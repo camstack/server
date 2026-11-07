@@ -5,7 +5,11 @@
 import { describe, expect, it } from 'vitest'
 import type { CompositionFieldsFeature } from '../../composition.js'
 import { CUSTOMIZE_STORED_CASES, type CustomizeStoredCase } from '../__fixtures__/stored-cases.js'
-import { compileScalarOverride, type ScalarCompileInput } from '../scalar-compile.js'
+import {
+  compileScalarOverride,
+  defaultThresholdSamples,
+  type ScalarCompileInput,
+} from '../scalar-compile.js'
 import { decodeScalarOverride } from '../scalar-decode.js'
 import { projectScalarAssignment } from '../scalar-status.js'
 
@@ -201,6 +205,43 @@ describe('scalar compiler', () => {
       sourceUnit: decoded.sourceUnit,
     })
     expect(again.ok && again.value).toEqual(timeOnly.value)
+  })
+
+  it('the samples argument round-trips: decoded 2, edited to 3, and the default when absent', () => {
+    const base = compileInput('running-power')
+    const draftWith = (minSamples: number | undefined): ScalarCompileInput => ({
+      ...base,
+      draft: {
+        ...base.draft,
+        transform: {
+          kind: 'threshold',
+          comparison: 'gte',
+          threshold: 10,
+          startDwellMs: 100_000,
+          stopDwellMs: 480_000,
+          ...(minSamples === undefined ? {} : { minSamples }),
+        },
+      },
+    })
+    const exprOf = (input: ScalarCompileInput): string => {
+      const out = compileScalarOverride(input)
+      if (!out.ok) throw new Error('compile refused')
+      const running = out.value.fields['running']
+      return running?.kind === 'expression' ? running.expr : ''
+    }
+    expect(exprOf(draftWith(3))).toBe('dwell(x >= 10, 100000, 480000, 3)')
+    expect(exprOf(draftWith(undefined))).toBe('dwell(x >= 10, 100000, 480000, 2)')
+    const stored = compileScalarOverride(draftWith(2))
+    if (!stored.ok) throw new Error('compile refused')
+    const decoded = decodeScalarOverride({
+      feature: stored.value,
+      device: base.device,
+      cap: 'running-state',
+      targetId: 'running',
+    })
+    expect(decoded?.draft.transform).toMatchObject({ kind: 'threshold', minSamples: 2 })
+    expect(defaultThresholdSamples('running-state', 'running', 'power-meter')).toBe(2)
+    expect(defaultThresholdSamples('battery', 'low', 'power-meter')).toBe(1)
   })
 
   it('refuses a bad threshold, dwell, scale, clamp, unit, transform and enum by name', () => {

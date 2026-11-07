@@ -2726,7 +2726,9 @@
           "no-runs": "Nessun ciclo trovato nello storico.",
           "no-separation": "Standby e funzionamento si sovrappongono, nessuna soglia li separa."
         }
-      }
+      },
+      "samples": "Campioni",
+      "samplesHint": "Letture consecutive necessarie prima che lo stato cambi"
     },
     "keyed": {
       "title": {

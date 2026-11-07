@@ -2651,7 +2651,9 @@
           "no-runs": "No run was found in the history.",
           "no-separation": "Standby and running levels overlap, so no threshold separates them."
         }
-      }
+      },
+      "samples": "Samples",
+      "samplesHint": "Consecutive readings needed before the state changes"
     },
     "keyed": {
       "title": {

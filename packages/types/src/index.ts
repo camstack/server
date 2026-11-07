@@ -1541,6 +1541,7 @@ export {
 } from './composition/customize/override-draft.js'
 export {
   compileScalarOverride,
+  defaultThresholdSamples,
   type ScalarCompileInput,
   type ScalarValueKind,
 } from './composition/customize/scalar-compile.js'

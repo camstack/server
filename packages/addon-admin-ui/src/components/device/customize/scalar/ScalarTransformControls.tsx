@@ -19,6 +19,8 @@ export interface ScalarTransformControlsProps {
   readonly transforms: readonly ScalarTransformKind[]
   readonly declared: readonly CustomizeCatalogTransform[]
   readonly unit: string | null
+  /** Samples the compiler uses when the draft sets none; shown in the Samples field. */
+  readonly defaultSamples?: number
   readonly value: ScalarTransformDraft
   readonly onChange: (next: ScalarTransformDraft) => void
 }
@@ -28,6 +30,7 @@ export function ScalarTransformControls({
   transforms,
   declared,
   unit,
+  defaultSamples = 1,
   value,
   onChange,
 }: ScalarTransformControlsProps): ReactNode {
@@ -61,7 +64,13 @@ export function ScalarTransformControls({
         </label>
       ) : null}
       {value.kind === 'threshold' && (
-        <ThresholdFields declared={declared} unit={unit} value={value} onChange={onChange} />
+        <ThresholdFields
+          declared={declared}
+          unit={unit}
+          defaultSamples={defaultSamples}
+          value={value}
+          onChange={onChange}
+        />
       )}
       {value.kind === 'linear' && (
         <LinearFields declared={declared} value={value} onChange={onChange} />
@@ -90,11 +99,18 @@ function kindOf(kind: string): CustomizeCatalogTransform['kind'] {
 interface ThresholdFieldsProps {
   readonly declared: readonly CustomizeCatalogTransform[]
   readonly unit: string | null
+  readonly defaultSamples: number
   readonly value: Extract<ScalarTransformDraft, { kind: 'threshold' }>
   readonly onChange: (next: ScalarTransformDraft) => void
 }
 
-function ThresholdFields({ declared, unit, value, onChange }: ThresholdFieldsProps): ReactNode {
+function ThresholdFields({
+  declared,
+  unit,
+  defaultSamples,
+  value,
+  onChange,
+}: ThresholdFieldsProps): ReactNode {
   const { t } = useTranslation()
   const suffix = unit ?? ''
   const spec = declaredOf(declared, 'threshold')
@@ -133,6 +149,16 @@ function ThresholdFields({ declared, unit, value, onChange }: ThresholdFieldsPro
         label={t('customize.scalar.stopDwell')}
         value={value.stopDwellMs / 1000}
         onChange={(seconds) => onChange({ ...value, stopDwellMs: seconds * 1000 })}
+      />
+      <NumberField
+        label={t('customize.scalar.samples')}
+        hint={t('customize.scalar.samplesHint')}
+        min={1}
+        step={1}
+        value={value.minSamples ?? defaultSamples}
+        onChange={(samples) => {
+          if (Number.isInteger(samples) && samples >= 1) onChange({ ...value, minSamples: samples })
+        }}
       />
     </div>
   )
@@ -196,20 +222,28 @@ interface NumberFieldProps {
   readonly label: string
   readonly value: number
   readonly onChange: (value: number) => void
+  readonly hint?: string
+  readonly min?: number
+  readonly step?: number
 }
 
-function NumberField({ label, value, onChange }: NumberFieldProps): ReactNode {
+function NumberField({ label, value, onChange, hint, min, step }: NumberFieldProps): ReactNode {
   return (
-    <label className="flex flex-col gap-1">
-      {label}
-      <Input
-        type="number"
-        value={Number.isFinite(value) ? value : ''}
-        onChange={(event) => {
-          const next = Number(event.target.value)
-          if (Number.isFinite(next)) onChange(next)
-        }}
-      />
-    </label>
+    <div className="flex flex-col gap-1">
+      <label className="flex flex-col gap-1">
+        {label}
+        <Input
+          type="number"
+          min={min}
+          step={step}
+          value={Number.isFinite(value) ? value : ''}
+          onChange={(event) => {
+            const next = Number(event.target.value)
+            if (Number.isFinite(next)) onChange(next)
+          }}
+        />
+      </label>
+      {hint !== undefined && <span className="text-foreground-muted">{hint}</span>}
+    </div>
   )
 }

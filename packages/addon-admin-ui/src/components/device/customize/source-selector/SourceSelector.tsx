@@ -3,7 +3,11 @@
  * column is the ui-library `DevicePicker`; Build-your-self helpers (D944 §3)
  * import this component next — they must not grow a second device list.
  */
-import type { CameraSensorMode, CustomizeEventEdge } from '@camstack/types'
+import {
+  type CameraSensorMode,
+  type CustomizeEventEdge,
+  defaultThresholdSamples,
+} from '@camstack/types'
 import {
   Button,
   type DeviceListState,
@@ -348,6 +352,11 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
         transforms={selectedFit.transforms}
         declared={selectedFit.declared}
         unit={selectedFit.sourceUnit}
+        defaultSamples={defaultThresholdSamples(
+          props.destination.cap,
+          props.destination.targetId,
+          props.kind === 'scalar' ? (props.field?.cap ?? '') : '',
+        )}
         value={props.transform}
         onChange={props.onTransformChange}
       />

@@ -169,8 +169,13 @@ function identityValue(
  */
 function evidenceSamples(input: ScalarCompileInput): number {
   const { cap, targetId, source } = input.draft
+  return defaultThresholdSamples(cap, targetId, source.cap)
+}
+
+/** The samples a threshold asks for when the operator sets none: 2 for running power, else 1. */
+export function defaultThresholdSamples(cap: string, targetId: string, sourceCap: string): number {
   const isRunningPower =
-    cap === 'running-state' && targetId === 'running' && source.cap === 'power-meter'
+    cap === 'running-state' && targetId === 'running' && sourceCap === 'power-meter'
   return isRunningPower ? RUNNING_POWER_MIN_SAMPLES : 1
 }
 
