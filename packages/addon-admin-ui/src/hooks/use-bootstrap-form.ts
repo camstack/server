@@ -45,7 +45,7 @@ export interface BootstrapFormSave {
   readonly isPending: boolean
 }
 
-/** Save a patch of the bootstrap form (admin-only on the hub); refreshes the form after. */
+/** Save a patch of the bootstrap form (admin-only on the hub); refreshes the form and `system.info` after. */
 export function useSaveBootstrapForm(): BootstrapFormSave {
   const system = useSystem()
   const queryClient = useQueryClient()
@@ -57,7 +57,12 @@ export function useSaveBootstrapForm(): BootstrapFormSave {
         input,
       })
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: BOOTSTRAP_FORM_QUERY_KEY }),
+    // `system.info` carries the server name the header shows.
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: BOOTSTRAP_FORM_QUERY_KEY }),
+        queryClient.invalidateQueries({ queryKey: [['system', 'info']] }),
+      ]),
   })
   return { mutateAsync: mutation.mutateAsync, isPending: mutation.isPending }
 }
