@@ -1,11 +1,13 @@
 /**
  * Hero cards for the public "Supported devices" pages: a light (601), a switch
  * (602), a cover (603), a thermostat (604), a lock (605), a gateway (606) and a climate sensor (607),
- * with invented names. Every other device id falls through to `appliances`
+ * with invented names. The climate sensor (607) answers temperature, humidity and
+ * battery; the gateway (606) answers only device-status. Every other device id falls through to `appliances`
  * (dishwasher 501, vacuum 502, pet feeder 5064, pet fountain 5065, air
  * conditioner 521, sensor 511), so `--fixtures docs-device-types` shoots all
  * of them. Also answers the two reads a device page always makes
- * (`powerSource.getStatus`, `preferences.get`).
+ * (`powerSource.getStatus`, `preferences.get`), empties the shell alerts and names
+ * the Home Assistant and Velux integrations.
  */
 import appliancesArea from './appliances'
 import { defineFixtures } from './_define'
@@ -92,15 +94,21 @@ const SLICES: Readonly<Record<string, unknown>> = {
 const slice = (id: number, cap: string): unknown =>
   cap === 'device-status' ? { online: true, lastChangedAt: NOW } : (SLICES[`${id}/${cap}`] ?? null)
 
-const base = (path: string): ((i: unknown) => unknown) => {
+type Handler = (input: unknown) => unknown
+
+const isHandler = (h: unknown): h is Handler => typeof h === 'function'
+
+const base = (path: string): Handler => {
   const h = appliancesArea.handlers[path]
-  return typeof h === 'function' ? (i: unknown) => (h as (x: unknown) => unknown)(i) : () => h
+  return isHandler(h) ? h : () => h
 }
+
+const asList = (v: unknown): readonly unknown[] => (Array.isArray(v) ? v : [])
 
 export default defineFixtures({
   area: 'docs-device-types',
   description:
-    'Hero cards of a light, switch, cover, thermostat, lock and gateway, plus appliances',
+    'Hero cards of a light, switch, cover, thermostat, lock, gateway and climate sensor, plus appliances',
   handlers: {
     ...appliancesArea.handlers,
     'powerSource.getStatus': {
@@ -113,8 +121,28 @@ export default defineFixtures({
       offSeconds: 0,
     },
     'preferences.get': { rows: [] },
+    // No shell alert toast over the hero, and the providers resolve to a named
+    // integration (the breadcrumb of a device page reads `integrations.list`).
+    'alerts.list': [],
+    'alerts.getUnreadCount': 0,
+    'integrations.list': [
+      {
+        id: 'int_homeassistant',
+        addonId: HA,
+        name: 'Home Assistant',
+        enabled: true,
+        processState: 'running',
+      },
+      {
+        id: 'int_velux',
+        addonId: 'provider-velux',
+        name: 'Velux',
+        enabled: true,
+        processState: 'running',
+      },
+    ],
     'deviceManager.listAll': (i: unknown) => [
-      ...(base('deviceManager.listAll')(i) as unknown[]),
+      ...asList(base('deviceManager.listAll')(i)),
       ...Object.values(DEVICES),
     ],
     'deviceManager.getDevice': (i: { deviceId?: number }) =>

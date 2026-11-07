@@ -1,6 +1,7 @@
 /**
- * An operator write that SETS a secret over a row whose stored marker is not the row's own
- * ref (a row adopted from a settings array, or written under another owner/collection name).
+ * A stored foreign marker is replaced by the row's own ref on a secret write. A defensive
+ * pin: the adoption path that produced such rows is closed (ADR-0900), but leftover markers
+ * from an old auth-oidc providers array still exist on the hub (ADR-0979).
  */
 import {
   createRecordsAccess,
@@ -25,15 +26,15 @@ const kinds = defineRecordKinds({
   },
 })
 
-const LEGACY = [
+const FOREIGN_MARKER = [
   'secret://auth-oidc/global/providers[prod01].clientSecret',
   'secret://auth/row/records%3Aoidc-provider/prod01/clientSecret',
   'secret://auth-oidc/row/oidc-provider/prod01/clientSecret',
 ]
 
-describe('a write that sets a secret over a legacy stored marker', () => {
-  for (const legacy of LEGACY) {
-    it(`replaces ${legacy}`, async () => {
+describe('a secret write over a stored foreign marker', () => {
+  for (const foreign of FOREIGN_MARKER) {
+    it(`replaces ${foreign}`, async () => {
       const world = makeRecordsWorld()
       const keychain = makeFakeKeychain()
       const records = createRecordsAccess({
@@ -51,7 +52,7 @@ describe('a write that sets a secret over a legacy stored marker', () => {
         .prepare(
           `UPDATE records SET data = jsonb_set(data, '$.clientSecret', jsonb(?)) WHERE id = 'prod01'`,
         )
-        .run(JSON.stringify({ $secret: legacy, v: 1 }))
+        .run(JSON.stringify({ $secret: foreign, v: 1 }))
       await kind.patch('prod01', {
         displayName: 'Prod 2',
         clientSecret: 'new-secret',
