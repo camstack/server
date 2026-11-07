@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.519] - 2026-11-07
+
 ### Changed
 
 - Scalar overrides expose the dwell sample count (the 4th dwell argument) as an editable default
