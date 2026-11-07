@@ -4,10 +4,11 @@
  * camera `terminal-camera-instance-<id>` and everything that names it keeps its identity; a
  * stable id that is not derivable from the id (an adopted legacy monitor) is carried on the body.
  *
- * Every row is converted BEFORE any is written, each write is read back equal, a record that
- * already exists is never overwritten, and the legacy key is deleted only when every row is
- * accounted for. A row that cannot be converted (malformed, a duplicate id or camera) keeps the
- * key where it is and fails the step, so it is tried again and the row is never guessed at.
+ * Every good row is converted BEFORE any is written, each write is read back equal, and a record
+ * that already exists is never overwritten. A row that cannot be converted (malformed, a duplicate
+ * id or camera) never blocks the others: the old reader skipped it and ran the rest. The legacy key
+ * is rewritten to hold ONLY those raw rows (nothing reads it any more; kept for forensics), one warn
+ * per row, and the migration lands as done. With no bad row the key is deleted.
  */
 import {
   type MigrationApiV1,
@@ -36,6 +37,8 @@ export interface TerminalMigrationPorts {
   readRecord(id: string): Promise<TerminalBody | null>
   /** Delete the legacy key. Called only once every row has a record that reads back equal. */
   dropLegacyKey(): Promise<void>
+  /** Rewrite the legacy key to hold only these raw rows (the ones that could not be converted). */
+  keepLegacyRows(rows: readonly unknown[]): Promise<void>
   /** A row that was not copied, by id and reason (never a value). */
   warn(message: string): void
 }
@@ -117,28 +120,31 @@ export async function copyTerminalsToRecords(
   const rows: readonly unknown[] = legacy.value
 
   const drafts: Draft[] = []
+  const skipped: { readonly raw: unknown; readonly reason: string }[] = []
   const ids = new Set<string>()
   const cameras = new Set<string>()
-  let unconverted = 0
   for (const raw of rows) {
     const draft = draftOf(raw)
-    const reason =
-      typeof draft === 'string'
-        ? draft
-        : ids.has(draft.id) ||
-            cameras.has(draft.body.cameraStableId ?? newTerminalCameraStableId(draft.id))
-          ? 'a duplicate instance or camera'
-          : null
-    if (typeof draft === 'string' || reason !== null) {
-      unconverted += 1
-      ports.warn(
-        `terminal: instance ${rowName(raw)} was not copied into records (${reason}); the legacy list is kept and the migration is not done`,
-      )
+    if (typeof draft === 'string') {
+      skipped.push({ raw, reason: draft })
+      continue
+    }
+    const camera = draft.body.cameraStableId ?? newTerminalCameraStableId(draft.id)
+    if (ids.has(draft.id) || cameras.has(camera)) {
+      skipped.push({ raw, reason: 'a duplicate instance or camera' })
       continue
     }
     ids.add(draft.id)
-    cameras.add(draft.body.cameraStableId ?? newTerminalCameraStableId(draft.id))
+    cameras.add(camera)
     drafts.push(draft)
+  }
+
+  // Only bad rows are left (a previous run kept them): nothing to convert, nothing to rewrite.
+  if (drafts.length === 0 && skipped.length > 0) {
+    ports.warn(
+      `terminal: ${skipped.length} legacy row(s) are kept unconverted in the old list and ignored`,
+    )
+    return { outcome: 'already-done', summary: { skipped: skipped.length } }
   }
 
   const have = await ports.listIds()
@@ -158,13 +164,14 @@ export async function copyTerminalsToRecords(
     }
     created += 1
   }
-  if (unconverted > 0) {
-    throw new Error(
-      `terminal: ${unconverted} legacy instance(s) could not be copied into records and the legacy list is kept (${created} created, ${kept} kept)`,
+  for (const { raw, reason } of skipped) {
+    ports.warn(
+      `terminal: row ${rowName(raw)} was not copied into records (${reason}) and is ignored`,
     )
   }
-  await ports.dropLegacyKey()
-  return { outcome: 'done', summary: { created, kept } }
+  if (skipped.length === 0) await ports.dropLegacyKey()
+  else await ports.keepLegacyRows(skipped.map((entry) => entry.raw))
+  return { outcome: 'done', summary: { created, kept, skipped: skipped.length } }
 }
 
 export function terminalPortsOver(api: MigrationApiV1): TerminalMigrationPorts {
@@ -195,6 +202,9 @@ export function terminalPortsOver(api: MigrationApiV1): TerminalMigrationPorts {
     readRecord: async (id) => (await records.get({ id }))?.data ?? null,
     dropLegacyKey: async () => {
       await api.settings.deleteKeys({ keys: [LEGACY_TERMINAL_INSTANCES_KEY] })
+    },
+    keepLegacyRows: async (kept) => {
+      await api.settings.write({ patch: { [LEGACY_TERMINAL_INSTANCES_KEY]: [...kept] } })
     },
     warn: (message) => {
       void api.log.warn({ message })

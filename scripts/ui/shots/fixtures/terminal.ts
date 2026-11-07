@@ -53,28 +53,55 @@ const PROFILES = [
   },
 ]
 
-const instance = (
+const TERMINAL_FORM = {
+  sections: [
+    {
+      id: 'terminal',
+      title: 'Terminal',
+      columns: 2,
+      fields: [
+        { type: 'node-select', key: 'nodeId', label: 'Node', required: true },
+        {
+          type: 'select',
+          key: 'profileId',
+          label: 'Profile',
+          required: true,
+          options: PROFILES.map((p) => ({ value: p.profileId, label: p.label })),
+        },
+        { type: 'text', key: 'executable', label: 'Executable' },
+        { type: 'text', key: 'cwd', label: 'Working directory' },
+        { type: 'tags', key: 'args', label: 'Arguments' },
+        { type: 'tags', key: 'environment', label: 'Environment' },
+      ],
+    },
+  ],
+}
+
+const record = (
   id: string,
   name: string,
   nodeId: string,
   profileId: string,
-  profileLabel: string,
   enabled: boolean,
-  nodeInCluster: boolean,
+  inCluster: boolean,
 ) => ({
-  instanceId: id,
-  cameraStableId: `terminal-camera-instance-${id}`,
-  nodeId,
-  nodeInCluster,
-  profileId,
-  profileLabel,
+  id,
   name,
+  kind: 'terminals',
+  configured: true,
   enabled,
-  executable: '',
-  args: [],
-  cwd: '',
-  environment: [],
-  profileSettings: {},
+  ...(inCluster ? {} : { status: { state: 'error', label: 'Node missing' } }),
+  formValues: {
+    name,
+    enabled,
+    nodeId,
+    profileId,
+    profileLabel: PROFILES.find((p) => p.profileId === profileId)?.label ?? profileId,
+    executable: '',
+    cwd: '',
+    args: [],
+    environment: [],
+  },
 })
 
 export default defineFixtures({
@@ -127,34 +154,43 @@ export default defineFixtures({
     'terminalSession.listProfiles': PROFILES,
     'terminalSession.listSessions': [],
     'terminalSession.listLegacyCameras': [],
-    'terminalSession.listInstances': [
-      instance(
-        '3f6c1c1e-0a51-4d0e-9a52-1d1b6f2a0001',
-        'BTM Hub',
-        'hub',
-        'monitor',
-        'BTM',
-        true,
-        true,
-      ),
-      instance(
-        '3f6c1c1e-0a51-4d0e-9a52-1d1b6f2a0002',
-        'Top garage-nuc',
-        'garage-nuc',
-        'top',
-        'Top',
-        false,
-        true,
-      ),
-      instance(
-        '3f6c1c1e-0a51-4d0e-9a52-1d1b6f2a0003',
-        'BTM old-mac',
-        'old-mac.localdomain',
-        'monitor',
-        'BTM',
-        true,
-        false,
-      ),
-    ],
+    'integrationInstances.describe': (i: { addonId: string }) =>
+      i.addonId === 'terminal'
+        ? {
+            role: 'services',
+            instanceMode: 'multiple',
+            kind: 'terminal',
+            canTest: false,
+            mintsId: true,
+            kinds: [{ id: 'terminals', label: 'Terminal', functionCap: 'terminal-session' }],
+          }
+        : { role: 'services', instanceMode: 'multiple', kind: 'other', canTest: false, kinds: [] },
+    'integrationInstances.instanceFormSchema': () => TERMINAL_FORM,
+    'integrationInstances.listInstances': (i: { addonId: string }) =>
+      i.addonId === 'terminal'
+        ? [
+            record('3f6c1c1e-0a51-4d0e-9a52-1d1b6f2a0001', 'BTM Hub', 'hub', 'monitor', true, true),
+            record(
+              '3f6c1c1e-0a51-4d0e-9a52-1d1b6f2a0002',
+              'Top garage-nuc',
+              'garage-nuc',
+              'top',
+              false,
+              true,
+            ),
+            record(
+              '3f6c1c1e-0a51-4d0e-9a52-1d1b6f2a0003',
+              'BTM old-mac',
+              'old-mac.localdomain',
+              'monitor',
+              true,
+              false,
+            ),
+          ]
+        : [],
+    'mut:integrationInstances.createInstance': (i: { id: string }) => ({ id: i.id }),
+    'mut:integrationInstances.updateInstance': { ok: true },
+    'mut:integrationInstances.setInstanceEnabled': { ok: true },
+    'mut:integrationInstances.deleteInstance': { ok: true },
   },
 })

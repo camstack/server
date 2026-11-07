@@ -136,21 +136,74 @@ describe('Terminal instances settings to records, on real SQLite', () => {
     expect(w.settingsRow()).toBeUndefined()
   })
 
-  it('keeps the old key when a row cannot be copied, and still copies the others', async () => {
+  const replaceLegacy = (w: Awaited<ReturnType<typeof boot>>, value: unknown) =>
+    w.world.db
+      .prepare('UPDATE "addon-settings" SET data = ? WHERE id = ?')
+      .run(
+        JSON.stringify({ addonId: TERMINAL_SEED_ADDON, key: 'terminalInstances', value }),
+        `${TERMINAL_SEED_ADDON}.terminalInstances`,
+      )
+  const legacyValue = (w: Awaited<ReturnType<typeof boot>>): unknown => {
+    const row = w.world.db
+      .prepare('SELECT data FROM "addon-settings" WHERE id = ?')
+      .get(`${TERMINAL_SEED_ADDON}.terminalInstances`)
+    if (row === undefined || typeof row.data !== 'string') return undefined
+    return JSON.parse(row.data).value
+  }
+
+  it('bad rows never block the good ones: they are converted, the key keeps only the bad rows, and it lands done', async () => {
     const w = await boot()
     seedTerminalLegacySettings(w.world.db)
-    w.world.db.prepare('UPDATE "addon-settings" SET data = ? WHERE id = ?').run(
-      JSON.stringify({
-        addonId: TERMINAL_SEED_ADDON,
-        key: 'terminalInstances',
-        value: [...TERMINAL_SEED_ROWS, { id: 'not-a-uuid', name: '' }],
-      }),
-      `${TERMINAL_SEED_ADDON}.terminalInstances`,
-    )
+    const nameless = { id: 'not-a-uuid', name: '' }
+    const malformed = {
+      ...TERMINAL_SEED_ROWS[0],
+      id: '9a8b7c6d-0000-4000-8000-00000000cccc',
+      args: 'x',
+    }
+    replaceLegacy(w, [...TERMINAL_SEED_ROWS, nameless, malformed])
     const report = await w.run()
-    expect(report.failed.length).toBeGreaterThan(0)
-    expect(w.settingsRow()).toBeDefined()
+    expect(report.failed).toEqual([])
+    expect(w.ledger()).toMatchObject({ status: 'applied' })
     expect((await w.handle.query({ limit: 10 })).records).toHaveLength(TERMINAL_SEED_ROWS.length)
+    expect(legacyValue(w)).toEqual([nameless, malformed])
+  })
+
+  it('a rerun with only bad rows left is already-done, rewrites nothing', async () => {
+    const w = await boot()
+    seedTerminalLegacySettings(w.world.db)
+    const nameless = { id: 'not-a-uuid', name: '' }
+    replaceLegacy(w, [nameless])
+    const migration = ADDON_MIGRATIONS[0]
+    if (migration === undefined || !('procedure' in migration)) {
+      throw new Error('the catalogue holds no procedure')
+    }
+    const result = await migration.procedure(w.portsOver())
+    expect(result).toMatchObject({ outcome: 'already-done' })
+    expect(legacyValue(w)).toEqual([nameless])
+  })
+
+  it('a duplicate id is skipped after the first, which stays', async () => {
+    const w = await boot()
+    seedTerminalLegacySettings(w.world.db)
+    const first = TERMINAL_SEED_ROWS[0]
+    const dup = { ...first, name: 'Second with the same id' }
+    replaceLegacy(w, [first, dup])
+    const report = await w.run()
+    expect(report.failed).toEqual([])
+    const records = (await w.handle.query({ limit: 10 })).records
+    expect(records).toHaveLength(1)
+    expect(records[0]?.data.name).toBe(first?.name)
+    expect(legacyValue(w)).toEqual([dup])
+  })
+
+  it('a disabled row survives disabled and an adopted legacy camera id survives', async () => {
+    const w = await boot()
+    seedTerminalLegacySettings(w.world.db)
+    await w.run()
+    const adopted = TERMINAL_SEED_ROWS[1]
+    const record = await w.handle.get(adopted?.id ?? '')
+    expect(record?.data.enabled).toBe(false)
+    expect(record?.data.cameraStableId).toBe(adopted?.cameraStableId)
   })
 
   it('keeps the old key when a written record does not read back equal', async () => {

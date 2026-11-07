@@ -1,15 +1,19 @@
 /**
  * The grids a pre-record install kept in the addon settings (`cameraGrids`) become `camera-grid`
  * records (planning#440 step 7, D1013). The record id IS the old row id, so the camera
- * `camera-grid-<id>` and every binding, layout and recording that names it keeps its identity; a
- * stable id that is not derivable from the id is carried on the body.
+ * `camera-grid-<id>` and every binding, layout and recording that names it keeps its identity.
  *
- * Every row is converted BEFORE any is written, each write is read back equal, a record that
- * already exists is never overwritten, and the legacy key is deleted only when every row is
- * accounted for. A nameless row was always ignored (and dropped at boot) by the reader, so it is
- * counted and warned, not copied; any other row that cannot be converted keeps the key where it is
- * and fails the step, so it is tried again and the row is never guessed at.
+ * Rows are first normalised the way the old boot-time normaliser did (a missing or non-uuid id is
+ * minted, a missing stable id is derived). The id is minted DETERMINISTICALLY from the row, so an
+ * interrupted run converts the same row to the same record. Every good row is written, read back
+ * equal, and an existing record is never overwritten.
+ *
+ * A row that still cannot be converted (nameless, malformed, a duplicate id or camera) never
+ * blocks the others: the old reader skipped it and ran the rest. The legacy key is rewritten to
+ * hold ONLY those raw rows (nothing reads it any more; kept for forensics), one warn per row, and
+ * the migration lands as done. With no bad row the key is deleted.
  */
+import { createHash } from 'node:crypto'
 import {
   isInstanceEnabled,
   type MigrationApiV1,
@@ -36,6 +40,8 @@ export interface GridMigrationPorts {
   readRecord(id: string): Promise<GridBody | null>
   /** Delete the legacy key. Called only once every row has a record that reads back equal. */
   dropLegacyKey(): Promise<void>
+  /** Rewrite the legacy key to hold only these raw rows (the ones that could not be converted). */
+  keepLegacyRows(rows: readonly unknown[]): Promise<void>
   /** A row that was not copied, by id and reason (never a value). */
   warn(message: string): void
 }
@@ -64,18 +70,29 @@ interface Draft {
 
 type Verdict =
   | { readonly kind: 'draft'; readonly draft: Draft }
-  | { readonly kind: 'nameless' }
-  | { readonly kind: 'unconverted'; readonly reason: string }
+  | { readonly kind: 'skip'; readonly reason: string }
+
+const UUID = z.string().uuid()
+
+/** A uuid derived from the row itself, so a rerun mints the same id for the same row. */
+function mintedId(raw: object): string {
+  const hex = createHash('sha1').update(JSON.stringify(raw)).digest('hex')
+  const variant = ((Number.parseInt(hex.charAt(16), 16) & 0x3) | 0x8).toString(16)
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`
+}
 
 function verdictOf(raw: unknown): Verdict {
-  if (raw === null || typeof raw !== 'object') {
-    return { kind: 'unconverted', reason: 'the row is not an object' }
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { kind: 'skip', reason: 'the row is not an object' }
   }
   const name: unknown = Reflect.get(raw, 'name')
-  if (typeof name !== 'string' || name.trim().length === 0) return { kind: 'nameless' }
-  const parsed = LegacyRowSchema.safeParse(raw)
-  if (!parsed.success)
-    return { kind: 'unconverted', reason: 'the row does not match the legacy shape' }
+  if (typeof name !== 'string' || name.trim().length === 0) {
+    return { kind: 'skip', reason: 'the row has no name' }
+  }
+  const rawId: unknown = Reflect.get(raw, 'id')
+  const id = UUID.safeParse(rawId).success && typeof rawId === 'string' ? rawId : mintedId(raw)
+  const parsed = LegacyRowSchema.safeParse({ ...raw, id, name: name.trim() })
+  if (!parsed.success) return { kind: 'skip', reason: 'the row does not match the legacy shape' }
   const row = parsed.data
   const derived =
     row.cameraStableId === undefined || row.cameraStableId === newGridCameraStableId(row.id)
@@ -128,35 +145,31 @@ export async function copyGridsToRecords(
   const rows: readonly unknown[] = legacy.value
 
   const drafts: Draft[] = []
+  const skipped: { readonly raw: unknown; readonly reason: string }[] = []
   const ids = new Set<string>()
   const cameras = new Set<string>()
-  let unconverted = 0
-  let nameless = 0
   for (const raw of rows) {
     const verdict = verdictOf(raw)
-    if (verdict.kind === 'nameless') {
-      nameless += 1
-      ports.warn(
-        `camera-grid: row ${rowName(raw)} has no name and was always ignored; it is not copied`,
-      )
+    if (verdict.kind === 'skip') {
+      skipped.push({ raw, reason: verdict.reason })
       continue
     }
-    const duplicate =
-      verdict.kind === 'draft' &&
-      (ids.has(verdict.draft.id) ||
-        cameras.has(verdict.draft.body.cameraStableId ?? newGridCameraStableId(verdict.draft.id)))
-    if (verdict.kind === 'unconverted' || duplicate) {
-      unconverted += 1
-      ports.warn(
-        `camera-grid: row ${rowName(raw)} was not copied into records (${
-          verdict.kind === 'unconverted' ? verdict.reason : 'a duplicate grid or camera'
-        }); the legacy list is kept and the migration is not done`,
-      )
+    const camera = verdict.draft.body.cameraStableId ?? newGridCameraStableId(verdict.draft.id)
+    if (ids.has(verdict.draft.id) || cameras.has(camera)) {
+      skipped.push({ raw, reason: 'a duplicate grid or camera' })
       continue
     }
     ids.add(verdict.draft.id)
-    cameras.add(verdict.draft.body.cameraStableId ?? newGridCameraStableId(verdict.draft.id))
+    cameras.add(camera)
     drafts.push(verdict.draft)
+  }
+
+  // Only bad rows are left (a previous run kept them): nothing to convert, nothing to rewrite.
+  if (drafts.length === 0 && skipped.length > 0) {
+    ports.warn(
+      `camera-grid: ${skipped.length} legacy row(s) are kept unconverted in the old list and ignored`,
+    )
+    return { outcome: 'already-done', summary: { skipped: skipped.length } }
   }
 
   const have = await ports.listIds()
@@ -176,13 +189,14 @@ export async function copyGridsToRecords(
     }
     created += 1
   }
-  if (unconverted > 0) {
-    throw new Error(
-      `camera-grid: ${unconverted} legacy grid(s) could not be copied into records and the legacy list is kept (${created} created, ${kept} kept)`,
+  for (const { raw, reason } of skipped) {
+    ports.warn(
+      `camera-grid: row ${rowName(raw)} was not copied into records (${reason}) and is ignored`,
     )
   }
-  await ports.dropLegacyKey()
-  return { outcome: 'done', summary: { created, kept, nameless } }
+  if (skipped.length === 0) await ports.dropLegacyKey()
+  else await ports.keepLegacyRows(skipped.map((entry) => entry.raw))
+  return { outcome: 'done', summary: { created, kept, skipped: skipped.length } }
 }
 
 export function gridPortsOver(api: MigrationApiV1): GridMigrationPorts {
@@ -213,6 +227,9 @@ export function gridPortsOver(api: MigrationApiV1): GridMigrationPorts {
     readRecord: async (id) => (await records.get({ id }))?.data ?? null,
     dropLegacyKey: async () => {
       await api.settings.deleteKeys({ keys: [LEGACY_GRIDS_KEY] })
+    },
+    keepLegacyRows: async (kept) => {
+      await api.settings.write({ patch: { [LEGACY_GRIDS_KEY]: [...kept] } })
     },
     warn: (message) => {
       void api.log.warn({ message })

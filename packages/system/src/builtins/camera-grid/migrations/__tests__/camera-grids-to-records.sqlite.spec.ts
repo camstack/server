@@ -126,24 +126,78 @@ describe('camera grids settings to records, on real SQLite', () => {
     expect(w.settingsRow()).toBeUndefined()
   })
 
-  it('a nameless row was always ignored: it is not copied and does not hold the key', async () => {
+  const legacyValue = (w: Awaited<ReturnType<typeof boot>>): unknown => {
+    const row = w.world.db
+      .prepare('SELECT data FROM "addon-settings" WHERE id = ?')
+      .get(`${GRID_SEED_ADDON}.cameraGrids`)
+    if (row === undefined || typeof row.data !== 'string') return undefined
+    return JSON.parse(row.data).value
+  }
+
+  it('bad rows never block the good ones: they are converted, the key keeps only the bad rows, and it lands done', async () => {
     const w = await boot()
     seedGridLegacySettings(w.world.db)
-    w.replaceLegacy([...GRID_SEED_ROWS, { id: '1b2c3d4e-0000-4000-8000-00000000aaaa', name: '  ' }])
+    const nameless = { id: '1b2c3d4e-0000-4000-8000-00000000aaaa', name: '  ' }
+    const malformed = { id: '1b2c3d4e-0000-4000-8000-00000000bbbb', name: 'Broken', fps: 'fast' }
+    w.replaceLegacy([...GRID_SEED_ROWS, nameless, malformed])
     const report = await w.run()
     expect(report.failed).toEqual([])
+    expect(w.ledger()).toMatchObject({ status: 'applied' })
     expect((await w.handle.query({ limit: 10 })).records).toHaveLength(GRID_SEED_ROWS.length)
+    expect(legacyValue(w)).toEqual([nameless, malformed])
+  })
+
+  it('a rerun with only bad rows left is already-done, rewrites nothing', async () => {
+    const w = await boot()
+    const nameless = { id: '1b2c3d4e-0000-4000-8000-00000000aaaa', name: '  ' }
+    seedGridLegacySettings(w.world.db)
+    w.replaceLegacy([nameless])
+    const migration = ADDON_MIGRATIONS[0]
+    if (migration === undefined || !('procedure' in migration)) {
+      throw new Error('the catalogue holds no procedure')
+    }
+    const result = await migration.procedure(w.portsOver())
+    expect(result).toMatchObject({ outcome: 'already-done' })
+    expect(legacyValue(w)).toEqual([nameless])
+    expect((await w.handle.query({ limit: 10 })).records).toHaveLength(0)
+  })
+
+  it('a row typed with no id or a non-uuid id is minted like the old normaliser, and keeps one stable camera', async () => {
+    const w = await boot()
+    seedGridLegacySettings(w.world.db)
+    w.replaceLegacy([{ name: 'No id yet' }, { id: 'not-a-uuid', name: 'Bad id' }])
+    const report = await w.run()
+    expect(report.failed).toEqual([])
+    const records = (await w.handle.query({ limit: 10 })).records
+    expect(records.map((r) => r.data.name).toSorted()).toEqual(['Bad id', 'No id yet'])
+    for (const record of records) {
+      expect(record.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+      expect(record.data.cameraStableId ?? newGridCameraStableId(record.id)).toBe(
+        newGridCameraStableId(record.id),
+      )
+    }
     expect(w.settingsRow()).toBeUndefined()
   })
 
-  it('keeps the old key when a row cannot be copied, and still copies the others', async () => {
+  it('a duplicate id is skipped after the first, which stays', async () => {
     const w = await boot()
     seedGridLegacySettings(w.world.db)
-    w.replaceLegacy([...GRID_SEED_ROWS, { id: 'not-a-uuid', name: 'Broken' }])
+    const first = GRID_SEED_ROWS[0]
+    const dup = { ...first, name: 'Second with the same id' }
+    w.replaceLegacy([first, dup])
     const report = await w.run()
-    expect(report.failed.length).toBeGreaterThan(0)
-    expect(w.settingsRow()).toBeDefined()
-    expect((await w.handle.query({ limit: 10 })).records).toHaveLength(GRID_SEED_ROWS.length)
+    expect(report.failed).toEqual([])
+    const records = (await w.handle.query({ limit: 10 })).records
+    expect(records).toHaveLength(1)
+    expect(records[0]?.data.name).toBe(first?.['name'])
+    expect(legacyValue(w)).toEqual([dup])
+  })
+
+  it('a disabled row survives disabled', async () => {
+    const w = await boot()
+    seedGridLegacySettings(w.world.db)
+    await w.run()
+    expect((await w.handle.get(seedId(1)))?.data.enabled).toBe(false)
   })
 
   it('keeps the old key when a written record does not read back equal', async () => {
