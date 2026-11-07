@@ -57,7 +57,7 @@ const TerminalInstanceInfoSchema = z.object({
   /**
    * False while the node the instance is bound to is not in the cluster
    * topology (forgotten, renamed, re-paired). The instance is kept; the
-   * operator re-points it with `updateInstance({ targetNodeId })`.
+   * operator re-points it on the Terminal page.
    */
   nodeInCluster: z.boolean(),
   profileId: z.string(),
@@ -114,48 +114,6 @@ export const terminalSessionCapability = {
     listProfiles: method(z.void(), z.array(TerminalProfileInfoSchema).readonly(), {
       auth: 'admin',
     }),
-    /** Explicit durable Terminal instances, managed centrally on the hub. */
-    listInstances: method(z.void(), z.array(TerminalInstanceInfoSchema).readonly(), {
-      auth: 'admin',
-    }),
-    createInstance: method(
-      z.object({
-        targetNodeId: z.string().min(1),
-        profileId: z.string().min(1),
-        name: z.string().trim().min(1).max(160).optional(),
-        executable: z.string().max(1024).optional(),
-        args: z.array(z.string().max(2048)).max(64).optional(),
-        cwd: z.string().max(1024).optional(),
-        environment: z.array(z.string().max(4096)).max(64).optional(),
-        profileSettings: ProfileSettingsBagSchema.optional(),
-      }),
-      TerminalInstanceInfoSchema,
-      { kind: 'mutation', auth: 'admin' },
-    ),
-    updateInstance: method(
-      z.object({
-        instanceId: z.string().min(1),
-        /** Re-point the instance to another node; the profile must exist there. */
-        targetNodeId: z.string().min(1).max(256).optional(),
-        name: z.string().trim().min(1).max(160).optional(),
-        executable: z.string().max(1024).optional(),
-        args: z.array(z.string().max(2048)).max(64).optional(),
-        cwd: z.string().max(1024).optional(),
-        environment: z.array(z.string().max(4096)).max(64).optional(),
-        profileSettings: ProfileSettingsBagSchema.optional(),
-      }),
-      TerminalInstanceInfoSchema,
-      { kind: 'mutation', auth: 'admin' },
-    ),
-    deleteInstance: method(z.object({ instanceId: z.string().min(1) }), z.void(), {
-      kind: 'mutation',
-      auth: 'admin',
-    }),
-    setInstanceEnabled: method(
-      z.object({ instanceId: z.string().min(1), enabled: z.boolean() }),
-      TerminalInstanceInfoSchema,
-      { kind: 'mutation', auth: 'admin' },
-    ),
     /** Existing automatic cameras are shown for explicit migration only. */
     listLegacyCameras: method(z.void(), z.array(TerminalLegacyCameraSchema).readonly(), {
       auth: 'admin',

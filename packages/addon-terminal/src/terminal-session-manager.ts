@@ -51,32 +51,6 @@ type UnsequencedOutputEvent =
 export type TerminalOutputSink = (event: TerminalOutputEvent) => void
 
 export interface TerminalInstanceControl {
-  listInstances(): Promise<readonly TerminalInstanceInfo[]>
-  createInstance(input: {
-    readonly targetNodeId: string
-    readonly profileId: string
-    readonly name?: string
-    readonly executable?: string
-    readonly args?: readonly string[]
-    readonly cwd?: string
-    readonly environment?: readonly string[]
-    readonly profileSettings?: Readonly<Record<string, unknown>>
-  }): Promise<TerminalInstanceInfo>
-  updateInstance(input: {
-    readonly instanceId: string
-    readonly targetNodeId?: string
-    readonly name?: string
-    readonly executable?: string
-    readonly args?: readonly string[]
-    readonly cwd?: string
-    readonly environment?: readonly string[]
-    readonly profileSettings?: Readonly<Record<string, unknown>>
-  }): Promise<TerminalInstanceInfo>
-  deleteInstance(input: { readonly instanceId: string }): Promise<void>
-  setInstanceEnabled(input: {
-    readonly instanceId: string
-    readonly enabled: boolean
-  }): Promise<TerminalInstanceInfo>
   listLegacyCameras(): Promise<readonly TerminalLegacyCamera[]>
   adoptLegacyMonitor(input: {
     readonly stableId: string
@@ -229,47 +203,6 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
 
   setInstanceControl(control: TerminalInstanceControl | null): void {
     this.instanceControl = control
-  }
-
-  async listInstances(): Promise<readonly TerminalInstanceInfo[]> {
-    return this.instanceControl?.listInstances() ?? []
-  }
-
-  async createInstance(input: {
-    readonly targetNodeId: string
-    readonly profileId: string
-    readonly name?: string
-    readonly executable?: string
-    readonly args?: readonly string[]
-    readonly cwd?: string
-    readonly environment?: readonly string[]
-    readonly profileSettings?: Readonly<Record<string, unknown>>
-  }): Promise<TerminalInstanceInfo> {
-    return this.requireInstanceControl().createInstance(input)
-  }
-
-  async updateInstance(input: {
-    readonly instanceId: string
-    readonly targetNodeId?: string
-    readonly name?: string
-    readonly executable?: string
-    readonly args?: readonly string[]
-    readonly cwd?: string
-    readonly environment?: readonly string[]
-    readonly profileSettings?: Readonly<Record<string, unknown>>
-  }): Promise<TerminalInstanceInfo> {
-    return this.requireInstanceControl().updateInstance(input)
-  }
-
-  async deleteInstance(input: { readonly instanceId: string }): Promise<void> {
-    await this.requireInstanceControl().deleteInstance(input)
-  }
-
-  async setInstanceEnabled(input: {
-    readonly instanceId: string
-    readonly enabled: boolean
-  }): Promise<TerminalInstanceInfo> {
-    return this.requireInstanceControl().setInstanceEnabled(input)
   }
 
   async listLegacyCameras(): Promise<readonly TerminalLegacyCamera[]> {

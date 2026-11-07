@@ -110,11 +110,11 @@ describe('TerminalSessionManager', () => {
     expect(profiles.map((p) => p.profileId)).toEqual(['monitor'])
   })
 
-  it('does not treat profile templates as Terminal instances until hub control creates one', async () => {
+  it('does not treat profile templates as Terminal instances until hub control adopts one', async () => {
     const { manager } = makeManager()
-    expect(await manager.listInstances()).toEqual([])
+    expect(await manager.listLegacyCameras()).toEqual([])
     await expect(
-      manager.createInstance({ targetNodeId: 'hub', profileId: 'monitor' }),
+      manager.adoptLegacyMonitor({ stableId: 'terminal-camera-agent-1' }),
     ).rejects.toThrow(/managed on the hub/)
 
     const created = {
@@ -133,18 +133,12 @@ describe('TerminalSessionManager', () => {
       profileSettings: {},
     }
     manager.setInstanceControl({
-      listInstances: async () => [created],
-      createInstance: async () => created,
-      updateInstance: async () => created,
-      deleteInstance: async () => {},
-      setInstanceEnabled: async () => created,
       listLegacyCameras: async () => [],
       adoptLegacyMonitor: async () => created,
     })
 
-    await expect(manager.listInstances()).resolves.toEqual([created])
     await expect(
-      manager.createInstance({ targetNodeId: 'hub', profileId: 'monitor' }),
+      manager.adoptLegacyMonitor({ stableId: 'terminal-camera-agent-1' }),
     ).resolves.toEqual(created)
   })
 

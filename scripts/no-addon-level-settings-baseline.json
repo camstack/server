@@ -16,7 +16,6 @@
       "packages/addon-post-analysis/src/pipeline-analytics/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings, getGlobalSettings]",
       "packages/addon-provider-wyze/src/addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
       "packages/addon-smtp-nodemailer/src/smtp.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings, updateGlobalSettings]",
-      "packages/addon-terminal/src/addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
       "packages/system/src/builtins/system-config/system-config.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings, updateGlobalSettings]"
     },
     "m5-framework": {

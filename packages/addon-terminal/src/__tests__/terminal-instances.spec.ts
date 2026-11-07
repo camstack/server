@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   instancesOnAbsentNodes,
-  applyTerminalInstancePatch,
   listLegacyTerminalCameraCandidates,
   readTerminalInstances,
   TerminalInstanceMutationQueue,
@@ -192,40 +191,5 @@ describe('instancesOnAbsentNodes', () => {
     const back = instancesOnAbsentNodes(instances, new Set(['hub', 'hub-test']), new Set([B]))
     expect(back.confirmed).toEqual([])
     expect(back.absentNow.size).toBe(0)
-  })
-})
-
-describe('applyTerminalInstancePatch', () => {
-  const base = {
-    id: '018f5846-3ae2-7cb7-9a13-0800200c9a66',
-    cameraStableId: 'terminal-camera-instance-x',
-    nodeId: 'MinidiGianluca.localdomain',
-    profileId: 'monitor',
-    profileLabel: 'BTM',
-    name: 'Glances macmini',
-    enabled: true,
-    executable: '',
-    args: [],
-    cwd: '',
-    environment: [],
-    profileSettings: {},
-  }
-
-  it('re-points the instance to another node and takes that node profile label', () => {
-    const next = applyTerminalInstancePatch(
-      base,
-      { instanceId: base.id, targetNodeId: 'agent-bbce9dde' },
-      { profileLabel: 'Monitor' },
-    )
-    expect(next.nodeId).toBe('agent-bbce9dde')
-    expect(next.profileLabel).toBe('Monitor')
-    expect(next.name).toBe('Glances macmini')
-    expect(next.cameraStableId).toBe(base.cameraStableId)
-  })
-
-  it('leaves the node alone when no target is given', () => {
-    const next = applyTerminalInstancePatch(base, { instanceId: base.id, name: ' x ' })
-    expect(next.nodeId).toBe(base.nodeId)
-    expect(next.name).toBe('x')
   })
 })

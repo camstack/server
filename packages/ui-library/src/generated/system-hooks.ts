@@ -3584,21 +3584,6 @@ export const useTemplateDelete: typeof trpc.template.delete.useMutation = /*#__P
 /** Generated alias around `trpc.terminalSession.listProfiles.useQuery`. */
 export const useTerminalSessionListProfiles: typeof trpc.terminalSession.listProfiles.useQuery = /*#__PURE__*/ alias(() => trpc.terminalSession.listProfiles.useQuery)
 
-/** Generated alias around `trpc.terminalSession.listInstances.useQuery`. */
-export const useTerminalSessionListInstances: typeof trpc.terminalSession.listInstances.useQuery = /*#__PURE__*/ alias(() => trpc.terminalSession.listInstances.useQuery)
-
-/** Generated alias around `trpc.terminalSession.createInstance.useMutation`. */
-export const useTerminalSessionCreateInstance: typeof trpc.terminalSession.createInstance.useMutation = /*#__PURE__*/ alias(() => trpc.terminalSession.createInstance.useMutation)
-
-/** Generated alias around `trpc.terminalSession.updateInstance.useMutation`. */
-export const useTerminalSessionUpdateInstance: typeof trpc.terminalSession.updateInstance.useMutation = /*#__PURE__*/ alias(() => trpc.terminalSession.updateInstance.useMutation)
-
-/** Generated alias around `trpc.terminalSession.deleteInstance.useMutation`. */
-export const useTerminalSessionDeleteInstance: typeof trpc.terminalSession.deleteInstance.useMutation = /*#__PURE__*/ alias(() => trpc.terminalSession.deleteInstance.useMutation)
-
-/** Generated alias around `trpc.terminalSession.setInstanceEnabled.useMutation`. */
-export const useTerminalSessionSetInstanceEnabled: typeof trpc.terminalSession.setInstanceEnabled.useMutation = /*#__PURE__*/ alias(() => trpc.terminalSession.setInstanceEnabled.useMutation)
-
 /** Generated alias around `trpc.terminalSession.listLegacyCameras.useQuery`. */
 export const useTerminalSessionListLegacyCameras: typeof trpc.terminalSession.listLegacyCameras.useQuery = /*#__PURE__*/ alias(() => trpc.terminalSession.listLegacyCameras.useQuery)
 

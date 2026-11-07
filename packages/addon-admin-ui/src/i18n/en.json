@@ -6890,7 +6890,8 @@
     "executable": "Executable",
     "cwd": "Working directory",
     "args": "Arguments (one per line)",
-    "env": "Environment NAME=value (one per line)"
+    "env": "Environment NAME=value (one per line)",
+    "saveProfileSettings": "Save profile settings"
   },
   "deviceQuickDetail": {
     "discard": "Discard",

@@ -134,7 +134,7 @@ export interface SystemProxy {
   readonly streamBroker: Pick<InferProvider<typeof streamBrokerCapability>, 'fetchEventMedia' | 'listAllCameraStreams' | 'listAllProfileSlots' | 'getBrokerStats' | 'probeStream' | 'listClients' | 'getLiveViewerCounts' | 'killClient' | 'getStreamUrl' | 'getStreamWithCodec' | 'releaseStreamWithCodec' | 'acquireEgressTranscode' | 'releaseEgressTranscode' | 'subscribeAudioChunks' | 'pullAudioChunks' | 'unsubscribeAudioChunks' | 'setPreBufferDuration' | 'getPreBufferInfo' | 'getRtspPort' | 'getAllRtspEntries' | 'getRtspEntry' | 'regenerateRtspToken' | 'setRtspEnabled' | 'isRtspEnabled'>
   readonly system: Pick<InferProvider<typeof systemCapability>, 'info' | 'health' | 'featureFlags' | 'networkAddresses' | 'getRetentionConfig' | 'setRetentionConfig' | 'forceRetentionCleanup' | 'getSiteLocation' | 'setSiteLocation' | 'detectSiteLocation' | 'getRequestCensus' | 'getLoadContributions' | 'getFailureContributions' | 'getLoggingSettings' | 'setLoggingSettings' | 'debugWatch'>
   readonly template: Pick<InferProvider<typeof templateCapability>, 'list' | 'get' | 'create' | 'update' | 'delete'>
-  readonly terminalSession: Pick<InferProvider<typeof terminalSessionCapability>, 'listProfiles' | 'listInstances' | 'createInstance' | 'updateInstance' | 'deleteInstance' | 'setInstanceEnabled' | 'listLegacyCameras' | 'adoptLegacyMonitor' | 'listSessions' | 'openSession' | 'resize' | 'pullOutput' | 'writeInput' | 'close'>
+  readonly terminalSession: Pick<InferProvider<typeof terminalSessionCapability>, 'listProfiles' | 'listLegacyCameras' | 'adoptLegacyMonitor' | 'listSessions' | 'openSession' | 'resize' | 'pullOutput' | 'writeInput' | 'close'>
   readonly toast: Pick<InferProvider<typeof toastCapability>, 'onToast'>
   readonly training: Pick<InferProvider<typeof trainingCapability>, 'listBaseModels' | 'planJob' | 'startJob' | 'startJobBatch' | 'listJobs' | 'getJob' | 'cancelJob' | 'getJobResult' | 'listCanaryTargets' | 'registerResult' | 'canaryResult' | 'rollbackCanary' | 'discardResult'>
   readonly turnProvider: Pick<InferProvider<typeof turnProviderCapability>, 'getTurnServers'>
@@ -995,11 +995,6 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
 
   const terminalSessionInterface = {
     listProfiles: (input?: unknown) => dispatch('terminalSession', 'listProfiles', 'query', input),
-    listInstances: (input?: unknown) => dispatch('terminalSession', 'listInstances', 'query', input),
-    createInstance: (input?: unknown) => dispatch('terminalSession', 'createInstance', 'mutation', input),
-    updateInstance: (input?: unknown) => dispatch('terminalSession', 'updateInstance', 'mutation', input),
-    deleteInstance: (input?: unknown) => dispatch('terminalSession', 'deleteInstance', 'mutation', input),
-    setInstanceEnabled: (input?: unknown) => dispatch('terminalSession', 'setInstanceEnabled', 'mutation', input),
     listLegacyCameras: (input?: unknown) => dispatch('terminalSession', 'listLegacyCameras', 'query', input),
     adoptLegacyMonitor: (input?: unknown) => dispatch('terminalSession', 'adoptLegacyMonitor', 'mutation', input),
     listSessions: (input?: unknown) => dispatch('terminalSession', 'listSessions', 'query', input),

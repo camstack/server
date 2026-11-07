@@ -52,6 +52,9 @@
         "capabilities": [
           {
             "name": "terminal-session"
+          },
+          {
+            "name": "integration-instances"
           }
         ]
       }

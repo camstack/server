@@ -15,43 +15,32 @@
  * wrapped in `<ProtectedRoute requireAdmin>` in App.tsx.
  */
 
-import type { TerminalInstanceInfo, TerminalSessionInfo } from '@camstack/types'
+import type { TerminalSessionInfo } from '@camstack/types'
 import {
   Badge,
   Button,
-  DataTable,
-  EmptyState,
   ErrorBox,
   type DataColumn,
   Select,
   SectionCard,
   Skeleton,
-  Switch,
   useClusterNodes,
-  useConfirm,
   useDeviceManagerListAll,
+  useInstancesOfCap,
   useTerminalSessionAdoptLegacyMonitor,
   useTerminalSessionClose,
-  useTerminalSessionCreateInstance,
-  useTerminalSessionDeleteInstance,
-  useTerminalSessionListInstances,
   useTerminalSessionListLegacyCameras,
   useTerminalSessionListProfiles,
   useTerminalSessionListSessions,
   useTerminalSessionOpenSession,
-  useTerminalSessionSetInstanceEnabled,
-  useTerminalSessionUpdateInstance,
 } from '@camstack/ui-library'
 import {
   Cable,
   ChevronDown,
   ChevronRight,
-  Pencil,
-  Plus,
   Server,
   SlidersHorizontal,
   Terminal as TerminalIcon,
-  Trash2,
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
@@ -60,11 +49,9 @@ import { Link } from 'react-router-dom'
 import { AdminPage } from '../../components/AdminPage'
 import { NodeAddonsSettingsPanel } from '../../components/settings/NodeAddonsSettingsPanel'
 import { TerminalPanel } from '../../components/TerminalPanel'
-import {
-  TerminalInstanceDialog,
-  type TerminalInstanceValues,
-  type TerminalNodeOption,
-} from './terminal/TerminalInstanceDialog'
+import { InstancesTable } from '../../components/instances/InstancesTable'
+import type { InstanceRow, PanelRow } from '../../components/instances/instances-model'
+import { TerminalProfileSettingsLead } from './terminal/TerminalProfileSettingsLead'
 import { useTerminalNodePresence } from './terminal/terminal-node-presence'
 
 /**
@@ -87,10 +74,41 @@ const DEFAULT_ROWS = 32
  */
 const LEGACY_CAMERA_POLL_INTERVAL_MS = 60_000
 
-type DialogState =
-  | { readonly kind: 'closed' }
-  | { readonly kind: 'create' }
-  | { readonly kind: 'edit'; readonly instanceId: string }
+interface TerminalNodeOption {
+  readonly id: string
+  readonly label: string
+}
+
+/** What Attach needs of a Terminal: its record's body, read from the instance list. */
+interface AttachTarget {
+  readonly nodeId: string
+  readonly profileId: string
+  readonly executable: string
+  readonly args: readonly string[]
+  readonly cwd: string
+  readonly environment: readonly string[]
+}
+
+function textOf(values: Readonly<Record<string, unknown>>, key: string): string {
+  const value = values[key]
+  return typeof value === 'string' ? value : ''
+}
+
+function linesOf(values: Readonly<Record<string, unknown>>, key: string): readonly string[] {
+  const value = values[key]
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []
+}
+
+function attachTargetOf(values: Readonly<Record<string, unknown>>): AttachTarget {
+  return {
+    nodeId: textOf(values, 'nodeId'),
+    profileId: textOf(values, 'profileId'),
+    executable: textOf(values, 'executable'),
+    args: linesOf(values, 'args'),
+    cwd: textOf(values, 'cwd'),
+    environment: linesOf(values, 'environment'),
+  }
+}
 
 interface AttachedSession {
   readonly nodeId: string
@@ -107,14 +125,10 @@ function formatStartedAt(ms: number): string {
 
 export function TerminalPage() {
   const { t } = useTranslation()
-  const confirm = useConfirm()
   const { nodes: clusterNodes } = useClusterNodes()
   const presence = useTerminalNodePresence()
 
-  const instancesQuery = useTerminalSessionListInstances(
-    { nodeId: 'hub' },
-    { refetchInterval: 5000 },
-  )
+  const instancesQuery = useInstancesOfCap({ functionCap: 'terminal-session' })
   // Only id + stableId are read, so the cheap projection is enough.
   const devicesQuery = useDeviceManagerListAll({
     addonId: TERMINAL_ADDON_ID,
@@ -124,16 +138,10 @@ export function TerminalPage() {
     { nodeId: 'hub' },
     { refetchInterval: LEGACY_CAMERA_POLL_INTERVAL_MS },
   )
-  const createInstance = useTerminalSessionCreateInstance()
-  const updateInstance = useTerminalSessionUpdateInstance()
-  const deleteInstance = useTerminalSessionDeleteInstance()
-  const setInstanceEnabled = useTerminalSessionSetInstanceEnabled()
   const adoptLegacyMonitor = useTerminalSessionAdoptLegacyMonitor()
   const openSession = useTerminalSessionOpenSession()
   const closeSession = useTerminalSessionClose()
 
-  const [dialog, setDialog] = useState<DialogState>({ kind: 'closed' })
-  const [dialogError, setDialogError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [attached, setAttached] = useState<AttachedSession | null>(null)
   const [closedSessionIds, setClosedSessionIds] = useState<ReadonlySet<string>>(() => new Set())
@@ -207,99 +215,10 @@ export function TerminalPage() {
   )
 
   const refreshInstances = async () => {
-    await Promise.all([
-      instancesQuery.refetch(),
-      legacyCamerasQuery.refetch(),
-      devicesQuery.refetch(),
-    ])
+    await Promise.all([legacyCamerasQuery.refetch(), devicesQuery.refetch()])
   }
 
-  const editedInstance =
-    dialog.kind === 'edit'
-      ? (instances?.find((row) => row.instanceId === dialog.instanceId) ?? null)
-      : null
-
-  const closeDialog = () => {
-    setDialog({ kind: 'closed' })
-    setDialogError(null)
-  }
-
-  const handleSubmitDialog = async (values: TerminalInstanceValues) => {
-    setDialogError(null)
-    try {
-      if (editedInstance) {
-        await updateInstance.mutateAsync({
-          nodeId: 'hub',
-          instanceId: editedInstance.instanceId,
-          ...(values.nodeId !== editedInstance.nodeId ? { targetNodeId: values.nodeId } : {}),
-          name: values.name,
-          executable: values.executable,
-          args: [...values.args],
-          cwd: values.cwd,
-          environment: [...values.environment],
-          profileSettings: values.profileSettings,
-        })
-      } else {
-        await createInstance.mutateAsync({
-          nodeId: 'hub',
-          targetNodeId: values.nodeId,
-          profileId: values.profileId,
-          name: values.name,
-          executable: values.executable,
-          args: [...values.args],
-          cwd: values.cwd,
-          environment: [...values.environment],
-          profileSettings: values.profileSettings,
-        })
-      }
-      closeDialog()
-      await refreshInstances()
-    } catch (error) {
-      setDialogError(
-        error instanceof Error && error.message
-          ? error.message
-          : editedInstance
-            ? t('terminalPage.updateFailed', 'Failed to update the terminal.')
-            : t('terminalPage.createFailed', 'Failed to create the terminal.'),
-      )
-    }
-  }
-
-  const handleDelete = async (instance: TerminalInstanceInfo) => {
-    const ok = await confirm({
-      title: t('terminalPage.deleteTitle', 'Delete "{{name}}"?', { name: instance.name }),
-      message: t(
-        'terminalPage.deleteMessage',
-        'The terminal and its camera are removed. A running session on it is closed.',
-      ),
-      confirmLabel: t('common.delete', 'Delete'),
-      variant: 'danger',
-    })
-    if (!ok) return
-    setActionError(null)
-    try {
-      await deleteInstance.mutateAsync({ nodeId: 'hub', instanceId: instance.instanceId })
-      await refreshInstances()
-    } catch {
-      setActionError(t('terminalPage.deleteFailed', 'Failed to delete the terminal.'))
-    }
-  }
-
-  const handleSetEnabled = async (instance: TerminalInstanceInfo, enabled: boolean) => {
-    setActionError(null)
-    try {
-      await setInstanceEnabled.mutateAsync({
-        nodeId: 'hub',
-        instanceId: instance.instanceId,
-        enabled,
-      })
-      await refreshInstances()
-    } catch {
-      setActionError(t('terminalPage.updateFailed', 'Failed to update the terminal.'))
-    }
-  }
-
-  const attachInstance = async (instance: TerminalInstanceInfo) => {
+  const attachInstance = async (instance: AttachTarget) => {
     setActionError(null)
     try {
       const session = await openSession.mutateAsync({
@@ -347,53 +266,51 @@ export function TerminalPage() {
     }
   }
 
-  const columns: readonly DataColumn<TerminalInstanceInfo>[] = [
-    {
-      key: 'name',
-      header: t('terminalPage.colName', 'Name'),
-      sortValue: (row) => row.name.toLowerCase(),
-      render: (row) => <span className="font-medium text-foreground">{row.name}</span>,
-    },
+  /** The camera a Terminal declares: the adopted monitor's id, else the one derived from the record id. */
+  const cameraStableIdOf = (row: PanelRow): string => {
+    if (row.kind !== 'instance') return ''
+    const adopted = valueOf(row, 'cameraStableId')
+    return adopted !== '' ? adopted : `terminal-camera-instance-${row.id}`
+  }
+  const targetById = useMemo(
+    () =>
+      new Map(
+        (instances ?? []).map((instance) => [instance.id, attachTargetOf(instance.formValues)]),
+      ),
+    [instances],
+  )
+  const valuesById = useMemo(
+    () => new Map((instances ?? []).map((instance) => [instance.id, instance.formValues] as const)),
+    [instances],
+  )
+  const valueOf = (row: PanelRow, key: string): string =>
+    row.kind === 'instance' ? textOf(valuesById.get(row.id) ?? {}, key) : ''
+  const extraColumns: readonly DataColumn<PanelRow>[] = [
     {
       key: 'node',
       header: t('terminalPage.colNode', 'Node'),
-      sortValue: (row) => row.nodeId,
-      render: (row) => (
-        <span className="inline-flex items-center gap-1.5">
+      sortValue: (row) => valueOf(row, 'nodeId'),
+      render: (row) => {
+        const nodeId = valueOf(row, 'nodeId')
+        return (
           <span className="font-mono text-foreground-muted">
-            {nodeNameById.get(row.nodeId) ?? row.nodeId}
+            {nodeNameById.get(nodeId) ?? (nodeId || '—')}
           </span>
-          {!row.nodeInCluster ? (
-            <Badge variant="warning">{t('terminalPage.notInCluster', 'Not in cluster')}</Badge>
-          ) : null}
-        </span>
-      ),
+        )
+      },
     },
     {
       key: 'profile',
       header: t('terminalPage.colProfile', 'Profile'),
-      sortValue: (row) => row.profileLabel.toLowerCase(),
-      render: (row) => row.profileLabel,
-    },
-    {
-      key: 'enabled',
-      header: t('terminalPage.colEnabled', 'Enabled'),
-      sortValue: (row) => (row.enabled ? 1 : 0),
-      render: (row) => (
-        <Switch
-          checked={row.enabled}
-          aria-label={t('terminalPage.enabledLabel', 'Enabled: {{name}}', { name: row.name })}
-          disabled={setInstanceEnabled.isPending}
-          onCheckedChange={(next) => void handleSetEnabled(row, next)}
-        />
-      ),
+      sortValue: (row) => valueOf(row, 'profileLabel').toLowerCase(),
+      render: (row) => valueOf(row, 'profileLabel') || '—',
     },
     {
       key: 'camera',
       header: t('terminalPage.colCamera', 'Camera'),
-      sortValue: (row) => (deviceIdByStableId.has(row.cameraStableId) ? 1 : 0),
+      sortValue: (row) => (deviceIdByStableId.has(cameraStableIdOf(row)) ? 1 : 0),
       render: (row) => {
-        const deviceId = deviceIdByStableId.get(row.cameraStableId)
+        const deviceId = deviceIdByStableId.get(cameraStableIdOf(row))
         if (deviceId === undefined) {
           return (
             <span className="text-foreground-subtle">{t('terminalPage.noCamera', 'None')}</span>
@@ -410,46 +327,22 @@ export function TerminalPage() {
         )
       },
     },
-    {
-      key: 'actions',
-      header: t('terminalPage.colActions', 'Actions'),
-      align: 'right',
-      notSortableReason: t('terminalPage.actionsNotSortable', 'Actions have no order'),
-      render: (row) => (
-        <span className="inline-flex items-center gap-1.5">
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!row.nodeInCluster || openSession.isPending}
-            onClick={() => void attachInstance(row)}
-          >
-            <TerminalIcon className="h-3 w-3" aria-hidden />
-            {t('terminalPage.attach', 'Attach')}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setDialogError(null)
-              setDialog({ kind: 'edit', instanceId: row.instanceId })
-            }}
-          >
-            <Pencil className="h-3 w-3" aria-hidden />
-            {t('common.edit', 'Edit')}
-          </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            disabled={deleteInstance.isPending}
-            onClick={() => void handleDelete(row)}
-          >
-            <Trash2 className="h-3 w-3" aria-hidden />
-            {t('common.delete', 'Delete')}
-          </Button>
-        </span>
-      ),
-    },
   ]
+  const rowActions = (row: InstanceRow) => {
+    const target = targetById.get(row.id)
+    if (target === undefined) return null
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={!row.enabled || !row.configured || openSession.isPending}
+        onClick={() => void attachInstance(target)}
+      >
+        <TerminalIcon className="h-3 w-3" aria-hidden />
+        {t('terminalPage.attach', 'Attach')}
+      </Button>
+    )
+  }
 
   const attachedSessionInfo: TerminalSessionInfo | null =
     attached && attached.nodeId === sessionNodeId
@@ -464,55 +357,27 @@ export function TerminalPage() {
         'terminalPage.subtitle',
         'Every terminal in the cluster, each with its own camera.',
       )}
-      actions={
-        <Button
-          size="sm"
-          disabled={providerNodes.length === 0}
-          onClick={() => {
-            setDialogError(null)
-            setDialog({ kind: 'create' })
-          }}
-        >
-          <Plus className="h-3.5 w-3.5" aria-hidden />
-          {t('terminalPage.newTerminal', 'New terminal')}
-        </Button>
-      }
     >
       {actionError && <ErrorBox message={actionError} />}
 
-      <SectionCard
-        headingId="terminal-instances"
-        title={t('terminalPage.instances', 'Terminals')}
+      <InstancesTable
+        functionCap="terminal-session"
         icon={TerminalIcon}
-      >
-        {instances === undefined ? (
-          instancesQuery.isError ? (
-            <ErrorBox
-              message={t('terminalPage.instancesUnknown', 'Could not read the terminals.')}
-              onRetry={() => void instancesQuery.refetch()}
-            />
-          ) : (
-            <Skeleton className="h-16 w-full" />
-          )
-        ) : instances.length === 0 ? (
-          <EmptyState
-            icon={TerminalIcon}
-            title={t('terminalPage.empty', 'No terminals yet')}
-            description={t(
-              'terminalPage.emptyHint',
-              'Create one to run a program on a node and watch it as a camera.',
-            )}
-          />
-        ) : (
-          <DataTable
-            columns={columns}
-            rows={instances}
-            rowKey={(row) => row.instanceId}
-            minWidthPx={860}
-            defaultSort={{ columnKey: 'name', dir: 'asc' }}
-          />
+        title={t('terminalPage.instances', 'Terminals')}
+        subtitle={t(
+          'terminalPage.subtitle',
+          'Every terminal in the cluster, each with its own camera.',
         )}
-      </SectionCard>
+        emptyTitle={t('terminalPage.empty', 'No terminals yet')}
+        emptyDescription={t(
+          'terminalPage.emptyHint',
+          'Create one to run a program on a node and watch it as a camera.',
+        )}
+        addLabel={t('terminalPage.newTerminal', 'New terminal')}
+        extraColumns={extraColumns}
+        lead={(row) => <TerminalProfileSettingsLead row={row} />}
+        rowActions={rowActions}
+      />
 
       <SectionCard
         headingId="terminal-nodes"
@@ -716,18 +581,6 @@ export function TerminalPage() {
             )}
           </div>
         </SectionCard>
-      )}
-
-      {dialog.kind !== 'closed' && (dialog.kind === 'create' || editedInstance !== null) && (
-        <TerminalInstanceDialog
-          key={dialog.kind === 'edit' ? dialog.instanceId : 'create'}
-          instance={editedInstance}
-          nodes={providerNodes}
-          submitting={createInstance.isPending || updateInstance.isPending}
-          error={dialogError}
-          onClose={closeDialog}
-          onSubmit={(values) => void handleSubmitDialog(values)}
-        />
       )}
     </AdminPage>
   )

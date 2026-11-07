@@ -6965,7 +6965,8 @@
     "executable": "Eseguibile",
     "cwd": "Cartella di lavoro",
     "args": "Argomenti (uno per riga)",
-    "env": "Ambiente NOME=valore (uno per riga)"
+    "env": "Ambiente NOME=valore (uno per riga)",
+    "saveProfileSettings": "Salva impostazioni profilo"
   },
   "deviceQuickDetail": {
     "discard": "Annulla",

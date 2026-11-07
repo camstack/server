@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { sanitizeProfileSettings } from './profile-settings.js'
+import { isInstanceEnabled } from '@camstack/types'
+import { newTerminalCameraStableId, type TerminalBody } from './terminal-record-kinds.js'
 
 const TerminalInstanceSchema = z.object({
   id: z.string().uuid(),
@@ -66,8 +67,29 @@ export function readTerminalInstances(
   return instances
 }
 
-export function newTerminalCameraStableId(instanceId: string): string {
-  return `terminal-camera-instance-${instanceId}`
+export { newTerminalCameraStableId }
+
+/** The raw instance a record means: the id is the record id, the switch is the one reader's. */
+export function rawInstanceOfRecord(id: string, body: TerminalBody): Record<string, unknown> {
+  return {
+    id,
+    cameraStableId: body.cameraStableId ?? newTerminalCameraStableId(id),
+    nodeId: body.nodeId,
+    profileId: body.profileId,
+    profileLabel: body.profileLabel,
+    name: body.name,
+    enabled: isInstanceEnabled(body),
+    executable: body.executable,
+    args: body.args,
+    cwd: body.cwd,
+    environment: body.environment,
+    profileSettings: body.profileSettings,
+  }
+}
+
+/** A record that names a node and a profile can work; a fresh row waiting for its form cannot. */
+export function isTerminalBodyConfigured(body: TerminalBody): boolean {
+  return body.nodeId.length > 0 && body.profileId.length > 0
 }
 
 export interface LegacyTerminalCameraCandidate {
@@ -228,42 +250,4 @@ export function instancesOnAbsentNodes(
     if (absentBefore.has(instance.id)) confirmed.push(instance)
   }
   return { confirmed, absentNow }
-}
-
-export interface TerminalInstancePatch {
-  readonly instanceId: string
-  readonly targetNodeId?: string
-  readonly name?: string
-  readonly executable?: string
-  readonly args?: readonly string[]
-  readonly cwd?: string
-  readonly environment?: readonly string[]
-  readonly profileSettings?: Readonly<Record<string, unknown>>
-}
-
-/** The profile on the node an instance is re-pointed to. */
-export interface TerminalInstanceTarget {
-  readonly profileLabel: string
-}
-
-/** Pure merge of an operator edit; re-pointing needs the target's profile. */
-export function applyTerminalInstancePatch(
-  instance: TerminalInstance,
-  patch: TerminalInstancePatch,
-  target?: TerminalInstanceTarget,
-): TerminalInstance {
-  return {
-    ...instance,
-    ...(patch.targetNodeId !== undefined && target !== undefined
-      ? { nodeId: patch.targetNodeId, profileLabel: target.profileLabel }
-      : {}),
-    ...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
-    ...(patch.executable !== undefined ? { executable: patch.executable.trim() } : {}),
-    ...(patch.args !== undefined ? { args: [...patch.args] } : {}),
-    ...(patch.cwd !== undefined ? { cwd: patch.cwd.trim() } : {}),
-    ...(patch.environment !== undefined ? { environment: [...patch.environment] } : {}),
-    ...(patch.profileSettings !== undefined
-      ? { profileSettings: sanitizeProfileSettings(instance.profileId, patch.profileSettings) }
-      : {}),
-  }
 }

@@ -108,9 +108,7 @@ vi.mock('../../../components/settings/NodeAddonsSettingsPanel', () => ({
 }))
 
 const mocks = vi.hoisted(() => ({
-  createInstance: vi.fn(async () => ({})),
-  deleteInstance: vi.fn(async () => {}),
-  confirm: vi.fn(async () => true),
+  openSession: vi.fn(async () => ({ sessionId: 's-1' })),
   profileCalls: [] as string[],
   registry: {
     status: 'success' as 'pending' | 'success' | 'error',
@@ -124,32 +122,62 @@ const mocks = vi.hoisted(() => ({
 
 const INSTANCES = [
   {
-    instanceId: 'i-1',
+    id: 'i-1',
     name: 'BTM Hub',
-    nodeId: 'hub',
-    nodeInCluster: true,
-    profileId: 'monitor',
-    profileLabel: 'BTM',
     enabled: true,
-    cameraStableId: 'cam-1',
-    args: [],
-    environment: [],
-    profileSettings: {},
+    formValues: {
+      nodeId: 'hub',
+      profileId: 'monitor',
+      profileLabel: 'BTM',
+      cameraStableId: 'cam-1',
+      executable: '/bin/btm',
+      args: ['-b'],
+      cwd: '',
+      environment: [],
+    },
   },
   {
-    instanceId: 'i-2',
+    id: 'i-2',
     name: 'BTM old-mac',
-    nodeId: 'old-mac',
-    nodeInCluster: false,
-    profileId: 'monitor',
-    profileLabel: 'BTM',
     enabled: true,
-    cameraStableId: 'cam-2',
-    args: [],
-    environment: [],
-    profileSettings: {},
+    formValues: { nodeId: 'old-mac', profileId: 'monitor', profileLabel: 'BTM', args: [] },
   },
 ]
+
+// The shared table is covered by its own spec; here it renders the page's columns and actions.
+vi.mock('../../../components/instances/InstancesTable', () => ({
+  InstancesTable: (props: {
+    extraColumns: readonly {
+      key: string
+      render: (row: unknown) => unknown
+    }[]
+    rowActions: (row: unknown) => unknown
+  }) => (
+    <table>
+      <tbody>
+        {INSTANCES.map((instance) => {
+          const row = {
+            kind: 'instance',
+            id: instance.id,
+            addonId: 'terminal',
+            name: instance.name,
+            enabled: instance.enabled,
+            configured: true,
+          }
+          return (
+            <tr key={instance.id}>
+              <td>{instance.name}</td>
+              {props.extraColumns.map((column) => (
+                <td key={column.key}>{column.render(row) as never}</td>
+              ))}
+              <td>{props.rowActions(row) as never}</td>
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
+  ),
+}))
 
 vi.mock('@camstack/ui-library', async () => {
   const actual = await vi.importActual<Record<string, unknown>>('@camstack/ui-library')
@@ -174,28 +202,17 @@ vi.mock('@camstack/ui-library', async () => {
         { id: 'edge', name: 'edge-proxmox' },
       ],
     }),
-    useConfirm: () => mocks.confirm,
     useDeviceManagerListAll: () => query([{ id: 4101, stableId: 'cam-1' }]),
-    useTerminalSessionListInstances: () => query(INSTANCES),
+    useInstancesOfCap: () => query(INSTANCES),
     useTerminalSessionListLegacyCameras: () => query([]),
     useTerminalSessionListProfiles: (input: { nodeId: string }) => {
       mocks.profileCalls.push(input.nodeId)
       return query([{ profileId: 'monitor', label: 'BTM', description: 'btm' }])
     },
     useTerminalSessionListSessions: () => query([]),
-    useTerminalSessionOpenSession: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useTerminalSessionOpenSession: () => ({ mutateAsync: mocks.openSession, isPending: false }),
     useTerminalSessionClose: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useTerminalSessionAdoptLegacyMonitor: () => ({ mutateAsync: vi.fn(), isPending: false }),
-    useTerminalSessionSetInstanceEnabled: () => ({ mutateAsync: vi.fn(), isPending: false }),
-    useTerminalSessionUpdateInstance: () => ({ mutateAsync: vi.fn(), isPending: false }),
-    useTerminalSessionCreateInstance: () => ({
-      mutateAsync: mocks.createInstance,
-      isPending: false,
-    }),
-    useTerminalSessionDeleteInstance: () => ({
-      mutateAsync: mocks.deleteInstance,
-      isPending: false,
-    }),
   }
 })
 
@@ -214,10 +231,7 @@ function renderPage() {
 
 describe('TerminalPage', () => {
   beforeEach(() => {
-    mocks.createInstance.mockClear()
-    mocks.deleteInstance.mockClear()
-    mocks.confirm.mockClear()
-    mocks.confirm.mockResolvedValue(true)
+    mocks.openSession.mockClear()
     mocks.profileCalls.length = 0
     mocks.registry.status = 'success'
     mocks.registry.data = {
@@ -227,65 +241,41 @@ describe('TerminalPage', () => {
     }
   })
 
-  it('lists every instance of every node in one table, flagging a node not in the cluster', () => {
+  it('shows each terminal with its node, profile and camera link', () => {
     renderPage()
     const table = screen.getByRole('table')
     expect(within(table).getByText('BTM Hub')).toBeInTheDocument()
-    expect(within(table).getByText('BTM old-mac')).toBeInTheDocument()
-    expect(within(table).getAllByText('Not in cluster')).toHaveLength(1)
+    expect(within(table).getByText('Hub')).toBeInTheDocument()
     expect(within(table).getByRole('link', { name: /camera 4101/i })).toBeInTheDocument()
+    expect(within(table).getAllByText('None')).toHaveLength(1)
   })
 
-  it('a node without a terminal provider reads "not installed", is not queried and not offered', () => {
+  it('attaches with the spawn values read from the record', async () => {
+    renderPage()
+    const row = screen.getByText('BTM Hub').closest('tr')!
+    fireEvent.click(within(row).getByRole('button', { name: /attach/i }))
+    await waitFor(() => {
+      expect(mocks.openSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          nodeId: 'hub',
+          profileId: 'monitor',
+          executable: '/bin/btm',
+          args: ['-b'],
+        }),
+      )
+    })
+  })
+
+  it('a node without a terminal provider reads "not installed" and is not queried', () => {
     renderPage()
     expect(screen.getByText('Terminal not installed on this node')).toBeInTheDocument()
     expect(screen.queryByTestId('error-box')).not.toBeInTheDocument()
     expect(mocks.profileCalls).not.toContain('edge')
-
-    fireEvent.click(screen.getByRole('button', { name: /new terminal/i }))
-    const dialog = screen.getByRole('dialog')
-    expect(within(dialog).queryByRole('option', { name: 'edge-proxmox' })).not.toBeInTheDocument()
   })
 
   it('does not call a pending registry answer "not installed"', () => {
     mocks.registry.status = 'pending'
     renderPage()
     expect(screen.queryByText('Terminal not installed on this node')).not.toBeInTheDocument()
-  })
-
-  it('creates a terminal from the dialog with its prefilled name', async () => {
-    renderPage()
-    fireEvent.click(screen.getByRole('button', { name: /new terminal/i }))
-    const dialog = await screen.findByRole('dialog')
-    fireEvent.click(within(dialog).getByRole('button', { name: /^create/i }))
-    await waitFor(() => {
-      expect(mocks.createInstance).toHaveBeenCalledWith(
-        expect.objectContaining({
-          nodeId: 'hub',
-          targetNodeId: 'hub',
-          profileId: 'monitor',
-          name: 'BTM Hub',
-        }),
-      )
-    })
-  })
-
-  it('deletes through the library confirm, also for a node not in the cluster', async () => {
-    renderPage()
-    const row = screen.getByText('BTM old-mac').closest('tr')!
-    fireEvent.click(within(row).getByRole('button', { name: /delete/i }))
-    await waitFor(() => {
-      expect(mocks.deleteInstance).toHaveBeenCalledWith({ nodeId: 'hub', instanceId: 'i-2' })
-    })
-    expect(mocks.confirm).toHaveBeenCalledTimes(1)
-  })
-
-  it('does not delete when the confirm is declined', async () => {
-    mocks.confirm.mockResolvedValue(false)
-    renderPage()
-    const row = screen.getByText('BTM old-mac').closest('tr')!
-    fireEvent.click(within(row).getByRole('button', { name: /delete/i }))
-    await waitFor(() => expect(mocks.confirm).toHaveBeenCalled())
-    expect(mocks.deleteInstance).not.toHaveBeenCalled()
   })
 })

@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**201 capabilities · 1469 methods.**
+**201 capabilities · 1464 methods.**
 
 ## Method index
 
@@ -1345,11 +1345,6 @@
 | `template.update` | mutation | admin | template |
 | `template.delete` | mutation | admin | template |
 | `terminalSession.listProfiles` | query | admin | terminal-session |
-| `terminalSession.listInstances` | query | admin | terminal-session |
-| `terminalSession.createInstance` | mutation | admin | terminal-session |
-| `terminalSession.updateInstance` | mutation | admin | terminal-session |
-| `terminalSession.deleteInstance` | mutation | admin | terminal-session |
-| `terminalSession.setInstanceEnabled` | mutation | admin | terminal-session |
 | `terminalSession.listLegacyCameras` | query | admin | terminal-session |
 | `terminalSession.adoptLegacyMonitor` | mutation | admin | terminal-session |
 | `terminalSession.listSessions` | query | admin | terminal-session |
@@ -4723,11 +4718,6 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | listProfiles | `terminalSession.listProfiles` | query | admin | `void` | `TerminalProfileInfoSchema[]` |
-| listInstances | `terminalSession.listInstances` | query | admin | `void` | `TerminalInstanceInfoSchema[]` |
-| createInstance | `terminalSession.createInstance` | mutation | admin | `{ targetNodeId: string; profileId: string; name?: string; executable?: string; args?: string[]; cwd?: string; environment?: string[]; profileSettings?: Record<string, unknown> }` | `TerminalInstanceInfoSchema` |
-| updateInstance | `terminalSession.updateInstance` | mutation | admin | `{ instanceId: string; targetNodeId?: string; name?: string; executable?: string; args?: string[]; cwd?: string; environment?: string[]; profileSettings?: Record<string, unknown> }` | `TerminalInstanceInfoSchema` |
-| deleteInstance | `terminalSession.deleteInstance` | mutation | admin | `{ instanceId: string }` | `void` |
-| setInstanceEnabled | `terminalSession.setInstanceEnabled` | mutation | admin | `{ instanceId: string; enabled: boolean }` | `TerminalInstanceInfoSchema` |
 | listLegacyCameras | `terminalSession.listLegacyCameras` | query | admin | `void` | `TerminalLegacyCameraSchema[]` |
 | adoptLegacyMonitor | `terminalSession.adoptLegacyMonitor` | mutation | admin | `{ stableId: string; name?: string }` | `TerminalInstanceInfoSchema` |
 | listSessions | `terminalSession.listSessions` | query | admin | `void` | `TerminalSessionInfoSchema[]` |
