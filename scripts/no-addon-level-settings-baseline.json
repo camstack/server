@@ -1,20 +1,14 @@
 {
   "_why": "Every file that names an addon-level settings hook today (planning#440 step 8, D986). P8 (M5) empties it; the google, waste, tailscale and training blocks go with their own packets. The list only shrinks.",
   "families": {
-    "google": {
-      "packages/addon-google-services/src/google-services.addon.ts:addon-level-settings": "the broker settings form and the addon blob; P5 deletes the legacy blob, P8 deletes globalSettingsSchema [updateGlobalSettings, globalSettingsSchema, getGlobalSettings]"
-    },
     "waste": {
-      "packages/addon-waste-collections/src/waste-collections.addon.ts:addon-level-settings": "the addon blob and the settings button; P6e moves the sources, P8 turns the button into a page action [updateGlobalSettings, globalSettingsSchema]"
+      "packages/addon-waste-collections/src/waste-collections.addon.ts:addon-level-settings": "pruneLegacyRows still writes the addon blob through updateGlobalSettings (a raw store write would put plaintext secrets back); the settings button is now a page action [updateGlobalSettings]"
     },
     "training": {
       "packages/addon-training/src/providers/modal/training-modal.addon.ts:addon-level-settings": "writes the addon blob; P6g/P8 move the credentials to the instance and the rest to cluster scope [updateGlobalSettings]"
     },
     "m5-declarers": {
-      "packages/addon-auth/src/webauthn/auth-webauthn.addon.ts:addon-level-settings": "declares the addon-level settings form; P8 moves it to cluster / node scope (D986 declarer list) [globalSettingsSchema, getGlobalSettings]",
-      "packages/system/src/builtins/camera-grid/addon.ts:addon-level-settings": "declares the addon-level settings form; P8 moves it to cluster / node scope (D986 declarer list) [updateGlobalSettings, globalSettingsSchema, integrationSettingSections]",
-      "packages/system/src/builtins/core-blocks/block-package.ts:addon-level-settings": "declares the addon-level settings form; P8 moves it to cluster / node scope (D986 declarer list) [globalSettingsSchema]",
-      "packages/system/src/builtins/winston-logging/winston-logging.addon.ts:addon-level-settings": "declares the addon-level settings form; P8 moves it to cluster / node scope (D986 declarer list) [globalSettingsSchema]"
+      "packages/system/src/builtins/camera-grid/addon.ts:addon-level-settings": "the grid list is an editable-array COLLECTION kept in the addon blob (cameraGrids); moving it is an instances-kind decision (D985), not a scope move, so it stays until the operator decides"
     },
     "m5-addon-blobs": {
       "packages/addon-admin-ui/src/components/pipeline/placement-board/board-model.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
@@ -64,9 +58,8 @@
     "m5-tooling": {
       "packages/cli/src/mcp/configure-network.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [getGlobalSettings, updateGlobalSettings]",
       "packages/cli/src/mcp/report-environment.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [getGlobalSettings]",
-      "packages/develop/src/scaffold/addon.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [globalSettingsSchema]",
-      "packages/mcp-dev/src/caps/plan.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [globalSettingsSchema]",
-      "packages/mcp-dev/src/ops/censuses.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [getGlobalSettings]"
+      "packages/mcp-dev/src/ops/censuses.ts:addon-level-settings": "a scaffold, plan or tool that still teaches or reads the addon-level hooks; P8 rewrites it for the scoped schemas (D986) [getGlobalSettings]",
+      "packages/develop/src/scaffold/addon.ts:addon-level-settings": "the scaffold's rule text says the hook is retired and so names it; it goes when the hook is deleted [globalSettingsSchema]"
     }
   }
 }

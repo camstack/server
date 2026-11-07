@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The addon-level Google settings pointer form is removed; setup lives on the Brokers page
+
 ## [0.2.42] - 2026-11-06
 
 ### Changed

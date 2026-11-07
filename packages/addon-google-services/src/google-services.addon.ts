@@ -33,7 +33,6 @@ import {
 import { randomBytes } from 'node:crypto'
 import { z } from 'zod'
 import { GoogleBrokerRegistry, brokerEntryToSettings } from './google-broker-registry.js'
-import { buildGoogleFeatureSettingsSchema } from './google-broker-settings-schema.js'
 import { createGoogleCalendarApi, createGoogleCalendarSource } from './google-calendar-source.js'
 import { createGmailSmtpProvider } from './google-gmail-smtp.js'
 import {
@@ -50,7 +49,6 @@ import {
   type GoogleClientProbeResult,
   refreshAccessToken,
 } from './google-oauth.js'
-import type { GoogleSettingsCap } from './google-settings-copy.js'
 import {
   DEFAULT_GOOGLE_CONFIG,
   DEFAULT_OAUTH_STATE,
@@ -866,29 +864,6 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
       this.publicOrigin = null
     }
   }
-
-  /**
-   * Connectivity Calendars / Email: point at Brokers (no duplicate OAuth fields).
-   * Addon page without cap: same pointer + note.
-   */
-  protected globalSettingsSchema(cap?: string) {
-    const scoped = asSettingsCap(cap)
-    return this.schema(buildGoogleFeatureSettingsSchema(scoped, this.publicOrigin))
-  }
-
-  override async getGlobalSettings(
-    overlay?: Record<string, unknown>,
-    cap?: string,
-    nodeId?: string,
-  ) {
-    await this.refreshPublicOrigin()
-    return super.getGlobalSettings(overlay, cap, nodeId)
-  }
-}
-
-function asSettingsCap(cap: string | undefined): GoogleSettingsCap {
-  if (cap === 'calendar-source' || cap === 'smtp-provider') return cap
-  return undefined
 }
 
 export default GoogleServicesAddon

@@ -7,7 +7,6 @@ import {
   GOOGLE_CONSOLE_APIS_URL,
   GOOGLE_CONSOLE_CREDENTIALS_URL,
   redirectUriDisplay,
-  type GoogleSettingsCap,
 } from './google-settings-copy.js'
 
 function consoleLinksHtml(): string {
@@ -114,72 +113,6 @@ export function buildGoogleBrokerSettingsSchema(publicOrigin: string | null) {
             key: 'fromName',
             label: 'From display name (optional)',
             labelKey: 'google-services:googleBrokerSettings.s_gmail-send.fromName.label',
-          },
-        ],
-      },
-    ],
-  } as const
-}
-
-/** Connectivity Calendars / Email pages — the calendar import picker is on each broker. */
-export function buildGoogleFeatureSettingsSchema(
-  cap: GoogleSettingsCap,
-  publicOrigin: string | null,
-) {
-  const redirect = escapeHtml(redirectUriDisplay(publicOrigin))
-  if (cap === 'calendar-source') {
-    return {
-      sections: [
-        {
-          id: 'setup-intro',
-          title: 'Google brokers',
-          titleKey: 'google-services:googleFeatureSettings.s_setup-intro.title',
-          columns: 1,
-          fields: [
-            {
-              type: 'info' as const,
-              key: '_setupSteps',
-              label: 'Setup',
-              labelKey: 'google-services:googleFeatureSettings.s_setup-intro._setupSteps.label',
-              format: 'html' as const,
-              content: [
-                '<p>Link a Google account under Connectivity → <strong>Brokers</strong> ',
-                '(Client ID / secret + Sign in), then add a calendar under Connectivity → <strong>Calendars</strong>. ',
-                `OAuth redirect URI: <code>${redirect}</code>.</p>`,
-              ].join(''),
-            },
-          ],
-        },
-      ],
-    } as const
-  }
-  const title = cap === 'smtp-provider' ? 'Gmail send uses Google brokers' : 'Google brokers'
-  const body =
-    cap === 'smtp-provider'
-      ? [
-          '<p>Add or edit a <strong>Google</strong> broker under Connectivity → <strong>Brokers</strong> ',
-          '(Client ID / secret + Sign in). From address and send-as live on that broker. ',
-          `OAuth redirect URI: <code>${redirect}</code>.</p>`,
-        ].join('')
-      : [
-          '<p>Add or edit a <strong>Google</strong> broker under Connectivity → <strong>Brokers</strong> ',
-          '(Client ID / secret + Sign in). ',
-          `OAuth redirect URI: <code>${redirect}</code>.</p>`,
-        ].join('')
-  return {
-    sections: [
-      {
-        id: 'setup-intro',
-        title,
-        columns: 1,
-        fields: [
-          {
-            type: 'info' as const,
-            key: '_setupSteps',
-            label: 'Setup',
-            labelKey: 'google-services:googleFeatureSettings._setupSteps.label',
-            format: 'html' as const,
-            content: body,
           },
         ],
       },

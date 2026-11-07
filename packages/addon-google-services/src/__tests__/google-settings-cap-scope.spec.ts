@@ -1,59 +1,13 @@
 /**
- * Connectivity Calendars / Email point at Brokers (no duplicate OAuth fields).
+ * Google broker setup copy.
  */
 import { describe, expect, it } from 'vitest'
 
-import { GoogleServicesAddon } from '../google-services.addon.js'
 import {
   buildGoogleBrokerSettingsSchema,
   googleBrokerSetupHtml,
 } from '../google-broker-settings-schema.js'
 import { connectHtml, introHtml } from '../google-settings-copy.js'
-
-type SchemaReader = {
-  globalSettingsSchema(cap?: string): {
-    sections: Array<{ id: string; fields: Array<{ key?: string; content?: string }> }>
-  } | null
-}
-
-function sectionIds(cap?: string): readonly string[] {
-  const addon = new GoogleServicesAddon() as unknown as SchemaReader
-  return (addon.globalSettingsSchema(cap)?.sections ?? []).map((s) => s.id)
-}
-
-function fieldContent(cap: string | undefined, sectionId: string, key: string): string {
-  const addon = new GoogleServicesAddon() as unknown as SchemaReader
-  const section = addon.globalSettingsSchema(cap)?.sections.find((s) => s.id === sectionId)
-  const field = section?.fields.find((f) => f.key === key)
-  return field?.content ?? ''
-}
-
-describe('GoogleServicesAddon settings scoped by capability', () => {
-  it('calendar-source: only the Brokers pointer; the calendar picker moved to each broker (D985)', () => {
-    expect(sectionIds('calendar-source')).toEqual(['setup-intro'])
-    const html = fieldContent('calendar-source', 'setup-intro', '_setupSteps')
-    expect(html).toContain('Brokers')
-  })
-
-  it('smtp-provider: only setup pointer to Brokers', () => {
-    expect(sectionIds('smtp-provider')).toEqual(['setup-intro'])
-    const html = fieldContent('smtp-provider', 'setup-intro', '_setupSteps')
-    expect(html).toContain('Brokers')
-    expect(html).toMatch(/Gmail|From/i)
-  })
-
-  it('addon page (no cap) still only points at Brokers', () => {
-    expect(sectionIds()).toEqual(['setup-intro'])
-  })
-
-  it('does not ship a gmailSendEnabled switch', () => {
-    const addon = new GoogleServicesAddon() as unknown as SchemaReader
-    const keys = (addon.globalSettingsSchema('smtp-provider')?.sections ?? []).flatMap((s) =>
-      s.fields.map((f) => f.key),
-    )
-    expect(keys).not.toContain('gmailSendEnabled')
-  })
-})
 
 describe('google broker Setup HTML', () => {
   it('mentions Audience / Test users and Test connection', () => {

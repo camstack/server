@@ -30,8 +30,8 @@ export function planCapability(
   if (/addon.?config|settings schema|globalsettings/.test(lower)) {
     needCapability = false
     rationale =
-      'Prefer globalSettingsSchema() + addon-settings; NodeAddonsSettingsPanel already renders it.'
-    alternatives.push('addon-settings', 'globalSettingsSchema()')
+      'Prefer a scoped schema (clusterSettingsSchema / nodeSettingsSchema / deviceDefaultsSchema) or an instance kind; there is no addon-level settings form (D986).'
+    alternatives.push('clusterSettingsSchema()', 'nodeSettingsSchema()', 'deviceDefaultsSchema()')
   }
   if (/enable|disable.?provider/.test(lower)) {
     needCapability = false
