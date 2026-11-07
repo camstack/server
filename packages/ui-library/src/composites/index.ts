@@ -1,4 +1,4 @@
-export { AddonGlobalSettingsForm } from './addon-global-settings-form'
+export { AddonScopedSettingsForm } from './addon-scoped-settings-form'
 // --- Addon page ---
 export type { AddonPageProps } from './addon-page-props'
 export {

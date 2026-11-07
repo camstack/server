@@ -51,7 +51,7 @@ right on its own dev server and broken in the hub.
   `pages/system/Authentication.tsx`; over non-addon kinds:
   `pages/system/Access.tsx` (Identity → Tokens & sessions).
 - **Sections and settings:** `SectionCard` + `SettingRow`; a schema-driven
-  form is `ConfigFormBuilder` / `AddonGlobalSettingsForm`, never hand-built.
+  form is `ConfigFormBuilder` / `AddonScopedSettingsForm`, never hand-built.
 - **Managed lists:** `DataTable` (`columns: DataColumn[]`, `rows`, `rowKey`,
   `maxBodyHeight={TABLE_SCROLL_MAX_H}`,
   `emptyMessage`; per column `sortValue` returning the RAW value or

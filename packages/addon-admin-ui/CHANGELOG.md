@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Notification settings and the cluster recording, events and roles pickers use the scoped settings API
+
 ## [1.2.602] - 2026-11-07
 
 ### Changed

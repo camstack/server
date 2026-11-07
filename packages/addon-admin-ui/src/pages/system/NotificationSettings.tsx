@@ -3,13 +3,15 @@
  *
  * The alert centre sends no notification of its own: a critical or error alert
  * reaches a phone only through a system-event rule (`alert-critical`,
- * `alert-error`, `alert-critical-resolved`). The form is the addon's own global
- * schema so the Integrations / System surfaces stay in sync.
+ * `alert-error`, `alert-critical-resolved`). The form is the cluster form of the
+ * `alerts` capability, so the Integrations / System surfaces stay in sync.
  */
-import { AddonGlobalSettingsForm, TEXT_HINT, useSystem } from '@camstack/ui-library'
+import { AddonScopedSettingsForm, TEXT_HINT, useSystem } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 
 const ALERT_CENTER_ADDON_ID = 'alert-center'
+/** The capability whose cluster form is the alert center's settings. */
+const ALERTS_CAP = 'alerts'
 
 export function NotificationSettingsPage() {
   const { t } = useTranslation()
@@ -23,10 +25,11 @@ export function NotificationSettingsPage() {
           'Alert storage and retention. Alerts are notified only through notification rules on the alert kinds.',
         )}
       </p>
-      <AddonGlobalSettingsForm
+      <AddonScopedSettingsForm
         trpc={system.trpcClient}
         addonId={ALERT_CENTER_ADDON_ID}
-        nodeId="hub"
+        cap={ALERTS_CAP}
+        scope="cluster"
         bare
       />
     </div>

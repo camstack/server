@@ -94,7 +94,6 @@ vi.mock('../../../components/cluster/tabs/NodeLaunchSettingsCard', () => ({
 
 vi.mock('@camstack/ui-library', () => ({
   useLiveEvent: () => {},
-  AddonGlobalSettingsForm: () => null,
   useClusterTopology: () => ({ nodes: topology.nodes, isLoading: false, isError: false }),
   useNodesRestartAddon: () => ({ mutateAsync: async () => ({ success: true }) }),
   useNodesRestartNode: () => ({ mutateAsync: async () => ({ restarted: [], failed: [] }) }),

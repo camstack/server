@@ -21,7 +21,7 @@ import {
   type ClusterModelScopedStep,
   pickClusterStepModels,
 } from '@camstack/types'
-import { TEXT_HINT, useAddonSettingsGetGlobalSettings } from '@camstack/ui-library'
+import { TEXT_HINT, useAddonSettingsGetScopedSettings } from '@camstack/ui-library'
 import { clusterStepSettingsHref } from './pipeline-links'
 import { Trans, useTranslation } from 'react-i18next'
 
@@ -43,8 +43,10 @@ interface ClusterStepModelProps {
 
 export function ClusterStepModel({ step, engineFormat, runnableModelIds }: ClusterStepModelProps) {
   const { t } = useTranslation()
-  const { data: settings } = useAddonSettingsGetGlobalSettings({
+  const { data: settings } = useAddonSettingsGetScopedSettings({
     addonId: CLUSTER_MODEL_OWNER_ADDON_ID,
+    cap: CLUSTER_MODEL_OWNER_ADDON_ID,
+    scope: 'cluster',
   })
   const current = pickClusterStepModels(settings ?? null)[step.stepId] ?? step.defaultModelId
   const label = step.options.find((o) => o.id === current)?.label ?? current

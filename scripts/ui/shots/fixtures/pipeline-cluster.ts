@@ -273,6 +273,30 @@ export default defineFixtures({
       input.addonId === 'pipeline-orchestrator'
         ? { tabs: null, sections: [LOAD_SECTION, FAILOVER_SECTION] }
         : null,
+    // The Roles & nodes pickers read the cluster form of the recorder and the analytics
+    // capability (D986); the orchestrator keeps its own form.
+    'addonSettings.getScopedSettings': (input: { addonId?: string }) => {
+      if (input.addonId === 'pipeline-orchestrator')
+        return { tabs: null, sections: [LOAD_SECTION, FAILOVER_SECTION] }
+      const key =
+        input.addonId === 'recorder'
+          ? 'recordingNodeId'
+          : input.addonId === 'pipeline-analytics'
+            ? 'postProcessingNodeId'
+            : null
+      if (key === null) return null
+      return {
+        tabs: null,
+        sections: [
+          {
+            id: 'cluster',
+            title: 'Cluster',
+            columns: 1,
+            fields: [{ type: 'text', key, label: key, value: 'garage-nuc' }],
+          },
+        ],
+      }
+    },
     // Auto tune (D745): one node change and one kept custom pin. A model and its
     // thresholds live on the accelerator only (D927) — no camera rows.
     'pipelineOrchestrator.planAutoTune': {

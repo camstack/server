@@ -18,7 +18,9 @@ import {
   SectionCard,
   TEXT_HINT,
   useAddonSettingsGetGlobalSettings,
+  useAddonSettingsGetScopedSettings,
   useAddonSettingsUpdateGlobalSettings,
+  useAddonSettingsUpdateScopedSettings,
   useClusterNodes,
   usePipelineOrchestratorListAgentSettings,
   usePipelineOrchestratorSetAgentCapabilities,
@@ -26,9 +28,11 @@ import {
 import { effectiveCapabilitySettings } from '../lib/node-enablement'
 import {
   ANALYTICS_ADDON_ID,
+  ANALYTICS_CAP,
   ORCHESTRATOR_ADDON_ID,
   POST_PROCESSING_NODE_KEY,
   RECORDER_ADDON_ID,
+  RECORDER_CAP,
   RECORDING_NODE_KEY,
   ROLE_FIELDS,
   invalidatePlacementQueries,
@@ -50,12 +54,23 @@ export function ClusterRolesNodesTab() {
   const globalSettingsQuery = useAddonSettingsGetGlobalSettings({ addonId: ORCHESTRATOR_ADDON_ID })
   // Recorder addon's canonical recording-node setting — the "Recording" picker's
   // read/write target (single source of truth), separate from orchestrator roles.
-  const recorderSettingsQuery = useAddonSettingsGetGlobalSettings({ addonId: RECORDER_ADDON_ID })
-  const analyticsSettingsQuery = useAddonSettingsGetGlobalSettings({ addonId: ANALYTICS_ADDON_ID })
+  const recorderSettingsQuery = useAddonSettingsGetScopedSettings({
+    addonId: RECORDER_ADDON_ID,
+    cap: RECORDER_CAP,
+    scope: 'cluster',
+  })
+  const analyticsSettingsQuery = useAddonSettingsGetScopedSettings({
+    addonId: ANALYTICS_ADDON_ID,
+    cap: ANALYTICS_CAP,
+    scope: 'cluster',
+  })
 
   const invalidate = (): void => invalidatePlacementQueries(queryClient)
   const setCapabilities = usePipelineOrchestratorSetAgentCapabilities({ onSuccess: invalidate })
+  // The orchestrator roles keep `updateGlobalSettings`: its override runs the ingest-owner
+  // re-derive and re-dispatch, which `updateScopedSettings` does not reach until the hook lands.
   const updateGlobal = useAddonSettingsUpdateGlobalSettings({ onSuccess: invalidate })
+  const updateScoped = useAddonSettingsUpdateScopedSettings({ onSuccess: invalidate })
 
   const settingsByNode = useMemo(() => {
     const map = new Map<string, object>()
@@ -119,12 +134,19 @@ export function ClusterRolesNodesTab() {
     // The "Recording" picker drives the recorder addon's canonical
     // `recordingNodeId`; ingest/audio remain orchestrator cluster roles.
     if (role === 'recordingNode') {
-      updateGlobal.mutate({ addonId: RECORDER_ADDON_ID, patch: { [RECORDING_NODE_KEY]: nodeId } })
+      updateScoped.mutate({
+        addonId: RECORDER_ADDON_ID,
+        cap: RECORDER_CAP,
+        scope: 'cluster',
+        patch: { [RECORDING_NODE_KEY]: nodeId },
+      })
       return
     }
     if (role === 'postProcessingNode') {
-      updateGlobal.mutate({
+      updateScoped.mutate({
         addonId: ANALYTICS_ADDON_ID,
+        cap: ANALYTICS_CAP,
+        scope: 'cluster',
         patch: { [POST_PROCESSING_NODE_KEY]: nodeId },
       })
       return
@@ -161,7 +183,7 @@ export function ClusterRolesNodesTab() {
         <RoleControls
           roleValues={roleValues}
           options={nodeOptions}
-          pending={updateGlobal.isPending}
+          pending={updateGlobal.isPending || updateScoped.isPending}
           onRoleChange={handleRoleChange}
         />
       </SectionCard>

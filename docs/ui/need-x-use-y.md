@@ -36,7 +36,7 @@ library's barrel; check a viewer name in the viewer repo's own catalogue.
 | A table of devices | `DeviceList` | — | `DeviceList mode="generic"` for rows that expand |
 | Switch a list between table and grid | `ViewSwitch` | — | The control remembers nothing. The page stores the choice (the page-size pattern: guarded `localStorage`, a safe default). One option is not rendered. `DataTable` itself never becomes a card stack |
 | A label / value setting row | `SettingRow` inside `SectionCard` | `Row`, `ToggleRow`, `SelectRow`, `StepperRow` inside `Section` | `SettingRow` stacks below `sm` |
-| A form generated from a settings schema | `ConfigFormBuilder` (`AddonGlobalSettingsForm` for an addon's global schema) | — | Placement follows the schema, see `docs/architecture/ui.md` |
+| A form generated from a settings schema | `ConfigFormBuilder` (`AddonScopedSettingsForm` for one capability's scope of an addon) | — | Placement follows the schema, see `docs/architecture/ui.md` |
 | A labelled form field | `FormField` + `Input` / `Select` / `Checkbox` / `Switch` | `ToggleRow`, `SelectRow` | |
 | A password, token or API key field | `PasswordInput`; `SecretFieldControl` for a keychain-backed setting | — | The form never holds a stored value; the eye reveals through the audited `keychain-admin.reveal` (`SecretRevealProvider`). See `docs/architecture/secrets-keychain.md` |
 | Copy a value | `CopyButton` | — | |

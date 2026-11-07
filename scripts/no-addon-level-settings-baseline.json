@@ -12,8 +12,6 @@
     },
     "m5-addon-blobs": {
       "packages/addon-admin-ui/src/components/pipeline/placement-board/board-model.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
-      "packages/addon-admin-ui/src/components/pipeline/tabs/ClusterEventsTab.tsx:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
-      "packages/addon-admin-ui/src/components/pipeline/tabs/ClusterRecordingTab.tsx:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
       "packages/addon-cloudflare/src/tunnel/cloudflare-tunnel.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
       "packages/addon-decoder-nodeav/src/addon/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
       "packages/addon-export-alexa/src/export-alexa.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
@@ -50,7 +48,6 @@
       "packages/types/src/addon/base-addon.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [globalSettingsSchema, integrationSettingSections, getGlobalSettings, getIntegrationSettings, updateGlobalSettings]",
       "packages/types/src/capabilities/addon-settings.cap.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, updateGlobalSettings, getIntegrationSettings]",
       "packages/types/src/interfaces/addon.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, updateGlobalSettings, getIntegrationSettings]",
-      "packages/ui-library/src/composites/addon-global-settings-form.tsx:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, updateGlobalSettings]",
       "server/backend/src/api/trpc/device-config-secret-redaction.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, getIntegrationSettings]",
       "server/backend/src/api/trpc/localized-schema-paths.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, getIntegrationSettings]",
       "server/backend/src/core/addon/addon-settings-provider.ts:addon-level-settings": "the carrier of the addon-level hooks (base class, cap, router, forwarding, UI form); P8 deletes it (D986) [getGlobalSettings, updateGlobalSettings, getIntegrationSettings]"

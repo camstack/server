@@ -13,7 +13,7 @@ import {
   SETTING_ROW_VALUE,
   TEXT_HINT,
   TEXT_SECTION_LABEL,
-  useAddonSettingsGetGlobalSettings,
+  useAddonSettingsGetScopedSettings,
 } from '@camstack/ui-library'
 import { clusterStepSettingsHref } from '../pipeline-links'
 import { useTranslation } from 'react-i18next'
@@ -30,7 +30,11 @@ export function ClusterOwnedSettings({
 }) {
   const { t } = useTranslation()
   const fields = clusterStepSettingFieldsFor(addonId)
-  const { data } = useAddonSettingsGetGlobalSettings({ addonId: OWNER_ADDON_ID })
+  const { data } = useAddonSettingsGetScopedSettings({
+    addonId: OWNER_ADDON_ID,
+    cap: OWNER_ADDON_ID,
+    scope: 'cluster',
+  })
   if (fields.length === 0) return null
   const values = pickClusterStepSettings(data ?? null)[addonId] ?? {}
   return (

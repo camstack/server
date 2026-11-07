@@ -18,6 +18,31 @@ vi.mock('../tabs/StorageLocationsPanel', () => ({
 
 const idle = { mutate: vi.fn(), isPending: false, isError: false, isSuccess: false }
 const updateGlobal = vi.fn()
+const updateScoped = vi.fn()
+interface ScopedQuery {
+  readonly addonId: string
+  readonly cap: string
+  readonly scope: string
+}
+/** The cluster forms the recorder and the analytics addon serve, one marked value each. */
+function scopedForm(input: ScopedQuery) {
+  const key =
+    input.addonId === 'recorder'
+      ? 'recordingNodeId'
+      : input.addonId === 'pipeline-analytics'
+        ? 'postProcessingNodeId'
+        : null
+  if (key === null) return null
+  return {
+    sections: [
+      {
+        id: 'cluster',
+        title: 'Cluster',
+        fields: [{ type: 'text', key, label: key, value: 'MacMiniAgent.localdomain' } as const],
+      },
+    ],
+  }
+}
 const setCapabilities = vi.fn()
 const NODES = [
   { id: 'hub', name: 'Hub', isHub: true, isOnline: true, localIps: ['192.0.2.10'], addons: [] },
@@ -38,6 +63,11 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     usePipelineOrchestratorListAgentSettings: () => ({ data: [], isLoading: false }),
     useAddonSettingsGetGlobalSettings: () => ({ data: undefined, isLoading: false }),
     useAddonSettingsUpdateGlobalSettings: () => ({ ...idle, mutate: updateGlobal }),
+    useAddonSettingsGetScopedSettings: (input: ScopedQuery) => ({
+      data: scopedForm(input),
+      isLoading: false,
+    }),
+    useAddonSettingsUpdateScopedSettings: () => ({ ...idle, mutate: updateScoped }),
     usePipelineOrchestratorSetAgentCapabilities: () => ({ ...idle, mutate: setCapabilities }),
   }
 })
@@ -72,6 +102,36 @@ describe('Cluster → Roles & nodes', () => {
       addonId: 'pipeline-orchestrator',
       patch: { audioNode: 'MacMiniAgent.localdomain' },
     })
+  })
+
+  it('the recording and post-processing roles read the cluster form of their own capability', () => {
+    renderTab()
+    expect((screen.getByLabelText('Recording node') as HTMLSelectElement).value).toBe(
+      'MacMiniAgent.localdomain',
+    )
+    expect((screen.getByLabelText('Post-processing node') as HTMLSelectElement).value).toBe(
+      'MacMiniAgent.localdomain',
+    )
+  })
+
+  it('writes the recording and post-processing roles through the scoped cluster write', () => {
+    renderTab()
+    fireEvent.change(screen.getByLabelText('Recording node'), { target: { value: 'hub' } })
+    expect(updateScoped).toHaveBeenCalledWith({
+      addonId: 'recorder',
+      cap: 'recording',
+      scope: 'cluster',
+      patch: { recordingNodeId: 'hub' },
+    })
+    fireEvent.change(screen.getByLabelText('Post-processing node'), { target: { value: 'hub' } })
+    expect(updateScoped).toHaveBeenCalledWith({
+      addonId: 'pipeline-analytics',
+      cap: 'pipeline-analytics',
+      scope: 'cluster',
+      patch: { postProcessingNodeId: 'hub' },
+    })
+    // The orchestrator roles keep the old write: its override runs the ingest re-derive.
+    expect(updateGlobal).not.toHaveBeenCalledWith(expect.objectContaining({ addonId: 'recorder' }))
   })
 
   it('the node table is the shared DataTable with a compact switch per capability', () => {

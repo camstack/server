@@ -68,7 +68,7 @@ title, `actions` — body is free). Optional `SectionToolbar` inside the body
 puts filters / `NodePicker` on the left and Add on the right. A setting inside
 a section is a `SettingRow` (label + control, stacking below `sm`). A
 schema-driven settings block is `ConfigFormBuilder` /
-`AddonGlobalSettingsForm`, never a hand-built form — where a schema is allowed
+`AddonScopedSettingsForm`, never a hand-built form — where a schema is allowed
 to appear is in
 [`docs/architecture/ui.md`](../architecture/ui.md#where-a-settings-schema-is-allowed-to-appear-and-the-key-that-decides-it).
 Schema drives **settings and modal form fields only** — it does not generate

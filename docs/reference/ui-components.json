@@ -419,7 +419,7 @@
     },
     {
       "need": "A form generated from a settings schema",
-      "admin": "`ConfigFormBuilder` (`AddonGlobalSettingsForm` for an addon's global schema)",
+      "admin": "`ConfigFormBuilder` (`AddonScopedSettingsForm` for one capability's scope of an addon)",
       "viewer": "—",
       "notes": "Placement follows the schema, see `docs/architecture/ui.md`"
     },
@@ -674,15 +674,15 @@
       "summary": "\"NPU\", \"ANE\", \"Coral\", \"CPU\" — chips and tabs."
     },
     {
-      "name": "AddonGlobalSettingsForm",
+      "name": "AddonScopedSettingsForm",
       "kind": "component",
       "area": "composites",
-      "file": "packages/ui-library/src/composites/addon-global-settings-form.tsx",
-      "summary": "`AddonGlobalSettingsForm` — mounts an addon's global-settings schema via `api.addonSettings.getGlobalSettings` + `updateGlobalSettings` and renders it with `ConfigFormBuilder`. Single source of truth for the addon's s…",
+      "file": "packages/ui-library/src/composites/addon-scoped-settings-form.tsx",
+      "summary": "`AddonScopedSettingsForm` — mounts one scope of one capability's settings via `api.addonSettings.getScopedSettings` + `updateScopedSettings` and renders it with `ConfigFormBuilder`. The schema is the capability's own …",
       "props": [
         {
           "name": "trpc",
-          "type": "AddonGlobalSettingsFormTrpc",
+          "type": "AddonScopedSettingsFormTrpc",
           "optional": false,
           "doc": ""
         },
@@ -693,10 +693,22 @@
           "doc": ""
         },
         {
-          "name": "nodeId",
+          "name": "cap",
           "type": "string",
           "optional": false,
+          "doc": "The capability whose settings of `scope` this form edits."
+        },
+        {
+          "name": "scope",
+          "type": "ScopedSettingsScope",
+          "optional": false,
           "doc": ""
+        },
+        {
+          "name": "nodeId",
+          "type": "string",
+          "optional": true,
+          "doc": "The `node` scope's node; absent for `cluster` / `device`."
         },
         {
           "name": "title",
@@ -726,7 +738,7 @@
           "name": "sectionIds",
           "type": "readonly string[]",
           "optional": true,
-          "doc": "Render only these section ids of the addon's schema (e.g. System → Cluster draws the `system-config` cluster section alone). Absent → every "
+          "doc": "Render only these section ids of the scope's schema (e.g. System → Cluster draws the `system-config` cluster section alone). Absent → every "
         },
         {
           "name": "bare",
@@ -745,18 +757,6 @@
           "type": "boolean",
           "optional": true,
           "doc": "When `collapsible`, start expanded (true) or collapsed (false). Defaults to false."
-        },
-        {
-          "name": "mode",
-          "type": "'persist' | 'override'",
-          "optional": true,
-          "doc": "- `'persist'` (default): edits call `updateGlobalSettings` and re-fetch — the live store is mutated. Use in settings editors (NodePipelineTa"
-        },
-        {
-          "name": "onOverrideChange",
-          "type": "( patch: Record<string, unknown>, effective: Record<string, unknown>, ) => void",
-          "optional": true,
-          "doc": "Called on every edit when `mode: 'override'`. `patch` is the sparse diff vs the persisted baseline (only the fields the operator touched). `"
         }
       ]
     },

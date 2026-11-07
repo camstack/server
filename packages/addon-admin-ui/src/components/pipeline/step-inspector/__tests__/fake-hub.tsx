@@ -248,7 +248,7 @@ export function makeFakeHub(state: FakeHubState) {
         state.nodeStepSettings = { ...state.nodeStepSettings, [node]: layer }
         return { success: true }
       }
-      case 'addonSettings.getGlobalSettings':
+      case 'addonSettings.getScopedSettings':
         return null
       case 'pipelineOrchestrator.getCameraSettings':
         return state.camera

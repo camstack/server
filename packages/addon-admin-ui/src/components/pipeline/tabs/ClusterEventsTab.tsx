@@ -15,14 +15,16 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import {
   useClusterNodes,
-  useAddonSettingsGetGlobalSettings,
-  useAddonSettingsUpdateGlobalSettings,
+  useAddonSettingsGetScopedSettings,
+  useAddonSettingsUpdateScopedSettings,
   Select,
 } from '@camstack/ui-library'
 import { StorageLocationsPanel } from './StorageLocationsPanel'
 import { useTranslation } from 'react-i18next'
 
 const ADDON_ID = 'pipeline-analytics'
+/** The capability whose cluster form carries `postProcessingNodeId`. */
+const CAP = 'pipeline-analytics'
 
 interface SchemaField {
   readonly key?: string
@@ -49,13 +51,15 @@ export function ClusterEventsTab() {
 
   // Needs the online node IDS for a picker — the roster, not the diagram (D317).
   const { nodes: clusterNodes } = useClusterNodes()
-  const { data: settings, isLoading: settingsLoading } = useAddonSettingsGetGlobalSettings({
+  const { data: settings, isLoading: settingsLoading } = useAddonSettingsGetScopedSettings({
     addonId: ADDON_ID,
+    cap: CAP,
+    scope: 'cluster',
   })
   const currentNode = readNodeValue(settings)
-  const updateGlobal = useAddonSettingsUpdateGlobalSettings({
+  const updateGlobal = useAddonSettingsUpdateScopedSettings({
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [['addonSettings', 'getGlobalSettings']] })
+      void queryClient.invalidateQueries({ queryKey: [['addonSettings', 'getScopedSettings']] })
     },
   })
   const nodeOptions = useMemo(() => {
@@ -86,6 +90,8 @@ export function ClusterEventsTab() {
                 if (e.target.value !== currentNode)
                   updateGlobal.mutate({
                     addonId: ADDON_ID,
+                    cap: CAP,
+                    scope: 'cluster',
                     patch: { postProcessingNodeId: e.target.value },
                   })
               }}

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Generated hooks for the new scoped addon settings calls.
+- System settings forms read and write one capability's scope: AddonScopedSettingsForm replaces AddonGlobalSettingsForm
 
 ## [1.2.395] - 2026-11-07
 

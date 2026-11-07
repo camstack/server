@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 /**
  * Persist-mode edits must keep the focused control enabled. Disabling the
- * form while `updateGlobalSettings` runs blurred text inputs on every
+ * form while `updateScopedSettings` runs blurred text inputs on every
  * keystroke (mobile keyboard closed) — Training Modal entry Name.
  */
 import type { ConfigUISchemaWithValues } from '@camstack/types'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { AddonGlobalSettingsForm } from '../addon-global-settings-form'
+import { AddonScopedSettingsForm } from '../addon-scoped-settings-form'
 
 const SCHEMA: ConfigUISchemaWithValues = {
   sections: [
@@ -37,7 +37,7 @@ function deferred<T>(): {
   return { promise, resolve }
 }
 
-describe('AddonGlobalSettingsForm persist edits', () => {
+describe('AddonScopedSettingsForm persist edits', () => {
   it('keeps the Name input enabled while a save is in flight', async () => {
     const gate = deferred<unknown>()
     let stored = SCHEMA
@@ -58,12 +58,19 @@ describe('AddonGlobalSettingsForm persist edits', () => {
     const query = vi.fn(async () => stored)
     const trpc = {
       addonSettings: {
-        getGlobalSettings: { query },
-        updateGlobalSettings: { mutate },
+        getScopedSettings: { query },
+        updateScopedSettings: { mutate },
       },
     }
 
-    render(<AddonGlobalSettingsForm trpc={trpc} addonId="training-modal" nodeId="hub" />)
+    render(
+      <AddonScopedSettingsForm
+        trpc={trpc}
+        addonId="training-modal"
+        cap="training-provider"
+        scope="cluster"
+      />,
+    )
 
     const input = (await screen.findByDisplayValue('Default')) as HTMLInputElement
     expect(input.disabled).toBe(false)
@@ -71,6 +78,17 @@ describe('AddonGlobalSettingsForm persist edits', () => {
     fireEvent.change(input, { target: { value: 'Staging' } })
 
     await waitFor(() => expect(mutate).toHaveBeenCalled())
+    expect(mutate).toHaveBeenCalledWith({
+      addonId: 'training-modal',
+      cap: 'training-provider',
+      scope: 'cluster',
+      patch: { displayName: 'Staging' },
+    })
+    expect(query).toHaveBeenCalledWith({
+      addonId: 'training-modal',
+      cap: 'training-provider',
+      scope: 'cluster',
+    })
     const duringSave = screen.getByDisplayValue('Staging') as HTMLInputElement
     expect(duringSave.disabled).toBe(false)
     expect(screen.getByText('Saving…')).toBeTruthy()

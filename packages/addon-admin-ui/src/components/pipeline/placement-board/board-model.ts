@@ -18,6 +18,10 @@ export const ORCHESTRATOR_ADDON_ID = 'pipeline-orchestrator'
 export const RECORDER_ADDON_ID = 'recorder'
 export const RECORDING_NODE_KEY = 'recordingNodeId'
 export const ANALYTICS_ADDON_ID = 'pipeline-analytics'
+/** The capability whose cluster form carries `recordingNodeId`. */
+export const RECORDER_CAP = 'recording'
+/** The capability whose cluster form carries `postProcessingNodeId`. */
+export const ANALYTICS_CAP = 'pipeline-analytics'
 export const POST_PROCESSING_NODE_KEY = 'postProcessingNodeId'
 
 export const ROLE_FIELDS = [
@@ -168,4 +172,5 @@ export function invalidatePlacementQueries(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: [['pipelineOrchestrator', 'listAgentSettings']] })
   void queryClient.invalidateQueries({ queryKey: [['pipelineOrchestrator', 'getAgentSettings']] })
   void queryClient.invalidateQueries({ queryKey: [['addonSettings', 'getGlobalSettings']] })
+  void queryClient.invalidateQueries({ queryKey: [['addonSettings', 'getScopedSettings']] })
 }

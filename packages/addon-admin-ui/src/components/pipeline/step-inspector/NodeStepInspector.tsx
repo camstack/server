@@ -40,7 +40,7 @@ import {
   stepModelOptions,
   TEXT_HINT,
   TEXT_SECTION_LABEL,
-  useAddonSettingsGetGlobalSettings,
+  useAddonSettingsGetScopedSettings,
   usePipelineExecutorGetSchema,
   usePipelineOrchestratorGetAgentSettings,
   usePipelineOrchestratorGetNodeInferenceDevices,
@@ -180,8 +180,10 @@ export function NodeStepInspector({ nodeId, nodeName, toolbar }: NodeStepInspect
     { refetchOnMount: 'always' },
   )
   const nodeStepSettings = agentQuery.data?.stepSettings
-  const clusterSettingsQuery = useAddonSettingsGetGlobalSettings({
+  const clusterSettingsQuery = useAddonSettingsGetScopedSettings({
     addonId: 'pipeline-orchestrator',
+    cap: 'pipeline-orchestrator',
+    scope: 'cluster',
   })
   const clusterModels = pickClusterStepModels(clusterSettingsQuery.data ?? null)
   const devices: readonly NodeInferenceDevice[] = devicesQuery.data?.devices ?? []
