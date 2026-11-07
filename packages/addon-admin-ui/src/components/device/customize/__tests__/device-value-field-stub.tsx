@@ -43,6 +43,7 @@ export function DeviceValueFieldStub(p: DeviceValueFieldProps) {
       {showRegion ? (
         <div>
           {p.transform}
+          {p.proposal}
           {p.preview}
         </div>
       ) : null}

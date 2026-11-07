@@ -1,18 +1,11 @@
-import { ChevronLeft } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'
+import { useIsPhone } from '../../hooks/use-is-mobile'
 import { Button } from '../../primitives/button'
 import { Radio } from '../../primitives/radio'
 import { DevicePicker } from '../device-picker/DevicePicker'
 import type { PickerItem } from '../device-picker/device-picker-model'
 import type { DeviceListState } from '../device-picker/device-selection'
-import {
-  type DeviceValueStep,
-  initialStep,
-  stepAfterDevice,
-  stepAfterValue,
-  stepBack,
-} from './device-value-steps'
 
 /** One value a device offers. Only values that FIT are ever passed in. */
 export interface DeviceValueRow {
@@ -60,6 +53,8 @@ export interface DeviceValueFieldProps {
   readonly valuesBefore?: ReactNode
   /** Transform (as is / scale / threshold / map) and its parameters. */
   readonly transform?: ReactNode
+  /** The suggestion line under the transform (a proposed threshold with its Apply). */
+  readonly proposal?: ReactNode
   /** The pre-save "would read" line. */
   readonly preview?: ReactNode
   /** Show the transform/preview region before a value is chosen (a declared value is never chosen). */
@@ -75,61 +70,88 @@ export interface DeviceValueFieldProps {
   readonly fillHeight?: boolean
 }
 
-const HIDDEN_ON_PHONE = 'hidden sm:block'
-
-function stepClass(step: DeviceValueStep, own: DeviceValueStep): string | undefined {
-  return step === own ? undefined : HIDDEN_ON_PHONE
-}
-
 /**
- * The ONE device → value picker: a device list, the values that fit, and what the
- * pick will read. Two columns from `sm`; on a phone three steps (devices, values,
- * preview). A value or device that does not fit is never offered. Adapters decide
- * what fits and what is done with the pick (a Customize source binding, a template
- * token chip).
+ * The ONE device → value picker. With a source already chosen (a device AND a value) it
+ * is one compact card at every width: the source row with a Change button, the transform
+ * slot, the proposal slot and the "would read" line. Without one, or after Change, it is
+ * the picker: two columns from `sm` (devices | their fitting values); on a phone ONE list
+ * where the picked device opens its fitting values inline. A value that does not fit is
+ * never offered. Adapters decide what fits and what is done with the pick.
  */
 export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
   const t = useUiText()
-  // null until the operator navigates: until then the step follows the props, so a device or
-  // value that resolves after mount (a change dialog waiting on the fleet) is still reached.
-  const [navigated, setStep] = useState<DeviceValueStep | null>(null)
+  const phone = useIsPhone()
+  const [changing, setChanging] = useState(false)
   const testId = props.testId ?? 'device-value-field'
+  const chosenRow = props.groups
+    .flatMap((group) => group.rows)
+    .find((row) => row.cap === props.value?.cap && row.path === props.value.path)
+  const cardMode =
+    props.deviceId !== null && props.value !== null && props.valuesOverride === undefined
   const pickDevice = (ids: readonly number[]): void => {
     const id = ids[0] ?? null
     if (id !== props.deviceId) props.onDeviceChange(id)
-    setStep(stepAfterDevice(id !== null))
   }
-  const hasPreviewContent = props.transform != null || props.preview != null
   const pickValue = (pick: DeviceValuePick): void => {
     props.onValueChange(pick)
-    setStep(stepAfterValue())
+    setChanging(false)
   }
-  const showPreview =
-    hasPreviewContent && (props.value !== null || props.alwaysShowPreview === true)
-  // The preview step exists only once there is something to preview: the transform and the
-  // "would read" line appear with the pick, so the step is judged at render, not at click.
-  const requested: DeviceValueStep =
-    navigated ??
-    (showPreview && props.deviceId !== null ? 'preview' : initialStep(props.deviceId !== null))
-  const step: DeviceValueStep = requested === 'preview' && !showPreview ? 'values' : requested
+  if (cardMode && !changing) {
+    return (
+      <div
+        data-testid={testId}
+        data-mode="card"
+        className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3"
+      >
+        <div className="flex items-center gap-2" data-testid={`${testId}-source`}>
+          <p className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1.5 text-xs text-foreground">
+            <span className="font-medium">{props.deviceLabel}</span>
+            <span className="text-foreground-subtle">·</span>
+            <span>{chosenRow?.label ?? props.value?.path}</span>
+            {chosenRow !== undefined && (
+              <span className="text-foreground-muted">{chosenRow.valueText}</span>
+            )}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            data-testid={`${testId}-change`}
+            onClick={() => setChanging(true)}
+          >
+            {t('uiLibrary.deviceValueField.change', 'Change')}
+          </Button>
+        </div>
+        {props.transform != null && (
+          <div data-testid={`${testId}-transform`}>{props.transform}</div>
+        )}
+        {props.proposal}
+        {props.preview != null && <div data-testid={`${testId}-preview`}>{props.preview}</div>}
+      </div>
+    )
+  }
+  const hasPreviewContent = props.transform != null || props.preview != null
+  const showLegacyPreview =
+    props.valuesOverride !== undefined && hasPreviewContent && props.alwaysShowPreview === true
+  const values = (
+    <>
+      {props.valuesBefore}
+      {props.deviceId !== null && !phone && (
+        <div className="text-[11px] font-medium text-foreground">{props.deviceLabel}</div>
+      )}
+      <ValuesBody {...props} onPick={pickValue} noDeviceText={props.noDeviceText} />
+    </>
+  )
   return (
     <div
       data-testid={testId}
-      data-step={step}
+      data-mode="picker"
       className={
         props.fillHeight === true
           ? 'flex min-h-0 flex-1 flex-col gap-3 sm:grid sm:grid-cols-2 sm:grid-rows-[minmax(0,1fr)] sm:gap-4'
           : 'flex flex-col gap-3 sm:grid sm:grid-cols-2 sm:gap-4'
       }
     >
-      <div
-        data-testid={`${testId}-devices`}
-        className={
-          step === 'devices'
-            ? 'flex min-h-0 flex-col gap-2'
-            : 'hidden min-h-0 flex-col gap-2 sm:flex'
-        }
-      >
+      <div data-testid={`${testId}-devices`} className="flex min-h-0 flex-col gap-2">
         <h3 className="text-[11px] font-medium text-foreground-muted">{props.heading}</h3>
         {props.suggestions}
         <DevicePicker
@@ -143,47 +165,39 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
           showAll
           fillHeight={props.fillHeight === true}
           testId={props.deviceListTestId ?? `${testId}-device-picker`}
+          {...(phone
+            ? {
+                renderExpanded: () => (
+                  <div data-testid={`${testId}-values`} className="flex flex-col gap-2">
+                    {values}
+                  </div>
+                ),
+              }
+            : {})}
         />
-      </div>
-      <div
-        data-testid={`${testId}-values`}
-        className={step === 'devices' ? HIDDEN_ON_PHONE : 'flex min-h-0 flex-col gap-2'}
-      >
-        {props.deviceId !== null && step !== 'devices' && (
+        {cardMode && (
           <Button
             variant="ghost"
             size="sm"
-            className="mb-1 self-start sm:hidden"
-            data-testid={`${testId}-back`}
-            aria-label={props.backLabel}
-            onClick={() => setStep(stepBack(step))}
+            className="self-start"
+            data-testid={`${testId}-cancel`}
+            onClick={() => setChanging(false)}
           >
-            <ChevronLeft className="size-3" />
-            {props.deviceLabel}
+            {t('uiLibrary.deviceValueField.cancel', 'Cancel')}
           </Button>
         )}
-        <div className={stepClass(step, 'values')}>
-          {props.valuesBefore}
-          {props.deviceId !== null && (
-            <div className="text-[11px] font-medium text-foreground">{props.deviceLabel}</div>
-          )}
-          <ValuesBody {...props} onPick={pickValue} noDeviceText={props.noDeviceText} />
-        </div>
-        {showPreview && (
-          <div
-            data-testid={`${testId}-preview`}
-            className={props.alwaysShowPreview === true ? undefined : stepClass(step, 'preview')}
-          >
-            <h4 className="mb-1 text-[10px] font-medium uppercase tracking-wide text-foreground-muted sm:mt-2">
-              {t('uiLibrary.deviceValueField.preview', 'Preview')}
-            </h4>
-            <div className="flex flex-col gap-2">
-              {props.transform}
-              {props.preview}
-            </div>
-          </div>
-        )}
       </div>
+      {!phone && (
+        <div data-testid={`${testId}-values`} className="flex min-h-0 flex-col gap-2">
+          {values}
+        </div>
+      )}
+      {showLegacyPreview && (
+        <div data-testid={`${testId}-preview`} className="flex flex-col gap-2 sm:col-span-2">
+          {props.transform}
+          {props.preview}
+        </div>
+      )}
     </div>
   )
 }

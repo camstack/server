@@ -11,7 +11,9 @@ import type { PickerDevice } from '../device-picker-model'
 vi.mock('../../../contexts/system-context.js', () => ({
   useSystem: () => ({
     trpcClient: {
-      deviceManager: { listSiteZones: { query: () => new Promise(() => undefined) } },
+      deviceManager: {
+        listSiteZones: { query: () => new Promise(() => undefined) },
+      },
     },
   }),
 }))
@@ -43,7 +45,9 @@ function Harness({ seen }: { readonly seen: (next: readonly number[]) => void })
 describe('DevicePicker selection=single', () => {
   it('picks one device with a radio and groups by location', () => {
     const seen = vi.fn<(next: readonly number[]) => void>()
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
     render(
       <QueryClientProvider client={client}>
         <Harness seen={seen} />
@@ -59,5 +63,38 @@ describe('DevicePicker selection=single', () => {
     expect(seen).toHaveBeenCalledWith([305])
     fireEvent.click(screen.getByRole('radio', { name: /Garage lamp/ }))
     expect(seen).toHaveBeenLastCalledWith([304])
+  })
+
+  it('opens renderExpanded under the picked device only, one at a time', () => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+    function Accordion() {
+      const [value, setValue] = useState<readonly number[]>([])
+      return (
+        <DevicePicker
+          devices={DEVICES}
+          listState="answered"
+          value={value}
+          selection="single"
+          groupBy="location"
+          noun="device"
+          showAll
+          onChange={setValue}
+          renderExpanded={(id) => <i data-testid="expanded">open {id}</i>}
+        />
+      )
+    }
+    render(
+      <QueryClientProvider client={client}>
+        <Accordion />
+      </QueryClientProvider>,
+    )
+    expect(screen.queryByTestId('expanded')).toBeNull()
+    fireEvent.click(screen.getByRole('radio', { name: /Porch power meter/ }))
+    expect(screen.getByTestId('expanded').textContent).toBe('open 305')
+    fireEvent.click(screen.getByRole('radio', { name: /Garage lamp/ }))
+    expect(screen.getAllByTestId('expanded')).toHaveLength(1)
+    expect(screen.getByTestId('expanded').textContent).toBe('open 304')
   })
 })

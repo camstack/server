@@ -100,7 +100,7 @@ function ThresholdFields({ declared, unit, value, onChange }: ThresholdFieldsPro
   const spec = declaredOf(declared, 'threshold')
   const comparisons = spec?.kind === 'threshold' ? spec.comparisons : []
   return (
-    <div className="flex flex-col gap-2 text-[11px] text-foreground">
+    <div className="grid grid-cols-2 gap-2 text-[11px] text-foreground">
       {comparisons.length > 0 && (
         <label className="flex flex-col gap-1">
           {t('customize.scalar.comparison')}
@@ -159,7 +159,7 @@ function LinearFields({ declared, value, onChange }: LinearFieldsProps): ReactNo
   const { t } = useTranslation()
   const bounds = clampBounds(declaredOf(declared, 'linear'))
   return (
-    <div className="flex flex-col gap-2 text-[11px] text-foreground">
+    <div className="grid grid-cols-2 gap-2 text-[11px] text-foreground">
       <NumberField
         label={t('customize.scalar.scale')}
         value={value.scale}

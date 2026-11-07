@@ -37,7 +37,7 @@
  * (D315).
  */
 
-import { useId, useMemo, useState, type JSX } from 'react'
+import { useId, useMemo, useState, type JSX, type ReactNode } from 'react'
 import { defaultUiText, useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { SelectedChip } from './SelectedChip.js'
 import { DeviceFilterBar, typeLabel } from './device-filter-bar'
@@ -140,6 +140,11 @@ export interface DevicePickerProps<Id extends PickerId = number> {
    * a definite height (a `fill` dialog column).
    */
   readonly fillHeight?: boolean
+  /**
+   * Content drawn right under a SELECTED row (a single-selection list that opens the
+   * picked device's details inline, one at a time).
+   */
+  readonly renderExpanded?: (id: Id) => ReactNode
   /**
    * Devices that are ALREADY part of the thing being edited (linked to the
    * camera, assigned to the room): drawn checked and disabled with
@@ -287,6 +292,7 @@ export function DevicePicker<Id extends PickerId = number>({
   testId,
   showAll = false,
   fillHeight = false,
+  renderExpanded,
   lockedIds,
   lockedNote: lockedNoteProp,
 }: DevicePickerProps<Id>): JSX.Element {
@@ -423,6 +429,7 @@ export function DevicePicker<Id extends PickerId = number>({
             showAll={showAll}
             fillHeight={fillHeight}
             selection={selection}
+            {...(renderExpanded !== undefined ? { renderExpanded } : {})}
             {...(pinnedGroupBy !== undefined ? { pinnedGroupBy } : {})}
           />
         ) : (
@@ -439,6 +446,7 @@ export function DevicePicker<Id extends PickerId = number>({
             showAll={showAll}
             fillHeight={fillHeight}
             selection={selection}
+            {...(renderExpanded !== undefined ? { renderExpanded } : {})}
           />
         ))}
       {widening && <DevicesWidenWarning noun={noun} />}
@@ -460,6 +468,7 @@ interface PickerPanelProps<Id extends PickerId> {
   readonly showAll: boolean
   readonly fillHeight: boolean
   readonly selection: DevicePickerSelection
+  readonly renderExpanded?: (id: Id) => ReactNode
   /** This instance's group-by. Absent: the remembered choice. */
   readonly pinnedGroupBy?: PickerGroupBy
   /** "Group by" — the device picker only; absent keeps the (type, room) groups. */
@@ -526,6 +535,7 @@ function PickerPanel<Id extends PickerId>({
   showAll,
   fillHeight,
   selection,
+  renderExpanded,
   grouping,
   providers = NO_PROVIDERS,
 }: PickerPanelProps<Id>) {
@@ -668,6 +678,7 @@ function PickerPanel<Id extends PickerId>({
               locked={locked}
               lockedNote={lockedNote}
               selection={selection}
+              renderExpanded={renderExpanded}
               radioName={radioName}
               providers={providers}
             />
@@ -710,6 +721,7 @@ interface PickerRowViewProps<Id extends PickerId> {
   readonly locked: ReadonlySet<Id>
   readonly lockedNote: string
   readonly selection: DevicePickerSelection
+  readonly renderExpanded: ((id: Id) => ReactNode) | undefined
   readonly radioName: string
   /** Who offers each device: "{addon} ({integration})". */
   readonly providers: ReadonlyMap<number, string>
@@ -742,6 +754,7 @@ function PickerRowView<Id extends PickerId>({
   locked,
   lockedNote,
   selection,
+  renderExpanded,
   radioName,
   providers,
 }: PickerRowViewProps<Id>) {
@@ -796,7 +809,7 @@ function PickerRowView<Id extends PickerId>({
   const second = secondLine(row.device, groupBy)
   const rowId = row.device.id
   const provider = typeof rowId === 'number' ? providers.get(rowId) : undefined
-  return (
+  const rowView = (
     <label
       className="flex cursor-pointer items-center gap-2.5 px-3 py-1 text-xs text-foreground hover:bg-surface-hover"
       data-testid="device-picker-row"
@@ -834,5 +847,14 @@ function PickerRowView<Id extends PickerId>({
         )}
       </span>
     </label>
+  )
+  if (renderExpanded === undefined || !row.selected) return rowView
+  return (
+    <>
+      {rowView}
+      <div className="pb-2 pl-9 pr-3" data-testid="device-picker-expanded">
+        {renderExpanded(row.device.id)}
+      </div>
+    </>
   )
 }

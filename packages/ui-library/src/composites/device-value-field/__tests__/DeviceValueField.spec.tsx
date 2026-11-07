@@ -1,22 +1,39 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { useState } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { type ReactElement, useState } from 'react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DeviceValueField, type DeviceValueFieldProps } from '../device-value-field'
 
-vi.mock('../../device-picker/DevicePicker', () => ({
-  DevicePicker: (p: {
-    devices: readonly { id: number; name: string }[]
-    onChange: (ids: number[]) => void
-  }) => (
-    <div>
-      {p.devices.map((d) => (
-        <button key={d.id} type="button" onClick={() => p.onChange([d.id])}>
-          {d.name}
-        </button>
-      ))}
-    </div>
-  ),
+vi.mock('../../../contexts/system-context.js', () => ({
+  useSystem: () => ({
+    trpcClient: {
+      deviceManager: {
+        listSiteZones: { query: () => new Promise(() => undefined) },
+      },
+    },
+  }),
 }))
+
+/** The REAL picker runs; only the viewport is faked (phone = below `sm`). */
+function setPhone(phone: boolean): void {
+  window.matchMedia = ((query: string) => ({
+    matches: phone && query === '(max-width: 639px)',
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  })) as unknown as typeof window.matchMedia
+}
+
+function renderField(ui: ReactElement) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  const view = render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>)
+  return {
+    rerender: (next: ReactElement) =>
+      view.rerender(<QueryClientProvider client={client}>{next}</QueryClientProvider>),
+  }
+}
 
 const GROUPS = [
   {
@@ -65,89 +82,160 @@ function Stateful({ extra }: { readonly extra: Partial<DeviceValueFieldProps> })
   )
 }
 
-describe('DeviceValueField', () => {
-  it('draws only the rows it is given and no empty group', () => {
-    render(<DeviceValueField {...props({ deviceId: 1 })} />)
-    expect(screen.getByTestId('device-value-power-meter.power')).toBeTruthy()
-    expect(screen.queryByText('Nothing')).toBeNull()
-    expect(screen.queryByText(/incompatible/i)).toBeNull()
+const PICK = { cap: 'power-meter', path: 'power' }
+const TWO_GROUPS = [
+  ...GROUPS,
+  {
+    cap: 'numeric-sensor',
+    title: 'Voltage',
+    rows: [
+      {
+        cap: 'numeric-sensor',
+        path: 'voltage',
+        label: 'Voltage',
+        valueText: '231 V',
+      },
+    ],
+  },
+]
+const mode = () => screen.getByTestId('device-value-field').getAttribute('data-mode')
+
+describe.each([
+  ['phone', true],
+  ['desktop', false],
+])('DeviceValueField on %s', (_name, phone) => {
+  beforeEach(() => setPhone(phone))
+
+  it('create mode starts with the device list, no card', () => {
+    renderField(<DeviceValueField {...props()} />)
+    expect(mode()).toBe('picker')
+    expect(screen.getByText('Porch meter')).toBeTruthy()
+    expect(screen.queryByTestId('device-value-field-change')).toBeNull()
   })
 
-  it('walks the three phone steps and stays on values with nothing to preview', () => {
-    const onValue = vi.fn()
-    const { rerender } = render(
-      <Stateful extra={{ onValueChange: onValue, transform: <i>t</i> }} />,
-    )
-    const root = screen.getByTestId('device-value-field')
-    expect(root.getAttribute('data-step')).toBe('devices')
-    fireEvent.click(screen.getByRole('button', { name: 'Porch meter' }))
-    expect(root.getAttribute('data-step')).toBe('values')
-    fireEvent.click(screen.getByTestId('device-value-power-meter.power'))
-    expect(onValue).toHaveBeenCalledWith({ cap: 'power-meter', path: 'power' })
-    expect(root.getAttribute('data-step')).toBe('preview')
-    fireEvent.click(screen.getByTestId('device-value-field-back'))
-    expect(root.getAttribute('data-step')).toBe('values')
-    rerender(<Stateful key="plain" extra={{}} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Porch meter' }))
-    fireEvent.click(screen.getByTestId('device-value-power-meter.power'))
-    expect(screen.getByTestId('device-value-field').getAttribute('data-step')).toBe('values')
-  })
-
-  it('does not open the preview step while the pick has not been taken as the value', () => {
-    render(
+  it('a chosen source is one compact card with the transform, proposal and preview, no back button', () => {
+    renderField(
       <DeviceValueField
         {...props({
           deviceId: 1,
-          transform: <i>t</i>,
-          onValueChange: () => undefined,
+          value: PICK,
+          transform: <i data-testid="tf">t</i>,
+          proposal: <i data-testid="pr">p</i>,
+          preview: <i data-testid="pv">v</i>,
         })}
       />,
     )
-    fireEvent.click(screen.getByTestId('device-value-power-meter.power'))
-    expect(screen.getByTestId('device-value-field').getAttribute('data-step')).toBe('values')
+    expect(mode()).toBe('card')
+    expect(screen.getByTestId('device-value-field-source').textContent).toBe(
+      'Porch meter·Power8.4 WChange',
+    )
+    expect(screen.getByTestId('tf')).toBeTruthy()
+    expect(screen.getByTestId('pr')).toBeTruthy()
+    expect(screen.getByTestId('pv')).toBeTruthy()
+    expect(screen.queryByTestId('device-value-field-back')).toBeNull()
   })
 
-  it('never reads an unanswered device as empty', () => {
-    render(<DeviceValueField {...props({ deviceId: 1, valuesState: 'loading', groups: [] })} />)
+  it('the card appears when the device resolves after mount', () => {
+    const { rerender } = renderField(
+      <DeviceValueField {...props({ value: PICK, transform: <i data-testid="tf">t</i> })} />,
+    )
+    expect(mode()).toBe('picker')
+    rerender(
+      <DeviceValueField
+        {...props({
+          deviceId: 1,
+          value: PICK,
+          transform: <i data-testid="tf">t</i>,
+        })}
+      />,
+    )
+    expect(mode()).toBe('card')
+    expect(screen.getByTestId('tf')).toBeTruthy()
+  })
+
+  it('Change opens the picker, a pick returns to the card with the new value', () => {
+    const onValue = vi.fn()
+    function Host() {
+      const [value, setValue] = useState<DeviceValueFieldProps['value']>(PICK)
+      return (
+        <DeviceValueField
+          {...props({
+            deviceId: 1,
+            value,
+            groups: TWO_GROUPS,
+            onValueChange: (pick) => {
+              onValue(pick)
+              setValue(pick)
+            },
+          })}
+        />
+      )
+    }
+    renderField(<Host />)
+    fireEvent.click(screen.getByTestId('device-value-field-change'))
+    expect(mode()).toBe('picker')
+    fireEvent.click(screen.getByTestId('device-value-numeric-sensor.voltage'))
+    expect(onValue).toHaveBeenCalledWith({
+      cap: 'numeric-sensor',
+      path: 'voltage',
+    })
+    expect(mode()).toBe('card')
+    expect(screen.getByTestId('device-value-field-source').textContent).toContain('231 V')
+  })
+
+  it('Cancel returns to the unchanged card', () => {
+    renderField(<DeviceValueField {...props({ deviceId: 1, value: PICK })} />)
+    fireEvent.click(screen.getByTestId('device-value-field-change'))
+    fireEvent.click(screen.getByTestId('device-value-field-cancel'))
+    expect(mode()).toBe('card')
+  })
+
+  it('never lists an empty group and never reads an unanswered device as empty', () => {
+    renderField(<DeviceValueField {...props({ deviceId: 1 })} />)
+    expect(screen.queryByText('Nothing')).toBeNull()
+    expect(screen.getByTestId('device-value-power-meter.power')).toBeTruthy()
+    renderField(
+      <DeviceValueField {...props({ deviceId: 1, valuesState: 'loading', groups: [] })} />,
+    )
     expect(screen.getByRole('status')).toBeTruthy()
     expect(screen.queryByText('No fitting value')).toBeNull()
   })
+})
 
-  describe('a device that resolves after mount (change dialog waiting on the fleet)', () => {
-    const PICK = { cap: 'power-meter', path: 'power' }
-    const withDevice = (over: Partial<DeviceValueFieldProps> = {}) =>
-      props({
-        deviceId: 1,
-        value: PICK,
-        transform: <i data-testid="tf">t</i>,
-        ...over,
-      })
+describe('DeviceValueField phone accordion', () => {
+  beforeEach(() => setPhone(true))
 
-    it('moves to preview once the device is known, so the transform is reachable', () => {
-      const { rerender } = render(
-        <DeviceValueField {...withDevice({ deviceId: null, value: PICK })} />,
+  it('opens the picked device values inline, under it, one device at a time', () => {
+    const onValue = vi.fn()
+    function Host() {
+      const [deviceId, setDeviceId] = useState<number | null>(null)
+      const [value, setValue] = useState<DeviceValueFieldProps['value']>(null)
+      return (
+        <DeviceValueField
+          {...props({
+            devices: [
+              { id: 1, name: 'Porch meter' },
+              { id: 2, name: 'Garage lamp' },
+            ],
+            deviceId,
+            onDeviceChange: setDeviceId,
+            value,
+            onValueChange: (pick) => {
+              onValue(pick)
+              setValue(pick)
+            },
+          })}
+        />
       )
-      const root = screen.getByTestId('device-value-field')
-      expect(root.getAttribute('data-step')).toBe('devices')
-      rerender(<DeviceValueField {...withDevice()} />)
-      expect(root.getAttribute('data-step')).toBe('preview')
-      expect(screen.getByTestId('tf')).toBeTruthy()
-      expect(screen.getByTestId('device-value-field-preview').className).not.toContain('hidden')
-    })
-
-    it('does not override the operator once they navigated', () => {
-      const { rerender } = render(<DeviceValueField {...withDevice({ deviceId: null })} />)
-      rerender(<DeviceValueField {...withDevice()} />)
-      fireEvent.click(screen.getByTestId('device-value-field-back'))
-      const root = screen.getByTestId('device-value-field')
-      expect(root.getAttribute('data-step')).toBe('values')
-      rerender(<DeviceValueField {...withDevice({ valuesState: 'loading' })} />)
-      expect(root.getAttribute('data-step')).toBe('values')
-    })
-
-    it('a new source (no device, no value) still starts at devices', () => {
-      render(<DeviceValueField {...props()} />)
-      expect(screen.getByTestId('device-value-field').getAttribute('data-step')).toBe('devices')
-    })
+    }
+    renderField(<Host />)
+    expect(screen.queryByTestId('device-value-power-meter.power')).toBeNull()
+    fireEvent.click(screen.getByRole('radio', { name: /Porch meter/ }))
+    expect(screen.getAllByTestId('device-value-field-values')).toHaveLength(1)
+    fireEvent.click(screen.getByRole('radio', { name: /Garage lamp/ }))
+    expect(screen.getAllByTestId('device-value-field-values')).toHaveLength(1)
+    fireEvent.click(screen.getByTestId('device-value-power-meter.power'))
+    expect(onValue).toHaveBeenCalledWith(PICK)
+    expect(mode()).toBe('card')
   })
 })

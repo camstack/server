@@ -75,7 +75,7 @@ export type {
 export { useDoorbellEvents } from './use-doorbell-events'
 export { useEventInvalidation } from './use-event-invalidation'
 export { useEventStreamLatest, useEventStreamMap } from './use-event-stream'
-export { useIsMidWidth, useIsMobile } from './use-is-mobile'
+export { useIsMidWidth, useIsMobile, useIsPhone } from './use-is-mobile'
 export type { LiveBuffer } from './use-live-buffer'
 export { useLiveBuffer } from './use-live-buffer'
 export { type LiveEventCallback, useLiveEvent } from './use-live-event'

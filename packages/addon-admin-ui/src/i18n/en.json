@@ -9459,7 +9459,8 @@
       "noDevice": "Pick a device to see its values.",
       "noValues": "This device has no value that fits.",
       "cancel": "Cancel",
-      "use": "Use this value"
+      "use": "Use this value",
+      "change": "Change"
     },
     "optimistic": {
       "refusedTitle": "The device refused the change"

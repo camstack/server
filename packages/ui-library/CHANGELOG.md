@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The device-to-value picker now reaches the editable fields of an existing source in the change dialog even when the device resolves after the dialog opens
+- The device-to-value picker shows a chosen source as one compact card at every width (source row with Change, editable transform, proposal, preview); on a phone, picking is one device list that opens the fitting values inline; DevicePicker gains renderExpanded
 
 ## [1.2.397] - 2026-11-07
 

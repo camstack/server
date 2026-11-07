@@ -71,6 +71,8 @@ export interface SourceSelectorScalarProps {
   readonly transform: ScalarTransformDraft
   /** The host's pre-save "would read" line (the transform applied); absent shows what the source reads now. */
   readonly preview?: ReactNode
+  /** A suggestion for the transform, drawn right under its fields. */
+  readonly proposal?: ReactNode
   readonly onDeviceChange: (device: PickerDevice | null) => void
   readonly onFieldChange: (field: SourceFieldPick | null) => void
   readonly onTransformChange: (next: ScalarTransformDraft) => void
@@ -440,6 +442,7 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
         ) : undefined
       }
       transform={transform}
+      proposal={props.kind === 'scalar' ? props.proposal : undefined}
       alwaysShowPreview={props.kind === 'event'}
       preview={preview}
       noDeviceText={t('customize.sourceSelector.noDevice')}

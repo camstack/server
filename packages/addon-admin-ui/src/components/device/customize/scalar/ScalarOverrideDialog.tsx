@@ -187,8 +187,12 @@ function DialogForm(props: ScalarOverrideDialogProps & { readonly heading: strin
           }}
           onTransformChange={setTransform}
           preview={preview === null ? undefined : <ScalarPreviewLine preview={preview} />}
+          proposal={
+            proposal === null ? undefined : (
+              <RunningProposalLine state={proposal} onApply={setTransform} />
+            )
+          }
         />
-        {proposal !== null && <RunningProposalLine state={proposal} onApply={setTransform} />}
       </DialogBody>
       <DialogFooter className="flex flex-wrap gap-2">
         <Button variant="ghost" onClick={props.onClose}>

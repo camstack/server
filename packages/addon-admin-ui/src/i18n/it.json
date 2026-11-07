@@ -9481,7 +9481,8 @@
       "noDevice": "Scegli un dispositivo per vedere i suoi valori.",
       "noValues": "Questo dispositivo non ha valori adatti.",
       "cancel": "Annulla",
-      "use": "Usa questo valore"
+      "use": "Usa questo valore",
+      "change": "Cambia"
     },
     "optimistic": {
       "refusedTitle": "Il dispositivo ha rifiutato la modifica"

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 
+const PHONE_QUERY = '(max-width: 639px)'
 const MOBILE_QUERY = '(max-width: 767px)'
 /**
  * Mid breakpoint — below this width the sidebar collapses to an
@@ -54,4 +55,13 @@ export function useIsMobile(): boolean {
  */
 export function useIsMidWidth(): boolean {
   return useSyncExternalStore(subscribeQuery(MID_QUERY), getSnapshot(MID_QUERY), getServerSnapshot)
+}
+
+/** True below Tailwind's `sm` (640px): the phone layout, for markup that must not be mounted twice. */
+export function useIsPhone(): boolean {
+  return useSyncExternalStore(
+    subscribeQuery(PHONE_QUERY),
+    getSnapshot(PHONE_QUERY),
+    getServerSnapshot,
+  )
 }

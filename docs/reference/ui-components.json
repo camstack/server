@@ -589,7 +589,7 @@
       "need": "Pick ONE device value (device, then cap, then field; only what fits)",
       "admin": "`DeviceValueField` + `useDeviceValueSource`; as a `{{dev:<stableId>/<cap>.<field>}}` chip, `DeviceValueTokenField`",
       "viewer": "`DevicePicker`, a second value list",
-      "notes": "Never lists an incompatible device or value. Three steps on a phone. Adapters add what the pick means (a transform and a preview, or a token)"
+      "notes": "Never lists an incompatible device or value. A chosen source is one compact card (source row with Change, transform, proposal, preview); picking is two columns from `sm`, one accordion list on a phone. Adapters add what the pick means (a transform and a preview, or a token)"
     },
     {
       "need": "Pick a timezone / icon / unit / model",
@@ -4257,6 +4257,12 @@
           "doc": "Stretch to the height of a flex parent and scroll the rows inside the panel, instead of capping the list at a fixed height. Needs a parent w"
         },
         {
+          "name": "renderExpanded",
+          "type": "(id: Id) => ReactNode",
+          "optional": true,
+          "doc": "Content drawn right under a SELECTED row (a single-selection list that opens the picked device's details inline, one at a time)."
+        },
+        {
           "name": "lockedIds",
           "type": "readonly Id[]",
           "optional": true,
@@ -4543,7 +4549,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-value-field/device-value-field.tsx",
-      "summary": "The ONE device → value picker: a device list, the values that fit, and what the pick will read. Two columns from `sm`; on a phone three steps (devices, values, preview). A value or device that does not fit is never of…",
+      "summary": "The ONE device → value picker. With a source already chosen (a device AND a value) it is one compact card at every width: the source row with a Change button, the transform slot, the proposal slot and the \"would read\"…",
       "props": [
         {
           "name": "devices",
@@ -4624,6 +4630,12 @@
           "doc": "Transform (as is / scale / threshold / map) and its parameters."
         },
         {
+          "name": "proposal",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "The suggestion line under the transform (a proposed threshold with its Apply)."
+        },
+        {
           "name": "preview",
           "type": "ReactNode",
           "optional": true,
@@ -4684,34 +4696,6 @@
           "doc": "The host gives a definite height: the columns scroll on their own."
         }
       ]
-    },
-    {
-      "name": "deviceValueInitialStep",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-value-field/device-value-steps.ts",
-      "summary": "A dialog that opens on a stored pick shows its values, not the empty list."
-    },
-    {
-      "name": "deviceValueStepAfterDevice",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-value-field/device-value-steps.ts",
-      "summary": "Choosing a device opens its values; clearing it returns to the list."
-    },
-    {
-      "name": "deviceValueStepAfterValue",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-value-field/device-value-steps.ts",
-      "summary": "Choosing a value opens the preview (transform and \"would read\")."
-    },
-    {
-      "name": "deviceValueStepBack",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-value-field/device-value-steps.ts",
-      "summary": "Back goes one step towards the device list and stops there."
     },
     {
       "name": "DeviceValueTokenField",
@@ -13421,6 +13405,13 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-is-mobile.ts",
       "summary": ""
+    },
+    {
+      "name": "useIsPhone",
+      "kind": "hook",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-is-mobile.ts",
+      "summary": "True below Tailwind's `sm` (640px): the phone layout, for markup that must not be mounted twice."
     },
     {
       "name": "useItemFormUrl",
