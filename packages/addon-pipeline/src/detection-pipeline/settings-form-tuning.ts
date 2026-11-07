@@ -3,14 +3,14 @@ import { type RuntimeId, type RuntimePoolProfile, tuningFor } from './runtimes.j
 
 /**
  * The live and per-backend values laid into the detection-pipeline settings forms. The scoped
- * hooks (`clusterSettingsSchema`, `nodeSettingsSchema`) and `getGlobalSettings` (which re-tunes
- * the executor form for the node that asks) share them.
+ * hooks (`clusterSettingsSchema`, `nodeSettingsSchema`) and `scopedSettingsOverlay` (which
+ * offers the tuned defaults for the node that asks) share them.
  */
 
 /**
  * Slider keys on the "Inference executor" section that map 1:1 onto a
  * {@link RuntimePoolProfile} field. Used to inject the node-default runtime's
- * registry value as the field's suggested default in `getGlobalSettings`.
+ * registry value as the field's suggested default in the executor form.
  */
 const PROFILE_SLIDER_KEYS = [
   'concurrency',

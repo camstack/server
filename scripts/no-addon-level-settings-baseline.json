@@ -10,7 +10,6 @@
       "packages/addon-admin-ui/src/components/pipeline/placement-board/board-model.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
       "packages/addon-model-studio/src/ui/api.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
       "packages/addon-pipeline/src/audio-analyzer/addons/analyzer/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings, updateGlobalSettings]",
-      "packages/addon-pipeline/src/detection-pipeline/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
       "packages/addon-post-analysis/src/pipeline-analytics/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings, getGlobalSettings]",
       "packages/system/src/builtins/system-config/system-config.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings, updateGlobalSettings]"
     },

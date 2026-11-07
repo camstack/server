@@ -122,9 +122,9 @@ describe('the detection pipeline scoped settings', () => {
     const store: Record<string, unknown> = { 'numWorkers@macmini': 7, 'windowMs@hub': 5 }
     addon = new Probe()
     await addon.initialize(fakeContext('hub', store))
-    const mac = await addon.getGlobalSettings(undefined, undefined, 'macmini')
+    const mac = await addon.getScopedSettings('node', 'pipeline-executor', 'macmini')
     expect(fieldValue(mac, 'numWorkers')).toBe(7)
-    const hub = await addon.getGlobalSettings(undefined, undefined, 'hub')
+    const hub = await addon.getScopedSettings('node', 'pipeline-executor', 'hub')
     expect(fieldValue(hub, 'windowMs')).toBe(5)
     expect(fieldValue(hub, 'numWorkers')).not.toBe(7)
   })

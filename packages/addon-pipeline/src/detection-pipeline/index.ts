@@ -9,16 +9,15 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import type {
   ConfigUISchema,
-  ConfigUISchemaWithValues,
   ModelCatalogEntry,
   ProviderRegistration,
+  ScopedSettingsScope,
 } from '@camstack/types'
 import {
   BaseAddon,
   createEvent,
   detectionPipelineCapability,
   EventCategory,
-  hydrateSchema,
   loadContributionCapability,
   pipelineExecutorCapability,
 } from '@camstack/types'
@@ -130,8 +129,8 @@ export { shouldInstallOpenvino, shouldInstallWebgpu } from './runtimes.js'
 //
 // Engine SELECTION is not an operator choice and has no persisted key: each
 // node runs a device-array of inference pools and the node-default pool derives
-// live from that node's hardware. `getGlobalSettings()` is overridden only to
-// compute hardware-driven suggested defaults and the substitutions readout.
+// live from that node's hardware. `scopedSettingsOverlay` computes the
+// hardware-driven suggested defaults of the node whose form is asked for.
 
 type BatchMode = PoolBatchMode
 
@@ -155,7 +154,7 @@ interface DetectionPipelineConfig {
   readonly concurrency: number
   /**
    * Pool batch dispatch strategy. The suggested default is injected by
-   * `getGlobalSettings(overlay)` from the node's DERIVED default runtime
+   * `scopedSettingsOverlay` from the node's DERIVED default runtime
    * (`pickBestRuntime`), not from any persisted engine selection.
    *   - 'none'   : one predict_fn per item (no batching)
    *   - 'list'   : MSG_INFER_BATCH dispatched as `model.predict([{},{}...])`
@@ -188,7 +187,7 @@ interface DetectionPipelineConfig {
    * format, so a compatible default is running instead (format:
    * `"<addonId>: <chosen>→<running>"`, comma-joined). Empty when every
    * step's chosen model matches this node's format. Computed live in
-   * `getGlobalSettings` from `provider.getActiveModelSubstitutions()`;
+   * the cluster declaration from `provider.getActiveModelSubstitutions()`;
    * never persisted.
    */
   readonly activeModelSubstitutions: string
@@ -231,7 +230,7 @@ function stableEngineKey(engines: readonly unknown[]): string {
 /**
  * Probe result for a TARGET node: the gpu/npu detail plus the probed node's
  * OWN `platform`/`arch` (carried by `PlatformCapabilities.hardware`). The hub
- * addon serves `getGlobalSettings` for every node, and the platform-compat
+ * addon serves the scoped form of every node, and the platform-compat
  * snap-back there is only correct against the TARGET node's platform — using
  * the serving hub's `process.platform` let an impossible backend (openvino on
  * a darwin agent) pass the check (CB3 guard gap #1). `platform`/`arch` are
@@ -317,8 +316,7 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
 
   /**
    * The cluster-wide part of the form: the read-only model-substitution readout. The live value
-   * is injected here, at request time, so the form is true without a `getGlobalSettings` override
-   * for it.
+   * is injected here, at request time, so the form is true without an overlay.
    */
   protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
     if (cap !== 'detection-pipeline') return null
@@ -375,7 +373,7 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
   /**
    * The per-node part of the form: the Inference-executor knobs. The suggested defaults are the
    * matrix-tuned row of this node's derived backend; a form opened for ANOTHER node is re-tuned
-   * for that node in {@link getGlobalSettings} (a scoped hook is not told which node asks).
+   * for that node by {@link scopedSettingsOverlay}, which is told which node asks.
    */
   protected override async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
     if (cap !== 'pipeline-executor') return null
@@ -509,58 +507,43 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
   }
 
   /**
-   * Override to inject the read-only model-substitution status + the
-   * per-backend tuning-slider defaults.
+   * The suggested slider/select defaults of the node whose executor form is being served.
    *
-   * Engine SELECTION is no longer operator-facing (the elected single-engine
-   * cascade was removed): each node runs a device-array of inference pools
-   * balanced per-session, and the node-default pool is derived live from the
-   * node's own hardware. So this override no longer offers a backend/device
-   * dropdown or a probed/active-engine readout — it only:
-   *   1. resolves the node's derived-default backend (via the probe) to suggest
-   *      the matrix-tuned slider defaults that won the bench for that backend, and
-   *   2. surfaces the live `activeModelSubstitutions` readout.
+   * Engine SELECTION is not operator-facing: each node runs a device-array of inference pools and
+   * the node-default pool derives live from that node's hardware. The scoped declaration lays in
+   * the matrix-tuned row of THIS instance's node; the hub addon answers for every node, so the form
+   * of another node needs that node's row. The overlay is told which node asks, probes ITS
+   * hardware, and offers the tuned default for each key the node has not stored. A stored value is
+   * never overlaid (the overlay would win over it). The substitution readout needs no overlay: the
+   * cluster declaration reads it live.
+   *
+   * Not reachable from here: the slider MAX (`concurrency` is capped lower on CoreML) lives in the
+   * declared schema, which is built without a node, so it follows this instance's node.
    */
-  override async getGlobalSettings(
-    overlay?: Record<string, unknown>,
-    _cap?: string,
+  protected override async scopedSettingsOverlay(
+    scope: ScopedSettingsScope,
+    cap: string,
     nodeId?: string,
-  ): Promise<ConfigUISchemaWithValues | null> {
-    // The hub addon answers for every node, so resolve the REQUESTED node's
-    // hardware (not this instance's). Falls back to self for a node-agnostic
-    // caller.
+  ): Promise<Record<string, unknown> | null> {
+    if (scope !== 'node' || cap !== 'pipeline-executor') return null
     const targetNode = nodeId ? normalizeEngineNodeId(nodeId) : this.localNodeId()
-    // ctx-not-wired guard: during the ~1s restart window the settings store
-    // isn't readable yet. Return null so callers keep the last-known view rather
-    // than serving fabricated empty-store defaults. (There is no longer a
-    // persisted per-node engine selection to protect — an empty store is a
-    // harmless genuine first boot; only the truly-unreadable case returns null.)
-    const rawStored = await this.resolveUiSettingsStore(targetNode)
-    if (rawStored === null) return null
-    const merged = overlay ? { ...rawStored, ...overlay } : rawStored
-
-    // The node's derived-default backend drives ONLY the suggested tuning
-    // defaults (the matrix-tuned per-backend slider values) — never an operator
-    // engine election. Probe the TARGET node's hardware and derive its default
-    // runtime the same way the provider does at boot.
+    // ctx-not-wired guard: mid-restart the store is unreadable; no overlay beats a fabricated one.
+    const stored = await this.resolveUiSettingsStore(targetNode)
+    if (stored === null) return null
+    const schema = await this.nodeSettingsSchema(cap)
+    if (schema === null) return null
     const env = await this.probeHardwareEnv(targetNode)
-    const backend: RuntimeId = pickBestRuntime(env, null).runtimeId
-
-    // Live node-local model-substitution readout (a step's chosen model has no
-    // build for this node's format → a compatible default is running instead).
-    const activeModelSubstitutions = this.activeModelSubstitutionsText()
-    const raw = { ...merged, activeModelSubstitutions }
-
-    // The scoped hooks answer without a node, so the executor form is re-tuned here for the
-    // TARGET node: the suggested defaults are the registry row of its DEFAULT runtime. A UI hint
-    // only, and only for that one pool: a node runs a pool per accelerator and each resolves its
-    // own runtime's row at build time (`engine/pool-provisioning.ts`). A value the operator sets
-    // here is an override and applies to every pool on the node.
-    const cluster = await this.clusterSettingsSchema('detection-pipeline')
-    const executor = await this.nodeSettingsSchema('pipeline-executor')
-    const sections = [...(cluster?.sections ?? []), ...(executor?.sections ?? [])]
-    const patched = withBackendTuning({ sections }, backend)
-    return hydrateSchema(patched, raw)
+    const tuned = withBackendTuning(schema, pickBestRuntime(env, null).runtimeId)
+    const suggested: Record<string, unknown> = {}
+    for (const section of tuned.sections) {
+      for (const field of section.fields) {
+        if (!('key' in field) || stored[field.key] !== undefined) continue
+        if (field.type !== 'slider' && field.type !== 'select') continue
+        if (field.default !== undefined && field.default !== '')
+          suggested[field.key] = field.default
+      }
+    }
+    return suggested
   }
 
   /** The live "step: chosen→running" readout of this node's model substitutions, or ''. */
@@ -582,7 +565,7 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
   /**
    * Resolve the persisted UI settings store, or `null` when it can't be read
    * right now (ctx/settings not wired — mid-restart). A readable-but-empty
-   * store (genuine first boot) returns `{}`, never null. `getGlobalSettings`
+   * store (genuine first boot) returns `{}`, never null. `scopedSettingsOverlay`
    * uses the null signal to avoid serving fabricated empty-store defaults
    * during the restart window. Seam kept protected so tests can drive the
    * unreadable vs empty vs populated cases without faking a full AddonContext.
@@ -612,7 +595,7 @@ export default class DetectionPipelineAddon extends BaseAddon<DetectionPipelineC
     if (hardware) this.lastGoodHardwareByNode.set(node, hardware)
     const effective = hardware ?? this.lastGoodHardwareByNode.get(node) ?? null
     // platform/arch must describe the TARGET node, not the serving instance:
-    // the hub addon answers `getGlobalSettings` for every node, and the
+    // the hub addon answers the scoped form of every node, and the
     // snap-back there rejects platform-impossible backends (openvino on
     // darwin) — a check that is only correct against the PROBED node's
     // platform (F3/CB3).

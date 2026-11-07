@@ -115,7 +115,8 @@ class TestDetectionPipelineAddon extends DetectionPipelineAddon {
     return []
   }
 
-  protected override async probeHardwareEnv(): Promise<RuntimeEnv> {
+  protected override async probeHardwareEnv(nodeId?: string): Promise<RuntimeEnv> {
+    if (nodeId === 'hub') return { platform: 'linux', arch: 'x64', hardware: null }
     return { platform: 'darwin', arch: 'arm64', hardware: null }
   }
 }
@@ -144,7 +145,7 @@ describe('detection-pipeline — Inference executor is per-node', () => {
   it('every Inference-executor field declares perNode: true', async () => {
     const { ctx } = makeFakeContext('hub')
     await addon!.initialize(ctx)
-    const schema = await addon!.getGlobalSettings(undefined, undefined, 'hub')
+    const schema = await addon!.getScopedSettings('node', 'pipeline-executor', 'hub')
     const section = schema?.sections.find((s) => s.id === 'inference-executor')
     expect(section).toBeDefined()
     const keys = (section?.fields ?? [])
@@ -171,14 +172,28 @@ describe('detection-pipeline — Inference executor is per-node', () => {
     })
     await addon!.initialize(ctx)
 
-    const mac = await addon!.getGlobalSettings(undefined, undefined, 'macmini')
+    const mac = await addon!.getScopedSettings('node', 'pipeline-executor', 'macmini')
     expect(fieldValue(mac, 'numWorkers')).toBe(2)
     expect(fieldValue(mac, 'concurrency')).toBe(3)
 
     // The hub has no scoped key ⇒ the CoreML registry suggestion (1), which is
     // "Auto". Emphatically not the macmini's 2 and not the stale bare 8.
-    const hub = await addon!.getGlobalSettings(undefined, undefined, 'hub')
+    const hub = await addon!.getScopedSettings('node', 'pipeline-executor', 'hub')
     expect(fieldValue(hub, 'numWorkers')).toBe(1)
+  })
+
+  it('the form of ANOTHER node is tuned for THAT node hardware (overlay carries the asking nodeId); a stored value wins', async () => {
+    const { ctx } = makeFakeContext('hub', { 'concurrency@agent-b': 2 })
+    await addon!.initialize(ctx)
+    const mac = await addon!.getScopedSettings('node', 'pipeline-executor', 'macmini')
+    const hub = await addon!.getScopedSettings('node', 'pipeline-executor', 'hub')
+    const stored = await addon!.getScopedSettings('node', 'pipeline-executor', 'agent-b')
+    // CoreML registry row (macmini) vs the ONNX row (hub): different suggested defaults.
+    expect(fieldValue(mac, 'concurrency')).toBe(1)
+    expect(fieldValue(hub, 'concurrency')).toBe(4)
+    expect(fieldValue(mac, 'windowMs')).toBe(8)
+    expect(fieldValue(hub, 'windowMs')).toBe(2)
+    expect(fieldValue(stored, 'concurrency')).toBe(2)
   })
 
   it('updateGlobalSettings persists under the TARGET node key and never the bare one', async () => {
