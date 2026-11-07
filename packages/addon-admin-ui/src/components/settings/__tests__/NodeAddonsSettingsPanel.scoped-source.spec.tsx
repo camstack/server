@@ -9,7 +9,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ConfigUISchemaWithValues } from '@camstack/types'
+import type { ConfigUISchemaWithValues, ScopedSettingsDeclaration } from '@camstack/types'
 
 function form(
   sectionId: string,
@@ -46,7 +46,7 @@ const TWO_CAP_ADDON = [
   { cap: 'cap-b', scope: 'node' as const, sectionIds: ['node-b'] },
 ]
 
-let listed: ReadonlyArray<(typeof TWO_CAP_ADDON)[number]> | null = TWO_CAP_ADDON
+let listed: readonly ScopedSettingsDeclaration[] | null = TWO_CAP_ADDON
 const listScopedSettings = vi.fn(async () => listed)
 const getScopedSettings = vi.fn(async (input: { cap: string; scope: string }) => {
   return FORMS[`${input.cap}:${input.scope}`] ?? null
