@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.790",
+  "version": "1.2.791",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,21 +66,14 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.602",
-        "@camstack/addon-agent-ui": ">=1.2.337",
-        "@camstack/addon-ai": ">=0.4.180",
-        "@camstack/addon-auth": ">=1.2.178",
-        "@camstack/addon-export-alexa": ">=1.2.187",
-        "@camstack/addon-export-google": ">=0.1.130",
-        "@camstack/addon-export-hap": ">=1.2.196",
-        "@camstack/addon-google-services": ">=0.2.43",
-        "@camstack/addon-import-alexa": ">=0.2.195",
-        "@camstack/addon-notifiers": ">=1.2.633",
-        "@camstack/addon-post-analysis": ">=1.2.677",
-        "@camstack/addon-provider-homeassistant": ">=1.2.670",
-        "@camstack/addon-remote-storage": ">=1.2.146",
-        "@camstack/addon-tailscale": ">=1.2.153",
-        "@camstack/addon-waste-collections": ">=0.1.37"
+        "@camstack/addon-admin-ui": ">=1.2.603",
+        "@camstack/addon-agent-ui": ">=1.2.338",
+        "@camstack/addon-decoder-nodeav": ">=1.2.148",
+        "@camstack/addon-export-alexa": ">=1.2.188",
+        "@camstack/addon-export-hap": ">=1.2.197",
+        "@camstack/addon-pipeline": ">=1.2.645",
+        "@camstack/addon-post-analysis": ">=1.2.678",
+        "@camstack/addon-provider-homeassistant": ">=1.2.671"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

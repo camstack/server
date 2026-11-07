@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.516] - 2026-11-07
+
 ### Changed
 
 - Addons get a typed scoped settings API (cluster, per-node, device defaults, per-node state) beside the old global settings calls, which keep working.

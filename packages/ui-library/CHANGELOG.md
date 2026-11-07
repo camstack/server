@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.396] - 2026-11-07
+
 ### Changed
 
 - Generated hooks for the new scoped addon settings calls.

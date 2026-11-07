@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.148] - 2026-11-07
+
 ### Changed
 
 - Internal: its stored state is now read and written through the typed state API under the same storage key; nothing changes for the operator.
