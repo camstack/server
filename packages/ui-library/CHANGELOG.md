@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.398] - 2026-11-07
+
 ### Changed
 
 - The device-to-value picker now reaches the editable fields of an existing source in the change dialog even when the device resolves after the dialog opens

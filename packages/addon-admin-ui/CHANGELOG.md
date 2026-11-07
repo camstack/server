@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.608] - 2026-11-07
+
 ### Changed
 
 - Customize change dialog: the source, the threshold fields and the proposal with Apply sit in one compact card, so editing an existing source works on a phone

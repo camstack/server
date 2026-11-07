@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.228] - 2026-11-07
+
 ### Changed
 
 - The generated compose and install rules no longer map or mention /config
