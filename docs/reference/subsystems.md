@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 8201 source files · 1286 file(s) in no subsystem.**
+**31 subsystems · 8203 source files · 1287 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -31,7 +31,7 @@ commits. A generated page may not.
 | Decode and the data planes | 81 | `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, +29 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 143 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, +63 more, 5 ADRs | 2026-10-24 | ✅ |
 | Pipeline orchestration and placement | 202 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, +105 more, 27 ADRs | 2026-11-02 | ✅ |
-| Post-analysis — tracking, the confirmation gate and media | 506 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +176 more, 29 ADRs | 2026-10-14 | ✅ |
+| Post-analysis — tracking, the confirmation gate and media | 507 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +176 more, 29 ADRs | 2026-10-14 | ✅ |
 | Face, plate and embedding recognition | 50 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +27 more, 4 ADRs | 2026-10-04 | ⚠️ |
 | Notification Center — rules, outbox, occupancy, timelapse | 284 | `architecture/notifications.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, +94 more, 27 ADRs | 2026-10-07 | ✅ |
 | Recorder, scrub and recorded playback | 140 | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-25-reference-scrub-teardown-and-plan.md` _(covers)_, +94 more, 19 ADRs | 2026-11-02 | ⚠️ |
@@ -135,7 +135,7 @@ Everything that happens after the pipeline emits a frame: tracks, the confirmati
 
 - **Owner doc**: `docs/architecture/post-analysis.md`
 - **Code**: `packages/addon-post-analysis/src/pipeline-analytics/**`, `packages/addon-post-analysis/src/shared/**`, `packages/addon-post-analysis/src/durable/**`, `packages/addon-post-analysis/src/_analytics-schemas/**`, `packages/addon-post-analysis/python/**`, `packages/types/src/media/**`
-- **Files**: 506 (500 claimed by some document)
+- **Files**: 507 (501 claimed by some document)
 - **Uncovered**: `packages/addon-post-analysis/python` (6)
 
 ### ⚠️ Face, plate and embedding recognition

@@ -14,14 +14,14 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**240 units · 8201 source files · 234 units claimed by at least one document (8171 files).**
+**240 units · 8203 source files · 234 units claimed by at least one document (8173 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
 | `packages/addon-waste-collections` | 1031 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-10-18 |
 | `packages/addon-admin-ui/src/components` | 637 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +81 more, 4 ADRs | 2026-11-02 |
 | `scripts` | 523 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +144 more, 14 ADRs | 2026-11-02 |
-| `packages/addon-post-analysis/src/pipeline-analytics` | 475 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-10-14 |
+| `packages/addon-post-analysis/src/pipeline-analytics` | 476 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-10-14 |
 | `packages/system/src/builtins` | 474 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, +185 more, 21 ADRs | 2026-11-02 |
 | `packages/ui-library/src/composites` | 371 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +54 more, 3 ADRs | 2026-11-02 |
 | `packages/types/src/capabilities` | 230 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +212 more, 41 ADRs | 2026-10-26 |
@@ -168,6 +168,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-alexa/src/migrations` | 5 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +2 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-export-alexa/src/state-reports` | 5 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0776-alexa-state-changes-are-reported-proactively-from-device-state-changed.md`, `decisions/adr-0869-the-alexa-export-maps-caps-through-one-adapter-registry-covers-first-and-shapes-its-reports.md`, +4 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-pipeline/src/motion-wasm` | 5 | `detection-execution` | `decisions/adr-0394-the-motion-area-bar-judges-a-merged-subject-relative-to-the-view.md`, `decisions/adr-1013-one-instance-model.md` | — |
+| `packages/addon-post-analysis/src/migrations` | 5 | — | `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/addon-provider-rtsp` | 5 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0689-a-stream-leaves-the-broker-when-two-catalog-pulls-agree-and-a-provider-restart-retracts-nothing.md` | 2026-10-26 |
 | `packages/addon-static-turn` | 5 | `stream-broker` | `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/cli` | 5 | `tooling` | `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md` | — |
@@ -176,7 +177,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-alexa/src/detection-sensors` | 4 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0772-alexa-detection-sensors-are-motionsensor-endpoints-fed-by-tracks-and-reconciled.md`, `decisions/adr-0778-alexa-detection-sensor-classes-are-chosen-per-camera-from-what-its-pipeline-produces-default-none.md`, +4 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-export-alexa/src/vision` | 4 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0779-alexa-object-detection-and-event-history-ship-as-a-switchable-experiment-on-the-camera-endpoint.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +3 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-post-analysis/src/durable` | 4 | `post-analysis` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0642-a-consumable-is-judged-at-each-rules-threshold-and-tanks-notify.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +1 more, 1 ADR | 2026-10-03 |
-| `packages/addon-post-analysis/src/migrations` | 4 | — | `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/addon-provider-reolink/src/migrations` | 4 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-10-26 |
 | `packages/addon-waste-collections/src/migrations` | 4 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/types/src/helpers` | 4 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |

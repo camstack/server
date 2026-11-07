@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.680] - 2026-11-07
+
 ### Fixed
 
 - A Correct / Wrong tap on a detection notification now saves the frame you were shown as a retraining example, so the track appears on the Training page and in the viewer; taps already made are backfilled at the next boot
