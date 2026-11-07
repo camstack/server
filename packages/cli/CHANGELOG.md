@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.227] - 2026-11-07
+
 ### Changed
 
 - MCP remote-access and environment tools read the addons' scoped settings; configure_remote_access_set now sets only the tunnel's local-origin form, and the tunnel mode, hostname and API token (now on the tunnel instance) and the TURN servers are edited in the admin UI (/system/remote-access, /system/turn)

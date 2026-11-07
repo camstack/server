@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.794",
+  "version": "1.2.795",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,8 +66,12 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-pipeline-orchestrator": ">=1.2.666",
-        "@camstack/addon-post-analysis": ">=1.2.680"
+        "@camstack/addon-admin-ui": ">=1.2.606",
+        "@camstack/addon-import-alexa": ">=0.2.197",
+        "@camstack/addon-model-studio": ">=1.1.345",
+        "@camstack/addon-pipeline": ">=1.2.647",
+        "@camstack/addon-provider-wyze": ">=0.2.169",
+        "@camstack/addon-smtp-nodemailer": ">=1.2.152"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

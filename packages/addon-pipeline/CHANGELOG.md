@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.647] - 2026-11-07
+
 ### Changed
 
 - The Inference executor form of another node now shows the suggested defaults of that node's own hardware, served through the scoped settings overlay

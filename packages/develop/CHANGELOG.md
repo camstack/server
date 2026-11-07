@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.49] - 2026-11-07
+
 ### Changed
 
 - The addon scaffold teaches the scoped settings declaration instead of naming the retired global settings hook
