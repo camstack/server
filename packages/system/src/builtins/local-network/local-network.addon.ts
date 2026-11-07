@@ -321,7 +321,8 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
   /**
    * Persist the keys this addon keeps for itself (the allowlist, the first-boot flag, the saved
    * subnets, the address book): bare keys of the addon store, none of them a declared setting, so
-   * each goes through its own durable handle. The config is read again so the next read sees it.
+   * each goes through its own durable handle. The config is read again so the next read sees it,
+   * and the mDNS advert is re-synced.
    */
   private async saveStored(patch: LocalNetworkStoredPatch): Promise<void> {
     if (patch.allowedAddresses !== undefined) {
@@ -351,6 +352,9 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
       await this.state('internalUrl', z.string(), '').set(patch.internalUrl)
     }
     await this.resolveConfig()
+    // The advert is built from the address book these keys shape (the allowlist filters it), and
+    // a state write runs no onConfigChanged: re-announce here, or the old URL stays advertised.
+    await this.mdns?.sync()
   }
 
   /**
@@ -373,7 +377,6 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
       detectedUrls,
     )
     await this.saveStored(addressBookPatch(after))
-    await this.mdns?.sync()
   }
 
   /** The deprecated `getHubAddresses` shape, from the role resolvers. */

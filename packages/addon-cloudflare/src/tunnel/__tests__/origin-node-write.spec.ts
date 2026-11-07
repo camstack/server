@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return -- AddonContext stub crosses typed boundaries. */
-import type { AddonContext, IScopedLogger, ScopedSettingsScope } from '@camstack/types'
+import type { IScopedLogger, ScopedSettingsScope } from '@camstack/types'
 import { makeInMemoryRecords } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -10,6 +10,7 @@ vi.mock('../ensure-cloudflared.js', () => ({
 }))
 
 import { CloudflareTunnelAddon } from '../cloudflare-tunnel.addon.js'
+import { stubAddonContext } from './addon-context-stub.js'
 import { cloudflareTunnelsKind } from '../tunnel-record-kinds.js'
 
 class WatchedTunnel extends CloudflareTunnelAddon {
@@ -32,7 +33,7 @@ function logger(): IScopedLogger {
     debug: vi.fn(),
     child: vi.fn().mockReturnThis(),
     withTags: vi.fn().mockReturnThis(),
-  } as unknown as IScopedLogger
+  }
 }
 
 describe('CloudflareTunnelAddon: the local origin is written through the node handle', () => {
@@ -50,7 +51,7 @@ describe('CloudflareTunnelAddon: the local origin is written through the node ha
       'localPortMode@hub': 'custom',
       'localPort@hub': 8443,
     }
-    const ctx = {
+    const ctx = stubAddonContext({
       id: 'cloudflare-tunnel',
       logger: logger(),
       records: world.records,
@@ -74,7 +75,7 @@ describe('CloudflareTunnelAddon: the local origin is written through the node ha
           finishMigration: { mutate: vi.fn() },
         },
       },
-    } as unknown as AddonContext
+    })
     const addon = new WatchedTunnel()
     addons.push(addon)
     const result = await addon.initialize(ctx)

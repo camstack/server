@@ -3399,7 +3399,9 @@ export default class PipelineOrchestratorAddon
   }
 
   private async afterClusterWrite(keys: readonly string[]): Promise<void> {
-    await this.deviceConfig!.afterClusterSettingsWritten()
+    // A write that lands after shutdown has nothing left to re-derive.
+    if (this.deviceConfig === null) return
+    await this.deviceConfig.afterClusterSettingsWritten()
     // A cluster row written with a deleted model is reset at once (D725). The sweep's own
     // writes land here too, so a sweep in flight is never re-entered.
     const writesClusterRow = CLUSTER_MODEL_SCOPED_STEPS.some((step) =>

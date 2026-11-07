@@ -6,8 +6,9 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { AddonContext, ILocalNetworkProvider, IScopedLogger } from '@camstack/types'
+import type { ILocalNetworkProvider, IScopedLogger } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { stubAddonContext } from './addon-context-stub.js'
 import { makeMigrationsApi } from './migrations-api.js'
 import { LocalNetworkAddon } from '../local-network.addon.js'
 
@@ -27,7 +28,7 @@ function makeLogger(): IScopedLogger {
 }
 
 async function start(dataDir: string, store: Record<string, unknown>) {
-  const ctx = {
+  const ctx = stubAddonContext({
     id: 'local-network',
     logger: makeLogger(),
     eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => undefined) },
@@ -45,7 +46,7 @@ async function start(dataDir: string, store: Record<string, unknown>) {
       getSection: vi.fn(async () => ({ port: 4443 })),
       setSection: vi.fn(async () => undefined),
     },
-  } as unknown as AddonContext
+  })
   const addon = new LocalNetworkAddon()
   const result = await addon.initialize(ctx)
   const registrations = result && 'providers' in result && result.providers ? result.providers : []
@@ -78,7 +79,7 @@ describe('local-network: the keys it keeps for itself', () => {
     expect(store['scanSubnets']).toEqual(['10.1.0.0/24'])
     expect(store['unrelated']).toBe('keep-me')
     expect(store['bootSeeded']).toBe(true)
-    expect(await provider.getScanSubnets({})).toEqual({ subnets: ['10.1.0.0/24'] })
+    expect(await provider.getScanSubnets()).toEqual({ subnets: ['10.1.0.0/24'] })
   })
 
   it('the first-boot seed writes `bootSeeded` and `allowedAddresses` as bare keys', async () => {
