@@ -62,6 +62,18 @@ if [[ -z "$CHANGED" ]]; then
   exit 0
 fi
 
+# The publish's own changelog gate, graded against the newest publish tag. A
+# branch cut before a publish and merged after it lands its [Unreleased] lines
+# under the heading that publish released — git's merge places them there
+# without a conflict — and the publish then fails at its first gate.
+if [[ ",${CHANGED}," == *"CHANGELOG.md,"* || ",${CHANGED}," == *",packages/"* || ",${CHANGED}," == *",server/"* ]]; then
+  echo "verify:push: changelog entries (against the last publish tag)"
+  if ! npx tsx scripts/check-changelog-unreleased.ts; then
+    echo "verify:push RED — changelog: fix the entries above before pushing"
+    exit 1
+  fi
+fi
+
 # Docs-only changes affect no project.
 CODE_CHANGED=$(echo "$CHANGED" | tr ',' '\n' | grep -v -E '^docs/|\.md$' || true)
 if [[ -z "$CODE_CHANGED" ]]; then

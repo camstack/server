@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A heater, fan or fountain composed on a plug gets a Running row in Customize with a Follow the device's switch toggle
+
 ## [1.2.611] - 2026-11-07
 
 ### Changed
@@ -15,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A device that a camera can link (a light, a sensor, a switch) now shows the cameras on its Customize tab, so you can tick which cameras link it without leaving the device.
 - The passkey relying-party card says the addon did not answer when it is unreachable.
 - The generic addon settings panels read and save the addon's scoped settings (per capability and scope) instead of the addon-level form; an addon that cannot be asked now says it is not available.
-- A heater, fan or fountain composed on a plug gets a Running row in Customize with a Follow the device's switch toggle
 
 ## [1.2.610] - 2026-11-07
 
@@ -148,7 +151,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The integration page has one Add device button: boards and devices found on the network, a scan scoped to the integration and the manual form live in one modal.
 - Deleting a device in the Devices and integration tables shows a Removing… row until the removal has completed, and reports a failure with a toast
-
 
 ## [1.2.592] - 2026-11-05
 
