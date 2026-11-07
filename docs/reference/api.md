@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**201 capabilities · 1464 methods.**
+**201 capabilities · 1465 methods.**
 
 ## Method index
 
@@ -36,6 +36,7 @@
 | `addonSettings.getGlobalSettings` | query | protected | addon-settings |
 | `addonSettings.updateGlobalSettings` | mutation | admin | addon-settings |
 | `addonSettings.getScopedSettings` | query | protected | addon-settings |
+| `addonSettings.listScopedSettings` | query | protected | addon-settings |
 | `addonSettings.updateScopedSettings` | mutation | admin | addon-settings |
 | `addonSettings.readScopedValues` | query | protected | addon-settings |
 | `addonSettings.getIntegrationSettings` | query | protected | addon-settings |
@@ -1566,7 +1567,7 @@
 
 ### `addon-settings` → `addonSettings.*`
 
-- **Source:** `packages/types/src/capabilities/addon-settings.cap.ts:80`
+- **Source:** `packages/types/src/capabilities/addon-settings.cap.ts:87`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton` · nodeIdMode: `data`
 - **Archetypes:** —
 - **Provider interface:** `IAddonSettingsProvider`
@@ -1576,6 +1577,7 @@
 | getGlobalSettings | `addonSettings.getGlobalSettings` | query | protected | `{ addonId: string; nodeId?: string; overlay?: Record<string, unknown>; cap?: string }` | `SettingsSchemaWithValuesSchema \| null` |
 | updateGlobalSettings | `addonSettings.updateGlobalSettings` | mutation | admin | `{ addonId: string; nodeId?: string; patch: SettingsPatchSchema }` | `SettingsUpdateResultSchema` |
 | getScopedSettings | `addonSettings.getScopedSettings` | query | protected | `{ addonId: string; cap: string; scope: "cluster" \| "device-defaults" \| "node"; nodeId?: string }` | `SettingsSchemaWithValuesSchema \| null` |
+| listScopedSettings | `addonSettings.listScopedSettings` | query | protected | `{ addonId: string; nodeId?: string }` | `({ cap: string; scope: "cluster" \| "device-defaults" \| "node"; sectionIds: string[] })[] \| null` |
 | updateScopedSettings | `addonSettings.updateScopedSettings` | mutation | admin | `{ addonId: string; cap: string; scope: "cluster" \| "device-defaults" \| "node"; nodeId?: string; patch: SettingsPatchSchema }` | `SettingsUpdateResultSchema` |
 | readScopedValues | `addonSettings.readScopedValues` | query | protected | `{ addonId: string; cap: string; scope: "cluster" \| "device-defaults" \| "node"; nodeId?: string }` | `Record<string, unknown> \| null` |
 | getIntegrationSettings | `addonSettings.getIntegrationSettings` | query | protected | `{ addonId: string; nodeId?: string }` | `SettingsSchemaWithValuesSchema \| null` |

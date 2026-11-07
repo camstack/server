@@ -270,6 +270,7 @@ export type AddonSettingsMethod =
   | 'getGlobalSettings'
   | 'updateGlobalSettings'
   | 'getScopedSettings'
+  | 'listScopedSettings'
   | 'updateScopedSettings'
   | 'readScopedValues'
   | 'getIntegrationSettings'

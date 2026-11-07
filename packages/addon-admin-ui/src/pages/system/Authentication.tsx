@@ -351,6 +351,10 @@ export function PasskeyRelyingPartyCard(): React.ReactElement {
           cap="login-method"
           scope="cluster"
           sectionIds={[WEBAUTHN_SECTION_ID]}
+          unavailableText={t(
+            'system.authentication.passkeyRpUnavailable',
+            'Not available — the addon that owns these settings did not answer.',
+          )}
           onAfterChange={invalidate}
           bare
         />

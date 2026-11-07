@@ -56,6 +56,7 @@
   "addonSettings.getIntegrationFormSchema": "protected",
   "addonSettings.getIntegrationSettings": "protected",
   "addonSettings.getScopedSettings": "protected",
+  "addonSettings.listScopedSettings": "protected",
   "addonSettings.readScopedValues": "protected",
   "addonSettings.unsetStoredSettingsKeys": "admin",
   "addonSettings.updateDeviceSettings": "admin",

@@ -1,7 +1,7 @@
 import type { z } from 'zod'
 import type { IntegrationInstanceRef } from '../addon/integration-instance-ref.js'
 import type { PackageRequires } from '../addon/package-requires.js'
-import type { ScopedSettingsScope } from '../addon/scoped-settings.js'
+import type { ScopedSettingsDeclaration, ScopedSettingsScope } from '../addon/scoped-settings.js'
 import type { CapabilityDefinition, InferProvider } from '../capabilities/capability-definition.js'
 import type { CustomActionCaller, CustomActionsSpec } from '../capabilities/custom-actions.js'
 import type { SecretsAccess } from '../keychain/secrets-access.js'
@@ -1085,6 +1085,8 @@ export interface ICamstackAddon {
     cap: string,
     nodeId?: string,
   ): Promise<ConfigUISchemaWithValues | null>
+  /** The scoped schemas the addon serves: one entry per loaded (capability, scope). `[]` when none. */
+  listScopedSettings?(): Promise<readonly ScopedSettingsDeclaration[]>
   /** The OPERATOR's write of declared keys of one scope (D787 secret semantics). */
   updateScopedSettings?(
     scope: ScopedSettingsScope,

@@ -46,6 +46,13 @@ const SettingsPatchSchema = z.record(z.string(), z.unknown())
 /** The scope of a scoped-settings call (D986): where the capability declared the values. */
 const ScopedSettingsScopeSchema = z.enum(SCOPED_SETTINGS_SCOPES)
 
+/** One scoped schema an addon serves: its capability, scope and section ids. */
+const ScopedSettingsDeclarationSchema = z.object({
+  cap: z.string(),
+  scope: ScopedSettingsScopeSchema,
+  sectionIds: z.array(z.string()),
+})
+
 /** Standard success response for update operations. */
 const SettingsUpdateResultSchema = z.object({
   success: z.literal(true),
@@ -124,6 +131,13 @@ export const addonSettingsCapability = {
         nodeId: z.string().optional(),
       }),
       SettingsSchemaWithValuesSchema.nullable(),
+    ),
+    // `listScopedSettings` — what the addon actually serves, one entry per loaded (cap, scope)
+    // with that schema's section ids. `[]`: it declares nothing. `null`: the addon is not found
+    // or not running — unknown, never "none" (D315).
+    listScopedSettings: method(
+      z.object({ addonId: z.string(), nodeId: z.string().optional() }),
+      z.array(ScopedSettingsDeclarationSchema).nullable(),
     ),
     updateScopedSettings: method(
       z.object({

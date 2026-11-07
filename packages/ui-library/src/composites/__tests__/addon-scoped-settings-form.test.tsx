@@ -129,4 +129,25 @@ describe('AddonScopedSettingsForm target change', () => {
     await waitFor(() => expect(screen.getByText(/not available/)).toBeTruthy())
     expect(screen.queryByDisplayValue('Default')).toBeNull()
   })
+
+  it("shows the caller's unavailableText instead of the default when the addon answers nothing", async () => {
+    const trpc = {
+      addonSettings: {
+        getScopedSettings: { query: vi.fn(async () => null) },
+        updateScopedSettings: { mutate: vi.fn(async () => ({})) },
+      },
+    }
+    render(
+      <AddonScopedSettingsForm
+        trpc={trpc}
+        addonId="auth-webauthn"
+        cap="login-method"
+        scope="cluster"
+        unavailableText="Custom unavailable line"
+        bare
+      />,
+    )
+    expect(await screen.findByText('Custom unavailable line')).toBeTruthy()
+    expect(screen.queryByText(/not available\./)).toBeNull()
+  })
 })

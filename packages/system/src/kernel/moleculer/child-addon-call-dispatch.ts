@@ -144,6 +144,10 @@ async function dispatchSettings(
         ? ((await addon.getScopedSettings(scope, cap, args.nodeId)) ?? null)
         : null
     }
+    case 'listScopedSettings':
+      return typeof addon.listScopedSettings === 'function'
+        ? ((await addon.listScopedSettings()) ?? null)
+        : null
     case 'updateScopedSettings': {
       const { scope, cap } = requireScopedTarget(addonId, method, args)
       if (typeof addon.updateScopedSettings !== 'function') {

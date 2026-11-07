@@ -9,6 +9,7 @@
  * panels went empty after the UDS migration; that path is gone.
  */
 import { z } from 'zod'
+import { SCOPED_SETTINGS_SCOPES } from '@camstack/types'
 import type {
   ICamstackAddon,
   ConfigUISchema,
@@ -46,6 +47,19 @@ interface ScopedPatchInput extends ScopedGetInput {
 }
 
 const ScopedValuesAnswer = z.record(z.string(), z.unknown())
+
+const ScopedDeclarationsAnswer = z.array(
+  z.object({
+    cap: z.string(),
+    scope: z.enum(SCOPED_SETTINGS_SCOPES),
+    sectionIds: z.array(z.string()),
+  }),
+)
+
+interface AddonNodeInput {
+  readonly addonId: string
+  readonly nodeId?: string
+}
 
 interface IntegrationFormInput {
   readonly addonId: string
@@ -252,6 +266,27 @@ function createAddonSettingsProvider(deps: AddonSettingsProviderDeps): IAddonSet
         },
         input.nodeId,
       )
+    },
+
+    async listScopedSettings(input: AddonNodeInput) {
+      try {
+        if (gateway.isInProcess(input.addonId, input.nodeId)) {
+          const addon = getAddon(input.addonId)
+          if (!addon || typeof addon.listScopedSettings !== 'function') return null
+          const declared = await addon.listScopedSettings()
+          return declared.map((entry) => ({ ...entry, sectionIds: [...entry.sectionIds] }))
+        }
+        const raw = await gateway.callForked(
+          input.addonId,
+          { target: 'settings', method: 'listScopedSettings', args: {} },
+          input.nodeId,
+        )
+        const parsed = ScopedDeclarationsAnswer.safeParse(raw)
+        return parsed.success ? parsed.data : null
+      } catch (err) {
+        if (isServiceNotFoundError(err)) return null
+        throw err
+      }
     },
 
     async updateScopedSettings(input: ScopedPatchInput) {

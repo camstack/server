@@ -46,6 +46,7 @@ export type {
   ResolvedSetting,
   ResolvedSettings,
   ScopedSettings,
+  ScopedSettingsDeclaration,
   ScopedSettingsScope,
   SettingSource,
 } from './addon/scoped-settings.js'

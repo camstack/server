@@ -25,6 +25,7 @@
   "addonSettings.getIntegrationFormSchema": "admin",
   "addonSettings.getIntegrationSettings": "admin",
   "addonSettings.getScopedSettings": "admin",
+  "addonSettings.listScopedSettings": "admin",
   "addonSettings.readScopedValues": "admin",
   "addonSettings.unsetStoredSettingsKeys": "admin",
   "addonSettings.updateDeviceSettings": "admin",

@@ -66,6 +66,8 @@ interface AddonScopedSettingsFormProps {
   /** The `node` scope's node; absent for `cluster` / `device`. */
   readonly nodeId?: string
   readonly title?: string
+  /** Shown instead of the default "{{name}} not available." when the addon answers nothing. */
+  readonly unavailableText?: string
   readonly disabled?: boolean
   readonly onAfterChange?: () => void
   /** Bump to force refetch (e.g. after an external mutation). */
@@ -130,6 +132,7 @@ export function AddonScopedSettingsForm({
   scope,
   nodeId,
   title,
+  unavailableText,
   disabled,
   onAfterChange,
   refreshToken,
@@ -269,9 +272,10 @@ export function AddonScopedSettingsForm({
   if (!hydrated || !schemaNoValues)
     return (
       <div className="text-xs text-foreground-subtle">
-        {t('uiLibrary.addonGlobalSettings.unavailable', '{{name}} not available.', {
-          name: title ?? addonId,
-        })}
+        {unavailableText ??
+          t('uiLibrary.addonGlobalSettings.unavailable', '{{name}} not available.', {
+            name: title ?? addonId,
+          })}
       </div>
     )
 

@@ -48,6 +48,7 @@ import {
 import {
   SCOPED_SETTINGS_SCOPES,
   type ScopedSettings,
+  type ScopedSettingsDeclaration,
   type ScopedSettingsScope,
 } from './scoped-settings.js'
 import { assertDeclaredKeys, createScopedSettings } from './scoped-settings-handle.js'
@@ -955,6 +956,22 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     const overlay = await this.scopedSettingsOverlay(scope, cap, nodeId)
     const values = overlay ? await this.overlayKeepingMarkers(stored, overlay) : stored
     return hydrateSchema(schema, values, { inlineSecretsAsViews: true })
+  }
+
+  /**
+   * The scoped schemas this addon serves: one entry per loaded (capability, scope), capabilities
+   * in declaration order, scopes in {@link SCOPED_SETTINGS_SCOPES} order. `[]` when it declares
+   * nothing.
+   */
+  async listScopedSettings(): Promise<readonly ScopedSettingsDeclaration[]> {
+    await this.loadScopedSchemas()
+    return [...this._scopedByCap].flatMap(([cap, entries]) =>
+      entries.map((entry) => ({
+        cap,
+        scope: entry.scope,
+        sectionIds: entry.schema.sections.map((section) => section.id),
+      })),
+    )
   }
 
   /** The OPERATOR's write of declared keys of one scope (D787 secret semantics). */

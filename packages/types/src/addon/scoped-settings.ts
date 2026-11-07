@@ -17,6 +17,16 @@
 /** The scopes a capability provider declares a schema for. */
 export type ScopedSettingsScope = 'cluster' | 'device-defaults' | 'node'
 
+/**
+ * One scoped schema an addon actually serves: the capability that declares it, the scope, and the
+ * ids of its sections (what a settings surface filters on).
+ */
+export interface ScopedSettingsDeclaration {
+  readonly cap: string
+  readonly scope: ScopedSettingsScope
+  readonly sectionIds: readonly string[]
+}
+
 /** Every scope, in the order the guard and the docs list them. */
 export const SCOPED_SETTINGS_SCOPES: readonly ScopedSettingsScope[] = [
   'cluster',

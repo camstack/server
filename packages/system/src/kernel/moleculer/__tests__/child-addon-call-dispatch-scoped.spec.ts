@@ -91,4 +91,17 @@ describe('scoped settings over the addon-call plane', () => {
       }),
     ).rejects.toThrow(/needs scope and cap/)
   })
+
+  it('listScopedSettings hands back the addon list, [] stays [], a missing method is null', async () => {
+    const declared = [{ cap: 'c', scope: 'node' as const, sectionIds: ['s'] }]
+    const call = {
+      addonId: 'a',
+      target: 'settings' as const,
+      method: 'listScopedSettings' as const,
+      args: {},
+    }
+    expect(await dispatchFor({ listScopedSettings: async () => declared })(call)).toEqual(declared)
+    expect(await dispatchFor({ listScopedSettings: async () => [] })(call)).toEqual([])
+    expect(await dispatchFor({})(call)).toBeNull()
+  })
 })

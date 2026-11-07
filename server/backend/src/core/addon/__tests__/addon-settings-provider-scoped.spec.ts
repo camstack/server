@@ -83,4 +83,39 @@ describe('scoped settings provider methods', () => {
     ])
     forkedMode.on = false
   })
+
+  describe('listScopedSettings', () => {
+    const declared = [{ cap: 'c', scope: 'cluster' as const, sectionIds: ['s'] }]
+
+    it('answers the list of an in-process addon, [] for one that declares nothing', async () => {
+      forkedMode.on = false
+      const some = build({ listScopedSettings: async () => declared })
+      expect(await some.listScopedSettings({ addonId: 'a' })).toEqual(declared)
+      const none = build({ listScopedSettings: async () => [] })
+      expect(await none.listScopedSettings({ addonId: 'a' })).toEqual([])
+    })
+
+    it('answers null (unknown, not none) for an addon that lacks the method', async () => {
+      forkedMode.on = false
+      expect(await build({}).listScopedSettings({ addonId: 'a' })).toBeNull()
+    })
+
+    it('routes a forked addon through the gateway and keeps a malformed answer unknown', async () => {
+      forkedMode.on = true
+      const callForked = vi.fn(async () => declared)
+      const p = build({}, callForked)
+      expect(await p.listScopedSettings({ addonId: 'a', nodeId: 'n1' })).toEqual(declared)
+      expect(callForked).toHaveBeenCalledWith(
+        'a',
+        { target: 'settings', method: 'listScopedSettings', args: {} },
+        'n1',
+      )
+      const bad = build(
+        {},
+        vi.fn(async () => 'garbage'),
+      )
+      expect(await bad.listScopedSettings({ addonId: 'a' })).toBeNull()
+      forkedMode.on = false
+    })
+  })
 })

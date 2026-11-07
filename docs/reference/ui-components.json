@@ -717,6 +717,12 @@
           "doc": ""
         },
         {
+          "name": "unavailableText",
+          "type": "string",
+          "optional": true,
+          "doc": "Shown instead of the default \"{{name}} not available.\" when the addon answers nothing."
+        },
+        {
           "name": "disabled",
           "type": "boolean",
           "optional": true,

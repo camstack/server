@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Log level and retention are per-node settings: existing values are copied to every node known at upgrade, and a node that joins later starts at the default level and retention, not the old cluster-wide value
 - Internal: autotrack and remote-access state is read and written through the typed state API under the same storage key; nothing changes for the operator.
 - Camera grids are now instances on a Camera grids page: the list is kept as records, migrated in place with the same ids and cameras
+- The addon-call plane carries listScopedSettings to forked addons.
 
 ### Removed
 

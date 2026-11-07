@@ -179,6 +179,9 @@ export const useAddonSettingsUpdateGlobalSettings: typeof trpc.addonSettings.upd
 /** Generated alias around `trpc.addonSettings.getScopedSettings.useQuery`. */
 export const useAddonSettingsGetScopedSettings: typeof trpc.addonSettings.getScopedSettings.useQuery = /*#__PURE__*/ alias(() => trpc.addonSettings.getScopedSettings.useQuery)
 
+/** Generated alias around `trpc.addonSettings.listScopedSettings.useQuery`. */
+export const useAddonSettingsListScopedSettings: typeof trpc.addonSettings.listScopedSettings.useQuery = /*#__PURE__*/ alias(() => trpc.addonSettings.listScopedSettings.useQuery)
+
 /** Generated alias around `trpc.addonSettings.updateScopedSettings.useMutation`. */
 export const useAddonSettingsUpdateScopedSettings: typeof trpc.addonSettings.updateScopedSettings.useMutation = /*#__PURE__*/ alias(() => trpc.addonSettings.updateScopedSettings.useMutation)
 
