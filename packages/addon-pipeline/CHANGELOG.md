@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The pipeline runner reads the crop convention, native-lease knobs and cluster step models from the orchestrator's scoped cluster values (same keys, same refresh)
 
+### Fixed
+
+- A change to the scene tile RAM alone now reaches the decode workers without a restart.
+
 ## [1.2.645] - 2026-11-07
 
 ### Changed
