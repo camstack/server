@@ -7,7 +7,7 @@
  */
 import type { EchoPushSink, PushChannelState } from './speak/echo-push.js'
 import type { BrokerEcho } from './speak/broker-echo.js'
-import type { DeviceVolume } from './speak/worker-protocol.js'
+import type { DeviceVolume, PlayerInfo } from './speak/worker-protocol.js'
 
 /** What a device needs of one account's session. */
 export type EchoSession = Pick<
@@ -39,6 +39,14 @@ interface SharedVolumes {
   readonly pending: Promise<ReadonlyMap<string, DeviceVolume>>
 }
 
+/** Members of one speaker group asking for the group's player in the same poll cycle share ONE call. */
+export const GROUP_PLAYER_SHARE_WINDOW_MS = 25_000
+
+interface SharedGroupPlayer {
+  readonly at: number
+  readonly pending: Promise<PlayerInfo>
+}
+
 export type EchoPushListener = () => void
 export type EchoChannelListener = (state: PushChannelState) => void
 
@@ -50,6 +58,7 @@ export class EchoSessionRegistry implements EchoPushSink {
   #resolve: ((brokerId: string) => EchoSession | null) | null = null
   readonly #dnd = new Map<string, SharedDnd>()
   readonly #volumes = new Map<string, SharedVolumes>()
+  readonly #groupPlayers = new Map<string, SharedGroupPlayer>()
 
   setResolver(fn: (brokerId: string) => EchoSession | null): void {
     this.#resolve = fn
@@ -87,9 +96,34 @@ export class EchoSessionRegistry implements EchoPushSink {
     return pending
   }
 
+  /**
+   * The player state of a speaker group, shared by its members within one poll cycle.
+   * A failed read is not kept for the next member.
+   */
+  groupPlayer(
+    brokerId: string,
+    group: { readonly id: string; readonly deviceType: string },
+    now: number,
+    deviceId?: number,
+  ): Promise<PlayerInfo> {
+    const key = `${brokerId}\u0000${group.id}`
+    const shared = this.#groupPlayers.get(key)
+    if (shared !== undefined && now - shared.at < GROUP_PLAYER_SHARE_WINDOW_MS)
+      return shared.pending
+    const session = this.get(brokerId)
+    if (session === null) return Promise.reject(new Error('no Echo session for this account'))
+    const pending = session.playerState(group.id, group.deviceType, deviceId)
+    this.#groupPlayers.set(key, { at: now, pending })
+    pending.catch(() => {
+      if (this.#groupPlayers.get(key)?.pending === pending) this.#groupPlayers.delete(key)
+    })
+    return pending
+  }
+
   /** Forget the shared volume list: a list fetched before a set must not answer a poll after it. */
   invalidateVolumes(brokerId: string): void {
     this.#volumes.delete(brokerId)
+    this.#groupPlayers.clear()
   }
 
   /** Forget the shared Do Not Disturb list, for the same reason. */
@@ -112,7 +146,8 @@ export class EchoSessionRegistry implements EchoPushSink {
     // The push read must not be served from the shared lists a poll fetched moments ago.
     this.invalidateVolumes(brokerId)
     this.invalidateDnd(brokerId)
-    for (const listener of [...(this.#pushListeners.get(`${brokerId}\u0000${serial}`) ?? [])]) listener()
+    for (const listener of [...(this.#pushListeners.get(`${brokerId}\u0000${serial}`) ?? [])])
+      listener()
   }
 
   /** Called when Amazon pushes something about this Echo. Returns the unsubscribe. */
@@ -132,6 +167,7 @@ export class EchoSessionRegistry implements EchoPushSink {
     this.#resolve = null
     this.#dnd.clear()
     this.#volumes.clear()
+    this.#groupPlayers.clear()
   }
 }
 

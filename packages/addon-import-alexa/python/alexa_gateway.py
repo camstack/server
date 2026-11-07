@@ -110,6 +110,11 @@ def normalize_device(raw: dict) -> dict | None:
     }
     if room != "":
         result["room"] = room
+    parents = raw.get("parentClusters")
+    if isinstance(parents, list):
+        serials = [p for p in parents if isinstance(p, str) and p != ""]
+        if serials:
+            result["parentClusters"] = serials
     return result
 
 
@@ -246,7 +251,7 @@ class AlexaPyGateway:
         public = [
             {
                 key: device[key]
-                for key in ("id", "name", "family", "online", "kind", "dnd", "deviceType", "room")
+                for key in ("id", "name", "family", "online", "kind", "dnd", "deviceType", "room", "parentClusters")
                 if key in device
             }
             for device in devices

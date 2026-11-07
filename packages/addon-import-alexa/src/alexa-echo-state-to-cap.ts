@@ -47,6 +47,12 @@ export function mapEchoPlaybackState(value: string | null | undefined): MediaPla
   }
 }
 
+/** Whether a player answer carries any playback: an active state, a text or artwork. */
+export function hasPlayback(info: PlayerInfo): boolean {
+  if (mapEchoPlaybackState(info.state) !== 'idle') return true
+  return nonEmpty(info.infoText?.title) !== null || nonEmpty(info.mainArt?.url) !== null
+}
+
 function percent(value: number | null | undefined): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null
   return Math.round(Math.max(0, Math.min(100, value)))

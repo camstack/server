@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- An Echo that is part of a playing speaker group shows the group's track and artwork.
+
 ## [0.2.195] - 2026-11-07
 
 ### Changed

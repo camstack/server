@@ -13,6 +13,7 @@ import {
 import { alexaEchoSessions, type EchoSession } from '../alexa-echo-sessions.js'
 import {
   emptyEchoStatus,
+  hasPlayback,
   mapPlayerInfoToStatus,
   withListedVolume,
 } from '../alexa-echo-state-to-cap.js'
@@ -22,7 +23,12 @@ import {
   ECHO_PUSH_READ_GAP_MS,
   ECHO_REREAD_MS,
 } from '../speak/constants.js'
-import { RateLimitedError, type NpCommand } from '../speak/worker-protocol.js'
+import {
+  RateLimitedError,
+  type EchoDevice,
+  type NpCommand,
+  type PlayerInfo,
+} from '../speak/worker-protocol.js'
 
 /**
  * An Echo is a media-player device. Identity only: the account (`brokerId`) and
@@ -71,6 +77,8 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
   private unsubscribers: Array<() => void> = []
   private polling = false
   private failureLogged = false
+  /** The name of the speaker group whose playback this Echo shows; null when it plays on its own. */
+  private viaGroup: string | null = null
   private volumeFailureLogged = false
   private health: EchoPollHealth = 'ok'
   /** When this device last wrote its volume / Do Not Disturb optimistically; a read that began earlier must not overwrite it. */
@@ -215,8 +223,9 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
     const deviceType =
       this.amazonDeviceType !== '' ? this.amazonDeviceType : (listed?.deviceType ?? '')
     try {
-      const info = await session.playerState(this.serial, deviceType, this.id)
+      const own = await session.playerState(this.serial, deviceType, this.id)
       const now = Date.now()
+      const info = await this.withGroupPlayback(own, listed, session)
       const fromPlayer = mapPlayerInfoToStatus(info, { online: true, now })
       const read = await this.completeVolume(fromPlayer)
       const kept = this.keepNewerVolume(read, readStartedAt)
@@ -229,6 +238,63 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
       return
     }
     await this.readDoNotDisturb(readStartedAt)
+  }
+
+  /**
+   * A member of a playing speaker group is answered empty by its own player read while
+   * the group plays. When the member's answer carries no playback, serve the first
+   * parent group that is playing or paused (its track and artwork; the volume stays the
+   * member's own). A failed group read leaves the member's own answer.
+   */
+  private async withGroupPlayback(
+    own: PlayerInfo,
+    listed: EchoDevice | undefined,
+    session: EchoSession,
+  ): Promise<PlayerInfo> {
+    const parents = listed?.parentClusters ?? []
+    if (hasPlayback(own) || parents.length === 0) {
+      this.noteViaGroup(null)
+      return own
+    }
+    for (const parentId of parents) {
+      const group = session.devices.find((device) => device.id === parentId)
+      if (group === undefined || !group.online) continue
+      try {
+        const groupInfo = await alexaEchoSessions.groupPlayer(
+          this.brokerId,
+          group,
+          Date.now(),
+          this.id,
+        )
+        if (
+          groupInfo.state === 'PLAYING' ||
+          groupInfo.state === 'PAUSED' ||
+          groupInfo.state === 'BUFFERING'
+        ) {
+          this.noteViaGroup(group.name)
+          return { ...groupInfo, volume: own.volume }
+        }
+      } catch (err: unknown) {
+        this.ctx.logger.debug('alexa echo: the group player could not be read', {
+          tags: { deviceId: this.id },
+          meta: { group: group.name, error: err instanceof Error ? err.message : String(err) },
+        })
+      }
+    }
+    this.noteViaGroup(null)
+    return own
+  }
+
+  /** Log each transition into and out of "playing via a group" once. */
+  private noteViaGroup(name: string | null): void {
+    if (name === this.viaGroup) return
+    this.viaGroup = name
+    this.ctx.logger.info(
+      name === null
+        ? 'alexa echo: no longer playing via a group'
+        : `alexa echo: playing via group ${name}`,
+      { tags: { deviceId: this.id } },
+    )
   }
 
   /**
@@ -411,8 +477,7 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
 
   /** Optimistic like the volume, with the same rules: only the latest refused set reverts, to what Amazon last took. */
   private async sendDnd(enabled: boolean): Promise<void> {
-    const previous =
-      this.runtimeState.getCapState<DoNotDisturbStatus>('do-not-disturb') ?? COLD_DND
+    const previous = this.runtimeState.getCapState<DoNotDisturbStatus>('do-not-disturb') ?? COLD_DND
     const setAt = Date.now()
     const seq = ++this.dndSeq
     this.dndSetAt = setAt
@@ -429,15 +494,18 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
           lastChangedAt: Date.now(),
         })
       }
-      this.ctx.logger.warn('alexa echo: Amazon refused Do Not Disturb, back to the previous state', {
-        tags: { deviceId: this.id },
-        meta: {
-          from: back,
-          to: enabled,
-          superseded: seq !== this.dndSeq,
-          error: err instanceof Error ? err.message : String(err),
+      this.ctx.logger.warn(
+        'alexa echo: Amazon refused Do Not Disturb, back to the previous state',
+        {
+          tags: { deviceId: this.id },
+          meta: {
+            from: back,
+            to: enabled,
+            superseded: seq !== this.dndSeq,
+            error: err instanceof Error ? err.message : String(err),
+          },
         },
-      })
+      )
       throw err
     }
   }

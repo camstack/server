@@ -12,6 +12,8 @@ export const EchoDeviceSchema = z.object({
   deviceType: z.string(),
   /** The room the account files the device under, when Amazon names one. */
   room: z.string().optional(),
+  /** Serials of the speaker groups this device belongs to (Amazon's `parentClusters`); absent when none. */
+  parentClusters: z.array(z.string()).optional(),
 })
 export type EchoDevice = z.infer<typeof EchoDeviceSchema>
 
@@ -219,19 +221,10 @@ const count = z.number().nullish().catch(null)
 export const PlayerInfoSchema = z.object({
   state: text,
   volume: z.object({ volume: count, muted: flag }).nullish().catch(null),
-  infoText: z
-    .object({ title: text, subText1: text, subText2: text })
-    .nullish()
-    .catch(null),
+  infoText: z.object({ title: text, subText1: text, subText2: text }).nullish().catch(null),
   mainArt: z.object({ url: text }).nullish().catch(null),
-  progress: z
-    .object({ mediaLength: count, mediaProgress: count })
-    .nullish()
-    .catch(null),
-  provider: z
-    .object({ providerName: text, providerDisplayName: text })
-    .nullish()
-    .catch(null),
+  progress: z.object({ mediaLength: count, mediaProgress: count }).nullish().catch(null),
+  provider: z.object({ providerName: text, providerDisplayName: text }).nullish().catch(null),
   transport: z.object({ shuffle: text, repeat: text }).nullish().catch(null),
 })
 export type PlayerInfo = z.infer<typeof PlayerInfoSchema>
@@ -253,9 +246,14 @@ export function parsePlayerState(result: unknown): PlayerInfo {
   const rawState = raw.success ? raw.data.playerInfo?.state : undefined
   const saidSomething = rawState !== undefined && rawState !== null
   const knownState = typeof info.state === 'string' && KNOWN_PLAYER_STATES.has(info.state)
-  const noBlock = [info.volume, info.infoText, info.mainArt, info.progress, info.provider, info.transport].every(
-    (block) => block === null || block === undefined,
-  )
+  const noBlock = [
+    info.volume,
+    info.infoText,
+    info.mainArt,
+    info.progress,
+    info.provider,
+    info.transport,
+  ].every((block) => block === null || block === undefined)
   if (saidSomething && !knownState && noBlock) {
     throw new Error('worker returned an unreadable player state')
   }
