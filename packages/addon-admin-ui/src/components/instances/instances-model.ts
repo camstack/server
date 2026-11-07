@@ -366,7 +366,7 @@ export function parseEditRef(raw: string): EditRef {
 
 export interface PinningTarget {
   readonly name: string
-  readonly config: Readonly<Record<string, unknown>>
+  readonly formValues: Readonly<Record<string, unknown>>
 }
 
 /** Names of the notification targets that pin one relay (`smtpInstanceId`): the delete warning and the row hint. */
@@ -374,7 +374,7 @@ export function targetsPinning(
   targets: readonly PinningTarget[],
   instanceId: string,
 ): readonly string[] {
-  return targets.filter((t) => t.config['smtpInstanceId'] === instanceId).map((t) => t.name)
+  return targets.filter((t) => t.formValues['smtpInstanceId'] === instanceId).map((t) => t.name)
 }
 
 /**

@@ -10,8 +10,9 @@
  *
  * Three providers (notifiers, Home Assistant, Alexa) serve the same shape, so the pieces are shared:
  *  - {@link defineNotificationTargetKind}: the record kind of one `TargetKind` descriptor;
- *  - {@link NotificationTargetStore}: the `Target`-shaped facade the existing provider code keeps
- *    using, over one handle per kind (the old `notification-output` CRUD keeps working on it);
+ *  - {@link NotificationTargetStore}: the `Target`-shaped facade the provider's own code keeps
+ *    using (send, the notification-center bridge), over one handle per kind;
+ *  - {@link listNotificationTargets}: the targets as an addon on `ctx.api` reads them;
  *  - {@link buildNotificationTargetInstances}: the `integration-instances` provider, one kind each;
  *  - {@link moveTargetRows}: the D987 procedure that flattens the old `config` blobs into the bodies.
  */
@@ -31,6 +32,7 @@ import { defineEntryKind } from '../records/entry-kind.js'
 import type { DefinedRecordKind } from '../records/record-kind.js'
 import type { RecordKindHandle, RecordsAccess } from '../records/records-access.js'
 import { composeInstanceKinds, type InstanceKindPart } from './compose-instance-kinds.js'
+import { type InstanceApi, instanceSourceOverApi, instancesOfCap } from './instances-of-cap.js'
 import { optionalLinkField } from './instance-link-meta.js'
 import {
   type InstanceBody,
@@ -47,6 +49,11 @@ const TARGETS_LIST_MAX = 1000
 /** The record kind name of one target kind: `telegram` is stored under `notify-telegram`. */
 export function notificationTargetKindName(kind: string): string {
   return `notify-${kind}`
+}
+
+/** The target kind a record kind name stands for: `notify-telegram` is the kind `telegram`. */
+export function notificationTargetKindOf(recordKind: string): string {
+  return recordKind.startsWith('notify-') ? recordKind.slice('notify-'.length) : recordKind
 }
 
 /** The body schema of a target kind: the entry's name and switch plus the adapter's fields. */
@@ -588,6 +595,93 @@ export function targetRowPortsOver(deps: {
       deps.logger.warn('notification target left in its legacy store; it keeps being served', {
         meta: { targetId: row.id, kind: row.kind, reason: row.reason },
       })
+    },
+  }
+}
+
+// ── Reading the targets from another addon ───────────────────────────────────────────────────────
+
+/** A notification target as a reader on `ctx.api` sees it: enough to list, pick and address a send. */
+export interface NotificationTargetRef {
+  readonly id: string
+  readonly name: string
+  readonly kind: string
+  /** The provider that holds the target: `notificationOutput.send` is routed by it. */
+  readonly addonId: string
+  readonly enabled: boolean
+  /** The user a personal target belongs to; absent for a system target. */
+  readonly ownerUserId?: string
+}
+
+/** The answer of {@link listNotificationTargets}: what was read, and who could not be read. */
+export interface NotificationTargetsRead {
+  readonly targets: readonly NotificationTargetRef[]
+  readonly unreadable: readonly { readonly addonId: string; readonly error: string }[]
+}
+
+/**
+ * Every notification target, read as the instances of `notification-output` (D1013 rule 5). A holder
+ * that could not answer is NAMED in `unreadable`: a caller that acts on a target's absence (drops a
+ * selection, refuses a send) must check it first, because a partial read is not "deleted" (D315, D49).
+ */
+export async function listNotificationTargets(api: InstanceApi): Promise<NotificationTargetsRead> {
+  const { instances, unreadable } = await instancesOfCap(
+    instanceSourceOverApi(api),
+    NOTIFICATION_OUTPUT_CAP,
+  )
+  const targets = instances.map(({ addonId, kind, instance }): NotificationTargetRef => {
+    const owner = instance.formValues['ownerUserId']
+    return {
+      id: instance.id,
+      name: instance.name,
+      kind: kind.id,
+      addonId,
+      enabled: instance.enabled !== false,
+      ...(typeof owner === 'string' && owner.length > 0 ? { ownerUserId: owner } : {}),
+    }
+  })
+  return { targets, unreadable }
+}
+
+/**
+ * The `ctx.api` slice {@link listNotificationTargets} reads, answering from the targets as they are NOW (read on every call):
+ * one holder per `addonId`, one record kind per target kind. For the specs of the addons that read the
+ * targets; it serves nothing at runtime.
+ */
+export function instanceApiOverTargets(targetsNow: () => readonly Target[]): InstanceApi {
+  const rowsOf = (addonId: string): readonly Target[] =>
+    targetsNow().filter((target) => target.addonId === addonId)
+  return {
+    capabilities: {
+      getCapability: {
+        query: async () => ({ providers: [...new Set(targetsNow().map((t) => t.addonId))] }),
+      },
+    },
+    integrationInstances: {
+      describe: {
+        query: async ({ addonId }) => ({
+          role: 'services',
+          instanceMode: 'multiple',
+          kind: addonId,
+          canTest: true,
+          kinds: [...new Set(rowsOf(addonId).map((target) => target.kind))].map((kind) => ({
+            id: notificationTargetKindName(kind),
+            label: kind,
+            functionCap: NOTIFICATION_OUTPUT_CAP,
+          })),
+        }),
+      },
+      listInstances: {
+        query: async ({ addonId }) =>
+          rowsOf(addonId).map((target) => ({
+            id: target.id,
+            name: target.name,
+            configured: true,
+            enabled: target.enabled,
+            kind: notificationTargetKindName(target.kind),
+            formValues: { ...target.config },
+          })),
+      },
     },
   }
 }

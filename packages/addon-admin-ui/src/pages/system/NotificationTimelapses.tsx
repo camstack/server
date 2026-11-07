@@ -31,7 +31,7 @@ import { Film, FlaskConical, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { AdminPage } from '../../components/AdminPage'
-import { TARGETS_QUERY_KEY } from './NotificationRules'
+import { useNotificationTargets } from './use-notification-targets'
 import { NotificationTimelapseEditor } from './NotificationTimelapseEditor'
 import type { DigestCameraOption, DigestTargetOption } from './notification-digest-fields'
 import { DigestTestConfirm } from './notification-digest-fields'
@@ -122,11 +122,7 @@ export function NotificationTimelapsesPage() {
     [fleetQuery.data],
   )
 
-  const targetsQuery = useQuery({
-    queryKey: TARGETS_QUERY_KEY,
-    queryFn: (): Promise<readonly Target[]> =>
-      system.trpcClient.notificationOutput.listTargets.query({}),
-  })
+  const targetsQuery = useNotificationTargets()
 
   const setEnabled = useMutation({
     mutationFn: (vars: { readonly ruleId: string; readonly enabled: boolean }) =>

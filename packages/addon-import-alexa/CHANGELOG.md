@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Alexa speak targets are created and edited through the instance form only
+
 ## [0.2.194] - 2026-11-06
 
 ### Changed

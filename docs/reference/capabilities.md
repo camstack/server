@@ -193,7 +193,7 @@ Singleton or collection providers, addressed without a device.
 | `node-certificates` | 8 | — | — | — | ✓ | — |
 | `node-removal-hook` | 1 | — | — | — | ✓ | `ai` `model-studio` `pipeline-orchestrator` |
 | `nodes` | 14 | — | — | — | — | — |
-| `notification-output` | 10 | — | — | — | — | `import-alexa` `notifiers` `provider-homeassistant` |
+| `notification-output` | 5 | — | — | — | — | `import-alexa` `notifiers` `provider-homeassistant` |
 | `notification-rules` | 32 | — | — | — | — | `pipeline-analytics` |
 | `oauth-integration` | 1 | — | — | — | ✓ | `export-alexa` `export-google` `homeassistant-export` |
 | `oidc-connections` | 5 | — | — | — | — | `auth-oidc` |

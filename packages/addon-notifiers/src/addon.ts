@@ -11,27 +11,31 @@
  */
 import { randomUUID } from 'node:crypto'
 import {
-  addonRoutesCapability,
-  buildAddonRouteProvider,
   type AddonInitResult,
+  addonRoutesCapability,
   BaseAddon,
+  buildAddonRouteProvider,
   buildNotificationTargetInstances,
   defineAddonMigrations,
   integrationInstancesCapability,
-  notificationOutputCapability,
-  secretKeysOf,
   legacyTargetsOver,
-  targetRowPortsOver,
+  notificationOutputCapability,
   publicEndpointReaderFrom,
+  secretKeysOf,
+  targetRowPortsOver,
 } from '@camstack/types'
 import type { EmailSmtpClient, SmtpProviderOption } from './adapters/email.js'
 import { buildNotifierAdapters } from './adapters/registry.js'
 import { iconMediaTypeFor, iconRoutes, iconUrlFor } from './icon-routes.js'
-import { sampleRoutes } from './sample-routes.js'
-import { makeNcTargetHandlers, ncTargetActions, type NcTargetActions } from './nc-target-actions.js'
-import { createNotificationOutputProvider, NOTIFIERS_ADDON_ID } from './provider.js'
-import { ADDON_MIGRATIONS, oldTargetKinds, OLD_TARGETS_KIND } from './migrations/index.js'
+import { ADDON_MIGRATIONS, OLD_TARGETS_KIND, oldTargetKinds } from './migrations/index.js'
+import { makeNcTargetHandlers, type NcTargetActions, ncTargetActions } from './nc-target-actions.js'
+import {
+  createNotificationOutputProvider,
+  createNotifierTargetAdmin,
+  NOTIFIERS_ADDON_ID,
+} from './provider.js'
 import { notifierDescriptors, notifiersRecordKinds } from './record-kinds.js'
+import { sampleRoutes } from './sample-routes.js'
 import { TargetStore } from './target-store.js'
 
 /** The notifiers addon has no global settings today — targets are managed via cap CRUD. */
@@ -171,8 +175,13 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
     // ownership is enforced inside the handlers (`nc-target-actions.ts`), which
     // wrap the very provider built above (redaction + secret merge stay there).
     // The addon is `hub-only`, so the bridge is unconditionally hub-resident.
+    const targetAdmin = createNotifierTargetAdmin({ store, adapters })
     const ncHandlers = makeNcTargetHandlers({
-      provider,
+      provider: {
+        ...targetAdmin,
+        listTargetKinds: provider.listTargetKinds,
+        testTarget: provider.testTarget,
+      },
       logger: this.ctx.logger.child('nc-target-actions'),
     })
 

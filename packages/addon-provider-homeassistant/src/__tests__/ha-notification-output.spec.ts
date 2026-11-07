@@ -1,7 +1,7 @@
 import {
   type Notification,
-  prepareNotification,
   type PublicEndpointReader,
+  prepareNotification,
   type Target,
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
@@ -351,38 +351,6 @@ describe('createHaNotificationOutputProvider', () => {
     const { provider, getServices } = await harness()
     expect(await provider.discoverTargets({ kind: 'ntfy' })).toEqual([])
     expect(getServices).not.toHaveBeenCalled()
-  })
-
-  it('upsertTarget forces the homeassistant kind + addonId', async () => {
-    const { provider } = await harness()
-    const saved = await provider.upsertTarget({
-      target: {
-        id: 't5',
-        name: 'Phone',
-        kind: 'wrong',
-        addonId: 'someone-else',
-        enabled: true,
-        config: { service: 'mobile_app_x' },
-      },
-    })
-    expect(saved.kind).toBe(HA_NOTIFICATION_KIND)
-    expect(saved.addonId).toBe(ADDON_ID)
-  })
-
-  it('getTarget returns the stored target addonId-stamped, and throws on an unknown id', async () => {
-    const { store, provider } = await harness()
-    await store.upsert({
-      id: 't6',
-      name: 'Phone',
-      kind: HA_NOTIFICATION_KIND,
-      addonId: 'stale',
-      enabled: true,
-      config: { service: 'mobile_app_x' },
-    })
-    const target = await provider.getTarget({ targetId: 't6' })
-    expect(target.config).toEqual({ service: 'mobile_app_x' })
-    expect(target.addonId).toBe(ADDON_ID)
-    await expect(provider.getTarget({ targetId: 'ghost' })).rejects.toThrow(/ghost/)
   })
 })
 

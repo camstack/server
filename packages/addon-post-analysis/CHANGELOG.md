@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The notification centre reads its targets from the instances of notification-output
+
 ## [1.2.676] - 2026-11-06
 
 ### Changed

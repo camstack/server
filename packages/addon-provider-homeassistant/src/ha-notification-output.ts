@@ -3,8 +3,8 @@
  *
  * A SECOND `notification-output` collection provider (the first lives in the
  * system `addon-notifiers`). The generated cap-mount `concatCollection`-fans
- * `listTargetKinds` / `listTargets` / `discoverTargets` across every registered
- * provider, and routes `send` / `testTarget` / CRUD to ONE provider by the
+ * `listTargetKinds` / `discoverTargets` across every registered
+ * provider, and routes `send` / `testTarget` to ONE provider by the
  * `addonId` stamped on each kind + target. So the HA addon contributes exactly
  * one kind (`homeassistant`) to the shared catalog.
  *
@@ -37,18 +37,18 @@ import {
   linkFieldDescriptor,
   type Notification,
   type NotificationActionIcon,
-  type PreparedNotification,
-  prepareNotification,
-  type PublicEndpointReader,
-  type RecordsAccess,
-  resolveAttachmentUrls,
-  type ResolvedLevel,
-  type SendResult,
-  type Target,
-  type TargetKind,
   NotificationTargetStore,
   type NotificationTargetStoreOptions,
   notificationTargetKinds,
+  type PreparedNotification,
+  type PublicEndpointReader,
+  prepareNotification,
+  type RecordsAccess,
+  type ResolvedLevel,
+  resolveAttachmentUrls,
+  type SendResult,
+  type Target,
+  type TargetKind,
 } from '@camstack/types'
 import { HA_BROKER_KIND } from './ha-broker-source.js'
 
@@ -525,21 +525,6 @@ export function createHaNotificationOutputProvider(
       return [stamped]
     },
 
-    listTargets: async (): Promise<Target[]> => {
-      const targets = await store.list()
-      // No secrets in HA targets (the broker connection is reused) — just
-      // stamp the routing addonId.
-      return targets.map((target) => ({ ...target, addonId }))
-    },
-
-    getTarget: async ({ targetId }): Promise<Target> => {
-      const target = await store.getById(targetId)
-      if (!target) throw new Error(`Unknown target '${targetId}'`)
-      // No secrets to un-redact (the broker connection is reused) — the same
-      // shape `listTargets` returns, for the admin edit / duplicate flow.
-      return { ...target, addonId }
-    },
-
     discoverTargets: async ({ kind, config }): Promise<DiscoveredTarget[]> => {
       if (kind !== HA_NOTIFICATION_KIND) return []
       // The registry only improves labels: a failed read must not hide the services.
@@ -587,20 +572,6 @@ export function createHaNotificationOutputProvider(
       const target = await store.getById(targetId)
       if (!target) return { success: false, error: `Unknown target '${targetId}'` }
       return dispatch(target, sample ?? cannedNotification())
-    },
-
-    upsertTarget: async ({ target }): Promise<Target> => {
-      const toStore: Target = { ...target, kind: HA_NOTIFICATION_KIND, addonId }
-      await store.upsert(toStore)
-      return toStore
-    },
-
-    deleteTarget: async ({ targetId }): Promise<void> => {
-      await store.delete(targetId)
-    },
-
-    setTargetEnabled: async ({ targetId, enabled }): Promise<void> => {
-      await store.setEnabled(targetId, enabled)
     },
   }
 }

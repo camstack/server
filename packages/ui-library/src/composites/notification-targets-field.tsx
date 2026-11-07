@@ -3,7 +3,7 @@
  *
  * The Notification Center editors (Summaries, Timelapses, Rules, Calendar
  * events) and ConfigUISchema forms (script settings, addon settings) all
- * pick the same catalog — `notificationOutput.listTargets`. One presentational
+ * pick the same catalog — `the instances of `notification-output``. One presentational
  * control plus two ConfigUISchema wrappers so a script can declare
  * `notification-target-select` / `notification-target-multiselect` without
  * inventing a parallel picker.
@@ -21,12 +21,10 @@ import type {
   ConfigNotificationTargetMultiSelectField,
   ConfigNotificationTargetSelectField,
 } from '@camstack/types'
-import {
-  useNotificationOutputListTargetKinds,
-  useNotificationOutputListTargets,
-} from '../generated/system-hooks'
+import { useNotificationOutputListTargetKinds } from '../generated/system-hooks'
 import type { TranslationFn } from './config-form-builder'
 import { useUiText } from '../contexts/ui-text'
+import { useInstancesOfCap } from '../hooks/use-instances-of-cap'
 import { resolveLabel } from './config-form-builder'
 import { OptionSelect } from './option-select/OptionSelect'
 import {
@@ -211,7 +209,7 @@ function FieldShell({
 }
 
 /**
- * ConfigUISchema `notification-target-multiselect` — fetches listTargets and
+ * ConfigUISchema `notification-target-multiselect` — reads the notification-output instances and
  * stores a `string[]` of target ids.
  */
 export function ConfigNotificationTargetMultiSelectFieldView({
@@ -228,7 +226,7 @@ export function ConfigNotificationTargetMultiSelectFieldView({
   readonly translationFn?: TranslationFn
 }): JSX.Element {
   const t = useUiText()
-  const targetsQuery = useNotificationOutputListTargets({})
+  const targetsQuery = useInstancesOfCap({ functionCap: 'notification-output' })
   const kindsQuery = useNotificationOutputListTargetKinds({})
   const targets = useMemo(() => toTargetOptions(targetsQuery.data), [targetsQuery.data])
   const kindIconUrls = useMemo(() => buildKindIconMap(kindsQuery.data), [kindsQuery.data])
@@ -244,7 +242,7 @@ export function ConfigNotificationTargetMultiSelectFieldView({
         : [value]
       : []
 
-  const pending = targetsQuery.isPending || kindsQuery.isPending
+  const pending = targetsQuery.isLoading || kindsQuery.isPending
   const error = targetsQuery.isError
     ? targetsQuery.error
     : kindsQuery.isError
@@ -309,7 +307,7 @@ export function ConfigNotificationTargetMultiSelectFieldView({
 }
 
 /**
- * ConfigUISchema `notification-target-select` — fetches listTargets and stores
+ * ConfigUISchema `notification-target-select` — reads the notification-output instances and stores
  * one target id string.
  */
 export function ConfigNotificationTargetSelectFieldView({
@@ -326,14 +324,14 @@ export function ConfigNotificationTargetSelectFieldView({
   readonly translationFn?: TranslationFn
 }): JSX.Element {
   const t = useUiText()
-  const targetsQuery = useNotificationOutputListTargets({})
+  const targetsQuery = useInstancesOfCap({ functionCap: 'notification-output' })
   const kindsQuery = useNotificationOutputListTargetKinds({})
   const targets = useMemo(() => toTargetOptions(targetsQuery.data), [targetsQuery.data])
   const kindIconUrls = useMemo(() => buildKindIconMap(kindsQuery.data), [kindsQuery.data])
 
   const current = typeof value === 'string' ? value : ''
 
-  const pending = targetsQuery.isPending || kindsQuery.isPending
+  const pending = targetsQuery.isLoading || kindsQuery.isPending
   const error = targetsQuery.isError
     ? targetsQuery.error
     : kindsQuery.isError

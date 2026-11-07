@@ -3,12 +3,13 @@
  * scene for an ADMIN link only, and Activate reaches `actions.run` only for an
  * admin link and an exported action.
  */
-import type {
-  ActionRunResult,
-  AddonContext,
-  ExportEntityApi,
-  IScopedLogger,
-  TokenScope,
+import {
+  type ActionRunResult,
+  type AddonContext,
+  type ExportEntityApi,
+  type IScopedLogger,
+  instanceApiOverTargets,
+  type TokenScope,
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { AlexaAccessGate, type AlexaUserGrant } from '../access/access-gate.js'
@@ -55,8 +56,8 @@ function setup() {
       list: { query: async () => [{ id: 'internal:a', name: 'Open gate' }] },
       run: { mutate: run },
     },
+    ...instanceApiOverTargets(() => []),
     notificationOutput: {
-      listTargets: { query: async () => [] },
       send: { mutate: async () => ({ success: true }) },
     },
   }

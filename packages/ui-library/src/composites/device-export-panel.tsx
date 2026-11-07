@@ -83,7 +83,6 @@ import {
   useDeviceExportUnexposeEntity,
   useDeviceManagerListAll,
   useIntegrationsList,
-  useNotificationOutputListTargets,
 } from '../generated/system-hooks'
 import { Badge } from '../primitives/badge'
 import { Button } from '../primitives/button'
@@ -92,6 +91,7 @@ import type { DeviceItemDevice } from './device-item/helpers'
 import { DeviceName, useDeviceLabel } from './device-name'
 import { DeviceList } from './device-list'
 import type { DeviceListColumn, GenericPageSizeSelector } from './device-list/generic-mode'
+import { useInstancesOfCap } from '../hooks/use-instances-of-cap'
 import { PAGE_SIZE_ALL } from '../hooks/use-persisted-page-size'
 import type { MultiSelectOption } from './device-list/multi-select'
 import { OptionSelect, type OptionSelectOption } from './option-select'
@@ -727,12 +727,9 @@ export function DeviceExportInstancePanel({
       enabled: entityKinds?.has('action') === true,
     },
   )
-  const targetsQuery = useNotificationOutputListTargets(
-    {},
-    {
-      refetchInterval: FLEET_POLL_INTERVAL_MS,
-      enabled: entityKinds?.has('notifier') === true,
-    },
+  const targetsQuery = useInstancesOfCap(
+    { functionCap: 'notification-output' },
+    { enabled: entityKinds?.has('notifier') === true },
   )
 
   const invalidate = useCallback((): void => {

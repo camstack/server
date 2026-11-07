@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { Target } from '../../capabilities/notification-output.cap.js'
+import { instanceApiOverTargets } from '../../addon/notification-targets.js'
 import type { IScopedLogger, LogExtras } from '../../interfaces/logging.js'
 import {
   pruneDeletedEntities,
@@ -27,7 +29,7 @@ function makeLogger(lines: Line[]): IScopedLogger {
 
 function makeApi(overrides: {
   run?: ExportEntityApi['actions']['run']['mutate']
-  targets?: Awaited<ReturnType<ExportEntityApi['notificationOutput']['listTargets']['query']>>
+  targets?: readonly Target[]
   send?: ExportEntityApi['notificationOutput']['send']['mutate']
 }): ExportEntityApi {
   return {
@@ -37,8 +39,8 @@ function makeApi(overrides: {
         mutate: overrides.run ?? (async () => ({ runId: 'r1', outcome: 'started' as const })),
       },
     },
+    ...instanceApiOverTargets(() => overrides.targets ?? []),
     notificationOutput: {
-      listTargets: { query: async () => overrides.targets ?? [] },
       send: { mutate: overrides.send ?? (async () => ({ success: true })) },
     },
   }

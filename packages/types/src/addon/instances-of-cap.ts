@@ -64,3 +64,40 @@ export async function instancesOfCap(
   }
   return { instances, unreadable }
 }
+
+/** The slice of `ctx.api` an addon needs to read the instances of a function cap. */
+export interface InstanceApi {
+  readonly capabilities: {
+    readonly getCapability: {
+      query(input: { name: string }): Promise<{ readonly providers: readonly string[] } | null>
+    }
+  }
+  readonly integrationInstances: {
+    readonly describe: {
+      query(input: { addonId: string }): Promise<IntegrationInstanceDescription>
+    }
+    readonly listInstances: {
+      query(input: { addonId: string }): Promise<readonly IntegrationInstance[]>
+    }
+  }
+}
+
+async function providersOf(api: InstanceApi, name: string): Promise<readonly string[]> {
+  const info = await api.capabilities.getCapability.query({ name })
+  if (info === null) throw new Error(`the capability registry did not answer for ${name}`)
+  return info.providers
+}
+
+/**
+ * The source over `ctx.api`. Every provider of the cap is a holder, not only those that also serve
+ * `integration-instances`: a provider that does not (an addon older than the hub during an update)
+ * then fails `describe` and is reported unreadable, so its instances are retried as transient
+ * instead of vanishing from the catalogue and failing for good.
+ */
+export function instanceSourceOverApi(api: InstanceApi): InstanceSource {
+  return {
+    holders: (cap) => providersOf(api, cap),
+    describe: (addonId) => api.integrationInstances.describe.query({ addonId }),
+    listInstances: (addonId) => api.integrationInstances.listInstances.query({ addonId }),
+  }
+}

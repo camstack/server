@@ -1,9 +1,6 @@
 {
   "_why": "Pages that draw their own list or editor for a family of configured things (planning#440 step 6, D1013). A family is a contiguous block that its U packet deletes with the page. The list only shrinks.",
   "families": {
-    "notifiers": {
-      "packages/addon-admin-ui/src/pages/system/NotificationTargets.tsx": "bespoke target list and editor over notification-output CRUD; P6a (U) moves it to InstancesTable functionCap=notification-output"
-    },
     "llm": {
       "packages/addon-admin-ui/src/pages/system/AiProfilesTab.tsx": "bespoke profile list over llm.upsertProfile / deleteProfile; P6b (U) moves it to InstancesTable inside AiProfiles.tsx",
       "packages/addon-admin-ui/src/pages/system/AiProfileEditor.tsx": "bespoke profile editor over llm.upsertProfile; P6b (U) moves it to InstanceEditorDialog"

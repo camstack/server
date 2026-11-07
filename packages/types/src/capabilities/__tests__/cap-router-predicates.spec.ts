@@ -16,18 +16,16 @@ import { notificationOutputCapability } from '../notification-output.cap.js'
  * degrades to `[]` instead of "method not found".
  */
 describe('isCollectionArrayMethod', () => {
-  it('is true for a real collection cap array method (notification-output.listTargets)', () => {
+  it('is true for a real collection cap array method (notification-output.listTargetKinds)', () => {
     expect(notificationOutputCapability.mode).toBe('collection')
-    expect(isCollectionArrayMethod(notificationOutputCapability, 'listTargets')).toBe(true)
     expect(isCollectionArrayMethod(notificationOutputCapability, 'listTargetKinds')).toBe(true)
     expect(isCollectionArrayMethod(notificationOutputCapability, 'discoverTargets')).toBe(true)
   })
 
-  it('is false for a collection cap NON-array method (notification-output.send / upsertTarget)', () => {
-    // `send` returns a SendResult object, `upsertTarget` a Target object — a
-    // missing one of those is a genuine bug, not a graceful-empty candidate.
+  it('is false for a collection cap NON-array method (notification-output.send)', () => {
+    // `send` returns a SendResult object — a missing one is a genuine bug, not a
+    // graceful-empty candidate.
     expect(isCollectionArrayMethod(notificationOutputCapability, 'send')).toBe(false)
-    expect(isCollectionArrayMethod(notificationOutputCapability, 'upsertTarget')).toBe(false)
   })
 
   it('is false for an unknown method name', () => {
@@ -47,7 +45,7 @@ describe('isCollectionArrayMethod', () => {
   })
 
   it('is false for an undefined cap definition', () => {
-    expect(isCollectionArrayMethod(undefined, 'listTargets')).toBe(false)
+    expect(isCollectionArrayMethod(undefined, 'listTargetKinds')).toBe(false)
   })
 
   it('unwraps optional/nullable array outputs on a collection cap', () => {
@@ -118,9 +116,8 @@ describe('objectInputDeclaresAddonId', () => {
   })
 
   it('is false for upsertTarget-style input (addonId only nested in target)', () => {
-    expect(
-      objectInputDeclaresAddonId(notificationOutputCapability.methods.upsertTarget.input),
-    ).toBe(false)
+    const upsertLike = z.object({ target: z.object({ addonId: z.string() }) })
+    expect(objectInputDeclaresAddonId(upsertLike)).toBe(false)
   })
 
   it('is true for a schema extended from a base that declares addonId', () => {

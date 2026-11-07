@@ -105,12 +105,6 @@ type AlarmConfigOnTheWire = Omit<NcAlarmConfig, 'settings'> & {
 }
 
 const mockGetAlarmConfig = vi.fn((): Promise<AlarmConfigOnTheWire> => Promise.resolve(ALARM_CONFIG))
-interface TargetFixture {
-  readonly id: string
-  readonly name: string
-  readonly enabled: boolean
-}
-const mockListTargets = vi.fn((): Promise<readonly TargetFixture[]> => Promise.resolve([]))
 const mockListRules = vi.fn(
   (): Promise<{ rules: readonly unknown[] }> => Promise.resolve({ rules: [] }),
 )
@@ -221,7 +215,6 @@ vi.mock('@camstack/ui-library', async () => {
           deleteAlarmProfile: { mutate: mockSetAlarmConfig },
           activateAlarmProfile: { mutate: mockSetAlarmConfig },
         },
-        notificationOutput: { listTargets: { query: mockListTargets } },
         addons: { custom: { mutate: mockCustom } },
         deviceManager: {
           listAll: { query: mockListAllRaw },

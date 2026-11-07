@@ -16,11 +16,9 @@
 import type { IScopedLogger } from '../interfaces/logging.js'
 import type { ActionRunResult } from './action.js'
 import type { ExportEntityRef } from '../capabilities/device-export.cap.js'
-import {
-  NotificationSchema,
-  type SendResult,
-  type Target,
-} from '../capabilities/notification-output.cap.js'
+import { NotificationSchema, type SendResult } from '../capabilities/notification-output.cap.js'
+import type { InstanceApi } from '../addon/instances-of-cap.js'
+import { listNotificationTargets } from '../addon/notification-targets.js'
 import type { z } from 'zod'
 
 /** What an exporter needs to know about an action to offer it. */
@@ -30,7 +28,7 @@ export interface ExportableAction {
 }
 
 /** The slice of `ctx.api` the exporters use for non-device entities. */
-export interface ExportEntityApi {
+export interface ExportEntityApi extends InstanceApi {
   readonly actions: {
     readonly list: {
       query(input?: Record<string, never>): Promise<readonly ExportableAction[]>
@@ -40,9 +38,6 @@ export interface ExportEntityApi {
     }
   }
   readonly notificationOutput: {
-    readonly listTargets: {
-      query(input?: Record<string, never>): Promise<readonly Target[]>
-    }
     readonly send: {
       mutate(input: {
         readonly targetId: string
@@ -146,8 +141,14 @@ export async function sendToExportedTarget(
   const { exporter, targetId } = input
   const tags = { targetId }
   try {
-    const targets = await api.notificationOutput.listTargets.query({})
+    const { targets, unreadable } = await listNotificationTargets(api)
     const target = targets.find((t) => t.id === targetId)
+    if (target === undefined && unreadable.length > 0) {
+      // A holder that could not answer may be the one that has it: not "gone" (D315, D49).
+      throw new Error(
+        `notification targets unreadable from ${unreadable.map((u) => u.addonId).join(', ')}`,
+      )
+    }
     if (target === undefined) {
       log.warn(`${exporter}: exported notifier not used — target-gone`, {
         tags,

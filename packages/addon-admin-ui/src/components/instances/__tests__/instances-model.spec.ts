@@ -212,9 +212,9 @@ describe('edit refs', () => {
 describe('targetsPinning', () => {
   it('names the targets that pin the instance and no others', () => {
     const targets = [
-      { name: 'Mail ops', config: { smtpInstanceId: 'inst-aaaaaaaa' } },
-      { name: 'Mail default', config: {} },
-      { name: 'Mail other', config: { smtpInstanceId: 'relay-default' } },
+      { name: 'Mail ops', formValues: { smtpInstanceId: 'inst-aaaaaaaa' } },
+      { name: 'Mail default', formValues: {} },
+      { name: 'Mail other', formValues: { smtpInstanceId: 'relay-default' } },
     ]
     expect(targetsPinning(targets, 'inst-aaaaaaaa')).toEqual(['Mail ops'])
   })

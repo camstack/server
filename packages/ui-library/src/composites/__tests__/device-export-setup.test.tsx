@@ -43,10 +43,6 @@ vi.mock('../../generated/system-hooks', () => ({
     isPending: false,
   }),
   useActionsList: () => ({ data: undefined, isLoading: false }),
-  useNotificationOutputListTargets: () => ({
-    data: undefined,
-    isLoading: false,
-  }),
   useDeviceManagerListAll: () => ({ data: [], isLoading: false }),
   useIntegrationsList: () => ({ data: undefined, isLoading: false }),
   useDeviceExportExposeDevice: () => ({
@@ -57,6 +53,10 @@ vi.mock('../../generated/system-hooks', () => ({
     mutateAsync: vi.fn(),
     isPending: false,
   }),
+}))
+
+vi.mock('../../hooks/use-instances-of-cap', () => ({
+  useInstancesOfCap: () => ({ data: undefined, isLoading: false }),
 }))
 
 const { DeviceExportInstancePanel, DeviceExportPanel, DeviceExportSetup } = await import(

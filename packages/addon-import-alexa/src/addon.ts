@@ -252,8 +252,6 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
     const speak = new AlexaSpeakController({
       logger: this.ctx.logger.child('speak'),
       readTargets: () => echoStore.list(),
-      putTarget: (target) => echoStore.upsert(target),
-      removeTarget: (targetId) => echoStore.delete(targetId),
       listBrokers: () =>
         this.activeBrokers.map((entry) => ({
           id: entry.id,

@@ -34,7 +34,8 @@ import { FlaskConical, Images, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { AdminPage } from '../../components/AdminPage'
-import { CATALOG_QUERY_KEY, TARGETS_QUERY_KEY } from './NotificationRules'
+import { CATALOG_QUERY_KEY } from './NotificationRules'
+import { useNotificationTargets } from './use-notification-targets'
 import { NotificationSummaryEditor } from './NotificationSummaryEditor'
 import type { DigestCameraOption, DigestTargetOption } from './notification-digest-fields'
 import { DigestTestConfirm } from './notification-digest-fields'
@@ -128,11 +129,7 @@ export function NotificationSummariesPage() {
   // The SAME keys the rules page uses: the targets and the taxonomy are the
   // same answers, and two keys for one question means the operator pays for the
   // round-trip twice and can see two vocabularies on two tabs of one page.
-  const targetsQuery = useQuery({
-    queryKey: TARGETS_QUERY_KEY,
-    queryFn: (): Promise<readonly Target[]> =>
-      system.trpcClient.notificationOutput.listTargets.query({}),
-  })
+  const targetsQuery = useNotificationTargets()
 
   const catalogQuery = useQuery({
     queryKey: CATALOG_QUERY_KEY,

@@ -13,17 +13,18 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
  * message to what the kind supports — callers never special-case a service.
  *
  * DESIGN DECISIONS (locked):
- *  - Target CRUD lives on THIS cap (`upsertTarget` / `deleteTarget` /
- *    `setTargetEnabled`), each provider persisting via the `settings-store`
- *    cap. Rationale: the admin UI needs one uniform surface across the
- *    notifiers addon AND the HA addon; the addon-`globalSettingsSchema`-array
- *    alternative would fork the UI per addon and cannot host the
- *    discovery→adopt flow.
- *  - `listTargetKinds` / `listTargets` / `discoverTargets` return arrays →
- *    the generated cap-mount auto-`concatCollection`-fans them across every
- *    registered provider (notifiers addon + HA addon) so one catalog is
- *    routable. `send` / `testTarget` / CRUD route to ONE provider by the
- *    `addonId` the generated collection router extracts from the call input.
+ *  - A target is an INSTANCE of this function cap (epic #440, step 6): the
+ *    providers serve their targets as `integration-instances` records, one
+ *    record kind per target kind, and the admin lists, adds, edits, switches
+ *    and deletes them through that cap. This cap keeps what an instance cannot
+ *    say: the kind catalogue (`listTargetKinds`: capabilities, delivery
+ *    parameters, brand icon), dispatch (`send`, `testTarget`) and the form
+ *    helpers (`discoverTargets`, `probeTargetConfig`).
+ *  - `listTargetKinds` / `discoverTargets` return arrays → the generated
+ *    cap-mount auto-`concatCollection`-fans them across every registered
+ *    provider so one catalog is routable. `send` / `testTarget` /
+ *    `probeTargetConfig` route to ONE provider by the `addonId` the generated
+ *    collection router extracts from the call input.
  *  - `Attachment.bytes` is `Uint8Array`. Transport-safe: superjson (the tRPC
  *    transformer) + UDS MsgPack both round-trip typed arrays — already used by
  *    `storage` / `storage-provider` / `recording` caps over the same path. No
@@ -344,9 +345,11 @@ export type TargetKind = Omit<z.infer<typeof TargetKindSchema>, 'configSchema'> 
 }
 
 /**
- * A persisted target. `config` holds secrets; providers REDACT secret fields
- * (return a presence marker only) when serving `listTargets` — never
- * round-trip a stored secret to the UI.
+ * A target as a provider's own code sees it (the notification-center bridge, the
+ * send path): the flat record body split into the name, the switch and the
+ * kind's fields. `config` holds secrets; a reader that serves it to a client
+ * REDACTS secret fields (a presence marker only) — never round-trip a stored
+ * secret to the UI.
  */
 export const TargetSchema = z.object({
   id: z.string(),
@@ -422,15 +425,8 @@ export const notificationOutputCapability = {
     // Only the kind catalog stays open: descriptors carry no secret.
     //
     // Catalog + discovery (array output → auto concat fan-out across addons).
+    // The targets themselves are instances of this cap (`integration-instances`).
     listTargetKinds: method(z.object({}), z.array(TargetKindSchema)),
-    listTargets: method(z.object({}), z.array(TargetSchema), { auth: 'admin' }),
-    /**
-     * One target WITH secrets — admin edit / duplicate hydration only.
-     * `listTargets` stays redacted; the editor loads this so password fields
-     * are filled (masked in the input) and a save can round-trip the token
-     * when a destination changes (Duplicate with a new chatId, etc.).
-     */
-    getTarget: method(z.object({ targetId: z.string() }), TargetSchema, { auth: 'admin' }),
     // `config` is a partial, unsaved connection the operator has typed but not
     // yet persisted — so credential-gated discovery (gotify/zentik/telegram/…)
     // can authenticate against the endpoint the user is about to add. Admin:
@@ -442,7 +438,7 @@ export const notificationOutputCapability = {
         /**
          * When editing / duplicating, the blank password field never round-trips
          * the stored token. Pass the source target id so the provider can restore
-         * secrets server-side before dialling (same merge as upsert).
+         * secrets server-side before dialling.
          */
         targetId: z.string().optional(),
       }),
@@ -450,7 +446,7 @@ export const notificationOutputCapability = {
       { auth: 'admin' },
     ),
     // Pre-save credential check against an unsaved config (e.g. Green API
-    // getStateInstance). Routed to ONE provider by addonId — same as upsert.
+    // getStateInstance). Routed to ONE provider by addonId — same as `discoverTargets`.
     probeTargetConfig: method(
       z.object({
         kind: z.string(),
@@ -472,32 +468,6 @@ export const notificationOutputCapability = {
       TestResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
-    // Target CRUD (cap methods — see header decision).
-    upsertTarget: method(
-      z.object({
-        target: TargetSchema,
-        /**
-         * Duplicate flow: create a NEW target id while copying secrets from an
-         * existing row. The UI never holds the stored token; blank / redacted
-         * password fields are restored from this source (D634 still applies if
-         * destinations diverge without a re-typed secret).
-         */
-        cloneSecretsFrom: z.string().optional(),
-      }),
-      TargetSchema,
-      {
-        kind: 'mutation',
-        auth: 'admin',
-      },
-    ),
-    deleteTarget: method(z.object({ targetId: z.string() }), z.void(), {
-      kind: 'mutation',
-      auth: 'admin',
-    }),
-    setTargetEnabled: method(z.object({ targetId: z.string(), enabled: z.boolean() }), z.void(), {
-      kind: 'mutation',
-      auth: 'admin',
-    }),
   },
 } as const satisfies CapabilityDefinition
 

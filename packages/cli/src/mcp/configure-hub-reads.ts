@@ -5,6 +5,7 @@
  * reason when it fails — an interview never treats "could not read" as "none".
  */
 import type { HubClient } from '@camstack/develop'
+import { notificationTargetKindOf } from '@camstack/types'
 import { z } from 'zod'
 import { readQuery, type Read } from './ops-hub.js'
 
@@ -99,14 +100,88 @@ export async function readBoundCaps(
   return { ok: true, value: read.value.entries.map((e) => e.capName) }
 }
 
-const TargetListSchema = z.array(
+const NOTIFICATION_OUTPUT_CAP = 'notification-output'
+
+const ProvidersSchema = z.looseObject({ providers: z.array(z.string()) }).nullable()
+
+const DescriptionSchema = z.looseObject({
+  kinds: z.array(z.looseObject({ id: z.string(), functionCap: z.string().optional() })).optional(),
+})
+
+const InstanceListSchema = z.array(
   z.looseObject({
     id: z.string(),
     name: z.string(),
-    kind: z.string(),
+    kind: z.string().optional(),
     enabled: z.boolean().optional(),
+    formValues: z.record(z.string(), z.unknown()),
   }),
 )
+
+/** One notification target as an instance of `notification-output` (a secret is a view, never text). */
+export interface NotificationInstance {
+  readonly id: string
+  readonly name: string
+  /** The adapter kind (`telegram`), not the record kind (`notify-telegram`). */
+  readonly kind: string
+  readonly addonId: string
+  readonly enabled: boolean
+  /** The form values without the entry's own `name` / `enabled`. */
+  readonly config: { readonly [key: string]: unknown }
+}
+
+/**
+ * Every instance of `notification-output`, through `integration-instances` of each provider. One
+ * holder that cannot answer fails the whole read: a partial list is never "no such target" (D315).
+ */
+export async function readNotificationInstances(
+  client: HubClient,
+): Promise<Read<readonly NotificationInstance[]>> {
+  const providers = await readQuery(
+    client,
+    'capabilities.getCapability',
+    { name: NOTIFICATION_OUTPUT_CAP },
+    ProvidersSchema,
+  )
+  if (!providers.ok) return providers
+  if (providers.value === null) {
+    return { ok: false, reason: 'the capability registry did not answer for notification-output' }
+  }
+  const found: NotificationInstance[] = []
+  for (const addonId of providers.value.providers) {
+    const description = await readQuery(
+      client,
+      'integrationInstances.describe',
+      { addonId },
+      DescriptionSchema,
+    )
+    if (!description.ok) return description
+    const kinds = (description.value.kinds ?? []).filter(
+      (k) => k.functionCap === NOTIFICATION_OUTPUT_CAP,
+    )
+    if (kinds.length === 0) continue
+    const list = await readQuery(
+      client,
+      'integrationInstances.listInstances',
+      { addonId },
+      InstanceListSchema,
+    )
+    if (!list.ok) return list
+    for (const instance of list.value) {
+      if (!kinds.some((k) => k.id === instance.kind)) continue
+      const { name: _name, enabled: _enabled, ...config } = instance.formValues
+      found.push({
+        id: instance.id,
+        name: instance.name,
+        kind: notificationTargetKindOf(instance.kind ?? ''),
+        addonId,
+        enabled: instance.enabled !== false,
+        config,
+      })
+    }
+  }
+  return { ok: true, value: found }
+}
 
 export interface TargetRef {
   readonly id: string
@@ -120,15 +195,10 @@ export interface TargetRef {
  * addresses and chat ids; it is never read into a tool answer.
  */
 export async function readTargets(client: HubClient): Promise<Read<readonly TargetRef[]>> {
-  const read = await readQuery(client, 'notificationOutput.listTargets', {}, TargetListSchema)
+  const read = await readNotificationInstances(client)
   if (!read.ok) return read
   return {
     ok: true,
-    value: read.value.map((t) => ({
-      id: t.id,
-      name: t.name,
-      kind: t.kind,
-      enabled: t.enabled !== false,
-    })),
+    value: read.value.map((t) => ({ id: t.id, name: t.name, kind: t.kind, enabled: t.enabled })),
   }
 }

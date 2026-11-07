@@ -30,7 +30,7 @@ const h = vi.hoisted(() => ({
   create: vi.fn(async (_input: unknown) => ({ id: 'x' })),
   update: vi.fn(async (_input: unknown) => ({ ok: true as const })),
   remove: vi.fn(async (_input: unknown) => ({ ok: true as const })),
-  targets: [] as { name: string; config: Record<string, unknown> }[],
+  targets: [] as { name: string; formValues: Record<string, unknown> }[],
 }))
 
 const FORM: ConfigUISchema = {
@@ -63,6 +63,22 @@ vi.mock('@camstack/ui-library', async () => {
     ...actual,
     useAddonsListCapabilityProviders: (input: { capName: string }) =>
       query(input.capName === 'integration-instances' ? h.holders : h.fn),
+    // The notification targets, as the instances of `notification-output` the delete hint reads.
+    useInstancesOfCap: () => ({
+      data: h.targets.map((target, index) => ({
+        id: `target-${index}`,
+        name: target.name,
+        kind: 'notify-ntfy',
+        recordKind: 'notify-ntfy',
+        addonId: 'notifiers',
+        state: 'ok' as const,
+        stateLabel: null,
+        usable: true,
+        enabled: true,
+        formValues: target.formValues,
+      })),
+      isLoading: false,
+    }),
     useAddonsList: () => ({
       data: [
         {
@@ -111,7 +127,6 @@ vi.mock('@camstack/ui-library', async () => {
           updateInstance: { mutate: h.update },
           deleteInstance: { mutate: h.remove },
         },
-        notificationOutput: { listTargets: { query: async () => h.targets } },
       },
     }),
   }
@@ -534,7 +549,7 @@ describe('InstancesTable', () => {
     })
 
     it('delete asks first, and names the notification targets that pin the relay', async () => {
-      h.targets = [{ name: 'Mail ops', config: { smtpInstanceId: 'relay-default' } }]
+      h.targets = [{ name: 'Mail ops', formValues: { smtpInstanceId: 'relay-default' } }]
       renderPanel()
       fireEvent.click(await screen.findByRole('button', { name: 'Delete Default relay' }))
       expect(await screen.findByText(/Mail ops/)).toBeTruthy()
@@ -622,7 +637,7 @@ describe('InstancesTable', () => {
     })
 
     it('says how many targets pin a relay', async () => {
-      h.targets = [{ name: 'Mail ops', config: { smtpInstanceId: 'inst-aaaaaaaa' } }]
+      h.targets = [{ name: 'Mail ops', formValues: { smtpInstanceId: 'inst-aaaaaaaa' } }]
       renderPanel()
       expect(await screen.findByText('1 target pins this relay')).toBeTruthy()
     })

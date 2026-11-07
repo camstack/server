@@ -89,7 +89,6 @@ export default defineFixtures({
     'deviceExport.listSupportedDeviceKinds': ['camera'],
     'deviceExport.listSupportedEntityKinds': ['device'],
     'deviceExport.listExposedEntities': [],
-    'notificationOutput.listTargets': [],
     'deviceExport.listExposedDevices': [
       { deviceId: '1', exposedAs: 'Garden cam' },
       { deviceId: '2', exposedAs: 'Porch cam' },

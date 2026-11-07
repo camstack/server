@@ -11180,40 +11180,6 @@ export function createCapRouter_notificationOutput(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listTargetKinds(methodInput as any)
       }),
-    listTargets: adminProcedure
-      .input(notificationOutputCapability.methods.listTargets.input.loose())
-      .output(notificationOutputCapability.methods.listTargets.output)
-      .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-output',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.listTargets(methodInput as any)
-      }),
-    getTarget: adminProcedure
-      .input(notificationOutputCapability.methods.getTarget.input.loose())
-      .output(notificationOutputCapability.methods.getTarget.output)
-      .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-output',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.getTarget(methodInput as any)
-      }),
     discoverTargets: adminProcedure
       .input(notificationOutputCapability.methods.discoverTargets.input.loose())
       .output(notificationOutputCapability.methods.discoverTargets.output)
@@ -11281,57 +11247,6 @@ export function createCapRouter_notificationOutput(
         )
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.testTarget(methodInput as any)
-      }),
-    upsertTarget: adminProcedure
-      .input(notificationOutputCapability.methods.upsertTarget.input.loose())
-      .output(notificationOutputCapability.methods.upsertTarget.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-output',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.upsertTarget(methodInput as any)
-      }),
-    deleteTarget: adminProcedure
-      .input(notificationOutputCapability.methods.deleteTarget.input.loose())
-      .output(notificationOutputCapability.methods.deleteTarget.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-output',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.deleteTarget(methodInput as any)
-      }),
-    setTargetEnabled: adminProcedure
-      .input(notificationOutputCapability.methods.setTargetEnabled.input.loose())
-      .output(notificationOutputCapability.methods.setTargetEnabled.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-output',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setTargetEnabled(methodInput as any)
       }),
   })
 }

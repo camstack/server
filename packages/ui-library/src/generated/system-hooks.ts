@@ -1958,12 +1958,6 @@ export const useNodesExecuteQuery: typeof trpc.nodes.executeQuery.useMutation = 
 /** Generated alias around `trpc.notificationOutput.listTargetKinds.useQuery`. */
 export const useNotificationOutputListTargetKinds: typeof trpc.notificationOutput.listTargetKinds.useQuery = /*#__PURE__*/ alias(() => trpc.notificationOutput.listTargetKinds.useQuery)
 
-/** Generated alias around `trpc.notificationOutput.listTargets.useQuery`. */
-export const useNotificationOutputListTargets: typeof trpc.notificationOutput.listTargets.useQuery = /*#__PURE__*/ alias(() => trpc.notificationOutput.listTargets.useQuery)
-
-/** Generated alias around `trpc.notificationOutput.getTarget.useQuery`. */
-export const useNotificationOutputGetTarget: typeof trpc.notificationOutput.getTarget.useQuery = /*#__PURE__*/ alias(() => trpc.notificationOutput.getTarget.useQuery)
-
 /** Generated alias around `trpc.notificationOutput.discoverTargets.useQuery`. */
 export const useNotificationOutputDiscoverTargets: typeof trpc.notificationOutput.discoverTargets.useQuery = /*#__PURE__*/ alias(() => trpc.notificationOutput.discoverTargets.useQuery)
 
@@ -1975,15 +1969,6 @@ export const useNotificationOutputSend: typeof trpc.notificationOutput.send.useM
 
 /** Generated alias around `trpc.notificationOutput.testTarget.useMutation`. */
 export const useNotificationOutputTestTarget: typeof trpc.notificationOutput.testTarget.useMutation = /*#__PURE__*/ alias(() => trpc.notificationOutput.testTarget.useMutation)
-
-/** Generated alias around `trpc.notificationOutput.upsertTarget.useMutation`. */
-export const useNotificationOutputUpsertTarget: typeof trpc.notificationOutput.upsertTarget.useMutation = /*#__PURE__*/ alias(() => trpc.notificationOutput.upsertTarget.useMutation)
-
-/** Generated alias around `trpc.notificationOutput.deleteTarget.useMutation`. */
-export const useNotificationOutputDeleteTarget: typeof trpc.notificationOutput.deleteTarget.useMutation = /*#__PURE__*/ alias(() => trpc.notificationOutput.deleteTarget.useMutation)
-
-/** Generated alias around `trpc.notificationOutput.setTargetEnabled.useMutation`. */
-export const useNotificationOutputSetTargetEnabled: typeof trpc.notificationOutput.setTargetEnabled.useMutation = /*#__PURE__*/ alias(() => trpc.notificationOutput.setTargetEnabled.useMutation)
 
 /** Generated alias around `trpc.notificationRules.listRules.useQuery`. */
 export const useNotificationRulesListRules: typeof trpc.notificationRules.listRules.useQuery = /*#__PURE__*/ alias(() => trpc.notificationRules.listRules.useQuery)

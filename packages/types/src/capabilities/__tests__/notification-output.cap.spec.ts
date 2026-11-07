@@ -189,26 +189,26 @@ describe('notification-output cap — records + results', () => {
 describe('notification-output cap — method surface', () => {
   it('declares the extended method set and drops sendTest', () => {
     const methods = notificationOutputCapability.methods
+    for (const m of ['listTargetKinds', 'discoverTargets', 'send', 'testTarget']) {
+      expect(methods).toHaveProperty(m)
+    }
+    expect(methods).not.toHaveProperty('sendTest')
+    // The target CRUD is the instance door's (D1013): a cap does not carry a second one.
     for (const m of [
-      'listTargetKinds',
       'listTargets',
-      'discoverTargets',
-      'send',
-      'testTarget',
+      'getTarget',
       'upsertTarget',
       'deleteTarget',
       'setTargetEnabled',
     ]) {
-      expect(methods).toHaveProperty(m)
+      expect(methods).not.toHaveProperty(m)
     }
-    expect(methods).not.toHaveProperty('sendTest')
   })
 
   it('array-output queries return arrays (auto concat fan-out)', () => {
     expect(notificationOutputCapability.methods.listTargetKinds.output.safeParse([]).success).toBe(
       true,
     )
-    expect(notificationOutputCapability.methods.listTargets.output.safeParse([]).success).toBe(true)
     expect(notificationOutputCapability.methods.discoverTargets.output.safeParse([]).success).toBe(
       true,
     )

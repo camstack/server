@@ -81,7 +81,7 @@ export function isArrayOutputSchema(schema: unknown): boolean {
 /**
  * True when `method` on cap `def` is a COLLECTION cap's array-returning
  * (non-subscription) method — the methods whose contract is "union the result
- * across every registered provider" (`listTargets`, `listTargetKinds`,
+ * across every registered provider" (`listTargetKinds`,
  * `discoverTargets`, `listEndpoints`, …).
  *
  * Such a method is aggregated at the hub via `concatCollection` / the runtime

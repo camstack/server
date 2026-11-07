@@ -98,3 +98,13 @@ export type {
   UseBrokerInstancesResult,
 } from './use-broker-instances'
 export { brokerInstancesOf, selectableBrokers, useBrokerInstances } from './use-broker-instances'
+export type {
+  InstanceHolderData,
+  LinkableInstance,
+  UseInstancesOfCapResult,
+} from './use-instances-of-cap'
+export {
+  instancesOfHolder,
+  selectableInstances,
+  useInstancesOfCap,
+} from './use-instances-of-cap'

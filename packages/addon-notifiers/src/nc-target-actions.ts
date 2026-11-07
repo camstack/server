@@ -33,17 +33,19 @@
  * blank-seed round-trip). `config.ownerUserId` is NOT a password field, so it
  * survives redaction and remains the ownership key on read.
  */
-import { z } from 'zod'
+
 import {
+  type CustomActionCaller,
   customAction,
   defineCustomActions,
-  TargetKindSchema,
-  TargetSchema,
-  type CustomActionCaller,
   type INotificationOutputProvider,
   type IScopedLogger,
   type Target,
+  TargetKindSchema,
+  TargetSchema,
 } from '@camstack/types'
+import { z } from 'zod'
+import type { NotifierTargetAdmin } from './provider.js'
 
 /**
  * The action catalog — the tRPC contract Group B (the viewer client) consumes
@@ -93,19 +95,12 @@ export type NcTargetActionHandlers = {
 }
 
 /**
- * The subset of the `notification-output` cap surface the bridge wraps. The
- * addon passes its already-built provider straight in — redaction + secret
- * merge stay in the provider, never re-implemented here.
+ * What the bridge wraps: the target admin (redaction + secret merge, never
+ * re-implemented here) plus the kind catalogue and the test send of the cap
+ * provider.
  */
-export type NcTargetProvider = Pick<
-  INotificationOutputProvider,
-  | 'listTargets'
-  | 'listTargetKinds'
-  | 'upsertTarget'
-  | 'deleteTarget'
-  | 'setTargetEnabled'
-  | 'testTarget'
->
+export type NcTargetProvider = NotifierTargetAdmin &
+  Pick<INotificationOutputProvider, 'listTargetKinds' | 'testTarget'>
 
 export interface NcTargetActionDeps {
   readonly provider: NcTargetProvider
@@ -134,7 +129,7 @@ function mintTargetId(kind: string): string {
 export function makeNcTargetHandlers(deps: NcTargetActionDeps): NcTargetActionHandlers {
   /** A caller-owned target — must exist AND carry the caller's ownerUserId. */
   const assertOwns = async (targetId: string, userId: string): Promise<Target> => {
-    const target = (await deps.provider.listTargets({})).find((t) => t.id === targetId)
+    const target = (await deps.provider.listTargets()).find((t) => t.id === targetId)
     if (!target || ownerOf(target) !== userId) {
       throw new Error(`forbidden: target not owned: ${targetId}`)
     }
@@ -146,7 +141,7 @@ export function makeNcTargetHandlers(deps: NcTargetActionDeps): NcTargetActionHa
       const c = requireCaller(caller)
       // The provider already redacts secrets; ownerUserId is not a secret so it
       // survives redaction and stays the ownership key here.
-      const own = (await deps.provider.listTargets({})).filter((t) => ownerOf(t) === c.userId)
+      const own = (await deps.provider.listTargets()).filter((t) => ownerOf(t) === c.userId)
       return { targets: own }
     },
 
@@ -154,7 +149,7 @@ export function makeNcTargetHandlers(deps: NcTargetActionDeps): NcTargetActionHa
 
     'nc.upsertMyTarget': async (input, caller) => {
       const c = requireCaller(caller)
-      const all = await deps.provider.listTargets({})
+      const all = await deps.provider.listTargets()
       const suggestedId = input.target.id
       const existing = suggestedId.length > 0 ? all.find((t) => t.id === suggestedId) : undefined
 

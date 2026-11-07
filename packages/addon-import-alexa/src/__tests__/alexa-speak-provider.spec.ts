@@ -63,8 +63,6 @@ function ports(): AlexaSpeakPorts {
     now: () => 0,
     logger: logger(),
     loadTargets: async () => [],
-    putTarget: async () => {},
-    removeTarget: async () => {},
     speak: async () => [],
   }
 }
@@ -79,8 +77,6 @@ describe('alexa notification provider', () => {
       now: () => now,
       logger: logger(),
       loadTargets: async () => [target()],
-      putTarget: async () => {},
-      removeTarget: async () => {},
       speak: async (command) => {
         spoken.push(command)
         if (command.text.includes('down')) throw new Error('session down')
@@ -208,8 +204,6 @@ describe('Alexa quiet vs announce is decided per notification', () => {
       },
       logger: log,
       loadTargets: async () => [target(config)],
-      putTarget: async () => {},
-      removeTarget: async () => {},
       speak: async (command) => {
         spoken.push(command)
         return [{ targetId: command.targets[0] ?? '', ok: true }]
@@ -291,32 +285,6 @@ describe('the Alexa target kind', () => {
       ['echo-1', 'Kitchen · Living room · ECHO'],
       ['grp', 'Downstairs · Group'],
     ])
-  })
-
-  it('pins the account on save, so a second account added later does not move the target', async () => {
-    const saved: Target[] = []
-    const provider = createAlexaNotificationProvider({
-      ...ports(),
-      brokers: () => [broker('b1', 'Home', [echo()])],
-      putTarget: async (next) => {
-        saved.push(next)
-      },
-    })
-    await provider.upsertTarget({ target: { ...target({ echoId: 'echo-1' }) } })
-    expect(saved[0]?.config['brokerId']).toBe('b1')
-  })
-
-  it('refuses to save a target with no Echo, or with no account when several are linked', async () => {
-    const provider = createAlexaNotificationProvider({
-      ...ports(),
-      brokers: () => [broker('b1', 'Home', [echo()]), broker('b2', 'Office', [echo()])],
-    })
-    await expect(provider.upsertTarget({ target: target({ echoId: '' }) })).rejects.toThrow(
-      'Pick the Echo that should speak',
-    )
-    await expect(provider.upsertTarget({ target: target({ echoId: 'echo-1' }) })).rejects.toThrow(
-      'Pick the Amazon account this Echo belongs to',
-    )
   })
 
   it('speaks through the account the target names, not another', async () => {

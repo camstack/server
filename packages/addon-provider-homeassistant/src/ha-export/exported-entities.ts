@@ -23,6 +23,7 @@ import {
   type ExportEntityRef,
   type ExposedEntity,
   type IScopedLogger,
+  listNotificationTargets,
   pruneDeletedEntities,
   runExportedAction,
   sendToExportedTarget,
@@ -140,8 +141,13 @@ export class ExportedEntities {
         meta: { displayName: action.name },
       })
     } else {
-      const targets = await this.ports.api.notificationOutput.listTargets.query({})
+      const { targets, unreadable } = await listNotificationTargets(this.ports.api)
       const target = targets.find((t) => t.id === entity.targetId)
+      if (target === undefined && unreadable.length > 0) {
+        throw new Error(
+          `homeassistant-export: notification targets unreadable from ${unreadable.map((u) => u.addonId).join(', ')}`,
+        )
+      }
       if (target === undefined) {
         throw new Error(
           `homeassistant-export: notification target '${entity.targetId}' does not exist`,
@@ -192,12 +198,19 @@ export class ExportedEntities {
     let actionIds: ReadonlySet<string>
     let targetIds: ReadonlySet<string>
     try {
-      const [actions, targets] = await Promise.all([
+      const [actions, read] = await Promise.all([
         this.ports.api.actions.list.query({}),
-        this.ports.api.notificationOutput.listTargets.query({}),
+        listNotificationTargets(this.ports.api),
       ])
+      // A holder that could not answer may be the one that has a selected target: the list is
+      // unanswered, and a failed read changes nothing (D49).
+      if (read.unreadable.length > 0) {
+        throw new Error(
+          `notification targets unreadable from ${read.unreadable.map((u) => u.addonId).join(', ')}`,
+        )
+      }
       actionIds = new Set(actions.map((a) => a.id))
-      targetIds = new Set(targets.map((t) => t.id))
+      targetIds = new Set(read.targets.map((t) => t.id))
     } catch (err) {
       this.ports.logger.warn(
         'homeassistant-export: exported entities not reconciled — a list was unanswered',

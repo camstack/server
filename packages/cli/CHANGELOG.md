@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The MCP notification tools list and write targets through integration instances
+
 ## [1.2.225] - 2026-11-06
 
 ### Changed

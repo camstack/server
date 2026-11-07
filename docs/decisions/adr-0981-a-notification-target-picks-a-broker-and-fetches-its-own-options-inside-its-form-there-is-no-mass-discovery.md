@@ -9,7 +9,7 @@ applies-to:
   - packages/ui-library/src/composites/config-instance-select-field.tsx
   - packages/ui-library/src/composites/config-discovered-select-field.tsx
   - packages/ui-library/src/contexts/instance-picker-slot.ts
-  - packages/addon-admin-ui/src/pages/system/NotificationTargets.tsx
+  - packages/addon-admin-ui/src/pages/system/NotificationTargetsPanel.tsx
   - packages/addon-provider-homeassistant/src/ha-notification-output.ts
   - packages/addon-import-alexa/src/speak/provider.ts
   - packages/addon-notifiers/src/adapters/**
@@ -50,5 +50,5 @@ list to pick from is a schema declaration, not UI code.
 Specs: `config-form-discovered-fields.test.tsx` (no fetch until `dependsOn` is
 filled, then the list; broker picker rendered), `ha-friendly-names.spec.ts`,
 `ha-target-schema.spec.ts`, `discover-options-schema.spec.ts`,
-`discover-without-credentials.spec.ts`, `NotificationTargets.spec.tsx` (no
-"Find devices").
+`discover-without-credentials.spec.ts`. The bespoke Targets page and its spec went with
+P6a; the instance editor renders the same form.

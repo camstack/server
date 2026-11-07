@@ -103,9 +103,6 @@ async function boot(
     capabilities: { getCapability: { query: async () => null } },
     // The old autonomous push path would have called these.
     notificationOutput: {
-      listTargets: {
-        query: async () => [{ id: 'ops', addonId: 'notifiers', enabled: true, config: {} }],
-      },
       send: { mutate: push },
     },
   }

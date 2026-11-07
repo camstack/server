@@ -800,7 +800,10 @@
       "storedSecretsLoadIntoThe": "Stored secrets load into the masked fields (eye to reveal). Clear a field to leave the stored value unchanged on save; type a new value to replace it.",
       "testConnection": "Test connection",
       "connected": "Connected — {{value1}}",
-      "connectionFailed": "Connection failed"
+      "connectionFailed": "Connection failed",
+      "emptyTitle": "No notification targets yet",
+      "emptyDescription": "Add a target to deliver notifications to ntfy, Pushover, Telegram, Home Assistant and more.",
+      "testTarget": "Send a test to {{name}}"
     },
     "notificationTestPanel": {
       "level": "Level",

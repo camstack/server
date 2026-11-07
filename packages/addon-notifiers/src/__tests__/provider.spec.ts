@@ -10,10 +10,10 @@
 import type {
   ConfigUISchema,
   Notification,
+  PreparedAttachment,
   Target,
   TargetKind,
   TargetKindCaps,
-  PreparedAttachment,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import type {
@@ -22,10 +22,20 @@ import type {
   HttpResponseLike,
   NotifierAdapter,
 } from '../adapters/adapter.js'
-import { createNotificationOutputProvider, type HttpSender } from '../provider.js'
+import {
+  createNotificationOutputProvider as createCapProvider,
+  createNotifierTargetAdmin,
+  type HttpSender,
+  type NotificationOutputProviderDeps,
+} from '../provider.js'
 import { REDACTED_MARKER } from '../secrets.js'
-import { makeNotifiersRecords } from './fake-records.js'
 import { TargetStore } from '../target-store.js'
+import { makeNotifiersRecords } from './fake-records.js'
+
+/** The cap provider plus the target admin, so a spec can seed and read targets the way the bridge does. */
+function createNotificationOutputProvider(deps: NotificationOutputProviderDeps) {
+  return { ...createCapProvider(deps), ...createNotifierTargetAdmin(deps) }
+}
 
 // ── Fixtures ────────────────────────────────────────────────────────
 
@@ -165,17 +175,17 @@ describe('target CRUD', () => {
     const { provider } = await makeProvider([okAdapter('fake')])
 
     await provider.upsertTarget({ target: target() })
-    let list = await provider.listTargets({})
+    let list = await provider.listTargets()
     expect(list).toHaveLength(1)
     expect(list[0]?.name).toBe('My ntfy')
 
     await provider.upsertTarget({ target: target({ name: 'Renamed' }) })
-    list = await provider.listTargets({})
+    list = await provider.listTargets()
     expect(list).toHaveLength(1)
     expect(list[0]?.name).toBe('Renamed')
 
     await provider.deleteTarget({ targetId: 't1' })
-    expect(await provider.listTargets({})).toEqual([])
+    expect(await provider.listTargets()).toEqual([])
   })
 
   it('setTargetEnabled flips the flag', async () => {
@@ -193,7 +203,7 @@ describe('secret handling', () => {
   it('blanks password-typed fields on listTargets (presence marker only)', async () => {
     const { provider } = await makeProvider([okAdapter('fake')])
     await provider.upsertTarget({ target: target() })
-    const list = await provider.listTargets({})
+    const list = await provider.listTargets()
     expect(list[0]?.config['token']).toBe(REDACTED_MARKER)
     // Non-secret fields are untouched.
     expect(list[0]?.config['url']).toBe('https://example.test/hook')
@@ -423,21 +433,6 @@ describe('probeTargetConfig + cloneSecretsFrom', () => {
     })
     const stored = await store.getById('dup')
     expect(stored?.config['token']).toBe('cloned-secret')
-  })
-
-  it('getTarget returns the live secret (listTargets stays redacted)', async () => {
-    const adapter = okAdapter('secret-kind')
-    const { provider } = await makeProvider([adapter])
-    await provider.upsertTarget({
-      target: target({
-        kind: 'secret-kind',
-        config: { url: 'https://x', token: 'live-token' },
-      }),
-    })
-    const listed = await provider.listTargets({})
-    expect(listed[0]?.config['token']).toBe('__redacted__')
-    const full = await provider.getTarget({ targetId: 't1' })
-    expect(full.config['token']).toBe('live-token')
   })
 })
 

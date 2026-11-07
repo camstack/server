@@ -78,39 +78,87 @@ const emailKind = buildEmailDescriptor([
   { value: 'provider-smtp', label: 'Email (SMTP) — smtp.example.com', ready: true },
 ])
 
-/** An Email target pinned to a relay the provider no longer holds. */
-const EMAIL_TARGET = {
-  id: 'email-alerts',
-  addonId: 'notifiers',
-  kind: 'email',
-  name: 'Alerts',
-  enabled: true,
-  config: { to: 'ops@example.com', smtpAddonId: 'provider-smtp', smtpInstanceId: 'relay-gone' },
+/** The targets as instances of `notification-output`, per provider addon (D1013). */
+const INSTANCES: Readonly<Record<string, readonly unknown[]>> = {
+  notifiers: [
+    {
+      id: 'email-alerts',
+      name: 'Alerts',
+      kind: 'notify-email',
+      configured: true,
+      enabled: true,
+      formValues: {
+        name: 'Alerts',
+        to: 'ops@example.com',
+        smtpAddonId: 'provider-smtp',
+        smtpInstanceId: 'relay-gone',
+        ownerUserId: 'user-1',
+      },
+    },
+  ],
+  'import-alexa': [
+    {
+      id: 'alexa-echo-1',
+      name: 'Kitchen',
+      kind: 'notify-alexa-echo',
+      configured: true,
+      enabled: true,
+      formValues: {
+        name: 'Kitchen',
+        brokerId: 'alexa_001',
+        echoId: 'echo-kitchen',
+        mode: 'speak',
+        volume: 40,
+        respectDnd: true,
+      },
+    },
+  ],
 }
+
+const KINDS_BY_ADDON: Readonly<Record<string, readonly { kind: string; label: string }[]>> = {
+  notifiers: [emailKind, webhookKind],
+  'import-alexa': [alexaKind],
+}
+
+const formOf = (kind: string): unknown =>
+  [alexaKind, webhookKind, emailKind].find((k) => k.kind === kind)?.configSchema
 
 export default defineFixtures({
   area: 'notification-targets',
-  description: 'Targets page with an Alexa kind: the Echo picker form and Find devices',
+  description:
+    'Targets page (InstancesTable over notification-output) with an Alexa kind, a Webhook and an Email target pinned to a missing relay',
   handlers: {
     'notificationOutput.listTargetKinds': [alexaKind, webhookKind, emailKind],
-    'notificationOutput.getTarget': EMAIL_TARGET,
-    'notificationOutput.listTargets': [
-      EMAIL_TARGET,
-      {
-        id: 'alexa-echo-1',
-        addonId: 'import-alexa',
-        kind: 'alexa-echo',
-        name: 'Kitchen',
-        enabled: true,
-        config: {
-          brokerId: 'alexa_001',
-          echoId: 'echo-kitchen',
-          mode: 'speak',
-          volume: 40,
-          respectDnd: true,
-        },
-      },
-    ],
+    'capabilities.getCapability': (i: { name: string }) => ({
+      name: i.name,
+      mode: i.name === 'notification-output' ? 'collection' : 'singleton',
+      providers: i.name === 'notification-output' ? ['notifiers', 'import-alexa'] : [i.name],
+      activeProvider: i.name === 'notification-output' ? null : i.name,
+      disabledProviders: [],
+    }),
+    'integrationInstances.describe': (i: { addonId: string }) => ({
+      role: 'services',
+      instanceMode: 'multiple',
+      kind: 'target',
+      canTest: true,
+      mintsId: true,
+      kinds: (KINDS_BY_ADDON[i.addonId] ?? []).map((k) => ({
+        id: `notify-${k.kind}`,
+        label: k.label,
+        functionCap: 'notification-output',
+        canTest: true,
+      })),
+    }),
+    'integrationInstances.listInstances': (i: { addonId: string }) => INSTANCES[i.addonId] ?? [],
+    'integrationInstances.instanceFormSchema': (i: { kind?: string; id: string | null }) => {
+      const kind = (i.kind ?? 'notify-email').replace('notify-', '')
+      return formOf(kind) ?? { sections: [] }
+    },
+    'mut:integrationInstances.createInstance': { id: 'new-target' },
+    'mut:integrationInstances.updateInstance': { ok: true },
+    'mut:integrationInstances.setInstanceEnabled': { ok: true },
+    'mut:integrationInstances.deleteInstance': { ok: true },
+    'mut:integrationInstances.testInstance': { success: true, status: 'validated' },
     // The provider already skips configured Echoes; the dialog skips them again
     // (a provider that does not), so the fixture answers with all three.
     'notificationOutput.discoverTargets': [

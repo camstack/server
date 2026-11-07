@@ -28,7 +28,7 @@ vi.mock('../NotificationRules', () => ({
 }))
 
 vi.mock('../NotificationHistory', () => ({ NotificationHistoryPage: () => null }))
-vi.mock('../NotificationTargets', () => ({ NotificationTargetsPage: () => null }))
+vi.mock('../NotificationTargetsPanel', () => ({ NotificationTargetsPanel: () => null }))
 vi.mock('../NotificationSimulate', () => ({ NotificationSimulatePage: () => null }))
 vi.mock('../NotificationAlarm', () => ({ NotificationAlarmPage: () => null }))
 vi.mock('../NotificationSequences', () => ({
@@ -63,13 +63,13 @@ describe('Notifications — header create follows Rules area', () => {
     await waitFor(() => expect(screen.getByTestId('rules-new-menu')).toBeTruthy())
   })
 
-  it('shows Add target on the Targets tab, not a Rules create', () => {
+  it('has no header create on the Targets tab: the table owns its Add button', () => {
     render(
       <MemoryRouter initialEntries={['/system/notifications?tab=targets']}>
         <NotificationsPage />
       </MemoryRouter>,
     )
-    expect(screen.getByTestId('notifications-add-target')).toBeTruthy()
+    expect(screen.queryByTestId('notifications-add-target')).toBeNull()
     expect(screen.queryByTestId('rules-new-menu')).toBeNull()
   })
 })

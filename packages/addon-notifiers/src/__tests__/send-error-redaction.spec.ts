@@ -12,9 +12,20 @@
 import type { IScopedLogger, LogExtras, Target } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import type { NotifierAdapter } from '../adapters/adapter.js'
-import { createNotificationOutputProvider, type HttpSender, stripUrls } from '../provider.js'
-import { makeNotifiersRecords } from './fake-records.js'
+import {
+  createNotificationOutputProvider as createCapProvider,
+  createNotifierTargetAdmin,
+  type HttpSender,
+  type NotificationOutputProviderDeps,
+  stripUrls,
+} from '../provider.js'
 import { TargetStore } from '../target-store.js'
+import { makeNotifiersRecords } from './fake-records.js'
+
+/** The cap provider plus the target admin, so a spec can seed and read targets the way the bridge does. */
+function createNotificationOutputProvider(deps: NotificationOutputProviderDeps) {
+  return { ...createCapProvider(deps), ...createNotifierTargetAdmin(deps) }
+}
 
 interface LoggedLine {
   readonly message: string

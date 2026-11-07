@@ -1,13 +1,13 @@
 /**
  * `configure` tools for notification targets (board #275).
  *
- * They go through the same `notificationOutput.*` methods the admin UI's
- * notification page uses (`listTargetKinds`, `listTargets`, `upsertTarget`,
- * `testTarget`) — no parallel path. A kind's `configSchema` is the one form
+ * Targets are instances of `notification-output`: they are read and written through
+ * `integrationInstances.*` (the door the admin UI's notification page uses), the kind
+ * catalog through `notificationOutput.listTargetKinds` and the test through
+ * `testTarget` — no parallel path. A kind's `configSchema` is the one form
  * schema; its `password` fields are the secrets, and a secret is never a tool
- * argument nor shown (`configure-support.ts`). `getTarget` is never called: it
- * returns a target WITH its secrets. `listTargets` is already redacted by the
- * provider, and the view here reduces every secret to set/unset on top.
+ * argument nor shown (`configure-support.ts`). An instance read carries a secret
+ * as a view, never text, and the view here reduces it to set/unset on top.
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import {
@@ -38,6 +38,7 @@ import {
 } from './configure-support.js'
 import { resolveLinkBase } from './ops-events.js'
 import { cap, readQuery, reasonOf, type NoSessionResult } from './ops-hub.js'
+import { readNotificationInstances, type NotificationInstance } from './configure-hub-reads.js'
 
 const MAX_TARGETS = 50
 
@@ -48,15 +49,6 @@ const TargetKindShape = z.looseObject({
   supportsDiscovery: z.boolean().optional(),
   configSchema: z.unknown(),
   destinationKeys: z.array(z.string()).optional(),
-})
-
-const TargetShape = z.looseObject({
-  id: z.string(),
-  name: z.string(),
-  kind: z.string(),
-  addonId: z.string(),
-  enabled: z.boolean(),
-  config: z.record(z.string(), z.unknown()),
 })
 
 const SendResultShape = z.looseObject({
@@ -168,7 +160,7 @@ export interface TargetsResult {
   readonly reason?: string
 }
 
-function viewTarget(target: z.infer<typeof TargetShape>, kinds: readonly KindForm[]): TargetView {
+function viewTarget(target: NotificationInstance, kinds: readonly KindForm[]): TargetView {
   const form = kinds.find((k) => k.kind === target.kind)
   const view = viewConfig(form?.fields ?? [], target.config)
   return {
@@ -188,7 +180,7 @@ export async function configureNotificationTargets(
   return withAdminHub(ctx, async ({ client }) => {
     const [kinds, targets] = await Promise.all([
       readKinds(client),
-      readQuery(client, 'notificationOutput.listTargets', {}, z.array(TargetShape)),
+      readNotificationInstances(client),
     ])
     if (!targets.ok) return { status: 'unavailable', reason: targets.reason }
     const forms = kinds.ok ? kinds.value : []
@@ -221,10 +213,12 @@ export interface UpsertTargetArgs {
 export const UPSERT_TARGET_TOOL = 'configure_notification_target_upsert'
 
 interface UpsertPlan {
-  readonly existing: z.infer<typeof TargetShape> | null
+  readonly existing: NotificationInstance | null
   readonly form: KindForm
   readonly fields: readonly FormField[]
   readonly mergedConfig: { readonly [key: string]: unknown }
+  /** What the caller named, minus secrets: the patch the instance door receives. */
+  readonly safeConfig: { readonly [key: string]: unknown }
   readonly secretNeeds: readonly FormField[]
 }
 
@@ -264,9 +258,9 @@ async function planUpsert(client: HubClient, args: UpsertTargetArgs): Promise<Pl
     }
   }
   const fields = form.fields
-  let existing: z.infer<typeof TargetShape> | null = null
+  let existing: NotificationInstance | null = null
   if (args.targetId !== undefined) {
-    const list = await readQuery(client, 'notificationOutput.listTargets', {}, z.array(TargetShape))
+    const list = await readNotificationInstances(client)
     if (!list.ok) return { ok: false, problems: [list.reason] }
     existing = list.value.find((t) => t.id === args.targetId) ?? null
     if (existing === null) return { ok: false, problems: [`target ${args.targetId} was not found`] }
@@ -305,7 +299,7 @@ async function planUpsert(client: HubClient, args: UpsertTargetArgs): Promise<Pl
   const secretNeeds = fields.filter((f) => f.secret && f.required && view.secrets[f.key] !== 'set')
   return {
     ok: true,
-    plan: { existing, form, fields, mergedConfig, secretNeeds },
+    plan: { existing, form, fields, mergedConfig, safeConfig: split.safe, secretNeeds },
   }
 }
 
@@ -352,19 +346,39 @@ export function upsertTargetSpec(
     async execute(args): Promise<UpsertTargetResult> {
       const plan = await planUpsert(client, args)
       if (!plan.ok) throw new Error(plan.problems.join('; '))
-      const id = plan.plan.existing?.id ?? `${args.kind}-${String(now())}`
-      const saved = await client.call('POST', 'notificationOutput.upsertTarget', {
-        target: {
+      const enabled = args.enabled ?? plan.plan.existing?.enabled ?? true
+      // The instance door keeps a stored secret the patch does not name, so only the
+      // non-secret values travel; the secrets are typed by the operator in the admin UI.
+      const values = { ...plan.plan.safeConfig }
+      let id: string
+      if (plan.plan.existing === null) {
+        const created = await client.call('POST', 'integrationInstances.createInstance', {
+          addonId: plan.plan.form.addonId,
+          name: args.name,
+          kind: `notify-${args.kind}`,
+          values,
+        })
+        const parsed = z.looseObject({ id: z.string() }).safeParse(created)
+        if (!parsed.success) throw new Error('the hub did not answer the new target id')
+        id = parsed.data.id
+      } else {
+        id = plan.plan.existing.id
+        await client.call('POST', 'integrationInstances.updateInstance', {
+          addonId: plan.plan.form.addonId,
           id,
           name: args.name,
-          kind: args.kind,
+          values,
+        })
+      }
+      if (enabled !== (plan.plan.existing?.enabled ?? true)) {
+        await client.call('POST', 'integrationInstances.setInstanceEnabled', {
           addonId: plan.plan.form.addonId,
-          enabled: args.enabled ?? plan.plan.existing?.enabled ?? true,
-          config: plan.plan.mergedConfig,
-        },
-      })
-      const parsed = TargetShape.safeParse(saved)
-      const stored = parsed.success ? parsed.data : null
+          id,
+          enabled,
+        })
+      }
+      const reread = await readNotificationInstances(client)
+      const stored = reread.ok ? (reread.value.find((t) => t.id === id) ?? null) : null
       const view = viewConfig(plan.plan.fields, stored?.config ?? plan.plan.mergedConfig)
       const link = await notificationsPage(client)
       const still = plan.plan.fields.filter((f) => view.missingSecrets.includes(f.key))
@@ -408,7 +422,7 @@ export function testTargetSpec(client: HubClient): GatedToolSpec<TestTargetArgs>
     async dryRun(args): Promise<DryRunOutcome> {
       const [kinds, targets] = await Promise.all([
         readKinds(client),
-        readQuery(client, 'notificationOutput.listTargets', {}, z.array(TargetShape)),
+        readNotificationInstances(client),
       ])
       if (!targets.ok) return { confirmable: false, describe: { problem: targets.reason } }
       const target = targets.value.find((t) => t.id === args.targetId)

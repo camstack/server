@@ -20,11 +20,12 @@ import {
   Switch,
   useAddonsSetCapabilityProviderEnabled,
   useConfirm,
+  useInstancesOfCap,
   useItemFormUrl,
   useSystem,
   type DataColumn,
 } from '@camstack/ui-library'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link2, Link2Off, Loader2, Pencil, Play, Plus, Trash2, type LucideIcon } from 'lucide-react'
 import { useCallback, useMemo, useState, type ReactElement, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -220,10 +221,8 @@ export function InstancesTable({
     readonly verdict: TestVerdict
   } | null>(null)
 
-  const targets = useQuery({
-    queryKey: [HOLDER_QUERY_KEY, 'pinning-targets'],
-    queryFn: () => system.trpcClient.notificationOutput.listTargets.query({}),
-  })
+  // The notification targets, read as the instances of `notification-output`: what pins a relay.
+  const targets = useInstancesOfCap({ functionCap: 'notification-output' })
   const pinningCount = useCallback(
     (id: string): number => targetsPinning(targets.data ?? [], id).length,
     [targets.data],
@@ -272,10 +271,7 @@ export function InstancesTable({
   const runDelete = useCallback(
     async (row: InstanceRow): Promise<void> => {
       // A failed look-up only drops the warning below; the delete itself still asks.
-      const pinning = await system.trpcClient.notificationOutput.listTargets
-        .query({})
-        .then((targets) => targetsPinning(targets, row.id))
-        .catch((): readonly string[] => [])
+      const pinning = targetsPinning(targets.data ?? [], row.id)
       const pinned =
         pinning.length > 0
           ? ` ${t(
@@ -310,7 +306,7 @@ export function InstancesTable({
         })
       }
     },
-    [confirm, queryClient, system, t],
+    [confirm, queryClient, system, t, targets.data],
   )
 
   const showKind = useMemo(

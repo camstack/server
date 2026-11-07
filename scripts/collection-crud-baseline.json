@@ -2,11 +2,7 @@
   "_why": "Methods that read as the CRUD of a collection of configured things (planning#440 step 6, D1013). Each family is a contiguous block that its packet deletes with the methods; `permanent` matches by name but is a runtime read or another kind of thing. The list only shrinks.",
   "families": {
     "notifiers": {
-      "notification-output.cap.ts:listTargetKinds": "kind catalogue of notification targets; folds into integration-instances kinds in P6a",
-      "notification-output.cap.ts:listTargets": "target list; becomes the instances of function cap notification-output (P6a)",
-      "notification-output.cap.ts:getTarget": "target read; folds into integration-instances (P6a)",
-      "notification-output.cap.ts:upsertTarget": "target write; folds into integration-instances upsertInstance (P6a)",
-      "notification-output.cap.ts:deleteTarget": "target delete; folds into integration-instances deleteInstance (P6a)",
+      "notification-output.cap.ts:listTargetKinds": "kind catalogue of notification targets; stays: the dispatcher's byte budgets (bodyMaxLen, maxActions), the rule editor's deliveryParams, the icons, the test panel and the viewer's nc.listTargetKinds read it (P6a left it; folding it into integration-instances kinds is a follow-up)",
       "notification-output.cap.ts:discoverTargets": "form helper that scans for targets to offer in the create form; stays as a helper (D981), P6a decides",
       "notification-output.cap.ts:probeTargetConfig": "form helper that probes a draft target config; stays as a helper (D981), P6a decides"
     },

@@ -3,14 +3,15 @@
  *
  * It multiplexes across registered `NotifierAdapter`s:
  *   - `listTargetKinds` — every adapter's descriptor, `addonId`-stamped.
- *   - `listTargets`      — persisted targets, secrets redacted.
  *   - `discoverTargets`  — `adapter.discover?.() ?? []`.
  *   - `send` / `testTarget` — resolve target → `prepareNotification` (pure
  *      degrade engine) → fetch any `needsFetch` attachments (hard byte cap) →
  *      `adapter.buildRequest` → execute → map to `SendResult` with the engine's
  *      `renderedAs`. NEVER throws through the cap: every failure lands in
  *      `SendResult.error`.
- *   - CRUD — `TargetStore`, with server-side secret-merge on upsert.
+ *   - the targets themselves are `integration-instances` records of this addon
+ *     (`record-kinds.ts`); {@link createNotifierTargetAdmin} is the `Target`-shaped
+ *     write path the notification-center bridge keeps, with the secret merge.
  *
  * Registered with an EMPTY adapter list for now (adapters are plan tasks
  * T6–T12); the catalog is empty but every code path compiles + is tested.
@@ -22,9 +23,9 @@ import {
   type Notification,
   type PreparedAttachment,
   type PreparedNotification,
-  prepareNotification,
   type ProbeTargetConfigResult,
   type PublicEndpointReader,
+  prepareNotification,
   resolveAttachmentUrls,
   type SendResult,
   type Target,
@@ -40,8 +41,8 @@ import {
 import {
   mergeSecrets,
   passwordFieldKeys,
-  redactForRead,
   REDACTED_MARKER,
+  redactForRead,
   SecretRestoreRefusedError,
 } from './secrets.js'
 import type { TargetStore } from './target-store.js'
@@ -130,6 +131,26 @@ function cannedNotification(): Notification {
 }
 
 /**
+ * Blank / redacted password fields never carry the live token from the UI.
+ * Drop them so `mergeSecrets` can restore from a stored target (edit or clone).
+ */
+function omitBlankSecrets(
+  config: Record<string, unknown>,
+  adapter: NotifierAdapter,
+): Record<string, unknown> {
+  const keys = passwordFieldKeys(adapter.descriptor)
+  if (keys.size === 0) return config
+  const out: Record<string, unknown> = { ...config }
+  for (const key of keys) {
+    const value = out[key]
+    if (value === '' || value === REDACTED_MARKER || value === undefined) {
+      delete out[key]
+    }
+  }
+  return out
+}
+
+/**
  * Build the concrete `notification-output` provider. Returns a plain object
  * matching `INotificationOutputProvider` so the addon can register it with the
  * cap router as a collection entry.
@@ -147,26 +168,6 @@ export function createNotificationOutputProvider(
   const adapterByKind = new Map<string, NotifierAdapter>()
   for (const adapter of deps.adapters) {
     adapterByKind.set(adapter.descriptor.kind, adapter)
-  }
-
-  /**
-   * Blank / redacted password fields never carry the live token from the UI.
-   * Drop them so `mergeSecrets` can restore from a stored target (edit or clone).
-   */
-  function omitBlankSecrets(
-    config: Record<string, unknown>,
-    adapter: NotifierAdapter,
-  ): Record<string, unknown> {
-    const keys = passwordFieldKeys(adapter.descriptor)
-    if (keys.size === 0) return config
-    const out: Record<string, unknown> = { ...config }
-    for (const key of keys) {
-      const value = out[key]
-      if (value === '' || value === REDACTED_MARKER || value === undefined) {
-        delete out[key]
-      }
-    }
-    return out
   }
 
   /**
@@ -379,24 +380,6 @@ export function createNotificationOutputProvider(
       return kinds
     },
 
-    listTargets: async (): Promise<Target[]> => {
-      const targets = await store.list()
-      return targets.map((target) => {
-        const adapter = adapterByKind.get(target.kind)
-        const redacted = adapter ? redactForRead(target, adapter.descriptor) : target
-        return { ...redacted, addonId }
-      })
-    },
-
-    getTarget: async ({ targetId }): Promise<Target> => {
-      const target = await store.getById(targetId)
-      if (target === null) {
-        throw new Error(`Unknown target '${targetId}'`)
-      }
-      // Unredacted — admin edit/duplicate only. listTargets stays masked.
-      return { ...target, addonId }
-    },
-
     discoverTargets: async ({ kind, config, targetId }): Promise<DiscoveredTarget[]> => {
       const adapter = adapterByKind.get(kind)
       if (!adapter?.discover) return []
@@ -450,6 +433,47 @@ export function createNotificationOutputProvider(
       const target = await store.getById(targetId)
       if (!target) return { success: false, error: `Unknown target '${targetId}'` }
       return dispatch(target, sample ?? cannedNotification())
+    },
+  }
+}
+
+/**
+ * What the notification-center bridge (`nc.*`, the viewer's personal targets) does with the targets of
+ * this addon. NOT a capability surface: the admin reads and writes targets as `integration-instances`
+ * records; this is the one write path that still takes a `Target` (a viewer sends the redacted form back),
+ * so the secret merge and the destination guard stay here, in one place (D634).
+ */
+export interface NotifierTargetAdmin {
+  /** Persisted targets, secrets redacted. */
+  readonly listTargets: () => Promise<Target[]>
+  /** Insert or replace by id, restoring the secrets the caller left blank or redacted. */
+  readonly upsertTarget: (input: {
+    readonly target: Target
+    readonly cloneSecretsFrom?: string
+  }) => Promise<Target>
+  readonly deleteTarget: (input: { readonly targetId: string }) => Promise<void>
+  readonly setTargetEnabled: (input: {
+    readonly targetId: string
+    readonly enabled: boolean
+  }) => Promise<void>
+}
+
+export function createNotifierTargetAdmin(
+  deps: Pick<NotificationOutputProviderDeps, 'store' | 'adapters' | 'addonId'>,
+): NotifierTargetAdmin {
+  const addonId = deps.addonId ?? NOTIFIERS_ADDON_ID
+  const store = deps.store
+  const adapterByKind = new Map<string, NotifierAdapter>(
+    deps.adapters.map((adapter) => [adapter.descriptor.kind, adapter]),
+  )
+  return {
+    listTargets: async (): Promise<Target[]> => {
+      const targets = await store.list()
+      return targets.map((target) => {
+        const adapter = adapterByKind.get(target.kind)
+        const redacted = adapter ? redactForRead(target, adapter.descriptor) : target
+        return { ...redacted, addonId }
+      })
     },
 
     upsertTarget: async ({ target, cloneSecretsFrom }): Promise<Target> => {

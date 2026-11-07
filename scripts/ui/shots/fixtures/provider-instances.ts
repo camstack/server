@@ -5,6 +5,11 @@
  * workspace manifests. Invented data.
  */
 import { defineFixtures } from './_define'
+import {
+  describeNotificationHolder,
+  listNotificationHolder,
+  type FixtureTarget,
+} from './_notification-instances'
 
 const LOKI_FORM = {
   sections: [
@@ -142,12 +147,24 @@ const INSTANCES: Readonly<Record<string, readonly unknown[]>> = {
   ],
 }
 
+/** A notification target pinned to one SMTP relay: the relay's delete is refused while it names it. */
+const TARGETS: readonly FixtureTarget[] = [
+  {
+    id: 'mail-ops',
+    name: 'Mail ops',
+    kind: 'email',
+    addonId: 'notification-output',
+    config: { smtpInstanceId: 'inst-3f9a1c2e' },
+  },
+]
+
 export default defineFixtures({
   area: 'provider-instances',
   description:
     'integration-instances records for Loki (Logs), the SMTP relays (Email) and the TURN servers (Network)',
   handlers: {
     'integrationInstances.describe': (i: { addonId: string }) => {
+      if (i.addonId === 'notification-output') return describeNotificationHolder(TARGETS, i.addonId)
       if (i.addonId === 'loki-logging') {
         return { instanceMode: 'single', kind: 'destination', canTest: true }
       }
@@ -165,10 +182,10 @@ export default defineFixtures({
       if (i.addonId === 'static-turn') return STATIC_TURN_FORM
       return SMTP_FORM
     },
-    'integrationInstances.listInstances': (i: { addonId: string }) => INSTANCES[i.addonId] ?? [],
-    'notificationOutput.listTargets': [
-      { name: 'Mail ops', config: { smtpInstanceId: 'inst-3f9a1c2e' } },
-    ],
+    'integrationInstances.listInstances': (i: { addonId: string }) =>
+      i.addonId === 'notification-output'
+        ? listNotificationHolder(TARGETS, i.addonId)
+        : (INSTANCES[i.addonId] ?? []),
     'mut:integrationInstances.createInstance': (i: { id: string }) => ({
       id: i.id,
     }),

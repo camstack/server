@@ -23,6 +23,12 @@ export interface LinkableInstance {
   readonly addonId: string
   readonly state: 'ok' | 'off' | 'error' | 'unknown'
   readonly stateLabel: string | null
+  /** The record kind id the instance is stored under (`kind.id`; `kind` above may be the broker kind). */
+  readonly recordKind: string
+  /** The instance's own on/off switch; a row written before the field existed is on. */
+  readonly enabled: boolean
+  /** The values of the instance's form, secrets redacted by the provider. */
+  readonly formValues: Readonly<Record<string, unknown>>
   /** Switched on, configured and not failing: a picker offers only these, plus the chosen one. */
   readonly usable: boolean
 }
@@ -61,6 +67,9 @@ export function instancesOfHolder(
       id: instance.id,
       name: instance.name,
       kind: kindName,
+      recordKind: own.id,
+      enabled: instance.enabled !== false,
+      formValues: instance.formValues,
       addonId: holder.addonId,
       state: instance.status?.state ?? 'unknown',
       stateLabel: instance.status?.label ?? null,

@@ -5,7 +5,13 @@
  * fire it (`actions.run` is an admin act; a scoped user reaches an action only
  * through a camera that links it, which a scene cannot express).
  */
-import type { ActionRunResult, ExportEntityApi, IScopedLogger, LogExtras } from '@camstack/types'
+import {
+  type ActionRunResult,
+  type ExportEntityApi,
+  type IScopedLogger,
+  type LogExtras,
+  instanceApiOverTargets,
+} from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { AlexaPrincipal } from '../access/access-gate.js'
@@ -55,8 +61,8 @@ function makeApi(
 ): ExportEntityApi {
   return {
     actions: { list: { query: async () => actions }, run: { mutate: run } },
+    ...instanceApiOverTargets(() => []),
     notificationOutput: {
-      listTargets: { query: async () => [] },
       send: { mutate: async () => ({ success: true }) },
     },
   }

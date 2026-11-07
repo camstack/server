@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildKindIconMap,
   targetsToOptions,
+  toTargetOptions,
   type NotificationTargetOption,
 } from './notification-targets-options'
 
@@ -53,5 +54,31 @@ describe('buildKindIconMap', () => {
     ])
     expect(map.get('notifiers:ntfy')).toBe('/i/ntfy.svg')
     expect(map.size).toBe(1)
+  })
+})
+
+describe('toTargetOptions', () => {
+  it('names the kind as its adapter, from the record kind of the instance', () => {
+    const rows = toTargetOptions([
+      {
+        id: 't1',
+        name: 'Phone',
+        kind: 'notify-ntfy',
+        recordKind: 'notify-ntfy',
+        addonId: 'notifiers',
+        state: 'ok',
+        stateLabel: null,
+        usable: true,
+        enabled: true,
+        formValues: {},
+      },
+    ])
+    expect(rows).toEqual([
+      { id: 't1', name: 'Phone', enabled: true, kind: 'ntfy', addonId: 'notifiers' },
+    ])
+  })
+
+  it('is empty before the read answers', () => {
+    expect(toTargetOptions(undefined)).toEqual([])
   })
 })

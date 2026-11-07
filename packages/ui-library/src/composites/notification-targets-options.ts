@@ -2,6 +2,8 @@
  * Pure mapping helpers for notification-target OptionSelect options.
  */
 
+import { notificationTargetKindOf } from '@camstack/types'
+import type { LinkableInstance } from '../hooks/use-instances-of-cap'
 import type { OptionSelectOption } from './option-select/option-select-model'
 
 export type NotificationTargetOption = {
@@ -58,25 +60,15 @@ export function buildKindIconMap(rows: unknown): ReadonlyMap<string, string> {
   return map
 }
 
-export function toTargetOptions(rows: unknown): readonly NotificationTargetOption[] {
-  if (!Array.isArray(rows)) return []
-  const out: NotificationTargetOption[] = []
-  for (const row of rows) {
-    if (row === null || typeof row !== 'object') continue
-    const id = Reflect.get(row, 'id')
-    const name = Reflect.get(row, 'name')
-    const enabled = Reflect.get(row, 'enabled')
-    const kind = Reflect.get(row, 'kind')
-    const addonId = Reflect.get(row, 'addonId')
-    if (typeof id !== 'string' || typeof name !== 'string') continue
-    if (typeof kind !== 'string' || typeof addonId !== 'string') continue
-    out.push({
-      id,
-      name,
-      enabled: enabled === true,
-      kind,
-      addonId,
-    })
-  }
-  return out
+/** The targets as picker options: the instances of `notification-output`, kind named as its adapter. */
+export function toTargetOptions(
+  instances: readonly LinkableInstance[] | undefined,
+): readonly NotificationTargetOption[] {
+  return (instances ?? []).map((instance) => ({
+    id: instance.id,
+    name: instance.name,
+    enabled: instance.enabled,
+    kind: notificationTargetKindOf(instance.recordKind),
+    addonId: instance.addonId,
+  }))
 }

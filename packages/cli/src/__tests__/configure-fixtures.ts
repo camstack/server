@@ -60,3 +60,34 @@ export function dryRunOf(result: unknown): DryRunView {
       : undefined
   return { token, describe: 'dryRun' in result ? result.dryRun : undefined }
 }
+
+export interface FakeNotificationTarget {
+  readonly id: string
+  readonly name: string
+  /** The adapter kind (`ntfy`); the instance's record kind is `notify-<kind>`. */
+  readonly kind: string
+  readonly enabled: boolean
+  readonly config: { readonly [key: string]: unknown }
+}
+
+/** The three reads that list the instances of `notification-output`, answering `targets`. */
+export function notificationTargetAnswers(targets: readonly FakeNotificationTarget[]): {
+  [path: string]: unknown
+} {
+  const kinds = [...new Set(targets.map((t) => t.kind))].map((kind) => ({
+    id: `notify-${kind}`,
+    functionCap: 'notification-output',
+  }))
+  return {
+    'capabilities.getCapability': { providers: ['notifiers'] },
+    'integrationInstances.describe': { kinds },
+    'integrationInstances.listInstances': targets.map((t) => ({
+      id: t.id,
+      name: t.name,
+      kind: `notify-${t.kind}`,
+      enabled: t.enabled,
+      configured: true,
+      formValues: { name: t.name, enabled: t.enabled, ...t.config },
+    })),
+  }
+}

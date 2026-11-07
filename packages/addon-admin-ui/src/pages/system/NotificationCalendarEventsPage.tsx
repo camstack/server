@@ -10,7 +10,7 @@ import { Calendar as CalendarIcon, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { AdminPage } from '../../components/AdminPage'
-import { TARGETS_QUERY_KEY } from './NotificationRules'
+import { useNotificationTargets } from './use-notification-targets'
 import { NotificationCalendarEventsEditor } from './NotificationCalendarEventsEditor'
 import type { DigestTargetOption } from './notification-digest-fields'
 import {
@@ -66,11 +66,7 @@ export function NotificationCalendarEventsPage() {
     if (rulesQuery.isSuccess) setUnreadable(rulesQuery.data === null)
   }, [rulesQuery.isSuccess, rulesQuery.data])
 
-  const targetsQuery = useQuery({
-    queryKey: TARGETS_QUERY_KEY,
-    queryFn: (): Promise<readonly Target[]> =>
-      system.trpcClient.notificationOutput.listTargets.query({}),
-  })
+  const targetsQuery = useNotificationTargets()
 
   const setEnabled = useMutation({
     mutationFn: (vars: { readonly ruleId: string; readonly enabled: boolean }) =>

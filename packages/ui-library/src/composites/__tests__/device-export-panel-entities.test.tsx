@@ -66,13 +66,6 @@ vi.mock('../../generated/system-hooks', () => ({
       isLoading: false,
     }
   },
-  useNotificationOutputListTargets: (_input: unknown, options?: { enabled?: boolean }) => {
-    targetsListEnabled.push(options?.enabled !== false)
-    return {
-      data: options?.enabled === false ? undefined : [{ id: 'tg:1', name: 'Phone' }],
-      isLoading: false,
-    }
-  },
   useDeviceExportExposeDevice: () => ({
     mutateAsync: (input: unknown) => {
       deviceExposeCalls.push(input)
@@ -100,6 +93,16 @@ vi.mock('../../generated/system-hooks', () => ({
     },
     isPending: false,
   }),
+}))
+
+vi.mock('../../hooks/use-instances-of-cap', () => ({
+  useInstancesOfCap: (_filter: unknown, options?: { enabled?: boolean }) => {
+    targetsListEnabled.push(options?.enabled !== false)
+    return {
+      data: options?.enabled === false ? undefined : [{ id: 'tg:1', name: 'Phone' }],
+      isLoading: false,
+    }
+  },
 }))
 
 const { DeviceExportPanel } = await import('../device-export-panel')

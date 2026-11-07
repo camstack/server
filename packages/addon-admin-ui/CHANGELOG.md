@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Waste sources use the shared Calendars list, with a Fetch now button on each source row
+- Notifications > Targets is the shared instances table (with the owner column and a test-send action); the bespoke target page and its dialog are gone, and Duplicate with them
 
 ## [1.2.601] - 2026-11-06
 

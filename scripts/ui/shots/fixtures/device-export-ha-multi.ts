@@ -4,6 +4,7 @@
  * Names are invented.
  */
 import { defineFixtures } from './_define'
+import { notificationInstanceHandlers } from './_notification-instances'
 
 export default defineFixtures({
   area: 'device-export-ha-multi',
@@ -44,7 +45,7 @@ export default defineFixtures({
       { entity: { kind: 'notifier', targetId: 'tg:1' }, exposedAs: 'Phone' },
     ],
     'actions.list': [{ id: 'internal:a', name: 'Open gate' }],
-    'notificationOutput.listTargets': [
+    ...notificationInstanceHandlers([
       { id: 'tg:1', name: 'Phone', kind: 'push', addonId: 'notifier-x', enabled: true, config: {} },
       {
         id: 'tg:2',
@@ -54,6 +55,6 @@ export default defineFixtures({
         enabled: true,
         config: {},
       },
-    ],
+    ]),
   },
 })

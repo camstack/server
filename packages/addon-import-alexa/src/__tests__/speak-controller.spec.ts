@@ -53,18 +53,12 @@ interface LoginSeen {
   readonly deviceAppName: string
 }
 
-type AlexaTargetPorts = Pick<AlexaSpeakHost, 'readTargets' | 'putTarget' | 'removeTarget'>
+type AlexaTargetPorts = Pick<AlexaSpeakHost, 'readTargets'>
 
 function mapTargets(initial: readonly Target[]): AlexaTargetPorts {
   const rows = new Map(initial.map((target) => [target.id, target]))
   return {
     readTargets: async () => [...rows.values()],
-    putTarget: async (target) => {
-      rows.set(target.id, target)
-    },
-    removeTarget: async (id) => {
-      rows.delete(id)
-    },
   }
 }
 
@@ -78,11 +72,7 @@ async function recordTargets(): Promise<{
   const store = echoTargetStoreOver(memory.records)
   return {
     store,
-    ports: {
-      readTargets: () => store.list(),
-      putTarget: (target) => store.upsert(target),
-      removeTarget: (id) => store.delete(id),
-    },
+    ports: { readTargets: () => store.list() },
   }
 }
 
@@ -267,29 +257,27 @@ describe('speak is bound to a broker', () => {
 })
 
 describe('stored Echo targets', () => {
-  it('are served as targets of the Alexa kind, with their switch and account', async () => {
-    const stored = echoTarget('t-kitchen', false)
-    const h = harness({ brokers: ONE, targets: mapTargets([stored]) })
-    const [row] = await h.controller.provider.listTargets({})
-    expect(row).toMatchObject({
-      id: 't-kitchen',
-      enabled: false,
-      config: { brokerId: 'alexa_001', echoId: 'echo-of-alexa_001', respectDnd: false },
+  it('are spoken on only while their switch is on', async () => {
+    const h = harness({ brokers: ONE, targets: mapTargets([echoTarget('t-kitchen', false)]) })
+    const sent = await h.controller.provider.send({
+      targetId: 't-kitchen',
+      notification: { body: 'hello', title: 'CamStack', format: 'text', priority: 3 },
     })
+    expect(sent).toMatchObject({ success: false, error: 'target disabled' })
   })
 })
 
 describe('the records are the one source of the Echo targets', () => {
   const NOTIFICATION = { body: 'hello', title: 'CamStack', format: 'text', priority: 3 } as const
 
-  it('lists and sends to a target an instance created after start, without a restart', async () => {
+  it('sends to a target an instance created after start, without a restart', async () => {
     const { ports, store } = await recordTargets()
     const h = harness({ brokers: ONE, targets: ports })
     await h.controller.start()
-    expect(await h.controller.provider.listTargets({})).toEqual([])
+    expect(
+      await h.controller.provider.send({ targetId: 't-new', notification: NOTIFICATION }),
+    ).toMatchObject({ success: false, error: 'target not found: t-new' })
     await store.upsert(echoTarget('t-new', true))
-    const listed = await h.controller.provider.listTargets({})
-    expect(listed.map((row) => row.id)).toEqual(['t-new'])
     const sent = await h.controller.provider.send({
       targetId: 't-new',
       notification: NOTIFICATION,
@@ -311,21 +299,6 @@ describe('the records are the one source of the Echo targets', () => {
     })
     expect(sent).toMatchObject({ success: false, error: 'target disabled' })
     expect(h.spoken).toEqual([])
-    h.controller.stop()
-  })
-
-  it('a legacy save keeps the target an instance created, and drops none', async () => {
-    const { ports, store } = await recordTargets()
-    const h = harness({ brokers: ONE, targets: ports })
-    await h.controller.start()
-    await store.upsert(echoTarget('t-instance', true))
-    await h.controller.provider.upsertTarget({ target: echoTarget('t-legacy', true) })
-    expect((await store.list()).map((row) => row.id).sort()).toEqual(['t-instance', 't-legacy'])
-    await h.controller.provider.setTargetEnabled({ targetId: 't-legacy', enabled: false })
-    expect((await store.list()).map((row) => [row.id, row.enabled]).sort()).toEqual([
-      ['t-instance', true],
-      ['t-legacy', false],
-    ])
     h.controller.stop()
   })
 })

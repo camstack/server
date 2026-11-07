@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**202 capabilities · 1488 methods.**
+**202 capabilities · 1483 methods.**
 
 ## Method index
 
@@ -754,15 +754,10 @@
 | `nodes.setProcessLogLevel` | mutation | admin | nodes |
 | `nodes.executeQuery` | mutation | admin | nodes |
 | `notificationOutput.listTargetKinds` | query | protected | notification-output |
-| `notificationOutput.listTargets` | query | admin | notification-output |
-| `notificationOutput.getTarget` | query | admin | notification-output |
 | `notificationOutput.discoverTargets` | query | admin | notification-output |
 | `notificationOutput.probeTargetConfig` | mutation | admin | notification-output |
 | `notificationOutput.send` | mutation | admin | notification-output |
 | `notificationOutput.testTarget` | mutation | admin | notification-output |
-| `notificationOutput.upsertTarget` | mutation | admin | notification-output |
-| `notificationOutput.deleteTarget` | mutation | admin | notification-output |
-| `notificationOutput.setTargetEnabled` | mutation | admin | notification-output |
 | `notificationRules.listRules` | query | admin | notification-rules |
 | `notificationRules.getRule` | query | admin | notification-rules |
 | `notificationRules.createRule` | mutation | admin | notification-rules |
@@ -3535,7 +3530,7 @@
 
 ### `notification-output` → `notificationOutput.*`
 
-- **Source:** `packages/types/src/capabilities/notification-output.cap.ts:406`
+- **Source:** `packages/types/src/capabilities/notification-output.cap.ts:409`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `INotificationOutputProvider`
@@ -3543,15 +3538,10 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | listTargetKinds | `notificationOutput.listTargetKinds` | query | protected | `{}` | `TargetKindSchema[]` |
-| listTargets | `notificationOutput.listTargets` | query | admin | `{}` | `TargetSchema[]` |
-| getTarget | `notificationOutput.getTarget` | query | admin | `{ targetId: string }` | `TargetSchema` |
 | discoverTargets | `notificationOutput.discoverTargets` | query | admin | `{ kind: string; config?: Record<string, unknown>; targetId?: string }` | `DiscoveredTargetSchema[]` |
 | probeTargetConfig | `notificationOutput.probeTargetConfig` | mutation | admin | `{ kind: string; config: Record<string, unknown>; targetId?: string }` | `ProbeTargetConfigResultSchema` |
 | send | `notificationOutput.send` | mutation | admin | `{ targetId: string; notification: NotificationSchema }` | `SendResultSchema` |
 | testTarget | `notificationOutput.testTarget` | mutation | admin | `{ targetId: string; sample?: NotificationSchema }` | `SendResultSchema` |
-| upsertTarget | `notificationOutput.upsertTarget` | mutation | admin | `{ target: TargetSchema; cloneSecretsFrom?: string }` | `TargetSchema` |
-| deleteTarget | `notificationOutput.deleteTarget` | mutation | admin | `{ targetId: string }` | `void` |
-| setTargetEnabled | `notificationOutput.setTargetEnabled` | mutation | admin | `{ targetId: string; enabled: boolean }` | `void` |
 
 ### `notification-rules` → `notificationRules.*`
 

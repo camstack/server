@@ -30,9 +30,6 @@ export interface AlexaSpeakHost {
   readonly logger: IScopedLogger
   /** The Echo targets now. Read on every use: an instance may have created, switched or deleted one. */
   readonly readTargets: () => Promise<readonly Target[]>
-  /** Write the one target that changed. */
-  readonly putTarget: (target: Target) => Promise<void>
-  readonly removeTarget: (targetId: string) => Promise<void>
   /** The brokers right now. Read on every use: accounts come and go. */
   readonly listBrokers: () => readonly SpeakBrokerRef[]
   /** The broker's current refresh token, or null when it holds none. */
@@ -61,8 +58,6 @@ export class AlexaSpeakController {
       now: this.now,
       logger: host.logger,
       loadTargets: () => host.readTargets(),
-      putTarget: (target) => host.putTarget(target),
-      removeTarget: (targetId) => host.removeTarget(targetId),
       speak: (command) => this.utter(command.brokerId, command.mode, command.targets, command.text),
     })
   }

@@ -1518,9 +1518,6 @@ export function mountAllCaps(services: MountAllCapsServices) {
         listTargetKinds: concatCollection(providers, 'listTargetKinds') as InferProvider<
           typeof notificationOutputCapability
         >['listTargetKinds'],
-        listTargets: concatCollection(providers, 'listTargets') as InferProvider<
-          typeof notificationOutputCapability
-        >['listTargets'],
         discoverTargets: concatCollection(providers, 'discoverTargets') as InferProvider<
           typeof notificationOutputCapability
         >['discoverTargets'],

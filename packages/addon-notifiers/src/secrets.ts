@@ -2,7 +2,7 @@
  * Secret handling for stored targets.
  *
  * A target's `config` blob holds secrets (API tokens, passwords, topics).
- * Secrets must NEVER round-trip to the admin UI, so `listTargets` replaces
+ * Secrets must NEVER round-trip to the admin UI, so a target read replaces
  * every field declared `type:'password'` in the kind's `configSchema` with a
  * presence marker. On write, `mergeSecrets` restores the stored secret for any
  * password field the operator left as the marker (i.e. didn't re-type),

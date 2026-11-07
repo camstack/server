@@ -7,6 +7,7 @@
 import type { CameraOccupancySnapshot, IScopedLogger } from '@camstack/types'
 import {
   errMsg,
+  instanceSourceOverApi,
   isDeviceScopedCap,
   kebabToCamel,
   readDeviceStateFrom,
@@ -25,7 +26,7 @@ import type {
   NcUnreadableHolder,
 } from '../../notification-center/dispatcher.js'
 import { NotificationCenter } from '../../notification-center/index.js'
-import { instanceSourceOverApi, type NcKindBudgets, readNcTargets } from './nc-target-instances.js'
+import { type NcKindBudgets, readNcTargets } from './nc-target-instances.js'
 import { buildRecordedGifPorts, deriveRecordedGif } from '../../notification-center/recorded-gif.js'
 import {
   NC_TRACKS_AT_INSTANT_LIMIT,

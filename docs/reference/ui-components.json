@@ -2506,14 +2506,14 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/notification-targets-field.tsx",
-      "summary": "ConfigUISchema `notification-target-multiselect` — fetches listTargets and stores a `string[]` of target ids."
+      "summary": "ConfigUISchema `notification-target-multiselect` — reads the notification-output instances and stores a `string[]` of target ids."
     },
     {
       "name": "ConfigNotificationTargetSelectFieldView",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/notification-targets-field.tsx",
-      "summary": "ConfigUISchema `notification-target-select` — fetches listTargets and stores one target id string."
+      "summary": "ConfigUISchema `notification-target-select` — reads the notification-output instances and stores one target id string."
     },
     {
       "name": "ConfigSchemaField",
@@ -7004,6 +7004,13 @@
       ]
     },
     {
+      "name": "instancesOfHolder",
+      "kind": "function",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-instances-of-cap.ts",
+      "summary": "The instances of one holder whose kind is configured for `functionCap`, optionally of one kind. A holder without `kinds` declares none, so it holds none."
+    },
+    {
       "name": "isAbsentProvider",
       "kind": "function",
       "area": "lib",
@@ -10533,6 +10540,13 @@
       "summary": "The brokers a picker offers: the usable ones, plus the CURRENTLY chosen one whatever its state, so an existing pick stays visible with its state instead of vanishing from the list."
     },
     {
+      "name": "selectableInstances",
+      "kind": "function",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-instances-of-cap.ts",
+      "summary": "The usable ones plus the CURRENTLY chosen one, whatever its state."
+    },
+    {
       "name": "SelectedChip",
       "kind": "component",
       "area": "composites",
@@ -13379,6 +13393,13 @@
       "area": "contexts",
       "file": "packages/ui-library/src/contexts/instance-picker-slot.ts",
       "summary": "The instance picker a host mounts for `instance-select` fields (D1013 rule 5)."
+    },
+    {
+      "name": "useInstancesOfCap",
+      "kind": "hook",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-instances-of-cap.ts",
+      "summary": "The instances an operator can link to, read from the ONE instance model (D1013 rule 5): every provider of `integration-instances` that also serves the function cap describes its kinds, and the instances of a kind whos…"
     },
     {
       "name": "useIsMidWidth",

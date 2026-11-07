@@ -26,7 +26,6 @@ const mockCatalog = vi.fn(() => Promise.resolve({ catalog: [] }))
 const mockListRules = vi.fn(
   (): Promise<{ rules: readonly NcRule[] }> => Promise.resolve({ rules: [] }),
 )
-const mockListTargets = vi.fn(() => Promise.resolve([]))
 const mockListZones = vi.fn(() => Promise.resolve([]))
 const mockKindsBatch = vi.fn(() => Promise.resolve([{ deviceId: 101, kinds: [] }]))
 const mockCustom = vi.fn((_input: unknown) =>
@@ -54,6 +53,10 @@ const listAllHook = vi.fn(
     fleetListResult(FLEET_ROWS),
 )
 
+vi.mock('../use-notification-targets', () => ({
+  useNotificationTargets: () => ({ data: [], isError: false }),
+}))
+
 vi.mock('@camstack/ui-library', async () => {
   const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
@@ -67,7 +70,6 @@ vi.mock('@camstack/ui-library', async () => {
           getConditionCatalog: { query: mockCatalog },
           listRules: { query: mockListRules },
         },
-        notificationOutput: { listTargets: { query: mockListTargets } },
         zones: { listZones: { query: mockListZones } },
         pipelineAnalytics: { listEventKindsBatch: { query: mockKindsBatch } },
         addons: { custom: { mutate: mockCustom } },

@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1488 method paths across 202 capabilities.
+ * Coverage: 1483 method paths across 202 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -762,16 +762,11 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'nodes.shutdownNode': { capName: "nodes", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'nodes.topology': { capName: "nodes", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'nodes.undeployAddon': { capName: "nodes", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'notificationOutput.deleteTarget': { capName: "notification-output", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'notificationOutput.discoverTargets': { capName: "notification-output", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'notificationOutput.getTarget': { capName: "notification-output", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationOutput.listTargetKinds': { capName: "notification-output", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'notificationOutput.listTargets': { capName: "notification-output", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationOutput.probeTargetConfig': { capName: "notification-output", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationOutput.send': { capName: "notification-output", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'notificationOutput.setTargetEnabled': { capName: "notification-output", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationOutput.testTarget': { capName: "notification-output", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'notificationOutput.upsertTarget': { capName: "notification-output", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.activateAlarmProfile': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.cancelSnooze': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.createAlarmProfile': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

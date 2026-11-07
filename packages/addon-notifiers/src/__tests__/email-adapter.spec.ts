@@ -1,10 +1,19 @@
 import { userError } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildEmailDescriptor, createEmailAdapter, type EmailSendInput } from '../adapters/email.js'
-import { createNotificationOutputProvider } from '../provider.js'
-import { makeNotifiersRecords } from './fake-records.js'
-import { TargetStore } from '../target-store.js'
 import { iconUrlFor } from '../icon-routes.js'
+import {
+  createNotificationOutputProvider as createCapProvider,
+  createNotifierTargetAdmin,
+  type NotificationOutputProviderDeps,
+} from '../provider.js'
+import { TargetStore } from '../target-store.js'
+import { makeNotifiersRecords } from './fake-records.js'
+
+/** The cap provider plus the target admin, so a spec can seed and read targets the way the bridge does. */
+function createNotificationOutputProvider(deps: NotificationOutputProviderDeps) {
+  return { ...createCapProvider(deps), ...createNotifierTargetAdmin(deps) }
+}
 
 describe('email descriptor relay pin', () => {
   it('is an optional instance-select over smtp-provider, not a hand-rolled select', () => {

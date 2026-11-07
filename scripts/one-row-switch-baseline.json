@@ -3,7 +3,6 @@
   "capMethods": {
     "addons.cap.ts:setCapabilityProviderEnabled": "a capability provider binding of an addon, not an integration instance",
     "core-blocks.cap.ts:setEnabled": "a core block has its own record kind and cap, not an integration-instances provider",
-    "notification-output.cap.ts:setTargetEnabled": "a notification target is a settings-store Target row with its own CRUD, not an instance record; it moves with the targets (audit item 3)",
     "notification-rules.cap.ts:setRuleEnabled": "a notification rule is a rule row with its own cap, not an integration instance",
     "schedulers.cap.ts:setEnabled": "a scheduler job has its own cap and store, not an integration-instances provider",
     "stream-broker.cap.ts:setRtspEnabled": "the broker's RTSP server toggle, a node setting, not an instance",

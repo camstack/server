@@ -36,7 +36,6 @@ let mockTargets: Target[] = []
 const mockListRules = vi.fn(
   (): Promise<{ rules: readonly NcRule[] }> => Promise.resolve({ rules: mockRules }),
 )
-const mockListTargets = vi.fn((): Promise<readonly Target[]> => Promise.resolve(mockTargets))
 const mockSetEnabled = vi.fn((_i: unknown) => Promise.resolve({ success: true as const }))
 const mockDelete = vi.fn((_i: unknown) => Promise.resolve({ success: true as const }))
 const mockCreate = vi.fn((i: { rule: unknown }) =>
@@ -152,6 +151,10 @@ const listAllHook = vi.fn(
     fleetListResult(FLEET_ROWS),
 )
 
+vi.mock('../use-notification-targets', () => ({
+  useNotificationTargets: () => ({ data: mockTargets, isError: false }),
+}))
+
 vi.mock('@camstack/ui-library', async () => {
   const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
@@ -191,9 +194,6 @@ vi.mock('@camstack/ui-library', async () => {
           getRuleLastRuns: { query: mockGetRuleLastRuns },
           listSequences: { query: mockListSequences },
           createSequence: { mutate: mockCreateSequence },
-        },
-        notificationOutput: {
-          listTargets: { query: mockListTargets },
         },
         deviceManager: {
           listAll: { query: mockListAll },
@@ -353,7 +353,6 @@ function resetHarness(): void {
   mockTargets = []
   mockBridgeAnswers = {}
   mockListRules.mockClear()
-  mockListTargets.mockClear()
   mockCustom.mockClear()
   mockSetEnabled.mockClear()
   mockDelete.mockClear()

@@ -5,7 +5,14 @@ import {
   testNotificationTarget,
   upsertNotificationTarget,
 } from '../mcp/configure-notifiers.js'
-import { ADDRESSES, asProtectedTier, dryRunOf, gatedHub, writes } from './configure-fixtures.js'
+import {
+  ADDRESSES,
+  asProtectedTier,
+  dryRunOf,
+  gatedHub,
+  notificationTargetAnswers,
+  writes,
+} from './configure-fixtures.js'
 
 const ntfyKind = {
   kind: 'ntfy',
@@ -38,21 +45,17 @@ const ntfyKind = {
   },
 }
 
-const echoTarget = (input: unknown): unknown =>
-  typeof input === 'object' && input !== null && 'target' in input ? input.target : null
-
 const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unknown } => ({
   'notificationOutput.listTargetKinds': [ntfyKind],
-  'notificationOutput.listTargets': [
+  ...notificationTargetAnswers([
     {
       id: 'ntfy-1',
       name: 'Phone',
       kind: 'ntfy',
-      addonId: 'notifiers',
       enabled: true,
       config: {
         serverUrl: 'https://ntfy.sh',
-        topic: '__redacted__',
+        topic: { $secret: 'ref-1', v: 1, set: true },
         ownerUserId: 'u1',
       },
     },
@@ -60,11 +63,10 @@ const answers = (extra: { [path: string]: unknown } = {}): { [path: string]: unk
       id: 'ntfy-2',
       name: 'Bare',
       kind: 'ntfy',
-      addonId: 'notifiers',
       enabled: true,
       config: { serverUrl: 'https://ntfy.sh' },
     },
-  ],
+  ]),
   'localNetwork.getAddresses': ADDRESSES,
   ...extra,
 })
@@ -103,7 +105,7 @@ describe('configure_notification_target_upsert', () => {
   }
 
   it('previews without writing, then creates with the non-secret fields and reports the secret as required', async () => {
-    const hub = gatedHub(answers({ 'notificationOutput.upsertTarget': echoTarget }))
+    const hub = gatedHub(answers({ 'integrationInstances.createInstance': { id: 'ntfy-new' } }))
     const dry = dryRunOf(await upsertNotificationTarget(hub.ctx, create, undefined))
     expect(writes(hub.calls)).toHaveLength(0)
     expect(JSON.stringify(dry.describe)).toContain('secret-required')
@@ -112,14 +114,12 @@ describe('configure_notification_target_upsert', () => {
     const done = await upsertNotificationTarget(hub.ctx, create, dry.token)
     const sent = writes(hub.calls)
     expect(sent).toHaveLength(1)
-    expect(sent[0]?.path).toBe('notificationOutput.upsertTarget')
+    expect(sent[0]?.path).toBe('integrationInstances.createInstance')
     expect(sent[0]?.input).toMatchObject({
-      target: {
-        kind: 'ntfy',
-        name: 'Kitchen',
-        addonId: 'notifiers',
-        config: { serverUrl: 'https://ntfy.example.test' },
-      },
+      addonId: 'notifiers',
+      kind: 'notify-ntfy',
+      name: 'Kitchen',
+      values: { serverUrl: 'https://ntfy.example.test' },
     })
     expect(done).toMatchObject({
       status: 'executed',
@@ -180,8 +180,8 @@ describe('configure_notification_target_upsert', () => {
     expect(bad).not.toContain('confirm_token')
   })
 
-  it('an edit keeps the stored secret markers so the provider restores them', async () => {
-    const hub = gatedHub(answers({ 'notificationOutput.upsertTarget': echoTarget }))
+  it('an edit sends only what the caller named, so the door keeps every stored secret', async () => {
+    const hub = gatedHub(answers({ 'integrationInstances.updateInstance': { ok: true } }))
     const args = {
       targetId: 'ntfy-1',
       kind: 'ntfy',
@@ -190,15 +190,14 @@ describe('configure_notification_target_upsert', () => {
     }
     const dry = dryRunOf(await upsertNotificationTarget(hub.ctx, args, undefined))
     await upsertNotificationTarget(hub.ctx, args, dry.token)
-    expect(writes(hub.calls)[0]?.input).toMatchObject({
-      target: {
-        id: 'ntfy-1',
-        config: {
-          topic: '__redacted__',
-          priority: 'high',
-          serverUrl: 'https://ntfy.sh',
-        },
-      },
+    const sent = writes(hub.calls)
+    expect(sent).toHaveLength(1)
+    expect(sent[0]?.path).toBe('integrationInstances.updateInstance')
+    expect(sent[0]?.input).toEqual({
+      addonId: 'notifiers',
+      id: 'ntfy-1',
+      name: 'Phone 2',
+      values: { priority: 'high' },
     })
   })
 

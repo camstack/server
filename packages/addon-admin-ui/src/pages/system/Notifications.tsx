@@ -21,14 +21,13 @@ import { NotificationRulesPage } from './NotificationRules'
 import { NotificationSequencesPage, SEQUENCES_TAB_OWNED_PARAMS } from './NotificationSequences'
 import { NotificationSettingsPage } from './NotificationSettings'
 import { NotificationSimulatePage } from './NotificationSimulate'
-import { NotificationTargetsPage } from './NotificationTargets'
+import { NotificationTargetsPanel } from './NotificationTargetsPanel'
 import { NotificationTextsPage } from './NotificationTexts'
 import {
   HISTORY_TAB_ID,
   HISTORY_TAB_OWNED_PARAMS,
   withHistoryTabForRule,
 } from './notification-history.helpers'
-import { TARGETS_TAB_OWNED_PARAMS } from './notification-targets-url'
 import {
   type CreateRuleType,
   isProducerAreaKey,
@@ -42,7 +41,10 @@ import i18n from '../../i18n/index'
 
 const SIMULATE_TAB_ID = 'simulate'
 const RULES_TAB_ID = 'rules'
-const TABS_WITH_CREATE = new Set(['targets', RULES_TAB_ID, 'sequences'])
+/** The `?` keys `<InstancesTable>` keeps its open instance in; a tab change drops them. */
+const TARGETS_TAB_OWNED_PARAMS: readonly string[] = ['instance', 'instance-new']
+
+const TABS_WITH_CREATE = new Set([RULES_TAB_ID, 'sequences'])
 
 function producerCreateType(area: RulesAreaKey): CreateRuleType | null {
   if (area === 'summaries') return 'summary'
@@ -146,19 +148,6 @@ export function NotificationsPage() {
   const clearCreate = (): void => setCreateRequested(false)
 
   const headerActions: ReactNode = (() => {
-    if (tab === 'targets') {
-      return (
-        <Button
-          size="sm"
-          type="button"
-          data-testid="notifications-add-target"
-          onClick={() => setCreateRequested(true)}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          {t('systemPage.notifications.addTarget', 'Add target')}
-        </Button>
-      )
-    }
     if (tab === 'sequences') {
       return (
         <Button
@@ -201,13 +190,7 @@ export function NotificationsPage() {
         {
           id: 'targets',
           label: t('systemPage.notifications.targets', 'Targets'),
-          content: (
-            <NotificationTargetsPage
-              headerOwnsCreate
-              createRequested={tab === 'targets' && createRequested}
-              onCreateConsumed={clearCreate}
-            />
-          ),
+          content: <NotificationTargetsPanel />,
           ownedParams: TARGETS_TAB_OWNED_PARAMS,
         },
         {

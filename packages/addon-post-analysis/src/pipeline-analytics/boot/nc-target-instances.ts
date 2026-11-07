@@ -8,56 +8,13 @@
  * answer, so one broken holder cannot stall delivery to the healthy ones, and a target missing from a
  * partial answer is transient (retried), never "deleted". Nothing readable at all is an error.
  */
-import {
-  type InstanceSource,
-  type IntegrationInstance,
-  type IntegrationInstanceDescription,
-  instancesOfCap,
-  type TargetKind,
-} from '@camstack/types'
+import { type InstanceSource, instancesOfCap, type TargetKind } from '@camstack/types'
 import type { NcTargetRef, NcUnreadableHolder } from '../../notification-center/dispatcher.js'
 
 const NOTIFICATION_OUTPUT = 'notification-output'
 
 /** What the dispatcher takes from a KIND: the budgets its caps and delivery parameters declare. */
 export type NcKindBudgets = Pick<TargetKind, 'kind' | 'caps' | 'deliveryParams'>
-
-/** The slice of `ctx.api` the read needs. */
-export interface NcInstanceApi {
-  readonly capabilities: {
-    readonly getCapability: {
-      query(input: { name: string }): Promise<{ readonly providers: readonly string[] } | null>
-    }
-  }
-  readonly integrationInstances: {
-    readonly describe: {
-      query(input: { addonId: string }): Promise<IntegrationInstanceDescription>
-    }
-    readonly listInstances: {
-      query(input: { addonId: string }): Promise<readonly IntegrationInstance[]>
-    }
-  }
-}
-
-async function providersOf(api: NcInstanceApi, name: string): Promise<readonly string[]> {
-  const info = await api.capabilities.getCapability.query({ name })
-  if (info === null) throw new Error(`the capability registry did not answer for ${name}`)
-  return info.providers
-}
-
-/**
- * The source over `ctx.api`. Every provider of the cap is a holder, not only those that also
- * serve `integration-instances`: a provider that does not (an addon older than the hub during an
- * update) then fails `describe` and is reported unreadable, so its targets are retried as
- * transient instead of vanishing from the catalogue and failing for good.
- */
-export function instanceSourceOverApi(api: NcInstanceApi): InstanceSource {
-  return {
-    holders: (cap) => providersOf(api, cap),
-    describe: (addonId) => api.integrationInstances.describe.query({ addonId }),
-    listInstances: (addonId) => api.integrationInstances.listInstances.query({ addonId }),
-  }
-}
 
 /** The readable targets, and the holders that could not be read. */
 export interface NcTargetRead {

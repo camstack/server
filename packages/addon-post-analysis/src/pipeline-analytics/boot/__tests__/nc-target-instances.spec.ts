@@ -7,6 +7,8 @@
  */
 import {
   buildNotificationTargetInstances,
+  type InstanceApi,
+  instanceSourceOverApi,
   makeInMemoryRecords,
   NotificationTargetStore,
   notificationTargetKinds,
@@ -16,7 +18,7 @@ import { describe, expect, it } from 'vitest'
 import { NcDispatcher } from '../../../notification-center/dispatcher.js'
 import type { NcOutboxEntry } from '../../../notification-center/outbox.js'
 import { makeSilentLogger } from '../../__tests__/test-helpers.js'
-import { instanceSourceOverApi, type NcInstanceApi, readNcTargets } from '../nc-target-instances.js'
+import { readNcTargets } from '../nc-target-instances.js'
 
 const TELEGRAM: TargetKind = {
   kind: 'telegram',
@@ -70,7 +72,7 @@ async function api(alexaDown = false) {
     canProbe: () => false,
   })
   const holders = alexaDown ? ['notifiers', 'import-alexa'] : ['notifiers']
-  const fake: NcInstanceApi = {
+  const fake: InstanceApi = {
     capabilities: {
       getCapability: {
         query: async ({ name }) => ({
@@ -149,7 +151,7 @@ describe('readNcTargets', () => {
 
   it('reports a notification provider that serves no integration-instances as unreadable, never drops it', async () => {
     const fake = await api()
-    const older: NcInstanceApi = {
+    const older: InstanceApi = {
       ...fake,
       capabilities: {
         getCapability: {
@@ -191,7 +193,7 @@ describe('readNcTargets', () => {
         describe: { query: () => Promise.reject(new Error('holder down')) },
         listInstances: { query: async () => [] },
       },
-    } satisfies NcInstanceApi
+    } satisfies InstanceApi
     await expect(readNcTargets(instanceSourceOverApi(api), [TELEGRAM])).rejects.toThrow(
       /import-alexa \(holder down\)/,
     )

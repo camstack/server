@@ -6,6 +6,7 @@
  * cameras.
  */
 import { defineFixtures } from './_define'
+import { notificationInstanceHandlers } from './_notification-instances'
 import { NOW } from './_time'
 
 const TARGET = 'ntfy-family'
@@ -89,7 +90,7 @@ export default defineFixtures({
     'notificationRules.listSequences': { sequences: [] },
     'notificationRules.listSnoozes': { snoozes: [] },
     'auth.listLoginMethods': [],
-    'notificationOutput.listTargets': [
+    ...notificationInstanceHandlers([
       {
         id: TARGET,
         addonId: 'notifiers',
@@ -98,6 +99,6 @@ export default defineFixtures({
         enabled: true,
         config: {},
       },
-    ],
+    ]),
   },
 })

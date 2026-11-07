@@ -6,7 +6,13 @@
  */
 import { Characteristic, Service } from '@homebridge/hap-nodejs'
 import type { Accessory } from '@homebridge/hap-nodejs'
-import type { ActionRunResult, ExportEntityApi, IScopedLogger, LogExtras } from '@camstack/types'
+import {
+  type ActionRunResult,
+  type ExportEntityApi,
+  type IScopedLogger,
+  type LogExtras,
+  instanceApiOverTargets,
+} from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ActionExports, type ActionExportEntry, type ActionExportPorts } from '../action-exports.js'
@@ -62,8 +68,8 @@ function harness(initial: readonly ActionExportEntry[] = []): Harness {
       },
       run: { mutate: run },
     },
+    ...instanceApiOverTargets(() => []),
     notificationOutput: {
-      listTargets: { query: async () => [] },
       send: { mutate: async () => ({ success: true }) },
     },
   }

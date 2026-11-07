@@ -18,10 +18,20 @@ import type { ConfigField, ConfigUISchema, Target } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import type { NotifierAdapter } from '../adapters/adapter.js'
 import { NOTIFIER_ADAPTERS } from '../adapters/registry.js'
-import { createNotificationOutputProvider, type HttpSender } from '../provider.js'
+import {
+  createNotificationOutputProvider as createCapProvider,
+  createNotifierTargetAdmin,
+  type HttpSender,
+  type NotificationOutputProviderDeps,
+} from '../provider.js'
 import { REDACTED_MARKER } from '../secrets.js'
-import { makeNotifiersRecords } from './fake-records.js'
 import { TargetStore } from '../target-store.js'
+import { makeNotifiersRecords } from './fake-records.js'
+
+/** The cap provider plus the target admin, so a spec can seed and read targets the way the bridge does. */
+function createNotificationOutputProvider(deps: NotificationOutputProviderDeps) {
+  return { ...createCapProvider(deps), ...createNotifierTargetAdmin(deps) }
+}
 
 const SECRET_PREFIX = 'S3CRET-'
 
@@ -326,7 +336,7 @@ describe('the webhook URL is a secret', () => {
     await provider.upsertTarget({
       target: targetOf(webhook, { url: 'https://ha.example/api/webhook/SECRET-ID' }),
     })
-    const [row] = await provider.listTargets({})
+    const [row] = await provider.listTargets()
     expect(row?.config['url']).toBe(REDACTED_MARKER)
     expect(JSON.stringify(row)).not.toContain('SECRET-ID')
   })

@@ -119,6 +119,7 @@ import {
   type IDeviceRemovalHookProvider,
   type IStorageOccupancyProvider,
   isEventOwnerType,
+  listNotificationTargets,
   MAX_TRACK_PURITIES,
   MAX_TRACK_RELATIONS,
   memoizePinnedFfmpeg,
@@ -3714,8 +3715,8 @@ export default class PipelineAnalyticsAddon
         cancel: (snoozeId, caller) => center.cancelSnooze(snoozeId, caller),
       },
       listCallerTargetIds: async (userId) => {
-        const targets = await api.notificationOutput.listTargets.query({})
-        return targets.filter((t) => t.config['ownerUserId'] === userId).map((t) => t.id)
+        const { targets } = await listNotificationTargets(api)
+        return targets.filter((t) => t.ownerUserId === userId).map((t) => t.id)
       },
       // The save-time device-compatibility guard's ONE capability read
       // (`device-compat-guard.ts`, operator ruling 2026-10-01) — the SAME

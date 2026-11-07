@@ -114,7 +114,7 @@ export interface SystemProxy {
   readonly networkAccess: Pick<InferProvider<typeof networkAccessCapability>, 'start' | 'stop' | 'getEndpoint' | 'getStatus' | 'listEndpoints'>
   readonly networkQuality: Pick<InferProvider<typeof networkQualityCapability>, 'getAllStats'>
   readonly nodes: Pick<InferProvider<typeof nodesCapability>, 'topology' | 'directory' | 'deployAddon' | 'undeployAddon' | 'restartAddon' | 'restartProcess' | 'restartNode' | 'shutdownNode' | 'renameNode' | 'clusterAddonStatus' | 'getCapUsageGraph' | 'getNodeAddons' | 'setProcessLogLevel' | 'executeQuery'>
-  readonly notificationOutput: Pick<InferProvider<typeof notificationOutputCapability>, 'listTargetKinds' | 'listTargets' | 'getTarget' | 'discoverTargets' | 'probeTargetConfig' | 'send' | 'testTarget' | 'upsertTarget' | 'deleteTarget' | 'setTargetEnabled'>
+  readonly notificationOutput: Pick<InferProvider<typeof notificationOutputCapability>, 'listTargetKinds' | 'discoverTargets' | 'probeTargetConfig' | 'send' | 'testTarget'>
   readonly notificationRules: Pick<InferProvider<typeof notificationRulesCapability>, 'listRules' | 'getRule' | 'createRule' | 'updateRule' | 'deleteRule' | 'setRuleEnabled' | 'listSequences' | 'getSequence' | 'createSequence' | 'updateSequence' | 'deleteSequence' | 'getClipRetentionAsks' | 'listDeviceMutes' | 'testRule' | 'previewStateSummary' | 'getConditionCatalog' | 'getTemplateCatalog' | 'previewTemplate' | 'getHistory' | 'getRuleLastRuns' | 'resolveArtifactUrl' | 'listSnoozes' | 'createSnooze' | 'cancelSnooze' | 'getAlarmConfig' | 'setAlarmConfig' | 'createAlarmProfile' | 'renameAlarmProfile' | 'deleteAlarmProfile' | 'activateAlarmProfile' | 'getAlarmSensors'>
   readonly oidcConnections: Pick<InferProvider<typeof oidcConnectionsCapability>, 'connectionFormSchema' | 'listConnections' | 'createConnection' | 'updateConnection' | 'deleteConnection'>
   readonly osdManager: Pick<InferProvider<typeof osdManagerCapability>, 'getConditionSupport' | 'copyDeviceConfiguration' | 'listTemplates' | 'upsertTemplate' | 'deleteTemplate'>
@@ -650,15 +650,10 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
 
   const notificationOutputInterface = {
     listTargetKinds: (input?: unknown) => dispatch('notificationOutput', 'listTargetKinds', 'query', input),
-    listTargets: (input?: unknown) => dispatch('notificationOutput', 'listTargets', 'query', input),
-    getTarget: (input?: unknown) => dispatch('notificationOutput', 'getTarget', 'query', input),
     discoverTargets: (input?: unknown) => dispatch('notificationOutput', 'discoverTargets', 'query', input),
     probeTargetConfig: (input?: unknown) => dispatch('notificationOutput', 'probeTargetConfig', 'mutation', input),
     send: (input?: unknown) => dispatch('notificationOutput', 'send', 'mutation', input),
     testTarget: (input?: unknown) => dispatch('notificationOutput', 'testTarget', 'mutation', input),
-    upsertTarget: (input?: unknown) => dispatch('notificationOutput', 'upsertTarget', 'mutation', input),
-    deleteTarget: (input?: unknown) => dispatch('notificationOutput', 'deleteTarget', 'mutation', input),
-    setTargetEnabled: (input?: unknown) => dispatch('notificationOutput', 'setTargetEnabled', 'mutation', input),
   }
 
   const notificationRulesInterface = {

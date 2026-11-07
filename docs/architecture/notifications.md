@@ -90,8 +90,8 @@ applies-to:
   - packages/types/src/capabilities/notification-output.cap.ts
   - packages/addon-notifiers/src/secrets.ts
   - packages/addon-notifiers/src/provider.ts
-  - packages/addon-admin-ui/src/pages/system/notification-targets.helpers.ts
-  - packages/addon-admin-ui/src/pages/system/NotificationTargets.tsx
+  - packages/addon-admin-ui/src/pages/system/NotificationTargetsPanel.tsx
+  - packages/addon-admin-ui/src/pages/system/use-notification-targets.ts
   - packages/addon-pipeline/src/recorder/addon/export-shrink-for-read.ts
   - server/backend/src/core/agent/node-directory.ts
   - camstack/src/components/notifications/system-event-family.ts
@@ -2621,31 +2621,24 @@ A target's `config` holds its secrets (bot tokens, API keys, ntfy passwords,
 webhook header values, the webhook `url` itself). The rules that keep them
 where they were typed:
 
-- **Only an admin reaches a target through the cap.** `notificationOutput`
-  `listTargets` / `getTarget` / `discoverTargets` / `send` / `testTarget` /
-  `upsertTarget` / `deleteTarget` / `setTargetEnabled` are `auth: 'admin'`,
-  (a target is not an integration-instance record, so `setTargetEnabled` is its own switch until it
-  becomes one; `check-one-row-switch` baselines it),
-  and so is every `settingsStore` method — the targets live verbatim in
-  `notifiers:notification-targets`, and that door has no idea who is asking.
-  A non-admin manages ITS OWN targets through the owner-checked `nc.*` bridge
-  (`nc-target-actions.ts`). The notification centre and every other addon
-  are unaffected: an addon's `ctx.api` cap call is resolved to the provider
-  directly and never enters the tRPC router, so the tier gates sessions and
-  tokens, never addons.
-  Every role carries `category:system`, so `protected` here meant "any user".
-- **`listTargets` stays redacted; `getTarget` is the edit door.** The list
-  still returns every `password` field as `__redacted__` (the webhook `url`
-  is a password field for that reason). Opening Edit / Duplicate calls
-  `notificationOutput.getTarget` (admin) and hydrates the form with the live
-  secret. The UI shows `SECRET_UI_MASK` (`••••••••`) with an eye toggle; the
-  wire never puts the mask back — `secretMergeDiff` /
-  `liveFormValues` (`notification-targets.helpers.ts`) omit an unchanged mask
-  so `mergeSecrets` keeps the stored value, and send a re-typed value when the
-  operator changed it. Duplicate seeds a NEW target from that hydrated form
-  so the operator does not re-enter the token. The edit dialog refuses
-  outside-close so an accidental backdrop click cannot discard a half-edited
-  secret.
+- **Only an admin reaches a target.** A target is an instance of the function cap
+  `notification-output` (D1013): it is listed, created, edited, switched and deleted through
+  `integrationInstances` (every method `auth: 'admin'`), by the admin page's `InstancesTable`
+  (`NotificationTargetsPanel.tsx`) and the pickers (`useInstancesOfCap('notification-output')`,
+  `use-notification-targets.ts`). The cap itself keeps only `listTargetKinds`, `discoverTargets`,
+  `probeTargetConfig`, `send` and `testTarget`. The targets live in one record kind per adapter
+  (`notify-<kind>`), written by the facade `NotificationTargetStore`, and every `settingsStore`
+  method is admin-only too. A non-admin manages ITS OWN targets through the owner-checked `nc.*`
+  bridge (`nc-target-actions.ts`), which keeps the D634 secret-merge guard
+  (`createNotifierTargetAdmin`). The notification centre and every other addon are unaffected:
+  an addon's `ctx.api` cap call is resolved to the provider directly and never enters the tRPC
+  router, so the tier gates sessions and tokens, never addons. An addon that needs the targets
+  reads them with `listNotificationTargets(api)`, whose `unreadable` holders it must treat as
+  "unknown", never "absent" (D315).
+- **An instance read shows a secret as a view, never text.** A stored secret reaches the form as
+  `{ $secret, v, set }`; the form reveals it by ref through the audited `keychain-admin.reveal`,
+  and a view sent back untouched keeps the stored secret. The edit dialog is the generic instance
+  editor, so there is no separate hydrate / mask step for targets.
 - **The marker keeps a secret only on the road it already had.** `mergeSecrets`
   restores a redacted / omitted secret only when the kind and every field in
   the adapter's `destinationKeys` (server / base URL, instance id, chat,
@@ -3517,7 +3510,7 @@ backend actually get" is answerable per delivery.
 
 Nine backends provide `notification-output` today: ntfy, pushover, gotify,
 telegram, discord, webhook, zentik, whatsapp (all in `addon-notifiers`) plus
-Home Assistant's provider — one concatenated catalog, since `listTargets` is a
+Home Assistant's provider — one concatenated catalog, since `listTargetKinds` is a
 collection cap. This is why asking for footage is always safe, and why
 per-target special-casing must never leak back into rule authoring.
 
@@ -4515,7 +4508,7 @@ state-word transition.
   or `null`, and the patch names only the touched mode and field. The
   non-blocking selection is the same sensor table, reading states through
   `nc.getAlarmSensors` and listing **openings only** — never a camera. Recipients come from
-  `notificationOutput.listTargets` and are **stripped to
+  the notification targets and are **stripped to
   `{ id, name, kind, enabled }` at parse** (`parseAlarmTargets`,
   `camstack/src/data/use-alarm-setup.ts`), so a target's `config` never reaches
   the query cache — see

@@ -60,7 +60,6 @@ vi.mock('../../generated/system-hooks', () => ({
   useDeviceExportExposeEntity: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeviceExportUnexposeEntity: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useActionsList: () => ({ data: undefined, isLoading: false }),
-  useNotificationOutputListTargets: () => ({ data: undefined, isLoading: false }),
   useIntegrationsList: () => ({ data: undefined, isLoading: false }),
   useDeviceManagerListAll: (input: unknown, options: unknown) => {
     fleetReads.push({ input, options })
@@ -79,6 +78,10 @@ vi.mock('../../generated/system-hooks', () => ({
   }),
   useDeviceExportExposeDevice: () => ({ mutate: vi.fn(), isPending: false }),
   useDeviceExportUnexposeDevice: () => ({ mutate: vi.fn(), isPending: false }),
+}))
+
+vi.mock('../../hooks/use-instances-of-cap', () => ({
+  useInstancesOfCap: () => ({ data: undefined, isLoading: false }),
 }))
 
 const { DeviceExportPanel } = await import('../device-export-panel')

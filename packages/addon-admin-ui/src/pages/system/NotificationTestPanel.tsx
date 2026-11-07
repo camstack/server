@@ -50,7 +50,8 @@ import i18n from '../../i18n/index'
 
 interface NotificationTestPanelProps {
   readonly target: Target
-  readonly kind: TargetKind
+  /** What the panel reads of the kind: its name and what it can carry. */
+  readonly kind: Pick<TargetKind, 'label' | 'caps'>
   readonly open: boolean
   readonly onClose: () => void
 }

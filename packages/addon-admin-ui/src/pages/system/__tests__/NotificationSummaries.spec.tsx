@@ -79,6 +79,10 @@ const listAllHook = vi.fn(
     fleetListResult(FLEET_ROWS),
 )
 
+vi.mock('../use-notification-targets', () => ({
+  useNotificationTargets: () => ({ data: [], isError: false }),
+}))
+
 vi.mock('@camstack/ui-library', async () => {
   const real = await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
@@ -92,9 +96,6 @@ vi.mock('@camstack/ui-library', async () => {
       trpcClient: {
         addons: { custom: { mutate: mockCustom } },
         deviceManager: { listAll: { query: mockListAllRaw } },
-        notificationOutput: {
-          listTargets: { query: () => Promise.resolve([]) },
-        },
         notificationRules: {
           getConditionCatalog: { query: () => Promise.resolve({}) },
           getTemplateCatalog: { query: () => Promise.resolve(templateCatalogAnswer()) },

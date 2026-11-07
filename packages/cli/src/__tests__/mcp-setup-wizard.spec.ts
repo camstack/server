@@ -10,6 +10,7 @@ import {
 } from '@camstack/develop'
 import type { McpContext } from '../mcp/context.js'
 import { createPublicServer } from '../mcp/server.js'
+import { notificationTargetAnswers } from './configure-fixtures.js'
 
 interface Call {
   readonly method: HubHttpMethod
@@ -36,7 +37,7 @@ const HEALTHY: Answers = {
     { id: 'hub', isHub: true, isOnline: true },
     { id: 'agent1', isHub: false, isOnline: true },
   ],
-  'notificationOutput.listTargets': [
+  ...notificationTargetAnswers([
     {
       id: 't1',
       name: 'Phone',
@@ -44,7 +45,7 @@ const HEALTHY: Answers = {
       enabled: true,
       config: { token: 'SECRET-TARGET-TOKEN' },
     },
-  ],
+  ]),
   'notificationRules.listRules': {
     rules: [
       {
@@ -171,7 +172,7 @@ describe('setup_wizard', () => {
     ['hub-address-remote-access', 'localNetwork.getAddresses', 'networkAccess.getStatus'],
     ['backups', 'backup.listDestinations'],
     ['cameras-and-agents', 'deviceManager.listAll'],
-    ['notifiers', 'notificationOutput.listTargets'],
+    ['notifiers', 'integrationInstances.listInstances'],
     ['admin-alert-rules', 'notificationRules.listRules'],
     ['household-rules', 'notificationRules.listRules'],
   ])('%s: a failing read is unknown with a reason, never missing', async (id, ...paths) => {
@@ -192,7 +193,7 @@ describe('setup_wizard', () => {
 
   it('an empty answer IS missing (the read succeeded)', async () => {
     const { body } = await run(
-      harness({ ...HEALTHY, 'deviceManager.listAll': [], 'notificationOutput.listTargets': [] })
+      harness({ ...HEALTHY, 'deviceManager.listAll': [], 'integrationInstances.listInstances': [] })
         .ctx,
     )
     expect(step(body, 'cameras-and-agents').status).toBe('missing')

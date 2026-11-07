@@ -5,15 +5,16 @@
  * `notification-output.send`). Neither is a camstack device (D954): both live
  * on ONE synthetic device, and nothing here touches the device registry.
  */
-import type {
-  ActionRunResult,
-  ExportEntityApi,
-  IScopedLogger,
-  LogExtras,
-  Target,
+import {
+  type ActionRunResult,
+  type ExportEntityApi,
+  type IScopedLogger,
+  instanceApiOverTargets,
+  type LogExtras,
+  type Target,
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
-
+import { LEGACY_SUPPORT } from '../component-support.js'
 import {
   actionEntity,
   EXPORTED_ENTITIES_STABLE_ID,
@@ -22,7 +23,6 @@ import {
   type ExportedEntitiesState,
   targetEntity,
 } from '../exported-entities.js'
-import { LEGACY_SUPPORT } from '../component-support.js'
 import { commandTopic, syntheticDeviceKeyFor } from '../topics.js'
 import type { HaPlatform } from '../types.js'
 
@@ -75,8 +75,8 @@ function build(initial: ExportedEntitiesState = { actions: [], targets: [] }) {
       list: { query: async () => state.actions },
       run: { mutate: run },
     },
+    ...instanceApiOverTargets(() => state.targets),
     notificationOutput: {
-      listTargets: { query: async () => state.targets },
       send: { mutate: send },
     },
   }
@@ -183,8 +183,8 @@ describe('ExportedEntities — selection', () => {
         },
         run: { mutate: h.run },
       },
+      ...instanceApiOverTargets(() => []),
       notificationOutput: {
-        listTargets: { query: async () => [] },
         send: { mutate: h.send },
       },
     }

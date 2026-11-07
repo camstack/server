@@ -708,7 +708,7 @@ export interface ConfigDeviceMultiSelectField extends ConfigFieldBase {
 
 /**
  * Pick a SINGLE `notification-output` target from the live catalog
- * (`listTargets`). Stored value is the target id string. Same control the
+ * (the instances of `notification-output`). Stored value is the target id string. Same control the
  * Notification Center editors use — scripts and addon settings must not
  * invent a parallel free-text "target id" field.
  */

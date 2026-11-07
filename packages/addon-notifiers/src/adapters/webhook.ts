@@ -77,7 +77,7 @@ function webhookConfigSchema(): ConfigUISchema {
             // A PASSWORD, not a text field: a Home Assistant webhook id, a
             // Slack-style incoming-webhook path or a `?token=` query is a
             // credential, and a text field is returned verbatim by
-            // `listTargets`. Redacted on read like any other secret; an editor
+            // an instance read. Redacted on read like any other secret; an editor
             // that leaves it untouched keeps the stored one.
             type: 'password',
             key: 'url',

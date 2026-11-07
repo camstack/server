@@ -800,7 +800,10 @@
       "storedSecretsLoadIntoThe": "I segreti memorizzati vengono caricati nei campi mascherati (occhio per mostrarli). Svuota un campo per lasciare invariato il valore memorizzato al salvataggio; digita un nuovo valore per sostituirlo.",
       "testConnection": "Test connessione",
       "connected": "Connesso — {{value1}}",
-      "connectionFailed": "Connessione fallita"
+      "connectionFailed": "Connessione fallita",
+      "emptyTitle": "Ancora nessun target di notifica",
+      "emptyDescription": "Aggiungi un target per inviare le notifiche a ntfy, Pushover, Telegram, Home Assistant e altro.",
+      "testTarget": "Invia un test a {{name}}"
     },
     "notificationTestPanel": {
       "level": "Livello",

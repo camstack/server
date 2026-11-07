@@ -180,6 +180,7 @@ import type { RuleDeviceOption } from './rule-device-filter'
 import { ruleLastRunCell } from './notification-rule-last-run'
 import { type DeviceFleetView, fleetViewOf } from './device-fleet-view'
 import { ruleScopeList } from './rule-scope-model'
+import { useNotificationTargets } from './use-notification-targets'
 import { zoneCameraIds } from './zone-scope-items'
 import { NcListEmpty, NcListLoading, NcListTable } from './notification-list-chrome'
 
@@ -192,7 +193,6 @@ import { NcListEmpty, NcListLoading, NcListTable } from './notification-list-chr
  * vocabularies on two tabs of one page.
  */
 export const RULES_QUERY_KEY = ['notificationRules', 'listRules'] as const
-export const TARGETS_QUERY_KEY = ['notificationOutput', 'listTargets', 'forRules'] as const
 export const CATALOG_QUERY_KEY = ['notificationRules', 'getConditionCatalog'] as const
 
 /** What `getConditionCatalog` returns: the condition surface plus the picker
@@ -309,11 +309,7 @@ export function NotificationRulesPage({
     setEditor({ mode: 'form', rule: hit })
   }, [editor.mode, formUrl, rulesQuery.data])
 
-  const targetsQuery = useQuery({
-    queryKey: TARGETS_QUERY_KEY,
-    queryFn: (): Promise<readonly Target[]> =>
-      system.trpcClient.notificationOutput.listTargets.query({}),
-  })
+  const targetsQuery = useNotificationTargets()
 
   // The catalog says WHICH conditions exist; the taxonomy says which VALUES
   // each one accepts. Both come from one call, so a picker can never render

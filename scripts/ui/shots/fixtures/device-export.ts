@@ -4,6 +4,7 @@
  * supports). Names are invented.
  */
 import { defineFixtures } from './_define'
+import { notificationInstanceHandlers } from './_notification-instances'
 
 const camera = (id: number, name: string) => ({
   id,
@@ -52,8 +53,8 @@ export default defineFixtures({
       { id: 'internal:a', name: 'Open gate' },
       { id: 'internal:b', name: 'Arm night mode' },
     ],
-    'notificationOutput.listTargets': [
+    ...notificationInstanceHandlers([
       { id: 'tg:1', name: 'Phone', kind: 'push', addonId: 'notifier-x', enabled: true, config: {} },
-    ],
+    ]),
   },
 })

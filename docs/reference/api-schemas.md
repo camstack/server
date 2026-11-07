@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1037 shared schemas.**
+**1036 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -6847,15 +6847,6 @@ Enum: `"jwt-signing-key"`
 - `supportsDiscovery`: `boolean`
 - `deliveryParams?`: `DeliveryParamSchema[]`
 - `caps`: `TargetKindCapsSchema`
-
-### `TargetSchema`
-
-- `id`: `string`
-- `name`: `string`
-- `kind`: `string`
-- `addonId`: `string`
-- `enabled`: `boolean`
-- `config`: `Record<string, unknown>`
 
 ### `TemperatureSensorStatusSchema`
 

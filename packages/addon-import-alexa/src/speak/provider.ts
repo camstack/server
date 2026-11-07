@@ -71,9 +71,6 @@ export interface AlexaSpeakPorts {
   readonly logger: IScopedLogger
   /** The targets now, read from the records on every use: an instance may have changed them. */
   readonly loadTargets: () => Promise<readonly Target[]>
-  /** Write the one target that changed; never a replace-all from memory. */
-  readonly putTarget: (target: Target) => Promise<void>
-  readonly removeTarget: (targetId: string) => Promise<void>
 }
 
 export interface AlexaNotificationProvider extends INotificationOutputProvider {
@@ -134,7 +131,7 @@ export function echoOptionLabel(device: EchoDevice): string {
 /**
  * The two pickers are not `required`: a required select shows its first option
  * while the form still holds no value, so a save would drop the choice. Left
- * optional they open on "Select", and `upsertTarget` refuses an empty pick.
+ * optional they open on "Select", and the instance form refuses an empty pick.
  *
  * The account is a broker pick (existing, or created in place); the Echo list
  * is fetched from that account, so a new Echo shows up without a deploy.
@@ -352,14 +349,6 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
     async listTargetKinds() {
       return [alexaTargetKind()]
     },
-    async listTargets() {
-      return [...(await ports.loadTargets())]
-    },
-    async getTarget(input) {
-      const found = (await ports.loadTargets()).find((target) => target.id === input.targetId)
-      if (found === undefined) throw new Error(`target not found: ${input.targetId}`)
-      return found
-    },
     async discoverTargets(input) {
       // The cap has no field to say "not ready", so an empty list would read as "no Echo":
       // say which accounts are the reason, on the record.
@@ -426,36 +415,6 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
         priority: 3,
       }
       return deliver(found, sample)
-    },
-    async upsertTarget(input) {
-      const owner = brokerFor(input.target.config)
-      if (readString(input.target.config, 'echoId').length === 0) {
-        throw new Error('Pick the Echo that should speak')
-      }
-      if (owner === undefined) {
-        throw new Error('Pick the Amazon account this Echo belongs to')
-      }
-      // Pin the account the moment it is known, so a second account added later
-      // cannot silently change where an existing target speaks.
-      const pinned =
-        readString(input.target.config, 'brokerId').length === 0
-          ? { ...input.target.config, brokerId: owner.id }
-          : input.target.config
-      const target: Target = {
-        ...input.target,
-        config: pinned,
-        addonId: ALEXA_SPEAK_ADDON_ID,
-        kind: ALEXA_SPEAK_KIND,
-      }
-      await ports.putTarget(target)
-      return target
-    },
-    async deleteTarget(input) {
-      await ports.removeTarget(input.targetId)
-    },
-    async setTargetEnabled(input) {
-      const found = (await ports.loadTargets()).find((row) => row.id === input.targetId)
-      if (found !== undefined) await ports.putTarget({ ...found, enabled: input.enabled })
     },
   }
 }

@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest'
 import { automationQuestionnaire, saveAutomation } from '../mcp/configure-automations.js'
 import { ncRuleQuestionnaire, saveRule } from '../mcp/configure-nc-rules.js'
+import { notificationTargetAnswers } from './configure-fixtures.js'
 import { withWrites } from './configure-gate-ctx.js'
 import { fakeHub } from './ops-fake-hub.js'
 
@@ -27,7 +28,7 @@ const hubReads = {
   'deviceManager.getBindings': { entries: [{ capName: 'pet-feeder' }] },
   'coreBlocks.list': [],
   'coreBlocks.create': { id: 'blk-1' },
-  'notificationOutput.listTargets': [
+  ...notificationTargetAnswers([
     {
       id: 'tg-1',
       name: 'Phone',
@@ -35,7 +36,7 @@ const hubReads = {
       enabled: true,
       config: { chatId: 'SECRET-CHAT' },
     },
-  ],
+  ]),
 }
 
 describe('configure_automation_questionnaire', () => {

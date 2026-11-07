@@ -46,8 +46,8 @@ import {
   CATALOG_QUERY_KEY,
   type NcConditionCatalogResult,
   RULES_QUERY_KEY,
-  TARGETS_QUERY_KEY,
 } from './NotificationRules'
+import { useNotificationTargets } from './use-notification-targets'
 import { AdvancedSection, RunSwitch, WhatHappenedSection } from './NotificationSimulateFields'
 import { NotificationSimulateResultPanel } from './NotificationSimulateResult'
 import type { RuleCameraOption } from './notification-condition-fields'
@@ -130,11 +130,7 @@ export function NotificationSimulatePage() {
     },
   })
 
-  const targetsQuery = useQuery({
-    queryKey: TARGETS_QUERY_KEY,
-    queryFn: (): Promise<readonly Target[]> =>
-      system.trpcClient.notificationOutput.listTargets.query({}),
-  })
+  const targetsQuery = useNotificationTargets()
 
   const deviceId = form.deviceId
   const kindsQuery = useQuery({
