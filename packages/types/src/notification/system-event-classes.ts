@@ -11,7 +11,7 @@
  *    whole class (`withSystemEventClasses`) — the operator asked for both
  *    fronts, and a rule that heard "offline" and never "back online" left
  *    every outage open-ended on the phone.
- *  - a SCHEDULED STATE SUMMARY (`systemEventDelivery.mode: 'summary'`) reads a
+ *  - a SCHEDULED STATE SUMMARY (`onSchedule`, D647) reads a
  *    class as a SNAPSHOT of the bad state at the scheduled time — never edges,
  *    never recoveries — so it is NOT widened. The summary already reports a
  *    state per kind group regardless of which edge was selected (D647).
@@ -23,7 +23,9 @@ import type {
   NcSystemEventCondition,
   NcSystemEventDelivery,
   NcSystemEventKind,
+  NcSystemEventModesDelivery,
 } from '../capabilities/notification-rules.cap.js'
+import { systemEventDeliveryModesOf } from './system-event-delivery-modes.js'
 import { type NcSystemEventFamily, NC_SYSTEM_EVENT_FAMILY } from './system-event-families.js'
 
 export interface NcSystemEventClassSpec {
@@ -230,10 +232,61 @@ export interface NcSystemEventClassSubject {
   readonly systemEventDelivery?: NcSystemEventDelivery
 }
 
-/** Does this rule speak per EVENT (not a scheduled summary)? */
+/** Does this rule speak per EVENT (activation or deactivation), not only on a schedule? */
 function isInstantSystemRule(rule: NcSystemEventClassSubject): boolean {
   if (rule.delivery !== 'system-event') return false
-  return rule.systemEventDelivery?.mode !== 'summary'
+  const modes = systemEventDeliveryModesOf(rule)
+  return modes.activation || modes.deactivation
+}
+
+/**
+ * The kinds a rule says something about AT ONCE (D1019): on activation every
+ * selected kind that is not a recovery edge (the bad edge, and every
+ * single-edge kind); on deactivation the recovery edges of the classes the
+ * selected kinds touch — derived, so a rule that lists only `device-offline`
+ * and asks for deactivation hears `device-online`. A schedule-only rule has none.
+ */
+export function instantKindsOf(rule: NcSystemEventClassSubject): ReadonlySet<NcSystemEventKind> {
+  const modes = systemEventDeliveryModesOf(rule)
+  const out = new Set<NcSystemEventKind>()
+  for (const kind of rule.conditions.systemEvent?.kinds ?? []) {
+    const recovery = isSystemEventRecoveryKind(kind)
+    if (modes.activation && !recovery) out.add(kind)
+    if (!modes.deactivation) continue
+    if (recovery) out.add(kind)
+    else for (const edge of systemEventClassOf(kind)?.recovery ?? []) out.add(edge)
+  }
+  return out
+}
+
+/**
+ * The `modes` shape a stored rule stands for (D1019), keeping every legacy
+ * rule's behaviour: absent / `instant` keeps both edges where its kinds have a
+ * recovery (D906 widening included); `summary` keeps its schedule object as is
+ * (so the scheduler's schedule hash is unchanged) with its `split` as the
+ * grouping. A `modes` rule is returned as is.
+ */
+export function systemEventDeliveryAsModes(rule: {
+  readonly conditions: { readonly systemEvent?: NcSystemEventCondition }
+  readonly systemEventDelivery?: NcSystemEventDelivery
+}): NcSystemEventModesDelivery {
+  const delivery = rule.systemEventDelivery
+  if (delivery?.mode === 'modes') return delivery
+  const modes = systemEventDeliveryModesOf(rule)
+  if (modes.schedule !== null) {
+    return {
+      mode: 'modes',
+      onActivation: false,
+      onDeactivation: false,
+      onSchedule: modes.schedule,
+    }
+  }
+  const kinds = expandSystemEventClasses(rule.conditions.systemEvent?.kinds ?? [])
+  return {
+    mode: 'modes',
+    onActivation: true,
+    onDeactivation: kinds.some(isSystemEventRecoveryKind),
+  }
 }
 
 /**

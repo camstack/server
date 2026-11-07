@@ -21,6 +21,8 @@ import type {
   NcSystemEventDelivery,
 } from '../capabilities/notification-rules.cap.js'
 import { isSystemDelivery } from './rule-kinds.js'
+import { systemEventDeliveryModesOf } from './system-event-delivery-modes.js'
+import { systemEventClassOf } from './system-event-classes.js'
 import { type NcSystemEventFamily, systemEventFamilyOf } from './system-event-families.js'
 
 /** The families a rule may summarise. The alarm is not one of them. */
@@ -48,33 +50,48 @@ export type NcSystemEventDeliveryProblem =
   | { readonly code: 'degenerate-window'; readonly index: number }
   | { readonly code: 'schedule-beside-summary' }
   | { readonly code: 'actions-beside-summary' }
+  /** Every moment is off — the rule would say nothing, ever (D1019). */
+  | { readonly code: 'no-mode' }
+  /** Deactivation alone, and nothing selected has a clearing event (D1019). */
+  | { readonly code: 'no-instant-kind' }
 
-/** The summary's schedule, or `null` for any rule that is not a summary system rule. */
+/** The summary's schedule, or `null` for any rule that sends no scheduled summary. */
 export function systemEventSummaryScheduleOf(
   rule: Pick<NcSystemEventDeliverySubject, 'delivery' | 'systemEventDelivery'>,
 ): NcSchedule | null {
   if (!isSystemDelivery(rule.delivery)) return null
-  const delivery = rule.systemEventDelivery
-  return delivery?.mode === 'summary' ? delivery.schedule : null
+  return systemEventDeliveryModesOf(rule).schedule?.schedule ?? null
 }
 
 /**
- * How a summary rule's window is sent (D698): `section` = one notification per
- * section; absent (every rule before D698) and any non-summary rule = `rule`.
- * The ONE reader — the scheduler, the rule test, the preview and both editors.
+ * How a summary's window is sent (D698): `section` = one notification per
+ * section; absent (every rule before D698) and any rule without a summary =
+ * `rule`. The ONE reader — the scheduler, the rule test, the preview and both
+ * editors.
  */
 export function systemEventSummarySplitOf(
   rule: Pick<NcSystemEventDeliverySubject, 'systemEventDelivery'>,
 ): NcStateSummarySplit {
-  const delivery = rule.systemEventDelivery
-  return delivery?.mode === 'summary' ? (delivery.split ?? 'rule') : 'rule'
+  return systemEventDeliveryModesOf(rule).schedule?.grouping ?? 'rule'
 }
 
-/** Absent and `instant` are the same answer: a notification per event. */
+/** Does this system rule send a scheduled state summary (alone or beside instant messages)? */
 export function isSystemEventSummaryRule(
   rule: Pick<NcSystemEventDeliverySubject, 'delivery' | 'systemEventDelivery'>,
 ): boolean {
   return systemEventSummaryScheduleOf(rule) !== null
+}
+
+/**
+ * Does this system rule speak ONLY on its schedule — no message per event?
+ * (The old `summary` mode: the engine holds every match for the window.)
+ */
+export function isScheduleOnlySystemRule(
+  rule: Pick<NcSystemEventDeliverySubject, 'delivery' | 'systemEventDelivery'>,
+): boolean {
+  if (!isSystemEventSummaryRule(rule)) return false
+  const modes = systemEventDeliveryModesOf(rule)
+  return !modes.activation && !modes.deactivation
 }
 
 function actionsAreSet(actions: NcRuleActions | undefined): boolean {
@@ -100,12 +117,29 @@ function actionsAreSet(actions: NcRuleActions | undefined): boolean {
 export function systemEventDeliveryProblems(
   rule: NcSystemEventDeliverySubject,
 ): readonly NcSystemEventDeliveryProblem[] {
-  if (rule.systemEventDelivery?.mode !== 'summary') return []
+  const delivery = rule.systemEventDelivery
+  if (delivery === undefined || delivery.mode === 'instant') return []
   if (!isSystemDelivery(rule.delivery)) {
     return [{ code: 'not-a-system-rule', delivery: rule.delivery }]
   }
   const problems: NcSystemEventDeliveryProblem[] = []
-  const verdict = systemEventFamilyOf(rule.conditions.systemEvent?.kinds ?? [])
+  const modes = systemEventDeliveryModesOf(rule)
+  const kinds = rule.conditions.systemEvent?.kinds ?? []
+  if (!modes.activation && !modes.deactivation && modes.schedule === null) {
+    problems.push({ code: 'no-mode' })
+  }
+  // Deactivation alone needs something that CLEARS: a kind that is a recovery
+  // edge or has one. Otherwise the rule could never speak.
+  if (
+    !modes.activation &&
+    modes.deactivation &&
+    modes.schedule === null &&
+    !kinds.some((kind) => systemEventClassOf(kind) !== undefined)
+  ) {
+    problems.push({ code: 'no-instant-kind' })
+  }
+  if (modes.schedule === null) return problems
+  const verdict = systemEventFamilyOf(kinds)
   const family = verdict.kind === 'family' ? verdict.family : 'mixed'
   if (family === 'mixed' || !NC_SYSTEM_EVENT_SUMMARY_FAMILIES.includes(family)) {
     problems.push({ code: 'family-not-summarisable', family })
@@ -113,7 +147,7 @@ export function systemEventDeliveryProblems(
   // A schedule with no window never closes, so the summary would never be
   // sent. The Zod schema already requires one window; a payload built past it
   // (a typed caller, a stored row) is refused here too (review M2).
-  const windows = rule.systemEventDelivery.schedule.windows
+  const windows = modes.schedule.schedule.windows
   if (windows.length === 0) problems.push({ code: 'empty-schedule' })
   // A window with no day, or one that starts and ends on the same minute, is
   // never active — so it never closes, and nothing is ever sent for it.
@@ -122,8 +156,13 @@ export function systemEventDeliveryProblems(
       problems.push({ code: 'degenerate-window', index })
     }
   })
-  if (rule.schedule !== undefined) problems.push({ code: 'schedule-beside-summary' })
-  if (actionsAreSet(rule.actions)) problems.push({ code: 'actions-beside-summary' })
+  // Beside an instant mode the rule's own active-hours `schedule` and its
+  // `actions` belong to the instant sends; the summary ignores both. Only a
+  // schedule-only rule has nothing for them to apply to.
+  if (!modes.activation && !modes.deactivation) {
+    if (rule.schedule !== undefined) problems.push({ code: 'schedule-beside-summary' })
+    if (actionsAreSet(rule.actions)) problems.push({ code: 'actions-beside-summary' })
+  }
   return problems
 }
 
@@ -143,6 +182,10 @@ export function describeSystemEventDeliveryProblem(problem: NcSystemEventDeliver
       return 'a summary rule is sent on its summary schedule — remove the active-hours schedule'
     case 'actions-beside-summary':
       return 'a summary rule never matches an event, so its actions would never run — remove them'
+    case 'no-mode':
+      return 'choose when the rule speaks: when it starts, when it clears, or on a schedule'
+    case 'no-instant-kind':
+      return 'none of the selected events ever clears — choose "when it starts" or "on a schedule"'
   }
 }
 

@@ -536,6 +536,10 @@ export type NcSchedule = z.infer<typeof NcScheduleSchema>
 export const NcSystemEventDeliveryModeSchema = z.enum(['instant', 'summary'])
 export type NcSystemEventDeliveryMode = z.infer<typeof NcSystemEventDeliveryModeSchema>
 
+/** The three moments a system-event rule may speak at; the editor's chips (D1019). */
+export const NcSystemEventDeliveryToggleSchema = z.enum(['activation', 'deactivation', 'schedule'])
+export type NcSystemEventDeliveryToggle = z.infer<typeof NcSystemEventDeliveryToggleSchema>
+
 /**
  * How a summary window is SENT (D698): `rule` (absent) = ONE notification with
  * every section; `section` = one notification per section with something to
@@ -561,8 +565,24 @@ export const NcSystemEventDeliverySchema = z.discriminatedUnion('mode', [
     schedule: NcScheduleSchema,
     split: NcStateSummarySplitSchema.optional(),
   }),
+  // A combination of delivery modes (D1019). `instant` and `summary` above stay
+  // parseable (the installed viewer and every stored row) and are normalised to
+  // this shape on load; the editors write only this one.
+  z.object({
+    mode: z.literal('modes'),
+    /** The bad edge, and every kind that has a single edge. */
+    onActivation: z.boolean(),
+    /** The recovery edges of the classes of the selected kinds (derived, never stored per kind). */
+    onDeactivation: z.boolean(),
+    /** A state summary at the end of each window; absent = no summary. */
+    onSchedule: z
+      .object({ schedule: NcScheduleSchema, grouping: NcStateSummarySplitSchema })
+      .optional(),
+  }),
 ])
 export type NcSystemEventDelivery = z.infer<typeof NcSystemEventDeliverySchema>
+/** The normalised shape (D1019): what every stored rule becomes on load, and the only one an editor writes. */
+export type NcSystemEventModesDelivery = Extract<NcSystemEventDelivery, { mode: 'modes' }>
 
 /** Fuzzy plate matcher — OCR noise makes exact match useless (spec row 12/13). */
 export const NcPlateMatcherSchema = z.object({

@@ -1934,7 +1934,9 @@ export {
 // ── Paired system events as ONE class (D906) ──
 export {
   expandSystemEventClasses,
+  instantKindsOf,
   isSystemEventRecoveryKind,
+  systemEventDeliveryAsModes,
   NC_SYSTEM_EVENT_CLASS_SPECS,
   type NcSystemEventClassSpec,
   type NcSystemEventClassSubject,
@@ -1943,9 +1945,16 @@ export {
   systemEventClassOf,
   withSystemEventClasses,
 } from './notification/system-event-classes.js'
+// ── The delivery modes of a system rule (D1019) ──
+export {
+  type NcSystemEventDeliveryModes,
+  type NcSystemEventScheduledSummary,
+  systemEventDeliveryModesOf,
+} from './notification/system-event-delivery-modes.js'
 // ── The scheduled STATE SUMMARY of a system rule (D647) ──
 export {
   describeSystemEventDeliveryProblem,
+  isScheduleOnlySystemRule,
   isSystemEventSummaryRule,
   NC_SYSTEM_EVENT_SUMMARY_FAMILIES,
   type NcSummarySendTime,

@@ -4425,6 +4425,7 @@ Enum: `"instant" \| "summary"`
 
 - `{ mode: "instant" }`
 - `{ mode: "summary"; schedule: NcScheduleSchema; split?: NcStateSummarySplitSchema }`
+- `{ mode: "modes"; onActivation: boolean; onDeactivation: boolean; onSchedule?: { schedule: NcScheduleSchema; grouping: NcStateSummarySplitSchema } }`
 
 ### `NcSystemEventKindSchema`
 
