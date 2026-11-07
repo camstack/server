@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Pipeline orchestrator settings the addon writes itself go through the scoped settings API; changing the cluster roles re-derives ingest as before.
+
 ## [1.2.664] - 2026-11-06
 
 ### Changed

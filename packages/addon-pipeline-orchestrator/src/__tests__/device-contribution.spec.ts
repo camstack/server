@@ -113,11 +113,8 @@ function makeAddon() {
       internals.deviceHasActivitySignalCap?.(deviceId) ?? Promise.resolve(false),
     deviceHasNativeObjectDetectionCap: (deviceId) =>
       internals.deviceHasNativeObjectDetectionCap(deviceId),
-    // None of this file's tests call `updateGlobalSettings` — these five
+    // None of this file's tests write cluster settings — these four
     // are unreachable here and only satisfy the deps type.
-    baseUpdateGlobalSettings: () => {
-      throw new Error('baseUpdateGlobalSettings not used in this harness')
-    },
     resolveGlobalStore: () => {
       throw new Error('resolveGlobalStore not used in this harness')
     },

@@ -12,12 +12,8 @@
     },
     "m5-addon-blobs": {
       "packages/addon-admin-ui/src/components/pipeline/placement-board/board-model.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
-      "packages/addon-cloudflare/src/tunnel/cloudflare-tunnel.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
       "packages/addon-import-alexa/src/addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
       "packages/addon-model-studio/src/ui/api.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings, getGlobalSettings]",
-      "packages/addon-pipeline-orchestrator/src/device-config-contributions.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
-      "packages/addon-pipeline-orchestrator/src/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
-      "packages/addon-pipeline-orchestrator/src/removed-model-pin-reset.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
       "packages/addon-pipeline/src/audio-analyzer/addons/analyzer/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings, updateGlobalSettings]",
       "packages/addon-pipeline/src/detection-pipeline/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
       "packages/addon-pipeline/src/pipeline-runner/crop-convention-source.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
@@ -26,12 +22,9 @@
       "packages/addon-post-analysis/src/pipeline-analytics/cluster-model-pin.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
       "packages/addon-post-analysis/src/pipeline-analytics/face-rescore-wiring.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
       "packages/addon-post-analysis/src/pipeline-analytics/index.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings, getGlobalSettings]",
-      "packages/addon-post-analysis/src/pipeline-analytics/retention/retired-settings-purge.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
       "packages/addon-provider-wyze/src/addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings]",
       "packages/addon-smtp-nodemailer/src/smtp.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings, updateGlobalSettings]",
       "packages/addon-terminal/src/addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
-      "packages/system/src/builtins/local-network/local-network.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
-      "packages/system/src/builtins/loki-logging/loki-logging.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [updateGlobalSettings]",
       "packages/system/src/builtins/system-config/system-config.addon.ts:addon-level-settings": "reads or writes the addon-level blob; P8 moves each value to its owner scope (D986) [getGlobalSettings, updateGlobalSettings]"
     },
     "m5-framework": {

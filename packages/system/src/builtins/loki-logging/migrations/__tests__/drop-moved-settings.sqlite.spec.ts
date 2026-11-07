@@ -40,7 +40,7 @@ beforeEach(() => {
   insert.run('loki-logging.url', wrapper('loki-logging', 'url', 'http://loki:3100'))
   insert.run('loki-logging.batchSize', wrapper('loki-logging', 'batchSize', 50))
   insert.run('loki-logging.level', wrapper('loki-logging', 'level', 'warn'))
-  insert.run('loki-logging.migratedEnabled', wrapper('loki-logging', 'migratedEnabled', true))
+  insert.run('loki-logging.unknownMarked', wrapper('loki-logging', 'unknownMarked', true))
   insert.run('other-addon.url', wrapper('other-addon', 'url', 'keep-me'))
   seed.close()
 })
@@ -131,6 +131,7 @@ describe('loki-logging/2026-11-02-drop-moved-settings on real SQLite', () => {
     const ports: LokiCataloguePorts = {
       readStored: async () => storedValues(),
       readRawStored: async () => storedValues(),
+      info: () => undefined,
       warn: (message) => {
         lines.push(message)
       },
@@ -159,14 +160,16 @@ describe('loki-logging/2026-11-02-drop-moved-settings on real SQLite', () => {
       'loki-logging/2026-11-02-connection-to-records': 'applied',
       'loki-logging/2026-11-02-drop-moved-settings': 'applied',
       'loki-logging/2026-11-02-registry-toggle-to-record': 'applied',
+      'loki-logging/2026-11-07-drop-retired-enabled-flag': 'applied',
     })
     expect(report.failed ?? []).toEqual([])
     expect(report.applied).toEqual([
       'loki-logging/2026-11-02-connection-to-records',
       'loki-logging/2026-11-02-drop-moved-settings',
       'loki-logging/2026-11-02-registry-toggle-to-record',
+      'loki-logging/2026-11-07-drop-retired-enabled-flag',
     ])
-    expect(Object.keys(rows()).sort()).toEqual(['loki-logging.migratedEnabled', 'other-addon.url'])
+    expect(Object.keys(rows()).sort()).toEqual(['loki-logging.unknownMarked', 'other-addon.url'])
     expect(rows()['other-addon.url']).toBe(wrapper('other-addon', 'url', 'keep-me'))
   })
 })

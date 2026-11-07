@@ -12,7 +12,7 @@ import {
   normalizeNodeId,
   userError,
 } from '@camstack/types'
-import type { z } from 'zod'
+import { z } from 'zod'
 import * as path from 'node:path'
 import { CloudflareTunnelService, type CloudflareTunnelConfig } from './cloudflare-tunnel'
 import { ensureCloudflared } from './ensure-cloudflared'
@@ -32,6 +32,16 @@ import {
   cloudflareTunnelsKind,
 } from './tunnel-record-kinds'
 import { DEFAULT_NODE_ORIGIN, legacySettingsOf, nodeOriginOf, settingsOf } from './tunnel-settings'
+
+const NETWORK_ACCESS_CAP = 'network-access'
+
+/** The origin keys `network-access` declares per node (`nodeSettingsSchema`). */
+const ORIGIN_SETTINGS_SCHEMA = z.object({
+  localHost: z.string(),
+  localPortMode: z.enum(['default', 'custom']),
+  localPort: z.number(),
+})
+type OriginSettings = Partial<z.infer<typeof ORIGIN_SETTINGS_SCHEMA>>
 
 // Re-export under the conventional name so the kernel addon-loader can
 // discover the catalog directly off the entry module (the manifest's
@@ -947,7 +957,7 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig
    */
   private async applyConnection(
     fields: Readonly<Record<string, unknown>>,
-    origin: Readonly<Record<string, unknown>>,
+    origin: OriginSettings,
   ): Promise<void> {
     const records = this.ctx.records
     if (records === undefined) throw new Error('records are not available')
@@ -972,8 +982,8 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig
     await handle.patch(CLOUDFLARE_TUNNEL_RECORD_ID, fields)
     const node = this.localNode()
     const before = this.reloads
-    // Bare keys and the node: the base stores each as `<key>@<node>` (they are the node hook's keys).
-    await this.updateGlobalSettings(origin, node)
+    // The node handle of `network-access`: each key is stored as `<key>@<node>`, as it always was.
+    await this.nodeSettings(NETWORK_ACCESS_CAP, ORIGIN_SETTINGS_SCHEMA, node).patch(origin)
     if (this.reloads === before) await this.reload()
   }
 

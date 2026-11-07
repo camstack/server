@@ -7,7 +7,7 @@
  * routing / motion / zones settings tab (`getDeviceSettingsContribution`),
  * the live-assignment status block (`getDeviceLiveContribution`), and the
  * save path for both device-scoped (`applyDeviceSettingsPatch`) and
- * addon-scoped (`updateGlobalSettings`) settings.
+ * cluster-scoped settings (the post-write follow-up).
  *
  * Extracted verbatim from `index.ts` — every method body, log message, and
  * control-flow branch is unchanged; only `this.<field/method>` accesses
@@ -20,18 +20,16 @@
  * guards the property access AFTER it), so `this.deps.ctx().api` is
  * byte-identical behavior, just without the vestigial `?.`.
  *
- * `updateGlobalSettings`'s re-derive-and-propagate step (failoverPolicy +
- * clusterRoles, via `deriveRuntimeSettings` inside the addon's private
- * `applyRuntimeSettings`) is preserved by injecting `applyRuntimeSettings`
- * itself as a single closure (`(config) => this.applyRuntimeSettings(config)`)
- * rather than re-implementing its derivation here — `applyRuntimeSettings`
- * ALSO runs during `onInitialize` (so it can't be moved into this stateless
- * controller) and ALSO calls `this.reconcile!.schedulePendingRetry()` as
- * part of the same derive step; re-implementing only the "derive + push"
- * half here would silently drop that pending-retry side effect. Likewise
- * `super.updateGlobalSettings(patch)` (the `BaseAddon` two-level settings
- * write) is injected as `baseUpdateGlobalSettings` — a class that doesn't
- * extend `BaseAddon` can't spell `super` itself.
+ * The re-derive-and-propagate step that follows a cluster settings write
+ * (failoverPolicy + clusterRoles, via `deriveRuntimeSettings` inside the
+ * addon's private `applyRuntimeSettings`) is preserved by injecting
+ * `applyRuntimeSettings` itself as a single closure
+ * (`(config) => this.applyRuntimeSettings(config)`) rather than re-implementing
+ * its derivation here — `applyRuntimeSettings` ALSO runs during `onInitialize`
+ * (so it can't be moved into this stateless controller) and ALSO calls
+ * `this.reconcile!.schedulePendingRetry()` as part of the same derive step.
+ * The addon runs it from `onScopedSettingsChanged` (D986), so a scoped write
+ * and the legacy write both reach it.
  */
 import type {
   AddonContext,
@@ -75,8 +73,6 @@ export interface DeviceConfigContributionsDeps {
   readonly deviceHasActivitySignalCap: (deviceId: number) => Promise<boolean>
   /** `this.deviceHasNativeObjectDetectionCap(deviceId)` — stays on index.ts. */
   readonly deviceHasNativeObjectDetectionCap: (deviceId: number) => Promise<boolean>
-  /** `super.updateGlobalSettings(patch)` — the `BaseAddon` two-level settings write + auto-restart check. */
-  readonly baseUpdateGlobalSettings: (patch: Record<string, unknown>) => Promise<void>
   /** `this.resolveGlobalStore()` — the `BaseAddon` protected store reader. */
   readonly resolveGlobalStore: () => Promise<Record<string, unknown>>
   /** `this.globalSettings = settings` — the addon's in-memory settings snapshot. */
@@ -96,11 +92,14 @@ export interface DeviceConfigContributionsDeps {
 export class DeviceConfigContributions {
   constructor(private readonly deps: DeviceConfigContributionsDeps) {}
 
-  // ── New three-level settings API (Phase 3 pilot) ─────────────────────
+  // ── Cluster settings write — post-write side effects ─────────────────
 
-  async updateGlobalSettings(patch: Record<string, unknown>): Promise<void> {
+  /**
+   * The side effects of a cluster settings write that already landed. Runs BEFORE
+   * `applyRuntimeSettings`, so `topology.clusterRoles` still holds the previous roles here.
+   */
+  async afterClusterSettingsWritten(): Promise<void> {
     const previousIngestNode = this.deps.topology.clusterRoles.ingestNode
-    await this.deps.baseUpdateGlobalSettings(patch)
     // Re-read full state and re-apply runtime tunables (balancer thresholds,
     // failover policy, broker timeout) so subsequent dispatches pick them up.
     const full = await this.deps.resolveGlobalStore()

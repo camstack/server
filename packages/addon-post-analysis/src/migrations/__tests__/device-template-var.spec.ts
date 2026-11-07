@@ -78,6 +78,7 @@ async function makeWorld(): Promise<World> {
       ...ncPorts,
       // The settings migration of the same catalogue has nothing stored to move here.
       readStored: async () => ({}),
+      announceRetired: async () => undefined,
       listDeviceIds: async () => [],
       readDeviceField: async () => new Map(),
     },

@@ -186,7 +186,7 @@ export class LoadShedController {
   // ── Settings-change hook ─────────────────────────────────────────────
 
   /**
-   * Mirrors the former inline block inside `updateGlobalSettings`: clear
+   * Mirrors the former inline block inside the cluster-write follow-up: clear
    * load-shed pauses so suspended cameras get re-evaluated with the new
    * thresholds on the next dispatch cycle, then re-dispatch each of them.
    */

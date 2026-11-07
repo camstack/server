@@ -29,6 +29,7 @@ async function world(initial: Record<string, unknown>, readFails = false) {
       return Object.fromEntries(store)
     },
     readRawStored: async () => Object.fromEntries(store),
+    info: () => undefined,
     ensureIntegration: async () => {
       writes.push('integration')
       created.push('int_0007')

@@ -7,7 +7,6 @@ import { lokiDestinationsKind } from '../loki-record-kinds.js'
 import { IntegrationRegistry } from '../../sqlite-storage/integration-registry.js'
 import { integrationRegistryRecordKinds } from '../../sqlite-storage/integration-record-kinds.js'
 import { CONNECTION_TO_RECORDS_ID, REGISTRY_TOGGLE_TO_RECORD_ID } from '../migrations/index.js'
-import { RETIREMENT_MARKER_KEY } from '../retire-enabled-flag.js'
 
 /**
  * The id SHAPES the hub really hands out: a hub-resident addon's `ctx.id` is `addon:loki-logging`
@@ -169,7 +168,7 @@ describe('LokiLoggingAddon — the registry id is the bare manifest id', () => {
   })
 
   it('does not offer the registry-toggle migration before the provider is registered', async () => {
-    const w = await boot({ registry: 'active', stored: { [RETIREMENT_MARKER_KEY]: true } })
+    const w = await boot({ registry: 'active', stored: {} })
     addons.push(w.addon)
     expect(w.offered).toHaveLength(1)
     expect(w.offered[0]).not.toContain(REGISTRY_TOGGLE_TO_RECORD_ID)
@@ -179,7 +178,7 @@ describe('LokiLoggingAddon — the registry id is the bare manifest id', () => {
   it('offers the full catalogue once the toggle migration is applied, so the engine never sees a "newer" id', async () => {
     const w = await boot({
       registry: 'active',
-      stored: { [RETIREMENT_MARKER_KEY]: true },
+      stored: {},
       toggleApplied: true,
     })
     addons.push(w.addon)
@@ -187,7 +186,7 @@ describe('LokiLoggingAddon — the registry id is the bare manifest id', () => {
   })
 
   it('an ACTIVE provider seen under the bare id after registration is already-done, not a failure', async () => {
-    const w = await boot({ registry: 'active', stored: { [RETIREMENT_MARKER_KEY]: true } })
+    const w = await boot({ registry: 'active', stored: {} })
     addons.push(w.addon)
     w.addon.postBrokerStart()
     await vi.waitFor(() =>
@@ -198,7 +197,7 @@ describe('LokiLoggingAddon — the registry id is the bare manifest id', () => {
   })
 
   it('an INACTIVE provider is carried to the record and re-enabled under the bare id', async () => {
-    const w = await boot({ registry: 'inactive', stored: { [RETIREMENT_MARKER_KEY]: true } })
+    const w = await boot({ registry: 'inactive', stored: {} })
     addons.push(w.addon)
     w.addon.postBrokerStart()
     await vi.waitFor(() => expect(w.enabledCalls).toEqual([{ addonId: BARE_ID, enabled: true }]))
@@ -206,29 +205,12 @@ describe('LokiLoggingAddon — the registry id is the bare manifest id', () => {
   })
 
   it('an UNREGISTERED provider after registration is a real fault and fails', async () => {
-    const w = await boot({ registry: 'unregistered', stored: { [RETIREMENT_MARKER_KEY]: true } })
+    const w = await boot({ registry: 'unregistered', stored: {} })
     addons.push(w.addon)
     w.addon.postBrokerStart()
     await vi.waitFor(() =>
       expect(w.finished).toContainEqual({ id: REGISTRY_TOGGLE_TO_RECORD_ID, kind: 'failed' }),
     )
-  })
-})
-
-describe('LokiLoggingAddon — the retired enabled flag disables nothing (D777)', () => {
-  const addons: LokiLoggingAddon[] = []
-  afterEach(async () => {
-    for (const a of addons.splice(0)) await a.shutdown()
-  })
-
-  it('a stored enabled:false is stripped, the marker set, and the record stays enabled', async () => {
-    const w = await boot({ registry: 'active', stored: { enabled: false } })
-    addons.push(w.addon)
-    await vi.waitFor(() => expect(w.getStore()[RETIREMENT_MARKER_KEY]).toBe(true))
-    expect('enabled' in w.getStore()).toBe(false)
-    expect((await w.handle.get('int_0001'))?.data.enabled).toBeUndefined()
-    expect(w.enabledCalls).toEqual([])
-    expect(w.log.info).toHaveBeenCalledWith(expect.stringContaining('enabled: false'))
   })
 })
 
@@ -248,7 +230,7 @@ describe('LokiLoggingAddon — a hub-resident ctx.id finds its integration row',
     const existing = await integrations.createIntegration({ addonId: BARE_ID, name: 'Loki' })
     const w = await boot({
       registry: 'active',
-      stored: { [RETIREMENT_MARKER_KEY]: true, url: 'http://loki:3100' },
+      stored: { url: 'http://loki:3100' },
       integrations,
     })
     addons.push(w.addon)

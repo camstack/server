@@ -35,6 +35,7 @@ import type {
   NetworkAccessStatus,
   NetworkEndpoint,
   ProviderRegistration,
+  ScopedSettingsScope,
 } from '@camstack/types'
 import {
   BaseAddon,
@@ -1015,23 +1016,47 @@ export class TailscaleClientAddon extends BaseAddon<TailscaleConfig> {
   }
 
   /**
-   * The old node form still shows and saves `authKey` and `hostname`, but they live on the tailnet
+   * The node form still shows and saves `authKey` and `hostname`, but they live on the tailnet
    * instance now (a record, once it exists, is the only source). The save goes THROUGH to the
    * record under its secret rules (kept, cleared or replaced) and never lands in the node rows; a
    * failed write fails the save with its reason. Everything else saves as it always did.
    */
+  override async updateScopedSettings(
+    scope: ScopedSettingsScope,
+    cap: string,
+    patch: Record<string, unknown>,
+    nodeId?: string,
+  ): Promise<void> {
+    if (scope !== 'node' || cap !== 'mesh-network') {
+      await super.updateScopedSettings(scope, cap, patch, nodeId)
+      return
+    }
+    const { moved, rest } = this.splitTailnetFields(patch)
+    if (Object.keys(moved).length > 0) await this.saveTailnet(moved)
+    if (Object.keys(rest).length > 0) await super.updateScopedSettings(scope, cap, rest, nodeId)
+  }
+
+  /** The same through-write for the addon-level operator entry that still exists. */
   override async updateGlobalSettingsAsOperator(
     patch: Record<string, unknown>,
     nodeId?: string,
   ): Promise<void> {
+    const { moved, rest } = this.splitTailnetFields(patch)
+    if (Object.keys(moved).length > 0) await this.saveTailnet(moved)
+    if (Object.keys(rest).length > 0) await super.updateGlobalSettingsAsOperator(rest, nodeId)
+  }
+
+  private splitTailnetFields(patch: Record<string, unknown>): {
+    readonly moved: Record<string, unknown>
+    readonly rest: Record<string, unknown>
+  } {
     const moved: Record<string, unknown> = {}
     const rest: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(patch)) {
       if (key === 'authKey' || key === 'hostname') moved[key] = value
       else rest[key] = value
     }
-    if (Object.keys(moved).length > 0) await this.saveTailnet(moved)
-    if (Object.keys(rest).length > 0) await super.updateGlobalSettingsAsOperator(rest, nodeId)
+    return { moved, rest }
   }
 
   /** The ports of the catalogue: the settings in, the `tailnet` record out. */

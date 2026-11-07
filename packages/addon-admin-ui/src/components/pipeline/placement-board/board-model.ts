@@ -11,6 +11,8 @@ import type { ConcernEnablement } from '../lib/node-enablement'
 import i18n from '../../../i18n/index'
 
 export const ORCHESTRATOR_ADDON_ID = 'pipeline-orchestrator'
+/** The capability whose cluster form holds the orchestrator's cluster roles. */
+export const ORCHESTRATOR_CAP = 'pipeline-orchestrator'
 // The recording node is owned by the `recorder` addon (single source of truth),
 // NOT the orchestrator. The "Recording" picker reads/writes the recorder's
 // canonical `recordingNodeId` global setting directly — it is a utility view

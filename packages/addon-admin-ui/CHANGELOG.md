@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Notification settings and the cluster recording, events and roles pickers use the scoped settings API
+- The cluster roles tab reads and writes the orchestrator cluster settings through the scoped settings API.
 
 ## [1.2.602] - 2026-11-07
 

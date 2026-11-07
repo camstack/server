@@ -5,11 +5,17 @@ import {
   moveConnectionToRecord,
   planDropMovedSettings,
 } from './connection-to-records.js'
+import { planDropRetiredEnabledFlag, type RetiredEnabledFlagPorts } from './retired-enabled-flag.js'
 import {
   moveRegistryToggleToRecord,
   type RegistryToggleMigrationPorts,
 } from './registry-toggle-to-record.js'
 
+export {
+  RETIRED_ENABLED_KEY,
+  RETIREMENT_MARKER_KEY,
+  type RetiredEnabledFlagPorts,
+} from './retired-enabled-flag.js'
 export type { RegistryState, RegistryToggleMigrationPorts } from './registry-toggle-to-record.js'
 export type {
   DropMovedSettingsPorts,
@@ -21,10 +27,12 @@ export type {
 /** Both bodies read through ONE port object, so the addon binds the catalogue once. */
 export type LokiCataloguePorts = LokiMigrationPorts &
   DropMovedSettingsPorts &
-  RegistryToggleMigrationPorts
+  RegistryToggleMigrationPorts &
+  RetiredEnabledFlagPorts
 
 export const CONNECTION_TO_RECORDS_ID = 'loki-logging/2026-11-02-connection-to-records'
 export const REGISTRY_TOGGLE_TO_RECORD_ID = 'loki-logging/2026-11-02-registry-toggle-to-record'
+export const DROP_RETIRED_ENABLED_ID = 'loki-logging/2026-11-07-drop-retired-enabled-flag'
 
 /** The `loki-logging` catalogue (D987): offered to the engine when the hub-resident addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<LokiCataloguePorts>[] = [
@@ -79,6 +87,24 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<LokiCataloguePorts>[] = [
       fixtureMark: 'a destinations record field the migration does not know (the job)',
     },
     procedure: moveRegistryToggleToRecord,
+  },
+  {
+    meta: {
+      id: DROP_RETIRED_ENABLED_ID,
+      owner: 'loki-logging',
+      level: 'addon-state',
+      seq: 4,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'cluster',
+      // The key describes nothing in effect, so a pass that cannot run only leaves it for the next boot.
+      onFailure: 'tolerate',
+      bodyKind: 'plan',
+      description:
+        'Delete the retired `enabled` setting (it gates nothing any more) and the marker its boot-time carry-over left',
+      fixtureMark: 'a setting key the migration does not know',
+    },
+    plan: planDropRetiredEnabledFlag,
   },
 ]
 

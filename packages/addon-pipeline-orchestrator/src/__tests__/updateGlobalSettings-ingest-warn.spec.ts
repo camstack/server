@@ -53,7 +53,9 @@ describe('PipelineOrchestrator — updateGlobalSettings ingest-owner config-issu
     addon = new PipelineOrchestratorAddon()
     await addon.initialize(ctx)
 
-    await addon.updateGlobalSettings({ ingestNode: 'agent-unreachable' })
+    await addon.updateScopedSettings('cluster', 'pipeline-orchestrator', {
+      ingestNode: 'agent-unreachable',
+    })
 
     const issueWarns = warns.filter((w) => w.message === 'ingest node config issue')
     expect(issueWarns.length).toBe(1)
@@ -61,6 +63,31 @@ describe('PipelineOrchestrator — updateGlobalSettings ingest-owner config-issu
       ingestNode: 'agent-unreachable',
       issue: expect.stringMatching(/reachable/i),
     })
+  })
+
+  it('a SCOPED write of ingestNode runs the same re-derive and warn (D986 P5)', async () => {
+    const broker = makeFakeBroker('hub')
+    const { logger, warns } = makeWarnCapturingLogger()
+    const { ctx, store } = makeFakeContext({
+      addonConfig: { moleculerBroker: broker },
+      initialGlobalSettings: {
+        enabledNodes: enabledNodesFromBroker(broker),
+        ingestNode: 'hub',
+      },
+      logger,
+    })
+    addon = new PipelineOrchestratorAddon()
+    await addon.initialize(ctx)
+
+    await addon.updateScopedSettings('cluster', 'pipeline-orchestrator', {
+      ingestNode: 'agent-unreachable',
+    })
+
+    // The stored key is the one the old build wrote.
+    expect(store.global['ingestNode']).toBe('agent-unreachable')
+    const issueWarns = warns.filter((w) => w.message === 'ingest node config issue')
+    expect(issueWarns.length).toBe(1)
+    expect(issueWarns[0]!.meta).toMatchObject({ ingestNode: 'agent-unreachable' })
   })
 
   it('does not warn when ingestNode is unchanged (stays hub)', async () => {
@@ -77,7 +104,7 @@ describe('PipelineOrchestrator — updateGlobalSettings ingest-owner config-issu
     addon = new PipelineOrchestratorAddon()
     await addon.initialize(ctx)
 
-    await addon.updateGlobalSettings({ loadShedEnabled: false })
+    await addon.updateScopedSettings('cluster', 'pipeline-orchestrator', { fpsMinThreshold: 7 })
 
     expect(warns.some((w) => w.message === 'ingest node config issue')).toBe(false)
     const owner = await addon.getIngestOwner()
@@ -98,7 +125,7 @@ describe('PipelineOrchestrator — updateGlobalSettings ingest-owner config-issu
     addon = new PipelineOrchestratorAddon()
     await addon.initialize(ctx)
 
-    await addon.updateGlobalSettings({ ingestNode: 'hub' })
+    await addon.updateScopedSettings('cluster', 'pipeline-orchestrator', { ingestNode: 'hub' })
 
     expect(warns.some((w) => w.message === 'ingest node config issue')).toBe(false)
   })

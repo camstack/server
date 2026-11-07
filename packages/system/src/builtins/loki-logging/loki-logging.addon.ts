@@ -5,7 +5,7 @@
  * operator supplies a URL: `url` defaults to empty and `LokiDestination` treats
  * that as inert. Whether it is used at all is the per-destination
  * `log-destination` capability toggle — the ONE enable (D777); the old private
- * `enabled` setting is retired by `retire-enabled-flag.ts`. The provider is
+ * `enabled` setting is retired by a ledger migration (`migrations/retired-enabled-flag.ts`). The provider is
  * registered either way, so the Logging page can show it and the operator can
  * turn it on without a restart of anything else.
  *
@@ -50,16 +50,6 @@ import {
   lokiDestinationsKind,
 } from './loki-record-kinds.js'
 import { ADDON_MIGRATIONS, INITIALIZE_MIGRATIONS } from './migrations/index.js'
-import {
-  RETIRED_ENABLED_KEY,
-  RETIREMENT_MARKER_KEY,
-  retireEnabledFlag,
-  type RetirementOutcome,
-} from './retire-enabled-flag.js'
-
-/** Backoff between retirement attempts — the first ones are refused until the
- *  provider registration reaches the hub. After the last, the next boot retries. */
-const RETIREMENT_RETRY_DELAYS_MS: readonly number[] = [1_000, 2_000, 5_000, 10_000, 30_000, 60_000]
 
 /**
  * The addon keeps NO connection setting of its own (D985): the connection is a `destinations`
@@ -106,7 +96,6 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
   private destination: LokiDestinationSet | null = null
   private instances: RecordIntegrationInstances<LokiDestinationBody> | null = null
   private refreshTimer: ReturnType<typeof setInterval> | null = null
-  private retirementTimer: ReturnType<typeof setTimeout> | null = null
   private shuttingDown = false
   private declared = false
   /** Instances whose keychain lock was already warned about — once per lock, per instance. */
@@ -177,10 +166,6 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
         ? `Loki logging initialized with ${String(urls.length)} destination(s): ${urls.join(', ')}`
         : 'Loki logging registered but inactive (no destination configured)',
     )
-    // Not awaited: the capability toggle refuses a provider that is not
-    // registered yet, and the one returned below is registered only after this
-    // method returns — so the carry-over retries in the background.
-    void this.attemptEnabledFlagRetirement(0)
     return registrations
   }
 
@@ -272,6 +257,9 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
         return stored
       },
       readRawStored: async () => this.resolveGlobalStore(),
+      info: (message: string) => {
+        this.ctx.logger.info(message)
+      },
       warn: (message: string) => {
         this.ctx.logger.warn(message)
       },
@@ -390,53 +378,6 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
     }
   }
 
-  /** One attempt of the D777 carry-over; reschedules itself while deferred. */
-  private async attemptEnabledFlagRetirement(attempt: number): Promise<void> {
-    if (this.shuttingDown) return
-    let outcome: RetirementOutcome
-    try {
-      outcome = await retireEnabledFlag({
-        readStoredKey: (key) => this.readStoredGlobalKey(key),
-        commit: async () => {
-          // `undefined` strips the key: every settings view rewrites the
-          // merged blob, and an undefined value is not persisted.
-          const patch: Record<string, unknown> = {
-            [RETIRED_ENABLED_KEY]: undefined,
-            [RETIREMENT_MARKER_KEY]: true,
-          }
-          await this.updateGlobalSettings(patch)
-        },
-      })
-    } catch (err: unknown) {
-      outcome = {
-        kind: 'deferred',
-        reason: err instanceof Error ? err.message : String(err),
-      }
-    }
-    if (outcome.kind === 'retired' && outcome.strippedValue !== null) {
-      this.ctx.logger.info(
-        `Loki logging: the retired \`enabled: ${String(outcome.strippedValue)}\` setting was removed; ` +
-          'it has not gated shipping since D777, so nothing was switched. The per-destination toggle is the only enable.',
-      )
-    }
-    if (outcome.kind !== 'deferred') return
-    const delay = RETIREMENT_RETRY_DELAYS_MS[attempt]
-    if (delay === undefined) {
-      this.ctx.logger.warn('Loki logging: enablement carry-over deferred to next boot', {
-        meta: { reason: outcome.reason },
-      })
-      return
-    }
-    this.ctx.logger.debug('Loki logging: enablement carry-over deferred', {
-      meta: { reason: outcome.reason, attempt, retryInMs: delay },
-    })
-    this.retirementTimer = setTimeout(() => {
-      this.retirementTimer = null
-      void this.attemptEnabledFlagRetirement(attempt + 1)
-    }, delay)
-    this.retirementTimer.unref?.()
-  }
-
   /**
    * Registration is done: the hub calls this after the providers are registered, so
    * `listCapabilityProviders` now sees Loki. The registry-toggle migration cannot decide before
@@ -468,8 +409,6 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
 
   protected async onShutdown(): Promise<void> {
     this.shuttingDown = true
-    if (this.retirementTimer !== null) clearTimeout(this.retirementTimer)
-    this.retirementTimer = null
     if (this.refreshTimer !== null) clearInterval(this.refreshTimer)
     this.refreshTimer = null
     await this.destination?.shutdown()

@@ -7,13 +7,12 @@
  * per process. They are migrations, not policy: candidates for deletion once
  * the fleet's stores hold none of these keys (needs production counts first).
  */
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@camstack/types'
 import {
   deriveSuggestionMinCosine,
   type FaceSettings,
   planStoredMinFaceConfidencePurge,
   planStoredSuggestionPurge,
-  resolveFaceSettings,
   STORED_MIN_FACE_CONFIDENCE_KEY,
   STORED_SUGGESTION_MIN_COSINE_KEY,
   SUGGESTION_BAND_FACTOR,
@@ -22,7 +21,7 @@ import type { RawDeviceBlobMirror } from '../store/settings-raw-mirror.js'
 import { planRetiredSettingsMigration, RETIRED_DEVICE_SETTINGS } from './retired-device-settings.js'
 
 /** A stored `minFaceConfidence` found by the D662 purge. */
-interface RetiredFaceConfidenceBar {
+export interface RetiredFaceConfidenceBar {
   readonly scope: 'global' | 'device'
   /** What the operator had typed, for the announcement. */
   readonly was: unknown
@@ -31,7 +30,7 @@ interface RetiredFaceConfidenceBar {
 
 /** One stored suggestion floor found by the D222 purge, and the threshold that
  *  governs its band instead. `deviceId` absent ⇒ the global store. */
-interface RetiredSuggestionThreshold {
+export interface RetiredSuggestionThreshold {
   readonly scope: 'global' | 'device'
   /** What the operator had typed, for the announcement. */
   readonly was: unknown
@@ -49,8 +48,6 @@ export interface RetiredSettingsPurgeDeps {
   readonly ctxIfReady: () => AddonContext | null
   readonly readDeviceBlob: (deviceId: number) => Promise<Record<string, unknown>>
   readonly rawDeviceBlobMirror: Pick<RawDeviceBlobMirror, 'invalidate'>
-  readonly resolveGlobalStore: () => Promise<Record<string, unknown>>
-  readonly updateGlobalSettings: (patch: Record<string, unknown>) => Promise<void>
   readonly resolveDeviceFaceSettings: (deviceId: number) => Promise<FaceSettings>
 }
 
@@ -71,14 +68,6 @@ export class RetiredSettingsPurge {
 
   private readDeviceBlob(deviceId: number): Promise<Record<string, unknown>> {
     return this.deps.readDeviceBlob(deviceId)
-  }
-
-  private resolveGlobalStore(): Promise<Record<string, unknown>> {
-    return this.deps.resolveGlobalStore()
-  }
-
-  private updateGlobalSettings(patch: Record<string, unknown>): Promise<void> {
-    return this.deps.updateGlobalSettings(patch)
   }
 
   private resolveDeviceFaceSettings(deviceId: number): Promise<FaceSettings> {
@@ -140,18 +129,17 @@ export class RetiredSettingsPurge {
     }
   }
 
-  /** Whether the GLOBAL store has been checked for a stored suggestion floor
-   *  this process, and which devices have. One announcement, not a heartbeat. */
-  private storedSuggestionCheckedGlobal = false
+  /** Which devices have been checked for a stored suggestion floor / face-confidence bar this
+   *  process. One announcement, not a heartbeat. The CLUSTER rows are retired by the
+   *  `pipeline-analytics/2026-11-07-retire-face-keys` ledger migration. */
   private readonly storedSuggestionCheckedDevices = new Set<number>()
-  private storedMinFaceConfidenceCheckedGlobal = false
   private readonly storedMinFaceConfidenceCheckedDevices = new Set<number>()
 
   /**
    * One-time: announce the recognizer face-confidence bar D662 retired, then
-   * unset it — globally and per device. Same shape as
+   * unset it per device (the cluster row is a ledger migration). Same shape as
    * {@link purgeStoredSuggestionThreshold}: absence of the key is the marker,
-   * the write goes through `updateGlobalSettings` / `writeDeviceStore`, and the
+   * the write goes through `writeDeviceStore`, and the
    * patch unsets with `undefined`.
    *
    * Why it must leave the store and not merely go unread: the bar compared the
@@ -164,22 +152,6 @@ export class RetiredSettingsPurge {
   async purgeStoredMinFaceConfidence(deviceIds: readonly number[]): Promise<void> {
     const settings = this.ctxIfReady?.settings
     if (!settings) return
-
-    if (!this.storedMinFaceConfidenceCheckedGlobal) {
-      this.storedMinFaceConfidenceCheckedGlobal = true
-      try {
-        const plan = planStoredMinFaceConfidencePurge(await this.resolveGlobalStore())
-        if (plan !== null) {
-          this.announceRetiredFaceConfidenceBar({ scope: 'global', was: plan.was })
-          await this.updateGlobalSettings(plan.patch)
-        }
-      } catch (err) {
-        this.storedMinFaceConfidenceCheckedGlobal = false
-        this.ctx.logger.warn('face confidence bar purge failed — will retry', {
-          meta: { scope: 'global', error: String(err) },
-        })
-      }
-    }
 
     for (const deviceId of deviceIds) {
       if (this.storedMinFaceConfidenceCheckedDevices.has(deviceId)) continue
@@ -201,23 +173,12 @@ export class RetiredSettingsPurge {
   }
 
   private announceRetiredFaceConfidenceBar(found: RetiredFaceConfidenceBar): void {
-    this.ctx.logger.warn(
-      'face confidence bar RETIRED — the detector model floor on the runner is the one bar now',
-      {
-        ...(found.deviceId !== undefined ? { tags: { deviceId: found.deviceId } } : {}),
-        meta: {
-          scope: found.scope,
-          setting: STORED_MIN_FACE_CONFIDENCE_KEY,
-          wasSetTo: found.was,
-          why: 'the recognizer compared the detector score without knowing which detector ran; after YuNet became the default its 0.5 was SCRFD’s bar on YuNet’s scale (D662).',
-        },
-      },
-    )
+    announceRetiredFaceConfidenceBar(this.ctx.logger, found)
   }
 
   /**
    * One-time: announce the suggestion floor D222 retired, then unset it —
-   * globally and per device.
+   * per device (the cluster row is a ledger migration).
    *
    * Removing the field from the schema already makes a stored value inert
    * (`resolveFaceSettings` reads declared fields only). That is not enough. A
@@ -230,7 +191,7 @@ export class RetiredSettingsPurge {
    * their number stopped applying.
    *
    * Absence of the key IS the marker: no flag, no version row, re-running is a
-   * no-op. The write goes through `updateGlobalSettings` / `writeDeviceStore`
+   * no-op. The write goes through `writeDeviceStore`
    * (never a raw store write), and the patch unsets with `undefined` — an
    * explicit `null` would survive the merge as exactly the residue being
    * removed.
@@ -238,28 +199,6 @@ export class RetiredSettingsPurge {
   async purgeStoredSuggestionThreshold(deviceIds: readonly number[]): Promise<void> {
     const settings = this.ctxIfReady?.settings
     if (!settings) return
-
-    if (!this.storedSuggestionCheckedGlobal) {
-      this.storedSuggestionCheckedGlobal = true
-      try {
-        const plan = planStoredSuggestionPurge(await this.resolveGlobalStore())
-        if (plan !== null) {
-          const global = resolveFaceSettings(await this.resolveGlobalStore())
-          this.announceRetiredSuggestionThreshold({
-            scope: 'global',
-            was: plan.was,
-            threshold: global.similarityThreshold,
-          })
-          await this.updateGlobalSettings(plan.patch)
-        }
-      } catch (err) {
-        // Retry next pass rather than swallow the announcement forever.
-        this.storedSuggestionCheckedGlobal = false
-        this.ctx.logger.warn('face suggestion threshold purge failed — will retry', {
-          meta: { scope: 'global', error: String(err) },
-        })
-      }
-    }
 
     for (const deviceId of deviceIds) {
       if (this.storedSuggestionCheckedDevices.has(deviceId)) continue
@@ -286,23 +225,45 @@ export class RetiredSettingsPurge {
     }
   }
 
-  /** The one line the operator can read to see what their number became. Both
-   *  numbers, and the rule between them, or it does not explain anything. */
   private announceRetiredSuggestionThreshold(found: RetiredSuggestionThreshold): void {
-    this.ctx.logger.warn(
-      'face suggestion threshold RETIRED — it is derived from the match threshold now',
-      {
-        ...(found.deviceId !== undefined ? { tags: { deviceId: found.deviceId } } : {}),
-        meta: {
-          scope: found.scope,
-          setting: STORED_SUGGESTION_MIN_COSINE_KEY,
-          wasSetTo: found.was,
-          similarityThreshold: found.threshold,
-          bandFactor: SUGGESTION_BAND_FACTOR,
-          nowInForce: deriveSuggestionMinCosine(found.threshold),
-          why: 'two knobs over one band could disagree, and did — a 0.45 threshold against a 0.50 floor made the suggestion band [0.50, 0.45) empty, so nothing could be suggested at all (D222).',
-        },
-      },
-    )
+    announceRetiredSuggestionThreshold(this.ctx.logger, found)
   }
+}
+
+export function announceRetiredFaceConfidenceBar(
+  logger: IScopedLogger,
+  found: RetiredFaceConfidenceBar,
+): void {
+  logger.warn(
+    'face confidence bar RETIRED — the detector model floor on the runner is the one bar now',
+    {
+      ...(found.deviceId !== undefined ? { tags: { deviceId: found.deviceId } } : {}),
+      meta: {
+        scope: found.scope,
+        setting: STORED_MIN_FACE_CONFIDENCE_KEY,
+        wasSetTo: found.was,
+        why: 'the recognizer compared the detector score without knowing which detector ran; after YuNet became the default its 0.5 was SCRFD’s bar on YuNet’s scale (D662).',
+      },
+    },
+  )
+}
+
+/** The one line the operator can read to see what their number became. Both
+ *  numbers, and the rule between them, or it does not explain anything. */
+export function announceRetiredSuggestionThreshold(
+  logger: IScopedLogger,
+  found: RetiredSuggestionThreshold,
+): void {
+  logger.warn('face suggestion threshold RETIRED — it is derived from the match threshold now', {
+    ...(found.deviceId !== undefined ? { tags: { deviceId: found.deviceId } } : {}),
+    meta: {
+      scope: found.scope,
+      setting: STORED_SUGGESTION_MIN_COSINE_KEY,
+      wasSetTo: found.was,
+      similarityThreshold: found.threshold,
+      bandFactor: SUGGESTION_BAND_FACTOR,
+      nowInForce: deriveSuggestionMinCosine(found.threshold),
+      why: 'two knobs over one band could disagree, and did — a 0.45 threshold against a 0.50 floor made the suggestion band [0.50, 0.45) empty, so nothing could be suggested at all (D222).',
+    },
+  })
 }

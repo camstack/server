@@ -3,7 +3,7 @@
  * addon-store access through the high-level BaseAddon settings API
  * instead of raw `readAddonStore`/`writeAddonStore`:
  *
- *  - `updateGlobalSettings` delegates to the base implementation
+ *  - a cluster write delegates to the base implementation
  *    (same persisted keys/shape, plus the sanctioned `AddonUpdated`
  *    lifecycle emission).
  *
@@ -23,7 +23,7 @@ describe('PipelineOrchestrator — settings accessor migration', () => {
     addon = null
   })
 
-  it('updateGlobalSettings persists the patch under the same bare keys (equivalence)', async () => {
+  it('a cluster write persists the patch under the same bare keys (equivalence)', async () => {
     const broker = makeFakeBroker('hub')
     const { ctx, store } = makeFakeContext({
       addonConfig: { moleculerBroker: broker },
@@ -34,10 +34,13 @@ describe('PipelineOrchestrator — settings accessor migration', () => {
     addon = new PipelineOrchestratorAddon()
     await addon.initialize(ctx)
 
-    await addon.updateGlobalSettings({ enabledNodes: ['hub'], loadShedEnabled: false })
+    await addon.updateScopedSettings('cluster', 'pipeline-orchestrator', {
+      audioNode: 'hub',
+      fpsMinThreshold: 7,
+    })
 
-    expect(store.global['enabledNodes']).toEqual(['hub'])
-    expect(store.global['loadShedEnabled']).toBe(false)
+    expect(store.global['audioNode']).toBe('hub')
+    expect(store.global['fpsMinThreshold']).toBe(7)
     // No node-scoped variant of a bare setting — nothing here is perNode. The node rows the
     // orchestrator owns (`agentSettings@<node>`, `nodeBindings@<node>`) are not settings.
     const nodeRowFields = ['agentSettings@', 'nodeBindings@']
@@ -47,7 +50,7 @@ describe('PipelineOrchestrator — settings accessor migration', () => {
     expect(variants).toEqual([])
   })
 
-  it('updateGlobalSettings emits the AddonUpdated lifecycle event (base settings API)', async () => {
+  it('a cluster write emits the AddonUpdated lifecycle event (base settings API)', async () => {
     const broker = makeFakeBroker('hub')
     const { ctx, captured } = makeFakeContext({
       addonConfig: { moleculerBroker: broker },
@@ -58,10 +61,31 @@ describe('PipelineOrchestrator — settings accessor migration', () => {
     addon = new PipelineOrchestratorAddon()
     await addon.initialize(ctx)
 
-    await addon.updateGlobalSettings({ loadShedEnabled: false })
+    await addon.updateScopedSettings('cluster', 'pipeline-orchestrator', { fpsMinThreshold: 7 })
 
     const updated = captured.filter((e) => e.category === EventCategory.AddonUpdated)
     expect(updated.length).toBeGreaterThan(0)
     expect(updated[0]!.data).toMatchObject({ level: 'global' })
+  })
+
+  it('setShareSource lands on the bare `shareSource` key an older build wrote, and is read back live', async () => {
+    const broker = makeFakeBroker('hub')
+    const { ctx, store } = makeFakeContext({
+      addonConfig: { moleculerBroker: broker },
+      initialGlobalSettings: {
+        enabledNodes: enabledNodesFromBroker(broker),
+        shareSource: 'benchmark',
+        audioNode: 'marker-kept',
+      },
+    })
+    addon = new PipelineOrchestratorAddon()
+    await addon.initialize(ctx)
+
+    await addon.setShareSource({ source: 'hardware' })
+
+    expect(store.global['shareSource']).toBe('hardware')
+    // The write merges: a neighbouring stored key survives.
+    expect(store.global['audioNode']).toBe('marker-kept')
+    expect((await addon.getEffectiveShares()).source).toBe('hardware')
   })
 })

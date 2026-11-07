@@ -862,7 +862,7 @@ describe('PipelineOrchestratorAddon — E2E', () => {
     broker.addNode('agent-cpu')
     broker.addNode('agent-gpu')
 
-    const { ctx } = makeFakeContext({
+    const { ctx, store } = makeFakeContext({
       addonConfig: { moleculerBroker: broker },
       initialGlobalSettings: {
         enabledNodes: enabledNodesFromBroker(broker),
@@ -874,10 +874,11 @@ describe('PipelineOrchestratorAddon — E2E', () => {
 
     // Raise the GPU affinity threshold so a 10fps camera no longer qualifies
     // for the L3 GPU pick — it should fall back to L2 capacity winner.
-    await addon.updateGlobalSettings({
-      gpuAffinityFpsThreshold: 20,
-      capacityTieEpsilon: 2,
-    })
+    // The two balancer keys are stored tunables outside the cluster form: seed them, then a
+    // declared cluster write runs the re-derive that picks the whole store up.
+    store.global['gpuAffinityFpsThreshold'] = 20
+    store.global['capacityTieEpsilon'] = 2
+    await addon.updateScopedSettings('cluster', 'pipeline-orchestrator', { fpsMinThreshold: 7 })
 
     const result = await addon.dispatchCamera(makeRunnerCameraConfig(10, { detectionFps: 10 }))
     // With threshold raised, 10fps is below the threshold → L3 does not kick

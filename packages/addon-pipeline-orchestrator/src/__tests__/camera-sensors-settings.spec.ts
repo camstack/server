@@ -113,7 +113,6 @@ function makeContributions() {
     deviceHasOnboardMotionCap: async () => true,
     deviceHasActivitySignalCap: async () => false,
     deviceHasNativeObjectDetectionCap: async () => false,
-    baseUpdateGlobalSettings: unused('baseUpdateGlobalSettings'),
     resolveGlobalStore: unused('resolveGlobalStore'),
     setGlobalSettings: unused('setGlobalSettings'),
     applyRuntimeSettings: unused('applyRuntimeSettings'),

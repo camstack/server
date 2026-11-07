@@ -35,6 +35,7 @@ async function analytics(input: {
       // The template migration of the same catalogue runs over empty kinds.
       ...ncPorts,
       readStored: rows.readStored,
+      announceRetired: async () => undefined,
       listDeviceIds: async () => [...new Set(deviceIds())],
       readDeviceField: rows.readDeviceField,
     }),

@@ -2,12 +2,10 @@
 import type { AddonContext, IScopedLogger } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LokiLoggingAddon } from '../loki-logging.addon.js'
-import { RETIREMENT_MARKER_KEY } from '../retire-enabled-flag.js'
 
 /**
- * Loki has ONE enable: the per-destination toggle (D777). The legacy `enabled`
- * key has gated nothing since then, so its retirement strips the key and sets
- * the marker WITHOUT switching anything.
+ * Loki has ONE enable: the per-destination toggle (D777). The retirement of the legacy `enabled`
+ * key is a ledger migration (`migrations/__tests__/retired-enabled-flag.sqlite.spec.ts`).
  */
 
 function makeLogger(): IScopedLogger {
@@ -79,45 +77,8 @@ describe('LokiLoggingAddon — one enable (D777)', () => {
     vi.useRealTimers()
   })
 
-  it('stored enabled:false → disables nothing (it gated nothing since D777): key stripped, marker set', async () => {
-    const { addon, setCapabilityProviderEnabled, getStore } = await boot({
-      enabled: false,
-      url: 'http://loki:3100',
-    })
-    addons.push(addon)
-    await vi.advanceTimersByTimeAsync(1_000)
-    await vi.waitFor(() => expect(getStore()[RETIREMENT_MARKER_KEY]).toBe(true))
-    expect(setCapabilityProviderEnabled).not.toHaveBeenCalled()
-    expect('enabled' in getStore()).toBe(false)
-  })
-
-  it('stored enabled:true → leaves the toggle alone, still writes the marker', async () => {
-    const { addon, setCapabilityProviderEnabled, getStore } = await boot({ enabled: true })
-    addons.push(addon)
-    await vi.waitFor(() => expect(getStore()[RETIREMENT_MARKER_KEY]).toBe(true))
-    expect(setCapabilityProviderEnabled).not.toHaveBeenCalled()
-    expect('enabled' in getStore()).toBe(false)
-  })
-
-  it('never written → leaves the toggle alone', async () => {
-    const { addon, setCapabilityProviderEnabled, getStore } = await boot({})
-    addons.push(addon)
-    await vi.waitFor(() => expect(getStore()[RETIREMENT_MARKER_KEY]).toBe(true))
-    expect(setCapabilityProviderEnabled).not.toHaveBeenCalled()
-  })
-
-  it('already migrated → never overrides a later operator choice, even with a stale enabled:false', async () => {
-    const { addon, setCapabilityProviderEnabled } = await boot({
-      [RETIREMENT_MARKER_KEY]: true,
-      enabled: false,
-    })
-    addons.push(addon)
-    await vi.advanceTimersByTimeAsync(120_000)
-    expect(setCapabilityProviderEnabled).not.toHaveBeenCalled()
-  })
-
   it('declares no connection setting (D985): the connection form belongs to the record', async () => {
-    const { addon } = await boot({ [RETIREMENT_MARKER_KEY]: true })
+    const { addon } = await boot({})
     addons.push(addon)
     const schema = await addon.getGlobalSettings()
     const keys = (schema?.sections ?? []).flatMap((s) =>

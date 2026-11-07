@@ -14,6 +14,7 @@
  * stays free of cross-addon dependencies.
  */
 import { readFileSync } from 'node:fs'
+import { z } from 'zod'
 import * as os from 'node:os'
 
 import type {
@@ -73,6 +74,7 @@ import {
   addressBookPatch,
   buildAddressBook,
   buildListenerOrigins,
+  CustomAddressListSchema,
   type CustomAddress,
   normalizeAddressBook,
   withAppConnectionCustomEndpoints,
@@ -96,6 +98,20 @@ import { DiscoveryWatcher } from './passive/discovery-watcher.js'
 import { nodePassiveListenIo } from './passive/passive-io-node.js'
 import { nodeScanIo } from './scan/scan-io-node.js'
 import { validateSavedSubnets } from './scan/subnets.js'
+
+const StringListSchema = z.array(z.string())
+
+/** The keys the addon stores for itself, bare, in its own store (none is a declared setting). */
+interface LocalNetworkStoredPatch {
+  readonly allowedAddresses?: readonly string[]
+  readonly bootSeeded?: boolean
+  readonly scanSubnets?: readonly string[]
+  readonly customAddresses?: readonly CustomAddress[]
+  readonly appConnectionUrls?: readonly string[]
+  readonly notificationTapUrl?: string
+  readonly publicEndpointUrl?: string
+  readonly internalUrl?: string
+}
 
 /** What a change to the address book may consult. */
 interface AddressChangeContext {
@@ -303,6 +319,41 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
   }
 
   /**
+   * Persist the keys this addon keeps for itself (the allowlist, the first-boot flag, the saved
+   * subnets, the address book): bare keys of the addon store, none of them a declared setting, so
+   * each goes through its own durable handle. The config is read again so the next read sees it.
+   */
+  private async saveStored(patch: LocalNetworkStoredPatch): Promise<void> {
+    if (patch.allowedAddresses !== undefined) {
+      await this.state('allowedAddresses', StringListSchema, []).set([...patch.allowedAddresses])
+    }
+    if (patch.bootSeeded !== undefined) {
+      await this.state('bootSeeded', z.boolean(), false).set(patch.bootSeeded)
+    }
+    if (patch.scanSubnets !== undefined) {
+      await this.state('scanSubnets', StringListSchema, []).set([...patch.scanSubnets])
+    }
+    if (patch.customAddresses !== undefined) {
+      await this.state('customAddresses', CustomAddressListSchema, []).set([
+        ...patch.customAddresses,
+      ])
+    }
+    if (patch.appConnectionUrls !== undefined) {
+      await this.state('appConnectionUrls', StringListSchema, []).set([...patch.appConnectionUrls])
+    }
+    if (patch.notificationTapUrl !== undefined) {
+      await this.state('notificationTapUrl', z.string(), '').set(patch.notificationTapUrl)
+    }
+    if (patch.publicEndpointUrl !== undefined) {
+      await this.state('publicEndpointUrl', z.string(), '').set(patch.publicEndpointUrl)
+    }
+    if (patch.internalUrl !== undefined) {
+      await this.state('internalUrl', z.string(), '').set(patch.internalUrl)
+    }
+    await this.resolveConfig()
+  }
+
+  /**
    * Apply one change to the address book and persist it, normalised (a flag
    * naming an address in no row becomes a custom address in the same write).
    */
@@ -321,7 +372,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
       { ...addressBookPatch(changed), customAddresses: changed.custom },
       detectedUrls,
     )
-    await this.updateGlobalSettings(addressBookPatch(after))
+    await this.saveStored(addressBookPatch(after))
     await this.mdns?.sync()
   }
 
@@ -501,7 +552,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     // entries stay opt-in. Loopback is not a client route.
     if (!this.config.bootSeeded) {
       const seed = autoSeedAllowlist(this.enumerate())
-      await this.updateGlobalSettings({ allowedAddresses: seed, bootSeeded: true })
+      await this.saveStored({ allowedAddresses: seed, bootSeeded: true })
       this.ctx.logger.info('local-network: first-boot auto-seed', {
         meta: { addresses: seed },
       })
@@ -576,7 +627,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
       getAllowedAddresses: async () => ({ addresses: this.config.allowedAddresses }),
       resetAllowlistToBestMatch: async () => {
         const seed = autoSeedAllowlist(this.enumerate())
-        await this.updateGlobalSettings({ allowedAddresses: seed, bootSeeded: true })
+        await this.saveStored({ allowedAddresses: seed, bootSeeded: true })
         this.ctx.logger.info('local-network: allowlist reset to auto-seed', {
           meta: { count: seed.length },
         })
@@ -589,7 +640,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
         // every real candidate.
         const known = new Set(this.enumerate().map((i) => i.address))
         const cleaned: readonly string[] = [...new Set(addresses)].filter((a) => known.has(a))
-        await this.updateGlobalSettings({ allowedAddresses: cleaned })
+        await this.saveStored({ allowedAddresses: cleaned })
         this.ctx.logger.info('local-network: allowlist updated', {
           meta: { count: cleaned.length, dropped: addresses.length - cleaned.length },
         })
@@ -608,7 +659,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
       getScanSubnets: async () => ({ subnets: [...this.config.scanSubnets] }),
       setScanSubnets: async ({ subnets }) => {
         const cleaned = [...validateSavedSubnets(subnets)]
-        await this.updateGlobalSettings({ scanSubnets: cleaned })
+        await this.saveStored({ scanSubnets: cleaned })
         this.ctx.logger.info('local-network: scan subnets updated', {
           meta: { count: cleaned.length, subnets: cleaned },
         })
@@ -1110,7 +1161,7 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
     try {
       const next = reconcileAllowlist(this.config.allowedAddresses, interfaces)
       if (sameAddressSet(this.config.allowedAddresses, next)) return
-      await this.updateGlobalSettings({ allowedAddresses: next, bootSeeded: true })
+      await this.saveStored({ allowedAddresses: next, bootSeeded: true })
       this.ctx.logger.info('local-network: allowlist reconciled', {
         meta: { addresses: next },
       })

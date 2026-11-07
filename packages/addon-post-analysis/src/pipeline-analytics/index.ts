@@ -725,6 +725,7 @@ import {
   type FaceSettings,
   FaceSettingsSchema,
   resolveFaceSettings,
+  STORED_MIN_FACE_CONFIDENCE_KEY,
   SUGGESTION_BAND_FACTOR,
 } from './face-settings.js'
 import { FrameState } from './frame/frame-state.js'
@@ -1012,7 +1013,11 @@ import {
 } from './retention/orphan-audit-settings.js'
 import { buildOrphanReclaimer, settingsRowDeleterOf } from './retention/orphan-reclaimers.js'
 import { RetentionSweepRunner } from './retention/retention-sweep-runner.js'
-import { RetiredSettingsPurge } from './retention/retired-settings-purge.js'
+import {
+  announceRetiredFaceConfidenceBar,
+  announceRetiredSuggestionThreshold,
+  RetiredSettingsPurge,
+} from './retention/retired-settings-purge.js'
 import { TrackPruneRunner } from './retention/track-prune-runner.js'
 import { BindingCache } from './runtime/binding-cache.js'
 import {
@@ -3952,6 +3957,7 @@ export default class PipelineAnalyticsAddon
       timelapseRules: records.kind(ncRecordKinds['timelapse-rules']),
       texts: records.kind(ncRecordKinds.texts),
       readStored: (keys) => readRawKeys((key) => this.readStoredGlobalKey(key), keys),
+      announceRetired: (key, was) => this.announceRetiredFaceKey(key, was),
       listDeviceIds: () => settings.listDeviceStoreIds(),
       readDeviceField: async (deviceIds, field) => {
         const found = new Map<number, unknown>()
@@ -3962,6 +3968,20 @@ export default class PipelineAnalyticsAddon
       },
     }
     await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, ports))
+  }
+
+  /** The warn a retired cluster face key gets as the migration deletes it (D222, D662). */
+  private async announceRetiredFaceKey(key: string, was: unknown): Promise<void> {
+    if (key === STORED_MIN_FACE_CONFIDENCE_KEY) {
+      announceRetiredFaceConfidenceBar(this.ctx.logger, { scope: 'global', was })
+      return
+    }
+    const global = resolveFaceSettings(await this.resolveGlobalStore())
+    announceRetiredSuggestionThreshold(this.ctx.logger, {
+      scope: 'global',
+      was,
+      threshold: global.similarityThreshold,
+    })
   }
 
   /** `declare-collections.ts` — declareCollections. */
@@ -9829,8 +9849,6 @@ export default class PipelineAnalyticsAddon
         ctxIfReady: () => this.ctxIfReady,
         readDeviceBlob: (deviceId) => this.readDeviceBlob(deviceId),
         rawDeviceBlobMirror: this.rawDeviceBlobMirror,
-        resolveGlobalStore: () => this.resolveGlobalStore(),
-        updateGlobalSettings: (patch) => this.updateGlobalSettings(patch),
         resolveDeviceFaceSettings: (deviceId) => this.resolveDeviceFaceSettings(deviceId),
       }),
       trackPrune: this.trackPrune,

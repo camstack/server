@@ -91,6 +91,8 @@ import type {
   SetCameraSensorsInput,
   Unsubscribe,
   DurableState,
+  ScopedSettings,
+  ScopedSettingsScope,
 } from '@camstack/types'
 import {
   assignNodeColorId,
@@ -118,10 +120,12 @@ import {
   pipelineOrchestratorCapability,
   resolveEffectiveShares,
   SHARE_SOURCE_SETTING_KEY,
+  ShareSourceSchema,
   viewerUiCapability,
   zoneRulesCapability,
   zonesCapability,
 } from '@camstack/types'
+import { z } from 'zod'
 import { readRawKeys } from './migrations/drop-keys.js'
 import {
   ADDON_MIGRATIONS,
@@ -323,6 +327,9 @@ interface InferenceDeviceProbe {
   readonly reachable: boolean
 }
 
+/** The cluster form is read and written key by key; the declared schema refuses any other key. */
+const CLUSTER_VALUES_SCHEMA = z.record(z.string(), z.unknown())
+
 export default class PipelineOrchestratorAddon
   extends BaseAddon
   implements IPipelineOrchestratorLocalProvider
@@ -469,7 +476,7 @@ export default class PipelineOrchestratorAddon
   /**
    * Device-details aggregator contributions (`getDeviceSettingsContribution`/
    * `getDeviceLiveContribution`/`applyDeviceSettingsPatch`/
-   * `updateGlobalSettings`/`writeDeviceOrchestratorSettings`/
+   * `afterClusterSettingsWritten`/`writeDeviceOrchestratorSettings`/
    * `splitPipelinePatch`/`applyPipelinePatch`) — see
    * `device-config-contributions.ts` (S11 Task 1 extraction, C13 remnant).
    * Owns nothing durable (reads through injected closures); constructed in
@@ -477,6 +484,8 @@ export default class PipelineOrchestratorAddon
    * exist. Stateless — no `dispose()`, just nulled at the end of `onShutdown`.
    */
   private deviceConfig: DeviceConfigContributions | null = null
+  /** True while the removed-model pin sweep runs, so its own cluster writes never re-enter it. */
+  private pinResetRunning = false
   /**
    * Read-only test-seam compat accessor — mirrors the pre-S9 `protected
    * remoteHealthAttempts` field so `remote-health.spec.ts`'s subclass
@@ -668,7 +677,6 @@ export default class PipelineOrchestratorAddon
       isIdleSessionCamera: (deviceId) => this.isIdleSessionCamera(deviceId),
       deviceSettingsSchema: () => this.deviceSettingsSchema(),
       resolveGlobalStore: () => this.resolveGlobalStore(),
-      baseUpdateGlobalSettings: (patch) => super.updateGlobalSettings(patch),
       watchCapability: (capNames, handlers) => this.watchCapability(capNames, handlers),
       state: this.state.bind(this),
       rebalance: (opts) => this.rebalance(opts),
@@ -3078,9 +3086,12 @@ export default class PipelineOrchestratorAddon
       const auto = this.effectiveShares().current()
       if (auto !== null) await this.setLoadBalancingShares(auto.weights)
     }
-    await this.updateGlobalSettings({
-      [SHARE_SOURCE_SETTING_KEY]: input.source,
-    })
+    // The share source is operational state kept in the cluster row (no form field declares
+    // it), so it is written as state under the same key; the follow-up re-reads the store.
+    await this.state(SHARE_SOURCE_SETTING_KEY, ShareSourceSchema, DEFAULT_SHARE_SOURCE).set(
+      input.source,
+    )
+    await this.afterClusterWrite([SHARE_SOURCE_SETTING_KEY])
     this.ctx.logger.info('load balancing: share source changed', {
       meta: { from: previous, to: input.source },
     })
@@ -3366,23 +3377,36 @@ export default class PipelineOrchestratorAddon
     })
   }
 
-  // ── New three-level settings API (Phase 3 pilot) ─────────────────────
+  // ── Cluster settings writes (D986) ───────────────────────────────────
   //
-  // Delegates to `DeviceConfigContributions` (S11 Task 1 extraction, C13
-  // remnant) — see `device-config-contributions.ts`. This override still
-  // shadows `BaseAddon.updateGlobalSettings` (so the cap surface keeps
-  // running the ingest-owner re-derive + re-dispatch + load-shed-clear
-  // side effects on every call); the controller internally re-invokes the
-  // base-class write via the injected `baseUpdateGlobalSettings` closure.
+  // Every write of a cluster key goes through `clusterSettings(...)` /
+  // `updateScopedSettings`, and `onScopedSettingsChanged` runs what must follow a cluster
+  // write: the ingest-owner re-derive + re-dispatch + load-shed clear
+  // (`DeviceConfigContributions.afterClusterSettingsWritten`) and the removed-model pin reset.
 
-  async updateGlobalSettings(patch: Record<string, unknown>): Promise<void> {
-    await this.deviceConfig!.updateGlobalSettings(patch)
-    // A cluster row written with a deleted model is reset at once (D725). The
-    // sweep's own patch writes `null`, so it never re-enters here with a value.
-    const writesClusterRow = CLUSTER_MODEL_SCOPED_STEPS.some(
-      (step) => typeof patch[clusterModelSettingKey(step.stepId)] === 'string',
+  /** The cluster form's stored values, written under their bare keys. */
+  private clusterStore(): ScopedSettings<Record<string, unknown>> {
+    return this.clusterSettings(PIPELINE_ORCHESTRATOR_ID, CLUSTER_VALUES_SCHEMA)
+  }
+
+  protected override async onScopedSettingsChanged(
+    scope: ScopedSettingsScope,
+    cap: string,
+    keys: readonly string[],
+  ): Promise<void> {
+    if (scope !== 'cluster' || cap !== PIPELINE_ORCHESTRATOR_ID) return
+    await this.afterClusterWrite(keys)
+  }
+
+  private async afterClusterWrite(keys: readonly string[]): Promise<void> {
+    await this.deviceConfig!.afterClusterSettingsWritten()
+    // A cluster row written with a deleted model is reset at once (D725). The sweep's own
+    // writes land here too, so a sweep in flight is never re-entered.
+    const writesClusterRow = CLUSTER_MODEL_SCOPED_STEPS.some((step) =>
+      keys.includes(clusterModelSettingKey(step.stepId)),
     )
-    if (writesClusterRow) await this.resetRemovedModelPins('cluster-row-write')
+    if (writesClusterRow && !this.pinResetRunning)
+      await this.resetRemovedModelPins('cluster-row-write')
   }
 
   /**
@@ -3412,6 +3436,17 @@ export default class PipelineOrchestratorAddon
   }
 
   async resetRemovedModelPins(trigger: PinResetTrigger): Promise<readonly ResetModelPin[]> {
+    this.pinResetRunning = true
+    try {
+      return await this.runRemovedModelPinReset(trigger)
+    } finally {
+      this.pinResetRunning = false
+    }
+  }
+
+  private async runRemovedModelPinReset(
+    trigger: PinResetTrigger,
+  ): Promise<readonly ResetModelPin[]> {
     return resetRemovedModelPins(
       {
         listCustomModels: async () => {
@@ -3421,7 +3456,7 @@ export default class PipelineOrchestratorAddon
         },
         resetStoredPins: (isCustom) => this.settingsStore!.resetRemovedModelPins(isCustom),
         readStoredGlobalKey: (key) => this.readStoredGlobalKey(key),
-        updateGlobalSettings: (patch) => this.deviceConfig!.updateGlobalSettings(patch),
+        patchClusterSettings: (patch) => this.clusterStore().patch(patch),
         redispatchNode: (nodeId) => this.placement!.redispatchCamerasOnAgent(nodeId),
         logger: this.ctx.logger,
       },

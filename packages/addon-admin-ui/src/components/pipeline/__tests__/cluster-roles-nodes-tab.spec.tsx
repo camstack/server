@@ -98,10 +98,13 @@ describe('Cluster → Roles & nodes', () => {
     expect(within(select).getByRole('option', { name: 'macmini' })).toBeInTheDocument()
     expect(within(select).queryByRole('option', { name: /localdomain/ })).toBeNull()
     fireEvent.change(select, { target: { value: 'MacMiniAgent.localdomain' } })
-    expect(updateGlobal).toHaveBeenCalledWith({
+    expect(updateScoped).toHaveBeenCalledWith({
       addonId: 'pipeline-orchestrator',
+      cap: 'pipeline-orchestrator',
+      scope: 'cluster',
       patch: { audioNode: 'MacMiniAgent.localdomain' },
     })
+    expect(updateGlobal).not.toHaveBeenCalled()
   })
 
   it('the recording and post-processing roles read the cluster form of their own capability', () => {

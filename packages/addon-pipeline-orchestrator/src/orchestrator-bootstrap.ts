@@ -216,8 +216,6 @@ export interface OrchestratorBootstrapDeps {
   readonly deviceSettingsSchema: () => ConfigUISchema
   /** `this.resolveGlobalStore()` — the `BaseAddon` protected store reader. */
   readonly resolveGlobalStore: () => Promise<Record<string, unknown>>
-  /** `super.updateGlobalSettings(patch)` — only spellable inside the class itself. */
-  readonly baseUpdateGlobalSettings: (patch: Record<string, unknown>) => Promise<void>
   /** `this.watchCapability(...)` — the `BaseAddon` protected capability-down watcher. */
   readonly watchCapability: (
     capNames: string | readonly string[],
@@ -734,7 +732,6 @@ export async function buildOrchestratorControllers(
     deviceHasActivitySignalCap: (deviceId) => deps.deviceHasActivitySignalCap(deviceId),
     deviceHasNativeObjectDetectionCap: (deviceId) =>
       deps.deviceHasNativeObjectDetectionCap(deviceId),
-    baseUpdateGlobalSettings: (patch) => deps.baseUpdateGlobalSettings(patch),
     resolveGlobalStore: () => deps.resolveGlobalStore(),
     setGlobalSettings: (settings) => {
       globalSettings = settings

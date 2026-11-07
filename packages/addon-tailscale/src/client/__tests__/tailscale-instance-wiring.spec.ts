@@ -141,7 +141,7 @@ describe('TailscaleClientAddon: the tailnet instance carries the key', () => {
     addons.push(first.addon)
     await settle()
     cliCalls.up.length = 0
-    await first.addon.updateGlobalSettingsAsOperator({ authKey: NEW })
+    await first.addon.updateScopedSettings('node', 'mesh-network', { authKey: NEW })
     expect((await w.handle.getResolved(TAILNET_RECORD_ID))?.data.authKey).toBe(NEW)
     expect(JSON.stringify(w.writes)).not.toContain(NEW)
     cliCalls.up.length = 0
@@ -157,7 +157,10 @@ describe('TailscaleClientAddon: the tailnet instance carries the key', () => {
     const form = await first.addon.getScopedSettingsSchema('node', 'mesh-network')
     expect(JSON.stringify(form)).not.toContain(OLD)
     expect(JSON.stringify(form)).toContain('camstack-hub')
-    await first.addon.updateGlobalSettingsAsOperator({ authKey: '', hostname: 'renamed' })
+    await first.addon.updateScopedSettings('node', 'mesh-network', {
+      authKey: '',
+      hostname: 'renamed',
+    })
     expect((await w.handle.getResolved(TAILNET_RECORD_ID))?.data).toMatchObject({
       authKey: OLD,
       hostname: 'renamed',

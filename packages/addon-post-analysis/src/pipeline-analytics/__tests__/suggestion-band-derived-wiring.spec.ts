@@ -10,8 +10,9 @@
  * hand to re-open the band) and asserts three operator-observable things:
  *
  *   1. the stored 0.33 decides NOTHING — the band in force is 0.36 = 0.8×0.45;
- *   2. the retention pass ANNOUNCES it and removes it from the store, global
- *      and per-device, so no future reader can resurrect it;
+ *   2. the retention pass ANNOUNCES it and removes it from every camera's store,
+ *      so no future reader can resurrect it (the cluster row is a ledger
+ *      migration: `migrations/__tests__/retired-face-keys.sqlite.spec.ts`);
  *   3. the announcement happens once.
  */
 
@@ -199,27 +200,6 @@ describe('D222 — the suggestion band is derived, and the stored value is gone'
     })
   })
 
-  it('the retention pass ANNOUNCES the retired value and removes it from the GLOBAL store', async () => {
-    booted = await boot({ similarityThreshold: 0.45, suggestionMinCosine: 0.33 })
-    booted.logger.warnCalls.length = 0
-    await runRetentionPass(booted.addon)
-
-    const line = booted.logger.warnCalls.find((c) =>
-      c.message.includes('face suggestion threshold RETIRED'),
-    )
-    expect(line).toBeDefined()
-    // Both numbers, or the operator cannot tell what changed.
-    expect(line?.extras?.meta?.['wasSetTo']).toBe(0.33)
-    expect(line?.extras?.meta?.['nowInForce']).toBe(0.36)
-    expect(line?.extras?.meta?.['scope']).toBe('global')
-
-    // Gone from the blob — not merely undefined, ABSENT (the store round-trips
-    // through JSON, so a key with no value is a key that is not there).
-    expect('suggestionMinCosine' in booted.addonStore).toBe(false)
-    // The knob that DOES decide is untouched.
-    expect(booted.addonStore['similarityThreshold']).toBe(0.45)
-  })
-
   it('removes a PER-DEVICE override too, and leaves every other key alone', async () => {
     booted = await boot(
       { similarityThreshold: 0.45 },
@@ -239,20 +219,6 @@ describe('D222 — the suggestion band is derived, and the stored value is gone'
     expect(line?.extras?.tags?.deviceId).toBe(DEVICE_ID)
     // The DEVICE's own threshold governs its band, not the global one.
     expect(line?.extras?.meta?.['nowInForce']).toBe(0.56)
-  })
-
-  it('says it ONCE — a second pass repeats neither the warning nor the write', async () => {
-    booted = await boot({ similarityThreshold: 0.45, suggestionMinCosine: 0.33 })
-    await runRetentionPass(booted.addon)
-    booted.logger.warnCalls.length = 0
-    await runRetentionPass(booted.addon)
-    expect(
-      booted.logger.warnCalls.filter((c) =>
-        c.message.includes('face suggestion threshold RETIRED'),
-      ),
-    ).toHaveLength(0)
-    expect('suggestionMinCosine' in booted.addonStore).toBe(false)
-    expect(booted.addonStore['similarityThreshold']).toBe(0.45)
   })
 
   it('a store that never carried the key is untouched', async () => {
@@ -284,22 +250,6 @@ describe('D662 — the stored face-confidence bar is announced and removed', () 
 
   const retiredLines = (b: Booted): readonly WarnCall[] =>
     b.logger.warnCalls.filter((c) => c.message.includes('face confidence bar RETIRED'))
-
-  it('removes it from the GLOBAL store, says what it was, once', async () => {
-    booted = await boot({ similarityThreshold: 0.45, minFaceConfidence: 0.85 })
-    booted.logger.warnCalls.length = 0
-    await runRetentionPass(booted.addon)
-    const [line, ...rest] = retiredLines(booted)
-    expect(rest).toHaveLength(0)
-    expect(line?.extras?.meta?.['wasSetTo']).toBe(0.85)
-    expect(line?.extras?.meta?.['scope']).toBe('global')
-    expect('minFaceConfidence' in booted.addonStore).toBe(false)
-    expect(booted.addonStore['similarityThreshold']).toBe(0.45)
-
-    booted.logger.warnCalls.length = 0
-    await runRetentionPass(booted.addon)
-    expect(retiredLines(booted)).toHaveLength(0)
-  })
 
   it('removes a PER-DEVICE override, tagged with the camera, and nothing else', async () => {
     booted = await boot(

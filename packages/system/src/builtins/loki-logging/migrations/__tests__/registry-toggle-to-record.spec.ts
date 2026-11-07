@@ -51,6 +51,7 @@ async function world(registry: RegistryState, withRecord = true, readFails = fal
   const ports: LokiCataloguePorts = {
     readStored: unused,
     readRawStored: unused,
+    info: unused,
     ensureIntegration: unused,
     putRecord: unused,
     findIntegration: unused,

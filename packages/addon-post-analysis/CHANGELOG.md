@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The face matching form's derived suggestion floor is also served through the scoped settings overlay; the readout is unchanged.
+- Pipeline analytics retires its stale face-threshold keys through a one-time ledger migration.
 
 ## [1.2.677] - 2026-11-07
 

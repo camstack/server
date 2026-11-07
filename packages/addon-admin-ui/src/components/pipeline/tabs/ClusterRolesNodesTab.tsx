@@ -17,9 +17,7 @@ import { Crown, Loader2, Server } from 'lucide-react'
 import {
   SectionCard,
   TEXT_HINT,
-  useAddonSettingsGetGlobalSettings,
   useAddonSettingsGetScopedSettings,
-  useAddonSettingsUpdateGlobalSettings,
   useAddonSettingsUpdateScopedSettings,
   useClusterNodes,
   usePipelineOrchestratorListAgentSettings,
@@ -30,6 +28,7 @@ import {
   ANALYTICS_ADDON_ID,
   ANALYTICS_CAP,
   ORCHESTRATOR_ADDON_ID,
+  ORCHESTRATOR_CAP,
   POST_PROCESSING_NODE_KEY,
   RECORDER_ADDON_ID,
   RECORDER_CAP,
@@ -51,7 +50,11 @@ export function ClusterRolesNodesTab() {
   const queryClient = useQueryClient()
   const { nodes } = useClusterNodes()
   const settingsQuery = usePipelineOrchestratorListAgentSettings(undefined)
-  const globalSettingsQuery = useAddonSettingsGetGlobalSettings({ addonId: ORCHESTRATOR_ADDON_ID })
+  const globalSettingsQuery = useAddonSettingsGetScopedSettings({
+    addonId: ORCHESTRATOR_ADDON_ID,
+    cap: ORCHESTRATOR_CAP,
+    scope: 'cluster',
+  })
   // Recorder addon's canonical recording-node setting — the "Recording" picker's
   // read/write target (single source of truth), separate from orchestrator roles.
   const recorderSettingsQuery = useAddonSettingsGetScopedSettings({
@@ -67,9 +70,6 @@ export function ClusterRolesNodesTab() {
 
   const invalidate = (): void => invalidatePlacementQueries(queryClient)
   const setCapabilities = usePipelineOrchestratorSetAgentCapabilities({ onSuccess: invalidate })
-  // The orchestrator roles keep `updateGlobalSettings`: its override runs the ingest-owner
-  // re-derive and re-dispatch, which `updateScopedSettings` does not reach until the hook lands.
-  const updateGlobal = useAddonSettingsUpdateGlobalSettings({ onSuccess: invalidate })
   const updateScoped = useAddonSettingsUpdateScopedSettings({ onSuccess: invalidate })
 
   const settingsByNode = useMemo(() => {
@@ -151,7 +151,13 @@ export function ClusterRolesNodesTab() {
       })
       return
     }
-    updateGlobal.mutate({ addonId: ORCHESTRATOR_ADDON_ID, patch: { [role]: nodeId } })
+    // The orchestrator's cluster-write hook runs the ingest-owner re-derive and re-dispatch.
+    updateScoped.mutate({
+      addonId: ORCHESTRATOR_ADDON_ID,
+      cap: ORCHESTRATOR_CAP,
+      scope: 'cluster',
+      patch: { [role]: nodeId },
+    })
   }
 
   const actions: PlacementActions = {
@@ -183,7 +189,7 @@ export function ClusterRolesNodesTab() {
         <RoleControls
           roleValues={roleValues}
           options={nodeOptions}
-          pending={updateGlobal.isPending || updateScoped.isPending}
+          pending={updateScoped.isPending}
           onRoleChange={handleRoleChange}
         />
       </SectionCard>

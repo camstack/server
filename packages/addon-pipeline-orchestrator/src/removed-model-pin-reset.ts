@@ -177,7 +177,7 @@ export interface RemovedModelPinResetDeps {
   /** Three-way read of one orchestrator global key. */
   readonly readStoredGlobalKey: (key: string) => Promise<StoredKeyRead>
   /** The orchestrator's own settings write (the path an operator's change takes). */
-  readonly updateGlobalSettings: (patch: Record<string, unknown>) => Promise<void>
+  readonly patchClusterSettings: (patch: Record<string, unknown>) => Promise<void>
   /** Hot-reload the cameras placed on a node whose base pin was cleared. */
   readonly redispatchNode: (nodeId: string) => Promise<void>
   readonly logger: IScopedLogger
@@ -237,7 +237,7 @@ async function resetClusterRows(
     if (read.kind === 'present') stored.set(key, read.value)
   }
   const { patch, cleared } = clusterRowsToReset((key) => stored.get(key), isCustom)
-  if (cleared.length > 0) await deps.updateGlobalSettings({ ...patch })
+  if (cleared.length > 0) await deps.patchClusterSettings({ ...patch })
   return cleared
 }
 

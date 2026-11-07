@@ -41,7 +41,7 @@ export interface CustomAddress {
   readonly label: string
 }
 
-const CustomAddressListSchema = z.array(z.object({ baseUrl: z.string(), label: z.string() }))
+export const CustomAddressListSchema = z.array(z.object({ baseUrl: z.string(), label: z.string() }))
 
 /** The address-book keys of the addon's stored settings. */
 export interface StoredAddressSettings {
