@@ -36,8 +36,7 @@
 import {
   addonWidgetsSourceCapability,
   BaseAddon,
-  type ConfigInfoField,
-  type ConfigUISchemaWithValues,
+  type ConfigUISchema,
   type IAddonWidgetsSourceProvider,
   type ILoginMethodProvider,
   type IUserPasskeysProvider,
@@ -56,15 +55,10 @@ import type {
   PublicKeyCredentialCreationOptionsJSON,
   PublicKeyCredentialRequestOptionsJSON,
 } from '@simplewebauthn/types'
-import { z } from 'zod'
 import { hubBrowserOrigin } from '../hub-browser-origin.js'
 import { authWebauthnRecordKinds } from './record-kinds.js'
 import { PasskeyStore, type StoredPasskey } from './passkey-store.js'
 import { authWebauthnWidgets, buildAuthWebauthnLoginMethods } from './widget-catalog.js'
-
-/** Minimal shape of a `network-access` endpoint entry we consume. */
-const EndpointSchema = z.object({ hostname: z.string(), url: z.string() })
-const EndpointsSchema = z.array(EndpointSchema)
 
 interface WebauthnConfig {
   /** Relying Party id — must match the hub's domain. Empty = derive from the hub address on the Network page. */
@@ -172,7 +166,16 @@ export class AuthWebauthnAddon extends BaseAddon<WebauthnConfig> {
     ]
   }
 
-  protected globalSettingsSchema() {
+  /** The relying-party identity is one value for the whole cluster (D986): cluster rows `<addonId>.<field>`. */
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['login-method']
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    return cap === 'login-method' ? this.relyingPartySchema() : null
+  }
+
+  private relyingPartySchema(): ConfigUISchema {
     return this.schema({
       sections: [
         {
@@ -182,6 +185,14 @@ export class AuthWebauthnAddon extends BaseAddon<WebauthnConfig> {
             "Configure the relying-party (RP) identity baked into every enrolled passkey. RP ID MUST match the hub's public domain (or a parent of it) — changing it invalidates existing passkeys.",
           columns: 1,
           fields: [
+            {
+              type: 'info',
+              key: 'rpIdHint',
+              label: 'Choosing the RP ID',
+              content:
+                'Pick one canonical hostname for the hub: the public endpoints are listed on the Network page. Changing the RP ID invalidates every already-enrolled passkey.',
+              variant: 'info',
+            },
             this.field({
               type: 'text',
               key: 'rpName',
@@ -216,60 +227,6 @@ export class AuthWebauthnAddon extends BaseAddon<WebauthnConfig> {
         },
       ],
     })
-  }
-
-  /**
-   * Surface the cluster's registered public endpoints as an RP ID /
-   * origin suggestion. Fed by the `network-access` CAPABILITY (via
-   * `ctx.api`) — cap-driven, never a hardcoded hostname or a specific
-   * ingress addon. Injected as a read-only info banner atop the settings
-   * form so the operator can pick the canonical login hostname. Degrades
-   * to the bare schema when no ingress provider is installed.
-   */
-  override async getGlobalSettings(
-    overlay?: Record<string, unknown>,
-    cap?: string,
-    nodeId?: string,
-  ): Promise<ConfigUISchemaWithValues | null> {
-    const base = await super.getGlobalSettings(overlay, cap, nodeId)
-    if (!base) return base
-    const hint = await this.buildEndpointHintField()
-    if (!hint) return base
-    return {
-      ...base,
-      sections: base.sections.map((s) =>
-        s.id === 'webauthn' ? { ...s, fields: [hint, ...s.fields] } : s,
-      ),
-    }
-  }
-
-  private async buildEndpointHintField(): Promise<ConfigInfoField | null> {
-    try {
-      const api = this.ctx.api
-      if (!api) return null
-      const raw = await api.networkAccess.listEndpoints.query()
-      const parsed = EndpointsSchema.safeParse(raw)
-      if (!parsed.success || parsed.data.length === 0) return null
-      const hosts = [...new Set(parsed.data.map((e) => e.hostname))].filter((h) => h.length > 0)
-      const origins = [...new Set(parsed.data.map((e) => e.url.replace(/\/+$/, '')))].filter(
-        (u) => u.length > 0,
-      )
-      if (hosts.length === 0) return null
-      const content =
-        `Detected public endpoints (from the network-access capability). ` +
-        `Set RP ID to one canonical hostname — ${hosts.join(', ')} — and Origin to its full ` +
-        `origin${origins.length > 0 ? ` (e.g. ${origins[0]})` : ''}. ` +
-        `Changing RP ID invalidates every already-enrolled passkey.`
-      return {
-        type: 'info',
-        key: 'detectedEndpoints',
-        label: 'Suggested RP ID / origin',
-        content,
-        variant: 'info',
-      }
-    } catch {
-      return null
-    }
   }
 
   // ── Helpers ──────────────────────────────────────────────────────

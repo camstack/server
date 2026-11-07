@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Legacy integrations and storage_locations tables are dropped once their records hold the data
 - Storage locations are now integration instances: the location form picks a provider, its credentials are kept per location in the keychain, and an existing location's credentials are moved over on start.
 - Storage locations are managed only as instances: the storage upsert, delete, test and provider-list calls are gone; the instance form no longer carries the state, which the Storage page owns
+- Log destination settings are per-node (existing values copied to every node on first boot); core-blocks settings are cluster scope
 
 ### Removed
 

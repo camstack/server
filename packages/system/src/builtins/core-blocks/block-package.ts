@@ -107,8 +107,14 @@ export default class CoreBlockAddon extends BaseAddon {
     this.disposer = null
   }
 
-  globalSettingsSchema() {
-    return BLOCK_SETTINGS_SCHEMA
+  // A block's values are cluster settings: rows \`core-block-<id>.<field>\`. It provides no capability
+  // of its own, so its form is declared under the one its manager provides (D986).
+  scopedSettingsCapabilities() {
+    return ['core-blocks']
+  }
+
+  async clusterSettingsSchema(cap) {
+    return cap === 'core-blocks' ? BLOCK_SETTINGS_SCHEMA : null
   }
 
   async onInitialize() {

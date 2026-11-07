@@ -1,6 +1,8 @@
 import path from 'node:path'
 import type { ConfigUISchema, ProviderRegistration } from '@camstack/types'
-import { BaseAddon, logDestinationCapability } from '@camstack/types'
+import { BaseAddon, defineAddonMigrations, logDestinationCapability } from '@camstack/types'
+import { ADDON_MIGRATIONS, WINSTON_LOGGING_ID } from './migrations/index.js'
+import { clusterNodeIds, readRawKeys } from './migrations/node-fields.js'
 import { WinstonDestination } from './winston-destination.js'
 
 interface WinstonConfig {
@@ -10,7 +12,8 @@ interface WinstonConfig {
 
 /**
  * Winston logging addon — rotated log files + console output.
- * Settings appear under Cluster → NodeDetail → Settings.
+ * Its settings are node settings (D986): each node writes its own files, so the level and the
+ * retention are rows `<key>@<nodeId>`, drawn under Cluster → NodeDetail → Settings.
  */
 export class WinstonLoggingAddon extends BaseAddon<WinstonConfig> {
   private destination: WinstonDestination | null = null
@@ -19,7 +22,24 @@ export class WinstonLoggingAddon extends BaseAddon<WinstonConfig> {
     super({ level: 'info', retentionDays: 30 })
   }
 
+  /**
+   * Copy the bare level and retention to a node row of every node (D986, D987), then re-resolve
+   * the config so this boot opens its files with the node values.
+   */
+  private async migrateNodeFields(): Promise<void> {
+    const report = await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        readStored: (keys) =>
+          readRawKeys((key) => this.readStoredGlobalKey(key), WINSTON_LOGGING_ID, keys),
+        nodeIds: () =>
+          clusterNodeIds(() => this.ctx.api.nodes.directory.query(), this.ctx.kernel.localNodeId),
+      }),
+    )
+    if (report.applied.length > 0) await this.resolveConfig()
+  }
+
   protected async onInitialize(): Promise<ProviderRegistration[]> {
+    await this.migrateNodeFields()
     // Node-local logs dir — anchored at this node's data root (never the
     // hub-singleton `storage` cap, which would write to the hub's path).
     const logsDir = path.join(this.ctx.nodeDataDir, 'logs')
@@ -42,7 +62,15 @@ export class WinstonLoggingAddon extends BaseAddon<WinstonConfig> {
     return this.destination
   }
 
-  protected globalSettingsSchema(): ConfigUISchema {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['log-destination']
+  }
+
+  protected override async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    return cap === 'log-destination' ? this.nodeSchema() : null
+  }
+
+  private nodeSchema(): ConfigUISchema {
     return this.schema({
       sections: [
         {
@@ -56,6 +84,7 @@ export class WinstonLoggingAddon extends BaseAddon<WinstonConfig> {
             this.field({
               type: 'select',
               key: 'level',
+              perNode: true,
               label: 'Log Level',
               labelKey: 'server:globalSettings.s_winston-logging.level.label',
               default: 'info',
@@ -85,6 +114,7 @@ export class WinstonLoggingAddon extends BaseAddon<WinstonConfig> {
             this.field({
               type: 'number',
               key: 'retentionDays',
+              perNode: true,
               label: 'Retention (days)',
               labelKey: 'server:globalSettings.s_winston-logging.retentionDays.label',
               description: 'Number of days to keep rotated log files before deletion',

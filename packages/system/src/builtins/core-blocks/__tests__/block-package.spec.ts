@@ -118,7 +118,13 @@ describe('the settings form in the wrapper (D880)', () => {
   it('embeds the block schema verbatim, so the SDK derives its keychain secret tree from it', () => {
     const wrapper = renderBlockWrapper('b1', 'A', schema)
     expect(embedded(wrapper)).toEqual(schema)
-    expect(wrapper).toContain('globalSettingsSchema() {\n    return BLOCK_SETTINGS_SCHEMA')
+    // The form is the block's CLUSTER settings (its rows are `core-block-<id>.<field>`, D870), declared
+    // on the scoped hook and named up front; no addon-level hook is emitted (D986).
+    expect(wrapper).toContain(
+      "async clusterSettingsSchema(cap) {\n    return cap === 'core-blocks' ? BLOCK_SETTINGS_SCHEMA : null",
+    )
+    expect(wrapper).toContain("scopedSettingsCapabilities() {\n    return ['core-blocks']")
+    expect(wrapper).not.toContain('globalSettingsSchema')
   })
 
   it('embeds null for a block that declares none', () => {
