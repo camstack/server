@@ -261,10 +261,7 @@ export const HeroBackgroundSchema = z.discriminatedUnion('kind', [
 ])
 export type HeroBackground = z.infer<typeof HeroBackgroundSchema>
 
-export const HeroProvenanceSchema = z.object({
-  partId: z.string(),
-  cap: z.string(),
-})
+export const HeroProvenanceSchema = z.object({ partId: z.string(), cap: z.string() })
 export type HeroProvenance = z.infer<typeof HeroProvenanceSchema>
 
 export const HeroModelSchema = z.object({

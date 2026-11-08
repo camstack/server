@@ -48,7 +48,9 @@ export const heroLayoutCapability = {
     }),
     /**
      * The list rows of many devices in ONE call, projected from the same model as
-     * the hero. One entry per requested id, in order; `null` = unknown device.
+     * the hero. One entry per requested id, in order. `null` has two meanings, both
+     * "no row": the registry does not know the device, or reading it failed (the
+     * provider logs that, tagged). It is never an empty row.
      */
     getRowModels: method(rowModelsInput, z.array(HeroRowModelSchema.nullable()), {
       auth: 'protected',

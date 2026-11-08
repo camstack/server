@@ -7,6 +7,15 @@
  *   3. the type's primary inline control;
  *   4. a trailing fact (power, else battery, else consumables).
  *
+ * Selection rules, all taken from the model:
+ *   - ONE control is ever shown: the device's own power; else the FIRST control of
+ *     the FIRST row that has any (a later row's control is never promoted). When
+ *     the model lists that part in `gated`, the row has no inline control: the
+ *     projection never falls through to another control the caller could use.
+ *   - the status line is the head (what plays, else the state) plus at most
+ *     {@link ROW_STATUS_FACTS_MAX} facts, the trailing fact excluded;
+ *   - the trailing fact is the first of power, battery, consumables.
+ *
  * `projectDeviceRow` is pure and computes nothing: it selects from a
  * {@link HeroModel}. A row that needed a value the hero lacks would mean the
  * model is missing it, so the fix goes in the model.
@@ -38,6 +47,9 @@ export const HeroRowModelSchema = z.object({
   trailing: HeroFactSchema.nullable(),
 })
 export type HeroRowModel = z.infer<typeof HeroRowModelSchema>
+
+/** The most facts a row's status line carries after its head: the line never wraps. */
+export const ROW_STATUS_FACTS_MAX = 3
 
 /** The trailing fact, in order of preference. */
 const TRAILING_ORDER: readonly HeroFact['id'][] = ['power', 'battery', 'consumables']
@@ -74,7 +86,10 @@ function primaryOf(model: HeroModel): HeroControl | null {
 function statusLineOf(model: HeroModel, trailing: HeroFact | null): HeroText[] {
   const playing = model.rows.find((r) => r.id === 'now-playing')?.status ?? null
   const head = playing ?? model.title
-  const rest = model.facts.filter((f) => f !== trailing).map((f) => f.text)
+  const rest = model.facts
+    .filter((f) => f !== trailing)
+    .map((f) => f.text)
+    .slice(0, ROW_STATUS_FACTS_MAX)
   return [head, ...rest]
 }
 

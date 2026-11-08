@@ -4,7 +4,7 @@ import { DeviceFeature, DeviceRole, DeviceType } from '../../device-type.js'
 import { HERO_ROW_MODELS_MAX, heroLayoutCapability } from '../../../capabilities/hero-layout.cap.js'
 import { buildHeroModel, type HeroModelInput } from '../build-hero-model.js'
 import type { HeroModel } from '../hero-model.js'
-import { HeroRowModelSchema, projectDeviceRow } from '../hero-row.js'
+import { HeroRowModelSchema, projectDeviceRow, ROW_STATUS_FACTS_MAX } from '../hero-row.js'
 import {
   HERO_SCENE_BY_ROLE,
   HERO_SCENE_BY_TYPE,
@@ -72,16 +72,16 @@ describe('scene exhaustiveness', () => {
   })
 
   it('a role refines the type, an unknown type gets the terminal', () => {
-    expect(resolveHeroSceneId(DeviceRole.ContactSensor, DeviceType.Sensor)).toBe('contact-door')
-    expect(resolveHeroSceneId(null, DeviceType.Sensor)).toBe('temperature-sparkline')
-    expect(resolveHeroSceneId(null, 'from-the-future')).toBe('generic-terminal')
+    expect(resolveHeroSceneId(DeviceRole.ContactSensor, DeviceType.Sensor)).toBe('contact')
+    expect(resolveHeroSceneId(null, DeviceType.Sensor)).toBe('sensor-sparkline')
+    expect(resolveHeroSceneId(null, 'from-the-future')).toBe('generic')
   })
 })
 
 describe('the hero model names its scene, facts and tiles', () => {
   it('a media player says what it is doing and at which volume', () => {
     const m = build(DeviceType.MediaPlayer, ['media-player'], { 'media-player': MEDIA })
-    expect(HeroSceneSchema.parse(m.scene)).toEqual({ id: 'tv-eq', mode: 'playing', level: 0.4 })
+    expect(HeroSceneSchema.parse(m.scene)).toEqual({ id: 'tv', mode: 'playing', level: 0.4 })
     expect(m.sideTiles.right[0]?.value.en).toBe('40%')
   })
 
@@ -104,7 +104,7 @@ describe('the hero model names its scene, facts and tiles', () => {
 describe('projectDeviceRow', () => {
   it('climate: the scene is the airflow, no control without a bound cap', () => {
     const row = projectDeviceRow(build(DeviceType.Climate, []))
-    expect(row.scene.id).toBe('ac-airflow')
+    expect(row.scene.id).toBe('ac')
     expect(row.primary).toBeNull()
     expect(row.trailing).toBeNull()
     expect(row.statusLine.map((t) => t.en)).toEqual(['Unknown'])
@@ -117,7 +117,7 @@ describe('projectDeviceRow', () => {
         'power-meter': METER,
       }),
     )
-    expect(row.scene.id).toBe('heater-rise')
+    expect(row.scene.id).toBe('heater')
     expect(row.primary).toMatchObject({ kind: 'toggle', id: 'own-power', on: true })
     expect(row.trailing).toMatchObject({ id: 'power', text: { en: '1500 W' } })
     expect(row.statusLine.map((t) => t.en)).toEqual(['On'])
@@ -135,7 +135,7 @@ describe('projectDeviceRow', () => {
         },
       }),
     )
-    expect(row.scene.id).toBe('drum')
+    expect(row.scene.id).toBe('washer')
     expect(row.state).toBe('running')
     expect(row.statusLine.map((t) => t.en)).toEqual(['Running', 'spin'])
   })
@@ -151,7 +151,7 @@ describe('projectDeviceRow', () => {
     )
     expect(row.statusLine[0]?.en).toBe('Song — Band')
     expect(row.primary?.kind).toBe('action')
-    expect(row.scene).toMatchObject({ id: 'tv-eq', mode: 'playing' })
+    expect(row.scene).toMatchObject({ id: 'tv', mode: 'playing' })
   })
 
   it('lock: its own scene, unknown stays unknown', () => {
@@ -162,12 +162,12 @@ describe('projectDeviceRow', () => {
 
   it('sensor: a flat battery trails in the danger tone', () => {
     const row = projectDeviceRow(build(DeviceType.Sensor, ['battery'], { battery: BATTERY_LOW }))
-    expect(row.scene.id).toBe('temperature-sparkline')
+    expect(row.scene.id).toBe('sensor-sparkline')
     expect(row.trailing).toMatchObject({ id: 'battery', tone: 'danger' })
   })
 
   it('cover: the slats scene, an open door reads open on a contact sensor', () => {
-    expect(projectDeviceRow(build(DeviceType.Cover, [])).scene.id).toBe('cover-slats')
+    expect(projectDeviceRow(build(DeviceType.Cover, [])).scene.id).toBe('cover')
     const door = projectDeviceRow(
       build(
         DeviceType.Sensor,
@@ -178,7 +178,7 @@ describe('projectDeviceRow', () => {
         },
       ),
     )
-    expect(door.scene).toMatchObject({ id: 'contact-door', mode: 'open' })
+    expect(door.scene).toMatchObject({ id: 'contact', mode: 'open' })
   })
 
   it('pet feeder: the auger, and a low consumable trails', () => {
@@ -199,7 +199,7 @@ describe('projectDeviceRow', () => {
         },
       }),
     )
-    expect(row.scene.id).toBe('feeder-auger')
+    expect(row.scene.id).toBe('pet-feeder')
     expect(row.trailing).toMatchObject({ id: 'consumables', tone: 'warning' })
   })
 
@@ -229,5 +229,44 @@ describe('getRowModels input', () => {
     const ids = (n: number): number[] => Array.from({ length: n }, (_, i) => i)
     expect(input.safeParse({ deviceIds: ids(HERO_ROW_MODELS_MAX) }).success).toBe(true)
     expect(input.safeParse({ deviceIds: ids(HERO_ROW_MODELS_MAX + 1) }).success).toBe(false)
+  })
+})
+
+describe('row selection rules', () => {
+  it('the status line is bounded and keeps the head first', () => {
+    const model = build(DeviceType.Heater, ['switch'], { switch: SWITCH_ON })
+    const fact = model.facts[0] ?? {
+      id: 'phase' as const,
+      icon: null,
+      text: { en: 'x', it: 'x' },
+      tone: 'muted' as const,
+    }
+    const many = { ...model, facts: Array.from({ length: 8 }, () => fact) }
+    const row = projectDeviceRow(many)
+    expect(row.statusLine).toHaveLength(1 + ROW_STATUS_FACTS_MAX)
+    expect(row.statusLine[0]).toBe(model.title)
+  })
+
+  it('a gated first-row control means no inline control, never the next row', () => {
+    const model = build(DeviceType.MediaPlayer, ['media-player'], { 'media-player': MEDIA })
+    const first = model.rows.find((r) => r.controls.length > 0)
+    expect(first).toBeDefined()
+    const gated = { ...model, gated: [first?.id ?? ''] }
+    expect(projectDeviceRow(gated).primary).toBeNull()
+  })
+
+  it('distinct pictures for the look-alike types', () => {
+    const ids = [
+      DeviceType.Climate,
+      DeviceType.Thermostat,
+      DeviceType.Fan,
+      DeviceType.Washer,
+      DeviceType.Dryer,
+      DeviceType.Vacuum,
+      DeviceType.LawnMower,
+      DeviceType.MediaPlayer,
+    ].map((t) => resolveHeroSceneId(null, t))
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(resolveHeroSceneId(DeviceRole.Chime, DeviceType.MediaPlayer)).toBe('speaker')
   })
 })

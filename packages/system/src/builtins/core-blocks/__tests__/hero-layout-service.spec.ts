@@ -128,4 +128,40 @@ describe('hero-layout getRowModels', () => {
     const [row] = await service({}).getRowModels({ deviceIds: [1], canActuate: false })
     expect(row?.primary).toBeNull()
   })
+
+  it('keeps the order across chunks of 16 and reads a repeated id once', async () => {
+    const device = vi.fn(async (id: number) => ({
+      type: DeviceType.Heater,
+      role: null,
+      name: `Dev ${id}`,
+      online: true,
+      features: [],
+    }))
+    const ids = [...Array.from({ length: 40 }, (_, i) => 100 + i), 105, 100]
+    const rows = await service({ device }).getRowModels({ deviceIds: ids })
+    expect(rows.map((r) => r?.deviceId)).toEqual(ids)
+    expect(device).toHaveBeenCalledTimes(40)
+  })
+
+  it('a device that throws is a null row with a tagged warning, the others still answer', async () => {
+    const logs: Logged[] = []
+    const device = async (id: number) => {
+      if (id === 2) throw new Error('registry down')
+      return { type: DeviceType.Heater, role: null, name: 'D', online: true, features: [] }
+    }
+    const rows = await service({ device }, logs).getRowModels({ deviceIds: [1, 2, 3] })
+    expect(rows.map((r) => r?.deviceId ?? null)).toEqual([1, null, 3])
+    expect(logs).toEqual([expect.objectContaining({ tags: { deviceId: 2 } })])
+    const caps = await service(
+      { caps: async () => Promise.reject(new Error('x')) },
+      logs,
+    ).getRowModels({
+      deviceIds: [5],
+    })
+    expect(caps).toEqual([null])
+  })
+
+  it('an empty list is an empty answer', async () => {
+    expect(await service({}).getRowModels({ deviceIds: [] })).toEqual([])
+  })
 })

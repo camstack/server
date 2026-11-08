@@ -10,6 +10,7 @@
  */
 import {
   buildHeroModel,
+  type HeroRowModel,
   projectDeviceRow,
   type IHeroLayoutProvider,
   type IScopedLogger,
@@ -74,10 +75,7 @@ export class HeroLayoutService implements IHeroLayoutProvider {
           } catch (error) {
             logger.warn('hero model: a cap slice could not be read; drawn as not answered', {
               tags: { deviceId },
-              meta: {
-                cap,
-                error: error instanceof Error ? error.message : String(error),
-              },
+              meta: { cap, error: error instanceof Error ? error.message : String(error) },
             })
           }
         }),
@@ -102,21 +100,39 @@ export class HeroLayoutService implements IHeroLayoutProvider {
     })
   }
 
+  /**
+   * One row per requested id, in order. `null` means "no row": either the registry
+   * does not know the device, or reading it failed (logged, tagged). Both read as
+   * "unknown", never as an empty row. A repeated id is read once.
+   */
   readonly getRowModels: IHeroLayoutProvider['getRowModels'] = async ({
     deviceIds,
     canActuate,
   }) => {
-    const rows: Awaited<ReturnType<IHeroLayoutProvider['getRowModels']>> = deviceIds.map(() => null)
-    for (let from = 0; from < deviceIds.length; from += ROW_MODELS_CONCURRENCY) {
-      const chunk = deviceIds.slice(from, from + ROW_MODELS_CONCURRENCY)
-      const models = await Promise.all(
-        chunk.map((deviceId) => this.getHeroModel({ deviceId, canActuate })),
-      )
-      models.forEach((model, i) => {
-        rows[from + i] = model === null ? null : projectDeviceRow(model)
-      })
+    const unique = [...new Set(deviceIds)]
+    const byId = new Map<number, HeroRowModel | null>()
+    for (let from = 0; from < unique.length; from += ROW_MODELS_CONCURRENCY) {
+      const chunk = unique.slice(from, from + ROW_MODELS_CONCURRENCY)
+      const rows = await Promise.all(chunk.map((id) => this.rowOf(id, canActuate)))
+      chunk.forEach((id, i) => byId.set(id, rows[i] ?? null))
     }
-    return rows
+    return deviceIds.map((id) => byId.get(id) ?? null)
+  }
+
+  private async rowOf(
+    deviceId: number,
+    canActuate: boolean | undefined,
+  ): Promise<HeroRowModel | null> {
+    try {
+      const model = await this.getHeroModel({ deviceId, canActuate })
+      return model === null ? null : projectDeviceRow(model)
+    } catch (error) {
+      this.deps.logger.warn('hero row: the device could not be read; its row is absent', {
+        tags: { deviceId },
+        meta: { error: error instanceof Error ? error.message : String(error) },
+      })
+      return null
+    }
   }
 
   private async remoteCommands(deviceId: number): Promise<number | null> {
@@ -127,9 +143,7 @@ export class HeroLayoutService implements IHeroLayoutProvider {
         'hero model: the remote could not be asked; its button shows without a count',
         {
           tags: { deviceId },
-          meta: {
-            error: error instanceof Error ? error.message : String(error),
-          },
+          meta: { error: error instanceof Error ? error.message : String(error) },
         },
       )
       return null
