@@ -3136,6 +3136,9 @@
       "alerts": "A critical or error alert opening — a runner that failed or was refused, a recording location out of space, an expired sign-in — and (optionally) a critical alert resolving. One notification per alert episode.",
       "rule-health": "A notification rule that cannot work — it no longer loads, or still names a device or destination that was deleted — and (optionally) its repair.",
       "alarm": "The alarm panel refusing to arm, arming, armed, counting down to a siren, going off, re-arming, excluding an open sensor, or being disarmed."
+    },
+    "schedule": {
+      "hint": "Only fire inside these weekly windows. Leave it empty to fire at any time."
     }
   },
   "ruleScope": {

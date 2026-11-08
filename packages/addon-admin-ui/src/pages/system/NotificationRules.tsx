@@ -1901,6 +1901,16 @@ function RuleFormDialog({
               testId="rule-template-preview"
             />
           </div>
+
+          {systemRule && (
+            <SystemEventDeliveryField
+              value={form.systemEventDelivery}
+              family={systemFamily}
+              kinds={form.conditions.systemEvent?.kinds ?? []}
+              onChange={(next) => patch({ systemEventDelivery: next })}
+              draft={() => buildRuleInput(form, preserve, catalog)}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="conditions" className="space-y-4">
@@ -1974,16 +1984,6 @@ function RuleFormDialog({
               />
             )}
           </div>
-
-          {systemRule && (
-            <SystemEventDeliveryField
-              value={form.systemEventDelivery}
-              family={systemFamily}
-              kinds={form.conditions.systemEvent?.kinds ?? []}
-              onChange={(next) => patch({ systemEventDelivery: next })}
-              draft={() => buildRuleInput(form, preserve, catalog)}
-            />
-          )}
 
           {/* FIRE IT NOW. Distinct from the dry-run below in the one way
                 that matters: this DELIVERS. It plans the event server-side from

@@ -3211,6 +3211,9 @@
       "alerts": "Un avviso critico o di errore che si apre — un runner fallito o rifiutato, un archivio di registrazione senza spazio, un accesso scaduto — e se vuoi un avviso critico che si chiude. Una notifica per episodio.",
       "rule-health": "Una regola di notifica che non può funzionare — non si carica più, o nomina ancora un dispositivo o una destinazione cancellati — e se vuoi la sua riparazione.",
       "alarm": "La centrale che rifiuta l’inserimento, che si sta inserendo, inserita, in conto alla rovescia verso la sirena, scattata, reinserita, con un sensore aperto escluso, o disinserita."
+    },
+    "schedule": {
+      "hint": "Invia solo in queste finestre settimanali. Lascia vuoto per inviare sempre."
     }
   },
   "ruleScope": {

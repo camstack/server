@@ -416,6 +416,12 @@ function conditionHint(descriptor: NcConditionDescriptor, t: TFunction): string 
   if (descriptor.id === 'scene') {
     return t('notificationRules.scene.hint', 'Only fire while a scene is matched or diverged.')
   }
+  if (descriptor.id === 'schedule') {
+    return t(
+      'notificationRules.schedule.hint',
+      'Only fire inside these weekly windows. Leave it empty to fire at any time.',
+    )
+  }
   return descriptor.description
 }
 

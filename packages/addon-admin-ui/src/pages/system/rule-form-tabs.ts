@@ -76,7 +76,7 @@ export const NC_RULE_TABS: readonly NcRuleTab[] = [
     get label() {
       return i18n.t('helpers.ruleFormTabs.tab_conditions')
     },
-    fields: ['conditions', 'classScope', 'schedule', 'systemEventDelivery'],
+    fields: ['conditions', 'classScope', 'schedule'],
   },
   {
     key: 'notification',
@@ -96,6 +96,7 @@ export const NC_RULE_TABS: readonly NcRuleTab[] = [
       'mediaWakeSleepingCamera',
       'templateTitle',
       'templateBody',
+      'systemEventDelivery',
     ],
   },
   {
