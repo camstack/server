@@ -7,11 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.529] - 2026-11-08
-
 ### Changed
 
-- Remote: Flipper .ir parsing and NEC, NECext and Samsung32 encoding for importing codes
 - Device heroes now complete for locks, alarm panels, fans, vacuums, mowers, pet feeders and fountains, groups, automations and scripts: look, status line and controls
 - Device heroes now read their own state for lights, covers, valves, humidifiers, alarm and motion sensors, doorbells, weather, updates and buttons instead of a generic power state
 - Climate, thermostat, water-heater, heating-valve and sensor devices now carry their mode, setpoint, measured values, readings and controls in the device hero instead of showing an unknown state
@@ -19,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Capability definitions can name restoredStateFields, so a restored capability persists only those fields of its state.
 - Enum sensors no longer persist a restore only because the timestamp flag changed
 - Device heroes: a channel row for media players and IR TVs, light colour presets, and a value slider or picker for generic controls
+
+## [1.2.529] - 2026-11-08
+
+### Changed
+
+- Remote: Flipper .ir parsing and NEC, NECext and Samsung32 encoding for importing codes
 
 ## [1.2.528] - 2026-11-08
 
