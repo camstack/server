@@ -11236,12 +11236,6 @@
       "other": "Other",
       "custom": "Custom"
     },
-    "card": {
-      "title": "Remote control",
-      "configure": "Configure",
-      "none": "No remote configured. The device's own commands are used.",
-      "summary": "Layout: {{template}} · {{count}} commands bound"
-    },
     "dialog": {
       "title": "Remote control — {{name}}",
       "loading": "Loading the remote configuration…",
@@ -11432,7 +11426,9 @@
       },
       "irDetail": "Infrared · {{pulses}} pulses",
       "irDetailCarrier": "Infrared · {{pulses}} pulses · {{khz}} kHz",
-      "irDetailBroken": "Infrared · the code cannot be sent"
+      "irDetailBroken": "Infrared · the code cannot be sent",
+      "refusedTitle": "These stored sources could not be read and are left out. Re-create them to bring them back.",
+      "refusedRow": "{{name}}: {{reason}}"
     },
     "sourceSelect": {
       "label": "Sources",

@@ -11258,12 +11258,6 @@
       "other": "Altro",
       "custom": "Personalizzato"
     },
-    "card": {
-      "title": "Telecomando",
-      "configure": "Configura",
-      "none": "Nessun telecomando configurato. Si usano i comandi nativi del dispositivo.",
-      "summary": "Layout: {{template}} · {{count}} comandi associati"
-    },
     "dialog": {
       "title": "Telecomando — {{name}}",
       "loading": "Caricamento della configurazione del telecomando…",
@@ -11454,7 +11448,9 @@
       },
       "irDetail": "Infrarosso · {{pulses}} impulsi",
       "irDetailCarrier": "Infrarosso · {{pulses}} impulsi · {{khz}} kHz",
-      "irDetailBroken": "Infrarosso · il codice non può essere inviato"
+      "irDetailBroken": "Infrarosso · il codice non può essere inviato",
+      "refusedTitle": "Queste sorgenti salvate non si possono leggere e sono escluse. Ricreale per riaverle.",
+      "refusedRow": "{{name}}: {{reason}}"
     },
     "sourceSelect": {
       "label": "Sorgenti",

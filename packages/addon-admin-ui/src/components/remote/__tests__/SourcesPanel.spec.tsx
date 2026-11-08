@@ -34,6 +34,22 @@ describe('SourcesPanel', () => {
     ).toBeTruthy()
   })
 
+  it('names a stored source that was left out, with its reason', () => {
+    render(
+      <Harness
+        initial={{
+          ...BOUND,
+          refusedSources: [
+            { index: 0, id: 'hdmi2', name: 'HDMI 2', reason: 'a pulse has no space' },
+          ],
+        }}
+      />,
+    )
+    expect(screen.getByTestId('remote-refused-sources').textContent).toContain(
+      'HDMI 2: a pulse has no space',
+    )
+  })
+
   it('adds a channel and shows the schema error inline until it is fixed', () => {
     render(<Harness initial={BOUND} />)
     fireEvent.click(screen.getByTestId('source-add'))

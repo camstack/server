@@ -22,7 +22,7 @@ import {
   type RemoteAssumedState,
   RemoteAssumedStateSchema,
   type RemoteConfig,
-  RemoteConfigSchema,
+  readStoredRemoteConfig,
   RunningStateStatusSchema,
   type TemplateUser,
 } from '@camstack/types'
@@ -74,19 +74,29 @@ export function remoteConfigStoreOver(
       const row = await settings.readDeviceStore(deviceId)
       const raw = row[REMOTE_STORE_KEY]
       if (raw === undefined) return EMPTY_REMOTE_CONFIG
-      const parsed = RemoteConfigSchema.safeParse(raw)
-      if (parsed.success) return parsed.data
+      const parsed = readStoredRemoteConfig(raw)
+      if (parsed.success) {
+        for (const refused of parsed.data.refusedSources ?? []) {
+          logger.warn('remote: a stored source no longer parses, it is left out of the remote', {
+            tags: { deviceId },
+            meta: { index: refused.index, sourceId: refused.id, reason: refused.reason },
+          })
+        }
+        return parsed.data
+      }
       logger.warn(
         'remote: a stored configuration no longer parses, the device reads as having none',
         {
           tags: { deviceId },
-          meta: { issues: parsed.error.issues.length },
+          meta: { issues: parsed.issues },
         },
       )
       return EMPTY_REMOTE_CONFIG
     },
     write: async (deviceId, config: RemoteConfig) => {
-      await settings.writeDeviceStore(deviceId, { [REMOTE_STORE_KEY]: config })
+      // `refusedSources` is a read-time report, never part of what is stored.
+      const { refusedSources: _report, ...stored } = config
+      await settings.writeDeviceStore(deviceId, { [REMOTE_STORE_KEY]: stored })
     },
   }
 }
@@ -178,7 +188,7 @@ export function templateUsageOver(
       const rows = await settings.readDeviceStoreBatch(ids)
       const users: TemplateUser[] = []
       for (const [deviceId, row] of rows) {
-        const parsed = RemoteConfigSchema.safeParse(row[REMOTE_STORE_KEY])
+        const parsed = readStoredRemoteConfig(row[REMOTE_STORE_KEY])
         if (!parsed.success || parsed.data.layoutTemplateId !== templateId) continue
         const found = await api()?.deviceManager.getDevice.query({ deviceId })
         users.push({ deviceId, name: found?.name ?? `#${deviceId}` })
@@ -239,7 +249,7 @@ export function remoteSliceWriterOver(
       const rows = await settings.readDeviceStoreBatch(ids)
       const carrying: number[] = []
       for (const [deviceId, row] of rows) {
-        if (RemoteConfigSchema.safeParse(row[REMOTE_STORE_KEY]).success) carrying.push(deviceId)
+        if (readStoredRemoteConfig(row[REMOTE_STORE_KEY]).success) carrying.push(deviceId)
       }
       return carrying
     },

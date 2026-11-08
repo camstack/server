@@ -111,6 +111,16 @@ function refineSources(
   })
 }
 
+/** A stored source that was left out of a read, and why (the UI shows it). */
+export const RemoteRefusedSourceSchema = z.object({
+  /** Position in the stored list. */
+  index: z.number().int().nonnegative(),
+  id: z.string().nullable(),
+  name: z.string().nullable(),
+  reason: z.string(),
+})
+export type RemoteRefusedSource = z.infer<typeof RemoteRefusedSourceSchema>
+
 export const RemoteConfigSchema = z
   .object({
     layoutTemplateId: z.string().min(1).nullable(),
@@ -135,6 +145,12 @@ export const RemoteConfigSchema = z
       .max(REMOTE_STEP_DELAY_MAX_MS)
       .default(REMOTE_STEP_DELAY_DEFAULT_MS),
     power: z.object({ mode: RemotePowerModeSchema }),
+    /**
+     * READ-ONLY: sources a stored configuration carries that no longer parse,
+     * left out of `sources` with the reason (`readStoredRemoteConfig`). Never
+     * stored: the store strips it on write.
+     */
+    refusedSources: z.array(RemoteRefusedSourceSchema).optional(),
   })
   .superRefine((config, ctx) => {
     const roles = Object.keys(config.bindings)
@@ -184,6 +200,54 @@ export const RemoteConfigSchema = z
     refineSources(config, ctx)
   })
 export type RemoteConfig = z.infer<typeof RemoteConfigSchema>
+
+const StoredSourcesShapeSchema = z.looseObject({ sources: z.array(z.unknown()) })
+const SourceIdentitySchema = z.object({ id: z.string(), name: z.string() }).partial()
+
+export type StoredRemoteConfigRead =
+  | { readonly success: true; readonly data: RemoteConfig }
+  | { readonly success: false; readonly issues: number }
+
+/**
+ * Read a STORED configuration. A single source that no longer parses (a code
+ * the transmitter could not send, a malformed entry) must not make the whole
+ * remote unreadable: it is left out and named in `refusedSources`, and the other
+ * sources and the bindings load. Writing stays strict (`RemoteConfigSchema`).
+ */
+export function readStoredRemoteConfig(raw: unknown): StoredRemoteConfigRead {
+  const shape = StoredSourcesShapeSchema.safeParse(raw)
+  if (!shape.success) return finishRead(RemoteConfigSchema.safeParse(raw))
+  const kept: unknown[] = []
+  const refused: RemoteRefusedSource[] = []
+  shape.data.sources.forEach((candidate, index) => {
+    const parsed = RemoteSourceSchema.safeParse(candidate)
+    const problem =
+      parsed.success && parsed.data.kind === 'ir' ? irSourceProblem(parsed.data) : null
+    if (parsed.success && problem === null) {
+      kept.push(candidate)
+      return
+    }
+    const identity = SourceIdentitySchema.safeParse(candidate)
+    const reason = problem ?? parsed.error?.issues[0]?.message ?? 'not a source'
+    refused.push({
+      index,
+      id: identity.success ? (identity.data.id ?? null) : null,
+      name: identity.success ? (identity.data.name ?? null) : null,
+      reason,
+    })
+  })
+  const read = finishRead(RemoteConfigSchema.safeParse({ ...shape.data, sources: kept }))
+  if (!read.success || refused.length === 0) return read
+  return { success: true, data: { ...read.data, refusedSources: refused } }
+}
+
+function finishRead(
+  parsed: ReturnType<typeof RemoteConfigSchema.safeParse>,
+): StoredRemoteConfigRead {
+  return parsed.success
+    ? { success: true, data: parsed.data }
+    : { success: false, issues: parsed.error.issues.length }
+}
 
 export const EMPTY_REMOTE_CONFIG: RemoteConfig = {
   layoutTemplateId: null,

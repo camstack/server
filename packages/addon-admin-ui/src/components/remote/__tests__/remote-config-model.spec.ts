@@ -22,6 +22,7 @@ import {
   newSourceId,
   setBinding,
   setStepDelay,
+  type SourceDraft,
   sourceIssues,
   transmitterOf,
   upsertSource,
@@ -340,12 +341,12 @@ describe('remote-config-model: sources', () => {
 
 describe('remote-config-model: infrared sources (planning#464)', () => {
   const base = { ...EMPTY_REMOTE_CONFIG, defaultTransmitterId: 7 }
-  const irDraft = {
+  const irDraft: SourceDraft = {
     ...BLANK_SOURCE_DRAFT,
-    kind: 'ir' as const,
+    kind: 'ir',
     name: 'HDMI 2',
     transmitterId: 7,
-    encoding: 'raw' as const,
+    encoding: 'raw',
     code: '[9000, -4500, 560,-560]',
     carrierKhz: '38',
   }
@@ -394,7 +395,7 @@ describe('remote-config-model: infrared sources (planning#464)', () => {
   })
 
   it('lets the schema refuse a missing transmitter, a bad code and a non-numeric carrier, on their fields', () => {
-    const fields = (draft: typeof irDraft) => draftIssues(base, draft, null).map((i) => i.field)
+    const fields = (draft: SourceDraft) => draftIssues(base, draft, null).map((i) => i.field)
     expect(fields({ ...irDraft, transmitterId: null })).toEqual(['transmitterId'])
     expect(fields({ ...irDraft, code: '9000 4500' })).toEqual(['payload'])
     expect(fields({ ...irDraft, code: '9000, abc' })).toEqual(['payload'])
@@ -404,13 +405,13 @@ describe('remote-config-model: infrared sources (planning#464)', () => {
 
   it('summarises a source for the list: pulses and carrier, or that the code is broken', () => {
     const ok = upsertSource(base, irDraft, null).sources[0]
-    expect(ok === undefined ? null : irSourceSummary(ok)).toEqual({
+    expect(ok?.kind === 'ir' ? irSourceSummary(ok) : null).toEqual({
       encoding: 'raw',
       pulses: 4,
       carrierKhz: 38,
     })
     const broken = upsertSource(base, { ...irDraft, code: '9000 4500' }, null).sources[0]
-    expect(broken === undefined ? null : irSourceSummary(broken)).toEqual({
+    expect(broken?.kind === 'ir' ? irSourceSummary(broken) : null).toEqual({
       encoding: 'raw',
       pulses: null,
       carrierKhz: null,

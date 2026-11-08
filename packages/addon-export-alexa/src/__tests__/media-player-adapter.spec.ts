@@ -360,6 +360,16 @@ describe('declared sources of a remote (planning#460)', () => {
     expect(interfaces(features, only)).not.toContain('Alexa.ChannelController')
   })
 
+  it('an infrared source is an input, like a sequence source', () => {
+    const withIr = slice({
+      availableSources: ['HDMI 1'],
+      declaredSources: [{ name: 'HDMI 1', kind: 'ir' }],
+    })
+    const built = build(features, withIr)
+    const input = built?.capabilities.find((c) => c.interface === 'Alexa.InputController')
+    expect(input?.inputs).toEqual([{ name: 'HDMI 1' }])
+  })
+
   it('a channel name is never an input, even when Amazon would know it', () => {
     const channelAsInput = slice({
       availableSources: ['HDMI 1'],

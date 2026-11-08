@@ -172,6 +172,19 @@ export function SourcesPanel({
       ) : (
         <DataTable columns={columns} rows={config.sources} rowKey={(s) => s.id} minWidthPx={320} />
       )}
+      {(config.refusedSources ?? []).length > 0 && (
+        <div role="alert" className="space-y-1" data-testid="remote-refused-sources">
+          <p className="text-xs font-medium text-danger">{t('remote.sources.refusedTitle')}</p>
+          {(config.refusedSources ?? []).map((refused) => (
+            <p key={refused.index} className="text-xs text-foreground-muted">
+              {t('remote.sources.refusedRow', {
+                name: refused.name ?? refused.id ?? `#${refused.index + 1}`,
+                reason: refused.reason,
+              })}
+            </p>
+          ))}
+        </div>
+      )}
       <FormField
         label={t('remote.sources.stepDelay')}
         description={t('remote.sources.stepDelayHint')}

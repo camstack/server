@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   EMPTY_REMOTE_CONFIG,
+  readStoredRemoteConfig,
   RemoteConfigSchema,
   RemoteAssumedStateSchema,
 } from '../remote-config.js'
@@ -159,5 +160,53 @@ describe('an infrared source (planning#464)', () => {
     expect(resolveRemoteSource([RAI1, IR], 'hdmi 2')).toBe(IR)
     expect(resolveRemoteSource([RAI1, IR], 'hdmi2')).toBe(IR)
     expect(findChannelSource([RAI1, IR], '1')).toBe(RAI1)
+  })
+})
+
+describe('reading a stored remote with a bad source (planning#464)', () => {
+  const good: RemoteSource = { kind: 'sequence', id: 'hdmi1', name: 'HDMI 1', steps: ['ok'] }
+  const badIr = {
+    kind: 'ir',
+    id: 'hdmi2',
+    name: 'HDMI 2',
+    transmitterId: 3,
+    payload: { kind: 'raw', timings: [9000, 4500] },
+  }
+  const stored = {
+    ...EMPTY_REMOTE_CONFIG,
+    layoutTemplateId: 'tpl',
+    bindings: { ok: binding },
+    sources: [good, badIr],
+  }
+
+  it('the write schema still refuses it', () => {
+    expect(RemoteConfigSchema.safeParse(stored).success).toBe(false)
+  })
+
+  it('a read leaves the bad source out with its reason; the rest still loads', () => {
+    const read = readStoredRemoteConfig(stored)
+    expect(read.success).toBe(true)
+    if (!read.success) return
+    expect(read.data.sources).toEqual([good])
+    expect(read.data.layoutTemplateId).toBe('tpl')
+    expect(Object.keys(read.data.bindings)).toEqual(['ok'])
+    expect(read.data.refusedSources).toHaveLength(1)
+    expect(read.data.refusedSources?.[0]).toMatchObject({ index: 1, id: 'hdmi2', name: 'HDMI 2' })
+    expect(read.data.refusedSources?.[0]?.reason).toMatch(/space/)
+  })
+
+  it('a source that is not even an object shape is refused by name of its problem', () => {
+    const read = readStoredRemoteConfig({ ...stored, sources: [good, { kind: 'ir' }] })
+    expect(read.success).toBe(true)
+    if (read.success) expect(read.data.refusedSources?.[0]?.id).toBeNull()
+  })
+
+  it('a clean config carries no refused sources', () => {
+    const read = readStoredRemoteConfig({ ...stored, sources: [good] })
+    expect(read.success && read.data.refusedSources).toBeFalsy()
+  })
+
+  it('another defect still fails the whole read', () => {
+    expect(readStoredRemoteConfig({ ...stored, power: 3 }).success).toBe(false)
   })
 })
