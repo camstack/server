@@ -1,4 +1,4 @@
-import { collectKeychainStoredKeys, omitTransientConfig } from '@camstack/types'
+import { omitTransientConfig } from '@camstack/types'
 import { Button, useAddonsCustom, useIntegrationInstancesTestInstance, Input } from '@camstack/ui-library'
 import { Radar } from 'lucide-react'
 import { useState } from 'react'
@@ -30,15 +30,10 @@ interface ProviderConfigFormProps {
   hideName?: boolean
   /** The save is in flight: the primary button is disabled and says so. */
   saving?: boolean
-  /** `secretKeys`: the keys the schema declares secret by type — the hub keeps
-   *  their values in the keychain, not the integration's settings (D787). */
   /** Opens a network scan scoped to this integration; shown only when set. */
   onScan?: () => void
-  onSave: (config: {
-    name: string
-    config: Record<string, unknown>
-    secretKeys: readonly string[]
-  }) => void
+  /** A `password` field's value reaches the keychain on the hub, by the schema's type (D787). */
+  onSave: (config: { name: string; config: Record<string, unknown> }) => void
   onBack: () => void
 }
 
@@ -189,7 +184,7 @@ export function ProviderConfigForm({
             {testMutation.isPending ? t('integrations.testing') : t('integrations.testConnection')}
           </Button>
           {/* Next requires a validated connection test when the addon declares
-              one. The server still re-runs the test inside `integrations.create`. */}
+              one. The server still re-runs the test inside `integrationInstances.createInstance`. */}
           <div className="flex flex-col items-end gap-1">
             {nameMissing && (
               <p data-testid="integration-name-submit-error" className="text-xs text-danger">
@@ -203,7 +198,6 @@ export function ProviderConfigForm({
                 onSave({
                   name,
                   config: omitTransientConfig(configSchema, config),
-                  secretKeys: [...collectKeychainStoredKeys(configSchema)],
                 })
               }}
               disabled={!canGoNext || saving}

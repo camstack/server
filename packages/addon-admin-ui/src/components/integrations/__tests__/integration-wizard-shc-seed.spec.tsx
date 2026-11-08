@@ -61,7 +61,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       isPending: false,
       data: undefined,
     }),
-    useIntegrationsCreate: () => ({
+    useIntegrationInstancesCreateInstance: () => ({
       mutateAsync: vi.fn(),
       isPending: false,
       error: null,

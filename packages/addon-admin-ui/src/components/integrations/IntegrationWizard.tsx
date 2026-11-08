@@ -14,8 +14,8 @@ import {
   useDeviceManagerAdoptDevice,
   useDeviceManagerDiscoverDevices,
   useDeviceManagerDiscoveryProviders,
+  useIntegrationInstancesCreateInstance,
   useIntegrationInstancesDescribe,
-  useIntegrationsCreate,
   useIntegrationsGetAvailableTypes,
   Button,
 } from '@camstack/ui-library'
@@ -182,8 +182,13 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     [configSchemaWithValues],
   )
 
-  const addProviderMutation = useIntegrationsCreate({
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [['integrations']] }),
+  // The one create door (D1013): the hub gates it on the connection test, mints the id and writes
+  // the registry row with the record. An addon with a single kind needs no `kind`.
+  const createInstanceMutation = useIntegrationInstancesCreateInstance({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [['integrations']] })
+      void queryClient.invalidateQueries({ queryKey: [['integrationInstances']] })
+    },
   })
 
   const discoverDevicesMutation = useDeviceManagerDiscoverDevices()
@@ -217,14 +222,14 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     mode: 'standalone' | 'account' | 'broker',
     providerCanTest: boolean,
   ) {
-    if (addProviderMutation.isPending) return
+    if (createInstanceMutation.isPending) return
 
     setSelectedAddonId(addonId)
     setCanTest(providerCanTest)
     setDiscoveryMode(providerDiscoveryMode)
     setPendingName(displayName)
     setPickerError(null)
-    addProviderMutation.reset()
+    createInstanceMutation.reset()
 
     // Route by `mode` (LOCKED MODEL), never by addon name:
     //   - broker     → shared-bus/session broker step (HA/MQTT). The operator
@@ -269,10 +274,10 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
 
   async function handleStandaloneCreate(addonId: string, displayName: string) {
     try {
-      const result = await addProviderMutation.mutateAsync({
+      const result = await createInstanceMutation.mutateAsync({
         addonId,
         name: displayName,
-        settings: {},
+        values: {},
       })
       onClose()
       resetState()
@@ -285,16 +290,14 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
   async function handleConfigSave(data: {
     name: string
     config: Record<string, unknown>
-    secretKeys: readonly string[]
   }) {
     if (!selectedAddonId) return
 
     try {
-      const result = await addProviderMutation.mutateAsync({
+      const result = await createInstanceMutation.mutateAsync({
         addonId: selectedAddonId,
         name: data.name,
-        settings: data.config,
-        secretKeys: [...data.secretKeys],
+        values: data.config,
         ...(instanceKind !== undefined ? { kind: instanceKind } : {}),
         ...(seed !== null && seed.addonId === selectedAddonId && seed.originStableId !== undefined
           ? { originStableId: seed.originStableId }
@@ -321,10 +324,10 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
       // the broker (an `account` instance of `integration-instances`) owns the connection
       // identity/credentials. No provider credentials live on the
       // integration record (Approach A).
-      const result = await addProviderMutation.mutateAsync({
+      const result = await createInstanceMutation.mutateAsync({
         addonId: selectedAddonId,
         name: pendingName,
-        settings: { brokerId },
+        values: { brokerId },
       })
       // Store the created integration id so the adopt step (next task)
       // can drive device adoption against it.
@@ -371,7 +374,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     setPendingName('')
     setCreatedIntegrationId(null)
     setPickerError(null)
-    addProviderMutation.reset()
+    createInstanceMutation.reset()
     setCanTest(false)
     setFormSeed({})
     setAppliedSeed('')
@@ -386,7 +389,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
   // the modal don't propagate to the page underneath on mobile.
   useBodyScrollLock(open)
 
-  const isCreating = addProviderMutation.isPending
+  const isCreating = createInstanceMutation.isPending
   // A create that spins past the deadline stops locking the modal — the
   // operator can close and refresh instead of being trapped on a spinner.
   // ⚠️ Hooks MUST run on every render: this sits ABOVE the `!open` early
@@ -406,7 +409,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
   }
 
   const pendingAddonId = isCreating ? selectedAddonId : null
-  const createError = addProviderMutation.error
+  const createError = createInstanceMutation.error
   // Lock the modal (disable close) ONLY while a create is genuinely in
   // flight AND still within the deadline. Once overdue, close is re-enabled.
   const lockModal = isCreating && !createOverdue
@@ -432,14 +435,14 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
           </DialogHeader>
           <DialogBody>
             {createError && !isCreating && (
-              <div className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              <div className="mb-3 rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger">
                 {createError instanceof Error ? createError.message : String(createError)}
               </div>
             )}
             {step === 'picker' && (
               <>
                 {pickerError && (
-                  <div className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  <div className="mb-3 rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger">
                     {pickerError}
                   </div>
                 )}

@@ -12,7 +12,7 @@ export interface IntegrationFormSeed {
   readonly addonId: string
   readonly name: string
   readonly config: Readonly<Record<string, unknown>>
-  /** `stableId` of the candidate the seed came from; `integrations.create` stores it (D984). */
+  /** `stableId` of the candidate the seed came from; `integrationInstances.createInstance` stores it (D984). */
   readonly originStableId?: string | undefined
 }
 

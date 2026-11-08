@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Remote customize: browse the Flipper-IRDB library and import a remote's buttons
+- The new-integration wizard creates through the one instance door, so the hub gates the create on the connection test and the discovery candidate is kept on the integration
 
 ## [1.2.621] - 2026-11-08
 
