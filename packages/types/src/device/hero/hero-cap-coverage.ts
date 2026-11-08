@@ -46,6 +46,9 @@ export const HERO_CAP_COVERAGE: Readonly<Record<string, HeroCapCoverage>> = {
   'device-extension': { none: NOT_A_HERO_FACT },
   'device-ops': { none: NOT_A_HERO_FACT },
   'device-runs': { none: NOT_A_HERO_FACT },
+  'device-transitions': {
+    none: 'audit log of what changed and who asked; reachable from the device page history',
+  },
   'device-status': { none: NOT_A_HERO_FACT },
   dishwasher: 'contributes',
   'do-not-disturb': { none: LATER_PHASE },
