@@ -65,6 +65,14 @@ function minutesLeft(seconds: number): HeroText {
   return heroText(`${m} min left`, `${m} min rimanenti`)
 }
 
+/** A time left as a tile reads it: "38 min", "1 h 12". */
+function durationText(seconds: number): HeroText {
+  const m = Math.ceil(seconds / 60)
+  if (m < 60) return heroText(`${m} min`, `${m} min`)
+  const text = `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`
+  return heroText(text, text)
+}
+
 function deviceTypeOf(type: string): DeviceType | undefined {
   return Object.values(DeviceType).find((t) => t === type)
 }
@@ -601,7 +609,7 @@ const dishwasherContribution = contribution('dishwasher', DishwasherStatusSchema
                 tone: 'warning' as const,
                 at: ctx.now + remaining * 1000,
               },
-              { label: heroText('Left', 'Restano'), value: minutesLeft(remaining) },
+              { label: heroText('Left', 'Restano'), value: durationText(remaining) },
             ],
           }),
     },

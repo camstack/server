@@ -39,6 +39,8 @@ export interface HeroSceneSpec extends HeroSceneParams {
 export interface SceneTile {
   readonly label: string
   readonly value: string
+  /** Draws the value in a state tone (an appliance's end time in `warning`). */
+  readonly tone?: 'success' | 'warning' | 'danger'
 }
 
 /** The visual a (scene, state) pair resolves to. */

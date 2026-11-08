@@ -60,10 +60,10 @@ function resolveByScene(scene: HeroSceneId, state: string, on: boolean): SceneVi
     case 'heater':
       return on ? visual('rise', 'warning') : DIM
     case 'fan':
-      return on ? visual('fan', 'info') : DIM
+      return on ? visual('fan', 'muted') : DIM
     case 'washer':
       if (state === 'done') return visual('breathe', 'success', 'slow')
-      return on ? visual('drum', 'info') : DIM
+      return on ? visual('drum', 'warning') : DIM
     case 'dryer':
       if (state === 'done') return visual('breathe', 'success', 'slow')
       return on ? visual('drum', 'warning') : DIM

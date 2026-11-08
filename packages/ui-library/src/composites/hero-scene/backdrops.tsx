@@ -223,7 +223,9 @@ function BackdropBody({ visual, level, points }: BackdropProps): ReactNode {
     case 'fan':
       return (
         <Centered>
-          <FanBlades color="currentColor" periodSec={PERIOD[visual.speed] * 0.7} size={64} />
+          <span className="opacity-50">
+            <FanBlades color="currentColor" periodSec={PERIOD[visual.speed] * 0.7} size={136} />
+          </span>
         </Centered>
       )
     case 'rise':

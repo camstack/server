@@ -116,10 +116,15 @@ function Tiles({ tiles }: { tiles: readonly SceneTile[] | undefined }): ReactNod
         <div
           key={tile.label}
           data-testid="scene-tile"
-          className="flex min-w-0 flex-col gap-0.5 rounded-lg bg-background-elevated px-2 py-1.5"
+          className="flex min-w-0 flex-col gap-0.5 rounded-lg bg-surface-hover px-2 py-1.5"
         >
           <span className="text-[10px] leading-tight text-foreground-muted">{tile.label}</span>
-          <span className="text-sm font-semibold leading-tight tabular-nums text-foreground">
+          <span
+            className={cn(
+              'whitespace-nowrap text-sm font-semibold leading-tight tabular-nums',
+              tile.tone === undefined ? 'text-foreground' : TONE_CLASS[tile.tone],
+            )}
+          >
             {tile.value}
           </span>
         </div>
@@ -201,7 +206,7 @@ export function HeroScene({
           <CaptionText text={caption} />
         </div>
       )}
-      <div className="relative z-10 grid h-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-2 pt-4 text-foreground">
+      <div className="relative z-10 grid h-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-2 pt-4 text-foreground">
         <Tiles tiles={leftTiles} />
         <div
           data-testid="scene-centre"

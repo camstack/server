@@ -25,7 +25,7 @@ describe('scene selection', () => {
     ['ac', 'heat', 'airflow', 'warning'],
     ['ac', 'fan', 'airflow', 'muted'],
     ['ac', 'off', 'airflow', 'subtle'],
-    ['washer', 'run', 'drum', 'info'],
+    ['washer', 'run', 'drum', 'warning'],
     ['washer', 'off', 'none', 'subtle'],
     ['dishwasher', 'run', 'drop', 'info'],
     ['pet-fountain', 'on', 'ripple', 'info'],
@@ -41,7 +41,7 @@ describe('scene selection', () => {
     ['gateway', 'online', 'orbit', 'info'],
     ['gateway', 'offline', 'none', 'subtle'],
     ['heater', 'on', 'rise', 'warning'],
-    ['fan', 'on', 'fan', 'info'],
+    ['fan', 'on', 'fan', 'muted'],
     ['tv', 'on', 'breathe', 'info'],
   ] as const)('%s / %s → %s (%s)', (scene, state, kind, tone) => {
     const v = resolveSceneVisual({ scene, state })
@@ -172,5 +172,25 @@ describe('DeviceRow', () => {
       />,
     )
     expect(screen.getByTestId('own')).toBeTruthy()
+  })
+})
+
+describe('scene tiles', () => {
+  it('draw a toned value in its tone and never wrap it', () => {
+    render(
+      <HeroScene
+        scene="washer"
+        state="run"
+        rightTiles={[
+          { label: 'Ends', value: '17:42', tone: 'warning' },
+          { label: 'Left', value: '38 min' },
+        ]}
+      />,
+    )
+    const [ends, left] = screen.getAllByTestId('scene-tile')
+    const endsValue = ends?.lastElementChild
+    expect(endsValue?.className).toContain('text-warning')
+    expect(endsValue?.className).toContain('whitespace-nowrap')
+    expect(left?.lastElementChild?.className).toContain('text-foreground')
   })
 })

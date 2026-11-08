@@ -139,3 +139,46 @@ describe('the tiles that match the appliance mockups', () => {
     ])
   })
 })
+
+describe('a time left on a tile', () => {
+  it('reads minutes under an hour and hours with minutes above', () => {
+    const left = (seconds: number): string | undefined => {
+      const m = build(DeviceType.Dishwasher, ['dishwasher'], {
+        dishwasher: {
+          availability: 'available',
+          state: 'running',
+          operationState: 'Run',
+          program: null,
+          selectedProgram: null,
+          availablePrograms: [],
+          remaining: seconds,
+          delayedStart: null,
+          progress: null,
+          doorOpen: null,
+          doorLocked: null,
+          remoteStartAllowed: null,
+          remoteControlActive: null,
+          localControlActive: null,
+          powerOn: null,
+          powerState: null,
+          filterCleaningDue: null,
+          machineCareDue: null,
+          machineCareRemainingRuns: null,
+          halfLoad: null,
+          hygienePlus: null,
+          extraDry: null,
+          intensiveZone: null,
+          varioSpeedPlus: null,
+          childLock: null,
+          activeEvents: [],
+          errorCode: null,
+          errorLabel: null,
+          ...FETCHED,
+        },
+      })
+      return m.sideTiles.right.find((t) => t.label.en === 'Left')?.value.en
+    }
+    expect(left(38 * 60)).toBe('38 min')
+    expect(left(72 * 60)).toBe('1 h 12')
+  })
+})

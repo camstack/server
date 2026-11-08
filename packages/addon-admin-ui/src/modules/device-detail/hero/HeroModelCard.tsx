@@ -26,8 +26,15 @@ import {
   useDisplayIconResolver,
 } from '@camstack/ui-library'
 import { Minus, Plus } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
-import { badgeVariantOf, type HeroLang, pickText, sceneOf, tilesOf } from './hero-model-view'
+import { type ReactNode, useEffect, useState } from 'react'
+import {
+  badgeVariantOf,
+  clockText,
+  type HeroLang,
+  pickText,
+  sceneOf,
+  tilesOf,
+} from './hero-model-view'
 
 /** What the card asks its host to do: run the cap method an action or a control names. */
 export interface HeroCardHost {
@@ -55,14 +62,17 @@ function ActionButton({
   action,
   host,
   disabled,
+  className,
 }: {
   readonly action: HeroAction
   readonly host: HeroCardHost
   readonly disabled?: boolean
+  readonly className?: string
 }): ReactNode {
   return (
     <Button
       size="sm"
+      {...(className === undefined ? {} : { className })}
       variant={action.emphasis === 'primary' ? 'primary' : 'outline'}
       disabled={host.busy || disabled === true}
       onClick={() => host.run(action.call, action)}
@@ -166,15 +176,67 @@ function PickerControl({
 
 type SliderModel = Extract<HeroControl, { kind: 'slider' }>
 
-/** The setpoint of a climate scene: the target in big digits with a round minus and plus at its sides. */
-function SetpointCentre({
-  control,
+/** A row without the slider the scene already draws in its centre. */
+function withoutDial(row: HeroRow, dial: Dial | null): HeroRow {
+  if (dial === null || row.controls.every((c) => c !== dial.control)) return row
+  return { ...row, status: null, controls: row.controls.filter((c) => c !== dial.control) }
+}
+
+/** What the centre dial prints: the number, the small mark after it and an optional heading. */
+interface DialView {
+  readonly text: string
+  readonly mark: string
+  readonly heading: string | null
+}
+
+/** A centre dial: the setpoint of a climate scene, the speed of a fan. */
+interface Dial {
+  readonly kind: 'setpoint' | 'speed'
+  readonly control: SliderModel
+}
+
+/** The slider the scene draws in its centre: a climate's target, else a fan's speed. */
+function dialOf(model: HeroModel): Dial | null {
+  const gated = new Set(model.gated)
+  const find = (id: string): SliderModel | null => {
+    const control = model.rows.find((r) => r.id === id && !gated.has(r.id))?.controls[0]
+    return control !== undefined && control.kind === 'slider' ? control : null
+  }
+  const setpoint = find('setpoint')
+  if (setpoint !== null) return { kind: 'setpoint', control: setpoint }
+  const speed = model.scene.id === 'fan' ? find('fan') : null
+  return speed === null ? null : { kind: 'speed', control: speed }
+}
+
+/** A fan speed in percent reads as a step of its own scale: 60 % on a 20 % step is "3 / 5". */
+function dialView(dial: Dial, lang: HeroLang): DialView {
+  const { control } = dial
+  const value = control.value
+  if (dial.kind === 'setpoint') {
+    return { text: value === null ? '–' : String(value), mark: control.unit, heading: null }
+  }
+  const heading = pickText(control.label, lang)
+  if (value === null) return { text: '–', mark: '', heading }
+  const steps = control.step > 0 ? Math.round((control.max - control.min) / control.step) : 0
+  if (steps <= 1) return { text: `${String(value)}${control.unit}`, mark: '', heading }
+  return {
+    text: String(Math.round((value - control.min) / control.step)),
+    mark: `/${steps}`,
+    heading,
+  }
+}
+
+/** The centre dial of a scene: the value in big digits with a round minus and plus at its sides. */
+function DialCentre({
+  dial,
   host,
 }: {
-  readonly control: SliderModel
+  readonly dial: Dial
   readonly host: HeroCardHost
 }): ReactNode {
+  const { control } = dial
   const value = control.value
+  const view = dialView(dial, host.lang)
   const step = (direction: 1 | -1): void => {
     if (value === null) return
     const next = Math.min(control.max, Math.max(control.min, value + direction * control.step))
@@ -186,38 +248,99 @@ function SetpointCentre({
   }
   const label = pickText(control.label, host.lang)
   return (
-    <div data-testid="setpoint-centre" className="flex items-center gap-2 text-current">
-      <IconButton
-        aria-label={`${label} −`}
-        icon={Minus}
-        size="lg"
-        variant="outline"
-        className="rounded-full"
-        disabled={host.busy || value === null || value <= control.min}
-        onClick={() => step(-1)}
-      />
-      <span className="text-5xl font-semibold tabular-nums leading-none text-current">
-        {value === null ? '–' : String(value)}
-        <span className="align-top text-xl">{control.unit}</span>
-      </span>
-      <IconButton
-        aria-label={`${label} +`}
-        icon={Plus}
-        size="lg"
-        variant="outline"
-        className="rounded-full"
-        disabled={host.busy || value === null || value >= control.max}
-        onClick={() => step(1)}
-      />
+    <div
+      data-testid={dial.kind === 'setpoint' ? 'setpoint-centre' : 'speed-centre'}
+      className="flex flex-col items-center gap-1 text-current"
+    >
+      {view.heading === null ? null : (
+        <span className="text-[11px] font-semibold uppercase tracking-wide">{view.heading}</span>
+      )}
+      <div className="flex items-center gap-2">
+        <IconButton
+          aria-label={`${label} −`}
+          icon={Minus}
+          size="lg"
+          variant="outline"
+          className="rounded-full"
+          disabled={host.busy || value === null || value <= control.min}
+          onClick={() => step(-1)}
+        />
+        <span className="text-5xl font-semibold tabular-nums leading-none text-current">
+          {view.text}
+          <span
+            className={
+              dial.kind === 'setpoint' ? 'align-top text-xl' : 'text-xl text-foreground-muted'
+            }
+          >
+            {view.mark}
+          </span>
+        </span>
+        <IconButton
+          aria-label={`${label} +`}
+          icon={Plus}
+          size="lg"
+          variant="outline"
+          className="rounded-full"
+          disabled={host.busy || value === null || value >= control.max}
+          onClick={() => step(1)}
+        />
+      </div>
     </div>
   )
 }
 
-/** The setpoint slider of a model, when its scene draws it in the centre. */
-function setpointOf(model: HeroModel): SliderModel | null {
-  const control = model.rows.find((r) => r.id === 'setpoint' && !model.gated.includes(r.id))
-    ?.controls[0]
-  return control !== undefined && control.kind === 'slider' ? control : null
+/** Seconds left as "18:42" (or "1:05:09" past the hour). */
+function countdownText(ms: number): string {
+  const total = Math.max(0, Math.ceil(ms / 1000))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  const two = (n: number): string => String(n).padStart(2, '0')
+  return h > 0 ? `${String(h)}:${two(m)}:${two(s)}` : `${two(m)}:${two(s)}`
+}
+
+/** The time now, re-read every second while a deadline is pending. */
+function useNow(active: boolean): number {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!active) return undefined
+    setNow(Date.now())
+    const timer = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(timer)
+  }, [active])
+  return now
+}
+
+/** A run on a timer, in the scene's centre: the time left as the big value, with Stop and the quick run again. */
+function CountdownCentre({
+  slot,
+  host,
+  actionable,
+}: {
+  readonly slot: HeroTimedRunSlot
+  readonly host: HeroCardHost
+  readonly actionable: boolean
+}): ReactNode {
+  const until = slot.activeUntil
+  const now = useNow(until !== null)
+  if (until === null) return null
+  return (
+    <div data-testid="countdown-centre" className="flex flex-col items-center gap-2 text-current">
+      <span className="text-5xl font-semibold tabular-nums leading-none text-current">
+        {countdownText(until - now)}
+      </span>
+      {actionable ? (
+        <div className="flex items-center gap-1.5 text-foreground">
+          <ActionButton action={slot.cancel} host={host} className="whitespace-nowrap" />
+          <ActionButton
+            action={{ ...slot.run, emphasis: 'normal' }}
+            host={host}
+            className="whitespace-nowrap"
+          />
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 function ToggleControl({
@@ -288,9 +411,7 @@ function ModelRow({
     >
       {row.progress === undefined || row.progress === null ? (
         <>
-          {status === null || valueControls.length > 0 ? null : (
-            <div className="truncate">{status}</div>
-          )}
+          {status === null || valueControls.length > 0 ? null : <div>{status}</div>}
           {valueControls.map((control, i) => (
             <ControlView key={i} control={control} host={host} tone={tone} />
           ))}
@@ -299,24 +420,6 @@ function ModelRow({
         <HeroProgressBar value={row.progress} label={label} tone={tone} />
       )}
     </HeroRowLine>
-  )
-}
-
-function TimedRunRow({
-  slot,
-  host,
-}: {
-  readonly slot: HeroTimedRunSlot
-  readonly host: HeroCardHost
-}): ReactNode {
-  return (
-    <HeroRowLine
-      testId="hero-timed-run"
-      label={pickText(HERO_ROW_LABELS['run-for'], host.lang)}
-      actions={
-        <ActionButton action={slot.activeUntil !== null ? slot.cancel : slot.run} host={host} />
-      }
-    />
   )
 }
 
@@ -329,6 +432,7 @@ function BaseSlotRows({
 }): ReactNode {
   const gated = new Set(model.gated)
   const { ownPower, timedRun, powerSupply } = model
+  const stopsAt = timedRun?.activeUntil ?? null
   return (
     <>
       {ownPower !== null && !gated.has('own-power') ? (
@@ -348,10 +452,14 @@ function BaseSlotRows({
               }}
             />
           }
-        />
-      ) : null}
-      {timedRun !== null && !gated.has('timed-run') ? (
-        <TimedRunRow slot={timedRun} host={host} />
+        >
+          {stopsAt === null ? null : (
+            <div>
+              {host.lang === 'it' ? 'si spegne alle ' : 'turns off at '}
+              {clockText(stopsAt, host.lang)}
+            </div>
+          )}
+        </HeroRowLine>
       ) : null}
       {powerSupply !== null && !gated.has('power-supply') ? (
         <HeroRowLine
@@ -430,7 +538,11 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
   const tone = resolveSceneVisual(scene).tone
   const footItems = model.consumables?.items ?? []
   const hasFoot = host.openHistory !== undefined || showRemote
-  const setpoint = setpointOf(model)
+  const dial = dialOf(model)
+  const timed = model.timedRun
+  const countdown =
+    timed !== null && timed.activeUntil !== null && model.scene.id !== 'pet-fountain'
+  const tonedCentre = dial !== null || countdown
   return (
     <HeroCardA
       title={model.name}
@@ -438,8 +550,10 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
       scene={
         <HeroScene
           {...scene}
-          caption={pickText(model.caption ?? model.title, lang)}
-          toneCentre={setpoint !== null}
+          {...(dial?.kind === 'speed'
+            ? {}
+            : { caption: pickText(model.caption ?? model.title, lang) })}
+          toneCentre={tonedCentre}
           leftTiles={tilesOf(model.sideTiles.left, lang)}
           rightTiles={tilesOf(model.sideTiles.right, lang)}
         >
@@ -449,8 +563,10 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
               alt=""
               className="size-24 rounded-lg border border-border object-cover"
             />
-          ) : setpoint !== null ? (
-            <SetpointCentre control={setpoint} host={host} />
+          ) : dial !== null ? (
+            <DialCentre dial={dial} host={host} />
+          ) : countdown && timed !== null ? (
+            <CountdownCentre slot={timed} host={host} actionable={!gated.has('timed-run')} />
           ) : SCENES_WITH_ART.has(scene.scene) ? undefined : (
             <span className="text-foreground [&>svg]:h-8 [&>svg]:w-8">
               <IconGlyph name={model.look.icon} />
@@ -462,7 +578,14 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
         <>
           <BaseSlotRows model={model} host={host} />
           {model.rows
-            .filter((row) => !gated.has(row.id) && !(setpoint !== null && row.id === 'setpoint'))
+            .filter(
+              (row) =>
+                !gated.has(row.id) &&
+                !(dial?.kind === 'setpoint' && row.id === 'setpoint') &&
+                !(countdown && row.id === 'run-for'),
+            )
+            .map((row) => withoutDial(row, dial))
+            .filter((row) => row.controls.length > 0 || row.status !== null || row.progress != null)
             .map((row) => (
               <ModelRow key={row.id} row={row} host={host} tone={tone} />
             ))}

@@ -30,11 +30,11 @@ export function HeroRowLine({
     <div
       data-testid={testId ?? 'hero-row'}
       className={cn(
-        'grid min-h-11 grid-cols-[5.5rem_minmax(0,1fr)_minmax(0,auto)] items-center gap-x-2 rounded-lg bg-background-elevated py-1.5 pl-3 pr-1.5 sm:grid-cols-[6.5rem_minmax(0,1fr)_minmax(0,auto)]',
+        'grid min-h-11 grid-cols-[5.5rem_minmax(0,1fr)_minmax(min-content,auto)] items-center gap-x-2 rounded-lg bg-surface-hover py-1.5 pl-3 pr-1.5 sm:grid-cols-[6.5rem_minmax(0,1fr)_minmax(min-content,auto)]',
         className,
       )}
     >
-      <span className="truncate text-xs text-foreground-muted">{label}</span>
+      <span className="text-xs text-foreground-muted">{label}</span>
       <div className="min-w-0 text-sm text-foreground">{children}</div>
       <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">{actions}</div>
     </div>

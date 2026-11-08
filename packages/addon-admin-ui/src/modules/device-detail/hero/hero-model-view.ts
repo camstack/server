@@ -55,10 +55,18 @@ export function sceneOf(model: HeroModel): SceneProps {
   return model.scene.level === null ? base : { ...base, level: model.scene.level }
 }
 
+/** A clock time in the viewer's own time zone ("17:42"). */
+export function clockText(at: number, lang: HeroLang): string {
+  return new Date(at).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })
+}
+
 function tile(side: HeroSideTile, lang: HeroLang): SceneTile {
   return {
     label: pickText(side.label, lang),
-    value: pickText(side.value, lang),
+    value: side.at === undefined ? pickText(side.value, lang) : clockText(side.at, lang),
+    ...(side.tone === 'warning' || side.tone === 'danger' || side.tone === 'success'
+      ? { tone: side.tone }
+      : {}),
   }
 }
 
