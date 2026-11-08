@@ -18,11 +18,11 @@
  *    instance, every exporter is multi-instance) must declare `integration-instances` and carry
  *    `instanceMode: 'multiple'` in its own source, never `'single'`.
  *
- * 4. An addon entry that declares a device marker, `broker` AND `integration-instances` (D1012: a
- *    broker is referenced by id and owns nothing of its users) must declare its integration kind
- *    through the generic primitive `declareBrokerLinkKind`. Its record carries a broker id and may
- *    carry link fields; a link field is never a secret, and never a field of the broker's own
- *    connection form (the broker owns those).
+ * 4. An addon entry that declares a device marker, `broker` AND `integration-instances` (D1013
+ *    rule 5: the link lives on the consumer, the broker owns nothing of its users) must declare
+ *    its integration kind through the one link primitive `declareLinkKind`, with a `links` entry
+ *    naming the broker. The kind never carries a password or any secret field
+ *    (credentials belong to the broker).
  *
  * Textual: the source is read, not run. Specs, `__tests__`, `dist` and generated code are skipped.
  *
@@ -51,9 +51,7 @@ export interface Violation {
   readonly message: string
 }
 
-/** `buildBrokerLinkInstances` answers role `devices` itself, so an addon on it states none. */
-const LINK_INSTANCES_RE = /\bbuildBrokerLinkInstances\s*[(<]/
-const KIND_RE = /\b(?:defineEntryKind|defineRecordKinds)\s*[(<]/
+const KIND_RE = /\b(?:defineEntryKind|defineRecordKinds|declareLinkKind)\s*[(<]/
 const ROLE_RE = /\brole:\s*['"](?:devices|services)['"]/
 
 export function findViolations(
@@ -76,7 +74,7 @@ export function findViolations(
           message: `declares ${INSTANCES_CAP} but its source defines no record kind (defineEntryKind / defineRecordKinds)`,
         })
       }
-      if (!ROLE_RE.test(source) && !LINK_INSTANCES_RE.test(source)) {
+      if (!ROLE_RE.test(source)) {
         out.push({
           addon: entry.id,
           message: `declares ${INSTANCES_CAP} but no describe() answers a role ('devices' | 'services')`,
@@ -134,10 +132,11 @@ export function findExporterViolations(
 }
 
 const BROKER_CAP = 'broker'
-const LINK_CALL_RE = /\bdeclareBrokerLinkKind\s*[(<]/
+const LINK_CALL_RE = /\bdeclareLinkKind\s*[(<]/
+const LINKS_RE = /\blinks:\s*\{/
 const SECRET_FIELD_RE = /\b(?:password|secret|token|apiKey)\b|\.meta\(/i
 
-/** The text of the first `declareBrokerLinkKind(...)` call, parentheses balanced. */
+/** The text of the first `declareLinkKind(...)` call, parentheses balanced. */
 function linkCallText(source: string): string {
   const at = source.search(LINK_CALL_RE)
   if (at < 0) return ''
@@ -153,7 +152,7 @@ function linkCallText(source: string): string {
   return source.slice(open)
 }
 
-/** D1012: a broker-backed integration names its broker by id, through the generic primitive. */
+/** D1013 rule 5: a broker-backed integration names its broker by id, through the one link primitive. */
 export function findBrokerLinkViolations(
   entries: readonly DeviceAddonEntry[],
   sourceOf: (pkg: string) => string,
@@ -169,15 +168,21 @@ export function findBrokerLinkViolations(
     if (!LINK_CALL_RE.test(source)) {
       out.push({
         addon: entry.id,
-        message: `brings devices through a broker and does not declare its integration kind with declareBrokerLinkKind: an integration names its broker by id and owns none of its settings (D1012)`,
+        message: `brings devices through a broker and does not declare its integration kind with declareLinkKind: an integration names its broker by id and owns none of its settings (D1013)`,
       })
       continue
     }
     const call = linkCallText(source)
+    if (!LINKS_RE.test(call)) {
+      out.push({
+        addon: entry.id,
+        message: `its declareLinkKind kind names no links entry (links: { brokerId: <the broker target> }): the integration must name its broker by id (D1013)`,
+      })
+    }
     if (SECRET_FIELD_RE.test(call)) {
       out.push({
         addon: entry.id,
-        message: `its declareBrokerLinkKind link carries a password or secret field: credentials belong to the broker, never to its users (D1012)`,
+        message: `its declareLinkKind kind carries a password or secret field: credentials belong to the broker, never to its users (D1013)`,
       })
     }
   }

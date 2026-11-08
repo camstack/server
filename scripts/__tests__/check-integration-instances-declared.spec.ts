@@ -114,13 +114,13 @@ describe('exporters are multi-instance (D1009)', () => {
   })
 })
 
-describe('broker-backed integrations go through the generic primitive (D1012)', () => {
+describe('broker-backed integrations go through the generic primitive (D1013)', () => {
   const backed = entry('acct', ['device-adoption', 'broker', 'integration-instances'])
   const GOOD = `
-    export const kind = declareBrokerLinkKind({ title: 'x', writeTrigger: 'y', linkFields: { filter: z.string().optional() } })
+    export const kind = declareLinkKind({ name: 'connections', title: 'x', writeTrigger: 'y', links: { brokerId: { cap: 'broker', kind: 'matter' } }, fields: { filter: z.string().optional() } })
   `
 
-  it('passes an addon that declares its integration kind through declareBrokerLinkKind', () => {
+  it('passes an addon that declares its integration kind through declareLinkKind', () => {
     expect(findBrokerLinkViolations([backed], () => GOOD)).toEqual([])
   })
 
@@ -136,25 +136,41 @@ describe('broker-backed integrations go through the generic primitive (D1012)', 
     ).toEqual([])
   })
 
-  it('accepts the role a buildBrokerLinkInstances integration answers on its own', () => {
+  it('accepts declareLinkKind as the record kind of a migrated addon', () => {
     expect(
       findViolations(
-        [backed],
+        [entry('mqtt-ha', ['device-provider', 'integration-instances'])],
         [],
-        () => 'declareBrokerLinkKind({}) buildBrokerLinkInstances(records, {}) defineEntryKind(',
+        () => "declareLinkKind({ name: 'x' }) description: { role: 'devices' }",
       ),
     ).toEqual([])
+  })
+
+  it('refuses the retired declareBrokerLinkKind as a record kind', () => {
+    expect(
+      findBrokerLinkViolations([backed], () => 'declareBrokerLinkKind({ title: "x" })').map(
+        (v) => v.message,
+      ),
+    ).toEqual([expect.stringMatching(/declareLinkKind/)])
+  })
+
+  it('refuses a link kind that names no link', () => {
+    const found = findBrokerLinkViolations(
+      [backed],
+      () => "declareLinkKind({ name: 'c', title: 'x' })",
+    )
+    expect(found.map((v) => v.message)).toEqual([expect.stringMatching(/names no links entry/)])
   })
 
   it('refuses a broker-backed integration that does not use the primitive', () => {
     const found = findBrokerLinkViolations([backed], () => "defineEntryKind('brokers', {})")
     expect(found).toEqual([
-      { addon: 'acct', message: expect.stringMatching(/declareBrokerLinkKind/) },
+      { addon: 'acct', message: expect.stringMatching(/declareLinkKind/) },
     ])
   })
 
   it('refuses a link field that is a password or any secret', () => {
-    const secret = `declareBrokerLinkKind({ title: 'x', writeTrigger: 'y', linkFields: { password: z.string().meta({ secret: true }) } })`
+    const secret = `declareLinkKind({ name: 'c', links: { brokerId: { cap: 'broker' } }, fields: { password: z.string().meta({ secret: true }) } })`
     const found = findBrokerLinkViolations([backed], () => secret)
     expect(found.map((v) => v.message)).toEqual([expect.stringMatching(/password|secret/)])
   })
