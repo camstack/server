@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Removed the unused 'assumed' media player labels from the translations.
+- The Customize running-state form pre-fills a media player's power threshold with its own faster dwell defaults
 
 ## [1.2.615] - 2026-11-08
 

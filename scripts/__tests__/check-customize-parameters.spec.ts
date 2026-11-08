@@ -41,6 +41,9 @@ describe('customize parameter projection', () => {
     expect(runningJson).toContain('"lte"')
     expect(runningJson).toContain('"defaultStartDwellMs":30000')
     expect(runningJson).toContain('"defaultStopDwellMs":180000')
+    expect(runningJson).toContain(
+      '"media-player":{"startDwellMs":10000,"stopDwellMs":10000,"minSamples":1}',
+    )
 
     const doorbellJson = JSON.stringify(projectCustomize(doorbell))
     expect(doorbellJson).toContain('"defaultEdge":"rising"')

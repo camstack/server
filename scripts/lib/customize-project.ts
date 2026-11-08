@@ -195,7 +195,11 @@ function projectField(
 }
 
 function projectTrait(trait: KeyedArrayTraitSpec): CustomizeCatalogTrait {
-  return { path: trait.path, values: trait.values, defaultValue: trait.defaultValue }
+  return {
+    path: trait.path,
+    values: trait.values,
+    defaultValue: trait.defaultValue,
+  }
 }
 
 interface ListedLiterals {
@@ -204,7 +208,12 @@ interface ListedLiterals {
 
 function listedLiterals(literals: readonly KeyedArrayLiteralSpec[] | undefined): ListedLiterals {
   if (literals === undefined || literals.length === 0) return {}
-  return { literals: literals.map((literal) => ({ path: literal.path, values: literal.values })) }
+  return {
+    literals: literals.map((literal) => ({
+      path: literal.path,
+      values: literal.values,
+    })),
+  }
 }
 
 function identity(
@@ -254,6 +263,9 @@ function projectTransform(transform: CustomizeTransformSpec): CustomizeCatalogTr
         defaultThreshold: transform.defaultThreshold,
         defaultStartDwellMs: transform.defaultStartDwellMs,
         defaultStopDwellMs: transform.defaultStopDwellMs,
+        ...(transform.deviceTypeDefaults !== undefined
+          ? { deviceTypeDefaults: transform.deviceTypeDefaults }
+          : {}),
         ...(transform.thresholdUnit !== undefined
           ? { thresholdUnit: transform.thresholdUnit }
           : {}),

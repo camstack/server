@@ -1,6 +1,7 @@
 /**
  * A new scalar draft takes its numbers from the catalog declaration (D944).
  */
+import { DeviceType } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { defaultScalarTransform, type ScalarTransformDraft } from '../scalar-form'
 import type { ScalarFieldFit } from '../scalar-fit'
@@ -16,7 +17,15 @@ describe('defaultScalarTransform', () => {
       valueKind: 'number',
       sourceUnit: null,
       transforms: ['linear'],
-      declared: [{ kind: 'linear', defaultScale: 1, defaultOffset: 0, clampMin: 0, clampMax: 100 }],
+      declared: [
+        {
+          kind: 'linear',
+          defaultScale: 1,
+          defaultOffset: 0,
+          clampMin: 0,
+          clampMax: 100,
+        },
+      ],
     }
     expect(draftOf(fit)).toEqual({
       kind: 'linear',
@@ -47,6 +56,46 @@ describe('defaultScalarTransform', () => {
     expect(draftOf(fit)).toEqual({
       kind: 'threshold',
       comparison: 'lte',
+      threshold: 5,
+      startDwellMs: 30_000,
+      stopDwellMs: 180_000,
+    })
+  })
+  it('a media player starts from its own dwell and sample defaults', () => {
+    const fit: ScalarFieldFit = {
+      ok: true,
+      valueKind: 'number',
+      sourceUnit: 'W',
+      transforms: ['threshold'],
+      declared: [
+        {
+          kind: 'threshold',
+          comparisons: ['gte', 'lte'],
+          comparison: 'gte',
+          defaultThreshold: 5,
+          defaultStartDwellMs: 30_000,
+          defaultStopDwellMs: 180_000,
+          deviceTypeDefaults: {
+            [DeviceType.MediaPlayer]: {
+              startDwellMs: 10_000,
+              stopDwellMs: 10_000,
+              minSamples: 1,
+            },
+          },
+        },
+      ],
+    }
+    expect(defaultScalarTransform(fit, DeviceType.MediaPlayer)).toEqual({
+      kind: 'threshold',
+      comparison: 'gte',
+      threshold: 5,
+      startDwellMs: 10_000,
+      stopDwellMs: 10_000,
+      minSamples: 1,
+    })
+    expect(defaultScalarTransform(fit, DeviceType.Washer)).toEqual({
+      kind: 'threshold',
+      comparison: 'gte',
       threshold: 5,
       startDwellMs: 30_000,
       stopDwellMs: 180_000,

@@ -127,6 +127,11 @@ function thresholdGaps(
   if (projected.defaultStopDwellMs !== declared.defaultStopDwellMs) {
     gaps.push(`${where}.defaultStopDwellMs`)
   }
+  if (
+    JSON.stringify(projected.deviceTypeDefaults) !== JSON.stringify(declared.deviceTypeDefaults)
+  ) {
+    gaps.push(`${where}.deviceTypeDefaults`)
+  }
   if (projected.thresholdUnit !== declared.thresholdUnit) gaps.push(`${where}.thresholdUnit`)
   return gaps
 }

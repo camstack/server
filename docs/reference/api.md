@@ -4261,7 +4261,7 @@
 
 ### `running-state` → `runningState.*`
 
-- **Source:** `packages/types/src/capabilities/running-state.cap.ts:112`
+- **Source:** `packages/types/src/capabilities/running-state.cap.ts:114`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, hub, light, siren, switch, sensor, thermostat, climate, button, event-emitter, update, generic, notifier, script, automation, lock, cover, valve, humidifier, water-heater, fan, media-player, alarm-panel, control, presence, weather, vacuum, lawn-mower, container, image, pet-feeder, pet-fountain, dishwasher, washer, heater, dryer, gateway`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IRunningStateProvider`

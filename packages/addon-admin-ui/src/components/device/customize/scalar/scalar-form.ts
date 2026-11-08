@@ -6,6 +6,7 @@ import {
   type CompositionFieldsFeature,
   type CompositionSourceRef,
   type CustomizeCatalogTransform,
+  DeviceType,
   type ScalarCompileInput,
   compileScalarOverride,
   tryConvertUnit,
@@ -62,14 +63,22 @@ function conversionDraft(
   return { kind: 'linear', scale: at1 - at0, offset: at0, ...clamp }
 }
 
-export function defaultScalarTransform(fit: ScalarFieldFit): ScalarTransformDraft {
+/** A picker row carries its type as a plain string; this narrows it to the enum without a cast. */
+export function deviceTypeOf(type: string | undefined): DeviceType | undefined {
+  return Object.values(DeviceType).find((known) => known === type)
+}
+
+export function defaultScalarTransform(
+  fit: ScalarFieldFit,
+  deviceType?: DeviceType,
+): ScalarTransformDraft {
   if (fit.conversion !== undefined && fit.transforms.includes('linear')) {
     return conversionDraft(fit, fit.conversion)
   }
   if (fit.transforms.includes('identity')) return { kind: 'identity' }
   if (fit.transforms.includes('threshold')) {
     const declared = declaredOf(fit.declared, 'threshold')
-    if (declared !== null) return draftFromDeclared(declared)
+    if (declared !== null) return draftFromDeclared(declared, deviceType)
   }
   if (fit.transforms.includes('linear')) {
     const declared = declaredOf(fit.declared, 'linear')
@@ -78,20 +87,26 @@ export function defaultScalarTransform(fit: ScalarFieldFit): ScalarTransformDraf
   return { kind: 'invert' }
 }
 
-export function draftFromDeclared(transform: CustomizeCatalogTransform): ScalarTransformDraft {
+export function draftFromDeclared(
+  transform: CustomizeCatalogTransform,
+  deviceType?: DeviceType,
+): ScalarTransformDraft {
   switch (transform.kind) {
     case 'identity':
       return { kind: 'identity' }
     case 'invert':
       return { kind: 'invert' }
-    case 'threshold':
+    case 'threshold': {
+      const own = deviceType === undefined ? undefined : transform.deviceTypeDefaults?.[deviceType]
       return {
         kind: 'threshold',
         comparison: transform.comparison,
         threshold: transform.defaultThreshold,
-        startDwellMs: transform.defaultStartDwellMs,
-        stopDwellMs: transform.defaultStopDwellMs,
+        startDwellMs: own?.startDwellMs ?? transform.defaultStartDwellMs,
+        stopDwellMs: own?.stopDwellMs ?? transform.defaultStopDwellMs,
+        ...(own === undefined ? {} : { minSamples: own.minSamples }),
       }
+    }
     case 'linear':
       return linearDraft(transform)
     case 'enum-map':

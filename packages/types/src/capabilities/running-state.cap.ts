@@ -4,6 +4,7 @@ import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 import {
+  RUNNING_POWER_DEFAULTS_BY_TYPE,
   RUNNING_POWER_START_DELAY_MS,
   RUNNING_POWER_STOP_DELAY_MS,
   RUNNING_POWER_THRESHOLD_WATTS,
@@ -86,6 +87,7 @@ const runningCustomize = {
               defaultThreshold: RUNNING_POWER_THRESHOLD_WATTS,
               defaultStartDwellMs: RUNNING_POWER_START_DELAY_MS,
               defaultStopDwellMs: RUNNING_POWER_STOP_DELAY_MS,
+              deviceTypeDefaults: RUNNING_POWER_DEFAULTS_BY_TYPE,
               thresholdUnit: 'W',
             },
           ],

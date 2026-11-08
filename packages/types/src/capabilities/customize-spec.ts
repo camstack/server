@@ -130,8 +130,20 @@ export interface ThresholdTransformSpec {
   readonly defaultThreshold: number
   readonly defaultStartDwellMs: number
   readonly defaultStopDwellMs: number
+  /** Dwell numbers for a device type that differs from the defaults above. */
+  readonly deviceTypeDefaults?: ThresholdDeviceTypeDefaults
   readonly thresholdUnit?: string
 }
+
+export interface ThresholdDwellDefaults {
+  readonly startDwellMs: number
+  readonly stopDwellMs: number
+  readonly minSamples: number
+}
+
+export type ThresholdDeviceTypeDefaults = Readonly<
+  Partial<Record<DeviceType, ThresholdDwellDefaults>>
+>
 
 export interface LinearTransformSpec {
   readonly kind: 'linear'

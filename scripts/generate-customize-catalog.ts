@@ -106,12 +106,29 @@ function printObject(value: PlainRecord, indent: number): string {
   if (entries.length === 0) return '{}'
   const pad = ' '.repeat(indent + 2)
   const inner = entries
-    .map(
-      ([key, item]) =>
-        `${pad}${key}: ${key === 'deviceTypes' ? printDeviceTypes(item) : print(item, indent + 2)}`,
-    )
+    .map(([key, item]) => `${pad}${key}: ${printMember(key, item, indent)}`)
     .join(',\n')
   return `{\n${inner},\n${' '.repeat(indent)}}`
+}
+
+/** A record keyed by device type: the key prints as `[DeviceType.X]`, never a bare hyphenated name. */
+function printDeviceTypeRecord(value: unknown, indent: number): string {
+  if (!isPlain(value)) throw new Error('customize catalog: deviceTypeDefaults is not an object')
+  const pad = ' '.repeat(indent + 2)
+  const inner = Object.entries(value)
+    .map(([type, item]) => {
+      const key = DEVICE_TYPE_KEYS.get(type)
+      if (key === undefined) throw new Error(`customize catalog: \`${type}\` is not a DeviceType`)
+      return `${pad}[DeviceType.${key}]: ${print(item, indent + 2)}`
+    })
+    .join(',\n')
+  return `{\n${inner},\n${' '.repeat(indent)}}`
+}
+
+function printMember(key: string, item: unknown, indent: number): string {
+  if (key === 'deviceTypes') return printDeviceTypes(item)
+  if (key === 'deviceTypeDefaults') return printDeviceTypeRecord(item, indent + 2)
+  return print(item, indent + 2)
 }
 
 function printDeviceTypes(value: unknown): string {

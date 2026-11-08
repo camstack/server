@@ -28,6 +28,7 @@ import { ScalarTransformControls } from '../scalar/ScalarTransformControls'
 import { fieldUnit, type ScalarFieldFit, scalarFieldFit } from '../scalar/scalar-fit'
 import {
   defaultScalarTransform,
+  deviceTypeOf,
   type ScalarTransformDraft,
   scalarControl,
 } from '../scalar/scalar-form'
@@ -222,6 +223,7 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
         : null,
     [capIndex, compatible, fleet, props.hostId],
   )
+  const hostDeviceType = deviceTypeOf(fleet.find((row) => row.id === props.hostId)?.type)
   const listState = listStateOf(devices.status, capIndex)
   const deviceId = props.device?.id ?? 0
   const wireable = useDeviceManagerGetWireableFields({ deviceId })
@@ -357,6 +359,7 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
           props.destination.targetId,
           props.kind === 'scalar' ? (props.field?.cap ?? '') : '',
         )}
+        hostDeviceType={hostDeviceType}
         value={props.transform}
         onChange={props.onTransformChange}
       />
@@ -377,7 +380,9 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       props.preview
     ) : chosenRow === undefined ? undefined : (
       <p data-testid="source-preview-reads" className="text-[11px] text-foreground-muted">
-        {t('customize.sourceSelector.sourceReads', { value: chosenRow.currentText })}
+        {t('customize.sourceSelector.sourceReads', {
+          value: chosenRow.currentText,
+        })}
       </p>
     )
   return (
@@ -385,7 +390,9 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       testId="source-selector"
       deviceListTestId={devicePickerTestId}
       fillHeight={fillHeight}
-      heading={t('customize.sourceSelector.pickDevice', { title: props.destination.title })}
+      heading={t('customize.sourceSelector.pickDevice', {
+        title: props.destination.title,
+      })}
       devices={compatibleDeviceItems}
       listState={listState}
       suggestions={
@@ -433,7 +440,8 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
           pick.cap,
           pick.path,
         )
-        if (nextFit !== null && nextFit.ok) props.onTransformChange(defaultScalarTransform(nextFit))
+        if (nextFit !== null && nextFit.ok)
+          props.onTransformChange(defaultScalarTransform(nextFit, hostDeviceType))
       }}
       valuesBefore={pickedList}
       valuesOverride={

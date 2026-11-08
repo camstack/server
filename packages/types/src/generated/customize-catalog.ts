@@ -643,6 +643,13 @@ export const CAP_CUSTOMIZE_CATALOG = {
                 defaultThreshold: 5,
                 defaultStartDwellMs: 30000,
                 defaultStopDwellMs: 180000,
+                deviceTypeDefaults: {
+                  [DeviceType.MediaPlayer]: {
+                    startDwellMs: 10000,
+                    stopDwellMs: 10000,
+                    minSamples: 1,
+                  },
+                },
                 thresholdUnit: 'W',
               },
             ],

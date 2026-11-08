@@ -2,7 +2,7 @@
  * Transform controls generated from the declaration: invert, threshold
  * with named watt defaults, or linear scale.
  */
-import type { CustomizeCatalogTransform } from '@camstack/types'
+import type { CustomizeCatalogTransform, DeviceType } from '@camstack/types'
 import { Checkbox, Input, Select } from '@camstack/ui-library'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -21,6 +21,8 @@ export interface ScalarTransformControlsProps {
   readonly unit: string | null
   /** Samples the compiler uses when the draft sets none; shown in the Samples field. */
   readonly defaultSamples?: number
+  /** The device the override lands on: a type with its own dwell defaults starts from them. */
+  readonly hostDeviceType?: DeviceType
   readonly value: ScalarTransformDraft
   readonly onChange: (next: ScalarTransformDraft) => void
 }
@@ -31,6 +33,7 @@ export function ScalarTransformControls({
   declared,
   unit,
   defaultSamples = 1,
+  hostDeviceType,
   value,
   onChange,
 }: ScalarTransformControlsProps): ReactNode {
@@ -49,7 +52,9 @@ export function ScalarTransformControls({
             value: kind,
             label: t(`customize.scalar.transform.${kind}`),
           }))}
-          onChange={(event) => onChange(transformOfKind(event.target.value, declared))}
+          onChange={(event) =>
+            onChange(transformOfKind(event.target.value, declared, hostDeviceType))
+          }
         />
       )}
       {value.kind === 'invert' || (control === 'invert' && value.kind !== 'threshold') ? (
@@ -82,9 +87,10 @@ export function ScalarTransformControls({
 function transformOfKind(
   kind: string,
   declared: readonly CustomizeCatalogTransform[],
+  deviceType: DeviceType | undefined,
 ): ScalarTransformDraft {
   const match = declaredOf(declared, kindOf(kind))
-  if (match !== null) return draftFromDeclared(match)
+  if (match !== null) return draftFromDeclared(match, deviceType)
   if (kind === 'invert') return { kind: 'invert' }
   return { kind: 'identity' }
 }
@@ -201,7 +207,11 @@ function LinearFields({ declared, value, onChange }: LinearFieldsProps): ReactNo
           label={t('customize.scalar.clampMin')}
           value={value.clampMin ?? bounds.min}
           onChange={(clampMin) =>
-            onChange({ ...value, clampMin, clampMax: value.clampMax ?? bounds.max })
+            onChange({
+              ...value,
+              clampMin,
+              clampMax: value.clampMax ?? bounds.max,
+            })
           }
         />
       )}
@@ -210,7 +220,11 @@ function LinearFields({ declared, value, onChange }: LinearFieldsProps): ReactNo
           label={t('customize.scalar.clampMax')}
           value={value.clampMax ?? bounds.max}
           onChange={(clampMax) =>
-            onChange({ ...value, clampMin: value.clampMin ?? bounds.min, clampMax })
+            onChange({
+              ...value,
+              clampMin: value.clampMin ?? bounds.min,
+              clampMax,
+            })
           }
         />
       )}

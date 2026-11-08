@@ -14,6 +14,7 @@ import type {
   CustomizeOverrideRule,
   CustomizeSourceReport,
   CustomizeValueKind,
+  ThresholdDeviceTypeDefaults,
 } from './customize-spec.js'
 
 export type CustomizeCatalogValueKind = 'boolean' | 'number' | 'string' | 'enum'
@@ -28,6 +29,7 @@ export type CustomizeCatalogTransform =
       readonly defaultThreshold: number
       readonly defaultStartDwellMs: number
       readonly defaultStopDwellMs: number
+      readonly deviceTypeDefaults?: ThresholdDeviceTypeDefaults
       readonly thresholdUnit?: string
     }
   | {
