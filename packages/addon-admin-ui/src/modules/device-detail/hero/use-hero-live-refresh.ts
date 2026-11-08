@@ -1,4 +1,4 @@
-import { useDeviceProxy, useSystem } from '@camstack/ui-library'
+import { useDeviceProxy, useTrpcClient } from '@camstack/ui-library'
 import { useEffect } from 'react'
 
 const COALESCE_MS = 250
@@ -22,8 +22,8 @@ function isSubscribable(value: unknown): value is Subscribable {
  * instead of polling. Bursts of pushes collapse into one refetch.
  */
 export function useHeroLiveRefresh(deviceId: number, refetch: () => unknown): void {
-  const system = useSystem()
-  const dev = useDeviceProxy(system.trpcClient, deviceId)
+  const client = useTrpcClient()
+  const dev = useDeviceProxy(client, deviceId)
   useEffect(() => {
     if (dev === null) return undefined
     let timer: ReturnType<typeof setTimeout> | null = null

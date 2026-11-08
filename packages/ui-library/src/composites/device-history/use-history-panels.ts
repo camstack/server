@@ -9,7 +9,7 @@
  */
 import { useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useSystem } from '../../contexts/system-context'
+import { useTrpcClient } from '../../contexts/system-context'
 import {
   EMPTY_HISTORY_PANELS,
   HISTORY_PANELS_NAMESPACE,
@@ -34,7 +34,7 @@ interface StoredRow {
 }
 
 export function useHistoryPanels(): HistoryPanelsState {
-  const client = useSystem().trpcClient
+  const client = useTrpcClient()
   const qc = useQueryClient()
   const q = useQuery({
     queryKey: QUERY_KEY,

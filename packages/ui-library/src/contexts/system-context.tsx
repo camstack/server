@@ -13,7 +13,7 @@
  * own it because addon UIs may want to construct the System
  * differently (e.g. against a remote cluster).
  */
-import { useContext, type ReactNode, type JSX } from 'react'
+import { createContext, useContext, type ReactNode, type JSX } from 'react'
 import type { System } from '@camstack/sdk'
 import { createSharedContext } from '../lib/shared-context'
 
@@ -55,4 +55,36 @@ export function useSystem(): System {
  */
 export function useOptionalSystem(): System | null {
   return useContext(SystemContext)
+}
+
+/** The tRPC client of a `System` — the one door a props-only module needs. */
+export type SystemTrpcClient = System['trpcClient']
+
+const TrpcClientContext = createContext<SystemTrpcClient | null>(null)
+
+/**
+ * Publishes a bare tRPC client for the hooks that only read through it. A module
+ * mounted without a `System` (a WebView, a standalone page) wraps itself in this;
+ * where a `<SystemProvider>` exists the client is read from it.
+ */
+export function TrpcClientProvider({
+  client,
+  children,
+}: {
+  readonly client: SystemTrpcClient
+  readonly children: ReactNode
+}): JSX.Element {
+  return <TrpcClientContext.Provider value={client}>{children}</TrpcClientContext.Provider>
+}
+
+/**
+ * The tRPC client: a surrounding `<TrpcClientProvider>` wins, else the
+ * `System`'s. Throws when neither is mounted.
+ */
+export function useTrpcClient(): SystemTrpcClient {
+  const own = useContext(TrpcClientContext)
+  const sys = useContext(SystemContext)
+  if (own !== null) return own
+  if (sys === null) throw new Error('useTrpcClient(): no <TrpcClientProvider> or <SystemProvider>')
+  return sys.trpcClient
 }

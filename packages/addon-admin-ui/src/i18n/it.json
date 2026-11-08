@@ -11896,5 +11896,8 @@
     "empty": "Nessuna griglia di camere",
     "emptyHint": "Aggiungi una griglia per riunire piu camere in una.",
     "add": "Aggiungi griglia"
+  },
+  "deviceModule": {
+    "history": "Storico"
   }
 }

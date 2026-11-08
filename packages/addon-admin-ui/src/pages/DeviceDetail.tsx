@@ -46,6 +46,7 @@ import {
   usePowerSourcePowerOn,
   useRebootReboot,
   useSystem,
+  useThemeMode,
   VodPlaybackProvider,
   ZoneEditingProvider,
   useDeviceLabel,
@@ -77,7 +78,8 @@ import { CameraFunctionSwitches } from '../components/device/CameraFunctionSwitc
 import { DeviceAdminLinkButton } from '../components/device/DeviceAdminLinkButton'
 import { ChildrenList } from '../components/device/ChildrenList'
 import { DeviceHero } from '../components/device/hero/HeroRegistry'
-import { ModelHero } from '../components/device/hero/model/ModelHero'
+import { DeviceDetailModule } from '../modules/device-detail'
+import { heroLang } from '../modules/device-detail/hero/hero-model-view'
 import { heroDrawnWidgets } from '../components/device/hero/hero-drawn-widgets'
 import { DeviceHeroWidgets } from '../components/device/hero/DeviceHeroWidgets'
 import { heroWidgets } from '../components/device/hero/hero-widgets'
@@ -175,7 +177,8 @@ const COMMON_SHORTCUTS: readonly CommonShortcutConfig[] = [
 // ---------------------------------------------------------------------------
 
 export function DeviceDetailPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const { resolvedMode } = useThemeMode()
   const uiText = useUiText()
   const params = useParams<{ deviceId: string }>()
   const deviceId = Number(params.deviceId)
@@ -470,7 +473,10 @@ export function DeviceDetailPage() {
     // tabs. The dedup keeps the FIRST entry for a given id, so the container's
     // own tab always wins a collision and a child tab only fills a gap.
     for (const t of [
-      ...structuralTabsFor(deviceTypeStr, isAdmin),
+      ...structuralTabsFor(deviceTypeStr, isAdmin).filter(
+        // The module's hero opens History itself (D1023): a drawn hero owns it.
+        (tab) => !(tab.id === HISTORY_TAB_ID && modelDrawn && !isCamera),
+      ),
       ...addonTabs,
       ...childAddonTabs,
     ]) {
@@ -480,7 +486,7 @@ export function DeviceDetailPage() {
       out.push(t)
     }
     return out
-  }, [deviceTypeStr, isAdmin, addonTabs, childAddonTabs, showConfigTab])
+  }, [deviceTypeStr, isAdmin, addonTabs, childAddonTabs, showConfigTab, modelDrawn, isCamera])
 
   // Effective active tab — the desired id from the URL if (and only if)
   // it's present in the available `tabs`, else 'overview'. We do NOT
@@ -1342,12 +1348,18 @@ export function DeviceDetailPage() {
                         // A plain wrapper: the hero's `h-full` must not resolve
                         // against the slot, or it claims the widgets' height too.
                         <div>
-                          <ModelHero
+                          <DeviceDetailModule
                             deviceId={deviceId}
-                            deviceName={name}
+                            trpcClient={system.trpcClient}
+                            queryClient={queryClient}
+                            theme={resolvedMode}
+                            locale={heroLang(i18n.language)}
                             canActuate={isAdmin}
-                            onOpenHistory={() => handleTabClick(HISTORY_TAB_ID)}
+                            defaultHistoryOpen={searchParams.get('tab') === HISTORY_TAB_ID}
                             onDrawn={setModelDrawn}
+                            onOpenDevice={(id) => navigate(`/devices/${String(id)}`)}
+                            onOpenCamera={(id) => navigate(`/devices/${String(id)}`)}
+                            onNavigate={(path) => navigate(path)}
                             fallback={
                               <DeviceHero
                                 deviceId={deviceId}
@@ -1362,7 +1374,9 @@ export function DeviceDetailPage() {
                           {/* The hero block's own sections (D915): consumables
                               sit right under the hero card, in the same slot, so
                               they are in view on every tab. */}
-                          <DeviceHeroWidgets deviceId={deviceId} widgets={heroSectionWidgets} />
+                          {modelDrawn ? null : (
+                            <DeviceHeroWidgets deviceId={deviceId} widgets={heroSectionWidgets} />
+                          )}
                         </div>
                       )}
                     </div>

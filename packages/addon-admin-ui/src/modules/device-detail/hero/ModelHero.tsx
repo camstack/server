@@ -5,11 +5,11 @@ import {
   useConfirm,
   useDeviceManagerGetBindings,
   useHeroLayoutGetHeroModel,
-  useSystem,
+  useTrpcClient,
 } from '@camstack/ui-library'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { RemoteHeroButton } from '../../../remote/RemoteHeroButton'
+import { RemoteHeroButton } from '../../../components/remote/RemoteHeroButton'
 import { callHeroAction } from './call-hero-action'
 import { HeroModelCard } from './HeroModelCard'
 import { heroLang, heroModelCovers } from './hero-model-view'
@@ -46,7 +46,6 @@ const confirmKey = (kind: HeroConfirm): string =>
 
 export interface ModelHeroProps {
   readonly deviceId: number
-  readonly deviceName: string
   readonly canActuate: boolean
   /** Drawn while the model does not cover the device (or could not be read). */
   readonly fallback: ReactNode
@@ -63,14 +62,13 @@ export interface ModelHeroProps {
  */
 export function ModelHero({
   deviceId,
-  deviceName,
   canActuate,
   fallback,
   onOpenHistory,
   onDrawn,
 }: ModelHeroProps): ReactNode {
   const { t, i18n } = useTranslation()
-  const system = useSystem()
+  const client = useTrpcClient()
   const confirm = useConfirm()
   const alert = useAlertIfAvailable()
   const [busy, setBusy] = useState(false)
@@ -99,7 +97,7 @@ export function ModelHero({
         const nodeId = bindings.data?.entries.find((e) => e.capName === call.cap)?.providerNodeId
         setBusy(true)
         try {
-          await callHeroAction(system.trpcClient, call, deviceId, nodeId)
+          await callHeroAction(client, call, deviceId, nodeId)
           await model.refetch()
         } catch (err) {
           await alert?.({
@@ -112,7 +110,7 @@ export function ModelHero({
         }
       })()
     },
-    [alert, bindings.data, confirm, deviceId, model, system.trpcClient, t],
+    [alert, bindings.data, confirm, deviceId, model, client, t],
   )
 
   const drawn =
@@ -154,7 +152,7 @@ export function ModelHero({
           run,
           ...(onOpenHistory === undefined ? {} : { openHistory: onOpenHistory }),
         }}
-        remote={<RemoteHeroButton deviceId={deviceId} deviceName={deviceName} />}
+        remote={<RemoteHeroButton deviceId={deviceId} deviceName={built.name} />}
       />
     </div>
   )

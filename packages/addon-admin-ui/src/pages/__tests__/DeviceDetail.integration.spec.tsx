@@ -46,6 +46,7 @@ vi.mock('@camstack/ui-library', async () => {
   return {
     ...actual,
     useSystem: () => ({ trpcClient: {} }),
+    useThemeMode: () => ({ resolvedMode: 'light' }),
     useDeviceManagerGetDevice: ({ deviceId }: { deviceId: number }) => ({
       data: deviceId === DEVICE.id ? DEVICE : undefined,
       isLoading: false,
@@ -77,6 +78,7 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
+vi.mock('../../modules/device-detail', () => ({ DeviceDetailModule: () => null }))
 vi.mock('../../hooks/useDevice', () => ({ useDeviceChildren: () => ({ data: [] }) }))
 vi.mock('../../components/device/CameraFunctionSwitches', () => ({
   CameraFunctionSwitches: () => null,

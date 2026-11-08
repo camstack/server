@@ -17,8 +17,11 @@ export type { AccountUnitPreferencesState } from './hooks/use-account-unit-prefe
 export {
   SystemProvider,
   type SystemProviderProps,
+  type SystemTrpcClient,
+  TrpcClientProvider,
   useOptionalSystem,
   useSystem,
+  useTrpcClient,
 } from './contexts/system-context'
 export * from './contexts/vod-playback'
 export {

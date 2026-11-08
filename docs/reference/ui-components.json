@@ -13225,6 +13225,13 @@
       "summary": "Shared typed React Query proxy for the backend AppRouter."
     },
     {
+      "name": "TrpcClientProvider",
+      "kind": "component",
+      "area": "contexts",
+      "file": "packages/ui-library/src/contexts/system-context.tsx",
+      "summary": "Publishes a bare tRPC client for the hooks that only read through it. A module mounted without a `System` (a WebView, a standalone page) wraps itself in this; where a `<SystemProvider>` exists the client is read from it."
+    },
+    {
       "name": "typedToStored",
       "kind": "function",
       "area": "composites",
@@ -13998,6 +14005,13 @@
       "area": "theme",
       "file": "packages/ui-library/src/theme/use-theme-mode.ts",
       "summary": ""
+    },
+    {
+      "name": "useTrpcClient",
+      "kind": "hook",
+      "area": "contexts",
+      "file": "packages/ui-library/src/contexts/system-context.tsx",
+      "summary": "The tRPC client: a surrounding `<TrpcClientProvider>` wins, else the `System`'s. Throws when neither is mounted."
     },
     {
       "name": "useUiText",

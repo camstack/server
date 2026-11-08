@@ -12,7 +12,7 @@ import type {
   DeviceHistoryQueryManyItem,
   DeviceHistorySeriesInfo,
 } from '@camstack/types'
-import { useSystem } from '../../contexts/system-context'
+import { useTrpcClient } from '../../contexts/system-context'
 import { useCapabilityPresence, type CapabilityPresence } from '../../hooks/use-capability-presence'
 import { readHistory, type HistoryReader } from './history-reads'
 import { HISTORY_WINDOW_MS, previousWindow, type HistoryWindow } from './history-window'
@@ -43,7 +43,7 @@ export function anchorNow(now: number, spanMs: number): number {
 
 /** The tRPC client as the two doors `readHistory` needs. */
 export function useHistoryReader(): HistoryReader {
-  const client = useSystem().trpcClient
+  const client = useTrpcClient()
   return useMemo<HistoryReader>(
     () => ({
       queryMany: (input) => client.deviceHistory.queryMany.query(input),
@@ -59,7 +59,7 @@ export function useDeviceSeriesList(deviceId: number): {
   readonly list: HistoryStage<readonly DeviceHistorySeriesInfo[]>
 } {
   const presence = useCapabilityPresence('device-history')
-  const client = useSystem().trpcClient
+  const client = useTrpcClient()
   const q = useQuery({
     queryKey: ['device-history', 'listSeries', deviceId],
     queryFn: () => client.deviceHistory.listSeries.query({ deviceId }),

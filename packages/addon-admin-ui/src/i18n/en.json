@@ -11874,5 +11874,8 @@
     "empty": "No camera grids yet",
     "emptyHint": "Add a grid to compose several cameras into one.",
     "add": "Add grid"
+  },
+  "deviceModule": {
+    "history": "History"
   }
 }
