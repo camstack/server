@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   ErrorBox,
+  RemoteControl,
   useCapabilityPresence,
   useRemoteGetAssumedStatus,
   useRemoteGetConfig,
@@ -21,7 +22,6 @@ import {
   useRemoteSendCommand,
   useTemplateList,
 } from '@camstack/ui-library'
-import { Gamepad2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { layoutOf } from './layout-model'
@@ -45,7 +45,7 @@ export function RemoteHeroButton({ deviceId, deviceName }: RemoteHeroButtonProps
   return (
     <div className="flex flex-wrap items-center justify-center gap-1">
       <Button size="sm" variant="outline" onClick={() => setOpen(true)} data-testid="hero-remote">
-        <Gamepad2 className="h-3.5 w-3.5" aria-hidden />
+        <RemoteControl className="h-3.5 w-3.5" aria-hidden />
         {t('remote.hero.open')}
       </Button>
       {open && (

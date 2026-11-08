@@ -4,8 +4,7 @@
  * "not configured" only from a config read that answered.
  */
 import type { DeviceInfo } from '@camstack/types'
-import { Button, useRemoteGetConfig, useTemplateList } from '@camstack/ui-library'
-import { Gamepad2 } from 'lucide-react'
+import { Button, RemoteControl, useRemoteGetConfig, useTemplateList } from '@camstack/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CustomizeCard } from '../device/customize/CustomizeCard'
@@ -31,7 +30,7 @@ export function RemoteExtensionCard({ device }: RemoteExtensionCardProps): React
     <CustomizeCard
       id="remote"
       title={t('remote.card.title')}
-      icon={Gamepad2}
+      icon={RemoteControl}
       testId="customize-remote"
       actions={
         <>

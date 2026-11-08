@@ -9593,6 +9593,13 @@
       "summary": "Install (or replace) one language of one namespace. Subscribers re-render."
     },
     {
+      "name": "RemoteControl",
+      "kind": "constant",
+      "area": "icons",
+      "file": "packages/ui-library/src/icons/remote-control.ts",
+      "summary": "Handset remote control: body, a round top button and a 2x2 key pad."
+    },
+    {
       "name": "renderMarkup",
       "kind": "function",
       "area": "i18n",

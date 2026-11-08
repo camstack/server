@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Remote button shows a remote-control icon.
+
 ## [1.2.405] - 2026-11-08
 
 ### Changed
