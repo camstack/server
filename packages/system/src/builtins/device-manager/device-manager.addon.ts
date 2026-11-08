@@ -94,6 +94,10 @@ import { deviceManagerRecordKinds } from './record-kinds.js'
 import { DeviceRowStore, deviceRowBackendOf } from './device-row-store.js'
 import { createDeviceStateClaimMethods } from './device-state-claims.js'
 import { DeviceStateMirror } from './device-state-mirror.js'
+import {
+  startDeviceTransitions,
+  type DeviceTransitionsHandle,
+} from './transitions/transitions-wiring.js'
 import { FieldClaimsIndex } from './field-claims-index.js'
 import * as syncResolvers from './device-sync-resolvers.js'
 import { createMigrationGuard } from './migrate-guard.js'
@@ -144,6 +148,9 @@ export class DeviceManagerAddon extends BaseAddon {
    * `ctx`); `null` before initialise / when `ctx.settings` is absent.
    */
   private stateMirrorImpl: DeviceStateMirror | null = null
+
+  /** The transition audit (D1022): command + mirror correlation, shipped to device-history. */
+  private transitions: DeviceTransitionsHandle | null = null
 
   /**
    * Removes the claimed-status overlay this addon installed on the capability
@@ -242,7 +249,10 @@ export class DeviceManagerAddon extends BaseAddon {
       holdMirrorWrites: (deviceIds, settings) =>
         this.stateMirror.holdDiskWrites(deviceIds, settings),
       mirrorOwnedCaps: (deviceId) => this.stateMirror.ownedCaps(deviceId),
-      forgetMirrorDevice: (deviceId) => this.stateMirror.forgetDevice(deviceId),
+      forgetMirrorDevice: (deviceId) => {
+        this.transitions?.forgetDevice(deviceId)
+        return this.stateMirror.forgetDevice(deviceId)
+      },
       resolveDeviceOnline: (deviceId, fallbackOnline) =>
         this.stateMirror.resolveDeviceOnline(deviceId, fallbackOnline),
       resolveDeviceProbed: (deviceId) => this.stateMirror.resolveDeviceProbed(deviceId),
@@ -674,6 +684,15 @@ export class DeviceManagerAddon extends BaseAddon {
     // Runtime-state mirror + debounced disk writer.
     this.stateMirrorImpl = new DeviceStateMirror(this.ctx)
     const stateMirror = this.stateMirrorImpl
+    this.transitions = startDeviceTransitions({
+      mirror: stateMirror,
+      logger: this.ctx.logger.child('transitions'),
+      record: async (transitions) => {
+        const api = this.ctx.api
+        if (api === undefined) throw new Error('ctx.api not ready')
+        await api.deviceTransitions.record.mutate({ transitions: [...transitions] })
+      },
+    })
     // The claims index, BEFORE any provider method can seed a device (S6): a
     // loaded index lets an unclaimed device's status read and native write
     // skip the row read. It never lets a ROW WRITE skip it — the writer reads
@@ -1197,6 +1216,8 @@ export class DeviceManagerAddon extends BaseAddon {
   }
 
   protected async onShutdown(): Promise<void> {
+    await this.transitions?.stop()
+    this.transitions = null
     this.removalCleanupImpl?.dispose()
     this.removalCleanupImpl = null
     this.removalHooksCleanupImpl?.dispose()

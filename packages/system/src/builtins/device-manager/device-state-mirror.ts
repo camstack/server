@@ -102,7 +102,16 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }
 
+/** Told of a native slice that changed: the slice before (if any) and the one stored now. */
+export type SliceChangeTap = (
+  deviceId: number,
+  capName: string,
+  prior: Readonly<Record<string, unknown>> | undefined,
+  slice: Readonly<Record<string, unknown>>,
+) => void
+
 export class DeviceStateMirror {
+  private transitionTap: SliceChangeTap | null = null
   /**
    * Hub-side mirror of every device's cap-keyed NATIVE runtime state — what the
    * provider wrote. Key: deviceId. Value: per-cap slice map. Empty by default —
@@ -162,6 +171,16 @@ export class DeviceStateMirror {
     })
   }
 
+  /** Set once by the device-manager: told, after the mirror stored it, of every native slice that actually changed (D1022). */
+  setTransitionTap(tap: SliceChangeTap | null): void {
+    this.transitionTap = tap
+  }
+
+  /** The native slice the mirror holds for `capName`, as a read-only view. */
+  currentSlice(deviceId: number, capName: string): Readonly<Record<string, unknown>> | undefined {
+    return this.stateMirror.get(deviceId)?.get(capName)
+  }
+
   /**
    * Single-cap mirror update — diff against the current mirror,
    * persist the new slice in-memory, emit `DeviceStateChanged` for
@@ -186,6 +205,7 @@ export class DeviceStateMirror {
     const prior = perCap.get(capName)
     if (prior && shallowEqual(prior, slice)) return false
     perCap.set(capName, { ...slice })
+    this.transitionTap?.(deviceId, capName, prior, slice)
     const claim = this.claims.claim(deviceId, capName)
     if (claim) {
       // The native changed; consumers see the merge over it, emitted whenever
