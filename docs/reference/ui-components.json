@@ -7715,7 +7715,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/media-player-hero-card.tsx",
-      "summary": "MediaPlayerHeroCard — the state of a MediaPlayer device and every control it exposes, drawn from `deriveMediaPlayerView` (the state → view mapping and its spec live in `media-player-view.ts`)."
+      "summary": "MediaPlayerHeroCard — the state of a MediaPlayer device and every control it exposes, drawn from `deriveMediaPlayerView` (the state → view mapping and its spec live in `@camstack/types` (`media-player-view.ts`))."
     },
     {
       "name": "MediaPlayerInlineControl",

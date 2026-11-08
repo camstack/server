@@ -37,7 +37,7 @@ import {
   type NowPlayingView,
   type PositionStampedStatus,
   type PowerView,
-} from './media-player-view'
+} from '@camstack/types'
 
 // ── Cap surface ───────────────────────────────────────────────────────────────
 // Named cap type; the accessor performs the documented cap-access boundary
@@ -302,7 +302,7 @@ function ModeFlag({ label, active, testId, children }: ModeFlagProps): ReactNode
 /**
  * MediaPlayerHeroCard — the state of a MediaPlayer device and every control it
  * exposes, drawn from `deriveMediaPlayerView` (the state → view mapping and
- * its spec live in `media-player-view.ts`).
+ * its spec live in `@camstack/types` (`media-player-view.ts`)).
  *
  *  - Power orb: glowing when on, amber in standby, flat when off, dashed with a
  *    question mark while the state is unknown (never drawn as off). It is the

@@ -7,7 +7,7 @@
 import { HelpCircle, Loader2, Pause, Power } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { cn } from '../../lib/cn'
-import type { PowerView, RunningView } from './media-player-view'
+import type { PowerView, RunningView } from '@camstack/types'
 
 export const MEDIA_HERO_KEYFRAMES = `
 @keyframes mph-eq { 0%, 100% { transform: scaleY(.3) } 50% { transform: scaleY(1) } }

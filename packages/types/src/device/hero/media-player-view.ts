@@ -57,10 +57,8 @@ export interface NowPlayingView {
 }
 
 /**
- * A status that may carry the instant its `position` was read (ms epoch). The field is
- * added to the media-player cap on branch alexa-echo-p0p1 (commit c91f746b4); until that
- * lands the type here reads it optionally, and a status without it keeps the position
- * where it was reported.
+ * A status that may carry the instant its `position` was read (ms epoch); a status
+ * without it keeps the position where it was reported.
  */
 export type PositionStampedStatus = MediaPlayerStatus & {
   readonly positionUpdatedAt?: number | null
