@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.807 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.808 | the update itself | — |
 
 ## Framework (4)
 
@@ -80,7 +80,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-smtp-nodemailer` | `packages/addon-smtp-nodemailer` | 1.2.153 | addons dir | SMTP email provider addon for CamStack — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons. |
 | `@camstack/addon-static-turn` | `packages/addon-static-turn` | 1.2.146 | addons dir | Static / self-hosted (coturn) TURN provider for CamStack |
 | `@camstack/addon-tailscale` | `packages/addon-tailscale` | 1.2.154 | addons dir | Tailscale bundle for CamStack — joins the host to a tailnet (client) and exposes the hub via Serve/Funnel (ingress). Multi-entry npm package shipping 2 addons under a single bundle. |
-| `@camstack/addon-terminal` | `packages/addon-terminal` | 0.1.161 | addons dir | Interactive terminal sessions (pty + xterm) as a CamStack addon |
+| `@camstack/addon-terminal` | `packages/addon-terminal` | 0.1.162 | addons dir | Interactive terminal sessions (pty + xterm) as a CamStack addon |
 | `@camstack/addon-training` | `packages/addon-training` | 0.1.135 | addons dir | Cloud training for CamStack: fine-tune the root detector on your own frames, on your own GPU-cloud account |
 | `@camstack/addon-waste-collections` | `packages/addon-waste-collections` | 0.1.40 | addons dir | Waste collection schedules via the vendored HACS waste_collection_schedule Python core — full source catalog as calendar-source. |
 | `@camstack/server-framework` | `packages/system` | _private_ | addons dir | Source of the kernel + builtins. Private workspace: its built dist ships inside the @camstack/server tarball as @camstack/server/system. |

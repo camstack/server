@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.808] - 2026-11-08
+
 ### Changed
 
 - An infrared TV (media-player with a remote) now publishes its assumed power state as its own state, so the hero no longer shows State unknown and the power button is enabled
