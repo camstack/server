@@ -52,9 +52,22 @@ export interface RemoteAssumptionStore {
   write(deviceId: number, state: RemoteAssumedState): Promise<void>
 }
 
+/**
+ * The device's `media-player` runtime slice, written through the standard
+ * runtime-state path. The slice is a PROJECTION of `assumedStatus` — the one
+ * computation `getStatus` is also answered from — so there is no second cache.
+ */
+export interface RemoteSliceWriter {
+  /** The devices that carry a remote configuration. */
+  devices(): Promise<readonly number[]>
+  /** Writes the slice; a no-op when it already says the same. */
+  publish(deviceId: number, status: MediaPlayerStatus): Promise<void>
+}
+
 export interface RemoteServiceDeps {
   readonly store: RemoteConfigStore
   readonly assumptions: RemoteAssumptionStore
+  readonly slice: RemoteSliceWriter
   /** Runs the action a role is bound to. Throws when the call fails. */
   invoke(call: CapCall): Promise<void>
   templateExists(templateId: string): Promise<boolean>
@@ -188,6 +201,32 @@ export class RemoteService implements IRemoteProvider {
   }
 
   /**
+   * Writes the device's `media-player` slice from `assumedStatus`, but only
+   * when the remote is what answers for it: a media player, no native source
+   * reading it, and a power state the remote knows. A failed write is logged,
+   * never thrown — the next input change or send is the retry (D3).
+   */
+  async refreshSlice(deviceId: number): Promise<void> {
+    try {
+      if (!(await this.deps.isMediaPlayer(deviceId))) return
+      if ((await this.deps.reportedStatus(deviceId)) !== null) return
+      const status = await this.statusOf(deviceId, false)
+      if (status === null) return
+      await this.deps.slice.publish(deviceId, status)
+    } catch (err: unknown) {
+      this.deps.logger.warn('remote: the media-player slice could not be written', {
+        tags: { deviceId },
+        meta: { error: errorText(err) },
+      })
+    }
+  }
+
+  /** Registration and an input change (plug, running-state): every remote device. */
+  async refreshSlices(): Promise<void> {
+    for (const deviceId of await this.deps.slice.devices()) await this.refreshSlice(deviceId)
+  }
+
+  /**
    * What the remote ASSUMES (the last power and mute it sent), or null when it
    * knows neither. No plug, no running-state: that is `assumedStatus`.
    */
@@ -198,7 +237,7 @@ export class RemoteService implements IRemoteProvider {
     const assumedFields: MediaPlayerAssumedField[] = []
     if (kept.power !== null) assumedFields.push('state')
     if (kept.muted !== null) assumedFields.push('isMuted')
-    return this.statusOf({
+    return this.buildStatus({
       state: kept.power?.state ?? 'standby',
       assumedFields,
       muted: kept.muted?.value ?? null,
@@ -215,8 +254,13 @@ export class RemoteService implements IRemoteProvider {
    * the assumption, and only while the device may be on.
    */
   async assumedStatus(deviceId: number): Promise<MediaPlayerStatus | null> {
+    return this.statusOf(deviceId, true)
+  }
+
+  /** `forget`: whether a plug that is off drops the kept power guess (a read's side effect). */
+  private async statusOf(deviceId: number, forget: boolean): Promise<MediaPlayerStatus | null> {
     const kept = await this.readAssumed(deviceId)
-    const truth = await this.powerTruth(deviceId)
+    const truth = await this.powerTruth(deviceId, forget)
     if (truth === null) return null
     const assumedFields: MediaPlayerAssumedField[] = truth.assumed ? ['state'] : []
     const state = truth.state
@@ -224,7 +268,7 @@ export class RemoteService implements IRemoteProvider {
     const mute = state === 'off' ? null : (kept.muted ?? null)
     if (mute !== null) assumedFields.push('isMuted')
     const config = await this.deps.store.read(deviceId)
-    return this.statusOf({
+    return this.buildStatus({
       state,
       assumedFields,
       muted: mute?.value ?? null,
@@ -233,7 +277,7 @@ export class RemoteService implements IRemoteProvider {
     })
   }
 
-  private statusOf(input: {
+  private buildStatus(input: {
     readonly state: MediaPlayerStatus['state']
     readonly assumedFields: readonly MediaPlayerAssumedField[]
     readonly muted: boolean | null
@@ -305,7 +349,10 @@ export class RemoteService implements IRemoteProvider {
    * standby; on contradicts an assumed `off`, which is dropped); then the
    * remote's own assumption; a plug on with nothing sent is `standby`.
    */
-  private async powerTruth(deviceId: number): Promise<{
+  private async powerTruth(
+    deviceId: number,
+    forget = true,
+  ): Promise<{
     readonly state: MediaPlayerStatus['state']
     readonly assumed: boolean
     readonly at: number
@@ -315,7 +362,8 @@ export class RemoteService implements IRemoteProvider {
     const plug = await this.deps.plugOn(deviceId)
     const kept = await this.readAssumed(deviceId)
     if (plug === false) {
-      if (kept.power !== null) await this.deps.assumptions.write(deviceId, { ...kept, power: null })
+      if (forget && kept.power !== null)
+        await this.deps.assumptions.write(deviceId, { ...kept, power: null })
       return { state: 'off', assumed: false, at: this.now() }
     }
     const keptPower = plug === true && kept.power?.state === 'off' ? null : kept.power
@@ -360,6 +408,7 @@ export class RemoteService implements IRemoteProvider {
         ...kept,
         muted: { value: muted, at: this.now() },
       })
+      await this.refreshSlice(deviceId)
     }
     return result
   }
@@ -411,6 +460,7 @@ export class RemoteService implements IRemoteProvider {
       }
     }
     await this.moveAssumption(deviceId, role, wantsState)
+    await this.refreshSlice(deviceId)
     return { status: 'sent', sends: times }
   }
 

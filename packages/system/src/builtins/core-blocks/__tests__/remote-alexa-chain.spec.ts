@@ -54,6 +54,7 @@ function chain() {
     reportedStatus: async () => null,
     runningState: async () => null,
     plugOn: async () => null,
+    slice: { devices: async () => [], publish: async () => undefined },
     assumptions: { read: async () => null, write: async () => undefined },
     logger: recordingLogger().logger,
   })

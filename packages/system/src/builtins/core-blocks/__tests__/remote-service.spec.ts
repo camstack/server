@@ -69,6 +69,10 @@ function world(
   /** The fake clock a send is stamped with; `sleep` is the only thing that moves it. */
   const clock = { at: 0 }
   const sentAt: number[] = []
+  const published: {
+    readonly deviceId: number
+    readonly status: MediaPlayerStatus
+  }[] = []
   const deps: RemoteServiceDeps = {
     store: {
       read: async () => stored,
@@ -97,11 +101,18 @@ function world(
         kept.current = next
       },
     },
+    slice: {
+      devices: async () => [TV],
+      publish: async (deviceId, status) => {
+        published.push({ deviceId, status })
+      },
+    },
     logger: recordingLogger().logger,
     now: () => 5,
   }
   return {
     service: new RemoteService(deps),
+    published,
     calls,
     sentAt,
     stored: () => stored,
@@ -644,7 +655,9 @@ describe('RemoteService — ONE power truth for the status and the toggle guard'
       plug: true,
       assumptions: { current: { power: { state: 'off', at: 1 }, muted: null } },
     })
-    expect(await stale.service.assumedStatus(TV)).toMatchObject({ state: 'standby' })
+    expect(await stale.service.assumedStatus(TV)).toMatchObject({
+      state: 'standby',
+    })
   })
 
   it('the toggle guard sees the plug off, so a turnOff is skipped as already off', async () => {
@@ -656,5 +669,68 @@ describe('RemoteService — ONE power truth for the status and the toggle guard'
     })
     expect(result).toMatchObject({ status: 'skipped' })
     expect(w.calls).toHaveLength(0)
+  })
+})
+
+describe('RemoteService — the device media-player slice is written, not only answered', () => {
+  const tvConfig = config({
+    power: { mode: 'toggle' },
+    bindings: { power: ir('power') },
+  })
+
+  it('seeds the slice at registration from the assumed status', async () => {
+    const w = world(tvConfig, { plug: true })
+    await w.service.refreshSlices()
+    expect(w.published).toHaveLength(1)
+    expect(w.published[0]).toMatchObject({
+      deviceId: TV,
+      status: {
+        state: 'standby',
+        stateSource: 'assumed',
+        assumedFields: ['state'],
+      },
+    })
+  })
+
+  it('writes nothing when the remote knows no power state', async () => {
+    const w = world(tvConfig)
+    await w.service.refreshSlices()
+    expect(w.published).toEqual([])
+  })
+
+  it('writes nothing when a native source reads the device', async () => {
+    const w = world(tvConfig, {
+      plug: true,
+      reported: nativeStatus('playing'),
+    })
+    await w.service.refreshSlices()
+    expect(w.published).toEqual([])
+  })
+
+  it('patches the slice after an accepted power send', async () => {
+    const w = world(tvConfig, { plug: true })
+    await w.service.refreshSlices()
+    await w.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 })
+    expect(w.published.at(-1)).toMatchObject({
+      deviceId: TV,
+      status: { state: 'on', stateSource: 'assumed' },
+    })
+  })
+
+  it('does not touch the slice when the send was refused', async () => {
+    const w = world(tvConfig, { plug: true, failOn: 1 })
+    await w.service.refreshSlices()
+    const before = w.published.length
+    await w.service.sendCommand({ deviceId: TV, role: 'power', repeat: 1 })
+    expect(w.published).toHaveLength(before)
+  })
+
+  it('follows the plug when it changes', async () => {
+    const plugState = { current: true as boolean | null }
+    const w = world(tvConfig, { plugState })
+    await w.service.refreshSlices()
+    plugState.current = false
+    await w.service.refreshSlices()
+    expect(w.published.at(-1)).toMatchObject({ status: { state: 'off' } })
   })
 })

@@ -39,6 +39,7 @@ function world(config: RemoteConfig, native = false) {
     reportedStatus: async () => null,
     runningState: async () => null,
     plugOn: async () => null,
+    slice: { devices: async () => [], publish: async () => undefined },
     sleep: async (ms) => {
       clock.at += ms
     },
@@ -123,6 +124,7 @@ describe('remoteCallRedirect — precedence at dispatch (D963)', () => {
       reportedStatus: async () => null,
       runningState: async () => null,
       plugOn: async () => null,
+      slice: { devices: async () => [], publish: async () => undefined },
       assumptions: { read: async () => null, write: async () => undefined },
       logger: recordingLogger().logger,
     })

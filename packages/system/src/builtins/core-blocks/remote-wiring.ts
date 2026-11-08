@@ -32,6 +32,7 @@ import {
   RemoteService,
   type RemoteAssumptionStore,
   type RemoteConfigStore,
+  type RemoteSliceWriter,
 } from './remote-service.js'
 import { TemplatesService, type TemplateUsage } from './templates-service.js'
 
@@ -105,7 +106,9 @@ export function remoteAssumptionStoreOver(
       return null
     },
     write: async (deviceId, state: RemoteAssumedState) => {
-      await settings.writeDeviceStore(deviceId, { [REMOTE_ASSUMED_STORE_KEY]: state })
+      await settings.writeDeviceStore(deviceId, {
+        [REMOTE_ASSUMED_STORE_KEY]: state,
+      })
     },
   }
 }
@@ -212,6 +215,53 @@ export function reportedStatusOver(
   }
 }
 
+/** The cap whose runtime slice the remote writes for a device no native source reads. */
+const MEDIA_PLAYER_CAP = 'media-player'
+
+/** A slice says the same when only its change stamp moved. */
+function sameStatus(a: MediaPlayerStatus, b: MediaPlayerStatus): boolean {
+  return JSON.stringify({ ...a, lastChangedAt: 0 }) === JSON.stringify({ ...b, lastChangedAt: 0 })
+}
+
+/**
+ * The standard runtime-state path (`deviceState.setCapSlice`, the entry every
+ * `setCapState` reaches). The current slice is read back from the hub, never
+ * kept here, so a write that would change nothing is skipped without a cache.
+ */
+export function remoteSliceWriterOver(
+  settings: Pick<DeviceSettings, 'readDeviceStoreBatch' | 'listDeviceStoreIds'>,
+  api: () => AddonApi | undefined,
+): RemoteSliceWriter {
+  return {
+    devices: async () => {
+      const ids = await settings.listDeviceStoreIds()
+      if (ids.length === 0) return []
+      const rows = await settings.readDeviceStoreBatch(ids)
+      const carrying: number[] = []
+      for (const [deviceId, row] of rows) {
+        if (RemoteConfigSchema.safeParse(row[REMOTE_STORE_KEY]).success) carrying.push(deviceId)
+      }
+      return carrying
+    },
+    publish: async (deviceId, status) => {
+      const current = api()
+      if (current === undefined) throw new Error('no ctx.api on this node')
+      const kept = MediaPlayerStatusSchema.safeParse(
+        await current.deviceState.getCapSlice.query({
+          deviceId,
+          capName: MEDIA_PLAYER_CAP,
+        }),
+      )
+      if (kept.success && sameStatus(kept.data, status)) return
+      await current.deviceState.setCapSlice.mutate({
+        deviceId,
+        capName: MEDIA_PLAYER_CAP,
+        slice: { ...status },
+      })
+    },
+  }
+}
+
 export function buildRemoteRuntime(deps: RemoteRuntimeDeps): RemoteRuntime {
   const templateRows = deps.records.kind(coreBlocksRecordKinds.templates)
   const templates = new TemplatesService({
@@ -231,9 +281,49 @@ export function buildRemoteRuntime(deps: RemoteRuntimeDeps): RemoteRuntime {
     runningState: runningStateOver(deps.api, deps.logger.child('remote')),
     plugOn: plugOnOver(deps.api, deps.logger.child('remote')),
     assumptions: remoteAssumptionStoreOver(deps.settings, deps.logger.child('remote')),
+    slice: remoteSliceWriterOver(deps.settings, deps.api),
     logger: deps.logger.child('remote'),
     ...(deps.sleep === undefined ? {} : { sleep: deps.sleep }),
     ...(deps.now === undefined ? {} : { now: deps.now }),
   })
   return { templates, remote }
+}
+
+/** The caps whose change moves the assumed state: the plug's switch and a running-state reading. */
+export const REMOTE_SLICE_INPUT_CAPS: ReadonlySet<string> = new Set(['switch', 'running-state'])
+
+const SEED_MAX_ATTEMPTS = 5
+const SEED_RETRY_DELAY_MS = 5_000
+
+/**
+ * Seeds every remote device's slice. The device registry answers only after
+ * boot, so a first read may find it not ready: a failed read changes nothing
+ * (D49) and is tried again a bounded number of times.
+ */
+export async function armRemoteSliceSeed(
+  remote: Pick<RemoteService, 'refreshSlices'>,
+  logger: IScopedLogger,
+  options: { readonly isDisposed: () => boolean },
+): Promise<void> {
+  for (let attempt = 1; attempt <= SEED_MAX_ATTEMPTS; attempt += 1) {
+    if (options.isDisposed()) return
+    try {
+      await remote.refreshSlices()
+      return
+    } catch (error) {
+      if (attempt === SEED_MAX_ATTEMPTS) {
+        logger.warn(
+          'remote: the media-player slices could not be seeded; the next input change will',
+          {
+            meta: {
+              attempts: attempt,
+              error: error instanceof Error ? error.message : String(error),
+            },
+          },
+        )
+        return
+      }
+      await new Promise<void>((resolve) => setTimeout(resolve, SEED_RETRY_DELAY_MS))
+    }
+  }
 }
