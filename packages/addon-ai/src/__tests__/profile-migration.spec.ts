@@ -20,64 +20,15 @@ import { aiRecordKinds } from '../record-kinds.js'
 import { readAllRows } from '../record-pages.js'
 import { makeAiRecords } from './support/fake-records.js'
 
-const KEY = 'fake-key-migration-0001'
-/** A value nothing else in the suite uses, so finding it proves it SURVIVED. */
-const MARK = 'marked-7f3a'
-
-const COMMON = {
-  addonId: 'ai',
-  enabled: true,
-  supportsVision: true,
-  temperature: 0.3,
-  topK: 17,
-  systemPrompt: `be brief ${MARK}`,
-  timeoutMs: 61_000,
-  connectTimeoutMs: 11_000,
-  firstTokenTimeoutMs: 121_000,
-  idleTimeoutMs: 59_000,
-  retry: { enabled: true, maxAttempts: 3 },
-  toolsEnabled: true,
-}
-
-const FLAT_HTTP = {
-  ...COMMON,
-  name: 'flat anthropic',
-  kind: 'anthropic',
-  model: 'claude-x',
-  baseUrl: `https://gw.example.com/${MARK}/v1`,
-  extraHeaders: { 'x-mark': MARK },
-}
-
-const RUNTIME = {
-  nodeId: `agent-${MARK}`,
-  engine: 'llama-cpp',
-  model: { kind: 'catalog', catalogId: 'qwen-mark' },
-  extraArgs: ['--jinja'],
-  contextSize: 8192,
-  gpuLayers: 33,
-  parallel: 2,
-  flashAttention: true,
-  mlock: false,
-  noMmap: false,
-  autoStart: true,
-  idleStopMinutes: 12,
-}
-
-const FLAT_MANAGED = {
-  ...COMMON,
-  name: 'flat managed',
-  kind: 'managed-local',
-  model: 'qwen-mark',
-  runtime: RUNTIME,
-}
-
-const FLAT_APPLE = {
-  ...COMMON,
-  name: 'flat apple',
-  kind: 'apple-foundation',
-  model: 'apple-system',
-  appleFoundation: { nodeId: `mac-${MARK}` },
-}
+import {
+  FLAT_APPLE,
+  FLAT_HTTP,
+  FLAT_MANAGED,
+  KEY,
+  MARK,
+  COMMON,
+  RUNTIME,
+} from '../migrations/__fixtures__/seed.js'
 
 async function seeded() {
   const world = await makeAiRecords()

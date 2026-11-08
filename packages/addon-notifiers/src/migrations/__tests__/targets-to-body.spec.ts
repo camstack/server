@@ -20,6 +20,11 @@ import {
 import { describe, expect, it } from 'vitest'
 import { notifierDescriptors, notifiersRecordKinds } from '../../record-kinds.js'
 import { TargetStore } from '../../target-store.js'
+import {
+  LEGACY_FOREIGN_TARGET,
+  LEGACY_TARGET_TOKEN,
+  LEGACY_TELEGRAM_TARGET,
+} from '../__fixtures__/seed.js'
 import { ADDON_MIGRATIONS, oldTargetKinds, OLD_TARGETS_KIND, TARGETS_TO_BODY_ID } from '../index.js'
 
 const silentLogger: IScopedLogger = {
@@ -65,7 +70,7 @@ function ledgerHost(): {
   return { host, outcomes }
 }
 
-const TOKEN = 'tg-token-MARK-8f31'
+const TOKEN = LEGACY_TARGET_TOKEN
 
 async function world() {
   const memory = makeInMemoryRecords('notifiers')
@@ -98,16 +103,7 @@ async function world() {
 describe('notifiers targets-to-body', () => {
   it('moves a switched-off Telegram target: token reads back equal, stays off, keeps its id', async () => {
     const w = await world()
-    await w.oldKind.put({
-      id: 'tg-1',
-      data: {
-        name: 'Phone',
-        kind: 'telegram',
-        addonId: 'notifiers',
-        enabled: false,
-        config: { botToken: TOKEN, chatId: '42' },
-      },
-    })
+    await w.oldKind.put({ id: LEGACY_TELEGRAM_TARGET.id, data: LEGACY_TELEGRAM_TARGET.data })
     const { host, outcomes } = ledgerHost()
     expect((await w.run(host)).failed).toEqual([])
     const moved = await w.store.getById('tg-1')
@@ -127,16 +123,7 @@ describe('notifiers targets-to-body', () => {
 
   it('a rerun is already-done and a row of a kind this addon does not serve stays', async () => {
     const w = await world()
-    await w.oldKind.put({
-      id: 'x-1',
-      data: {
-        name: 'Other',
-        kind: 'unknown-kind',
-        addonId: 'notifiers',
-        enabled: true,
-        config: {},
-      },
-    })
+    await w.oldKind.put({ id: LEGACY_FOREIGN_TARGET.id, data: LEGACY_FOREIGN_TARGET.data })
     const first = ledgerHost()
     await w.run(first.host)
     expect(first.outcomes.get(TARGETS_TO_BODY_ID)).toMatchObject({
