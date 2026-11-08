@@ -231,7 +231,15 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
 
   /** The kind an instance body is of: the provider's `kindOf`, else its one declared kind. */
   private kindOfBody(body: TBody): string {
-    if (this.hooks.kindOf !== undefined) return this.hooks.kindOf(body)
+    if (this.hooks.kindOf !== undefined) {
+      const id = this.hooks.kindOf(body)
+      if (!this.hooks.description.kinds.some((declared) => declared.id === id)) {
+        throw new Error(
+          `record kind '${this.kind.name}': kindOf returned '${id}', which describe().kinds does not declare (D1013)`,
+        )
+      }
+      return id
+    }
     const only = this.hooks.description.kinds[0]
     if (only === undefined) throw new Error(`record kind '${this.kind.name}' declares no kinds`)
     return only.id

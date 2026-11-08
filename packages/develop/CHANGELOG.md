@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The addon scaffolds for an integration, a service and an exporter now declare their instance kind, so a generated addon loads
+
 ## [0.1.50] - 2026-11-08
 
 ### Changed

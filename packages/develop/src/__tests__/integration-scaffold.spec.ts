@@ -185,3 +185,21 @@ describe('scaffold exporter', () => {
     expect(fs.readFileSync(file, 'utf8')).toContain('padStart(3')
   })
 })
+
+describe('scaffolded providers declare their kinds (D1013)', () => {
+  it.each([
+    ['device-integration', "functionCap: 'device-provider'"],
+    ['service-integration', "functionCap: 'integration-instances'"],
+    ['exporter', "functionCap: 'device-export'"],
+  ] as const)('%s emits a one-entry kinds[] in describe()', (kind, functionCap) => {
+    const text = allText(scaffold(kind).sources)
+    expect(text).toMatch(/kinds:\s*\[\s*\{[^\]]*id:/)
+    expect(text).toContain(functionCap)
+  })
+
+  it('the exporter keeps kindOf and names the same id in kinds[]', () => {
+    const text = allText(scaffold('exporter').sources)
+    expect(text).toContain('kindOf: () =>')
+    expect(text).toMatch(/kinds:\s*\[\{ id: \w+_TARGET_KIND,/)
+  })
+})

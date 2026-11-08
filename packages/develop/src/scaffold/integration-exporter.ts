@@ -99,6 +99,8 @@ export function open<%= className %>Targets(
         instanceMode: 'multiple',
         kind: 'target',
         canTest: true,
+        // The one kind this provider serves; kindOf below stamps it on every instance.
+        kinds: [{ id: <%= className %>_TARGET_KIND, label: '<%= displayName %>', functionCap: 'device-export', role: 'services' }],
       },
       formSchema: () => build<%= className %>TargetForm('<%= fileName %>'),
       initialBody: (name): <%= className %>TargetBody => ({ name, devices: [] }),

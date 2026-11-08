@@ -54,6 +54,35 @@ describe('check-instances-kinds-declared', () => {
     expect(found[0]?.message).toContain('no functionCap')
   })
 
+  it('refuses a package where one RecordIntegrationInstances declares kinds and its sibling does not', () => {
+    const source = `
+      const a = new RecordIntegrationInstances(records, kindA, {
+        description: { role: 'services', instanceMode: 'multiple', kind: 'a', canTest: false,
+          kinds: [{ id: 'a', label: 'A', functionCap: 'device-provider' }] },
+        configured: () => true,
+      })
+      const b = new RecordIntegrationInstances(records, kindB, {
+        description: { role: 'services', instanceMode: 'multiple', kind: 'b', canTest: false },
+        configured: () => true,
+      })`
+    const found = findKindsViolations(
+      [entry('two', ['integration-instances', 'device-provider'])],
+      () => source,
+    )
+    expect(found).toHaveLength(1)
+    expect(found[0]?.message).toContain('RecordIntegrationInstances construction')
+  })
+
+  it('follows a description passed as a module constant, and passes two providers that both declare kinds', () => {
+    const source = `
+      const D: IntegrationInstanceDescription = { role: 'services', kinds: [{ id: 'a', label: 'A', functionCap: 'device-provider' }] }
+      new RecordIntegrationInstances(records, kindA, { description: D, configured: () => true })
+      new RecordIntegrationInstances(records, kindB, { description: { kinds: [{ id: 'b', label: 'B', functionCap: 'device-provider' }] }, configured: () => true })`
+    expect(
+      findKindsViolations([entry('two', ['integration-instances', 'device-provider'])], () => source),
+    ).toEqual([])
+  })
+
   it('reads a package as one provider: the entries of one package share their sections', () => {
     const entries = [
       entry('ha', ['integration-instances', 'broker', 'device-provider'], 'ha'),

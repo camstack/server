@@ -121,6 +121,26 @@ describe('integration-instances additive fields (P2)', () => {
     ).toThrow(/kindOf is required/)
   })
 
+  it('refuses an instance whose kindOf names a kind describe() does not declare', async () => {
+    const world = makeInMemoryRecords('spec-addon')
+    await world.records.declare({ 'spec-kinds': kind })
+    const instances = new RecordIntegrationInstances<Body>(world.records, kind, {
+      formSchema: () => ({ sections: [] }),
+      initialBody: (name: string): Body => ({ name, adapter: 'ghost' }),
+      configured: () => true,
+      kindOf: (body) => body.adapter,
+      description: {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'x',
+        canTest: false,
+        kinds: [{ id: 'a', label: 'A', functionCap: 'broker' }],
+      },
+    })
+    await instances.createInstance({ id: 'g1', name: 'Ghost' })
+    await expect(instances.getInstance({ id: 'g1' })).rejects.toThrow(/'ghost'/)
+  })
+
   it('mints the id in the provider when the caller sends none, and keeps the kind', async () => {
     const { instances } = await setup(true)
     const created = await instances.createInstance({ name: 'One', kind: 'b' })

@@ -45,7 +45,8 @@ export const SECTION_CAPS: ReadonlySet<string> = new Set([
 const FUNCTION_CAP_RE = /\bfunctionCap:\s*['"]([^'"]+)['"]/g
 /** `buildNotificationTargetInstances` and `notificationTargetParts` declare the kinds themselves. */
 const KINDS_DECL_RE =
-  /\bkinds:\s*\[|\bcomposeInstanceKinds\s*\(|\bbuildNotificationTargetInstances\s*\(|\bnotificationTargetParts\s*\(/
+  /\bkinds:\s*[[A-Za-z_$]|\bcomposeInstanceKinds\s*\(|\bbuildNotificationTargetInstances\s*\(|\bnotificationTargetParts\s*\(/
+const RECORD_SITE_RE = /\bnew\s+RecordIntegrationInstances\b/g
 const KINDS_ARRAY_RE = /\bkinds:\s*\[/g
 const BOTH_RE = /\b(?:role|integrationRole):\s*['"]both['"]/
 
@@ -60,6 +61,47 @@ function arrayText(source: string, open: number): string {
     }
   }
   return source.slice(open)
+}
+
+/** The text of the parenthesised call whose `(` is the first one at or after `from`. */
+function callText(source: string, from: number): string {
+  const open = source.indexOf('(', from)
+  if (open < 0) return ''
+  let depth = 0
+  for (let i = open; i < source.length; i += 1) {
+    if (source[i] === '(') depth += 1
+    else if (source[i] === ')') {
+      depth -= 1
+      if (depth === 0) return source.slice(open, i + 1)
+    }
+  }
+  return source.slice(open)
+}
+
+/** The text of the braced object that opens at the first `{` at or after `from`. */
+function braceText(source: string, from: number): string {
+  const open = source.indexOf('{', from)
+  if (open < 0) return ''
+  let depth = 0
+  for (let i = open; i < source.length; i += 1) {
+    if (source[i] === '{') depth += 1
+    else if (source[i] === '}') {
+      depth -= 1
+      if (depth === 0) return source.slice(open, i + 1)
+    }
+  }
+  return source.slice(open)
+}
+
+/**
+ * The call text, plus the initialiser of a `description: NAME` constant it passes by name (the
+ * description is often a module constant shared with `describe()`).
+ */
+function siteText(source: string, call: string): string {
+  const named = /\bdescription:\s*([A-Za-z_$][\w$]*)\s*[,}\n]/.exec(call)
+  if (named === null) return call
+  const def = new RegExp(`\\b(?:const|let)\\s+${named[1] ?? ''}\\b[^=]*=`).exec(source)
+  return def === null ? call : `${call}\n${braceText(source, def.index + def[0].length)}`
 }
 
 /** The top-level `{ ... }` entries of an array text. */
@@ -133,6 +175,18 @@ export function findKindsViolations(
             })
           }
         }
+      }
+    }
+    // Every `new RecordIntegrationInstances` declares its own kinds: one provider that does
+    // must not cover a sibling that does not (D1013 rule 1).
+    for (const site of source.matchAll(RECORD_SITE_RE)) {
+      const call = callText(source, (site.index ?? 0) + site[0].length)
+      if (!KINDS_DECL_RE.test(siteText(source, call))) {
+        const line = source.slice(0, site.index ?? 0).split('\n').length
+        out.push({
+          addon: entry.addon,
+          message: `a RecordIntegrationInstances construction (source line ${line} of the package) declares no kinds in its description (D1013 rule 1)`,
+        })
       }
     }
     for (const match of source.matchAll(KINDS_ARRAY_RE)) {

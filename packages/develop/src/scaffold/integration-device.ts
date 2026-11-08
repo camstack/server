@@ -71,6 +71,8 @@ export function build<%= className %>Instances(
         instanceMode: 'multiple',
         kind: 'server',
         canTest: true,
+        // The one kind this provider serves; its functionCap is the cap an instance of it feeds.
+        kinds: [{ id: 'server', label: '<%= displayName %>', functionCap: 'device-provider', role: 'devices' }],
       },
       formSchema: () => build<%= className %>ConnectionForm(),
       initialBody: (name): <%= className %>ConnectionBody => ({ name }),
