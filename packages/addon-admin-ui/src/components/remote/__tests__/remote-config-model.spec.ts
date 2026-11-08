@@ -17,6 +17,7 @@ import {
   draftIssues,
   draftOfSource,
   importSmartIr,
+  irSourceSummary,
   moveSource,
   newSourceId,
   setBinding,
@@ -334,5 +335,85 @@ describe('remote-config-model: sources', () => {
     expect(sourceIssues(setStepDelay(WITH_KEYS, 3001)).stepDelay).not.toBeNull()
     expect(sourceIssues(setStepDelay(WITH_KEYS, Number.NaN)).stepDelay).not.toBeNull()
     expect(checkForSave(setStepDelay(WITH_KEYS, 50)).config).toBeNull()
+  })
+})
+
+describe('remote-config-model: infrared sources (planning#464)', () => {
+  const base = { ...EMPTY_REMOTE_CONFIG, defaultTransmitterId: 7 }
+  const irDraft = {
+    ...BLANK_SOURCE_DRAFT,
+    kind: 'ir' as const,
+    name: 'HDMI 2',
+    transmitterId: 7,
+    encoding: 'raw' as const,
+    code: '[9000, -4500, 560,-560]',
+    carrierKhz: '38',
+  }
+
+  it('reads a typed raw train, in brackets or not, into a payload with its carrier', () => {
+    const next = upsertSource(base, irDraft, null)
+    expect(next.sources).toEqual([
+      {
+        id: 'hdmi-2',
+        kind: 'ir',
+        name: 'HDMI 2',
+        transmitterId: 7,
+        payload: {
+          kind: 'raw',
+          timings: [9000, -4500, 560, -560],
+          settings: { carrierHz: 38000 },
+        },
+      },
+    ])
+    expect(draftIssues(base, irDraft, null)).toEqual([])
+    expect(checkForSave(next).config).not.toBeNull()
+  })
+
+  it('keeps a Pronto code as Pronto and round-trips a source back into its draft', () => {
+    const pronto = {
+      ...irDraft,
+      encoding: 'pronto' as const,
+      code: '0000 006D 0001 0000 00AC 00AC',
+    }
+    const next = upsertSource(base, pronto, null)
+    const stored = next.sources[0]
+    expect(stored).toMatchObject({ kind: 'ir', payload: { kind: 'pronto' } })
+    expect(stored === undefined ? null : draftOfSource(stored)).toMatchObject({
+      kind: 'ir',
+      transmitterId: 7,
+      encoding: 'pronto',
+      code: '0000 006D 0001 0000 00AC 00AC',
+      carrierKhz: '',
+    })
+    const raw = upsertSource(base, irDraft, null).sources[0]
+    expect(raw === undefined ? null : draftOfSource(raw)).toMatchObject({
+      encoding: 'raw',
+      code: '9000, -4500, 560, -560',
+      carrierKhz: '38',
+    })
+  })
+
+  it('lets the schema refuse a missing transmitter, a bad code and a non-numeric carrier, on their fields', () => {
+    const fields = (draft: typeof irDraft) => draftIssues(base, draft, null).map((i) => i.field)
+    expect(fields({ ...irDraft, transmitterId: null })).toEqual(['transmitterId'])
+    expect(fields({ ...irDraft, code: '9000 4500' })).toEqual(['payload'])
+    expect(fields({ ...irDraft, code: '9000, abc' })).toEqual(['payload'])
+    expect(fields({ ...irDraft, carrierKhz: 'x' })).toEqual(['payload'])
+    expect(fields({ ...irDraft, encoding: 'pronto', code: 'zz' })).toEqual(['payload'])
+  })
+
+  it('summarises a source for the list: pulses and carrier, or that the code is broken', () => {
+    const ok = upsertSource(base, irDraft, null).sources[0]
+    expect(ok === undefined ? null : irSourceSummary(ok)).toEqual({
+      encoding: 'raw',
+      pulses: 4,
+      carrierKhz: 38,
+    })
+    const broken = upsertSource(base, { ...irDraft, code: '9000 4500' }, null).sources[0]
+    expect(broken === undefined ? null : irSourceSummary(broken)).toEqual({
+      encoding: 'raw',
+      pulses: null,
+      carrierKhz: null,
+    })
   })
 })

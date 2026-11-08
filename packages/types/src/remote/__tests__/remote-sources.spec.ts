@@ -125,3 +125,39 @@ describe('declared sources', () => {
     expect(parsed.success && parsed.data.source).toBeNull()
   })
 })
+
+describe('an infrared source (planning#464)', () => {
+  const IR: RemoteSource = {
+    kind: 'ir',
+    id: 'hdmi2',
+    name: 'HDMI 2',
+    transmitterId: 3,
+    payload: { kind: 'raw', timings: [9000, -4500, 560, -560], settings: { carrierHz: 38000 } },
+  }
+
+  it('is accepted with a raw train and with a Pronto code, and presses no role', () => {
+    expect(parse([IR]).success).toBe(true)
+    expect(remoteSourceSteps(IR)).toEqual([])
+    const pronto: RemoteSource = {
+      ...IR,
+      id: 'p',
+      name: 'Pronto',
+      payload: { kind: 'pronto', code: '0000 006D 0001 0000 00AC 00AC' },
+    }
+    expect(parse([pronto]).success).toBe(true)
+  })
+
+  it('refuses a code the transmitter could not send, on the payload field', () => {
+    const bad: RemoteSource = { ...IR, payload: { kind: 'raw', timings: [9000, 4500] } }
+    const parsed = parse([bad])
+    expect(parsed.success).toBe(false)
+    const issue = parsed.error?.issues.find((i) => i.path.join('.') === 'sources.0.payload')
+    expect(issue?.message).toMatch(/space/)
+  })
+
+  it('resolves by name and by id, and is never a channel', () => {
+    expect(resolveRemoteSource([RAI1, IR], 'hdmi 2')).toBe(IR)
+    expect(resolveRemoteSource([RAI1, IR], 'hdmi2')).toBe(IR)
+    expect(findChannelSource([RAI1, IR], '1')).toBe(RAI1)
+  })
+})

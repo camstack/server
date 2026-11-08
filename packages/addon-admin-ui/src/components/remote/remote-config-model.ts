@@ -10,6 +10,7 @@ import {
   customKeyOfRole,
   customRole,
   IrCodecError,
+  type IrPayload,
   isRemoteWidgetRole,
   parseSmartIr,
   type RemoteBinding,
@@ -18,11 +19,13 @@ import {
   RemoteConfigSchema,
   type RemoteCustomButton,
   type RemoteLayoutPayload,
+  type RemoteIrSource,
   type RemoteSource,
   type RemoteSourceKind,
   type SmartIrDraft,
   type SmartIrSkipped,
   smartIrDraft,
+  toTimings,
 } from '@camstack/types'
 import { humanRole } from './layout-model'
 
@@ -198,7 +201,10 @@ export function applyDraft(config: RemoteConfig, draft: SmartIrDraft): RemoteCon
 // schema's own issues next to the field they name.
 // ---------------------------------------------------------------------------
 
-/** What the add / edit dialog holds: every field of both kinds, so a kind switch loses nothing. */
+/** How an infrared code is typed: signed microseconds, or Pronto hex words. */
+export type IrCodeEncoding = 'raw' | 'pronto'
+
+/** What the add / edit dialog holds: every field of every kind, so a kind switch loses nothing. */
 export interface SourceDraft {
   readonly kind: RemoteSourceKind
   readonly name: string
@@ -206,14 +212,95 @@ export interface SourceDraft {
   readonly number: string
   /** The roles pressed in order (`sequence`). */
   readonly steps: readonly string[]
+  /** The transmitter the code goes through (`ir`); null until one is picked. */
+  readonly transmitterId: number | null
+  /** How `code` is written (`ir`). */
+  readonly encoding: IrCodeEncoding
+  /** The code as typed (`ir`): marks and spaces in µs, or Pronto hex words. */
+  readonly code: string
+  /** The carrier in kHz as typed (`ir`, raw); empty leaves it to the transmitter. */
+  readonly carrierKhz: string
 }
 
-export const BLANK_SOURCE_DRAFT: SourceDraft = { kind: 'digits', name: '', number: '', steps: [] }
+export const BLANK_SOURCE_DRAFT: SourceDraft = {
+  kind: 'digits',
+  name: '',
+  number: '',
+  steps: [],
+  transmitterId: null,
+  encoding: 'raw',
+  code: '',
+  carrierKhz: '',
+}
 
 export function draftOfSource(source: RemoteSource): SourceDraft {
-  return source.kind === 'digits'
-    ? { ...BLANK_SOURCE_DRAFT, kind: 'digits', name: source.name, number: source.number }
-    : { ...BLANK_SOURCE_DRAFT, kind: 'sequence', name: source.name, steps: source.steps }
+  switch (source.kind) {
+    case 'digits':
+      return { ...BLANK_SOURCE_DRAFT, kind: 'digits', name: source.name, number: source.number }
+    case 'sequence':
+      return { ...BLANK_SOURCE_DRAFT, kind: 'sequence', name: source.name, steps: source.steps }
+    case 'ir':
+      return {
+        ...BLANK_SOURCE_DRAFT,
+        kind: 'ir',
+        name: source.name,
+        transmitterId: source.transmitterId,
+        ...(source.payload.kind === 'pronto'
+          ? { encoding: 'pronto', code: source.payload.code }
+          : {
+              encoding: 'raw',
+              code: source.payload.timings.join(', '),
+              carrierKhz:
+                source.payload.settings?.carrierHz === undefined
+                  ? ''
+                  : String(source.payload.settings.carrierHz / 1000),
+            }),
+      }
+  }
+}
+
+/**
+ * The typed code as a payload. Nothing is judged here: a token that is not a
+ * number, a mark where a space belongs or a carrier that is not a number all
+ * reach the schema, which names the `payload` field.
+ */
+function irPayloadOf(draft: SourceDraft): IrPayload {
+  if (draft.encoding === 'pronto') return { kind: 'pronto', code: draft.code.trim() }
+  const timings = draft.code
+    .replace(/[[\]]/g, ' ')
+    .split(/[\s,]+/)
+    .filter((token) => token !== '')
+    .map(Number)
+  const carrier = draft.carrierKhz.trim()
+  return carrier === ''
+    ? { kind: 'raw', timings }
+    : { kind: 'raw', timings, settings: { carrierHz: Math.round(Number(carrier) * 1000) } }
+}
+
+/** No transmitter picked is spelled as `-1`: the schema, not the editor, refuses it on `transmitterId`. */
+const NO_TRANSMITTER = -1
+
+export interface IrSourceSummary {
+  readonly encoding: IrCodeEncoding
+  /** Pulses the code resolves to, or null when the transmitter could not send it. */
+  readonly pulses: number | null
+  readonly carrierKhz: number | null
+}
+
+/** What the sources list says of an infrared code, read from the code itself. */
+export function irSourceSummary(source: RemoteIrSource): IrSourceSummary {
+  const encoding: IrCodeEncoding = source.payload.kind
+  try {
+    const { timings, settings } = toTimings(source.payload)
+    return {
+      encoding,
+      pulses: timings.length,
+      carrierKhz: settings.carrierHz === undefined ? null : settings.carrierHz / 1000,
+    }
+  } catch (err: unknown) {
+    if (err instanceof IrCodecError) return { encoding, pulses: null, carrierKhz: null }
+    throw err
+  }
 }
 
 /** The roles a sequence may press: the ones with a binding, never an unbound role. */
@@ -240,9 +327,20 @@ export function newSourceId(config: RemoteConfig, name: string): string {
 }
 
 function sourceOfDraft(draft: SourceDraft, id: string): RemoteSource {
-  return draft.kind === 'digits'
-    ? { id, kind: 'digits', name: draft.name, number: draft.number }
-    : { id, kind: 'sequence', name: draft.name, steps: [...draft.steps] }
+  switch (draft.kind) {
+    case 'digits':
+      return { id, kind: 'digits', name: draft.name, number: draft.number }
+    case 'sequence':
+      return { id, kind: 'sequence', name: draft.name, steps: [...draft.steps] }
+    case 'ir':
+      return {
+        id,
+        kind: 'ir',
+        name: draft.name,
+        transmitterId: draft.transmitterId ?? NO_TRANSMITTER,
+        payload: irPayloadOf(draft),
+      }
+  }
 }
 
 /**
@@ -285,7 +383,7 @@ export function setStepDelay(config: RemoteConfig, stepDelayMs: number): RemoteC
   return { ...config, stepDelayMs }
 }
 
-export type SourceField = 'id' | 'name' | 'number' | 'steps' | 'kind'
+export type SourceField = 'id' | 'name' | 'number' | 'steps' | 'kind' | 'transmitterId' | 'payload'
 
 export interface SourceIssue {
   readonly field: SourceField
@@ -302,7 +400,15 @@ export interface SourceIssues {
   readonly stepDelay: SourceIssue | null
 }
 
-const SOURCE_FIELDS: readonly SourceField[] = ['id', 'name', 'number', 'steps', 'kind']
+const SOURCE_FIELDS: readonly SourceField[] = [
+  'id',
+  'name',
+  'number',
+  'steps',
+  'kind',
+  'transmitterId',
+  'payload',
+]
 
 function isSourceField(value: unknown): value is SourceField {
   return SOURCE_FIELDS.some((f) => f === value)

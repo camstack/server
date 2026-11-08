@@ -2,7 +2,7 @@
  * The `source_select` key of a remote layout (planning#460): a widget, not a
  * command. It shows the source the remote assumes is on (else "Sources"); a tap
  * opens a picker of the declared sources — Channels (number and name) and
- * Inputs (sequences) — and a pick runs `remote.selectSource` through
+ * Inputs (sequences and infrared codes) — and a pick runs `remote.selectSource` through
  * `sendMediaCommand`. A remote that declares no source draws NOTHING here.
  */
 import type { RemoteLayoutButton, RemoteSource } from '@camstack/types'
@@ -45,7 +45,7 @@ export function SourceSelectKey({
   if (sources.length === 0) return null
   const label = current === '' ? t('remote.sourceSelect.label') : current
   const channels = sources.filter((s) => s.kind === 'digits')
-  const inputs = sources.filter((s) => s.kind === 'sequence')
+  const inputs = sources.filter((s) => s.kind !== 'digits')
 
   const pick = async (source: RemoteSource): Promise<void> => {
     setFailure(null)

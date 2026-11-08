@@ -854,6 +854,41 @@ describe('declared sources (planning#460)', () => {
     })
   })
 
+  const HDMI2: RemoteSource = {
+    kind: 'ir',
+    id: 'hdmi2',
+    name: 'HDMI 2',
+    transmitterId: 7,
+    payload: { kind: 'raw', timings: [9000, -4500, 560, -560], settings: { carrierHz: 38000 } },
+  }
+
+  it('an infrared source sends its own code through its transmitter, once, and is remembered', async () => {
+    const w = world(declared({ sources: [RAI1, HDMI2] }))
+    expect(await select(w, 'HDMI 2')).toEqual({ status: 'sent', sends: 1 })
+    expect(w.calls).toEqual([
+      {
+        deviceId: 7,
+        cap: 'ir-transmitter',
+        method: 'send',
+        args: { timings: [9000, -4500, 560, -560], settings: { carrierHz: 38000 } },
+      },
+    ])
+    expect(w.kept()?.source).toMatchObject({ name: 'HDMI 2' })
+    expect(await w.service.getAssumedStatus({ deviceId: TV })).toMatchObject({
+      source: 'HDMI 2',
+      declaredSources: [
+        { name: 'Rai 1', kind: 'digits', number: '1' },
+        { name: 'HDMI 2', kind: 'ir' },
+      ],
+    })
+  })
+
+  it('an infrared source whose transmitter fails is refused as action-failed and forgets nothing', async () => {
+    const w = world(declared({ sources: [RAI1, HDMI2] }), { failOn: 1 })
+    expect(await select(w, 'HDMI 2')).toMatchObject({ status: 'refused', reason: 'action-failed' })
+    expect(w.kept()?.source ?? null).toBeNull()
+  })
+
   it('selectSource of a number runs 2 then 5 in order, stepDelayMs apart', async () => {
     const w = world(declared({ stepDelayMs: 700 }))
     expect(await select(w, 'Canale 24')).toEqual({ status: 'sent', sends: 2 })

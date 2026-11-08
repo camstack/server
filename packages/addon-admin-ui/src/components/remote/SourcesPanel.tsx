@@ -22,19 +22,56 @@ import {
 import { ArrowDown, ArrowUp, ListVideo, Pencil, Plus, Trash2 } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { deleteSource, moveSource, setStepDelay, sourceIssues } from './remote-config-model'
-import { SourceDialog } from './SourceDialog'
+import {
+  deleteSource,
+  irSourceSummary,
+  moveSource,
+  setStepDelay,
+  sourceIssues,
+} from './remote-config-model'
+import { SourceDialog, type TransmitterOption } from './SourceDialog'
 import { issueText } from './source-text'
 
 export interface SourcesPanelProps {
   readonly config: RemoteConfig
   readonly onChange: (update: (prev: RemoteConfig) => RemoteConfig) => void
   readonly roleLabel: (role: string) => string
+  /** The `ir-transmitter` devices an infrared source may send through. */
+  readonly transmitters: readonly TransmitterOption[]
+}
+
+/** One line on what a source IS: its number, its steps, or the code it carries. */
+function SourceDetail({
+  source,
+  roleLabel,
+}: {
+  readonly source: RemoteSource
+  readonly roleLabel: (role: string) => string
+}): ReactNode {
+  const { t } = useTranslation()
+  switch (source.kind) {
+    case 'digits':
+      return source.number
+    case 'sequence':
+      return remoteSourceSteps(source).map(roleLabel).join(' → ')
+    case 'ir': {
+      const summary = irSourceSummary(source)
+      if (summary.pulses === null) return t('remote.sources.irDetailBroken')
+      return summary.carrierKhz === null
+        ? t('remote.sources.irDetail', { pulses: summary.pulses })
+        : t('remote.sources.irDetailCarrier', { pulses: summary.pulses, khz: summary.carrierKhz })
+    }
+  }
 }
 
 type Editing = { readonly source: RemoteSource | null } | null
 
-export function SourcesPanel({ config, onChange, roleLabel }: SourcesPanelProps): ReactNode {
+export function SourcesPanel({
+  config,
+  onChange,
+  roleLabel,
+  transmitters,
+}: SourcesPanelProps): ReactNode {
   const { t } = useTranslation()
   const [editing, setEditing] = useState<Editing>(null)
   const issues = useMemo(() => sourceIssues(config), [config])
@@ -61,7 +98,7 @@ export function SourcesPanel({ config, onChange, roleLabel }: SourcesPanelProps)
       render: (s, index) => (
         <div className="space-y-0.5">
           <span className="text-foreground-muted">
-            {s.kind === 'digits' ? s.number : remoteSourceSteps(s).map(roleLabel).join(' → ')}
+            <SourceDetail source={s} roleLabel={roleLabel} />
           </span>
           {(issues.bySource.get(index) ?? []).map((issue) => (
             <p key={`${issue.field}:${issue.message}`} role="alert" className="text-xs text-danger">
@@ -163,6 +200,7 @@ export function SourcesPanel({ config, onChange, roleLabel }: SourcesPanelProps)
           config={config}
           source={editing.source}
           roleLabel={roleLabel}
+          transmitters={transmitters}
           onClose={() => setEditing(null)}
           onSave={(next) => {
             onChange(() => next)

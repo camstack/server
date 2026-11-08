@@ -44,12 +44,18 @@ import {
   type MediaPlayerStatus,
   type RemoteAssumedState,
   type RemoteConfig,
+  type RemoteIrSource,
   type RemoteMediaCommand,
   type RemoteSendResult,
   type RemoteSource,
   remoteSourceSteps,
   resolveRemoteSource,
+  toTimings,
 } from '@camstack/types'
+
+/** The cap and method an infrared source's code goes out through. */
+const IR_TRANSMITTER_CAP = 'ir-transmitter'
+const IR_SEND_METHOD = 'send'
 
 /** Per-device remote configuration, kept in the device's settings store. */
 export interface RemoteConfigStore {
@@ -605,12 +611,14 @@ export class RemoteService implements IRemoteProvider {
    * Presses a source's steps in order, one lock for the whole sequence,
    * `stepDelayMs` apart. Every step is checked bound BEFORE the first press, so
    * a half-bound source sends nothing. A step that fails stops the sequence.
+   * An `ir` source presses nothing: its own code goes out once (planning#464).
    */
   private async runSource(
     deviceId: number,
     config: RemoteConfig,
     source: RemoteSource,
   ): Promise<RemoteSendResult> {
+    if (source.kind === 'ir') return this.runIrSource(deviceId, source)
     const steps = remoteSourceSteps(source)
     const missing = steps.findIndex((role) => !this.isBound(config, role))
     if (missing >= 0) {
@@ -665,6 +673,34 @@ export class RemoteService implements IRemoteProvider {
       })
       await this.refreshSlice(deviceId)
       return { status: 'sent', sends: steps.length }
+    })
+  }
+
+  /** One train through the source's own transmitter; the source is remembered only after it landed. */
+  private async runIrSource(deviceId: number, source: RemoteIrSource): Promise<RemoteSendResult> {
+    return this.withLock(deviceId, async () => {
+      const { timings, settings } = toTimings(source.payload)
+      try {
+        await this.deps.invoke({
+          deviceId: source.transmitterId,
+          cap: IR_TRANSMITTER_CAP,
+          method: IR_SEND_METHOD,
+          args: { timings, settings },
+        })
+      } catch (err: unknown) {
+        this.deps.logger.warn('remote: the infrared source failed to send, nothing was assumed', {
+          tags: { deviceId },
+          meta: { source: source.name, transmitterId: source.transmitterId, error: errorText(err) },
+        })
+        return { status: 'refused', reason: 'action-failed', detail: errorText(err) }
+      }
+      const kept = await this.readAssumed(deviceId)
+      await this.deps.assumptions.write(deviceId, {
+        ...kept,
+        source: { name: source.name, at: this.now() },
+      })
+      await this.refreshSlice(deviceId)
+      return { status: 'sent', sends: 1 }
     })
   }
 

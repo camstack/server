@@ -16,7 +16,14 @@ let latest: RemoteConfig = BOUND
 function Harness({ initial }: { initial: RemoteConfig }) {
   const [config, setConfig] = useState(initial)
   latest = config
-  return <SourcesPanel config={config} onChange={setConfig} roleLabel={(r) => r} />
+  return (
+    <SourcesPanel
+      config={config}
+      onChange={setConfig}
+      roleLabel={(r) => r}
+      transmitters={[{ id: 7, label: 'IR board' }]}
+    />
+  )
 }
 
 describe('SourcesPanel', () => {
@@ -67,5 +74,43 @@ describe('SourcesPanel', () => {
     render(<Harness initial={broken} />)
     expect(screen.getByText(/which is not bound/)).toBeTruthy()
     expect(screen.getByText('Enter a whole number from 100 to 3000.')).toBeTruthy()
+  })
+
+  it('declares an infrared code of its own through the default transmitter, and refuses a broken one (planning#464)', () => {
+    render(<Harness initial={{ ...BOUND, defaultTransmitterId: 7 }} />)
+    fireEvent.click(screen.getByTestId('source-add'))
+    fireEvent.change(screen.getByTestId('source-kind'), { target: { value: 'ir' } })
+    fireEvent.change(screen.getByTestId('source-name'), { target: { value: 'HDMI 2' } })
+    expect((screen.getByTestId('source-transmitter') as HTMLSelectElement).value).toBe('7')
+    fireEvent.change(screen.getByTestId('source-code'), { target: { value: '9000 4500' } })
+    fireEvent.click(screen.getByTestId('source-save'))
+    expect(screen.getByText(/must be a non-zero space/)).toBeTruthy()
+    expect(latest.sources).toEqual([])
+    fireEvent.change(screen.getByTestId('source-code'), {
+      target: { value: '9000, -4500, 560, -560' },
+    })
+    fireEvent.change(screen.getByTestId('source-carrier'), { target: { value: '38' } })
+    fireEvent.click(screen.getByTestId('source-save'))
+    expect(latest.sources).toEqual([
+      {
+        id: 'hdmi-2',
+        kind: 'ir',
+        name: 'HDMI 2',
+        transmitterId: 7,
+        payload: { kind: 'raw', timings: [9000, -4500, 560, -560], settings: { carrierHz: 38000 } },
+      },
+    ])
+    expect(screen.getByText('Infrared · 4 pulses · 38 kHz')).toBeTruthy()
+  })
+
+  it('asks for a transmitter when the remote has none', () => {
+    render(<Harness initial={BOUND} />)
+    fireEvent.click(screen.getByTestId('source-add'))
+    fireEvent.change(screen.getByTestId('source-kind'), { target: { value: 'ir' } })
+    fireEvent.change(screen.getByTestId('source-name'), { target: { value: 'HDMI 2' } })
+    fireEvent.change(screen.getByTestId('source-code'), { target: { value: '9000, -4500' } })
+    fireEvent.click(screen.getByTestId('source-save'))
+    expect(screen.getByText('Pick the transmitter the code is sent through.')).toBeTruthy()
+    expect(latest.sources).toEqual([])
   })
 })

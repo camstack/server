@@ -8,14 +8,19 @@
  *    a voice command or `playMedia` names.
  *  - `sequence`: a name and explicit steps — bound roles pressed in order
  *    (an input key, a menu macro such as `source, down, down, ok`).
+ *  - `ir`: a name and one infrared code of its own (raw timings or a Pronto
+ *    string), sent through a named transmitter (planning#464). It presses no
+ *    button: a source the remote's layout has no key for.
  *
  * The name and the number resolve to the SAME declared source. A number no
  * `digits` source declares is not a channel: it is refused, never guessed.
  */
 import { z } from 'zod'
+import { IrCodecError } from '../ir/ir-error.js'
+import { IrPayloadSchema, toTimings } from '../ir/ir-payload.js'
 import { RemoteRoleSchema } from './remote-roles.js'
 
-export const REMOTE_SOURCE_KINDS = ['digits', 'sequence'] as const
+export const REMOTE_SOURCE_KINDS = ['digits', 'sequence', 'ir'] as const
 export const RemoteSourceKindSchema = z.enum(REMOTE_SOURCE_KINDS)
 export type RemoteSourceKind = z.infer<typeof RemoteSourceKindSchema>
 
@@ -47,9 +52,20 @@ export const RemoteSequenceSourceSchema = z.object({
 })
 export type RemoteSequenceSource = z.infer<typeof RemoteSequenceSourceSchema>
 
+export const RemoteIrSourceSchema = z.object({
+  ...sourceBase,
+  kind: z.literal('ir'),
+  /** The `ir-transmitter` device the code is sent through. */
+  transmitterId: z.number().int().nonnegative(),
+  /** The code itself; whether a transmitter could send it is `irSourceProblem`. */
+  payload: IrPayloadSchema,
+})
+export type RemoteIrSource = z.infer<typeof RemoteIrSourceSchema>
+
 export const RemoteSourceSchema = z.discriminatedUnion('kind', [
   RemoteDigitsSourceSchema,
   RemoteSequenceSourceSchema,
+  RemoteIrSourceSchema,
 ])
 export type RemoteSource = z.infer<typeof RemoteSourceSchema>
 
@@ -58,11 +74,33 @@ export const REMOTE_STEP_DELAY_DEFAULT_MS = 500
 export const REMOTE_STEP_DELAY_MIN_MS = 100
 export const REMOTE_STEP_DELAY_MAX_MS = 3000
 
-/** The roles a source presses, in order. A `digits` number is its digit roles. */
+/**
+ * The roles a source presses, in order. A `digits` number is its digit roles;
+ * an `ir` source presses none — it carries its own code.
+ */
 export function remoteSourceSteps(source: RemoteSource): readonly string[] {
-  return source.kind === 'sequence'
-    ? source.steps
-    : Array.from(source.number, (digit) => `digit_${digit}`)
+  switch (source.kind) {
+    case 'sequence':
+      return source.steps
+    case 'digits':
+      return Array.from(source.number, (digit) => `digit_${digit}`)
+    case 'ir':
+      return []
+  }
+}
+
+/**
+ * Why an `ir` source's code could not be sent (the codec's own words), or null
+ * when it resolves to a pulse train. The schema refuses on it; the editor shows it.
+ */
+export function irSourceProblem(source: RemoteIrSource): string | null {
+  try {
+    toTimings(source.payload)
+    return null
+  } catch (err: unknown) {
+    if (err instanceof IrCodecError) return err.message
+    throw err
+  }
 }
 
 function same(a: string, b: string): boolean {

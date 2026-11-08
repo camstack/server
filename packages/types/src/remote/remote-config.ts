@@ -19,6 +19,7 @@ import {
   RemoteRoleSchema,
 } from './remote-roles.js'
 import {
+  irSourceProblem,
   MAX_REMOTE_SOURCES,
   type RemoteSource,
   REMOTE_STEP_DELAY_DEFAULT_MS,
@@ -80,6 +81,10 @@ function refineSources(
     if (source.kind === 'digits') {
       if (numbers.has(source.number)) fail(`channel ${source.number} is declared twice`, 'number')
       numbers.add(source.number)
+    }
+    if (source.kind === 'ir') {
+      const problem = irSourceProblem(source)
+      if (problem !== null) fail(problem, 'payload')
     }
     for (const role of remoteSourceSteps(source)) {
       if (isRemoteWidgetRole(role)) {

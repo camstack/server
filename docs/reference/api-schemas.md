@@ -3512,7 +3512,7 @@ Enum: `"reported" \| "assumed"`
 - `isMuted`: `boolean \| null`
 - `source`: `string`
 - `availableSources`: `string[]`
-- `declaredSources?`: `({ name: string; kind: "digits" \| "sequence"; number?: string })[]`
+- `declaredSources?`: `({ name: string; kind: "digits" \| "sequence" \| "ir"; number?: string })[]`
 - `currentMedia`: `{ type: string; title: string; artist?: string; album?: string; imageUrl?: string } \| null`
 - `position`: `number \| null`
 - `duration`: `number \| null`
@@ -5571,7 +5571,7 @@ Enum: `"continuous" \| "motion" \| "person" \| "vehicle" \| "animal" \| "lineCro
 - `layoutTemplateId`: `string \| null`
 - `power`: `{ mode: "toggle" \| "discrete" }`
 - `commands`: `RemoteBoundCommandSchema[]`
-- `sources`: `({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] })[]`
+- `sources`: `({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] } \| { id: string; name: string; kind: "ir"; transmitterId: number; payload: { kind: "raw"; timings: number[]; settings?: { carrierHz?: number; dutyCyclePercent?: number; repeat?: number; repeatDelayMs?: number } } \| { kind: "pronto"; code: string } })[]`
 
 ### `RemoteMediaCommandResultSchema`
 

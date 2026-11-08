@@ -74,12 +74,13 @@ export type DeclaredSource = NonNullable<MediaPlayerStatus['declaredSources']>[n
 
 /**
  * The sources that are INPUTS. A player with its own sources offers them all; a
- * remote's declared sources split by kind (a `digits` source is a channel).
+ * remote's declared sources split by kind (a `digits` source is a channel; a
+ * `sequence` and an `ir` source are inputs).
  */
 function inputSources(status: MediaPlayerStatus): readonly string[] {
   const declared = status.declaredSources
   if (declared === undefined) return status.availableSources
-  return declared.filter((s) => s.kind === 'sequence').map((s) => s.name)
+  return declared.filter((s) => s.kind !== 'digits').map((s) => s.name)
 }
 
 /** The inputs of a slice that Amazon has a name for, paired with the player's own name. */

@@ -1,10 +1,20 @@
 /**
- * Add or edit one source of a remote (planning#460): a channel number, or a
- * sequence of bound buttons. The dialog holds a draft; the rules are the
- * schema's, read back through `draftIssues` (the whole config is parsed).
+ * Add or edit one source of a remote (planning#460): a channel number, a
+ * sequence of bound buttons, or an infrared code of its own (planning#464). The
+ * dialog holds a draft; the rules are the schema's, read back through
+ * `draftIssues` (the whole config is parsed).
  */
-import type { RemoteConfig, RemoteSource } from '@camstack/types'
-import { Button, FormField, IconButton, Input, ItemFormDialog, Select } from '@camstack/ui-library'
+import type { RemoteConfig, RemoteSource, RemoteSourceKind } from '@camstack/types'
+import { REMOTE_SOURCE_KINDS } from '@camstack/types'
+import {
+  Button,
+  FormField,
+  IconButton,
+  Input,
+  ItemFormDialog,
+  Select,
+  Textarea,
+} from '@camstack/ui-library'
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -16,13 +26,21 @@ import {
   type SourceDraft,
   upsertSource,
 } from './remote-config-model'
-import { issuesFor, issueText } from './source-text'
+import { type SourceDialogField, issuesFor, issueText } from './source-text'
+
+/** A transmitter the operator can pick for an infrared source. */
+export interface TransmitterOption {
+  readonly id: number
+  readonly label: string
+}
 
 export interface SourceDialogProps {
   readonly config: RemoteConfig
   /** The source being edited, or null to add one. */
   readonly source: RemoteSource | null
   readonly roleLabel: (role: string) => string
+  /** The `ir-transmitter` devices an infrared source may send through. */
+  readonly transmitters: readonly TransmitterOption[]
   readonly onClose: () => void
   readonly onSave: (next: RemoteConfig) => void
 }
@@ -38,16 +56,24 @@ function Errors({ lines }: { readonly lines: readonly string[] }): ReactNode {
   )
 }
 
+function isSourceKind(value: string): value is RemoteSourceKind {
+  return REMOTE_SOURCE_KINDS.some((kind) => kind === value)
+}
+
 export function SourceDialog({
   config,
   source,
   roleLabel,
+  transmitters,
   onClose,
   onSave,
 }: SourceDialogProps): ReactNode {
   const { t } = useTranslation()
+  // A new infrared source goes through the remote's default transmitter until changed.
   const [draft, setDraft] = useState<SourceDraft>(
-    source === null ? BLANK_SOURCE_DRAFT : draftOfSource(source),
+    source === null
+      ? { ...BLANK_SOURCE_DRAFT, transmitterId: config.defaultTransmitterId }
+      : draftOfSource(source),
   )
   const [touched, setTouched] = useState(false)
   const [pick, setPick] = useState('')
@@ -57,7 +83,7 @@ export function SourceDialog({
   )
   const bound = boundStepRoles(config)
   const patch = (next: Partial<SourceDraft>): void => setDraft((prev) => ({ ...prev, ...next }))
-  const lines = (field: 'name' | 'number' | 'steps'): readonly string[] =>
+  const lines = (field: SourceDialogField): readonly string[] =>
     touched ? issuesFor(issues, field, draft.kind).map((i) => issueText(i, t)) : []
 
   const moveStep = (index: number, delta: -1 | 1): void => {
@@ -94,11 +120,13 @@ export function SourceDialog({
         <FormField label={t('remote.sources.dialog.kind')}>
           <Select
             value={draft.kind}
-            options={[
-              { value: 'digits', label: t('remote.sources.kind.digits') },
-              { value: 'sequence', label: t('remote.sources.kind.sequence') },
-            ]}
-            onChange={(e) => patch({ kind: e.target.value === 'sequence' ? 'sequence' : 'digits' })}
+            options={REMOTE_SOURCE_KINDS.map((kind) => ({
+              value: kind,
+              label: t(`remote.sources.kind.${kind}`),
+            }))}
+            onChange={(e) => {
+              if (isSourceKind(e.target.value)) patch({ kind: e.target.value })
+            }}
             data-testid="source-kind"
           />
         </FormField>
@@ -111,7 +139,10 @@ export function SourceDialog({
           />
         </FormField>
         <Errors lines={lines('name')} />
-        {draft.kind === 'digits' ? (
+        {draft.kind === 'ir' && (
+          <IrFields draft={draft} transmitters={transmitters} patch={patch} lines={lines} />
+        )}
+        {draft.kind === 'digits' && (
           <>
             <FormField
               label={t('remote.sources.dialog.number')}
@@ -127,7 +158,8 @@ export function SourceDialog({
             </FormField>
             <Errors lines={lines('number')} />
           </>
-        ) : (
+        )}
+        {draft.kind === 'sequence' && (
           <div className="space-y-2">
             <FormField
               label={t('remote.sources.dialog.steps')}
@@ -212,5 +244,79 @@ export function SourceDialog({
         )}
       </div>
     </ItemFormDialog>
+  )
+}
+
+interface IrFieldsProps {
+  readonly draft: SourceDraft
+  readonly transmitters: readonly TransmitterOption[]
+  readonly patch: (next: Partial<SourceDraft>) => void
+  readonly lines: (field: SourceDialogField) => readonly string[]
+}
+
+/** The transmitter, the format and the code of an `ir` source; the carrier only for a raw train. */
+function IrFields({ draft, transmitters, patch, lines }: IrFieldsProps): ReactNode {
+  const { t } = useTranslation()
+  return (
+    <>
+      <FormField label={t('remote.sources.dialog.transmitter')}>
+        <Select
+          value={draft.transmitterId === null ? '' : String(draft.transmitterId)}
+          options={[
+            { value: '', label: t('remote.sources.dialog.noTransmitter') },
+            ...transmitters.map((d) => ({ value: String(d.id), label: d.label })),
+          ]}
+          onChange={(e) =>
+            patch({ transmitterId: e.target.value === '' ? null : Number(e.target.value) })
+          }
+          data-testid="source-transmitter"
+        />
+      </FormField>
+      <Errors lines={lines('transmitterId')} />
+      <FormField label={t('remote.sources.dialog.encoding')}>
+        <Select
+          value={draft.encoding}
+          options={[
+            { value: 'raw', label: t('remote.sources.encoding.raw') },
+            { value: 'pronto', label: t('remote.sources.encoding.pronto') },
+          ]}
+          onChange={(e) => patch({ encoding: e.target.value === 'pronto' ? 'pronto' : 'raw' })}
+          data-testid="source-encoding"
+        />
+      </FormField>
+      <FormField
+        label={t('remote.sources.dialog.code')}
+        description={
+          draft.encoding === 'pronto'
+            ? t('remote.sources.dialog.prontoHint')
+            : t('remote.sources.dialog.codeHint')
+        }
+      >
+        <Textarea
+          value={draft.code}
+          rows={4}
+          spellCheck={false}
+          className="font-mono text-xs"
+          state={lines('payload').length > 0 ? 'error' : 'default'}
+          onChange={(e) => patch({ code: e.target.value })}
+          data-testid="source-code"
+        />
+      </FormField>
+      {draft.encoding === 'raw' && (
+        <FormField
+          label={t('remote.sources.dialog.carrier')}
+          description={t('remote.sources.dialog.carrierHint')}
+        >
+          <Input
+            value={draft.carrierKhz}
+            inputMode="decimal"
+            className="w-32"
+            onChange={(e) => patch({ carrierKhz: e.target.value })}
+            data-testid="source-carrier"
+          />
+        </FormField>
+      )}
+      <Errors lines={lines('payload')} />
+    </>
   )
 }
