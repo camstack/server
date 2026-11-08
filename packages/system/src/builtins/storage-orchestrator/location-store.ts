@@ -8,7 +8,6 @@
  * pattern as `IntegrationRegistry` in `sqlite-storage/`.
  */
 import type {
-  LegacyStorageLocationDefault,
   RecordKindHandle,
   RecordsAccess,
   StorageLocation,
@@ -21,15 +20,7 @@ import {
   type StorageLocationBody,
   type StorageSeedMarkerBody,
 } from './record-kinds.js'
-import { LegacyStorageLocationDefaultSchema, StorageLocationTypeSchema } from '@camstack/types'
-
-/**
- * A location as it comes back OFF DISK: the live record plus the retired
- * `isDefault` column, which exists only so the orchestrator's boot migration
- * can turn an old default into the enabled write set and say which row it came
- * from. No other reader may take this type.
- */
-export type PersistedStorageLocation = StorageLocation & LegacyStorageLocationDefault
+import { StorageLocationTypeSchema } from '@camstack/types'
 
 /**
  * Abstract storage interface for `StorageLocation` records. Methods are
@@ -38,10 +29,8 @@ export type PersistedStorageLocation = StorageLocation & LegacyStorageLocationDe
  * disk doesn't block the cap surface.
  */
 export interface ILocationStore {
-  /** Read every persisted location. Called once at boot. Rows carry the
-   *  RETIRED `isDefault` column when it was set, for the one reader allowed to
-   *  see it: the orchestrator's boot migration onto the `enabled` write set. */
-  loadAll(): Promise<readonly PersistedStorageLocation[]>
+  /** Read every persisted location. Called once at boot. */
+  loadAll(): Promise<readonly StorageLocation[]>
   /** Insert or replace a single location by id. */
   upsert(loc: StorageLocation): Promise<void>
   /** Remove a location by id. */
@@ -147,10 +136,10 @@ export class SqliteLocationStore implements ILocationStore {
     return records.kind(storageOrchestratorRecordKinds.locations)
   }
 
-  async loadAll(): Promise<readonly PersistedStorageLocation[]> {
+  async loadAll(): Promise<readonly StorageLocation[]> {
     const rows = await readAllRows(this.locationsKind)
     rows.sort((a, b) => a.data.createdAt - b.data.createdAt)
-    const out: PersistedStorageLocation[] = []
+    const out: StorageLocation[] = []
     for (const row of rows) {
       const mapped = bodyToPersistedLocation(row.id, row.data)
       if (mapped) out.push(mapped)
@@ -214,7 +203,7 @@ export function locationToBody(
 export function bodyToPersistedLocation(
   id: string,
   body: StorageLocationBody,
-): PersistedStorageLocation | null {
+): StorageLocation | null {
   const parsedType = StorageLocationTypeSchema.safeParse(body.type)
   if (!parsedType.success || id.length === 0) return null
   return {
@@ -231,9 +220,6 @@ export function bodyToPersistedLocation(
     ...(body.nodeId !== undefined ? { nodeId: body.nodeId } : {}),
     ...(body.enabled !== undefined ? { enabled: body.enabled } : {}),
     ...(body.mode !== undefined ? { mode: body.mode } : {}),
-    ...LegacyStorageLocationDefaultSchema.parse({
-      isDefault: body.isDefault ?? false,
-    }),
     isSystem: body.isSystem,
     createdAt: body.createdAt,
     updatedAt: body.updatedAt,

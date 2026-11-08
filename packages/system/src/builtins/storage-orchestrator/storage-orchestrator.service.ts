@@ -39,7 +39,6 @@ import type {
 } from '@camstack/types'
 import {
   isLocationEnabled,
-  legacyModeOf,
   mayWriteToLocation,
   modeMayWrite,
   resolveLocationMode,
@@ -49,7 +48,7 @@ import {
 import { physicalRootOf } from '@camstack/types/node'
 import type { ResolveRoot } from './location-root-collision.js'
 import { findRootCollision, rootCollisionMessage } from './location-root-collision.js'
-import type { ILocationStore, PersistedStorageLocation } from './location-store.js'
+import type { ILocationStore } from './location-store.js'
 
 export interface ListLocationsFilter {
   // Open string — location *type* is now a declaration-driven id, not a
@@ -387,91 +386,6 @@ export class StorageOrchestratorService {
         total: this.locations.size,
       },
     })
-    this.migrateOntoTheWriteSet(rows)
-  }
-
-  /**
-   * ONE explicit migration onto the four-state model (D385), run once per boot
-   * against the rows that came off disk. Idempotent: the second boot finds
-   * nothing to do.
-   *
-   * Two steps, in order, and each one is a WRITE — the point is that "absent"
-   * stops existing rather than being re-interpreted on every read forever:
-   *
-   *   1. A row with no `mode` is stamped with the mode its legacy flags imply
-   *      (`legacyModeOf`): `config.readOnly === true` → `readonly` and the
-   *      config key is DELETED; `enabled === false` → `readonly` (the
-   *      CONSERVATIVE direction — a state change must never start deleting
-   *      footage on its own); everything else → `active`. `withLocationMode`
-   *      derives `enabled` from the mode, so the two can never disagree, and
-   *      this subsumes the D383 pass that stamped flagless rows `enabled: true`.
-   *   2. A type left with NO write target — only reachable from a hand-edited
-   *      store or a row an older build wrote — gets one made `active`, chosen as
-   *      the row the RETIRED default flag named, else the `:default`-slugged
-   *      row, else the lexicographically first. Loudly: a class with no write
-   *      target records nowhere, and refusing to repair it here would leave the
-   *      hub silently unable to write with no operator action pending.
-   *
-   * An operator's explicit `readonly`/`drain`/`disabled` is never reversed by
-   * step 1 — only step 2 touches it, and only when the alternative is a class
-   * that cannot write at all.
-   *
-   * On the live hub every location is enabled with no `readOnly`, so step 1 is
-   * a no-op that stamps `active` and nothing else changes.
-   */
-  private migrateOntoTheWriteSet(rows: readonly PersistedStorageLocation[]): void {
-    const legacyDefaultOfType = new Map<string, string>()
-    for (const row of rows) if (row.isDefault === true) legacyDefaultOfType.set(row.type, row.id)
-
-    const stamped: string[] = []
-    // Re-`set`ting an EXISTING key during iteration is defined behaviour (the
-    // entry keeps its position), and this loop only ever replaces rows it has
-    // already visited.
-    for (const loc of this.locations.values()) {
-      if (loc.mode !== undefined) continue
-      this.persistMigrated(withLocationMode(loc, legacyModeOf(loc) ?? 'active'))
-      stamped.push(loc.id)
-    }
-
-    const repaired: string[] = []
-    for (const type of new Set([...this.locations.values()].map((l) => l.type))) {
-      const ofType = [...this.locations.values()].filter((l) => l.type === type)
-      if (ofType.some((l) => isLocationEnabled(l))) continue
-      const legacyDefault = legacyDefaultOfType.get(type)
-      const pick =
-        ofType.find((l) => l.id === legacyDefault) ??
-        ofType.find((l) => l.id === `${type}:default`) ??
-        ofType.toSorted((a, b) => a.id.localeCompare(b.id))[0]
-      if (!pick) continue
-      this.persistMigrated(withLocationMode(pick, 'active'))
-      repaired.push(pick.id)
-    }
-
-    if (stamped.length > 0 || repaired.length > 0) {
-      this.logger.info('storage-orchestrator: migrated locations onto the state model', {
-        meta: { stamped, repaired },
-      })
-    }
-    for (const id of repaired) {
-      this.logger.warn(
-        'storage-orchestrator: a storage type had NO enabled location — re-enabled one so it can ' +
-          'write. Every other location of that type stays read-only until you enable it.',
-        { meta: { id } },
-      )
-    }
-  }
-
-  /** Apply one migrated row in memory and mirror it to the store. */
-  private persistMigrated(next: StorageLocation): void {
-    const withStamp: StorageLocation = { ...next, updatedAt: Date.now() }
-    this.locations.set(withStamp.id, withStamp)
-    const store = this.locationStore
-    if (!store) return
-    void store.upsert(withStamp).catch((err) => {
-      this.logger.error('storage-orchestrator: state-model migration persist failed', {
-        meta: { id: withStamp.id, error: err instanceof Error ? err.message : String(err) },
-      })
-    })
   }
 
   /**
@@ -536,7 +450,6 @@ export class StorageOrchestratorService {
     this.logger.info('storage-orchestrator: hydrated locations from store', {
       meta: { loaded: this.locations.size },
     })
-    this.migrateOntoTheWriteSet(rows)
   }
 
   /**

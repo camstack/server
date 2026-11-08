@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
   isLocationEnabled,
-  LegacyStorageLocationDefaultSchema,
   StorageLocationSchema,
   StorageLocationRefSchema,
   StorageLocationTypeSchema,
@@ -41,11 +40,6 @@ describe('StorageLocationSchema', () => {
       updatedAt: now,
     })
     expect('isDefault' in parsed).toBe(false)
-    // …and the one reader that still needs it — the orchestrator's boot
-    // migration — takes it from the schema that DECLARES it, rather than from a
-    // key silently stripped here (D380/D381).
-    expect(LegacyStorageLocationDefaultSchema.parse({ isDefault: true }).isDefault).toBe(true)
-    expect(LegacyStorageLocationDefaultSchema.parse({}).isDefault).toBeUndefined()
   })
 
   it('reads an absent enabled flag as ENABLED, in one place', () => {

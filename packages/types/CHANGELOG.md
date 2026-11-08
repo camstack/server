@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Remote: Flipper .ir parsing and NEC, NECext and Samsung32 encoding for importing codes
 - The integrations.create method is gone: every instance is created through integrationInstances.createInstance, and an addon seeds its own fixed integration with its seed field
+- Removed the LegacyStorageLocationDefault schema (the retired isDefault key is migrated in the ledger)
 
 ## [1.2.528] - 2026-11-08
 

@@ -19,9 +19,6 @@
  * note (see `git log` / D383 for the retired assertions).
  *
  * What still deserves pinning under the new model:
- *   - the boot migration (`migrateOntoTheWriteSet`) must LOUDLY repair a type
- *     that hydrates with NO enabled location — silence there is exactly the
- *     "nowhere to write" failure this file's spirit is about;
  *   - `setWriteTargets` (the `setDefaultLocations` replacement) enables the
  *     location it is told to enable;
  *   - the coordinator's `drain()` still carries its own defensive refusal for
@@ -174,30 +171,7 @@ function coordinatorOver(locations: StorageOrchestratorService): StorageMigratio
 // enables the location it repoints onto" is the same file's "setWriteTargets
 // enables the location it names and disables the one it retires".
 
-describe('write-set repair at hydrate (the successor of "the hydrate hole")', () => {
-  it('a type with no enabled location gets one re-enabled at hydrate, loudly', async () => {
-    // Both rows persisted disabled — nothing left in the write set. Silence
-    // here is exactly the "nowhere to write" failure this file exists to
-    // catch; `migrateOntoTheWriteSet`'s repair pass must re-enable one and say
-    // so at `warn`, not bury it in the boot log.
-    const lines: LoggedLine[] = []
-    const service = new StorageOrchestratorService(makeLogger(lines), () => [])
-    await service.attachStore(
-      storeOf([
-        row({ id: 'recordings:old', type: 'recordings', enabled: false }),
-        row({ id: 'recordings:new', type: 'recordings', enabled: false }),
-      ]),
-    )
-    // No legacy default and no `:default`-slugged row among these two, so the
-    // repair falls back to the lexicographically-first id — `recordings:new`.
-    const shout = lines.find(
-      (l) => l.level === 'warn' && String(l.meta['id'] ?? '') === 'recordings:new',
-    )
-    expect(shout).toBeDefined()
-    expect(shout?.message).toMatch(/no enabled location/i)
-    expect(service.writeTargets('recordings').map((l) => l.id)).toEqual(['recordings:new'])
-  })
-
+describe('a hydrated store raises nothing for a flagless or enabled row', () => {
   it('does not shout when a type already has an enabled location, or for a legacy flagless row', async () => {
     const lines: LoggedLine[] = []
     const service = new StorageOrchestratorService(makeLogger(lines), () => [])

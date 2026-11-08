@@ -4,9 +4,6 @@
     "registry": {
     },
     "storage": {
-      "packages/system/src/builtins/storage-orchestrator/location-store.ts:LegacyStorageLocationDefaultSchema": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
-      "packages/types/src/index.ts:LegacyStorageLocationDefaultSchema": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations",
-      "packages/types/src/interfaces/storage-location.ts:LegacyStorageLocationDefaultSchema": "the legacy storage_locations / drain-state collection beside the location records; P5 deletes the collection path, P6d moves the locations"
     },
     "google": {
     },

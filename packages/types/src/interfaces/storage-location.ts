@@ -125,22 +125,6 @@ export const StorageLocationSchema = z.object({
 export type StorageLocation = z.infer<typeof StorageLocationSchema>
 
 /**
- * The retired `isDefault` key, DECLARED rather than dropped.
- *
- * A key removed from a non-strict `z.object` is stripped in silence (D380,
- * D381): a reader that still needs the old value gets `undefined` and cannot
- * tell "absent" from "never sent". The one reader that legitimately needs it —
- * the location store's boot migration, which turns the old default flag into
- * the `enabled` write set — parses THIS schema against the raw row instead, so
- * the migration is explicit and the live schema stays clean. Nothing else in
- * the repo may read it; `scripts/check-no-storage-default.ts` enforces that.
- */
-export const LegacyStorageLocationDefaultSchema = z.object({
-  isDefault: z.boolean().optional(),
-})
-export type LegacyStorageLocationDefault = z.infer<typeof LegacyStorageLocationDefaultSchema>
-
-/**
  * Is this location a write target?
  *
  * A THIN delegate to the policy module (D385) — `mode` is the state, and

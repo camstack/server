@@ -117,37 +117,6 @@ describe('StorageLocation.enabled — updates never flip it silently', () => {
     )
     expect(drained.enabled).toBe(false)
   })
-
-  it('a legacy (flagless) row is stamped enabled:true at hydrate, and a later update that omits enabled preserves it', async () => {
-    // A row persisted before `__enabled` existed carries no flag on disk.
-    // `initialize()` now runs the D383 write-set migration: it stamps a
-    // flagless row `enabled: true` ONCE, at boot, so absence stops existing
-    // rather than being re-derived on every read (see `migrateOntoTheWriteSet`
-    // in storage-orchestrator.service.ts). What survives from the original
-    // contract is the second half: an unrelated edit AFTER that must not flip
-    // a live write target — stamping `false` here would silently stop a live
-    // recorder.
-    const rows: StorageLocation[] = [
-      {
-        ...makeLocation({ id: 'recordings:legacy', type: 'recordings' }),
-        createdAt: 1,
-        updatedAt: 1,
-      },
-    ]
-    const legacyService = new StorageOrchestratorService(makeLogger(), () => [], {
-      loadAll: async () => rows,
-      upsert: async () => undefined,
-      delete: async () => undefined,
-    })
-    await legacyService.initialize()
-    expect(legacyService.listLocations()[0]?.enabled).toBe(true)
-
-    const updated = legacyService.upsertLocation({
-      ...makeLocation({ id: 'recordings:legacy', type: 'recordings' }),
-      displayName: 'Legacy',
-    })
-    expect(updated.enabled).toBe(true)
-  })
 })
 
 describe('StorageLocation.enabled — last writable of a write-serving type', () => {

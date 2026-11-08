@@ -21,7 +21,6 @@ export type StorageLocationBody = {
   readonly nodeId?: string
   readonly enabled?: boolean
   readonly mode?: z.infer<typeof StorageLocationModeSchema>
-  readonly isDefault?: boolean
   /**
    * The provider's credentials by config key (`password`, `privateKey`, ...), kept in the keychain
    * and bound to THIS row: the records door stores the value and deleting the row deletes it.
@@ -40,7 +39,6 @@ const _storageLocationBody: z.ZodType<StorageLocationBody> = z.object({
   nodeId: z.string().optional(),
   enabled: z.boolean().optional(),
   mode: StorageLocationModeSchema.optional(),
-  isDefault: z.boolean().optional(),
   secrets: z.record(z.string(), z.string().meta({ secret: true })).optional(),
 })
 export const StorageLocationBodySchema: z.ZodType<StorageLocationBody> = _storageLocationBody

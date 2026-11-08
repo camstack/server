@@ -29,10 +29,9 @@
  *    `setDefaultLocations` were DELETED (D383): enabled is the write set, all
  *    enabled locations of a class are written to together, and a second
  *    authority layered over the pool is the exact shape that had three cameras
- *    writing to a disk a migration was emptying. Three files may still name
- *    `isDefault` — the schema that declares the retired key, the store that
- *    reads the retired column, and the boot migration that consumes it — and
- *    they are listed in {@link LEGACY_DEFAULT_READERS}. Anything else is a
+ *    writing to a disk a migration was emptying. One file may still name
+ *    `isDefault` — the ledger migration that consumes it (D987) — and it is
+ *    listed in {@link LEGACY_DEFAULT_READERS}. Anything else is a
  *    reintroduction.
  *
  * 3. **The three write-target pickers still filter.** Named function, named
@@ -106,24 +105,16 @@ const READ_ONLY_LISTERS: ReadonlyArray<{ readonly file: string; readonly why: st
 ]
 
 /**
- * The three files allowed to name the RETIRED `isDefault`, and why.
+ * The files allowed to name the RETIRED `isDefault`, and why.
  *
  * A key removed from a non-strict `z.object` is stripped in silence (D380,
- * D381), so the retired one is declared and migrated deliberately instead of
- * deleted and hoped about. That deliberate path is exactly these three files.
+ * D381), so the retired one is migrated deliberately in the ledger (D987), not
+ * deleted and hoped about. That one migration is the only reader.
  */
 const LEGACY_DEFAULT_READERS: ReadonlyArray<{ readonly file: string; readonly why: string }> = [
   {
-    file: 'packages/types/src/interfaces/storage-location.ts',
-    why: 'declares the retired key (`LegacyStorageLocationDefaultSchema`) so the migration can read it explicitly',
-  },
-  {
-    file: 'packages/system/src/builtins/storage-orchestrator/location-store.ts',
-    why: 'reads the dead `is_default` column off disk, through that schema, and hands it to the migration',
-  },
-  {
-    file: 'packages/system/src/builtins/storage-orchestrator/storage-orchestrator.service.ts',
-    why: 'the one-time boot migration onto the enabled write set',
+    file: 'packages/system/src/migrations/hub/2026-11-08-storage-locations-write-set.ts',
+    why: 'the ledger migration that turns the old default flag into the enabled write set and removes the field',
   },
 ]
 

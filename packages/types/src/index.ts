@@ -325,7 +325,6 @@ export type * from './interfaces/device-call-redirect.js'
 // --- Server interfaces (consolidated from server/backend/src/interfaces/) ---
 export type * from './interfaces/storage.js'
 export type {
-  LegacyStorageLocationDefault,
   StorageDrainProgress,
   StorageLocation,
   StorageLocationRef,
@@ -333,7 +332,6 @@ export type {
 export {
   gbToBytes,
   isLocationEnabled,
-  LegacyStorageLocationDefaultSchema,
   STORAGE_BYTES_PER_GB,
   StorageDrainProgressSchema,
   StorageLocationRefSchema,
