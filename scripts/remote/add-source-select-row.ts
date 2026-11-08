@@ -79,6 +79,57 @@ function describe(p: PlannedTemplate): string {
   }
 }
 
+export interface ApplyResult {
+  readonly updated: number
+  readonly failed: number
+}
+
+/**
+ * Writes the backup of the ORIGINAL payloads first, then updates each planned
+ * template. A refused (or throwing) update is a failure, reported by name; the
+ * others still run.
+ */
+export async function applyPlan(
+  hub: HubCall,
+  planned: readonly PlannedTemplate[],
+  backupFile: string,
+  log: (line: string) => void = console.log,
+): Promise<ApplyResult> {
+  const todo = planned.filter((p) => p.plan.status === 'insert')
+  if (todo.length === 0) return { updated: 0, failed: 0 }
+  writeFileSync(
+    path.resolve(backupFile),
+    JSON.stringify(
+      todo.map((p) => ({ id: p.row.id, name: p.row.name, payload: p.row.payload })),
+      null,
+      2,
+    ),
+    { mode: 0o600 },
+  )
+  log(`backup written: ${path.resolve(backupFile)}`)
+  let updated = 0
+  let failed = 0
+  for (const p of todo) {
+    if (p.plan.status !== 'insert') continue
+    try {
+      const result = await hub.mutate('template.update', { id: p.row.id, payload: p.plan.layout })
+      const status =
+        typeof result === 'object' && result !== null && 'status' in result ? result.status : null
+      if (status === 'saved') {
+        updated += 1
+        log(`updated ${p.row.id}`)
+      } else {
+        failed += 1
+        log(`FAILED  ${p.row.id} "${p.row.name}": ${JSON.stringify(result)}`)
+      }
+    } catch (err: unknown) {
+      failed += 1
+      log(`FAILED  ${p.row.id} "${p.row.name}": ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+  return { updated, failed }
+}
+
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2))
   if (typeof args === 'string') {
@@ -90,31 +141,21 @@ async function main(): Promise<void> {
   for (const p of planned) console.log(describe(p))
   const todo = planned.filter((p) => p.plan.status === 'insert')
   console.log(`${todo.length} to change, ${planned.length - todo.length} left as they are`)
-  if (!args.apply) {
+  if (!args.apply || args.backup === null) {
     console.log('dry run: nothing written (use --apply --backup <file>)')
     return
   }
-  if (args.backup === null || todo.length === 0) return
-  writeFileSync(
-    path.resolve(args.backup),
-    JSON.stringify(
-      todo.map((p) => ({ id: p.row.id, name: p.row.name, payload: p.row.payload })),
-      null,
-      2,
-    ),
-    { mode: 0o600 },
-  )
-  console.log(`backup written: ${path.resolve(args.backup)}`)
-  for (const p of todo) {
-    if (p.plan.status !== 'insert') continue
-    const result = await hub.mutate('template.update', { id: p.row.id, payload: p.plan.layout })
-    console.log(`updated ${p.row.id}: ${JSON.stringify(result)}`)
-  }
+  const result = await applyPlan(hub, planned, args.backup)
+  console.log(`${result.updated} updated, ${result.failed} failed`)
+  if (result.failed > 0) process.exitCode = 1
 }
 
 if (
   process.argv[1] !== undefined &&
   path.resolve(process.argv[1]) === path.resolve(import.meta.filename ?? '')
 ) {
-  void main()
+  main().catch((err: unknown) => {
+    console.error(err instanceof Error ? err.message : String(err))
+    process.exitCode = 1
+  })
 }
