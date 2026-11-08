@@ -21,6 +21,10 @@ const inst = (id: string, kind: string, enabled = true): IntegrationInstance => 
 })
 
 function source(opts: { failing?: string } = {}): InstanceSource {
+  const broken: IntegrationInstanceDescription = {
+    ...base,
+    kinds: [{ id: 'unrelated', label: 'U', functionCap: 'device-provider' }],
+  }
   const descriptions: Record<string, IntegrationInstanceDescription> = {
     notifiers: {
       ...base,
@@ -39,7 +43,7 @@ function source(opts: { failing?: string } = {}): InstanceSource {
         },
       ],
     },
-    broken: base,
+    broken,
   }
   const rows: Record<string, IntegrationInstance[]> = {
     notifiers: [inst('tg-1', 'telegram', false), inst('r-1', 'other')],
@@ -50,7 +54,7 @@ function source(opts: { failing?: string } = {}): InstanceSource {
     holders: async () => ['notifiers', 'ha', 'broken'],
     describe: async (id) => {
       if (id === opts.failing) throw new Error('holder down')
-      return descriptions[id] ?? base
+      return descriptions[id] ?? broken
     },
     listInstances: async (id) => rows[id] ?? [],
   }
