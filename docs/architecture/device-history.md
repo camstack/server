@@ -1,6 +1,6 @@
 ---
 title: device-history — the one mechanism for numeric history
-last-verified: 2026-10-23
+last-verified: 2026-11-08
 applies-to:
   - packages/system/src/builtins/device-history/runtime/history-runtime.ts
   - packages/system/src/builtins/device-history/capture/capture-engine.ts
@@ -184,6 +184,10 @@ used: it is telemetry that may be dropped, and a provider that restarts emits it
 for devices that come back. An opted-out device keeps its history until retention
 ages it out.
 
+`transitionDays` (default 365, D1022) ages out the `device-transitions` rows in
+the same pass and the same time slices; it is a policy field beside the four
+tiers, not a second job.
+
 Per-series state (last recorded value, pending point, rate limit, dirty marks,
 retention markers) is released when a series is purged.
 
@@ -363,6 +367,46 @@ a `detail` branch so a mower or vacuum adds a branch, not a kind.
   cap answered with rows, shows `DeviceRunsPanel` and shades each run as a band on
   the `power-meter.power` chart (an open run reaches now); a row opens the run
   plus 15 minutes either side. An unanswered or failed read shows neither.
+
+## Device transitions (D1022)
+
+The builtin also provides `device-transitions`: one document per audited field
+change of a device, with who caused it. Record kind `device-transitions` (events
+DB, class `audit`, `deviceRemoval: 'delete'`), service in
+`device-history/transitions/`.
+
+A row is `{deviceId, capName, field, from, to, at, outcome, actor, command?}`.
+`outcome` is `confirmed` (a command and the device's own report matched),
+`already` (the target held when the command arrived), `unconfirmed` (nothing
+changed within 30 s; from = to), `failed` (the call threw; the message is
+scrubbed and cut) or `device` (nobody asked). `actor` is a user, an API token,
+an integration, a mesh node, an addon (with the caller's origin claim: action
+run, scheduler) or the device.
+
+- **Observation.** The hub tRPC mount, the UDS parent and an in-process hub
+  addon's own client report a vocabulary command through
+  `kernel/command-observation.ts`. The observer set is empty on a node that
+  audits nothing and costs one lookup per mutation.
+- **Correlation.** `device-manager/transitions/transition-correlator.ts`, fed
+  by `DeviceStateMirror.setTransitionTap` (a slice that actually changed, with
+  the previous one). Audited fields are those vocabulary effects name; a cap
+  with none costs one map lookup. A command with no effect (stop) is stored with
+  field `*` and takes the next change of its cap. The first slice a cap reports
+  is not a change.
+- **Delivery.** `transitions-sender.ts` flushes every 2 s in batches of at most
+  500 through `deviceTransitions.record` (only the kernel caller is accepted).
+  The queue holds 10 000; past it the oldest rows are dropped, logged with
+  counts and `tags: { deviceId }`.
+- **Args.** `command-args.ts`: routing keys dropped, secret paths and
+  credential-named keys replaced by `[redacted]`, a bag over 1 KiB replaced by
+  `{_truncated: true}`.
+- **Reads.** `listTransitions` (per device, paged), `getTransition`,
+  `listRecentTransitions` (admin), `getStatus` (`rows`, `lastWriteAt`,
+  `refused`).
+
+Blind spots, recorded as `device`: agent-originated calls through
+`$hub-cap-fwd`, co-located providers in a grouped runner, hub-main builtins on
+the shared broker client, composition-owned fields.
 
 ## Traps
 

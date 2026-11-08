@@ -4,7 +4,7 @@
 
 # Decisions
 
-984 architecture decision records. One file per decision, never
+985 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -999,6 +999,7 @@ that rots.
 | D1019 | [A system rule speaks at up to three moments — activation, deactivation, schedule](adr-1019-a-system-rule-speaks-at-up-to-three-moments-activation-deactivation-schedule.md) | ✅ accepted | 2026-11-07 |
 | D1020 | [An actuated device runs while its own switch is on; the default is derived, never written](adr-1020-an-actuated-device-runs-while-its-own-switch-is-on.md) | ✅ accepted | 2026-11-07 |
 | D1021 | [Device value templates are nunjucks over device aliases, rendered only in a budgeted worker thread](adr-1021-device-value-templates-nunjucks-and-device-aliases.md) | ✅ accepted | 2026-11-08 |
+| D1022 | [Every device transition is a recorded fact with its actor; a command is matched to the slice change it caused in the hub mirror, and an unmatched change is the device's own](adr-1022-device-transitions-are-recorded-with-their-actor.md) | ✅ accepted | 2026-11-08 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next
