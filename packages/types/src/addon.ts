@@ -27,7 +27,11 @@ export { MIGRATION_API_VERSION } from './migrations/api/migration-api-version.js
 export { ErrorI18nPayloadSchema, readErrorI18n } from './i18n/camstack-error.js'
 export type { ErrorI18nPayload } from './i18n/camstack-error.js'
 export { commandOrigin, nodePin, readCommandOrigin, readNodePin } from './cap-call-context.js'
-export type { CommandOriginClaim } from './audit/device-transition.js'
+export { CommandOriginClaimSchema } from './audit/command-origin-claim.js'
+export type { CommandOriginClaim } from './audit/command-origin-claim.js'
+// The command catalogue (D1022) — vocabulary-derived, zod-free; the kernel's
+// command observation runs inside the runner closure.
+export { isCommand } from './device/cap-vocabulary/command-catalog.js'
 export {
   nodeIdOfScopedKey,
   resolveDeviceSettings,

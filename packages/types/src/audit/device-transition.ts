@@ -94,17 +94,9 @@ export const DeviceTransitionSchema = z.object({
 })
 export type DeviceTransition = z.infer<typeof DeviceTransitionSchema>
 
-/** Where a command's origin claim comes from: an addon states WHY it called, never WHO it is. */
-export const CommandOriginClaimSchema = z.discriminatedUnion('kind', [
-  z.object({
-    kind: z.literal('action'),
-    actionId: z.string(),
-    runId: z.string(),
-    automationId: z.string().optional(),
-  }),
-  z.object({ kind: z.literal('scheduler'), schedulerId: z.string() }),
-])
-export type CommandOriginClaim = z.infer<typeof CommandOriginClaimSchema>
+// Its own module so the runner closure can parse a claim without the transition schemas (D28).
+export { CommandOriginClaimSchema } from './command-origin-claim.js'
+export type { CommandOriginClaim } from './command-origin-claim.js'
 
 /** The actor of a command: every kind but `device`, which is what nobody asked for. */
 export type CommandActor = Exclude<TransitionActor, { readonly kind: 'device' }>

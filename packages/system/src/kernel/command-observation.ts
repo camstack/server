@@ -15,13 +15,8 @@
 import type { TRPCLink } from '@trpc/client'
 import type { AnyRouter } from '@trpc/server'
 import { observable } from '@trpc/server/observable'
-import {
-  isCommand,
-  readCommandOrigin,
-  type CommandActor,
-  type CommandOriginClaim,
-  type DeviceCommandObservation,
-} from '@camstack/types'
+import type { CommandActor, DeviceCommandObservation } from '@camstack/types'
+import { isCommand, readCommandOrigin, type CommandOriginClaim } from '@camstack/types/addon'
 
 export type CommandObserver = (obs: DeviceCommandObservation) => void
 

@@ -1,10 +1,10 @@
+import type { IReadinessRegistryRecord, SystemEvent } from '@camstack/types'
 import {
   CommandOriginClaimSchema,
+  createEvent,
+  EventCategory,
   isCommand,
-  type IReadinessRegistryRecord,
-  type SystemEvent,
-} from '@camstack/types'
-import { createEvent, EventCategory } from '@camstack/types/addon'
+} from '@camstack/types/addon'
 import type { CapUsageCallRecord } from '../moleculer/cap-usage-registry.js'
 import { PARENT_ROUTED_PROVIDER_ADDON_ID } from '../moleculer/cap-usage-registry.js'
 import { matchesPattern } from '../moleculer/event-bus-core.js'
