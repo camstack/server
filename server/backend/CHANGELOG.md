@@ -7,23 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device hero capability (hero-layout) is exposed on the API
+- The remote runs declared sources under a per-device lock, resolves a source by name or channel number and refuses undeclared channels; custom buttons are no longer sources
+- Device history keeps a ledger of device transitions (who changed what, and the outcome) with its own retention, default 365 days, in the same Retention settings.
+- Device commands are observed where the caller is known (hub API, forked addon, in-process addon) for the device transition audit.
+- The hub now audits device commands and the state changes they cause: a command is matched to the device's own report within 30 s, or recorded as unconfirmed or failed
+- Device transition audit: command arguments are redacted at any depth (pin, otp, code, key included) and a chatty device field writes one row per 10 s
+
 ## [1.2.810] - 2026-11-08
 
 ### Changed
 
 - Every integration provider declares its kinds and stamps a kind on its instances; the storage orchestrator no longer carries a dead legacy keychain scope constant.
-- The device hero capability (hero-layout) is exposed on the API
-- The remote runs declared sources under a per-device lock, resolves a source by name or channel number and refuses undeclared channels; custom buttons are no longer sources
 
 ## [1.2.809] - 2026-11-08
 
 ### Changed
 
 - Rebuilt against updated dependencies.
-- Device history keeps a ledger of device transitions (who changed what, and the outcome) with its own retention, default 365 days, in the same Retention settings.
-- Device commands are observed where the caller is known (hub API, forked addon, in-process addon) for the device transition audit.
-- The hub now audits device commands and the state changes they cause: a command is matched to the device's own report within 30 s, or recorded as unconfirmed or failed
-- Device transition audit: command arguments are redacted at any depth (pin, otp, code, key included) and a chatty device field writes one row per 10 s
 
 ## [1.2.808] - 2026-11-08
 

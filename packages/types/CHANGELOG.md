@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- New device-transitions capability and transition types: a device's changes can be recorded with who asked for them
+- A device call can state why it is made (commandOrigin) so the transition audit can tell an action run or a scheduler from a plain addon call.
+- Added the device hero model: a look per device type and role, fixed row layouts, and the hero-layout capability that serves it (nothing draws it yet)
+- A remote declares its sources explicitly: digits sources (name and channel number) and sequence sources (name and bound steps), with a step delay
+- Remote layouts can place a Sources key (source_select): a widget that opens the source picker; it can never be bound or used as a source step
+
 ## [1.2.525] - 2026-11-08
 
 ### Changed
@@ -14,11 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Media players now start the running-state power threshold with a 10 s start dwell, a 10 s stop dwell and one sample instead of 30 s / 3 min / 2 samples; other device types are unchanged
 - integration-instances: describe().kinds and every instance's kind are required; a record provider with one kind stamps it.
 - A provider whose kindOf names a kind its description does not declare is refused with the offending id
-- New device-transitions capability and transition types: a device's changes can be recorded with who asked for them
-- A device call can state why it is made (commandOrigin) so the transition audit can tell an action run or a scheduler from a plain addon call.
-- Added the device hero model: a look per device type and role, fixed row layouts, and the hero-layout capability that serves it (nothing draws it yet)
-- A remote declares its sources explicitly: digits sources (name and channel number) and sequence sources (name and bound steps), with a step delay
-- Remote layouts can place a Sources key (source_select): a widget that opens the source picker; it can never be bound or used as a source step
 
 ## [1.2.524] - 2026-11-08
 

@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Alexa channel changes by number or name for a remote's declared channels; inputs only for declared input sources
+
 ## [1.2.190] - 2026-11-08
 
 ### Changed
 
 - Its integration-instances provider declares its instance kind and stamps it on every instance.
-- Alexa channel changes by number or name for a remote's declared channels; inputs only for declared input sources
 
 ## [1.2.189] - 2026-11-08
 

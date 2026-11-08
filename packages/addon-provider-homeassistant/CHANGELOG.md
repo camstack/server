@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device transition audit capability is listed as not exported to Home Assistant
+
 ## [1.2.673] - 2026-11-08
 
 ### Changed
 
 - Its integration-instances provider declares its instance kind and stamps it on every instance.
-- The device transition audit capability is listed as not exported to Home Assistant
 
 ## [1.2.672] - 2026-11-08
 
