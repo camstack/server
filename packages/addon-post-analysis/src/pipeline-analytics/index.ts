@@ -2133,7 +2133,7 @@ export default class PipelineAnalyticsAddon
    * pipeline-analytics:addon-devices` at ~700/min, live 2026-08-26. Invalidated
    * by every in-process writer: `applyDeviceSettingsPatch` and the retired-
    * setting purges drop the device mirror, `onConfigChanged` (this process's
-   * own `updateGlobalSettings`) drops the global mirror.
+   * own `updateScopedSettings`) drops the global mirror.
    */
   private readonly rawDeviceBlobMirror = new RawDeviceBlobMirror({
     read: (deviceId) => this.readDeviceBlob(deviceId),
@@ -6384,7 +6384,7 @@ export default class PipelineAnalyticsAddon
   }
 
   /**
-   * `BaseAddon.updateGlobalSettings` calls this after the write lands —
+   * `BaseAddon.updateScopedSettings` calls this after the write lands —
    * gated to the LOCAL node's own write (a sibling-node write returns before
    * reaching it), which is exactly the scope `rawGlobalStoreMirror` needs to
    * invalidate: the mirror only ever answers for THIS process, so it only
@@ -8475,7 +8475,7 @@ export default class PipelineAnalyticsAddon
    *
    *  The cascade is device override > global value > schema default, resolved
    *  per field. The global half is NOT optional: the global settings page
-   *  (`updateGlobalSettings`) writes the ADDON store, and until 2026-08-21
+   *  (`updateScopedSettings`) writes the ADDON store, and until 2026-08-21
    *  this read consulted only the DEVICE store — so a device with no override
    *  silently ran on schema defaults and every global retune was a knob
    *  nobody at frame-time read (the operator's 0.45 face threshold ran at

@@ -12,7 +12,7 @@
  * proactive Report State (the one part of the Google contract that needs a
  * HomeGraph service-account key) is not implemented. Before adding such a
  * field, read docs/decisions/adr-0269-a-google-export-that-holds-no-google-credential.md — a `type: 'password'` settings field
- * masks in the UI only, and `addonSettings.getGlobalSettings` returns the
+ * masks in the UI only, and `addonSettings.getScopedSettings` returns the
  * stored value in plaintext to any admin caller.
  */
 import { ExportSetupSchema } from '@camstack/types'

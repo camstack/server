@@ -51,6 +51,8 @@ function trackedFiles(roots: readonly string[]): string[] {
   const out = execFileSync('git', ['ls-files', '-z', '--', ...roots], {
     cwd: ROOT,
     encoding: 'utf8',
+    // The tracked tree outgrew the 1 MB default; a short buffer died with ENOBUFS.
+    maxBuffer: 256 * 1024 * 1024,
   })
   return out
     .split('\0')

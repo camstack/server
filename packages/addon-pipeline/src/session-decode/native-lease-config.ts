@@ -26,7 +26,7 @@
  * 2. **env** — {@link NATIVE_LEASE_ENV_VARS}, the pre-settings mechanism, kept
  *    as an emergency / dev override. It applies only while the corresponding
  *    setting is UNSET. "Unset" includes a knob sitting AT its shipped default:
- *    `addon-settings.getGlobalSettings` hydrates an unstored field with the
+ *    `addon-settings.getScopedSettings` hydrates an unstored field with the
  *    schema default and offers no way to tell the two apart, so treating the
  *    default as a choice would have retired every env var on the day this
  *    shipped. Move the slider off the default and the setting takes over; move

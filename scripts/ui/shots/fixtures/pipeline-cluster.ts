@@ -295,7 +295,6 @@ export default defineFixtures({
     // One answer for the old and the scoped read, so a before/after shot of the Roles & nodes
     // pickers compares like with like (D986): the orchestrator form, and the recorder and
     // analytics cluster keys.
-    'addonSettings.getGlobalSettings': clusterSettingsAnswer,
     'addonSettings.getScopedSettings': clusterSettingsAnswer,
     // Auto tune (D745): one node change and one kept custom pin. A model and its
     // thresholds live on the accelerator only (D927) — no camera rows.

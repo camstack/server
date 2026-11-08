@@ -169,7 +169,6 @@ export default defineFixtures({
       derivationAttemptedAt: null,
       derivationError: null,
     },
-    'addonSettings.getGlobalSettings': null,
     'displayPalette.getPalette': bundledCamstack(),
     'displayPalette.listPresets': DISPLAY_PRESETS.map((row) => ({
       id: row.id,

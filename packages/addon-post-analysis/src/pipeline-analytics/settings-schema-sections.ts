@@ -2,8 +2,8 @@
  * S5 (refactor spec 2026-07-22-post-analysis-maintainability-refactor):
  * the four DETECTION-knob sections of the pipeline-analytics global settings
  * form (`detection-sensitivity`, `confirmation-gate`, `tracking`,
- * `stationary-objects`) — extracted VERBATIM from the `globalSettingsSchema()`
- * literal in `index.ts`. Pure move, zero logic change: these are exactly the
+ * `stationary-objects`) — extracted VERBATIM from the retired addon-level
+ * schema literal in `index.ts`. Pure move, zero logic change: these are exactly the
  * sections `DETECTION_PIPELINE_SECTION_IDS` re-homes onto the Detection
  * pipeline tab. Split out of `settings-schema.ts` only to respect the
  * 800-line file cap.

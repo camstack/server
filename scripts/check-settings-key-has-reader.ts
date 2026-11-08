@@ -63,7 +63,7 @@
  * ## Scope
  *
  * Declarations are read from files that build a settings schema (they mention
- * `globalSettingsSchema`, `ConfigSection`, `ConfigUISchema` or `this.schema(`)
+ * `ConfigSection`, `ConfigUISchema` or `this.schema(`)
  * under `packages/`. `info` / `separator` / `group` / `sub-tabs` /
  * `widget` rows and `readonlyField: true` readouts are LAYOUT, not knobs, and
  * carry no reader obligation — they are skipped, exactly as the census
@@ -105,12 +105,7 @@ const NAMES_DEAD_KEYS: readonly string[] = [
 const SEARCH_ROOTS: readonly string[] = ['packages', 'server', 'apps', 'scripts']
 
 /** A file must mention one of these to be scanned for field declarations. */
-const SCHEMA_MARKERS: readonly string[] = [
-  'globalSettingsSchema',
-  'ConfigSection',
-  'ConfigUISchema',
-  'this.schema(',
-]
+const SCHEMA_MARKERS: readonly string[] = ['ConfigSection', 'ConfigUISchema', 'this.schema(']
 
 /**
  * Field `type`s that carry no reader obligation.

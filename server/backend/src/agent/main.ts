@@ -178,7 +178,7 @@ const agentRunnerOfAddon = new RunnerOfAddon()
  * caps, so derive the set from the static cap definitions shipped in
  * `@camstack/types`. Fed to `createParentUnownedCallHandler` so a forked
  * addon on this agent calling e.g.
- * `addon-settings.getGlobalSettings({addonId, nodeId})` forwards UNPINNED to
+ * `addon-settings.getScopedSettings({addonId, cap, scope, nodeId})` forwards UNPINNED to
  * the hub singleton (which reads `nodeId` as data) instead of being pinned to
  * a node with no provider (dead broker fallback → ServiceNotFoundError).
  */

@@ -39,7 +39,7 @@ export function readFaceRescoreIntervalMinutes(value: unknown): number {
   )
 }
 
-/** One hydrated section of an `addon-settings.getGlobalSettings` payload. */
+/** One hydrated section of an `addon-settings.getScopedSettings` payload. */
 export interface FaceRescoreSettingsView {
   readonly sections: readonly { readonly fields: readonly unknown[] }[]
 }

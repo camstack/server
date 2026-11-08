@@ -168,9 +168,11 @@ export function authSettingsHandlers(withCors: boolean) {
     // system-config serves its form through the bootstrap action pair; the passkey section
     // still comes from the addon-level settings read (auth-webauthn).
     'mut:addons.custom': { sections: [section] },
-    'addonSettings.getGlobalSettings': (input: { addonId?: string }) => {
-      if (input.addonId === 'auth-webauthn') return { sections: [WEBAUTHN_SECTION] }
-      return null
-    },
+    'addonSettings.listScopedSettings': (input: { addonId?: string }) =>
+      input.addonId === 'auth-webauthn'
+        ? [{ cap: 'auth-webauthn', scope: 'cluster', sectionIds: [WEBAUTHN_SECTION.id] }]
+        : null,
+    'addonSettings.getScopedSettings': (input: { addonId?: string }) =>
+      input.addonId === 'auth-webauthn' ? { tabs: null, sections: [WEBAUTHN_SECTION] } : null,
   }
 }

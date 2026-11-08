@@ -850,7 +850,7 @@ export interface CapabilityDefinition<
    *     The provider owns the storage.
    *
    * The naming is intentionally distinct from the three-level addon API
-   * (`getGlobalSettings` / `getDeviceSettings` / `getAddonSettings`) to
+   * (`getScopedSettings` / `getDeviceSettings`) to
    * avoid collisions when an addon implements both surfaces on the same
    * class. The words "Contribution" and "Patch" signal these are aggregator
    * hooks, not persistent settings accessors.

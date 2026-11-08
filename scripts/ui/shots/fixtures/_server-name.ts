@@ -109,7 +109,11 @@ export function serverNameHandlers(info: Named, stored: string): Record<string, 
     'auth.listLoginMethods': [],
     'auth.getServerName': info,
     'nodes.topology': topologyWithSystemConfig(),
-    'addonSettings.getGlobalSettings': (input: { addonId?: string }) =>
-      input.addonId === 'system-config' ? { sections: [serverSection(stored)] } : null,
+    'addonSettings.listScopedSettings': (input: { addonId?: string }) =>
+      input.addonId === 'system-config'
+        ? [{ cap: 'system-config', scope: 'cluster', sectionIds: ['system-config-server'] }]
+        : null,
+    'addonSettings.getScopedSettings': (input: { addonId?: string }) =>
+      input.addonId === 'system-config' ? { tabs: null, sections: [serverSection(stored)] } : null,
   }
 }

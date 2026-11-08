@@ -148,4 +148,18 @@ describe('keychain-migrate-hub — D797 system secrets and the retired mqtt code
     expect(script.mqttKeyFromMaterial(raw.toString('base64')).equals(raw)).toBe(true)
     expect(script.mqttKeyFromMaterial('a passphrase')).toHaveLength(32)
   })
+
+  it('names the top-level keys a scoped form draws, looking through groups and sub-tabs', () => {
+    const keys = script.topLevelFieldKeys([
+      {
+        fields: [
+          { type: 'text', key: 'a' },
+          { type: 'group', fields: [{ type: 'password', key: 'b' }] },
+          { type: 'sub-tabs', tabs: [{ fields: [{ type: 'text', key: 'c' }] }] },
+          { type: 'info', label: 'no key' },
+        ],
+      },
+    ])
+    expect([...keys].sort()).toEqual(['a', 'b', 'c'])
+  })
 })

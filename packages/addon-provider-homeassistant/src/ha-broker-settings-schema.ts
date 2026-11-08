@@ -2,7 +2,7 @@
 //
 // Rendered by the generic Broker manager + the wizard's "create new"
 // path. This is PURE DATA — the same `select` / `text` / `password`
-// field shapes the addon's `globalSettingsSchema()` uses for HA
+// field shapes the addon's scoped broker form uses for HA
 // credentials, but WITHOUT the `brokerSource` / `brokerId` fields
 // (those are wizard concerns: pick "link existing" vs "create new"
 // happens one level up, in the integration wizard, not in the broker's

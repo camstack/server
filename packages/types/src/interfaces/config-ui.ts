@@ -336,8 +336,8 @@ export interface ConfigFieldBase {
   readonly bindsToModel?: boolean
   // Settings-redesign cleanup: `scope?: 'device' | 'global'` removed.
   // In the three-level model, a field's scope is determined by WHICH
-  // schema it lives in — `getAddonSettings / getGlobalSettings /
-  // getDeviceSettings` — not by a field-level marker. The keys are
+  // schema it lives in — `getAddonSettings /
+  // getScopedSettings / getDeviceSettings` — not by a field-level marker. The keys are
   // disjoint across levels by invariant, so a scope marker is
   // redundant.
   /**
@@ -355,15 +355,15 @@ export interface ConfigFieldBase {
    * inference-pool `concurrency` (pool threads are allocated at pool
    * spawn). The UI surfaces a "Restart required" hint, and the
    * framework auto-restarts the addon after the update lands on a flag
-   * transition — see `BaseAddon.updateGlobalSettings` /
-   * `updateAddonSettings`.
+   * transition — see `updateScopedSettings` /
+   * `BaseAddon.updateAddonSettings`.
    */
   readonly requiresRestart?: boolean
   /**
    * Per-node store scoping. `perNode: true` ⇒ the field's persisted store
    * key is physically `<key>@<nodeId>` — one value per cluster node — while
    * the SCHEMA field key stays bare (the UI form never sees the scoped key).
-   * `BaseAddon.getGlobalSettings` / `updateGlobalSettings` / `resolveConfig`
+   * `getScopedSettings` / `updateScopedSettings` / `BaseAddon.resolveConfig`
    * scope reads and writes through `addon/per-node-store.ts`; a node with no
    * scoped key resolves to the field's schema `default` — NEVER another
    * node's value (deliberately NO bare-key fallback).
@@ -1350,7 +1350,7 @@ export interface ConfigWidgetField extends ConfigFieldBase {
 // ---------------------------------------------------------------------------
 //
 // `ConfigUISchemaWithValues` is the shape returned by the new
-// `getAddonSettings() / getGlobalSettings() / getDeviceSettings()` family of
+// `getAddonSettings() / getScopedSettings() / getDeviceSettings()` family of
 // methods on `ICamstackAddon`. Each leaf field carries its *current* value
 // inline so the admin UI form builder can render in one pass without having
 // to cross-reference a separate `values` object.

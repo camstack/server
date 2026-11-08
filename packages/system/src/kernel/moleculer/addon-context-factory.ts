@@ -590,7 +590,7 @@ async function buildAddonContext(
    * to claim, and it was a leftover that read as verification.
    * `BaseAddon.resolveConfig` reads THIS function through
    * `ctx.settings.readAddonStore()`; the defaults it falls back to then become
-   * the values the addon's next `updateGlobalSettings` patch carries into the
+   * the values the addon's next `updateScopedSettings` patch carries into the
    * store. That is how the Home Assistant export lost its membership on
    * 2026-08-24 — see `brokerRefreshPatch` in the ha-export addon for the other
    * half of that story. The line below is the only warning that this window is

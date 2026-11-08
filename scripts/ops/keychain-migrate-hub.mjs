@@ -10,7 +10,7 @@
 // `camstack login <host>` once as an admin (the shared resolver renews it;
 // --token-file is an explicit override only). Every write goes through the product's normal OPERATOR write
 // paths, which store a sent secret in the keychain and leave a marker:
-//   addon settings    addonSettings.updateGlobalSettings
+//   addon settings    addonSettings.updateScopedSettings
 //   device configs    deviceManager.persistConfig      (unstamped = operator)
 //   integrations      instance record (copy migration) (unstamped = operator)
 //
@@ -371,6 +371,60 @@ function makeClient(hub, token) {
 const GET = 'GET'
 const POST = 'POST'
 
+/** Every (cap, scope) an addon serves, with its form; `null` from the hub means "unknown" (not running). */
+async function scopedFormsOf(call, addonId) {
+  const declared = await call(GET, 'addonSettings.listScopedSettings', { addonId })
+  if (!Array.isArray(declared)) throw new Error(`${addonId}: scoped settings unknown`)
+  const forms = []
+  for (const { cap, scope } of declared) {
+    const form = await call(GET, 'addonSettings.getScopedSettings', { addonId, cap, scope })
+    forms.push({ cap, scope, sections: isRecord(form) && Array.isArray(form.sections) ? form.sections : [] })
+  }
+  return forms
+}
+
+/** The addon's form as one schema: every (cap, scope) section joined. */
+async function scopedSchemaOf(call, addonId) {
+  const forms = await scopedFormsOf(call, addonId)
+  return { sections: forms.flatMap((f) => f.sections) }
+}
+
+/** Top-level field keys a form draws (groups and sub-tabs looked through). */
+export function topLevelFieldKeys(sections) {
+  const keys = new Set()
+  const walk = (fields) => {
+    for (const f of Array.isArray(fields) ? fields : []) {
+      if (!isRecord(f)) continue
+      if (f.type === 'group') walk(f.fields)
+      else if (f.type === 'sub-tabs') for (const t of f.tabs ?? []) walk(t?.fields)
+      else if (typeof f.key === 'string') keys.add(f.key)
+    }
+  }
+  for (const sec of sections) walk(sec?.fields)
+  return keys
+}
+
+/** Write a flat patch to the (cap, scope) rows that own its keys, one `updateScopedSettings` each. */
+async function writeAddonPatch(call, addonId, patch) {
+  const forms = await scopedFormsOf(call, addonId)
+  const pending = new Set(Object.keys(patch))
+  for (const form of forms) {
+    const owned = topLevelFieldKeys(form.sections)
+    const part = Object.fromEntries(Object.entries(patch).filter(([k]) => owned.has(k)))
+    if (Object.keys(part).length === 0) continue
+    await call(POST, 'addonSettings.updateScopedSettings', {
+      addonId,
+      cap: form.cap,
+      scope: form.scope,
+      patch: part,
+    })
+    for (const k of Object.keys(part)) pending.delete(k)
+  }
+  if (pending.size > 0) {
+    throw new Error(`${addonId}: no scoped form owns ${[...pending].join(', ')}`)
+  }
+}
+
 async function inventory(call) {
   const addons = (await call(GET, 'addons.list')) ?? []
   const addonItems = []
@@ -379,7 +433,7 @@ async function inventory(call) {
     if (typeof addonId !== 'string' || SKIPPED_ADDONS.has(addonId)) continue
     let schema
     try {
-      schema = await call(GET, 'addonSettings.getGlobalSettings', { addonId })
+      schema = await scopedSchemaOf(call, addonId)
     } catch {
       addonItems.push({ addonId, error: 'schema unreadable (addon not running?)' })
       continue
@@ -563,10 +617,7 @@ async function main() {
     let moved = 0
     for (const a of inv.addonItems) {
       if (a.error) continue
-      await call(POST, 'addonSettings.updateGlobalSettings', {
-        addonId: a.addonId,
-        patch: migrationPatch(a.blob, a.found),
-      })
+      await writeAddonPatch(call, a.addonId, migrationPatch(a.blob, a.found))
       moved += a.found.length
       console.log(`moved    addon ${a.addonId}: ${a.found.map((f) => f.path).join(', ')}`)
     }
@@ -689,10 +740,7 @@ async function main() {
       console.log('no enc:v1 value left in mqtt-broker')
       return 0
     }
-    await call(POST, 'addonSettings.updateGlobalSettings', {
-      addonId: 'mqtt-broker',
-      patch: migration.patch,
-    })
+    await writeAddonPatch(call, 'mqtt-broker', migration.patch)
     console.log(`moved    mqtt-broker: ${migration.paths.join(', ')}`)
     console.log(
       'Next: restart mqtt-broker and check every broker connects; THEN delete /data/addons-data/mqtt-broker/.secret-key on the hub and your local copy.',

@@ -425,7 +425,7 @@ interface AddonEntry {
 // Phase 11 (settings redesign): `stripValue` helper and the legacy
 // `getAddonConfigSchema / getAddonConfig / updateAddonConfig` adapter
 // shim that consumed it were deleted. All settings flow through the
-// new `getAddonSettings / getGlobalSettings / getDeviceSettings`
+// new `getAddonSettings / getScopedSettings / getDeviceSettings`
 // endpoints on the `addon-settings` singleton capability.
 
 /**
@@ -2892,7 +2892,7 @@ export class AddonRegistryService {
    * shim that synthesised a plain `ConfigUISchema` view from the new
    * three-level methods — are gone. All settings traffic goes through
    * the six Phase 5 tRPC endpoints (`addons.getAddonSettings`,
-   * `updateAddonSettings`, `getGlobalSettings`, `updateGlobalSettings`,
+   * `updateAddonSettings`, `getScopedSettings`, `updateScopedSettings`,
    * `getDeviceSettings`, `updateDeviceSettings`) which call the
    * addon's methods directly via the `addon-settings` singleton capability.
    */
@@ -3413,7 +3413,7 @@ export class AddonRegistryService {
   // the legacy `ICamstackAddon.getConfigSchema()` method, exposed via
   // `listAddons().hasConfigSchema` for the old AddonCard settings gate.
   // `NodeAddonsSettingsPanel` now gracefully shows an empty state when
-  // an addon doesn't implement `getGlobalSettings`, so the backend no
+  // an addon serves no scoped settings, so the backend no
   // longer needs to pre-compute this flag.
 
   private emitAddonLifecycleEvent(
@@ -3554,7 +3554,7 @@ export class AddonRegistryService {
     // for the addon store, the per-device store, and the cluster-wide
     // yml-backed sections. No schema merging happens here — the addon
     // combines these raw reads with its own schema via
-    // `hydrateSchema()` inside `getAddonSettings / getGlobalSettings
+    // `hydrateSchema()` inside `getAddonSettings / getScopedSettings
     // / getDeviceSettings`.
     const settingsView: AddonSettingsView = this.configService.createSettingsView(addonId)
 

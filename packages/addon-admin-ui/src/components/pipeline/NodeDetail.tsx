@@ -3,7 +3,7 @@
  *
  * Top-level tab bar is owned by `NodeAddonsSettingsPanel`: dynamic tabs
  * from `section.tab` values declared by each addon's
- * `globalSettingsSchema()` + the `extraTabs` we feed here
+ * scoped form + the `extraTabs` we feed here
  * (assignments / tree / engines / logs). No custom bar or routing lives in this
  * file — adding a new tunable section is "stamp `tab: '<id>'` on it"
  * and adding a non-schema surface is "append an entry to `extraTabs`".
@@ -21,7 +21,7 @@ import { NodeLogsTab } from './tabs/NodeLogsTab'
 import { NodePipelineTab } from './tabs/NodePipelineTab'
 import { useTranslation } from 'react-i18next'
 
-// Non-decoder addons that contribute `globalSettingsSchema` sections to the
+// Non-decoder addons that contribute scoped-form sections to the
 // Pipeline page. Discovery is explicit (rather than enumerating every installed
 // addon) so the tab bar stays stable across hub/agent deployments that happen
 // to have extra non-pipeline addons.
@@ -111,7 +111,7 @@ export function NodeDetail({ nodeId, refreshToken }: NodeDetailProps) {
   // D748), rendered as a nodes→devices tree (Block D2). The #33
   // "Inference Engine" tab now shows only the engine forms + model-substitution
   // status; live engine-pool telemetry is on the "Warm instances" tab.
-  // Per-node decode limits live on pipeline-runner's globalSettingsSchema
+  // Per-node decode limits live on pipeline-runner's node-scope form
   // (`perNode: true`, tab engine) — not a parallel card.
   return (
     <div className="flex flex-col h-full">

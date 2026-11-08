@@ -13,7 +13,7 @@ export type HwAccelChoice = 'auto' | 'none' | HwAccelBackend
 
 /**
  * Stable UI option list for the `hwaccel` setting. Decoder addons
- * reuse this for `globalSettingsSchema()` so the dropdown is
+ * reuse this in their scoped settings form so the dropdown is
  * identical everywhere. Order: auto → off → common backends by
  * platform affinity (macOS, NVIDIA, Intel/AMD, Windows, Linux).
  */

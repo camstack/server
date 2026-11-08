@@ -239,13 +239,13 @@ export function readClusterStepModels(
   return out
 }
 
-/** One hydrated field of an `addon-settings.getGlobalSettings` payload. */
+/** One hydrated field of an `addon-settings.getScopedSettings` payload. */
 interface HydratedClusterField {
   readonly key: unknown
   readonly value?: unknown
 }
 
-/** One section of an `addon-settings.getGlobalSettings` payload. */
+/** One section of an `addon-settings.getScopedSettings` payload. */
 export interface HydratedClusterSection {
   readonly fields: readonly unknown[]
 }
@@ -264,7 +264,7 @@ function isHydratedField(entry: unknown): entry is HydratedClusterField {
 }
 
 /**
- * Extract the cluster row from an `addon-settings.getGlobalSettings` payload.
+ * Extract the cluster row from an `addon-settings.getScopedSettings` payload.
  *
  * Walks EVERY section rather than looking inside {@link CLUSTER_MODEL_SECTION_ID}
  * alone: the keys are unique across the addon's schema, and a section rename

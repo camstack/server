@@ -94,8 +94,6 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "test:multi-agent": "tsx scripts/test-multi-agent.ts",
-    "test:pipeline-inheritance": "tsx scripts/test-pipeline-inheritance.mts",
-    "test:bench-flow": "tsx scripts/test-bench-flow.mts",
     "bench:stream-broker-gc": "tsx scripts/bench-stream-broker-gc.mts",
     "postinstall": "patch-package",
     "prepare": "husky || true"

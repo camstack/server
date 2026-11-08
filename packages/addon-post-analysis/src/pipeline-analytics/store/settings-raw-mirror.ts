@@ -19,7 +19,7 @@
  * ## Why this is not "a cache in the consumer" (D224)
  *
  * This addon OWNS both rows. The only writers of the addon store are
- * `updateGlobalSettings` (via `onConfigChanged`, gated to the LOCAL node's own
+ * `updateScopedSettings` (via `onConfigChanged`, gated to the LOCAL node's own
  * write — the same gate `resolveGlobalStore`'s per-node projection already
  * relies on) and the addon's own retired-setting purges; the only writers of
  * a device's row are `applyDeviceSettingsPatch` and the same purges. Every one

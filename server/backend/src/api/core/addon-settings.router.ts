@@ -27,13 +27,13 @@
  *
  * A forked addon's settings live in its own namespaced blob (`namespace
  * <addonId>`, collection `addon-settings`, key `root`), which this router does
- * not read — use the `addonSettings` cap (`getGlobalSettings`) for an addon's
+ * not read — use the `addonSettings` cap (`getScopedSettings`) for an addon's
  * hydrated settings, whichever process it runs in.
  *
  * The write methods (`updateGlobal` / `updateDevice` / `replaceGlobal`) are
  * GONE (D675): they had no callers, threw `SettingsStore not initialized` on
  * every isolated-engine hub, and bypassed the schema gate. Write an addon's
- * settings through the `addonSettings` cap (`updateGlobalSettings`, which also
+ * settings through the `addonSettings` cap (`updateScopedSettings`, which also
  * applies per-node scoping).
  *
  * ## ⚠️ ADMIN-ONLY — every method here is `adminProcedure`

@@ -1687,7 +1687,7 @@ function incomingFromUpdateAvailable(
 
 /**
  * Version-bearing `addon.updated` only — a settings save carries no versions
- * at all (`BaseAddon.updateGlobalSettings`).
+ * at all (`BaseAddon.updateScopedSettings`).
  *
  * `toVersion` IS the discriminator, and `fromVersion` is not: the emitter
  * omits the predecessor when it cannot read what was installed (a first

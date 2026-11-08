@@ -269,7 +269,7 @@ export const NATIVE_LEASE_ADMISSION_FIELD = {
  * value equal to the shipped default.
  *
  * That last rule is not tidiness, it is the difference between the documented
- * precedence being true and being a lie. `addon-settings.getGlobalSettings`
+ * precedence being true and being a lie. `addon-settings.getScopedSettings`
  * returns a HYDRATED payload, and `hydrateField` fills an unstored field with
  * the schema's own `default` (verified live on the hub: a cluster that has never
  * opened the form still reports `nativeLeaseHoldFrames = 8`). A reader that took
@@ -337,7 +337,7 @@ export function readNativeLeaseOverride(
   }
 }
 
-/** One hydrated field of an `addon-settings.getGlobalSettings` payload. */
+/** One hydrated field of an `addon-settings.getScopedSettings` payload. */
 interface HydratedLeaseField {
   readonly key: unknown
   readonly value?: unknown
@@ -358,7 +358,7 @@ const LEASE_KEYS: readonly string[] = [
 
 /**
  * Extract the operator's lease overrides from an
- * `addon-settings.getGlobalSettings` payload.
+ * `addon-settings.getScopedSettings` payload.
  *
  * Walks EVERY section rather than looking inside {@link NATIVE_LEASE_SECTION_ID}
  * alone: the keys are unique across the addon's schema, and a section rename

@@ -9,7 +9,7 @@
  *
  * Everything below re-uses `NodeAddonsSettingsPanel` at `level: 'global'`
  * — same component the cluster's Settings sub-tab uses. Adding an addon
- * on the hub automatically surfaces its `getGlobalSettings()` here
+ * on the hub automatically surfaces its scoped forms (`listScopedSettings`) here
  * without touching this file.
  *
  * The last group is per-user, not per-hub: Units (an account preference) and

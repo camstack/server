@@ -49,7 +49,7 @@ export const EMBEDDING_ENABLED_DEFAULT = true
  * device-detail top-level tab instead of nesting them under Config —
  * mirrors how recording/zones/ptz/live-stats hoist their sections.
  * Pure transform: only the per-device contribution uses it; the global
- * settings page renders the untouched `globalSettingsSchema()`.
+ * settings page renders the untouched scoped form.
  */
 export function toAnalyticsDeviceSections<T extends { readonly tab?: string }>(
   sections: readonly T[],
@@ -220,7 +220,7 @@ const DEVICE_ONLY_FIELDS: Readonly<Record<string, ReadonlySet<string>>> = {
 
 /** Drop device-only fields before the sections reach the GLOBAL settings
  *  page — the mirror of {@link stripGlobalOnlyFields}. The per-device
- *  contribution builds its own sections straight off `globalSettingsSchema()`
+ *  contribution builds its own sections straight off the scoped form
  *  (this function is never in that path), so it keeps every device-only
  *  field untouched. */
 export function stripDeviceOnlyFields<

@@ -525,11 +525,11 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
 
   /**
    * Reconcile the live broker registry against the persisted `brokers`
-   * array. Called by BaseAddon after every `updateGlobalSettings` /
+   * array. Called by BaseAddon after every `updateScopedSettings` /
    * `updateAddonSettings` — covers BOTH paths that mutate the array:
    *
    *   1. the account instances (create / update / delete): the registry is
-   *      mutated IN-PLACE first (`syncBrokerRuntime`), then `updateGlobalSettings` lands the
+   *      mutated IN-PLACE first (`syncBrokerRuntime`), then `updateGlobalSettingsAsOperator` lands the
    *      persistence. This reconcile becomes a no-op (the registry
    *      already reflects the new state).
    *   2. UI form save (External systems → Brokers → HA settings → save):

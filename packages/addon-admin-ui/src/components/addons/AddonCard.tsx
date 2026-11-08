@@ -975,7 +975,7 @@ export function AddonCard({
             <DialogBody className="space-y-4">
               {/* Cluster-level settings rendered via the three-level API.
                   Falls back silently to "no editable settings" when the
-                  addon doesn't implement `getGlobalSettings`.
+                  addon serves no scoped settings (`listScopedSettings` answers null or empty).
 
                   SCOPE. This dialog is opened from an addon card. There is no
                   node behind it — not the operator's current node, not the

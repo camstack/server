@@ -133,8 +133,6 @@ export default defineFixtures({
     'integrationInstances.instanceFormSchema': { sections: [] },
     'preferences.get': null,
     'localNetwork.getScanSubnets': { subnets: [] },
-    'addonSettings.getGlobalSettings': null,
-    'addonSettings.getIntegrationSettings': null,
     'auth.listLoginMethods': [],
   },
 })

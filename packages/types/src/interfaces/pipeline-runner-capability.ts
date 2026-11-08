@@ -328,8 +328,8 @@ export interface IPipelineRunnerProvider {
 
   // NOTE: tuning fields (maxQueueDepth, maxConcurrentInferences,
   // targetLoadPercent, minThrottledFps) are exposed via the
-  // global-level settings API (`getGlobalSettings / updateGlobalSettings`
-  // on `ICamstackAddon`). The live runner instance is hot-reloaded via
-  // `PipelineRunner.updateLimits()` from `PipelineRunnerAddon.updateGlobalSettings`.
+  // scoped settings API (`getScopedSettings / updateScopedSettings` of the
+  // `addon-settings` cap). The live runner instance is hot-reloaded via
+  // `PipelineRunner.updateLimits()` when its scoped values change.
   // The admin UI renders these under `NodeAddonsSettingsPanel`.
 }

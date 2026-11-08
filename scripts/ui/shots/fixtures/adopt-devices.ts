@@ -74,8 +74,6 @@ export default defineFixtures({
     ],
     'deviceManager.listAll': [],
     'deviceManager.discoveryProviders': { providers: [] },
-    'addonSettings.getGlobalSettings': null,
-    'addonSettings.getIntegrationSettings': null,
     'deviceManager.adoptionListCandidateFilters': {
       filters: [{ id: 'devices', label: 'Devices', isDefault: true }],
     },

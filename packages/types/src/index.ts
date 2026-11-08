@@ -520,7 +520,7 @@ export * from './types/tracked.js'
 
 // Phase 11 (settings redesign): `schemas/system-settings-schemas.ts`
 // deleted. Hub yml sections migrated to the `system-config` built-in
-// addon's `getGlobalSettings()` method.
+// addon's scoped settings (`addonSettings.getScopedSettings`).
 
 // The one bearer-principal / scope derivation, shared by the kernel,
 // server/backend AND addons (which may not import @camstack/server/system).

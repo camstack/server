@@ -53,7 +53,7 @@ const BackupDestinationInfoSchema = BackupSubDestinationInfoSchema.extend({
   id: z.string(),
   /**
    * Manifest id of the owning addon. The Settings button on the
-   * destination card opens that addon's `globalSettingsSchema` panel.
+   * destination card opens that addon's scoped settings panel.
    */
   addonId: z.string(),
   /** Operator-toggled enable flag from the destination-policy table. */

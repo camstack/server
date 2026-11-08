@@ -592,7 +592,7 @@ export const localNetworkCapability = {
 
     /**
      * Live TLS material for the Network → Local access certificate card.
-     * LAN HTTP / hostname are addon settings (`globalSettingsSchema`), not
+     * LAN HTTP / hostname are scoped settings (the cap's own form), not
      * a second store — this query is status, not configuration.
      */
     getTlsStatus: method(z.void(), TlsStatusSchema),

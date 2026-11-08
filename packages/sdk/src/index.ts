@@ -22,7 +22,7 @@ export type { DeviceInfo } from '@camstack/types'
 // Settings-redesign cleanup: `SettingsSection` type deleted together
 // with the legacy `settings.*` tRPC namespace. Hub yml sections now
 // flow through the `system-config` built-in addon via
-// `addons.getGlobalSettings / updateGlobalSettings`.
+// `addonSettings.getScopedSettings / updateScopedSettings`.
 
 // ─── tRPC AppRouter type (for advanced typed access) ─────────────────
 export type { BackendAppRouter } from './backend-router.js'

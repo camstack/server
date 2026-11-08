@@ -88,7 +88,7 @@ export function connectionFromSettings(settings: Record<string, unknown>): Dream
 
 /**
  * Hand-written connection form for the account/integration creation UI — the
- * wizard's `account` config step renders this via `getGlobalSettings`. A flat
+ * wizard's `account` config step renders this via `getIntegrationFormSchema`. A flat
  * set of sections the admin UI renders into the "Add Dreame account" modal.
  */
 export function buildConnectionFormSchema(): ConfigUISchema {

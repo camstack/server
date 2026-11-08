@@ -858,7 +858,7 @@ export const pipelineOrchestratorCapability = {
     /**
      * The operator's STORED model choice for one cluster-scoped step (D651).
      * Read three-way from this addon's own store, only once its boot has
-     * settled. Unlike `addonSettings.getGlobalSettings`, it never answers a
+     * settled. Unlike `addonSettings.getScopedSettings`, it never answers a
      * default as though someone chose it.
      */
     getClusterModelChoice: method(z.object({ stepId: z.string() }), ClusterModelChoiceSchema),

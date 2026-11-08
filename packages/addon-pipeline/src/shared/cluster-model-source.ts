@@ -72,7 +72,7 @@ export const CLUSTER_MODEL_UNKNOWN_RETRY_MS = 5_000
  *
  * The MODEL comes from the owner's three-way answer
  * (`pipelineOrchestrator.getClusterModelChoice`, D651): a written choice, a key
- * nobody wrote, or NO answer. `getGlobalSettings` cannot say the third — it
+ * nobody wrote, or NO answer. `getScopedSettings` cannot say the third — it
  * hydrates an unread or restarting store as `{}`, i.e. as "the defaults" — and
  * that is how a runner that booted while the owner restarted ran the registry
  * default for its whole life (D658). The step KNOBS still come from the

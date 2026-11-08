@@ -196,7 +196,6 @@ jobs:
             scripts/check-no-publish-lifecycle-script.mjs \
             scripts/check-no-client-secrets.ts \
             scripts/check-secret-fields-declared.ts \
-            scripts/check-global-schema-declared.ts \
             scripts/check-no-raw-secret-read.ts \
             scripts/check-keychain-backed-rows.ts \
             scripts/check-no-raw-secrets-in-collections.ts \

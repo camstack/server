@@ -44,7 +44,7 @@ export default defineFixtures({
     ],
     'integrations.list': [],
     'auth.listLoginMethods': [],
-    'addonSettings.getGlobalSettings': (input: { addonId?: string }) => {
+    'addonSettings.getIntegrationFormSchema': (input: { addonId?: string }) => {
       if (input.addonId === 'provider-rtsp') return schema('rtsp', 'RTSP', 'host', 'Host')
       if (input.addonId === 'provider-wyze') return schema('wyze', 'Wyze', 'email', 'Email')
       return null

@@ -20,7 +20,7 @@
  * setting while watching what the addon logs about it. Every section is a
  * deep-link target (`?section=`), so a link can still land straight on one.
  *
- * Settings default to the addon's `globalSettingsSchema()` via
+ * Settings default to the addon's scoped forms (`listScopedSettings`) via
  * `NodeAddonsSettingsPanel`. A page may pass `settingsContent` to replace that
  * body inside the same Settings section (e.g. auth-oidc DataTable + dialog) —
  * still not a new panel id.

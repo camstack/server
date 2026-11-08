@@ -114,7 +114,7 @@ export interface ParentUnownedCallDeps {
    * internally — NOT a routing hint. For such caps the handler must NOT lift
    * `args.nodeId` into a routing pin: pinning routes the call to a node with
    * no provider for the cap (e.g. a forked addon on an agent calling
-   * `addon-settings.getGlobalSettings({addonId, nodeId})` gets pinned to
+   * `addon-settings.getScopedSettings({addonId, cap, scope, nodeId})` gets pinned to
    * `nodeId` → dead broker fallback → ServiceNotFoundError). Suppressing the
    * pin forwards the call unpinned → singleton resolution on the hub — exactly
    * how `settings-store` (no `nodeId` arg) already behaves. `args` pass

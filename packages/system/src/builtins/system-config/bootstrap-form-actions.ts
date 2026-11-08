@@ -4,12 +4,12 @@
  * `system-config` owns nine keys that stay bootstrap `ConfigManager` values
  * (`server.name`, `server.port|host|dataPath`, `auth.tokenExpiry|accessTokenExpiry|
  * trustedProxies|trustedNetworks|corsOrigins`). They are NOT addon settings: no
- * capability declares them, so the addon-level hooks (`getGlobalSettings` /
- * `updateGlobalSettings`) are not their carrier. The form is served by this
+ * capability declares them, so the scoped settings API (`getScopedSettings` /
+ * `updateScopedSettings`) is not their carrier. The form is served by this
  * action pair instead (D986 §7).
  *
- * Reading is open to any signed-in caller, as `getGlobalSettings` was; a save is
- * admin-only, as `addonSettings.updateGlobalSettings` was.
+ * Reading is open to any signed-in caller, as the scoped read is; a save is
+ * admin-only, as `addonSettings.updateScopedSettings` is.
  */
 import { z } from 'zod'
 import {

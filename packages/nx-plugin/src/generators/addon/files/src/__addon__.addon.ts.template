@@ -15,7 +15,7 @@
 import { BaseAddon, type ProviderRegistration } from '@camstack/types'
 
 // Operator-visible config fields go here, each with a default below and a
-// field in a `globalSettingsSchema()` override. The framework merges persisted
+// field in the owning capability's scoped settings (its `*.cap.ts` declares the form). The framework merges persisted
 // values over DEFAULTS; `this.config` is the live typed snapshot. No on/off switch: the
 // capability toggle is an addon's ONE enable (D777). An addon that needs a
 // setting to do anything (a URL, a token) treats the empty value as inert.

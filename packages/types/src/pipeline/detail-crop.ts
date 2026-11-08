@@ -113,13 +113,13 @@ export function readDetailCropConvention(
   }
 }
 
-/** One hydrated field of an `addon-settings.getGlobalSettings` payload. */
+/** One hydrated field of an `addon-settings.getScopedSettings` payload. */
 interface HydratedSettingsField {
   readonly key: unknown
   readonly value?: unknown
 }
 
-/** One section of an `addon-settings.getGlobalSettings` payload. */
+/** One section of an `addon-settings.getScopedSettings` payload. */
 export interface HydratedSettingsSection {
   readonly fields: readonly unknown[]
 }
@@ -138,7 +138,7 @@ function isHydratedField(entry: unknown): entry is HydratedSettingsField {
 }
 
 /**
- * Extract the convention from an `addon-settings.getGlobalSettings` payload.
+ * Extract the convention from an `addon-settings.getScopedSettings` payload.
  *
  * Walks EVERY section rather than looking inside {@link DETAIL_CROP_SECTION_ID}
  * alone: the keys are unique across the addon's schema, and a section rename

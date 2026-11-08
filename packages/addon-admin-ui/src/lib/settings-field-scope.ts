@@ -6,7 +6,7 @@
  * per-node: it scopes the persisted key to `<key>@<nodeId>`
  * (`ConfigFieldBase.perNode`, `addon/per-node-store.ts`). Without the flag the
  * value is one blob for the whole cluster, and the `nodeId` argument the UI
- * passes is discarded by `BaseAddon.updateGlobalSettings`.
+ * passes is discarded by `BaseAddon.updateScopedSettings`.
  *
  * A settings surface therefore has exactly one honest population:
  *

@@ -1078,7 +1078,7 @@ export class SnapshotAddon extends BaseAddon<SnapshotAddonConfig> {
   /**
    * Drop the cached ingest owner whenever addon-level settings change —
    * cheap, correct-by-construction refresh point (BaseAddon calls this
-   * after every `updateGlobalSettings`/`updateAddonSettings`). Combined
+   * after every `updateScopedSettings`/`updateAddonSettings`). Combined
    * with the TTL in `resolveIngestOwner`, a cluster topology change is
    * picked up either on the next settings save or within
    * `OWNER_CACHE_TTL_MS`, whichever comes first.

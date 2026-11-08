@@ -529,7 +529,7 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
       const mapping = CATEGORY_MAPPINGS[category]
       if (!mapping) return
 
-      // Settings saves also emit `addon.updated` (`BaseAddon.updateGlobalSettings`
+      // Settings saves also emit `addon.updated` (`BaseAddon.updateScopedSettings`
       // with `{ level: 'global' }` and no versions). Notification Center already
       // drops those — `toVersion` is the discriminator. Alert Center used to
       // mint a fresh UUID per save, so exporters that write settings in a burst
@@ -1317,7 +1317,7 @@ export class AlertCenterAddon extends BaseAddon<AlertCenterConfig> {
 
   private buildMessage(category: string, data: Record<string, unknown>, sourceId?: string): string {
     // Addon lifecycle events always carry the addon id in `source.id`;
-    // some emit sites (e.g. BaseAddon.updateGlobalSettings) don't also
+    // some emit sites (e.g. BaseAddon.updateScopedSettings) don't also
     // duplicate it into `data.addonId`. Fall back to the event source so
     // the alert names the addon ("stream-broker updated") instead of the
     // bare "unknown" placeholder.
