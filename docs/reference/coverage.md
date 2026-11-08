@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**241 units · 8267 source files · 235 units claimed by at least one document (8237 files).**
+**241 units · 8268 source files · 235 units claimed by at least one document (8238 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -184,6 +184,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/running-state` | 4 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0933-a-device-reports-whether-it-is-running-natively-or-from-one-assigned-field.md`, `decisions/adr-1008-an-anti-crease-pulse-does-not-re-arm-a-run.md` | — |
 | `packages/types/src/schemas` | 4 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ui.md`, `decisions/adr-0894-viewer-settings-have-two-levels-device-and-account-and-a-setting-lives-in-exactly-one.md`, +1 more | 2026-11-02 |
 | `packages/ui-library/src/hotkeys` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
+| `packages/ui-library/src/icons` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/addon-admin-ui/src/i18n` | 3 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-02 |
 | `packages/addon-export-alexa/src/snapshots` | 3 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0773-alexa-snapshots-are-signed-ten-minute-token-checked-urls-behind-an-integration-switch.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +3 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-pipeline-orchestrator/src/migrations` | 3 | — | `decisions/adr-1013-one-instance-model.md`, 1 ADR | — |
@@ -201,7 +202,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/util` | 3 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/windows-agent.md`, `design/boot-to-usable-camera.md` _(covers)_ | 2026-10-13 |
 | `packages/ui-library` | 3 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/ui-library/src/i18n` | 3 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
-| `packages/ui-library/src/icons` | 3 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/addon-admin-ui/src/contexts` | 2 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +3 more | 2026-11-02 |
 | `packages/addon-admin-ui/src/server` | 2 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-02 |
 | `packages/addon-import-alexa/src/devices` | 2 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md` | — |
