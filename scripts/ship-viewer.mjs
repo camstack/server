@@ -43,6 +43,7 @@ import { execFileSync, execSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { buildOtaPayload, readOtaNotifyUrl, sendOtaNotification, whatsNewNotes } from './lib/ota-notify.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const VIEWER = path.join(ROOT, 'camstack')
@@ -226,6 +227,25 @@ run(
 )
 run('git', ['commit', '--no-verify', '-m', `chore(viewer): pin ${shipped}`], ROOT)
 run('git', ['push', 'origin', 'HEAD'], ROOT)
+
+// ── 7. announce it (EAS has no webhook for an update) ───────────────────────
+const notifyUrl = readOtaNotifyUrl()
+if (notifyUrl === null) {
+  say('notifica OTA saltata: ~/.camstack/zentik-ota-url assente')
+} else {
+  const appConfig = fs.readFileSync(path.join(VIEWER, 'app.config.ts'), 'utf-8')
+  const payload = buildOtaPayload({
+    version: shipped,
+    runtimeVersion: appConfig.match(/runtimeVersion:\s*["']([^"']+)["']/)?.[1],
+    commit: head,
+    notes: whatsNewNotes(whatsNew, shipped, 'it'),
+    channel: 'production',
+    projectName: 'camstack',
+    accountName: 'zentik-notifier',
+    at: Date.now(),
+  })
+  say(await sendOtaNotification(notifyUrl, payload))
+}
 
 process.stdout.write(`\n\x1b[32m✔ viewer ${shipped} su tutti e tre i canali\x1b[0m\n`)
 report()
