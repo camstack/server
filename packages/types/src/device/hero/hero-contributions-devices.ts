@@ -140,7 +140,23 @@ const fanContribution = contribution('fan-control', FanControlStatusSchema, (sli
       ? {}
       : {
           facts: [fact('speed', 'fan', speedText, speed === 0 ? 'muted' : 'primary')],
-          tiles: { right: [{ label: heroText('Speed', 'Velocità'), value: speedText }] },
+          tiles: {
+            ...(slice?.oscillating == null
+              ? {}
+              : {
+                  left: [
+                    {
+                      label: heroText('Oscillation', 'Oscilla'),
+                      value: slice.oscillating ? heroText('Yes', 'Sì') : heroText('No', 'No'),
+                    },
+                  ],
+                }),
+            ...(preset === ''
+              ? {}
+              : {
+                  right: [{ label: heroText('Mode', 'Modalità'), value: heroText(preset, preset) }],
+                }),
+          },
           scene: { level: unit(speed ?? 0) },
         }),
   }
@@ -439,18 +455,21 @@ const feederContribution = contribution('pet-feeder', PetFeederStatusSchema, (sl
         : [fact('last-run', 'clock', heroText(`Last ${last} g`, `Ultimo ${last} g`))]),
       ...ownBattery(slice?.powerSource === 'battery' ? slice.batteryPower : null, ctx),
     ],
-    ...(last === null
-      ? {}
-      : {
-          tiles: {
-            right: [
+    tiles: {
+      left: [
+        ...(slice?.foodLevel == null
+          ? []
+          : [{ label: heroText('Tank', 'Serbatoio'), value: pct(slice.foodLevel) }]),
+        ...(last === null
+          ? []
+          : [
               {
                 label: heroText('Last portion', 'Ultima porzione'),
                 value: heroText(`${last} g`, `${last} g`),
               },
-            ],
-          },
-        }),
+            ]),
+      ],
+    },
   }
 })
 
@@ -527,7 +546,22 @@ const fountainContribution = contribution('pet-fountain', PetFountainStatusSchem
               level <= 20 ? 'warning' : 'primary',
             ),
           ],
-          tiles: { right: [{ label: heroText('Water', 'Acqua'), value: pct(level) }] },
+          tiles: {
+            left: [
+              { label: heroText('Water', 'Acqua'), value: pct(level) },
+              ...(slice?.waterVolume == null
+                ? []
+                : [
+                    {
+                      label: heroText('Volume', 'Volume'),
+                      value: heroText(
+                        `${Math.round(slice.waterVolume)} ml`,
+                        `${Math.round(slice.waterVolume)} ml`,
+                      ),
+                    },
+                  ]),
+            ],
+          },
           scene: { level: unit(level) },
         }),
   }

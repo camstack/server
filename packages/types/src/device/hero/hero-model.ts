@@ -348,6 +348,11 @@ export const HeroSideTileSchema = z.object({
   label: HeroTextSchema,
   value: HeroTextSchema,
   tone: HeroToneSchema.optional(),
+  /**
+   * Epoch ms when the tile reads a clock time (an appliance's end): a client prints it in
+   * the viewer's own time zone; `value` is the fallback for one that cannot.
+   */
+  at: z.number().optional(),
 })
 export type HeroSideTile = z.infer<typeof HeroSideTileSchema>
 

@@ -403,6 +403,11 @@ const heatingValveContribution = contribution(
       reading: reading('sensor', position > 0 ? 'running' : 'idle'),
       facts: [fact('valve', 'gauge', heroText(`Valve ${text.en}`, `Valvola ${text.it}`))],
       tiles: { right: [tile('Valve', 'Valvola', text.en)] },
+      ...(position > 0
+        ? {
+            caption: heroText(`Heating · valve ${text.en}`, `Riscalda · valvola ${text.it}`),
+          }
+        : {}),
       // Heat rises slower when the valve is nearly shut: the intensity follows the opening.
       scene: { level: position / 100 },
     }

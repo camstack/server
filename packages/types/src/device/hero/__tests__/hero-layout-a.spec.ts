@@ -70,7 +70,7 @@ describe('layout A anatomy in the model', () => {
       ['Phase', 'Running'],
       ['Program', 'Eco 50'],
     ])
-    expect(m.sideTiles.right.map((t) => t.label.en)).toEqual(['Left'])
+    expect(m.sideTiles.right.map((t) => t.label.en)).toEqual(['Ends', 'Left'])
     expect(rowOf(m, 'progress').progress).toBeCloseTo(0.3)
     expect(actionsOf(rowOf(m, 'cycle').controls).map((a) => a.call.method)).toEqual([
       'pause',

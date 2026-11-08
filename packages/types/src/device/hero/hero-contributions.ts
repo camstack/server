@@ -241,6 +241,7 @@ const batteryContribution = contribution('battery', BatteryStatusSchema, (slice)
       ? {}
       : {
           facts: [fact('battery', 'battery', badge.label, badge.tone)],
+          tilesFallback: true,
           tiles: {
             left: [
               {
@@ -340,6 +341,12 @@ const motionTriggerContribution = contribution(
 
 // ── timed-run ──────────────────────────────────────────────────────────────
 
+/** The armed run's length: "Timer 25 min". */
+function timerTile(quickRun: { readonly duration: number; readonly unit: string }): HeroSideTile {
+  const text = `${quickRun.duration} ${quickRun.unit}`
+  return { label: heroText('Timer', 'Timer'), value: heroText(text, text) }
+}
+
 const timedRunContribution = contribution('timed-run', TimedRunStatusSchema, (slice, ctx) => {
   const type = deviceTypeOf(ctx.type)
   const limit = type === undefined ? undefined : TIMED_RUN_LIMITS[type]
@@ -385,7 +392,13 @@ const timedRunContribution = contribution('timed-run', TimedRunStatusSchema, (sl
         : heroText(`Stops in ${left} min`, `Si ferma tra ${left} min`),
     controls: activeUntil === null ? [asAction(run)] : [asAction(cancel), asAction(restart)],
   }
-  return { timedRun: { activeUntil, quickRun, run, cancel }, rows: [row] }
+  const armed = activeUntil === null ? {} : { right: [timerTile(quickRun)] }
+  return {
+    timedRun: { activeUntil, quickRun, run, cancel },
+    rows: [row],
+    tilesFallback: true,
+    tiles: armed,
+  }
 })
 
 // ── power-source ───────────────────────────────────────────────────────────
@@ -506,7 +519,7 @@ const OPERATION_WORDS: Readonly<Record<string, HeroText>> = {
   Aborting: heroText('Stopping', 'Arresto'),
 }
 
-const dishwasherContribution = contribution('dishwasher', DishwasherStatusSchema, (slice) => {
+const dishwasherContribution = contribution('dishwasher', DishwasherStatusSchema, (slice, ctx) => {
   const state: HeroState =
     slice === undefined || slice.state === 'unavailable'
       ? 'unknown'
@@ -580,7 +593,17 @@ const dishwasherContribution = contribution('dishwasher', DishwasherStatusSchema
       left,
       ...(remaining === null
         ? {}
-        : { right: [{ label: heroText('Left', 'Restano'), value: minutesLeft(remaining) }] }),
+        : {
+            right: [
+              {
+                label: heroText('Ends', 'Fine'),
+                value: minutesLeft(remaining),
+                tone: 'warning' as const,
+                at: ctx.now + remaining * 1000,
+              },
+              { label: heroText('Left', 'Restano'), value: minutesLeft(remaining) },
+            ],
+          }),
     },
     ...(progress === null ? {} : { scene: { level: progress / 100 } }),
   }
