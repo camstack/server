@@ -258,6 +258,8 @@ jobs:
             scripts/check-runner-group-isolation.ts \
             scripts/check-cgroup-path-single-owner.ts \
             scripts/check-cap-name-kebab.ts \
+            scripts/check-hero-look-exhaustive.ts \
+            scripts/check-cap-hero-contributions.ts \
             scripts/check-spec-dynamic-imports-declared.ts \
             scripts/check-authored-fields-reachable.ts \
             scripts/check-nc-text-catalog.ts \

@@ -1146,6 +1146,9 @@ export {
   SENSOR_FEATURES,
   SENSOR_MAP,
 } from './device/device-control-resolution.js'
+
+// The device hero model (D1023): one pure builder for every hero, on every client.
+export * from './device/hero/index.js'
 export type { DeviceDoAction, DeviceDoOpenArg } from './device/device-do-actions.js'
 export {
   actionsForBoundCaps,

@@ -1,0 +1,105 @@
+import { DeviceType } from '@camstack/types'
+import type { IScopedLogger } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
+import { HeroLayoutService, type HeroLayoutReader } from '../hero-layout-service.js'
+
+interface Logged {
+  readonly message: string
+  readonly tags: unknown
+}
+
+function logger(into: Logged[]): IScopedLogger {
+  const line = (message: string, ctx?: { tags?: unknown }): void => {
+    into.push({ message, tags: ctx?.tags })
+  }
+  const self: IScopedLogger = {
+    debug: line,
+    info: line,
+    warn: line,
+    error: line,
+    child: () => self,
+    withTags: () => self,
+  }
+  return self
+}
+
+function service(reader: Partial<HeroLayoutReader>, logs: Logged[] = []): HeroLayoutService {
+  return new HeroLayoutService({
+    logger: logger(logs),
+    now: () => 1_700_000_000_000,
+    reader: {
+      device: async () => ({
+        type: DeviceType.Heater,
+        role: null,
+        name: 'Stove',
+        online: true,
+        features: [],
+      }),
+      caps: async () => ['switch'],
+      slice: async () => ({ on: true, lastChangedAt: 1 }),
+      remoteCommands: async () => 0,
+      ...reader,
+    },
+  })
+}
+
+describe('hero-layout provider', () => {
+  it('serves the fixed rows of a type', async () => {
+    const { rows } = await service({}).getLayout({ deviceType: DeviceType.Heater })
+    expect(rows).toEqual(['run-for', 'cycle'])
+  })
+
+  it('an unknown device answers null and says so on the record, tagged', async () => {
+    const logs: Logged[] = []
+    const model = await service({ device: async () => null }, logs).getHeroModel({ deviceId: 9 })
+    expect(model).toBeNull()
+    expect(logs).toEqual([expect.objectContaining({ tags: { deviceId: 9 } })])
+  })
+
+  it('builds the model from the bound caps and their slices', async () => {
+    const model = await service({}).getHeroModel({ deviceId: 7 })
+    expect(model?.state).toBe('on')
+    expect(model?.ownPower?.source).toBe('switch')
+  })
+
+  it('a slice that cannot be read is not answered: the heater is unknown, never off', async () => {
+    const logs: Logged[] = []
+    const model = await service(
+      { slice: async () => Promise.reject(new Error('boom')) },
+      logs,
+    ).getHeroModel({
+      deviceId: 7,
+    })
+    expect(model?.state).toBe('unknown')
+    expect(model?.ownPower?.on).toBeNull()
+    expect(logs.every((l) => (l.tags as { deviceId: number }).deviceId === 7)).toBe(true)
+    expect(logs.length).toBeGreaterThan(0)
+  })
+
+  it('the remote is offered to any type when it holds commands', async () => {
+    const model = await service({ remoteCommands: async () => 3 }).getHeroModel({ deviceId: 7 })
+    expect(model?.remote).toEqual({ commands: 3 })
+  })
+
+  it('a remote that cannot be asked still shows its button, without a count', async () => {
+    const model = await service({
+      remoteCommands: async () => Promise.reject(new Error('x')),
+    }).getHeroModel({
+      deviceId: 7,
+    })
+    expect(model?.remote).toEqual({ commands: null })
+  })
+
+  it('a remote with no commands shows no button', async () => {
+    const model = await service({ remoteCommands: async () => 0 }).getHeroModel({ deviceId: 7 })
+    expect(model?.remote).toBeNull()
+  })
+
+  it('a caller that may not act is told what to hide', async () => {
+    const reader = { slice: vi.fn(async () => ({ on: true, lastChangedAt: 1 })) }
+    const model = await service(reader).getHeroModel({ deviceId: 7, canActuate: false })
+    expect(model?.gated).toContain('own-power')
+    const open = await service(reader).getHeroModel({ deviceId: 7 })
+    expect(open?.gated).toEqual([])
+  })
+})

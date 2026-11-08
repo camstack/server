@@ -39,7 +39,7 @@ this column exists to stop.
 | `cloudflare-turn` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `turn-provider` |
 | `composer` | `@camstack/server-framework` | system | own runner | `hub-only` | `composer` | — | `composer` |
 | `console-logging` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `log-destination` |
-| `core-blocks` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `action-source` `actions` `core-blocks` `fan-presets` `power-source` `remote` `remote-layout-components` `schedulers` `template` `timed-run` |
+| `core-blocks` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `action-source` `actions` `core-blocks` `fan-presets` `hero-layout` `power-source` `remote` `remote-layout-components` `schedulers` `template` `timed-run` |
 | `decoder-nodeav` | `@camstack/addon-decoder-nodeav` | pipeline | own runner | `any-node` | — | — | `audio-codec` `decoder` |
 | `detection-pipeline` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `detection-pipeline` `load-contribution` `pipeline-executor` |
 | `device-history` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `device-history` `device-removal-hook` `device-runs` `device-transitions` |

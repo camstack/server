@@ -4,12 +4,12 @@
 
 # Guards
 
-230 repository guards: 225 in `scripts/`,
+232 repository guards: 227 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (220)
+## Enforced by CI checks (222)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -33,6 +33,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-age-keyed-retention.ts` | Retention guard — there is exactly ONE age-keyed sweep, and it is over TRACKS. |
 | `scripts/check-authored-fields-reachable.ts` | Authored-field guard — **a field an operator is meant to set has a control that sets it, or it does not exist.** ## The failure this catches `RecordingTriggers.sensorDeviceIds` shipped on 2026-08 with a schema, a recorder that listened o… |
 | `scripts/check-broker-cap-is-bus-only.ts` | The `broker` capability is the message bus only (D1013). |
+| `scripts/check-cap-hero-contributions.ts` | GUARD: every device capability is accounted for in the hero (D1023). |
 | `scripts/check-cap-history-declared.ts` | Cap history guard (D850) — a value is recorded as long-term history because its own capability said so, in a diff someone reviewed. |
 | `scripts/check-cap-mount-codegen-agrees.ts` | Cap mount agreement guard — the type-only codegen mount and the runtime builder must tell the same story about every cap. |
 | `scripts/check-cap-name-kebab.ts` | Cap-name guard — **a capability name is kebab-case, because the transport recovers it from the router key with a string transform.** ## The failure this catches A forked addon calls `ctx.api.<routerKey>.<method>()`. The router key is `ke… |
@@ -91,6 +92,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-fleet-query-defaults.ts` | Fleet-query-defaults guard — enforcement for D274. |
 | `scripts/check-heavy-specs.ts` | Heavy-spec guard — a `*.heavy.spec.*` file is out of every automatic lane and IN the on-demand Checks workflow, never in neither. |
 | `scripts/check-helper-kinds-are-aggregators.ts` | The helper kinds are exactly the aggregators (D1004, D944). |
+| `scripts/check-hero-look-exhaustive.ts` | GUARD: every device type has a hero look and a hero layout, and every look is complete (D1023). |
 | `scripts/check-history-single-mechanism.ts` | D850 P4 — numeric history has one mechanism (device-history). |
 | `scripts/check-host-externals-identical.ts` | The three host-external lists name the same specifiers. |
 | `scripts/check-host-widget-resolves.ts` | Host-widget guard — every `host/…` widget a capability DECLARES must exist in `HOST_WIDGETS`. |

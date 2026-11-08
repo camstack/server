@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A field's condition can now depend on a field in another section and resolves that field's default when it has no value yet.
 - A settings form no longer draws the bare header of a section whose fields are all hidden by their condition.
+- Generated hooks include the new hero-layout capability (no visible change yet)
 
 ## [1.2.403] - 2026-11-08
 

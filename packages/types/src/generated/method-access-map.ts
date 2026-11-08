@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1470 method paths across 202 capabilities.
+ * Coverage: 1472 method paths across 203 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -522,6 +522,8 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'groupCommands.getStatus': { capName: "group-commands", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'groupStatus.getStatus': { capName: "group-status", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'heatingValve.getStatus': { capName: "heating-valve", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'heroLayout.getHeroModel': { capName: "hero-layout", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
+  'heroLayout.getLayout': { capName: "hero-layout", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
   'humidifier.getStatus': { capName: "humidifier", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'humidifier.setMode': { capName: "humidifier", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'humidifier.setOn': { capName: "humidifier", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
@@ -1580,6 +1582,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "group-commands",
   "group-status",
   "heating-valve",
+  "hero-layout",
   "humidifier",
   "humidity-sensor",
   "image",
@@ -1848,6 +1851,7 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "failure-contribution",
   "fan-presets",
   "filesystem-browse",
+  "hero-layout",
   "integration-instances",
   "integrations",
   "keychain",

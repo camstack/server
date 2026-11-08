@@ -2155,6 +2155,12 @@ export {
   remoteCapability,
 } from './remote.cap.js'
 export {
+  heroLayoutCapability,
+  type HeroLayoutRows,
+  HeroLayoutRowsSchema,
+  type IHeroLayoutProvider,
+} from './hero-layout.cap.js'
+export {
   type ITemplateProvider,
   TEMPLATE_WRITE_REFUSALS,
   type TemplateDeleteResult,
@@ -3415,6 +3421,7 @@ import type { brokerCapability } from './broker.cap.js'
 import type { buttonCapability } from './button.cap.js'
 import type { irTransmitterCapability } from './ir-transmitter.cap.js'
 import type { remoteCapability } from './remote.cap.js'
+import type { heroLayoutCapability } from './hero-layout.cap.js'
 import type { fanPresetsCapability } from './fan-presets.cap.js'
 import type { templateCapability } from './template.cap.js'
 import type { remoteLayoutComponentsCapability } from './remote-layout-components.cap.js'
@@ -3774,6 +3781,7 @@ type AnyCapability =
   | typeof buttonCapability
   | typeof irTransmitterCapability
   | typeof remoteCapability
+  | typeof heroLayoutCapability
   | typeof fanPresetsCapability
   | typeof templateCapability
   | typeof remoteLayoutComponentsCapability

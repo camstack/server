@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1035 shared schemas.**
+**1036 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -2568,6 +2568,11 @@ Enum: `"replace" \| "add"`
 
 - `position`: `number \| null`
 - `lastFetchedAt`: `number`
+
+### `HeroLayoutRowsSchema`
+
+- `type`: `string`
+- `rows`: `("run-for" \| "cycle" \| "program" \| "appliance-power" \| "now-playing" \| "playback" \| "volume" \| "source" \| "contact" \| "motion-trigger")[]`
 
 ### `HfModelResolutionSchema`
 

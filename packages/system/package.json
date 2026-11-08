@@ -493,6 +493,9 @@
             "name": "remote"
           },
           {
+            "name": "hero-layout"
+          },
+          {
             "name": "remote-layout-components"
           },
           {

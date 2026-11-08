@@ -108,6 +108,7 @@ export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
     'recording exports — requested from the timeline, not an automation step',
   ),
   records: system(INTERNAL),
+  'hero-layout': system('the device hero model — read-only data the UI draws, never actuated'),
   remote: system(
     'the per-device remote setup — authored in the Customize remote editor, sent through the remote UI',
   ),

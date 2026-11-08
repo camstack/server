@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**202 capabilities · 1470 methods.**
+**203 capabilities · 1472 methods.**
 
 ## Method index
 
@@ -513,6 +513,8 @@
 | `groupCommands.getStatus` | query | protected | group-commands (auto) |
 | `groupStatus.getStatus` | query | protected | group-status (auto) |
 | `heatingValve.getStatus` | query | protected | heating-valve (auto) |
+| `heroLayout.getHeroModel` | query | protected | hero-layout |
+| `heroLayout.getLayout` | query | protected | hero-layout |
 | `humidifier.getStatus` | query | protected | humidifier (auto) |
 | `humidifier.setOn` | mutation | protected | humidifier |
 | `humidifier.setTargetHumidity` | mutation | protected | humidifier |
@@ -2872,6 +2874,18 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `heatingValve.getStatus` | query | protected | `{ deviceId: number }` | `HeatingValveStatusSchema` |
+
+### `hero-layout` → `heroLayout.*`
+
+- **Source:** `packages/types/src/capabilities/hero-layout.cap.ts:29`
+- **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
+- **Archetypes:** —
+- **Provider interface:** `IHeroLayoutProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| getHeroModel | `heroLayout.getHeroModel` | query | protected | `{ deviceId: number; canActuate?: boolean }` | `{ deviceId: number; type: string; role: string \| null; name: string; state: "on" \| "off" \| "running" \| "idle" \| "standby" \| "alert" \| "offline" \| "unknown"; stateAssumed: boolean; look: { icon: <custom>; tone: "success" \| "warning" \| "danger" \| "primary" \| "info" \| "muted"; background: "plain" \| "heat-rise" \| "cool-fall" \| "glow" \| "water" \| "drum" \| "sky" \| "mist" \| "alert-wash"; animation: "none" \| "pulse" \| "spin" \| "glow" \| "halo" \| "wave" \| "rise" \| "fall" \| "tumble" \| "equalizer" \| "blink" \| "breathe" }; background: { kind: "artwork"; url: string; fallback: { token: "plain" \| "heat-rise" \| "cool-fall" \| "glow" \| "water" \| "drum" \| "sky" \| "mist" \| "alert-wash"; animation: "none" \| "pulse" \| "spin" \| "glow" \| "halo" \| "wave" \| "rise" \| "fall" \| "tumble" \| "equalizer" \| "blink" \| "breathe" } } \| { kind: "state"; token: "plain" \| "heat-rise" \| "cool-fall" \| "glow" \| "water" \| "drum" \| "sky" \| "mist" \| "alert-wash"; animation: "none" \| "pulse" \| "spin" \| "glow" \| "halo" \| "wave" \| "rise" \| "fall" \| "tumble" \| "equalizer" \| "blink" \| "breathe" }; title: { en: string; it: string }; badges: ({ id: "battery" \| "network-link"; icon: <custom>; tone: "success" \| "warning" \| "danger" \| "primary" \| "info" \| "muted"; value: number \| null; label: { en: string; it: string } })[]; remote: { commands: number \| null } \| null; consumables: { items: ({ key: string; label: string; level: number \| null; needsAttention: boolean })[]; attention: number } \| null; consumption: { kind: "power"; watts: number; detail: ({ label: { en: string; it: string }; value: number \| string; unit: string \| null })[] } \| { kind: "running"; running: boolean \| null; since: number \| null; phase: string \| null; detail: ({ label: { en: string; it: string }; value: number \| string; unit: string \| null })[] } \| null; ownPower: { source: "switch" \| "media-player"; on: boolean \| null; assumed: boolean; turnOn: { id: string; label: { en: string; it: string }; icon: <custom>; call: { cap: string; method: string; args: Record<string, string \| number \| boolean> }; emphasis: "primary" \| "normal"; confirm: "off-while-running" \| null }; turnOff: { id: string; label: { en: string; it: string }; icon: <custom>; call: { cap: string; method: string; args: Record<string, string \| number \| boolean> }; emphasis: "primary" \| "normal"; confirm: "off-while-running" \| null } } \| null; timedRun: { activeUntil: number \| null; quickRun: TimedRunQuickRunSchema; run: { id: string; label: { en: string; it: string }; icon: <custom>; call: { cap: string; method: string; args: Record<string, string \| number \| boolean> }; emphasis: "primary" \| "normal"; confirm: "off-while-running" \| null }; cancel: { id: string; label: { en: string; it: string }; icon: <custom>; call: { cap: string; method: string; args: Record<string, string \| number \| boolean> }; emphasis: "primary" \| "normal"; confirm: "off-while-running" \| null } } \| null; powerSupply: { on: boolean \| null; confirmOffWhileRunning: boolean; running: boolean \| null; powerOn: { id: string; label: { en: string; it: string }; icon: <custom>; call: { cap: string; method: string; args: Record<string, string \| number \| boolean> }; emphasis: "primary" \| "normal"; confirm: "off-while-running" \| null }; powerOff: { id: string; label: { en: string; it: string }; icon: <custom>; call: { cap: string; method: string; args: Record<string, string \| number \| boolean> }; emphasis: "primary" \| "normal"; confirm: "off-while-running" \| null }; restart: { id: string; label: { en: string; it: string }; icon: <custom>; call: { cap: string; method: string; args: Record<string, string \| number \| boolean> }; emphasis: "primary" \| "normal"; confirm: "off-while-running" \| null } } \| null; rows: ({ id: "run-for" \| "cycle" \| "program" \| "appliance-power" \| "now-playing" \| "playback" \| "volume" \| "source" \| "contact" \| "motion-trigger"; icon: <custom>; status: { en: string; it: string } \| null; controls: ({ kind: "action"; action: { id: string; label: {…}; icon: <custom>; call: {…}; emphasis: "primary" \| "normal"; confirm: "off-while-running" \| null } } \| { kind: "toggle"; id: string; label: { en: string; it: string }; on: boolean \| null; turnOn: { id: string; label: {…}; icon: <custom>; call: {…}; emphasis: "primary" \| "normal"; confirm: "off-while-running" \| null }; turnOff: { id: string; label: {…}; icon: <custom>; call: {…}; emphasis: "primary" \| "normal"; confirm: "off-while-running" \| null } } \| { kind: "slider"; id: string; label: { en: string; it: string }; value: number \| null; min: number; max: number; step: number; unit: string; call: { cap: string; method: string; args: Record<string, string \| number \| boolean> }; valueArg: string } \| { kind: "picker"; id: string; label: { en: string; it: string }; current: string \| null; options: string[]; call: { cap: string; method: string; args: Record<string, string \| number \| boolean> }; valueArg: string })[] })[]; gated: string[]; provenance: ({ partId: string; cap: string })[] } \| null` |
+| getLayout | `heroLayout.getLayout` | query | protected | `{ deviceType: string }` | `HeroLayoutRowsSchema` |
 
 ### `humidifier` → `humidifier.*`
 

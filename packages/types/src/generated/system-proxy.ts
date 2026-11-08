@@ -30,6 +30,7 @@ import type { deviceStateCapability } from '../capabilities/device-state.cap.js'
 import type { displayPaletteCapability } from '../capabilities/display-palette.cap.js'
 import type { faceGalleryCapability } from '../capabilities/face-gallery.cap.js'
 import type { fanPresetsCapability } from '../capabilities/fan-presets.cap.js'
+import type { heroLayoutCapability } from '../capabilities/hero-layout.cap.js'
 import type { integrationInstancesCapability } from '../capabilities/integration-instances.cap.js'
 import type { integrationsCapability } from '../capabilities/integrations.cap.js'
 import type { keychainAdminCapability } from '../capabilities/keychain-admin.cap.js'
@@ -102,6 +103,7 @@ export interface SystemProxy {
   readonly displayPalette: Pick<InferProvider<typeof displayPaletteCapability>, 'getPalette' | 'listPresets' | 'setPalette'>
   readonly faceGallery: Pick<InferProvider<typeof faceGalleryCapability>, 'listIdentities' | 'createIdentity' | 'renameIdentity' | 'deleteIdentity' | 'listIdentitySamples' | 'auditIdentitySamples' | 'removeSample' | 'getFaceMedia' | 'assignFace' | 'unassignFace' | 'deleteFace' | 'assignFaces' | 'unassignFaces' | 'suggestFaceClusters'>
   readonly fanPresets: Pick<InferProvider<typeof fanPresetsCapability>, 'getPresets' | 'setPresets' | 'applyPreset' | 'capturePreset'>
+  readonly heroLayout: Pick<InferProvider<typeof heroLayoutCapability>, 'getHeroModel' | 'getLayout'>
   readonly integrationInstances: Pick<InferProvider<typeof integrationInstancesCapability>, 'describe' | 'instanceFormSchema' | 'listInstances' | 'getInstance' | 'createInstance' | 'updateInstance' | 'setInstanceEnabled' | 'deleteInstance' | 'testInstance'>
   readonly integrations: Pick<InferProvider<typeof integrationsCapability>, 'list' | 'get' | 'getByAddonId' | 'create' | 'update' | 'delete' | 'getAvailableTypes'>
   readonly keychainAdmin: Pick<InferProvider<typeof keychainAdminCapability>, 'status' | 'listSecrets' | 'listAudit' | 'reveal' | 'setSystemSecret' | 'importSecret' | 'deleteOrphans' | 'rotateMasterKey' | 'purgeRetiredKeys' | 'downloadRecoveryKey' | 'resetKeychain' | 'resetReport' | 'acknowledgeReset'>
@@ -492,6 +494,11 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     setPresets: (input?: unknown) => dispatch('fanPresets', 'setPresets', 'mutation', input),
     applyPreset: (input?: unknown) => dispatch('fanPresets', 'applyPreset', 'mutation', input),
     capturePreset: (input?: unknown) => dispatch('fanPresets', 'capturePreset', 'query', input),
+  }
+
+  const heroLayoutInterface = {
+    getHeroModel: (input?: unknown) => dispatch('heroLayout', 'getHeroModel', 'query', input),
+    getLayout: (input?: unknown) => dispatch('heroLayout', 'getLayout', 'query', input),
   }
 
   const integrationInstancesInterface = {
@@ -1079,6 +1086,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     displayPalette: displayPaletteInterface,
     faceGallery: faceGalleryInterface,
     fanPresets: fanPresetsInterface,
+    heroLayout: heroLayoutInterface,
     integrationInstances: integrationInstancesInterface,
     integrations: integrationsInterface,
     keychainAdmin: keychainAdminInterface,

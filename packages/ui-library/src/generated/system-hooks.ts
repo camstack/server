@@ -1385,6 +1385,12 @@ export const useGroupStatusGetStatus: typeof trpc.groupStatus.getStatus.useQuery
 /** Generated alias around `trpc.heatingValve.getStatus.useQuery`. */
 export const useHeatingValveGetStatus: typeof trpc.heatingValve.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.heatingValve.getStatus.useQuery)
 
+/** Generated alias around `trpc.heroLayout.getHeroModel.useQuery`. */
+export const useHeroLayoutGetHeroModel: typeof trpc.heroLayout.getHeroModel.useQuery = /*#__PURE__*/ alias(() => trpc.heroLayout.getHeroModel.useQuery)
+
+/** Generated alias around `trpc.heroLayout.getLayout.useQuery`. */
+export const useHeroLayoutGetLayout: typeof trpc.heroLayout.getLayout.useQuery = /*#__PURE__*/ alias(() => trpc.heroLayout.getLayout.useQuery)
+
 /** Generated alias around `trpc.humidifier.setOn.useMutation`. */
 export const useHumidifierSetOn: typeof trpc.humidifier.setOn.useMutation = /*#__PURE__*/ alias(() => trpc.humidifier.setOn.useMutation)
 

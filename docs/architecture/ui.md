@@ -1648,3 +1648,27 @@ one cluster key (runner tuning, the audio backend) is on Cluster â†’ Settings â†
 Runner defaults. The decoder's section is shown on the engine tab
 (`tabAliases`, `?ntab=decoder` lands there). The scroller pads `p-4 sm:p-6`.
 
+
+### A device hero is ONE model (D1023)
+
+The hero of a device is data, not a per-type card: `buildHeroModel` in
+`packages/types/src/device/hero/` takes the device, the caps it is bound to
+(`getBindings`, per device), its features and one slice per cap, and returns the
+look (icon, tone, background, one animation, per state), a status line, the reserved
+slots (remote, consumables, consumption, own power with its timed run, power supply)
+and the rows of its type's fixed layout. The `hero-layout` cap, provided by
+core-blocks, serves it read-only (`getHeroModel`, `getLayout`).
+
+Rules that hold when you touch it:
+
+- A look is declared per `DeviceType` and per `DeviceRole` (`hero-look.ts`); a layout
+  per type (`hero-layout.ts`) names only rows. The reserved slots are not in a layout.
+- Own power (`switch`, or media-player power) and the power supply (`power-source`)
+  are separate slots and never merge.
+- A cap contributes through `hero-contributions.ts`, typed on its own status schema;
+  an unparsable slice is "not answered", never off. A new device cap is listed in
+  `hero-cap-coverage.ts` (contributes, or why not), enforced by
+  `scripts/check-cap-hero-contributions.ts`; a new type or role needs a look
+  (`scripts/check-hero-look-exhaustive.ts`).
+
+The renderers (admin and viewer) are not built yet; nothing draws this model today.

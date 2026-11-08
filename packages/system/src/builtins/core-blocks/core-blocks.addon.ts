@@ -40,6 +40,7 @@ import {
   type IScopedLogger,
   normalizeCoreBlockWrite,
   type ProviderRegistration,
+  heroLayoutCapability,
   remoteCapability,
   fanPresetsCapability,
   actionSourceCapability,
@@ -65,6 +66,7 @@ import {
 } from './scheduler/scheduler-wiring.js'
 import { actionOwner, automationOwner, schedulerOwner } from './runs-ledger.js'
 import { RemoteComponentsService } from './remote-components-service.js'
+import { HeroLayoutService } from './hero-layout-service.js'
 import { composeRedirects, LockDoorGate } from './lock-door-gate.js'
 import { type DeviceNames, doorSensorOf, seedLockDoors } from './lock-door-sensor.js'
 import {
@@ -253,9 +255,46 @@ export class CoreBlocksAddon extends BaseAddon {
       { capability: timedRunCapability, provider: timedRun },
       // The built-in palette needs no store: it is served even when the remote is not.
       { capability: remoteLayoutComponentsCapability, provider: new RemoteComponentsService() },
+      { capability: heroLayoutCapability, provider: this.buildHeroLayout() },
       ...this.remoteRegistrations(),
       ...this.fanPresetRegistrations(),
     ]
+  }
+
+  /** Read-only: the fixed layouts and the model built from the device's bindings and slices. */
+  private buildHeroLayout(): HeroLayoutService {
+    const requireApi = (): AddonApi => {
+      const api = this.ctx.api
+      if (!api)
+        throw new Error('core-blocks: no ctx.api on this node — hero-layout cannot reach devices')
+      return api
+    }
+    return new HeroLayoutService({
+      logger: this.ctx.logger.child('hero-layout'),
+      now: () => Date.now(),
+      reader: {
+        device: async (deviceId) => {
+          const found = await requireApi().deviceManager.getDevice.query({ deviceId })
+          return found === null
+            ? null
+            : {
+                type: found.type,
+                role: found.role ?? null,
+                name: found.name,
+                online: found.online,
+                features: found.features,
+              }
+        },
+        caps: async (deviceId) =>
+          (await requireApi().deviceManager.getBindings.query({ deviceId })).entries.map(
+            (e) => e.capName,
+          ),
+        slice: (deviceId, capName) =>
+          requireApi().deviceState.getCapSlice.query({ deviceId, capName }),
+        remoteCommands: async (deviceId) =>
+          (await requireApi().remote.listCommands.query({ deviceId })).commands.length,
+      },
+    })
   }
 
   private buildPowerSource(): PowerSourceService {
