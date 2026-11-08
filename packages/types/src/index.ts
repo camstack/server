@@ -1096,8 +1096,11 @@ export type {
   DeclaredDeviceRow,
   DeclaredDevicesResult,
   DeclaredDevicesSpec,
+  DeclaredInstanceSeed,
+  DeclaredIntegrationRef,
   DeclaredIntegrationRow,
   DeviceDeclaration,
+  SeedableInstances,
 } from './device/declared-device.js'
 // Declared devices — the ownership primitive for a device an addon declares
 export {
@@ -1105,6 +1108,7 @@ export {
   DECLARED_INTEGRATION_FIXED_KEY,
   DeclaredDevices,
   declarationOwnerNodeId,
+  seedInstanceOnce,
 } from './device/declared-device.js'
 export type {
   ExposeBlockDevicesInput,

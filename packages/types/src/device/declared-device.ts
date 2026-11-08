@@ -39,6 +39,7 @@
  */
 
 import type { IScopedLogger } from '../interfaces/logging.js'
+import { errMsg } from '../utils/err-msg.js'
 import type { IDevice } from './device.js'
 import type { DeviceConstructor, DeviceManagerApi } from './device-context.js'
 import type { DeviceType } from './device-type.js'
@@ -56,7 +57,46 @@ export interface DeclaredDeviceRow {
 /** An integration as the integrations store reports it. */
 export interface DeclaredIntegrationRow {
   readonly id: string
+  /** The row's current name (the operator may have renamed it); absent in a fake that has none. */
+  readonly name?: string
   readonly info?: Record<string, unknown> | null
+}
+
+/** The integration an addon declared: its registry id and the name it carries now. */
+export interface DeclaredIntegrationRef {
+  readonly id: string
+  readonly name: string
+}
+
+/** A name-only instance record to keep under a declared integration's registry id. */
+export interface DeclaredInstanceSeed {
+  readonly id: string
+  readonly name: string
+}
+
+/**
+ * The part of an addon's `integration-instances` provider that seeding needs. Structural, so this
+ * module takes no dependency on the capability.
+ */
+export interface SeedableInstances {
+  readonly getInstance: (input: { id: string }) => Promise<unknown>
+  readonly createInstance: (input: { id: string; name: string }) => Promise<unknown>
+}
+
+/**
+ * Give a declared integration its instance record, ONCE. The record is read first and left
+ * exactly as it is when it exists (an operator's rename, a field the addon later adds): a seed
+ * never overwrites. A read that fails throws and writes nothing (D49) — the next pass retries.
+ * True when the record was written by this call.
+ */
+export async function seedInstanceOnce(
+  instances: SeedableInstances,
+  seed: DeclaredInstanceSeed,
+): Promise<boolean> {
+  const existing = await instances.getInstance({ id: seed.id })
+  if (existing !== null && existing !== undefined) return false
+  await instances.createInstance({ id: seed.id, name: seed.name })
+  return true
 }
 
 /**
@@ -94,6 +134,13 @@ export interface DeclaredDevicePorts {
    * is indistinguishable from "the operator deleted everything".
    */
   readonly listOwnDevices: () => Promise<readonly DeclaredDeviceRow[]>
+  /**
+   * Keep an `integration-instances` record under the integration this declarer MINTED (epic
+   * #440): called once per pass with its registry id and name, and it must not overwrite a record
+   * that exists (`seedInstanceOnce`). Not called for a supplied `integrationId` — that owner seeds
+   * its own. A throw is logged and never stops the devices from converging.
+   */
+  readonly seedInstance?: (seed: DeclaredInstanceSeed) => Promise<void>
 }
 
 /** One device an addon declares. */
@@ -231,7 +278,14 @@ export class DeclaredDevices {
     // A supplied id is used verbatim: minting and re-asserting `fixed` belong
     // to whoever owns that integration, and a declarer that cannot READ it
     // (see `integrationId`) must not try to own it.
-    const integrationId = spec.integrationId ?? (await this.ensureIntegration(spec.integrationName))
+    let integrationId: string
+    if (spec.integrationId !== undefined) {
+      integrationId = spec.integrationId
+    } else {
+      const own = await this.ensureIntegration(spec.integrationName)
+      integrationId = own.id
+      await this.seedInstance(own)
+    }
     // The index read. Fallible: if it throws, this pass changes NOTHING and the
     // next one converges. That is the whole point of reconciling.
     const index = await this.readIndex()
@@ -259,7 +313,7 @@ export class DeclaredDevices {
    * install without it, and the kernel kept offering to delete an integration
    * the addon owns.
    */
-  private async ensureIntegration(integrationName: string): Promise<string> {
+  private async ensureIntegration(integrationName: string): Promise<DeclaredIntegrationRef> {
     const existing = await this.ports.getIntegration(this.ports.addonId)
     if (existing === null) {
       const created = await this.ports.createIntegration({
@@ -270,7 +324,7 @@ export class DeclaredDevices {
       this.ports.logger.info('declared a fixed integration', {
         meta: { integrationId: created.id, name: integrationName },
       })
-      return created.id
+      return { id: created.id, name: integrationName }
     }
     if (existing.info?.[DECLARED_INTEGRATION_FIXED_KEY] !== true) {
       await this.ports.updateIntegration({
@@ -281,7 +335,21 @@ export class DeclaredDevices {
         meta: { integrationId: existing.id },
       })
     }
-    return existing.id
+    return { id: existing.id, name: existing.name ?? integrationName }
+  }
+
+  /** Seed the instance record of an integration this declarer owns; best-effort, retried next pass. */
+  private async seedInstance(integration: DeclaredIntegrationRef): Promise<void> {
+    const { seedInstance } = this.ports
+    if (seedInstance === undefined) return
+    try {
+      await seedInstance({ id: integration.id, name: integration.name })
+    } catch (err) {
+      this.ports.logger.warn('could not seed the instance record of a declared integration', {
+        tags: { integrationId: integration.id },
+        meta: { error: errMsg(err) },
+      })
+    }
   }
 
   private async readIndex(): Promise<Map<string, DeclaredDeviceRow>> {

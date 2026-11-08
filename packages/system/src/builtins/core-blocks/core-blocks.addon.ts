@@ -30,6 +30,8 @@ import {
   coreBlockComposition,
   coreBlocksCapability,
   defineAddonMigrations,
+  integrationInstancesCapability,
+  seedInstanceOnce,
   powerSourceCapability,
   timedRunCapability,
   actionsCapability,
@@ -85,6 +87,7 @@ import { buildFanPresetsRuntime, type FanPresetsRuntime } from './fan-presets-wi
 import { BlockSettingsStore } from './block-settings-store.js'
 import { type BlockTypeLib, loadBlockTypeDefs } from './block-type-defs.js'
 import { armBlocksIntegration, reconcileBlocksIntegration } from './blocks-integration.js'
+import { blocksInstanceRecordKinds, buildBlocksInstances } from './blocks-instances.js'
 import { type BlockTranspiler, compileBlock } from './compile-block.js'
 import { buildCompositionApi, type CompositionApi } from './composition-api.js'
 import { describeCompositionSources } from './composition-sources.js'
@@ -139,6 +142,8 @@ export class CoreBlocksAddon extends BaseAddon {
   private readonly seedFailed = new Set<number>()
   /** The shared integration, or null when this node does not own it. */
   private blocksIntegrationId: string | null = null
+  /** The instance record the shared integration keeps (name only); built with the records. */
+  private blocksInstances: ReturnType<typeof buildBlocksInstances> | null = null
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
     const settingsStore = this.ctx.api?.settingsStore
@@ -154,6 +159,8 @@ export class CoreBlocksAddon extends BaseAddon {
       throw new Error('core-blocks needs ctx.records on the hub')
     }
     await records.declare(coreBlocksRecordKinds)
+    await records.declare(blocksInstanceRecordKinds)
+    this.blocksInstances = buildBlocksInstances(records)
     // Stored compositions take the shape the current caps validate BEFORE the store loads
     // them: a fountain still carrying its pump cycle on `pet-fountain` would not build.
     await this.runMigrations(
@@ -249,6 +256,9 @@ export class CoreBlocksAddon extends BaseAddon {
     })
     return [
       { capability: coreBlocksCapability, provider: this.buildProvider() },
+      ...(this.blocksInstances === null
+        ? []
+        : [{ capability: integrationInstancesCapability, provider: this.blocksInstances.toProvider() }]),
       { capability: actionsCapability, provider: this.requireActions().service },
       { capability: schedulersCapability, provider: schedulers.service },
       { capability: powerSourceCapability, provider: this.buildPowerSource() },
@@ -611,6 +621,13 @@ export class CoreBlocksAddon extends BaseAddon {
       // every block-declared device on the cluster.
       listOwnDevices: async () =>
         api.deviceManager.listAll.query({ addonId: CORE_BLOCKS_ADDON_ID }),
+      // The integration keeps a name-only instance record under its registry id. A seed never
+      // overwrites, so an existing install gains the record once and keeps it afterwards.
+      seedInstance: async (seed) => {
+        if (this.blocksInstances !== null) {
+          await seedInstanceOnce(this.blocksInstances.toProvider(), seed)
+        }
+      },
     })
   }
 

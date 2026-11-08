@@ -509,6 +509,9 @@
           },
           {
             "name": "action-source"
+          },
+          {
+            "name": "integration-instances"
           }
         ]
       },

@@ -112,6 +112,7 @@ import {
   type ClipSearchStrictness,
   DeviceType,
   deviceRemovalHookCapability,
+  integrationInstancesCapability,
   EVENT_KIND_BY_CAP,
   EventCategory,
   errMsg,
@@ -458,6 +459,7 @@ import {
   type PreviewUpgradeDeriveInput,
 } from './pipeline/preview-upgrade.js'
 import { TrackCloser } from './pipeline/track-close.js'
+import { buildAlarmPanelInstances } from './alarm-panel-instances.js'
 import { trackPlacementOf } from './pipeline/track-placement.js'
 import { trackProvenanceOf } from './pipeline/track-provenance.js'
 import { type IdleResident, TrackResidentState } from './pipeline/track-resident-state.js'
@@ -6349,6 +6351,21 @@ export default class PipelineAnalyticsAddon
         : []),
       // A deleted device's events, tracks and media are removed with it (D865).
       { capability: deviceRemovalHookCapability, provider: this.removalHook },
+      // The Notification Center integration's name-only instance record. Hub only: the
+      // integration is declared there and the record kind is declared there.
+      ...this.alarmPanelInstanceRegistrations(),
+    ]
+  }
+
+  /** The `integration-instances` provider of the fixed Notification Center integration (hub only). */
+  private alarmPanelInstanceRegistrations(): ProviderRegistration[] {
+    const records = this.ctx.records
+    if (records === undefined || this.localOwnNodeId() !== 'hub') return []
+    return [
+      {
+        capability: integrationInstancesCapability,
+        provider: buildAlarmPanelInstances(records).toProvider(),
+      },
     ]
   }
 

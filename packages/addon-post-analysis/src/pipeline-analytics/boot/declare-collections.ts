@@ -9,6 +9,7 @@ import type { AddonContext, RecordsAccess, SettingsStoreClient } from '@camstack
 import { ncDurableRecordKinds } from '../../notification-center/nc-durable-record-kinds.js'
 import { ncRecordKinds } from '../../notification-center/record-kinds.js'
 import { declarePipelineAnalyticsBootCollections } from '../pa-boot-declare.js'
+import { alarmPanelInstanceRecordKinds } from '../alarm-panel-instances.js'
 import { pipelineAnalyticsRecordKinds } from '../record-kinds.js'
 import { runAudioTrackClassMigration } from '../store/audio-track-class-migration.js'
 import { OBJECT_EVENTS_COLLECTION } from '../store/event-store.js'
@@ -85,6 +86,7 @@ export class DeclareCollections {
       // Declared FIRST and not in the parallel batch: a refused declaration
       // must stop the boot before any other declare races it.
       await records.declare(pipelineAnalyticsRecordKinds)
+      await records.declare(alarmPanelInstanceRecordKinds)
       await records.declare(ncRecordKinds)
       await records.declare(ncDurableRecordKinds)
       markers = MigrationMarkerStore.of(records)

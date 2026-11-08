@@ -6,7 +6,7 @@
  */
 
 import type { AddonContext } from '@camstack/types'
-import { DeclaredDevices, errMsg } from '@camstack/types'
+import { DeclaredDevices, errMsg, seedInstanceOnce } from '@camstack/types'
 import {
   NC_ALARM_DECLARATION,
   NC_INTEGRATION_NAME,
@@ -14,6 +14,7 @@ import {
 import { NcAlarmPanelDevice } from '../../notification-center/alarm/alarm-panel-device.js'
 import { ncAlarmPanelPort } from '../../notification-center/alarm/alarm-panel-port.js'
 import { NotificationCenter } from '../../notification-center/index.js'
+import { buildAlarmPanelInstances } from '../alarm-panel-instances.js'
 import type { AlarmPanelConvergence } from '../alarm-panel-convergence.js'
 import { startAlarmPanelConvergence } from '../alarm-panel-convergence.js'
 import type { AnalyticsApi } from './boot-types.js'
@@ -154,6 +155,13 @@ export class BuildAlarmPanel {
         api.deviceManager.listAll.query({
           addonId: PIPELINE_ANALYTICS_ADDON_ID,
         }),
+      // The integration keeps a name-only instance record under its registry id. A seed never
+      // overwrites, so an existing install gains the record once and keeps it afterwards.
+      seedInstance: async (seed) => {
+        const records = this.ctx.records
+        if (records === undefined) throw new Error('ctx.records is not available')
+        await seedInstanceOnce(buildAlarmPanelInstances(records).toProvider(), seed)
+      },
     })
     try {
       const result = await declared.reconcile({

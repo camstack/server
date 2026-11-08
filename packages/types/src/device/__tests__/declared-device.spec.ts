@@ -6,6 +6,8 @@ import {
   DeclaredDevices,
   type DeviceDeclaration,
   declarationOwnerNodeId,
+  type DeclaredInstanceSeed,
+  seedInstanceOnce,
 } from '../declared-device.js'
 import type { IDevice } from '../device.js'
 import type { DeviceConstructor, DeviceManagerApi } from '../device-context.js'
@@ -48,7 +50,7 @@ function makeLogger() {
 interface HarnessOptions {
   /** One entry per `listOwnDevices()` call, in order. The last repeats. */
   readonly indexReads: ReadonlyArray<readonly DeclaredDeviceRow[]>
-  readonly integration?: { id: string; info?: Record<string, unknown> | null } | null
+  readonly integration?: { id: string; name?: string; info?: Record<string, unknown> | null } | null
   readonly localNodeId?: string
 }
 
@@ -454,5 +456,79 @@ describe('DeclaredDevices.reconcile', () => {
 
     expect(h.create).toHaveBeenCalledTimes(1)
     expect(result.devices[0]).toMatchObject({ stableId: PANEL_STABLE_ID, created: false })
+  })
+})
+
+describe('DeclaredDevices — the instance record of the integration it owns', () => {
+  function seeding(opts: Parameters<typeof harness>[0]) {
+    const h = harness(opts)
+    const seedInstance = vi.fn(async (_seed: DeclaredInstanceSeed) => undefined)
+    return { h, seedInstance, ports: { ...h.ports, seedInstance } }
+  }
+
+  it('seeds the minted integration by its registry id, every pass', async () => {
+    const { ports, seedInstance } = seeding({ indexReads: [[]], integration: null })
+    await new DeclaredDevices(ports).reconcile(SPEC)
+    expect(seedInstance).toHaveBeenCalledWith({ id: 'int_new', name: 'Notification Center' })
+  })
+
+  it('seeds an existing integration under the name it carries now, not the declared one', async () => {
+    const { ports, seedInstance } = seeding({
+      indexReads: [[]],
+      integration: { id: INTEGRATION_ID, info: { fixed: true }, name: 'Renamed by the operator' },
+    })
+    await new DeclaredDevices(ports).reconcile(SPEC)
+    expect(seedInstance).toHaveBeenCalledWith({ id: INTEGRATION_ID, name: 'Renamed by the operator' })
+  })
+
+  it('does not seed an integration owned by somebody else (a supplied integrationId)', async () => {
+    const { ports, seedInstance } = seeding({ indexReads: [[]] })
+    await new DeclaredDevices(ports).reconcile({ ...SPEC, integrationId: 'int_0024' })
+    expect(seedInstance).not.toHaveBeenCalled()
+  })
+
+  it('a seed that throws is logged and the devices still converge', async () => {
+    const { h, ports, seedInstance } = seeding({ indexReads: [[]] })
+    seedInstance.mockRejectedValueOnce(new Error('records down'))
+    const result = await new DeclaredDevices(ports).reconcile(SPEC)
+    expect(result.devices).toHaveLength(1)
+    expect(h.logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('could not seed'),
+      expect.objectContaining({ tags: { integrationId: INTEGRATION_ID } }),
+    )
+  })
+})
+
+describe('seedInstanceOnce', () => {
+  it('writes a missing record and leaves an existing one exactly as it is', async () => {
+    const rows = new Map<string, { name: string }>()
+    const instances = {
+      getInstance: async ({ id }: { id: string }) => rows.get(id) ?? null,
+      createInstance: async ({ id, name }: { id: string; name: string }) => {
+        if (rows.has(id)) throw new Error('overwrite')
+        rows.set(id, { name })
+        return { id }
+      },
+    }
+    expect(await seedInstanceOnce(instances, { id: 'int_1', name: 'Blocks' })).toBe(true)
+    rows.set('int_1', { name: 'Renamed' })
+    expect(await seedInstanceOnce(instances, { id: 'int_1', name: 'Blocks' })).toBe(false)
+    expect(rows.get('int_1')).toEqual({ name: 'Renamed' })
+  })
+
+  it('writes nothing when the read fails', async () => {
+    const createInstance = vi.fn()
+    await expect(
+      seedInstanceOnce(
+        {
+          getInstance: async () => {
+            throw new Error('read failed')
+          },
+          createInstance,
+        },
+        { id: 'int_1', name: 'Blocks' },
+      ),
+    ).rejects.toThrow('read failed')
+    expect(createInstance).not.toHaveBeenCalled()
   })
 })

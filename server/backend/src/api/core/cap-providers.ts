@@ -1095,6 +1095,10 @@ function getInstancesProvider(
  * addon answers every row of it. An addon whose provider is not up, that keeps no instance for the
  * row, or that fails to answer keeps the registry's stored flag for that row, and a failure is
  * logged: a listing never fails because one addon did not answer.
+ *
+ * A FIXED builtin is the exception: its switch is the registry flag, the one store
+ * (`integrations.update`), and the name-only record it is seeded with carries no flag, which a
+ * body reads as "on". Its row is never projected.
  */
 async function projectSwitches(
   ar: AddonRegistryService,
@@ -1102,7 +1106,7 @@ async function projectSwitches(
   integrations: readonly Integration[],
 ): Promise<readonly Integration[]> {
   const byAddon = new Map<string, ReadonlyMap<string, boolean>>()
-  for (const addonId of new Set(integrations.map((i) => i.addonId))) {
+  for (const addonId of new Set(integrations.filter((i) => !isFixedBuiltin(i)).map((i) => i.addonId))) {
     const provider = getInstancesProvider(ar, addonId)
     if (provider === null) continue
     try {
@@ -1116,9 +1120,15 @@ async function projectSwitches(
     }
   }
   return integrations.map((i) => {
+    if (isFixedBuiltin(i)) return i
     const enabled = byAddon.get(i.addonId)?.get(i.id)
     return enabled === undefined ? i : { ...i, enabled }
   })
+}
+
+/** A builtin the hub itself declared (`DeclaredDevices` marks it `fixed`); its switch is the registry flag. */
+function isFixedBuiltin(integration: Integration): boolean {
+  return integration.info['fixed'] === true
 }
 
 export function buildIntegrationsProvider(

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Notification Center integration now keeps an instance record under its registry id
+
 ## [1.2.685] - 2026-11-08
 
 ### Changed

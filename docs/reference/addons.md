@@ -39,7 +39,7 @@ this column exists to stop.
 | `cloudflare-turn` | `@camstack/addon-cloudflare` | networking | own runner | `hub-only` | `net-access` | — | `integration-instances` `turn-provider` |
 | `composer` | `@camstack/server-framework` | system | own runner | `hub-only` | `composer` | — | `composer` |
 | `console-logging` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `log-destination` |
-| `core-blocks` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `action-source` `actions` `core-blocks` `fan-presets` `hero-layout` `power-source` `remote` `remote-layout-components` `schedulers` `template` `timed-run` |
+| `core-blocks` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `action-source` `actions` `core-blocks` `fan-presets` `hero-layout` `integration-instances` `power-source` `remote` `remote-layout-components` `schedulers` `template` `timed-run` |
 | `decoder-nodeav` | `@camstack/addon-decoder-nodeav` | pipeline | own runner | `any-node` | — | — | `audio-codec` `decoder` |
 | `detection-pipeline` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `detection-pipeline` `load-contribution` `pipeline-executor` |
 | `device-history` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `device-history` `device-removal-hook` `device-runs` `device-transitions` |
@@ -65,7 +65,7 @@ this column exists to stop.
 | `mqtt-broker` | `@camstack/addon-mqtt-broker` | messaging | own runner | `hub-only` | — | — | `broker` `integration-instances` `mqtt-broker` |
 | `notifiers` | `@camstack/addon-notifiers` | messaging | own runner | `hub-only` | `notifiers` | — | `addon-routes` `integration-instances` `notification-output` |
 | `osd-manager` | `@camstack/addon-osd-manager` | system | own runner | `hub-only` | `integrations` | unique | `addon-pages-source` `osd-manager` |
-| `pipeline-analytics` | `@camstack/addon-post-analysis` | analytics | own runner | `any-node` | — | — | `addon-widgets-source` `audio-metrics` `device-removal-hook` `face-gallery` `failure-contribution` `notification-rules` `pipeline-analytics` `plate-gallery` `scene-monitor` `storage-occupancy` `zone-analytics` |
+| `pipeline-analytics` | `@camstack/addon-post-analysis` | analytics | own runner | `any-node` | — | — | `addon-widgets-source` `audio-metrics` `device-removal-hook` `face-gallery` `failure-contribution` `integration-instances` `notification-rules` `pipeline-analytics` `plate-gallery` `scene-monitor` `storage-occupancy` `zone-analytics` |
 | `pipeline-orchestrator` | `@camstack/addon-pipeline-orchestrator` | pipeline | own runner | `hub-only` | — | — | `addon-widgets-source` `camera-pipeline-config` `display-palette` `node-removal-hook` `pipeline-orchestrator` `viewer-ui` `zone-rules` `zones` |
 | `pipeline-runner` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `failure-contribution` `load-contribution` `pipeline-runner` |
 | `platform-probe` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `platform-probe` |

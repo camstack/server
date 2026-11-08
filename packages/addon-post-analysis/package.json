@@ -116,6 +116,10 @@
           {
             "name": "storage-occupancy",
             "optional": true
+          },
+          {
+            "name": "integration-instances",
+            "optional": true
           }
         ],
         "storageLocations": [

@@ -42,14 +42,18 @@ export type {
   DeclaredDeviceRow,
   DeclaredDevicesResult,
   DeclaredDevicesSpec,
+  DeclaredInstanceSeed,
+  DeclaredIntegrationRef,
   DeclaredIntegrationRow,
   DeviceDeclaration,
+  SeedableInstances,
 } from './declared-device.js'
 export {
   DECLARED_DEVICE_SWEEP_LIMIT,
   DECLARED_INTEGRATION_FIXED_KEY,
   DeclaredDevices,
   declarationOwnerNodeId,
+  seedInstanceOnce,
 } from './declared-device.js'
 export type {
   ExposeBlockDevicesInput,

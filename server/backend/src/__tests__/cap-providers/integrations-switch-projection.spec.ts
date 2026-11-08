@@ -116,6 +116,28 @@ describe('integrations.list / get / getByAddonId project enabled from the instan
   })
 })
 
+describe('a fixed builtin keeps its switch in the registry, whatever its record says', () => {
+  it('projects a disabled fixed builtin as disabled although a name-only record is seeded', async () => {
+    // The seeded record carries a name and no flag: read as a body it would mean `enabled`.
+    const h = harness(
+      [row('int_9', 'core-blocks', false, true), row('int_1', 'provider-x', false)],
+      (addonId) =>
+        addonId === 'core-blocks'
+          ? instancesProvider([{ id: 'int_9' }])
+          : instancesProvider([{ id: 'int_1', enabled: true }]),
+    )
+
+    const listed = await h.provider.list()
+
+    expect(listed.map((i) => [i.id, i.enabled])).toEqual([
+      ['int_9', false],
+      ['int_1', true],
+    ])
+    expect((await h.provider.get({ id: 'int_9' })).enabled).toBe(false)
+    expect((await h.provider.getByAddonId({ addonId: 'core-blocks' }))?.enabled).toBe(false)
+  })
+})
+
 describe('integrations.update and the switch', () => {
   it('refuses enabled for an integration that has an instance record', async () => {
     const h = harness([row('int_1', 'provider-x', true)], () => instancesProvider([]))
