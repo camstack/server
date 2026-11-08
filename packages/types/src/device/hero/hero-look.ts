@@ -133,24 +133,122 @@ const DISHWASHER_LOOK = lookOf({
   standby: WARN,
 })
 
-const LEAK_LOOK = lookOf({
-  icon: 'droplets',
-  on: ['danger', 'water', 'wave'],
+/** A sensor that reads Clear or Detected: calm when clear, an alarm when it trips. */
+function sensorLook(icon: VocabIcon, alertIcon: VocabIcon = icon): HeroLook {
+  return lookOf({
+    icon,
+    on: ['primary', 'glow', 'halo'],
+    off: MUTED,
+    running: ['primary', 'glow', 'halo'],
+    idle: ['success', 'plain', 'none'],
+    standby: WARN,
+    alert: look(alertIcon, 'danger', 'alert-wash', 'pulse'),
+  })
+}
+
+const SENSOR_LOOK = sensorLook('activity', 'triangle-alert')
+const LEAK_LOOK = sensorLook('droplets')
+const SMOKE_LOOK = sensorLook('flame')
+const GAS_LOOK = sensorLook('wind')
+const TAMPER_LOOK = sensorLook('shield-alert')
+const VIBRATION_LOOK = sensorLook('vibrate')
+const MOTION_LOOK = sensorLook('radar', 'triangle-alert')
+const DOORBELL_LOOK = sensorLook('bell-ring')
+
+/** A camera is a camera: never a power glyph, whatever its motion reads. */
+const CAMERA_LOOK = sensorLook('video', 'triangle-alert')
+
+/** A bulb glows while lit. */
+const LIGHT_LOOK = lookOf({
+  icon: 'lightbulb',
+  on: ['warning', 'glow', 'glow'],
   off: MUTED,
-  running: ['danger', 'water', 'wave'],
+  running: ['warning', 'glow', 'glow'],
   idle: INFO,
   standby: WARN,
-  alert: look('droplets', 'danger', 'alert-wash', 'pulse'),
 })
 
-const SMOKE_LOOK = lookOf({
-  icon: 'flame',
-  on: ['danger', 'alert-wash', 'pulse'],
+/** Closed is a position, not an absence of power: the blind keeps its glyph and goes quiet. */
+const COVER_LOOK = lookOf({
+  icon: 'blinds',
+  on: ['primary', 'plain', 'none'],
   off: MUTED,
-  running: ['danger', 'alert-wash', 'pulse'],
+  running: ['primary', 'plain', 'pulse'],
   idle: INFO,
   standby: WARN,
-  alert: look('flame', 'danger', 'alert-wash', 'pulse'),
+})
+
+const VALVE_LOOK = lookOf({
+  icon: 'droplet',
+  on: ['primary', 'water', 'wave'],
+  off: MUTED,
+  running: ['primary', 'water', 'pulse'],
+  idle: INFO,
+  standby: WARN,
+})
+
+const HUMIDIFIER_LOOK = lookOf({
+  icon: 'droplets',
+  on: ['info', 'mist', 'breathe'],
+  off: MUTED,
+  running: ['info', 'mist', 'wave'],
+  idle: INFO,
+  standby: WARN,
+})
+
+const CONTROL_LOOK = lookOf({
+  icon: 'sliders-horizontal',
+  on: ['primary', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'plain', 'pulse'],
+  idle: INFO,
+  standby: WARN,
+})
+
+const PRESENCE_LOOK = lookOf({
+  icon: 'map-pin',
+  on: ['success', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'plain', 'pulse'],
+  idle: INFO,
+  standby: WARN,
+})
+
+const WEATHER_LOOK = lookOf({
+  icon: 'cloud-sun',
+  on: ['info', 'sky', 'none'],
+  off: MUTED,
+  running: ['info', 'sky', 'none'],
+  idle: INFO,
+  standby: WARN,
+})
+
+/** An update waits (warning), runs (pulse) or is done (calm). */
+const UPDATE_LOOK = lookOf({
+  icon: 'download',
+  on: ['success', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'plain', 'pulse'],
+  idle: ['success', 'plain', 'none'],
+  standby: ['warning', 'plain', 'pulse'],
+})
+
+const BUTTON_LOOK = lookOf({
+  icon: 'pointer',
+  on: ['primary', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'plain', 'pulse'],
+  idle: INFO,
+  standby: WARN,
+})
+
+const IMAGE_LOOK = lookOf({
+  icon: 'image',
+  on: ['primary', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'plain', 'pulse'],
+  idle: INFO,
+  standby: WARN,
 })
 
 /** A lock is secure when locked, and says so when it is not. */
@@ -256,36 +354,36 @@ const EVENT_EMITTER_LOOK = lookOf({
 })
 
 export const HERO_LOOK_BY_TYPE = {
-  [DeviceType.Camera]: HERO_LOOK_DEFAULT,
+  [DeviceType.Camera]: CAMERA_LOOK,
   [DeviceType.Hub]: HERO_LOOK_DEFAULT,
-  [DeviceType.Light]: HERO_LOOK_DEFAULT,
+  [DeviceType.Light]: LIGHT_LOOK,
   [DeviceType.Siren]: HERO_LOOK_DEFAULT,
   [DeviceType.Switch]: SWITCH_LOOK,
-  [DeviceType.Sensor]: HERO_LOOK_DEFAULT,
+  [DeviceType.Sensor]: SENSOR_LOOK,
   [DeviceType.Thermostat]: HERO_LOOK_DEFAULT,
   [DeviceType.Climate]: HERO_LOOK_DEFAULT,
-  [DeviceType.Button]: HERO_LOOK_DEFAULT,
+  [DeviceType.Button]: BUTTON_LOOK,
   [DeviceType.EventEmitter]: EVENT_EMITTER_LOOK,
-  [DeviceType.Update]: HERO_LOOK_DEFAULT,
+  [DeviceType.Update]: UPDATE_LOOK,
   [DeviceType.Generic]: HERO_LOOK_DEFAULT,
   [DeviceType.Notifier]: HERO_LOOK_DEFAULT,
   [DeviceType.Script]: SCRIPT_LOOK,
   [DeviceType.Automation]: AUTOMATION_LOOK,
   [DeviceType.Lock]: LOCK_LOOK,
-  [DeviceType.Cover]: HERO_LOOK_DEFAULT,
-  [DeviceType.Valve]: HERO_LOOK_DEFAULT,
-  [DeviceType.Humidifier]: HERO_LOOK_DEFAULT,
+  [DeviceType.Cover]: COVER_LOOK,
+  [DeviceType.Valve]: VALVE_LOOK,
+  [DeviceType.Humidifier]: HUMIDIFIER_LOOK,
   [DeviceType.WaterHeater]: HERO_LOOK_DEFAULT,
   [DeviceType.Fan]: FAN_LOOK,
   [DeviceType.MediaPlayer]: MEDIA_PLAYER_LOOK,
   [DeviceType.AlarmPanel]: ALARM_LOOK,
-  [DeviceType.Control]: HERO_LOOK_DEFAULT,
-  [DeviceType.Presence]: HERO_LOOK_DEFAULT,
-  [DeviceType.Weather]: HERO_LOOK_DEFAULT,
+  [DeviceType.Control]: CONTROL_LOOK,
+  [DeviceType.Presence]: PRESENCE_LOOK,
+  [DeviceType.Weather]: WEATHER_LOOK,
   [DeviceType.Vacuum]: VACUUM_LOOK,
   [DeviceType.LawnMower]: MOWER_LOOK,
   [DeviceType.Container]: HERO_LOOK_DEFAULT,
-  [DeviceType.Image]: HERO_LOOK_DEFAULT,
+  [DeviceType.Image]: IMAGE_LOOK,
   [DeviceType.PetFeeder]: FEEDER_LOOK,
   [DeviceType.PetFountain]: FOUNTAIN_LOOK,
   [DeviceType.Dishwasher]: DISHWASHER_LOOK,
@@ -300,12 +398,12 @@ export const HERO_LOOK_BY_ROLE = {
   [DeviceRole.Siren]: 'inherit',
   [DeviceRole.Floodlight]: 'inherit',
   [DeviceRole.Spotlight]: 'inherit',
-  [DeviceRole.PirSensor]: 'inherit',
+  [DeviceRole.PirSensor]: MOTION_LOOK,
   [DeviceRole.Chime]: 'inherit',
   [DeviceRole.Autotrack]: 'inherit',
   [DeviceRole.Nightvision]: 'inherit',
   [DeviceRole.PrivacyMask]: 'inherit',
-  [DeviceRole.Doorbell]: 'inherit',
+  [DeviceRole.Doorbell]: DOORBELL_LOOK,
   [DeviceRole.CoverBlind]: 'inherit',
   [DeviceRole.CoverShutter]: 'inherit',
   [DeviceRole.CoverAwning]: 'inherit',
@@ -316,14 +414,14 @@ export const HERO_LOOK_BY_ROLE = {
   [DeviceRole.CoverWindow]: 'inherit',
   [DeviceRole.BinaryHelper]: 'inherit',
   [DeviceRole.Outlet]: 'inherit',
-  [DeviceRole.MotionSensor]: 'inherit',
+  [DeviceRole.MotionSensor]: MOTION_LOOK,
   [DeviceRole.ContactSensor]: 'inherit',
   [DeviceRole.LeakSensor]: LEAK_LOOK,
   [DeviceRole.SmokeSensor]: SMOKE_LOOK,
-  [DeviceRole.COSensor]: 'inherit',
-  [DeviceRole.GasSensor]: 'inherit',
-  [DeviceRole.TamperSensor]: 'inherit',
-  [DeviceRole.VibrationSensor]: 'inherit',
+  [DeviceRole.COSensor]: GAS_LOOK,
+  [DeviceRole.GasSensor]: GAS_LOOK,
+  [DeviceRole.TamperSensor]: TAMPER_LOOK,
+  [DeviceRole.VibrationSensor]: VIBRATION_LOOK,
   [DeviceRole.ConnectivitySensor]: 'inherit',
   [DeviceRole.SoundSensor]: 'inherit',
   [DeviceRole.BinarySensor]: 'inherit',

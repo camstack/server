@@ -68,6 +68,25 @@ const STATE_SOURCE_ORDER: readonly StateSource[] = [
   'switch',
   'contact',
   'group-active',
+  'cover',
+  'valve',
+  'humidifier',
+  'brightness',
+  'smoke',
+  'flood',
+  'gas',
+  'tamper',
+  'vibration',
+  'doorbell',
+  'motion',
+  'presence',
+  'update',
+  'weather',
+  'image',
+  'control',
+  'meter',
+  'binary',
+  'button',
 ]
 
 const STATE_TEXT: Readonly<Record<HeroState, HeroText>> = {
@@ -82,6 +101,11 @@ const STATE_TEXT: Readonly<Record<HeroState, HeroText>> = {
 }
 
 function pickReading(readings: readonly StateReading[]): StateReading | null {
+  // A tripped alarm is never hidden behind a calmer reading of the same device.
+  for (const source of STATE_SOURCE_ORDER) {
+    const alarm = readings.find((r) => r.source === source && r.state === 'alert')
+    if (alarm !== undefined) return alarm
+  }
   for (const source of STATE_SOURCE_ORDER) {
     const found = readings.find((r) => r.source === source && r.state !== 'unknown')
     if (found !== undefined) return found

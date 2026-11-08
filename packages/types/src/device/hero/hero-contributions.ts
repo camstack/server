@@ -48,7 +48,9 @@ import type { HeroState } from './hero-state.js'
 import { heroText, type HeroText } from './hero-text.js'
 import { ACCESS_FAMILY_CONTRIBUTIONS } from './hero-contributions-access.js'
 import { DEVICES_FAMILY_CONTRIBUTIONS } from './hero-contributions-devices.js'
+import { ACTUATORS_FAMILY_CONTRIBUTIONS } from './hero-contributions-actuators.js'
 import { GROUPS_FAMILY_CONTRIBUTIONS } from './hero-contributions-groups.js'
+import { SENSORS_FAMILY_CONTRIBUTIONS } from './hero-contributions-sensors.js'
 import { deriveMediaPlayerView, type MediaPlayerView } from './media-player-view.js'
 
 function minutesLeft(seconds: number): HeroText {
@@ -790,4 +792,6 @@ export const HERO_CAP_CONTRIBUTIONS: readonly HeroContribution[] = [
   ...Object.values(ACCESS_FAMILY_CONTRIBUTIONS),
   ...Object.values(DEVICES_FAMILY_CONTRIBUTIONS),
   ...Object.values(GROUPS_FAMILY_CONTRIBUTIONS),
+  ...Object.values(ACTUATORS_FAMILY_CONTRIBUTIONS),
+  ...Object.values(SENSORS_FAMILY_CONTRIBUTIONS),
 ]

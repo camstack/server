@@ -35,27 +35,33 @@ const FEEDER_LAYOUT: HeroLayout = { rows: ['feeder'] }
 const FOUNTAIN_LAYOUT: HeroLayout = { rows: ['fountain', 'pump-cycle'] }
 const AUTOMATION_LAYOUT: HeroLayout = { rows: ['automation'] }
 const SCRIPT_LAYOUT: HeroLayout = { rows: ['script'] }
+const LIGHT_LAYOUT: HeroLayout = { rows: ['brightness', 'color', 'contact', 'motion-trigger'] }
+const COVER_LAYOUT: HeroLayout = { rows: ['cover'] }
+const VALVE_LAYOUT: HeroLayout = { rows: ['valve'] }
+const HUMIDIFIER_LAYOUT: HeroLayout = { rows: ['humidifier'] }
+const UPDATE_LAYOUT: HeroLayout = { rows: ['update'] }
+const BUTTON_LAYOUT: HeroLayout = { rows: ['button'] }
 
 export const HERO_LAYOUT_BY_TYPE = {
   [DeviceType.Camera]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Hub]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Light]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.Light]: LIGHT_LAYOUT,
   [DeviceType.Siren]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Switch]: SWITCH_LAYOUT,
   [DeviceType.Sensor]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Thermostat]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Climate]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Button]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.Button]: BUTTON_LAYOUT,
   [DeviceType.EventEmitter]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Update]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.Update]: UPDATE_LAYOUT,
   [DeviceType.Generic]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Notifier]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Script]: SCRIPT_LAYOUT,
   [DeviceType.Automation]: AUTOMATION_LAYOUT,
   [DeviceType.Lock]: LOCK_LAYOUT,
-  [DeviceType.Cover]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Valve]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Humidifier]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.Cover]: COVER_LAYOUT,
+  [DeviceType.Valve]: VALVE_LAYOUT,
+  [DeviceType.Humidifier]: HUMIDIFIER_LAYOUT,
   [DeviceType.WaterHeater]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Fan]: FAN_LAYOUT,
   [DeviceType.MediaPlayer]: MEDIA_PLAYER_LAYOUT,
