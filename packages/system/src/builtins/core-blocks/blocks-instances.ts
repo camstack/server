@@ -6,6 +6,7 @@
  * `integrations.list` never projects it from a record), and there is nothing to configure.
  */
 import {
+  type DefinedRecordKind,
   defineEntryKind,
   entryBody,
   type RecordsAccess,
@@ -13,15 +14,33 @@ import {
 } from '@camstack/types'
 import type { z } from 'zod'
 
-export const blocksConnectionsEntryKind = defineEntryKind('connections', {
-  title: 'Blocks integration',
-  schema: entryBody({}),
-  writeTrigger: 'the hub declares the Blocks integration on boot',
-})
-export type BlocksConnectionBody = z.infer<typeof blocksConnectionsEntryKind.schema>
+/** Checked against the schema by its annotation: a drifted field fails the typecheck. */
+export type BlocksConnectionBody = {
+  readonly name: string
+  readonly enabled?: boolean | undefined
+}
+
+const BlocksConnectionBodySchema: z.ZodType<BlocksConnectionBody> = entryBody({})
+
+export type BlocksConnectionsEntryKind = DefinedRecordKind<z.ZodType<BlocksConnectionBody>>
+
+export const blocksConnectionsEntryKind: BlocksConnectionsEntryKind = defineEntryKind(
+  'connections',
+  {
+    title: 'Blocks integration',
+    schema: BlocksConnectionBodySchema,
+    writeTrigger: 'the hub declares the Blocks integration on boot',
+  },
+)
 
 /** Every kind of the Blocks integration record, keyed by its name. */
-export const blocksInstanceRecordKinds = { connections: blocksConnectionsEntryKind } as const
+export type BlocksInstanceRecordKinds = {
+  readonly connections: BlocksConnectionsEntryKind
+}
+
+export const blocksInstanceRecordKinds: BlocksInstanceRecordKinds = {
+  connections: blocksConnectionsEntryKind,
+}
 
 export function buildBlocksInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
