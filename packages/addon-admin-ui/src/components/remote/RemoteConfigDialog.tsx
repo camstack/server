@@ -306,19 +306,23 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
                 />
               )}
               {offLayout.length > 0 && (
-                <Select
-                  aria-label={t('remote.panel.otherCommands')}
-                  value={selected?.inLayout === false ? selected.role : ''}
-                  options={[
-                    { value: '', label: t('remote.panel.pickOther') },
-                    ...offLayout.map((r) => ({
-                      value: r.role,
-                      label: roleName(r),
-                    })),
-                  ]}
-                  onChange={(e) => setSelectedRole(e.target.value === '' ? null : e.target.value)}
-                  data-testid="binding-other"
-                />
+                <FormField
+                  label={t('remote.panel.otherCommands')}
+                  description={t('remote.panel.pickOtherHint')}
+                >
+                  <Select
+                    value={selected?.inLayout === false ? selected.role : ''}
+                    options={[
+                      { value: '', label: t('remote.panel.pickOther') },
+                      ...offLayout.map((r) => ({
+                        value: r.role,
+                        label: roleName(r),
+                      })),
+                    ]}
+                    onChange={(e) => setSelectedRole(e.target.value === '' ? null : e.target.value)}
+                    data-testid="binding-other"
+                  />
+                </FormField>
               )}
             </div>
           </div>
@@ -334,6 +338,7 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
           roleLabel={(role) =>
             roles.find((r) => r.role === role)?.name ?? vocabRoleName(role, i18n.language)
           }
+          transmitters={transmitters.map((d) => ({ id: d.id, label: deviceLabel(d) }))}
         />
         <section className="space-y-2">
           <h3 className="text-sm font-medium text-foreground">{t('remote.import.title')}</h3>

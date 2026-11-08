@@ -11366,7 +11366,15 @@
       "sendThrough": "Invia tramite",
       "otherCommands": "Comandi fuori dal layout",
       "pickOther": "Scegline uno da modificare",
-      "hint": "Scegli un tasto per vedere e modificare cosa fa."
+      "hint": "Scegli un tasto per vedere e modificare cosa fa.",
+      "selected": "Tasto selezionato",
+      "does": "Fa",
+      "through": "Invia tramite",
+      "codeRaw": "Tempi grezzi in µs · {{count}} impulsi",
+      "codeCarrier": "portante {{khz}} kHz",
+      "copyCode": "Copia il codice",
+      "callCode": "Chiamata di capability",
+      "pickOtherHint": "Un comando senza tasto nel layout."
     },
     "editTemplate": "Modifica layout",
     "hero": {
@@ -11390,7 +11398,8 @@
       },
       "kind": {
         "digits": "Numero di canale",
-        "sequence": "Sequenza di pulsanti"
+        "sequence": "Sequenza di pulsanti",
+        "ir": "Codice infrarosso"
       },
       "dialog": {
         "addTitle": "Aggiungi sorgente",
@@ -11407,7 +11416,15 @@
         "noBound": "Associa prima un pulsante — solo i pulsanti associati possono essere un passo.",
         "stepUp": "Sposta il passo su",
         "stepDown": "Sposta il passo giù",
-        "stepRemove": "Rimuovi passo"
+        "stepRemove": "Rimuovi passo",
+        "transmitter": "Trasmettitore",
+        "noTransmitter": "Scegli un trasmettitore",
+        "encoding": "Formato del codice",
+        "code": "Codice infrarosso",
+        "codeHint": "Impulsi e pause in microsecondi, separati da virgole o spazi (una pausa è negativa), oppure l’array incollato da un file SmartIR.",
+        "prontoHint": "La forma appresa 0000, come la fornisce il ricevitore o una libreria di codici.",
+        "carrier": "Portante (kHz)",
+        "carrierHint": "Vuoto: decide il trasmettitore; la maggior parte dei televisori usa 38."
       },
       "stepDelay": "Pausa tra i passi (ms)",
       "stepDelayHint": "Quanto tempo serve al televisore tra due pressioni di una sorgente.",
@@ -11423,8 +11440,21 @@
         "steps": {
           "too_small": "Aggiungi almeno un passo.",
           "too_big": "Una sequenza ha al massimo 16 passi."
+        },
+        "transmitterId": {
+          "too_small": "Scegli il trasmettitore attraverso cui inviare il codice."
+        },
+        "payload": {
+          "invalid_type": "Ogni tempo è un numero intero di microsecondi."
         }
-      }
+      },
+      "encoding": {
+        "raw": "Tempi grezzi (µs)",
+        "pronto": "Pronto hex"
+      },
+      "irDetail": "Infrarosso · {{pulses}} impulsi",
+      "irDetailCarrier": "Infrarosso · {{pulses}} impulsi · {{khz}} kHz",
+      "irDetailBroken": "Infrarosso · il codice non può essere inviato"
     },
     "sourceSelect": {
       "label": "Sorgenti",

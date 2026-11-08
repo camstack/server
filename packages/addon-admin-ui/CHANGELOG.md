@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Customize tab: a Power source or Running row shows which device it reads, is edited through a pencil, and the formula editor opens on the stored source instead of null; the table fills a phone's width.
+- Remote control: the Customize row's pencil opens the layout editor directly; a selected button shows what it does, its transmitter and its code (infrared timings or the capability call) with a copy button; a source can be an infrared code.
 
 ## [1.2.620] - 2026-11-08
 

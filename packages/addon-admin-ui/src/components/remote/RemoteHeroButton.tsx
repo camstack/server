@@ -4,7 +4,7 @@
  * self-gates: nothing is drawn until the `remote` capability is known present
  * and the device has at least one saved command — a device with only a remote
  * (no media-player binding) still gets it. The link to the layout template is
- * NOT here: it lives on the device's customization page (`RemoteExtensionCard`).
+ * NOT here: it lives on the device's customization page (`RemoteConfigDialog`, opened from the Customize table).
  */
 import {
   Button,

@@ -1,16 +1,31 @@
 /**
- * The action of the selected button: what it does in plain words (the target
- * device and the command it sends), and its secondary actions — Test, Clear,
- * and the device / command pickers to change it. Only the selected button's
- * action is rendered; the grid is the list. Test sends the SAVED command once.
+ * The selected button, read top to bottom: what it does in plain words, the
+ * transmitter it goes through, the code it sends (an infrared train in µs, or
+ * the capability call) the moment the button is selected, then the actions —
+ * Change, Test, Clear — and the device / command pickers while changing. Only
+ * the selected button's binding is rendered; the grid is the list. Test sends
+ * the SAVED command once.
  */
 import { type RemoteBinding, type RemoteBindingAction, remoteRoleIcon } from '@camstack/types'
-import { Badge, Button, Select, useDisplayIconResolver } from '@camstack/ui-library'
+import {
+  Badge,
+  Button,
+  CopyButton,
+  FormField,
+  Select,
+  useDisplayIconResolver,
+} from '@camstack/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from '../../pages/build/automation/automation-data'
 import { CommandStep } from '../../pages/build/flow/CommandStep'
-import { type BindingDescription, deviceLabel, describeBinding } from './binding-summary'
+import {
+  type BindingCode,
+  type BindingDescription,
+  bindingCode,
+  deviceLabel,
+  describeBinding,
+} from './binding-summary'
 import {
   type BindableRole,
   BLANK_ACTION,
@@ -63,6 +78,56 @@ function DescriptionText({ description }: { readonly description: BindingDescrip
   }
 }
 
+/** One labelled row of the panel. */
+function Row({
+  label,
+  children,
+}: {
+  readonly label: string
+  readonly children: ReactNode
+}): ReactNode {
+  return (
+    <div className="grid gap-1 sm:grid-cols-[6rem_minmax(0,1fr)] sm:gap-2">
+      <dt className="text-xs text-foreground-muted">{label}</dt>
+      <dd className="min-w-0 text-xs text-foreground">{children}</dd>
+    </div>
+  )
+}
+
+/** The code as the transmitter or the capability receives it, with a copy button. */
+function CodeBlock({
+  code,
+  role,
+}: {
+  readonly code: BindingCode
+  readonly role: string
+}): ReactNode {
+  const { t } = useTranslation()
+  const caption =
+    code.kind === 'infrared'
+      ? [
+          t('remote.panel.codeRaw', { count: code.pulses }),
+          ...(code.carrierKhz === null
+            ? []
+            : [t('remote.panel.codeCarrier', { khz: code.carrierKhz })]),
+        ].join(' · ')
+      : t('remote.panel.callCode')
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] text-foreground-subtle">{caption}</span>
+        <CopyButton value={code.text} srLabel={t('remote.panel.copyCode')} />
+      </div>
+      <pre
+        className="max-h-28 overflow-auto whitespace-pre-wrap break-all rounded border border-border bg-surface p-2 font-mono text-[11px] leading-snug text-foreground"
+        data-testid={`code-${role}`}
+      >
+        {code.text}
+      </pre>
+    </div>
+  )
+}
+
 export function BindingPanel({
   role,
   name,
@@ -81,8 +146,7 @@ export function BindingPanel({
   const complete = binding !== undefined && isCompleteAction(binding.action)
   const irTransmitter = binding === undefined ? null : transmitterOf(binding)
   const description = describeBinding(binding?.action, devices)
-  const args =
-    description.kind === 'infrared' || description.kind === 'call' ? description.args : []
+  const code = binding === undefined ? null : bindingCode(binding.action)
   const pickCommand = binding !== undefined && irTransmitter === null && (editing || !complete)
   return (
     <aside
@@ -99,48 +163,50 @@ export function BindingPanel({
         {!role.inLayout && <Badge variant="warning">{t('remote.bindings.notInLayout')}</Badge>}
         {irTransmitter !== null && <Badge variant="info">{t('remote.bindings.infrared')}</Badge>}
       </div>
-      <div className="space-y-1" data-testid="binding-description">
-        <p
-          className={
-            binding === undefined ? 'text-xs text-foreground-subtle' : 'text-xs text-foreground'
-          }
-          data-testid={`summary-${role.role}`}
-        >
-          <DescriptionText description={description} />
-        </p>
-        {args.length > 0 && (
-          <p className="break-words text-xs text-foreground-muted">
-            {t('remote.panel.withArgs', {
-              args: args.map((a) => `${a.name} ${a.value}`).join(', '),
-            })}
-          </p>
+      <dl className="space-y-2" data-testid="binding-description">
+        <Row label={t('remote.panel.does')}>
+          <span
+            className={binding === undefined ? 'text-foreground-subtle' : undefined}
+            data-testid={`summary-${role.role}`}
+          >
+            <DescriptionText description={description} />
+          </span>
+          {complete && (
+            <span className="block text-foreground-muted">{t('remote.panel.repeatValue')}</span>
+          )}
+        </Row>
+        {irTransmitter !== null && binding !== undefined && (
+          <Row label={t('remote.panel.through')}>
+            <Select
+              aria-label={t('remote.bindings.transmitterFor', { name })}
+              value={String(irTransmitter)}
+              options={transmitters.map((d) => ({
+                value: String(d.id),
+                label: deviceLabel(d),
+              }))}
+              onChange={(e) => onBind(withTransmitter(binding, Number(e.target.value)).action)}
+              data-testid={`transmitter-${role.role}`}
+            />
+          </Row>
         )}
-        {complete && (
-          <p className="text-xs text-foreground-muted">{t('remote.panel.repeatValue')}</p>
+        {code !== null && (
+          <Row label={t('remote.panel.code')}>
+            <CodeBlock code={code} role={role.role} />
+          </Row>
         )}
-      </div>
-      {irTransmitter !== null && binding !== undefined && (
-        <Select
-          aria-label={t('remote.bindings.transmitterFor', { name })}
-          value={String(irTransmitter)}
-          options={transmitters.map((d) => ({
-            value: String(d.id),
-            label: deviceLabel(d),
-          }))}
-          onChange={(e) => onBind(withTransmitter(binding, Number(e.target.value)).action)}
-          data-testid={`transmitter-${role.role}`}
-        />
-      )}
+      </dl>
       {pickCommand && binding !== undefined && (
-        <CommandStep
-          step={binding.action}
-          devices={devices}
-          variables={[]}
-          onChange={(next) => {
-            if (typeof next.deviceId !== 'number') return
-            onBind({ ...next, deviceId: next.deviceId })
-          }}
-        />
+        <FormField label={t('commands.change')}>
+          <CommandStep
+            step={binding.action}
+            devices={devices}
+            variables={[]}
+            onChange={(next) => {
+              if (typeof next.deviceId !== 'number') return
+              onBind({ ...next, deviceId: next.deviceId })
+            }}
+          />
+        </FormField>
       )}
       <div className="flex flex-wrap items-center gap-1">
         {binding === undefined ? (

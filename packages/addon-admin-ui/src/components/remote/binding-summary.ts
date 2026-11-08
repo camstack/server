@@ -107,3 +107,41 @@ export function describeBinding(
   }
   return { kind: 'call', target, call: summary.call, args }
 }
+
+/**
+ * The code behind a button, as the panel shows it the moment the button is
+ * selected: an infrared train in signed microseconds (what the transmitter is
+ * handed, copyable as is), or the capability call any other binding makes.
+ */
+export type BindingCode =
+  | {
+      readonly kind: 'infrared'
+      readonly timings: readonly number[]
+      readonly pulses: number
+      readonly carrierKhz: number | null
+      /** The timings joined by `, `. */
+      readonly text: string
+    }
+  | { readonly kind: 'call'; readonly text: string }
+
+function isTimings(value: unknown): value is readonly number[] {
+  return Array.isArray(value) && value.every((v) => typeof v === 'number')
+}
+
+export function bindingCode(action: RemoteBindingAction): BindingCode | null {
+  if (!isCompleteAction(action)) return null
+  const args = action.args ?? {}
+  if (action.cap === IR_CAP && action.method === IR_SEND && isTimings(args['timings'])) {
+    const timings = args['timings']
+    const carrierHz = summarizeBinding(action).carrierHz
+    return {
+      kind: 'infrared',
+      timings,
+      pulses: timings.length,
+      carrierKhz: carrierHz === null ? null : carrierHz / 1000,
+      text: timings.join(', '),
+    }
+  }
+  const spelledArgs = Object.keys(args).length === 0 ? '' : JSON.stringify(args)
+  return { kind: 'call', text: `${action.cap}.${action.method}(${spelledArgs})` }
+}

@@ -95,9 +95,9 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     }),
   }
 })
-// The two config cards talk to tRPC; this spec asks only whether they are offered.
-vi.mock('../../../remote/RemoteExtensionCard', () => ({
-  RemoteExtensionCard: () => <div data-testid="config-card-remote" />,
+// The remote editor and the fan card talk to tRPC; this spec asks only whether they are offered.
+vi.mock('../../../remote/RemoteConfigDialog', () => ({
+  RemoteConfigDialog: () => <div data-testid="remote-editor" />,
 }))
 vi.mock('../../../fan-presets/FanPresetsExtensionCard', () => ({
   FanPresetsExtensionCard: () => <div data-testid="config-card-fan-presets" />,

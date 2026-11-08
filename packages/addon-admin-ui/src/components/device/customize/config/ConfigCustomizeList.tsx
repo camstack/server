@@ -1,16 +1,35 @@
 /**
  * The `config` cardinality of the Customize catalog (D944): an extension whose
  * editor is a modal of its own. The catalog says WHICH capability is offered on
- * this device type; the registry below says which component edits it. A
- * catalog entry with no editor yet renders nothing (it never invents one).
+ * this device type; the registries below say which component edits it — an
+ * EDITOR is the modal itself and opens straight from the row (the remote:
+ * planning#464), a CARD is shown inside the generic row dialog. A catalog
+ * entry with neither renders nothing (it never invents one).
  */
 import { CAP_CUSTOMIZE_CATALOG, type DeviceInfo } from '@camstack/types'
 import type { ComponentType, ReactNode } from 'react'
 import { FanPresetsExtensionCard } from '../../../fan-presets/FanPresetsExtensionCard'
-import { RemoteExtensionCard } from '../../../remote/RemoteExtensionCard'
+import { RemoteConfigDialog } from '../../../remote/RemoteConfigDialog'
 
 export interface ConfigCardProps {
   readonly device: DeviceInfo
+}
+
+export interface ConfigEditorProps extends ConfigCardProps {
+  readonly onClose: () => void
+}
+
+function RemoteEditor({ device, onClose }: ConfigEditorProps): ReactNode {
+  return <RemoteConfigDialog device={device} open onClose={onClose} />
+}
+
+const CONFIG_EDITORS: Readonly<Record<string, ComponentType<ConfigEditorProps>>> = {
+  remote: RemoteEditor,
+}
+
+/** The modal that edits this cap on its own, or null when the cap is a card. */
+export function configEditorOf(cap: string): ComponentType<ConfigEditorProps> | null {
+  return CONFIG_EDITORS[cap] ?? null
 }
 
 export interface ConfigCustomizeListProps extends ConfigCardProps {
@@ -19,7 +38,6 @@ export interface ConfigCustomizeListProps extends ConfigCardProps {
 }
 
 const CONFIG_CARDS: Readonly<Record<string, ComponentType<ConfigCardProps>>> = {
-  remote: RemoteExtensionCard,
   'fan-presets': FanPresetsExtensionCard,
 }
 

@@ -279,9 +279,9 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
-// The remote card talks to tRPC; the media-player test below is about the scalar cards.
-vi.mock('../../../remote/RemoteExtensionCard', () => ({
-  RemoteExtensionCard: () => null,
+// The remote editor talks to tRPC; the media-player test below is about the scalar cards.
+vi.mock('../../../remote/RemoteConfigDialog', () => ({
+  RemoteConfigDialog: () => <div data-testid="remote-editor" />,
 }))
 
 const { CustomizeTab } = await import('../CustomizeTab')
@@ -1078,6 +1078,26 @@ describe('CustomizeTab — event and extension rows carry a value and a source',
     expect(row.textContent).toMatch(/3 commands/)
     expect(row.textContent).toMatch(/Living room remote/)
     expect(row.textContent).not.toMatch(/Extension/)
+  })
+  it("the remote row's pencil opens the remote editor itself, with no card in between", () => {
+    device.current = { ...FEEDER, id: 55, type: 'media-player', name: 'TV' }
+    composable.current = { status: 'success', data: { caps: [] } }
+    bindings.current = { status: 'success', data: { entries: [] } }
+    remoteConfig.current = {
+      status: 'success',
+      data: { bindings: { a: {} }, layoutTemplateId: 'tpl-1' },
+    }
+    remoteTemplates.current = { status: 'success', data: [{ id: 'tpl-1', name: 'Living room' }] }
+    customization.current = {
+      status: 'success',
+      data: { state: 'loaded', view: null },
+      refetch: vi.fn(async () => undefined),
+    }
+    renderTab()
+    expect(screen.queryByTestId('remote-editor')).toBeNull()
+    fireEvent.click(screen.getByTestId('customize-manage-remote.remote'))
+    expect(screen.getByTestId('remote-editor')).toBeTruthy()
+    expect(screen.queryByText('Configure')).toBeNull()
   })
   it('an extension whose read failed says unknown, not configured', () => {
     device.current = { ...FEEDER, id: 55, type: 'media-player', name: 'TV' }

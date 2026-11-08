@@ -265,6 +265,25 @@ describe('RemoteConfigDialog', () => {
     expect(screen.getByTestId('summary-power').textContent).toBe(
       'Sends an infrared code of 6 pulses through send_raw_command · Kitchen board.',
     )
+    // The code itself is on screen the moment the button is selected (planning#464).
+    expect(screen.getByTestId('code-power').textContent).toBe('9000, -4500, 560, -560, 560, -1690')
+    expect(screen.getByTestId('binding-panel').textContent).toContain(
+      'Raw timings in µs · 6 pulses',
+    )
+  })
+
+  it('a capability binding shows the call it makes as its code', () => {
+    storedConfig = {
+      ...storedConfig,
+      bindings: {
+        power: {
+          action: { kind: 'cap', deviceId: TV, cap: 'switch', method: 'turnOn' },
+        },
+      },
+    }
+    renderDialog()
+    pick('a')
+    expect(screen.getByTestId('code-power').textContent).toBe('switch.turnOn()')
   })
 
   it('selecting a button shows its binding and sends nothing until Test is clicked', async () => {

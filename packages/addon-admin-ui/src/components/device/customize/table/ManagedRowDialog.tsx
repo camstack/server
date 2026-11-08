@@ -2,6 +2,8 @@
  * The editor of a Customize row that is not a single scalar link — an event,
  * a keyed list or an extension. Each already has its own editor; this opens it
  * on its own, so the table lists the row and the existing card does the work.
+ * An extension whose editor is a modal of its own (the remote) opens that
+ * modal directly — no card in between (planning#464).
  */
 import type { DeviceInfo } from '@camstack/types'
 import {
@@ -16,7 +18,7 @@ import {
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AssignmentFacts } from '../assignment-availability'
-import { ConfigCustomizeList } from '../config/ConfigCustomizeList'
+import { ConfigCustomizeList, configEditorOf } from '../config/ConfigCustomizeList'
 import { EventCustomizeList } from '../event/EventCustomizeList'
 import { KeyedArrayCustomizeList } from '../keyed/KeyedArrayCard'
 import type { Known } from '../known'
@@ -39,6 +41,8 @@ export interface ManagedRowDialogProps {
 export function ManagedRowDialog(props: ManagedRowDialogProps): ReactNode {
   const { t } = useTranslation()
   const { spec, device, handle } = props
+  const Editor = spec.kind === 'config' ? configEditorOf(spec.cap) : null
+  if (Editor !== null) return <Editor device={device} onClose={props.onClose} />
   return (
     <Dialog open onOpenChange={(next) => (next ? undefined : props.onClose())}>
       <DialogContent width="xl" placement="sheet-on-mobile" scroll="body" aria-label={props.title}>

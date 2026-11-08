@@ -11344,7 +11344,15 @@
       "sendThrough": "Send through",
       "otherCommands": "Commands not on the layout",
       "pickOther": "Pick one to edit",
-      "hint": "Pick a button to see and edit what it does."
+      "hint": "Pick a button to see and edit what it does.",
+      "selected": "Selected button",
+      "does": "Does",
+      "through": "Sends through",
+      "codeRaw": "Raw timings in µs · {{count}} pulses",
+      "codeCarrier": "{{khz}} kHz carrier",
+      "copyCode": "Copy the code",
+      "callCode": "Capability call",
+      "pickOtherHint": "A command the layout has no key for."
     },
     "editTemplate": "Edit layout",
     "hero": {
@@ -11368,7 +11376,8 @@
       },
       "kind": {
         "digits": "Channel number",
-        "sequence": "Button sequence"
+        "sequence": "Button sequence",
+        "ir": "Infrared code"
       },
       "dialog": {
         "addTitle": "Add source",
@@ -11385,7 +11394,15 @@
         "noBound": "Bind a button first — only bound buttons can be a step.",
         "stepUp": "Move step up",
         "stepDown": "Move step down",
-        "stepRemove": "Remove step"
+        "stepRemove": "Remove step",
+        "transmitter": "Transmitter",
+        "noTransmitter": "Pick a transmitter",
+        "encoding": "Code format",
+        "code": "Infrared code",
+        "codeHint": "Marks and spaces in microseconds, separated by commas or spaces (a space is negative), or the array pasted from a SmartIR file.",
+        "prontoHint": "The 0000 learned form, as the receiver or a code library gives it.",
+        "carrier": "Carrier (kHz)",
+        "carrierHint": "Empty leaves it to the transmitter; most televisions use 38."
       },
       "stepDelay": "Pause between steps (ms)",
       "stepDelayHint": "How long the television needs between two presses of a source.",
@@ -11401,8 +11418,21 @@
         "steps": {
           "too_small": "Add at least one step.",
           "too_big": "A sequence has at most 16 steps."
+        },
+        "transmitterId": {
+          "too_small": "Pick the transmitter the code is sent through."
+        },
+        "payload": {
+          "invalid_type": "Every timing is a whole number of microseconds."
         }
-      }
+      },
+      "encoding": {
+        "raw": "Raw timings (µs)",
+        "pronto": "Pronto hex"
+      },
+      "irDetail": "Infrared · {{pulses}} pulses",
+      "irDetailCarrier": "Infrared · {{pulses}} pulses · {{khz}} kHz",
+      "irDetailBroken": "Infrared · the code cannot be sent"
     },
     "sourceSelect": {
       "label": "Sources",

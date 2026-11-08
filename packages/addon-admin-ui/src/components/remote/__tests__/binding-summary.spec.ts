@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { describeBinding, summarizeBinding, targetLabel } from '../binding-summary'
+import { bindingCode, describeBinding, summarizeBinding, targetLabel } from '../binding-summary'
 import { templateEditPath } from '../EditTemplateButton'
 
 describe('summarizeBinding', () => {
@@ -133,5 +133,45 @@ describe('describeBinding', () => {
     expect(
       describeBinding({ kind: 'cap', deviceId: 99, cap: 'switch', method: 'turnOn' }, devices),
     ).toMatchObject({ kind: 'call', target: '#99' })
+  })
+})
+
+describe('bindingCode', () => {
+  it('hands an infrared binding its raw train, pulse count and carrier, ready to copy', () => {
+    expect(
+      bindingCode({
+        kind: 'cap',
+        deviceId: 5,
+        cap: 'ir-transmitter',
+        method: 'send',
+        args: { timings: [9000, -4500, 560], settings: { carrierHz: 38000 } },
+      }),
+    ).toEqual({
+      kind: 'infrared',
+      timings: [9000, -4500, 560],
+      pulses: 3,
+      carrierKhz: 38,
+      text: '9000, -4500, 560',
+    })
+  })
+
+  it('spells any other call as cap.method with its arguments', () => {
+    expect(
+      bindingCode({
+        kind: 'cap',
+        deviceId: 5,
+        cap: 'media-player',
+        method: 'setVolume',
+        args: { level: 0.4 },
+      }),
+    ).toEqual({ kind: 'call', text: 'media-player.setVolume({"level":0.4})' })
+    expect(bindingCode({ kind: 'cap', deviceId: 5, cap: 'switch', method: 'turnOn' })).toEqual({
+      kind: 'call',
+      text: 'switch.turnOn()',
+    })
+  })
+
+  it('has nothing for a binding that is not finished', () => {
+    expect(bindingCode({ kind: 'cap', deviceId: 0, cap: '', method: '' })).toBeNull()
   })
 })
