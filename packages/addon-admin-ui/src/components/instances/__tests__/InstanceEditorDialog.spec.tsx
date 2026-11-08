@@ -8,6 +8,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import '../../brokers/__tests__/setup'
 
+const schemaQuery = vi.hoisted(() => vi.fn())
+
 const FORM = {
   sections: [
     {
@@ -39,7 +41,12 @@ vi.mock('@camstack/ui-library', async () => {
     useSystem: () => ({
       trpcClient: {
         integrationInstances: {
-          instanceFormSchema: { query: async () => FORM },
+          instanceFormSchema: {
+            query: async (input: unknown) => {
+              schemaQuery(input)
+              return FORM
+            },
+          },
           updateInstance: { mutate: async () => ({}) },
         },
       },
@@ -59,7 +66,7 @@ const instance = {
   formValues: { amazonDomain: 'amazon.it' },
 } as const
 
-function renderDialog() {
+function renderDialog(formValues: Readonly<Record<string, unknown>> = instance.formValues) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
@@ -80,14 +87,17 @@ function renderDialog() {
             },
           ],
         }}
-        instance={instance}
+        instance={{ ...instance, formValues }}
         onClose={() => {}}
       />
     </QueryClientProvider>,
   )
 }
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  schemaQuery.mockClear()
+})
 
 describe('InstanceEditorDialog — stored values', () => {
   it('a select shows its stored option, not the schema default', async () => {
@@ -108,5 +118,65 @@ describe('InstanceEditorDialog — stored values', () => {
     expect(start).toBeDefined()
     expect(JSON.parse(start?.[1].body ?? '{}')).toMatchObject({ amazonDomain: 'amazon.it' })
     vi.unstubAllGlobals()
+  })
+
+  it('the on/off switch stored beside the form values is not a form value', async () => {
+    const fetchSpy = vi.fn(async () => new Response('{}', { status: 500 }))
+    vi.stubGlobal('fetch', fetchSpy)
+    renderDialog({ amazonDomain: 'amazon.it', enabled: true })
+    await screen.findByLabelText(/amazon domain/i)
+    fireEvent.click(await screen.findByRole('button', { name: /get a code/i }))
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+    const calls = fetchSpy.mock.calls as unknown as Array<[string, { body: string }]>
+    const start = calls.find(([url]) => String(url).includes('/code/start'))
+    expect(JSON.parse(start?.[1].body ?? '{}')).not.toHaveProperty('enabled')
+    vi.unstubAllGlobals()
+  })
+})
+
+describe('InstanceEditorDialog — create a record of a provider with several kinds', () => {
+  function renderCreate() {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    return render(
+      <QueryClientProvider client={client}>
+        <InstanceEditorDialog
+          addonId="storage-orchestrator"
+          providerName="Storage Orchestrator"
+          description={{
+            role: 'services',
+            instanceMode: 'multiple',
+            kind: 'storage',
+            canTest: false,
+            kinds: [
+              { id: 'recordings', label: 'Recordings', functionCap: 'storage' },
+              { id: 'events', label: 'Event media', functionCap: 'storage' },
+            ],
+          }}
+          instance={null}
+          onClose={() => {}}
+        />
+      </QueryClientProvider>,
+    )
+  }
+
+  it('is titled and named after the kind, not the provider addon', async () => {
+    renderCreate()
+    expect(await screen.findByText('Add Recordings')).toBeTruthy()
+    expect(screen.queryByText(/Add Storage Orchestrator/)).toBeNull()
+    // The form builder's labels are not bound to their controls: step from the label to its input.
+    const label = await screen.findByText(/^Name\b/)
+    const input = label.parentElement?.querySelector('input')
+    expect(input?.value).toBe('Recordings')
+  })
+
+  it('asks for the form of the chosen kind', async () => {
+    renderCreate()
+    await waitFor(() =>
+      expect(schemaQuery).toHaveBeenCalledWith({
+        addonId: 'storage-orchestrator',
+        id: null,
+        kind: 'recordings',
+      }),
+    )
   })
 })

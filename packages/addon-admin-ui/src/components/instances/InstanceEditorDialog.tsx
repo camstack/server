@@ -38,7 +38,9 @@ import {
   checkTypedId,
   diffInstanceValues,
   effectiveInstanceValues,
+  createLabel,
   findKind,
+  formStartValues,
   mintInstanceId,
   needsKindPicker,
   randomHex8,
@@ -84,12 +86,19 @@ export function InstanceEditorDialog({
   const { t } = useTranslation()
   const system = useSystem()
   const queryClient = useQueryClient()
-  const stored = instance?.formValues ?? NO_VALUES
+  const stored = useMemo(
+    () => (instance === null ? NO_VALUES : formStartValues(instance.formValues)),
+    [instance],
+  )
   const instanceId = instance?.id ?? null
 
   const kinds = description.kinds ?? []
+  // A provider with several kinds (storage: one per place) is not what the operator is adding:
+  // the kind is, so the default name and the title say the kind (D1013).
+  const startKindId = instance?.kind ?? kinds[0]?.id
+  const addedLabel = createLabel(description, findKind(description, startKindId), providerName)
   const [identity, setIdentity] = useState<Record<string, unknown>>({
-    [IDENTITY_NAME]: instance?.name ?? providerName,
+    [IDENTITY_NAME]: instance?.name ?? addedLabel,
     [IDENTITY_KIND]: instance?.kind ?? kinds[0]?.id ?? '',
     [IDENTITY_RESTORE]: false,
     [IDENTITY_RESTORE_ID]: '',
@@ -193,12 +202,15 @@ export function InstanceEditorDialog({
   )
   const [verdict, setVerdict] = useState<TestVerdict | null>(null)
 
+  // The create form is the chosen kind's; an existing record's form is its own.
+  const formKind = instanceId === null && kindId !== '' ? kindId : undefined
   const schemaQuery = useQuery({
-    queryKey: ['provider-instance-form', addonId, instanceId],
+    queryKey: ['provider-instance-form', addonId, instanceId, formKind ?? null],
     queryFn: () =>
       system.trpcClient.integrationInstances.instanceFormSchema.query({
         addonId,
         id: instanceId,
+        ...(formKind !== undefined ? { kind: formKind } : {}),
       }),
   })
   const hydrated = useMemo(
@@ -282,7 +294,7 @@ export function InstanceEditorDialog({
   const title =
     instance === null
       ? t('providerInstances.createTitle', 'Add {{provider}}', {
-          provider: providerName,
+          provider: createLabel(description, kind, providerName),
         })
       : t('providerInstances.editTitle', 'Edit {{name}}', {
           name: instance.name,

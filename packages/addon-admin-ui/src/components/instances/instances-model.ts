@@ -158,6 +158,18 @@ export function needsKindPicker(description: IntegrationInstanceDescription): bo
   return (description.kinds?.length ?? 0) > 1
 }
 
+/**
+ * What a new record is called: the provider's name, or the kind's label when the provider offers
+ * several kinds and so does not say what is being added.
+ */
+export function createLabel(
+  description: IntegrationInstanceDescription,
+  kind: IntegrationInstanceKind | undefined,
+  providerName: string,
+): string {
+  return needsKindPicker(description) && kind !== undefined ? kind.label : providerName
+}
+
 /** The word a status badge shows: the provider's own label, else the state. */
 export function statusText(status: NonNullable<IntegrationInstance['status']>): string {
   return status.label !== undefined && status.label.length > 0 ? status.label : status.state
@@ -287,6 +299,20 @@ function valuesEqual(a: unknown, b: unknown): boolean {
     if (!valuesEqual(left[key], right[key])) return false
   }
   return true
+}
+
+/** The on/off switch is stored in the record body beside the form values; it is not a form field. */
+const SWITCH_BODY_KEY = 'enabled'
+
+/**
+ * The values a record's form starts from: its `formValues` without the switch, which the record
+ * body shares and only the row's On control writes (`setInstanceEnabled`).
+ */
+export function formStartValues(
+  formValues: Readonly<Record<string, unknown>>,
+): Record<string, unknown> {
+  const { [SWITCH_BODY_KEY]: _switch, ...rest } = formValues
+  return rest
 }
 
 /**

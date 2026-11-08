@@ -239,7 +239,8 @@ describe('InstancesTable', () => {
 
     it('Add asks the kind and offers restore; the provider mints the id so none is sent', async () => {
       renderPanel('?instance=smtp-nodemailer:%2B')
-      expect(await screen.findByText('Add SMTP')).toBeTruthy()
+      // Several kinds: the dialog says which one is being added, not the provider's name.
+      expect(await screen.findByText('Add Kind one')).toBeTruthy()
       expect(await screen.findByLabelText('Kind')).toBeTruthy()
       expect(screen.getByText('Restore under its old id')).toBeTruthy()
       fireEvent.click(await screen.findByRole('button', { name: 'Create' }))

@@ -1,6 +1,6 @@
 import { useState, type JSX } from 'react'
 import type { ConfigUISchema, ConfigSection, FieldProbeResult } from '@camstack/types'
-import { ConfigFormField } from './config-form-field'
+import { ConfigFormField, isFieldVisible } from './config-form-field'
 import { DisclosureChevron } from '../primitives/disclosure-chevron'
 import type { ProbeState } from './config-form-field'
 
@@ -64,6 +64,23 @@ export function sectionGridClass(columns: 1 | 2 | 3 | 4 | undefined): string {
   if (cols === 4) return 'grid-cols-1 @[480px]:grid-cols-2 @[1140px]:grid-cols-4'
   return 'grid-cols-1 @[480px]:grid-cols-2'
   // i18n-ignore-end
+}
+
+/**
+ * The sections worth drawing for these values: a section whose every field is hidden by its
+ * `showWhen` (a provider's section while another provider is selected) would be a bare header, so
+ * it is left out. A section declared with no fields at all is the author's choice and stays.
+ */
+function visibleSections(
+  schema: FormBuilderProps['schema'],
+  values: Record<string, unknown>,
+): readonly ConfigSection[] {
+  const allFields = schema.sections.flatMap((section) => section.fields)
+  return schema.sections.filter(
+    (section) =>
+      section.fields.length === 0 ||
+      section.fields.some((field) => isFieldVisible(field, values, allFields)),
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -177,7 +194,7 @@ export function ConfigFormBuilder({
     // schemas inside ItemFormDialog (OIDC, Training Providers, …).
     return (
       <div className="space-y-4">
-        {schema.sections.map((section) => (
+        {visibleSections(schema, values).map((section) => (
           <div key={section.id} className="@container" style={{ containerType: 'inline-size' }}>
             <div className={`grid ${sectionGridClass(section.columns)} gap-x-3 gap-y-2.5`}>
               {section.fields.map((field) => (
@@ -201,7 +218,7 @@ export function ConfigFormBuilder({
 
   return (
     <div className="space-y-4">
-      {schema.sections.map((section) => (
+      {visibleSections(schema, values).map((section) => (
         <SectionCard
           key={section.id}
           section={section}
