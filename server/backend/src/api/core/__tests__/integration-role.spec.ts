@@ -38,7 +38,7 @@ describe('describedRoleOf', () => {
   it('a kind without a role takes the provider role, and no kinds is the provider role', () => {
     const kind = { id: 'k', label: 'K', functionCap: 'broker' }
     expect(describedRoleOf({ role: 'devices', kinds: [kind] })).toBe('devices')
-    expect(describedRoleOf({ role: 'services' })).toBe('services')
+    expect(describedRoleOf({ role: 'services', kinds: [] })).toBe('services')
     expect(describedRoleOf(null)).toBeUndefined()
   })
 })

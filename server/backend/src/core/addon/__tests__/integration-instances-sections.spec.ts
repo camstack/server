@@ -2,8 +2,8 @@ import type { IIntegrationInstancesProvider, IntegrationInstance } from '@camsta
 import { describe, expect, it } from 'vitest'
 import { instancesOfSection, kindsFor } from '../integration-instances-provider.js'
 
-function instance(id: string, kind?: string): IntegrationInstance {
-  return { id, name: id, configured: true, formValues: {}, ...(kind !== undefined ? { kind } : {}) }
+function instance(id: string, kind = 'plain'): IntegrationInstance {
+  return { id, name: id, configured: true, formValues: {}, kind }
 }
 
 function provider(
@@ -16,9 +16,7 @@ function provider(
       instanceMode: 'multiple',
       kind: 'account',
       canTest: false,
-      ...(kinds !== undefined
-        ? { kinds: kinds.map((k) => ({ id: k.id, label: k.id, functionCap: k.functionCap })) }
-        : {}),
+      kinds: (kinds ?? []).map((k) => ({ id: k.id, label: k.id, functionCap: k.functionCap })),
     }),
     instanceFormSchema: async () => ({ sections: [] }),
     listInstances: async () => rows,

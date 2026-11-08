@@ -13,17 +13,13 @@ import {
   type InstanceHolder,
 } from '../instance-links.service.js'
 
-function row(
-  id: string,
-  kind: string | undefined,
-  formValues: Record<string, unknown>,
-): IntegrationInstance {
+function row(id: string, kind: string, formValues: Record<string, unknown>): IntegrationInstance {
   return {
     id,
     name: `n-${id}`,
     configured: true,
     formValues,
-    ...(kind !== undefined ? { kind } : {}),
+    kind,
   }
 }
 
@@ -39,6 +35,7 @@ function provider(
       kind: 'x',
       canTest: false,
       ...description,
+      kinds: description.kinds ?? [],
     }),
     instanceFormSchema: async () => ({ sections: [] }),
     listInstances: async () => rows,
@@ -70,9 +67,9 @@ function world() {
       links: [{ kind: 'connections', field: 'brokerId', to: { cap: 'broker', kind: 'mqtt' } }],
     },
     [
-      row('c1', undefined, { brokerId: 'b1' }),
-      row('c2', undefined, { brokerId: 'b2' }),
-      row('c3', undefined, { brokerId: 'other' }),
+      row('c1', 'connections', { brokerId: 'b1' }),
+      row('c2', 'connections', { brokerId: 'b2' }),
+      row('c3', 'connections', { brokerId: 'other' }),
     ],
   )
   const holders: readonly InstanceHolder[] = [
@@ -111,7 +108,10 @@ describe('instance links guard', () => {
           { kind: 'connections', field: 'mqttBrokerId', to: { cap: 'broker', kind: 'mqtt' } },
         ],
       },
-      [row('ha1', undefined, { mqttBrokerId: 'mq1' }), row('ha2', undefined, { mqttBrokerId: '' })],
+      [
+        row('ha1', 'connections', { mqttBrokerId: 'mq1' }),
+        row('ha2', 'connection', { mqttBrokerId: '' }),
+      ],
     )
     const index = new InstanceLinksIndex(() => [
       { addonId: 'mqtt-broker', provider: brokers },

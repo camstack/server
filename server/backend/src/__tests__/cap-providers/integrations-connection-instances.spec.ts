@@ -76,6 +76,7 @@ function harness(
       async (input: { id: string }): Promise<IntegrationInstance | null> => ({
         id: input.id,
         name: 'Loki',
+        kind: 'loki',
         configured: true,
         formValues: {
           url: 'http://loki:3100',
