@@ -5,7 +5,6 @@ status: superseded
 date: 2026-08-28
 supersedes:
 applies-to:
-  - packages/addon-admin-ui/src/lib/settings-forwarding.ts
   - packages/addon-admin-ui/src/components/settings/NodeAddonsSettingsPanel.tsx
   - packages/addon-admin-ui/src/pages/IntegrationDetail.tsx
 ---
@@ -141,7 +140,7 @@ addon-level declaration deploys immediately.
 
 ## Enforcement
 
-- `packages/addon-admin-ui/src/components/settings/__tests__/settings-forwarding.spec.tsx`
+- `packages/addon-admin-ui/src/components/settings/__tests__/settings-forwarding.spec.tsx` <!-- drift-ok: deleted with the addon-level settings API (D986) -->
   drives the **real** panel over a Reolink-shaped schema: declared sections
   render, undeclared ones do not, an addon that declares nothing gets nothing, a
   `perNode` field tagged for the surface is dropped, the scope statement

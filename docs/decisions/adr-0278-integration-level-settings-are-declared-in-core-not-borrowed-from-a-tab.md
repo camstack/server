@@ -11,7 +11,6 @@ applies-to:
   - packages/system/src/kernel/transport/child-cap-protocol.ts
   - packages/system/src/kernel/moleculer/child-addon-call-dispatch.ts
   - server/backend/src/core/addon/addon-settings-provider.ts
-  - packages/addon-admin-ui/src/lib/settings-forwarding.ts
   - packages/addon-admin-ui/src/components/settings/NodeAddonsSettingsPanel.tsx
   - packages/addon-admin-ui/src/pages/IntegrationDetail.tsx
 ---
@@ -149,14 +148,14 @@ controls with one label writing two tables.
 
 ## Enforcement
 
-- `packages/types/src/addon/__tests__/base-addon-integration-settings.spec.ts` —
+- `packages/types/src/addon/__tests__/base-addon-integration-settings.spec.ts` — <!-- drift-ok: deleted with the addon-level settings API (D986) -->
   11 assertions against the real `BaseAddon`: declared sections in declared
   order, undeclared ones absent HERE but still present on the addon page, values
   compared field-by-field against `getGlobalSettings` for the same key, a write
   through `updateGlobalSettings` landing on the bare key with no `@hub` sibling,
   `perNode` dropped here and retained there, a per-node-only declaration
   yielding `null`, and an unknown id throwing.
-- `packages/addon-admin-ui/src/components/settings/__tests__/settings-forwarding.spec.tsx`
+- `packages/addon-admin-ui/src/components/settings/__tests__/settings-forwarding.spec.tsx` <!-- drift-ok: deleted with the addon-level settings API (D986) -->
   — 10 assertions driving the REAL panel: it calls `getIntegrationSettings` and
   never `getGlobalSettings`; an addon that declared nothing renders nothing; NO
   scope paragraph renders (amended 2026-09-05 — it used to assert the opposite);
