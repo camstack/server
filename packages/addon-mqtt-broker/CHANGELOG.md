@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The embedded broker's client credentials and topic rules are instances of the broker page (migrated in place with the same ids), no longer two lists in the addon settings
+- The embedded broker keeps serving the legacy client and ACL lists until their copy to instances is recorded, and refuses to open if they cannot be read
 
 ## [1.2.156] - 2026-11-08
 

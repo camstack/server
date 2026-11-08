@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Climate and water-heater power-on now remembers the last mode the device ran across a hub restart; the other readings are still re-read from the device.
 - Fixed built-in integrations are seeded through integrationInstances.createInstance instead of integrations.create
 - Storage locations are stamped with their mode and the retired default flag removed by a one-time migration, not at every boot
+- A storage type with no enabled location is repaired at every boot, not only by the one-time migration
 
 ### Removed
 
