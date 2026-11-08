@@ -467,7 +467,6 @@
   "integrationInstances.setInstanceEnabled": "admin",
   "integrationInstances.testInstance": "admin",
   "integrationInstances.updateInstance": "admin",
-  "integrations.create": "admin",
   "integrations.delete": "admin",
   "integrations.get": "protected",
   "integrations.getAvailableTypes": "admin",

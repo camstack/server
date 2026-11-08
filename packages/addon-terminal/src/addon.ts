@@ -484,9 +484,13 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
         return integration
       },
       createIntegration: async (input) => {
-        const integration = await this.ctx.api.integrations.create.mutate(input)
-        terminalIntegrationId = integration.id
-        return integration
+        const created = await this.ctx.api.integrationInstances.createInstance.mutate({
+          addonId: input.addonId,
+          name: input.name,
+          seed: { info: input.info },
+        })
+        terminalIntegrationId = created.id
+        return { id: created.id }
       },
       updateIntegration: async ({ id, info }) => {
         await this.ctx.api.integrations.update.mutate({ id, info, skipRestart: true })

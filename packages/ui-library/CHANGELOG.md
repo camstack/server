@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Regenerated hooks: integrations.create removed, createInstance takes an addon-only seed field
+
 ## [1.2.408] - 2026-11-08
 
 ### Changed

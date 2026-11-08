@@ -8124,7 +8124,8 @@ export function createCapRouter_integrationInstances(
       .input(integrationInstancesCapability.methods.instanceFormSchema.input.loose())
       .output(integrationInstancesCapability.methods.instanceFormSchema.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, addonId, ...methodInput } = parsedInput as {
           nodeId?: string
           addonId?: string
         } & Record<string, unknown>
@@ -8153,7 +8154,8 @@ export function createCapRouter_integrationInstances(
       .input(integrationInstancesCapability.methods.getInstance.input.loose())
       .output(integrationInstancesCapability.methods.getInstance.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, addonId, ...methodInput } = parsedInput as {
           nodeId?: string
           addonId?: string
         } & Record<string, unknown>
@@ -8170,7 +8172,8 @@ export function createCapRouter_integrationInstances(
       .input(integrationInstancesCapability.methods.createInstance.input.loose())
       .output(integrationInstancesCapability.methods.createInstance.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, addonId, ...methodInput } = parsedInput as {
           nodeId?: string
           addonId?: string
         } & Record<string, unknown>
@@ -8187,7 +8190,8 @@ export function createCapRouter_integrationInstances(
       .input(integrationInstancesCapability.methods.updateInstance.input.loose())
       .output(integrationInstancesCapability.methods.updateInstance.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, addonId, ...methodInput } = parsedInput as {
           nodeId?: string
           addonId?: string
         } & Record<string, unknown>
@@ -8204,7 +8208,8 @@ export function createCapRouter_integrationInstances(
       .input(integrationInstancesCapability.methods.setInstanceEnabled.input.loose())
       .output(integrationInstancesCapability.methods.setInstanceEnabled.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, addonId, ...methodInput } = parsedInput as {
           nodeId?: string
           addonId?: string
         } & Record<string, unknown>
@@ -8221,7 +8226,8 @@ export function createCapRouter_integrationInstances(
       .input(integrationInstancesCapability.methods.deleteInstance.input.loose())
       .output(integrationInstancesCapability.methods.deleteInstance.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, addonId, ...methodInput } = parsedInput as {
           nodeId?: string
           addonId?: string
         } & Record<string, unknown>
@@ -8238,7 +8244,8 @@ export function createCapRouter_integrationInstances(
       .input(integrationInstancesCapability.methods.testInstance.input.loose())
       .output(integrationInstancesCapability.methods.testInstance.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, addonId, ...methodInput } = parsedInput as {
           nodeId?: string
           addonId?: string
         } & Record<string, unknown>
@@ -8308,19 +8315,6 @@ export function createCapRouter_integrations(
         const p = resolveProvider('integrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getByAddonId(methodInput as any)
-      }),
-    create: adminProcedure
-      .input(integrationsCapability.methods.create.input.loose())
-      .output(integrationsCapability.methods.create.output)
-      .mutation(async ({ input, ctx }) => {
-        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider('integrations', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.create(methodInput as any)
       }),
     update: adminProcedure
       .input(integrationsCapability.methods.update.input.loose())

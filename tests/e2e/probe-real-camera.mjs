@@ -48,7 +48,7 @@ try {
     const ints = await trpc.integrations.list.query()
     let integration = ints.find((i) => i.addonId === 'provider-rtsp')
     if (!integration) {
-      integration = await trpc.integrations.create.mutate({
+      integration = await trpc.integrationInstances.createInstance.mutate({
         addonId: 'provider-rtsp',
         name: 'Live Probe',
       })

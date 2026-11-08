@@ -150,7 +150,12 @@ export class BuildAlarmPanel {
       devices: this.ctx.kernel.devices,
       localNodeId: this.ctx.kernel.localNodeId,
       getIntegration: async (addonId) => api.integrations.getByAddonId.query({ addonId }),
-      createIntegration: async (input) => api.integrations.create.mutate(input),
+      createIntegration: async (input) =>
+        api.integrationInstances.createInstance.mutate({
+          addonId: input.addonId,
+          name: input.name,
+          seed: { info: input.info },
+        }),
       updateIntegration: async ({ id, info }) => {
         await api.integrations.update.mutate({ id, info, skipRestart: true })
       },

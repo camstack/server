@@ -454,3 +454,66 @@ describe('the switch of a fixed builtin is the registry flag', () => {
     expect((await kit.wrapped.getInstance({ id: created.id }))?.enabled).toBe(false)
   })
 })
+
+describe('createInstance with a seed', () => {
+  let kit: Kit
+  beforeEach(async () => {
+    kit = await makeKit()
+  })
+
+  /** What the transport hands the provider: the input plus who called. */
+  function stamped<T extends object>(input: T, callerAddonId?: string): T {
+    return callerAddonId === undefined ? input : Object.assign({}, input, { callerAddonId })
+  }
+
+  it('is refused from a caller the transport did not stamp (the admin tier)', async () => {
+    await expect(
+      kit.wrapped.createInstance(stamped({ name: 'Panel', seed: { info: { fixed: true } } })),
+    ).rejects.toThrow(/may seed its own integration/)
+    expect(await kit.registry.listIntegrations()).toHaveLength(0)
+    expect(kit.calls).toEqual([])
+  })
+
+  it('is refused from another addon', async () => {
+    await expect(
+      kit.wrapped.createInstance(
+        stamped({ name: 'Panel', seed: { info: { fixed: true } } }, 'provider-other'),
+      ),
+    ).rejects.toThrow(/may seed its own integration/)
+    expect(await kit.registry.listIntegrations()).toHaveLength(0)
+  })
+
+  it('writes a registry row with the info, even for a kind that brings no devices', async () => {
+    const services = await makeKit('multiple', { role: 'services' })
+    const created = await services.wrapped.createInstance(
+      stamped({ name: 'Loki', seed: { info: { fixed: true } } }, ADDON),
+    )
+    const rows = await services.registry.listIntegrations()
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ id: created.id, addonId: ADDON, info: { fixed: true } })
+  })
+
+  it('a fixed seed lists with the registry flag, not the flagless record', async () => {
+    const created = await kit.wrapped.createInstance(
+      stamped({ name: 'Blocks', seed: { info: { fixed: true } } }, ADDON),
+    )
+    await kit.registry.updateIntegration(created.id, { enabled: false })
+    expect((await kit.wrapped.listInstances()).find((i) => i.id === created.id)?.enabled).toBe(false)
+  })
+
+  it('keeps the candidate and the settings the seed carries', async () => {
+    const created = await kit.wrapped.createInstance(
+      stamped(
+        {
+          name: 'Hub',
+          originStableId: 'mac-aabbcc',
+          values: { host: '192.0.2.9' },
+          seed: { info: {} },
+        },
+        ADDON,
+      ),
+    )
+    expect((await kit.registry.getIntegration(created.id))?.originStableId).toBe('mac-aabbcc')
+    expect(kit.stored.get(created.id)?.formValues).toMatchObject({ host: '192.0.2.9' })
+  })
+})

@@ -5,7 +5,7 @@
  * What this exercises, over a real tRPC WebSocket against a running server:
  *   1. Take the `camstack login` session (shared resolver) and open an authenticated WSS tRPC client.
  *   2. Clean up any prior RTSP integration / device rows.
- *   3. Create the RTSP integration (`integrations.create`) — unique mode.
+ *   3. Create the RTSP integration (`integrationInstances.createInstance`) — unique mode.
  *   4. Create a device (`deviceManagement.createDevice`) with a fake stream URL.
  *   5. Verify the device appears in `deviceManagement.list` — this catches the
  *      cross-process list union bug where forked-worker devices were invisible
@@ -94,13 +94,12 @@ async function main() {
 
     // ── 3. Create integration ───────────────────────────────────────────
     log('create integration')
-    const integration = await trpc.integrations.create.mutate({
+    const integration = await trpc.integrationInstances.createInstance.mutate({
       addonId: ADDON_ID,
       name: 'RTSP E2E',
     })
     integrationId = integration.id
     assertTrue(integrationId.length > 0, 'integration.id is non-empty')
-    assertEq(integration.addonId, ADDON_ID, 'integration.addonId')
     assertEq(integration.enabled, true, 'integration starts enabled')
 
     // ── 4. Create device ────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 /**
  * Integration rows are keyed by the BARE addon id. A hub-resident addon passed its `ctx.id`
- * (`addon:<id>`) to `integrations.create`, so rows such as `addon:loki-logging` reached the
+ * (`addon:<id>`) to `integrationInstances.createInstance`, so rows such as `addon:loki-logging` reached the
  * `integrations` records of `integration-registry`. The registry now canonicalises on write and
  * lookup; this migration re-stamps the rows already on disk, `addon:<id>` → `<id>`, keeping the
  * row id and every other field.

@@ -237,6 +237,14 @@ export const integrationInstancesCapability = {
          * that already has its integration (D984). Ignored by an instance with no registry row.
          */
         originStableId: z.string().min(1).optional(),
+        /**
+         * The seed variant: the HUB or an addon states the integration it owns (a fixed builtin's
+         * row, a migration's row), not an operator creating one. It brings the registry `info`
+         * (`{ fixed: true }`), makes the row whatever the kind's role, and is accepted only from a
+         * caller the transport stamped as the addon itself (`callerAddonId`): an admin session
+         * cannot send it, and the wizard never does. `values` are the settings it is seeded with.
+         */
+        seed: z.object({ info: z.record(z.string(), z.unknown()) }).optional(),
       }),
       z.object({ id: z.string() }),
       { kind: 'mutation', auth: 'admin' },

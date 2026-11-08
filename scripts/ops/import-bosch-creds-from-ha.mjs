@@ -27,11 +27,11 @@
 //   camstack-import.json           CamStack-oriented plan (paths, not inline PEM)
 //
 // Apply-hub (when camstack-import.json marks readyToApply):
-//   integrations.create (settings on the create) via scripts/hub/hub.mjs
+//   integrationInstances.createInstance (values on the create) via scripts/hub/hub.mjs
 //
 // Coordinator manual apply (.50 example):
-//   node scripts/hub/hub.mjs --server 192.0.2.20 POST integrations.create \
-//     '{"addonId":"bosch-shc","name":"Bosch SHC (from HA)","settings":{...}}'
+//   node scripts/hub/hub.mjs --server 192.0.2.20 POST integrationInstances.createInstance \
+//     '{"addonId":"bosch-shc","name":"Bosch SHC (from HA)","values":{...}}'
 //
 // Requires: ~/.claude/homelab/bin/hl (or HL_BIN), virsh + qemu-guest-agent on Unraid.
 import { execFileSync } from 'node:child_process'
@@ -269,12 +269,12 @@ export function buildCamstackImport(entries, ctx) {
     outDir: ctx.outDir,
     readyToApply: false,
     readyToApplyReason:
-      'Bosch provider addons are account-mode scaffolds without a finalized integration settings schema; use extract output to wire integrations.create once schema lands.',
+      'Bosch provider addons are account-mode scaffolds without a finalized integration settings schema; use extract output to wire integrationInstances.createInstance once schema lands.',
     integrations,
     hubApplyExample: {
       server: '192.0.2.20',
       steps: [
-        'POST integrations.create {"addonId":"bosch-shc","name":"...","settings":{}}',
+        'POST integrationInstances.createInstance {"addonId":"bosch-shc","name":"...","values":{}}',
         'Repeat per integration; PEM paths in settings should be absolute paths on the hub host only after copying scratchpad/pem there securely.',
       ],
     },
@@ -680,17 +680,17 @@ function cmdApplyHub(args) {
     const created = hubCall(
       server,
       'POST',
-      'integrations.create',
+      'integrationInstances.createInstance',
       {
         addonId: item.camstackAddonId,
         name: item.suggestedIntegrationName,
-        settings: item.settings,
+        values: item.settings,
       },
       dryRun,
     )
     const integrationId = created?.id
     if (!integrationId && !dryRun) {
-      console.error(`integrations.create failed for ${item.camstackAddonId}`)
+      console.error(`integrationInstances.createInstance failed for ${item.camstackAddonId}`)
       return 2
     }
     if (!dryRun) console.log(`applied ${item.camstackAddonId} integration id=${integrationId}`)

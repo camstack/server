@@ -1457,9 +1457,6 @@ export const useIntegrationsGet: typeof trpc.integrations.get.useQuery = /*#__PU
 /** Generated alias around `trpc.integrations.getByAddonId.useQuery`. */
 export const useIntegrationsGetByAddonId: typeof trpc.integrations.getByAddonId.useQuery = /*#__PURE__*/ alias(() => trpc.integrations.getByAddonId.useQuery)
 
-/** Generated alias around `trpc.integrations.create.useMutation`. */
-export const useIntegrationsCreate: typeof trpc.integrations.create.useMutation = /*#__PURE__*/ alias(() => trpc.integrations.create.useMutation)
-
 /** Generated alias around `trpc.integrations.update.useMutation`. */
 export const useIntegrationsUpdate: typeof trpc.integrations.update.useMutation = /*#__PURE__*/ alias(() => trpc.integrations.update.useMutation)
 

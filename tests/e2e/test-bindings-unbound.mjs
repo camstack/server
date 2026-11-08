@@ -48,7 +48,7 @@ try {
   }
 
   log('create integration + device WITHOUT snapshotUrl')
-  const integration = await trpc.integrations.create.mutate({
+  const integration = await trpc.integrationInstances.createInstance.mutate({
     addonId: 'provider-rtsp',
     name: 'Unbound E2E',
   })

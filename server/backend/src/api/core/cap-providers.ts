@@ -65,7 +65,6 @@ import type {
 import { errMsg } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
 import {
-  createRegisteredInstance,
   deleteRegisteredInstance,
   type DeviceCascadePort,
   type InstanceLifecycleDeps,
@@ -1173,46 +1172,6 @@ export function buildIntegrationsProvider(
       if (!integration) return integration
       const [projected] = await projectSwitches(ar, logger, [integration])
       return projected ?? integration
-    },
-    create: async (input) => {
-      const { settings } = input
-      const reg = requireIntegrationRegistry(ar)
-
-      logger.info('request', {
-        tags: { addonId: input.addonId },
-        meta: { phase: 'create', name: input.name },
-      })
-
-      // The hub half is shared with the registered `integration-instances` provider
-      // (`instance-lifecycle.ts`): unique check, the D1016 gate, the row, the record, rollback.
-      const instances = getInstancesProvider(ar, input.addonId)
-      const raw = instances === null ? null : rawInstancesProvider(instances)
-      const addon = ar.listAddons().find((a) => a.manifest.id === input.addonId)
-      if (raw === null) {
-        const legacyMode =
-          addon?.declaration?.instanceMode ?? addon?.manifest?.instanceMode ?? 'multiple'
-        if (legacyMode === 'unique') {
-          const existing = (await reg.listIntegrations()).filter((i) => i.addonId === input.addonId)
-          if (existing.length > 0) {
-            logger.warn('rejected duplicate unique', {
-              tags: { addonId: input.addonId, integrationId: existing[0]!.id },
-              meta: { phase: 'create' },
-            })
-            throw new TRPCError({
-              code: 'CONFLICT',
-              message: `Addon "${input.addonId}" is unique-instance and already has an integration (${existing[0]!.id})`,
-            })
-          }
-        }
-      }
-      return createRegisteredInstance(lifecycleDeps, raw, {
-        addonId: input.addonId,
-        name: input.name,
-        ...(input.info !== undefined ? { info: input.info } : {}),
-        ...(input.originStableId !== undefined ? { originStableId: input.originStableId } : {}),
-        ...(input.kind !== undefined ? { kind: input.kind } : {}),
-        ...(settings !== undefined ? { settings } : {}),
-      })
     },
     update: async (input) => {
       const reg = requireIntegrationRegistry(ar)

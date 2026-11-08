@@ -2387,7 +2387,7 @@ export class AddonRegistryService {
         // caps (vacuum-control, valve, humidifier, …) register only when a
         // device using them exists: waiting for a cap that was NOT registered
         // before the restart burns the full 120s timeout for nothing (live:
-        // integrations.create held its mutation — and the creation modal —
+        // createInstance held its mutation — and the creation modal —
         // for 2 minutes on the HA addon's 8 deviceless caps).
         const preRegistered = new Set(
           entry.declaredCapabilities
@@ -2413,7 +2413,7 @@ export class AddonRegistryService {
         }
 
         // The respawn resolves as soon as the child is up, not when its
-        // capabilities are re-registered. Callers (integrations.create, UI forms) may
+        // capabilities are re-registered. Callers (integrationInstances.createInstance, UI forms) may
         // immediately try to route to the provider and hit a transient null. Block here
         // until every declared capability is back on the registry so the restart is
         // observable-consistent from the caller's perspective.
@@ -2446,7 +2446,7 @@ export class AddonRegistryService {
           // those are the ones a caller could have been routing to. Caps that
           // were absent (device-scoped, no device yet) re-register
           // asynchronously whenever their devices appear; waiting for them
-          // here held integrations.create (and its modal) for the full
+          // here held createInstance (and its modal) for the full
           // timeout on every deviceless declared cap.
           const gated = declared.filter((cap) => preRegistered.has(cap.name))
           const skipped = declared.filter((cap) => !preRegistered.has(cap.name))

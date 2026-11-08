@@ -285,10 +285,10 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
           addonId: this.ctx.id,
         })
         if (existing !== null && existing !== undefined) return existing.id
-        const created = await this.ctx.api.integrations.create.mutate({
+        const created = await this.ctx.api.integrationInstances.createInstance.mutate({
           addonId: this.ctx.id,
           name,
-          skipRestart: true,
+          seed: { info: {} },
         })
         return created.id
       },

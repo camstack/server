@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1036 shared schemas.**
+**1035 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1354,15 +1354,6 @@ Enum: `"open" \| "opening" \| "closing" \| "closed" \| "stopped"`
 - `position`: `number \| null`
 - `tiltPosition`: `number \| null`
 - `lastChangedAt`: `number`
-
-### `CreateIntegrationInputSchema`
-
-- `addonId`: `string`
-- `name`: `string`
-- `info?`: `Record<string, unknown>`
-- `originStableId?`: `string`
-- `settings?`: `Record<string, unknown>`
-- `kind?`: `string`
 
 ### `CreateUserInputSchema`
 

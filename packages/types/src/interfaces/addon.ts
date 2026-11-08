@@ -1227,7 +1227,7 @@ export interface AddonDeclaration {
    *     adding/discovering the first device. No config step, no config
    *     button on the detail page. (Reolink/ONVIF/Ecowitt/Gree.)
    *   - `'account'` — account/connection config; wizard shows the config
-   *     step, then `integrations.create` with those settings.
+   *     step, then `integrationInstances.createInstance` with those settings.
    *     (Dreo/Wyze/Dreame.)
    *   - `'broker'` — the shared-bus/session broker step. (HomeAssistant/MQTT.)
    * Optional/transitional: when absent, `getAvailableTypes` DERIVES the mode

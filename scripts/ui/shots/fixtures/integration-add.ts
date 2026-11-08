@@ -164,6 +164,6 @@ export default defineFixtures({
       status: 'rejected',
       error: 'Dreo sign-in was refused (invalid credentials)',
     },
-    'mut:integrations.create': { id: 'int-new', name: 'New' },
+    'mut:integrationInstances.createInstance': { id: 'int-new', name: 'New' },
   },
 })

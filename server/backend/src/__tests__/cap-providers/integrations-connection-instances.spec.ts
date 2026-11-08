@@ -6,6 +6,7 @@ import type {
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildIntegrationsProvider } from '../../api/core/cap-providers'
+import { type SeedCreateInput, seedCreate } from './support/seed-create'
 
 /** The slice of a listed addon the integrations provider reads. */
 interface ListedAddon {
@@ -122,7 +123,8 @@ function harness(
     { createLogger: vi.fn(() => log) } as never,
     null,
   )
-  return { provider, registry, instances, restartAddon, log, addonReg }
+  const create = (input: SeedCreateInput) => seedCreate({ registry, log }, instances, input)
+  return { provider, registry, instances, restartAddon, log, addonReg, create }
 }
 
 describe('integrations over an integration-instances provider', () => {
@@ -133,7 +135,7 @@ describe('integrations over an integration-instances provider', () => {
 
   it("does not list the addon's registry rows, and keeps them (no delete)", async () => {
     const h = harness()
-    await h.provider.create({ addonId: ADDON_ID, name: 'Loki' })
+    await h.create({ addonId: ADDON_ID, name: 'Loki' })
     expect(await h.provider.list()).toEqual([])
     expect(h.registry.deleteIntegration).not.toHaveBeenCalled()
     expect(await h.registry.listIntegrations()).toHaveLength(1)
@@ -156,7 +158,7 @@ describe('integrations over an integration-instances provider', () => {
         },
       },
     ])
-    await h.provider.create({ addonId: ADDON_ID, name: 'Dual' })
+    await h.create({ addonId: ADDON_ID, name: 'Dual' })
     expect(await h.provider.list()).toHaveLength(1)
     const [type] = await h.provider.getAvailableTypes()
     expect(type).toMatchObject({ addonId: ADDON_ID })
@@ -176,7 +178,7 @@ describe('integrations over an integration-instances provider', () => {
         },
       },
     ])
-    await h.provider.create({ addonId: ADDON_ID, name: 'Dual' })
+    await h.create({ addonId: ADDON_ID, name: 'Dual' })
     expect(await h.provider.list()).toEqual([])
     expect(await h.provider.getAvailableTypes()).toEqual([])
   })
@@ -199,7 +201,7 @@ describe('integrations over an integration-instances provider', () => {
 
   it('create inserts the registry row, then the record with the typed settings, no restart', async () => {
     const h = harness()
-    const created = await h.provider.create({
+    const created = await h.create({
       addonId: ADDON_ID,
       name: 'Loki',
       settings: { url: 'http://x' },
@@ -220,7 +222,7 @@ describe('integrations over an integration-instances provider', () => {
     const h = harness()
     h.instances.updateInstance.mockRejectedValueOnce(new Error('refused'))
     await expect(
-      h.provider.create({
+      h.create({
         addonId: ADDON_ID,
         name: 'Loki',
         settings: { url: 'bad' },
@@ -235,7 +237,7 @@ describe('integrations over an integration-instances provider', () => {
     h.instances.updateInstance.mockRejectedValueOnce(new Error('refused'))
     h.registry.deleteIntegration.mockRejectedValueOnce(new Error('registry down'))
     await expect(
-      h.provider.create({
+      h.create({
         addonId: ADDON_ID,
         name: 'Loki',
         settings: { url: 'bad' },
@@ -255,7 +257,7 @@ describe('integrations over an integration-instances provider', () => {
       error: 'bad credentials',
     })
     await expect(
-      h.provider.create({
+      h.create({
         addonId: ADDON_ID,
         name: 'Loki',
         settings: { url: 'bad' },
@@ -266,25 +268,10 @@ describe('integrations over an integration-instances provider', () => {
 
   it('delete removes the record, then the registry row', async () => {
     const h = harness()
-    await h.provider.create({ addonId: ADDON_ID, name: 'Loki' })
+    await h.create({ addonId: ADDON_ID, name: 'Loki' })
     await h.provider.delete({ id: 'int_0001' })
     expect(h.instances.deleteInstance).toHaveBeenCalledWith({ id: 'int_0001' })
     expect(h.registry.deleteIntegration).toHaveBeenCalledWith('int_0001')
-  })
-
-  it('without an instances provider, settings on create are dropped and the addon is not restarted', async () => {
-    const h = harness({ withProvider: false })
-    await h.provider.create({
-      addonId: ADDON_ID,
-      name: 'Loki',
-      settings: { url: 'http://x' },
-    })
-    expect(h.instances.updateInstance).not.toHaveBeenCalled()
-    expect(h.restartAddon).not.toHaveBeenCalled()
-    expect(h.log.warn).toHaveBeenCalledWith(
-      expect.stringContaining('settings dropped'),
-      expect.anything(),
-    )
   })
 })
 
@@ -310,7 +297,7 @@ describe('the provider describes what its instances are (planning#416)', () => {
   it('describe().role devices lists the addon and offers it, though the manifest declares no role', async () => {
     const h = harness({ role: 'devices', instanceMode: 'multiple' })
     deviceAddon(h)
-    await h.provider.create({ addonId: ADDON_ID, name: 'Gizmo' })
+    await h.create({ addonId: ADDON_ID, name: 'Gizmo' })
     expect(await h.provider.list()).toHaveLength(1)
     const [type] = await h.provider.getAvailableTypes()
     expect(type).toMatchObject({ addonId: ADDON_ID, instanceMode: 'multiple' })
@@ -339,7 +326,7 @@ describe('the provider describes what its instances are (planning#416)', () => {
     const h = harness({ role: 'devices' })
     deviceAddon(h)
     h.instances.describe.mockRejectedValue(new Error('addon restarting'))
-    await h.provider.create({ addonId: ADDON_ID, name: 'Gizmo' }).catch(() => undefined)
+    await h.create({ addonId: ADDON_ID, name: 'Gizmo' }).catch(() => undefined)
     expect(await h.provider.list()).toEqual([])
   })
 

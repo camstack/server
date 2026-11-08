@@ -27,6 +27,9 @@ export const CALLER_STAMPED_CAPABILITIES: readonly string[] = [
   // `record` is accepted only from the hub kernel (device-manager): the stamp is how it tells a
   // forked addon (stamped by the transport) from a hub-main caller stating its own id.
   'device-transitions',
+  // `createInstance` with a `seed` is accepted only when the stamp IS the addon the instance
+  // belongs to: an addon states the integration it owns, an operator session never can.
+  'integration-instances',
 ]
 
 /** A copy of `input` without the caller stamp. Anything that is not a plain object passes through. */

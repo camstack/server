@@ -1,6 +1,7 @@
 import type { Integration, IntegrationTestConnectionResult } from '@camstack/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildIntegrationsProvider } from '../../api/core/cap-providers'
+import { type SeedCreateInput, seedCreate } from './support/seed-create'
 
 /**
  * Pre-creation credential validation for EVERY integration (D1016).
@@ -119,7 +120,18 @@ function makeHarness(opts: HarnessOptions = {}) {
     { createLogger: vi.fn(() => log) } as never,
     null,
   )
-  return { provider, integrationReg, log }
+  const create = (input: SeedCreateInput) =>
+    seedCreate(
+      {
+        registry: integrationReg,
+        log,
+        providerFor: (addonId) =>
+          addonId === 'mqtt-broker' ? opts.brokerInstances : opts.instances,
+      },
+      opts.instances,
+      input,
+    )
+  return { provider, integrationReg, log, create }
 }
 
 describe('integrations.create is GATED on the instance test', () => {
@@ -131,7 +143,7 @@ describe('integrations.create is GATED on the instance test', () => {
 
   it('REFUSES to create when the provider rejected the credentials', async () => {
     await expect(
-      h.provider.create({ addonId: ADDON_ID, name: 'Dreo bad', settings: { ...BAD } }),
+      h.create({ addonId: ADDON_ID, name: 'Dreo bad', settings: { ...BAD } }),
     ).rejects.toThrow(/rejected these credentials/)
 
     expect(h.integrationReg.createIntegration).not.toHaveBeenCalled()
@@ -143,7 +155,7 @@ describe('integrations.create is GATED on the instance test', () => {
   })
 
   it('CREATES when the provider validated the credentials', async () => {
-    const created = await h.provider.create({
+    const created = await h.create({
       addonId: ADDON_ID,
       name: 'Dreo good',
       settings: { ...GOOD },
@@ -156,7 +168,7 @@ describe('integrations.create is GATED on the instance test', () => {
   it('CREATES — and says so — when no test is declared', async () => {
     const bare = makeHarness({ instances: makeInstances({ canTest: false }) })
 
-    await bare.provider.create({ addonId: ADDON_ID, name: 'Untestable', settings: { ...BAD } })
+    await bare.create({ addonId: ADDON_ID, name: 'Untestable', settings: { ...BAD } })
 
     expect(bare.integrationReg.createIntegration).toHaveBeenCalledOnce()
     // Silence would read as "validated". A create that could not be validated
@@ -170,7 +182,7 @@ describe('integrations.create is GATED on the instance test', () => {
   it('CREATES when a declared test could not complete — a timeout is not a refusal', async () => {
     const flaky = makeHarness({ instances: makeInstances({ canTest: true, mode: 'throws' }) })
 
-    await flaky.provider.create({ addonId: ADDON_ID, name: 'Flaky', settings: { ...GOOD } })
+    await flaky.create({ addonId: ADDON_ID, name: 'Flaky', settings: { ...GOOD } })
 
     expect(flaky.integrationReg.createIntegration).toHaveBeenCalledOnce()
   })
@@ -206,7 +218,7 @@ describe('integrations.create on a provider with several kinds', () => {
   it('tests the draft as the kind being created and creates that kind', async () => {
     const instances = makeInstances({ canTest: true })
     const h = makeHarness({ instances })
-    await h.provider.create({
+    await h.create({
       addonId: ADDON_ID,
       name: 'Multi',
       kind: 'calendar',
@@ -230,7 +242,7 @@ describe('integrations.create over a settings blob that NAMES a broker', () => {
     const h = makeHarness({ instances: consumer, brokerInstances: broker })
 
     await expect(
-      h.provider.create({ addonId: ADDON_ID, name: 'Link', settings: { brokerId: 'brk_1' } }),
+      h.create({ addonId: ADDON_ID, name: 'Link', settings: { brokerId: 'brk_1' } }),
     ).rejects.toThrow(/bridge unreachable/)
 
     expect(broker.testInstance).toHaveBeenCalledWith({ id: 'brk_1', values: {} })
@@ -241,7 +253,7 @@ describe('integrations.create over a settings blob that NAMES a broker', () => {
   it('is inconclusive (not a refusal) when no provider owns that broker', async () => {
     const consumer = makeInstances({ canTest: false })
     const h = makeHarness({ instances: consumer })
-    await h.provider.create({ addonId: ADDON_ID, name: 'Link', settings: { brokerId: 'ghost' } })
+    await h.create({ addonId: ADDON_ID, name: 'Link', settings: { brokerId: 'ghost' } })
     expect(consumer.testInstance).not.toHaveBeenCalled()
     expect(h.integrationReg.createIntegration).toHaveBeenCalled()
   })

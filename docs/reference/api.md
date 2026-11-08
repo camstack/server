@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**203 capabilities · 1473 methods.**
+**203 capabilities · 1472 methods.**
 
 ## Method index
 
@@ -537,7 +537,6 @@
 | `integrations.list` | query | protected | integrations |
 | `integrations.get` | query | protected | integrations |
 | `integrations.getByAddonId` | query | protected | integrations |
-| `integrations.create` | mutation | admin | integrations |
 | `integrations.update` | mutation | admin | integrations |
 | `integrations.delete` | mutation | admin | integrations |
 | `integrations.getAvailableTypes` | query | admin | integrations |
@@ -2955,7 +2954,7 @@
 | instanceFormSchema | `integrationInstances.instanceFormSchema` | query | admin | `{ id: string \| null; kind?: string; mode?: "standalone" \| "account" \| "broker"; candidateStableId?: string }` | `<custom>` |
 | listInstances | `integrationInstances.listInstances` | query | admin | `void` | `IntegrationInstanceSchema[]` |
 | getInstance | `integrationInstances.getInstance` | query | admin | `{ id: string }` | `IntegrationInstanceSchema \| null` |
-| createInstance | `integrationInstances.createInstance` | mutation | admin | `{ id?: string; name: string; kind?: string; values?: Record<string, unknown>; originStableId?: string }` | `{ id: string }` |
+| createInstance | `integrationInstances.createInstance` | mutation | admin | `{ id?: string; name: string; kind?: string; values?: Record<string, unknown>; originStableId?: string; seed?: { info: Record<string, unknown> } }` | `{ id: string }` |
 | updateInstance | `integrationInstances.updateInstance` | mutation | admin | `IntegrationInstancePatchSchema` | `{ ok: true }` |
 | setInstanceEnabled | `integrationInstances.setInstanceEnabled` | mutation | admin | `{ id: string; enabled: boolean }` | `{ ok: true }` |
 | deleteInstance | `integrationInstances.deleteInstance` | mutation | admin | `{ id: string }` | `{ ok: true }` |
@@ -2963,7 +2962,7 @@
 
 ### `integrations` → `integrations.*`
 
-- **Source:** `packages/types/src/capabilities/integrations.cap.ts:159`
+- **Source:** `packages/types/src/capabilities/integrations.cap.ts:148`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationsProvider`
@@ -2973,7 +2972,6 @@
 | list | `integrations.list` | query | protected | `void` | `IntegrationWithStateSchema[]` |
 | get | `integrations.get` | query | protected | `{ id: string }` | `IntegrationWithStateSchema` |
 | getByAddonId | `integrations.getByAddonId` | query | protected | `{ addonId: string }` | `IntegrationLiteSchema \| null` |
-| create | `integrations.create` | mutation | admin | `CreateIntegrationInputSchema` | `IntegrationLiteSchema` |
 | update | `integrations.update` | mutation | admin | `UpdateIntegrationInputSchema` | `IntegrationLiteSchema` |
 | delete | `integrations.delete` | mutation | admin | `{ id: string }` | `DeleteIntegrationResultSchema` |
 | getAvailableTypes | `integrations.getAvailableTypes` | query | admin | `void` | `AvailableIntegrationTypeSchema[]` |

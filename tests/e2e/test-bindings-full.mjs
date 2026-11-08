@@ -67,7 +67,7 @@ try {
   }
 
   log('create integration')
-  const integration = await trpc.integrations.create.mutate({
+  const integration = await trpc.integrationInstances.createInstance.mutate({
     addonId: ADDON_ID,
     name: 'Bindings E2E',
   })

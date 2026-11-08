@@ -41,7 +41,7 @@ try {
     await trpc.integrations.delete.mutate({ id: stale.id })
   }
 
-  const integration = await trpc.integrations.create.mutate({
+  const integration = await trpc.integrationInstances.createInstance.mutate({
     addonId: 'provider-rtsp',
     name: 'Absent-native E2E',
   })

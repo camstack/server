@@ -428,9 +428,13 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
         return integration
       },
       createIntegration: async (input) => {
-        const integration = await this.ctx.api.integrations.create.mutate(input)
-        this.integrationId = integration.id
-        return integration
+        const created = await this.ctx.api.integrationInstances.createInstance.mutate({
+          addonId: input.addonId,
+          name: input.name,
+          seed: { info: input.info },
+        })
+        this.integrationId = created.id
+        return { id: created.id }
       },
       updateIntegration: async ({ id, info }) => {
         await this.ctx.api.integrations.update.mutate({ id, info, skipRestart: true })

@@ -14,7 +14,7 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
  *
  * Phase E of the API consolidation: previously a hand-written core
  * router. Cap conversion lets `useIntegrationsList`,
- * `useIntegrationsCreate`, `useIntegrationsTestConnection` and
+ * `useIntegrationsTestConnection` and
  * friends flow through the same codegen pipeline as every other cap.
  */
 
@@ -99,7 +99,7 @@ const AvailableIntegrationTypeSchema = z.object({
  *
  *   - `validated`    — a provider-declared test ran and the remote ACCEPTED.
  *   - `rejected`     — a provider-declared test ran and the remote REFUSED.
- *                      The only status that blocks `integrations.create`.
+ *                      The only status that blocks `integrationInstances.createInstance`.
  *   - `inconclusive` — a test IS declared but could not complete (timeout,
  *                      DNS, 5xx). Nothing was observed; not a failure.
  *   - `unsupported`  — this integration declares NO test. Nothing was
@@ -128,17 +128,6 @@ const TestConnectionResultSchema = z.object({
 
 // ── Method I/O ──────────────────────────────────────────────────────
 
-const CreateIntegrationInputSchema = z.object({
-  addonId: z.string(),
-  name: z.string(),
-  info: z.record(z.string(), z.unknown()).optional(),
-  /** `stableId` of the discovery candidate the form was seeded from (D984). */
-  originStableId: z.string().optional(),
-  settings: z.record(z.string(), z.unknown()).optional(),
-  /** The instance kind being created, for a provider with several; omitted = its only testable kind. */
-  kind: z.string().min(1).optional(),
-})
-
 const UpdateIntegrationInputSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
@@ -164,10 +153,6 @@ export const integrationsCapability = {
     list: method(z.void(), z.array(IntegrationWithStateSchema)),
     get: method(z.object({ id: z.string() }), IntegrationWithStateSchema),
     getByAddonId: method(z.object({ addonId: z.string() }), IntegrationLiteSchema.nullable()),
-    create: method(CreateIntegrationInputSchema, IntegrationLiteSchema, {
-      kind: 'mutation',
-      auth: 'admin',
-    }),
     update: method(UpdateIntegrationInputSchema, IntegrationLiteSchema, {
       kind: 'mutation',
       auth: 'admin',
@@ -188,7 +173,6 @@ export type IntegrationTestConnectionResult = z.infer<typeof TestConnectionResul
 
 export {
   AvailableIntegrationTypeSchema,
-  CreateIntegrationInputSchema,
   DeleteIntegrationResultSchema,
   IntegrationLiteSchema,
   IntegrationWithStateSchema,

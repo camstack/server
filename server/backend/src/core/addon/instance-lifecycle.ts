@@ -9,7 +9,7 @@
  *    destroyed, remove the integration's devices through the device manager (its tombstone path,
  *    D865), then the record, the registry row and the `IntegrationDeleted` event.
  *
- * There is ONE implementation and two doors: the legacy `integrations.create` / `integrations.delete`
+ * There is ONE implementation and two doors: the legacy `integrationInstances.createInstance` / `integrations.delete`
  * and the registered `integration-instances` provider ({@link withInstanceLifecycle}). Both call
  * {@link createRegisteredInstance} / {@link deleteRegisteredInstance}.
  */
@@ -451,6 +451,12 @@ export function isFixedBuiltin(integration: Integration): boolean {
   return integration.info['fixed'] === true
 }
 
+/** Who the transport stamped as the caller of an `integration-instances` call; null when nobody. */
+function callerAddonIdOf(input: object): string | null {
+  const stamp: unknown = Reflect.get(input, 'callerAddonId')
+  return typeof stamp === 'string' && stamp.length > 0 ? stamp : null
+}
+
 /** The wrapped providers and the raw ones they stand for. */
 const RAW_PROVIDERS = new WeakMap<IIntegrationInstancesProvider, IIntegrationInstancesProvider>()
 
@@ -465,7 +471,7 @@ export function rawInstancesProvider(
  * `provider` with a `createInstance` / `deleteInstance` that carry the hub half for an instance
  * that brings devices. An instance of a kind that does not (a notifier, a broker account, a
  * destination) is the addon's record alone and goes straight through, as does a call naming a
- * registry row that already exists (the legacy `integrations.create` made the row first).
+ * registry row that already exists (the legacy `integrationInstances.createInstance` made the row first).
  */
 export function withInstanceLifecycle(
   addonId: string,
@@ -474,6 +480,30 @@ export function withInstanceLifecycle(
 ): IIntegrationInstancesProvider {
   const bare = bareAddonId(addonId)
   const createInstance: IIntegrationInstancesProvider['createInstance'] = async (input) => {
+    if (input.seed !== undefined) {
+      // The seed variant states an integration the addon OWNS. The transport stamps who called
+      // (an HTTP session's claim is stripped), so an operator, or another addon, never gets here.
+      const stamp = callerAddonIdOf(input)
+      if (stamp === null || bareAddonId(stamp) !== bare) {
+        deps.logger.warn('refused: a seed is accepted only from the addon it seeds', {
+          tags: { addonId: bare },
+          meta: { phase: 'create', stampedBy: stamp },
+        })
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: `Only "${bare}" may seed its own integration`,
+        })
+      }
+      const created = await createRegisteredInstance(deps, provider, {
+        addonId: bare,
+        name: input.name,
+        info: input.seed.info,
+        ...(input.kind !== undefined ? { kind: input.kind } : {}),
+        ...(input.originStableId !== undefined ? { originStableId: input.originStableId } : {}),
+        ...(input.values !== undefined ? { settings: input.values } : {}),
+      })
+      return { id: created.id }
+    }
     if (!(await bringsDevicesOf(deps, bare, provider, input.kind))) {
       return provider.createInstance(input)
     }

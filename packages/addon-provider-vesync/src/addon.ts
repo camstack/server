@@ -216,13 +216,12 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
           ...(i.originStableId !== undefined ? { originStableId: i.originStableId } : {}),
         })),
       createIntegration: async (input) => {
-        const created = await this.ctx.api.integrations.create.mutate({
+        const created = await this.ctx.api.integrationInstances.createInstance.mutate({
           addonId: input.addonId,
           name: input.name,
-          info: { ...input.info },
-          originStableId: input.originStableId,
-          settings: { ...input.settings },
-          secretKeys: [...input.secretKeys],
+          seed: { info: { ...input.info } },
+          ...(input.originStableId !== undefined ? { originStableId: input.originStableId } : {}),
+          values: { ...input.settings },
         })
         return { id: created.id }
       },

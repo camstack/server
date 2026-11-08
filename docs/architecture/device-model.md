@@ -849,7 +849,7 @@ A provider's physical hub (an NVR, a console, a gateway whose channels are the p
 integration instance named after the hub, not a `Hub` device with children. The provider's default integration
 finds hubs through the LAN engine (D977) and offers each as a `setupIntegration` candidate; picking one creates
 a new integration whose connection is prefilled, and whose own discovery is scoped to that hub
-(`device-adoption`, `integrationId`). `integrations.create` stores the candidate's `stableId` as the typed
+(`device-adoption`, `integrationId`). `integrationInstances.createInstance` stores the candidate's `stableId` as the typed
 `originStableId`, and `discoverProviders` hides every candidate that already is an integration's origin, once,
 for all providers. `instanceMode: unique` is refused by the backend (typed `CONFLICT`), not only by the picker.
 Velux keeps its Gateway (D976) and ESPHome keeps one integration with a board list (D978). A provider moves over

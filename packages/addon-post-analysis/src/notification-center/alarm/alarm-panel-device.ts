@@ -9,7 +9,7 @@
  * It needed no new addon and no base-class change either — the wiring already
  * existed and was simply never used this way: `ctx.kernel.devices.create()` is
  * on EVERY addon's kernel services, not only a `BaseDeviceProvider`'s, and
- * `integrations.create` gives it a fixed home to hang from.
+ * `integrationInstances.createInstance` gives it a fixed home to hang from.
  *
  * The lifecycle lives in {@link ../alarm-state-machine.js} as pure functions.
  * This class is the thin part: persist the machine, publish the derived state,
