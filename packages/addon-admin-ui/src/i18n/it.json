@@ -11293,7 +11293,11 @@
       "refused": {
         "no-remote": "Questo dispositivo non ha un telecomando configurato.",
         "unbound-role": "Quel tasto non ha un comando salvato.",
-        "action-failed": "Il comando non è riuscito. {{detail}}"
+        "action-failed": "Il comando non è riuscito. {{detail}}",
+        "unknown-source": "Nessuna sorgente dichiarata ha quel nome.",
+        "unbound-step": "Un passaggio di questa sorgente non è associato: {{detail}}",
+        "undeclared-channel": "Nessuna sorgente dichiara quel numero di canale.",
+        "press-timeout": "La pressione non è terminata ed è stata abbandonata: {{detail}}"
       }
     },
     "import": {
@@ -11414,6 +11418,13 @@
           "too_big": "Una sequenza ha al massimo 16 passi."
         }
       }
+    },
+    "sourceSelect": {
+      "label": "Sorgenti",
+      "title": "Seleziona sorgente",
+      "channels": "Canali",
+      "inputs": "Ingressi",
+      "notRouted": "Questo telecomando non può selezionare una sorgente."
     }
   },
   "commands": {

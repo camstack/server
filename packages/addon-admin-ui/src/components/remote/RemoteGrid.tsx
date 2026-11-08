@@ -9,12 +9,13 @@ import {
   type RemoteLayoutButton,
   type RemoteLayoutGroup,
   type RemoteLayoutPayload,
+  isRemoteWidgetRole,
   remoteRoleIcon,
   remoteRoleLegend,
 } from '@camstack/types'
 import { Button, cn, useDisplayIconResolver } from '@camstack/ui-library'
 import { GripVertical } from 'lucide-react'
-import type { KeyboardEvent, PointerEvent, ReactNode, Ref } from 'react'
+import { Fragment, type KeyboardEvent, type PointerEvent, type ReactNode, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppBrandGlyph } from './AppBrandGlyph'
 import { resolveAppBrand } from './app-brand-icons'
@@ -49,6 +50,15 @@ export interface RemoteGridProps {
   readonly onItemPointerDown?: (item: DragItem, event: PointerEvent<HTMLElement>) => void
   readonly onItemKeyDown?: (item: DragItem, event: KeyboardEvent<HTMLElement>) => void
   readonly drag?: GridDrag | null
+  /**
+   * Where the grid is USED (not edited): draws a widget key (`source_select`).
+   * Returning null draws an empty cell; a grid without it draws the widget as a
+   * plain key, which is how the editor shows where it sits.
+   */
+  readonly renderWidget?: (
+    button: RemoteLayoutButton,
+    style: { readonly gridRow: string; readonly gridColumn: string },
+  ) => ReactNode
 }
 
 const FULL_ROW = '2.75rem'
@@ -215,6 +225,7 @@ export function RemoteGrid({
   onItemPointerDown,
   onItemKeyDown,
   drag = null,
+  renderWidget,
 }: RemoteGridProps): ReactNode {
   const { i18n } = useTranslation()
   const editable = onItemPointerDown !== undefined
@@ -288,6 +299,9 @@ export function RemoteGrid({
         />
       ))}
       {grid.buttons.map((button) => {
+        if (renderWidget !== undefined && isRemoteWidgetRole(button.role)) {
+          return <Fragment key={button.id}>{renderWidget(button, placement(button))}</Fragment>
+        }
         const selected = button.id === selectedId
         const bound = boundRoles === undefined || boundRoles.has(button.role)
         const held = drag?.item.kind === 'button' && drag.item.id === button.id

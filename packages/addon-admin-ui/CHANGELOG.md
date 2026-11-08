@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The calendars tab no longer shows 'No calendar sources installed' under a populated list, the storage Add dialog is named after the kind it adds, the Settings page shows the server settings form on a hub without addons, and a notification target's owner shows the user name instead of an id.
 - The Customize running-state form pre-fills a media player's power threshold with its own faster dwell defaults
 - The Remote editor has a Sources section: declare channel numbers and button sequences (from bound buttons only), reorder them, and set the pause between steps; mistakes show next to the field.
+- The remote shows a Sources key that opens a picker of the declared channels and inputs; a remote with no sources hides it
 
 ## [1.2.616] - 2026-11-08
 

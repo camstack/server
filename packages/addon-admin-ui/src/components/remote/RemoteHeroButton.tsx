@@ -15,6 +15,7 @@ import {
   DialogTitle,
   ErrorBox,
   useCapabilityPresence,
+  useRemoteGetAssumedStatus,
   useRemoteGetConfig,
   useRemoteListCommands,
   useRemoteSendCommand,
@@ -25,6 +26,7 @@ import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { layoutOf } from './layout-model'
 import { RemoteGrid } from './RemoteGrid'
+import { SourceSelectKey } from './SourceSelectKey'
 
 export interface RemoteHeroButtonProps {
   readonly deviceId: number
@@ -37,7 +39,9 @@ export function RemoteHeroButton({ deviceId, deviceName }: RemoteHeroButtonProps
   const commands = useRemoteListCommands({ deviceId }, { enabled: presence === 'present' })
   const [open, setOpen] = useState(false)
   if (presence !== 'present') return null
-  if ((commands.data?.commands.length ?? 0) === 0) return null
+  if ((commands.data?.commands.length ?? 0) === 0 && (commands.data?.sources.length ?? 0) === 0) {
+    return null
+  }
   return (
     <div className="flex flex-wrap items-center justify-center gap-1">
       <Button size="sm" variant="outline" onClick={() => setOpen(true)} data-testid="hero-remote">
@@ -67,6 +71,7 @@ function RemotePressDialog({ deviceId, deviceName, onClose }: PressProps): React
   const templates = useTemplateList({ kind: 'remote' })
   const commands = useRemoteListCommands({ deviceId })
   const send = useRemoteSendCommand()
+  const assumed = useRemoteGetAssumedStatus({ deviceId })
   const [failure, setFailure] = useState<string | null>(null)
   const templateId = config.data?.layoutTemplateId ?? null
   const template = (templates.data ?? []).find((r) => r.id === templateId)
@@ -112,6 +117,15 @@ function RemotePressDialog({ deviceId, deviceName, onClose }: PressProps): React
                 label={t('remote.hero.title', { name: deviceName })}
                 boundRoles={bound}
                 onSelect={(id) => void press(id)}
+                renderWidget={(button, placement) => (
+                  <SourceSelectKey
+                    deviceId={deviceId}
+                    button={button}
+                    sources={commands.data?.sources ?? []}
+                    current={assumed.data?.source ?? ''}
+                    placement={placement}
+                  />
+                )}
               />
             </div>
           )}

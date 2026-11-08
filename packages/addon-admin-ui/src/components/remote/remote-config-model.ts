@@ -10,6 +10,7 @@ import {
   customKeyOfRole,
   customRole,
   IrCodecError,
+  isRemoteWidgetRole,
   parseSmartIr,
   type RemoteBinding,
   type RemoteBindingAction,
@@ -54,7 +55,7 @@ export function bindableRoles(
   const seen = new Set<string>()
   const out: BindableRole[] = []
   const push = (role: string, inLayout: boolean): void => {
-    if (seen.has(role)) return
+    if (seen.has(role) || isRemoteWidgetRole(role)) return
     seen.add(role)
     const custom = customKeyOfRole(role) !== null
     out.push({

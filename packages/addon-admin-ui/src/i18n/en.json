@@ -11271,7 +11271,11 @@
       "refused": {
         "no-remote": "This device has no remote configured.",
         "unbound-role": "That button has no saved command.",
-        "action-failed": "The command failed. {{detail}}"
+        "action-failed": "The command failed. {{detail}}",
+        "unknown-source": "No declared source has that name.",
+        "unbound-step": "A step of this source is not bound: {{detail}}",
+        "undeclared-channel": "No source declares that channel number.",
+        "press-timeout": "The press never finished and was given up: {{detail}}"
       }
     },
     "import": {
@@ -11392,6 +11396,13 @@
           "too_big": "A sequence has at most 16 steps."
         }
       }
+    },
+    "sourceSelect": {
+      "label": "Sources",
+      "title": "Select source",
+      "channels": "Channels",
+      "inputs": "Inputs",
+      "notRouted": "This remote cannot select a source."
     }
   },
   "commands": {

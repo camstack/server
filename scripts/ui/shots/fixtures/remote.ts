@@ -10,6 +10,7 @@ import {
   insertComponent,
   type RemoteLayoutPayload,
 } from '@camstack/types'
+import { planSourceSelectRow } from '../../../remote/source-select-row'
 import { defineFixtures } from './_define'
 import customizeArea from './customize'
 
@@ -114,7 +115,9 @@ function composedLayout(): RemoteLayoutPayload {
   put('core:rocker-channel-v', 2, 5)
   put('core:keypad', 6, 0)
   put('core:colour-keys', 10, 0)
-  return layout
+  const plan = planSourceSelectRow(layout)
+  if (plan.status !== 'insert') throw new Error(`fixture: source_select ${plan.status}`)
+  return plan.layout
 }
 
 const TEMPLATES = [
@@ -194,6 +197,8 @@ const REMOTE_CONFIG = {
   },
   customButtons: [{ key: 'hdmi_1', name: 'HDMI 1' }],
   sources: [
+    { id: 'rai-1', kind: 'digits', name: 'Rai 1', number: '1' },
+    { id: 'rai-2', kind: 'digits', name: 'Rai 2', number: '2' },
     { id: 'hdmi-1', kind: 'sequence', name: 'HDMI 1', steps: ['custom:hdmi_1'] },
     { id: 'quiet-hdmi', kind: 'sequence', name: 'HDMI 1, muted', steps: ['mute', 'custom:hdmi_1'] },
   ],
@@ -261,7 +266,10 @@ export default defineFixtures({
         { role: 'volume_up', custom: false },
         { role: 'custom:hdmi_1', label: 'HDMI 1', custom: true },
       ],
+      sources: REMOTE_CONFIG.sources,
     },
+    'remote.getAssumedStatus': { ...TV_MEDIA_PLAYER, source: 'Rai 1' },
+    'mut:remote.sendMediaCommand': { status: 'sent', sends: 1 },
     'mut:remote.sendCommand': { status: 'sent', sends: 1 },
     'deviceManager.listDeviceIdsByCaps': [BOARD_ID],
     'deviceManager.getDevice': (i: { deviceId: number }) =>
