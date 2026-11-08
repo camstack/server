@@ -21,6 +21,7 @@ const SCHEMA: ConfigUISchema = {
           type: 'select',
           key: 'providerId',
           label: 'Provider',
+          default: 'filesystem',
           options: [
             { value: 'filesystem', label: 'Filesystem' },
             { value: 's3', label: 'S3' },
@@ -68,6 +69,15 @@ function renderWith(providerId: string, bare = false) {
     />,
   )
 }
+
+describe('ConfigFormBuilder resolves a condition on a field of another section', () => {
+  it('shows the fields of the provider the untouched select defaults to', () => {
+    render(<ConfigFormBuilder schema={SCHEMA} values={{}} onChange={() => undefined} />)
+    expect(screen.getByText('Base path')).toBeTruthy()
+    expect(screen.queryByText('Bucket')).toBeNull()
+    expect(screen.queryByText('S3 section')).toBeNull()
+  })
+})
 
 describe('ConfigFormBuilder hides sections with no visible field', () => {
   it('draws only the selected provider section', () => {

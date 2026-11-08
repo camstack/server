@@ -58,7 +58,10 @@ const CREATE_FORM = {
           key: 'providerId',
           label: 'Provider',
           default: 'filesystem',
-          options: [{ value: 'filesystem', label: 'Filesystem' }],
+          options: [
+            { value: 'filesystem', label: 'Filesystem' },
+            { value: 's3', label: 'S3-compatible' },
+          ],
         },
         {
           type: 'select',
@@ -90,6 +93,20 @@ const CREATE_FORM = {
           label: 'Node',
           default: 'hub',
           showWhen: { field: 'providerId', in: ['filesystem'] },
+        },
+      ],
+    },
+    {
+      id: 's3:connection',
+      title: 'S3-compatible',
+      columns: 2,
+      fields: [
+        {
+          type: 'text',
+          key: 's3.bucket',
+          label: 'Bucket',
+          default: '',
+          showWhen: { field: 'providerId', equals: 's3' },
         },
       ],
     },
@@ -166,8 +183,8 @@ export default defineFixtures({
         widgets: [{ id: 'storage/path-browser', placement: 'connection' }],
       })),
     }),
-    'integrationInstances.instanceFormSchema': (i: { id?: string }) =>
-      i.id === undefined || i.id === '' ? CREATE_FORM : FORM,
+    'integrationInstances.instanceFormSchema': (i: { id?: string | null }) =>
+      i.id === undefined || i.id === null || i.id === '' ? CREATE_FORM : FORM,
     'integrationInstances.listInstances': (i: { addonId: string }) =>
       i.addonId === 'storage-orchestrator'
         ? LOCATIONS.map((l) => ({

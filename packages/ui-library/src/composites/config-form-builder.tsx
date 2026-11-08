@@ -1,5 +1,5 @@
 import { useState, type JSX } from 'react'
-import type { ConfigUISchema, ConfigSection, FieldProbeResult } from '@camstack/types'
+import type { ConfigUISchema, ConfigSection, ConfigField, FieldProbeResult } from '@camstack/types'
 import { ConfigFormField, isFieldVisible } from './config-form-field'
 import { DisclosureChevron } from '../primitives/disclosure-chevron'
 import type { ProbeState } from './config-form-field'
@@ -72,10 +72,10 @@ export function sectionGridClass(columns: 1 | 2 | 3 | 4 | undefined): string {
  * it is left out. A section declared with no fields at all is the author's choice and stays.
  */
 function visibleSections(
+  allFields: readonly ConfigField[],
   schema: FormBuilderProps['schema'],
   values: Record<string, unknown>,
 ): readonly ConfigSection[] {
-  const allFields = schema.sections.flatMap((section) => section.fields)
   return schema.sections.filter(
     (section) =>
       section.fields.length === 0 ||
@@ -89,6 +89,7 @@ function visibleSections(
 
 function SectionCard({
   section,
+  allFields,
   values,
   onChange,
   disabled,
@@ -97,6 +98,8 @@ function SectionCard({
   probeResults,
 }: {
   section: ConfigSection
+  /** Every field of the form: a `showWhen` may name a field of another section. */
+  allFields: readonly ConfigField[]
   values: Record<string, unknown>
   onChange: (key: string, value: unknown) => void
   disabled?: boolean
@@ -154,6 +157,7 @@ function SectionCard({
             <ConfigFormField
               key={field.key}
               field={field}
+              allFields={allFields}
               values={values}
               onChange={onChange}
               disabled={disabled}
@@ -188,19 +192,22 @@ export function ConfigFormBuilder({
     onClearProbe?.(key)
   }
 
+  const allFields = schema.sections.flatMap((section) => section.fields)
+
   if (bare) {
     // Honor section.columns (same grids as SectionCard) — still no
     // title/border chrome. Flattening to grid-cols-1 hid multi-col
     // schemas inside ItemFormDialog (OIDC, Training Providers, …).
     return (
       <div className="space-y-4">
-        {visibleSections(schema, values).map((section) => (
+        {visibleSections(allFields, schema, values).map((section) => (
           <div key={section.id} className="@container" style={{ containerType: 'inline-size' }}>
             <div className={`grid ${sectionGridClass(section.columns)} gap-x-3 gap-y-2.5`}>
               {section.fields.map((field) => (
                 <ConfigFormField
                   key={field.key}
                   field={field}
+                  allFields={allFields}
                   values={values}
                   onChange={handleFieldChange}
                   disabled={disabled}
@@ -218,10 +225,11 @@ export function ConfigFormBuilder({
 
   return (
     <div className="space-y-4">
-      {visibleSections(schema, values).map((section) => (
+      {visibleSections(allFields, schema, values).map((section) => (
         <SectionCard
           key={section.id}
           section={section}
+          allFields={allFields}
           values={values}
           onChange={handleFieldChange}
           disabled={disabled}
