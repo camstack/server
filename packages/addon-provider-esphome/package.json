@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-esphome",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "ESPHome device-provider addon for CamStack: one broker per board, spoken over the native API (Noise) with esphome-client",
   "keywords": [
     "camstack",
@@ -62,7 +62,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.788"
+      "server": ">=1.2.810"
     }
   },
   "files": [

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.810] - 2026-11-08
+
 ### Changed
 
 - Every integration provider declares its kinds and stamps a kind on its instances; the storage orchestrator no longer carries a dead legacy keychain scope constant.

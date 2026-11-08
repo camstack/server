@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.404] - 2026-11-08
+
 ### Changed
 
 - A field's condition can now depend on a field in another section and resolves that field's default when it has no value yet.

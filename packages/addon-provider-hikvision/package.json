@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-hikvision",
-  "version": "1.2.185",
+  "version": "1.2.186",
   "description": "Hikvision camera device provider addon for CamStack — ISAPI over HTTP(S) with digest auth (snapshot, alarm stream, RTSP discovery)",
   "keywords": [
     "camstack",
@@ -88,7 +88,7 @@
       "werift"
     ],
     "requires": {
-      "server": ">=1.2.788"
+      "server": ">=1.2.810"
     }
   },
   "files": [

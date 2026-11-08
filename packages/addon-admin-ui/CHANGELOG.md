@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.617] - 2026-11-08
+
 ### Changed
 
 - Editing an integration no longer sends its on/off switch as a form value.

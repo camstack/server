@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-rtsp",
-  "version": "1.2.155",
+  "version": "1.2.156",
   "description": "Generic RTSP camera device provider addon for CamStack",
   "keywords": [
     "camstack",
@@ -59,7 +59,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.788"
+      "server": ">=1.2.810"
     }
   },
   "files": [

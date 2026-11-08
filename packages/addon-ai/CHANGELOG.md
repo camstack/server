@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.181] - 2026-11-08
+
 ### Changed
 
 - LLM profiles of every provider kind list again: the profile now reports its stored kind, so the integrations page no longer fails on a hub with several LLM providers
