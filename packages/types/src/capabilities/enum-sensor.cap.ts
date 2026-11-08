@@ -59,7 +59,7 @@ export const enumSensorCapability = {
   history: { fields: { value: { kind: 'enum', skipWhenSet: 'timestamp' } } },
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
-  volatileStateFields: ['lastFetchedAt'],
+  volatileStateFields: ['lastFetchedAt', 'timestamp'],
 } as const satisfies CapabilityDefinition
 
 export type IEnumSensorProvider = InferProvider<typeof enumSensorCapability>

@@ -51,7 +51,7 @@ export const RUNTIME_STATE_POLICY: Readonly<Record<string, RuntimeStatePolicy>> 
   'dishwasher': { durability: 'session', volatileFields: [] },
   'do-not-disturb': { durability: 'session', volatileFields: [] },
   'doorbell': { durability: 'restored', volatileFields: [] },
-  'enum-sensor': { durability: 'restored', volatileFields: ['lastFetchedAt'] },
+  'enum-sensor': { durability: 'restored', volatileFields: ['lastFetchedAt', 'timestamp'] },
   'event-emitter': { durability: 'session', volatileFields: [] },
   'fan-control': { durability: 'session', volatileFields: [] },
   'feature-probe': { durability: 'session', volatileFields: [] },
