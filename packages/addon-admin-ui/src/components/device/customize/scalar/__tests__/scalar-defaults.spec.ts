@@ -3,7 +3,12 @@
  */
 import { DeviceType } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { defaultScalarTransform, type ScalarTransformDraft } from '../scalar-form'
+import {
+  defaultScalarTransform,
+  dwellLabel,
+  type ScalarTransformDraft,
+  withTypeSamples,
+} from '../scalar-form'
 import type { ScalarFieldFit } from '../scalar-fit'
 
 function draftOf(fit: ScalarFieldFit): ScalarTransformDraft {
@@ -17,15 +22,7 @@ describe('defaultScalarTransform', () => {
       valueKind: 'number',
       sourceUnit: null,
       transforms: ['linear'],
-      declared: [
-        {
-          kind: 'linear',
-          defaultScale: 1,
-          defaultOffset: 0,
-          clampMin: 0,
-          clampMax: 100,
-        },
-      ],
+      declared: [{ kind: 'linear', defaultScale: 1, defaultOffset: 0, clampMin: 0, clampMax: 100 }],
     }
     expect(draftOf(fit)).toEqual({
       kind: 'linear',
@@ -100,5 +97,26 @@ describe('defaultScalarTransform', () => {
       startDwellMs: 30_000,
       stopDwellMs: 180_000,
     })
+  })
+
+  it('an applied history proposal takes the samples of a type with its own defaults', () => {
+    const proposed: ScalarTransformDraft = {
+      kind: 'threshold',
+      comparison: 'gte',
+      threshold: 8,
+      startDwellMs: 20_000,
+      stopDwellMs: 60_000,
+    }
+    expect(withTypeSamples(proposed, DeviceType.MediaPlayer)).toEqual({
+      ...proposed,
+      minSamples: 1,
+    })
+    expect(withTypeSamples(proposed, DeviceType.Washer)).toEqual(proposed)
+    expect(withTypeSamples(proposed, undefined)).toEqual(proposed)
+  })
+
+  it('names a dwell in seconds under a minute and in minutes from there', () => {
+    expect(dwellLabel(10_000)).toEqual({ unit: 'seconds', n: 10 })
+    expect(dwellLabel(180_000)).toEqual({ unit: 'minutes', n: 3 })
   })
 })

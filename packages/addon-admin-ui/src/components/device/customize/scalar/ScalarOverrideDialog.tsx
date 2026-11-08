@@ -28,9 +28,11 @@ import { RunningProposalLine, type RunningProposalState } from './RunningProposa
 import { ScalarPreviewLine } from './ScalarPreviewLine'
 import { scalarFieldFit, scalarFieldOffers, type ScalarFieldOffer } from './scalar-fit'
 import {
+  deviceTypeOf,
   scalarFeatureFromForm,
   type ScalarFormSource,
   type ScalarTransformDraft,
+  withTypeSamples,
 } from './scalar-form'
 import { previewScalarOverride } from './scalar-preview'
 
@@ -189,7 +191,12 @@ function DialogForm(props: ScalarOverrideDialogProps & { readonly heading: strin
           preview={preview === null ? undefined : <ScalarPreviewLine preview={preview} />}
           proposal={
             proposal === null ? undefined : (
-              <RunningProposalLine state={proposal} onApply={setTransform} />
+              <RunningProposalLine
+                state={proposal}
+                onApply={(next) =>
+                  setTransform(withTypeSamples(next, deviceTypeOf(props.host.type)))
+                }
+              />
             )
           }
         />

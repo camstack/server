@@ -207,11 +207,7 @@ function LinearFields({ declared, value, onChange }: LinearFieldsProps): ReactNo
           label={t('customize.scalar.clampMin')}
           value={value.clampMin ?? bounds.min}
           onChange={(clampMin) =>
-            onChange({
-              ...value,
-              clampMin,
-              clampMax: value.clampMax ?? bounds.max,
-            })
+            onChange({ ...value, clampMin, clampMax: value.clampMax ?? bounds.max })
           }
         />
       )}
@@ -220,11 +216,7 @@ function LinearFields({ declared, value, onChange }: LinearFieldsProps): ReactNo
           label={t('customize.scalar.clampMax')}
           value={value.clampMax ?? bounds.max}
           onChange={(clampMax) =>
-            onChange({
-              ...value,
-              clampMin: value.clampMin ?? bounds.min,
-              clampMax,
-            })
+            onChange({ ...value, clampMin: value.clampMin ?? bounds.min, clampMax })
           }
         />
       )}

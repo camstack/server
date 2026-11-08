@@ -2732,8 +2732,8 @@
         "label": "Proposta",
         "error": "Impossibile calcolare una proposta.",
         "apply": "Applica",
-        "summary": "Da {{runs}} cicli in {{days}} giorni: {{threshold}} W, avvio {{start}} s, arresto {{stop}} min",
-        "defaults": "Valori predefiniti mostrati: {{threshold}} W, avvio {{start}} s, arresto {{stop}} min.",
+        "summary": "Da {{runs}} cicli in {{days}} giorni: {{threshold}} W, avvio {{start}}, arresto {{stop}}",
+        "defaults": "Valori predefiniti mostrati: {{threshold}} W, avvio {{start}}, arresto {{stop}}.",
         "confidence": {
           "high": "Affidabilità alta",
           "medium": "Affidabilità media",
@@ -2746,7 +2746,9 @@
           "no-idle-floor": "Il dispositivo non resta a riposo su un livello.",
           "no-runs": "Nessun ciclo trovato nello storico.",
           "no-separation": "Standby e funzionamento si sovrappongono, nessuna soglia li separa."
-        }
+        },
+        "seconds": "{{n}} s",
+        "minutes": "{{n}} min"
       },
       "samples": "Campioni",
       "samplesHint": "Letture consecutive necessarie prima che lo stato cambi"

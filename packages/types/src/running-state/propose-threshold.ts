@@ -26,7 +26,7 @@ import { evaluateDwell, type ExpressionEvalHooks } from '../expression/builtins.
 import type { DwellCallState } from '../expression/expression-source.js'
 import {
   RUNNING_POWER_MIN_SAMPLES,
-  RUNNING_POWER_DEFAULTS_BY_TYPE,
+  hasOwnRunningPowerDefaults,
   RUNNING_POWER_THRESHOLD_WATTS,
   runningPowerDefaultsFor,
 } from './defaults.js'
@@ -113,9 +113,6 @@ export function proposeRunningThreshold(series: ProposalSeries): RunningThreshol
   const segments = toSegments(series)
   const spanMs = segments.length === 0 ? 0 : series.to - (segments[0]?.start ?? series.to)
   const fallbackDefaults = runningPowerDefaultsFor(series.deviceType)
-  const fallbackHasOwnRow =
-    series.deviceType !== undefined &&
-    RUNNING_POWER_DEFAULTS_BY_TYPE[series.deviceType] !== undefined
   const insufficient = (
     reason: RunningProposalInsufficientReason,
     runsFound: number,
@@ -130,7 +127,9 @@ export function proposeRunningThreshold(series: ProposalSeries): RunningThreshol
       startDwellMs: fallbackDefaults.startDwellMs,
       stopDwellMs: fallbackDefaults.stopDwellMs,
       // Explicit only where the type has its own row: absent = the compiler's default.
-      ...(fallbackHasOwnRow ? { minSamples: fallbackDefaults.minSamples } : {}),
+      ...(hasOwnRunningPowerDefaults(series.deviceType)
+        ? { minSamples: fallbackDefaults.minSamples }
+        : {}),
     },
   })
 

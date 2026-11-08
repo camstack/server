@@ -7,6 +7,8 @@ import {
   type CompositionSourceRef,
   type CustomizeCatalogTransform,
   DeviceType,
+  hasOwnRunningPowerDefaults,
+  runningPowerDefaultsFor,
   type ScalarCompileInput,
   compileScalarOverride,
   tryConvertUnit,
@@ -66,6 +68,30 @@ function conversionDraft(
 /** A picker row carries its type as a plain string; this narrows it to the enum without a cast. */
 export function deviceTypeOf(type: string | undefined): DeviceType | undefined {
   return Object.values(DeviceType).find((known) => known === type)
+}
+
+/**
+ * A proposal read from history sets the dwells but not the sample count. A type with its own
+ * defaults states its samples, so an applied proposal compiles the way the pre-fill does.
+ */
+export function withTypeSamples(
+  transform: ScalarTransformDraft,
+  deviceType: DeviceType | undefined,
+): ScalarTransformDraft {
+  if (transform.kind !== 'threshold' || transform.minSamples !== undefined) return transform
+  if (!hasOwnRunningPowerDefaults(deviceType)) return transform
+  return { ...transform, minSamples: runningPowerDefaultsFor(deviceType).minSamples }
+}
+
+/** A dwell in whole seconds under a minute, else whole minutes (at least one). */
+export interface DwellLabel {
+  readonly unit: 'seconds' | 'minutes'
+  readonly n: number
+}
+
+export function dwellLabel(ms: number): DwellLabel {
+  if (ms < 60_000) return { unit: 'seconds', n: Math.round(ms / 1000) }
+  return { unit: 'minutes', n: Math.max(1, Math.round(ms / 60_000)) }
 }
 
 export function defaultScalarTransform(

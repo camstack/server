@@ -380,9 +380,7 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       props.preview
     ) : chosenRow === undefined ? undefined : (
       <p data-testid="source-preview-reads" className="text-[11px] text-foreground-muted">
-        {t('customize.sourceSelector.sourceReads', {
-          value: chosenRow.currentText,
-        })}
+        {t('customize.sourceSelector.sourceReads', { value: chosenRow.currentText })}
       </p>
     )
   return (
@@ -390,9 +388,7 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       testId="source-selector"
       deviceListTestId={devicePickerTestId}
       fillHeight={fillHeight}
-      heading={t('customize.sourceSelector.pickDevice', {
-        title: props.destination.title,
-      })}
+      heading={t('customize.sourceSelector.pickDevice', { title: props.destination.title })}
       devices={compatibleDeviceItems}
       listState={listState}
       suggestions={

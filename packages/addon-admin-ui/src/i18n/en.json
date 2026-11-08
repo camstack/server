@@ -2657,8 +2657,8 @@
         "label": "Proposal",
         "error": "Could not compute a proposal.",
         "apply": "Apply",
-        "summary": "From {{runs}} runs over {{days}} days: {{threshold}} W, start {{start}} s, stop {{stop}} min",
-        "defaults": "Defaults shown: {{threshold}} W, start {{start}} s, stop {{stop}} min.",
+        "summary": "From {{runs}} runs over {{days}} days: {{threshold}} W, start {{start}}, stop {{stop}}",
+        "defaults": "Defaults shown: {{threshold}} W, start {{start}}, stop {{stop}}.",
         "confidence": {
           "high": "High confidence",
           "medium": "Medium confidence",
@@ -2671,7 +2671,9 @@
           "no-idle-floor": "The device does not rest near one level.",
           "no-runs": "No run was found in the history.",
           "no-separation": "Standby and running levels overlap, so no threshold separates them."
-        }
+        },
+        "seconds": "{{n}} s",
+        "minutes": "{{n}} min"
       },
       "samples": "Samples",
       "samplesHint": "Consecutive readings needed before the state changes"

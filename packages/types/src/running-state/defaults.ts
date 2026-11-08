@@ -40,6 +40,11 @@ export const RUNNING_POWER_DEFAULTS_BY_TYPE: Readonly<
   },
 }
 
+/** True when the type has its own row, so its numbers are stated rather than inherited. */
+export function hasOwnRunningPowerDefaults(deviceType: DeviceType | undefined): boolean {
+  return deviceType !== undefined && RUNNING_POWER_DEFAULTS_BY_TYPE[deviceType] !== undefined
+}
+
 /** The only place a running-power dwell default is resolved for a device type. */
 export function runningPowerDefaultsFor(deviceType: DeviceType | undefined): RunningPowerDefaults {
   if (deviceType === undefined) return RUNNING_POWER_GLOBAL_DEFAULTS

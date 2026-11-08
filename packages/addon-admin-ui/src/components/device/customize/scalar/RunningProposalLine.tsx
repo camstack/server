@@ -5,9 +5,10 @@
  */
 import type { RunningThresholdProposal } from '@camstack/types'
 import { Button } from '@camstack/ui-library'
+import type { TFunction } from 'i18next'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ScalarTransformDraft } from './scalar-form'
+import { dwellLabel, type ScalarTransformDraft } from './scalar-form'
 
 export type RunningProposalState =
   | { readonly kind: 'pending' }
@@ -42,8 +43,8 @@ export function RunningProposalLine({ state, onApply }: RunningProposalLineProps
           {state.proposal.fallback.kind === 'threshold' &&
             t('customize.scalar.proposal.defaults', {
               threshold: state.proposal.fallback.threshold,
-              start: Math.round(state.proposal.fallback.startDwellMs / 1000),
-              stop: Math.round(state.proposal.fallback.stopDwellMs / 60_000),
+              start: dwellText(t, state.proposal.fallback.startDwellMs),
+              stop: dwellText(t, state.proposal.fallback.stopDwellMs),
             })}
         </span>
       )}
@@ -64,8 +65,8 @@ function ProposalBody(props: {
           runs: evidence.runsFound,
           days: Math.max(1, Math.round(evidence.spanMs / DAY_MS)),
           threshold: transform.threshold,
-          start: Math.round(transform.startDwellMs / 1000),
-          stop: Math.max(1, Math.round(transform.stopDwellMs / 60_000)),
+          start: dwellText(t, transform.startDwellMs),
+          stop: dwellText(t, transform.stopDwellMs),
         })}
       </span>
       <span className="text-foreground-muted">
@@ -81,4 +82,9 @@ function ProposalBody(props: {
       </Button>
     </>
   )
+}
+
+function dwellText(t: TFunction, ms: number): string {
+  const { unit, n } = dwellLabel(ms)
+  return t(`customize.scalar.proposal.${unit}`, { n })
 }
