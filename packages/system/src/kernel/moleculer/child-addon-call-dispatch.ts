@@ -37,6 +37,8 @@ export interface ChildAddonCallDispatchDeps {
   customActions: CustomActionRegistry
   /** Resolve the loaded addon instance by id — used for the `settings` surface. */
   getAddonInstance: (addonId: string) => ICamstackAddon | null
+  /** Ids of every addon this runner hosts — named in the refusal for an addon it does not. */
+  listAddonIds?: () => readonly string[]
   /** Resolve an addon's live HTTP data-plane endpoints (published by its
    *  `ctx.dataPlane` facility). Empty when the addon serves no data-plane. */
   getDataPlanes: (addonId: string) => readonly AddonDataPlaneEndpoint[]
@@ -264,7 +266,13 @@ export function createChildAddonCallDispatch(
         }
         const addon = deps.getAddonInstance(addonId)
         if (addon == null) {
-          throw new Error(`child-addon-call: addon "${addonId}" not loaded on this node`)
+          // A grouped runner is addressed by its GROUP name on the wire, so an operator can
+          // mistake the group (`auth`) for an addon id (`auth-oidc`): say what IS hosted.
+          const hosted = deps.listAddonIds?.() ?? []
+          const hostedText = hosted.length > 0 ? ` (this runner hosts: ${hosted.join(', ')})` : ''
+          throw new Error(
+            `child-addon-call: addon "${addonId}" is not loaded in this runner${hostedText} — address an addon by its own id, not its execution group`,
+          )
         }
         const args = (call.args ?? {}) as SettingsArgs
         return dispatchSettings(addon, addonId, method, args)

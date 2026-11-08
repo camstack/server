@@ -457,6 +457,7 @@ async function main(): Promise<void> {
       getRouteProvider: (addonId) => addonRouteProviders.get(addonId) ?? null,
       customActions: customActionRegistry,
       getAddonInstance: (addonId) => loadedAddonInstances.get(addonId) ?? null,
+      listAddonIds: () => [...loadedAddonInstances.keys()],
       getDataPlanes: (addonId) => addonDataPlanes.get(addonId) ?? [],
       resolveSecretViews: (addonId, args) => resolveSecretViewsIn(args, addonSecrets.get(addonId)),
     }),

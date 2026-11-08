@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A forked addon call for the deleted global settings methods is refused by name, and the addon service no longer exposes them.
 - Device aliases (generated once, editable, unique) and a sandboxed device value-template renderer (nunjucks in a budgeted worker thread); the state mirror no longer mixes two addons that share a stable id
 - A device owned by a forked worker now reports its alias in getDevice and listAll
+- A settings call to an addon id its runner does not host now names the addons that runner does host, instead of a bare 'not loaded on this node'
 
 ### Removed
 

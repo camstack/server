@@ -161,19 +161,10 @@ export const ALLOWLIST: ReadonlyMap<string, string> = new Map<string, string>([
     'packages/addon-post-analysis/src/pipeline-analytics/tracking-bench/recorder/tape-pin-ledger.ts#pin',
     'a retention pin on a tape, not a credential',
   ],
-  // -- LLM token COUNTS and limits --
-  ['packages/types/src/capabilities/llm.cap.ts#maxTokens', 'a generation length bound'],
-  ['packages/types/src/capabilities/llm.cap.ts#firstTokenTimeoutMs', 'a timeout'],
-  ...[
-    'packages/addon-ai/src/record-kinds.ts',
-    'packages/addon-ai/src/usage/usage-store.ts',
-    'packages/addon-ai/src/usage/usage-port.ts',
-  ].flatMap((f) =>
-    ['inputTokens', 'outputTokens'].map((k): [string, string] => [
-      `${f}#${k}`,
-      'a usage COUNT of LLM tokens',
-    ]),
-  ),
+  [
+    'packages/types/src/keychain/secret-marker.ts#$secret',
+    'the keychain marker TYPE itself: a reference, never a value',
+  ],
 ])
 
 /**
@@ -200,42 +191,6 @@ export const RAW_UNTIL_RECORDS: readonly RawCensusRow[] = [
   // The config blob may still hold plaintext adapter secrets (tokens, passwords)
   // at the records layer; a future phase will mark individual fields with
   // `.meta({ secret: true })` once the adapter config schemas can enumerate them.
-  {
-    owner: 'provider-homeassistant',
-    where: 'addon-settings brokers[]',
-    field: 'auth.accessToken, auth.supervisorToken',
-    phase: 3,
-    file: 'packages/addon-provider-homeassistant/src/addon.ts',
-    evidence: /updateGlobalSettings\(\{\s*brokers/,
-    covers: ['pkg:addon-provider-homeassistant#brokers'],
-  },
-  {
-    owner: 'matter-broker',
-    where: 'addon-settings brokers[]',
-    field: 'connection.threadDataset, connection.wifiPassword',
-    phase: 3,
-    file: 'packages/addon-matter-broker/src/addon.ts',
-    evidence: /updateGlobalSettings\(\{\s*brokers/,
-    covers: ['pkg:addon-matter-broker#brokers'],
-  },
-  {
-    owner: 'import-alexa',
-    where: 'addon-settings brokers[]',
-    field: 'connection.cookie, connection.refreshToken, connection.macDms',
-    phase: 3,
-    file: 'packages/addon-import-alexa/src/addon.ts',
-    evidence: /updateGlobalSettings\(\{\s*brokers/,
-    covers: ['pkg:addon-import-alexa#brokers'],
-  },
-  {
-    owner: 'google-services',
-    where: 'addon-settings brokers[] (+ legacy top-level clientSecret)',
-    field: 'clientSecret',
-    phase: 3,
-    file: 'packages/addon-google-services/src/google-services.addon.ts',
-    evidence: /updateGlobalSettings\(\{\s*brokers/,
-    covers: ['pkg:addon-google-services#brokers'],
-  },
   {
     owner: 'snapshot',
     where: 'addon-settings state snapshotLinkSecret',
