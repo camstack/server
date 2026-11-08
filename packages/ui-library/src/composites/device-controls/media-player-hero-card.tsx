@@ -308,7 +308,7 @@ function ModeFlag({ label, active, testId, children }: ModeFlagProps): ReactNode
  *    question mark while the state is unknown (never drawn as off). It is the
  *    power switch when the device declares `MediaPlayerPower`.
  *  - Running line: equalizer while playing, spinner while buffering, pause
- *    glyph when paused; a value the driver only guesses carries an "assumed" mark.
+ *    glyph when paused.
  *  - Only while the device is on: now-playing, seek, transport (previous /
  *    play-pause / stop / next), volume (slider with mute, or steps when the
  *    device has no level reading), the source (a picker when it can switch),

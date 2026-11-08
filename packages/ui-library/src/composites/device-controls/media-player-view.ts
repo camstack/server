@@ -6,8 +6,8 @@
  * (`off` / `standby` / on); RUNNING is what a powered device is doing
  * (`playing` / `paused` / `buffering` / `idle`). A status that never arrived
  * is `unknown` for both, and an unknown state is never drawn as off: it is
- * its own look. A value the driver only guesses (infrared has no feedback)
- * carries an `assumed` flag so the card can draw it as a guess.
+ * its own look. A state the driver only guesses (infrared has no feedback) is
+ * marked `stateAssumed`, so a running-state reading outranks it.
  *
  * The controls are derived from what the device exposes — the status fields
  * it fills and the `DeviceFeature` flags it declares — never from a vendor.
