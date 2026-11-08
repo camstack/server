@@ -141,3 +141,18 @@ describe('a removed device keeps its alias reserved', () => {
     expect((await readDeviceRow(h.settingsStore, c))['alias']).toBe('garage_2')
   })
 })
+
+describe('alias reaches readers of a device with no live instance (D1021)', () => {
+  it('getDevice and listAll answer the alias of a forked-worker device', async () => {
+    const h = await setup()
+    const id = await register(h, 'forked-1', 'Stufa Veranda')
+    expect((await h.provider.setAlias({ deviceId: id, alias: 'stufa_x' })).ok).toBe(true)
+    // the owning worker lives in another process: the hub registry has no instance
+    h.registry.remove(id)
+
+    const one = await h.provider.getDevice({ deviceId: id })
+    expect(one?.alias).toBe('stufa_x')
+    const all = await h.provider.listAll({})
+    expect(all.find((d) => d.id === id)?.alias).toBe('stufa_x')
+  })
+})

@@ -322,6 +322,7 @@ export async function listAll(
       config: persistedConfig ?? {},
       ...secretConfigPathsField(pctx.secretConfigPaths.get(m.id)),
       metadata,
+      ...(m.alias !== undefined ? { alias: m.alias } : {}),
       ...(m.integrationId !== undefined ? { integrationId: m.integrationId } : {}),
       ...(m.linkDeviceId !== undefined ? { linkDeviceId: m.linkDeviceId } : {}),
       ...(m.primaryChildEntityId !== undefined
@@ -402,6 +403,7 @@ export async function getDevice(
     config: persistedConfig ?? {},
     ...secretConfigPathsField(pctx.secretConfigPaths.get(deviceId)),
     metadata,
+    ...(m.alias !== undefined ? { alias: m.alias } : {}),
     ...(m.integrationId !== undefined ? { integrationId: m.integrationId } : {}),
     ...(m.linkDeviceId !== undefined ? { linkDeviceId: m.linkDeviceId } : {}),
     ...(m.primaryChildEntityId !== undefined
@@ -514,6 +516,7 @@ function projectChildren(
       config: persistedConfig,
       ...secretConfigPathsField(pctx.secretConfigPaths.get(m.id)),
       metadata,
+      ...(m.alias !== undefined ? { alias: m.alias } : {}),
       ...(m.integrationId !== undefined ? { integrationId: m.integrationId } : {}),
       ...(m.linkDeviceId !== undefined ? { linkDeviceId: m.linkDeviceId } : {}),
       ...(m.primaryChildEntityId !== undefined
