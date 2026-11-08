@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Generated system hooks gain the heroLayout row-models read
+
 ## [1.2.406] - 2026-11-08
 
 ### Changed
