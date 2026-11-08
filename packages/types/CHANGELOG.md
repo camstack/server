@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.530] - 2026-11-08
+
 ### Changed
 
 - Device heroes now complete for locks, alarm panels, fans, vacuums, mowers, pet feeders and fountains, groups, automations and scripts: look, status line and controls
