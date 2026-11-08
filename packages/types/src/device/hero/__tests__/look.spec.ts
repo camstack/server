@@ -62,7 +62,7 @@ describe('resolveHeroLook', () => {
 
   it('a role refines the type: a leak sensor reads as water, a plain sensor does not', () => {
     expect(resolveHeroLook(DeviceRole.LeakSensor, DeviceType.Sensor, 'on').icon).toBe('droplets')
-    expect(resolveHeroLook(DeviceRole.TemperatureSensor, DeviceType.Sensor, 'on')).toEqual(
+    expect(resolveHeroLook(DeviceRole.GenericSensor, DeviceType.Sensor, 'on')).toEqual(
       HERO_LOOK_BY_TYPE[DeviceType.Sensor].on,
     )
   })

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ClimateControlStatus } from '../../../capabilities/climate-control.cap.js'
+import type { ClimateControlStatus, HvacMode } from '../../../capabilities/climate-control.cap.js'
 import { DeviceFeature, DeviceType } from '../../device-type.js'
 import { buildHeroModel } from '../build-hero-model.js'
 import type { HeroModel } from '../hero-model.js'
@@ -52,7 +52,9 @@ describe('climate hero', () => {
     })
     expect(m.state).toBe('on')
     expect(m.scene).toEqual({ id: 'ac', mode: 'heat', level: (22 - 16) / 14 })
-    expect(text(m)).toContain('Heat · 22° (22.3°)')
+    expect(m.title.en).toBe('Heating')
+    expect(text(m)).toEqual(['Heating', '22° (22.3°)', '58%'])
+    expect(m.look).toMatchObject({ icon: 'flame', tone: 'warning', background: 'heat-rise' })
     expect(m.facts.map((f) => f.text.en)).toContain('58%')
     expect(m.ownPower?.on).toBe(true)
     expect(m.ownPower?.turnOff.call).toEqual({
@@ -76,7 +78,9 @@ describe('climate hero', () => {
     })
     expect(m.state).toBe('off')
     expect(m.scene.mode).toBeNull()
-    expect(text(m)).toContain('20° (19°)')
+    expect(text(m)).toEqual(['Off', '20° (19°)'])
+    expect(m.title.it).toBe('Spento')
+    expect(m.look).toMatchObject({ icon: 'snowflake', tone: 'muted' })
     expect(m.ownPower?.on).toBe(false)
     expect(m.ownPower?.turnOn.call.args).toEqual({ mode: 'auto' })
   })
@@ -92,7 +96,8 @@ describe('climate hero', () => {
       },
     })
     expect(m.scene.id).toBe('thermostat')
-    expect(text(m)).toContain('Heat/Cool · 18–24° (22.3°)')
+    expect(text(m)).toEqual(['Heat/Cool', '18–24° (22.3°)', '58%'])
+    expect(m.look.icon).toBe('thermometer')
   })
 
   it('unread is unknown, with no rows and no power', () => {
@@ -135,7 +140,8 @@ describe('climate hero', () => {
         lastChangedAt: 1,
       },
     })
-    expect(text(m)).toContain('Eco · 55° (48°)')
+    expect(text(m)).toEqual(['Eco', '55° (48°)'])
+    expect(m.look).toMatchObject({ icon: 'thermometer-sun', tone: 'warning' })
     expect(m.ownPower?.turnOn.call.args).toEqual({ mode: 'eco' })
     expect(m.rows.find((r) => r.id === 'setpoint')).toBeDefined()
   })
@@ -149,7 +155,9 @@ describe('sensor heroes', () => {
     })
     expect(m.scene.id).toBe('sensor-sparkline')
     expect(m.state).toBe('on')
-    expect(m.facts.map((f) => f.text.en)).toEqual(['21.4°', '54%'])
+    expect(m.title.en).toBe('21.4°')
+    expect(m.facts.map((f) => f.text.en)).toEqual(['54%'])
+    expect(m.look.icon).toBe('gauge')
   })
 
   it('a refused sample is unknown, never zero', () => {
@@ -165,6 +173,7 @@ describe('sensor heroes', () => {
       'carbon-monoxide': { detected: true, lastChangedAt: 1 },
     })
     expect(m.state).toBe('alert')
+    expect(m.title.en).toBe('CO detected')
   })
 
   it('air quality lists what the sensor reports', () => {
@@ -172,5 +181,128 @@ describe('sensor heroes', () => {
       'air-quality-sensor': { co2: 612, pm25: 8, lastFetchedAt: 1 },
     })
     expect(m.facts.map((f) => f.text.en)).toEqual(['CO₂ 612 ppm', 'PM2.5 8 µg/m³'])
+    expect(m.sideTiles.right.map((t) => [t.label.en, t.value.en])).toEqual([
+      ['CO₂', '612 ppm'],
+      ['PM2.5', '8 µg/m³'],
+    ])
+  })
+
+  it('each sensor role has its own icon and a reading headline, never on/off', () => {
+    const cases: [string, string, string, Record<string, unknown>, string, string][] = [
+      [
+        'temperature-sensor',
+        'temperature-sensor',
+        'thermometer',
+        { temperature: 21.4, lastFetchedAt: 1 },
+        '21.4°',
+        'info',
+      ],
+      [
+        'humidity-sensor',
+        'humidity-sensor',
+        'droplets',
+        { humidity: 55, lastFetchedAt: 1 },
+        '55%',
+        'info',
+      ],
+      [
+        'air-quality-sensor',
+        'air-quality-sensor',
+        'wind',
+        { aqi: 30, lastFetchedAt: 1 },
+        'Good',
+        'success',
+      ],
+      [
+        'ambient-light-sensor',
+        'ambient-light-sensor',
+        'sun',
+        { illuminance: 320, lastFetchedAt: 1 },
+        '320 lx',
+        'warning',
+      ],
+      [
+        'pressure-sensor',
+        'pressure-sensor',
+        'gauge',
+        { pressure: 1013, lastFetchedAt: 1 },
+        '1013 hPa',
+        'info',
+      ],
+    ]
+    const roles: Record<string, string> = {
+      'temperature-sensor': 'temperature-sensor',
+      'humidity-sensor': 'humidity-sensor',
+      'air-quality-sensor': 'air-quality-sensor',
+      'ambient-light-sensor': 'ambient-light-sensor',
+      'pressure-sensor': 'pressure-sensor',
+    }
+    for (const [cap, , icon, slice, title, tone] of cases) {
+      const m = buildHeroModel({
+        device: {
+          id: 1,
+          type: DeviceType.Sensor,
+          role: roles[cap] ?? null,
+          name: 's',
+          online: true,
+        },
+        caps: [cap],
+        features: [],
+        slices: { [cap]: slice },
+        now: 1,
+        remoteCommands: null,
+        access: { canActuate: true },
+      })
+      expect(m.title.en, cap).toBe(title)
+      expect(m.look, cap).toMatchObject({ icon, tone })
+    }
+  })
+})
+
+describe('power on restores the last mode', () => {
+  const off = { ...AC, mode: 'off' as const }
+  it('heat, then off: on sends heat', () => {
+    const m = build(DeviceType.Climate, ['climate-control'], {
+      'climate-control': { ...off, lastActiveMode: 'heat' },
+    })
+    expect(m.ownPower?.turnOn.call.args).toEqual({ mode: 'heat' })
+  })
+  it('a device that never reported a mode falls back to the fixed order', () => {
+    const m = build(DeviceType.Climate, ['climate-control'], { 'climate-control': off })
+    expect(m.ownPower?.turnOn.call.args).toEqual({ mode: 'auto' })
+  })
+  it('a remembered mode the device no longer accepts falls back', () => {
+    const m = build(DeviceType.Climate, ['climate-control'], {
+      'climate-control': { ...off, availableModes: ['off', 'cool'], lastActiveMode: 'heat' },
+    })
+    expect(m.ownPower?.turnOn.call.args).toEqual({ mode: 'cool' })
+  })
+})
+
+describe('climate looks by mode', () => {
+  const modes: [HvacMode, string, string, string][] = [
+    ['heat', 'flame', 'warning', 'Heating'],
+    ['cool', 'snowflake', 'info', 'Cooling'],
+    ['dry', 'droplets', 'info', 'Drying'],
+    ['fan_only', 'fan', 'primary', 'Fan only'],
+    ['auto', 'thermometer', 'success', 'Auto'],
+  ]
+  for (const [mode, icon, tone, title] of modes) {
+    it(`${mode}: ${icon}, ${tone}, "${title}"`, () => {
+      const m = build(DeviceType.Climate, ['climate-control'], {
+        'climate-control': { ...AC, mode },
+      })
+      expect(m.look).toMatchObject({ icon, tone })
+      expect(m.title.en).toBe(title)
+    })
+  }
+  it('a thermostat on heat uses the same mode picture', () => {
+    const m = build(DeviceType.Thermostat, ['climate-control'], { 'climate-control': AC })
+    expect(m.look.icon).toBe('flame')
+  })
+  it('unread climate is the unknown look, not a mode', () => {
+    expect(build(DeviceType.Climate, ['climate-control'], {}).look.icon).toBe(
+      'circle-question-mark',
+    )
   })
 })

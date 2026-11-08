@@ -39,6 +39,7 @@ import {
 import type { DeviceManagerSettings } from './device-meta-store.js'
 import { RunningFlipDetector } from './running-flip.js'
 import { shallowEqual } from './device-projection.js'
+import { carryLastActiveMode } from './last-active-mode.js'
 import {
   ClaimViews,
   defaultSchemaFor,
@@ -203,7 +204,9 @@ export class DeviceStateMirror {
       this.stateMirror.set(deviceId, perCap)
     }
     const prior = perCap.get(capName)
-    if (prior && shallowEqual(prior, slice)) return false
+    const written = carryLastActiveMode(capName, prior, slice)
+    if (prior && shallowEqual(prior, written)) return false
+    slice = written
     perCap.set(capName, { ...slice })
     this.transitionTap?.(deviceId, capName, prior, slice)
     const claim = this.claims.claim(deviceId, capName)

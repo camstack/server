@@ -35,12 +35,12 @@ export interface ClimateView {
 
 const MODE_LABEL: Readonly<Record<HvacMode, HeroText>> = {
   off: heroText('Off', 'Spento'),
-  heat: heroText('Heat', 'Caldo'),
-  cool: heroText('Cool', 'Freddo'),
+  heat: heroText('Heating', 'Riscalda'),
+  cool: heroText('Cooling', 'Freddo'),
   auto: heroText('Auto', 'Auto'),
   heat_cool: heroText('Heat/Cool', 'Caldo/Freddo'),
-  fan_only: heroText('Fan', 'Ventilazione'),
-  dry: heroText('Dry', 'Deumidifica'),
+  fan_only: heroText('Fan only', 'Solo ventola'),
+  dry: heroText('Drying', 'Deumidifica'),
 }
 
 const SCENE_MODE: Readonly<Record<HvacMode, HeroSceneMode | null>> = {
@@ -53,7 +53,7 @@ const SCENE_MODE: Readonly<Record<HvacMode, HeroSceneMode | null>> = {
   dry: 'dry',
 }
 
-/** The cap keeps no "last mode", so "turn on" picks the first of these the device accepts. */
+/** Without a remembered mode, "turn on" picks the first of these the device accepts. */
 const ON_MODE_PREFERENCE: readonly HvacMode[] = ['auto', 'heat_cool', 'heat', 'cool']
 
 export function modeLabelOf(mode: HvacMode): HeroText {
@@ -65,8 +65,10 @@ export function formatDegrees(value: number): string {
   return `${Number(value.toFixed(1))}°`
 }
 
-function onModeOf(available: readonly HvacMode[]): HvacMode | null {
+/** "Turn on" returns to the mode the device last ran when it still accepts it, else the fixed order. */
+function onModeOf(available: readonly HvacMode[], last: HvacMode | undefined): HvacMode | null {
   const candidates: HvacMode[] = available.filter((m) => m !== 'off')
+  if (last !== undefined && candidates.includes(last)) return last
   for (const preferred of ON_MODE_PREFERENCE) {
     if (candidates.includes(preferred)) return preferred
   }
@@ -92,23 +94,19 @@ export function deriveClimateView(slice: ClimateControlStatus): ClimateView {
     availableModes: slice.availableModes,
     sceneMode: SCENE_MODE[slice.mode],
     level,
-    onMode: onModeOf(slice.availableModes),
+    onMode: onModeOf(slice.availableModes, slice.lastActiveMode),
   }
 }
 
-/** "Heat · 22° (22.3°)"; off drops the mode (the state already says it): "20° (19°)". */
+/** "22° (22.3°)": the setpoint and, in brackets, what is measured. The mode is the headline, not repeated here. */
 export function thermalStatusText(
-  label: HeroText,
-  isOff: boolean,
   target: number | string | null,
   measured: number | null,
 ): HeroText | null {
   const goal = target === null ? '' : typeof target === 'string' ? target : formatDegrees(target)
   const now = measured === null ? '' : formatDegrees(measured)
   const temps = goal !== '' && now !== '' ? `${goal} (${now})` : goal !== '' ? goal : now
-  if (isOff) return temps === '' ? null : heroText(temps, temps)
-  const join = (word: string): string => (temps === '' ? word : `${word} · ${temps}`)
-  return heroText(join(label.en), join(label.it))
+  return temps === '' ? null : heroText(temps, temps)
 }
 
 export function climateStatusText(view: ClimateView): HeroText | null {
@@ -119,7 +117,7 @@ export function climateStatusText(view: ClimateView): HeroText | null {
       : range === null
         ? null
         : `${Number(range.low.toFixed(1))}–${formatDegrees(range.high)}`
-  return thermalStatusText(view.modeLabel, view.isOff, goal, view.measured)
+  return thermalStatusText(goal, view.measured)
 }
 
 /** The setpoint inside its range, 0..1. */

@@ -36,6 +36,11 @@ export const WaterHeaterStatusSchema = z.object({
   minTemp: z.number().nullable().meta(readingMeta('temperature')),
   /** HA `max_temp` attribute. Null when not reported. */
   maxTemp: z.number().nullable().meta(readingMeta('temperature')),
+  /**
+   * The last operation mode other than `off` the device reported. Kept by the device-state
+   * mirror on every write (providers never set it), so "turn on" can return to it.
+   */
+  lastActiveMode: z.string().optional(),
   /** Ms epoch when the slice was last updated. */
   lastChangedAt: z.number(),
 })

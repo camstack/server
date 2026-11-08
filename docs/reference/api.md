@@ -2026,7 +2026,7 @@
 
 ### `climate-control` → `climateControl.*`
 
-- **Source:** `packages/types/src/capabilities/climate-control.cap.ts:102`
+- **Source:** `packages/types/src/capabilities/climate-control.cap.ts:108`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `thermostat, climate`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IClimateControlProvider`
@@ -5008,7 +5008,7 @@
 
 ### `water-heater` → `waterHeater.*`
 
-- **Source:** `packages/types/src/capabilities/water-heater.cap.ts:45`
+- **Source:** `packages/types/src/capabilities/water-heater.cap.ts:50`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `water-heater`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IWaterHeaterProvider`

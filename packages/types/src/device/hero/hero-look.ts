@@ -14,6 +14,7 @@
  */
 import { DeviceRole, DeviceType } from '../device-type.js'
 import type { VocabIcon } from './cap-vocabulary-icon.js'
+import type { HeroSceneMode } from './hero-scene.js'
 import type {
   HeroAnimation,
   HeroBackgroundToken,
@@ -146,7 +147,6 @@ function sensorLook(icon: VocabIcon, alertIcon: VocabIcon = icon): HeroLook {
   })
 }
 
-const SENSOR_LOOK = sensorLook('activity', 'triangle-alert')
 const LEAK_LOOK = sensorLook('droplets')
 const SMOKE_LOOK = sensorLook('flame')
 const GAS_LOOK = sensorLook('wind')
@@ -353,15 +353,87 @@ const EVENT_EMITTER_LOOK = lookOf({
   standby: WARN,
 })
 
+/** A reading device: the value is the headline, the look only says what kind of reading it is. */
+function readingLook(icon: VocabIcon, tone: HeroTone): HeroLook {
+  return lookOf({
+    icon,
+    on: [tone, 'plain', 'none'],
+    off: MUTED,
+    running: [tone, 'plain', 'none'],
+    idle: [tone, 'plain', 'none'],
+    standby: MUTED,
+  })
+}
+
+const READING_SENSOR_LOOK = readingLook('gauge', 'info')
+const TEMPERATURE_LOOK = readingLook('thermometer', 'info')
+const HUMIDITY_LOOK = readingLook('droplets', 'info')
+const AIR_QUALITY_LOOK = readingLook('wind', 'success')
+const LIGHT_SENSOR_LOOK = readingLook('sun', 'warning')
+
+/** Carbon monoxide: calm is a shield, detected is the alarm. */
+const CO_LOOK = lookOf({
+  icon: 'shield-check',
+  on: ['danger', 'alert-wash', 'pulse'],
+  off: MUTED,
+  running: ['danger', 'alert-wash', 'pulse'],
+  idle: ['success', 'plain', 'none'],
+  standby: MUTED,
+  alert: look('triangle-alert', 'danger', 'alert-wash', 'pulse'),
+})
+
+/** Heating and cooling devices: the mode (see {@link HERO_MODE_LOOK}) picks the picture while on. */
+const THERMOSTAT_LOOK = lookOf({
+  icon: 'thermometer',
+  on: ['primary', 'plain', 'none'],
+  off: MUTED,
+  running: ['warning', 'heat-rise', 'rise'],
+  idle: INFO,
+  standby: MUTED,
+})
+
+const CLIMATE_LOOK = lookOf({
+  icon: 'snowflake',
+  on: ['primary', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'plain', 'none'],
+  idle: INFO,
+  standby: MUTED,
+})
+
+const WATER_HEATER_LOOK = lookOf({
+  icon: 'thermometer-sun',
+  on: ['warning', 'heat-rise', 'rise'],
+  off: MUTED,
+  running: ['warning', 'heat-rise', 'rise'],
+  idle: INFO,
+  standby: MUTED,
+})
+
+/** What a climate device draws while it is on, by mode: warm air rises, cold falls, drops dry, the fan spins. */
+export const HERO_MODE_LOOK: Readonly<Record<HeroSceneMode, StateLook | null>> = {
+  heat: look('flame', 'warning', 'heat-rise', 'rise'),
+  cool: look('snowflake', 'info', 'cool-fall', 'fall'),
+  dry: look('droplets', 'info', 'water', 'wave'),
+  fan: look('fan', 'primary', 'plain', 'spin'),
+  auto: look('thermometer', 'success', 'glow', 'glow'),
+  playing: null,
+  paused: null,
+  open: null,
+  closed: null,
+}
+
+const MODE_LOOK_TYPES: readonly string[] = [DeviceType.Climate, DeviceType.Thermostat]
+
 export const HERO_LOOK_BY_TYPE = {
   [DeviceType.Camera]: CAMERA_LOOK,
   [DeviceType.Hub]: HERO_LOOK_DEFAULT,
   [DeviceType.Light]: LIGHT_LOOK,
   [DeviceType.Siren]: HERO_LOOK_DEFAULT,
   [DeviceType.Switch]: SWITCH_LOOK,
-  [DeviceType.Sensor]: SENSOR_LOOK,
-  [DeviceType.Thermostat]: HERO_LOOK_DEFAULT,
-  [DeviceType.Climate]: HERO_LOOK_DEFAULT,
+  [DeviceType.Sensor]: READING_SENSOR_LOOK,
+  [DeviceType.Thermostat]: THERMOSTAT_LOOK,
+  [DeviceType.Climate]: CLIMATE_LOOK,
   [DeviceType.Button]: BUTTON_LOOK,
   [DeviceType.EventEmitter]: EVENT_EMITTER_LOOK,
   [DeviceType.Update]: UPDATE_LOOK,
@@ -373,7 +445,7 @@ export const HERO_LOOK_BY_TYPE = {
   [DeviceType.Cover]: COVER_LOOK,
   [DeviceType.Valve]: VALVE_LOOK,
   [DeviceType.Humidifier]: HUMIDIFIER_LOOK,
-  [DeviceType.WaterHeater]: HERO_LOOK_DEFAULT,
+  [DeviceType.WaterHeater]: WATER_HEATER_LOOK,
   [DeviceType.Fan]: FAN_LOOK,
   [DeviceType.MediaPlayer]: MEDIA_PLAYER_LOOK,
   [DeviceType.AlarmPanel]: ALARM_LOOK,
@@ -418,17 +490,17 @@ export const HERO_LOOK_BY_ROLE = {
   [DeviceRole.ContactSensor]: 'inherit',
   [DeviceRole.LeakSensor]: LEAK_LOOK,
   [DeviceRole.SmokeSensor]: SMOKE_LOOK,
-  [DeviceRole.COSensor]: GAS_LOOK,
+  [DeviceRole.COSensor]: CO_LOOK,
   [DeviceRole.GasSensor]: GAS_LOOK,
   [DeviceRole.TamperSensor]: TAMPER_LOOK,
   [DeviceRole.VibrationSensor]: VIBRATION_LOOK,
   [DeviceRole.ConnectivitySensor]: 'inherit',
   [DeviceRole.SoundSensor]: 'inherit',
   [DeviceRole.BinarySensor]: 'inherit',
-  [DeviceRole.TemperatureSensor]: 'inherit',
-  [DeviceRole.HumiditySensor]: 'inherit',
-  [DeviceRole.AmbientLightSensor]: 'inherit',
-  [DeviceRole.PressureSensor]: 'inherit',
+  [DeviceRole.TemperatureSensor]: TEMPERATURE_LOOK,
+  [DeviceRole.HumiditySensor]: HUMIDITY_LOOK,
+  [DeviceRole.AmbientLightSensor]: LIGHT_SENSOR_LOOK,
+  [DeviceRole.PressureSensor]: READING_SENSOR_LOOK,
   [DeviceRole.WindSensor]: 'inherit',
   [DeviceRole.RainSensor]: 'inherit',
   [DeviceRole.UvSensor]: 'inherit',
@@ -438,7 +510,7 @@ export const HERO_LOOK_BY_ROLE = {
   [DeviceRole.EnergySensor]: 'inherit',
   [DeviceRole.VoltageSensor]: 'inherit',
   [DeviceRole.CurrentSensor]: 'inherit',
-  [DeviceRole.AirQualitySensor]: 'inherit',
+  [DeviceRole.AirQualitySensor]: AIR_QUALITY_LOOK,
   [DeviceRole.BatterySensor]: 'inherit',
   [DeviceRole.NumericSensor]: 'inherit',
   [DeviceRole.EnumSensor]: 'inherit',
@@ -463,10 +535,22 @@ function isDeviceRole(role: string): role is DeviceRole {
   return Object.values<string>(DeviceRole).includes(role)
 }
 
-/** The look of a (role, type) pair, for a state. Role beats type beats the generic default. */
-export function resolveHeroLook(role: string | null, type: string, state: HeroState): StateLook {
+/**
+ * The look of a (role, type) pair, for a state. Role beats type beats the generic default.
+ * A climate device that is on draws its MODE (`mode` is the scene's); a role never loses to it.
+ */
+export function resolveHeroLook(
+  role: string | null,
+  type: string,
+  state: HeroState,
+  mode: HeroSceneMode | null = null,
+): StateLook {
   const byRole = role !== null && isDeviceRole(role) ? HERO_LOOK_BY_ROLE[role] : undefined
   if (byRole !== undefined && byRole !== 'inherit') return byRole[state]
+  if (mode !== null && (state === 'on' || state === 'running') && MODE_LOOK_TYPES.includes(type)) {
+    const byMode = HERO_MODE_LOOK[mode]
+    if (byMode !== null) return byMode
+  }
   const byType = isDeviceType(type) ? HERO_LOOK_BY_TYPE[type] : undefined
   return (byType ?? HERO_LOOK_DEFAULT)[state]
 }

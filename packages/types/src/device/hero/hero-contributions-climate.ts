@@ -210,13 +210,14 @@ const climateContribution = contribution(
     const sceneMode: HeroSceneMode | null = view.sceneMode
     return {
       reading: reading('climate-control', view.isOff ? 'off' : 'on'),
+      title: view.modeLabel,
       facts,
       ...(left.length === 0 && right.length === 0 ? {} : { tiles: { left, right } }),
       scene: {
         ...(sceneMode === null ? {} : { mode: sceneMode }),
         ...(view.level === null ? {} : { level: view.level }),
       },
-      // The cap keeps no "last mode": on selects the first mode the device accepts, in a fixed order.
+      // On returns to the mode the device last ran (kept by the mirror), else the first it accepts in a fixed order.
       ...(view.onMode === null
         ? {}
         : {
@@ -265,10 +266,14 @@ const waterHeaterContribution = contribution(
     }
     const isOff = slice.operationMode === 'off'
     const label = capitalised(slice.operationMode)
-    const status = thermalStatusText(label, isOff, slice.targetTemp, slice.currentTemp)
+    const status = thermalStatusText(slice.targetTemp, slice.currentTemp)
     const range = rangeFrom(slice.minTemp, slice.maxTemp, 1)
     const candidates = slice.availableModes.filter((m) => m !== 'off')
-    const onMode = WATER_ON_PREFERENCE.find((m) => candidates.includes(m)) ?? candidates[0] ?? null
+    const last = slice.lastActiveMode
+    const onMode =
+      last !== undefined && candidates.includes(last)
+        ? last
+        : (WATER_ON_PREFERENCE.find((m) => candidates.includes(m)) ?? candidates[0] ?? null)
 
     const modeControls: HeroControl[] = [
       {
@@ -329,6 +334,7 @@ const waterHeaterContribution = contribution(
     const level = levelWithin(slice.targetTemp, range)
     return {
       reading: reading('climate-control', isOff ? 'off' : 'on'),
+      title: label,
       facts: status === null ? [] : [fact('climate', 'flame', status)],
       ...(slice.currentTemp === null
         ? {}
@@ -404,6 +410,7 @@ function sensorFragment(
   if (value === null) return { reading: reading('sensor', 'unknown') }
   return {
     reading: reading('sensor', 'on'),
+    title: same(text),
     facts: [fact(id, icon, same(text))],
     tiles: { right: [tile(en, it, text)] },
   }
@@ -477,55 +484,40 @@ const enumContribution = contribution('enum-sensor', EnumSensorStatusSchema, (sl
   return sensorFragment(slice.value, 'reading', 'gauge', 'State', 'Stato', slice.value)
 })
 
+interface AirPart {
+  readonly label: string
+  readonly value: string
+}
+
+/** Index bands: the headline of an air-quality sensor is a word, not a number. */
+function airQualityWord(aqi: number): HeroText {
+  if (aqi <= 50) return heroText('Good', 'Buona')
+  if (aqi <= 100) return heroText('Moderate', 'Discreta')
+  if (aqi <= 150) return heroText('Poor', 'Scadente')
+  return heroText('Unhealthy', 'Malsana')
+}
+
 const airQualityContribution = contribution(
   'air-quality-sensor',
   AirQualitySensorStatusSchema,
   (slice): HeroFragment => {
     if (slice === undefined) return { reading: reading('sensor', 'unknown') }
-    const parts: {
-      readonly en: string
-      readonly it: string
-      readonly text: string
-    }[] = []
-    if (slice.aqi !== undefined)
-      parts.push({
-        en: 'AQI',
-        it: 'AQI',
-        text: `AQI ${Math.round(slice.aqi)}`,
-      })
-    if (slice.co2 !== undefined)
-      parts.push({
-        en: 'CO₂',
-        it: 'CO₂',
-        text: `CO₂ ${Math.round(slice.co2)} ppm`,
-      })
+    const parts: AirPart[] = []
+    if (slice.aqi !== undefined) parts.push({ label: 'AQI', value: String(Math.round(slice.aqi)) })
+    if (slice.co2 !== undefined) parts.push({ label: 'CO₂', value: `${Math.round(slice.co2)} ppm` })
     if (slice.pm25 !== undefined) {
-      parts.push({
-        en: 'PM2.5',
-        it: 'PM2.5',
-        text: `PM2.5 ${Math.round(slice.pm25)} µg/m³`,
-      })
+      parts.push({ label: 'PM2.5', value: `${Math.round(slice.pm25)} µg/m³` })
     }
-    if (slice.voc !== undefined)
-      parts.push({
-        en: 'VOC',
-        it: 'VOC',
-        text: `VOC ${Math.round(slice.voc)} ppb`,
-      })
+    if (slice.voc !== undefined) parts.push({ label: 'VOC', value: `${Math.round(slice.voc)} ppb` })
     if (slice.pm10 !== undefined) {
-      parts.push({
-        en: 'PM10',
-        it: 'PM10',
-        text: `PM10 ${Math.round(slice.pm10)} µg/m³`,
-      })
+      parts.push({ label: 'PM10', value: `${Math.round(slice.pm10)} µg/m³` })
     }
     if (parts.length === 0) return { reading: reading('sensor', 'unknown') }
     return {
       reading: reading('sensor', 'on'),
-      facts: parts.map((p) => fact('air-quality', 'wind', same(p.text))),
-      tiles: {
-        right: parts.slice(0, 2).map((p) => tile(p.en, p.it, p.text.replace(`${p.en} `, ''))),
-      },
+      ...(slice.aqi === undefined ? {} : { title: airQualityWord(slice.aqi) }),
+      facts: parts.map((p) => fact('air-quality', 'wind', same(`${p.label} ${p.value}`))),
+      tiles: { right: parts.slice(0, 2).map((p) => tile(p.label, p.label, p.value)) },
     }
   },
 )
@@ -537,6 +529,9 @@ const carbonMonoxideContribution = contribution(
     if (slice === undefined) return { reading: reading('sensor', 'unknown') }
     return {
       reading: reading('sensor', slice.detected ? 'alert' : 'idle'),
+      title: slice.detected
+        ? heroText('CO detected', 'CO rilevato')
+        : heroText('Air clear', 'Aria libera'),
       facts: [
         fact(
           'reading',

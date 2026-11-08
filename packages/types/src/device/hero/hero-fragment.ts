@@ -107,5 +107,7 @@ export interface HeroFragment {
     readonly right?: readonly HeroSideTile[]
   }
   /** What the scene is doing, when this cap knows. The first fragment that names a field wins. */
+  /** What the hero's headline says instead of the state word (a mode, a reading). The first fragment that names one wins; offline and unknown are never overridden. */
+  readonly title?: HeroText
   readonly scene?: { readonly mode?: HeroSceneMode; readonly level?: number }
 }

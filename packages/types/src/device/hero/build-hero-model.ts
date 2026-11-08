@@ -201,7 +201,8 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
 
   const readings = fragments.flatMap((f) => (f.reading === undefined ? [] : [f.reading]))
   const { state, assumed, title } = stateOf(input, readings)
-  const look = resolveHeroLook(device.role, device.type, state)
+  const scene = sceneOf(device.role, device.type, fragments)
+  const look = resolveHeroLook(device.role, device.type, state, scene.mode)
 
   const artworkUrl = fragments.find((f) => f.artworkUrl !== undefined)?.artworkUrl
   const background: HeroBackground =
@@ -227,7 +228,14 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
   const remote = fragments.find((f) => f.remote !== undefined)?.remote ?? null
   const badges: HeroBadge[] = fragments.flatMap((f) => f.badges ?? [])
 
-  const facts: HeroFact[] = fragments.flatMap((f) => f.facts ?? [])
+  const headline =
+    state === 'offline' || state === 'unknown'
+      ? undefined
+      : fragments.find((f) => f.title !== undefined)?.title
+  // A fact that repeats the headline would read twice in the status line.
+  const facts: HeroFact[] = fragments
+    .flatMap((f) => f.facts ?? [])
+    .filter((f) => headline === undefined || f.text.en !== headline.en)
   const sideTiles: HeroSideTiles = {
     left: tilesOf(fragments, 'left'),
     right: tilesOf(fragments, 'right'),
@@ -251,10 +259,10 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
     stateAssumed: assumed,
     look,
     background,
-    scene: sceneOf(device.role, device.type, fragments),
+    scene,
     facts,
     sideTiles,
-    title,
+    title: headline ?? title,
     badges,
     remote,
     consumables: fragments.find((f) => f.consumables !== undefined)?.consumables ?? null,

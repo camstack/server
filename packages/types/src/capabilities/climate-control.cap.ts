@@ -93,6 +93,12 @@ export const ClimateControlStatusSchema = z.object({
   maxTemp: z.number().nullable().optional().meta(readingMeta('temperature')),
   /** Setpoint granularity, Celsius (0.5, 1). Absent / null = not reported. */
   tempStep: z.number().positive().nullable().optional().meta(readingMeta('temperature')),
+  /**
+   * The last non-off mode the device reported. Kept by the device-state mirror on every
+   * write (providers never set it), so "turn on" can return to it. Absent until the device
+   * has reported a running mode.
+   */
+  lastActiveMode: HvacModeSchema.exclude(['off']).optional(),
   /** Ms epoch when the slice was last updated (push or command). */
   lastFetchedAt: z.number(),
 })

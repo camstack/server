@@ -991,6 +991,7 @@ Enum: `"pull-rtsp" \| "pull-rtmp" \| "pull-http" \| "pull-flv" \| "pull-rfc4571"
 - `minTemp?`: `number \| null`
 - `maxTemp?`: `number \| null`
 - `tempStep?`: `number \| null`
+- `lastActiveMode?`: `"heat" \| "cool" \| "auto" \| "heat_cool" \| "fan_only" \| "dry"`
 - `lastFetchedAt`: `number`
 
 ### `ClipBytesOfferSchema`
@@ -7496,6 +7497,7 @@ Enum: `"cosine" \| "dot" \| "euclidean"`
 - `away`: `boolean \| null`
 - `minTemp`: `number \| null`
 - `maxTemp`: `number \| null`
+- `lastActiveMode?`: `string`
 - `lastChangedAt`: `number`
 
 ### `WeatherStatusSchema`
