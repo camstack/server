@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AddonApi } from '@camstack/types'
-import { sourcesOver } from '../actions-wiring.js'
+import { readCommandOrigin } from '@camstack/types'
+import { invokeCapOver, sourcesOver } from '../actions-wiring.js'
 
 interface FakeOptions {
   /** `providers` of the registry entry; `null` = the registry has no entry. */
@@ -65,5 +66,35 @@ describe('sourcesOver.list', () => {
     const { api, listCalls } = apiOf({ providers: null, listActions: async () => [] })
     await sourcesOver(() => api).list()
     expect(listCalls()).toBe(1)
+  })
+})
+
+describe('invokeCapOver origin (D1022)', () => {
+  function sirenApi(): { api: AddonApi; seen: Array<{ input: unknown; options: unknown }> } {
+    const seen: Array<{ input: unknown; options: unknown }> = []
+    const fake = {
+      siren: { on: { mutate: async (input: unknown, options?: unknown) => void seen.push({ input, options }) } },
+    }
+    return { api: Object.assign(Object.create(null), fake), seen }
+  }
+
+  it('hands the origin to the call as request context, never inside the arguments', async () => {
+    const { api, seen } = sirenApi()
+    await invokeCapOver(() => api)({
+      deviceId: 616,
+      cap: 'siren',
+      method: 'on',
+      args: { volume: 9 },
+      origin: { kind: 'action', actionId: 'a1', runId: 'r1' },
+    })
+    expect(seen[0]?.input).toEqual({ volume: 9, deviceId: 616 })
+    const context = Reflect.get(Object(seen[0]?.options), 'context')
+    expect(readCommandOrigin(context)).toEqual({ kind: 'action', actionId: 'a1', runId: 'r1' })
+  })
+
+  it('sends a call without an origin exactly as before', async () => {
+    const { api, seen } = sirenApi()
+    await invokeCapOver(() => api)({ deviceId: 616, cap: 'siren', method: 'on', args: {} })
+    expect(seen[0]).toEqual({ input: { deviceId: 616 }, options: undefined })
   })
 })

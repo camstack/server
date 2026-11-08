@@ -22,6 +22,7 @@
 import {
   ALL_CAPABILITY_DEFINITIONS,
   buildCapRouters,
+  getCommandObserverRegistry,
   type CapabilityRegistry,
   type CapRouterPrimitives,
   type CapRouterServices,
@@ -624,6 +625,9 @@ export function createCapRouterServices(deps: CapRouterRuntimeDeps): CapRouterSe
         message: `Capability "${capName}" has no method "${method}"`,
       })
     },
+    // Device commands served by the hub mount (D1022): the principal is read
+    // from the request context; the hub mirror's correlator listens here.
+    commandObserver: (obs) => getCommandObserverRegistry().observe(obs),
   }
 }
 

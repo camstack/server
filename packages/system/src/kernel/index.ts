@@ -404,6 +404,16 @@ export { AddonRefusedError, findAddonRefusal } from './addon-refused-error.js'
 export type { RunnerRefusalReport } from './moleculer/runner-refusal.js'
 export { signalAllRunnerGroups } from './moleculer/runner-process-group.js'
 export {
+  CommandObserverRegistry,
+  __resetCommandObserverRegistryForTests,
+  addonCommandActor,
+  commandActorFromContext,
+  commandObserverLink,
+  getCommandObserverRegistry,
+  runObservedCommand,
+} from './command-observation.js'
+export type { CommandObserver } from './command-observation.js'
+export {
   CapUsageRegistry,
   getCapUsageRegistry,
   PARENT_ROUTED_PROVIDER_ADDON_ID,

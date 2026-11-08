@@ -26,7 +26,8 @@ export {
 export { MIGRATION_API_VERSION } from './migrations/api/migration-api-version.js'
 export { ErrorI18nPayloadSchema, readErrorI18n } from './i18n/camstack-error.js'
 export type { ErrorI18nPayload } from './i18n/camstack-error.js'
-export { nodePin, readNodePin } from './cap-call-context.js'
+export { commandOrigin, nodePin, readCommandOrigin, readNodePin } from './cap-call-context.js'
+export type { CommandOriginClaim } from './audit/device-transition.js'
 export {
   nodeIdOfScopedKey,
   resolveDeviceSettings,

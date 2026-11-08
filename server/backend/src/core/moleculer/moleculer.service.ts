@@ -28,6 +28,7 @@ import {
   expandCapMethods,
   getBrokerTlsTransporter,
   getCapUsageRegistry,
+  getCommandObserverRegistry,
   HubNodeRegistry,
   getProcessMeshCertificateRegistry,
   getProcessPeerLeaf,
@@ -606,6 +607,9 @@ export class MoleculerService {
         // why the graph answered `[]` on a hub running 64 addons. Blind spots
         // that remain are listed on `LocalChildRegistryOptions.capUsageObserver`.
         capUsageObserver: (obs) => getCapUsageRegistry().recordCall(obs),
+        // A forked addon's device commands (D1022): the actor is the addon on the
+        // socket. The hub mirror's correlator listens on this registry.
+        commandObserver: (obs) => getCommandObserverRegistry().observe(obs),
         logger: {
           info: (msg, meta) =>
             logger.info(

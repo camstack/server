@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - integration-instances: describe().kinds and every instance's kind are required; a record provider with one kind stamps it.
 - A provider whose kindOf names a kind its description does not declare is refused with the offending id
 - New device-transitions capability and transition types: a device's changes can be recorded with who asked for them
+- A device call can state why it is made (commandOrigin) so the transition audit can tell an action run or a scheduler from a plain addon call.
 
 ## [1.2.524] - 2026-11-08
 

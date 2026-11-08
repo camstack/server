@@ -369,7 +369,7 @@ export class ActionsService implements IActionsProvider {
     let message: string | undefined
     const deadline = this.armDeadline(entry.id, runId, token)
     try {
-      const runnable = this.runnableFor(entry, values, token)
+      const runnable = this.runnableFor(entry, values, token, runId)
       const running = runSteps(runnable, {
         pathPrefix: 'steps',
         isAborted: () => token.aborted,
@@ -479,10 +479,12 @@ export class ActionsService implements IActionsProvider {
     entry: ActionEntry,
     values: Readonly<Record<string, ActionVariableValue>>,
     token: RunToken,
+    runId: string,
   ): RunnableStep[] {
     if (entry.source === 'internal') {
       return buildActionSteps(entry.steps ?? [], values, {
-        invokeCap: (call) => this.invokeCap(call),
+        invokeCap: (call) =>
+          this.invokeCap({ ...call, origin: { kind: 'action', actionId: entry.id, runId } }),
         sleep: (ms) => token.sleep(ms),
         resolveTarget: (target, actionId, vars, origin) =>
           this.targets.resolve(target, actionId, vars, origin),

@@ -1,8 +1,14 @@
-import type { IReadinessRegistryRecord, SystemEvent } from '@camstack/types'
+import {
+  CommandOriginClaimSchema,
+  isCommand,
+  type IReadinessRegistryRecord,
+  type SystemEvent,
+} from '@camstack/types'
 import { createEvent, EventCategory } from '@camstack/types/addon'
 import type { CapUsageCallRecord } from '../moleculer/cap-usage-registry.js'
 import { PARENT_ROUTED_PROVIDER_ADDON_ID } from '../moleculer/cap-usage-registry.js'
 import { matchesPattern } from '../moleculer/event-bus-core.js'
+import { addonCommandActor, reportCommand, type CommandObserver } from '../command-observation.js'
 import {
   capActionLabel,
   createCapActionCensus,
@@ -337,6 +343,17 @@ export interface LocalChildRegistryOptions {
    * MUST NOT throw; the call site catches anyway (see the record site).
    */
   readonly capUsageObserver?: (obs: CapUsageCallRecord) => void
+  /**
+   * Told of every device command (a vocabulary action of a device-scope cap) a
+   * child issues, with the addon the SOCKET belongs to as the actor (D1022).
+   * An `origin` claim in the frame adds the detail of why (an action run, a
+   * scheduler); it is re-parsed here and never names the caller. Args are
+   * decoded only for a call that is a command (D448), so every other call pays
+   * one Set lookup. The blind spots are the ones of {@link capUsageObserver}:
+   * hub-main in-process addons are reported by their own client, not here.
+   * MUST NOT throw; the call site catches anyway.
+   */
+  readonly commandObserver?: CommandObserver
 }
 
 interface ChildEntry {
@@ -406,6 +423,8 @@ export class LocalChildRegistry {
   private readonly deviceCallRedirect?: DeviceCallRedirectHook
   /** See {@link LocalChildRegistryOptions.capUsageObserver}. */
   private readonly capUsageObserver?: (obs: CapUsageCallRecord) => void
+  /** See {@link LocalChildRegistryOptions.commandObserver}. */
+  private readonly commandObserver?: CommandObserver
   /** Tracks capNames already logged as UDS-routed; one INFO line per capName per process. */
   private readonly egressRoutedCaps = new Set<string>()
   /** Per-child event fan-out counters (sent / suppressed). */
@@ -464,6 +483,7 @@ export class LocalChildRegistry {
       this.claimedStatus = opts.claimedStatus
       this.deviceCallRedirect = opts.deviceCallRedirect
       this.capUsageObserver = opts.capUsageObserver
+      this.commandObserver = opts.commandObserver
     } else {
       // Positional form: LocalChildRegistry(server, onUnownedCall?)
       this.server = serverOrOptions as LocalTransportServer
@@ -740,6 +760,31 @@ export class LocalChildRegistry {
    * registry swallows too, and BOTH matter: this catch also covers a sink that
    * is not the registry.
    */
+  private recordCommand(
+    callerChildId: string | null,
+    out: CapCallOutMessage,
+    materialise: () => unknown,
+  ): void {
+    const sink = this.commandObserver
+    if (sink === undefined || callerChildId === null) return
+    if (!isCommand(out.capName, out.method)) return
+    try {
+      const claim = CommandOriginClaimSchema.safeParse(out.origin)
+      reportCommand(sink, {
+        capName: out.capName,
+        method: out.method,
+        args: materialise(),
+        actor: addonCommandActor(
+          callerChildId,
+          claim.success ? claim.data : undefined,
+          this.ownNodeId,
+        ),
+      })
+    } catch {
+      // Observation is best-effort and never affects the caller.
+    }
+  }
+
   private recordCapUsage(
     callerChildId: string | null,
     providerChildId: string | null,
@@ -1250,6 +1295,9 @@ export class LocalChildRegistry {
           // the RUNNER, which is the identity actually known at this layer.
           ...(callerStamp !== null ? { callerAddonId: callerStamp } : {}),
         })
+        // A device command is reported once, before any route below answers or
+        // redirects it (D1022); `getStatus` and every other call is not a command.
+        this.recordCommand(childId, out, materialise)
         // `getStatus` of a CLAIMED cap — the hub mirror answers (D663, S3),
         // before any name-based resolution below. See
         // `LocalChildRegistryOptions.claimedStatus`. The device is the lifted

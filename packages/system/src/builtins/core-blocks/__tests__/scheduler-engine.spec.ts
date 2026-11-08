@@ -64,6 +64,14 @@ const MIDNIGHT = at('2026-03-09T23:00:00Z')
 const h = (hh: number, mm = 0): number => MIDNIGHT + (hh * 60 + mm) * 60_000
 
 describe('scheduler engine — edges and the queue', () => {
+  it('states which scheduler asked for the device call (D1022)', async () => {
+    const w = await harness({ start: MIDNIGHT, devices: [{ id: 1 }] })
+    const id = await w.create(scheduler([profile([point('a', 8, 0, 'edge', [turn(true, 1)])])]))
+    await w.engine.start()
+    await w.advanceTo(h(9))
+    expect(w.calls.map((c) => c.origin)).toEqual([{ kind: 'scheduler', schedulerId: id }])
+  })
+
   it('runs an edge at its time, on ONE timer across schedulers, in time order', async () => {
     const w = await harness({
       start: MIDNIGHT,

@@ -65,6 +65,11 @@ import {
   resolveMethodAuth,
 } from '@camstack/types'
 import { z } from 'zod'
+import {
+  commandActorFromContext,
+  runObservedCommand,
+  type CommandObserver,
+} from './command-observation.js'
 
 /**
  * A tRPC-procedure-like builder. Mirrors the chainable surface the
@@ -197,6 +202,14 @@ export interface CapRouterServices {
    * to `badRequest` so the call still fails closed instead of answering 200.
    */
   readonly methodNotFound?: (capName: string, method: string) => never
+  /**
+   * Told of every device command (a vocabulary action of a device-scope cap)
+   * this mount serves, with the principal from the request context and an
+   * outcome that settles with the call (D1022). OPTIONAL for framework-live-update
+   * version skew: an older server hands a services object without it and the
+   * mount simply reports nothing. Telemetry — it never affects the call.
+   */
+  readonly commandObserver?: CommandObserver
 }
 
 /** A method-schema with the routing flags the builder reads. */
@@ -322,6 +335,33 @@ function invokeCapMethod(
     ((cap: string, m: string): never =>
       services.badRequest(`Capability "${cap}" has no method "${m}"`))
   return raise(capName, method.name)
+}
+
+/**
+ * Invoke the provider, reporting the call first when it is a device command and
+ * the request carries a principal (D1022).
+ */
+function invokeObserved(
+  def: CapabilityDefinition,
+  ctx: unknown,
+  provider: ResolvedProvider,
+  method: BuiltMethod,
+  payload: unknown,
+  isCollection: boolean,
+  services: CapRouterServices,
+): unknown {
+  const invoke = (): unknown =>
+    invokeCapMethod(provider, method, payload, def.name, isCollection, services)
+  if (services.commandObserver === undefined || def.scope !== 'device' || method.kind !== 'mutation') {
+    return invoke()
+  }
+  const actor = commandActorFromContext(ctx)
+  if (actor === null) return invoke()
+  return runObservedCommand(
+    services.commandObserver,
+    { capName: def.name, method: method.name, args: payload, actor },
+    invoke,
+  )
 }
 
 // ── Caller-identity injection (D-1, notification-center P0) ─────────────
@@ -593,7 +633,7 @@ export function buildOneCapRouter(
             const payload = method.callerRequired
               ? injectCaller(rest, ctx, capName, method.name, services)
               : rest
-            return invokeCapMethod(provider, method, payload, capName, isCollection, services)
+            return invokeObserved(def, ctx, provider, method, payload, isCollection, services)
           }
           return resolveAndInvoke()
         }
@@ -603,7 +643,7 @@ export function buildOneCapRouter(
         const payload = method.callerRequired
           ? injectCaller(rest, ctx, capName, method.name, services)
           : rest
-        return invokeCapMethod(provider, method, payload, capName, isCollection, services)
+        return invokeObserved(def, ctx, provider, method, payload, isCollection, services)
       })
       continue
     }

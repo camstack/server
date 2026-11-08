@@ -9,6 +9,7 @@
  * after a failure, or after an abort, are `not-run` with the reason.
  */
 
+import type { CommandOriginClaim } from '../audit/device-transition.js'
 import type { ActionTarget, ResolvedTarget, ResolveOrigin } from './action-target.js'
 import { type ActionStep, normalizeCapStep } from './recipe.js'
 import {
@@ -210,6 +211,8 @@ export interface CapCall {
   readonly cap: string
   readonly method: string
   readonly args: Readonly<Record<string, unknown>>
+  /** Why the call is made (an action run, a scheduler); recorded in the device transition audit (D1022). */
+  readonly origin?: CommandOriginClaim
 }
 
 /** How many devices of one step are driven at once. */

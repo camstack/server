@@ -19,6 +19,7 @@ import {
   EventCategory,
   type IEventBus,
   type IScopedLogger,
+  commandOrigin,
   kebabToCamel,
   type RecordsAccess,
 } from '@camstack/types'
@@ -96,7 +97,13 @@ export function invokeCapOver(api: () => AddonApi | undefined): (call: CapCall) 
     if (typeof mutate !== 'function') {
       throw new Error(`no such device method: ${call.cap}.${call.method}`)
     }
-    await Reflect.apply(mutate, procedure, [{ ...call.args, deviceId: call.deviceId }])
+    const input = { ...call.args, deviceId: call.deviceId }
+    // The origin rides out-of-band in the call's context (D1022), never in the args.
+    await Reflect.apply(
+      mutate,
+      procedure,
+      call.origin === undefined ? [input] : [input, commandOrigin(call.origin)],
+    )
   }
 }
 

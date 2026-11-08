@@ -459,6 +459,7 @@ export class LocalChildClient {
       // this child's own tRPC chain, which never sees this call) resolving a
       // wrapper cap NAME back to the wrapper that is asking.
       ...(input.native === true ? { native: true } : {}),
+      ...(input.origin !== undefined ? { origin: input.origin } : {}),
       ...(input.actingAddonId !== undefined ? { actingAddonId: input.actingAddonId } : {}),
     }
     if (this.parentRawForward && input.args !== undefined) {

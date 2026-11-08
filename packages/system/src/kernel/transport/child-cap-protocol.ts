@@ -1,5 +1,6 @@
 import type {
   ChildCustomActionCatalogs,
+  CommandOriginClaim,
   CustomActionCaller,
   IReadinessRegistryRecord,
   LogLevel,
@@ -121,6 +122,13 @@ export interface CapCallOutMessage {
    */
   readonly nodeId?: string
   /**
+   * Why a device command is being issued (an action run, a scheduler): a CLAIM by
+   * the calling addon, carried out-of-band like the node pin and recorded as audit
+   * detail only (D1022). The parent re-parses it and takes the caller's identity
+   * from the connection, never from here.
+   */
+  readonly origin?: CommandOriginClaim
+  /**
    * "Resolve the per-device NATIVE provider for this cap, never a wrapper."
    * Set by `ctx.getNativeProvider(...)` in a forked runner.
    *
@@ -195,6 +203,8 @@ export interface CapCallMessage {
   readonly deviceId?: number
   /** Optional per-call node pin (out-of-band routing hint; see {@link CapCallOutMessage.nodeId}). */
   readonly nodeId?: string
+  /** Optional command origin claim (see {@link CapCallOutMessage.origin}); child → parent leg only. */
+  readonly origin?: CommandOriginClaim
   /**
    * Out-of-band PROVIDER-selection hint: the addonId of the provider the hub
    * resolved for this call. Needed for GROUPED runners where two co-located

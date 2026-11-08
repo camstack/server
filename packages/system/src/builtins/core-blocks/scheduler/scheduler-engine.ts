@@ -519,7 +519,10 @@ export class SchedulerEngine {
         throw new OverriddenError(refusal)
       }
       try {
-        await this.deps.host.invokeCap(call)
+        await this.deps.host.invokeCap({
+          ...call,
+          origin: { kind: 'scheduler', schedulerId: scheduler.id },
+        })
       } catch (err: unknown) {
         failedCalls += 1
         throw err

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { CAP_NODE_PIN_CONTEXT_KEY, nodePin, readNodePin, toNodeId } from '../cap-call-context.js'
+import {
+  CAP_COMMAND_ORIGIN_CONTEXT_KEY,
+  CAP_NODE_PIN_CONTEXT_KEY,
+  commandOrigin,
+  nodePin,
+  readCommandOrigin,
+  readNodePin,
+  toNodeId,
+} from '../cap-call-context.js'
 
 describe('nodePin', () => {
   it('reduces a RUNNER id to the node id', () => {
@@ -26,5 +34,25 @@ describe('nodePin', () => {
 
   it('still writes the key the transport reads', () => {
     expect(Object.keys(nodePin('hub/x').context)).toEqual([CAP_NODE_PIN_CONTEXT_KEY])
+  })
+})
+
+describe('commandOrigin', () => {
+  const claim = { kind: 'action', actionId: 'a1', runId: 'r1' } as const
+
+  it('round-trips a claim through the context', () => {
+    expect(readCommandOrigin(commandOrigin(claim).context)).toEqual(claim)
+  })
+
+  it('rides beside a node pin in one context', () => {
+    const options = commandOrigin(claim, nodePin('hub/x'))
+    expect(readNodePin(options.context)).toBe('hub')
+    expect(readCommandOrigin(options.context)).toEqual(claim)
+  })
+
+  it('drops a value that is not a well-formed claim', () => {
+    expect(readCommandOrigin({ [CAP_COMMAND_ORIGIN_CONTEXT_KEY]: { kind: 'user', userId: 'x' } })).toBeUndefined()
+    expect(readCommandOrigin({ [CAP_COMMAND_ORIGIN_CONTEXT_KEY]: 'action' })).toBeUndefined()
+    expect(readCommandOrigin(undefined)).toBeUndefined()
   })
 })

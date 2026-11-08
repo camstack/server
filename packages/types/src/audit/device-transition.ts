@@ -105,3 +105,23 @@ export const CommandOriginClaimSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('scheduler'), schedulerId: z.string() }),
 ])
 export type CommandOriginClaim = z.infer<typeof CommandOriginClaimSchema>
+
+/** The actor of a command: every kind but `device`, which is what nobody asked for. */
+export type CommandActor = Exclude<TransitionActor, { readonly kind: 'device' }>
+
+/**
+ * One device command as the kernel saw it leave its caller (D1022). Built at the
+ * two seams that know the caller (the hub tRPC mount and the UDS parent) and
+ * handed to the hub mirror's correlator. `args` are the call's own arguments,
+ * still unredacted: the recorder redacts and caps them before they are stored.
+ */
+export interface DeviceCommandObservation {
+  readonly deviceId: number
+  readonly capName: string
+  readonly method: string
+  readonly args: Readonly<Record<string, unknown>>
+  readonly actor: CommandActor
+  readonly at: number
+  /** Present where the seam can see the call settle (the hub tRPC mount): a rejection means `failed`. */
+  readonly outcome?: Promise<void>
+}

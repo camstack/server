@@ -20,6 +20,8 @@
  *   await api.platformProbe.getCapabilities.query(undefined, nodePin(nodeId))
  */
 
+import { CommandOriginClaimSchema, type CommandOriginClaim } from './audit/device-transition.js'
+
 /** tRPC `op.context` key carrying a per-call node pin. */
 export const CAP_NODE_PIN_CONTEXT_KEY = '__camstackNodePin'
 
@@ -74,4 +76,37 @@ export function readNodePin(context: unknown): string | undefined {
   if (context === null || typeof context !== 'object') return undefined
   const value: unknown = Reflect.get(context, CAP_NODE_PIN_CONTEXT_KEY)
   return typeof value === 'string' ? value : undefined
+}
+
+/** tRPC `op.context` key carrying a per-call command origin claim (D1022). */
+export const CAP_COMMAND_ORIGIN_CONTEXT_KEY = '__camstackCommandOrigin'
+
+/** The tRPC request-options shape produced by {@link commandOrigin}. */
+export interface CommandOriginRequestOptions {
+  readonly context: Readonly<Record<string, string | CommandOriginClaim>>
+}
+
+/**
+ * Build the tRPC request options that state WHY a device command is being issued
+ * (an action run, a scheduler). Pass as the second argument to `.mutate(input, …)`;
+ * `base` (a {@link nodePin}) is kept, so both ride in one context.
+ *
+ * It is a claim about the call, never about the caller: the transport stamps WHO
+ * the caller is (the addon id) and the audit records the claim as detail only.
+ */
+export function commandOrigin(
+  claim: CommandOriginClaim,
+  base?: { readonly context: Readonly<Record<string, string | CommandOriginClaim>> },
+): CommandOriginRequestOptions {
+  return { context: { ...(base?.context ?? {}), [CAP_COMMAND_ORIGIN_CONTEXT_KEY]: claim } }
+}
+
+/**
+ * Read a command origin claim out of a tRPC `op.context` (transport side). A value
+ * that is not a well-formed claim is dropped: the claim is detail, never trusted.
+ */
+export function readCommandOrigin(context: unknown): CommandOriginClaim | undefined {
+  if (context === null || typeof context !== 'object') return undefined
+  const parsed = CommandOriginClaimSchema.safeParse(Reflect.get(context, CAP_COMMAND_ORIGIN_CONTEXT_KEY))
+  return parsed.success ? parsed.data : undefined
 }

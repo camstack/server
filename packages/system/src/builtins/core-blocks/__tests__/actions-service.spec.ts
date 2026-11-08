@@ -144,7 +144,16 @@ describe('actions — internal actions', () => {
       caller: ADMIN,
     })
     expect(result.outcome).toBe('ran')
-    expect(w.calls).toEqual([{ deviceId: 616, cap: 'siren', method: 'on', args: { volume: 9 } }])
+    // The run states why the device was asked (D1022): this action, this run.
+    expect(w.calls).toEqual([
+      {
+        deviceId: 616,
+        cap: 'siren',
+        method: 'on',
+        args: { volume: 9 },
+        origin: { kind: 'action', actionId: action.id, runId: result.runId },
+      },
+    ])
     const { traces } = await w.service.getTraces({ actionId: action.id })
     expect(traces).toHaveLength(1)
     expect(traces[0]?.steps.map((s) => s.path)).toEqual(['steps.0'])
@@ -252,9 +261,15 @@ describe('actions — a number tied to a quantity (D972)', () => {
     expect(warnings ?? []).toEqual([])
     const stored = await w.store.get(action.id)
     expect(stored?.steps).toEqual(action.steps)
-    await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    const ran = await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
     expect(w.calls).toEqual([
-      { deviceId: 41, cap: 'pet-feeder', method: 'feed', args: { grams: 100 } },
+      {
+        deviceId: 41,
+        cap: 'pet-feeder',
+        method: 'feed',
+        args: { grams: 100 },
+        origin: { kind: 'action', actionId: action.id, runId: ran.runId },
+      },
     ])
   })
 

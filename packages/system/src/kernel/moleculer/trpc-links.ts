@@ -26,6 +26,7 @@
 import {
   CALLER_STAMPED_CAPABILITIES,
   COLLECTION_ARRAY_METHODS,
+  readCommandOrigin,
   readNodePin,
   withCapInputDefaults,
 } from '@camstack/types/addon'
@@ -1022,6 +1023,8 @@ export function ipcParentLink<TRouter extends AnyRouter>(
       // it to the resolver so a singleton/in-process cap can be served by a
       // SPECIFIC node (e.g. a remote agent's own platform-probe), not the hub.
       const pinnedNodeId = readNodePin(op.context)
+      // The same lift for a command origin claim (D1022): a claim about WHY, never WHO.
+      const origin = readCommandOrigin(op.context)
 
       const capCallInput: CapCallInput = {
         capName: parsed.capName,
@@ -1029,6 +1032,7 @@ export function ipcParentLink<TRouter extends AnyRouter>(
         args: op.input,
         ...(deviceId !== undefined ? { deviceId } : {}),
         ...(pinnedNodeId !== undefined ? { nodeId: pinnedNodeId } : {}),
+        ...(origin !== undefined ? { origin } : {}),
       }
 
       return observable((observer) => {
