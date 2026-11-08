@@ -8,12 +8,22 @@ import { describe, expect, it } from 'vitest'
 import {
   applyDraft,
   BLANK_ACTION,
+  BLANK_SOURCE_DRAFT,
   bindableRoles,
+  boundStepRoles,
   checkForSave,
   clearBinding,
+  deleteSource,
+  draftIssues,
+  draftOfSource,
   importSmartIr,
+  moveSource,
+  newSourceId,
   setBinding,
+  setStepDelay,
+  sourceIssues,
   transmitterOf,
+  upsertSource,
   withTransmitter,
 } from '../remote-config-model'
 
@@ -157,5 +167,172 @@ describe('remote-config-model: SmartIR import', () => {
     })
     expect(importSmartIr('{ nope', 7)).toEqual({ status: 'refused', reason: 'not-json' })
     expect(importSmartIr('{"hello":1}', 7)).toEqual({ status: 'refused', reason: 'not-smartir' })
+  })
+})
+
+describe('remote-config-model: sources', () => {
+  const bound = (roles: readonly string[]): RemoteConfig => ({
+    ...EMPTY_REMOTE_CONFIG,
+    bindings: Object.fromEntries(roles.map((r) => [r, { action: SWITCH_ACTION }])),
+  })
+  const WITH_KEYS = bound([
+    'input',
+    'down',
+    'ok',
+    ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => `digit_${d}`),
+  ])
+  const channel = (name: string, number: string) => ({
+    ...BLANK_SOURCE_DRAFT,
+    kind: 'digits' as const,
+    name,
+    number,
+  })
+
+  it('adds a source at the end with a slug id, and the config still parses', () => {
+    const one = upsertSource(WITH_KEYS, channel('Rai 1', '1'), null)
+    const two = upsertSource(one, channel('Rai 2', '2'), null)
+    expect(two.sources.map((s) => s.id)).toEqual(['rai-1', 'rai-2'])
+    expect(checkForSave(two).config).not.toBeNull()
+  })
+
+  it('keeps an id unique when two names slug the same', () => {
+    const one = upsertSource(WITH_KEYS, channel('Rai 1', '1'), null)
+    expect(newSourceId(one, 'rai  1!')).toBe('rai-1-2')
+    expect(newSourceId(WITH_KEYS, '***')).toBe('source')
+  })
+
+  it('edits in place and keeps the id on a rename', () => {
+    const one = upsertSource(WITH_KEYS, channel('Rai 1', '1'), null)
+    const renamed = upsertSource(one, { ...channel('Rai Uno', '1') }, 'rai-1')
+    expect(renamed.sources).toEqual([{ id: 'rai-1', kind: 'digits', name: 'Rai Uno', number: '1' }])
+    expect(draftOfSource(renamed.sources[0]!)).toMatchObject({
+      kind: 'digits',
+      name: 'Rai Uno',
+      number: '1',
+    })
+  })
+
+  it('switches an existing source to a sequence', () => {
+    const one = upsertSource(WITH_KEYS, channel('HDMI', '1'), null)
+    const seq = upsertSource(
+      one,
+      { ...BLANK_SOURCE_DRAFT, kind: 'sequence', name: 'HDMI', steps: ['input', 'down', 'ok'] },
+      'hdmi',
+    )
+    expect(seq.sources[0]).toEqual({
+      id: 'hdmi',
+      kind: 'sequence',
+      name: 'HDMI',
+      steps: ['input', 'down', 'ok'],
+    })
+  })
+
+  it('deletes by id and leaves the rest', () => {
+    const two = upsertSource(
+      upsertSource(WITH_KEYS, channel('A', '1'), null),
+      channel('B', '2'),
+      null,
+    )
+    expect(deleteSource(two, 'a').sources.map((s) => s.id)).toEqual(['b'])
+  })
+
+  it('reorders one place and stops at the ends', () => {
+    let c = WITH_KEYS
+    for (const [n, d] of [
+      ['A', '1'],
+      ['B', '2'],
+      ['C', '3'],
+    ] as const) {
+      c = upsertSource(c, channel(n, d), null)
+    }
+    expect(moveSource(c, 'c', -1).sources.map((s) => s.id)).toEqual(['a', 'c', 'b'])
+    expect(moveSource(c, 'a', 1).sources.map((s) => s.id)).toEqual(['b', 'a', 'c'])
+    expect(moveSource(c, 'a', -1)).toBe(c)
+    expect(moveSource(c, 'c', 1)).toBe(c)
+    expect(moveSource(c, 'zzz', 1)).toBe(c)
+  })
+
+  it('offers only bound roles as steps', () => {
+    expect(boundStepRoles(WITH_KEYS)).toEqual([
+      'input',
+      'down',
+      'ok',
+      'digit_0',
+      'digit_1',
+      'digit_2',
+      'digit_3',
+      'digit_4',
+      'digit_5',
+      'digit_6',
+      'digit_7',
+      'digit_8',
+      'digit_9',
+    ])
+    expect(boundStepRoles(EMPTY_REMOTE_CONFIG)).toEqual([])
+  })
+
+  it('maps the schema issues to the field they name', () => {
+    expect(draftIssues(WITH_KEYS, channel('Rai 1', '1'), null)).toEqual([])
+    expect(draftIssues(WITH_KEYS, channel('', '1'), null).map((i) => i.field)).toEqual(['name'])
+    expect(draftIssues(WITH_KEYS, channel('Rai', '1234567'), null).map((i) => i.field)).toEqual([
+      'number',
+    ])
+    const seq = { ...BLANK_SOURCE_DRAFT, kind: 'sequence' as const, name: 'Menu' }
+    expect(draftIssues(WITH_KEYS, seq, null).map((i) => i.field)).toEqual(['steps'])
+  })
+
+  it('reports an unbound step, a duplicate name and a duplicate number from the schema', () => {
+    const seq = {
+      ...BLANK_SOURCE_DRAFT,
+      kind: 'sequence' as const,
+      name: 'Menu',
+      steps: ['menu'],
+    }
+    const issue = draftIssues(WITH_KEYS, seq, null)[0]
+    expect(issue).toMatchObject({ field: 'steps', code: 'custom' })
+    expect(issue?.message).toContain('not bound')
+
+    const one = upsertSource(WITH_KEYS, channel('Rai 1', '1'), null)
+    expect(draftIssues(one, channel('RAI 1', '2'), null).map((i) => i.field)).toEqual(['name'])
+    expect(draftIssues(one, channel('Other', '1'), null).map((i) => i.field)).toEqual(['number'])
+    // a name that is another source's channel number reaches two sources
+    expect(
+      draftIssues(
+        one,
+        { ...BLANK_SOURCE_DRAFT, kind: 'sequence', name: '1', steps: ['ok'] },
+        null,
+      ).map((i) => i.field),
+    ).toContain('name')
+  })
+
+  it("does not blame a source for another source's problem, and finds a source broken by clearBinding", () => {
+    const one = upsertSource(
+      WITH_KEYS,
+      { ...BLANK_SOURCE_DRAFT, kind: 'sequence', name: 'Menu', steps: ['ok'] },
+      null,
+    )
+    expect(sourceIssues(one).bySource.size).toBe(0)
+    const broken = clearBinding(one, 'ok')
+    expect(sourceIssues(broken).bySource.get(0)?.[0]).toMatchObject({ field: 'steps' })
+    expect(checkForSave(broken).config).toBeNull()
+    expect(draftIssues(broken, channel('X', '9'), null)).toEqual([])
+  })
+
+  it('refuses a channel whose digit buttons are not bound, on the steps field', () => {
+    const noDigits = bound(['ok'])
+    expect(
+      draftIssues(noDigits, channel('Rai 1', '12'), null).map((i) => [i.field, i.code]),
+    ).toEqual([
+      ['steps', 'custom'],
+      ['steps', 'custom'],
+    ])
+  })
+
+  it('validates the step delay against the schema bounds', () => {
+    expect(sourceIssues(setStepDelay(WITH_KEYS, 500)).stepDelay).toBeNull()
+    expect(sourceIssues(setStepDelay(WITH_KEYS, 50)).stepDelay).not.toBeNull()
+    expect(sourceIssues(setStepDelay(WITH_KEYS, 3001)).stepDelay).not.toBeNull()
+    expect(sourceIssues(setStepDelay(WITH_KEYS, Number.NaN)).stepDelay).not.toBeNull()
+    expect(checkForSave(setStepDelay(WITH_KEYS, 50)).config).toBeNull()
   })
 })

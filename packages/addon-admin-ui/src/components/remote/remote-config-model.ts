@@ -17,9 +17,11 @@ import {
   RemoteConfigSchema,
   type RemoteCustomButton,
   type RemoteLayoutPayload,
-  smartIrDraft,
+  type RemoteSource,
+  type RemoteSourceKind,
   type SmartIrDraft,
   type SmartIrSkipped,
+  smartIrDraft,
 } from '@camstack/types'
 import { humanRole } from './layout-model'
 
@@ -186,4 +188,154 @@ export function applyDraft(config: RemoteConfig, draft: SmartIrDraft): RemoteCon
     ],
     power: { mode: draft.power.mode },
   }
+}
+
+// ---------------------------------------------------------------------------
+// Sources (planning#460): the list a media player's source picker offers. Every
+// rule lives in `RemoteConfigSchema`; the editor never restates one — it builds
+// the config the operator is asking for, parses the WHOLE config and shows the
+// schema's own issues next to the field they name.
+// ---------------------------------------------------------------------------
+
+/** What the add / edit dialog holds: every field of both kinds, so a kind switch loses nothing. */
+export interface SourceDraft {
+  readonly kind: RemoteSourceKind
+  readonly name: string
+  /** The channel number, as typed (`digits`). */
+  readonly number: string
+  /** The roles pressed in order (`sequence`). */
+  readonly steps: readonly string[]
+}
+
+export const BLANK_SOURCE_DRAFT: SourceDraft = { kind: 'digits', name: '', number: '', steps: [] }
+
+export function draftOfSource(source: RemoteSource): SourceDraft {
+  return source.kind === 'digits'
+    ? { ...BLANK_SOURCE_DRAFT, kind: 'digits', name: source.name, number: source.number }
+    : { ...BLANK_SOURCE_DRAFT, kind: 'sequence', name: source.name, steps: source.steps }
+}
+
+/** The roles a sequence may press: the ones with a binding, never an unbound role. */
+export function boundStepRoles(config: RemoteConfig): readonly string[] {
+  return Object.keys(config.bindings)
+}
+
+const SOURCE_ID_MAX = 48
+
+/** A lowercase slug of the name that no other source of the config already uses. */
+export function newSourceId(config: RemoteConfig, name: string): string {
+  const slug = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, SOURCE_ID_MAX - 4)
+    .replace(/-+$/g, '')
+  const base = slug === '' ? 'source' : slug
+  const taken = new Set(config.sources.map((s) => s.id))
+  let id = base
+  for (let n = 2; taken.has(id); n++) id = `${base}-${n}`
+  return id
+}
+
+function sourceOfDraft(draft: SourceDraft, id: string): RemoteSource {
+  return draft.kind === 'digits'
+    ? { id, kind: 'digits', name: draft.name, number: draft.number }
+    : { id, kind: 'sequence', name: draft.name, steps: [...draft.steps] }
+}
+
+/**
+ * The config with the draft added (`id` null: a new source at the end, its id a
+ * slug of the name) or replacing the source with that id. An id never changes
+ * on rename. The result is NOT validated; `draftIssues` and `checkForSave` do.
+ */
+export function upsertSource(
+  config: RemoteConfig,
+  draft: SourceDraft,
+  id: string | null,
+): RemoteConfig {
+  if (id === null) {
+    const added = sourceOfDraft(draft, newSourceId(config, draft.name))
+    return { ...config, sources: [...config.sources, added] }
+  }
+  return {
+    ...config,
+    sources: config.sources.map((s) => (s.id === id ? sourceOfDraft(draft, id) : s)),
+  }
+}
+
+export function deleteSource(config: RemoteConfig, id: string): RemoteConfig {
+  return { ...config, sources: config.sources.filter((s) => s.id !== id) }
+}
+
+/** Move a source one place up (`-1`) or down (`1`); the ends stay put. */
+export function moveSource(config: RemoteConfig, id: string, delta: -1 | 1): RemoteConfig {
+  const from = config.sources.findIndex((s) => s.id === id)
+  const to = from + delta
+  if (from < 0 || to < 0 || to >= config.sources.length) return config
+  const next = [...config.sources]
+  const [moved] = next.splice(from, 1)
+  if (moved === undefined) return config
+  next.splice(to, 0, moved)
+  return { ...config, sources: next }
+}
+
+export function setStepDelay(config: RemoteConfig, stepDelayMs: number): RemoteConfig {
+  return { ...config, stepDelayMs }
+}
+
+export type SourceField = 'id' | 'name' | 'number' | 'steps' | 'kind'
+
+export interface SourceIssue {
+  readonly field: SourceField
+  /** The Zod issue code (`custom`, `too_small`, `invalid_format`, …). */
+  readonly code: string
+  /** The schema's own message; shown as is for a `custom` rule. */
+  readonly message: string
+}
+
+export interface SourceIssues {
+  /** Issues per source index. */
+  readonly bySource: ReadonlyMap<number, readonly SourceIssue[]>
+  /** An issue on `stepDelayMs`, or null. */
+  readonly stepDelay: SourceIssue | null
+}
+
+const SOURCE_FIELDS: readonly SourceField[] = ['id', 'name', 'number', 'steps', 'kind']
+
+function isSourceField(value: unknown): value is SourceField {
+  return SOURCE_FIELDS.some((f) => f === value)
+}
+
+/** Parse the whole config and keep the issues that name a source or the step delay. */
+export function sourceIssues(config: RemoteConfig): SourceIssues {
+  const parsed = RemoteConfigSchema.safeParse(config)
+  const bySource = new Map<number, SourceIssue[]>()
+  let stepDelay: SourceIssue | null = null
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) {
+      const [head, index, field] = issue.path
+      if (head === 'stepDelayMs') {
+        stepDelay = { field: 'kind', code: issue.code, message: issue.message }
+      } else if (head === 'sources' && typeof index === 'number') {
+        // A step issue deeper in the array (`steps`, 3) still belongs to `steps`.
+        const named = isSourceField(field) ? field : 'kind'
+        const list = bySource.get(index) ?? []
+        list.push({ field: named, code: issue.code, message: issue.message })
+        bySource.set(index, list)
+      }
+    }
+  }
+  return { bySource, stepDelay }
+}
+
+/** The issues the schema raises for the source this draft would add or replace. */
+export function draftIssues(
+  config: RemoteConfig,
+  draft: SourceDraft,
+  id: string | null,
+): readonly SourceIssue[] {
+  const next = upsertSource(config, draft, id)
+  const index = id === null ? next.sources.length - 1 : next.sources.findIndex((s) => s.id === id)
+  return sourceIssues(next).bySource.get(index) ?? []
 }

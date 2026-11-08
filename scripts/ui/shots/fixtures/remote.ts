@@ -10,8 +10,8 @@ import {
   insertComponent,
   type RemoteLayoutPayload,
 } from '@camstack/types'
-import customizeArea from './customize'
 import { defineFixtures } from './_define'
+import customizeArea from './customize'
 
 const TV_ID = 901
 const BOARD_ID = 902
@@ -193,6 +193,11 @@ const REMOTE_CONFIG = {
     'custom:hdmi_1': irBinding('hdmi_1'),
   },
   customButtons: [{ key: 'hdmi_1', name: 'HDMI 1' }],
+  sources: [
+    { id: 'hdmi-1', kind: 'sequence', name: 'HDMI 1', steps: ['custom:hdmi_1'] },
+    { id: 'quiet-hdmi', kind: 'sequence', name: 'HDMI 1, muted', steps: ['mute', 'custom:hdmi_1'] },
+  ],
+  stepDelayMs: 500,
   power: { mode: 'toggle' },
 }
 

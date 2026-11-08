@@ -52,6 +52,7 @@ import {
 } from './remote-config-model'
 import { RemoteGrid } from './RemoteGrid'
 import { SmartIrImportPanel } from './SmartIrImportPanel'
+import { SourcesPanel } from './SourcesPanel'
 
 export interface RemoteConfigDialogProps {
   readonly device: DeviceInfo
@@ -327,6 +328,13 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
             <EditTemplateButton templateId={config.layoutTemplateId} />
           </div>
         )}
+        <SourcesPanel
+          config={config}
+          onChange={setConfig}
+          roleLabel={(role) =>
+            roles.find((r) => r.role === role)?.name ?? vocabRoleName(role, i18n.language)
+          }
+        />
         <section className="space-y-2">
           <h3 className="text-sm font-medium text-foreground">{t('remote.import.title')}</h3>
           <SmartIrImportPanel

@@ -11340,6 +11340,58 @@
       "open": "Remote",
       "title": "Remote of {{name}}",
       "noLayout": "This remote has no layout yet: pick a template in Customize."
+    },
+    "sources": {
+      "title": "Sources",
+      "hint": "What the source picker of Alexa and the viewer offers. A button is never a source until you declare it here.",
+      "empty": "No sources declared — Alexa and the viewer will show none.",
+      "add": "Add source",
+      "edit": "Edit source",
+      "delete": "Delete source",
+      "moveUp": "Move source up",
+      "moveDown": "Move source down",
+      "col": {
+        "name": "Source",
+        "detail": "Channel or steps",
+        "actions": "Actions"
+      },
+      "kind": {
+        "digits": "Channel number",
+        "sequence": "Button sequence"
+      },
+      "dialog": {
+        "addTitle": "Add source",
+        "editTitle": "Edit source",
+        "kind": "Kind",
+        "name": "Name",
+        "number": "Channel number",
+        "numberHint": "Presses the digit buttons of the number in order, so each digit must be bound.",
+        "steps": "Steps",
+        "stepsHint": "Pressed in this order.",
+        "stepsEmpty": "No steps yet.",
+        "pickStep": "Pick a bound button",
+        "addStep": "Add step",
+        "noBound": "Bind a button first — only bound buttons can be a step.",
+        "stepUp": "Move step up",
+        "stepDown": "Move step down",
+        "stepRemove": "Remove step"
+      },
+      "stepDelay": "Pause between steps (ms)",
+      "stepDelayHint": "How long the television needs between two presses of a source.",
+      "error": {
+        "stepDelay": "Enter a whole number from {{min}} to {{max}}.",
+        "name": {
+          "too_small": "Give the source a name.",
+          "too_big": "The name is too long (60 characters at most)."
+        },
+        "number": {
+          "invalid_format": "Enter the channel number: 1 to 6 digits."
+        },
+        "steps": {
+          "too_small": "Add at least one step.",
+          "too_big": "A sequence has at most 16 steps."
+        }
+      }
     }
   },
   "commands": {

@@ -11362,6 +11362,58 @@
       "open": "Telecomando",
       "title": "Telecomando di {{name}}",
       "noLayout": "Questo telecomando non ha ancora un layout: scegli un modello in Personalizza."
+    },
+    "sources": {
+      "title": "Sorgenti",
+      "hint": "Cosa offrono il selettore di Alexa e il viewer. Un pulsante non è una sorgente finché non la dichiari qui.",
+      "empty": "Nessuna sorgente dichiarata — Alexa e il viewer non ne mostreranno.",
+      "add": "Aggiungi sorgente",
+      "edit": "Modifica sorgente",
+      "delete": "Elimina sorgente",
+      "moveUp": "Sposta la sorgente su",
+      "moveDown": "Sposta la sorgente giù",
+      "col": {
+        "name": "Sorgente",
+        "detail": "Canale o passi",
+        "actions": "Azioni"
+      },
+      "kind": {
+        "digits": "Numero di canale",
+        "sequence": "Sequenza di pulsanti"
+      },
+      "dialog": {
+        "addTitle": "Aggiungi sorgente",
+        "editTitle": "Modifica sorgente",
+        "kind": "Tipo",
+        "name": "Nome",
+        "number": "Numero di canale",
+        "numberHint": "Preme in ordine i pulsanti delle cifre del numero, quindi ogni cifra deve essere associata.",
+        "steps": "Passi",
+        "stepsHint": "Premuti in quest'ordine.",
+        "stepsEmpty": "Nessun passo.",
+        "pickStep": "Scegli un pulsante associato",
+        "addStep": "Aggiungi passo",
+        "noBound": "Associa prima un pulsante — solo i pulsanti associati possono essere un passo.",
+        "stepUp": "Sposta il passo su",
+        "stepDown": "Sposta il passo giù",
+        "stepRemove": "Rimuovi passo"
+      },
+      "stepDelay": "Pausa tra i passi (ms)",
+      "stepDelayHint": "Quanto tempo serve al televisore tra due pressioni di una sorgente.",
+      "error": {
+        "stepDelay": "Inserisci un numero intero da {{min}} a {{max}}.",
+        "name": {
+          "too_small": "Dai un nome alla sorgente.",
+          "too_big": "Il nome è troppo lungo (massimo 60 caratteri)."
+        },
+        "number": {
+          "invalid_format": "Inserisci il numero di canale: da 1 a 6 cifre."
+        },
+        "steps": {
+          "too_small": "Aggiungi almeno un passo.",
+          "too_big": "Una sequenza ha al massimo 16 passi."
+        }
+      }
     }
   },
   "commands": {
