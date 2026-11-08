@@ -61,6 +61,12 @@ function world(
     /** A plug that changes during the test; wins over `plug`. */
     readonly plugState?: { current: boolean | null }
     readonly assumptions?: { current: RemoteAssumedState | null }
+    /** A driver's native media-player cap reads the device. */
+    readonly native?: boolean
+    /** The device of the linked plug. */
+    readonly plugDevice?: number | null
+    /** Counts every read the service makes of the world. */
+    readonly reads?: { count: number }
   } = {},
 ) {
   let stored: RemoteConfig = initial
@@ -88,7 +94,10 @@ function world(
       }
     },
     templateExists: async (id) => (options.templates ?? ['tpl']).includes(id),
-    isMediaPlayer: async () => options.mediaPlayer ?? true,
+    isMediaPlayer: async () => {
+      if (options.reads) options.reads.count += 1
+      return options.mediaPlayer ?? true
+    },
     reportedStatus: async () => options.reported ?? null,
     runningState: async () => options.running ?? null,
     plugOn: async () => (options.plugState ? options.plugState.current : (options.plug ?? null)),
@@ -100,6 +109,11 @@ function world(
       write: async (_id, next) => {
         kept.current = next
       },
+    },
+    hasNative: () => options.native ?? false,
+    plugDeviceOf: async () => {
+      if (options.reads) options.reads.count += 1
+      return options.plugDevice ?? null
     },
     slice: {
       devices: async () => [TV],
@@ -701,7 +715,7 @@ describe('RemoteService — the device media-player slice is written, not only a
   it('writes nothing when a native source reads the device', async () => {
     const w = world(tvConfig, {
       plug: true,
-      reported: nativeStatus('playing'),
+      native: true,
     })
     await w.service.refreshSlices()
     expect(w.published).toEqual([])
@@ -732,5 +746,41 @@ describe('RemoteService — the device media-player slice is written, not only a
     plugState.current = false
     await w.service.refreshSlices()
     expect(w.published.at(-1)).toMatchObject({ status: { state: 'off' } })
+  })
+
+  it('writes the slice when a config is saved after registration', async () => {
+    const w = world(tvConfig, { plug: true })
+    await w.service.setConfig({ deviceId: TV, config: tvConfig })
+    expect(w.published).toHaveLength(1)
+    expect(w.published[0]).toMatchObject({ deviceId: TV, status: { state: 'standby' } })
+  })
+
+  it('an input event refreshes only the TV it feeds', async () => {
+    const PLUG = 40
+    const plugState = { current: true as boolean | null }
+    const reads = { count: 0 }
+    const w = world(tvConfig, { plugState, plugDevice: PLUG, reads })
+    await w.service.refreshSlices()
+    plugState.current = false
+    reads.count = 0
+    const before = w.published.length
+    await w.service.onInputChanged(999)
+    expect(reads.count).toBe(0)
+    expect(w.published).toHaveLength(before)
+    await w.service.onInputChanged(PLUG)
+    expect(w.published.at(-1)).toMatchObject({ deviceId: TV, status: { state: 'off' } })
+    await w.service.onInputChanged(TV)
+    expect(reads.count).toBeGreaterThan(0)
+  })
+
+  it('coalesces overlapping refreshes of one device: one in flight, one pending', async () => {
+    const w = world(tvConfig, { plug: true })
+    await Promise.all([
+      w.service.refreshSlice(TV),
+      w.service.refreshSlice(TV),
+      w.service.refreshSlice(TV),
+      w.service.refreshSlice(TV),
+    ])
+    expect(w.published).toHaveLength(2)
   })
 })

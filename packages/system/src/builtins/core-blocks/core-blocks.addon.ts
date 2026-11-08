@@ -74,10 +74,10 @@ import {
 } from './power-source-service.js'
 import { remoteCallRedirect } from './remote-call-redirect.js'
 import {
-  armRemoteSliceSeed,
   buildRemoteRuntime,
   REMOTE_SLICE_INPUT_CAPS,
   type RemoteRuntime,
+  seedRemoteSlices,
 } from './remote-wiring.js'
 import { buildFanPresetsRuntime, type FanPresetsRuntime } from './fan-presets-wiring.js'
 import { BlockSettingsStore } from './block-settings-store.js'
@@ -247,18 +247,12 @@ export class CoreBlocksAddon extends BaseAddon {
     })
     return [
       { capability: coreBlocksCapability, provider: this.buildProvider() },
-      {
-        capability: actionsCapability,
-        provider: this.requireActions().service,
-      },
+      { capability: actionsCapability, provider: this.requireActions().service },
       { capability: schedulersCapability, provider: schedulers.service },
       { capability: powerSourceCapability, provider: this.buildPowerSource() },
       { capability: timedRunCapability, provider: timedRun },
       // The built-in palette needs no store: it is served even when the remote is not.
-      {
-        capability: remoteLayoutComponentsCapability,
-        provider: new RemoteComponentsService(),
-      },
+      { capability: remoteLayoutComponentsCapability, provider: new RemoteComponentsService() },
       ...this.remoteRegistrations(),
       ...this.fanPresetRegistrations(),
     ]
@@ -316,7 +310,14 @@ export class CoreBlocksAddon extends BaseAddon {
       settings,
       api: () => this.ctx.api,
       logger: this.ctx.logger,
+      hasNative: (deviceId) => this.hasNativeMediaPlayer(deviceId),
     })
+  }
+
+  /** A driver's native media-player cap reads the device; the composer's own native holds no reading. */
+  private hasNativeMediaPlayer(deviceId: number): boolean {
+    const owner = this.ctx.kernel?.capabilityRegistry?.getNativeAddonId('media-player', deviceId)
+    return owner !== undefined && owner !== null && owner !== COMPOSER_ADDON_ID
   }
 
   /**
@@ -345,10 +346,7 @@ export class CoreBlocksAddon extends BaseAddon {
           : [
               remoteCallRedirect({
                 remote: runtime.remote,
-                hasNative: (deviceId) => {
-                  const owner = registry.getNativeAddonId('media-player', deviceId)
-                  return owner !== null && owner !== COMPOSER_ADDON_ID
-                },
+                hasNative: (deviceId) => this.hasNativeMediaPlayer(deviceId),
                 logger: this.ctx.logger.child('remote'),
               }),
             ]),
@@ -359,24 +357,24 @@ export class CoreBlocksAddon extends BaseAddon {
 
   /**
    * The remote writes each of its devices' `media-player` slice itself: seeded
-   * once the device registry answers (ARMED, never awaited), patched when a
-   * device registers or an input of the assumed state moves (the plug's switch,
-   * a running-state). Our own slice write is a `media-player` event and is not
-   * one of those inputs, so it cannot loop.
+   * once at boot (never awaited), refreshed when a device registers, a config
+   * is saved, a send lands, or a device that feeds the assumed state changes (its
+   * running-state, or the switch of its linked plug). Our own slice write is a
+   * `media-player` event, not one of those inputs, so it cannot loop.
    */
   private armRemoteSlices(): void {
     const remote = this.remoteRuntime?.remote
     if (remote === undefined) return
-    void armRemoteSliceSeed(remote, this.ctx.logger.child('remote'), {
-      isDisposed: () => this.disposed,
-    })
+    void seedRemoteSlices(remote, this.ctx.logger.child('remote'))
     this.subscribe({ category: EventCategory.DeviceRegistered }, (event) => {
       const deviceId = isRecord(event.data) ? event.data['deviceId'] : undefined
       if (typeof deviceId === 'number') void remote.refreshSlice(deviceId)
     })
     this.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
       const data = parseDeviceStateChanged(event.data)
-      if (data !== null && REMOTE_SLICE_INPUT_CAPS.has(data.capName)) void remote.refreshSlices()
+      if (data !== null && REMOTE_SLICE_INPUT_CAPS.has(data.capName)) {
+        void remote.onInputChanged(data.deviceId)
+      }
     })
   }
 
@@ -387,19 +385,13 @@ export class CoreBlocksAddon extends BaseAddon {
       blocks: this.requireStore().list(),
       names: this.deviceNames(api),
       readState: async (deviceId) => {
-        const raw: unknown = await api.lockControl.getStatus.query({
-          deviceId,
-        })
+        const raw: unknown = await api.lockControl.getStatus.query({ deviceId })
         const state =
           raw !== null && typeof raw === 'object' ? Reflect.get(raw, 'state') : undefined
         return typeof state === 'string' ? state : null
       },
       apply: (deviceId, state) =>
-        gate.onStateChanged({
-          deviceId,
-          capName: 'lock-control',
-          slice: { state },
-        }),
+        gate.onStateChanged({ deviceId, capName: 'lock-control', slice: { state } }),
       logger: this.ctx.logger.child('lock-door'),
       failedLogged: this.seedFailed,
     }).catch((err: unknown) => {
@@ -517,10 +509,7 @@ export class CoreBlocksAddon extends BaseAddon {
       host: createBrokerProcessHost(broker),
       compile: async (source) => {
         if (this.transpiler === null) {
-          return {
-            ok: false,
-            error: 'the compiler is unavailable on this node',
-          }
+          return { ok: false, error: 'the compiler is unavailable on this node' }
         }
         const input =
           source.files !== undefined
@@ -772,12 +761,7 @@ export class CoreBlocksAddon extends BaseAddon {
             for (const claim of unreleased) {
               this.ctx.logger.error('composition deleted but its claim was not released', {
                 tags: { deviceId: claim.deviceId },
-                meta: {
-                  blockId,
-                  cap: claim.capName,
-                  owner: claim.owner,
-                  error: claim.error,
-                },
+                meta: { blockId, cap: claim.capName, owner: claim.owner, error: claim.error },
               })
             }
             const detail = unreleased
@@ -832,10 +816,7 @@ export class CoreBlocksAddon extends BaseAddon {
 
       compile: async (input: CoreBlockCompileInput) => {
         if (this.transpiler === null) {
-          return {
-            ok: false,
-            error: 'the compiler is unavailable on this node',
-          }
+          return { ok: false, error: 'the compiler is unavailable on this node' }
         }
         const source =
           input.files !== undefined
@@ -874,12 +855,7 @@ export class CoreBlocksAddon extends BaseAddon {
         // Read once and held: 344 files off disk per keystroke would be absurd,
         // and they cannot change without the process restarting.
         this.typeDefs ??= await loadBlockTypeDefs(this.ctx.logger)
-        return {
-          libs: this.typeDefs.map((l) => ({
-            filePath: l.filePath,
-            content: l.content,
-          })),
-        }
+        return { libs: this.typeDefs.map((l) => ({ filePath: l.filePath, content: l.content })) }
       },
 
       ...this.requireActions().runsApi,
@@ -928,11 +904,7 @@ export class CoreBlocksAddon extends BaseAddon {
         ),
       lookupCap: buildCapabilityLookup(ALL_CAPABILITY_DEFINITIONS),
       composerStates: async (blockIds) =>
-        (
-          await requireApi().composer.getStates.query({
-            blockIds: [...blockIds],
-          })
-        ).states,
+        (await requireApi().composer.getStates.query({ blockIds: [...blockIds] })).states,
       convergeSoon: () => {
         this.convergeSoon()
         this.seedLockDoorGate()
@@ -960,9 +932,7 @@ export class CoreBlocksAddon extends BaseAddon {
           }),
         retention: async () =>
           historyRetentionFromSettings(
-            await requireApi().addonSettingsRaw.getGlobal.query({
-              addonId: 'device-history',
-            }),
+            await requireApi().addonSettingsRaw.getGlobal.query({ addonId: 'device-history' }),
           ),
         now: () => Date.now(),
         logger: this.ctx.logger.child('running-proposal'),

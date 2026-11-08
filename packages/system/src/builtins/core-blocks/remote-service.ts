@@ -68,6 +68,13 @@ export interface RemoteServiceDeps {
   readonly store: RemoteConfigStore
   readonly assumptions: RemoteAssumptionStore
   readonly slice: RemoteSliceWriter
+  /**
+   * Whether a driver's native media-player cap reads the device — the SAME
+   * predicate the dispatch redirect uses. Such a device never gets an assumed slice.
+   */
+  hasNative(deviceId: number): boolean
+  /** The device of the linked plug, or null when none is linked. */
+  plugDeviceOf(deviceId: number): Promise<number | null>
   /** Runs the action a role is bound to. Throws when the call fails. */
   invoke(call: CapCall): Promise<void>
   templateExists(templateId: string): Promise<boolean>
@@ -135,6 +142,10 @@ function errorText(err: unknown): string {
 export class RemoteService implements IRemoteProvider {
   private readonly now: () => number
   private readonly sleep: (ms: number) => Promise<void>
+  /** Remote devices seen so far, and the plug each one waits on: who an input event affects. */
+  private readonly plugOf = new Map<number, number | null>()
+  private readonly sliceRuns = new Map<number, Promise<void>>()
+  private readonly slicePending = new Set<number>()
 
   constructor(private readonly deps: RemoteServiceDeps) {
     this.now = deps.now ?? Date.now
@@ -163,6 +174,7 @@ export class RemoteService implements IRemoteProvider {
       }
     }
     await this.deps.store.write(deviceId, config)
+    await this.refreshSlice(deviceId)
     return { status: 'saved' }
   }
 
@@ -203,13 +215,35 @@ export class RemoteService implements IRemoteProvider {
   /**
    * Writes the device's `media-player` slice from `assumedStatus`, but only
    * when the remote is what answers for it: a media player, no native source
-   * reading it, and a power state the remote knows. A failed write is logged,
-   * never thrown — the next input change or send is the retry (D3).
+   * (`hasNative`), and a power state the remote knows. Overlapping calls for a
+   * device coalesce: one run in flight, one more pending. A failed write is
+   * logged, never thrown — the next input change or send is the retry (D3).
    */
-  async refreshSlice(deviceId: number): Promise<void> {
+  refreshSlice(deviceId: number): Promise<void> {
+    const running = this.sliceRuns.get(deviceId)
+    if (running !== undefined) {
+      this.slicePending.add(deviceId)
+      return running
+    }
+    const run = this.drainSlice(deviceId).finally(() => {
+      this.sliceRuns.delete(deviceId)
+    })
+    this.sliceRuns.set(deviceId, run)
+    return run
+  }
+
+  private async drainSlice(deviceId: number): Promise<void> {
+    do {
+      this.slicePending.delete(deviceId)
+      await this.writeSlice(deviceId)
+    } while (this.slicePending.has(deviceId))
+  }
+
+  private async writeSlice(deviceId: number): Promise<void> {
     try {
+      if (this.deps.hasNative(deviceId)) return
       if (!(await this.deps.isMediaPlayer(deviceId))) return
-      if ((await this.deps.reportedStatus(deviceId)) !== null) return
+      this.plugOf.set(deviceId, await this.deps.plugDeviceOf(deviceId))
       const status = await this.statusOf(deviceId, false)
       if (status === null) return
       await this.deps.slice.publish(deviceId, status)
@@ -221,9 +255,22 @@ export class RemoteService implements IRemoteProvider {
     }
   }
 
-  /** Registration and an input change (plug, running-state): every remote device. */
+  /** Boot: every remote device. */
   async refreshSlices(): Promise<void> {
     for (const deviceId of await this.deps.slice.devices()) await this.refreshSlice(deviceId)
+  }
+
+  /**
+   * A device's state changed: refresh the remote devices it feeds — the TV
+   * itself (its running-state) and every TV whose linked plug it is. Any other
+   * device costs no read.
+   */
+  async onInputChanged(deviceId: number): Promise<void> {
+    const affected: number[] = []
+    for (const [tv, plug] of this.plugOf) {
+      if (tv === deviceId || plug === deviceId) affected.push(tv)
+    }
+    await Promise.all(affected.map((tv) => this.refreshSlice(tv)))
   }
 
   /**

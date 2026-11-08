@@ -52,6 +52,8 @@ export interface RemoteRuntimeDeps {
   readonly settings: DeviceSettings
   readonly api: () => AddonApi | undefined
   readonly logger: IScopedLogger
+  /** Whether a driver's native media-player cap reads the device (the redirect's predicate). */
+  readonly hasNative: (deviceId: number) => boolean
   /** The wait between two sends of a repeat; a spec drives it. */
   readonly sleep?: (ms: number) => Promise<void>
   readonly now?: () => number
@@ -106,9 +108,7 @@ export function remoteAssumptionStoreOver(
       return null
     },
     write: async (deviceId, state: RemoteAssumedState) => {
-      await settings.writeDeviceStore(deviceId, {
-        [REMOTE_ASSUMED_STORE_KEY]: state,
-      })
+      await settings.writeDeviceStore(deviceId, { [REMOTE_ASSUMED_STORE_KEY]: state })
     },
   }
 }
@@ -247,10 +247,7 @@ export function remoteSliceWriterOver(
       const current = api()
       if (current === undefined) throw new Error('no ctx.api on this node')
       const kept = MediaPlayerStatusSchema.safeParse(
-        await current.deviceState.getCapSlice.query({
-          deviceId,
-          capName: MEDIA_PLAYER_CAP,
-        }),
+        await current.deviceState.getCapSlice.query({ deviceId, capName: MEDIA_PLAYER_CAP }),
       )
       if (kept.success && sameStatus(kept.data, status)) return
       await current.deviceState.setCapSlice.mutate({
@@ -259,6 +256,45 @@ export function remoteSliceWriterOver(
         slice: { ...status },
       })
     },
+  }
+}
+
+/** The device of the linked plug (`power-source`), null when none is linked or it errors. */
+export function plugDeviceOver(
+  api: () => AddonApi | undefined,
+): (deviceId: number) => Promise<number | null> {
+  return async (deviceId) => {
+    const current = api()
+    if (current === undefined) return null
+    try {
+      const parsed = PowerSourceInfoSchema.safeParse(
+        await current.powerSource.getStatus.query({ deviceId }),
+      )
+      return parsed.success && parsed.data.linked ? parsed.data.switchDeviceId : null
+    } catch {
+      return null
+    }
+  }
+}
+
+/** The caps whose change can move the assumed state: the plug's switch and a running-state. */
+export const REMOTE_SLICE_INPUT_CAPS: ReadonlySet<string> = new Set(['switch', 'running-state'])
+
+/**
+ * Seeds every remote device's slice ONCE at boot. No retry timer (D3): a read
+ * that fails changes nothing, and `DeviceRegistered` and the input events
+ * re-drive the refresh.
+ */
+export async function seedRemoteSlices(
+  remote: Pick<RemoteService, 'refreshSlices'>,
+  logger: IScopedLogger,
+): Promise<void> {
+  try {
+    await remote.refreshSlices()
+  } catch (error) {
+    logger.warn('remote: the media-player slices could not be seeded at boot', {
+      meta: { error: error instanceof Error ? error.message : String(error) },
+    })
   }
 }
 
@@ -282,48 +318,11 @@ export function buildRemoteRuntime(deps: RemoteRuntimeDeps): RemoteRuntime {
     plugOn: plugOnOver(deps.api, deps.logger.child('remote')),
     assumptions: remoteAssumptionStoreOver(deps.settings, deps.logger.child('remote')),
     slice: remoteSliceWriterOver(deps.settings, deps.api),
+    hasNative: deps.hasNative,
+    plugDeviceOf: plugDeviceOver(deps.api),
     logger: deps.logger.child('remote'),
     ...(deps.sleep === undefined ? {} : { sleep: deps.sleep }),
     ...(deps.now === undefined ? {} : { now: deps.now }),
   })
   return { templates, remote }
-}
-
-/** The caps whose change moves the assumed state: the plug's switch and a running-state reading. */
-export const REMOTE_SLICE_INPUT_CAPS: ReadonlySet<string> = new Set(['switch', 'running-state'])
-
-const SEED_MAX_ATTEMPTS = 5
-const SEED_RETRY_DELAY_MS = 5_000
-
-/**
- * Seeds every remote device's slice. The device registry answers only after
- * boot, so a first read may find it not ready: a failed read changes nothing
- * (D49) and is tried again a bounded number of times.
- */
-export async function armRemoteSliceSeed(
-  remote: Pick<RemoteService, 'refreshSlices'>,
-  logger: IScopedLogger,
-  options: { readonly isDisposed: () => boolean },
-): Promise<void> {
-  for (let attempt = 1; attempt <= SEED_MAX_ATTEMPTS; attempt += 1) {
-    if (options.isDisposed()) return
-    try {
-      await remote.refreshSlices()
-      return
-    } catch (error) {
-      if (attempt === SEED_MAX_ATTEMPTS) {
-        logger.warn(
-          'remote: the media-player slices could not be seeded; the next input change will',
-          {
-            meta: {
-              attempts: attempt,
-              error: error instanceof Error ? error.message : String(error),
-            },
-          },
-        )
-        return
-      }
-      await new Promise<void>((resolve) => setTimeout(resolve, SEED_RETRY_DELAY_MS))
-    }
-  }
 }
