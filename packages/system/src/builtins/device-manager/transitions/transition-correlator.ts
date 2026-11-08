@@ -57,6 +57,9 @@ export interface CorrelatorDeps {
 }
 
 interface DeviceRowWindow {
+  readonly deviceId: number
+  readonly capName: string
+  readonly field: string
   /** When the last row of this field was written. */
   lastEmitAt: number
   /** Changes seen since then, not yet written. */
@@ -301,8 +304,13 @@ export class TransitionCorrelator {
     const key = `${deviceId}|${capName}|${field}`
     const window = this.deviceRows.get(key)
     if (window === undefined || at - window.lastEmitAt >= DEVICE_ROW_WINDOW_MS) {
+      // A change held since the last window closes before this one is written: the sweep may not
+      // have run yet, and overwriting the window would lose it.
+      if (window?.held !== undefined && !sameValue(window.held.from, window.held.to)) {
+        this.writeDevice(deviceId, capName, field, window.held.from, window.held.to, window.held.at)
+      }
       this.writeDevice(deviceId, capName, field, from, to, at)
-      this.deviceRows.set(key, { lastEmitAt: at })
+      this.deviceRows.set(key, { deviceId, capName, field, lastEmitAt: at })
       return
     }
     window.held = { from: window.held?.from ?? from, to, at }
@@ -336,9 +344,8 @@ export class TransitionCorrelator {
       const held = window.held
       this.deviceRows.delete(key)
       if (held === undefined || sameValue(held.from, held.to)) continue
-      const [deviceId, capName, ...rest] = key.split('|')
-      this.writeDevice(Number(deviceId), capName ?? '', rest.join('|'), held.from, held.to, held.at)
-      this.deviceRows.set(key, { lastEmitAt: now })
+      this.writeDevice(window.deviceId, window.capName, window.field, held.from, held.to, held.at)
+      this.deviceRows.set(key, { ...window, held: undefined, lastEmitAt: now })
     }
   }
 

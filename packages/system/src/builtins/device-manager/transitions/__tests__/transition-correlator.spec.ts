@@ -287,6 +287,20 @@ describe('transition correlator (D1022)', () => {
       expect(w.out[1]).toMatchObject({ outcome: 'confirmed' })
     })
 
+    it('a change held when the window closes is written before the next one, not lost', () => {
+      const w = world({ '7|switch': { on: false } })
+      w.write('switch', { on: true }) // t=0 written: false -> true
+      w.advance(5_000)
+      w.write('switch', { on: false }) // t=5 held: true -> false
+      w.advance(5_500)
+      w.write('switch', { on: true }) // t=10.5, no sweep yet: false -> true
+      expect(w.out.map((t) => [t.from, t.to])).toEqual([
+        [false, true],
+        [true, false],
+        [false, true],
+      ])
+    })
+
     it('a removed device keeps no window', () => {
       const w = world({ '7|switch': { on: false } })
       w.write('switch', { on: true })
