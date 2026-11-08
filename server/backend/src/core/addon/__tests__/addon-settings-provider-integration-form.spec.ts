@@ -56,7 +56,26 @@ describe('getIntegrationFormSchema route', () => {
     })
     const out = await p.getIntegrationFormSchema({ addonId: 'a', instance: INSTANCE })
     expect(firstKey(out)).toBe('instance')
-    expect(instanceFormSchema).toHaveBeenCalledWith({ id: 'i1' })
+    expect(instanceFormSchema).toHaveBeenCalledWith({ id: 'i1', mode: 'account' })
     expect(hook).not.toHaveBeenCalled()
+  })
+
+  it('hands the wizard mode and the discovery candidate to instanceFormSchema', async () => {
+    const instanceFormSchema = vi.fn(async () => schema('instance'))
+    const gateway = { isInProcess: () => true, callForked: vi.fn() } as unknown as AddonCallGateway
+    const p = createAddonSettingsProvider({
+      getAddon: () => ({}) as unknown as ICamstackAddon,
+      gateway,
+      instancesFor: () => ({ instanceFormSchema }) as never,
+    })
+    await p.getIntegrationFormSchema({
+      addonId: 'a',
+      instance: { integrationId: null, mode: 'broker', candidateStableId: 'mac-aabbcc' },
+    })
+    expect(instanceFormSchema).toHaveBeenCalledWith({
+      id: null,
+      mode: 'broker',
+      candidateStableId: 'mac-aabbcc',
+    })
   })
 })

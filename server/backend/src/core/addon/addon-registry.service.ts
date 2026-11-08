@@ -139,7 +139,16 @@ import {
 import { createRunnerSerializer, type RunnerSerializer } from './runner-serialization'
 import { spawnPlanConcurrently } from './runner-spawn-fanout.js'
 import { findInstancesProvider } from './integration-instances-provider.js'
-import { registeredProviderFor } from './instance-links.service.js'
+import {
+  holdersOf,
+  type InstanceLifecycleWrap,
+  registeredProviderFor,
+} from './instance-links.service.js'
+import {
+  type DeviceCascadePort,
+  type InstanceLifecycleDeps,
+  withInstanceLifecycle,
+} from './instance-lifecycle.js'
 import { wireSettingsDoor } from './settings-door-wiring.js'
 
 type AddonSource = 'core' | 'installed'
@@ -783,6 +792,7 @@ export class AddonRegistryService {
     // active-singleton preference can select a grouped addon (whose child id
     // is its `execution.group`, not its own id). Identity for ungrouped addons.
     this.moleculer.setRunnerIdResolver((addonId) => this.childIdForAddon(addonId))
+    this.moleculer.setInstanceLifecycleWrap(this.instanceLifecycleWrap)
     const settingsProvider = createAddonSettingsProvider({
       getAddon: (addonId) => {
         const entry = this.addonEntries.get(addonId)
@@ -1606,6 +1616,37 @@ export class AddonRegistryService {
       'setAppRouter called — broker-routed addon API in use, no direct caller needed',
     )
   }
+
+  /**
+   * What the hub half of an `integration-instances` create and delete reads (epic #440, H3).
+   * Every member is read when used, so a not-yet-wired registry fails the call, not the boot.
+   */
+  private instanceLifecycleDeps(): InstanceLifecycleDeps {
+    return {
+      logger: this.loggingService.createLogger('integrations'),
+      integrations: () => {
+        if (this.integrationRegistry === null) {
+          throw new Error(
+            `IntegrationRegistry not available: ${this.integrationRegistryUnavailable ?? 'its records are still being wired'}`,
+          )
+        }
+        return this.integrationRegistry
+      },
+      deviceManager: () =>
+        this.capabilityRegistry.getSingleton<DeviceCascadePort>('device-manager'),
+      eventBus: this.eventBusService,
+      providerFor: (addonId) => findInstancesProvider(this.capabilityRegistry, addonId),
+      holders: () => holdersOf(this.capabilityRegistry),
+      manifestRole: (addonId) => {
+        const addon = this.listAddons().find((a) => a.manifest.id === addonId)
+        return addon?.declaration?.integrationRole ?? addon?.manifest.integrationRole
+      },
+    }
+  }
+
+  /** Registers an `integration-instances` provider with the hub half of create and delete around it. */
+  readonly instanceLifecycleWrap: InstanceLifecycleWrap = (addonId, provider) =>
+    withInstanceLifecycle(addonId, provider, this.instanceLifecycleDeps())
 
   /** Get the CapabilityRegistry for external consumers to register */
   getCapabilityRegistry(): CapabilityRegistry {
@@ -3542,7 +3583,10 @@ export class AddonRegistryService {
       this.capabilityRegistry.registerProvider(
         capabilityName,
         addonId,
-        registeredProviderFor(capabilityName, provider, this.capabilityRegistry),
+        registeredProviderFor(capabilityName, provider, this.capabilityRegistry, {
+          addonId,
+          wrap: this.instanceLifecycleWrap,
+        }),
       )
       logger.info('Registered provider via context.registerProvider()', {
         meta: { capabilityName },

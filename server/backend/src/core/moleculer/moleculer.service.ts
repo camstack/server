@@ -68,7 +68,10 @@ import { LoggingService } from '../logging/logging.service'
 import { StreamProbeService } from '../streaming/stream-probe.service'
 import { filterAgentAuthoritativeRecords } from './agent-readiness-pull.js'
 import { requestAgentRegistration } from './agent-registration-request.js'
-import { registeredProviderFor } from '../addon/instance-links.service.js'
+import {
+  type InstanceLifecycleWrap,
+  registeredProviderFor,
+} from '../addon/instance-links.service.js'
 import { HubMeshGuard } from './hub-mesh-guard.js'
 import { readHubServerVersion } from './hub-server-version.js'
 import { buildCapCallFn } from './cap-call-fn.js'
@@ -229,6 +232,17 @@ export class MoleculerService {
       nodeId,
       runnerId,
     )
+  }
+
+  /**
+   * Adds the hub half of an `integration-instances` create and delete around a forked holder,
+   * injected late by `AddonRegistryService` (the registry and the device manager live there).
+   * Null before that: the holder is then registered with its delete guard only.
+   */
+  private instanceLifecycleWrap: InstanceLifecycleWrap | null = null
+
+  setInstanceLifecycleWrap(wrap: InstanceLifecycleWrap): void {
+    this.instanceLifecycleWrap = wrap
   }
 
   get childRegistry(): LocalChildRegistry | null {
@@ -1309,7 +1323,10 @@ export class MoleculerService {
       registry.registerProvider(
         capName,
         registryKey,
-        registeredProviderFor(capName, proxy, registry),
+        registeredProviderFor(capName, proxy, registry, {
+          addonId,
+          wrap: this.instanceLifecycleWrap,
+        }),
         owner,
       )
 

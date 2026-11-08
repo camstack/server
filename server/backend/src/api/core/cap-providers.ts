@@ -40,7 +40,6 @@ import {
   getCapUsageRegistry,
   getLoggingGate,
   getProcessNodeMeshTransport,
-  IntegrationRegistry,
   type BrokerLike,
 } from '@camstack/server/system'
 import type {
@@ -56,7 +55,6 @@ import type {
   INetworkQualityProvider,
   INodesProvider,
   Integration,
-  IntegrationTestConnectionStatus,
   IScopedLogger,
   ISettingsStoreProvider,
   ISystemProvider,
@@ -64,9 +62,16 @@ import type {
   Toast,
   TopologyNode,
 } from '@camstack/types'
-import { EventCategory, errMsg } from '@camstack/types'
+import { errMsg } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
-import { planDeleteTimeStamps } from '../../boot/integration-id-backfill'
+import {
+  createRegisteredInstance,
+  deleteRegisteredInstance,
+  type DeviceCascadePort,
+  type InstanceLifecycleDeps,
+  rawInstancesProvider,
+} from '../../core/addon/instance-lifecycle'
+import { holdersOf } from '../../core/addon/instance-links.service'
 import type { AddonPackageService } from '../../core/addon/addon-package.service'
 import { SYSTEM_PACKAGE } from '../../core/addon/addon-package.service.js'
 import type { AddonRegistryService } from '../../core/addon/addon-registry.service'
@@ -1019,155 +1024,6 @@ function getDeviceProvider(ar: AddonRegistryService, addonId: string): IDevicePr
   return isDeviceProvider(provider) ? provider : null
 }
 
-// ── pre-creation connection test ────────────────────────────────────
-//
-// `integrations.create` gates on the instance's own test (D1016): an integration whose instances
-// declare a Test (`describe().canTest`) is asked through `integration-instances.testInstance`
-// with the draft values; one that declares none is a KNOWN `unsupported`, never a silent pass.
-// There is no default branch and the framework never guesses a test from the shape of the
-// settings.
-
-/** The addon that keeps the MQTT brokers: the instance a `brokerId` names lives there, not in the consumer. */
-const BROKER_OWNER_ADDON_ID = 'mqtt-broker'
-
-/**
- * The instances provider that owns the broker a settings blob NAMES. The consumer (`addonId`) holds a
- * link to a broker, not the broker, so the broker addon is asked first and the consumer's own provider
- * only when it lists that id itself.
- */
-async function findBrokerOwner(
-  ar: AddonRegistryService,
-  addonId: string,
-  brokerId: string,
-): Promise<{ readonly addonId: string; readonly provider: IIntegrationInstancesProvider } | null> {
-  for (const candidateId of [BROKER_OWNER_ADDON_ID, addonId]) {
-    const candidate = getInstancesProvider(ar, candidateId)
-    if (candidate === null || candidate.testInstance === undefined) continue
-    const rows = await candidate.listInstances()
-    if (rows.some((row) => row.id === brokerId))
-      return { addonId: candidateId, provider: candidate }
-  }
-  return null
-}
-
-/** What a pre-creation test concluded, and who concluded it. */
-interface ConnectionTestVerdict {
-  readonly status: IntegrationTestConnectionStatus
-  readonly error?: string
-  readonly latencyMs?: number
-  readonly detail?: string
-  /** Addon id whose declared test answered — null when none did. */
-  readonly testedBy: string | null
-}
-
-/**
- * Run the pre-creation test for `(addonId, settings)` through `testInstance`, the one test method.
- *
- * Never throws: a test that blows up is `inconclusive`, which is emphatically
- * NOT `rejected`. A timeout must not read as a refusal — it would block a
- * perfectly good create on a flaky network, and the operator would have no way
- * to tell the two apart.
- */
-async function testBeforeCreate(
-  ar: AddonRegistryService,
-  addonId: string,
-  settings: Record<string, unknown>,
-  logger: IScopedLogger,
-  kind: string | undefined,
-): Promise<ConnectionTestVerdict> {
-  // 0. An addon that keeps its connection as typed instances tests it there.
-  const instances = getInstancesProvider(ar, addonId)
-  let declaresTest = false
-  if (instances !== null && instances.testInstance !== undefined) {
-    try {
-      declaresTest = (await instances.describe()).canTest
-    } catch (err) {
-      logger.warn('could not read whether the integration declares a test', {
-        tags: { addonId },
-        meta: { phase: 'test', error: errMsg(err) },
-      })
-    }
-  }
-  if (instances !== null && instances.testInstance !== undefined && declaresTest) {
-    try {
-      const result = await instances.testInstance({
-        id: null,
-        values: settings,
-        ...(kind !== undefined ? { kind } : {}),
-      })
-      const status = result.status ?? (result.success ? 'validated' : 'rejected')
-      return {
-        status,
-        testedBy: addonId,
-        ...(result.error !== undefined ? { error: result.error } : {}),
-        ...(result.latencyMs !== undefined ? { latencyMs: result.latencyMs } : {}),
-        ...(result.detail !== undefined ? { detail: result.detail } : {}),
-      }
-    } catch (err) {
-      logger.warn('connection test could not run', {
-        tags: { addonId },
-        meta: { phase: 'test', error: errMsg(err) },
-      })
-      return {
-        status: 'inconclusive',
-        error: `Connection test could not run: ${errMsg(err)}`,
-        testedBy: addonId,
-      }
-    }
-  }
-
-  // 1. Broker-backed integrations carry their connection identity as a
-  //    `brokerId`; the broker already owns the real semantic check (HA opens a
-  //    temporary WS handshake, MQTT pings the bridge). Reached because the
-  //    settings NAME a broker, not because nothing else matched.
-  const brokerId = settings['brokerId']
-  if (typeof brokerId === 'string' && brokerId.length > 0) {
-    try {
-      const owner = await findBrokerOwner(ar, addonId, brokerId)
-      if (owner === null || owner.provider.testInstance === undefined) {
-        logger.warn('no instances provider owns the broker a create names', {
-          tags: { addonId },
-          meta: { phase: 'test', brokerId },
-        })
-        return {
-          status: 'inconclusive',
-          error: `No instances provider that owns broker '${brokerId}' is available`,
-          testedBy: null,
-        }
-      }
-      const result = await owner.provider.testInstance({ id: brokerId, values: {} })
-      const status = result.status ?? (result.success ? 'validated' : 'rejected')
-      return {
-        status,
-        testedBy: owner.addonId,
-        ...(result.error !== undefined ? { error: result.error } : {}),
-        ...(result.latencyMs !== undefined ? { latencyMs: result.latencyMs } : {}),
-        ...(result.detail !== undefined ? { detail: result.detail } : {}),
-      }
-    } catch (err) {
-      logger.warn('broker connection test could not run', {
-        tags: { addonId },
-        meta: { phase: 'test', brokerId, error: errMsg(err) },
-      })
-      return {
-        status: 'inconclusive',
-        error: `Broker test could not run: ${errMsg(err)}`,
-        testedBy: addonId,
-      }
-    }
-  }
-
-  // 2. Nothing declared. Say so plainly — this must never render as a pass,
-  //    and must never render as a failure we did not observe.
-  return {
-    status: 'unsupported',
-    error:
-      `Integration '${addonId}' declares no connection test, ` +
-      `so these settings cannot be validated before it is created.`,
-    testedBy: null,
-  }
-}
-
 /**
  * Marker caps that flag an addon as a creatable integration type:
  *   - `device-provider` — classic providers (Reolink/ONVIF)
@@ -1272,6 +1128,16 @@ export function buildIntegrationsProvider(
   capabilityRegistry: CapabilityRegistry | null,
 ): IIntegrationsProvider {
   const logger = loggingService.createLogger('integrations')
+  const lifecycleDeps: InstanceLifecycleDeps = {
+    logger,
+    integrations: () => requireIntegrationRegistry(ar),
+    deviceManager: () =>
+      capabilityRegistry?.getSingleton<DeviceCascadePort>('device-manager') ?? null,
+    eventBus: eb,
+    providerFor: (addonId) => getInstancesProvider(ar, addonId),
+    holders: () => holdersOf(ar.getCapabilityRegistry()),
+    manifestRole: () => undefined,
+  }
   const withProcessState = (i: Integration): IntegrationWithProcessState => ({
     ...i,
     processState:
@@ -1303,8 +1169,7 @@ export function buildIntegrationsProvider(
       return projected ?? integration
     },
     create: async (input) => {
-      const { settings, ...rest } = input
-      const payload = rest
+      const { settings } = input
       const reg = requireIntegrationRegistry(ar)
 
       logger.info('request', {
@@ -1312,124 +1177,36 @@ export function buildIntegrationsProvider(
         meta: { phase: 'create', name: input.name },
       })
 
-      const addon = ar.listAddons().find((a) => a.manifest.id === input.addonId)
+      // The hub half is shared with the registered `integration-instances` provider
+      // (`instance-lifecycle.ts`): unique check, the D1016 gate, the row, the record, rollback.
       const instances = getInstancesProvider(ar, input.addonId)
-      const instanceMode =
-        instances !== null
-          ? (await instances.describe()).instanceMode === 'single'
-            ? 'unique'
-            : 'multiple'
-          : (addon?.declaration?.instanceMode ?? addon?.manifest?.instanceMode ?? 'multiple')
-      if (instanceMode === 'unique') {
-        const existing = (await reg.listIntegrations()).filter((i) => i.addonId === input.addonId)
-        if (existing.length > 0) {
-          logger.warn('rejected duplicate unique', {
-            tags: { addonId: input.addonId, integrationId: existing[0]!.id },
-            meta: { phase: 'create' },
-          })
-          throw new TRPCError({
-            code: 'CONFLICT',
-            message: `Addon "${input.addonId}" is unique-instance and already has an integration (${existing[0]!.id})`,
-          })
-        }
-      }
-
-      // ── the gate ────────────────────────────────────────────────────
-      //
-      // "Next" must validate and create ONLY on success. `rejected` is the one
-      // status that blocks: it means the remote was asked and said no. An
-      // `unsupported` (no test declared) or `inconclusive` (declared test could
-      // not complete) observed NOTHING about the credentials — refusing on
-      // those would make every integration lacking the hook uncreatable, and
-      // would fail a good create on a flaky network. They pass, and they SAY SO
-      // in the log: silence here would read as "validated".
-      const verdict = await testBeforeCreate(ar, input.addonId, settings ?? {}, logger, input.kind)
-      if (verdict.status === 'rejected') {
-        logger.warn('rejected — connection test refused the settings', {
-          tags: { addonId: input.addonId },
-          meta: {
-            phase: 'create',
-            status: verdict.status,
-            testedBy: verdict.testedBy,
-          },
-        })
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: verdict.error ?? `Connection test failed for '${input.addonId}'`,
-        })
-      }
-      if (verdict.status === 'validated') {
-        logger.info('connection test validated — proceeding', {
-          tags: { addonId: input.addonId },
-          meta: { phase: 'create', latencyMs: verdict.latencyMs },
-        })
-      } else {
-        logger.warn('creating without validation — the settings were not validated', {
-          tags: { addonId: input.addonId },
-          meta: {
-            phase: 'create',
-            status: verdict.status,
-            reason: verdict.error,
-          },
-        })
-      }
-
-      const integration = await reg.createIntegration(payload)
-      if (instances !== null) {
-        // The connection is a typed record keyed by the registry id. A refusal
-        // deletes the row: a registry entry with no record is an orphan.
-        try {
-          await instances.createInstance({
-            id: integration.id,
-            name: integration.name,
-            ...(input.kind !== undefined ? { kind: input.kind } : {}),
-          })
-          if (settings !== undefined && Object.keys(settings).length > 0) {
-            await instances.updateInstance({
-              id: integration.id,
-              values: settings,
+      const raw = instances === null ? null : rawInstancesProvider(instances)
+      const addon = ar.listAddons().find((a) => a.manifest.id === input.addonId)
+      if (raw === null) {
+        const legacyMode =
+          addon?.declaration?.instanceMode ?? addon?.manifest?.instanceMode ?? 'multiple'
+        if (legacyMode === 'unique') {
+          const existing = (await reg.listIntegrations()).filter((i) => i.addonId === input.addonId)
+          if (existing.length > 0) {
+            logger.warn('rejected duplicate unique', {
+              tags: { addonId: input.addonId, integrationId: existing[0]!.id },
+              meta: { phase: 'create' },
+            })
+            throw new TRPCError({
+              code: 'CONFLICT',
+              message: `Addon "${input.addonId}" is unique-instance and already has an integration (${existing[0]!.id})`,
             })
           }
-        } catch (err) {
-          await instances.deleteInstance({ id: integration.id }).catch(() => undefined)
-          try {
-            await reg.deleteIntegration(integration.id)
-          } catch (rollbackErr) {
-            // The rollback failing must not hide WHY the create was refused.
-            logger.warn('instance record refused — registry row could not be removed', {
-              tags: {
-                integrationId: integration.id,
-                addonId: integration.addonId,
-              },
-              meta: { phase: 'create-rollback', error: errMsg(rollbackErr) },
-            })
-          }
-          logger.warn('instance record refused — registry row removed', {
-            tags: {
-              integrationId: integration.id,
-              addonId: integration.addonId,
-            },
-            meta: { phase: 'create', error: errMsg(err) },
-          })
-          throw err
         }
-        logger.info('persisted as an instance record (no restart)', {
-          tags: { integrationId: integration.id, addonId: integration.addonId },
-          meta: { phase: 'create' },
-        })
-        return integration
       }
-      if (settings !== undefined && Object.keys(settings).length > 0) {
-        logger.warn('settings dropped — the addon has no instance record to store them', {
-          tags: { integrationId: integration.id, addonId: integration.addonId },
-          meta: { phase: 'create', keys: Object.keys(settings) },
-        })
-      }
-      logger.info('persisted', {
-        tags: { integrationId: integration.id, addonId: integration.addonId },
-        meta: { phase: 'create' },
+      return createRegisteredInstance(lifecycleDeps, raw, {
+        addonId: input.addonId,
+        name: input.name,
+        ...(input.info !== undefined ? { info: input.info } : {}),
+        ...(input.originStableId !== undefined ? { originStableId: input.originStableId } : {}),
+        ...(input.kind !== undefined ? { kind: input.kind } : {}),
+        ...(settings !== undefined ? { settings } : {}),
       })
-      return integration
     },
     update: async (input) => {
       const reg = requireIntegrationRegistry(ar)
@@ -1518,131 +1295,15 @@ export function buildIntegrationsProvider(
         })
         throw new Error(`Integration "${input.id}" not found`)
       }
-      // REFUSE BEFORE MUTATING ANYTHING.
-      //
-      // The registry enforces this too, but it is the LAST step here — and the
-      // device cascade below is deliberately best-effort, so a refusal that
-      // arrives afterwards has already destroyed every device the integration
-      // owned. That is not theoretical: it deleted the Notification Center's
-      // alarm panel (835) one second before the registry answered "is fixed",
-      // and the panel came back with a new id and no state, silently breaking
-      // every rule that named it.
-      if (IntegrationRegistry.isFixed(integration)) {
-        throw new Error(
-          `integration "${input.id}" is fixed — it belongs to the addon that declared it and cannot be deleted`,
-        )
-      }
-
-      logger.info('removing', {
-        tags: { integrationId: input.id, addonId: integration.addonId },
-        meta: { phase: 'delete', name: integration.name },
-      })
-
-      // Cascade-delete every live device whose integrationId matches.
-      // Best-effort: a device-removal hiccup must not abort the integration
-      // delete — log a warning and continue so the record + event always fire.
-      const dm =
-        capabilityRegistry?.getSingleton<{
-          removeByIntegration?: (input: { integrationId: string }) => Promise<{ removed: number }>
-          listAll?: (input: Record<string, never>) => Promise<
-            readonly {
-              id: number
-              addonId: string
-              parentDeviceId: number | null
-              integrationId?: string
-            }[]
-          >
-          setIntegrationId?: (input: { deviceId: number; integrationId: string }) => Promise<void>
-        }>('device-manager') ?? null
-
-      // Claim legacy un-tagged devices BEFORE the cascade. Devices created
-      // before stamping (or whose provider never stamps, e.g. `provider-rtsp`)
-      // carry no integrationId, so `removeByIntegration` (which matches on
-      // integrationId) would leave them orphaned forever once their integration
-      // is gone. While the integration record still exists, stamp the
-      // unambiguous ones (addons hosting exactly one integration) so the cascade
-      // below removes them too. Best-effort: never abort the delete.
-      if (dm?.listAll && dm?.setIntegrationId) {
-        try {
-          const [integrations, devices] = await Promise.all([
-            reg.listIntegrations(),
-            dm.listAll({}),
-          ])
-          const stamps = planDeleteTimeStamps(
-            input.id,
-            integrations.map((i) => ({ id: i.id, addonId: i.addonId })),
-            devices.map((d) => ({
-              id: d.id,
-              addonId: d.addonId,
-              parentDeviceId: d.parentDeviceId,
-              ...(d.integrationId !== undefined ? { integrationId: d.integrationId } : {}),
-            })),
-          )
-          for (const stamp of stamps) {
-            await dm.setIntegrationId({
-              deviceId: stamp.deviceId,
-              integrationId: stamp.integrationId,
-            })
-          }
-          if (stamps.length > 0) {
-            logger.info('claimed legacy un-tagged devices for cascade', {
-              tags: { integrationId: input.id, addonId: integration.addonId },
-              meta: { phase: 'delete', claimed: stamps.length },
-            })
-          }
-        } catch (err) {
-          logger.warn('legacy device claim failed (best-effort — continuing)', {
-            tags: { integrationId: input.id },
-            meta: { phase: 'delete', error: errMsg(err) },
-          })
-        }
-      }
-
-      if (dm?.removeByIntegration) {
-        try {
-          const result = await dm.removeByIntegration({
-            integrationId: input.id,
-          })
-          logger.info('cascade-removed devices', {
-            tags: { integrationId: input.id },
-            meta: { phase: 'delete', removed: result.removed },
-          })
-        } catch (err) {
-          logger.warn('device cascade-remove failed (best-effort — continuing)', {
-            tags: { integrationId: input.id },
-            meta: { phase: 'delete', error: errMsg(err) },
-          })
-        }
-      } else {
-        logger.warn('device-manager not available — skipping cascade device removal', {
-          tags: { integrationId: input.id },
-          meta: { phase: 'delete' },
-        })
-      }
-
-      // The record and its keychain refs go first; a refusal stops here, with
-      // the registry row still naming what was not removed.
-      await getInstancesProvider(ar, integration.addonId)?.deleteInstance({
-        id: input.id,
-      })
-
-      await reg.deleteIntegration(input.id)
-
-      eb.emit({
-        id: `integration-deleted-${Date.now()}`,
-        timestamp: new Date(),
-        source: { type: 'integration', id: input.id },
-        category: EventCategory.IntegrationDeleted,
-        data: {
-          integrationId: input.id,
-          addonId: integration.addonId,
-        },
-      })
-      logger.info('completed (no restart)', {
-        tags: { integrationId: input.id },
-        meta: { phase: 'delete' },
-      })
-
+      // The hub half is shared with the registered `integration-instances` provider
+      // (`instance-lifecycle.ts`): a fixed builtin and a linked instance are refused BEFORE the
+      // first mutation, then the devices, the record, the row and the event.
+      const instances = getInstancesProvider(ar, integration.addonId)
+      await deleteRegisteredInstance(
+        lifecycleDeps,
+        instances === null ? null : rawInstancesProvider(instances),
+        integration,
+      )
       return { success: true, deletedId: input.id }
     },
     getAvailableTypes: async () => {

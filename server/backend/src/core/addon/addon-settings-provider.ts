@@ -293,7 +293,13 @@ function createAddonSettingsProvider(deps: AddonSettingsProviderDeps): IAddonSet
       const instances = deps.instancesFor?.(input.addonId) ?? null
       if (instances !== null) {
         return reshapeForOutput(
-          await instances.instanceFormSchema({ id: input.instance.integrationId }),
+          await instances.instanceFormSchema({
+            id: input.instance.integrationId,
+            mode: input.instance.mode,
+            ...(input.instance.candidateStableId !== undefined
+              ? { candidateStableId: input.instance.candidateStableId }
+              : {}),
+          }),
         )
       }
       if (gateway.isInProcess(input.addonId, input.nodeId)) {

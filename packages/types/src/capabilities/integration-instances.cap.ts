@@ -198,6 +198,10 @@ export const integrationInstancesCapability = {
         id: IntegrationInstanceIdSchema.nullable(),
         /** The kind of the create form (`id: null`) of a provider with several. */
         kind: z.string().min(1).optional(),
+        /** The wizard mode of the integration type (`getAvailableTypes`); a form may differ per mode. */
+        mode: z.enum(['standalone', 'account', 'broker']).optional(),
+        /** The discovery candidate the wizard was seeded from (`stableId`), if any. */
+        candidateStableId: z.string().min(1).optional(),
       }),
       ConfigSchemaPassthrough,
       { auth: 'admin' },
@@ -213,6 +217,12 @@ export const integrationInstancesCapability = {
     /**
      * Insert the typed record. With `id` it is stored under that id (a duplicate id is refused);
      * without one the PROVIDER mints it and answers it. `kind` picks one of `describe().kinds`.
+     *
+     * An instance of a kind that brings devices (`role: 'devices'`) is an integration: the HUB mints
+     * the id (the `integrations` registry id, which its devices carry), refuses the create when
+     * `testInstance` rejects the values (D1016; a kind with no test passes and says so), writes the
+     * registry row and the record, and removes both when either step fails. An `id` is accepted
+     * only when it names an existing registry row of the addon.
      */
     createInstance: method(
       z.object({
@@ -221,6 +231,12 @@ export const integrationInstancesCapability = {
         kind: z.string().min(1).optional(),
         /** Form values written with the record (a link picked in the create dialog). */
         values: z.record(z.string(), z.unknown()).optional(),
+        /**
+         * The discovery candidate (`stableId`) the instance is set up from. Kept on the integration
+         * registry row of an instance that brings devices, so discovery stops offering a candidate
+         * that already has its integration (D984). Ignored by an instance with no registry row.
+         */
+        originStableId: z.string().min(1).optional(),
       }),
       z.object({ id: z.string() }),
       { kind: 'mutation', auth: 'admin' },
@@ -239,7 +255,11 @@ export const integrationInstancesCapability = {
       z.object({ ok: z.literal(true) }),
       { kind: 'mutation', auth: 'admin' },
     ),
-    /** Delete the record and its keychain refs together. */
+    /**
+     * Delete the record and its keychain refs together. For an instance that brings devices the hub
+     * also removes the integration's devices (their tombstones, D865), the registry row, and emits
+     * `IntegrationDeleted`; a fixed builtin and an instance a link names are refused first.
+     */
     deleteInstance: method(
       z.object({ id: IntegrationInstanceIdSchema }),
       z.object({ ok: z.literal(true) }),

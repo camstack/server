@@ -2950,10 +2950,10 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | describe | `integrationInstances.describe` | query | admin | `void` | `IntegrationInstanceDescriptionSchema` |
-| instanceFormSchema | `integrationInstances.instanceFormSchema` | query | admin | `{ id: string \| null; kind?: string }` | `<custom>` |
+| instanceFormSchema | `integrationInstances.instanceFormSchema` | query | admin | `{ id: string \| null; kind?: string; mode?: "standalone" \| "account" \| "broker"; candidateStableId?: string }` | `<custom>` |
 | listInstances | `integrationInstances.listInstances` | query | admin | `void` | `IntegrationInstanceSchema[]` |
 | getInstance | `integrationInstances.getInstance` | query | admin | `{ id: string }` | `IntegrationInstanceSchema \| null` |
-| createInstance | `integrationInstances.createInstance` | mutation | admin | `{ id?: string; name: string; kind?: string; values?: Record<string, unknown> }` | `{ id: string }` |
+| createInstance | `integrationInstances.createInstance` | mutation | admin | `{ id?: string; name: string; kind?: string; values?: Record<string, unknown>; originStableId?: string }` | `{ id: string }` |
 | updateInstance | `integrationInstances.updateInstance` | mutation | admin | `IntegrationInstancePatchSchema` | `{ ok: true }` |
 | setInstanceEnabled | `integrationInstances.setInstanceEnabled` | mutation | admin | `{ id: string; enabled: boolean }` | `{ ok: true }` |
 | deleteInstance | `integrationInstances.deleteInstance` | mutation | admin | `{ id: string }` | `{ ok: true }` |

@@ -81,23 +81,30 @@ export class InstanceLinksIndex {
 }
 
 /**
- * `provider` with a `deleteInstance` that refuses while a declared link names the instance.
- * The target's function cap and kind come from its own `describe().kinds`; a provider with no
- * kinds is no link target and is passed through. A consumer that cannot be read REFUSES the
- * delete: a destructive step never goes ahead on a failed read (D49).
+ * Refuse while a declared link names instance `id` of `provider`. The target's function cap and
+ * kind come from its own `describe().kinds`; a provider with no kinds is no link target. A
+ * consumer that cannot be read REFUSES: a destructive step never goes ahead on a failed read (D49).
  */
+export async function assertInstanceDeletable(
+  provider: IIntegrationInstancesProvider,
+  index: InstanceLinksIndex,
+  id: string,
+): Promise<void> {
+  const instance = await provider.getInstance({ id })
+  const description = await provider.describe()
+  const kind = (description.kinds ?? []).find((k) => k.id === instance?.kind)
+  if (kind === undefined) return
+  const names = kind.brokerKind === undefined ? [kind.id] : [kind.id, kind.brokerKind]
+  await assertInstanceUnused(id, await index.findersFor(kind.functionCap, names))
+}
+
+/** `provider` with a `deleteInstance` that refuses while a declared link names the instance. */
 export function guardInstanceDeletes(
   provider: IIntegrationInstancesProvider,
   index: InstanceLinksIndex,
 ): IIntegrationInstancesProvider {
   const guarded: IIntegrationInstancesProvider['deleteInstance'] = async (input) => {
-    const instance = await provider.getInstance({ id: input.id })
-    const description = await provider.describe()
-    const kind = (description.kinds ?? []).find((k) => k.id === instance?.kind)
-    if (kind !== undefined) {
-      const names = kind.brokerKind === undefined ? [kind.id] : [kind.id, kind.brokerKind]
-      await assertInstanceUnused(input.id, await index.findersFor(kind.functionCap, names))
-    }
+    await assertInstanceDeletable(provider, index, input.id)
     return provider.deleteInstance(input)
   }
   return new Proxy(provider, {
@@ -109,18 +116,29 @@ export function guardInstanceDeletes(
   })
 }
 
+/** Adds the hub half of create and delete (`withInstanceLifecycle`) around a registered provider. */
+export type InstanceLifecycleWrap = (
+  addonId: string,
+  provider: IIntegrationInstancesProvider,
+) => IIntegrationInstancesProvider
+
 /**
  * What the registry should hold for `provider` registered under `capName`: a holder of
- * `integration-instances` comes back guarded, anything else unchanged. One call site per way a
+ * `integration-instances` comes back guarded (a delete refused while a link names it, D1013) and,
+ * when `lifecycle` is given, carrying the hub half of create and delete for an instance that
+ * brings devices (epic #440 H3). Anything else comes back unchanged. One call site per way a
  * provider reaches the registry (in-process context, forked-runner proxy).
  */
 export function registeredProviderFor(
   capName: string,
   provider: unknown,
   registry: InstanceHolderRegistry,
+  lifecycle?: { readonly addonId: string; readonly wrap: InstanceLifecycleWrap | null },
 ): unknown {
   if (capName !== INTEGRATION_INSTANCES_CAP || !isIntegrationInstancesProvider(provider)) {
     return provider
   }
-  return guardInstanceDeletes(provider, new InstanceLinksIndex(() => holdersOf(registry)))
+  const holders = () => holdersOf(registry)
+  const guarded = guardInstanceDeletes(provider, new InstanceLinksIndex(holders))
+  return lifecycle?.wrap == null ? guarded : lifecycle.wrap(lifecycle.addonId, guarded)
 }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- integration-instances: instanceFormSchema takes the wizard mode and discovery candidate, createInstance takes the originating candidate
+
 ## [1.2.526] - 2026-11-08
 
 ### Changed

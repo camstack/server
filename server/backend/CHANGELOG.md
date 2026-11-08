@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Creating an instance that brings devices now writes the integration row, applies the connection-test gate and rolls back on failure; deleting one removes its devices, row and announces it
+
 ## [1.2.812] - 2026-11-08
 
 ### Changed
