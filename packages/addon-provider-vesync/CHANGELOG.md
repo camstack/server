@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.155] - 2026-11-08
+
 ### Changed
 
 - Settings migration creates the instance through the single create door

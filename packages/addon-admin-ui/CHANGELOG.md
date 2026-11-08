@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.624] - 2026-11-08
+
 ### Changed
 
 - The new-integration wizard creates through the one instance door, so the hub gates the create on the connection test and the discovery candidate is kept on the integration

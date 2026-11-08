@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.531] - 2026-11-08
+
 ### Changed
 
 - The integrations.create method is gone: every instance is created through integrationInstances.createInstance, and an addon seeds its own fixed integration with its seed field

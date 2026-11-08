@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-ai",
-  "version": "0.4.181",
+  "version": "0.4.182",
   "description": "AI addon for CamStack — the `llm` collection provider (cloud, LAN, and camstack-managed local llama.cpp profiles) plus the per-node `llm-runtime` managed executor.",
   "keywords": [
     "camstack",
@@ -61,7 +61,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.810"
+      "server": ">=1.2.817"
     }
   },
   "files": [

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.634] - 2026-11-08
+
 ### Changed
 
 - No operator change: the legacy target rows the migration is tested against now live in a replay seed
