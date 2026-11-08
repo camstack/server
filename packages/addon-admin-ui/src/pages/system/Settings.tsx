@@ -51,11 +51,11 @@ export function SettingsPage() {
     <AdminPage embedded>
       <SiteLocationCard />
       {isLoading ? (
-        <div className="text-muted-foreground text-sm py-12 text-center">
+        <div className="text-foreground-subtle text-sm py-12 text-center">
           {t('admin.system.settings.loadingHubTopology', 'Loading hub topology…')}
         </div>
       ) : !hub ? (
-        <div className="flex flex-col items-center justify-center text-muted-foreground text-sm gap-2 py-12">
+        <div className="flex flex-col items-center justify-center text-foreground-subtle text-sm gap-2 py-12">
           <SettingsIcon className="h-8 w-8 opacity-30" />
           <p>{t('admin.system.settings.noOnlineHubNodeFound', 'No online hub node found.')}</p>
           <p className="text-xs">
@@ -64,10 +64,6 @@ export function SettingsPage() {
               'Settings will appear once the hub is reachable.',
             )}
           </p>
-        </div>
-      ) : addonIds.length === 0 ? (
-        <div className="text-muted-foreground text-sm py-12 text-center">
-          {t('admin.system.settings.noAddonsInstalledOnThe', 'No addons installed on the hub yet.')}
         </div>
       ) : (
         <>
@@ -78,12 +74,21 @@ export function SettingsPage() {
               'Not available — the addon that owns the server settings did not answer.',
             )}
           />
-          <NodeAddonsSettingsPanel
-            nodeId={hub.id}
-            addonIds={addonIds}
-            level="global"
-            omitSectionIds={[AUTH_POLICY_SECTION_ID, WEBAUTHN_SECTION_ID]}
-          />
+          {addonIds.length === 0 ? (
+            <div className="text-foreground-subtle text-sm py-12 text-center">
+              {t(
+                'admin.system.settings.noAddonsInstalledOnThe',
+                'No addons installed on the hub yet.',
+              )}
+            </div>
+          ) : (
+            <NodeAddonsSettingsPanel
+              nodeId={hub.id}
+              addonIds={addonIds}
+              level="global"
+              omitSectionIds={[AUTH_POLICY_SECTION_ID, WEBAUTHN_SECTION_ID]}
+            />
+          )}
         </>
       )}
       <section aria-labelledby="settings-per-user" className="mt-3 sm:mt-4 space-y-3 sm:space-y-4">

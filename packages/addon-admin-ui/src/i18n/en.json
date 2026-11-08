@@ -825,7 +825,8 @@
       "connectionFailed": "Connection failed",
       "emptyTitle": "No notification targets yet",
       "emptyDescription": "Add a target to deliver notifications to ntfy, Pushover, Telegram, Home Assistant and more.",
-      "testTarget": "Send a test to {{name}}"
+      "testTarget": "Send a test to {{name}}",
+      "unknownUser": "unknown user"
     },
     "notificationTestPanel": {
       "level": "Level",

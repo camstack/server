@@ -152,6 +152,18 @@ describe('Connectivity SectionedPage', () => {
     expect(within(pills).queryByText('Google')).toBeNull()
   })
 
+  it('calendars section draws no "nothing installed" state under a populated list', () => {
+    // Every calendar provider keeps instance records, so the hub has no pill. The other
+    // connectivity addons (email, broker) are no calendar provider and must not become one.
+    fixtures.holders = ['google-services', 'waste-collections']
+    renderAt('/system/integrations?tab=calendars')
+    expect(screen.getByTestId('provider-instances').getAttribute('data-cap')).toBe(
+      'calendar-source',
+    )
+    expect(screen.queryByText(/No calendar sources/i)).toBeNull()
+    expect(screen.queryByRole('navigation', { name: /Calendars integrations/i })).toBeNull()
+  })
+
   it('email section is the provider-instances list of smtp-provider, not a pill hub', () => {
     renderAt('/system/integrations?tab=email')
     expect(screen.getByTestId('provider-instances').getAttribute('data-cap')).toBe('smtp-provider')

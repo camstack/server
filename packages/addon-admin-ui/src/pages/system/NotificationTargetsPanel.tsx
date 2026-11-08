@@ -6,7 +6,7 @@
  * test panel that sends a sample the kind can honour.
  */
 import { notificationTargetKindOf, type Target } from '@camstack/types'
-import { IconButton, Badge, useInstancesOfCap, useSystem } from '@camstack/ui-library'
+import { IconButton, Badge, Skeleton, useInstancesOfCap, useSystem } from '@camstack/ui-library'
 import type { DataColumn, LinkableInstance } from '@camstack/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Bell, Send } from 'lucide-react'
@@ -39,8 +39,14 @@ function OwnerCell({ row }: { readonly row: PanelRow }): ReactElement | null {
   const instance = (targets.data ?? []).find((i) => i.id === row.id)
   const owner = instance === undefined ? null : targetOwnerUserId(instance)
   if (owner === null) return <Badge variant="default">{t('common.systemWord', 'system')}</Badge>
+  // The id is never shown: unanswered is a skeleton, an owner the list does not know is named so.
+  if (users.data === undefined && !users.isError) return <Skeleton className="h-3 w-16" />
   const name = (users.data ?? []).find((u) => u.id === owner)?.username
-  return <span className="text-[11px] text-foreground">{name ?? owner}</span>
+  return (
+    <span className="text-xs text-foreground">
+      {name ?? t('system.notificationTargets.unknownUser', 'unknown user')}
+    </span>
+  )
 }
 
 function ownerColumn(label: string): DataColumn<PanelRow> {

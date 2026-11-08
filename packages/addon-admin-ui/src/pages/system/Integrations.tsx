@@ -249,10 +249,14 @@ function InstancesKindSection({
   readonly isLoading: boolean
 }): ReactElement {
   const holders = useInstanceHolderIds()
-  const pillRows = useMemo(
-    () => (holders === null ? [] : rows.filter((row) => !holders.has(row.addonId))),
-    [holders, rows],
-  )
+  // Only a provider of THIS kind without an instance model is a pill: `rows` lists every
+  // connectivity addon, and one that is no provider of the kind would leave the hub with no
+  // entry and draw its "nothing installed" state under a populated table.
+  const pillRows = useMemo(() => {
+    if (holders === null) return []
+    const kindCaps = capsOfKind(CAP_PROVIDER_KIND_MAP, descriptor.kind)
+    return rows.filter((row) => !holders.has(row.addonId) && capForRow(row, kindCaps) !== null)
+  }, [descriptor.kind, holders, rows])
   return (
     <>
       {instances}

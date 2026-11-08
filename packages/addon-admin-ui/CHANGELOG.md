@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed the unused 'assumed' media player labels from the translations.
 - The Customize running-state form pre-fills a media player's power threshold with its own faster dwell defaults
+- The calendars tab no longer shows 'No calendar sources installed' under a populated list, the storage Add dialog is named after the kind it adds, the Settings page shows the server settings form on a hub without addons, and a notification target's owner shows the user name instead of an id.
 
 ## [1.2.615] - 2026-11-08
 
