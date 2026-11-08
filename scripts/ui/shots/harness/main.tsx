@@ -48,6 +48,9 @@ if (window.location.pathname === '/sso-complete') {
 } else if (window.location.pathname.startsWith('/hero-scenes-preview')) {
   const { HeroScenesPreview } = await import('./hero-scenes-preview')
   createRoot(root).render(<HeroScenesPreview />)
+} else if (window.location.pathname.startsWith('/device-module-preview')) {
+  const { DeviceModulePreview } = await import('./device-module-preview')
+  createRoot(root).render(<DeviceModulePreview />)
 } else {
   createRoot(root).render(<App />)
 }
