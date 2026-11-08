@@ -114,7 +114,13 @@ async function world(bound: Partial<RemoteConfig>): Promise<World> {
     },
   } as unknown as AddonApi
 
-  const runtime = buildRemoteRuntime({ records, settings, api: () => api, logger })
+  const runtime = buildRemoteRuntime({
+    records,
+    settings,
+    api: () => api,
+    logger,
+    hasNative: () => false,
+  })
   const made = await runtime.templates.create({ kind: 'remote', name: 'TV', payload: LAYOUT })
   if (made.status !== 'saved') throw new Error('the layout template was refused')
   const templateId = made.template.id
