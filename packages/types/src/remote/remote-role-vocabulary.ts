@@ -63,6 +63,7 @@ export const REMOTE_ROLE_VOCABULARY: Readonly<Record<RemoteKnownRole, RemoteRole
   digit_7: digit('7'),
   digit_8: digit('8'),
   digit_9: digit('9'),
+  source_select: { label: t('Sources', 'Sorgenti'), icon: 'tv' },
 }
 
 /** The glyph of a `custom:<key>` role (an operator's own key) and of an unknown role. */

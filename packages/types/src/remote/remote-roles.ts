@@ -48,8 +48,20 @@ export const REMOTE_KNOWN_ROLES = [
   'digit_7',
   'digit_8',
   'digit_9',
+  'source_select',
 ] as const
 export type RemoteKnownRole = (typeof REMOTE_KNOWN_ROLES)[number]
+
+/**
+ * Roles that are WIDGETS, not commands: a layout may place them, but they are
+ * never bound, never pressed through `sendCommand`, never a source step and
+ * never a media-player feature. `source_select` is the source picker key.
+ */
+export const REMOTE_WIDGET_ROLES = ['source_select'] as const satisfies readonly RemoteKnownRole[]
+
+export function isRemoteWidgetRole(role: string): boolean {
+  return (REMOTE_WIDGET_ROLES as readonly string[]).includes(role)
+}
 
 export const REMOTE_CUSTOM_ROLE_PREFIX = 'custom:'
 const CUSTOM_KEY_RE = /^[a-z0-9][a-z0-9_]{0,47}$/

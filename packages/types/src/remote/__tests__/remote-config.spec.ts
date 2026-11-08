@@ -4,7 +4,7 @@ import {
   RemoteConfigSchema,
   RemoteLayoutPayloadSchema,
 } from '../remote-config.js'
-import { isRemoteRole, REMOTE_KNOWN_ROLES } from '../remote-roles.js'
+import { isRemoteRole, isRemoteWidgetRole, REMOTE_KNOWN_ROLES } from '../remote-roles.js'
 
 const action = {
   kind: 'cap' as const,
@@ -20,6 +20,42 @@ describe('remote roles', () => {
     expect(isRemoteRole('custom:source_hdmi_1')).toBe(true)
     expect(isRemoteRole('custom:Bad Key')).toBe(false)
     expect(isRemoteRole('turbo')).toBe(false)
+  })
+})
+
+describe('widget roles', () => {
+  it('source_select is a known role and the only widget', () => {
+    expect(isRemoteRole('source_select')).toBe(true)
+    expect(isRemoteWidgetRole('source_select')).toBe(true)
+    expect(isRemoteWidgetRole('volume_up')).toBe(false)
+    expect(isRemoteWidgetRole('custom:source_select')).toBe(false)
+  })
+
+  it('refuses to bind a widget, with a message that says why', () => {
+    const parsed = RemoteConfigSchema.safeParse({
+      ...EMPTY_REMOTE_CONFIG,
+      bindings: { source_select: { action } },
+    })
+    expect(parsed.success).toBe(false)
+    expect(JSON.stringify(parsed.error?.issues)).toContain('layout widget')
+  })
+
+  it('refuses a sequence step that presses a widget', () => {
+    const parsed = RemoteConfigSchema.safeParse({
+      ...EMPTY_REMOTE_CONFIG,
+      sources: [{ id: 'x', name: 'X', kind: 'sequence', steps: ['source_select'] }],
+    })
+    expect(parsed.success).toBe(false)
+    expect(JSON.stringify(parsed.error?.issues)).toContain('layout widget')
+  })
+
+  it('a layout may place it', () => {
+    const parsed = RemoteLayoutPayloadSchema.safeParse({
+      columns: 4,
+      rows: 1,
+      buttons: [{ id: 's', role: 'source_select', row: 0, col: 0, rowSpan: 1, colSpan: 4 }],
+    })
+    expect(parsed.success).toBe(true)
   })
 })
 

@@ -3,6 +3,10 @@ import { DeviceFeature } from '../../device/device-type.js'
 import { mediaPlayerFeaturesOfRoles } from '../remote-media-features.js'
 
 describe('mediaPlayerFeaturesOfRoles', () => {
+  it('a widget role contributes no feature', () => {
+    expect(mediaPlayerFeaturesOfRoles(['source_select'], 0)).toEqual([])
+  })
+
   it('derives the surface from what is bound, never from what a TV could do', () => {
     expect(
       mediaPlayerFeaturesOfRoles(['power', 'volume_up', 'volume_down', 'channel_up'], 0),

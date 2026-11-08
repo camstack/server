@@ -15,6 +15,7 @@ import {
   customKeyOfRole,
   isRemoteCustomKey,
   isRemoteRole,
+  isRemoteWidgetRole,
   RemoteRoleSchema,
 } from './remote-roles.js'
 import {
@@ -81,7 +82,9 @@ function refineSources(
       numbers.add(source.number)
     }
     for (const role of remoteSourceSteps(source)) {
-      if (config.bindings[role] === undefined) {
+      if (isRemoteWidgetRole(role)) {
+        fail(`"${source.name}" presses ${role}, a layout widget, not a command`, 'steps')
+      } else if (config.bindings[role] === undefined) {
         fail(`"${source.name}" presses ${role}, which is not bound`, 'steps')
       }
     }
@@ -138,7 +141,13 @@ export const RemoteConfigSchema = z
       })
     }
     for (const role of roles) {
-      if (!isRemoteRole(role)) {
+      if (isRemoteWidgetRole(role)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `"${role}" is a layout widget, not a command: it cannot be bound`,
+          path: ['bindings', role],
+        })
+      } else if (!isRemoteRole(role)) {
         ctx.addIssue({
           code: 'custom',
           message: `"${role}" is not a role`,
