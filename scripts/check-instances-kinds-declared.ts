@@ -47,6 +47,9 @@ const FUNCTION_CAP_RE = /\bfunctionCap:\s*['"]([^'"]+)['"]/g
 const KINDS_DECL_RE =
   /\bkinds:\s*[[A-Za-z_$]|\bcomposeInstanceKinds\s*\(|\bbuildNotificationTargetInstances\s*\(|\bnotificationTargetParts\s*\(/
 const RECORD_SITE_RE = /\bnew\s+RecordIntegrationInstances\b/g
+const KIND_OF_RE = /\bkindOf\b/
+const KINDS_OPEN_RE = /\bkinds:\s*(\[?)/
+const KIND_ID_RE = /\bid:\s*/g
 const KINDS_ARRAY_RE = /\bkinds:\s*\[/g
 const BOTH_RE = /\b(?:role|integrationRole):\s*['"]both['"]/
 
@@ -188,6 +191,25 @@ export function findKindsViolations(
           message: `a RecordIntegrationInstances construction (source line ${line} of the package) declares no kinds in its description (D1013 rule 1)`,
         })
       }
+    }
+    // With more than one kind (or kinds computed, so not provably one) the construction names
+    // which kind a stored row is of: `kindOf`, or the helper throws at construction.
+    for (const site of source.matchAll(RECORD_SITE_RE)) {
+      const call = callText(source, (site.index ?? 0) + site[0].length)
+      if (KIND_OF_RE.test(call)) continue
+      const text = siteText(source, call)
+      const open = KINDS_OPEN_RE.exec(text)
+      if (open === null) continue // composed elsewhere; the declaration rule above speaks
+      const provablyOne =
+        open[1] === '[' &&
+        (arrayText(text, (open.index ?? 0) + open[0].length - 1).match(KIND_ID_RE)?.length ?? 0) <=
+          1
+      if (provablyOne) continue
+      const line = source.slice(0, site.index ?? 0).split('\n').length
+      out.push({
+        addon: entry.addon,
+        message: `a RecordIntegrationInstances construction (source line ${line} of the package) declares several or computed kinds and no kindOf: it throws at construction`,
+      })
     }
     for (const match of source.matchAll(KINDS_ARRAY_RE)) {
       const array = arrayText(source, (match.index ?? 0) + match[0].length - 1)

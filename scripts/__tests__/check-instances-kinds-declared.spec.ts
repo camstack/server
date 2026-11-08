@@ -79,8 +79,29 @@ describe('check-instances-kinds-declared', () => {
       new RecordIntegrationInstances(records, kindA, { description: D, configured: () => true })
       new RecordIntegrationInstances(records, kindB, { description: { kinds: [{ id: 'b', label: 'B', functionCap: 'device-provider' }] }, configured: () => true })`
     expect(
-      findKindsViolations([entry('two', ['integration-instances', 'device-provider'])], () => source),
+      findKindsViolations(
+        [entry('two', ['integration-instances', 'device-provider'])],
+        () => source,
+      ),
     ).toEqual([])
+  })
+
+  it('refuses a construction with computed or several kinds and no kindOf, passes one with kindOf or one literal kind', () => {
+    const e = [entry('ai', ['integration-instances', 'device-provider'])]
+    const computed = `const D = { kinds: LIST.map((d) => ({ id: d.kind, functionCap: 'device-provider' })) }
+      new RecordIntegrationInstances(records, k, { description: D, configured: () => true })`
+    const found = findKindsViolations(e, () => computed)
+    expect(found).toHaveLength(1)
+    expect(found[0]?.message).toContain('no kindOf')
+    expect(
+      findKindsViolations(e, () =>
+        computed.replace('configured', 'kindOf: (b) => b.kind, configured'),
+      ),
+    ).toEqual([])
+    const several = `new RecordIntegrationInstances(records, k, { description: { kinds: [{ id: 'a', functionCap: 'device-provider' }, { id: 'b', functionCap: 'device-provider' }] }, configured: () => true })`
+    expect(findKindsViolations(e, () => several)).toHaveLength(1)
+    const one = `new RecordIntegrationInstances(records, k, { description: { kinds: [{ id: 'a', functionCap: 'device-provider' }] }, configured: () => true })`
+    expect(findKindsViolations(e, () => one)).toEqual([])
   })
 
   it('reads a package as one provider: the entries of one package share their sections', () => {

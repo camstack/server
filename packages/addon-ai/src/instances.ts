@@ -426,6 +426,7 @@ export function createLlmInstances(deps: LlmInstancesDeps): IIntegrationInstance
     initialBody: (id) => {
       throw new Error(`profile "${id}" not found`)
     },
+    kindOf: (body) => body.kind,
     configured: (body) => validateProviderConfig(body.kind, body.providerConfig).ok,
   })
 
