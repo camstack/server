@@ -256,9 +256,10 @@ export class CoreBlocksAddon extends BaseAddon {
     })
     return [
       { capability: coreBlocksCapability, provider: this.buildProvider() },
-      ...(this.blocksInstances === null
-        ? []
-        : [{ capability: integrationInstancesCapability, provider: this.blocksInstances.toProvider() }]),
+      {
+        capability: integrationInstancesCapability,
+        provider: this.requireBlocksInstances().toProvider(),
+      },
       { capability: actionsCapability, provider: this.requireActions().service },
       { capability: schedulersCapability, provider: schedulers.service },
       { capability: powerSourceCapability, provider: this.buildPowerSource() },
@@ -628,10 +629,9 @@ export class CoreBlocksAddon extends BaseAddon {
         api.deviceManager.listAll.query({ addonId: CORE_BLOCKS_ADDON_ID }),
       // The integration keeps a name-only instance record under its registry id. A seed never
       // overwrites, so an existing install gains the record once and keeps it afterwards.
+      // Not initialised is a refusal the bounded arm retry sees and logs, never a silent skip.
       seedInstance: async (seed) => {
-        if (this.blocksInstances !== null) {
-          await seedInstanceOnce(this.blocksInstances.toProvider(), seed)
-        }
+        await seedInstanceOnce(this.requireBlocksInstances().toProvider(), seed)
       },
     })
   }
@@ -646,6 +646,11 @@ export class CoreBlocksAddon extends BaseAddon {
    */
   private convergeSoon(): void {
     void this.supervisor?.converge()
+  }
+
+  private requireBlocksInstances(): NonNullable<typeof this.blocksInstances> {
+    if (this.blocksInstances === null) throw new Error('core-blocks: not initialized')
+    return this.blocksInstances
   }
 
   private requireActions(): ActionsRuntime {

@@ -83,6 +83,16 @@ describe('reconcileBlocksIntegration', () => {
     )
   })
 
+  it('a seed that refuses is a logged warning, the integration still lands', async () => {
+    const h = harness()
+    const seedInstance = vi.fn(async () => {
+      throw new Error('core-blocks: not initialized')
+    })
+    const id = await reconcileBlocksIntegration({ ...h.ports, seedInstance })
+    expect(id).toBe('int_0023')
+    expect(seedInstance).toHaveBeenCalledTimes(1)
+  })
+
   it('adopts the existing row on every later boot instead of minting a second', async () => {
     // Discriminating: this is the branch that failed for a block — its
     // `getIntegration` answered null forever, so it took the mint branch every
