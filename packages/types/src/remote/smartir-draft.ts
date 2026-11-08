@@ -35,6 +35,11 @@ export interface SmartIrSkipped {
   readonly reason: string
 }
 
+/** How a different source format names its buttons: the role a name fills, or undefined for a custom button. */
+export interface SmartIrDraftOptions {
+  readonly roleOf?: (name: string) => string | undefined
+}
+
 export interface SmartIrDraft {
   readonly bindings: Record<string, RemoteBinding>
   readonly customButtons: RemoteCustomButton[]
@@ -108,7 +113,11 @@ function resolveAll(
  * command SmartIR knows fills its role; a source, or any command it does not
  * know, becomes a custom button named as the file spells it.
  */
-export function smartIrDraft(table: RemoteCommandTable, target: SmartIrTarget): SmartIrDraft {
+export function smartIrDraft(
+  table: RemoteCommandTable,
+  target: SmartIrTarget,
+  options: SmartIrDraftOptions = {},
+): SmartIrDraft {
   const skipped: SmartIrSkipped[] = []
   const commands = resolveAll(table, target, skipped)
   const bindings: Record<string, RemoteBinding> = {}
@@ -141,9 +150,15 @@ export function smartIrDraft(table: RemoteCommandTable, target: SmartIrTarget): 
       continue
     }
     if (command.name === 'on' || command.name === 'off') continue
-    const role = KNOWN_KEY_ROLES[command.name]
-    if (role !== undefined) bindings[role] = bindingOf(command)
-    else addCustom(command, '')
+    const role = options.roleOf?.(command.name) ?? KNOWN_KEY_ROLES[command.name]
+    if (role === undefined) {
+      addCustom(command, '')
+    } else if (bindings[role] !== undefined) {
+      skipped.push({ name: command.name, reason: `duplicate of the ${role} button already bound` })
+    } else {
+      bindings[role] = bindingOf(command)
+      if (role === 'power') mode = 'toggle'
+    }
   }
   return { bindings, customButtons, power: { mode }, skipped }
 }

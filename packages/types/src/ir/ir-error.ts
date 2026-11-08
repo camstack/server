@@ -6,6 +6,7 @@ export type IrCodecErrorCode =
   | 'pronto-unsupported-form'
   | 'smartir-malformed'
   | 'samsung-invalid'
+  | 'flipper-malformed'
 
 export class IrCodecError extends Error {
   readonly code: IrCodecErrorCode
