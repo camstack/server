@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- No operator change: the legacy profile rows the migration is tested against now live in a replay seed
+
 ## [0.4.181] - 2026-11-08
 
 ### Changed

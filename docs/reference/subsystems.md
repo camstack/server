@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 8285 source files · 1295 file(s) in no subsystem.**
+**31 subsystems · 8291 source files · 1296 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -33,7 +33,7 @@ commits. A generated page may not.
 | Pipeline orchestration and placement | 202 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, +105 more, 27 ADRs | 2026-11-02 | ✅ |
 | Post-analysis — tracking, the confirmation gate and media | 508 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +176 more, 29 ADRs | 2026-10-14 | ✅ |
 | Face, plate and embedding recognition | 50 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +27 more, 4 ADRs | 2026-10-04 | ⚠️ |
-| Notification Center — rules, outbox, occupancy, timelapse | 285 | `architecture/notifications.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, +95 more, 27 ADRs | 2026-10-07 | ✅ |
+| Notification Center — rules, outbox, occupancy, timelapse | 286 | `architecture/notifications.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, +95 more, 27 ADRs | 2026-10-07 | ✅ |
 | Recorder, scrub and recorded playback | 140 | `decisions/adr-0228-recording-write-stays-in-recorder-scrub-stays-on-the-live-webrtc-session.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-25-reference-scrub-teardown-and-plan.md` _(covers)_, +94 more, 19 ADRs | 2026-11-02 | ⚠️ |
 | Stream broker, WebRTC and live delivery | 170 | `decisions/adr-1013-one-instance-model.md`, `architecture/data-planes.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +44 more, 16 ADRs | 2026-10-21 | ✅ |
 | Audio analysis and audio delivery | 18 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, +10 more | 2026-10-08 | ⚠️ |
@@ -44,16 +44,16 @@ commits. A generated page may not.
 | The hub API surface | 174 | `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, +114 more, 18 ADRs | 2026-11-02 | ⚠️ |
 | Shared types, schemas and enums | 105 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, `architecture/windows-agent.md`, +34 more, 5 ADRs | 2026-11-02 | ⚠️ |
 | Update, release, OTA and agent delivery | 73 | `architecture/update-and-release.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +36 more, 10 ADRs | 2026-10-27 | ✅ |
-| Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 392 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, +54 more, 20 ADRs | 2026-11-08 | ⚠️ |
+| Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 394 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, +54 more, 20 ADRs | 2026-11-08 | ⚠️ |
 | Remote access and networking | 77 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1013-one-instance-model.md`, +20 more | 2026-10-21 | ⚠️ |
 | Automations, blocks and declared devices | 192 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +41 more, 1 ADR | 2026-11-08 | ⚠️ |
 | Alerts, liveness and system health | 57 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, +44 more | 2026-10-13 | ⚠️ |
 | Logging and log shipping | 43 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +11 more, 1 ADR | 2026-10-21 | ⚠️ |
-| LLM runtimes and AI actions | 54 | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 | ⚠️ |
+| LLM runtimes and AI actions | 55 | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 | ⚠️ |
 | Admin UI and the shared component library | 1461 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +164 more, 15 ADRs | 2026-11-02 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 118 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1013-one-instance-model.md`, +19 more, 7 ADRs | 2026-10-04 | ⚠️ |
 | Cloud training | 161 | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +17 more, 2 ADRs | 2026-10-14 | ✅ |
-| Benchmarks, model studio and developer tooling | 792 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +178 more, 14 ADRs | 2026-11-04 | ⚠️ |
+| Benchmarks, model studio and developer tooling | 793 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +178 more, 14 ADRs | 2026-11-04 | ⚠️ |
 
 ## What each subsystem is, and what is uncovered inside it
 
@@ -153,7 +153,7 @@ Decides whether a track deserves to reach a human, and delivers it.
 
 - **Owner doc**: `docs/architecture/notifications.md`
 - **Code**: `packages/addon-post-analysis/src/notification-center/**`, `packages/types/src/notification/**`, `packages/types/src/i18n/**`, `packages/system/src/notification/**`, `packages/addon-notifiers/**`, `packages/addon-smtp-nodemailer/**`, `server/backend/src/core/notification/**`
-- **Files**: 285 (283 claimed by some document)
+- **Files**: 286 (284 claimed by some document)
 - **Uncovered**: `server/backend/src/core/notification` (2)
 
 ### ⚠️ Recorder, scrub and recorded playback
@@ -252,7 +252,7 @@ Publishes CamStack's devices into somebody else's ecosystem, and imports theirs.
 
 - **Owner doc**: — none
 - **Code**: `packages/addon-export-hap/**`, `packages/addon-export-alexa/**`, `packages/addon-export-google/**`, `packages/addon-import-alexa/**`, `packages/addon-matter-broker/**`, `packages/addon-mqtt-broker/**`, `packages/addon-provider-homeassistant/src/ha-export/**`
-- **Files**: 392 (392 claimed by some document)
+- **Files**: 394 (394 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Remote access and networking
@@ -297,7 +297,7 @@ Model-backed reasoning available to the rest of the system — runtimes, profile
 
 - **Owner doc**: — none
 - **Code**: `packages/addon-ai/**`
-- **Files**: 54 (54 claimed by some document)
+- **Files**: 55 (55 claimed by some document)
 - **Uncovered**: —
 
 ### ✅ Admin UI and the shared component library
@@ -333,8 +333,8 @@ Everything that measures or builds CamStack rather than running it — the bench
 
 - **Owner doc**: `docs/reference/guards.md`
 - **Code**: `packages/addon-benchmark/**`, `packages/addon-model-studio/**`, `packages/cli/**`, `packages/sdk/**`, `packages/desktop/**`, `packages/nx-plugin/**`, `scripts/**`, `e2e/**`, `packages/addon-pipeline/scripts/**`
-- **Files**: 792 (436 claimed by some document)
-- **Uncovered**: `scripts` (176), `scripts/ui/shots/fixtures` (89), `scripts/lib` (18), `packages/cli/src/commands` (13), `e2e/fixtures` (9), `scripts/ui/shots/harness/stubs` (8), +18 more directories
+- **Files**: 793 (436 claimed by some document)
+- **Uncovered**: `scripts` (177), `scripts/ui/shots/fixtures` (89), `scripts/lib` (18), `packages/cli/src/commands` (13), `e2e/fixtures` (9), `scripts/ui/shots/harness/stubs` (8), +18 more directories
 
 ## Claimed by no subsystem
 

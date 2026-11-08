@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A fixed built-in integration (alarm panel, Blocks, Notification Center) now reports and switches on the registry flag in the instance list, not on a record that carries none
+- One door to create an instance: integrationInstances.createInstance (a seed is accepted only from the addon it seeds); integrations.create removed
+
 ## [1.2.816] - 2026-11-08
 
 ### Changed
@@ -18,10 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
-### Changed
-
-- A fixed built-in integration (alarm panel, Blocks, Notification Center) now reports and switches on the registry flag in the instance list, not on a record that carries none
-- One door to create an instance: integrationInstances.createInstance (a seed is accepted only from the addon it seeds); integrations.create removed
 
 ## [1.2.814] - 2026-11-08
 
