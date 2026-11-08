@@ -856,8 +856,9 @@ function RadiatorFins(): ReactNode {
   )
 }
 
-/** Big spinning fan for `fan_only` mode. */
-function FanBlades({
+/** Big spinning fan for `fan_only` mode. `color` may be `currentColor`, so a
+ *  caller can tint it with a theme text-token class (HeroScene does). */
+export function FanBlades({
   color,
   periodSec,
   size,

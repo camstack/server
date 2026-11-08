@@ -406,6 +406,18 @@
       "notes": "`DeviceList mode=\"generic\"` for rows that expand"
     },
     {
+      "need": "A device row (mini scene, name + status line, control, fact)",
+      "admin": "`DeviceRow`",
+      "viewer": "—",
+      "notes": "Four fixed zones; the fact hides below `sm`. The mini scene is `HeroScene size=\"mini\"` with the same scene id as the hero"
+    },
+    {
+      "need": "A device hero card, layout A",
+      "admin": "`HeroCardA` + `HeroScene`",
+      "viewer": "—",
+      "notes": "One-line top row, scene (id + state + params from the hero model), rows, foot. One animation per state; reduced motion stops it"
+    },
+    {
       "need": "Switch a list between table and grid",
       "admin": "`ViewSwitch`",
       "viewer": "—",
@@ -4324,6 +4336,57 @@
       "summary": "Runtime-string-safe role lookup; unknown roles fall back to `GenericSensor`."
     },
     {
+      "name": "DeviceRow",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/device-row.tsx",
+      "summary": "The shared device row: a fixed four-zone grid — mini scene (44×44), name + one status line, primary control, trailing fact. Below `sm` the fact zone is dropped and the control stays.",
+      "props": [
+        {
+          "name": "scene",
+          "type": "Pick< HeroSceneProps, 'scene' | 'state' | 'level' | 'speed' | 'timer' | 'points' | 'tone' ",
+          "optional": false,
+          "doc": "The mini scene: the same scene id + params a hero would draw."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "optional": true,
+          "doc": "The one status line under the name."
+        },
+        {
+          "name": "control",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "The primary control (toggle, stepper, button). It stays at phone width."
+        },
+        {
+          "name": "fact",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Trailing fact chip (power, last seen). Hidden at phone width."
+        },
+        {
+          "name": "onSelect",
+          "type": "() => void",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "DeviceRunsPanel",
       "kind": "component",
       "area": "composites",
@@ -6121,6 +6184,129 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-list/hardware.ts",
       "summary": "Compact cell text: `manufacturer · model`, or whichever is present, or `null` when neither is a usable string (caller renders the empty state)."
+    },
+    {
+      "name": "HERO_SCENE_ICON",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/hero-scene.tsx",
+      "summary": "Default glyph per scene — the type icon shown in front of a row's mini scene."
+    },
+    {
+      "name": "HERO_SCENE_IDS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/types.ts",
+      "summary": "Every scene a device hero (or row mini scene) can draw."
+    },
+    {
+      "name": "HeroCardA",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/hero-card-a.tsx",
+      "summary": "Layout A hero shell: one-line top row, scene, rows slot, foot. The top row is `nowrap` — the title ellipsises, the chips stay whole and the overflow clips; it is never two lines.",
+      "props": [
+        {
+          "name": "title",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "chips",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Inline chips next to the title (brand, power, state). Never wrap: the row clips."
+        },
+        {
+          "name": "scene",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": "The HeroScene."
+        },
+        {
+          "name": "rows",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Controls / facts under the scene."
+        },
+        {
+          "name": "footChips",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Foot, left: consumable chips."
+        },
+        {
+          "name": "footAction",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Foot, right: the history action."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "HeroScene",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/hero-scene.tsx",
+      "summary": "A rectangular scene: an animated backdrop chosen by scene id + state, side tiles and a centre slot. The same ids render at mini size inside a DeviceRow.",
+      "propsExtends": ["HeroSceneParams"],
+      "props": [
+        {
+          "name": "scene",
+          "type": "HeroSceneId",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "optional": true,
+          "doc": "Scene-specific state (see `resolveSceneVisual`)."
+        },
+        {
+          "name": "size",
+          "type": "'hero' | 'mini'",
+          "optional": true,
+          "doc": "`hero`: the full-width box with tiles and centre slot. `mini`: 44×44 for a row."
+        },
+        {
+          "name": "leftTiles",
+          "type": "readonly SceneTile[]",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "rightTiles",
+          "type": "readonly SceneTile[]",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Centre slot (hero) — the camera thumbnail, the setpoint control, a readout."
+        },
+        {
+          "name": "icon",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Mini only: the glyph in front of the animation. Defaults to the scene's icon."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "HISTORY_PAGE_PATH",
@@ -9726,6 +9912,13 @@
       "summary": "Resolve a container's primary child: the operator's pick when it still matches a live child, else the highest-priority type."
     },
     {
+      "name": "resolveSceneVisual",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/scene-map.ts",
+      "summary": "Scene id + state → the one background animation for that state."
+    },
+    {
       "name": "resolveSelectedDevices",
       "kind": "function",
       "area": "composites",
@@ -10130,6 +10323,39 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/cap-settings/scene-monitor-copy.ts",
       "summary": "The lighting variants an operator is OFFERED. The resolver can also report `night`, `dawn` and `dusk`; those are shown when present but never demanded, because most installs only ever see day and IR."
+    },
+    {
+      "name": "SceneBackdrop",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/backdrops.tsx",
+      "summary": "The one background animation a resolved scene visual draws.",
+      "props": [
+        {
+          "name": "visual",
+          "type": "SceneVisual",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "level",
+          "type": "number",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "points",
+          "type": "readonly number[]",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "timer",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "SceneMonitorEditor",
@@ -11168,6 +11394,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "sparkPath",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/backdrops.tsx",
+      "summary": "Normalised polyline `d` in a 100×40 viewBox."
     },
     {
       "name": "SPLIT_PANEL_OUTER",

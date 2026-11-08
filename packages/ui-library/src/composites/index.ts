@@ -334,6 +334,7 @@ export type {
 export { DeviceActivityPanel } from './device-activity-panel'
 export * from './device-card'
 export * from './device-controls'
+export * from './hero-scene'
 export type {
   DeviceExportInstancePanelProps,
   DeviceExportPanelProps,

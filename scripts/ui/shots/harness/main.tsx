@@ -45,6 +45,9 @@ if (window.location.pathname === '/sso-complete') {
 } else if (window.location.pathname.startsWith('/ffmpeg-params-preview')) {
   const { FfmpegParamsPreview } = await import('./ffmpeg-params-preview')
   createRoot(root).render(<FfmpegParamsPreview />)
+} else if (window.location.pathname.startsWith('/hero-scenes-preview')) {
+  const { HeroScenesPreview } = await import('./hero-scenes-preview')
+  createRoot(root).render(<HeroScenesPreview />)
 } else {
   createRoot(root).render(<App />)
 }
