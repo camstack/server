@@ -68,6 +68,7 @@ import { LoggingService } from '../logging/logging.service'
 import { StreamProbeService } from '../streaming/stream-probe.service'
 import { filterAgentAuthoritativeRecords } from './agent-readiness-pull.js'
 import { requestAgentRegistration } from './agent-registration-request.js'
+import { deferInstanceLifecycle } from '../addon/instance-lifecycle.js'
 import {
   type InstanceLifecycleWrap,
   registeredProviderFor,
@@ -237,7 +238,8 @@ export class MoleculerService {
   /**
    * Adds the hub half of an `integration-instances` create and delete around a forked holder,
    * injected late by `AddonRegistryService` (the registry and the device manager live there).
-   * Null before that: the holder is then registered with its delete guard only.
+   * Null before that. A forked holder can register earlier (the broker is up first), so the
+   * registration never captures this: it resolves it when a create or delete arrives.
    */
   private instanceLifecycleWrap: InstanceLifecycleWrap | null = null
 
@@ -1325,7 +1327,7 @@ export class MoleculerService {
         registryKey,
         registeredProviderFor(capName, proxy, registry, {
           addonId,
-          wrap: this.instanceLifecycleWrap,
+          wrap: deferInstanceLifecycle(() => this.instanceLifecycleWrap, this.logger),
         }),
         owner,
       )

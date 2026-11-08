@@ -20,11 +20,16 @@ import { integrationRegistryRecordKinds } from '../../../../../../packages/syste
 import { makeRecordsWorld } from '../../../../../../packages/system/src/builtins/sqlite-storage/__tests__/support/records-world.js'
 import { isIntegrationInstancesProvider } from '../integration-instances-provider.js'
 import {
+  deferInstanceLifecycle,
   type InstanceLifecycleDeps,
   rawInstancesProvider,
   withInstanceLifecycle,
 } from '../instance-lifecycle.js'
-import { type InstanceHolder, registeredProviderFor } from '../instance-links.service.js'
+import {
+  type InstanceHolder,
+  type InstanceLifecycleWrap,
+  registeredProviderFor,
+} from '../instance-links.service.js'
 
 const ADDON = 'provider-acme'
 
@@ -66,7 +71,10 @@ function description(mode: 'single' | 'multiple'): IntegrationInstanceDescriptio
   }
 }
 
-async function makeKit(mode: 'single' | 'multiple' = 'multiple'): Promise<Kit> {
+async function makeKit(
+  mode: 'single' | 'multiple' = 'multiple',
+  override: Partial<IntegrationInstanceDescription> = {},
+): Promise<Kit> {
   const world = makeRecordsWorld()
   await world.provider.init()
   const records = createRecordsAccess({
@@ -85,7 +93,7 @@ async function makeKit(mode: 'single' | 'multiple' = 'multiple'): Promise<Kit> {
     async (): Promise<IntegrationTestConnectionResult> => ({ success: true, status: 'validated' }),
   )
   const provider: IIntegrationInstancesProvider = {
-    describe: async () => description(mode),
+    describe: async () => ({ ...description(mode), ...override }),
     instanceFormSchema: async () => ({ sections: [] }),
     listInstances: async () => [...stored.values()],
     getInstance: async ({ id }) => stored.get(id) ?? null,
@@ -224,6 +232,52 @@ describe('createInstance of a kind that brings devices', () => {
   })
 })
 
+describe('createInstance without a kind on a provider with several', () => {
+  it('takes the default kind: a services default writes no row and runs no test', async () => {
+    const mixed = await makeKit('multiple', { kind: 'dest' })
+    const created = await mixed.wrapped.createInstance({ name: 'Out' })
+    expect(created.id).toBe('minted-by-provider')
+    expect(await mixed.registry.listIntegrations()).toHaveLength(0)
+    expect(mixed.testInstance).not.toHaveBeenCalled()
+  })
+
+  it('takes the default kind: a devices default writes the row', async () => {
+    const mixed = await makeKit('multiple', { kind: 'connection' })
+    const created = await mixed.wrapped.createInstance({ name: 'Home' })
+    expect((await mixed.registry.listIntegrations()).map((r) => r.id)).toEqual([created.id])
+  })
+
+  it('falls back to the addon-wide rule when the default names no declared kind', async () => {
+    const mixed = await makeKit('multiple', { kind: 'account' })
+    await mixed.wrapped.createInstance({ name: 'Home' })
+    expect(await mixed.registry.listIntegrations()).toHaveLength(1)
+  })
+})
+
+describe('the connection test follows the kind that is created', () => {
+  it('runs for a kind that declares canTest although the provider does not', async () => {
+    const kit = await makeKit('multiple', {
+      canTest: false,
+      kinds: [{ id: 'connection', label: 'Acme', functionCap: 'device-provider', canTest: true }],
+    })
+    kit.testInstance.mockResolvedValueOnce({ success: false, status: 'rejected', error: 'bad key' })
+    await expect(
+      kit.wrapped.createInstance({ name: 'Home', kind: 'connection' }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST', message: 'bad key' })
+    expect(await kit.registry.listIntegrations()).toHaveLength(0)
+  })
+
+  it('is skipped for a kind that declares no test although the provider does', async () => {
+    const kit = await makeKit('multiple', {
+      canTest: true,
+      kinds: [{ id: 'connection', label: 'Acme', functionCap: 'device-provider', canTest: false }],
+    })
+    await kit.wrapped.createInstance({ name: 'Home', kind: 'connection' })
+    expect(kit.testInstance).not.toHaveBeenCalled()
+    expect(await kit.registry.listIntegrations()).toHaveLength(1)
+  })
+})
+
 describe('deleteInstance of an integration', () => {
   let kit: Kit
   let id: string
@@ -326,5 +380,35 @@ describe('registration', () => {
     )
     await bare.createInstance({ name: 'Other', kind: 'connection' })
     expect(await kit.registry.listIntegrations()).toHaveLength(1)
+  })
+
+  it('a holder registered BEFORE the hub half exists still gets it once it does', async () => {
+    const kit = await makeKit()
+    const registry = { getCollectionEntries: () => [] }
+    let late: InstanceLifecycleWrap | null = null
+    const deps: InstanceLifecycleDeps = {
+      logger: silentLogger(),
+      integrations: () => kit.registry,
+      deviceManager: () => null,
+      eventBus: { emit: kit.emit },
+      providerFor: () => kit.provider,
+      holders: () => [],
+      manifestRole: () => undefined,
+    }
+    const registered = instancesProviderOrThrow(
+      registeredProviderFor('integration-instances', kit.provider, registry, {
+        addonId: ADDON,
+        wrap: deferInstanceLifecycle(() => late, silentLogger()),
+      }),
+    )
+    await expect(
+      registered.createInstance({ name: 'Early', kind: 'connection' }),
+    ).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' })
+    expect(kit.stored.size).toBe(0)
+
+    late = (addonId, p) => withInstanceLifecycle(addonId, p, deps)
+    await registered.createInstance({ name: 'Home', kind: 'connection' })
+    expect(await kit.registry.listIntegrations()).toHaveLength(1)
+    expect(rawInstancesProvider(registered)).not.toBe(registered)
   })
 })

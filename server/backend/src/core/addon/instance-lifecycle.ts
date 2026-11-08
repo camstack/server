@@ -30,6 +30,7 @@ import type { EventBusService } from '../events/event-bus.service'
 import {
   assertInstanceDeletable,
   type InstanceHolder,
+  type InstanceLifecycleWrap,
   InstanceLinksIndex,
 } from './instance-links.service'
 
@@ -424,7 +425,10 @@ export async function deleteRegisteredInstance(
   })
 }
 
-/** Whether instances of `kind` of `provider` bring devices (a kind without a role takes the provider's). */
+/**
+ * Whether instances of `kind` of `provider` bring devices (a kind without a role takes the provider's;
+ * no `kind` means the default kind, then the addon-wide rule).
+ */
 async function bringsDevicesOf(
   deps: InstanceLifecycleDeps,
   addonId: string,
@@ -434,7 +438,9 @@ async function bringsDevicesOf(
   const declared = deps.manifestRole(addonId)
   if (declared !== undefined) return bringsDevices(declared)
   const described = await provider.describe()
-  const own = (described.kinds ?? []).find((k) => (kind === undefined ? false : k.id === kind))
+  // A call without `kind` is the provider's default kind (`described.kind`) when that names a declared kind.
+  const wanted = kind ?? described.kind
+  const own = (described.kinds ?? []).find((k) => k.id === wanted)
   if (own !== undefined) return bringsDevices(own.role ?? described.role)
   return bringsDevices(describedRoleOf(described) ?? described.role)
 }
@@ -503,4 +509,46 @@ export function withInstanceLifecycle(
   })
   RAW_PROVIDERS.set(wrapped, provider)
   return wrapped
+}
+
+/**
+ * A {@link InstanceLifecycleWrap} that is looked up when a create or delete ARRIVES, not when the
+ * provider is registered. A forked holder can register before the hub half exists (the broker
+ * is up before `AddonRegistryService` has initialised); capturing the wrap then would leave that
+ * holder without the registry row, the test gate and the device cascade for good. Until the
+ * wrap exists a create or delete is refused, and says so.
+ */
+export function deferInstanceLifecycle(
+  resolve: () => InstanceLifecycleWrap | null,
+  logger: IScopedLogger,
+): InstanceLifecycleWrap {
+  return (addonId, provider) => {
+    const bare = bareAddonId(addonId)
+    const wrapNow = (phase: 'create' | 'delete'): IIntegrationInstancesProvider => {
+      const wrap = resolve()
+      if (wrap !== null) return wrap(addonId, provider)
+      logger.warn('refused: the hub half of integration-instances is not ready yet', {
+        tags: { addonId: bare },
+        meta: { phase },
+      })
+      throw new TRPCError({
+        code: 'PRECONDITION_FAILED',
+        message: `The hub is still starting; "${bare}" cannot ${phase} an instance yet`,
+      })
+    }
+    const createInstance: IIntegrationInstancesProvider['createInstance'] = async (input) =>
+      wrapNow('create').createInstance(input)
+    const deleteInstance: IIntegrationInstancesProvider['deleteInstance'] = async (input) =>
+      wrapNow('delete').deleteInstance(input)
+    const deferred: IIntegrationInstancesProvider = new Proxy(provider, {
+      get(target, prop) {
+        if (prop === 'createInstance') return createInstance
+        if (prop === 'deleteInstance') return deleteInstance
+        const value: unknown = Reflect.get(target, prop)
+        return typeof value === 'function' ? value.bind(target) : value
+      },
+    })
+    RAW_PROVIDERS.set(deferred, rawInstancesProvider(provider))
+    return deferred
+  }
 }

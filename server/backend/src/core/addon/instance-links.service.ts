@@ -122,6 +122,12 @@ export type InstanceLifecycleWrap = (
   provider: IIntegrationInstancesProvider,
 ) => IIntegrationInstancesProvider
 
+/** How a provider of `addonId` gets the hub half of create and delete when it is registered. */
+export interface InstanceLifecycleBinding {
+  readonly addonId: string
+  readonly wrap: InstanceLifecycleWrap
+}
+
 /**
  * What the registry should hold for `provider` registered under `capName`: a holder of
  * `integration-instances` comes back guarded (a delete refused while a link names it, D1013) and,
@@ -133,12 +139,12 @@ export function registeredProviderFor(
   capName: string,
   provider: unknown,
   registry: InstanceHolderRegistry,
-  lifecycle?: { readonly addonId: string; readonly wrap: InstanceLifecycleWrap | null },
+  lifecycle?: InstanceLifecycleBinding,
 ): unknown {
   if (capName !== INTEGRATION_INSTANCES_CAP || !isIntegrationInstancesProvider(provider)) {
     return provider
   }
   const holders = () => holdersOf(registry)
   const guarded = guardInstanceDeletes(provider, new InstanceLinksIndex(holders))
-  return lifecycle?.wrap == null ? guarded : lifecycle.wrap(lifecycle.addonId, guarded)
+  return lifecycle === undefined ? guarded : lifecycle.wrap(lifecycle.addonId, guarded)
 }
