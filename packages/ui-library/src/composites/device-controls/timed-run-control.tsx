@@ -3,14 +3,16 @@
  *
  * A number, the unit it is in, and a Run button: the hub turns the device on and
  * switches it off again after that long. While a run is armed the control shows
- * the time left (counted down from the slice's `activeUntil`) and a Cancel. The
+ * Stop, the time left (counted down from the slice's `activeUntil`) and Restart
+ * replace the start field. Restart runs again for the duration the field holds (the
+ * device's one-tap run unless edited); the slice does not carry the running duration. The
  * maximum is the device type's own bound (`TIMED_RUN_LIMITS`); a value above it
  * is refused by the hub with a typed reason, which this control says in words.
  *
  * Rendered only when the device binds `timed-run`. An unknown slice is "nothing
  * armed", never a running timer.
  */
-import { Timer, TimerOff } from 'lucide-react'
+import { RotateCw, Square, Timer } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
 import type { TimedRunLimit, TimedRunRefusal } from '@camstack/types'
 import { useUiText } from '../../contexts/ui-text'
@@ -88,47 +90,57 @@ export function TimedRunControl({ trpc, deviceId, limit }: TimedRunControlProps)
 
   return (
     <div className="flex flex-col gap-1.5" data-testid="timed-run-control">
-      <div className="flex items-center gap-2">
-        <Input
-          type="number"
-          inputMode="numeric"
-          min={1}
-          max={max}
-          step={1}
-          value={Number.isFinite(draft) ? draft : ''}
-          disabled={!online}
-          aria-label={t('uiLibrary.timedRun.duration', 'Run for')}
-          className="w-20 tabular-nums"
-          onChange={(event) => setEdited(event.target.valueAsNumber)}
-        />
-        <span className="text-xs text-foreground-muted">{unitLabel}</span>
-        <Button size="sm" disabled={!online || !valid} onClick={run}>
-          <Timer className="h-4 w-4" aria-hidden />
-          {t('uiLibrary.timedRun.run', 'Run')}
-        </Button>
-        {armed && (
-          <>
-            <span
-              className="text-xs font-medium tabular-nums text-foreground"
-              data-testid="timed-run-countdown"
-            >
-              {t('uiLibrary.timedRun.remaining', '{{time}} left', {
-                time: formatCountdown(activeUntil - now),
-              })}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={!online}
-              aria-label={t('uiLibrary.timedRun.cancel', 'Cancel the timer')}
-              onClick={() => void cap.cancel({})}
-            >
-              <TimerOff className="h-4 w-4" aria-hidden />
-            </Button>
-          </>
-        )}
-      </div>
-      {!valid && (
+      {armed ? (
+        <div
+          className="flex items-center justify-between gap-2"
+          role="group"
+          aria-label={t('uiLibrary.timedRun.running', 'Timed run')}
+          data-testid="timed-run-armed"
+        >
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!online}
+            onClick={() => void cap.cancel({})}
+          >
+            <Square className="h-4 w-4" aria-hidden />
+            {t('uiLibrary.timedRun.stop', 'Stop')}
+          </Button>
+          <span
+            className="text-sm font-medium tabular-nums text-foreground"
+            data-testid="timed-run-countdown"
+          >
+            {t('uiLibrary.timedRun.remaining', '{{time}} left', {
+              time: formatCountdown(activeUntil - now),
+            })}
+          </span>
+          <Button size="sm" disabled={!online || !valid} onClick={run}>
+            <RotateCw className="h-4 w-4" aria-hidden />
+            {t('uiLibrary.timedRun.restart', 'Restart')}
+          </Button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={max}
+            step={1}
+            value={Number.isFinite(draft) ? draft : ''}
+            disabled={!online}
+            aria-label={t('uiLibrary.timedRun.duration', 'Run for')}
+            className="w-20 tabular-nums"
+            onChange={(event) => setEdited(event.target.valueAsNumber)}
+          />
+          <span className="text-xs text-foreground-muted">{unitLabel}</span>
+          <Button size="sm" disabled={!online || !valid} onClick={run}>
+            <Timer className="h-4 w-4" aria-hidden />
+            {t('uiLibrary.timedRun.run', 'Run')}
+          </Button>
+        </div>
+      )}
+      {!armed && !valid && (
         <span className="text-xs text-danger">
           {t('uiLibrary.timedRun.range', 'Enter 1 to {{max}} {{unit}}', { max, unit: unitLabel })}
         </span>

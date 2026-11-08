@@ -9498,7 +9498,10 @@
       "remaining": "{{time}} rimasti",
       "run": "Avvia",
       "unsupported": "Questo dispositivo non supporta il timer.",
-      "quickRun": "Accendi per {{duration}} {{unit}}"
+      "quickRun": "Accendi per {{duration}} {{unit}}",
+      "stop": "Ferma",
+      "restart": "Riavvia",
+      "running": "Esecuzione a tempo"
     },
     "powerMeterLine": {
       "energy": "Energia"

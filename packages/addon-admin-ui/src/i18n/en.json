@@ -9476,7 +9476,10 @@
       "remaining": "{{time}} left",
       "run": "Run",
       "unsupported": "This device cannot run on a timer.",
-      "quickRun": "Run {{duration}} {{unit}}"
+      "quickRun": "Run {{duration}} {{unit}}",
+      "stop": "Stop",
+      "restart": "Restart",
+      "running": "Timed run"
     },
     "powerMeterLine": {
       "energy": "Energy"

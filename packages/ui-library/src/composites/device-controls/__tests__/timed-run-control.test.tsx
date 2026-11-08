@@ -55,24 +55,52 @@ describe('TimedRunControl', () => {
     expect(runFor).not.toHaveBeenCalled()
   })
 
-  it('shows a countdown and a cancel while a deadline is armed, none otherwise', () => {
-    render(<TimedRunControl trpc={trpc} deviceId={5} limit={HEATER} />)
-    expect(screen.queryByTestId('timed-run-countdown')).toBeNull()
-    cleanup()
+  function armedSlice(quickRun = { duration: 45, unit: 'min' }): void {
     mockResult = {
       cap: { runFor, cancel },
-      slice: {
-        activeUntil: Date.now() + 90_000,
-        requestedBy: null,
-        quickRun: { duration: 30, unit: 'min' },
-        lastFetchedAt: 1,
-      },
+      slice: { activeUntil: Date.now() + 90_000, requestedBy: null, quickRun, lastFetchedAt: 1 },
       online: true,
     }
+  }
+
+  it('idle: no countdown, no Stop, no Restart', () => {
     render(<TimedRunControl trpc={trpc} deviceId={5} limit={HEATER} />)
-    expect(screen.getByTestId('timed-run-countdown')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
+    expect(screen.queryByTestId('timed-run-countdown')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Stop' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Restart' })).toBeNull()
+    expect(screen.getByRole('spinbutton')).toBeTruthy()
+  })
+
+  it('armed: Stop, the time left and Restart replace the start control', () => {
+    armedSlice()
+    render(<TimedRunControl trpc={trpc} deviceId={5} limit={HEATER} />)
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Restart' })).toBeTruthy()
+    expect(screen.getByTestId('timed-run-countdown').textContent).toContain('1:')
+    expect(screen.queryByRole('button', { name: 'Run' })).toBeNull()
+    expect(screen.queryByRole('spinbutton')).toBeNull()
+  })
+
+  it('armed: Stop cancels the run', () => {
+    armedSlice()
+    render(<TimedRunControl trpc={trpc} deviceId={5} limit={HEATER} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Stop' }))
     expect(cancel).toHaveBeenCalledWith({})
+  })
+
+  it("armed: Restart runs again for this device's duration", () => {
+    armedSlice({ duration: 45, unit: 'min' })
+    render(<TimedRunControl trpc={trpc} deviceId={5} limit={HEATER} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Restart' }))
+    expect(runFor).toHaveBeenCalledWith({ duration: 45, unit: 'min' })
+  })
+
+  it('armed: a refused Restart says why', async () => {
+    armedSlice()
+    runFor.mockResolvedValue({ ok: false, reason: 'command-failed', maxSeconds: null })
+    render(<TimedRunControl trpc={trpc} deviceId={5} limit={HEATER} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Restart' }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
   })
 
   it('says a typed refusal in words', async () => {

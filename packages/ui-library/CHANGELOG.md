@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Timed run: while running, Stop · time left · Restart replace the start button.
+
 ## [1.2.401] - 2026-11-08
 
 ### Changed
