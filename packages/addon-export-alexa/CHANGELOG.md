@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.191] - 2026-11-08
+
 ### Changed
 
 - Alexa channel changes by number or name for a remote's declared channels; inputs only for declared input sources

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.811] - 2026-11-08
+
 ### Changed
 
 - The device hero capability (hero-layout) is exposed on the API

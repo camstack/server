@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.526] - 2026-11-08
+
 ### Changed
 
 - New device-transitions capability and transition types: a device's changes can be recorded with who asked for them

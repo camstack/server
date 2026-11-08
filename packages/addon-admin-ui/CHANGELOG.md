@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.618] - 2026-11-08
+
 ### Changed
 
 - The Remote editor has a Sources section: declare channel numbers and button sequences (from bound buttons only), reorder them, and set the pause between steps; mistakes show next to the field.
