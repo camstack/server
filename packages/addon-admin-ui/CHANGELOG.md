@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.621] - 2026-11-08
+
 ### Changed
 
 - Customize tab: a Power source or Running row shows which device it reads, is edited through a pencil, and the formula editor opens on the stored source instead of null; the table fills a phone's width.

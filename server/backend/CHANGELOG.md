@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.814] - 2026-11-08
+
 ### Changed
 
 - Pressing Stop on a timed run now switches the device off, instead of only forgetting the timer

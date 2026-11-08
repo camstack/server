@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.192] - 2026-11-08
+
 ### Changed
 
 - Infrared-code remote sources are offered as Alexa input sources.
