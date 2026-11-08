@@ -397,9 +397,11 @@ run, scheduler) or the device.
   500 through `deviceTransitions.record` (only the kernel caller is accepted).
   The queue holds 10 000; past it the oldest rows are dropped, logged with
   counts and `tags: { deviceId }`.
-- **Args.** `command-args.ts`: routing keys dropped, secret paths and
-  credential-named keys replaced by `[redacted]`, a bag over 1 KiB replaced by
-  `{_truncated: true}`.
+- **Args.** `command-args.ts`: routing keys dropped; secret paths (nested) and
+  credential-named keys, at any depth, replaced by `***`; a bag over 1 KiB replaced
+  by `{_truncated: true}`.
+- **Chatty fields.** A `device` row for one field is written at most once per
+  10 s; changes inside the window coalesce into one row released by the sweep.
 - **Reads.** `listTransitions` (per device, paged), `getTransition`,
   `listRecentTransitions` (admin), `getStatus` (`rows`, `lastWriteAt`,
   `refused`).

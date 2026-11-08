@@ -27,7 +27,8 @@ function make(opts: { max?: number; fail?: boolean } = {}) {
       sent.push([...batch])
     },
     logger: {
-      error: (msg: string, meta?: { tags?: unknown }) => void errors.push({ msg, tags: meta?.tags }),
+      error: (msg: string, meta?: { tags?: unknown }) =>
+        void errors.push({ msg, tags: meta?.tags }),
     },
     maxQueued: opts.max ?? 10_000,
   })
@@ -77,18 +78,36 @@ describe('transition sender (D1022)', () => {
     expect(w.sent[0]?.map((t) => t.at)).toEqual([3, 4, 5])
   })
 
+  it('abandon says what it throws away, and nothing when the queue is empty', () => {
+    const w = make()
+    w.sender.abandon()
+    expect(w.errors).toEqual([])
+    w.sender.enqueue(row(1, 41))
+    w.sender.enqueue(row(2, 42))
+    w.sender.abandon()
+    expect(w.sender.queued()).toBe(0)
+    expect(w.errors[0]?.msg).toContain('2 transition(s)')
+    expect(w.errors.filter((e) => e.tags !== undefined)).toHaveLength(2)
+  })
+
   it('logs each dropped device with its tag', () => {
     const w = make({ max: 1 })
     w.sender.enqueue(row(1, 41))
     w.sender.enqueue(row(2, 42))
-    expect(w.errors.some((e) => JSON.stringify(e.tags) === JSON.stringify({ deviceId: 41 }))).toBe(true)
+    expect(w.errors.some((e) => JSON.stringify(e.tags) === JSON.stringify({ deviceId: 41 }))).toBe(
+      true,
+    )
   })
 
   it('does not overlap two flushes', async () => {
     const send = vi.fn(async () => {
       await new Promise((r) => setTimeout(r, 5))
     })
-    const sender = new TransitionSender({ send, logger: { error: () => undefined }, maxQueued: 100 })
+    const sender = new TransitionSender({
+      send,
+      logger: { error: () => undefined },
+      maxQueued: 100,
+    })
     sender.enqueue(row(1))
     await Promise.all([sender.flush(), sender.flush()])
     expect(send).toHaveBeenCalledTimes(1)

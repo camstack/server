@@ -27,6 +27,13 @@ import { redactLogText } from '../../../logging/log-redactor.js'
 export const COMMAND_MATCH_WINDOW_MS = 30_000
 /** Pending commands kept per (device, cap); the oldest is expired when a ninth arrives. */
 export const PENDING_RING_MAX = 8
+/**
+ * A device-origin change of one field is written at most once per this window; changes inside it
+ * are coalesced into one row (first `from` to last `to`) released by the next sweep. A chatty
+ * field (a flapping contact, a bouncing state) would otherwise write a row per poll. Commands are
+ * never bounded: each is a decision somebody made.
+ */
+export const DEVICE_ROW_WINDOW_MS = 10_000
 /** Longest error text a row keeps. */
 const ERROR_MAX_CHARS = 300
 /** The field of a row whose command named none (a toggle that changed nothing we saw). */
@@ -47,6 +54,13 @@ export interface CorrelatorDeps {
     method: string,
     args: Readonly<Record<string, unknown>>,
   ) => Record<string, unknown>
+}
+
+interface DeviceRowWindow {
+  /** When the last row of this field was written. */
+  lastEmitAt: number
+  /** Changes seen since then, not yet written. */
+  held?: { readonly from: TransitionValue; to: TransitionValue; at: number }
 }
 
 interface Pending {
@@ -81,6 +95,7 @@ export function toTransitionValue(value: unknown): TransitionValue {
 export class TransitionCorrelator {
   private readonly pending = new Map<string, Pending[]>()
   private seq = 0
+  private readonly deviceRows = new Map<string, DeviceRowWindow>()
 
   constructor(private readonly deps: CorrelatorDeps) {}
 
@@ -105,7 +120,14 @@ export class TransitionCorrelator {
       sameValue(current[effect.field], effect.value)
     ) {
       entry.settled = true
-      this.emit(entry, 'already', effect.field, fromAtCommand, toTransitionValue(effect.value), null)
+      this.emit(
+        entry,
+        'already',
+        effect.field,
+        fromAtCommand,
+        toTransitionValue(effect.value),
+        null,
+      )
       return
     }
     const key = this.keyOf(obs.deviceId, obs.capName)
@@ -154,6 +176,7 @@ export class TransitionCorrelator {
   /** Expire every pending command past its window. Driven by the sender's tick. */
   sweep(): void {
     const now = this.deps.now()
+    this.releaseDeviceRows(now)
     for (const [key, ring] of this.pending) {
       const live: Pending[] = []
       for (const entry of ring) {
@@ -176,6 +199,9 @@ export class TransitionCorrelator {
   /** Forget a removed device's pending commands. */
   forgetDevice(deviceId: number): void {
     const prefix = `${deviceId}|`
+    for (const key of [...this.deviceRows.keys()]) {
+      if (key.startsWith(prefix)) this.deviceRows.delete(key)
+    }
     for (const key of [...this.pending.keys()]) {
       if (key.startsWith(prefix)) this.pending.delete(key)
     }
@@ -198,9 +224,7 @@ export class TransitionCorrelator {
       .reverse()
       .find((e) => e.effect !== null && e.effect.field === field && sameValue(e.effect.value, to))
     const matched =
-      byEffect ??
-      claimedByThisWrite ??
-      [...live].reverse().find((e) => e.effect === null)
+      byEffect ?? claimedByThisWrite ?? [...live].reverse().find((e) => e.effect === null)
     if (matched === undefined) {
       // The first slice the mirror ever holds for a cap is the device being learned (a boot, a
       // restore, a new device), not the device changing: with no command to claim it, no row.
@@ -265,7 +289,26 @@ export class TransitionCorrelator {
     })
   }
 
+  /** A change nobody asked for, bounded per field (see {@link DEVICE_ROW_WINDOW_MS}). */
   private emitDevice(
+    deviceId: number,
+    capName: string,
+    field: string,
+    from: TransitionValue,
+    to: TransitionValue,
+    at: number,
+  ): void {
+    const key = `${deviceId}|${capName}|${field}`
+    const window = this.deviceRows.get(key)
+    if (window === undefined || at - window.lastEmitAt >= DEVICE_ROW_WINDOW_MS) {
+      this.writeDevice(deviceId, capName, field, from, to, at)
+      this.deviceRows.set(key, { lastEmitAt: at })
+      return
+    }
+    window.held = { from: window.held?.from ?? from, to, at }
+  }
+
+  private writeDevice(
     deviceId: number,
     capName: string,
     field: string,
@@ -284,6 +327,19 @@ export class TransitionCorrelator {
       outcome: 'device',
       actor: { kind: 'device' },
     })
+  }
+
+  /** Release coalesced device rows whose window has closed; forget windows nothing is held in. */
+  private releaseDeviceRows(now: number): void {
+    for (const [key, window] of this.deviceRows) {
+      if (now - window.lastEmitAt < DEVICE_ROW_WINDOW_MS) continue
+      const held = window.held
+      this.deviceRows.delete(key)
+      if (held === undefined || sameValue(held.from, held.to)) continue
+      const [deviceId, capName, ...rest] = key.split('|')
+      this.writeDevice(Number(deviceId), capName ?? '', rest.join('|'), held.from, held.to, held.at)
+      this.deviceRows.set(key, { lastEmitAt: now })
+    }
   }
 
   private keyOf(deviceId: number, capName: string): string {

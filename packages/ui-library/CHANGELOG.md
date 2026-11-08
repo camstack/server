@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The media player card no longer shows an 'assumed' label.
+- Regenerated device-state hooks include the device-transitions capability
 
 ## [1.2.402] - 2026-11-08
 

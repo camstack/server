@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device history keeps a ledger of device transitions (who changed what, and the outcome) with its own retention, default 365 days, in the same Retention settings.
 - Device commands are observed where the caller is known (hub API, forked addon, in-process addon) for the device transition audit.
 - The hub now audits device commands and the state changes they cause: a command is matched to the device's own report within 30 s, or recorded as unconfirmed or failed
+- Device transition audit: command arguments are redacted at any depth (pin, otp, code, key included) and a chatty device field writes one row per 10 s
 
 ## [1.2.808] - 2026-11-08
 

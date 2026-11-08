@@ -33,14 +33,27 @@ export class TransitionSender {
     return this.queue.length
   }
 
+  /**
+   * Give up on what is still queued (shutdown): say how much, and for which devices, then clear.
+   * Rows are telemetry (D8), but a hole in the audit is never silent.
+   */
+  abandon(): void {
+    if (this.queue.length === 0) return
+    const dropped = this.queue.splice(0)
+    this.reportDropped(dropped, 'abandoned at shutdown')
+  }
+
   enqueue(row: DeviceTransition): void {
     this.queue.push(row)
     const over = this.queue.length - this.max
     if (over <= 0) return
-    const dropped = this.queue.splice(0, over)
+    this.reportDropped(this.queue.splice(0, over), `queue over ${this.max}, oldest dropped`)
+  }
+
+  private reportDropped(dropped: readonly DeviceTransition[], why: string): void {
     const devices = [...new Set(dropped.map((t) => t.deviceId))]
     this.deps.logger.error(
-      `device-transitions queue over ${this.max}: dropped ${dropped.length} oldest transition(s) across ${devices.length} device(s)`,
+      `device-transitions ${why}: ${dropped.length} transition(s) across ${devices.length} device(s) lost`,
     )
     for (const deviceId of devices.slice(0, DROP_LOG_DEVICES_MAX)) {
       this.deps.logger.error('device-transitions dropped transitions for this device', {

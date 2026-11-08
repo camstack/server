@@ -20,17 +20,15 @@ import { TransitionSender } from './transitions-sender.js'
 
 export const TRANSITIONS_FLUSH_INTERVAL_MS = 2_000
 
-export interface TransitionTimers {
-  setInterval(fn: () => void, ms: number): unknown
-  clearInterval(handle: unknown): void
-}
+/** Runs `fn` every `ms` until the returned function is called. */
+export type TransitionTicker = (fn: () => void, ms: number) => () => void
 
 export interface DeviceTransitionsDeps {
   readonly mirror: DeviceStateMirror
   readonly logger: IScopedLogger
   readonly record: (transitions: readonly DeviceTransition[]) => Promise<void>
   readonly now?: () => number
-  readonly timers?: TransitionTimers
+  readonly ticker?: TransitionTicker
 }
 
 export interface DeviceTransitionsHandle {
@@ -39,11 +37,9 @@ export interface DeviceTransitionsHandle {
   stop(): Promise<void>
 }
 
-const REAL_TIMERS: TransitionTimers = {
-  setInterval: (fn, ms) => setInterval(fn, ms),
-  clearInterval: (handle) => {
-    if (handle !== undefined && handle !== null && typeof handle === 'object') clearInterval(handle as NodeJS.Timeout)
-  },
+const realTicker: TransitionTicker = (fn, ms) => {
+  const handle = setInterval(fn, ms)
+  return () => clearInterval(handle)
 }
 
 function inputFor(capName: string, method: string): z.ZodType | undefined {
@@ -53,7 +49,7 @@ function inputFor(capName: string, method: string): z.ZodType | undefined {
 
 export function startDeviceTransitions(deps: DeviceTransitionsDeps): DeviceTransitionsHandle {
   const now = deps.now ?? Date.now
-  const timers = deps.timers ?? REAL_TIMERS
+  const ticker = deps.ticker ?? realTicker
   const sender = new TransitionSender({
     send: (batch) => deps.record(batch),
     logger: deps.logger,
@@ -85,7 +81,7 @@ export function startDeviceTransitions(deps: DeviceTransitionsDeps): DeviceTrans
       )
     }
   })
-  const tick = timers.setInterval(() => {
+  const stopTicker = ticker(() => {
     correlator.sweep()
     void sender.flush()
   }, TRANSITIONS_FLUSH_INTERVAL_MS)
@@ -94,8 +90,9 @@ export function startDeviceTransitions(deps: DeviceTransitionsDeps): DeviceTrans
     stop: async () => {
       unsubscribe()
       deps.mirror.setTransitionTap(null)
-      timers.clearInterval(tick)
+      stopTicker()
       await sender.flush()
+      sender.abandon()
     },
   }
 }

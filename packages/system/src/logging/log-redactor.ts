@@ -47,6 +47,33 @@ export function isCredentialKeyName(key: string): boolean {
   return SECRET_KEY_SUBSTRINGS.some((needle) => lower.includes(needle))
 }
 
+/**
+ * Words that name a credential only as the LAST word of a key (`pin`, `adminPin`,
+ * `otp`, `apiKey`, `code`). Not part of the log net above: an error `code`
+ * is a string in most log meta, and `keyFrame` is not a key. Used where an
+ * argument bag is stored (D1022), where a wrongly hidden value costs less than
+ * a leaked code.
+ */
+const SECRET_LAST_WORDS: ReadonlySet<string> = new Set([
+  'pin',
+  'pincode',
+  'passcode',
+  'otp',
+  'code',
+  'key',
+])
+
+/** The last camelCase / snake_case / kebab-case word of a key, lowercased. */
+function lastWord(key: string): string {
+  const words = key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').split(/[\s_-]+/)
+  return (words[words.length - 1] ?? '').toLowerCase()
+}
+
+/** True for a credential-named key, or one whose last word is a code, pin, otp or key. */
+export function isSecretArgumentKey(key: string): boolean {
+  return isCredentialKeyName(key) || SECRET_LAST_WORDS.has(lastWord(key))
+}
+
 const URL_IN_TEXT = /\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>`]+/gi
 /** A root-relative path WITH a query, as request logs print it. */
 const RELATIVE_URL_IN_TEXT = /(^|[\s"'(=])(\/[^\s"'<>`?]*\?[^\s"'<>`]+)/g

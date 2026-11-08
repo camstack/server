@@ -81,9 +81,17 @@ Tried first and rejected:
 - `CapCallInput` grows an optional `origin`; the actions runner and schedulers
   pass it. Bridges need nothing: their addon id is the actor. Fan presets are
   attributed to the `core-blocks` addon, not to a preset.
-- Command args are stored redacted by the input schema's secret paths (and a
-  credential-looking key name) and replaced by `{_truncated: true}` past 1 KiB;
+- Command args are stored redacted: the input schema's secret paths with their
+  nesting (an object or array declared secret goes whole), then a key-name net
+  at any depth for values of any type (credential-named keys, and keys whose
+  last word is `pin`, `otp`, `code` or `key`), then the log redactor's text nets
+  (URL credentials). The whole bag is replaced by `{_truncated: true}` past 1 KiB;
   a credential never reaches a row (D879).
+- A device-origin change of one field is written at most once per 10 s; the
+  changes inside the window are coalesced into one row (first `from`, last
+  `to`, none at all when it ended where it began) released by the next sweep.
+  A chatty field costs a row per window, not per poll; the intermediate flips
+  are not kept. Commands are never bounded.
 - Not attributed in this version, and the change is then recorded as the
   device's own:
   - agent-originated addon calls through `$hub-cap-fwd`;

@@ -2,6 +2,7 @@ import type { CommandActor, DeviceCommandObservation, DeviceTransition } from '@
 import { describe, expect, it } from 'vitest'
 import {
   COMMAND_MATCH_WINDOW_MS,
+  DEVICE_ROW_WINDOW_MS,
   PENDING_RING_MAX,
   TransitionCorrelator,
 } from '../transition-correlator.js'
@@ -81,7 +82,12 @@ describe('transition correlator (D1022)', () => {
     const w = world({ '7|switch': { on: false } })
     w.write('switch', { on: true })
     expect(w.out).toEqual([
-      expect.objectContaining({ outcome: 'device', actor: { kind: 'device' }, from: false, to: true }),
+      expect.objectContaining({
+        outcome: 'device',
+        actor: { kind: 'device' },
+        from: false,
+        to: true,
+      }),
     ])
     expect(w.out[0]?.command).toBeUndefined()
   })
@@ -181,7 +187,9 @@ describe('transition correlator (D1022)', () => {
 
   it('a command whose call threw is failed, with the scrubbed message, and is not matched later', async () => {
     const w = world({ '7|switch': { on: false } })
-    const failure = Promise.reject(new Error('device unreachable rtsp://admin:abc123secret@10.0.0.5/live'))
+    const failure = Promise.reject(
+      new Error('device unreachable rtsp://admin:abc123secret@10.0.0.5/live'),
+    )
     w.command('switch', 'setState', { on: true }, USER, failure)
     await failure.catch(() => undefined)
     await Promise.resolve()
@@ -232,5 +240,60 @@ describe('transition correlator (D1022)', () => {
     clock += 1
     correlator.onSliceChange(7, 'switch', { on: false }, { on: true })
     expect(out[0]?.command?.args).toEqual({ redacted: true })
+  })
+
+  describe('chatty device fields', () => {
+    it('writes the first change at once and coalesces the rest of the window into one row', () => {
+      const w = world({ '7|switch': { on: false } })
+      w.write('switch', { on: true }) // row 1: false -> true
+      for (const on of [false, true, false]) {
+        w.advance(100)
+        w.write('switch', { on })
+      }
+      expect(w.out).toHaveLength(1)
+      w.advance(DEVICE_ROW_WINDOW_MS)
+      w.correlator.sweep()
+      expect(w.out).toHaveLength(2)
+      expect(w.out[1]).toMatchObject({ outcome: 'device', from: true, to: false })
+    })
+
+    it('a flap that ends where the window started writes nothing more', () => {
+      const w = world({ '7|switch': { on: false } })
+      w.write('switch', { on: true })
+      w.advance(100)
+      w.write('switch', { on: false })
+      w.advance(100)
+      w.write('switch', { on: true })
+      w.advance(DEVICE_ROW_WINDOW_MS)
+      w.correlator.sweep()
+      expect(w.out).toHaveLength(1)
+    })
+
+    it('a change after the window is written at once', () => {
+      const w = world({ '7|switch': { on: false } })
+      w.write('switch', { on: true })
+      w.advance(DEVICE_ROW_WINDOW_MS)
+      w.write('switch', { on: false })
+      expect(w.out).toHaveLength(2)
+    })
+
+    it('never bounds a command: its change is confirmed inside the window', () => {
+      const w = world({ '7|switch': { on: false } })
+      w.write('switch', { on: true })
+      w.command('switch', 'setState', { on: false })
+      w.advance(50)
+      w.write('switch', { on: false })
+      expect(w.out).toHaveLength(2)
+      expect(w.out[1]).toMatchObject({ outcome: 'confirmed' })
+    })
+
+    it('a removed device keeps no window', () => {
+      const w = world({ '7|switch': { on: false } })
+      w.write('switch', { on: true })
+      w.correlator.forgetDevice(7)
+      w.advance(10)
+      w.write('switch', { on: false })
+      expect(w.out).toHaveLength(2)
+    })
   })
 })

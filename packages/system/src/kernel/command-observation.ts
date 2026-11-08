@@ -36,6 +36,11 @@ export class CommandObserverRegistry {
     }
   }
 
+  /** How many observers are subscribed (a node that audits nothing has none). */
+  observerCount(): number {
+    return this.observers.size
+  }
+
   observe(obs: DeviceCommandObservation): void {
     for (const observer of this.observers) {
       try {

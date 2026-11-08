@@ -1,28 +1,28 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import type { DeviceCommandObservation, DeviceTransition, IScopedLogger } from '@camstack/types'
-import { __resetCommandObserverRegistryForTests, getCommandObserverRegistry } from '../../../../kernel/command-observation.js'
+import {
+  __resetCommandObserverRegistryForTests,
+  getCommandObserverRegistry,
+} from '../../../../kernel/command-observation.js'
 import { harness } from '../../__tests__/mirror-harness.js'
-import { startDeviceTransitions, type TransitionTimers } from '../transitions-wiring.js'
+import { startDeviceTransitions, type TransitionTicker } from '../transitions-wiring.js'
 
 afterEach(() => __resetCommandObserverRegistryForTests())
 
-function manualTimers() {
+function manualTicker() {
   const ticks: Array<() => void> = []
-  const cleared: unknown[] = []
-  const timers: TransitionTimers = {
-    setInterval: (fn) => {
-      ticks.push(fn)
-      return ticks.length
-    },
-    clearInterval: (h) => void cleared.push(h),
+  const stopped: number[] = []
+  const ticker: TransitionTicker = (fn) => {
+    ticks.push(fn)
+    const id = ticks.length
+    return () => void stopped.push(id)
   }
-  return { timers, tick: () => ticks.forEach((t) => t()), cleared }
+  return { ticker, tick: () => ticks.forEach((t) => t()), stopped }
 }
 
-
-function setup() {
+function setup(record?: (batch: readonly DeviceTransition[]) => Promise<void>) {
   const h = harness()
-  const t = manualTimers()
+  const t = manualTicker()
   const recorded: DeviceTransition[][] = []
   const errors: string[] = []
   const logger: IScopedLogger = {
@@ -36,9 +36,9 @@ function setup() {
   const handle = startDeviceTransitions({
     mirror: h.mirror,
     logger,
-    record: async (batch) => void recorded.push([...batch]),
+    record: record ?? (async (batch) => void recorded.push([...batch])),
     now: () => 1000,
-    timers: t.timers,
+    ticker: t.ticker,
   })
   return { h, t, recorded, errors, handle }
 }
@@ -64,7 +64,12 @@ describe('device transitions wiring (D1022)', () => {
     await Promise.resolve()
     await Promise.resolve()
     expect(w.recorded).toHaveLength(1)
-    expect(w.recorded[0]?.[0]).toMatchObject({ outcome: 'confirmed', field: 'on', from: false, to: true })
+    expect(w.recorded[0]?.[0]).toMatchObject({
+      outcome: 'confirmed',
+      field: 'on',
+      from: false,
+      to: true,
+    })
     await w.handle.stop()
   })
 
@@ -80,13 +85,23 @@ describe('device transitions wiring (D1022)', () => {
     await w.handle.stop()
   })
 
-  it('after stop nothing observes and the timer is cleared', async () => {
+  it('after stop nothing observes: no subscriber, the ticker is stopped', async () => {
     const w = setup()
+    expect(getCommandObserverRegistry().observerCount()).toBe(1)
     await w.handle.stop()
-    expect(w.t.cleared).toHaveLength(1)
-    getCommandObserverRegistry().observe(command())
+    expect(getCommandObserverRegistry().observerCount()).toBe(0)
+    expect(w.t.stopped).toHaveLength(1)
+  })
+
+  it('a stop that cannot send says how many rows it lost, for which device', async () => {
+    const w = setup(async () => {
+      throw new Error('hub gone')
+    })
+    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
     w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
     await w.handle.stop()
-    expect(w.recorded).toEqual([])
+    expect(
+      w.errors.some((e) => e.includes('abandoned at shutdown') && e.includes('1 transition')),
+    ).toBe(true)
   })
 })
