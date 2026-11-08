@@ -99,6 +99,10 @@ const READ_ONLY_LISTERS: ReadonlyArray<{ readonly file: string; readonly why: st
     why: 'the cap READ surface plus the pressure/eviction inputs (minFreePercent, maxUsedGb, basePath) — a disabled location must keep being evicted and swept, so filtering here would be the bug, not the fix',
   },
   {
+    file: 'packages/addon-post-analysis/src/pipeline-analytics/boot/build-stores.ts',
+    why: 'only hands `listLocations` to `EventMediaWriteLocator` as its `list` port; the choice is made in `event-media-write-location.ts`, which reads each mode through `resolveLocationMode` (and that file passes this guard on its own)',
+  },
+  {
     file: 'packages/system/src/builtins/liveness-monitor/liveness-monitor.addon.ts',
     why: 'probes whether this process can write each storage ROOT and reports it; it writes no bytes and picks no target. Which roots it judges is decided in `storage-root-access.ts` (`storageRootTargets`, through `mayWriteToLocation`)',
   },
