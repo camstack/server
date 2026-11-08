@@ -41,7 +41,11 @@ function main(): void {
         c.volatileStateFields.length > 0
           ? `[${c.volatileStateFields.map((f) => `'${f}'`).join(', ')}]`
           : '[]'
-      return `  '${c.capName}': { durability: '${c.durability ?? 'session'}', volatileFields: ${volatile} },`
+      const restoredFields =
+        c.restoredStateFields === null
+          ? ''
+          : `, restoredFields: [${c.restoredStateFields.map((f) => `'${f}'`).join(', ')}]`
+      return `  '${c.capName}': { durability: '${c.durability ?? 'session'}', volatileFields: ${volatile}${restoredFields} },`
     })
     .join('\n')
 
@@ -60,6 +64,11 @@ export interface RuntimeStatePolicy {
    * whether a write is worth a SQLite commit. Declared by the cap.
    */
   readonly volatileFields: readonly string[]
+  /**
+   * When set, ONLY these fields of a \`restored\` slice are written and seeded
+   * back at boot (D1024); the rest stay session values. Absent = the whole slice.
+   */
+  readonly restoredFields?: readonly string[]
 }
 
 /**

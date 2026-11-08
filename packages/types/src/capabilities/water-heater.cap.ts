@@ -95,7 +95,8 @@ export const waterHeaterCapability = {
    * See `RuntimeStateDurability`. Enforced by
    * `scripts/check-runtime-state-durability.ts`.
    */
-  durability: 'session',
+  durability: 'restored',
+  restoredStateFields: ['lastActiveMode'],
   /**
    * History (D850): recorded series. The schema carries no unit; providers publish Celsius. Setpoint keeps every change.
    */

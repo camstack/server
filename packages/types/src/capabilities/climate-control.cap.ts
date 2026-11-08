@@ -195,7 +195,8 @@ export const climateControlCapability = {
    * See `RuntimeStateDurability`. Enforced by
    * `scripts/check-runtime-state-durability.ts`.
    */
-  durability: 'session',
+  durability: 'restored',
+  restoredStateFields: ['lastActiveMode'],
   /**
    * History (D850): recorded series. Celsius by contract; setpoints keep every change (`minIntervalMs: 0`).
    */

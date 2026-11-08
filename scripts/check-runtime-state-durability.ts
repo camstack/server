@@ -161,9 +161,28 @@ function main(): void {
       })
       continue
     }
+    const src = readCapSource(cap.fileName)
+    if (cap.restoredStateFields !== null) {
+      if (cap.durability !== 'restored') {
+        violations.push({
+          capName: cap.capName,
+          message: `declares \`restoredStateFields\` but is \`${cap.durability}\`: only a \`restored\` cap persists anything.`,
+        })
+        continue
+      }
+      const known = new Set(runtimeStateFieldNames(src))
+      for (const field of cap.restoredStateFields) {
+        if (known.has(field)) continue
+        violations.push({
+          capName: cap.capName,
+          message: `names \`${field}\` in \`restoredStateFields\`, which is not a field of its runtime state.`,
+        })
+      }
+      // Only the named fields reach disk, so the clock-field rule below has nothing to ask.
+      continue
+    }
     if (cap.durability !== 'restored') continue
 
-    const src = readCapSource(cap.fileName)
     const declared = new Set(cap.volatileStateFields)
     for (const field of runtimeStateFieldNames(src)) {
       if (!CLOCK_FIELD_NAMES.includes(field)) continue

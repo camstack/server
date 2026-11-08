@@ -39,6 +39,8 @@ export type RuntimeStateBlob = Readonly<Record<string, Readonly<Record<string, u
  * The subset of `blob` that is allowed on disk: slices whose capability
  * declared `durability: 'restored'`.
  *
+ * A `restored` cap that names `restoredFields` contributes only those fields.
+ *
  * A cap the lookup does not know resolves to `'session'` and is dropped. That
  * direction is deliberate: the cost of losing a session value is a cold window
  * until the provider republishes; the cost of persisting an unasked-for one is
@@ -54,9 +56,32 @@ export function persistableBlob(
 ): Record<string, Record<string, unknown>> {
   const out: Record<string, Record<string, unknown>> = {}
   for (const [capName, slice] of Object.entries(blob)) {
-    if (capName !== OWNED_FIELDS_KEY && policyFor(capName).durability !== 'restored') continue
-    out[capName] = { ...slice }
+    if (capName === OWNED_FIELDS_KEY) {
+      out[capName] = { ...slice }
+      continue
+    }
+    const policy = policyFor(capName)
+    if (policy.durability !== 'restored') continue
+    const kept = restoredPart(slice, policy)
+    if (Object.keys(kept).length > 0) out[capName] = kept
   }
+  return out
+}
+
+/**
+ * The part of a `restored` slice that may live on disk (D1024). A cap that
+ * names `restoredFields` keeps only those; every other restored cap keeps the
+ * whole slice. One function for both directions — what is written and what the
+ * boot seed reads back — so the two cannot drift.
+ */
+export function restoredPart(
+  slice: Readonly<Record<string, unknown>>,
+  policy: RuntimeStatePolicy,
+): Record<string, unknown> {
+  const names = policy.restoredFields
+  if (names === undefined) return { ...slice }
+  const out: Record<string, unknown> = {}
+  for (const name of names) if (name in slice) out[name] = slice[name]
   return out
 }
 

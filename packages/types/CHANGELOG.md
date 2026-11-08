@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device heroes now read their own state for lights, covers, valves, humidifiers, alarm and motion sensors, doorbells, weather, updates and buttons instead of a generic power state
 - Climate, thermostat, water-heater, heating-valve and sensor devices now carry their mode, setpoint, measured values, readings and controls in the device hero instead of showing an unknown state
 - Climate and water-heater state now remembers the last mode the device ran (lastActiveMode), and climate, sensor and water-heater heroes get their own icon, tone and headline
+- Capability definitions can name restoredStateFields, so a restored capability persists only those fields of its state.
 
 ## [1.2.528] - 2026-11-08
 

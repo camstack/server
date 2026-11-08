@@ -72,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The remote runs declared sources under a per-device lock with a bounded wait, resolves a source by name or channel number and refuses undeclared channels
 - Hero layout provider serves the list rows of many devices in one call (getRowModels)
 - Climate and water-heater runtime state keeps the last non-off mode on every provider write, so power-on can return to it
+- Climate and water-heater power-on now remembers the last mode the device ran across a hub restart; the other readings are still re-read from the device.
 
 ### Removed
 

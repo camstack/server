@@ -53,6 +53,8 @@ export interface CapInfo {
    * worth a commit. Empty when the cap declares none.
    */
   readonly volatileStateFields: readonly string[]
+  /** `restoredStateFields: [...]` as declared; `null` when the cap persists its whole slice. */
+  readonly restoredStateFields: readonly string[] | null
   /** True when the cap declares `status: { ... }`. */
   readonly hasStatus: boolean
   /**
@@ -198,6 +200,10 @@ export function parseCapFile(capsDir: string, file: string): CapInfo | null {
   const volatileStateFields = volatileMatch
     ? [...volatileMatch[1]!.matchAll(/['"]([^'"]+)['"]/g)].map((m2) => m2[1]!)
     : []
+  const restoredMatch = src.match(/^\s*restoredStateFields\s*:\s*\[([^\]]*)\]/m)
+  const restoredStateFields = restoredMatch
+    ? [...restoredMatch[1]!.matchAll(/['"]([^'"]+)['"]/g)].map((m2) => m2[1]!)
+    : null
   const hasStatus = /^\s*status\s*:\s*\{/m.test(src)
   const exposesDeviceSettings = /^\s*exposesDeviceSettings\s*:\s*true/m.test(src)
   const internal = /^\s*internal\s*:\s*true/m.test(src)
@@ -256,6 +262,7 @@ export function parseCapFile(capsDir: string, file: string): CapInfo | null {
     hasRuntimeState,
     durability,
     volatileStateFields,
+    restoredStateFields,
     hasStatus,
     internal,
     providerKind,

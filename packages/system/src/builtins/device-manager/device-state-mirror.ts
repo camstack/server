@@ -59,6 +59,7 @@ import {
 import { MirrorRowWriter, type MirrorWriteHold } from './mirror-row-writer.js'
 import {
   persistableBlob,
+  restoredPart,
   type RuntimeStatePolicyLookup,
   sliceEffectivelyEqual,
 } from './runtime-state-persist-gate.js'
@@ -678,7 +679,13 @@ export class DeviceStateMirror {
       this.stateMirror.set(deviceId, perCap)
     }
     for (const [capName, raw] of Object.entries(split.native)) {
-      if (!perCap.has(capName)) perCap.set(capName, { ...raw })
+      if (perCap.has(capName)) continue
+      const policy = this.policyFor(capName)
+      // A cap that restores only named fields (D1024) never seeds the rest, even
+      // from a row that carries more: those are live readings the provider re-reports.
+      const seeded = policy.durability === 'restored' ? restoredPart(raw, policy) : { ...raw }
+      if (policy.restoredFields !== undefined && Object.keys(seeded).length === 0) continue
+      perCap.set(capName, seeded)
     }
     this.claims.seedClaims(deviceId, split.owned)
     if (split.dropped.length > 0) {

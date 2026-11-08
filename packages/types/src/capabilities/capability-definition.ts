@@ -795,6 +795,22 @@ export interface CapabilityDefinition<
   readonly volatileStateFields?: readonly string[]
 
   /**
+   * The ONLY fields of a `durability: 'restored'` slice that reach disk and are
+   * seeded back at boot (D1024). Absent = the whole slice, as for every other
+   * restored cap.
+   *
+   * For a slice that is mostly live reading but carries one thing a provider can
+   * never re-report — `climate-control.lastActiveMode`: after a restart the
+   * provider says the mode it is in NOW, never the one it ran before it was
+   * switched off. Every other field stays a session value, re-read from the
+   * provider, so nothing stale is served after a restart.
+   *
+   * Requires `durability: 'restored'`; every name must be a field of
+   * `runtimeState` (`scripts/check-runtime-state-durability.ts`).
+   */
+  readonly restoredStateFields?: readonly string[]
+
+  /**
    * Which `runtimeState` fields are recorded as long-term history series
    * (D850), or `'none'`. Mandatory for every cap declaring `runtimeState` —
    * `scripts/check-cap-history-declared.ts` fails the build otherwise. See

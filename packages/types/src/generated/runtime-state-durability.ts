@@ -13,11 +13,16 @@ export interface RuntimeStatePolicy {
    * whether a write is worth a SQLite commit. Declared by the cap.
    */
   readonly volatileFields: readonly string[]
+  /**
+   * When set, ONLY these fields of a `restored` slice are written and seeded
+   * back at boot (D1024); the rest stay session values. Absent = the whole slice.
+   */
+  readonly restoredFields?: readonly string[]
 }
 
 /**
  * Per-cap runtime-state policy, projected from every `*.cap.ts` that declares
- * `runtimeState`. 81 caps: 39 `restored`, 42 `session`.
+ * `runtimeState`. 81 caps: 41 `restored`, 40 `session`.
  *
  * A cap absent from this map has no runtime-state slice at all. A cap PRESENT
  * with `durability: 'session'` has one and has decided not to keep it.
@@ -33,7 +38,7 @@ export const RUNTIME_STATE_POLICY: Readonly<Record<string, RuntimeStatePolicy>> 
   'brightness': { durability: 'session', volatileFields: [] },
   'camera-streams': { durability: 'session', volatileFields: [] },
   'carbon-monoxide': { durability: 'restored', volatileFields: ['lastChangedAt'] },
-  'climate-control': { durability: 'session', volatileFields: [] },
+  'climate-control': { durability: 'restored', volatileFields: [], restoredFields: ['lastActiveMode'] },
   'color': { durability: 'session', volatileFields: [] },
   'connectivity': { durability: 'restored', volatileFields: ['lastChangedAt'] },
   'consumables': { durability: 'restored', volatileFields: ['lastChangedAt', 'lastFetchedAt'] },
@@ -99,7 +104,7 @@ export const RUNTIME_STATE_POLICY: Readonly<Record<string, RuntimeStatePolicy>> 
   'vacuum-control': { durability: 'session', volatileFields: [] },
   'valve': { durability: 'session', volatileFields: [] },
   'vibration': { durability: 'restored', volatileFields: ['lastChangedAt'] },
-  'water-heater': { durability: 'session', volatileFields: [] },
+  'water-heater': { durability: 'restored', volatileFields: [], restoredFields: ['lastActiveMode'] },
   'weather': { durability: 'session', volatileFields: [] },
   'zone-analytics': { durability: 'session', volatileFields: [] },
   'zone-rules': { durability: 'restored', volatileFields: [] },
@@ -133,6 +138,7 @@ export const RESTORED_CAP_NAMES: readonly string[] = [
   'battery',
   'binary',
   'carbon-monoxide',
+  'climate-control',
   'connectivity',
   'consumables',
   'contact',
@@ -164,6 +170,7 @@ export const RESTORED_CAP_NAMES: readonly string[] = [
   'tamper',
   'temperature-sensor',
   'vibration',
+  'water-heater',
   'zone-rules',
   'zones',
 ]
