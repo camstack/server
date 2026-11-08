@@ -2573,7 +2573,7 @@ Enum: `"replace" \| "add"`
 ### `HeroLayoutRowsSchema`
 
 - `type`: `string`
-- `rows`: `("run-for" \| "cycle" \| "program" \| "appliance-power" \| "now-playing" \| "playback" \| "volume" \| "source" \| "contact" \| "motion-trigger" \| "lock" \| "alarm" \| "fan" \| "vacuum" \| "mower" \| "feeder" \| "fountain" \| "pump-cycle" \| "automation" \| "script" \| "do-not-disturb" \| "brightness" \| "color" \| "cover" \| "valve" \| "humidifier" \| "update" \| "button" \| "climate-mode" \| "climate-fan" \| "setpoint")[]`
+- `rows`: `("run-for" \| "cycle" \| "program" \| "appliance-power" \| "now-playing" \| "playback" \| "volume" \| "source" \| "contact" \| "motion-trigger" \| "lock" \| "alarm" \| "fan" \| "vacuum" \| "mower" \| "feeder" \| "fountain" \| "pump-cycle" \| "automation" \| "script" \| "do-not-disturb" \| "brightness" \| "color" \| "cover" \| "valve" \| "humidifier" \| "update" \| "button" \| "climate-mode" \| "climate-fan" \| "setpoint" \| "channel" \| "control")[]`
 
 ### `HfModelResolutionSchema`
 

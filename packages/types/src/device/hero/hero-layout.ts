@@ -22,7 +22,7 @@ export const HERO_LAYOUT_DEFAULT: HeroLayout = {
 
 const HEATER_LAYOUT: HeroLayout = { rows: ['run-for', 'cycle'] }
 const MEDIA_PLAYER_LAYOUT: HeroLayout = {
-  rows: ['now-playing', 'playback', 'volume', 'source', 'do-not-disturb'],
+  rows: ['now-playing', 'playback', 'volume', 'channel', 'source', 'do-not-disturb'],
 }
 const APPLIANCE_LAYOUT: HeroLayout = { rows: ['cycle'] }
 /** Its Home Connect PowerState is a secondary row action, never the own-power slot. */
@@ -47,6 +47,7 @@ const COVER_LAYOUT: HeroLayout = { rows: ['cover'] }
 const VALVE_LAYOUT: HeroLayout = { rows: ['valve'] }
 const HUMIDIFIER_LAYOUT: HeroLayout = { rows: ['humidifier'] }
 const UPDATE_LAYOUT: HeroLayout = { rows: ['update'] }
+const CONTROL_LAYOUT: HeroLayout = { rows: ['control'] }
 const BUTTON_LAYOUT: HeroLayout = { rows: ['button'] }
 
 export const HERO_LAYOUT_BY_TYPE = {
@@ -73,7 +74,7 @@ export const HERO_LAYOUT_BY_TYPE = {
   [DeviceType.Fan]: FAN_LAYOUT,
   [DeviceType.MediaPlayer]: MEDIA_PLAYER_LAYOUT,
   [DeviceType.AlarmPanel]: ALARM_LAYOUT,
-  [DeviceType.Control]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.Control]: CONTROL_LAYOUT,
   [DeviceType.Presence]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Weather]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Vacuum]: VACUUM_LAYOUT,

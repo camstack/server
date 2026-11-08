@@ -64,13 +64,39 @@ export const HERO_ROW_IDS = [
   'climate-mode',
   'climate-fan',
   'setpoint',
+  'channel',
+  'control',
 ] as const
 export const HeroRowIdSchema = z.enum(HERO_ROW_IDS)
 export type HeroRowId = z.infer<typeof HeroRowIdSchema>
 
 /** Argument values an action carries; the device id is added by the renderer. */
-export const HeroArgsSchema = z.record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+export type HeroScalar = string | number | boolean
+/** A scalar, or a nested object of them (a cap input such as `{ color: { mode, hsv: { h, s, v } } }`). */
+export type HeroArgValue = HeroScalar | { [key: string]: HeroArgValue }
+export const HeroArgValueSchema: z.ZodType<HeroArgValue> = z.lazy(() =>
+  z.union([z.string(), z.number(), z.boolean(), z.record(z.string(), HeroArgValueSchema)]),
+)
+export const HeroArgsSchema = z.record(z.string(), HeroArgValueSchema)
 export type HeroArgs = z.infer<typeof HeroArgsSchema>
+
+function setArgAt(args: HeroArgs, keys: readonly string[], value: HeroScalar): HeroArgs {
+  const [head, ...rest] = keys
+  if (head === undefined) return args
+  if (rest.length === 0) return { ...args, [head]: value }
+  const child = args[head]
+  const base: HeroArgs = typeof child === 'object' ? child : {}
+  return { ...args, [head]: setArgAt(base, rest, value) }
+}
+
+/**
+ * `args` with the chosen value set at `path` (`level`, or `control.value` for a value
+ * that lives inside a nested argument). The original is not touched; a renderer builds
+ * the call of a slider or picker with this.
+ */
+export function heroArgsWithValue(args: HeroArgs, path: string, value: HeroScalar): HeroArgs {
+  return setArgAt(args, path.split('.'), value)
+}
 
 /** A cap method called on the hero's device. */
 export const HeroCallSchema = z.object({

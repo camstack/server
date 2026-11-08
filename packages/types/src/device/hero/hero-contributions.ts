@@ -694,6 +694,34 @@ const mediaPlayerContribution = contribution(
         status: null,
         controls: volume,
       })
+    if (view.channel !== null) {
+      const channel = view.channel.current
+      rows.push({
+        id: 'channel',
+        icon: 'tv',
+        status: channel === null ? null : heroText(channel, channel),
+        controls: [
+          asAction(
+            action(
+              'channel.down',
+              heroText('Channel down', 'Canale giù'),
+              'chevron-down',
+              'media-player',
+              'channelDown',
+            ),
+          ),
+          asAction(
+            action(
+              'channel.up',
+              heroText('Channel up', 'Canale su'),
+              'chevron-up',
+              'media-player',
+              'channelUp',
+            ),
+          ),
+        ],
+      })
+    }
     if (view.source !== null) {
       const current = view.source.current === '' ? null : view.source.current
       rows.push({

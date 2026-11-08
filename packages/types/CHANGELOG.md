@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Climate and water-heater state now remembers the last mode the device ran (lastActiveMode), and climate, sensor and water-heater heroes get their own icon, tone and headline
 - Capability definitions can name restoredStateFields, so a restored capability persists only those fields of its state.
 - Enum sensors no longer persist a restore only because the timestamp flag changed
+- Device heroes: a channel row for media players and IR TVs, light colour presets, and a value slider or picker for generic controls
 
 ## [1.2.528] - 2026-11-08
 

@@ -71,11 +71,58 @@ const brightnessContribution = contribution('brightness', BrightnessStatusSchema
 // ── color ──────────────────────────────────────────────────────────────────
 
 /**
- * Shown, not set: `setColor` takes a nested `{ mode, … }` argument and a hero
- * action carries scalars only, so a colour control waits for a nested-argument
- * action in the model.
+ * Preset colours as actions: `setColor` takes a nested `{ mode, … }` argument, which a
+ * hero action carries (D1023). Only the modes the bulb declares are offered, each a
+ * valid `setColor` input; a bulb that declares none is shown, not set.
  */
-const colorContribution = contribution('color', ColorStatusSchema, (slice) => {
+const WHITE_PRESETS = [
+  { id: 'color.warm', en: 'Warm white', it: 'Bianco caldo', icon: 'sun', mired: 370 },
+  { id: 'color.neutral', en: 'Neutral white', it: 'Bianco neutro', icon: 'lightbulb', mired: 250 },
+  { id: 'color.cool', en: 'Cool white', it: 'Bianco freddo', icon: 'snowflake', mired: 154 },
+] as const
+
+const HUE_PRESETS = [
+  { id: 'color.red', en: 'Red', it: 'Rosso', hue: 0 },
+  { id: 'color.amber', en: 'Amber', it: 'Ambra', hue: 40 },
+  { id: 'color.green', en: 'Green', it: 'Verde', hue: 120 },
+  { id: 'color.cyan', en: 'Cyan', it: 'Ciano', hue: 180 },
+  { id: 'color.blue', en: 'Blue', it: 'Blu', hue: 240 },
+  { id: 'color.purple', en: 'Purple', it: 'Viola', hue: 280 },
+] as const
+
+function colorControls(
+  ctx: HeroContext,
+  current: { readonly s: number; readonly v: number } | null,
+): HeroControl[] {
+  const controls: HeroControl[] = []
+  if (has(ctx, DeviceFeature.LightColorMired)) {
+    for (const p of WHITE_PRESETS) {
+      controls.push(
+        asAction(
+          action(p.id, heroText(p.en, p.it), p.icon, 'color', 'setColor', {
+            color: { mode: 'mired', colorTemperature: p.mired },
+          }),
+        ),
+      )
+    }
+  }
+  if (has(ctx, DeviceFeature.LightColorHsv)) {
+    const s = current?.s ?? 100
+    const v = current?.v ?? 100
+    for (const p of HUE_PRESETS) {
+      controls.push(
+        asAction(
+          action(p.id, heroText(p.en, p.it), 'palette', 'color', 'setColor', {
+            color: { mode: 'hsv', hsv: { h: p.hue, s, v } },
+          }),
+        ),
+      )
+    }
+  }
+  return controls
+}
+
+const colorContribution = contribution('color', ColorStatusSchema, (slice, ctx) => {
   let words: HeroText | null = null
   if (slice !== undefined) {
     if (
@@ -94,7 +141,14 @@ const colorContribution = contribution('color', ColorStatusSchema, (slice) => {
   }
   return {
     ...(words === null ? {} : { facts: [fact('reading', 'palette', words)] }),
-    rows: [row('color', 'palette', words)],
+    rows: [
+      row(
+        'color',
+        'palette',
+        words,
+        colorControls(ctx, slice?.mode === 'hsv' && slice.hsv !== undefined ? slice.hsv : null),
+      ),
+    ],
   }
 })
 

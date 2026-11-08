@@ -20,6 +20,11 @@ export type PowerView = 'on' | 'off' | 'standby' | 'unknown'
 export type RunningView = 'playing' | 'paused' | 'buffering' | 'idle' | 'none' | 'unknown'
 export type VolumeView = 'slider' | 'steps' | 'none'
 
+/** Channel stepping: the device takes channel up / down; `current` is the channel it reports, when it does. */
+export interface ChannelView {
+  readonly current: string | null
+}
+
 export interface SourceView {
   readonly current: string
   readonly options: readonly string[]
@@ -120,6 +125,8 @@ export interface MediaPlayerView {
   /** A mute toggle with a known state. */
   readonly mute: boolean
   readonly source: SourceView | null
+  /** Channel up / down is offered; null when the device does not declare channel stepping. */
+  readonly channel: ChannelView | null
   readonly shuffle: boolean
   readonly repeat: boolean
   /** The device reports a shuffle / repeat value it cannot be told to change: drawn, not pressable. */
@@ -185,6 +192,7 @@ const UNKNOWN_VIEW: MediaPlayerView = {
   artworkUrl: null,
   mute: false,
   source: null,
+  channel: null,
   shuffle: false,
   repeat: false,
   shuffleReadOnly: false,
@@ -270,6 +278,14 @@ function derivePowerGatedView(
   return { ...powered, power: 'on', stateAssumed: false, runningReading }
 }
 
+/** The channel being watched: only a media item the device itself calls a channel. */
+function channelOf(status: MediaPlayerStatus): string | null {
+  const media = status.currentMedia
+  if (media === null || media === undefined || media.type !== 'channel') return null
+  const title = media.title.trim()
+  return title === '' ? null : title
+}
+
 function deriveFromStatus(
   status: MediaPlayerStatus | undefined,
   features: readonly string[] | undefined,
@@ -332,6 +348,7 @@ function deriveFromStatus(
           selectable: has(DeviceFeature.MediaPlayerSelectSource) && options.length > 1,
         }
       : null,
+    channel: has(DeviceFeature.MediaPlayerChannelStep) ? { current: channelOf(status) } : null,
     shuffle: has(DeviceFeature.MediaPlayerShuffle) && status.shuffle !== null,
     repeat: has(DeviceFeature.MediaPlayerRepeat) && status.repeat !== null,
   }

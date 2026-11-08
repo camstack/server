@@ -10,7 +10,7 @@
  * a measurement the device did not report is absent, never a zero (D393).
  */
 import { BinaryStatusSchema } from '../../capabilities/binary.cap.js'
-import { ControlStatusSchema } from '../../capabilities/control.cap.js'
+import { ControlStatusSchema, type ControlStatus } from '../../capabilities/control.cap.js'
 import { DoorbellStatusSchema } from '../../capabilities/doorbell.cap.js'
 import { FloodStatusSchema } from '../../capabilities/flood.cap.js'
 import { GasStatusSchema } from '../../capabilities/gas.cap.js'
@@ -34,7 +34,7 @@ import {
   type HeroContribution,
 } from './hero-contribution-kit.js'
 import type { StateSource } from './hero-fragment.js'
-import type { HeroFact, HeroSideTile } from './hero-model.js'
+import type { HeroFact, HeroRow, HeroSideTile } from './hero-model.js'
 import type { HeroState } from './hero-state.js'
 import { heroText, type HeroText } from './hero-text.js'
 import type { z } from 'zod'
@@ -446,8 +446,50 @@ const controlContribution = contribution('control', ControlStatusSchema, (slice,
   return {
     reading: reading('control', 'on', false, heroText(text, text)),
     facts: sinceFact(slice.lastChangedAt === 0 ? null : slice.lastChangedAt, ctx.now),
+    rows: controlRows(slice),
   }
 })
+
+const CONTROL_LABEL = heroText('Value', 'Valore')
+
+/** A number with known bounds is a slider, a choice a picker; text and dates stay read-only. */
+function controlRows(slice: ControlStatus): HeroRow[] {
+  if (slice.kind === 'numeric' && typeof slice.value === 'number') {
+    if (slice.min === undefined || slice.max === undefined) return []
+    return [
+      row('control', 'sliders-horizontal', null, [
+        {
+          kind: 'slider',
+          id: 'control.value',
+          label: CONTROL_LABEL,
+          value: slice.value,
+          min: slice.min,
+          max: slice.max,
+          step: slice.step ?? 1,
+          unit: '',
+          call: { cap: 'control', method: 'setValue', args: { control: { kind: 'numeric' } } },
+          valueArg: 'control.value',
+        },
+      ]),
+    ]
+  }
+  if (slice.kind === 'select' && typeof slice.value === 'string') {
+    return [
+      row('control', 'sliders-horizontal', null, [
+        {
+          kind: 'picker',
+          id: 'control.value',
+          label: CONTROL_LABEL,
+          current: slice.value,
+          options: slice.options,
+          call: { cap: 'control', method: 'setValue', args: { control: { kind: 'select' } } },
+          valueArg: 'control.value',
+        },
+      ]),
+    ]
+  }
+  return []
+}
 
 export const SENSORS_FAMILY_CONTRIBUTIONS: Readonly<Record<string, HeroContribution>> = {
   smoke: smokeContribution,

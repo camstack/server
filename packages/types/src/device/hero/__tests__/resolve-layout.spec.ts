@@ -29,6 +29,7 @@ describe('fixed hero layouts', () => {
       'now-playing',
       'playback',
       'volume',
+      'channel',
       'source',
       'do-not-disturb',
     ])
