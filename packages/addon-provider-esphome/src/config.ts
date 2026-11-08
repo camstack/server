@@ -94,8 +94,8 @@ export const espBoardCreationSchema = z.object({
     z.number().int().min(1).max(65535).default(ESPHOME_DEFAULT_PORT),
   ),
   name: z.string().default(''),
-  encryptionKey: z.string().default(''),
-  password: z.string().default(''),
+  encryptionKey: z.string().default('').meta({ secret: true }),
+  password: z.string().default('').meta({ secret: true }),
 })
 
 export type EspBoardCreation = z.infer<typeof espBoardCreationSchema>

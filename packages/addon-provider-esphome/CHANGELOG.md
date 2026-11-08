@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The ESPHome board creation form keeps the encryption key and password as secrets.
+
 ## [0.1.16] - 2026-11-06
 
 ### Changed
