@@ -49,7 +49,7 @@ export interface LegacyConfigYamlResult {
   readonly notes: readonly LegacyNote[]
 }
 
-const NO_LEGACY: LegacyConfigYamlResult = { overrides: {}, notes: [] }
+const NOTHING_TO_APPLY: LegacyConfigYamlResult = { overrides: {}, notes: [] }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -130,7 +130,7 @@ export function reconcileLegacyConfigYaml(
   effective: EffectiveBootstrapValues,
 ): LegacyConfigYamlResult {
   const file = findLegacyFile(env)
-  if (file === undefined) return NO_LEGACY
+  if (file === undefined) return NOTHING_TO_APPLY
 
   let raw: Record<string, unknown>
   try {
