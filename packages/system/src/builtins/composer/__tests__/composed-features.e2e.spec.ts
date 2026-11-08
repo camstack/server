@@ -207,8 +207,8 @@ afterEach(() => {
 })
 
 describe('the features of a composed device', () => {
-  it('carry none while no feature cap is bound', () => {
-    expect(stove().features).toEqual([])
+  it('carry only the bound switch while no other feature cap is bound', () => {
+    expect(stove().features).toEqual(['switch'])
   })
 
   it('carry timed-run once the wrapper binds it, and lose it when it is unbound', async () => {
@@ -221,7 +221,7 @@ describe('the features of a composed device', () => {
         reason: 'wrapper-activated',
       }),
     )
-    expect(stove().features).toEqual(['timed-run'])
+    expect(stove().features).toEqual(['timed-run', 'switch'])
 
     boundCaps = ['switch', 'running-state']
     await drive(
@@ -232,13 +232,13 @@ describe('the features of a composed device', () => {
         reason: 'wrapper-deactivated',
       }),
     )
-    expect(stove().features).toEqual([])
+    expect(stove().features).toEqual(['switch'])
   })
 
   it('are read again when the composition is applied (a hub restart binds before the apply)', async () => {
     boundCaps = ['switch', 'timed-run']
     await drive(composer.apply(applyInput()))
-    expect(stove().features).toEqual(['timed-run'])
+    expect(stove().features).toEqual(['timed-run', 'switch'])
   })
 
   it('ignore a bindings change of another device', async () => {
@@ -251,6 +251,6 @@ describe('the features of a composed device', () => {
         reason: 'wrapper-activated',
       }),
     )
-    expect(stove().features).toEqual([])
+    expect(stove().features).toEqual(['switch'])
   })
 })
