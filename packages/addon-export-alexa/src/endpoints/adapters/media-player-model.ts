@@ -6,10 +6,12 @@
  *   volume ±N  → `Alexa.StepSpeaker`            (feature `media-player-volume-step`)
  *   mute       → `Alexa.Speaker` (`muted` only) (feature `media-player-mute`)
  *   channel ±N → `Alexa.ChannelController`      (feature `media-player-channel-step`)
+ *   channel N  → `Alexa.ChannelController`      (a declared `digits` source: by number or name)
  *   transport  → `Alexa.PlaybackController`     (stop / next / previous by feature; play and
  *                                                pause only when the player REPORTS its state,
  *                                                since an assumed one cannot tell)
- *   inputs     → `Alexa.InputController`        (the reported sources Amazon names)
+ *   inputs     → `Alexa.InputController`        (the sources Amazon names; when the sources are
+ *                                                the operator's own, only the `sequence` ones)
  *
  * A property is reported only for a known value: an assumed `standby`, a null
  * mute and an unlisted volume or input produce no property at all (D393).
@@ -67,19 +69,58 @@ export function amazonInputOf(source: string): string | null {
   return AMAZON_INPUTS.find((name) => squash(name) === wanted) ?? null
 }
 
-/** The sources of a slice that Amazon has a name for, paired with the player's own name. */
+/** A source the operator declared on a remote (planning#460). */
+export type DeclaredSource = NonNullable<MediaPlayerStatus['declaredSources']>[number]
+
+/**
+ * The sources that are INPUTS. A player with its own sources offers them all; a
+ * remote's declared sources split by kind (a `digits` source is a channel).
+ */
+function inputSources(status: MediaPlayerStatus): readonly string[] {
+  const declared = status.declaredSources
+  if (declared === undefined) return status.availableSources
+  return declared.filter((s) => s.kind === 'sequence').map((s) => s.name)
+}
+
+/** The inputs of a slice that Amazon has a name for, paired with the player's own name. */
 export function inputPairs(
   status: MediaPlayerStatus,
 ): ReadonlyArray<{ readonly amazon: string; readonly source: string }> {
   const seen = new Set<string>()
   const pairs: Array<{ amazon: string; source: string }> = []
-  for (const source of status.availableSources) {
+  for (const source of inputSources(status)) {
     const amazon = amazonInputOf(source)
     if (amazon === null || seen.has(amazon)) continue
     seen.add(amazon)
     pairs.push({ amazon, source })
   }
   return pairs
+}
+
+/** The declared inputs Amazon has no fixed name for: they cannot be offered, and are logged. */
+export function unmappedInputs(status: MediaPlayerStatus): readonly string[] {
+  if (status.declaredSources === undefined) return []
+  return inputSources(status).filter((source) => amazonInputOf(source) === null)
+}
+
+/** The declared channels (`digits` sources) of a slice. */
+export function channelSources(status: MediaPlayerStatus | null): readonly DeclaredSource[] {
+  return (status?.declaredSources ?? []).filter((s) => s.kind === 'digits' && s.number)
+}
+
+/** The declared channel an Alexa channel number or name points at, or null. */
+export function channelOf(
+  status: MediaPlayerStatus | null,
+  ask: { readonly number?: string | undefined; readonly name?: string | undefined },
+): DeclaredSource | null {
+  const channels = channelSources(status)
+  const number = ask.number?.trim() ?? ''
+  const name = ask.name?.trim().toLowerCase() ?? ''
+  return (
+    channels.find((c) => number.length > 0 && c.number === number) ??
+    channels.find((c) => name.length > 0 && c.name.trim().toLowerCase() === name) ??
+    null
+  )
 }
 
 export function readMediaPlayerSlice(slice: unknown): MediaPlayerStatus | null {
@@ -120,7 +161,7 @@ export function describeMediaPlayerCapabilities(device: AdapterDevice): readonly
     })
   }
   if (has(DeviceFeature.MediaPlayerMute)) capabilities.push(iface('Alexa.Speaker', 'muted'))
-  if (has(DeviceFeature.MediaPlayerChannelStep)) {
+  if (has(DeviceFeature.MediaPlayerChannelStep) || channelSources(status).length > 0) {
     capabilities.push({
       type: 'AlexaInterface',
       interface: 'Alexa.ChannelController',

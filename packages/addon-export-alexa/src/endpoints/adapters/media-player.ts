@@ -25,6 +25,7 @@ const DIRECTIVES: readonly AdapterDirective[] = [
   directive('Alexa.StepSpeaker/SetMute'),
   directive('Alexa.Speaker/SetMute'),
   directive('Alexa.ChannelController/SkipChannels'),
+  directive('Alexa.ChannelController/ChangeChannel'),
   directive('Alexa.PlaybackController/Play'),
   directive('Alexa.PlaybackController/Pause'),
   directive('Alexa.PlaybackController/Stop'),

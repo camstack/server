@@ -15,6 +15,7 @@ import {
   STEP_ANSWER_BUDGET_MS,
 } from '../handlers/media-player-controller.js'
 import { genericPropertiesFor } from '../handlers/generic-state.js'
+import { logUnmappedInputsOnce } from '../handlers/discovery.js'
 import { quietLogger } from './helpers/fake-device-api.js'
 
 function slice(overrides: Record<string, unknown> = {}) {
@@ -74,6 +75,7 @@ function api() {
       channelDown: mutate(),
       setMute: mutate(),
       selectSource: mutate(),
+      playMedia: mutate(),
       play: mutate(),
       pause: mutate(),
       stop: mutate(),
@@ -325,5 +327,108 @@ describe('a long train run does not hold the Alexa answer', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('declared sources of a remote (planning#460)', () => {
+  const declaredSlice = (overrides: Record<string, unknown> = {}) =>
+    slice({
+      availableSources: ['HDMI 1', 'Cable box menu', 'Rai 1', 'Canale 24'],
+      declaredSources: [
+        { name: 'HDMI 1', kind: 'sequence' },
+        { name: 'Cable box menu', kind: 'sequence' },
+        { name: 'Rai 1', kind: 'digits', number: '1' },
+        { name: 'Canale 24', kind: 'digits', number: '25' },
+      ],
+      ...overrides,
+    })
+  const features = [DeviceFeature.MediaPlayerPower, DeviceFeature.MediaPlayerSelectSource]
+
+  it('offers inputs only for sequence sources Amazon names, and a channel controller for digits sources', () => {
+    const built = build(features, declaredSlice())
+    const input = built?.capabilities.find((c) => c.interface === 'Alexa.InputController')
+    expect(input?.inputs).toEqual([{ name: 'HDMI 1' }])
+    expect(built?.capabilities.map((c) => c.interface)).toContain('Alexa.ChannelController')
+    if (built !== null) expect(validateAlexaEndpoint(built)).toEqual([])
+  })
+
+  it('offers no channel controller without a digits source or a channel step', () => {
+    const only = slice({
+      availableSources: ['HDMI 1'],
+      declaredSources: [{ name: 'HDMI 1', kind: 'sequence' }],
+    })
+    expect(interfaces(features, only)).not.toContain('Alexa.ChannelController')
+  })
+
+  it('a channel name is never an input, even when Amazon would know it', () => {
+    const channelAsInput = slice({
+      availableSources: ['HDMI 1'],
+      declaredSources: [{ name: 'HDMI 1', kind: 'digits', number: '1' }],
+    })
+    expect(interfaces(features, channelAsInput)).not.toContain('Alexa.InputController')
+  })
+
+  it('ChangeChannel by number plays that channel', async () => {
+    const fake = api()
+    fake.deviceState.getCapSlice.query.mockResolvedValue(declaredSlice())
+    await run('Alexa.ChannelController/ChangeChannel', { channel: { number: '25' } }, fake)
+    expect(fake.mediaPlayer.playMedia.mutate).toHaveBeenCalledWith({
+      deviceId: 5478,
+      mediaType: 'channel',
+      mediaId: '25',
+    })
+  })
+
+  it('ChangeChannel by name reaches the same declared channel', async () => {
+    const fake = api()
+    fake.deviceState.getCapSlice.query.mockResolvedValue(declaredSlice())
+    await run(
+      'Alexa.ChannelController/ChangeChannel',
+      { channel: {}, channelMetadata: { name: 'canale 24' } },
+      fake,
+    )
+    expect(fake.mediaPlayer.playMedia.mutate).toHaveBeenCalledWith({
+      deviceId: 5478,
+      mediaType: 'channel',
+      mediaId: '25',
+    })
+  })
+
+  it('ChangeChannel to a channel nobody declared is refused and presses nothing', async () => {
+    const fake = api()
+    fake.deviceState.getCapSlice.query.mockResolvedValue(declaredSlice())
+    const answer = await run(
+      'Alexa.ChannelController/ChangeChannel',
+      { channel: { number: '7' } },
+      fake,
+    )
+    expect(answer.event.header.name).toBe('ErrorResponse')
+    expect(answer.event.payload.type).toBe('INVALID_VALUE')
+    expect(fake.mediaPlayer.playMedia.mutate).not.toHaveBeenCalled()
+  })
+
+  it('SelectInput finds a declared sequence source, not a channel', async () => {
+    const fake = api()
+    fake.deviceState.getCapSlice.query.mockResolvedValue(declaredSlice())
+    await run('Alexa.InputController/SelectInput', { input: 'HDMI 1' }, fake)
+    expect(fake.mediaPlayer.selectSource.mutate).toHaveBeenCalledWith({
+      deviceId: 5478,
+      source: 'HDMI 1',
+    })
+  })
+
+  it('names the sequence sources it cannot offer ONCE per device, with the device tag', () => {
+    const lines: { message: string; tags: unknown }[] = []
+    const logger = {
+      ...quietLogger,
+      info: (message: string, extra?: { tags?: unknown }) => {
+        lines.push({ message, tags: extra?.tags })
+      },
+    }
+    logUnmappedInputsOnce(logger, 5478, declaredSlice())
+    logUnmappedInputsOnce(logger, 5478, declaredSlice())
+    expect(lines).toHaveLength(1)
+    expect(lines[0]?.tags).toEqual({ deviceId: 5478 })
+    expect(lines[0]?.message).toContain('no Amazon input name')
   })
 })

@@ -11,6 +11,7 @@ import { MEDIA_PLAYER_MAX_STEPS } from '@camstack/types'
 import { z } from 'zod'
 import {
   CAP_MEDIA_PLAYER,
+  channelOf,
   inputPairs,
   mediaPlayerProperties,
   readMediaPlayerSlice,
@@ -28,6 +29,16 @@ const CAP_SWITCH = 'switch'
 
 const StepsPayload = z.object({ volumeSteps: z.number().int() })
 const ChannelPayload = z.object({ channelCount: z.number().int() })
+const ChangeChannelPayload = z.object({
+  channel: z
+    .object({
+      number: z.string().optional(),
+      callSign: z.string().optional(),
+      affiliateCallSign: z.string().optional(),
+    })
+    .optional(),
+  channelMetadata: z.object({ name: z.string().optional() }).optional(),
+})
 const MutePayload = z.object({ mute: z.boolean() })
 const InputPayload = z.object({ input: z.string() })
 
@@ -199,6 +210,61 @@ async function channel(c: AdapterDirectiveContext): Promise<unknown> {
   )
 }
 
+/**
+ * `ChangeChannel`: a channel the OPERATOR declared, by its number or its name.
+ * Both reach one declared source; a channel nobody declared is refused here as
+ * an invalid value, and nothing is pressed.
+ */
+async function changeChannel(c: AdapterDirectiveContext): Promise<unknown> {
+  const payload = ChangeChannelPayload.safeParse(c.payload)
+  const deps = c.deps.mediaPlayerController
+  const ask = payload.success
+    ? {
+        number: payload.data.channel?.number,
+        name:
+          payload.data.channelMetadata?.name ??
+          payload.data.channel?.callSign ??
+          payload.data.channel?.affiliateCallSign,
+      }
+    : null
+  if (ask === null || (ask.number === undefined && ask.name === undefined)) {
+    return errorEnvelope(c.header, 'INVALID_DIRECTIVE', 'a channel number or name is required')
+  }
+  let declared: ReturnType<typeof channelOf>
+  try {
+    const slice = await deps.ctx.api.deviceState.getCapSlice.query({
+      deviceId: c.deviceId,
+      capName: CAP_MEDIA_PLAYER,
+    })
+    declared = channelOf(readMediaPlayerSlice(slice), ask)
+  } catch (err: unknown) {
+    deps.logger.warn('alexa media-player-controller: the channels could not be read', {
+      tags: { deviceId: c.deviceId },
+      meta: { error: message(err) },
+    })
+    return errorEnvelope(c.header, 'ENDPOINT_UNREACHABLE', 'the player channels could not be read')
+  }
+  if (declared === null || declared.number === undefined) {
+    deps.logger.info('alexa media-player-controller: change channel refused, not declared', {
+      tags: { deviceId: c.deviceId },
+      meta: { number: ask.number ?? null, name: ask.name ?? null },
+    })
+    return errorEnvelope(c.header, 'INVALID_VALUE', 'that channel is not declared on the player')
+  }
+  const mediaId = declared.number
+  return attempt(
+    c,
+    `change channel ${declared.name}`,
+    () =>
+      deps.ctx.api.mediaPlayer.playMedia.mutate({
+        deviceId: c.deviceId,
+        mediaType: 'channel',
+        mediaId,
+      }),
+    { slow: true },
+  )
+}
+
 async function mute(c: AdapterDirectiveContext): Promise<unknown> {
   const payload = MutePayload.safeParse(c.payload)
   if (!payload.success) return errorEnvelope(c.header, 'INVALID_DIRECTIVE', 'mute is required')
@@ -296,6 +362,8 @@ export async function handleMediaPlayerDirective(c: AdapterDirectiveContext): Pr
       return mute(c)
     case 'Alexa.ChannelController/SkipChannels':
       return channel(c)
+    case 'Alexa.ChannelController/ChangeChannel':
+      return changeChannel(c)
     case 'Alexa.InputController/SelectInput':
       return selectInput(c)
     default:

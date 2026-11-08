@@ -26,6 +26,7 @@ import {
   type SmartVisionClass,
 } from '../endpoints/builder.js'
 import { discoveryExtrasFor, discoveryReadCaps } from '../endpoints/adapters/index.js'
+import { readMediaPlayerSlice, unmappedInputs } from '../endpoints/adapters/media-player-model.js'
 import { GENERIC_DEVICE_TYPES, planGenericEndpoint } from '../endpoints/generic-device.js'
 import type { AlexaEndpoint } from '../endpoints/types.js'
 import type { ExposedDeviceEntry } from '../types.js'
@@ -199,6 +200,7 @@ export async function buildEndpointsForExposedDevice(
     GENERIC_DEVICE_TYPES.includes(String(device.type)) &&
     !parentInfo.capNames.includes(CAP_ALARM_PANEL)
   ) {
+    const slices = await readDiscoverySlices(api, parentInfo, deps.logger)
     const plan = planGenericEndpoint({
       deviceId: parentInfo.id,
       stableId: parentInfo.stableId,
@@ -208,9 +210,12 @@ export async function buildEndpointsForExposedDevice(
       capNames: parentInfo.capNames,
       role: parentInfo.role,
       features: parentInfo.features,
-      slices: await readDiscoverySlices(api, parentInfo, deps.logger),
+      slices,
     })
-    if (plan.kind === 'endpoint') return [plan.endpoint]
+    if (plan.kind === 'endpoint') {
+      logUnmappedInputsOnce(deps.logger, deviceId, slices[CAP_MEDIA_PLAYER_SLICE])
+      return [plan.endpoint]
+    }
     if (plan.kind === 'skip') {
       logSkippedOnce(deps.logger, deviceId, plan.reasons)
       return []
@@ -450,6 +455,30 @@ function logSkippedOnce(logger: IScopedLogger, deviceId: number, reasons: readon
     logger.info('alexa discovery: device not published', {
       tags: { deviceId },
       meta: { reason },
+    })
+  }
+}
+
+const CAP_MEDIA_PLAYER_SLICE = 'media-player'
+
+/**
+ * A declared input Amazon has no fixed name for cannot be offered to Alexa:
+ * said once per device and input, never silently dropped.
+ */
+export function logUnmappedInputsOnce(
+  logger: IScopedLogger,
+  deviceId: number,
+  slice: unknown,
+): void {
+  const status = readMediaPlayerSlice(slice)
+  if (status === null) return
+  for (const name of unmappedInputs(status)) {
+    const key = `${deviceId}|input|${name}`
+    if (loggedSkips.has(key)) continue
+    loggedSkips.add(key)
+    logger.info('alexa discovery: a declared input has no Amazon input name, not offered', {
+      tags: { deviceId },
+      meta: { source: name },
     })
   }
 }
