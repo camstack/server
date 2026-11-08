@@ -157,6 +157,35 @@ describe('TimedRunService', () => {
     ])
   })
 
+  it('a double cancel sends exactly one off', async () => {
+    const h = harness()
+    await h.service.runFor({ deviceId: HEATER, duration: 10, unit: 'min' })
+    await h.service.cancel({ deviceId: HEATER })
+    await h.service.cancel({ deviceId: HEATER })
+    expect(h.commands.filter((c) => !c.on)).toHaveLength(1)
+  })
+
+  it('cancel after the run expired sends no second off', async () => {
+    const h = harness()
+    await h.service.runFor({ deviceId: HEATER, duration: 10, unit: 'min' })
+    h.clock.now = T0 + 10 * 60_000
+    h.live()[0]?.fire()
+    await h.service.settled()
+    await h.service.cancel({ deviceId: HEATER })
+    expect(h.commands.filter((c) => !c.on)).toHaveLength(1)
+  })
+
+  it('a rejected off on cancel is logged with the device tag, not retried, and the row is dropped', async () => {
+    const h = harness({ failOff: true })
+    await h.service.runFor({ deviceId: HEATER, duration: 10, unit: 'min' })
+    await h.service.cancel({ deviceId: HEATER })
+    expect(h.commands.filter((c) => !c.on)).toHaveLength(1)
+    expect(h.store.rows.size).toBe(0)
+    expect(h.live()).toHaveLength(0)
+    const warn = h.lines.find((l) => l.level === 'warn')
+    expect(warn?.extras?.tags).toEqual({ deviceId: HEATER })
+  })
+
   it('cancel with nothing armed sends no off', async () => {
     const h = harness()
     await h.service.cancel({ deviceId: HEATER })

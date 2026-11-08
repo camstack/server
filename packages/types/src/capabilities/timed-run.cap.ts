@@ -8,7 +8,8 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
  * "Heat for 30 minutes", "run the fountain pump for 2 minutes": the device has
  * no timer of its own, so the hub keeps one. `runFor` turns the device on and
  * records a deadline; `cancel` switches the device off and forgets the deadline,
- * and the device being switched off by hand just forgets it; at the deadline the hub issues the off once.
+ * and the device being switched off by hand just forgets it; at the deadline
+ * the hub issues the off once.
  *
  * The deadline is DURABLE: it is a row in the records store, so a hub restart
  * neither loses a pending off nor leaves the device running past its time. At
