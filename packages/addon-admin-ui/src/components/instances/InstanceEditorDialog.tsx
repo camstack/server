@@ -20,7 +20,7 @@ import {
 import { Button, ConfigFormBuilder, ItemFormDialog, useSystem } from '@camstack/ui-library'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link2, Loader2 } from 'lucide-react'
-import { useMemo, useState, type ReactElement, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fillBrokerConnectPath, startServerNavigation } from '../../lib/broker-oauth-popup'
 import type { ConfigUISchema } from '../../types/config-ui'
@@ -86,10 +86,6 @@ export function InstanceEditorDialog({
   const { t } = useTranslation()
   const system = useSystem()
   const queryClient = useQueryClient()
-  const stored = useMemo(
-    () => (instance === null ? NO_VALUES : formStartValues(instance.formValues)),
-    [instance],
-  )
   const instanceId = instance?.id ?? null
 
   const kinds = description.kinds ?? []
@@ -104,6 +100,18 @@ export function InstanceEditorDialog({
     [IDENTITY_RESTORE_ID]: '',
     [IDENTITY_TYPED_ID]: '',
   })
+  // The default name follows the chosen kind while the operator has not typed their own.
+  const autoName = useRef(addedLabel)
+  const chosenKind = identity[IDENTITY_KIND]
+  useEffect(() => {
+    if (instance !== null || typeof chosenKind !== 'string') return
+    const label = createLabel(description, findKind(description, chosenKind), providerName)
+    const previous = autoName.current
+    autoName.current = label
+    setIdentity((prev) =>
+      prev[IDENTITY_NAME] === previous ? { ...prev, [IDENTITY_NAME]: label } : prev,
+    )
+  }, [chosenKind, description, instance, providerName])
   const textOf = (key: string): string => {
     const v = identity[key]
     return typeof v === 'string' ? v.trim() : ''
@@ -125,7 +133,9 @@ export function InstanceEditorDialog({
       : undefined
   const typed = textOf(IDENTITY_TYPED_ID)
   const typedState = idRule === undefined ? 'ok' : checkTypedId(idRule, typed)
-  const [values, setValues] = useState<Record<string, unknown>>({ ...stored })
+  const [values, setValues] = useState<Record<string, unknown>>({
+    ...(instance?.formValues ?? NO_VALUES),
+  })
   const [error, setError] = useState<string | null>(null)
   const identitySchema = useMemo<ConfigUISchema>(
     () => ({
@@ -213,6 +223,16 @@ export function InstanceEditorDialog({
         ...(formKind !== undefined ? { kind: formKind } : {}),
       }),
   })
+  // The record body also holds the on/off switch; the form starts without it unless the form
+  // itself owns a field of that name.
+  const stored = useMemo(
+    () => (instance === null ? NO_VALUES : formStartValues(instance.formValues, schemaQuery.data)),
+    [instance, schemaQuery.data],
+  )
+  const edited = useMemo(
+    () => formStartValues(values, schemaQuery.data),
+    [values, schemaQuery.data],
+  )
   const hydrated = useMemo(
     () => (schemaQuery.data ? hydrateSchema(schemaQuery.data, { ...stored }) : null),
     [schemaQuery.data, stored],
@@ -232,7 +252,7 @@ export function InstanceEditorDialog({
   const save = useMutation({
     mutationFn: async (): Promise<string> => {
       const client = system.trpcClient.integrationInstances
-      const patch = diffInstanceValues(stored, values)
+      const patch = diffInstanceValues(stored, edited)
       if (instance === null) {
         // The old id wins; else the provider mints one when it can; else the UI mints an opaque id.
         const chosen =
@@ -284,7 +304,7 @@ export function InstanceEditorDialog({
       system.trpcClient.integrationInstances.testInstance.mutate({
         addonId,
         id: instanceId,
-        values: diffInstanceValues(stored, values),
+        values: diffInstanceValues(stored, edited),
       }),
     onSuccess: (result) => setVerdict(toTestVerdict(result)),
     // A transport failure of the CALL is not a verdict on the credentials.
@@ -356,7 +376,7 @@ export function InstanceEditorDialog({
             {...(kind.signIn.methods !== undefined ? { methods: kind.signIn.methods } : {})}
             name={name}
             {...(instance !== null ? { brokerId: instance.id } : {})}
-            getSettings={() => effectiveInstanceValues(stored, values)}
+            getSettings={() => effectiveInstanceValues(stored, edited)}
             disabled={name.length === 0}
             onSignedIn={(signedInId) => {
               void queryClient.invalidateQueries({

@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
+  formStartValues,
   effectiveInstanceValues,
   buildRows,
   creatableProviders,
@@ -29,7 +30,12 @@ const SECRET_VIEW = { $secret: 'ref', v: 1, set: true }
 
 const loki: HolderData = {
   addonId: 'loki-logging',
-  description: { role: 'services', instanceMode: 'single', kind: 'destination', canTest: true },
+  description: {
+    role: 'services',
+    instanceMode: 'single',
+    kind: 'destination',
+    canTest: true,
+  },
   instances: [
     {
       id: 'loki-logging',
@@ -42,7 +48,12 @@ const loki: HolderData = {
 }
 const smtp: HolderData = {
   addonId: 'smtp-nodemailer',
-  description: { role: 'services', instanceMode: 'multiple', kind: 'relay', canTest: false },
+  description: {
+    role: 'services',
+    instanceMode: 'multiple',
+    kind: 'relay',
+    canTest: false,
+  },
   instances: [
     {
       id: 'relay-default',
@@ -271,7 +282,12 @@ describe('enabled and providersOf', () => {
 describe('add stays offered (instanceMode)', () => {
   const many = (n: number): HolderData => ({
     addonId: 'm',
-    description: { role: 'services', instanceMode: 'multiple', kind: 'x', canTest: false },
+    description: {
+      role: 'services',
+      instanceMode: 'multiple',
+      kind: 'x',
+      canTest: false,
+    },
     instances: Array.from({ length: n }, (_, i) => ({
       id: `i${i}`,
       name: `N${i}`,
@@ -286,7 +302,12 @@ describe('add stays offered (instanceMode)', () => {
   it('a single provider is creatable only while it has no row', () => {
     const single = (n: number): HolderData => ({
       ...many(n),
-      description: { role: 'services', instanceMode: 'single', kind: 'x', canTest: false },
+      description: {
+        role: 'services',
+        instanceMode: 'single',
+        kind: 'x',
+        canTest: false,
+      },
     })
     expect(creatableProviders([single(0)])).toHaveLength(1)
     expect(creatableProviders([single(1)])).toHaveLength(0)
@@ -421,5 +442,38 @@ describe('effectiveInstanceValues', () => {
         { pollIntervalMs: 15_000 },
       ),
     ).toEqual({ amazonDomain: 'amazon.it', pollIntervalMs: 15_000 })
+  })
+})
+
+describe('formStartValues', () => {
+  const body = { url: 'x', enabled: true }
+
+  it('drops the record switch from the form values', () => {
+    expect(formStartValues(body)).toEqual({ url: 'x' })
+    expect(
+      formStartValues(body, {
+        sections: [
+          {
+            id: 's',
+            title: 'S',
+            fields: [{ type: 'text', key: 'url', label: 'Url' }],
+          },
+        ],
+      }),
+    ).toEqual({ url: 'x' })
+  })
+
+  it('keeps a value the form owns as a field named like the switch', () => {
+    expect(
+      formStartValues(body, {
+        sections: [
+          {
+            id: 's',
+            title: 'S',
+            fields: [{ type: 'boolean', key: 'enabled', label: 'Enabled' }],
+          },
+        ],
+      }),
+    ).toEqual(body)
   })
 })

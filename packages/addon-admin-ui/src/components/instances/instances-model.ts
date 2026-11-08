@@ -12,6 +12,7 @@ import type {
   IntegrationInstanceKind,
   IntegrationInstanceMode,
 } from '@camstack/types'
+import type { ConfigUISchema } from '../../types/config-ui'
 
 /** One provider of the function cap (`log-destination`, `smtp-provider`). */
 export interface FunctionProvider {
@@ -306,13 +307,18 @@ const SWITCH_BODY_KEY = 'enabled'
 
 /**
  * The values a record's form starts from: its `formValues` without the switch, which the record
- * body shares and only the row's On control writes (`setInstanceEnabled`).
+ * body shares and only the row's On control writes (`setInstanceEnabled`). A form that has a
+ * field of its own named like the switch keeps it.
  */
 export function formStartValues(
   formValues: Readonly<Record<string, unknown>>,
+  schema?: ConfigUISchema,
 ): Record<string, unknown> {
-  const { [SWITCH_BODY_KEY]: _switch, ...rest } = formValues
-  return rest
+  const owned = schema?.sections.some((section) =>
+    section.fields.some((field) => field.key === SWITCH_BODY_KEY),
+  )
+  if (owned === true) return { ...formValues }
+  return Object.fromEntries(Object.entries(formValues).filter(([key]) => key !== SWITCH_BODY_KEY))
 }
 
 /**

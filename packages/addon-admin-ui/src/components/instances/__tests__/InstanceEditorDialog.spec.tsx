@@ -67,7 +67,9 @@ const instance = {
 } as const
 
 function renderDialog(formValues: Readonly<Record<string, unknown>> = instance.formValues) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   return render(
     <QueryClientProvider client={client}>
       <InstanceEditorDialog
@@ -83,7 +85,10 @@ function renderDialog(formValues: Readonly<Record<string, unknown>> = instance.f
               id: 'alexa',
               label: 'Alexa',
               functionCap: 'broker',
-              signIn: { basePath: '/addon/import-alexa/login', methods: ['device-code'] },
+              signIn: {
+                basePath: '/addon/import-alexa/login',
+                methods: ['device-code'],
+              },
             },
           ],
         }}
@@ -116,7 +121,9 @@ describe('InstanceEditorDialog — stored values', () => {
     const calls = fetchSpy.mock.calls as unknown as Array<[string, { body: string }]>
     const start = calls.find(([url]) => String(url).includes('/code/start'))
     expect(start).toBeDefined()
-    expect(JSON.parse(start?.[1].body ?? '{}')).toMatchObject({ amazonDomain: 'amazon.it' })
+    expect(JSON.parse(start?.[1].body ?? '{}')).toMatchObject({
+      amazonDomain: 'amazon.it',
+    })
     vi.unstubAllGlobals()
   })
 
@@ -136,7 +143,9 @@ describe('InstanceEditorDialog — stored values', () => {
 
 describe('InstanceEditorDialog — create a record of a provider with several kinds', () => {
   function renderCreate() {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
     return render(
       <QueryClientProvider client={client}>
         <InstanceEditorDialog
@@ -178,5 +187,33 @@ describe('InstanceEditorDialog — create a record of a provider with several ki
         kind: 'recordings',
       }),
     )
+  })
+
+  it('the default name follows the kind while the operator has not typed a name', async () => {
+    renderCreate()
+    await screen.findByText('Add Recordings')
+    const nameInput = async (): Promise<HTMLInputElement | null | undefined> =>
+      (await screen.findByText(/^Name\b/)).parentElement?.querySelector('input')
+    const kindSelect = (await screen.findByText(/^Kind\b/)).parentElement?.querySelector('select')
+    expect(kindSelect).toBeTruthy()
+    fireEvent.change(kindSelect as HTMLSelectElement, {
+      target: { value: 'events' },
+    })
+    await screen.findByText('Add Event media')
+    expect((await nameInput())?.value).toBe('Event media')
+  })
+
+  it('a name the operator typed survives a kind change', async () => {
+    renderCreate()
+    await screen.findByText('Add Recordings')
+    const nameLabel = await screen.findByText(/^Name\b/)
+    const input = nameLabel.parentElement?.querySelector('input') as HTMLInputElement
+    fireEvent.change(input, { target: { value: 'Garage disk' } })
+    const kindSelect = (await screen.findByText(/^Kind\b/)).parentElement?.querySelector('select')
+    fireEvent.change(kindSelect as HTMLSelectElement, {
+      target: { value: 'events' },
+    })
+    await screen.findByText('Add Event media')
+    expect(input.value).toBe('Garage disk')
   })
 })
