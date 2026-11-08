@@ -24,6 +24,9 @@ export const CALLER_STAMPED_CAPABILITIES: readonly string[] = [
   // `declareOwner` / `startMigration` / `finishMigration` are refused unless the stamp IS the
   // migration's owner: an addon drives only its own catalogue.
   'migrations',
+  // `record` is accepted only from the hub kernel (device-manager): the stamp is how it tells a
+  // forked addon (stamped by the transport) from a hub-main caller stating its own id.
+  'device-transitions',
 ]
 
 /** A copy of `input` without the caller stamp. Anything that is not a plain object passes through. */

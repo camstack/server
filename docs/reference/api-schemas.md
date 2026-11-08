@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1032 shared schemas.**
+**1035 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -7249,6 +7249,21 @@ Enum: `"unknown-dataset" \| "unknown-provider" \| "provider-not-configured" \| "
 - `holdoutLastDays`: `number`
 - `holdoutSupport`: `Record<string, number> \| null`
 - `trainSubjects`: `number`
+
+### `TransitionRecordResultSchema`
+
+- `written`: `number`
+- `refused`: `({ id: string; reason: TransitionRefusalReasonSchema })[]`
+
+### `TransitionRefusalReasonSchema`
+
+Enum: `"not-kernel" \| "invalid" \| "unknown-device"`
+
+### `TransitionsStatusSchema`
+
+- `rows`: `number \| null`
+- `lastWriteAt`: `number \| null`
+- `refused`: `Record<string, number>`
 
 ### `TransmitSettingKeySchema`
 

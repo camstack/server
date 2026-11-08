@@ -220,6 +220,7 @@ export {
 } from './interfaces/config-ui-secrets.js'
 export * from './keychain/index.js'
 export * from './records/index.js'
+export * from './audit/device-transition.js'
 export * from './migrations/migration.js'
 export * from './migrations/addon-migration.js'
 export * from './migrations/flatten-nested-records.js'
@@ -1169,6 +1170,7 @@ export type {
   CapVocabularyMap,
   L10n as VocabL10n,
   ActionEffect,
+  CommandEffect,
   IndexedVocabAction,
   LooseCapVocabularyEntry,
   LooseVocabEffect,
@@ -1190,9 +1192,12 @@ export {
   actionEffect,
   actionsForDevice as vocabularyActionsForDevice,
   allVocabActions,
+  auditedFields,
   CAP_VOCABULARY,
   CAP_VOCABULARY_BY_NAME,
+  commandEffect,
   findVocabAction,
+  isCommand,
   renderVocabPhrase,
   triggersForDevice as vocabularyTriggersForDevice,
   VOCAB_TEMPLATES,

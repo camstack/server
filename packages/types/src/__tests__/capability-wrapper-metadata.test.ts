@@ -25,6 +25,7 @@ const WRAPPER_CAPS: Readonly<Record<string, boolean>> = {
   'camera-pipeline-config': true,
   videoclips: true,
   'device-runs': true,
+  'device-transitions': true,
   'timed-run': true,
   // `recording` joined the wrappers on 2026-09-24 (D625) with the same
   // policy and for the same reason as `videoclips`: recorded coverage is a

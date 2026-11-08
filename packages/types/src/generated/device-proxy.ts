@@ -39,6 +39,7 @@ import type { deviceExtensionCapability } from '../capabilities/device-extension
 import type { deviceOpsCapability } from '../capabilities/device-ops.cap.js'
 import type { deviceRunsCapability } from '../capabilities/device-runs.cap.js'
 import type { deviceStatusCapability } from '../capabilities/device-status.cap.js'
+import type { deviceTransitionsCapability } from '../capabilities/device-transitions.cap.js'
 import type { dishwasherCapability } from '../capabilities/dishwasher.cap.js'
 import type { doNotDisturbCapability } from '../capabilities/do-not-disturb.cap.js'
 import type { doorbellCapability } from '../capabilities/doorbell.cap.js'
@@ -269,6 +270,7 @@ export interface DeviceProxy {
   readonly deviceOps?: InferDeviceProxyCap<typeof deviceOpsCapability>
   readonly deviceRuns?: InferDeviceProxyCap<typeof deviceRunsCapability>
   readonly deviceStatus?: InferDeviceProxyCap<typeof deviceStatusCapability>
+  readonly deviceTransitions?: InferDeviceProxyCap<typeof deviceTransitionsCapability>
   readonly dishwasher?: InferDeviceProxyCap<typeof dishwasherCapability>
   readonly doNotDisturb?: InferDeviceProxyCap<typeof doNotDisturbCapability>
   readonly doorbell?: InferDeviceProxyCap<typeof doorbellCapability>
@@ -619,6 +621,14 @@ export function createDeviceProxy(
 
   const deviceStatusInterface = {
     getStatus: (input?: unknown) => dispatch('device-status', 'deviceStatus', 'getStatus', 'query', input),
+  }
+
+  const deviceTransitionsInterface = {
+    listTransitions: (input?: unknown) => dispatch('device-transitions', 'deviceTransitions', 'listTransitions', 'query', input),
+    getTransition: (input?: unknown) => dispatch('device-transitions', 'deviceTransitions', 'getTransition', 'query', input),
+    listRecentTransitions: (input?: unknown) => dispatch('device-transitions', 'deviceTransitions', 'listRecentTransitions', 'query', input),
+    record: (input?: unknown) => dispatch('device-transitions', 'deviceTransitions', 'record', 'mutation', input),
+    getStatus: (input?: unknown) => dispatch('device-transitions', 'deviceTransitions', 'getStatus', 'query', input),
   }
 
   const dishwasherInterface = {
@@ -1497,6 +1507,7 @@ export function createDeviceProxy(
     ...(bound('device-ops') ? { deviceOps: deviceOpsInterface } : {}),
     ...(bound('device-runs') ? { deviceRuns: deviceRunsInterface } : {}),
     ...(bound('device-status') ? { deviceStatus: deviceStatusInterface } : {}),
+    ...(bound('device-transitions') ? { deviceTransitions: deviceTransitionsInterface } : {}),
     ...(bound('dishwasher') ? { dishwasher: dishwasherInterface } : {}),
     ...(bound('do-not-disturb') ? { doNotDisturb: doNotDisturbInterface } : {}),
     ...(bound('doorbell') ? { doorbell: doorbellInterface } : {}),

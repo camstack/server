@@ -25,6 +25,8 @@ export {
   findVocabAction,
   vocabActionIdFor,
 } from './action-index.js'
+export type { CommandEffect } from './command-catalog.js'
+export { auditedFields, commandEffect, isCommand } from './command-catalog.js'
 export { VOCAB_TEMPLATES } from './templates.js'
 export type {
   ActionArgKey,

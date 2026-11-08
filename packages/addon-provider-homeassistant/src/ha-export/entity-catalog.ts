@@ -2366,6 +2366,12 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
       'exports through `running-state` is its live face.',
   },
   {
+    cap: 'device-transitions',
+    reason:
+      'An audit ledger of past changes and who asked for them (paged reads), with no ' +
+      'single live value to publish; the state itself is exported by the cap that owns it.',
+  },
+  {
     cap: 'power-source',
     reason:
       'A manual admin recovery action (cut the power of a device that hangs) on a ' +

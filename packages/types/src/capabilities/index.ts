@@ -441,6 +441,18 @@ export {
   deviceRunsCapability,
 } from './device-runs.cap.js'
 export {
+  DEVICE_TRANSITIONS_MAX_PAGE,
+  DEVICE_TRANSITIONS_RECORD_BATCH_MAX,
+  deviceTransitionsCapability,
+  type IDeviceTransitionsProvider,
+  type TransitionRecordResult,
+  TransitionRecordResultSchema,
+  type TransitionRefusalReason,
+  TransitionRefusalReasonSchema,
+  type TransitionsStatus,
+  TransitionsStatusSchema,
+} from './device-transitions.cap.js'
+export {
   type DoNotDisturbStatus,
   DoNotDisturbStatusSchema,
   doNotDisturbCapability,
@@ -3431,6 +3443,7 @@ import type { recordsCapability } from './records.cap.js'
 import type { recordEntriesCapability } from './record-entries.cap.js'
 import type { deviceHistoryCapability } from './device-history.cap.js'
 import type { deviceRunsCapability } from './device-runs.cap.js'
+import type { deviceTransitionsCapability } from './device-transitions.cap.js'
 import type { timedRunCapability } from './timed-run.cap.js'
 import type { doNotDisturbCapability } from './do-not-disturb.cap.js'
 import type { keychainCapability } from './keychain.cap.js'
@@ -3596,6 +3609,7 @@ type AnyCapability =
   | typeof recordEntriesCapability
   | typeof deviceHistoryCapability
   | typeof deviceRunsCapability
+  | typeof deviceTransitionsCapability
   | typeof timedRunCapability
   | typeof doNotDisturbCapability
   | typeof keychainCapability

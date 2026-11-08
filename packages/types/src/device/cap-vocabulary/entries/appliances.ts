@@ -19,6 +19,7 @@ type ApplianceCap =
   | 'consumables'
   | 'running-state'
   | 'device-runs'
+  | 'device-transitions'
   | 'timed-run'
   | 'do-not-disturb'
   | 'navigation'
@@ -1466,6 +1467,11 @@ export const APPLIANCE_CAP_VOCABULARY: CapVocabularySlice<ApplianceCap> = {
           'the durable record of a run that the running-state finish flip already announces',
       },
     },
+  },
+
+  'device-transitions': {
+    scope: 'device',
+    noun: t('Transitions', 'Transizioni'),
   },
 
   'timed-run': {

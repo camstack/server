@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**201 capabilities · 1465 methods.**
+**202 capabilities · 1470 methods.**
 
 ## Method index
 
@@ -445,6 +445,11 @@
 | `deviceState.listClaims` | query | admin | device-state |
 | `deviceState.getNativeCapSlice` | query | admin | device-state |
 | `deviceStatus.getStatus` | query | protected | device-status (auto) |
+| `deviceTransitions.listTransitions` | query | protected | device-transitions |
+| `deviceTransitions.getTransition` | query | protected | device-transitions |
+| `deviceTransitions.listRecentTransitions` | query | admin | device-transitions |
+| `deviceTransitions.record` | mutation | admin | device-transitions |
+| `deviceTransitions.getStatus` | query | admin | device-transitions |
 | `dishwasher.getStatus` | query | protected | dishwasher (auto) |
 | `dishwasher.start` | mutation | protected | dishwasher |
 | `dishwasher.pause` | mutation | protected | dishwasher |
@@ -2583,6 +2588,21 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `deviceStatus.getStatus` | query | protected | `{ deviceId: number }` | `DeviceStatusSchema` |
+
+### `device-transitions` → `deviceTransitions.*`
+
+- **Source:** `packages/types/src/capabilities/device-transitions.cap.ts:59`
+- **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `camera, light, siren, switch, sensor, thermostat, climate, button, event-emitter, update, generic, notifier, script, automation, lock, cover, valve, humidifier, water-heater, fan, media-player, alarm-panel, control, presence, weather, vacuum, lawn-mower, image, pet-feeder, pet-fountain, dishwasher, washer, heater, dryer, gateway`
+- **Archetypes:** wrapper(defaultActive)
+- **Provider interface:** `IDeviceTransitionsProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| listTransitions | `deviceTransitions.listTransitions` | query | protected | `{ deviceId: number; capName?: string; actorKind?: "user" \| "addon" \| "action" \| "scheduler" \| "composition" \| "node" \| "device"; outcome?: "confirmed" \| "device" \| "already" \| "unconfirmed" \| "failed"; atFrom?: number; atTo?: number; limit?: number = 50; cursor?: string }` | `{ transitions: ({ id: string; deviceId: number; at: number; capName: string; field: string; from: string \| number \| boolean \| null \| Record<string, unknown>; to: string \| number \| boolean \| null \| Record<string, unknown>; outcome: "confirmed" \| "device" \| "already" \| "unconfirmed" \| "failed"; actor: { kind: "user"; userId: string; username: string; credential: "session" \| "token" \| "integration"; credentialId?: string } \| { kind: "addon"; addonId: string; nodeId?: string } \| { kind: "action"; addonId: string; actionId: string; runId: string; automationId?: string } \| { kind: "scheduler"; addonId: string; schedulerId: string } \| { kind: "composition"; owner: string } \| { kind: "node"; nodeId: string } \| { kind: "device" }; command?: { commandId: string; method: string; args: Record<string, unknown>; requestedAt: number; matchedAfterMs: number \| null; error?: string } })[]; nextCursor: string \| null }` |
+| getTransition | `deviceTransitions.getTransition` | query | protected | `{ deviceId: number; id: string }` | `{ id: string; deviceId: number; at: number; capName: string; field: string; from: string \| number \| boolean \| null \| Record<string, unknown>; to: string \| number \| boolean \| null \| Record<string, unknown>; outcome: "confirmed" \| "device" \| "already" \| "unconfirmed" \| "failed"; actor: { kind: "user"; userId: string; username: string; credential: "session" \| "token" \| "integration"; credentialId?: string } \| { kind: "addon"; addonId: string; nodeId?: string } \| { kind: "action"; addonId: string; actionId: string; runId: string; automationId?: string } \| { kind: "scheduler"; addonId: string; schedulerId: string } \| { kind: "composition"; owner: string } \| { kind: "node"; nodeId: string } \| { kind: "device" }; command?: { commandId: string; method: string; args: Record<string, unknown>; requestedAt: number; matchedAfterMs: number \| null; error?: string } } \| null` |
+| listRecentTransitions | `deviceTransitions.listRecentTransitions` | query | admin | `{ deviceIds?: number[]; actorKind?: "user" \| "addon" \| "action" \| "scheduler" \| "composition" \| "node" \| "device"; outcome?: "confirmed" \| "device" \| "already" \| "unconfirmed" \| "failed"; atFrom?: number; atTo?: number; limit?: number = 50; cursor?: string }` | `{ transitions: ({ id: string; deviceId: number; at: number; capName: string; field: string; from: string \| number \| boolean \| null \| Record<string, unknown>; to: string \| number \| boolean \| null \| Record<string, unknown>; outcome: "confirmed" \| "device" \| "already" \| "unconfirmed" \| "failed"; actor: { kind: "user"; userId: string; username: string; credential: "session" \| "token" \| "integration"; credentialId?: string } \| { kind: "addon"; addonId: string; nodeId?: string } \| { kind: "action"; addonId: string; actionId: string; runId: string; automationId?: string } \| { kind: "scheduler"; addonId: string; schedulerId: string } \| { kind: "composition"; owner: string } \| { kind: "node"; nodeId: string } \| { kind: "device" }; command?: { commandId: string; method: string; args: Record<string, unknown>; requestedAt: number; matchedAfterMs: number \| null; error?: string } })[]; nextCursor: string \| null }` |
+| record | `deviceTransitions.record` | mutation | admin | `{ transitions: ({ id: string; deviceId: number; at: number; capName: string; field: string; from: string \| number \| boolean \| null \| Record<string, unknown>; to: string \| number \| boolean \| null \| Record<string, unknown>; outcome: "confirmed" \| "device" \| "already" \| "unconfirmed" \| "failed"; actor: { kind: "user"; userId: string; username: string; credential: "session" \| "token" \| "integration"; credentialId?: string } \| { kind: "addon"; addonId: string; nodeId?: string } \| { kind: "action"; addonId: string; actionId: string; runId: string; automationId?: string } \| { kind: "scheduler"; addonId: string; schedulerId: string } \| { kind: "composition"; owner: string } \| { kind: "node"; nodeId: string } \| { kind: "device" }; command?: { commandId: string; method: string; args: Record<string, unknown>; requestedAt: number; matchedAfterMs: number \| null; error?: string } })[] }` | `TransitionRecordResultSchema` |
+| getStatus | `deviceTransitions.getStatus` | query | admin | `{}` | `TransitionsStatusSchema` |
 
 ### `dishwasher` → `dishwasher.*`
 

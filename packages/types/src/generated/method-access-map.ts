@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1465 method paths across 201 capabilities.
+ * Coverage: 1470 method paths across 202 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -454,6 +454,11 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceState.releaseClaim': { capName: "device-state", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceState.setCapSlice': { capName: "device-state", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceStatus.getStatus': { capName: "device-status", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'deviceTransitions.getStatus': { capName: "device-transitions", capScope: "device", addonId: null, access: "view", role: "admin" } as const,
+  'deviceTransitions.getTransition': { capName: "device-transitions", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'deviceTransitions.listRecentTransitions': { capName: "device-transitions", capScope: "device", addonId: null, access: "view", role: "admin" } as const,
+  'deviceTransitions.listTransitions': { capName: "device-transitions", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'deviceTransitions.record': { capName: "device-transitions", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'dishwasher.getOptions': { capName: "dishwasher", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'dishwasher.getStatus': { capName: "dishwasher", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'dishwasher.pause': { capName: "dishwasher", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
@@ -1555,6 +1560,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "device-runs",
   "device-state",
   "device-status",
+  "device-transitions",
   "dishwasher",
   "display-palette",
   "do-not-disturb",
@@ -1727,6 +1733,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "device-ops",
   "device-runs",
   "device-status",
+  "device-transitions",
   "dishwasher",
   "do-not-disturb",
   "doorbell",
