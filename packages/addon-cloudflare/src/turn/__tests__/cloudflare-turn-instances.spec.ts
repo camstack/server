@@ -114,6 +114,7 @@ describe('CloudflareTurnAddon: the account is an integration instance (D996)', (
       canTest: true,
       mintsId: true,
       role: 'services',
+      kinds: [expect.objectContaining({ id: 'accounts', functionCap: 'turn-provider' })],
     })
     expect((await w.instances.listInstances()).map((i) => i.id)).toEqual(['cloudflare-turn'])
   })

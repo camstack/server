@@ -56,6 +56,15 @@ export function buildHaAccountInstances(
       kind: 'connection',
       canTest: true,
       allowRestoreId: true,
+      kinds: [
+        {
+          id: HA_ACCOUNT_KIND,
+          label: 'Home Assistant connection',
+          functionCap: 'broker',
+          role: 'services',
+          brokerKind: 'home-assistant',
+        },
+      ],
     },
     formSchema: () => haBrokerSettingsSchema,
     initialBody: (name): HaBrokerBody => ({ name, authKind: 'long-lived' }),

@@ -22,6 +22,9 @@ export function buildMatterInstances(
       instanceMode: 'multiple',
       kind: 'connection',
       canTest: false,
+      kinds: [
+        { id: 'integration', label: 'Matter', functionCap: 'device-provider', role: 'devices' },
+      ],
     },
     labels: { brokerId: { label: 'Matter fabric' } },
   })

@@ -458,6 +458,9 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         instanceMode: 'multiple',
         kind: 'bridge',
         canTest: false,
+        kinds: [
+          { id: 'bridge', label: 'HomeKit bridge', functionCap: 'device-export', role: 'services' },
+        ],
       },
       formSchema: (id) => this.bridgeForm(id),
       initialBody: (name) => ({

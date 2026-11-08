@@ -55,6 +55,14 @@ export function buildHaCalendarInstances(
       instanceMode: 'multiple',
       kind: HA_CALENDAR_INSTANCE_KIND,
       canTest: false,
+      kinds: [
+        {
+          id: HA_CALENDAR_INSTANCE_KIND,
+          label: 'Home Assistant calendar',
+          functionCap: 'calendar-source',
+          role: 'services',
+        },
+      ],
     },
     labels: {
       accountId: {

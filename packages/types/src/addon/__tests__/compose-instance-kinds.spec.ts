@@ -39,6 +39,7 @@ function part(
       instanceMode: 'multiple',
       kind: prefix,
       canTest: false,
+      kinds: [{ id: 'k', label: 'K', functionCap: 'device-provider' }],
     },
     formSchema: async () => ({ sections: [] }),
     initialBody: (name) => ({ name }),
@@ -192,6 +193,7 @@ describe('composeInstanceKinds links', () => {
         instanceMode: 'multiple',
         kind: 'calendar',
         canTest: false,
+        kinds: [{ id: 'k', label: 'K', functionCap: 'device-provider' }],
       },
       alsoConfigured: (body) => body.calendarId !== '',
     })

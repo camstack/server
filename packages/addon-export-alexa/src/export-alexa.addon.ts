@@ -273,6 +273,9 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         instanceMode: 'multiple',
         kind: 'skills',
         canTest: false,
+        kinds: [
+          { id: 'skills', label: 'Alexa skill', functionCap: 'device-export', role: 'services' },
+        ],
       },
       formSchema: (id) => this.skillForm(id),
       // A new skill has its own Lambda: it enforces its ingress token from the start (public mode too).

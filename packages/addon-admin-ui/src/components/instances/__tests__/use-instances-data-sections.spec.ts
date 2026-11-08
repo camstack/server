@@ -36,12 +36,4 @@ describe('sectionHolder — a page section is a filter on kinds[].functionCap', 
   it('a holder with nothing in the section is dropped', () => {
     expect(sectionHolder(holder, 'smtp-provider')).toBeNull()
   })
-  it('a holder that declares no kinds stays in every section it serves', () => {
-    const plain: HolderData = {
-      addonId: 'plain',
-      description: { ...description, kinds: undefined },
-      instances: [inst('p', 'x')],
-    }
-    expect(sectionHolder(plain, 'anything')).toBe(plain)
-  })
 })

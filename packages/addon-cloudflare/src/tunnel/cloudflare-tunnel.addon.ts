@@ -183,6 +183,14 @@ export class CloudflareTunnelAddon extends BaseAddon<CloudflareTunnelAddonConfig
         instanceMode: 'single',
         kind: 'tunnels',
         canTest: false,
+        kinds: [
+          {
+            id: 'tunnels',
+            label: 'Cloudflare Tunnel',
+            functionCap: 'network-access',
+            role: 'services',
+          },
+        ],
       },
       formSchema: () => this.tunnelForm(),
       initialBody: (name) => ({ ...CLOUDFLARE_TUNNEL_DEFAULT_BODY, name }),

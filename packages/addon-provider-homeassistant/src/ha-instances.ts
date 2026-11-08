@@ -22,6 +22,14 @@ export function buildHaInstances(
       instanceMode: 'multiple',
       kind: 'connection',
       canTest: false,
+      kinds: [
+        {
+          id: 'integration',
+          label: 'Home Assistant',
+          functionCap: 'device-provider',
+          role: 'devices',
+        },
+      ],
     },
     labels: { brokerId: { label: 'Home Assistant connection' } },
   })

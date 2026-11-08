@@ -6,6 +6,8 @@
  * Integrations) is the kinds of that provider whose `functionCap` it names. So, for every addon
  * entry that declares `integration-instances`:
  *
+ * 0. Every holder declares `kinds` (even one kind): `describe().kinds` is required (D1013 rule 1) and
+ *    the type says so; this is the textual twin that names the addon.
  * 1. S = the configurable functions its package declares (`broker`, `device-provider` (also
  *    `device-adoption`, the same section), `smtp-provider`, `device-export`, `calendar-source`,
  *    `notification-output`). With |S| >= 2 its source must declare `kinds`
@@ -41,7 +43,9 @@ export const SECTION_CAPS: ReadonlySet<string> = new Set([
 ])
 
 const FUNCTION_CAP_RE = /\bfunctionCap:\s*['"]([^'"]+)['"]/g
-const KINDS_DECL_RE = /\bkinds:\s*\[|\bcomposeInstanceKinds\s*\(/
+/** `buildNotificationTargetInstances` and `notificationTargetParts` declare the kinds themselves. */
+const KINDS_DECL_RE =
+  /\bkinds:\s*\[|\bcomposeInstanceKinds\s*\(|\bbuildNotificationTargetInstances\s*\(|\bnotificationTargetParts\s*\(/
 const KINDS_ARRAY_RE = /\bkinds:\s*\[/g
 const BOTH_RE = /\b(?:role|integrationRole):\s*['"]both['"]/
 
@@ -107,14 +111,14 @@ export function findKindsViolations(
   for (const entry of holdersByPackage(entries)) {
     const source = sourceOf(entry.pkg)
     const sections = entry.sections
-    if (sections.size >= 2) {
-      if (!KINDS_DECL_RE.test(source)) {
-        out.push({
-          addon: entry.addon,
-          message: `serves ${[...sections].join(', ')} and declares no instance kinds: its integration-instances provider needs kinds[] with a functionCap each (D1013)`,
-        })
-      } else {
-        const literals = [...source.matchAll(FUNCTION_CAP_RE)].map((m) => m[1] ?? '')
+    if (!KINDS_DECL_RE.test(source)) {
+      out.push({
+        addon: entry.addon,
+        message: `declares no instance kinds: describe() needs kinds[] with a functionCap each, even for one kind (D1013 rule 1)`,
+      })
+    } else {
+      const literals = [...source.matchAll(FUNCTION_CAP_RE)].map((m) => m[1] ?? '')
+      if (sections.size >= 2) {
         if (literals.length === 0) {
           out.push({
             addon: entry.addon,

@@ -62,37 +62,63 @@ async function setup(withMint: boolean) {
 }
 
 describe('integration-instances additive fields (P2)', () => {
-  it('the schemas accept the new optional fields and the old shapes', () => {
+  it('the schemas accept the optional fields and REFUSE a description without kinds or an instance without a kind (D1013)', () => {
+    const noKinds = { role: 'services', instanceMode: 'multiple', kind: 'x', canTest: true }
+    expect(IntegrationInstanceDescriptionSchema.safeParse(noKinds).success).toBe(false)
+    expect(IntegrationInstanceDescriptionSchema.safeParse({ ...noKinds, kinds: [] }).success).toBe(
+      false,
+    )
     expect(
       IntegrationInstanceDescriptionSchema.safeParse({
-        role: 'services',
-        instanceMode: 'multiple',
-        kind: 'x',
-        canTest: true,
-      }).success,
-    ).toBe(true)
-    expect(
-      IntegrationInstanceDescriptionSchema.safeParse({
-        role: 'services',
-        instanceMode: 'multiple',
-        kind: 'x',
-        canTest: true,
+        ...noKinds,
         allowRestoreId: true,
         kinds: [{ id: 'a', label: 'A', functionCap: 'broker' }],
       }).success,
     ).toBe(true)
-    const parsed = IntegrationInstanceSchema.parse({
+    const instance = {
       id: 'i',
       name: 'n',
       configured: true,
       enabled: true,
       formValues: {},
-      kind: 'a',
       status: { state: 'ok', label: 'Signed in' },
       lastCheckedAt: 5,
-    })
+    }
+    expect(IntegrationInstanceSchema.safeParse(instance).success).toBe(false)
+    const parsed = IntegrationInstanceSchema.parse({ ...instance, kind: 'a' })
     expect(parsed.status?.label).toBe('Signed in')
     expect(parsed.lastCheckedAt).toBe(5)
+  })
+
+  it('stamps the one declared kind on a provider that has no kindOf, and refuses several without it', async () => {
+    const world = makeInMemoryRecords('spec-addon')
+    await world.records.declare({ 'spec-kinds': kind })
+    const hooks = {
+      formSchema: () => ({ sections: [] }),
+      initialBody: (name: string): Body => ({ name, adapter: 'a' }),
+      configured: () => true,
+    }
+    const base = { role: 'services', instanceMode: 'multiple', kind: 'x', canTest: false } as const
+    const one = new RecordIntegrationInstances<Body>(world.records, kind, {
+      ...hooks,
+      description: { ...base, kinds: [{ id: 'only', label: 'Only', functionCap: 'broker' }] },
+    })
+    await one.createInstance({ id: 'i1', name: 'One' })
+    expect((await one.getInstance({ id: 'i1' }))?.kind).toBe('only')
+    expect((await one.listInstances()).map((i) => i.kind)).toEqual(['only'])
+    expect(
+      () =>
+        new RecordIntegrationInstances<Body>(world.records, kind, {
+          ...hooks,
+          description: {
+            ...base,
+            kinds: [
+              { id: 'a', label: 'A', functionCap: 'broker' },
+              { id: 'b', label: 'B', functionCap: 'broker' },
+            ],
+          },
+        }),
+    ).toThrow(/kindOf is required/)
   })
 
   it('mints the id in the provider when the caller sends none, and keeps the kind', async () => {

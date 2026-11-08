@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The ESPHome board creation form keeps the encryption key and password as secrets.
+- Its integration-instances provider declares its instance kind and stamps it on every instance.
 
 ## [0.1.16] - 2026-11-06
 

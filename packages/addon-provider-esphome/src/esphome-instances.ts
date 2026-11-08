@@ -44,6 +44,9 @@ export function buildEspInstances(
       instanceMode: 'multiple',
       kind: 'connection',
       canTest: false,
+      kinds: [
+        { id: 'connection', label: 'ESPHome', functionCap: 'device-provider', role: 'devices' },
+      ],
     },
     formSchema: () => buildIntegrationFormSchema(),
     initialBody: (name): EspConnectionsBody => ({ name }),

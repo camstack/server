@@ -94,6 +94,9 @@ export function buildHomematicInstances(
         instanceMode: 'multiple',
         kind: 'connection',
         canTest: true,
+        kinds: [
+          { id: 'connection', label: 'Homematic', functionCap: 'device-provider', role: 'devices' },
+        ],
       },
       formSchema: () => buildConnectionFormSchema(),
       initialBody: (name): HomematicConnectionBody => ({ name }),

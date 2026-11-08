@@ -85,6 +85,9 @@ export function buildEcowittInstances(
         instanceMode: 'multiple',
         kind: 'connection',
         canTest: false,
+        kinds: [
+          { id: 'connection', label: 'Ecowitt', functionCap: 'device-provider', role: 'devices' },
+        ],
       },
       formSchema: () => buildConnectionFormSchema(),
       initialBody: (name): EcowittConnectionBody => ({ name }),

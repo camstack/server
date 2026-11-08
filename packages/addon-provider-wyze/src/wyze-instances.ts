@@ -57,6 +57,7 @@ export function buildWyzeInstances(
       instanceMode: 'multiple',
       kind: 'account',
       canTest: true,
+      kinds: [{ id: 'connection', label: 'Wyze', functionCap: 'device-provider', role: 'devices' }],
     },
     formSchema: () => buildSettingsSchema(),
     initialBody: (name): WyzeConnectionBody => ({ name }),

@@ -133,7 +133,20 @@ export function buildShcInstances(
     records,
     shcConnectionsEntryKind,
     {
-      description: { role: 'devices', instanceMode: 'multiple', kind: 'controller', canTest: true },
+      description: {
+        role: 'devices',
+        instanceMode: 'multiple',
+        kind: 'controller',
+        canTest: true,
+        kinds: [
+          {
+            id: 'connection',
+            label: 'Bosch Smart Home',
+            functionCap: 'device-provider',
+            role: 'devices',
+          },
+        ],
+      },
       formSchema: () => buildConnectionFormSchema(),
       initialBody: (name): ShcConnectionBody => ({ name }),
       configured: (body) => connectionFromSettings(body) !== null,

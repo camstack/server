@@ -179,7 +179,20 @@ export function buildHomeComInstances(
     records,
     homeComConnectionsEntryKind,
     {
-      description: { role: 'devices', instanceMode: 'multiple', kind: 'account', canTest: true },
+      description: {
+        role: 'devices',
+        instanceMode: 'multiple',
+        kind: 'account',
+        canTest: true,
+        kinds: [
+          {
+            id: 'connection',
+            label: 'Bosch HomeCom',
+            functionCap: 'device-provider',
+            role: 'devices',
+          },
+        ],
+      },
       formSchema: () => buildHomeComFormSchema(),
       initialBody: (name): HomeComConnectionBody => ({ name }),
       configured: (body) => connectionFromSettings(body) !== null,

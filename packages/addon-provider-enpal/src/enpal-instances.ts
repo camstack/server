@@ -49,6 +49,9 @@ export function buildEnpalInstances(
       instanceMode: 'multiple',
       kind: 'server',
       canTest: false,
+      kinds: [
+        { id: 'connection', label: 'Enpal', functionCap: 'device-provider', role: 'devices' },
+      ],
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): EnpalConnectionBody => ({ name }),

@@ -115,7 +115,15 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
     }
     await records.declare({ relays: smtpRelaysKind, mailboxes: mailboxesKind })
     this.instances = new RecordIntegrationInstances(records, smtpRelaysKind, {
-      description: { role: 'services', instanceMode: 'multiple', kind: 'relays', canTest: true },
+      description: {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'relays',
+        canTest: true,
+        kinds: [
+          { id: 'relays', label: 'SMTP relay', functionCap: 'smtp-provider', role: 'services' },
+        ],
+      },
       formSchema: () => this.relayForm(),
       initialBody: (name) => ({ ...RELAY_DEFAULT_BODY, name }),
       configured: (body) => body.host.length > 0,

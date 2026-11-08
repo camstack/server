@@ -74,6 +74,7 @@ export function buildGoogleInstances(
       kind: 'account',
       canTest: true,
       allowRestoreId: true,
+      kinds: [googleAccountKind(deps)],
     },
     // The calendars an account imports are `calendars` records of their own (D1013).
     formSchema: () => buildGoogleBrokerSettingsSchema(deps.publicOrigin()),

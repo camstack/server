@@ -130,10 +130,11 @@ export const IntegrationInstanceDescriptionSchema = z.object({
   /** True when `testInstance` really probes the remote. */
   canTest: z.boolean(),
   /**
-   * The kinds an instance can be of. Absent or one entry: nothing to choose; more than one: the
-   * Add flow asks which first and sends it as `createInstance.kind`.
+   * The kinds an instance can be of (D1013 rule 1), each naming its `functionCap`. One entry:
+   * nothing to choose; more than one: the Add flow asks which first and sends it as
+   * `createInstance.kind`. Never empty: every instance belongs to exactly one kind.
    */
-  kinds: z.array(IntegrationInstanceKindSchema).optional(),
+  kinds: z.array(IntegrationInstanceKindSchema).min(1),
   /**
    * The provider accepts `createInstance.id` for an id that once existed (an adopted id, because
    * devices carry it). The UI then offers "restore under its old id" on Add. Absent means no.
@@ -167,8 +168,8 @@ export const IntegrationInstanceSchema = z.object({
    * the body is the one store, `setInstanceEnabled` the one writer (epic #440, step 3).
    */
   enabled: z.boolean().optional(),
-  /** The kind of this instance (one of `describe().kinds[].id`), when the provider has kinds. */
-  kind: z.string().optional(),
+  /** The kind of this instance: exactly one of `describe().kinds[].id` (D1013 rule 2). */
+  kind: z.string().min(1),
   /** Values for the instance form; a secret is a `SecretFieldView`, never text. */
   formValues: z.record(z.string(), z.unknown()),
   status: IntegrationInstanceStatusSchema.optional(),

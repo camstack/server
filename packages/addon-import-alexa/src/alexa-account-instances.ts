@@ -13,6 +13,7 @@ import {
 } from '@camstack/types'
 import { alexaBrokersEntryKind, type AlexaBrokerBody } from './broker-record-kinds.js'
 import { buildConnectionFormSchema } from './config.js'
+import { ALEXA_BROKER_KIND } from './speak/constants.js'
 import type { AlexaBrokerInfo } from './alexa-integration-manager.js'
 
 export const ALEXA_ACCOUNT_KIND = 'account'
@@ -52,6 +53,15 @@ export function buildAlexaAccountInstances(
       kind: 'account',
       canTest: true,
       allowRestoreId: true,
+      kinds: [
+        {
+          id: ALEXA_ACCOUNT_KIND,
+          label: 'Alexa account',
+          functionCap: 'broker',
+          role: 'services',
+          brokerKind: ALEXA_BROKER_KIND,
+        },
+      ],
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): AlexaBrokerBody => ({

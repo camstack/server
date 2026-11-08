@@ -120,6 +120,9 @@ export function buildReolinkInstances(
         instanceMode: 'multiple',
         kind: 'connection',
         canTest: false,
+        kinds: [
+          { id: 'connection', label: 'Reolink', functionCap: 'device-provider', role: 'devices' },
+        ],
       },
       formSchema: () => buildHubInstanceSchema(),
       initialBody: (name): ReolinkConnectionBody => ({ name }),

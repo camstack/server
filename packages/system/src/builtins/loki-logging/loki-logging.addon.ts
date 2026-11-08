@@ -128,6 +128,9 @@ export class LokiLoggingAddon extends BaseAddon<LokiAddonConfig> {
           instanceMode: 'multiple',
           kind: 'destination',
           canTest: true,
+          kinds: [
+            { id: 'destination', label: 'Loki', functionCap: 'log-destination', role: 'services' },
+          ],
         },
         formSchema: () => this.connectionForm(),
         initialBody: (name) => ({ ...LOKI_DEFAULT_BODY, name }),

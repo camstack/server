@@ -21,7 +21,13 @@ async function setup() {
   const world = makeInMemoryRecords('spec-addon')
   await world.records.declare({ 'spec-validated': kind })
   const instances = new RecordIntegrationInstances<Body>(world.records, kind, {
-    description: { role: 'services', instanceMode: 'multiple', kind: 'target', canTest: false },
+    description: {
+      role: 'services',
+      instanceMode: 'multiple',
+      kind: 'target',
+      canTest: false,
+      kinds: [{ id: 'k', label: 'K', functionCap: 'device-provider' }],
+    },
     formSchema: () => ({ sections: [] }),
     initialBody: (name) => ({ name }),
     configured: () => true,

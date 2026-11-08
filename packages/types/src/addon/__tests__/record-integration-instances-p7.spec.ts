@@ -35,6 +35,7 @@ async function setupAccounts(role: 'devices' | 'services') {
       instanceMode: 'multiple',
       kind: 'account',
       canTest: false,
+      kinds: [{ id: 'k', label: 'K', functionCap: 'device-provider' }],
     },
     formSchema: () => EMPTY_FORM,
     initialBody: (name) => ({ name }),
@@ -48,7 +49,12 @@ async function setupAccounts(role: 'devices' | 'services') {
 
 describe('describe(): role and discovery', () => {
   it('requires a role and accepts a discovery that names its scope', () => {
-    const base = { instanceMode: 'multiple', kind: 'account', canTest: true }
+    const base = {
+      instanceMode: 'multiple',
+      kind: 'account',
+      canTest: true,
+      kinds: [{ id: 'account', label: 'Account', functionCap: 'broker' }],
+    }
     expect(IntegrationInstanceDescriptionSchema.safeParse(base).success).toBe(false)
     expect(
       IntegrationInstanceDescriptionSchema.safeParse({

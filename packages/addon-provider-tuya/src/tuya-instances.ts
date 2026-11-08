@@ -50,6 +50,7 @@ export function buildTuyaInstances(
       instanceMode: 'multiple',
       kind: 'account',
       canTest: true,
+      kinds: [{ id: 'connection', label: 'Tuya', functionCap: 'device-provider', role: 'devices' }],
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): TuyaConnectionBody => ({ name }),

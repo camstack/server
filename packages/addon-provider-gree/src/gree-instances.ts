@@ -85,6 +85,7 @@ export function buildGreeInstances(
       instanceMode: 'multiple',
       kind: 'connection',
       canTest: false,
+      kinds: [{ id: 'connection', label: 'Gree', functionCap: 'device-provider', role: 'devices' }],
     },
     formSchema: () => buildGreeInstanceFormSchema(),
     initialBody: (name): GreeConnectionBody => ({ name }),

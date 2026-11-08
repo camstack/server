@@ -25,7 +25,13 @@ async function world() {
   await memory.records.declare({ connections: kind })
   const instances = buildLinkedInstances(memory.records, {
     kind,
-    description: { role: 'services', instanceMode: 'multiple', kind: 'thing', canTest: false },
+    description: {
+      role: 'services',
+      instanceMode: 'multiple',
+      kind: 'thing',
+      canTest: false,
+      kinds: [{ id: 'k', label: 'K', functionCap: 'device-provider' }],
+    },
     dynamicSections: async (id) => [
       { id: 'dyn', title: 'Dyn', fields: [{ type: 'info', key: id, label: id, content: id }] },
     ],

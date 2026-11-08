@@ -44,6 +44,15 @@ export function buildMatterAccountInstances(
       kind: 'connection',
       canTest: true,
       allowRestoreId: true,
+      kinds: [
+        {
+          id: MATTER_ACCOUNT_KIND,
+          label: 'Matter fabric',
+          functionCap: 'broker',
+          role: 'services',
+          brokerKind: 'matter',
+        },
+      ],
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): MatterBrokerBody => ({

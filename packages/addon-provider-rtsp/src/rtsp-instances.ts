@@ -32,6 +32,7 @@ export function buildRtspInstances(
       instanceMode: 'single',
       kind: 'connection',
       canTest: false,
+      kinds: [{ id: 'connection', label: 'RTSP', functionCap: 'device-provider', role: 'devices' }],
     },
     formSchema: () => ({ sections: [] }),
     initialBody: (name): RtspConnectionBody => ({ name }),

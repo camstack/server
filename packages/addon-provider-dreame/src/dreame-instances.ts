@@ -165,6 +165,9 @@ export function buildDreameInstances(
       instanceMode: 'multiple',
       kind: 'account',
       canTest: true,
+      kinds: [
+        { id: 'connection', label: 'Dreame', functionCap: 'device-provider', role: 'devices' },
+      ],
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): DreameConnectionBody => ({ name }),

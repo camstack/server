@@ -46,10 +46,16 @@ describe('brokerInstancesOf', () => {
     }
     expect(brokerInstancesOf(plain, 'mqtt').map((b) => b.id)).toEqual(['m'])
   })
-  it('a holder that declares no kinds holds no broker', () => {
+  it('a holder whose kinds serve another function holds no broker', () => {
     const bare: BrokerHolderData = {
       ...holder,
-      description: { role: 'services', instanceMode: 'multiple', kind: 'brokers', canTest: true },
+      description: {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'brokers',
+        canTest: true,
+        kinds: [{ id: 'relay', label: 'Relay', functionCap: 'smtp-provider' }],
+      },
     }
     expect(brokerInstancesOf(bare)).toEqual([])
   })

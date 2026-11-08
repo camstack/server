@@ -35,6 +35,7 @@ const loki: HolderData = {
     instanceMode: 'single',
     kind: 'destination',
     canTest: true,
+    kinds: [{ id: 'k', label: 'K', functionCap: 'device-provider' }],
   },
   instances: [
     {
@@ -43,6 +44,7 @@ const loki: HolderData = {
       configured: true,
       enabled: true,
       formValues: {},
+      kind: 'k',
     },
   ],
 }
@@ -53,6 +55,7 @@ const smtp: HolderData = {
     instanceMode: 'multiple',
     kind: 'relay',
     canTest: false,
+    kinds: [{ id: 'k', label: 'K', functionCap: 'device-provider' }],
   },
   instances: [
     {
@@ -61,6 +64,7 @@ const smtp: HolderData = {
       configured: true,
       enabled: true,
       formValues: {},
+      kind: 'k',
     },
     {
       id: 'inst-aaaaaaaa',
@@ -68,6 +72,7 @@ const smtp: HolderData = {
       configured: false,
       enabled: true,
       formValues: {},
+      kind: 'k',
       status: { state: 'error', detail: 'refused' },
     },
   ],
@@ -241,12 +246,14 @@ describe('enabled and providersOf', () => {
         configured: true,
         enabled: true,
         formValues: {},
+        kind: 'k',
       },
       {
         id: 'b',
         name: 'Switched off',
         configured: true,
         formValues: {},
+        kind: 'k',
         enabled: false,
       },
     ],
@@ -287,6 +294,7 @@ describe('add stays offered (instanceMode)', () => {
       instanceMode: 'multiple',
       kind: 'x',
       canTest: false,
+      kinds: [{ id: 'k', label: 'K', functionCap: 'device-provider' }],
     },
     instances: Array.from({ length: n }, (_, i) => ({
       id: `i${i}`,
@@ -294,6 +302,7 @@ describe('add stays offered (instanceMode)', () => {
       configured: true,
       enabled: true,
       formValues: {},
+      kind: 'k',
     })),
   })
   it('a multiple provider is creatable with 0, 1 and 5 rows', () => {
@@ -307,6 +316,7 @@ describe('add stays offered (instanceMode)', () => {
         instanceMode: 'single',
         kind: 'x',
         canTest: false,
+        kinds: [{ id: 'k', label: 'K', functionCap: 'device-provider' }],
       },
     })
     expect(creatableProviders([single(0)])).toHaveLength(1)

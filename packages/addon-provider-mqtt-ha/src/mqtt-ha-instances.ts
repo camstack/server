@@ -233,6 +233,14 @@ export function buildMqttHaInstances(
       instanceMode: 'multiple',
       kind: 'connection',
       canTest: false,
+      kinds: [
+        {
+          id: 'connection',
+          label: 'MQTT Discovery',
+          functionCap: 'device-provider',
+          role: 'devices',
+        },
+      ],
     },
     formSchema: () => buildMqttHaConnectionForm(),
     initialBody: (name): MqttHaConnectionBody => ({ name, mqttBrokerId: '' }),

@@ -45,6 +45,7 @@ export function buildDreoInstances(
       instanceMode: 'multiple',
       kind: 'account',
       canTest: true,
+      kinds: [{ id: 'connection', label: 'Dreo', functionCap: 'device-provider', role: 'devices' }],
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): DreoConnectionBody => ({ name }),

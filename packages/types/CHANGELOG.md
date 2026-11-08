@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Media players now start the running-state power threshold with a 10 s start dwell, a 10 s stop dwell and one sample instead of 30 s / 3 min / 2 samples; other device types are unchanged
+- integration-instances: describe().kinds and every instance's kind are required; a record provider with one kind stamps it.
 
 ## [1.2.524] - 2026-11-08
 

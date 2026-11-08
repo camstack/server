@@ -222,7 +222,20 @@ export function buildHomeConnectInstances(
     records,
     homeConnectConnectionsEntryKind,
     {
-      description: { role: 'devices', instanceMode: 'multiple', kind: 'account', canTest: true },
+      description: {
+        role: 'devices',
+        instanceMode: 'multiple',
+        kind: 'account',
+        canTest: true,
+        kinds: [
+          {
+            id: 'connection',
+            label: 'Bosch Home Connect',
+            functionCap: 'device-provider',
+            role: 'devices',
+          },
+        ],
+      },
       formSchema: () => buildHomeConnectFormSchema(),
       initialBody: (name): HomeConnectConnectionBody => ({ name }),
       configured: (body) => connectionFromSettings(body) !== null,

@@ -168,6 +168,9 @@ export function buildPetkitInstances(
       instanceMode: 'multiple',
       kind: 'account',
       canTest: true,
+      kinds: [
+        { id: 'connection', label: 'PetKit', functionCap: 'device-provider', role: 'devices' },
+      ],
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): PetkitConnectionBody => ({ name }),

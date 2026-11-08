@@ -83,6 +83,14 @@ export class CloudflareTurnAddon extends BaseAddon<CloudflareTurnAddonConfig> {
         instanceMode: 'multiple',
         kind: 'accounts',
         canTest: true,
+        kinds: [
+          {
+            id: 'accounts',
+            label: 'Cloudflare TURN account',
+            functionCap: 'turn-provider',
+            role: 'services',
+          },
+        ],
       },
       formSchema: () => this.accountForm(),
       initialBody: (name) => ({ ...CLOUDFLARE_TURN_DEFAULT_BODY, name }),

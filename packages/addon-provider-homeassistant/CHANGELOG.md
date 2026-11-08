@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Its integration-instances provider declares its instance kind and stamps it on every instance.
+
 ## [1.2.672] - 2026-11-08
 
 ### Changed

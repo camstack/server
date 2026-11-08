@@ -35,6 +35,9 @@ export function buildAmcrestInstances(
         instanceMode: 'single',
         kind: 'connection',
         canTest: false,
+        kinds: [
+          { id: 'connection', label: 'Amcrest', functionCap: 'device-provider', role: 'devices' },
+        ],
       },
       formSchema: () => ({ sections: [] }),
       initialBody: (name): AmcrestConnectionBody => ({ name }),

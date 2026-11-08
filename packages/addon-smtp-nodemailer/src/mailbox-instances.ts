@@ -13,6 +13,7 @@ import {
   type IIntegrationInstancesProvider,
   RecordIntegrationInstances,
   type RecordsAccess,
+  SMTP_INBOUND_KIND,
   SmtpInboundSettingsSchema,
 } from '@camstack/types'
 import { probeBind } from './bind-probe.js'
@@ -58,7 +59,21 @@ export function buildMailboxInstances(
 ): IIntegrationInstancesProvider {
   const users: InstanceUserFinder = deps.inbound.subscriberUsers()
   const instances = new RecordIntegrationInstances<MailboxBody>(records, mailboxesKind, {
-    description: { role: 'services', instanceMode: 'multiple', kind: 'mailbox', canTest: true },
+    description: {
+      role: 'services',
+      instanceMode: 'multiple',
+      kind: 'mailbox',
+      canTest: true,
+      kinds: [
+        {
+          id: MAILBOX_INSTANCE_KIND,
+          label: 'Inbound mailbox (SMTP)',
+          functionCap: 'broker',
+          role: 'services',
+          brokerKind: SMTP_INBOUND_KIND,
+        },
+      ],
+    },
     formSchema: () => mailboxSettingsSchema(),
     initialBody: (name) => newMailboxBody(name),
     mintId: () => `smtp-inbound-${randomUUID().slice(0, 8)}`,

@@ -55,10 +55,16 @@ describe('instancesOfHolder', () => {
     expect(row?.enabled).toBe(false)
     expect(row?.formValues).toEqual({ host: 'smtp.example.com' })
   })
-  it('a holder without kinds holds none', () => {
+  it('a holder whose kinds serve another function holds none', () => {
     const bare: InstanceHolderData = {
       ...holder,
-      description: { role: 'services', instanceMode: 'multiple', kind: 'x', canTest: false },
+      description: {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'x',
+        canTest: false,
+        kinds: [{ id: 'relay', label: 'Relay', functionCap: 'smtp-provider' }],
+      },
     }
     expect(instancesOfHolder(bare, 'broker')).toEqual([])
   })

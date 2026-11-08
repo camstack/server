@@ -45,6 +45,9 @@ export function buildUnraidInstances(
       instanceMode: 'multiple',
       kind: 'server',
       canTest: false,
+      kinds: [
+        { id: 'connection', label: 'Unraid', functionCap: 'device-provider', role: 'devices' },
+      ],
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): UnraidConnectionBody => ({ name }),

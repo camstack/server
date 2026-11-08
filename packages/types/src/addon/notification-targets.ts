@@ -17,7 +17,10 @@
  *  - {@link moveTargetRows}: the D987 procedure that flattens the old `config` blobs into the bodies.
  */
 import { z } from 'zod'
-import type { IIntegrationInstancesProvider } from '../capabilities/integration-instances.cap.js'
+import type {
+  IIntegrationInstancesProvider,
+  IntegrationInstanceKind,
+} from '../capabilities/integration-instances.cap.js'
 import type { IntegrationTestConnectionResult } from '../capabilities/integrations.cap.js'
 import {
   type ProbeTargetConfigResult,
@@ -395,12 +398,20 @@ export function notificationTargetParts(
     const defined = spec.kinds[notificationTargetKindName(descriptor.kind)]
     if (defined === undefined) return []
     const canTest = spec.probe !== undefined && spec.canProbe(descriptor.kind)
+    const kind: IntegrationInstanceKind = {
+      id: descriptor.kind,
+      label: descriptor.label,
+      functionCap: NOTIFICATION_OUTPUT_CAP,
+      role: 'services',
+      canTest,
+    }
     const instances = new RecordIntegrationInstances<InstanceBody>(records, defined, {
       description: {
         role: 'services',
         instanceMode: 'multiple',
         kind: 'target',
         canTest,
+        kinds: [kind],
       },
       formSchema: () => formOf(descriptor),
       initialBody: (name): InstanceBody => ({ name }),
@@ -424,18 +435,7 @@ export function notificationTargetParts(
         )
       },
     })
-    return [
-      {
-        kind: {
-          id: descriptor.kind,
-          label: descriptor.label,
-          functionCap: NOTIFICATION_OUTPUT_CAP,
-          role: 'services' as const,
-          canTest,
-        },
-        provider: instances.toProvider(),
-      },
-    ]
+    return [{ kind, provider: instances.toProvider() }]
   })
 }
 

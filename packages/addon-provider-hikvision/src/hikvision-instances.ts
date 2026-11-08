@@ -35,6 +35,9 @@ export function buildHikvisionInstances(
         instanceMode: 'single',
         kind: 'connection',
         canTest: false,
+        kinds: [
+          { id: 'connection', label: 'Hikvision', functionCap: 'device-provider', role: 'devices' },
+        ],
       },
       formSchema: () => ({ sections: [] }),
       initialBody: (name): HikvisionConnectionBody => ({ name }),

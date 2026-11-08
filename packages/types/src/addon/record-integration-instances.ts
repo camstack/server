@@ -62,8 +62,11 @@ export interface RecordIntegrationInstancesHooks<TBody extends InstanceBody> {
    * refused: the helper never invents an id a provider did not choose.
    */
   mintId?(input: { readonly name: string; readonly kind?: string }): string
-  /** The kind a stored instance is of; surfaces as `IntegrationInstance.kind`. */
-  kindOf?(body: TBody): string | undefined
+  /**
+   * The kind a stored instance is of; surfaces as `IntegrationInstance.kind`. Required when
+   * `description.kinds` has more than one entry; with exactly one, that kind is stamped.
+   */
+  kindOf?(body: TBody): string
   /** The instance's own health word and the time it was last probed, from the record. */
   health?(
     body: TBody,
@@ -168,6 +171,12 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     this.secretKeys = topLevelSecretKeys(kind.declaration.secretPaths)
     this.secretMaps = secretMapKeys(kind.declaration.secretPaths)
     this.nameField = kind.declaration.entry?.nameField ?? 'name'
+    // D1013: every instance names its kind.
+    if (hooks.kindOf === undefined && hooks.description.kinds.length !== 1) {
+      throw new Error(
+        `record kind '${kind.name}': describe().kinds has ${hooks.description.kinds.length} entries, so kindOf is required to say which one an instance is`,
+      )
+    }
   }
 
   /**
@@ -220,6 +229,14 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
     return out
   }
 
+  /** The kind an instance body is of: the provider's `kindOf`, else its one declared kind. */
+  private kindOfBody(body: TBody): string {
+    if (this.hooks.kindOf !== undefined) return this.hooks.kindOf(body)
+    const only = this.hooks.description.kinds[0]
+    if (only === undefined) throw new Error(`record kind '${this.kind.name}' declares no kinds`)
+    return only.id
+  }
+
   private viewOf(record: RecordRow<TBody>): IntegrationInstance {
     const shown = secretViewsOf(
       this.records.owner,
@@ -229,7 +246,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       record.data,
     )
     const rawName = record.data[this.nameField]
-    const kind = this.hooks.kindOf?.(record.data)
+    const kind = this.kindOfBody(record.data)
     const health = this.hooks.health?.(record.data, record.id)
     return {
       id: record.id,
@@ -237,7 +254,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       configured: this.hooks.configured(record.data),
       enabled: isInstanceEnabled(record.data),
       formValues: shown,
-      ...(kind !== undefined ? { kind } : {}),
+      kind,
       ...(health?.status !== undefined ? { status: health.status } : {}),
       ...(health?.lastCheckedAt !== undefined ? { lastCheckedAt: health.lastCheckedAt } : {}),
     }

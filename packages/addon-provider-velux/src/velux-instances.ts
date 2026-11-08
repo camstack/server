@@ -47,6 +47,9 @@ export function buildVeluxInstances(
       instanceMode: 'multiple',
       kind: 'server',
       canTest: true,
+      kinds: [
+        { id: 'connection', label: 'Velux', functionCap: 'device-provider', role: 'devices' },
+      ],
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): VeluxConnectionBody => ({ name }),

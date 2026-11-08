@@ -157,7 +157,15 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
     this.registry = registry
 
     this.instances = new RecordIntegrationInstances(records, googleHomesKind, {
-      description: { role: 'services', instanceMode: 'multiple', kind: 'homes', canTest: false },
+      description: {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'homes',
+        canTest: false,
+        kinds: [
+          { id: 'homes', label: 'Google Home', functionCap: 'device-export', role: 'services' },
+        ],
+      },
       formSchema: (id) => this.homeForm(id),
       initialBody: (name): GoogleHomeBody => ({ name }),
       mintId: () => `google-home-${randomUUID().slice(0, 8)}`,

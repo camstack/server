@@ -21,6 +21,23 @@ describe('check-instances-kinds-declared', () => {
     expect(found[0]?.message).toContain('declares no instance kinds')
   })
 
+  it('refuses a single-function addon (or one with no section cap) that declares no kinds', () => {
+    for (const caps of [['integration-instances', 'device-provider'], ['integration-instances']]) {
+      const found = findKindsViolations([entry('solo', caps)], () => 'const x = 1')
+      expect(found.map((v) => v.message).join('\n')).toContain('declares no instance kinds')
+    }
+  })
+
+  it('passes a single-kind addon that declares its one kind', () => {
+    const source = `kinds: [{ id: 'connection', label: 'C', functionCap: 'device-provider' }]`
+    expect(
+      findKindsViolations(
+        [entry('solo', ['integration-instances', 'device-provider'])],
+        () => source,
+      ),
+    ).toEqual([])
+  })
+
   it('refuses a functionCap the addon does not declare', () => {
     const source = `kinds: [{ id: 'a', label: 'A', functionCap: 'smtp-provider' }]`
     const found = findKindsViolations([entry('dual', DUAL)], () => source)

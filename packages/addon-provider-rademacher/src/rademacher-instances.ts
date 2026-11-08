@@ -173,6 +173,14 @@ export function buildRademacherInstances(
         instanceMode: 'multiple',
         kind: 'connection',
         canTest: true,
+        kinds: [
+          {
+            id: 'connection',
+            label: 'Rademacher',
+            functionCap: 'device-provider',
+            role: 'devices',
+          },
+        ],
       },
       formSchema: () => buildConnectionFormSchema(),
       initialBody: (name): RademacherConnectionBody => ({ name }),

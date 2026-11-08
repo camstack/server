@@ -56,6 +56,14 @@ export function buildGoogleCalendarInstances(
       instanceMode: 'multiple',
       kind: GOOGLE_CALENDAR_INSTANCE_KIND,
       canTest: false,
+      kinds: [
+        {
+          id: GOOGLE_CALENDAR_INSTANCE_KIND,
+          label: 'Google calendar',
+          functionCap: 'calendar-source',
+          role: 'services',
+        },
+      ],
     },
     labels: {
       accountId: {

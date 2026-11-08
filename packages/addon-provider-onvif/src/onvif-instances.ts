@@ -32,6 +32,9 @@ export function buildOnvifInstances(
       instanceMode: 'single',
       kind: 'connection',
       canTest: false,
+      kinds: [
+        { id: 'connection', label: 'ONVIF', functionCap: 'device-provider', role: 'devices' },
+      ],
     },
     formSchema: () => ({ sections: [] }),
     initialBody: (name): OnvifConnectionBody => ({ name }),

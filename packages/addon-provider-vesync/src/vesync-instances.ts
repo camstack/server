@@ -43,6 +43,9 @@ export function buildVeSyncInstances(
       instanceMode: 'multiple',
       kind: 'account',
       canTest: false,
+      kinds: [
+        { id: 'connection', label: 'VeSync', functionCap: 'device-provider', role: 'devices' },
+      ],
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): VeSyncConnectionBody => ({ name }),

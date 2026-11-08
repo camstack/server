@@ -20,6 +20,9 @@ export function buildAlexaInstances(
       instanceMode: 'multiple',
       kind: 'connection',
       canTest: false,
+      kinds: [
+        { id: 'integration', label: 'Alexa', functionCap: 'device-provider', role: 'devices' },
+      ],
     },
     labels: { brokerId: { label: 'Alexa account' } },
   })
