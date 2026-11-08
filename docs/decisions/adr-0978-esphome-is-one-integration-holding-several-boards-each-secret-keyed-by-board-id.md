@@ -2,6 +2,7 @@
 id: D978
 title: ESPHome is one integration holding several boards, each board secret keyed by its row id
 status: accepted
+superseded-in-part-by: D1011
 date: 2026-10-30
 supersedes: D952 (one broker per board)
 applies-to:

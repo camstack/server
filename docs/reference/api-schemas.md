@@ -2732,7 +2732,7 @@ Enum: `"not-electron" \| "no-app-state" \| "app-state-stale" \| "not-downloaded"
 - `instanceMode`: `IntegrationInstanceModeSchema`
 - `kind`: `string`
 - `canTest`: `boolean`
-- `kinds?`: `IntegrationInstanceKindSchema[]`
+- `kinds`: `IntegrationInstanceKindSchema[]`
 - `allowRestoreId?`: `boolean`
 - `mintsId?`: `boolean`
 - `links?`: `IntegrationInstanceLinkSchema[]`
@@ -2781,7 +2781,7 @@ Enum: `"devices" \| "services"`
 - `name`: `string`
 - `configured`: `boolean`
 - `enabled?`: `boolean`
-- `kind?`: `string`
+- `kind`: `string`
 - `formValues`: `Record<string, unknown>`
 - `status?`: `IntegrationInstanceStatusSchema`
 - `lastCheckedAt?`: `number`

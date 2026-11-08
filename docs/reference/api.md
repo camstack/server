@@ -2908,7 +2908,7 @@
 
 ### `integration-instances` → `integrationInstances.*`
 
-- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:188`
+- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:189`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationInstancesProvider`

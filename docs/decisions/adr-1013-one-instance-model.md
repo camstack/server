@@ -36,7 +36,9 @@ declares, served ONLY through `integration-instances`.
    carries add / remove / list / get / settings / `listProviders` for a configured thing.
 2. Resolution is by (addon, section). A section is a function cap; a caller keeps the kinds whose
    `functionCap` is that section. An instance belongs to exactly one kind. The instance id is
-   opaque, immutable and NOT the registry id.
+   opaque and immutable. A NEW instance gets an opaque id; an id that already exists is KEPT as it
+   is (an adopted device provider keeps its registry id, a provider that mints its own id from the
+   addon id keeps that), because devices and links carry it. Nothing renames a live id.
 3. One switch: `setInstanceEnabled`. The registry `enabled` is a projection of it; there is no
    body field, target flag or calendar flag.
 4. One test: `testInstance`, with `canTest` per kind.
@@ -84,5 +86,9 @@ then `check-one-row-switch`, `check-one-test-method`, `check-no-settings-fallbac
 `check-collection-crud-is-instances`, `check-one-instances-list` and
 `check-no-addon-level-settings`. Already in force: `check-collection-cap-pin` and
 `check-integration-instances-declared`.
+
+**Kinds are required (H1).** `describe().kinds` is never empty and every instance carries its `kind`
+(one of `kinds[].id`); a provider with one kind has the kind stamped for it. The type says so, and
+`scripts/check-instances-kinds-declared.ts` refuses a provider that declares none.
 
 **Migration notes (review 3).** A legacy embedded broker that was STOPPED but had been configured is migrated as a switched-off onboard record (`enabled: false`, same id, port and password through the keychain), then its flat keys are dropped; nothing is lost silently. The Home Assistant `broker-links-to-connections` step is `tolerate`: a link that does not read back stays on the broker, uncleared, and the engine logs the failure, so one unreadable link never blocks every HA integration.
