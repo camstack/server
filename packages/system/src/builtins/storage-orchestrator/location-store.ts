@@ -63,13 +63,6 @@ export interface ILocationStore {
 }
 
 /**
- * The keychain scope collection a storage location's secret fields are filed
- * under (`row/storage_locations/<id>`). The table it was named for is gone; the
- * string stays because existing secret markers point at it.
- */
-export const STORAGE_LOCATIONS_SECRET_SCOPE = 'storage_locations'
-
-/**
  * Credentials a save carries, by config key, until the store writes the row: a value sets the
  * credential, `null` removes it. The service persists without waiting (`upsert` is fire and
  * forget), so the plaintext cannot ride on the location itself; it is staged here, one shot per

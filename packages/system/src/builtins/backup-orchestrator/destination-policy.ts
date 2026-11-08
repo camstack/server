@@ -19,7 +19,7 @@ import { backupOrchestratorRecordKinds, type BackupDestinationPolicyBody } from 
 
 /**
  * Per-`backups`-location policy. `locationId` is the foreign-key into
- * the storage orchestrator's `storage_locations` table.
+ * the storage orchestrator's location record (its `locations` kind).
  *
  * `enabled` gates whether scheduled / unspecified-target backups fan out
  * to this destination; operators can disable a destination temporarily
