@@ -20,12 +20,21 @@ export const HERO_LAYOUT_DEFAULT: HeroLayout = { rows: ['contact', 'motion-trigg
 
 const HEATER_LAYOUT: HeroLayout = { rows: ['run-for', 'cycle'] }
 const MEDIA_PLAYER_LAYOUT: HeroLayout = {
-  rows: ['now-playing', 'playback', 'volume', 'source'],
+  rows: ['now-playing', 'playback', 'volume', 'source', 'do-not-disturb'],
 }
 const APPLIANCE_LAYOUT: HeroLayout = { rows: ['cycle'] }
 /** Its Home Connect PowerState is a secondary row action, never the own-power slot. */
 const DISHWASHER_LAYOUT: HeroLayout = { rows: ['cycle', 'program', 'appliance-power'] }
 const SWITCH_LAYOUT: HeroLayout = { rows: ['motion-trigger'] }
+const LOCK_LAYOUT: HeroLayout = { rows: ['lock'] }
+const ALARM_LAYOUT: HeroLayout = { rows: ['alarm'] }
+const FAN_LAYOUT: HeroLayout = { rows: ['fan'] }
+const VACUUM_LAYOUT: HeroLayout = { rows: ['vacuum'] }
+const MOWER_LAYOUT: HeroLayout = { rows: ['mower'] }
+const FEEDER_LAYOUT: HeroLayout = { rows: ['feeder'] }
+const FOUNTAIN_LAYOUT: HeroLayout = { rows: ['fountain', 'pump-cycle'] }
+const AUTOMATION_LAYOUT: HeroLayout = { rows: ['automation'] }
+const SCRIPT_LAYOUT: HeroLayout = { rows: ['script'] }
 
 export const HERO_LAYOUT_BY_TYPE = {
   [DeviceType.Camera]: HERO_LAYOUT_DEFAULT,
@@ -41,25 +50,25 @@ export const HERO_LAYOUT_BY_TYPE = {
   [DeviceType.Update]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Generic]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Notifier]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Script]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Automation]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Lock]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.Script]: SCRIPT_LAYOUT,
+  [DeviceType.Automation]: AUTOMATION_LAYOUT,
+  [DeviceType.Lock]: LOCK_LAYOUT,
   [DeviceType.Cover]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Valve]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Humidifier]: HERO_LAYOUT_DEFAULT,
   [DeviceType.WaterHeater]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Fan]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.Fan]: FAN_LAYOUT,
   [DeviceType.MediaPlayer]: MEDIA_PLAYER_LAYOUT,
-  [DeviceType.AlarmPanel]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.AlarmPanel]: ALARM_LAYOUT,
   [DeviceType.Control]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Presence]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Weather]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Vacuum]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.LawnMower]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.Vacuum]: VACUUM_LAYOUT,
+  [DeviceType.LawnMower]: MOWER_LAYOUT,
   [DeviceType.Container]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Image]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.PetFeeder]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.PetFountain]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.PetFeeder]: FEEDER_LAYOUT,
+  [DeviceType.PetFountain]: FOUNTAIN_LAYOUT,
   [DeviceType.Dishwasher]: DISHWASHER_LAYOUT,
   [DeviceType.Washer]: APPLIANCE_LAYOUT,
   [DeviceType.Heater]: HEATER_LAYOUT,

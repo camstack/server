@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Remote: Flipper .ir parsing and NEC, NECext and Samsung32 encoding for importing codes
+- Device heroes now complete for locks, alarm panels, fans, vacuums, mowers, pet feeders and fountains, groups, automations and scripts: look, status line and controls
 
 ## [1.2.528] - 2026-11-08
 

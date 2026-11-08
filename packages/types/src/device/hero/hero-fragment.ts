@@ -16,15 +16,37 @@ import type {
 } from './hero-model.js'
 import type { HeroSceneMode } from './hero-scene.js'
 import type { HeroState } from './hero-state.js'
+import type { HeroText } from './hero-text.js'
 
 /** Which cap a state reading comes from; `STATE_SOURCE_ORDER` ranks them. */
-export type StateSource = 'media-player' | 'dishwasher' | 'running-state' | 'switch' | 'contact'
+export type StateSource =
+  | 'media-player'
+  | 'dishwasher'
+  | 'lock-control'
+  | 'alarm-panel'
+  | 'vacuum-control'
+  | 'lawn-mower-control'
+  | 'fan-control'
+  | 'pet-feeder'
+  | 'pet-fountain'
+  | 'automation-control'
+  | 'script-runner'
+  | 'event-emitter'
+  | 'running-state'
+  | 'switch'
+  | 'contact'
+  | 'group-active'
 
 export interface StateReading {
   readonly source: StateSource
   readonly state: HeroState
   /** The state is the driver's own bookkeeping, not a reading. */
   readonly assumed: boolean
+  /**
+   * The words for the state when the generic ones ("On", "Off") would mislead:
+   * a lock is "Locked", an alarm "Armed away". Absent = the state's own words.
+   */
+  readonly title?: HeroText
 }
 
 export interface HeroContext {
@@ -36,6 +58,8 @@ export interface HeroContext {
   readonly running: boolean | null | undefined
   /** Saved remote commands; `null` = not known. */
   readonly remoteCommands: number | null
+  /** The caps the device is bound to: a contribution that overlaps another cap's fact yields to it. */
+  readonly caps: readonly string[]
 }
 
 export interface HeroFragment {

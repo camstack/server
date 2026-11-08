@@ -9,7 +9,6 @@
  * device cap, whether it contributes and why it does not; the guard
  * `scripts/check-cap-hero-contributions.ts` keeps it complete.
  */
-import type { z } from 'zod'
 import { BatteryStatusSchema } from '../../capabilities/battery.cap.js'
 import { ConsumablesStatusSchema } from '../../capabilities/consumables.cap.js'
 import { ContactStatusSchema } from '../../capabilities/contact.cap.js'
@@ -28,12 +27,18 @@ import {
 } from '../../capabilities/timed-run.cap.js'
 import { DeviceFeature, DeviceType } from '../device-type.js'
 import type { VocabIcon } from './cap-vocabulary-icon.js'
-import type { HeroContext, HeroFragment, StateReading } from './hero-fragment.js'
+import {
+  action,
+  asAction,
+  contribution,
+  fact,
+  reading,
+  type HeroContribution,
+} from './hero-contribution-kit.js'
+import type { HeroContext, StateReading } from './hero-fragment.js'
 import type {
-  HeroAction,
   HeroArgs,
   HeroBadge,
-  HeroConfirm,
   HeroControl,
   HeroDetail,
   HeroFact,
@@ -41,58 +46,10 @@ import type {
 } from './hero-model.js'
 import type { HeroState } from './hero-state.js'
 import { heroText, type HeroText } from './hero-text.js'
+import { ACCESS_FAMILY_CONTRIBUTIONS } from './hero-contributions-access.js'
+import { DEVICES_FAMILY_CONTRIBUTIONS } from './hero-contributions-devices.js'
+import { GROUPS_FAMILY_CONTRIBUTIONS } from './hero-contributions-groups.js'
 import { deriveMediaPlayerView, type MediaPlayerView } from './media-player-view.js'
-
-export interface HeroContribution {
-  readonly cap: string
-  readonly contribute: (slice: unknown, ctx: HeroContext) => HeroFragment
-}
-
-/** Parses the raw slice with the cap's own schema; `undefined` when it does not parse. */
-function contribution<S>(
-  cap: string,
-  schema: z.ZodType<S>,
-  build: (slice: S | undefined, ctx: HeroContext) => HeroFragment,
-): HeroContribution {
-  return {
-    cap,
-    contribute: (raw, ctx) => {
-      const parsed = schema.safeParse(raw)
-      return build(parsed.success ? parsed.data : undefined, ctx)
-    },
-  }
-}
-
-function action(
-  id: string,
-  label: HeroText,
-  icon: VocabIcon,
-  cap: string,
-  method: string,
-  args: HeroArgs = {},
-  emphasis: 'primary' | 'normal' = 'normal',
-  confirm: HeroConfirm | null = null,
-): HeroAction {
-  return { id, label, icon, call: { cap, method, args }, emphasis, confirm }
-}
-
-const asAction = (a: HeroAction): HeroControl => ({
-  kind: 'action',
-  action: a,
-})
-
-function reading(source: StateReading['source'], state: HeroState, assumed = false): StateReading {
-  return { source, state, assumed }
-}
-
-function fact(
-  id: HeroFact['id'],
-  icon: HeroFact['icon'],
-  text: HeroText,
-  tone: HeroFact['tone'] = 'muted',
-): HeroFact {
-  return { id, icon, text, tone }
-}
 
 function minutesLeft(seconds: number): HeroText {
   const m = Math.ceil(seconds / 60)
@@ -813,6 +770,8 @@ const mediaPlayerContribution = contribution(
   },
 )
 
+export type { HeroContribution } from './hero-contribution-kit.js'
+
 /** Every contributing cap, in the order their fragments are merged. */
 export const HERO_CAP_CONTRIBUTIONS: readonly HeroContribution[] = [
   mediaPlayerContribution,
@@ -828,4 +787,7 @@ export const HERO_CAP_CONTRIBUTIONS: readonly HeroContribution[] = [
   remoteContribution,
   consumablesContribution,
   dishwasherContribution,
+  ...ACCESS_FAMILY_CONTRIBUTIONS,
+  ...DEVICES_FAMILY_CONTRIBUTIONS,
+  ...GROUPS_FAMILY_CONTRIBUTIONS,
 ]

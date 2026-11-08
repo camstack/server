@@ -153,6 +153,108 @@ const SMOKE_LOOK = lookOf({
   alert: look('flame', 'danger', 'alert-wash', 'pulse'),
 })
 
+/** A lock is secure when locked, and says so when it is not. */
+const LOCK_LOOK: HeroLook = {
+  ...lookOf({
+    icon: 'lock',
+    on: ['success', 'plain', 'none'],
+    off: MUTED,
+    running: ['primary', 'plain', 'pulse'],
+    idle: INFO,
+    standby: WARN,
+  }),
+  standby: look('lock-open', 'warning', 'plain', 'none'),
+  off: look('lock-open', 'muted', 'plain', 'none'),
+}
+
+/** The shield glows while armed, blinks red in alarm and goes quiet when disarmed. */
+const ALARM_LOOK: HeroLook = {
+  ...lookOf({
+    icon: 'shield-check',
+    on: ['success', 'glow', 'halo'],
+    off: MUTED,
+    running: ['primary', 'plain', 'pulse'],
+    idle: INFO,
+    standby: WARN,
+  }),
+  off: look('shield-off', 'muted', 'plain', 'none'),
+  standby: look('shield', 'warning', 'plain', 'pulse'),
+  alert: look('shield-alert', 'danger', 'alert-wash', 'blink'),
+}
+
+/** Blades turn only while air moves. */
+const FAN_LOOK = lookOf({
+  icon: 'fan',
+  on: ['success', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'mist', 'spin'],
+  idle: INFO,
+  standby: WARN,
+})
+
+const VACUUM_LOOK = lookOf({
+  icon: 'bot',
+  on: ['success', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'plain', 'pulse'],
+  idle: INFO,
+  standby: WARN,
+})
+
+const MOWER_LOOK = lookOf({
+  icon: 'sprout',
+  on: ['success', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'plain', 'pulse'],
+  idle: INFO,
+  standby: WARN,
+})
+
+const FEEDER_LOOK = lookOf({
+  icon: 'bone',
+  on: ['success', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'plain', 'pulse'],
+  idle: INFO,
+  standby: WARN,
+})
+
+const FOUNTAIN_LOOK = lookOf({
+  icon: 'droplets',
+  on: ['success', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'water', 'wave'],
+  idle: INFO,
+  standby: WARN,
+})
+
+const AUTOMATION_LOOK = lookOf({
+  icon: 'workflow',
+  on: ['success', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'plain', 'pulse'],
+  idle: INFO,
+  standby: WARN,
+})
+
+const SCRIPT_LOOK = lookOf({
+  icon: 'scroll-text',
+  on: ['success', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'plain', 'pulse'],
+  idle: INFO,
+  standby: WARN,
+})
+
+const EVENT_EMITTER_LOOK = lookOf({
+  icon: 'radio-tower',
+  on: ['success', 'plain', 'none'],
+  off: MUTED,
+  running: ['primary', 'plain', 'pulse'],
+  idle: INFO,
+  standby: WARN,
+})
+
 export const HERO_LOOK_BY_TYPE = {
   [DeviceType.Camera]: HERO_LOOK_DEFAULT,
   [DeviceType.Hub]: HERO_LOOK_DEFAULT,
@@ -163,29 +265,29 @@ export const HERO_LOOK_BY_TYPE = {
   [DeviceType.Thermostat]: HERO_LOOK_DEFAULT,
   [DeviceType.Climate]: HERO_LOOK_DEFAULT,
   [DeviceType.Button]: HERO_LOOK_DEFAULT,
-  [DeviceType.EventEmitter]: HERO_LOOK_DEFAULT,
+  [DeviceType.EventEmitter]: EVENT_EMITTER_LOOK,
   [DeviceType.Update]: HERO_LOOK_DEFAULT,
   [DeviceType.Generic]: HERO_LOOK_DEFAULT,
   [DeviceType.Notifier]: HERO_LOOK_DEFAULT,
-  [DeviceType.Script]: HERO_LOOK_DEFAULT,
-  [DeviceType.Automation]: HERO_LOOK_DEFAULT,
-  [DeviceType.Lock]: HERO_LOOK_DEFAULT,
+  [DeviceType.Script]: SCRIPT_LOOK,
+  [DeviceType.Automation]: AUTOMATION_LOOK,
+  [DeviceType.Lock]: LOCK_LOOK,
   [DeviceType.Cover]: HERO_LOOK_DEFAULT,
   [DeviceType.Valve]: HERO_LOOK_DEFAULT,
   [DeviceType.Humidifier]: HERO_LOOK_DEFAULT,
   [DeviceType.WaterHeater]: HERO_LOOK_DEFAULT,
-  [DeviceType.Fan]: HERO_LOOK_DEFAULT,
+  [DeviceType.Fan]: FAN_LOOK,
   [DeviceType.MediaPlayer]: MEDIA_PLAYER_LOOK,
-  [DeviceType.AlarmPanel]: HERO_LOOK_DEFAULT,
+  [DeviceType.AlarmPanel]: ALARM_LOOK,
   [DeviceType.Control]: HERO_LOOK_DEFAULT,
   [DeviceType.Presence]: HERO_LOOK_DEFAULT,
   [DeviceType.Weather]: HERO_LOOK_DEFAULT,
-  [DeviceType.Vacuum]: HERO_LOOK_DEFAULT,
-  [DeviceType.LawnMower]: HERO_LOOK_DEFAULT,
+  [DeviceType.Vacuum]: VACUUM_LOOK,
+  [DeviceType.LawnMower]: MOWER_LOOK,
   [DeviceType.Container]: HERO_LOOK_DEFAULT,
   [DeviceType.Image]: HERO_LOOK_DEFAULT,
-  [DeviceType.PetFeeder]: HERO_LOOK_DEFAULT,
-  [DeviceType.PetFountain]: HERO_LOOK_DEFAULT,
+  [DeviceType.PetFeeder]: FEEDER_LOOK,
+  [DeviceType.PetFountain]: FOUNTAIN_LOOK,
   [DeviceType.Dishwasher]: DISHWASHER_LOOK,
   [DeviceType.Washer]: WASHER_LOOK,
   [DeviceType.Heater]: HEATER_LOOK,

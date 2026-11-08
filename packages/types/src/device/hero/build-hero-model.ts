@@ -54,9 +54,20 @@ export interface HeroModelInput {
 const STATE_SOURCE_ORDER: readonly StateSource[] = [
   'media-player',
   'dishwasher',
+  'lock-control',
+  'alarm-panel',
+  'vacuum-control',
+  'lawn-mower-control',
+  'fan-control',
+  'pet-feeder',
+  'pet-fountain',
+  'automation-control',
+  'script-runner',
+  'event-emitter',
   'running-state',
   'switch',
   'contact',
+  'group-active',
 ]
 
 const STATE_TEXT: Readonly<Record<HeroState, HeroText>> = {
@@ -87,16 +98,20 @@ function runningOf(input: HeroModelInput): boolean | null | undefined {
 function stateOf(
   input: HeroModelInput,
   readings: readonly StateReading[],
-): { readonly state: HeroState; readonly assumed: boolean } {
-  if (!input.device.online) return { state: 'offline', assumed: false }
+): { readonly state: HeroState; readonly assumed: boolean; readonly title: HeroText } {
+  if (!input.device.online) return { state: 'offline', assumed: false, title: STATE_TEXT.offline }
   const picked = pickReading(readings)
-  if (picked === null) return { state: 'unknown', assumed: false }
+  if (picked === null) return { state: 'unknown', assumed: false, title: STATE_TEXT.unknown }
   // A heater that is switched off draws nothing: a quiet meter is "off", not "idle".
   const switchOff = readings.some((r) => r.source === 'switch' && r.state === 'off')
   if (picked.source === 'running-state' && picked.state === 'idle' && switchOff) {
-    return { state: 'off', assumed: false }
+    return { state: 'off', assumed: false, title: STATE_TEXT.off }
   }
-  return { state: picked.state, assumed: picked.assumed }
+  return {
+    state: picked.state,
+    assumed: picked.assumed,
+    title: picked.title ?? STATE_TEXT[picked.state],
+  }
 }
 
 function provenanceOf(cap: string, fragment: HeroFragment): readonly HeroProvenance[] {
@@ -147,6 +162,7 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
     now: input.now,
     running: runningOf(input),
     remoteCommands: input.remoteCommands,
+    caps: input.caps,
   }
   const contributed = HERO_CAP_CONTRIBUTIONS.filter((c) => input.caps.includes(c.cap)).map((c) => ({
     cap: c.cap,
@@ -155,7 +171,7 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
   const fragments = contributed.map((c) => c.fragment)
 
   const readings = fragments.flatMap((f) => (f.reading === undefined ? [] : [f.reading]))
-  const { state, assumed } = stateOf(input, readings)
+  const { state, assumed, title } = stateOf(input, readings)
   const look = resolveHeroLook(device.role, device.type, state)
 
   const artworkUrl = fragments.find((f) => f.artworkUrl !== undefined)?.artworkUrl
@@ -209,7 +225,7 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
     scene: sceneOf(device.role, device.type, fragments),
     facts,
     sideTiles,
-    title: STATE_TEXT[state],
+    title,
     badges,
     remote,
     consumables: fragments.find((f) => f.consumables !== undefined)?.consumables ?? null,

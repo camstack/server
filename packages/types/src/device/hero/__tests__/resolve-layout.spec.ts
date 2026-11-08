@@ -30,6 +30,7 @@ describe('fixed hero layouts', () => {
       'playback',
       'volume',
       'source',
+      'do-not-disturb',
     ])
     expect(resolveHeroLayout('future-type')).toBe(HERO_LAYOUT_DEFAULT)
   })

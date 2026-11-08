@@ -43,6 +43,17 @@ export const HERO_ROW_IDS = [
   'source',
   'contact',
   'motion-trigger',
+  'lock',
+  'alarm',
+  'fan',
+  'vacuum',
+  'mower',
+  'feeder',
+  'fountain',
+  'pump-cycle',
+  'automation',
+  'script',
+  'do-not-disturb',
 ] as const
 export const HeroRowIdSchema = z.enum(HERO_ROW_IDS)
 export type HeroRowId = z.infer<typeof HeroRowIdSchema>
@@ -59,7 +70,7 @@ export const HeroCallSchema = z.object({
 })
 export type HeroCall = z.infer<typeof HeroCallSchema>
 
-export const HeroConfirmSchema = z.enum(['off-while-running'])
+export const HeroConfirmSchema = z.enum(['off-while-running', 'unlock'])
 export type HeroConfirm = z.infer<typeof HeroConfirmSchema>
 
 export const HeroActionSchema = z.object({
@@ -225,6 +236,14 @@ export const HERO_FACT_IDS = [
   'volume',
   'source',
   'consumables',
+  'since',
+  'speed',
+  'progress',
+  'level',
+  'last-run',
+  'event',
+  'members',
+  'failures',
 ] as const
 export const HeroFactSchema = z.object({
   id: z.enum(HERO_FACT_IDS),

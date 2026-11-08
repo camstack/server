@@ -2572,7 +2572,7 @@ Enum: `"replace" \| "add"`
 ### `HeroLayoutRowsSchema`
 
 - `type`: `string`
-- `rows`: `("run-for" \| "cycle" \| "program" \| "appliance-power" \| "now-playing" \| "playback" \| "volume" \| "source" \| "contact" \| "motion-trigger")[]`
+- `rows`: `("run-for" \| "cycle" \| "program" \| "appliance-power" \| "now-playing" \| "playback" \| "volume" \| "source" \| "contact" \| "motion-trigger" \| "lock" \| "alarm" \| "fan" \| "vacuum" \| "mower" \| "feeder" \| "fountain" \| "pump-cycle" \| "automation" \| "script" \| "do-not-disturb")[]`
 
 ### `HfModelResolutionSchema`
 
