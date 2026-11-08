@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { REMOTE_SOURCE_KINDS } from '../remote/remote-sources.js'
 import { readingMeta } from '../units/quantity.js'
 
 /**
@@ -84,6 +85,22 @@ export const MediaPlayerStatusSchema = z.object({
   /** Selectable sources. Empty when no source surface.
    *  Pair with `DeviceFeature.MediaPlayerSelectSource`. */
   availableSources: z.array(z.string()),
+  /**
+   * What each declared source IS, when the sources are the operator's own (a
+   * remote, planning#460): an exporter offers a channel by number only for a
+   * `digits` source and an input only for a `sequence` one. Absent when the
+   * player's sources are its own.
+   */
+  declaredSources: z
+    .array(
+      z.object({
+        name: z.string(),
+        kind: z.enum(REMOTE_SOURCE_KINDS),
+        /** The channel number of a `digits` source. */
+        number: z.string().optional(),
+      }),
+    )
+    .optional(),
   /** Currently-playing media info. Null when nothing is playing. */
   currentMedia: MediaInfoSchema.nullable(),
   /** Current playback position in ms. Null when not seekable or

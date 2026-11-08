@@ -3208,7 +3208,7 @@
 
 ### `media-player` → `mediaPlayer.*`
 
-- **Source:** `packages/types/src/capabilities/media-player.cap.ts:121`
+- **Source:** `packages/types/src/capabilities/media-player.cap.ts:138`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `media-player`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IMediaPlayerProvider`
@@ -4268,19 +4268,19 @@
 
 ### `remote` → `remote.*`
 
-- **Source:** `packages/types/src/capabilities/remote.cap.ts:124`
+- **Source:** `packages/types/src/capabilities/remote.cap.ts:142`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IRemoteProvider`
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
-| getConfig | `remote.getConfig` | query | admin | `{ deviceId: number }` | `{ layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> } }>; customButtons: ({ key: string; name: string })[]; power: { mode: "toggle" \| "discrete" } }` |
-| setConfig | `remote.setConfig` | mutation | admin | `{ deviceId: number; config: { layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> } }>; customButtons: ({ key: string; name: string })[]; power: { mode: "toggle" \| "discrete" } } }` | `RemoteSetConfigResultSchema` |
+| getConfig | `remote.getConfig` | query | admin | `{ deviceId: number }` | `{ layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> } }>; customButtons: ({ key: string; name: string })[]; sources?: ({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] })[] = []; stepDelayMs?: number = 500; power: { mode: "toggle" \| "discrete" } }` |
+| setConfig | `remote.setConfig` | mutation | admin | `{ deviceId: number; config: { layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> } }>; customButtons: ({ key: string; name: string })[]; sources?: ({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] })[] = []; stepDelayMs?: number = 500; power: { mode: "toggle" \| "discrete" } } }` | `RemoteSetConfigResultSchema` |
 | listCommands | `remote.listCommands` | query | protected | `{ deviceId: number }` | `RemoteCommandListSchema` |
 | sendCommand | `remote.sendCommand` | mutation | protected | `{ deviceId: number; role: string; repeat?: number = 1 }` | `RemoteSendResultSchema` |
 | getAssumedStatus | `remote.getAssumedStatus` | query | protected | `{ deviceId: number }` | `MediaPlayerStatusSchema \| null` |
-| sendMediaCommand | `remote.sendMediaCommand` | mutation | protected | `{ deviceId: number; command: RemoteMediaCommandSchema; muted?: boolean; source?: string; repeat?: number = 1 }` | `RemoteMediaCommandResultSchema` |
+| sendMediaCommand | `remote.sendMediaCommand` | mutation | protected | `{ deviceId: number; command: RemoteMediaCommandSchema; muted?: boolean; source?: string; mediaType?: string; mediaId?: string; repeat?: number = 1 }` | `RemoteMediaCommandResultSchema` |
 
 ### `remote-layout-components` → `remoteLayoutComponents.*`
 

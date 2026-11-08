@@ -121,7 +121,7 @@ export const CAP_INPUT_DEFAULTS: Readonly<
   "remote": {
     "sendCommand": {"repeat":1},
     "sendMediaCommand": {"repeat":1},
-    "setConfig": {"config":{"__nested__":{"defaultTransmitterId":null}}},
+    "setConfig": {"config":{"__nested__":{"defaultTransmitterId":null,"sources":[],"stepDelayMs":500}}},
   },
   "schedulers": {
     "conflicts": {"scheduler":{"__nested__":{"enabled":true,"priority":0,"maxLateMs":600000}}},

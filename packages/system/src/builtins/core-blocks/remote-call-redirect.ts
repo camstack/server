@@ -4,7 +4,7 @@
  * an automation, an exporter, a forked addon — never in a UI.
  *
  * - A media-player command (`play`, `pause`, `stop`, `next`, `previous`,
- *   `setMute`, `selectSource`) on a device whose remote binds the command's
+ *   `setMute`, `selectSource`, `playMedia` of a channel) on a device whose remote binds the command's
  *   role runs the binding. An unbound role falls through to the native cap.
  *   A binding that FAILS fails the call: the native cap never silently runs in
  *   its place. `repeat`, where the caller supplies one, is passed through.
@@ -65,11 +65,15 @@ export function remoteCallRedirect(deps: RemoteCallRedirectDeps): DeviceCallRedi
   const command = async (call: DeviceCall, name: RemoteMediaCommand): Promise<DeviceCallAnswer> => {
     const muted = field(call.args, 'muted')
     const source = field(call.args, 'source')
+    const mediaType = field(call.args, 'mediaType')
+    const mediaId = field(call.args, 'mediaId')
     const result = await deps.remote.sendMediaCommand({
       deviceId: call.deviceId,
       command: name,
       ...(typeof muted === 'boolean' ? { muted } : {}),
       ...(typeof source === 'string' ? { source } : {}),
+      ...(typeof mediaType === 'string' ? { mediaType } : {}),
+      ...(typeof mediaId === 'string' ? { mediaId } : {}),
       repeat: repeatOf(call.args),
     })
     switch (result.status) {

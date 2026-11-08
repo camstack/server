@@ -5,6 +5,7 @@ import { DeviceType } from '../device/device-type.js'
 import { MediaPlayerStatusSchema } from './media-player.cap.js'
 import { RemoteConfigSchema, RemotePowerModeSchema } from '../remote/remote-config.js'
 import { RemoteRoleSchema } from '../remote/remote-roles.js'
+import { RemoteSourceSchema } from '../remote/remote-sources.js'
 
 /**
  * remote — a button panel over a device (D963). The operator binds a ROLE
@@ -41,10 +42,24 @@ export const RemoteCommandListSchema = z.object({
   power: z.object({ mode: RemotePowerModeSchema }),
   /** Only the roles that are BOUND — the ones a press can reach. */
   commands: z.array(RemoteBoundCommandSchema),
+  /** The sources the operator declared; empty when none (planning#460). */
+  sources: z.array(RemoteSourceSchema),
 })
 export type RemoteCommandList = z.infer<typeof RemoteCommandListSchema>
 
-export const REMOTE_REFUSAL_REASONS = ['no-remote', 'unbound-role', 'action-failed'] as const
+/**
+ * `unknown-source`: no declared source answers to that name. `undeclared-channel`:
+ * no `digits` source declares that number — a channel is never guessed.
+ * `unbound-step`: a step of the source has no binding (named in `step`).
+ */
+export const REMOTE_REFUSAL_REASONS = [
+  'no-remote',
+  'unbound-role',
+  'action-failed',
+  'unknown-source',
+  'unbound-step',
+  'undeclared-channel',
+] as const
 export const RemoteRefusalReasonSchema = z.enum(REMOTE_REFUSAL_REASONS)
 export type RemoteRefusalReason = z.infer<typeof RemoteRefusalReasonSchema>
 
@@ -60,6 +75,8 @@ export const RemoteSendResultSchema = z.discriminatedUnion('status', [
     status: z.literal('refused'),
     reason: RemoteRefusalReasonSchema,
     detail: z.string().optional(),
+    /** The step of a source that stopped it: its place (1-based) and role. */
+    step: z.object({ index: z.number().int().min(1), role: z.string() }).optional(),
   }),
 ])
 export type RemoteSendResult = z.infer<typeof RemoteSendResultSchema>
@@ -73,6 +90,7 @@ export const REMOTE_MEDIA_COMMANDS = [
   'previous',
   'setMute',
   'selectSource',
+  'playMedia',
   'turnOn',
   'turnOff',
   'volumeUp',
@@ -164,6 +182,9 @@ export const remoteCapability = {
         command: RemoteMediaCommandSchema,
         muted: z.boolean().optional(),
         source: z.string().optional(),
+        /** `playMedia` only: `channel` plus the number is routed, anything else is not. */
+        mediaType: z.string().optional(),
+        mediaId: z.string().optional(),
         repeat: z.number().int().min(1).max(REMOTE_MAX_REPEAT).default(1),
       }),
       RemoteMediaCommandResultSchema,

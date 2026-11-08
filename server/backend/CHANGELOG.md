@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Every integration provider declares its kinds and stamps a kind on its instances; the storage orchestrator no longer carries a dead legacy keychain scope constant.
 - The device hero capability (hero-layout) is exposed on the API
+- The remote runs declared sources under a per-device lock, resolves a source by name or channel number and refuses undeclared channels; custom buttons are no longer sources
 
 ## [1.2.809] - 2026-11-08
 

@@ -4,6 +4,7 @@ import {
   type MediaPlayerStatus,
   type RemoteAssumedState,
   type RemoteConfig,
+  type RemoteSource,
   customRole,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
@@ -52,6 +53,8 @@ function world(
   initial: RemoteConfig,
   options: {
     readonly failOn?: number
+    /** Holds the nth send (1-based) until released: a press in flight. */
+    readonly hold?: { readonly at: number; readonly until: Promise<void> }
     readonly reported?: MediaPlayerStatus | null
     readonly templates?: readonly string[]
     readonly mediaPlayer?: boolean
@@ -89,6 +92,7 @@ function world(
     invoke: async (call) => {
       calls.push(call)
       sentAt.push(clock.at)
+      if (options.hold !== undefined && calls.length === options.hold.at) await options.hold.until
       if (options.failOn !== undefined && calls.length === options.failOn) {
         throw new Error('board is off')
       }
@@ -130,6 +134,7 @@ function world(
     calls,
     sentAt,
     stored: () => stored,
+    kept: () => kept.current,
   }
 }
 
@@ -485,7 +490,7 @@ describe('RemoteService.sendMediaCommand', () => {
     })
   })
 
-  it('maps selectSource to the custom button of that name', async () => {
+  it('a custom button is a button, not a source: selectSource of its name is left to the native cap', async () => {
     const w = world(
       config({
         bindings: { [customRole('hdmi1')]: ir('hdmi') },
@@ -499,15 +504,8 @@ describe('RemoteService.sendMediaCommand', () => {
         source: 'HDMI 1',
         repeat: 1,
       }),
-    ).toMatchObject({ status: 'sent' })
-    expect(
-      await w.service.sendMediaCommand({
-        deviceId: TV,
-        command: 'selectSource',
-        source: 'Nope',
-        repeat: 1,
-      }),
     ).toEqual({ status: 'not-routed' })
+    expect(w.calls).toEqual([])
   })
 
   it('maps setMute to the mute role', async () => {
@@ -667,7 +665,7 @@ describe('RemoteService — ONE power truth for the status and the toggle guard'
   it('an assumed off is dropped when the plug is on', async () => {
     const stale = world(standing, {
       plug: true,
-      assumptions: { current: { power: { state: 'off', at: 1 }, muted: null } },
+      assumptions: { current: { power: { state: 'off', at: 1 }, muted: null, source: null } },
     })
     expect(await stale.service.assumedStatus(TV)).toMatchObject({
       state: 'standby',
@@ -752,7 +750,10 @@ describe('RemoteService — the device media-player slice is written, not only a
     const w = world(tvConfig, { plug: true })
     await w.service.setConfig({ deviceId: TV, config: tvConfig })
     expect(w.published).toHaveLength(1)
-    expect(w.published[0]).toMatchObject({ deviceId: TV, status: { state: 'standby' } })
+    expect(w.published[0]).toMatchObject({
+      deviceId: TV,
+      status: { state: 'standby' },
+    })
   })
 
   it('an input event refreshes only the TV it feeds', async () => {
@@ -768,7 +769,10 @@ describe('RemoteService — the device media-player slice is written, not only a
     expect(reads.count).toBe(0)
     expect(w.published).toHaveLength(before)
     await w.service.onInputChanged(PLUG)
-    expect(w.published.at(-1)).toMatchObject({ deviceId: TV, status: { state: 'off' } })
+    expect(w.published.at(-1)).toMatchObject({
+      deviceId: TV,
+      status: { state: 'off' },
+    })
     await w.service.onInputChanged(TV)
     expect(reads.count).toBeGreaterThan(0)
   })
@@ -782,5 +786,211 @@ describe('RemoteService — the device media-player slice is written, not only a
       w.service.refreshSlice(TV),
     ])
     expect(w.published).toHaveLength(2)
+  })
+})
+
+describe('declared sources (planning#460)', () => {
+  const press = (code: string) => ir(code)
+  const keys = Object.fromEntries(
+    Array.from({ length: 10 }, (_, d) => [`digit_${d}`, press(`d${d}`)]),
+  )
+  const RAI1: RemoteSource = {
+    kind: 'digits',
+    id: 'rai1',
+    name: 'Rai 1',
+    number: '1',
+  }
+  const C24: RemoteSource = {
+    kind: 'digits',
+    id: 'c24',
+    name: 'Canale 24',
+    number: '25',
+  }
+  const HDMI: RemoteSource = {
+    kind: 'sequence',
+    id: 'hdmi1',
+    name: 'HDMI 1',
+    steps: ['input', 'down', 'ok'],
+  }
+  const declared = (patch: Partial<RemoteConfig> = {}) =>
+    config({
+      bindings: {
+        ...keys,
+        input: press('in'),
+        down: press('dn'),
+        ok: press('ok'),
+        channel_up: press('ch+'),
+        power: press('pwr'),
+        power_off: press('off'),
+      },
+      power: { mode: 'discrete' },
+      sources: [RAI1, C24, HDMI],
+      ...patch,
+    })
+  const tags = (calls: readonly CapCall[]) =>
+    calls.map((c) => (c.args as { tag?: string } | undefined)?.tag)
+  const select = (w: ReturnType<typeof world>, source: string) =>
+    w.service.sendMediaCommand({
+      deviceId: TV,
+      command: 'selectSource',
+      source,
+      repeat: 1,
+    })
+
+  it('lists exactly the declared sources, with their kind and number', async () => {
+    const w = world(declared({ customButtons: [{ key: 'x', name: 'Not a source' }] }))
+    const status = await w.service.getAssumedStatus({ deviceId: TV })
+    expect(status).toBeNull()
+    await select(w, 'Rai 1')
+    expect(await w.service.getAssumedStatus({ deviceId: TV })).toMatchObject({
+      availableSources: ['Rai 1', 'Canale 24', 'HDMI 1'],
+      declaredSources: [
+        { name: 'Rai 1', kind: 'digits', number: '1' },
+        { name: 'Canale 24', kind: 'digits', number: '25' },
+        { name: 'HDMI 1', kind: 'sequence' },
+      ],
+    })
+  })
+
+  it('selectSource of a number runs 2 then 5 in order, stepDelayMs apart', async () => {
+    const w = world(declared({ stepDelayMs: 700 }))
+    expect(await select(w, 'Canale 24')).toEqual({ status: 'sent', sends: 2 })
+    expect(tags(w.calls)).toEqual(['d2', 'd5'])
+    expect(w.sentAt).toEqual([0, 700])
+  })
+
+  it('the name and the number reach the same source', async () => {
+    const byName = world(declared())
+    const byNumber = world(declared())
+    await select(byName, 'canale 24')
+    await select(byNumber, '25')
+    expect(tags(byName.calls)).toEqual(tags(byNumber.calls))
+    expect(byNumber.kept()?.source).toMatchObject({ name: 'Canale 24' })
+  })
+
+  it('runs a sequence source step by step', async () => {
+    const w = world(declared())
+    await select(w, 'HDMI 1')
+    expect(tags(w.calls)).toEqual(['in', 'dn', 'ok'])
+  })
+
+  it('playMedia channel presses the declared digits and assumes that source', async () => {
+    const w = world(declared())
+    expect(
+      await w.service.sendMediaCommand({
+        deviceId: TV,
+        command: 'playMedia',
+        mediaType: 'channel',
+        mediaId: '25',
+        repeat: 1,
+      }),
+    ).toEqual({ status: 'sent', sends: 2 })
+    expect(tags(w.calls)).toEqual(['d2', 'd5'])
+    expect(w.kept()?.source).toMatchObject({ name: 'Canale 24' })
+  })
+
+  it('refuses a channel number no source declares, sending nothing', async () => {
+    const w = world(declared())
+    expect(
+      await w.service.sendMediaCommand({
+        deviceId: TV,
+        command: 'playMedia',
+        mediaType: 'channel',
+        mediaId: '7',
+        repeat: 1,
+      }),
+    ).toMatchObject({ status: 'refused', reason: 'undeclared-channel' })
+    expect(w.calls).toEqual([])
+  })
+
+  it('refuses an unknown source name, sending nothing', async () => {
+    const w = world(declared())
+    expect(await select(w, 'Nope')).toMatchObject({
+      status: 'refused',
+      reason: 'unknown-source',
+    })
+    expect(w.calls).toEqual([])
+  })
+
+  it('refuses a source with an unbound step before the first press, naming the step', async () => {
+    const bindings = { ...declared().bindings }
+    delete bindings['digit_5']
+    const w = world(declared({ bindings }))
+    expect(await select(w, 'Canale 24')).toMatchObject({
+      status: 'refused',
+      reason: 'unbound-step',
+      step: { index: 2, role: 'digit_5' },
+    })
+    expect(w.calls).toEqual([])
+  })
+
+  it('a failed step stops the sequence, names that step and keeps no source', async () => {
+    const w = world(declared(), { failOn: 2 })
+    expect(await select(w, 'HDMI 1')).toMatchObject({
+      status: 'refused',
+      reason: 'action-failed',
+      step: { index: 2, role: 'down' },
+      detail: expect.stringContaining('step 2/3 (down)'),
+    })
+    expect(w.calls).toHaveLength(2)
+    expect(w.kept()?.source ?? null).toBeNull()
+  })
+
+  it('an interleaved press waits for the whole sequence', async () => {
+    let release: () => void = () => undefined
+    const until = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const w = world(declared(), { hold: { at: 1, until } })
+    const sequence = select(w, 'Canale 24')
+    const other = w.service.sendCommand({
+      deviceId: TV,
+      role: 'channel_up',
+      repeat: 1,
+    })
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(tags(w.calls)).toEqual(['d2'])
+    release()
+    await Promise.all([sequence, other])
+    expect(tags(w.calls)).toEqual(['d2', 'd5', 'ch+'])
+  })
+
+  it('assumes the last declared source sent, marked assumed', async () => {
+    const w = world(declared({ bindings: { ...declared().bindings } }), {
+      plug: true,
+    })
+    await select(w, 'HDMI 1')
+    const status = await w.service.assumedStatus(TV)
+    expect(status).toMatchObject({ source: 'HDMI 1' })
+    expect(status?.assumedFields).toContain('source')
+  })
+
+  it('forgets the source when the remote powers the set off', async () => {
+    const w = world(declared(), { plug: true })
+    await select(w, 'HDMI 1')
+    await w.service.sendCommand({ deviceId: TV, role: 'power_off', repeat: 1 })
+    expect(w.kept()?.source).toBeNull()
+    expect((await w.service.assumedStatus(TV))?.source).toBe('')
+  })
+
+  it('forgets the source when the plug reads off', async () => {
+    const plugState = { current: true as boolean | null }
+    const w = world(declared(), { plugState })
+    await select(w, 'HDMI 1')
+    expect(w.kept()?.source).toMatchObject({ name: 'HDMI 1' })
+    plugState.current = false
+    await w.service.assumedStatus(TV)
+    expect(w.kept()?.source).toBeNull()
+  })
+
+  it('forgets the source on a channel step', async () => {
+    const w = world(declared(), { plug: true })
+    await select(w, 'Rai 1')
+    await w.service.sendCommand({
+      deviceId: TV,
+      role: 'channel_up',
+      repeat: 1,
+    })
+    expect(w.kept()?.source).toBeNull()
   })
 })

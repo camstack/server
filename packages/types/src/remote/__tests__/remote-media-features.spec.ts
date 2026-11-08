@@ -4,20 +4,20 @@ import { mediaPlayerFeaturesOfRoles } from '../remote-media-features.js'
 
 describe('mediaPlayerFeaturesOfRoles', () => {
   it('derives the surface from what is bound, never from what a TV could do', () => {
-    expect(mediaPlayerFeaturesOfRoles(['power', 'volume_up', 'volume_down', 'channel_up'])).toEqual(
-      [
-        DeviceFeature.MediaPlayerPower,
-        DeviceFeature.MediaPlayerVolumeStep,
-        DeviceFeature.MediaPlayerChannelStep,
-      ],
-    )
+    expect(
+      mediaPlayerFeaturesOfRoles(['power', 'volume_up', 'volume_down', 'channel_up'], 0),
+    ).toEqual([
+      DeviceFeature.MediaPlayerPower,
+      DeviceFeature.MediaPlayerVolumeStep,
+      DeviceFeature.MediaPlayerChannelStep,
+    ])
   })
 
-  it('offers sources for a custom or input button, and nothing for an empty remote', () => {
-    expect(mediaPlayerFeaturesOfRoles(['custom:netflix'])).toEqual([
+  it('offers a source surface only for declared sources, never for a bound button', () => {
+    expect(mediaPlayerFeaturesOfRoles(['custom:netflix', 'input'], 0)).toEqual([])
+    expect(mediaPlayerFeaturesOfRoles(['custom:netflix'], 1)).toEqual([
       DeviceFeature.MediaPlayerSelectSource,
     ])
-    expect(mediaPlayerFeaturesOfRoles(['input'])).toEqual([DeviceFeature.MediaPlayerSelectSource])
-    expect(mediaPlayerFeaturesOfRoles([])).toEqual([])
+    expect(mediaPlayerFeaturesOfRoles([], 0)).toEqual([])
   })
 })

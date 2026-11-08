@@ -3512,6 +3512,7 @@ Enum: `"reported" \| "assumed"`
 - `isMuted`: `boolean \| null`
 - `source`: `string`
 - `availableSources`: `string[]`
+- `declaredSources?`: `({ name: string; kind: "digits" \| "sequence"; number?: string })[]`
 - `currentMedia`: `{ type: string; title: string; artist?: string; album?: string; imageUrl?: string } \| null`
 - `position`: `number \| null`
 - `duration`: `number \| null`
@@ -5570,27 +5571,28 @@ Enum: `"continuous" \| "motion" \| "person" \| "vehicle" \| "animal" \| "lineCro
 - `layoutTemplateId`: `string \| null`
 - `power`: `{ mode: "toggle" \| "discrete" }`
 - `commands`: `RemoteBoundCommandSchema[]`
+- `sources`: `({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] })[]`
 
 ### `RemoteMediaCommandResultSchema`
 
 - `{ status: "sent"; sends: number }`
 - `{ status: "skipped"; reason: "already-in-state" }`
-- `{ status: "refused"; reason: RemoteRefusalReasonSchema; detail?: string }`
+- `{ status: "refused"; reason: RemoteRefusalReasonSchema; detail?: string; step?: { index: number; role: string } }`
 - `{ status: "not-routed" }`
 
 ### `RemoteMediaCommandSchema`
 
-Enum: `"play" \| "pause" \| "stop" \| "next" \| "previous" \| "setMute" \| "selectSource" \| "turnOn" \| "turnOff" \| "volumeUp" \| "volumeDown" \| "channelUp" \| "channelDown"`
+Enum: `"play" \| "pause" \| "stop" \| "next" \| "previous" \| "setMute" \| "selectSource" \| "playMedia" \| "turnOn" \| "turnOff" \| "volumeUp" \| "volumeDown" \| "channelUp" \| "channelDown"`
 
 ### `RemoteRefusalReasonSchema`
 
-Enum: `"no-remote" \| "unbound-role" \| "action-failed"`
+Enum: `"no-remote" \| "unbound-role" \| "action-failed" \| "unknown-source" \| "unbound-step" \| "undeclared-channel"`
 
 ### `RemoteSendResultSchema`
 
 - `{ status: "sent"; sends: number }`
 - `{ status: "skipped"; reason: "already-in-state" }`
-- `{ status: "refused"; reason: RemoteRefusalReasonSchema; detail?: string }`
+- `{ status: "refused"; reason: RemoteRefusalReasonSchema; detail?: string; step?: { index: number; role: string } }`
 
 ### `RemoteSetConfigResultSchema`
 

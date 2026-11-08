@@ -21,6 +21,14 @@
  *    in history. A toggle power code is sent only when the current state
  *    differs from the requested one; a discrete pair is always sent. A mute on
  *    a device that does not report it is sent and marked assumed.
+ *  - **Sources are declared** (planning#460). `availableSources` is the
+ *    operator's declared sources, never the custom buttons. A source runs its
+ *    steps in order under the device's lock (no other press interleaves),
+ *    `stepDelayMs` apart; a refusal is typed (`unknown-source`,
+ *    `unbound-step`, `undeclared-channel`) and a failed step stops the
+ *    sequence and names itself. The source last sent is ASSUMED, and forgotten
+ *    when the device is switched off, when the plug reads off and when a
+ *    channel step moves the channel.
  *  - **Precedence** (`sendMediaCommand`): a media-player command takes the
  *    remote when its role is bound, else answers `not-routed` so the native
  *    cap runs. The dispatch redirect asks this for every caller.
@@ -28,8 +36,8 @@
 import {
   type CapCall,
   customKeyOfRole,
-  customRole,
   EMPTY_REMOTE_ASSUMED_STATE,
+  findChannelSource,
   type IRemoteProvider,
   type IScopedLogger,
   type MediaPlayerAssumedField,
@@ -38,6 +46,9 @@ import {
   type RemoteConfig,
   type RemoteMediaCommand,
   type RemoteSendResult,
+  type RemoteSource,
+  remoteSourceSteps,
+  resolveRemoteSource,
 } from '@camstack/types'
 
 /** Per-device remote configuration, kept in the device's settings store. */
@@ -131,6 +142,7 @@ function rolesFor(command: RemoteMediaCommand): readonly string[] {
     case 'channelDown':
       return ['channel_down']
     case 'selectSource':
+    case 'playMedia':
       return []
   }
 }
@@ -146,6 +158,8 @@ export class RemoteService implements IRemoteProvider {
   private readonly plugOf = new Map<number, number | null>()
   private readonly sliceRuns = new Map<number, Promise<void>>()
   private readonly slicePending = new Set<number>()
+  /** The tail of each device's presses: a sequence is never interleaved with another press. */
+  private readonly locks = new Map<number, Promise<void>>()
 
   constructor(private readonly deps: RemoteServiceDeps) {
     this.now = deps.now ?? Date.now
@@ -193,6 +207,7 @@ export class RemoteService implements IRemoteProvider {
       layoutTemplateId: config.layoutTemplateId,
       power: config.power,
       commands,
+      sources: config.sources,
     }
   }
 
@@ -204,6 +219,12 @@ export class RemoteService implements IRemoteProvider {
   readonly sendMediaCommand: IRemoteProvider['sendMediaCommand'] = async (input) => {
     const { deviceId, repeat } = input
     const config = await this.deps.store.read(deviceId)
+    if (input.command === 'selectSource') {
+      return this.selectSource(deviceId, config, input.source)
+    }
+    if (input.command === 'playMedia') {
+      return this.playMedia(deviceId, config, input.mediaType, input.mediaId)
+    }
     const role = this.mediaRole(config, input)
     if (role === null) return { status: 'not-routed' }
     if (input.command === 'setMute' && input.muted !== undefined) {
@@ -279,17 +300,19 @@ export class RemoteService implements IRemoteProvider {
    */
   readonly getAssumedStatus: IRemoteProvider['getAssumedStatus'] = async ({ deviceId }) => {
     const kept = await this.readAssumed(deviceId)
-    if (kept.power === null && kept.muted === null) return null
+    if (kept.power === null && kept.muted === null && kept.source === null) return null
     const config = await this.deps.store.read(deviceId)
     const assumedFields: MediaPlayerAssumedField[] = []
     if (kept.power !== null) assumedFields.push('state')
     if (kept.muted !== null) assumedFields.push('isMuted')
+    if (kept.source !== null) assumedFields.push('source')
     return this.buildStatus({
       state: kept.power?.state ?? 'standby',
       assumedFields,
       muted: kept.muted?.value ?? null,
-      changedAt: Math.max(kept.power?.at ?? 0, kept.muted?.at ?? 0),
-      sources: config.customButtons.map((b) => b.name),
+      source: kept.source?.name ?? '',
+      changedAt: Math.max(kept.power?.at ?? 0, kept.muted?.at ?? 0, kept.source?.at ?? 0),
+      sources: config.sources,
     })
   }
 
@@ -314,13 +337,16 @@ export class RemoteService implements IRemoteProvider {
     const changedAt = truth.at
     const mute = state === 'off' ? null : (kept.muted ?? null)
     if (mute !== null) assumedFields.push('isMuted')
+    const source = state === 'off' ? null : (kept.source ?? null)
+    if (source !== null) assumedFields.push('source')
     const config = await this.deps.store.read(deviceId)
     return this.buildStatus({
       state,
       assumedFields,
       muted: mute?.value ?? null,
-      changedAt: Math.max(changedAt, mute?.at ?? 0),
-      sources: config.customButtons.map((b) => b.name),
+      source: source?.name ?? '',
+      changedAt: Math.max(changedAt, mute?.at ?? 0, source?.at ?? 0),
+      sources: config.sources,
     })
   }
 
@@ -328,8 +354,9 @@ export class RemoteService implements IRemoteProvider {
     readonly state: MediaPlayerStatus['state']
     readonly assumedFields: readonly MediaPlayerAssumedField[]
     readonly muted: boolean | null
+    readonly source: string
     readonly changedAt: number
-    readonly sources: readonly string[]
+    readonly sources: readonly RemoteSource[]
   }): MediaPlayerStatus {
     return {
       state: input.state,
@@ -337,8 +364,13 @@ export class RemoteService implements IRemoteProvider {
       assumedFields: [...input.assumedFields],
       volumeLevel: null,
       isMuted: input.muted,
-      source: '',
-      availableSources: [...input.sources],
+      source: input.source,
+      availableSources: input.sources.map((source) => source.name),
+      declaredSources: input.sources.map((source) =>
+        source.kind === 'digits'
+          ? { name: source.name, kind: source.kind, number: source.number }
+          : { name: source.name, kind: source.kind },
+      ),
       currentMedia: null,
       position: null,
       duration: null,
@@ -351,18 +383,8 @@ export class RemoteService implements IRemoteProvider {
 
   private mediaRole(
     config: RemoteConfig,
-    input: {
-      readonly command: RemoteMediaCommand
-      readonly source?: string | undefined
-    },
+    input: { readonly command: RemoteMediaCommand },
   ): string | null {
-    if (input.command === 'selectSource') {
-      const wanted = input.source
-      const button = config.customButtons.find((b) => b.name === wanted || b.key === wanted)
-      if (button === undefined) return null
-      const role = customRole(button.key)
-      return config.bindings[role] === undefined ? null : role
-    }
     for (const role of rolesFor(input.command)) {
       if (this.isBound(config, role)) return role
     }
@@ -409,8 +431,9 @@ export class RemoteService implements IRemoteProvider {
     const plug = await this.deps.plugOn(deviceId)
     const kept = await this.readAssumed(deviceId)
     if (plug === false) {
-      if (forget && kept.power !== null)
-        await this.deps.assumptions.write(deviceId, { ...kept, power: null })
+      if (forget && (kept.power !== null || kept.source !== null)) {
+        await this.deps.assumptions.write(deviceId, { ...kept, power: null, source: null })
+      }
       return { state: 'off', assumed: false, at: this.now() }
     }
     const keptPower = plug === true && kept.power?.state === 'off' ? null : kept.power
@@ -460,7 +483,130 @@ export class RemoteService implements IRemoteProvider {
     return result
   }
 
-  private async run(
+  /** Runs `fn` after every earlier press of the device has finished. */
+  private async withLock<T>(deviceId: number, fn: () => Promise<T>): Promise<T> {
+    const result = (this.locks.get(deviceId) ?? Promise.resolve()).then(fn)
+    const tail = result.then(
+      () => undefined,
+      () => undefined,
+    )
+    this.locks.set(deviceId, tail)
+    try {
+      return await result
+    } finally {
+      if (this.locks.get(deviceId) === tail) this.locks.delete(deviceId)
+    }
+  }
+
+  private run(
+    deviceId: number,
+    config: RemoteConfig,
+    role: string,
+    repeat: number,
+  ): Promise<RemoteSendResult> {
+    return this.withLock(deviceId, () => this.runRole(deviceId, config, role, repeat))
+  }
+
+  /**
+   * `selectSource(name)`: the declared source a name (or its channel number)
+   * points at. A remote that declares none leaves the call to the native cap.
+   */
+  private async selectSource(
+    deviceId: number,
+    config: RemoteConfig,
+    wanted: string | undefined,
+  ): Promise<RemoteSendResult | { readonly status: 'not-routed' }> {
+    if (config.sources.length === 0) return { status: 'not-routed' }
+    const source = wanted === undefined ? null : resolveRemoteSource(config.sources, wanted)
+    if (source === null) {
+      this.deps.logger.warn('remote: no declared source answers to that name, nothing was sent', {
+        tags: { deviceId },
+        meta: { wanted: wanted ?? null },
+      })
+      return {
+        status: 'refused',
+        reason: 'unknown-source',
+        detail: `no source "${wanted ?? ''}" is declared`,
+      }
+    }
+    return this.runSource(deviceId, config, source)
+  }
+
+  /** `playMedia` of a channel: the `digits` source that declares the number, else a refusal. */
+  private async playMedia(
+    deviceId: number,
+    config: RemoteConfig,
+    mediaType: string | undefined,
+    mediaId: string | undefined,
+  ): Promise<RemoteSendResult | { readonly status: 'not-routed' }> {
+    if (mediaType !== 'channel' || config.sources.length === 0) return { status: 'not-routed' }
+    const source = mediaId === undefined ? null : findChannelSource(config.sources, mediaId)
+    if (source === null) {
+      this.deps.logger.warn('remote: no source declares that channel, nothing was sent', {
+        tags: { deviceId },
+        meta: { channel: mediaId ?? null },
+      })
+      return {
+        status: 'refused',
+        reason: 'undeclared-channel',
+        detail: `channel ${mediaId ?? ''} is not declared`,
+      }
+    }
+    return this.runSource(deviceId, config, source)
+  }
+
+  /**
+   * Presses a source's steps in order, one lock for the whole sequence,
+   * `stepDelayMs` apart. Every step is checked bound BEFORE the first press, so
+   * a half-bound source sends nothing. A step that fails stops the sequence.
+   */
+  private async runSource(
+    deviceId: number,
+    config: RemoteConfig,
+    source: RemoteSource,
+  ): Promise<RemoteSendResult> {
+    const steps = remoteSourceSteps(source)
+    const missing = steps.findIndex((role) => !this.isBound(config, role))
+    if (missing >= 0) {
+      const role = steps[missing] ?? ''
+      this.deps.logger.warn('remote: a step of the source is not bound, nothing was sent', {
+        tags: { deviceId },
+        meta: { source: source.name, step: missing + 1, role },
+      })
+      return {
+        status: 'refused',
+        reason: 'unbound-step',
+        detail: `step ${missing + 1}/${steps.length} (${role}) is not bound`,
+        step: { index: missing + 1, role },
+      }
+    }
+    return this.withLock(deviceId, async () => {
+      for (const [at, role] of steps.entries()) {
+        if (at > 0) await this.sleep(config.stepDelayMs)
+        const result = await this.runRole(deviceId, config, role, 1)
+        if (result.status === 'refused') {
+          this.deps.logger.warn('remote: a step of the source failed, the sequence stopped', {
+            tags: { deviceId },
+            meta: { source: source.name, step: at + 1, role, reason: result.reason },
+          })
+          return {
+            ...result,
+            detail: `step ${at + 1}/${steps.length} (${role}): ${result.detail ?? result.reason}`,
+            step: { index: at + 1, role },
+          }
+        }
+      }
+      const kept = await this.readAssumed(deviceId)
+      await this.deps.assumptions.write(deviceId, {
+        ...kept,
+        source: { name: source.name, at: this.now() },
+      })
+      await this.refreshSlice(deviceId)
+      return { status: 'sent', sends: steps.length }
+    })
+  }
+
+  private async runRole(
     deviceId: number,
     config: RemoteConfig,
     role: string,
@@ -526,16 +672,26 @@ export class RemoteService implements IRemoteProvider {
       await this.deps.assumptions.write(deviceId, {
         ...kept,
         power: { state: wantsState, at: this.now() },
+        // Off forgets the source; on does not say which one the set woke on.
+        source: wantsState === 'off' ? null : kept.source,
       })
       return
     }
     if (role === 'power') {
       const before = await this.currentState(deviceId)
       if (before === null) return
+      const next: PowerState = before === 'on' ? 'off' : 'on'
       await this.deps.assumptions.write(deviceId, {
         ...kept,
-        power: { state: before === 'on' ? 'off' : 'on', at: this.now() },
+        power: { state: next, at: this.now() },
+        source: next === 'off' ? null : kept.source,
       })
+      return
+    }
+    if (role === 'channel_up' || role === 'channel_down') {
+      // The channel moved by an unknown amount: the declared source no longer holds.
+      if (kept.source !== null)
+        await this.deps.assumptions.write(deviceId, { ...kept, source: null })
       return
     }
     if (role === 'mute') {

@@ -131,6 +131,8 @@ async function world(bound: Partial<RemoteConfig>): Promise<World> {
       defaultTransmitterId: BOARD,
       bindings: {},
       customButtons: [],
+      sources: [],
+      stepDelayMs: 500,
       power: { mode: 'toggle' },
       ...bound,
     },

@@ -145,6 +145,7 @@ describe('remoteCallRedirect — precedence at dispatch (D963)', () => {
       ...EMPTY_REMOTE_CONFIG,
       bindings: { mute: ir, 'custom:hdmi1': ir },
       customButtons: [{ key: 'hdmi1', name: 'HDMI 1' }],
+      sources: [{ kind: 'sequence', id: 'hdmi1', name: 'HDMI 1', steps: ['custom:hdmi1'] }],
     })
     await redirect.attempt(call('setMute', { muted: true }))
     await redirect.attempt(call('selectSource', { source: 'HDMI 1' }))

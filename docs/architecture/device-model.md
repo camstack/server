@@ -15,7 +15,7 @@ applies-to:
 covers:
   - packages/addon-provider-*/**
   - packages/system/src/builtins/device-manager/removal-cleanup.ts
-last-verified: 2026-10-26
+last-verified: 2026-11-08
 ---
 
 # The device model
@@ -439,6 +439,26 @@ unbound) falls through to the native cap; a failing binding fails the call.
 `getStatus` is answered from the remote's assumed state only when no native
 provider exists. `scripts/check-claimed-get-status.ts` fails an entry that skips
 the hook. Repeat counts are per call, never stored. See D964.
+
+**Sources are declared, never inferred** (planning#460). A remote offers a
+source only when the operator declared it in `config.sources`; a custom button
+is a button and nothing else, and a remote with no sources has no source list.
+Two kinds: `digits` (a name and a channel number, the steps are the number's
+`digit_N` roles) and `sequence` (a name and explicit bound roles, an input key
+or a menu macro). The name and the number resolve to the same source
+(`resolveRemoteSource`); a number no `digits` source declares is refused
+`undeclared-channel`, and numbers are unique among `digits` sources. A source
+runs its steps in order under a per-device lock (no other press interleaves),
+`stepDelayMs` apart (default 500, 100-3000). Refusals are typed: `unknown-source`,
+`unbound-step`, `undeclared-channel`; a failed step stops the sequence and names
+itself. The source last sent is ASSUMED (`assumedFields` gains `source`), forgotten
+on a power off, when the plug reads off and on a channel step. The slice carries
+`declaredSources` (name, kind, number) so an exporter splits inputs from channels:
+Alexa offers `InputController` for `sequence` sources whose names Amazon fixes
+(the rest are logged once per device) and `ChannelController/ChangeChannel` by
+number or name against the `digits` ones. HomeKit and Google do not export a
+media player at all today. `MediaPlayerSelectSource` is a feature only with at
+least one declared source.
 
 The `remote` template's layout is a button grid plus optional **groups** (a
 titled panel, a section divider, a D-pad ring, a rocker, a keypad) that move as

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New device-transitions capability and transition types: a device's changes can be recorded with who asked for them
 - A device call can state why it is made (commandOrigin) so the transition audit can tell an action run or a scheduler from a plain addon call.
 - Added the device hero model: a look per device type and role, fixed row layouts, and the hero-layout capability that serves it (nothing draws it yet)
+- A remote declares its sources explicitly: digits sources (name and channel number) and sequence sources (name and bound steps), with a step delay
 
 ## [1.2.524] - 2026-11-08
 

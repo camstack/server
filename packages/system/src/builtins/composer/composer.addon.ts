@@ -265,7 +265,10 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
       extensionFeatures: async (deviceId) => {
         try {
           const list = await api.remote.listCommands.query({ deviceId })
-          return mediaPlayerFeaturesOfRoles(list.commands.map((c) => c.role))
+          return mediaPlayerFeaturesOfRoles(
+            list.commands.map((c) => c.role),
+            list.sources.length,
+          )
         } catch (err: unknown) {
           this.ctx.logger.warn('composer: the remote of a media player could not be read', {
             tags: { deviceId },

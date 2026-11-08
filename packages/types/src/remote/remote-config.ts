@@ -17,6 +17,15 @@ import {
   isRemoteRole,
   RemoteRoleSchema,
 } from './remote-roles.js'
+import {
+  MAX_REMOTE_SOURCES,
+  type RemoteSource,
+  REMOTE_STEP_DELAY_DEFAULT_MS,
+  REMOTE_STEP_DELAY_MAX_MS,
+  REMOTE_STEP_DELAY_MIN_MS,
+  RemoteSourceSchema,
+  remoteSourceSteps,
+} from './remote-sources.js'
 
 export const RemoteBindingActionSchema = AutomationCapStepBaseSchema.omit({
   target: true,
@@ -46,6 +55,48 @@ export type RemotePowerMode = z.infer<typeof RemotePowerModeSchema>
 export const MAX_REMOTE_BINDINGS = 200
 export const MAX_REMOTE_CUSTOM_BUTTONS = 100
 
+/**
+ * The source rules: every step role is bound, ids and names are unique, a
+ * channel number belongs to one `digits` source, and no name is another
+ * source's number (a name and a number must reach one source, never two).
+ */
+function refineSources(
+  config: { readonly bindings: Record<string, unknown>; readonly sources: readonly RemoteSource[] },
+  ctx: z.RefinementCtx,
+): void {
+  const ids = new Set<string>()
+  const names = new Set<string>()
+  const numbers = new Set<string>()
+  config.sources.forEach((source, index) => {
+    const fail = (message: string, field: string): void => {
+      ctx.addIssue({ code: 'custom', message, path: ['sources', index, field] })
+    }
+    if (ids.has(source.id)) fail(`source id "${source.id}" is used twice`, 'id')
+    ids.add(source.id)
+    const name = source.name.trim().toLowerCase()
+    if (names.has(name)) fail(`source name "${source.name}" is used twice`, 'name')
+    names.add(name)
+    if (source.kind === 'digits') {
+      if (numbers.has(source.number)) fail(`channel ${source.number} is declared twice`, 'number')
+      numbers.add(source.number)
+    }
+    for (const role of remoteSourceSteps(source)) {
+      if (config.bindings[role] === undefined) {
+        fail(`"${source.name}" presses ${role}, which is not bound`, 'steps')
+      }
+    }
+  })
+  config.sources.forEach((source, index) => {
+    if (numbers.has(source.name.trim())) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `"${source.name}" is also a channel number`,
+        path: ['sources', index, 'name'],
+      })
+    }
+  })
+}
+
 export const RemoteConfigSchema = z
   .object({
     layoutTemplateId: z.string().min(1).nullable(),
@@ -57,6 +108,18 @@ export const RemoteConfigSchema = z
     /** Keyed by role. A role with no entry falls back to the native cap. */
     bindings: z.record(z.string(), RemoteBindingSchema),
     customButtons: z.array(RemoteCustomButtonSchema).max(MAX_REMOTE_CUSTOM_BUTTONS),
+    /**
+     * The sources the operator DECLARED (planning#460). A custom button is a
+     * button, never a source; a config with none offers no source at all.
+     */
+    sources: z.array(RemoteSourceSchema).max(MAX_REMOTE_SOURCES).default([]),
+    /** The pause between two steps of a source: the television's receiver, not a repeat. */
+    stepDelayMs: z
+      .number()
+      .int()
+      .min(REMOTE_STEP_DELAY_MIN_MS)
+      .max(REMOTE_STEP_DELAY_MAX_MS)
+      .default(REMOTE_STEP_DELAY_DEFAULT_MS),
     power: z.object({ mode: RemotePowerModeSchema }),
   })
   .superRefine((config, ctx) => {
@@ -98,6 +161,7 @@ export const RemoteConfigSchema = z
         })
       }
     }
+    refineSources(config, ctx)
   })
 export type RemoteConfig = z.infer<typeof RemoteConfigSchema>
 
@@ -106,6 +170,8 @@ export const EMPTY_REMOTE_CONFIG: RemoteConfig = {
   defaultTransmitterId: null,
   bindings: {},
   customButtons: [],
+  sources: [],
+  stepDelayMs: REMOTE_STEP_DELAY_DEFAULT_MS,
   power: { mode: 'discrete' },
 }
 
@@ -118,12 +184,15 @@ export const EMPTY_REMOTE_CONFIG: RemoteConfig = {
 export const RemoteAssumedStateSchema = z.object({
   power: z.object({ state: z.enum(['on', 'off']), at: z.number() }).nullable(),
   muted: z.object({ value: z.boolean(), at: z.number() }).nullable(),
+  /** The declared source last sent; unknown after a power off or a channel step. */
+  source: z.object({ name: z.string(), at: z.number() }).nullable().default(null),
 })
 export type RemoteAssumedState = z.infer<typeof RemoteAssumedStateSchema>
 
 export const EMPTY_REMOTE_ASSUMED_STATE: RemoteAssumedState = {
   power: null,
   muted: null,
+  source: null,
 }
 
 // ── The `remote` template kind: a button grid ────────────────────────────────
