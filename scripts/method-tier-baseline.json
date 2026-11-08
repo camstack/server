@@ -452,6 +452,7 @@
   "filesystemBrowse.listAllowedRoots": "admin",
   "heroLayout.getHeroModel": "protected",
   "heroLayout.getLayout": "protected",
+  "heroLayout.getRowModels": "protected",
   "humidifier.setMode": "protected",
   "humidifier.setOn": "protected",
   "humidifier.setTargetHumidity": "protected",

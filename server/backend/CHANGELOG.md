@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Creating an instance that brings devices now writes the integration row, applies the connection-test gate (a kind that declares its own test is tested by it; a create without a kind takes the provider's default kind) and rolls back on failure; deleting one removes its devices, row and announces it
 - The Blocks and Notification Center integrations now keep an instance record, and a fixed builtin keeps its on/off switch in the registry
+- Generated cap routers gain heroLayout.getRowModels
 
 ## [1.2.812] - 2026-11-08
 

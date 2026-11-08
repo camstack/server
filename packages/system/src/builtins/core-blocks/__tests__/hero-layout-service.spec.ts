@@ -103,3 +103,29 @@ describe('hero-layout provider', () => {
     expect(open?.gated).toEqual([])
   })
 })
+
+describe('hero-layout getRowModels', () => {
+  it('answers a whole list in order, null for an unknown id, and reads each device once', async () => {
+    const device = vi.fn(async (id: number) =>
+      id === 99
+        ? null
+        : {
+            type: DeviceType.Heater,
+            role: null,
+            name: `Dev ${id}`,
+            online: true,
+            features: [],
+          },
+    )
+    const rows = await service({ device }).getRowModels({ deviceIds: [3, 99, 4] })
+    expect(rows.map((r) => r?.deviceId ?? null)).toEqual([3, null, 4])
+    expect(rows[0]).toMatchObject({ scene: { id: 'heater-rise' }, name: 'Dev 3' })
+    expect(rows[0]?.primary).toMatchObject({ kind: 'toggle', id: 'own-power' })
+    expect(device).toHaveBeenCalledTimes(3)
+  })
+
+  it('a caller that may not act gets rows without an inline control', async () => {
+    const [row] = await service({}).getRowModels({ deviceIds: [1], canActuate: false })
+    expect(row?.primary).toBeNull()
+  })
+})

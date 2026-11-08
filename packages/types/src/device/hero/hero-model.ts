@@ -28,6 +28,7 @@ import {
   HeroToneSchema,
   StateLookSchema,
 } from './hero-state.js'
+import { HeroSceneSchema } from './hero-scene.js'
 import { HeroTextSchema } from './hero-text.js'
 
 /** The rows a layout may carry. Each is built from the caps the device is bound to. */
@@ -209,6 +210,46 @@ const HeroStateBackdropSchema = z.object({
   animation: z.enum(HERO_ANIMATIONS),
 })
 
+/**
+ * One fact the layout prints: on the hero's top line, in a row's status line
+ * (joined by " · ") or as a row's trailing fact. `id` names the kind so a client
+ * can pick one without parsing the words.
+ */
+export const HERO_FACT_IDS = [
+  'power',
+  'energy',
+  'battery',
+  'link',
+  'phase',
+  'remaining',
+  'volume',
+  'source',
+  'consumables',
+] as const
+export const HeroFactSchema = z.object({
+  id: z.enum(HERO_FACT_IDS),
+  icon: IconKeySchema.nullable(),
+  text: HeroTextSchema,
+  tone: HeroToneSchema,
+})
+export type HeroFact = z.infer<typeof HeroFactSchema>
+
+/** A labelled value beside the scene. */
+export const HeroSideTileSchema = z.object({
+  label: HeroTextSchema,
+  value: HeroTextSchema,
+  tone: HeroToneSchema.optional(),
+})
+export type HeroSideTile = z.infer<typeof HeroSideTileSchema>
+
+/** At most two tiles per side of the scene. */
+export const HERO_SIDE_TILES_MAX = 2
+export const HeroSideTilesSchema = z.object({
+  left: z.array(HeroSideTileSchema).max(HERO_SIDE_TILES_MAX),
+  right: z.array(HeroSideTileSchema).max(HERO_SIDE_TILES_MAX),
+})
+export type HeroSideTiles = z.infer<typeof HeroSideTilesSchema>
+
 export const HeroBackgroundSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('artwork'),
@@ -220,7 +261,10 @@ export const HeroBackgroundSchema = z.discriminatedUnion('kind', [
 ])
 export type HeroBackground = z.infer<typeof HeroBackgroundSchema>
 
-export const HeroProvenanceSchema = z.object({ partId: z.string(), cap: z.string() })
+export const HeroProvenanceSchema = z.object({
+  partId: z.string(),
+  cap: z.string(),
+})
 export type HeroProvenance = z.infer<typeof HeroProvenanceSchema>
 
 export const HeroModelSchema = z.object({
@@ -233,6 +277,11 @@ export const HeroModelSchema = z.object({
   stateAssumed: z.boolean(),
   look: StateLookSchema,
   background: HeroBackgroundSchema,
+  /** Which animated picture the hero (and the list row) draws; its motion is `look.animation`. */
+  scene: HeroSceneSchema,
+  /** The top line's inline facts, in order; never wraps, so a client may cut the tail. */
+  facts: z.array(HeroFactSchema),
+  sideTiles: HeroSideTilesSchema,
   /** The status line under the main icon. */
   title: HeroTextSchema,
   badges: z.array(HeroBadgeSchema),

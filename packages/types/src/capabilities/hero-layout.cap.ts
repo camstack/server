@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { HeroModelSchema, HeroRowIdSchema } from '../device/hero/hero-model.js'
+import { HeroRowModelSchema } from '../device/hero/hero-row.js'
 
 /**
  * hero-layout — what a device's hero says (D1023). Read-only: the FIXED
@@ -20,6 +21,15 @@ const heroInput = z.object({
   canActuate: z.boolean().optional(),
 })
 
+/** A list's most rows in one call; a longer list is read in pages. */
+export const HERO_ROW_MODELS_MAX = 500
+
+const rowModelsInput = z.object({
+  deviceIds: z.array(z.number().int().nonnegative()).max(HERO_ROW_MODELS_MAX),
+  /** As `canActuate` of `getHeroModel`; absent = may. */
+  canActuate: z.boolean().optional(),
+})
+
 export const HeroLayoutRowsSchema = z.object({
   type: z.string(),
   rows: z.array(HeroRowIdSchema),
@@ -33,6 +43,14 @@ export const heroLayoutCapability = {
   methods: {
     /** `null` = the device is unknown to the registry (never an empty hero). */
     getHeroModel: method(heroInput, HeroModelSchema.nullable(), {
+      auth: 'protected',
+      role: 'viewer',
+    }),
+    /**
+     * The list rows of many devices in ONE call, projected from the same model as
+     * the hero. One entry per requested id, in order; `null` = unknown device.
+     */
+    getRowModels: method(rowModelsInput, z.array(HeroRowModelSchema.nullable()), {
       auth: 'protected',
       role: 'viewer',
     }),

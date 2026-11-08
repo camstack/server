@@ -13,14 +13,19 @@ import type { HeroContext, HeroFragment, StateReading, StateSource } from './her
 import { HERO_CAP_CONTRIBUTIONS } from './hero-contributions.js'
 import { resolveHeroLayout } from './hero-layout.js'
 import { resolveHeroLook } from './hero-look.js'
+import { resolveHeroSceneId, type HeroScene } from './hero-scene.js'
 import type {
   HeroBackground,
   HeroBadge,
   HeroConsumptionSlot,
+  HeroFact,
   HeroModel,
   HeroProvenance,
   HeroRow,
+  HeroSideTile,
+  HeroSideTiles,
 } from './hero-model.js'
+import { HERO_SIDE_TILES_MAX } from './hero-model.js'
 import type { HeroState } from './hero-state.js'
 import { heroText, type HeroText } from './hero-text.js'
 import { resolveOwnPower } from './own-power.js'
@@ -102,6 +107,9 @@ function provenanceOf(cap: string, fragment: HeroFragment): readonly HeroProvena
   if (fragment.powerSupply !== undefined) ids.push('power-supply')
   if (fragment.consumption !== undefined) ids.push('consumption')
   if (fragment.consumables !== undefined) ids.push('consumables')
+  if (fragment.facts !== undefined && fragment.facts.length > 0) ids.push('facts')
+  if (fragment.tiles !== undefined) ids.push('side-tiles')
+  if (fragment.scene !== undefined) ids.push('scene')
   if (fragment.remote !== undefined) ids.push('remote')
   for (const badge of fragment.badges ?? []) ids.push(badge.id)
   for (const row of fragment.rows ?? []) ids.push(row.id)
@@ -109,12 +117,28 @@ function provenanceOf(cap: string, fragment: HeroFragment): readonly HeroProvena
 }
 
 function consumptionOf(fragments: readonly HeroFragment[]): HeroConsumptionSlot | null {
-  let best: { readonly priority: number; readonly slot: HeroConsumptionSlot } | null = null
+  let best: {
+    readonly priority: number
+    readonly slot: HeroConsumptionSlot
+  } | null = null
   for (const fragment of fragments) {
     const c = fragment.consumption
     if (c !== undefined && (best === null || c.priority > best.priority)) best = c
   }
   return best === null ? null : best.slot
+}
+
+function tilesOf(fragments: readonly HeroFragment[], side: 'left' | 'right'): HeroSideTile[] {
+  return fragments.flatMap((f) => f.tiles?.[side] ?? []).slice(0, HERO_SIDE_TILES_MAX)
+}
+
+function sceneOf(role: string | null, type: string, fragments: readonly HeroFragment[]): HeroScene {
+  const parts = fragments.flatMap((f) => (f.scene === undefined ? [] : [f.scene]))
+  return {
+    id: resolveHeroSceneId(role, type),
+    mode: parts.find((p) => p.mode !== undefined)?.mode ?? null,
+    level: parts.find((p) => p.level !== undefined)?.level ?? null,
+  }
 }
 
 export function buildHeroModel(input: HeroModelInput): HeroModel {
@@ -161,6 +185,12 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
   const remote = fragments.find((f) => f.remote !== undefined)?.remote ?? null
   const badges: HeroBadge[] = fragments.flatMap((f) => f.badges ?? [])
 
+  const facts: HeroFact[] = fragments.flatMap((f) => f.facts ?? [])
+  const sideTiles: HeroSideTiles = {
+    left: tilesOf(fragments, 'left'),
+    right: tilesOf(fragments, 'right'),
+  }
+
   const gated: string[] = []
   if (!input.access.canActuate) {
     if (ownPower !== null) gated.push('own-power')
@@ -179,6 +209,9 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
     stateAssumed: assumed,
     look,
     background,
+    scene: sceneOf(device.role, device.type, fragments),
+    facts,
+    sideTiles,
     title: STATE_TEXT[state],
     badges,
     remote,

@@ -103,7 +103,7 @@ export interface SystemProxy {
   readonly displayPalette: Pick<InferProvider<typeof displayPaletteCapability>, 'getPalette' | 'listPresets' | 'setPalette'>
   readonly faceGallery: Pick<InferProvider<typeof faceGalleryCapability>, 'listIdentities' | 'createIdentity' | 'renameIdentity' | 'deleteIdentity' | 'listIdentitySamples' | 'auditIdentitySamples' | 'removeSample' | 'getFaceMedia' | 'assignFace' | 'unassignFace' | 'deleteFace' | 'assignFaces' | 'unassignFaces' | 'suggestFaceClusters'>
   readonly fanPresets: Pick<InferProvider<typeof fanPresetsCapability>, 'getPresets' | 'setPresets' | 'applyPreset' | 'capturePreset'>
-  readonly heroLayout: Pick<InferProvider<typeof heroLayoutCapability>, 'getHeroModel' | 'getLayout'>
+  readonly heroLayout: Pick<InferProvider<typeof heroLayoutCapability>, 'getHeroModel' | 'getRowModels' | 'getLayout'>
   readonly integrationInstances: Pick<InferProvider<typeof integrationInstancesCapability>, 'describe' | 'instanceFormSchema' | 'listInstances' | 'getInstance' | 'createInstance' | 'updateInstance' | 'setInstanceEnabled' | 'deleteInstance' | 'testInstance'>
   readonly integrations: Pick<InferProvider<typeof integrationsCapability>, 'list' | 'get' | 'getByAddonId' | 'create' | 'update' | 'delete' | 'getAvailableTypes'>
   readonly keychainAdmin: Pick<InferProvider<typeof keychainAdminCapability>, 'status' | 'listSecrets' | 'listAudit' | 'reveal' | 'setSystemSecret' | 'importSecret' | 'deleteOrphans' | 'rotateMasterKey' | 'purgeRetiredKeys' | 'downloadRecoveryKey' | 'resetKeychain' | 'resetReport' | 'acknowledgeReset'>
@@ -498,6 +498,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
 
   const heroLayoutInterface = {
     getHeroModel: (input?: unknown) => dispatch('heroLayout', 'getHeroModel', 'query', input),
+    getRowModels: (input?: unknown) => dispatch('heroLayout', 'getRowModels', 'query', input),
     getLayout: (input?: unknown) => dispatch('heroLayout', 'getLayout', 'query', input),
   }
 

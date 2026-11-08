@@ -6,12 +6,15 @@ import type {
   HeroBadge,
   HeroConsumablesSlot,
   HeroConsumptionSlot,
+  HeroFact,
   HeroOwnPowerSlot,
   HeroPowerSupplySlot,
   HeroRemoteSlot,
   HeroRow,
+  HeroSideTile,
   HeroTimedRunSlot,
 } from './hero-model.js'
+import type { HeroSceneMode } from './hero-scene.js'
 import type { HeroState } from './hero-state.js'
 
 /** Which cap a state reading comes from; `STATE_SOURCE_ORDER` ranks them. */
@@ -42,10 +45,22 @@ export interface HeroFragment {
   readonly timedRun?: HeroTimedRunSlot
   readonly powerSupply?: HeroPowerSupplySlot
   /** A consumption value; the highest `priority` wins (power over a running state). */
-  readonly consumption?: { readonly priority: number; readonly slot: HeroConsumptionSlot }
+  readonly consumption?: {
+    readonly priority: number
+    readonly slot: HeroConsumptionSlot
+  }
   readonly consumables?: HeroConsumablesSlot
   readonly remote?: HeroRemoteSlot
   readonly badges?: readonly HeroBadge[]
   readonly rows?: readonly HeroRow[]
   readonly artworkUrl?: string
+  /** Facts for the top line, in the order the cap wants them read. */
+  readonly facts?: readonly HeroFact[]
+  /** Tiles beside the scene; the builder keeps the first two of each side. */
+  readonly tiles?: {
+    readonly left?: readonly HeroSideTile[]
+    readonly right?: readonly HeroSideTile[]
+  }
+  /** What the scene is doing, when this cap knows. The first fragment that names a field wins. */
+  readonly scene?: { readonly mode?: HeroSceneMode; readonly level?: number }
 }

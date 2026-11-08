@@ -10,6 +10,7 @@
  */
 import {
   buildHeroModel,
+  projectDeviceRow,
   type IHeroLayoutProvider,
   type IScopedLogger,
   resolveHeroLayout,
@@ -44,6 +45,9 @@ export interface HeroLayoutServiceDeps {
 
 const REMOTE_CAP = 'remote'
 
+/** Models built at once for a list; the cap bounds the list, this bounds the fan-out on the registry. */
+const ROW_MODELS_CONCURRENCY = 16
+
 export class HeroLayoutService implements IHeroLayoutProvider {
   constructor(private readonly deps: HeroLayoutServiceDeps) {}
 
@@ -70,7 +74,10 @@ export class HeroLayoutService implements IHeroLayoutProvider {
           } catch (error) {
             logger.warn('hero model: a cap slice could not be read; drawn as not answered', {
               tags: { deviceId },
-              meta: { cap, error: error instanceof Error ? error.message : String(error) },
+              meta: {
+                cap,
+                error: error instanceof Error ? error.message : String(error),
+              },
             })
           }
         }),
@@ -95,6 +102,23 @@ export class HeroLayoutService implements IHeroLayoutProvider {
     })
   }
 
+  readonly getRowModels: IHeroLayoutProvider['getRowModels'] = async ({
+    deviceIds,
+    canActuate,
+  }) => {
+    const rows: Awaited<ReturnType<IHeroLayoutProvider['getRowModels']>> = deviceIds.map(() => null)
+    for (let from = 0; from < deviceIds.length; from += ROW_MODELS_CONCURRENCY) {
+      const chunk = deviceIds.slice(from, from + ROW_MODELS_CONCURRENCY)
+      const models = await Promise.all(
+        chunk.map((deviceId) => this.getHeroModel({ deviceId, canActuate })),
+      )
+      models.forEach((model, i) => {
+        rows[from + i] = model === null ? null : projectDeviceRow(model)
+      })
+    }
+    return rows
+  }
+
   private async remoteCommands(deviceId: number): Promise<number | null> {
     try {
       return await this.deps.reader.remoteCommands(deviceId)
@@ -103,7 +127,9 @@ export class HeroLayoutService implements IHeroLayoutProvider {
         'hero model: the remote could not be asked; its button shows without a count',
         {
           tags: { deviceId },
-          meta: { error: error instanceof Error ? error.message : String(error) },
+          meta: {
+            error: error instanceof Error ? error.message : String(error),
+          },
         },
       )
       return null

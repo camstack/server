@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 600 methods carry a device reference, of which
- * 193 are on SYSTEM-scope caps.
+ * Coverage: 601 methods carry a device reference, of which
+ * 194 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -242,6 +242,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'groupStatus.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heatingValve.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heroLayout.getHeroModel': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heroLayout.getRowModels': [{ name: "deviceIds", form: "array", optional: false }] as const,
   'humidifier.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'humidifier.setMode': [{ name: "deviceId", form: "single", optional: false }] as const,
   'humidifier.setOn': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -722,6 +723,7 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "fanPresets.getPresets",
   "fanPresets.setPresets",
   "heroLayout.getHeroModel",
+  "heroLayout.getRowModels",
   "keychain.deleteDeviceScope",
   "logDestination.read",
   "networkQuality.getDeviceStats",

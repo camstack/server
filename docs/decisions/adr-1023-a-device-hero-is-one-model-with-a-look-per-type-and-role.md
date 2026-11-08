@@ -67,3 +67,22 @@ cap. A caller states whether it may act (`canActuate`) and receives what to hide
 `scripts/check-cap-hero-contributions.ts` (Checks workflow); specs under
 `packages/types/src/device/hero/__tests__` and
 `packages/system/src/builtins/core-blocks/__tests__/hero-layout-service.spec.ts`.
+
+## P2 — the scene and the list row come from the same declaration
+
+The hero and the device ROW in a list are one declaration per type, served by the
+same cap. `hero-scene.ts` names a **scene** per `DeviceType` (refined by role,
+exhaustive like the looks): the closed id says WHICH picture is drawn (air flow,
+rising heat, drum, spray arm, …), a closed `mode` and a `level` in 0..1 say what it
+is doing when the device told us (`null` otherwise, never a guess). Motion and
+backdrop stay the state look's `animation` / `background` tokens: the scene adds no
+second vocabulary for them. `HeroModel` gains `scene`, `facts` (the top line),
+`sideTiles` (at most two per side); `consumables` already existed.
+
+`projectDeviceRow(model)` is a pure selection from the model: mini-scene, name plus
+one status line (joined by " · " by the client), the type's primary inline control
+(the device's own power, else the first control of the first row; none when the
+caller may not act), and one trailing fact (power, else battery, else consumables).
+It computes nothing the hero does not hold. `getRowModels({ deviceIds ≤ 500,
+canActuate? })` returns one row per id, in order, `null` for an unknown device, so a
+list of hundreds is ONE call. Same auth and role as `getHeroModel`.

@@ -6,8 +6,16 @@ export {
   NOT_A_HERO_FACT,
   type HeroCapCoverage,
 } from './hero-cap-coverage.js'
-export { HERO_CAP_CONTRIBUTIONS, type HeroContribution } from './hero-contributions.js'
-export type { HeroContext, HeroFragment, StateReading, StateSource } from './hero-fragment.js'
+export {
+  HERO_CAP_CONTRIBUTIONS,
+  type HeroContribution,
+} from './hero-contributions.js'
+export type {
+  HeroContext,
+  HeroFragment,
+  StateReading,
+  StateSource,
+} from './hero-fragment.js'
 export {
   HERO_LAYOUT_BY_TYPE,
   HERO_LAYOUT_DEFAULT,
@@ -34,6 +42,9 @@ export {
   type HeroConsumptionSlot,
   type HeroControl,
   type HeroDetail,
+  type HeroFact,
+  type HeroSideTile,
+  type HeroSideTiles,
   type HeroModel,
   type HeroOwnPowerSlot,
   type HeroPowerSupplySlot,
@@ -55,6 +66,21 @@ export {
   type HeroTone,
   type StateLook,
 } from './hero-state.js'
+export {
+  HERO_SCENE_BY_ROLE,
+  HERO_SCENE_BY_TYPE,
+  HERO_SCENES,
+  HERO_SCENE_MODES,
+  resolveHeroSceneId,
+  type HeroScene,
+  type HeroSceneId,
+  type HeroSceneMode,
+} from './hero-scene.js'
+export {
+  HeroRowModelSchema,
+  projectDeviceRow,
+  type HeroRowModel,
+} from './hero-row.js'
 export { heroText, type HeroText } from './hero-text.js'
 export * from './media-player-view.js'
 export { resolveOwnPower } from './own-power.js'

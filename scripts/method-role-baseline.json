@@ -501,6 +501,7 @@
   "heatingValve.getStatus": "viewer",
   "heroLayout.getHeroModel": "viewer",
   "heroLayout.getLayout": "viewer",
+  "heroLayout.getRowModels": "viewer",
   "humidifier.getStatus": "viewer",
   "humidifier.setMode": "viewer",
   "humidifier.setOn": "viewer",

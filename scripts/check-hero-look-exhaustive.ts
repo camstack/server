@@ -19,6 +19,7 @@ import {
   HERO_LAYOUT_DEFAULT,
   resolveHeroLayout,
 } from '../packages/types/src/device/hero/hero-layout.js'
+import { HERO_SCENES, resolveHeroSceneId } from '../packages/types/src/device/hero/hero-scene.js'
 import { allHeroLooks, resolveHeroLook } from '../packages/types/src/device/hero/hero-look.js'
 import { HERO_ROW_IDS } from '../packages/types/src/device/hero/hero-model.js'
 import {
@@ -71,9 +72,20 @@ for (const layout of [
   }
 }
 
+for (const type of Object.values(DeviceType)) {
+  for (const role of [null, ...Object.values(DeviceRole)]) {
+    const scene = resolveHeroSceneId(role, type)
+    if (!HERO_SCENES.includes(scene)) {
+      problems.push(`no scene resolves for type "${type}", role "${String(role)}"`)
+    }
+  }
+}
+
 if (problems.length > 0) {
   console.error(`check-hero-look-exhaustive: ${problems.length} problem(s)`)
   for (const p of problems.slice(0, 40)) console.error(`  - ${p}`)
   process.exit(1)
 }
-console.log('check-hero-look-exhaustive: every type and role resolves a complete look and a layout')
+console.log(
+  'check-hero-look-exhaustive: every type and role resolves a complete look, a layout and a scene',
+)

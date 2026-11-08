@@ -7929,6 +7929,15 @@ export function createCapRouter_heroLayout(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getHeroModel(methodInput as any)
       }),
+    getRowModels: protectedProcedure
+      .input(heroLayoutCapability.methods.getRowModels.input.loose())
+      .output(heroLayoutCapability.methods.getRowModels.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('hero-layout', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getRowModels(methodInput as any)
+      }),
     getLayout: protectedProcedure
       .input(heroLayoutCapability.methods.getLayout.input.loose())
       .output(heroLayoutCapability.methods.getLayout.output)

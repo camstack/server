@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - integration-instances: instanceFormSchema takes the wizard mode and discovery candidate, createInstance takes the originating candidate
 - A declared integration can be given a name-only instance record that is seeded once and never overwritten
+- Device hero: every device type now names an animated scene, and a batch read returns the list rows of many devices in one call
 
 ## [1.2.526] - 2026-11-08
 

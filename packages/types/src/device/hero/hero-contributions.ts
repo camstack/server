@@ -36,6 +36,7 @@ import type {
   HeroConfirm,
   HeroControl,
   HeroDetail,
+  HeroFact,
   HeroRow,
 } from './hero-model.js'
 import type { HeroState } from './hero-state.js'
@@ -75,10 +76,27 @@ function action(
   return { id, label, icon, call: { cap, method, args }, emphasis, confirm }
 }
 
-const asAction = (a: HeroAction): HeroControl => ({ kind: 'action', action: a })
+const asAction = (a: HeroAction): HeroControl => ({
+  kind: 'action',
+  action: a,
+})
 
 function reading(source: StateReading['source'], state: HeroState, assumed = false): StateReading {
   return { source, state, assumed }
+}
+
+function fact(
+  id: HeroFact['id'],
+  icon: HeroFact['icon'],
+  text: HeroText,
+  tone: HeroFact['tone'] = 'muted',
+): HeroFact {
+  return { id, icon, text, tone }
+}
+
+function minutesLeft(seconds: number): HeroText {
+  const m = Math.ceil(seconds / 60)
+  return heroText(`${m} min left`, `${m} min rimanenti`)
 }
 
 function deviceTypeOf(type: string): DeviceType | undefined {
@@ -127,9 +145,18 @@ const runningStateContribution = contribution(
     const phase = slice?.phase ?? null
     const detail: HeroDetail[] = []
     if (slice?.since != null) {
-      detail.push({ label: heroText('Since', 'Da'), value: slice.since, unit: 'ms-epoch' })
+      detail.push({
+        label: heroText('Since', 'Da'),
+        value: slice.since,
+        unit: 'ms-epoch',
+      })
     }
-    if (phase !== null) detail.push({ label: heroText('Phase', 'Fase'), value: phase, unit: null })
+    if (phase !== null)
+      detail.push({
+        label: heroText('Phase', 'Fase'),
+        value: phase,
+        unit: null,
+      })
     const head =
       running === null
         ? heroText('Unknown', 'Sconosciuto')
@@ -152,9 +179,20 @@ const runningStateContribution = contribution(
       ),
       consumption: {
         priority: 1,
-        slot: { kind: 'running', running, since: slice?.since ?? null, phase, detail },
+        slot: {
+          kind: 'running',
+          running,
+          since: slice?.since ?? null,
+          phase,
+          detail,
+        },
       },
       rows: [row],
+      ...(phase !== null && running === true
+        ? {
+            facts: [fact('phase', 'activity', heroText(phase, phase), 'primary')],
+          }
+        : {}),
     }
   },
 )
@@ -165,15 +203,48 @@ const powerMeterContribution = contribution('power-meter', PowerMeterStatusSchem
   if (slice?.power === undefined) return {}
   const detail: HeroDetail[] = []
   if (slice.energy !== undefined) {
-    detail.push({ label: heroText('Energy', 'Energia'), value: slice.energy, unit: 'kWh' })
+    detail.push({
+      label: heroText('Energy', 'Energia'),
+      value: slice.energy,
+      unit: 'kWh',
+    })
   }
   if (slice.voltage !== undefined) {
-    detail.push({ label: heroText('Voltage', 'Tensione'), value: slice.voltage, unit: 'V' })
+    detail.push({
+      label: heroText('Voltage', 'Tensione'),
+      value: slice.voltage,
+      unit: 'V',
+    })
   }
   if (slice.current !== undefined) {
-    detail.push({ label: heroText('Current', 'Corrente'), value: slice.current, unit: 'A' })
+    detail.push({
+      label: heroText('Current', 'Corrente'),
+      value: slice.current,
+      unit: 'A',
+    })
   }
-  return { consumption: { priority: 2, slot: { kind: 'power', watts: slice.power, detail } } }
+  const watts = Math.round(slice.power)
+  const text = heroText(`${watts} W`, `${watts} W`)
+  return {
+    consumption: {
+      priority: 2,
+      slot: { kind: 'power', watts: slice.power, detail },
+    },
+    facts: [fact('power', 'zap', text, watts > 0 ? 'primary' : 'muted')],
+    tiles: {
+      right: [{ label: heroText('Power', 'Potenza'), value: text }],
+      ...(slice.energy === undefined
+        ? {}
+        : {
+            left: [
+              {
+                label: heroText('Energy', 'Energia'),
+                value: heroText(`${slice.energy} kWh`, `${slice.energy} kWh`),
+              },
+            ],
+          }),
+    },
+  }
 })
 
 // ── battery / network-link ─────────────────────────────────────────────────
@@ -196,7 +267,23 @@ const batteryContribution = contribution('battery', BatteryStatusSchema, (slice)
         ? heroText('Battery', 'Batteria')
         : heroText(`Battery ${level}%`, `Batteria ${level}%`),
   }
-  return { badges: [badge] }
+  return {
+    badges: [badge],
+    ...(level === null
+      ? {}
+      : {
+          facts: [fact('battery', 'battery', badge.label, badge.tone)],
+          tiles: {
+            left: [
+              {
+                label: heroText('Battery', 'Batteria'),
+                value: heroText(`${level}%`, `${level}%`),
+                tone: badge.tone,
+              },
+            ],
+          },
+        }),
+  }
 })
 
 const networkLinkContribution = contribution('network-link', NetworkLinkStatusSchema, (slice) => {
@@ -211,7 +298,10 @@ const networkLinkContribution = contribution('network-link', NetworkLinkStatusSc
       ? heroText(slice.type, slice.type)
       : heroText('Link unknown', 'Collegamento sconosciuto'),
   }
-  return { badges: [badge] }
+  return {
+    badges: [badge],
+    ...(known ? { facts: [fact('link', 'wifi', badge.label, badge.tone)] } : {}),
+  }
 })
 
 // ── contact / motion-trigger ───────────────────────────────────────────────
@@ -231,6 +321,7 @@ const contactContribution = contribution('contact', ContactStatusSchema, (slice)
   return {
     reading: reading('contact', slice === undefined ? 'unknown' : slice.entryOpen ? 'on' : 'off'),
     rows: [row],
+    ...(slice === undefined ? {} : { scene: { mode: slice.entryOpen ? 'open' : 'closed' } }),
   }
 })
 
@@ -289,7 +380,10 @@ const timedRunContribution = contribution('timed-run', TimedRunStatusSchema, (sl
   const quickRun = slice?.quickRun ?? timedRunQuickRun(limit, null)
   const activeUntil =
     slice?.activeUntil != null && slice.activeUntil > ctx.now ? slice.activeUntil : null
-  const runArgs: HeroArgs = { duration: quickRun.duration, unit: quickRun.unit }
+  const runArgs: HeroArgs = {
+    duration: quickRun.duration,
+    unit: quickRun.unit,
+  }
   const label = heroText(
     `Run ${quickRun.duration} ${quickRun.unit}`,
     `Avvia ${quickRun.duration} ${quickRun.unit}`,
@@ -383,7 +477,22 @@ const consumablesContribution = contribution('consumables', ConsumablesStatusSch
     level: item.level,
     needsAttention: item.status !== null && ATTENTION_STATUSES.includes(item.status),
   }))
-  return { consumables: { items, attention: items.filter((i) => i.needsAttention).length } }
+  const attention = items.filter((i) => i.needsAttention).length
+  return {
+    consumables: { items, attention },
+    ...(attention === 0
+      ? {}
+      : {
+          facts: [
+            fact(
+              'consumables',
+              null,
+              heroText(`${attention} to check`, `${attention} da controllare`),
+              'warning',
+            ),
+          ],
+        }),
+  }
 })
 
 // ── dishwasher ─────────────────────────────────────────────────────────────
@@ -444,7 +553,24 @@ const dishwasherContribution = contribution('dishwasher', DishwasherStatusSchema
       ],
     })
   }
-  return { reading: reading('dishwasher', state), rows }
+  const remaining = slice?.remaining ?? null
+  return {
+    reading: reading('dishwasher', state),
+    rows,
+    ...(remaining === null
+      ? {}
+      : {
+          facts: [fact('remaining', 'timer', minutesLeft(remaining), 'primary')],
+          tiles: {
+            right: [
+              {
+                label: heroText('Left', 'Rimane'),
+                value: minutesLeft(remaining),
+              },
+            ],
+          },
+        }),
+  }
 })
 
 // ── media-player ───────────────────────────────────────────────────────────
@@ -576,21 +702,38 @@ const mediaPlayerContribution = contribution(
   'media-player',
   MediaPlayerStatusSchema,
   (slice, ctx) => {
-    const view = deriveMediaPlayerView(slice, ctx.features, { running: ctx.running })
+    const view = deriveMediaPlayerView(slice, ctx.features, {
+      running: ctx.running,
+    })
     const rows: HeroRow[] = []
     const playing = view.nowPlaying
     if (playing !== null && (playing.title !== null || playing.subtitle !== null)) {
       const line = [playing.title, playing.subtitle]
         .filter((p): p is string => p !== null)
         .join(' — ')
-      rows.push({ id: 'now-playing', icon: 'music', status: heroText(line, line), controls: [] })
+      rows.push({
+        id: 'now-playing',
+        icon: 'music',
+        status: heroText(line, line),
+        controls: [],
+      })
     }
     const playback = playbackControls(view, ctx)
     if (playback.length > 0)
-      rows.push({ id: 'playback', icon: 'play', status: null, controls: playback })
+      rows.push({
+        id: 'playback',
+        icon: 'play',
+        status: null,
+        controls: playback,
+      })
     const volume = volumeControls(view, slice?.volumeLevel ?? null, slice?.isMuted ?? null)
     if (volume.length > 0)
-      rows.push({ id: 'volume', icon: 'volume-2', status: null, controls: volume })
+      rows.push({
+        id: 'volume',
+        icon: 'volume-2',
+        status: null,
+        controls: volume,
+      })
     if (view.source !== null) {
       const current = view.source.current === '' ? null : view.source.current
       rows.push({
@@ -612,8 +755,35 @@ const mediaPlayerContribution = contribution(
           : [],
       })
     }
+    const volumeNow = view.volumeKnown ? (slice?.volumeLevel ?? null) : null
+    const sourceNow =
+      view.source === null || view.source.current === '' ? null : view.source.current
+    const mode =
+      view.running === 'playing' ? 'playing' : view.running === 'paused' ? 'paused' : null
+    const facts: HeroFact[] = []
+    if (sourceNow !== null) facts.push(fact('source', 'radio', heroText(sourceNow, sourceNow)))
+    if (volumeNow !== null) {
+      facts.push(fact('volume', 'volume-2', heroText(`${volumeNow}%`, `${volumeNow}%`)))
+    }
     return {
       reading: mediaReading(view),
+      facts,
+      ...(volumeNow === null
+        ? {}
+        : {
+            tiles: {
+              right: [
+                {
+                  label: heroText('Volume', 'Volume'),
+                  value: heroText(`${volumeNow}%`, `${volumeNow}%`),
+                },
+              ],
+            },
+          }),
+      scene: {
+        ...(mode === null ? {} : { mode }),
+        ...(volumeNow === null ? {} : { level: volumeNow / 100 }),
+      },
       ...(view.canSwitchPower
         ? {
             ownPower: {

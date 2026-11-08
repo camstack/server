@@ -2155,6 +2155,7 @@ export {
   remoteCapability,
 } from './remote.cap.js'
 export {
+  HERO_ROW_MODELS_MAX,
   heroLayoutCapability,
   type HeroLayoutRows,
   HeroLayoutRowsSchema,
