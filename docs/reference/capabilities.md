@@ -54,7 +54,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `device-ops` | 7 | — | — | — | — | — |
 | `device-runs` | 3 | — | — | — | — | `device-history` |
 | `device-status` | 1 | ✓ | ✓ | 1 series | — | — |
-| `device-transitions` | 5 | — | — | — | — | — |
+| `device-transitions` | 5 | — | — | — | — | `device-history` |
 | `dishwasher` | 15 | ✓ | ✓ | 6 series | — | `bosch-home-connect` |
 | `do-not-disturb` | 2 | ✓ | ✓ | 1 series | — | — |
 | `doorbell` | 1 | ✓ | ✓ | none | — | — |

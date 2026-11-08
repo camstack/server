@@ -1205,6 +1205,21 @@ export const useDeviceStateGetNativeCapSlice: typeof trpc.deviceState.getNativeC
 /** Generated alias around `trpc.deviceStatus.getStatus.useQuery`. */
 export const useDeviceStatusGetStatus: typeof trpc.deviceStatus.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.deviceStatus.getStatus.useQuery)
 
+/** Generated alias around `trpc.deviceTransitions.listTransitions.useQuery`. */
+export const useDeviceTransitionsListTransitions: typeof trpc.deviceTransitions.listTransitions.useQuery = /*#__PURE__*/ alias(() => trpc.deviceTransitions.listTransitions.useQuery)
+
+/** Generated alias around `trpc.deviceTransitions.getTransition.useQuery`. */
+export const useDeviceTransitionsGetTransition: typeof trpc.deviceTransitions.getTransition.useQuery = /*#__PURE__*/ alias(() => trpc.deviceTransitions.getTransition.useQuery)
+
+/** Generated alias around `trpc.deviceTransitions.listRecentTransitions.useQuery`. */
+export const useDeviceTransitionsListRecentTransitions: typeof trpc.deviceTransitions.listRecentTransitions.useQuery = /*#__PURE__*/ alias(() => trpc.deviceTransitions.listRecentTransitions.useQuery)
+
+/** Generated alias around `trpc.deviceTransitions.record.useMutation`. */
+export const useDeviceTransitionsRecord: typeof trpc.deviceTransitions.record.useMutation = /*#__PURE__*/ alias(() => trpc.deviceTransitions.record.useMutation)
+
+/** Generated alias around `trpc.deviceTransitions.getStatus.useQuery`. */
+export const useDeviceTransitionsGetStatus: typeof trpc.deviceTransitions.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.deviceTransitions.getStatus.useQuery)
+
 /** Generated alias around `trpc.dishwasher.start.useMutation`. */
 export const useDishwasherStart: typeof trpc.dishwasher.start.useMutation = /*#__PURE__*/ alias(() => trpc.dishwasher.start.useMutation)
 

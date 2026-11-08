@@ -117,7 +117,7 @@ describe('row counts move with the writes instead of rescanning', () => {
     const series = h.runtime.registry.all()[0]
     expect(series).toBeDefined()
     await h.runtime.retentionJob.run(
-      { rawDays: 1, fiveMinuteDays: 14, hourDays: 365, dayDays: null },
+      { rawDays: 1, fiveMinuteDays: 14, hourDays: 365, dayDays: null, transitionDays: 365 },
       h.now() + 10 * 86_400_000,
     )
     expect(raw()).toBe(0)

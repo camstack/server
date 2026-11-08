@@ -97,6 +97,7 @@ describe('device-history readiness', () => {
     expect(readiness(events, 'device-history')).not.toContain('ready')
     expect(readiness(events, 'device-removal-hook')).not.toContain('ready')
     expect(readiness(events, 'device-runs')).not.toContain('ready')
+    expect(readiness(events, 'device-transitions')).not.toContain('ready')
 
     const providers = init !== undefined && 'providers' in init ? (init.providers ?? []) : []
     const history = providers.find((p) => p.capability.name === 'device-history')?.provider
@@ -116,11 +117,17 @@ describe('device-history readiness', () => {
     const currentRun = (): Promise<unknown> =>
       Reflect.apply(Reflect.get(runs ?? {}, 'getCurrentRun'), runs, [{ deviceId: 7 }])
     await expect(currentRun()).rejects.toThrow(/starting/)
+    const transitions = providers.find((p) => p.capability.name === 'device-transitions')?.provider
+    const transitionStatus = (): Promise<unknown> =>
+      Reflect.apply(Reflect.get(transitions ?? {}, 'getStatus'), transitions, [])
+    await expect(transitionStatus()).rejects.toThrow(/starting/)
 
     await addon.onHubReachable()
     expect(readiness(events, 'device-history')).toEqual(['starting', 'ready'])
     expect(readiness(events, 'device-removal-hook')).toEqual(['starting', 'ready'])
     expect(readiness(events, 'device-runs')).toEqual(['starting', 'ready'])
+    expect(readiness(events, 'device-transitions')).toEqual(['starting', 'ready'])
+    await expect(transitionStatus()).resolves.toMatchObject({ rows: 0 })
     await expect(currentRun()).resolves.toBeNull()
     await expect(declare()).resolves.toEqual({ key: 'addon:metrics-native/level' })
 

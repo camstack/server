@@ -27,12 +27,14 @@ import {
   deviceHistoryCapability,
   deviceRemovalHookCapability,
   deviceRunsCapability,
+  deviceTransitionsCapability,
   EventCategory,
   emitReadiness,
   HISTORY_CATALOG,
   HISTORY_ITEM_CATALOG,
   type IDeviceHistoryProvider,
   type IDeviceRunsProvider,
+  type IDeviceTransitionsProvider,
   isReadingQuantity,
   type IDeviceRemovalHookProvider,
   type ProviderRegistration,
@@ -42,6 +44,7 @@ import type { SnapshotMap } from './capture/capture-engine.js'
 import { DEFAULT_RETENTION, type RetentionPolicy } from './retention/retention.js'
 import { HistoryRuntime } from './runtime/history-runtime.js'
 import { DeviceRunsService } from './runs/device-runs-service.js'
+import { TransitionsService } from './transitions/transitions-service.js'
 import { energyKwhFromHistory } from './runs/energy-from-history.js'
 import { UNRAID_ADDON_ID, type LegacyScale, unraidInformationScale } from './store/series-scale.js'
 
@@ -51,6 +54,8 @@ export interface DeviceHistoryConfig extends Record<string, unknown> {
   hourDays: number
   /** `0` keeps the daily tier forever. */
   dayDays: number
+  /** Days a device transition is kept. */
+  transitionDays: number
 }
 
 const DEFAULT_CONFIG: DeviceHistoryConfig = {
@@ -58,6 +63,7 @@ const DEFAULT_CONFIG: DeviceHistoryConfig = {
   fiveMinuteDays: DEFAULT_RETENTION.fiveMinuteDays,
   hourDays: DEFAULT_RETENTION.hourDays,
   dayDays: 0,
+  transitionDays: DEFAULT_RETENTION.transitionDays,
 }
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
@@ -81,6 +87,7 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
   private removalHook: IDeviceRemovalHookProvider | null = null
   private runsProvider: IDeviceRunsProvider | null = null
   private runs: DeviceRunsService | null = null
+  private transitions: TransitionsService | null = null
 
   /** This instance's readiness generation (the base class keeps its own private). */
   private readonly readinessGeneration: string = `device-history-${Date.now().toString(36)}`
@@ -103,6 +110,7 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     for (const capName of [
       deviceHistoryCapability.name,
       deviceRunsCapability.name,
+      deviceTransitionsCapability.name,
       deviceRemovalHookCapability.name,
     ]) {
       try {
@@ -128,6 +136,7 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       fiveMinuteDays: positiveOr(c.fiveMinuteDays, DEFAULT_RETENTION.fiveMinuteDays),
       hourDays: positiveOr(c.hourDays, DEFAULT_RETENTION.hourDays),
       dayDays: positiveOr(c.dayDays, 0) > 0 ? c.dayDays : null,
+      transitionDays: positiveOr(c.transitionDays, DEFAULT_RETENTION.transitionDays),
     }
   }
 
@@ -157,6 +166,13 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       throw new Error('device-runs is starting — the run ledger is not open yet')
     }
     return this.runsProvider
+  }
+
+  private requireTransitions(): TransitionsService {
+    if (this.transitions === null) {
+      throw new Error('device-transitions is starting — the transition ledger is not open yet')
+    }
+    return this.transitions
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
@@ -195,6 +211,13 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       getRun: async (input) => this.requireRuns().getRun(input),
       getCurrentRun: async (input) => this.requireRuns().getCurrentRun(input),
     }
+    const transitionsFacade: IDeviceTransitionsProvider = {
+      listTransitions: async (input) => this.requireTransitions().list(input),
+      getTransition: async (input) => this.requireTransitions().get(input),
+      listRecentTransitions: async (input) => this.requireTransitions().listRecent(input),
+      record: async (input) => this.requireTransitions().record(callerOf(input), input.transitions),
+      getStatus: async () => this.requireTransitions().status(),
+    }
     this.emitStoreReadiness('starting')
     this.ctx.logger.info(
       'Initialized — device-history provider registered (store opens on hub link)',
@@ -203,13 +226,14 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       onDeviceRemoved: async (input) => {
         const { series } = await this.requireRuntime().removeDevice(input.deviceId)
         const deviceRuns = (await this.runs?.removeDevice(input.deviceId)) ?? 0
-        if (series > 0 || deviceRuns > 0) {
+        const deviceTransitions = (await this.transitions?.removeDevice(input.deviceId)) ?? 0
+        if (series > 0 || deviceRuns > 0 || deviceTransitions > 0) {
           this.ctx.logger.info('device-history: removed the history of a deleted device', {
             tags: { deviceId: input.deviceId },
-            meta: { counts: { series, deviceRuns }, deletedAt: input.deletedAt },
+            meta: { counts: { series, deviceRuns, deviceTransitions }, deletedAt: input.deletedAt },
           })
         }
-        return { counts: { series, deviceRuns } }
+        return { counts: { series, deviceRuns, deviceTransitions } }
       },
       listDeviceData: async () => [
         ...[...this.requireRuntime().seriesByDevice()].map(([deviceId, count]) => ({
@@ -222,12 +246,18 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
           deviceId,
           count,
         })),
+        ...((await this.transitions?.countByDevice()) ?? []).map(({ deviceId, count }) => ({
+          store: 'transitions',
+          deviceId,
+          count,
+        })),
       ],
     }
     this.removalHook = removalHook
     return [
       { capability: deviceHistoryCapability, provider },
       { capability: deviceRunsCapability, provider: runsFacade },
+      { capability: deviceTransitionsCapability, provider: transitionsFacade },
       { capability: deviceRemovalHookCapability, provider: removalHook },
     ]
   }
@@ -265,6 +295,9 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     const runsOpened = await runs.open()
     this.runsProvider = runsOpened.provider
     this.runs = runs
+    const transitions = await this.openTransitions()
+    this.transitions = transitions
+    runtime.retentionJob.attachTransitions(transitions)
     this.unsubscribe = this.ctx.eventBus.subscribe(
       { category: EventCategory.DeviceStateChanged },
       (event) => {
@@ -328,6 +361,21 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     })
   }
 
+  private async openTransitions(): Promise<TransitionsService> {
+    const { ctx } = this
+    const records = ctx.records
+    if (records === undefined) {
+      throw new Error('device-history needs ctx.records on the hub for the transition ledger')
+    }
+    const transitions = new TransitionsService({
+      records,
+      logger: ctx.logger,
+      clock: () => Date.now(),
+    })
+    await transitions.open()
+    return transitions
+  }
+
   private async stopRuntime(): Promise<void> {
     this.unsubscribe?.()
     this.unsubscribe = null
@@ -341,6 +389,7 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     this.runtime = null
     this.runs = null
     this.runsProvider = null
+    this.transitions = null
   }
 
   protected override scopedSettingsCapabilities(): readonly string[] {
@@ -355,7 +404,7 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
           id: 'retention',
           title: 'Retention',
           description:
-            'How long each tier is kept. The raw points feed the 5-minute rollup; the 1-day tier is kept forever unless a number of days is set.',
+            'How long each tier is kept. The raw points feed the 5-minute rollup; the 1-day tier is kept forever unless a number of days is set. Device transitions (who changed what) are kept for their own number of days.',
           columns: 2,
           fields: [
             {
@@ -388,6 +437,14 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
               label: '1-day rollup (days, 0 = forever)',
               min: 0,
               max: 36500,
+              step: 1,
+            },
+            {
+              type: 'number',
+              key: 'transitionDays',
+              label: 'Device transitions (days)',
+              min: 7,
+              max: 3650,
               step: 1,
             },
           ],

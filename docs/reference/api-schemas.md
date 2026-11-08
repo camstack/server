@@ -7257,7 +7257,7 @@ Enum: `"unknown-dataset" \| "unknown-provider" \| "provider-not-configured" \| "
 
 ### `TransitionRefusalReasonSchema`
 
-Enum: `"not-kernel" \| "invalid" \| "unknown-device"`
+Enum: `"not-kernel" \| "invalid"`
 
 ### `TransitionsStatusSchema`
 

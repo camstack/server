@@ -28,7 +28,7 @@ describe('device history scoped settings', () => {
     const addon = new Probe()
     expect(addon.caps()).toContain('device-history')
     expect(keysOf(await addon.getScopedSettingsSchema('cluster', 'device-history'))).toEqual(
-      ['rawDays', 'fiveMinuteDays', 'hourDays', 'dayDays'].sort(),
+      ['rawDays', 'fiveMinuteDays', 'hourDays', 'dayDays', 'transitionDays'].sort(),
     )
     expect(await addon.getScopedSettingsSchema('cluster', 'not-a-capability')).toBeNull()
   })

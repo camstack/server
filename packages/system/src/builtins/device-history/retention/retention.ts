@@ -33,6 +33,8 @@ export interface RetentionPolicy {
   readonly hourDays: number
   /** `null` (or 0) keeps the daily tier forever. */
   readonly dayDays: number | null
+  /** Days a device transition (D1022) is kept; the same pass sweeps the ledger. */
+  readonly transitionDays: number
 }
 
 export const DEFAULT_RETENTION: RetentionPolicy = {
@@ -40,6 +42,18 @@ export const DEFAULT_RETENTION: RetentionPolicy = {
   fiveMinuteDays: 30,
   hourDays: 365,
   dayDays: null,
+  transitionDays: 365,
+}
+
+/** Rows of the transition ledger strictly older than this are deleted; the row AT it is kept. */
+export function transitionCutoff(policy: RetentionPolicy, now: number): number {
+  return now - policy.transitionDays * DAY_MS
+}
+
+/** What the retention pass needs of the transition ledger. */
+export interface TransitionSweeper {
+  /** Delete every row older than `cutoff`; answers the rows deleted. */
+  sweep(cutoff: number): Promise<number>
 }
 
 /** Cutoff per tier: rows strictly older are deleted. `null` = keep forever. */
@@ -87,11 +101,20 @@ export interface RetentionDeps {
 
 const yieldToEventLoop = (): Promise<void> => new Promise((resolve) => setImmediate(resolve))
 
+/** The cutoff of the transition ledger moves a day before it is swept again. */
+const TRANSITION_STEP_MS = DAY_MS
+
 export class RetentionJob {
   private readonly appliedUpTo = new Map<string, number>()
   private running: Promise<void> | null = null
+  private transitions: TransitionSweeper | null = null
 
   constructor(private readonly deps: RetentionDeps) {}
+
+  /** The ledger opens after the history runtime does; the pass sweeps it from then on. */
+  attachTransitions(sweeper: TransitionSweeper): void {
+    this.transitions = sweeper
+  }
 
   run(policy: RetentionPolicy, now: number): Promise<void> {
     if (this.running !== null) return this.running
@@ -127,6 +150,7 @@ export class RetentionJob {
         }
       }
       await this.purgeDeparted(now)
+      await this.sweepTransitions(policy, now)
       counters.retentionLastRunAt = now
     } catch (err) {
       logger.warn('device-history: retention pass failed — retried at the next run', {
@@ -135,7 +159,31 @@ export class RetentionJob {
     }
   }
 
-  /** Delete `[lo, hiInclusive]` of one tier in time slices, yielding between them. */
+  /** The fifth step: the transition ledger, under its own failure so the tiers never wait on it. */
+  private async sweepTransitions(policy: RetentionPolicy, now: number): Promise<void> {
+    const sweeper = this.transitions
+    if (sweeper === null) return
+    const cutoff = transitionCutoff(policy, now)
+    const applied = this.appliedUpTo.get('transitions')
+    if (applied !== undefined && cutoff - applied < TRANSITION_STEP_MS) return
+    try {
+      const deleted = await sweeper.sweep(cutoff)
+      this.appliedUpTo.set('transitions', cutoff)
+      if (deleted > 0) {
+        this.deps.logger.info('device-history: pruned device transitions past retention', {
+          meta: { deleted, cutoff, transitionDays: policy.transitionDays },
+        })
+      }
+    } catch (err) {
+      this.deps.logger.warn(
+        'device-history: transition retention failed — retried at the next run',
+        {
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        },
+      )
+    }
+  }
+
   /** Drop the visit markers of a purged series. */
   forgetSeries(seriesId: number): void {
     for (const tier of TIERS) this.appliedUpTo.delete(`${tier}:${seriesId}`)

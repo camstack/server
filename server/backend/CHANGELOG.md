@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
+- Device history keeps a ledger of device transitions (who changed what, and the outcome) with its own retention, default 365 days, in the same Retention settings.
 
 ## [1.2.808] - 2026-11-08
 

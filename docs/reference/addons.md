@@ -42,7 +42,7 @@ this column exists to stop.
 | `core-blocks` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `action-source` `actions` `core-blocks` `fan-presets` `power-source` `remote` `remote-layout-components` `schedulers` `template` `timed-run` |
 | `decoder-nodeav` | `@camstack/addon-decoder-nodeav` | pipeline | own runner | `any-node` | — | — | `audio-codec` `decoder` |
 | `detection-pipeline` | `@camstack/addon-pipeline` | pipeline | own runner | `any-node` | `detection` | — | `detection-pipeline` `load-contribution` `pipeline-executor` |
-| `device-history` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `device-history` `device-removal-hook` `device-runs` |
+| `device-history` | `@camstack/server-framework` | system | own runner | `hub-only` | — | — | `device-history` `device-removal-hook` `device-runs` `device-transitions` |
 | `device-manager` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `device-extension` `device-manager` `device-state` |
 | `embedding-encoder` | `@camstack/addon-post-analysis` | analytics | own runner | `any-node` | — | — | `embedding-encoder` |
 | `export-alexa` | `@camstack/addon-export-alexa` | exports | own runner | `hub-only` | — | — | `addon-routes` `device-export` `integration-instances` `oauth-integration` |

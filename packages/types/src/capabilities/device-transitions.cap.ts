@@ -33,7 +33,7 @@ export const DEVICE_TRANSITIONS_MAX_PAGE = 200
 export const DEVICE_TRANSITIONS_RECORD_BATCH_MAX = 500
 
 /** Why a row of a `record` batch was not written. */
-export const TransitionRefusalReasonSchema = z.enum(['not-kernel', 'invalid', 'unknown-device'])
+export const TransitionRefusalReasonSchema = z.enum(['not-kernel', 'invalid'])
 export type TransitionRefusalReason = z.infer<typeof TransitionRefusalReasonSchema>
 
 export const TransitionRecordResultSchema = z.object({
@@ -64,7 +64,10 @@ export const deviceTransitionsCapability = {
   defaultActive: true,
   deviceTypes: DEVICE_TRANSITIONS_DEVICE_TYPES,
   methods: {
-    /** Transitions of a device, newest first. `limit` is bounded; page with `cursor`. */
+    /**
+     * Transitions of a device, newest first. `limit` is bounded; page with `cursor`.
+     * At most ONE of `capName`, `actorKind`, `outcome` per call - each is served by its own index.
+     */
     listTransitions: method(
       z.object({
         deviceId: z.number().int(),
@@ -85,10 +88,9 @@ export const deviceTransitionsCapability = {
       z.object({ deviceId: z.number().int(), id: z.string() }),
       DeviceTransitionSchema.nullable(),
     ),
-    /** The fleet page: transitions across devices, newest first. */
+    /** The fleet page, newest first. At most ONE of `actorKind`, `outcome` per call. */
     listRecentTransitions: systemMethod(
       z.object({
-        deviceIds: z.array(z.number().int()).max(500).optional(),
         actorKind: TransitionActorKindSchema.optional(),
         outcome: TransitionOutcomeSchema.optional(),
         atFrom: z.number().optional(),
