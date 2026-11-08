@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Removing a legacy waste source no longer rewrites the addon's settings blob; a deleted legacy row is remembered and skipped by the migration.
+
 ## [0.1.39] - 2026-11-07
 
 ### Changed

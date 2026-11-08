@@ -9,7 +9,12 @@ import { MqttBrokerAddon } from '../mqtt-broker.addon.js'
 
 async function sectionIds(cap?: string): Promise<readonly string[]> {
   const addon = new MqttBrokerAddon()
-  if (cap === undefined) return (await addon.getGlobalSettings())?.sections.map((s) => s.id) ?? []
+  if (cap === undefined)
+    return (
+      (
+        await addon.getIntegrationFormSchema({ integrationId: null, mode: 'standalone' })
+      )?.sections.map((s) => s.id) ?? []
+    )
   return (await addon.getScopedSettingsSchema('cluster', cap))?.sections.map((s) => s.id) ?? []
 }
 

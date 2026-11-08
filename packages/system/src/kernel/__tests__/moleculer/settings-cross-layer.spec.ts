@@ -19,32 +19,12 @@ import type { ICamstackAddon, AddonDeclaration, ConfigUISchemaWithValues } from 
 // ── Test addon factory ──────────────────────────────────────────────
 
 function makeSettingsAddon(overrides?: Partial<ICamstackAddon>): ICamstackAddon {
-  const store: Record<string, unknown> = { volume: 75, theme: 'dark' }
   const deviceStores = new Map<number, Record<string, unknown>>()
 
   return {
     manifest: { id: 'test-settings-addon', name: 'Test Settings' },
     initialize: vi.fn().mockResolvedValue(undefined),
     shutdown: vi.fn().mockResolvedValue(undefined),
-
-    getGlobalSettings: vi.fn(
-      async (): Promise<ConfigUISchemaWithValues> => ({
-        sections: [
-          {
-            id: 'global',
-            title: 'Global',
-            fields: [
-              { type: 'text', key: 'theme', label: 'Theme', value: store['theme'] },
-              { type: 'number', key: 'volume', label: 'Volume', value: store['volume'] },
-            ],
-          },
-        ],
-      }),
-    ),
-
-    updateGlobalSettings: vi.fn(async (patch: Record<string, unknown>) => {
-      Object.assign(store, patch)
-    }),
 
     getDeviceSettings: vi.fn(async (deviceId: number): Promise<ConfigUISchemaWithValues> => {
       const ds = deviceStores.get(deviceId) ?? {}
@@ -86,22 +66,7 @@ describe('Addon settings via Moleculer service', () => {
     if (broker) await broker.stop()
   })
 
-  it('exposes settings.getGlobalSettings action (legacy "getAddonSettings" was collapsed into this pair)', async () => {
-    const addon = makeSettingsAddon()
-    const providers = new Map<string, unknown>([['detector', { detect: vi.fn() }]])
-
-    broker = new ServiceBroker({ nodeID: 'hub', transporter: 'Fake', logger: false })
-    const schema = createAddonService(addon, settingsDeclaration, { providers })
-    broker.createService(schema)
-    await broker.start()
-
-    const result = await broker.call('test-settings-addon.settings.getGlobalSettings', {})
-    expect(result).toBeDefined()
-    expect((result as ConfigUISchemaWithValues).sections[0]?.id).toBe('global')
-    expect(addon.getGlobalSettings).toHaveBeenCalled()
-  })
-
-  it('exposes settings.updateGlobalSettings action (legacy "updateAddonSettings" was collapsed into this pair)', async () => {
+  it('exposes no addon-level settings action: the global pair is gone, only the device pair is served', async () => {
     const addon = makeSettingsAddon()
     const providers = new Map<string, unknown>([['detector', { detect: vi.fn() }]])
 
@@ -109,11 +74,12 @@ describe('Addon settings via Moleculer service', () => {
     broker.createService(createAddonService(addon, settingsDeclaration, { providers }))
     await broker.start()
 
-    const result = await broker.call('test-settings-addon.settings.updateGlobalSettings', {
-      patch: { volume: 50 },
-    })
-    expect(result).toEqual({ success: true })
-    expect(addon.updateGlobalSettings).toHaveBeenCalledWith({ volume: 50 })
+    for (const action of ['getGlobalSettings', 'updateGlobalSettings', 'getIntegrationSettings']) {
+      await expect(broker.call(`test-settings-addon.settings.${action}`, {})).rejects.toThrow()
+    }
+    await expect(
+      broker.call('test-settings-addon.settings.getDeviceSettings', { deviceId: 1 }),
+    ).resolves.toBeDefined()
   })
 
   it('exposes settings.getDeviceSettings with deviceId', async () => {
@@ -202,7 +168,9 @@ describe('Addon settings via Moleculer service', () => {
     expect(detectResult).toEqual({ detections: ['cat'] })
 
     // Settings action works alongside
-    const settingsResult = await broker.call('test-settings-addon.settings.getGlobalSettings', {})
+    const settingsResult = await broker.call('test-settings-addon.settings.getDeviceSettings', {
+      deviceId: 1,
+    })
     expect(settingsResult).toBeDefined()
     expect((settingsResult as ConfigUISchemaWithValues).sections).toHaveLength(1)
   })

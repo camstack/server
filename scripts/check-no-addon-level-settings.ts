@@ -11,10 +11,8 @@
  * - `getGlobalSettings` / `updateGlobalSettings` (read and write that one blob),
  * - `getIntegrationSettings` (the integration-wide settings read).
  *
- * Any of them in non-test source is refused, unless the file is in
- * `scripts/no-addon-level-settings-baseline.json` under its family with the reason it cannot move yet.
- * The baseline only shrinks; P8 (M5) empties it. A listed file that no longer names any of them is an
- * error too. Key: `<repo path>:addon-level-settings`.
+ * Any of them in non-test source is refused. There is no baseline: the API is gone (P10, D986), so
+ * nothing may be listed as "cannot move yet".
  *
  * Textual: the source is read, comments are ignored, not run. Specs, `__tests__`, `dist`, `.d.ts` and
  * generated code are skipped.
@@ -23,12 +21,8 @@
  */
 import path from 'node:path'
 import {
-  compareToBaseline,
-  type FamilyBaseline,
-  type Finding,
   isMain,
   isProductSource,
-  loadBaseline,
   ROOT,
   readSources,
   report,
@@ -36,8 +30,6 @@ import {
   type Violation,
   walk,
 } from './lib/family-baseline.js'
-
-export const BASELINE_PATH = 'scripts/no-addon-level-settings-baseline.json'
 
 const RETIRED_RE =
   /\b(globalSettingsSchema|integrationSettingSections|getGlobalSettings|updateGlobalSettings|getIntegrationSettings)\b/g
@@ -56,21 +48,17 @@ export function retiredHooksOf(text: string): string[] {
   ].filter(Boolean)
 }
 
-export function findViolations(
-  sources: readonly SourceFile[],
-  baseline: FamilyBaseline,
-): Violation[] {
-  const findings: Finding[] = []
+export function findViolations(sources: readonly SourceFile[]): Violation[] {
+  const violations: Violation[] = []
   for (const source of sources) {
     const hooks = retiredHooksOf(source.text)
     if (hooks.length === 0) continue
-    findings.push({
-      key: `${source.path}:addon-level-settings`,
+    violations.push({
       where: source.path,
-      message: `names ${hooks.join(', ')}: an addon has no settings of its own (D986). Put the value in its owner's scope (clusterSettingsSchema, nodeSettingsSchema, an instance kind body); a site that cannot move yet is listed, with its reason, in ${BASELINE_PATH}`,
+      message: `names ${hooks.join(', ')}: an addon has no settings of its own and the API is deleted (D986). Put the value in its owner's scope (clusterSettingsSchema, nodeSettingsSchema, an instance kind body)`,
     })
   }
-  return compareToBaseline(findings, baseline, BASELINE_PATH)
+  return violations
 }
 
 function main(): number {
@@ -78,7 +66,7 @@ function main(): number {
     ...walk(path.join(ROOT, 'packages'), isProductSource),
     ...walk(path.join(ROOT, 'server'), isProductSource),
   ]
-  const violations = findViolations(readSources(files), loadBaseline(BASELINE_PATH))
+  const violations = findViolations(readSources(files))
   return report('check-no-addon-level-settings', violations)
 }
 

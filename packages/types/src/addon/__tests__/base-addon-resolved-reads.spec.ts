@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import type { ConfigUISchema } from '../../interfaces/config-ui.js'
 import { clearKnownSecrets } from '../../keychain/known-secrets.js'
 import { isSecretMarker, makeSecretMarker } from '../../keychain/secret-marker.js'
@@ -17,6 +18,7 @@ interface Config {
 }
 
 const ID = 'reader'
+const CAP = 'reader-cap'
 const TOKEN_REF = `secret://${ID}/global/apiToken`
 const SIGNING_REF = `secret://${ID}/global/signingKey`
 const CAM_REF = `secret://${ID}/device/7/camPassword`
@@ -37,7 +39,25 @@ class ReaderAddon extends BaseAddon<Config> {
     this.configChanges++
   }
 
-  protected override globalSettingsSchema(): ConfigUISchema {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return [CAP]
+  }
+
+  /** What an override passes as the preview overlay: the RESOLVED store. */
+  overlayWith: Record<string, unknown> | null = null
+  protected override async scopedSettingsOverlay(): Promise<Record<string, unknown> | null> {
+    return this.overlayWith
+  }
+
+  /** The addon's OWN write (not the operator's). */
+  write(patch: Partial<Config>): Promise<void> {
+    return this.clusterSettings(CAP, z.object({ host: z.string(), apiToken: z.string() })).patch(
+      patch,
+    )
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== CAP) return null
     return {
       sections: [
         {
@@ -76,7 +96,7 @@ class ReaderAddon extends BaseAddon<Config> {
 }
 
 function fieldValue(
-  form: Awaited<ReturnType<ReaderAddon['getGlobalSettings']>>,
+  form: Awaited<ReturnType<ReaderAddon['getScopedSettings']>>,
   key: string,
 ): unknown {
   const field = form?.sections.flatMap((s) => s.fields).find((f) => 'key' in f && f.key === key)
@@ -167,9 +187,10 @@ describe('BaseAddon — every addon-facing read resolves keychain markers (D798)
   it('the forms still never carry a value — global, device, and an override overlaying a resolved read', async () => {
     const addon = await started(w)
     const view = { $secret: TOKEN_REF, v: 1, set: true }
-    expect(fieldValue(await addon.getGlobalSettings(), 'apiToken')).toEqual(view)
-    // A `getGlobalSettings` override that passes the resolved store as overlay.
-    const overlaid = await addon.getGlobalSettings(await addon.globalStore())
+    expect(fieldValue(await addon.getScopedSettings('cluster', CAP), 'apiToken')).toEqual(view)
+    // An override that passes the resolved store as overlay.
+    addon.overlayWith = await addon.globalStore()
+    const overlaid = await addon.getScopedSettings('cluster', CAP)
     expect(fieldValue(overlaid, 'apiToken')).toEqual(view)
     expect(JSON.stringify(overlaid)).not.toContain('token-value-123')
     const device = await addon.getDeviceSettings(7)
@@ -195,10 +216,10 @@ describe('BaseAddon — writing back a resolved read is a no-op (D798)', () => {
     expect(w.kc.get(TOKEN_REF)?.version).toBe(1)
   })
 
-  it('updateGlobalSettings with the resolved values: no config change, no AddonUpdated', async () => {
+  it('a write of the resolved values: no config change, no AddonUpdated', async () => {
     const addon = await started(w)
     const stored = await addon.globalStore()
-    await addon.updateGlobalSettings({ host: 'cam.local', apiToken: String(stored['apiToken']) })
+    await addon.write({ host: 'cam.local', apiToken: String(stored['apiToken']) })
     expect(w.blobWrites).toBe(0)
     expect(w.puts).toBe(0)
     expect(addon.configChanges).toBe(0)
@@ -224,7 +245,7 @@ describe('BaseAddon — writing back a resolved read is a no-op (D798)', () => {
 
   it('a changed value is stored in the keychain under the same ref, never in the blob', async () => {
     const addon = await started(w)
-    await addon.updateGlobalSettings({ apiToken: 'token-value-NEW' })
+    await addon.write({ apiToken: 'token-value-NEW' })
     expect(w.store['apiToken']).toEqual(makeSecretMarker(TOKEN_REF))
     expect(w.kc.get(TOKEN_REF)).toEqual({ value: 'token-value-NEW', version: 2 })
     expect(JSON.stringify(w.store)).not.toContain('token-value-NEW')
@@ -256,7 +277,7 @@ describe('BaseAddon — an unavailable keychain (D798)', () => {
   it('an addon may not overwrite a stored secret it cannot read, even when puts work', async () => {
     w.resolveFails = true
     const addon = await started(w)
-    await expect(addon.updateGlobalSettings({ apiToken: 'minted-replacement' })).rejects.toThrow(
+    await expect(addon.write({ apiToken: 'minted-replacement' })).rejects.toThrow(
       SecretOverwriteRefusedError,
     )
     expect(w.kc.get(TOKEN_REF)).toEqual({ value: 'token-value-123', version: 1 })
@@ -275,7 +296,7 @@ describe('BaseAddon — an unavailable keychain (D798)', () => {
   it('a MISSING ref (gone from the keychain) may be minted again', async () => {
     w.kc.delete(TOKEN_REF)
     const addon = await started(w)
-    await addon.updateGlobalSettings({ apiToken: 'fresh-token-value' })
+    await addon.write({ apiToken: 'fresh-token-value' })
     expect(w.kc.get(TOKEN_REF)?.value).toBe('fresh-token-value')
     expect(w.store['apiToken']).toEqual(makeSecretMarker(TOKEN_REF))
   })

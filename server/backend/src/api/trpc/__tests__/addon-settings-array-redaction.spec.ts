@@ -11,7 +11,7 @@
  * settings (an `editable-array` of broker rows with a `password` item, a URL
  * text field with userinfo, an embedded password, client rows with a bcrypt
  * hash in a text field), hydrated by the REAL `hydrateSchema` — the pair
- * `BaseAddon.getGlobalSettings` answers with. The server never imports an
+ * `BaseAddon.getScopedSettings` answers with. The server never imports an
  * addon, not even in a spec, so the shape is restated here.
  */
 import { type ConfigUISchema, hydrateSchema } from '@camstack/types'
@@ -69,8 +69,8 @@ const BROKER_LIKE_SCHEMA: ConfigUISchema = {
 }
 
 function redactGlobal(data: unknown): unknown {
-  const redact = NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getGlobalSettings')
-  if (redact === undefined) throw new Error('addonSettings.getGlobalSettings is not redacted')
+  const redact = NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getScopedSettings')
+  if (redact === undefined) throw new Error('addonSettings.getScopedSettings is not redacted')
   return redact(data)
 }
 
@@ -90,7 +90,7 @@ const STORED = {
 }
 
 describe('addon settings: secrets inside arrays (broker-shaped schema)', () => {
-  // As `BaseAddon.getGlobalSettings` answers: inline secrets become views (D789).
+  // As `BaseAddon.getScopedSettings` answers: inline secrets become views (D789).
   const hydrated = hydrateSchema(BROKER_LIKE_SCHEMA, STORED, {
     inlineSecretsAsViews: true,
   })

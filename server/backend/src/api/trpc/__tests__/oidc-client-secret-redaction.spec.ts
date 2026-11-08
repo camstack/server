@@ -7,15 +7,9 @@
  * behaviour itself (view, locked keychain) is pinned in the addon's own spec.
  */
 import { AuthOidcAddon } from '@camstack/addon-auth/oidc'
-import { type ConfigUISchema, makeSecretMarker, toSecretFieldView } from '@camstack/types'
+import { makeSecretMarker, toSecretFieldView } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { OIDC_CONNECTION_FORM_SCHEMA } from '../../../../../../packages/addon-auth/src/oidc/oidc-connection-schema.js'
-
-class OidcSchemaProbe extends AuthOidcAddon {
-  settingsSchema(): ConfigUISchema | null {
-    return this.globalSettingsSchema()
-  }
-}
 
 const REF = 'secret://auth/oidc-provider/authentik/clientSecret'
 
@@ -23,10 +17,10 @@ const REF = 'secret://auth/oidc-provider/authentik/clientSecret'
 const INLINE_SECRET = ['real', 'authentik', 'client', 'secret'].join('-')
 
 describe('auth-oidc client secret (instances table + connection form)', () => {
-  const probe = new OidcSchemaProbe()
+  const probe = new AuthOidcAddon()
 
-  it('declares no Settings form — the client secret has no global field to land in', () => {
-    expect(probe.settingsSchema()).toBeNull()
+  it('declares no Settings form — the client secret has no global field to land in', async () => {
+    expect(await probe.listScopedSettings()).toEqual([])
   })
 
   it('the connection form declares a password clientSecret (keychain path)', () => {

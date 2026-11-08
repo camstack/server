@@ -10,6 +10,7 @@ import type { ChildAddonCallDispatchDeps } from '../../moleculer/child-addon-cal
 import { CustomActionRegistry } from '../../custom-action-registry.js'
 import { customAction } from '@camstack/types'
 import type { CustomActionsSpec } from '@camstack/types'
+import type { AddonCallInput } from '../../transport/child-cap-protocol.js'
 
 describe('createChildAddonCallDispatch', () => {
   it('routes: returns getRoutes() with handler functions STRIPPED', async () => {
@@ -194,4 +195,31 @@ describe('createChildAddonCallDispatch', () => {
     )
     await expect(dispatch({ addonId: 'other', target: 'data-planes' })).resolves.toEqual([])
   })
+})
+
+describe('the retired addon-level settings methods', () => {
+  // A hub from before D986 P10 still packs these names on the wire; the frame is untyped there,
+  // so the call is built at that boundary and the child must refuse it BY NAME.
+  const RETIRED = ['getGlobalSettings', 'updateGlobalSettings', 'getIntegrationSettings'] as const
+  const dispatch = createChildAddonCallDispatch({
+    getRouteProvider: () => null,
+    customActions: new CustomActionRegistry(),
+    getAddonInstance: () => ({ manifest: { id: 'a' } }),
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test double
+  } as unknown as ChildAddonCallDispatchDeps)
+
+  for (const method of RETIRED) {
+    it(`refuses a forked ${method} call by name`, async () => {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- legacy wire frame
+      const call = {
+        addonId: 'a',
+        target: 'settings',
+        method,
+        args: {},
+      } as unknown as AddonCallInput
+      await expect(dispatch(call)).rejects.toThrow(
+        new RegExp(`unhandled settings method "${method}"`),
+      )
+    })
+  }
 })

@@ -5,6 +5,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { z } from 'zod'
 import {
   type AddonInitResult,
   BaseAddon,
@@ -60,6 +61,16 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
   private refreshInFlight: Promise<void> | null = null
   private sourceStore: WasteSourceStore | null = null
   private activeSources: readonly WasteSourceConfig[] = []
+  /**
+   * Legacy source ids the operator deleted while the migration was pending. The legacy setting is
+   * never written (a raw write of the addon blob is gone with the addon-level API, D986); this
+   * list keeps such a row from being served again or copied into a record by the migration.
+   */
+  private readonly deletedLegacyIds = this.state(
+    'deletedLegacySourceIds',
+    z.array(z.string()),
+    [] as string[],
+  )
   /** The migration has not landed: the legacy setting is served, read-only, until it does. */
   private legacyServed = false
 
@@ -169,7 +180,7 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
     this.ctx.logger.info('waste source instance changed', {
       meta: { sourceId: id, change },
     })
-    if (change === 'deleted') await this.pruneLegacyRows((legacyId) => legacyId !== id)
+    if (change === 'deleted') await this.forgetLegacyRow(id)
     await this.reloadSources(`instance-${change}`)
   }
 
@@ -190,8 +201,9 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
    * until it lands, never half-copied.
    */
   private async migrateLegacySources(kind: WasteSourceKindDefinition): Promise<void> {
+    const skipIds = new Set(await this.deletedLegacyIds.get())
     const report = await this.runMigrations(ADDON_MIGRATIONS, (api) =>
-      wasteSourcePortsOver(api, kind),
+      wasteSourcePortsOver(api, kind, skipIds),
     )
     this.legacyServed =
       !report.declared ||
@@ -246,18 +258,20 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
     if (!this.legacyServed) return records
     // The migration has not landed: a legacy row with no record yet is still served, read-only.
     // Writes go to the records as ever; a row leaves this view as soon as a record has its id.
-    return withUnmigratedLegacyRows(records, this.parseConfigSources(this.config.sources))
+    const gone = new Set(await this.deletedLegacyIds.get())
+    const legacy = this.parseConfigSources(this.config.sources).filter((row) => !gone.has(row.id))
+    return withUnmigratedLegacyRows(records, legacy)
   }
 
   /**
-   * A source deleted at the records leaves the legacy setting too, or it would reappear beside the
-   * records (while the migration is pending) or be copied back by it.
+   * A source deleted at the records is remembered as gone while a legacy row of that id may still
+   * sit in the settings, or it would reappear beside the records (migration pending) or be copied
+   * back by the migration. The legacy setting itself is left as it is.
    */
-  private async pruneLegacyRows(keep: (id: string) => boolean): Promise<void> {
+  private async forgetLegacyRow(id: string): Promise<void> {
     const legacy = this.parseConfigSources(this.config.sources)
-    const remaining = legacy.filter((row) => keep(row.id))
-    if (remaining.length === legacy.length) return
-    await this.updateGlobalSettings({ sources: remaining })
+    if (!legacy.some((row) => row.id === id)) return
+    await this.deletedLegacyIds.update((prev) => (prev.includes(id) ? prev : [...prev, id]))
   }
 
   configuredSources(): readonly WasteSourceConfig[] {

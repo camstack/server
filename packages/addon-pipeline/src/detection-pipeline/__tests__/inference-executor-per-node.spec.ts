@@ -196,10 +196,10 @@ describe('detection-pipeline — Inference executor is per-node', () => {
     expect(fieldValue(stored, 'concurrency')).toBe(2)
   })
 
-  it('updateGlobalSettings persists under the TARGET node key and never the bare one', async () => {
+  it('updateScopedSettings persists under the TARGET node key and never the bare one', async () => {
     const { ctx, store } = makeFakeContext('hub')
     await addon!.initialize(ctx)
-    await addon!.updateGlobalSettings({ numWorkers: 2 }, 'macmini')
+    await addon!.updateScopedSettings('node', 'pipeline-executor', { numWorkers: 2 }, 'macmini')
     expect(store['numWorkers@macmini']).toBe(2)
     expect(Object.prototype.hasOwnProperty.call(store, 'numWorkers')).toBe(false)
   })

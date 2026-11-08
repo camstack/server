@@ -335,7 +335,7 @@ value that cannot be resolved stays a MARKER on these raw-shaped reads —
 blob is reachable only through `BaseAddon`'s private `rawSettings()`: the form
 hydrate (markers → views), `resolveConfig` (tracks unresolved refs for retry)
 and the save path. An override that hydrates its form from a resolved read
-through `super.getGlobalSettings(overlay)` keeps the marker for every member it
+through `scopedSettingsOverlay` keeps the marker for every member it
 carries unchanged. `scripts/check-no-raw-secret-read.ts` fails CI on addon code
 that reaches the raw view (the `initialize(context)` parameter's `settings`,
 the private members). This replaced three per-addon fixes in one evening —

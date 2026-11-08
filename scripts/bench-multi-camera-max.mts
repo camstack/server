@@ -179,8 +179,10 @@ async function applyPipelineSettings(
   let lastErr: unknown = null
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      await trpcPost(fetchFn, token, 'addonSettings.updateGlobalSettings', {
+      await trpcPost(fetchFn, token, 'addonSettings.updateScopedSettings', {
         addonId: 'detection-pipeline',
+        cap: 'pipeline-executor',
+        scope: 'node',
         nodeId: 'hub',
         patch: {
           concurrency: config.concurrency,
@@ -344,8 +346,10 @@ async function main(): Promise<void> {
   // Restore the operator's defaults: concurrency=2, batchMode='' (server picks).
   console.log('\n>> restoring detection-pipeline defaults (concurrency=2, batchMode="")')
   try {
-    await trpcPost(fetchFn, token, 'addonSettings.updateGlobalSettings', {
+    await trpcPost(fetchFn, token, 'addonSettings.updateScopedSettings', {
       addonId: 'detection-pipeline',
+      cap: 'pipeline-executor',
+      scope: 'node',
       nodeId: 'hub',
       patch: { concurrency: 2, batchMode: '', maxBatchSize: 8 },
     })

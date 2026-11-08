@@ -556,8 +556,7 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
    * `system-config` addon.
    *
    * The addon combines these raw reads with its own schema via
-   * `hydrateSchema()` inside `getAddonSettings / getGlobalSettings /
-   * getDeviceSettings` on `ICamstackAddon`. There is no defaults
+   * `hydrateSchema()` inside the scoped and device settings readers on `ICamstackAddon`. There is no defaults
    * injection or cross-level merge at this layer.
    *
    * KEYCHAIN (D798): the view a `BaseAddon` reaches as `this.ctx.settings`
@@ -583,9 +582,8 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
      *
      * @internal Low-level primitive — addons MUST NOT call this directly.
      * Use the high-level, schema-driven, per-node-aware API instead:
-     * `this.getGlobalSettings()` / `this.updateGlobalSettings()`,
-     * `this.resolveGlobalStore()` (raw view for a `getGlobalSettings`
-     * override), or `this.state<T>()` (durable JSON blob). Enforced by the
+     * `this.clusterSettings(...)`, `this.resolveGlobalStore()` (the raw
+     * per-node view), or `this.state<T>()` (durable JSON blob). Enforced by the
      * `no-raw-addon-store` biome guard over the addon source tree; the
      * sanctioned `BaseAddon` wrappers (in `@camstack/types`) and the
      * allowlisted engine-cascade holdouts are the only callers.
@@ -621,7 +619,7 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
      * layering happens only at `hydrateSchema` time).
      *
      * @internal Low-level primitive — addons MUST NOT call this directly.
-     * Use `this.updateGlobalSettings()` or `this.state<T>().set()`. Enforced
+     * Use `this.clusterSettings(...).patch()` or `this.state<T>().set()`. Enforced
      * by the `no-raw-addon-store` biome guard (see `readAddonStore`).
      */
     writeAddonStore(patch: Record<string, unknown>): Promise<void>
@@ -707,7 +705,7 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
      * `ConfigManager.getSection` recognises). Returns the raw section
      * record with no schema merging. Used by the built-in
      * `system-config` addon to surface the bootstrap
-     * sections through its `getGlobalSettings()` method.
+     * sections through its scoped settings readers.
      */
     getSection(section: string): Promise<Record<string, unknown>>
 
@@ -716,7 +714,7 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
      * into the existing section so unrelated keys are preserved.
      * Hub-only — agents have no concept of yml sections and will
      * throw. Used by the `system-config` addon's
-     * `updateGlobalSettings()` implementation.
+     * scoped writer.
      */
     setSection(section: string, patch: Record<string, unknown>): Promise<void>
   }
@@ -1022,7 +1020,7 @@ export interface ICamstackAddon {
   //           providers).
   // Level 2 — node-global settings: node-level fields shown in Cluster →
   //           NodeDetailPanel → Settings. Dynamic discovery: an addon
-  //           that doesn't implement `getGlobalSettings` doesn't appear
+  //           that declares no scoped schema doesn't appear
   //           there.
   // Level 3 — device settings: per-camera fields shown in Device
   //           Overrides.
@@ -1030,35 +1028,6 @@ export interface ICamstackAddon {
   // All six methods are OPTIONAL. They will become the canonical way
   // addons expose settings once Phase 3 removes the deprecated trio
   // above. See docs/superpowers/specs/2026-04-11-settings-redesign-design.md.
-
-  /** Level 1 — node-global settings (schema + values). Appears in
-   *  Cluster → Settings tab. `overlay` is an optional preview merge
-   *  consumed by override-mode UIs (benchmark) so cascade-aware
-   *  addons can re-derive dependent options without touching the
-   *  persisted store. */
-  getGlobalSettings?(
-    overlay?: Record<string, unknown>,
-    cap?: string,
-    nodeId?: string,
-  ): Promise<ConfigUISchemaWithValues | null>
-  updateGlobalSettings?(patch: Record<string, unknown>, nodeId?: string): Promise<void>
-  /**
-   * The same write, made by the OPERATOR (D787): the kernel's settings
-   * dispatch prefers it when the addon has it.
-   */
-  updateGlobalSettingsAsOperator?(patch: Record<string, unknown>, nodeId?: string): Promise<void>
-
-  /**
-   * Integration-level settings — the subset of the global schema the addon
-   * declared as its INTEGRATION's configuration (`BaseAddon.
-   * integrationSettingSections`). `null` ⇒ none declared, so the surface is
-   * not offered.
-   *
-   * There is no matching updater on purpose: the payload is a subset of the
-   * global schema, so `updateGlobalSettings` is the writer and the store key
-   * stays the one bare key. See `addon-settings.cap.ts`.
-   */
-  getIntegrationSettings?(nodeId?: string): Promise<ConfigUISchemaWithValues | null>
 
   /**
    * The form of ONE integration instance (create wizard or edit page): the addon's per-instance

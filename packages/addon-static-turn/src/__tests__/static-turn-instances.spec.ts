@@ -139,9 +139,9 @@ describe('StaticTurnAddon: TURN servers are integration instances (D996)', () =>
     expect((await w.getTurnServers())[0]).toMatchObject({ credential: 'pw-SECRET' })
   })
 
-  it('the page owns no settings of its own: the global schema is empty', async () => {
+  it('the page owns no settings of its own: the scoped settings are empty', async () => {
     const w = await boot()
     addons.push(w.addon)
-    expect((await w.addon.getGlobalSettings())?.sections ?? []).toEqual([])
+    expect(await w.addon.listScopedSettings()).toEqual([])
   })
 })

@@ -496,7 +496,7 @@ Logs → Destinations.
   `?section=devices` still scrolls to the table; only its position changed.
   The addon card keeps the whole panel (`showSetup` defaults to true).
 - **Settings are always the form builder.** `NodeAddonsSettingsPanel` for the
-  addon's `globalSettingsSchema(cap)`, scoped to the page's capability. A page
+  addon's scoped schema (`clusterSettingsSchema(cap)`), scoped to the page's capability. A page
   contributes panels, never a settings form. An addon whose cap-scoped schema
   would duplicate a page panel drops that section for that cap (mqtt-broker
   leaves `mqtt-broker-external` out under `broker`, because Connections edits

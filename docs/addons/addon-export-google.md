@@ -100,7 +100,7 @@ REFUSED rather than resolved: they need the current value.
 This addon holds **no Google credential**, and a HomeGraph service-account key
 must never become one. `type: 'password'` masks in the browser only:
 `packages/types/src/interfaces/config-ui.ts:1356` records that password fields
-deliberately hydrate with their stored value, so `getGlobalSettings` returns
+deliberately hydrate with their stored value, so a settings read returns
 plaintext. The `device-export` cap's `ExportSetupField.secret` has the same
 shape. When Report State is built, the key arrives by file path or environment
 variable. Full reasoning:

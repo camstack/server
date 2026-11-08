@@ -235,7 +235,7 @@ and persists `entryId` (UUID for Modal). Credentials and per-entry defaults
 `updateEntry` from Training → Providers (one form per entry, driven by
 `describeTypes[].configSchema` + `ConfigFormBuilder` — D829). An omitted
 `tokenSecret` on update means KEEP; `{ $secretClear: true }` clears. The
-provider addon's `globalSettingsSchema` does not own an `entries`
+provider addon's scoped settings do not own an `entries`
 editable-array — that would be a second authority beside the Providers
 table. `describe()` surfaces `formValues` (password fields as keychain
 views) and `defaults` for the form.

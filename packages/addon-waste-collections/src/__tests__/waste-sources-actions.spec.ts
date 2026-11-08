@@ -16,8 +16,7 @@ describe('wasteCollectionsActions catalog', () => {
 
 describe('WasteCollectionsAddon settings', () => {
   it('has no settings form of its own: sources are instances, the refresh is a page action (D986)', async () => {
-    const view = await new WasteCollectionsAddon().getGlobalSettings()
-    expect(view).toEqual({ sections: [] })
+    expect(await new WasteCollectionsAddon().listScopedSettings()).toEqual([])
   })
 })
 

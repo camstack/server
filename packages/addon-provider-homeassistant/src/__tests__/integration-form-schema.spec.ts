@@ -12,9 +12,6 @@ class Probe extends HaProviderAddon {
   formFor(): Promise<ConfigUISchema | null> {
     return this.integrationFormSchema({ integrationId: 'broker-1', mode: 'account' })
   }
-  globalFormForTest(): ConfigUISchema | null {
-    return this.globalSettingsSchema()
-  }
 }
 
 describe('the Home Assistant integration form', () => {
@@ -27,7 +24,7 @@ describe('the Home Assistant integration form', () => {
     ])
   })
 
-  it('declares no addon-settings key: the global schema is gone', () => {
-    expect(new Probe().globalFormForTest()).toBeNull()
+  it('declares no addon-settings key: the scoped settings is gone', async () => {
+    expect(await new Probe().listScopedSettings()).toEqual([])
   })
 })

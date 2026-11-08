@@ -349,7 +349,7 @@ addon's name, its category, or what its fields happen to contain.
 
 | Level | Who asks | What the addon implements | Where it lands |
 | --- | --- | --- | --- |
-| Addon settings page | `addonSettings.getGlobalSettings({addonId})` | `globalSettingsSchema()` on `BaseAddon` | the addon's own card under Integrations / Addons — and any page that mounts `NodeAddonsSettingsPanel` for it (Terminal, Cluster → Settings, Local access, an integration's page). The host re-declares nothing; the schema still comes from the addon. |
+| Addon settings page | `addonSettings.listScopedSettings({addonId})` + `getScopedSettings({addonId, cap, scope})` | `clusterSettingsSchema(cap)` / `nodeSettingsSchema(cap)` on `BaseAddon` | the addon's own card under Integrations / Addons — and any page that mounts `NodeAddonsSettingsPanel` for it (Terminal, Cluster → Settings, Local access, an integration's page). The host re-declares nothing; the schema still comes from the addon. |
 | Device **Settings** panel | `deviceManager.getDeviceSettingsAggregate({deviceId})` | `getDeviceSettingsContribution(deviceId)`, or a derived `deviceConfig` cap | the device page's **Config** tab, in the sub-tab named by `section.tab` |
 | Device **top-level tab** | the same aggregate | the same contribution, plus `location: 'top-tab'` | its own tab in the device header strip, sibling of Overview / Config |
 
@@ -397,7 +397,7 @@ the value is STORED, and conflating the two is the defect this area keeps
 producing. `perNode: true` (`ConfigFieldBase.perNode`) is the only thing that
 scopes a key to `<key>@<nodeId>`; without it the value is one blob for the whole
 cluster and the `nodeId` the UI passes is discarded by
-`BaseAddon.updateGlobalSettings`. A surface therefore has exactly one honest
+`BaseAddon.updateScopedSettings`. A surface therefore has exactly one honest
 population, and `NodeAddonsSettingsPanel` takes it as `fieldScope`:
 
 - `perNode` for a page drawn under a node's name (Cluster → node → Settings);
@@ -412,22 +412,10 @@ does the narrowing; `settings-surface-scope.spec.ts` is the guard.
 
 ### Integration-level settings
 
-An addon may declare that some of its global sections ARE the configuration of
-its **integration**, so an operator hunting "the Reolink webhook port" finds it
-under System → Integrations → Reolink instead of only in the cluster-wide list
-of every addon. It is opt-in and the declaration lives in core:
-
-```ts
-protected override integrationSettingSections(): readonly string[] {
-  return ['baichuan-webhook']   // ids from globalSettingsSchema()
-}
-```
-
-`BaseAddon.getIntegrationSettings()` then serves exactly those sections, and
-`addonSettings.getIntegrationSettings` carries them to the UI. Declaring nothing
-returns `null` and no surface is offered.
-Reolink was the reference consumer until D999 moved its webhook to the data
-plane; no addon declares integration sections today.
+There are none. An addon has no addon-level settings: `integrationSettingSections`,
+`getIntegrationSettings` and `addonSettings.getIntegrationSettings` were deleted with the rest of the
+addon-level API (D986, P10, 2026-11-07). What an integration lets the operator configure is a field of
+its instance record, below.
 
 ### Every configured thing is an instance of its owner's `integration-instances`
 
@@ -442,41 +430,12 @@ is the message bus only.
 
 An addon whose instances differ in kind (Reolink: the default integration versus an
 NVR / Home Hub) overrides `BaseAddon.integrationFormSchema(instance)` and returns
-the schema for that instance, or `null` for its global schema. `instance` is an
+the schema for that instance, or `null` to serve the form of its scoped schemas. `instance` is an
 `IntegrationInstanceRef` (`integrationId`, `null` in the create wizard, plus `mode`
 and an optional `candidateStableId`). `addonSettings.getIntegrationFormSchema` serves
-it, and falls back to `getGlobalSettings` for an addon without the hook; the wizard,
+it, and falls back to the addon's scoped schemas for an addon without the hook; the wizard,
 the edit page and the config modal all read through it. Values still come from
-`integrations.getSettings`. Extending `getGlobalSettings` with an instance argument was
-rejected: it would have touched the four hops that serve the cluster-wide settings tab.
-
-This is a second **page**, never a second **scope**
-([D269](../decisions/adr-0278-integration-level-settings-are-declared-in-core-not-borrowed-from-a-tab.md),
-superseding D268). The properties that make it safe are all in core, so no UI
-can re-decide them: the payload is a SUBSET of `globalSettingsSchema()` hydrated
-from the same store (hence the same bare key); there is deliberately **no**
-`updateIntegrationSettings`, so the writer is `updateGlobalSettings`; `perNode`
-fields are dropped, because an integration is not a node; an unknown section id
-throws rather than silently emptying the page. The panel throws on any mount
-implying a narrower scope (a `deviceId`, a node id, a competing `fieldScope`),
-so a device page cannot host one.
-
-The panel used to render an on-screen paragraph naming that scope
-("Integration-wide settings — …"). It was removed on operator request
-(2026-09-05): the refusals above already MAKE the scope true, and a sentence
-restating what the code enforces is the leftover this repo treats as worse than
-nothing. `settings-surface-scope.spec.ts` pins its absence in all three files
-that could bring it back.
-
-The sections keep appearing on the addon's own page too — they are declared, not
-moved. That page is the complete view of an addon's configuration, and one that
-silently omitted settings would be the worse failure.
-
-**Placement is never expressed by borrowing `section.tab`.** D268 did exactly
-that, and because `tab` also feeds the settings tab bar the addon's own page
-grew a tab labelled "integration". `tab` means "how to group this visually" and
-may not also mean "where this lives"; it remains available to group sections
-*within* the integration page.
+`integrations.getSettings`.
 
 **A connection that holds no devices** (Loki, the SMTP relays, the TURN servers) is not an addon-level setting at all
 ([D996](../decisions/adr-0996-connection-holding-addons-are-integration-instances.md)): the

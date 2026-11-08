@@ -124,9 +124,7 @@ describe('Alexa skill form', () => {
     }
   })
 
-  it('the addon has no page of its own: the skills are the page', () => {
-    const addon = new ExportAlexaAddon()
-    const internals = addon as unknown as { globalSettingsSchema: () => unknown }
-    expect(internals.globalSettingsSchema.call(addon)).toBeNull()
+  it('the addon has no page of its own: the skills are the page', async () => {
+    expect(await new ExportAlexaAddon().listScopedSettings()).toEqual([])
   })
 })

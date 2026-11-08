@@ -2,12 +2,12 @@
  * Settings-API migration (P3c) — the Reolink provider must access the
  * addon store through the high-level BaseAddon settings API:
  *
- *  - email-push settings reads (getGlobalSettings hydration + the
+ *  - email-push settings reads (the scoped-settings hydration + the
  *    server's `readStore` dep) via the sanctioned projected-store seam,
  *  - the bootstrapped SMTP AUTH credentials via `this.state()` durable
  *    handles (SAME keys `emailPushAuthUsername`/`emailPushAuthPassword`,
  *    same string shape),
- *  - settings writes via the base `updateGlobalSettings` (same bare
+ *  - settings writes via the base `updateScopedSettings` (same bare
  *    keys, plus the sanctioned `AddonUpdated` lifecycle emission and the
  *    `onConfigChanged` restart the old override triggered manually).
  *
@@ -135,29 +135,28 @@ describe('ReolinkProviderAddon — settings accessor migration', () => {
     expect(broker.add.mutate).not.toHaveBeenCalled()
   })
 
-  it('getGlobalSettings hydrates the seeded store values (equivalence)', async () => {
+  it('getScopedSettings hydrates the seeded store values (equivalence)', async () => {
     const { ctx } = makeCtx({ clipCatalogRefreshMinutes: 17 })
     addon = new ReolinkProviderAddon()
     await addon.initialize(ctx)
 
-    const hydrated = await addon.getGlobalSettings()
-    // `BaseAddon.getGlobalSettings` is nullable ("cannot serve settings right
-    // now"). Reolink used to override it with a non-null return; it now
-    // declares `globalSettingsSchema()` and inherits the base getter, so the
-    // null case is part of the contract and the test states it rather than
-    // leaning on a narrower override signature.
-    expect(hydrated, 'getGlobalSettings returned null').not.toBeNull()
+    // The read is nullable (the capability may declare nothing for the scope), so the null
+    // case is part of the contract and the test states it.
+    const hydrated = await addon.getScopedSettings('device-defaults', 'videoclips')
+    expect(hydrated, 'getScopedSettings returned null').not.toBeNull()
     const fields = collectFields(hydrated?.sections ?? [])
     const minutes = fields.find((f) => f.key === 'clipCatalogRefreshMinutes')
     expect(minutes?.value).toBe(17)
   })
 
-  it('updateGlobalSettings persists bare keys AND emits AddonUpdated (base settings API)', async () => {
+  it('updateScopedSettings persists bare keys AND emits AddonUpdated (base settings API)', async () => {
     const { ctx, store, captured } = makeCtx({})
     addon = new ReolinkProviderAddon()
     await addon.initialize(ctx)
 
-    await addon.updateGlobalSettings({ clipCatalogRefreshMinutes: 33 })
+    await addon.updateScopedSettings('device-defaults', 'videoclips', {
+      clipCatalogRefreshMinutes: 33,
+    })
 
     expect(store['clipCatalogRefreshMinutes']).toBe(33)
     expect(Object.keys(store).some((k) => k.includes('@'))).toBe(false)

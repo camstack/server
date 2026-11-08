@@ -167,8 +167,8 @@ replaces §6: receivers are not a builtin phase.
 
 - `scripts/check-no-addon-level-settings.ts` (wired in checks.yml): refuses `globalSettingsSchema`,
   `integrationSettingSections`, `getGlobalSettings`, `updateGlobalSettings` and `getIntegrationSettings` in
-  non-test source. Every site that exists today is in `scripts/no-addon-level-settings-baseline.json`, in the
-  family whose packet moves it; the baseline only shrinks and M5 empties it.
+  non-test source. The baseline file is deleted (P10): there is nothing left to list, and the guard takes no
+  baseline.
 - `scripts/check-scoped-settings-declared.ts` (new): every scoped schema names a cap the addon's manifest <!-- drift-ok: new guard, lands with this decision -->
   provides; the scopes of one addon declare disjoint keys; a schema key never contains `@`.
 - `scripts/check-device-settings-standard.ts` extended: an addon-settings value that is a map keyed by a
@@ -182,3 +182,18 @@ replaces §6: receivers are not a builtin phase.
     refusal with a reason.
   - Reolink migration spec: a legacy `MARK` port and password reach the builtin, a second run is a
     no-op, and a failed read writes nothing.
+
+## Status update (2026-11-07): P10 done — the API is gone
+
+`globalSettingsSchema`, `integrationSettingSections`, `getGlobalSettings`, `updateGlobalSettings` and
+`getIntegrationSettings` are deleted from the base class, `ICamstackAddon`, the `addon-settings` cap (and
+its generated routers and proxies), the child protocol and dispatch, the Moleculer service factory, the
+backend provider, the redaction and localization lists and the admin UI panel. A forked child call that
+names one of them is refused by name (`unhandled settings method`). `NodeAddonsSettingsPanel` reads and
+writes through `listScopedSettings` / `updateScopedSettings`; `settings-forwarding.ts` is deleted. The
+baseline is deleted and the guard takes none.
+
+Kept, because roughly twenty addons still depend on them and removing them is a redesign, not a deletion:
+`BaseAddon.resolveGlobalStore` (the projected raw read) and `updateGlobalSettingsAsOperator` (the operator
+write of declared keys, with D787 secret semantics). Waste collections no longer rewrites the addon blob:
+a deleted legacy row is recorded as a tombstone in durable state, and the D987 migration skips it.

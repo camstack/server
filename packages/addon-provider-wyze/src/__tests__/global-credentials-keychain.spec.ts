@@ -2,9 +2,8 @@
  * Wyze account credentials have ONE home: the integration settings. The
  * addon has no global settings form of its own.
  *
- * Regression (D787 migration, 2026-10-08): `getGlobalSettings()` was
- * overridden to expose the credential form, but `globalSettingsSchema()`
- * returned null — so the addon's secret tree was EMPTY, and every write of
+ * Regression (D787 migration, 2026-10-08): the addon exposed a credential form but declared no
+ * schema for it — so the addon's secret tree was EMPTY, and every write of
  * `password` / `apiKey` to the global store (the migration's own operator
  * write included) bypassed the keychain and landed as plaintext.
  */
@@ -120,17 +119,6 @@ describe('Wyze global store: credentials never stored as plaintext', () => {
     expect(isSecretMarker(w.store['apiKey'])).toBe(true)
   })
 
-  it('an addon write-back of a resolved config object stores markers, never plaintext', async () => {
-    const w: World = { store: {}, kc: new Map() }
-    const addon = await boot(w)
-
-    await addon.updateGlobalSettings({ password: PLAIN_PASSWORD, apiKey: PLAIN_API_KEY })
-
-    expect(plaintextIn(w.store)).toEqual([])
-    expect(isSecretMarker(w.store['password'])).toBe(true)
-    expect(isSecretMarker(w.store['apiKey'])).toBe(true)
-  })
-
   it('stale global credentials (dead: the addon reads the integration) are removed on boot', async () => {
     const w: World = {
       store: {
@@ -162,12 +150,9 @@ describe('Wyze global store: credentials never stored as plaintext', () => {
   it('the addon has no global settings form of its own: the account form is the instance form', async () => {
     const w: World = { store: {}, kc: new Map() }
     const addon = await boot(w)
-    expect(Reflect.get(addon, 'getGlobalSettings')).toBe(
-      Reflect.get(Object.getPrototypeOf(WyzeProviderAddon.prototype), 'getGlobalSettings'),
-    )
+    expect(await addon.listScopedSettings()).toEqual([])
     await addon.updateGlobalSettingsAsOperator({ password: PLAIN_PASSWORD })
-    const view = await addon.getGlobalSettings()
+    const view = await addon.getIntegrationFormSchema({ integrationId: null, mode: 'standalone' })
     expect(JSON.stringify(view)).not.toContain(PLAIN_PASSWORD)
-    expect(view).toEqual({ sections: [] })
   })
 })

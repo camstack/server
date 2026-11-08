@@ -38,7 +38,7 @@ describe('webauthn scoped settings', () => {
   })
 
   it('serves that form through the settings read without a hand-built overlay', async () => {
-    const view = await new Probe().getGlobalSettings(undefined, 'login-method')
+    const view = await new Probe().getScopedSettings('cluster', 'login-method')
     const keys = (view?.sections ?? [])
       .flatMap((section) => section.fields)
       .flatMap((field) => ('key' in field && field.type !== 'info' ? [field.key] : []))

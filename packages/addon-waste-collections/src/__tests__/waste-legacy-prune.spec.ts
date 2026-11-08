@@ -1,6 +1,7 @@
 /**
- * Deleting a source that also sits in the legacy `sources` setting removes that row too, or it
- * would reappear beside the records (migration pending) or be copied back by the migration.
+ * Deleting a source that also sits in the legacy `sources` setting must not bring it back beside
+ * the records (migration pending) or let the migration copy it into a record. The legacy setting
+ * itself is never written: the deletion is remembered as a tombstone instead (D986, P10).
  */
 import {
   type AddonContext,
@@ -10,6 +11,7 @@ import {
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { WasteCollectionsAddon } from '../waste-collections.addon.js'
+import { wasteSourcePortsOver } from '../migrations/ports.js'
 import { plainWasteSourceKind } from '../waste-source-record-kinds.js'
 
 const noopLogger = {
@@ -117,8 +119,8 @@ async function boot(
   return { addon, settings, holder }
 }
 
-describe('a delete also removes the legacy row', () => {
-  it('deleting the instance drops the legacy row, so it neither returns nor is copied back', async () => {
+describe('a delete of a pending legacy row is remembered, not written into the settings', () => {
+  it('deleting the instance keeps the legacy row from being served again, and leaves the setting alone', async () => {
     const { addon, settings, holder } = await boot()
     expect(
       addon
@@ -133,7 +135,8 @@ describe('a delete also removes the legacy row', () => {
     if (typeof provider.deleteInstance !== 'function') throw new Error('no deleteInstance')
     await provider.deleteInstance({ id: 'cabin' })
     const legacy = settings.store['sources'] as { id: string }[]
-    expect(legacy.map((r) => r.id)).toEqual(['home'])
+    expect(legacy.map((r) => r.id)).toEqual(['home', 'cabin'])
+    expect(settings.store['deletedLegacySourceIds']).toEqual(['cabin'])
     expect(addon.configuredSources().map((s) => s.id)).toEqual(['home'])
   })
 
@@ -158,7 +161,7 @@ describe('a delete also removes the legacy row', () => {
     expect(JSON.stringify([...world.tables.values()])).not.toContain('hunter2')
   })
 
-  it('the prune leaves a sealed credential a keychain marker in the legacy setting and keeps the served source in step', async () => {
+  it('deleting a source never rewrites the legacy setting, so a plaintext credential in it is not touched either way', async () => {
     const withPassword = (id: string) => ({
       id,
       label: id,
@@ -166,22 +169,37 @@ describe('a delete also removes the legacy row', () => {
       args: { city: 'Torino', password: `hunter2-${id}` },
       enabled: true,
     })
-    const world = makeInMemoryRecords('waste-collections')
-    const { addon, settings, holder } = await boot(world, world.secrets, [])
-    // The operator saved two sources with a credential: the keychain holds the values, the row a marker.
-    await addon.updateGlobalSettingsAsOperator({
-      sources: [withPassword('home'), withPassword('cabin')],
-    })
-    expect(JSON.stringify(settings.store)).not.toContain('hunter2')
+    const seed = [withPassword('home'), withPassword('cabin')]
+    const { addon, settings, holder } = await boot(
+      makeInMemoryRecords('waste-collections'),
+      undefined,
+      seed,
+    )
     const provider = holder?.provider
     if (typeof provider !== 'object' || provider === null || !('deleteInstance' in provider)) {
       throw new Error('the addon registered no integration-instances provider')
     }
     if (typeof provider.deleteInstance !== 'function') throw new Error('no deleteInstance')
     await provider.deleteInstance({ id: 'cabin' })
-    const legacy = settings.store['sources'] as { id: string }[]
-    expect(legacy.map((r) => r.id)).toEqual(['home'])
-    expect(JSON.stringify(settings.store)).not.toContain('hunter2')
+    expect(settings.store['sources']).toEqual(seed)
     expect(addon.configuredSources().map((s) => s.args['password'])).toEqual(['hunter2-home'])
+  })
+
+  it('the migration ports never offer a deleted legacy row to the copy', async () => {
+    const world = makeInMemoryRecords('waste-collections')
+    const api = {
+      settings: { read: async () => ({ store: { sources: structuredClone(LEGACY) } }) },
+      secrets: { resolve: async () => ({ values: {} }) },
+      log: { info: async () => ({}), warn: async () => ({}) },
+      records: { kind: () => world.records.kind(plainWasteSourceKind) },
+    }
+    const ports = wasteSourcePortsOver(
+      api as unknown as Parameters<typeof wasteSourcePortsOver>[0],
+      plainWasteSourceKind,
+      new Set(['cabin']),
+    )
+    const answer = await ports.readStored('sources')
+    if (answer.kind !== 'present') throw new Error('the legacy rows were not served')
+    expect((answer.value as { id: string }[]).map((r) => r.id)).toEqual(['home'])
   })
 })

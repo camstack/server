@@ -1,7 +1,7 @@
 /**
  * `BaseAddon.getIntegrationFormSchema` — the form one integration INSTANCE renders. The addon's
  * `integrationFormSchema(instance)` hook wins when it returns a schema; `null` (the default)
- * falls back to the global schema, which is what the wizard and the edit page always showed.
+ * falls back to the form of the scoped schemas.
  */
 import { describe, expect, it, vi } from 'vitest'
 import type { ConfigUISchema } from '../../interfaces/config-ui.js'
@@ -39,8 +39,11 @@ class Plain extends BaseAddon<{ globalKey: string }> {
   protected override async onInitialize() {
     return []
   }
-  protected override globalSettingsSchema() {
-    return GLOBAL
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['test-cap']
+  }
+  protected override async clusterSettingsSchema(cap: string) {
+    return cap === 'test-cap' ? GLOBAL : null
   }
 }
 

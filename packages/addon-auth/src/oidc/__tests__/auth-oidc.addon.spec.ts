@@ -356,7 +356,10 @@ describe('AuthOidcAddon — initialization', () => {
     expect(byKey.has('defaultRole')).toBe(false)
     // Settings schema itself is blurb-only (no providers editable-array).
     const { addon } = await bootAddon({ config: VIEWER_CONFIG })
-    const settings = await addon.getGlobalSettings()
+    const settings = await addon.getIntegrationFormSchema({
+      integrationId: null,
+      mode: 'standalone',
+    })
     expect(settings?.sections.flatMap((s) => s.fields)).toEqual([])
   })
 

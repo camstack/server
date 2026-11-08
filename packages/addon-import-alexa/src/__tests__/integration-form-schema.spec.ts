@@ -11,9 +11,6 @@ class Probe extends AlexaImportAddon {
   formFor(): Promise<ConfigUISchema | null> {
     return this.integrationFormSchema({ integrationId: 'acct-1', mode: 'account' })
   }
-  globalFormForTest(): ConfigUISchema | null {
-    return this.globalSettingsSchema()
-  }
 }
 
 describe('the Alexa import integration form', () => {
@@ -26,7 +23,7 @@ describe('the Alexa import integration form', () => {
     expect(keys.sort()).toEqual(['amazonDomain', 'pollIntervalMs'])
   })
 
-  it('is no longer the addon-settings global schema', () => {
-    expect(new Probe().globalFormForTest()).toBeNull()
+  it('is no longer the addon-settings scoped settings', async () => {
+    expect(await new Probe().listScopedSettings()).toEqual([])
   })
 })

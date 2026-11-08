@@ -5,9 +5,9 @@ import { BaseAddon } from '../base-addon.js'
 import { newWorld, worldContext, type KeychainWorld } from './keychain-world.js'
 
 /**
- * The Roles and nodes pickers moved from `getGlobalSettings` / `updateGlobalSettings` to the
- * scoped pair (D986 §7). Against a real settings store (no mocked hooks) a node written through
- * the old API reads back through `getScopedSettings('cluster', cap)`, and the other way round.
+ * The Roles and nodes pickers read and write through the scoped pair (D986 §7). Against a real
+ * settings store (no mocked hooks) a node written through `updateScopedSettings` lands on its bare
+ * key and reads back through `getScopedSettings('cluster', cap)`.
  */
 
 const RECORDER_CAP = 'recording'
@@ -57,28 +57,15 @@ function valueOf(form: ConfigUISchemaWithValues | null, key: string): unknown {
   return collectHydratedFieldEntries(form).get(key)?.value
 }
 
-describe('cluster pickers: the old and the scoped API share one store', () => {
+describe('cluster pickers: the scoped API stores the bare key', () => {
   it.each([
     [RECORDER_CAP, 'recordingNodeId'],
     [ANALYTICS_CAP, 'postProcessingNodeId'],
-  ])('%s: a write through updateGlobalSettings reads back through the cluster scope', async (cap, key) => {
-    const world = newWorld()
-    const addon = await boot(world)
-    await addon.updateGlobalSettings({ [key]: 'garage-nuc' })
-    expect(world.store[key]).toBe('garage-nuc')
-    expect(valueOf(await addon.getScopedSettings('cluster', cap), key)).toBe('garage-nuc')
-    expect(valueOf(await addon.getGlobalSettings(undefined, cap), key)).toBe('garage-nuc')
-  })
-
-  it.each([
-    [RECORDER_CAP, 'recordingNodeId'],
-    [ANALYTICS_CAP, 'postProcessingNodeId'],
-  ])('%s: a write through updateScopedSettings reads back through the old API', async (cap, key) => {
+  ])('%s: a write through updateScopedSettings reads back through getScopedSettings', async (cap, key) => {
     const world = newWorld()
     const addon = await boot(world)
     await addon.updateScopedSettings('cluster', cap, { [key]: 'hub' })
     expect(world.store[key]).toBe('hub')
-    expect(valueOf(await addon.getGlobalSettings(undefined, cap), key)).toBe('hub')
     expect(valueOf(await addon.getScopedSettings('cluster', cap), key)).toBe('hub')
   })
 

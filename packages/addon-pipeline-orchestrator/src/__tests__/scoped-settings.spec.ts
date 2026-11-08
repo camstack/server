@@ -6,7 +6,7 @@ import { enabledNodesFromBroker, makeFakeBroker, makeFakeContext } from './e2e-h
 
 /**
  * D986 M4: the orchestrator's cluster form is declared by `clusterSettingsSchema('pipeline-orchestrator')`.
- * Other addons read these values through `addonSettings.getGlobalSettings({ addonId })` (no cap),
+ * Other addons read these values through the scoped reads (`readScopedValues`),
  * so the stored value has to come back unchanged through the scoped declaration.
  */
 const CLUSTER_KEYS = [
@@ -87,7 +87,7 @@ describe('the pipeline orchestrator scoped settings', () => {
     addon = new Probe()
     await addon.initialize(ctx)
     initialized = true
-    const view = await addon.getGlobalSettings()
+    const view = await addon.getIntegrationFormSchema({ integrationId: null, mode: 'standalone' })
     expect(pickDetailCropConvention(view)).toEqual({ paddingRatio: 0.37, square: true })
     const values = new Map<string, unknown>()
     for (const section of view?.sections ?? []) {

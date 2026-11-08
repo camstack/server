@@ -9,7 +9,7 @@
  * `addonSettings.listScopedSettings` names the (capability, scope) pairs it serves,
  * `getScopedSettings` reads each, and a Save writes every key to the pair that declared it
  * (`updateScopedSettings`). `null` from the listing is "not available", never "no settings".
- * The integration surface and the device level keep their own endpoints.
+ * The device level keeps its own endpoints.
  *
  * Consumers pass:
  *   - `nodeId`: which node to target. `null` means hub.
@@ -72,11 +72,9 @@ import {
   type ScopedTarget,
 } from '../../lib/settings-scoped-source'
 import { shapeSections, shownTab, type SectionShape } from '../../lib/settings-section-shape'
-import { type SettingsSurface } from '../../lib/settings-forwarding'
 
 import {
   useAddonSettingsUpdateDeviceSettings,
-  useAddonSettingsUpdateGlobalSettings,
   useAddonSettingsUpdateScopedSettings,
   useAddonsList,
   useAudioAnalyzerReprobeAudioEngine,
@@ -145,19 +143,6 @@ interface NodeAddonsSettingsPanelProps {
    * lying about at least one of them.
    */
   readonly fieldScope?: SettingsFieldScope
-  /**
-   * Render the addon's INTEGRATION-LEVEL settings instead of its whole global
-   * schema: the sections it declared in `BaseAddon.integrationSettingSections()`,
-   * fetched through `addonSettings.getIntegrationSettings`.
-   *
-   * The selection is core's, not this panel's — core answers with the declared
-   * sections already stripped of `perNode` fields. What this prop adds is a
-   * REFUSAL of every mount that would imply a narrower scope than the payload
-   * has (a device level, a `deviceId`, a node id, or a `fieldScope`). Saves
-   * still go through the addon-wide write, which is why the store key is the
-   * same one the addon's own page writes. See `lib/settings-forwarding.ts`.
-   */
-  readonly surface?: SettingsSurface
   /**
    * Replaces the generic "Nothing to configure here" line. A surface that
    * narrows its population with `fieldScope` must say WHY it is empty and
@@ -302,7 +287,7 @@ interface AddonPaneEntry {
   readonly schema: ConfigUISchema
   /** Flat key→value map of the server-authoritative values. */
   readonly serverValues: Record<string, unknown>
-  /** Field key → the (cap, scope) that stores it; empty for the integration surface. */
+  /** Field key → the (cap, scope) that stores it; empty when none. */
   readonly keyTargets: Readonly<Record<string, readonly ScopedTarget[]>>
 }
 
@@ -331,7 +316,6 @@ export function NodeAddonsSettingsPanel({
   tabLabelOverrides,
   sectionTab: controlledSectionTab,
   fieldScope,
-  surface,
   emptyMessage,
   extraTabs,
   schemaTabExtras,
@@ -344,7 +328,6 @@ export function NodeAddonsSettingsPanel({
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const trpcClient = useSystem().trpcClient
-  const updateGlobalMutation = useAddonSettingsUpdateGlobalSettings()
   const updateScopedMutation = useAddonSettingsUpdateScopedSettings()
   const updateDeviceMutation = useAddonSettingsUpdateDeviceSettings()
   const reprobeHwaccelMutation = useDecoderReprobeHwaccel()
@@ -363,39 +346,6 @@ export function NodeAddonsSettingsPanel({
     throw new Error('NodeAddonsSettingsPanel: deviceId is required when level === "device"')
   }
 
-  // Integration-level settings are addon-wide by construction. Each refusal
-  // below is a mount that would silently re-scope them; they throw rather than
-  // warn because every one renders a plausible-looking form that writes
-  // somewhere the operator did not mean.
-  if (surface !== undefined) {
-    // `level: 'device'` / a `deviceId` is the `ProviderSettingsTab` defect: an
-    // addon-wide schema under ONE camera's heading, where editing the SMTP
-    // port from camera 102 reconfigures every Reolink.
-    if (level !== 'global' || deviceId !== undefined) {
-      throw new Error(
-        'NodeAddonsSettingsPanel: integration-level settings are addon-wide — they cannot be ' +
-          'mounted at device level or with a deviceId. A second page, never a second scope.',
-      )
-    }
-    // A node id is the `AddonCard` defect: `nodeId="hub"` wrote `<key>@hub`
-    // while the same label on the node card wrote `<key>@<thatNode>`.
-    if (nodeId !== null) {
-      throw new Error(
-        'NodeAddonsSettingsPanel: an integration has no node behind it — pass nodeId={null}. ' +
-          `Received ${JSON.stringify(nodeId)}.`,
-      )
-    }
-    // Core already stripped `perNode` from this payload; a caller-supplied
-    // scope is the "two knobs that disagree" shape even when it happens to
-    // agree, and it would be applied to a schema that no longer needs it.
-    if (fieldScope !== undefined) {
-      throw new Error(
-        'NodeAddonsSettingsPanel: integration-level settings arrive already cluster-scoped from ' +
-          'core — remove `fieldScope` rather than restating it.',
-      )
-    }
-  }
-
   const effectiveNodeId = nodeId ?? 'hub'
 
   // ── Parallel fetches ─────────────────────────────────────────────
@@ -404,14 +354,7 @@ export function NodeAddonsSettingsPanel({
   const queries = useQueries({
     queries: addonIds.map((addonId) => ({
       queryKey: [
-        [
-          'addonSettings',
-          surface !== undefined
-            ? 'getIntegrationSettings'
-            : level === 'global'
-              ? 'listScopedSettings'
-              : 'getDeviceSettings',
-        ],
+        ['addonSettings', level === 'global' ? 'listScopedSettings' : 'getDeviceSettings'],
         {
           addonId,
           nodeId: effectiveNodeId,
@@ -426,17 +369,6 @@ export function NodeAddonsSettingsPanel({
         },
       ],
       queryFn: async (): Promise<AddonSettingsAnswer> => {
-        // An integration surface asks CORE for the addon's declared sections.
-        // The narrowing is not repeated here on purpose: a client-side filter
-        // beside the server-side one is a second opinion about which settings
-        // are integration-level, and the two would eventually disagree.
-        if (surface !== undefined) {
-          const result = await trpcClient.addonSettings.getIntegrationSettings.query({
-            addonId,
-            nodeId: effectiveNodeId,
-          })
-          return { addonId, result: result as ConfigUISchemaWithValues | null, keyTargets: {} }
-        }
         if (level === 'global') {
           // The addon's scoped schemas: what it serves, per (cap, scope). `null` is
           // "could not be asked" — never "serves nothing" (that is `[]`).
@@ -749,7 +681,6 @@ export function NodeAddonsSettingsPanel({
   const unavailableAddonIds = useMemo<readonly string[]>(
     () =>
       queries.flatMap((q) =>
-        surface === undefined &&
         level === 'global' &&
         q.data !== undefined &&
         q.data.result === null &&
@@ -758,7 +689,7 @@ export function NodeAddonsSettingsPanel({
           : [],
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [queriesDataHash, surface, level],
+    [queriesDataHash, level],
   )
 
   // Pending state by addonId, fed by AddonFormPane.onStateChange.
@@ -787,7 +718,7 @@ export function NodeAddonsSettingsPanel({
 
   /**
    * Write one addon's patch. Global level: each key goes to the (cap, scope) that declared it,
-   * one `updateScopedSettings` per target; the integration surface keeps the addon-wide write.
+   * one `updateScopedSettings` per target.
    */
   const writeAddonPatch = useCallback(
     async (addonId: string, patch: Record<string, unknown>): Promise<void> => {
@@ -798,10 +729,6 @@ export function NodeAddonsSettingsPanel({
           nodeId: effectiveNodeId,
           patch,
         })
-        return
-      }
-      if (surface !== undefined) {
-        await updateGlobalMutation.mutateAsync({ addonId, nodeId: effectiveNodeId, patch })
         return
       }
       const keyTargets = paneEntries.find((entry) => entry.addonId === addonId)?.keyTargets ?? {}
@@ -835,9 +762,7 @@ export function NodeAddonsSettingsPanel({
     },
     [
       level,
-      surface,
       paneEntries,
-      updateGlobalMutation,
       updateScopedMutation,
       updateDeviceMutation,
       queryClient,

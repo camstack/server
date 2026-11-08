@@ -455,7 +455,7 @@ Conventions:
   ([D232](../decisions/adr-0232-a-forked-deviceproxy-listens-on-the-event-bus.md)).
 - Per-device settings are `scope: 'device'` fields in the config schema.
 - **Was this key ever WRITTEN?** is a question the hydrated view cannot answer
-  (`getGlobalSettings` reports `value ?? default`) and `readAddonStore()` must
+  (`getScopedSettings` reports `value ?? default`) and `readAddonStore()` must
   not be asked (it folds a failed read into `{}`). Ask
   `this.readStoredGlobalKey(key)` (`BaseAddon`), which answers `present`,
   `absent` or `unreadable` — and `unreadable` is never turned into "never

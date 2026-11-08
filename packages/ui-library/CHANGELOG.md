@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The generated addon-settings hooks for the deleted global and integration settings calls are removed.
+
 ## [1.2.400] - 2026-11-07
 
 ### Changed

@@ -595,22 +595,6 @@ export function createCapRouter_addonSettings(
   _createRemoteProxy?: (capName: string, nodeId: string) => AddonSettingsProvider | null,
 ) {
   return trpcRouter({
-    getGlobalSettings: protectedProcedure
-      .input(addonSettingsCapability.methods.getGlobalSettings.input.loose())
-      .output(addonSettingsCapability.methods.getGlobalSettings.output)
-      .query(async ({ input, ctx }) => {
-        const p = requireCapProvider('addon-settings', () => getProvider(ctx))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.getGlobalSettings(input as any)
-      }),
-    updateGlobalSettings: adminProcedure
-      .input(addonSettingsCapability.methods.updateGlobalSettings.input.loose())
-      .output(addonSettingsCapability.methods.updateGlobalSettings.output)
-      .mutation(async ({ input, ctx }) => {
-        const p = requireCapProvider('addon-settings', () => getProvider(ctx))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.updateGlobalSettings(input as any)
-      }),
     getScopedSettings: protectedProcedure
       .input(addonSettingsCapability.methods.getScopedSettings.input.loose())
       .output(addonSettingsCapability.methods.getScopedSettings.output)
@@ -642,14 +626,6 @@ export function createCapRouter_addonSettings(
         const p = requireCapProvider('addon-settings', () => getProvider(ctx))
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.readScopedValues(input as any)
-      }),
-    getIntegrationSettings: protectedProcedure
-      .input(addonSettingsCapability.methods.getIntegrationSettings.input.loose())
-      .output(addonSettingsCapability.methods.getIntegrationSettings.output)
-      .query(async ({ input, ctx }) => {
-        const p = requireCapProvider('addon-settings', () => getProvider(ctx))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.getIntegrationSettings(input as any)
       }),
     getIntegrationFormSchema: protectedProcedure
       .input(addonSettingsCapability.methods.getIntegrationFormSchema.input.loose())

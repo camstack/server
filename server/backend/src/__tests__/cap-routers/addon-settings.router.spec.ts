@@ -15,10 +15,6 @@ import { makeCtx, invokeProcedure, checkAuthMatrix, buildCapRouterForTest } from
 
 function makeMockProvider(): IAddonSettingsProvider {
   return {
-    getGlobalSettings: vi.fn(async () => ({
-      sections: [{ id: 'g', title: 'Global', fields: [] }],
-    })),
-    updateGlobalSettings: vi.fn(async () => ({ success: true as const })),
     getDeviceSettings: vi.fn(async () => ({
       sections: [{ id: 'd', title: 'Device', fields: [] }],
     })),
@@ -27,29 +23,6 @@ function makeMockProvider(): IAddonSettingsProvider {
 }
 
 describe('addon-settings cap router', () => {
-  it('getGlobalSettings returns schema', async () => {
-    const provider = makeMockProvider()
-    const router = buildCapRouterForTest('addon-settings', () => provider)
-    const result = await invokeProcedure(router, 'getGlobalSettings', makeCtx('admin'), {
-      addonId: 'test',
-    })
-    expect(result.ok).toBe(true)
-    if (result.ok)
-      expect(result.value).toEqual({ sections: [{ id: 'g', title: 'Global', fields: [] }] })
-    expect(provider.getGlobalSettings).toHaveBeenCalledWith({ addonId: 'test' })
-  })
-
-  it('updateGlobalSettings returns success', async () => {
-    const provider = makeMockProvider()
-    const router = buildCapRouterForTest('addon-settings', () => provider)
-    const result = await invokeProcedure(router, 'updateGlobalSettings', makeCtx('admin'), {
-      addonId: 'test',
-      patch: { volume: 50 },
-    })
-    expect(result.ok).toBe(true)
-    if (result.ok) expect(result.value).toEqual({ success: true })
-  })
-
   it('getDeviceSettings passes deviceId', async () => {
     const provider = makeMockProvider()
     const router = buildCapRouterForTest('addon-settings', () => provider)
@@ -77,8 +50,9 @@ describe('addon-settings cap router', () => {
 
   it('returns PRECONDITION_FAILED when provider is null', async () => {
     const router = buildCapRouterForTest('addon-settings', () => null)
-    const result = await invokeProcedure(router, 'getGlobalSettings', makeCtx('admin'), {
+    const result = await invokeProcedure(router, 'getDeviceSettings', makeCtx('admin'), {
       addonId: 'x',
+      deviceId: 1,
     })
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.code).toBe('PRECONDITION_FAILED')
@@ -87,8 +61,8 @@ describe('addon-settings cap router', () => {
   it('getters enforce protected auth', async () => {
     const provider = makeMockProvider()
     const router = buildCapRouterForTest('addon-settings', () => provider)
-    for (const method of ['getGlobalSettings', 'getDeviceSettings']) {
-      const input = method.includes('Device') ? { addonId: 'x', deviceId: 1 } : { addonId: 'x' }
+    for (const method of ['getDeviceSettings']) {
+      const input = { addonId: 'x', deviceId: 1 }
       const results = await checkAuthMatrix(router, method, 'protected', input)
       for (const r of results) {
         if (r.allowed) expect(r.outcome.ok).toBe(true)
@@ -100,10 +74,8 @@ describe('addon-settings cap router', () => {
   it('updaters enforce admin auth', async () => {
     const provider = makeMockProvider()
     const router = buildCapRouterForTest('addon-settings', () => provider)
-    for (const method of ['updateGlobalSettings', 'updateDeviceSettings']) {
-      const input = method.includes('Device')
-        ? { addonId: 'x', deviceId: 1, patch: {} }
-        : { addonId: 'x', patch: {} }
+    for (const method of ['updateDeviceSettings']) {
+      const input = { addonId: 'x', deviceId: 1, patch: {} }
       const results = await checkAuthMatrix(router, method, 'admin', input)
       for (const r of results) {
         if (r.allowed) expect(r.outcome.ok).toBe(true)

@@ -10,9 +10,8 @@ import { BaseAddon } from '../base-addon.js'
 import { fakeAddonContext } from '../fake-addon-context.js'
 
 /**
- * D986 M4: the three readers of the addon-level schema (`perNodeKeys`, the secret tree, the
- * restart check) see the SCOPED schemas, so an addon can drop `globalSettingsSchema` without
- * losing a node key, a secret or a restart.
+ * D986 M4: the three readers of the addon's schemas (`perNodeKeys`, the secret tree, the
+ * restart check) see the SCOPED schemas, so an addon keeps a node key, a secret and a restart.
  */
 
 interface Config {
@@ -22,6 +21,7 @@ interface Config {
 }
 
 const CAP = 'device-export'
+const INSTANCE = { integrationId: null, mode: 'standalone' } as const
 
 const nodeSchema: ConfigUISchema = {
   sections: [
@@ -46,7 +46,7 @@ const clusterSchema: ConfigUISchema = {
   ],
 }
 
-/** HAP-shaped: the old hook is null, the scoped hooks carry everything. */
+/** HAP-shaped: the scoped hooks carry everything. */
 class ScopedOnlyAddon extends BaseAddon<Config> {
   constructor() {
     super({ interfaceName: '', clusterToken: '', mode: 'a' })
@@ -144,7 +144,7 @@ describe('BaseAddon readers of the scoped schemas', () => {
     const h = makeCtx('node-b')
     const addon = new ScopedOnlyAddon()
     await addon.initialize(h.ctx)
-    await addon.updateGlobalSettings({ interfaceName: 'eth9' })
+    await addon.updateScopedSettings('node', CAP, { interfaceName: 'eth9' })
     expect(h.store()['interfaceName@node-b']).toBe('eth9')
     expect(h.store()['interfaceName']).toBeUndefined()
   })
@@ -153,7 +153,7 @@ describe('BaseAddon readers of the scoped schemas', () => {
     const h = makeCtx('node-b')
     const addon = new ScopedOnlyAddon()
     await addon.initialize(h.ctx)
-    await addon.updateGlobalSettings({ interfaceName: 'eth1' }, 'node-c')
+    await addon.updateScopedSettings('node', CAP, { interfaceName: 'eth1' }, 'node-c')
     expect(h.store()['interfaceName@node-c']).toBe('eth1')
     expect(h.store()['interfaceName']).toBeUndefined()
   })
@@ -173,7 +173,7 @@ describe('BaseAddon readers of the scoped schemas', () => {
     const h = makeCtx('node-b', true)
     const addon = new ScopedOnlyAddon()
     await addon.initialize(h.ctx)
-    await addon.updateGlobalSettings({ clusterToken: 'super-secret-123' })
+    await addon.updateScopedSettings('cluster', CAP, { clusterToken: 'super-secret-123' })
     expect(isSecretMarker(h.store()['clusterToken'])).toBe(true)
     expect(JSON.stringify(h.store())).not.toContain('super-secret-123')
   })
@@ -184,7 +184,7 @@ describe('BaseAddon readers of the scoped schemas', () => {
       const h = makeCtx('node-b')
       const addon = new ScopedOnlyAddon()
       await addon.initialize(h.ctx)
-      await addon.updateGlobalSettings({ mode: 'b' })
+      await addon.updateScopedSettings('cluster', CAP, { mode: 'b' })
       await vi.runAllTimersAsync()
       expect(h.calls).toEqual(['addons.restartAddon'])
     } finally {
@@ -192,12 +192,12 @@ describe('BaseAddon readers of the scoped schemas', () => {
     }
   })
 
-  it('getGlobalSettings serves the scoped sections when no global schema is declared', async () => {
+  it('the integration form serves the scoped sections of an addon with no per-instance schema', async () => {
     const h = makeCtx('node-b')
     await h.ctx.settings?.writeAddonStore({ 'interfaceName@node-b': 'eth9' })
     const addon = new ScopedOnlyAddon()
     await addon.initialize(h.ctx)
-    const form = await addon.getGlobalSettings()
+    const form = await addon.getIntegrationFormSchema(INSTANCE)
     const field = form?.sections
       .flatMap((section) => section.fields)
       .find((f) => 'key' in f && f.key === 'interfaceName')
@@ -215,7 +215,7 @@ describe('BaseAddon readers of the scoped schemas', () => {
     }
     const addon = new TwoCaps()
     await addon.initialize(makeCtx('node-b').ctx)
-    const form = await addon.getGlobalSettings()
+    const form = await addon.getIntegrationFormSchema(INSTANCE)
     expect(form?.sections.filter((section) => section.id === 'node')).toHaveLength(1)
   })
 

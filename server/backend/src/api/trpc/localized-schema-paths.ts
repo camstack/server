@@ -9,9 +9,7 @@
  * schema served from a path not listed simply stays English.
  */
 export const LOCALIZED_SCHEMA_PATHS: ReadonlySet<string> = new Set([
-  'addonSettings.getGlobalSettings',
   'addonSettings.getScopedSettings',
-  'addonSettings.getIntegrationSettings',
   'addonSettings.getIntegrationFormSchema',
   'addonSettings.getDeviceSettings',
   'deviceManager.getDeviceSettingsAggregate',

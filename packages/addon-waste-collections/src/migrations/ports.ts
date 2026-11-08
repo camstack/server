@@ -8,9 +8,18 @@ import {
 import type { plainWasteSourceKind, WasteSourceBody } from '../waste-source-record-kinds.js'
 import type { wasteSourceEntryKind } from '../waste-source-record-kinds.js'
 import { bodyOf, rowToSource } from '../waste-source-store.js'
-import type { WasteSourcePorts } from './sources-from-settings.js'
+import { LEGACY_SOURCES_KEY, type WasteSourcePorts } from './sources-from-settings.js'
 
 const PAGE = 1000
+
+/** The legacy rows without the ones whose id was deleted; anything that is not a list stays. */
+function withoutSkipped(value: unknown, skipIds: ReadonlySet<string>): unknown {
+  if (!Array.isArray(value) || skipIds.size === 0) return value
+  return value.filter((row: unknown) => {
+    const id: unknown = typeof row === 'object' && row !== null ? Reflect.get(row, 'id') : undefined
+    return typeof id !== 'string' || !skipIds.has(id)
+  })
+}
 
 /** The slice of the migration API these ports use. */
 export type WastePortsApi = Pick<MigrationApiV1, 'settings' | 'secrets' | 'log' | 'records'>
@@ -24,6 +33,7 @@ export type WasteSourceKindDefinition = typeof wasteSourceEntryKind | typeof pla
 export function wasteSourcePortsOver(
   api: WastePortsApi,
   kind: WasteSourceKindDefinition,
+  skipIds: ReadonlySet<string> = new Set(),
 ): WasteSourcePorts {
   const handle = api.records.kind(kind)
   const secrets = {
@@ -56,7 +66,11 @@ export function wasteSourcePortsOver(
     if (!Object.hasOwn(store, key)) return { kind: 'absent' }
     // A credential the keychain cannot serve stays a marker: the step refuses it by name.
     const { value } = await resolveSecretMarkers(store[key], secrets, { unresolved: 'keep-marker' })
-    return { kind: 'present', value }
+    // A legacy row the operator deleted while this step was pending is never copied back.
+    return {
+      kind: 'present',
+      value: key === LEGACY_SOURCES_KEY ? withoutSkipped(value, skipIds) : value,
+    }
   }
   const asRow = (row: MigrationRecordRowV1<WasteSourceBody>) => rowToSource(row.id, row.data)
   return {

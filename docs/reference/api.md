@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**201 capabilities · 1467 methods.**
+**201 capabilities · 1464 methods.**
 
 ## Method index
 
@@ -33,13 +33,10 @@
 | `addonPagesSource.listPages` | query | admin | addon-pages-source |
 | `addonRoutes.getRoutes` | query | admin | addon-routes |
 | `addonRoutes.invoke` | mutation | admin | addon-routes |
-| `addonSettings.getGlobalSettings` | query | protected | addon-settings |
-| `addonSettings.updateGlobalSettings` | mutation | admin | addon-settings |
 | `addonSettings.getScopedSettings` | query | protected | addon-settings |
 | `addonSettings.listScopedSettings` | query | protected | addon-settings |
 | `addonSettings.updateScopedSettings` | mutation | admin | addon-settings |
 | `addonSettings.readScopedValues` | query | protected | addon-settings |
-| `addonSettings.getIntegrationSettings` | query | protected | addon-settings |
 | `addonSettings.getIntegrationFormSchema` | query | protected | addon-settings |
 | `addonSettings.getDeclaredSettingsKeys` | query | admin | addon-settings |
 | `addonSettings.unsetStoredSettingsKeys` | mutation | admin | addon-settings |
@@ -1576,13 +1573,10 @@
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
-| getGlobalSettings | `addonSettings.getGlobalSettings` | query | protected | `{ addonId: string; nodeId?: string; overlay?: Record<string, unknown>; cap?: string }` | `SettingsSchemaWithValuesSchema \| null` |
-| updateGlobalSettings | `addonSettings.updateGlobalSettings` | mutation | admin | `{ addonId: string; nodeId?: string; patch: SettingsPatchSchema }` | `SettingsUpdateResultSchema` |
 | getScopedSettings | `addonSettings.getScopedSettings` | query | protected | `{ addonId: string; cap: string; scope: "cluster" \| "device-defaults" \| "node"; nodeId?: string }` | `SettingsSchemaWithValuesSchema \| null` |
 | listScopedSettings | `addonSettings.listScopedSettings` | query | protected | `{ addonId: string; nodeId?: string }` | `({ cap: string; scope: "cluster" \| "device-defaults" \| "node"; sectionIds: string[] })[] \| null` |
 | updateScopedSettings | `addonSettings.updateScopedSettings` | mutation | admin | `{ addonId: string; cap: string; scope: "cluster" \| "device-defaults" \| "node"; nodeId?: string; patch: SettingsPatchSchema }` | `SettingsUpdateResultSchema` |
 | readScopedValues | `addonSettings.readScopedValues` | query | protected | `{ addonId: string; cap: string; scope: "cluster" \| "device-defaults" \| "node"; nodeId?: string }` | `Record<string, unknown> \| null` |
-| getIntegrationSettings | `addonSettings.getIntegrationSettings` | query | protected | `{ addonId: string; nodeId?: string }` | `SettingsSchemaWithValuesSchema \| null` |
 | getIntegrationFormSchema | `addonSettings.getIntegrationFormSchema` | query | protected | `{ addonId: string; nodeId?: string; instance: { integrationId: string \| null; mode: "standalone" \| "account" \| "broker"; candidateStableId?: string } }` | `SettingsSchemaWithValuesSchema \| null` |
 | getDeclaredSettingsKeys | `addonSettings.getDeclaredSettingsKeys` | query | admin | `{ addonId: string; nodeId?: string }` | `{ keys: string[] } \| null` |
 | unsetStoredSettingsKeys | `addonSettings.unsetStoredSettingsKeys` | mutation | admin | `{ addonId: string; nodeId?: string; keys: string[] }` | `{ removed: string[]; refused: ({ key: string; reason: string })[]; secretsCleared: number }` |

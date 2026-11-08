@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { EventCategory } from '../../enums/event-category.js'
-import type { ConfigFieldWithValue, ConfigUISchemaWithValues } from '../../interfaces/config-ui.js'
+import type {
+  ConfigFieldWithValue,
+  ConfigUISchema,
+  ConfigUISchemaWithValues,
+} from '../../interfaces/config-ui.js'
 import { BaseAddon } from '../base-addon.js'
 
 // ── Fakes ───────────────────────────────────────────────────────────────
@@ -50,7 +54,9 @@ function emittedCategories(emit: ReturnType<typeof vi.fn>): string[] {
   })
 }
 
-// ── Addon WITHOUT any perNode field (the P2a steady state) ──────────────
+const CAP = 'test-cap'
+
+// ── Addon WITHOUT any node-scoped field ──────────────────────────────────
 
 interface PlainConfig {
   shared: string
@@ -66,7 +72,11 @@ class PlainAddon extends BaseAddon<PlainConfig> {
   async resolveStoreFor(nodeId?: string): Promise<Record<string, unknown>> {
     return this.resolveGlobalStore(nodeId)
   }
-  protected globalSettingsSchema() {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return [CAP]
+  }
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== CAP) return null
     return this.schema({
       sections: [
         {
@@ -104,7 +114,25 @@ class PerNodeAddon extends BaseAddon<NodeScopedConfig> {
   async resolveStoreFor(nodeId?: string): Promise<Record<string, unknown>> {
     return this.resolveGlobalStore(nodeId)
   }
-  protected globalSettingsSchema() {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return [CAP]
+  }
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== CAP) return null
+    return this.schema({
+      sections: [
+        {
+          id: 'cluster',
+          title: 'Cluster',
+          fields: [
+            this.field({ type: 'text', key: 'shared', label: 'Shared', default: 'default-shared' }),
+          ],
+        },
+      ],
+    })
+  }
+  protected override async nodeSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== CAP) return null
     return this.schema({
       sections: [
         {
@@ -116,13 +144,11 @@ class PerNodeAddon extends BaseAddon<NodeScopedConfig> {
               key: 'backend',
               label: 'Backend',
               default: 'ffmpeg',
-              perNode: true,
               options: [
                 { value: 'ffmpeg', label: 'FFmpeg' },
                 { value: 'nodeav', label: 'NodeAV' },
               ],
             }),
-            this.field({ type: 'text', key: 'shared', label: 'Shared', default: 'default-shared' }),
           ],
         },
       ],
@@ -139,28 +165,28 @@ class PerNodeAddon extends BaseAddon<NodeScopedConfig> {
 // ── No-op guarantee: NO field is perNode ⇒ byte-identical behavior ──────
 
 describe('BaseAddon settings — no perNode fields (no-op guarantee)', () => {
-  it('getGlobalSettings hydrates from the raw store verbatim', async () => {
+  it('the cluster form hydrates from the raw store verbatim', async () => {
     const { ctx } = makeCtx('hub', { shared: 'from-store' })
     const addon = new PlainAddon()
     await addon.initialize(ctx)
-    const view = await addon.getGlobalSettings()
+    const view = await addon.getScopedSettings('cluster', CAP)
     expect(fieldValue(view, 'shared')).toBe('from-store')
     expect(fieldValue(view, 'count')).toBe(1) // schema default
   })
 
-  it('getGlobalSettings with an explicit foreign nodeId still reads the raw store (projection bypassed)', async () => {
+  it('the cluster form with an explicit foreign nodeId still reads the raw store (projection bypassed)', async () => {
     const { ctx } = makeCtx('hub', { shared: 'from-store' })
     const addon = new PlainAddon()
     await addon.initialize(ctx)
-    const view = await addon.getGlobalSettings(undefined, undefined, 'agent-1')
+    const view = await addon.getScopedSettings('cluster', CAP, 'agent-1')
     expect(fieldValue(view, 'shared')).toBe('from-store')
   })
 
-  it('updateGlobalSettings writes the bare patch and runs the full local-apply tail', async () => {
+  it('a cluster write stores the bare patch and runs the full local-apply tail', async () => {
     const { ctx, store, emit } = makeCtx('hub')
     const addon = new PlainAddon()
     await addon.initialize(ctx)
-    await addon.updateGlobalSettings({ shared: 'updated', count: 5 })
+    await addon.updateScopedSettings('cluster', CAP, { shared: 'updated', count: 5 })
     expect(store).toEqual({ shared: 'updated', count: 5 })
     expect(Object.keys(store).some((k) => k.includes('@'))).toBe(false)
     expect(addon.config.shared).toBe('updated')
@@ -169,11 +195,11 @@ describe('BaseAddon settings — no perNode fields (no-op guarantee)', () => {
     expect(emittedCategories(emit)).toContain(EventCategory.AddonUpdated)
   })
 
-  it('updateGlobalSettings with an explicit SELF nodeId behaves identically', async () => {
+  it('a cluster write with an explicit SELF nodeId behaves identically', async () => {
     const { ctx, store } = makeCtx('hub')
     const addon = new PlainAddon()
     await addon.initialize(ctx)
-    await addon.updateGlobalSettings({ shared: 'self-updated' }, 'hub')
+    await addon.updateScopedSettings('cluster', CAP, { shared: 'self-updated' }, 'hub')
     expect(store).toEqual({ shared: 'self-updated' })
     expect(addon.config.shared).toBe('self-updated')
     expect(addon.configChanges).toBe(1)
@@ -188,20 +214,21 @@ describe('BaseAddon settings — with a perNode:true field', () => {
     const { ctx, store } = makeCtx('hub/decoder-ffmpeg')
     const addon = new PerNodeAddon()
     await addon.initialize(ctx)
-    await addon.updateGlobalSettings({ backend: 'nodeav', shared: 'cluster' })
+    await addon.updateScopedSettings('node', CAP, { backend: 'nodeav' })
     expect(store['backend@hub']).toBe('nodeav')
     expect(Object.prototype.hasOwnProperty.call(store, 'backend')).toBe(false)
-    expect(store['shared']).toBe('cluster')
     // local apply ran: config resolved THIS node's scoped value
     expect(addon.config.backend).toBe('nodeav')
     expect(addon.configChanges).toBe(1)
+    await addon.updateScopedSettings('cluster', CAP, { shared: 'cluster' })
+    expect(store['shared']).toBe('cluster')
   })
 
   it('get projects the scoped value back onto the bare schema key', async () => {
     const { ctx } = makeCtx('hub', { 'backend@hub': 'nodeav' })
     const addon = new PerNodeAddon()
     await addon.initialize(ctx)
-    const view = await addon.getGlobalSettings()
+    const view = await addon.getScopedSettings('node', CAP)
     expect(fieldValue(view, 'backend')).toBe('nodeav')
   })
 
@@ -213,12 +240,12 @@ describe('BaseAddon settings — with a perNode:true field', () => {
     })
     const addon = new PerNodeAddon()
     await addon.initialize(ctx)
-    const agent1 = await addon.getGlobalSettings(undefined, undefined, 'agent-1')
+    const agent1 = await addon.getScopedSettings('node', CAP, 'agent-1')
     expect(fieldValue(agent1, 'backend')).toBe('ffmpeg')
     // node with NO scoped key: schema default, NOT the hub's value, NOT the bare key
-    const agent99 = await addon.getGlobalSettings(undefined, undefined, 'agent-99')
+    const agent99 = await addon.getScopedSettings('node', CAP, 'agent-99')
     expect(fieldValue(agent99, 'backend')).toBe('ffmpeg')
-    const hub = await addon.getGlobalSettings()
+    const hub = await addon.getScopedSettings('node', CAP)
     expect(fieldValue(hub, 'backend')).toBe('nodeav')
   })
 
@@ -227,7 +254,7 @@ describe('BaseAddon settings — with a perNode:true field', () => {
     const addon = new PerNodeAddon()
     await addon.initialize(ctx)
     emit.mockClear()
-    await addon.updateGlobalSettings({ backend: 'nodeav' }, 'agent-1')
+    await addon.updateScopedSettings('node', CAP, { backend: 'nodeav' }, 'agent-1')
     expect(store['backend@agent-1']).toBe('nodeav')
     expect(Object.prototype.hasOwnProperty.call(store, 'backend')).toBe(false)
     // no local apply: config untouched, no onConfigChanged, no lifecycle emit
@@ -251,7 +278,7 @@ describe('BaseAddon settings — with a perNode:true field', () => {
   })
 })
 
-// ── resolveGlobalStore — projected raw store for getGlobalSettings overrides ─
+// ── resolveGlobalStore — projected raw store ─
 
 describe('BaseAddon.resolveGlobalStore — per-node projected store seam', () => {
   const seed = {

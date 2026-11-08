@@ -320,8 +320,8 @@ function redactFormField(field: unknown): unknown {
 }
 
 /**
- * Project an ADDON settings form (`addonSettings.getGlobalSettings` /
- * `getIntegrationSettings` / `getDeviceSettings`, a `SettingsSchemaWithValues`).
+ * Project an ADDON settings form (`addonSettings.getScopedSettings` /
+ * `getIntegrationFormSchema` / `getDeviceSettings`, a `SettingsSchemaWithValues`).
  *
  * Unlike {@link redactSettingsSections} (device forms, whose secrets are named
  * by key convention) this decides by the FIELD: an addon's credential is often
@@ -330,7 +330,7 @@ function redactFormField(field: unknown): unknown {
  * `hydrateSchema` fills a password field with its stored value on purpose (a
  * masked value clobbered secrets on save), so this boundary is the only place
  * the value is withheld from a non-admin; an admin still gets the real form,
- * and `updateGlobalSettings` / `updateDeviceSettings` are admin-only, so a
+ * and `updateScopedSettings` / `updateDeviceSettings` are admin-only, so a
  * redacted value can never be written back (D634).
  */
 export function redactSettingsForm(data: unknown): unknown {
@@ -495,9 +495,7 @@ export const NON_ADMIN_CONFIG_REDACTED_METHODS: ReadonlyMap<string, ConfigRedact
   ConfigRedactor
 >([
   // ── Addon settings forms (D634) — hydrated with the STORED secret ──
-  ['addonSettings.getGlobalSettings', redactSettingsForm],
   ['addonSettings.getScopedSettings', redactSettingsForm],
-  ['addonSettings.getIntegrationSettings', redactSettingsForm],
   ['addonSettings.getIntegrationFormSchema', redactSettingsForm],
   ['addonSettings.getDeviceSettings', redactSettingsForm],
   ['deviceExport.getStatus', redactExportSetup],

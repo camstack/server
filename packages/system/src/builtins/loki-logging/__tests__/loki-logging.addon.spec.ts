@@ -80,7 +80,7 @@ describe('LokiLoggingAddon — one enable (D777)', () => {
   it('declares no connection setting (D985): the connection form belongs to the record', async () => {
     const { addon } = await boot({})
     addons.push(addon)
-    const schema = await addon.getGlobalSettings()
+    const schema = await addon.getIntegrationFormSchema({ integrationId: null, mode: 'standalone' })
     const keys = (schema?.sections ?? []).flatMap((s) =>
       s.fields.map((f) => ('key' in f ? f.key : null)),
     )

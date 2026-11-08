@@ -771,7 +771,7 @@ describe('PipelineOrchestratorAddon — E2E', () => {
     expect(fieldValues.has('motionDebug')).toBe(false)
   })
 
-  it('getGlobalSettings exposes cluster + load + detail-crop + native-lease + failover sections', async () => {
+  it('the settings form exposes cluster + load + detail-crop + native-lease + failover sections', async () => {
     const broker = makeFakeBroker('hub')
     const { ctx } = makeFakeContext({
       addonConfig: { moleculerBroker: broker },
@@ -784,7 +784,10 @@ describe('PipelineOrchestratorAddon — E2E', () => {
     addon = new PipelineOrchestratorAddon()
     await addon.initialize(ctx)
 
-    const hydrated = await addon.getGlobalSettings()
+    const hydrated = await addon.getIntegrationFormSchema({
+      integrationId: null,
+      mode: 'standalone',
+    })
     expect(hydrated).not.toBeNull()
     const sectionIds = hydrated!.sections.map((s: ConfigSectionWithValues) => s.id)
     // The legacy `'balancer'` section was renamed to `'load'` when the

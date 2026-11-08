@@ -72,9 +72,8 @@ function normalizeCapability(
  * 2. `methodResolver(capName)` from CapabilityRegistry definitions
  * 3. Auto-discovery: enumerate own methods on the registered provider
  *
- * Additionally, the four two-level settings methods (`getGlobalSettings`,
- * `updateGlobalSettings`, `getDeviceSettings`, `updateDeviceSettings`)
- * are auto-exposed under a
+ * Additionally, the two device settings methods (`getDeviceSettings`,
+ * `updateDeviceSettings`) are auto-exposed under a
  * `settings.*` namespace if the addon implements them. This replaces the
  * former `$addonHost` Moleculer service — the hub's `addon-settings`
  * singleton provider calls `broker.call('<addonId>.settings.<method>')`.
@@ -280,14 +279,9 @@ function discoverProviderMethods(provider: unknown): readonly string[] {
 
 // ── Settings actions — replaces `$addonHost` Moleculer service ──────
 
-/** The four two-level settings method names on ICamstackAddon. */
-const SETTINGS_GETTERS = ['getGlobalSettings', 'getDeviceSettings'] as const
-const SETTINGS_UPDATERS = ['updateGlobalSettings', 'updateDeviceSettings'] as const
-
 /**
- * Params shape for settings actions. Getters receive an empty object (or
- * `{ deviceId }` for device-level). Updaters receive `{ patch }` (or
- * `{ deviceId, patch }` for device-level).
+ * Params shape for the device settings actions. The getter receives `{ deviceId }`, the updater
+ * `{ deviceId, patch }`.
  */
 interface SettingsGetParams {
   readonly deviceId?: number
@@ -298,62 +292,38 @@ interface SettingsUpdateParams {
 }
 
 /**
- * Add `settings.getGlobalSettings`, `settings.updateGlobalSettings`, etc.
- * to the actions map for any addon that implements the corresponding
- * method on `ICamstackAddon`.
+ * Add `settings.getDeviceSettings` and `settings.updateDeviceSettings` to the actions map for an
+ * addon that implements them. An addon has no settings of its own (D986): there is no addon-level
+ * action here.
  *
- * Getter actions return `ConfigUISchemaWithValues | null`.
- * Updater actions return `{ success: true }` or throw.
+ * The getter returns `ConfigUISchemaWithValues | null`; the updater returns `{ success: true }`
+ * or throws.
  */
 function addSettingsActions(
   addon: ICamstackAddon,
   actions: Record<string, { handler: (ctx: Context) => Promise<unknown> }>,
 ): void {
-  // Getters: getGlobalSettings, getDeviceSettings
-  for (const methodName of SETTINGS_GETTERS) {
-    const fn = addon[methodName]
-    if (typeof fn !== 'function') continue
-
-    actions[`settings.${methodName}`] = {
+  if (typeof addon.getDeviceSettings === 'function') {
+    actions['settings.getDeviceSettings'] = {
       handler: async (ctx: Context): Promise<unknown> => {
         const params = (ctx.params ?? {}) as SettingsGetParams
-        if (methodName === 'getDeviceSettings') {
-          const deviceId = params.deviceId
-          if (typeof deviceId !== 'number')
-            throw new Error(`settings.${methodName}: numeric deviceId is required`)
-          const result: unknown = await addon.getDeviceSettings!(deviceId)
-          return result ?? null
-        }
-        // `getGlobalSettings` optionally accepts a preview `overlay` that
-        // the schema hydrator merges on top of the persisted store.
-        // Override-mode UIs pass it so cascade selects re-derive options
-        // without touching the store.
-        const overlay = (params as { overlay?: Record<string, unknown> }).overlay
-        const result: unknown = await (
-          addon[methodName] as (o?: Record<string, unknown>) => Promise<unknown>
-        )(overlay)
+        const deviceId = params.deviceId
+        if (typeof deviceId !== 'number')
+          throw new Error('settings.getDeviceSettings: numeric deviceId is required')
+        const result: unknown = await addon.getDeviceSettings!(deviceId)
         return result ?? null
       },
     }
   }
 
-  // Updaters: updateGlobalSettings, updateDeviceSettings
-  for (const methodName of SETTINGS_UPDATERS) {
-    const fn = addon[methodName]
-    if (typeof fn !== 'function') continue
-
-    actions[`settings.${methodName}`] = {
+  if (typeof addon.updateDeviceSettings === 'function') {
+    actions['settings.updateDeviceSettings'] = {
       handler: async (ctx: Context): Promise<unknown> => {
         const params = (ctx.params ?? {}) as SettingsUpdateParams
-        const patch = params.patch ?? {}
-        if (methodName === 'updateDeviceSettings') {
-          const deviceId = params.deviceId
-          if (typeof deviceId !== 'number')
-            throw new Error(`settings.${methodName}: numeric deviceId is required`)
-          await addon.updateDeviceSettings!(deviceId, patch)
-          return { success: true as const }
-        }
-        await (addon[methodName] as (p: Record<string, unknown>) => Promise<void>)(patch)
+        const deviceId = params.deviceId
+        if (typeof deviceId !== 'number')
+          throw new Error('settings.updateDeviceSettings: numeric deviceId is required')
+        await addon.updateDeviceSettings!(deviceId, params.patch ?? {})
         return { success: true as const }
       },
     }

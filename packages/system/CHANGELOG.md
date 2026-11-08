@@ -64,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Camera grids are now instances on a Camera grids page: the list is kept as records, migrated in place with the same ids and cameras
 - The addon-call plane carries listScopedSettings to forked addons.
 - The quick-run length of a timed-run device (heater, pet fountain) is a per-device setting instead of a fixed 30 minutes
+- A forked addon call for the deleted global settings methods is refused by name, and the addon service no longer exposes them.
 
 ### Removed
 

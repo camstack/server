@@ -256,7 +256,7 @@ export interface ReadinessSnapshotResponse {
  *   - `routes`   → the addon's `addon-routes` provider `getRoutes()` (handlers
  *     STRIPPED — MsgPack can't encode functions; the hub re-binds via `invoke`).
  *   - `custom`   → the addon's custom-action handler (`action` + `args`).
- *   - `settings` → the addon's global/device settings methods (`method` names
+ *   - `settings` → the addon's scoped/device settings methods (`method` names
  *     the entry; `args` carries the params). Mirrors the removed
  *     `<addonId>.settings.<method>` Moleculer action.
  *   - `data-planes` → the addon's live HTTP data-plane endpoints
@@ -267,13 +267,10 @@ export type AddonCallTarget = 'routes' | 'custom' | 'settings' | 'data-planes'
 
 /** The addon-settings methods reachable over the addon-call plane. */
 export type AddonSettingsMethod =
-  | 'getGlobalSettings'
-  | 'updateGlobalSettings'
   | 'getScopedSettings'
   | 'listScopedSettings'
   | 'updateScopedSettings'
   | 'readScopedValues'
-  | 'getIntegrationSettings'
   | 'getIntegrationFormSchema'
   | 'getDeviceSettings'
   | 'updateDeviceSettings'

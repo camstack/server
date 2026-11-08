@@ -75,10 +75,10 @@ describe('AddonCallGateway — childId resolution (co-location)', () => {
       },
       { callAddonOnChild },
     )
-    await gw.callForked('auth-webauthn', { target: 'settings', method: 'getGlobalSettings' })
+    await gw.callForked('auth-webauthn', { target: 'settings', method: 'getDeviceSettings' })
     expect(callAddonOnChild).toHaveBeenCalledWith('auth', {
       target: 'settings',
-      method: 'getGlobalSettings',
+      method: 'getDeviceSettings',
       addonId: 'auth-webauthn',
     })
   })

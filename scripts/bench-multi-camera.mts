@@ -148,8 +148,10 @@ async function setBatchMode(
   let lastErr: unknown = null
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      await trpcPost(fetchFn, token, 'addonSettings.updateGlobalSettings', {
+      await trpcPost(fetchFn, token, 'addonSettings.updateScopedSettings', {
         addonId: 'detection-pipeline',
+        cap: 'pipeline-executor',
+        scope: 'node',
         nodeId: 'hub',
         patch: { batchMode },
       })

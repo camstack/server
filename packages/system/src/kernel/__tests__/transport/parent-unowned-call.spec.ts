@@ -258,7 +258,7 @@ describe('createParentUnownedCallHandler', () => {
   })
 
   it('nodeIdMode data cap: args.nodeId is NOT lifted into a routing pin — unpinned resolve, data preserved', async () => {
-    // `addon-settings.getGlobalSettings({addonId, nodeId})` from a forked addon
+    // `addon-settings.getScopedSettings({addonId, nodeId})` from a forked addon
     // on an AGENT: `nodeId` is DATA for the hub singleton provider (which
     // dispatches internally), NOT a routing hint. Pinning on it routes the call
     // to a node with NO addon-settings provider → dead broker fallback →
@@ -289,7 +289,7 @@ describe('createParentUnownedCallHandler', () => {
     const args = { addonId: 'decoder-ffmpeg', nodeId: 'agent-a' }
     const result = await handler({
       capName: 'addon-settings',
-      method: 'getGlobalSettings',
+      method: 'getScopedSettings',
       args,
     })
     expect(result).toEqual({ settings: { budget: 1 } })
@@ -297,7 +297,7 @@ describe('createParentUnownedCallHandler', () => {
     expect(seen).toHaveLength(1)
     expect(seen[0]?.nodeId).toBeUndefined()
     // Data preserved — the provider still receives `nodeId` inside args.
-    expect(dispatch).toHaveBeenCalledWith(route, 'getGlobalSettings', {
+    expect(dispatch).toHaveBeenCalledWith(route, 'getScopedSettings', {
       addonId: 'decoder-ffmpeg',
       nodeId: 'agent-a',
     })

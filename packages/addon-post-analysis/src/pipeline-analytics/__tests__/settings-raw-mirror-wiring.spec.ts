@@ -237,17 +237,21 @@ describe('pipeline-analytics — readDeviceSettings raw-store mirror wiring', ()
     // ITS OWN per-kind cache, so it must re-read). Without
     // `onConfigChanged` invalidating the shared mirror, this cold read would
     // still be served the pre-update blob the mirror was holding warm —
-    // `updateGlobalSettings`'s own write would be invisible to its own
+    // `updateScopedSettings`'s own write would be invisible to its own
     // process for up to `RAW_SETTINGS_STALE_MS`.
     booted = await boot({ similarityThreshold: 0.55 })
     const addon = booted.addon as unknown as {
       resolveDeviceTrackingSettings(id: number): Promise<unknown>
       resolveDeviceFaceSettings(id: number): Promise<{ similarityThreshold: number }>
-      updateGlobalSettings(patch: Record<string, unknown>): Promise<void>
+      updateScopedSettings(
+        scope: 'cluster',
+        cap: string,
+        patch: Record<string, unknown>,
+      ): Promise<void>
     }
 
     await addon.resolveDeviceTrackingSettings(700) // warms rawGlobalStoreMirror
-    await addon.updateGlobalSettings({ similarityThreshold: 0.45 })
+    await addon.updateScopedSettings('cluster', 'face-gallery', { similarityThreshold: 0.45 })
 
     const resolved = await addon.resolveDeviceFaceSettings(701) // cold kind+device
     expect(resolved.similarityThreshold).toBe(0.45)

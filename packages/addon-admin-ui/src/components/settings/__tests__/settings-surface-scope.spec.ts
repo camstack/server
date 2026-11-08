@@ -96,7 +96,6 @@ describe('the integration page carries no addon-level settings surface (D986)', 
     for (const rel of [
       'pages/IntegrationDetail.tsx',
       'components/settings/NodeAddonsSettingsPanel.tsx',
-      'lib/settings-forwarding.ts',
     ]) {
       expect(code(read(rel)), `${rel} reintroduces the scope paragraph`).not.toContain(
         'Integration-wide settings',
@@ -114,7 +113,6 @@ describe('placement is never expressed as a tab', () => {
     // again, and nothing may read it to decide placement.
     for (const rel of [
       'components/settings/NodeAddonsSettingsPanel.tsx',
-      'lib/settings-forwarding.ts',
       'pages/IntegrationDetail.tsx',
     ]) {
       expect(code(read(rel)), `${rel} treats a tab id as placement`).not.toMatch(

@@ -135,7 +135,7 @@ Four `log-destination` providers, all peers. `LogManager` fans every entry to ea
 | `loki-logging` | pushes to Grafana Loki, **opt-in** | its addon settings (URL, level, labels, auth, batching) |
 | `hub-forwarder` | agent → hub, **agent-only** | — |
 
-Each destination's settings come from its own `globalSettingsSchema()`, are stored
+Each destination's settings come from its own `nodeSettingsSchema()`, are stored
 **per node**, and are rendered by the derived form — under Data → Logging, and
 equally under Cluster → node → Settings. Nothing about a destination is hard-coded
 in the UI.

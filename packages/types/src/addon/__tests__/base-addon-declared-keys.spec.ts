@@ -27,7 +27,12 @@ class DeclaringAddon extends BaseAddon<Config> {
     return []
   }
 
-  protected override globalSettingsSchema(): ConfigUISchema {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return ['test-cap']
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== 'test-cap') return null
     return {
       sections: [
         {

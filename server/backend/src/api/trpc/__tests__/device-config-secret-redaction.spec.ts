@@ -241,9 +241,7 @@ describe('the enumeration covers every non-admin read that can leak a secret', (
   it('lists exactly the config-bearing AND stream-url-bearing paths', () => {
     expect([...NON_ADMIN_CONFIG_REDACTED_METHODS.keys()].sort()).toEqual([
       'addonSettings.getDeviceSettings',
-      'addonSettings.getGlobalSettings',
       'addonSettings.getIntegrationFormSchema',
-      'addonSettings.getIntegrationSettings',
       'addonSettings.getScopedSettings',
       'cameraStreams.getCameraStreams',
       'cameraStreams.getProfileRtspEntries',
@@ -313,7 +311,7 @@ describe('the redactor agrees with the settings UI about what is a secret', () =
 })
 
 /**
- * `addonSettings.getGlobalSettings` & co. are `protected`, and `hydrateSchema`
+ * `addonSettings.getScopedSettings` & co. are `protected`, and `hydrateSchema`
  * fills a `password` field with its STORED value (the masking was removed on
  * purpose, trusting an "admin-gated endpoint" that was never admin-gated). So
  * every role read every addon's API keys — a Cloudflare token, an LLM key, a
@@ -347,8 +345,8 @@ describe('addon settings forms are redacted for a non-admin (D634)', () => {
   }
 
   it('withholds every password / secret field value, at any depth, by field type', () => {
-    const redact = NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getGlobalSettings')
-    if (redact === undefined) throw new Error('addonSettings.getGlobalSettings is not redacted')
+    const redact = NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getScopedSettings')
+    if (redact === undefined) throw new Error('addonSettings.getScopedSettings is not redacted')
     const out = JSON.stringify(redact(form))
     for (const secret of ['ntfy-secret-topic', 'BEGIN KEY', 'nested-secret', 'tab-secret']) {
       expect(out).not.toContain(secret)
@@ -359,11 +357,10 @@ describe('addon settings forms are redacted for a non-admin (D634)', () => {
   })
 
   it('the device and integration surfaces use the same redactor', () => {
-    const global = NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getGlobalSettings')
-    expect(NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getDeviceSettings')).toBe(global)
-    expect(NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getIntegrationSettings')).toBe(
-      global,
+    const scoped = NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getScopedSettings')
+    expect(NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getDeviceSettings')).toBe(scoped)
+    expect(NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getIntegrationFormSchema')).toBe(
+      scoped,
     )
-    expect(NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getScopedSettings')).toBe(global)
   })
 })

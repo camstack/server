@@ -269,7 +269,7 @@ describe('native-metrics — a tick never outlives its context', () => {
   it('a settings write before initialize() arms no timer', async () => {
     const { addon } = makeHarness()
 
-    await addon.updateGlobalSettings({ loadSeriesCadenceSec: 5 })
+    await addon.updateScopedSettings('cluster', 'metrics-provider', { loadSeriesCadenceSec: 5 })
     await vi.advanceTimersByTimeAsync(PROCESS_CADENCE_MS)
     await settle()
 

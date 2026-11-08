@@ -145,9 +145,7 @@ describe('SmtpNodemailerAddon — relays are integration instances (D996)', () =
   it('the addon has no settings form of its own: the relay form is the instance form', async () => {
     const w = await boot()
     addons.push(w.addon)
-    expect(Reflect.get(w.addon, 'getGlobalSettings')).toBe(
-      Reflect.get(Object.getPrototypeOf(SmtpNodemailerAddon.prototype), 'getGlobalSettings'),
-    )
+    expect(await w.addon.listScopedSettings()).toEqual([])
     await w.instances.updateInstance({
       id: 'int_0001',
       values: { username: 'u', password: 'pw-PAGE', port: 465 },

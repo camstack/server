@@ -25,6 +25,8 @@ interface Config {
   signingKey: string
 }
 
+const CAP = 'canary-cap'
+
 class CanaryAddon extends BaseAddon<Config> {
   protected override readonly secretStatePaths = ['signingKey']
   configChanges = 0
@@ -41,7 +43,19 @@ class CanaryAddon extends BaseAddon<Config> {
     this.configChanges++
   }
 
-  protected override globalSettingsSchema(): ConfigUISchema {
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return [CAP]
+  }
+
+  /** The addon's OWN write (not the operator's): a secret equal to an inline value is kept. */
+  write(patch: Partial<Pick<Config, 'host' | 'apiToken'>>): Promise<void> {
+    return this.clusterSettings(CAP, z.object({ host: z.string(), apiToken: z.string() })).patch(
+      patch,
+    )
+  }
+
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    if (cap !== CAP) return null
     return {
       sections: [
         {
@@ -160,10 +174,10 @@ describe('BaseAddon on the keychain', () => {
   it('a form save stores a marker; the value lives in the keychain; the form gets "set", never the value', async () => {
     const addon = new CanaryAddon()
     await addon.initialize(contextFor(w))
-    await addon.updateGlobalSettings({ host: 'h', apiToken: 'canary-token-123' })
+    await addon.write({ host: 'h', apiToken: 'canary-token-123' })
     expect(w.store).toEqual({ host: 'h', apiToken: makeSecretMarker(REF) })
     expect(addon.config.apiToken).toBe('canary-token-123')
-    const form = await addon.getGlobalSettings()
+    const form = await addon.getScopedSettings('cluster', CAP)
     expect(JSON.stringify(form)).not.toContain('canary-token-123')
     const field = form?.sections[0]?.fields.find((f) => 'key' in f && f.key === 'apiToken')
     expect(field && 'value' in field ? field.value : undefined).toEqual({
@@ -176,13 +190,13 @@ describe('BaseAddon on the keychain', () => {
   it("'' never clears, and the untouched form round-trips without a write to the keychain", async () => {
     const addon = new CanaryAddon()
     await addon.initialize(contextFor(w))
-    await addon.updateGlobalSettings({ apiToken: 'canary-token-123' })
-    await addon.updateGlobalSettings({ apiToken: '' })
+    await addon.write({ apiToken: 'canary-token-123' })
+    await addon.write({ apiToken: '' })
     expect(w.store['apiToken']).toEqual(makeSecretMarker(REF))
     expect(addon.config.apiToken).toBe('canary-token-123')
-    const form = await addon.getGlobalSettings()
+    const form = await addon.getScopedSettings('cluster', CAP)
     const view = form?.sections[0]?.fields.find((f) => 'key' in f && f.key === 'apiToken')
-    await addon.updateGlobalSettings({
+    await addon.write({
       apiToken: view && 'value' in view ? (view.value as string) : '',
     })
     expect(w.kc.get(REF)?.version).toBe(1)
@@ -229,9 +243,7 @@ describe('BaseAddon on the keychain', () => {
     w.locked = true
     const addon = new CanaryAddon()
     await addon.initialize(contextFor(w))
-    await expect(addon.updateGlobalSettings({ apiToken: 'canary-token-123' })).rejects.toThrow(
-      /not saved/,
-    )
+    await expect(addon.write({ apiToken: 'canary-token-123' })).rejects.toThrow(/not saved/)
     expect(JSON.stringify(w.store)).not.toContain('canary-token-123')
     await addon.shutdown()
   })
@@ -247,7 +259,7 @@ describe('BaseAddon on the keychain', () => {
   it("clearSecrets is the explicit way to forget a stored secret ('' would keep it)", async () => {
     const addon = new CanaryAddon()
     await addon.initialize(contextFor(w))
-    await addon.updateGlobalSettings({ apiToken: 'canary-token-123' })
+    await addon.write({ apiToken: 'canary-token-123' })
     await addon.forget()
     expect(w.store['apiToken']).toBeNull()
     expect(w.kc.has(REF)).toBe(false)
@@ -259,7 +271,7 @@ describe('BaseAddon on the keychain', () => {
     const addon = new CanaryAddon()
     await addon.initialize(contextFor(w))
     expect(addon.config.apiToken).toBe('legacy-inline-token')
-    await addon.updateGlobalSettings({ apiToken: addon.config.apiToken })
+    await addon.write({ apiToken: addon.config.apiToken })
     expect(w.store['apiToken']).toBe('legacy-inline-token')
     await addon.updateGlobalSettingsAsOperator({ apiToken: 'legacy-inline-token' })
     expect(w.store['apiToken']).toEqual(makeSecretMarker(REF))
@@ -271,7 +283,7 @@ describe('BaseAddon on the keychain', () => {
     const { secrets: _omitted, ...withoutSecrets } = ctx
     const addon = new CanaryAddon()
     await addon.initialize(withoutSecrets)
-    await addon.updateGlobalSettings({ apiToken: 'plain-token-1' })
+    await addon.write({ apiToken: 'plain-token-1' })
     expect(w.store['apiToken']).toBe('plain-token-1')
   })
 })

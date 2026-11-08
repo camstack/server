@@ -294,7 +294,7 @@ camstack develop extend <package> --entry <new-id>
 
 An integration is a typed instance record (D1007, D996, D1009). These break it:
 
-- **No addon-level settings for an integration.** No `globalSettingsSchema()`,
+- **No addon-level settings for an integration.** No `globalSettingsSchema()` (the hook is deleted),
   no `integration_settings` row, no `integrations.getSettings` /
   `integrations.setSettings` (retired, being deleted). Everything the operator
   configures is a field of the instance record; a secret is a `password` field

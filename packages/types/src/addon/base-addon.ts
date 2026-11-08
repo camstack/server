@@ -53,7 +53,12 @@ import {
 } from './scoped-settings.js'
 import { assertDeclaredKeys, createScopedSettings } from './scoped-settings-handle.js'
 import { createSecretAwareContext, type SecretAwareSettingsHandle } from './secret-aware-context.js'
-import { mergeSecretStatePaths, type SecretTree, secretTreeFromSchema } from './secret-paths.js'
+import {
+  mergeSecretStatePaths,
+  type SecretNode,
+  type SecretTree,
+  secretTreeFromSchema,
+} from './secret-paths.js'
 import {
   collectSecretMarkerRefs,
   resolveSecretMarkers,
@@ -88,7 +93,7 @@ export type { CapabilitiesAccess }
  * keys of TConfig. Usage inside schema builders:
  *
  * ```ts
- * protected globalSettingsSchema() {
+ * protected clusterSettingsSchema(cap: string) {
  *   return this.schema({
  *     sections: [{
  *       id: 'main',
@@ -170,7 +175,7 @@ function boundOf<TPorts>(
  * Base class for CamStack addons. Eliminates settings boilerplate:
  *
  * - Typed `config` property with automatic resolution from store + defaults
- * - `getGlobalSettings()` / `updateGlobalSettings()` auto-implemented
+ * - the scoped settings API (`clusterSettings` / `nodeSettings` / `deviceDefaults`) auto-implemented
  * - `getAddonSettings()` / `updateAddonSettings()` auto-implemented
  * - `getDeviceSettings()` / `updateDeviceSettings()` auto-implemented
  * - `ctx` accessor for the AddonContext (no manual `this.ctxRef` storage)
@@ -180,7 +185,7 @@ function boundOf<TPorts>(
  * Subclasses override:
  * - `onInitialize()` — addon-specific init logic, return ProviderRegistration[]
  * - `onShutdown()` — cleanup
- * - `globalSettingsSchema()` / `deviceSettingsSchema()` — UI schemas
+ * - `clusterSettingsSchema()` / `nodeSettingsSchema()` / `deviceSettingsSchema()` — UI schemas
  *
  * @example
  * ```ts
@@ -194,7 +199,7 @@ function boundOf<TPorts>(
  *     super({ maxRetries: 3, endpoint: 'http://localhost' })
  *   }
  *
- *   protected globalSettingsSchema() {
+ *   protected clusterSettingsSchema() {
  *     return this.schema({
  *       sections: [{
  *         id: 'main', title: 'Settings',
@@ -243,7 +248,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
 
   /**
    * Hidden-state paths that hold secrets (D787) — values the addon writes
-   * itself (`updateGlobalSettings`, `state()`) that no form field declares.
+   * itself (`state()`, the scoped writers) that no form field declares.
    * Stored in the keychain exactly like a `password` field. Syntax:
    * `'snapshotSigningKey'`, `'identity.pincode'`, `'tokens[userId].accessToken'`
    * (`key[<id field>]` addresses array items by id, never by index).
@@ -254,7 +259,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   /**
    * D986 M4: the scoped schemas this addon declared, resolved once per capability
    * (`loadScopedSchemas`) so the sync readers (`perNodeKeys`, the secret tree, the restart check)
-   * see them. Empty until loaded: the readers then fall back to {@link globalSettingsSchema}.
+   * see them. Empty until loaded.
    */
   private readonly _scopedByCap = new Map<string, readonly LoadedScopedSchema[]>()
   private _nodeKeysByCap = new Map<string, ReadonlySet<string>>()
@@ -555,7 +560,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   }
 
   /**
-   * Called after config is resolved during updateGlobalSettings/updateAddonSettings.
+   * Called after config is resolved during a settings write.
    * Override to react to config changes (e.g. restart a sampler, reconnect a service).
    * Not called during initialize() — use onInitialize() for initial setup.
    */
@@ -598,112 +603,13 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     return []
   }
 
-  /** Override to provide global-level settings UI schema. */
-  protected globalSettingsSchema(_cap?: string): ConfigUISchema | null {
-    return null
-  }
-
   /** Override to provide device-level settings UI schema. */
   protected deviceSettingsSchema(): ConfigUISchema | null {
     return null
   }
 
   /**
-   * INTEGRATION-LEVEL SETTINGS — declare which of this addon's global sections
-   * ARE the configuration of its integration.
-   *
-   * Return the `ConfigSection.id`s, from {@link globalSettingsSchema}, that an
-   * operator should find on the addon's integration page (System →
-   * Integrations → <name>) rather than only in the cluster-wide list of every
-   * addon. Empty (the default) means the addon has no integration-level
-   * settings and no such surface is offered — this is opt-in, because whether
-   * an addon's configuration IS its integration's configuration depends on the
-   * nature of the integration.
-   *
-   * WHAT THIS IS NOT. It is not a scope. The selected sections keep living in
-   * the ONE global schema, in the ONE addon store, written by the ONE
-   * `updateGlobalSettings` path. There is deliberately no
-   * `updateIntegrationSettings`: a second write path is how a surface acquires
-   * a second store key, and this repo has shipped that twice (`btmPath@hub`,
-   * D266). Selecting sections cannot introduce a key that selecting cannot.
-   *
-   * WHY IT IS A LIST OF SECTION IDS AND NOT A MARKER ON THE SECTION.
-   * `ConfigFieldBase` used to carry `scope?: 'device' | 'global'` and it was
-   * removed with the reason recorded at
-   * `packages/types/src/interfaces/config-ui.ts:249` — *"a field's scope is
-   * determined by WHICH schema it lives in, not by a field-level marker."* A
-   * marker sprinkled across sections also has to borrow a field that already
-   * means something else; borrowing `section.tab` put the literal word
-   * "integration" into an operator-facing tab bar, because `tab` means "how to
-   * GROUP this visually" and cannot also mean "where this lives" (D269
-   * supersedes D268). One declaration, in one place, next to the schema whose
-   * ids it names.
-   */
-  protected integrationSettingSections(): readonly string[] {
-    return []
-  }
-
-  // ── Two-level settings API (auto-implemented) ────────────────────────
-  //
-  // Note: the former three-level split (addon / global / device) collapsed
-  // to two. `addon` and `global` both wrote to the same `writeAddonStore`
-  // blob and every addon used exactly one of them; the distinction was
-  // never semantically load-bearing. `global` won because it was the
-  // widely-used one and the name reads naturally (per-node addon config).
-
-  // Returns `null` when the addon cannot serve authoritative settings right
-  // now (e.g. mid-restart, ctx not yet wired). Callers MUST treat null as
-  // "unavailable — keep the last-known view" and never as "empty store", so a
-  // transient restart window can't reset a UI form to schema defaults.
-  // `nodeId` is the node the UI is asking about — the hub addon answers for
-  // every node, so it must not assume "self". When the schema declares
-  // `perNode: true` fields, reads/writes are scoped per node through
-  // `per-node-store.ts`; with no perNode field the projection is bypassed and
-  // behavior is identical to the legacy node-agnostic path. The local node id
-  // defaults from ctx (node-blind injection) — addons never pass their own.
-  async getGlobalSettings(
-    overlay?: Record<string, unknown>,
-    cap?: string,
-    nodeId?: string,
-  ): Promise<ConfigUISchemaWithValues | null> {
-    await this.loadScopedSchemas(cap)
-    const schema = this.globalSettingsSchema(cap) ?? this.scopedFormSchema(cap)
-    if (!schema) return { sections: [] }
-    // The form hydrates from the MARKER-bearing store (a marker becomes a
-    // "set" view). An override's overlay usually comes from the resolved
-    // `resolveGlobalStore()`: a member it carries unchanged keeps the marker.
-    const projected = await this.readRawProjectedStore(nodeId, cap)
-    const values = overlay ? await this.overlayKeepingMarkers(projected, overlay) : projected
-    return hydrateSchema(schema, values, { inlineSecretsAsViews: true })
-  }
-
-  /**
-   * The integration-level view of this addon's settings: exactly the sections
-   * named by {@link integrationSettingSections}, hydrated from the SAME store
-   * `getGlobalSettings` reads, and narrowed to cluster-scoped fields.
-   *
-   * Returns `null` when the addon declared nothing — an addon that opts out has
-   * no integration settings surface at all, rather than an empty one that reads
-   * as a failed load.
-   *
-   * Three properties hold BY CONSTRUCTION, which is why they are here in core
-   * and not in whichever UI happens to render this:
-   *
-   *  1. **One key.** The payload is a SUBSET of the global schema, so a field
-   *     shown here is the same field, with the same bare key, that the addon's
-   *     own page shows. There is no integration-specific writer — callers save
-   *     through `updateGlobalSettings` — so a second store key is unreachable,
-   *     not merely discouraged.
-   *  2. **No node scope.** `perNode: true` fields are DROPPED. Their store key
-   *     is `<key>@<nodeId>` and an integration is not a node; whichever node
-   *     such a field silently picked would be a wrong answer for the operator
-   *     who opened the page (D266).
-   *  3. **No silent typo.** A declared id that names no section throws. The
-   *     alternative — skip it — turns a rename into a surface that quietly
-   *     empties, which looks exactly like an addon with nothing to configure.
-   */
-  /**
-   * The form schema of ONE integration instance, or `null` to use {@link globalSettingsSchema}.
+   * The form schema of ONE integration instance, or `null` to use the scoped form.
    *
    * Override it only when an `instanceMode: multiple` addon's instances differ: an NVR integration
    * needs its connection fields, the default integration the addon's own sections. It is the
@@ -1016,37 +922,16 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     nodeId?: string,
   ): Promise<ConfigUISchemaWithValues | null> {
     const scoped = await this.integrationFormSchema(instance)
-    if (scoped === null) return this.getGlobalSettings(undefined, undefined, nodeId)
+    if (scoped === null) return this.scopedForm(nodeId)
     return hydrateSchema(scoped, {}, { inlineSecretsAsViews: true })
   }
 
-  async getIntegrationSettings(nodeId?: string): Promise<ConfigUISchemaWithValues | null> {
-    const declared = this.integrationSettingSections()
-    if (declared.length === 0) return null
-    const schema = this.globalSettingsSchema()
-    if (!schema) {
-      throw new Error(
-        `${this.constructor.name}: integrationSettingSections() names ` +
-          `[${declared.join(', ')}] but globalSettingsSchema() returns null.`,
-      )
-    }
-    const byId = new Map(schema.sections.map((section) => [section.id, section]))
-    const sections: ConfigSection[] = []
-    for (const id of declared) {
-      const section = byId.get(id)
-      if (!section) {
-        throw new Error(
-          `${this.constructor.name}: integrationSettingSections() names unknown section ` +
-            `"${id}". Known sections: [${[...byId.keys()].join(', ')}].`,
-        )
-      }
-      const fields = dropPerNodeFields(section.fields)
-      if (fields.length === 0) continue
-      sections.push({ ...section, fields })
-    }
-    if (sections.length === 0) return null
-    const projected = await this.readRawProjectedStore(nodeId)
-    return hydrateSchema({ ...schema, sections }, projected, {
+  /** The form of the scoped schemas this addon declared, hydrated from its store. */
+  private async scopedForm(nodeId?: string): Promise<ConfigUISchemaWithValues | null> {
+    await this.loadScopedSchemas()
+    const schema = this.scopedFormSchema()
+    if (!schema) return { sections: [] }
+    return hydrateSchema(schema, await this.readRawProjectedStore(nodeId), {
       inlineSecretsAsViews: true,
     })
   }
@@ -1058,8 +943,8 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
    * bare fallback), all `@`-scoped and stray bare per-node keys are dropped.
    * A no-op passthrough when the schema declares no `perNode` field.
    *
-   * This is the sanctioned way for a `getGlobalSettings` OVERRIDE that needs
-   * the store for custom option logic (option narrowing, value snapping) to
+   * This is the sanctioned way for an addon that needs
+   * the store for custom logic (option narrowing, value snapping) to
    * read it per-node — never `ctx.settings.readAddonStore()` directly.
    * `nodeId` omitted ⇒ the local node (node-blind injection from ctx).
    *
@@ -1125,7 +1010,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
 
   /**
    * Whether ONE global key of this addon's store was written, read three-way
-   * (D651). For a question a hydrated view cannot answer: `getGlobalSettings`
+   * (D651). For a question a hydrated view cannot answer: a hydrated form
    * reports `value ?? default`, so "the operator chose the default" and "nobody
    * chose" look the same, and a failed read looks like both. A `perNode` key is
    * not supported here: its stored name is scoped.
@@ -1158,7 +1043,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
 
   /**
    * The OPERATOR's write — a settings form or an admin API call, dispatched by
-   * the kernel. Identical to {@link updateGlobalSettings}, except that a secret
+   * the kernel. The one in-process write of the addon blob that is not a scoped write; a secret
    * the operator sends is stored as sent even when it equals a pre-keychain
    * inline value: the operator re-entering a password is a change, an addon
    * writing back what it read is not (D787).
@@ -1173,12 +1058,6 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     } finally {
       this._operatorWriteDepth--
     }
-  }
-
-  async updateGlobalSettings(patch: Partial<TConfig>, nodeId?: string): Promise<void> {
-    // The `as Record<string, unknown>` below is the pre-existing documented
-    // type boundary (a generic Partial<TConfig> has no index signature).
-    await this.applyGlobalPatch(patch as Record<string, unknown>, nodeId)
   }
 
   /**
@@ -1253,11 +1132,10 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     await this.resolveConfig()
     await this.onConfigChanged()
     this.emitLifecycle(EventCategory.AddonUpdated, { level: 'global' })
-    const legacy = this.globalSettingsSchema()
-    this.maybeAutoRestart(Object.keys(barePatch), [
-      ...(legacy === null ? [] : [legacy]),
-      ...this.loadedScopedSchemas().map((entry) => entry.schema),
-    ])
+    this.maybeAutoRestart(
+      Object.keys(barePatch),
+      this.loadedScopedSchemas().map((entry) => entry.schema),
+    )
     return true
   }
 
@@ -1294,10 +1172,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     this._addonSecretTree = null
   }
 
-  /**
-   * The form the settings API serves while an addon declares no {@link globalSettingsSchema}: the
-   * sections of its scoped schemas, so dropping the old hook does not blank the form.
-   */
+  /** The form of an addon's scoped schemas: their sections, each shown once. */
   private scopedFormSchema(cap?: string): ConfigUISchema | null {
     // Two capabilities may answer with the same section: it is one form section, shown once.
     const byId = new Map<string, ConfigUISchema['sections'][number]>()
@@ -1315,8 +1190,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   }
 
   /**
-   * The field keys that are stored per node: every field of a {@link nodeSettingsSchema}, plus
-   * the fields the legacy {@link globalSettingsSchema} still marks `perNode: true`. Derived once
+   * The field keys that are stored per node: every field of a {@link nodeSettingsSchema}. Derived once
    * per `cap` argument and memoized (schemas are static declarations). Empty set ⇒ every
    * per-node code path is bypassed and the settings API behaves like the node-agnostic one.
    * Call {@link loadScopedSchemas} first (the async seams do).
@@ -1325,10 +1199,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     const cacheKey = cap ?? ''
     const cached = this._nodeKeysByCap.get(cacheKey)
     if (cached) return cached
-    const legacy = this.globalSettingsSchema(cap)
-    const keys = new Set<string>(
-      legacy ? legacy.sections.flatMap((section) => collectPerNodeFieldKeys(section.fields)) : [],
-    )
+    const keys = new Set<string>()
     for (const { scope, schema } of this.loadedScopedSchemas(cap)) {
       if (scope !== 'node') continue
       for (const section of schema.sections) {
@@ -1629,12 +1500,6 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
 
   private declaredKeySet(): Set<string> {
     const keys = new Set<string>(Object.keys(this.defaults))
-    const schema = this.globalSettingsSchema()
-    if (schema) {
-      for (const section of schema.sections) {
-        for (const key of collectFieldKeys(section.fields)) keys.add(key)
-      }
-    }
     for (const { schema: scoped } of this.loadedScopedSchemas()) {
       for (const section of scoped.sections) {
         for (const key of collectFieldKeys(section.fields)) keys.add(key)
@@ -1741,7 +1606,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   /** The addon store's secret tree: schema fields by TYPE, plus `secretStatePaths`. */
   private addonSecretTree(): SecretTree {
     if (this._addonSecretTree === null) {
-      const tree = new Map(secretTreeFromSchema(this.globalSettingsSchema()))
+      const tree = new Map<string, SecretNode>()
       for (const { schema } of this.loadedScopedSchemas()) {
         for (const [key, node] of secretTreeFromSchema(schema)) tree.set(key, node)
       }
@@ -1995,41 +1860,6 @@ export function classifyStoreError(err: unknown): 'restart' | 'transport' | 'per
   return 'permanent'
 }
 
-/**
- * Collect the keys of every field marked `perNode: true`, recursing into
- * layout containers (`group` fields and `sub-tabs` tabs) the same way
- * `hydrateSchema` does. Valueless structural fields (separator/info/…)
- * don't declare `perNode` and are excluded by the `in` narrowing.
- */
-/**
- * The same fields with every `perNode: true` one removed, recursing into layout
- * containers exactly as {@link collectPerNodeFieldKeys} does. A container left
- * with no child is dropped rather than rendered empty.
- *
- * Used by `getIntegrationSettings`: an integration is not a node, so a field
- * whose store key is `<key>@<nodeId>` has no node to belong to there.
- */
-function dropPerNodeFields(fields: readonly ConfigField[]): ConfigField[] {
-  const kept: ConfigField[] = []
-  for (const field of fields) {
-    if (field.type === 'group') {
-      const inner = dropPerNodeFields(field.fields)
-      if (inner.length > 0) kept.push({ ...field, fields: inner })
-      continue
-    }
-    if (field.type === 'sub-tabs') {
-      const tabs = field.tabs
-        .map((tab) => ({ ...tab, fields: dropPerNodeFields(tab.fields) }))
-        .filter((tab) => tab.fields.length > 0)
-      if (tabs.length > 0) kept.push({ ...field, tabs })
-      continue
-    }
-    if ('perNode' in field && field.perNode === true) continue
-    kept.push(field)
-  }
-  return kept
-}
-
 /** One scoped schema a capability declared, with the scope it was declared for. */
 interface LoadedScopedSchema {
   readonly scope: ScopedSettingsScope
@@ -2066,22 +1896,6 @@ function collectFieldKeys(fields: readonly ConfigField[]): readonly string[] {
       continue
     }
     if ('key' in field && typeof field.key === 'string') collected.push(field.key)
-  }
-  return collected
-}
-
-function collectPerNodeFieldKeys(fields: readonly ConfigField[]): readonly string[] {
-  const collected: string[] = []
-  for (const field of fields) {
-    if (field.type === 'group') {
-      collected.push(...collectPerNodeFieldKeys(field.fields))
-      continue
-    }
-    if (field.type === 'sub-tabs') {
-      for (const tab of field.tabs) collected.push(...collectPerNodeFieldKeys(tab.fields))
-      continue
-    }
-    if ('perNode' in field && field.perNode === true) collected.push(field.key)
   }
   return collected
 }

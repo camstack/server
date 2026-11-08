@@ -6,7 +6,7 @@
  * base-addon.ts` + `per-node-store.ts`): any schema field marked
  * `perNode: true` is persisted node-scoped as `<key>@<nodeId>` — node-blind,
  * with NO bare-key fallback. P2b marks this addon's `probedBestHwaccel`
- * `perNode: true` and routes `reprobeHwaccel` through `updateGlobalSettings`
+ * `perNode: true` and routes `reprobeHwaccel` through `updateScopedSettings`
  * so the base class does the scoping. (The `backend` select field lives on
  * decoder-ffmpeg — the owner addon; this addon has none.)
  *
@@ -63,16 +63,6 @@ function makeCtx(options: FakeCtxOptions): FakeCtxHandle {
       readAddonStore: async () => ({ ...store }),
       writeAddonStore: async (patch: Record<string, unknown>) => {
         Object.assign(store, patch)
-      },
-    },
-    api: {
-      addonSettings: {
-        getGlobalSettings: {
-          // Persisted owner backend is inert; initialize still defaults to nodeav.
-          query: async () => ({
-            sections: [{ fields: [{ key: 'backend', value: 'ffmpeg' }] }],
-          }),
-        },
       },
     },
   } as unknown as AddonCtx
@@ -170,15 +160,19 @@ describe('decoder-nodeav — probe stored by an old build', () => {
       seed: { 'probedBestHwaccel@hub': 'vaapi' },
       hwaccel: { resolve: async () => ({ preferred: ['videotoolbox'], rationale: 'test' }) },
     })
-    expect(fieldValue(await addon.getGlobalSettings(), 'probedBestHwaccel')).toBe('vaapi')
+    expect(fieldValue(await addon.getScopedSettings('node', 'decoder'), 'probedBestHwaccel')).toBe(
+      'vaapi',
+    )
     await addon.reprobeHwaccel()
-    expect(fieldValue(await addon.getGlobalSettings(), 'probedBestHwaccel')).toBe('videotoolbox')
+    expect(fieldValue(await addon.getScopedSettings('node', 'decoder'), 'probedBestHwaccel')).toBe(
+      'videotoolbox',
+    )
   })
 })
 
-// ── getGlobalSettings is per-node independent ────────────────────────────
+// ── getScopedSettings is per-node independent ────────────────────────────
 
-describe('decoder-nodeav — getGlobalSettings per-node projection', () => {
+describe('decoder-nodeav — getScopedSettings per-node projection', () => {
   it('each node reads its OWN scoped probedBestHwaccel; absent scoped key ⇒ schema default, never a bare legacy key', async () => {
     const { addon } = await makeAddon({
       localNodeId: 'hub',
@@ -189,12 +183,12 @@ describe('decoder-nodeav — getGlobalSettings per-node projection', () => {
         probedBestHwaccel: 'stale-bare-probe',
       },
     })
-    const hub = await addon.getGlobalSettings(undefined, undefined, 'hub')
+    const hub = await addon.getScopedSettings('node', 'decoder', 'hub')
     expect(fieldValue(hub, 'probedBestHwaccel')).toBe('vaapi')
-    const agent1 = await addon.getGlobalSettings(undefined, undefined, 'agent-1')
+    const agent1 = await addon.getScopedSettings('node', 'decoder', 'agent-1')
     expect(fieldValue(agent1, 'probedBestHwaccel')).toBe('qsv')
     // Node with NO scoped key: schema default, NOT the bare key.
-    const agent99 = await addon.getGlobalSettings(undefined, undefined, 'agent-99')
+    const agent99 = await addon.getScopedSettings('node', 'decoder', 'agent-99')
     expect(fieldValue(agent99, 'probedBestHwaccel')).toBe('')
   })
 
@@ -203,14 +197,14 @@ describe('decoder-nodeav — getGlobalSettings per-node projection', () => {
       localNodeId: 'hub',
       seed: { 'probedBestHwaccel@hub': 'vaapi', 'probedBestHwaccel@agent-1': 'qsv' },
     })
-    const view = await addon.getGlobalSettings()
+    const view = await addon.getScopedSettings('node', 'decoder')
     expect(fieldValue(view, 'probedBestHwaccel')).toBe('vaapi')
   })
 })
 
-// ── updateGlobalSettings for a sibling node ──────────────────────────────
+// ── updateScopedSettings for a sibling node ──────────────────────────────
 
-describe('decoder-nodeav — updateGlobalSettings sibling-node write', () => {
+describe('decoder-nodeav — updateScopedSettings sibling-node write', () => {
   it('writes ONLY the scoped key, no bare key, no local side effects', async () => {
     const { addon, store, emit } = await makeAddon({ localNodeId: 'hub' })
     // Init now stays on the nodeav default (persisted backend@* is inert), so
@@ -218,7 +212,7 @@ describe('decoder-nodeav — updateGlobalSettings sibling-node write', () => {
     await addon.reprobeHwaccel()
     const localAfterInit = addon.config.probedBestHwaccel
     emit.mockClear()
-    await addon.updateGlobalSettings({ probedBestHwaccel: 'qsv' }, 'agent-1')
+    await addon.updateScopedSettings('node', 'decoder', { probedBestHwaccel: 'qsv' }, 'agent-1')
     expect(store['probedBestHwaccel@agent-1']).toBe('qsv')
     expect(Object.prototype.hasOwnProperty.call(store, 'probedBestHwaccel')).toBe(false)
     expect(addon.config.probedBestHwaccel).toBe(localAfterInit)

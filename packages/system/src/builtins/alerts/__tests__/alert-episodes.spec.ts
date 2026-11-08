@@ -288,7 +288,7 @@ describe('alert episodes', () => {
         criticalPushTargetIds: 'ops,phone',
       },
     )
-    const schema = await addon.getGlobalSettings()
+    const schema = await addon.getScopedSettings('cluster', 'alerts')
     const keys = schema?.sections[0]?.fields.map((f) => ('key' in f ? f.key : undefined))
     expect(keys).toEqual(['maxAlerts', 'retentionDays'])
     const max = schema?.sections[0]?.fields.find((f) => 'key' in f && f.key === 'maxAlerts')

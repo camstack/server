@@ -67,12 +67,6 @@ interface IntegrationFormInput {
   readonly instance: IntegrationInstanceRef
 }
 
-interface AddonPatchInput {
-  readonly addonId: string
-  readonly nodeId?: string
-  readonly patch: Record<string, unknown>
-}
-
 interface DeviceGetInput {
   readonly addonId: string
   readonly deviceId: number
@@ -205,50 +199,6 @@ function createAddonSettingsProvider(deps: AddonSettingsProviderDeps): IAddonSet
   // ── Provider implementation ──────────────────────────────────────
 
   return {
-    async getGlobalSettings(input: AddonIdInput) {
-      if (gateway.isInProcess(input.addonId, input.nodeId)) {
-        const addon = getAddon(input.addonId)
-        if (!addon || typeof addon.getGlobalSettings !== 'function') return null
-        // Pass the REQUESTED nodeId so an addon serving a cluster-central,
-        // per-node config (the store is hub-resident) can scope to that node —
-        // the hub addon answers for every node, so it must not assume "self".
-        const result = await addon.getGlobalSettings(input.overlay, input.cap, input.nodeId)
-        return result ? reshapeForOutput(result) : null
-      }
-      return forkedGet(
-        input.addonId,
-        'getGlobalSettings',
-        {
-          ...(input.overlay ? { overlay: input.overlay } : {}),
-          ...(input.cap ? { cap: input.cap } : {}),
-          ...(input.nodeId ? { nodeId: input.nodeId } : {}),
-        },
-        input.nodeId,
-      )
-    },
-
-    async updateGlobalSettings(input: AddonPatchInput) {
-      if (gateway.isInProcess(input.addonId, input.nodeId)) {
-        const addon = getAddon(input.addonId)
-        if (!addon || typeof addon.updateGlobalSettings !== 'function') {
-          throw new Error(`Addon "${input.addonId}" does not implement updateGlobalSettings`)
-        }
-        // The admin API's write is the OPERATOR's (D787).
-        if (typeof addon.updateGlobalSettingsAsOperator === 'function') {
-          await addon.updateGlobalSettingsAsOperator(input.patch, input.nodeId)
-        } else {
-          await addon.updateGlobalSettings(input.patch, input.nodeId)
-        }
-        return { success: true as const }
-      }
-      return forkedUpdate(
-        input.addonId,
-        'updateGlobalSettings',
-        { patch: input.patch, ...(input.nodeId ? { nodeId: input.nodeId } : {}) },
-        input.nodeId,
-      )
-    },
-
     async getScopedSettings(input: ScopedGetInput) {
       if (gateway.isInProcess(input.addonId, input.nodeId)) {
         const addon = getAddon(input.addonId)
@@ -339,21 +289,6 @@ function createAddonSettingsProvider(deps: AddonSettingsProviderDeps): IAddonSet
       }
     },
 
-    async getIntegrationSettings(input: AddonIdInput) {
-      if (gateway.isInProcess(input.addonId, input.nodeId)) {
-        const addon = getAddon(input.addonId)
-        if (!addon || typeof addon.getIntegrationSettings !== 'function') return null
-        const result = await addon.getIntegrationSettings(input.nodeId)
-        return result ? reshapeForOutput(result) : null
-      }
-      return forkedGet(
-        input.addonId,
-        'getIntegrationSettings',
-        { ...(input.nodeId ? { nodeId: input.nodeId } : {}) },
-        input.nodeId,
-      )
-    },
-
     async getIntegrationFormSchema(input: IntegrationFormInput) {
       const instances = deps.instancesFor?.(input.addonId) ?? null
       if (instances !== null) {
@@ -364,14 +299,11 @@ function createAddonSettingsProvider(deps: AddonSettingsProviderDeps): IAddonSet
       if (gateway.isInProcess(input.addonId, input.nodeId)) {
         const addon = getAddon(input.addonId)
         if (!addon) return null
-        // The per-instance hook when the addon has one; its global schema otherwise (what the
-        // wizard and the edit page always showed).
+        // The per-instance hook when the addon has one; its scoped form otherwise.
         const result =
           typeof addon.getIntegrationFormSchema === 'function'
             ? await addon.getIntegrationFormSchema(input.instance, input.nodeId)
-            : typeof addon.getGlobalSettings === 'function'
-              ? await addon.getGlobalSettings(undefined, undefined, input.nodeId)
-              : null
+            : null
         return result ? reshapeForOutput(result) : null
       }
       return forkedGet(

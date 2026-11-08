@@ -11,9 +11,6 @@ class Probe extends WyzeProviderAddon {
   formFor(): Promise<ConfigUISchema | null> {
     return this.integrationFormSchema({ integrationId: 'acct-1', mode: 'account' })
   }
-  globalFormForTest(): ConfigUISchema | null {
-    return this.globalSettingsSchema()
-  }
 }
 
 describe('the Wyze account form', () => {
@@ -26,7 +23,7 @@ describe('the Wyze account form', () => {
     expect(keys.sort()).toEqual(['apiId', 'apiKey', 'email', 'password'])
   })
 
-  it('is no longer the addon-settings global schema', () => {
-    expect(new Probe().globalFormForTest()).toBeNull()
+  it('is no longer the addon-settings scoped settings', async () => {
+    expect(await new Probe().listScopedSettings()).toEqual([])
   })
 })

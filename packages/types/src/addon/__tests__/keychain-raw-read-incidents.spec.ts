@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import type { ConfigUISchema } from '../../interfaces/config-ui.js'
 import { clearKnownSecrets } from '../../keychain/known-secrets.js'
 import { isSecretMarker, makeSecretMarker } from '../../keychain/secret-marker.js'
@@ -12,15 +13,35 @@ import { type KeychainWorld, newWorld, worldContext } from './keychain-world.js'
  * changes and nothing loops.
  */
 
-// ── Wyze (b4906cec6): no globalSettingsSchema, credentials read raw ────────
+// ── Wyze (b4906cec6): credentials read raw ──────────────────────────────────
 
 interface WyzeLikeConfig {
   apiKey: string
 }
 
+const CAP = 'incident-cap'
+
+function passwordForm(...keys: readonly string[]): ConfigUISchema {
+  return {
+    sections: [
+      {
+        id: 'cred',
+        title: 'Credentials',
+        fields: keys.map((key) => ({ type: 'password' as const, key, label: key })),
+      },
+    ],
+  }
+}
+
 class NoSchemaAddon extends BaseAddon<WyzeLikeConfig> {
   constructor() {
     super({ apiKey: '' })
+  }
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return [CAP]
+  }
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    return cap === CAP ? passwordForm('password') : null
   }
   protected async onInitialize() {
     return []
@@ -32,8 +53,10 @@ class NoSchemaAddon extends BaseAddon<WyzeLikeConfig> {
   }
   /** The shape: persist the whole credentials object it just read. */
   async persistCredentials(): Promise<void> {
-    const { username, password } = await this.credentials()
-    await this.updateGlobalSettings({ username, password } as Partial<WyzeLikeConfig>)
+    const { password } = await this.credentials()
+    await this.clusterSettings(CAP, z.object({ password: z.string() })).patch({
+      password: typeof password === 'string' ? password : '',
+    })
   }
 }
 
@@ -50,16 +73,11 @@ class RawConfigAddon extends BaseAddon<OnvifLikeConfig> {
   protected async onInitialize() {
     return []
   }
-  protected override globalSettingsSchema(): ConfigUISchema {
-    return {
-      sections: [
-        {
-          id: 'd',
-          title: 'd',
-          fields: [{ type: 'password', key: 'defaultPassword', label: 'Default password' }],
-        },
-      ],
-    }
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return [CAP]
+  }
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    return cap === CAP ? passwordForm('defaultPassword') : null
   }
   /** The shape: `raw.defaultPassword` typed as a string, undefined when not one. */
   async addonConfig(): Promise<{ defaultPassword: string | undefined }> {
@@ -86,6 +104,18 @@ class BootstrapAddon extends BaseAddon<ReolinkLikeConfig> {
   constructor() {
     super({ emailPushAuthPassword: '' })
   }
+  protected override scopedSettingsCapabilities(): readonly string[] {
+    return [CAP]
+  }
+  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
+    return cap === CAP ? passwordForm('emailPushAuthPassword') : null
+  }
+  /** The addon's OWN write of the minted password. */
+  protected writePassword(value: string): Promise<void> {
+    return this.clusterSettings(CAP, z.object({ emailPushAuthPassword: z.string() })).patch({
+      emailPushAuthPassword: value,
+    })
+  }
   protected async onInitialize() {
     await this.startServer()
     return []
@@ -111,7 +141,7 @@ class BootstrapAddon extends BaseAddon<ReolinkLikeConfig> {
     this.minted++
     const fresh = `minted-${this.minted}-password`
     this.passwordInUse = fresh
-    await this.updateGlobalSettings({ emailPushAuthPassword: fresh })
+    await this.writePassword(fresh)
   }
 }
 
@@ -122,7 +152,7 @@ describe('the 2026-10-08 raw-read incidents, generically (D798)', () => {
   })
   afterEach(() => clearKnownSecrets())
 
-  it('Wyze: a marker under a key no schema declares reads as plaintext and writes back unchanged', async () => {
+  it('Wyze: a marker reads as plaintext through the raw store read and writes back unchanged', async () => {
     const ref = 'secret://wyze-like/global/password'
     w.store = { username: 'me@example.com', password: makeSecretMarker(ref) }
     w.kc.set(ref, { value: 'wyze-password-1', version: 1 })
@@ -181,7 +211,7 @@ describe('the 2026-10-08 raw-read incidents, generically (D798)', () => {
     w.resolveFails = true
     class NaiveBootstrap extends BootstrapAddon {
       async mintOverwhatever(): Promise<void> {
-        await this.updateGlobalSettings({ emailPushAuthPassword: 'minted-over-the-kept-one' })
+        await this.writePassword('minted-over-the-kept-one')
       }
     }
     const addon = new NaiveBootstrap()

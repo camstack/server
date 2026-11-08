@@ -11,9 +11,6 @@ class Probe extends MatterBrokerAddon {
   formFor(): Promise<ConfigUISchema | null> {
     return this.integrationFormSchema({ integrationId: 'fabric-1', mode: 'account' })
   }
-  globalFormForTest(): ConfigUISchema | null {
-    return this.globalSettingsSchema()
-  }
 }
 
 describe('the Matter integration form', () => {
@@ -31,7 +28,7 @@ describe('the Matter integration form', () => {
     ])
   })
 
-  it('is no longer the addon-settings global schema', () => {
-    expect(new Probe().globalFormForTest()).toBeNull()
+  it('is no longer the addon-settings scoped settings', async () => {
+    expect(await new Probe().listScopedSettings()).toEqual([])
   })
 })

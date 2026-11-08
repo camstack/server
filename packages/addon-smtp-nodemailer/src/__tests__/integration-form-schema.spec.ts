@@ -10,9 +10,6 @@ class Probe extends SmtpNodemailerAddon {
   relayFormFor(): Promise<ConfigUISchema | null> {
     return this.integrationFormSchema({ integrationId: 'relay-1', mode: 'account' })
   }
-  globalFormForTest(): ConfigUISchema | null {
-    return this.globalSettingsSchema()
-  }
 }
 
 function keysOf(schema: ConfigUISchema | null): string[] {
@@ -31,7 +28,7 @@ describe('the SMTP relay form', () => {
     )
   })
 
-  it('is no longer the addon-settings global schema', () => {
-    expect(new Probe().globalFormForTest()).toBeNull()
+  it('is no longer the addon-settings scoped settings', async () => {
+    expect(await new Probe().listScopedSettings()).toEqual([])
   })
 })

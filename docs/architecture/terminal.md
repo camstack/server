@@ -53,7 +53,7 @@ start an instance's camera with its stored overrides; the Admin UI's interactive
 open still sends `profileId` alone — but the **contract** accepts overrides from
 any caller, so the profile allowlist no longer bounds what argv is executed.
 
-Those settings are declared once, in the addon's `globalSettingsSchema()`, and
+Those settings are declared once, in the addon's scoped settings schema, and
 are rendered in two places from that one declaration: the generic
 /system/settings form, and **inline on Administration → Terminal**, scoped to
 the node that page's own NodePicker has selected. Nothing about a profile is

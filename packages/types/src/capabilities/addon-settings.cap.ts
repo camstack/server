@@ -90,35 +90,11 @@ export const addonSettingsCapability = {
   mode: 'singleton',
   nodeIdMode: 'data',
   methods: {
-    // ── Global-level settings ─────────────────────────────────────────
-    //
-    // `overlay` — optional preview overlay. When present, the provider
-    // hydrates the schema as if the overlay were merged on top of the
-    // persisted store (without writing anything). Used by override-mode
-    // UIs (benchmark tabs) to get cascade-aware option lists when the
-    // operator tweaks an upstream field — e.g. changing engineRuntime
-    // from 'python' to 'node' refetches with `overlay: {engineRuntime:
-    // 'node'}` so the backend/device dropdowns re-derive.
-    getGlobalSettings: method(
-      z.object({
-        addonId: z.string(),
-        nodeId: z.string().optional(),
-        overlay: z.record(z.string(), z.unknown()).optional(),
-        cap: z.string().optional(),
-      }),
-      SettingsSchemaWithValuesSchema.nullable(),
-    ),
-    updateGlobalSettings: method(
-      z.object({ addonId: z.string(), nodeId: z.string().optional(), patch: SettingsPatchSchema }),
-      SettingsUpdateResultSchema,
-      { kind: 'mutation', auth: 'admin' },
-    ),
-
     // ── Scoped settings (D986 §7) ─────────────────────────────────────
     //
     // One scope of one capability's settings, addressed by `(addonId, cap, scope)`; `nodeId`
-    // matters for the `node` scope only (absent: the addon's own node). They replace
-    // `getGlobalSettings` / `updateGlobalSettings`, which stay as shims until every caller moved.
+    // matters for the `node` scope only (absent: the addon's own node). An addon has no settings of
+    // its own: the former addon-level read and write are gone (D986, P10).
     //
     // `getScopedSettings` — the hydrated form, the addon's overlay applied; `null` when the
     // capability declares nothing for the scope. `readScopedValues` — the effective values for
@@ -160,29 +136,10 @@ export const addonSettingsCapability = {
       z.record(z.string(), z.unknown()).nullable(),
     ),
 
-    // ── Integration-level settings ────────────────────────────────────
-    //
-    // The sections an addon declared (`BaseAddon.integrationSettingSections`)
-    // as being the configuration of its INTEGRATION, so an operator finds them
-    // under System → Integrations → <name> instead of only in the cluster-wide
-    // list of every addon. `null` ⇒ the addon declared none; the surface is not
-    // offered at all.
-    //
-    // READ-ONLY BY DESIGN — there is deliberately NO `updateIntegrationSettings`.
-    // The payload is a SUBSET of `getGlobalSettings`, so the writer is
-    // `updateGlobalSettings` and the store key is the same bare key the addon's
-    // own page writes. A second write path is exactly how a surface acquires a
-    // second store key (D266's `btmPath@hub`), so the contract omits one rather
-    // than documenting that nobody should call it.
-    getIntegrationSettings: method(
-      z.object({ addonId: z.string(), nodeId: z.string().optional() }),
-      SettingsSchemaWithValuesSchema.nullable(),
-    ),
-
     // The form of ONE integration instance — the create wizard (`integrationId: null`) and the
-    // edit page both ask here instead of `getGlobalSettings`. An addon with a per-instance schema
-    // (`BaseAddon.integrationFormSchema`) answers with it; every other addon answers with its
-    // global schema, exactly as before. Read-only: the values come from the instance record.
+    // edit page both ask here. An addon with a per-instance schema
+    // (`BaseAddon.integrationFormSchema`) answers with it; every other addon answers with the form of its
+    // scoped schemas. Read-only: the values come from the instance record.
     getIntegrationFormSchema: method(
       z.object({
         addonId: z.string(),

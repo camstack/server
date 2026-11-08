@@ -137,7 +137,7 @@ describe('UDS addon-call plane — routes / custom', () => {
     })
     child.onAddonCall(async (call) => {
       seen.push(call)
-      if (call.target === 'settings' && call.method === 'getGlobalSettings') {
+      if (call.target === 'settings' && call.method === 'getIntegrationFormSchema') {
         return { sections: [{ id: 'stream-broker-settings', title: 'Stream Broker', fields: [] }] }
       }
       throw new Error(`unexpected settings call ${String(call.method)}`)
@@ -148,16 +148,16 @@ describe('UDS addon-call plane — routes / custom', () => {
     const result = await registry.callAddonOnChild('stream-broker', {
       addonId: 'stream-broker',
       target: 'settings',
-      method: 'getGlobalSettings',
-      args: { overlay: { defaultPreBufferSec: 12 } },
+      method: 'getIntegrationFormSchema',
+      args: { nodeId: 'agent-a' },
     })
 
     expect(seen).toHaveLength(1)
     const call0 = seen[0]
     if (!call0) throw new Error('expected one captured addon call')
     expect(call0.target).toBe('settings')
-    expect(call0.method).toBe('getGlobalSettings')
-    expect(call0.args).toEqual({ overlay: { defaultPreBufferSec: 12 } })
+    expect(call0.method).toBe('getIntegrationFormSchema')
+    expect(call0.args).toEqual({ nodeId: 'agent-a' })
     expect(result).toEqual({
       sections: [{ id: 'stream-broker-settings', title: 'Stream Broker', fields: [] }],
     })

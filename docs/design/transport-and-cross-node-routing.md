@@ -160,7 +160,7 @@ hub addon ctx.api.X.Y()
 ## 5. Addon-LEVEL calls (settings / routes / custom) — the gateway
 
 Capabilities are not the only surface. Addon-LEVEL methods — the `settings`
-(`getGlobalSettings`/`updateGlobalSettings`/…), `routes`, and `custom`-action
+(`getScopedSettings`/`updateScopedSettings`/…), `routes`, and `custom`-action
 surfaces — are routed by a separate, single chokepoint:
 
 - **`AddonCallGateway`** (`server/backend/src/core/addon/addon-call-gateway.ts`).
@@ -243,7 +243,7 @@ devices reflect ITS hardware (e.g. an N100 has no NPU) instead of the hub's.
 - Per-node keys are persisted node-scoped (`<key>@<nodeId>`), never bare. The
   engine cascade that introduced the pattern is retired (see §5); live users are
   `probedBestHwaccel` and `probedBestAudioBackend`.
-- `getGlobalSettings` returns `null` ("keep last-known") only when the store is
+- `getScopedSettings` returns `null` ("keep last-known") only when the store is
   genuinely UNREADABLE — an empty store is a harmless first boot, and there is no
   longer a persisted engine selection to protect. The UI keeps the last good
   value on `null`.

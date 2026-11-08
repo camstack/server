@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The addon settings panel reads and writes through the scoped settings only; the integration surface and the settings forwarding are gone.
+
 ## [1.2.613] - 2026-11-08
 
 ### Changed

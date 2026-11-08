@@ -81,7 +81,6 @@ function toSerializableRoute(route: unknown): SerializableRouteDescriptor {
 
 /** Settings-method params as the hub packs them into `AddonCallInput.args`. */
 interface SettingsArgs {
-  readonly overlay?: Record<string, unknown>
   readonly cap?: string
   /** The scope of a scoped-settings call (D986). */
   readonly scope?: ScopedSettingsScope
@@ -121,23 +120,6 @@ async function dispatchSettings(
   args: SettingsArgs,
 ): Promise<unknown> {
   switch (method) {
-    case 'getGlobalSettings':
-      return typeof addon.getGlobalSettings === 'function'
-        ? ((await addon.getGlobalSettings(args.overlay, args.cap, args.nodeId)) ?? null)
-        : null
-    case 'updateGlobalSettings':
-      if (typeof addon.updateGlobalSettings !== 'function') {
-        throw new Error(
-          `child-addon-call: addon "${addonId}" does not implement updateGlobalSettings`,
-        )
-      }
-      // A settings call that reaches an addon is the OPERATOR's (D787).
-      if (typeof addon.updateGlobalSettingsAsOperator === 'function') {
-        await addon.updateGlobalSettingsAsOperator(args.patch ?? {}, args.nodeId)
-      } else {
-        await addon.updateGlobalSettings(args.patch ?? {}, args.nodeId)
-      }
-      return { success: true as const }
     case 'getScopedSettings': {
       const { scope, cap } = requireScopedTarget(addonId, method, args)
       return typeof addon.getScopedSettings === 'function'
@@ -164,18 +146,10 @@ async function dispatchSettings(
         ? ((await addon.readScopedValues(scope, cap, args.nodeId)) ?? null)
         : null
     }
-    case 'getIntegrationSettings':
-      // No update twin: the writer is `updateGlobalSettings` (same store, same
-      // bare key). See `addon-settings.cap.ts`.
-      return typeof addon.getIntegrationSettings === 'function'
-        ? ((await addon.getIntegrationSettings(args.nodeId)) ?? null)
-        : null
     case 'getIntegrationFormSchema':
       return typeof addon.getIntegrationFormSchema === 'function' && args.instance !== undefined
         ? ((await addon.getIntegrationFormSchema(args.instance, args.nodeId)) ?? null)
-        : typeof addon.getGlobalSettings === 'function'
-          ? ((await addon.getGlobalSettings(undefined, undefined, args.nodeId)) ?? null)
-          : null
+        : null
     case 'getDeviceSettings':
       return typeof addon.getDeviceSettings === 'function' && typeof args.deviceId === 'number'
         ? ((await addon.getDeviceSettings(args.deviceId)) ?? null)

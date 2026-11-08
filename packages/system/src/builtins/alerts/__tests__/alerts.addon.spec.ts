@@ -270,9 +270,9 @@ function makeSystemEvent(category: string, data: Record<string, unknown> = {}): 
  * In-memory fake of the Phase 2 raw-store accessors exposed by
  * `AddonContext.settings`. The alerts addon reads
  * `settings?.readAddonStore()` during `initialize()` and
- * `updateGlobalSettings()`, and writes back via `writeAddonStore(patch)`.
+ * `updateScopedSettings()`, and writes back via `writeAddonStore(patch)`.
  * `writeAddonStore` shallow-merges into the in-memory store so partial
- * patches from `updateGlobalSettings` preserve untouched keys.
+ * patches from `updateScopedSettings` preserve untouched keys.
  */
 function createFakeSettings(initial: Record<string, unknown> = {}): {
   readAddonStore: () => Promise<Record<string, unknown>>
@@ -412,7 +412,7 @@ describe('AlertCenterAddon', () => {
       // addon reads its config from `context.settings.readAddonStore()`
       // instead of the legacy `addonConfig` field. Seed the fake
       // settings with the values we want and assert via the new
-      // `getGlobalSettings` path.
+      // `getScopedSettings` path.
       const addon2 = new AlertCenterAddon()
       await addon2.initialize({
         api: { settingsStore: wrapAsTrpc(backend) },
@@ -424,7 +424,7 @@ describe('AlertCenterAddon', () => {
         settings: createFakeSettings({ maxAlerts: 100, retentionDays: 7 }),
       } as unknown as AddonContext)
 
-      const schema = await addon2.getGlobalSettings()
+      const schema = await addon2.getScopedSettings('cluster', 'alerts')
       expect(schema).not.toBeNull()
       const fields = schema!.sections[0]!.fields
       const maxAlerts = fields.find((f) => 'key' in f && f.key === 'maxAlerts')
@@ -439,7 +439,7 @@ describe('AlertCenterAddon', () => {
       // been written yet. `hydrateSchema` + `readAddonStore()` guarantees
       // this — there is no longer a legacy `DEFAULT_CONFIG` const to
       // inspect directly on the addon instance.
-      const schema = await addon.getGlobalSettings()
+      const schema = await addon.getScopedSettings('cluster', 'alerts')
       expect(schema).not.toBeNull()
       const fields = schema!.sections[0]!.fields
       const maxAlerts = fields.find((f) => 'key' in f && f.key === 'maxAlerts')
@@ -584,7 +584,7 @@ describe('AlertCenterAddon', () => {
     })
 
     it('ignores settings-only addon.updated (no toVersion) — same gate as NC', async () => {
-      // BaseAddon.updateGlobalSettings emits addon.updated with neither
+      // BaseAddon.updateScopedSettings emits addon.updated with neither
       // version. Those are not package updates; minting a card per save is
       // what filled the bell with identical "Addon X updated" rows.
       eventBus._fire('addon.updated', {
@@ -1318,7 +1318,7 @@ describe('AlertCenterAddon', () => {
       // Phase 13: Set low maxAlerts via the new three-level settings
       // API (Phase 3 migration replaced the legacy `onConfigChange`
       // method on `ICamstackAddon`).
-      await addon.updateGlobalSettings({ maxAlerts: 3, retentionDays: 30 })
+      await addon.updateScopedSettings('cluster', 'alerts', { maxAlerts: 3, retentionDays: 30 })
 
       // Create 4 alerts
       for (let i = 0; i < 4; i++) {
@@ -1348,13 +1348,13 @@ describe('AlertCenterAddon', () => {
   // Phase 13: rewritten from the legacy
   // `getConfigSchema / getConfig / onConfigChange` trio (deleted in
   // Phase 3 for this addon) to the new
-  // `getGlobalSettings / updateGlobalSettings` pair that exposes a
+  // `getScopedSettings / updateScopedSettings` pair that exposes a
   // hydrated `ConfigUISchemaWithValues` instead of a plain schema +
   // separate config record.
 
   describe('settings management', () => {
-    it('getGlobalSettings returns the hydrated schema', async () => {
-      const schema = await addon.getGlobalSettings()
+    it('getScopedSettings returns the hydrated schema', async () => {
+      const schema = await addon.getScopedSettings('cluster', 'alerts')
       expect(schema).not.toBeNull()
       expect(schema!.sections).toHaveLength(1)
       expect(schema!.sections[0]!.id).toBe('alerts')
@@ -1364,9 +1364,9 @@ describe('AlertCenterAddon', () => {
       expect(keys).toEqual(['maxAlerts', 'retentionDays'])
     })
 
-    it('updateGlobalSettings writes both values', async () => {
-      await addon.updateGlobalSettings({ maxAlerts: 200, retentionDays: 14 })
-      const schema = await addon.getGlobalSettings()
+    it('updateScopedSettings writes both values', async () => {
+      await addon.updateScopedSettings('cluster', 'alerts', { maxAlerts: 200, retentionDays: 14 })
+      const schema = await addon.getScopedSettings('cluster', 'alerts')
       expect(schema).not.toBeNull()
       const fields = schema!.sections[0]!.fields
       const maxAlerts = fields.find((f) => 'key' in f && f.key === 'maxAlerts') as
@@ -1379,11 +1379,11 @@ describe('AlertCenterAddon', () => {
       expect(retentionDays?.value).toBe(14)
     })
 
-    it('updateGlobalSettings preserves existing values when the patch is partial', async () => {
+    it('updateScopedSettings preserves existing values when the patch is partial', async () => {
       // Seed first write, then patch only one key.
-      await addon.updateGlobalSettings({ maxAlerts: 100, retentionDays: 20 })
-      await addon.updateGlobalSettings({ maxAlerts: 200 })
-      const schema = await addon.getGlobalSettings()
+      await addon.updateScopedSettings('cluster', 'alerts', { maxAlerts: 100, retentionDays: 20 })
+      await addon.updateScopedSettings('cluster', 'alerts', { maxAlerts: 200 })
+      const schema = await addon.getScopedSettings('cluster', 'alerts')
       expect(schema).not.toBeNull()
       const fields = schema!.sections[0]!.fields
       const maxAlerts = fields.find((f) => 'key' in f && f.key === 'maxAlerts') as

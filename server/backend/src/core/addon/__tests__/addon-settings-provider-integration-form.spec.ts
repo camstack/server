@@ -1,6 +1,6 @@
 /**
- * The integration form route: the addon's per-instance hook when it has one, its global
- * settings when it does not, and the forked path forwards the instance.
+ * The integration form route: the addon's per-instance hook when it has one, null when it has
+ * none, and the forked path forwards the instance.
  */
 import type { ICamstackAddon, IntegrationInstanceRef } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
@@ -30,19 +30,16 @@ function build(addon: Partial<ICamstackAddon>, forked = vi.fn()) {
 describe('getIntegrationFormSchema route', () => {
   it('uses the addon hook when present', async () => {
     const hook = vi.fn(async () => schema('scoped'))
-    const global = vi.fn(async () => schema('global'))
-    const p = build({ getIntegrationFormSchema: hook, getGlobalSettings: global })
+    const p = build({ getIntegrationFormSchema: hook })
     const out = await p.getIntegrationFormSchema({ addonId: 'a', instance: INSTANCE })
     expect(firstKey(out)).toBe('scoped')
     expect(hook).toHaveBeenCalledWith(INSTANCE, undefined)
-    expect(global).not.toHaveBeenCalled()
   })
 
-  it('falls back to getGlobalSettings when the addon has no hook', async () => {
-    const global = vi.fn(async () => schema('global'))
-    const p = build({ getGlobalSettings: global })
+  it('answers null when the addon has no hook', async () => {
+    const p = build({})
     const out = await p.getIntegrationFormSchema({ addonId: 'a', instance: INSTANCE })
-    expect(firstKey(out)).toBe('global')
+    expect(out).toBeNull()
   })
 
   it('an addon with integration-instances answers with its instanceFormSchema for that id', async () => {

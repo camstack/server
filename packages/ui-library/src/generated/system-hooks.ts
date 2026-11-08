@@ -170,12 +170,6 @@ export const useAddonsCancelJob: typeof trpc.addons.cancelJob.useMutation = /*#_
 /** Generated alias around `trpc.addons.onAddonLogs.useSubscription`. */
 export const useAddonsOnAddonLogs: typeof trpc.addons.onAddonLogs.useSubscription = /*#__PURE__*/ alias(() => trpc.addons.onAddonLogs.useSubscription)
 
-/** Generated alias around `trpc.addonSettings.getGlobalSettings.useQuery`. */
-export const useAddonSettingsGetGlobalSettings: typeof trpc.addonSettings.getGlobalSettings.useQuery = /*#__PURE__*/ alias(() => trpc.addonSettings.getGlobalSettings.useQuery)
-
-/** Generated alias around `trpc.addonSettings.updateGlobalSettings.useMutation`. */
-export const useAddonSettingsUpdateGlobalSettings: typeof trpc.addonSettings.updateGlobalSettings.useMutation = /*#__PURE__*/ alias(() => trpc.addonSettings.updateGlobalSettings.useMutation)
-
 /** Generated alias around `trpc.addonSettings.getScopedSettings.useQuery`. */
 export const useAddonSettingsGetScopedSettings: typeof trpc.addonSettings.getScopedSettings.useQuery = /*#__PURE__*/ alias(() => trpc.addonSettings.getScopedSettings.useQuery)
 
@@ -187,9 +181,6 @@ export const useAddonSettingsUpdateScopedSettings: typeof trpc.addonSettings.upd
 
 /** Generated alias around `trpc.addonSettings.readScopedValues.useQuery`. */
 export const useAddonSettingsReadScopedValues: typeof trpc.addonSettings.readScopedValues.useQuery = /*#__PURE__*/ alias(() => trpc.addonSettings.readScopedValues.useQuery)
-
-/** Generated alias around `trpc.addonSettings.getIntegrationSettings.useQuery`. */
-export const useAddonSettingsGetIntegrationSettings: typeof trpc.addonSettings.getIntegrationSettings.useQuery = /*#__PURE__*/ alias(() => trpc.addonSettings.getIntegrationSettings.useQuery)
 
 /** Generated alias around `trpc.addonSettings.getIntegrationFormSchema.useQuery`. */
 export const useAddonSettingsGetIntegrationFormSchema: typeof trpc.addonSettings.getIntegrationFormSchema.useQuery = /*#__PURE__*/ alias(() => trpc.addonSettings.getIntegrationFormSchema.useQuery)
