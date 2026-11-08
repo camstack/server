@@ -9,14 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The hub serves viewer 1.0.693.
+- Serves viewer 1.0.693
 
 ## [1.2.671] - 2026-11-08
 
 ### Changed
 
 - Serves viewer 1.0.692
-- Serves viewer 1.0.693
 
 ## [1.2.670] - 2026-11-08
 
