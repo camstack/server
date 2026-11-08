@@ -94,8 +94,6 @@ describe('assumed state', () => {
       ALL,
     )
     expect(view.stateAssumed).toBe(false)
-    expect(view.muteAssumed).toBe(true)
-    expect(view.volumeAssumed).toBe(false)
   })
 
   it('an older assumed slice with no field list is assumed throughout', () => {

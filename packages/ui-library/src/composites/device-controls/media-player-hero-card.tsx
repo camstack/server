@@ -196,14 +196,12 @@ const STATE_LABEL: Readonly<Record<MediaPlayerState, string>> = {
 interface StateLineProps {
   /** The reported state; undefined while the status has not arrived (shown as unknown). */
   readonly state: MediaPlayerState | undefined
-  /** Some of what is shown is the driver's own bookkeeping (infrared), not a reading. */
-  readonly assumed: boolean
   /** The active source as plain text; empty when it is a picker or absent. */
   readonly source: string
   readonly running: ReactNode
 }
 
-function StateLine({ state, assumed, source, running }: StateLineProps): ReactNode {
+function StateLine({ state, source, running }: StateLineProps): ReactNode {
   const t = useUiText()
   return (
     <div
@@ -218,18 +216,6 @@ function StateLine({ state, assumed, source, running }: StateLineProps): ReactNo
       ) : (
         <span className="font-medium text-foreground">
           {t(`uiLibrary.mediaPlayerHero.state.${state}`, STATE_LABEL[state])}
-        </span>
-      )}
-      {assumed && (
-        <span
-          className="rounded border border-dashed border-border px-1.5 py-0.5 text-[11px] text-foreground-subtle"
-          title={t(
-            'uiLibrary.mediaPlayerHero.assumedHint',
-            'No feedback from the device: this is what was last sent.',
-          )}
-          data-testid="media-assumed"
-        >
-          {t('uiLibrary.mediaPlayerHero.assumed', 'assumed')}
         </span>
       )}
       {source !== '' && <span data-testid="media-source">{source}</span>}
@@ -397,8 +383,6 @@ export function MediaPlayerHeroCard({
   // What plays is shown whenever the device reports it, whatever the power reading says.
   const nowPlaying = view.nowPlaying
   const positionMs = status === undefined ? null : projectedPositionMs(status, nowMs)
-  const assumedAny =
-    view.stateAssumed || view.volumeAssumed || view.muteAssumed || view.sourceAssumed
   // A source that cannot be switched is plain text on the state line; a picker replaces it.
   const sourcePicker = powered && view.source !== null && view.source.selectable
   const sourceText =
@@ -431,7 +415,6 @@ export function MediaPlayerHeroCard({
         />
         <StateLine
           state={status?.state}
-          assumed={assumedAny}
           source={sourceText}
           running={<RunningIndicator running={view.running} />}
         />

@@ -7701,8 +7701,6 @@
       "unmute": "Riattiva audio",
       "mute": "Disattiva audio",
       "volume": "Volume",
-      "assumed": "presunto",
-      "assumedHint": "Nessun riscontro dal dispositivo: è l'ultimo comando inviato.",
       "state": {
         "off": "Spento",
         "on": "Acceso",

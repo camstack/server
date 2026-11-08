@@ -7679,8 +7679,6 @@
       "unmute": "Unmute",
       "mute": "Mute",
       "volume": "Volume",
-      "assumed": "assumed",
-      "assumedHint": "No feedback from the device: this is what was last sent.",
       "state": {
         "off": "Off",
         "on": "On",

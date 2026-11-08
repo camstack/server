@@ -113,7 +113,6 @@ export interface MediaPlayerView {
   readonly transport: TransportView
   readonly seek: boolean
   readonly volume: VolumeView
-  readonly volumeAssumed: boolean
   /** The device reported a level; false draws the slider as unknown. */
   readonly volumeKnown: boolean
   readonly muteKnown: boolean
@@ -121,9 +120,7 @@ export interface MediaPlayerView {
   readonly artworkUrl: string | null
   /** A mute toggle with a known state. */
   readonly mute: boolean
-  readonly muteAssumed: boolean
   readonly source: SourceView | null
-  readonly sourceAssumed: boolean
   readonly shuffle: boolean
   readonly repeat: boolean
   /** The device reports a shuffle / repeat value it cannot be told to change: drawn, not pressable. */
@@ -184,14 +181,11 @@ const UNKNOWN_VIEW: MediaPlayerView = {
   transport: NO_TRANSPORT,
   seek: false,
   volume: 'none',
-  volumeAssumed: false,
   volumeKnown: false,
   muteKnown: false,
   artworkUrl: null,
   mute: false,
-  muteAssumed: false,
   source: null,
-  sourceAssumed: false,
   shuffle: false,
   repeat: false,
   shuffleReadOnly: false,
@@ -326,14 +320,12 @@ function deriveFromStatus(
     },
     seek: has(DeviceFeature.MediaPlayerSeek) && status.duration !== null && status.duration > 0,
     volume,
-    volumeAssumed: isAssumed(status, 'volumeLevel'),
     // A declared mute is drawn even with no reading (its state then reads unknown, not "unmuted");
     // a device that declares nothing but reports a mute next to a slider keeps the toggle.
     mute: has(DeviceFeature.MediaPlayerMute) || (volume === 'slider' && status.isMuted !== null),
     volumeKnown: status.volumeLevel !== null,
     muteKnown: status.isMuted !== null,
     artworkUrl: artworkOf(status),
-    muteAssumed: isAssumed(status, 'isMuted'),
     source: hasSource
       ? {
           current: sourceName,
@@ -341,7 +333,6 @@ function deriveFromStatus(
           selectable: has(DeviceFeature.MediaPlayerSelectSource) && options.length > 1,
         }
       : null,
-    sourceAssumed: isAssumed(status, 'source'),
     shuffle: has(DeviceFeature.MediaPlayerShuffle) && status.shuffle !== null,
     repeat: has(DeviceFeature.MediaPlayerRepeat) && status.repeat !== null,
   }

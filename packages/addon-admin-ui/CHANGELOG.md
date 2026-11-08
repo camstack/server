@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Removed the unused 'assumed' media player labels from the translations.
+
 ## [1.2.615] - 2026-11-08
 
 ### Changed

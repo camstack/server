@@ -55,16 +55,17 @@ function renderHero(slice: unknown): void {
 }
 
 describe('MediaPlayerHeroCard — only what is known', () => {
-  it('draws no volume, source or now-playing for an infrared TV, and marks the state assumed', () => {
+  it('draws no volume, source or now-playing for an infrared TV, and shows no assumed label', () => {
     renderHero(infrared)
     expect(screen.queryByTestId('media-volume')).toBeNull()
     expect(screen.queryByTestId('media-source')).toBeNull()
     expect(screen.queryByText('Nothing playing')).toBeNull()
-    expect(screen.getByTestId('media-assumed')).toBeTruthy()
+    expect(screen.queryByTestId('media-assumed')).toBeNull()
+    expect(screen.queryByText('assumed')).toBeNull()
     expect(screen.getByTestId('media-state').textContent).toContain('Standby')
   })
 
-  it('draws volume, source and now-playing when they are known, with no assumed mark', () => {
+  it('draws volume, source and now-playing when they are known', () => {
     renderHero({
       ...infrared,
       state: 'playing',
@@ -78,7 +79,6 @@ describe('MediaPlayerHeroCard — only what is known', () => {
     expect(screen.getByTestId('media-volume')).toBeTruthy()
     expect(screen.getByTestId('media-source').textContent).toBe('HDMI 1')
     expect(screen.getByText('Song')).toBeTruthy()
-    expect(screen.queryByTestId('media-assumed')).toBeNull()
   })
 
   it('renders nothing without the media-player binding', () => {
