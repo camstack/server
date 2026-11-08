@@ -90,8 +90,10 @@ export interface DwellLabel {
 }
 
 export function dwellLabel(ms: number): DwellLabel {
-  if (ms < 60_000) return { unit: 'seconds', n: Math.round(ms / 1000) }
-  return { unit: 'minutes', n: Math.max(1, Math.round(ms / 60_000)) }
+  const seconds = Math.round(ms / 1000)
+  // Minutes only when they are exact: a 90 s dwell must not read as "2 min".
+  if (seconds < 60 || seconds % 60 !== 0) return { unit: 'seconds', n: seconds }
+  return { unit: 'minutes', n: seconds / 60 }
 }
 
 export function defaultScalarTransform(

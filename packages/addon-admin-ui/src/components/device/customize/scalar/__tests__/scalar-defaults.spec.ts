@@ -118,5 +118,6 @@ describe('defaultScalarTransform', () => {
   it('names a dwell in seconds under a minute and in minutes from there', () => {
     expect(dwellLabel(10_000)).toEqual({ unit: 'seconds', n: 10 })
     expect(dwellLabel(180_000)).toEqual({ unit: 'minutes', n: 3 })
+    expect(dwellLabel(90_000)).toEqual({ unit: 'seconds', n: 90 })
   })
 })
