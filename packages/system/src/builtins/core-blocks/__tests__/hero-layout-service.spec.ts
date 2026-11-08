@@ -119,7 +119,7 @@ describe('hero-layout getRowModels', () => {
     )
     const rows = await service({ device }).getRowModels({ deviceIds: [3, 99, 4] })
     expect(rows.map((r) => r?.deviceId ?? null)).toEqual([3, null, 4])
-    expect(rows[0]).toMatchObject({ scene: { id: 'heater-rise' }, name: 'Dev 3' })
+    expect(rows[0]).toMatchObject({ scene: { id: 'heater' }, name: 'Dev 3' })
     expect(rows[0]?.primary).toMatchObject({ kind: 'toggle', id: 'own-power' })
     expect(device).toHaveBeenCalledTimes(3)
   })
