@@ -70,6 +70,7 @@
       {
         "id": "pipeline-analytics",
         "category": "analytics",
+        "integrationRole": "devices",
         "name": "Pipeline Analytics",
         "icon": "assets/pipeline-analytics/icon.svg",
         "description": "Zone analytics + audio metrics aggregator. Consumes pipeline events to surface per-camera zone counters and audio-level histograms.",

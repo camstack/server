@@ -470,6 +470,7 @@
       {
         "id": "core-blocks",
         "category": "system",
+        "integrationRole": "devices",
         "name": "Core Blocks",
         "icon": "assets/core-blocks/icon.svg",
         "color": "#ea580c",

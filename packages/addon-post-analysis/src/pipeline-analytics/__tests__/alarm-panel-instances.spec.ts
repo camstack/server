@@ -56,6 +56,9 @@ interface Kit {
   readonly instances: IIntegrationInstancesProvider
   /** Runs the alarm panel's declaration pass against a registry row named `rowName`. */
   readonly declarePass: (rowName: string | null) => Promise<void>
+  readonly warn: ReturnType<typeof vi.fn>
+  /** Makes the next reads of the records fail (or work again). */
+  readonly recordsDown: { value: boolean }
 }
 
 async function makeKit(): Promise<Kit> {
@@ -78,10 +81,16 @@ async function makeKit(): Promise<Kit> {
   }
   // Documented type boundary: the pass reads `logger`, `kernel` and `records` of the context and
   // `integrations` / `deviceManager` of the api; nothing else of either is touched.
+  const warn = vi.fn()
+  const info = vi.fn()
+  const recordsDown = { value: false }
+  const logger = { ...makeSilentLogger(), warn, info }
   const ctx = {
-    logger: makeSilentLogger(),
+    logger,
     kernel: { devices, localNodeId: 'hub' },
-    records,
+    get records() {
+      return recordsDown.value ? undefined : records
+    },
   } as unknown as AddonContext<Record<string, unknown>>
   const boot = new BuildAlarmPanel({
     ctx: () => ctx,
@@ -108,7 +117,7 @@ async function makeKit(): Promise<Kit> {
     } as unknown as AnalyticsApi
     await boot.attemptAlarmPanelDeclaration(api)
   }
-  return { records, instances, declarePass }
+  return { records, instances, declarePass, warn, recordsDown }
 }
 
 describe('the Notification Center integration instance record', () => {
@@ -144,10 +153,26 @@ describe('the Notification Center integration instance record', () => {
     expect(await kit.instances.listInstances()).toHaveLength(1)
   })
 
+  it('reports a seed failure once while it lasts, not on every pass', async () => {
+    kit.recordsDown.value = true
+    await kit.declarePass(null)
+    await kit.declarePass(null)
+    await kit.declarePass(null)
+    const seedWarnings = kit.warn.mock.calls.filter(([m]) => String(m).includes('could not seed'))
+    expect(seedWarnings).toHaveLength(1)
+    expect(seedWarnings[0]?.[1]).toMatchObject({ tags: { integrationId: INTEGRATION_ID } })
+    kit.recordsDown.value = false
+    await kit.declarePass(null)
+    expect(await kit.instances.getInstance({ id: INTEGRATION_ID })).not.toBeNull()
+  })
+
   it('carries no switch of its own', async () => {
     await kit.declarePass(NC_INTEGRATION_NAME)
     const instance = await kit.instances.getInstance({ id: INTEGRATION_ID })
     expect(instance?.formValues).not.toHaveProperty('enabled')
-    expect(await kit.instances.describe()).toMatchObject({ role: 'devices', instanceMode: 'single' })
+    expect(await kit.instances.describe()).toMatchObject({
+      role: 'devices',
+      instanceMode: 'single',
+    })
   })
 })

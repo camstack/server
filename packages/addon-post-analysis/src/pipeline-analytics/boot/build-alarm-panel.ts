@@ -6,7 +6,7 @@
  */
 
 import type { AddonContext } from '@camstack/types'
-import { DeclaredDevices, errMsg, seedInstanceOnce } from '@camstack/types'
+import { DeclaredDevices, declarationOwnerNodeId, errMsg, seedInstanceOnce } from '@camstack/types'
 import {
   NC_ALARM_DECLARATION,
   NC_INTEGRATION_NAME,
@@ -33,6 +33,9 @@ export interface BuildAlarmPanelDeps {
 }
 
 export class BuildAlarmPanel {
+  /** The seed failure last reported, so a failure that persists is logged once, not every pass. */
+  private seedFailure: string | null = null
+
   constructor(protected readonly deps: BuildAlarmPanelDeps) {}
 
   protected get ctx(): AddonContext<Record<string, unknown>> {
@@ -157,11 +160,7 @@ export class BuildAlarmPanel {
         }),
       // The integration keeps a name-only instance record under its registry id. A seed never
       // overwrites, so an existing install gains the record once and keeps it afterwards.
-      seedInstance: async (seed) => {
-        const records = this.ctx.records
-        if (records === undefined) throw new Error('ctx.records is not available')
-        await seedInstanceOnce(buildAlarmPanelInstances(records).toProvider(), seed)
-      },
+      seedInstance: (seed) => this.seedInstanceRecord(seed),
     })
     try {
       const result = await declared.reconcile({
@@ -185,6 +184,42 @@ export class BuildAlarmPanel {
     // happened and will not run again.
     if (this.notificationCenter !== null) this.wireAlarmPanel(this.notificationCenter)
     return true
+  }
+
+  /**
+   * Seed the instance record of the Notification Center integration. Hub only, like the provider
+   * that serves it. A failure is reported when it CHANGES (first failure, a different cause) and
+   * once more when it clears, never on every convergence pass; the next pass retries.
+   */
+  private async seedInstanceRecord(seed: {
+    readonly id: string
+    readonly name: string
+  }): Promise<void> {
+    if (declarationOwnerNodeId(this.ctx.kernel.localNodeId) !== 'hub') return
+    try {
+      const records = this.ctx.records
+      if (records === undefined) throw new Error('ctx.records is not available')
+      await seedInstanceOnce(buildAlarmPanelInstances(records).toProvider(), seed)
+    } catch (err) {
+      const reason = errMsg(err)
+      if (this.seedFailure !== reason) {
+        this.seedFailure = reason
+        this.ctx.logger.warn(
+          'could not seed the instance record of the Notification Center integration',
+          {
+            tags: { integrationId: seed.id },
+            meta: { error: reason },
+          },
+        )
+      }
+      return
+    }
+    if (this.seedFailure !== null) {
+      this.seedFailure = null
+      this.ctx.logger.info('the instance record of the Notification Center integration is seeded', {
+        tags: { integrationId: seed.id },
+      })
+    }
   }
 
   /**
