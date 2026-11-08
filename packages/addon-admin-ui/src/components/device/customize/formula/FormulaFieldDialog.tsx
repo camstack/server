@@ -66,6 +66,18 @@ export interface FormulaFieldDialogProps {
 
 type PickerMode = 'idle' | 'add-binding'
 
+/**
+ * What the editor opens on. A formula is itself; a source link becomes the
+ * formula that reads it (`x`), so the operator sees the link they stored, not
+ * `null`. Only a field no formula can express (code, aggregate, series) starts
+ * empty — and `null` is then the truth, not a value that failed to load.
+ */
+export function seedOf(initial: CompositionFieldSource): CompositionExpressionSource {
+  if (initial.kind === 'expression') return initial
+  if (initial.kind === 'from') return { kind: 'expression', expr: 'x', bindings: { x: initial } }
+  return { kind: 'expression', expr: 'null', bindings: {} }
+}
+
 export function FormulaFieldDialog({
   open,
   title,
@@ -78,9 +90,7 @@ export function FormulaFieldDialog({
   onSave,
 }: FormulaFieldDialogProps): ReactNode {
   const { t, i18n } = useTranslation()
-  const seed: CompositionExpressionSource =
-    initial.kind === 'expression' ? initial : { kind: 'expression', expr: 'null', bindings: {} }
-  const [draft, setDraft] = useState(seed)
+  const [draft, setDraft] = useState(() => seedOf(initial))
   const [picker, setPicker] = useState<PickerMode>('idle')
   const [pickDevice, setPickDevice] = useState<ReturnType<typeof toPickerDevices>[number] | null>(
     null,

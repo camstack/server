@@ -560,6 +560,9 @@ export const CAP_CUSTOMIZE_CATALOG = {
             path: 'offSeconds',
             value: 10,
             when: 'add',
+            formerValues: [
+              0,
+            ],
           },
           {
             kind: 'clock',

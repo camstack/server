@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device Customize tab reads a power-source or running-state row an earlier version stored (explicit dwell sample count, zero off-seconds) as the source link it is, instead of showing it as a custom formula.
+
 ## [1.2.527] - 2026-11-08
 
 ### Changed

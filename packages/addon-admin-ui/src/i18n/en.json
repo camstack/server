@@ -2677,7 +2677,12 @@
         "minutes": "{{n}} min"
       },
       "samples": "Samples",
-      "samplesHint": "Consecutive readings needed before the state changes"
+      "samplesHint": "Consecutive readings needed before the state changes",
+      "hints": {
+        "power-source": "The switch or plug this device is powered through",
+        "running-state": "Whether the device is on, judged from a reading or a switch",
+        "power-meter": "Power and energy read from another device"
+      }
     },
     "keyed": {
       "title": {
@@ -2822,7 +2827,7 @@
       "empty": "Nothing is customized yet. Use “+ Add customization” to link a value from another device.",
       "nothingToAdd": "Every customization that applies to this device is already linked.",
       "sourceMissing": "Source device missing",
-      "otherFormula": "Set in Advanced",
+      "otherFormula": "Custom formula",
       "customized": "Customized",
       "configured": "Extension",
       "sourceOf": "{{name}} · {{field}}",
@@ -2861,7 +2866,9 @@
       "fillNoDevice": "Pick a device to see what it can fill.",
       "fillNothing": "Nothing on this device fits.",
       "fillSkip": "Leave empty",
-      "fillApply": "Apply"
+      "fillApply": "Apply",
+      "fixedValue": "Fixed value {{value}}",
+      "formulaOf": "Formula: {{formula}}"
     },
     "followSwitch": {
       "label": "Follow the device's switch",

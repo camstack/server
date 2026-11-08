@@ -3,13 +3,21 @@
  * edits through the existing {@link ScalarOverrideDialog}; the cells only read
  * what {@link useScalarRow} projects and open it.
  */
-import type { CustomizeCatalogTarget, DeviceInfo } from '@camstack/types'
+import {
+  type CompositionFieldsFeature,
+  compositionSourceKey,
+  type CustomizeCatalogTarget,
+  type DeviceInfo,
+} from '@camstack/types'
 import { Badge, IconButton } from '@camstack/ui-library'
 import { Pencil, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LiveValueText } from '../assignments/LiveValueText'
+import { formulaOneLiner } from '../cards/field-entry-copy'
 import { FormulaEntryButton } from '../formula/FormulaEntryButton'
+import { vocabularyFieldLabel } from '../vocabulary-field-label'
+import { useFieldSources } from './use-field-sources'
 import type { CustomizationHandle } from '../use-customization'
 import { FollowSwitchToggle } from '../scalar/FollowSwitchToggle'
 import { currentComposition } from '../customization-read'
@@ -73,13 +81,8 @@ function ScalarSource(props: ScalarRowProps): ReactNode {
   if (row.released) {
     return <Badge variant="warning">{t('customize.table.sourceMissing')}</Badge>
   }
-  if (row.otherFormula) {
-    return (
-      <span className="flex flex-wrap items-center gap-1 text-xs text-foreground">
-        {t('customize.table.otherFormula')}
-        <FormulaEntryButton handle={props.handle} cap={props.cap} fieldPath={row.path} />
-      </span>
-    )
+  if (row.otherFormula && row.stored.kind === 'known' && row.stored.value !== null) {
+    return <StoredFormulaText feature={row.stored.value} path={row.path} />
   }
   if (
     isFollowSwitchRow(props.cap, props.target.id) &&
@@ -90,6 +93,48 @@ function ScalarSource(props: ScalarRowProps): ReactNode {
     return <span className="text-xs text-foreground">{t('customize.followSwitch.default')}</span>
   }
   return <Badge>{badgeText(t, row)}</Badge>
+}
+
+interface StoredFormulaTextProps {
+  readonly feature: CompositionFieldsFeature
+  readonly path: string
+}
+
+/**
+ * What a stored field the link dialog cannot edit actually says: the formula
+ * over its named sources, the link it reads, or the fixed value. Never a
+ * label that hides where the value comes from.
+ */
+function StoredFormulaText({ feature, path }: StoredFormulaTextProps): ReactNode {
+  const { t, i18n } = useTranslation()
+  const field = feature.fields[path]
+  const sources = useFieldSources(field !== undefined)
+  if (field === undefined) return null
+  const unknown = t('customize.fieldsCard.unknownDevice')
+  const text =
+    field.kind === 'expression'
+      ? Object.keys(field.bindings).length === 0
+        ? t('customize.table.fixedValue', { value: field.expr })
+        : t('customize.table.formulaOf', {
+            formula: formulaOneLiner(
+              field.expr,
+              field.bindings,
+              sources.names,
+              i18n.language,
+              unknown,
+            ),
+          })
+      : field.kind === 'from'
+        ? t('customize.table.sourceOf', {
+            name: sources.names.get(compositionSourceKey(field.source)) ?? unknown,
+            field: vocabularyFieldLabel(field.cap, field.fieldPath, i18n.language),
+          })
+        : t('customize.table.otherFormula')
+  return (
+    <span className="text-xs text-foreground" data-testid={`scalar-formula-${feature.cap}`}>
+      {text}
+    </span>
+  )
 }
 
 export interface ScalarActionsProps extends ScalarRowProps {
@@ -116,6 +161,17 @@ export function ScalarActionsCell(props: ScalarActionsProps): ReactNode {
           data-testid={`scalar-change-${rowKey}`}
           disabled={row.saving}
           onClick={props.onEdit}
+        />
+      )}
+      {row.otherFormula && !followOffered && (
+        // A formula the link dialog cannot edit opens the formula editor — from the same pencil.
+        <FormulaEntryButton
+          icon
+          handle={props.handle}
+          cap={props.cap}
+          fieldPath={row.path}
+          label={t('customize.table.editWhat', { title: row.title })}
+          testId={`scalar-change-${rowKey}`}
         />
       )}
       {(row.recognized || row.otherFormula) && (

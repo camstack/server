@@ -52,6 +52,83 @@ const BOARD = {
   ...device(BOARD_ID, 'send_raw_command', 'generic', 'Living room'),
   parentDeviceId: PARENT_ID,
 }
+const PLUG_ID = 904
+/** The smart plug the TV is powered through: its switch and its power reading feed the Power rows. */
+const PLUG = {
+  ...device(PLUG_ID, 'TV plug', 'switch', 'Living room'),
+  features: ['switch', 'power-meter'],
+}
+const PLUG_REF = { addonId: PLUG.addonId, stableId: PLUG.stableId }
+const TV_REF = { addonId: TV.addonId, stableId: TV.stableId }
+
+/**
+ * What an older compiler stored for a TV behind a plug: an explicit `, 1`
+ * sample count on the running dwell and a `0` restart gap. Both are the
+ * shapes the live hub carries, so the Power rows must still read as links.
+ */
+const TV_CUSTOMIZATION = {
+  state: 'loaded',
+  view: {
+    block: {
+      id: 'blk-tv',
+      name: 'customize:tv',
+      code: '',
+      enabled: true,
+      placement: 'hub',
+      createdAt: 1,
+      updatedAt: 1_700_000_000_000,
+      createdBy: 'admin',
+      status: 'running',
+      lastChangedAt: 1,
+      source: {
+        kind: 'composition',
+        composition: {
+          target: { kind: 'existing', device: TV_REF },
+          features: [
+            {
+              kind: 'fields',
+              cap: 'power-source',
+              fields: {
+                switchOn: { kind: 'from', source: PLUG_REF, cap: 'switch', fieldPath: 'on' },
+                offSeconds: { kind: 'expression', expr: '0', bindings: {} },
+                lastFetchedAt: { kind: 'expression', expr: 'now', bindings: {} },
+              },
+            },
+            {
+              kind: 'fields',
+              cap: 'running-state',
+              fields: {
+                running: {
+                  kind: 'expression',
+                  expr: 'dwell(x >= 20, 10000, 10000, 1)',
+                  bindings: {
+                    x: { kind: 'from', source: PLUG_REF, cap: 'power-meter', fieldPath: 'power' },
+                  },
+                },
+                source: { kind: 'expression', expr: '"assigned"', bindings: {} },
+                phase: { kind: 'expression', expr: 'null', bindings: {} },
+                lastFetchedAt: { kind: 'expression', expr: 'now', bindings: {} },
+                since: {
+                  kind: 'expression',
+                  expr: 'latchedAt(running)',
+                  bindings: {
+                    running: {
+                      kind: 'from',
+                      source: TV_REF,
+                      cap: 'running-state',
+                      fieldPath: 'running',
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+    state: { kind: 'answered', state: null },
+  },
+}
 
 const delegate = (path: string, input: unknown): unknown => {
   const h = customizeArea.handlers[path]
@@ -271,17 +348,31 @@ export default defineFixtures({
     'remote.getAssumedStatus': { ...TV_MEDIA_PLAYER, source: 'Rai 1' },
     'mut:remote.sendMediaCommand': { status: 'sent', sends: 1 },
     'mut:remote.sendCommand': { status: 'sent', sends: 1 },
-    'deviceManager.listDeviceIdsByCaps': [BOARD_ID],
+    'deviceManager.listDeviceIdsByCaps': (i: { capNames?: readonly string[] }) =>
+      i.capNames?.includes('ir-transmitter') === true
+        ? [BOARD_ID]
+        : delegate('deviceManager.listDeviceIdsByCaps', i),
+    'coreBlocks.listComposableCaps': {
+      caps: [
+        ...(delegate('coreBlocks.listComposableCaps', undefined) as { caps: unknown[] }).caps,
+        { cap: 'power-source' },
+      ],
+    },
+    'coreBlocks.getCustomization': (i: { stableId?: string }) =>
+      i.stableId === TV.stableId ? TV_CUSTOMIZATION : delegate('coreBlocks.getCustomization', i),
     'deviceManager.getDevice': (i: { deviceId: number }) =>
       i.deviceId === TV_ID
         ? TV
         : i.deviceId === BOARD_ID
           ? BOARD
-          : delegate('deviceManager.getDevice', i),
+          : i.deviceId === PLUG_ID
+            ? PLUG
+            : delegate('deviceManager.getDevice', i),
     'deviceManager.listAll': [
       TV,
       BOARD,
       PARENT,
+      PLUG,
       ...((customizeArea.handlers['deviceManager.listAll'] as unknown[]) ?? []),
     ],
     'deviceManager.getBindings': (i: { deviceId: number }) =>

@@ -216,6 +216,12 @@ export interface CustomizeConstantCompanion {
   readonly path: string
   readonly value: string | number | boolean | null
   readonly when: 'add' | 'always'
+  /**
+   * Literals an earlier builder of this product wrote here. A stored row
+   * carrying one still reads as the link it is and takes `value` on its next
+   * save; any other literal is a hand-written companion and stays Advanced.
+   */
+  readonly formerValues?: readonly (string | number | boolean | null)[]
 }
 
 export interface CustomizeClockCompanion {

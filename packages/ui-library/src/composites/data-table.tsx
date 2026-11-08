@@ -327,7 +327,7 @@ export function DataTable<T>({
                   aria-sort={sortable ? ariaSortForColumn(activeSort, col.key) : undefined}
                   title={sortable ? undefined : col.notSortableReason}
                   className={[
-                    'px-3 py-2 text-foreground-subtle font-medium bg-surface border-b border-border',
+                    'px-2 sm:px-3 py-2 text-foreground-subtle font-medium bg-surface border-b border-border',
                     // Pinned to the SCROLLER, which is the wrapper above — the
                     // one element that actually scrolls. `sticky` on the `th`
                     // rather than on the `thead` because that is what works
@@ -391,7 +391,7 @@ export function DataTable<T>({
                         key={col.key}
                         data-cell={col.key}
                         className={[
-                          'px-3 py-2 text-foreground border-b border-border',
+                          'px-2 sm:px-3 py-2 text-foreground border-b border-border',
                           ALIGN_CLASS[align],
                           nowrap ? 'whitespace-nowrap' : '',
                         ]

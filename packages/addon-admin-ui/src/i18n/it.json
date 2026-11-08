@@ -2752,7 +2752,12 @@
         "minutes": "{{n}} min"
       },
       "samples": "Campioni",
-      "samplesHint": "Letture consecutive necessarie prima che lo stato cambi"
+      "samplesHint": "Letture consecutive necessarie prima che lo stato cambi",
+      "hints": {
+        "power-source": "L’interruttore o la presa che alimenta questo dispositivo",
+        "running-state": "Se il dispositivo è acceso, dedotto da una lettura o da un interruttore",
+        "power-meter": "Potenza ed energia lette da un altro dispositivo"
+      }
     },
     "keyed": {
       "title": {
@@ -2897,7 +2902,7 @@
       "empty": "Nessuna personalizzazione. Usa “+ Aggiungi personalizzazione” per collegare un valore di un altro dispositivo.",
       "nothingToAdd": "Ogni personalizzazione applicabile a questo dispositivo è già collegata.",
       "sourceMissing": "Dispositivo di origine mancante",
-      "otherFormula": "Impostata in Avanzate",
+      "otherFormula": "Formula personalizzata",
       "customized": "Personalizzato",
       "configured": "Estensione",
       "sourceOf": "{{name}} · {{field}}",
@@ -2936,7 +2941,9 @@
       "fillNoDevice": "Scegli un dispositivo per vedere cosa può compilare.",
       "fillNothing": "Nulla su questo dispositivo è adatto.",
       "fillSkip": "Lascia vuoto",
-      "fillApply": "Applica"
+      "fillApply": "Applica",
+      "fixedValue": "Valore fisso {{value}}",
+      "formulaOf": "Formula: {{formula}}"
     },
     "followSwitch": {
       "label": "Segui lo switch del dispositivo",

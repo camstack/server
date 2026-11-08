@@ -278,9 +278,16 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
             </Button>
           )
         }
+        const hintKey = line.kind === 'row' ? `customize.scalar.hints.${line.plan.spec.cap}` : ''
+        const hint = line.kind === 'row' && i18n.exists(hintKey) ? t(hintKey) : null
         return (
-          <span className="text-xs text-foreground">
-            {line.kind === 'row' ? titleOf(line.plan.spec) : fieldRowTitle(i18n.language, line.row)}
+          <span className="flex flex-col gap-0.5">
+            <span className="text-xs text-foreground">
+              {line.kind === 'row'
+                ? titleOf(line.plan.spec)
+                : fieldRowTitle(i18n.language, line.row)}
+            </span>
+            {hint !== null && <span className="text-[11px] text-foreground-muted">{hint}</span>}
           </span>
         )
       },
@@ -350,9 +357,14 @@ function CustomizeTableBody(props: CustomizeTableBodyProps): ReactNode {
     },
     {
       key: 'actions',
-      header: t('customize.table.col.actions'),
+      // The pencil and the bin need no caption on a phone: the header would only push the
+      // table past the viewport (D43 — the concession names its breakpoint).
+      headerRender: () => (
+        <span className="sr-only sm:not-sr-only">{t('customize.table.col.actions')}</span>
+      ),
       notSortableReason: t('customize.table.col.actions'),
       align: 'right',
+      width: 'w-px',
       render: (line) => {
         if (isLinkedActionLine(line)) {
           return actions === null ? null : <LinkedActionButtons line={line} state={actions} />

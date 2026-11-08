@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- DataTable cells use tighter padding on a phone so a four-column table fits a 390px screen.
+
 ## [1.2.407] - 2026-11-08
 
 ### Changed

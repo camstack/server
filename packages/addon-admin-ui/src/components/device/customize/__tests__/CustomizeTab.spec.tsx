@@ -588,9 +588,13 @@ describe('CustomizeTab — layout (spec §5)', () => {
       data: loadedRead({ addonId: host.addonId, stableId: host.stableId }, [feature()]),
     }
     renderTab()
-    // A scalar row carries the Formula entry itself; an event or a list opens its editor first.
-    if (manage !== null) fireEvent.click(screen.getByTestId(manage))
-    fireEvent.click(screen.getAllByRole('button', { name: /^Formula$/ })[0] as HTMLElement)
+    // A scalar row carries its pencil itself; an event or a list opens its editor first.
+    if (manage !== null) {
+      fireEvent.click(screen.getByTestId(manage))
+      fireEvent.click(screen.getAllByRole('button', { name: /^Formula$/ })[0] as HTMLElement)
+    } else {
+      fireEvent.click(screen.getByRole('button', { name: `Edit ${heading}` }))
+    }
     expect(screen.getByTestId('formula-dialog')).toBeTruthy()
     expect(screen.queryByText('1 · Target')).toBeNull()
     expect(screen.getAllByText(heading).length).toBeGreaterThan(0)

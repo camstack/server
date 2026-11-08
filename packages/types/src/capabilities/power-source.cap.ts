@@ -120,6 +120,8 @@ const powerSourceCustomize = {
           path: 'offSeconds',
           value: POWER_SOURCE_OFF_SECONDS_DEFAULT,
           when: 'add',
+          // The retired appliance helper (D1004) linked a plug with no off time.
+          formerValues: [0],
         },
         { kind: 'clock', path: 'lastFetchedAt', when: 'always' },
       ],

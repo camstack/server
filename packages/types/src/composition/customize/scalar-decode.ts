@@ -17,7 +17,15 @@ import {
   type ScalarCompileInput,
   type ScalarValueKind,
 } from './scalar-compile.js'
-import { overrideExpr, parseDwell, parseLinear, singleFrom } from './scalar-expr.js'
+import {
+  constantExpr,
+  dwellExpr,
+  overrideExpr,
+  parseDwell,
+  parseLinear,
+  singleFrom,
+  unsignedToken,
+} from './scalar-expr.js'
 import { sameStored } from './normalize.js'
 import { ownedSlice } from './scalar-merge.js'
 import type { CustomizeStored } from './stored.js'
@@ -241,16 +249,77 @@ function reproduces(
   }
   const compiled = compileScalarOverride(input)
   if (!compiled.ok) return false
-  return sameFeature(compiled.value, ownedSlice(stored, decoded.draft.cap, decoded.draft.targetId))
+  const target = catalogTarget(decoded.draft.cap, decoded.draft.targetId)
+  return sameFeature(
+    compiled.value,
+    ownedSlice(stored, decoded.draft.cap, decoded.draft.targetId),
+    target?.companions ?? [],
+  )
 }
 
+/**
+ * The compiled feature and the stored one say the same thing. Text is compared
+ * after canonicalising what an EARLIER compiler spelled differently: a dwell
+ * that wrote its default `, 1` sample count, and a constant companion whose
+ * literal the catalog has since changed (`offSeconds` 0 → 10). The operator
+ * never sees a companion, and the evaluator reads `dwell(…)` and `dwell(…, 1)`
+ * alike — so neither may turn a source link into "another formula".
+ */
 function sameFeature(
   compiled: CompositionFieldsFeature,
   stored: CompositionFieldsFeature,
+  companions: readonly CustomizeCompanion[],
 ): boolean {
-  const left = wrap(withoutEnabled(compiled))
-  const right = wrap(withoutEnabled(stored))
+  const left = wrap(withoutEnabled(canonicalFields(compiled)))
+  const right = wrap(withoutEnabled(canonicalFields(adoptConstants(stored, compiled, companions))))
   return sameStored(left, right)
+}
+
+/** Every dwell expression re-spelled by the current builder; other text is left alone. */
+function canonicalFields(feature: CompositionFieldsFeature): CompositionFieldsFeature {
+  const fields = Object.fromEntries(
+    Object.entries(feature.fields).map(([path, field]) => [path, canonicalField(field)]),
+  )
+  return { ...feature, fields }
+}
+
+function canonicalField(field: CompositionFieldSource): CompositionFieldSource {
+  if (field.kind !== 'expression') return field
+  const dwell = parseDwell(field.expr)
+  if (dwell === null) return field
+  const threshold = unsignedToken(dwell.threshold)
+  const start = unsignedToken(dwell.startDwellMs)
+  const stop = unsignedToken(dwell.stopDwellMs)
+  if (threshold === null || start === null || stop === null) return field
+  return {
+    ...field,
+    expr: dwellExpr(dwell.comparison, threshold, start, stop, dwell.minSamples),
+  }
+}
+
+/**
+ * A constant companion stored with a literal an earlier builder wrote
+ * (`formerValues`) takes the compiled literal: the value is the catalog's
+ * business, not the row's. Any other literal, and anything that reads a
+ * device, stays as it is and fails the comparison: that row was written by hand.
+ */
+function adoptConstants(
+  stored: CompositionFieldsFeature,
+  compiled: CompositionFieldsFeature,
+  companions: readonly CustomizeCompanion[],
+): CompositionFieldsFeature {
+  const fields = { ...stored.fields }
+  for (const companion of companions) {
+    if (companion.kind !== 'constant') continue
+    const own = fields[companion.path]
+    const built = compiled.fields[companion.path]
+    if (own?.kind !== 'expression' || built === undefined) continue
+    if (Object.keys(own.bindings).length > 0) continue
+    const former = (companion.formerValues ?? []).map((value) => constantExpr(value))
+    if (!former.includes(own.expr)) continue
+    fields[companion.path] = built
+  }
+  return { ...stored, fields }
 }
 
 function withoutEnabled(feature: CompositionFieldsFeature): CompositionFieldsFeature {

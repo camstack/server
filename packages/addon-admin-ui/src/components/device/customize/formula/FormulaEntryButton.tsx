@@ -2,7 +2,8 @@
  * Opens the formula dialog for one stored field on a cap feature.
  */
 import type { CompositionFieldSource, CompositionFieldsFeature } from '@camstack/types'
-import { Button } from '@camstack/ui-library'
+import { Button, IconButton } from '@camstack/ui-library'
+import { Pencil } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { featureOf, withFeature } from '../customization-save'
@@ -22,6 +23,8 @@ export interface FormulaEntryButtonProps {
   readonly label?: string
   readonly testId?: string
   readonly sourceNames?: ReadonlyMap<string, string>
+  /** A pencil in a table's Actions cell instead of a text button; `label` becomes its accessible name. */
+  readonly icon?: boolean
 }
 
 export function FormulaEntryButton({
@@ -32,6 +35,7 @@ export function FormulaEntryButton({
   label,
   testId,
   sourceNames = NO_NAMES,
+  icon = false,
 }: FormulaEntryButtonProps): ReactNode {
   const { t, i18n } = useTranslation()
   const fieldLabel = vocabularyFieldLabel(cap, fieldPath, i18n.language)
@@ -68,14 +72,25 @@ export function FormulaEntryButton({
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="sm"
-        data-testid={testId ?? `formula-entry-${cap}-${fieldPath}`}
-        onClick={() => setOpen(true)}
-      >
-        {label ?? t('compositionEditor.formula')}
-      </Button>
+      {icon ? (
+        <IconButton
+          variant="ghost"
+          size="sm"
+          icon={Pencil}
+          aria-label={label ?? t('customize.table.editWhat', { title: fieldLabel })}
+          data-testid={testId ?? `formula-entry-${cap}-${fieldPath}`}
+          onClick={() => setOpen(true)}
+        />
+      ) : (
+        <Button
+          variant="ghost"
+          size="sm"
+          data-testid={testId ?? `formula-entry-${cap}-${fieldPath}`}
+          onClick={() => setOpen(true)}
+        >
+          {label ?? t('compositionEditor.formula')}
+        </Button>
+      )}
       <FormulaFieldDialog
         open={open}
         title={t('compositionEditor.formulaFor', { path: fieldLabel })}
