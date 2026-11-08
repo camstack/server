@@ -33,7 +33,9 @@ import {
   DROP_BROKERS_KEY_ID,
   DROP_EMBEDDED_KEYS_ID,
   EMBEDDED_TO_ONBOARD_ID,
-  type EmbeddedMigrationPorts,
+  type ClientAclMigrationPorts,
+  CLIENTS_ACL_TO_RECORDS_ID,
+  DROP_CLIENTS_ACL_KEYS_ID,
 } from '../index.js'
 
 const SNAPSHOT_WORKER = fileURLToPath(
@@ -171,7 +173,11 @@ async function boot(options: Options = {}) {
       { ifRev: 0 },
     )
   }
-  const ports: EmbeddedMigrationPorts = {
+  const ports: ClientAclMigrationPorts = {
+    readRawClientsAcl: async () => ({}),
+    readClientAclRecordIds: async () => ({ clients: new Set<string>(), acl: new Set<string>() }),
+    putClient: async () => undefined,
+    putAcl: async () => undefined,
     readRawBrokers: async () => storedBrokers(),
     readRecords: async () => {
       const page = await handle.query({ limit: 100 })
@@ -246,6 +252,8 @@ describe('mqtt-broker migrations on real SQLite', () => {
       [DROP_BROKERS_KEY_ID]: 'applied',
       [EMBEDDED_TO_ONBOARD_ID]: 'applied',
       [DROP_EMBEDDED_KEYS_ID]: 'applied',
+      [CLIENTS_ACL_TO_RECORDS_ID]: 'applied',
+      [DROP_CLIENTS_ACL_KEYS_ID]: 'applied',
     })
     const after = rows()
     expect(Object.keys(after).sort()).toEqual(

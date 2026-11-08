@@ -4,7 +4,7 @@ import { mqttBrokersEntryKind } from '../../broker-record-kinds.js'
 import { planDropEmbeddedKeys } from '../embedded-to-onboard.js'
 import {
   ADDON_MIGRATIONS,
-  type EmbeddedMigrationPorts,
+  type ClientAclMigrationPorts,
   EMBEDDED_TO_ONBOARD_ID,
   type LegacyEmbedded,
 } from '../index.js'
@@ -34,7 +34,11 @@ async function setup(options: { legacy?: LegacyEmbedded | null; existing?: strin
   }
   const legacy = options.legacy === undefined ? MARKED : options.legacy
   const warnings: string[] = []
-  const ports: EmbeddedMigrationPorts = {
+  const ports: ClientAclMigrationPorts = {
+    readRawClientsAcl: async () => ({}),
+    readClientAclRecordIds: async () => ({ clients: new Set<string>(), acl: new Set<string>() }),
+    putClient: async () => undefined,
+    putAcl: async () => undefined,
     readRawBrokers: async () => undefined,
     readRecords: async () => {
       const page = await handle.query({ limit: 100 })

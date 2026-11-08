@@ -1,7 +1,7 @@
 /**
- * The brokers (external and onboard, the old embedded one included) are integration instances,
- * edited on the Brokers page. The addon's settings form draws no second editor for them: it keeps
- * only the credentials and the ACL the onboard brokers share, and no flat `embedded*` broker key.
+ * The brokers, and the client credentials and topic rules they share, are integration instances.
+ * The addon's settings form draws no editor at all: the `embeddedClients` / `embeddedAcl` keys
+ * moved to records (a ledger migration), and no flat `embedded*` broker key remains.
  */
 import { describe, expect, it } from 'vitest'
 
@@ -12,22 +12,18 @@ async function sectionIds(cap?: string): Promise<readonly string[]> {
   if (cap === undefined)
     return (
       (
-        await addon.getIntegrationFormSchema({ integrationId: null, mode: 'standalone' })
+        await addon.getIntegrationFormSchema({
+          integrationId: null,
+          mode: 'standalone',
+        })
       )?.sections.map((s) => s.id) ?? []
     )
   return (await addon.getScopedSettingsSchema('cluster', cap))?.sections.map((s) => s.id) ?? []
 }
 
-describe('MqttBrokerAddon settings scoped to the broker cap', () => {
-  it('leaves the external brokers to the connections surface', async () => {
-    expect(await sectionIds('broker')).not.toContain('mqtt-broker-external')
-    expect(await sectionIds('broker')).toContain('mqtt-broker-embedded-clients')
-    expect(await sectionIds('broker')).not.toContain('mqtt-broker-embedded')
-  })
-
-  it('draws no editor for the external brokers on the addon’s own page either: they are integration instances', async () => {
-    expect(await sectionIds()).not.toContain('mqtt-broker-external')
-    expect(await sectionIds()).toContain('mqtt-broker-embedded-acl')
-    expect(await sectionIds()).not.toContain('mqtt-broker-embedded')
+describe('MqttBrokerAddon settings', () => {
+  it('draws no settings editor for the brokers, the clients or the ACL', async () => {
+    for (const cap of ['broker', 'mqtt-broker']) expect(await sectionIds(cap)).toEqual([])
+    expect(await sectionIds()).toEqual([])
   })
 })

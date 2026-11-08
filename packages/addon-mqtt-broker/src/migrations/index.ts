@@ -1,10 +1,11 @@
 import type { AddonMigration } from '@camstack/types'
 import { planDropBrokersKey, verifyBrokersAreRecords } from './brokers-to-records.js'
 import {
-  type EmbeddedMigrationPorts,
-  embeddedToOnboardRecord,
-  planDropEmbeddedKeys,
-} from './embedded-to-onboard.js'
+  type ClientAclMigrationPorts,
+  clientsAclToRecords,
+  planDropClientsAclKeys,
+} from './clients-acl-to-records.js'
+import { embeddedToOnboardRecord, planDropEmbeddedKeys } from './embedded-to-onboard.js'
 
 export type {
   MqttBrokerMigrationLog,
@@ -16,7 +17,14 @@ export const BROKERS_TO_RECORDS_ID = 'mqtt-broker/2026-11-03-brokers-settings-to
 export const DROP_BROKERS_KEY_ID = 'mqtt-broker/2026-11-03-drop-brokers-key'
 export const EMBEDDED_TO_ONBOARD_ID = 'mqtt-broker/2026-11-05-embedded-broker-to-onboard-record'
 export const DROP_EMBEDDED_KEYS_ID = 'mqtt-broker/2026-11-05-drop-embedded-keys'
+export const CLIENTS_ACL_TO_RECORDS_ID = 'mqtt-broker/2026-11-08-clients-acl-settings-to-records'
+export const DROP_CLIENTS_ACL_KEYS_ID = 'mqtt-broker/2026-11-08-drop-clients-acl-keys'
 
+export type {
+  ClientAclMigrationPorts,
+  LegacyAcl,
+  LegacyClient,
+} from './clients-acl-to-records.js'
 export type {
   EmbeddedMigrationPorts,
   LegacyEmbedded,
@@ -30,7 +38,7 @@ const FIXTURE_MARK = 'a setting key the migration does not know'
  * entries are `tolerate`: the embedded broker and every record keep working while a legacy key
  * stays where it is.
  */
-export const ADDON_MIGRATIONS: readonly AddonMigration<EmbeddedMigrationPorts>[] = [
+export const ADDON_MIGRATIONS: readonly AddonMigration<ClientAclMigrationPorts>[] = [
   {
     meta: {
       id: BROKERS_TO_RECORDS_ID,
@@ -96,5 +104,38 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<EmbeddedMigrationPorts>[]
       fixtureMark: FIXTURE_MARK,
     },
     plan: planDropEmbeddedKeys,
+  },
+  {
+    meta: {
+      id: CLIENTS_ACL_TO_RECORDS_ID,
+      owner: 'mqtt-broker',
+      level: 'addon-state',
+      seq: 5,
+      dependsOn: [DROP_EMBEDDED_KEYS_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'The embedded clients and ACL rules of the settings lists become records under the ids the stores always used; never overwrites a record',
+      fixtureMark: FIXTURE_MARK,
+    },
+    procedure: clientsAclToRecords,
+  },
+  {
+    meta: {
+      id: DROP_CLIENTS_ACL_KEYS_ID,
+      owner: 'mqtt-broker',
+      level: 'addon-state',
+      seq: 6,
+      dependsOn: [CLIENTS_ACL_TO_RECORDS_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'plan',
+      description: 'Delete the embeddedClients and embeddedAcl keys once every entry is a record',
+      fixtureMark: FIXTURE_MARK,
+    },
+    plan: planDropClientsAclKeys,
   },
 ]

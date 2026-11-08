@@ -11,7 +11,6 @@
     "recorder": {
     },
     "mqtt": {
-      "packages/addon-mqtt-broker/src/mqtt-broker.addon.ts:replaceAll-config": "seeds the embedded clients / acl store from config on boot when it is empty; not an instance family yet, folds in with the mqtt broker instances"
     },
     "vestigial-names": {
       "packages/addon-pipeline-orchestrator/src/record-kinds.ts:NODE_BENCHMARK_MODE_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",

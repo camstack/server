@@ -13,21 +13,5 @@
   "fullSettings.brokers.port.label": "Port",
   "fullSettings.brokers.port.description": "TCP port for the onboard broker. Leave blank to auto-allocate a free port.",
   "fullSettings.brokers.allowAnonymous.label": "Allow anonymous",
-  "fullSettings.brokers.allowAnonymous.description": "Permit clients to connect without a username/password.",
-  "fullSettings.s_mqtt-broker-embedded-clients.title": "Embedded broker — credentials",
-  "fullSettings.s_mqtt-broker-embedded-clients.description": "Per-client username + bcrypt password hash for the embedded aedes broker. Generate the hash with `npx bcrypt-cli` (or any bcrypt tool, cost factor 10) and paste it here.",
-  "fullSettings.s_mqtt-broker-embedded-clients.embeddedClients.label": "Clients",
-  "fullSettings.s_mqtt-broker-embedded-clients.embeddedClients.username.label": "Username",
-  "fullSettings.s_mqtt-broker-embedded-clients.embeddedClients.passwordHash.label": "bcrypt hash",
-  "fullSettings.s_mqtt-broker-embedded-clients.embeddedClients.passwordHash.description": "bcrypt hash of the password (cost factor 10).",
-  "fullSettings.s_mqtt-broker-embedded-acl.title": "Embedded broker — topic ACL",
-  "fullSettings.s_mqtt-broker-embedded-acl.description": "Per-user pub/sub allow-list. With zero rules the broker is fully open to authenticated clients. With at least one rule, every user needs at least one rule that matches the topic.",
-  "fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.label": "Rules",
-  "fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.username.label": "Username",
-  "fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.topicPattern.label": "Topic pattern",
-  "fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.topicPattern.description": "MQTT wildcards: `+` = single level, `#` = multi-level.",
-  "fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.access.label": "Access",
-  "fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.access.o_sub.label": "Subscribe only",
-  "fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.access.o_pub.label": "Publish only",
-  "fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.access.o_both.label": "Subscribe + publish"
+  "fullSettings.brokers.allowAnonymous.description": "Permit clients to connect without a username/password."
 }

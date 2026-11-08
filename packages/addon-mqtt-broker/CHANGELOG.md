@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The embedded broker's client credentials and topic rules are instances of the broker page (migrated in place with the same ids), no longer two lists in the addon settings
+
 ## [1.2.156] - 2026-11-08
 
 ### Changed

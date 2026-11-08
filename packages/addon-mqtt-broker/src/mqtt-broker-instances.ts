@@ -11,6 +11,7 @@ import {
   guardInstanceDelete,
   type IIntegrationInstancesProvider,
   type InstanceChange,
+  type IntegrationInstanceKind,
   type IntegrationInstanceStatus,
   type IntegrationTestConnectionResult,
   isSecretFieldView,
@@ -26,6 +27,14 @@ import { mqttBrokerUsers } from './mqtt-broker-users.js'
 import { buildOnboardEntry, isOnboardRequested, readOnboardPort } from './onboard-helpers.js'
 
 export const MQTT_INSTANCE_KIND = 'mqtt'
+
+export const MQTT_BROKER_KIND: IntegrationInstanceKind = {
+  id: MQTT_INSTANCE_KIND,
+  label: 'MQTT broker',
+  functionCap: 'broker',
+  brokerKind: 'mqtt',
+  canTest: true,
+}
 
 /** The create-form keys that only mean "run an onboard broker"; the record keeps a descriptor. */
 const ONBOARD_FORM_KEYS: ReadonlySet<string> = new Set(['onboard', 'port', 'allowAnonymous'])
@@ -152,15 +161,7 @@ export function buildMqttBrokerInstances(
         instanceMode: 'multiple',
         kind: 'brokers',
         canTest: true,
-        kinds: [
-          {
-            id: MQTT_INSTANCE_KIND,
-            label: 'MQTT broker',
-            functionCap: 'broker',
-            brokerKind: 'mqtt',
-            canTest: true,
-          },
-        ],
+        kinds: [MQTT_BROKER_KIND],
       },
       formSchema: (id) => deps.formSchema(id, false),
       kindOf: () => MQTT_INSTANCE_KIND,

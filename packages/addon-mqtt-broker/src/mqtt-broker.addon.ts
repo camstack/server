@@ -40,7 +40,7 @@
 import {
   BaseAddon,
   brokerCapability,
-  type ConfigUISchema,
+  composeInstanceKinds,
   defineAddonMigrations,
   EventCategory,
   integrationInstancesCapability,
@@ -52,6 +52,7 @@ import {
   mqttBrokerCapability,
   type ProviderRegistration,
   type RecordKindHandle,
+  RecordIntegrationInstances,
   resolveSecretMarkers,
   isInstanceEnabled,
 } from '@camstack/types'
@@ -86,10 +87,14 @@ import {
   retiredCiphertextPaths,
 } from './retired-ciphertext.js'
 import { type MqttBrokerBody, mqttBrokersEntryKind } from './broker-record-kinds.js'
-import { buildMqttBrokerInstances, type MqttLiveState } from './mqtt-broker-instances.js'
+import {
+  buildMqttBrokerInstances,
+  MQTT_BROKER_KIND,
+  type MqttLiveState,
+} from './mqtt-broker-instances.js'
 import {
   ADDON_MIGRATIONS,
-  type EmbeddedMigrationPorts,
+  type ClientAclMigrationPorts,
   type LegacyEmbedded,
   type MqttBrokerRecordState,
 } from './migrations/index.js'
@@ -98,16 +103,26 @@ import {
   LEGACY_EMBEDDED_KEYS,
   LEGACY_EMBEDDED_NAME,
 } from './migrations/embedded-to-onboard.js'
-import { mqttAclEntryKind, mqttClientEntryKind } from './mqtt-entry-record-kinds.js'
+import {
+  activeAcl,
+  activeClients,
+  buildMqttAclInstances,
+  buildMqttClientInstances,
+  type EmbeddedAclEntry,
+  type EmbeddedClientEntry,
+  MQTT_ACL_KIND,
+  MQTT_CLIENT_KIND,
+} from './mqtt-embedded-instances.js'
+import { aclRecordId, LEGACY_CLIENT_ACL_KEYS } from './migrations/clients-acl-to-records.js'
+import {
+  type MqttAclBody,
+  mqttAclEntryKind,
+  type MqttClientBody,
+  mqttClientEntryKind,
+} from './mqtt-entry-record-kinds.js'
 import { MqttBrokerStore } from './mqtt-broker-store.js'
 import { listMqttHaInstancesOver } from './mqtt-broker-users.js'
 import type { MqttExternalBrokerEntry } from './mqtt-external-broker-entry.js'
-import {
-  MqttAclStore,
-  MqttClientStore,
-  type EmbeddedAclEntry,
-  type EmbeddedClientEntry,
-} from './mqtt-entry-store.js'
 
 type ExternalBrokerEntry = MqttExternalBrokerEntry
 type AedesInstance = InstanceType<typeof Aedes>
@@ -131,21 +146,6 @@ interface EmbeddedBrokerEntry {
   readonly password?: string
 }
 
-/**
- * Persisted addon config: the embedded broker's per-client credentials and ACL. The broker itself
- * is an onboard `brokers` record; the flat `embedded*` keys that once described it are migrated
- * away (`migrations/embedded-to-onboard.ts`).
- */
-interface MqttBrokerConfig {
-  readonly embeddedClients: readonly EmbeddedClientEntry[]
-  readonly embeddedAcl: readonly EmbeddedAclEntry[]
-}
-
-const DEFAULT_CONFIG: MqttBrokerConfig = {
-  embeddedClients: [],
-  embeddedAcl: [],
-}
-
 interface EmbeddedRuntime {
   readonly entry: EmbeddedBrokerEntry
   readonly aedes: AedesInstance
@@ -158,21 +158,21 @@ interface EmbeddedRuntime {
   credentialsSnapshot: ReadonlyMap<string, string>
 }
 
-export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
+export class MqttBrokerAddon extends BaseAddon<Record<string, never>> {
   /** Per-record onboard `aedes` runtimes, keyed by `ExternalBrokerEntry.id`. */
   private onboardRuntimes = new Map<string, EmbeddedRuntime>()
   private probeCache: BrokerProbeCache | null = null
   private brokerStore: MqttBrokerStore | null = null
   private brokerInstances: IIntegrationInstancesProvider | null = null
-  private clientStore: MqttClientStore | null = null
-  private aclStore: MqttAclStore | null = null
+  private clientInstances: RecordIntegrationInstances<MqttClientBody> | null = null
+  private aclInstances: RecordIntegrationInstances<MqttAclBody> | null = null
   /** The external broker rows: the `brokers` records, secrets resolved. */
   private activeExternalBrokers: readonly ExternalBrokerEntry[] = []
   private activeEmbeddedClients: readonly EmbeddedClientEntry[] = []
   private activeEmbeddedAcl: readonly EmbeddedAclEntry[] = []
 
   constructor() {
-    super({ ...DEFAULT_CONFIG })
+    super({})
   }
 
   private requireBrokerStore(): MqttBrokerStore {
@@ -213,33 +213,19 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     await this.reconcileOnboardRuntimes()
   }
 
-  private async loadEmbeddedClients(): Promise<readonly EmbeddedClientEntry[]> {
-    const store = this.clientStore
-    if (store !== null) {
-      const fromRecords = await store.listResolved()
-      if (fromRecords.length > 0) return fromRecords
-    }
-    return this.config.embeddedClients
+  /** Re-read the shared client credentials and ACL from their instances. */
+  private async loadEmbeddedEntries(): Promise<void> {
+    const clients = this.clientInstances
+    const acl = this.aclInstances
+    if (clients === null || acl === null) return
+    this.activeEmbeddedClients = activeClients(await clients.listResolved())
+    this.activeEmbeddedAcl = activeAcl(await acl.listResolved())
   }
 
-  private async loadEmbeddedAcl(): Promise<readonly EmbeddedAclEntry[]> {
-    const store = this.aclStore
-    if (store !== null) {
-      const fromRecords = await store.listResolved()
-      if (fromRecords.length > 0) return fromRecords
-    }
-    return this.config.embeddedAcl
-  }
-
-  private async syncEmbeddedEntriesFromConfig(): Promise<void> {
-    const clients = [...this.config.embeddedClients]
-    const acl = [...this.config.embeddedAcl]
-    this.activeEmbeddedClients = clients
-    this.activeEmbeddedAcl = acl
-    const clientStore = this.clientStore
-    const aclStore = this.aclStore
-    if (clientStore !== null) await clientStore.replaceAll(clients)
-    if (aclStore !== null) await aclStore.replaceAll(acl)
+  /** A client or a rule changed: reload, then hot-reload the credentials of every onboard broker. */
+  private async onEmbeddedEntriesChanged(): Promise<void> {
+    await this.loadEmbeddedEntries()
+    this.reconcileEmbeddedClients()
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
@@ -253,8 +239,9 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
       'mqtt-acl-rule': mqttAclEntryKind,
     })
     this.brokerStore = MqttBrokerStore.of(records)
-    this.clientStore = MqttClientStore.of(records)
-    this.aclStore = MqttAclStore.of(records)
+    const embeddedDeps = { onChanged: () => this.onEmbeddedEntriesChanged() }
+    this.clientInstances = buildMqttClientInstances(records, embeddedDeps)
+    this.aclInstances = buildMqttAclInstances(records, embeddedDeps)
     this.brokerInstances = buildMqttBrokerInstances(records, {
       formSchema: (id, onboard) => this.brokerForm(id, onboard),
       listMqttHaInstances: () => listMqttHaInstancesOver(this.ctx.api),
@@ -270,19 +257,7 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
     await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
     this.activeExternalBrokers = await this.brokerStore.listResolved()
     this.reportRetiredCiphertext()
-    this.activeEmbeddedClients = await this.loadEmbeddedClients()
-    this.activeEmbeddedAcl = await this.loadEmbeddedAcl()
-    if (
-      (await this.clientStore.listResolved()).length === 0 &&
-      this.config.embeddedClients.length > 0
-    ) {
-      await this.clientStore.replaceAll(this.config.embeddedClients)
-      this.activeEmbeddedClients = await this.loadEmbeddedClients()
-    }
-    if ((await this.aclStore.listResolved()).length === 0 && this.config.embeddedAcl.length > 0) {
-      await this.aclStore.replaceAll(this.config.embeddedAcl)
-      this.activeEmbeddedAcl = await this.loadEmbeddedAcl()
-    }
+    await this.loadEmbeddedEntries()
 
     // Probe loop.
     this.probeCache = new BrokerProbeCache({
@@ -330,9 +305,28 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
       { capability: brokerCapability, provider: unifiedProvider },
       {
         capability: integrationInstancesCapability,
-        provider: brokerInstances,
+        provider: this.buildInstancesProvider(brokerInstances),
       },
     ]
+  }
+
+  /** One provider over the three kinds: the brokers, and the clients and topic rules they share. */
+  private buildInstancesProvider(
+    brokers: IIntegrationInstancesProvider,
+  ): IIntegrationInstancesProvider {
+    const clients = this.clientInstances
+    const acl = this.aclInstances
+    if (clients === null || acl === null) {
+      throw new Error('mqtt-broker: the embedded client instances are not built')
+    }
+    return composeInstanceKinds(
+      [
+        { kind: MQTT_BROKER_KIND, provider: brokers },
+        { kind: MQTT_CLIENT_KIND, provider: clients.toProvider() },
+        { kind: MQTT_ACL_KIND, provider: acl.toProvider() },
+      ],
+      { role: 'services', instanceMode: 'multiple', kind: 'brokers', canTest: true },
+    )
   }
 
   // ── Unified `broker` cap (kind='mqtt') ────────────────────────────────
@@ -383,16 +377,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
   protected async onShutdown(): Promise<void> {
     await this.probeCache?.stop()
     await this.shutdownAllOnboard()
-  }
-
-  protected async onConfigChanged(): Promise<void> {
-    this.activeExternalBrokers = await this.requireBrokerStore().listResolved()
-    await this.syncEmbeddedEntriesFromConfig()
-
-    // The clients and ACL are shared by every onboard broker: reconcile the servers, then
-    // hot-reload their credentials without dropping every session.
-    await this.reconcileOnboardRuntimes()
-    this.reconcileEmbeddedClients()
   }
 
   // ── Registry mutations ──────────────────────────────────────────
@@ -1117,10 +1101,40 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
   }
 
   /** The ports of the settings migrations: the old `brokers` key in, the records read. */
-  private migrationPorts(): EmbeddedMigrationPorts {
+  private migrationPorts(): ClientAclMigrationPorts {
     const handle = this.ctx.records?.kind(mqttBrokersEntryKind)
-    if (handle === undefined) throw new Error('records are not available')
+    const clientHandle = this.ctx.records?.kind(mqttClientEntryKind)
+    const aclHandle = this.ctx.records?.kind(mqttAclEntryKind)
+    if (handle === undefined || clientHandle === undefined || aclHandle === undefined) {
+      throw new Error('records are not available')
+    }
     return {
+      readRawClientsAcl: async (): Promise<Readonly<Record<string, unknown>>> => {
+        const raw = (await this.ctx.settings?.readAddonStore()) ?? {}
+        return Object.fromEntries(
+          LEGACY_CLIENT_ACL_KEYS.filter((key) => key in raw).map((key) => [key, raw[key]]),
+        )
+      },
+      readClientAclRecordIds: async () => ({
+        clients: new Set((await clientHandle.query({ limit: 1000 })).records.map((r) => r.id)),
+        acl: new Set((await aclHandle.query({ limit: 1000 })).records.map((r) => r.id)),
+      }),
+      putClient: async (entry): Promise<void> => {
+        const data = mqttClientEntryKind.schema.parse({
+          name: entry.username,
+          passwordHash: entry.passwordHash,
+        })
+        await clientHandle.put({ id: entry.username, data }, { ifRev: 0 })
+      },
+      putAcl: async (entry): Promise<void> => {
+        const data = mqttAclEntryKind.schema.parse({
+          name: `${entry.username} · ${entry.topicPattern}`,
+          username: entry.username,
+          topicPattern: entry.topicPattern,
+          access: entry.access,
+        })
+        await aclHandle.put({ id: aclRecordId(entry), data }, { ifRev: 0 })
+      },
       // The value as stored, markers unresolved: the plan's precondition is that very row.
       readRawBrokers: async (): Promise<unknown> =>
         (await this.ctx.settings?.readAddonStore())?.['brokers'],
@@ -1182,141 +1196,6 @@ export class MqttBrokerAddon extends BaseAddon<MqttBrokerConfig> {
         this.ctx.logger.warn(message, { tags: { topic: 'mqtt-broker', phase: 'migration' } })
       },
     }
-  }
-
-  // ── Settings UI ─────────────────────────────────────────────────
-
-  protected override scopedSettingsCapabilities(): readonly string[] {
-    return ['mqtt-broker', 'broker']
-  }
-
-  /**
-   * The credentials and the ACL of the onboard brokers. The brokers are records, listed
-   * on the Brokers page and edited as integration instances (`brokerForm`).
-   */
-  protected override async clusterSettingsSchema(cap: string): Promise<ConfigUISchema | null> {
-    // `broker` is the scope the Connectivity page asks for; both answer with the credentials and ACL form.
-    if (cap !== 'mqtt-broker' && cap !== 'broker') return null
-    return this.schema({
-      sections: [
-        {
-          id: 'mqtt-broker-embedded-clients',
-          title: 'Embedded broker — credentials',
-          titleKey: 'mqtt-broker:fullSettings.s_mqtt-broker-embedded-clients.title',
-          description:
-            'Per-client username + bcrypt password hash for the embedded aedes broker. Generate the hash with `npx bcrypt-cli` (or any bcrypt tool, cost factor 10) and paste it here.',
-          descriptionKey: 'mqtt-broker:fullSettings.s_mqtt-broker-embedded-clients.description',
-          columns: 1,
-          fields: [
-            {
-              type: 'editable-array',
-              key: 'embeddedClients',
-              label: 'Clients',
-              labelKey:
-                'mqtt-broker:fullSettings.s_mqtt-broker-embedded-clients.embeddedClients.label',
-              emptyMessage:
-                'No clients configured — embedded broker is in shared-creds / anonymous mode.',
-              addLabel: 'Add client',
-              rowTitleTemplate: '{username}',
-              defaultItem: {
-                username: '',
-                passwordHash: '',
-              },
-              itemFields: [
-                {
-                  type: 'text',
-                  key: 'username',
-                  label: 'Username',
-                  labelKey:
-                    'mqtt-broker:fullSettings.s_mqtt-broker-embedded-clients.embeddedClients.username.label',
-                },
-                {
-                  type: 'text',
-                  key: 'passwordHash',
-                  label: 'bcrypt hash',
-                  labelKey:
-                    'mqtt-broker:fullSettings.s_mqtt-broker-embedded-clients.embeddedClients.passwordHash.label',
-                  description: 'bcrypt hash of the password (cost factor 10).',
-                  descriptionKey:
-                    'mqtt-broker:fullSettings.s_mqtt-broker-embedded-clients.embeddedClients.passwordHash.description',
-                },
-              ],
-            },
-          ],
-        },
-        {
-          id: 'mqtt-broker-embedded-acl',
-          title: 'Embedded broker — topic ACL',
-          titleKey: 'mqtt-broker:fullSettings.s_mqtt-broker-embedded-acl.title',
-          description:
-            'Per-user pub/sub allow-list. With zero rules the broker is fully open to authenticated clients. With at least one rule, every user needs at least one rule that matches the topic.',
-          descriptionKey: 'mqtt-broker:fullSettings.s_mqtt-broker-embedded-acl.description',
-          columns: 1,
-          fields: [
-            {
-              type: 'editable-array',
-              key: 'embeddedAcl',
-              label: 'Rules',
-              labelKey: 'mqtt-broker:fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.label',
-              emptyMessage: 'No ACL rules — embedded broker is wide open to authenticated users.',
-              addLabel: 'Add rule',
-              rowTitleTemplate: '{username} → {topicPattern} ({access})',
-              defaultItem: {
-                username: '',
-                topicPattern: '#',
-                access: 'both',
-              },
-              itemFields: [
-                {
-                  type: 'text',
-                  key: 'username',
-                  label: 'Username',
-                  labelKey:
-                    'mqtt-broker:fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.username.label',
-                },
-                {
-                  type: 'text',
-                  key: 'topicPattern',
-                  label: 'Topic pattern',
-                  labelKey:
-                    'mqtt-broker:fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.topicPattern.label',
-                  description: 'MQTT wildcards: `+` = single level, `#` = multi-level.',
-                  descriptionKey:
-                    'mqtt-broker:fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.topicPattern.description',
-                },
-                {
-                  type: 'select',
-                  key: 'access',
-                  label: 'Access',
-                  labelKey:
-                    'mqtt-broker:fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.access.label',
-                  options: [
-                    {
-                      value: 'sub',
-                      label: 'Subscribe only',
-                      labelKey:
-                        'mqtt-broker:fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.access.o_sub.label',
-                    },
-                    {
-                      value: 'pub',
-                      label: 'Publish only',
-                      labelKey:
-                        'mqtt-broker:fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.access.o_pub.label',
-                    },
-                    {
-                      value: 'both',
-                      label: 'Subscribe + publish',
-                      labelKey:
-                        'mqtt-broker:fullSettings.s_mqtt-broker-embedded-acl.embeddedAcl.access.o_both.label',
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    })
   }
 }
 
