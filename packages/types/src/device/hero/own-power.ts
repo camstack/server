@@ -10,7 +10,11 @@
 import type { HeroOwnPowerSlot } from './hero-model.js'
 
 /** The media player's offer outranks a bound switch: the player's own state is the device's. */
-const OWN_POWER_SOURCE_ORDER: readonly HeroOwnPowerSlot['source'][] = ['media-player', 'switch']
+const OWN_POWER_SOURCE_ORDER: readonly HeroOwnPowerSlot['source'][] = [
+  'media-player',
+  'climate-control',
+  'switch',
+]
 
 export function resolveOwnPower(offers: readonly HeroOwnPowerSlot[]): HeroOwnPowerSlot | null {
   for (const source of OWN_POWER_SOURCE_ORDER) {

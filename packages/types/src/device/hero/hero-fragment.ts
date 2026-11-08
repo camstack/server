@@ -55,6 +55,8 @@ export type StateSource =
   | 'meter'
   | 'binary'
   | 'button'
+  | 'climate-control'
+  | 'sensor'
 
 export interface StateReading {
   readonly source: StateSource

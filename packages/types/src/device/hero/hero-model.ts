@@ -61,6 +61,9 @@ export const HERO_ROW_IDS = [
   'humidifier',
   'update',
   'button',
+  'climate-mode',
+  'climate-fan',
+  'setpoint',
 ] as const
 export const HeroRowIdSchema = z.enum(HERO_ROW_IDS)
 export type HeroRowId = z.infer<typeof HeroRowIdSchema>
@@ -194,7 +197,7 @@ export type HeroConsumptionSlot = z.infer<typeof HeroConsumptionSlotSchema>
 
 export const HeroOwnPowerSlotSchema = z.object({
   /** Which cap the power is switched through; the renderer never needs it. */
-  source: z.enum(['switch', 'media-player']),
+  source: z.enum(['switch', 'media-player', 'climate-control']),
   /** `null` = unknown, never off. */
   on: z.boolean().nullable(),
   assumed: z.boolean(),
@@ -252,6 +255,13 @@ export const HERO_FACT_IDS = [
   'members',
   'failures',
   'reading',
+  'climate',
+  'temperature',
+  'humidity',
+  'pressure',
+  'air-quality',
+  'illuminance',
+  'valve',
 ] as const
 export const HeroFactSchema = z.object({
   id: z.enum(HERO_FACT_IDS),
@@ -288,7 +298,10 @@ export const HeroBackgroundSchema = z.discriminatedUnion('kind', [
 ])
 export type HeroBackground = z.infer<typeof HeroBackgroundSchema>
 
-export const HeroProvenanceSchema = z.object({ partId: z.string(), cap: z.string() })
+export const HeroProvenanceSchema = z.object({
+  partId: z.string(),
+  cap: z.string(),
+})
 export type HeroProvenance = z.infer<typeof HeroProvenanceSchema>
 
 export const HeroModelSchema = z.object({

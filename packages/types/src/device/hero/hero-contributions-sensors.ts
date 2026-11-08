@@ -33,7 +33,7 @@ import {
   row,
   type HeroContribution,
 } from './hero-contribution-kit.js'
-import type { HeroFragment, StateSource } from './hero-fragment.js'
+import type { StateSource } from './hero-fragment.js'
 import type { HeroFact, HeroSideTile } from './hero-model.js'
 import type { HeroState } from './hero-state.js'
 import { heroText, type HeroText } from './hero-text.js'

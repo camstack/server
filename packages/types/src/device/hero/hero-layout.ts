@@ -16,7 +16,9 @@ export interface HeroLayout {
 }
 
 /** Every other type: the facts a bound cap adds, nothing type-specific. */
-export const HERO_LAYOUT_DEFAULT: HeroLayout = { rows: ['contact', 'motion-trigger'] }
+export const HERO_LAYOUT_DEFAULT: HeroLayout = {
+  rows: ['contact', 'motion-trigger'],
+}
 
 const HEATER_LAYOUT: HeroLayout = { rows: ['run-for', 'cycle'] }
 const MEDIA_PLAYER_LAYOUT: HeroLayout = {
@@ -24,7 +26,12 @@ const MEDIA_PLAYER_LAYOUT: HeroLayout = {
 }
 const APPLIANCE_LAYOUT: HeroLayout = { rows: ['cycle'] }
 /** Its Home Connect PowerState is a secondary row action, never the own-power slot. */
-const DISHWASHER_LAYOUT: HeroLayout = { rows: ['cycle', 'program', 'appliance-power'] }
+const DISHWASHER_LAYOUT: HeroLayout = {
+  rows: ['cycle', 'program', 'appliance-power'],
+}
+const CLIMATE_LAYOUT: HeroLayout = {
+  rows: ['climate-mode', 'climate-fan', 'setpoint'],
+}
 const SWITCH_LAYOUT: HeroLayout = { rows: ['motion-trigger'] }
 const LOCK_LAYOUT: HeroLayout = { rows: ['lock'] }
 const ALARM_LAYOUT: HeroLayout = { rows: ['alarm'] }
@@ -49,8 +56,8 @@ export const HERO_LAYOUT_BY_TYPE = {
   [DeviceType.Siren]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Switch]: SWITCH_LAYOUT,
   [DeviceType.Sensor]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Thermostat]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Climate]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.Thermostat]: CLIMATE_LAYOUT,
+  [DeviceType.Climate]: CLIMATE_LAYOUT,
   [DeviceType.Button]: BUTTON_LAYOUT,
   [DeviceType.EventEmitter]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Update]: UPDATE_LAYOUT,
@@ -62,7 +69,7 @@ export const HERO_LAYOUT_BY_TYPE = {
   [DeviceType.Cover]: COVER_LAYOUT,
   [DeviceType.Valve]: VALVE_LAYOUT,
   [DeviceType.Humidifier]: HUMIDIFIER_LAYOUT,
-  [DeviceType.WaterHeater]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.WaterHeater]: CLIMATE_LAYOUT,
   [DeviceType.Fan]: FAN_LAYOUT,
   [DeviceType.MediaPlayer]: MEDIA_PLAYER_LAYOUT,
   [DeviceType.AlarmPanel]: ALARM_LAYOUT,

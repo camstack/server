@@ -51,6 +51,7 @@ import { DEVICES_FAMILY_CONTRIBUTIONS } from './hero-contributions-devices.js'
 import { ACTUATORS_FAMILY_CONTRIBUTIONS } from './hero-contributions-actuators.js'
 import { GROUPS_FAMILY_CONTRIBUTIONS } from './hero-contributions-groups.js'
 import { SENSORS_FAMILY_CONTRIBUTIONS } from './hero-contributions-sensors.js'
+import { CLIMATE_FAMILY_CONTRIBUTIONS } from './hero-contributions-climate.js'
 import { deriveMediaPlayerView, type MediaPlayerView } from './media-player-view.js'
 
 function minutesLeft(seconds: number): HeroText {
@@ -794,4 +795,5 @@ export const HERO_CAP_CONTRIBUTIONS: readonly HeroContribution[] = [
   ...Object.values(GROUPS_FAMILY_CONTRIBUTIONS),
   ...Object.values(ACTUATORS_FAMILY_CONTRIBUTIONS),
   ...Object.values(SENSORS_FAMILY_CONTRIBUTIONS),
+  ...Object.values(CLIMATE_FAMILY_CONTRIBUTIONS),
 ]

@@ -87,6 +87,8 @@ const STATE_SOURCE_ORDER: readonly StateSource[] = [
   'meter',
   'binary',
   'button',
+  'climate-control',
+  'sensor',
 ]
 
 const STATE_TEXT: Readonly<Record<HeroState, HeroText>> = {
@@ -156,7 +158,10 @@ function provenanceOf(cap: string, fragment: HeroFragment): readonly HeroProvena
 }
 
 function consumptionOf(fragments: readonly HeroFragment[]): HeroConsumptionSlot | null {
-  let best: { readonly priority: number; readonly slot: HeroConsumptionSlot } | null = null
+  let best: {
+    readonly priority: number
+    readonly slot: HeroConsumptionSlot
+  } | null = null
   for (const fragment of fragments) {
     const c = fragment.consumption
     if (c !== undefined && (best === null || c.priority > best.priority)) best = c
