@@ -48,22 +48,78 @@ export interface ClientAclMigrationPorts extends EmbeddedMigrationPorts {
   putAcl(entry: LegacyAcl): Promise<void>
 }
 
-function entriesOf<T>(raw: unknown, schema: z.ZodType<T>): readonly T[] {
-  if (!Array.isArray(raw)) return []
-  const out: T[] = []
-  for (const item of raw) {
-    const parsed = schema.safeParse(item)
-    if (parsed.success) out.push(parsed.data)
+/** A legacy entry the schema refused: which list, which entry, and why. */
+export interface RejectedLegacyEntry {
+  readonly list: 'embeddedClients' | 'embeddedAcl'
+  readonly id: string
+  readonly reason: string
+}
+
+export interface LegacyClientsAcl {
+  readonly clients: readonly LegacyClient[]
+  readonly acl: readonly LegacyAcl[]
+  readonly rejected: readonly RejectedLegacyEntry[]
+}
+
+function describeItem(item: unknown, index: number): string {
+  if (typeof item !== 'object' || item === null) return `#${index}`
+  const username: unknown = Reflect.get(item, 'username')
+  const pattern: unknown = Reflect.get(item, 'topicPattern')
+  const name = typeof username === 'string' && username.length > 0 ? username : `#${index}`
+  return typeof pattern === 'string' ? `${name} ${pattern}` : name
+}
+
+function parseList<T>(
+  list: RejectedLegacyEntry['list'],
+  raw: unknown,
+  schema: z.ZodType<T>,
+): { readonly entries: readonly T[]; readonly rejected: readonly RejectedLegacyEntry[] } {
+  if (raw === undefined) return { entries: [], rejected: [] }
+  if (!Array.isArray(raw)) {
+    return { entries: [], rejected: [{ list, id: '(the list)', reason: 'not a list' }] }
   }
-  return out
+  const entries: T[] = []
+  const rejected: RejectedLegacyEntry[] = []
+  raw.forEach((item: unknown, index) => {
+    const parsed = schema.safeParse(item)
+    if (parsed.success) {
+      entries.push(parsed.data)
+      return
+    }
+    const reason = parsed.error.issues
+      .map((issue) => `${issue.path.join('.') || '(entry)'}: ${issue.message}`)
+      .join('; ')
+    rejected.push({ list, id: describeItem(item, index), reason })
+  })
+  return { entries, rejected }
+}
+
+/** The two legacy lists as stored, split into what parses and what does not. */
+export function parseLegacyClientsAcl(raw: Readonly<Record<string, unknown>>): LegacyClientsAcl {
+  const clients = parseList('embeddedClients', raw['embeddedClients'], LegacyClientSchema)
+  const acl = parseList('embeddedAcl', raw['embeddedAcl'], LegacyAclSchema)
+  return {
+    clients: clients.entries,
+    acl: acl.entries,
+    rejected: [...clients.rejected, ...acl.rejected],
+  }
+}
+
+function warnRejected(
+  ports: ClientAclMigrationPorts,
+  rejected: readonly RejectedLegacyEntry[],
+): void {
+  for (const r of rejected) {
+    ports.warn(`mqtt-broker migration: legacy ${r.list} entry '${r.id}' is rejected: ${r.reason}`)
+  }
 }
 
 export async function clientsAclToRecords(
   ports: ClientAclMigrationPorts,
 ): Promise<MigrationProcedureResult> {
   const raw = await ports.readRawClientsAcl()
-  const clients = entriesOf(raw['embeddedClients'], LegacyClientSchema)
-  const acl = entriesOf(raw['embeddedAcl'], LegacyAclSchema)
+  const { clients, acl, rejected } = parseLegacyClientsAcl(raw)
+  warnRejected(ports, rejected)
   const have = await ports.readClientAclRecordIds()
   let migrated = 0
   for (const client of clients) {
@@ -87,12 +143,19 @@ export async function planDropClientsAclKeys(
   const raw = await ports.readRawClientsAcl()
   const present = LEGACY_CLIENT_ACL_KEYS.filter((key) => key in raw)
   if (present.length === 0) return { edits: [] }
+  const { clients, acl, rejected } = parseLegacyClientsAcl(raw)
+  if (rejected.length > 0) {
+    warnRejected(ports, rejected)
+    const reason = `${rejected.length} entries cannot be read (${rejected
+      .slice(0, 5)
+      .map((r) => `'${r.id}'`)
+      .join(', ')})`
+    throw new Error(`the legacy client and ACL lists are not deleted: ${reason}`)
+  }
   const have = await ports.readClientAclRecordIds()
   const missing = [
-    ...entriesOf(raw['embeddedClients'], LegacyClientSchema)
-      .filter((c) => !have.clients.has(c.username))
-      .map((c) => `client '${c.username}'`),
-    ...entriesOf(raw['embeddedAcl'], LegacyAclSchema)
+    ...clients.filter((c) => !have.clients.has(c.username)).map((c) => `client '${c.username}'`),
+    ...acl
       .filter((r) => !have.acl.has(aclRecordId(r)))
       .map((r) => `acl '${r.username}' ${r.topicPattern}`),
   ]

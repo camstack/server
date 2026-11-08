@@ -94,6 +94,7 @@ import {
 } from './mqtt-broker-instances.js'
 import {
   ADDON_MIGRATIONS,
+  CLIENTS_ACL_TO_RECORDS_ID,
   type ClientAclMigrationPorts,
   type LegacyEmbedded,
   type MqttBrokerRecordState,
@@ -113,7 +114,17 @@ import {
   MQTT_ACL_KIND,
   MQTT_CLIENT_KIND,
 } from './mqtt-embedded-instances.js'
-import { aclRecordId, LEGACY_CLIENT_ACL_KEYS } from './migrations/clients-acl-to-records.js'
+import {
+  aclRecordId,
+  LEGACY_CLIENT_ACL_KEYS,
+  parseLegacyClientsAcl,
+} from './migrations/clients-acl-to-records.js'
+import {
+  allRecordIds,
+  copyIsRecorded,
+  type EmbeddedEntries,
+  resolveEmbeddedEntries,
+} from './embedded-entries-source.js'
 import {
   type MqttAclBody,
   mqttAclEntryKind,
@@ -170,6 +181,10 @@ export class MqttBrokerAddon extends BaseAddon<Record<string, never>> {
   private activeExternalBrokers: readonly ExternalBrokerEntry[] = []
   private activeEmbeddedClients: readonly EmbeddedClientEntry[] = []
   private activeEmbeddedAcl: readonly EmbeddedAclEntry[] = []
+  /** True once the copy migration is recorded `applied`: from then on the records alone are read. */
+  private clientAclCopyRecorded = false
+  /** The copy is not recorded and the legacy lists cannot be read: no onboard broker opens. */
+  private embeddedAuthUnavailable = false
 
   constructor() {
     super({})
@@ -218,8 +233,34 @@ export class MqttBrokerAddon extends BaseAddon<Record<string, never>> {
     const clients = this.clientInstances
     const acl = this.aclInstances
     if (clients === null || acl === null) return
-    this.activeEmbeddedClients = activeClients(await clients.listResolved())
-    this.activeEmbeddedAcl = activeAcl(await acl.listResolved())
+    const fromRecords: EmbeddedEntries = {
+      clients: activeClients(await clients.listResolved()),
+      acl: activeAcl(await acl.listResolved()),
+    }
+    const ports = this.migrationPorts()
+    const resolved = await resolveEmbeddedEntries({
+      copyRecorded: this.clientAclCopyRecorded,
+      fromRecords,
+      readLegacy: async () => parseLegacyClientsAcl(await ports.readRawClientsAcl()),
+      readRecordIds: () => ports.readClientAclRecordIds(),
+    })
+    if (resolved.kind === 'unavailable') {
+      this.embeddedAuthUnavailable = true
+      this.activeEmbeddedClients = []
+      this.activeEmbeddedAcl = []
+      this.ctx.logger.error(
+        `the client and ACL copy is not recorded and the legacy lists cannot be read: no embedded broker opens (${resolved.reason})`,
+      )
+      return
+    }
+    for (const r of resolved.rejected) {
+      this.ctx.logger.warn(
+        `legacy ${r.list} entry '${r.id}' cannot be read and is not served: ${r.reason}`,
+      )
+    }
+    this.embeddedAuthUnavailable = false
+    this.activeEmbeddedClients = resolved.entries.clients
+    this.activeEmbeddedAcl = resolved.entries.acl
   }
 
   /** A client or a rule changed: reload, then hot-reload the credentials of every onboard broker. */
@@ -254,7 +295,10 @@ export class MqttBrokerAddon extends BaseAddon<Record<string, never>> {
       },
     })
     // The addon checks the old settings list against the records, then serves the records.
-    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
+    const report = await this.runMigrations(
+      defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()),
+    )
+    this.clientAclCopyRecorded = copyIsRecorded(report, CLIENTS_ACL_TO_RECORDS_ID)
     this.activeExternalBrokers = await this.brokerStore.listResolved()
     this.reportRetiredCiphertext()
     await this.loadEmbeddedEntries()
@@ -694,9 +738,12 @@ export class MqttBrokerAddon extends BaseAddon<Record<string, never>> {
    * entry disappeared, and respawn runtimes whose port changed.
    */
   private async reconcileOnboardRuntimes(): Promise<void> {
-    const desiredEntries = this.activeExternalBrokers
-      .filter(hasOnboard)
-      .filter((b) => isInstanceEnabled(b))
+    if (this.embeddedAuthUnavailable) {
+      this.ctx.logger.error('embedded mqtt brokers stay closed: their users could not be loaded')
+    }
+    const desiredEntries = this.embeddedAuthUnavailable
+      ? []
+      : this.activeExternalBrokers.filter(hasOnboard).filter((b) => isInstanceEnabled(b))
     const desired = desiredEntries.map((b) => ({ id: b.id, port: b.onboard.port }))
     const runningIds = [...this.onboardRuntimes.keys()]
     const portById = new Map<string, number>()
@@ -1116,8 +1163,8 @@ export class MqttBrokerAddon extends BaseAddon<Record<string, never>> {
         )
       },
       readClientAclRecordIds: async () => ({
-        clients: new Set((await clientHandle.query({ limit: 1000 })).records.map((r) => r.id)),
-        acl: new Set((await aclHandle.query({ limit: 1000 })).records.map((r) => r.id)),
+        clients: await allRecordIds(clientHandle),
+        acl: await allRecordIds(aclHandle),
       }),
       putClient: async (entry): Promise<void> => {
         const data = mqttClientEntryKind.schema.parse({

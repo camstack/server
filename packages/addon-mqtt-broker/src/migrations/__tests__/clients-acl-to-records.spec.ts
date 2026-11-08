@@ -14,7 +14,9 @@ const LEGACY_CLIENTS = [
 ]
 const LEGACY_ACL = [{ username: 'marked-client', topicPattern: 'home/#', access: 'both' }]
 
-async function setup(options: { existingClientHash?: string } = {}) {
+async function setup(
+  options: { existingClientHash?: string; raw?: Readonly<Record<string, unknown>> } = {},
+) {
   const world = makeInMemoryRecords('mqtt-broker')
   await world.records.declare({
     'mqtt-client': mqttClientEntryKind,
@@ -41,10 +43,11 @@ async function setup(options: { existingClientHash?: string } = {}) {
     readLegacyEmbedded: async () => null,
     readRawEmbeddedKeys: async () => ({}),
     putOnboardRecord: async () => undefined,
-    readRawClientsAcl: async () => ({
-      embeddedClients: LEGACY_CLIENTS,
-      embeddedAcl: LEGACY_ACL,
-    }),
+    readRawClientsAcl: async () =>
+      options.raw ?? {
+        embeddedClients: LEGACY_CLIENTS,
+        embeddedAcl: LEGACY_ACL,
+      },
     readClientAclRecordIds: async () => ({
       clients: new Set((await clients.query({ limit: 100 })).records.map((r) => r.id)),
       acl: new Set((await acl.query({ limit: 100 })).records.map((r) => r.id)),
@@ -120,5 +123,28 @@ describe('the embedded clients and ACL become records', () => {
     expect(await w.execute(DROP_CLIENTS_ACL_KEYS_ID)).not.toMatchObject({
       kind: 'failed',
     })
+  })
+
+  it('names every rejected legacy entry with its reason, copies the rest, and keeps the keys', async () => {
+    const w = await setup({
+      raw: {
+        embeddedClients: [
+          { username: 'good', passwordHash: '$2b$10$ok' },
+          { username: 'nohash' },
+          'not-an-object',
+        ],
+        embeddedAcl: [{ username: 'good', topicPattern: 'a/#', access: 'rw' }],
+      },
+    })
+    expect(await w.execute(CLIENTS_ACL_TO_RECORDS_ID)).toMatchObject({
+      result: { outcome: 'done', summary: { migrated: 1 } },
+    })
+    const log = w.warnings.join('\n')
+    expect(log).toContain("'nohash'")
+    expect(log).toContain('passwordHash')
+    expect(log).toContain("'#2'")
+    expect(log).toContain('good a/#')
+    // The valid client has its record, yet the plan still refuses: unreadable entries remain.
+    expect(await w.execute(DROP_CLIENTS_ACL_KEYS_ID)).toMatchObject({ kind: 'failed' })
   })
 })
