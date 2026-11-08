@@ -498,7 +498,7 @@ export class RemoteService implements IRemoteProvider {
    */
   private async withLock(
     deviceId: number,
-    fn: () => Promise<RemoteSendResult>,
+    fn: (abandoned: AbortSignal) => Promise<RemoteSendResult>,
   ): Promise<RemoteSendResult> {
     const result = (this.locks.get(deviceId) ?? Promise.resolve()).then(() =>
       this.boundedPress(deviceId, fn),
@@ -517,16 +517,18 @@ export class RemoteService implements IRemoteProvider {
 
   private async boundedPress(
     deviceId: number,
-    fn: () => Promise<RemoteSendResult>,
+    fn: (abandoned: AbortSignal) => Promise<RemoteSendResult>,
   ): Promise<RemoteSendResult> {
+    const giveUp = new AbortController()
     let timer: ReturnType<typeof setTimeout> | undefined
     const expired = new Promise<'timeout'>((resolve) => {
       timer = setTimeout(() => resolve('timeout'), this.lockTimeoutMs)
     })
-    const started = fn()
+    const started = fn(giveUp.signal)
     try {
       const outcome = await Promise.race([started, expired])
       if (outcome !== 'timeout') return outcome
+      giveUp.abort()
       started.catch(() => undefined)
       this.deps.logger.warn('remote: a press never finished, it was given up', {
         tags: { deviceId },
@@ -624,9 +626,23 @@ export class RemoteService implements IRemoteProvider {
         step: { index: missing + 1, role },
       }
     }
-    return this.withLock(deviceId, async () => {
+    return this.withLock(deviceId, async (abandoned) => {
       for (const [at, role] of steps.entries()) {
         if (at > 0) await this.sleep(config.stepDelayMs)
+        // The lock was given up while a step hung: this sequence must not keep pressing.
+        if (abandoned.aborted) {
+          this.deps.logger.warn('remote: the sequence was abandoned, no further step was sent', {
+            tags: { deviceId },
+            meta: { source: source.name, step: at + 1, role },
+          })
+          if (at > 0) await this.forgetSource(deviceId)
+          return {
+            status: 'refused',
+            reason: 'press-timeout',
+            detail: `abandoned before step ${at + 1}/${steps.length} (${role})`,
+            step: { index: at + 1, role },
+          }
+        }
         const result = await this.runRole(deviceId, config, role, 1)
         if (result.status === 'refused') {
           // The set already moved by the steps pressed: the old source no longer holds.

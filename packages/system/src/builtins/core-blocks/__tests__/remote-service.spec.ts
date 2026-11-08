@@ -1012,6 +1012,22 @@ describe('declared sources (planning#460)', () => {
     expect(next).toMatchObject({ status: 'sent' })
   })
 
+  it('an abandoned sequence never sends its next step when the hung one finally resolves', async () => {
+    let release: () => void = () => undefined
+    const until = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const w = world(declared(), { hold: { at: 1, until }, lockTimeoutMs: 20 })
+    expect(await select(w, 'Canale 24')).toMatchObject({
+      status: 'refused',
+      reason: 'press-timeout',
+    })
+    release()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(tags(w.calls)).toEqual(['d2'])
+    expect(w.kept()?.source ?? null).toBeNull()
+  })
+
   it('forgets the source on a channel step', async () => {
     const w = world(declared(), { plug: true })
     await select(w, 'Rai 1')
