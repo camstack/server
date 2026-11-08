@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.523] - 2026-11-08
+
 ### Changed
 
 - A device can carry the timed-run feature, derived from the capabilities bound on it
