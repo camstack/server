@@ -24,6 +24,8 @@ export interface HeroDeviceFacts {
   readonly name: string
   readonly online: boolean
   readonly features: readonly string[]
+  /** The brand or integration name the device comes from, when it is known. */
+  readonly integration?: string | null
 }
 
 /** The reads the service needs; the addon wires them to `ctx.api`. */
@@ -88,6 +90,7 @@ export class HeroLayoutService implements IHeroLayoutProvider {
         role: device.role,
         name: device.name,
         online: device.online,
+        integration: device.integration ?? null,
       },
       // The remote is a system cap, never in `getBindings`: it is offered to any
       // type, and its contribution decides (0 commands = no button, unknown = a button).

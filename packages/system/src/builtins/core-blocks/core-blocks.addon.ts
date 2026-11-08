@@ -311,6 +311,7 @@ export class CoreBlocksAddon extends BaseAddon {
                 name: found.name,
                 online: found.online,
                 features: found.features,
+                integration: manufacturerOf(found.metadata),
               }
         },
         caps: async (deviceId) =>
@@ -1119,3 +1120,11 @@ async function loadTranspiler(logger: IScopedLogger): Promise<BlockTranspiler | 
 }
 
 export type { CoreBlock }
+
+/** The manufacturer a driver recorded in the device's identity blob, or `null`. */
+function manufacturerOf(
+  metadata: Readonly<Record<string, unknown>> | null | undefined,
+): string | null {
+  const value = metadata?.['manufacturer']
+  return typeof value === 'string' && value.trim() !== '' ? value : null
+}

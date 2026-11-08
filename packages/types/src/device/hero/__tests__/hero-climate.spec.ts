@@ -66,6 +66,44 @@ describe('climate hero', () => {
     expect(m.sideTiles.left.map((t) => t.value.en)).toEqual(['22.3°', '58%'])
   })
 
+  it('the scene caption names the mode and the fan; the title stays the mode', () => {
+    const m = build(DeviceType.Climate, ['climate-control'], { 'climate-control': AC })
+    expect(m.title.en).toBe('Heating')
+    expect(m.caption).toEqual({ en: 'Heating · fan Auto', it: 'Riscalda · ventola Auto' })
+  })
+
+  it('mode and fan options carry readable labels', () => {
+    const m = build(DeviceType.Climate, ['climate-control'], { 'climate-control': AC })
+    const row = (id: string) => m.rows.find((r) => r.id === id)?.controls[0]
+    const mode = row('climate-mode')
+    const fan = row('climate-fan')
+    expect(mode?.kind === 'picker' ? mode.optionLabels?.['dry']?.it : null).toBe('Deum.')
+    expect(fan?.kind === 'picker' ? fan.optionLabels?.['low']?.it : null).toBe('Bassa')
+  })
+
+  it('the integration is a chip, first among the badges', () => {
+    const m = buildHeroModel({
+      device: {
+        id: 3,
+        type: DeviceType.Climate,
+        role: null,
+        name: 'Clima',
+        online: true,
+        integration: 'Midea',
+      },
+      caps: ['climate-control'],
+      features: [],
+      slices: { 'climate-control': AC },
+      now: 1_700_000_000_000,
+      remoteCommands: null,
+      access: { canActuate: true },
+    })
+    expect(m.badges[0]).toMatchObject({ id: 'integration', label: { en: 'Midea', it: 'Midea' } })
+    expect(
+      build(DeviceType.Climate, ['climate-control'], { 'climate-control': AC }).badges,
+    ).toEqual([])
+  })
+
   it('off keeps the setpoint and measured value, and offers a way back on', () => {
     const m = build(DeviceType.Climate, ['climate-control'], {
       'climate-control': {

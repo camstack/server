@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Device hero: the integration name is a chip, climate modes and fan speeds carry readable labels, and the scene caption names the mode and the fan
+
 ## [1.2.534] - 2026-11-09
 
 ### Changed

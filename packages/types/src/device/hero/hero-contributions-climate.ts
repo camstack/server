@@ -33,6 +33,8 @@ import { heroText, type HeroText } from './hero-text.js'
 import {
   climateStatusText,
   deriveClimateView,
+  fanLabelOf,
+  modeLabelsOf,
   formatDegrees,
   levelWithin,
   rangeFrom,
@@ -104,7 +106,9 @@ const climateContribution = contribution(
         id: 'climate.mode',
         label: heroText('Mode', 'Modalità'),
         current: view.mode,
-        options: [...view.availableModes],
+        // "Off" is the device's own power switch, not a mode to pick.
+        options: view.availableModes.filter((m) => m !== 'off'),
+        optionLabels: modeLabelsOf(view.availableModes),
         call: { cap: 'climate-control', method: 'setMode', args: {} },
         valueArg: 'mode',
       },
@@ -128,6 +132,7 @@ const climateContribution = contribution(
         label: heroText('Fan', 'Ventola'),
         current: slice.fanMode === '' ? null : slice.fanMode,
         options: [...slice.availableFanModes],
+        optionLabels: Object.fromEntries(slice.availableFanModes.map((m) => [m, fanLabelOf(m)])),
         call: { cap: 'climate-control', method: 'setFanMode', args: {} },
         valueArg: 'fanMode',
       })
@@ -211,6 +216,14 @@ const climateContribution = contribution(
     return {
       reading: reading('climate-control', view.isOff ? 'off' : 'on'),
       title: view.modeLabel,
+      ...(view.isOff || slice.fanMode === ''
+        ? {}
+        : {
+            caption: heroText(
+              `${view.modeLabel.en} · fan ${fanLabelOf(slice.fanMode).en}`,
+              `${view.modeLabel.it} · ventola ${fanLabelOf(slice.fanMode).it}`,
+            ),
+          }),
       facts,
       ...(left.length === 0 && right.length === 0 ? {} : { tiles: { left, right } }),
       scene: {

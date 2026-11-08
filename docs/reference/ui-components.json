@@ -6355,6 +6355,12 @@
           "doc": "A short state caption at the top of the scene (\"Cooling\", \"Rinsing\"), in the scene's tone."
         },
         {
+          "name": "toneCentre",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Draws the centre slot in the scene's tone (a setpoint, a countdown) instead of the text colour."
+        },
+        {
           "name": "leftTiles",
           "type": "readonly SceneTile[]",
           "optional": true,

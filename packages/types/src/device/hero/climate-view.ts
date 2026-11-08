@@ -56,6 +56,37 @@ const SCENE_MODE: Readonly<Record<HvacMode, HeroSceneMode | null>> = {
 /** Without a remembered mode, "turn on" picks the first of these the device accepts. */
 const ON_MODE_PREFERENCE: readonly HvacMode[] = ['auto', 'heat_cool', 'heat', 'cool']
 
+const FAN_LABEL: Readonly<Record<string, HeroText>> = {
+  auto: heroText('Auto', 'Auto'),
+  quiet: heroText('Quiet', 'Silenziosa'),
+  low: heroText('Low', 'Bassa'),
+  medium: heroText('Medium', 'Media'),
+  high: heroText('High', 'Alta'),
+  turbo: heroText('Turbo', 'Turbo'),
+  off: heroText('Off', 'Spenta'),
+}
+
+/** A readable label for a fan speed name; an unknown one is shown as the device reported it. */
+export function fanLabelOf(fan: string): HeroText {
+  return FAN_LABEL[fan] ?? heroText(fan, fan)
+}
+
+/** Short labels for a segmented control: one word each, so the segments stay on a line. */
+const MODE_SEGMENT_LABEL: Readonly<Record<HvacMode, HeroText>> = {
+  off: heroText('Off', 'Spento'),
+  heat: heroText('Heat', 'Caldo'),
+  cool: heroText('Cool', 'Freddo'),
+  auto: heroText('Auto', 'Auto'),
+  heat_cool: heroText('Heat/Cool', 'Caldo/Freddo'),
+  fan_only: heroText('Fan', 'Vent.'),
+  dry: heroText('Dry', 'Deum.'),
+}
+
+/** The segment label of every available HVAC mode, keyed by the mode value. */
+export function modeLabelsOf(modes: readonly HvacMode[]): Record<string, HeroText> {
+  return Object.fromEntries(modes.map((m) => [m, MODE_SEGMENT_LABEL[m]]))
+}
+
 export function modeLabelOf(mode: HvacMode): HeroText {
   return MODE_LABEL[mode]
 }

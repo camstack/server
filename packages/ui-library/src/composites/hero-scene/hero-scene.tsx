@@ -76,6 +76,18 @@ export const HERO_SCENE_ICON: Readonly<Record<HeroSceneId, LucideIcon>> = {
 
 const MAX_TILES_PER_SIDE = 2
 
+/** "COOLING · fan Auto": the first part is the state in the scene's tone, the rest reads as detail. */
+function CaptionText({ text }: { readonly text: string }): ReactNode {
+  const at = text.indexOf(' · ')
+  if (at === -1) return <>{text}</>
+  return (
+    <>
+      {text.slice(0, at)}
+      <span className="font-normal normal-case text-foreground-muted">{text.slice(at)}</span>
+    </>
+  )
+}
+
 export interface HeroSceneProps extends HeroSceneParams {
   readonly scene: HeroSceneId
   /** Scene-specific state (see `resolveSceneVisual`). */
@@ -84,6 +96,8 @@ export interface HeroSceneProps extends HeroSceneParams {
   readonly size?: 'hero' | 'mini'
   /** A short state caption at the top of the scene ("Cooling", "Rinsing"), in the scene's tone. */
   readonly caption?: string
+  /** Draws the centre slot in the scene's tone (a setpoint, a countdown) instead of the text colour. */
+  readonly toneCentre?: boolean
   readonly leftTiles?: readonly SceneTile[]
   readonly rightTiles?: readonly SceneTile[]
   /** Centre slot (hero) — the camera thumbnail, the setpoint control, a readout. */
@@ -104,8 +118,8 @@ function Tiles({ tiles }: { tiles: readonly SceneTile[] | undefined }): ReactNod
           data-testid="scene-tile"
           className="flex min-w-0 flex-col gap-0.5 rounded-lg bg-background-elevated px-2 py-1.5"
         >
-          <span className="truncate text-[10px] text-foreground-muted">{tile.label}</span>
-          <span className="truncate text-sm font-semibold tabular-nums text-foreground">
+          <span className="text-[10px] leading-tight text-foreground-muted">{tile.label}</span>
+          <span className="text-sm font-semibold leading-tight tabular-nums text-foreground">
             {tile.value}
           </span>
         </div>
@@ -123,6 +137,7 @@ export function HeroScene({
   state,
   size = 'hero',
   caption,
+  toneCentre,
   leftTiles,
   rightTiles,
   children,
@@ -183,12 +198,15 @@ export function HeroScene({
           data-testid="scene-caption"
           className="absolute inset-x-0 top-1.5 z-20 truncate text-center text-[11px] font-semibold uppercase tracking-wide"
         >
-          {caption}
+          <CaptionText text={caption} />
         </div>
       )}
       <div className="relative z-10 grid h-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-2 pt-4 text-foreground">
         <Tiles tiles={leftTiles} />
-        <div data-testid="scene-centre" className="flex min-w-0 items-center justify-center">
+        <div
+          data-testid="scene-centre"
+          className={cn('flex min-w-0 items-center justify-center', toneCentre === true && tone)}
+        >
           {children ??
             (art ? <SceneArt scene={scene} running={!visual.dim} level={params.level} /> : null)}
         </div>

@@ -17,6 +17,7 @@ import {
   HeroRowLine,
   HeroScene,
   HeroSegmented,
+  IconButton,
   resolveSceneVisual,
   SCENES_WITH_ART,
   Select,
@@ -24,6 +25,7 @@ import {
   Switch,
   useDisplayIconResolver,
 } from '@camstack/ui-library'
+import { Minus, Plus } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { badgeVariantOf, type HeroLang, pickText, sceneOf, tilesOf } from './hero-model-view'
 
@@ -116,9 +118,11 @@ function SliderControl({
 function PickerControl({
   control,
   host,
+  tone,
 }: {
   readonly control: Extract<HeroControl, { kind: 'picker' }>
   readonly host: HeroCardHost
+  readonly tone: Parameters<typeof HeroProgressBar>[0]['tone']
 }): ReactNode {
   const choose = (value: string): void =>
     host.run(
@@ -129,13 +133,18 @@ function PickerControl({
       null,
     )
   const label = pickText(control.label, host.lang)
+  const optionLabel = (o: string): string => {
+    const named = control.optionLabels?.[o]
+    return named === undefined ? o : pickText(named, host.lang)
+  }
   if (control.options.length <= SEGMENTED_MAX) {
     return (
       <HeroSegmented
         label={label}
+        tone={tone}
         value={control.current}
         disabled={host.busy}
-        options={control.options.map((o) => ({ value: o, label: o }))}
+        options={control.options.map((o) => ({ value: o, label: optionLabel(o) }))}
         onChange={choose}
       />
     )
@@ -148,11 +157,67 @@ function PickerControl({
       disabled={host.busy}
       options={[
         ...(control.current === null ? [{ value: '', label: '–' }] : []),
-        ...control.options.map((o) => ({ value: o, label: o })),
+        ...control.options.map((o) => ({ value: o, label: optionLabel(o) })),
       ]}
       onChange={(e) => choose(e.target.value)}
     />
   )
+}
+
+type SliderModel = Extract<HeroControl, { kind: 'slider' }>
+
+/** The setpoint of a climate scene: the target in big digits with a round minus and plus at its sides. */
+function SetpointCentre({
+  control,
+  host,
+}: {
+  readonly control: SliderModel
+  readonly host: HeroCardHost
+}): ReactNode {
+  const value = control.value
+  const step = (direction: 1 | -1): void => {
+    if (value === null) return
+    const next = Math.min(control.max, Math.max(control.min, value + direction * control.step))
+    if (next === value) return
+    host.run(
+      { ...control.call, args: heroArgsWithValue(control.call.args, control.valueArg, next) },
+      null,
+    )
+  }
+  const label = pickText(control.label, host.lang)
+  return (
+    <div data-testid="setpoint-centre" className="flex items-center gap-2 text-current">
+      <IconButton
+        aria-label={`${label} −`}
+        icon={Minus}
+        size="lg"
+        variant="outline"
+        className="rounded-full"
+        disabled={host.busy || value === null || value <= control.min}
+        onClick={() => step(-1)}
+      />
+      <span className="text-5xl font-semibold tabular-nums leading-none text-current">
+        {value === null ? '–' : String(value)}
+        <span className="align-top text-xl">{control.unit}</span>
+      </span>
+      <IconButton
+        aria-label={`${label} +`}
+        icon={Plus}
+        size="lg"
+        variant="outline"
+        className="rounded-full"
+        disabled={host.busy || value === null || value >= control.max}
+        onClick={() => step(1)}
+      />
+    </div>
+  )
+}
+
+/** The setpoint slider of a model, when its scene draws it in the centre. */
+function setpointOf(model: HeroModel): SliderModel | null {
+  const control = model.rows.find((r) => r.id === 'setpoint' && !model.gated.includes(r.id))
+    ?.controls[0]
+  return control !== undefined && control.kind === 'slider' ? control : null
 }
 
 function ToggleControl({
@@ -182,9 +247,11 @@ const isValueControl = (control: HeroControl): boolean =>
 function ControlView({
   control,
   host,
+  tone,
 }: {
   readonly control: HeroControl
   readonly host: HeroCardHost
+  readonly tone: Parameters<typeof HeroProgressBar>[0]['tone']
 }): ReactNode {
   switch (control.kind) {
     case 'action':
@@ -194,7 +261,7 @@ function ControlView({
     case 'slider':
       return <SliderControl control={control} host={host} />
     case 'picker':
-      return <PickerControl control={control} host={host} />
+      return <PickerControl control={control} host={host} tone={tone} />
   }
 }
 
@@ -216,7 +283,7 @@ function ModelRow({
       testId={`hero-row-${row.id}`}
       label={label}
       actions={actionControls.map((control, i) => (
-        <ControlView key={i} control={control} host={host} />
+        <ControlView key={i} control={control} host={host} tone={tone} />
       ))}
     >
       {row.progress === undefined || row.progress === null ? (
@@ -225,7 +292,7 @@ function ModelRow({
             <div className="truncate">{status}</div>
           )}
           {valueControls.map((control, i) => (
-            <ControlView key={i} control={control} host={host} />
+            <ControlView key={i} control={control} host={host} tone={tone} />
           ))}
         </>
       ) : (
@@ -314,7 +381,11 @@ function Chips({ model, lang }: { readonly model: HeroModel; readonly lang: Hero
   return (
     <>
       {model.badges
-        .filter((badge) => !factIds.has(badge.id === 'network-link' ? 'link' : badge.id))
+        .filter(
+          (badge) =>
+            badge.id === 'integration' ||
+            !factIds.has(badge.id === 'network-link' ? 'link' : badge.id),
+        )
         .map((badge) => (
           <Badge key={badge.id} variant={badgeVariantOf(badge.tone)} size="sm">
             {pickText(badge.label, lang)}
@@ -359,6 +430,7 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
   const tone = resolveSceneVisual(scene).tone
   const footItems = model.consumables?.items ?? []
   const hasFoot = host.openHistory !== undefined || showRemote
+  const setpoint = setpointOf(model)
   return (
     <HeroCardA
       title={model.name}
@@ -366,7 +438,8 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
       scene={
         <HeroScene
           {...scene}
-          caption={pickText(model.title, lang)}
+          caption={pickText(model.caption ?? model.title, lang)}
+          toneCentre={setpoint !== null}
           leftTiles={tilesOf(model.sideTiles.left, lang)}
           rightTiles={tilesOf(model.sideTiles.right, lang)}
         >
@@ -376,6 +449,8 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
               alt=""
               className="size-24 rounded-lg border border-border object-cover"
             />
+          ) : setpoint !== null ? (
+            <SetpointCentre control={setpoint} host={host} />
           ) : SCENES_WITH_ART.has(scene.scene) ? undefined : (
             <span className="text-foreground [&>svg]:h-8 [&>svg]:w-8">
               <IconGlyph name={model.look.icon} />
@@ -387,7 +462,7 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
         <>
           <BaseSlotRows model={model} host={host} />
           {model.rows
-            .filter((row) => !gated.has(row.id))
+            .filter((row) => !gated.has(row.id) && !(setpoint !== null && row.id === 'setpoint'))
             .map((row) => (
               <ModelRow key={row.id} row={row} host={host} tone={tone} />
             ))}

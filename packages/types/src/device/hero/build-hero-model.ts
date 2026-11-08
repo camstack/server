@@ -38,6 +38,8 @@ export interface HeroModelInput {
     readonly role: string | null
     readonly name: string
     readonly online: boolean
+    /** The integration or brand the device comes from ("Midea"); drawn as a chip when known. */
+    readonly integration?: string | null
   }
   /** Kebab cap names the device is bound to. */
   readonly caps: readonly string[]
@@ -250,7 +252,21 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
   const timedRun = fragments.find((f) => f.timedRun !== undefined)?.timedRun ?? null
   const powerSupply = fragments.find((f) => f.powerSupply !== undefined)?.powerSupply ?? null
   const remote = fragments.find((f) => f.remote !== undefined)?.remote ?? null
-  const badges: HeroBadge[] = fragments.flatMap((f) => f.badges ?? [])
+  const integration = device.integration?.trim() ?? ''
+  const badges: HeroBadge[] = [
+    ...(integration === ''
+      ? []
+      : [
+          {
+            id: 'integration' as const,
+            icon: 'plug' as const,
+            tone: 'muted' as const,
+            value: null,
+            label: heroText(integration, integration),
+          },
+        ]),
+    ...fragments.flatMap((f) => f.badges ?? []),
+  ]
 
   const headline =
     state === 'offline' || state === 'unknown'
@@ -264,6 +280,11 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
     left: tilesOf(fragments, 'left'),
     right: tilesOf(fragments, 'right'),
   }
+
+  const caption =
+    state === 'offline' || state === 'unknown'
+      ? undefined
+      : fragments.find((f) => f.caption !== undefined)?.caption
 
   const gated: string[] = []
   if (!input.access.canActuate) {
@@ -287,6 +308,7 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
     facts,
     sideTiles,
     title: headline ?? title,
+    ...(caption === undefined ? {} : { caption }),
     badges,
     remote,
     historyLabel: historyLabelOf(device.type),

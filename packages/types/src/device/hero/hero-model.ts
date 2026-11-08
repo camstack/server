@@ -194,6 +194,8 @@ export const HeroControlSchema = z.discriminatedUnion('kind', [
     label: HeroTextSchema,
     current: z.string().nullable(),
     options: z.array(z.string()),
+    /** A readable label per option value; an option without one is drawn as its raw value. */
+    optionLabels: z.record(z.string(), HeroTextSchema).optional(),
     call: HeroCallSchema,
     valueArg: z.string(),
   }),
@@ -219,7 +221,7 @@ export const HeroDetailSchema = z.object({
 export type HeroDetail = z.infer<typeof HeroDetailSchema>
 
 export const HeroBadgeSchema = z.object({
-  id: z.enum(['battery', 'network-link']),
+  id: z.enum(['battery', 'network-link', 'integration']),
   icon: IconKeySchema,
   tone: HeroToneSchema,
   /** Percent for a battery, link quality for a link; `null` = not known. */
@@ -391,6 +393,8 @@ export const HeroModelSchema = z.object({
   sideTiles: HeroSideTilesSchema,
   /** The status line under the main icon. */
   title: HeroTextSchema,
+  /** The scene's top line when it says more than `title`; absent = draw the title. */
+  caption: HeroTextSchema.optional(),
   badges: z.array(HeroBadgeSchema),
   remote: HeroRemoteSlotSchema.nullable(),
   /** The foot button that opens the device's history: "History", "Cycles", "Meals", "Access". */

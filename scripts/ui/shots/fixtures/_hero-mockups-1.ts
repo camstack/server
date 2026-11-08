@@ -26,6 +26,7 @@ const CLIMATE = {
 export const SPECS_TUTTI1: Readonly<Record<number, MockupSpec>> = {
   1101: {
     name: 'Climatizzatore salone',
+    integration: 'Midea',
     type: 'climate',
     provider: 'Midea',
     caps: ['device-status', 'climate-control', 'power-meter', 'consumables'],

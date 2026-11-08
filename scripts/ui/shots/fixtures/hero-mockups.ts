@@ -16,6 +16,7 @@ export interface MockupSpec {
   readonly name: string
   readonly type: string
   readonly role?: string | null
+  readonly integration?: string
   readonly provider: string
   readonly caps: readonly string[]
   readonly features?: readonly string[]
@@ -52,6 +53,7 @@ export default defineFixtures({
           role: spec.role ?? null,
           name: spec.name,
           online: true,
+          integration: spec.integration ?? null,
         },
         caps: spec.caps,
         features: spec.features ?? [],

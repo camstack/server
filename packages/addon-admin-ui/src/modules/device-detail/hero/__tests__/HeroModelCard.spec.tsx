@@ -93,4 +93,43 @@ describe('HeroModelCard', () => {
       null,
     )
   })
+  it('draws a climate setpoint in the scene centre, steps it by the cap step and names mode and fan', () => {
+    const run = vi.fn()
+    const model = buildModel('climate', ['climate-control'], {
+      'climate-control': {
+        mode: 'cool',
+        availableModes: ['off', 'auto', 'cool', 'heat'],
+        fanMode: 'auto',
+        availableFanModes: ['auto', 'low'],
+        preset: '',
+        availablePresets: [],
+        target: 24,
+        targetHigh: null,
+        targetLow: null,
+        targetHumidity: null,
+        currentTemp: 26,
+        currentHumidity: null,
+        swingVertical: null,
+        swingHorizontal: null,
+        minTemp: 16,
+        maxTemp: 30,
+        tempStep: 1,
+        lastFetchedAt: 1,
+      },
+    })
+    render(<HeroModelCard model={model} host={host(run)} />)
+    expect(screen.getByTestId('setpoint-centre').textContent).toContain('24')
+    expect(screen.queryByTestId('hero-row-setpoint')).toBeNull()
+    expect(screen.getByTestId('scene-caption').textContent).toContain('fan Auto')
+    expect(screen.queryByText('off')).toBeNull()
+    fireEvent.click(screen.getByLabelText('Target +'))
+    expect(run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cap: 'climate-control',
+        method: 'setTarget',
+        args: { target: 25 },
+      }),
+      null,
+    )
+  })
 })

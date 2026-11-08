@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New HeroScene, HeroCardA and DeviceRow components draw the layout-A device hero and the shared device row with one animated scene per device type
 - Hero card layout A: one-line title row, full-width illustrated scene with animated washer, dryer, dishwasher, fountain and feeder art, label/value/action rows with progress bar and segmented controls
 - TrpcClientProvider and useTrpcClient: history and device hooks read the tRPC client without a System, so a module can mount in a WebView
+- Hero scene: side tiles no longer truncate, the caption splits state from detail, and the centre can follow the scene tone
 
 ## [1.2.411] - 2026-11-09
 
