@@ -29,10 +29,11 @@ import {
   StateLookSchema,
 } from './hero-state.js'
 import { HeroSceneSchema } from './hero-scene.js'
-import { HeroTextSchema } from './hero-text.js'
+import { HeroTextSchema, heroText, type HeroText } from './hero-text.js'
 
 /** The rows a layout may carry. Each is built from the caps the device is bound to. */
 export const HERO_ROW_IDS = [
+  'progress',
   'run-for',
   'cycle',
   'program',
@@ -69,6 +70,47 @@ export const HERO_ROW_IDS = [
 ] as const
 export const HeroRowIdSchema = z.enum(HERO_ROW_IDS)
 export type HeroRowId = z.infer<typeof HeroRowIdSchema>
+
+/**
+ * The label a row carries at its left ("Phase | value | action"), per row id: the
+ * vocabulary of layout A, so no client names a row itself.
+ */
+export const HERO_ROW_LABELS: Readonly<Record<HeroRowId, HeroText>> = {
+  progress: heroText('Progress', 'Avanzamento'),
+  'run-for': heroText('Run for', 'Avvia per'),
+  cycle: heroText('Cycle', 'Ciclo'),
+  program: heroText('Program', 'Programma'),
+  'appliance-power': heroText('Appliance', 'Elettrodomestico'),
+  'now-playing': heroText('Now playing', 'In riproduzione'),
+  playback: heroText('Playback', 'Riproduzione'),
+  volume: heroText('Volume', 'Volume'),
+  source: heroText('Source', 'Sorgente'),
+  contact: heroText('Door', 'Porta'),
+  'motion-trigger': heroText('Motion', 'Movimento'),
+  lock: heroText('Lock', 'Serratura'),
+  alarm: heroText('Alarm', 'Allarme'),
+  fan: heroText('Fan', 'Ventola'),
+  vacuum: heroText('Robot', 'Robot'),
+  mower: heroText('Mower', 'Tagliaerba'),
+  feeder: heroText('Feed now', 'Eroga ora'),
+  fountain: heroText('Pump', 'Pompa'),
+  'pump-cycle': heroText('Pump cycle', 'Ciclo pompa'),
+  automation: heroText('Automation', 'Automazione'),
+  script: heroText('Script', 'Script'),
+  'do-not-disturb': heroText('Do not disturb', 'Non disturbare'),
+  brightness: heroText('Brightness', 'Luminosità'),
+  color: heroText('Colour', 'Colore'),
+  cover: heroText('Position', 'Posizione'),
+  valve: heroText('Valve', 'Valvola'),
+  humidifier: heroText('Humidifier', 'Umidificatore'),
+  update: heroText('Firmware', 'Firmware'),
+  button: heroText('Action', 'Azione'),
+  'climate-mode': heroText('Mode', 'Modalità'),
+  'climate-fan': heroText('Fan', 'Ventola'),
+  setpoint: heroText('Setpoint', 'Temperatura'),
+  channel: heroText('Channel', 'Canale'),
+  control: heroText('Control', 'Controllo'),
+}
 
 /** Argument values an action carries; the device id is added by the renderer. */
 export type HeroScalar = string | number | boolean
@@ -164,6 +206,8 @@ export const HeroRowSchema = z.object({
   /** The row's status, in words. `null` = nothing to say. */
   status: HeroTextSchema.nullable(),
   controls: z.array(HeroControlSchema),
+  /** A bar under the row's label, 0..1; `null` / absent = no bar. */
+  progress: z.number().min(0).max(1).nullable().optional(),
 })
 export type HeroRow = z.infer<typeof HeroRowSchema>
 
@@ -349,6 +393,8 @@ export const HeroModelSchema = z.object({
   title: HeroTextSchema,
   badges: z.array(HeroBadgeSchema),
   remote: HeroRemoteSlotSchema.nullable(),
+  /** The foot button that opens the device's history: "History", "Cycles", "Meals", "Access". */
+  historyLabel: HeroTextSchema,
   consumables: HeroConsumablesSlotSchema.nullable(),
   consumption: HeroConsumptionSlotSchema.nullable(),
   ownPower: HeroOwnPowerSlotSchema.nullable(),

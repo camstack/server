@@ -6197,7 +6197,7 @@
       "kind": "constant",
       "area": "composites",
       "file": "packages/ui-library/src/composites/hero-scene/types.ts",
-      "summary": "Every scene a device hero (or row mini scene) can draw."
+      "summary": "Every scene a device hero (or row mini scene) can draw — the model's list, not a copy."
     },
     {
       "name": "HeroCardA",
@@ -6251,6 +6251,78 @@
       ]
     },
     {
+      "name": "HeroProgressBar",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/hero-row.tsx",
+      "summary": "The progress bar of a cycle or a timer: the scene's tone fills it.",
+      "props": [
+        {
+          "name": "value",
+          "type": "number",
+          "optional": false,
+          "doc": "0..1."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "tone",
+          "type": "SceneTone",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "HeroRowLine",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/hero-row.tsx",
+      "summary": "One row of a layout A hero: `label | value | actions`, on a fixed grid so every row of every device lines up. An empty value or action zone leaves no gap.",
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": "The row's label at the left (\"Phase\", \"Mode\")."
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "The value in the middle: words, a progress bar or a segmented control."
+        },
+        {
+          "name": "actions",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "The actions at the right."
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "HeroScene",
       "kind": "component",
       "area": "composites",
@@ -6275,6 +6347,12 @@
           "type": "'hero' | 'mini'",
           "optional": true,
           "doc": "`hero`: the full-width box with tiles and centre slot. `mini`: 44×44 for a row."
+        },
+        {
+          "name": "caption",
+          "type": "string",
+          "optional": true,
+          "doc": "A short state caption at the top of the scene (\"Cooling\", \"Rinsing\"), in the scene's tone."
         },
         {
           "name": "leftTiles",
@@ -6304,6 +6382,51 @@
           "name": "className",
           "type": "string",
           "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "HeroSegmented",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/hero-row.tsx",
+      "summary": "A segmented control: the options of a mode or a speed, one pressed.",
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "options",
+          "type": "readonly { readonly value: string; readonly label: string }[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "value",
+          "type": "string | null",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "tone",
+          "type": "SceneTone",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(value: string) => void",
+          "optional": false,
           "doc": ""
         }
       ]
@@ -10363,6 +10486,13 @@
       "area": "root",
       "file": "packages/ui-library/src/index.ts",
       "summary": "Lazy-wrapped `SceneMonitorEditor` — code-split off the main bundle for the same reason: it mounts `MaskShapeCanvas`, which chains react-konva. Render inside `<Suspense>`; the admin-ui `/scenes` dialog is its only caller."
+    },
+    {
+      "name": "SCENES_WITH_ART",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/scene-art.tsx",
+      "summary": "The scene ids that have an illustration; every other scene keeps its icon in the centre."
     },
     {
       "name": "ScopePicker",

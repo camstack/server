@@ -223,15 +223,12 @@ describe('update and button', () => {
       ...extra,
     },
   })
-  it('update available offers a confirmed install; up to date offers none; unread is unknown', () => {
+  it('update reads the versions and offers no action: its install method addresses no device', () => {
     const m = build(DeviceType.Update, ['update'], upd({}))
     expect(m.state).toBe('standby')
     expect(m.title.en).toBe('Update available')
-    const install = primaryOf(m, 'update')
-    expect(install).toMatchObject({
-      confirm: 'install',
-      call: { cap: 'update', method: 'installUpdate' },
-    })
+    expect(actionsOf(rowOf(m, 'update').controls)).toEqual([])
+    expect(JSON.stringify(m)).not.toContain('installUpdate')
     const done = build(DeviceType.Update, ['update'], upd({ availableVersion: '1.0' }))
     expect(done.title.en).toBe('Up to date')
     expect(actionsOf(rowOf(done, 'update').controls)).toEqual([])

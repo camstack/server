@@ -4,8 +4,7 @@
  * borrow: 505 washing machine and 521 living-room AC (`appliances`), 961 kitchen
  * Echo (`media-player`) and 971 washer plug (`hero-plug`). Load it FIRST; it
  * answers only `heroLayout.*`, so the device areas keep answering the rest.
- * 521 has only `climate-control`, which contributes nothing yet: its model has
- * no state, so the page keeps the legacy hero.
+ * 521 carries a cooling `climate-control` slice (setpoint, fan, mode).
  */
 import { buildHeroModel } from '../../../../packages/types/src/device/hero/build-hero-model.ts'
 import { DeviceFeature } from '../../../../packages/types/src/device/device-type.ts'
@@ -63,13 +62,42 @@ const SPECS: Readonly<Record<number, Spec>> = {
     type: 'climate',
     caps: ['device-status', 'climate-control'],
     features: [],
-    slices: {},
+    slices: {
+      'climate-control': {
+        mode: 'cool',
+        availableModes: ['off', 'heat', 'cool', 'auto', 'dry', 'fan_only'],
+        fanMode: 'auto',
+        availableFanModes: ['auto', 'low', 'high'],
+        preset: '',
+        availablePresets: [],
+        target: 22,
+        targetHigh: null,
+        targetLow: null,
+        targetHumidity: null,
+        currentTemp: 24.3,
+        currentHumidity: 58,
+        swingVertical: null,
+        swingHorizontal: null,
+        minTemp: 16,
+        maxTemp: 30,
+        tempStep: 1,
+        lastFetchedAt: NOW,
+      },
+    },
   },
   961: {
     name: 'Kitchen Echo',
     type: 'media-player',
     caps: ['media-player', 'device-status'],
-    features: [DeviceFeature.MediaPlayerVolume, DeviceFeature.MediaPlayerMute],
+    features: [
+      DeviceFeature.MediaPlayerVolume,
+      DeviceFeature.MediaPlayerMute,
+      DeviceFeature.MediaPlayerNext,
+      DeviceFeature.MediaPlayerPrevious,
+      DeviceFeature.MediaPlayerShuffle,
+      DeviceFeature.MediaPlayerRepeat,
+      DeviceFeature.MediaPlayerSeek,
+    ],
     slices: { 'media-player': MEDIA },
   },
   971: {

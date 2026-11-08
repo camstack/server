@@ -441,7 +441,7 @@ describe('corner slots', () => {
 })
 
 describe('layout selects rows, never slots', () => {
-  it('a washer carries the cycle row, with the phase', () => {
+  it('a washer reads its phase in a tile, with no status-line row of its own', () => {
     const model = build(DeviceType.Washer, ['running-state'], {
       'running-state': {
         running: true,
@@ -453,8 +453,8 @@ describe('layout selects rows, never slots', () => {
     })
     expect(model.state).toBe('running')
     expect(model.look).toMatchObject({ background: 'drum', animation: 'tumble' })
-    expect(model.rows.map((r) => r.id)).toEqual(['cycle'])
-    expect(model.rows[0]?.status?.en).toContain('spin')
+    expect(model.rows).toEqual([])
+    expect(model.sideTiles.left.map((t) => [t.label.en, t.value.en])).toEqual([['Phase', 'spin']])
   })
 
   it('a row the type does not carry is dropped even when its cap is bound', () => {

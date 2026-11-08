@@ -391,6 +391,8 @@ export function DeviceDetailPage() {
   // Under the hero card (D915): every `hero` widget the device's bindings
   // declare (the Consumables panel), plus the primary child's on a container.
   // Data, not device type — the server emits the section per binding.
+  // The model hero draws its own power line (D1023); the legacy strip repeats it.
+  const [modelDrawn, setModelDrawn] = useState(false)
   const heroSectionWidgets = useMemo(
     () =>
       heroWidgets({
@@ -399,7 +401,10 @@ export function DeviceDetailPage() {
           ...(aggregateData?.live?.sections ?? []),
         ],
         deviceId,
-        drawnByHero: heroDrawnWidgets(deviceTypeStr),
+        drawnByHero: [
+          ...heroDrawnWidgets(deviceTypeStr),
+          ...(modelDrawn ? ['host/power-meter-line'] : []),
+        ],
         ...(primaryChildId !== null
           ? {
               child: {
@@ -412,7 +417,7 @@ export function DeviceDetailPage() {
             }
           : {}),
       }),
-    [aggregateData, childAggregateData, deviceId, deviceTypeStr, primaryChildId],
+    [aggregateData, childAggregateData, deviceId, deviceTypeStr, modelDrawn, primaryChildId],
   )
   // Parent device — surfaced as a clickable link under the title for
   // accessory children (Floodlight / Siren / PIR under a camera). The
@@ -1341,6 +1346,8 @@ export function DeviceDetailPage() {
                             deviceId={deviceId}
                             deviceName={name}
                             canActuate={isAdmin}
+                            onOpenHistory={() => handleTabClick(HISTORY_TAB_ID)}
+                            onDrawn={setModelDrawn}
                             fallback={
                               <DeviceHero
                                 deviceId={deviceId}

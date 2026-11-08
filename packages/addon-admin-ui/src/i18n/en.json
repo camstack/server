@@ -11648,7 +11648,24 @@
         "message": "The device is running. Cutting its power now interrupts what it is doing.",
         "confirm": "Turn off"
       },
-      "callFailed": "The device did not accept the command"
+      "callFailed": "The device did not accept the command",
+      "confirm": {
+        "unlock": {
+          "title": "Unlock?",
+          "message": "The lock will open.",
+          "confirm": "Unlock"
+        },
+        "install": {
+          "title": "Install the update?",
+          "message": "The device may restart and be unavailable for a while.",
+          "confirm": "Install"
+        },
+        "press": {
+          "title": "Run it now?",
+          "message": "The device acts as soon as you confirm.",
+          "confirm": "Run"
+        }
+      }
     }
   },
   "cliLogin": {

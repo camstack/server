@@ -12,7 +12,7 @@
 import { BatteryStatusSchema } from '../../capabilities/battery.cap.js'
 import { ConsumablesStatusSchema } from '../../capabilities/consumables.cap.js'
 import { ContactStatusSchema } from '../../capabilities/contact.cap.js'
-import { DishwasherStatusSchema } from '../../capabilities/dishwasher.cap.js'
+import { DishwasherStatusSchema, type DishwasherStatus } from '../../capabilities/dishwasher.cap.js'
 import { MediaPlayerStatusSchema } from '../../capabilities/media-player.cap.js'
 import { MotionTriggerStatusSchema } from '../../capabilities/motion-trigger.cap.js'
 import { NetworkLinkStatusSchema } from '../../capabilities/network-link.cap.js'
@@ -31,6 +31,7 @@ import {
   action,
   asAction,
   contribution,
+  elapsedText,
   fact,
   reading,
   type HeroContribution,
@@ -43,6 +44,7 @@ import type {
   HeroDetail,
   HeroFact,
   HeroRow,
+  HeroSideTile,
 } from './hero-model.js'
 import type { HeroState } from './hero-state.js'
 import { heroText, type HeroText } from './hero-text.js'
@@ -52,7 +54,11 @@ import { ACTUATORS_FAMILY_CONTRIBUTIONS } from './hero-contributions-actuators.j
 import { GROUPS_FAMILY_CONTRIBUTIONS } from './hero-contributions-groups.js'
 import { SENSORS_FAMILY_CONTRIBUTIONS } from './hero-contributions-sensors.js'
 import { CLIMATE_FAMILY_CONTRIBUTIONS } from './hero-contributions-climate.js'
-import { deriveMediaPlayerView, type MediaPlayerView } from './media-player-view.js'
+import {
+  deriveMediaPlayerView,
+  projectedPositionMs,
+  type MediaPlayerView,
+} from './media-player-view.js'
 
 function minutesLeft(seconds: number): HeroText {
   const m = Math.ceil(seconds / 60)
@@ -100,7 +106,7 @@ const switchContribution = contribution('switch', SwitchStatusSchema, (slice) =>
 const runningStateContribution = contribution(
   'running-state',
   RunningStateStatusSchema,
-  (slice) => {
+  (slice, ctx) => {
     const running = slice?.running ?? null
     const phase = slice?.phase ?? null
     const detail: HeroDetail[] = []
@@ -117,21 +123,6 @@ const runningStateContribution = contribution(
         value: phase,
         unit: null,
       })
-    const head =
-      running === null
-        ? heroText('Unknown', 'Sconosciuto')
-        : running
-          ? heroText('Running', 'In funzione')
-          : heroText('Idle', 'Inattivo')
-    const row: HeroRow = {
-      id: 'cycle',
-      icon: 'activity',
-      status:
-        phase === null || running !== true
-          ? head
-          : heroText(`${head.en} · ${phase}`, `${head.it} · ${phase}`),
-      controls: [],
-    }
     return {
       reading: reading(
         'running-state',
@@ -147,10 +138,26 @@ const runningStateContribution = contribution(
           detail,
         },
       },
-      rows: [row],
       ...(phase !== null && running === true
+        ? { facts: [fact('phase', 'activity', heroText(phase, phase), 'primary')] }
+        : {}),
+      ...(running === true && (phase !== null || slice?.since != null)
         ? {
-            facts: [fact('phase', 'activity', heroText(phase, phase), 'primary')],
+            tiles: {
+              ...(phase === null
+                ? {}
+                : { left: [{ label: heroText('Phase', 'Fase'), value: heroText(phase, phase) }] }),
+              ...(slice?.since == null || elapsedText(slice.since, ctx.now) === null
+                ? {}
+                : {
+                    right: [
+                      {
+                        label: heroText('Started', 'Avviata'),
+                        value: elapsedText(slice.since, ctx.now) ?? heroText('', ''),
+                      },
+                    ],
+                  }),
+            },
           }
         : {}),
     }
@@ -191,6 +198,7 @@ const powerMeterContribution = contribution('power-meter', PowerMeterStatusSchem
       slot: { kind: 'power', watts: slice.power, detail },
     },
     facts: [fact('power', 'zap', text, watts > 0 ? 'primary' : 'muted')],
+    tilesFallback: true,
     tiles: {
       right: [{ label: heroText('Power', 'Potenza'), value: text }],
       ...(slice.energy === undefined
@@ -457,6 +465,47 @@ const consumablesContribution = contribution('consumables', ConsumablesStatusSch
 
 // ── dishwasher ─────────────────────────────────────────────────────────────
 
+const pct = (n: number): HeroText => heroText(`${Math.round(n)}%`, `${Math.round(n)}%`)
+
+const dishCycle = (
+  id: string,
+  en: string,
+  it: string,
+  icon: VocabIcon,
+  method: string,
+  emphasis: 'primary' | 'normal' = 'normal',
+): HeroControl =>
+  asAction(action(`cycle.${id}`, heroText(en, it), icon, 'dishwasher', method, {}, emphasis))
+
+/** Pause / resume / stop, per what the appliance is doing; nothing while it is not running. */
+function dishwasherCycleControls(state: DishwasherStatus['state'] | undefined): HeroControl[] {
+  if (state === 'running') {
+    return [
+      dishCycle('pause', 'Pause', 'Pausa', 'pause', 'pause'),
+      dishCycle('stop', 'Stop', 'Stop', 'square', 'stop'),
+    ]
+  }
+  if (state === 'paused') {
+    return [
+      dishCycle('resume', 'Resume', 'Riprendi', 'play', 'resume', 'primary'),
+      dishCycle('stop', 'Stop', 'Stop', 'square', 'stop'),
+    ]
+  }
+  return []
+}
+
+const OPERATION_WORDS: Readonly<Record<string, HeroText>> = {
+  Run: heroText('Running', 'In corso'),
+  Pause: heroText('Paused', 'In pausa'),
+  Finished: heroText('Finished', 'Finito'),
+  Ready: heroText('Ready', 'Pronta'),
+  Inactive: heroText('Idle', 'Inattiva'),
+  DelayedStart: heroText('Delayed start', 'Avvio ritardato'),
+  ActionRequired: heroText('Action needed', 'Serve un intervento'),
+  Error: heroText('Error', 'Errore'),
+  Aborting: heroText('Stopping', 'Arresto'),
+}
+
 const dishwasherContribution = contribution('dishwasher', DishwasherStatusSchema, (slice) => {
   const state: HeroState =
     slice === undefined || slice.state === 'unavailable'
@@ -466,21 +515,19 @@ const dishwasherContribution = contribution('dishwasher', DishwasherStatusSchema
         : slice.state === 'error'
           ? 'alert'
           : 'idle'
-  const stop = action('program.stop', heroText('Stop', 'Ferma'), 'square', 'dishwasher', 'stop')
-  const rows: HeroRow[] = [
-    {
-      id: 'program',
-      icon: 'utensils',
-      status:
-        slice?.remaining == null
-          ? null
-          : heroText(
-              `${Math.ceil(slice.remaining / 60)} min left`,
-              `${Math.ceil(slice.remaining / 60)} min rimanenti`,
-            ),
-      controls: slice?.state === 'running' ? [asAction(stop)] : [],
-    },
-  ]
+  const rows: HeroRow[] = []
+  const progress = slice?.progress ?? null
+  if (progress !== null) {
+    rows.push({
+      id: 'progress',
+      icon: 'activity',
+      status: pct(progress),
+      controls: [],
+      progress: progress / 100,
+    })
+  }
+  const cycle = dishwasherCycleControls(slice?.state)
+  if (cycle.length > 0) rows.push({ id: 'cycle', icon: 'activity', status: null, controls: cycle })
   // Its PowerState is the appliance's main power, a secondary row action — never the own-power slot.
   if (slice?.powerOn != null) {
     rows.push({
@@ -514,22 +561,28 @@ const dishwasherContribution = contribution('dishwasher', DishwasherStatusSchema
     })
   }
   const remaining = slice?.remaining ?? null
+  const phase =
+    slice?.operationState == null ? null : (OPERATION_WORDS[slice.operationState] ?? null)
+  const program = slice?.program ?? slice?.selectedProgram ?? null
+  const left: HeroSideTile[] = [
+    ...(phase === null ? [] : [{ label: heroText('Phase', 'Fase'), value: phase }]),
+    ...(program === null
+      ? []
+      : [{ label: heroText('Program', 'Programma'), value: heroText(program, program) }]),
+  ]
   return {
     reading: reading('dishwasher', state),
     rows,
     ...(remaining === null
       ? {}
-      : {
-          facts: [fact('remaining', 'timer', minutesLeft(remaining), 'primary')],
-          tiles: {
-            right: [
-              {
-                label: heroText('Left', 'Rimane'),
-                value: minutesLeft(remaining),
-              },
-            ],
-          },
-        }),
+      : { facts: [fact('remaining', 'timer', minutesLeft(remaining), 'primary')] }),
+    tiles: {
+      left,
+      ...(remaining === null
+        ? {}
+        : { right: [{ label: heroText('Left', 'Restano'), value: minutesLeft(remaining) }] }),
+    },
+    ...(progress === null ? {} : { scene: { level: progress / 100 } }),
   }
 })
 
@@ -658,6 +711,61 @@ function volumeControls(
   return controls
 }
 
+const clock = (ms: number): string => {
+  const total = Math.max(0, Math.floor(ms / 1000))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const sec = String(total % 60).padStart(2, '0')
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`
+}
+
+const REPEAT_MODES = ['off', 'all', 'one'] as const
+
+/** Shuffle and repeat, drawn only when the player declares them and reports a value. */
+function modeControls(
+  view: MediaPlayerView,
+  shuffle: boolean | null,
+  repeat: string | null,
+): HeroControl[] {
+  const controls: HeroControl[] = []
+  if (view.shuffle) {
+    controls.push({
+      kind: 'toggle',
+      id: 'playback.shuffle',
+      label: heroText('Shuffle', 'Casuale'),
+      on: shuffle,
+      turnOn: action(
+        'playback.shuffle.on',
+        heroText('Shuffle on', 'Casuale attivo'),
+        'shuffle',
+        'media-player',
+        'setShuffle',
+        { shuffle: true },
+      ),
+      turnOff: action(
+        'playback.shuffle.off',
+        heroText('Shuffle off', 'Casuale disattivo'),
+        'shuffle',
+        'media-player',
+        'setShuffle',
+        { shuffle: false },
+      ),
+    })
+  }
+  if (view.repeat) {
+    controls.push({
+      kind: 'picker',
+      id: 'playback.repeat',
+      label: heroText('Repeat', 'Ripeti'),
+      current: repeat,
+      options: [...REPEAT_MODES],
+      call: { cap: 'media-player', method: 'setRepeat', args: {} },
+      valueArg: 'repeat',
+    })
+  }
+  return controls
+}
+
 const mediaPlayerContribution = contribution(
   'media-player',
   MediaPlayerStatusSchema,
@@ -678,7 +786,10 @@ const mediaPlayerContribution = contribution(
         controls: [],
       })
     }
-    const playback = playbackControls(view, ctx)
+    const playback = [
+      ...playbackControls(view, ctx),
+      ...modeControls(view, slice?.shuffle ?? null, slice?.repeat ?? null),
+    ]
     if (playback.length > 0)
       rows.push({
         id: 'playback',
@@ -752,6 +863,12 @@ const mediaPlayerContribution = contribution(
     if (sourceNow !== null) facts.push(fact('source', 'radio', heroText(sourceNow, sourceNow)))
     if (volumeNow !== null) {
       facts.push(fact('volume', 'volume-2', heroText(`${volumeNow}%`, `${volumeNow}%`)))
+    }
+    const duration = slice?.duration ?? null
+    const position = slice === undefined ? null : projectedPositionMs(slice, ctx.now)
+    if (position !== null && duration !== null && duration > 0) {
+      const line = `${clock(position)} / ${clock(duration)}`
+      facts.push(fact('progress', 'activity', heroText(line, line)))
     }
     return {
       reading: mediaReading(view),

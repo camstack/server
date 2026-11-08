@@ -97,7 +97,7 @@ describe('the hero model names its scene, facts and tiles', () => {
     })
     expect(m.sideTiles.left.length).toBeLessThanOrEqual(2)
     expect(m.sideTiles.right.length).toBeLessThanOrEqual(2)
-    expect(m.sideTiles.left.map((t) => t.label.en)).toEqual(['Energy', 'Battery'])
+    expect(m.sideTiles.left.map((t) => t.label.en)).toEqual(['Battery'])
   })
 })
 

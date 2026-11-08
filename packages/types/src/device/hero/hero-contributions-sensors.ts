@@ -342,9 +342,12 @@ const weatherContribution = contribution('weather', WeatherStatusSchema, (slice,
 
 // ── update ─────────────────────────────────────────────────────────────────
 
+// Read-only on purpose: `update` is a singleton cap and `installUpdate` names no device
+// (update.cap.ts), so an action on this hero could not say which device to update.
+
 const updateContribution = contribution('update', UpdateStatusSchema, (slice) => {
   if (slice === undefined) return { reading: reading('update', 'unknown') }
-  const { currentVersion, availableVersion, inProgress, updatable } = slice
+  const { currentVersion, availableVersion, inProgress } = slice
   const pending =
     availableVersion !== null && availableVersion !== '' && availableVersion !== currentVersion
   if (!pending && currentVersion === null && !inProgress)
@@ -366,30 +369,13 @@ const updateContribution = contribution('update', UpdateStatusSchema, (slice) =>
             `${currentVersion} → ${availableVersion}`,
           )
         : heroText(`Version ${currentVersion}`, `Versione ${currentVersion}`)
-  const install =
-    pending && updatable && !inProgress
-      ? [
-          asAction(
-            action(
-              'update.install',
-              heroText('Install', 'Installa'),
-              'download',
-              'update',
-              'installUpdate',
-              {},
-              'primary',
-              'install',
-            ),
-          ),
-        ]
-      : []
   return {
     reading: reading('update', state, false, title),
     facts:
       versions === null
         ? []
         : [fact('reading', 'download', versions, pending ? 'warning' : 'muted')],
-    rows: [row('update', 'download', versions, install)],
+    rows: [row('update', 'download', versions, [])],
   }
 })
 

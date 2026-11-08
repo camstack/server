@@ -48,8 +48,26 @@ export const HERO_SCENE_CSS = `
 .hs-lv-5{--hs-lv:.5} .hs-lv-6{--hs-lv:.6} .hs-lv-7{--hs-lv:.7} .hs-lv-8{--hs-lv:.8} .hs-lv-9{--hs-lv:.9} .hs-lv-10{--hs-lv:1}
 .hs-slat-block { transform-origin:top; transform:scaleY(var(--hs-lv,1)); }
 .hs-timer { transform-origin:left; transform:scaleX(var(--hs-lv,1)); }
+@keyframes hs-heat { 0%{transform:translateY(0);opacity:0} 30%{opacity:.8} 100%{transform:translateY(-18px);opacity:0} }
+@keyframes hs-bubble { 0%{transform:translateY(0);opacity:0} 15%{opacity:.9} 100%{transform:translateY(-46px);opacity:0} }
+@keyframes hs-wave { to { transform:translateX(-80px) } }
+@keyframes hs-stream { to { stroke-dashoffset:-24 } }
+@keyframes hs-drop { 0%{transform:translateY(0);opacity:0} 10%{opacity:1} 85%{opacity:1} 100%{transform:translateY(40px);opacity:0} }
+@keyframes hs-jiggle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(1.5px)} }
+.art-spin { transform-box:fill-box; transform-origin:center; animation:hs-spin 3s linear infinite; }
+.art-spin-fast { transform-box:fill-box; transform-origin:center; animation:hs-spin 1s linear infinite; }
+.art-heat { animation:hs-heat 1.8s ease-out infinite; }
+.art-heat:nth-child(2){animation-delay:.5s} .art-heat:nth-child(3){animation-delay:1s}
+.art-bubble { animation:hs-bubble 2.4s ease-in infinite; }
+.art-bubble:nth-child(2){animation-delay:.4s} .art-bubble:nth-child(3){animation-delay:.8s}
+.art-bubble:nth-child(4){animation-delay:1.2s} .art-bubble:nth-child(5){animation-delay:1.6s}
+.art-wave { animation:hs-wave 2.6s linear infinite; }
+.art-stream { stroke-dasharray:6 6; animation:hs-stream .5s linear infinite; }
+.art-kibble { animation:hs-drop 1.1s ease-in infinite; }
+.art-kibble:nth-child(2){animation-delay:.35s} .art-kibble:nth-child(3){animation-delay:.7s}
+.art-pile { animation:hs-jiggle 1.1s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .hs-fx *, .hs-fx { animation: none !important; }
+  .hs-fx *, .hs-fx, .art-spin, .art-spin-fast, .art-heat, .art-bubble, .art-wave, .art-stream, .art-kibble, .art-pile { animation: none !important; }
   .hs-p { opacity:.35 !important }
 }
 `

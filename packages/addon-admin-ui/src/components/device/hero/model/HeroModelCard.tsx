@@ -1,16 +1,24 @@
-import type {
-  HeroAction,
-  HeroCall,
-  HeroControl,
-  HeroModel,
-  HeroRow,
-  HeroTimedRunSlot,
+import {
+  heroArgsWithValue,
+  HERO_ROW_LABELS,
+  type HeroAction,
+  type HeroCall,
+  type HeroConsumableItem,
+  type HeroControl,
+  type HeroModel,
+  type HeroRow,
+  type HeroTimedRunSlot,
 } from '@camstack/types'
 import {
   Badge,
   Button,
   HeroCardA,
+  HeroProgressBar,
+  HeroRowLine,
   HeroScene,
+  HeroSegmented,
+  resolveSceneVisual,
+  SCENES_WITH_ART,
   Select,
   Slider,
   Switch,
@@ -25,26 +33,20 @@ export interface HeroCardHost {
   readonly busy: boolean
   /** Runs the call; `confirm` asks first. Resolves when the call settled. */
   readonly run: (call: HeroCall, action: HeroAction | null) => void
+  /** Opens the device's history (cycles, meals, access ...). Absent: the foot button is not drawn. */
+  readonly openHistory?: () => void
 }
 
-interface ControlRowProps {
-  readonly icon: ReactNode
-  readonly status: string | null
-  readonly children: ReactNode
-  readonly testId: string
-}
+/** Facts the top line prints as chips; the rest are read in the scene tiles and rows. */
+const CHIP_FACT_IDS: ReadonlySet<string> = new Set(['power', 'battery', 'link'])
 
-function ControlRow({ icon, status, children, testId }: ControlRowProps): ReactNode {
-  return (
-    <div
-      data-testid={testId}
-      className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border-subtle bg-background-elevated px-3 py-2"
-    >
-      <span className="shrink-0 text-foreground-muted">{icon}</span>
-      <span className="min-w-0 flex-1 truncate text-sm text-foreground-muted">{status ?? ''}</span>
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{children}</div>
-    </div>
-  )
+/** A picker with at most this many options is a segmented control, a longer one a select. */
+const SEGMENTED_MAX = 6
+
+function IconGlyph({ name }: { readonly name: string }): ReactNode {
+  const resolve = useDisplayIconResolver()
+  const Glyph = resolve(name)
+  return Glyph === undefined ? null : <Glyph className="h-4 w-4" aria-hidden />
 }
 
 function ActionButton({
@@ -69,12 +71,6 @@ function ActionButton({
   )
 }
 
-function IconGlyph({ name }: { readonly name: string }): ReactNode {
-  const resolve = useDisplayIconResolver()
-  const Glyph = resolve(name)
-  return Glyph === undefined ? null : <Glyph className="h-4 w-4" aria-hidden />
-}
-
 function SliderControl({
   control,
   host,
@@ -89,7 +85,7 @@ function SliderControl({
     host.run(
       {
         ...control.call,
-        args: { ...control.call.args, [control.valueArg]: draft },
+        args: heroArgsWithValue(control.call.args, control.valueArg, draft),
       },
       null,
     )
@@ -99,7 +95,7 @@ function SliderControl({
     <div className="flex items-center gap-2">
       <Slider
         aria-label={pickText(control.label, host.lang)}
-        className="w-32 sm:w-44"
+        className="min-w-0 flex-1"
         min={control.min}
         max={control.max}
         step={control.step}
@@ -110,12 +106,78 @@ function SliderControl({
         onKeyUp={commit}
         onBlur={commit}
       />
-      <span className="w-14 text-right text-xs tabular-nums text-foreground-muted">
+      <span className="w-12 text-right text-xs tabular-nums text-foreground-muted">
         {control.value === null ? '–' : `${String(shown)}${control.unit}`}
       </span>
     </div>
   )
 }
+
+function PickerControl({
+  control,
+  host,
+}: {
+  readonly control: Extract<HeroControl, { kind: 'picker' }>
+  readonly host: HeroCardHost
+}): ReactNode {
+  const choose = (value: string): void =>
+    host.run(
+      {
+        ...control.call,
+        args: heroArgsWithValue(control.call.args, control.valueArg, value),
+      },
+      null,
+    )
+  const label = pickText(control.label, host.lang)
+  if (control.options.length <= SEGMENTED_MAX) {
+    return (
+      <HeroSegmented
+        label={label}
+        value={control.current}
+        disabled={host.busy}
+        options={control.options.map((o) => ({ value: o, label: o }))}
+        onChange={choose}
+      />
+    )
+  }
+  return (
+    <Select
+      aria-label={label}
+      wrapperClassName="relative w-40 max-w-full"
+      value={control.current ?? ''}
+      disabled={host.busy}
+      options={[
+        ...(control.current === null ? [{ value: '', label: '–' }] : []),
+        ...control.options.map((o) => ({ value: o, label: o })),
+      ]}
+      onChange={(e) => choose(e.target.value)}
+    />
+  )
+}
+
+function ToggleControl({
+  control,
+  host,
+}: {
+  readonly control: Extract<HeroControl, { kind: 'toggle' }>
+  readonly host: HeroCardHost
+}): ReactNode {
+  return (
+    <Switch
+      aria-label={pickText(control.label, host.lang)}
+      checked={control.on === true}
+      disabled={host.busy || control.on === null}
+      onCheckedChange={(next) => {
+        const action = next ? control.turnOn : control.turnOff
+        host.run(action.call, action)
+      }}
+    />
+  )
+}
+
+/** Sliders and pickers read as the row's value; buttons and switches sit at its right. */
+const isValueControl = (control: HeroControl): boolean =>
+  control.kind === 'slider' || control.kind === 'picker'
 
 function ControlView({
   control,
@@ -128,64 +190,48 @@ function ControlView({
     case 'action':
       return <ActionButton action={control.action} host={host} />
     case 'toggle':
-      return (
-        <Switch
-          label={pickText(control.label, host.lang)}
-          checked={control.on === true}
-          disabled={host.busy || control.on === null}
-          onCheckedChange={(next) => {
-            const action = next ? control.turnOn : control.turnOff
-            host.run(action.call, action)
-          }}
-        />
-      )
+      return <ToggleControl control={control} host={host} />
     case 'slider':
       return <SliderControl control={control} host={host} />
     case 'picker':
-      return (
-        <Select
-          aria-label={pickText(control.label, host.lang)}
-          wrapperClassName="relative w-40"
-          value={control.current ?? ''}
-          disabled={host.busy}
-          options={[
-            ...(control.current === null ? [{ value: '', label: '–' }] : []),
-            ...control.options.map((o) => ({ value: o, label: o })),
-          ]}
-          onChange={(e) =>
-            host.run(
-              {
-                ...control.call,
-                args: {
-                  ...control.call.args,
-                  [control.valueArg]: e.target.value,
-                },
-              },
-              null,
-            )
-          }
-        />
-      )
+      return <PickerControl control={control} host={host} />
   }
 }
 
 function ModelRow({
   row,
   host,
+  tone,
 }: {
   readonly row: HeroRow
   readonly host: HeroCardHost
+  readonly tone: Parameters<typeof HeroProgressBar>[0]['tone']
 }): ReactNode {
+  const label = pickText(HERO_ROW_LABELS[row.id], host.lang)
+  const valueControls = row.controls.filter(isValueControl)
+  const actionControls = row.controls.filter((c) => !isValueControl(c))
+  const status = row.status === null ? null : pickText(row.status, host.lang)
   return (
-    <ControlRow
+    <HeroRowLine
       testId={`hero-row-${row.id}`}
-      icon={<IconGlyph name={row.icon} />}
-      status={row.status === null ? null : pickText(row.status, host.lang)}
-    >
-      {row.controls.map((control, i) => (
+      label={label}
+      actions={actionControls.map((control, i) => (
         <ControlView key={i} control={control} host={host} />
       ))}
-    </ControlRow>
+    >
+      {row.progress === undefined || row.progress === null ? (
+        <>
+          {status === null || valueControls.length > 0 ? null : (
+            <div className="truncate">{status}</div>
+          )}
+          {valueControls.map((control, i) => (
+            <ControlView key={i} control={control} host={host} />
+          ))}
+        </>
+      ) : (
+        <HeroProgressBar value={row.progress} label={label} tone={tone} />
+      )}
+    </HeroRowLine>
   )
 }
 
@@ -196,15 +242,14 @@ function TimedRunRow({
   readonly slot: HeroTimedRunSlot
   readonly host: HeroCardHost
 }): ReactNode {
-  const active = slot.activeUntil !== null
   return (
-    <ControlRow testId="hero-timed-run" icon={<IconGlyph name={slot.run.icon} />} status={null}>
-      {active ? (
-        <ActionButton action={slot.cancel} host={host} />
-      ) : (
-        <ActionButton action={slot.run} host={host} />
-      )}
-    </ControlRow>
+    <HeroRowLine
+      testId="hero-timed-run"
+      label={pickText(HERO_ROW_LABELS['run-for'], host.lang)}
+      actions={
+        <ActionButton action={slot.activeUntil !== null ? slot.cancel : slot.run} host={host} />
+      }
+    />
   )
 }
 
@@ -220,44 +265,80 @@ function BaseSlotRows({
   return (
     <>
       {ownPower !== null && !gated.has('own-power') ? (
-        <ControlRow
+        <HeroRowLine
           testId="hero-own-power"
-          icon={<IconGlyph name={ownPower.turnOn.icon} />}
-          status={null}
-        >
-          <ControlView
-            host={host}
-            control={{
-              kind: 'toggle',
-              id: 'own-power',
-              label: ownPower.turnOn.label,
-              on: ownPower.on,
-              turnOn: ownPower.turnOn,
-              turnOff: ownPower.turnOff,
-            }}
-          />
-        </ControlRow>
+          label={host.lang === 'it' ? 'Accensione' : 'Power'}
+          actions={
+            <ToggleControl
+              host={host}
+              control={{
+                kind: 'toggle',
+                id: 'own-power',
+                label: ownPower.turnOn.label,
+                on: ownPower.on,
+                turnOn: ownPower.turnOn,
+                turnOff: ownPower.turnOff,
+              }}
+            />
+          }
+        />
       ) : null}
       {timedRun !== null && !gated.has('timed-run') ? (
         <TimedRunRow slot={timedRun} host={host} />
       ) : null}
       {powerSupply !== null && !gated.has('power-supply') ? (
-        <ControlRow
+        <HeroRowLine
           testId="hero-power-supply"
-          icon={<IconGlyph name={powerSupply.powerOn.icon} />}
-          status={null}
-        >
-          <ActionButton
-            action={powerSupply.on === true ? powerSupply.powerOff : powerSupply.powerOn}
-            host={host}
-          />
-          <ActionButton
-            action={powerSupply.restart}
-            host={host}
-            disabled={powerSupply.on !== true}
-          />
-        </ControlRow>
+          label={host.lang === 'it' ? 'Alimentazione' : 'Supply'}
+          actions={
+            <>
+              <ActionButton
+                action={powerSupply.on === true ? powerSupply.powerOff : powerSupply.powerOn}
+                host={host}
+              />
+              <ActionButton
+                action={powerSupply.restart}
+                host={host}
+                disabled={powerSupply.on !== true}
+              />
+            </>
+          }
+        />
       ) : null}
+    </>
+  )
+}
+
+function Chips({ model, lang }: { readonly model: HeroModel; readonly lang: HeroLang }): ReactNode {
+  const factIds = new Set(model.facts.map((f) => f.id))
+  return (
+    <>
+      {model.badges
+        .filter((badge) => !factIds.has(badge.id === 'network-link' ? 'link' : badge.id))
+        .map((badge) => (
+          <Badge key={badge.id} variant={badgeVariantOf(badge.tone)} size="sm">
+            {pickText(badge.label, lang)}
+          </Badge>
+        ))}
+      {model.facts
+        .filter((fact) => CHIP_FACT_IDS.has(fact.id))
+        .map((fact) => (
+          <Badge key={fact.id} variant={badgeVariantOf(fact.tone)} size="sm">
+            {pickText(fact.text, lang)}
+          </Badge>
+        ))}
+    </>
+  )
+}
+
+function FootChips({ items }: { readonly items: HeroConsumableItem[] }): ReactNode {
+  return (
+    <>
+      {items.map((item) => (
+        <Badge key={item.key} variant={item.needsAttention ? 'warning' : 'neutral'} size="sm">
+          {item.level === null ? item.label : `${item.label} ${String(Math.round(item.level))}%`}
+        </Badge>
+      ))}
     </>
   )
 }
@@ -274,24 +355,18 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
   const { lang } = host
   const scene = sceneOf(model)
   const gated = new Set(model.gated)
+  const showRemote = model.remote !== null && !gated.has('remote')
+  const tone = resolveSceneVisual(scene).tone
+  const footItems = model.consumables?.items ?? []
+  const hasFoot = host.openHistory !== undefined || showRemote
   return (
     <HeroCardA
       title={model.name}
-      chips={
-        <>
-          <Badge variant={badgeVariantOf(model.look.tone)} size="sm">
-            {pickText(model.title, lang)}
-          </Badge>
-          {model.facts.map((fact) => (
-            <Badge key={fact.id} variant={badgeVariantOf(fact.tone)} size="sm">
-              {pickText(fact.text, lang)}
-            </Badge>
-          ))}
-        </>
-      }
+      chips={<Chips model={model} lang={lang} />}
       scene={
         <HeroScene
           {...scene}
+          caption={pickText(model.title, lang)}
           leftTiles={tilesOf(model.sideTiles.left, lang)}
           rightTiles={tilesOf(model.sideTiles.right, lang)}
         >
@@ -301,7 +376,7 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
               alt=""
               className="size-24 rounded-lg border border-border object-cover"
             />
-          ) : (
+          ) : SCENES_WITH_ART.has(scene.scene) ? undefined : (
             <span className="text-foreground [&>svg]:h-8 [&>svg]:w-8">
               <IconGlyph name={model.look.icon} />
             </span>
@@ -314,11 +389,23 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
           {model.rows
             .filter((row) => !gated.has(row.id))
             .map((row) => (
-              <ModelRow key={row.id} row={row} host={host} />
+              <ModelRow key={row.id} row={row} host={host} tone={tone} />
             ))}
         </>
       }
-      footAction={model.remote !== null && !gated.has('remote') ? remote : undefined}
+      footChips={footItems.length > 0 ? <FootChips items={footItems} /> : undefined}
+      footAction={
+        hasFoot ? (
+          <div className="flex items-center gap-1.5">
+            {showRemote ? remote : null}
+            {host.openHistory === undefined ? null : (
+              <Button size="sm" variant="outline" onClick={host.openHistory}>
+                {pickText(model.historyLabel, lang)}
+              </Button>
+            )}
+          </div>
+        ) : undefined
+      }
     />
   )
 }

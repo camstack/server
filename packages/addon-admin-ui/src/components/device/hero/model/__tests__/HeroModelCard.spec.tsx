@@ -66,4 +66,31 @@ describe('HeroModelCard', () => {
       'https://example.com/cover.jpg',
     )
   })
+
+  it('puts a slider value at its dotted path in the call (control.value)', () => {
+    const run = vi.fn()
+    const model = buildModel('control', ['control'], {
+      control: {
+        kind: 'numeric',
+        value: 5,
+        min: 0,
+        max: 30,
+        step: 1,
+        options: [],
+        lastChangedAt: 1,
+      },
+    })
+    render(<HeroModelCard model={model} host={host(run)} />)
+    const slider = screen.getByRole('slider')
+    fireEvent.change(slider, { target: { value: '22' } })
+    fireEvent.pointerUp(slider)
+    expect(run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cap: 'control',
+        method: 'setValue',
+        args: { control: { kind: 'numeric', value: 22 } },
+      }),
+      null,
+    )
+  })
 })

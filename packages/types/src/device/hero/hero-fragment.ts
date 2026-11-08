@@ -106,6 +106,8 @@ export interface HeroFragment {
     readonly left?: readonly HeroSideTile[]
     readonly right?: readonly HeroSideTile[]
   }
+  /** The tiles are a fallback: a side keeps them only when no other cap put a tile there. */
+  readonly tilesFallback?: boolean
   /** What the scene is doing, when this cap knows. The first fragment that names a field wins. */
   /** What the hero's headline says instead of the state word (a mode, a reading). The first fragment that names one wins; offline and unknown are never overridden. */
   readonly title?: HeroText

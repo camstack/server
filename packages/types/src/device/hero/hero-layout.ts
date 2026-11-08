@@ -24,10 +24,10 @@ const HEATER_LAYOUT: HeroLayout = { rows: ['run-for', 'cycle'] }
 const MEDIA_PLAYER_LAYOUT: HeroLayout = {
   rows: ['now-playing', 'playback', 'volume', 'channel', 'source', 'do-not-disturb'],
 }
-const APPLIANCE_LAYOUT: HeroLayout = { rows: ['cycle'] }
+const APPLIANCE_LAYOUT: HeroLayout = { rows: ['progress', 'cycle'] }
 /** Its Home Connect PowerState is a secondary row action, never the own-power slot. */
 const DISHWASHER_LAYOUT: HeroLayout = {
-  rows: ['cycle', 'program', 'appliance-power'],
+  rows: ['progress', 'cycle', 'program', 'appliance-power'],
 }
 const CLIMATE_LAYOUT: HeroLayout = {
   rows: ['climate-mode', 'climate-fan', 'setpoint'],

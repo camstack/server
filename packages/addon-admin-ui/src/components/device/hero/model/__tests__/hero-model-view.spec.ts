@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   heroLang,
   heroModelCovers,
+  modelSaysAnything,
   pickText,
   sceneOf,
   sceneStateOf,
@@ -53,14 +54,13 @@ describe('hero model coverage', () => {
     expect(heroModelCovers(washer, ['running-state', 'power-meter'])).toBe(true)
   })
 
-  it('falls back when a bound cap still has parts only the legacy hero draws', () => {
-    const model = buildModel('switch', ['switch'], PLUG_SLICES)
-    expect(uncoveredCaps(['switch', 'brightness', 'device-status'])).toEqual(['brightness'])
-    expect(heroModelCovers(model, ['switch', 'brightness'])).toBe(false)
+  it('no bound cap is left to the legacy hero (LATER_PHASE is empty)', () => {
+    expect(uncoveredCaps(['switch', 'brightness', 'device-status', 'update'])).toEqual([])
   })
 
   it('falls back when the model has nothing to say', () => {
-    const model = buildModel('climate', ['climate-control'], {})
+    const model = buildModel('sensor', ['device-status'], {})
+    expect(modelSaysAnything(model)).toBe(false)
     expect(heroModelCovers(model, ['device-status'])).toBe(false)
   })
 })

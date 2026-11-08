@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { callHeroAction, capRouterName } from '../call-hero-action'
+import { heroArgsWithValue } from '@camstack/types'
+import { callHeroAction, capRouterName, heroCallInput } from '../call-hero-action'
 
 describe('callHeroAction', () => {
   it('names the router like the generated client', () => {
@@ -38,5 +39,42 @@ describe('callHeroAction', () => {
     await expect(
       callHeroAction({}, { cap: 'switch', method: 'setState', args: {} }, 3, undefined),
     ).rejects.toThrow("no mutation 'switch.setState'")
+  })
+
+  it('sends no deviceId to a singleton cap method and no input when nothing is left', async () => {
+    const mutate = vi.fn().mockResolvedValue(undefined)
+    await callHeroAction(
+      { update: { installUpdate: { mutate } } },
+      { cap: 'update', method: 'installUpdate', args: {} },
+      9,
+      undefined,
+    )
+    expect(mutate).toHaveBeenCalledWith(undefined)
+    expect(heroCallInput({ cap: 'update', method: 'installUpdate', args: {} }, 9, undefined)).toBe(
+      undefined,
+    )
+  })
+
+  it('carries the nested control value and the colour preset to the mutate input', async () => {
+    const mutate = vi.fn().mockResolvedValue(undefined)
+    const control = {
+      cap: 'control',
+      method: 'setValue',
+      args: heroArgsWithValue({ control: { kind: 'numeric' } }, 'control.value', 22),
+    }
+    await callHeroAction({ control: { setValue: { mutate } } }, control, 5, undefined)
+    expect(mutate).toHaveBeenCalledWith({ control: { kind: 'numeric', value: 22 }, deviceId: 5 })
+
+    const preset = {
+      cap: 'color',
+      method: 'setColor',
+      args: { color: { mode: 'hsv', hsv: { h: 120, s: 80, v: 60 } } },
+    }
+    await callHeroAction({ color: { setColor: { mutate } } }, preset, 5, 'hub')
+    expect(mutate).toHaveBeenLastCalledWith({
+      color: { mode: 'hsv', hsv: { h: 120, s: 80, v: 60 } },
+      deviceId: 5,
+      nodeId: 'hub',
+    })
   })
 })

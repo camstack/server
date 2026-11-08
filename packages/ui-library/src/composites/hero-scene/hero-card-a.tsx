@@ -43,7 +43,7 @@ export function HeroCardA({
         data-testid="hero-card-top"
         className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden whitespace-nowrap"
       >
-        <h3 className="min-w-0 shrink truncate text-base font-semibold text-foreground">{title}</h3>
+        <h3 className="min-w-0 flex-1 truncate text-base font-semibold text-foreground">{title}</h3>
         {chips !== undefined ? (
           <div className="flex shrink-0 flex-nowrap items-center gap-1.5">{chips}</div>
         ) : null}

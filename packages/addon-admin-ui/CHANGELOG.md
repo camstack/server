@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The device page draws its hero from the hero model: an animated scene, state and power chips and the controls of the device's own caps; devices the model does not cover yet keep the previous hero.
+- The device page draws its hero from the hero model (layout A), live through the device state, dropping the duplicated power strip
 
 ## [1.2.627] - 2026-11-09
 

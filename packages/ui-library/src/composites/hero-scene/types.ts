@@ -4,41 +4,11 @@
  * Nothing here is a component or a colour; tones are theme-token names.
  */
 
-/** Every scene a device hero (or row mini scene) can draw. */
-export const HERO_SCENE_IDS = [
-  'ac',
-  'thermostat',
-  'heater',
-  'fan',
-  'washer',
-  'dryer',
-  'dishwasher',
-  'pet-fountain',
-  'pet-feeder',
-  'vacuum',
-  'lawn-mower',
-  'tv',
-  'speaker',
-  'camera',
-  'light',
-  'cover',
-  'lock',
-  'alarm',
-  'siren',
-  'sensor-sparkline',
-  'contact',
-  'presence',
-  'weather',
-  'plug',
-  'button',
-  'update',
-  'control-dial',
-  'event-stream',
-  'gateway',
-  'generic',
-] as const
+import { HERO_SCENES, type HeroSceneId } from '@camstack/types'
 
-export type HeroSceneId = (typeof HERO_SCENE_IDS)[number]
+/** Every scene a device hero (or row mini scene) can draw — the model's list, not a copy. */
+export const HERO_SCENE_IDS: typeof HERO_SCENES = HERO_SCENES
+export type { HeroSceneId }
 
 /** Theme-token accent of a scene. Resolved to `text-<tone>`; particles use `currentColor`. */
 export type SceneTone = 'primary' | 'info' | 'success' | 'warning' | 'danger' | 'muted' | 'subtle'

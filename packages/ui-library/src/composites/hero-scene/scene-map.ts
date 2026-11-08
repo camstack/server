@@ -138,3 +138,14 @@ export const TONE_CLASS: Readonly<Record<SceneTone, string>> = {
   muted: 'text-foreground-muted',
   subtle: 'text-foreground-subtle',
 }
+
+/** A filled control in the scene's tone (a pressed segment): theme fill + its contrast colour. */
+export const TONE_FILL: Readonly<Record<SceneTone, string>> = {
+  primary: 'bg-primary-fill text-primary-on',
+  info: 'bg-info-fill text-info-on',
+  success: 'bg-success-fill text-success-on',
+  warning: 'bg-warning-fill text-warning-on',
+  danger: 'bg-danger-fill text-danger-on',
+  muted: 'bg-neutral-fill text-neutral-on',
+  subtle: 'bg-neutral-fill text-neutral-on',
+}

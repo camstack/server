@@ -9,6 +9,7 @@
  * off (D315/D393), a heater whose switch has not reported renders `unknown`.
  */
 import { RunningStateStatusSchema } from '../../capabilities/running-state.cap.js'
+import { DeviceType } from '../device-type.js'
 import type { HeroContext, HeroFragment, StateReading, StateSource } from './hero-fragment.js'
 import { HERO_CAP_CONTRIBUTIONS } from './hero-contributions.js'
 import { resolveHeroLayout } from './hero-layout.js'
@@ -170,7 +171,30 @@ function consumptionOf(fragments: readonly HeroFragment[]): HeroConsumptionSlot 
 }
 
 function tilesOf(fragments: readonly HeroFragment[], side: 'left' | 'right'): HeroSideTile[] {
-  return fragments.flatMap((f) => f.tiles?.[side] ?? []).slice(0, HERO_SIDE_TILES_MAX)
+  const own = fragments
+    .filter((f) => f.tilesFallback !== true)
+    .flatMap((f) => f.tiles?.[side] ?? [])
+  const shown =
+    own.length > 0
+      ? own
+      : fragments.filter((f) => f.tilesFallback === true).flatMap((f) => f.tiles?.[side] ?? [])
+  return shown.slice(0, HERO_SIDE_TILES_MAX)
+}
+
+/** The foot button that opens the history, named for what the device keeps. */
+function historyLabelOf(type: string): HeroText {
+  switch (type) {
+    case DeviceType.Washer:
+    case DeviceType.Dryer:
+    case DeviceType.Dishwasher:
+      return heroText('Cycles', 'Cicli')
+    case DeviceType.PetFeeder:
+      return heroText('Meals', 'Pasti')
+    case DeviceType.Lock:
+      return heroText('Access', 'Accessi')
+    default:
+      return heroText('History', 'Storico')
+  }
 }
 
 function sceneOf(role: string | null, type: string, fragments: readonly HeroFragment[]): HeroScene {
@@ -265,6 +289,7 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
     title: headline ?? title,
     badges,
     remote,
+    historyLabel: historyLabelOf(device.type),
     consumables: fragments.find((f) => f.consumables !== undefined)?.consumables ?? null,
     consumption: consumptionOf(fragments),
     ownPower,

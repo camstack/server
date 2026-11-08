@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Capability definitions can name restoredStateFields, so a restored capability persists only those fields of its state.
 - Enum sensors no longer persist a restore only because the timestamp flag changed
 - Device heroes: a channel row for media players and IR TVs, light colour presets, and a value slider or picker for generic controls
+- Device hero model: media-player shuffle/repeat/next/previous and progress, washing and dishwasher cycle rows, phase and started tiles, hero args with a dotted value path, update cap read-only
 
 ## [1.2.529] - 2026-11-08
 

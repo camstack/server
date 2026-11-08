@@ -31,6 +31,8 @@ export {
 } from './hero-look.js'
 export {
   HERO_ROW_IDS,
+  HERO_ROW_LABELS,
+  heroArgsWithValue,
   type HeroAction,
   type HeroArgs,
   type HeroBackground,

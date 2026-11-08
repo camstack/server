@@ -11670,7 +11670,24 @@
         "message": "Il dispositivo è in funzione. Togliere l'alimentazione ora interrompe ciò che sta facendo.",
         "confirm": "Spegni"
       },
-      "callFailed": "Il dispositivo non ha accettato il comando"
+      "callFailed": "Il dispositivo non ha accettato il comando",
+      "confirm": {
+        "unlock": {
+          "title": "Aprire?",
+          "message": "La serratura si aprirà.",
+          "confirm": "Apri"
+        },
+        "install": {
+          "title": "Installare l'aggiornamento?",
+          "message": "Il dispositivo può riavviarsi e restare non disponibile per un po'.",
+          "confirm": "Installa"
+        },
+        "press": {
+          "title": "Eseguire ora?",
+          "message": "Il dispositivo agisce appena confermi.",
+          "confirm": "Esegui"
+        }
+      }
     }
   },
   "cliLogin": {

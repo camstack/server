@@ -34,6 +34,7 @@ import {
 import type { ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { SceneBackdrop } from './backdrops'
+import { SceneArt, SCENES_WITH_ART } from './scene-art'
 import { HERO_SCENE_CSS } from './hero-scene-css'
 import { KEYFRAMES as AIRFLOW_KEYFRAMES } from '../device-controls/ac-panel'
 import { resolveSceneVisual, TONE_CLASS } from './scene-map'
@@ -81,6 +82,8 @@ export interface HeroSceneProps extends HeroSceneParams {
   readonly state?: string
   /** `hero`: the full-width box with tiles and centre slot. `mini`: 44×44 for a row. */
   readonly size?: 'hero' | 'mini'
+  /** A short state caption at the top of the scene ("Cooling", "Rinsing"), in the scene's tone. */
+  readonly caption?: string
   readonly leftTiles?: readonly SceneTile[]
   readonly rightTiles?: readonly SceneTile[]
   /** Centre slot (hero) — the camera thumbnail, the setpoint control, a readout. */
@@ -99,9 +102,9 @@ function Tiles({ tiles }: { tiles: readonly SceneTile[] | undefined }): ReactNod
         <div
           key={tile.label}
           data-testid="scene-tile"
-          className="flex min-w-0 flex-col rounded-lg bg-surface/80 px-2.5 py-2"
+          className="flex min-w-0 flex-col gap-0.5 rounded-lg bg-background-elevated px-2 py-1.5"
         >
-          <span className="truncate text-[11px] text-foreground-subtle">{tile.label}</span>
+          <span className="truncate text-[10px] text-foreground-muted">{tile.label}</span>
           <span className="truncate text-sm font-semibold tabular-nums text-foreground">
             {tile.value}
           </span>
@@ -119,6 +122,7 @@ export function HeroScene({
   scene,
   state,
   size = 'hero',
+  caption,
   leftTiles,
   rightTiles,
   children,
@@ -159,12 +163,14 @@ export function HeroScene({
     )
   }
 
+  const art = SCENES_WITH_ART.has(scene)
   return (
     <div
       data-scene={scene}
       data-scene-size="hero"
       className={cn(
-        'relative h-44 w-full overflow-hidden rounded-xl border border-border bg-surface/30',
+        'relative w-full overflow-hidden rounded-xl border border-current/40 bg-surface/30',
+        art ? 'h-48' : 'h-44',
         tone,
         className,
       )}
@@ -172,10 +178,19 @@ export function HeroScene({
       <style>{AIRFLOW_KEYFRAMES}</style>
       <style>{HERO_SCENE_CSS}</style>
       {backdrop}
-      <div className="relative z-10 grid h-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-3 text-foreground">
+      {caption === undefined ? null : (
+        <div
+          data-testid="scene-caption"
+          className="absolute inset-x-0 top-1.5 z-20 truncate text-center text-[11px] font-semibold uppercase tracking-wide"
+        >
+          {caption}
+        </div>
+      )}
+      <div className="relative z-10 grid h-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-2 pt-4 text-foreground">
         <Tiles tiles={leftTiles} />
         <div data-testid="scene-centre" className="flex min-w-0 items-center justify-center">
-          {children}
+          {children ??
+            (art ? <SceneArt scene={scene} running={!visual.dim} level={params.level} /> : null)}
         </div>
         <div className="flex min-w-0 justify-end">
           <Tiles tiles={rightTiles} />
