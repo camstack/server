@@ -69,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A device owned by a forked worker now reports its alias in getDevice and listAll
 - A settings call to an addon id its runner does not host now names the addons that runner does host, instead of a bare 'not loaded on this node'
 - core-blocks now provides the read-only hero-layout capability, serving the device hero model
+- The remote runs declared sources under a per-device lock with a bounded wait, resolves a source by name or channel number and refuses undeclared channels
 
 ### Removed
 

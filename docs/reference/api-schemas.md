@@ -5586,7 +5586,7 @@ Enum: `"play" \| "pause" \| "stop" \| "next" \| "previous" \| "setMute" \| "sele
 
 ### `RemoteRefusalReasonSchema`
 
-Enum: `"no-remote" \| "unbound-role" \| "action-failed" \| "unknown-source" \| "unbound-step" \| "undeclared-channel"`
+Enum: `"no-remote" \| "unbound-role" \| "action-failed" \| "unknown-source" \| "unbound-step" \| "undeclared-channel" \| "press-timeout"`
 
 ### `RemoteSendResultSchema`
 

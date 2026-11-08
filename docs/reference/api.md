@@ -4268,7 +4268,7 @@
 
 ### `remote` → `remote.*`
 
-- **Source:** `packages/types/src/capabilities/remote.cap.ts:142`
+- **Source:** `packages/types/src/capabilities/remote.cap.ts:145`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IRemoteProvider`

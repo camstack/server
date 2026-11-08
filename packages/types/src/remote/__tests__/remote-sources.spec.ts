@@ -88,6 +88,18 @@ describe('declared sources', () => {
     expect(parse([RAI1, { ...HDMI, name: '1' }]).success).toBe(false)
   })
 
+  it('refuses an id that is another channel number, but not a source its own number', () => {
+    const five: RemoteSource = { kind: 'digits', id: 'five', name: 'Cinque', number: '5' }
+    expect(parse([five, { ...HDMI, id: '5' }]).success).toBe(false)
+    expect(parse([{ ...five, id: '5' }]).success).toBe(true)
+  })
+
+  it('a digits source may be named by its own number', () => {
+    const own: RemoteSource = { kind: 'digits', id: 'five', name: '5', number: '5' }
+    expect(parse([own]).success).toBe(true)
+    expect(resolveRemoteSource([own], '5')).toBe(own)
+  })
+
   it('bounds stepDelayMs to 100..3000', () => {
     const ok = (stepDelayMs: number) =>
       RemoteConfigSchema.safeParse({ ...EMPTY_REMOTE_CONFIG, stepDelayMs }).success

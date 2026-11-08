@@ -57,8 +57,8 @@ export const MAX_REMOTE_CUSTOM_BUTTONS = 100
 
 /**
  * The source rules: every step role is bound, ids and names are unique, a
- * channel number belongs to one `digits` source, and no name is another
- * source's number (a name and a number must reach one source, never two).
+ * channel number belongs to one `digits` source, and no name or id is another
+ * source's number (a name, an id and a number must reach one source, never two).
  */
 function refineSources(
   config: { readonly bindings: Record<string, unknown>; readonly sources: readonly RemoteSource[] },
@@ -86,13 +86,19 @@ function refineSources(
       }
     }
   })
+  // A name or an id that is ANOTHER source's channel number would reach two
+  // sources (selectSource by name or id, playMedia by number). Its own is fine.
   config.sources.forEach((source, index) => {
-    if (numbers.has(source.name.trim())) {
-      ctx.addIssue({
-        code: 'custom',
-        message: `"${source.name}" is also a channel number`,
-        path: ['sources', index, 'name'],
-      })
+    for (const other of config.sources) {
+      if (other.kind !== 'digits' || other === source) continue
+      for (const field of ['name', 'id'] as const) {
+        if (source[field].trim() !== other.number) continue
+        ctx.addIssue({
+          code: 'custom',
+          message: `${field} "${source[field]}" is the channel number of "${other.name}"`,
+          path: ['sources', index, field],
+        })
+      }
     }
   })
 }

@@ -51,6 +51,8 @@ export type RemoteCommandList = z.infer<typeof RemoteCommandListSchema>
  * `unknown-source`: no declared source answers to that name. `undeclared-channel`:
  * no `digits` source declares that number — a channel is never guessed.
  * `unbound-step`: a step of the source has no binding (named in `step`).
+ * `press-timeout`: a press never finished within the bound, so it was given up
+ * and the device's later presses are not held behind it.
  */
 export const REMOTE_REFUSAL_REASONS = [
   'no-remote',
@@ -59,6 +61,7 @@ export const REMOTE_REFUSAL_REASONS = [
   'unknown-source',
   'unbound-step',
   'undeclared-channel',
+  'press-timeout',
 ] as const
 export const RemoteRefusalReasonSchema = z.enum(REMOTE_REFUSAL_REASONS)
 export type RemoteRefusalReason = z.infer<typeof RemoteRefusalReasonSchema>

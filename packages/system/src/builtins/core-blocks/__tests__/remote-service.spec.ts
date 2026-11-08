@@ -55,6 +55,7 @@ function world(
     readonly failOn?: number
     /** Holds the nth send (1-based) until released: a press in flight. */
     readonly hold?: { readonly at: number; readonly until: Promise<void> }
+    readonly lockTimeoutMs?: number
     readonly reported?: MediaPlayerStatus | null
     readonly templates?: readonly string[]
     readonly mediaPlayer?: boolean
@@ -108,6 +109,7 @@ function world(
     sleep: async (ms) => {
       clock.at += ms
     },
+    ...(options.lockTimeoutMs === undefined ? {} : { lockTimeoutMs: options.lockTimeoutMs }),
     assumptions: {
       read: async () => kept.current,
       write: async (_id, next) => {
@@ -981,6 +983,33 @@ describe('declared sources (planning#460)', () => {
     plugState.current = false
     await w.service.assumedStatus(TV)
     expect(w.kept()?.source).toBeNull()
+  })
+
+  it('a sequence that fails midway forgets the previous source: the set already moved', async () => {
+    const assumptions = {
+      current: { power: null, muted: null, source: { name: 'Rai 1', at: 1 } },
+    }
+    const w = world(declared(), { failOn: 2, plug: true, assumptions })
+    expect(await select(w, 'HDMI 1')).toMatchObject({ status: 'refused', step: { index: 2 } })
+    expect(w.kept()?.source).toBeNull()
+  })
+
+  it('a sequence refused at its first step keeps the previous source', async () => {
+    const assumptions = {
+      current: { power: null, muted: null, source: { name: 'Rai 1', at: 1 } },
+    }
+    const w = world(declared(), { failOn: 1, plug: true, assumptions })
+    await select(w, 'HDMI 1')
+    expect(w.kept()?.source).toMatchObject({ name: 'Rai 1' })
+  })
+
+  it('a press that never finishes is given up and does not wedge the presses behind it', async () => {
+    const never = new Promise<void>(() => undefined)
+    const w = world(declared(), { hold: { at: 1, until: never }, lockTimeoutMs: 20 })
+    const hung = await w.service.sendCommand({ deviceId: TV, role: 'channel_up', repeat: 1 })
+    expect(hung).toMatchObject({ status: 'refused', reason: 'press-timeout' })
+    const next = await w.service.sendCommand({ deviceId: TV, role: 'channel_up', repeat: 1 })
+    expect(next).toMatchObject({ status: 'sent' })
   })
 
   it('forgets the source on a channel step', async () => {

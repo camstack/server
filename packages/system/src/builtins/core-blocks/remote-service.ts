@@ -100,7 +100,12 @@ export interface RemoteServiceDeps {
   readonly now?: () => number
   /** Waits between two sends of a repeat; a spec drives it. */
   readonly sleep?: (ms: number) => Promise<void>
+  /** How long one press (or one whole source) may run under the device lock. */
+  readonly lockTimeoutMs?: number
 }
+
+/** A sequence is at most 16 steps of 3 s; a press that outlasts this is hung. */
+export const REMOTE_LOCK_TIMEOUT_MS = 60_000
 
 /** The pause between two full sends of a repeat — never stored, never a setting. */
 export const REMOTE_REPEAT_GAP_MS = 150
@@ -154,6 +159,7 @@ function errorText(err: unknown): string {
 export class RemoteService implements IRemoteProvider {
   private readonly now: () => number
   private readonly sleep: (ms: number) => Promise<void>
+  private readonly lockTimeoutMs: number
   /** Remote devices seen so far, and the plug each one waits on: who an input event affects. */
   private readonly plugOf = new Map<number, number | null>()
   private readonly sliceRuns = new Map<number, Promise<void>>()
@@ -164,6 +170,7 @@ export class RemoteService implements IRemoteProvider {
   constructor(private readonly deps: RemoteServiceDeps) {
     this.now = deps.now ?? Date.now
     this.sleep = deps.sleep ?? realSleep
+    this.lockTimeoutMs = deps.lockTimeoutMs ?? REMOTE_LOCK_TIMEOUT_MS
   }
 
   readonly getConfig: IRemoteProvider['getConfig'] = async ({ deviceId }) =>
@@ -483,9 +490,19 @@ export class RemoteService implements IRemoteProvider {
     return result
   }
 
-  /** Runs `fn` after every earlier press of the device has finished. */
-  private async withLock<T>(deviceId: number, fn: () => Promise<T>): Promise<T> {
-    const result = (this.locks.get(deviceId) ?? Promise.resolve()).then(fn)
+  /**
+   * Runs `fn` after every earlier press of the device has finished. A press that
+   * does not finish within `lockTimeoutMs` is given up: the caller is told
+   * (`press-timeout`) and the lock is released, so one hung press never wedges
+   * the presses behind it.
+   */
+  private async withLock(
+    deviceId: number,
+    fn: () => Promise<RemoteSendResult>,
+  ): Promise<RemoteSendResult> {
+    const result = (this.locks.get(deviceId) ?? Promise.resolve()).then(() =>
+      this.boundedPress(deviceId, fn),
+    )
     const tail = result.then(
       () => undefined,
       () => undefined,
@@ -495,6 +512,33 @@ export class RemoteService implements IRemoteProvider {
       return await result
     } finally {
       if (this.locks.get(deviceId) === tail) this.locks.delete(deviceId)
+    }
+  }
+
+  private async boundedPress(
+    deviceId: number,
+    fn: () => Promise<RemoteSendResult>,
+  ): Promise<RemoteSendResult> {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const expired = new Promise<'timeout'>((resolve) => {
+      timer = setTimeout(() => resolve('timeout'), this.lockTimeoutMs)
+    })
+    const started = fn()
+    try {
+      const outcome = await Promise.race([started, expired])
+      if (outcome !== 'timeout') return outcome
+      started.catch(() => undefined)
+      this.deps.logger.warn('remote: a press never finished, it was given up', {
+        tags: { deviceId },
+        meta: { timeoutMs: this.lockTimeoutMs },
+      })
+      return {
+        status: 'refused',
+        reason: 'press-timeout',
+        detail: `the press did not finish within ${this.lockTimeoutMs} ms`,
+      }
+    } finally {
+      clearTimeout(timer)
     }
   }
 
@@ -585,6 +629,8 @@ export class RemoteService implements IRemoteProvider {
         if (at > 0) await this.sleep(config.stepDelayMs)
         const result = await this.runRole(deviceId, config, role, 1)
         if (result.status === 'refused') {
+          // The set already moved by the steps pressed: the old source no longer holds.
+          if (at > 0) await this.forgetSource(deviceId)
           this.deps.logger.warn('remote: a step of the source failed, the sequence stopped', {
             tags: { deviceId },
             meta: { source: source.name, step: at + 1, role, reason: result.reason },
@@ -604,6 +650,11 @@ export class RemoteService implements IRemoteProvider {
       await this.refreshSlice(deviceId)
       return { status: 'sent', sends: steps.length }
     })
+  }
+
+  private async forgetSource(deviceId: number): Promise<void> {
+    const kept = await this.readAssumed(deviceId)
+    if (kept.source !== null) await this.deps.assumptions.write(deviceId, { ...kept, source: null })
   }
 
   private async runRole(
