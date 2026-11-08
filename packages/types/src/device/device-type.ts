@@ -158,6 +158,13 @@ export enum DeviceFeature {
    * (`featuresOfBoundCaps`). Gates the quick-run control in the viewer.
    */
   TimedRun = 'timed-run',
+  /**
+   * Device binds a plain `switch` cap. Derived from the bindings
+   * (`featuresOfBoundCaps`) for a composed device, whose switch is bound by the
+   * composition and not by a driver: an appliance (a heater behind a smart
+   * plug) has no control of its own, so a surface reads this as its on/off.
+   */
+  Switch = 'switch',
 
   // ── HA-targeted actuator sub-features (Phase C1 retroactive) ────────
   // Granular color-mode support — paired with `colorCapability`. A

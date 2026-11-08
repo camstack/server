@@ -146,13 +146,21 @@ describe('TimedRunService', () => {
     expect(h.store.rows.get(HEATER)?.activeUntil).toBe(T0 + 20 * 60_000)
   })
 
-  it('cancel forgets the deadline and leaves the device alone', async () => {
+  it('cancel forgets the deadline AND switches the device off once', async () => {
     const h = harness()
     await h.service.runFor({ deviceId: HEATER, duration: 10, unit: 'min' })
     await h.service.cancel({ deviceId: HEATER })
     expect(h.live()).toHaveLength(0)
     expect(h.store.rows.size).toBe(0)
-    expect(h.commands.filter((c) => !c.on)).toEqual([])
+    expect(h.commands.filter((c) => !c.on)).toEqual([
+      { deviceId: HEATER, actuator: 'switch', on: false },
+    ])
+  })
+
+  it('cancel with nothing armed sends no off', async () => {
+    const h = harness()
+    await h.service.cancel({ deviceId: HEATER })
+    expect(h.commands).toEqual([])
   })
 
   it('a manual off cancels the pending timer silently', async () => {

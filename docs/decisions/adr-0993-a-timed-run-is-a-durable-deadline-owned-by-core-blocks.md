@@ -23,7 +23,8 @@ devices of a type listed in `TIMED_RUN_LIMITS` (Heater 180 min, PetFountain
 300 s). The deadline is one `timed-runs` row per device, written BEFORE the
 device is switched on; ONE timer is armed for the earliest deadline. A request
 above the maximum is refused with a typed reason, never clamped. A manual off
-cancels the pending deadline silently. At boot a passed deadline issues the off
+cancels the pending deadline silently; an explicit `cancel` (Stop) switches the
+device off once as well, and sends nothing when no run is armed. At boot a passed deadline issues the off
 once and a future one is re-armed (D49: the off is a one-shot, a failed one is
 logged with the device tag and not retried in a loop).
 

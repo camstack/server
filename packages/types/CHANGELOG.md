@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device Customize tab reads a power-source or running-state row an earlier version stored (explicit dwell sample count, zero off-seconds) as the source link it is, instead of showing it as a custom formula.
 - A remote source can be a raw infrared code (raw timings or Pronto hex) sent through a transmitter, next to digits and key sequences.
 - A remote with one unreadable infrared source still opens: that source is left out and named, the rest loads.
+- A composed device that binds a plain switch advertises it as the switch feature, so a viewer can offer a heater its on/off
 
 ## [1.2.527] - 2026-11-08
 

@@ -7,8 +7,8 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
  *
  * "Heat for 30 minutes", "run the fountain pump for 2 minutes": the device has
  * no timer of its own, so the hub keeps one. `runFor` turns the device on and
- * records a deadline; `cancel` (or the device being switched off by hand)
- * forgets it; at the deadline the hub issues the off once.
+ * records a deadline; `cancel` switches the device off and forgets the deadline,
+ * and the device being switched off by hand just forgets it; at the deadline the hub issues the off once.
  *
  * The deadline is DURABLE: it is a row in the records store, so a hub restart
  * neither loses a pending off nor leaves the device running past its time. At
@@ -177,7 +177,7 @@ export const timedRunCapability = {
       // ACTUATION, like `switch.setState`: the caller's device grant governs it.
       { kind: 'mutation', auth: 'protected' },
     ),
-    /** Forget the pending off. The device is left as it is. */
+    /** Stop the run: switch the device off (once) and forget the pending off. Nothing armed: nothing is sent. */
     cancel: method(z.object({ deviceId: z.number().int() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',

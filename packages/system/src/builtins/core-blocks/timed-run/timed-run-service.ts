@@ -15,6 +15,7 @@
  *
  * A manual off (the switch observed off, the pump observed stopped) cancels the
  * pending deadline silently: the operator already did what the timer would do.
+ * An explicit `cancel` (Stop) is the opposite: it switches the device off too.
  */
 import {
   DeviceType,
@@ -176,7 +177,29 @@ export class TimedRunService implements ITimedRunProvider {
     return { ok: true, activeUntil: body.activeUntil }
   }
 
+  /**
+   * Stop a run: the device this run switched on is switched OFF, once, and the
+   * deadline is forgotten. Nothing armed means nothing to stop - no command is sent.
+   * D49: the off is a one-shot; a failure is logged with the device tag, not retried,
+   * and the row is dropped either way.
+   */
   cancel: ITimedRunProvider['cancel'] = async ({ deviceId }) => {
+    const armed = this.pending.get(deviceId)
+    if (armed === undefined) {
+      await this.forget(deviceId)
+      return
+    }
+    this.deps.logger.info('timed-run: stopped by request, switching the device off', {
+      tags: { deviceId },
+    })
+    try {
+      await this.deps.actuation.set(deviceId, armed.actuator, false)
+    } catch (error) {
+      this.deps.logger.warn('timed-run: the stop did not reach the device; not retrying', {
+        tags: { deviceId },
+        meta: { error: String(error) },
+      })
+    }
     await this.forget(deviceId)
   }
 
