@@ -19,7 +19,7 @@ import {
   useDeviceManagerDiscoveryProviders,
   useDeviceManagerEnable,
   useDeviceManagerListAll,
-  useIntegrationsDelete,
+  useIntegrationInstancesDeleteInstance,
   useIntegrationsGet,
   useIntegrationsGetAvailableTypes,
   useIntegrationsList,
@@ -297,7 +297,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
         : instanceToggle.mutate({ ...vars, addonId: integration?.addonId }),
   }
 
-  const deleteMutation = useIntegrationsDelete({
+  const deleteMutation = useIntegrationInstancesDeleteInstance({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [['integrations']] })
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
@@ -570,7 +570,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
               confirmVariant="danger"
               className="border-danger bg-danger/10 text-danger hover:bg-danger hover:text-background"
               disabled={deleteMutation.isPending}
-              action={() => deleteMutation.mutateAsync({ id: integrationId })}
+              action={() => deleteMutation.mutateAsync({ addonId, id: integrationId })}
             />
           )}
         </div>

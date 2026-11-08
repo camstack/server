@@ -412,3 +412,45 @@ describe('registration', () => {
     expect(rawInstancesProvider(registered)).not.toBe(registered)
   })
 })
+
+describe('the switch of a fixed builtin is the registry flag', () => {
+  async function fixedKit(): Promise<{ kit: Kit; id: string }> {
+    const kit = await makeKit()
+    const row = await kit.registry.createIntegration({ addonId: ADDON, name: 'Blocks' })
+    await kit.registry.updateIntegration(row.id, { info: { fixed: true }, enabled: false })
+    // The name-only record it is seeded with carries no flag, which a body reads as "on".
+    kit.stored.set(row.id, {
+      id: row.id,
+      name: 'Blocks',
+      kind: 'connection',
+      configured: true,
+      formValues: {},
+    })
+    return { kit, id: row.id }
+  }
+
+  it('lists and gets the registry flag, not the flagless body', async () => {
+    const { kit, id } = await fixedKit()
+    expect((await kit.wrapped.listInstances()).find((i) => i.id === id)?.enabled).toBe(false)
+    expect((await kit.wrapped.getInstance({ id }))?.enabled).toBe(false)
+  })
+
+  it('writes the registry flag, the one store, and not a body flag nobody reads', async () => {
+    const { kit, id } = await fixedKit()
+    const setOnRecord = vi.spyOn(kit.provider, 'setInstanceEnabled')
+    await kit.wrapped.setInstanceEnabled({ id, enabled: true })
+    expect((await kit.registry.getIntegration(id))?.enabled).toBe(true)
+    expect(setOnRecord).not.toHaveBeenCalled()
+    expect((await kit.wrapped.getInstance({ id }))?.enabled).toBe(true)
+  })
+
+  it('leaves a non-fixed instance to its own record', async () => {
+    const kit = await makeKit()
+    const created = await kit.wrapped.createInstance({ name: 'Home', kind: 'connection' })
+    kit.stored.set(created.id, {
+      ...(kit.stored.get(created.id) ?? { id: created.id, name: 'Home', kind: 'connection', configured: true, formValues: {} }),
+      enabled: false,
+    })
+    expect((await kit.wrapped.getInstance({ id: created.id }))?.enabled).toBe(false)
+  })
+})

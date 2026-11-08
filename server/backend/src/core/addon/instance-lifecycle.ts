@@ -18,6 +18,7 @@ import type {
   IIntegrationInstancesProvider,
   IIntegrationRegistry,
   Integration,
+  IntegrationInstance,
   IntegrationRole,
   IntegrationTestConnectionStatus,
   IScopedLogger,
@@ -445,6 +446,11 @@ async function bringsDevicesOf(
   return bringsDevices(describedRoleOf(described) ?? described.role)
 }
 
+/** A builtin the hub itself declared (`DeclaredDevices` marks it `fixed`); its switch is the registry flag. */
+export function isFixedBuiltin(integration: Integration): boolean {
+  return integration.info['fixed'] === true
+}
+
 /** The wrapped providers and the raw ones they stand for. */
 const RAW_PROVIDERS = new WeakMap<IIntegrationInstancesProvider, IIntegrationInstancesProvider>()
 
@@ -499,10 +505,34 @@ export function withInstanceLifecycle(
     await deleteRegisteredInstance(deps, provider, integration)
     return { ok: true as const }
   }
+  // A FIXED builtin keeps a name-only record with no flag, which a body reads as "on": its switch
+  // is the registry flag, the one store, so the listing reads it and the switch writes it.
+  const fixedRow = async (id: string): Promise<Integration | null> => {
+    const row = await deps.integrations().getIntegration(id)
+    return row !== null && row.addonId === bare && isFixedBuiltin(row) ? row : null
+  }
+  const withRegistryFlag = async (instance: IntegrationInstance): Promise<IntegrationInstance> => {
+    const row = await fixedRow(instance.id)
+    return row === null ? instance : { ...instance, enabled: row.enabled }
+  }
+  const listInstances: IIntegrationInstancesProvider['listInstances'] = async () =>
+    Promise.all((await provider.listInstances()).map(withRegistryFlag))
+  const getInstance: IIntegrationInstancesProvider['getInstance'] = async (input) => {
+    const instance = await provider.getInstance(input)
+    return instance === null ? null : withRegistryFlag(instance)
+  }
+  const setInstanceEnabled: IIntegrationInstancesProvider['setInstanceEnabled'] = async (input) => {
+    if ((await fixedRow(input.id)) === null) return provider.setInstanceEnabled(input)
+    await deps.integrations().updateIntegration(input.id, { enabled: input.enabled })
+    return { ok: true as const }
+  }
   const wrapped: IIntegrationInstancesProvider = new Proxy(provider, {
     get(target, prop) {
       if (prop === 'createInstance') return createInstance
       if (prop === 'deleteInstance') return deleteInstance
+      if (prop === 'listInstances') return listInstances
+      if (prop === 'getInstance') return getInstance
+      if (prop === 'setInstanceEnabled') return setInstanceEnabled
       const value: unknown = Reflect.get(target, prop)
       return typeof value === 'function' ? value.bind(target) : value
     },
@@ -540,10 +570,21 @@ export function deferInstanceLifecycle(
       wrapNow('create').createInstance(input)
     const deleteInstance: IIntegrationInstancesProvider['deleteInstance'] = async (input) =>
       wrapNow('delete').deleteInstance(input)
+    // Reads and the switch never refuse: before the hub half exists the holder's own answer stands.
+    const readNow = (): IIntegrationInstancesProvider => resolve()?.(addonId, provider) ?? provider
+    const listInstances: IIntegrationInstancesProvider['listInstances'] = async () =>
+      readNow().listInstances()
+    const getInstance: IIntegrationInstancesProvider['getInstance'] = async (input) =>
+      readNow().getInstance(input)
+    const setInstanceEnabled: IIntegrationInstancesProvider['setInstanceEnabled'] = async (input) =>
+      readNow().setInstanceEnabled(input)
     const deferred: IIntegrationInstancesProvider = new Proxy(provider, {
       get(target, prop) {
         if (prop === 'createInstance') return createInstance
         if (prop === 'deleteInstance') return deleteInstance
+        if (prop === 'listInstances') return listInstances
+        if (prop === 'getInstance') return getInstance
+        if (prop === 'setInstanceEnabled') return setInstanceEnabled
         const value: unknown = Reflect.get(target, prop)
         return typeof value === 'function' ? value.bind(target) : value
       },

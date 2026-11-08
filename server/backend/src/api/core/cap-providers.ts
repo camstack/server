@@ -69,6 +69,7 @@ import {
   deleteRegisteredInstance,
   type DeviceCascadePort,
   type InstanceLifecycleDeps,
+  isFixedBuiltin,
   rawInstancesProvider,
 } from '../../core/addon/instance-lifecycle'
 import { holdersOf } from '../../core/addon/instance-links.service'
@@ -1124,11 +1125,6 @@ async function projectSwitches(
     const enabled = byAddon.get(i.addonId)?.get(i.id)
     return enabled === undefined ? i : { ...i, enabled }
   })
-}
-
-/** A builtin the hub itself declared (`DeclaredDevices` marks it `fixed`); its switch is the registry flag. */
-function isFixedBuiltin(integration: Integration): boolean {
-  return integration.info['fixed'] === true
 }
 
 export function buildIntegrationsProvider(
