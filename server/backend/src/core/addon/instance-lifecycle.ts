@@ -9,9 +9,12 @@
  *    destroyed, remove the integration's devices through the device manager (its tombstone path,
  *    D865), then the record, the registry row and the `IntegrationDeleted` event.
  *
- * There is ONE implementation and two doors: the legacy `integrationInstances.createInstance` / `integrations.delete`
- * and the registered `integration-instances` provider ({@link withInstanceLifecycle}). Both call
- * {@link createRegisteredInstance} / {@link deleteRegisteredInstance}.
+ * There is ONE create door: the registered `integration-instances` provider
+ * ({@link withInstanceLifecycle}), which calls {@link createRegisteredInstance}. A seed (an
+ * addon making its own fixed or migrated instance) goes through the same door and is accepted
+ * only from the addon it names. Delete has two callers of {@link deleteRegisteredInstance}: the
+ * provider's `deleteInstance` and `integrations.delete`, which stays for registry rows no addon
+ * provides any more (an orphan).
  */
 import { IntegrationRegistry } from '@camstack/server/system'
 import type {
