@@ -16,13 +16,14 @@ import {
   deleteSource,
   draftIssues,
   draftOfSource,
+  importFlipperIr,
   importSmartIr,
   irSourceSummary,
   moveSource,
   newSourceId,
+  type SourceDraft,
   setBinding,
   setStepDelay,
-  type SourceDraft,
   sourceIssues,
   transmitterOf,
   upsertSource,
@@ -416,5 +417,24 @@ describe('remote-config-model: infrared sources (planning#464)', () => {
       pulses: null,
       carrierKhz: null,
     })
+  })
+})
+
+describe('remote-config-model: Flipper-IRDB import', () => {
+  const FILE =
+    'Filetype: IR signals file\nVersion: 1\n#\nname: Power\ntype: parsed\nprotocol: Samsung32\naddress: 07 00 00 00\ncommand: 02 00 00 00\n' +
+    '#\nname: Ch_up\ntype: parsed\nprotocol: RC5\naddress: 05 00 00 00\ncommand: 20 00 00 00\n'
+
+  it('turns a .ir file into bindings and lists the button it cannot send', () => {
+    const result = importFlipperIr(FILE, 7)
+    if (result.status !== 'ok') throw new Error(result.reason)
+    expect(Object.keys(result.draft.bindings)).toEqual(['power'])
+    expect(result.bound).toBe(1)
+    expect(result.skipped).toEqual([{ name: 'Ch_up', reason: expect.stringContaining('RC5') }])
+  })
+
+  it('refuses without a transmitter and on text that is not a .ir file', () => {
+    expect(importFlipperIr(FILE, null)).toEqual({ status: 'refused', reason: 'no-transmitter' })
+    expect(importFlipperIr('nope', 7)).toEqual({ status: 'refused', reason: 'not-flipper' })
   })
 })

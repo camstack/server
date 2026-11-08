@@ -11280,7 +11280,7 @@
       }
     },
     "import": {
-      "title": "Import from SmartIR",
+      "title": "Import codes",
       "hint": "Paste a SmartIR device file or pick one. It is read here and not stored; only the commands it produces are kept when you save.",
       "pasteLabel": "SmartIR file (JSON)",
       "chooseFile": "Choose file",
@@ -11293,7 +11293,8 @@
         "not-json": "That is not valid JSON.",
         "not-smartir": "That is not a SmartIR device file."
       },
-      "skipped_one": "{{count}} command could not be used:"
+      "skipped_one": "{{count}} command could not be used:",
+      "smartirTitle": "SmartIR file"
     },
     "palette": {
       "title": "Add component",
@@ -11436,6 +11437,26 @@
       "channels": "Channels",
       "inputs": "Inputs",
       "notRouted": "This remote cannot select a source."
+    },
+    "flipper": {
+      "title": "Flipper-IRDB library",
+      "hint": "Browse the community IR library and import a remote's buttons. Files are fetched from GitHub when you open them; nothing is stored.",
+      "search": "Filter by name",
+      "root": "Library",
+      "loading": "Loading…",
+      "empty": "Nothing matches.",
+      "import": "Read this file",
+      "error": {
+        "rate-limited": "GitHub rate limit reached. Try again later.",
+        "rate-limitedAt": "GitHub rate limit reached. Try again after {{time}}.",
+        "not-found": "Not found in the library.",
+        "network": "Could not reach GitHub.",
+        "bad-response": "GitHub sent an answer that could not be read."
+      },
+      "refused": {
+        "no-transmitter": "Pick a transmitter first.",
+        "not-flipper": "This is not a Flipper IR file."
+      }
     }
   },
   "commands": {

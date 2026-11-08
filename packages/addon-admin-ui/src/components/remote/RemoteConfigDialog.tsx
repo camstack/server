@@ -36,11 +36,12 @@ import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAutomationDevices } from '../../pages/build/automation/automation-data'
 import { BindingPanel } from './BindingPanel'
-import { composedBlockIdOf, withMediaPlayerExtension } from './composed-remote'
 import { deviceLabel } from './binding-summary'
+import { composedBlockIdOf, withMediaPlayerExtension } from './composed-remote'
 import { EditTemplateButton } from './EditTemplateButton'
+import { FlipperIrdbPanel } from './FlipperIrdbPanel'
 import { layoutOf } from './layout-model'
-import { roleName as vocabRoleName } from './role-vocabulary'
+import { RemoteGrid } from './RemoteGrid'
 import {
   applyDraft,
   type BindableRole,
@@ -50,7 +51,7 @@ import {
   IR_CAP,
   setBinding,
 } from './remote-config-model'
-import { RemoteGrid } from './RemoteGrid'
+import { roleName as vocabRoleName } from './role-vocabulary'
 import { SmartIrImportPanel } from './SmartIrImportPanel'
 import { SourcesPanel } from './SourcesPanel'
 
@@ -342,7 +343,15 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
         />
         <section className="space-y-2">
           <h3 className="text-sm font-medium text-foreground">{t('remote.import.title')}</h3>
+          <h4 className="text-xs font-medium text-foreground-muted">
+            {t('remote.import.smartirTitle')}
+          </h4>
           <SmartIrImportPanel
+            transmitterId={config.defaultTransmitterId}
+            onApply={(draft) => setConfig((prev) => applyDraft(prev, draft))}
+          />
+          <h4 className="text-xs font-medium text-foreground-muted">{t('remote.flipper.title')}</h4>
+          <FlipperIrdbPanel
             transmitterId={config.defaultTransmitterId}
             onApply={(draft) => setConfig((prev) => applyDraft(prev, draft))}
           />

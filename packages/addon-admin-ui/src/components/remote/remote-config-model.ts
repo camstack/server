@@ -9,17 +9,19 @@
 import {
   customKeyOfRole,
   customRole,
+  flipperIrDraft,
   IrCodecError,
   type IrPayload,
   isRemoteWidgetRole,
+  parseFlipperIr,
   parseSmartIr,
   type RemoteBinding,
   type RemoteBindingAction,
   type RemoteConfig,
   RemoteConfigSchema,
   type RemoteCustomButton,
-  type RemoteLayoutPayload,
   type RemoteIrSource,
+  type RemoteLayoutPayload,
   type RemoteSource,
   type RemoteSourceKind,
   type SmartIrDraft,
@@ -172,6 +174,29 @@ export function importSmartIr(text: string, transmitterDeviceId: number | null):
     return { status: 'ok', draft, bound: Object.keys(draft.bindings).length, skipped }
   } catch (err: unknown) {
     if (err instanceof IrCodecError) return { status: 'refused', reason: 'not-smartir' }
+    throw err
+  }
+}
+
+export type FlipperIrImport =
+  | Extract<SmartIrImport, { status: 'ok' }>
+  | { readonly status: 'refused'; readonly reason: 'no-transmitter' | 'not-flipper' }
+
+/** Parse a Flipper-IRDB `.ir` file into a draft; nothing is stored. */
+export function importFlipperIr(text: string, transmitterDeviceId: number | null): FlipperIrImport {
+  if (transmitterDeviceId === null || transmitterDeviceId <= 0) {
+    return { status: 'refused', reason: 'no-transmitter' }
+  }
+  try {
+    const draft = flipperIrDraft(parseFlipperIr(text), { transmitterDeviceId })
+    return {
+      status: 'ok',
+      draft,
+      bound: Object.keys(draft.bindings).length,
+      skipped: draft.skipped,
+    }
+  } catch (err: unknown) {
+    if (err instanceof IrCodecError) return { status: 'refused', reason: 'not-flipper' }
     throw err
   }
 }

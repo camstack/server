@@ -11302,7 +11302,7 @@
       }
     },
     "import": {
-      "title": "Importa da SmartIR",
+      "title": "Importa codici",
       "hint": "Incolla un file dispositivo SmartIR o sceglilo. Viene letto qui e non salvato; quando salvi restano solo i comandi che produce.",
       "pasteLabel": "File SmartIR (JSON)",
       "chooseFile": "Scegli file",
@@ -11315,7 +11315,8 @@
         "not-json": "Non è un JSON valido.",
         "not-smartir": "Non è un file dispositivo SmartIR."
       },
-      "skipped_one": "{{count}} comando non utilizzabile:"
+      "skipped_one": "{{count}} comando non utilizzabile:",
+      "smartirTitle": "File SmartIR"
     },
     "palette": {
       "title": "Aggiungi componente",
@@ -11458,6 +11459,26 @@
       "channels": "Canali",
       "inputs": "Ingressi",
       "notRouted": "Questo telecomando non può selezionare una sorgente."
+    },
+    "flipper": {
+      "title": "Libreria Flipper-IRDB",
+      "hint": "Sfoglia la libreria IR della community e importa i pulsanti di un telecomando. I file sono letti da GitHub quando li apri; nulla viene salvato.",
+      "search": "Filtra per nome",
+      "root": "Libreria",
+      "loading": "Caricamento…",
+      "empty": "Nessun risultato.",
+      "import": "Leggi questo file",
+      "error": {
+        "rate-limited": "Limite di richieste GitHub raggiunto. Riprova più tardi.",
+        "rate-limitedAt": "Limite di richieste GitHub raggiunto. Riprova dopo le {{time}}.",
+        "not-found": "Non trovato nella libreria.",
+        "network": "GitHub non raggiungibile.",
+        "bad-response": "GitHub ha risposto in un formato non leggibile."
+      },
+      "refused": {
+        "no-transmitter": "Scegli prima un trasmettitore.",
+        "not-flipper": "Questo non è un file IR Flipper."
+      }
     }
   },
   "commands": {
