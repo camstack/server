@@ -57,11 +57,12 @@ interface Kit {
   /** Runs the alarm panel's declaration pass against a registry row named `rowName`. */
   readonly declarePass: (rowName: string | null) => Promise<void>
   readonly warn: ReturnType<typeof vi.fn>
+  readonly info: ReturnType<typeof vi.fn>
   /** Makes the next reads of the records fail (or work again). */
   readonly recordsDown: { value: boolean }
 }
 
-async function makeKit(): Promise<Kit> {
+async function makeKit(localNodeId = 'hub'): Promise<Kit> {
   const engine = new RecordsEngine(new Database(':memory:'), {
     databaseId: 'settings',
     logger: makeSilentLogger(),
@@ -87,7 +88,7 @@ async function makeKit(): Promise<Kit> {
   const logger = { ...makeSilentLogger(), warn, info }
   const ctx = {
     logger,
-    kernel: { devices, localNodeId: 'hub' },
+    kernel: { devices, localNodeId },
     get records() {
       return recordsDown.value ? undefined : records
     },
@@ -117,7 +118,7 @@ async function makeKit(): Promise<Kit> {
     } as unknown as AnalyticsApi
     await boot.attemptAlarmPanelDeclaration(api)
   }
-  return { records, instances, declarePass, warn, recordsDown }
+  return { records, instances, declarePass, warn, info, recordsDown }
 }
 
 describe('the Notification Center integration instance record', () => {
@@ -164,6 +165,28 @@ describe('the Notification Center integration instance record', () => {
     kit.recordsDown.value = false
     await kit.declarePass(null)
     expect(await kit.instances.getInstance({ id: INTEGRATION_ID })).not.toBeNull()
+  })
+
+  it('leaves the record unwritten and logs no warning on a node that is not the hub', async () => {
+    const agent = await makeKit('little-unraid')
+    agent.recordsDown.value = true
+    await agent.declarePass(null)
+    await agent.declarePass(null)
+    agent.recordsDown.value = false
+    await agent.declarePass(null)
+    expect(await agent.instances.getInstance({ id: INTEGRATION_ID })).toBeNull()
+    expect(agent.warn.mock.calls.filter(([m]) => String(m).includes('seed'))).toHaveLength(0)
+  })
+
+  it('logs the recovery exactly once when the failure clears', async () => {
+    kit.recordsDown.value = true
+    await kit.declarePass(null)
+    kit.recordsDown.value = false
+    await kit.declarePass(null)
+    await kit.declarePass(null)
+    const recovered = kit.info.mock.calls.filter(([m]) => String(m).includes('is seeded'))
+    expect(recovered).toHaveLength(1)
+    expect(recovered[0]?.[1]).toMatchObject({ tags: { integrationId: INTEGRATION_ID } })
   })
 
   it('carries no switch of its own', async () => {
