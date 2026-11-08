@@ -81,7 +81,7 @@ async function makeKit(localNodeId = 'hub'): Promise<Kit> {
     getAll: vi.fn(async () => []),
   }
   // Documented type boundary: the pass reads `logger`, `kernel` and `records` of the context and
-  // `integrations` / `deviceManager` of the api; nothing else of either is touched.
+  // `integrations` / `integrationInstances` / `deviceManager` of the api; nothing else of either is touched.
   const warn = vi.fn()
   const info = vi.fn()
   const recordsDown = { value: false }
@@ -111,8 +111,10 @@ async function makeKit(localNodeId = 'hub'): Promise<Kit> {
           query: async () =>
             rowName === null ? null : { id: INTEGRATION_ID, name: rowName, info: { fixed: true } },
         },
-        create: { mutate: async () => ({ id: INTEGRATION_ID }) },
         update: { mutate: async () => undefined },
+      },
+      integrationInstances: {
+        createInstance: { mutate: async () => ({ id: INTEGRATION_ID }) },
       },
       deviceManager: { listAll: { query: async () => [] } },
     } as unknown as AnalyticsApi
