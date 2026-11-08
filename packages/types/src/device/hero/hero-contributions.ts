@@ -787,7 +787,7 @@ export const HERO_CAP_CONTRIBUTIONS: readonly HeroContribution[] = [
   remoteContribution,
   consumablesContribution,
   dishwasherContribution,
-  ...ACCESS_FAMILY_CONTRIBUTIONS,
-  ...DEVICES_FAMILY_CONTRIBUTIONS,
-  ...GROUPS_FAMILY_CONTRIBUTIONS,
+  ...Object.values(ACCESS_FAMILY_CONTRIBUTIONS),
+  ...Object.values(DEVICES_FAMILY_CONTRIBUTIONS),
+  ...Object.values(GROUPS_FAMILY_CONTRIBUTIONS),
 ]

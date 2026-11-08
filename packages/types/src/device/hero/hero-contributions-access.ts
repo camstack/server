@@ -27,7 +27,7 @@ import {
   row,
   type HeroContribution,
 } from './hero-contribution-kit.js'
-import type { HeroControl } from './hero-model.js'
+import type { HeroAction, HeroControl } from './hero-model.js'
 import type { HeroState } from './hero-state.js'
 import { heroText, type HeroText } from './hero-text.js'
 
@@ -48,7 +48,7 @@ const LOCK_WORDS: Readonly<Record<LockState, LockWords>> = {
   'door-open': { state: 'standby', title: heroText('Door open', 'Porta aperta'), door: 'open' },
 }
 
-const lockAction = (primary: boolean) =>
+const lockAction = (primary: boolean): HeroAction =>
   action(
     'lock.lock',
     heroText('Lock', 'Chiudi'),
@@ -59,7 +59,7 @@ const lockAction = (primary: boolean) =>
     primary ? 'primary' : 'normal',
   )
 
-const unlockAction = (primary: boolean) =>
+const unlockAction = (primary: boolean): HeroAction =>
   action(
     'lock.unlock',
     heroText('Unlock', 'Apri'),
@@ -79,6 +79,9 @@ function lockControls(state: LockState | null, latch: boolean): HeroControl[] {
       'door-open',
       'lock-control',
       'open',
+      {},
+      'normal',
+      'unlock',
     ),
   )
   switch (state) {
@@ -189,19 +192,9 @@ function alarmControls(
     case 'arming':
     case 'disarming':
       return []
+    // Unread: whether the panel wants a code is unknown too, so nothing is offered.
     case null:
-      return [
-        ...arm(false),
-        asAction(
-          action(
-            'alarm.disarm',
-            heroText('Disarm', 'Disinserisci'),
-            'shield-off',
-            'alarm-panel',
-            'disarm',
-          ),
-        ),
-      ]
+      return []
     // armed, entry delay, triggered: the way out is disarming.
     default:
       return [disarm]
@@ -413,10 +406,10 @@ const doNotDisturbContribution = contribution(
   },
 )
 
-export const ACCESS_FAMILY_CONTRIBUTIONS: readonly HeroContribution[] = [
-  lockContribution,
-  alarmContribution,
-  automationContribution,
-  scriptContribution,
-  doNotDisturbContribution,
-]
+export const ACCESS_FAMILY_CONTRIBUTIONS: Readonly<Record<string, HeroContribution>> = {
+  'lock-control': lockContribution,
+  'alarm-panel': alarmContribution,
+  'automation-control': automationContribution,
+  'script-runner': scriptContribution,
+  'do-not-disturb': doNotDisturbContribution,
+}

@@ -582,11 +582,11 @@ const pumpCycleContribution = contribution('pump-cycle', PumpCycleStatusSchema, 
   }
 })
 
-export const DEVICES_FAMILY_CONTRIBUTIONS: readonly HeroContribution[] = [
-  fanContribution,
-  vacuumContribution,
-  mowerContribution,
-  feederContribution,
-  fountainContribution,
-  pumpCycleContribution,
-]
+export const DEVICES_FAMILY_CONTRIBUTIONS: Readonly<Record<string, HeroContribution>> = {
+  'fan-control': fanContribution,
+  'vacuum-control': vacuumContribution,
+  'lawn-mower-control': mowerContribution,
+  'pet-feeder': feederContribution,
+  'pet-fountain': fountainContribution,
+  'pump-cycle': pumpCycleContribution,
+}

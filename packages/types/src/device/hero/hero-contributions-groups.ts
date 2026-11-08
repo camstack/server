@@ -97,9 +97,9 @@ const eventEmitterContribution = contribution(
   },
 )
 
-export const GROUPS_FAMILY_CONTRIBUTIONS: readonly HeroContribution[] = [
-  groupActiveContribution,
-  groupStatusContribution,
-  groupCommandsContribution,
-  eventEmitterContribution,
-]
+export const GROUPS_FAMILY_CONTRIBUTIONS: Readonly<Record<string, HeroContribution>> = {
+  'group-active': groupActiveContribution,
+  'group-status': groupStatusContribution,
+  'group-commands': groupCommandsContribution,
+  'event-emitter': eventEmitterContribution,
+}

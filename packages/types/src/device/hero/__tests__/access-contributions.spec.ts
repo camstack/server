@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DeviceFeature, DeviceType } from '../../device-type.js'
-import { build, methods, NOW, primaryOf, rowOf } from './hero-test-kit.js'
+import { actionsOf, build, methods, NOW, primaryOf, rowOf } from './hero-test-kit.js'
 
 const lock = (state: string, extra: object = {}) => ({
   'lock-control': { state, lastChangedAt: NOW - 2 * 3_600_000, ...extra },
@@ -41,7 +41,12 @@ describe('lock-control', () => {
   })
   it('the latch release shows only when the lock declares it', () => {
     const f = [DeviceFeature.LockOpen]
-    expect(methods(build(DeviceType.Lock, caps, lock('locked'), f), 'lock')).toContain('open')
+    const withLatch = build(DeviceType.Lock, caps, lock('locked'), f)
+    expect(methods(withLatch, 'lock')).toContain('open')
+    // The latch release opens the door: it asks first, like Unlock.
+    expect(
+      actionsOf(rowOf(withLatch, 'lock').controls).find((a) => a.call.method === 'open')?.confirm,
+    ).toBe('unlock')
     expect(methods(build(DeviceType.Lock, caps, lock('locked')), 'lock')).not.toContain('open')
   })
   it('unread is unknown, never locked or unlocked, and nothing is guessed', () => {
@@ -95,6 +100,9 @@ describe('alarm-panel', () => {
   it('a panel that wants a code offers no button: a hero action carries no secret', () => {
     const m = build(DeviceType.AlarmPanel, caps, alarm('disarmed', { requiresCode: true }))
     expect(m.rows.find((r) => r.id === 'alarm')?.controls).toEqual([])
+  })
+  it('unread: whether a code is needed is unknown, so no arm or disarm button is offered', () => {
+    expect(methods(build(DeviceType.AlarmPanel, caps, {}), 'alarm')).toEqual([])
   })
   it('unread is unknown, never disarmed', () => {
     const m = build(DeviceType.AlarmPanel, caps, {})
