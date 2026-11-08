@@ -11641,6 +11641,14 @@
       "on": "Power switch on",
       "off": "Power switch off",
       "withName": "{{state}} · {{name}}"
+    },
+    "model": {
+      "confirmOff": {
+        "title": "Turn off while running?",
+        "message": "The device is running. Cutting its power now interrupts what it is doing.",
+        "confirm": "Turn off"
+      },
+      "callFailed": "The device did not accept the command"
     }
   },
   "cliLogin": {

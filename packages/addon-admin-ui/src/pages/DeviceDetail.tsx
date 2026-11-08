@@ -77,6 +77,7 @@ import { CameraFunctionSwitches } from '../components/device/CameraFunctionSwitc
 import { DeviceAdminLinkButton } from '../components/device/DeviceAdminLinkButton'
 import { ChildrenList } from '../components/device/ChildrenList'
 import { DeviceHero } from '../components/device/hero/HeroRegistry'
+import { ModelHero } from '../components/device/hero/model/ModelHero'
 import { heroDrawnWidgets } from '../components/device/hero/hero-drawn-widgets'
 import { DeviceHeroWidgets } from '../components/device/hero/DeviceHeroWidgets'
 import { heroWidgets } from '../components/device/hero/hero-widgets'
@@ -1336,13 +1337,20 @@ export function DeviceDetailPage() {
                         // A plain wrapper: the hero's `h-full` must not resolve
                         // against the slot, or it claims the widgets' height too.
                         <div>
-                          <DeviceHero
+                          <ModelHero
                             deviceId={deviceId}
                             deviceName={name}
-                            deviceType={deviceTypeStr ?? 'unknown'}
-                            provider={provider}
-                            isOnline={isOnline}
-                            features={capabilities}
+                            canActuate={isAdmin}
+                            fallback={
+                              <DeviceHero
+                                deviceId={deviceId}
+                                deviceName={name}
+                                deviceType={deviceTypeStr ?? 'unknown'}
+                                provider={provider}
+                                isOnline={isOnline}
+                                features={capabilities}
+                              />
+                            }
                           />
                           {/* The hero block's own sections (D915): consumables
                               sit right under the hero card, in the same slot, so

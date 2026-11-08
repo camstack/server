@@ -11663,6 +11663,14 @@
       "on": "Presa accesa",
       "off": "Presa spenta",
       "withName": "{{state}} · {{name}}"
+    },
+    "model": {
+      "confirmOff": {
+        "title": "Spegnere mentre è in funzione?",
+        "message": "Il dispositivo è in funzione. Togliere l'alimentazione ora interrompe ciò che sta facendo.",
+        "confirm": "Spegni"
+      },
+      "callFailed": "Il dispositivo non ha accettato il comando"
     }
   },
   "cliLogin": {
