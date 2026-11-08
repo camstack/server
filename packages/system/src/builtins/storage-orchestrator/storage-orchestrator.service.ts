@@ -386,6 +386,7 @@ export class StorageOrchestratorService {
         total: this.locations.size,
       },
     })
+    this.repairWriteSets()
   }
 
   /**
@@ -450,6 +451,44 @@ export class StorageOrchestratorService {
     this.logger.info('storage-orchestrator: hydrated locations from store', {
       meta: { loaded: this.locations.size },
     })
+    this.repairWriteSets()
+  }
+
+  /**
+   * A type with NO enabled location records nowhere, so this is a runtime invariant, not a
+   * one-time migration: a hand-edited store, a restore or an older build can break it at any
+   * boot. Idempotent: a type that can write is left alone. One location is made `active` (the
+   * `<type>:default` row, else the lexicographically first id), persisted, and said loudly.
+   * The mode is read and written only through `storage-location-mode` (D385); an operator's
+   * `readonly`/`drain`/`disabled` is touched only when the alternative is a type that cannot write.
+   */
+  private repairWriteSets(): void {
+    const repaired: string[] = []
+    for (const type of new Set([...this.locations.values()].map((l) => l.type))) {
+      const ofType = [...this.locations.values()].filter((l) => l.type === type)
+      if (ofType.some((l) => isLocationEnabled(l))) continue
+      const pick =
+        ofType.find((l) => l.id === `${type}:default`) ??
+        ofType.toSorted((a, b) => a.id.localeCompare(b.id))[0]
+      if (!pick) continue
+      const next: StorageLocation = { ...withLocationMode(pick, 'active'), updatedAt: Date.now() }
+      this.locations.set(next.id, next)
+      repaired.push(next.id)
+      const store = this.locationStore
+      if (!store) continue
+      void store.upsert(next).catch((err) => {
+        this.logger.error('storage-orchestrator: write-set repair persist failed', {
+          meta: { id: next.id, error: err instanceof Error ? err.message : String(err) },
+        })
+      })
+    }
+    for (const id of repaired) {
+      this.logger.warn(
+        'storage-orchestrator: a storage type had NO enabled location — re-enabled one so it can ' +
+          'write. Every other location of that type stays read-only until you enable it.',
+        { meta: { id } },
+      )
+    }
   }
 
   /**

@@ -171,6 +171,43 @@ function coordinatorOver(locations: StorageOrchestratorService): StorageMigratio
 // enables the location it repoints onto" is the same file's "setWriteTargets
 // enables the location it names and disables the one it retires".
 
+describe('write-set repair at hydrate (a runtime invariant, not a migration)', () => {
+  it('a type with no enabled location gets one re-enabled, loudly, and persisted', async () => {
+    const lines: LoggedLine[] = []
+    const service = new StorageOrchestratorService(makeLogger(lines), () => [])
+    const upserts: string[] = []
+    const rows = [
+      row({ id: 'recordings:old', type: 'recordings', enabled: false }),
+      row({ id: 'recordings:new', type: 'recordings', enabled: false }),
+    ]
+    await service.attachStore({
+      ...storeOf(rows),
+      upsert: async (loc) => {
+        upserts.push(loc.id)
+      },
+    })
+    const shout = lines.find(
+      (l) => l.level === 'warn' && String(l.meta['id'] ?? '') === 'recordings:new',
+    )
+    expect(shout?.message).toMatch(/no enabled location/i)
+    expect(service.writeTargets('recordings').map((l) => l.id)).toEqual(['recordings:new'])
+    expect(upserts).toContain('recordings:new')
+  })
+
+  it('is idempotent: a type that can write is left alone', async () => {
+    const lines: LoggedLine[] = []
+    const service = new StorageOrchestratorService(makeLogger(lines), () => [])
+    await service.attachStore(
+      storeOf([
+        row({ id: 'recordings:a', type: 'recordings', enabled: true }),
+        row({ id: 'recordings:b', type: 'recordings', enabled: false }),
+      ]),
+    )
+    expect(lines.filter((l) => l.level === 'warn')).toEqual([])
+    expect(service.writeTargets('recordings').map((l) => l.id)).toEqual(['recordings:a'])
+  })
+})
+
 describe('a hydrated store raises nothing for a flagless or enabled row', () => {
   it('does not shout when a type already has an enabled location, or for a legacy flagless row', async () => {
     const lines: LoggedLine[] = []
