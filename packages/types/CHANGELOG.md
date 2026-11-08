@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.524] - 2026-11-08
+
 ### Changed
 
 - The addon-level settings API is deleted: addons keep their values in cluster, node, device and instance scopes only (D986). getGlobalSettings, updateGlobalSettings, getIntegrationSettings, globalSettingsSchema and integrationSettingSections are removed.

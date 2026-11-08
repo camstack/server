@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.50] - 2026-11-08
+
 ### Changed
 
 - The addon authoring skill no longer names the deleted addon-level settings hooks.

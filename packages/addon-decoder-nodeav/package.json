@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-decoder-nodeav",
-  "version": "1.2.148",
+  "version": "1.2.149",
   "description": "Standalone in-process node-av decoder addon for CamStack",
   "keywords": [
     "camstack",
@@ -62,7 +62,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.791"
+      "server": ">=1.2.805"
     }
   },
   "files": [

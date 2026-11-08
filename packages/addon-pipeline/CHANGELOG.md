@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.648] - 2026-11-08
+
 ### Changed
 
 - Comments and the addon template no longer name the retired addon-level settings hooks; they point at the scoped settings API.
