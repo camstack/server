@@ -1,5 +1,3 @@
-import { clearDeviceSettings } from '../../kernel/device-settings-store.js'
-import { userError } from '@camstack/types'
 /**
  * Device meta-mutation + persistence actions for the device-manager addon —
  * the `IDeviceManagerProvider` write/load surface. Extracted verbatim from the
@@ -23,15 +21,6 @@ import { userError } from '@camstack/types'
  * link reverse-index rebuild gating. Pure refactor — no behavior change.
  */
 import { randomUUID } from 'node:crypto'
-import { migrateDevice as runMigrateDevice } from './migrate-device.js'
-import { reloadMigratedDevices } from './migrate-reload.js'
-import {
-  assertNoClaimLandedDuringMigration,
-  assertNoFieldClaims,
-  ClaimLandedDuringMigrationError,
-  FieldClaimsBlockMigrationError,
-  swapHardwareState,
-} from './migrate-hardware-state.js'
 import type { AddonContext } from '@camstack/types'
 import {
   type DeviceCapDisplayOverride,
@@ -39,28 +28,43 @@ import {
   DeviceType,
   deviceManagerCapability,
   EventCategory,
-  InferProvider,
   type IconKey,
+  InferProvider,
   locationIconKey,
   normalizeUnit,
   type RoleDisplayDefault,
   siteZoneKey,
+  userError,
 } from '@camstack/types'
 import { canonicalDeviceFingerprint } from '@camstack/types/node'
-import { freeAliasFor } from './device-alias-actions.js'
+import { clearDeviceSettings } from '../../kernel/device-settings-store.js'
+import {
+  freeAliasFor,
+  readReservedAliases,
+  reserveAliasOfRemovedDevice,
+} from './device-alias-actions.js'
 import { readBindingsStore, writeBindingsStore } from './device-bindings-store.js'
 import {
   loadDeviceConfigWithSecrets,
   persistDeviceConfigWithSecrets,
 } from './device-config-secrets.js'
 import type { DeviceMetaStore } from './device-meta-store.js'
-import { resolveInheritedLocation } from './location-alignment.js'
 import type { PersistedDeviceMeta, SiteZoneRecord } from './device-meta-types.js'
 import type { ProviderContext } from './device-provider-context.js'
 import { removalHookStep } from './device-removal-hooks.js'
-import type { RemovalStep } from './removal-cleanup.js'
-import type { MirrorWriteHold } from './mirror-row-writer.js'
 import { splitRuntimeBlob } from './field-ownership.js'
+import { resolveInheritedLocation } from './location-alignment.js'
+import { migrateDevice as runMigrateDevice } from './migrate-device.js'
+import {
+  assertNoClaimLandedDuringMigration,
+  assertNoFieldClaims,
+  ClaimLandedDuringMigrationError,
+  FieldClaimsBlockMigrationError,
+  swapHardwareState,
+} from './migrate-hardware-state.js'
+import { reloadMigratedDevices } from './migrate-reload.js'
+import type { MirrorWriteHold } from './mirror-row-writer.js'
+import type { RemovalStep } from './removal-cleanup.js'
 
 type IDeviceManagerProvider = InferProvider<typeof deviceManagerCapability>
 
@@ -542,7 +546,12 @@ export async function registerDevice(
     // one (operator-set, backfilled) is left exactly as it is.
     if (existingMeta?.alias === undefined) {
       await pctx.metaStore.rows.patch(id, {
-        alias: await freeAliasFor(pctx.metaStore.rows, resolvedName, id),
+        alias: await freeAliasFor(
+          pctx.metaStore.rows,
+          resolvedName,
+          id,
+          await readReservedAliases(pctx),
+        ),
       })
     }
     // Out-of-order adoption registers children before their parents: this
@@ -808,6 +817,11 @@ export async function removeDevice(
   // is one DELETE. Still under the write lock so it orders against a concurrent
   // register's read-modify-write of the same row.
   await pctx.metaStore.withMetaWriteLock(async () => {
+    // The alias outlives the device (D1021): reserved BEFORE the row goes, so a
+    // crash between the two leaves a reservation, never a freed name.
+    if (persistedMeta.alias !== undefined) {
+      await reserveAliasOfRemovedDevice(pctx, persistedMeta.alias, deviceId)
+    }
     await pctx.metaStore.rows.remove(deviceId)
     // Fence the identity BEFORE the lock is released: a `registerDevice` or
     // `allocateDeviceId` queued behind us must find the fence, not an empty

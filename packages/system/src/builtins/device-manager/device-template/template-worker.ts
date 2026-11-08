@@ -10,16 +10,20 @@
  */
 import { parentPort, workerData } from 'node:worker_threads'
 import { createTemplateEnvironment, type TemplateEnvironment } from './nunjucks-internals.js'
-import { analyzeTemplate } from './template-grammar.js'
 import {
+  addChecked,
+  concatChecked,
   defaultFilter,
   formatFilter,
   makeAgoFilter,
   makePrinter,
   makeSinceFilter,
+  type Printer,
+  rangeGlobal,
   roundFilter,
   unitFilter,
 } from './template-filters.js'
+import { analyzeTemplate } from './template-grammar.js'
 import {
   isRenderRequest,
   type RenderResponse,
@@ -68,13 +72,27 @@ const BUILTIN_FILTERS: readonly string[] = [
   'int',
   'float',
   'length',
+  'join',
+  'replace',
+  'first',
+  'last',
+  'sort',
+  'reverse',
+  'sum',
+  'string',
+  'list',
+  'truncate',
 ]
 
-function environmentFor(nowMs: number, unavailable: string): TemplateEnvironment {
+function environmentFor(nowMs: number, printer: Printer): TemplateEnvironment {
   return createTemplateEnvironment({
-    print: makePrinter(unavailable),
+    print: printer.print,
     keepBuiltinFilters: BUILTIN_FILTERS,
+    globals: { range: rangeGlobal },
+    add: addChecked,
+    concat: concatChecked,
     filters: {
+      d: defaultFilter,
       unit: unitFilter,
       round: roundFilter,
       default: defaultFilter,
@@ -105,7 +123,8 @@ function renderInWorker(
     }
   }
   try {
-    const text = environmentFor(request.nowMs, limits.unavailable).render(
+    const printer = makePrinter(limits.unavailable)
+    const text = environmentFor(request.nowMs, printer).render(
       request.source,
       freezeContext(request.context),
     )
@@ -117,7 +136,7 @@ function renderInWorker(
         message: `output is longer than ${limits.maxOutput} characters`,
       }
     }
-    return { id: request.id, ok: true, text }
+    return { id: request.id, ok: true, text, poisoned: printer.poisoned() }
   } catch (err) {
     return {
       id: request.id,

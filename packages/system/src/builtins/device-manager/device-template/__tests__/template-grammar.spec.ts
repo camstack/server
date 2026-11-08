@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
 import { DEVICE_TEMPLATE_FILTERS, DEVICE_TEMPLATE_MAX_LENGTH } from '@camstack/types'
-import { analyzeTemplate } from '../template-grammar.js'
+import { describe, expect, it } from 'vitest'
+import { nunjucksNodeFields } from '../nunjucks-internals.js'
+import { analyzeTemplate, NODE_POLICY } from '../template-grammar.js'
 
 const vet = (source: string) =>
   analyzeTemplate(source, DEVICE_TEMPLATE_FILTERS, DEVICE_TEMPLATE_MAX_LENGTH)
@@ -51,12 +52,82 @@ describe('device template grammar', () => {
     ['a.b.prototype', 'forbidden-member'],
     ['a[b]', 'forbidden-syntax'],
     ['a.b()', 'forbidden-syntax'],
-    ['range(5)', 'forbidden-syntax'],
+    ['foo(5)', 'forbidden-syntax'],
+    ['range.constructor(5)', 'forbidden-syntax'],
+    ['range(a.b, k=1)', 'syntax'],
+    ['range()', 'syntax'],
     ['a | safe', 'unknown-filter'],
     ['a | dump', 'unknown-filter'],
-    ['a | list', 'unknown-filter'],
+    ['a | escape', 'unknown-filter'],
+    ['a | groupby(1)', 'unknown-filter'],
+    ['a | selectattr(1)', 'unknown-filter'],
+    ['a | rejectattr(1)', 'unknown-filter'],
+    ["a | join(',', 'name')", 'syntax'],
+    ["a | join(',', attribute='name')", 'syntax'],
+    ["a | sort(false, false, 'name')", 'syntax'],
+    ["a | sum('x')", 'syntax'],
+    // `is` tests: the right side is vetted, not skipped.
+    [
+      "1 is divisibleby('a'.constructor.constructor('globalThis.PWNED=typeof process')())",
+      'forbidden-syntax',
+    ],
+    ['1 is divisibleby(range.constructor)', 'forbidden-member'],
+    ['1 is divisibleby(x.y())', 'forbidden-syntax'],
+    ['1 is callable', 'forbidden-syntax'],
+    ['1 is foo', 'forbidden-syntax'],
+    ['1 is foo(2)', 'forbidden-syntax'],
   ])('refuses the payload {{ %s }}', (expr, reason) => {
     expect(refused(`{{ ${expr} }}`)).toBe(reason)
+  })
+
+  it('refuses the {% if %} form of the `is` payload and the Set capture body', () => {
+    expect(
+      refused(
+        "{% if 1 is divisibleby('a'.constructor.constructor('globalThis.PWNED=typeof process')()) %}x{% endif %}",
+      ),
+    ).toBe('forbidden-syntax')
+    expect(refused('{% set x %}y{% endset %}')).toBe('forbidden-syntax')
+  })
+
+  it('accepts the allowed tests, the pure filters and the capped range', () => {
+    for (const ok of [
+      '{{ a.b is defined }}',
+      '{{ a.n is divisibleby(3) }}',
+      '{{ a.list | join(", ") | upper }}',
+      "{{ a.s | replace('a', 'b') | truncate(5) }}",
+      '{{ a.list | sort | reverse | first }}',
+      '{{ a.list | sum | string }}',
+      '{{ a.x | d("n/a") }}',
+      '{% for i in range(3) %}{{ i }}{% endfor %}',
+    ]) {
+      const out = vet(ok)
+      if (!out.ok) throw new Error(`${ok}: ${out.refusal.message}`)
+    }
+  })
+
+  it('has a field policy for every node kind that matches nunjucks, so a missed child cannot hide', () => {
+    const declared = nunjucksNodeFields()
+    for (const [kind, policy] of Object.entries(NODE_POLICY)) {
+      const mine = [...policy.walk, ...policy.data, ...policy.special].sort()
+      expect([kind, [...(declared.get(kind) ?? [])].sort()]).toEqual([kind, mine])
+    }
+    // Every kind the policy does not name is refused (default-deny): spot-check the dangerous ones.
+    for (const kind of [
+      'Capture',
+      'Macro',
+      'Caller',
+      'Import',
+      'FromImport',
+      'Include',
+      'Extends',
+      'Block',
+      'Super',
+      'CallExtension',
+      'Switch',
+    ]) {
+      expect(NODE_POLICY[kind]).toBeUndefined()
+      expect(declared.has(kind)).toBe(true)
+    }
   })
 
   it.each([

@@ -10,46 +10,132 @@
  * Type-only imports from `@camstack/types`: this module is loaded by the
  * render worker, which must not load the types barrel (D453).
  */
-import type { DeviceTemplateRefusal, DeviceTemplateRef } from '@camstack/types'
+import type { DeviceTemplateRef, DeviceTemplateRefusal } from '@camstack/types'
 import { parseTemplateSource, type TemplateNode } from './nunjucks-internals.js'
 
-/** Node kinds a template may contain. Anything else is `forbidden-syntax`. */
-const ALLOWED_NODES: ReadonlySet<string> = new Set([
-  'Root',
-  'NodeList',
-  'Output',
-  'TemplateData',
-  'Literal',
-  'Symbol',
-  'Group',
-  'Array',
-  'Dict',
-  'Pair',
-  'If',
-  'InlineIf',
-  'For',
-  'Set',
-  'LookupVal',
-  'Add',
-  'Concat',
-  'Sub',
-  'Mul',
-  'Div',
-  'FloorDiv',
-  'Mod',
-  'Pow',
-  'Neg',
-  'Pos',
-  'And',
-  'Or',
-  'Not',
-  'Compare',
-  'CompareOperand',
-  'In',
-  'Is',
-  'Filter',
-  'KeywordArgs',
+/**
+ * Per node kind: the declared fields the walker FOLLOWS (`walk`) and the ones
+ * that carry plain data (`data`) or are checked by the kind's own rule
+ * (`special`). A kind not listed here is refused; a node carrying a field this
+ * table does not name is refused (a child the walker never visits is a child
+ * that executes unvetted). `template-grammar.spec.ts` compares this table with
+ * nunjucks' own node classes, so a field added upstream fails the spec.
+ */
+export interface NodePolicy {
+  readonly walk: readonly string[]
+  readonly data: readonly string[]
+  readonly special: readonly string[]
+}
+
+const LIST: NodePolicy = { walk: ['children'], data: [], special: [] }
+const BINARY: NodePolicy = { walk: ['left', 'right'], data: [], special: [] }
+const UNARY: NodePolicy = { walk: ['target'], data: [], special: [] }
+const LEAF: NodePolicy = { walk: [], data: ['value'], special: [] }
+const CONDITIONAL: NodePolicy = { walk: ['cond', 'body', 'else_'], data: [], special: [] }
+
+export const NODE_POLICY: Readonly<Record<string, NodePolicy>> = {
+  Root: LIST,
+  NodeList: LIST,
+  Output: LIST,
+  Group: LIST,
+  Array: LIST,
+  Dict: LIST,
+  KeywordArgs: LIST,
+  TemplateData: LEAF,
+  Literal: LEAF,
+  Symbol: LEAF,
+  Pair: { walk: ['key', 'value'], data: [], special: [] },
+  If: CONDITIONAL,
+  InlineIf: CONDITIONAL,
+  For: { walk: ['arr', 'name', 'body', 'else_'], data: [], special: [] },
+  Set: { walk: ['targets', 'value'], data: [], special: [] },
+  LookupVal: { walk: [], data: [], special: ['target', 'val'] },
+  Add: BINARY,
+  Concat: BINARY,
+  Sub: BINARY,
+  Mul: BINARY,
+  Div: BINARY,
+  FloorDiv: BINARY,
+  Mod: BINARY,
+  Pow: BINARY,
+  And: BINARY,
+  Or: BINARY,
+  In: BINARY,
+  Neg: UNARY,
+  Pos: UNARY,
+  Not: UNARY,
+  Compare: { walk: ['expr', 'ops'], data: [], special: [] },
+  CompareOperand: { walk: ['expr'], data: ['type'], special: [] },
+  Is: { walk: ['left'], data: [], special: ['right'] },
+  Filter: { walk: [], data: [], special: ['name', 'args'] },
+  FunCall: { walk: [], data: [], special: ['name', 'args'] },
+}
+
+/** Tests an `is` may name. Pure predicates; none takes a callable. */
+const ALLOWED_TESTS: ReadonlySet<string> = new Set([
+  'defined',
+  'undefined',
+  'null',
+  'none',
+  'number',
+  'string',
+  'odd',
+  'even',
+  'truthy',
+  'falsy',
+  'divisibleby',
+  'equalto',
+  'eq',
+  'ne',
+  'lt',
+  'le',
+  'gt',
+  'ge',
+  'sameas',
+  'lower',
+  'upper',
+  'iterable',
+  'mapping',
 ])
+
+/** The one global a template may call. */
+const CALLABLE_GLOBAL = 'range'
+
+/**
+ * Most parameters a filter takes after its input. The attribute-taking forms
+ * (`join(',', attr)`, `sort(false, false, attr)`, `sum(attr)`) sit past these
+ * limits, and a keyword named `attribute` is refused wherever it appears.
+ */
+const FILTER_MAX_PARAMS: Readonly<Record<string, number>> = {
+  unit: 2,
+  round: 1,
+  default: 2,
+  d: 2,
+  since: 0,
+  ago: 0,
+  format: 1,
+  upper: 0,
+  lower: 0,
+  title: 0,
+  capitalize: 0,
+  trim: 0,
+  abs: 0,
+  int: 1,
+  float: 1,
+  length: 0,
+  join: 1,
+  replace: 3,
+  first: 0,
+  last: 0,
+  sort: 2,
+  reverse: 0,
+  sum: 0,
+  string: 0,
+  list: 0,
+  truncate: 3,
+}
+
+const FORBIDDEN_KEYWORDS: ReadonlySet<string> = new Set(['attribute', 'attr'])
 
 /** Member names that reach a constructor, a prototype or a stack frame. Refused wherever they appear. */
 const FORBIDDEN_MEMBERS: ReadonlySet<string> = new Set([
@@ -154,76 +240,188 @@ function recordRef(
   return ref
 }
 
-function walk(node: TemplateNode, state: WalkState): void {
-  if (!ALLOWED_NODES.has(node.typename)) {
-    refuse('forbidden-syntax', `${node.typename} is not allowed in a device template (${at(node)})`)
+function forbiddenName(name: string, node: TemplateNode): never {
+  return refuse('forbidden-member', `"${name}" is not allowed in a device template (${at(node)})`)
+}
+
+function checkPolicy(node: TemplateNode): NodePolicy {
+  const policy = NODE_POLICY[node.typename]
+  if (policy === undefined) {
+    return refuse(
+      'forbidden-syntax',
+      `${node.typename} is not allowed in a device template (${at(node)})`,
+    )
   }
+  if (node.unlisted.length > 0) {
+    return refuse(
+      'forbidden-syntax',
+      `${node.typename} carries ${node.unlisted.join(', ')}, which a device template may not use (${at(node)})`,
+    )
+  }
+  const known = new Set([...policy.walk, ...policy.data, ...policy.special])
+  for (const field of node.fieldNames) {
+    if (!known.has(field)) {
+      refuse(
+        'forbidden-syntax',
+        `${node.typename}.${field} is not allowed in a device template (${at(node)})`,
+      )
+    }
+  }
+  return policy
+}
+
+function walk(node: TemplateNode, state: WalkState): void {
+  const policy = checkPolicy(node)
   if (
     node.typename === 'Literal' &&
     typeof node.value === 'string' &&
     FORBIDDEN_MEMBERS.has(node.value)
   ) {
-    refuse('forbidden-member', `"${node.value}" is not allowed in a device template (${at(node)})`)
-  }
-  if (
-    node.typename === 'Symbol' &&
-    typeof node.value === 'string' &&
-    FORBIDDEN_MEMBERS.has(node.value)
-  ) {
-    refuse('forbidden-member', `"${node.value}" is not allowed in a device template (${at(node)})`)
-  }
-  if (node.typename === 'LookupVal') {
-    const chain = chainOf(node)
-    if (chain === undefined) {
-      refuse('forbidden-syntax', `a member lookup must start at a device alias (${at(node)})`)
-    }
-    for (const part of chain.path) {
-      if (typeof part === 'string' && FORBIDDEN_MEMBERS.has(part)) {
-        refuse('forbidden-member', `"${part}" is not allowed in a device template (${at(node)})`)
-      }
-    }
-    recordRef(chain, state)
-    return
+    forbiddenName(node.value, node)
   }
   if (node.typename === 'Symbol' && typeof node.value === 'string') {
+    if (FORBIDDEN_MEMBERS.has(node.value)) forbiddenName(node.value, node)
     if (!state.locals.has(node.value)) state.refs.push({ alias: node.value, path: [] })
     return
   }
-  if (node.typename === 'Filter') {
-    walkFilter(node, state)
+  switch (node.typename) {
+    case 'LookupVal':
+      walkLookup(node, state)
+      return
+    case 'Filter':
+      walkFilter(node, state)
+      return
+    case 'FunCall':
+      walkCall(node, state)
+      return
+    case 'Is':
+      walkIs(node, state)
+      return
+    case 'Pair':
+      walkPair(node, state)
+      return
+    default:
+  }
+  for (const field of policy.walk) for (const child of node.all(field)) walk(child, state)
+}
+
+function walkLookup(node: TemplateNode, state: WalkState): void {
+  const chain = chainOf(node)
+  if (chain === undefined) {
+    refuse('forbidden-syntax', `a member lookup must start at a device alias (${at(node)})`)
+  }
+  for (const part of chain.path) {
+    if (typeof part === 'string' && FORBIDDEN_MEMBERS.has(part)) forbiddenName(part, node)
+  }
+  if (FORBIDDEN_MEMBERS.has(chain.root)) forbiddenName(chain.root, node)
+  recordRef(chain, state)
+}
+
+/** A keyword-argument name is not a reference; a dict key written as a bare word is one. */
+function walkPair(node: TemplateNode, state: WalkState): void {
+  const key = node.field('key')
+  const value = node.field('value')
+  const isKeyword = key?.typename === 'Symbol' && keywordPairs.has(node)
+  if (isKeyword && typeof key?.value === 'string' && FORBIDDEN_KEYWORDS.has(key.value)) {
+    refuse(
+      'forbidden-syntax',
+      `the keyword "${key.value}" is not allowed in a device template (${at(node)})`,
+    )
+  }
+  if (key !== undefined && !isKeyword) walk(key, state)
+  if (value !== undefined) walk(value, state)
+}
+
+const keywordPairs = new WeakSet<TemplateNode>()
+
+function markKeywordPairs(args: TemplateNode | undefined): void {
+  if (args === undefined) return
+  for (const child of args.children) {
+    if (child.typename === 'KeywordArgs') for (const pair of child.children) keywordPairs.add(pair)
+  }
+}
+
+/** `x is test` / `x is test(arg)`: the test must be on the list, its arguments are vetted expressions. */
+function walkIs(node: TemplateNode, state: WalkState): void {
+  const left = node.field('left')
+  if (left !== undefined) walk(left, state)
+  const right = node.field('right')
+  if (right === undefined) return
+  if (right.typename === 'Literal' && (right.value === null || typeof right.value === 'boolean'))
+    return
+  if (right.typename === 'Symbol') {
+    testName(right, node)
     return
   }
-  if (node.typename === 'Is') {
-    // The right side names a test (`defined`), it is not a reference.
-    const left = node.field('left')
-    if (left !== undefined) walk(left, state)
+  if (right.typename === 'FunCall') {
+    const name = right.field('name')
+    if (name === undefined || name.typename !== 'Symbol')
+      refuse('forbidden-syntax', `a test must be named (${at(node)})`)
+    testName(name, node)
+    markKeywordPairs(right.field('args'))
+    for (const arg of right.field('args')?.children ?? []) walk(arg, state)
     return
   }
-  if (node.typename === 'Pair') {
-    // A keyword-argument name is not a reference either.
-    const [key, value] = node.children
-    if (key !== undefined && key.typename !== 'Symbol') walk(key, state)
-    if (value !== undefined) walk(value, state)
-    return
+  refuse('forbidden-syntax', `a test must be a name (${at(node)})`)
+}
+
+function testName(symbol: TemplateNode, node: TemplateNode): void {
+  const name = typeof symbol.value === 'string' ? symbol.value : ''
+  if (!ALLOWED_TESTS.has(name))
+    refuse(
+      'forbidden-syntax',
+      `the test "${name}" is not available in a device template (${at(node)})`,
+    )
+}
+
+/** The only call a template may make is the capped `range(n)`. */
+function walkCall(node: TemplateNode, state: WalkState): void {
+  const name = node.field('name')
+  const callee =
+    name !== undefined && name.typename === 'Symbol' && typeof name.value === 'string'
+      ? name.value
+      : undefined
+  if (callee !== CALLABLE_GLOBAL || state.locals.has(callee)) {
+    refuse(
+      'forbidden-syntax',
+      `calling ${callee ?? 'an expression'} is not allowed in a device template (${at(node)})`,
+    )
   }
-  for (const child of node.children) walk(child, state)
+  const args = node.field('args')?.children ?? []
+  if (args.length < 1 || args.length > 3 || args.some((arg) => arg.typename === 'KeywordArgs')) {
+    refuse('syntax', `range() takes one to three numbers (${at(node)})`)
+  }
+  for (const arg of args) walk(arg, state)
 }
 
 function walkFilter(node: TemplateNode, state: WalkState): void {
   const name = node.field('name')
   const filterName = name !== undefined && typeof name.value === 'string' ? name.value : undefined
-  if (filterName === undefined || !state.allowedFilters.has(filterName)) {
+  if (
+    filterName === undefined ||
+    !state.allowedFilters.has(filterName) ||
+    FILTER_MAX_PARAMS[filterName] === undefined
+  ) {
     refuse(
       'unknown-filter',
       `filter "${filterName ?? '?'}" is not available in a device template (${at(node)})`,
     )
   }
   const args = node.field('args')
+  markKeywordPairs(args)
   const params = args?.children ?? []
+  const positional = params.filter((param) => param.typename !== 'KeywordArgs')
+  const keywords = params
+    .filter((param) => param.typename === 'KeywordArgs')
+    .flatMap((k) => k.children)
+  const max = FILTER_MAX_PARAMS[filterName] ?? 0
+  if (positional.length - 1 + keywords.length > max) {
+    refuse('syntax', `filter "${filterName}" takes at most ${max} argument(s) (${at(node)})`)
+  }
   if (filterName === 'unit') {
-    if (params.length < 2)
+    if (positional.length < 2)
       refuse('syntax', `unit() needs the target unit, e.g. unit('°F') (${at(node)})`)
-    const input = params[0]
+    const input = positional[0]
     const chain = input !== undefined && input.typename === 'LookupVal' ? chainOf(input) : undefined
     const ref =
       chain !== undefined && !state.locals.has(chain.root)

@@ -42,15 +42,30 @@ automation block read the wrong device without a sound.
    ambiguous `alias.field` is refused by name, listing the capabilities. The
    alias is resolved to the device at render time, never stored in a template.
    `setAlias` answers a typed refusal (`empty`, `too-long`, `grammar`,
-   `reserved`, `taken` with the owner), not a thrown string.
+   `reserved`, `taken` with the owner), not a thrown string. **A removed
+   device's alias stays reserved** (addon-store key `_reservedAliases`, written
+   in the removal's lock before the row is deleted): a new device of the same
+   name slugs to `_2`, so a template that still names the old alias never
+   silently reads another device. An explicit `setAlias` may reclaim it.
 2. **Templates are nunjucks**, with a closed vocabulary: `unit` (converts from
    the field's D944 base unit with the one conversion table and appends the
-   symbol), `round`, `default`, `since`, `ago`, `format` and a few string
-   filters. A value that is unknown or unavailable prints `—` and goes into a
-   trace the caller can show.
+   symbol), `round`, `default`/`d`, `since`, `ago`, `format`, the string filters
+   (`upper lower title capitalize trim truncate replace join`), `abs int float
+   length first last sort reverse sum string list`, and the `range(n)` global
+   (capped at 1000). Refused by name: `groupby selectattr rejectattr safe
+   escape dump`, every `attribute`/`attr` argument, every other call. Each
+   filter has a maximum parameter count. A value that is unknown or unavailable
+   prints `—` and goes into a trace the caller can show; `+` and `~` with an
+   unavailable operand yield the same `—` (the compiler's add/concat emission is
+   patched to a checked form), never a quiet `0` or `undefined`. A template
+   naming an alias that resolves to no device renders `—` with a trace entry.
 3. **A template never runs outside the sandbox below.** Every one of these holds:
-   - the template is parsed and every node is checked against a whitelist: no
-     call of any kind, no `include`/`import`/`extends`/`block`/`macro`, no
+   - the template is parsed and every node is checked against a DEFAULT-DENY
+     policy table (a node kind not listed is refused, and so is a node carrying
+     a field or a child node the table does not declare; a spec compares the
+     table with nunjucks' own node classes so an upgrade cannot add a path
+     silently). The `is` test must be an allow-listed name. No call but
+     `range`, no `include`/`import`/`extends`/`block`/`macro`, no
      dynamic member lookup (`a[k]`), no member named `constructor`,
      `__proto__`, `prototype` (and the getter/stack names), no filter outside
      the allow-list;
@@ -63,7 +78,10 @@ automation block read the wrong device without a sound.
      overruns and respawns it lazily; output is capped at 4096 characters, the
      template at 4096, the worker heap is limited;
    - the worker re-runs the whitelist over what it receives, so a bypassed host
-     check still cannot reach the engine.
+     check still cannot reach the engine;
+   - the renderer queues at most 16 renders (`busy` beyond), keeps a per-template
+     circuit breaker (three timeouts in a minute answer `budget-exceeded`
+     without running), and kills a worker that does not report ready in time.
 4. **The renderer lives in device-manager**, which owns the device rows and the
    aliases; `@camstack/types` carries only the vocabulary (limits, refusal
    reasons, how a reference resolves) and no engine.
@@ -86,8 +104,6 @@ in the owner (`_deviceAliasBackfillVersion`), like the linked-devices backfill.
   first render after a spawn or a kill pays the start.
 - `nunjucks` is a dependency of `@camstack/server` (system) only, bundled into
   the render worker; no addon depends on it (D28).
-- A concatenation of an unavailable value prints the engine's own text for
-  it; use `default` where that matters.
 - The change adds a capability method, so `@camstack/system` must be
   force-published for it to reach a hub.
 

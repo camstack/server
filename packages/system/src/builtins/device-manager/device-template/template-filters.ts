@@ -23,6 +23,55 @@ function isMissing(value: unknown): boolean {
   return value === undefined || value === null || (typeof value === 'number' && Number.isNaN(value))
 }
 
+/** What `+` / `~` give when an operand is unavailable: the whole output expression then prints as unavailable. */
+class Unavailable {
+  constructor() {
+    Object.freeze(this)
+  }
+}
+export const UNAVAILABLE_VALUE: object = new Unavailable()
+
+function operandText(value: unknown): string | undefined {
+  if (value instanceof Quantity) return `${value.value} ${value.symbol}`
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+    return String(value)
+  return undefined
+}
+
+export function addChecked(left: unknown, right: unknown): unknown {
+  if (typeof left === 'number' && typeof right === 'number') return left + right
+  if (typeof left === 'string' || typeof right === 'string') return concatChecked(left, right)
+  return UNAVAILABLE_VALUE
+}
+
+export function concatChecked(left: unknown, right: unknown): unknown {
+  const a = operandText(left)
+  const b = operandText(right)
+  if (a === undefined || b === undefined || (typeof left === 'number' && Number.isNaN(left)))
+    return UNAVAILABLE_VALUE
+  if (typeof right === 'number' && Number.isNaN(right)) return UNAVAILABLE_VALUE
+  return a + b
+}
+
+/** `range(n)`, `range(a, b)`, `range(a, b, step)` — integers only, never more than `RANGE_MAX` items. */
+export const RANGE_MAX = 1000
+
+export function rangeGlobal(...args: readonly unknown[]): readonly number[] {
+  const numbers = args.map((arg) =>
+    typeof arg === 'number' && Number.isInteger(arg) ? arg : Number.NaN,
+  )
+  if (numbers.length < 1 || numbers.length > 3 || numbers.some(Number.isNaN))
+    throw new Error('range() takes integers')
+  const [first = 0, second, third] = numbers
+  const start = second === undefined ? 0 : first
+  const stop = second === undefined ? first : second
+  const step = third ?? 1
+  if (step === 0) throw new Error('range() step cannot be 0')
+  const count = Math.max(0, Math.ceil((stop - start) / step))
+  if (count > RANGE_MAX) throw new Error(`range() is capped at ${RANGE_MAX} items`)
+  return Array.from({ length: count }, (_, i) => start + i * step)
+}
+
 export function unitFilter(input: unknown, from: unknown, to: unknown): unknown {
   if (typeof input !== 'number' || typeof to !== 'string') return input
   const converted =
@@ -98,8 +147,20 @@ export function formatFilter(input: unknown, pattern: unknown): unknown {
 }
 
 /** What `{{ … }}` prints. Unknown values read as `unavailable`; objects never print their shape. */
-export function makePrinter(unavailable: string): (value: unknown) => string {
-  return (value) => {
+export interface Printer {
+  readonly print: (value: unknown) => string
+  /** How many outputs printed as unavailable because an operand of `+` / `~` was. */
+  readonly poisoned: () => number
+}
+
+export function makePrinter(unavailable: string): Printer {
+  let poisoned = 0
+  const print = (value: unknown): string => {
+    if (value === UNAVAILABLE_VALUE) {
+      poisoned += 1
+      return unavailable
+    }
+    if (value instanceof String) return String(value)
     if (isMissing(value)) return unavailable
     if (value instanceof Quantity) return `${value.value} ${value.symbol}`
     if (typeof value === 'string') return value
@@ -108,4 +169,5 @@ export function makePrinter(unavailable: string): (value: unknown) => string {
       return value.map((item) => (isMissing(item) ? unavailable : String(item))).join(', ')
     return unavailable
   }
+  return { print, poisoned: () => poisoned }
 }

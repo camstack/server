@@ -23,6 +23,7 @@ import { Button, Input, Select } from '@camstack/ui-library'
 import { Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
+import { deviceIdOfBinding, globalBindingFor } from './expression-binding-devices'
 import { FieldPicker, type FieldSelection, PickerLabel } from './FieldPicker'
 
 export interface ExpressionLeafRowProps {
@@ -115,7 +116,7 @@ function BindingRow({ alias, source, devices, onRename, onChange, onRemove }: Bi
   const selection: FieldSelection = isLiteral
     ? { deviceId: 0, cap: '', fieldPath: '' }
     : {
-        deviceId: deviceIdForStableId(devices, stableIdOf(source)),
+        deviceId: source.kind === 'global' ? deviceIdOfBinding(devices, source) : 0,
         cap: source.cap,
         fieldPath: source.fieldPath,
       }
@@ -161,14 +162,7 @@ function BindingRow({ alias, source, devices, onRename, onChange, onRemove }: Bi
         <FieldPicker
           value={selection}
           devices={devices}
-          onChange={(next) =>
-            onChange({
-              kind: 'global',
-              sourceStableId: stableIdForDeviceId(devices, next.deviceId),
-              cap: next.cap,
-              fieldPath: next.fieldPath,
-            })
-          }
+          onChange={(next) => onChange(globalBindingFor(devices, next))}
         />
       )}
 
@@ -192,18 +186,6 @@ function parseLiteral(raw: string): string | number | boolean {
   if (trimmed === 'false') return false
   if (trimmed !== '' && !Number.isNaN(Number(trimmed))) return Number(trimmed)
   return raw
-}
-
-function stableIdOf(source: ExpressionBindingSource): string {
-  return source.kind === 'global' ? source.sourceStableId : ''
-}
-
-function deviceIdForStableId(devices: readonly AutomationDevice[], stableId: string): number {
-  return devices.find((d) => d.stableId === stableId)?.id ?? 0
-}
-
-function stableIdForDeviceId(devices: readonly AutomationDevice[], deviceId: number): string {
-  return devices.find((d) => d.id === deviceId)?.stableId ?? ''
 }
 
 /** `a`, `b`, `c`… The engine's identifiers must match

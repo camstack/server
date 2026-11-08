@@ -4,8 +4,7 @@
  * a rename, and back-filled once onto rows that predate it.
  */
 import { describe, expect, it } from 'vitest'
-import { planAliasBackfill } from '../device-alias-actions.js'
-import { DEVICE_ALIAS_BACKFILL_MARKER_KEY } from '../device-alias-actions.js'
+import { DEVICE_ALIAS_BACKFILL_MARKER_KEY, planAliasBackfill } from '../device-alias-actions.js'
 import { registerCamera, setup } from './device-manager-harness.js'
 import { readDeviceRow } from './settings-store-api.js'
 
@@ -120,5 +119,25 @@ describe('the boot backfill', () => {
     expect((await readDeviceRow(second.settingsStore, old1))['alias']).toBe('old_one')
     expect((await readDeviceRow(second.settingsStore, old2))['alias']).toBe('old_one_2')
     expect((await second.settings.readAddonStore())[DEVICE_ALIAS_BACKFILL_MARKER_KEY]).toBe(1)
+  })
+})
+
+describe('a removed device keeps its alias reserved', () => {
+  it('a new device of the same name slugs to _2, and an explicit setAlias reclaims it', async () => {
+    const h = await setup()
+    const a = await registerCamera(h, 'provider-x', 'Garage')
+    expect((await readDeviceRow(h.settingsStore, a))['alias']).toBe('garage')
+    await h.provider.removeDevice({ deviceId: a })
+
+    const b = await registerCamera(h, 'provider-y', 'Garage')
+    expect((await readDeviceRow(h.settingsStore, b))['alias']).toBe('garage_2')
+
+    // the admin may take the reserved name on purpose, then it is theirs
+    expect(await h.provider.setAlias({ deviceId: b, alias: 'garage' })).toEqual({
+      ok: true,
+      alias: 'garage',
+    })
+    const c = await registerCamera(h, 'provider-z', 'Garage')
+    expect((await readDeviceRow(h.settingsStore, c))['alias']).toBe('garage_2')
   })
 })

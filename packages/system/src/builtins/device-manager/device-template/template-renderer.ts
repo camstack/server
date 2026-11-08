@@ -21,12 +21,12 @@ import {
   DEVICE_TEMPLATE_MAX_LENGTH,
   DEVICE_TEMPLATE_MAX_OUTPUT,
   DEVICE_TEMPLATE_UNAVAILABLE,
-  resolveTemplateRef,
-  type DeviceTemplateRefusal,
   type DeviceTemplateRef,
+  type DeviceTemplateRefusal,
   type DeviceTemplateRender,
   type DeviceTemplateTraceEntry,
   type DeviceTemplateView,
+  resolveTemplateRef,
 } from '@camstack/types'
 import { analyzeTemplate, type TemplateAnalysis, type UnitSite } from './template-grammar.js'
 import {
@@ -54,13 +54,37 @@ export interface DeviceTemplateRendererOptions {
   readonly workerExecArgv?: readonly string[]
   readonly budgetMs?: number
   readonly now?: () => number
+  /** How long a fresh worker may take to announce `ready` (default 10 s). */
+  readonly spawnTimeoutMs?: number
+  /** Renders allowed to wait behind the running one before `busy` (default 16). */
+  readonly maxQueue?: number
+  /** Consecutive timeouts of one template before it is refused without running (default 3). */
+  readonly breakerThreshold?: number
+  /** How long a tripped template stays refused (default 60 s). */
+  readonly breakerWindowMs?: number
 }
 
 /** Room for the hidden source-unit arguments the renderer adds to `unit()` calls. */
 const REWRITE_ALLOWANCE = 2048
+/**
+ * The cold start of the worker thread (loading nunjucks) is NOT part of a
+ * render's budget: the budget timer starts only once the worker has announced
+ * `ready`. A thread that never does is killed after this long, and the next
+ * render respawns it.
+ */
 const SPAWN_TIMEOUT_MS = 10_000
+const DEFAULT_MAX_QUEUE = 16
+const DEFAULT_BREAKER_THRESHOLD = 3
+const DEFAULT_BREAKER_WINDOW_MS = 60_000
+const BREAKER_MAX_TEMPLATES = 256
+
+interface BreakerState {
+  timeouts: number
+  openUntil: number
+}
 
 interface PendingRender {
+  readonly worker: Worker
   readonly resolve: (response: RenderResponse) => void
 }
 
@@ -168,12 +192,22 @@ export class DeviceTemplateRenderer {
   private nextId = 1
   private readonly pending = new Map<number, PendingRender>()
   private queue: Promise<unknown> = Promise.resolve()
+  private waiting = 0
+  private readonly spawnTimeoutMs: number
+  private readonly maxQueue: number
+  private readonly breakerThreshold: number
+  private readonly breakerWindowMs: number
+  private readonly breakers = new Map<string, BreakerState>()
 
   constructor(options: DeviceTemplateRendererOptions = {}) {
     this.workerPath = options.workerPath ?? defaultTemplateWorkerPath()
     this.execArgv = options.workerExecArgv
     this.budgetMs = options.budgetMs ?? DEVICE_TEMPLATE_BUDGET_MS
     this.now = options.now ?? Date.now
+    this.spawnTimeoutMs = options.spawnTimeoutMs ?? SPAWN_TIMEOUT_MS
+    this.maxQueue = options.maxQueue ?? DEFAULT_MAX_QUEUE
+    this.breakerThreshold = options.breakerThreshold ?? DEFAULT_BREAKER_THRESHOLD
+    this.breakerWindowMs = options.breakerWindowMs ?? DEFAULT_BREAKER_WINDOW_MS
   }
 
   /** Vet a template without rendering it: its references, or the refusal. */
@@ -187,12 +221,62 @@ export class DeviceTemplateRenderer {
     const prepared = this.prepare(source, analysis, resolver)
     if ('refusal' in prepared)
       return { ok: false, refusal: prepared.refusal, trace: prepared.trace }
-    const response = await this.enqueue(prepared)
-    if (response.ok) return { ok: true, text: response.text, trace: prepared.trace }
+    const open = this.breakers.get(source)
+    if (open !== undefined && open.openUntil > Date.now()) {
+      return {
+        ok: false,
+        refusal: {
+          reason: 'budget-exceeded',
+          message: `this template overran its ${this.budgetMs} ms budget ${open.timeouts} times in a row; it is not run again for ${Math.ceil((open.openUntil - Date.now()) / 1000)} s`,
+        },
+        trace: prepared.trace,
+      }
+    }
+    if (this.waiting >= this.maxQueue) {
+      return {
+        ok: false,
+        refusal: { reason: 'busy', message: `${this.maxQueue} renders are already waiting` },
+        trace: prepared.trace,
+      }
+    }
+    this.waiting += 1
+    let response: RenderResponse
+    try {
+      response = await this.enqueue(prepared)
+    } finally {
+      this.waiting -= 1
+    }
+    this.noteOutcome(source, response)
+    if (response.ok) {
+      const poisoned: DeviceTemplateTraceEntry[] = Array.from(
+        { length: response.poisoned },
+        () => ({
+          ref: '<expression>',
+          reason: 'unavailable' as const,
+        }),
+      )
+      return { ok: true, text: response.text, trace: [...prepared.trace, ...poisoned] }
+    }
     return {
       ok: false,
       refusal: { reason: response.reason, message: response.message },
       trace: prepared.trace,
+    }
+  }
+
+  private noteOutcome(source: string, response: RenderResponse): void {
+    if (response.ok || response.reason !== 'timeout') {
+      this.breakers.delete(source)
+      return
+    }
+    const state = this.breakers.get(source) ?? { timeouts: 0, openUntil: 0 }
+    state.timeouts += 1
+    if (state.timeouts >= this.breakerThreshold) state.openUntil = Date.now() + this.breakerWindowMs
+    this.breakers.delete(source)
+    this.breakers.set(source, state)
+    for (const key of this.breakers.keys()) {
+      if (this.breakers.size <= BREAKER_MAX_TEMPLATES) break
+      this.breakers.delete(key)
     }
   }
 
@@ -276,7 +360,7 @@ export class DeviceTemplateRenderer {
       }
     }
     const response = new Promise<RenderResponse>((resolve) => {
-      this.pending.set(id, { resolve })
+      this.pending.set(id, { worker, resolve })
     })
     const request: RenderRequest = {
       id,
@@ -329,10 +413,12 @@ export class DeviceTemplateRenderer {
     })
     this.worker = worker
     this.ready = new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error('template worker did not start')),
-        SPAWN_TIMEOUT_MS,
-      )
+      const timer = setTimeout(() => {
+        reject(new Error('template worker did not start'))
+        // Kill it and forget it: the next render spawns a fresh one instead of awaiting this forever.
+        if (this.worker === worker) this.dropWorker()
+        void worker.terminate()
+      }, this.spawnTimeoutMs)
       worker.on('message', (message: unknown) => {
         if (isReadyMessage(message)) {
           clearTimeout(timer)
@@ -344,12 +430,12 @@ export class DeviceTemplateRenderer {
       worker.on('error', (err: unknown) => {
         clearTimeout(timer)
         reject(err instanceof Error ? err : new Error(String(err)))
-        this.failPending(err instanceof Error ? err.message : String(err))
+        this.failPending(worker, err instanceof Error ? err.message : String(err))
         if (this.worker === worker) this.dropWorker()
       })
       worker.on('exit', () => {
         clearTimeout(timer)
-        this.failPending('template worker exited')
+        this.failPending(worker, 'template worker exited')
         if (this.worker === worker) this.dropWorker()
       })
     })
@@ -357,11 +443,13 @@ export class DeviceTemplateRenderer {
     return this.ready.then(() => worker)
   }
 
-  private failPending(message: string): void {
+  /** Fail only the renders that were running on THIS worker: a killed worker's late `exit` must not fail the next one. */
+  private failPending(worker: Worker, message: string): void {
     for (const [id, entry] of this.pending) {
+      if (entry.worker !== worker) continue
       entry.resolve({ id, ok: false, reason: 'render-failed', message })
+      this.pending.delete(id)
     }
-    this.pending.clear()
   }
 
   private dropWorker(): void {

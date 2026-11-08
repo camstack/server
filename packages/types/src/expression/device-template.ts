@@ -42,6 +42,17 @@ export const DEVICE_TEMPLATE_FILTERS = [
   'int',
   'float',
   'length',
+  'd',
+  'join',
+  'replace',
+  'first',
+  'last',
+  'sort',
+  'reverse',
+  'sum',
+  'string',
+  'list',
+  'truncate',
 ] as const
 export type DeviceTemplateFilter = (typeof DEVICE_TEMPLATE_FILTERS)[number]
 
@@ -58,6 +69,8 @@ export type DeviceTemplateRefusalReason =
   | 'forbidden-member'
   | 'unknown-filter'
   | 'ambiguous-field'
+  | 'busy'
+  | 'budget-exceeded'
   | 'timeout'
   | 'output-too-large'
   | 'render-failed'

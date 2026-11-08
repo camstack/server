@@ -22,6 +22,48 @@ type IDeviceManagerProvider = InferProvider<typeof deviceManagerCapability>
 
 export const DEVICE_ALIAS_BACKFILL_MARKER_KEY = '_deviceAliasBackfillVersion'
 export const DEVICE_ALIAS_BACKFILL_VERSION = 1
+/**
+ * Addon-store key holding `{ [alias]: deviceId }` of REMOVED devices. A removed
+ * device's alias stays reserved so a template that still names it never silently
+ * starts reading a different device; only an explicit `setAlias` reclaims it.
+ */
+export const RESERVED_ALIASES_KEY = '_reservedAliases'
+
+export type ReservedAliases = Readonly<Record<string, number>>
+
+function isReservedAliases(value: unknown): value is ReservedAliases {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
+  return Object.values(value).every((v) => typeof v === 'number')
+}
+
+export async function readReservedAliases(pctx: ProviderContext): Promise<ReservedAliases> {
+  const raw = (await pctx.settings.readAddonStore())[RESERVED_ALIASES_KEY]
+  return isReservedAliases(raw) ? raw : {}
+}
+
+/** Reserve (or, with `deviceId: null`, release) one alias. Merges per key. */
+async function writeReservation(
+  pctx: ProviderContext,
+  alias: string,
+  deviceId: number | null,
+): Promise<void> {
+  await pctx.bindingsDeps.withAddonStoreWriteLock(async () => {
+    const current = await readReservedAliases(pctx)
+    const next: Record<string, number> = { ...current }
+    if (deviceId === null) delete next[alias]
+    else next[alias] = deviceId
+    await pctx.settings.writeAddonStore({ [RESERVED_ALIASES_KEY]: next })
+  })
+}
+
+/** Keep the alias of a device that is being removed. Caller holds the meta write lock. */
+export async function reserveAliasOfRemovedDevice(
+  pctx: ProviderContext,
+  alias: string,
+  deviceId: number,
+): Promise<void> {
+  await writeReservation(pctx, alias, deviceId)
+}
 
 /**
  * The first free alias for `name`, against the persisted fleet. Caller holds the
@@ -32,10 +74,11 @@ export async function freeAliasFor(
   rows: DeviceRowStore,
   name: string,
   selfId: number,
+  reserved: ReservedAliases,
 ): Promise<string> {
   const refused = new Set<string>()
   for (;;) {
-    const candidate = generateDeviceAlias(name, (alias) => refused.has(alias))
+    const candidate = generateDeviceAlias(name, (alias) => refused.has(alias) || alias in reserved)
     const owner = await rows.findByAlias(candidate)
     if (owner === null || owner.meta.id === selfId) return candidate
     refused.add(candidate)
@@ -59,6 +102,9 @@ export async function setAlias(
     if (persisted.meta.alias !== alias) {
       await pctx.metaStore.rows.patch(deviceId, { alias })
     }
+    // An explicit choice reclaims a removed device's reservation (no live device
+    // holds it: `findByAlias` above found none).
+    if (alias in (await readReservedAliases(pctx))) await writeReservation(pctx, alias, null)
     return grammar
   })
   if (!outcome.ok) {
@@ -95,8 +141,9 @@ export interface AliasBackfillAssignment {
  */
 export function planAliasBackfill(
   rows: readonly AliasBackfillRow[],
+  reserved: ReservedAliases = {},
 ): readonly AliasBackfillAssignment[] {
-  const taken = new Set<string>()
+  const taken = new Set<string>(Object.keys(reserved))
   for (const row of rows) {
     if (row.alias !== undefined) taken.add(row.alias)
   }
@@ -128,6 +175,7 @@ export async function runDeviceAliasBackfillAtBoot(pctx: ProviderContext): Promi
     // A row `allocateDeviceId` minted that never registered still carries its
     // placeholder name (the stableId): it is stamped at its first registration, from
     // the real name, not here.
+    const reserved = await readReservedAliases(pctx)
     const plan = planAliasBackfill(
       all
         .filter((row) => row.registered)
@@ -136,6 +184,7 @@ export async function runDeviceAliasBackfillAtBoot(pctx: ProviderContext): Promi
           name: row.meta.name,
           ...(row.meta.alias !== undefined ? { alias: row.meta.alias } : {}),
         })),
+      reserved,
     )
     for (const assignment of plan) {
       await pctx.metaStore.rows.patch(assignment.id, { alias: assignment.alias })
@@ -147,7 +196,6 @@ export async function runDeviceAliasBackfillAtBoot(pctx: ProviderContext): Promi
     return plan.length
   })
   await pctx.settings.writeAddonStore({
-    ...addonStore,
     [DEVICE_ALIAS_BACKFILL_MARKER_KEY]: DEVICE_ALIAS_BACKFILL_VERSION,
   })
   logger.info('device aliases backfilled (D1021)', { meta: { devicesStamped: stamped } })

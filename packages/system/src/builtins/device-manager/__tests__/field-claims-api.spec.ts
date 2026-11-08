@@ -19,7 +19,7 @@
  */
 import { EventCategory } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
-import { FieldClaimsIndex } from '../field-claims-index.js'
+import { FIELD_CLAIMS_INDEX_KEY, FieldClaimsIndex } from '../field-claims-index.js'
 import { OWNED_FIELDS_KEY } from '../field-ownership.js'
 import { type Harness, registerCamera, setup } from './device-manager-harness.js'
 
@@ -442,7 +442,10 @@ describe('the index and the seed (S6, ruling M)', () => {
     const h = await setup(PROVIDERS)
     const id = await cameraWithBattery(h)
     await claim(h, id, ['level'], { level: 90 })
-    h.settings.writeAddonStore.mockRejectedValueOnce(new Error('sqlite busy'))
+    // only the claims-index write fails; the alias reservation (D1021) shares the store
+    h.settings.writeAddonStore.mockImplementation(async (patch: Record<string, unknown>) => {
+      if (FIELD_CLAIMS_INDEX_KEY in patch) throw new Error('sqlite busy')
+    })
 
     await expect(h.provider.removeDevice({ deviceId: id })).resolves.toBeUndefined()
 

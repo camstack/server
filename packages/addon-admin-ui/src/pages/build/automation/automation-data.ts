@@ -30,6 +30,8 @@ export interface AutomationDevice {
   readonly id: number
   readonly name: string
   readonly stableId: string
+  /** The addon that owns the device; with `stableId` it is the device's identity (a stable id is only unique per addon). */
+  readonly addonId?: string
   readonly type?: string
   readonly location?: string | null
   /** The device's parent (a board, a hub), by name, when it has one. */
@@ -62,6 +64,7 @@ export function useAutomationDevices(): readonly AutomationDevice[] {
           id: d.id,
           name: d.name,
           stableId: d.stableId,
+          addonId: d.addonId,
           type: String(d.type),
           location: d.location ?? null,
           parentName: d.parentDeviceId === null ? null : (names.get(d.parentDeviceId) ?? null),

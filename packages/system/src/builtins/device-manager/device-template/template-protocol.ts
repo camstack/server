@@ -21,7 +21,13 @@ export interface RenderRequest {
 }
 
 export type RenderResponse =
-  | { readonly id: number; readonly ok: true; readonly text: string }
+  | {
+      readonly id: number
+      readonly ok: true
+      readonly text: string
+      /** Outputs that printed as unavailable because an operand of `+` / `~` was. */
+      readonly poisoned: number
+    }
   | {
       readonly id: number
       readonly ok: false
@@ -36,7 +42,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export function isRenderResponse(value: unknown): value is RenderResponse {
   if (!isRecord(value)) return false
   if (typeof value['id'] !== 'number') return false
-  if (value['ok'] === true) return typeof value['text'] === 'string'
+  if (value['ok'] === true)
+    return typeof value['text'] === 'string' && typeof value['poisoned'] === 'number'
   return (
     value['ok'] === false &&
     typeof value['reason'] === 'string' &&

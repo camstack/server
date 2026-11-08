@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The addon settings panel reads and writes through the scoped settings only; the integration surface and the settings forwarding are gone.
+- Automation expression bindings to a device now carry the owning addon, so two addons sharing a stable id no longer resolve to the wrong device.
 
 ## [1.2.613] - 2026-11-08
 
