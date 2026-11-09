@@ -1282,6 +1282,22 @@ export {
   DeviceType,
   featuresOfBoundCaps,
 } from './device/device-type.js'
+export type {
+  CapBackedFeature,
+  FeatureAuthority,
+  FeatureDerivation,
+  FeatureMissing,
+  FeatureRequirement,
+  FeatureSupplier,
+  ReportedFeature,
+} from './device/device-feature-requirements.js'
+export {
+  DEVICE_FEATURE_REQUIREMENTS,
+  deriveFeatureProvenance,
+  implementedMethodsOf,
+  reconcileReportedFeatures,
+  settleDeviceFeatures,
+} from './device/device-feature-requirements.js'
 export {
   APPLIANCE_EXPORT,
   type ApplianceExportDecision,

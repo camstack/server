@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import {
+  method,
+  type CapabilityDefinition,
+  type InferProvider,
+  optionalMethod,
+} from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { REMOTE_SOURCE_KINDS } from '../remote/remote-sources.js'
 import { readingMeta } from '../units/quantity.js'
@@ -142,12 +147,12 @@ export const mediaPlayerCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.MediaPlayer],
   methods: {
-    turnOn: method(deviceOnly, z.void(), { kind: 'mutation', auth: 'protected' }),
-    turnOff: method(deviceOnly, z.void(), { kind: 'mutation', auth: 'protected' }),
-    volumeUp: method(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
-    volumeDown: method(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
-    channelUp: method(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
-    channelDown: method(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
+    turnOn: optionalMethod(deviceOnly, z.void(), { kind: 'mutation', auth: 'protected' }),
+    turnOff: optionalMethod(deviceOnly, z.void(), { kind: 'mutation', auth: 'protected' }),
+    volumeUp: optionalMethod(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
+    volumeDown: optionalMethod(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
+    channelUp: optionalMethod(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
+    channelDown: optionalMethod(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
     play: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
@@ -156,19 +161,19 @@ export const mediaPlayerCapability = {
       kind: 'mutation',
       auth: 'protected',
     }),
-    stop: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
+    stop: optionalMethod(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
     }),
-    next: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
+    next: optionalMethod(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
     }),
-    previous: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
+    previous: optionalMethod(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
     }),
-    seek: method(
+    seek: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         position: z.number().int().nonnegative(),
@@ -176,7 +181,7 @@ export const mediaPlayerCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setVolume: method(
+    setVolume: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         volumeLevel: z.number().min(0).max(100),
@@ -184,7 +189,7 @@ export const mediaPlayerCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setMute: method(
+    setMute: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         muted: z.boolean(),
@@ -192,7 +197,7 @@ export const mediaPlayerCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setShuffle: method(
+    setShuffle: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         shuffle: z.boolean(),
@@ -200,7 +205,7 @@ export const mediaPlayerCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setRepeat: method(
+    setRepeat: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         repeat: MediaPlayerRepeatSchema,
@@ -208,7 +213,7 @@ export const mediaPlayerCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    selectSource: method(
+    selectSource: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         source: z.string().min(1),
@@ -216,7 +221,7 @@ export const mediaPlayerCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    playMedia: method(
+    playMedia: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         /** Media identifier / URL. */

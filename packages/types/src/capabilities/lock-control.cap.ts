@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import {
+  method,
+  type CapabilityDefinition,
+  type InferProvider,
+  optionalMethod,
+} from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 
@@ -108,7 +113,7 @@ export const lockControlCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    open: method(
+    open: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
       }),

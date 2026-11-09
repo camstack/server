@@ -58,13 +58,19 @@ export function isCollectionArrayMethodName(capName: string, method: string): bo
  * Per capability, the methods declared `optionalMethod` — the ones whose
  * ABSENCE on a provider is a fact about that provider, not a bug.
  *
- * Coverage: 4 caps, 12 methods.
+ * Coverage: 10 caps, 43 methods.
  */
 export const PROVIDER_OPTIONAL_METHODS: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+  "climate-control": ["setFanMode", "setPreset", "setSwingHorizontal", "setSwingVertical", "setTargetHumidity", "setTargetRange"],
+  "cover": ["setPosition", "setTiltPosition", "stop"],
   "device-export": ["exposeEntity", "listExposedEntities", "listSupportedEntityKinds", "unexposeEntity"],
+  "fan-control": ["setDirection", "setOscillating", "setPercentage", "setPreset"],
   "integration-instances": ["testInstance"],
+  "lock-control": ["open"],
   "log-destination": ["cancelRead", "describeRead", "read"],
+  "media-player": ["channelDown", "channelUp", "next", "playMedia", "previous", "seek", "selectSource", "setMute", "setRepeat", "setShuffle", "setVolume", "stop", "turnOff", "turnOn", "volumeDown", "volumeUp"],
+  "valve": ["setPosition"],
   "videoclips": ["dialClipStream", "getPlaybackOptions", "offerClipBytes", "readClipBytes"],
 } as const)
 

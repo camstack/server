@@ -1112,6 +1112,8 @@ export interface EventCatalog {
       | 'wrapper-deactivated'
     addonId: string
     nodeId: string
+    /** On `native-registered`: the cap's methods the provider object implements. Absent = all. */
+    implementedMethods?: string[]
   }
   'device.meta-changed': {
     deviceId: number

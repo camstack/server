@@ -295,6 +295,8 @@ export const DeviceBindingsForDeviceSchema = z.object({
       providerAddonId: z.string(),
       providerNodeId: z.string(),
       nativeAddonId: z.string(),
+      /** The cap's methods the native provider implements; absent = all. */
+      implementedMethods: z.array(z.string()).optional(),
     }),
   ),
 })

@@ -26,6 +26,12 @@ export interface DeviceBindingEntry {
   providerNodeId: string
   /** Always the addon id of the underlying native provider for the device. */
   nativeAddonId: string
+  /**
+   * Which of the cap's methods the bound NATIVE provider implements. Absent
+   * means "all of them" (an older worker, or a wrapper): the kernel then
+   * derives device features from the cap being bound alone, never from nothing.
+   */
+  implementedMethods?: string[]
 }
 
 export interface DeviceBinding {

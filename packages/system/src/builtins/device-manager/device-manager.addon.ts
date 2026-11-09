@@ -66,6 +66,7 @@ import {
 } from './device-source-activation.js'
 import {
   type BindingsDeps,
+  type RemoteNativeCaps,
   getAllBindings,
   getBindings,
   getBindingsBatch,
@@ -179,8 +180,7 @@ export class DeviceManagerAddon extends BaseAddon {
    * `$node.connected` + `addon.restarted`) has been removed in Task 13 —
    * the D3 re-handshake after device restore is the reliable replacement.
    */
-  private remoteNativeCaps: Map<number, Map<string, { addonId: string; nodeId: string }>> =
-    new Map()
+  private remoteNativeCaps: RemoteNativeCaps = new Map()
 
   /** Background adoption jobs — lazily constructed (needs `ctx.logger`). */
   private adoptionJobEngine: AdoptionJobEngine | null = null

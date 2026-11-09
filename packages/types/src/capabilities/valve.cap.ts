@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import {
+  method,
+  type CapabilityDefinition,
+  type InferProvider,
+  optionalMethod,
+} from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 
@@ -55,7 +60,7 @@ export const valveCapability = {
       kind: 'mutation',
       auth: 'protected',
     }),
-    setPosition: method(
+    setPosition: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         position: z.number().min(0).max(100),

@@ -2567,8 +2567,15 @@ export function createCapRouter_climateControl(
           () => getProvider(ctx),
           createRemoteProxy,
         )
+        const fn = p.setFanMode
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "climate-control" provider does not implement "setFanMode"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setFanMode(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setPreset: protectedProcedure
       .input(climateControlCapability.methods.setPreset.input.loose())
@@ -2581,8 +2588,15 @@ export function createCapRouter_climateControl(
           () => getProvider(ctx),
           createRemoteProxy,
         )
+        const fn = p.setPreset
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "climate-control" provider does not implement "setPreset"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setPreset(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setTarget: protectedProcedure
       .input(climateControlCapability.methods.setTarget.input.loose())
@@ -2609,8 +2623,15 @@ export function createCapRouter_climateControl(
           () => getProvider(ctx),
           createRemoteProxy,
         )
+        const fn = p.setTargetRange
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "climate-control" provider does not implement "setTargetRange"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setTargetRange(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setTargetHumidity: protectedProcedure
       .input(climateControlCapability.methods.setTargetHumidity.input.loose())
@@ -2623,8 +2644,15 @@ export function createCapRouter_climateControl(
           () => getProvider(ctx),
           createRemoteProxy,
         )
+        const fn = p.setTargetHumidity
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "climate-control" provider does not implement "setTargetHumidity"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setTargetHumidity(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setSwingVertical: protectedProcedure
       .input(climateControlCapability.methods.setSwingVertical.input.loose())
@@ -2637,8 +2665,15 @@ export function createCapRouter_climateControl(
           () => getProvider(ctx),
           createRemoteProxy,
         )
+        const fn = p.setSwingVertical
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "climate-control" provider does not implement "setSwingVertical"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setSwingVertical(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setSwingHorizontal: protectedProcedure
       .input(climateControlCapability.methods.setSwingHorizontal.input.loose())
@@ -2651,8 +2686,16 @@ export function createCapRouter_climateControl(
           () => getProvider(ctx),
           createRemoteProxy,
         )
+        const fn = p.setSwingHorizontal
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message:
+              'Capability "climate-control" provider does not implement "setSwingHorizontal"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setSwingHorizontal(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
   })
 }
@@ -3172,8 +3215,15 @@ export function createCapRouter_cover(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('cover', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.stop
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "cover" provider does not implement "stop"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.stop(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setPosition: protectedProcedure
       .input(coverCapability.methods.setPosition.input.loose())
@@ -3181,8 +3231,15 @@ export function createCapRouter_cover(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('cover', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.setPosition
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "cover" provider does not implement "setPosition"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setPosition(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setTiltPosition: protectedProcedure
       .input(coverCapability.methods.setTiltPosition.input.loose())
@@ -3190,8 +3247,15 @@ export function createCapRouter_cover(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('cover', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.setTiltPosition
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "cover" provider does not implement "setTiltPosition"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setTiltPosition(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
   })
 }
@@ -7646,8 +7710,15 @@ export function createCapRouter_fanControl(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('fan-control', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.setPercentage
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "fan-control" provider does not implement "setPercentage"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setPercentage(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setPreset: protectedProcedure
       .input(fanControlCapability.methods.setPreset.input.loose())
@@ -7655,8 +7726,15 @@ export function createCapRouter_fanControl(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('fan-control', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.setPreset
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "fan-control" provider does not implement "setPreset"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setPreset(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setDirection: protectedProcedure
       .input(fanControlCapability.methods.setDirection.input.loose())
@@ -7664,8 +7742,15 @@ export function createCapRouter_fanControl(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('fan-control', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.setDirection
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "fan-control" provider does not implement "setDirection"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setDirection(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setOscillating: protectedProcedure
       .input(fanControlCapability.methods.setOscillating.input.loose())
@@ -7673,8 +7758,15 @@ export function createCapRouter_fanControl(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('fan-control', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.setOscillating
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "fan-control" provider does not implement "setOscillating"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setOscillating(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
   })
 }
@@ -9741,8 +9833,15 @@ export function createCapRouter_lockControl(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('lock-control', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.open
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "lock-control" provider does not implement "open"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.open(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
   })
 }
@@ -9937,8 +10036,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.turnOn
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "turnOn"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.turnOn(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     turnOff: protectedProcedure
       .input(mediaPlayerCapability.methods.turnOff.input.loose())
@@ -9946,8 +10052,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.turnOff
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "turnOff"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.turnOff(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     volumeUp: protectedProcedure
       .input(mediaPlayerCapability.methods.volumeUp.input.loose())
@@ -9955,8 +10068,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.volumeUp
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "volumeUp"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.volumeUp(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     volumeDown: protectedProcedure
       .input(mediaPlayerCapability.methods.volumeDown.input.loose())
@@ -9964,8 +10084,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.volumeDown
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "volumeDown"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.volumeDown(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     channelUp: protectedProcedure
       .input(mediaPlayerCapability.methods.channelUp.input.loose())
@@ -9973,8 +10100,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.channelUp
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "channelUp"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.channelUp(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     channelDown: protectedProcedure
       .input(mediaPlayerCapability.methods.channelDown.input.loose())
@@ -9982,8 +10116,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.channelDown
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "channelDown"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.channelDown(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     play: protectedProcedure
       .input(mediaPlayerCapability.methods.play.input.loose())
@@ -10009,8 +10150,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.stop
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "stop"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.stop(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     next: protectedProcedure
       .input(mediaPlayerCapability.methods.next.input.loose())
@@ -10018,8 +10166,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.next
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "next"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.next(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     previous: protectedProcedure
       .input(mediaPlayerCapability.methods.previous.input.loose())
@@ -10027,8 +10182,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.previous
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "previous"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.previous(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     seek: protectedProcedure
       .input(mediaPlayerCapability.methods.seek.input.loose())
@@ -10036,8 +10198,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.seek
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "seek"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.seek(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setVolume: protectedProcedure
       .input(mediaPlayerCapability.methods.setVolume.input.loose())
@@ -10045,8 +10214,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.setVolume
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "setVolume"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setVolume(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setMute: protectedProcedure
       .input(mediaPlayerCapability.methods.setMute.input.loose())
@@ -10054,8 +10230,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.setMute
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "setMute"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setMute(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setShuffle: protectedProcedure
       .input(mediaPlayerCapability.methods.setShuffle.input.loose())
@@ -10063,8 +10246,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.setShuffle
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "setShuffle"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setShuffle(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     setRepeat: protectedProcedure
       .input(mediaPlayerCapability.methods.setRepeat.input.loose())
@@ -10072,8 +10262,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.setRepeat
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "setRepeat"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setRepeat(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     selectSource: protectedProcedure
       .input(mediaPlayerCapability.methods.selectSource.input.loose())
@@ -10081,8 +10278,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.selectSource
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "selectSource"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.selectSource(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
     playMedia: protectedProcedure
       .input(mediaPlayerCapability.methods.playMedia.input.loose())
@@ -10090,8 +10294,15 @@ export function createCapRouter_mediaPlayer(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.playMedia
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "playMedia"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.playMedia(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
   })
 }
@@ -20754,8 +20965,15 @@ export function createCapRouter_valve(
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('valve', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.setPosition
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "valve" provider does not implement "setPosition"',
+          })
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setPosition(methodInput as any)
+        return fn.call(p, methodInput as any)
       }),
   })
 }

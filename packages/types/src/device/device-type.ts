@@ -305,6 +305,15 @@ export enum DeviceFeature {
   /** Robot mower exposes targeted mowing (all-area / zones / edges /
    *  spots) — gates the Mow action + map selectors. */
   MowerHasTargetedMowing = 'mower-has-targeted-mowing',
+
+  // ── Cap-presence features (#459) ─────────────────────────────────────
+  // The feature IS the bound cap: a surface that gates on `features` only
+  // (viewer, admin) needs no second query on the device's bindings.
+
+  /** The device has a drive/navigation surface (`navigation` cap): a robot camera. */
+  Navigation = 'navigation',
+  /** The device has a network-link reading (`network-link` cap). */
+  NetworkLink = 'network-link',
 }
 
 /**

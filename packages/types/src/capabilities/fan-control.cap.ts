@@ -1,5 +1,9 @@
 import { z } from 'zod'
-import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import {
+  type CapabilityDefinition,
+  type InferProvider,
+  optionalMethod,
+} from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 
@@ -56,7 +60,7 @@ export const fanControlCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Fan],
   methods: {
-    setPercentage: method(
+    setPercentage: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         speed: z.number().min(0).max(100),
@@ -64,7 +68,7 @@ export const fanControlCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setPreset: method(
+    setPreset: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         preset: z.string().min(1),
@@ -72,7 +76,7 @@ export const fanControlCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setDirection: method(
+    setDirection: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         direction: FanDirectionSchema,
@@ -80,7 +84,7 @@ export const fanControlCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setOscillating: method(
+    setOscillating: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         oscillating: z.boolean(),

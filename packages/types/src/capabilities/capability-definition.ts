@@ -1302,13 +1302,20 @@ type NativeMethodFn<M> =
 
 export type InferNativeProvider<T extends CapabilityDefinition> = {
   // Required: ordinary device-scoped methods every driver native serves.
-  readonly [K in keyof T['methods'] as T['methods'][K] extends { systemOnly: true }
+  readonly [K in keyof T['methods'] as T['methods'][K] extends
+    | { systemOnly: true }
+    | { providerOptional: true }
     ? never
     : K]: NativeMethodFn<T['methods'][K]>
 } & {
   // Optional: `systemOnly` methods are served by the system/wrapper provider,
-  // so a per-device native may omit them entirely.
-  readonly [K in keyof T['methods'] as T['methods'][K] extends { systemOnly: true }
+  // so a per-device native may omit them entirely. A `providerOptional` method
+  // is one a provider may legitimately not serve; which of them a native DOES
+  // serve is read off the registered object (`implementedOptionalMethods`) and
+  // decides which device features the kernel derives (#459).
+  readonly [K in keyof T['methods'] as T['methods'][K] extends
+    | { systemOnly: true }
+    | { providerOptional: true }
     ? K
     : never]?: NativeMethodFn<T['methods'][K]>
 } & (T extends { status: CapabilityStatusSchema }

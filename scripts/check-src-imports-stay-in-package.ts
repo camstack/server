@@ -64,6 +64,8 @@ function main(): void {
   for (const dir of workspacePackageDirs(ROOT)) {
     const packageDir = path.join(ROOT, dir)
     for (const f of walkSources(ROOT, [`${dir}/src`])) {
+      // A nested vitest config is test tooling: it may reach the root worker cap.
+      if (/vitest\.config\.[cm]?[jt]s$/.test(f.file)) continue
       files++
       escapes.push(...escapingImports(f.file, f.code, packageDir))
     }

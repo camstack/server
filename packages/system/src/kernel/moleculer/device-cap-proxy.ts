@@ -19,6 +19,7 @@
 // between the two sides readable in one place.
 
 import { randomUUID } from 'node:crypto'
+import { implementedMethodsOf } from '@camstack/types'
 import type {
   AddonApi,
   CapabilityDefinition,
@@ -776,7 +777,14 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
           timestamp: new Date(),
           source: { type: 'device', id },
           category: EventCategory.DeviceBindingsChanged,
-          data: { deviceId: id, capName: cap.name, reason: 'native-registered', addonId, nodeId },
+          data: {
+            deviceId: id,
+            capName: cap.name,
+            reason: 'native-registered',
+            addonId,
+            nodeId,
+            implementedMethods: implementedMethodsOf(Object.keys(cap.methods), finalProvider),
+          },
         })
         emitReadiness(eventBus, {
           capName: cap.name,

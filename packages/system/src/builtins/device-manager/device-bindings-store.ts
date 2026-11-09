@@ -17,7 +17,7 @@ import type {
   DeviceBindingEntry,
   ICapabilityRegistry,
 } from '@camstack/types'
-import { COMPOSER_ADDON_ID, EventCategory } from '@camstack/types'
+import { COMPOSER_ADDON_ID, EventCategory, implementedMethodsOf } from '@camstack/types'
 import type { DeviceBindingsStore } from './device-meta-types.js'
 import type { DeviceRow, DeviceRowStore } from './device-row-store.js'
 import type { StaleWrapperActivations } from './stale-wrapper-activations.js'
@@ -25,7 +25,13 @@ import { isDeclaredCollectionCap, isRetiredWrapperActivation } from './stale-wra
 import type { WriteLock } from './write-lock.js'
 
 /** Push-fed remote native-cap cache shape (numeric deviceId → capName → owner). */
-export type RemoteNativeCaps = Map<number, Map<string, { addonId: string; nodeId: string }>>
+export interface RemoteNativeCapInfo {
+  readonly addonId: string
+  readonly nodeId: string
+  /** The cap's methods the remote provider implements; absent = all (older worker). */
+  readonly implementedMethods?: string[]
+}
+export type RemoteNativeCaps = Map<number, Map<string, RemoteNativeCapInfo>>
 
 /**
  * Low-level dependencies the binding resolver needs. Assembled by the addon
@@ -89,7 +95,7 @@ export function wireRemoteNativeCapSync(
 ): void {
   const localNodeId = ctx.kernel.localNodeId ?? 'hub'
   ctx.eventBus.subscribe({ category: EventCategory.DeviceBindingsChanged }, (event) => {
-    const { deviceId, capName, reason, addonId, nodeId } = event.data
+    const { deviceId, capName, reason, addonId, nodeId, implementedMethods } = event.data
     if (nodeId === localNodeId) return
     if (reason === 'native-registered') {
       let perDevice = remoteNativeCaps.get(deviceId)
@@ -112,7 +118,11 @@ export function wireRemoteNativeCapSync(
         })
         return
       }
-      perDevice.set(capName, { addonId, nodeId })
+      perDevice.set(capName, {
+        addonId,
+        nodeId,
+        ...(implementedMethods !== undefined ? { implementedMethods } : {}),
+      })
     } else if (reason === 'native-unregistered') {
       const perDevice = remoteNativeCaps.get(deviceId)
       if (!perDevice) return
@@ -628,12 +638,14 @@ async function resolveBindingsForDevice(
     for (const capName of deps.capabilityRegistry.getNativeCapsForDevice(deviceId)) {
       if (seenCaps.has(capName)) continue
       const nativeAddonId = deps.capabilityRegistry.getNativeAddonId(capName, deviceId) ?? ''
+      const implementedMethods = localImplementedMethods(deps, capName, deviceId)
       entries.push({
         capName,
         kind: 'native',
         providerAddonId: nativeAddonId,
         providerNodeId: deps.ctx.kernel.localNodeId ?? 'hub',
         nativeAddonId,
+        ...(implementedMethods !== undefined ? { implementedMethods } : {}),
       })
       seenCaps.add(capName)
     }
@@ -664,6 +676,9 @@ async function resolveBindingsForDevice(
         providerAddonId: info.addonId,
         providerNodeId: toRoutableProviderNodeId(info.nodeId),
         nativeAddonId: info.addonId,
+        ...(info.implementedMethods !== undefined
+          ? { implementedMethods: info.implementedMethods }
+          : {}),
       })
       seenCaps.add(capName)
     }
@@ -844,4 +859,22 @@ export async function lookupPersistedStableId(
 ): Promise<string | undefined> {
   const row = await deps.rows.get(deviceId)
   return row?.meta.stableId
+}
+
+/**
+ * The methods a HUB-LOCAL native provider object implements, read off the
+ * object registered for `(cap, device)`; `undefined` when it cannot be said
+ * (no definition, no provider), which the derivation reads as "all".
+ */
+function localImplementedMethods(
+  deps: BindingsDeps,
+  capName: string,
+  deviceId: number,
+): string[] | undefined {
+  const registry = deps.capabilityRegistry
+  if (registry === undefined) return undefined
+  const definition = registry.getDefinition(capName)
+  const provider = registry.getNativeProvider<object>(capName, deviceId)
+  if (definition === undefined || provider === null) return undefined
+  return implementedMethodsOf(Object.keys(definition.methods), provider)
 }

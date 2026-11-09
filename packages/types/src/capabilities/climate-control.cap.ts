@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import {
+  method,
+  type CapabilityDefinition,
+  type InferProvider,
+  optionalMethod,
+} from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 
@@ -120,7 +125,7 @@ export const climateControlCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setFanMode: method(
+    setFanMode: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         fanMode: z.string().min(1),
@@ -128,7 +133,7 @@ export const climateControlCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setPreset: method(
+    setPreset: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         preset: z.string().min(1),
@@ -144,7 +149,7 @@ export const climateControlCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setTargetRange: method(
+    setTargetRange: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         targetLow: z.number(),
@@ -153,7 +158,7 @@ export const climateControlCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setTargetHumidity: method(
+    setTargetHumidity: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         targetHumidity: z.number().min(0).max(100),
@@ -161,7 +166,7 @@ export const climateControlCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setSwingVertical: method(
+    setSwingVertical: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         on: z.boolean(),
@@ -169,7 +174,7 @@ export const climateControlCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setSwingHorizontal: method(
+    setSwingHorizontal: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         on: z.boolean(),

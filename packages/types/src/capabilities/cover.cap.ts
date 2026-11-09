@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import {
+  method,
+  type CapabilityDefinition,
+  type InferProvider,
+  optionalMethod,
+} from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 
@@ -58,11 +63,11 @@ export const coverCapability = {
       kind: 'mutation',
       auth: 'protected',
     }),
-    stop: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
+    stop: optionalMethod(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
     }),
-    setPosition: method(
+    setPosition: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         position: z.number().min(0).max(100),
@@ -70,7 +75,7 @@ export const coverCapability = {
       z.void(),
       { kind: 'mutation', auth: 'protected' },
     ),
-    setTiltPosition: method(
+    setTiltPosition: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         tiltPosition: z.number().min(0).max(100),

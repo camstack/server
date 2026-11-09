@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - OSD texts migrated onto device templates now cut decimals like before (new trunc filter), skip one bad row instead of blocking every camera, and read the same whether or not the device is online
 
+- Device features are now derived from the capabilities a device is bound to; bindings report which optional methods a provider implements
+
 ## [1.2.538] - 2026-11-10
 
 ### Changed

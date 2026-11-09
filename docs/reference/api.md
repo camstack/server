@@ -2034,7 +2034,7 @@
 
 ### `climate-control` → `climateControl.*`
 
-- **Source:** `packages/types/src/capabilities/climate-control.cap.ts:108`
+- **Source:** `packages/types/src/capabilities/climate-control.cap.ts:113`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `thermostat, climate`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IClimateControlProvider`
@@ -2163,7 +2163,7 @@
 
 ### `cover` → `cover.*`
 
-- **Source:** `packages/types/src/capabilities/cover.cap.ts:46`
+- **Source:** `packages/types/src/capabilities/cover.cap.ts:51`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `cover`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ICoverProvider`
@@ -2394,7 +2394,7 @@
 
 ### `device-manager` → `deviceManager.*`
 
-- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:526`
+- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:528`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceManagerProvider`
@@ -2460,9 +2460,9 @@
 | getStreamProfileMap | `deviceManager.getStreamProfileMap` | query | protected | `{ deviceId: number }` | `Record<string, string \| null>` |
 | setStreamProfileMap | `deviceManager.setStreamProfileMap` | mutation | admin | `{ deviceId: number; profileMap: Record<string, string \| null> }` | `{ success: true }` |
 | probeStreams | `deviceManager.probeStreams` | mutation | admin | `{ deviceId: number }` | `({ streamId: string; width?: number; height?: number; codec?: string; fps?: number; bitrateKbps?: number })[]` |
-| getBindings | `deviceManager.getBindings` | query | protected | `{ deviceId: number }` | `{ deviceId: number; entries: ({ capName: string; kind: "native" \| "wrapped"; providerAddonId: string; providerNodeId: string; nativeAddonId: string })[] }` |
-| getBindingsBatch | `deviceManager.getBindingsBatch` | query | protected | `{ deviceIds: number[] }` | `({ deviceId: number; entries: ({ capName: string; kind: "native" \| "wrapped"; providerAddonId: string; providerNodeId: string; nativeAddonId: string })[] })[]` |
-| getAllBindings | `deviceManager.getAllBindings` | query | protected | `{}` | `({ deviceId: number; entries: ({ capName: string; kind: "native" \| "wrapped"; providerAddonId: string; providerNodeId: string; nativeAddonId: string })[] })[]` |
+| getBindings | `deviceManager.getBindings` | query | protected | `{ deviceId: number }` | `{ deviceId: number; entries: ({ capName: string; kind: "native" \| "wrapped"; providerAddonId: string; providerNodeId: string; nativeAddonId: string; implementedMethods?: string[] })[] }` |
+| getBindingsBatch | `deviceManager.getBindingsBatch` | query | protected | `{ deviceIds: number[] }` | `({ deviceId: number; entries: ({ capName: string; kind: "native" \| "wrapped"; providerAddonId: string; providerNodeId: string; nativeAddonId: string; implementedMethods?: string[] })[] })[]` |
+| getAllBindings | `deviceManager.getAllBindings` | query | protected | `{}` | `({ deviceId: number; entries: ({ capName: string; kind: "native" \| "wrapped"; providerAddonId: string; providerNodeId: string; nativeAddonId: string; implementedMethods?: string[] })[] })[]` |
 | listDeviceIdsByCaps | `deviceManager.listDeviceIdsByCaps` | query | protected | `{ capNames: string[] }` | `number[]` |
 | setWrapperActive | `deviceManager.setWrapperActive` | mutation | admin | `{ deviceId: number; capName: string; wrapperAddonId: string; active: boolean }` | `void` |
 | getWrapperActivation | `deviceManager.getWrapperActivation` | query | protected | `{ deviceId: number; capName: string }` | `WrapperActivationReadSchema` |
@@ -2760,7 +2760,7 @@
 
 ### `fan-control` → `fanControl.*`
 
-- **Source:** `packages/types/src/capabilities/fan-control.cap.ts:52`
+- **Source:** `packages/types/src/capabilities/fan-control.cap.ts:56`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `fan`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IFanControlProvider`
@@ -3203,7 +3203,7 @@
 
 ### `lock-control` → `lockControl.*`
 
-- **Source:** `packages/types/src/capabilities/lock-control.cap.ts:79`
+- **Source:** `packages/types/src/capabilities/lock-control.cap.ts:84`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `lock`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ILockControlProvider`
@@ -3255,7 +3255,7 @@
 
 ### `media-player` → `mediaPlayer.*`
 
-- **Source:** `packages/types/src/capabilities/media-player.cap.ts:138`
+- **Source:** `packages/types/src/capabilities/media-player.cap.ts:143`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `media-player`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IMediaPlayerProvider`
@@ -4971,7 +4971,7 @@
 
 ### `valve` → `valve.*`
 
-- **Source:** `packages/types/src/capabilities/valve.cap.ts:39`
+- **Source:** `packages/types/src/capabilities/valve.cap.ts:44`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `valve`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IValveProvider`
