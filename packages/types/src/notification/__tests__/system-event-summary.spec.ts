@@ -95,7 +95,7 @@ describe('systemEventDeliveryProblems — which rules may be a summary', () => {
       rule(['device-battery-low'], {
         ...summary,
         schedule: EIGHT_AM,
-        actions: { buttons: [{ id: 'b', label: 'x', sequenceId: 's' }] },
+        actions: { buttons: [{ id: 'b', label: 'x', actionId: 'internal:s' }] },
       }),
     )
     expect(problems.map((p) => p.code)).toEqual([

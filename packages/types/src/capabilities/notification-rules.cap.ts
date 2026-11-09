@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { ActionTargetSchema } from '../automation/action-target.js'
 import { NcTaxonomySchema } from '../catalogs/nc-taxonomy.js'
 import { type AlarmArmMode, AlarmArmModeSchema, AlarmStateSchema } from './alarm-panel.cap.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
@@ -757,115 +756,27 @@ export type NcZoneCondition = z.infer<typeof NcZoneConditionSchema>
  * The P1 condition set — a flat AND of groups; absent group = pass;
  * membership lists are OR within the list (spec §2.3).
  */
-// ── Rule actions — actuating devices when a rule fires ──────────────
+// ── Rule actions — a rule runs existing Actions, by id ─────────────
 
 /**
- * What a rule may actuate.
+ * What a rule or a button runs: an **Action** of the `actions` surface
+ * (`internal:<uuid>` or an addon's), by id, and nothing else (planning#473).
  *
- * **No hand-maintained allowlist** (operator decision, and the right one — a
- * written list of methods is a third parallel map to keep aligned, and this
- * repo has paid for those). The boundary instead comes from a property the
- * capabilities already carry: an action may target only a **device-scoped**
- * capability method.
- *
- * That is not decoration. A rule can be authored by a NON-ADMIN — personal
- * rules are a supported flow — and the executor runs with the addon's
- * privileges, so an unbounded action is an arbitrary RPC channel with a
- * privilege escalation attached. Restricting to device scope excludes the
- * system caps (`device-manager.removeDevice` and friends) by construction,
- * costs nothing to maintain, and cannot rot: a cap that stops being
- * device-scoped stops being actuatable in the same change.
- *
- * The executor enforces it; {@link NcRuleActionSchema} carries the intent.
+ * The notification centre has no step vocabulary of its own. The steps, the
+ * device-scope boundary, the stop-at-first-failure, the throttle
+ * (`minDelaySec`), the variables and the runs ledger all belong to the Action;
+ * an operator edits them in ONE place (the Actions page) and a rule points at
+ * the result. A rule can be authored by a non-admin (personal rules), which is
+ * safe for the same reason: it can only name an Action an admin already wrote.
  */
+export const NcActionIdSchema = z.string().min(1)
+
+/** Action ids one hook edge runs, in order. Capped so a slot never becomes a second editor. */
+export const NcHookActionIdsSchema = z.array(NcActionIdSchema).max(4)
+export type NcHookActionIds = z.infer<typeof NcHookActionIdsSchema>
 
 /**
- * One step of a sequence.
- *
- * `wait` is a first-class step rather than a property of the next action: it is
- * what makes a sequence a SEQUENCE and not a list — "unlock, wait 5s, open"
- * cannot be expressed otherwise.
- */
-export const NcRuleActionSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('wait'), seconds: z.number().min(0).max(300) }),
-  z
-    .object({
-      kind: z.literal('cap'),
-      /**
-       * WHO the step acts on (D983) — the only shape that is written. A sequence
-       * stored before D983 carries `deviceId`; the sequence store reads it as a
-       * `devices` target.
-       */
-      target: ActionTargetSchema.optional(),
-      /** The vocabulary action the step performs; required for a `domain` target. */
-      actionId: z.string().min(1).optional(),
-      /** @deprecated The pre-D983 single device. Read, never written. */
-      deviceId: z.number().int().optional(),
-      /** Capability name, e.g. `alarm-panel`. */
-      cap: z.string().min(1),
-      /** Method on it. The executor refuses a non-device-scoped cap. */
-      method: z.string().min(1),
-      /** Method arguments, minus `deviceId` (the executor injects it). */
-      args: z.record(z.string(), z.unknown()).optional(),
-    })
-    .refine((step) => step.target !== undefined || step.deviceId !== undefined, {
-      message: 'a cap step needs a target',
-      path: ['target'],
-    })
-    .refine((step) => step.target?.kind !== 'domain' || step.actionId !== undefined, {
-      message: 'a domain target needs the vocabulary action it applies to (actionId)',
-      path: ['actionId'],
-    }),
-])
-export type NcRuleAction = z.infer<typeof NcRuleActionSchema>
-
-/**
- * A named, ordered run of steps shared across rules, with its own throttle.
- *
- * Sequences live in the notification centre's sequence store — never inline on
- * a rule. A rule binds to one by id ({@link NcActionBindingSchema}), and a
- * button names one the same way. `minDelaySec` exists because a noisy rule
- * otherwise hammers a physical actuator — the rule's own cooldown governs
- * NOTIFICATIONS, which is a different budget from "how often may this gate
- * actually open". The throttle key is the sequence id, so two rules sharing
- * one sequence share its budget.
- */
-export const NcSharedSequenceSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1).max(120),
-  minDelaySec: z.number().int().min(0).max(86_400).optional(),
-  actions: z.array(NcRuleActionSchema).min(1),
-})
-export type NcSharedSequence = z.infer<typeof NcSharedSequenceSchema>
-
-/** Create / update body — the id is minted by the provider. */
-export const NcSharedSequenceInputSchema = z.object({
-  name: z.string().min(1).max(120),
-  minDelaySec: z.number().int().min(0).max(86_400).optional(),
-  actions: z.array(NcRuleActionSchema).min(1),
-})
-export type NcSharedSequenceInput = z.infer<typeof NcSharedSequenceInputSchema>
-
-/**
- * What one hook slot may run: a shared sequence, or a single step authored
- * inline ("Do").
- *
- * A button may ONLY name a sequence — a one-shot Do on a public callback would
- * be a parallel actuation vocabulary with no throttle and no shared authoring
- * surface.
- */
-export const NcActionBindingSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('sequence'), sequenceId: z.string().min(1) }),
-  z.object({ kind: z.literal('do'), action: NcRuleActionSchema }),
-])
-export type NcActionBinding = z.infer<typeof NcActionBindingSchema>
-
-/** Bindings on one hook edge. Cap keeps a slot from becoming a second sequence editor. */
-export const NcHookBindingsSchema = z.array(NcActionBindingSchema).max(4)
-export type NcHookBindings = z.infer<typeof NcHookBindingsSchema>
-
-/**
- * One button carried by the notification, running a shared sequence on tap.
+ * One button carried by the notification, running an Action on tap.
  *
  * **Read this before adding a button that does something physical.** The tap
  * arrives over a link that travelled through third-party infrastructure — ntfy,
@@ -880,9 +791,9 @@ export const NcRuleNotificationButtonSchema = z.object({
   /** Stable id — travels in the callback and identifies the button in logs. */
   id: z.string().min(1).max(64),
   label: z.string().min(1).max(40),
-  /** Id of a shared sequence. The dispatcher drops a button whose sequence
-   *  does not exist rather than minting a token for nothing. */
-  sequenceId: z.string().min(1),
+  /** The Action the tap runs. The dispatcher drops a button whose Action does
+   *  not exist rather than minting a token for nothing. */
+  actionId: NcActionIdSchema,
   icon: NotificationActionIconSchema.optional(),
   destructive: z.boolean().optional(),
 })
@@ -899,38 +810,20 @@ export type NcRuleNotificationButton = z.infer<typeof NcRuleNotificationButtonSc
  *    leave). A delivery with no clear edge never produces this hook.
  */
 export const NcRuleActionsSchema = z.object({
-  onActivation: NcHookBindingsSchema.optional(),
-  onDeactivation: NcHookBindingsSchema.optional(),
+  onActivation: NcHookActionIdsSchema.optional(),
+  onDeactivation: NcHookActionIdsSchema.optional(),
   /** Runs on a positive / raised match. */
-  onTrigger: NcHookBindingsSchema.optional(),
+  onTrigger: NcHookActionIdsSchema.optional(),
   /** Runs on a clear / leave match, when the subject carries one. */
-  onTriggerOff: NcHookBindingsSchema.optional(),
+  onTriggerOff: NcHookActionIdsSchema.optional(),
   /**
-   * Buttons the NOTIFICATION carries, each running one shared sequence when
-   * tapped. Deliberately a REFERENCE — a button that could define its own
-   * actions would be a parallel actuation vocabulary.
+   * Buttons the NOTIFICATION carries, each running one Action when tapped.
+   * Deliberately a REFERENCE — a button that could define its own steps would
+   * be a parallel actuation vocabulary.
    */
   buttons: z.array(NcRuleNotificationButtonSchema).max(8).optional(),
 })
 export type NcRuleActions = z.infer<typeof NcRuleActionsSchema>
-
-/**
- * @deprecated Legacy inline sequence shape (pre shared-sequence store). Kept
- * only so boot migration / tests can recognise and rewrite persisted rows.
- * New code must use {@link NcSharedSequence} + {@link NcActionBinding}.
- */
-export const NcLegacyRuleActionSequenceSchema = z.object({
-  name: z.string().min(1).max(120),
-  enabled: z.boolean(),
-  minDelaySec: z.number().int().min(0).max(86_400).optional(),
-  actions: z.array(NcRuleActionSchema).min(1),
-})
-export type NcLegacyRuleActionSequence = z.infer<typeof NcLegacyRuleActionSequenceSchema>
-
-/** @deprecated Alias kept for call sites mid-migration; prefer {@link NcSharedSequence}. */
-export const NcRuleActionSequenceSchema = NcLegacyRuleActionSequenceSchema
-/** @deprecated */
-export type NcRuleActionSequence = z.infer<typeof NcRuleActionSequenceSchema>
 
 /**
  * "This rule applies only while `deviceId` is in one of `states`."
@@ -3326,38 +3219,6 @@ export const notificationRulesCapability = {
     }),
     setRuleEnabled: method(
       z.object({ ruleId: z.string(), enabled: z.boolean() }),
-      z.object({ success: z.literal(true) }),
-      { kind: 'mutation', auth: 'admin' },
-    ),
-
-    /**
-     * Shared action sequences — named step lists rules and buttons bind to by
-     * id. One store for the whole notification centre so two rules sharing a
-     * gate share its throttle too.
-     */
-    listSequences: method(z.object({}), z.object({ sequences: z.array(NcSharedSequenceSchema) }), {
-      auth: 'admin',
-    }),
-    getSequence: method(
-      z.object({ sequenceId: z.string().min(1) }),
-      z.object({ sequence: NcSharedSequenceSchema.nullable() }),
-      { auth: 'admin' },
-    ),
-    createSequence: method(
-      z.object({ sequence: NcSharedSequenceInputSchema }),
-      z.object({ sequence: NcSharedSequenceSchema }),
-      { kind: 'mutation', auth: 'admin' },
-    ),
-    updateSequence: method(
-      z.object({
-        sequenceId: z.string().min(1),
-        sequence: NcSharedSequenceInputSchema,
-      }),
-      z.object({ sequence: NcSharedSequenceSchema }),
-      { kind: 'mutation', auth: 'admin' },
-    ),
-    deleteSequence: method(
-      z.object({ sequenceId: z.string().min(1) }),
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin' },
     ),

@@ -186,7 +186,6 @@ async function makeHarness(policy: Policy = {}): Promise<Harness> {
         location: 'Hall',
       },
     ],
-    isCapDeviceScoped: () => true,
     actuate: async ({ cap: capName, method }) => {
       if (capName !== 'alarm-panel') return
       if (method === 'trigger') await cap().trigger({ deviceId: PANEL_ID })

@@ -11,7 +11,6 @@ import { z } from 'zod'
 import {
   defineRecordKinds,
   NcRuleSchema,
-  NcSharedSequenceSchema,
   TimelapseRuleSchema,
 } from '@camstack/types'
 import { NcCalendarEventsRuleSchema } from './calendar-events/calendar-events-rule.js'
@@ -23,7 +22,7 @@ import { NcSummaryRuleSchema } from './summary/summary-rule.js'
 
 /** Legacy collection for the text-catalog document. */
 export const NC_TEXTS_COLLECTION = 'notification-center:texts'
-/** Legacy collection for shared action sequences. */
+/** Legacy collection of shared action sequences — read only by the Actions migration. */
 export const NC_SEQUENCES_COLLECTION = 'notification-center:sequences'
 /** Legacy collection for per-rule AI sections. */
 export const NC_RULE_AI_COLLECTION = 'notification-center:rule-ai'
@@ -49,10 +48,16 @@ const TextsBodySchema = z.object({
 export type TextsBody = z.infer<typeof TextsBodySchema>
 
 /**
- * A shared action sequence (without id, which is the record key).
- * Extends the wire shape with `createdAt` / `updatedAt` (stored by the legacy table).
+ * A shared action sequence as the centre stored it before rules ran existing
+ * Actions (planning#473): MIGRATION INPUT only — the boot migration reads these
+ * rows, makes an Action of each and deletes them. Nothing else reads or writes
+ * the kind. The steps stay `unknown` here; the migration parses each with the
+ * Actions step schema and names a row it cannot parse.
  */
-const SequenceBodySchema = NcSharedSequenceSchema.omit({ id: true }).extend({
+const SequenceBodySchema = z.object({
+  name: z.string(),
+  minDelaySec: z.number().optional(),
+  actions: z.array(z.unknown()),
   createdAt: z.number(),
   updatedAt: z.number(),
 })
@@ -102,18 +107,20 @@ export const ncRecordKinds = defineRecordKinds({
   },
 
   /**
-   * Shared action sequences — named, ordered runs of steps with their own throttle.
-   * One row per sequence, id = sequence UUID.
+   * Retired shared action sequences (planning#473) — the rows the Actions
+   * migration reads, turns into Actions and deletes. One row per sequence,
+   * id = sequence UUID. Declared so the migration can reach them through the
+   * records engine; nothing authors a row any more.
    */
   sequences: {
     schema: SequenceBodySchema,
     class: 'config',
     writeTrigger:
-      'an admin creates/edits/deletes a shared sequence via notificationRules.createSequence / updateSequence / deleteSequence, or the one-shot boot migration that materialises legacy inline sequences',
+      'none since planning#473 — the boot migration to Actions deletes each row once its Action and every rule and button that named it are verified',
     device: 'none',
     at: 'none',
     retention: {
-      none: 'a row goes only when an admin deletes it; bounded by the sequence set a human is willing to author',
+      none: 'a row goes when the migration to Actions has moved it; bounded by the sequence set a human authored before it',
     },
   },
 

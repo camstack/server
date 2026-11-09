@@ -24,7 +24,6 @@ import type {
   Unsubscribe,
 } from '@camstack/types'
 import {
-  ACTION_TARGET_INVALIDATION_EVENTS,
   EVENT_KIND_BY_CAP,
   EventCategory,
 } from '@camstack/types'
@@ -179,8 +178,6 @@ export interface WireSubscriptionsDeps {
   readonly onClusterTopology: (nodes: readonly NodeLivenessNode[]) => void
   /** Notification Center infrastructure/liveness/update intake. */
   readonly onSystemEvent: (event: SystemEvent) => void
-  /** The device registry changed (added, removed, moved, re-bound): a cached action target is stale. */
-  readonly onDeviceRegistryChange: () => void
 }
 
 /**
@@ -298,11 +295,6 @@ export function wireSubscriptions(deps: WireSubscriptionsDeps): Unsubscribe[] {
     // why this may never be collapsed back into a single array filter.
     for (const category of NC_SYSTEM_EVENT_CATEGORIES) {
       unsubs.push(deps.eventBus.subscribe({ category }, (ev) => deps.onSystemEvent(ev)))
-    }
-    // D983: a rule action aimed at a domain reads the registry once and keeps it
-    // until one of these says it moved.
-    for (const category of ACTION_TARGET_INVALIDATION_EVENTS) {
-      unsubs.push(deps.eventBus.subscribe({ category }, () => deps.onDeviceRegistryChange()))
     }
   } // end if (isPostProcessingNode)
 

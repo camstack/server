@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { NcRuleAction, NcRuleActions } from '../../capabilities/notification-rules.cap.js'
+import type { ActionStep } from '../../automation/recipe.js'
+import type { NcRuleActions } from '../../capabilities/notification-rules.cap.js'
 import {
   NC_ALARM_OPENING_EVENT_KINDS,
   ruleAutoTriggersAlarm,
@@ -7,40 +8,31 @@ import {
   sensorTransitionNeverFires,
 } from '../alarm-membership.js'
 
-const TRIGGER_STEP: NcRuleAction = {
+const TRIGGER_STEP: ActionStep = {
   kind: 'cap',
   cap: 'alarm-panel',
   method: 'trigger',
-  deviceId: 900,
+  target: { kind: 'devices', ids: [900] },
 }
 const ARMED = { deviceState: { deviceId: 900, states: ['Armed_Away'] } }
 
-function actionsOnTriggerDo(action: NcRuleAction): NcRuleActions {
-  return { onTrigger: [{ kind: 'do', action }] }
-}
+const ACTIONS_OF = (id: string): readonly ActionStep[] | undefined =>
+  id === 'internal:a1' ? [TRIGGER_STEP] : undefined
+
+const onTriggerAction: NcRuleActions = { onTrigger: ['internal:a1'] }
 
 describe('ruleBelongsToAlarm (D630, hoisted for the editors)', () => {
-  it('an armed-state gate or an on-match panel trigger makes a rule the alarm', () => {
+  it('an armed-state gate or an on-match Action that triggers the panel makes a rule the alarm', () => {
     expect(ruleBelongsToAlarm({ conditions: ARMED })).toBe(true)
-    expect(ruleBelongsToAlarm({ conditions: {}, actions: actionsOnTriggerDo(TRIGGER_STEP) })).toBe(
-      true,
-    )
     expect(
-      ruleBelongsToAlarm({
-        conditions: {},
-        actions: {
-          onTrigger: [{ kind: 'sequence', sequenceId: 's1' }],
-          buttons: [{ id: 'b', label: 'Arm', sequenceId: 's1' }],
-        },
-        sequenceActionsOf: (id) => (id === 's1' ? [TRIGGER_STEP] : undefined),
-      }),
+      ruleBelongsToAlarm({ conditions: {}, actions: onTriggerAction, actionStepsOf: ACTIONS_OF }),
     ).toBe(true)
-    // Button-only (no onTrigger binding) does not make the rule the alarm.
+    // Button-only (no onTrigger Action) does not make the rule the alarm.
     expect(
       ruleBelongsToAlarm({
         conditions: {},
-        actions: { buttons: [{ id: 'b', label: 'Arm', sequenceId: 's1' }] },
-        sequenceActionsOf: (id) => (id === 's1' ? [TRIGGER_STEP] : undefined),
+        actions: { buttons: [{ id: 'b', label: 'Arm', actionId: 'internal:a1' }] },
+        actionStepsOf: ACTIONS_OF,
       }),
     ).toBe(false)
     expect(
@@ -48,13 +40,8 @@ describe('ruleBelongsToAlarm (D630, hoisted for the editors)', () => {
     ).toBe(false)
   })
 
-  it('a sequence binding without a resolver cannot prove membership', () => {
-    expect(
-      ruleBelongsToAlarm({
-        conditions: {},
-        actions: { onTrigger: [{ kind: 'sequence', sequenceId: 's1' }] },
-      }),
-    ).toBe(false)
+  it('an Action id without a resolver cannot prove membership', () => {
+    expect(ruleBelongsToAlarm({ conditions: {}, actions: onTriggerAction })).toBe(false)
   })
 })
 
@@ -62,7 +49,7 @@ describe('ruleAutoTriggersAlarm', () => {
   it('is true only for an armed_* gate — not for an explicit trigger binding alone', () => {
     expect(ruleAutoTriggersAlarm({ conditions: ARMED })).toBe(true)
     expect(
-      ruleAutoTriggersAlarm({ conditions: {}, actions: actionsOnTriggerDo(TRIGGER_STEP) }),
+      ruleAutoTriggersAlarm({ conditions: {}, actions: onTriggerAction, actionStepsOf: ACTIONS_OF }),
     ).toBe(false)
   })
 })

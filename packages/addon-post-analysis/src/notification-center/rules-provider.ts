@@ -28,7 +28,6 @@ import {
   guardRuleSystemEventDelivery,
 } from './rule-summary-guard.js'
 import { guardPatchSensorTransition, guardRuleSensorTransition } from './sensor-transition-guard.js'
-import { NcSequenceStore } from './sequence-store.js'
 import { NcSnoozeStore } from './snooze-store.js'
 import { NcStateSummaryService } from './state-summary/state-summary-service.js'
 import { servedTemplateDefaults } from './template-defaults.js'
@@ -170,6 +169,8 @@ export interface NcSnoozeCaller {
 
 export interface RulesProviderHost {
   readonly actionRunner: NcRuleActionRunner | null
+  /** Re-read the Actions list: a rule that names an Action just made must see its steps. */
+  refreshActions(): Promise<void>
   alarmConfig(): Promise<NcAlarmConfig>
   alarmSensors(input: NcAlarmSensorsInput): Promise<NcAlarmSensors>
   cancelSnooze(snoozeId: string, caller: NcSnoozeCaller): Promise<void>
@@ -186,7 +187,6 @@ export interface RulesProviderHost {
   readonly now: () => number
   readonly outbox: NcOutbox
   readonly rules: NcRuleStore
-  readonly sequences: NcSequenceStore
   setAlarmConfig(patch: NcAlarmSettingsPatch): Promise<NcAlarmConfig>
   readonly snoozes: NcSnoozeStore
   readonly stateSummary: NcStateSummaryService
@@ -230,6 +230,9 @@ export function buildProvider(host: RulesProviderHost): INotificationRulesProvid
       // D647: a scheduled summary belongs to device-events / system rules only.
       guardRuleSystemEventDelivery(rule, { logger: host.logger, by: caller.userId })
       await host.validateTargetRefs(rule.targets.map((t) => t.targetId))
+      // The alarm-membership and snooze-exemption answers read the Actions mirror (D49: a
+      // rule saved against an Action the mirror has not seen must not be judged by silence).
+      if (rule.actions !== undefined) await host.refreshActions()
       const created = await host.rules.create(rule, caller.userId)
       host.logger.info('notification rule created', {
         meta: { ruleId: created.id, name: created.name, by: caller.userId },
@@ -240,6 +243,7 @@ export function buildProvider(host: RulesProviderHost): INotificationRulesProvid
       if (patch.targets !== undefined) {
         await host.validateTargetRefs(patch.targets.map((t) => t.targetId))
       }
+      if (patch.actions !== undefined) await host.refreshActions()
       // One authority for the addressee invariant (shared with nc.updateRule).
       const existing = host.rules.get(ruleId)
       assertPatchKeepsAddressee(existing, patch, clear ?? [])
@@ -302,33 +306,16 @@ export function buildProvider(host: RulesProviderHost): INotificationRulesProvid
     },
     setRuleEnabled: async ({ ruleId, enabled }) => {
       const updated = await host.rules.setEnabled(ruleId, enabled)
-      const bindings = enabled ? updated.actions?.onActivation : updated.actions?.onDeactivation
-      if (bindings !== undefined && bindings.length > 0 && host.actionRunner !== null) {
-        void host.actionRunner.runBindings({
+      const actionIds = enabled ? updated.actions?.onActivation : updated.actions?.onDeactivation
+      if (actionIds !== undefined && actionIds.length > 0 && host.actionRunner !== null) {
+        void host.actionRunner.runHook({
           ruleId: updated.id,
           ruleName: updated.name,
           deviceId: host.deviceIdForRuleActions(updated),
-          bindings,
-          lookup: (id) => host.sequences.get(id),
+          actionIds,
+          fire: { ruleId: updated.id, rule: updated.name },
         })
       }
-      return { success: true }
-    },
-    listSequences: async () => ({ sequences: [...host.sequences.list()] }),
-    getSequence: async ({ sequenceId }) => ({ sequence: host.sequences.get(sequenceId) }),
-    createSequence: async ({ sequence }) => {
-      const created = await host.sequences.create(sequence)
-      host.logger.info('notification sequence created', { meta: { sequenceId: created.id } })
-      return { sequence: created }
-    },
-    updateSequence: async ({ sequenceId, sequence }) => {
-      const updated = await host.sequences.update(sequenceId, sequence)
-      host.logger.info('notification sequence updated', { meta: { sequenceId } })
-      return { sequence: updated }
-    },
-    deleteSequence: async ({ sequenceId }) => {
-      await host.sequences.delete(sequenceId)
-      host.logger.info('notification sequence deleted', { meta: { sequenceId } })
       return { success: true }
     },
     testRule: async ({ rule, lookbackMinutes }) => ({

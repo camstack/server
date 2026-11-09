@@ -58,6 +58,8 @@ export const NcPruneRecordSchema = z.object({
   /** Device id as a decimal string, or the target id. */
   subject: z.string().min(1),
   field: z.string().min(1),
+  // `sequence-removed` and `binding-removed` are only ever READ: ledger rows written before
+  // rule actions became Action ids (planning#473) still carry them.
   outcome: z.enum(['removed', 'kept-disabled', 'kept', 'sequence-removed', 'binding-removed']),
   at: z.number(),
   source: z.enum(['event', 'reconcile']),

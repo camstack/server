@@ -3,6 +3,7 @@
  * The class method forwards private state through {@link RuleActionDispatchHost}.
  */
 
+import type { ActionStepsOf } from './snooze-exempt.js'
 import type {
   NcAlarmMatchPhase,
   NcAlarmPushVerdict,
@@ -28,7 +29,6 @@ import type {
 import { NC_RECOGNITION_CONDITIONS, evaluateRule } from './rule-engine.js'
 import { NcRuleStore } from './rule-store.js'
 import { NcSceneStateCache } from './scene-state-cache.js'
-import { NcSequenceStore } from './sequence-store.js'
 import { NcZoneOwnershipCache } from './zone-owner-cache.js'
 import type { IScopedLogger, NcRule, NcSystemEventKind } from '@camstack/types'
 import { ruleAutoTriggersAlarm } from '@camstack/types'
@@ -119,6 +119,7 @@ function sensorNameOf(host: RuleActionDispatchHost, subject: NcRuleSubject): str
 }
 
 export interface RuleActionDispatchHost {
+  readonly actionStepsOf: ActionStepsOf
   readonly actionRunner: NcRuleActionRunner | null
   readonly alarmPanel: NcAlarmPanelPort | null
   alarmRowsHeard(): NcAlarmRowsHeard
@@ -141,7 +142,6 @@ export interface RuleActionDispatchHost {
   readonly now: () => number
   readonly rules: NcRuleStore
   readonly sceneStates: NcSceneStateCache
-  readonly sequences: NcSequenceStore
   readonly zoneOwners: NcZoneOwnershipCache
 }
 
@@ -164,17 +164,22 @@ export function runRuleActions(
   const triggerOff = host.isTriggerOffSubject(subject)
   const phase = triggerOff ? NO_ALARM_PHASE : host.autoTriggerAlarmPanel(rule, subject, kind)
   if (host.actionRunner === null) return phase
-  const bindings = triggerOff ? rule.actions?.onTriggerOff : rule.actions?.onTrigger
-  if (bindings === undefined || bindings.length === 0) return phase
-  void host.actionRunner.runBindings({
+  const actionIds = triggerOff ? rule.actions?.onTriggerOff : rule.actions?.onTrigger
+  if (actionIds === undefined || actionIds.length === 0) return phase
+  const className = subject.classNames[0]
+  const deviceName = sensorNameOf(host, subject) ?? host.deviceDirectory.get(subject.deviceId)?.name
+  void host.actionRunner.runHook({
     ruleId: rule.id,
     ruleName: rule.name,
     deviceId: subject.deviceId,
-    bindings,
-    lookup: (id) => host.sequences.get(id),
-    // The provenance that makes an alarm this sequence sets off deliver ONE
-    // notification instead of two — see {@link NcRuleFireRef}.
-    origin: fireRefFor(rule, subject, kind, sensorNameOf(host, subject)),
+    actionIds,
+    fire: {
+      deviceId: subject.deviceId,
+      ruleId: rule.id,
+      rule: rule.name,
+      ...(deviceName !== undefined ? { device: deviceName } : {}),
+      ...(className !== undefined ? { class: className } : {}),
+    },
   })
   return phase
 }
@@ -344,7 +349,10 @@ export function evaluateGrouped(
     host.deviceStateLookup((id) => host.deviceStates.get(id)),
     (id) => host.zoneOwners.get(id),
     (sceneId) => host.sceneStates.get(sceneId),
-    relax ? { relax: NC_RECOGNITION_CONDITIONS } : undefined,
+    {
+      actionStepsOf: host.actionStepsOf,
+      ...(relax ? { relax: NC_RECOGNITION_CONDITIONS } : {}),
+    },
   )
 }
 /**

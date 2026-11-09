@@ -15,7 +15,7 @@
  *    has proven they hold a link this install minted, and telling them "already
  *    used" instead of "not found" is the difference between an operator who
  *    knows the gate opened and one who taps four more times.
- *  - **The token is spent BEFORE the sequence runs.** A sequence that fails
+ *  - **The token is spent BEFORE the Action runs.** An Action that fails
  *    does not hand the token back. Retrying an actuation that may have half-run
  *    ("unlock, wait, open" failing at step three) is precisely the intent the
  *    operator never expressed, and the runner already stops at the first
@@ -34,13 +34,13 @@ import {
 } from './action-token.js'
 
 /** Run what the grant authorises. Throwing means it failed. */
-export type NcActionSequenceRunner = (grant: NcActionGrant) => Promise<void>
+export type NcRunActionRunner = (grant: NcActionGrant) => Promise<void>
 
 export interface NcActionPlaneDeps {
   readonly registry: NcActionTokenRegistry
   readonly secret: string
   readonly logger: IScopedLogger
-  readonly run: NcActionSequenceRunner
+  readonly run: NcRunActionRunner
   readonly now?: () => number
 }
 
@@ -54,9 +54,9 @@ export interface NcActionPlaneDeps {
  */
 function describeGrant(grant: NcActionGrant): string {
   switch (grant.kind) {
-    case 'sequence':
+    case 'run-action':
       // The button the operator configured on the rule — the grant carries no
-      // sequence NAME, and its id is an opaque store key.
+      // Action NAME, and its id is an opaque store key.
       return `${grant.ruleName} — ${grant.actionId}`
     case 'snooze':
       return grant.classes === undefined || grant.classes.length === 0
@@ -86,17 +86,17 @@ function describeGrant(grant: NcActionGrant): string {
   }
 }
 
-/** The audit line's `meta`, per family. A snooze that logged a `sequence` it
+/** The audit line's `meta`, per family. A snooze that logged a `runActionId` it
  *  does not have would be a line nobody can grep. */
 function grantMeta(grant: NcActionGrant): Readonly<Record<string, unknown>> {
   const common = { action: grant.actionId, targetId: grant.targetId ?? null }
   switch (grant.kind) {
-    case 'sequence':
+    case 'run-action':
       return {
         ...common,
         ruleId: grant.ruleId,
         rule: grant.ruleName,
-        sequenceId: grant.sequenceId,
+        runActionId: grant.runActionId,
       }
     case 'snooze':
       return {

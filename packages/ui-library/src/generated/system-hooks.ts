@@ -2042,21 +2042,6 @@ export const useNotificationRulesDeleteRule: typeof trpc.notificationRules.delet
 /** Generated alias around `trpc.notificationRules.setRuleEnabled.useMutation`. */
 export const useNotificationRulesSetRuleEnabled: typeof trpc.notificationRules.setRuleEnabled.useMutation = /*#__PURE__*/ alias(() => trpc.notificationRules.setRuleEnabled.useMutation)
 
-/** Generated alias around `trpc.notificationRules.listSequences.useQuery`. */
-export const useNotificationRulesListSequences: typeof trpc.notificationRules.listSequences.useQuery = /*#__PURE__*/ alias(() => trpc.notificationRules.listSequences.useQuery)
-
-/** Generated alias around `trpc.notificationRules.getSequence.useQuery`. */
-export const useNotificationRulesGetSequence: typeof trpc.notificationRules.getSequence.useQuery = /*#__PURE__*/ alias(() => trpc.notificationRules.getSequence.useQuery)
-
-/** Generated alias around `trpc.notificationRules.createSequence.useMutation`. */
-export const useNotificationRulesCreateSequence: typeof trpc.notificationRules.createSequence.useMutation = /*#__PURE__*/ alias(() => trpc.notificationRules.createSequence.useMutation)
-
-/** Generated alias around `trpc.notificationRules.updateSequence.useMutation`. */
-export const useNotificationRulesUpdateSequence: typeof trpc.notificationRules.updateSequence.useMutation = /*#__PURE__*/ alias(() => trpc.notificationRules.updateSequence.useMutation)
-
-/** Generated alias around `trpc.notificationRules.deleteSequence.useMutation`. */
-export const useNotificationRulesDeleteSequence: typeof trpc.notificationRules.deleteSequence.useMutation = /*#__PURE__*/ alias(() => trpc.notificationRules.deleteSequence.useMutation)
-
 /** Generated alias around `trpc.notificationRules.getClipRetentionAsks.useQuery`. */
 export const useNotificationRulesGetClipRetentionAsks: typeof trpc.notificationRules.getClipRetentionAsks.useQuery = /*#__PURE__*/ alias(() => trpc.notificationRules.getClipRetentionAsks.useQuery)
 

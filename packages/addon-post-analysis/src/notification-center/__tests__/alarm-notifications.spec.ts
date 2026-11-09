@@ -40,6 +40,7 @@ import type { NcRuleFireRef } from '../rule-engine.js'
 import { NcTextCatalog } from '../text-catalog.js'
 import { makeFakeDeviceSettings } from './fake-device-settings.js'
 import { makeTestObjectEvent } from '../../__tests__/support/events.js'
+import { capAction, makeFakeActions } from './fake-actions.js'
 
 const PANEL_ID = 1023
 const CAMERA_ID = 102
@@ -187,12 +188,12 @@ async function makeHarness(
       { deviceId: CAMERA_ID, type: DeviceType.Camera, name: 'Cancello', isCamera: true },
       { deviceId: PANEL_ID, type: DeviceType.AlarmPanel, name: 'Alarm', isCamera: false },
     ],
-    isCapDeviceScoped: () => true,
     // Any OTHER device's actuation. A press of the local panel's trigger never lands
     // here: the centre calls `triggerFromRule` with the match instead.
     actuate: async ({ deviceId, cap, method }) => {
       actuations.push({ deviceId, cap, method })
     },
+    actions: makeFakeActions((a) => actuations.push(a)),
     readDeviceOpenings: async (ids) => new Map([...openings].filter(([id]) => ids.includes(id))),
     ...(mirror.readDeviceStates !== undefined ? { readDeviceStates: mirror.readDeviceStates } : {}),
     drainIntervalMs: 3_600_000,
@@ -201,6 +202,9 @@ async function makeHarness(
   centers.push(center)
   await center.start({ evaluation: true })
   center.setAlarmPanel(panel)
+  // The panel is armed away: a rule gated on it presses the panel with its own match — the
+  // attribution the combined alarm row joins on.
+  center.onAlarmPublish({ state: 'armed_away', target: 'armed_away', transition: null })
   return {
     center,
     panel,
@@ -225,24 +229,10 @@ async function makeIntrusionRule(
     rule: NcRuleInputSchema.parse({
       name: 'Intrusione',
       delivery: 'immediate',
-      conditions: { classes: ['person'] },
+      conditions: { classes: ['person'], deviceState: { deviceId: PANEL_ID, states: ['armed_away'] } },
       targets: targetIds.map((targetId) => ({ targetId })),
       media: { attach: 'best', gif: true },
       throttle: { cooldownSec: 0, scope: 'rule-device' },
-      actions: {
-        onTrigger: [
-          {
-            kind: 'do',
-            action: {
-              kind: 'cap',
-              deviceId: PANEL_ID,
-              cap: 'alarm-panel',
-              method: 'trigger',
-              args: {},
-            },
-          },
-        ],
-      },
     }),
   })
   return rule.id
@@ -337,24 +327,14 @@ describe('the COMBINED alarm notification', () => {
       rule: NcRuleInputSchema.parse({
         name: 'Intrusione Uscio',
         delivery: 'immediate',
-        conditions: { classes: ['person'], zones: { ids: ['zone-uscio'] } },
+        conditions: {
+          classes: ['person'],
+          zones: { ids: ['zone-uscio'] },
+          deviceState: { deviceId: PANEL_ID, states: ['armed_away'] },
+        },
         targets: [{ targetId: 'tgt-phone' }],
         media: { image: 'scene-boxes', showTriggerZone: true, showSubjectPath: true },
         throttle: { cooldownSec: 0, scope: 'rule-device' },
-        actions: {
-          onTrigger: [
-            {
-              kind: 'do',
-              action: {
-                kind: 'cap',
-                deviceId: PANEL_ID,
-                cap: 'alarm-panel',
-                method: 'trigger',
-                args: {},
-              },
-            },
-          ],
-        },
       }),
     })
     await makeAlarmRule(h.center)
@@ -945,16 +925,7 @@ describe('a cooling rule still ACTUATES', () => {
         throttle: { cooldownSec: 60, scope: 'rule-device' },
         actions: {
           onTrigger: [
-            {
-              kind: 'do',
-              action: {
-                kind: 'cap',
-                deviceId: PANEL_ID,
-                cap: 'alarm-panel',
-                method: 'trigger',
-                args: {},
-              },
-            },
+            capAction(PANEL_ID, 'alarm-panel', 'trigger'),
           ],
         },
       }),
@@ -1307,23 +1278,13 @@ describe('the sensor rides the attribution', () => {
       rule: NcRuleInputSchema.parse({
         name: 'contatti',
         delivery: 'device-event',
-        conditions: { devices: [PORCH], sensorKinds: ['contact'] },
+        conditions: {
+          devices: [PORCH],
+          sensorKinds: ['contact'],
+          deviceState: { deviceId: PANEL_ID, states: ['armed_away'] },
+        },
         targets: targetIds.map((targetId) => ({ targetId })),
         throttle: { cooldownSec: 0, scope: 'rule' },
-        actions: {
-          onTrigger: [
-            {
-              kind: 'do',
-              action: {
-                kind: 'cap',
-                deviceId: PANEL_ID,
-                cap: 'alarm-panel',
-                method: 'trigger',
-                args: {},
-              },
-            },
-          ],
-        },
       }),
     })
     return rule.id

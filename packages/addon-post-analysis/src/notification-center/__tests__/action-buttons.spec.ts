@@ -2,25 +2,25 @@ import type { NcRuleActions } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { buildActionButtons, unresolvableButtons } from '../action-buttons.js'
 
-const mintUrl = (i: { sequenceId: string; actionId: string }): string =>
-  `url://${i.actionId}/${i.sequenceId}`
+const mintUrl = (i: { runActionId: string; actionId: string }): string =>
+  `url://${i.actionId}/${i.runActionId}`
 
 const known = new Set(['open-gate-id'])
 
 function actions(over: Partial<NcRuleActions> = {}): NcRuleActions {
   return {
-    onTrigger: [{ kind: 'sequence', sequenceId: 'open-gate-id' }],
+    onTrigger: ['open-gate-id'],
     ...over,
   }
 }
 
 describe('buildActionButtons', () => {
-  it('mints a button whose sequenceId is known', () => {
+  it('mints a button whose actionId is known', () => {
     const out = buildActionButtons({
       actions: actions({
-        buttons: [{ id: 'open', label: 'Open', sequenceId: 'open-gate-id', icon: 'unlock' }],
+        buttons: [{ id: 'open', label: 'Open', actionId: 'open-gate-id', icon: 'unlock' }],
       }),
-      knownSequenceIds: known,
+      knownActionIds: known,
       mintUrl,
     })
     expect(out).toEqual([
@@ -34,16 +34,16 @@ describe('buildActionButtons', () => {
     ])
   })
 
-  it('drops a button whose sequenceId is unknown', () => {
+  it('drops a button whose actionId is unknown', () => {
     const out = buildActionButtons({
-      actions: actions({ buttons: [{ id: 'x', label: 'X', sequenceId: 'typo' }] }),
-      knownSequenceIds: known,
+      actions: actions({ buttons: [{ id: 'x', label: 'X', actionId: 'typo' }] }),
+      knownActionIds: known,
       mintUrl,
     })
     expect(out).toEqual([])
     expect(
       unresolvableButtons(
-        actions({ buttons: [{ id: 'x', label: 'X', sequenceId: 'typo' }] }),
+        actions({ buttons: [{ id: 'x', label: 'X', actionId: 'typo' }] }),
         known,
       ),
     ).toEqual(['x→typo'])
@@ -53,18 +53,18 @@ describe('buildActionButtons', () => {
     const out = buildActionButtons({
       actions: actions({
         buttons: [
-          { id: 'open', label: 'Open', sequenceId: 'open-gate-id' },
-          { id: 'open', label: 'Open again', sequenceId: 'open-gate-id' },
+          { id: 'open', label: 'Open', actionId: 'open-gate-id' },
+          { id: 'open', label: 'Open again', actionId: 'open-gate-id' },
         ],
       }),
-      knownSequenceIds: known,
+      knownActionIds: known,
       mintUrl,
     })
     expect(out).toHaveLength(1)
   })
 
   it('returns [] when there are no buttons', () => {
-    expect(buildActionButtons({ actions: undefined, knownSequenceIds: known, mintUrl })).toEqual([])
-    expect(buildActionButtons({ actions: actions(), knownSequenceIds: known, mintUrl })).toEqual([])
+    expect(buildActionButtons({ actions: undefined, knownActionIds: known, mintUrl })).toEqual([])
+    expect(buildActionButtons({ actions: actions(), knownActionIds: known, mintUrl })).toEqual([])
   })
 })

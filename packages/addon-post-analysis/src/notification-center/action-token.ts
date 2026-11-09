@@ -12,8 +12,8 @@
  * authorisation model does not:
  *
  *  - **One token, one action, one notification.** The record carries the rule,
- *    the sequence and the device, so a token cannot be re-pointed at anything
- *    else. There is no "run arbitrary sequence" shape to abuse.
+ *    the Action and the device, so a token cannot be re-pointed at anything
+ *    else. There is no "run any Action" shape to abuse.
  *  - **Single use, claimed ATOMICALLY.** `claim()` is the only way to read a
  *    record and it marks it spent in the same synchronous step, so two taps
  *    arriving together cannot both open a gate. This is why the registry is a
@@ -47,13 +47,13 @@ interface NcActionGrantBase {
   readonly expiresAt: number
 }
 
-/** Run one shared sequence. The original grant. */
-export interface NcSequenceGrant extends NcActionGrantBase {
-  readonly kind: 'sequence'
+/** Run one existing Action of the Actions surface (planning#473). The original grant. */
+export interface NcRunActionGrant extends NcActionGrantBase {
+  readonly kind: 'run-action'
   readonly ruleId: string
   readonly ruleName: string
-  /** The shared sequence to run. Must exist in the store; the minter checks. */
-  readonly sequenceId: string
+  /** The Action to run (`actions.run`). Must exist in the Actions list; the minter checks. */
+  readonly runActionId: string
 }
 
 /**
@@ -262,11 +262,11 @@ export interface NcVerdictSubject {
  * A DISCRIMINATED UNION rather than an optional-field bag: the plane switches
  * on `kind` and TypeScript refuses a grant missing what its branch needs, so a
  * fifth button family cannot be added without the plane being made to handle
- * it. The previous shape was "a sequence, always", and a snooze faked as a
- * sequence would have been a sequence the rule does not have.
+ * it. The previous shape was "an Action, always", and a snooze faked as an
+ * Action would have been an Action the rule does not have.
  */
 export type NcActionGrant =
-  | NcSequenceGrant
+  | NcRunActionGrant
   | NcSnoozeGrant
   | NcAlarmGrant
   | NcAddonUpdateGrant
@@ -336,8 +336,8 @@ const DEFAULT_ACTION_TTL_MS = 15 * 60_000
 /**
  * How long a SNOOZE button stays live: one hour.
  *
- * Longer than a sequence's fifteen minutes because the blast radius is the
- * opposite shape. A sequence moves a gate; a snooze silences, at most, the one
+ * Longer than an Action's fifteen minutes because the blast radius is the
+ * opposite shape. An Action moves a gate; a snooze silences, at most, the one
  * person the notification was already addressed to, for a bounded window they
  * can end from the app. The thing an operator actually does with it — waking
  * up to a noisy camera at 03:00 and wanting it quiet — happens on a
@@ -362,7 +362,7 @@ export const ALARM_DISARM_TTL_MS = 5 * 60_000
 
 /** Just enough of a button to price its window — known before an id exists. */
 export type NcActionTtlSubject =
-  | { readonly kind: 'sequence' }
+  | { readonly kind: 'run-action' }
   | { readonly kind: 'snooze' }
   | { readonly kind: 'alarm'; readonly action: NcAlarmGrant['action'] }
   | { readonly kind: 'addon-update' }
@@ -389,9 +389,9 @@ export function actionTtlMs(subject: NcActionTtlSubject): number {
       // minutes — the panel still refuses it once that arm is over.
       if (subject.action === 'bypass-input') return DEFAULT_ACTION_TTL_MS
       return subject.action === 'disarm' ? ALARM_DISARM_TTL_MS : DEFAULT_ACTION_TTL_MS
-    case 'sequence':
+    case 'run-action':
       return DEFAULT_ACTION_TTL_MS
-    // Fifteen minutes, the sequence window — NOT the snooze hour. A snooze is
+    // Fifteen minutes, the Action window — NOT the snooze hour. A snooze is
     // longer because at worst it silences the one person the notification was
     // addressed to; this one restarts every addon it names on a whole node,
     // over a link that travelled through a push relay. An operator who reads

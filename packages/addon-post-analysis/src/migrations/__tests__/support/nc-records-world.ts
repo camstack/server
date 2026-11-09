@@ -10,7 +10,11 @@ import { ncRecordKinds } from '../../../notification-center/record-kinds.js'
 import { makeSilentLogger } from '../../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDetectionVerdictLedger } from '../../../notification-center/detection-verdict-ledger.js'
 import { ncDurableRecordKinds } from '../../../notification-center/nc-durable-record-kinds.js'
-import type { NcTemplateMigrationPorts, RetrainVerdictFramePorts } from '../../index.js'
+import type {
+  NcRuleActionsMigrationPorts,
+  NcTemplateMigrationPorts,
+  RetrainVerdictFramePorts,
+} from '../../index.js'
 
 const OWNER = 'pipeline-analytics'
 
@@ -41,7 +45,7 @@ function engineTransport(engine: RecordsEngine): RecordsTransport {
 export interface NcWorld {
   readonly records: RecordsAccess
   /** The template kinds, plus a real verdict ledger and retrain ports that find nothing to do. */
-  readonly ncPorts: NcTemplateMigrationPorts & RetrainVerdictFramePorts
+  readonly ncPorts: NcTemplateMigrationPorts & RetrainVerdictFramePorts & NcRuleActionsMigrationPorts
 }
 
 export async function makeNcWorld(): Promise<NcWorld> {
@@ -62,6 +66,14 @@ export async function makeNcWorld(): Promise<NcWorld> {
       rules: records.kind(ncRecordKinds['rules']),
       timelapseRules: records.kind(ncRecordKinds['timelapse-rules']),
       texts: records.kind(ncRecordKinds.texts),
+      legacySequences: records.kind(ncRecordKinds.sequences),
+      // Specs that do not run the Actions migration never reach the Actions cap.
+      actions: {
+        list: async () => [],
+        create: async () => {
+          throw new Error('the Actions cap is not wired in this world')
+        },
+      },
       verdicts: new NcDetectionVerdictLedger({ records, logger: makeSilentLogger() }),
       resolveTrackAlias: async () => null,
       listStagedTracks: async () => [],

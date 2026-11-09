@@ -810,6 +810,7 @@ import { AnalyticsLtsSeriesSchema, defineAddonMigrations } from '@camstack/types
 import { ncRecordKinds } from '../notification-center/record-kinds.js'
 import {
   ADDON_MIGRATIONS,
+  type NcMigrationActionsPort,
   type PipelineAnalyticsMigrationPorts,
   RETRAIN_VERDICT_FRAMES_MIGRATION_ID,
 } from '../migrations/index.js'
@@ -3604,7 +3605,6 @@ export default class PipelineAnalyticsAddon
       onDeviceUnregistered: (deviceId) => this.handleDeviceUnregisteredEvent(deviceId),
       onClusterTopology: (nodes) => this.nodeLiveness.applySnapshot(nodes, Date.now()),
       onSystemEvent: (event) => this.notificationCenter?.onSystemEvent(event),
-      onDeviceRegistryChange: () => this.notificationCenter?.invalidateActionTargets(),
     })
 
     // Tracking tapes (D681): their OWN step, so a failed event-media plane can
@@ -3992,6 +3992,21 @@ export default class PipelineAnalyticsAddon
     }, this.ctx.logger)
   }
 
+  /** The Actions cap as the rule-actions migration uses it (planning#473). */
+  private migrationActions(): NcMigrationActionsPort {
+    const api = this.ctx.api
+    return {
+      list: async () =>
+        (await api.actions.list.query({})).map((entry) => ({
+          id: entry.id,
+          name: entry.name,
+          steps: entry.steps ?? [],
+          minDelaySec: entry.minDelaySec,
+        })),
+      create: async (action) => (await api.actions.create.mutate({ action })).action.id,
+    }
+  }
+
   private migrationPorts(): PipelineAnalyticsMigrationPorts {
     const records = this.requireRecords()
     const settings = this.ctx.settings
@@ -4004,6 +4019,8 @@ export default class PipelineAnalyticsAddon
       rules: records.kind(ncRecordKinds['rules']),
       timelapseRules: records.kind(ncRecordKinds['timelapse-rules']),
       texts: records.kind(ncRecordKinds.texts),
+      legacySequences: records.kind(ncRecordKinds.sequences),
+      actions: this.migrationActions(),
       readStored: (keys) => readRawKeys((key) => this.readStoredGlobalKey(key), keys),
       announceRetired: (key, was) => this.announceRetiredFaceKey(key, was),
       listDeviceIds: () => settings.listDeviceStoreIds(),

@@ -74,7 +74,6 @@ function deps(bus: RecordingBus, isPostProcessingNode: boolean): WireSubscriptio
     onDeviceUnregistered: () => undefined,
     onClusterTopology: () => undefined,
     onSystemEvent: () => undefined,
-    onDeviceRegistryChange: () => undefined,
   }
 }
 

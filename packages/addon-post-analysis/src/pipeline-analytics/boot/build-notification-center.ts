@@ -8,7 +8,6 @@ import type { CameraOccupancySnapshot, IScopedLogger } from '@camstack/types'
 import {
   errMsg,
   instanceSourceOverApi,
-  isDeviceScopedCap,
   kebabToCamel,
   readDeviceStateFrom,
   viewerLinkBaseOf,
@@ -333,24 +332,11 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
         }
         await fn({ deviceId, ...args })
       },
-      isCapDeviceScoped: isDeviceScopedCap,
-      // D983: the registry a `domain` action target is resolved from — the same
-      // two reads a core-blocks action makes (per-binding walk, slim listing).
-      actionTargetDirectory: {
-        listDeviceIdsByCaps: (capNames) =>
-          api.deviceManager.listDeviceIdsByCaps.query({ capNames: [...capNames] }),
-        listDevices: async (deviceIds) => {
-          const rows = await api.deviceManager.listAll.query({
-            deviceIds: [...deviceIds],
-            projection: 'slim',
-          })
-          return rows.map((d) => ({
-            id: d.id,
-            type: d.type,
-            location: d.location,
-            disabled: d.disabled,
-          }))
-        },
+      // planning#473: a rule and a button run an Action by id — `actions.list`
+      // feeds the centre's mirror, `actions.run` is the only way anything runs.
+      actions: {
+        list: () => api.actions.list.query({}),
+        run: (input) => api.actions.run.mutate(input),
       },
       // AI CONFIRM — `llm.generateVision`, through `ctx.api` like every other
       // cross-addon call. The centre constructs no gate when this is absent,

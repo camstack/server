@@ -1,350 +1,226 @@
 /**
- * Running a rule's action bindings / shared sequences.
+ * Running a rule's Actions (planning#473).
  *
- * A rule can actuate devices when it matches — arm the alarm, open a gate, turn
- * on a light. Sequences are shared entities; a rule binds to them (or authors a
- * single Do). Three properties, each of which is the difference between a
- * sequence and a list of calls:
+ * The notification centre has no step vocabulary and no executor of its own: a
+ * rule hook or a button names an Action of the `actions` surface by id, and the
+ * run goes through `actions.run`. The steps, the device-scope boundary, the
+ * stop-at-first-failure, the throttle (`minDelaySec`), the one-run-at-a-time
+ * refusal and the runs ledger are the Action's — this file only decides WHICH
+ * Actions a hook edge starts and WHAT the rule's match hands them.
  *
- *  - **It STOPS at the first failure.** "Unlock, then open" with the unlock
- *    failed is a door being forced. Continuing past a failed step executes an
- *    intent the operator never expressed.
- *  - **`wait` is a step**, so "unlock, wait 5s, open" is expressible at all.
- *  - **A per-sequence throttle** keyed on `sequenceId`, because the rule's
- *    cooldown governs NOTIFICATIONS and "how often may this gate physically
- *    open" is a different budget — and two rules sharing one sequence share
- *    that budget. Single Do bindings are never throttled.
+ * What a match hands an Action is its declared **variables**, the way any other
+ * caller (an automation block) passes context: an Action that declares a
+ * variable named like a fire variable ({@link NC_FIRE_VARIABLES}) receives the
+ * value, one that does not receives nothing. A value the Action did not declare
+ * is never sent — the Actions surface refuses an unknown variable by name.
  */
 
 import type {
-  ActionTarget,
+  ActionEntry,
+  ActionRunResult,
+  ActionStep,
+  ActionVariableValue,
   IScopedLogger,
-  NcActionBinding,
-  NcRuleAction,
-  NcSharedSequence,
-  ResolvedTarget,
 } from '@camstack/types'
-import { normalizeNcCapTarget } from '@camstack/types'
-import type { NcRuleFireRef } from './rule-engine.js'
+
+/** The `actions` cap as the centre uses it — a port, so a spec can stand in. */
+export interface NcActionsPort {
+  list(): Promise<readonly ActionEntry[]>
+  run(input: {
+    readonly actionId: string
+    readonly variables?: Readonly<Record<string, ActionVariableValue>>
+    readonly wait: boolean
+    readonly deviceId?: number
+  }): Promise<ActionRunResult>
+}
+
+/** What a rule match tells an Action about itself, by declared-variable name. */
+export const NC_FIRE_VARIABLES = ['device', 'deviceId', 'class', 'rule', 'ruleId'] as const
+export type NcFireVariableName = (typeof NC_FIRE_VARIABLES)[number]
+
+export type NcFireVariables = Readonly<Partial<Record<NcFireVariableName, string | number>>>
+
+/** The Actions the centre knows about, kept in RAM and revalidated off the hot path. */
+const CATALOG_MAX_AGE_MS = 60_000
 
 /**
- * Invoke one device-cap method. Returns nothing; throwing means failed.
+ * A mirror of the Actions list, for the three questions the centre must answer
+ * WITHOUT a call: does this Action exist (a button is minted only for one),
+ * which variables does it declare (what a match may hand it), and does it
+ * actuate the alarm panel (a snooze must not silence such a rule).
  *
- * `origin` is the MATCH this actuation descends from, handed through
- * untouched. The runner does nothing with it — it is provenance, not a
- * parameter, and no cap input carries it. It exists because a device that is
- * itself part of the notification path (the alarm panel) otherwise cannot know
- * which detection pressed its button, and the operator then receives two
- * notifications about one incident. Absent when a BUTTON granted the run: an
- * operator tapping "Open the gate" is not a rule match, and stamping it as one
- * would attribute a photograph to a person's finger.
+ * The Actions surface is the authority (D3). A failed read changes nothing —
+ * the mirror keeps what it has (D49) — and a stale answer is served while one
+ * refresh runs.
  */
-export type NcActuator = (input: {
-  readonly deviceId: number
-  readonly cap: string
-  readonly method: string
-  readonly args: Readonly<Record<string, unknown>>
-  readonly origin?: NcRuleFireRef
-}) => Promise<void>
+export class NcActionCatalog {
+  private byId = new Map<string, ActionEntry>()
+  private loadedAt = 0
+  private inflight: Promise<void> | null = null
 
-/** Is this capability device-scoped? The only boundary on what a rule may
- *  actuate — see the cap file for why it is structural rather than a list. */
-export type NcCapScopeCheck = (cap: string) => boolean
+  constructor(
+    private readonly port: Pick<NcActionsPort, 'list'>,
+    private readonly logger: IScopedLogger,
+    private readonly now: () => number = Date.now,
+  ) {}
 
-/** Look up a shared sequence by id. Absent ⇒ the binding is skipped. */
-export type NcSequenceLookup = (sequenceId: string) => NcSharedSequence | null
+  async load(): Promise<void> {
+    this.inflight ??= this.read().finally(() => {
+      this.inflight = null
+    })
+    return this.inflight
+  }
 
-/**
- * A step's target as device ids (D983). `owner` names the sequence for the log
- * line of an empty answer. Absent ⇒ only a `devices` target can run.
- */
-export type NcTargetResolve = (
-  target: ActionTarget,
-  actionId: string | undefined,
-  owner: string,
-) => Promise<ResolvedTarget>
+  /** Start a refresh when the mirror is older than its window; never awaited. */
+  revalidate(): void {
+    if (this.now() - this.loadedAt < CATALOG_MAX_AGE_MS) return
+    void this.load()
+  }
 
-export interface NcRuleActionRunnerDeps {
-  readonly logger: IScopedLogger
-  readonly actuate: NcActuator
-  readonly resolveTarget?: NcTargetResolve
-  readonly isDeviceScoped: NcCapScopeCheck
-  readonly sleep?: (ms: number) => Promise<void>
-  readonly now?: () => number
+  private async read(): Promise<void> {
+    try {
+      const entries = await this.port.list()
+      this.byId = new Map(entries.map((entry) => [entry.id, entry]))
+      this.loadedAt = this.now()
+    } catch (err: unknown) {
+      this.logger.warn('actions list failed — keeping the Actions already known', {
+        meta: { known: this.byId.size, error: err instanceof Error ? err.message : String(err) },
+      })
+    }
+  }
+
+  get(actionId: string): ActionEntry | undefined {
+    return this.byId.get(actionId)
+  }
+
+  knownIds(): ReadonlySet<string> {
+    this.revalidate()
+    return new Set(this.byId.keys())
+  }
+
+  /** The steps of an internal Action, `undefined` for an unknown or addon-declared one. */
+  stepsOf(actionId: string): readonly ActionStep[] | undefined {
+    return this.byId.get(actionId)?.steps
+  }
 }
 
-/** A resolved run unit — what the runner actually steps through. */
-export interface ResolvedRunSequence {
-  readonly id: string
-  readonly name: string
-  readonly enabled: boolean
-  readonly minDelaySec?: number
-  readonly actions: readonly NcRuleAction[]
-  /** Shared sequences throttle; ephemeral Do wrappers do not. */
-  readonly throttle: boolean
-}
-
-export interface RunSequencesInput {
-  readonly ruleId: string
-  readonly ruleName: string
-  readonly sequences: readonly ResolvedRunSequence[]
-  /** Subject device — for the log tag, never for routing. */
-  readonly deviceId: number
-  /** The match this run descends from, passed to every actuation. Absent for a
-   *  button-granted run — see {@link NcActuator}. */
-  readonly origin?: NcRuleFireRef
-}
-
-export interface RunBindingsInput {
-  readonly ruleId: string
-  readonly ruleName: string
-  readonly bindings: readonly NcActionBinding[]
-  readonly lookup: NcSequenceLookup
-  readonly deviceId: number
-  readonly origin?: NcRuleFireRef
-}
-
-/** What one sequence run did, for the caller's log line and for tests. */
-export interface SequenceOutcome {
-  readonly id: string
-  readonly name: string
+/** What one Action run did, for the caller's log line and for tests. */
+export interface NcActionRunOutcome {
+  readonly actionId: string
   readonly ran: boolean
-  readonly stepsRun: number
-  /** Set when a step failed; the run stopped there. */
-  readonly failedAt?: number
-  readonly skippedReason?: 'disabled' | 'throttled' | 'empty' | 'missing'
+  /** The run's outcome as the Actions surface answered; absent when the call itself failed. */
+  readonly outcome?: ActionRunResult['outcome']
+  readonly error?: string
 }
 
-function wrapDo(action: NcRuleAction): ResolvedRunSequence {
-  const name =
-    action.kind === 'wait' ? `wait ${String(action.seconds)}s` : `${action.cap}.${action.method}`
-  return {
-    id: `do:${name}`,
-    name,
-    enabled: true,
-    actions: [action],
-    throttle: false,
-  }
+export interface NcHookRunInput {
+  readonly ruleId: string
+  readonly ruleName: string
+  /** Subject device — the log tag and the run's `deviceId`. */
+  readonly deviceId: number
+  readonly actionIds: readonly string[]
+  readonly fire: NcFireVariables
 }
 
-function resolveBinding(
-  binding: NcActionBinding,
-  lookup: NcSequenceLookup,
-): ResolvedRunSequence | { readonly missing: string } {
-  if (binding.kind === 'do') return wrapDo(binding.action)
-  const sequence = lookup(binding.sequenceId)
-  if (sequence === null) return { missing: binding.sequenceId }
-  return {
-    id: sequence.id,
-    name: sequence.name,
-    enabled: true,
-    ...(sequence.minDelaySec !== undefined ? { minDelaySec: sequence.minDelaySec } : {}),
-    actions: sequence.actions,
-    throttle: true,
+/** The variables an Action declared, filled from what the match offers. */
+export function variablesFor(
+  entry: ActionEntry | undefined,
+  fire: NcFireVariables,
+): Readonly<Record<string, ActionVariableValue>> {
+  const out: Record<string, ActionVariableValue> = {}
+  for (const declared of entry?.variables ?? []) {
+    const value = (NC_FIRE_VARIABLES as readonly string[]).includes(declared.name)
+      ? Reflect.get(fire, declared.name)
+      : undefined
+    if (typeof value === 'number' && declared.type === 'number') out[declared.name] = value
+    else if (typeof value === 'string' && declared.type === 'string') out[declared.name] = value
+    else if (
+      typeof value === 'string' &&
+      declared.type === 'select' &&
+      (declared.options ?? []).includes(value)
+    ) {
+      out[declared.name] = value
+    }
   }
+  return out
 }
 
 export class NcRuleActionRunner {
-  /** Last run per `sequenceId` — the throttle's memory (shared across rules). */
-  private readonly lastRunAt = new Map<string, number>()
-  private readonly now: () => number
-  private readonly sleep: (ms: number) => Promise<void>
-
-  constructor(private readonly deps: NcRuleActionRunnerDeps) {
-    this.now = deps.now ?? ((): number => Date.now())
-    this.sleep =
-      deps.sleep ?? ((ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms)))
-  }
+  constructor(
+    private readonly port: NcActionsPort,
+    private readonly catalog: NcActionCatalog,
+    private readonly logger: IScopedLogger,
+  ) {}
 
   /**
-   * Resolve bindings via the sequence store and run each, in order.
+   * Run the Actions of one hook edge, in order, each to its end.
    *
-   * Never throws: an actuation that fails must not cost the NOTIFICATION about
-   * the very same event.
+   * Never throws: an Action that cannot start must not cost the NOTIFICATION
+   * about the very same event. A failed or refused Action does not stop the
+   * next one — each is its own sequence with its own stop-at-first-failure.
    */
-  async runBindings(input: RunBindingsInput): Promise<readonly SequenceOutcome[]> {
-    const sequences: ResolvedRunSequence[] = []
-    const missing: SequenceOutcome[] = []
-    for (const binding of input.bindings) {
-      const resolved = resolveBinding(binding, input.lookup)
-      if ('missing' in resolved) {
-        this.deps.logger.warn('rule action binding skipped — sequence missing', {
-          tags: { deviceId: input.deviceId },
-          meta: { ruleId: input.ruleId, sequenceId: resolved.missing },
-        })
-        missing.push({
-          id: resolved.missing,
-          name: resolved.missing,
-          ran: false,
-          stepsRun: 0,
-          skippedReason: 'missing',
-        })
-        continue
-      }
-      sequences.push(resolved)
-    }
-    const ran = await this.run({
-      ruleId: input.ruleId,
-      ruleName: input.ruleName,
-      deviceId: input.deviceId,
-      sequences,
-      ...(input.origin !== undefined ? { origin: input.origin } : {}),
-    })
-    return [...missing, ...ran]
-  }
-
-  /**
-   * Run every enabled sequence, in order.
-   *
-   * Prefer {@link runBindings} at call sites that hold bindings. This remains
-   * for button grants (force-enabled shared sequence) and tests.
-   */
-  async run(input: RunSequencesInput): Promise<readonly SequenceOutcome[]> {
-    const out: SequenceOutcome[] = []
-    for (const sequence of input.sequences) {
-      out.push(await this.runOne(input, sequence))
+  async runHook(input: NcHookRunInput): Promise<readonly NcActionRunOutcome[]> {
+    const out: NcActionRunOutcome[] = []
+    for (const actionId of input.actionIds) {
+      out.push(await this.runOne(input, actionId, true))
     }
     return out
   }
 
-  private async runOne(
-    input: RunSequencesInput,
-    sequence: ResolvedRunSequence,
-  ): Promise<SequenceOutcome> {
-    if (!sequence.enabled) {
-      return {
-        id: sequence.id,
-        name: sequence.name,
-        ran: false,
-        stepsRun: 0,
-        skippedReason: 'disabled',
-      }
+  /**
+   * Run the Action a spent button token granted. Throws when the Action did not
+   * run to its end — the action plane turns that into the page that says so.
+   */
+  async runGranted(input: {
+    readonly ruleId: string
+    readonly ruleName: string
+    readonly deviceId: number
+    readonly actionId: string
+  }): Promise<void> {
+    const result = await this.runOne({ ...input, actionIds: [input.actionId], fire: {} }, input.actionId, true)
+    if (result.error !== undefined) throw new Error(result.error)
+    if (!result.ran) {
+      throw new Error(`the action did not run (${result.outcome ?? 'unknown'})`)
     }
-    if (sequence.actions.length === 0) {
-      return {
-        id: sequence.id,
-        name: sequence.name,
-        ran: false,
-        stepsRun: 0,
-        skippedReason: 'empty',
-      }
-    }
-    const now = this.now()
-    const minDelayMs = sequence.throttle ? (sequence.minDelaySec ?? 0) * 1000 : 0
-    const last = this.lastRunAt.get(sequence.id)
-    if (minDelayMs > 0 && last !== undefined && now - last < minDelayMs) {
-      this.deps.logger.debug('rule action sequence throttled', {
-        tags: { deviceId: input.deviceId },
-        meta: {
-          ruleId: input.ruleId,
-          sequenceId: sequence.id,
-          sequence: sequence.name,
-          sinceLastMs: now - last,
-        },
-      })
-      return {
-        id: sequence.id,
-        name: sequence.name,
-        ran: false,
-        stepsRun: 0,
-        skippedReason: 'throttled',
-      }
-    }
-    if (sequence.throttle) this.lastRunAt.set(sequence.id, now)
+  }
 
-    let stepsRun = 0
-    for (const [index, action] of sequence.actions.entries()) {
-      try {
-        await this.step(action, input.origin, sequence.id)
-        stepsRun += 1
-      } catch (err) {
-        this.deps.logger.warn('rule action failed — stopping the sequence', {
-          tags: { deviceId: input.deviceId },
-          meta: {
-            ruleId: input.ruleId,
-            rule: input.ruleName,
-            sequenceId: sequence.id,
-            sequence: sequence.name,
-            step: index,
-            action: action.kind === 'cap' ? `${action.cap}.${action.method}` : 'wait',
-            error: String(err),
-          },
-        })
-        return {
-          id: sequence.id,
-          name: sequence.name,
-          ran: true,
-          stepsRun,
-          failedAt: index,
-        }
-      }
-    }
-    this.deps.logger.info('rule actions ran', {
-      tags: { deviceId: input.deviceId },
-      meta: {
+  private async runOne(
+    input: NcHookRunInput,
+    actionId: string,
+    wait: boolean,
+  ): Promise<NcActionRunOutcome> {
+    this.catalog.revalidate()
+    try {
+      const result = await this.port.run({
+        actionId,
+        variables: variablesFor(this.catalog.get(actionId), input.fire),
+        wait,
+        deviceId: input.deviceId,
+      })
+      const ran = result.outcome === 'ran' || result.outcome === 'started'
+      const meta = {
         ruleId: input.ruleId,
         rule: input.ruleName,
-        sequenceId: sequence.id,
-        sequence: sequence.name,
-        steps: stepsRun,
-      },
-    })
-    return { id: sequence.id, name: sequence.name, ran: true, stepsRun }
-  }
-
-  private async step(
-    action: NcRuleAction,
-    origin: NcRuleFireRef | undefined,
-    owner: string,
-  ): Promise<void> {
-    if (action.kind === 'wait') {
-      await this.sleep(action.seconds * 1000)
-      return
-    }
-    if (!this.deps.isDeviceScoped(action.cap)) {
-      throw new Error(
-        `rule action refused: "${action.cap}" is not a device capability — only devices can be actuated`,
-      )
-    }
-    const { target, actionId } = normalizeNcCapTarget(action)
-    const deviceIds = await this.devicesOf(target, actionId, owner)
-    // An empty answer was logged by the resolver (with the action and the
-    // sequence); the step ran on nobody, which is not a failure.
-    for (const deviceId of deviceIds) {
-      await this.deps.actuate({
-        deviceId,
-        cap: action.cap,
-        method: action.method,
-        args: action.args ?? {},
-        ...(origin !== undefined ? { origin } : {}),
+        actionId,
+        runId: result.runId,
+        outcome: result.outcome,
+        ...(result.message === undefined ? {} : { message: result.message }),
+      }
+      if (ran) {
+        this.logger.info('rule action ran', { tags: { deviceId: input.deviceId }, meta })
+      } else {
+        // A refusal (already running, throttled) or a failed run is on the
+        // record with its reason — it is work the rule asked for and did not get.
+        this.logger.warn('rule action did not run', { tags: { deviceId: input.deviceId }, meta })
+      }
+      return { actionId, ran, outcome: result.outcome }
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err.message : String(err)
+      this.logger.warn('rule action could not start', {
+        tags: { deviceId: input.deviceId },
+        meta: { ruleId: input.ruleId, rule: input.ruleName, actionId, error },
       })
+      return { actionId, ran: false, error }
     }
-  }
-
-  private async devicesOf(
-    target: ActionTarget,
-    actionId: string | undefined,
-    owner: string,
-  ): Promise<readonly number[]> {
-    if (target.kind === 'devices') return target.ids
-    if (target.kind === 'var') {
-      throw new Error('rule action refused: a sequence has no variables to resolve a target from')
-    }
-    if (this.deps.resolveTarget === undefined) {
-      throw new Error('rule action refused: this node cannot resolve a domain target')
-    }
-    return (await this.deps.resolveTarget(target, actionId, owner)).deviceIds
-  }
-}
-
-/** Force-enable a shared sequence for a button tap (always runs, still throttled). */
-export function asForcedSequence(sequence: NcSharedSequence): ResolvedRunSequence {
-  return {
-    id: sequence.id,
-    name: sequence.name,
-    enabled: true,
-    ...(sequence.minDelaySec !== undefined ? { minDelaySec: sequence.minDelaySec } : {}),
-    actions: sequence.actions,
-    throttle: true,
   }
 }

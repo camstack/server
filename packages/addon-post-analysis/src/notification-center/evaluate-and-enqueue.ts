@@ -3,6 +3,7 @@
  * The class method forwards private state through {@link EvaluateAndEnqueueHost}.
  */
 
+import type { ActionStepsOf } from './snooze-exempt.js'
 import { unresolvableButtons } from './action-buttons.js'
 import type { NcAlarmMatchPhase, NcAlarmPushVerdict } from './alarm/alarm-push-policy.js'
 import { intrusionDeviceOf } from './alarm/alarm-push-policy.js'
@@ -36,7 +37,7 @@ import {
 } from './rule-engine.js'
 import { NcRuleStore } from './rule-store.js'
 import { NcSceneStateCache } from './scene-state-cache.js'
-import { NcSequenceStore } from './sequence-store.js'
+import type { NcActionCatalog } from './rule-actions.js'
 import { NcStillShelf } from './still-shelf.js'
 import { NcZoneOwnershipCache } from './zone-owner-cache.js'
 import type { IScopedLogger, NcRule, NcRuleTarget } from '@camstack/types'
@@ -88,6 +89,7 @@ export function groupedRuleOutcome(
 }
 
 export interface EvaluateAndEnqueueHost {
+  readonly actionStepsOf: ActionStepsOf
   alarmPushVerdict(rule: NcRule, deviceId: number, phase: NcAlarmMatchPhase): NcAlarmPushVerdict
   buildEntries(
     rule: NcRule,
@@ -144,7 +146,7 @@ export interface EvaluateAndEnqueueHost {
   ): NcAlarmMatchPhase
   readonly sceneGateReported: Map<string, string>
   readonly sceneStates: NcSceneStateCache
-  readonly sequences: NcSequenceStore
+  readonly actionCatalog: NcActionCatalog
   readonly stills: NcStillShelf | null
   readonly zoneOwners: NcZoneOwnershipCache
 }
@@ -280,6 +282,7 @@ export async function evaluateAndEnqueue(
       host.deviceStateLookup((id) => host.deviceStates.get(id)),
       (id) => host.zoneOwners.get(id),
       (sceneId) => host.sceneStates.get(sceneId),
+      { actionStepsOf: host.actionStepsOf },
     )
     if (!evaluation.matched) {
       host.reportRuleNonMatch(rule, subject, kind, evaluation, outcomes, rejections)
@@ -452,12 +455,12 @@ export async function evaluateAndEnqueue(
           : {}),
       },
     })
-    // A button naming a sequence the rule does not have never reaches a
+    // A button naming an Action that does not exist never reaches a
     // phone. Say so ONCE per fire rather than never: the operator authored
     // it, and a button that silently does not appear is unreportable.
-    const unresolvable = unresolvableButtons(rule.actions, host.sequences.knownIds())
+    const unresolvable = unresolvableButtons(rule.actions, host.actionCatalog.knownIds())
     if (unresolvable.length > 0) {
-      host.logger.warn('rule buttons reference sequences that do not exist — not sent', {
+      host.logger.warn('rule buttons reference Actions that do not exist — not sent', {
         tags: { deviceId: subject.deviceId },
         meta: { ruleId: rule.id, rule: rule.name, buttons: unresolvable.join(', ') },
       })

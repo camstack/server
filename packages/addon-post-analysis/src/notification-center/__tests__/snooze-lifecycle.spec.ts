@@ -21,6 +21,7 @@ import type { NcSendInput, NcTargetRef } from '../dispatcher.js'
 import { ncPruneWindowsPort, makeNcRecords } from './support/nc-test-deps.js'
 import { NotificationCenter } from '../index.js'
 import { makeFakeDeviceSettings } from './fake-device-settings.js'
+import { capAction, makeFakeActions } from './fake-actions.js'
 
 const T0 = 1_800_000_000_000
 const BOB = { userId: 'user-bob', isAdmin: false }
@@ -72,6 +73,7 @@ function makeHarness(): Harness {
     listObjectEventsSince: async (since) => events.filter((e) => e.timestamp >= since),
     listRecentTracks: async () => [],
     now: () => now,
+    actions: makeFakeActions(() => {}),
     // Fast enough to drive the drain (and with it the digest tick) from a test.
     drainIntervalMs: 5,
     ruleReloadIntervalMs: 3_600_000,
@@ -301,10 +303,7 @@ describe('a window never silences an ALARM rule', () => {
       name: 'intruder — arm',
       actions: {
         onTrigger: [
-          {
-            kind: 'do',
-            action: { kind: 'cap', deviceId: 900, cap: 'alarm-panel', method: 'trigger' },
-          },
+          capAction(900, 'alarm-panel', 'trigger'),
         ],
       },
     })

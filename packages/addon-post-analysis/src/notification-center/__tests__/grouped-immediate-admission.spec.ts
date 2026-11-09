@@ -26,6 +26,7 @@ import {
   T0,
   track,
 } from './grouped-harness.js'
+import { capAction } from './fake-actions.js'
 
 const IDENTITY_B = { stepId: 'face-recognizer', decidedAt: 1, identityId: 'id-b' } as const
 
@@ -144,10 +145,7 @@ describe('grouped admission (D692 Task 8)', () => {
         conditions: { classes: ['person'], identities: ['id-a'] },
         actions: {
           onTrigger: [
-            {
-              kind: 'do',
-              action: { kind: 'cap', deviceId: 42, cap: 'switch', method: 'turnOn' },
-            },
+            capAction(42, 'switch', 'turnOn'),
           ],
         },
       }),

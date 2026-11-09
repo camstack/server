@@ -32,6 +32,7 @@ import type {
   TrackEnvelope,
   ZoneCrossing,
 } from '@camstack/types'
+import type { ActionStepsOf } from './snooze-exempt.js'
 import {
   consumableLowPercentOf,
   isScheduleActive,
@@ -1110,6 +1111,12 @@ export interface NcEvaluateOptions {
    * order are unchanged; only these ids stop short-circuiting (D692 §3.2).
    */
   readonly relax?: readonly NcRecognitionCondition[]
+  /**
+   * The steps of an Action by id. A rule is an alarm rule when an Action it runs presses the
+   * alarm panel, and the opening-edge filter asks exactly that — so the evaluation needs the
+   * same lookup the snooze exemption uses.
+   */
+  readonly actionStepsOf?: ActionStepsOf
 }
 
 /**
@@ -1349,16 +1356,14 @@ export function ruleHasRecognitionScope(rule: NcEvaluableRule): boolean {
  */
 export function ruleBelongsToAlarm(
   rule: NcEvaluableRule,
-  sequenceActionsOf?: (
-    sequenceId: string,
-  ) => readonly import('@camstack/types').NcRuleAction[] | undefined,
+  actionStepsOf?: ActionStepsOf,
 ): boolean {
   // The predicate itself lives in `@camstack/types` (`alarm-membership.ts`) so
   // the editors' D640 warning asks the very same question.
   return sharedRuleBelongsToAlarm({
     conditions: rule.conditions,
     ...(rule.actions !== undefined ? { actions: rule.actions } : {}),
-    ...(sequenceActionsOf !== undefined ? { sequenceActionsOf } : {}),
+    ...(actionStepsOf !== undefined ? { actionStepsOf } : {}),
   })
 }
 
@@ -1678,7 +1683,7 @@ export function evaluateRule(
   if (
     subject.kind === 'device-event' &&
     isRefusedAlarmEdge(subject.sensorEdge) &&
-    ruleBelongsToAlarm(rule)
+    ruleBelongsToAlarm(rule, options?.actionStepsOf)
   ) {
     return fail('sensorEdge')
   }

@@ -19,7 +19,7 @@ import { NC_SYSTEM_DEVICE_ID } from './rule-engine.js'
 import { NcRuleStore } from './rule-store.js'
 import { NcDetectionVerdictLedger } from './detection-verdict-ledger.js'
 import { NcSceneStateCache } from './scene-state-cache.js'
-import { NcSequenceStore } from './sequence-store.js'
+import type { NcActionCatalog } from './rule-actions.js'
 import { NcSnoozeStore } from './snooze-store.js'
 import { NcStateSummaryService } from './state-summary/state-summary-service.js'
 import { NcStillShelf } from './still-shelf.js'
@@ -79,7 +79,7 @@ export interface BootLifecycleHost {
   readonly rules: NcRuleStore
   readonly sceneStates: NcSceneStateCache
   seedCooldowns(rows: readonly NcOutboxEntry[] | null): void
-  readonly sequences: NcSequenceStore
+  readonly actionCatalog: NcActionCatalog
   readonly snoozes: NcSnoozeStore
   readonly stateSummary: NcStateSummaryService
   readonly stills: NcStillShelf | null
@@ -160,7 +160,7 @@ export async function start(
   // 200 s on the hub while the same code does 0.7/10/3 s elsewhere. In
   // parallel they cost the worst single read. Each stays individually
   // timed; a rejection still fails start(), exactly as the serial chain did.
-  await timed('sequences', () => host.sequences.load())
+  await timed('actions', () => host.actionCatalog.load())
   await Promise.all([
     timed('texts', () => host.reloadTexts()),
     timed('rules', () => host.rules.load()),

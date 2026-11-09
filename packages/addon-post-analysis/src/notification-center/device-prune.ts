@@ -32,17 +32,14 @@
  */
 
 import type {
-  NcActionBinding,
   NcAlarmSettings,
   NcConditions,
   NcRule,
-  NcRuleActions,
   NcRulePatch,
   NcRuleTarget,
   TimelapseRule,
   TimelapseRulePatch,
 } from '@camstack/types'
-import { normalizeNcAction, normalizeNcCapTarget } from '@camstack/types'
 import type { NcSummaryRule, NcSummaryRulePatch } from './summary/summary-rule.js'
 
 /** Which store a pruned rule lives in. */
@@ -59,17 +56,11 @@ export type NcPruneSubjectKind = 'device' | 'target'
  *  - `kept` — it was the last one, and the rule was ALREADY off. Recorded so an
  *    operator who later re-enables it is not overridden, and so no banner
  *    claims we switched off something the operator had switched off.
- *  - `sequence-removed` — the step was the sequence's last device step, so the
- *    sequence (and every button naming it) went with it.
- *  - `binding-removed` — an inline `do` step on the rule's onTrigger /
- *    onTriggerOff actuated the device; that one binding went, the rule stays.
  */
 export type NcPruneOutcome =
   | 'removed'
   | 'kept-disabled'
   | 'kept'
-  | 'sequence-removed'
-  | 'binding-removed'
 
 /** Who asked: the `DeviceUnregistered` event, or the reload-tick reconcile. */
 export type NcPruneSource = 'event' | 'reconcile'
@@ -277,95 +268,6 @@ function pruneRuleConditions(
   return changed ? next : null
 }
 
-/** A Do binding whose device is dead is dropped; sequence refs are left alone
- *  (shared sequences are pruned on their own store, not per-rule). */
-function pruneHookBindings(
-  bindings: readonly NcActionBinding[] | undefined,
-  field: string,
-  isDead: (id: number) => boolean,
-  notes: NcRuleNotes,
-): { readonly next: readonly NcActionBinding[] | undefined; readonly changed: boolean } {
-  if (bindings === undefined) return { next: undefined, changed: false }
-  const kept: NcActionBinding[] = []
-  let changed = false
-  for (const binding of bindings) {
-    if (binding.kind === 'sequence') {
-      kept.push(binding)
-      continue
-    }
-    if (binding.action.kind === 'cap') {
-      const { target } = normalizeNcCapTarget(binding.action)
-      if (target.kind === 'devices') {
-        const dead = target.ids.filter(isDead)
-        if (dead.length === target.ids.length) {
-          changed = true
-          notes.removed(field, deviceSubjects(dead), 'binding-removed')
-          continue
-        }
-        if (dead.length > 0) {
-          changed = true
-          notes.removed(field, deviceSubjects(dead), 'binding-removed')
-          const alive = target.ids.filter((id) => !isDead(id))
-          kept.push({
-            ...binding,
-            action: normalizeNcAction({
-              ...binding.action,
-              deviceId: undefined,
-              target: { kind: 'devices', ids: alive },
-            }),
-          })
-          continue
-        }
-      }
-    }
-    kept.push(binding)
-  }
-  if (!changed) return { next: bindings, changed: false }
-  return { next: kept.length > 0 ? kept : undefined, changed: true }
-}
-
-/** The actions after a device prune — `null` when no binding moved. */
-function pruneRuleActions(
-  actions: NcRuleActions,
-  isDead: (id: number) => boolean,
-  notes: NcRuleNotes,
-): NcRuleActions | null {
-  const onActivation = pruneHookBindings(
-    actions.onActivation,
-    'actions.onActivation',
-    isDead,
-    notes,
-  )
-  const onDeactivation = pruneHookBindings(
-    actions.onDeactivation,
-    'actions.onDeactivation',
-    isDead,
-    notes,
-  )
-  const onTrigger = pruneHookBindings(actions.onTrigger, 'actions.onTrigger', isDead, notes)
-  const onTriggerOff = pruneHookBindings(
-    actions.onTriggerOff,
-    'actions.onTriggerOff',
-    isDead,
-    notes,
-  )
-  if (
-    !onActivation.changed &&
-    !onDeactivation.changed &&
-    !onTrigger.changed &&
-    !onTriggerOff.changed
-  ) {
-    return null
-  }
-  return {
-    ...(onActivation.next !== undefined ? { onActivation: [...onActivation.next] } : {}),
-    ...(onDeactivation.next !== undefined ? { onDeactivation: [...onDeactivation.next] } : {}),
-    ...(onTrigger.next !== undefined ? { onTrigger: [...onTrigger.next] } : {}),
-    ...(onTriggerOff.next !== undefined ? { onTriggerOff: [...onTriggerOff.next] } : {}),
-    ...(actions.buttons !== undefined ? { buttons: actions.buttons } : {}),
-  }
-}
-
 function planRuleDevices(
   rule: NcRule,
   isDead: (id: number) => boolean,
@@ -373,11 +275,9 @@ function planRuleDevices(
 ): NcRulePruneEdit | null {
   const notes = new NcRuleNotes('rule', rule.id, 'device', rule.enabled, guard)
   const conditions = pruneRuleConditions(rule.conditions, isDead, notes)
-  const actions = rule.actions !== undefined ? pruneRuleActions(rule.actions, isDead, notes) : null
   if (notes.notes.length === 0) return null
   const patch: NcRulePatch = {
     ...(conditions !== null ? { conditions } : {}),
-    ...(actions !== null ? { actions } : {}),
     ...(notes.disable ? { enabled: false } : {}),
   }
   return { ruleId: rule.id, patch, notes: notes.notes }
@@ -505,16 +405,6 @@ export function referencedDeviceIds(snapshot: NcPruneSnapshot): ReadonlySet<numb
     add(c.systemEvent?.deviceIds)
     if (c.deviceState !== undefined) ids.add(c.deviceState.deviceId)
     if (c.scene?.deviceId !== undefined) ids.add(c.scene.deviceId)
-    // An inline `do` cap step names its device on the rule; a shared sequence's
-    // steps live in the sequence store, not here.
-    for (const binding of [
-      ...(rule.actions?.onTrigger ?? []),
-      ...(rule.actions?.onTriggerOff ?? []),
-    ]) {
-      if (binding.kind !== 'do' || binding.action.kind !== 'cap') continue
-      const { target } = normalizeNcCapTarget(binding.action)
-      if (target.kind === 'devices') add(target.ids)
-    }
   }
   for (const rule of snapshot.timelapse) add(rule.deviceIds)
   for (const rule of snapshot.summary) add(rule.deviceIds)

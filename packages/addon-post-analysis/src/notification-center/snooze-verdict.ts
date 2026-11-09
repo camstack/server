@@ -15,9 +15,9 @@
  * say so.
  */
 
-import type { NcRuleAction, NcSnooze } from '@camstack/types'
+import type { NcSnooze } from '@camstack/types'
 import type { NcSnoozeGateInput } from './dispatcher.js'
-import { isSnoozeExempt, type SnoozeExemptRule } from './snooze-exempt.js'
+import { isSnoozeExempt, type ActionStepsOf, type SnoozeExemptRule } from './snooze-exempt.js'
 import type { SnoozeQuery } from './snooze-policy.js'
 
 export interface NcSnoozeVerdictDeps {
@@ -25,8 +25,8 @@ export interface NcSnoozeVerdictDeps {
   readonly activeFor: (query: SnoozeQuery) => NcSnooze | null
   /** The rule as it stands now — `null` when it is gone (never exempt then). */
   readonly ruleFor: (ruleId: string) => SnoozeExemptRule | null
-  /** Resolve shared-sequence steps so a sequence-ref alarm actuation is exempt. */
-  readonly sequenceActionsOf?: (sequenceId: string) => readonly NcRuleAction[] | undefined
+  /** Resolve an Action's steps so an Action that actuates the alarm panel is exempt. */
+  readonly actionStepsOf?: ActionStepsOf
 }
 
 /** No window covers the delivery. */
@@ -61,7 +61,7 @@ export function snoozeVerdict(
   })
   if (active === null) return { kind: 'clear' }
   const rule = deps.ruleFor(input.ruleId)
-  if (rule !== null && isSnoozeExempt(rule, deps.sequenceActionsOf)) {
+  if (rule !== null && isSnoozeExempt(rule, deps.actionStepsOf)) {
     return { kind: 'exempt', snooze: active }
   }
   return { kind: 'suppressed', snooze: active }

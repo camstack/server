@@ -39,6 +39,7 @@ import { NotificationCenter } from '../index.js'
 import { resolvePruneWindows } from '../prune-windows.js'
 import { type LoggedLine, makeLogRecorder } from './grouped-harness.js'
 import { makeFakeDeviceSettings } from './fake-device-settings.js'
+import { makeFakeActions } from './fake-actions.js'
 
 const T0 = Date.UTC(2026, 9, 7, 2, 32, 0)
 const PANEL_ID = TEST_PANEL_ID
@@ -142,7 +143,6 @@ async function makeHarness(): Promise<Harness> {
       })),
       { deviceId: CAM_STUDIO, type: DeviceType.Camera, name: 'Cam studio', isCamera: true },
     ],
-    isCapDeviceScoped: () => true,
     // DEFERRED like the real `ctx.api` call (3–27 ms on the hub): the press lands after
     // the evaluation that made it has moved on. A design that parks the source anywhere
     // between the match and this call is exposed by exactly this gap.
@@ -152,6 +152,14 @@ async function makeHarness(): Promise<Harness> {
       actuated += 1
       if (method === 'trigger') await cap().trigger({ deviceId: PANEL_ID })
     },
+    // A rule's Action reaches the panel the way the Actions cap does: it invokes the cap method
+    // on the device and forwards NO match, so the press is anonymous (D735 judges it so).
+    actions: makeFakeActions(async ({ cap: capName, method }) => {
+      await new Promise<void>((resolve) => setImmediate(resolve))
+      if (capName !== 'alarm-panel') return
+      actuated += 1
+      if (method === 'trigger') await cap().trigger({ deviceId: PANEL_ID })
+    }),
     drainIntervalMs: 3_600_000,
     ruleReloadIntervalMs: 3_600_000,
   })
@@ -295,43 +303,6 @@ describe('the 2026-10-07 02:32Z false alarm, replayed (D735)', () => {
     expect(suppressed.map((l) => l.tags['deviceId']).toSorted()).toEqual(
       [PORTA_PORCH, CAM_STUDIO].toSorted(),
     )
-  })
-
-  it('an ANONYMOUS rule-action press is refused while the arm excludes sensors (fail-closed)', async () => {
-    const h = await makeHarness()
-    // A rule's ACTIVATION binding presses the panel: no match, so no sensor to check.
-    const provider = h.center.buildProvider()
-    const caller = { userId: 'admin', isAdmin: true }
-    const { rule } = await provider.createRule({
-      caller,
-      rule: NcRuleInputSchema.parse({
-        name: 'Panico',
-        enabled: false,
-        delivery: 'immediate',
-        conditions: { classes: ['person'] },
-        targets: [{ targetId: 'tgt-phone' }],
-        actions: {
-          onActivation: [
-            {
-              kind: 'do',
-              action: {
-                kind: 'cap',
-                deviceId: PANEL_ID,
-                cap: 'alarm-panel',
-                method: 'trigger',
-                args: {},
-              },
-            },
-          ],
-        },
-      }),
-    })
-    await provider.setRuleEnabled({ ruleId: rule.id, enabled: true })
-    await h.settle()
-    expect(h.panel.currentState()).toBe('armed_night')
-    expect(h.actuated()).toBe(0)
-    const refused = h.lines.find((l) => l.msg.startsWith('alarm trigger REFUSED'))
-    expect(refused).toMatchObject({ level: 'error', tags: { deviceId: PANEL_ID } })
   })
 
   it('"ignored" is told only for a REAL move, and only when the mode notifies it (D735)', async () => {

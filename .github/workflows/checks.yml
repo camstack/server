@@ -327,6 +327,7 @@ jobs:
             scripts/check-device-name-in-sync.ts \
             scripts/check-nc-mirrors-in-sync.ts \
             scripts/check-nc-one-shot.ts \
+            scripts/check-nc-no-executor.ts \
             scripts/check-icon-catalog.ts \
             scripts/check-closure-shipped-deps.ts \
             scripts/check-runtime-deps-reachable-from-dist.ts \

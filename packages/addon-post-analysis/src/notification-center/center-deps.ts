@@ -28,6 +28,7 @@ import type { NcRecognitionOutlook, NcRecognitionOutlookQuery } from './grouped/
 import type { NcLinkedSnapshotState } from './linked-stills.js'
 import type { PruneWindows } from './prune-windows.js'
 import type { NcVerdictSourceMedia } from './action-token.js'
+import type { NcActionsPort } from './rule-actions.js'
 import type { NcRuleFireRef } from './rule-engine.js'
 import type { NcSceneObservation } from './scene-state-cache.js'
 import type { NcRunnerStateReads } from './state-summary/runner-recovery.js'
@@ -69,6 +70,22 @@ export type NcVerdictFrameOutcome =
       readonly reason: 'still-unavailable' | 'still-busy' | 'failed'
       readonly detail?: string
     }
+
+/**
+ * Invoke one device-capability method on a device.
+ *
+ * `origin` is the match a press descends from; only the alarm-panel press reads
+ * it, to attribute the trigger to the rule that caused it. A button-granted
+ * press carries none — an operator tapping "Arm" is not a rule match, and
+ * stamping it as one would attribute a photograph to a person's finger.
+ */
+export type NcActuator = (input: {
+  readonly deviceId: number
+  readonly cap: string
+  readonly method: string
+  readonly args: Readonly<Record<string, unknown>>
+  readonly origin?: NcRuleFireRef
+}) => Promise<void>
 
 /** What copying a verdict's training frame came to: it landed, or a NAMED reason it did not. */
 export type NcVerdictCopyOutcome =
@@ -293,18 +310,17 @@ export interface NotificationCenterDeps {
     deviceIds: readonly number[] | undefined,
   ) => Promise<ReadonlyMap<number, CameraOccupancySnapshot>>
   /**
-   * Invoke one device-capability method — the transport behind a rule's
-   * actions. Absent = a rule that declares actions still notifies.
+   * Invoke one device-capability method — the transport the alarm-panel
+   * buttons (arm, disarm, bypass) press through. A rule's own work is an
+   * Action ({@link actions}); this is not that path.
    */
-  readonly actuate?: import('./rule-actions.js').NcActuator
-  /** Whether a capability is device-scoped. The only boundary on what a rule
-   *  may actuate; see the cap file for why it is structural, not a list. */
-  readonly isCapDeviceScoped?: import('./rule-actions.js').NcCapScopeCheck
+  readonly actuate?: NcActuator
   /**
-   * The device registry, for a `domain` action target (D983). Absent = only a
-   * step naming its devices can run; a domain step is refused by name.
+   * The `actions` cap as the centre uses it (planning#473): the list its
+   * mirror is built from and `run`, the only way a rule or a button does
+   * anything. Absent = a rule that names Actions still notifies.
    */
-  readonly actionTargetDirectory?: import('@camstack/types').DeviceDirectory
+  readonly actions?: NcActionsPort
   /**
    * Build the externally-reachable callback URL for one button, or null when
    * no such URL exists (loopback-only install). Null means NO buttons rather

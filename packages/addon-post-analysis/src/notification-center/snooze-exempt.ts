@@ -14,11 +14,11 @@
  *
  *  - it is ABOUT the panel — `conditions.systemEvent.kinds` names one of the
  *    panel's three transitions ({@link NC_ALARM_SYSTEM_EVENT_KINDS});
- *  - or it ACTUATES the panel — a binding (Do or shared sequence) calls the
- *    `alarm-panel` cap (arm, disarm, trigger). That rule is what makes the
- *    alarm go off, and silencing its notification silences the escalation
- *    itself. Button-bound sequences count too — a tap arming the panel is
- *    exactly the case this protects.
+ *  - or it ACTUATES the panel — an Action it runs (on a hook edge or behind a
+ *    button) has a step that calls the `alarm-panel` cap (arm, disarm,
+ *    trigger). That rule is what makes the alarm go off, and silencing its
+ *    notification silences the escalation itself. Button-bound Actions count
+ *    too — a tap arming the panel is exactly the case this protects.
  *
  * A rule may still say "no snooze buttons on me" by authoring
  * `snoozeOptions: []`. That is an explicit override of the button surface and
@@ -34,10 +34,10 @@
  *     is absent proves nothing about a window created from the app.
  */
 
-import type { NcActionBinding, NcRule, NcRuleAction } from '@camstack/types'
+import type { ActionStep, NcRule } from '@camstack/types'
 import { NC_ALARM_SYSTEM_EVENT_KINDS } from '@camstack/types'
 
-/** The cap whose presence in a sequence makes the rule the alarm's trigger. */
+/** The cap whose presence in an Action makes the rule the alarm's trigger. */
 const ALARM_PANEL_CAP = 'alarm-panel'
 
 const ALARM_KINDS: ReadonlySet<string> = new Set(NC_ALARM_SYSTEM_EVENT_KINDS)
@@ -46,25 +46,21 @@ const ALARM_KINDS: ReadonlySet<string> = new Set(NC_ALARM_SYSTEM_EVENT_KINDS)
  *  patch, a test fixture) can ask the same question. */
 export type SnoozeExemptRule = Pick<NcRule, 'conditions' | 'actions'>
 
-export type SequenceActionsOf = (sequenceId: string) => readonly NcRuleAction[] | undefined
+/** The steps of an Action by id, from the centre's RAM mirror of the Actions list. */
+export type ActionStepsOf = (actionId: string) => readonly ActionStep[] | undefined
 
-function stepActuatesAlarm(step: NcRuleAction): boolean {
+function stepActuatesAlarm(step: ActionStep): boolean {
   return step.kind === 'cap' && step.cap === ALARM_PANEL_CAP
 }
 
-function bindingActuatesAlarm(
-  binding: NcActionBinding,
-  sequenceActionsOf: SequenceActionsOf | undefined,
-): boolean {
-  if (binding.kind === 'do') return stepActuatesAlarm(binding.action)
-  const steps = sequenceActionsOf?.(binding.sequenceId)
-  if (steps === undefined) return false
-  return steps.some(stepActuatesAlarm)
+function actionActuatesAlarm(actionId: string, actionStepsOf: ActionStepsOf | undefined): boolean {
+  const steps = actionStepsOf?.(actionId)
+  return steps !== undefined && steps.some(stepActuatesAlarm)
 }
 
 function actionsActuateAlarm(
   rule: SnoozeExemptRule,
-  sequenceActionsOf: SequenceActionsOf | undefined,
+  actionStepsOf: ActionStepsOf | undefined,
 ): boolean {
   const actions = rule.actions
   if (actions === undefined) return false
@@ -74,14 +70,13 @@ function actionsActuateAlarm(
     actions.onTrigger,
     actions.onTriggerOff,
   ]
-  for (const bindings of hooks) {
-    for (const binding of bindings ?? []) {
-      if (bindingActuatesAlarm(binding, sequenceActionsOf)) return true
+  for (const actionIds of hooks) {
+    for (const actionId of actionIds ?? []) {
+      if (actionActuatesAlarm(actionId, actionStepsOf)) return true
     }
   }
   for (const button of actions.buttons ?? []) {
-    const steps = sequenceActionsOf?.(button.sequenceId)
-    if (steps !== undefined && steps.some(stepActuatesAlarm)) return true
+    if (actionActuatesAlarm(button.actionId, actionStepsOf)) return true
   }
   return false
 }
@@ -90,19 +85,17 @@ function actionsActuateAlarm(
  * May a snooze window silence this rule?
  *
  * `true` = never. Deliberately answered from the rule alone (plus an optional
- * sequence lookup): the gate reads it on the delivery path, where a fallible
+ * Action lookup): the gate reads it on the delivery path, where a fallible
  * lookup would be a read that can DESTROY the exemption (D49) — and the
- * failure direction of this one is silencing an alarm. A missing sequence
- * lookup means sequence-ref bindings cannot prove exemption; Do bindings and
- * system-event kinds still can.
+ * failure direction of this one is silencing an alarm. The lookup is the
+ * centre's RAM mirror of the Actions list, kept across a failed refresh; an
+ * Action the mirror has never seen cannot prove exemption, system-event kinds
+ * still can.
  */
-export function isSnoozeExempt(
-  rule: SnoozeExemptRule,
-  sequenceActionsOf?: SequenceActionsOf,
-): boolean {
+export function isSnoozeExempt(rule: SnoozeExemptRule, actionStepsOf?: ActionStepsOf): boolean {
   const kinds = rule.conditions.systemEvent?.kinds ?? []
   for (const kind of kinds) {
     if (ALARM_KINDS.has(kind)) return true
   }
-  return actionsActuateAlarm(rule, sequenceActionsOf)
+  return actionsActuateAlarm(rule, actionStepsOf)
 }

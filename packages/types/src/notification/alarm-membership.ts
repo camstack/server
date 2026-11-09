@@ -10,18 +10,14 @@
  * fires, and the operator was never told. One predicate, so the engine and the
  * warning cannot disagree about which rules are the alarm.
  *
- * Structural inputs (conditions + the ENABLED on-match bindings), so the
+ * Structural inputs (conditions + the ENABLED on-match Action ids), so the
  * admin's form state and the engine's rule both answer without a cast.
- * Sequence bindings need {@link NcAlarmMembershipSubject.sequenceActionsOf} —
- * without it a sequence-ref cannot prove membership (fail closed for the
+ * An Action id needs {@link NcAlarmMembershipSubject.actionStepsOf} —
+ * without it an Action cannot prove membership (fail closed for the
  * opening-edge refusal: better a closing notification than a silent open).
  */
-import type {
-  NcActionBinding,
-  NcConditions,
-  NcRuleAction,
-  NcRuleActions,
-} from '../capabilities/notification-rules.cap.js'
+import type { ActionStep } from '../automation/recipe.js'
+import type { NcConditions, NcRuleActions } from '../capabilities/notification-rules.cap.js'
 
 const ARMED_WORD_PREFIX = 'armed_'
 const ALARM_PANEL_CAP = 'alarm-panel'
@@ -52,25 +48,17 @@ export interface NcAlarmMembershipSubject {
   /** The rule's actions block. Absent = no actuation. */
   readonly actions?: NcRuleActions
   /**
-   * Resolve a shared sequence's steps. Required when an `onTrigger` binding is
-   * a sequence ref — without it that binding cannot prove membership.
+   * Resolve an Action's steps. Required when the rule has an `onTrigger`
+   * Action — without it that Action cannot prove membership.
    */
-  readonly sequenceActionsOf?: (sequenceId: string) => readonly NcRuleAction[] | undefined
+  readonly actionStepsOf?: (actionId: string) => readonly ActionStep[] | undefined
 }
 
-function bindingPullsAlarmTrigger(
-  binding: NcActionBinding,
-  sequenceActionsOf: ((sequenceId: string) => readonly NcRuleAction[] | undefined) | undefined,
+function actionPullsAlarmTrigger(
+  actionId: string,
+  actionStepsOf: ((actionId: string) => readonly ActionStep[] | undefined) | undefined,
 ): boolean {
-  if (binding.kind === 'do') {
-    const action = binding.action
-    return (
-      action.kind === 'cap' &&
-      action.cap === ALARM_PANEL_CAP &&
-      action.method === ALARM_PANEL_TRIGGER_METHOD
-    )
-  }
-  const steps = sequenceActionsOf?.(binding.sequenceId)
+  const steps = actionStepsOf?.(actionId)
   if (steps === undefined) return false
   return steps.some(
     (step) =>
@@ -89,22 +77,22 @@ export function ruleGatedOnArmedState(rule: NcAlarmMembershipSubject): boolean {
 
 /**
  * A rule belongs to the alarm when its `deviceState` gate names ANY device's
- * `armed_*` word, or an on-match binding pulls the alarm panel's trigger
- * (D630). Button-only sequences do NOT count — they are not an automatic
+ * `armed_*` word, or an on-match Action pulls the alarm panel's trigger
+ * (D630). Button-only Actions do NOT count — they are not an automatic
  * escalation.
  */
 export function ruleBelongsToAlarm(rule: NcAlarmMembershipSubject): boolean {
   if (ruleGatedOnArmedState(rule)) return true
-  for (const binding of rule.actions?.onTrigger ?? []) {
-    if (bindingPullsAlarmTrigger(binding, rule.sequenceActionsOf)) return true
+  for (const actionId of rule.actions?.onTrigger ?? []) {
+    if (actionPullsAlarmTrigger(actionId, rule.actionStepsOf)) return true
   }
   return false
 }
 
 /**
  * A rule gated on `armed_*` auto-triggers the CamStack `alarm-panel` on match
- * — no `onTrigger` sequence required. Sirens are never part of this path.
- * An explicit `alarm-panel.trigger` binding without an armed gate stays
+ * — no `onTrigger` Action required. Sirens are never part of this path.
+ * An explicit `alarm-panel.trigger` step without an armed gate stays
  * explicit actuation only ({@link ruleBelongsToAlarm}).
  */
 export function ruleAutoTriggersAlarm(rule: NcAlarmMembershipSubject): boolean {

@@ -21,6 +21,7 @@ import type {
   NcTestResult,
 } from '@camstack/types'
 import type { NotificationCenterDeps } from './index.js'
+import type { ActionStepsOf } from './snooze-exempt.js'
 
 // The outbox window's default lives in `PRUNE_WINDOW_DEFAULT_DAYS` with every
 // other one. It used to be a local 7-day constant; a second default over one
@@ -30,6 +31,7 @@ const TEST_RULE_MAX_RESULTS = 200
 
 export interface DryRunHost {
   readonly deps: NotificationCenterDeps
+  readonly actionStepsOf: ActionStepsOf
   deviceStateLookup(read: (deviceId: number) => string | undefined): NcDeviceStateLookup
   readonly deviceStates: NcDeviceStateCache
   readonly logger: IScopedLogger
@@ -145,7 +147,9 @@ export async function dryRun(
   const results: NcTestResult[] = []
   for (const subject of subjects.sort((a, b) => b.timestamp - a.timestamp)) {
     if (results.length >= TEST_RULE_MAX_RESULTS) break
-    const evaluation = evaluateRule(rule, subject, lookup, zoneLookup, sceneLookup)
+    const evaluation = evaluateRule(rule, subject, lookup, zoneLookup, sceneLookup, {
+      actionStepsOf: host.actionStepsOf,
+    })
     results.push({
       recordId: subject.recordId,
       // dryRun only builds object/track/package subjects (audio, occupancy,
@@ -237,7 +241,9 @@ export async function occupancyDryRun(
       })
       continue
     }
-    const evaluation = evaluateRule(rule, probe.subject, lookup, zoneLookup, sceneLookup)
+    const evaluation = evaluateRule(rule, probe.subject, lookup, zoneLookup, sceneLookup, {
+      actionStepsOf: host.actionStepsOf,
+    })
     results.push({
       ...common,
       recordId: probe.subject.recordId,

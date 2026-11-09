@@ -21,6 +21,7 @@ import type { NcSendInput, NcTargetRef } from '../dispatcher.js'
 import { ncPruneWindowsPort, makeNcRecords } from './support/nc-test-deps.js'
 import { NotificationCenter } from '../index.js'
 import { makeFakeDeviceSettings } from './fake-device-settings.js'
+import { capAction, makeFakeActions } from './fake-actions.js'
 
 const T0 = 1_800_000_000_000
 const BOB = { userId: 'user-bob', isAdmin: false }
@@ -76,10 +77,7 @@ function makeHarness(): Harness {
     drainIntervalMs: 5,
     ruleReloadIntervalMs: 3_600_000,
     // The two deps that make a rule able to MOVE something.
-    actuate: async (input) => {
-      actuations.push({ deviceId: input.deviceId, cap: input.cap, method: input.method })
-    },
-    isCapDeviceScoped: () => true,
+    actions: makeFakeActions((a) => actuations.push(a)),
   })
   return {
     center,
@@ -114,10 +112,7 @@ async function makeActuatingRule(h: Harness): Promise<string> {
       throttle: { cooldownSec: 0, scope: 'rule-device' },
       actions: {
         onTrigger: [
-          {
-            kind: 'do',
-            action: { kind: 'cap', deviceId: 42, cap: 'switch', method: 'turnOn' },
-          },
+          capAction(42, 'switch', 'turnOn'),
         ],
       },
     }),

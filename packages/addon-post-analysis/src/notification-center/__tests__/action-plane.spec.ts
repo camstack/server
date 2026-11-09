@@ -11,7 +11,7 @@ import type { ServerResponse } from 'node:http'
 import type { IScopedLogger } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { NcActionPlane } from '../action-plane.js'
-import { NcActionTokenRegistry, type NcSequenceGrant, signActionToken } from '../action-token.js'
+import { NcActionTokenRegistry, type NcRunActionGrant, signActionToken } from '../action-token.js'
 
 const SECRET = 'per-install'
 const NOW = 1_000
@@ -49,12 +49,12 @@ function fakeLogger(): IScopedLogger {
   } as unknown as IScopedLogger
 }
 
-const grant = (over: Partial<NcSequenceGrant> = {}): NcSequenceGrant => ({
-  kind: 'sequence',
+const grant = (over: Partial<NcRunActionGrant> = {}): NcRunActionGrant => ({
+  kind: 'run-action',
   id: 'tok1',
   ruleId: 'r1',
   ruleName: 'Gate at night',
-  sequenceId: 'open-gate-id',
+  runActionId: 'internal:open-gate',
   deviceId: 101,
   actionId: 'open',
   expiresAt: NOW + 60_000,
@@ -118,7 +118,7 @@ describe('a forged or stale link learns nothing', () => {
 })
 
 describe('exactly once', () => {
-  it('runs the sequence on the first tap', async () => {
+  it('runs the Action on the first tap', async () => {
     const run = vi.fn(() => Promise.resolve())
     const { plane } = setup(run)
     const { res, captured } = fakeRes()
@@ -142,7 +142,7 @@ describe('exactly once', () => {
     expect(captured.body).toContain('Already done')
   })
 
-  it('does not hand the token back when the sequence FAILS', async () => {
+  it('does not hand the token back when the Action FAILS', async () => {
     // Retrying a half-run "unlock, wait, open" executes an intent nobody
     // expressed. The spend is the point.
     const run = vi.fn(() => Promise.reject(new Error('gate offline')))
@@ -228,7 +228,7 @@ describe('a BACKGROUND call is answered in the shape it can use', () => {
     expect(captured.body).toContain('<!doctype')
   })
 
-  it('describes an ALARM grant as an alarm, not as a sequence', async () => {
+  it('describes an ALARM grant as an alarm, not as an Action', async () => {
     const registry = new NcActionTokenRegistry(() => NOW)
     registry.put({
       kind: 'alarm',

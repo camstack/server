@@ -79,35 +79,17 @@ describe('planDevicePrune — devicesExclude', () => {
     expect(ids.has(DEAD)).toBe(true)
   })
 
-  it('the reconcile looks for inline `do` cap steps, on and off, without throwing', () => {
-    // Bindings are `sequence` refs or inline `do` steps — never a sequence
-    // body with `actions` (iterating one threw on every reconcile).
+  it('an Action id on a hook is not a device reference', () => {
     const ids = referencedDeviceIds(
       snapshot({
         rules: [
           rule('r1', {
-            actions: {
-              onTrigger: [
-                { kind: 'sequence', sequenceId: 'shared' },
-                {
-                  kind: 'do',
-                  action: { kind: 'cap', deviceId: DEAD, cap: 'switch', method: 'on' },
-                },
-              ],
-              onTriggerOff: [
-                {
-                  kind: 'do',
-                  action: { kind: 'cap', deviceId: LIVE, cap: 'switch', method: 'off' },
-                },
-                { kind: 'do', action: { kind: 'wait', seconds: 1 } },
-              ],
-            },
+            actions: { onTrigger: ['internal:lights'], onTriggerOff: ['internal:lights-off'] },
           }),
         ],
       }),
     )
-    expect(ids.has(DEAD)).toBe(true)
-    expect(ids.has(LIVE)).toBe(true)
+    expect(ids.size).toBe(0)
   })
 
   it('is idempotent: planning against the applied plan plans nothing', () => {

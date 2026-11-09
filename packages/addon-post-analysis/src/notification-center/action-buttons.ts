@@ -4,7 +4,7 @@
  * Pure, and separate from both the dispatcher and the token registry, because
  * the interesting rules are all about REFUSING to mint:
  *
- *  - A button naming a sequence that is not in {@link knownSequenceIds}
+ *  - A button naming an Action that is not in {@link knownActionIds}
  *    produces nothing. The alternative is a live token whose run always fails
  *    — a button that looks armed and is not, which is worse than an absent one.
  *  - A button is dropped when there is no externally-reachable base URL. A
@@ -22,24 +22,23 @@
 import type {
   AlarmArmMode,
   NcRule,
-  NcRuleAction,
   NcRuleActions,
   NotificationAction,
 } from '@camstack/types'
 import { NC_DEFAULT_SNOOZE_MINUTES, NC_SNOOZE_MAX_MINUTES } from '@camstack/types'
-import { isSnoozeExempt } from './snooze-exempt.js'
+import { isSnoozeExempt, type ActionStepsOf } from './snooze-exempt.js'
 
 /** Mint one callback URL for a button, and register what it may run. */
 export type NcActionUrlMinter = (input: {
-  readonly sequenceId: string
+  readonly runActionId: string
   readonly actionId: string
 }) => string
 
 export interface BuildActionButtonsInput {
   /** The rule's `actions` block. Absent = no buttons, which is the common case. */
   readonly actions: NcRuleActions | undefined
-  /** Shared sequence ids that currently exist in the store. */
-  readonly knownSequenceIds: ReadonlySet<string>
+  /** Ids of the Actions that currently exist (the centre's mirror of the Actions list). */
+  readonly knownActionIds: ReadonlySet<string>
   readonly mintUrl: NcActionUrlMinter
 }
 
@@ -56,18 +55,18 @@ export function buildActionButtons(input: BuildActionButtonsInput): readonly Not
   const buttons = actions.buttons ?? []
   if (buttons.length === 0) return []
 
-  const known = input.knownSequenceIds
+  const known = input.knownActionIds
   const seen = new Set<string>()
   const out: NotificationAction[] = []
   for (const button of buttons) {
-    if (!known.has(button.sequenceId)) continue
+    if (!known.has(button.actionId)) continue
     if (seen.has(button.id)) continue
     seen.add(button.id)
     out.push({
       id: button.id,
       label: button.label,
-      url: input.mintUrl({ sequenceId: button.sequenceId, actionId: button.id }),
-      // Background POST — same as snooze/arm. A sequence that opens a browser
+      url: input.mintUrl({ runActionId: button.actionId, actionId: button.id }),
+      // Background POST — same as snooze/arm. An Action that opens a browser
       // tab (Zentik NAVIGATE) costs more attention than the notification itself;
       // Zentik supports BACKGROUND_CALL and every other NC button already uses it.
       mode: 'background',
@@ -79,7 +78,7 @@ export function buildActionButtons(input: BuildActionButtonsInput): readonly Not
 }
 
 /**
- * Which of a rule's buttons name a sequence that is not known.
+ * Which of a rule's buttons name an Action that is not known.
  *
  * Exported so the caller can LOG the drop. A button silently missing from a
  * notification is the exact shape of failure this repo keeps paying for — the
@@ -87,14 +86,14 @@ export function buildActionButtons(input: BuildActionButtonsInput): readonly Not
  */
 export function unresolvableButtons(
   actions: NcRuleActions | undefined,
-  knownSequenceIds: ReadonlySet<string>,
+  knownActionIds: ReadonlySet<string>,
 ): readonly string[] {
   if (actions === undefined) return []
   const buttons = actions.buttons ?? []
   if (buttons.length === 0) return []
   return buttons
-    .filter((b) => !knownSequenceIds.has(b.sequenceId))
-    .map((b) => `${b.id}→${b.sequenceId}`)
+    .filter((b) => !knownActionIds.has(b.actionId))
+    .map((b) => `${b.id}→${b.actionId}`)
 }
 
 // ── Snooze buttons ──────────────────────────────────────────────────
@@ -126,8 +125,8 @@ export interface BuildSnoozeButtonsInput {
   /** How a choice is worded, in the hub's language. Injected so this stays
    *  pure and the text catalog stays the one place words live. */
   readonly label: (minutes: number) => string
-  /** Resolve shared-sequence steps so a sequence-ref alarm actuation is exempt. */
-  readonly sequenceActionsOf?: (sequenceId: string) => readonly NcRuleAction[] | undefined
+  /** Resolve an Action's steps so an Action that actuates the alarm panel is exempt. */
+  readonly actionStepsOf?: ActionStepsOf
 }
 
 /**
@@ -170,7 +169,7 @@ export function snoozeChoices(options: readonly number[] | undefined): readonly 
  * attention than the notification did.
  */
 export function buildSnoozeButtons(input: BuildSnoozeButtonsInput): readonly NotificationAction[] {
-  if (isSnoozeExempt(input.rule, input.sequenceActionsOf)) return []
+  if (isSnoozeExempt(input.rule, input.actionStepsOf)) return []
   const choices = snoozeChoices(input.rule.snoozeOptions)
   return choices.map((minutes) => {
     const actionId = snoozeButtonId(minutes)

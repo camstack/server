@@ -77,16 +77,18 @@ describe('the two refusals', () => {
   it('a rule that ARMS the panel gets none either', () => {
     expect(
       buildSnoozeButtons({
-        rule: rule({
-          actions: {
-            onTrigger: [
-              {
-                kind: 'do',
-                action: { kind: 'cap', deviceId: 900, cap: 'alarm-panel', method: 'trigger' },
-              },
-            ],
-          },
-        }),
+        rule: rule({ actions: { onTrigger: ['internal:panel'] } }),
+        actionStepsOf: (id) =>
+          id === 'internal:panel'
+            ? [
+                {
+                  kind: 'cap',
+                  target: { kind: 'devices', ids: [900] },
+                  cap: 'alarm-panel',
+                  method: 'trigger',
+                },
+              ]
+            : undefined,
         mintUrl,
         label,
       }),

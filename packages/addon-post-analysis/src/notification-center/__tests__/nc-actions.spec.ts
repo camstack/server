@@ -378,7 +378,7 @@ describe('nc rule actions — admin-only rule fields', () => {
   })
 
   const ACTIONS = {
-    onTrigger: [{ kind: 'do' as const, action: { kind: 'wait' as const, seconds: 1 } }],
+    onTrigger: ['internal:any-action'],
   }
 
   it('nc.createRule refuses actions from a non-admin', async () => {
@@ -447,7 +447,7 @@ describe('nc rule actions — admin-only rule fields', () => {
       ctx.handlers['nc.updateRule']({ ruleId: 'r1', patch: { targetUsers: ['u2', 'u3'] } }, U1),
     ).rejects.toThrow("forbidden: 'targetUsers' requires admin")
     const changedActions = {
-      onTrigger: [{ kind: 'do' as const, action: { kind: 'wait' as const, seconds: 2 } }],
+      onTrigger: ['internal:other-action'],
     }
     await expect(
       ctx.handlers['nc.updateRule']({ ruleId: 'r1', patch: { actions: changedActions } }, U1),

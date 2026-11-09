@@ -4,6 +4,10 @@ import {
   type NcTemplateMigrationPorts,
 } from './device-template-var.js'
 import {
+  migrateRuleActionsToActions,
+  type NcRuleActionsMigrationPorts,
+} from './rule-actions-to-actions.js'
+import {
   migrateSystemEventDeliveryModes,
   type NcSystemEventDeliveryPorts,
 } from './system-event-delivery-modes.js'
@@ -22,6 +26,7 @@ export type { NcTemplateMigrationPorts } from './device-template-var.js'
 export type { NcSystemEventDeliveryPorts } from './system-event-delivery-modes.js'
 export type { EnabledSplitPorts } from './split-enabled-key.js'
 export type { RetiredFaceKeysPorts } from './retired-face-keys.js'
+export type { MigratedAction, NcMigrationActionsPort, NcRuleActionsMigrationPorts } from './rule-actions-to-actions.js'
 export type { RetrainVerdictFramePorts, StagedRetrainTrack } from './retrain-verdict-frames.js'
 
 /** Everything the `pipeline-analytics` catalogue reads and writes. */
@@ -29,12 +34,15 @@ export type PipelineAnalyticsMigrationPorts = NcTemplateMigrationPorts &
   EnabledSplitPorts &
   RetiredFaceKeysPorts &
   RetrainVerdictFramePorts &
-  NcSystemEventDeliveryPorts
+  NcSystemEventDeliveryPorts &
+  NcRuleActionsMigrationPorts
 
 export const SYSTEM_EVENT_DELIVERY_MODES_MIGRATION_ID =
   'pipeline-analytics/2026-11-07-system-event-delivery-modes'
 export const SPLIT_ENABLED_KEY_MIGRATION_ID = 'pipeline-analytics/2026-11-05-split-enabled-key'
 export const RETIRE_FACE_KEYS_MIGRATION_ID = 'pipeline-analytics/2026-11-07-retire-face-keys'
+export const RULE_ACTIONS_TO_ACTIONS_MIGRATION_ID =
+  'pipeline-analytics/2026-11-09-rule-actions-to-actions'
 export const RETRAIN_VERDICT_FRAMES_MIGRATION_ID =
   'pipeline-analytics/2026-11-07-retrain-verdict-frames'
 
@@ -130,5 +138,23 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<PipelineAnalyticsMigratio
       fixtureMark: 'the rule name and the kinds the migration does not collapse',
     },
     procedure: migrateSystemEventDeliveryModes,
+  },
+  {
+    meta: {
+      id: RULE_ACTIONS_TO_ACTIONS_MIGRATION_ID,
+      owner: PIPELINE_ANALYTICS_ID,
+      level: 'addon-state',
+      seq: 6,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'cluster',
+      // The store drops a rule's old-shape actions on read (the rule still notifies), so a pass left for the next boot loses nothing.
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'Make an Action of every shared sequence and of the inline steps of every notification rule, and rebind the rules and buttons to Action ids; the sequence rows are deleted only after a fresh read confirms it',
+      fixtureMark: 'the rule name and the button label the migration does not know',
+    },
+    procedure: migrateRuleActionsToActions,
   },
 ]

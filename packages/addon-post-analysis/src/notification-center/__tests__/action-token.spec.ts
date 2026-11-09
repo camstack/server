@@ -8,19 +8,19 @@ import { describe, expect, it } from 'vitest'
 import {
   buildActionUrl,
   NcActionTokenRegistry,
-  type NcSequenceGrant,
+  type NcRunActionGrant,
   signActionToken,
   verifyActionSignature,
 } from '../action-token.js'
 
 const SECRET = 'a-per-install-secret'
 
-const grant = (over: Partial<NcSequenceGrant> = {}): NcSequenceGrant => ({
-  kind: 'sequence',
+const grant = (over: Partial<NcRunActionGrant> = {}): NcRunActionGrant => ({
+  kind: 'run-action',
   id: 'tok1',
   ruleId: 'r1',
   ruleName: 'Gate at night',
-  sequenceId: 'open-gate-id',
+  runActionId: 'internal:open-gate',
   deviceId: 101,
   actionId: 'open',
   expiresAt: 10_000,

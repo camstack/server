@@ -42,6 +42,7 @@ import {
   NcTestEventInputSchema,
 } from '../test-event.js'
 import { makeFakeDeviceSettings } from './fake-device-settings.js'
+import { capAction } from './fake-actions.js'
 
 const CALLER = { userId: 'admin-42', isAdmin: true }
 const NOW = 1_000_000
@@ -463,10 +464,7 @@ describe('the side gates behave as the operator asked', () => {
       rule: makeRuleInput({
         actions: {
           onTrigger: [
-            {
-              kind: 'do',
-              action: { kind: 'cap', cap: 'cover', method: 'open', deviceId: 104 },
-            },
+            capAction(104, 'cover', 'open'),
           ],
         },
       }),

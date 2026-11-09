@@ -25,14 +25,7 @@ const WINDOW: NcSnooze = {
 const PLAIN: SnoozeExemptRule = { conditions: { classes: ['dog'] }, actions: {} }
 const ALARM: SnoozeExemptRule = {
   conditions: { classes: ['dog'] },
-  actions: {
-    onTrigger: [
-      {
-        kind: 'do',
-        action: { kind: 'cap', deviceId: 7, cap: 'alarm-panel', method: 'trigger' },
-      },
-    ],
-  },
+  actions: { onTrigger: ['internal:panel'] },
 }
 
 function ask(className: string, ownerUserId: string | undefined, rule: SnoozeExemptRule | null) {
@@ -46,7 +39,21 @@ function ask(className: string, ownerUserId: string | undefined, rule: SnoozeExe
       className,
       at: 1_000,
     },
-    { activeFor: (q) => activeSnoozeFor([WINDOW], q), ruleFor: () => rule },
+    {
+      activeFor: (q) => activeSnoozeFor([WINDOW], q),
+      ruleFor: () => rule,
+      actionStepsOf: (id) =>
+        id === 'internal:panel'
+          ? [
+              {
+                kind: 'cap',
+                target: { kind: 'devices', ids: [7] },
+                cap: 'alarm-panel',
+                method: 'trigger',
+              },
+            ]
+          : undefined,
+    },
   )
 }
 

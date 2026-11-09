@@ -28,6 +28,7 @@ import {
   T0,
   track,
 } from './grouped-harness.js'
+import { capAction } from './fake-actions.js'
 
 const PERSON_A_META = { stepId: 'face-recognizer', decidedAt: 1, identityId: 'id-a' } as const
 const IDENTITY_RULE = { classes: ['person'], identities: ['id-a'] }
@@ -518,10 +519,7 @@ describe('grouped close pass (D692 Task 9a)', () => {
         rule({
           actions: {
             onTrigger: [
-              {
-                kind: 'do',
-                action: { kind: 'cap', deviceId: 7, cap: 'alarm-panel', method: 'trigger' },
-              },
+              capAction(7, 'alarm-panel', 'trigger'),
             ],
           },
         }),

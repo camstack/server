@@ -11,6 +11,7 @@
  * Lifted from `track-grouping.spec.ts`, which D692 (T17) deleted along with the D143 burst.
  */
 
+import { makeFakeActions } from './fake-actions.js'
 import type { InMemoryRecords } from '@camstack/types'
 import { makeNcRecords, ncTable } from './support/nc-test-deps.js'
 import type { IScopedLogger, NcRuleInput, ObjectEvent, Track } from '@camstack/types'
@@ -212,7 +213,7 @@ export function makeHarness(options: HarnessOptions = {}): Harness {
     actuate: async (input) => {
       actuations.push({ deviceId: input.deviceId, method: input.method })
     },
-    isCapDeviceScoped: () => true,
+    actions: makeFakeActions((a) => actuations.push({ deviceId: a.deviceId, method: a.method })),
   })
   return {
     center,

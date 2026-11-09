@@ -29,7 +29,7 @@ import type {
   TimelapseRule,
   Track,
 } from '@camstack/types'
-import { ActionTargetResolver, DETECTION_MACRO_CLASSES, ruleGroupingApplies } from '@camstack/types'
+import { DETECTION_MACRO_CLASSES, ruleGroupingApplies } from '@camstack/types'
 import {
   actionTtlMs,
   type NcActionGrant,
@@ -38,7 +38,7 @@ import {
   type NcAlarmArmAnywayGrant,
   type NcAlarmBypassInputGrant,
   type NcAlarmGrant,
-  type NcSequenceGrant,
+  type NcRunActionGrant,
   type NcServerUpdateGrant,
   type NcDetectionVerdictGrant,
   type NcSnoozeGrant,
@@ -79,7 +79,6 @@ import { NcDeviceDirectory, type NcDeviceIdentity } from './device-directory.js'
 import { listNcDeviceData } from './device-data-removal.js'
 import { NcDeviceMuteStore } from './device-mute-store.js'
 import type { DurableKindDeps } from '../durable/durable-wiring.js'
-import { NcSequenceStore } from './sequence-store.js'
 import { NcDetectionVerdictLedger } from './detection-verdict-ledger.js'
 import { NcPruneLedger, type NcPruneRecord } from './device-prune-ledger.js'
 import { NcDeletedSubjectPruner } from './device-prune-runner.js'
@@ -144,7 +143,8 @@ import {
   type NcOutboxEnqueueInput,
   type NcOutboxEntry,
 } from './outbox.js'
-import { NcRuleActionRunner } from './rule-actions.js'
+import { NcActionCatalog, NcRuleActionRunner, type NcActionsPort } from './rule-actions.js'
+import type { ActionStepsOf } from './snooze-exempt.js'
 import { NcRuleAiAnalyst } from './rule-ai-analyst.js'
 import { NcRuleAiStore } from './rule-ai-store.js'
 import {
@@ -233,7 +233,7 @@ import {
   applyGrantedDetectionVerdict as runApplyGrantedDetectionVerdict,
   announceServerUpdate as runAnnounceServerUpdate,
   announceAddonUpdate as runAnnounceAddonUpdate,
-  runGrantedSequence as runRunGrantedSequence,
+  runGrantedRunAction as runRunGrantedRunAction,
 } from './granted-actions.js'
 import type { GrantedActionsHost } from './granted-actions.js'
 import { buildProvider as runBuildProvider } from './rules-provider.js'
@@ -415,6 +415,9 @@ export type {
 
 /** Bound on the sampled "departed track alias resolution failed" memo
  *  (D683 × D691) — the alias-resolution call sites' own shape. */
+/** Stand-in for a node with no Actions cap wired: the mirror stays empty and nothing runs. */
+const NO_ACTIONS: Pick<NcActionsPort, 'list'> = { list: async () => [] }
+
 const NC_DEPARTED_ALIAS_FAILURE_MEMO_MAX = 256
 
 /**
@@ -511,8 +514,8 @@ export class NotificationCenter implements NcEventConsumer {
   private readonly snoozes: NcSnoozeStore
   /** The permanent per-camera notification off switch — see `device-mute-store.ts`. */
   private readonly deviceMutes: NcDeviceMuteStore
-  /** Shared action sequences rules and buttons bind to by id. */
-  private readonly sequences: NcSequenceStore
+  /** RAM mirror of the Actions list: which Actions exist, their variables and steps. */
+  private readonly actionCatalog: NcActionCatalog
   /** The durable episode rows behind the sustained-state alerts. */
   private readonly alertStore: NcAlertStore
   /** Battery band → notification, and the reminder sweep. */
@@ -549,10 +552,8 @@ export class NotificationCenter implements NcEventConsumer {
    *  reload tick, read with no I/O inside the engine — see
    *  `zone-owner-cache.ts` / `zone-ownership.ts`. */
   private readonly zoneOwners: NcZoneOwnershipCache
-  /** Runs a matched rule's action sequences. Null when no actuator is wired. */
+  /** Runs a matched rule's Actions through `actions.run`. Null when the Actions cap is not wired. */
   private readonly actionRunner: NcRuleActionRunner | null
-  /** Domain action targets read from the registry (D983); null without a directory. */
-  private readonly actionTargets: ActionTargetResolver | null
   /** Grants behind the tap-through buttons. In-process and single-use — read
    *  `action-token.ts` before assuming anything about what a tap proves. */
   private readonly actionTokens = new NcActionTokenRegistry()
@@ -789,11 +790,11 @@ export class NotificationCenter implements NcEventConsumer {
       get rules() {
         return self.rules
       },
-      get sequenceActionsOf() {
-        return self.sequenceActionsOf
+      get actionStepsOf() {
+        return self.actionStepsOf
       },
-      get sequences() {
-        return self.sequences
+      get actionCatalog() {
+        return self.actionCatalog
       },
       snoozeButtonLabel: (minutes) => self.snoozeButtonLabel(minutes),
       get texts() {
@@ -846,12 +847,9 @@ export class NotificationCenter implements NcEventConsumer {
       get rules() {
         return self.rules
       },
-      runGrantedSequence: (grant) => self.runGrantedSequence(grant),
-      get sequenceActionsOf() {
-        return self.sequenceActionsOf
-      },
-      get sequences() {
-        return self.sequences
+      runGrantedRunAction: (grant) => self.runGrantedRunAction(grant),
+      get actionStepsOf() {
+        return self.actionStepsOf
       },
       get snoozes() {
         return self.snoozes
@@ -922,8 +920,8 @@ export class NotificationCenter implements NcEventConsumer {
   ): Promise<void> {
     return runAnnounceAddonUpdate(this.grantedActionsHost(), grant, sentence, vars, report, count)
   }
-  private async runGrantedSequence(grant: NcSequenceGrant): Promise<void> {
-    return runRunGrantedSequence(this.grantedActionsHost(), grant)
+  private async runGrantedRunAction(grant: NcRunActionGrant): Promise<void> {
+    return runRunGrantedRunAction(this.grantedActionsHost(), grant)
   }
 
   constructor(deps: NotificationCenterDeps) {
@@ -1045,25 +1043,14 @@ export class NotificationCenter implements NcEventConsumer {
         delayMs: deps.nodeLivenessHoldoffMs ?? (process.env.VITEST ? 0 : NODE_LIVENESS_HOLDOFF_MS),
       },
     )
-    const targets =
-      deps.actionTargetDirectory !== undefined
-        ? new ActionTargetResolver(deps.actionTargetDirectory, this.logger.child('actions'))
-        : null
-    this.actionTargets = targets
+    this.actionCatalog = new NcActionCatalog(
+      deps.actions ?? NO_ACTIONS,
+      this.logger.child('actions'),
+      deps.now,
+    )
     this.actionRunner =
-      deps.actuate !== undefined && deps.isCapDeviceScoped !== undefined
-        ? new NcRuleActionRunner({
-            logger: this.logger.child('actions'),
-            actuate: (input) => this.actuateWithAttribution(input),
-            ...(targets !== null
-              ? {
-                  resolveTarget: (target, actionId, owner) =>
-                    targets.resolve(target, actionId, {}, { actionId, owner }),
-                }
-              : {}),
-            isDeviceScoped: deps.isCapDeviceScoped,
-            ...(deps.now !== undefined ? { now: deps.now } : {}),
-          })
+      deps.actions !== undefined
+        ? new NcRuleActionRunner(deps.actions, this.actionCatalog, this.logger.child('actions'))
         : null
     this.deviceStates = new NcDeviceStateCache({
       logger: this.logger.child('device-state'),
@@ -1105,7 +1092,6 @@ export class NotificationCenter implements NcEventConsumer {
       logger: this.logger.child('device-mute'),
       ...(deps.now !== undefined ? { now: deps.now } : {}),
     })
-    this.sequences = NcSequenceStore.of(deps.records, this.logger.child('sequences'), deps.now)
     this.alertStore = new NcAlertStore({
       ...durableStore,
       logger: this.logger.child('device-alerts'),
@@ -1585,8 +1571,8 @@ export class NotificationCenter implements NcEventConsumer {
         return self.sceneStates
       },
       seedCooldowns: (rows) => self.seedCooldowns(rows),
-      get sequences() {
-        return self.sequences
+      get actionCatalog() {
+        return self.actionCatalog
       },
       get snoozes() {
         return self.snoozes
@@ -2320,11 +2306,6 @@ export class NotificationCenter implements NcEventConsumer {
     }
   }
 
-  /** The device registry changed: a cached domain action target is stale (D983). */
-  invalidateActionTargets(): void {
-    this.actionTargets?.invalidate()
-  }
-
   onSystemEvent(event: SystemEvent): void {
     return runOnSystemEvent(this.systemEventsHost(), event)
   }
@@ -2339,6 +2320,7 @@ export class NotificationCenter implements NcEventConsumer {
       get actionRunner() {
         return self.actionRunner
       },
+      refreshActions: () => self.actionCatalog.load(),
       alarmConfig: () => self.alarmConfig(),
       alarmSensors: (input) => self.alarmSensors(input),
       cancelSnooze: (snoozeId, caller) => self.cancelSnooze(snoozeId, caller),
@@ -2366,9 +2348,6 @@ export class NotificationCenter implements NcEventConsumer {
       },
       get rules() {
         return self.rules
-      },
-      get sequences() {
-        return self.sequences
       },
       setAlarmConfig: (patch) => self.setAlarmConfig(patch),
       get snoozes() {
@@ -2815,6 +2794,9 @@ export class NotificationCenter implements NcEventConsumer {
   private ruleActionDispatchHost(): RuleActionDispatchHost {
     const self = this
     return {
+      get actionStepsOf() {
+        return self.actionStepsOf
+      },
       get actionRunner() {
         return self.actionRunner
       },
@@ -2852,9 +2834,6 @@ export class NotificationCenter implements NcEventConsumer {
       },
       get sceneStates() {
         return self.sceneStates
-      },
-      get sequences() {
-        return self.sequences
       },
       get zoneOwners() {
         return self.zoneOwners
@@ -3071,6 +3050,9 @@ export class NotificationCenter implements NcEventConsumer {
   private evaluateAndEnqueueHost(): EvaluateAndEnqueueHost {
     const self = this
     return {
+      get actionStepsOf() {
+        return self.actionStepsOf
+      },
       alarmPushVerdict: (rule, deviceId, phase) => self.alarmPushVerdict(rule, deviceId, phase),
       buildEntries: (rule, subject, kind, matchedOn, userTargets, origin, cooldown, extras) =>
         self.buildEntries(rule, subject, kind, matchedOn, userTargets, origin, cooldown, extras),
@@ -3118,8 +3100,8 @@ export class NotificationCenter implements NcEventConsumer {
       get sceneStates() {
         return self.sceneStates
       },
-      get sequences() {
-        return self.sequences
+      get actionCatalog() {
+        return self.actionCatalog
       },
       get stills() {
         return self.stills
@@ -3172,10 +3154,7 @@ export class NotificationCenter implements NcEventConsumer {
     return runDeviceIdForRuleActions(rule)
   }
 
-  private sequenceActionsOf = (
-    sequenceId: string,
-  ): readonly import('@camstack/types').NcRuleAction[] | undefined =>
-    this.sequences.get(sequenceId)?.actions
+  private actionStepsOf: ActionStepsOf = (actionId) => this.actionCatalog.stepsOf(actionId)
 
   private runRuleActions(
     rule: NcRule,
@@ -3364,8 +3343,8 @@ export class NotificationCenter implements NcEventConsumer {
       get rules() {
         return self.rules
       },
-      get sequenceActionsOf() {
-        return self.sequenceActionsOf
+      get actionStepsOf() {
+        return self.actionStepsOf
       },
       snoozeDecision: (input) => self.snoozeDecision(input),
       get snoozes() {
@@ -3602,6 +3581,9 @@ export class NotificationCenter implements NcEventConsumer {
   private dryRunHost(): DryRunHost {
     const self = this
     return {
+      get actionStepsOf() {
+        return self.actionStepsOf
+      },
       get deps() {
         return self.deps
       },

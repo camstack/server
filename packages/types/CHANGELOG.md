@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A notification rule or button now runs existing Actions by id; the rule's own action steps and shared sequences are gone
 - Renaming a composed device keeps the new name after a restart.
 - Renaming a composed device keeps the new name after a restart, whether the rename was made on the device page or in the composition editor.
 - A device type can declare which child it stands for; a heat pump stands for itself, so its hero stays its own
@@ -62,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A calendar names the integration-instances record that owns it (calendar-source CalendarInfo.instanceId, passed through the calendars listing)
 - Remote: an infrared source may leave its emitter out (the remote's default one is used), the power mode setting is gone, and the colour keys have one set of roles
+
 ## [1.2.531] - 2026-11-08
 
 ### Changed

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Notification sequence hooks removed (the notification centre runs Actions)
 - A heat pump keeps its own name and is the suggested device; a climate circuit is not treated as its primary child
 
 ## [1.2.413] - 2026-11-09
@@ -47,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The account sign-in field no longer polls a claim action; it shows a paste hint under the sign-in button.
+
 ## [1.2.409] - 2026-11-08
 
 ### Changed

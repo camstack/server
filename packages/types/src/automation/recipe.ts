@@ -15,9 +15,8 @@
  *    (instants) and state leaves (durations). It replaces the flat trigger list
  *    plus the separate condition tree; the firing rule is in that file and in
  *    ADR "one tree".
- *  - **Actions** — `NcRuleActionSchema`'s two steps, plus the `{kind:'code'}`
- *    fragment of §3.2.2. See {@link AutomationActionSchema} for the ONE place
- *    this had to diverge from "verbatim", and why.
+ *  - **Actions** — the `wait` and `cap` steps, plus the `{kind:'code'}`
+ *    fragment of §3.2.2. See {@link AutomationActionSchema}.
  *
  * A recipe stored in the old shape (`triggers` + `conditions`) still LOADS:
  * {@link AutomationRecipeSchema} (the parse-anywhere schema) converts it on parse. Nothing writes it.
@@ -40,22 +39,14 @@ export type { QuantityValue }
 export type { ActionTarget }
 
 /**
- * One action step.
+ * One action step: `wait`, or a `cap` call.
  *
- * `wait` and `cap` are `NcRuleActionSchema`'s two members, kept structurally
- * identical so `NcRuleActionRunner` runs them unchanged — its device-scope
- * check, stop-at-first-failure and per-sequence throttle are the whole reason
- * to reuse it, and none of them are re-implemented here.
- *
- * **The one divergence, and it is forced.** `NcRuleActionSchema.cap.deviceId` is
- * a literal `z.number().int()`, and the NC runner's own `RunSequencesInput`
- * documents its subject device as *"for the log tag, never for routing"*. So an
- * NC action can never target the device that triggered it — which is fine for
- * the NC (its rules already scope to a device) and fatal for an automation
- * ("sound the siren of the camera that saw the person"). `deviceId` therefore
- * also accepts `{ $var }`, resolved from the run's `vars` bag BEFORE the runner
- * is called. The runner still receives a number and is untouched; the
- * resolution is the recipe's job, not the runner's.
+ * A cap step's target is who it acts on (D983: `devices`, a `domain`, or a
+ * `{ $var }` resolved from the run's variables); the legacy `deviceId` is still
+ * READ, never written. The step runner (`runSteps`) owns the device-scope
+ * check, the stop-at-first-failure and the variable substitution, once, for
+ * every caller — automations, Actions, and the notification centre, which runs
+ * only Actions (planning#473).
  */
 export const AutomationWaitStepSchema = z.object({
   kind: z.literal('wait'),

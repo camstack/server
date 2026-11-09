@@ -6,7 +6,9 @@ import {
   subjectFromSensorEvent,
   subjectFromUnownedSensorEvent,
 } from '../rule-engine.js'
+import { capAction, fakeActionStepsOf } from './fake-actions.js'
 
+const STEPS = { actionStepsOf: fakeActionStepsOf }
 const PANEL = 900
 const WINDOW = 3243
 const CAMERA = 101
@@ -39,10 +41,7 @@ function triggering(onMatch: boolean) {
     actions: onMatch
       ? {
           onTrigger: [
-            {
-              kind: 'do',
-              action: { kind: 'cap', cap: 'alarm-panel', method: 'trigger', deviceId: PANEL },
-            },
+            capAction(PANEL, 'alarm-panel', 'trigger'),
           ],
         }
       : {
@@ -51,7 +50,7 @@ function triggering(onMatch: boolean) {
             {
               id: 'siren',
               label: 'Siren',
-              sequenceId: 's-siren',
+              actionId: 'internal:siren',
             },
           ],
         },
@@ -61,7 +60,7 @@ const triggersPanel = triggering(true)
 const chime = rule({ conditions: { devices: [WINDOW] } })
 
 const judge = (r: ReturnType<typeof rule>, kind: string, value: Record<string, unknown>) =>
-  evaluateRule(r, subjectFromSensorEvent(event(kind, value)), lookup)
+  evaluateRule(r, subjectFromSensorEvent(event(kind, value)), lookup, undefined, undefined, STEPS)
 
 describe('an alarm rule fires on the opening edge only', () => {
   it('a window opening while armed matches', () => {
@@ -80,7 +79,7 @@ describe('an alarm rule fires on the opening edge only', () => {
   })
 
   it('a DISABLED trigger sequence pulls no trigger — the rule is not the alarm', () => {
-    expect(ruleBelongsToAlarm(triggering(false))).toBe(false)
+    expect(ruleBelongsToAlarm(triggering(false), fakeActionStepsOf)).toBe(false)
     expect(judge(triggering(false), 'contact', { entryOpen: false }).matched).toBe(true)
   })
 
@@ -113,8 +112,8 @@ describe('an alarm rule fires on the opening edge only', () => {
       id === PANEL ? ['triggered', 'armed_away'] : undefined
     const closing = subjectFromSensorEvent(event('contact', { entryOpen: false }))
     const opening = subjectFromSensorEvent(event('contact', { entryOpen: true }))
-    expect(evaluateRule(gatedOnAway, closing, incident).failedCondition).toBe('sensorEdge')
-    expect(evaluateRule(gatedOnAway, opening, incident).matched).toBe(true)
+    expect(evaluateRule(gatedOnAway, closing, incident, undefined, undefined, STEPS).failedCondition).toBe('sensorEdge')
+    expect(evaluateRule(gatedOnAway, opening, incident, undefined, undefined, STEPS).matched).toBe(true)
   })
 
   it('every camera row of one change gets the same answer, and so does an unlinked sensor', () => {
@@ -122,10 +121,10 @@ describe('an alarm rule fires on the opening edge only', () => {
     const unlinked = subjectFromUnownedSensorEvent(event('contact', { entryOpen: false }), [])
     expect(onCamera.sensorEdge).toBe('closing')
     expect(unlinked.sensorEdge).toBe('closing')
-    expect(evaluateRule(gatedOnAway, onCamera, lookup).failedCondition).toBe('sensorEdge')
-    expect(evaluateRule(gatedOnAway, unlinked, lookup).failedCondition).toBe('sensorEdge')
+    expect(evaluateRule(gatedOnAway, onCamera, lookup, undefined, undefined, STEPS).failedCondition).toBe('sensorEdge')
+    expect(evaluateRule(gatedOnAway, unlinked, lookup, undefined, undefined, STEPS).failedCondition).toBe('sensorEdge')
     const opening = subjectFromUnownedSensorEvent(event('contact', { entryOpen: true }), [])
-    expect(evaluateRule(gatedOnAway, opening, lookup).matched).toBe(true)
+    expect(evaluateRule(gatedOnAway, opening, lookup, undefined, undefined, STEPS).matched).toBe(true)
   })
 
   // Task 7b review: the edge gate ran BEFORE `deviceState`, so a closing on a

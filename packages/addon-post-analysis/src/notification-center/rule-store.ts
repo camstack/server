@@ -59,6 +59,7 @@ import {
   stripStoredKeys,
 } from './rule-retired-fields.js'
 import { ncRecordKinds, type RuleBody } from './record-kinds.js'
+import { withoutLegacyActions } from './rule-legacy-actions.js'
 
 /**
  * @durable class=config owner=pipeline-analytics
@@ -104,9 +105,13 @@ function parseStoredRule(
   onProjection?: NcProjectionSink,
   onGroupingRepair?: NcGroupingRepairSink,
   onClassWidening?: NcClassWideningSink,
+  onLegacyActions?: (ruleId: string) => void,
 ): NcStoredRuleParse {
-  const { candidate, projection, groupingRepair } = projectRawStoredRule(raw)
-  const parsed = NcRuleSchema.safeParse({ ...(candidate as object), id })
+  const projected = projectRawStoredRule(raw)
+  const { projection, groupingRepair } = projected
+  const legacy = withoutLegacyActions(projected.candidate)
+  if (legacy.dropped) onLegacyActions?.(id)
+  const parsed = NcRuleSchema.safeParse({ ...(legacy.candidate as object), id })
   if (!parsed.success) {
     const issue = parsed.error.issues[0]
     const reason =
@@ -239,6 +244,7 @@ export class NcRuleStore {
    * Bounded by the rule set: it is keyed by rule id and emptied on every load.
    */
   private readonly pendingProjections = new Map<string, NcProjectedRule>()
+  private readonly legacyActionsLogged = new Set<string>()
   /** Rules whose projection was already logged in this process (D692 §9) — once each. */
   private readonly projectionLogged = new Set<string>()
   /** Rules whose out-of-range `groupingSec` repair was already logged — once each. */
@@ -299,6 +305,7 @@ export class NcRuleStore {
           },
           (ruleId, repair) => this.logGroupingRepair(ruleId, repair),
           (ruleId, before, after) => this.logClassWidening(ruleId, before, after),
+          (ruleId) => this.logLegacyActions(ruleId),
         )
         if (parsed.ok)
           this.logDeliveryNormalised(row.id, row.data['systemEventDelivery'], parsed.rule)
@@ -368,6 +375,16 @@ export class NcRuleStore {
     this.logger.info('system rule delivery read in the modes shape', {
       meta: { ruleId, rule: rule.name, delivery: rule.systemEventDelivery },
     })
+  }
+
+  /** Say, once per process per rule, that its pre-Actions `actions` block waits for the migration. */
+  private logLegacyActions(ruleId: string): void {
+    if (this.legacyActionsLogged.has(ruleId)) return
+    this.legacyActionsLogged.add(ruleId)
+    this.logger.warn(
+      'rule carries rule actions in the pre-Actions shape — it notifies, its actions wait for the migration',
+      { meta: { ruleId } },
+    )
   }
 
   /** Say, once per process per rule, that an out-of-range stored `groupingSec` was repaired. */

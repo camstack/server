@@ -133,26 +133,15 @@ describe('planDevicePrune — ordinary rules', () => {
   })
 })
 
-describe('planDevicePrune — action sequences', () => {
-  const step = (deviceId: number) => ({
-    kind: 'cap' as const,
-    deviceId,
-    cap: 'switch',
-    method: 'turnOn',
-  })
-
-  it('removes a Do binding on a deleted device and keeps sequence refs + buttons', () => {
+describe('planDevicePrune — rule Actions', () => {
+  it('leaves a rule that only names Actions alone: the Actions own their device steps', () => {
     const plan = planDevicePrune(
       snapshot({
         rules: [
           rule('r1', {
             actions: {
-              onTrigger: [
-                { kind: 'do', action: step(LIVE) },
-                { kind: 'do', action: step(DEAD) },
-                { kind: 'sequence', sequenceId: 'shared-lights' },
-              ],
-              buttons: [{ id: 'b1', label: 'Lights', sequenceId: 'shared-lights' }],
+              onTrigger: ['internal:lights'],
+              buttons: [{ id: 'b1', label: 'Lights', actionId: 'internal:lights' }],
             },
           }),
         ],
@@ -160,38 +149,7 @@ describe('planDevicePrune — action sequences', () => {
       new Set([DEAD]),
       NOTHING_RECORDED,
     )
-    const actions = plan.rules[0]?.patch.actions
-    expect(actions?.onTrigger).toEqual([
-      { kind: 'do', action: step(LIVE) },
-      { kind: 'sequence', sequenceId: 'shared-lights' },
-    ])
-    expect(actions?.buttons).toEqual([{ id: 'b1', label: 'Lights', sequenceId: 'shared-lights' }])
-    expect(plan.rules[0]?.patch.enabled).toBeUndefined()
-  })
-
-  it('drops a Do binding when its only device is gone', () => {
-    const plan = planDevicePrune(
-      snapshot({
-        rules: [
-          rule('r1', {
-            actions: {
-              onTrigger: [
-                { kind: 'do', action: step(DEAD) },
-                { kind: 'do', action: step(LIVE) },
-              ],
-              buttons: [{ id: 'b2', label: 'Lights', sequenceId: 'shared-lights' }],
-            },
-          }),
-        ],
-      }),
-      new Set([DEAD]),
-      NOTHING_RECORDED,
-    )
-    const actions = plan.rules[0]?.patch.actions
-    expect(actions?.onTrigger).toEqual([{ kind: 'do', action: step(LIVE) }])
-    expect(actions?.buttons?.map((b) => b.id)).toEqual(['b2'])
-    expect(plan.rules[0]?.notes[0]).toMatchObject({ outcome: 'binding-removed' })
-    expect(plan.rules[0]?.patch.enabled).toBeUndefined()
+    expect(plan.rules).toEqual([])
   })
 })
 

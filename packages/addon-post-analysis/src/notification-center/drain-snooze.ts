@@ -4,6 +4,7 @@
  */
 
 import { shouldReleaseCooldown } from './confirm-policy.js'
+import type { ActionStepsOf } from './snooze-exempt.js'
 import type { NcCooldownRelease, NcSnoozeGateInput } from './dispatcher.js'
 import { NcDispatcher } from './dispatcher.js'
 import type { NcIncomingEvent } from './event-intake.js'
@@ -161,9 +162,7 @@ export interface DrainSnoozeHost {
     input: NcSnoozeGateInput,
   ): Promise<void>
   readonly rules: NcRuleStore
-  readonly sequenceActionsOf: (
-    sequenceId: string,
-  ) => readonly import('@camstack/types').NcRuleAction[] | undefined
+  readonly actionStepsOf: ActionStepsOf
   snoozeDecision(input: NcSnoozeGateInput): NcSnoozeVerdict
   readonly snoozes: NcSnoozeStore
   readonly texts: NcTextCatalog
@@ -394,7 +393,7 @@ export function snoozeDecision(host: DrainSnoozeHost, input: NcSnoozeGateInput):
   const verdict = snoozeVerdict(input, {
     activeFor: (query) => host.snoozes.activeFor(query),
     ruleFor: (ruleId) => host.rules.get(ruleId),
-    sequenceActionsOf: host.sequenceActionsOf,
+    actionStepsOf: host.actionStepsOf,
   })
   if (verdict.kind === 'exempt') {
     // An ALARM rule is never silenced, whatever window covers it. The button

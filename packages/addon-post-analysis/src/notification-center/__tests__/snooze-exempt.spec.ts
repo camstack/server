@@ -2,9 +2,9 @@
  * An alarm rule can never be snoozed, and nobody has to remember to say so.
  */
 
-import type { NcRule } from '@camstack/types'
+import type { ActionStep, NcRule } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { isSnoozeExempt, type SnoozeExemptRule } from '../snooze-exempt.js'
+import { type ActionStepsOf, isSnoozeExempt, type SnoozeExemptRule } from '../snooze-exempt.js'
 
 function rule(over: Partial<Pick<NcRule, 'conditions' | 'actions'>> = {}): SnoozeExemptRule {
   return { conditions: {}, ...over }
@@ -33,55 +33,50 @@ describe('a rule ABOUT the panel is exempt', () => {
   })
 })
 
-describe('a rule that ACTUATES the panel is exempt', () => {
-  it('exempts a Do binding that calls alarm-panel', () => {
+const PANEL_STEP: ActionStep = {
+  kind: 'cap',
+  target: { kind: 'devices', ids: [900] },
+  cap: 'alarm-panel',
+  method: 'trigger',
+}
+const SWITCH_STEP: ActionStep = {
+  kind: 'cap',
+  target: { kind: 'devices', ids: [12] },
+  cap: 'switch',
+  method: 'turnOn',
+}
+
+/** The centre's mirror of the Actions list, as the gate reads it. */
+const STEPS_OF: ActionStepsOf = (id) =>
+  id === 'internal:panel' ? [PANEL_STEP] : id === 'internal:switch' ? [SWITCH_STEP] : undefined
+
+describe('a rule that RUNS an Action actuating the panel is exempt', () => {
+  it('exempts a hook that runs an Action calling alarm-panel', () => {
+    expect(
+      isSnoozeExempt(rule({ actions: { onTrigger: ['internal:panel'] } }), STEPS_OF),
+    ).toBe(true)
+  })
+
+  it('exempts a BUTTON-ONLY Action via the resolver', () => {
     expect(
       isSnoozeExempt(
-        rule({
-          actions: {
-            onTrigger: [
-              {
-                kind: 'do',
-                action: { kind: 'cap', deviceId: 900, cap: 'alarm-panel', method: 'trigger' },
-              },
-            ],
-          },
-        }),
+        rule({ actions: { buttons: [{ id: 'arm', label: 'Arma', actionId: 'internal:panel' }] } }),
+        STEPS_OF,
       ),
     ).toBe(true)
   })
 
-  it('exempts a BUTTON-ONLY sequence via the resolver', () => {
+  it('does NOT exempt a rule whose Action actuates something else', () => {
     expect(
-      isSnoozeExempt(
-        rule({
-          actions: {
-            buttons: [{ id: 'arm', label: 'Arma', sequenceId: 's-arm' }],
-          },
-        }),
-        (id) =>
-          id === 's-arm'
-            ? [{ kind: 'cap', deviceId: 900, cap: 'alarm-panel', method: 'arm' }]
-            : undefined,
-      ),
-    ).toBe(true)
-  })
-
-  it('does NOT exempt a rule that actuates something else', () => {
-    expect(
-      isSnoozeExempt(
-        rule({
-          actions: {
-            onTrigger: [
-              {
-                kind: 'do',
-                action: { kind: 'cap', deviceId: 12, cap: 'switch', method: 'turnOn' },
-              },
-            ],
-          },
-        }),
-      ),
+      isSnoozeExempt(rule({ actions: { onTrigger: ['internal:switch'] } }), STEPS_OF),
     ).toBe(false)
+  })
+
+  it('an Action the mirror has never seen cannot prove the exemption', () => {
+    expect(isSnoozeExempt(rule({ actions: { onTrigger: ['internal:unknown'] } }), STEPS_OF)).toBe(
+      false,
+    )
+    expect(isSnoozeExempt(rule({ actions: { onTrigger: ['internal:panel'] } }))).toBe(false)
   })
 })
 

@@ -4,6 +4,7 @@
  */
 
 import type { NcAlarmButtonKind, NcAlarmBypassableInput } from './action-buttons.js'
+import type { ActionStepsOf } from './snooze-exempt.js'
 import { verdictButtonRefusal, verdictButtonSpecs } from './detection-verdict-buttons.js'
 import { buildActionButtons, buildAlarmButtons, buildSnoozeButtons } from './action-buttons.js'
 import type { NcActionGrant, NcVerdictValue } from './action-token.js'
@@ -11,9 +12,8 @@ import { NcActionTokenRegistry, actionTtlMs } from './action-token.js'
 import { addonUpdateButtonRefusal, buildAddonUpdateButtons } from './addon-update-buttons.js'
 import { intrusionDeviceOf } from './alarm/alarm-push-policy.js'
 import type { NcMintButtonsInput, NcOutboxSystemEvent } from './dispatcher.js'
-import { NcRuleActionRunner } from './rule-actions.js'
+import { NcRuleActionRunner, type NcActionCatalog } from './rule-actions.js'
 import { NcRuleStore } from './rule-store.js'
-import { NcSequenceStore } from './sequence-store.js'
 import { buildServerUpdateButtons, serverUpdateButtonRefusal } from './server-update-buttons.js'
 import { NcTextCatalog } from './text-catalog.js'
 import type { IScopedLogger, NcSystemEventKind, NotificationAction } from '@camstack/types'
@@ -108,10 +108,8 @@ export interface MintButtonsHost {
   readonly logger: IScopedLogger
   readonly now: () => number
   readonly rules: NcRuleStore
-  readonly sequenceActionsOf: (
-    sequenceId: string,
-  ) => readonly import('@camstack/types').NcRuleAction[] | undefined
-  readonly sequences: NcSequenceStore
+  readonly actionStepsOf: ActionStepsOf
+  readonly actionCatalog: NcActionCatalog
   snoozeButtonLabel(minutes: number): string
   readonly texts: NcTextCatalog
 }
@@ -137,7 +135,7 @@ export async function mintButtons(
   const stored = host.rules.get(input.ruleId)
   // The panel's own ANNOUNCEMENT has no stored rule — it is addressed to
   // `announceTargets` — but it is where the refusal's Arm anyway lives, so it
-  // still gets the ALARM buttons (and only those: no sequence, no snooze).
+  // still gets the ALARM buttons (and only those: no Action, no snooze).
   const announcement = stored === null && input.ruleId === NC_ALARM_ANNOUNCE_RULE_ID
   if (stored === null && !announcement) return []
 
@@ -225,27 +223,27 @@ export async function mintButtons(
           }
         })
 
-  // 1. The rule's own sequences. Needs an actuator — a button that would
+  // 1. The rule's own Actions. Needs an actuator — a button that would
   //    always fail is worse than an absent one.
-  const sequenceButtons =
+  const actionButtons =
     host.actionRunner === null || stored === null
       ? []
       : buildActionButtons({
           actions: stored.actions,
-          knownSequenceIds: host.sequences.knownIds(),
+          knownActionIds: host.actionCatalog.knownIds(),
           // Synchronous by contract, so the pure builder stays pure: the id
           // is minted here and the URL is filled in below.
-          mintUrl: ({ sequenceId, actionId }) => {
+          mintUrl: ({ runActionId, actionId }) => {
             const id = randomUUID()
             drafts.push({
               id,
-              ttlMs: actionTtlMs({ kind: 'sequence' }),
+              ttlMs: actionTtlMs({ kind: 'run-action' }),
               grant: (expiresAt) => ({
-                kind: 'sequence',
+                kind: 'run-action',
                 id,
                 ruleId: input.ruleId,
                 ruleName: input.ruleName,
-                sequenceId,
+                runActionId,
                 deviceId: input.deviceId,
                 actionId,
                 targetId: input.targetId,
@@ -266,7 +264,7 @@ export async function mintButtons(
       ? []
       : buildSnoozeButtons({
           rule: stored,
-          sequenceActionsOf: host.sequenceActionsOf,
+          actionStepsOf: host.actionStepsOf,
           label: (minutes) => host.snoozeButtonLabel(minutes),
           mintUrl: ({ actionId, minutes }) => {
             const id = randomUUID()
@@ -489,7 +487,7 @@ export async function mintButtons(
 
   const out = [
     ...verdictButtons,
-    ...sequenceButtons,
+    ...actionButtons,
     ...snoozeButtons,
     ...alarmButtons,
     ...updateButtons,

@@ -1,5 +1,5 @@
 /**
- * Extracted from NotificationCenter (applyGrantedSnooze, applyGrantedAlarm, applyGrantedArmAnyway, applyGrantedBypassInput, runGrantedAction, applyGrantedAddonUpdate, applyGrantedServerUpdate, announceServerUpdate, announceAddonUpdate, runGrantedSequence).
+ * Extracted from NotificationCenter (applyGrantedSnooze, applyGrantedAlarm, applyGrantedArmAnyway, applyGrantedBypassInput, runGrantedAction, applyGrantedAddonUpdate, applyGrantedServerUpdate, announceServerUpdate, announceAddonUpdate, runGrantedRunAction).
  * The class method forwards private state through {@link GrantedActionsHost}.
  */
 
@@ -10,7 +10,7 @@ import type {
   NcAlarmBypassInputGrant,
   NcAlarmGrant,
   NcDetectionVerdictGrant,
-  NcSequenceGrant,
+  NcRunActionGrant,
   NcServerUpdateGrant,
   NcSnoozeGrant,
   NcVerdictSubject,
@@ -24,11 +24,10 @@ import type {
 } from './alarm/alarm-panel-device.js'
 import type { NcDetectionVerdictLedger } from './detection-verdict-ledger.js'
 import { NcDispatcher } from './dispatcher.js'
-import { NcRuleActionRunner, asForcedSequence } from './rule-actions.js'
+import { NcRuleActionRunner } from './rule-actions.js'
 import type { NcRuleFireRef } from './rule-engine.js'
 import { NcRuleStore } from './rule-store.js'
-import { NcSequenceStore } from './sequence-store.js'
-import { isSnoozeExempt } from './snooze-exempt.js'
+import { isSnoozeExempt, type ActionStepsOf } from './snooze-exempt.js'
 import { NcSnoozeStore } from './snooze-store.js'
 import { NcTextCatalog } from './text-catalog.js'
 import type { IScopedLogger, RetrainVerdictSubject } from '@camstack/types'
@@ -88,11 +87,8 @@ export interface GrantedActionsHost {
   readonly logger: IScopedLogger
   readonly now: () => number
   readonly rules: NcRuleStore
-  runGrantedSequence(grant: NcSequenceGrant): Promise<void>
-  readonly sequenceActionsOf: (
-    sequenceId: string,
-  ) => readonly import('@camstack/types').NcRuleAction[] | undefined
-  readonly sequences: NcSequenceStore
+  runGrantedRunAction(grant: NcRunActionGrant): Promise<void>
+  readonly actionStepsOf: ActionStepsOf
   readonly snoozes: NcSnoozeStore
   readonly texts: NcTextCatalog
   readonly verdicts: NcDetectionVerdictLedger
@@ -121,7 +117,7 @@ export async function applyGrantedSnooze(
   // The exemption is re-checked at REDEMPTION, not just at mint: a rule
   // edited into an alarm rule between the two must not be silenceable by a
   // token minted before the edit.
-  if (rule !== null && isSnoozeExempt(rule, host.sequenceActionsOf)) {
+  if (rule !== null && isSnoozeExempt(rule, host.actionStepsOf)) {
     throw new Error(`"${grant.ruleName}" is an alarm rule and cannot be snoozed`)
   }
   const snooze = await host.snoozes.create({
@@ -245,18 +241,12 @@ export async function applyGrantedBypassInput(
   })
 }
 /**
- * Run the sequence a spent token granted.
+ * Run the Action a spent token granted, through the Actions surface.
  *
- * **The grant overrides `enabled`, deliberately.** A sequence reachable only
- * by a button is written as `enabled: false` — that is how "do not run this
- * automatically" is expressed — and the runner skips a disabled sequence. For
- * a granted run the BUTTON is the enablement, and the operator tapping it is
- * a more explicit instruction than the flag it overrides. The per-sequence
- * throttle still applies: `minDelaySec` is about how often a gate may
- * physically move, and a tap does not change that.
- *
- * Throws when the sequence is gone or a step failed — the plane turns that
- * into the page that says so.
+ * The Action's own `enabled`-style gates are its own: a run the Actions
+ * surface refuses (already running, throttled by `minDelaySec`) is reported
+ * back as a failure, because the tap asked for it. Throws when the Action did
+ * not run to its end — the plane turns that into the page that says so.
  */
 export async function runGrantedAction(
   host: GrantedActionsHost,
@@ -267,8 +257,8 @@ export async function runGrantedAction(
       return host.applyGrantedSnooze(grant)
     case 'alarm':
       return host.applyGrantedAlarm(grant)
-    case 'sequence':
-      return host.runGrantedSequence(grant)
+    case 'run-action':
+      return host.runGrantedRunAction(grant)
     case 'addon-update':
       return host.applyGrantedAddonUpdate(grant)
     case 'server-update':
@@ -689,28 +679,17 @@ export async function announceAddonUpdate(
     body: failedNames.length > 0 ? `${body}\n${failedNames.join(', ')}` : body,
   })
 }
-export async function runGrantedSequence(
+export async function runGrantedRunAction(
   host: GrantedActionsHost,
-  grant: NcSequenceGrant,
+  grant: NcRunActionGrant,
 ): Promise<void> {
   if (host.actionRunner === null) throw new Error('no actuator is wired on this node')
   const rule = host.rules.get(grant.ruleId)
   if (rule === null) throw new Error(`rule ${grant.ruleId} no longer exists`)
-  const sequence = host.sequences.get(grant.sequenceId)
-  if (sequence === null) {
-    throw new Error(`sequence "${grant.sequenceId}" no longer exists`)
-  }
-  const [outcome] = await host.actionRunner.run({
+  await host.actionRunner.runGranted({
     ruleId: rule.id,
     ruleName: rule.name,
     deviceId: grant.deviceId,
-    sequences: [asForcedSequence(sequence)],
+    actionId: grant.runActionId,
   })
-  if (outcome === undefined) throw new Error('the sequence did not run')
-  if (outcome.failedAt !== undefined) {
-    throw new Error(`step ${String(outcome.failedAt)} of "${sequence.name}" failed`)
-  }
-  if (!outcome.ran) {
-    throw new Error(`"${sequence.name}" did not run (${outcome.skippedReason ?? 'unknown'})`)
-  }
 }
