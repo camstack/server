@@ -15,7 +15,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { EventCategory, type SystemEvent } from '@camstack/types'
 import { ServiceBroker } from 'moleculer'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { getBrokerEventBus } from '../../moleculer/event-bus.js'
 import { createProcessService, type ProcessInfo } from '../../moleculer/process-service.js'
 import {
@@ -35,7 +35,10 @@ interface FakeChild extends EventEmitter {
 }
 
 const spawned: FakeChild[] = []
-const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 5))
+// Yield to the event loop WITHOUT a timer: `setTimeout` is faked below, so the
+// crash backoff (a real 500 ms timer in process-service) is advanced by hand
+// instead of being waited for under whatever load the machine is in.
+const settle = (): Promise<void> => new Promise((resolve) => setImmediate(resolve))
 
 function newest(): FakeChild {
   const child = spawned[spawned.length - 1]
@@ -73,6 +76,7 @@ describe('process-service: a typed Init refusal parks the runner, it does not cr
       }),
     )
     await broker.start()
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     const bus = getBrokerEventBus(broker)
     bus.subscribe({ category: EventCategory.AddonRunnerRefused }, (e) => refusedEvents.push(e))
     bus.subscribe({ category: EventCategory.AddonRunnerFailed }, (e) => failedEvents.push(e))
@@ -80,6 +84,7 @@ describe('process-service: a typed Init refusal parks the runner, it does not cr
     bus.subscribe({ category: EventCategory.ProcessStateChanged }, (e) => stateEvents.push(e))
   })
   afterAll(async () => {
+    vi.useRealTimers()
     await broker.stop()
     fs.rmSync(tmpDir, { recursive: true, force: true })
   })
@@ -133,7 +138,7 @@ describe('process-service: a typed Init refusal parks the runner, it does not cr
     expect(refusedEvents[0]?.data).toMatchObject({ runnerId: 'auth', code: 'unmigrated-settings' })
     // No timer-driven respawn follows a refusal.
     const count = spawned.length
-    await new Promise((resolve) => setTimeout(resolve, 700))
+    await vi.advanceTimersByTimeAsync(700)
     expect(spawned.length).toBe(count)
   }, 20_000)
 
@@ -184,8 +189,8 @@ describe('process-service: a typed Init refusal parks the runner, it does not cr
     const before = stateEvents.length
     // the crash above is waiting on its backoff respawn: let it spawn
     const spawnedBefore = spawned.length
-    const deadline = Date.now() + 5_000
-    while (spawned.length === spawnedBefore && Date.now() < deadline) await settle()
+    await vi.advanceTimersByTimeAsync(500)
+    expect(spawned.length).toBe(spawnedBefore + 1)
     const child = newest()
     child.stdout.emit('data', Buffer.from(`READY:${child.nodeId}\n`))
     await settle()
