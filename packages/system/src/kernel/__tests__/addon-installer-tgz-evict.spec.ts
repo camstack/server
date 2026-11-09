@@ -20,7 +20,7 @@ import { execFileSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AddonInstaller } from '../addon-installer.js'
 
 interface TgzManifest {
@@ -74,6 +74,22 @@ describe('AddonInstaller.installFromTgz — rename-aside eviction (FUSE held-ope
   let tmpRoot: string
   let addonsDir: string
   let installer: AddonInstaller
+  // The tarballs are fixtures, not the thing under test: building them (two `tar`
+  // spawns) inside the 5 s test budget is what timed it out under a loaded
+  // host. They are packed once, before any timed section.
+  let fixtureRoot: string
+  let tgzV1: string
+  let tgzV2: string
+
+  beforeAll(() => {
+    fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-tgz-fixture-'))
+    tgzV1 = makeTgz(fixtureRoot, { name: PKG, version: '1.0.0' })
+    tgzV2 = makeTgz(fixtureRoot, { name: PKG, version: '2.0.0' })
+  })
+
+  afterAll(() => {
+    fs.rmSync(fixtureRoot, { recursive: true, force: true })
+  })
 
   beforeEach(() => {
     tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'camstack-tgz-evict-'))
@@ -89,7 +105,7 @@ describe('AddonInstaller.installFromTgz — rename-aside eviction (FUSE held-ope
 
   it('redeploys over a previous install whose dir cannot be removed in place', async () => {
     // First install (v1) establishes the live addon dir.
-    await installer.installFromTgz(makeTgz(tmpRoot, { name: PKG, version: '1.0.0' }))
+    await installer.installFromTgz(tgzV1)
     const targetDir = path.join(addonsDir, PKG)
     // Simulate a held-open native prebuild the old runner has loaded.
     const heldDir = path.join(targetDir, 'node_modules', '@seydx', 'node-av-linux-x64')
@@ -119,7 +135,7 @@ describe('AddonInstaller.installFromTgz — rename-aside eviction (FUSE held-ope
     })
 
     // Deploy v2 — must succeed despite the in-place delete being impossible.
-    const result = await installer.installFromTgz(makeTgz(tmpRoot, { name: PKG, version: '2.0.0' }))
+    const result = await installer.installFromTgz(tgzV2)
 
     expect(result).toEqual({ name: PKG, version: '2.0.0' })
     // The installed dir reflects the NEW version (not gutted, not stale).
