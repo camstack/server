@@ -311,6 +311,12 @@ export const HeroTimedRunSlotSchema = z.object({
   quickRun: TimedRunQuickRunSchema,
   run: HeroActionSchema,
   cancel: HeroActionSchema,
+  /**
+   * Whole units left (the limit's unit, ceil). `null` while nothing is armed.
+   * A number, not words: the row formats it, and a text here would not fit the
+   * hero-layout declaration.
+   */
+  remaining: z.number().nullable(),
 })
 export type HeroTimedRunSlot = z.infer<typeof HeroTimedRunSlotSchema>
 

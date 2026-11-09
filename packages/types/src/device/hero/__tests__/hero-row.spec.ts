@@ -121,6 +121,7 @@ describe('projectDeviceRow', () => {
     expect(row.primary).toMatchObject({ kind: 'toggle', id: 'own-power', on: true })
     expect(row.trailing).toMatchObject({ id: 'power', text: { en: '1500 W' } })
     expect(row.statusLine.map((t) => t.en)).toEqual(['On'])
+    expect(row.timedRun).toBeNull()
   })
 
   it('washer: the phase is in the status line, the drum is the scene', () => {
@@ -220,6 +221,77 @@ describe('projectDeviceRow', () => {
     expect(row.scene).toBe(model.scene)
     expect(row.look).toBe(model.look)
     expect(model.facts).toContain(row.trailing)
+  })
+})
+
+const NOW = 1_700_000_000_000
+
+const FOUNTAIN_SLICE = {
+  waterLevel: 70,
+  waterVolume: null,
+  empty: false,
+  pumpRunning: true,
+  error: null,
+  lastFetchedAt: 0,
+}
+
+describe('timed run on the row', () => {
+  it('an armed heater keeps the power toggle and adds Stop plus the minutes left', () => {
+    const row = projectDeviceRow(
+      build(DeviceType.Heater, ['switch', 'timed-run'], {
+        switch: SWITCH_ON,
+        'timed-run': {
+          activeUntil: NOW + 23 * 60_000,
+          requestedBy: null,
+          quickRun: { duration: 30, unit: 'min' },
+          lastFetchedAt: 1,
+        },
+      }),
+    )
+    expect(row.primary).toMatchObject({ kind: 'toggle', id: 'own-power', on: true })
+    expect(row.statusLine.map((t) => t.en)).toEqual(['On', '23 min'])
+    expect(row.timedRun).toEqual({ id: 'timed-run.cancel', duration: 30, unit: 'min' })
+  })
+
+  it('an idle heater offers Run and does not invent a remaining time', () => {
+    const row = projectDeviceRow(
+      build(DeviceType.Heater, ['switch', 'timed-run'], {
+        switch: SWITCH_ON,
+        'timed-run': {
+          activeUntil: null,
+          requestedBy: null,
+          quickRun: { duration: 30, unit: 'min' },
+          lastFetchedAt: 1,
+        },
+      }),
+    )
+    expect(row.primary).toMatchObject({ kind: 'toggle', id: 'own-power' })
+    expect(row.statusLine.map((t) => t.en)).toEqual(['On'])
+    expect(row.timedRun).toEqual({ id: 'timed-run.run', duration: 30, unit: 'min' })
+  })
+
+  it('an armed fountain uses seconds and offers Stop beside its pump', () => {
+    const row = projectDeviceRow(
+      build(DeviceType.PetFountain, ['pet-fountain', 'timed-run'], {
+        'pet-fountain': FOUNTAIN_SLICE,
+        'timed-run': {
+          activeUntil: NOW + 45_000,
+          requestedBy: null,
+          quickRun: { duration: 60, unit: 's' },
+          lastFetchedAt: 1,
+        },
+      }),
+    )
+    expect(row.primary).toMatchObject({ kind: 'toggle', id: 'fountain.pump' })
+    expect(row.statusLine.map((t) => t.en)).toContain('45 s')
+    expect(row.timedRun).toEqual({ id: 'timed-run.cancel', duration: 60, unit: 's' })
+  })
+
+  it('a switch without the cap is unchanged', () => {
+    const row = projectDeviceRow(build(DeviceType.Switch, ['switch'], { switch: SWITCH_ON }))
+    expect(row.timedRun).toBeNull()
+    expect(row.primary).toMatchObject({ kind: 'toggle', id: 'own-power' })
+    expect(row.statusLine.map((t) => t.en)).toEqual(['On'])
   })
 })
 

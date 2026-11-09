@@ -21,9 +21,11 @@ import { PowerSourceStateSchema } from '../../capabilities/power-source.cap.js'
 import { RunningStateStatusSchema } from '../../capabilities/running-state.cap.js'
 import { SwitchStatusSchema } from '../../capabilities/switch.cap.js'
 import {
-  TIMED_RUN_LIMITS,
   TimedRunStatusSchema,
+  timedRunLimitOf,
   timedRunQuickRun,
+  timedRunRemaining,
+  type TimedRunUnit,
 } from '../../capabilities/timed-run.cap.js'
 import { DeviceFeature, DeviceType } from '../device-type.js'
 import type { VocabIcon } from './cap-vocabulary-icon.js'
@@ -356,11 +358,16 @@ function timerTile(quickRun: { readonly duration: number; readonly unit: string 
   return { label: heroText('Timer', 'Timer'), value: heroText(text, text) }
 }
 
+function remainingWords(amount: number, unit: TimedRunUnit): HeroText {
+  const word = unit === 'min' ? 'min' : 's'
+  return heroText(`${amount} ${word}`, `${amount} ${word}`)
+}
+
 const timedRunContribution = contribution('timed-run', TimedRunStatusSchema, (slice, ctx) => {
   const type = deviceTypeOf(ctx.type)
-  const limit = type === undefined ? undefined : TIMED_RUN_LIMITS[type]
-  // Offered only to the types that have a limit.
-  if (limit === undefined) return {}
+  const limit = type === undefined ? null : timedRunLimitOf(type)
+  // Offered only to the types that have a limit. A bound cap on any other type adds nothing.
+  if (limit === null) return {}
   const quickRun = slice?.quickRun ?? timedRunQuickRun(limit, null)
   const activeUntil =
     slice?.activeUntil != null && slice.activeUntil > ctx.now ? slice.activeUntil : null
@@ -388,22 +395,24 @@ const timedRunContribution = contribution('timed-run', TimedRunStatusSchema, (sl
     'runFor',
     runArgs,
   )
-  const left = activeUntil === null ? 0 : Math.max(1, Math.ceil((activeUntil - ctx.now) / 60_000))
+  const remaining =
+    activeUntil === null ? null : timedRunRemaining(activeUntil, ctx.now, quickRun.unit)
+  const words = remaining === null ? null : remainingWords(remaining, quickRun.unit)
   const row: HeroRow = {
     id: 'run-for',
     icon: 'timer',
     status:
-      activeUntil === null
+      words === null
         ? heroText(
             `Run for ${quickRun.duration} ${quickRun.unit}`,
             `Avvia per ${quickRun.duration} ${quickRun.unit}`,
           )
-        : heroText(`Stops in ${left} min`, `Si ferma tra ${left} min`),
+        : heroText(`Stops in ${words.en}`, `Si ferma tra ${words.it}`),
     controls: activeUntil === null ? [asAction(run)] : [asAction(cancel), asAction(restart)],
   }
   const armed = activeUntil === null ? {} : { right: [timerTile(quickRun)] }
   return {
-    timedRun: { activeUntil, quickRun, run, cancel },
+    timedRun: { activeUntil, quickRun, run, cancel, remaining },
     rows: [row],
     tilesFallback: true,
     tiles: armed,

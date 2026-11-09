@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { DeviceType } from '../device/device-type.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { switchCapability } from './switch.cap.js'
 
 /**
  * timed-run - run a device for a chosen time, then stop it (D993).
@@ -19,6 +20,10 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
  * What a device may be run for, and for how long at most, is per device type
  * ({@link TIMED_RUN_LIMITS}): the maximum is a safety bound, not a preference,
  * so a request above it is REFUSED with a typed reason, never clamped.
+ *
+ * The wrapper can be turned on for any `switch` device. It turns itself on
+ * only for {@link TIMED_RUN_DEFAULT_TYPES} (a stove, a fountain). Every other
+ * switch stays off until the operator enables it in Customize.
  */
 
 export const TimedRunUnitSchema = z.enum(['s', 'min'])
@@ -38,14 +43,25 @@ export interface TimedRunLimit {
   readonly quickRunDefault: number
 }
 
-/** The longest run, per device type. Only these types are offered `timed-run`. */
+/**
+ * The generic on/off timed run: any device that carries `switch`. A stove uses
+ * the same bound. 180 minutes is the safety maximum, not a preference.
+ */
+export const TIMED_RUN_SWITCH_LIMIT: TimedRunLimit = {
+  actuator: 'switch',
+  maxSeconds: 180 * 60,
+  unit: 'min',
+  quickRunDefault: 30,
+}
+
+/**
+ * The longest run, per device type. A type absent here falls back to
+ * {@link TIMED_RUN_SWITCH_LIMIT} when it is a `switch` device type, and has no
+ * timed run otherwise.
+ */
 export const TIMED_RUN_LIMITS: Readonly<Partial<Record<DeviceType, TimedRunLimit>>> = {
-  [DeviceType.Heater]: {
-    actuator: 'switch',
-    maxSeconds: 180 * 60,
-    unit: 'min',
-    quickRunDefault: 30,
-  },
+  [DeviceType.Heater]: TIMED_RUN_SWITCH_LIMIT,
+  [DeviceType.Switch]: TIMED_RUN_SWITCH_LIMIT,
   [DeviceType.PetFountain]: {
     actuator: 'pet-fountain',
     maxSeconds: 300,
@@ -54,13 +70,38 @@ export const TIMED_RUN_LIMITS: Readonly<Partial<Record<DeviceType, TimedRunLimit
   },
 }
 
+/** Types the wrapper can be activated on: every `switch` type, plus the fountain. */
 export const TIMED_RUN_DEVICE_TYPES: readonly DeviceType[] = [
+  ...switchCapability.deviceTypes,
+  DeviceType.PetFountain,
+]
+
+/** Types the wrapper turns itself on for. Every other switch type stays off until Customize. */
+export const TIMED_RUN_DEFAULT_TYPES: readonly DeviceType[] = [
   DeviceType.Heater,
   DeviceType.PetFountain,
 ]
 
+const SWITCH_DEVICE_TYPES: ReadonlySet<string> = new Set(switchCapability.deviceTypes)
+
 export function timedRunLimitOf(deviceType: DeviceType): TimedRunLimit | null {
-  return TIMED_RUN_LIMITS[deviceType] ?? null
+  const named = TIMED_RUN_LIMITS[deviceType]
+  if (named !== undefined) return named
+  return SWITCH_DEVICE_TYPES.has(deviceType) ? TIMED_RUN_SWITCH_LIMIT : null
+}
+
+const MS_PER_SECOND = 1000
+const MS_PER_MINUTE = 60_000
+
+/**
+ * Whole units left on an armed run. Minutes and seconds both ceil, and a run
+ * that has not expired yet never reads as zero.
+ */
+export function timedRunRemaining(activeUntil: number, now: number, unit: TimedRunUnit): number {
+  const left = activeUntil - now
+  if (left <= 0) return 0
+  const per = unit === 'min' ? MS_PER_MINUTE : MS_PER_SECOND
+  return Math.max(1, Math.ceil(left / per))
 }
 
 /** Seconds in a duration of `duration` `unit`. */
@@ -149,6 +190,7 @@ export const timedRunCapability = {
   mode: 'singleton',
   kind: 'wrapper',
   defaultActive: true,
+  defaultActiveTypes: TIMED_RUN_DEFAULT_TYPES,
   deviceTypes: TIMED_RUN_DEVICE_TYPES,
   deviceConfig: {
     ui: { kind: 'derived-form', builderId: 'timed-run', tab: 'general' },

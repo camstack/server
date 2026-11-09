@@ -8,12 +8,15 @@
  *   4. a trailing fact (power, else battery, else consumables).
  *
  * Selection rules, all taken from the model:
- *   - ONE control is ever shown: the device's own power; else the FIRST control of
+ *   - the primary control is the device's own power; else the FIRST control of
  *     the FIRST row that has any (a later row's control is never promoted). When
  *     the model lists that part in `gated`, the row has no inline control: the
  *     projection never falls through to another control the caller could use.
+ *   - a timed run, when the model carries the slot, sits beside that primary:
+ *     Run while idle, Stop while armed. Gating the slot hides the control.
  *   - the status line is the head (what plays, else the state) plus at most
- *     {@link ROW_STATUS_FACTS_MAX} facts, the trailing fact excluded;
+ *     {@link ROW_STATUS_FACTS_MAX} facts, the trailing fact excluded, then the
+ *     time left on an armed timed run;
  *   - the trailing fact is the first of power, battery, consumables.
  *
  * `projectDeviceRow` is pure and computes nothing: it selects from a
@@ -32,6 +35,18 @@ import { HeroSceneSchema } from './hero-scene.js'
 import { StateLookSchema, HeroStateSchema } from './hero-state.js'
 import { HeroTextSchema, type HeroText } from './hero-text.js'
 
+/**
+ * The row's timed-run control. `id` is `timed-run.run` while idle and
+ * `timed-run.cancel` while armed; `duration` and `unit` are the one-tap run
+ * a Run press starts.
+ */
+export const HeroRowTimedRunSchema = z.object({
+  id: z.enum(['timed-run.run', 'timed-run.cancel']),
+  duration: z.number(),
+  unit: z.enum(['min', 's']),
+})
+export type HeroRowTimedRun = z.infer<typeof HeroRowTimedRunSchema>
+
 export const HeroRowModelSchema = z.object({
   deviceId: z.number().int(),
   name: z.string(),
@@ -44,6 +59,11 @@ export const HeroRowModelSchema = z.object({
   statusLine: z.array(HeroTextSchema),
   /** `null` = the type has no inline control, or the caller may not act on it. */
   primary: HeroControlSchema.nullable(),
+  /**
+   * Beside `primary` when the device offers a timed run: Run while idle, Stop
+   * while armed. `null` when there is no slot, or the caller may not act.
+   */
+  timedRun: HeroRowTimedRunSchema.nullable(),
   trailing: HeroFactSchema.nullable(),
 })
 export type HeroRowModel = z.infer<typeof HeroRowModelSchema>
@@ -90,7 +110,25 @@ function statusLineOf(model: HeroModel, trailing: HeroFact | null): HeroText[] {
     .filter((f) => f !== trailing)
     .map((f) => f.text)
     .slice(0, ROW_STATUS_FACTS_MAX)
-  return [head, ...rest]
+  const slot = model.timedRun
+  if (slot === null || slot.remaining === null) return [head, ...rest]
+  const word = slot.quickRun.unit === 'min' ? 'min' : 's'
+  const left: HeroText = {
+    en: `${slot.remaining} ${word}`,
+    it: `${slot.remaining} ${word}`,
+  }
+  return [head, ...rest, left]
+}
+
+/** Run while the slot is idle, Stop while it is armed. Hidden when the caller may not act. */
+function timedRunOf(model: HeroModel): HeroRowTimedRun | null {
+  const slot = model.timedRun
+  if (slot === null || model.gated.includes('timed-run')) return null
+  return {
+    id: slot.activeUntil === null ? 'timed-run.run' : 'timed-run.cancel',
+    duration: slot.quickRun.duration,
+    unit: slot.quickRun.unit,
+  }
 }
 
 export function projectDeviceRow(model: HeroModel): HeroRowModel {
@@ -105,6 +143,7 @@ export function projectDeviceRow(model: HeroModel): HeroRowModel {
     scene: model.scene,
     statusLine: statusLineOf(model, trailing),
     primary: primaryOf(model),
+    timedRun: timedRunOf(model),
     trailing,
   }
 }

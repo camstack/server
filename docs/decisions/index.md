@@ -4,7 +4,7 @@
 
 # Decisions
 
-989 architecture decision records. One file per decision, never
+990 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1004,6 +1004,7 @@ that rots.
 | D1024 | [A restored cap may persist only the fields it names](adr-1024-a-restored-cap-may-persist-only-the-fields-it-names.md) | ✅ accepted | 2026-11-08 |
 | D1025 | [A SingleKey ID sign-in runs in the operator's own browser with a written guide, never through the hub proxy](adr-1025-a-singlekey-id-sign-in-runs-in-the-operators-own-browser-with-a-written-guide-never-through-the-hub-proxy.md) | ✅ accepted | 2026-11-09 |
 | D1026 | [A heat pump is one device type with one status cap that carries its circuits as a keyed array](adr-1026-a-heat-pump-is-one-device-type-with-a-keyed-circuits-status-cap.md) | ✅ accepted | 2026-11-09 |
+| DNNN | [A timed run is on by default only for stoves and fountains](adr-DNNN-timed-run-per-type-default.md) | ✅ accepted | 2026-11-09 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next
