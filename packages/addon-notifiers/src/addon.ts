@@ -168,10 +168,6 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
       ...sampleRoutes(),
     ])
 
-    // The Notification Center add form is drawn from the kind catalogue: the only `nc.*`
-    // action left. A user's own targets travel `integration-instances` (see `instances` below).
-    const ncHandlers = makeNcTargetHandlers({ provider })
-
     this.ctx.logger.info('NotifiersAddon initialized', {
       meta: { adapterCount: adapters.length },
     })
@@ -195,6 +191,9 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
       },
       this.ctx.logger,
     )
+
+    // The shipped Notification Center viewer still calls `nc.*`: thin delegates onto `instances`.
+    const ncHandlers = makeNcTargetHandlers({ provider, instances })
 
     return {
       providers: [

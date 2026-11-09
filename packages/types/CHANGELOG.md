@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Removed the unused claimAction from the account-sign-in config field.
+### Changed
+
+- A provider's refusal of a caller (a user touching a target that is not theirs) answers FORBIDDEN instead of a server error.
 
 ## [1.2.532] - 2026-11-09
 

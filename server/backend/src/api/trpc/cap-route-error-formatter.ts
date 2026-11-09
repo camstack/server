@@ -16,6 +16,7 @@
 import { CapRouteError, getCatalogRegistry, SERVER_NAMESPACE } from '@camstack/server/system'
 import {
   DEFAULT_CATALOG_LANG,
+  FORBIDDEN_MESSAGE_PREFIX,
   interpolate,
   readErrorI18n,
   type CatalogLang,
@@ -158,7 +159,28 @@ export interface FormatTrpcErrorOpts {
  * Returns the shape unchanged for all other errors.
  */
 export function formatTrpcError(opts: FormatTrpcErrorOpts): AugmentedErrorShape {
-  return withErrorI18n(opts, withCapRouteData(opts))
+  return withErrorI18n(opts, withProviderRefusal(opts, withCapRouteData(opts)))
+}
+
+/** JSON-RPC code tRPC uses for FORBIDDEN. */
+const FORBIDDEN_RPC_CODE = -32003
+
+/**
+ * A provider's refusal of a caller (`forbiddenError`) reaches the hub as a plain Error, often
+ * through the UDS hop to a forked addon, so tRPC calls it a 500. The message prefix survives
+ * the hop: answer FORBIDDEN for it.
+ */
+function withProviderRefusal(
+  opts: FormatTrpcErrorOpts,
+  shape: AugmentedErrorShape,
+): AugmentedErrorShape {
+  if (opts.error.code !== 'INTERNAL_SERVER_ERROR') return shape
+  if (!opts.error.message.startsWith(FORBIDDEN_MESSAGE_PREFIX)) return shape
+  return {
+    ...shape,
+    code: FORBIDDEN_RPC_CODE,
+    data: { ...shape.data, code: 'FORBIDDEN', httpStatus: 403 },
+  }
 }
 
 /**

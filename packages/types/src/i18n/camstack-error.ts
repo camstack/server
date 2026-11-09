@@ -63,3 +63,15 @@ export function readErrorI18n(err: unknown): ErrorI18nPayload | null {
   }
   return null
 }
+
+/**
+ * A provider that refuses a caller throws an Error whose message starts with this prefix. The
+ * class does not survive the UDS hop to a forked addon, the message does, so the hub's tRPC
+ * error formatter answers FORBIDDEN (403) for it instead of a 500.
+ */
+export const FORBIDDEN_MESSAGE_PREFIX = 'forbidden: '
+
+/** `throw forbiddenError('target not owned: tg-1')` */
+export function forbiddenError(reason: string): Error {
+  return new Error(`${FORBIDDEN_MESSAGE_PREFIX}${reason}`)
+}

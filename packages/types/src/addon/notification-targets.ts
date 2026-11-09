@@ -17,6 +17,7 @@
  *  - {@link moveTargetRows}: the D987 procedure that flattens the old `config` blobs into the bodies.
  */
 import { z } from 'zod'
+import { forbiddenError } from '../i18n/camstack-error.js'
 import type { CapCaller } from '../capabilities/capability-definition.js'
 import type {
   IIntegrationInstancesProvider,
@@ -463,7 +464,7 @@ export function scopeInstancesToCaller(
   ): instance is IntegrationInstance => instance !== null && ownerOf(instance) === userId
   const requireOwned = async (id: string, userId: string): Promise<void> => {
     if (!owned(await inner.getInstance({ id }), userId)) {
-      throw new Error(`forbidden: target not owned: ${id}`)
+      throw forbiddenError(`target not owned: ${id}`)
     }
   }
   /** The user's own values: whatever the client sent for the owner is dropped and re-stamped. */
@@ -473,6 +474,8 @@ export function scopeInstancesToCaller(
   ): Record<string, unknown> => ({ ...values, [TARGET_OWNER_KEY]: userId })
   const userOnly = (caller: CapCaller | undefined): CapCaller | undefined =>
     caller !== undefined && !caller.isAdmin ? caller : undefined
+
+  const test = inner.testInstance?.bind(inner)
 
   return {
     ...inner,
@@ -535,7 +538,7 @@ export function scopeInstancesToCaller(
       })
       return deleted
     },
-    ...(inner.testInstance === undefined
+    ...(test === undefined
       ? {}
       : {
           testInstance: async (input) => {
@@ -543,13 +546,10 @@ export function scopeInstancesToCaller(
             // A user tests a STORED target of their own: an unsaved form would make the hub
             // probe any address the user types.
             if (user !== undefined) {
-              if (input.id === null)
-                throw new Error('forbidden: a draft target is tested by an admin')
+              if (input.id === null) throw forbiddenError('a draft target is tested by an admin')
               await requireOwned(input.id, user.userId)
             }
-            return inner.testInstance === undefined
-              ? { success: false, status: 'unsupported', error: 'This kind cannot be tested' }
-              : inner.testInstance(input)
+            return test(input)
           },
         }),
   }

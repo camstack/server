@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
+### Changed
+
+- A provider's refusal of a caller answers FORBIDDEN (403) instead of a server error.
 
 ## [1.2.818] - 2026-11-09
 

@@ -2076,6 +2076,8 @@ export {
   CamstackError,
   ErrorCodeSchema,
   ErrorI18nPayloadSchema,
+  FORBIDDEN_MESSAGE_PREFIX,
+  forbiddenError,
   readErrorI18n,
   userError,
 } from './i18n/camstack-error.js'

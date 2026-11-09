@@ -122,4 +122,23 @@ describe('formatTrpcError', () => {
     expect(result.data).not.toHaveProperty('capRouteReason')
     expect(result).toStrictEqual(shape)
   })
+
+  it('maps a provider refusal (plain Error "forbidden: ...", e.g. across the UDS hop) to FORBIDDEN, not a 500', () => {
+    const error = new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'forbidden: target not owned: tg-1',
+      cause: new Error('forbidden: target not owned: tg-1'),
+    })
+    const result = formatTrpcError({ error, shape: makeShape({ message: error.message }) })
+    expect(result.data.code).toBe('FORBIDDEN')
+    expect(result.data.httpStatus).toBe(403)
+    expect(result.code).toBe(-32003)
+  })
+
+  it('leaves an ordinary internal error a 500', () => {
+    const error = new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'disk full' })
+    const result = formatTrpcError({ error, shape: makeShape({ message: 'disk full' }) })
+    expect(result.data.code).toBe('INTERNAL_SERVER_ERROR')
+    expect(result.data.httpStatus).toBe(500)
+  })
 })

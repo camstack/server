@@ -9,6 +9,7 @@ import type { CapCaller } from '../../capabilities/capability-definition.js'
 import type { IIntegrationInstancesProvider } from '../../capabilities/integration-instances.cap.js'
 import type { IScopedLogger } from '../../interfaces/logging.js'
 import type { TargetKind } from '../../capabilities/notification-output.cap.js'
+import { FORBIDDEN_MESSAGE_PREFIX } from '../../i18n/camstack-error.js'
 import { makeInMemoryRecords } from '../../records/in-memory-records.js'
 import {
   buildNotificationTargetInstances,
@@ -185,6 +186,15 @@ describe('notification targets at the instance door', () => {
     await door.updateInstance({ id: 'a1', values: { topic: 'a2', ownerUserId: 'u2' }, caller: U1 })
     const row = await door.getInstance({ id: 'a1', caller: ADMIN })
     expect(row?.formValues).toMatchObject({ topic: 'a2', ownerUserId: 'u1' })
+  })
+
+  it('a refusal carries the FORBIDDEN prefix the hub maps to a 403, not a bare Error', async () => {
+    await expect(door.deleteInstance({ id: 'b1', caller: U1 })).rejects.toThrow(
+      new RegExp(`^${FORBIDDEN_MESSAGE_PREFIX}`),
+    )
+    await expect(door.testInstance?.({ id: null, values: {}, caller: U1 })).rejects.toThrow(
+      new RegExp(`^${FORBIDDEN_MESSAGE_PREFIX}`),
+    )
   })
 
   it('switch and delete: only an own target', async () => {
