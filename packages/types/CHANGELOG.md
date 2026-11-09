@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- addonSettings.getIntegrationFormSchema, BaseAddon.integrationFormSchema and IntegrationInstanceRef are removed; an instance form is integrationInstances.instanceFormSchema
+
+### Changed
+- A user's writes to their own notification targets are audit-logged
+- A user's own notification targets are now integration instances scoped to the signed-in user; capability methods can declare caller-scoped access
+- Integrations: update accepts enabled only for a fixed builtin (the hub's own switch, which works while its addon is down); any other row is switched through setInstanceEnabled, and a row whose addon did not answer is marked switchUnknown
+- SMTP: the duplicate smtp-provider verify call is removed; test a relay from its instance (Test connection)
+- integrations.delete is back: it deletes an integration from the hub side, so an addon that is installed but not running can still be removed.
+- smtp-provider getStatus adds an optional verified flag (true, false, or absent while the relay has not sent).
+- A provider's refusal of a caller (a user touching a target that is not theirs) answers FORBIDDEN instead of a server error.
+
 ## [1.2.533] - 2026-11-09
 
 ### Changed
@@ -14,9 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed the unused claimAction from the account-sign-in config field.
 ### Changed
 
-- A provider's refusal of a caller (a user touching a target that is not theirs) answers FORBIDDEN instead of a server error.
-- smtp-provider getStatus adds an optional verified flag (true, false, or absent while the relay has not sent).
-- integrations.delete is back: it deletes an integration from the hub side, so an addon that is installed but not running can still be removed.
 
 ## [1.2.532] - 2026-11-09
 
@@ -26,15 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remote: an infrared source may leave its emitter out (the remote's default one is used), the power mode setting is gone, and the colour keys have one set of roles
 ### Changed
 
-- SMTP: the duplicate smtp-provider verify call is removed; test a relay from its instance (Test connection)
-- Integrations: update accepts enabled only for a fixed builtin (the hub's own switch, which works while its addon is down); any other row is switched through setInstanceEnabled, and a row whose addon did not answer is marked switchUnknown
-- A user's own notification targets are now integration instances scoped to the signed-in user; capability methods can declare caller-scoped access
-- A user's writes to their own notification targets are audit-logged
-- integrations.delete is gone: delete an integration through integrationInstances.deleteInstance
 
 ### Removed
 
-- addonSettings.getIntegrationFormSchema, BaseAddon.integrationFormSchema and IntegrationInstanceRef are removed; an instance form is integrationInstances.instanceFormSchema
 
 ## [1.2.531] - 2026-11-08
 

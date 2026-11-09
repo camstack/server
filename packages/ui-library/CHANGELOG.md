@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- useAddonSettingsGetIntegrationFormSchema is removed; use useIntegrationInstancesInstanceFormSchema
+
+### Changed
+- A generated integrations.delete hook is available again.
+
 ## [1.2.410] - 2026-11-09
 
 ### Changed
@@ -14,11 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The account sign-in field no longer polls a claim action; it shows a paste hint under the sign-in button.
 ### Changed
 
-- A generated integrations.delete hook is available again.
 
 ### Removed
 
-- useAddonSettingsGetIntegrationFormSchema is removed; use useIntegrationInstancesInstanceFormSchema
 
 ## [1.2.409] - 2026-11-08
 

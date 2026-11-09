@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**203 capabilities · 1469 methods.**
+**203 capabilities · 1470 methods.**
 
 ## Method index
 
@@ -537,6 +537,7 @@
 | `integrations.get` | query | protected | integrations |
 | `integrations.getByAddonId` | query | protected | integrations |
 | `integrations.update` | mutation | admin | integrations |
+| `integrations.delete` | mutation | admin | integrations |
 | `integrations.getAvailableTypes` | query | admin | integrations |
 | `intercom.getStatus` | query | protected | intercom (auto) |
 | `intercom.startSession` | mutation | protected | intercom |
@@ -2958,7 +2959,7 @@
 
 ### `integrations` → `integrations.*`
 
-- **Source:** `packages/types/src/capabilities/integrations.cap.ts:155`
+- **Source:** `packages/types/src/capabilities/integrations.cap.ts:160`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationsProvider`
@@ -2969,6 +2970,7 @@
 | get | `integrations.get` | query | protected | `{ id: string }` | `IntegrationWithStateSchema` |
 | getByAddonId | `integrations.getByAddonId` | query | protected | `{ addonId: string }` | `IntegrationLiteSchema \| null` |
 | update | `integrations.update` | mutation | admin | `UpdateIntegrationInputSchema` | `IntegrationLiteSchema` |
+| delete | `integrations.delete` | mutation | admin | `{ id: string }` | `DeleteIntegrationResultSchema` |
 | getAvailableTypes | `integrations.getAvailableTypes` | query | admin | `void` | `AvailableIntegrationTypeSchema[]` |
 
 ### `intercom` → `intercom.*`
@@ -4415,7 +4417,7 @@
 
 ### `smtp-provider` → `smtpProvider.*`
 
-- **Source:** `packages/types/src/capabilities/smtp-provider.cap.ts:65`
+- **Source:** `packages/types/src/capabilities/smtp-provider.cap.ts:70`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `email`
 - **Archetypes:** internal
 - **Provider interface:** `ISmtpProvider`

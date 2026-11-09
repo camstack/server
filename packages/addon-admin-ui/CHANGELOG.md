@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- The add-integration wizard reads its create form from the one instance door
+- An unknown integration switch is no longer drawn green; a fixed builtin switches without its addon
+- Integration page: Config opens the shared instance editor (name, test connection, sign-in) instead of a second form
+- Integration page: a fixed builtin switches like every other integration, and a switch the addon could not answer shows Unknown instead of a stale on/off
+- An integration whose addon is not running can be deleted, and a fixed builtin can be switched on while its addon is down.
+
 ## [1.2.626] - 2026-11-09
 
 ### Changed
@@ -14,7 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The account sign-in paste hint asks for the address the browser stopped on, or only its code
 ### Changed
 
-- An integration whose addon is not running can be deleted, and a fixed builtin can be switched on while its addon is down.
 
 ## [1.2.625] - 2026-11-09
 
@@ -28,10 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remote: edit the layout inside the remote modal, one colour-keys set with optional letters, Samsung layout with source and app rows, and a default-emitter choice for infrared sources
 ### Changed
 
-- Integration page: a fixed builtin switches like every other integration, and a switch the addon could not answer shows Unknown instead of a stale on/off
-- Integration page: Config opens the shared instance editor (name, test connection, sign-in) instead of a second form
-- An unknown integration switch is no longer drawn green; a fixed builtin switches without its addon
-- The add-integration wizard reads its create form from the one instance door
 
 ## [1.2.624] - 2026-11-08
 

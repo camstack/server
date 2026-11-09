@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Gmail send provider drops the unused verify call
+
 ## [0.2.45] - 2026-11-09
 
 ### Fixed
@@ -14,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Each imported calendar names the record that owns it, so its switch is found on the Calendars page
 ### Changed
 
-- Gmail send provider drops the unused verify call
 
 ## [0.2.44] - 2026-11-08
 

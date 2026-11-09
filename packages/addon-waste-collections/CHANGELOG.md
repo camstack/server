@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- A boot where the migration engine is unreachable, or legacy sources have no record, logs an error
+- Waste sources are served only from their records; a source still in the legacy setting stays unavailable until the migration has copied it
+
 ## [0.1.41] - 2026-11-09
 
 ### Fixed
@@ -14,8 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A waste collection calendar names its source record, so an enabled source shows once on the Calendars page with its switch
 ### Changed
 
-- Waste sources are served only from their records; a source still in the legacy setting stays unavailable until the migration has copied it
-- A boot where the migration engine is unreachable, or legacy sources have no record, logs an error
 
 ## [0.1.40] - 2026-11-08
 
