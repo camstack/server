@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Action step arguments may carry device value templates, rendered at run time
+- An action step can carry an if condition and an else list; a state that cannot be read runs neither side
 - A device row shows a running timed run, with the time left and Run or Stop.
 
 ## [1.2.535] - 2026-11-09
@@ -53,10 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remote: an infrared source may leave its emitter out (the remote's default one is used), the power mode setting is gone, and the colour keys have one set of roles
 ### Changed
 
-
-### Removed
-- Action step arguments may carry device value templates, rendered at run time
-- An action step can carry an if condition and an else list; a state that cannot be read runs neither side
 
 ## [1.2.531] - 2026-11-08
 
