@@ -67,4 +67,14 @@ describe('check-one-test-method', () => {
     const found = findViolations([], { 'gone.cap.ts:testX': 'x' }, {})
     expect(found[0]?.message).toContain('remove the line')
   })
+
+  it('reads a QUOTED, namespaced custom action and refuses it unless listed', () => {
+    const text = "defineCustomActions({\n  'x.testThing': customAction(\n"
+    expect(testMethodsOf(text)).toEqual(['x.testThing'])
+    const file = { path: 'packages/addon-x/src/x-actions.ts', text }
+    expect(findViolations([file], {}, {})).toHaveLength(1)
+    expect(
+      findViolations([file], { 'packages/addon-x/src/x-actions.ts:x.testThing': 'why' }, {}),
+    ).toEqual([])
+  })
 })

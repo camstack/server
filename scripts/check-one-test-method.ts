@@ -25,7 +25,7 @@ import { fileURLToPath } from 'node:url'
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 const METHOD_RE =
-  /^\s{2,4}((?:(?:test|verify|check|probe|ping)\w*|validate\w*Credentials))\s*:\s*(?:optionalMethod|method)\s*\(/
+  /^\s{2,4}['"]?((?:\w+\.)?(?:(?:test|verify|check|probe|ping)\w*|validate\w*Credentials))['"]?\s*:\s*(?:optionalMethod|method|customAction)\s*[(<]/
 const ALLOWED = 'integration-instances.cap.ts:testInstance'
 
 /** Key: `<cap file>:<method>`. Value: why it is not a connection test of an instance. */
@@ -54,6 +54,14 @@ export const PERMANENT: Readonly<Record<string, string>> = {
   'stream-broker.cap.ts:probeStream':
     'probes one stream URL for its media info, not a connection test',
   'user-management.cap.ts:verifyTotp': 'verifies a one-time code of a user login',
+  'packages/addon-cloudflare/src/turn/cloudflare-turn-actions.ts:testCredentials':
+    'checks one credential pair typed in the form before it is saved, not an instance record',
+  'packages/addon-post-analysis/src/notification-center/nc-actions.ts:nc.testRule':
+    'dry-runs a notification rule against an event',
+  'packages/addon-post-analysis/src/notification-center/nc-actions.ts:nc.testTimelapseRule':
+    'dry-runs a timelapse notification rule',
+  'packages/addon-post-analysis/src/notification-center/nc-actions.ts:nc.testSummaryRule':
+    'dry-runs a summary notification rule',
 }
 
 /** Folds into `testInstance` at step 5/6 of planning#440; delete the entry then. */
@@ -87,7 +95,10 @@ export function findViolations(
   const out: Violation[] = []
   const seen = new Set<string>()
   for (const cap of caps) {
-    const base = cap.path.slice(cap.path.lastIndexOf('/') + 1)
+    // A custom action file is keyed by its repo path; a cap file by its basename.
+    const base = cap.path.endsWith('.cap.ts')
+      ? cap.path.slice(cap.path.lastIndexOf('/') + 1)
+      : cap.path
     for (const method of testMethodsOf(cap.text)) {
       const key = `${base}:${method}`
       seen.add(key)
@@ -110,13 +121,12 @@ export function findViolations(
 }
 
 function main(): number {
-  const files = execFileSync('git', ['ls-files', '*.cap.ts'], { cwd: ROOT, encoding: 'utf8' })
+  const files = execFileSync('git', ['ls-files', '*.ts'], { cwd: ROOT, encoding: 'utf8' })
     .split('\n')
-    .filter((f) => f !== '')
-  const caps: SourceFile[] = files.map((f) => ({
-    path: f,
-    text: readFileSync(path.join(ROOT, f), 'utf8'),
-  }))
+    .filter((f) => f !== '' && !f.includes('/__tests__/') && !f.endsWith('.spec.ts'))
+  const caps: SourceFile[] = files
+    .map((f) => ({ path: f, text: readFileSync(path.join(ROOT, f), 'utf8') }))
+    .filter((f) => f.path.endsWith('.cap.ts') || f.text.includes('defineCustomActions('))
   const violations = findViolations(caps)
   for (const v of violations) console.error(`check-one-test-method: ${v.where}: ${v.message}`)
   if (violations.length === 0) console.log('check-one-test-method: OK')
