@@ -191,9 +191,8 @@ export function targetOfRecord(
 }
 
 /**
- * Where a target that could not be moved still lives (its legacy source). The facade serves such a row
- * as long as the new records do not hold its id, so a row the migration skipped never goes dark, and a
- * write of that id moves it (the legacy row is dropped last).
+ * The retired single kind a target migration reads and empties. Only the migration holds it: the store
+ * never serves it, and its declaration is made by the migration at the moment it runs.
  */
 export interface LegacyTargets {
   list(): Promise<readonly OldTargetRow[]>
@@ -203,18 +202,6 @@ export interface LegacyTargets {
 /** What a store takes beyond its kinds. */
 export interface NotificationTargetStoreOptions {
   readonly logger?: IScopedLogger
-  readonly legacy?: LegacyTargets
-}
-
-function targetOfOld(addonId: string, row: OldTargetRow): Target {
-  return {
-    id: row.id,
-    name: row.name,
-    kind: row.kind,
-    addonId,
-    enabled: row.enabled,
-    config: { ...row.config },
-  }
 }
 
 interface KindHandle {
@@ -275,19 +262,7 @@ export class NotificationTargetStore {
         )
       }
     }
-    const held = new Set(out.map((target) => target.id))
-    for (const row of await this.legacyRows()) {
-      if (!held.has(row.id)) out.push(targetOfOld(this.addonId, row))
-    }
     return out
-  }
-
-  /** The legacy rows of a kind this provider serves (the others are not ours to show). */
-  private async legacyRows(): Promise<readonly OldTargetRow[]> {
-    const legacy = this.options.legacy
-    if (legacy === undefined) return []
-    const served = new Set(this.handles.map((entry) => entry.kind))
-    return (await legacy.list()).filter((row) => served.has(row.kind))
   }
 
   async getById(id: string): Promise<Target | null> {
@@ -295,8 +270,7 @@ export class NotificationTargetStore {
       const row = await handle.getResolved(id)
       if (row !== null) return targetOfRecord(this.addonId, kind, row.id, row.data)
     }
-    const old = (await this.legacyRows()).find((row) => row.id === id)
-    return old === undefined ? null : targetOfOld(this.addonId, old)
+    return null
   }
 
   /** Insert or replace by id; a target whose kind changed leaves the record of its old kind. */
@@ -308,13 +282,10 @@ export class NotificationTargetStore {
     for (const other of this.handles) {
       if (other !== own) await other.handle.delete(target.id)
     }
-    // The record now holds the id: the legacy row of it is moved, so it goes, last.
-    await this.options.legacy?.delete(target.id)
   }
 
   async delete(id: string): Promise<void> {
     for (const { handle } of this.handles) await handle.delete(id)
-    await this.options.legacy?.delete(id)
   }
 
   /** Flip the switch on an existing target; null when it does not exist. */
@@ -325,12 +296,7 @@ export class NotificationTargetStore {
       const row = await handle.get(id)
       return row === null ? null : targetOfRecord(this.addonId, kind, row.id, row.data)
     }
-    // Only the legacy source has it: flipping the switch moves the row to its record.
-    const old = (await this.legacyRows()).find((row) => row.id === id)
-    if (old === undefined) return null
-    const moved = { ...targetOfOld(this.addonId, old), enabled }
-    await this.upsert(moved)
-    return moved
+    return null
   }
 }
 
@@ -606,7 +572,7 @@ export interface TargetRowPorts {
   dropNew(kind: string, id: string): Promise<void>
   /** Drop the old row, last. */
   dropOld(id: string): Promise<void>
-  /** A row left where it was (its legacy source keeps serving it), with the reason. */
+  /** A row left in the retired kind, with the reason; nothing serves it. */
   skipped(row: { readonly id: string; readonly kind: string; readonly reason: string }): void
 }
 
@@ -710,6 +676,29 @@ export function legacyTargetsOver(
   }
 }
 
+/**
+ * The retired kind as a lazy legacy source: it is declared on the first read or delete, which only
+ * the migration makes, so an addon whose migration is applied never declares it.
+ */
+export function retiredTargetsOver(
+  records: Pick<RecordsAccess, 'declare' | 'kind'>,
+  retired: DefinedRecordKind<typeof OldTargetBodySchema>,
+  logger: IScopedLogger,
+): LegacyTargets {
+  let source: LegacyTargets | null = null
+  const open = async (): Promise<LegacyTargets> => {
+    if (source === null) {
+      await records.declare({ [retired.name]: retired })
+      source = legacyTargetsOver(records.kind(retired), logger)
+    }
+    return source
+  }
+  return {
+    list: async () => (await open()).list(),
+    delete: async (id) => (await open()).delete(id),
+  }
+}
+
 /** The ports over the records: the retired kind in, the per-kind records out. */
 export function targetRowPortsOver(deps: {
   readonly legacy: LegacyTargets
@@ -729,7 +718,7 @@ export function targetRowPortsOver(deps: {
     },
     dropOld: (id) => deps.legacy.delete(id),
     skipped: (row) => {
-      deps.logger.warn('notification target left in its legacy store; it keeps being served', {
+      deps.logger.warn('notification target left in its retired kind; it is not served', {
         meta: { targetId: row.id, kind: row.kind, reason: row.reason },
       })
     },

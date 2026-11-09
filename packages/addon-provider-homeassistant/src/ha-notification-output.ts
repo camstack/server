@@ -377,7 +377,6 @@ export const haNotifyRecordKinds = notificationTargetKinds([homeassistantTargetK
  */
 export type HaTargetStore = NotificationTargetStore
 export const HaTargetStore = {
-  /** `options.legacy` is the retired kind a skipped row still lives in: the store keeps serving it. */
   of(
     records: Pick<RecordsAccess, 'kind'>,
     options: NotificationTargetStoreOptions = {},

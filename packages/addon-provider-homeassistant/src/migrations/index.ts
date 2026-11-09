@@ -33,7 +33,7 @@ export const CALENDAR_IDS_TO_RECORDS_ID =
 export { BROKER_LINKS_TO_CONNECTIONS_ID, haBrokerLinkPorts }
 export {
   HA_NOTIFY_TARGETS_TO_BODY_ID,
-  haLegacyTargetsOver,
+  haRetiredTargetKinds,
   haNotifyPortsOver,
 } from './notify-targets-to-body.js'
 export { haInstanceRecordPortsOver } from './ha-instance-settings.js'
@@ -193,7 +193,7 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<HaMigrationPorts>[] = [
       onFailure: 'tolerate',
       bodyKind: 'procedure',
       description:
-        'Move each Home Assistant notify target to the notify-homeassistant record, the config flat in the body, the same id and the same switch; read back before the old row goes; a row that fails stays in the old kind and is still served',
+        'Move each Home Assistant notify target to the notify-homeassistant record, the config flat in the body, the same id and the same switch; read back before the old row goes; a row that fails stays in the old kind, named in the log',
       fixtureMark: 'the switch (off) and the id of a Home Assistant notify target',
     },
     procedure: moveHaNotifyTargets,

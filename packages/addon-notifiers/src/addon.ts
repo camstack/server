@@ -18,7 +18,7 @@ import {
   buildUserScopedNotificationTargetInstances,
   defineAddonMigrations,
   integrationInstancesCapability,
-  legacyTargetsOver,
+  retiredTargetsOver,
   notificationOutputCapability,
   publicEndpointReaderFrom,
   secretKeysOf,
@@ -50,14 +50,16 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
       throw new Error('notifiers (hub) needs ctx.records — check execution.placement')
     }
     // Declare notification-targets BEFORE first store access.
-    await records.declare({ ...notifiersRecordKinds, ...oldTargetKinds })
+    await records.declare(notifiersRecordKinds)
     const descriptors = notifierDescriptors()
-    // A target the migration could not move stays in the retired kind, and the store keeps serving it.
-    const legacy = legacyTargetsOver(
-      records.kind(oldTargetKinds[OLD_TARGETS_KIND]),
+    // The retired single kind is declared by the migration when it runs, never here: the store
+    // serves the per-kind records only.
+    const legacy = retiredTargetsOver(
+      records,
+      oldTargetKinds[OLD_TARGETS_KIND],
       this.ctx.logger,
     )
-    const store = TargetStore.of(records, descriptors, { logger: this.ctx.logger, legacy })
+    const store = TargetStore.of(records, descriptors, { logger: this.ctx.logger })
     // The old single kind is flattened into the per-kind records BEFORE anything reads a target.
     await this.runMigrations(
       defineAddonMigrations(ADDON_MIGRATIONS, {

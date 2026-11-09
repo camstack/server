@@ -102,7 +102,6 @@ import { haInstanceSettingsPortsOver } from './migrations/legacy-integration-row
 import {
   ADDON_MIGRATIONS,
   haInstanceRecordPortsOver,
-  haLegacyTargetsOver,
   haNotifyPortsOver,
   type HaMigrationPorts,
 } from './migrations/index.js'
@@ -376,11 +375,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     if (records === undefined) {
       throw new Error('ha notification-output: ctx.records is required (hub-only addon)')
     }
-    // Declare ha-notification-targets BEFORE first store access.
-    const store = HaTargetStore.of(records, {
-      logger: this.ctx.logger,
-      legacy: haLegacyTargetsOver(records, this.ctx.logger),
-    })
+    const store = HaTargetStore.of(records, { logger: this.ctx.logger })
     return createHaNotificationOutputProvider({
       addonId: this.ctx.id,
       iconUrl: HA_NOTIFICATION_ICON_URL,

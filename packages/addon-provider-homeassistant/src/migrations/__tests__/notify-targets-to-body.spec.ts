@@ -14,11 +14,10 @@ import {
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { haNotifyRecordKinds, HaTargetStore } from '../../ha-notification-output.js'
-import { haRecordKinds } from '../../record-kinds.js'
 import {
-  haLegacyTargetsOver,
   type HaNotifyPorts,
   haNotifyPortsOver,
+  haRetiredTargetKinds,
 } from '../notify-targets-to-body.js'
 import { ADDON_MIGRATIONS, HA_NOTIFY_TARGETS_TO_BODY_ID } from '../index.js'
 
@@ -65,7 +64,7 @@ function ledgerHost(): {
   return { host, outcomes }
 }
 
-const OLD = haRecordKinds['ha-notification-targets']
+const OLD = haRetiredTargetKinds['ha-notification-targets']
 
 async function world() {
   const memory = makeInMemoryRecords('provider-homeassistant')
@@ -74,10 +73,7 @@ async function world() {
     'ha-notification-targets': OLD,
   })
   const oldKind = memory.records.kind(OLD)
-  const store = HaTargetStore.of(memory.records, {
-    logger: silentLogger,
-    legacy: haLegacyTargetsOver(memory.records, silentLogger),
-  })
+  const store = HaTargetStore.of(memory.records, { logger: silentLogger })
   const run = (
     host: AddonMigrationHost,
     wrap: (ports: HaNotifyPorts) => HaNotifyPorts = (p) => p,
@@ -130,7 +126,7 @@ describe('homeassistant notify-targets-to-body', () => {
     })
   })
 
-  it('one target that fails to move stays in the old kind and is still served; the other moves', async () => {
+  it('one target that fails to move stays in the old kind, unserved; the other moves', async () => {
     const w = await world()
     for (const [id, enabled] of [
       ['ha-bad', false],
@@ -163,11 +159,7 @@ describe('homeassistant notify-targets-to-body', () => {
     })
     expect(await w.oldKind.get('ha-good')).toBeNull()
     expect(await w.oldKind.get('ha-bad')).not.toBeNull()
-    expect(await w.store.getById('ha-bad')).toMatchObject({
-      id: 'ha-bad',
-      enabled: false,
-      config: { service: 'notify_ha-bad' },
-    })
-    expect((await w.store.list()).map((t) => t.id).sort()).toEqual(['ha-bad', 'ha-good'])
+    expect(await w.store.getById('ha-bad')).toBeNull()
+    expect((await w.store.list()).map((t) => t.id)).toEqual(['ha-good'])
   })
 })

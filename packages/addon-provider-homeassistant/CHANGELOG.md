@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Each imported calendar names the record that owns it, so two connections sharing an entity id keep separate switches
+### Changed
+
+- Notify targets: the retired ha-notification-targets kind is declared only while its migration runs, and a row left in it is no longer served
 
 ## [1.2.674] - 2026-11-08
 

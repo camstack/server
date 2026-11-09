@@ -77,10 +77,7 @@ async function world() {
   await memory.records.declare({ ...notifiersRecordKinds, ...oldTargetKinds })
   const oldKind = memory.records.kind(oldTargetKinds[OLD_TARGETS_KIND])
   const legacy = legacyTargetsOver(oldKind, silentLogger)
-  const store = TargetStore.of(memory.records, notifierDescriptors(), {
-    logger: silentLogger,
-    legacy,
-  })
+  const store = TargetStore.of(memory.records, notifierDescriptors(), { logger: silentLogger })
   const descriptors = notifierDescriptors()
   const run = (
     host: AddonMigrationHost,
@@ -135,7 +132,7 @@ describe('notifiers targets-to-body', () => {
     expect(await w.oldKind.get('x-1')).not.toBeNull()
   })
 
-  it('one target whose token will not read back stays in the old kind and is still served; the other moves', async () => {
+  it('one target whose token will not read back stays in the old kind, unserved; the other moves', async () => {
     const w = await world()
     await w.oldKind.put({
       id: 'tg-bad',
@@ -167,15 +164,11 @@ describe('notifiers targets-to-body', () => {
     expect(outcomes.get(TARGETS_TO_BODY_ID)).toMatchObject({
       result: { outcome: 'done', summary: { converted: 1, skipped: 1 } },
     })
-    // The good one moved, the bad one is untouched in the old kind and the store still serves it.
+    // The good one moved, the bad one is untouched in the old kind and the store does not serve it.
     expect(await w.oldKind.get('tg-good')).toBeNull()
     expect(await w.oldKind.get('tg-bad')).not.toBeNull()
     expect((await w.store.getById('tg-good'))?.config['botToken']).toBe(`${TOKEN}-2`)
-    expect(await w.store.getById('tg-bad')).toMatchObject({
-      id: 'tg-bad',
-      enabled: false,
-      config: { botToken: TOKEN, chatId: '1' },
-    })
-    expect((await w.store.list()).map((t) => t.id).sort()).toEqual(['tg-bad', 'tg-good'])
+    expect(await w.store.getById('tg-bad')).toBeNull()
+    expect((await w.store.list()).map((t) => t.id)).toEqual(['tg-good'])
   })
 })

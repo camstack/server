@@ -29,7 +29,7 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<NotifiersMigrationPorts>[
       onFailure: 'tolerate',
       bodyKind: 'procedure',
       description:
-        'Move each notification target from the single targets kind to the record kind of its target kind, the config flat in the body, every secret in the keychain and read back before the old row goes; a row that fails stays in the old kind and is still served',
+        'Move each notification target from the single targets kind to the record kind of its target kind, the config flat in the body, every secret in the keychain and read back before the old row goes; a row that fails stays in the old kind, named in the log',
       fixtureMark: 'the token, the switch (off) and the id of a Telegram target',
     },
     procedure: moveNotifierTargets,

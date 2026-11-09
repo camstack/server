@@ -2,7 +2,7 @@
  * Notification targets as instances: the per-kind record kinds, the facade the providers keep using, the
  * `integration-instances` provider, and the D987 procedure that flattens the old `config` blob.
  */
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IScopedLogger } from '../../interfaces/logging.js'
 import { recordSecretRef } from '../../records/secret-paths.js'
 import type { TargetKind } from '../../capabilities/notification-output.cap.js'
@@ -11,6 +11,7 @@ import { makeInMemoryRecords } from '../../records/in-memory-records.js'
 import {
   buildNotificationTargetInstances,
   legacyTargetsOver,
+  retiredTargetsOver,
   moveTargetRows,
   NotificationTargetStore,
   notificationTargetKinds,
@@ -98,10 +99,7 @@ async function world() {
   const { logger, warns } = recordingLogger()
   const oldKind = memory.records.kind(LEGACY)
   const legacy = legacyTargetsOver(oldKind, logger)
-  const store = NotificationTargetStore.of(memory.records, OWNER, kinds, DESCRIPTORS, {
-    logger,
-    legacy,
-  })
+  const store = NotificationTargetStore.of(memory.records, OWNER, kinds, DESCRIPTORS, { logger })
   const ports = targetRowPortsOver({ legacy, store, logger })
   const secretKeys = (kind: string): readonly string[] =>
     secretKeysOf(DESCRIPTORS.find((d) => d.kind === kind) ?? TELEGRAM)
@@ -195,7 +193,7 @@ describe('notification targets over per-kind records', () => {
     )
   })
 
-  it('one row whose secret does not read back stays served from legacy while the others move', async () => {
+  it('one row whose secret does not read back stays in the retired kind, unserved, while the others move', async () => {
     const lying = {
       ...w.ports,
       readNew: async (kind: string, id: string) =>
@@ -205,15 +203,11 @@ describe('notification targets over per-kind records', () => {
       outcome: 'done',
       summary: { converted: 1, skipped: 2 },
     })
-    // The bad row: its new record is undone, its legacy row is still there and the facade serves it.
+    // The bad row: its new record is undone, its retired row is still there and nothing serves it.
     expect(await w.memory.records.kind(w.kinds['notify-telegram']!).get('tg-1')).toBeNull()
     expect(await w.oldKind.get('tg-1')).not.toBeNull()
-    expect(await w.store.getById('tg-1')).toMatchObject({
-      id: 'tg-1',
-      enabled: false,
-      config: { botToken: 'tok-secret', chatId: '42' },
-    })
-    expect((await w.store.list()).map((t) => t.id).sort()).toEqual(['tg-1', 'wh-1'])
+    expect(await w.store.getById('tg-1')).toBeNull()
+    expect((await w.store.list()).map((t) => t.id)).toEqual(['wh-1'])
     // The good row moved.
     expect(await w.oldKind.get('wh-1')).toBeNull()
     expect(await w.memory.records.kind(w.kinds['notify-webhook']!).get('wh-1')).not.toBeNull()
@@ -236,17 +230,31 @@ describe('notification targets over per-kind records', () => {
     expect(w.warns.some((line) => line.includes('wh-1') && line.includes('keychain locked'))).toBe(
       true,
     )
-    expect(await w.store.getById('wh-1')).toMatchObject({ id: 'wh-1', kind: 'webhook' })
+    expect(await w.store.getById('wh-1')).toBeNull()
   })
 
-  it('a write to the facade moves a legacy-served row and drops the legacy row', async () => {
+  it('a row left in the retired kind is not reachable through the store: no read, no switch', async () => {
     const lying = { ...w.ports, readNew: async () => null }
     await moveTargetRows(lying, w.secretKeys)
     expect(await w.oldKind.get('tg-1')).not.toBeNull()
-    const flipped = await w.store.setEnabled('tg-1', true)
-    expect(flipped).toMatchObject({ id: 'tg-1', enabled: true })
-    expect(await w.oldKind.get('tg-1')).toBeNull()
-    expect(await w.memory.records.kind(w.kinds['notify-telegram']!).get('tg-1')).not.toBeNull()
+    expect(await w.store.list()).toEqual([])
+    expect(await w.store.setEnabled('tg-1', true)).toBeNull()
+    expect(await w.oldKind.get('tg-1')).not.toBeNull()
+  })
+
+  it('the retired kind is declared by the first read of the migration, not before', async () => {
+    const memory = makeInMemoryRecords(OWNER)
+    await memory.records.declare(notificationTargetKinds(DESCRIPTORS))
+    const declare = vi.spyOn(memory.records, 'declare')
+    const lazy = retiredTargetsOver(memory.records, LEGACY, recordingLogger().logger)
+    expect(declare).not.toHaveBeenCalled()
+    expect(await lazy.list()).toEqual([])
+    expect(declare).toHaveBeenCalledTimes(1)
+    memory.seed('notification-targets', {
+      id: 'x',
+      data: { name: 'n', kind: 'webhook', addonId: OWNER, enabled: true, config: {} },
+    })
+    expect((await lazy.list()).map((row) => row.id)).toEqual(['x'])
   })
 
   it('a record that is no valid target is named in the log, not dropped silently', async () => {

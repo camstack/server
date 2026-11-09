@@ -5,16 +5,30 @@
  * still resolves; the switch (`enabled`) is carried across, never reset.
  */
 import {
+  defineRecordKinds,
   type IScopedLogger,
-  legacyTargetsOver,
   type MigrationProcedureResult,
   moveTargetRows,
+  OldTargetBodySchema,
   type RecordsAccess,
+  retiredTargetsOver,
   targetRowPortsOver,
   type TargetRowPorts,
 } from '@camstack/types'
 import { HaTargetStore } from '../ha-notification-output.js'
-import { haRecordKinds } from '../record-kinds.js'
+
+/** The retired kind, as it was declared; read and emptied only by this migration. */
+export const haRetiredTargetKinds = defineRecordKinds({
+  'ha-notification-targets': {
+    schema: OldTargetBodySchema,
+    class: 'config',
+    writeTrigger: 'retired: read once by the notify-targets-to-body migration',
+    device: 'none',
+    at: 'none',
+    retention: { none: 'emptied by the migration' },
+    entry: { title: 'Home Assistant notification targets (retired)' },
+  },
+})
 
 export const HA_NOTIFY_TARGETS_TO_BODY_ID =
   'provider-homeassistant/2026-11-06-notify-targets-config-to-body'
@@ -24,21 +38,20 @@ export interface HaNotifyPorts {
   readonly notifyRows: TargetRowPorts
 }
 
-/** The retired kind as the legacy source of the store: a row the migration skipped is still served. */
-export function haLegacyTargetsOver(records: Pick<RecordsAccess, 'kind'>, logger: IScopedLogger) {
-  return legacyTargetsOver(records.kind(haRecordKinds['ha-notification-targets']), logger)
-}
-
-/** Ports over the retired kind and the new one. */
+/** Ports over the retired kind (declared when the migration first reads it) and the new one. */
 export function haNotifyPortsOver(
-  records: Pick<RecordsAccess, 'kind'>,
+  records: Pick<RecordsAccess, 'declare' | 'kind'>,
   logger: IScopedLogger,
 ): HaNotifyPorts {
-  const legacy = haLegacyTargetsOver(records, logger)
+  const legacy = retiredTargetsOver(
+    records,
+    haRetiredTargetKinds['ha-notification-targets'],
+    logger,
+  )
   return {
     notifyRows: targetRowPortsOver({
       legacy,
-      store: HaTargetStore.of(records, { logger, legacy }),
+      store: HaTargetStore.of(records, { logger }),
       logger,
     }),
   }
