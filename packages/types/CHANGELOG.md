@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Action step arguments may carry device value templates, rendered at run time
 - An action step can carry an if condition and an else list; a state that cannot be read runs neither side
 - A device row shows a running timed run, with the time left and Run or Stop.
+- Renaming a composed device keeps the new name after a restart.
 
 ## [1.2.535] - 2026-11-09
 

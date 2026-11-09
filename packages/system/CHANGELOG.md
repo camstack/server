@@ -98,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notification text times no longer fail under a container with an empty TZ; they fall back to UTC
 - Fix: a grouped addon's migrations (Home Assistant export) are no longer refused when they read the legacy rows of their sibling provider; the integrations runner starts again
 - Selecting a remote source that is an infrared code sends it through its transmitter once and remembers it as the current source.
+- Renaming a composed device keeps the new name after a restart.
 
 ## [1.2.537] - 2026-11-01
 

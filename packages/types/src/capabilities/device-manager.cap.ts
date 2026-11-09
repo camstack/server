@@ -633,10 +633,23 @@ export const deviceManagerCapability = {
 
     /** Update the operator-edited display name. Persists to the meta
      *  row + emits `EventCategory.DeviceMetaChanged`. */
-    setName: method(z.object({ deviceId: z.number(), name: z.string() }), z.void(), {
-      kind: 'mutation',
-      auth: 'admin',
-    }),
+    setName: method(
+      z.object({
+        deviceId: z.number(),
+        name: z.string(),
+        /**
+         * Absent or true: an operator rename, which stamps `userNamed`.
+         * False: the system copying a block name onto the device. That write
+         * must not look like the operator's, or the next reconcile freezes it.
+         */
+        stampUserNamed: z.boolean().optional(),
+      }),
+      z.void(),
+      {
+        kind: 'mutation',
+        auth: 'admin',
+      },
+    ),
 
     /** Set the device's template alias (D1021). The refusal is a typed reason in
      *  the answer, never a thrown string: `empty | too-long | grammar | reserved |

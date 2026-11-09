@@ -21,6 +21,10 @@
  * link reverse-index rebuild gating. Pure refactor — no behavior change.
  */
 import { randomUUID } from 'node:crypto'
+import {
+  composedBlockIdOf,
+  renameCompositionBlock,
+} from '../core-blocks/rename-composition-block.js'
 import type { AddonContext } from '@camstack/types'
 import {
   type DeviceCapDisplayOverride,
@@ -942,6 +946,7 @@ export async function loadMeta(
     addonId,
     type: m.type as DeviceType,
     name: m.name,
+    ...(m.userNamed !== undefined ? { userNamed: m.userNamed } : {}),
     location: m.location ?? null,
     disabled: m.disabled ?? false,
     parentDeviceId: m.parentDeviceId,
@@ -964,16 +969,31 @@ export async function setName(
   input: Parameters<IDeviceManagerProvider['setName']>[0],
 ): ReturnType<IDeviceManagerProvider['setName']> {
   const { deviceId, name } = input
+  // Absent means the operator. The composer passes false: its write is the
+  // block's name, and stamping it would freeze that name as if the operator
+  // had chosen it. `false` is written explicitly — a NULL flag plus a
+  // non-placeholder name is treated as user-named on the next register.
+  const stamp = input.stampUserNamed !== false
   // Child ids whose name was cascaded from the parent rename (emitted below).
   const cascaded: Array<{ id: number; name: string }> = []
+  let keptOperatorName: string | null = null
+  let blockId: string | null = null
   await pctx.metaStore.withMetaWriteLock(async () => {
     const persisted = await pctx.metaStore.resolvePersistedById(deviceId)
     if (!persisted) throw new Error(`[device-manager] setName: unknown device id=${deviceId}`)
     const { meta: m } = persisted
     const oldName = m.name
-    // Mark the row user-named (#17) so the reconcile preserves this name
-    // against a provider's fresh construction-time name on re-register.
-    await pctx.metaStore.rows.patch(deviceId, { name, userNamed: true })
+    if (!stamp && m.userNamed === true && oldName !== name) {
+      keptOperatorName = oldName
+      return
+    }
+    blockId = stamp ? composedBlockIdOf(m.addonId, m.stableId) : null
+    // An operator rename stamps the row. A system write stamps false so a
+    // later register still adopts a fresher block name.
+    await pctx.metaStore.rows.patch(
+      deviceId,
+      stamp ? { name, userNamed: true } : { name, userNamed: false },
+    )
 
     // Cascade the rename to accessory/linked children whose display name was
     // DERIVED from the parent's name (e.g. a Gree AC child named exactly like
@@ -995,7 +1015,7 @@ export async function setName(
     // to it. `parentDeviceId` is indexed; `linkDeviceId` is not a parent
     // relation, so those are found by scanning the fleet — the one place this
     // module still reads every row, and it runs only on an operator rename.
-    if (oldName.length > 0 && oldName !== name) {
+    if (stamp && oldName.length > 0 && oldName !== name) {
       const candidates = new Map<number, PersistedDeviceMeta>()
       for (const row of await pctx.metaStore.rows.listByParent(deviceId)) {
         candidates.set(row.meta.id, row.meta)
@@ -1013,6 +1033,13 @@ export async function setName(
       }
     }
   })
+  if (keptOperatorName !== null) {
+    pctx.host.ctx.logger.info('composed device keeps the name the operator gave it', {
+      tags: { deviceId },
+      meta: { name: keptOperatorName, requested: name },
+    })
+    return
+  }
   pctx.host.ctx.eventBus.emit({
     id: randomUUID(),
     timestamp: new Date(),
@@ -1028,6 +1055,17 @@ export async function setName(
       category: EventCategory.DeviceMetaChanged,
       data: { deviceId: child.id, field: 'name', value: child.name },
     })
+  }
+  if (blockId !== null) {
+    const api = pctx.host.ctx.api
+    if (api === undefined) {
+      pctx.host.ctx.logger.warn(
+        'composed rename did not reach the block — no api on this node, retried on the next apply',
+        { tags: { deviceId }, meta: { blockId } },
+      )
+      return
+    }
+    await renameCompositionBlock(api, pctx.host.ctx.logger, deviceId, blockId, name)
   }
 }
 

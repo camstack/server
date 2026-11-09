@@ -226,6 +226,12 @@ export interface ComposerDeps {
    * Absent in tests that predate it.
    */
   readonly boundCapNames?: (deviceId: number) => Promise<readonly string[] | null>
+  /**
+   * Write a composition block's name so it matches the operator's device name.
+   * Absent in tests that predate the operator-rename repair: the name is kept
+   * and the block is reconciled on the next apply that has the port.
+   */
+  readonly syncBlockName?: (deviceId: number, blockId: string, name: string) => Promise<void>
 }
 
 interface RuntimeRebuild {
@@ -639,7 +645,7 @@ export class Composer {
           ? null
           : p.block.name === null
             ? (previous?.appliedName ?? device.name)
-            : await this.applyName(device, p.block.name, previous?.appliedName ?? null)
+            : await this.applyName(device, p.block.id, p.block.name, previous?.appliedName ?? null)
       const unchanged =
         previous?.runtime != null &&
         previous.device === device &&
@@ -846,9 +852,20 @@ export class Composer {
 
   private async applyName(
     device: ComposedDeviceHandle,
+    blockId: string,
     name: string,
     applied: string | null,
   ): Promise<string> {
+    // The operator's rename is the authority. A restart has no remembered
+    // `applied`, so without this the block name would be written back.
+    if (device.userNamed === true && device.name !== name) {
+      this.deps.logger.info('composed device keeps the name the operator gave it', {
+        tags: { deviceId: device.id },
+        meta: { name: device.name, blockName: name },
+      })
+      await this.syncBlockName(device.id, blockId, device.name)
+      return device.name
+    }
     if ((applied ?? device.name) === name) return name
     try {
       await this.deps.devices.setName(device.id, name)
@@ -863,6 +880,20 @@ export class Composer {
         meta: { name, error: errMsg(err) },
       })
       return applied ?? device.name
+    }
+  }
+
+  /** The block follows the name that was kept. A missed write is retried on the next apply. */
+  private async syncBlockName(deviceId: number, blockId: string, name: string): Promise<void> {
+    const sync = this.deps.syncBlockName
+    if (sync === undefined) return
+    try {
+      await sync(deviceId, blockId, name)
+    } catch (err: unknown) {
+      this.deps.logger.warn(
+        'composed device kept its name but the block was not updated — retried on the next apply',
+        { tags: { deviceId }, meta: { blockId, name, error: errMsg(err) } },
+      )
     }
   }
 

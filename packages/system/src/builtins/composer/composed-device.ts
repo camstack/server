@@ -115,6 +115,8 @@ function sliceBoolean(slice: unknown, field: string): boolean {
 
 export interface ComposedDeviceHandle extends ComposedWriteTarget {
   readonly name: string
+  /** True once an operator renamed this device. Absent on test doubles that predate the flag. */
+  readonly userNamed?: boolean
   /** Copies a source reading's quantity onto this device (D944). Optional so test doubles stay small. */
   adoptQuantity?(quantity: ReadingQuantity): Promise<void>
   /** Publishes the features the device's bound caps stand for (`featuresOfBoundCaps`). Optional so test doubles stay small. */
@@ -133,6 +135,11 @@ export class ComposedDevice
   private readonly derivesWater: boolean
   /** The `consumables` items the composition last wrote — the derived water item is added to these. */
   private composedItems: readonly ConsumableItem[] = []
+
+  /** The row's flag, read at use: a restart loads it with the meta, and a system rename never sets it. */
+  get userNamed(): boolean {
+    return this.ctx.deviceMeta.userNamed === true
+  }
 
   get features(): readonly DeviceFeature[] {
     return [...new Set([...this.sharedFeatures, ...this.boundFeatures])]

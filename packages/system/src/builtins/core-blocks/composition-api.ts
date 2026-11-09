@@ -426,7 +426,9 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
           }
         }
         const updated = await deps.store.updateComposition(blockId, block)
-        deps.logger.info('composition updated', { meta: { blockId, by: caller.userId } })
+        deps.logger.info('composition updated', {
+          meta: { blockId, by: caller?.userId ?? 'system' },
+        })
         if (block.composition !== undefined) {
           const unreleased = (await deps.convergeForClaims()).filter(
             (claim) => claim.owner === blockId,

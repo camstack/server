@@ -352,10 +352,15 @@ export class FakeTarget implements ComposedWriteTarget {
   /** When set, every write THROWS this — a target breaking its no-throw contract. */
   throwing: string | null = null
   private asyncListener: ((cap: string, failure: TargetAsyncFailure) => void) | null = null
+  /** Set by an operator rename. The composer must not write the block name over it. */
+  userNamed = false
+  name: string
   constructor(
     readonly id: number,
-    readonly name = 'Living room',
-  ) {}
+    name = 'Living room',
+  ) {
+    this.name = name
+  }
   seed(cap: string, slice: SlicePatch): WriteOutcome {
     if (this.throwing !== null) throw new Error(this.throwing)
     if (this.refuse !== null) return { ok: false, error: this.refuse }

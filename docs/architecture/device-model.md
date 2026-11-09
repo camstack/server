@@ -10,7 +10,10 @@ applies-to:
   - packages/system/src/builtins/composer/composed-device.ts
   - packages/system/src/builtins/composer/graft-host.ts
   - packages/system/src/builtins/composer/composer.addon.ts
+  - packages/system/src/builtins/composer/composer.ts
   - packages/system/src/builtins/core-blocks/composition-api.ts
+  - packages/system/src/builtins/core-blocks/rename-composition-block.ts
+  - packages/system/src/builtins/device-manager/device-meta-actions.ts
   - packages/system/src/builtins/core-blocks/composition-sources.ts
 covers:
   - packages/addon-provider-*/**
@@ -505,6 +508,11 @@ runner (a group of one) for every declarative composition. Existing devices are 
   source's own (re)registration. A time window arms one deadline, and every
   evaluation is stored so a moved deadline reaches it. The tracker's copy of a
   source value is derivation input only, served to nobody (D224).
+- **The operator's rename of a composed device is the name.** `setName` writes
+  that name onto the composition block as well, and stamps `userNamed`. The
+  composer's own copy of the block name does not stamp the flag. After a
+  restart, a block that still carries the old name does not overwrite a row
+  stamped `userNamed`; the block is brought into line instead.
 - **A composed device is never deleted by a read that failed** (D49): nothing is
   declared or withdrawn while the `core_blocks` store has not loaded, a
   withdrawal needs two agreeing applies (the gate is seeded from persisted

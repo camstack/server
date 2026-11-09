@@ -60,6 +60,7 @@ let persistedScript: PersistedComposedRow[][]
 let decommissionFails: number
 let minted: number
 let named: Array<readonly [number, string]>
+let blockRenames: Array<readonly [string, string]>
 let decommissioned: number[]
 let composer: Composer
 let log: RecordingLogger
@@ -125,6 +126,9 @@ function makeComposer(): Composer {
     describeTarget: hub.ports(log.logger).readBoundCaps,
     now: () => 1_000_000,
     newTimer: () => new FakeTimer(),
+    syncBlockName: async (_deviceId, blockId, name) => {
+      blockRenames.push([blockId, name])
+    },
   })
 }
 
@@ -139,6 +143,7 @@ beforeEach(async () => {
   persistedFails = 0
   minted = 0
   named = []
+  blockRenames = []
   decommissioned = []
   persistedScript = []
   decommissionFails = 0
@@ -198,6 +203,34 @@ describe('apply', () => {
     )
     expect(result.blocks[0]).toMatchObject({ status: 'stopped' })
     expect(targets.get('composed-b1')?.availability.at(-1)).toBe(false)
+  })
+
+  it('an operator rename survives a composer restart, and the block takes that name', async () => {
+    await composer.apply(input())
+    const device = targets.get('composed-b1')
+    if (device === undefined) throw new Error('the room was not declared')
+    device.name = 'Garden'
+    device.userNamed = true
+    named = []
+    blockRenames = []
+    // Restart: a fresh composer has no remembered appliedName, and the block
+    // still says the name it was saved under. An empty row read is trusted
+    // only when the next apply agrees (D49), so the rename is judged then.
+    composer = makeComposer()
+    await composer.apply(input())
+    await composer.apply(input())
+    expect(named).toEqual([])
+    expect(device.name).toBe('Garden')
+    expect(blockRenames).toEqual([['b1', 'Garden']])
+    expect(log.lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          level: 'info',
+          message: 'composed device keeps the name the operator gave it',
+          extras: expect.objectContaining({ tags: { deviceId: device.id } }),
+        }),
+      ]),
+    )
   })
 
   it('the block name is the device name', async () => {

@@ -25,6 +25,7 @@ import type {
   DeviceConstructor,
   DeviceContext,
   DeviceManagerApi,
+  DeviceNameWrite,
   DeviceProxy,
   ICameraDevice,
   IDevice,
@@ -47,6 +48,7 @@ import {
   expandCapMethods,
   sleep,
 } from '@camstack/types/addon'
+import { COMPOSED_DEVICE_STABLE_ID_PREFIX } from '@camstack/types'
 import type { ServiceBroker } from 'moleculer'
 import {
   createChildrenBatchLoader,
@@ -1118,14 +1120,19 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       // `loadMeta` / `loadConfig` return it verbatim.
       if (initialMeta) {
         if (initialMeta.name !== undefined) {
-          await callDeviceManager(api, 'setName', { deviceId: id, name: initialMeta.name }).catch(
-            (err: unknown) => {
-              opts.logger.warn('create: setName pre-seed failed', {
-                tags: { stableId, deviceId: id },
-                meta: { error: err instanceof Error ? err.message : String(err) },
-              })
-            },
-          )
+          // A composed device's first name is the block's, not the operator's.
+          // Stamping it would freeze that name against a later block rename.
+          const systemName = stableId.startsWith(COMPOSED_DEVICE_STABLE_ID_PREFIX)
+          await callDeviceManager(api, 'setName', {
+            deviceId: id,
+            name: initialMeta.name,
+            ...(systemName ? { stampUserNamed: false } : {}),
+          }).catch((err: unknown) => {
+            opts.logger.warn('create: setName pre-seed failed', {
+              tags: { stableId, deviceId: id },
+              meta: { error: err instanceof Error ? err.message : String(err) },
+            })
+          })
         }
         if (initialMeta.location !== undefined) {
           await callDeviceManager(api, 'setLocation', {
@@ -1295,8 +1302,12 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       return id
     },
 
-    setName: async (deviceId: number, name: string): Promise<void> => {
-      await callDeviceManager(api, 'setName', { deviceId, name })
+    setName: async (deviceId: number, name: string, write?: DeviceNameWrite): Promise<void> => {
+      await callDeviceManager(api, 'setName', {
+        deviceId,
+        name,
+        ...(write?.stampUserNamed === false ? { stampUserNamed: false } : {}),
+      })
     },
 
     setLocation: async (deviceId: number, location: string | null): Promise<void> => {

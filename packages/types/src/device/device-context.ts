@@ -158,6 +158,12 @@ export function widenDeviceConstructor<T extends IDevice>(
   return ctor as DeviceConstructor<IDevice>
 }
 
+/** Who is writing a device name. Absent means the operator. */
+export interface DeviceNameWrite {
+  /** False when the writer is the system, not an operator rename. */
+  readonly stampUserNamed: boolean
+}
+
 export interface DeviceManagerApi {
   /**
    * Create, register, and persist a device in one call.
@@ -245,8 +251,10 @@ export interface DeviceManagerApi {
   persistInitialConfig(stableId: string, config: Record<string, unknown>): Promise<number>
 
   /** Update the device's display name. Surfaces immediately in
-   *  the UI device list + on `IDevice.name` for live consumers. */
-  setName(deviceId: number, name: string): Promise<void>
+   *  the UI device list + on `IDevice.name` for live consumers.
+   *  `stampUserNamed: false` is the system writer (a block name copied
+   *  onto a composed device); omitted, the write is the operator's. */
+  setName(deviceId: number, name: string, opts?: DeviceNameWrite): Promise<void>
 
   /** Set the operator-organisational location label
    *  ("Kitchen" / "Front yard" / …). Pass `null` to clear. */

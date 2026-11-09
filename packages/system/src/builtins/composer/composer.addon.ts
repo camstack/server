@@ -37,6 +37,7 @@ import { invokeActuatorCall } from './actuator-invoke.js'
 import { type ComposedDeviceHandle, isComposedDevice } from './composed-device.js'
 import { Composer, type NativeShadowChangedData } from './composer.js'
 import { NodeDeadlineTimer } from './deadline-timer.js'
+import { renameCompositionBlock } from '../core-blocks/rename-composition-block.js'
 import { historySeriesKey, pulseHistoryFromQuery } from './pulse-seed-resolve.js'
 import { GraftHost } from './graft-host.js'
 import { type BoundCapsRead, SourceTracker } from './source-tracker.js'
@@ -176,7 +177,7 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
         return { devices: handles }
       },
       devices: {
-        setName: (deviceId, name) => devices.setName(deviceId, name),
+        setName: (deviceId, name) => devices.setName(deviceId, name, { stampUserNamed: false }),
         decommission: (deviceId) => devices.decommission(deviceId),
         applyDerivedSpec: (deviceId, derived) => devices.applyDerivedSpec(deviceId, derived),
       },
@@ -249,6 +250,17 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
           throw new Error(`\`${cap}.${method}\` is not a mutation reachable through ctx.api`)
         }
         await mutate({ deviceId, ...args })
+      },
+      syncBlockName: async (deviceId, blockId, name) => {
+        const blocks = this.ctx.api
+        if (blocks === undefined) {
+          this.ctx.logger.warn(
+            'composed device kept its name but the block was not updated — no api on this runner',
+            { tags: { deviceId }, meta: { blockId } },
+          )
+          return
+        }
+        await renameCompositionBlock(blocks, this.ctx.logger, deviceId, blockId, name)
       },
       boundCapNames: async (deviceId) => {
         try {

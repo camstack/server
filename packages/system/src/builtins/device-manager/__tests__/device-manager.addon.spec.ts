@@ -182,7 +182,10 @@ interface DeviceStateProviderLike {
   }) => Promise<Record<string, unknown> | null>
 }
 
-async function setup(registryOrNull?: DeviceRegistry | null): Promise<{
+async function setup(
+  registryOrNull?: DeviceRegistry | null,
+  extraApi?: Record<string, unknown>,
+): Promise<{
   provider: IDeviceManagerProvider
   deviceState: DeviceStateProviderLike
   settings: ReturnType<typeof makeSettings>
@@ -199,7 +202,7 @@ async function setup(registryOrNull?: DeviceRegistry | null): Promise<{
   const settingsStoreApi = store.api
   const records = await makeRecordsAccessForOwner('device-manager')
   const ctx = {
-    api: { settingsStore: settingsStoreApi },
+    api: { settingsStore: settingsStoreApi, ...extraApi },
     id: 'device-manager',
     logger: makeLogger(),
     eventBus,
@@ -485,6 +488,80 @@ describe('DeviceManagerAddon', () => {
       expect(meta.name).toBe('My Camera')
       // The PRESERVE decision is stamped forward so subsequent reconciles are explicit.
       expect(meta.userNamed).toBe(true)
+    })
+
+    it('an operator rename of a composed device stamps userNamed and writes the block name', async () => {
+      const writes: Array<{ blockId: string; name: string }> = []
+      let stored = { name: 'Room', updatedAt: 1 }
+      const { provider, store } = await setup(null, {
+        coreBlocks: {
+          getComposition: {
+            query: async () => ({
+              state: 'loaded',
+              view: { block: { id: 'b1', name: stored.name, updatedAt: stored.updatedAt } },
+            }),
+          },
+          updateComposition: {
+            mutate: async (input: { blockId: string; block: { name?: string } }) => {
+              const next = input.block.name ?? stored.name
+              writes.push({ blockId: input.blockId, name: next })
+              stored = { name: next, updatedAt: stored.updatedAt + 1 }
+              return { block: { id: input.blockId, name: next, updatedAt: stored.updatedAt } }
+            },
+          },
+        },
+      })
+      const { id } = await provider.allocateDeviceId({
+        addonId: 'composer',
+        stableId: 'composed-b1',
+      })
+      await provider.registerDevice({
+        addonId: 'composer',
+        stableId: 'composed-b1',
+        id,
+        type: 'generic',
+        name: 'Room',
+        parentDeviceId: null,
+        config: {},
+      })
+
+      await provider.setName({ deviceId: id, name: 'Garden' })
+      const meta = await readMetaRow(store, id)
+      expect(meta.name).toBe('Garden')
+      expect(meta.userNamed).toBe(true)
+      expect(writes).toEqual([{ blockId: 'b1', name: 'Garden' }])
+      expect(await provider.loadMeta({ deviceId: id })).toMatchObject({
+        name: 'Garden',
+        userNamed: true,
+      })
+
+      // The composer copying the block name back is not the operator.
+      await provider.setName({ deviceId: id, name: 'Room', stampUserNamed: false })
+      const kept = await readMetaRow(store, id)
+      expect(kept.name).toBe('Garden')
+      expect(kept.userNamed).toBe(true)
+      expect(writes).toEqual([{ blockId: 'b1', name: 'Garden' }])
+    })
+
+    it('a system rename does not stamp userNamed', async () => {
+      const { provider, store } = await setup()
+      const { id } = await provider.allocateDeviceId({
+        addonId: 'composer',
+        stableId: 'composed-b2',
+      })
+      await provider.registerDevice({
+        addonId: 'composer',
+        stableId: 'composed-b2',
+        id,
+        type: 'generic',
+        name: 'Room',
+        parentDeviceId: null,
+        config: {},
+      })
+      await provider.setName({ deviceId: id, name: 'Lounge', stampUserNamed: false })
+      const meta = await readMetaRow(store, id)
+      expect(meta.name).toBe('Lounge')
+      expect(meta.userNamed).toBe(false)
     })
 
     it('takes the fresh name for a legacy row still on the stableId placeholder', async () => {

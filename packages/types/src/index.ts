@@ -1123,6 +1123,7 @@ export type {
   DeviceConstructor,
   DeviceContext,
   DeviceManagerApi,
+  DeviceNameWrite,
   DevicePersistConfigOptions,
   IDeviceRegistry,
   IDeviceRegistryReader,
