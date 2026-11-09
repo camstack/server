@@ -23,19 +23,11 @@ import type {
   NotifierAdapter,
 } from '../adapters/adapter.js'
 import {
-  createNotificationOutputProvider as createCapProvider,
-  createNotifierTargetAdmin,
+  createNotificationOutputProvider as createNotificationOutputProvider,
   type HttpSender,
-  type NotificationOutputProviderDeps,
 } from '../provider.js'
-import { REDACTED_MARKER } from '../secrets.js'
 import { TargetStore } from '../target-store.js'
 import { makeNotifiersRecords } from './fake-records.js'
-
-/** The cap provider plus the target admin, so a spec can seed and read targets the way the bridge does. */
-function createNotificationOutputProvider(deps: NotificationOutputProviderDeps) {
-  return { ...createCapProvider(deps), ...createNotifierTargetAdmin(deps) }
-}
 
 // ── Fixtures ────────────────────────────────────────────────────────
 
@@ -168,61 +160,6 @@ describe('listTargetKinds', () => {
   })
 })
 
-// ── CRUD round-trip ─────────────────────────────────────────────────
-
-describe('target CRUD', () => {
-  it('insert → list → update → delete round-trip', async () => {
-    const { provider } = await makeProvider([okAdapter('fake')])
-
-    await provider.upsertTarget({ target: target() })
-    let list = await provider.listTargets()
-    expect(list).toHaveLength(1)
-    expect(list[0]?.name).toBe('My ntfy')
-
-    await provider.upsertTarget({ target: target({ name: 'Renamed' }) })
-    list = await provider.listTargets()
-    expect(list).toHaveLength(1)
-    expect(list[0]?.name).toBe('Renamed')
-
-    await provider.deleteTarget({ targetId: 't1' })
-    expect(await provider.listTargets()).toEqual([])
-  })
-})
-
-// ── Secret redaction + merge ────────────────────────────────────────
-
-describe('secret handling', () => {
-  it('blanks password-typed fields on listTargets (presence marker only)', async () => {
-    const { provider } = await makeProvider([okAdapter('fake')])
-    await provider.upsertTarget({ target: target() })
-    const list = await provider.listTargets()
-    expect(list[0]?.config['token']).toBe(REDACTED_MARKER)
-    // Non-secret fields are untouched.
-    expect(list[0]?.config['url']).toBe('https://example.test/hook')
-  })
-
-  it('preserves the stored secret when the operator re-submits the marker', async () => {
-    const { provider, store } = await makeProvider([okAdapter('fake')])
-    await provider.upsertTarget({
-      target: target({ config: { url: 'https://a', token: 'realtoken' } }),
-    })
-    // Second save comes back from the UI with the redaction marker, not the value.
-    await provider.upsertTarget({
-      target: target({ name: 'Edited', config: { url: 'https://a', token: REDACTED_MARKER } }),
-    })
-    const stored = await store.getById('t1')
-    expect(stored?.config['token']).toBe('realtoken')
-    expect(stored?.name).toBe('Edited')
-  })
-
-  it('upsertTarget returns a redacted target', async () => {
-    const { provider } = await makeProvider([okAdapter('fake')])
-    const saved = await provider.upsertTarget({ target: target() })
-    expect(saved.config['token']).toBe(REDACTED_MARKER)
-    expect(saved.addonId).toBe('notifiers')
-  })
-})
-
 // ── send() dispatch ─────────────────────────────────────────────────
 
 describe('send', () => {
@@ -235,8 +172,8 @@ describe('send', () => {
 
   it('disabled target is skipped with a result (not dispatched)', async () => {
     const adapter = okAdapter('fake')
-    const { provider } = await makeProvider([adapter])
-    await provider.upsertTarget({ target: target({ enabled: false }) })
+    const { provider, store } = await makeProvider([adapter])
+    await store.upsert(target({ enabled: false }))
     const result = await provider.send({ targetId: 't1', notification: NOTIFICATION })
     expect(result.success).toBe(false)
     expect(result.error).toMatch(/disabled/i)
@@ -245,8 +182,8 @@ describe('send', () => {
 
   it('dispatches through the adapter and surfaces renderedAs (prepareNotification ran)', async () => {
     const adapter = okAdapter('fake')
-    const { provider } = await makeProvider([adapter])
-    await provider.upsertTarget({ target: target() })
+    const { provider, store } = await makeProvider([adapter])
+    await store.upsert(target())
     const result = await provider.send({
       targetId: 't1',
       notification: { body: 'ping', format: 'text', priority: 4 },
@@ -261,8 +198,8 @@ describe('send', () => {
   })
 
   it('isolates a buildRequest throw into SendResult.error', async () => {
-    const { provider } = await makeProvider([throwingAdapter('boom')])
-    await provider.upsertTarget({ target: target({ kind: 'boom' }) })
+    const { provider, store } = await makeProvider([throwingAdapter('boom')])
+    await store.upsert(target({ kind: 'boom' }))
     const result = await provider.send({ targetId: 't1', notification: NOTIFICATION })
     expect(result.success).toBe(false)
     expect(result.error).toMatch(/buildRequest failed/)
@@ -274,8 +211,8 @@ describe('send', () => {
     const rejectingSender: HttpSender = async () => {
       throw new Error('ECONNREFUSED')
     }
-    const { provider } = await makeProvider([okAdapter('fake')], rejectingSender)
-    await provider.upsertTarget({ target: target() })
+    const { provider, store } = await makeProvider([okAdapter('fake')], rejectingSender)
+    await store.upsert(target())
     const result = await provider.send({ targetId: 't1', notification: NOTIFICATION })
     expect(result.success).toBe(false)
     expect(result.error).toMatch(/request failed/)
@@ -288,8 +225,8 @@ describe('send', () => {
       statusText: 'Bad Gateway',
       text: async () => 'nope',
     })
-    const { provider } = await makeProvider([okAdapter('fake')], failSender)
-    await provider.upsertTarget({ target: target() })
+    const { provider, store } = await makeProvider([okAdapter('fake')], failSender)
+    await store.upsert(target())
     const result = await provider.send({ targetId: 't1', notification: NOTIFICATION })
     expect(result.success).toBe(false)
     expect(result.error).toMatch(/502/)
@@ -312,8 +249,8 @@ describe('send', () => {
       statusText: 'Bad Request',
       text: async () => '{"errors":["invalid token"]}',
     })
-    const { provider } = await makeProvider([parsing], bodySender)
-    await provider.upsertTarget({ target: target({ kind: 'parse' }) })
+    const { provider, store } = await makeProvider([parsing], bodySender)
+    await store.upsert(target({ kind: 'parse' }))
     const result = await provider.send({ targetId: 't1', notification: NOTIFICATION })
     expect(seenBody).toBe('{"errors":["invalid token"]}')
     expect(result.success).toBe(false)
@@ -323,9 +260,9 @@ describe('send', () => {
   })
 
   it('kind with no adapter yields an error, not a throw', async () => {
-    const { provider } = await makeProvider([], okSender, [okAdapter('ghost').descriptor])
+    const { provider, store } = await makeProvider([], okSender, [okAdapter('ghost').descriptor])
     // Persist a target whose adapter is gone, then attempt send.
-    await provider.upsertTarget({ target: target({ kind: 'ghost' }) })
+    await store.upsert(target({ kind: 'ghost' }))
     const result = await provider.send({ targetId: 't1', notification: NOTIFICATION })
     expect(result.success).toBe(false)
     expect(result.error).toMatch(/No adapter/)
@@ -347,8 +284,8 @@ describe('send', () => {
       httpCalls += 1
       return okResponse
     }
-    const { provider } = await makeProvider([probing], countingSender)
-    await provider.upsertTarget({ target: target({ kind: 'probe-kind' }) })
+    const { provider, store } = await makeProvider([probing], countingSender)
+    await store.upsert(target({ kind: 'probe-kind' }))
     const result = await provider.send({ targetId: 't1', notification: NOTIFICATION })
     expect(result.success).toBe(false)
     expect(result.error).toMatch(/notAuthorized/)
@@ -365,8 +302,8 @@ describe('send', () => {
         stateInstance: 'authorized',
       }),
     }
-    const { provider } = await makeProvider([probing])
-    await provider.upsertTarget({ target: target({ kind: 'probe-ok' }) })
+    const { provider, store } = await makeProvider([probing])
+    await store.upsert(target({ kind: 'probe-ok' }))
     const result = await provider.send({ targetId: 't1', notification: NOTIFICATION })
     expect(result.success).toBe(true)
   })
@@ -374,7 +311,7 @@ describe('send', () => {
 
 // ── probe / clone secrets ───────────────────────────────────────────
 
-describe('probeTargetConfig + cloneSecretsFrom', () => {
+describe('probeTargetConfig', () => {
   it('restores a blank password from targetId before probing', async () => {
     let seenToken: unknown
     const probing: NotifierAdapter = {
@@ -388,13 +325,13 @@ describe('probeTargetConfig + cloneSecretsFrom', () => {
         }
       },
     }
-    const { provider } = await makeProvider([probing])
-    await provider.upsertTarget({
-      target: target({
+    const { provider, store } = await makeProvider([probing])
+    await store.upsert(
+      target({
         kind: 'secret-probe',
         config: { url: 'https://x', token: 'live-secret' },
       }),
-    })
+    )
     const result = await provider.probeTargetConfig({
       kind: 'secret-probe',
       config: { url: 'https://x' },
@@ -403,29 +340,6 @@ describe('probeTargetConfig + cloneSecretsFrom', () => {
     expect(result.ok).toBe(true)
     expect(seenToken).toBe('live-secret')
   })
-
-  it('cloneSecretsFrom copies the stored token onto a new target id', async () => {
-    const adapter = okAdapter('clone-kind')
-    const { provider, store } = await makeProvider([adapter])
-    await provider.upsertTarget({
-      target: target({
-        id: 'src',
-        kind: 'clone-kind',
-        config: { url: 'https://x', token: 'cloned-secret' },
-      }),
-    })
-    await provider.upsertTarget({
-      target: target({
-        id: 'dup',
-        name: 'Alerts Copy',
-        kind: 'clone-kind',
-        config: { url: 'https://x' },
-      }),
-      cloneSecretsFrom: 'src',
-    })
-    const stored = await store.getById('dup')
-    expect(stored?.config['token']).toBe('cloned-secret')
-  })
 })
 
 // ── testTarget ──────────────────────────────────────────────────────
@@ -433,8 +347,8 @@ describe('probeTargetConfig + cloneSecretsFrom', () => {
 describe('testTarget', () => {
   it('sends a canned notification when no sample is given', async () => {
     const adapter = okAdapter('fake')
-    const { provider } = await makeProvider([adapter])
-    await provider.upsertTarget({ target: target() })
+    const { provider, store } = await makeProvider([adapter])
+    await store.upsert(target())
     const result = await provider.testTarget({ targetId: 't1' })
     expect(result.success).toBe(true)
     expect(adapter.lastPlan).toBeDefined()
@@ -450,8 +364,8 @@ describe('testTarget', () => {
         error: 'Instance notAuthorized — scan the QR',
       }),
     }
-    const { provider } = await makeProvider([probing])
-    await provider.upsertTarget({ target: target({ kind: 'probe-test' }) })
+    const { provider, store } = await makeProvider([probing])
+    await store.upsert(target({ kind: 'probe-test' }))
     const result = await provider.testTarget({ targetId: 't1' })
     expect(result.success).toBe(false)
     expect(result.error).toMatch(/notAuthorized/)
@@ -568,7 +482,7 @@ describe('relative attachment urls (test-panel samples)', () => {
       httpSend: okSender,
       readPublicEndpoint: async () => ({ kind: 'resolved', origin: 'https://hub.example.com' }),
     })
-    await provider.upsertTarget({ target: target({ kind: 'imgfake' }) })
+    await store.upsert(target({ kind: 'imgfake' }))
     const res = await provider.testTarget({
       targetId: 't1',
       sample: {

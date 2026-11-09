@@ -10,8 +10,7 @@
  *      `renderedAs`. NEVER throws through the cap: every failure lands in
  *      `SendResult.error`.
  *   - the targets themselves are `integration-instances` records of this addon
- *     (`record-kinds.ts`); {@link createNotifierTargetAdmin} is the `Target`-shaped
- *     write path the notification-center bridge keeps, with the secret merge.
+ *     (`record-kinds.ts`).
  *
  * Registered with an EMPTY adapter list for now (adapters are plan tasks
  * T6–T12); the catalog is empty but every code path compiles + is tested.
@@ -42,7 +41,6 @@ import {
   mergeSecrets,
   passwordFieldKeys,
   REDACTED_MARKER,
-  redactForRead,
   SecretRestoreRefusedError,
 } from './secrets.js'
 import type { TargetStore } from './target-store.js'
@@ -433,74 +431,6 @@ export function createNotificationOutputProvider(
       const target = await store.getById(targetId)
       if (!target) return { success: false, error: `Unknown target '${targetId}'` }
       return dispatch(target, sample ?? cannedNotification())
-    },
-  }
-}
-
-/**
- * What the notification-center bridge (`nc.*`, the viewer's personal targets) does with the targets of
- * this addon. NOT a capability surface: the admin reads and writes targets as `integration-instances`
- * records; this is the one write path that still takes a `Target` (a viewer sends the redacted form back),
- * so the secret merge and the destination guard stay here, in one place (D634).
- */
-export interface NotifierTargetAdmin {
-  /** Persisted targets, secrets redacted. */
-  readonly listTargets: () => Promise<Target[]>
-  /** Insert or replace by id, restoring the secrets the caller left blank or redacted. */
-  readonly upsertTarget: (input: {
-    readonly target: Target
-    readonly cloneSecretsFrom?: string
-  }) => Promise<Target>
-  readonly deleteTarget: (input: { readonly targetId: string }) => Promise<void>
-}
-
-export function createNotifierTargetAdmin(
-  deps: Pick<NotificationOutputProviderDeps, 'store' | 'adapters' | 'addonId'>,
-): NotifierTargetAdmin {
-  const addonId = deps.addonId ?? NOTIFIERS_ADDON_ID
-  const store = deps.store
-  const adapterByKind = new Map<string, NotifierAdapter>(
-    deps.adapters.map((adapter) => [adapter.descriptor.kind, adapter]),
-  )
-  return {
-    listTargets: async (): Promise<Target[]> => {
-      const targets = await store.list()
-      return targets.map((target) => {
-        const adapter = adapterByKind.get(target.kind)
-        const redacted = adapter ? redactForRead(target, adapter.descriptor) : target
-        return { ...redacted, addonId }
-      })
-    },
-
-    upsertTarget: async ({ target, cloneSecretsFrom }): Promise<Target> => {
-      const adapter = adapterByKind.get(target.kind)
-      // `getById` returns `null` when missing — never compare to `undefined`.
-      const existingById = await store.getById(target.id)
-      const cloneSource =
-        existingById === null && cloneSecretsFrom !== undefined
-          ? await store.getById(cloneSecretsFrom)
-          : null
-      const existing = existingById ?? cloneSource
-      // Throws `SecretRestoreRefusedError` when a redacted secret would follow
-      // a changed kind or destination — the save is refused, nothing is stored.
-      const incoming = adapter
-        ? { ...target, config: omitBlankSecrets(target.config, adapter) }
-        : target
-      const config = adapter
-        ? mergeSecrets({
-            existing: existing ?? undefined,
-            incoming,
-            adapter,
-          })
-        : { ...target.config }
-      const toStore: Target = { ...target, addonId, config }
-      await store.upsert(toStore)
-      const redacted = adapter ? redactForRead(toStore, adapter.descriptor) : toStore
-      return { ...redacted, addonId }
-    },
-
-    deleteTarget: async ({ targetId }): Promise<void> => {
-      await store.delete(targetId)
     },
   }
 }
