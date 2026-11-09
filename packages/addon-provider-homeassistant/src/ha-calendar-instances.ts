@@ -28,17 +28,17 @@ export interface HaCalendarInstancesDeps {
   readonly onChanged: () => Promise<void>
 }
 
-/** The entity ids each connection imports, from the calendar records. */
+/** The entity ids each connection imports, each with the id of the calendar record that imports it. */
 export function selectedEntityIds(
   rows: readonly ResolvedInstance<HaCalendarBody>[],
-): ReadonlyMap<string, ReadonlySet<string>> {
-  const out = new Map<string, Set<string>>()
+): ReadonlyMap<string, ReadonlyMap<string, string>> {
+  const out = new Map<string, Map<string, string>>()
   for (const row of rows) {
     const { accountId, calendarId } = row.body
     if (!row.enabled || accountId === '' || calendarId === '') continue
-    const set = out.get(accountId) ?? new Set<string>()
-    set.add(calendarId)
-    out.set(accountId, set)
+    const picked = out.get(accountId) ?? new Map<string, string>()
+    picked.set(calendarId, row.id)
+    out.set(accountId, picked)
   }
   return out
 }

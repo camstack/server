@@ -22,11 +22,11 @@ export interface HaCalendarSourceDeps {
   readonly brokers: HaBrokerRegistry
   readonly logger: IScopedLogger
   /**
-   * Entity ids to import (`calendar.*`) from ONE broker: the selection is a fact of each Home
-   * Assistant instance (D985), so a pick on one never selects a same-named entity on another.
-   * Empty = import nothing.
+   * Entity ids to import (`calendar.*`) from ONE broker, each mapped to the id of the calendar
+   * record that imports it: the selection is a fact of each Home Assistant instance (D985), so a
+   * pick on one never selects a same-named entity on another. Empty = import nothing.
    */
-  readonly selectedCalendarIds: (brokerId: string) => ReadonlySet<string>
+  readonly selectedCalendarIds: (brokerId: string) => ReadonlyMap<string, string>
 }
 
 function isCalendarEntity(entityId: string): boolean {
@@ -185,11 +185,6 @@ async function fetchEventsForEntities(
   return out
 }
 
-/** Empty selection = import nothing (operator must pick calendars explicitly). */
-function isSelected(entityId: string, selected: ReadonlySet<string>): boolean {
-  return selected.size > 0 && selected.has(entityId)
-}
-
 export function createHaCalendarSource(deps: HaCalendarSourceDeps): ICalendarSourceProvider {
   return {
     listCalendars: async (): Promise<readonly CalendarInfo[]> => {
@@ -199,11 +194,13 @@ export function createHaCalendarSource(deps: HaCalendarSourceDeps): ICalendarSou
         const states = manager.snapshotAllStates()
         for (const [entityId, raw] of Object.entries(states)) {
           if (!isCalendarEntity(entityId)) continue
-          if (!isSelected(entityId, selected)) continue
+          const instanceId = selected.get(entityId)
+          if (instanceId === undefined) continue
           const state = asEntityState(raw)
           if (state === null) continue
           out.push({
             id: entityId,
+            instanceId,
             name: calendarName(state),
             source: 'ha',
             enabled: state.state !== 'unavailable',
@@ -227,7 +224,7 @@ export function createHaCalendarSource(deps: HaCalendarSourceDeps): ICalendarSou
         const states = manager.snapshotAllStates()
         const entityIds = Object.keys(states).filter((id) => {
           if (!isCalendarEntity(id)) return false
-          if (!isSelected(id, selected)) return false
+          if (!selected.has(id)) return false
           return wanted === null || wanted.has(id)
         })
         if (entityIds.length === 0) continue

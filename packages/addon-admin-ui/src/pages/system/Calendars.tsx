@@ -837,6 +837,19 @@ export function CalendarsPage() {
         'Calendars from connected sources. Used by Calendar events notification rules.',
       )}
     >
+      {instancesData.state === 'error' && listRows.length > 0 ? (
+        <p
+          className="mb-3 text-sm text-warning"
+          role="status"
+          data-testid="calendars-switches-unavailable"
+        >
+          {t(
+            'systemPage.calendars.switchesUnavailable',
+            'The calendar switches could not be loaded, so they are hidden. Calendars switched off are not listed until they load.',
+          )}{' '}
+          {instancesData.error}
+        </p>
+      ) : null}
       {body}
       {selectedEvent !== null ? (
         <EventDetailDialog

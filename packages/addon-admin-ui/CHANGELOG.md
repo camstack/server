@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Calendars page lists every imported calendar with an on/off switch, so a calendar can be switched off and back on without leaving the page
 
+### Fixed
+
+- Calendars page joins calendars to their switch by the owning record, no longer shows an enabled waste calendar twice, and says when the switches could not be loaded
+
 ## [1.2.624] - 2026-11-08
 
 ### Changed

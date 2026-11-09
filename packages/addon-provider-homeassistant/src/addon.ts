@@ -204,7 +204,7 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   private accountInstances: RecordIntegrationInstances<HaBrokerBody> | null = null
   private calendarInstances: RecordIntegrationInstances<HaCalendarBody> | null = null
   /** `connection id → entity ids` its calendar records import. */
-  private calendarSelection: ReadonlyMap<string, ReadonlySet<string>> = new Map()
+  private calendarSelection: ReadonlyMap<string, ReadonlyMap<string, string>> = new Map()
   /** Runtime broker rows (records when B2 is live, else settings). */
   private activeBrokers: readonly HaBrokerEntry[] = []
   /** Periodic re-sync sweep handle (cleared on shutdown). */
@@ -459,8 +459,8 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
   }
 
   /** The calendars one connection imports, from its calendar records. */
-  private calendarIdsOf(brokerId: string): ReadonlySet<string> {
-    return this.calendarSelection.get(brokerId) ?? new Set()
+  private calendarIdsOf(brokerId: string): ReadonlyMap<string, string> {
+    return this.calendarSelection.get(brokerId) ?? new Map()
   }
 
   private async refreshCalendarSelection(): Promise<void> {

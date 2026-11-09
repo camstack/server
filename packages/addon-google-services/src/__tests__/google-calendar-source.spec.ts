@@ -60,7 +60,7 @@ describe('createGoogleCalendarSource', () => {
   it('empty selection imports nothing', async () => {
     const provider = createGoogleCalendarSource({
       logger,
-      selectedCalendarIds: () => new Set(),
+      selectedCalendarIds: () => new Map(),
       accounts: () => [
         {
           brokerId: 'google_001',
@@ -78,7 +78,7 @@ describe('createGoogleCalendarSource', () => {
   it('stamps ids and filters by selected stamped set', async () => {
     const provider = createGoogleCalendarSource({
       logger,
-      selectedCalendarIds: () => new Set(['google_001:a@g']),
+      selectedCalendarIds: () => new Map([['google_001:a@g', 'cal_a']]),
       accounts: () => [
         {
           brokerId: 'google_001',
@@ -92,7 +92,13 @@ describe('createGoogleCalendarSource', () => {
     })
     const list = await provider.listCalendars()
     expect(list).toEqual([
-      { id: 'google_001:a@g', name: 'Personal', source: 'addon', enabled: true },
+      {
+        id: 'google_001:a@g',
+        instanceId: 'cal_a',
+        name: 'Personal',
+        source: 'addon',
+        enabled: true,
+      },
     ])
   })
 
@@ -100,7 +106,11 @@ describe('createGoogleCalendarSource', () => {
     const provider = createGoogleCalendarSource({
       logger,
       selectedCalendarIds: () =>
-        new Set(['google_001:a@g', 'google_002:c@g', 'google_002:shared@g']),
+        new Map([
+          ['google_001:a@g', 'cal_a'],
+          ['google_002:c@g', 'cal_c'],
+          ['google_002:shared@g', 'cal_s'],
+        ]),
       accounts: () => [
         {
           brokerId: 'google_001',
@@ -131,7 +141,11 @@ describe('createGoogleCalendarSource', () => {
   it('filters listEvents by intersection of request and selection', async () => {
     const provider = createGoogleCalendarSource({
       logger,
-      selectedCalendarIds: () => new Set(['google_001:a@g', 'google_001:b@g']),
+      selectedCalendarIds: () =>
+        new Map([
+          ['google_001:a@g', 'cal_a'],
+          ['google_001:b@g', 'cal_b'],
+        ]),
       accounts: () => [
         {
           brokerId: 'google_001',
@@ -155,7 +169,7 @@ describe('createGoogleCalendarSource', () => {
   it('skips disconnected brokers', async () => {
     const provider = createGoogleCalendarSource({
       logger,
-      selectedCalendarIds: () => new Set(['google_001:a@g']),
+      selectedCalendarIds: () => new Map([['google_001:a@g', 'cal_a']]),
       accounts: () => [
         {
           brokerId: 'google_001',
@@ -169,12 +183,18 @@ describe('createGoogleCalendarSource', () => {
 
   it('two instances: a selection on A is invisible on B', async () => {
     const byBroker = new Map([
-      ['google_001', new Set(['google_001:a@g', 'google_002:b@g'])],
-      ['google_002', new Set<string>()],
+      [
+        'google_001',
+        new Map([
+          ['google_001:a@g', 'cal_a'],
+          ['google_002:b@g', 'cal_b'],
+        ]),
+      ],
+      ['google_002', new Map<string, string>()],
     ])
     const provider = createGoogleCalendarSource({
       logger,
-      selectedCalendarIds: (brokerId) => byBroker.get(brokerId) ?? new Set(),
+      selectedCalendarIds: (brokerId) => byBroker.get(brokerId) ?? new Map(),
       accounts: () =>
         ['google_001', 'google_002'].map((brokerId) => ({
           brokerId,
@@ -189,5 +209,25 @@ describe('createGoogleCalendarSource', () => {
     expect((await provider.listCalendars()).map((c) => c.id)).toEqual(['google_001:a@g'])
     const events = await provider.listEvents({ startMs: 0, endMs: Date.parse('2026-12-01') })
     expect(events.map((e) => e.calendarId)).toEqual(['google_001:a@g'])
+  })
+})
+
+describe('createGoogleCalendarSource: every calendar names the record that owns it', () => {
+  it('stamps the id of the record that imports the calendar', async () => {
+    const provider = createGoogleCalendarSource({
+      logger,
+      selectedCalendarIds: () => new Map([['google_001:a@g', 'cal_xyz']]),
+      accounts: () => [
+        {
+          brokerId: 'google_001',
+          connected: true,
+          api: {
+            listCalendars: async () => [{ id: 'a@g', summary: 'A' }],
+            listEvents: async () => [],
+          },
+        },
+      ],
+    })
+    expect((await provider.listCalendars()).map((c) => c.instanceId)).toEqual(['cal_xyz'])
   })
 })

@@ -72,8 +72,8 @@ describe('Google calendars as integration instances', () => {
       values: { accountId: 'google_001' },
     })
     const selection = selectedStampedIds(await instances.listResolved())
-    expect([...(selection.get('google_001') ?? [])]).toEqual(['google_001:work@g'])
-    expect([...(selection.get('google_002') ?? [])]).toEqual(['google_002:home@g'])
+    expect([...(selection.get('google_001') ?? [])]).toEqual([['google_001:work@g', 'cal_a']])
+    expect([...(selection.get('google_002') ?? [])]).toEqual([['google_002:home@g', 'cal_b']])
   })
 
   it('after the move the calendar source answers the SAME stamped ids as before', async () => {
@@ -114,10 +114,16 @@ describe('Google calendars as integration instances', () => {
           },
         },
       ],
-      selectedCalendarIds: (brokerId) => selection.get(brokerId) ?? new Set(),
+      selectedCalendarIds: (brokerId) => selection.get(brokerId) ?? new Map(),
     })
     expect(await source.listCalendars()).toEqual([
-      { id: 'google_001:work@g', name: 'Work', source: 'addon', enabled: true },
+      {
+        id: 'google_001:work@g',
+        instanceId: expect.any(String),
+        name: 'Work',
+        source: 'addon',
+        enabled: true,
+      },
     ])
   })
   it('a switched-off calendar leaves the source answer and its events, and returns when switched on', async () => {
@@ -144,7 +150,7 @@ describe('Google calendars as integration instances', () => {
         },
       ],
       selectedCalendarIds: (brokerId) =>
-        selectedStampedIds(resolved).get(brokerId) ?? new Set<string>(),
+        selectedStampedIds(resolved).get(brokerId) ?? new Map<string, string>(),
     })
     let resolved = await instances.listResolved()
     expect((await source.listCalendars()).map((c) => c.id)).toEqual(['google_001:work@g'])

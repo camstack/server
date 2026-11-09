@@ -29,17 +29,17 @@ export interface GoogleCalendarInstancesDeps {
   readonly onChanged: () => Promise<void>
 }
 
-/** The stamped ids each account imports, from the calendar records. */
+/** The stamped ids each account imports, each with the id of the calendar record that imports it. */
 export function selectedStampedIds(
   rows: readonly ResolvedInstance<GoogleCalendarBody>[],
-): ReadonlyMap<string, ReadonlySet<string>> {
-  const out = new Map<string, Set<string>>()
+): ReadonlyMap<string, ReadonlyMap<string, string>> {
+  const out = new Map<string, Map<string, string>>()
   for (const row of rows) {
     const { accountId, calendarId } = row.body
     if (!row.enabled || accountId === '' || calendarId === '') continue
-    const set = out.get(accountId) ?? new Set<string>()
-    set.add(stampCalendarId(accountId, calendarId))
-    out.set(accountId, set)
+    const picked = out.get(accountId) ?? new Map<string, string>()
+    picked.set(stampCalendarId(accountId, calendarId), row.id)
+    out.set(accountId, picked)
   }
   return out
 }

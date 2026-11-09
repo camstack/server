@@ -150,7 +150,11 @@ describe('createHaCalendarSource listEvents', () => {
           },
         ],
       } as never,
-      selectedCalendarIds: () => new Set(['calendar.a', 'calendar.b']),
+      selectedCalendarIds: () =>
+        new Map([
+          ['calendar.a', 'cal_a'],
+          ['calendar.b', 'cal_b'],
+        ]),
       logger: { warn: vi.fn(), child: vi.fn() } as never,
     })
 
@@ -195,7 +199,7 @@ describe('createHaCalendarSource: the selection is per broker', () => {
         ],
       } as never,
       selectedCalendarIds: (brokerId) =>
-        brokerId === 'ha_a' ? new Set(['calendar.shared']) : new Set(),
+        brokerId === 'ha_a' ? new Map([['calendar.shared', 'cal_a']]) : new Map(),
       logger: { warn: vi.fn(), child: vi.fn() } as never,
     })
     const range = { startMs: 0, endMs: 1000 }
@@ -203,5 +207,32 @@ describe('createHaCalendarSource: the selection is per broker', () => {
     expect(publishA).toHaveBeenCalledTimes(1)
     expect(publishB).not.toHaveBeenCalled()
     expect((await source.listCalendars()).length).toBe(1)
+  })
+})
+
+describe('createHaCalendarSource: every calendar names the record that owns it', () => {
+  const state = {
+    entity_id: 'calendar.home',
+    state: 'off',
+    attributes: {},
+    last_changed: '',
+    last_updated: '',
+    context: { id: 'x', parent_id: null, user_id: null },
+  }
+  const manager = { snapshotAllStates: () => ({ 'calendar.home': state }), publish: vi.fn() }
+
+  it('two connections that share an entity id answer it with their own record id', async () => {
+    const source = createHaCalendarSource({
+      brokers: {
+        listManagers: () => [
+          { brokerId: 'ha_a', manager },
+          { brokerId: 'ha_b', manager },
+        ],
+      } as never,
+      selectedCalendarIds: (brokerId) =>
+        new Map([['calendar.home', brokerId === 'ha_a' ? 'cal_a' : 'cal_b']]),
+      logger: { warn: vi.fn(), child: vi.fn() } as never,
+    })
+    expect((await source.listCalendars()).map((c) => c.instanceId)).toEqual(['cal_a', 'cal_b'])
   })
 })

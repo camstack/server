@@ -49,8 +49,8 @@ describe('Home Assistant calendars as integration instances', () => {
     })
     await instances.createInstance({ id: 'cal_c', name: 'Half', values: { accountId: 'ha_001' } })
     const selection = selectedEntityIds(await instances.listResolved())
-    expect([...(selection.get('ha_001') ?? [])]).toEqual(['calendar.work'])
-    expect([...(selection.get('ha_002') ?? [])]).toEqual(['calendar.home'])
+    expect([...(selection.get('ha_001') ?? [])]).toEqual([['calendar.work', 'cal_a']])
+    expect([...(selection.get('ha_002') ?? [])]).toEqual([['calendar.home', 'cal_b']])
   })
 
   it('after the move the connection selects the SAME entity ids as before', async () => {
@@ -69,7 +69,7 @@ describe('Home Assistant calendars as integration instances', () => {
       { calendarIdOf: (_accountId, entry) => entry },
     )
     const selection = selectedEntityIds(await instances.listResolved())
-    expect([...(selection.get('ha_001') ?? [])]).toEqual(['calendar.work'])
+    expect([...(selection.get('ha_001')?.keys() ?? [])]).toEqual(['calendar.work'])
   })
   it('a switched-off calendar leaves the connection selection and returns when switched on', async () => {
     const { instances } = await setup()
@@ -79,7 +79,9 @@ describe('Home Assistant calendars as integration instances', () => {
       values: { accountId: 'ha_001', calendarId: 'calendar.work' },
     })
     const entityIds = async () => [
-      ...(selectedEntityIds(await instances.listResolved()).get('ha_001') ?? []),
+      ...(selectedEntityIds(await instances.listResolved())
+        .get('ha_001')
+        ?.keys() ?? []),
     ]
     expect(await entityIds()).toEqual(['calendar.work'])
     await instances.toProvider().setInstanceEnabled({ id: 'cal_a', enabled: false })

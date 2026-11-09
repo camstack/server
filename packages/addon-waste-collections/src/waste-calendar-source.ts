@@ -59,6 +59,7 @@ export function createWasteCalendarSource(deps: WasteCalendarSourceDeps): ICalen
         .map(
           (s): CalendarInfo => ({
             id: s.id,
+            instanceId: s.id,
             name: s.label,
             source: 'addon',
             enabled: true,

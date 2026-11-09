@@ -66,7 +66,18 @@ describe('createWasteCalendarSource', () => {
       getEntries: (id) => cache.get(id) ?? [],
     })
     const list = await provider.listCalendars()
-    expect(list).toEqual([{ id: 'a', name: 'Home', source: 'addon', enabled: true }])
+    expect(list).toEqual([
+      { id: 'a', instanceId: 'a', name: 'Home', source: 'addon', enabled: true },
+    ])
+  })
+
+  it('names the source record as the owner of its calendar', async () => {
+    const provider = createWasteCalendarSource({
+      logger,
+      listConfigured: () => sources,
+      getEntries: (id) => cache.get(id) ?? [],
+    })
+    expect((await provider.listCalendars()).map((c) => [c.id, c.instanceId])).toEqual([['a', 'a']])
   })
 
   it('filters listEvents by calendarIds', async () => {

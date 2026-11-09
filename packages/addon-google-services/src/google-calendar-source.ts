@@ -46,10 +46,11 @@ export interface GoogleCalendarSourceDeps {
   readonly logger: IScopedLogger
   readonly accounts: () => readonly GoogleCalendarAccountView[]
   /**
-   * The stamped ids (`brokerId:googleCalendarId`) ONE broker imports: a value of that broker,
-   * never of the addon. Empty = import none.
+   * The stamped ids (`brokerId:googleCalendarId`) ONE broker imports, each mapped to the id of
+   * the calendar record that imports it: a value of that broker, never of the addon. Empty =
+   * import none.
    */
-  readonly selectedCalendarIds: (brokerId: string) => ReadonlySet<string>
+  readonly selectedCalendarIds: (brokerId: string) => ReadonlyMap<string, string>
 }
 
 export function parseGoogleInstant(value: string): number | null {
@@ -139,9 +140,11 @@ export function createGoogleCalendarSource(
           const list = await account.api.listCalendars()
           for (const c of list) {
             const stamped = stampCalendarId(account.brokerId, c.id)
-            if (!selected.has(stamped)) continue
+            const instanceId = selected.get(stamped)
+            if (instanceId === undefined) continue
             out.push({
               id: stamped,
+              instanceId,
               name: c.summary,
               source: 'addon',
               enabled: true,
@@ -172,7 +175,7 @@ export function createGoogleCalendarSource(
                 deps
                   .accounts()
                   .flatMap((account) =>
-                    [...deps.selectedCalendarIds(account.brokerId)].filter(
+                    [...deps.selectedCalendarIds(account.brokerId).keys()].filter(
                       (stamped) => parseStampedCalendarId(stamped)?.brokerId === account.brokerId,
                     ),
                   ),

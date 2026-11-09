@@ -6755,7 +6755,8 @@
       "dayAllDay": "{{date}} · Tutto il giorno",
       "rangeAllDay": "{{from}} – {{to}} · Tutto il giorno",
       "allSwitchedOff": "Tutti i calendari sono disattivati. Attiva un calendario nell'elenco per vederne gli eventi.",
-      "switchedOff": "Disattivato"
+      "switchedOff": "Disattivato",
+      "switchesUnavailable": "Impossibile caricare gli interruttori dei calendari, quindi sono nascosti. I calendari disattivati non sono elencati finche' non vengono caricati."
     },
     "terminal": {
       "executable": "Eseguibile",

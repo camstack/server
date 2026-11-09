@@ -3,9 +3,9 @@
  * instance record behind it, plus the records whose calendar the sources no longer answer (a
  * switched-off one) so they stay in the list and can be switched back on. Pure.
  *
- * A source stamps its calendar id as `<addonId>:<local>`, where `<local>` is the record's
- * calendar id (a connection that lists entities) or `<accountId>:<calendarId>` (an account).
- * The record carries `accountId` and `calendarId` in its form values, so the join tries both.
+ * Every calendar carries the id of the record that owns it (`instanceId`, stamped by the source
+ * from the record it read the calendar from), so the join is the pair (providing addon, record
+ * id) and never an id rebuilt from form values.
  */
 import type { CalendarEntry } from '@camstack/types'
 import type { HolderData } from '../instances/instances-model'
@@ -16,8 +16,6 @@ export interface CalendarInstanceRef {
   readonly name: string
   readonly enabled: boolean
   readonly providerName: string
-  /** The cluster-stable calendar ids this record can answer as. */
-  readonly entryIds: readonly string[]
 }
 
 export interface CalendarListRow {
@@ -30,35 +28,18 @@ export interface CalendarListRow {
   readonly instance: CalendarInstanceRef | null
 }
 
-function text(values: Readonly<Record<string, unknown>>, key: string): string {
-  const v = values[key]
-  return typeof v === 'string' ? v : ''
-}
-
 export function calendarInstanceRefs(
   holders: readonly HolderData[],
   displayNames: ReadonlyMap<string, string>,
 ): readonly CalendarInstanceRef[] {
   return holders.flatMap((holder) =>
-    holder.instances.map((inst) => {
-      const accountId = text(inst.formValues, 'accountId')
-      const calendarId = text(inst.formValues, 'calendarId')
-      const entryIds =
-        calendarId === ''
-          ? []
-          : [
-              `${holder.addonId}:${calendarId}`,
-              ...(accountId === '' ? [] : [`${holder.addonId}:${accountId}:${calendarId}`]),
-            ]
-      return {
-        addonId: holder.addonId,
-        id: inst.id,
-        name: inst.name,
-        enabled: inst.enabled !== false,
-        providerName: displayNames.get(holder.addonId) ?? holder.addonId,
-        entryIds,
-      }
-    }),
+    holder.instances.map((inst) => ({
+      addonId: holder.addonId,
+      id: inst.id,
+      name: inst.name,
+      enabled: inst.enabled !== false,
+      providerName: displayNames.get(holder.addonId) ?? holder.addonId,
+    })),
   )
 }
 
@@ -68,11 +49,16 @@ export function joinCalendarRows(
   providerLabel: (cal: CalendarEntry) => string,
 ): readonly CalendarListRow[] {
   const claimed = new Set<string>()
+  const keyOf = (addonId: string, instanceId: string): string => `${addonId}\u0000${instanceId}`
   const rows: CalendarListRow[] = calendars.map((calendar) => {
-    const instance = instances.find((i) => i.entryIds.includes(calendar.id)) ?? null
-    if (instance !== null) claimed.add(instance.id)
+    const instance =
+      instances.find(
+        (i) => i.addonId === calendar.providerAddonId && i.id === calendar.instanceId,
+      ) ?? null
+    if (instance !== null) claimed.add(keyOf(instance.addonId, instance.id))
     return {
-      key: calendar.id,
+      // The record is the row's identity: two connections can answer the same entity id.
+      key: instance === null ? calendar.id : `instance:${instance.addonId}:${instance.id}`,
       name: calendar.name,
       providerName: instance?.providerName ?? providerLabel(calendar),
       calendar,
@@ -80,9 +66,9 @@ export function joinCalendarRows(
     }
   })
   for (const instance of instances) {
-    if (claimed.has(instance.id)) continue
+    if (claimed.has(keyOf(instance.addonId, instance.id))) continue
     rows.push({
-      key: `instance:${instance.id}`,
+      key: `instance:${instance.addonId}:${instance.id}`,
       name: instance.name,
       providerName: instance.providerName,
       calendar: null,

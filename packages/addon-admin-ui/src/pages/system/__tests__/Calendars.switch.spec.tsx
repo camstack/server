@@ -7,7 +7,11 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const st = vi.hoisted(() => ({ holders: [] as unknown[], state: 'ready' as string }))
+const st = vi.hoisted(() => ({
+  holders: [] as unknown[],
+  calendars: [] as unknown[],
+  state: 'ready' as string,
+}))
 
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
@@ -15,7 +19,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
     isPending: false,
     isError: false,
     isSuccess: true,
-    data: [],
+    data: st.calendars,
   }),
   useCalendarsGetPreferences: () => ({
     isSuccess: true,
@@ -29,7 +33,7 @@ vi.mock('../../../components/instances/use-instances-data', () => ({
   HOLDER_QUERY_KEY: 'provider-instances-holder',
   useInstancesData: () => ({
     state: st.state,
-    error: null,
+    error: st.state === 'error' ? 'holders unreachable' : null,
     holders: st.holders,
     displayNames: new Map([['google-services', 'Google']]),
     rows: [],
@@ -75,16 +79,17 @@ function mount() {
 describe('CalendarsPage with switched-off calendars', () => {
   beforeEach(() => {
     st.state = 'ready'
+    st.calendars = []
   })
 
   it('lists a switched-off calendar with its switch and does not claim there are no sources', () => {
     st.holders = [holder(false)]
     mount()
-    expect(screen.getByTestId('calendars-row-instance:cal_a')).toBeTruthy()
+    expect(screen.getByTestId('calendars-row-instance:google-services:cal_a')).toBeTruthy()
     expect(screen.getByTestId('switch-cal_a')).toBeTruthy()
     expect(screen.queryByTestId('calendars-empty-sources')).toBeNull()
     expect(screen.getByTestId('calendars-empty-hidden')).toBeTruthy()
-    expect(screen.queryByTestId('calendars-visible-instance:cal_a')).toBeNull()
+    expect(screen.queryByTestId('calendars-visible-instance:google-services:cal_a')).toBeNull()
   })
 
   it('says there are no sources only when there are no calendar records at all', () => {
@@ -98,5 +103,28 @@ describe('CalendarsPage with switched-off calendars', () => {
     st.state = 'pending'
     mount()
     expect(screen.queryByTestId('calendars-empty-sources')).toBeNull()
+  })
+
+  it('shows a notice, not silently no switches, when the instance query failed but calendars are listed', () => {
+    st.holders = []
+    st.state = 'error'
+    st.calendars = [
+      {
+        id: 'google-services:g1:work@g',
+        providerAddonId: 'google-services',
+        instanceId: 'cal_a',
+        name: 'Work',
+        source: 'addon',
+        enabled: true,
+        visible: true,
+        defaultColor: '#3B82F6',
+        color: '#3B82F6',
+      },
+    ]
+    mount()
+    expect(screen.getByTestId('calendars-switches-unavailable').textContent).toContain(
+      'holders unreachable',
+    )
+    expect(screen.queryByTestId('switch-cal_a')).toBeNull()
   })
 })

@@ -110,7 +110,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
   private instances: RecordIntegrationInstances<GoogleBrokerBody> | null = null
   private calendarInstances: RecordIntegrationInstances<GoogleCalendarBody> | null = null
   /** The stamped calendar ids each account imports, from the `calendars` records. */
-  private calendarSelection: ReadonlyMap<string, ReadonlySet<string>> = new Map()
+  private calendarSelection: ReadonlyMap<string, ReadonlyMap<string, string>> = new Map()
   private activeBrokers: readonly GoogleBrokerEntry[] = []
   /** CSRF state → { brokerId, issuedAt } for the in-flight OAuth consents. */
   private pendingStates = new Map<string, { brokerId: string; issuedAt: number }>()
@@ -152,7 +152,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
           connected: this.registry.isConnected(entry.id),
           api: createGoogleCalendarApi(() => this.ensureAccessToken(entry.id)),
         })),
-      selectedCalendarIds: (brokerId) => this.calendarSelection.get(brokerId) ?? new Set(),
+      selectedCalendarIds: (brokerId) => this.calendarSelection.get(brokerId) ?? new Map(),
     })
 
     const smtpProvider: ISmtpProvider = createGmailSmtpProvider({
