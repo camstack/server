@@ -8,13 +8,13 @@
  * `art-*` keyframes of the library). `ui:shots` mounts it for `/hero-476-preview?view=...`
  * with views hp | energy | customize | container.
  */
+import { AdminUiTextProvider } from '@admin/i18n/AdminUiTextProvider'
 import {
   Badge,
   Button,
   DeviceRow,
   DeviceSelectField,
   HeroCardA,
-  HeroProgressBar,
   HeroRowLine,
   HeroScene,
   HeroSegmented,
@@ -22,19 +22,22 @@ import {
   SectionCard,
   Select,
   SettingRow,
-  Switch,
   ThemeProvider,
   TrpcClientProvider,
   trpc,
 } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
   BatteryCharging,
+  BatteryMedium,
   Droplets,
   Flame,
   House,
   Settings2,
   Sun,
+  Gauge,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
@@ -273,29 +276,109 @@ const POS = {
   grid: { x: 302, y: 44 },
   battery: { x: 58, y: 150 },
   house: { x: 180, y: 98 },
-  heatPump: { x: 302, y: 150 },
+  /** Tangent to the house circle (26 + 13): a share OF the house, not a branch. */
+  heatPump: { x: 208, y: 126 },
 } as const
 
-/** PV / battery / grid around the house, the heat pump as a small extra node on the load side. */
+/** The battery cell: the charge level fills it from the bottom, the percentage sits INSIDE. */
+function BatteryNode({
+  at,
+  r,
+  soc,
+  moving,
+}: {
+  readonly at: Pt
+  readonly r: number
+  readonly soc: number
+  readonly moving: boolean
+}): ReactNode {
+  const w = 34
+  const h = 44
+  const fillH = ((h - 4) * Math.min(Math.max(soc, 0), 100)) / 100
+  const x = at.x - w / 2
+  const y = at.y - h / 2
+  return (
+    <g className={moving ? 'text-success' : 'text-foreground-muted'}>
+      <circle cx={at.x} cy={at.y} r={r + 4} className="fill-none stroke-border" strokeWidth="1" />
+      <rect x={at.x - 6} y={y - 4} width="12" height="4" rx="1.5" className="fill-current" />
+      <rect
+        x={x}
+        y={y}
+        width={w}
+        height={h}
+        rx="7"
+        className={`fill-surface ${moving ? 'stroke-current' : 'stroke-border'}`}
+        strokeWidth="2"
+      />
+      <rect
+        x={x + 2}
+        y={y + 2 + (h - 4 - fillH)}
+        width={w - 4}
+        height={fillH}
+        rx="5"
+        className="fill-current opacity-25"
+      />
+      <text
+        x={at.x}
+        y={at.y + 4}
+        textAnchor="middle"
+        fontSize="11"
+        fontWeight="700"
+        className="fill-foreground"
+      >
+        {String(Math.round(soc))}%
+      </text>
+      <text
+        x={at.x}
+        y={y + h + 14}
+        textAnchor="middle"
+        fontSize="10"
+        className="fill-foreground-muted"
+      >
+        Batteria
+      </text>
+    </g>
+  )
+}
+
+/**
+ * PV / battery / grid around the house. The house shows its TOTAL consumption; the linked
+ * heat pump is a small circle attached to it: a share of that total, never a second branch.
+ */
 function EnergyFlowArt({ flows }: { readonly flows: EnergyFlows }): ReactNode {
-  const { pv, battery, grid, heatPump } = flows
+  const { pv, battery, grid, heatPump, house } = flows
   const R = 22
   const links: Link[] = [
     { from: POS.pv, to: POS.house, watts: pv, tone: 'warning', at: 0.45 },
     grid >= 0
       ? { from: POS.grid, to: POS.house, watts: grid, tone: 'info', at: 0.45 }
-      : { from: POS.house, to: POS.grid, watts: grid, tone: 'success', at: 0.55 },
+      : {
+          from: POS.house,
+          to: POS.grid,
+          watts: grid,
+          tone: 'success',
+          at: 0.55,
+        },
     battery >= 0
-      ? { from: POS.house, to: POS.battery, watts: battery, tone: 'success', at: 0.55 }
-      : { from: POS.battery, to: POS.house, watts: battery, tone: 'success', at: 0.45 },
-    ...(heatPump === null
-      ? []
-      : [{ from: POS.house, to: POS.heatPump, watts: heatPump, tone: 'warning', at: 0.55 } as Link]),
+      ? {
+          from: POS.house,
+          to: POS.battery,
+          watts: battery,
+          tone: 'success',
+          at: 0.55,
+        }
+      : {
+          from: POS.battery,
+          to: POS.house,
+          watts: battery,
+          tone: 'warning',
+          at: 0.45,
+        },
   ]
   return (
     <svg viewBox="0 0 360 196" aria-hidden="true" className="h-full w-full max-w-[420px]">
       {links.map((link, i) => (
-        <FlowLink key={i} link={link} r={link.to === POS.house || link.from === POS.house ? R : R} />
+        <FlowLink key={i} link={link} r={R} />
       ))}
       <FlowNode
         at={POS.pv}
@@ -310,26 +393,50 @@ function EnergyFlowArt({ flows }: { readonly flows: EnergyFlows }): ReactNode {
         r={R}
         icon={Zap}
         tone={Math.abs(grid) >= IDLE_W ? (grid >= 0 ? 'info' : 'success') : null}
-        caption={Math.abs(grid) < IDLE_W ? 'Rete' : grid >= 0 ? 'Rete · import' : 'Rete · export'}
+        caption={
+          Math.abs(grid) < IDLE_W ? 'Rete' : grid >= 0 ? 'Rete · da rete' : 'Rete · verso rete'
+        }
         captionAbove
       />
-      <FlowNode
-        at={POS.battery}
-        r={R}
-        icon={BatteryCharging}
-        tone={Math.abs(battery) >= IDLE_W ? 'success' : null}
-        caption={`Batteria ${n(flows.soc)} %`}
-      />
-      <FlowNode at={POS.house} r={26} icon={House} tone="primary" caption="Casa" />
+      <BatteryNode at={POS.battery} r={R} soc={flows.soc} moving={Math.abs(battery) >= IDLE_W} />
       {heatPump === null ? null : (
-        <FlowNode
-          at={POS.heatPump}
-          r={16}
-          icon={Flame}
-          tone={heatPump >= IDLE_W ? 'warning' : null}
-          caption="Pompa di calore"
-        />
+        <g className={heatPump >= IDLE_W ? 'text-warning' : 'text-foreground-muted'}>
+          <circle
+            cx={POS.heatPump.x}
+            cy={POS.heatPump.y}
+            r="13"
+            className={`fill-surface ${heatPump >= IDLE_W ? 'stroke-current' : 'stroke-border'}`}
+            strokeWidth="2"
+          />
+          <Flame
+            x={POS.heatPump.x - 6}
+            y={POS.heatPump.y - 6}
+            width={12}
+            height={12}
+            className="stroke-current"
+            aria-hidden
+          />
+          <text
+            x={POS.heatPump.x + 19}
+            y={POS.heatPump.y + 4}
+            fontSize="10"
+            className="fill-foreground-muted"
+          >
+            {`PdC ${wattsText(heatPump)}`}
+          </text>
+        </g>
       )}
+      <FlowNode at={POS.house} r={26} icon={House} tone="primary" caption="" />
+      <text
+        x={POS.house.x}
+        y={POS.house.y - 26 - 6}
+        textAnchor="middle"
+        fontSize="11"
+        fontWeight="700"
+        className="fill-foreground"
+      >
+        {`Casa ${wattsText(house)}`}
+      </text>
     </svg>
   )
 }
@@ -392,9 +499,111 @@ function HeatingCircuitRow({
 
 // ------------------------------------------------------------- the heat pump
 
+interface ModeDef {
+  readonly key: string
+  readonly label: string
+  readonly options: readonly {
+    readonly value: string
+    readonly label: string
+  }[]
+  readonly initial: string
+}
+
+/** The independent system modes, each with its REAL values (not one profile selector). */
+const SYSTEM_MODES: readonly ModeDef[] = [
+  {
+    key: 'silent',
+    label: 'Silenzioso',
+    options: [
+      { value: 'off', label: 'Off' },
+      { value: 'auto', label: 'Auto' },
+      { value: 'on', label: 'On' },
+    ],
+    initial: 'off',
+  },
+  {
+    key: 'absent',
+    label: 'Assente',
+    options: [
+      { value: 'off', label: 'Off' },
+      { value: 'on', label: 'On' },
+    ],
+    initial: 'off',
+  },
+  {
+    key: 'aux',
+    label: 'Riscaldatore aggiuntivo',
+    options: [
+      { value: 'off', label: 'Off' },
+      { value: 'manual', label: 'Manuale' },
+      { value: 'auto', label: 'Auto' },
+    ],
+    initial: 'off',
+  },
+  {
+    key: 'holiday',
+    label: 'Vacanza',
+    options: [
+      { value: 'off', label: 'Off' },
+      { value: 'schedule', label: 'Programma' },
+    ],
+    initial: 'off',
+  },
+]
+
+/** The "Sistema" group: one segmented control per mode, each its own row. */
+function SystemModes(): ReactNode {
+  const [values, setValues] = useState<Readonly<Record<string, string>>>(() =>
+    Object.fromEntries(SYSTEM_MODES.map((m) => [m.key, m.initial])),
+  )
+  return (
+    <>
+      <div className="px-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-foreground-muted">
+        Sistema
+      </div>
+      {SYSTEM_MODES.map((mode) => (
+        <HeroRowLine
+          key={mode.key}
+          testId="system-mode-row"
+          label={mode.label}
+          actions={
+            <HeroSegmented
+              label={mode.label}
+              tone="warning"
+              value={values[mode.key] ?? mode.initial}
+              options={mode.options}
+              onChange={(v) => setValues({ ...values, [mode.key]: v })}
+            />
+          }
+        />
+      ))}
+    </>
+  )
+}
+
+/** Live power of the unit; `null` = not reported (a missing reading is never drawn as 0). */
+export interface HeatPumpPower {
+  readonly thermalW: number | null
+  readonly electricalW: number | null
+}
+
+const kw = (w: number): string => `${n(w / 1000, 2)} kW`
+
+/** "COP istantaneo": thermal over electrical power, only when BOTH are known and the unit draws power. */
+function instantCop(p: HeatPumpPower): number | null {
+  if (p.thermalW === null || p.electricalW === null || p.electricalW <= 0) return null
+  return p.thermalW / p.electricalW
+}
+
 /** The "Pompa di calore" hero, with the operator's real values (Compress CS5800iAW via HomeCom). */
-export function HeatPumpHero({ title = 'Pompa di calore' }: { readonly title?: string }): ReactNode {
-  const cop = 74.16 / 30.46
+export function HeatPumpHero({
+  title = 'Pompa di calore',
+  power = { thermalW: 9200, electricalW: 2991 },
+}: {
+  readonly title?: string
+  readonly power?: HeatPumpPower
+}): ReactNode {
+  const cop = instantCop(power)
   return (
     <HeroCardA
       title={title}
@@ -458,30 +667,29 @@ export function HeatPumpHero({ title = 'Pompa di calore' }: { readonly title?: s
               <span className="text-foreground-muted">resa {n(0)}</span>
             </CircuitValue>
           </HeroRowLine>
+          <PillGroup label="Potenza" testId="power-row">
+            <>
+              <Badge variant="neutral" style="outline" icon={<Flame />}>
+                Termica {power.thermalW === null ? '—' : kw(power.thermalW)}
+              </Badge>
+              <Badge variant="neutral" style="outline" icon={<Zap />}>
+                Elettrica {power.electricalW === null ? '—' : kw(power.electricalW)}
+              </Badge>
+              <Badge
+                variant={cop === null ? 'neutral' : 'success'}
+                style={cop === null ? 'outline' : 'solid'}
+                icon={<Gauge />}
+              >
+                COP istantaneo {cop === null ? '—' : n(cop)}
+              </Badge>
+            </>
+          </PillGroup>
           <HeroRowLine testId="energy-row" label="Oggi">
             <div className="text-xs">
-              Prodotta {n(74.16, 2)} kWh · assorbita {n(30.46, 2)} kWh ·{' '}
-              <span className="font-semibold text-success">COP {n(cop)}</span>
+              Prodotta {n(74.16, 2)} kWh · assorbita {n(30.46, 2)} kWh
             </div>
           </HeroRowLine>
-          <HeroRowLine
-            label="Silenzioso"
-            actions={<Switch aria-label="Silenzioso" checked={false} onCheckedChange={noop} />}
-          />
-          <HeroRowLine
-            label="Resistenza"
-            actions={<Switch aria-label="Resistenza" checked={false} onCheckedChange={noop} />}
-          />
-          <HeroRowLine
-            label="Assenza"
-            actions={
-              <Button size="sm" variant="outline" onClick={noop}>
-                Imposta vacanza
-              </Button>
-            }
-          >
-            <div className="text-xs">Nessuna vacanza · assenza off</div>
-          </HeroRowLine>
+          <SystemModes />
         </>
       }
       footChips={
@@ -506,9 +714,114 @@ export function HeatPumpHero({ title = 'Pompa di calore' }: { readonly title?: s
 // ------------------------------------------------------------ the energy system
 
 /** The real moment of the fixture: PV 1234 W, battery 98,9 % charging 339 W, grid 5 W, house 895 W. */
-const NOW_FLOWS: EnergyFlows = { pv: 1234, battery: 339, grid: 5, house: 895, heatPump: null, soc: 98.9 }
-/** Illustrative, to show the opposite directions: night, battery discharging, grid importing. */
-const NIGHT_FLOWS: EnergyFlows = { pv: 0, battery: -1180, grid: 412, house: 1592, heatPump: 2991, soc: 61.4 }
+const NOW_FLOWS: EnergyFlows = {
+  pv: 1234,
+  battery: 339,
+  grid: 5,
+  house: 895,
+  heatPump: null,
+  soc: 98.9,
+}
+/**
+ * Illustrative, the opposite directions: night, battery discharging, grid importing. The
+ * house total is the sum of the sources (0 + 1180 + 3403) and the heat pump a share of it.
+ */
+const NIGHT_FLOWS: EnergyFlows = {
+  pv: 0,
+  battery: -1180,
+  grid: 3403,
+  house: 4583,
+  heatPump: 2991,
+  soc: 61.4,
+}
+/** A heat pump linked at the real moment: a small share of the 895 W. */
+const LINKED_FLOWS: EnergyFlows = { ...NOW_FLOWS, heatPump: 310 }
+
+/** A labelled group of pills spanning the whole card width (a pill row needs more room than a label + value row). */
+function PillGroup({
+  label,
+  testId,
+  children,
+}: {
+  readonly label: string
+  readonly testId: string
+  readonly children: ReactNode
+}): ReactNode {
+  return (
+    <div
+      data-testid={testId}
+      className="flex flex-col gap-1.5 rounded-lg border border-border-subtle bg-surface px-3 py-2"
+    >
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground-muted">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-1.5">{children}</div>
+    </div>
+  )
+}
+
+/** One value pill: icon + text, tone by what it is. */
+function FlowPill({
+  icon: Icon,
+  variant,
+  children,
+}: {
+  readonly icon: LucideIcon
+  readonly variant: 'neutral' | 'success' | 'info' | 'warning'
+  readonly children: ReactNode
+}): ReactNode {
+  return (
+    <Badge
+      variant={variant}
+      style={variant === 'neutral' ? 'outline' : 'solid'}
+      size="md"
+      icon={<Icon />}
+    >
+      {children}
+    </Badge>
+  )
+}
+
+/** The live values of the energy hero as pills: house total, grid import and export apart, battery with direction. */
+function EnergyPills({ flows }: { readonly flows: EnergyFlows }): ReactNode {
+  const imp = Math.max(flows.grid, 0)
+  const exp = Math.max(-flows.grid, 0)
+  const bat = flows.battery
+  const batteryText =
+    Math.abs(bat) < IDLE_W
+      ? 'Batteria ferma'
+      : bat > 0
+        ? `In carica ${wattsText(bat)}`
+        : `In scarica ${wattsText(bat)}`
+  return (
+    <>
+      <FlowPill icon={House} variant="neutral">
+        Casa {wattsText(flows.house)}
+      </FlowPill>
+      {flows.heatPump === null ? null : (
+        <FlowPill icon={Flame} variant="warning">
+          di cui PdC {wattsText(flows.heatPump)} ·{' '}
+          {String(Math.round((flows.heatPump / flows.house) * 100))} %
+        </FlowPill>
+      )}
+      <FlowPill icon={Sun} variant={flows.pv >= IDLE_W ? 'warning' : 'neutral'}>
+        FV {wattsText(flows.pv)}
+      </FlowPill>
+      <FlowPill icon={ArrowDownToLine} variant={imp >= IDLE_W ? 'info' : 'neutral'}>
+        Da rete {wattsText(imp)}
+      </FlowPill>
+      <FlowPill icon={ArrowUpFromLine} variant={exp >= IDLE_W ? 'success' : 'neutral'}>
+        Verso rete {wattsText(exp)}
+      </FlowPill>
+      <FlowPill
+        icon={bat > 0 ? BatteryCharging : BatteryMedium}
+        variant={bat > 0 ? 'success' : bat < 0 ? 'warning' : 'neutral'}
+      >
+        {batteryText}
+      </FlowPill>
+    </>
+  )
+}
 
 /** The "Impianto" hero; `heatPump` is the live power of a LINKED heat pump, `null` when not linked. */
 export function EnergyHero({
@@ -524,23 +837,12 @@ export function EnergyHero({
     <HeroCardA
       title={title}
       chips={
-        <>
-          <Badge variant="neutral" size="sm">
-            Enpal
-          </Badge>
-          <Badge variant="success" size="sm">
-            Batteria {n(flows.soc)} %
-          </Badge>
-        </>
+        <Badge variant="neutral" size="sm">
+          Enpal
+        </Badge>
       }
       scene={
-        <HeroScene
-          scene="plug"
-          state="on"
-          caption={caption}
-          className="h-56"
-          rightTiles={undefined}
-        >
+        <HeroScene scene="plug" state="on" caption={caption} className="h-56">
           <EnergyFlowArt flows={flows} />
         </HeroScene>
       }
@@ -551,7 +853,7 @@ export function EnergyHero({
             actions={
               <Select
                 aria-label="Modalità"
-                wrapperClassName="relative w-40 max-w-full"
+                wrapperClassName="relative w-32 max-w-full"
                 value="self"
                 options={[
                   { value: 'self', label: 'Autoconsumo' },
@@ -562,17 +864,25 @@ export function EnergyHero({
               />
             }
           />
-          <HeroRowLine
-            label="Batteria"
-            actions={<span className="text-xs tabular-nums text-foreground-muted">15,2 kWh</span>}
-          >
-            <HeroProgressBar value={flows.soc / 100} label="Batteria" tone="success" />
-          </HeroRowLine>
-          <HeroRowLine label="Oggi">
-            <div className="text-xs">
-              FV {n(4.0)} · consumo {n(3.6)} · import {n(0.8)} · export {n(1.1)} kWh
-            </div>
-          </HeroRowLine>
+          <PillGroup label="Adesso" testId="energy-pills">
+            <EnergyPills flows={flows} />
+          </PillGroup>
+          <PillGroup label="Oggi" testId="energy-today">
+            <>
+              <Badge variant="neutral" style="outline">
+                FV {n(4.0)} kWh
+              </Badge>
+              <Badge variant="neutral" style="outline">
+                Consumo {n(3.6)} kWh
+              </Badge>
+              <Badge variant="neutral" style="outline">
+                Import {n(0.8)} kWh
+              </Badge>
+              <Badge variant="neutral" style="outline">
+                Export {n(1.1)} kWh
+              </Badge>
+            </>
+          </PillGroup>
         </>
       }
       footAction={
@@ -602,7 +912,10 @@ function CustomizeCard({ linked }: { readonly linked: boolean }): ReactNode {
               type: 'device-select',
               key: 'heatPump',
               label: '',
-              deviceFilter: { caps: ['heat-pump'], excludeTypes: ['container'] },
+              deviceFilter: {
+                caps: ['heat-pump'],
+                excludeTypes: ['container'],
+              },
             }}
             value={value}
             onChange={(v) => setValue(String(v))}
@@ -665,8 +978,16 @@ function ContainerDetail({
 }: {
   readonly name: string
   readonly hero: ReactNode
-  readonly kids: readonly { id: number; stableId: string; type: string; name: string }[]
-  readonly childScenes: readonly { scene: 'heater' | 'thermostat' | 'plug' | 'sensor-sparkline'; status: string }[]
+  readonly kids: readonly {
+    id: number
+    stableId: string
+    type: string
+    name: string
+  }[]
+  readonly childScenes: readonly {
+    scene: 'heater' | 'thermostat' | 'plug' | 'sensor-sparkline'
+    status: string
+  }[]
 }): ReactNode {
   return (
     <div className="flex flex-col gap-3">
@@ -715,12 +1036,17 @@ function Cell({ id, children }: { readonly id: string; readonly children: ReactN
 }
 
 function View({ view }: { readonly view: string }): ReactNode {
-  const linked: EnergyFlows = { ...NOW_FLOWS, heatPump: 2991 }
+  const linked = LINKED_FLOWS
   if (view === 'hp') {
     return (
-      <Cell id="hp">
-        <HeatPumpHero />
-      </Cell>
+      <>
+        <Cell id="hp">
+          <HeatPumpHero />
+        </Cell>
+        <Cell id="hp-no-reading">
+          <HeatPumpHero title="PdC · senza lettura" power={{ thermalW: 9200, electricalW: null }} />
+        </Cell>
+      </>
     )
   }
   if (view === 'energy') {
@@ -798,18 +1124,22 @@ function View({ view }: { readonly view: string }): ReactNode {
 
 export function Hero476Preview(): ReactElement {
   const view = new URLSearchParams(window.location.search).get('view') ?? 'hp'
-  const [client] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }))
+  const [client] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+  )
   return (
     <ThemeProvider>
-      <TrpcClientProvider client={fakeClient() as never}>
-        <trpc.Provider client={fakeClient() as never} queryClient={client}>
-          <QueryClientProvider client={client}>
-            <main className="flex min-h-screen flex-wrap content-start items-start gap-4 bg-background p-4">
-              <View view={view} />
-            </main>
-          </QueryClientProvider>
-        </trpc.Provider>
-      </TrpcClientProvider>
+      <AdminUiTextProvider>
+        <TrpcClientProvider client={fakeClient() as never}>
+          <trpc.Provider client={fakeClient() as never} queryClient={client}>
+            <QueryClientProvider client={client}>
+              <main className="flex min-h-screen flex-wrap content-start items-start gap-4 bg-background p-4">
+                <View view={view} />
+              </main>
+            </QueryClientProvider>
+          </trpc.Provider>
+        </TrpcClientProvider>
+      </AdminUiTextProvider>
     </ThemeProvider>
   )
 }
