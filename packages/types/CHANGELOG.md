@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Renaming a composed device keeps the new name after a restart.
+- Renaming a composed device keeps the new name after a restart, whether the rename was made on the device page or in the composition editor.
+- A device type can declare which child it stands for; a heat pump stands for itself, so its hero stays its own
+- The heat pump hero shows the instantaneous COP as — when thermal or electrical power is unknown
+- Choosing the child a device stands for requires that device's type
+
 ## [1.2.536] - 2026-11-09
 
 ### Added
@@ -14,14 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Action step arguments may carry device value templates, rendered at run time
 - An action step can carry an if condition and an else list; a state that cannot be read runs neither side
 - A device row shows a running timed run, with the time left and Run or Stop.
-- Renaming a composed device keeps the new name after a restart.
-- Renaming a composed device keeps the new name after a restart, whether the rename was made on the device page or in the composition editor.
-- A device type can declare which child it stands for; a heat pump stands for itself, so its hero stays its own
-- The heat pump hero shows the instantaneous COP as — when thermal or electrical power is unknown
-
-### Fixed
-
-- Choosing the child a device stands for requires that device's type
 
 ## [1.2.535] - 2026-11-09
 
@@ -54,18 +54,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Removed the unused claimAction from the account-sign-in config field.
-### Changed
-
-
 ## [1.2.532] - 2026-11-09
 
 ### Changed
 
 - A calendar names the integration-instances record that owns it (calendar-source CalendarInfo.instanceId, passed through the calendars listing)
 - Remote: an infrared source may leave its emitter out (the remote's default one is used), the power mode setting is gone, and the colour keys have one set of roles
-### Changed
-
-
 ## [1.2.531] - 2026-11-08
 
 ### Changed

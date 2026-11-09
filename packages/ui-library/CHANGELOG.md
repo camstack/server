@@ -7,16 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A heat pump keeps its own name and is the suggested device; a climate circuit is not treated as its primary child
+
 ## [1.2.413] - 2026-11-09
 
 ### Added
 
 - Device-manager hooks for rendering and checking device templates
 - The device list shows Run or Stop for a timed run, and the time left while one is armed.
-
-### Fixed
-
-- A heat pump keeps its own name and is the suggested device; a climate circuit is not treated as its primary child
 
 ## [1.2.412] - 2026-11-09
 
@@ -45,9 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The account sign-in field no longer polls a claim action; it shows a paste hint under the sign-in button.
-### Changed
-
-
 ## [1.2.409] - 2026-11-08
 
 ### Changed

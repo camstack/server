@@ -7,15 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device page passes the device type when it resolves which child a container stands for
+
 ## [1.2.629] - 2026-11-09
 
 ### Changed
 
 - An action step has an Only if toggle with the automation condition editor and an Otherwise list
-
-### Fixed
-
-- The device page passes the device type when it resolves which child a container stands for
 
 ## [1.2.628] - 2026-11-09
 
@@ -43,9 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The account sign-in paste hint asks for the address the browser stopped on, or only its code
-### Changed
-
-
 ## [1.2.625] - 2026-11-09
 
 ### Changed
@@ -56,9 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Calendars page joins calendars to their switch by the owning record, no longer shows an enabled waste calendar twice, and says when the switches could not be loaded
 - Remote: edit the layout inside the remote modal, one colour-keys set with optional letters, Samsung layout with source and app rows, and a default-emitter choice for infrared sources
-### Changed
-
-
 ## [1.2.624] - 2026-11-08
 
 ### Changed
