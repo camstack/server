@@ -186,8 +186,9 @@ describe('HomeCom heat pump discovery', () => {
   it('offers one heat pump only when a heat-pump reading exists', async () => {
     expect(buildDiscoverables(base).some((d) => d.kind === 'heat-pump')).toBe(false)
     const withReading = { ...base, heatPump: await read(true) }
-    expect(buildDiscoverables(withReading).filter((d) => d.kind === 'heat-pump')).toEqual([
-      { nativeId: 'hp:0', name: 'Heat pump', kind: 'heat-pump' },
+    const picks = buildDiscoverables(withReading)
+    expect(picks).toEqual([
+      { nativeId: 'hp:0', name: 'Heat pump', kind: 'heat-pump', children: [] },
     ])
   })
 })

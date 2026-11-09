@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A device row shows a running timed run, with the time left and Run or Stop.
 - Renaming a composed device keeps the new name after a restart.
 - Renaming a composed device keeps the new name after a restart, whether the rename was made on the device page or in the composition editor.
+- A device type can declare which child it stands for; a heat pump stands for itself, so its hero stays its own
+- The heat pump hero shows the instantaneous COP as — when thermal or electrical power is unknown
 
 ## [1.2.535] - 2026-11-09
 

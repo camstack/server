@@ -1078,8 +1078,13 @@ export {
 // Camera device interface + stream sources
 export type { ICameraDevice, StreamSourceEntry } from './device/camera-device.js'
 export {
+  applyPrimaryChildRule,
   CONTAINER_CHILD_PRIORITY,
+  CONTAINER_PRIMARY_CHILD_RULES,
+  type AppliedPrimaryChildRule,
   type ContainerChildRef,
+  type ContainerPrimaryChildRule,
+  type ContainerPrimaryDeclaration,
   resolveContainerPrimaryChild,
 } from './device/container-primary-child.js'
 export {

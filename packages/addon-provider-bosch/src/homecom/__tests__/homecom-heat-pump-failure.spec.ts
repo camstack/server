@@ -57,6 +57,7 @@ describe('HomeCom heat pump reads never break the working devices', () => {
     expect(first.circuits.map((c) => c.id)).toEqual(['hc1'])
     expect(first.dhw?.circuitId).toBe('dhw1')
     expect(first.heatPump).toBeUndefined()
+    expect(buildDiscoverables(first).map((d) => d.kind)).toEqual(['heating-circuit', 'dhw'])
     const failed = log.warn.mock.calls.map((c) => c[1]?.meta?.path)
     expect(failed.length).toBeGreaterThan(0)
     expect(new Set(failed).size).toBe(failed.length)
@@ -94,11 +95,12 @@ describe('HomeCom heat pump reads never break the working devices', () => {
     await client.fetchSystem()
     const heatPump = snapshot.heatPump
     if (heatPump === undefined) throw new Error('expected a heat pump')
-    expect(buildDiscoverables(snapshot).map((d) => [d.nativeId, d.name])).toEqual([
+    const picks = buildDiscoverables(snapshot)
+    expect(picks.map((d) => [d.nativeId, d.name])).toEqual([['hp:0', 'Heat pump']])
+    expect(picks[0]?.children?.map((d) => [d.nativeId, d.name])).toEqual([
       ['hc:hc1', 'Heating circuit 1'],
       ['hc:hc2', 'Heating circuit 2'],
-      ['dhw:0', 'Domestic hot water'],
-      ['hp:0', 'Heat pump'],
+      ['dhw:0', 'Hot water'],
     ])
     const status = heatPumpStatusFrom(heatPump, 1)
     expect(status.system.away?.value).toBe('off')

@@ -1,11 +1,25 @@
 import type { HomeComApiClient, HomeComSystemSnapshot } from './homecom-api-client.js'
+import type { HomeComHeatingCircuit } from './homecom-domain-mapping.js'
 
 export interface HomeComDiscoverableDevice {
   readonly nativeId: string
   readonly name: string
   readonly kind: 'heating-circuit' | 'dhw' | 'heat-pump'
   readonly circuitId?: string
+  /**
+   * Set only on a heat-pump pick: one climate child per circuit and the hot
+   * water child, created with the heat pump. Absent on a boiler's rows.
+   */
+  readonly children?: readonly HomeComDiscoverableDevice[]
 }
+
+/** Stable id of one HomeCom device. Adoption matches an existing row on this. */
+export function homeComStableId(integrationId: string, nativeId: string): string {
+  return `homecom:${integrationId}:${nativeId}`
+}
+
+/** The hot-water child of a heat pump. A boiler's own row keeps its longer name. */
+export const HOMECOM_HOT_WATER_CHILD_NAME = 'Hot water'
 
 export interface HomeComConnectionSurface {
   readonly gatewayId: string
@@ -60,27 +74,35 @@ export class HomeComConnectionResolver {
   }
 }
 
+const BOILER_DHW_NAME = 'Domestic hot water'
+
+function circuitDiscoverable(circuit: HomeComHeatingCircuit): HomeComDiscoverableDevice {
+  return {
+    nativeId: `hc:${circuit.id}`,
+    name: circuit.name,
+    kind: 'heating-circuit',
+    circuitId: circuit.id,
+  }
+}
+
+function dhwDiscoverable(name: string): HomeComDiscoverableDevice {
+  return { nativeId: 'dhw:0', name, kind: 'dhw' }
+}
+
+/**
+ * A gateway with a heat pump is one pick. A boiler still offers each circuit
+ * and the hot-water row on its own.
+ */
 export function buildDiscoverables(snapshot: HomeComSystemSnapshot): HomeComDiscoverableDevice[] {
-  const out: HomeComDiscoverableDevice[] = []
-  for (const circuit of snapshot.circuits) {
-    out.push({
-      nativeId: `hc:${circuit.id}`,
-      name: circuit.name,
-      kind: 'heating-circuit',
-      circuitId: circuit.id,
-    })
-  }
-  if (snapshot.dhw) {
-    out.push({
-      nativeId: 'dhw:0',
-      name: 'Domestic hot water',
-      kind: 'dhw',
-    })
-  }
+  const circuits = snapshot.circuits.map(circuitDiscoverable)
   if (snapshot.heatPump !== undefined) {
-    out.push({ nativeId: 'hp:0', name: 'Heat pump', kind: 'heat-pump' })
+    const children = [
+      ...circuits,
+      ...(snapshot.dhw === null ? [] : [dhwDiscoverable(HOMECOM_HOT_WATER_CHILD_NAME)]),
+    ]
+    return [{ nativeId: 'hp:0', name: 'Heat pump', kind: 'heat-pump', children }]
   }
-  return out
+  return [...circuits, ...(snapshot.dhw === null ? [] : [dhwDiscoverable(BOILER_DHW_NAME)])]
 }
 
 export const homeComConnections = new HomeComConnectionResolver()

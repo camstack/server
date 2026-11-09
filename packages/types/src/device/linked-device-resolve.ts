@@ -81,7 +81,8 @@ export function expandContainer(
   // The choice is `resolveContainerPrimaryChild`, the same rule admin-ui
   // renders a container AS, so the two surfaces name the same child.
   //
-  // The operator's stored pick wins; priority only decides in its absence.
+  // The operator's stored pick wins; the device type's declaration is next;
+  // priority only decides when the type declared nothing.
   //
   // Both halves survive the `slim` projection this module must use: the pick
   // is a column on the CONTAINER's row, and `stableId` is a column on each
@@ -100,6 +101,7 @@ export function expandContainer(
     })),
     byId.get(id)?.primaryChildEntityId,
     byId.get(id)?.name,
+    candidate.type,
   )
   if (primary !== null) expandContainer(primary.id, byId, byParent, nextVisited, out)
 }

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { DeviceType } from '../device-type.js'
 import {
+  applyPrimaryChildRule,
   CONTAINER_CHILD_PRIORITY,
   resolveContainerPrimaryChild,
 } from '../container-primary-child.js'
@@ -292,5 +294,54 @@ describe('a container named with separators still picks its actuator', () => {
     )
     const without = resolveContainerPrimaryChild([presence, cover], undefined)
     expect(withName?.id).toBe(without?.id)
+  })
+})
+
+/**
+ * A device type may declare which child it stands for. The declaration sits
+ * between the operator's pick and the heuristic, and it names no vendor.
+ */
+describe('a device type declares its primary child', () => {
+  const circuits: readonly ContainerChildRef[] = [
+    child(1, 'climate', 'circuit-1'),
+    child(2, 'water-heater', 'hot-water'),
+  ]
+
+  it("lets the operator's pick win over a type that stands for itself", () => {
+    const picked = resolveContainerPrimaryChild(
+      circuits,
+      'hot-water',
+      'Heat pump',
+      DeviceType.HeatPump,
+    )
+    expect(picked?.stableId).toBe('hot-water')
+  })
+
+  it('returns no child when the type stands for itself, even if a climate child would win', () => {
+    expect(
+      resolveContainerPrimaryChild(circuits, undefined, 'Heat pump', DeviceType.HeatPump),
+    ).toBeNull()
+    expect(
+      resolveContainerPrimaryChild(circuits, 'missing', undefined, DeviceType.HeatPump),
+    ).toBeNull()
+  })
+
+  it('keeps the heuristic for a type that declares nothing', () => {
+    const picked = resolveContainerPrimaryChild(circuits, undefined, 'Box', DeviceType.Container)
+    expect(picked?.type).toBe('climate')
+  })
+
+  it('a declared child type beats the heuristic, and a missing one falls through', () => {
+    const sensor = child(3, 'sensor', 'reading')
+    const declared = applyPrimaryChildRule(
+      { deviceType: 'example', primary: { childType: 'sensor' } },
+      [circuits[0]!, sensor],
+    )
+    expect(declared.kind === 'child' ? declared.child.id : null).toBe(3)
+    const missing = applyPrimaryChildRule(
+      { deviceType: 'example', primary: { childType: 'lock' } },
+      circuits,
+    )
+    expect(missing.kind).toBe('fall-through')
   })
 })

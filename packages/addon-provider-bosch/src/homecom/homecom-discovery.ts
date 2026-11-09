@@ -32,6 +32,10 @@ interface CandidateShape {
   readonly caps: readonly string[]
 }
 
+export function homeComDeviceType(kind: HomeComDiscoverableDevice['kind']): DeviceType {
+  return shapeOf(kind).type
+}
+
 function shapeOf(kind: HomeComDiscoverableDevice['kind']): CandidateShape {
   switch (kind) {
     case 'heating-circuit':

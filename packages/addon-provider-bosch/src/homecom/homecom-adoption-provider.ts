@@ -6,7 +6,8 @@ import type {
   DiscoveredChildDevice,
   IDeviceAdoptionProvider,
 } from '@camstack/types'
-import { buildHomeComCandidates } from './homecom-discovery.js'
+import { planHomeComAdoption, type HomeComAdoptedRow } from './homecom-adoption-plan.js'
+import { buildHomeComCandidates, homeComDeviceType } from './homecom-discovery.js'
 import type { HomeComDiscoverableDevice } from './homecom-gateway.js'
 
 export interface HomeComAdoptionRegistry {
@@ -19,7 +20,7 @@ export interface HomeComAdoptionProviderDeps {
   readonly hasIntegration: (integrationId: string) => boolean
   readonly listIntegrations: () => readonly string[]
   readonly listAdopted: () => Promise<
-    ReadonlyArray<{ readonly id: number; readonly config: Record<string, unknown> }>
+    ReadonlyArray<HomeComAdoptedRow & { readonly config: Record<string, unknown> }>
   >
   readonly adoptDevice: (input: {
     readonly nativeId: string
@@ -28,6 +29,7 @@ export interface HomeComAdoptionProviderDeps {
     readonly name: string
     readonly kind: 'heating-circuit' | 'dhw' | 'heat-pump'
     readonly circuitId?: string
+    readonly parentDeviceId: number | null
   }) => Promise<{ readonly deviceId: number }>
   readonly removeDevice: (camDeviceId: number) => Promise<void>
   readonly findDeviceConfig: (camDeviceId: number) => Promise<Record<string, unknown> | null>
@@ -35,6 +37,84 @@ export interface HomeComAdoptionProviderDeps {
 }
 
 const DEVICES_FILTER: AdoptionFilter = { id: 'devices', label: 'Devices', isDefault: true } as const
+
+const STAYED_TOP_LEVEL =
+  'HomeCom device stayed top-level: it was already adopted, so it was not created again under the heat pump'
+
+const ALREADY_PRESENT =
+  'HomeCom device was not created again: a device with this stable id already exists'
+
+interface AdoptedPick {
+  readonly childNativeId: string
+  readonly parentDeviceId: number
+  readonly accessoryDeviceIds: readonly number[]
+}
+
+type AdoptOneResult =
+  | {
+      readonly ok: true
+      readonly parentDeviceId: number
+      readonly accessoryDeviceIds: readonly number[]
+    }
+  | { readonly ok: false }
+
+interface AdoptOneInput {
+  readonly dev: HomeComDiscoverableDevice
+  readonly integrationId: string
+  readonly name: string
+  readonly known: readonly HomeComAdoptedRow[]
+  readonly adoptDevice: HomeComAdoptionProviderDeps['adoptDevice']
+  readonly logger: IScopedLogger
+  readonly logOnce: (deviceId: number, message: string) => void
+}
+
+async function adoptOne(input: AdoptOneInput): Promise<AdoptOneResult> {
+  const { dev, integrationId, name, known, adoptDevice, logger, logOnce } = input
+  const plan = planHomeComAdoption(dev, integrationId, known)
+  for (const skip of plan.stayedTopLevel) logOnce(skip.deviceId, STAYED_TOP_LEVEL)
+  for (const skip of plan.alreadyPresent) logOnce(skip.deviceId, ALREADY_PRESENT)
+  const root = plan.create[0]
+  if (root === undefined) return { ok: false }
+  let parentDeviceId: number
+  try {
+    const created = await adoptDevice({
+      nativeId: root.nativeId,
+      integrationId,
+      type: homeComDeviceType(root.kind),
+      name,
+      kind: root.kind,
+      ...(root.circuitId === undefined ? {} : { circuitId: root.circuitId }),
+      parentDeviceId: null,
+    })
+    parentDeviceId = created.deviceId
+  } catch (err: unknown) {
+    logger.warn('homecom adopt failed', {
+      meta: { nativeId: root.nativeId, integrationId, error: errMsg(err) },
+    })
+    return { ok: false }
+  }
+  const accessoryDeviceIds: number[] = []
+  for (const child of plan.create.slice(1)) {
+    try {
+      const created = await adoptDevice({
+        nativeId: child.nativeId,
+        integrationId,
+        type: homeComDeviceType(child.kind),
+        name: child.name,
+        kind: child.kind,
+        ...(child.circuitId === undefined ? {} : { circuitId: child.circuitId }),
+        parentDeviceId,
+      })
+      accessoryDeviceIds.push(created.deviceId)
+    } catch (err: unknown) {
+      logger.warn('homecom adopt child failed', {
+        tags: { deviceId: parentDeviceId },
+        meta: { nativeId: child.nativeId, integrationId, error: errMsg(err) },
+      })
+    }
+  }
+  return { ok: true, parentDeviceId, accessoryDeviceIds }
+}
 
 async function adoptedMapForIntegration(
   integrationId: string,
@@ -64,6 +144,12 @@ export function buildHomeComAdoptionProvider(
     findDeviceConfig,
     logger,
   } = deps
+  const logged = new Set<number>()
+  const logOnce = (deviceId: number, message: string): void => {
+    if (logged.has(deviceId)) return
+    logged.add(deviceId)
+    logger.info(message, { tags: { deviceId } })
+  }
 
   async function allCandidatesForIntegration(
     integrationId: string,
@@ -133,43 +219,40 @@ export function buildHomeComAdoptionProvider(
         throw new Error(`homecom adopt: integration ${integrationId} not connected`)
       }
       const devices = registry.discoverables(integrationId)
-      const adopted: { readonly childNativeId: string; readonly parentDeviceId: number }[] = []
+      const known = await listAdopted()
+      const adopted: AdoptedPick[] = []
       let failures = 0
 
       for (const nativeId of childNativeIds) {
-        try {
-          const dev = devices.find((d) => d.nativeId === nativeId)
-          if (!dev) {
-            failures++
-            continue
-          }
-          const candidate = buildHomeComCandidates({ devices: [dev], adopted: new Map() })[0]
-          if (!candidate) {
-            failures++
-            continue
-          }
-          const name = perCandidate?.[nativeId]?.name ?? dev.name
-          const { deviceId } = await adoptDevice({
-            nativeId,
-            integrationId,
-            type: candidate.type,
-            name,
-            kind: dev.kind,
-            circuitId: dev.circuitId,
-          })
-          adopted.push({ childNativeId: nativeId, parentDeviceId: deviceId })
-        } catch (err: unknown) {
-          logger.warn('homecom adopt failed', {
-            meta: { nativeId, integrationId, error: errMsg(err) },
-          })
+        const dev = devices.find((d) => d.nativeId === nativeId)
+        if (!dev) {
           failures++
+          continue
         }
+        const outcome = await adoptOne({
+          dev,
+          integrationId,
+          name: perCandidate?.[nativeId]?.name ?? dev.name,
+          known,
+          adoptDevice,
+          logger,
+          logOnce,
+        })
+        if (!outcome.ok) {
+          failures++
+          continue
+        }
+        adopted.push({
+          childNativeId: nativeId,
+          parentDeviceId: outcome.parentDeviceId,
+          accessoryDeviceIds: outcome.accessoryDeviceIds,
+        })
       }
 
       if (adopted.length === 0 && failures > 0) {
         throw new Error(`homecom adopt: all ${failures} adopt(s) failed`)
       }
-      return { adopted: adopted.map((a) => ({ ...a, accessoryDeviceIds: [] as const })) }
+      return { adopted }
     },
 
     release: async ({ camDeviceId }) => {

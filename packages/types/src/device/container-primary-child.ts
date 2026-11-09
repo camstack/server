@@ -23,11 +23,66 @@
  * priority-in-sync.ts` fails the build when either drifts — the comment that
  * used to ask for this could not.
  *
- * The rule has two halves and the ORDER matters: an operator's explicit pick
- * wins outright, and only in its absence does type priority decide. The pick is
- * keyed on the child's re-sync-stable `entityId`, not its numeric id, so it
- * survives a re-sync that reallocates ids.
+ * The rule has three halves and the ORDER matters: an operator's explicit pick
+ * wins outright; else a declaration on the device type
+ * ({@link CONTAINER_PRIMARY_CHILD_RULES}); else role, namesake, then type
+ * priority. The pick is keyed on the child's re-sync-stable `entityId`, not
+ * its numeric id, so it survives a re-sync that reallocates ids.
  */
+
+import { DeviceType } from './device-type.js'
+
+/**
+ * What a device type stands for, when it says so itself.
+ *
+ * `'self'` — the device's own surface is the hero; resolution returns no
+ * child. `{ childType }` — the child of that type is primary, ahead of the
+ * role / namesake / type-rank heuristic. A type absent from
+ * {@link CONTAINER_PRIMARY_CHILD_RULES} keeps the heuristic.
+ */
+export type ContainerPrimaryDeclaration = 'self' | { readonly childType: string }
+
+export interface ContainerPrimaryChildRule {
+  /** A {@link DeviceType} value. Vendor names do not belong here. */
+  readonly deviceType: string
+  readonly primary: ContainerPrimaryDeclaration
+}
+
+/**
+ * Device types that name their primary child. A heat pump stands for itself:
+ * its hero is the system row, not the climate circuit that type-rank would
+ * otherwise pick.
+ */
+export const CONTAINER_PRIMARY_CHILD_RULES: readonly ContainerPrimaryChildRule[] = [
+  { deviceType: DeviceType.HeatPump, primary: 'self' },
+]
+
+export type AppliedPrimaryChildRule =
+  | { readonly kind: 'fall-through' }
+  | { readonly kind: 'none' }
+  | { readonly kind: 'child'; readonly child: ContainerChildRef }
+
+/**
+ * The type declaration, before the heuristic. `fall-through` means the
+ * heuristic still decides: the type declared nothing, or it named a child
+ * type that is not among the children.
+ */
+function declaredChildType(primary: ContainerPrimaryDeclaration): string | undefined {
+  if (primary === 'self') return undefined
+  return primary.childType
+}
+
+export function applyPrimaryChildRule(
+  rule: ContainerPrimaryChildRule | undefined,
+  children: readonly ContainerChildRef[],
+): AppliedPrimaryChildRule {
+  if (rule === undefined) return { kind: 'fall-through' }
+  const childType = declaredChildType(rule.primary)
+  if (childType === undefined) return { kind: 'none' }
+  const match = children.find((child) => child.type === childType)
+  if (match === undefined) return { kind: 'fall-through' }
+  return { kind: 'child', child: match }
+}
 
 /**
  * Type priority, most→least "primary". An actuator (climate / lock / cover / …)
@@ -157,9 +212,10 @@ function rank(type: string): number {
 
 /**
  * The child a container stands for: the operator's pick when it still exists,
- * else the highest-priority type. `null` for a childless container — a caller
- * must decide what an empty container means for it, rather than being handed a
- * child that is not there.
+ * else the device type's declaration, else the highest-priority type. `null`
+ * for a childless container, and for a type that stands for itself — a caller
+ * must decide what "no child" means for it, rather than being handed a child
+ * that is not the device.
  */
 /**
  * Two names for the same thing, compared the way an integration writes them.
@@ -197,6 +253,7 @@ export function resolveContainerPrimaryChild(
   children: readonly ContainerChildRef[],
   overrideEntityId: string | null | undefined,
   containerName?: string,
+  containerType?: string,
 ): ContainerChildRef | null {
   if (overrideEntityId !== undefined && overrideEntityId !== null) {
     // Canonical key first, then the legacy one — a pick written before
@@ -205,11 +262,16 @@ export function resolveContainerPrimaryChild(
     const picked =
       children.find((c) => c.stableId === overrideEntityId) ??
       children.find((c) => c.entityId !== undefined && c.entityId === overrideEntityId)
-    // A pick that no longer matches any child falls through to priority rather
-    // than yielding nothing: a re-sync that dropped the chosen entity must not
-    // leave the container unrepresented.
+    // A pick that no longer matches any child falls through to the type
+    // declaration, then priority: a re-sync that dropped the chosen entity must
+    // not leave a type that has a child unrepresented. A type that stands for
+    // itself still answers no child.
     if (picked !== undefined) return picked
   }
+  const rule = CONTAINER_PRIMARY_CHILD_RULES.find((entry) => entry.deviceType === containerType)
+  const declared = applyPrimaryChildRule(rule, children)
+  if (declared.kind === 'none') return null
+  if (declared.kind === 'child') return declared.child
   // Ordered criteria, most→least decisive. Each only breaks a tie the previous
   // one left: role says what the container IS, the namesake says which child
   // the container was named after, and type is the original fallback.

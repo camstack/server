@@ -1,7 +1,7 @@
 /**
  * The heat pump's contribution to a hero (D1026): the compressor scene, every
  * circuit as a row with its own label and icon, the powers as pills (the
- * instantaneous COP only when both powers are known) and a "System" group with
+ * instantaneous COP is "—" when it cannot be computed) and a "System" group with
  * one selector per mode. Values and their limits come from the slice, which the
  * gateway filled: a selector with no allowed value is not drawn, a missing
  * reading is never a 0 (D393).
@@ -118,9 +118,25 @@ function circuitRow(circuit: HeatPumpCircuit): HeroRow {
 
 const kilowatts = (watts: number): string => `${Number((watts / 1000).toFixed(2))} kW`
 
+/** A COP that cannot be computed is still the pill: "—", never an absent reading (D393). */
+function copPill(cop: number | null): HeroPill {
+  if (cop === null) {
+    return {
+      icon: 'gauge',
+      text: heroText('Instantaneous COP —', 'COP istantaneo —'),
+      tone: 'muted',
+    }
+  }
+  const text = String(Number(cop.toFixed(1)))
+  return {
+    icon: 'gauge',
+    text: heroText(`Instantaneous COP ${text}`, `COP istantaneo ${text}`),
+    tone: 'success',
+  }
+}
+
 function powerPills(status: HeatPumpStatus): readonly HeroPill[] {
   const { thermalW, electricalW } = status.power
-  const cop = heatPumpInstantCop(status.power)
   const pills: HeroPill[] = []
   if (thermalW !== null) {
     pills.push({
@@ -136,14 +152,7 @@ function powerPills(status: HeatPumpStatus): readonly HeroPill[] {
       tone: 'muted',
     })
   }
-  if (cop !== null) {
-    const text = String(Number(cop.toFixed(1)))
-    pills.push({
-      icon: 'gauge',
-      text: heroText(`Instantaneous COP ${text}`, `COP istantaneo ${text}`),
-      tone: 'success',
-    })
-  }
+  pills.push(copPill(heatPumpInstantCop(status.power)))
   return pills
 }
 

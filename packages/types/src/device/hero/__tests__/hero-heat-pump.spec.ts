@@ -140,7 +140,7 @@ describe('heat pump hero (D1026)', () => {
     expect(solar.controls).toEqual([])
   })
 
-  it('shows the COP only when both powers are known, and never as 0', () => {
+  it('shows the COP as — when a power is unknown, and never as 0', () => {
     const pill = (m: HeroModel) =>
       rowsOf(m, 'heat-pump-power')[0]?.pills?.map((p) => p.text.en) ?? []
     expect(pill(build(SLICE))).toEqual([
@@ -152,14 +152,15 @@ describe('heat pump hero (D1026)', () => {
       ...SLICE,
       power: { ...SLICE.power, electricalW: null },
     }
-    expect(pill(build(noElectrical)).some((t) => t.includes('COP'))).toBe(false)
+    expect(pill(build(noElectrical))).toContain('Instantaneous COP —')
     const idle = { ...SLICE, power: { ...SLICE.power, electricalW: 0 } }
-    expect(pill(build(idle)).some((t) => t.includes('COP'))).toBe(false)
+    expect(pill(build(idle))).toContain('Instantaneous COP —')
+    expect(pill(build(idle)).some((t) => t.includes('COP 0'))).toBe(false)
     const none = {
       ...SLICE,
       power: { thermalW: null, electricalW: null, compressorPct: null },
     }
-    expect(rowsOf(build(none), 'heat-pump-power')).toEqual([])
+    expect(pill(build(none))).toEqual(['Instantaneous COP —'])
   })
 
   it('draws a System group with one selector per mode and its real values', () => {

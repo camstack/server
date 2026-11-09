@@ -40,7 +40,7 @@ import {
   homeComStoredOf,
   homeComConnectionsEntryKind,
 } from './homecom-instances.js'
-import { homeComConnections } from './homecom-gateway.js'
+import { homeComConnections, homeComStableId } from './homecom-gateway.js'
 import { HomeComClimateDevice } from './devices/homecom-climate-device.js'
 import { HomeComWaterHeaterDevice } from './devices/homecom-water-heater-device.js'
 import { HomeComHeatPumpDevice } from './devices/homecom-heat-pump-device.js'
@@ -161,7 +161,7 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
     if (typeof nativeId !== 'string' || nativeId.length === 0) {
       throw new Error('homecom generateStableId: nativeId required')
     }
-    return `homecom:${integrationId}:${nativeId}`
+    return homeComStableId(integrationId, nativeId)
   }
 
   private async reconcileIntegrations(): Promise<void> {
@@ -233,14 +233,32 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
         const reg = this.ctx.kernel.deviceRegistry
         const devices = this.ctx.kernel.devices
         if (!reg || !devices) return []
-        const out: { id: number; config: Record<string, unknown> }[] = []
+        const out: {
+          id: number
+          stableId: string
+          parentDeviceId: number | null
+          config: Record<string, unknown>
+        }[] = []
         for (const d of reg.getAllForAddon(this.addonId)) {
           const config = await devices.loadConfig(d.id).catch((): Record<string, unknown> => ({}))
-          out.push({ id: d.id, config })
+          out.push({
+            id: d.id,
+            stableId: d.stableId,
+            parentDeviceId: d.parentDeviceId,
+            config,
+          })
         }
         return out
       },
-      adoptDevice: async ({ nativeId, integrationId, type, name, kind, circuitId }) => {
+      adoptDevice: async ({
+        nativeId,
+        integrationId,
+        type,
+        name,
+        kind,
+        circuitId,
+        parentDeviceId,
+      }) => {
         const devices = this.ctx.kernel.devices
         if (!devices) throw new Error('homecom adopt: devices unavailable')
         const config: Record<string, unknown> = {
@@ -256,7 +274,7 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
         const stableId = this.generateStableId(type, config)
         const DeviceClass = this.deviceClasses[type]
         if (!DeviceClass) throw new Error(`homecom adopt: unsupported type ${type}`)
-        const device = await devices.create(stableId, DeviceClass, config, null, {
+        const device = await devices.create(stableId, DeviceClass, config, parentDeviceId, {
           type,
           name,
           integrationId,
