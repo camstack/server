@@ -238,8 +238,24 @@ const PROTECTED_SLOT_RE = new RegExp(`${VAR_SLOT_OPEN}([A-Za-z_][A-Za-z0-9_]*)${
 const TEMPLATE_MARKUP_RE = /\{\{|\{%/
 
 /** True when a string, once its `{{vars.x}}` slots are set aside, still carries template markup. */
-function carriesDeviceTemplate(text: string): boolean {
+export function carriesDeviceTemplate(text: string): boolean {
   return TEMPLATE_MARKUP_RE.test(text.replace(TEMPLATE_RE, ''))
+}
+
+/** Every string in `value` that is a device template (D1021), de-duplicated, in walk order. */
+export function collectDeviceTemplates(value: unknown): string[] {
+  const found = new Set<string>()
+  const walk = (node: unknown): void => {
+    if (typeof node === 'string') {
+      if (carriesDeviceTemplate(node)) found.add(node)
+    } else if (Array.isArray(node)) {
+      for (const item of node) walk(item)
+    } else if (node !== null && typeof node === 'object') {
+      for (const item of Object.values(node)) walk(item)
+    }
+  }
+  walk(value)
+  return [...found]
 }
 
 function protectVarSlots(text: string): string {

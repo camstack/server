@@ -12,6 +12,7 @@ import {
   type SiteReading,
 } from '@camstack/types'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
+import type { DeviceTemplateDoor } from '../device-template-door.js'
 import { coreBlocksRecordKinds } from '../record-kinds.js'
 import { SchedulerEngine } from '../scheduler/scheduler-engine.js'
 import { SchedulersStore } from '../scheduler/scheduler-store.js'
@@ -101,6 +102,7 @@ export interface HarnessOptions {
   readonly devices?: readonly Device[]
   readonly settleMs?: number
   readonly seed?: ReadonlyMap<string, Record<string, unknown>>
+  readonly templates?: DeviceTemplateDoor
 }
 
 export async function harness(options: HarnessOptions): Promise<Harness> {
@@ -162,6 +164,7 @@ export async function harness(options: HarnessOptions): Promise<Harness> {
     targets,
     logger: log.logger,
     clock,
+    ...(options.templates === undefined ? {} : { templates: options.templates }),
     ...(options.settleMs === undefined ? {} : { settleMs: options.settleMs }),
     record: async (schedulerId, trace) => {
       seen.push({ schedulerId, outcome: trace.scheduler, trace })

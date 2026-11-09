@@ -375,6 +375,7 @@ import {
   nextOccurrence,
   stableIdMapOf,
   resolveStepArgs,
+  resolveStepArgsWithTemplates,
   runForDevices,
   runSteps,
   validateTimeSpecForSite,
@@ -681,6 +682,12 @@ export default function block(ctx: AddonContext) {
     ctx.logger.warn('template referenced a var that was never set', { var: name })
   }
 
+  /** Device value templates (D1021) render on the hub through the ONE renderer; this block keeps no copy. */
+  async function renderTemplates(templates: readonly string[]) {
+    const out = await ctx.api.deviceManager.renderDeviceTemplates.query({ templates: [...templates] })
+    return out.results
+  }
+
   /** Substitute {{vars.x}} slots and { $var } values. Substitution only — never evaluation. */
   function substitute(value: unknown, vars: Record<string, unknown>): unknown {
     return resolveStepArgs(value, vars, warnMissingVar)
@@ -709,7 +716,9 @@ export default function block(ctx: AddonContext) {
     args: Record<string, unknown>,
     vars: Record<string, unknown>,
   ): Promise<void> {
-    const substituted = substitute(args, vars)
+    const templated = await resolveStepArgsWithTemplates(args, vars, warnMissingVar, renderTemplates)
+    if (templated.notes.length > 0) scope.setTemplateNotes(templated.notes)
+    const substituted = templated.value
     const resolved: Record<string, unknown> =
       substituted !== null && typeof substituted === 'object' ? { ...substituted } : {}
     scope.setArgs(resolved)

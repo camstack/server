@@ -25,6 +25,7 @@ import {
 } from '@camstack/types'
 import { ActionsService, type ActionSources } from './actions-service.js'
 import { ActionsStore } from './actions-store.js'
+import { templateDoorOver } from './device-template-door.js'
 import { coreBlocksRecordKinds } from './record-kinds.js'
 import { buildRunsApi, type RunsApi } from './runs-api.js'
 import { RunsLedger } from './runs-ledger.js'
@@ -152,6 +153,7 @@ export function buildActionsRuntime(deps: ActionsRuntimeDeps): ActionsRuntime {
     sources: sourcesOver(deps.api),
     directory: deps.directory ?? directoryOver(deps.api),
     invokeCap: invokeCapOver(deps.api),
+    templates: templateDoorOver(deps.api),
     emit: (event: ActionRunChanged) =>
       deps.eventBus.emit({
         id: randomUUID(),

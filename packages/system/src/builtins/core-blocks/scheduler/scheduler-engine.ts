@@ -42,6 +42,7 @@ import {
   vocabActionIdFor,
   type AutomationWhen,
 } from '@camstack/types'
+import { type DeviceTemplateDoor, stepRenderer } from '../device-template-door.js'
 import { HoldManager } from './scheduler-holds.js'
 import type { SchedulersStore } from './scheduler-store.js'
 import { localDateIn, profileState, type StateTruth, timeSiteOf } from './scheduler-timeline.js'
@@ -83,6 +84,8 @@ export interface SchedulerEngineDeps {
   readonly clock?: SchedulerClock
   readonly settleMs?: number
   readonly newRunId?: () => string
+  /** The device template renderer (D1021); a templated step fails where there is none. */
+  readonly templates?: DeviceTemplateDoor
 }
 
 /** An edge step refused because a higher priority hold has the device. */
@@ -544,6 +547,7 @@ export class SchedulerEngine {
           resolveTarget: (target, actionId, v, origin) =>
             this.deps.targets.resolve(target, actionId, v, origin),
           owner: `scheduler:${scheduler.id}`,
+          renderTemplates: stepRenderer(this.deps.templates),
           onMissingVar: () => undefined,
         },
       )

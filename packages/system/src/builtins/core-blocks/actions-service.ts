@@ -39,6 +39,7 @@ import {
   type AutomationStepTrace,
   ActionTargetResolver,
   buildActionSteps,
+  collectDeviceTemplates,
   type DeviceDirectory,
   capUnitResolver,
   type CapCall,
@@ -56,6 +57,7 @@ import {
   type UnitWarning,
 } from '@camstack/types'
 import type { ActionsStore } from './actions-store.js'
+import { type DeviceTemplateDoor, stepRenderer } from './device-template-door.js'
 import { actionOwner, type RunsLedger, type RunsLedgerView } from './runs-ledger.js'
 
 /** The ring an Action keeps. */
@@ -89,6 +91,8 @@ export interface ActionsServiceDeps {
   readonly maxRunMs?: number
   /** How long a stopped run is given to wind down before its call is answered anyway. */
   readonly stopGraceMs?: number
+  /** The device template renderer (D1021); absent where there is none, and a templated step then fails. */
+  readonly templates?: DeviceTemplateDoor
 }
 
 /** After a timeout stops a run, the call is answered once the run ended or this long passed. */
@@ -149,6 +153,7 @@ export class ActionsService implements IActionsProvider {
   private readonly newRunId: () => string
   private readonly units: UnitResolver
   private readonly targets: ActionTargetResolver
+  private readonly templates: DeviceTemplateDoor | undefined
   private readonly running = new Map<string, RunningRun>()
   private readonly maxRunMs: number
   private readonly stopGraceMs: number
@@ -166,6 +171,7 @@ export class ActionsService implements IActionsProvider {
     this.stopGraceMs = deps.stopGraceMs ?? STOP_GRACE_MS
     this.units = deps.units ?? capUnitResolver(ALL_CAPABILITY_DEFINITIONS)
     this.targets = new ActionTargetResolver(deps.directory, deps.logger)
+    this.templates = deps.templates
   }
 
   /** One-shot at boot: stored steps written before D983 are rewritten to the target shape. */
@@ -279,6 +285,37 @@ export class ActionsService implements IActionsProvider {
     throw new ActionError('not-linked', reason)
   }
 
+  /**
+   * The devices a run's templates may read. An admin (or an in-process block)
+   * reads any (`undefined`); a non-admin only the camera the scope gate proved
+   * it may see — fail-closed, because the gate proves nothing about any other.
+   */
+  private readableDevices(input: RunInput): readonly number[] | undefined {
+    if (input.caller === undefined || input.caller.isAdmin) return undefined
+    return input.deviceId === undefined ? [] : [input.deviceId]
+  }
+
+  /** A non-admin run is refused up front when a template names a device outside `readable`. */
+  private async checkTemplateScope(
+    entry: ActionEntry,
+    readable: readonly number[] | undefined,
+    deviceId: number | undefined,
+  ): Promise<void> {
+    if (readable === undefined || entry.source !== 'internal' || this.templates === undefined) return
+    const templates = collectDeviceTemplates(entry.steps ?? [])
+    if (templates.length === 0) return
+    const checks = await this.templates.check(templates, readable)
+    const outside = checks.flatMap((c) => (c.ok ? c.aliases.filter((a) => !a.allowed) : []))
+    if (outside.length === 0) return
+    const names = [...new Set(outside.map((a) => a.alias))].join(', ')
+    const reason = `a template names ${names}, which this caller was not proven to see`
+    this.logger.warn(`action run refused — ${reason}`, {
+      ...(deviceId === undefined ? {} : { tags: { deviceId } }),
+      meta: { actionId: entry.id },
+    })
+    throw new ActionError('template-scope', reason)
+  }
+
   // ── run / stop ──────────────────────────────────────────────────────────
 
   async run(input: RunInput): Promise<ActionRunResult> {
@@ -287,6 +324,8 @@ export class ActionsService implements IActionsProvider {
     if (entry === null) throw new ActionError('not-found', `no action "${input.actionId}"`)
     const resolved = resolveActionVariables(entry.variables, input.variables)
     if (!resolved.ok) throw new ActionError('invalid-variables', resolved.error)
+    const readable = this.readableDevices(input)
+    await this.checkTemplateScope(entry, readable, input.deviceId)
 
     const runId = this.newRunId()
     const startedAt = this.now()
@@ -329,7 +368,7 @@ export class ActionsService implements IActionsProvider {
       lastRunAt: startedAt,
       lastError: null,
     })
-    const done = this.execute(entry, resolved.values, runId, startedAt, trigger, token)
+    const done = this.execute(entry, resolved.values, runId, startedAt, trigger, token, readable)
     if (input.wait === true) return done
     void done
     return { runId, outcome: 'started' }
@@ -363,13 +402,14 @@ export class ActionsService implements IActionsProvider {
     startedAt: number,
     trigger: AutomationRunTrace['trigger'],
     token: RunToken,
+    readable: readonly number[] | undefined,
   ): Promise<ActionRunResult> {
     let outcome: AutomationRunOutcome = 'failed'
     let steps: readonly AutomationStepTrace[] = []
     let message: string | undefined
     const deadline = this.armDeadline(entry.id, runId, token)
     try {
-      const runnable = this.runnableFor(entry, values, token, runId)
+      const runnable = this.runnableFor(entry, values, token, runId, readable)
       const running = runSteps(runnable, {
         pathPrefix: 'steps',
         isAborted: () => token.aborted,
@@ -480,6 +520,7 @@ export class ActionsService implements IActionsProvider {
     values: Readonly<Record<string, ActionVariableValue>>,
     token: RunToken,
     runId: string,
+    readable: readonly number[] | undefined,
   ): RunnableStep[] {
     if (entry.source === 'internal') {
       return buildActionSteps(entry.steps ?? [], values, {
@@ -489,6 +530,7 @@ export class ActionsService implements IActionsProvider {
         resolveTarget: (target, actionId, vars, origin) =>
           this.targets.resolve(target, actionId, vars, origin),
         owner: entry.id,
+        renderTemplates: stepRenderer(this.templates, readable),
         onMissingVar: (name) =>
           this.logger.warn('action template referenced a variable that was never set', {
             meta: { actionId: entry.id, variable: name },

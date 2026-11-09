@@ -90,6 +90,8 @@ interface Options {
   readonly failStampRead?: boolean
   /** What `actions.run` answers. */
   readonly actionOutcome?: { outcome: string; message?: string }
+  /** What the hub's template renderer answers per template (D1021). */
+  readonly renderTemplate?: (source: string) => { ok: true; text: string } | { ok: false; reason: string }
   /** The device registry a domain target resolves against. */
   readonly registry?: FakeRegistry
   /** What `system.getSiteLocation` answers (default: Rome, located). */
@@ -166,6 +168,16 @@ function start(block: BlockFn, options: Options = {}): Harness {
         },
       },
       deviceManager: {
+        renderDeviceTemplates: {
+          query: async (q: { templates: string[] }) => ({
+            results: q.templates.map((source) => {
+              const r = options.renderTemplate?.(source) ?? { ok: true as const, text: source }
+              return r.ok
+                ? { ok: true, text: r.text, trace: [] }
+                : { ok: false, refusal: { reason: r.reason, message: r.reason }, trace: [] }
+            }),
+          }),
+        },
         listAll: {
           query: async (q: { deviceIds?: number[] }) =>
             q.deviceIds === undefined
@@ -334,6 +346,32 @@ describe('a schedule time spec (D983)', () => {
     await settle(60_000)
     expect(h.mutate.mock.calls.length).toBeGreaterThanOrEqual(1)
     h.stop()
+  })
+})
+
+describe('device value templates in action args (D1021)', () => {
+  const NOTIFY: AutomationRecipe['actions'] = [
+    { kind: 'cap', deviceId: 616, cap: 'siren', method: 'on', args: { message: 'Temp {{ states(\'sensor.x\') }}' } },
+  ]
+
+  it('renders a template arg through the hub renderer before the call', async () => {
+    const block = await load({ when: MOTION, actions: NOTIFY })
+    const h = start(block, { renderTemplate: () => ({ ok: true, text: 'Temp 21' }) })
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 1)
+    await settle()
+    expect(h.mutate.mock.calls[0]?.[0]).toMatchObject({ deviceId: 616, message: 'Temp 21' })
+  })
+
+  it('a refused render fails the step with the reason and dispatches nothing', async () => {
+    const block = await load({ when: MOTION, actions: NOTIFY })
+    const h = start(block, { renderTemplate: () => ({ ok: false, reason: 'budget-exceeded' }) })
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 1)
+    await settle()
+    expect(h.mutate).not.toHaveBeenCalled()
+    expect(h.traces()[0]?.steps[0]).toMatchObject({ outcome: 'error' })
+    expect(JSON.stringify(h.traces()[0])).toContain('budget-exceeded')
   })
 })
 

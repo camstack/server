@@ -63,6 +63,36 @@ function scheduler(
 const MIDNIGHT = at('2026-03-09T23:00:00Z')
 const h = (hh: number, mm = 0): number => MIDNIGHT + (hh * 60 + mm) * 60_000
 
+describe('scheduler engine — device templates (D1021)', () => {
+  it('renders a templated step arg through the door, with no per-caller restriction', async () => {
+    const seen: Array<readonly number[] | undefined> = []
+    const w = await harness({
+      start: MIDNIGHT,
+      devices: [{ id: 1 }],
+      templates: {
+        render: async (sources, allowed) => {
+          seen.push(allowed)
+          return sources.map(() => ({ ok: true as const, text: 'Warm 21.5', trace: [] }))
+        },
+        check: async () => [],
+      },
+    })
+    const step: ActionStep = {
+      kind: 'cap',
+      target: { kind: 'devices', ids: [1] },
+      cap: 'display',
+      method: 'show',
+      args: { text: '{{ stufa.temperature }}' },
+    }
+    const id = await w.create(scheduler([profile([point('a', 8, 0, 'edge', [step])])]))
+    await w.engine.start()
+    await w.advanceTo(h(9))
+    expect(w.calls.map((c) => c.args)).toEqual([{ text: 'Warm 21.5' }])
+    expect(seen).toEqual([undefined])
+    expect(w.outcomes(id)).toEqual(['done'])
+  })
+})
+
 describe('scheduler engine — edges and the queue', () => {
   it('states which scheduler asked for the device call (D1022)', async () => {
     const w = await harness({ start: MIDNIGHT, devices: [{ id: 1 }] })

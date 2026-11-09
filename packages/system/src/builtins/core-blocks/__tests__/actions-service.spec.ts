@@ -13,6 +13,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { ActionsService, type ActionSources } from '../actions-service.js'
 import { ActionsStore } from '../actions-store.js'
+import type { DeviceTemplateDoor } from '../device-template-door.js'
 import { coreBlocksRecordKinds } from '../record-kinds.js'
 import { actionOwner, RunsLedger } from '../runs-ledger.js'
 import { recordingLogger } from './fixtures.js'
@@ -54,6 +55,7 @@ async function world(options?: {
   readonly directory?: DeviceDirectory
   readonly maxRunMs?: number
   readonly stopGraceMs?: number
+  readonly templates?: DeviceTemplateDoor
 }) {
   const w = makeRecordsWorld()
   await w.provider.init()
@@ -109,6 +111,7 @@ async function world(options?: {
     },
     emit: (event) => events.push(event),
     logger: log.logger,
+    ...(options?.templates === undefined ? {} : { templates: options.templates }),
     now: () => (clock += 10),
     newRunId: () => `run-${(runs += 1)}`,
     ...(options?.maxRunMs === undefined ? {} : { maxRunMs: options.maxRunMs }),
@@ -749,5 +752,104 @@ describe('actions — the run ceiling', () => {
       }),
     ).rejects.toThrow(/\[invalid-steps\]/)
     expect((await w.store.get(action.id))?.steps).toHaveLength(1)
+  })
+})
+
+
+describe('actions — device templates in step args (D1021)', () => {
+  /** A door over two devices: `stufa` is camera 616's, `garage` is 9. */
+  function door() {
+    const owners: Record<string, number> = { stufa: 616, garage: 9 }
+    const renders: Array<{ templates: readonly string[]; allowed: readonly number[] | undefined }> = []
+    const fake: DeviceTemplateDoor = {
+      render: async (templates, allowed) => {
+        renders.push({ templates, allowed })
+        return templates.map((t) => ({
+          ok: true as const,
+          text: t.replace(/\{\{ (\w+)\.temp \}\}/, (_m, alias: string) => `${owners[alias] ?? '?'}C`),
+          trace: [],
+        }))
+      },
+      check: async (templates, allowed) =>
+        templates.map((t) => {
+          const alias = /\{\{ (\w+)\./.exec(t)?.[1] ?? ''
+          const deviceId = owners[alias] ?? null
+          return {
+            ok: true as const,
+            aliases: [
+              {
+                alias,
+                deviceId,
+                allowed: allowed === undefined || (deviceId !== null && allowed.includes(deviceId)),
+              },
+            ],
+          }
+        }),
+    }
+    return { fake, renders }
+  }
+
+  async function templated(templates: DeviceTemplateDoor, text: string) {
+    const w = await world({ templates })
+    const { action } = await w.service.create({
+      action: {
+        name: 'Say',
+        steps: [{ kind: 'cap', deviceId: 616, cap: 'display', method: 'show', args: { text } }],
+      },
+    })
+    await w.service.setLinks({ deviceId: 616, actionIds: [action.id] })
+    return { w, action }
+  }
+
+  it('an admin run renders the arg through the door before dispatch', async () => {
+    const d = door()
+    const { w, action } = await templated(d.fake, 'now {{ garage.temp }}')
+    const result = await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    expect(result.outcome).toBe('ran')
+    expect(w.calls[0]?.args).toEqual({ text: 'now 9C' })
+    expect(d.renders[0]?.allowed).toBeUndefined()
+  })
+
+  it('a non-admin run is bound to the camera it came through', async () => {
+    const d = door()
+    const { w, action } = await templated(d.fake, 'now {{ stufa.temp }}')
+    const result = await w.service.run({
+      actionId: action.id,
+      deviceId: 616,
+      wait: true,
+      caller: VIEWER,
+    })
+    expect(result.outcome).toBe('ran')
+    expect(d.renders[0]?.allowed).toEqual([616])
+  })
+
+  it('a non-admin run is REFUSED, before anything runs, when a template names a device outside its camera', async () => {
+    const d = door()
+    const { w, action } = await templated(d.fake, 'now {{ garage.temp }}')
+    await expect(
+      w.service.run({ actionId: action.id, deviceId: 616, wait: true, caller: VIEWER }),
+    ).rejects.toThrow(/\[template-scope\]/)
+    expect(w.calls).toEqual([])
+    expect(d.renders).toEqual([])
+    const line = w.log.lines.find((l) => l.message.includes('template'))
+    expect(line?.level).toBe('warn')
+    expect(line?.extras?.tags).toEqual({ deviceId: 616 })
+  })
+
+  it('a render that is refused fails the run with the typed reason and sends nothing', async () => {
+    const refusing: DeviceTemplateDoor = {
+      render: async (templates) =>
+        templates.map(() => ({
+          ok: false as const,
+          refusal: { reason: 'budget-exceeded' as const, message: 'too slow' },
+          trace: [],
+        })),
+      check: async () => [],
+    }
+    const { w, action } = await templated(refusing, 'now {{ stufa.temp }}')
+    const result = await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    expect(result.outcome).toBe('failed')
+    expect(result.message).toContain('[budget-exceeded]')
+    expect(w.calls).toEqual([])
   })
 })

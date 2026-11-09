@@ -243,6 +243,8 @@ export const ActionErrorCodeSchema = z.enum([
   'invalid-variables',
   'invalid-steps',
   'not-linked',
+  /** A non-admin run of an action whose template names a device that caller was not proven to see (D1021). */
+  'template-scope',
   'busy',
 ])
 export type ActionErrorCode = z.infer<typeof ActionErrorCodeSchema>

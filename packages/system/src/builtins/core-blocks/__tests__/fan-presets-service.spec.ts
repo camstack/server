@@ -8,6 +8,7 @@ import {
   type SwitchStatus,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
+import type { DeviceTemplateDoor } from '../device-template-door.js'
 import { FanPresetActionSource } from '../fan-presets-action-source.js'
 import { FanPresetsService, type FanPresetsServiceDeps } from '../fan-presets-service.js'
 import { recordingLogger } from './fixtures.js'
@@ -59,6 +60,7 @@ interface WorldOptions {
   /** Facts for the container siblings; any id not listed is a switch named `dev <id>`. */
   readonly siblings?: Readonly<Record<number, { name: string; type: DeviceType }>>
   readonly children?: readonly number[]
+  readonly templates?: DeviceTemplateDoor
 }
 
 function world(options: WorldOptions = {}) {
@@ -101,6 +103,7 @@ function world(options: WorldOptions = {}) {
       }
     },
     logger: lines.logger,
+    ...(options.templates === undefined ? {} : { templates: options.templates }),
   }
   return {
     service: new FanPresetsService(deps),
@@ -394,5 +397,29 @@ describe('FanPresetActionSource', () => {
     await expect(
       source.runAction({ actionId: `core-blocks:fan-preset:${FAN}/night` }),
     ).rejects.toThrow(/step 1/)
+  })
+})
+
+
+describe('FanPresetsService.applyPreset — device templates (D1021)', () => {
+  it('renders a templated arg through the door, bound to the fan it was applied on', async () => {
+    const seen: Array<readonly number[] | undefined> = []
+    const templates: DeviceTemplateDoor = {
+      render: async (sources, allowed) => {
+        seen.push(allowed)
+        return sources.map(() => ({ ok: true as const, text: 'Warm 21.5', trace: [] }))
+      },
+      check: async () => [],
+    }
+    const preset: FanPreset = {
+      id: 'say',
+      name: 'Say',
+      steps: [cap(FAN, 'fan-control', 'setLabel', { label: '{{ stufa.temperature }}' })],
+    }
+    const w = world({ initial: [preset], templates })
+    const result = await w.service.applyPreset({ deviceId: FAN, presetId: 'say' })
+    expect(result.status).toBe('applied')
+    expect(w.calls[0]?.args).toEqual({ label: 'Warm 21.5' })
+    expect(seen).toEqual([[FAN]])
   })
 })
