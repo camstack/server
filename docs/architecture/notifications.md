@@ -2124,8 +2124,8 @@ from one that is only gone for a moment.
   EXCLUSION (`conditions.devicesExclude`, D641) shrinks the other way: every
   dead id goes, the last one deleting the key, and the rule stays on — removing
   an excluded device widens the rule only by a device that can no longer fire. A
-  `cap` step on a deleted device is removed; a sequence left with no device
-  step goes, with every button naming it. Alarm `nonBlocking` lists and
+  `cap` step on a deleted device belongs to the Action, which the Actions
+  surface prunes (D1025). Alarm `nonBlocking` lists and
   exclusions shrink, mutes are unset, and the device's battery and consumable
   alert rows are forgotten ([D636](../decisions/adr-0636-battery-alerts-are-authored-apart-and-an-unheard-raise-stays-pending.md) — the reconcile also looks at alert devices no
   rule names). Zones, liveness and history are untouched. The planner is pure: `device-prune.ts`; the writes are
@@ -3393,12 +3393,11 @@ the mesh.
 
 ## A tap-through button is a credential, and it is the notification
 
-A rule may carry **buttons** (`actions.buttons[]`), each naming one of its own
-`onTrigger` sequences. Tapping one runs that sequence: the actuation vocabulary
-is the existing `{cap, method, args}`, so the executor's device-scope check, its
-stop-at-first-failure rule and its per-sequence throttle all still apply. A
-sequence reachable ONLY by a button is written `enabled: false` — a granted run
-overrides that flag deliberately, because the tap is the enablement.
+A rule may carry **buttons** (`actions.buttons[]`), each naming one `actionId` of
+the Actions surface ([D1025](../decisions/adr-1025-a-notification-rule-only-runs-existing-actions.md)).
+Tapping one runs that Action through `actions.run`, so the Action's own
+device-scope check, stop-at-first-failure rule and `minDelaySec` throttle apply.
+The centre has no step vocabulary of its own.
 
 **Read this before authoring a button that moves something.** The callback URL
 travels through ntfy, a push relay, whatever forwarded the message. It is as
@@ -3407,11 +3406,11 @@ no session check and a tap does not identify who tapped. Whoever holds the
 notification can run the button, once, within fifteen minutes. That is the
 operator's explicit choice ([D47](../decisions/adr-0047.md)), and `destructive`
 is a rendering hint, never a gate. The bound is therefore the button list
-itself: do not author one for a sequence you would not want a forwarded
+itself: do not author one for an Action you would not want a forwarded
 screenshot to run.
 
-A button never reaches a phone when it names a sequence the rule does not have
-(logged, `rule buttons reference sequences that do not exist`) or when no
+A button never reaches a phone when it names an Action the Actions list does not
+carry (logged, `rule buttons reference actions that do not exist`) or when no
 non-loopback base URL exists — the same rule attachments follow, for the same
 reason.
 
@@ -4578,7 +4577,7 @@ state-word transition.
   matching the viewer's family list. URL restore keeps `?tab` / `?section` /
   `?rule` / `?editTab` (and Build Automations `?block=`, OSD `?tab` /
   `?device` / `?slot`) so back/forward and a shared link open the same editor.
-- **Shared sequences + Device→Action.** Curated `DEVICE_DO_ACTIONS` /
+- **Shared sequences + Device→Action (the sequences were retired by D1025; steps are Actions now).** Curated `DEVICE_DO_ACTIONS` /
   `actionsForBoundCaps` drive a single `DeviceDoActionFields` picker (device,
   then friendly action from bound caps) in NC Sequences / rule Do and in Build
   Automations (`$trigger` device option). Sequences are reusable across rules
@@ -4647,3 +4646,24 @@ template (`rules`, `timelapse-rules`, `texts` overrides), idempotent, `tolerate`
 (`NC_DEPRECATED_TEMPLATE_VARS`, `render-template.ts`) for a template an older
 client still writes: it renders, the catalog never offers it, and the dispatcher
 logs the rule once (`tags: { ruleId }`).
+
+## A rule runs existing Actions only (D1025, 2026-11-09)
+
+A rule hook is a list of Action ids and a button names one `actionId`; both run
+through `actions.run` (`notification-center/rule-actions.ts`, `NcRuleActionRunner`).
+The centre keeps a RAM mirror of the Actions list (`NcActionCatalog`, 60 s
+revalidate, refreshed on a rule save, a failed read keeps what is known) for the
+questions it must answer without a call: does an Action exist, which variables does
+it declare, and does it press the alarm panel (alarm membership and the snooze
+exemption read the Action's steps). A match hands an Action only the variables it
+declared among `device`, `deviceId`, `class`, `rule`, `ruleId`.
+
+Existing data moves by the migration
+`pipeline-analytics/2026-11-09-rule-actions-to-actions` (sequences become Actions,
+the inline steps of a hook become one Action named after the rule, rules and
+buttons are rebound; old rows are deleted after a verified second read).
+
+Known gap: the Actions surface forwards no origin, so an Action pressing
+`alarm-panel.trigger` is not attributed to the rule (D705) and the anonymous-press
+refusal (D735) does not apply on that path. `scripts/check-nc-no-executor.ts` keeps
+a step vocabulary, an executor and the sequences record kind out of the centre.
