@@ -17,8 +17,10 @@
  *  - {@link moveTargetRows}: the D987 procedure that flattens the old `config` blobs into the bodies.
  */
 import { z } from 'zod'
+import type { CapCaller } from '../capabilities/capability-definition.js'
 import type {
   IIntegrationInstancesProvider,
+  IntegrationInstance,
   IntegrationInstanceKind,
 } from '../capabilities/integration-instances.cap.js'
 import type { IntegrationTestConnectionResult } from '../capabilities/integrations.cap.js'
@@ -439,6 +441,90 @@ export function notificationTargetParts(
   })
 }
 
+/** The body key that names the user a PERSONAL target belongs to (the open blob, no schema change). */
+export const TARGET_OWNER_KEY = 'ownerUserId'
+
+/**
+ * The authorisation of a target as the instance door sees it. An admin (and an in-process caller
+ * that holds no session) keeps the admin door: every target, any change. A user sees and changes
+ * only the targets whose `ownerUserId` is theirs, and a target with no owner (a global target the
+ * operator made) is nobody's. Nothing a client sends moves the owner of a user's target: the
+ * server stamps it from the caller.
+ */
+export function scopeInstancesToCaller(
+  inner: IIntegrationInstancesProvider,
+): IIntegrationInstancesProvider {
+  const ownerOf = (instance: IntegrationInstance): unknown => instance.formValues[TARGET_OWNER_KEY]
+  const owned = (instance: IntegrationInstance | null, userId: string): instance is IntegrationInstance =>
+    instance !== null && ownerOf(instance) === userId
+  const requireOwned = async (id: string, userId: string): Promise<void> => {
+    if (!owned(await inner.getInstance({ id }), userId)) {
+      throw new Error(`forbidden: target not owned: ${id}`)
+    }
+  }
+  /** The user's own values: whatever the client sent for the owner is dropped and re-stamped. */
+  const stamped = (
+    values: Readonly<Record<string, unknown>> | undefined,
+    userId: string,
+  ): Record<string, unknown> => ({ ...values, [TARGET_OWNER_KEY]: userId })
+  const userOnly = (caller: CapCaller | undefined): CapCaller | undefined =>
+    caller !== undefined && !caller.isAdmin ? caller : undefined
+
+  return {
+    ...inner,
+    describe: async () => ({ ...(await inner.describe()), userScoped: true }),
+    listInstances: async (input) => {
+      const all = await inner.listInstances(input)
+      const user = userOnly(input?.caller)
+      return user === undefined ? all : all.filter((instance) => owned(instance, user.userId))
+    },
+    getInstance: async (input) => {
+      const found = await inner.getInstance(input)
+      const user = userOnly(input.caller)
+      return user === undefined || owned(found, user.userId) ? found : null
+    },
+    createInstance: async (input) => {
+      const user = userOnly(input.caller)
+      if (user === undefined) return inner.createInstance(input)
+      // A user never names the id (it could collide with, or adopt, somebody else's row).
+      const { id: _id, seed: _seed, ...rest } = input
+      return inner.createInstance({ ...rest, values: stamped(input.values, user.userId) })
+    },
+    updateInstance: async (input) => {
+      const user = userOnly(input.caller)
+      if (user === undefined) return inner.updateInstance(input)
+      await requireOwned(input.id, user.userId)
+      return inner.updateInstance({ ...input, values: stamped(input.values, user.userId) })
+    },
+    setInstanceEnabled: async (input) => {
+      const user = userOnly(input.caller)
+      if (user !== undefined) await requireOwned(input.id, user.userId)
+      return inner.setInstanceEnabled(input)
+    },
+    deleteInstance: async (input) => {
+      const user = userOnly(input.caller)
+      if (user !== undefined) await requireOwned(input.id, user.userId)
+      return inner.deleteInstance(input)
+    },
+    ...(inner.testInstance === undefined
+      ? {}
+      : {
+          testInstance: async (input) => {
+            const user = userOnly(input.caller)
+            // A user tests a STORED target of their own: an unsaved form would make the hub
+            // probe any address the user types.
+            if (user !== undefined) {
+              if (input.id === null) throw new Error('forbidden: a draft target is tested by an admin')
+              await requireOwned(input.id, user.userId)
+            }
+            return inner.testInstance === undefined
+              ? { success: false, status: 'unsupported', error: 'This kind cannot be tested' }
+              : inner.testInstance(input)
+          },
+        }),
+  }
+}
+
 /** The `integration-instances` provider of a notification provider: one kind per target kind. */
 export function buildNotificationTargetInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
@@ -452,6 +538,17 @@ export function buildNotificationTargetInstances(
     canTest: parts.some((part) => part.kind.canTest === true),
     mintsId: true,
   })
+}
+
+/**
+ * The same provider, for a notification provider whose targets belong to users (the notifiers
+ * addon): `describe().userScoped`, and every row filtered on the caller.
+ */
+export function buildUserScopedNotificationTargetInstances(
+  records: Pick<RecordsAccess, 'kind' | 'owner'>,
+  spec: NotificationTargetInstancesSpec,
+): IIntegrationInstancesProvider {
+  return scopeInstancesToCaller(buildNotificationTargetInstances(records, spec))
 }
 
 // ── The D987 procedure: the old `config` blob becomes the flat body ──────────────────────────────

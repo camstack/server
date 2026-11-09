@@ -101,10 +101,10 @@ export function composeInstanceKinds(
       const part = id === null ? byKind(kind) : await holderOf(id)
       return part.provider.instanceFormSchema({ id })
     },
-    listInstances: async () => {
+    listInstances: async (input) => {
       const lists = await Promise.all(
         parts.map(async (part) =>
-          (await part.provider.listInstances()).map((instance) => tagged(part, instance)),
+          (await part.provider.listInstances(input)).map((instance) => tagged(part, instance)),
         ),
       )
       return lists.flat()

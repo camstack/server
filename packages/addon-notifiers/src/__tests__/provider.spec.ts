@@ -187,14 +187,6 @@ describe('target CRUD', () => {
     await provider.deleteTarget({ targetId: 't1' })
     expect(await provider.listTargets()).toEqual([])
   })
-
-  it('setTargetEnabled flips the flag', async () => {
-    const { provider, store } = await makeProvider([okAdapter('fake')])
-    await provider.upsertTarget({ target: target({ enabled: true }) })
-    await provider.setTargetEnabled({ targetId: 't1', enabled: false })
-    const stored = await store.getById('t1')
-    expect(stored?.enabled).toBe(false)
-  })
 })
 
 // ── Secret redaction + merge ────────────────────────────────────────

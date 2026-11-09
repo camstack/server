@@ -60,8 +60,15 @@ export interface CapCaller {
  * methods with an OBJECT input schema (the injected field needs an
  * object to live on); the runtime builder rejects other shapes at
  * router-build time.
+ *
+ * `'scoped'` — the method is open to ANY authenticated session and the provider decides per
+ * caller (a user sees and changes only their own rows; epic #440). The router injects the same
+ * {@link CapCaller} (provider input: `caller?: CapCaller`, absent for an in-process caller that
+ * holds no session), and it default-denies: a NON-admin caller is admitted only on a call pinned
+ * to ONE addon (`addonId`) whose provider declares itself user-scoped
+ * (`isUserScopedProvider`). Every other provider keeps the admin-only door it always had.
  */
-export type CapabilityMethodCaller = 'required'
+export type CapabilityMethodCaller = 'required' | 'scoped'
 
 /**
  * Optional semantic role used by the admin UI's unified "Integrations"
@@ -1240,14 +1247,21 @@ export interface DeviceStatusContribution<TStatus> {
  */
 type ProviderMethodInput<M, TIn extends z.ZodType> = M extends { readonly caller: 'required' }
   ? z.infer<TIn> & { readonly caller: CapCaller }
-  : z.infer<TIn>
+  : M extends { readonly caller: 'scoped' }
+    ? z.infer<TIn> & { readonly caller?: CapCaller }
+    : z.infer<TIn>
 
 /** One provider method's callable shape, subscription arm included. */
 type ProviderMethodFn<M> =
   M extends CapabilityMethodSchema<infer TIn, infer TOut>
     ? M['kind'] extends 'subscription'
       ? (input: z.infer<TIn>, push: (value: z.infer<TOut>) => void) => (() => void) | void
-      : (input: ProviderMethodInput<M, TIn>) => Promise<z.infer<TOut>>
+      : M extends { readonly caller: 'scoped' }
+        ? // A scoped method on an empty input (a list) is callable with no argument, as a void one was.
+          Record<string, never> extends ProviderMethodInput<M, TIn>
+          ? (input?: ProviderMethodInput<M, TIn>) => Promise<z.infer<TOut>>
+          : (input: ProviderMethodInput<M, TIn>) => Promise<z.infer<TOut>>
+        : (input: ProviderMethodInput<M, TIn>) => Promise<z.infer<TOut>>
     : never
 
 export type InferProvider<T extends CapabilityDefinition> = {
@@ -1443,6 +1457,15 @@ export function method<
 >(
   input: TIn,
   output: TOut,
+  options: CapabilityMethodOptions<TKind> & { readonly caller: 'scoped' },
+): CapabilityMethodSchema<TIn, TOut, TKind> & { readonly caller: 'scoped' }
+export function method<
+  TIn extends z.ZodType,
+  TOut extends z.ZodType,
+  TKind extends CapabilityMethodKind = 'query',
+>(
+  input: TIn,
+  output: TOut,
   options?: CapabilityMethodOptions<TKind>,
 ): CapabilityMethodSchema<TIn, TOut, TKind>
 export function method<
@@ -1494,6 +1517,27 @@ export function systemMethod<
  * `InferProvider` keys on; see {@link CapabilityMethodSchema.providerOptional}
  * for when this is the honest answer and when it is a soft stub.
  */
+export function optionalMethod<
+  TIn extends z.ZodType,
+  TOut extends z.ZodType,
+  TKind extends CapabilityMethodKind = 'query',
+>(
+  input: TIn,
+  output: TOut,
+  options: CapabilityMethodOptions<TKind> & { readonly caller: 'scoped' },
+): CapabilityMethodSchema<TIn, TOut, TKind> & {
+  readonly providerOptional: true
+  readonly caller: 'scoped'
+}
+export function optionalMethod<
+  TIn extends z.ZodType,
+  TOut extends z.ZodType,
+  TKind extends CapabilityMethodKind = 'query',
+>(
+  input: TIn,
+  output: TOut,
+  options?: CapabilityMethodOptions<TKind>,
+): CapabilityMethodSchema<TIn, TOut, TKind> & { readonly providerOptional: true }
 export function optionalMethod<
   TIn extends z.ZodType,
   TOut extends z.ZodType,

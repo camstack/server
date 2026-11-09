@@ -8138,19 +8138,25 @@ export function createCapRouter_integrationInstances(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.instanceFormSchema(methodInput as any)
       }),
-    listInstances: adminProcedure
-      .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
+    listInstances: protectedProcedure
+      .input(integrationInstancesCapability.methods.listInstances.input.loose())
       .output(integrationInstancesCapability.methods.listInstances.output)
       .query(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, addonId, ...methodInput } = parsedInput as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
         const p = resolveProvider(
           'integration-instances',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
+          nodeId,
+          () => getProvider(ctx, addonId),
           createRemoteProxy,
         )
-        return p.listInstances()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.listInstances(methodInput as any)
       }),
-    getInstance: adminProcedure
+    getInstance: protectedProcedure
       .input(integrationInstancesCapability.methods.getInstance.input.loose())
       .output(integrationInstancesCapability.methods.getInstance.output)
       .query(async ({ input, ctx }) => {
@@ -8168,7 +8174,7 @@ export function createCapRouter_integrationInstances(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getInstance(methodInput as any)
       }),
-    createInstance: adminProcedure
+    createInstance: protectedProcedure
       .input(integrationInstancesCapability.methods.createInstance.input.loose())
       .output(integrationInstancesCapability.methods.createInstance.output)
       .mutation(async ({ input, ctx }) => {
@@ -8186,7 +8192,7 @@ export function createCapRouter_integrationInstances(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createInstance(methodInput as any)
       }),
-    updateInstance: adminProcedure
+    updateInstance: protectedProcedure
       .input(integrationInstancesCapability.methods.updateInstance.input.loose())
       .output(integrationInstancesCapability.methods.updateInstance.output)
       .mutation(async ({ input, ctx }) => {
@@ -8204,7 +8210,7 @@ export function createCapRouter_integrationInstances(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateInstance(methodInput as any)
       }),
-    setInstanceEnabled: adminProcedure
+    setInstanceEnabled: protectedProcedure
       .input(integrationInstancesCapability.methods.setInstanceEnabled.input.loose())
       .output(integrationInstancesCapability.methods.setInstanceEnabled.output)
       .mutation(async ({ input, ctx }) => {
@@ -8222,7 +8228,7 @@ export function createCapRouter_integrationInstances(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setInstanceEnabled(methodInput as any)
       }),
-    deleteInstance: adminProcedure
+    deleteInstance: protectedProcedure
       .input(integrationInstancesCapability.methods.deleteInstance.input.loose())
       .output(integrationInstancesCapability.methods.deleteInstance.output)
       .mutation(async ({ input, ctx }) => {
@@ -8240,7 +8246,7 @@ export function createCapRouter_integrationInstances(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteInstance(methodInput as any)
       }),
-    testInstance: adminProcedure
+    testInstance: protectedProcedure
       .input(integrationInstancesCapability.methods.testInstance.input.loose())
       .output(integrationInstancesCapability.methods.testInstance.output)
       .mutation(async ({ input, ctx }) => {

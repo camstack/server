@@ -488,6 +488,27 @@ async function inferDeviceAdoptionCollectionAddonPin(
   })
 }
 
+/**
+ * May a NON-admin session call a `caller: 'scoped'` method on this provider? Only an
+ * `integration-instances` provider that declares `describe().userScoped`: the provider is asked,
+ * through the same call the Integrations page uses, so a forked addon answers like a resident one.
+ */
+async function userScopedAdmission(
+  capName: string,
+  provider: Readonly<Record<string, (input?: unknown) => unknown>>,
+): Promise<boolean> {
+  if (capName !== 'integration-instances') return false
+  const describe = provider['describe']
+  if (typeof describe !== 'function') return false
+  const description: unknown = await describe.call(provider)
+  return (
+    description !== null &&
+    typeof description === 'object' &&
+    'userScoped' in description &&
+    description.userScoped === true
+  )
+}
+
 /** Build the `services` half of `buildCapRouters(primitives, services)`. */
 export function createCapRouterServices(deps: CapRouterRuntimeDeps): CapRouterServices {
   const reg = deps.capabilityRegistry
@@ -614,6 +635,12 @@ export function createCapRouterServices(deps: CapRouterRuntimeDeps): CapRouterSe
     unauthorized: (message): never => {
       throw new TRPCError({ code: 'UNAUTHORIZED', message })
     },
+    forbidden: (message): never => {
+      throw new TRPCError({ code: 'FORBIDDEN', message })
+    },
+    // `caller: 'scoped'` default-deny (epic #440): a non-admin session reaches an
+    // `integration-instances` provider only when that provider says its rows belong to users.
+    admitsUserCaller: userScopedAdmission,
     // Task 7.5d: a resolved provider that does not implement `method` must
     // fail, not answer `undefined` (200). NOT_IMPLEMENTED mirrors what
     // `child-cap-dispatch.ts` does on the identical condition on the UDS

@@ -15,7 +15,7 @@ import {
   addonRoutesCapability,
   BaseAddon,
   buildAddonRouteProvider,
-  buildNotificationTargetInstances,
+  buildUserScopedNotificationTargetInstances,
   defineAddonMigrations,
   integrationInstancesCapability,
   legacyTargetsOver,
@@ -31,7 +31,6 @@ import { ADDON_MIGRATIONS, OLD_TARGETS_KIND, oldTargetKinds } from './migrations
 import { makeNcTargetHandlers, type NcTargetActions, ncTargetActions } from './nc-target-actions.js'
 import {
   createNotificationOutputProvider,
-  createNotifierTargetAdmin,
   NOTIFIERS_ADDON_ID,
 } from './provider.js'
 import { notifierDescriptors, notifiersRecordKinds } from './record-kinds.js'
@@ -170,26 +169,15 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
       ...sampleRoutes(),
     ])
 
-    // Notification Center target-bridge actions (nc.*). The viewer reaches
-    // these over `addons.custom` (addonId `notifiers`); per-action auth +
-    // ownership is enforced inside the handlers (`nc-target-actions.ts`), which
-    // wrap the very provider built above (redaction + secret merge stay there).
-    // The addon is `hub-only`, so the bridge is unconditionally hub-resident.
-    const targetAdmin = createNotifierTargetAdmin({ store, adapters })
-    const ncHandlers = makeNcTargetHandlers({
-      provider: {
-        ...targetAdmin,
-        listTargetKinds: provider.listTargetKinds,
-        testTarget: provider.testTarget,
-      },
-      logger: this.ctx.logger.child('nc-target-actions'),
-    })
+    // The Notification Center add form is drawn from the kind catalogue: the only `nc.*`
+    // action left. A user's own targets travel `integration-instances` (see `instances` below).
+    const ncHandlers = makeNcTargetHandlers({ provider })
 
     this.ctx.logger.info('NotifiersAddon initialized', {
       meta: { adapterCount: adapters.length },
     })
 
-    const instances = buildNotificationTargetInstances(records, {
+    const instances = buildUserScopedNotificationTargetInstances(records, {
       descriptors,
       kinds: notifiersRecordKinds,
       mintId: () => randomUUID(),

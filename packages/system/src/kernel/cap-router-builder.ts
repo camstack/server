@@ -157,6 +157,15 @@ export interface CapRouterServices {
    * back to `badRequest` in that case so the call still fails closed.
    */
   readonly unauthorized?: (message: string) => never
+  /** Raise the canonical FORBIDDEN error; falls back to `unauthorized`, then `badRequest`. */
+  readonly forbidden?: (message: string) => never
+  /**
+   * `caller: 'scoped'` default-deny: may a NON-admin session call a scoped method on this
+   * resolved provider? Absent (or a provider that does not say so) means no — the provider keeps
+   * the admin-only door. The provider is asked, never assumed: a cap-specific answer lives with
+   * the server, not in this builder.
+   */
+  readonly admitsUserCaller?: (capName: string, provider: ResolvedProvider) => Promise<boolean>
   /**
    * Called when an EXPLICIT top-level `{ addonId }` collection pin resolved to
    * no local provider, BEFORE the hub-proxy fallthrough. Implementations throw
@@ -222,6 +231,8 @@ interface BuiltMethod {
   readonly isObject: boolean
   /** D-1: `caller: 'required'` — inject the authenticated caller identity. */
   readonly callerRequired: boolean
+  /** `caller: 'scoped'` — open to any session, the provider filters on the caller. */
+  readonly callerScoped: boolean
   /**
    * Task 7.5d: true when this method's output is array-shaped — the same
    * predicate `resolveCollectionProvider`/`concatArrayMethod` use to decide
@@ -300,6 +311,7 @@ function methodsFor(def: CapabilityDefinition): readonly BuiltMethod[] {
       isVoid: isVoidInput(m.input),
       isObject: isObjectInput(m.input),
       callerRequired: m.caller === 'required',
+      callerScoped: m.caller === 'scoped',
       isArrayOutput: m.kind !== 'subscription' && isArrayOutputSchema(m.output),
     }
   })
@@ -352,7 +364,11 @@ function invokeObserved(
 ): unknown {
   const invoke = (): unknown =>
     invokeCapMethod(provider, method, payload, def.name, isCollection, services)
-  if (services.commandObserver === undefined || def.scope !== 'device' || method.kind !== 'mutation') {
+  if (
+    services.commandObserver === undefined ||
+    def.scope !== 'device' ||
+    method.kind !== 'mutation'
+  ) {
     return invoke()
   }
   const actor = commandActorFromContext(ctx)
@@ -414,6 +430,48 @@ function injectCaller(
   if (caller === null) {
     const raise = services.unauthorized ?? services.badRequest
     return raise(`Capability "${capName}.${methodName}" requires an authenticated caller`)
+  }
+  return { ...rest, caller }
+}
+
+/**
+ * `caller: 'scoped'`: the same server-derived identity as {@link injectCaller}, with the
+ * default-deny a method open to every session needs. An ADMIN passes as it always did. A
+ * NON-admin passes only on a call pinned to ONE addon (`addonId`, never the fan-out union) whose
+ * provider says it serves user-scoped rows (`admitsUserCaller`); the provider then filters on
+ * the `caller` it receives. A context with a request but no user fails closed; a context with
+ * neither (an in-process call that holds no session) passes without a caller, as before.
+ */
+async function injectScopedCaller(
+  rest: Record<string, unknown>,
+  ctx: unknown,
+  provider: ResolvedProvider,
+  pinnedAddonId: string | undefined,
+  capName: string,
+  methodName: string,
+  services: CapRouterServices,
+): Promise<Record<string, unknown>> {
+  const caller = extractCallerIdentity(ctx)
+  if (caller === null) {
+    const hasHttpReq =
+      typeof ctx === 'object' && ctx !== null && 'req' in ctx && ctx.req !== undefined
+    if (!hasHttpReq) return rest
+    const raise = services.unauthorized ?? services.badRequest
+    return raise(`Capability "${capName}.${methodName}" requires an authenticated caller`)
+  }
+  if (!caller.isAdmin) {
+    const refuse = services.forbidden ?? services.unauthorized ?? services.badRequest
+    if (pinnedAddonId === undefined) {
+      return refuse(
+        `Capability "${capName}.${methodName}" requires admin unless it names one addon`,
+      )
+    }
+    const admitted = (await services.admitsUserCaller?.(capName, provider)) === true
+    if (!admitted) {
+      return refuse(
+        `Capability "${capName}.${methodName}" requires admin for addon "${pinnedAddonId}"`,
+      )
+    }
   }
   return { ...rest, caller }
 }
@@ -501,7 +559,10 @@ export function buildOneCapRouter(
     // on and a query/mutation procedure. Any other shape is a definition
     // error — fail the router build (caught by CI/tests immediately)
     // instead of silently skipping injection at call time.
-    if (method.callerRequired && (method.kind === 'subscription' || !method.isObject)) {
+    if (
+      (method.callerRequired || method.callerScoped) &&
+      (method.kind === 'subscription' || !method.isObject)
+    ) {
       throw new Error(
         `Cap "${capName}" method "${method.name}": caller: 'required' is only ` +
           `supported on query/mutation methods with an object input schema`,
@@ -513,6 +574,11 @@ export function buildOneCapRouter(
     // structurally. See {@link methodMountKindFor}.
     const effectiveMountKind = methodMountKindFor(def, mount.kind, method)
     const isCollection = effectiveMountKind === 'collection'
+    if (method.callerScoped && (!isCollection || nodeIdData)) {
+      throw new Error(
+        `Cap "${capName}" method "${method.name}": caller: 'scoped' needs a collection cap`,
+      )
+    }
     const getLocal = (ctx: unknown, addonId?: string): ResolvedProvider | null =>
       services.getLocalProvider(capName, effectiveMountKind, ctx, addonId)
 
@@ -630,6 +696,19 @@ export function buildOneCapRouter(
               services,
               refusePin,
             )
+            if (method.callerScoped) {
+              return injectScopedCaller(
+                rest,
+                ctx,
+                provider,
+                topLevelAddonId,
+                capName,
+                method.name,
+                services,
+              ).then((payload) =>
+                invokeObserved(def, ctx, provider, method, payload, isCollection, services),
+              )
+            }
             const payload = method.callerRequired
               ? injectCaller(rest, ctx, capName, method.name, services)
               : rest

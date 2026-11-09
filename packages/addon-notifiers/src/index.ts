@@ -21,7 +21,6 @@ export {
   type NcTargetActionDeps,
   type NcTargetActionHandlers,
   type NcTargetActions,
-  type NcTargetProvider,
 } from './nc-target-actions.js'
 export {
   DEFAULT_MAX_ATTACHMENT_BYTES,

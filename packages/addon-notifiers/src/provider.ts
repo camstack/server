@@ -452,10 +452,6 @@ export interface NotifierTargetAdmin {
     readonly cloneSecretsFrom?: string
   }) => Promise<Target>
   readonly deleteTarget: (input: { readonly targetId: string }) => Promise<void>
-  readonly setTargetEnabled: (input: {
-    readonly targetId: string
-    readonly enabled: boolean
-  }) => Promise<void>
 }
 
 export function createNotifierTargetAdmin(
@@ -505,10 +501,6 @@ export function createNotifierTargetAdmin(
 
     deleteTarget: async ({ targetId }): Promise<void> => {
       await store.delete(targetId)
-    },
-
-    setTargetEnabled: async ({ targetId, enabled }): Promise<void> => {
-      await store.setEnabled(targetId, enabled)
     },
   }
 }

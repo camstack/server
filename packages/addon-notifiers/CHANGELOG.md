@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Removed the unused legacy settings-store port adapters
+- Notification targets are listed, edited, switched, tested and deleted through the instance door; the per-target custom actions are removed
 
 ## [1.2.634] - 2026-11-08
 

@@ -26,6 +26,12 @@ import { TestConnectionResultSchema } from './integrations.cap.js'
  * the form as a `SecretFieldView`, never text (D789). A patch value omitted, `''`
  * or the redaction token KEEPS the stored secret; `{ $secretClear: true }`
  * clears it.
+ *
+ * Who may call (epic #440): every method but `describe` and `instanceFormSchema` is open to any
+ * session (`caller: 'scoped'`) and default-denies. An admin passes everywhere. A non-admin passes
+ * only on a call pinned to one addon whose `describe().userScoped` is true, and that provider
+ * filters every row on the `caller` the router injected (a notification target is somebody's
+ * phone: a user sees and changes only their own). An addon that says nothing keeps the admin door.
  */
 
 const ConfigSchemaPassthrough = z.custom<ConfigUISchema>()
@@ -147,6 +153,14 @@ export const IntegrationInstanceDescriptionSchema = z.object({
   mintsId: z.boolean().optional(),
   /** The links to other instances the provider's kinds declare; absent means none. */
   links: z.array(IntegrationInstanceLinkSchema).optional(),
+  /**
+   * The rows belong to individual users (a notification target is somebody's phone). The router
+   * then opens `listInstances`, `getInstance`, `createInstance`, `updateInstance`,
+   * `setInstanceEnabled`, `deleteInstance` and `testInstance` to a NON-admin session on a call
+   * pinned to this addon, and hands the provider the `caller` so it keeps a user to their own rows.
+   * Absent means admin only, as it always was.
+   */
+  userScoped: z.boolean().optional(),
 })
 export type IntegrationInstanceDescription = z.infer<typeof IntegrationInstanceDescriptionSchema>
 
@@ -206,13 +220,14 @@ export const integrationInstancesCapability = {
       ConfigSchemaPassthrough,
       { auth: 'admin' },
     ),
-    listInstances: method(z.void(), z.array(IntegrationInstanceSchema).readonly(), {
-      auth: 'admin',
+    listInstances: method(z.looseObject({}), z.array(IntegrationInstanceSchema).readonly(), {
+      auth: 'protected',
+      caller: 'scoped',
     }),
     getInstance: method(
       z.object({ id: IntegrationInstanceIdSchema }),
       IntegrationInstanceSchema.nullable(),
-      { auth: 'admin' },
+      { auth: 'protected', caller: 'scoped' },
     ),
     /**
      * Insert the typed record. With `id` it is stored under that id (a duplicate id is refused);
@@ -247,11 +262,12 @@ export const integrationInstancesCapability = {
         seed: z.object({ info: z.record(z.string(), z.unknown()) }).optional(),
       }),
       z.object({ id: z.string() }),
-      { kind: 'mutation', auth: 'admin' },
+      { kind: 'mutation', auth: 'protected', caller: 'scoped' },
     ),
     updateInstance: method(IntegrationInstancePatchSchema, z.object({ ok: z.literal(true) }), {
       kind: 'mutation',
-      auth: 'admin',
+      auth: 'protected',
+      caller: 'scoped',
     }),
     /**
      * Switch ONE instance on or off, for every role; a missing record is created from the addon's
@@ -261,7 +277,7 @@ export const integrationInstancesCapability = {
     setInstanceEnabled: method(
       z.object({ id: IntegrationInstanceIdSchema, enabled: z.boolean() }),
       z.object({ ok: z.literal(true) }),
-      { kind: 'mutation', auth: 'admin' },
+      { kind: 'mutation', auth: 'protected', caller: 'scoped' },
     ),
     /**
      * Delete the record and its keychain refs together. For an instance that brings devices the hub
@@ -271,7 +287,7 @@ export const integrationInstancesCapability = {
     deleteInstance: method(
       z.object({ id: IntegrationInstanceIdSchema }),
       z.object({ ok: z.literal(true) }),
-      { kind: 'mutation', auth: 'admin' },
+      { kind: 'mutation', auth: 'protected', caller: 'scoped' },
     ),
     testInstance: optionalMethod(
       z.object({
@@ -281,7 +297,7 @@ export const integrationInstancesCapability = {
         kind: z.string().min(1).optional(),
       }),
       TestConnectionResultSchema,
-      { kind: 'mutation', auth: 'admin' },
+      { kind: 'mutation', auth: 'protected', caller: 'scoped' },
     ),
   },
 } as const satisfies CapabilityDefinition
