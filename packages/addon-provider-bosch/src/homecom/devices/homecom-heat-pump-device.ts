@@ -49,6 +49,8 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
   readonly features: readonly never[] = []
 
   readonly #brokerId: string
+  /** True while the gateway has no heat-pump reading, so the log marks the transitions only. */
+  #noReading = false
 
   constructor(ctx: DeviceContext) {
     const persisted = homeComHeatPumpSchema.parse(ctx.persistedConfig ?? {})
@@ -73,11 +75,23 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
   private refreshFromSnapshot(): void {
     const reading = this.reading()
     if (reading === null) {
-      this.ctx.logger.warn('HomeCom heat pump: the gateway returned no heat-pump reading', {
-        tags: { deviceId: this.ctx.id },
-      })
+      if (!this.#noReading) {
+        this.#noReading = true
+        this.ctx.logger.warn('HomeCom heat pump: the gateway returned no heat-pump reading', {
+          tags: { deviceId: this.ctx.id },
+        })
+      }
       this.runtimeState.setCapState(STATUS_CAP, { ...COLD_START, lastFetchedAt: Date.now() })
       return
+    }
+    if (this.#noReading) {
+      this.#noReading = false
+      this.ctx.logger.info(
+        'HomeCom heat pump: the gateway answers with a heat-pump reading again',
+        {
+          tags: { deviceId: this.ctx.id },
+        },
+      )
     }
     this.runtimeState.setCapState(STATUS_CAP, heatPumpStatusFrom(reading, Date.now()))
   }
@@ -103,8 +117,17 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
       tags: { deviceId: this.ctx.id },
       meta: { path: write.path },
     })
-    const snapshot = await client.fetchSystem()
-    homeComConnections.updateSnapshot(this.#brokerId, snapshot)
+    try {
+      const snapshot = await client.fetchSystem()
+      homeComConnections.updateSnapshot(this.#brokerId, snapshot)
+    } catch (error) {
+      // The write went out: say the refresh failed, never that the write did.
+      this.ctx.logger.warn('HomeCom heat pump: value written, the refresh failed', {
+        tags: { deviceId: this.ctx.id },
+        meta: { path: write.path, error: error instanceof Error ? error.message : String(error) },
+      })
+      return
+    }
     this.refreshFromSnapshot()
   }
 
