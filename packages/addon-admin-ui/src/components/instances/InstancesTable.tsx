@@ -63,7 +63,7 @@ import {
   type PanelRow,
   type TypedIdRuleFor,
 } from './instances-model'
-import { useSetInstanceEnabled } from './use-set-instance-enabled'
+import { InstanceSwitchCell } from './InstanceSwitchCell'
 import { HOLDER_QUERY_KEY, useInstancesData, type InstancesData } from './use-instances-data'
 
 /** The `?<key>=` that holds an open instance in the URL. */
@@ -147,39 +147,6 @@ function StateCell({ row }: { readonly row: InstanceRow }): ReactElement {
         >
           {statusText(row.status)}
         </Badge>
-      )}
-    </span>
-  )
-}
-
-function InstanceSwitchCell({
-  row,
-  pinning,
-}: {
-  readonly row: InstanceRow
-  readonly pinning: number
-}): ReactElement {
-  const { t } = useTranslation()
-  const queryClient = useQueryClient()
-  const setEnabled = useSetInstanceEnabled({
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] }),
-  })
-  return (
-    <span className="flex flex-col gap-1">
-      <Switch
-        checked={row.enabled}
-        disabled={setEnabled.isPending}
-        aria-label={t('providerInstances.enable', 'Enable {{name}}', {
-          name: row.name,
-        })}
-        onCheckedChange={(enabled) =>
-          setEnabled.mutate({ addonId: row.addonId, id: row.id, enabled })
-        }
-      />
-      {pinning > 0 && (
-        <span className="text-[11px] text-foreground-subtle">
-          {t('providerInstances.pinnedBy', { count: pinning })}
-        </span>
       )}
     </span>
   )

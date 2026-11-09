@@ -6,18 +6,22 @@
  */
 import { defineFixtures } from './_define'
 
-const CAL = 'ha:calendar.family'
+const CAL = 'google-services:google_001:family@g'
 const HOUR = 3_600_000
 
 export default defineFixtures({
   area: 'calendars',
   description: 'Calendars page: all-day single, all-day multi-day, timed across midnight',
   handlers: {
+    // The shell's urgent-alert toast would cover the list on a phone.
+    'alerts.list': [],
+    'alerts.getUnreadCount': 0,
     'calendars.listCalendars': [
       {
         id: CAL,
         name: 'Family',
-        source: 'ha',
+        source: 'addon',
+        providerAddonId: 'google-services',
         enabled: true,
         visible: true,
         defaultColor: '#3B82F6',
@@ -49,7 +53,7 @@ export default defineFixtures({
         configured: true,
         enabled: true,
         kind: 'calendar',
-        formValues: {},
+        formValues: { accountId: 'google_001', calendarId: 'family@g' },
       },
       {
         id: 'cal_b2',
@@ -57,7 +61,7 @@ export default defineFixtures({
         configured: true,
         enabled: false,
         kind: 'calendar',
-        formValues: {},
+        formValues: { accountId: 'google_001', calendarId: 'work@g' },
       },
     ],
     'mut:integrationInstances.setInstanceEnabled': { ok: true },

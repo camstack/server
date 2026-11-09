@@ -5,33 +5,40 @@
  */
 
 import {
+  type CalendarEntry,
+  type CalendarEvent,
+  type CalendarPreferences,
+  calendarEventLocalSpan,
+  calendarEventOnLocalDay,
+} from '@camstack/types'
+import {
   Button,
+  Checkbox,
   Dialog,
   DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Input,
   useCalendarsGetPreferences,
   useCalendarsListCalendars,
   useCalendarsListEvents,
   useCalendarsSetCalendarPreference,
-  Checkbox,
-  Input,
 } from '@camstack/ui-library'
-import {
-  calendarEventLocalSpan,
-  calendarEventOnLocalDay,
-  type CalendarEntry,
-  type CalendarEvent,
-  type CalendarPreferences,
-} from '@camstack/types'
+import { useQueryClient } from '@tanstack/react-query'
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { type ReactNode, useCallback, useMemo, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { AdminPage } from '../../components/AdminPage'
-import { CalendarSourceSwitches } from '../../components/calendars/CalendarSourceSwitches'
-import { Trans, useTranslation } from 'react-i18next'
+import {
+  type CalendarListRow,
+  calendarInstanceRefs,
+  joinCalendarRows,
+} from '../../components/calendars/calendar-rows'
+import { InstanceSwitchCell } from '../../components/instances/InstanceSwitchCell'
+import { useInstancesData } from '../../components/instances/use-instances-data'
 import i18n from '../../i18n/index'
 
 type ViewMode = 'month' | 'week' | 'day'
@@ -280,14 +287,16 @@ function ViewToggle({
 }
 
 function CalendarLegend({
-  calendars,
+  rows,
   onToggleVisible,
   onColorChange,
+  onSwitched,
   busy,
 }: {
-  readonly calendars: readonly CalendarEntry[]
+  readonly rows: readonly CalendarListRow[]
   readonly onToggleVisible: (calendarId: string, visible: boolean) => void
   readonly onColorChange: (calendarId: string, color: string) => void
+  readonly onSwitched: () => void
   readonly busy: boolean
 }) {
   const { t } = useTranslation()
@@ -297,43 +306,58 @@ function CalendarLegend({
         {t('systemPage.calendars.calendars', 'Calendars')}
       </h2>
       <ul className="space-y-1">
-        {calendars.map((cal) => (
-          <li
-            key={cal.id}
-            className="flex items-start gap-2 rounded-md px-1.5 py-1.5 hover:bg-surface"
-          >
-            <Checkbox
-              className="mt-1 h-3.5 w-3.5 shrink-0 accent-primary"
-              checked={cal.visible}
-              disabled={busy}
-              onChange={(e) => onToggleVisible(cal.id, e.target.checked)}
-              aria-label={t('systemPage.calendars.show', 'Show {{name}}', { name: cal.name })}
-              data-testid={`calendars-visible-${cal.id}`}
-            />
-            <Input
-              type="color"
-              className="mt-0.5 h-6 w-6 shrink-0 cursor-pointer rounded border border-border bg-transparent p-0"
-              value={cal.color}
-              disabled={busy}
-              onChange={(e) => onColorChange(cal.id, e.target.value.toUpperCase())}
-              aria-label={t('systemPage.calendars.colourFor', 'Colour for {{name}}', {
-                name: cal.name,
-              })}
-              data-testid={`calendars-color-${cal.id}`}
-            />
-            <div className="min-w-0 flex-1">
-              <div
-                className={`truncate text-sm font-medium ${cal.visible ? 'text-foreground' : 'text-foreground-subtle'}`}
-              >
-                {cal.name}
+        {rows.map((row) => {
+          const cal = row.calendar
+          const off = row.instance !== null && !row.instance.enabled
+          return (
+            <li
+              key={row.key}
+              className={`flex items-start gap-2 rounded-md px-1.5 py-1.5 hover:bg-surface ${off ? 'opacity-60' : ''}`}
+              data-testid={`calendars-row-${row.key}`}
+            >
+              {cal !== null && !off ? (
+                <>
+                  <Checkbox
+                    className="mt-1 h-3.5 w-3.5 shrink-0 accent-primary"
+                    checked={cal.visible}
+                    disabled={busy}
+                    onChange={(e) => onToggleVisible(cal.id, e.target.checked)}
+                    aria-label={t('systemPage.calendars.show', 'Show {{name}}', { name: row.name })}
+                    data-testid={`calendars-visible-${cal.id}`}
+                  />
+                  <Input
+                    type="color"
+                    className="mt-0.5 h-6 w-6 shrink-0 cursor-pointer rounded border border-border bg-transparent p-0"
+                    value={cal.color}
+                    disabled={busy}
+                    onChange={(e) => onColorChange(cal.id, e.target.value.toUpperCase())}
+                    aria-label={t('systemPage.calendars.colourFor', 'Colour for {{name}}', {
+                      name: row.name,
+                    })}
+                    data-testid={`calendars-color-${cal.id}`}
+                  />
+                </>
+              ) : null}
+              <div className="min-w-0 flex-1">
+                <div
+                  className={`truncate text-sm font-medium ${cal?.visible === true && !off ? 'text-foreground' : 'text-foreground-subtle'}`}
+                >
+                  {row.name}
+                </div>
+                <div className="truncate text-[11px] text-foreground-subtle">
+                  {row.providerName}
+                  {off ? ` · ${t('systemPage.calendars.switchedOff')}` : ''}
+                  {cal !== null && !cal.enabled
+                    ? ` · ${t('systemPage.calendars.unavailableAtSource')}`
+                    : ''}
+                </div>
               </div>
-              <div className="truncate text-[11px] text-foreground-subtle">
-                {providerLabel(cal)}
-                {!cal.enabled ? ` · ${t('systemPage.calendars.unavailableAtSource')}` : ''}
-              </div>
-            </div>
-          </li>
-        ))}
+              {row.instance !== null ? (
+                <InstanceSwitchCell row={row.instance} pinning={0} onChanged={onSwitched} />
+              ) : null}
+            </li>
+          )
+        })}
       </ul>
     </aside>
   )
@@ -574,6 +598,8 @@ export function CalendarsPage() {
   const calendarsQuery = useCalendarsListCalendars()
   const prefsQuery = useCalendarsGetPreferences({})
   const setPref = useCalendarsSetCalendarPreference()
+  const queryClient = useQueryClient()
+  const instancesData = useInstancesData('calendar-source')
 
   const [mode, setMode] = useState<ViewMode>('month')
   const [anchor, setAnchor] = useState(() => startOfDay(new Date()))
@@ -617,6 +643,22 @@ export function CalendarsPage() {
     return map
   }, [calendars])
 
+  // The list is the sources' answer joined with the instance records behind it, so a calendar
+  // that is switched off (no longer answered) stays here, muted, with its switch.
+  const listRows = useMemo(
+    () =>
+      joinCalendarRows(
+        calendars,
+        calendarInstanceRefs(instancesData.holders, instancesData.displayNames),
+        providerLabel,
+      ),
+    [calendars, instancesData.holders, instancesData.displayNames],
+  )
+  const onSwitched = useCallback(
+    () => void queryClient.invalidateQueries({ queryKey: [['calendars']] }),
+    [queryClient],
+  )
+
   const onToggleVisible = useCallback(
     (calendarId: string, visible: boolean) => {
       void setPref.mutateAsync({ calendarId, visible }).then(() => prefsQuery.refetch())
@@ -642,7 +684,7 @@ export function CalendarsPage() {
     'inline-flex items-center rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-primary/5'
 
   let body: ReactNode
-  if (calendarsQuery.isPending) {
+  if (calendarsQuery.isPending || instancesData.state === 'pending') {
     body = (
       <p className="text-sm text-foreground-subtle">
         {t('systemPage.calendars.loadingCalendars', 'Loading calendars…')}
@@ -655,7 +697,14 @@ export function CalendarsPage() {
         {calendarsQuery.error.message}
       </p>
     )
-  } else if (calendars.length === 0) {
+  } else if (instancesData.state === 'error' && listRows.length === 0) {
+    body = (
+      <p className="text-sm text-danger">
+        {t('systemPage.calendars.couldNotListCalendars', 'Could not list calendars:')}{' '}
+        {instancesData.error}
+      </p>
+    )
+  } else if (listRows.length === 0) {
     body = (
       <p className="text-sm text-foreground-subtle" data-testid="calendars-empty-sources">
         <Trans
@@ -675,16 +724,19 @@ export function CalendarsPage() {
     body = (
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
         <CalendarLegend
-          calendars={calendars}
+          rows={listRows}
           onToggleVisible={onToggleVisible}
           onColorChange={onColorChange}
+          onSwitched={onSwitched}
           busy={setPref.isPending}
         />
         <p className="text-sm text-foreground-subtle" data-testid="calendars-empty-hidden">
-          {t(
-            'systemPage.calendars.allCalendarsAreHiddenTurn',
-            'All calendars are hidden. Turn one on in the legend to see events.',
-          )}
+          {calendars.length === 0
+            ? t('systemPage.calendars.allSwitchedOff')
+            : t(
+                'systemPage.calendars.allCalendarsAreHiddenTurn',
+                'All calendars are hidden. Turn one on in the legend to see events.',
+              )}
         </p>
       </div>
     )
@@ -692,9 +744,10 @@ export function CalendarsPage() {
     body = (
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
         <CalendarLegend
-          calendars={calendars}
+          rows={listRows}
           onToggleVisible={onToggleVisible}
           onColorChange={onColorChange}
+          onSwitched={onSwitched}
           busy={setPref.isPending}
         />
         <div className="min-w-0 flex-1 space-y-3">
@@ -785,7 +838,6 @@ export function CalendarsPage() {
       )}
     >
       {body}
-      <CalendarSourceSwitches />
       {selectedEvent !== null ? (
         <EventDetailDialog
           ev={selectedEvent}

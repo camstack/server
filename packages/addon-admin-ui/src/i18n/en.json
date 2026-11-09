@@ -6679,10 +6679,8 @@
       "allDay": "All day",
       "dayAllDay": "{{date}} · All day",
       "rangeAllDay": "{{from}} – {{to}} · All day",
-      "switchesError": "Could not load the calendar switches",
-      "importedCalendars": "Imported calendars",
-      "importCalendar": "Import {{name}}",
-      "switchFailed": "Could not change {{name}}: {{message}}"
+      "allSwitchedOff": "All calendars are switched off. Switch one on in the list to see its events.",
+      "switchedOff": "Switched off"
     },
     "terminal": {
       "executable": "Executable",
@@ -11811,7 +11809,8 @@
     "disconnectRow": "Disconnect {{name}}",
     "typedId": "Id",
     "typedIdHint": "Chosen once; it cannot be changed after the record is created.",
-    "typedIdInvalid": "Lowercase letters, digits and dashes, starting with a letter or digit (up to 64)."
+    "typedIdInvalid": "Lowercase letters, digits and dashes, starting with a letter or digit (up to 64).",
+    "switchFailed": "Could not change {{name}}: {{message}}"
   },
   "instances": {
     "colStatus": "Status",

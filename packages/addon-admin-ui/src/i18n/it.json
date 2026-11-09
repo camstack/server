@@ -6754,10 +6754,8 @@
       "allDay": "Tutto il giorno",
       "dayAllDay": "{{date}} · Tutto il giorno",
       "rangeAllDay": "{{from}} – {{to}} · Tutto il giorno",
-      "switchesError": "Impossibile caricare gli interruttori dei calendari",
-      "importedCalendars": "Calendari importati",
-      "importCalendar": "Importa {{name}}",
-      "switchFailed": "Impossibile modificare {{name}}: {{message}}"
+      "allSwitchedOff": "Tutti i calendari sono disattivati. Attiva un calendario nell'elenco per vederne gli eventi.",
+      "switchedOff": "Disattivato"
     },
     "terminal": {
       "executable": "Eseguibile",
@@ -11833,7 +11831,8 @@
     "disconnectRow": "Scollega {{name}}",
     "typedId": "Id",
     "typedIdHint": "Scelto una sola volta; non si può cambiare dopo la creazione.",
-    "typedIdInvalid": "Lettere minuscole, cifre e trattini, a partire da una lettera o cifra (massimo 64)."
+    "typedIdInvalid": "Lettere minuscole, cifre e trattini, a partire da una lettera o cifra (massimo 64).",
+    "switchFailed": "Impossibile modificare {{name}}: {{message}}"
   },
   "instances": {
     "colStatus": "Stato",
