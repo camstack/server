@@ -22,7 +22,7 @@ import {
 import { rawBrokers } from '../../__tests__/raw-brokers.js'
 import { fakeIntegrations, type FakeIntegrations } from '../../__tests__/fake-integrations.js'
 import { HA_BROKERS_OWNER, haBrokersEntryKind } from '../../broker-record-kinds.js'
-import { haInstanceRecordPortsOver } from '../../ha-instance-settings.js'
+import { haInstanceRecordPortsOver } from '../ha-instance-settings.js'
 import { haInstanceSettingsPortsOver } from '../legacy-integration-rows.js'
 import {
   ADDON_MIGRATIONS,

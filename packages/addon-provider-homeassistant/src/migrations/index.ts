@@ -36,6 +36,7 @@ export {
   haLegacyTargetsOver,
   haNotifyPortsOver,
 } from './notify-targets-to-body.js'
+export { haInstanceRecordPortsOver } from './ha-instance-settings.js'
 export type { HaNotifyPorts } from './notify-targets-to-body.js'
 export type { CalendarIdsPorts } from './calendar-ids-to-integration.js'
 export { FLATTEN_BROKER_RECORDS_ID } from './flatten-broker-records.js'

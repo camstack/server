@@ -18,7 +18,7 @@
  * Both are idempotent.
  */
 import type { MigrationProcedureResult } from '@camstack/types'
-import type { HaInstanceRecordPorts, HaInstanceValues } from '../ha-instance-settings.js'
+import type { HaInstanceRecordPorts, HaInstanceValues } from './ha-instance-settings.js'
 import type { HaInstanceClearPorts, HaInstanceRow } from './legacy-integration-rows.js'
 
 export const INSTANCE_SETTINGS_TO_RECORD_ID =

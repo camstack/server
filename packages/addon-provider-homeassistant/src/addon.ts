@@ -96,12 +96,12 @@ import { haBrokerLinkPorts } from './migrations/index.js'
 import { listHaCalendarCatalog } from './ha-calendar-source.js'
 import { haAllRecordKinds } from './record-kinds.js'
 import { createHaBoardKeyProvider, HaBoardKeySource } from './ha-board-key-source.js'
-import { haInstanceRecordPortsOver } from './ha-instance-settings.js'
 import { haCalendarRecordPortsOver } from './migrations/calendar-ports.js'
 import { buildHaCalendarInstances, selectedEntityIds } from './ha-calendar-instances.js'
 import { haInstanceSettingsPortsOver } from './migrations/legacy-integration-rows.js'
 import {
   ADDON_MIGRATIONS,
+  haInstanceRecordPortsOver,
   haLegacyTargetsOver,
   haNotifyPortsOver,
   type HaMigrationPorts,

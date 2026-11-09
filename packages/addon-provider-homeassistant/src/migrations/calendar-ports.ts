@@ -3,7 +3,7 @@ import {
   type CalendarRecordPorts,
   type RecordKindHandle,
 } from '@camstack/types'
-import type { RawHaBrokerBody } from '../ha-instance-settings.js'
+import type { RawHaBrokerBody } from './ha-instance-settings.js'
 
 /** The ports of the calendars move: the raw `brokers` rows and the `calendars` records. */
 export function haCalendarRecordPortsOver(deps: {

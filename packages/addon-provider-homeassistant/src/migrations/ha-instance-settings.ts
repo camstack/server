@@ -1,9 +1,9 @@
 /**
- * The settings of one Home Assistant instance live on its own `brokers` record (planning#416):
- * the calendars it imports (`calendarIds`) and the integration it belongs to (`integrationId`)
- * sit beside its connection, under the record id (`ha_NNN`). This is the one place that reads and
- * writes them. The leftover rows of the integration are read by the migrations only
- * (`migrations/legacy-integration-rows.ts`).
+ * MIGRATION PORTS ONLY. The `integrationId` and `calendarIds` of a Home Assistant instance once sat
+ * beside its connection on the `brokers` record (planning#416); the instance record no longer
+ * names them, so these ports read them off the raw broker body and merge a patch back. Only the
+ * migrations that move those values into the instance record (and the migration engine binding in
+ * `addon.ts`) use them; nothing at runtime reads or writes these fields.
  */
 import type { RecordKindHandle } from '@camstack/types'
 
