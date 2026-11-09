@@ -251,12 +251,19 @@ function typeExpr(schema: ZSchema, depth: number): string {
     case 'lazy': {
       if (!d.getter) return 'lazy'
       try {
-        const resolved = d.getter()
-        if (lazyGuard.has(resolved)) return 'self'
-        lazyGuard.add(resolved)
-        const out = refOrInline(resolved, depth)
-        lazyGuard.delete(resolved)
-        return out
+        // Guard on the LAZY node, not on what its getter returns: a getter that
+        // builds a fresh `z.union(...)` per call (HeroArgValueSchema) never
+        // yields the same object twice, so a guard on the result never fired and
+        // the walk recursed until the stack overflowed — the output then depended
+        // on how deep the stack happened to be (a different `args: Record<…>`
+        // nesting per run).
+        if (lazyGuard.has(schema)) return 'self'
+        lazyGuard.add(schema)
+        try {
+          return refOrInline(d.getter(), depth)
+        } finally {
+          lazyGuard.delete(schema)
+        }
       } catch {
         return 'lazy'
       }
