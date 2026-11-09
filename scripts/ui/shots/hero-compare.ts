@@ -125,10 +125,14 @@ async function shootAll(): Promise<void> {
       await page.waitForSelector('[data-device-id] [data-testid="device-detail-module"]', {
         timeout: 180_000,
       })
-      await page.waitForTimeout(3500)
+      await page.waitForTimeout(Number(arg('wait') ?? 3500))
       for (const id of ids) {
         const cell = page.locator(`[data-device-id="${String(id)}"]`)
-        await cell.screenshot({ path: path.join(RAW, `${String(id)}-${shot.name}.png`) })
+        await cell
+          .screenshot({ path: path.join(RAW, `${String(id)}-${shot.name}.png`), timeout: 4000 })
+          .catch(() =>
+            console.log(`  [skipped] ${String(id)} ${shot.name}: the cell did not render`),
+          )
       }
       await ctx.close()
     }

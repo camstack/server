@@ -11,6 +11,8 @@ import { buildHeroModel } from '../../../../packages/types/src/device/hero/build
 import { defineFixtures } from './_define'
 import { NOW } from './_time'
 import { SPECS_TUTTI1 } from './_hero-mockups-1'
+import { SPECS_TUTTI2 } from './_hero-mockups-2'
+import { SPECS_TUTTI3 } from './_hero-mockups-3'
 import historyArea from './history'
 
 export interface MockupSpec {
@@ -22,11 +24,13 @@ export interface MockupSpec {
   readonly caps: readonly string[]
   readonly features?: readonly string[]
   readonly slices: Record<string, unknown>
-  readonly remoteCommands?: readonly string[] | null
+  readonly remoteCommands?: number | null
 }
 
 export const MOCKUP_SPECS: Readonly<Record<number, MockupSpec>> = {
   ...SPECS_TUTTI1,
+  ...SPECS_TUTTI2,
+  ...SPECS_TUTTI3,
 }
 
 export const MOCKUP_IDS: readonly number[] = Object.keys(MOCKUP_SPECS).map(Number)
