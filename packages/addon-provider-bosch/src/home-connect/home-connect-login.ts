@@ -1,3 +1,4 @@
+import { HOME_CONNECT_REDIRECT_URI } from '../shared/sign-in-redirects.js'
 import { createHash, randomBytes } from 'node:crypto'
 import { parseOAuthCallback } from '../shared/oauth-callback.js'
 import {
@@ -16,7 +17,7 @@ export const HOME_CONNECT_CLIENT_ID =
   '9B75AC9EC512F36C84256AC47D813E2C1DD0D6520DF774B020E1E6E2EB29B1F3'
 export const HOME_CONNECT_OAUTH_BASE = 'https://api.home-connect.com/security/oauth/'
 const ASSET_BASE = 'https://eu.services.home-connect.com/'
-export const HOME_CONNECT_REDIRECT_URI = 'hcauth://auth/prod'
+export { HOME_CONNECT_REDIRECT_URI }
 export const HOME_CONNECT_AUTHORIZE_SCOPE =
   'Control DeleteAppliance IdentifyAppliance Images Monitor ReadAccount ReadOrigApi Settings WriteAppliance WriteOrigApi'
 const APP_ID = HOME_CONNECT_CLIENT_ID

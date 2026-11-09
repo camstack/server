@@ -5,6 +5,8 @@ import {
   isSecretMarkerLike,
   type IScopedLogger,
 } from '@camstack/types'
+import { buildSignInGuideFields, type SignInGuideInput } from '../shared/sign-in-guide.js'
+import { HOME_CONNECT_REDIRECT_URI } from '../shared/sign-in-redirects.js'
 
 export const HOME_CONNECT_MODES = ['AES', 'TLS'] as const
 export const HomeConnectModeSchema = z.enum(HOME_CONNECT_MODES)
@@ -328,6 +330,13 @@ export function sameHomeConnectConnection(
 /** Sentinel so the gateway fields stay filled by sign-in and stay off the form. */
 export const HOME_CONNECT_PAIRED_ONLY = '__paired_only__'
 
+export const HOME_CONNECT_SIGN_IN_GUIDE: SignInGuideInput = {
+  i18nPrefix: 'home-connect.s_gateway',
+  keyPrefix: '__home-connect',
+  providerName: 'Home Connect',
+  redirectStart: `${HOME_CONNECT_REDIRECT_URI}?code=`,
+}
+
 export function buildHomeConnectFormSchema(): ConfigUISchema {
   const pairedOnly = {
     field: '__hidden__',
@@ -340,10 +349,11 @@ export function buildHomeConnectFormSchema(): ConfigUISchema {
         title: 'Home Connect',
         titleKey: 'provider-bosch:home-connect.s_gateway.title',
         description:
-          'Sign in with your Home Connect account. A new tab opens the sign-in page through this hub and finishes on its own.',
+          'Sign in with your Home Connect account in your own browser, then paste the address the browser stops on.',
         descriptionKey: 'provider-bosch:home-connect.s_gateway.description',
         columns: 1,
         fields: [
+          ...buildSignInGuideFields(HOME_CONNECT_SIGN_IN_GUIDE),
           {
             type: 'account-sign-in',
             addonId: 'bosch-home-connect',
@@ -353,7 +363,6 @@ export function buildHomeConnectFormSchema(): ConfigUISchema {
             providerLabel: 'Home Connect',
             beginAction: 'beginSignIn',
             completeAction: 'finishSignIn',
-            claimAction: 'claimSignIn',
             signOutAction: 'signOut',
             accountKey: 'accountLabel',
             countFromKey: 'appliances',

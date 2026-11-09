@@ -7065,7 +7065,7 @@
       "signedInCount": "Accesso effettuato come {{account}} · {{detail}}",
       "working": "Operazione in corso…",
       "yourAccount": "il tuo account",
-      "pasteFallback": "Se la pagina non si conclude, incolla qui l indirizzo a cui si ferma."
+      "pasteHint": "Incolla l'indirizzo su cui si è fermato il browser, o solo il suo codice."
     },
     "runningBadge": {
       "running": "In funzione",

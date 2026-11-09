@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import type { ConfigUISchema } from '@camstack/types'
+import { buildSignInGuideFields, type SignInGuideInput } from '../shared/sign-in-guide.js'
+import { HOMECOM_REDIRECT_URI } from '../shared/sign-in-redirects.js'
 
 export const HOMECOM_BRANDS = ['bosch', 'buderus'] as const
 export const HomeComBrandSchema = z.enum(HOMECOM_BRANDS)
@@ -63,8 +65,12 @@ export function homeComApiBase(_region: HomeComConfig['region']): string {
 
 const HIDDEN_UNTIL_ADVANCED = { field: '__hidden__', equals: 'yes' } as const
 
-const HOMECOM_CODE_HELP =
-  'If the page does not finish, copy the address it stops on (it starts with com.bosch.tt.dashtt.pointt://app/login?code=) or only the code, and paste it in the box under the sign-in button.'
+export const HOMECOM_SIGN_IN_GUIDE: SignInGuideInput = {
+  i18nPrefix: 'homecom.s_account',
+  keyPrefix: '__homecom',
+  providerName: 'SingleKey ID',
+  redirectStart: `${HOMECOM_REDIRECT_URI}?code=`,
+}
 
 export function buildHomeComFormSchema(): ConfigUISchema {
   return {
@@ -74,17 +80,11 @@ export function buildHomeComFormSchema(): ConfigUISchema {
         title: 'HomeCom account',
         titleKey: 'provider-bosch:homecom.s_account.title',
         description:
-          'Sign in with your SingleKey ID. A new tab opens the sign-in page through this hub and finishes on its own.',
+          'Sign in with your SingleKey ID in your own browser, then paste the address the browser stops on.',
         descriptionKey: 'provider-bosch:homecom.s_account.description',
         columns: 1,
         fields: [
-          {
-            type: 'info',
-            key: '__homecom-code-help',
-            label: HOMECOM_CODE_HELP,
-            labelKey: 'provider-bosch:homecom.s_account.__homecom-code-help.label',
-            content: '',
-          },
+          ...buildSignInGuideFields(HOMECOM_SIGN_IN_GUIDE),
           {
             type: 'account-sign-in',
             addonId: 'bosch-homecom',
@@ -94,7 +94,6 @@ export function buildHomeComFormSchema(): ConfigUISchema {
             providerLabel: 'SingleKey ID',
             beginAction: 'beginSignIn',
             completeAction: 'finishSignIn',
-            claimAction: 'claimSignIn',
             signOutAction: 'signOut',
             accountKey: 'accountLabel',
             countKey: 'gatewayCount',

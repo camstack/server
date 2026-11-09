@@ -7043,7 +7043,7 @@
       "signedInCount": "Signed in as {{account}} · {{detail}}",
       "working": "Working…",
       "yourAccount": "your account",
-      "pasteFallback": "If the page does not finish, paste the address it stops on here."
+      "pasteHint": "Paste the address the browser stopped on, or only its code."
     },
     "runningBadge": {
       "running": "Running",

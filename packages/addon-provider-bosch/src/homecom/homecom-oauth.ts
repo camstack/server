@@ -8,8 +8,10 @@
  * answers `misconfigured-application` and never shows the login page. The scope it does accept
  * names `pointt.gateway.resource.dashapp`, and the Bosch app sends `style_id=tt_bsch`.
  */
+import { HOMECOM_REDIRECT_URI } from '../shared/sign-in-redirects.js'
+
 export const HOMECOM_CLIENT_ID = '762162C0-FA2D-4540-AE66-6489F189FADC'
-export const HOMECOM_REDIRECT_URI = 'com.bosch.tt.dashtt.pointt://app/login'
+export { HOMECOM_REDIRECT_URI }
 export const HOMECOM_AUTHORIZE_URL = 'https://singlekey-id.com/auth/connect/authorize'
 export const HOMECOM_TOKEN_URL = 'https://singlekey-id.com/auth/connect/token'
 export const HOMECOM_STYLE_ID = 'tt_bsch'

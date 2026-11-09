@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   HOMECOM_POINTT_API_ORIGIN,
-  buildHomeComFormSchema,
   connectionFromSettings,
   homeComApiBase,
   homeComConfigSchema,
@@ -26,20 +25,5 @@ describe('homeCom config', () => {
     })
     expect(parsed).not.toBeNull()
     expect(parsed?.gatewayId).toBeUndefined()
-  })
-
-  it('offers the paste fallback, without devtools instructions, before the login button', () => {
-    const fields = buildHomeComFormSchema().sections[0]?.fields ?? []
-    const helpAt = fields.findIndex((field) => field.key === '__homecom-code-help')
-    const signInAt = fields.findIndex((field) => field.key === '__homecom-sign-in')
-    expect(helpAt).toBeGreaterThanOrEqual(0)
-    expect(signInAt).toBeGreaterThan(helpAt)
-    const help = fields[helpAt]
-    expect(help?.type).toBe('info')
-    if (help?.type !== 'info') return
-    expect(help.label).toMatch(/does not finish/i)
-    expect(help.label).not.toMatch(/Preserve log|developer tools|Network/i)
-    expect(help.label).toContain('com.bosch.tt.dashtt.pointt://app/login?code=')
-    expect(help.labelKey).toBe('provider-bosch:homecom.s_account.__homecom-code-help.label')
   })
 })

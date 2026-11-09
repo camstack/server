@@ -14,7 +14,7 @@ holds an OAuth token pair for the operator's SingleKey ID and polls the cloud on
 
 The same shape as Home Connect (PKCE, no browser automation):
 
-1. **Create login link** (`beginSignIn`) returns the authorize URL, a PKCE verifier and a state.
+1. **Sign in** (`beginSignIn`) returns the authorize URL and an attempt id (the PKCE verifier stays in the addon). The form shows a written guide, opens the link in a new tab of your own browser (the hub cannot proxy SingleKey ID, D1025) and reveals the paste box.
 2. Open the link in a browser and sign in with the SingleKey ID.
 3. The browser then tries to open the app's redirect (`com.bosch.tt.dashtt.pointt://app/login?code=…&state=…`),
    fails, and stops. Copy that address — Chrome / Edge: DevTools (F12) > Network with *Preserve log*

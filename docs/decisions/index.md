@@ -4,7 +4,7 @@
 
 # Decisions
 
-987 architecture decision records. One file per decision, never
+988 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1002,6 +1002,7 @@ that rots.
 | D1022 | [Every device transition is a recorded fact with its actor; a command is matched to the slice change it caused in the hub mirror, and an unmatched change is the device's own](adr-1022-device-transitions-are-recorded-with-their-actor.md) | ✅ accepted | 2026-11-08 |
 | D1023 | [A device hero is one pure model with a look per type and role, filled by capabilities and served read-only](adr-1023-a-device-hero-is-one-model-with-a-look-per-type-and-role.md) | 💭 proposed | 2026-11-08 |
 | D1024 | [A restored cap may persist only the fields it names](adr-1024-a-restored-cap-may-persist-only-the-fields-it-names.md) | ✅ accepted | 2026-11-08 |
+| D1025 | [A SingleKey ID sign-in runs in the operator's own browser with a written guide, never through the hub proxy](adr-1025-a-singlekey-id-sign-in-runs-in-the-operators-own-browser-with-a-written-guide-never-through-the-hub-proxy.md) | ✅ accepted | 2026-11-09 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

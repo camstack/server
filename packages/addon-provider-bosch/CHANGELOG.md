@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Bosch HomeCom and Home Connect sign-in no longer go through the hub login proxy: the form explains how to sign in with SingleKey ID in your own browser and copy the address back, in English and Italian.
+
 ## [0.1.43] - 2026-11-08
 
 ### Changed

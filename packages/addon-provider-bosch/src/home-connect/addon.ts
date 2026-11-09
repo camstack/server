@@ -1,5 +1,4 @@
 import {
-  type AddonDataPlaneHandle,
   type AddonInitResult,
   BaseDeviceProvider,
   type ConfigUISchema,
@@ -15,18 +14,16 @@ import {
   type IDeviceAdoptionProvider,
   type SavedDevice,
   type SystemEvent,
-  VENDOR_LOGIN_PROXY_PREFIX,
-  VendorLoginProxy,
   rowsDepsOver,
 } from '@camstack/types'
 import { homeConnectActions } from './custom-actions.js'
 import { trackHomeConnectContainers } from './home-connect-container-tracker.js'
-import { finishHomeConnectSignIn, homeConnectSignInAttempts } from './home-connect-login.js'
-import { homeConnectFinishResult } from './home-connect-sign-in-result.js'
 import {
-  beginHomeConnectProxiedSignIn,
-  homeConnectSignInClaims,
-} from './home-connect-sign-in-proxy.js'
+  finishHomeConnectSignIn,
+  homeConnectSignInAttempts,
+  publishHomeConnectSignIn,
+} from './home-connect-login.js'
+import { homeConnectFinishResult } from './home-connect-sign-in-result.js'
 import { cascadeRemoveDevicesForIntegration } from '../shared/account-integration-cascade.js'
 import { setIntegrationDevicesOnline } from '../shared/account-integration-offline.js'
 import { buildHomeConnectAdoptionProvider } from './home-connect-adoption-provider.js'
@@ -72,8 +69,6 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
   private clients: HomeConnectClientRegistry | null = null
   private instances: HomeConnectInstances | null = null
   private reconciler: HomeConnectChildReconciler | null = null
-  private loginProxy: VendorLoginProxy | null = null
-  private loginPlane: AddonDataPlaneHandle | null = null
 
   constructor() {
     super({})
@@ -98,7 +93,6 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
       tester: this.buildConnectionTestProvider(),
     })
     this.instances = built
-    await this.serveLoginProxy()
     this.clients = new HomeConnectClientRegistry(this.ctx.logger, {
       onConnectionUpdated: (integrationId, connection) => {
         void this.persistIntegrationAppliances(integrationId, connection)
@@ -118,68 +112,49 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
     return {
       providers: [
         ...regs,
-        { capability: deviceAdoptionCapability, provider: this.buildAdoptionProvider() },
-        { capability: integrationInstancesCapability, provider: built.provider },
+        {
+          capability: deviceAdoptionCapability,
+          provider: this.buildAdoptionProvider(),
+        },
+        {
+          capability: integrationInstancesCapability,
+          provider: built.provider,
+        },
       ],
       customActions: homeConnectActions,
       actionHandlers: {
         beginSignIn: async () => ({
-          ...beginHomeConnectProxiedSignIn({
-            proxy: this.loginProxy,
-            addonId: this.ctx.id,
-          }),
-          summary: 'Open the sign-in page and sign in.',
+          ...publishHomeConnectSignIn(homeConnectSignInAttempts, Date.now()),
+          summary: 'Open the sign-in page, sign in, then paste the address the browser stops on.',
         }),
         finishSignIn: async (input) =>
           homeConnectFinishResult(
             await finishHomeConnectSignIn(
-              { attemptId: input.attemptId, callback: input.callback, nowMs: Date.now() },
+              {
+                attemptId: input.attemptId,
+                callback: input.callback,
+                nowMs: Date.now(),
+              },
               homeConnectSignInAttempts,
             ),
           ),
-        claimSignIn: async (input) => {
-          const claim = homeConnectSignInClaims.claim(input.attemptId, Date.now())
-          return claim.state === 'pending' ? { pending: true } : { pending: false, ...claim.result }
-        },
-        signOut: async () => ({ signedOut: true as const, summary: 'Signed out.' }),
+        signOut: async () => ({
+          signedOut: true as const,
+          summary: 'Signed out.',
+        }),
       },
     }
   }
 
-  /** The hub's HTTPS face for the vendor's login pages (D955): admin session only. */
-  private async serveLoginProxy(): Promise<void> {
-    const proxy = new VendorLoginProxy({
-      addonId: this.ctx.id,
-      logger: this.ctx.logger,
-    })
-    try {
-      this.loginPlane =
-        (await this.ctx.dataPlane?.serve({
-          prefix: VENDOR_LOGIN_PROXY_PREFIX,
-          access: 'admin',
-          handler: proxy.handler,
-        })) ?? null
-      if (this.loginPlane !== null) this.loginProxy = proxy
-    } catch (err) {
-      this.ctx.logger.warn(
-        'Home Connect login proxy failed to serve — sign-in falls back to paste',
-        {
-          meta: { error: errMsg(err) },
-        },
-      )
-    }
-  }
-
   protected override async onShutdown(): Promise<void> {
-    await this.loginPlane?.dispose().catch(() => undefined)
-    this.loginPlane = null
-    this.loginProxy = null
     this.reconciler?.stop()
     this.reconciler = null
     try {
       await this.clients?.shutdown()
     } catch (err) {
-      this.ctx.logger.warn('Home Connect shutdown error', { meta: { error: errMsg(err) } })
+      this.ctx.logger.warn('Home Connect shutdown error', {
+        meta: { error: errMsg(err) },
+      })
     }
     this.clients = null
     this.instances = null
@@ -372,7 +347,12 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
     const client = homeConnectConnections.getClient(integrationId)
     const description = client?.getDescription(haId) ?? null
     if (client === null || description === null || description.state === 'missing') return []
-    return [...deriveChildBindings({ description, features: client.getFeatures(haId) })]
+    return [
+      ...deriveChildBindings({
+        description,
+        features: client.getFeatures(haId),
+      }),
+    ]
   }
 
   private buildChildReconciler(): HomeConnectChildReconciler {
@@ -389,7 +369,9 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
         return persistedChildBindingsFromConfig(await devices().loadConfig(deviceId))
       },
       applyEntities: (deviceId, entities) =>
-        devices().applyDerivedSpec(deviceId, { config: { entities: [...entities] } }),
+        devices().applyDerivedSpec(deviceId, {
+          config: { entities: [...entities] },
+        }),
       logger: this.ctx.logger,
     })
   }

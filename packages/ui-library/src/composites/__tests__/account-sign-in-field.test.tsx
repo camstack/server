@@ -32,7 +32,10 @@ describe('account-sign-in field', () => {
     const onChangeMany = vi.fn()
     const onAction = vi.fn(async (action: string, _key: string, _value?: unknown) => {
       if (action === 'beginSignIn') {
-        return { attemptId: 'attempt-1', authorizeUrl: 'https://singlekey-id.com/auth' }
+        return {
+          attemptId: 'attempt-1',
+          authorizeUrl: 'https://singlekey-id.com/auth',
+        }
       }
       if (action === 'finishSignIn') {
         return {
@@ -66,7 +69,9 @@ describe('account-sign-in field', () => {
     expect(onAction).toHaveBeenCalledWith('beginSignIn', '__homecom-sign-in', {})
 
     fireEvent.change(screen.getByRole('textbox'), {
-      target: { value: 'com.bosch.tt.dashtt.pointt://app/login?code=abc&state=st' },
+      target: {
+        value: 'com.bosch.tt.dashtt.pointt://app/login?code=abc&state=st',
+      },
     })
     await waitFor(() =>
       expect(onAction).toHaveBeenCalledWith('finishSignIn', '__homecom-sign-in', {
@@ -86,7 +91,11 @@ describe('account-sign-in field', () => {
     rerender(
       <FormField
         field={FIELD}
-        values={{ accountLabel: 'me@example.com', gatewayCount: 1, token: 'access' }}
+        values={{
+          accountLabel: 'me@example.com',
+          gatewayCount: 1,
+          token: 'access',
+        }}
         onChange={vi.fn()}
         onChangeMany={onChangeMany}
         onAction={onAction}
@@ -110,7 +119,10 @@ describe('account-sign-in field', () => {
     vi.spyOn(window, 'open').mockImplementation(() => null)
     const onAction = vi.fn(async (action: string) => {
       if (action === 'beginSignIn') {
-        return { attemptId: 'attempt-1', authorizeUrl: 'https://singlekey-id.com/auth' }
+        return {
+          attemptId: 'attempt-1',
+          authorizeUrl: 'https://singlekey-id.com/auth',
+        }
       }
       return {
         token: 'access',
@@ -131,60 +143,12 @@ describe('account-sign-in field', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign in with SingleKey ID' }))
     await waitFor(() => expect(screen.getByRole('textbox')).toBeTruthy())
     fireEvent.change(screen.getByRole('textbox'), {
-      target: { value: 'com.bosch.tt.dashtt.pointt://app/login?code=abc&state=st' },
+      target: {
+        value: 'com.bosch.tt.dashtt.pointt://app/login?code=abc&state=st',
+      },
     })
     await waitFor(() =>
       expect(screen.getByText('This Bosch account has no HomeCom gateway.')).toBeTruthy(),
     )
   })
-
-  it('opens the hub-relative login on the hub origin and applies what the hub captured', async () => {
-    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
-    const onChangeMany = vi.fn()
-    let claims = 0
-    const onAction = vi.fn(async (action: string) => {
-      if (action === 'beginSignIn') {
-        return {
-          attemptId: 'attempt-1',
-          authorizeUrl: '/addon/bosch-homecom/vendor-login/attempt-1/h/x',
-        }
-      }
-      if (action === 'claimSignIn') {
-        claims += 1
-        return claims < 2
-          ? { pending: true }
-          : { pending: false, token: 'access', accountLabel: 'me@example.com', gatewayCount: 1 }
-      }
-      return { signedOut: true }
-    })
-    render(
-      <FormField
-        field={{ ...FIELD, claimAction: 'claimSignIn' }}
-        values={{}}
-        onChange={vi.fn()}
-        onChangeMany={onChangeMany}
-        onAction={onAction}
-      />,
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in with SingleKey ID' }))
-    await waitFor(() => expect(screen.getByRole('textbox')).toBeTruthy())
-    expect(open).toHaveBeenCalledWith(
-      `${window.location.origin}/addon/bosch-homecom/vendor-login/attempt-1/h/x`,
-      '_blank',
-      'noopener,noreferrer',
-    )
-    await waitFor(
-      () =>
-        expect(onChangeMany).toHaveBeenCalledWith({
-          token: 'access',
-          accountLabel: 'me@example.com',
-          gatewayCount: 1,
-        }),
-      { timeout: 8000 },
-    )
-    expect(onAction).toHaveBeenCalledWith('claimSignIn', '__homecom-sign-in', {
-      attemptId: 'attempt-1',
-    })
-    open.mockRestore()
-  }, 12000)
 })

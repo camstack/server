@@ -5,12 +5,12 @@ status: accepted
 date: 2026-10-27
 applies-to:
   - packages/types/src/vendor-login-proxy/**
-  - packages/addon-provider-bosch/src/shared/login-proxy-sign-in.ts
-  - packages/addon-provider-bosch/src/home-connect/home-connect-sign-in-proxy.ts
-  - packages/addon-provider-bosch/src/homecom/homecom-sign-in-proxy.ts
   - packages/addon-import-alexa/src/amazon-auth/**
   - packages/addon-import-alexa/src/alexa-proxy-login-manager.ts
 ---
+
+> Bosch HomeCom and Home Connect no longer use this proxy (D1025: the SingleKey ID captcha is bound to
+> SingleKey's domains). Alexa still does.
 
 ## Context
 
