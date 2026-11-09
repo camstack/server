@@ -7,11 +7,11 @@
       "notification-output.cap.ts:probeTargetConfig": "form helper that probes a draft target config; stays as a helper (D981), P6a decides"
     },
     "training": {
-      "training-provider.cap.ts:describeTypes": "type catalogue of training provider entries; kinds of integration-instances (P6g)",
-      "training-provider.cap.ts:listEntries": "entry list; still read by the training orchestrator (api-ports addonForEntry), not by any page (P6g)"
+      "training-provider.cap.ts:describeTypes": "runtime read, not CRUD: the orchestrator routes a training job by the type catalogue each provider describes (api-ports describeTypes); the entries themselves are instances since the training-modal entries-to-records migration",
+      "training-provider.cap.ts:listEntries": "runtime read, not CRUD: the orchestrator resolves which provider addon owns an entry id (api-ports addonForEntry); no page lists or edits entries through it"
     },
     "addon-settings": {
-      "addon-settings.cap.ts:getIntegrationFormSchema": "form of the addon-level integration settings; retired with the addon-level settings (M5, D986, P8)"
+      "addon-settings.cap.ts:getIntegrationFormSchema": "runtime read, not CRUD: the form a NEW instance of a kind renders in the create wizard (IntegrationWizard), where no instance id exists yet for integration-instances.instanceFormSchema"
     },
     "permanent": {
       "storage.cap.ts:listLocations": "runtime read of the locations with occupancy and state, not the CRUD of the configured rows",
