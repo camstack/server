@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.412] - 2026-11-09
+
 ### Changed
 
 - New HeroScene, HeroCardA and DeviceRow components draw the layout-A device hero and the shared device row with one animated scene per device type

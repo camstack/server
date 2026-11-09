@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.45] - 2026-11-09
+
 ### Changed
 
 - A HomeCom hydronic heat pump can be adopted as a heat pump device: circuits, power, temperatures and the silent, away, additional-heater and holiday modes, with values and limits read from the gateway

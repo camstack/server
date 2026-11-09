@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.821] - 2026-11-09
+
 ### Changed
 
 - A heat-pump device type exposes its status and typed setters through the generated cap routers
