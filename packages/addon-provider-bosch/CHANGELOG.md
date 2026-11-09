@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.47] - 2026-11-09
+
 ### Changed
 
 - A HomeCom gateway with a heat pump is adopted as one heat pump, with a climate child per circuit and a Hot water child; a circuit already adopted on its own stays there

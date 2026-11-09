@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.537] - 2026-11-09
+
 ### Changed
 
 - Renaming a composed device keeps the new name after a restart.

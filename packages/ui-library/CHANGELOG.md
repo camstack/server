@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.414] - 2026-11-09
+
 ### Changed
 
 - A heat pump keeps its own name and is the suggested device; a climate circuit is not treated as its primary child
