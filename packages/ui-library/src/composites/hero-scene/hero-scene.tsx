@@ -213,7 +213,11 @@ export function HeroScene({
           className={cn('flex min-w-0 items-center justify-center', toneCentre === true && tone)}
         >
           {children ??
-            (art ? <SceneArt scene={scene} running={!visual.dim} level={params.level} /> : null)}
+            (art ? (
+              <span className={tone}>
+                <SceneArt scene={scene} running={!visual.dim} level={params.level} mode={state} />
+              </span>
+            ) : null)}
         </div>
         <div className="flex min-w-0 justify-end">
           <Tiles tiles={rightTiles} />

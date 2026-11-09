@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { HOME_SCENES_WITH_ART, HomeSceneArt } from './scene-art-home'
 import type { HeroSceneId } from './types'
 
 /**
@@ -14,6 +15,8 @@ export interface SceneArtProps {
   readonly running: boolean
   /** 0..1 — the fountain's water level, the feeder's hopper fill. */
   readonly level?: number
+  /** What the scene is doing when the device says: a lock's or a door's side. */
+  readonly mode?: string | null
 }
 
 const BODY = 'fill-background-elevated stroke-border'
@@ -234,9 +237,10 @@ export const SCENES_WITH_ART: ReadonlySet<HeroSceneId> = new Set<HeroSceneId>([
   'dishwasher',
   'pet-fountain',
   'pet-feeder',
+  ...HOME_SCENES_WITH_ART,
 ])
 
-export function SceneArt({ scene, running, level = 0.7 }: SceneArtProps): ReactNode {
+export function SceneArt({ scene, running, level = 0.7, mode = null }: SceneArtProps): ReactNode {
   switch (scene) {
     case 'washer':
       return <Drum running={running} heat={false} />
@@ -249,6 +253,6 @@ export function SceneArt({ scene, running, level = 0.7 }: SceneArtProps): ReactN
     case 'pet-feeder':
       return <Feeder running={running} level={level} />
     default:
-      return null
+      return <HomeSceneArt scene={scene} running={running} level={level} mode={mode} />
   }
 }

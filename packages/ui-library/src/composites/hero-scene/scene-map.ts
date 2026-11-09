@@ -20,6 +20,9 @@ function visual(
 
 const DIM: SceneVisual = visual('none', 'subtle')
 
+/** No backdrop: the scene's own illustration moves (or is held still) in the tone. */
+const still = (tone: SceneTone): SceneVisual => visual('none', tone, 'normal', { dim: false })
+
 function resolveAc(state: string): SceneVisual {
   switch (state) {
     case 'cool':
@@ -76,10 +79,10 @@ function resolveByScene(scene: HeroSceneId, state: string, on: boolean): SceneVi
       return on ? visual('drop', 'warning', 'slow') : DIM
     case 'vacuum':
       if (state === 'charging' || state === 'docked') return visual('breathe', 'success', 'slow')
-      return on ? visual('sweep', 'primary') : DIM
+      return on ? still('primary') : DIM
     case 'lawn-mower':
       if (state === 'returning') return visual('breathe', 'success', 'slow')
-      return on ? visual('sweep', 'success') : DIM
+      return on ? still('success') : DIM
     case 'tv':
       return on ? visual('breathe', 'info') : DIM
     case 'speaker':
@@ -89,15 +92,13 @@ function resolveByScene(scene: HeroSceneId, state: string, on: boolean): SceneVi
     case 'light':
       return on ? visual('breathe', 'warning', 'slow') : DIM
     case 'cover':
-      return state === 'opening' || state === 'closing'
-        ? visual('slats', 'info', 'slow')
-        : visual('slats', 'subtle', 'normal', { dim: true })
+      return still(state === 'opening' || state === 'closing' ? 'info' : 'muted')
     case 'lock':
-      if (state === 'locked') return visual('ring', 'success', 'slow')
-      return on ? visual('ring', 'warning', 'slow') : DIM
+      if (state === 'locked') return visual('breathe', 'success', 'slow')
+      return on ? visual('breathe', 'warning', 'slow') : DIM
     case 'alarm':
       if (state === 'triggered') return visual('ripple', 'danger', 'fast')
-      return on ? visual('ring', 'success', 'slow') : DIM
+      return on ? visual('breathe', 'danger', 'slow') : DIM
     case 'siren':
       return state === 'sounding' ? visual('ripple', 'danger', 'fast') : DIM
     case 'sensor-sparkline':
@@ -112,7 +113,7 @@ function resolveByScene(scene: HeroSceneId, state: string, on: boolean): SceneVi
       if (state === 'sun') return visual('breathe', 'warning', 'slow')
       return visual('breathe', 'info', 'slow')
     case 'plug':
-      return on ? visual('breathe', 'primary', 'slow') : DIM
+      return on ? still('primary') : DIM
     case 'button':
       return state === 'pressed' ? visual('ripple', 'primary', 'fast') : DIM
     case 'update':

@@ -53,6 +53,8 @@ export const HERO_SCENE_CSS = `
 @keyframes hs-wave { to { transform:translateX(-80px) } }
 @keyframes hs-stream { to { stroke-dashoffset:-24 } }
 @keyframes hs-drop { 0%{transform:translateY(0);opacity:0} 10%{opacity:1} 85%{opacity:1} 100%{transform:translateY(40px);opacity:0} }
+@keyframes hs-travel { 0%,100%{transform:translateX(0)} 50%{transform:translateX(70px)} }
+@keyframes hs-rise-up { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
 @keyframes hs-jiggle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(1.5px)} }
 .art-spin { transform-box:fill-box; transform-origin:center; animation:hs-spin 3s linear infinite; }
 .art-spin-fast { transform-box:fill-box; transform-origin:center; animation:hs-spin 1s linear infinite; }
@@ -65,9 +67,11 @@ export const HERO_SCENE_CSS = `
 .art-stream { stroke-dasharray:6 6; animation:hs-stream .5s linear infinite; }
 .art-kibble { animation:hs-drop 1.1s ease-in infinite; }
 .art-kibble:nth-child(2){animation-delay:.35s} .art-kibble:nth-child(3){animation-delay:.7s}
+.art-sweep { animation:hs-travel 5s ease-in-out infinite; }
+.art-rise { animation:hs-rise-up 1.6s ease-in-out infinite; }
 .art-pile { animation:hs-jiggle 1.1s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .hs-fx *, .hs-fx, .art-spin, .art-spin-fast, .art-heat, .art-bubble, .art-wave, .art-stream, .art-kibble, .art-pile { animation: none !important; }
+  .hs-fx *, .hs-fx, .art-spin, .art-spin-fast, .art-heat, .art-bubble, .art-wave, .art-stream, .art-kibble, .art-pile, .art-sweep, .art-rise { animation: none !important; }
   .hs-p { opacity:.35 !important }
 }
 `
