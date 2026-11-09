@@ -1,15 +1,15 @@
 import {
+  type CalendarRecordPorts,
   type IScopedLogger,
   makeInMemoryRecords,
   moveCalendarIdsToRecords,
-  type CalendarRecordPorts,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { googleBrokersEntryKind, googleCalendarsEntryKind } from '../broker-record-kinds.js'
+import { parseStampedCalendarId } from '../google-broker-registry.js'
 import { buildGoogleCalendarInstances, selectedStampedIds } from '../google-calendar-instances.js'
 import { createGoogleCalendarSource } from '../google-calendar-source.js'
-import { parseStampedCalendarId } from '../google-broker-registry.js'
 import { calendarRecordPortsOver } from '../migrations/ports.js'
 
 const silent: IScopedLogger = {
@@ -119,5 +119,49 @@ describe('Google calendars as integration instances', () => {
     expect(await source.listCalendars()).toEqual([
       { id: 'google_001:work@g', name: 'Work', source: 'addon', enabled: true },
     ])
+  })
+  it('a switched-off calendar leaves the source answer and its events, and returns when switched on', async () => {
+    const { instances } = await setup()
+    await instances.createInstance({
+      id: 'cal_a',
+      name: 'A',
+      values: { accountId: 'google_001', calendarId: 'work@g' },
+    })
+    const listed: string[] = []
+    const source = createGoogleCalendarSource({
+      logger: silent,
+      accounts: () => [
+        {
+          brokerId: 'google_001',
+          connected: true,
+          api: {
+            listCalendars: async () => [{ id: 'work@g', summary: 'Work' }],
+            listEvents: async ({ calendarId }) => {
+              listed.push(calendarId)
+              return []
+            },
+          },
+        },
+      ],
+      selectedCalendarIds: (brokerId) =>
+        selectedStampedIds(resolved).get(brokerId) ?? new Set<string>(),
+    })
+    let resolved = await instances.listResolved()
+    expect((await source.listCalendars()).map((c) => c.id)).toEqual(['google_001:work@g'])
+    await source.listEvents({ calendarIds: ['google_001:work@g'], startMs: 0, endMs: 1 })
+    expect(listed).toEqual(['work@g'])
+    listed.length = 0
+
+    await instances.toProvider().setInstanceEnabled({ id: 'cal_a', enabled: false })
+    resolved = await instances.listResolved()
+    expect(await source.listCalendars()).toEqual([])
+    await source.listEvents({ calendarIds: ['google_001:work@g'], startMs: 0, endMs: 1 })
+    expect(listed).toEqual([])
+
+    await instances.toProvider().setInstanceEnabled({ id: 'cal_a', enabled: true })
+    resolved = await instances.listResolved()
+    expect((await source.listCalendars()).map((c) => c.id)).toEqual(['google_001:work@g'])
+    await source.listEvents({ calendarIds: ['google_001:work@g'], startMs: 0, endMs: 1 })
+    expect(listed).toEqual(['work@g'])
   })
 })
