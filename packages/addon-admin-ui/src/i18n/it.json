@@ -6274,6 +6274,11 @@
       "orSubject": "oppure",
       "onlySomeClasses": "Solo alcune classi",
       "addClass": "Aggiungi una classe"
+    },
+    "stepGuard": {
+      "if": "Solo se…",
+      "hint": "Controllato quando si arriva a questo passo. Se uno stato non è leggibile, il passo e il suo alternativo vengono saltati.",
+      "else": "Altrimenti, esegui…"
     }
   },
   "accessDenied": {

@@ -165,16 +165,55 @@ export function normalizeStepTargets<A extends AutomationAction>(
 /**
  * The steps an internal Action may contain: cap and wait, and nothing that can
  * call back into an Action — so an Action can never reach itself (no cycles).
+ * This is the LEAF shape: no condition of its own.
  */
-export const ActionStepSchema = z.discriminatedUnion('kind', [
+export const LeafActionStepSchema = z.discriminatedUnion('kind', [
   AutomationWaitStepSchema,
   AutomationCapStepSchema,
+])
+
+/** How many steps one `else` list holds. */
+export const STEP_ELSE_MAX = 10
+
+/**
+ * The optional guard of a step (#472): `if` is the ONE `when` tree (D980), read
+ * on the state mirror when the step is reached; `else` runs when it is false.
+ * An `else` holds leaf steps only — the nesting is bounded at ONE level, so a
+ * branch can never grow a tree the trace has to draw.
+ */
+const stepGuardShape = {
+  if: AutomationWhenSchema.optional(),
+  else: z.array(LeafActionStepSchema).max(STEP_ELSE_MAX).optional(),
+}
+const elseNeedsIf = {
+  message: 'an else list needs the condition it is the other side of (if)',
+  path: ['else'],
+}
+
+const GuardedWaitStepSchema = AutomationWaitStepSchema.extend(stepGuardShape).refine(
+  (step) => step.else === undefined || step.if !== undefined,
+  elseNeedsIf,
+)
+const GuardedCapStepSchema = AutomationCapStepBaseSchema.extend(stepGuardShape)
+  .refine((step) => step.target !== undefined || step.deviceId !== undefined, {
+    message: 'a cap step needs a target',
+    path: ['target'],
+  })
+  .refine((step) => step.target?.kind !== 'domain' || step.actionId !== undefined, {
+    message: 'a domain target needs the vocabulary action it applies to (actionId)',
+    path: ['actionId'],
+  })
+  .refine((step) => step.else === undefined || step.if !== undefined, elseNeedsIf)
+
+export const ActionStepSchema = z.discriminatedUnion('kind', [
+  GuardedWaitStepSchema,
+  GuardedCapStepSchema,
 ])
 export type ActionStep = z.infer<typeof ActionStepSchema>
 
 export const AutomationActionSchema = z.discriminatedUnion('kind', [
-  AutomationWaitStepSchema,
-  AutomationCapStepSchema,
+  GuardedWaitStepSchema,
+  GuardedCapStepSchema,
   z.object({
     kind: z.literal('action'),
     /** An entry of the `actions` surface (`internal:<uuid>` or `<addonId>:<localId>`). */

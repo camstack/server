@@ -8,6 +8,7 @@ import {
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { ALL_DAYS, at, harness } from './scheduler-support.js'
+import type { StepConditionDoor } from '../step-condition-door.js'
 
 function turn(on: boolean, target: number | 'domain'): ActionStep {
   return {
@@ -89,6 +90,47 @@ describe('scheduler engine — device templates (D1021)', () => {
     await w.advanceTo(h(9))
     expect(w.calls.map((c) => c.args)).toEqual([{ text: 'Warm 21.5' }])
     expect(seen).toEqual([undefined])
+    expect(w.outcomes(id)).toEqual(['done'])
+  })
+})
+
+describe('scheduler engine — a conditional step (#472)', () => {
+  it('a false if runs the else step, read through the door with no per-caller restriction', async () => {
+    const built: Array<readonly number[] | undefined> = []
+    const conditions: StepConditionDoor = (readable) => {
+      built.push(readable)
+      return async () => ({ result: 'false', reason: 'not on' })
+    }
+    const w = await harness({ start: MIDNIGHT, devices: [{ id: 1 }], conditions })
+    const step: ActionStep = {
+      kind: 'cap',
+      target: { kind: 'devices', ids: [1] },
+      cap: 'display',
+      method: 'show',
+      args: { text: 'then' },
+      if: {
+        kind: 'device-is',
+        deviceId: 1,
+        cap: 'switch',
+        fieldPath: 'on',
+        operator: 'eq',
+        value: true,
+      },
+      else: [
+        {
+          kind: 'cap',
+          target: { kind: 'devices', ids: [1] },
+          cap: 'display',
+          method: 'show',
+          args: { text: 'else' },
+        },
+      ],
+    }
+    const id = await w.create(scheduler([profile([point('a', 8, 0, 'edge', [step])])]))
+    await w.engine.start()
+    await w.advanceTo(h(9))
+    expect(w.calls.map((c) => c.args)).toEqual([{ text: 'else' }])
+    expect(built).toEqual([undefined])
     expect(w.outcomes(id)).toEqual(['done'])
   })
 })

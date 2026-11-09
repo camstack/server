@@ -14,6 +14,7 @@ import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records
 import { ActionsService, type ActionSources } from '../actions-service.js'
 import { ActionsStore } from '../actions-store.js'
 import type { DeviceTemplateDoor } from '../device-template-door.js'
+import type { StepConditionDoor } from '../step-condition-door.js'
 import { coreBlocksRecordKinds } from '../record-kinds.js'
 import { actionOwner, RunsLedger } from '../runs-ledger.js'
 import { recordingLogger } from './fixtures.js'
@@ -56,6 +57,7 @@ async function world(options?: {
   readonly maxRunMs?: number
   readonly stopGraceMs?: number
   readonly templates?: DeviceTemplateDoor
+  readonly conditions?: StepConditionDoor
 }) {
   const w = makeRecordsWorld()
   await w.provider.init()
@@ -112,6 +114,7 @@ async function world(options?: {
     emit: (event) => events.push(event),
     logger: log.logger,
     ...(options?.templates === undefined ? {} : { templates: options.templates }),
+    ...(options?.conditions === undefined ? {} : { conditions: options.conditions }),
     now: () => (clock += 10),
     newRunId: () => `run-${(runs += 1)}`,
     ...(options?.maxRunMs === undefined ? {} : { maxRunMs: options.maxRunMs }),
@@ -755,18 +758,21 @@ describe('actions — the run ceiling', () => {
   })
 })
 
-
 describe('actions — device templates in step args (D1021)', () => {
   /** A door over two devices: `stufa` is camera 616's, `garage` is 9. */
   function door() {
     const owners: Record<string, number> = { stufa: 616, garage: 9 }
-    const renders: Array<{ templates: readonly string[]; allowed: readonly number[] | undefined }> = []
+    const renders: Array<{ templates: readonly string[]; allowed: readonly number[] | undefined }> =
+      []
     const fake: DeviceTemplateDoor = {
       render: async (templates, allowed) => {
         renders.push({ templates, allowed })
         return templates.map((t) => ({
           ok: true as const,
-          text: t.replace(/\{\{ (\w+)\.temp \}\}/, (_m, alias: string) => `${owners[alias] ?? '?'}C`),
+          text: t.replace(
+            /\{\{ (\w+)\.temp \}\}/,
+            (_m, alias: string) => `${owners[alias] ?? '?'}C`,
+          ),
           trace: [],
         }))
       },
@@ -851,5 +857,68 @@ describe('actions — device templates in step args (D1021)', () => {
     expect(result.outcome).toBe('failed')
     expect(result.message).toContain('[budget-exceeded]')
     expect(w.calls).toEqual([])
+  })
+})
+
+describe('actions — a conditional step (#472)', () => {
+  const IF = {
+    kind: 'device-is',
+    deviceId: 616,
+    cap: 'switch',
+    fieldPath: 'on',
+    operator: 'eq',
+    value: true,
+  } as const
+  const GUARDED: ActionStep = {
+    kind: 'cap',
+    deviceId: 616,
+    cap: 'siren',
+    method: 'on',
+    if: IF,
+    else: [{ kind: 'cap', deviceId: 616, cap: 'siren', method: 'off' }],
+  }
+
+  /** A door whose verdict is fixed; it records the readable set it was built for. */
+  function door(result: 'true' | 'false' | 'unknown') {
+    const built: Array<readonly number[] | undefined> = []
+    const fake: StepConditionDoor = (readable) => {
+      built.push(readable)
+      return async () => ({ result, reason: `fixed ${result}` })
+    }
+    return { fake, built }
+  }
+
+  async function guarded(conditions: StepConditionDoor | undefined) {
+    const w = await world(conditions === undefined ? {} : { conditions })
+    const { action } = await w.service.create({ action: { name: 'If', steps: [GUARDED] } })
+    await w.service.setLinks({ deviceId: 616, actionIds: [action.id] })
+    return { w, action }
+  }
+
+  it('true runs the step, false runs the else, unknown runs neither — and the trace says which', async () => {
+    for (const [result, methods, outcome] of [
+      ['true', ['on'], 'ok'],
+      ['false', ['off'], 'ok'],
+      ['unknown', [], 'skipped'],
+    ] as const) {
+      const { w, action } = await guarded(door(result).fake)
+      await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+      expect(w.calls.map((c) => c.method)).toEqual(methods)
+      const { traces } = await w.service.getTraces({ actionId: action.id })
+      expect(traces[0]?.steps[0]).toMatchObject({ condition: result, outcome })
+    }
+  })
+
+  it('a service wired with no door reads every guard as unknown', async () => {
+    const { w, action } = await guarded(undefined)
+    await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    expect(w.calls).toEqual([])
+  })
+
+  it('a non-admin run builds its evaluator bound to the camera it came through', async () => {
+    const d = door('true')
+    const { w, action } = await guarded(d.fake)
+    await w.service.run({ actionId: action.id, deviceId: 616, wait: true, caller: VIEWER })
+    expect(d.built).toEqual([[616]])
   })
 })

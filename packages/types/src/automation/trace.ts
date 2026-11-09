@@ -112,7 +112,7 @@ export type StepDeviceTrace = z.infer<typeof StepDeviceTraceSchema>
 /** How many unknown-value notes one step trace keeps. */
 export const MAX_STEP_TEMPLATE_NOTES = 20
 
-export const AutomationStepTraceSchema = z.object({
+const StepTraceBaseSchema = z.object({
   /** `actions.<i>` */
   path: z.string().min(1),
   kind: z.string().min(1),
@@ -136,9 +136,21 @@ export const AutomationStepTraceSchema = z.object({
    * (D1021): why a sentence says "—" where a number was expected. Bounded.
    */
   templates: z.array(z.string()).max(MAX_STEP_TEMPLATE_NOTES).optional(),
-  /** `empty`: the target resolved to no device, so nothing was done — never silently `ok`. */
-  outcome: z.enum(['ok', 'error', 'not-run', 'empty']),
+  /**
+   * What the step's own `if` read when the step was reached (#472): `true` the
+   * step ran, `false` its `else` ran (or nothing did), `unknown` a state leaf
+   * could not be read, so NEITHER side ran. Absent on an unguarded step.
+   */
+  condition: z.enum(['true', 'false', 'unknown']).optional(),
+  /** Why the condition read what it read, in the evaluator's own words. */
+  conditionReason: z.string().optional(),
+  /** `empty`: the target resolved to no device, so nothing was done — never silently `ok`. `skipped`: its `if` was false (or unknown) and nothing ran in its place. */
+  outcome: z.enum(['ok', 'error', 'not-run', 'empty', 'skipped']),
   message: z.string().optional(),
+})
+/** A step trace; the `else` steps that ran are one level of the same shape (the nesting is bounded at one). */
+export const AutomationStepTraceSchema = StepTraceBaseSchema.extend({
+  else: z.array(StepTraceBaseSchema).optional(),
 })
 export type AutomationStepTrace = z.infer<typeof AutomationStepTraceSchema>
 

@@ -9,6 +9,7 @@ import {
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import type { DeviceTemplateDoor } from '../device-template-door.js'
+import type { StepConditionDoor } from '../step-condition-door.js'
 import { FanPresetActionSource } from '../fan-presets-action-source.js'
 import { FanPresetsService, type FanPresetsServiceDeps } from '../fan-presets-service.js'
 import { recordingLogger } from './fixtures.js'
@@ -61,6 +62,7 @@ interface WorldOptions {
   readonly siblings?: Readonly<Record<number, { name: string; type: DeviceType }>>
   readonly children?: readonly number[]
   readonly templates?: DeviceTemplateDoor
+  readonly conditions?: StepConditionDoor
 }
 
 function world(options: WorldOptions = {}) {
@@ -104,6 +106,7 @@ function world(options: WorldOptions = {}) {
     },
     logger: lines.logger,
     ...(options.templates === undefined ? {} : { templates: options.templates }),
+    ...(options.conditions === undefined ? {} : { conditions: options.conditions }),
   }
   return {
     service: new FanPresetsService(deps),
@@ -400,7 +403,6 @@ describe('FanPresetActionSource', () => {
   })
 })
 
-
 describe('FanPresetsService.applyPreset — device templates (D1021)', () => {
   it('renders a templated arg through the door, bound to the fan it was applied on', async () => {
     const seen: Array<readonly number[] | undefined> = []
@@ -421,5 +423,38 @@ describe('FanPresetsService.applyPreset — device templates (D1021)', () => {
     expect(result.status).toBe('applied')
     expect(w.calls[0]?.args).toEqual({ label: 'Warm 21.5' })
     expect(seen).toEqual([[FAN]])
+  })
+})
+
+describe('FanPresetsService.applyPreset — a conditional step (#472)', () => {
+  it("reads the step's if through the door bound to the fan, and runs the else on false", async () => {
+    const built: Array<readonly number[] | undefined> = []
+    const conditions: StepConditionDoor = (readable) => {
+      built.push(readable)
+      return async () => ({ result: 'false', reason: 'not on' })
+    }
+    const preset: FanPreset = {
+      id: 'if',
+      name: 'If',
+      steps: [
+        {
+          ...cap(FAN, 'fan-control', 'setLabel', { label: 'then' }),
+          if: {
+            kind: 'device-is',
+            deviceId: FAN,
+            cap: 'switch',
+            fieldPath: 'on',
+            operator: 'eq',
+            value: true,
+          },
+          else: [cap(FAN, 'fan-control', 'setLabel', { label: 'else' })],
+        },
+      ],
+    }
+    const w = world({ initial: [preset], conditions })
+    const result = await w.service.applyPreset({ deviceId: FAN, presetId: 'if' })
+    expect(result.status).toBe('applied')
+    expect(w.calls.map((c) => c.args)).toEqual([{ label: 'else' }])
+    expect(built).toEqual([[FAN]])
   })
 })

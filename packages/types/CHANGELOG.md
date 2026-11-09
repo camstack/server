@@ -56,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Action step arguments may carry device value templates, rendered at run time
+- An action step can carry an if condition and an else list; a state that cannot be read runs neither side
 
 ## [1.2.531] - 2026-11-08
 

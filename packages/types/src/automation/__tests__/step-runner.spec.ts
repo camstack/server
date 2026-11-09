@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { DeviceTemplateRender } from '../../expression/device-template.js'
 import { type ActionVariable, resolveActionVariables } from '../action.js'
 import { ActionTargetResolver } from '../action-target.js'
+import { evaluateStepCondition } from '../step-condition.js'
 import type { ActionStep } from '../recipe.js'
 import {
   buildActionSteps,
@@ -189,9 +190,10 @@ describe('buildActionSteps — device templates (D1021 run-time contract)', () =
     },
   ]
 
-  function rendering(
-    answer: (source: string) => DeviceTemplateRender,
-  ): { sources: string[]; render: (sources: readonly string[]) => Promise<DeviceTemplateRender[]> } {
+  function rendering(answer: (source: string) => DeviceTemplateRender): {
+    sources: string[]
+    render: (sources: readonly string[]) => Promise<DeviceTemplateRender[]>
+  } {
     const sources: string[] = []
     return {
       sources,
@@ -209,10 +211,14 @@ describe('buildActionSteps — device templates (D1021 run-time contract)', () =
       text: source.replace('{{ stufa.temperature | round(1) }}', '21.5'),
       trace: [],
     }))
-    const runnable = buildActionSteps(templated, { zone: '{{ secret.thing }}' }, {
-      ...d.deps,
-      renderTemplates: r.render,
-    })
+    const runnable = buildActionSteps(
+      templated,
+      { zone: '{{ secret.thing }}' },
+      {
+        ...d.deps,
+        renderTemplates: r.render,
+      },
+    )
     const result = await runSteps(runnable, options())
     expect(result.failed).toBe(false)
     expect(d.calls[0]?.args).toEqual({
@@ -232,10 +238,14 @@ describe('buildActionSteps — device templates (D1021 run-time contract)', () =
       text: 'Stufa — in porch',
       trace: [{ ref: 'stufa.temperature', reason: 'unknown-field' }],
     }))
-    const runnable = buildActionSteps(templated, { zone: 'porch' }, {
-      ...d.deps,
-      renderTemplates: r.render,
-    })
+    const runnable = buildActionSteps(
+      templated,
+      { zone: 'porch' },
+      {
+        ...d.deps,
+        renderTemplates: r.render,
+      },
+    )
     const result = await runSteps(runnable, options())
     expect(result.failed).toBe(false)
     expect(d.calls[0]?.args['text']).toBe('Stufa — in porch')
@@ -281,5 +291,123 @@ describe('buildActionSteps — device templates (D1021 run-time contract)', () =
     await runSteps(runnable, options())
     expect(r.sources).toEqual([])
     expect(d.calls).toHaveLength(1)
+  })
+})
+
+describe('a conditional step (#472): if / else on the ONE when tree', () => {
+  const IS_ON = {
+    kind: 'device-is',
+    deviceId: 7,
+    cap: 'switch',
+    fieldPath: 'on',
+    operator: 'eq',
+    value: true,
+  } as const
+  const closeStep: ActionStep = {
+    kind: 'cap',
+    deviceId: 616,
+    cap: 'cover',
+    method: 'close',
+    if: IS_ON,
+    else: [{ kind: 'cap', deviceId: 617, cap: 'cover', method: 'open' }],
+  }
+
+  function run(slice: unknown, extra: Partial<RunStepsOptions> = {}) {
+    const d = deps()
+    const failures: string[] = []
+    const steps = buildActionSteps(
+      [closeStep],
+      {},
+      {
+        ...d.deps,
+        evaluateCondition: async (when) =>
+          evaluateStepCondition(when, {
+            fetchSlice: async () => slice,
+            fetchStableIds: async () => new Map(),
+          }),
+      },
+    )
+    return runSteps(steps, options({ onFailure: (f) => failures.push(f.message), ...extra })).then(
+      (result) => ({ result, calls: d.calls, failures }),
+    )
+  }
+
+  it('true: the step runs, the else does not, and the trace says what was read', async () => {
+    const { result, calls } = await run({ on: true })
+    expect(calls.map((c) => c.method)).toEqual(['close'])
+    expect(result.steps[0]).toMatchObject({ outcome: 'ok', condition: 'true' })
+    expect(result.steps[0]?.else).toBeUndefined()
+  })
+
+  it('false: the else steps run instead and are traced under the step', async () => {
+    const { result, calls } = await run({ on: false })
+    expect(calls.map((c) => c.method)).toEqual(['open'])
+    expect(result.steps[0]).toMatchObject({ outcome: 'ok', condition: 'false' })
+    expect(result.steps[0]?.else?.[0]).toMatchObject({
+      outcome: 'ok',
+      method: 'open',
+      path: 'steps.0.else.0',
+    })
+  })
+
+  it('false with no else: the step is skipped, not silently ok', async () => {
+    const d = deps()
+    const { else: _drop, ...bare } = closeStep as Extract<ActionStep, { kind: 'cap' }>
+    const steps = buildActionSteps(
+      [bare],
+      {},
+      {
+        ...d.deps,
+        evaluateCondition: async (when) =>
+          evaluateStepCondition(when, {
+            fetchSlice: async () => ({ on: false }),
+            fetchStableIds: async () => new Map(),
+          }),
+      },
+    )
+    const result = await runSteps(steps, options())
+    expect(d.calls).toEqual([])
+    expect(result.steps[0]).toMatchObject({ outcome: 'skipped', condition: 'false' })
+  })
+
+  it('unknown: NEITHER side runs and the trace says why', async () => {
+    const { result, calls } = await run(undefined)
+    expect(calls).toEqual([])
+    expect(result.steps[0]).toMatchObject({ outcome: 'skipped', condition: 'unknown' })
+    expect(result.steps[0]?.message).toMatch(/not known/i)
+    expect(result.steps[0]?.else).toBeUndefined()
+  })
+
+  it('a failing else step fails the run and the later steps are not run', async () => {
+    const d = deps()
+    const failing: ActionStep = {
+      ...(closeStep as Extract<ActionStep, { kind: 'cap' }>),
+      else: [{ kind: 'cap', deviceId: 1, cap: 'broken', method: 'x' }],
+    }
+    const steps = buildActionSteps(
+      [failing, { kind: 'wait', seconds: 1 }],
+      {},
+      {
+        ...d.deps,
+        evaluateCondition: async (when) =>
+          evaluateStepCondition(when, {
+            fetchSlice: async () => ({ on: false }),
+            fetchStableIds: async () => new Map(),
+          }),
+      },
+    )
+    const result = await runSteps(steps, options())
+    expect(result.failed).toBe(true)
+    expect(result.steps[0]).toMatchObject({ outcome: 'error', condition: 'false' })
+    expect(result.steps[1]).toMatchObject({ outcome: 'not-run' })
+  })
+
+  it('a consumer with no evaluator fails the step rather than guessing', async () => {
+    const d = deps()
+    const steps = buildActionSteps([closeStep], {}, d.deps)
+    const result = await runSteps(steps, options())
+    expect(d.calls).toEqual([])
+    expect(result.steps[0]).toMatchObject({ outcome: 'skipped', condition: 'unknown' })
+    expect(result.steps[0]?.message).toMatch(/no condition evaluator/i)
   })
 })

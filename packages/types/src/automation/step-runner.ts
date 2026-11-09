@@ -13,6 +13,11 @@ import type { CommandOriginClaim } from '../audit/device-transition.js'
 import type { DeviceTemplateRender } from '../expression/device-template.js'
 import type { ActionTarget, ResolvedTarget, ResolveOrigin } from './action-target.js'
 import { type ActionStep, normalizeCapStep } from './recipe.js'
+import type {
+  EvaluateStepCondition,
+  StepConditionResult,
+  StepConditionVerdict,
+} from './step-condition.js'
 import {
   type AutomationStepTrace,
   buildStepArgsTrace,
@@ -48,6 +53,10 @@ export interface StepScope {
 export interface RunnableStep {
   readonly meta: StepMeta
   run(scope: StepScope): Promise<void>
+  /** The step's own `if` (#472): read when the step is reached. Absent = always runs. */
+  readonly guard?: () => Promise<StepConditionVerdict>
+  /** Run when the guard reads `false`; never when it reads `unknown`. */
+  readonly otherwise?: readonly RunnableStep[]
 }
 
 export interface StepFailure {
@@ -78,6 +87,23 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }
 
+/** A guard that throws is an unknown, never a crash of the run. */
+async function readGuard(
+  guard: () => Promise<StepConditionVerdict>,
+): Promise<StepConditionVerdict> {
+  try {
+    return await guard()
+  } catch (err: unknown) {
+    return { result: 'unknown', reason: `the condition could not be read: ${errorMessage(err)}` }
+  }
+}
+
+/** The else level of a trace is one level deep: a nested trace carries no `else` of its own. */
+function withoutElse(trace: AutomationStepTrace): Omit<AutomationStepTrace, 'else'> {
+  const { else: _else, ...rest } = trace
+  return rest
+}
+
 export async function runSteps(
   steps: readonly RunnableStep[],
   options: RunStepsOptions,
@@ -98,6 +124,43 @@ export async function runSteps(
       continue
     }
     const startedAt = options.now()
+    let guardTrace: { condition?: StepConditionResult; conditionReason?: string } = {}
+    if (step.guard !== undefined) {
+      const verdict = await readGuard(step.guard)
+      guardTrace = { condition: verdict.result, conditionReason: verdict.reason }
+      if (verdict.result !== 'true') {
+        const branch = verdict.result === 'false' ? (step.otherwise ?? []) : []
+        if (branch.length === 0) {
+          traces.push({
+            ...step.meta,
+            ...guardTrace,
+            path,
+            startedAt,
+            endedAt: options.now(),
+            outcome: 'skipped',
+            message:
+              verdict.result === 'unknown'
+                ? `not run: ${verdict.reason}`
+                : `not run: the condition is false (${verdict.reason})`,
+          })
+          continue
+        }
+        const sub = await runSteps(branch, { ...options, pathPrefix: `${path}.else` })
+        if (sub.failed) failed = true
+        else if (sub.aborted) aborted = true
+        traces.push({
+          ...step.meta,
+          ...guardTrace,
+          path,
+          startedAt,
+          endedAt: options.now(),
+          outcome: sub.failed ? 'error' : 'ok',
+          ...(sub.failed ? { message: 'an else step failed' } : {}),
+          else: sub.steps.map(withoutElse),
+        })
+        continue
+      }
+    }
     let deviceId: number | undefined = step.meta.deviceId
     let sent: Readonly<Record<string, unknown>> | undefined
     const perDevice: StepDeviceTrace[] = []
@@ -134,6 +197,7 @@ export async function runSteps(
         ...argsTrace(),
         ...templatesTrace(),
         ...devicesTrace(),
+        ...guardTrace,
         path,
         startedAt,
         endedAt: options.now(),
@@ -150,6 +214,7 @@ export async function runSteps(
         ...argsTrace(),
         ...templatesTrace(),
         ...devicesTrace(),
+        ...guardTrace,
         path,
         startedAt,
         endedAt: options.now(),
@@ -234,7 +299,10 @@ export class StepTemplateError extends Error {
 /** The text of `{{vars.x}}` slots, kept out of a template's source (a variable VALUE is never rendered). */
 const VAR_SLOT_OPEN = '\uE000'
 const VAR_SLOT_CLOSE = '\uE001'
-const PROTECTED_SLOT_RE = new RegExp(`${VAR_SLOT_OPEN}([A-Za-z_][A-Za-z0-9_]*)${VAR_SLOT_CLOSE}`, 'g')
+const PROTECTED_SLOT_RE = new RegExp(
+  `${VAR_SLOT_OPEN}([A-Za-z_][A-Za-z0-9_]*)${VAR_SLOT_CLOSE}`,
+  'g',
+)
 const TEMPLATE_MARKUP_RE = /\{\{|\{%/
 
 /** True when a string, once its `{{vars.x}}` slots are set aside, still carries template markup. */
@@ -379,6 +447,8 @@ export interface ActionStepDeps {
   onMissingVar(name: string): void
   /** Renders the device templates of a step's args (D1021); absent on a node that has none. */
   readonly renderTemplates?: RenderStepTemplates
+  /** Reads a step's `if` (#472) on the state mirror; absent = a guarded step reads `unknown`. */
+  readonly evaluateCondition?: EvaluateStepCondition
   /** Turn a step's target into device ids (an empty answer is logged by the resolver). */
   resolveTarget(
     target: ActionTarget,
@@ -454,19 +524,39 @@ export async function runForDevices(
  * variables. Variables are substituted per step, at the moment it runs, so a
  * missing one fails THAT step (traced) and leaves the later ones not-run.
  */
+/** The guard and the else list of a step, bound to the run (#472); `{}` for an unguarded step. */
+function guardOf(
+  step: ActionStep,
+  vars: StepVars,
+  deps: ActionStepDeps,
+): Pick<RunnableStep, 'guard' | 'otherwise'> {
+  const when = step.if
+  if (when === undefined) return {}
+  const evaluate = deps.evaluateCondition
+  return {
+    guard: async () =>
+      evaluate === undefined
+        ? { result: 'unknown', reason: 'this consumer has no condition evaluator' }
+        : evaluate(when),
+    ...(step.else === undefined ? {} : { otherwise: buildActionSteps(step.else, vars, deps) }),
+  }
+}
+
 export function buildActionSteps(
   steps: readonly ActionStep[],
   vars: StepVars,
   deps: ActionStepDeps,
 ): RunnableStep[] {
   return steps.map((step): RunnableStep => {
+    const guarded = guardOf(step, vars, deps)
     const meta = stepMetaOfAction(step)
     if (step.kind === 'wait') {
-      return { meta, run: () => deps.sleep(step.seconds * 1000) }
+      return { meta, ...guarded, run: () => deps.sleep(step.seconds * 1000) }
     }
     const normalized = normalizeCapStep(step)
     return {
       meta,
+      ...guarded,
       run: async (scope) => {
         const templated = await resolveStepArgsWithTemplates(
           step.args ?? {},

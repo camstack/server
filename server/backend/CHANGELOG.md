@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An action step can carry an if condition and an else list, in actions, schedulers, fan presets and automations
+
 ## [1.2.821] - 2026-11-09
 
 ### Changed

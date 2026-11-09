@@ -31,6 +31,7 @@ import { type AutomationDevice } from './automation-data'
 import { PickerLabel } from './FieldPicker'
 import { RunActionFields } from './RunActionFields'
 import { type ActionKind, moveItem, newAction, removeAt, replaceAt } from './recipe-parts'
+import { StepGuard } from './StepGuard'
 import { Trans, useTranslation } from 'react-i18next'
 
 const ACTION_KINDS: readonly { readonly value: ActionKind; readonly labelKey: string }[] = [
@@ -52,6 +53,8 @@ export interface ActionListProps {
   readonly stepTones?: readonly BlockTone[]
   /** What the selected run recorded per step, by index; shown inside the card. */
   readonly stepResults?: readonly (StepDetailView | undefined)[]
+  /** An else list: its steps carry no `if` of their own (one level of else). */
+  readonly nested?: boolean
   readonly onChange: (next: readonly AutomationAction[]) => void
 }
 
@@ -63,6 +66,7 @@ export function ActionList({
   variables = [],
   stepTones,
   stepResults,
+  nested = false,
   onChange,
 }: ActionListProps) {
   const { t } = useTranslation()
@@ -136,7 +140,7 @@ export function ActionList({
                 value={String(action.seconds)}
                 onChange={(e) =>
                   onChange(
-                    replaceAt(actions, index, { kind: 'wait', seconds: Number(e.target.value) }),
+                    replaceAt(actions, index, { ...action, seconds: Number(e.target.value) }),
                   )
                 }
               />
@@ -166,13 +170,31 @@ export function ActionList({
               devices={devices}
               devicesState={devicesState}
               variables={variables}
-              onChange={(next) => onChange(replaceAt(actions, index, next))}
+              onChange={(next) =>
+                onChange(
+                  replaceAt(actions, index, {
+                    ...next,
+                    ...(action.if === undefined ? {} : { if: action.if }),
+                    ...(action.else === undefined ? {} : { else: action.else }),
+                  }),
+                )
+              }
             />
           )}
 
           {action.kind === 'action' && (
             <RunActionFields
               step={action}
+              onChange={(next) => onChange(replaceAt(actions, index, next))}
+            />
+          )}
+
+          {!nested && (action.kind === 'wait' || action.kind === 'cap') && (
+            <StepGuard
+              step={action}
+              devices={devices}
+              devicesState={devicesState}
+              variables={variables}
               onChange={(next) => onChange(replaceAt(actions, index, next))}
             />
           )}

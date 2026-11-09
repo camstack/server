@@ -283,10 +283,42 @@ function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
   }
 }
 
+/** The body of a wait or cap step, shared by a top-level step and an else step. */
+function emitLeafBody(action: AutomationAction): string | null {
+  switch (action.kind) {
+    case 'wait':
+      return `        await sleep(${j(action.seconds * 1000)})`
+    case 'cap': {
+      const { target, actionId } = normalizeCapStep(action)
+      return `        await actuateTarget(scope, ${j(target)}, ${j(actionId)}, ${j(action.cap)}, ${j(
+        action.method,
+      )}, ${j(action.args ?? {})}, vars)`
+    }
+    default:
+      return null
+  }
+}
+
+/** A step's `if` (#472) and its else list, as the fields of a RunnableStep. */
+function emitGuard(action: AutomationAction): string {
+  if (action.kind !== 'wait' && action.kind !== 'cap') return ''
+  if (action.if === undefined) return ''
+  const otherwise = (action.else ?? [])
+    .map((el) => {
+      const body = emitLeafBody(el)
+      return `{ meta: ${j(stepMetaOf(el))}, run: async (scope) => {\n${body ?? ''}\n } }`
+    })
+    .join(', ')
+  return `      guard: () => evaluateCondition(${j(action.if)}),${
+    otherwise === '' ? '' : `\n      otherwise: [${otherwise}],`
+  }
+`
+}
+
 function emitAction(action: AutomationAction, index: number): string {
   const step = (body: string): string => `    {
       meta: STEP_META[${index}]!,
-      run: async (scope) => {
+${emitGuard(action)}      run: async (scope) => {
 ${body}
       },
     },`
@@ -352,6 +384,7 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   AutomationConditionTraceNode,
   AutomationRunTrace,
   AutomationRunVerdict,
+  AutomationWhen,
   AutomationStepTrace,
   RunnableStep,
   StepScope,
@@ -377,6 +410,7 @@ import {
   resolveStepArgs,
   resolveStepArgsWithTemplates,
   runForDevices,
+  evaluateStepCondition,
   runSteps,
   validateTimeSpecForSite,
   zoneOnlySite,
@@ -733,6 +767,17 @@ export default function block(ctx: AddonContext) {
       throw new Error('no such device method: ' + cap + '.' + method)
     }
     await mutate({ ...resolved, deviceId })
+  }
+
+  /** A step's \`if\` (#472), read on a mirror filled for exactly its leaves, NOW (D49: unread = unknown). */
+  function evaluateCondition(when: AutomationWhen) {
+    return evaluateStepCondition(when, {
+      fetchSlice: (deviceId, cap) => ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap }),
+      fetchStableIds: async () => {
+        const all = await ctx.api.deviceManager.listAll.query({})
+        return stableIdMapOf(all.devices)
+      },
+    })
   }
 
   /** The THEN half, through the ONE shared step runner: stops at the first

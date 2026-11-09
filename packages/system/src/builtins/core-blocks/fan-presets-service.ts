@@ -38,6 +38,11 @@ import {
   runSteps,
 } from '@camstack/types'
 import { type DeviceTemplateDoor, stepRenderer } from './device-template-door.js'
+import {
+  conditionDeps,
+  type StepConditionDoor,
+  stepConditionEvaluator,
+} from './step-condition-door.js'
 
 /** The per-device store the presets live in. */
 export interface FanPresetsStore {
@@ -75,6 +80,7 @@ export interface FanPresetsServiceDeps {
   readonly now?: () => number
   /** The device template renderer (D1021); a templated step fails where there is none. */
   readonly templates?: DeviceTemplateDoor
+  readonly conditions?: StepConditionDoor
 }
 
 type SetResult = Awaited<ReturnType<IFanPresetsProvider['setPresets']>>
@@ -225,6 +231,7 @@ export class FanPresetsService implements IFanPresetsProvider {
         owner: `fan-preset:${deviceId}/${presetId}`,
         // Bound to the fan itself: the scope gate proved that device, nothing else.
         renderTemplates: stepRenderer(this.deps.templates, [deviceId]),
+        ...conditionDeps(stepConditionEvaluator(this.deps.conditions, [deviceId])),
         onMissingVar: () => undefined,
       },
     )

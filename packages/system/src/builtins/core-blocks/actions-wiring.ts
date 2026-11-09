@@ -26,6 +26,7 @@ import {
 import { ActionsService, type ActionSources } from './actions-service.js'
 import { ActionsStore } from './actions-store.js'
 import { templateDoorOver } from './device-template-door.js'
+import { conditionDoorOver } from './step-condition-door.js'
 import { coreBlocksRecordKinds } from './record-kinds.js'
 import { buildRunsApi, type RunsApi } from './runs-api.js'
 import { RunsLedger } from './runs-ledger.js'
@@ -154,6 +155,7 @@ export function buildActionsRuntime(deps: ActionsRuntimeDeps): ActionsRuntime {
     directory: deps.directory ?? directoryOver(deps.api),
     invokeCap: invokeCapOver(deps.api),
     templates: templateDoorOver(deps.api),
+    conditions: conditionDoorOver(deps.api),
     emit: (event: ActionRunChanged) =>
       deps.eventBus.emit({
         id: randomUUID(),

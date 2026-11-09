@@ -27,6 +27,7 @@ import {
 } from './fan-presets-service.js'
 import { invokeCapOver } from './actions-wiring.js'
 import { templateDoorOver } from './device-template-door.js'
+import { conditionDoorOver } from './step-condition-door.js'
 
 /** The key of the device's settings store that holds a fan's presets. */
 export const FAN_PRESETS_STORE_KEY = 'fanPresets'
@@ -162,6 +163,7 @@ export function buildFanPresetsRuntime(deps: FanPresetsRuntimeDeps): FanPresetsR
     readings: fanPresetsReadingsOver(deps.api, deps.logger.child('fan-presets')),
     invoke: invokeCapOver(deps.api),
     templates: templateDoorOver(deps.api),
+    conditions: conditionDoorOver(deps.api),
     logger: deps.logger.child('fan-presets'),
   })
   const actionSource = new FanPresetActionSource({

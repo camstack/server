@@ -6199,6 +6199,11 @@
       "orSubject": "or",
       "onlySomeClasses": "Only some classes",
       "addClass": "Add a class"
+    },
+    "stepGuard": {
+      "if": "Only if…",
+      "hint": "Checked when this step is reached. If a state cannot be read, the step and its else are both skipped.",
+      "else": "Otherwise, run…"
     }
   },
   "accessDenied": {

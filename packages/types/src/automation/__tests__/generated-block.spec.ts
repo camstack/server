@@ -91,7 +91,9 @@ interface Options {
   /** What `actions.run` answers. */
   readonly actionOutcome?: { outcome: string; message?: string }
   /** What the hub's template renderer answers per template (D1021). */
-  readonly renderTemplate?: (source: string) => { ok: true; text: string } | { ok: false; reason: string }
+  readonly renderTemplate?: (
+    source: string,
+  ) => { ok: true; text: string } | { ok: false; reason: string }
   /** The device registry a domain target resolves against. */
   readonly registry?: FakeRegistry
   /** What `system.getSiteLocation` answers (default: Rome, located). */
@@ -351,7 +353,13 @@ describe('a schedule time spec (D983)', () => {
 
 describe('device value templates in action args (D1021)', () => {
   const NOTIFY: AutomationRecipe['actions'] = [
-    { kind: 'cap', deviceId: 616, cap: 'siren', method: 'on', args: { message: 'Temp {{ states(\'sensor.x\') }}' } },
+    {
+      kind: 'cap',
+      deviceId: 616,
+      cap: 'siren',
+      method: 'on',
+      args: { message: "Temp {{ states('sensor.x') }}" },
+    },
   ]
 
   it('renders a template arg through the hub renderer before the call', async () => {
@@ -977,5 +985,54 @@ describe('one when tree: an instant is an event, the rest is state', () => {
     const h = start(await load(bothNow), { failSliceReads: true })
     await settle(5_000)
     expect(h.mutate).not.toHaveBeenCalled()
+  })
+})
+
+describe('a conditional step (#472)', () => {
+  const IF_ON = {
+    kind: 'device-is',
+    deviceId: 5,
+    cap: 'switch',
+    fieldPath: 'on',
+    operator: 'eq',
+    value: true,
+  } as const
+  const GUARDED: AutomationRecipe['actions'] = [
+    {
+      kind: 'cap',
+      deviceId: 616,
+      cap: 'siren',
+      method: 'on',
+      args: { label: 'then' },
+      if: IF_ON,
+      else: [{ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on', args: { label: 'else' } }],
+    },
+  ]
+  const fire = async (slices: Record<string, object> | undefined) => {
+    const h = start(
+      await load({ when: MOTION, actions: GUARDED }),
+      slices === undefined ? {} : { slices },
+    )
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 1)
+    await settle()
+    return h
+  }
+
+  it('true runs the step, false runs the else, unknown runs neither and says why', async () => {
+    const yes = await fire({ '5|switch': { on: true } })
+    expect(yes.mutate.mock.calls.map(([a]) => (a as { label: string }).label)).toEqual(['then'])
+    expect(yes.traces()[0]?.steps[0]).toMatchObject({ outcome: 'ok', condition: 'true' })
+
+    const no = await fire({ '5|switch': { on: false } })
+    expect(no.mutate.mock.calls.map(([a]) => (a as { label: string }).label)).toEqual(['else'])
+    expect(no.traces()[0]?.steps[0]).toMatchObject({ condition: 'false' })
+
+    const unknown = await fire(undefined)
+    expect(unknown.mutate).not.toHaveBeenCalled()
+    expect(unknown.traces()[0]?.steps[0]).toMatchObject({
+      outcome: 'skipped',
+      condition: 'unknown',
+    })
   })
 })

@@ -4,7 +4,7 @@
 
 # Decisions
 
-991 architecture decision records. One file per decision, never
+992 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1005,6 +1005,7 @@ that rots.
 | D1025 | [A device template in a consumer's text is resolved at run time by the one hub renderer, inside the caller's scope](adr-1025-a-device-template-is-resolved-at-run-time-by-the-one-hub-renderer-for-the-caller-scope.md) | ✅ accepted | 2026-11-09 |
 | D1025 | [A SingleKey ID sign-in runs in the operator's own browser with a written guide, never through the hub proxy](adr-1025-a-singlekey-id-sign-in-runs-in-the-operators-own-browser-with-a-written-guide-never-through-the-hub-proxy.md) | ✅ accepted | 2026-11-09 |
 | D1026 | [A heat pump is one device type with one status cap that carries its circuits as a keyed array](adr-1026-a-heat-pump-is-one-device-type-with-a-keyed-circuits-status-cap.md) | ✅ accepted | 2026-11-09 |
+| D1026 | [An action step may carry one `if` and one else list, read on the condition mirror when the step is reached](adr-1026-an-action-step-may-carry-one-if-and-one-else-read-on-the-condition-mirror.md) | ✅ accepted | 2026-11-09 |
 | D1027 | [A device row draws its timed run from the hero slot](adr-1027-a-device-row-draws-its-timed-run-from-the-hero-slot.md) | ✅ accepted | 2026-11-09 |
 
 Conventions, and why the numbering looks the way it does:

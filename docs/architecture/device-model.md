@@ -879,3 +879,15 @@ substituted; the trace of the step lists every value that printed `—` with its
 reason (`templates`). A refused render fails the step as `[reason]` and nothing
 is dispatched. A non-admin `actions.run` naming a device it cannot see is refused
 with `template-scope`.
+
+## A conditional action step ([D1026](../decisions/adr-1026-an-action-step-may-carry-one-if-and-one-else-read-on-the-condition-mirror.md))
+
+A `wait` or `cap` step may carry `if` (the same `when` tree an automation uses) and
+`else` (steps without an `if`, one level). `runSteps` reads the guard when the step
+is reached on a mirror filled for exactly its leaves: true runs the step, false runs
+the else, unknown (a state that cannot be read, or a caller not allowed to see the
+device) runs neither and the trace says why (`condition`, `conditionReason`,
+outcome `skipped`). Each consumer passes `evaluateCondition` (`step-condition-door.ts`
+for actions, the scheduler and fan presets; the generated block reads through its own
+mirror). The editor is the "Only if…" toggle of the shared action list
+(`StepGuard.tsx`).

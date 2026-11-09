@@ -21,6 +21,7 @@ import { directoryOver, invokeCapOver } from '../actions-wiring.js'
 import { coreBlocksRecordKinds } from '../record-kinds.js'
 import { type RunsLedger, schedulerOwner } from '../runs-ledger.js'
 import { templateDoorOver } from '../device-template-door.js'
+import { conditionDoorOver } from '../step-condition-door.js'
 import { parseDeviceStateChanged } from '../../shared/device-state-changed.js'
 import { SchedulerEngine, SCHEDULER_TRACE_KEEP } from './scheduler-engine.js'
 import { SchedulersService } from './scheduler-service.js'
@@ -83,6 +84,7 @@ export function buildSchedulersRuntime(deps: SchedulersRuntimeDeps): SchedulersR
     host,
     targets,
     templates: templateDoorOver(deps.api),
+    conditions: conditionDoorOver(deps.api),
     logger: deps.logger.child('engine'),
     record: (schedulerId, trace) =>
       deps.ledger.report(schedulerOwner(schedulerId), {

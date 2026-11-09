@@ -58,6 +58,11 @@ import {
 } from '@camstack/types'
 import type { ActionsStore } from './actions-store.js'
 import { type DeviceTemplateDoor, stepRenderer } from './device-template-door.js'
+import {
+  conditionDeps,
+  type StepConditionDoor,
+  stepConditionEvaluator,
+} from './step-condition-door.js'
 import { actionOwner, type RunsLedger, type RunsLedgerView } from './runs-ledger.js'
 
 /** The ring an Action keeps. */
@@ -93,6 +98,8 @@ export interface ActionsServiceDeps {
   readonly stopGraceMs?: number
   /** The device template renderer (D1021); absent where there is none, and a templated step then fails. */
   readonly templates?: DeviceTemplateDoor
+  /** Reads a conditional step's `if` (#472). */
+  readonly conditions?: StepConditionDoor
 }
 
 /** After a timeout stops a run, the call is answered once the run ended or this long passed. */
@@ -154,6 +161,7 @@ export class ActionsService implements IActionsProvider {
   private readonly units: UnitResolver
   private readonly targets: ActionTargetResolver
   private readonly templates: DeviceTemplateDoor | undefined
+  private readonly conditions: StepConditionDoor | undefined
   private readonly running = new Map<string, RunningRun>()
   private readonly maxRunMs: number
   private readonly stopGraceMs: number
@@ -172,6 +180,7 @@ export class ActionsService implements IActionsProvider {
     this.units = deps.units ?? capUnitResolver(ALL_CAPABILITY_DEFINITIONS)
     this.targets = new ActionTargetResolver(deps.directory, deps.logger)
     this.templates = deps.templates
+    this.conditions = deps.conditions
   }
 
   /** One-shot at boot: stored steps written before D983 are rewritten to the target shape. */
@@ -301,7 +310,8 @@ export class ActionsService implements IActionsProvider {
     readable: readonly number[] | undefined,
     deviceId: number | undefined,
   ): Promise<void> {
-    if (readable === undefined || entry.source !== 'internal' || this.templates === undefined) return
+    if (readable === undefined || entry.source !== 'internal' || this.templates === undefined)
+      return
     const templates = collectDeviceTemplates(entry.steps ?? [])
     if (templates.length === 0) return
     const checks = await this.templates.check(templates, readable)
@@ -531,6 +541,7 @@ export class ActionsService implements IActionsProvider {
           this.targets.resolve(target, actionId, vars, origin),
         owner: entry.id,
         renderTemplates: stepRenderer(this.templates, readable),
+        ...conditionDeps(stepConditionEvaluator(this.conditions, readable)),
         onMissingVar: (name) =>
           this.logger.warn('action template referenced a variable that was never set', {
             meta: { actionId: entry.id, variable: name },

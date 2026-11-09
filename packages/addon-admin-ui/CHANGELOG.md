@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An action step has an Only if toggle with the automation condition editor and an Otherwise list
+
 ## [1.2.628] - 2026-11-09
 
 ### Changed
