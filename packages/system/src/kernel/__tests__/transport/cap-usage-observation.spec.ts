@@ -21,6 +21,7 @@
  * that was handed the answer.
  */
 
+import { randomUUID } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -36,7 +37,11 @@ import { createLocalTransport } from '../../transport/create-local-transport.js'
 import { LocalChildClient } from '../../transport/local-child-client.js'
 import { LocalChildRegistry } from '../../transport/local-child-registry.js'
 
-const PARENT_NODE = 'hub'
+// The UDS endpoint is derived from the node id (`localEndpointPath`), so a fixed
+// id made every concurrent run (worktrees, vitest workers) bind the same
+// `camstack-hub.sock` and unlink each other's listener. A per-run id gives each
+// run its own socket.
+const PARENT_NODE = `hub-${randomUUID().slice(0, 8)}`
 const CALLER_ID = 'addon-post-analysis'
 const PROVIDER_ID = 'addon-pipeline'
 const PROVIDED_CAP = 'stream-catalog'
