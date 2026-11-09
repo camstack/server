@@ -99,6 +99,9 @@ export function modelSaysAnything(model: HeroModel): boolean {
   return (
     model.provenance.some((p) => p.partId === 'state') ||
     model.rows.length > 0 ||
+    model.facts.length > 0 ||
+    model.sideTiles.left.length > 0 ||
+    model.sideTiles.right.length > 0 ||
     model.ownPower !== null ||
     model.powerSupply !== null ||
     model.timedRun !== null

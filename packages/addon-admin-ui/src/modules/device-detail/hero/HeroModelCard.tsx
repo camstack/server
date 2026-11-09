@@ -433,9 +433,11 @@ function BaseSlotRows({
   const gated = new Set(model.gated)
   const { ownPower, timedRun, powerSupply } = model
   const stopsAt = timedRun?.activeUntil ?? null
+  // A climate device switches off through its own mode picker: a second Power row would say it twice.
+  const powerCarriedByMode = ownPower?.source === 'climate-control'
   return (
     <>
-      {ownPower !== null && !gated.has('own-power') ? (
+      {ownPower !== null && !powerCarriedByMode && !gated.has('own-power') ? (
         <HeroRowLine
           testId="hero-own-power"
           label={host.lang === 'it' ? 'Accensione' : 'Power'}

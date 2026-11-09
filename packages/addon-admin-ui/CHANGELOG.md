@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device page draws its hero from the hero model (layout A), live through the device state, dropping the duplicated power strip
 - The device detail hero, History and runs are one props-only module (DeviceDetailModule) that the admin page mounts directly
 - Device hero card: countdown with Stop and run again for a timed run, speed dial for a fan, end clock time on appliances
+- Device hero: an AC no longer repeats its power in a second row, and a device with only tiles or facts is drawn by the hero
 
 ## [1.2.627] - 2026-11-09
 
