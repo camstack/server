@@ -220,7 +220,7 @@ export class DeviceTemplateRenderer {
     if (!analysis.ok) return { ok: false, refusal: analysis.refusal, trace: [] }
     const prepared = this.prepare(source, analysis, resolver)
     if ('refusal' in prepared)
-      return { ok: false, refusal: prepared.refusal, trace: prepared.trace }
+      return { ok: false, refusal: prepared.refusal, trace: [...prepared.trace] }
     const open = this.breakers.get(source)
     if (open !== undefined && open.openUntil > Date.now()) {
       return {
@@ -229,14 +229,14 @@ export class DeviceTemplateRenderer {
           reason: 'budget-exceeded',
           message: `this template overran its ${this.budgetMs} ms budget ${open.timeouts} times in a row; it is not run again for ${Math.ceil((open.openUntil - Date.now()) / 1000)} s`,
         },
-        trace: prepared.trace,
+        trace: [...prepared.trace],
       }
     }
     if (this.waiting >= this.maxQueue) {
       return {
         ok: false,
         refusal: { reason: 'busy', message: `${this.maxQueue} renders are already waiting` },
-        trace: prepared.trace,
+        trace: [...prepared.trace],
       }
     }
     this.waiting += 1
@@ -260,7 +260,7 @@ export class DeviceTemplateRenderer {
     return {
       ok: false,
       refusal: { reason: response.reason, message: response.message },
-      trace: prepared.trace,
+      trace: [...prepared.trace],
     }
   }
 

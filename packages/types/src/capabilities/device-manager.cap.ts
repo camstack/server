@@ -21,6 +21,12 @@ import { CameraSwitchIdSchema } from '../interfaces/camera-switches.js'
 import { DEVICE_CHILDREN_BATCH_MAX } from '../device/children-batch-max.js'
 import { DeviceType } from '../device/device-type.js'
 import { DeviceAliasSchema } from '../device/device-alias.js'
+import {
+  DeviceTemplateRefusalSchema,
+  DeviceTemplateRenderSchema,
+  DeviceTemplateSchema,
+} from '../expression/device-template.js'
+
 import { IconKeySchema } from '../device/icon-catalog.js'
 import {
   LOCATION_DESCRIPTION_MAX,
@@ -509,6 +515,9 @@ export const MigrateDeviceResultSchema = z.object({
 /** What happened to ONE switch on ONE device during a migration. */
 export type MigrateSwitchOutcome = z.infer<typeof MigrateSwitchOutcomeSchema>
 export type MigrateSwitchReport = z.infer<typeof MigrateSwitchReportSchema>
+/** Templates one `renderDeviceTemplates` / `checkDeviceTemplates` call carries. */
+export const DEVICE_TEMPLATES_PER_CALL_MAX = 64
+
 /** The wire shape a `deviceManager.migrateDevice` caller renders. Inferred
  *  rather than restated so a client cannot drift from the report it displays. */
 export type MigrateDeviceResult = z.infer<typeof MigrateDeviceResultSchema>
@@ -644,6 +653,54 @@ export const deviceManagerCapability = {
         }),
       ]),
       { kind: 'mutation', auth: 'admin' },
+    ),
+
+    /**
+     * Render device value templates (D1021). The ONE door every consumer uses:
+     * an action step, a scheduler point, a notification rule, a generated
+     * automation block. Admin-only (an in-process block carries the mesh
+     * principal): it reads device state by alias, so a non-admin never calls it
+     * directly. `allowedDeviceIds` is the set the END caller was proven to see;
+     * a template naming another device answers `out-of-scope`. Answers are
+     * index-aligned with `templates`.
+     */
+    renderDeviceTemplates: method(
+      z.object({
+        templates: z.array(DeviceTemplateSchema).max(DEVICE_TEMPLATES_PER_CALL_MAX),
+        allowedDeviceIds: z.array(z.number().int()).optional(),
+      }),
+      z.object({ results: z.array(DeviceTemplateRenderSchema) }),
+      { auth: 'admin' },
+    ),
+
+    /**
+     * Vet templates without rendering them: the syntax refusal, or the devices
+     * each names and whether `allowedDeviceIds` covers them. The save door and
+     * the run-time scope check both ask this.
+     */
+    checkDeviceTemplates: method(
+      z.object({
+        templates: z.array(z.string()).max(DEVICE_TEMPLATES_PER_CALL_MAX),
+        allowedDeviceIds: z.array(z.number().int()).optional(),
+      }),
+      z.object({
+        results: z.array(
+          z.discriminatedUnion('ok', [
+            z.object({
+              ok: z.literal(true),
+              aliases: z.array(
+                z.object({
+                  alias: z.string(),
+                  deviceId: z.number().int().nullable(),
+                  allowed: z.boolean(),
+                }),
+              ),
+            }),
+            z.object({ ok: z.literal(false), refusal: DeviceTemplateRefusalSchema }),
+          ]),
+        ),
+      }),
+      { auth: 'admin' },
     ),
 
     /** Update the operator-organisational location label. `null`

@@ -4854,6 +4854,42 @@ export function createCapRouter_deviceManager(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setAlias(methodInput as any)
       }),
+    renderDeviceTemplates: adminProcedure
+      .input(deviceManagerCapability.methods.renderDeviceTemplates.input.loose())
+      .output(deviceManagerCapability.methods.renderDeviceTemplates.output)
+      .query(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.renderDeviceTemplates(methodInput as any)
+      }),
+    checkDeviceTemplates: adminProcedure
+      .input(deviceManagerCapability.methods.checkDeviceTemplates.input.loose())
+      .output(deviceManagerCapability.methods.checkDeviceTemplates.output)
+      .query(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.checkDeviceTemplates(methodInput as any)
+      }),
     setLocation: adminProcedure
       .input(deviceManagerCapability.methods.setLocation.input.loose())
       .output(deviceManagerCapability.methods.setLocation.output)

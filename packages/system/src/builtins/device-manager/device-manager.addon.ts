@@ -82,6 +82,7 @@ import * as metaActions from './device-meta-actions.js'
 import { runLocationBackfillAtBoot } from './location-alignment.js'
 import { runLinkedDevicesManualBackfillAtBoot } from './linked-devices-manual-backfill.js'
 import * as aliasActions from './device-alias-actions.js'
+import { DeviceTemplateActions } from './device-template-actions.js'
 import { DeviceMetaStore } from './device-meta-store.js'
 import type { ContributionShape } from './device-meta-types.js'
 import type { ProviderContext, ProviderHost } from './device-provider-context.js'
@@ -196,6 +197,7 @@ export class DeviceManagerAddon extends BaseAddon {
   private readonly removalFence: RemovalFence = createRemovalFence()
   /** Store-by-store clean-up of a removed device, with a bounded retry (D864). */
   private removalCleanupImpl: RemovalCleanup | null = null
+  private templateActions: DeviceTemplateActions | null = null
   private removalHooksCleanupImpl: RemovalCleanup | null = null
   /** Declared secret config paths per device, as last registered (D783). */
   private readonly secretConfigPaths = createSecretConfigPathRegistry()
@@ -757,6 +759,7 @@ export class DeviceManagerAddon extends BaseAddon {
     // so the query methods that self-call sibling cap methods resolve the live
     // implementation (the getter runs only when a cap method is invoked, well
     // after `provider` is assigned — no TDZ hit).
+    const templates = this.makeTemplateActions()
     const pctx: ProviderContext = {
       host: this.providerHost,
       metaStore,
@@ -875,6 +878,8 @@ export class DeviceManagerAddon extends BaseAddon {
       loadMeta: (input) => metaActions.loadMeta(pctx, input),
       setName: (input) => metaActions.setName(pctx, input),
       setAlias: (input) => aliasActions.setAlias(pctx, input),
+      renderDeviceTemplates: (input) => templates.render(input),
+      checkDeviceTemplates: (input) => templates.check(input),
       setLocation: (input) => metaActions.setLocation(pctx, input),
       setType: (input) => metaActions.setType(pctx, input),
       setIntegrationId: (input) => metaActions.setIntegrationId(pctx, input),
@@ -1215,7 +1220,39 @@ export class DeviceManagerAddon extends BaseAddon {
     return this.removalHooksCleanupImpl
   }
 
+  /**
+   * The template actions read device rows (alias), bindings (caps) and the
+   * runtime-state slices (`device-state`) — all through what this addon already
+   * owns. Built once per boot;
+   */
+  private makeTemplateActions(): DeviceTemplateActions {
+    this.templateActions?.dispose()
+    const actions = new DeviceTemplateActions(this.ctx.logger, {
+      findByAlias: async (alias) => {
+        const row = await this.deviceRows?.findByAlias(alias)
+        if (row === undefined || row === null) return null
+        return {
+          deviceId: row.meta.id,
+          addonId: row.meta.addonId,
+          stableId: row.meta.stableId,
+          alias,
+        }
+      },
+      capsOf: async (deviceId) =>
+        (await this.getBindings({ deviceId })).entries.map((entry) => entry.capName),
+      fetchSlice: async (deviceId, cap) => {
+        const api = this.ctx.api
+        if (api === undefined) throw new Error('ctx.api not ready')
+        return api.deviceState.getCapSlice.query({ deviceId, capName: cap })
+      },
+    })
+    this.templateActions = actions
+    return actions
+  }
+
   protected async onShutdown(): Promise<void> {
+    this.templateActions?.dispose()
+    this.templateActions = null
     await this.transitions?.stop()
     this.transitions = null
     this.removalCleanupImpl?.dispose()

@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1485 method paths across 205 capabilities.
+ * Coverage: 1487 method paths across 205 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -331,6 +331,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceManager.adoptionStartJob': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.allocateDeviceId': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.applyInitialMeta': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceManager.checkDeviceTemplates': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceManager.cleanupDeletedDevicesData': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.createDevice': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.disable': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -388,6 +389,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceManager.removeSiteZone': { capName: "device-manager", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'deviceManager.renameLocation': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.renameSiteZone': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceManager.renderDeviceTemplates': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceManager.reportDiscoveryObservations': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.runDeviceAction': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.runDiscoverySweep': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
