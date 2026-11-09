@@ -87,8 +87,7 @@ origin and relies on the reverse proxy forwarding `/addon/…`.
 ## Enforcement
 
 Specs in `packages/types/src/vendor-login-proxy/__tests__` (rewriting, cookies, allow-list,
-replay and expiry), `packages/addon-provider-bosch/src/shared/__tests__/login-proxy-sign-in.spec.ts`
-(fake vendor ending on `hcauth://…`, exchange run, result page reached) and
+replay and expiry), a Bosch login-proxy spec (deleted when D1025 retired the Bosch path) and
 `packages/addon-import-alexa/src/__tests__/alexa-login-through-hub-proxy.spec.ts`
 (loopback bind asserted on the options alexa-cookie2 receives). No guard; review only for
 a new vendor's host list.
