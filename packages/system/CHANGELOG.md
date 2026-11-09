@@ -79,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remote: the Power key always sends power, explicit on/off is used when both are bound; a stored power mode and the lettered colour roles are migrated
 - Integration-instances calls from a non-admin session are admitted only for an addon that serves user-scoped rows, and are filtered to the caller
 - A scoped capability method whose input takes {} is also callable with no input
+- A timed run turns itself on only for stoves and fountains. Any other switch stays off until Customize enables it.
 
 ### Removed
 
