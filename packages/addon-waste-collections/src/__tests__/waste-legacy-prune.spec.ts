@@ -1,6 +1,7 @@
 /**
- * Deleting a source that also sits in the legacy `sources` setting must not bring it back beside
- * the records (migration pending) or let the migration copy it into a record. The legacy setting
+ * The records are the only store: a source still in the legacy `sources` setting (migration not
+ * landed) is NOT served. Deleting a source that also sits there must not let the migration copy it
+ * into a record when it lands. The legacy setting
  * itself is never written: the deletion is remembered as a tombstone instead (D986, P10).
  */
 import {
@@ -10,8 +11,8 @@ import {
   type SecretsAccess,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { WasteCollectionsAddon } from '../waste-collections.addon.js'
 import { wasteSourcePortsOver } from '../migrations/ports.js'
+import { WasteCollectionsAddon } from '../waste-collections.addon.js'
 import { plainWasteSourceKind } from '../waste-source-record-kinds.js'
 
 const noopLogger = {
@@ -120,14 +121,9 @@ async function boot(
 }
 
 describe('a delete of a pending legacy row is remembered, not written into the settings', () => {
-  it('deleting the instance keeps the legacy row from being served again, and leaves the setting alone', async () => {
+  it('an unmigrated legacy row is not served; deleting the instance remembers it and leaves the setting alone', async () => {
     const { addon, settings, holder } = await boot()
-    expect(
-      addon
-        .configuredSources()
-        .map((s) => s.id)
-        .toSorted(),
-    ).toEqual(['cabin', 'home'])
+    expect(addon.configuredSources()).toEqual([])
     const provider = holder?.provider
     if (typeof provider !== 'object' || provider === null || !('deleteInstance' in provider)) {
       throw new Error('the addon registered no integration-instances provider')
@@ -137,7 +133,6 @@ describe('a delete of a pending legacy row is remembered, not written into the s
     const legacy = settings.store['sources'] as { id: string }[]
     expect(legacy.map((r) => r.id)).toEqual(['home', 'cabin'])
     expect(settings.store['deletedLegacySourceIds']).toEqual(['cabin'])
-    expect(addon.configuredSources().map((s) => s.id)).toEqual(['home'])
   })
 
   it('a boot whose credentials cannot be sealed stays on the plain kind and still serves them; the next boot seals', async () => {
@@ -182,7 +177,7 @@ describe('a delete of a pending legacy row is remembered, not written into the s
     if (typeof provider.deleteInstance !== 'function') throw new Error('no deleteInstance')
     await provider.deleteInstance({ id: 'cabin' })
     expect(settings.store['sources']).toEqual(seed)
-    expect(addon.configuredSources().map((s) => s.args['password'])).toEqual(['hunter2-home'])
+    expect(addon.configuredSources()).toEqual([])
   })
 
   it('the migration ports never offer a deleted legacy row to the copy', async () => {

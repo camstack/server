@@ -1,7 +1,7 @@
 import { makeInMemoryRecords, REDACTED_SECRET } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { wasteSourceEntryKind } from '../waste-source-record-kinds.js'
-import { WasteSourceStore, withUnmigratedLegacyRows } from '../waste-source-store.js'
+import { WasteSourceStore } from '../waste-source-store.js'
 import { sourceArgs, WasteCredentialUnavailableError } from '../waste-types.js'
 
 async function makeWasteRecords() {
@@ -53,33 +53,6 @@ describe('WasteSourceStore', () => {
       label: 'Home',
       args: { city: 'Torino', password: 'hunter2' },
     })
-  })
-
-  it('while the migration has not landed, legacy rows without a record are served beside the records and a write still lands', async () => {
-    const world = await makeWasteRecords()
-    const store = WasteSourceStore.of(world.records)
-    await store.putIfAbsent({
-      id: 'a',
-      label: 'A',
-      module: 'ics',
-      args: { url: 'x' },
-      enabled: true,
-    })
-    const legacy = [
-      { id: 'a', label: 'Stale A', module: 'ics', args: { url: 'old' }, enabled: true },
-      { id: 'b', label: 'B', module: 'ics', args: { url: 'y' }, enabled: true },
-    ]
-    const served = withUnmigratedLegacyRows(await store.listResolved(), legacy)
-    expect(served.map((s) => `${s.id}:${s.label}`)).toEqual(['a:A', 'b:B'])
-
-    // A write (the legacy CRUD path) goes to the records; the legacy row then leaves the view.
-    await store.replaceAll([
-      ...served,
-      { id: 'c', label: 'C', module: 'ics', args: {}, enabled: true },
-    ])
-    const after = withUnmigratedLegacyRows(await store.listResolved(), legacy)
-    expect(after.map((s) => s.id).toSorted()).toEqual(['a', 'b', 'c'])
-    expect(after.find((s) => s.id === 'b')?.label).toBe('B')
   })
 
   it('the redaction token is never a usable credential: the fetch args are refused, not the token', () => {

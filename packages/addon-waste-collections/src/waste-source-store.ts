@@ -34,19 +34,6 @@ export function bodyOf(source: WasteSourceConfig): WasteSourceBody {
   return parsed.data
 }
 
-/**
- * While the sources migration has not landed: every record, plus the legacy rows that have no
- * record yet (a read-only view of those). A legacy row leaves the view as soon as a record has
- * its id, so the two never diverge; writes go to the records.
- */
-export function withUnmigratedLegacyRows(
-  records: readonly WasteSourceConfig[],
-  legacy: readonly WasteSourceConfig[],
-): readonly WasteSourceConfig[] {
-  const have = new Set(records.map((r) => r.id))
-  return [...records, ...legacy.filter((r) => !have.has(r.id))]
-}
-
 export class WasteSourceStore {
   private readonly kind: RecordKindHandle<WasteSourceBody>
 

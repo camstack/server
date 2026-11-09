@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Removed the unused legacy settings-store port adapters
+
 ## [1.2.634] - 2026-11-08
 
 ### Changed

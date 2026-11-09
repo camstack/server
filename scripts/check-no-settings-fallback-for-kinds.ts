@@ -6,9 +6,12 @@
  * from must not stay alive beside it: two stores for one thing drift, and the old one is the one that
  * a half-finished migration keeps reading. Three rules, over non-test source:
  *
- * 1. `declareCollection`: a file that registers a record kind (`records.kind(`, `defineRecordKinds(`,
- *    `defineEntryKind(`) does not also declare a collection (`declareCollection(`) or read one
- *    (`store.query({ collection`). That is the parallel settings-store path.
+ * 1. `declareCollection`: a package that registers a record kind (`records.kind(`, `defineRecordKinds(`,
+ *    `defineEntryKind(`) in ANY of its files does not also declare a collection (`declareCollection(`)
+ *    or read one (`store.query({ collection`) in any non-migration file. That is the parallel
+ *    settings-store path; the finding is keyed on the file holding the collection.
+ * 1b. `legacy-served`: a package that registers a kind does not serve the old rows beside it
+ *    (`legacyServed`, `withUnmigrated*`): until the migration lands the records are the only store.
  * 2. `replaceAll-config`: `replaceAll(this.config.` / `replaceAll(this.parseConfig` seeds a store from
  *    the addon's settings on every boot, so the settings win over what the operator edited.
  * 3. `legacy-identifier`: an identifier that names the old storage (`*_LEGACY`, `*_LEGACY_COLLECTION`,
@@ -43,6 +46,7 @@ export const BASELINE_PATH = 'scripts/no-settings-fallback-baseline.json'
 
 const KIND_REGISTRATION_RE = /\brecords\.kind\(|\bdefineRecordKinds\(|\bdefineEntryKind\(/
 const DECLARE_COLLECTION_RE = /\bdeclareCollection\(|\bstore\.query\(\s*\{\s*collection\b/
+const LEGACY_SERVED_RE = /\blegacyServed\b|\bwithUnmigrated\w*/
 const REPLACE_ALL_CONFIG_RE = /replaceAll\(\s*this\.(?:config\.|parseConfig)/
 const LEGACY_IDENTIFIER_RE =
   /\b[A-Z0-9_]+_LEGACY(?:_COLLECTIONS?)?\b|\bLEGACY_\w*COLLECTION\w*\b|\bLegacy\w+Schema\b/g
@@ -85,14 +89,54 @@ export function legacyIdentifiersOf(text: string): string[] {
   return [...found]
 }
 
+/** `packages/<addon>` (or `server/<x>`) the file belongs to: the unit that owns one kind's store. */
+function packageDirOf(file: string): string {
+  const parts = file.split('/')
+  return parts.slice(0, 2).join('/')
+}
+
+/** Only an addon package owns ONE kind's store; the kernel (`system`, `types`) holds many unrelated stores. */
+function isAddonPackage(dir: string): boolean {
+  return dir.startsWith('packages/addon-')
+}
+
+/** The package directories with at least one non-migration file that registers a record kind. */
+function kindPackages(sources: readonly SourceFile[]): Set<string> {
+  const dirs = new Set<string>()
+  for (const source of sources) {
+    if (
+      !isMigration(source.path) &&
+      isAddonPackage(packageDirOf(source.path)) &&
+      KIND_REGISTRATION_RE.test(source.text)
+    ) {
+      dirs.add(packageDirOf(source.path))
+    }
+  }
+  return dirs
+}
+
 export function findViolations(
   sources: readonly SourceFile[],
   baseline: FamilyBaseline,
 ): Violation[] {
   const findings: Finding[] = []
+  const withKinds = kindPackages(sources)
   for (const source of sources) {
     if (isMigration(source.path)) continue
-    if (KIND_REGISTRATION_RE.test(source.text) && DECLARE_COLLECTION_RE.test(source.text)) {
+    const inKindPackage = withKinds.has(packageDirOf(source.path))
+    if (inKindPackage && LEGACY_SERVED_RE.test(source.text)) {
+      findings.push({
+        key: `${source.path}:legacy-served`,
+        where: source.path,
+        message:
+          'serves the old rows beside a record kind (legacyServed / withUnmigrated*): the records are the only store; the migration copies the old rows once (**/migrations/**)',
+      })
+    }
+    const ownKind = KIND_REGISTRATION_RE.test(source.text)
+    if (
+      DECLARE_COLLECTION_RE.test(source.text) &&
+      (inKindPackage || (ownKind && !isAddonPackage(packageDirOf(source.path))))
+    ) {
       findings.push({
         key: `${source.path}:declareCollection`,
         where: source.path,

@@ -100,6 +100,32 @@ describe('check-no-settings-fallback-for-kinds', () => {
     expect(found).toEqual([])
   })
 
+  it('flags a collection declared in ANOTHER file of an addon package that registers a kind', () => {
+    const found = findViolations(
+      [
+        file('packages/addon-x/src/kinds.ts', 'records.kind(Thing)'),
+        file('packages/addon-x/src/port.ts', "await store.declareCollection({ name: 'x' })"),
+        file('packages/addon-y/src/port.ts', "await store.declareCollection({ name: 'y' })"),
+      ],
+      { families: {} },
+    )
+    expect(found.map((v) => v.where)).toEqual(['packages/addon-x/src/port.ts'])
+  })
+
+  it('flags serving the old rows beside a kind, in another file of the package', () => {
+    const found = findViolations(
+      [
+        file('packages/addon-x/src/kinds.ts', 'defineRecordKinds(x)'),
+        file('packages/addon-x/src/addon.ts', 'return withUnmigratedLegacyRows(rows, this.config)'),
+        file('packages/addon-x/src/migrations/m.ts', 'withUnmigratedLegacyRows(a)'),
+        file('packages/addon-z/src/addon.ts', 'const legacyServed = []'),
+      ],
+      { families: {} },
+    )
+    expect(found.map((v) => v.where)).toEqual(['packages/addon-x/src/addon.ts'])
+    expect(found[0]?.message).toContain('old rows beside a record kind')
+  })
+
   itRealTree('holds on the committed tree and baseline', { timeout: 120_000 }, () => {
     const files = [
       ...walk(path.join(ROOT, 'packages'), isProductSource),
