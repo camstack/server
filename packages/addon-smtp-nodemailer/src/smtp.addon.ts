@@ -7,7 +7,7 @@
  * (Connectivity → Email). That page reads and writes the addon's global settings, so the addon
  * projects them onto its DEFAULT relay (the first configured one, created on first save). The
  * old settings were moved into a record by the migrations of `./migrations`.
- * A caller of `sendEmail` / `verify` / `getStatus` may name a relay with `instanceId`; without
+ * A caller of `sendEmail` / `getStatus` may name a relay with `instanceId`; without
  * one the first configured relay answers, so every caller written before relays existed keeps
  * working.
  *
@@ -427,7 +427,7 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
           id: 'smtp-relay',
           title: 'SMTP Relay',
           description:
-            'Outbound SMTP relay used by notifications and alerts. Tested with the per-cap `verify()` button.',
+            'Outbound SMTP relay used by notifications and alerts. Tested with the Test connection button.',
           columns: 2,
           fields: [
             {

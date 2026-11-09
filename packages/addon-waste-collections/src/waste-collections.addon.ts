@@ -96,6 +96,7 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
     this.sourceStore = store
     await this.migrateLegacySources(plainBoot ? plainWasteSourceKind : wasteSourceEntryKind)
     this.activeSources = await this.loadPersistedSources()
+    this.reportUnservedLegacySources()
     const instances = plainBoot
       ? null
       : new WasteSourceInstances(records, {
@@ -203,12 +204,32 @@ export class WasteCollectionsAddon extends BaseAddon<WasteConfig> {
     const report = await this.runMigrations(ADDON_MIGRATIONS, (api) =>
       wasteSourcePortsOver(api, kind, skipIds),
     )
+    if (!report.declared) {
+      this.ctx.logger.error(
+        'waste-collections: the migration engine was unreachable - nothing was migrated, and the sources still in the legacy setting are unavailable until a boot where it answers',
+        { meta: { declared: report.declared, failed: report.failed, blocked: report.blocked } },
+      )
+    }
     if (report.failed.length > 0 || report.blocked.includes(SOURCES_FROM_SETTINGS_ID)) {
       this.ctx.logger.error(
         'waste-collections: the sources migration has not landed - the sources still in the legacy setting are unavailable until it does (the records are the only store)',
         { meta: { declared: report.declared, failed: report.failed, blocked: report.blocked } },
       )
     }
+  }
+
+  /**
+   * Sources still sitting in the legacy setting while the records hold none (a restore of an old
+   * backup, or a migration that did not run): they are NOT served, and the operator is told so.
+   */
+  private reportUnservedLegacySources(): void {
+    if (this.activeSources.length > 0) return
+    const legacyCount = this.config.sources.length
+    if (legacyCount === 0) return
+    this.ctx.logger.error(
+      'waste-collections: the legacy setting still holds sources but no record exists - they are not served until the sources migration copies them',
+      { meta: { legacySourceCount: legacyCount } },
+    )
   }
 
   // ── Custom actions ────────────────────────────────────────────────

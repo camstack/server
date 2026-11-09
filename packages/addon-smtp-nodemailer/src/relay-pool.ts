@@ -1,7 +1,7 @@
 /**
  * The live relays of the SMTP addon: one transporter per `relays` record, kept by registry id.
  *
- * A change to one relay rebuilds only that relay (and resets only its verify state). A caller
+ * A change to one relay rebuilds only that relay (and resets only its send state). A caller
  * that names no relay gets the first configured one, so everything written before relays
  * existed keeps working. Failures surface through each relay's own `lastError`, never as a
  * throw on boot.
@@ -37,6 +37,11 @@ export interface SendEmailRequest {
   readonly html?: string | undefined
 }
 
+/**
+ * `ready` is "the last send worked". A relay that never sent anything is NOT known to be broken:
+ * it reads `ready: false` with neither `error` nor `lastVerifiedAt`, which a reader takes as
+ * unknown (the connection check is `testInstance`, not this).
+ */
 export interface RelayStatus {
   ready: boolean
   host: string
@@ -53,7 +58,8 @@ interface RelayState {
   readonly id: string
   readonly body: SmtpRelayBody
   readonly transporter: RelayTransport | null
-  lastVerifyOk: boolean
+  /** The outcome of the last send; `undefined` until the first one (unknown, not failed). */
+  lastSendOk: boolean | undefined
   lastError: string | undefined
   lastVerifiedAt: number | undefined
 }
@@ -105,7 +111,7 @@ export class RelayPool {
     private readonly log: RelayLog,
   ) {}
 
-  /** Make `id` serve `body`. An unchanged body keeps its transporter and verify state. */
+  /** Make `id` serve `body`. An unchanged body keeps its transporter and send state. */
   apply(id: string, body: SmtpRelayBody): void {
     const current = this.relays.get(id)
     if (current !== undefined && sameBody(current.body, body)) return
@@ -114,7 +120,7 @@ export class RelayPool {
       id,
       body,
       transporter: this.build(id, body),
-      lastVerifyOk: false,
+      lastSendOk: undefined,
       lastError: undefined,
       lastVerifiedAt: undefined,
     })
@@ -212,7 +218,7 @@ export class RelayPool {
       const info = await relay.transporter.sendMail(mail)
       relay.lastError = undefined
       // A delivered message is the proof the relay works: the status reads it (the notifier picker's "verified").
-      relay.lastVerifyOk = true
+      relay.lastSendOk = true
       relay.lastVerifiedAt = Date.now()
       this.log.info('smtp send ok', {
         meta: {
@@ -229,7 +235,7 @@ export class RelayPool {
         rejected: info.rejected.map(coerceAddress),
       }
     } catch (err: unknown) {
-      relay.lastVerifyOk = false
+      relay.lastSendOk = false
       relay.lastError = errMsg(err)
       this.log.warn('smtp send failed', {
         meta: { error: relay.lastError, integrationId: relay.id },
@@ -248,7 +254,7 @@ export class RelayPool {
   private statusOf(relay: RelayState): RelayStatus {
     // A relay that is off is not ready, and that is not an error (D62: off must not look broken).
     const status: RelayStatus = {
-      ready: isOn(relay.body) && relay.lastVerifyOk,
+      ready: isOn(relay.body) && relay.lastSendOk === true,
       host: relay.body.host,
     }
     if (relay.lastError) status.error = relay.lastError

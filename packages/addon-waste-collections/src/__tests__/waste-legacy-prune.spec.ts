@@ -15,11 +15,14 @@ import { wasteSourcePortsOver } from '../migrations/ports.js'
 import { WasteCollectionsAddon } from '../waste-collections.addon.js'
 import { plainWasteSourceKind } from '../waste-source-record-kinds.js'
 
+const errors: string[] = []
 const noopLogger = {
   debug: () => undefined,
   info: () => undefined,
   warn: () => undefined,
-  error: () => undefined,
+  error: (message: string) => {
+    errors.push(message)
+  },
   child: () => noopLogger,
   withTags: () => noopLogger,
 }
@@ -119,6 +122,21 @@ async function boot(
       : result.providers?.find((p) => p.capability.name === integrationInstancesCapability.name)
   return { addon, settings, holder }
 }
+
+describe('an unmigrated boot says so', () => {
+  it('logs an error when the migration engine was unreachable and when legacy sources have no record', async () => {
+    errors.length = 0
+    await boot()
+    expect(errors.some((m) => m.includes('migration engine was unreachable'))).toBe(true)
+    expect(errors.some((m) => m.includes('legacy setting still holds sources'))).toBe(true)
+  })
+
+  it('stays quiet about legacy sources when there are none', async () => {
+    errors.length = 0
+    await boot(undefined, undefined, [])
+    expect(errors.some((m) => m.includes('legacy setting still holds sources'))).toBe(false)
+  })
+})
 
 describe('a delete of a pending legacy row is remembered, not written into the settings', () => {
   it('an unmigrated legacy row is not served; deleting the instance remembers it and leaves the setting alone', async () => {
