@@ -77,7 +77,7 @@ async function world() {
   await memory.records.declare({ ...notifiersRecordKinds, ...oldTargetKinds })
   const oldKind = memory.records.kind(oldTargetKinds[OLD_TARGETS_KIND])
   const legacy = legacyTargetsOver(oldKind, silentLogger)
-  const store = TargetStore.of(memory.records, notifierDescriptors(), { logger: silentLogger })
+  const store = TargetStore.of(memory.records, notifierDescriptors(), { logger: silentLogger, legacy })
   const descriptors = notifierDescriptors()
   const run = (
     host: AddonMigrationHost,
@@ -132,7 +132,7 @@ describe('notifiers targets-to-body', () => {
     expect(await w.oldKind.get('x-1')).not.toBeNull()
   })
 
-  it('one target whose token will not read back stays in the old kind, unserved; the other moves', async () => {
+  it('a target whose token will not read back is NOT recorded applied: it stays served from the retired kind and moves on the rerun, marked field intact', async () => {
     const w = await world()
     await w.oldKind.put({
       id: 'tg-bad',
@@ -154,21 +154,30 @@ describe('notifiers targets-to-body', () => {
         config: { botToken: `${TOKEN}-2`, chatId: '2' },
       },
     })
-    const { host, outcomes } = ledgerHost()
-    const result = await w.run(host, (rows) => ({
+    const first = ledgerHost()
+    const failedRun = await w.run(first.host, (rows) => ({
       ...rows,
       readNew: async (kind, id) =>
         id === 'tg-bad' ? { name: 'Broken', botToken: 'unreadable' } : rows.readNew(kind, id),
     }))
-    expect(result.failed).toEqual([])
-    expect(outcomes.get(TARGETS_TO_BODY_ID)).toMatchObject({
-      result: { outcome: 'done', summary: { converted: 1, skipped: 1 } },
-    })
-    // The good one moved, the bad one is untouched in the old kind and the store does not serve it.
+    // The ledger does not say applied: the next boot runs it again.
+    expect(failedRun.failed).toEqual([TARGETS_TO_BODY_ID])
+    expect(first.outcomes.has(TARGETS_TO_BODY_ID)).toBe(false)
+    // The good one moved; the bad one is untouched and still SERVED from the retired kind.
     expect(await w.oldKind.get('tg-good')).toBeNull()
     expect(await w.oldKind.get('tg-bad')).not.toBeNull()
-    expect((await w.store.getById('tg-good'))?.config['botToken']).toBe(`${TOKEN}-2`)
-    expect(await w.store.getById('tg-bad')).toBeNull()
-    expect((await w.store.list()).map((t) => t.id)).toEqual(['tg-good'])
+    expect((await w.store.getById('tg-bad'))?.config['botToken']).toBe(TOKEN)
+
+    // The rerun (the read-back works now) moves it, the switch and the token intact.
+    const second = ledgerHost()
+    expect((await w.run(second.host)).failed).toEqual([])
+    expect(second.outcomes.get(TARGETS_TO_BODY_ID)).toMatchObject({
+      result: { outcome: 'done', summary: { converted: 1 } },
+    })
+    expect(await w.oldKind.get('tg-bad')).toBeNull()
+    const moved = await w.store.getById('tg-bad')
+    expect(moved).toMatchObject({ name: 'Broken', enabled: false })
+    expect(moved?.config['botToken']).toBe(TOKEN)
+    expect((await w.store.list()).map((t) => t.id).sort()).toEqual(['tg-bad', 'tg-good'])
   })
 })

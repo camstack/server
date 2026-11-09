@@ -97,6 +97,7 @@ import { haAllRecordKinds } from './record-kinds.js'
 import { createHaBoardKeyProvider, HaBoardKeySource } from './ha-board-key-source.js'
 import { haCalendarRecordPortsOver } from './migrations/calendar-ports.js'
 import { buildHaCalendarInstances, selectedEntityIds } from './ha-calendar-instances.js'
+import { haLegacyTargetsOver } from './migrations/notify-targets-to-body.js'
 import { haInstanceSettingsPortsOver } from './migrations/legacy-integration-rows.js'
 import {
   ADDON_MIGRATIONS,
@@ -374,7 +375,10 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     if (records === undefined) {
       throw new Error('ha notification-output: ctx.records is required (hub-only addon)')
     }
-    const store = HaTargetStore.of(records, { logger: this.ctx.logger })
+    const store = HaTargetStore.of(records, {
+      logger: this.ctx.logger,
+      legacy: haLegacyTargetsOver(records, this.ctx.logger),
+    })
     return createHaNotificationOutputProvider({
       addonId: this.ctx.id,
       iconUrl: HA_NOTIFICATION_ICON_URL,

@@ -16,6 +16,7 @@ import { describe, expect, it } from 'vitest'
 import { haNotifyRecordKinds, HaTargetStore } from '../../ha-notification-output.js'
 import {
   type HaNotifyPorts,
+  haLegacyTargetsOver,
   haNotifyPortsOver,
   haRetiredTargetKinds,
 } from '../notify-targets-to-body.js'
@@ -73,7 +74,10 @@ async function world() {
     'ha-notification-targets': OLD,
   })
   const oldKind = memory.records.kind(OLD)
-  const store = HaTargetStore.of(memory.records, { logger: silentLogger })
+  const store = HaTargetStore.of(memory.records, {
+    logger: silentLogger,
+    legacy: haLegacyTargetsOver(memory.records, silentLogger),
+  })
   const run = (
     host: AddonMigrationHost,
     wrap: (ports: HaNotifyPorts) => HaNotifyPorts = (p) => p,
@@ -126,7 +130,7 @@ describe('homeassistant notify-targets-to-body', () => {
     })
   })
 
-  it('one target that fails to move stays in the old kind, unserved; the other moves', async () => {
+  it('a target that fails to move is NOT recorded applied: it stays served from the retired kind and moves on the rerun, switch intact', async () => {
     const w = await world()
     for (const [id, enabled] of [
       ['ha-bad', false],
@@ -143,8 +147,8 @@ describe('homeassistant notify-targets-to-body', () => {
         },
       })
     }
-    const { host, outcomes } = ledgerHost()
-    const result = await w.run(host, (ports) => ({
+    const first = ledgerHost()
+    const failedRun = await w.run(first.host, (ports) => ({
       notifyRows: {
         ...ports.notifyRows,
         writeNew: async (kind, id, body) => {
@@ -153,13 +157,19 @@ describe('homeassistant notify-targets-to-body', () => {
         },
       },
     }))
-    expect(result.failed).toEqual([])
-    expect(outcomes.get(HA_NOTIFY_TARGETS_TO_BODY_ID)).toMatchObject({
-      result: { outcome: 'done', summary: { converted: 1, skipped: 1 } },
-    })
+    expect(failedRun.failed).toEqual([HA_NOTIFY_TARGETS_TO_BODY_ID])
+    expect(first.outcomes.has(HA_NOTIFY_TARGETS_TO_BODY_ID)).toBe(false)
     expect(await w.oldKind.get('ha-good')).toBeNull()
     expect(await w.oldKind.get('ha-bad')).not.toBeNull()
-    expect(await w.store.getById('ha-bad')).toBeNull()
-    expect((await w.store.list()).map((t) => t.id)).toEqual(['ha-good'])
+    expect(await w.store.getById('ha-bad')).toMatchObject({ enabled: false })
+
+    const second = ledgerHost()
+    expect((await w.run(second.host)).failed).toEqual([])
+    expect(await w.oldKind.get('ha-bad')).toBeNull()
+    expect(await w.store.getById('ha-bad')).toMatchObject({
+      enabled: false,
+      config: { service: 'notify_ha-bad' },
+    })
+    expect((await w.store.list()).map((t) => t.id).sort()).toEqual(['ha-bad', 'ha-good'])
   })
 })

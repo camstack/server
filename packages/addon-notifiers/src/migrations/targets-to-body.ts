@@ -15,7 +15,7 @@ import { z } from 'zod'
 
 export const TARGETS_TO_BODY_ID = 'notifiers/2026-11-06-targets-config-to-body'
 
-/** The retired single kind, as it was declared; read and emptied only by this migration. */
+/** The retired single kind, as it was declared; read by the migration and by the store while a row stays in it. */
 export const OLD_TARGETS_KIND = 'notification-targets'
 export const oldTargetKinds = defineRecordKinds({
   [OLD_TARGETS_KIND]: {

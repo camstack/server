@@ -52,14 +52,14 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
     // Declare notification-targets BEFORE first store access.
     await records.declare(notifiersRecordKinds)
     const descriptors = notifierDescriptors()
-    // The retired single kind is declared by the migration when it runs, never here: the store
-    // serves the per-kind records only.
+    // The retired single kind is declared on first read (by the migration, or by the store that
+    // serves a row the migration could not move), never here.
     const legacy = retiredTargetsOver(
       records,
       oldTargetKinds[OLD_TARGETS_KIND],
       this.ctx.logger,
     )
-    const store = TargetStore.of(records, descriptors, { logger: this.ctx.logger })
+    const store = TargetStore.of(records, descriptors, { logger: this.ctx.logger, legacy })
     // The old single kind is flattened into the per-kind records BEFORE anything reads a target.
     await this.runMigrations(
       defineAddonMigrations(ADDON_MIGRATIONS, {

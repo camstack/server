@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed the unused legacy settings-store port adapters
 - Notification targets are listed, edited, switched, tested and deleted through the instance door
-- A target the migration could not move is no longer served from the retired kind; the retired kind is declared only while the migration runs
+- A notification target the migration could not move stays served from the retired kind, and the migration runs again on the next boot until it has moved
 - The Notification Center keeps working on the previous viewer release: the five my-target actions answer again, as delegates onto the same per-user instance door.
 
 ## [1.2.634] - 2026-11-08

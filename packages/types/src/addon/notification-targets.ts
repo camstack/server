@@ -623,11 +623,14 @@ export function secretKeysOf(descriptor: TargetKind): readonly string[] {
 /**
  * Move every old row to the record of its kind under the SAME id: the config flat beside the name and
  * the switch, each secret written to the keychain by the door and READ BACK before the old row goes.
- * One bad row never aborts the others: a row whose write or read-back fails (or disagrees) is undone,
- * reported through `skipped` with its id and reason, and its old row stays where it was, still served
- * by the facade. A row of a kind this provider does not serve is left alone the same way. Idempotent:
- * no old rows is `already-done`, and a row the new kind already holds equal is only dropped from the
- * old kind.
+ * One bad row never aborts the others: a row whose write or read-back fails (or disagrees) is undone
+ * and its old row stays where it was, still served by the store through its legacy source. A row of a
+ * kind this provider does not serve is left alone the same way (`skipped`, nothing to retry).
+ * Idempotent: a row the new kind already holds equal is only dropped from the old kind.
+ *
+ * A row that FAILED makes the run throw, after every other row was tried: the ledger then records
+ * `failed`, not `applied`, and the migration runs again on the next boot until each row has moved.
+ * Reporting `done` over a row that merely failed once would leave it in the retired kind for good.
  */
 export async function moveTargetRows(
   ports: TargetRowPorts,
@@ -637,6 +640,7 @@ export async function moveTargetRows(
   if (rows.length === 0) return { outcome: 'already-done', summary: { converted: 0 } }
   let converted = 0
   let skipped = 0
+  const failed: string[] = []
   for (const row of rows) {
     if (!ports.hasKind(row.kind)) {
       skipped += 1
@@ -647,9 +651,14 @@ export async function moveTargetRows(
     if (reason === null) {
       converted += 1
     } else {
-      skipped += 1
+      failed.push(`${row.id} (${reason})`)
       ports.skipped({ id: row.id, kind: row.kind, reason })
     }
+  }
+  if (failed.length > 0) {
+    throw new Error(
+      `${failed.length} notification target(s) did not move and stay served from the retired kind; the migration runs again: ${failed.join(', ')}`,
+    )
   }
   return {
     outcome: converted > 0 ? 'done' : 'already-done',
@@ -712,8 +721,9 @@ export function legacyTargetsOver(
 }
 
 /**
- * The retired kind as a lazy legacy source: it is declared on the first read or delete, which only
- * the migration makes, so an addon whose migration is applied never declares it.
+ * The retired kind as a lazy legacy source: it is declared on the first read or delete, by the
+ * migration or by the store that serves a row the migration could not move, so it stays declared
+ * and readable while such a row exists.
  */
 export function retiredTargetsOver(
   records: Pick<RecordsAccess, 'declare' | 'kind'>,
@@ -753,7 +763,7 @@ export function targetRowPortsOver(deps: {
     },
     dropOld: (id) => deps.legacy.delete(id),
     skipped: (row) => {
-      deps.logger.warn('notification target left in its retired kind; it is not served', {
+      deps.logger.warn('notification target left in its retired kind', {
         meta: { targetId: row.id, kind: row.kind, reason: row.reason },
       })
     },

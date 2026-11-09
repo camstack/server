@@ -6,6 +6,7 @@
  */
 import {
   defineRecordKinds,
+  type LegacyTargets,
   type IScopedLogger,
   type MigrationProcedureResult,
   moveTargetRows,
@@ -17,7 +18,7 @@ import {
 } from '@camstack/types'
 import { HaTargetStore } from '../ha-notification-output.js'
 
-/** The retired kind, as it was declared; read and emptied only by this migration. */
+/** The retired kind, as it was declared; read by the migration and by the store while a row stays in it. */
 export const haRetiredTargetKinds = defineRecordKinds({
   'ha-notification-targets': {
     schema: OldTargetBodySchema,
@@ -38,20 +39,24 @@ export interface HaNotifyPorts {
   readonly notifyRows: TargetRowPorts
 }
 
-/** Ports over the retired kind (declared when the migration first reads it) and the new one. */
+/** The retired kind as a legacy source: declared on first read, served while a row stays in it. */
+export function haLegacyTargetsOver(
+  records: Pick<RecordsAccess, 'declare' | 'kind'>,
+  logger: IScopedLogger,
+): LegacyTargets {
+  return retiredTargetsOver(records, haRetiredTargetKinds['ha-notification-targets'], logger)
+}
+
+/** Ports over the retired kind and the new one. */
 export function haNotifyPortsOver(
   records: Pick<RecordsAccess, 'declare' | 'kind'>,
   logger: IScopedLogger,
 ): HaNotifyPorts {
-  const legacy = retiredTargetsOver(
-    records,
-    haRetiredTargetKinds['ha-notification-targets'],
-    logger,
-  )
+  const legacy = haLegacyTargetsOver(records, logger)
   return {
     notifyRows: targetRowPortsOver({
       legacy,
-      store: HaTargetStore.of(records, { logger }),
+      store: HaTargetStore.of(records, { logger, legacy }),
       logger,
     }),
   }
