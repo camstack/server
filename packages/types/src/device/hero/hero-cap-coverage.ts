@@ -62,6 +62,7 @@ export const HERO_CAP_COVERAGE: Readonly<Record<string, HeroCapCoverage>> = {
   'group-active': 'contributes',
   'group-commands': 'contributes',
   'group-status': 'contributes',
+  'heat-pump-status': 'contributes',
   'heating-valve': 'contributes',
   humidifier: 'contributes',
   'humidity-sensor': 'contributes',

@@ -101,9 +101,12 @@ function circuitControl(circuit: HeatPumpCircuit): HeroControl | null {
   )
 }
 
+/** A circuit with no reading is still a row: it shows that nothing is known, not nothing. */
+const UNKNOWN_STATUS = same('—')
+
 function circuitRow(circuit: HeatPumpCircuit): HeroRow {
   const control = circuitControl(circuit)
-  const status = thermalStatusText(circuit.targetTemp, circuit.currentTemp)
+  const status = thermalStatusText(circuit.targetTemp, circuit.currentTemp) ?? UNKNOWN_STATUS
   return {
     id: 'circuit',
     label: same(circuit.label),
@@ -181,11 +184,59 @@ const SYSTEM_MODES: readonly SystemModeDef[] = [
 
 const SYSTEM_GROUP = heroText('System', 'Sistema')
 
+const PROGRAMME = /^hm\d+$/
+
+/**
+ * Holiday is two segments, off / programme. Choosing "programme" keeps the programme
+ * that is set, else the first one the gateway allowed, so a write never leaves
+ * `allowed`. The full hm1..hm8 pick is not in the hero (D1026). A holiday whose values
+ * are not programmes keeps the plain selector.
+ */
+function holidayRow(def: SystemModeDef, setting: HeatPumpOptionSetting): HeroRow | null {
+  if (!setting.allowed.includes('off')) return null
+  const current = setting.value !== null && PROGRAMME.test(setting.value) ? setting.value : null
+  const programme = current ?? setting.allowed.find((v) => PROGRAMME.test(v))
+  if (programme === undefined) return null
+  const control = picker(
+    'heat-pump.system.holiday',
+    def.label,
+    { value: setting.value, allowed: ['off', programme] },
+    def.method,
+    {},
+  )
+  const number = programme.slice(2)
+  return {
+    id: 'system-mode',
+    label: def.label,
+    group: SYSTEM_GROUP,
+    icon: def.icon,
+    status: current === null ? null : heroText(`Programme ${number}`, `Programma ${number}`),
+    controls: [
+      control.kind === 'picker'
+        ? {
+            ...control,
+            optionLabels: {
+              off: heroText('Off', 'Off'),
+              [programme]: heroText('Programme', 'Programma'),
+            },
+          }
+        : control,
+    ],
+  }
+}
+
 function systemRows(status: HeatPumpStatus): readonly HeroRow[] {
   const rows: HeroRow[] = []
   for (const def of SYSTEM_MODES) {
     const setting = status.system[def.key]
     if (!choosable(setting)) continue
+    if (def.key === 'holiday') {
+      const holiday = holidayRow(def, setting)
+      if (holiday !== null) {
+        rows.push(holiday)
+        continue
+      }
+    }
     rows.push({
       id: 'system-mode',
       label: def.label,

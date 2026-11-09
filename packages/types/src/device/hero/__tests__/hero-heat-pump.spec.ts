@@ -172,18 +172,55 @@ describe('heat pump hero (D1026)', () => {
       'setAdditionalHeaterMode',
       'setHolidayMode',
     ])
-    expect(pickerOf(rows[3] as HeroRow).options).toEqual([
-      'off',
-      'hm1',
-      'hm2',
-      'hm3',
-      'hm4',
-      'hm5',
-      'hm6',
-      'hm7',
-      'hm8',
-    ])
     expect(pickerOf(rows[0] as HeroRow).options).toEqual(['off', 'auto', 'on'])
+  })
+
+  it('draws holiday as off / programme, never a value outside what the gateway allowed (D1026)', () => {
+    const holiday = (value: string) => {
+      const row = rowsOf(
+        build({
+          ...SLICE,
+          system: {
+            ...SLICE.system,
+            holiday: options(value, SLICE.system.holiday?.allowed ?? []),
+          },
+        }),
+        'system-mode',
+      )[3]
+      if (row === undefined) throw new Error('no holiday row')
+      return row
+    }
+    const off = holiday('off')
+    expect(pickerOf(off).options).toEqual(['off', 'hm1'])
+    expect(pickerOf(off).optionLabels?.['hm1']?.it).toBe('Programma')
+    expect(off.status).toBeNull()
+    const on = holiday('hm3')
+    expect(pickerOf(on).options).toEqual(['off', 'hm3'])
+    expect(pickerOf(on).current).toBe('hm3')
+    expect(on.status?.en).toBe('Programme 3')
+  })
+
+  it('keeps the plain selector for a holiday whose values are not programmes', () => {
+    const plain = {
+      ...SLICE,
+      system: { ...SLICE.system, holiday: options('off', ['off', 'on']) },
+    }
+    expect(pickerOf(rowsOf(build(plain), 'system-mode')[3] as HeroRow).options).toEqual([
+      'off',
+      'on',
+    ])
+  })
+
+  it('still draws a circuit whose every value is unknown, with an unknown status', () => {
+    const silent: HeatPumpCircuit = {
+      ...heating('hc9', 'Circuit 9'),
+      currentTemp: null,
+      targetTemp: null,
+      operationMode: null,
+    }
+    const row = rowsOf(build({ ...SLICE, circuits: [silent] }), 'circuit')[0]
+    expect(row?.controls).toEqual([])
+    expect(row?.status?.en).toBe('—')
   })
 
   it('draws no selector for a mode the gateway has no values for', () => {
