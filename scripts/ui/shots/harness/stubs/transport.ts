@@ -4,8 +4,8 @@
  * happen. Subscriptions never emit. Unanswered query paths are collected in
  * `window.__uiShotsMissing` — the runner reports them per shot.
  */
-import { createTRPCClient, type TRPCLink } from '@trpc/client'
-import { observable } from '@trpc/server/observable'
+import { fakeSystemClient } from '@admin/modules/device-detail/__tests__/fake-system-client'
+import type { SystemTrpcClient } from '@camstack/ui-library'
 import { resolveFixture } from '../fixtures-runtime'
 
 declare global {
@@ -17,33 +17,15 @@ declare global {
 window.__uiShotsMissing = window.__uiShotsMissing ?? new Set()
 window.__uiShotsCalls = window.__uiShotsCalls ?? []
 
-const fakeLink: TRPCLink<never> =
-  () =>
-  ({ op }) =>
-    observable((observer) => {
-      if (op.type === 'subscription') return () => undefined
-      const mutation = op.type === 'mutation'
-      window.__uiShotsCalls.push(`${mutation ? 'mut:' : ''}${op.path}`)
-      const r = resolveFixture(op.path, op.input, mutation)
-      if (!r.found && !mutation) window.__uiShotsMissing.add(op.path)
-      if (r.hang === true) return () => undefined
-      const timer = setTimeout(() => {
-        if (r.error !== undefined) {
-          observer.error({
-            message: r.error,
-            data: { code: 'BAD_REQUEST' },
-            shape: { message: r.error },
-          } as never)
-          return
-        }
-        observer.next({ result: { type: 'data', data: r.value } } as never)
-        observer.complete()
-      }, 5)
-      return () => clearTimeout(timer)
-    })
-
-let client: ReturnType<typeof createTRPCClient> | null = null
-export function fakeClient(): ReturnType<typeof createTRPCClient> {
-  client ??= createTRPCClient({ links: [fakeLink] })
+let client: SystemTrpcClient | null = null
+export function fakeClient(): SystemTrpcClient {
+  client ??= fakeSystemClient((call) => {
+    window.__uiShotsCalls.push(`${call.mutation ? 'mut:' : ''}${call.path}`)
+    const r = resolveFixture(call.path, call.input, call.mutation)
+    if (!r.found && !call.mutation) window.__uiShotsMissing.add(call.path)
+    if (r.hang === true) return { kind: 'hang' }
+    if (r.error !== undefined) return { kind: 'error', message: r.error }
+    return { kind: 'data', value: r.value }
+  }, 5)
   return client
 }

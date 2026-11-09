@@ -22,7 +22,7 @@ export function DeviceModulePreview(): ReactElement {
         <div key={id} data-device-id={id} className="w-[416px] max-w-full">
           <DeviceDetailModule
             deviceId={id}
-            trpcClient={fakeClient() as never}
+            trpcClient={fakeClient()}
             theme={theme}
             locale="it"
             canActuate
