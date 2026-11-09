@@ -274,21 +274,7 @@ describe('timed run', () => {
   })
 
   it('a type without a limit is offered no timed run', () => {
-    expect(build(DeviceType.Camera, HEATER).timedRun).toBeNull()
-  })
-
-  it('a switch has no slot until the cap is active, and then it does', () => {
-    expect(build(DeviceType.Switch, ['switch']).timedRun).toBeNull()
-    const model = build(DeviceType.Switch, ['switch', 'timed-run'], {
-      switch: { on: false, lastChangedAt: 1 },
-    })
-    expect(model.timedRun?.quickRun).toEqual({ duration: 30, unit: 'min' })
-    expect(model.timedRun?.run.id).toBe('timed-run.run')
-  })
-
-  it('a light uses the generic switch limit once the cap is active', () => {
-    const model = build(DeviceType.Light, ['switch', 'timed-run'])
-    expect(model.timedRun?.quickRun).toEqual({ duration: 30, unit: 'min' })
+    expect(build(DeviceType.Switch, HEATER).timedRun).toBeNull()
   })
 })
 

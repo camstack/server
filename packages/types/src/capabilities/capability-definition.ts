@@ -723,14 +723,6 @@ export interface CapabilityDefinition<
    * Ignored unless `kind === 'wrapper'`. Default: `false`.
    */
   readonly defaultActive?: boolean
-  /**
-   * Wrapper-only. When `defaultActive` is true, the device types this wrapper
-   * auto-binds for. Omit it and every type in `deviceTypes` is active by
-   * default. A type listed in `deviceTypes` but not here can still be turned
-   * on per device (`setWrapperActive`); it stays off until then. Behavioural
-   * metadata, so it lives only here (D4).
-   */
-  readonly defaultActiveTypes?: readonly DeviceType[]
   /** True when this cap is registered PER-DEVICE via `ctx.registerNativeCap`
    *  (the provider IS the device), so the tRPC layer must resolve it with
    *  `requireDeviceScoped` → `getNativeProvider(capName, deviceId)`. Distinct

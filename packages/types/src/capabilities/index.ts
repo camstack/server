@@ -460,10 +460,8 @@ export {
 } from './do-not-disturb.cap.js'
 export {
   type ITimedRunProvider,
-  TIMED_RUN_DEFAULT_TYPES,
   TIMED_RUN_DEVICE_TYPES,
   TIMED_RUN_LIMITS,
-  TIMED_RUN_SWITCH_LIMIT,
   type TimedRunActuator,
   TimedRunActuatorSchema,
   type TimedRunLimit,

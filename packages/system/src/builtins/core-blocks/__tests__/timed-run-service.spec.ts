@@ -10,7 +10,6 @@ import { recordingLogger } from './fixtures.js'
 
 const HEATER = 5
 const FOUNTAIN = 6
-const SWITCH = 11
 const T0 = 1_000_000
 
 function fakeRows(seed: Record<number, TimedRunRowBody> = {}) {
@@ -42,7 +41,6 @@ function harness(
   const types = new Map<number, DeviceType>([
     [HEATER, DeviceType.Heater],
     [FOUNTAIN, DeviceType.PetFountain],
-    [SWITCH, DeviceType.Switch],
     [9, DeviceType.Camera],
   ])
   const quickRuns = new Map<number, number>()
@@ -109,16 +107,6 @@ describe('TimedRunService', () => {
     const result = await h.service.runFor({ deviceId: FOUNTAIN, duration: 120, unit: 's' })
     expect(result).toEqual({ ok: true, activeUntil: T0 + 120_000 })
     expect(h.commands).toEqual([{ deviceId: FOUNTAIN, actuator: 'pet-fountain', on: true }])
-  })
-
-  it('runFor on a generic switch respects 180 min', async () => {
-    const h = harness()
-    const over = await h.service.runFor({ deviceId: SWITCH, duration: 181, unit: 'min' })
-    expect(over).toEqual({ ok: false, reason: 'over-max', maxSeconds: 180 * 60 })
-    expect(h.commands).toEqual([])
-    const ok = await h.service.runFor({ deviceId: SWITCH, duration: 30, unit: 'min' })
-    expect(ok).toEqual({ ok: true, activeUntil: T0 + 30 * 60_000 })
-    expect(h.commands).toEqual([{ deviceId: SWITCH, actuator: 'switch', on: true }])
   })
 
   it('refuses above the type maximum with the typed reason and arms nothing', async () => {

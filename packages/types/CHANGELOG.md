@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- A device row shows a running timed run, with the time left and Run or Stop. Any switch can opt in; stoves and fountains stay on by default.
+- A device row shows a running timed run, with the time left and Run or Stop.
 
 ## [1.2.535] - 2026-11-09
 

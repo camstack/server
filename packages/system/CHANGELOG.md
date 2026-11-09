@@ -81,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A scoped capability method whose input takes {} is also callable with no input
 - A timed run turns itself on only for stoves and fountains. Any other switch stays off until Customize enables it.
 
+
 ### Removed
 
 - Drop the legacy integration settings table once every owning addon's copy migration is applied

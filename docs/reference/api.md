@@ -4810,8 +4810,8 @@
 
 ### `timed-run` → `timedRun.*`
 
-- **Source:** `packages/types/src/capabilities/timed-run.cap.ts:187`
-- **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `switch, siren, light, fan, heater, pet-fountain`
+- **Source:** `packages/types/src/capabilities/timed-run.cap.ts:160`
+- **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `heater, pet-fountain`
 - **Archetypes:** status(push) · runtimeState · deviceConfig(derived-form) · wrapper(defaultActive)
 - **Provider interface:** `ITimedRunProvider`
 - **runtimeState:** `TimedRunStatusSchema`

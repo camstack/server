@@ -16,7 +16,6 @@ import {
   type IEventBus,
   type IScopedLogger,
   type SystemEvent,
-  timedRunCapability,
 } from '@camstack/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
@@ -721,42 +720,6 @@ describe('device-manager bindings store', () => {
     expect(events[1]).toMatchObject({
       category: EventCategory.DeviceBindingsChanged,
       data: { deviceId: CAM_02, capName: 'snapshot', reason: 'wrapper-deactivated' },
-    })
-  })
-
-  describe('timed-run defaults on for heaters and fountains only', () => {
-    const HEATER = 910
-    const FOUNTAIN = 900
-    const SWITCH = 320
-
-    beforeEach(async () => {
-      await seedDeviceRow(store, { deviceId: HEATER, type: DeviceType.Heater })
-      await seedDeviceRow(store, { deviceId: FOUNTAIN, type: DeviceType.PetFountain })
-      await seedDeviceRow(store, { deviceId: SWITCH, type: DeviceType.Switch })
-      const registry = new CapabilityRegistry(makeLogger())
-      registry.declareCapability(timedRunCapability)
-      registry.registerWrapper('timed-run', 'core/core-blocks', { defaultActive: true })
-      ctx.kernel.capabilityRegistry = registry
-    })
-
-    it('a heater and a fountain are active without being asked', async () => {
-      const heater = await addon.getBindings({ deviceId: HEATER })
-      const fountain = await addon.getBindings({ deviceId: FOUNTAIN })
-      expect(heater.entries.map((e) => e.capName)).toContain('timed-run')
-      expect(fountain.entries.map((e) => e.capName)).toContain('timed-run')
-    })
-
-    it('a switch stays inactive until the operator activates it', async () => {
-      const before = await addon.getBindings({ deviceId: SWITCH })
-      expect(before.entries.map((e) => e.capName)).not.toContain('timed-run')
-      await addon.setWrapperActive({
-        deviceId: SWITCH,
-        capName: 'timed-run',
-        wrapperAddonId: 'core/core-blocks',
-        active: true,
-      })
-      const after = await addon.getBindings({ deviceId: SWITCH })
-      expect(after.entries.map((e) => e.capName)).toContain('timed-run')
     })
   })
 })

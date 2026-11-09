@@ -356,23 +356,6 @@ export function capAppliesToDeviceType(
 }
 
 /**
- * Does a `defaultActive` wrapper auto-bind for this device type?
- *
- * `defaultActiveTypes` narrows the auto-bind (D4: the list lives on the cap).
- * Omit it and every type the cap applies to is active by default. An unknown
- * type does not filter, so a failed type read changes nothing (D49).
- */
-export function defaultWrapperAppliesToType(
-  def: Pick<CapabilityDefinition, 'defaultActiveTypes'> | undefined,
-  deviceType: string | undefined,
-): boolean {
-  const types = def?.defaultActiveTypes
-  if (types === undefined || types.length === 0) return true
-  if (deviceType === undefined) return true
-  return types.some((t) => t === deviceType)
-}
-
-/**
  * An addon's identity, with the node it happens to run on stripped.
  *
  * A capability registered on an agent arrives under `<addonId>@<nodeId>` —
@@ -610,16 +593,10 @@ async function resolveBindingsForDevice(
     })
   } else if (deps.capabilityRegistry) {
     const skippedForType: string[] = []
-    const skippedNotDefault: string[] = []
     for (const capName of deps.capabilityRegistry.getCapsWithDefaultWrapper()) {
       if (seenCaps.has(capName)) continue
-      const definition = deps.capabilityRegistry.getDefinition(capName)
-      if (!capAppliesToDeviceType(definition, deviceType)) {
+      if (!capAppliesToDeviceType(deps.capabilityRegistry.getDefinition(capName), deviceType)) {
         skippedForType.push(capName)
-        continue
-      }
-      if (!defaultWrapperAppliesToType(definition, deviceType)) {
-        skippedNotDefault.push(capName)
         continue
       }
       const defaultWrapperAddonId = deps.capabilityRegistry.getDefaultWrapperForCap(capName)
@@ -642,12 +619,6 @@ async function resolveBindingsForDevice(
       deps.ctx.logger.debug('getBindings: default wrappers skipped — deviceTypes mismatch', {
         tags: { deviceId },
         meta: { deviceType, skipped: skippedForType },
-      })
-    }
-    if (skippedNotDefault.length > 0) {
-      deps.ctx.logger.debug('getBindings: default wrapper skipped — not active for this type', {
-        tags: { deviceId },
-        meta: { deviceType, skipped: skippedNotDefault },
       })
     }
   }
