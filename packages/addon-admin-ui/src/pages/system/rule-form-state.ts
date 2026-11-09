@@ -5,6 +5,8 @@
  */
 
 import type {
+  ActionEntry,
+  ActionStep,
   NcConditionDescriptor,
   NcConditions,
   NcConfirmExpect,
@@ -12,8 +14,6 @@ import type {
   NcMediaImage,
   NcMediaPolicy,
   NcRule,
-  NcRuleAction,
-  NcSharedSequence,
   NcRuleSectionSubject,
   NcSchedule,
   NcSystemEventDelivery,
@@ -50,6 +50,7 @@ import { projectRuleScope, type RuleScopeDraft, ruleScopeDraftOf } from './rule-
 import {
   actionsToForm,
   EMPTY_RULE_ACTIONS,
+  formActionSteps,
   formToActions,
   type NcRuleActionsFormState,
   validateRuleActions,
@@ -173,8 +174,8 @@ export interface NcRuleFormState {
   /**
    * What the rule ACTUATES, and the buttons its notification carries.
    *
-   * Authored as one block because a button references a sequence by name — two
-   * tabs owning the halves separately would let a button point at a sequence
+   * Authored as one block because a button references an Action by id — two
+   * tabs owning the halves separately would let a button point at an Action
    * the other tab had just renamed.
    */
   readonly actions: NcRuleActionsFormState
@@ -269,13 +270,13 @@ const NC_ALARM_PANEL_CAP = 'alarm-panel'
  * Is this rule one a snooze can never silence?
  *
  * True when the rule is ABOUT the panel (a system-event kind) or ACTUATES it
- * (a Do / shared-sequence step on the `alarm-panel` cap). Derived from what
+ * (an Action it runs has a step on the `alarm-panel` cap). Derived from what
  * the operator already wrote — nothing is stored, so the editor cannot
  * disagree with the engine.
  */
 export function isRuleSnoozeExempt(
   conditions: NcConditions,
-  steps: readonly NcRuleAction[],
+  steps: readonly ActionStep[],
 ): boolean {
   for (const kind of conditions.systemEvent?.kinds ?? []) {
     if (NC_ALARM_KINDS.has(kind)) return true
@@ -286,27 +287,12 @@ export function isRuleSnoozeExempt(
   return false
 }
 
-/** Resolve form bindings against the shared sequence list for snooze exemption. */
+/** The steps of every Action the form names, for the snooze exemption. */
 export function formStepsForSnooze(
   form: NcRuleActionsFormState,
-  sequences: readonly NcSharedSequence[],
-): readonly NcRuleAction[] {
-  const byId = new Map(sequences.map((s) => [s.id, s]))
-  const out: NcRuleAction[] = []
-  for (const key of ['onActivation', 'onDeactivation', 'onTrigger', 'onTriggerOff'] as const) {
-    for (const binding of form[key]) {
-      if (binding.kind === 'do') out.push(binding.action)
-      else {
-        const seq = byId.get(binding.sequenceId)
-        if (seq !== undefined) out.push(...seq.actions)
-      }
-    }
-  }
-  for (const button of form.buttons) {
-    const seq = byId.get(button.sequenceId)
-    if (seq !== undefined) out.push(...seq.actions)
-  }
-  return out
+  actions: readonly ActionEntry[],
+): readonly ActionStep[] {
+  return formActionSteps(form, actions)
 }
 
 /** The form's slice of a rule's conditions: everything, and the two scope axes. */
@@ -631,7 +617,7 @@ export function isStateSummaryForm(form: NcRuleFormState): boolean {
 export function isRuleFormValid(
   form: NcRuleFormState,
   preserved?: Pick<NcRule, 'confirm'>,
-  knownSequenceIds: ReadonlySet<string> = new Set(),
+  knownActionIds: ReadonlySet<string> = new Set(),
 ): boolean {
   return (
     // A condition the engine would refuse blocks the save. The rule would be
@@ -653,10 +639,10 @@ export function isRuleFormValid(
     form.name.trim().length > 0 &&
     (form.targetIds.length > 0 || form.targetUsers.length > 0) &&
     // The actions problems BLOCK the save rather than merely being displayed.
-    // A button / binding pointing at a missing sequence would be accepted by
+    // A button / hook naming a missing Action would be accepted by
     // the store and then do nothing. Shown-but-saveable is how a warning
     // becomes decoration.
-    validateRuleActions(form.actions, knownSequenceIds).length === 0
+    validateRuleActions(form.actions, knownActionIds).length === 0
   )
 }
 

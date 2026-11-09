@@ -1,58 +1,37 @@
 /**
- * The rule dialog's Actions tab: hook bindings and notification buttons.
+ * The rule dialog's Actions tab: which Actions each hook edge starts, and the buttons
+ * the notification carries.
  *
- * Sequences are authored on Notifications → Sequences. Here the operator only
- * binds to them (or authors a single Do) on each hook edge.
+ * Actions are authored on the Build → Actions page. Here the operator only names them
+ * (planning#473): a rule or a button runs an existing Action by id, it never defines
+ * steps of its own.
  */
 
-import type {
-  NcActionBinding,
-  NcRuleAction,
-  NcRuleNotificationButton,
-  NcSharedSequence,
-} from '@camstack/types'
-import { normalizeNcCapTarget } from '@camstack/types'
+import type { ActionEntry, NcRuleNotificationButton } from '@camstack/types'
 import type { ReactNode } from 'react'
 import { Button, Input, Select } from '@camstack/ui-library'
-import { AlertTriangle, Plus, Trash2 } from 'lucide-react'
-import {
-  DeviceDoActionFields,
-  type CapDoWire,
-  type CapDeviceTarget,
-} from '../../components/device-do-action/DeviceDoActionFields'
+import { AlertTriangle, ExternalLink, Plus, Trash2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import {
   NC_ACTION_ICON_OPTIONS,
   NC_HOOK_KEYS,
   NC_HOOK_LABELS,
+  NC_HOOK_MAX_ACTIONS,
   type NcHookKey,
   type NcRuleActionsFormState,
   newButton,
-  newDoBinding,
-  newSequenceBinding,
   validateRuleActions,
 } from './notification-rule-actions'
-import { type DeviceListState } from './device-selection'
-import { Trans, useTranslation } from 'react-i18next'
 
-export interface RuleActionDevice {
-  readonly id: number
-  readonly name: string
-  readonly type?: string
-  readonly location?: string | null
-}
+/** Where an Action is made: the Actions section of Build, create dialog open. */
+export const CREATE_ACTION_PATH = '/build?tab=actions&create=1'
 
 export interface NotificationRuleActionsProps {
   readonly value: NcRuleActionsFormState
   readonly onChange: (next: NcRuleActionsFormState) => void
-  readonly devices: readonly RuleActionDevice[]
-  readonly devicesState: DeviceListState
-  readonly sequences: readonly NcSharedSequence[]
-  /** Create a shared sequence from a preset and return its id. */
-  readonly onCreateSequence?: (input: {
-    readonly name: string
-    readonly minDelaySec?: number
-    readonly actions: readonly NcRuleAction[]
-  }) => Promise<string>
+  /** The Actions the hub lists (`actions.list`). */
+  readonly actions: readonly ActionEntry[]
   /** When false, hide validation banners (new rule before first Create). */
   readonly showProblems?: boolean
 }
@@ -82,120 +61,77 @@ function SectionHeader({
   )
 }
 
-function selectedIdsOf(deviceId: CapDeviceTarget): readonly number[] {
-  if (typeof deviceId === 'number') return deviceId > 0 ? [deviceId] : []
-  if (Array.isArray(deviceId)) return deviceId.filter((id) => id > 0)
-  return []
-}
-
-function capActionFromWire(wire: CapDoWire, deviceId: number): NcRuleAction {
-  return {
-    kind: 'cap',
-    deviceId,
-    cap: wire.cap,
-    method: wire.method,
-    ...(wire.args !== undefined ? { args: { ...wire.args } } : {}),
-  }
-}
-
-/** Expand a multi-device Do wire into one sequence `cap` step per device (schema is scalar). */
-export function expandCapActions(wire: CapDoWire): readonly NcRuleAction[] {
-  const ids = selectedIdsOf(wire.deviceId)
-  if (ids.length === 0) return [capActionFromWire(wire, 0)]
-  return ids.map((deviceId) => capActionFromWire(wire, deviceId))
-}
-
-/** Expand a multi-device Do wire into one `do` binding per device (schema is scalar). */
-export function expandDoBindings(wire: CapDoWire): readonly NcActionBinding[] {
-  return expandCapActions(wire).map((action) => ({ kind: 'do' as const, action }))
-}
-
-/**
- * The devices a stored cap step names (D983: `target.devices`, or the legacy
- * `deviceId`). A `domain` or `var` target names none here — this editor is a
- * device picker.
- */
-function stepDeviceIds(step: Extract<NcRuleAction, { kind: 'cap' }>): readonly number[] {
-  const { target } = normalizeNcCapTarget(step)
-  return target.kind === 'devices' ? target.ids.filter((id) => id > 0) : []
-}
-
-/**
- * Collapse consecutive same-action sequence `cap` steps into one CapDoWire for editing.
- * Returns how many steps were consumed (at least 1). Wait / mismatched steps stop the group.
- */
-export function collapseCapGroup(
-  actions: readonly NcRuleAction[],
-  start: number,
-): { readonly wire: CapDoWire; readonly length: number } {
-  const first = actions[start]
-  if (first === undefined || first.kind !== 'cap') {
-    return {
-      wire: { deviceId: 0, cap: '', method: '' },
-      length: 1,
-    }
-  }
-  const ids: number[] = [...stepDeviceIds(first)]
-  let length = 1
-  for (let i = start + 1; i < actions.length; i += 1) {
-    const next = actions[i]
-    if (next === undefined || next.kind !== 'cap') break
-    if (
-      next.cap !== first.cap ||
-      next.method !== first.method ||
-      JSON.stringify(next.args ?? {}) !== JSON.stringify(first.args ?? {})
-    ) {
-      break
-    }
-    ids.push(...stepDeviceIds(next))
-    length += 1
-  }
-  return {
-    wire: {
-      deviceId: ids.length === 0 ? 0 : ids.length === 1 ? ids[0]! : [...ids],
-      cap: first.cap,
-      method: first.method,
-      ...(first.args !== undefined ? { args: { ...first.args } } : {}),
-    },
-    length,
-  }
-}
-
-/**
- * Collapse consecutive same-action do bindings into one CapDoWire for editing.
- * Returns how many bindings were consumed (at least 1).
- */
-export function collapseDoGroup(
-  bindings: readonly NcActionBinding[],
-  start: number,
-): { readonly wire: CapDoWire; readonly length: number } {
-  const first = bindings[start]
-  if (first === undefined || first.kind !== 'do') {
-    return {
-      wire: { deviceId: 0, cap: '', method: '' },
-      length: 1,
-    }
-  }
-  const group = collapseCapGroup(
-    bindings.slice(start).map((b) => (b.kind === 'do' ? b.action : { kind: 'wait', seconds: 0 })),
-    0,
+/** The jump to the Actions page, in a new tab so the open rule dialog is not lost. */
+function CreateActionLink() {
+  const { t } = useTranslation()
+  return (
+    <Link
+      to={CREATE_ACTION_PATH}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={t(
+        'system.notificationRuleActions.createActionHint',
+        'Opens the Actions page in a new tab. Reopen the list here afterwards.',
+      )}
+      className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+    >
+      <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+      {t('system.notificationRuleActions.createActionLink', 'Create a new Action')}
+    </Link>
   )
-  return group
+}
+
+/** One Action chosen from the hub's list; a stored id the hub no longer lists stays visible. */
+function ActionSelect({
+  value,
+  actions,
+  onChange,
+}: {
+  readonly value: string
+  readonly actions: readonly ActionEntry[]
+  readonly onChange: (actionId: string) => void
+}) {
+  const { t } = useTranslation()
+  const missing = value !== '' && !actions.some((a) => a.id === value)
+  return (
+    <Select
+      wrapperClassName="block w-full"
+      className={FIELD}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      {value === '' && (
+        <option value="">
+          {t('system.notificationRuleActions.pickAction', 'Pick an Action')}
+        </option>
+      )}
+      {missing && (
+        <option value={value}>
+          {t('system.notificationRuleActions.missingAction', 'Missing Action ({{id}})', {
+            id: value,
+          })}
+        </option>
+      )}
+      {actions.map((a) => (
+        <option key={a.id} value={a.id}>
+          {a.name}
+        </option>
+      ))}
+    </Select>
+  )
 }
 
 export function NotificationRuleActions({
   value,
   onChange,
-  devices,
-  devicesState,
-  sequences = [],
+  actions,
   showProblems = true,
 }: NotificationRuleActionsProps) {
   const { t } = useTranslation()
-  const knownIds = new Set(sequences.map((s) => s.id))
+  const knownIds = new Set(actions.map((a) => a.id))
   const problems = validateRuleActions(value, knownIds)
 
-  const setHook = (key: NcHookKey, next: readonly NcActionBinding[]): void =>
+  const setHook = (key: NcHookKey, next: readonly string[]): void =>
     onChange({ ...value, [key]: next })
 
   const setButton = (index: number, next: NcRuleNotificationButton): void =>
@@ -211,14 +147,22 @@ export function NotificationRuleActions({
         </div>
       ) : null}
 
+      {actions.length === 0 && (
+        <p className="rounded border border-border px-3 py-2 text-[11px] text-foreground-subtle">
+          {t(
+            'system.notificationRuleActions.noActionsYet',
+            'There are no Actions yet. Create one on the Actions page — a rule or a button runs an Action, it does not define its own steps.',
+          )}{' '}
+          <CreateActionLink />
+        </p>
+      )}
+
       {NC_HOOK_KEYS.map((key) => (
         <HookSection
           key={key}
           hookKey={key}
-          bindings={value[key]}
-          sequences={sequences}
-          devices={devices}
-          devicesState={devicesState}
+          actionIds={value[key]}
+          actions={actions}
           onChange={(next) => setHook(key, next)}
         />
       ))}
@@ -230,27 +174,25 @@ export function NotificationRuleActions({
             'Buttons on the notification',
           )}
           description={t(
-            'system.notificationRuleActions.eachButtonRunsOneShared',
-            'Each button runs one shared sequence when tapped.',
+            'system.notificationRuleActions.eachButtonRunsOneAction',
+            'Each button runs one Action when tapped.',
           )}
         >
           <Button
             size="sm"
             variant="ghost"
             type="button"
-            disabled={sequences.length === 0}
+            disabled={actions.length === 0}
             onClick={() =>
               onChange({
                 ...value,
-                buttons: [
-                  ...value.buttons,
-                  newButton(value.buttons.length, sequences[0]?.id ?? ''),
-                ],
+                buttons: [...value.buttons, newButton(value.buttons.length, actions[0]?.id ?? '')],
               })
             }
           >
             <Plus className="h-3.5 w-3.5 shrink-0" /> {t('system.notificationRuleActions.button')}
           </Button>
+          <CreateActionLink />
         </SectionHeader>
 
         {value.buttons.length > 0 && (
@@ -265,14 +207,7 @@ export function NotificationRuleActions({
           </div>
         )}
 
-        {sequences.length === 0 ? (
-          <p className="rounded border border-border px-3 py-2 text-[11px] text-foreground-subtle">
-            {t(
-              'system.notificationRuleActions.createASequenceOnThe',
-              'Create a sequence on the Sequences tab first — a button runs one, it does not define its own steps.',
-            )}
-          </p>
-        ) : value.buttons.length === 0 ? (
+        {value.buttons.length === 0 ? (
           <p className="rounded border border-border px-3 py-2 text-[11px] text-foreground-subtle">
             {t(
               'system.notificationRuleActions.noButtonsTheNotificationArrives',
@@ -284,7 +219,7 @@ export function NotificationRuleActions({
             <ButtonRow
               key={`btn-${String(index)}`}
               button={button}
-              sequences={sequences}
+              actions={actions}
               onChange={(next) => setButton(index, next)}
               onRemove={() =>
                 onChange({ ...value, buttons: value.buttons.filter((_, i) => i !== index) })
@@ -299,40 +234,17 @@ export function NotificationRuleActions({
 
 function HookSection({
   hookKey,
-  bindings,
-  sequences,
-  devices,
-  devicesState,
+  actionIds,
+  actions,
   onChange,
 }: {
   readonly hookKey: NcHookKey
-  readonly bindings: readonly NcActionBinding[]
-  readonly sequences: readonly NcSharedSequence[]
-  readonly devices: readonly RuleActionDevice[]
-  readonly devicesState: DeviceListState
-  readonly onChange: (next: readonly NcActionBinding[]) => void
+  readonly actionIds: readonly string[]
+  readonly actions: readonly ActionEntry[]
+  readonly onChange: (next: readonly string[]) => void
 }) {
   const { t } = useTranslation()
   const meta = NC_HOOK_LABELS[hookKey]
-
-  const cards: {
-    readonly start: number
-    readonly kind: 'sequence' | 'do'
-    readonly length: number
-  }[] = []
-  let i = 0
-  while (i < bindings.length) {
-    const b = bindings[i]!
-    if (b.kind === 'sequence') {
-      cards.push({ start: i, kind: 'sequence', length: 1 })
-      i += 1
-      continue
-    }
-    const group = collapseDoGroup(bindings, i)
-    cards.push({ start: i, kind: 'do', length: group.length })
-    i += group.length
-  }
-
   return (
     <section className="space-y-2">
       <SectionHeader title={meta.title} description={meta.hint}>
@@ -340,110 +252,41 @@ function HookSection({
           size="sm"
           variant="ghost"
           type="button"
-          disabled={bindings.length >= 4 || sequences.length === 0}
-          onClick={() => onChange([...bindings, newSequenceBinding(sequences[0]?.id ?? '')])}
+          disabled={actionIds.length >= NC_HOOK_MAX_ACTIONS || actions.length === 0}
+          onClick={() => onChange([...actionIds, actions[0]?.id ?? ''])}
         >
-          <Plus className="h-3.5 w-3.5" /> {t('system.notificationRuleActions.sequence')}
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          type="button"
-          disabled={bindings.length >= 4}
-          onClick={() => onChange([...bindings, newDoBinding()])}
-        >
-          <Plus className="h-3.5 w-3.5" /> {t('system.notificationRuleActions.singleAction')}
+          <Plus className="h-3.5 w-3.5" /> {t('system.notificationRuleActions.addAction')}
         </Button>
       </SectionHeader>
-      {bindings.length === 0 ? (
+      {actionIds.length === 0 ? (
         <p className="rounded border border-border px-3 py-2 text-[11px] text-foreground-subtle">
           {t('system.notificationRuleActions.nothingOnThisEdge', 'Nothing on this edge.')}
         </p>
       ) : (
-        cards.map((card) => {
-          if (card.kind === 'sequence') {
-            const binding = bindings[card.start]!
-            if (binding.kind !== 'sequence') return null
-            return (
-              <div
-                key={`seq-${String(card.start)}`}
-                className="flex flex-wrap items-end gap-2 rounded-md border border-border p-3"
-              >
-                <div className="min-w-0 flex-1">
-                  <label className={LABEL}>
-                    {t('system.notificationRuleActions.sequence', 'Sequence')}
-                  </label>
-                  <Select
-                    wrapperClassName="inline-block w-auto"
-                    className={FIELD}
-                    value={binding.sequenceId}
-                    onChange={(e) => {
-                      const next = [...bindings]
-                      next[card.start] = { kind: 'sequence', sequenceId: e.target.value }
-                      onChange(next)
-                    }}
-                  >
-                    {sequences.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  type="button"
-                  onClick={() => onChange(bindings.filter((_, idx) => idx !== card.start))}
-                  title={t('common.remove', 'Remove')}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            )
-          }
-
-          const group = collapseDoGroup(bindings, card.start)
-          return (
-            <div
-              key={`do-${String(card.start)}`}
-              className="space-y-2 rounded-md border border-border p-3"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <DeviceDoActionFields
-                    value={group.wire}
-                    devices={devices}
-                    listState={devicesState}
-                    allowMultiSameFamily
-                    onChange={(wire) => {
-                      const expanded = expandDoBindings(wire)
-                      onChange([
-                        ...bindings.slice(0, card.start),
-                        ...expanded,
-                        ...bindings.slice(card.start + card.length),
-                      ])
-                    }}
-                  />
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  type="button"
-                  onClick={() =>
-                    onChange([
-                      ...bindings.slice(0, card.start),
-                      ...bindings.slice(card.start + card.length),
-                    ])
-                  }
-                  title={t('common.remove', 'Remove')}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
+        actionIds.map((actionId, index) => (
+          <div
+            key={`${hookKey}-${String(index)}`}
+            className="flex flex-wrap items-end gap-2 rounded-md border border-border p-3"
+          >
+            <div className="min-w-0 flex-1">
+              <label className={LABEL}>{t('system.notificationRuleActions.action', 'Action')}</label>
+              <ActionSelect
+                value={actionId}
+                actions={actions}
+                onChange={(next) => onChange(actionIds.map((id, i) => (i === index ? next : id)))}
+              />
             </div>
-          )
-        })
+            <Button
+              size="sm"
+              variant="ghost"
+              type="button"
+              onClick={() => onChange(actionIds.filter((_, i) => i !== index))}
+              title={t('common.remove', 'Remove')}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ))
       )}
     </section>
   )
@@ -451,12 +294,12 @@ function HookSection({
 
 function ButtonRow({
   button,
-  sequences,
+  actions,
   onChange,
   onRemove,
 }: {
   readonly button: NcRuleNotificationButton
-  readonly sequences: readonly NcSharedSequence[]
+  readonly actions: readonly ActionEntry[]
   readonly onChange: (next: NcRuleNotificationButton) => void
   readonly onRemove: () => void
 }) {
@@ -480,19 +323,12 @@ function ButtonRow({
         />
       </div>
       <div className="min-w-0 flex-1">
-        <label className={LABEL}>{t('system.notificationRuleActions.sequence', 'Sequence')}</label>
-        <Select
-          wrapperClassName="inline-block w-auto"
-          className={FIELD}
-          value={button.sequenceId}
-          onChange={(e) => onChange({ ...button, sequenceId: e.target.value })}
-        >
-          {sequences.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </Select>
+        <label className={LABEL}>{t('system.notificationRuleActions.action', 'Action')}</label>
+        <ActionSelect
+          value={button.actionId}
+          actions={actions}
+          onChange={(actionId) => onChange({ ...button, actionId })}
+        />
       </div>
       <div className="w-32">
         <label className={LABEL}>{t('system.notificationRuleActions.icon', 'Icon')}</label>
@@ -501,10 +337,9 @@ function ButtonRow({
           className={FIELD}
           value={button.icon ?? ''}
           onChange={(e) => {
-            const next = { ...button }
-            if (e.target.value === '') delete (next as { icon?: string }).icon
-            else next.icon = e.target.value as typeof button.icon
-            onChange(next)
+            const { icon: _drop, ...rest } = button
+            const chosen = NC_ACTION_ICON_OPTIONS.find((o) => o.value === e.target.value)
+            onChange(chosen === undefined ? rest : { ...rest, icon: chosen.value })
           }}
         >
           <option value="">—</option>

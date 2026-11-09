@@ -35,6 +35,10 @@ export default defineFixtures({
       rules: [
         rule('rule-door', 'Person at the door', {
           delivery: 'immediate',
+          actions: {
+            onTrigger: ['internal:siren'],
+            buttons: [{ id: 'open', label: 'Open gate', actionId: 'internal:gate', icon: 'unlock' }],
+          },
           conditions: { classes: ['person'], zones: { ids: ['zone-door'] } },
           // The legacy triple rides along so the pre-D897 editor (the 'before' shot) shows the same choice.
           media: {
@@ -87,7 +91,28 @@ export default defineFixtures({
       ],
     },
     'notificationRules.getRuleLastRuns': { runs: [], horizonMs: null },
-    'notificationRules.listSequences': { sequences: [] },
+    'actions.list': [
+      {
+        id: 'internal:gate',
+        name: 'Open the gate',
+        addonId: 'system',
+        source: 'internal',
+        readOnly: false,
+        steps: [{ kind: 'wait', seconds: 1 }],
+        variables: [],
+        status: { isRunning: false, lastRunAt: null, lastError: null },
+      },
+      {
+        id: 'internal:siren',
+        name: 'Sound the siren',
+        addonId: 'system',
+        source: 'internal',
+        readOnly: false,
+        steps: [{ kind: 'wait', seconds: 5 }],
+        variables: [],
+        status: { isRunning: false, lastRunAt: null, lastError: null },
+      },
+    ],
     'notificationRules.listSnoozes': { snoozes: [] },
     'auth.listLoginMethods': [],
     ...notificationInstanceHandlers([

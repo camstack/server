@@ -34,8 +34,8 @@ export interface RuleColumnsDeps {
   readonly targetNameById: ReadonlyMap<string, string>
   /** Every snooze window the caller can see — the Snooze column reads it. */
   readonly snoozes: readonly NcSnooze[]
-  /** Shared sequences — snooze exemption resolves sequence-ref actuation. */
-  readonly sequences: readonly import('@camstack/types').NcSharedSequence[]
+  /** The Actions the hub lists — snooze exemption reads the steps of the ones a rule runs. */
+  readonly actions: readonly import('@camstack/types').ActionEntry[]
   readonly deletePending: boolean
   readonly onToggle: (rule: NcRule, enabled: boolean) => void
   readonly onDuplicate: (rule: NcRule) => void
@@ -145,7 +145,7 @@ export function ruleColumns(deps: RuleColumnsDeps): readonly DataColumn<NcRule>[
                   onTriggerOff: rule.actions?.onTriggerOff ?? [],
                   buttons: rule.actions?.buttons ?? [],
                 },
-                deps.sequences,
+                deps.actions,
               ),
             )}
           />

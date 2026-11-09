@@ -314,7 +314,7 @@ export function emptySimulateForm(): NcSimulateFormState {
     // common reasons a live rule is quiet.
     bypassCooldown: false,
     bypassMute: false,
-    // OFF: running a rule's sequences actuates real devices.
+    // OFF: running a rule's Actions actuates real devices.
     runActions: false,
     still: 'live',
   }

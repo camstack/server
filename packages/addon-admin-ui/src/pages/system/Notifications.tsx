@@ -1,5 +1,5 @@
 /**
- * Notifications — Targets / Rules / Sequences / Simulate / History / Alarm /
+ * Notifications — Targets / Rules / Simulate / History / Alarm /
  * Texts / Settings.
  *
  * Shell is library `SectionedPage` (OSD template). Add / New live on the page
@@ -18,7 +18,6 @@ import { navChromeForPath } from '../../lib/nav-items'
 import { NotificationAlarmPage } from './NotificationAlarm'
 import { NotificationHistoryPage } from './NotificationHistory'
 import { NotificationRulesPage } from './NotificationRules'
-import { NotificationSequencesPage, SEQUENCES_TAB_OWNED_PARAMS } from './NotificationSequences'
 import { NotificationSettingsPage } from './NotificationSettings'
 import { NotificationSimulatePage } from './NotificationSimulate'
 import { NotificationTargetsPanel } from './NotificationTargetsPanel'
@@ -44,7 +43,7 @@ const RULES_TAB_ID = 'rules'
 /** The `?` keys `<InstancesTable>` keeps its open instance in; a tab change drops them. */
 const TARGETS_TAB_OWNED_PARAMS: readonly string[] = ['instance', 'instance-new']
 
-const TABS_WITH_CREATE = new Set([RULES_TAB_ID, 'sequences'])
+const TABS_WITH_CREATE = new Set([RULES_TAB_ID])
 
 function producerCreateType(area: RulesAreaKey): CreateRuleType | null {
   if (area === 'summaries') return 'summary'
@@ -148,19 +147,6 @@ export function NotificationsPage() {
   const clearCreate = (): void => setCreateRequested(false)
 
   const headerActions: ReactNode = (() => {
-    if (tab === 'sequences') {
-      return (
-        <Button
-          size="sm"
-          type="button"
-          data-testid="notifications-add-sequence"
-          onClick={() => setCreateRequested(true)}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          {t('systemPage.notifications.newSequence', 'New sequence')}
-        </Button>
-      )
-    }
     if (tab === RULES_TAB_ID) {
       return rulesHeaderActions(
         rulesArea,
@@ -208,18 +194,6 @@ export function NotificationsPage() {
             />
           ),
           ownedParams: ['section', 'rule', 'editTab'],
-        },
-        {
-          id: 'sequences',
-          label: t('systemPage.notifications.sequences', 'Sequences'),
-          content: (
-            <NotificationSequencesPage
-              headerOwnsCreate
-              createRequested={tab === 'sequences' && createRequested}
-              onCreateConsumed={clearCreate}
-            />
-          ),
-          ownedParams: SEQUENCES_TAB_OWNED_PARAMS,
         },
         {
           id: SIMULATE_TAB_ID,

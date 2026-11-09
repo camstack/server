@@ -1,6 +1,6 @@
 /**
  * Bound capability names for one device — shared by the Device→Do picker
- * (NC Sequences / Automations) so both surfaces ask the same question.
+ * (Actions / Automations) so both surfaces ask the same question.
  */
 
 import { useSystem } from '@camstack/ui-library'

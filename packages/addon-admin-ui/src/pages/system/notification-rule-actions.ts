@@ -1,20 +1,18 @@
 /**
- * Authoring a rule's ACTIONS: hook bindings and the buttons its notification
- * carries. Sequences themselves are shared entities (Notifications → Sequences);
- * a rule only binds to them by id, or authors a single Do.
+ * Authoring a rule's ACTIONS: which Actions each hook edge starts, and the buttons the
+ * notification carries. An Action is authored on the Build → Actions page; a rule only
+ * names it by id (planning#473).
  *
  * Pure, so the rules can be tested without mounting a dialog.
  */
 
 import type {
-  NcActionBinding,
-  NcRuleAction,
+  ActionEntry,
+  ActionStep,
   NcRuleActions,
   NcRuleNotificationButton,
-  NcSharedSequence,
   NotificationActionIcon,
 } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
 import i18n from '../../i18n/index'
 
 export type NcHookKey = 'onActivation' | 'onDeactivation' | 'onTrigger' | 'onTriggerOff'
@@ -63,10 +61,10 @@ export const NC_HOOK_LABELS: Readonly<Record<NcHookKey, { title: string; hint: s
 
 /** The actions half of the rule form. */
 export interface NcRuleActionsFormState {
-  readonly onActivation: readonly NcActionBinding[]
-  readonly onDeactivation: readonly NcActionBinding[]
-  readonly onTrigger: readonly NcActionBinding[]
-  readonly onTriggerOff: readonly NcActionBinding[]
+  readonly onActivation: readonly string[]
+  readonly onDeactivation: readonly string[]
+  readonly onTrigger: readonly string[]
+  readonly onTriggerOff: readonly string[]
   readonly buttons: readonly NcRuleNotificationButton[]
 }
 
@@ -77,6 +75,9 @@ export const EMPTY_RULE_ACTIONS: NcRuleActionsFormState = {
   onTriggerOff: [],
   buttons: [],
 }
+
+/** Most Actions one hook edge may start (the schema's bound). */
+export const NC_HOOK_MAX_ACTIONS = 4
 
 /** Hydrate from a persisted rule. Absent blocks read as empty, not as a change. */
 export function actionsToForm(actions: NcRuleActions | undefined): NcRuleActionsFormState {
@@ -98,13 +99,14 @@ export function actionsToForm(actions: NcRuleActions | undefined): NcRuleActions
  */
 export function formToActions(form: NcRuleActionsFormState): NcRuleActions | undefined {
   const buttons = form.buttons.filter(
-    (b) => b.id.trim() !== '' && b.label.trim() !== '' && b.sequenceId.trim() !== '',
+    (b) => b.id.trim() !== '' && b.label.trim() !== '' && b.actionId.trim() !== '',
   )
+  const hook = (ids: readonly string[]): readonly string[] => ids.filter((id) => id.trim() !== '')
   const hooks = {
-    onActivation: form.onActivation,
-    onDeactivation: form.onDeactivation,
-    onTrigger: form.onTrigger,
-    onTriggerOff: form.onTriggerOff,
+    onActivation: hook(form.onActivation),
+    onDeactivation: hook(form.onDeactivation),
+    onTrigger: hook(form.onTrigger),
+    onTriggerOff: hook(form.onTriggerOff),
   }
   const anyHook = NC_HOOK_KEYS.some((key) => hooks[key].length > 0)
   if (!anyHook && buttons.length === 0) return undefined
@@ -118,18 +120,18 @@ export function formToActions(form: NcRuleActionsFormState): NcRuleActions | und
 }
 
 export interface NcRuleActionsProblem {
-  readonly kind: 'duplicate-button' | 'unknown-sequence' | 'empty-hook' | 'too-many'
+  readonly kind: 'duplicate-button' | 'unknown-action' | 'too-many'
   readonly message: string
 }
 
 export function validateRuleActions(
   form: NcRuleActionsFormState,
-  knownSequenceIds: ReadonlySet<string>,
+  knownActionIds: ReadonlySet<string>,
 ): readonly NcRuleActionsProblem[] {
   const problems: NcRuleActionsProblem[] = []
   for (const key of NC_HOOK_KEYS) {
-    const bindings = form[key]
-    if (bindings.length > 4) {
+    const ids = form[key]
+    if (ids.length > NC_HOOK_MAX_ACTIONS) {
       problems.push({
         kind: 'too-many',
         message: i18n.t('helpers.notificationRuleActions.tooMany', {
@@ -137,32 +139,30 @@ export function validateRuleActions(
         }),
       })
     }
-    for (const binding of bindings) {
-      if (binding.kind === 'sequence' && !knownSequenceIds.has(binding.sequenceId)) {
-        problems.push({
-          kind: 'unknown-sequence',
-          message: i18n.t('helpers.notificationRuleActions.hookUnknownSeq', {
-            title: NC_HOOK_LABELS[key].title,
-          }),
-        })
-      }
+    if (ids.some((id) => id.trim() !== '' && !knownActionIds.has(id))) {
+      problems.push({
+        kind: 'unknown-action',
+        message: i18n.t('helpers.notificationRuleActions.hookUnknownAction', {
+          title: NC_HOOK_LABELS[key].title,
+        }),
+      })
     }
   }
-  const ids = new Set<string>()
+  const seen = new Set<string>()
   for (const button of form.buttons) {
     const id = button.id.trim()
     if (id === '') continue
-    if (ids.has(id)) {
+    if (seen.has(id)) {
       problems.push({
         kind: 'duplicate-button',
         message: i18n.t('helpers.notificationRuleActions.dupButton', { id }),
       })
     }
-    ids.add(id)
-    if (!knownSequenceIds.has(button.sequenceId.trim())) {
+    seen.add(id)
+    if (!knownActionIds.has(button.actionId.trim())) {
       problems.push({
-        kind: 'unknown-sequence',
-        message: i18n.t('helpers.notificationRuleActions.buttonUnknownSeq', {
+        kind: 'unknown-action',
+        message: i18n.t('helpers.notificationRuleActions.buttonUnknownAction', {
           label: button.label || id,
         }),
       })
@@ -171,24 +171,12 @@ export function validateRuleActions(
   return problems
 }
 
-export function newButton(index: number, sequenceId: string): NcRuleNotificationButton {
+export function newButton(index: number, actionId: string): NcRuleNotificationButton {
   return {
     id: `action-${String(index + 1)}`,
     label: i18n.t('helpers.notificationRuleActions.newButtonLabel'),
-    sequenceId,
+    actionId,
   }
-}
-
-export function newDoBinding(): NcActionBinding {
-  return { kind: 'do', action: { kind: 'cap', deviceId: 0, cap: '', method: '' } }
-}
-
-export function newSequenceBinding(sequenceId: string): NcActionBinding {
-  return { kind: 'sequence', sequenceId }
-}
-
-export function newStep(): NcRuleAction {
-  return { kind: 'wait', seconds: 5 }
 }
 
 /**
@@ -308,122 +296,25 @@ export const NC_ACTION_ICON_OPTIONS: readonly {
   },
 ]
 
-/** A device a preset can be built against. */
-export interface NcPresetDevice {
-  readonly id: number
-  readonly name: string
-  readonly type?: string
-}
-
-export const SIREN_PRESET_SECONDS = 30
-
-export interface NcRuleActionPreset {
-  readonly id: string
-  readonly label: string
-  readonly hint: string
-  readonly build: () => {
-    readonly name: string
-    readonly minDelaySec?: number
-    readonly actions: readonly NcRuleAction[]
-  }
-}
-
-export function ruleActionPresets(
-  devices: readonly NcPresetDevice[],
-): readonly NcRuleActionPreset[] {
-  const out: NcRuleActionPreset[] = []
-  const panel = devices.find((d) => d.type === DeviceType.AlarmPanel)
-  if (panel !== undefined) {
-    out.push({
-      id: 'trigger-alarm',
-      label: i18n.t('helpers.notificationRuleActions.presetAlarm'),
-      hint: i18n.t('helpers.notificationRuleActions.presetAlarmHint', { name: panel.name }),
-      build: () => ({
-        name: 'trigger the alarm',
-        actions: [
-          { kind: 'cap', deviceId: panel.id, cap: 'alarm-panel', method: 'trigger', args: {} },
-        ],
-      }),
-    })
-  }
-  for (const siren of devices.filter((d) => d.type === DeviceType.Siren)) {
-    out.push({
-      id: `siren-${String(siren.id)}`,
-      label: i18n.t('helpers.notificationRuleActions.presetSiren', { name: siren.name }),
-      hint: i18n.t('helpers.notificationRuleActions.presetSirenHint', {
-        seconds: SIREN_PRESET_SECONDS,
-      }),
-      build: () => ({
-        name: `sound ${siren.name}`.toLowerCase(),
-        minDelaySec: 60,
-        actions: [
-          {
-            kind: 'cap',
-            deviceId: siren.id,
-            cap: 'switch',
-            method: 'setState',
-            args: { on: true },
-          },
-          { kind: 'wait', seconds: SIREN_PRESET_SECONDS },
-          {
-            kind: 'cap',
-            deviceId: siren.id,
-            cap: 'switch',
-            method: 'setState',
-            args: { on: false },
-          },
-        ],
-      }),
-    })
-  }
-  return out
-}
-
-/** Bind a preset's sequence id into onTrigger (after the caller created it). */
-export function withPresetOnTrigger(
-  form: NcRuleActionsFormState,
-  sequenceId: string,
-): NcRuleActionsFormState {
-  if (form.onTrigger.length >= 4) return form
-  return {
-    ...form,
-    onTrigger: [...form.onTrigger, { kind: 'sequence', sequenceId }],
-  }
-}
-
-/** Collect every sequence id a form references (hooks + buttons). */
-export function referencedSequenceIds(form: NcRuleActionsFormState): ReadonlySet<string> {
+/** Collect every Action id a form references (hooks + buttons). */
+export function referencedActionIds(form: NcRuleActionsFormState): ReadonlySet<string> {
   const ids = new Set<string>()
   for (const key of NC_HOOK_KEYS) {
-    for (const binding of form[key]) {
-      if (binding.kind === 'sequence') ids.add(binding.sequenceId)
-    }
+    for (const id of form[key]) if (id.trim() !== '') ids.add(id)
   }
   for (const button of form.buttons) {
-    if (button.sequenceId.trim() !== '') ids.add(button.sequenceId)
+    if (button.actionId.trim() !== '') ids.add(button.actionId)
   }
   return ids
 }
 
-/** Steps of every binding that can actuate — for alarm / snooze derivation. */
+/** Steps of every Action the form names — for alarm / snooze derivation. */
 export function formActionSteps(
   form: NcRuleActionsFormState,
-  sequences: readonly NcSharedSequence[],
-): readonly NcRuleAction[] {
-  const byId = new Map(sequences.map((s) => [s.id, s]))
-  const out: NcRuleAction[] = []
-  for (const key of NC_HOOK_KEYS) {
-    for (const binding of form[key]) {
-      if (binding.kind === 'do') out.push(binding.action)
-      else {
-        const seq = byId.get(binding.sequenceId)
-        if (seq !== undefined) out.push(...seq.actions)
-      }
-    }
-  }
-  for (const button of form.buttons) {
-    const seq = byId.get(button.sequenceId)
-    if (seq !== undefined) out.push(...seq.actions)
-  }
+  actions: readonly ActionEntry[],
+): readonly ActionStep[] {
+  const byId = new Map(actions.map((a) => [a.id, a]))
+  const out: ActionStep[] = []
+  for (const id of referencedActionIds(form)) out.push(...(byId.get(id)?.steps ?? []))
   return out
 }

@@ -61,10 +61,9 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  useActionsList,
   useDeviceManagerListAll,
   useItemFormUrl,
-  useNotificationRulesCreateSequence,
-  useNotificationRulesListSequences,
   useSystem,
   useUrlQueryParam,
 } from '@camstack/ui-library'
@@ -85,7 +84,7 @@ import {
   readDeliveryValue,
   writeDeliveryValue,
 } from './rule-form-delivery'
-import { formToActions } from './notification-rule-actions'
+import { formToActions, referencedActionIds } from './notification-rule-actions'
 import {
   type RuleCameraOption,
   RuleConditionsAdvancedFields,
@@ -387,7 +386,7 @@ export function NotificationRulesPage({
   const actuatable = useMemo((): readonly RuleDeviceOption[] => {
     // Resolved from the SAME listing, so the container costs no query:
     // `parentDeviceId` is already on the slim projection above.
-    // Containers are parent grouping nodes — Do / Sequences actuate children.
+    // Containers are parent grouping nodes.
     const parents = resolveParentNames(fleet)
     return fleet
       .filter((d) => isDoPickerDeviceType(String(d.type)))
@@ -459,9 +458,10 @@ export function NotificationRulesPage({
   })
   /** The Snooze column's windows — the "Silenced right now" panel's key. */
   const snoozes = useRuleSnoozes()
-  const sequencesQuery = useNotificationRulesListSequences({})
-  const sequences = sequencesQuery.data?.sequences ?? []
-  const createSequence = useNotificationRulesCreateSequence()
+  // The Actions a rule or a button can run. Polled so an Action made in another tab
+  // shows up without reopening the dialog.
+  const actionsQuery = useActionsList({}, { refetchInterval: ACTIONS_POLL_MS })
+  const actions = actionsQuery.data ?? []
 
   const rules = rulesQuery.data ?? []
 
@@ -562,7 +562,7 @@ export function NotificationRulesPage({
   const eventColumnDeps: RuleColumnsDeps = {
     targetNameById,
     snoozes,
-    sequences,
+    actions,
     deletePending: deleteRule.isPending,
     onToggle: (rule, enabled) => setEnabled.mutate({ ruleId: rule.id, enabled }),
     // Duplicate: seed the form from this rule, but as a NEW rule (empty id)
@@ -715,18 +715,8 @@ export function NotificationRulesPage({
             targets={targetsQuery.data ?? []}
             actuatable={actuatable}
             fleet={fleetView}
-            sequences={sequences}
-            onCreateSequence={async (input) => {
-              const res = await createSequence.mutateAsync({
-                sequence: {
-                  name: input.name,
-                  ...(input.minDelaySec !== undefined ? { minDelaySec: input.minDelaySec } : {}),
-                  actions: [...input.actions],
-                },
-              })
-              await sequencesQuery.refetch()
-              return res.sequence.id
-            }}
+            actions={actions}
+            actionsAnswered={actionsQuery.data !== undefined}
             // Plus what this build can author against a hub whose train predates
             // the descriptor — otherwise `buildConditions` prunes to the served
             // catalog and an open-and-save STRIPS the condition from a rule the
@@ -828,17 +818,16 @@ interface RuleFormDialogProps {
   /** The fleet behind `cameras` and `actuatable`, and whether it ANSWERED
    *  (D315). */
   readonly fleet: DeviceFleetView
-  readonly sequences: readonly import('@camstack/types').NcSharedSequence[]
-  readonly onCreateSequence: (input: {
-    readonly name: string
-    readonly minDelaySec?: number
-    readonly actions: readonly import('@camstack/types').NcRuleAction[]
-  }) => Promise<string>
+  /** The Actions the hub lists; {@link RuleFormDialogProps.actionsAnswered} says whether it answered. */
+  readonly actions: readonly import('@camstack/types').ActionEntry[]
+  readonly actionsAnswered: boolean
   readonly initialEditTab?: NcRuleTabKey
   readonly onEditTabChange?: (tab: NcRuleTabKey) => void
   readonly onSaved: () => void
   readonly onCancel: () => void
 }
+
+const ACTIONS_POLL_MS = 10_000
 
 function RuleFormDialog({
   rule,
@@ -851,8 +840,8 @@ function RuleFormDialog({
   gateableScenes,
   actuatable,
   fleet,
-  sequences,
-  onCreateSequence,
+  actions,
+  actionsAnswered,
   initialEditTab = DEFAULT_NC_RULE_TAB,
   onEditTabChange,
   onSaved,
@@ -1046,9 +1035,14 @@ function RuleFormDialog({
   // Derived on every render from what the operator is authoring RIGHT NOW:
   // adding an `alarm-panel` step must disable the snooze controls in the same
   // breath, or the dialog would offer a silence the hub refuses.
+  // Until the Actions list has answered, the Actions the form already names count as known:
+  // an unanswered query must not read as "that Action does not exist" (D315).
+  const knownActionIds: ReadonlySet<string> = actionsAnswered
+    ? new Set(actions.map((a) => a.id))
+    : referencedActionIds(form.actions)
   const snoozeExempt = isRuleSnoozeExempt(
     form.conditions,
-    formStepsForSnooze(form.actions, sequences),
+    formStepsForSnooze(form.actions, actions),
   )
   // Does this rule's match depend on RECOGNITION? Derived exactly as the engine
   // derives it (`ruleHasRecognitionScope`), so the two grouping hints show in
@@ -1180,7 +1174,7 @@ function RuleFormDialog({
                   setProblemsRevealed(true)
                   setError(null)
                   if (
-                    !isRuleFormValid(form, preserve, new Set(sequences.map((s) => s.id))) ||
+                    !isRuleFormValid(form, preserve, knownActionIds) ||
                     save.isPending
                   ) {
                     return
@@ -1400,10 +1394,7 @@ function RuleFormDialog({
           <NotificationRuleActions
             value={form.actions}
             onChange={(next) => patch({ actions: next })}
-            devices={actuatable}
-            devicesState={fleet.state}
-            sequences={sequences}
-            onCreateSequence={onCreateSequence}
+            actions={actions}
             showProblems={problemsRevealed}
           />
         </TabsContent>
@@ -1968,7 +1959,7 @@ function RuleFormDialog({
                 classScope={form.classScope}
                 onClassScopeChange={(next) => patch({ classScope: next })}
                 actions={formToActions(form.actions)}
-                sequenceActionsOf={(id) => sequences.find((s) => s.id === id)?.actions}
+                actionStepsOf={(id) => actions.find((a) => a.id === id)?.steps}
                 savedConditions={opened.conditions}
                 schedule={form.schedule}
                 deviceIds={formScopedDeviceIds(form)}
@@ -2050,7 +2041,7 @@ function RuleFormDialog({
                   type="button"
                   disabled={
                     testRun.isPending ||
-                    !isRuleFormValid(form, preserve, new Set(sequences.map((s) => s.id)))
+                    !isRuleFormValid(form, preserve, knownActionIds)
                   }
                   onClick={() => {
                     setError(null)

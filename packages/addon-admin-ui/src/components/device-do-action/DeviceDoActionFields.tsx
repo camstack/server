@@ -1,10 +1,10 @@
 /**
- * Shared Device → Action authoring block for NC Sequences / rule Do steps and
+ * Shared Device → Action authoring block for Action steps and
  * Automations: the usual DevicePicker plus a friendly action select derived
  * from the device's bound caps × the curated DEVICE_DO_ACTIONS catalogue.
  *
  * Wire shape stays `{ deviceId, cap, method, args? }` — this only changes how
- * the operator picks them. Automations and NC Sequences/Rules may multi-select
+ * the operator picks them. Automations and Actions may multi-select
  * same-family devices (`deviceId: number[]` in the picker; the schema expands
  * to one scalar step/binding per device).
  */

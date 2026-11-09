@@ -37,10 +37,6 @@ vi.mock('../NotificationAlarm', () => ({ NotificationAlarmPage: () => null }))
 vi.mock('../NotificationSummaries', () => ({ NotificationSummariesPage: () => null }))
 vi.mock('../NotificationTimelapses', () => ({ NotificationTimelapsesPage: () => null }))
 vi.mock('../NotificationTexts', () => ({ NotificationTextsPage: () => null }))
-vi.mock('../NotificationSequences', () => ({
-  NotificationSequencesPage: () => null,
-  SEQUENCES_TAB_OWNED_PARAMS: ['sequence', 'new'] as const,
-}))
 
 import { NotificationsPage } from '../Notifications'
 

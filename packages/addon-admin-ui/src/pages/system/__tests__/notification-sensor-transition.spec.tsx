@@ -88,6 +88,7 @@ describe('buildConditions — sensorTransition is pruned where it cannot mean an
 function renderEditor(
   conditions: NcConditions,
   actions?: import('@camstack/types').NcRuleActions,
+  actionStepsOf?: (actionId: string) => readonly import('@camstack/types').ActionStep[] | undefined,
 ): { readonly changes: NcConditions[] } {
   const changes: NcConditions[] = []
   const queryClient = new QueryClient({
@@ -103,6 +104,7 @@ function renderEditor(
         delivery="device-event"
         conditions={conditions}
         {...(actions !== undefined ? { actions } : {})}
+        {...(actionStepsOf !== undefined ? { actionStepsOf } : {})}
         savedConditions={undefined}
         deviceIds={[3223]}
         gateable={[]}
@@ -208,18 +210,12 @@ describe('RuleConditionsEditor — an alarm rule that asks for the clear (D640 �
     renderEditor(
       { sensorKinds: ['contact'], sensorTransition: 'cleared' },
       {
-        onTrigger: [
-          {
-            kind: 'do',
-            action: {
-              kind: 'cap',
-              cap: 'alarm-panel',
-              method: 'trigger',
-              deviceId: 900,
-            },
-          },
-        ],
+        onTrigger: ['internal:panel'],
       },
+      (id) =>
+        id === 'internal:panel'
+          ? [{ kind: 'cap', cap: 'alarm-panel', method: 'trigger', target: { kind: 'devices', ids: [900] } }]
+          : undefined,
     )
     expect(screen.queryByTestId('nc-sensor-transition-never-fires')).not.toBeNull()
   })

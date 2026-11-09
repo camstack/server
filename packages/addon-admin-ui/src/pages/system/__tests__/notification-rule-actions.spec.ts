@@ -1,29 +1,32 @@
 /**
- * Authoring rules for a rule's actions (shared-sequence shape).
+ * Authoring rules for a rule's actions: hooks name Action ids, buttons name one.
  */
 
-import type { NcRuleActions, NcSharedSequence } from '@camstack/types'
-import { DeviceType, NotificationActionIconSchema } from '@camstack/types'
+import type { ActionEntry, NcRuleActions } from '@camstack/types'
+import { NotificationActionIconSchema } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   actionsToForm,
   EMPTY_RULE_ACTIONS,
+  formActionSteps,
   formToActions,
   NC_ACTION_ICON_OPTIONS,
-  ruleActionPresets,
-  SIREN_PRESET_SECONDS,
   validateRuleActions,
-  withPresetOnTrigger,
 } from '../notification-rule-actions'
 
-const SEQ: NcSharedSequence = {
-  id: 'seq-1',
-  name: 'open-gate',
-  minDelaySec: 30,
-  actions: [
-    { kind: 'cap', deviceId: 7, cap: 'lock', method: 'unlock' },
-    { kind: 'wait', seconds: 5 },
-  ],
+const KNOWN = new Set(['internal:a', 'internal:b'])
+
+function entry(id: string, steps: ActionEntry['steps']): ActionEntry {
+  return {
+    id,
+    name: id,
+    addonId: 'system',
+    source: 'internal',
+    readOnly: false,
+    steps,
+    variables: [],
+    status: { isRunning: false, lastRunAt: null, lastError: null },
+  }
 }
 
 describe('an untouched rule round-trips', () => {
@@ -37,72 +40,75 @@ describe('an untouched rule round-trips', () => {
 
   it('carries every field of a stored block back out unchanged', () => {
     const stored: NcRuleActions = {
-      onTrigger: [{ kind: 'sequence', sequenceId: 'seq-1' }],
-      onTriggerOff: [{ kind: 'do', action: { kind: 'wait', seconds: 1 } }],
-      buttons: [{ id: 'open', label: 'Open', sequenceId: 'seq-1', icon: 'unlock' }],
+      onTrigger: ['internal:a', 'internal:b'],
+      onTriggerOff: ['internal:b'],
+      buttons: [{ id: 'open', label: 'Open', actionId: 'internal:a', icon: 'unlock' }],
     }
     expect(formToActions(actionsToForm(stored))).toEqual(stored)
   })
+
+  it('drops a blank id and a half-filled button', () => {
+    expect(
+      formToActions({
+        ...EMPTY_RULE_ACTIONS,
+        onTrigger: ['', 'internal:a'],
+        buttons: [{ id: 'x', label: '', actionId: 'internal:a' }],
+      }),
+    ).toEqual({ onTrigger: ['internal:a'] })
+  })
 })
 
-describe('a button that could never appear is refused here', () => {
-  it('flags a button naming a sequence that does not exist', () => {
+describe('what is refused here', () => {
+  it('flags a button naming an Action that does not exist', () => {
     const problems = validateRuleActions(
-      {
-        ...EMPTY_RULE_ACTIONS,
-        buttons: [{ id: 'x', label: 'X', sequenceId: 'typo' }],
-      },
-      new Set(['seq-1']),
+      { ...EMPTY_RULE_ACTIONS, buttons: [{ id: 'x', label: 'X', actionId: 'typo' }] },
+      KNOWN,
     )
-    expect(problems.map((p) => p.kind)).toContain('unknown-sequence')
+    expect(problems.map((p) => p.kind)).toContain('unknown-action')
   })
 
-  it('accepts a button pointing at a known sequence', () => {
+  it('flags a hook naming an Action that does not exist', () => {
+    const problems = validateRuleActions({ ...EMPTY_RULE_ACTIONS, onTrigger: ['gone'] }, KNOWN)
+    expect(problems.map((p) => p.kind)).toEqual(['unknown-action'])
+  })
+
+  it('flags more Actions than a hook may start', () => {
+    const many = ['internal:a', 'internal:b', 'internal:a', 'internal:b', 'internal:a']
+    const problems = validateRuleActions({ ...EMPTY_RULE_ACTIONS, onTrigger: many }, KNOWN)
+    expect(problems.map((p) => p.kind)).toContain('too-many')
+  })
+
+  it('flags two buttons with one id', () => {
+    const b = { id: 'x', label: 'X', actionId: 'internal:a' }
+    const problems = validateRuleActions({ ...EMPTY_RULE_ACTIONS, buttons: [b, b] }, KNOWN)
+    expect(problems.map((p) => p.kind)).toContain('duplicate-button')
+  })
+
+  it('accepts known Actions', () => {
     const problems = validateRuleActions(
       {
         ...EMPTY_RULE_ACTIONS,
-        buttons: [{ id: 'x', label: 'X', sequenceId: 'seq-1' }],
+        onTrigger: ['internal:a'],
+        buttons: [{ id: 'x', label: 'X', actionId: 'internal:b' }],
       },
-      new Set(['seq-1']),
+      KNOWN,
     )
     expect(problems).toEqual([])
   })
 })
 
-describe('presets', () => {
-  const DEVICES = [
-    { id: 1023, name: 'Alarm', type: DeviceType.AlarmPanel },
-    { id: 44, name: 'Sirena', type: DeviceType.Siren },
-    { id: 102, name: 'Cancello', type: DeviceType.Camera },
-  ]
-
-  it('offers only what this hub can actually actuate', () => {
-    expect(ruleActionPresets(DEVICES).map((p) => p.id)).toEqual(['trigger-alarm', 'siren-44'])
-  })
-
-  it('builds the alarm sequence with the four facts that live in a cap file', () => {
-    const preset = ruleActionPresets(DEVICES).find((p) => p.id === 'trigger-alarm')
-    expect(preset?.build()).toEqual({
-      name: 'trigger the alarm',
-      actions: [{ kind: 'cap', deviceId: 1023, cap: 'alarm-panel', method: 'trigger', args: {} }],
-    })
-  })
-
-  it('the siren turns itself back OFF, and carries its own budget', () => {
-    const sequence = ruleActionPresets(DEVICES)
-      .find((p) => p.id === 'siren-44')
-      ?.build()
-    expect(sequence?.actions).toEqual([
-      { kind: 'cap', deviceId: 44, cap: 'switch', method: 'setState', args: { on: true } },
-      { kind: 'wait', seconds: SIREN_PRESET_SECONDS },
-      { kind: 'cap', deviceId: 44, cap: 'switch', method: 'setState', args: { on: false } },
-    ])
-    expect(sequence?.minDelaySec).toBe(60)
-  })
-
-  it('binds a created sequence id onto onTrigger', () => {
-    const next = withPresetOnTrigger(EMPTY_RULE_ACTIONS, SEQ.id)
-    expect(next.onTrigger).toEqual([{ kind: 'sequence', sequenceId: 'seq-1' }])
+describe('formActionSteps', () => {
+  it('collects the steps of every Action the form names, once', () => {
+    const wait = { kind: 'wait', seconds: 1 } as const
+    const out = formActionSteps(
+      {
+        ...EMPTY_RULE_ACTIONS,
+        onTrigger: ['internal:a'],
+        buttons: [{ id: 'x', label: 'X', actionId: 'internal:a' }],
+      },
+      [entry('internal:a', [wait]), entry('internal:b', [wait, wait])],
+    )
+    expect(out).toEqual([wait])
   })
 })
 

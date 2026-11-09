@@ -43,6 +43,7 @@ const OUTCOMES: ReadonlySet<string> = new Set([
   'removed',
   'kept-disabled',
   'kept',
+  // Read-only: ledger rows written before the sequences were retired still carry these.
   'sequence-removed',
   'binding-removed',
 ])

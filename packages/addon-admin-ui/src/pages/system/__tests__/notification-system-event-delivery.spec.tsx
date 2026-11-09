@@ -306,7 +306,7 @@ describe('the rule form saves the delivery (D1019)', () => {
       actions: {
         onActivation: [],
         onDeactivation: [],
-        onTrigger: [{ kind: 'do' as const, action: { kind: 'wait' as const, seconds: 1 } }],
+        onTrigger: ['internal:x'],
         onTriggerOff: [],
         buttons: [],
       },

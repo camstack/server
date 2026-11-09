@@ -6,18 +6,11 @@
  * the cluster WRAP. Class-contract assertions because jsdom has no layout.
  * Quick add presets are gone — only On trigger / Buttons remain.
  */
-import { DeviceType } from '@camstack/types'
 import { render } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
-import { NotificationRuleActions, type RuleActionDevice } from '../NotificationRuleActions'
+import { NotificationRuleActions } from '../NotificationRuleActions'
 import { EMPTY_RULE_ACTIONS } from '../notification-rule-actions'
-
-const DEVICES: readonly RuleActionDevice[] = [
-  { id: 1, name: 'Alarm', type: DeviceType.AlarmPanel },
-  { id: 2, name: 'Baby monitor Siren', type: DeviceType.Siren },
-  { id: 3, name: 'Camera camera Carol Siren', type: DeviceType.Siren },
-  { id: 4, name: 'Camera camera principale Siren', type: DeviceType.Siren },
-]
 
 function headerRowFor(container: HTMLElement, heading: string): HTMLElement {
   const headings = [...container.querySelectorAll('h4')]
@@ -31,14 +24,9 @@ function headerRowFor(container: HTMLElement, heading: string): HTMLElement {
 
 function renderTab() {
   return render(
-    <NotificationRuleActions
-      value={EMPTY_RULE_ACTIONS}
-      onChange={() => {}}
-      devices={DEVICES}
-      devicesState="answered"
-      sequences={[]}
-      onCreateSequence={async () => 'new-id'}
-    />,
+    <MemoryRouter>
+      <NotificationRuleActions value={EMPTY_RULE_ACTIONS} onChange={() => {}} actions={[]} />
+    </MemoryRouter>,
   )
 }
 

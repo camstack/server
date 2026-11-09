@@ -113,18 +113,6 @@ const mockTopology = vi.fn(() => Promise.resolve([{ id: 'hub', name: 'Hub', isOn
 const mockListPackages = vi.fn(() =>
   Promise.resolve([{ name: '@camstack/addon-ai', version: '0.2.17' }]),
 )
-const mockListSequences = vi.fn(
-  (): Promise<{ sequences: readonly unknown[] }> => Promise.resolve({ sequences: [] }),
-)
-const mockCreateSequence = vi.fn((i: { name: string; actions: unknown[] }) =>
-  Promise.resolve({
-    sequence: { id: 'seq-new', name: i.name, actions: i.actions, createdAt: 1, updatedAt: 1 },
-  }),
-)
-const mockCreateSequenceMutate = {
-  mutateAsync: mockCreateSequence,
-  isPending: false,
-}
 
 interface ErrorBoxProps {
   readonly title?: string
@@ -174,13 +162,22 @@ vi.mock('@camstack/ui-library', async () => {
     useFaceGalleryListIdentities: () => ({ data: [], isLoading: false, isError: false }),
     usePlateGalleryListPlates: () => ({ data: [], isLoading: false }),
     usePlateGalleryListVehicles: () => ({ data: [], isLoading: false }),
-    useNotificationRulesListSequences: () => ({
-      data: { sequences: [] },
+    useActionsList: () => ({
+      data: [
+        {
+          id: 'internal:a',
+          name: 'Open gate',
+          addonId: 'system',
+          source: 'internal',
+          readOnly: false,
+          steps: [{ kind: 'wait', seconds: 1 }],
+          variables: [],
+          status: { isRunning: false, lastRunAt: null, lastError: null },
+        },
+      ],
       isLoading: false,
       isError: false,
-      refetch: mockListSequences,
     }),
-    useNotificationRulesCreateSequence: () => mockCreateSequenceMutate,
     // The calendar-events editor lists calendars through a tRPC React hook.
     useCalendarsListCalendars: () => ({ data: [], isPending: false, isError: false }),
     useSystem: () => ({
@@ -201,8 +198,6 @@ vi.mock('@camstack/ui-library', async () => {
           getTemplateCatalog: { query: mockGetTemplateCatalog },
           previewTemplate: { mutate: mockPreviewTemplate },
           getRuleLastRuns: { query: mockGetRuleLastRuns },
-          listSequences: { query: mockListSequences },
-          createSequence: { mutate: mockCreateSequence },
         },
         deviceManager: {
           listAll: { query: mockListAll },
@@ -383,8 +378,6 @@ function resetHarness(): void {
   mockListDeviceIdsByCaps.mockClear()
   // A test that swaps the implementation must not leak it into the next one.
   mockListDeviceIdsByCaps.mockImplementation((_i) => Promise.resolve(mockCompatIds))
-  mockListSequences.mockClear()
-  mockCreateSequence.mockClear()
   window.history.replaceState(null, '', window.location.pathname)
 }
 
@@ -793,7 +786,7 @@ function fullyAuthoredRule(): NcRule {
     snoozeOptions: [10, 30],
     snoozeAllowGlobal: true,
     actions: {
-      onTrigger: [{ kind: 'do', action: { kind: 'wait', seconds: 1 } }],
+      onTrigger: ['internal:a'],
     },
   })
 }

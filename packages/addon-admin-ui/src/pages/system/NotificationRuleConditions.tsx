@@ -52,7 +52,7 @@ import type {
   NcConditionDescriptor,
   NcConditions,
   NcDelivery,
-  NcRuleAction,
+  ActionStep,
   NcRuleActions,
   NcRuleKind,
   NcSchedule,
@@ -152,8 +152,8 @@ interface RuleConditionsEditorProps {
    *  that make a rule belong to the alarm (D630), which the "Notify when" field
    *  needs to warn about a rule that can never fire. */
   readonly actions?: NcRuleActions
-  /** Resolve shared-sequence steps for alarm-membership (D630). */
-  readonly sequenceActionsOf?: (sequenceId: string) => readonly NcRuleAction[] | undefined
+  /** Resolve the steps of an Action for alarm-membership (D630). */
+  readonly actionStepsOf?: (actionId: string) => readonly ActionStep[] | undefined
   /** The rule's conditions as OPENED (the saved rule, or a new rule's seed):
    *  a device picker whose empty value means "all" warns from it, so the
    *  warning survives the picker's remount on a tab switch. */
@@ -205,7 +205,7 @@ export function RuleConditionsEditor({
   classScope,
   onClassScopeChange,
   actions,
-  sequenceActionsOf,
+  actionStepsOf,
   savedConditions,
   schedule,
   deviceIds,
@@ -305,7 +305,7 @@ export function RuleConditionsEditor({
                     taxonomy={taxonomy}
                     conditions={conditions}
                     actions={actions}
-                    sequenceActionsOf={sequenceActionsOf}
+                    actionStepsOf={actionStepsOf}
                     savedConditions={savedConditions}
                     schedule={schedule}
                     deviceIds={deviceIds}
@@ -440,7 +440,7 @@ interface ConditionWidgetProps {
   readonly conditions: NcConditions
   /** See `RuleConditionsEditorProps.actions`. */
   readonly actions?: NcRuleActions
-  readonly sequenceActionsOf?: (sequenceId: string) => readonly NcRuleAction[] | undefined
+  readonly actionStepsOf?: (actionId: string) => readonly ActionStep[] | undefined
   /** The rule's conditions as OPENED (the saved rule, or a new rule's seed):
    *  a device picker whose empty value means "all" warns from it, so the
    *  warning survives the picker's remount on a tab switch. */
@@ -481,7 +481,7 @@ function ConditionWidget({
   taxonomy,
   conditions,
   actions,
-  sequenceActionsOf,
+  actionStepsOf,
   savedConditions,
   schedule,
   deviceIds,
@@ -653,7 +653,7 @@ function ConditionWidget({
       const neverFires = sensorTransitionNeverFires({
         conditions,
         ...(actions !== undefined ? { actions } : {}),
-        ...(sequenceActionsOf !== undefined ? { sequenceActionsOf } : {}),
+        ...(actionStepsOf !== undefined ? { actionStepsOf } : {}),
       })
       return (
         <>

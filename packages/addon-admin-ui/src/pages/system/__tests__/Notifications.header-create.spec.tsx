@@ -31,10 +31,6 @@ vi.mock('../NotificationHistory', () => ({ NotificationHistoryPage: () => null }
 vi.mock('../NotificationTargetsPanel', () => ({ NotificationTargetsPanel: () => null }))
 vi.mock('../NotificationSimulate', () => ({ NotificationSimulatePage: () => null }))
 vi.mock('../NotificationAlarm', () => ({ NotificationAlarmPage: () => null }))
-vi.mock('../NotificationSequences', () => ({
-  NotificationSequencesPage: () => null,
-  SEQUENCES_TAB_OWNED_PARAMS: ['sequence', 'new'] as const,
-}))
 vi.mock('../NotificationTexts', () => ({ NotificationTextsPage: () => null }))
 vi.mock('../NotificationSettings', () => ({ NotificationSettingsPage: () => null }))
 

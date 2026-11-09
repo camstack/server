@@ -241,53 +241,6 @@ describe('the widening warning', () => {
   })
 })
 
-describe('the action step device', () => {
-  const FORM: NcRuleActionsFormState = {
-    onActivation: [],
-    onDeactivation: [],
-    onTrigger: [
-      {
-        kind: 'do',
-        action: {
-          kind: 'cap',
-          deviceId: 42,
-          cap: 'switch',
-          method: 'setState',
-          args: { on: true },
-        },
-      },
-    ],
-    onTriggerOff: [],
-    buttons: [],
-  }
-
-  function renderActions(devicesState: DeviceListState) {
-    render(
-      withSystem(
-        <NotificationRuleActions
-          value={FORM}
-          onChange={() => {}}
-          devices={devicesState === 'answered' ? CAMERAS : []}
-          devicesState={devicesState}
-          sequences={[]}
-        />,
-      ),
-    )
-  }
-
-  it('names a step device the answered fleet lacks as removed, still selected', () => {
-    renderActions('answered')
-    expect(screen.getByTestId('device-do-action-device-picker')).toBeTruthy()
-    expect(screen.getByText(REMOVED_42)).toBeTruthy()
-  })
-
-  it('an unanswered fleet names the id without claiming removal', () => {
-    renderActions('failed')
-    expect(screen.getByTestId('device-do-action-device-picker')).toBeTruthy()
-    expect(screen.queryByText(REMOVED_42)).toBeNull()
-  })
-})
-
 describe('the alarm non-blocking picker', () => {
   const COVERAGE: NcAlarmModeCoverage = {
     mode: 'away',
