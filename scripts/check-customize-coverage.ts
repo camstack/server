@@ -19,7 +19,7 @@ import {
 } from '../packages/types/src/capabilities/customize-spec.ts'
 import { COMPOSITION_LINK_KINDS } from '../packages/types/src/composition/composition-link-kinds.ts'
 import { EXTENSION_SLOT_IDS } from '../packages/types/src/generated/extension-slots.ts'
-import { customizeCoverageHits, readRepoFile } from './lib/customize-coverage.ts'
+import { customizeCoverageHits, listLinkSources, readRepoFile } from './lib/customize-coverage.ts'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -44,6 +44,7 @@ function main(): void {
     authorityKinds: CUSTOMIZE_APPLY_AUTHORITY_KINDS,
     slotIds: EXTENSION_SLOT_IDS,
     linkKinds: COMPOSITION_LINK_KINDS,
+    linkSources: listLinkSources(repoRoot),
     i18nCapTitles: { en: capTitles('en'), it: capTitles('it') },
     read: (file) => readRepoFile(repoRoot, file),
   })

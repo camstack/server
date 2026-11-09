@@ -16,6 +16,7 @@ import { EXTENSION_SLOT_IDS } from '../../packages/types/src/generated/extension
 import {
   type CoverageInput,
   customizeCoverageHits,
+  listLinkSources,
   readRepoFile,
 } from '../lib/customize-coverage.ts'
 
@@ -29,6 +30,7 @@ const base: CoverageInput = {
   authorityKinds: CUSTOMIZE_APPLY_AUTHORITY_KINDS,
   slotIds: EXTENSION_SLOT_IDS,
   linkKinds: COMPOSITION_LINK_KINDS,
+  linkSources: listLinkSources(repoRoot),
   i18nCapTitles: { en: caps, it: caps },
   read: (file) => readRepoFile(repoRoot, file),
 }
@@ -52,6 +54,23 @@ describe('customize coverage guard', () => {
       linkKinds: [...COMPOSITION_LINK_KINDS, 'valve-flow'],
     })
     expect(hits.map((hit) => hit.surface)).toEqual(['link valve-flow'])
+  })
+
+  it('a stored-link module nobody registered is a hit', () => {
+    const hits = customizeCoverageHits({
+      ...base,
+      linkSources: [...base.linkSources, 'packages/types/src/composition/valve-flow-link.ts'],
+    })
+    expect(hits.map((hit) => hit.surface)).toEqual([
+      'link module packages/types/src/composition/valve-flow-link.ts',
+    ])
+  })
+
+  it('the link modules on disk are exactly the two registered kinds', () => {
+    expect(listLinkSources(repoRoot)).toEqual([
+      'packages/types/src/composition/lock-door-link.ts',
+      'packages/types/src/composition/power-source-link.ts',
+    ])
   })
 
   it('a link whose renderer file no longer reads it is a hit', () => {

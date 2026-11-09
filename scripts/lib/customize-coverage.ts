@@ -5,7 +5,7 @@
  * what they cannot: a catalog cap with no title, a slot or an event shape whose
  * renderer file does not name it, a stored link nobody draws.
  */
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import type { CompositionLinkKind } from '../../packages/types/src/composition/composition-link-kinds.ts'
 import type { CustomizeCatalog } from '../../packages/types/src/capabilities/customize-catalog.ts'
@@ -22,16 +22,20 @@ export const AUTHORITY_SOURCES = [
 
 /** Where each stored link is drawn, and a token that proves that file reads it. */
 export interface LinkRenderer {
+  /** The `@camstack/types` module that reads this link from the stored composition. */
+  readonly source: string
   readonly file: string
   readonly marker: string
 }
 
 export const LINK_RENDERERS: Readonly<Record<CompositionLinkKind, LinkRenderer>> = {
   'lock-door-sensor': {
+    source: 'packages/types/src/composition/lock-door-link.ts',
     file: 'packages/ui-library/src/composites/device-controls/lock-hero-card.tsx',
     marker: 'useLockDoorSensor',
   },
   'power-source': {
+    source: 'packages/types/src/composition/power-source-link.ts',
     file: 'packages/addon-admin-ui/src/pages/DeviceDetail.tsx',
     marker: 'powerSource',
   },
@@ -44,6 +48,8 @@ export interface CoverageInput {
   readonly authorityKinds: readonly string[]
   readonly slotIds: readonly string[]
   readonly linkKinds: readonly string[]
+  /** Every `*-link.ts` module under `packages/types/src/composition/`, repo-relative. */
+  readonly linkSources: readonly string[]
   readonly i18nCapTitles: Readonly<Record<string, readonly string[]>>
   /** Reads a repo-relative file; null when it does not exist. */
   readonly read: (file: string) => string | null
@@ -112,7 +118,25 @@ export function customizeCoverageHits(input: CoverageInput): readonly CoverageHi
       miss(`link ${kind}`, `${renderer.file} does not read it (${renderer.marker})`)
     }
   }
+  const registered = new Set(Array.from(renderers.values(), (renderer) => renderer.source))
+  for (const source of input.linkSources) {
+    if (!registered.has(source)) {
+      miss(
+        `link module ${source}`,
+        'reads a stored link no COMPOSITION_LINK_KINDS entry names (add the kind and its LINK_RENDERERS entry)',
+      )
+    }
+  }
   return hits
+}
+
+export const COMPOSITION_DIR = 'packages/types/src/composition'
+
+export function listLinkSources(repoRoot: string): readonly string[] {
+  return readdirSync(path.join(repoRoot, COMPOSITION_DIR))
+    .filter((name) => name.endsWith('-link.ts'))
+    .map((name) => `${COMPOSITION_DIR}/${name}`)
+    .sort()
 }
 
 export function readRepoFile(repoRoot: string, file: string): string | null {
