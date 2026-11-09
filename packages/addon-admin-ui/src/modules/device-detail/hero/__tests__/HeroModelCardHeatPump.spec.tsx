@@ -80,12 +80,12 @@ describe('HeroModelCard heat pump', () => {
     )
   })
 
-  it('shows the instantaneous COP pill only while both powers are known', () => {
+  it('shows the instantaneous COP, and — while a power is unknown', () => {
     const { unmount } = render(<HeroModelCard model={model(2991)} host={host()} />)
     expect(screen.getByText('Instantaneous COP 3.1')).toBeTruthy()
     unmount()
     render(<HeroModelCard model={model(null)} host={host()} />)
-    expect(screen.queryByText(/COP/)).toBeNull()
+    expect(screen.getByText('Instantaneous COP —')).toBeTruthy()
     expect(screen.getByText('Thermal 9.2 kW')).toBeTruthy()
   })
 })

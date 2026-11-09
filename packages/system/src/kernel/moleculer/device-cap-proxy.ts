@@ -38,6 +38,7 @@ import type {
 import {
   addonSliceHandleApi,
   BOOT_RECOVERY_BACKOFF_MS,
+  COMPOSED_DEVICE_STABLE_ID_PREFIX,
   createDeviceProxy,
   createEventBusSliceSource,
   DeviceType,
@@ -48,7 +49,6 @@ import {
   expandCapMethods,
   sleep,
 } from '@camstack/types/addon'
-import { COMPOSED_DEVICE_STABLE_ID_PREFIX } from '@camstack/types'
 import type { ServiceBroker } from 'moleculer'
 import {
   createChildrenBatchLoader,

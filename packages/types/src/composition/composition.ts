@@ -32,8 +32,9 @@ export const COMPOSER_ADDON_ID = 'composer'
  * customization apart: `composition.target.kind === 'existing'` says that (D663).
  */
 export const CUSTOMIZATION_BLOCK_NAME_PREFIX = 'customize:'
-/** A composed device's stableId is this prefix plus the block id. */
-export const COMPOSED_DEVICE_STABLE_ID_PREFIX = 'composed-'
+import { COMPOSED_DEVICE_STABLE_ID_PREFIX } from './composed-stable-id.js'
+
+export { COMPOSED_DEVICE_STABLE_ID_PREFIX }
 /** A device with more capabilities than this is two devices. */
 export const MAX_COMPOSITION_FEATURES = 16
 export const MAX_COMPOSITION_FIELDS_PER_FEATURE = 32

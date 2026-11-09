@@ -1,40 +1,17 @@
 /**
- * The container-child precedence has ONE definition and two copies that cannot
+ * The container-child precedence has ONE definition and one copy that cannot
  * import it. This makes that fact checkable instead of asking for it in a
  * comment.
  *
  * `packages/types/src/device/container-primary-child.ts` is the definition.
- * admin-ui's ui-library and the server's linked-devices expansion import it
- * directly. Two consumers cannot:
- *
- *   - the VIEWER (`camstack/`) resolves `@camstack/types` from its own
- *     `node_modules` — an installed release, not this workspace — so a newly
- *     added export is simply absent at runtime there;
- *   - the Home Assistant provider expresses the same precedence over the
- *     `DeviceType` ENUM, because it answers a different question (what type
- *     should the adopted PARENT be) from the same ordering.
- *
- * Both therefore keep a copy, and both are checked here. A copy that drifts
- * makes admin-ui, the viewer's panel and the adoption preview name DIFFERENT
- * children as "the container", which reads as three bugs rather than one
- * divergence.
- *
- * ── When the viewer is not on disk ─────────────────────────────────────────
- * `camstack/` is a git SUBMODULE. It is absent in a fresh worktree and in CI
- * (`actions/checkout` runs without `submodules: true`), and this guard used to
- * read its copy unconditionally: ENOENT, an uncaught throw, and the ENTIRE
- * pre-commit hook died on it. Every agent working in a worktree then committed
- * with `--no-verify`, so the real cost was never the viewer check — it was the
- * formatter, the docs regeneration and the dozen guards that run after this
- * line and stopped running at all.
- *
- * So the viewer half SKIPS when the submodule is absent, and says so. It must
- * never print the same verdict as a check that ran: "I could not look" and "I
- * looked and it was fine" are different answers (D315), and a guard that
- * collapses them is decoration. The Home Assistant half is in THIS repository
- * and is always enforced.
+ * admin-ui's ui-library, the server's linked-devices expansion and the viewer
+ * (`resolveContainerPrimaryChild` through `@camstack/types/client`) import it.
+ * The Home Assistant provider cannot: it expresses the same precedence over the
+ * `DeviceType` ENUM, because it answers a different question (what type should
+ * the adopted PARENT be) from the same ordering. A copy that drifts makes the
+ * adoption preview name a DIFFERENT child as "the container" than admin-ui.
  */
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = join(import.meta.dirname, '..')
@@ -76,20 +53,10 @@ const canonical = readList(
   'packages/types/src/device/container-primary-child.ts',
   'CONTAINER_CHILD_PRIORITY',
 )
-const VIEWER_COPY = 'camstack/src/components/camera/accessory-controls/container-primary.ts'
-const viewerPresent = existsSync(join(ROOT, VIEWER_COPY))
-const viewer = viewerPresent ? readList(VIEWER_COPY, 'CONTAINER_CHILD_PRIORITY') : null
-
 const problems: string[] = []
 
 if (canonical.length === 0)
   problems.push('the canonical list is empty — the parser is broken, not the data')
-if (viewer !== null && JSON.stringify(viewer) !== JSON.stringify(canonical)) {
-  problems.push(
-    `the viewer's copy has drifted.\n    canonical: ${canonical.join(', ')}\n    viewer:    ${viewer.join(', ')}`,
-  )
-}
-
 // The HA list is enum MEMBER names, so compare the ORDER of the types both
 // mention rather than the spellings. It legitimately omits entries (it only
 // ranks the types adoption can produce); it must never CONTRADICT the order.
@@ -115,17 +82,6 @@ if (problems.length > 0) {
   for (const p of problems) console.error(`  - ${p}`)
   process.exit(1)
 }
-if (viewer === null) {
-  // Two lines, deliberately: the tick is about what was checked, and the skip
-  // is not allowed to hide inside it.
-  console.log(
-    `  ✔ container-child precedence: ${canonical.length} entries, ${haValues.length} HA types in agreement`,
-  )
-  console.log(
-    `  ⊘ viewer copy NOT checked: ${VIEWER_COPY} is absent (the camstack/ submodule is not checked out here) — run \`git submodule update --init camstack\` to check it`,
-  )
-} else {
-  console.log(
-    `  ✔ container-child precedence: ${canonical.length} entries, viewer copy identical, ${haValues.length} HA types in agreement`,
-  )
-}
+console.log(
+  `  ✔ container-child precedence: ${canonical.length} entries, ${haValues.length} HA types in agreement`,
+)
