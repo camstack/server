@@ -26,10 +26,12 @@ import { fileURLToPath } from 'node:url'
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
-const CAP_METHOD_RE = /^\s{2,4}(set\w*Enabled)\s*:\s*(?:optionalMethod|method)\s*\(/
-const NEXT_METHOD_RE = /^\s{2,4}\w+\s*:\s*(?:optionalMethod|method)\s*\(/
 /** Where an implementation of the switch is looked for: addons and the hub's own half. */
 export const SOURCE_ROOTS: readonly string[] = ['packages', 'server/backend/src']
+const CAP_METHOD_RE =
+  /^\s{2,4}['"]?([\w.]*set\w*Enabled)['"]?\s*:\s*(?:optionalMethod|method|customAction)\s*[(<]/
+const NEXT_METHOD_RE =
+  /^\s{2,4}['"]?[\w.]+['"]?\s*:\s*(?:optionalMethod|method|customAction)\s*[(<]/
 const HELPER_FILES: ReadonlySet<string> = new Set([
   'packages/types/src/addon/record-integration-instances.ts',
   'packages/types/src/addon/compose-instance-kinds.ts',
@@ -77,8 +79,12 @@ export function findViolations(
 ): Violation[] {
   const out: Violation[] = []
   const seenCap = new Set<string>()
-  for (const cap of caps) {
-    const base = cap.path.slice(cap.path.lastIndexOf('/') + 1)
+  // A custom action (`defineCustomActions(`) is a method too: keyed by its repo path, not a cap file.
+  const customActionFiles = sources.filter((source) => source.text.includes('defineCustomActions('))
+  const declarers = [...caps, ...customActionFiles]
+  for (const cap of declarers) {
+    const isCap = cap.path.endsWith('.cap.ts')
+    const base = isCap ? cap.path.slice(cap.path.lastIndexOf('/') + 1) : cap.path
     for (const method of switchMethodsOf(cap.text)) {
       if (method.deviceScoped) continue
       const key = `${base}:${method.name}`

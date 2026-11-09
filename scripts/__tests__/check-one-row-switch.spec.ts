@@ -105,4 +105,19 @@ describe('check-one-row-switch', () => {
     expect(found).toHaveLength(1)
     expect(found[0]?.where).toBe(hub.path)
   })
+
+  it('reads a QUOTED custom action in a defineCustomActions file, keyed by its path', () => {
+    const file = {
+      path: 'packages/addon-x/src/x-actions.ts',
+      text: "export const a = defineCustomActions({\n  'x.setThingEnabled': customAction(\n    z.object({ id: z.string() }),\n",
+    }
+    const found = findViolations([], [file], EMPTY)
+    expect(found).toHaveLength(1)
+    expect(found[0]?.message).toMatch(/second way to switch an instance/)
+    const baselined = findViolations([], [file], {
+      ...EMPTY,
+      capMethods: { 'packages/addon-x/src/x-actions.ts:x.setThingEnabled': 'reason' },
+    })
+    expect(baselined).toEqual([])
+  })
 })
