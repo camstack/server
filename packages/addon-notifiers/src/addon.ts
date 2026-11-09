@@ -56,8 +56,8 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
     // Declare notification-targets BEFORE first store access.
     await records.declare(notifiersRecordKinds)
     const descriptors = notifierDescriptors()
-    // The retired single kind is declared on first read (by the migration, or by the store that
-    // serves a row the migration could not move), never here.
+    // The retired single kind is declared on the store's first list, on every boot (not only while
+    // the migration runs), so a stuck row stays visible through `legacy`; never declared here.
     const legacy = retiredTargetsOver(
       records,
       oldTargetKinds[OLD_TARGETS_KIND],

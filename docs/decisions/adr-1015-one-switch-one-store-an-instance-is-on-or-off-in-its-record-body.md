@@ -31,10 +31,13 @@ instance, for every role including `devices`. `integration-instances.setInstance
 only way to write it; it creates a missing record from the addon's `initialBody(name)`. The
 registry `enabled` column is neither read nor written by the switch (its drop is step 5).
 `integrations.list`, `get` and `getByAddonId` project `enabled` from the instance body. The one
-exception is a row with `info.fixed` (alarm panel, camera-grid, core-blocks, terminal): it has no
-record, so the hub half of `setInstanceEnabled` (`instance-lifecycle.ts`) writes its registry flag,
-which is the answer for that row. There is no second door: `integrations.update({enabled})` is
-refused for every row.
+exception is a row with `info.fixed` (alarm panel, camera-grid, core-blocks, terminal): no addon
+instance row exists to own its switch, so the switch is the hub-owned integrations flag (the
+registry flag), which is the answer for that row. That row is switched through
+`integrations.update({enabled})` (`cap-providers.ts` calls `setFixedBuiltinEnabled`; the admin-ui
+`IntegrationDetail.tsx` uses `useIntegrationsUpdate` for a fixed row), and it works while the addon
+is down. Every other row switches only through its instance door,
+`integration-instances.setInstanceEnabled`; `integrations.update({enabled})` is refused for it.
 
 An addon learns of a switch through `RecordIntegrationInstances.onSwitched((id, enabled) => ...)`,
 called after `onChanged`, in the process that serves the instance. The event subscription is gone.
@@ -45,8 +48,9 @@ a rerun does nothing.
 
 ## Consequences
 
-- `integrations.update({enabled})` refuses every row (a typed `BAD_REQUEST`), a fixed builtin
-  included; the admin-ui switches a fixed row through `setInstanceEnabled` like any other.
+- `integrations.update({enabled})` refuses every row except a fixed builtin (a typed `BAD_REQUEST`);
+  a fixed builtin's switch is the hub-owned integrations flag, and the admin-ui switches every
+  other row through `setInstanceEnabled`.
 - A row with no provider, no instance or an addon that failed to answer (logged) is returned with
   `switchUnknown: true`: its `enabled` is the stale registry flag, not the state, and a reader draws
   it as unknown, never as off (D315). Step 5 removes the column and that fallback.

@@ -721,9 +721,9 @@ export function legacyTargetsOver(
 }
 
 /**
- * The retired kind as a lazy legacy source: it is declared on the first read or delete, by the
- * migration or by the store that serves a row the migration could not move, so it stays declared
- * and readable while such a row exists.
+ * The retired kind as a lazy legacy source: it is declared on the store's first list (or delete),
+ * on every boot, not only while the migration runs, so a row the migration could not move stays
+ * visible through `legacy` and readable.
  */
 export function retiredTargetsOver(
   records: Pick<RecordsAccess, 'declare' | 'kind'>,
