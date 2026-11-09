@@ -61,6 +61,21 @@ describe('HomeCom heat pump reads never break the working devices', () => {
     expect(log.warn.mock.calls[0]?.[1]?.tags).toEqual({ gatewayId: 'g1' })
   })
 
+  it('offers no heat pump on a boiler whose heat source answers only flow, pressure and starts', async () => {
+    const client = createHomeComApiClient(CONFIG, 'g1', {
+      fetchFn: gateway({
+        ...BASE,
+        '/heatSources/hs1/supplyTemperature': envelope(55),
+        '/heatSources/hs1/returnTemperature': envelope(40),
+        '/heatSources/hs1/waterPressure': envelope(1.6),
+        '/heatSources/hs1/numberOfStarts': envelope(1200),
+      }),
+      deviceType: 'k40',
+      logger: logger(),
+    })
+    expect((await client.fetchSystem()).heatPump).toBeUndefined()
+  })
+
   it('attaches the heat pump once a heat source answers', async () => {
     const client = createHomeComApiClient(CONFIG, 'g1', {
       fetchFn: gateway({ ...BASE, '/heatSources/hs1/heatPumpPower': envelope(4200) }),

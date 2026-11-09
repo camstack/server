@@ -179,9 +179,9 @@ function safeGet(get: ResourceGet, onFailure: HeatPumpReadInput['onFailure']): R
 }
 
 /**
- * True when a heat SOURCE answered (silent mode, auxiliary heater, power, flow
- * temperatures, pressure, starts). A boiler-only or room-controller gateway
- * answers none of those, so it offers no heat pump.
+ * True when a HEAT PUMP answered: silent mode, the auxiliary heater, heat-pump
+ * power or compressor modulation. Flow temperatures, pressure and starts are left
+ * out on purpose: a gas boiler's heat source answers those too, and it is no heat pump.
  */
 export function hasHeatSource(reading: HomeComHeatPumpReading): boolean {
   return [
@@ -190,10 +190,6 @@ export function hasHeatSource(reading: HomeComHeatPumpReading): boolean {
     reading.thermalW,
     reading.electricalW,
     reading.compressorPct,
-    reading.supply,
-    reading.return,
-    reading.pressureBar,
-    reading.starts,
   ].some((v) => v !== null)
 }
 
