@@ -62,48 +62,60 @@ export interface DeviceTemplateRef {
   readonly path: readonly (string | number)[]
 }
 
-export type DeviceTemplateRefusalReason =
-  | 'too-long'
-  | 'syntax'
-  | 'forbidden-syntax'
-  | 'forbidden-member'
-  | 'unknown-filter'
-  | 'ambiguous-field'
-  | 'busy'
-  | 'budget-exceeded'
-  | 'timeout'
-  | 'output-too-large'
-  | 'render-failed'
+export const DEVICE_TEMPLATE_REFUSAL_REASONS = [
+  'too-long',
+  'syntax',
+  'forbidden-syntax',
+  'forbidden-member',
+  'unknown-filter',
+  'ambiguous-field',
+  'busy',
+  'budget-exceeded',
+  'timeout',
+  'output-too-large',
+  'render-failed',
+  /** The template names a device the caller was not proven to see (D1021 run-time contract). */
+  'out-of-scope',
+  /** No renderer on this node, or the call to it failed: the template was not run. */
+  'unavailable',
+] as const
+export type DeviceTemplateRefusalReason = (typeof DEVICE_TEMPLATE_REFUSAL_REASONS)[number]
 
+export const DeviceTemplateRefusalSchema = z.object({
+  reason: z.enum(DEVICE_TEMPLATE_REFUSAL_REASONS),
+  message: z.string(),
+})
 /** A template the engine will not run, or a render that did not finish — named, never a bare string. */
-export interface DeviceTemplateRefusal {
-  readonly reason: DeviceTemplateRefusalReason
-  readonly message: string
-}
+export type DeviceTemplateRefusal = z.infer<typeof DeviceTemplateRefusalSchema>
 
-export type DeviceTemplateTraceReason =
-  | 'unknown-alias'
-  | 'unknown-field'
-  | 'no-field'
-  | 'unavailable'
+export const DEVICE_TEMPLATE_TRACE_REASONS = [
+  'unknown-alias',
+  'unknown-field',
+  'no-field',
+  'unavailable',
+] as const
+export type DeviceTemplateTraceReason = (typeof DEVICE_TEMPLATE_TRACE_REASONS)[number]
 
+export const DeviceTemplateTraceEntrySchema = z.object({
+  ref: z.string(),
+  reason: z.enum(DEVICE_TEMPLATE_TRACE_REASONS),
+})
 /** One value that rendered as `—`, and why. */
-export interface DeviceTemplateTraceEntry {
-  readonly ref: string
-  readonly reason: DeviceTemplateTraceReason
-}
+export type DeviceTemplateTraceEntry = z.infer<typeof DeviceTemplateTraceEntrySchema>
 
-export type DeviceTemplateRender =
-  | {
-      readonly ok: true
-      readonly text: string
-      readonly trace: readonly DeviceTemplateTraceEntry[]
-    }
-  | {
-      readonly ok: false
-      readonly refusal: DeviceTemplateRefusal
-      readonly trace: readonly DeviceTemplateTraceEntry[]
-    }
+export const DeviceTemplateRenderSchema = z.discriminatedUnion('ok', [
+  z.object({
+    ok: z.literal(true),
+    text: z.string(),
+    trace: z.array(DeviceTemplateTraceEntrySchema),
+  }),
+  z.object({
+    ok: z.literal(false),
+    refusal: DeviceTemplateRefusalSchema,
+    trace: z.array(DeviceTemplateTraceEntrySchema),
+  }),
+])
+export type DeviceTemplateRender = z.infer<typeof DeviceTemplateRenderSchema>
 
 /** What the renderer knows about one device when it resolves an alias. */
 export interface DeviceTemplateView {

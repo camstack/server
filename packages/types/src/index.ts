@@ -1439,7 +1439,12 @@ export {
   DEVICE_TEMPLATE_MAX_LENGTH,
   DEVICE_TEMPLATE_MAX_OUTPUT,
   DEVICE_TEMPLATE_UNAVAILABLE,
+  DEVICE_TEMPLATE_REFUSAL_REASONS,
+  DEVICE_TEMPLATE_TRACE_REASONS,
+  DeviceTemplateRefusalSchema,
+  DeviceTemplateRenderSchema,
   DeviceTemplateSchema,
+  DeviceTemplateTraceEntrySchema,
   resolveTemplateRef,
   templateCapKey,
 } from './expression/device-template.js'

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { DeviceTemplateRender } from '../../expression/device-template.js'
 import { type ActionVariable, resolveActionVariables } from '../action.js'
 import { ActionTargetResolver } from '../action-target.js'
 import type { ActionStep } from '../recipe.js'
@@ -170,5 +171,115 @@ describe('resolveActionVariables', () => {
     const spy = vi.fn()
     expect(resolveActionVariables(undefined, undefined)).toEqual({ ok: true, values: {} })
     expect(spy).not.toHaveBeenCalled()
+  })
+})
+
+describe('buildActionSteps — device templates (D1021 run-time contract)', () => {
+  const templated: ActionStep[] = [
+    {
+      kind: 'cap',
+      deviceId: 616,
+      cap: 'display',
+      method: 'show',
+      args: {
+        text: 'Stufa {{ stufa.temperature | round(1) }} in {{vars.zone}}',
+        level: 3,
+        plain: 'no markup',
+      },
+    },
+  ]
+
+  function rendering(
+    answer: (source: string) => DeviceTemplateRender,
+  ): { sources: string[]; render: (sources: readonly string[]) => Promise<DeviceTemplateRender[]> } {
+    const sources: string[] = []
+    return {
+      sources,
+      render: async (batch) => {
+        sources.push(...batch)
+        return batch.map(answer)
+      },
+    }
+  }
+
+  it('renders a template arg before dispatch, keeps {{vars.x}} for the variables and never renders a variable VALUE', async () => {
+    const d = deps()
+    const r = rendering((source) => ({
+      ok: true,
+      text: source.replace('{{ stufa.temperature | round(1) }}', '21.5'),
+      trace: [],
+    }))
+    const runnable = buildActionSteps(templated, { zone: '{{ secret.thing }}' }, {
+      ...d.deps,
+      renderTemplates: r.render,
+    })
+    const result = await runSteps(runnable, options())
+    expect(result.failed).toBe(false)
+    expect(d.calls[0]?.args).toEqual({
+      text: 'Stufa 21.5 in {{ secret.thing }}',
+      level: 3,
+      plain: 'no markup',
+    })
+    // The variable's text never reached the renderer.
+    expect(r.sources.join('')).not.toContain('secret.thing')
+    expect(r.sources).toHaveLength(1)
+  })
+
+  it('an unknown value prints the dash and the reason is on the step trace', async () => {
+    const d = deps()
+    const r = rendering(() => ({
+      ok: true,
+      text: 'Stufa — in porch',
+      trace: [{ ref: 'stufa.temperature', reason: 'unknown-field' }],
+    }))
+    const runnable = buildActionSteps(templated, { zone: 'porch' }, {
+      ...d.deps,
+      renderTemplates: r.render,
+    })
+    const result = await runSteps(runnable, options())
+    expect(result.failed).toBe(false)
+    expect(d.calls[0]?.args['text']).toBe('Stufa — in porch')
+    expect(result.steps[0]?.templates).toEqual(['stufa.temperature: unknown-field'])
+  })
+
+  it('a refused render fails THAT step with the typed reason, dispatches nothing and does not throw past runSteps', async () => {
+    const d = deps()
+    const r = rendering(() => ({
+      ok: false,
+      refusal: { reason: 'budget-exceeded', message: 'overran its 50 ms budget' },
+      trace: [],
+    }))
+    const runnable = buildActionSteps(
+      [...templated, { kind: 'wait', seconds: 1 }],
+      { zone: 'porch' },
+      { ...d.deps, renderTemplates: r.render },
+    )
+    const result = await runSteps(runnable, options())
+    expect(d.calls).toEqual([])
+    expect(result.failed).toBe(true)
+    expect(result.steps[0]).toMatchObject({ outcome: 'error' })
+    expect(result.steps[0]?.message).toContain('[budget-exceeded]')
+    expect(result.steps[1]).toMatchObject({ outcome: 'not-run' })
+  })
+
+  it('a node without a renderer fails the step as unavailable instead of sending the raw template', async () => {
+    const d = deps()
+    const runnable = buildActionSteps(templated, { zone: 'porch' }, d.deps)
+    const result = await runSteps(runnable, options())
+    expect(d.calls).toEqual([])
+    expect(result.steps[0]?.message).toContain('[unavailable]')
+  })
+
+  it('a step without template markup never calls the renderer', async () => {
+    const d = deps()
+    const r = rendering(() => ({ ok: true, text: 'x', trace: [] }))
+    const runnable = buildActionSteps(
+      [{ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on', args: { volume: 80 } }],
+      {},
+      { ...d.deps, renderTemplates: r.render },
+    )
+    await runSteps(runnable, options())
+    expect(r.sources).toEqual([])
+    expect(d.calls).toHaveLength(1)
   })
 })

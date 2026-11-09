@@ -109,6 +109,9 @@ export const StepDeviceTraceSchema = z.object({
 })
 export type StepDeviceTrace = z.infer<typeof StepDeviceTraceSchema>
 
+/** How many unknown-value notes one step trace keeps. */
+export const MAX_STEP_TEMPLATE_NOTES = 20
+
 export const AutomationStepTraceSchema = z.object({
   /** `actions.<i>` */
   path: z.string().min(1),
@@ -128,6 +131,11 @@ export const AutomationStepTraceSchema = z.object({
    * is shown as {@link REDACTED_ARG}. Absent on traces written before it existed.
    */
   args: z.record(z.string(), TraceValueSchema).optional(),
+  /**
+   * The device values a templated arg printed as `—`, one `ref: reason` each
+   * (D1021): why a sentence says "—" where a number was expected. Bounded.
+   */
+  templates: z.array(z.string()).max(MAX_STEP_TEMPLATE_NOTES).optional(),
   /** `empty`: the target resolved to no device, so nothing was done — never silently `ok`. */
   outcome: z.enum(['ok', 'error', 'not-run', 'empty']),
   message: z.string().optional(),

@@ -10,12 +10,14 @@
  */
 
 import type { CommandOriginClaim } from '../audit/device-transition.js'
+import type { DeviceTemplateRender } from '../expression/device-template.js'
 import type { ActionTarget, ResolvedTarget, ResolveOrigin } from './action-target.js'
 import { type ActionStep, normalizeCapStep } from './recipe.js'
 import {
   type AutomationStepTrace,
   buildStepArgsTrace,
   MAX_STEP_DEVICE_OUTCOMES,
+  MAX_STEP_TEMPLATE_NOTES,
   type StepDeviceTrace,
 } from './trace.js'
 
@@ -38,6 +40,8 @@ export interface StepScope {
   markEmpty(reason: string): void
   /** The parameters the step is sending NOW (substituted), for its trace. */
   setArgs(args: Readonly<Record<string, unknown>>): void
+  /** The device values the step's templates printed as `—`, with the reason (D1021). */
+  setTemplateNotes(notes: readonly string[]): void
 }
 
 /** One step as the runner sees it: its meta and a closure that does the work. */
@@ -98,6 +102,7 @@ export async function runSteps(
     let sent: Readonly<Record<string, unknown>> | undefined
     const perDevice: StepDeviceTrace[] = []
     let emptyReason: string | undefined
+    let templateNotes: readonly string[] = []
     const scope: StepScope = {
       setDeviceId: (id) => {
         deviceId = id
@@ -111,7 +116,12 @@ export async function runSteps(
       setArgs: (args) => {
         sent = args
       },
+      setTemplateNotes: (notes) => {
+        templateNotes = notes.slice(0, MAX_STEP_TEMPLATE_NOTES)
+      },
     }
+    const templatesTrace = (): { templates?: string[] } =>
+      templateNotes.length === 0 ? {} : { templates: [...templateNotes] }
     const argsTrace = (): { args?: ReturnType<typeof buildStepArgsTrace> } =>
       sent === undefined ? {} : { args: buildStepArgsTrace(sent) }
     const devicesTrace = (): { devices?: StepDeviceTrace[] } =>
@@ -122,6 +132,7 @@ export async function runSteps(
         ...step.meta,
         ...(deviceId === undefined || perDevice.length > 1 ? {} : { deviceId }),
         ...argsTrace(),
+        ...templatesTrace(),
         ...devicesTrace(),
         path,
         startedAt,
@@ -137,6 +148,7 @@ export async function runSteps(
         ...step.meta,
         ...(deviceId === undefined || perDevice.length > 1 ? {} : { deviceId }),
         ...argsTrace(),
+        ...templatesTrace(),
         ...devicesTrace(),
         path,
         startedAt,
@@ -199,6 +211,133 @@ export function resolveStepArgs(
   return value
 }
 
+/**
+ * Renders device templates (D1021) — the hub's `device-manager` does the work;
+ * a consumer reaches it through `ctx.api`. One call carries every template of a
+ * step, and the answer is index-aligned with the question.
+ */
+export type RenderStepTemplates = (
+  templates: readonly string[],
+) => Promise<readonly DeviceTemplateRender[]>
+
+/** A device template that did not render: the step fails with this, never throws past `runSteps`. */
+export class StepTemplateError extends Error {
+  constructor(
+    readonly reason: string,
+    message: string,
+  ) {
+    super(`device template [${reason}]: ${message}`)
+    this.name = 'StepTemplateError'
+  }
+}
+
+/** The text of `{{vars.x}}` slots, kept out of a template's source (a variable VALUE is never rendered). */
+const VAR_SLOT_OPEN = '\uE000'
+const VAR_SLOT_CLOSE = '\uE001'
+const PROTECTED_SLOT_RE = new RegExp(`${VAR_SLOT_OPEN}([A-Za-z_][A-Za-z0-9_]*)${VAR_SLOT_CLOSE}`, 'g')
+const TEMPLATE_MARKUP_RE = /\{\{|\{%/
+
+/** True when a string, once its `{{vars.x}}` slots are set aside, still carries template markup. */
+function carriesDeviceTemplate(text: string): boolean {
+  return TEMPLATE_MARKUP_RE.test(text.replace(TEMPLATE_RE, ''))
+}
+
+function protectVarSlots(text: string): string {
+  return text.replace(TEMPLATE_RE, (_m, key: string) => `${VAR_SLOT_OPEN}${key}${VAR_SLOT_CLOSE}`)
+}
+
+function restoreVarSlots(text: string, vars: StepVars, onMissing: (name: string) => void): string {
+  return text.replace(PROTECTED_SLOT_RE, (_m, key: string) => {
+    const v = vars[key]
+    if (v === undefined) {
+      onMissing(key)
+      return ''
+    }
+    return String(v)
+  })
+}
+
+export interface TemplatedArgs {
+  readonly value: unknown
+  /** `ref: reason` per value that printed `—`, in render order, de-duplicated. */
+  readonly notes: readonly string[]
+}
+
+/**
+ * {@link resolveStepArgs} plus the device templates of a step (D1021). A string
+ * that carries `{{ … }}` / `{% … %}` beyond a `{{vars.x}}` slot is rendered by
+ * `render` BEFORE the variables are put in, so a variable's value is data and
+ * never template source (an action variable can come from a non-admin caller).
+ * A refused render, or no renderer, throws {@link StepTemplateError}: the step
+ * fails with the typed reason and nothing is dispatched.
+ */
+export async function resolveStepArgsWithTemplates(
+  value: unknown,
+  vars: StepVars,
+  onMissing: (name: string) => void,
+  render: RenderStepTemplates | undefined,
+): Promise<TemplatedArgs> {
+  const sources: string[] = []
+  const indexOf = new Map<string, number>()
+  const hold = (text: string): number => {
+    const known = indexOf.get(text)
+    if (known !== undefined) return known
+    sources.push(text)
+    indexOf.set(text, sources.length - 1)
+    return sources.length - 1
+  }
+  class Pending {
+    constructor(readonly index: number) {}
+  }
+  const collect = (node: unknown): unknown => {
+    if (isVarRef(node)) return resolveStepArgs(node, vars, onMissing)
+    if (typeof node === 'string') {
+      return carriesDeviceTemplate(node)
+        ? new Pending(hold(protectVarSlots(node)))
+        : resolveStepArgs(node, vars, onMissing)
+    }
+    if (Array.isArray(node)) return node.map(collect)
+    if (node !== null && typeof node === 'object') {
+      return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, collect(v)]))
+    }
+    return node
+  }
+  const skeleton = collect(value)
+  if (sources.length === 0) return { value: skeleton, notes: [] }
+  if (render === undefined) {
+    throw new StepTemplateError('unavailable', 'this node has no device template renderer')
+  }
+  let answers: readonly DeviceTemplateRender[]
+  try {
+    answers = await render(sources)
+  } catch (err: unknown) {
+    throw new StepTemplateError('unavailable', errorMessage(err))
+  }
+  const texts: string[] = []
+  const notes: string[] = []
+  for (const index of sources.keys()) {
+    const answer = answers[index]
+    if (answer === undefined) {
+      throw new StepTemplateError('unavailable', `no answer for template ${index + 1}`)
+    }
+    if (!answer.ok) throw new StepTemplateError(answer.refusal.reason, answer.refusal.message)
+    texts.push(restoreVarSlots(answer.text, vars, onMissing))
+    for (const entry of answer.trace) {
+      const note = `${entry.ref}: ${entry.reason}`
+      if (!notes.includes(note)) notes.push(note)
+    }
+  }
+  const fill = (node: unknown): unknown => {
+    if (node instanceof Pending) return texts[node.index] ?? ''
+    if (Array.isArray(node)) return node.map(fill)
+    if (node !== null && typeof node === 'object') {
+      return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, fill(v)]))
+    }
+    return node
+  }
+  return { value: fill(skeleton), notes }
+}
+
 /** A `{ $var }` device target, resolved from the bag BEFORE dispatch. */
 export function resolveDeviceTarget(vars: StepVars, name: string): number {
   const raw = vars[name]
@@ -222,6 +361,8 @@ export interface ActionStepDeps {
   invokeCap(call: CapCall): Promise<void>
   sleep(ms: number): Promise<void>
   onMissingVar(name: string): void
+  /** Renders the device templates of a step's args (D1021); absent on a node that has none. */
+  readonly renderTemplates?: RenderStepTemplates
   /** Turn a step's target into device ids (an empty answer is logged by the resolver). */
   resolveTarget(
     target: ActionTarget,
@@ -311,8 +452,14 @@ export function buildActionSteps(
     return {
       meta,
       run: async (scope) => {
-        const resolved = resolveStepArgs(step.args ?? {}, vars, deps.onMissingVar)
-        const args = isPlainRecord(resolved) ? resolved : {}
+        const templated = await resolveStepArgsWithTemplates(
+          step.args ?? {},
+          vars,
+          deps.onMissingVar,
+          deps.renderTemplates,
+        )
+        if (templated.notes.length > 0) scope.setTemplateNotes(templated.notes)
+        const args = isPlainRecord(templated.value) ? templated.value : {}
         const target = await deps.resolveTarget(normalized.target, normalized.actionId, vars, {
           actionId: normalized.actionId,
           owner: deps.owner,
