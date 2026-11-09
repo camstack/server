@@ -6,7 +6,7 @@ import {
   HomeComUnknownDeviceTypeError,
   type HomeComResourceFamily,
 } from './homecom-device-type.js'
-import { readHeatPump, type HomeComHeatPumpReading } from './homecom-heat-pump.js'
+import { hasHeatSource, readHeatPump, type HomeComHeatPumpReading } from './homecom-heat-pump.js'
 import { HOMECOM_CLIENT_ID, HOMECOM_TOKEN_URL } from './homecom-oauth.js'
 import {
   circuitModeWrites,
@@ -348,12 +348,23 @@ export function createHomeComApiClient(
     const dhwId = snapshot.dhw?.circuitId
     const heatPump = await readHeatPump({
       get: getResource,
+      onFailure: logHeatPumpFailure,
       circuitIds: {
         hc: snapshot.circuits.map((circuit) => circuit.id),
         dhw: dhwId === undefined ? [] : [dhwId],
       },
     })
-    return { ...snapshot, heatPump }
+    return hasHeatSource(heatPump) ? { ...snapshot, heatPump } : snapshot
+  }
+
+  function logHeatPumpFailure(path: string, error: unknown): void {
+    const key = `heat-pump-read:${path}`
+    if (dropped.has(key)) return
+    dropped.add(key)
+    logger?.warn('HomeCom heat-pump resource could not be read; it is skipped', {
+      tags: { gatewayId },
+      meta: { path, error: error instanceof Error ? error.message : String(error) },
+    })
   }
 
   async function probePath(path: string): Promise<string | null> {

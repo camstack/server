@@ -114,14 +114,17 @@ export class HomeComHeatPumpRefusalError extends Error {
 
 export interface HeatPumpReadInput {
   readonly get: ResourceGet
+  /** Told once per failed read; the read itself carries on with `null` (never throws). */
+  readonly onFailure?: (path: string, error: unknown) => void
   readonly circuitIds: { readonly hc: readonly string[]; readonly dhw: readonly string[] }
 }
 
 export async function readHeatPump(input: HeatPumpReadInput): Promise<HomeComHeatPumpReading> {
-  const { get } = input
-  const circuits: HomeComHeatPumpCircuitReading[] = []
-  for (const id of input.circuitIds.hc) circuits.push(await readHc(get, id))
-  for (const id of input.circuitIds.dhw) circuits.push(await readDhwCircuit(get, id))
+  const get = safeGet(input.get, input.onFailure)
+  const circuits = await Promise.all([
+    ...input.circuitIds.hc.map((id) => readHc(get, id)),
+    ...input.circuitIds.dhw.map((id) => readDhwCircuit(get, id)),
+  ])
   const r = HEAT_PUMP_PATHS.readings
   const s = HEAT_PUMP_PATHS.system
   const [silent, away, additionalHeater, holiday] = await Promise.all([
@@ -161,6 +164,37 @@ export async function readHeatPump(input: HeatPumpReadInput): Promise<HomeComHea
     pressureBar,
     starts,
   }
+}
+
+/** Any failure of a heat-pump read (HTTP 4xx/5xx, a throw) is "not answered", never an error. */
+function safeGet(get: ResourceGet, onFailure: HeatPumpReadInput['onFailure']): ResourceGet {
+  return async (path) => {
+    try {
+      return await get(path)
+    } catch (error) {
+      onFailure?.(path, error)
+      return null
+    }
+  }
+}
+
+/**
+ * True when a heat SOURCE answered (silent mode, auxiliary heater, power, flow
+ * temperatures, pressure, starts). A boiler-only or room-controller gateway
+ * answers none of those, so it offers no heat pump.
+ */
+export function hasHeatSource(reading: HomeComHeatPumpReading): boolean {
+  return [
+    reading.silent,
+    reading.additionalHeater,
+    reading.thermalW,
+    reading.electricalW,
+    reading.compressorPct,
+    reading.supply,
+    reading.return,
+    reading.pressureBar,
+    reading.starts,
+  ].some((v) => v !== null)
 }
 
 async function readHc(get: ResourceGet, id: string): Promise<HomeComHeatPumpCircuitReading> {
