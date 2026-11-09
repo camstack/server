@@ -23,7 +23,6 @@ import {
   useIntegrationsGet,
   useIntegrationsGetAvailableTypes,
   useIntegrationsList,
-  useIntegrationsUpdate,
   useIntegrationInstancesSetInstanceEnabled,
   useSystem,
   Button,
@@ -255,9 +254,9 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     ['integrations', 'get'],
     { input: { id: integrationId }, type: 'query' },
   ] as const
-  // The switch is `setInstanceEnabled` for an instance row. A FIXED builtin has no instance body: its
-  // switch is the registry flag, written by the hub without its addon (a failed builtin can be
-  // turned back on), so it goes through `integrations.update`.
+  // The ONE switch is `setInstanceEnabled` for every row; for a fixed builtin (no instance body) the
+  // hub half of that call writes the registry flag. Without the addon's provider it cannot, and the
+  // row arrives marked `switchUnknown`.
   const switchHandlers = {
     onMutate: async (vars: { readonly enabled?: boolean }) => {
       await queryClient.cancelQueries({ queryKey: integrationKey })
@@ -281,15 +280,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
     },
   }
-  const instanceToggle = useIntegrationInstancesSetInstanceEnabled(switchHandlers)
-  const fixedToggle = useIntegrationsUpdate(switchHandlers)
-  const toggleMutation = {
-    isPending: instanceToggle.isPending || fixedToggle.isPending,
-    mutate: (vars: { id: string; addonId?: string; enabled: boolean }) =>
-      isFixed
-        ? fixedToggle.mutate({ id: vars.id, enabled: vars.enabled })
-        : instanceToggle.mutate(vars),
-  }
+  const toggleMutation = useIntegrationInstancesSetInstanceEnabled(switchHandlers)
   const switchUnknown = integration?.switchUnknown === true
 
   const deleteMutation = useIntegrationInstancesDeleteInstance({

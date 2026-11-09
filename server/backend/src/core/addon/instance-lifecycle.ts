@@ -594,10 +594,15 @@ export function withInstanceLifecycle(
       await setFixedBuiltinEnabled(deps, fixed, input.enabled)
       return { ok: true as const }
     }
-    const before = await deps.integrations().getIntegration(input.id)
+    // The switch of an instance lives in its record body: the baseline is what the body said
+    // BEFORE the write, never the registry flag (this path does not write it).
+    const row = await deps.integrations().getIntegration(input.id)
+    const previous =
+      row !== null && row.addonId === bare ? await provider.getInstance({ id: input.id }) : null
     const result = await provider.setInstanceEnabled(input)
-    if (before !== null && before.addonId === bare)
-      await emitSwitchEvent(deps, before, input.enabled)
+    if (row !== null && previous !== null) {
+      await emitSwitchEvent(deps, { ...row, enabled: previous.enabled !== false }, input.enabled)
+    }
     return result
   }
   const wrapped: IIntegrationInstancesProvider = new Proxy(provider, {

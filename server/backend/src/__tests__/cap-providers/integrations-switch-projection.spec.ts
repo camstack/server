@@ -150,16 +150,17 @@ describe('integrations.update and the switch', () => {
     expect(h.registry.updateIntegration).not.toHaveBeenCalled()
   })
 
-  it('switches a fixed builtin through the registry although its addon provider is absent, and emits the event', async () => {
-    const rows = [row('int_9', 'core-blocks', false, true)]
-    const h = harness(rows, () => null)
-    await h.provider.update({ id: 'int_9', enabled: true })
-    expect(h.registry.updateIntegration).toHaveBeenCalledWith('int_9', { enabled: true })
-    expect(h.emit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        category: 'integration.enabled',
-        data: expect.objectContaining({ integrationId: 'int_9' }),
-      }),
-    )
+  it('refuses enabled for a fixed builtin too: its switch is setInstanceEnabled', async () => {
+    const h = harness([row('int_9', 'core-blocks', true, true)], () => instancesProvider([]))
+    await expect(h.provider.update({ id: 'int_9', enabled: false })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: expect.stringContaining('setInstanceEnabled'),
+    })
+    expect(h.registry.updateIntegration).not.toHaveBeenCalled()
+  })
+
+  it('marks a fixed builtin switchUnknown while its addon provider is absent (the hub half cannot write)', async () => {
+    const h = harness([row('int_9', 'core-blocks', true, true)], () => null)
+    expect((await h.provider.get({ id: 'int_9' })).switchUnknown).toBe(true)
   })
 })

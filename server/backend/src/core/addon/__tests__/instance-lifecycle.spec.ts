@@ -117,7 +117,11 @@ async function makeKit(
         stored.set(id, { ...row, formValues: { ...row.formValues, ...values } })
       return { ok: true as const }
     },
-    setInstanceEnabled: async () => ({ ok: true as const }),
+    setInstanceEnabled: async ({ id, enabled }) => {
+      const row = stored.get(id)
+      if (row !== undefined) stored.set(id, { ...row, enabled })
+      return { ok: true as const }
+    },
     deleteInstance: async ({ id }) => {
       calls.push('deleteInstance')
       stored.delete(id)
@@ -448,10 +452,50 @@ describe('the switch of a fixed builtin is the registry flag', () => {
     const kit = await makeKit()
     const created = await kit.wrapped.createInstance({ name: 'Home', kind: 'connection' })
     kit.stored.set(created.id, {
-      ...(kit.stored.get(created.id) ?? { id: created.id, name: 'Home', kind: 'connection', configured: true, formValues: {} }),
+      ...(kit.stored.get(created.id) ?? {
+        id: created.id,
+        name: 'Home',
+        kind: 'connection',
+        configured: true,
+        formValues: {},
+      }),
       enabled: false,
     })
     expect((await kit.wrapped.getInstance({ id: created.id }))?.enabled).toBe(false)
+  })
+})
+
+describe('the switch events of an instance follow its record body', () => {
+  const switchCategories = (kit: Kit): string[] =>
+    kit.emit.mock.calls
+      .map(([event]) => event.category)
+      .filter(
+        (c) => c === EventCategory.IntegrationEnabled || c === EventCategory.IntegrationDisabled,
+      )
+
+  async function instanceKit(): Promise<{ kit: Kit; id: string }> {
+    const kit = await makeKit()
+    const row = await kit.registry.createIntegration({ addonId: ADDON, name: 'Home' })
+    kit.stored.set(row.id, {
+      id: row.id,
+      name: 'Home',
+      kind: 'connection',
+      configured: true,
+      formValues: {},
+    })
+    return { kit, id: row.id }
+  }
+
+  it('emits disabled, then enabled again, and nothing for a switch that did not move', async () => {
+    const { kit, id } = await instanceKit()
+    await kit.wrapped.setInstanceEnabled({ id, enabled: false })
+    await kit.wrapped.setInstanceEnabled({ id, enabled: false })
+    await kit.wrapped.setInstanceEnabled({ id, enabled: true })
+    await kit.wrapped.setInstanceEnabled({ id, enabled: true })
+    expect(switchCategories(kit)).toEqual([
+      EventCategory.IntegrationDisabled,
+      EventCategory.IntegrationEnabled,
+    ])
   })
 })
 
@@ -498,7 +542,9 @@ describe('createInstance with a seed', () => {
       stamped({ name: 'Blocks', seed: { info: { fixed: true } } }, ADDON),
     )
     await kit.registry.updateIntegration(created.id, { enabled: false })
-    expect((await kit.wrapped.listInstances()).find((i) => i.id === created.id)?.enabled).toBe(false)
+    expect((await kit.wrapped.listInstances()).find((i) => i.id === created.id)?.enabled).toBe(
+      false,
+    )
   })
 
   it('keeps the candidate and the settings the seed carries', async () => {

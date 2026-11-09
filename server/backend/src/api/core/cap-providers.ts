@@ -66,7 +66,6 @@ import { errMsg } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
 import {
   deleteRegisteredInstance,
-  setFixedBuiltinEnabled,
   type DeviceCascadePort,
   type InstanceLifecycleDeps,
   isFixedBuiltin,
@@ -1125,7 +1124,14 @@ async function projectSwitches(
     }
   }
   return integrations.map((i) => {
-    if (isFixedBuiltin(i)) return i
+    // A fixed builtin's switch is the registry flag, written by the hub half of `setInstanceEnabled`,
+    // which runs only while the owning addon's provider is registered: without it the switch
+    // cannot be written, so the row reads unknown rather than a switch that does nothing.
+    if (isFixedBuiltin(i)) {
+      return getInstancesProvider(ar, i.addonId) === null
+        ? { ...i, switchUnknown: true as const }
+        : i
+    }
     const enabled = byAddon.get(i.addonId)?.get(i.id)
     return enabled === undefined ? { ...i, switchUnknown: true as const } : { ...i, enabled }
   })
@@ -1188,11 +1194,7 @@ export function buildIntegrationsProvider(
         })
         throw new Error(`Integration "${input.id}" not found`)
       }
-      if (input.enabled !== undefined && isFixedBuiltin(previous)) {
-        // A fixed builtin's switch is the registry flag: no addon provider is needed, so a builtin
-        // whose addon is down can be turned back on.
-        await setFixedBuiltinEnabled(lifecycleDeps, previous, input.enabled)
-      } else if (input.enabled !== undefined) {
+      if (input.enabled !== undefined) {
         logger.warn('refused: integrations.update does not switch', {
           tags: { integrationId: input.id, addonId: previous.addonId },
           meta: { phase: 'update', reason: 'switch-through-set-instance-enabled' },
@@ -1202,7 +1204,7 @@ export function buildIntegrationsProvider(
           message: `Integration "${input.id}" is switched through integration-instances.setInstanceEnabled, not integrations.update`,
         })
       }
-      const { id, enabled: _switched, ...updates } = input
+      const { id, ...updates } = input
       const changedFields = Object.keys(updates).filter(
         (k) => (updates as Record<string, unknown>)[k] !== undefined,
       )
