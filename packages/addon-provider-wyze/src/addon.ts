@@ -19,7 +19,6 @@ import type {
   IConnectionProbe,
   IDevice,
   IDeviceAdoptionProvider,
-  IntegrationInstanceRef,
   RecordIntegrationInstances,
   SavedDevice,
   SystemEvent,
@@ -27,7 +26,6 @@ import type {
 import { WyzeClientRegistry } from './client-registry.js'
 import { WYZE_ADDON_ID } from './constants.js'
 import { buildCreationFormSchema } from './creation-schema.js'
-import { buildSettingsSchema } from './settings-schema.js'
 import { cameraConfigFromCloud, stableIdForMac } from './mapping.js'
 import { wyzeCameraSchema } from './schema.js'
 import {
@@ -321,7 +319,7 @@ export class WyzeProviderAddon extends BaseDeviceProvider {
 
   // ── Config form (account credentials, rendered by the wizard) ───────────
   //
-  // `mode: account`: the account form is the INSTANCE form (`integrationFormSchema`); the
+  // `mode: account`: the account form is the INSTANCE form (`wyze-instances`); the
   // submitted values are stored on the connection record, and the addon reads credentials from
   // there, NOT the global store. The global store only ever held leftovers.
   //
@@ -331,12 +329,6 @@ export class WyzeProviderAddon extends BaseDeviceProvider {
   // as plaintext (`global-credentials-keychain.spec.ts`).
 
   protected override readonly secretStatePaths: readonly string[] = ['password', 'apiKey']
-
-  protected override async integrationFormSchema(
-    _instance: IntegrationInstanceRef,
-  ): Promise<ConfigUISchema | null> {
-    return buildSettingsSchema()
-  }
 
   /**
    * Remove account credentials left in the GLOBAL store. They are dead — the

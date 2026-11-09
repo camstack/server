@@ -191,8 +191,10 @@ export function targetOfRecord(
 }
 
 /**
- * The retired single kind a target migration reads and empties. Only the migration holds it: the store
- * never serves it, and its declaration is made by the migration at the moment it runs.
+ * Where a target that could not be moved still lives (its legacy source). A store handed one serves
+ * such a row as long as the new records do not hold its id, so a row a migration skipped never goes
+ * dark, and a write of that id moves it (the legacy row is dropped last). A migration also reads and
+ * empties it; the store of an addon whose source holds no rows never takes one.
  */
 export interface LegacyTargets {
   list(): Promise<readonly OldTargetRow[]>
@@ -202,6 +204,18 @@ export interface LegacyTargets {
 /** What a store takes beyond its kinds. */
 export interface NotificationTargetStoreOptions {
   readonly logger?: IScopedLogger
+  readonly legacy?: LegacyTargets
+}
+
+function targetOfOld(addonId: string, row: OldTargetRow): Target {
+  return {
+    id: row.id,
+    name: row.name,
+    kind: row.kind,
+    addonId,
+    enabled: row.enabled,
+    config: { ...row.config },
+  }
 }
 
 interface KindHandle {
@@ -262,7 +276,19 @@ export class NotificationTargetStore {
         )
       }
     }
+    const held = new Set(out.map((target) => target.id))
+    for (const row of await this.legacyRows()) {
+      if (!held.has(row.id)) out.push(targetOfOld(this.addonId, row))
+    }
     return out
+  }
+
+  /** The legacy rows of a kind this provider serves (the others are not ours to show). */
+  private async legacyRows(): Promise<readonly OldTargetRow[]> {
+    const legacy = this.options.legacy
+    if (legacy === undefined) return []
+    const served = new Set(this.handles.map((entry) => entry.kind))
+    return (await legacy.list()).filter((row) => served.has(row.kind))
   }
 
   async getById(id: string): Promise<Target | null> {
@@ -270,7 +296,8 @@ export class NotificationTargetStore {
       const row = await handle.getResolved(id)
       if (row !== null) return targetOfRecord(this.addonId, kind, row.id, row.data)
     }
-    return null
+    const old = (await this.legacyRows()).find((row) => row.id === id)
+    return old === undefined ? null : targetOfOld(this.addonId, old)
   }
 
   /** Insert or replace by id; a target whose kind changed leaves the record of its old kind. */
@@ -282,10 +309,13 @@ export class NotificationTargetStore {
     for (const other of this.handles) {
       if (other !== own) await other.handle.delete(target.id)
     }
+    // The record now holds the id: the legacy row of it is moved, so it goes, last.
+    await this.options.legacy?.delete(target.id)
   }
 
   async delete(id: string): Promise<void> {
     for (const { handle } of this.handles) await handle.delete(id)
+    await this.options.legacy?.delete(id)
   }
 
   /** Flip the switch on an existing target; null when it does not exist. */
@@ -296,7 +326,12 @@ export class NotificationTargetStore {
       const row = await handle.get(id)
       return row === null ? null : targetOfRecord(this.addonId, kind, row.id, row.data)
     }
-    return null
+    // Only the legacy source has it: flipping the switch moves the row to its record.
+    const old = (await this.legacyRows()).find((row) => row.id === id)
+    if (old === undefined) return null
+    const moved = { ...targetOfOld(this.addonId, old), enabled }
+    await this.upsert(moved)
+    return moved
   }
 }
 

@@ -784,10 +784,7 @@ describe('PipelineOrchestratorAddon — E2E', () => {
     addon = new PipelineOrchestratorAddon()
     await addon.initialize(ctx)
 
-    const hydrated = await addon.getIntegrationFormSchema({
-      integrationId: null,
-      mode: 'standalone',
-    })
+    const hydrated = await addon.getScopedSettings('cluster', 'pipeline-orchestrator')
     expect(hydrated).not.toBeNull()
     const sectionIds = hydrated!.sections.map((s: ConfigSectionWithValues) => s.id)
     // The legacy `'balancer'` section was renamed to `'load'` when the

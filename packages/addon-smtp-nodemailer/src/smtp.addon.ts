@@ -22,7 +22,6 @@ import {
   BaseAddon,
   type ConfigUISchema,
   type IntegrationTestConnectionResult,
-  type IntegrationInstanceRef,
   type ISmtpProvider,
   EventCategory,
   type ProviderRegistration,
@@ -342,15 +341,6 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
     const page = await records.kind(smtpRelaysKind).query({ limit: RELAY_LIST_MAX })
     const rows = page.records
     return (rows.find((row) => row.data.host.length > 0) ?? rows[0])?.id
-  }
-
-  // ── The relay form: its values live on the relay record, never in `addon-settings` ───
-
-  /** The relay form. */
-  protected override async integrationFormSchema(
-    _instance: IntegrationInstanceRef,
-  ): Promise<ConfigUISchema | null> {
-    return this.relayForm()
   }
 
   /** Probe a relay (EHLO + AUTH) with the form's values, falling back to the stored ones. */

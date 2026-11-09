@@ -36,7 +36,6 @@ import {
 } from '../migrations/registry-switch-to-body.js'
 import type { DefinedRecordKind } from '../records/record-kind.js'
 import { createDurableState, type DurableState } from './durable-state.js'
-import type { IntegrationInstanceRef } from './integration-instance-ref.js'
 import { AddonMigrationsBlockedError } from './migrations-blocked-error.js'
 import {
   nodeScopedKey,
@@ -609,19 +608,6 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   }
 
   /**
-   * The form schema of ONE integration instance, or `null` to use the scoped form.
-   *
-   * Override it only when an `instanceMode: multiple` addon's instances differ: an NVR integration
-   * needs its connection fields, the default integration the addon's own sections. It is the
-   * SHAPE of the form only — the values live on the instance record.
-   */
-  protected async integrationFormSchema(
-    _instance: IntegrationInstanceRef,
-  ): Promise<ConfigUISchema | null> {
-    return null
-  }
-
-  /**
    * D986 scoped settings: the form shape of the CLUSTER-wide settings one capability this addon
    * provides owns, or `null` when it has none. `cap` is a capability name the addon's manifest
    * declares. Stored as `addon-settings` rows `<addonId>.<field>`. The keys of this schema, of
@@ -652,8 +638,7 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
 
   /**
    * The host's read of the scoped declarations: the schema one capability declares for `scope`,
-   * or `null`. Beside {@link getIntegrationFormSchema}, the same shape: the hook is protected, the
-   * host asks this method.
+   * or `null`. The hook is protected, the host asks this method.
    */
   async getScopedSettingsSchema(
     scope: ScopedSettingsScope,
@@ -914,29 +899,6 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
   }
 
   /**
-   * What the create wizard and the integration edit page render for one instance: the addon's
-   * per-instance schema when it declares one, else its global schema (what they always showed).
-   */
-  async getIntegrationFormSchema(
-    instance: IntegrationInstanceRef,
-    nodeId?: string,
-  ): Promise<ConfigUISchemaWithValues | null> {
-    const scoped = await this.integrationFormSchema(instance)
-    if (scoped === null) return this.scopedForm(nodeId)
-    return hydrateSchema(scoped, {}, { inlineSecretsAsViews: true })
-  }
-
-  /** The form of the scoped schemas this addon declared, hydrated from its store. */
-  private async scopedForm(nodeId?: string): Promise<ConfigUISchemaWithValues | null> {
-    await this.loadScopedSchemas()
-    const schema = this.scopedFormSchema()
-    if (!schema) return { sections: [] }
-    return hydrateSchema(schema, await this.readRawProjectedStore(nodeId), {
-      inlineSecretsAsViews: true,
-    })
-  }
-
-  /**
    * The raw addon store PROJECTED onto the target node's bare per-node keys:
    * every `perNode: true` field carries THAT node's scoped value on its bare
    * key (absent scoped key ⇒ key absent, so the schema `default` wins — no
@@ -1170,17 +1132,6 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     if (!added) return
     this._nodeKeysByCap = new Map()
     this._addonSecretTree = null
-  }
-
-  /** The form of an addon's scoped schemas: their sections, each shown once. */
-  private scopedFormSchema(cap?: string): ConfigUISchema | null {
-    // Two capabilities may answer with the same section: it is one form section, shown once.
-    const byId = new Map<string, ConfigUISchema['sections'][number]>()
-    for (const entry of this.loadedScopedSchemas(cap)) {
-      for (const section of entry.schema.sections)
-        if (!byId.has(section.id)) byId.set(section.id, section)
-    }
-    return byId.size === 0 ? null : { sections: [...byId.values()] }
   }
 
   /** Every loaded scoped schema of `cap`, or of every loaded capability. */

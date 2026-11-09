@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1470 method paths across 203 capabilities.
+ * Coverage: 1469 method paths across 203 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -76,7 +76,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'addons.updatePackage': { capName: "addons", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'addonSettings.getDeclaredSettingsKeys': { capName: "addon-settings", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addonSettings.getDeviceSettings': { capName: "addon-settings", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'addonSettings.getIntegrationFormSchema': { capName: "addon-settings", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addonSettings.getScopedSettings': { capName: "addon-settings", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addonSettings.listScopedSettings': { capName: "addon-settings", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'addonSettings.readScopedValues': { capName: "addon-settings", capScope: "system", addonId: null, access: "view", role: "admin" } as const,

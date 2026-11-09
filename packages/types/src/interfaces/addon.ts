@@ -1,5 +1,4 @@
 import type { z } from 'zod'
-import type { IntegrationInstanceRef } from '../addon/integration-instance-ref.js'
 import type { PackageRequires } from '../addon/package-requires.js'
 import type { ScopedSettingsDeclaration, ScopedSettingsScope } from '../addon/scoped-settings.js'
 import type { CapabilityDefinition, InferProvider } from '../capabilities/capability-definition.js'
@@ -1028,15 +1027,6 @@ export interface ICamstackAddon {
   // All six methods are OPTIONAL. They will become the canonical way
   // addons expose settings once Phase 3 removes the deprecated trio
   // above. See docs/superpowers/specs/2026-04-11-settings-redesign-design.md.
-
-  /**
-   * The form of ONE integration instance (create wizard or edit page): the addon's per-instance
-   * schema when it declares one, else its global schema. See `BaseAddon.getIntegrationFormSchema`.
-   */
-  getIntegrationFormSchema?(
-    instance: IntegrationInstanceRef,
-    nodeId?: string,
-  ): Promise<ConfigUISchemaWithValues | null>
 
   /**
    * D986: the schema one capability this addon provides declares for a settings scope

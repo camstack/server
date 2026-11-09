@@ -59,7 +59,9 @@ describe('integration-instances cap router', () => {
       kind: 'a',
     })
     expect(r.ok && r.value).toEqual({ id: 'minted-1' })
-    expect(provider.createInstance).toHaveBeenCalledWith({ name: 'One', kind: 'a' })
+    expect(provider.createInstance).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'One', kind: 'a' }),
+    )
   })
 
   it('every method stays admin-only', async () => {

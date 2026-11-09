@@ -26,7 +26,6 @@ import {
   type IBrokerProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type IntegrationInstanceRef,
   type RecordIntegrationInstances,
   notificationOutputCapability,
   VENDOR_LOGIN_PROXY_PREFIX,
@@ -34,7 +33,6 @@ import {
   isInstanceEnabled,
 } from '@camstack/types'
 import {
-  buildConnectionFormSchema,
   settingsToAlexaConnection,
   type AlexaAddonConfig,
   type AlexaConnection,
@@ -790,15 +788,6 @@ export class AlexaImportAddon extends BaseDeviceProvider<AlexaAddonConfig> {
         return devices.loadConfig(id).catch((): null => null)
       },
     })
-  }
-
-  // ── Instance form ──────────────────────────────────────────────────────
-
-  /** The connection form a record carries; the values live on the record, never in `addon-settings`. */
-  protected override async integrationFormSchema(
-    _instance: IntegrationInstanceRef,
-  ): Promise<ConfigUISchema | null> {
-    return buildConnectionFormSchema()
   }
 
   // ── Manual creation: not supported (appliances are imported + adopted) ──

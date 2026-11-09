@@ -14,10 +14,9 @@ import type {
   ICamstackAddon,
   ConfigUISchema,
   ConfigUISchemaWithValues,
-  IntegrationInstanceRef,
   ScopedSettingsScope,
 } from '@camstack/types'
-import type { IAddonSettingsProvider, IIntegrationInstancesProvider } from '@camstack/types'
+import type { IAddonSettingsProvider } from '@camstack/types'
 import type { AddonSettingsMethod } from '@camstack/server/system'
 import type { AddonCallGateway } from './addon-call-gateway.js'
 
@@ -59,12 +58,6 @@ const ScopedDeclarationsAnswer = z.array(
 interface AddonNodeInput {
   readonly addonId: string
   readonly nodeId?: string
-}
-
-interface IntegrationFormInput {
-  readonly addonId: string
-  readonly nodeId?: string
-  readonly instance: IntegrationInstanceRef
 }
 
 interface DeviceGetInput {
@@ -156,11 +149,6 @@ interface AddonSettingsProviderDeps {
   readonly getAddon: AddonLookup
   /** Shared router for forked addon-level calls (hub-local-child / remote). */
   readonly gateway: AddonCallGateway
-  /**
-   * The addon's `integration-instances` provider (D985), or null. When it exists
-   * the integration form is ITS `instanceFormSchema`, wherever the addon runs.
-   */
-  readonly instancesFor?: (addonId: string) => IIntegrationInstancesProvider | null
 }
 
 function createAddonSettingsProvider(deps: AddonSettingsProviderDeps): IAddonSettingsProvider {
@@ -287,37 +275,6 @@ function createAddonSettingsProvider(deps: AddonSettingsProviderDeps): IAddonSet
         if (isServiceNotFoundError(err)) return null
         throw err
       }
-    },
-
-    async getIntegrationFormSchema(input: IntegrationFormInput) {
-      const instances = deps.instancesFor?.(input.addonId) ?? null
-      if (instances !== null) {
-        return reshapeForOutput(
-          await instances.instanceFormSchema({
-            id: input.instance.integrationId,
-            mode: input.instance.mode,
-            ...(input.instance.candidateStableId !== undefined
-              ? { candidateStableId: input.instance.candidateStableId }
-              : {}),
-          }),
-        )
-      }
-      if (gateway.isInProcess(input.addonId, input.nodeId)) {
-        const addon = getAddon(input.addonId)
-        if (!addon) return null
-        // The per-instance hook when the addon has one; its scoped form otherwise.
-        const result =
-          typeof addon.getIntegrationFormSchema === 'function'
-            ? await addon.getIntegrationFormSchema(input.instance, input.nodeId)
-            : null
-        return result ? reshapeForOutput(result) : null
-      }
-      return forkedGet(
-        input.addonId,
-        'getIntegrationFormSchema',
-        { instance: input.instance, ...(input.nodeId ? { nodeId: input.nodeId } : {}) },
-        input.nodeId,
-      )
     },
 
     async getDeclaredSettingsKeys(input: AddonIdInput) {

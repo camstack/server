@@ -87,7 +87,7 @@ describe('the pipeline orchestrator scoped settings', () => {
     addon = new Probe()
     await addon.initialize(ctx)
     initialized = true
-    const view = await addon.getIntegrationFormSchema({ integrationId: null, mode: 'standalone' })
+    const view = await addon.getScopedSettings('cluster', 'pipeline-orchestrator')
     expect(pickDetailCropConvention(view)).toEqual({ paddingRatio: 0.37, square: true })
     const values = new Map<string, unknown>()
     for (const section of view?.sections ?? []) {

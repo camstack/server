@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A user's writes to their own notification targets are audit-logged
 - integrations.delete is gone: delete an integration through integrationInstances.deleteInstance
 
+### Removed
+
+- addonSettings.getIntegrationFormSchema, BaseAddon.integrationFormSchema and IntegrationInstanceRef are removed; an instance form is integrationInstances.instanceFormSchema
+
 ## [1.2.531] - 2026-11-08
 
 ### Changed

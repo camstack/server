@@ -241,7 +241,6 @@ describe('the enumeration covers every non-admin read that can leak a secret', (
   it('lists exactly the config-bearing AND stream-url-bearing paths', () => {
     expect([...NON_ADMIN_CONFIG_REDACTED_METHODS.keys()].sort()).toEqual([
       'addonSettings.getDeviceSettings',
-      'addonSettings.getIntegrationFormSchema',
       'addonSettings.getScopedSettings',
       'cameraStreams.getCameraStreams',
       'cameraStreams.getProfileRtspEntries',
@@ -359,8 +358,5 @@ describe('addon settings forms are redacted for a non-admin (D634)', () => {
   it('the device and integration surfaces use the same redactor', () => {
     const scoped = NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getScopedSettings')
     expect(NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getDeviceSettings')).toBe(scoped)
-    expect(NON_ADMIN_CONFIG_REDACTED_METHODS.get('addonSettings.getIntegrationFormSchema')).toBe(
-      scoped,
-    )
   })
 })

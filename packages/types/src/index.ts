@@ -68,8 +68,6 @@ export type {
   UnmetRequirement,
   WrapperRequirementKind,
 } from './addon/package-requires.js'
-export { IntegrationInstanceRefSchema } from './addon/integration-instance-ref.js'
-export type { IntegrationInstanceRef } from './addon/integration-instance-ref.js'
 export type {
   AddonRouteInvokeRequest,
   AddonRouteReplyEnvelope,

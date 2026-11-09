@@ -629,14 +629,6 @@ export function createCapRouter_addonSettings(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.readScopedValues(input as any)
       }),
-    getIntegrationFormSchema: protectedProcedure
-      .input(addonSettingsCapability.methods.getIntegrationFormSchema.input.loose())
-      .output(addonSettingsCapability.methods.getIntegrationFormSchema.output)
-      .query(async ({ input, ctx }) => {
-        const p = requireCapProvider('addon-settings', () => getProvider(ctx))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.getIntegrationFormSchema(input as any)
-      }),
     getDeclaredSettingsKeys: adminProcedure
       .input(addonSettingsCapability.methods.getDeclaredSettingsKeys.input.loose())
       .output(addonSettingsCapability.methods.getDeclaredSettingsKeys.output)

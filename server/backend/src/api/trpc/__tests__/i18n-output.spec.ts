@@ -89,8 +89,10 @@ describe('schema localization middleware', () => {
     ],
   }
   const router = trpcRouter({
+    integrationInstances: trpcRouter({
+      instanceFormSchema: protectedProcedure.query(() => schema),
+    }),
     addonSettings: trpcRouter({
-      getIntegrationFormSchema: protectedProcedure.query(() => schema),
       getScopedSettings: protectedProcedure.query(() => schema),
     }),
     other: trpcRouter({ getThing: protectedProcedure.query(() => schema) }),
@@ -109,14 +111,14 @@ describe('schema localization middleware', () => {
   })
 
   it('serves the Italian text for it, English for en, and English for an unknown key', async () => {
-    const italian = await caller(ctxFor('it')).addonSettings.getIntegrationFormSchema()
+    const italian = await caller(ctxFor('it')).integrationInstances.instanceFormSchema()
     expect(italian.sections[0]?.title).toBe('Connessione')
     expect(italian.sections[0]?.fields[0]?.label).toBe('Server')
     expect(italian.sections[0]?.fields[1]?.label).toBe('Port')
 
-    const en = await caller(ctxFor('en')).addonSettings.getIntegrationFormSchema()
+    const en = await caller(ctxFor('en')).integrationInstances.instanceFormSchema()
     expect(en).toEqual(schema)
-    const none = await caller(ctxFor()).addonSettings.getIntegrationFormSchema()
+    const none = await caller(ctxFor()).integrationInstances.instanceFormSchema()
     expect(none).toEqual(schema)
   })
 

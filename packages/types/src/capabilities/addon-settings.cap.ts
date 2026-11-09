@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { IntegrationInstanceRefSchema } from '../addon/integration-instance-ref.js'
 import { SCOPED_SETTINGS_SCOPES } from '../addon/scoped-settings.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 
@@ -134,19 +133,6 @@ export const addonSettingsCapability = {
         nodeId: z.string().optional(),
       }),
       z.record(z.string(), z.unknown()).nullable(),
-    ),
-
-    // The form of ONE integration instance — the create wizard (`integrationId: null`) and the
-    // edit page both ask here. An addon with a per-instance schema
-    // (`BaseAddon.integrationFormSchema`) answers with it; every other addon answers with the form of its
-    // scoped schemas. Read-only: the values come from the instance record.
-    getIntegrationFormSchema: method(
-      z.object({
-        addonId: z.string(),
-        nodeId: z.string().optional(),
-        instance: IntegrationInstanceRefSchema,
-      }),
-      SettingsSchemaWithValuesSchema.nullable(),
     ),
 
     // ── Stale-data audit ──────────────────────────────────────────────

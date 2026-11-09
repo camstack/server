@@ -20,12 +20,11 @@ import {
   type IBrokerProvider,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type IntegrationInstanceRef,
   type ProviderRegistration,
   type RecordIntegrationInstances,
   isInstanceEnabled,
 } from '@camstack/types'
-import { buildConnectionFormSchema, type MatterAddonConfig } from './config.js'
+import type { MatterAddonConfig } from './config.js'
 import { MatterBrokerRegistry } from './matter-broker-registry.js'
 import { sameConnection } from './matter-integration-manager.js'
 import { buildMatterBrokerProvider } from './matter-broker-provider.js'
@@ -438,15 +437,6 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
         return devices.loadConfig(id).catch((): null => null)
       },
     })
-  }
-
-  // ── Instance form ──────────────────────────────────────────────────────
-
-  /** The connection form a record carries; the values live on the record, never in `addon-settings`. */
-  protected override async integrationFormSchema(
-    _instance: IntegrationInstanceRef,
-  ): Promise<ConfigUISchema | null> {
-    return buildConnectionFormSchema()
   }
 
   // ── Manual creation: not supported (nodes are commissioned + adopted) ──

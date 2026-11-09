@@ -21,7 +21,6 @@ interface Config {
 }
 
 const CAP = 'device-export'
-const INSTANCE = { integrationId: null, mode: 'standalone' } as const
 
 const nodeSchema: ConfigUISchema = {
   sections: [
@@ -192,31 +191,16 @@ describe('BaseAddon readers of the scoped schemas', () => {
     }
   })
 
-  it('the integration form serves the scoped sections of an addon with no per-instance schema', async () => {
+  it('the node scope reads its field from the node-scoped key', async () => {
     const h = makeCtx('node-b')
     await h.ctx.settings?.writeAddonStore({ 'interfaceName@node-b': 'eth9' })
     const addon = new ScopedOnlyAddon()
     await addon.initialize(h.ctx)
-    const form = await addon.getIntegrationFormSchema(INSTANCE)
+    const form = await addon.getScopedSettings('node', CAP, 'node-b')
     const field = form?.sections
       .flatMap((section) => section.fields)
       .find((f) => 'key' in f && f.key === 'interfaceName')
     expect(field && 'value' in field ? field.value : undefined).toBe('eth9')
-  })
-
-  it('a section declared under two capabilities is served once', async () => {
-    class TwoCaps extends ScopedOnlyAddon {
-      protected override scopedSettingsCapabilities(): readonly string[] {
-        return [CAP, 'other-cap']
-      }
-      protected override async nodeSettingsSchema(): Promise<ConfigUISchema | null> {
-        return nodeSchema
-      }
-    }
-    const addon = new TwoCaps()
-    await addon.initialize(makeCtx('node-b').ctx)
-    const form = await addon.getIntegrationFormSchema(INSTANCE)
-    expect(form?.sections.filter((section) => section.id === 'node')).toHaveLength(1)
   })
 
   it('getDeclaredSettingsKeys lists the scoped fields', async () => {

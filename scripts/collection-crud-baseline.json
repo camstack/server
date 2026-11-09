@@ -12,7 +12,6 @@
       "training-provider.cap.ts:listEntries": "runtime read, not CRUD: the orchestrator resolves which provider addon owns an entry id (api-ports addonForEntry); no page lists or edits entries through it"
     },
     "addon-settings": {
-      "addon-settings.cap.ts:getIntegrationFormSchema": "runtime read, not CRUD: the form a NEW instance of a kind renders in the create wizard (IntegrationWizard), where no instance id exists yet for integration-instances.instanceFormSchema"
     },
     "permanent": {
       "storage.cap.ts:listLocations": "runtime read of the locations with occupancy and state, not the CRUD of the configured rows",

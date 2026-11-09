@@ -9,7 +9,7 @@ import { newWorld, worldContext, type KeychainWorld } from './keychain-world.js'
 
 /**
  * D986 §7: the typed scoped value API — `clusterSettings`, `deviceDefaults`, `nodeSettings`,
- * `nodeState` — over the same rows `scopedFormSchema` and `this.config` already use.
+ * `nodeState` — over the same rows `this.config` already uses.
  */
 
 const CAP = 'value-cap'

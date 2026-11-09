@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**203 capabilities · 1472 methods.**
+**203 capabilities · 1469 methods.**
 
 ## Method index
 
@@ -37,7 +37,6 @@
 | `addonSettings.listScopedSettings` | query | protected | addon-settings |
 | `addonSettings.updateScopedSettings` | mutation | admin | addon-settings |
 | `addonSettings.readScopedValues` | query | protected | addon-settings |
-| `addonSettings.getIntegrationFormSchema` | query | protected | addon-settings |
 | `addonSettings.getDeclaredSettingsKeys` | query | admin | addon-settings |
 | `addonSettings.unsetStoredSettingsKeys` | mutation | admin | addon-settings |
 | `addonSettings.getDeviceSettings` | query | protected | addon-settings |
@@ -527,18 +526,17 @@
 | `imageSettings.setSettings` | mutation | admin | image-settings |
 | `integrationInstances.describe` | query | admin | integration-instances |
 | `integrationInstances.instanceFormSchema` | query | admin | integration-instances |
-| `integrationInstances.listInstances` | query | admin | integration-instances |
-| `integrationInstances.getInstance` | query | admin | integration-instances |
-| `integrationInstances.createInstance` | mutation | admin | integration-instances |
-| `integrationInstances.updateInstance` | mutation | admin | integration-instances |
-| `integrationInstances.setInstanceEnabled` | mutation | admin | integration-instances |
-| `integrationInstances.deleteInstance` | mutation | admin | integration-instances |
-| `integrationInstances.testInstance` | mutation | admin | integration-instances |
+| `integrationInstances.listInstances` | query | protected | integration-instances |
+| `integrationInstances.getInstance` | query | protected | integration-instances |
+| `integrationInstances.createInstance` | mutation | protected | integration-instances |
+| `integrationInstances.updateInstance` | mutation | protected | integration-instances |
+| `integrationInstances.setInstanceEnabled` | mutation | protected | integration-instances |
+| `integrationInstances.deleteInstance` | mutation | protected | integration-instances |
+| `integrationInstances.testInstance` | mutation | protected | integration-instances |
 | `integrations.list` | query | protected | integrations |
 | `integrations.get` | query | protected | integrations |
 | `integrations.getByAddonId` | query | protected | integrations |
 | `integrations.update` | mutation | admin | integrations |
-| `integrations.delete` | mutation | admin | integrations |
 | `integrations.getAvailableTypes` | query | admin | integrations |
 | `intercom.getStatus` | query | protected | intercom (auto) |
 | `intercom.startSession` | mutation | protected | intercom |
@@ -1213,7 +1211,6 @@
 | `settingsStore.declareCollection` | mutation | admin | settings-store |
 | `smoke.getStatus` | query | protected | smoke (auto) |
 | `smtpProvider.sendEmail` | mutation | admin | smtp-provider |
-| `smtpProvider.verify` | mutation | admin | smtp-provider |
 | `smtpProvider.getStatus` | query | admin | smtp-provider |
 | `snapshot.getStatus` | query | protected | snapshot (auto) |
 | `snapshot.getDeviceSettingsContribution` | query | protected | snapshot (auto) |
@@ -1574,7 +1571,7 @@
 
 ### `addon-settings` → `addonSettings.*`
 
-- **Source:** `packages/types/src/capabilities/addon-settings.cap.ts:87`
+- **Source:** `packages/types/src/capabilities/addon-settings.cap.ts:86`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton` · nodeIdMode: `data`
 - **Archetypes:** —
 - **Provider interface:** `IAddonSettingsProvider`
@@ -1585,7 +1582,6 @@
 | listScopedSettings | `addonSettings.listScopedSettings` | query | protected | `{ addonId: string; nodeId?: string }` | `({ cap: string; scope: "cluster" \| "device-defaults" \| "node"; sectionIds: string[] })[] \| null` |
 | updateScopedSettings | `addonSettings.updateScopedSettings` | mutation | admin | `{ addonId: string; cap: string; scope: "cluster" \| "device-defaults" \| "node"; nodeId?: string; patch: SettingsPatchSchema }` | `SettingsUpdateResultSchema` |
 | readScopedValues | `addonSettings.readScopedValues` | query | protected | `{ addonId: string; cap: string; scope: "cluster" \| "device-defaults" \| "node"; nodeId?: string }` | `Record<string, unknown> \| null` |
-| getIntegrationFormSchema | `addonSettings.getIntegrationFormSchema` | query | protected | `{ addonId: string; nodeId?: string; instance: { integrationId: string \| null; mode: "standalone" \| "account" \| "broker"; candidateStableId?: string } }` | `SettingsSchemaWithValuesSchema \| null` |
 | getDeclaredSettingsKeys | `addonSettings.getDeclaredSettingsKeys` | query | admin | `{ addonId: string; nodeId?: string }` | `{ keys: string[] } \| null` |
 | unsetStoredSettingsKeys | `addonSettings.unsetStoredSettingsKeys` | mutation | admin | `{ addonId: string; nodeId?: string; keys: string[] }` | `{ removed: string[]; refused: ({ key: string; reason: string })[]; secretsCleared: number }` |
 | getDeviceSettings | `addonSettings.getDeviceSettings` | query | protected | `{ addonId: string; deviceId: number; nodeId?: string }` | `SettingsSchemaWithValuesSchema \| null` |
@@ -2943,7 +2939,7 @@
 
 ### `integration-instances` → `integrationInstances.*`
 
-- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:189`
+- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:203`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationInstancesProvider`
@@ -2952,17 +2948,17 @@
 |---|---|---|---|---|---|
 | describe | `integrationInstances.describe` | query | admin | `void` | `IntegrationInstanceDescriptionSchema` |
 | instanceFormSchema | `integrationInstances.instanceFormSchema` | query | admin | `{ id: string \| null; kind?: string; mode?: "standalone" \| "account" \| "broker"; candidateStableId?: string }` | `<custom>` |
-| listInstances | `integrationInstances.listInstances` | query | admin | `void` | `IntegrationInstanceSchema[]` |
-| getInstance | `integrationInstances.getInstance` | query | admin | `{ id: string }` | `IntegrationInstanceSchema \| null` |
-| createInstance | `integrationInstances.createInstance` | mutation | admin | `{ id?: string; name: string; kind?: string; values?: Record<string, unknown>; originStableId?: string; seed?: { info: Record<string, unknown> } }` | `{ id: string }` |
-| updateInstance | `integrationInstances.updateInstance` | mutation | admin | `IntegrationInstancePatchSchema` | `{ ok: true }` |
-| setInstanceEnabled | `integrationInstances.setInstanceEnabled` | mutation | admin | `{ id: string; enabled: boolean }` | `{ ok: true }` |
-| deleteInstance | `integrationInstances.deleteInstance` | mutation | admin | `{ id: string }` | `{ ok: true }` |
-| testInstance | `integrationInstances.testInstance` | mutation | admin | `{ id: string \| null; values: Record<string, unknown>; kind?: string }` | `TestConnectionResultSchema` |
+| listInstances | `integrationInstances.listInstances` | query | protected | `{}` | `IntegrationInstanceSchema[]` |
+| getInstance | `integrationInstances.getInstance` | query | protected | `{ id: string }` | `IntegrationInstanceSchema \| null` |
+| createInstance | `integrationInstances.createInstance` | mutation | protected | `{ id?: string; name: string; kind?: string; values?: Record<string, unknown>; originStableId?: string; seed?: { info: Record<string, unknown> } }` | `{ id: string }` |
+| updateInstance | `integrationInstances.updateInstance` | mutation | protected | `IntegrationInstancePatchSchema` | `{ ok: true }` |
+| setInstanceEnabled | `integrationInstances.setInstanceEnabled` | mutation | protected | `{ id: string; enabled: boolean }` | `{ ok: true }` |
+| deleteInstance | `integrationInstances.deleteInstance` | mutation | protected | `{ id: string }` | `{ ok: true }` |
+| testInstance | `integrationInstances.testInstance` | mutation | protected | `{ id: string \| null; values: Record<string, unknown>; kind?: string }` | `TestConnectionResultSchema` |
 
 ### `integrations` → `integrations.*`
 
-- **Source:** `packages/types/src/capabilities/integrations.cap.ts:148`
+- **Source:** `packages/types/src/capabilities/integrations.cap.ts:155`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationsProvider`
@@ -2973,7 +2969,6 @@
 | get | `integrations.get` | query | protected | `{ id: string }` | `IntegrationWithStateSchema` |
 | getByAddonId | `integrations.getByAddonId` | query | protected | `{ addonId: string }` | `IntegrationLiteSchema \| null` |
 | update | `integrations.update` | mutation | admin | `UpdateIntegrationInputSchema` | `IntegrationLiteSchema` |
-| delete | `integrations.delete` | mutation | admin | `{ id: string }` | `DeleteIntegrationResultSchema` |
 | getAvailableTypes | `integrations.getAvailableTypes` | query | admin | `void` | `AvailableIntegrationTypeSchema[]` |
 
 ### `intercom` → `intercom.*`
@@ -4428,7 +4423,6 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | sendEmail | `smtpProvider.sendEmail` | mutation | admin | `SendEmailInputSchema` | `SendEmailResultSchema` |
-| verify | `smtpProvider.verify` | mutation | admin | `{ instanceId?: string }` | `SmtpStatusSchema` |
 | getStatus | `smtpProvider.getStatus` | query | admin | `{ instanceId?: string }` | `SmtpStatusSchema` |
 
 ### `snapshot` → `snapshot.*`

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The connection form of an instance is served only by the one instance door; the addon-level form hook is gone
+
 ## [0.2.171] - 2026-11-08
 
 ### Changed

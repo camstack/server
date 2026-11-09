@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The generated integrations.delete hook is gone
 
+### Removed
+
+- useAddonSettingsGetIntegrationFormSchema is removed; use useIntegrationInstancesInstanceFormSchema
+
 ## [1.2.409] - 2026-11-08
 
 ### Changed

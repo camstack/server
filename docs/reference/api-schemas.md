@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1035 shared schemas.**
+**1034 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1461,11 +1461,6 @@ Enum: `"auto" \| "day" \| "night" \| "schedule"`
 - `channels`: `number`
 - `timestamp`: `number`
 - `format?`: `AudioChunkFormatSchema`
-
-### `DeleteIntegrationResultSchema`
-
-- `success`: `boolean`
-- `deletedId`: `string`
 
 ### `DeliveryParamSchema`
 

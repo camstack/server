@@ -21,7 +21,6 @@
   "addonRoutes.invoke": "admin",
   "addonSettings.getDeclaredSettingsKeys": "admin",
   "addonSettings.getDeviceSettings": "admin",
-  "addonSettings.getIntegrationFormSchema": "admin",
   "addonSettings.getScopedSettings": "admin",
   "addonSettings.listScopedSettings": "admin",
   "addonSettings.readScopedValues": "admin",

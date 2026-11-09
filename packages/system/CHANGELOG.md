@@ -83,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Drop the legacy integration settings table once every owning addon's copy migration is applied
+- The settings addon-call no longer carries getIntegrationFormSchema
 
 ### Fixed
 

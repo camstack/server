@@ -90,7 +90,7 @@ export function sameConnection(a: TuyaConfig | null, b: TuyaConfig | null): bool
 
 /**
  * Hand-written connection form for the account/integration creation UI — the
- * wizard's `account` config step renders this via `getIntegrationFormSchema`. A flat set
+ * wizard's `account` config step renders this via the instance form (`instanceFormSchema`). A flat set
  * of sections the admin UI renders into the "Add Tuya account" modal.
  */
 export function buildConnectionFormSchema(): ConfigUISchema {

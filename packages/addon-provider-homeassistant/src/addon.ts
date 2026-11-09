@@ -16,7 +16,6 @@ import {
   notificationTargetParts,
   type IIntegrationInstancesProvider,
   integrationInstancesCapability,
-  type IntegrationInstanceRef,
   type RecordIntegrationInstances,
   guardInstanceDelete,
   linkedId,
@@ -462,39 +461,6 @@ export class HaProviderAddon extends BaseDeviceProvider<HaProviderConfig> {
     const calendars = this.calendarInstances
     if (calendars === null) return
     this.calendarSelection = selectedEntityIds(await calendars.listResolved())
-  }
-
-  // ── Settings UI (External systems → integration settings panel) ────
-  //
-  // Approach A: an integration record carries ONLY a `{brokerId}` link;
-  // it never stores credentials. Brokers are created/edited as
-  // `account` instances of `integration-instances` (External systems → Brokers), NOT
-  // by cramming a creation form into the integration settings. So this
-  // schema is purely informational — there are no editable fields.
-
-  protected override async integrationFormSchema(
-    _instance: IntegrationInstanceRef,
-  ): Promise<ConfigUISchema | null> {
-    return this.schema({
-      sections: [
-        {
-          id: 'ha-broker',
-          title: 'Home Assistant broker',
-          titleKey: 'provider-homeassistant:globalSettings.s_ha-broker.title',
-          columns: 1,
-          fields: [
-            {
-              type: 'info' as const,
-              key: 'brokerHelp',
-              label: 'Brokers are managed separately',
-              labelKey: 'provider-homeassistant:globalSettings.s_ha-broker.brokerHelp.label',
-              content:
-                'This integration links to a Home Assistant broker managed under Connectivity → Brokers.',
-            },
-          ],
-        },
-      ],
-    })
   }
 
   protected override async onShutdown(): Promise<void> {

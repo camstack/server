@@ -799,7 +799,6 @@ export class AddonRegistryService {
         return entry?.addon ?? null
       },
       gateway: this.addonCallGateway,
-      instancesFor: (addonId) => findInstancesProvider(this.capabilityRegistry, addonId),
     })
     this.capabilityRegistry.registerProvider('addon-settings', '$hub', settingsProvider)
 

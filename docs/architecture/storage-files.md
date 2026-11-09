@@ -241,7 +241,7 @@ read of an unwritten scoped table answers absent. Modules:
 An addon has no addon-level settings: every setting is declared by a capability the addon
 provides, in one scope, through a hook of `BaseAddon` (`clusterSettingsSchema(cap)`,
 `nodeSettingsSchema(cap)`, `deviceDefaultsSchema(cap)`; the host asks
-`getScopedSettingsSchema(scope, cap)`), beside `integrationFormSchema(instance)` (D985).
+`getScopedSettingsSchema(scope, cap)`). The form of an instance is the provider's `instanceFormSchema` (D985).
 The rows are the existing ones:
 
 | Scope | Table | Row id | Row data |

@@ -152,7 +152,6 @@ describe('Wyze global store: credentials never stored as plaintext', () => {
     const addon = await boot(w)
     expect(await addon.listScopedSettings()).toEqual([])
     await addon.updateGlobalSettingsAsOperator({ password: PLAIN_PASSWORD })
-    const view = await addon.getIntegrationFormSchema({ integrationId: null, mode: 'standalone' })
-    expect(JSON.stringify(view)).not.toContain(PLAIN_PASSWORD)
+    expect(JSON.stringify(await addon.listScopedSettings())).not.toContain(PLAIN_PASSWORD)
   })
 })

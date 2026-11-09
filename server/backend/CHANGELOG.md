@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A viewer user manages only their own notification targets through integration-instances
 - integrations.delete is gone: delete an integration through integrationInstances.deleteInstance
 
+### Removed
+
+- addonSettings.getIntegrationFormSchema is removed; the create form is integrationInstances.instanceFormSchema with no id
+
 ## [1.2.817] - 2026-11-08
 
 ### Changed

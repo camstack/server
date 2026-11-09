@@ -152,7 +152,7 @@ export const ACCOUNT_SESSION_GUIDANCE =
 
 /**
  * Hand-written account form for the integration creation UI — the wizard's
- * `account` config step renders this via `getIntegrationFormSchema`. The submitted
+ * `account` config step renders this via the instance form (`instanceFormSchema`). The submitted
  * values are stored PER-INTEGRATION (`integrationInstances.createInstance({ addonId, name,
  * settings })`); the addon reads creds from `integration.settings`, not a
  * global store.

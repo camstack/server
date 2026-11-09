@@ -182,9 +182,6 @@ export const useAddonSettingsUpdateScopedSettings: typeof trpc.addonSettings.upd
 /** Generated alias around `trpc.addonSettings.readScopedValues.useQuery`. */
 export const useAddonSettingsReadScopedValues: typeof trpc.addonSettings.readScopedValues.useQuery = /*#__PURE__*/ alias(() => trpc.addonSettings.readScopedValues.useQuery)
 
-/** Generated alias around `trpc.addonSettings.getIntegrationFormSchema.useQuery`. */
-export const useAddonSettingsGetIntegrationFormSchema: typeof trpc.addonSettings.getIntegrationFormSchema.useQuery = /*#__PURE__*/ alias(() => trpc.addonSettings.getIntegrationFormSchema.useQuery)
-
 /** Generated alias around `trpc.addonSettings.getDeclaredSettingsKeys.useQuery`. */
 export const useAddonSettingsGetDeclaredSettingsKeys: typeof trpc.addonSettings.getDeclaredSettingsKeys.useQuery = /*#__PURE__*/ alias(() => trpc.addonSettings.getDeclaredSettingsKeys.useQuery)
 

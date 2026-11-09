@@ -281,7 +281,6 @@ export type AddonSettingsMethod =
   | 'listScopedSettings'
   | 'updateScopedSettings'
   | 'readScopedValues'
-  | 'getIntegrationFormSchema'
   | 'getDeviceSettings'
   | 'updateDeviceSettings'
   | 'getDeclaredSettingsKeys'

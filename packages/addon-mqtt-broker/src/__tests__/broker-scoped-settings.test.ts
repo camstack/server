@@ -7,23 +7,14 @@ import { describe, expect, it } from 'vitest'
 
 import { MqttBrokerAddon } from '../mqtt-broker.addon.js'
 
-async function sectionIds(cap?: string): Promise<readonly string[]> {
+async function sectionIds(cap: string): Promise<readonly string[]> {
   const addon = new MqttBrokerAddon()
-  if (cap === undefined)
-    return (
-      (
-        await addon.getIntegrationFormSchema({
-          integrationId: null,
-          mode: 'standalone',
-        })
-      )?.sections.map((s) => s.id) ?? []
-    )
   return (await addon.getScopedSettingsSchema('cluster', cap))?.sections.map((s) => s.id) ?? []
 }
 
 describe('MqttBrokerAddon settings', () => {
   it('draws no settings editor for the brokers, the clients or the ACL', async () => {
     for (const cap of ['broker', 'mqtt-broker']) expect(await sectionIds(cap)).toEqual([])
-    expect(await sectionIds()).toEqual([])
+    expect(await new MqttBrokerAddon().listScopedSettings()).toEqual([])
   })
 })

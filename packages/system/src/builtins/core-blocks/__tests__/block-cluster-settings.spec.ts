@@ -78,8 +78,9 @@ describe('a core block without a capability keeps its stored values at the same 
     const field = view?.sections[0]?.fields[0]
     expect(field && 'value' in field ? field.value : undefined).toBe(4)
 
-    const bare = await addon.getIntegrationFormSchema({ integrationId: null, mode: 'standalone' })
-    expect(bare?.sections.map((section) => section.id)).toEqual(['main'])
+    expect((await addon.listScopedSettings()).flatMap((entry) => entry.sectionIds)).toEqual([
+      'main',
+    ])
 
     await addon.updateGlobalSettingsAsOperator({ gain: 9 })
     expect(written).toEqual([{ gain: 9 }])
@@ -93,7 +94,6 @@ describe('a core block without a capability keeps its stored values at the same 
     }
     const addon = new Undeclared()
     await addon.initialize(ctxStoring({ gain: 4 }, []))
-    const view = await addon.getIntegrationFormSchema({ integrationId: null, mode: 'standalone' })
-    expect(view?.sections ?? []).toEqual([])
+    expect(await addon.listScopedSettings()).toEqual([])
   })
 })

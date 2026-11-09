@@ -428,14 +428,12 @@ is the message bus only.
 
 ### One form per integration instance
 
-An addon whose instances differ in kind (Reolink: the default integration versus an
-NVR / Home Hub) overrides `BaseAddon.integrationFormSchema(instance)` and returns
-the schema for that instance, or `null` to serve the form of its scoped schemas. `instance` is an
-`IntegrationInstanceRef` (`integrationId`, `null` in the create wizard, plus `mode`
-and an optional `candidateStableId`). `addonSettings.getIntegrationFormSchema` serves
-it, and falls back to the addon's scoped schemas for an addon without the hook; the wizard,
-the edit page and the config modal all read through it. Values still come from
-`integrations.getSettings`.
+The form of an instance is served by the one door, `integrationInstances.instanceFormSchema`
+(`{ addonId, id | null, kind?, mode?, candidateStableId? }`): `id: null` is the create form, which the
+wizard asks for with the wizard `mode` of the chosen type and the discovery candidate it was seeded
+from. The addon's `integration-instances` provider answers it (per kind: Reolink's default
+integration versus an NVR / Home Hub differ there); the wizard, the edit page and the instance
+editor all read through it. Values come from the instance record (`listInstances`, `getInstance`).
 
 **A connection that holds no devices** (Loki, the SMTP relays, the TURN servers) is not an addon-level setting at all
 ([D996](../decisions/adr-0996-connection-holding-addons-are-integration-instances.md)): the
@@ -462,9 +460,9 @@ their records.
 way to switch an instance. The switch is ONE stored field, the record body's `enabled`, read through
 `isInstanceEnabled` (`@camstack/types`); an absent field is on. `createInstance` and `updateInstance`
 never write it (the form hands back the whole body it was shown, and a stale `enabled` in it would
-undo a switch moved meanwhile). The `integrations` registry flag of a `role: devices` addon is still
-its own store (D1007); folding it needs a records-side door for an addon to reach the registry, and is
-left open. A notification rule (`setRuleEnabled`), a core block, a scheduler job and a terminal
+undo a switch moved meanwhile). The `integrations` registry list does not keep a switch of its own:
+it projects the record's `enabled` ([D1015](../decisions/adr-1015-one-switch-one-store-an-instance-is-on-or-off-in-its-record-body.md)),
+and the hub half of an `info.fixed` row writes the registry flag. A notification rule (`setRuleEnabled`), a core block, a scheduler job and a terminal
 session are not integration-instance records yet and keep their own switch, listed with the reason in
 `scripts/one-row-switch-baseline.json`; `scripts/check-one-row-switch.ts` refuses a new one.
 
@@ -1281,7 +1279,7 @@ expo-router `Href`.
   authority `isRuleFormValid` derives from).
 - **Save waits for two answers.** Who is saving (`AdminVerdict` =
   `pending | admin | not-admin | unknown`, `camstack/src/data/use-me.ts`) and
-  which targets are his (`nc.listMyTargets`) decide which stored targets a save
+  which targets are his (the caller-scoped `integrationInstances.listInstances`) decide which stored targets a save
   keeps (`target-ownership.ts`: an admin keeps unlisted ones verbatim, a
   non-admin's are filtered to his own). `save-gate.ts` blocks every Save — rule,
   timelapse, digest — on `pending`, on `unknown` (a FAILED `auth.me`) and on a

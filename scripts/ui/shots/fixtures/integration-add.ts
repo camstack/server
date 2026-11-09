@@ -137,7 +137,7 @@ export default defineFixtures({
     'integrations.list': [],
     'addons.listInstallations': { installations: [], unreachable: [] },
     'auth.listLoginMethods': [],
-    'addonSettings.getIntegrationFormSchema': (input: unknown) => {
+    'integrationInstances.instanceFormSchema': (input: unknown) => {
       const addonId =
         input !== null && typeof input === 'object' && 'addonId' in input
           ? input.addonId

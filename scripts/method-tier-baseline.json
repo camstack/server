@@ -52,7 +52,6 @@
   "addons.updatePackage": "admin",
   "addonSettings.getDeclaredSettingsKeys": "admin",
   "addonSettings.getDeviceSettings": "protected",
-  "addonSettings.getIntegrationFormSchema": "protected",
   "addonSettings.getScopedSettings": "protected",
   "addonSettings.listScopedSettings": "protected",
   "addonSettings.readScopedValues": "protected",
