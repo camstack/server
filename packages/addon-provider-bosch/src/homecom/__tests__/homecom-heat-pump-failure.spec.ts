@@ -7,6 +7,7 @@ const CONFIG = {
   refresh: 'refresh',
   brand: 'bosch',
   region: 'eu',
+  gatewayId: undefined,
 } as const
 
 function envelope(value: string | number) {
