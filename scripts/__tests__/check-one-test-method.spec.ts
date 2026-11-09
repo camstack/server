@@ -27,6 +27,23 @@ describe('check-one-test-method', () => {
     ).toEqual(['testInstance', 'testConnection', 'validateCredentials'])
   })
 
+  it('reads verify, check, probe and ping methods too (a second test under another name)', () => {
+    expect(
+      testMethodsOf(
+        '    verify: method(\n    checkBackupKey: method(\n    probeStream: optionalMethod(\n    pingRelay: method(\n    getStatus: method(\n',
+      ),
+    ).toEqual(['verify', 'checkBackupKey', 'probeStream', 'pingRelay'])
+  })
+
+  it('refuses an unlisted verify like the smtp-provider one', () => {
+    const found = findViolations(
+      [cap('smtp-provider.cap.ts', '    verify: method(\n      RelaySchema,\n')],
+      {},
+      {},
+    )
+    expect(found).toHaveLength(1)
+  })
+
   it('accepts testInstance, a permanent and a pending entry', () => {
     const found = findViolations(
       [

@@ -144,30 +144,6 @@ export function createGmailSmtpProvider(deps: GmailSmtpDeps): ISmtpProvider {
 
   return {
     getStatus: async () => status(),
-    verify: async () => {
-      const account = selectGmailAccount(deps.accounts(), undefined)
-      if (account === null) {
-        lastError = 'No Google broker connected.'
-        return status()
-      }
-      try {
-        const token = await account.getAccessToken()
-        const res = await http(`${GOOGLE_GMAIL_API}/users/me/profile`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (!res.ok) {
-          const text = await res.text()
-          lastError = `Gmail profile failed (${res.status}): ${text.slice(0, 200)}`
-          return status()
-        }
-        lastError = undefined
-        lastVerifiedAt = Date.now()
-        return status()
-      } catch (err) {
-        lastError = err instanceof Error ? err.message : String(err)
-        return status()
-      }
-    },
     sendEmail: async (input) => {
       const account = selectGmailAccount(deps.accounts(), input.from)
       if (account === null) {

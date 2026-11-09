@@ -3,7 +3,7 @@
  * One connection test (planning#440 step 4, D1016).
  *
  * `integration-instances.testInstance` is the only way to ask "do these settings work?". A capability
- * method named `test…` or `validate…Credentials` is a second connection test, so it is refused unless
+ * method named `test…`, `verify…`, `check…`, `probe…`, `ping…` or `validate…Credentials` is a second connection test, so it is refused unless
  * it is in one of two lists below, each entry with the reason:
  *
  * - PERMANENT: it tests something that is not an instance's settings (a notification target, a rule,
@@ -25,7 +25,7 @@ import { fileURLToPath } from 'node:url'
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 const METHOD_RE =
-  /^\s{2,4}((?:test\w*|validate\w*Credentials))\s*:\s*(?:optionalMethod|method)\s*\(/
+  /^\s{2,4}((?:(?:test|verify|check|probe|ping)\w*|validate\w*Credentials))\s*:\s*(?:optionalMethod|method)\s*\(/
 const ALLOWED = 'integration-instances.cap.ts:testInstance'
 
 /** Key: `<cap file>:<method>`. Value: why it is not a connection test of an instance. */
@@ -42,11 +42,22 @@ export const PERMANENT: Readonly<Record<string, string>> = {
     'the provider-level probe of one config that the storage instances call, not an instance test',
   'device-provider.cap.ts:testCreationField':
     'probes one creation-form field of a device that does not exist yet',
+  'backup.cap.ts:checkBackupKey':
+    'checks an encryption passphrase against an archive, not a connection',
+  'device-manager.cap.ts:probeStreams':
+    'measures the streams of one existing camera (codec, size), not settings',
+  'notification-output.cap.ts:probeTargetConfig':
+    'dry-runs the config of one notification target before it is saved, not an instance',
+  'server-management.cap.ts:checkServerUpdate':
+    'asks the registry whether a newer server version exists',
+  'sso-bridge.cap.ts:verifyBridgeToken': 'verifies a signed bridge token of a user session',
+  'stream-broker.cap.ts:probeStream':
+    'probes one stream URL for its media info, not a connection test',
+  'user-management.cap.ts:verifyTotp': 'verifies a one-time code of a user login',
 }
 
 /** Folds into `testInstance` at step 5/6 of planning#440; delete the entry then. */
-export const PENDING: Readonly<Record<string, string>> = {
-}
+export const PENDING: Readonly<Record<string, string>> = {}
 
 export interface SourceFile {
   /** Repo-relative, forward slashes. */

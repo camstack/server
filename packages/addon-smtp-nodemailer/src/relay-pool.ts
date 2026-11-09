@@ -211,6 +211,9 @@ export class RelayPool {
     try {
       const info = await relay.transporter.sendMail(mail)
       relay.lastError = undefined
+      // A delivered message is the proof the relay works: the status reads it (the notifier picker's "verified").
+      relay.lastVerifyOk = true
+      relay.lastVerifiedAt = Date.now()
       this.log.info('smtp send ok', {
         meta: {
           messageId: info.messageId,
@@ -226,6 +229,7 @@ export class RelayPool {
         rejected: info.rejected.map(coerceAddress),
       }
     } catch (err: unknown) {
+      relay.lastVerifyOk = false
       relay.lastError = errMsg(err)
       this.log.warn('smtp send failed', {
         meta: { error: relay.lastError, integrationId: relay.id },
@@ -233,35 +237,6 @@ export class RelayPool {
       })
       throw err
     }
-  }
-
-  async verify(instanceId: string | undefined): Promise<RelayStatus> {
-    const relay = this.pick(instanceId)
-    if (relay === undefined) return { ready: false, host: '', error: this.unknown(instanceId) }
-    if (relay.transporter === null) {
-      relay.lastVerifyOk = false
-      relay.lastError = 'transporter not configured'
-      return this.statusOf(relay)
-    }
-    try {
-      // EHLO + AUTH round-trip; resolves on success, throws otherwise.
-      await relay.transporter.verify()
-      relay.lastVerifyOk = true
-      relay.lastError = undefined
-      relay.lastVerifiedAt = Date.now()
-      this.log.info('smtp verify ok', {
-        meta: { host: relay.body.host, port: relay.body.port, integrationId: relay.id },
-        tags: { topic: 'smtp', phase: 'verified' },
-      })
-    } catch (err: unknown) {
-      relay.lastVerifyOk = false
-      relay.lastError = errMsg(err)
-      this.log.warn('smtp verify failed', {
-        meta: { error: relay.lastError, integrationId: relay.id },
-        tags: { topic: 'smtp', phase: 'verify-failed' },
-      })
-    }
-    return this.statusOf(relay)
   }
 
   status(instanceId: string | undefined): RelayStatus {

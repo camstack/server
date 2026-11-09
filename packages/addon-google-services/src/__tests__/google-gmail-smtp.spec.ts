@@ -102,23 +102,6 @@ describe('createGmailSmtpProvider', () => {
     expect(status.error).toMatch(/not connected|No Google broker/i)
   })
 
-  it('verify hits Gmail profile and marks ready', async () => {
-    const calls: string[] = []
-    const fetchMock: typeof fetch = async (url) => {
-      calls.push(String(url))
-      return {
-        ok: true,
-        text: async () => '',
-        json: async () => ({ emailAddress: 'a@example.com' }),
-      } as Response
-    }
-    const smtp = make([accountA], fetchMock)
-    const status = await smtp.verify({})
-    expect(calls[0]).toContain('/users/me/profile')
-    expect(status.ready).toBe(true)
-    expect(status.error).toBeUndefined()
-  })
-
   it('sendEmail without from uses the first connected account token', async () => {
     const tokens: string[] = []
     const fetchMock: typeof fetch = async (url, init) => {

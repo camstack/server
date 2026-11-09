@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1472 method paths across 203 capabilities.
+ * Coverage: 1471 method paths across 203 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1223,7 +1223,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'smoke.getStatus': { capName: "smoke", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'smtpProvider.getStatus': { capName: "smtp-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'smtpProvider.sendEmail': { capName: "smtp-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'smtpProvider.verify': { capName: "smtp-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'snapshot.applyDeviceSettingsPatch': { capName: "snapshot", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'snapshot.getDebugState': { capName: "snapshot", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'snapshot.getDeviceLiveContribution': { capName: "snapshot", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,

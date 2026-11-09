@@ -49,8 +49,8 @@ describe('RelayPool', () => {
     const pool = new RelayPool(factory, log)
     pool.apply('int_0001', relay('a', 'smtp.a.test'))
     pool.apply('int_0002', relay('b', 'smtp.b.test'))
-    await pool.verify('int_0001')
-    await pool.verify('int_0002')
+    await pool.sendEmail('int_0001', mail)
+    await pool.sendEmail('int_0002', mail)
     pool.apply('int_0002', relay('b', 'smtp.b2.test'))
     pool.apply('int_0001', relay('a', 'smtp.a.test'))
     expect(pool.status('int_0001').ready).toBe(true)
@@ -108,15 +108,11 @@ describe('RelayPool', () => {
       )
     })
 
-    it('verify still probes a disabled relay, and status reports not ready without an error', async () => {
+    it('a switched-off relay reports not ready without an error', () => {
       const { factory } = fakeFactory()
       const pool = new RelayPool(factory, log)
       pool.apply('int_0001', relay('a', 'smtp.a.test', { enabled: false }))
       expect(pool.status('int_0001')).toEqual({ ready: false, host: 'smtp.a.test' })
-      const verified = await pool.verify('int_0001')
-      expect(verified.ready).toBe(false)
-      expect(verified.lastVerifiedAt).toBeDefined()
-      expect(verified.error).toBeUndefined()
     })
 
     it('the toggle survives an apply of the same relay: it is not dropped as unchanged', async () => {

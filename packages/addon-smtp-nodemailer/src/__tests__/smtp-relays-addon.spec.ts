@@ -132,7 +132,7 @@ describe('SmtpNodemailerAddon — relays are integration instances (D996)', () =
     expect(JSON.stringify(await w.instances.getInstance({ id: 'int_0001' }))).not.toContain(
       'pw-SECRET',
     )
-    await w.smtp.verify({ instanceId: 'int_0001' })
+    await w.instances.testInstance?.({ id: 'int_0001', values: {} })
     expect(
       w.built.find((t) => t.options.host === 'smtp.a.test' && t.options.auth !== undefined)?.options
         .auth,

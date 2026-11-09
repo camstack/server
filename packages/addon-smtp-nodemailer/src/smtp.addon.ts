@@ -138,7 +138,6 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
 
     const provider: ISmtpProvider = {
       sendEmail: async (input) => this.pool.sendEmail(input.instanceId, input),
-      verify: async (input) => this.pool.verify(input?.instanceId),
       getStatus: async (input) => this.pool.status(input?.instanceId),
     }
     const inbound = this.buildInbound(records.kind(mailboxesKind))

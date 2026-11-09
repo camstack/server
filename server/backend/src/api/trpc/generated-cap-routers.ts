@@ -17281,23 +17281,6 @@ export function createCapRouter_smtpProvider(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.sendEmail(methodInput as any)
       }),
-    verify: adminProcedure
-      .input(smtpProviderCapability.methods.verify.input.loose())
-      .output(smtpProviderCapability.methods.verify.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'smtp-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.verify(methodInput as any)
-      }),
     getStatus: adminProcedure
       .input(DEVICE_STATUS_METHOD.getStatus.input.loose())
       .output(DEVICE_STATUS_METHOD.getStatus.output)

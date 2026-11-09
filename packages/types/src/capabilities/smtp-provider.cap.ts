@@ -74,13 +74,6 @@ export const smtpProviderCapability = {
       auth: 'admin',
       access: 'create',
     }),
-    /** Round-trip ping against the SMTP relay (EHLO + AUTH if configured).
-     *  Used by the operator's "Test connection" button. */
-    verify: method(RelayPinSchema, SmtpStatusSchema, {
-      kind: 'mutation',
-      auth: 'admin',
-      access: 'view',
-    }),
     getStatus: method(RelayPinSchema, SmtpStatusSchema, { auth: 'admin' }),
   },
 } as const satisfies CapabilityDefinition
