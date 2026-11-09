@@ -19,6 +19,9 @@ const BOARD = 902
 const setConfig = vi.fn(async (_input: { deviceId: number; config: RemoteConfig }) => ({
   status: 'saved' as const,
 }))
+const updateTemplate = vi.fn(async (_input: { id: string; name: string; payload: unknown }) => ({
+  status: 'saved' as const,
+}))
 const updateBlock = vi.fn(async (_input: unknown) => ({}))
 let blockView: unknown = null
 const sendCommand = vi.fn(async () => ({ status: 'sent' as const, sends: 1 }))
@@ -51,7 +54,6 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useRemoteListCommands: () => ({
       data: {
         layoutTemplateId: null,
-        power: { mode: 'toggle' },
         commands: savedCommands.map((role) => ({ role, custom: false })),
       },
     }),
@@ -63,6 +65,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useRemoteSetConfig: () => ({ mutateAsync: setConfig, isPending: false }),
     useRemoteSendCommand: () => ({ mutateAsync: sendCommand }),
     useTemplateList: () => ({ data: [TEMPLATE] }),
+    useTemplateUpdate: () => ({ mutateAsync: updateTemplate, isPending: false }),
+    useTemplateCreate: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useDeviceManagerListDeviceIdsByCaps: () => ({ data: [BOARD] }),
   }
 })
@@ -131,6 +135,7 @@ function renderDialog(device: DeviceInfo = DEVICE): void {
 beforeEach(() => {
   setConfig.mockClear()
   updateBlock.mockClear()
+  updateTemplate.mockClear()
   blockView = null
   sendCommand.mockClear()
   storedConfig = { ...EMPTY_REMOTE_CONFIG, layoutTemplateId: 'tpl-tv' }
@@ -360,9 +365,52 @@ describe('RemoteConfigDialog', () => {
     expect(screen.queryByTestId('test-mute')).toBeNull()
   })
 
-  it('offers a shortcut to the layout template editor', () => {
-    renderDialog()
-    expect(screen.getByTestId('remote-edit-template')).toBeTruthy()
+  describe('the layout editor inside the same modal', () => {
+    it('swaps the body for the template editor, titled with the template, and back returns to the bindings', () => {
+      renderDialog()
+      pick('b')
+      fireEvent.click(screen.getByTestId('remote-edit-layout'))
+      expect(screen.getByText('Layout: Television')).toBeTruthy()
+      expect(screen.queryByTestId('remote-preview')).toBeNull()
+      expect(screen.getByTestId('template-back').textContent).toContain('Living room TV')
+      // One dialog only: nothing stacked on top.
+      expect(screen.getAllByRole('dialog')).toHaveLength(1)
+      fireEvent.click(screen.getByTestId('template-back'))
+      expect(updateTemplate).not.toHaveBeenCalled()
+      expect(screen.getByTestId('remote-preview')).toBeTruthy()
+    })
+
+    it('Save writes the template and returns to the bindings, keeping the unsaved binding edits', async () => {
+      renderDialog()
+      pick('b')
+      fireEvent.click(screen.getByTestId('bind-mute'))
+      fireEvent.click(screen.getByTestId('pick-command'))
+      fireEvent.click(screen.getByTestId('remote-edit-layout'))
+      fireEvent.click(screen.getByTestId('template-save'))
+      await waitFor(() => expect(screen.getByTestId('remote-preview')).toBeTruthy())
+      expect(updateTemplate).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'tpl-tv', name: 'Television' }),
+      )
+      expect(setConfig).not.toHaveBeenCalled()
+      pick('b')
+      expect(screen.getByTestId('summary-mute').textContent).not.toMatch(/^Not bound/)
+    })
+
+    it('Cancel discards the layout edits and goes back, not closing the modal', () => {
+      const onClose = vi.fn()
+      render(
+        <MemoryRouter>
+          <QueryClientProvider client={new QueryClient()}>
+            <RemoteConfigDialog device={DEVICE} open onClose={onClose} />
+          </QueryClientProvider>
+        </MemoryRouter>,
+      )
+      fireEvent.click(screen.getByTestId('remote-edit-layout'))
+      fireEvent.click(screen.getByText('Cancel'))
+      expect(updateTemplate).not.toHaveBeenCalled()
+      expect(onClose).not.toHaveBeenCalled()
+      expect(screen.getByTestId('remote-preview')).toBeTruthy()
+    })
   })
 
   describe('on a built (composed) media player', () => {

@@ -280,7 +280,6 @@ const REMOTE_CONFIG = {
     { id: 'quiet-hdmi', kind: 'sequence', name: 'HDMI 1, muted', steps: ['mute', 'custom:hdmi_1'] },
   ],
   stepDelayMs: 500,
-  power: { mode: 'toggle' },
 }
 
 export default defineFixtures({

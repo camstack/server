@@ -39,7 +39,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       refetch: vi.fn(),
     }),
     useRemoteListCommands: () => ({
-      data: { layoutTemplateId: 'tpl-tv', power: { mode: 'toggle' }, commands, sources },
+      data: { layoutTemplateId: 'tpl-tv', commands, sources },
     }),
     useRemoteSendCommand: () => ({ mutateAsync: sendCommand }),
     useRemoteSendMediaCommand: () => ({ mutateAsync: selectSource, isPending: false }),

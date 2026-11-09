@@ -31,6 +31,7 @@ import {
   useTemplateList,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
+import { Pencil } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -38,7 +39,6 @@ import { useAutomationDevices } from '../../pages/build/automation/automation-da
 import { BindingPanel } from './BindingPanel'
 import { deviceLabel } from './binding-summary'
 import { composedBlockIdOf, withMediaPlayerExtension } from './composed-remote'
-import { EditTemplateButton } from './EditTemplateButton'
 import { FlipperIrdbPanel } from './FlipperIrdbPanel'
 import { layoutOf } from './layout-model'
 import { RemoteGrid } from './RemoteGrid'
@@ -54,6 +54,8 @@ import {
 import { roleName as vocabRoleName } from './role-vocabulary'
 import { SmartIrImportPanel } from './SmartIrImportPanel'
 import { SourcesPanel } from './SourcesPanel'
+import { type TemplateDraft, TemplateEditorBody } from './TemplateEditorDialog'
+import { useTemplateSave } from './useTemplateSave'
 
 export interface RemoteConfigDialogProps {
   readonly device: DeviceInfo
@@ -67,23 +69,25 @@ export function RemoteConfigDialog({ device, open, onClose }: RemoteConfigDialog
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent width="xl" placement="sheet-on-mobile" scroll="body">
-        <DialogHeader>
-          <DialogTitle>{t('remote.dialog.title', { name: device.name })}</DialogTitle>
-        </DialogHeader>
         {stored.data === undefined ? (
-          <DialogBody>
-            {stored.status === 'error' ? (
-              <ErrorBox
-                title={t('remote.dialog.unreadable')}
-                message={stored.error?.message ?? ''}
-                onRetry={() => void stored.refetch()}
-              />
-            ) : (
-              <p role="status" className="text-xs text-foreground-subtle">
-                {t('remote.dialog.loading')}
-              </p>
-            )}
-          </DialogBody>
+          <>
+            <DialogHeader>
+              <DialogTitle>{t('remote.dialog.title', { name: device.name })}</DialogTitle>
+            </DialogHeader>
+            <DialogBody>
+              {stored.status === 'error' ? (
+                <ErrorBox
+                  title={t('remote.dialog.unreadable')}
+                  message={stored.error?.message ?? ''}
+                  onRetry={() => void stored.refetch()}
+                />
+              ) : (
+                <p role="status" className="text-xs text-foreground-subtle">
+                  {t('remote.dialog.loading')}
+                </p>
+              )}
+            </DialogBody>
+          </>
         ) : (
           <DialogForm device={device} initial={stored.data} onClose={onClose} />
         )}
@@ -117,6 +121,10 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
   const [config, setConfig] = useState<RemoteConfig>(initial)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [selectedRole, setSelectedRole] = useState<string | null>(null)
+  // The layout editor takes the dialog body over without closing the dialog; the
+  // remote's own edits live in `config` and survive the round trip.
+  const [editing, setEditing] = useState<TemplateDraft | null>(null)
+  const layoutSave = useTemplateSave()
   const [results, setResults] = useState<Readonly<Record<string, string>>>({})
   const templates = useTemplateList({ kind: 'remote' })
   const commands = useRemoteListCommands({ deviceId: device.id })
@@ -207,8 +215,33 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
   const bind = (role: string, action: RemoteBindingAction): void =>
     setConfig((prev) => setBinding(prev, role, action))
 
+  if (editing !== null) {
+    return (
+      <TemplateEditorBody
+        key={editing.id ?? 'new'}
+        draft={editing}
+        saving={layoutSave.saving}
+        error={layoutSave.error}
+        back={{
+          label: device.name,
+          title: t('remote.layout.editorTitle', { name: editing.name }),
+          onBack: () => setEditing(null),
+        }}
+        onSave={(next) =>
+          void layoutSave.save(next).then((saved) => {
+            if (saved) setEditing(null)
+          })
+        }
+        onClose={() => setEditing(null)}
+      />
+    )
+  }
+
   return (
     <>
+      <DialogHeader>
+        <DialogTitle>{t('remote.dialog.title', { name: device.name })}</DialogTitle>
+      </DialogHeader>
       <DialogBody className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-3">
           <FormField label={t('remote.dialog.template')}>
@@ -249,24 +282,6 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
                 }))
               }
               data-testid="remote-transmitter"
-            />
-          </FormField>
-          <FormField label={t('remote.dialog.power')}>
-            <Select
-              value={config.power.mode}
-              options={[
-                { value: 'toggle', label: t('remote.dialog.powerToggle') },
-                { value: 'discrete', label: t('remote.dialog.powerDiscrete') },
-              ]}
-              onChange={(e) =>
-                setConfig((prev) => ({
-                  ...prev,
-                  power: {
-                    mode: e.target.value === 'discrete' ? 'discrete' : 'toggle',
-                  },
-                }))
-              }
-              data-testid="remote-power"
             />
           </FormField>
         </div>
@@ -328,9 +343,25 @@ function DialogForm({ device, initial, onClose }: FormProps): ReactNode {
             </div>
           </div>
         )}
-        {config.layoutTemplateId !== null && (
+        {template !== undefined && (
           <div className="flex justify-end">
-            <EditTemplateButton templateId={config.layoutTemplateId} />
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                layoutSave.clearError()
+                setEditing({
+                  id: template.id,
+                  kind: template.kind,
+                  name: template.name,
+                  payload: template.payload,
+                })
+              }}
+              data-testid="remote-edit-layout"
+            >
+              <Pencil className="h-3.5 w-3.5" aria-hidden />
+              {t('remote.editTemplate')}
+            </Button>
           </div>
         )}
         <SourcesPanel

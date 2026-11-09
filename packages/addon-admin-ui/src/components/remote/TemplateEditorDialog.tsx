@@ -17,7 +17,7 @@ import {
   Select,
   useHotkey,
 } from '@camstack/ui-library'
-import { Redo2, Undo2 } from 'lucide-react'
+import { ArrowLeft, Redo2, Undo2 } from 'lucide-react'
 import { type ReactNode, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { canRedo, canUndo, editHistoryReducer, startHistory } from './edit-history'
@@ -50,7 +50,7 @@ export function TemplateEditorDialog({
     <Dialog open={draft !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent width="xl" placement="sheet-on-mobile" scroll="body">
         {draft !== null && (
-          <EditorBody
+          <TemplateEditorBody
             key={draft.id ?? 'new'}
             draft={draft}
             saving={saving}
@@ -71,15 +71,35 @@ interface EditorSnapshot {
   readonly payload: unknown
 }
 
+/** Shown by a host that embeds the editor body in another dialog: a way back and a title. */
+export interface TemplateEditorBack {
+  /** What the back button names, e.g. the remote the layout belongs to. */
+  readonly label: string
+  readonly title: string
+  readonly onBack: () => void
+}
+
 interface BodyProps {
   readonly draft: TemplateDraft
   readonly saving: boolean
   readonly error: string | null
   readonly onSave: (draft: TemplateDraft) => void
   readonly onClose: () => void
+  readonly back?: TemplateEditorBack
 }
 
-function EditorBody({ draft, saving, error, onSave, onClose }: BodyProps): ReactNode {
+/**
+ * The editor of one template, without a dialog around it: the Templates page puts
+ * it in its own dialog, the remote modal swaps it in for its binding view.
+ */
+export function TemplateEditorBody({
+  draft,
+  saving,
+  error,
+  onSave,
+  onClose,
+  back,
+}: BodyProps): ReactNode {
   const { t } = useTranslation()
   const [name, setName] = useState(draft.name)
   // Kind, preset and payload move together, so one undo step never leaves a
@@ -104,9 +124,21 @@ function EditorBody({ draft, saving, error, onSave, onClose }: BodyProps): React
   return (
     <>
       <DialogHeader className="flex-row items-center justify-between gap-2">
-        <DialogTitle>
-          {draft.id === null ? t('remote.templates.newTitle') : t('remote.templates.editTitle')}
-        </DialogTitle>
+        <div className="flex min-w-0 items-center gap-2">
+          {back !== undefined && (
+            <Button size="sm" variant="ghost" onClick={back.onBack} data-testid="template-back">
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
+              <span className="truncate">{back.label}</span>
+            </Button>
+          )}
+          <DialogTitle className="truncate">
+            {back !== undefined
+              ? back.title
+              : draft.id === null
+                ? t('remote.templates.newTitle')
+                : t('remote.templates.editTitle')}
+          </DialogTitle>
+        </div>
         <div className="flex shrink-0 items-center gap-1">
           <IconButton
             icon={Undo2}

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Calendars page joins calendars to their switch by the owning record, no longer shows an enabled waste calendar twice, and says when the switches could not be loaded
+- Remote: edit the layout inside the remote modal, one colour-keys set with optional letters, Samsung layout with source and app rows, and a default-emitter choice for infrared sources
 
 ## [1.2.624] - 2026-11-08
 

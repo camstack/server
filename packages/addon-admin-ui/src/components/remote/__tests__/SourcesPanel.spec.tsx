@@ -97,7 +97,8 @@ describe('SourcesPanel', () => {
     fireEvent.click(screen.getByTestId('source-add'))
     fireEvent.change(screen.getByTestId('source-kind'), { target: { value: 'ir' } })
     fireEvent.change(screen.getByTestId('source-name'), { target: { value: 'HDMI 2' } })
-    expect((screen.getByTestId('source-transmitter') as HTMLSelectElement).value).toBe('7')
+    // Blank = the remote's default emitter; nothing is pinned on the source.
+    expect((screen.getByTestId('source-transmitter') as HTMLSelectElement).value).toBe('')
     fireEvent.change(screen.getByTestId('source-code'), { target: { value: '9000 4500' } })
     fireEvent.click(screen.getByTestId('source-save'))
     expect(screen.getByText(/must be a non-zero space/)).toBeTruthy()
@@ -112,7 +113,6 @@ describe('SourcesPanel', () => {
         id: 'hdmi-2',
         kind: 'ir',
         name: 'HDMI 2',
-        transmitterId: 7,
         payload: { kind: 'raw', timings: [9000, -4500, 560, -560], settings: { carrierHz: 38000 } },
       },
     ])
@@ -126,7 +126,7 @@ describe('SourcesPanel', () => {
     fireEvent.change(screen.getByTestId('source-name'), { target: { value: 'HDMI 2' } })
     fireEvent.change(screen.getByTestId('source-code'), { target: { value: '9000, -4500' } })
     fireEvent.click(screen.getByTestId('source-save'))
-    expect(screen.getByText('Pick the transmitter the code is sent through.')).toBeTruthy()
+    expect(screen.getByText('Pick an emitter: this remote has no default one.')).toBeTruthy()
     expect(latest.sources).toEqual([])
   })
 })

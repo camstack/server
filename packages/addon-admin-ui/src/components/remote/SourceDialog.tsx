@@ -69,11 +69,9 @@ export function SourceDialog({
   onSave,
 }: SourceDialogProps): ReactNode {
   const { t } = useTranslation()
-  // A new infrared source goes through the remote's default transmitter until changed.
+  // An infrared source goes through the remote's default emitter until one is chosen.
   const [draft, setDraft] = useState<SourceDraft>(
-    source === null
-      ? { ...BLANK_SOURCE_DRAFT, transmitterId: config.defaultTransmitterId }
-      : draftOfSource(source),
+    source === null ? BLANK_SOURCE_DRAFT : draftOfSource(source),
   )
   const [touched, setTouched] = useState(false)
   const [pick, setPick] = useState('')
@@ -140,7 +138,13 @@ export function SourceDialog({
         </FormField>
         <Errors lines={lines('name')} />
         {draft.kind === 'ir' && (
-          <IrFields draft={draft} transmitters={transmitters} patch={patch} lines={lines} />
+          <IrFields
+            draft={draft}
+            transmitters={transmitters}
+            defaultTransmitterId={config.defaultTransmitterId}
+            patch={patch}
+            lines={lines}
+          />
         )}
         {draft.kind === 'digits' && (
           <>
@@ -250,20 +254,35 @@ export function SourceDialog({
 interface IrFieldsProps {
   readonly draft: SourceDraft
   readonly transmitters: readonly TransmitterOption[]
+  /** The remote's default emitter; the source goes through it unless one is chosen. */
+  readonly defaultTransmitterId: number | null
   readonly patch: (next: Partial<SourceDraft>) => void
   readonly lines: (field: SourceDialogField) => readonly string[]
 }
 
 /** The transmitter, the format and the code of an `ir` source; the carrier only for a raw train. */
-function IrFields({ draft, transmitters, patch, lines }: IrFieldsProps): ReactNode {
+function IrFields({
+  draft,
+  transmitters,
+  defaultTransmitterId,
+  patch,
+  lines,
+}: IrFieldsProps): ReactNode {
   const { t } = useTranslation()
+  const defaultLabel = transmitters.find((d) => d.id === defaultTransmitterId)?.label
   return (
     <>
       <FormField label={t('remote.sources.dialog.transmitter')}>
         <Select
           value={draft.transmitterId === null ? '' : String(draft.transmitterId)}
           options={[
-            { value: '', label: t('remote.sources.dialog.noTransmitter') },
+            {
+              value: '',
+              label:
+                defaultLabel === undefined
+                  ? t('remote.sources.dialog.noTransmitter')
+                  : `${t('remote.sources.dialog.noTransmitter')} (${defaultLabel})`,
+            },
             ...transmitters.map((d) => ({ value: String(d.id), label: d.label })),
           ]}
           onChange={(e) =>

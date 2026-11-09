@@ -204,7 +204,7 @@ export function importFlipperIr(text: string, transmitterDeviceId: number | null
 /**
  * Fill the config with an import. A role the file fills takes the file's
  * binding; a role it does not fill keeps what it had. Custom buttons merge by
- * key, and the file's power mode replaces the current one.
+ * key.
  */
 export function applyDraft(config: RemoteConfig, draft: SmartIrDraft): RemoteConfig {
   const known = new Set(config.customButtons.map((b) => b.key))
@@ -215,7 +215,6 @@ export function applyDraft(config: RemoteConfig, draft: SmartIrDraft): RemoteCon
       ...config.customButtons,
       ...draft.customButtons.filter((b) => !known.has(b.key)),
     ],
-    power: { mode: draft.power.mode },
   }
 }
 
@@ -237,7 +236,7 @@ export interface SourceDraft {
   readonly number: string
   /** The roles pressed in order (`sequence`). */
   readonly steps: readonly string[]
-  /** The transmitter the code goes through (`ir`); null until one is picked. */
+  /** The transmitter the code goes through (`ir`); null = the remote's default emitter. */
   readonly transmitterId: number | null
   /** How `code` is written (`ir`). */
   readonly encoding: IrCodeEncoding
@@ -269,7 +268,7 @@ export function draftOfSource(source: RemoteSource): SourceDraft {
         ...BLANK_SOURCE_DRAFT,
         kind: 'ir',
         name: source.name,
-        transmitterId: source.transmitterId,
+        transmitterId: source.transmitterId ?? null,
         ...(source.payload.kind === 'pronto'
           ? { encoding: 'pronto', code: source.payload.code }
           : {
@@ -301,9 +300,6 @@ function irPayloadOf(draft: SourceDraft): IrPayload {
     ? { kind: 'raw', timings }
     : { kind: 'raw', timings, settings: { carrierHz: Math.round(Number(carrier) * 1000) } }
 }
-
-/** No transmitter picked is spelled as `-1`: the schema, not the editor, refuses it on `transmitterId`. */
-const NO_TRANSMITTER = -1
 
 export interface IrSourceSummary {
   readonly encoding: IrCodeEncoding
@@ -362,7 +358,7 @@ function sourceOfDraft(draft: SourceDraft, id: string): RemoteSource {
         id,
         kind: 'ir',
         name: draft.name,
-        transmitterId: draft.transmitterId ?? NO_TRANSMITTER,
+        ...(draft.transmitterId === null ? {} : { transmitterId: draft.transmitterId }),
         payload: irPayloadOf(draft),
       }
   }
@@ -469,5 +465,18 @@ export function draftIssues(
 ): readonly SourceIssue[] {
   const next = upsertSource(config, draft, id)
   const index = id === null ? next.sources.length - 1 : next.sources.findIndex((s) => s.id === id)
-  return sourceIssues(next).bySource.get(index) ?? []
+  const schemaIssues = sourceIssues(next).bySource.get(index) ?? []
+  // The schema accepts a source with no emitter (the default may arrive later); the
+  // editor does not offer to save one that could not be sent today.
+  if (draft.kind === 'ir' && draft.transmitterId === null && config.defaultTransmitterId === null) {
+    return [
+      ...schemaIssues,
+      {
+        field: 'transmitterId',
+        code: 'no_emitter',
+        message: 'Pick an emitter: the remote has no default one',
+      },
+    ]
+  }
+  return schemaIssues
 }

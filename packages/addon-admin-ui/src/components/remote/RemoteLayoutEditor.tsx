@@ -389,6 +389,18 @@ function ButtonInspector({ grid, buttonId, apply, onRemove }: InspectorProps): R
           />
         </FormField>
       </div>
+      {button.tone !== undefined && ['red', 'green', 'yellow', 'blue'].includes(button.tone) && (
+        <label className="flex items-center gap-2 text-xs text-foreground-muted">
+          <Checkbox
+            checked={button.showLegend === true}
+            onChange={(e) =>
+              apply(setButtonLook(grid, button.id, { showLegend: e.target.checked }))
+            }
+            data-testid="remote-show-legend"
+          />
+          {t('remote.layout.showLegend')}
+        </label>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <FormField label={t('remote.layout.move')}>
           <div className="flex items-center gap-1">

@@ -87,7 +87,7 @@ function keyName(button: RemoteLayoutButton, roleName: string): string {
 /** A key's text is its own label (the layout's); a role's name is only its accessible name. */
 function showsWords(button: RemoteLayoutButton): boolean {
   if (button.label === undefined || resolveAppBrand(button.icon) !== undefined) return false
-  return button.tone === undefined || !COLOUR_TONES.has(button.tone)
+  return button.showLegend === true || button.tone === undefined || !COLOUR_TONES.has(button.tone)
 }
 
 /** The glyph a key wears: its own icon, else its role's, none on a colour key. */
@@ -118,7 +118,7 @@ function Face({
       {brand !== undefined && <AppBrandGlyph brand={brand} />}
       {Icon !== undefined && <Icon className="h-4 w-4" aria-hidden />}
       {legend !== undefined && <span className="text-sm font-medium">{legend}</span>}
-      {words !== undefined && !compact && (
+      {words !== undefined && (!compact || button.showLegend === true) && (
         <span className="max-w-full truncate text-[11px]">{words}</span>
       )}
     </span>

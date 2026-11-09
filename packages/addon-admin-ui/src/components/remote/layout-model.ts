@@ -258,6 +258,8 @@ export interface ButtonLook {
   /** `null` clears the shape back to the plain look. */
   readonly shape?: RemoteButtonShape | null
   readonly tone?: RemoteButtonTone | null
+  /** Draw the label on a colour-toned key; `false` clears it. */
+  readonly showLegend?: boolean
 }
 
 /** Shape and tone of a button — drawing only, it never moves anything. */
@@ -268,13 +270,15 @@ export function setButtonLook(
 ): LayoutResult {
   const button = find(grid, id)
   if (button === undefined) return refused('unknown-button')
-  const { shape: _shape, tone: _tone, ...kept } = button
+  const { shape: _shape, tone: _tone, showLegend: _legend, ...kept } = button
   const shape = look.shape === undefined ? button.shape : (look.shape ?? undefined)
   const tone = look.tone === undefined ? button.tone : (look.tone ?? undefined)
+  const showLegend = look.showLegend === undefined ? button.showLegend : look.showLegend
   const next: RemoteLayoutButton = {
     ...kept,
     ...(shape === undefined ? {} : { shape }),
     ...(tone === undefined ? {} : { tone }),
+    ...(showLegend === true ? { showLegend } : {}),
   }
   return ok({
     ...grid,
@@ -470,6 +474,8 @@ export interface ButtonSpec {
   readonly colSpan?: number
   readonly icon?: string
   readonly label?: string
+  readonly tone?: RemoteButtonTone
+  readonly showLegend?: boolean
 }
 
 /**
@@ -494,6 +500,8 @@ export function buildLayout(
       role: spec.role,
       ...(spec.icon === undefined ? {} : { icon: spec.icon }),
       ...(spec.label === undefined ? {} : { label: spec.label }),
+      ...(spec.tone === undefined ? {} : { tone: spec.tone }),
+      ...(spec.showLegend === true ? { showLegend: true } : {}),
     }
     const reason = placementRefusal(grid, candidate, null)
     if (reason !== null || grid.buttons.some((b) => b.id === spec.id)) {

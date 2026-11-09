@@ -68,10 +68,10 @@ describe('built-in remote layout presets', () => {
     'rewind',
     'fast_forward',
     ...Array.from({ length: 10 }, (_, n) => `digit_${n}`),
-    'custom:color_a',
-    'custom:color_b',
-    'custom:color_c',
-    'custom:color_d',
+    'custom:color_red',
+    'custom:color_green',
+    'custom:color_yellow',
+    'custom:color_blue',
     'custom:settings',
     'custom:ch_list',
   ]
@@ -114,6 +114,39 @@ describe('built-in remote layout presets', () => {
       expect(apps.length, id).toBeGreaterThanOrEqual(2)
       for (const b of apps) expect(resolveAppBrand(b.icon), `${id} ${b.icon}`).toBeDefined()
     }
+  })
+
+  it('every preset puts its colour keys on the four colour roles, toned, and none keeps a lettered role', () => {
+    for (const preset of REMOTE_LAYOUT_PRESETS) {
+      const roles = preset.layout.buttons.map((b) => b.role)
+      expect(
+        roles.some((r) => /^custom:color_[abcd]$/.test(r)),
+        preset.id,
+      ).toBe(false)
+      for (const b of preset.layout.buttons.filter((x) => x.role.startsWith('custom:color_'))) {
+        expect(b.tone, `${preset.id} ${b.role}`).toBe(b.role.slice('custom:color_'.length))
+      }
+    }
+  })
+
+  it('samsung-classic: row 0 is Power, the source selector, Input; row 1 the four app keys; Samsung keys carry A-D', () => {
+    const layout = REMOTE_LAYOUT_PRESETS.find((p) => p.id === 'samsung-classic')?.layout
+    const at = (row: number) =>
+      (layout?.buttons ?? []).filter((b) => b.row === row).sort((a, b) => a.col - b.col)
+    expect(at(0).map((b) => b.role)).toEqual(['power', 'source_select', 'input'])
+    expect(at(1).map((b) => b.icon)).toEqual([
+      'app:netflix',
+      'app:youtube',
+      'app:primevideo',
+      'app:disneyplus',
+    ])
+    const colours = (layout?.buttons ?? []).filter((b) => b.role.startsWith('custom:color_'))
+    expect(colours.map((b) => [b.role, b.label, b.showLegend])).toEqual([
+      ['custom:color_red', 'A', true],
+      ['custom:color_green', 'B', true],
+      ['custom:color_yellow', 'C', true],
+      ['custom:color_blue', 'D', true],
+    ])
   })
 
   it('creating from a preset returns an independent editable copy', () => {

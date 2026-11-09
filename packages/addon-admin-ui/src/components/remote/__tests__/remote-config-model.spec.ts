@@ -124,7 +124,6 @@ describe('remote-config-model: SmartIR import', () => {
       7,
     )
     if (result.status !== 'ok') throw new Error(result.reason)
-    expect(result.draft.power.mode).toBe('toggle')
     expect(Object.keys(result.draft.bindings).sort()).toEqual([
       'custom:source_hdmi_1',
       'power',
@@ -138,7 +137,6 @@ describe('remote-config-model: SmartIR import', () => {
     expect(result.bound).toBe(3)
 
     const applied = applyDraft(EMPTY_REMOTE_CONFIG, result.draft)
-    expect(applied.power.mode).toBe('toggle')
     expect(applied.customButtons).toEqual([{ key: 'source_hdmi_1', name: 'HDMI 1' }])
     expect(checkForSave(applied).config).not.toBeNull()
   })
@@ -397,7 +395,12 @@ describe('remote-config-model: infrared sources (planning#464)', () => {
 
   it('lets the schema refuse a missing transmitter, a bad code and a non-numeric carrier, on their fields', () => {
     const fields = (draft: SourceDraft) => draftIssues(base, draft, null).map((i) => i.field)
-    expect(fields({ ...irDraft, transmitterId: null })).toEqual(['transmitterId'])
+    const noDefault = { ...base, defaultTransmitterId: null }
+    expect(
+      draftIssues(noDefault, { ...irDraft, transmitterId: null }, null).map((i) => i.field),
+    ).toEqual(['transmitterId'])
+    // With a default on the remote, a source with no emitter of its own is fine.
+    expect(fields({ ...irDraft, transmitterId: null })).toEqual([])
     expect(fields({ ...irDraft, code: '9000 4500' })).toEqual(['payload'])
     expect(fields({ ...irDraft, code: '9000, abc' })).toEqual(['payload'])
     expect(fields({ ...irDraft, carrierKhz: 'x' })).toEqual(['payload'])

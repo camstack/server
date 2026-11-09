@@ -11249,7 +11249,9 @@
       "separatorSize": "Dimensione",
       "separatorSizeCompact": "Compatto",
       "separatorSizeNormal": "Normale",
-      "separatorHideLabel": "Nascondi l'etichetta"
+      "separatorHideLabel": "Nascondi l'etichetta",
+      "showLegend": "Mostra l'etichetta sul tasto colorato",
+      "editorTitle": "Layout: {{name}}"
     },
     "roleGroup": {
       "power": "Alimentazione",
@@ -11270,9 +11272,6 @@
       "noTemplatesHint": "Non c'è ancora nessun layout di telecomando. Creane uno in Sistema > Modelli.",
       "transmitter": "Trasmettitore predefinito",
       "noTransmitter": "Nessuno",
-      "power": "Comando di accensione",
-      "powerToggle": "Un solo tasto on/off",
-      "powerDiscrete": "On e off separati",
       "preview": "Anteprima del telecomando",
       "incomplete_other": "{{count}} comandi non sono completi: scegli un dispositivo e un comando, oppure rimuovili.",
       "incomplete_one": "{{count}} comando non è completo: scegli un dispositivo e un comando, oppure rimuovilo."
@@ -11416,7 +11415,7 @@
         "stepDown": "Sposta il passo giù",
         "stepRemove": "Rimuovi passo",
         "transmitter": "Trasmettitore",
-        "noTransmitter": "Scegli un trasmettitore",
+        "noTransmitter": "Emettitore predefinito del telecomando",
         "encoding": "Formato del codice",
         "code": "Codice infrarosso",
         "codeHint": "Impulsi e pause in microsecondi, separati da virgole o spazi (una pausa è negativa), oppure l’array incollato da un file SmartIR.",
@@ -11440,7 +11439,8 @@
           "too_big": "Una sequenza ha al massimo 16 passi."
         },
         "transmitterId": {
-          "too_small": "Scegli il trasmettitore attraverso cui inviare il codice."
+          "too_small": "Scegli il trasmettitore attraverso cui inviare il codice.",
+          "no_emitter": "Scegli un emettitore: questo telecomando non ne ha uno predefinito."
         },
         "payload": {
           "invalid_type": "Ogni tempo è un numero intero di microsecondi."

@@ -21,7 +21,6 @@ import {
   useTemplateCreate,
   useTemplateDelete,
   useTemplateList,
-  useTemplateUpdate,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Copy, LayoutTemplate, Pencil, Plus, Trash2 } from 'lucide-react'
@@ -33,6 +32,7 @@ import {
   TemplateEditorDialog,
   type TemplateDraft,
 } from '../../components/remote/TemplateEditorDialog'
+import { useTemplateSave } from '../../components/remote/useTemplateSave'
 import { TEMPLATE_EDIT_PARAM } from '../../components/remote/EditTemplateButton'
 import { templateKindView } from '../../components/remote/template-kinds'
 
@@ -43,12 +43,11 @@ export function TemplatesPage(): ReactNode {
   const queryClient = useQueryClient()
   const list = useTemplateList({})
   const create = useTemplateCreate()
-  const update = useTemplateUpdate()
+  const saver = useTemplateSave()
   const remove = useTemplateDelete()
   const confirm = useConfirm()
   const alert = useAlert()
   const [draft, setDraft] = useState<TemplateDraft | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [params, setParams] = useSearchParams()
   const editId = params.get(TEMPLATE_EDIT_PARAM)
 
@@ -77,29 +76,7 @@ export function TemplatesPage(): ReactNode {
   const refresh = (): void => void queryClient.invalidateQueries({ queryKey: [['template']] })
 
   const save = async (next: TemplateDraft): Promise<void> => {
-    setError(null)
-    try {
-      const result =
-        next.id === null
-          ? await create.mutateAsync({
-              kind: next.kind,
-              name: next.name,
-              payload: next.payload,
-            })
-          : await update.mutateAsync({
-              id: next.id,
-              name: next.name,
-              payload: next.payload,
-            })
-      if (result.status === 'refused') {
-        setError(result.detail)
-        return
-      }
-      refresh()
-      setDraft(null)
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
-    }
+    if (await saver.save(next)) setDraft(null)
   }
 
   const duplicate = async (row: TemplateRecord): Promise<void> => {
@@ -196,7 +173,7 @@ export function TemplatesPage(): ReactNode {
                 label: t('common.edit'),
                 icon: Pencil,
                 onClick: () => {
-                  setError(null)
+                  saver.clearError()
                   setDraft({
                     id: r.id,
                     kind: r.kind,
@@ -230,7 +207,7 @@ export function TemplatesPage(): ReactNode {
 
   const rows = list.data ?? []
   const newTemplate = (): void => {
-    setError(null)
+    saver.clearError()
     setDraft({
       id: null,
       kind: FIRST_KIND,
@@ -278,7 +255,7 @@ export function TemplatesPage(): ReactNode {
           maxBodyHeight={TABLE_SCROLL_MAX_H}
           defaultSort={{ columnKey: 'name', dir: 'asc' }}
           onRowClick={(r) => {
-            setError(null)
+            saver.clearError()
             setDraft({
               id: r.id,
               kind: r.kind,
@@ -290,8 +267,8 @@ export function TemplatesPage(): ReactNode {
       )}
       <TemplateEditorDialog
         draft={draft}
-        saving={create.isPending || update.isPending}
-        error={error}
+        saving={saver.saving}
+        error={saver.error}
         onSave={(next) => void save(next)}
         onClose={() => setDraft(null)}
       />

@@ -11227,7 +11227,9 @@
       "separatorSize": "Size",
       "separatorSizeCompact": "Compact",
       "separatorSizeNormal": "Normal",
-      "separatorHideLabel": "Hide the label"
+      "separatorHideLabel": "Hide the label",
+      "showLegend": "Show the label on the coloured key",
+      "editorTitle": "Layout: {{name}}"
     },
     "roleGroup": {
       "power": "Power",
@@ -11248,9 +11250,6 @@
       "noTemplatesHint": "There is no remote layout yet. Create one in System > Templates.",
       "transmitter": "Default transmitter",
       "noTransmitter": "None",
-      "power": "Power command",
-      "powerToggle": "One toggle button",
-      "powerDiscrete": "Separate on and off",
       "preview": "Remote preview",
       "incomplete_other": "{{count}} commands are not finished: pick a device and a command, or clear them.",
       "incomplete_one": "{{count}} command is not finished: pick a device and a command, or clear it."
@@ -11394,7 +11393,7 @@
         "stepDown": "Move step down",
         "stepRemove": "Remove step",
         "transmitter": "Transmitter",
-        "noTransmitter": "Pick a transmitter",
+        "noTransmitter": "Remote's default emitter",
         "encoding": "Code format",
         "code": "Infrared code",
         "codeHint": "Marks and spaces in microseconds, separated by commas or spaces (a space is negative), or the array pasted from a SmartIR file.",
@@ -11418,7 +11417,8 @@
           "too_big": "A sequence has at most 16 steps."
         },
         "transmitterId": {
-          "too_small": "Pick the transmitter the code is sent through."
+          "too_small": "Pick the transmitter the code is sent through.",
+          "no_emitter": "Pick an emitter: this remote has no default one."
         },
         "payload": {
           "invalid_type": "Every timing is a whole number of microseconds."

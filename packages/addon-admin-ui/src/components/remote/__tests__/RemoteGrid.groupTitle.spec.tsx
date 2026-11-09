@@ -34,3 +34,32 @@ describe('RemoteGrid group titles', () => {
     expect(screen.getByText('Numbers')).toBeTruthy()
   })
 })
+
+describe('RemoteGrid colour keys', () => {
+  const colourGrid = (showLegend: boolean): RemoteLayoutPayload => ({
+    columns: 1,
+    rows: 1,
+    buttons: [
+      {
+        id: 'r',
+        row: 0,
+        col: 0,
+        rowSpan: 1,
+        colSpan: 1,
+        role: 'custom:color_red',
+        tone: 'red',
+        label: 'A',
+        showLegend,
+      },
+    ],
+    groups: [],
+  })
+
+  it('writes the letter on the coloured key only when the layout asks for it', () => {
+    const { unmount } = render(<RemoteGrid grid={colourGrid(true)} label="grid" />)
+    expect(screen.getByText('A')).toBeTruthy()
+    unmount()
+    render(<RemoteGrid grid={colourGrid(false)} label="grid" />)
+    expect(screen.queryByText('A')).toBeNull()
+  })
+})

@@ -37,7 +37,7 @@ const key = (
   row: number,
   col: number,
   colSpan: number,
-  extra: Pick<ButtonSpec, 'label' | 'icon' | 'rowSpan'> = {},
+  extra: Pick<ButtonSpec, 'label' | 'icon' | 'rowSpan' | 'tone' | 'showLegend'> = {},
 ): ButtonSpec => ({ id, role, row, col, colSpan, ...extra })
 
 const custom = (name: string): string => `custom:${name}`
@@ -137,37 +137,38 @@ const keypadExtra = (
   label,
 })
 
+/** Samsung prints A B C D on the red / green / yellow / blue keys. */
+const SAMSUNG_COLOUR_LEGENDS = { red: 'A', green: 'B', yellow: 'C', blue: 'D' } as const
+
 const SAMSUNG_CLASSIC = compose(
-  23,
+  24,
   [
     key('input', 'input', 0, 2 * THIRD, THIRD),
-    key('mute', 'mute', 7, THIRD, THIRD),
-    key('ch_list', custom('ch_list'), 8, THIRD, THIRD, { label: 'CH LIST' }),
-    key('settings', custom('settings'), 9, THIRD, THIRD, { label: 'Settings' }),
-    key('home', 'home', 10, THIRD, THIRD),
-    key('guide', 'guide', 12, 0, THIRD),
-    key('e_manual', custom('e_manual'), 12, THIRD, THIRD, {
+    key('source_select', 'source_select', 0, 2, 6),
+    ...appRow(1, ['netflix', 'youtube', 'primevideo', 'disneyplus']),
+    key('mute', 'mute', 8, THIRD, THIRD),
+    key('ch_list', custom('ch_list'), 9, THIRD, THIRD, { label: 'CH LIST' }),
+    key('settings', custom('settings'), 10, THIRD, THIRD, { label: 'Settings' }),
+    key('home', 'home', 11, THIRD, THIRD),
+    key('guide', 'guide', 13, 0, THIRD),
+    key('e_manual', custom('e_manual'), 13, THIRD, THIRD, {
       label: 'e-Manual',
     }),
-    key('info', 'info', 12, 2 * THIRD, THIRD),
-    key('back', 'back', 17, 0, THIRD),
-    key('exit', 'exit', 17, 2 * THIRD, THIRD),
-    key('color_a', custom('color_a'), 19, 0, QUARTER, { label: 'A' }),
-    key('color_b', custom('color_b'), 19, QUARTER, QUARTER, { label: 'B' }),
-    key('color_c', custom('color_c'), 19, 2 * QUARTER, QUARTER, { label: 'C' }),
-    key('color_d', custom('color_d'), 19, 3 * QUARTER, QUARTER, { label: 'D' }),
-    key('pic_size', custom('pic_size'), 20, 0, THIRD, { label: 'P.SIZE' }),
-    key('picture', custom('picture'), 20, THIRD, THIRD, { label: 'Picture' }),
-    key('ad_subt', custom('ad_subt'), 20, 2 * THIRD, THIRD, {
+    key('info', 'info', 13, 2 * THIRD, THIRD),
+    key('back', 'back', 18, 0, THIRD),
+    key('exit', 'exit', 18, 2 * THIRD, THIRD),
+    key('pic_size', custom('pic_size'), 21, 0, THIRD, { label: 'P.SIZE' }),
+    key('picture', custom('picture'), 21, THIRD, THIRD, { label: 'Picture' }),
+    key('ad_subt', custom('ad_subt'), 21, 2 * THIRD, THIRD, {
       label: 'AD/SUBT',
     }),
   ],
   [
     { id: 'core:power', row: 0, col: 0, options: { scale: { cols: 2 } } },
-    divider(1, 'Numbers'),
+    divider(2, 'Numbers'),
     {
       id: 'core:keypad',
-      row: 2,
+      row: 3,
       col: 0,
       options: {
         scale: FULL_WIDTH_3.scale,
@@ -177,22 +178,28 @@ const SAMSUNG_CLASSIC = compose(
         ],
       },
     },
-    divider(6, 'Volume and channels'),
-    { id: 'core:rocker-volume-v', row: 7, col: 0, options: TALL_ROCKER },
+    divider(7, 'Volume and channels'),
+    { id: 'core:rocker-volume-v', row: 8, col: 0, options: TALL_ROCKER },
     {
       id: 'core:rocker-channel-v',
-      row: 7,
+      row: 8,
       col: 2 * THIRD,
       options: TALL_ROCKER,
     },
-    divider(11, 'Menus'),
-    divider(13, 'Navigation'),
-    { id: 'core:dpad', row: 14, col: 0, options: FULL_WIDTH_3 },
-    divider(18, 'Colour and picture'),
-    divider(21, 'Playback'),
+    divider(12, 'Menus'),
+    divider(14, 'Navigation'),
+    { id: 'core:dpad', row: 15, col: 0, options: FULL_WIDTH_3 },
+    divider(19, 'Colour and picture'),
+    {
+      id: 'core:colour-keys',
+      row: 20,
+      col: 0,
+      options: { scale: { cols: QUARTER }, legends: SAMSUNG_COLOUR_LEGENDS },
+    },
+    divider(22, 'Playback'),
     {
       id: 'core:media-transport',
-      row: 22,
+      row: 23,
       col: 1,
       options: { scale: { cols: 2 } },
     },
@@ -327,11 +334,23 @@ function digitRows(row: number): ButtonSpec[] {
   )
 }
 
-/** Four colour keys on one row, each named by its letter. */
-function colourRow(row: number): ButtonSpec[] {
-  return ['a', 'b', 'c', 'd'].map((letter, i) =>
-    key(`color_${letter}`, custom(`color_${letter}`), row, i * QUARTER, QUARTER, {
-      label: letter.toUpperCase(),
+const COLOUR_KEYS = [
+  { name: 'red', tone: 'red' },
+  { name: 'green', tone: 'green' },
+  { name: 'yellow', tone: 'yellow' },
+  { name: 'blue', tone: 'blue' },
+] as const
+
+/**
+ * Four colour keys on one row: the roles and tones of `core:colour-keys`.
+ * `letters` prints A B C D on them (Samsung's plastic does).
+ */
+function colourRow(row: number, letters: boolean): ButtonSpec[] {
+  return COLOUR_KEYS.map(({ name, tone }, i) =>
+    key(`color_${name}`, custom(`color_${name}`), row, i * QUARTER, QUARTER, {
+      label: letters ? String.fromCharCode(65 + i) : name,
+      tone,
+      ...(letters ? { showLegend: true } : {}),
     }),
   )
 }
@@ -364,7 +383,7 @@ const SAMSUNG_BN59_01315 = buildLayout(COLUMNS, 18, [
   ...thirds(13, ['rewind', 'play', 'fast_forward']),
   key('pause', 'pause', 14, 0, 6),
   key('stop', 'stop', 14, 6, 6),
-  ...colourRow(15),
+  ...colourRow(15, true),
   key('ad_subt', custom('ad_subt'), 16, 0, 12, { label: 'AD/SUBT' }),
   key('app_netflix', custom('netflix'), 17, 0, THIRD, {
     icon: appIconKey('netflix'),
@@ -414,7 +433,7 @@ const HISENSE_ERF3_VIDAA = buildLayout(COLUMNS, 18, [
   ...thirds(15, ['rewind', 'play', 'fast_forward']),
   key('pause', 'pause', 16, 0, 6),
   key('stop', 'stop', 16, 6, 6),
-  ...colourRow(17),
+  ...colourRow(17, false),
 ])
 
 export const REMOTE_LAYOUT_PRESETS: readonly RemoteLayoutPreset[] = [
