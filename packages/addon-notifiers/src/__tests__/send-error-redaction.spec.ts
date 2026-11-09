@@ -13,19 +13,12 @@ import type { IScopedLogger, LogExtras, Target } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import type { NotifierAdapter } from '../adapters/adapter.js'
 import {
-  createNotificationOutputProvider as createCapProvider,
-  createNotifierTargetAdmin,
+  createNotificationOutputProvider as createNotificationOutputProvider,
   type HttpSender,
-  type NotificationOutputProviderDeps,
   stripUrls,
 } from '../provider.js'
 import { TargetStore } from '../target-store.js'
 import { makeNotifiersRecords } from './fake-records.js'
-
-/** The cap provider plus the target admin, so a spec can seed and read targets the way the bridge does. */
-function createNotificationOutputProvider(deps: NotificationOutputProviderDeps) {
-  return { ...createCapProvider(deps), ...createNotifierTargetAdmin(deps) }
-}
 
 interface LoggedLine {
   readonly message: string
@@ -96,7 +89,7 @@ async function sendThrough(adapter: NotifierAdapter, httpSend: HttpSender) {
     httpSend,
     logger: capturingLogger(lines),
   })
-  await provider.upsertTarget({ target: TARGET })
+  await store.upsert(TARGET)
   const result = await provider.testTarget({ targetId: 't1' })
   return { result, logged: JSON.stringify(lines) }
 }

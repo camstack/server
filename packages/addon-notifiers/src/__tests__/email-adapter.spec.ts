@@ -2,18 +2,9 @@ import { userError } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { buildEmailDescriptor, createEmailAdapter, type EmailSendInput } from '../adapters/email.js'
 import { iconUrlFor } from '../icon-routes.js'
-import {
-  createNotificationOutputProvider as createCapProvider,
-  createNotifierTargetAdmin,
-  type NotificationOutputProviderDeps,
-} from '../provider.js'
+import { createNotificationOutputProvider as createNotificationOutputProvider } from '../provider.js'
 import { TargetStore } from '../target-store.js'
 import { makeNotifiersRecords } from './fake-records.js'
-
-/** The cap provider plus the target admin, so a spec can seed and read targets the way the bridge does. */
-function createNotificationOutputProvider(deps: NotificationOutputProviderDeps) {
-  return { ...createCapProvider(deps), ...createNotifierTargetAdmin(deps) }
-}
 
 describe('email descriptor relay pin', () => {
   it('is an optional instance-select over smtp-provider, not a hand-rolled select', () => {
@@ -40,15 +31,13 @@ describe('email notifier adapter', () => {
       store,
       adapters: [adapter],
     })
-    await provider.upsertTarget({
-      target: {
-        id: 'email-1',
-        addonId: 'notifiers',
-        name: 'Ops',
-        kind: 'email',
-        enabled: true,
-        config: { to: 'ops@example.com', smtpAddonId: 'google-services' },
-      },
+    await store.upsert({
+      id: 'email-1',
+      addonId: 'notifiers',
+      name: 'Ops',
+      kind: 'email',
+      enabled: true,
+      config: { to: 'ops@example.com', smtpAddonId: 'google-services' },
     })
     const result = await provider.testTarget({
       targetId: 'email-1',
@@ -79,8 +68,13 @@ describe('email notifier adapter', () => {
       ],
       ['unpinned', { to: 'ops@example.com', smtpAddonId: 'smtp-nodemailer' }],
     ] as const) {
-      await provider.upsertTarget({
-        target: { id, addonId: 'notifiers', name: id, kind: 'email', enabled: true, config },
+      await store.upsert({
+        id,
+        addonId: 'notifiers',
+        name: id,
+        kind: 'email',
+        enabled: true,
+        config,
       })
       await provider.testTarget({ targetId: id, sample })
     }
@@ -100,18 +94,16 @@ describe('email notifier adapter', () => {
       adapter.descriptor,
     ])
     const provider = createNotificationOutputProvider({ store, adapters: [adapter] })
-    await provider.upsertTarget({
-      target: {
-        id: 'pinned',
-        addonId: 'notifiers',
-        name: 'pinned',
-        kind: 'email',
-        enabled: true,
-        config: {
-          to: 'ops@example.com',
-          smtpAddonId: 'smtp-nodemailer',
-          smtpInstanceId: 'int_0003',
-        },
+    await store.upsert({
+      id: 'pinned',
+      addonId: 'notifiers',
+      name: 'pinned',
+      kind: 'email',
+      enabled: true,
+      config: {
+        to: 'ops@example.com',
+        smtpAddonId: 'smtp-nodemailer',
+        smtpInstanceId: 'int_0003',
       },
     })
     const result = await provider.testTarget({
@@ -132,15 +124,13 @@ describe('email notifier adapter', () => {
       adapter.descriptor,
     ])
     const provider = createNotificationOutputProvider({ store, adapters: [adapter] })
-    await provider.upsertTarget({
-      target: {
-        id: 'email-2',
-        addonId: 'notifiers',
-        name: 'Ops',
-        kind: 'email',
-        enabled: true,
-        config: { to: 'ops@example.com', smtpAddonId: 'smtp-nodemailer' },
-      },
+    await store.upsert({
+      id: 'email-2',
+      addonId: 'notifiers',
+      name: 'Ops',
+      kind: 'email',
+      enabled: true,
+      config: { to: 'ops@example.com', smtpAddonId: 'smtp-nodemailer' },
     })
     const result = await provider.send({
       targetId: 'email-2',
