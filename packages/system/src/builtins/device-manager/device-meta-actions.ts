@@ -27,6 +27,7 @@ import {
 } from '../core-blocks/rename-composition-block.js'
 import type { AddonContext } from '@camstack/types'
 import {
+  type DeviceBindingEntry,
   type DeviceCapDisplayOverride,
   type DeviceDisplayOverride,
   DeviceType,
@@ -36,7 +37,9 @@ import {
   InferProvider,
   locationIconKey,
   normalizeUnit,
+  reconcileReportedFeatures,
   type RoleDisplayDefault,
+  settleDeviceFeatures,
   siteZoneKey,
   userError,
 } from '@camstack/types'
@@ -451,6 +454,7 @@ export async function registerDevice(
     isFirstRegistration,
     exportFingerprint,
     fingerprintChanged,
+    storedFeatures,
     inheritedLocation,
     inheritedDescendantIds,
     inheritFailed,
@@ -493,10 +497,14 @@ export async function registerDevice(
     const isFirst = !existingMeta || !wasRegistered
     // Export-relevant fingerprint — drives the DeviceProvisioned signal
     // (emitted below only when it actually changes vs the persisted one).
+    // The features a driver reports are only its claim for the families that
+    // are not derived yet; a `derived` one is the kernel's, so a re-register
+    // keeps what the row already holds (#459).
+    const settledFeatures = reconcileReportedFeatures(existingMeta?.features, featuresArr)
     const fingerprint = canonicalDeviceFingerprint({
       deviceId: id,
       deviceType: type,
-      features: featuresArr,
+      features: settledFeatures,
     })
     // Write-time location inheritance (D352): a child adopted AFTER its
     // container's location was set is the cascade's retroactivity hole
@@ -542,7 +550,7 @@ export async function registerDevice(
       disabled: existingMeta?.disabled ?? false,
       parentDeviceId: resolvedParentId,
       registered: true,
-      features: featuresArr,
+      features: settledFeatures,
       exportFingerprint: fingerprint,
     })
     // The template alias (D1021) is stamped ONCE, from the name known at the
@@ -577,6 +585,7 @@ export async function registerDevice(
     }
     return {
       isFirstRegistration: isFirst,
+      storedFeatures: settledFeatures,
       exportFingerprint: fingerprint,
       fingerprintChanged: existingMeta?.exportFingerprint !== fingerprint,
       inheritedLocation: inherited,
@@ -662,7 +671,7 @@ export async function registerDevice(
         name: name.length > 0 ? name : stableId,
         providerId: addonId,
         parentDeviceId: parentDeviceId ?? null,
-        features: featuresArr,
+        features: storedFeatures,
       },
     })
   }
@@ -680,6 +689,51 @@ export async function registerDevice(
       data: { deviceId: id, fingerprint: exportFingerprint, generation: Date.now() },
     })
   }
+}
+
+/**
+ * Re-derive a device's features from its bindings and persist them when they
+ * moved (#459). The settle runs INSIDE the meta write lock against the row as
+ * it is there, so a concurrent `registerDevice` cannot land between the read
+ * and the write. A row that does not exist is left alone (a binding event can
+ * outlive the device), and an unchanged set writes nothing and announces
+ * nothing. A changed one stamps the new fingerprint and, like `registerDevice`,
+ * emits `DeviceProvisioned` so exporters reconcile with one delta.
+ */
+export async function applyDerivedFeatures(
+  pctx: ProviderContext,
+  deviceId: number,
+  entries: readonly DeviceBindingEntry[],
+): Promise<boolean> {
+  const outcome = await pctx.metaStore.withMetaWriteLock(async () => {
+    const row = await pctx.metaStore.rows.get(deviceId)
+    if (row === null || !row.registered) return null
+    const settled = settleDeviceFeatures(entries, row.meta.features ?? [])
+    const stored = row.meta.features ?? []
+    if (settled.length === stored.length && settled.every((value, i) => value === stored[i])) {
+      return null
+    }
+    const fingerprint = canonicalDeviceFingerprint({
+      deviceId,
+      deviceType: row.meta.type,
+      features: settled,
+    })
+    await pctx.metaStore.rows.patch(deviceId, { features: settled, exportFingerprint: fingerprint })
+    return { fingerprint, features: settled, previous: stored }
+  })
+  if (outcome === null) return false
+  pctx.host.ctx.logger.info('device features re-derived from bindings', {
+    tags: { deviceId },
+    meta: { from: outcome.previous, to: outcome.features },
+  })
+  pctx.host.ctx.eventBus.emit({
+    id: randomUUID(),
+    timestamp: new Date(),
+    source: { type: 'device', id: deviceId },
+    category: EventCategory.DeviceProvisioned,
+    data: { deviceId, fingerprint: outcome.fingerprint, generation: Date.now() },
+  })
+  return true
 }
 
 /**

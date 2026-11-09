@@ -13,7 +13,13 @@ import type {
   IDeviceRegistry,
   SourceInfo,
 } from '@camstack/types'
-import { collectZodSecretPaths, DeviceFeature, DeviceRole, DeviceType } from '@camstack/types'
+import {
+  collectZodSecretPaths,
+  DeviceFeature,
+  DeviceRole,
+  DeviceType,
+  isKernelDerivedFeature,
+} from '@camstack/types'
 import type { PersistedDeviceMeta } from './device-meta-types.js'
 
 /**
@@ -90,6 +96,23 @@ export function persistedFeatures(features: readonly string[] | undefined): Devi
     if (DEVICE_FEATURE_VALUES.has(f)) out.push(f as DeviceFeature)
   }
   return out
+}
+
+/**
+ * The features a device is shown with (#459). The kernel owns the `derived`
+ * ones, and the row is where it keeps them, so they come from the row; a
+ * driver's own list (the live array, or the row when the live one is empty)
+ * decides only the rest. Without a row the live list is all there is.
+ */
+export function projectedFeatures(
+  live: readonly string[],
+  persisted: readonly string[] | undefined,
+): DeviceFeature[] {
+  if (persisted === undefined) return persistedFeatures(live)
+  const claimed = live.length > 0 ? live : persisted
+  const driverOwned = claimed.filter((value) => !isKernelDerivedFeature(value))
+  const kernelOwned = persisted.filter((value) => isKernelDerivedFeature(value))
+  return persistedFeatures([...new Set([...driverOwned, ...kernelOwned])])
 }
 
 /**
@@ -233,8 +256,7 @@ export function toDeviceInfo(
     // worker published the real flags (e.g. HA `lock-open`) into the meta row
     // via `refreshFeatures` — without this fallback those flags never reach the
     // UI (the lock "Open door" button stayed hidden despite a correct mapping).
-    features:
-      device.features.length > 0 ? [...device.features] : persistedFeatures(metaRow?.features),
+    features: projectedFeatures(device.features, metaRow?.features),
     isCamera: isCameraDevice(device),
     config: configValues,
     // D783 — a live device answers from its own schema declaration.

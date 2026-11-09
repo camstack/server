@@ -1295,6 +1295,7 @@ export {
   DEVICE_FEATURE_REQUIREMENTS,
   deriveFeatureProvenance,
   implementedMethodsOf,
+  isKernelDerivedFeature,
   reconcileReportedFeatures,
   settleDeviceFeatures,
 } from './device/device-feature-requirements.js'

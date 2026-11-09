@@ -77,6 +77,7 @@ import {
 } from './device-bindings-store.js'
 import { StaleWrapperActivations } from './stale-wrapper-activations.js'
 import { DeviceEventPropagator } from './device-event-propagator.js'
+import { FeatureDeriver, subscribeFeatureDeriver } from './feature-deriver.js'
 import { createDeviceManagerExtensionProvider } from './device-extension-linked-slot.js'
 import { getLinkedDevices, getLinkedDevicesBatch } from './device-linked-devices.js'
 import * as metaActions from './device-meta-actions.js'
@@ -134,6 +135,8 @@ export class DeviceManagerAddon extends BaseAddon {
    * populated. Stopped in `onShutdown`.
    */
   private propagator: DeviceEventPropagator | null = null
+  /** Stops the bindings → features subscription; run in `onShutdown`. */
+  private unsubscribeFeatureDeriver: (() => void) | null = null
   /**
    * Hub-side mirror of every device's cap-keyed runtime state.
    * Populated whenever any caller writes via `deviceState.setCapSlice`
@@ -1192,6 +1195,18 @@ export class DeviceManagerAddon extends BaseAddon {
       }),
     }
 
+    // Device features follow the bindings (#459): every binding change settles
+    // the device, and a boot pass settles the fleet for the events that were
+    // dropped or fired before this subscription existed.
+    const featureDeriver = new FeatureDeriver({
+      bindingsOf: async (deviceId) => (await getBindings(this.bindingsDeps, { deviceId })).entries,
+      allBindings: () => getAllBindings(this.bindingsDeps),
+      apply: (deviceId, entries) => metaActions.applyDerivedFeatures(pctx, deviceId, entries),
+      logger: this.ctx.logger.child('features'),
+    })
+    this.unsubscribeFeatureDeriver = subscribeFeatureDeriver(this.ctx.eventBus, featureDeriver)
+    void featureDeriver.reconcileAll()
+
     return [
       { capability: deviceManagerCapability, provider },
       { capability: deviceStateCapability, provider: deviceStateProvider },
@@ -1271,6 +1286,8 @@ export class DeviceManagerAddon extends BaseAddon {
     this.removalHooksCleanupImpl = null
     this.propagator?.stop()
     this.propagator = null
+    this.unsubscribeFeatureDeriver?.()
+    this.unsubscribeFeatureDeriver = null
     this.uninstallStatusOverlay?.()
     this.uninstallStatusOverlay = null
     // Flush any pending debounced runtime-state disk writes so a

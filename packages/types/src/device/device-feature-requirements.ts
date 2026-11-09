@@ -211,6 +211,11 @@ function knownFeature(value: string): value is DeviceFeature {
   return FEATURE_VALUES.has(value)
 }
 
+/** True when the kernel, not the driver, decides this feature. */
+export function isKernelDerivedFeature(value: string): boolean {
+  return knownFeature(value) && isDerivedAuthority(value)
+}
+
 /**
  * The feature set to persist: the kernel's value for every `derived` feature,
  * plus the driver's own claim for the rest (`reported`). Unknown strings are
