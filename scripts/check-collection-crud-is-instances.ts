@@ -36,14 +36,19 @@ import {
 
 export const BASELINE_PATH = 'scripts/collection-crud-baseline.json'
 
-const DECL_RE = /^\s{2,4}(\w+)\s*:\s*(?:optionalMethod|method|customAction)\s*[(<]/
+/**
+ * A declaration, quoted or not: a custom action is keyed `'nc.listMyTargets':`, which an unquoted
+ * `\w+` never read -- the guard was blind to every namespaced action.
+ */
+const DECL_RE = /^\s{2,4}['"]?([\w.]+)['"]?\s*:\s*(?:optionalMethod|method|customAction)\s*[(<]/
+/** `nc.` namespace and the `My` of "my targets" are not a different CRUD. */
 const CRUD_NAME_RE = new RegExp(
   [
-    '^(?:list|get|upsert|create|update|delete|remove|add)',
+    '^(?:\\w+\\.)?(?:list|get|upsert|create|update|delete|remove|add)(?:My)?',
     '(?:Target|Profile|Connection|LocationDeclaration|Location|Source|Entry|Entries|Provider|DrainProgress)s?$',
-    '|^(?:discoverTargets|probeTargetConfig|describeTypes)$',
-    '|^list(?:Target|Profile|Provider|Connection|Location|Source|Entry|Instance)Kinds$',
-    '|^\\w*FormSchema$',
+    '|^(?:\\w+\\.)?(?:discoverTargets|probeTargetConfig|describeTypes)$',
+    '|^(?:\\w+\\.)?list(?:Target|Profile|Provider|Connection|Location|Source|Entry|Instance)Kinds$',
+    '|^(?:\\w+\\.)?\\w*FormSchema$',
   ].join(''),
 )
 /** The one CRUD every family folds into. */

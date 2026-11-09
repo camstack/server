@@ -90,6 +90,24 @@ describe('check-collection-crud-is-instances', () => {
     expect(found[0]?.message).toContain('integration-instances')
   })
 
+  it('reads a QUOTED, namespaced custom action: the five nc.*MyTarget* actions are a second CRUD', () => {
+    const planted = `defineCustomActions({
+  'nc.listMyTargets': customAction(z.object({}), z.object({})),
+  "nc.upsertMyTarget": customAction(a, b, { kind: 'mutation' }),
+  'nc.deleteMyTarget': customAction(a, b),
+  'nc.setMyTargetEnabled': customAction(a, b),
+  'nc.testMyTarget': customAction(a, b),
+  'nc.listRules': customAction(a, b),
+})`
+    expect(crudMethodsOf(planted)).toEqual(['nc.listMyTargets', 'nc.upsertMyTarget', 'nc.deleteMyTarget'])
+    const found = findViolations(
+      [{ path: 'packages/addon-acme/src/nc-actions.ts', text: planted }],
+      { families: {} },
+    )
+    expect(found.map((v) => v.message).join('\n')).toContain('nc.listMyTargets')
+    expect(found).toHaveLength(3)
+  })
+
   it('does not look at integration-instances itself, nor at a file with no cap or custom actions', () => {
     const found = findViolations(
       [
