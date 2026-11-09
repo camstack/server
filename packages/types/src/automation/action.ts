@@ -153,6 +153,9 @@ export const IDLE_ACTION_STATUS: ActionStatus = {
   lastError: null,
 }
 
+/** The throttle window of an action, in seconds; absent or 0 = no throttle. */
+export const ActionMinDelaySecSchema = z.number().int().min(0).max(86_400)
+
 export const ActionEntrySchema = z
   .object({
     /** `internal:<uuid>` or `<addonId>:<localId>`. */
@@ -166,6 +169,14 @@ export const ActionEntrySchema = z
     /** Internal only: cap and wait steps. No action-in-action, so no cycles. */
     steps: z.array(ActionStepSchema).min(1).max(50).optional(),
     variables: z.array(ActionVariableSchema).max(20).optional(),
+    /**
+     * Internal only: the least time between two run STARTS. A run that begins
+     * inside the window is skipped (`skipped-cooldown`), traced and logged. It
+     * is an actuator's budget — "how often may this gate physically open" —
+     * not a notification cooldown, and it is shared by every caller of the
+     * action (two rules, a button, an automation).
+     */
+    minDelaySec: ActionMinDelaySecSchema.optional(),
     status: ActionStatusSchema,
   })
   .superRefine((entry, ctx) => {
@@ -208,6 +219,7 @@ export const ActionInputSchema = z.object({
   name: z.string().min(1).max(120),
   steps: z.array(ActionStepSchema).min(1).max(50),
   variables: z.array(ActionVariableSchema).max(20).optional(),
+  minDelaySec: ActionMinDelaySecSchema.optional(),
 })
 export type ActionInput = z.infer<typeof ActionInputSchema>
 

@@ -163,6 +163,8 @@ export class ActionsService implements IActionsProvider {
   private readonly templates: DeviceTemplateDoor | undefined
   private readonly conditions: StepConditionDoor | undefined
   private readonly running = new Map<string, RunningRun>()
+  /** Last run START per action — the throttle's memory. */
+  private readonly lastStartedAt = new Map<string, number>()
   private readonly maxRunMs: number
   private readonly stopGraceMs: number
 
@@ -364,6 +366,31 @@ export class ActionsService implements IActionsProvider {
       return { runId, outcome: 'skipped-overlap', message }
     }
 
+    const throttled = this.throttleOf(entry, startedAt)
+    if (throttled !== null) {
+      this.logger.info('action run throttled', {
+        meta: {
+          actionId: entry.id,
+          runId,
+          minDelaySec: entry.minDelaySec,
+          sinceLastMs: throttled.sinceLastMs,
+        },
+      })
+      await this.record(entry.id, {
+        runId,
+        startedAt,
+        endedAt: startedAt,
+        trigger: { ...trigger, outcome: 'pass', reason: throttled.message },
+        conditions: [],
+        steps: [],
+        outcome: 'skipped-cooldown',
+        repeat: 1,
+        lastAt: startedAt,
+      })
+      return { runId, outcome: 'skipped-cooldown', message: throttled.message }
+    }
+    this.lastStartedAt.set(entry.id, startedAt)
+
     const token = new RunToken()
     this.running.set(entry.id, {
       runId,
@@ -382,6 +409,24 @@ export class ActionsService implements IActionsProvider {
     if (input.wait === true) return done
     void done
     return { runId, outcome: 'started' }
+  }
+
+  /**
+   * The action's throttle (`minDelaySec`): null when this start is let through.
+   * The stamp is memory — the authority at fire time (D49) — and a restart
+   * forgets it, which only ever lets one extra run through.
+   */
+  private throttleOf(
+    entry: ActionEntry,
+    at: number,
+  ): { readonly sinceLastMs: number; readonly message: string } | null {
+    const windowMs = (entry.minDelaySec ?? 0) * 1000
+    const last = this.lastStartedAt.get(entry.id)
+    if (windowMs <= 0 || last === undefined || at - last >= windowMs) return null
+    return {
+      sinceLastMs: at - last,
+      message: `throttled — the action may start at most every ${String(entry.minDelaySec)} s`,
+    }
   }
 
   private triggerOf(
@@ -639,6 +684,9 @@ export class ActionsService implements IActionsProvider {
       ...((patch.variables ?? existing.variables) === undefined
         ? {}
         : { variables: patch.variables ?? existing.variables }),
+      ...((patch.minDelaySec ?? existing.minDelaySec) === undefined
+        ? {}
+        : { minDelaySec: patch.minDelaySec ?? existing.minDelaySec }),
     })
     this.logger.info('internal action updated', {
       meta: { actionId: action.id },

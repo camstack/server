@@ -2,6 +2,7 @@
  * Record kinds owned by core-blocks (phase 4).
  */
 import {
+  ActionMinDelaySecSchema,
   ActionStepSchema,
   ActionVariableSchema,
   type Scheduler,
@@ -63,6 +64,7 @@ export type ActionRowBody = {
   readonly name: string
   readonly steps: z.infer<typeof ActionStepSchema>[]
   readonly variables?: z.infer<typeof ActionVariableSchema>[]
+  readonly minDelaySec?: number
   readonly createdAt: number
   readonly updatedAt: number
 }
@@ -70,6 +72,7 @@ export const ActionRowBodySchema: z.ZodType<ActionRowBody> = z.object({
   name: z.string().min(1).max(120),
   steps: z.array(ActionStepSchema).min(1).max(50),
   variables: z.array(ActionVariableSchema).max(20).optional(),
+  minDelaySec: ActionMinDelaySecSchema.optional(),
   createdAt: z.number(),
   updatedAt: z.number(),
 })

@@ -58,6 +58,9 @@ export class ActionsStore {
       // D983: a row written before the target shape is READ as the new one.
       steps: normalizeStepTargets(body.steps),
       ...(body.variables === undefined ? {} : { variables: body.variables }),
+      ...(body.minDelaySec === undefined || body.minDelaySec === 0
+        ? {}
+        : { minDelaySec: body.minDelaySec }),
       status: IDLE_ACTION_STATUS,
     }
   }
@@ -108,6 +111,9 @@ export class ActionsStore {
       name: input.name,
       steps: input.steps,
       ...(input.variables === undefined ? {} : { variables: input.variables }),
+      ...(input.minDelaySec === undefined || input.minDelaySec === 0
+        ? {}
+        : { minDelaySec: input.minDelaySec }),
       createdAt: at,
       updatedAt: at,
     }
@@ -122,6 +128,9 @@ export class ActionsStore {
       name: input.name,
       steps: input.steps,
       ...(input.variables === undefined ? {} : { variables: input.variables }),
+      ...(input.minDelaySec === undefined || input.minDelaySec === 0
+        ? {}
+        : { minDelaySec: input.minDelaySec }),
       createdAt: existing.data.createdAt,
       updatedAt: this.now(),
     }

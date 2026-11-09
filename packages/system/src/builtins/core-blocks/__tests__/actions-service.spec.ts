@@ -120,7 +120,19 @@ async function world(options?: {
     ...(options?.maxRunMs === undefined ? {} : { maxRunMs: options.maxRunMs }),
     ...(options?.stopGraceMs === undefined ? {} : { stopGraceMs: options.stopGraceMs }),
   })
-  return { service, store, ledger, calls, sourceRuns, events, log, records }
+  return {
+    service,
+    store,
+    ledger,
+    calls,
+    sourceRuns,
+    events,
+    log,
+    records,
+    advance: (ms: number): void => {
+      clock += ms
+    },
+  }
 }
 
 const STEP = (deviceId: number) => ({ kind: 'cap', deviceId, cap: 'siren', method: 'on' }) as const
@@ -231,6 +243,41 @@ describe('actions — internal actions', () => {
     await new Promise((resolve) => setTimeout(resolve, 20))
     const { traces } = await w.service.getTraces({ actionId: action.id })
     expect(traces.map((t) => t.outcome).toSorted()).toEqual(['ran', 'skipped-overlap'])
+  })
+
+  it('minDelaySec: a run that starts inside the window after the last start is skipped, traced and logged; after the window it runs', async () => {
+    const w = await world()
+    const { action } = await w.service.create({
+      action: { name: 'Gate', steps: [STEP(1)], minDelaySec: 30 },
+    })
+    expect(action.minDelaySec).toBe(30)
+    const first = await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    expect(first.outcome).toBe('ran')
+    const second = await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    expect(second.outcome).toBe('skipped-cooldown')
+    expect(w.calls).toHaveLength(1)
+    expect(
+      w.log.lines.some(
+        (l) => l.message.includes('throttled') && l.extras?.meta?.['actionId'] === action.id,
+      ),
+    ).toBe(true)
+    const { traces } = await w.service.getTraces({ actionId: action.id })
+    expect(traces.map((t) => t.outcome).toSorted()).toEqual(['ran', 'skipped-cooldown'])
+    w.advance(31_000)
+    const third = await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
+    expect(third.outcome).toBe('ran')
+    expect(w.calls).toHaveLength(2)
+  })
+
+  it('an action without minDelaySec is never throttled, and update can clear the window with 0', async () => {
+    const w = await world()
+    const { action } = await w.service.create({ action: { name: 'Free', steps: [STEP(1)] } })
+    expect((await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })).outcome).toBe('ran')
+    expect((await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })).outcome).toBe('ran')
+    const set = await w.service.update({ actionId: action.id, action: { minDelaySec: 60 } })
+    expect(set.action.minDelaySec).toBe(60)
+    const cleared = await w.service.update({ actionId: action.id, action: { minDelaySec: 0 } })
+    expect(cleared.action.minDelaySec).toBeUndefined()
   })
 
   it('emits onRunChanged when a run starts and when it ends', async () => {
