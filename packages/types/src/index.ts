@@ -1294,11 +1294,11 @@ export type {
 export {
   DEVICE_FEATURE_REQUIREMENTS,
   deriveFeatureProvenance,
-  implementedMethodsOf,
   isKernelDerivedFeature,
   reconcileReportedFeatures,
   settleDeviceFeatures,
 } from './device/device-feature-requirements.js'
+export { implementedMethodsOf } from './device/implemented-methods.js'
 export {
   APPLIANCE_EXPORT,
   type ApplianceExportDecision,

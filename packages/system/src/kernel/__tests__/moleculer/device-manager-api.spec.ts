@@ -479,7 +479,7 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
 
     const ctx = deviceApi.createContext('cam-1', 1)
     ctx.registerNativeCap(
-      { name: 'snapshot' } as unknown as Parameters<typeof ctx.registerNativeCap>[0],
+      { name: 'snapshot', methods: {} } as unknown as Parameters<typeof ctx.registerNativeCap>[0],
       { getSnapshot: async () => ({}) as never } as never,
     )
 
@@ -542,6 +542,8 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
           reason: 'native-registered',
           addonId: 'provider-rtsp',
           nodeId: 'worker-rtsp-1',
+          // The provider object serves its one cap method: the hub learns it from the event.
+          implementedMethods: ['getSnapshot'],
         },
         {
           deviceId: 4101,
@@ -1811,11 +1813,11 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     await deviceApi.register(asDevice(device))
     const ctx = deviceApi.createContext('cam-1', device.id)
     ctx.registerNativeCap(
-      { name: 'snapshot' } as unknown as Parameters<typeof ctx.registerNativeCap>[0],
+      { name: 'snapshot', methods: {} } as unknown as Parameters<typeof ctx.registerNativeCap>[0],
       { getSnapshot: async () => ({}) as never } as never,
     )
     ctx.registerNativeCap(
-      { name: 'events' } as unknown as Parameters<typeof ctx.registerNativeCap>[0],
+      { name: 'events', methods: {} } as unknown as Parameters<typeof ctx.registerNativeCap>[0],
       { subscribe: async () => ({}) as never } as never,
     )
     emitted.length = 0

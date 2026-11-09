@@ -19,7 +19,7 @@
 // between the two sides readable in one place.
 
 import { randomUUID } from 'node:crypto'
-import { implementedMethodsOf } from '@camstack/types'
+import { implementedMethodsOf } from '@camstack/types/node'
 import type {
   AddonApi,
   CapabilityDefinition,

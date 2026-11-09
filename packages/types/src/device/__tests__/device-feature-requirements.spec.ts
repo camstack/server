@@ -4,10 +4,10 @@ import type { DeviceBindingEntry } from '../device-binding.js'
 import {
   DEVICE_FEATURE_REQUIREMENTS,
   deriveFeatureProvenance,
-  implementedMethodsOf,
   reconcileReportedFeatures,
   settleDeviceFeatures,
 } from '../device-feature-requirements.js'
+import { implementedMethodsOf } from '../implemented-methods.js'
 import { DeviceFeature } from '../device-type.js'
 
 function entry(capName: string, implementedMethods?: string[]): DeviceBindingEntry {

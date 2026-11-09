@@ -148,6 +148,7 @@ export {
   signExpiringUrl,
   verifyExpiringUrl,
 } from './utils/expiring-url-signature.js'
+export { implementedMethodsOf } from './device/implemented-methods.js'
 export type {
   DeviceExportShape,
   ExportDelta,
