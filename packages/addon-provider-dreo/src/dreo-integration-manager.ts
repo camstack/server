@@ -60,7 +60,7 @@ export interface DreoIntegrationManagerOptions {
 
 /**
  * Build a real {@link Nodedreo} facade from a config. Exported so the
- * pre-creation `connection-test` provider signs in through EXACTLY the same
+ * pre-creation connection probe signs in through EXACTLY the same
  * client the live integration will use — a test that authenticated some other
  * way would be validating a different thing from the one that then fails.
  */

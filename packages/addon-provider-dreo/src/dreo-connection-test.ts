@@ -4,8 +4,8 @@ import { dreoConfigSchema } from './config.js'
 import type { DreoFacadeFactory } from './dreo-integration-manager.js'
 
 /**
- * `connection-test` cap provider for Dreo — validates account credentials
- * BEFORE the integration exists.
+ * The credential probe of Dreo (`IConnectionProbe`, answered by `testInstance`) — validates
+ * account credentials BEFORE the integration exists.
  *
  * The Dreo library already carries the credential check we need: `login()`
  * performs the cloud REST auth and throws `DreoAuthError` specifically when the

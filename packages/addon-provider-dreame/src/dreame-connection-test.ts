@@ -4,8 +4,8 @@ import { dreameConfigSchema } from './config.js'
 import type { DreameFacadeFactory } from './dreame-integration-manager.js'
 
 /**
- * `connection-test` cap provider for Dreame — validates account credentials
- * BEFORE the integration exists.
+ * The credential probe of Dreame (`IConnectionProbe`, answered by `testInstance`) — validates
+ * account credentials BEFORE the integration exists.
  *
  * Same contract as the Dreo one: the library's `login()` is the credential
  * check, and `DreameAuthError` is what distinguishes an OBSERVED refusal from a

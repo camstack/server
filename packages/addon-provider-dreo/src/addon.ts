@@ -269,7 +269,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
     })
   }
 
-  // ── connection-test cap provider ───────────────────────────────────────
+  // ── connection probe ────────────────────────────────────────────────
 
   /**
    * Pre-creation credential check. Registered unconditionally — it must answer

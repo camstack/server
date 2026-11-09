@@ -4,8 +4,8 @@ import { petkitConfigSchema } from './config.js'
 import type { PetkitFacadeFactory } from './petkit-integration-manager.js'
 
 /**
- * `connection-test` cap provider for PetKit — validates account credentials
- * BEFORE the integration exists.
+ * The credential probe of PetKit (`IConnectionProbe`, answered by `testInstance`) — validates
+ * account credentials BEFORE the integration exists.
  *
  * PetKit is a pure cloud REST client with no sockets, so `login()` is both the
  * cheapest and the most complete credential check available, and there is

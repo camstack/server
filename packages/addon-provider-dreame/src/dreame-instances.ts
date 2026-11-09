@@ -146,7 +146,7 @@ export async function dreameConnectionOf(
 export interface DreameInstancesDeps {
   /** Bring the runtime in line with the records after a change. */
   readonly onChanged: () => Promise<void>
-  /** The addon's own credential check (the `connection-test` provider). */
+  /** The addon's own credential check (the connection probe `testInstance` runs). */
   readonly tester: IConnectionProbe
 }
 
