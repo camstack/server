@@ -94,6 +94,7 @@ import {
   recordedCutKey,
 } from './recorded-cut-memo.js'
 import type { NcRecordedGifRequest, NcRecordedGifResult } from './recorded-gif.js'
+import { type NcRenderDeviceTemplates, renderAuthoredDeviceTemplates } from './device-template-pass.js'
 import { deprecatedPlaceholders, renderTemplate, templatePlaceholders } from './render-template.js'
 import { NC_RULE_AI_TRACK_FRAMES, pickTrackNarrationFrames, ruleAiWordCap } from './rule-ai.js'
 import type {
@@ -538,6 +539,12 @@ export interface NcDispatcherDeps {
   readonly getZoneNames?: (
     deviceId: number,
   ) => Promise<ReadonlyArray<{ readonly id: string; readonly name: string }>>
+  /**
+   * The hub's device template renderer (D1021), for the second pass over a
+   * rule's authored text. Absent on a node without it: a rule that carries a
+   * device template then falls back to the catalog sentence, and says so.
+   */
+  readonly renderDeviceTemplates?: NcRenderDeviceTemplates
   /**
    * Cut the event's footage ONCE, in every container the rule asked for.
    *
@@ -2052,6 +2059,47 @@ export class NcDispatcher {
    * A rule template written by an older client may still say `{{camera}}`. It
    * renders (the alias), and the rule is named once so the operator can edit it.
    */
+  /**
+   * The second pass over the rule's authored title/body (D1021): device value
+   * templates become text on the hub. A value that printed `—` is logged with
+   * its reason; a refused render drops that text to the catalog sentence and is
+   * logged — the notification is never lost to a template.
+   */
+  private async withDeviceTemplates(entry: NcOutboxEntry): Promise<NcOutboxEntry> {
+    const template = entry.payload.template
+    if (template === undefined) return entry
+    const [title, body] = await renderAuthoredDeviceTemplates(
+      [template.title, template.body],
+      this.deps.renderDeviceTemplates,
+    )
+    if (title === undefined || body === undefined) return entry
+    for (const [field, pass] of [['title', title], ['body', body]] as const) {
+      if (pass.refused !== undefined) {
+        this.deps.logger.warn(
+          'rule device template not rendered — the catalog sentence is sent instead',
+          { tags: { deviceId: entry.deviceId, ruleId: entry.ruleId }, meta: { field, reason: pass.refused } },
+        )
+      } else if (pass.notes.length > 0) {
+        this.deps.logger.info('rule device template printed — for some values', {
+          tags: { deviceId: entry.deviceId, ruleId: entry.ruleId },
+          meta: { field, unknown: pass.notes },
+        })
+      }
+    }
+    if (title.template === template.title && body.template === template.body) return entry
+    return {
+      ...entry,
+      payload: {
+        ...entry.payload,
+        template: {
+          ...template,
+          title: title.template,
+          body: body.template,
+        },
+      },
+    }
+  }
+
   private warnDeprecatedVars(entry: NcOutboxEntry): void {
     if (this.deprecatedVarWarned.has(entry.ruleId)) return
     const template = entry.payload.template
@@ -2131,10 +2179,11 @@ export class NcDispatcher {
    * part of what `notification-output` sends to a backend.
    */
   private async buildNotification(
-    entry: NcOutboxEntry,
+    authored: NcOutboxEntry,
     target: NcTargetRef,
     cycleFacts: NcApplianceCycleFacts,
   ): Promise<NcBuiltNotification> {
+    const entry = await this.withDeviceTemplates(authored)
     const subject = entry.payload.subject
     const systemEvent = subject.systemEvent
     const deviceName = await notificationDeviceName(entry, this.deps.getDeviceName)

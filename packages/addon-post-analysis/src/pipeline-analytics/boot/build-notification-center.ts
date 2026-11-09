@@ -579,6 +579,9 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
         return out
       },
       dispatcher: {
+        // D1021: a rule's device value templates are rendered on the hub by the one renderer.
+        renderDeviceTemplates: async (templates: readonly string[]) =>
+          (await api.deviceManager.renderDeviceTemplates.query({ templates: [...templates] })).results,
         // Rendering-only zone-name lookup: `subject.zones` carries IDs (what
         // the conditions match on), and a body full of UUIDs is what an
         // operator actually received on 2026-07-30.
