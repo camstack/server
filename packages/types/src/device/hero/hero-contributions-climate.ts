@@ -106,8 +106,11 @@ const climateContribution = contribution(
         id: 'climate.mode',
         label: heroText('Mode', 'Modalità'),
         current: view.mode,
-        // "Off" is the device's own power switch, not a mode to pick.
-        options: view.availableModes.filter((m) => m !== 'off'),
+        // "Off" is a mode here: the card draws no separate power row, the last segment switches the device off.
+        options: [
+          ...view.availableModes.filter((m) => m !== 'off'),
+          ...view.availableModes.filter((m) => m === 'off'),
+        ],
         optionLabels: modeLabelsOf(view.availableModes),
         call: { cap: 'climate-control', method: 'setMode', args: {} },
         valueArg: 'mode',

@@ -41,6 +41,7 @@ const brightnessContribution = contribution('brightness', BrightnessStatusSchema
       : {
           facts: [fact('level', 'sun-dim', pct(level), level > 0 ? 'primary' : 'muted')],
           scene: { level: level / 100 },
+          tiles: { left: [{ label: heroText('Brightness', 'Luminosità'), value: pct(level) }] },
         }),
     rows: [
       row(
@@ -296,6 +297,9 @@ function travelFragment(
   return {
     reading: reading(s.source, words.state, false, words.title),
     ...(position === null ? {} : { facts: [fact('level', 'arrow-up-down', pct(position))] }),
+    ...(position === null
+      ? {}
+      : { tiles: { left: [{ label: heroText('Opening', 'Apertura'), value: pct(position) }] } }),
     scene: {
       ...(words.mode === null ? {} : { mode: words.mode }),
       ...(position === null ? {} : { level: position / 100 }),

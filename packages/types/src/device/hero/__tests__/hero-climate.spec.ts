@@ -81,6 +81,13 @@ describe('climate hero', () => {
     expect(fan?.kind === 'picker' ? fan.optionLabels?.['low']?.it : null).toBe('Bassa')
   })
 
+  it('the mode picker carries Off as its last segment, so the card needs no power row', () => {
+    const m = build(DeviceType.Climate, ['climate-control'], { 'climate-control': AC })
+    const mode = m.rows.find((r) => r.id === 'climate-mode')?.controls[0]
+    expect(mode?.kind === 'picker' ? mode.options.at(-1) : null).toBe('off')
+    expect(mode?.kind === 'picker' ? mode.optionLabels?.['off']?.it : null).toBe('Spento')
+  })
+
   it('the integration is a chip, first among the badges', () => {
     const m = buildHeroModel({
       device: {

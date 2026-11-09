@@ -117,6 +117,16 @@ const lockContribution = contribution('lock-control', LockControlStatusSchema, (
     ...(since === null || words === null
       ? {}
       : { facts: [fact('since', 'clock', since, 'muted')] }),
+    ...(words === null
+      ? {}
+      : {
+          tiles: {
+            left: [
+              { label: heroText('Door', 'Porta'), value: title },
+              ...(since === null ? [] : [{ label: heroText('Since', 'Da'), value: since }]),
+            ],
+          },
+        }),
     ...(words?.door == null ? {} : { scene: { mode: words.door } }),
   }
 })
@@ -223,6 +233,16 @@ const alarmContribution = contribution('alarm-panel', AlarmPanelStatusSchema, (s
     ...(since === null || words === null
       ? {}
       : { facts: [fact('since', 'clock', since, state === 'triggered' ? 'danger' : 'muted')] }),
+    ...(words === null
+      ? {}
+      : {
+          tiles: {
+            left: [{ label: heroText('Mode', 'Modalità'), value: words.title }],
+            ...(since === null
+              ? {}
+              : { right: [{ label: heroText('Since', 'Da'), value: since }] }),
+          },
+        }),
   }
 })
 

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Device hero: the integration name is a chip, climate modes and fan speeds carry readable labels, and the scene caption names the mode and the fan
 - The device hero model gains an end clock time, a timer tile, fan oscillation and mode, tank and volume tiles, and a valve caption
+- Device hero: the vacuum gets a Suction row and tile, media, lock, alarm, cover and light carry their own tiles, and the climate mode picker ends with Off
 
 ## [1.2.534] - 2026-11-09
 

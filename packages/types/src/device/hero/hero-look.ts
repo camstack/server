@@ -265,11 +265,11 @@ const LOCK_LOOK: HeroLook = {
   off: look('lock-open', 'muted', 'plain', 'none'),
 }
 
-/** The shield glows while armed, blinks red in alarm and goes quiet when disarmed. */
+/** The shield glows red while armed, blinks red in alarm and goes quiet when disarmed. */
 const ALARM_LOOK: HeroLook = {
   ...lookOf({
     icon: 'shield-check',
-    on: ['success', 'glow', 'halo'],
+    on: ['danger', 'glow', 'halo'],
     off: MUTED,
     running: ['primary', 'plain', 'pulse'],
     idle: INFO,

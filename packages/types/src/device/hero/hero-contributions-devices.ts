@@ -34,7 +34,7 @@ import {
   type HeroContribution,
 } from './hero-contribution-kit.js'
 import type { HeroContext } from './hero-fragment.js'
-import type { HeroArgs, HeroControl, HeroFact } from './hero-model.js'
+import type { HeroArgs, HeroControl, HeroFact, HeroRow } from './hero-model.js'
 import type { HeroState } from './hero-state.js'
 import { heroText, type HeroText } from './hero-text.js'
 
@@ -242,8 +242,9 @@ const vacuumContribution = contribution(
         ? heroText(slice.errorLabel, slice.errorLabel)
         : words?.title
     const controls = vacuumControls(state)
+    const suctionControls: HeroControl[] = []
     if (slice !== undefined && slice.availableFanSpeeds.length > 0) {
-      controls.push({
+      suctionControls.push({
         kind: 'picker',
         id: 'vacuum.suction',
         label: heroText('Suction', 'Aspirazione'),
@@ -255,21 +256,43 @@ const vacuumContribution = contribution(
     }
     if (state !== null) controls.push(vac('locate', 'Locate', 'Trova', 'map-pin', 'locate'))
     const progress = state === 'cleaning' ? (slice?.progress ?? null) : null
+    const suction =
+      slice?.fanSpeed == null || slice.fanSpeed === ''
+        ? []
+        : [
+            {
+              label: heroText('Suction', 'Aspirazione'),
+              value: heroText(slice.fanSpeed, slice.fanSpeed),
+            },
+          ]
+    const suctionRows: readonly HeroRow[] =
+      suctionControls.length === 0
+        ? []
+        : [{ id: 'vacuum-suction', icon: 'bot', status: null, controls: suctionControls }]
+    const vacuumRows: readonly HeroRow[] = [
+      { id: 'vacuum', icon: 'bot', status: title ?? unknownText, controls },
+      ...suctionRows,
+    ]
     return {
       reading: reading('vacuum-control', words?.state ?? 'unknown', false, title),
-      rows: [{ id: 'vacuum', icon: 'bot', status: title ?? unknownText, controls }],
+      rows: vacuumRows,
       facts: [
         ...ownBattery(slice?.batteryLevel ?? null, ctx),
         ...(progress === null ? [] : [fact('progress', 'activity', pct(progress), 'primary')]),
       ],
-      ...(progress === null
+      ...(suction.length === 0 && progress === null
         ? {}
         : {
             tiles: {
-              right: [{ label: heroText('Progress', 'Avanzamento'), value: pct(progress) }],
+              right: [
+                ...suction,
+                ...(progress === null
+                  ? []
+                  : [{ label: heroText('Progress', 'Avanzamento'), value: pct(progress) }]),
+              ],
             },
-            scene: { level: unit(progress) },
           }),
+      ...(progress === null ? {} : { scene: { level: unit(progress) } }),
     }
   },
 )

@@ -67,7 +67,8 @@ describe('vacuum-control', () => {
     expect(primaryOf(m, 'vacuum')?.call.method).toBe('pause')
     expect(methods(m, 'vacuum')).toContain('returnToBase')
     expect(m.facts.map((f) => f.id)).toEqual(['battery', 'progress'])
-    expect(rowOf(m, 'vacuum').controls.some((c) => c.kind === 'picker')).toBe(true)
+    expect(rowOf(m, 'vacuum-suction').controls.map((c) => c.kind)).toEqual(['picker'])
+    expect(rowOf(m, 'vacuum').controls.some((c) => c.kind === 'picker')).toBe(false)
   })
   it('paused resumes with start; docked and idle start; error only goes home', () => {
     const paused = build(DeviceType.Vacuum, caps, vacuum('paused'))

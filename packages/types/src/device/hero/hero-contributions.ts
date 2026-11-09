@@ -901,21 +901,32 @@ const mediaPlayerContribution = contribution(
       const line = `${clock(position)} / ${clock(duration)}`
       facts.push(fact('progress', 'activity', heroText(line, line)))
     }
+    const trackNow = slice?.currentMedia?.title ?? null
+    const mediaTiles = {
+      left: [
+        ...(trackNow === null
+          ? []
+          : [{ label: heroText('Track', 'Brano'), value: heroText(trackNow, trackNow) }]),
+        ...(sourceNow === null
+          ? []
+          : [{ label: heroText('Source', 'Sorgente'), value: heroText(sourceNow, sourceNow) }]),
+      ],
+      right:
+        volumeNow === null
+          ? []
+          : [
+              {
+                label: heroText('Volume', 'Volume'),
+                value: heroText(`${volumeNow}%`, `${volumeNow}%`),
+              },
+            ],
+    }
     return {
       reading: mediaReading(view),
       facts,
-      ...(volumeNow === null
+      ...(mediaTiles.left.length === 0 && mediaTiles.right.length === 0
         ? {}
-        : {
-            tiles: {
-              right: [
-                {
-                  label: heroText('Volume', 'Volume'),
-                  value: heroText(`${volumeNow}%`, `${volumeNow}%`),
-                },
-              ],
-            },
-          }),
+        : { tiles: mediaTiles }),
       scene: {
         ...(mode === null ? {} : { mode }),
         ...(volumeNow === null ? {} : { level: volumeNow / 100 }),
