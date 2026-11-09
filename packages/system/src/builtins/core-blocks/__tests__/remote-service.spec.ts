@@ -335,6 +335,14 @@ describe('power on a toggle remote', () => {
     expect(on.calls.map((c) => c.args)).toEqual([{ timings: [9000, -4500], tag: 'off' }])
   })
 
+  it('the Power key with power AND the pair all bound sends the power binding', async () => {
+    const w = world(
+      config({ bindings: { power: ir('pwr'), power_on: ir('on'), power_off: ir('off') } }),
+    )
+    await w.service.sendCommand({ deviceId: TV, role: 'power', repeat: 1 })
+    expect(w.calls.map((c) => c.args)).toEqual([{ timings: [9000, -4500], tag: 'pwr' }])
+  })
+
   it('a stored configuration that still carries power.mode reads, and the field is gone', () => {
     const read = readStoredRemoteConfig({
       ...EMPTY_REMOTE_CONFIG,

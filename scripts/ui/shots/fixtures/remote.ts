@@ -335,7 +335,6 @@ export default defineFixtures({
     'mut:remote.setConfig': { status: 'saved' },
     'remote.listCommands': {
       layoutTemplateId: 'tpl-composed',
-      power: { mode: 'toggle' },
       commands: [
         { role: 'power', custom: false },
         { role: 'mute', custom: false },

@@ -17,7 +17,7 @@ import {
 } from '@camstack/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeRecordsWorld } from '../../../sqlite-storage/__tests__/support/records-world.js'
-import { recordingLogger } from '../../__tests__/fixtures.js'
+import { type LogLine, recordingLogger } from '../../__tests__/fixtures.js'
 import { coreBlocksRecordKinds } from '../../record-kinds.js'
 import {
   ADDON_MIGRATIONS,
@@ -47,6 +47,7 @@ function seedRemote(): Record<string, unknown> {
     layoutTemplateId: 'tpl-samsung',
     defaultTransmitterId: 77,
     stepDelayMs: 650,
+    power: { mode: 'toggle' },
     bindings: {
       power: action(77, 'pwr-marker'),
       ok: action(77, 'ok-marker'),
@@ -108,8 +109,11 @@ beforeEach(async () => {
   })
 })
 
+let logLines: LogLine[] = []
+
 async function run(id: string): Promise<string> {
-  const { logger } = recordingLogger()
+  const { logger, lines } = recordingLogger()
+  logLines = lines
   const stores = {
     listDeviceStoreIds: async () => [...deviceStore.keys()],
     readDeviceStoreBatch: async (ids: readonly number[]) =>
@@ -143,6 +147,109 @@ describe('core-blocks migration: the remote power mode is dropped', () => {
     expect(remoteOf()).toEqual(expected)
     expect(deviceStore.get(TV)?.['unrelated']).toEqual({ marker: 1 })
     expect(deviceStore.get(9)).toEqual({ other: true })
+  })
+
+  it('a second run edits nothing', async () => {
+    await run(REMOTE_POWER_DROP_ID)
+    const first = structuredClone(remoteOf())
+    await expect(run(REMOTE_POWER_DROP_ID)).resolves.toBe('already-done')
+    expect(remoteOf()).toEqual(first)
+  })
+
+  it('the migrated config parses with the schema that has no power', async () => {
+    await run(REMOTE_POWER_DROP_ID)
+    expect(RemoteConfigSchema.safeParse(remoteOf()).success).toBe(true)
+  })
+})
+
+describe('core-blocks migration: the lettered colour keys take the colour roles', () => {
+  it('renames bindings, custom buttons and sequence steps, keeping each action and name', async () => {
+    await expect(run(REMOTE_COLOUR_ROLES_ID)).resolves.toBe('done')
+    const remote = remoteOf()
+    expect(remote['bindings']).toEqual({
+      power: action(77, 'pwr-marker'),
+      ok: action(77, 'ok-marker'),
+      'custom:color_red': action(77, 'a-marker'),
+      'custom:color_green': action(77, 'b-marker'),
+      'custom:color_yellow': action(77, 'c-marker'),
+      'custom:color_blue': action(77, 'd-marker'),
+      'custom:ch_list': action(77, 'ch-marker'),
+    })
+    expect(remote['customButtons']).toEqual([
+      { key: 'color_red', name: 'Rosso marker' },
+      { key: 'color_green', name: 'B' },
+      { key: 'color_yellow', name: 'C' },
+      { key: 'color_blue', name: 'D' },
+      { key: 'ch_list', name: 'CH LIST' },
+    ])
+    expect(remote['sources']).toEqual([
+      { id: 'blue-seq', name: 'Blue marker', kind: 'sequence', steps: ['custom:color_blue', 'ok'] },
+    ])
+    expect(remote['defaultTransmitterId']).toBe(77)
+    expect(remote['stepDelayMs']).toBe(650)
+  })
+
+  it('gives the layout buttons the tone and keeps the letter on the key', async () => {
+    await run(REMOTE_COLOUR_ROLES_ID)
+    const row = await records.kind(coreBlocksRecordKinds.templates).get('tpl-samsung')
+    expect(row?.data.name).toBe('Samsung marker')
+    expect(row?.data.updatedAt).toBe(NOW)
+    const layout = RemoteLayoutPayloadSchema.parse(row?.data.payload)
+    expect(layout.buttons.find((b) => b.id === 'color_a')).toMatchObject({
+      role: 'custom:color_red',
+      tone: 'red',
+      label: 'A',
+      showLegend: true,
+    })
+    expect(layout.buttons.find((b) => b.id === 'color_b')).toMatchObject({
+      role: 'custom:color_green',
+      tone: 'green',
+    })
+    expect(layout.buttons.find((b) => b.id === 'power')).toEqual(seedLayout.buttons[0])
+  })
+
+  it('a remote with BOTH the lettered and the colour binding loses no code: the lettered one is kept under a fresh key', async () => {
+    const seeded = seedRemote()
+    deviceStore.set(TV, {
+      remote: {
+        ...seeded,
+        bindings: { ...(seeded['bindings'] as object), 'custom:color_red': action(1, 'newer') },
+        customButtons: [
+          ...(seeded['customButtons'] as { key: string; name: string }[]),
+          { key: 'color_red', name: 'Red' },
+        ],
+        sources: [
+          { id: 'a-seq', name: 'A seq', kind: 'sequence', steps: ['custom:color_a', 'ok'] },
+          { id: 'b-seq', name: 'B seq', kind: 'sequence', steps: ['custom:color_b', 'ok'] },
+        ],
+      },
+    })
+    await run(REMOTE_COLOUR_ROLES_ID)
+    const remote = remoteOf()
+    expect(remote['bindings']).toMatchObject({
+      'custom:color_red': action(1, 'newer'),
+      'custom:color_a_kept': action(77, 'a-marker'),
+      'custom:color_green': action(77, 'b-marker'),
+    })
+    expect(Object.keys(remote['bindings'] as object)).not.toContain('custom:color_a')
+    expect(remote['customButtons']).toEqual(
+      expect.arrayContaining([
+        { key: 'color_a_kept', name: 'Rosso marker' },
+        { key: 'color_red', name: 'Red' },
+      ]),
+    )
+    // The sequence that pressed the lettered key presses the kept one, not the newer colour key.
+    const steps = (remote['sources'] as { id: string; steps: string[] }[]).map((x) => [
+      x.id,
+      x.steps,
+    ])
+    expect(steps).toEqual([
+      ['a-seq', ['custom:color_a_kept', 'ok']],
+      ['b-seq', ['custom:color_green', 'ok']],
+    ])
+    const warn = logLines.find((l) => l.level === 'warn')
+    expect(warn?.message).toContain('color_a')
+    expect(warn?.extras).toMatchObject({ tags: { deviceId: TV } })
   })
 
   it('a second run edits nothing', async () => {

@@ -6,4 +6,5 @@ export const NO_REMOTE_PORTS: RemoteMigrationPorts = {
   replaceStoredRemote: async () => undefined,
   listTemplateRows: async () => [],
   replaceTemplateRow: async () => undefined,
+  warnCollision: () => undefined,
 }

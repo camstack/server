@@ -43,6 +43,8 @@ export interface RemoteMigrationPorts {
   replaceStoredRemote(deviceId: number, raw: Record<string, unknown>): Promise<void>
   listTemplateRows(): Promise<readonly StoredTemplateRow[]>
   replaceTemplateRow(id: string, data: TemplateRowBody, ifRev: number): Promise<void>
+  /** A device had both a lettered colour key and its colour role: the lettered one was kept under a new key. */
+  warnCollision(deviceId: number, keys: readonly string[]): void
 }
 
 /** The device settings view the real ports need. */
@@ -83,6 +85,12 @@ export function remoteMigrationPortsOver(
     replaceTemplateRow: async (id, data, ifRev) => {
       await templates.put({ id, data }, { ifRev })
     },
+    warnCollision: (deviceId, keys) => {
+      logger.warn(
+        `remote migration: ${keys.join(', ')} had a code and so did its colour role; the lettered one is kept as <key>_kept`,
+        { tags: { deviceId } },
+      )
+    },
   }
 }
 
@@ -118,12 +126,6 @@ function newKeyOf(key: string): string | null {
   return colour === undefined ? null : `color_${colour}`
 }
 
-function newRoleOf(role: string): string | null {
-  if (!role.startsWith(CUSTOM)) return null
-  const key = newKeyOf(role.slice(CUSTOM.length))
-  return key === null ? null : `${CUSTOM}${key}`
-}
-
 function withoutKeys(
   record: Readonly<Record<string, unknown>>,
   drop: ReadonlySet<string>,
@@ -138,48 +140,85 @@ export function withoutPowerMode(raw: unknown): Record<string, unknown> | null {
   return withoutKeys(parsed.data, new Set(['power']))
 }
 
+/**
+ * The lettered keys of a remote that already has the colour role of the same colour:
+ * both carry a code, so the lettered one is kept under a fresh key instead of
+ * being dropped.
+ */
+function collidingKeys(remote: StoredRemote): ReadonlySet<string> {
+  const bound = new Set(Object.keys(remote.bindings ?? {}))
+  const buttons = new Set((remote.customButtons ?? []).map((b) => b.key))
+  const out = new Set<string>()
+  for (const key of Object.keys(LETTER_TO_COLOUR)) {
+    const target = newKeyOf(key)
+    if (target === null) continue
+    const hasOld = bound.has(`${CUSTOM}${key}`) || buttons.has(key)
+    const hasNew = bound.has(`${CUSTOM}${target}`) || buttons.has(target)
+    if (hasOld && hasNew) out.add(key)
+  }
+  return out
+}
+
+/** Where a lettered key goes: its colour key, or `<key>_kept` when the colour key is taken. */
+function keyAfter(key: string, kept: ReadonlySet<string>): string | null {
+  if (kept.has(key)) return `${key}_kept`
+  return newKeyOf(key)
+}
+
+function roleAfter(role: string, kept: ReadonlySet<string>): string | null {
+  if (!role.startsWith(CUSTOM)) return null
+  const key = keyAfter(role.slice(CUSTOM.length), kept)
+  return key === null ? null : `${CUSTOM}${key}`
+}
+
 function renameBindings(
   bindings: Readonly<Record<string, unknown>>,
+  kept: ReadonlySet<string>,
 ): Record<string, unknown> | null {
   let changed = false
   const out: Record<string, unknown> = {}
   for (const [role, binding] of Object.entries(bindings)) {
-    const next = newRoleOf(role)
+    const next = roleAfter(role, kept)
     if (next === null) {
-      if (!(role in out)) out[role] = binding
+      out[role] = binding
       continue
     }
     changed = true
-    // A binding already stored under the colour role wins: it is the newer one.
-    if (!(next in bindings)) out[next] = binding
+    out[next] = binding
   }
   return changed ? out : null
 }
 
 function renameCustomButtons(
   buttons: NonNullable<StoredRemote['customButtons']>,
+  kept: ReadonlySet<string>,
 ): NonNullable<StoredRemote['customButtons']> | null {
   const keys = new Set(buttons.map((b) => b.key))
   let changed = false
   const out: NonNullable<StoredRemote['customButtons']> = []
   for (const button of buttons) {
-    const next = newKeyOf(button.key)
+    const next = keyAfter(button.key, kept)
     if (next === null) {
       out.push(button)
       continue
     }
     changed = true
-    if (!keys.has(next)) out.push({ ...button, key: next })
+    // A colour button already stored under the target key is the newer one; the
+    // lettered button only goes when the colour role is free (the `_kept` key always is).
+    if (!keys.has(next) || kept.has(button.key)) out.push({ ...button, key: next })
   }
   return changed ? out : null
 }
 
-function renameSourceSteps(sources: readonly unknown[]): unknown[] | null {
+function renameSourceSteps(
+  sources: readonly unknown[],
+  kept: ReadonlySet<string>,
+): unknown[] | null {
   let changed = false
   const out = sources.map((source) => {
     const sequence = StoredSequenceSchema.safeParse(source)
     if (!sequence.success) return source
-    const steps = sequence.data.steps.map((step) => newRoleOf(step) ?? step)
+    const steps = sequence.data.steps.map((step) => roleAfter(step, kept) ?? step)
     if (steps.every((step, i) => step === sequence.data.steps[i])) return source
     changed = true
     return { ...sequence.data, steps }
@@ -187,20 +226,34 @@ function renameSourceSteps(sources: readonly unknown[]): unknown[] | null {
   return changed ? out : null
 }
 
+export interface RenamedRemote {
+  readonly remote: Record<string, unknown>
+  /** The lettered keys kept under a `_kept` key because their colour role was already in use. */
+  readonly collisions: readonly string[]
+}
+
 /** The remote with the colour roles renamed, or null when it binds none of the lettered ones. */
-export function withColourRoles(raw: unknown): Record<string, unknown> | null {
+export function withColourRoles(raw: unknown): RenamedRemote | null {
   const parsed = StoredRemoteSchema.safeParse(raw)
   if (!parsed.success) return null
-  const bindings = parsed.data.bindings === undefined ? null : renameBindings(parsed.data.bindings)
+  const kept = collidingKeys(parsed.data)
+  const bindings =
+    parsed.data.bindings === undefined ? null : renameBindings(parsed.data.bindings, kept)
   const customButtons =
-    parsed.data.customButtons === undefined ? null : renameCustomButtons(parsed.data.customButtons)
-  const sources = parsed.data.sources === undefined ? null : renameSourceSteps(parsed.data.sources)
+    parsed.data.customButtons === undefined
+      ? null
+      : renameCustomButtons(parsed.data.customButtons, kept)
+  const sources =
+    parsed.data.sources === undefined ? null : renameSourceSteps(parsed.data.sources, kept)
   if (bindings === null && customButtons === null && sources === null) return null
   return {
-    ...parsed.data,
-    ...(bindings === null ? {} : { bindings }),
-    ...(customButtons === null ? {} : { customButtons }),
-    ...(sources === null ? {} : { sources }),
+    remote: {
+      ...parsed.data,
+      ...(bindings === null ? {} : { bindings }),
+      ...(customButtons === null ? {} : { customButtons }),
+      ...(sources === null ? {} : { sources }),
+    },
+    collisions: [...kept],
   }
 }
 
@@ -208,7 +261,7 @@ function recolouredButton(button: RemoteLayoutButton): RemoteLayoutButton | null
   if (!button.role.startsWith(CUSTOM)) return null
   const oldKey = button.role.slice(CUSTOM.length)
   const colour = LETTER_TO_COLOUR[oldKey]
-  const role = newRoleOf(button.role)
+  const role = roleAfter(button.role, new Set())
   if (colour === undefined || role === null) return null
   return {
     ...button,
@@ -258,7 +311,8 @@ export async function renameRemoteColourRoles(
   for (const { deviceId, raw } of remotes) {
     const next = withColourRoles(raw)
     if (next === null) continue
-    await ports.replaceStoredRemote(deviceId, next)
+    if (next.collisions.length > 0) ports.warnCollision(deviceId, next.collisions)
+    await ports.replaceStoredRemote(deviceId, next.remote)
     devices += 1
   }
   let templates = 0
