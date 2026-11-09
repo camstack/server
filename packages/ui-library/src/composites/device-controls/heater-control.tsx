@@ -3,8 +3,9 @@
  *
  * A heater is a switch that heats while it is on, and the hub can switch it off
  * again after a chosen time (`timed-run`, D993):
- *   - HeaterInlineControl (device-list row): the on/off switch and a one-tap
- *     "Run N min".
+ *   - HeaterInlineControl (device-list row): the on/off switch. The timed run
+ *     beside it is the row control (`TimedRunRowControl`), shared by every
+ *     device that binds the cap.
  *   - HeaterHeroCard (device-detail hero): the glowing heat backdrop (the same
  *     rising streaks a heating air conditioner draws) while it is on, the
  *     on/off switch and the timed
@@ -12,14 +13,13 @@
  *
  * Every reading may be unknown (`null`) and is drawn as a dash, never as zero.
  */
-import { Flame, Timer } from 'lucide-react'
+import { Flame } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { TIMED_RUN_LIMITS, type SwitchStatus, DeviceType } from '@camstack/types'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
 import { cn } from '../../lib/cn'
-import { Button } from '../../primitives/button'
 import { Switch } from '../../primitives/switch'
 import { AirflowViz, KEYFRAMES } from './ac-panel'
 import type { DeviceControlProps } from './control-registry'
@@ -29,13 +29,22 @@ const HEATER_LIMIT = TIMED_RUN_LIMITS[DeviceType.Heater]
 const HEAT_ACCENT = 'var(--color-warning)'
 const HEAT_PERIOD_SEC = 1.8
 
-function useHeater({ trpc, deviceId, optimistic }: DeviceControlProps) {
+function useHeaterSwitch({ trpc, deviceId, optimistic }: DeviceControlProps) {
   const { cap, slice, available } = useDeviceCapability({
     trpc,
     deviceId,
     cap: (d) => d.switch,
     slice: (d) => d.state.switch,
   })
+  const { display, applyOptimisticAction } = useOptimisticSlice<SwitchStatus>(slice, {
+    enabled: optimistic ?? true,
+  })
+  return { cap, display, available, applyOptimisticAction }
+}
+
+function useHeater(props: DeviceControlProps) {
+  const sw = useHeaterSwitch(props)
+  const { trpc, deviceId } = props
   const running = useDeviceCapability({
     trpc,
     deviceId,
@@ -48,14 +57,8 @@ function useHeater({ trpc, deviceId, optimistic }: DeviceControlProps) {
     cap: (d) => d.timedRun,
     slice: (d) => d.state.timedRun,
   })
-  const { display, applyOptimisticAction } = useOptimisticSlice<SwitchStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
   return {
-    cap,
-    display,
-    available,
-    applyOptimisticAction,
+    ...sw,
     running: running.slice,
     timer,
   }
@@ -63,16 +66,9 @@ function useHeater({ trpc, deviceId, optimistic }: DeviceControlProps) {
 
 export function HeaterInlineControl(props: DeviceControlProps): ReactNode {
   const t = useUiText()
-  const { cap, display, available, applyOptimisticAction, timer } = useHeater(props)
+  const { cap, display, available, applyOptimisticAction } = useHeaterSwitch(props)
   if (cap === undefined || display === undefined) return null
   const on = display.on === true
-  // The one-tap run is the hub's word for THIS device (the timed-run status). A status from
-  // an older provider carries none: the type's default stands in, as the timed-run control does.
-  const quickRun =
-    timer.slice?.quickRun ??
-    (HEATER_LIMIT === undefined
-      ? null
-      : { duration: HEATER_LIMIT.quickRunDefault, unit: HEATER_LIMIT.unit })
   return (
     <div className="inline-flex items-center gap-2">
       {/* The row is clickable: a toggle must not also open the device. */}
@@ -86,27 +82,6 @@ export function HeaterInlineControl(props: DeviceControlProps): ReactNode {
           }}
         />
       </span>
-      {timer.cap !== undefined && quickRun !== null && (
-        <span onClick={(e) => e.stopPropagation()}>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!timer.online}
-            onClick={() =>
-              void timer.cap?.runFor({ duration: quickRun.duration, unit: quickRun.unit })
-            }
-          >
-            <Timer className="h-3.5 w-3.5" aria-hidden />
-            {t('uiLibrary.timedRun.quickRun', 'Run {{duration}} {{unit}}', {
-              duration: quickRun.duration,
-              unit:
-                quickRun.unit === 'min'
-                  ? t('uiLibrary.timedRun.minutes', 'min')
-                  : t('uiLibrary.timedRun.seconds', 's'),
-            })}
-          </Button>
-        </span>
-      )}
     </div>
   )
 }

@@ -36,6 +36,7 @@ import {
   type ControlPlacement,
 } from '../device-controls/control-registry'
 import { ControlColumn } from '../device-controls/atoms'
+import { TimedRunRowControl } from '../device-controls/timed-run-row-control'
 import { SensorValueAtom } from '../device-controls/sensor-value-atom'
 import { resolveContainerPrimary } from '../device-controls/container-primary'
 import { cn } from '../../lib/cn'
@@ -142,6 +143,7 @@ export function DeviceItemActions({
             <OnMotionToggle trpc={trpc} deviceId={device.id} features={device.features} />
           )}
           <InlineControl trpc={trpc} deviceId={device.id} features={device.features} />
+          <TimedRunRowControl trpc={trpc} deviceId={device.id} deviceType={device.type} />
         </ControlColumn>
       )}
       {!isSensorRow && InlineControl === null && showOnMotion && (
@@ -204,6 +206,7 @@ function ContainerPrimaryInline({
   return (
     <ControlColumn align={columnAlign} onClick={(e) => e.stopPropagation()}>
       <InlineControl trpc={trpc} deviceId={child.id} features={child.features} />
+      <TimedRunRowControl trpc={trpc} deviceId={child.id} deviceType={child.type} />
     </ControlColumn>
   )
 }

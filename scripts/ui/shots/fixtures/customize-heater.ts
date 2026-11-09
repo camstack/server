@@ -10,7 +10,7 @@ import { defineFixtures } from './_define'
 const HA = 'provider-homeassistant'
 const base = fountainArea.handlers
 
-const FOUNTAIN_DEVICE = {
+const HEATER = {
   id: 910,
   stableId: 'composed-blk-heater',
   addonId: 'composer',
@@ -27,6 +27,30 @@ const FOUNTAIN_DEVICE = {
   config: {},
   secretConfigPaths: [],
   metadata: {},
+}
+
+/** A second stove with a run already armed, so the list shows idle and armed together. */
+const HEATER_ARMED = {
+  ...HEATER,
+  id: 911,
+  stableId: 'composed-blk-heater-armed',
+  name: 'Stove armed',
+}
+
+const ARMED_UNTIL = Date.now() + 23 * 60_000
+
+function heaterBindings(deviceId: number) {
+  const entry = (capName: string) => ({
+    capName,
+    kind: 'native' as const,
+    providerAddonId: 'composer',
+    providerNodeId: 'hub',
+    nativeAddonId: 'composer',
+  })
+  return {
+    deviceId,
+    entries: [entry('switch'), entry('timed-run')],
+  }
 }
 
 const PLUG = {
@@ -96,13 +120,15 @@ export default defineFixtures({
   description: 'Customize tab and device page of a built heater on a plug',
   handlers: {
     ...base,
-    'deviceManager.listAll': [...baseDevices, FOUNTAIN_DEVICE, PLUG],
+    'deviceManager.listAll': [HEATER, HEATER_ARMED, ...baseDevices, PLUG],
     'deviceManager.getDevice': (i: { deviceId: number }) =>
       i.deviceId === 910
-        ? FOUNTAIN_DEVICE
-        : i.deviceId === 410
-          ? PLUG
-          : get('deviceManager.getDevice')(i),
+        ? HEATER
+        : i.deviceId === 911
+          ? HEATER_ARMED
+          : i.deviceId === 410
+            ? PLUG
+            : get('deviceManager.getDevice')(i),
     'deviceManager.getDeviceAggregate': (i: { deviceId: number }) => ({
       settings: { tabs: [], sections: [] },
       live: { sections: [] },
@@ -116,7 +142,7 @@ export default defineFixtures({
     'deviceManager.getChildren': [],
     'alerts.list': [],
     'deviceManager.listPersistedByAddon': (input: { addonId?: string }) =>
-      input.addonId === 'composer' ? [FOUNTAIN_DEVICE] : [],
+      input.addonId === 'composer' ? [HEATER, HEATER_ARMED] : [],
     'coreBlocks.list': { blocks: [BLOCK] },
     'coreBlocks.listCompositions': { state: 'loaded', views: [VIEW] },
     'coreBlocks.getComposition': (input: { blockId?: string }) =>
@@ -128,7 +154,9 @@ export default defineFixtures({
       caps: [{ cap: 'consumables' }, { cap: 'power-source' }, { cap: 'running-state' }],
     },
     'deviceManager.getBindings': (i: { deviceId?: number }) =>
-      i.deviceId === 910 ? { entries: [] } : get('deviceManager.getBindings')(i),
+      i.deviceId === 910 || i.deviceId === 911
+        ? heaterBindings(i.deviceId)
+        : get('deviceManager.getBindings')(i),
     'deviceManager.listDeviceIdsByCaps': (i: { capNames?: readonly string[] }) => {
       const cap = i.capNames?.[0] ?? ''
       if (cap === 'battery' || cap === 'numeric-sensor' || cap === 'temperature-sensor')
@@ -162,20 +190,30 @@ export default defineFixtures({
             switch: { on: true, lastChangedAt: 1_700_000_000_000 },
             'timed-run': { activeUntil: null, quickRun: { duration: 45, unit: 'min' } },
           }
-        : i.deviceId === 305
+        : i.deviceId === 911
           ? {
-              control: { value: 12, unit: 'h' },
-              battery: { level: 64 },
-              'temperature-sensor': { temperature: 21.5, unit: '°C' },
+              switch: { on: true, lastChangedAt: 1_700_000_000_000 },
+              'timed-run': {
+                activeUntil: ARMED_UNTIL,
+                quickRun: { duration: 30, unit: 'min' },
+              },
             }
-          : i.deviceId === 301
-            ? { 'enum-sensor': { value: '0' } }
-            : {},
+          : i.deviceId === 305
+            ? {
+                control: { value: 12, unit: 'h' },
+                battery: { level: 64 },
+                'temperature-sensor': { temperature: 21.5, unit: '°C' },
+              }
+            : i.deviceId === 301
+              ? { 'enum-sensor': { value: '0' } }
+              : {},
     'deviceState.getCapSlice': (i: { deviceId: number; capName: string }) =>
       i.deviceId === 910 && i.capName === 'timed-run'
         ? { activeUntil: null, quickRun: { duration: 45, unit: 'min' } }
-        : i.deviceId === 910 && i.capName === 'switch'
-          ? { on: true, lastChangedAt: 1_700_000_000_000 }
-          : { percentage: 73, running: false },
+        : i.deviceId === 911 && i.capName === 'timed-run'
+          ? { activeUntil: ARMED_UNTIL, quickRun: { duration: 30, unit: 'min' } }
+          : (i.deviceId === 910 || i.deviceId === 911) && i.capName === 'switch'
+            ? { on: true, lastChangedAt: 1_700_000_000_000 }
+            : { percentage: 73, running: false },
   },
 })

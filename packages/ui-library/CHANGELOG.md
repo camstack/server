@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The device list shows Run or Stop for a timed run, and the time left while one is armed.
+
 ## [1.2.412] - 2026-11-09
 
 ### Changed
