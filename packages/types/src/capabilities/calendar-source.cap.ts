@@ -23,9 +23,10 @@ export const CalendarInfoSchema = z.object({
   /**
    * The `integration-instances` record that owns this calendar (the record the switch writes).
    * Every source stamps it from the record it read the calendar from, so a consumer joins on
-   * it instead of rebuilding an id from form values.
+   * it instead of rebuilding an id from form values. Optional on the wire so a source addon
+   * that predates the field still lists its calendars: such a row simply has no switch.
    */
-  instanceId: z.string().min(1),
+  instanceId: z.string().min(1).optional(),
 })
 export type CalendarInfo = z.infer<typeof CalendarInfoSchema>
 

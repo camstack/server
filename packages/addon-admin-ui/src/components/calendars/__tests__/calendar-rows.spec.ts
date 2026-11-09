@@ -148,4 +148,10 @@ describe('joinCalendarRows', () => {
     const rows = join([entry('a', 'nope', 'a:y', 'Y')], [])
     expect(rows[0]?.instance).toBeNull()
   })
+
+  it('a calendar from a source that predates instanceId stays listed, with no switch', () => {
+    const { instanceId: _omitted, ...legacy } = entry('waste-collections', 's1', 'waste:s1', 'Old')
+    const rows = join([legacy], [holder('waste-collections', [{ id: 's1', formValues: {} }])])
+    expect(rows.find((r) => r.calendar?.id === 'waste:s1')?.instance).toBeNull()
+  })
 })

@@ -52,9 +52,11 @@ export function joinCalendarRows(
   const keyOf = (addonId: string, instanceId: string): string => `${addonId}\u0000${instanceId}`
   const rows: CalendarListRow[] = calendars.map((calendar) => {
     const instance =
-      instances.find(
-        (i) => i.addonId === calendar.providerAddonId && i.id === calendar.instanceId,
-      ) ?? null
+      calendar.instanceId === undefined
+        ? null
+        : (instances.find(
+            (i) => i.addonId === calendar.providerAddonId && i.id === calendar.instanceId,
+          ) ?? null)
     if (instance !== null) claimed.add(keyOf(instance.addonId, instance.id))
     return {
       // The record is the row's identity: two connections can answer the same entity id.
