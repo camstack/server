@@ -96,6 +96,7 @@ describe('HomeCom connection-test', () => {
         setFanMode: async () => undefined,
         setSwingVertical: async () => undefined,
         setSwingHorizontal: async () => undefined,
+        writeHeatPump: async () => undefined,
       }),
     })
     const none = await empty.testSettings({
@@ -127,6 +128,7 @@ describe('HomeCom connection-test', () => {
         setFanMode: async () => undefined,
         setSwingVertical: async () => undefined,
         setSwingHorizontal: async () => undefined,
+        writeHeatPump: async () => undefined,
       }),
     })
     const listed = await failed.testSettings({

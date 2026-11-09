@@ -6,6 +6,7 @@ import {
   HomeComUnknownDeviceTypeError,
   type HomeComResourceFamily,
 } from './homecom-device-type.js'
+import { readHeatPump, type HomeComHeatPumpReading } from './homecom-heat-pump.js'
 import { HOMECOM_CLIENT_ID, HOMECOM_TOKEN_URL } from './homecom-oauth.js'
 import {
   circuitModeWrites,
@@ -66,6 +67,8 @@ export interface HomeComSystemSnapshot {
   readonly dhw: HomeComDhw | null
   readonly deviceType?: string
   readonly family?: HomeComResourceFamily
+  /** Heat-pump resources, read for a hydronic gateway that is not a room controller (D1026). */
+  readonly heatPump?: HomeComHeatPumpReading
 }
 
 export interface HomeComProbeResult {
@@ -86,6 +89,8 @@ export interface HomeComApiClient {
   setFanMode(circuitId: string, fanMode: string): Promise<void>
   setSwingVertical(circuitId: string, on: boolean): Promise<void>
   setSwingHorizontal(circuitId: string, on: boolean): Promise<void>
+  /** Sends already validated heat-pump writes (D1026). */
+  writeHeatPump(writes: readonly PointtWrite[]): Promise<void>
 }
 
 export type FetchFn = (
@@ -333,8 +338,22 @@ export function createHomeComApiClient(
       get: getResource,
       logDrop,
     })
-    last = snapshot
-    return snapshot
+    const withHeatPump = await attachHeatPump(snapshot)
+    last = withHeatPump
+    return withHeatPump
+  }
+
+  async function attachHeatPump(snapshot: HomeComSystemSnapshot): Promise<HomeComSystemSnapshot> {
+    if (snapshot.family !== 'hydronic' || snapshot.deviceType === 'rrc2') return snapshot
+    const dhwId = snapshot.dhw?.circuitId
+    const heatPump = await readHeatPump({
+      get: getResource,
+      circuitIds: {
+        hc: snapshot.circuits.map((circuit) => circuit.id),
+        dhw: dhwId === undefined ? [] : [dhwId],
+      },
+    })
+    return { ...snapshot, heatPump }
   }
 
   async function probePath(path: string): Promise<string | null> {
@@ -388,6 +407,9 @@ export function createHomeComApiClient(
       const snapshot = await requireSnapshot()
       if (snapshot.family !== 'rac') logDrop('swing is not a resource on this device type')
       await putWrite(swingWrite(snapshot, 'horizontal', on))
+    },
+    async writeHeatPump(writes) {
+      for (const write of writes) await putWrite(write)
     },
   }
 }
@@ -463,6 +485,9 @@ export function createInMemoryHomeComApiClient(input: {
     },
     async setSwingHorizontal() {
       throw new Error('HomeCom climate: swing not supported')
+    },
+    async writeHeatPump(writes) {
+      for (const write of writes) mutations.push({ path: write.path, body: write.value })
     },
   }
 }

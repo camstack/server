@@ -127,6 +127,12 @@
           },
           {
             "name": "water-heater"
+          },
+          {
+            "name": "heat-pump-status"
+          },
+          {
+            "name": "heat-pump-control"
           }
         ]
       }

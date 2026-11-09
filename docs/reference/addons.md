@@ -31,7 +31,7 @@ this column exists to stop.
 | `backup-orchestrator` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `backup` |
 | `benchmark` | `@camstack/addon-benchmark` | system | own runner | `hub-only` | `ml` | — | `addon-pages-source` |
 | `bosch-home-connect` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `consumables` `device-adoption` `device-provider` `dishwasher` `integration-instances` `running-state` |
-| `bosch-homecom` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `climate-control` `device-adoption` `device-provider` `integration-instances` `water-heater` |
+| `bosch-homecom` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `climate-control` `device-adoption` `device-provider` `heat-pump-control` `heat-pump-status` `integration-instances` `water-heater` |
 | `bosch-shc` | `@camstack/addon-provider-bosch` | providers | own runner | `hub-only` | — | multiple | `device-adoption` `device-provider` `integration-instances` |
 | `calendars` | `@camstack/server-framework` | system | own runner | `any-node` | — | — | `calendars` |
 | `camera-grid` | `@camstack/server-framework` | system | own runner | `any-node` | — | unique | `camera-grid-layout` `integration-instances` `motion` |

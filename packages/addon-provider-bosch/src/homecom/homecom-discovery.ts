@@ -11,8 +11,7 @@ export function buildHomeComCandidates(
 ): DiscoveredChildDevice[] {
   const out: DiscoveredChildDevice[] = []
   for (const dev of input.devices) {
-    const type = dev.kind === 'heating-circuit' ? DeviceType.Climate : DeviceType.WaterHeater
-    const caps = dev.kind === 'heating-circuit' ? ['climate-control'] : ['water-heater']
+    const { type, caps } = shapeOf(dev.kind)
     const adoptedId = input.adopted.get(dev.nativeId) ?? null
     out.push({
       childNativeId: dev.nativeId,
@@ -26,4 +25,20 @@ export function buildHomeComCandidates(
     })
   }
   return out
+}
+
+interface CandidateShape {
+  readonly type: DeviceType
+  readonly caps: readonly string[]
+}
+
+function shapeOf(kind: HomeComDiscoverableDevice['kind']): CandidateShape {
+  switch (kind) {
+    case 'heating-circuit':
+      return { type: DeviceType.Climate, caps: ['climate-control'] }
+    case 'dhw':
+      return { type: DeviceType.WaterHeater, caps: ['water-heater'] }
+    case 'heat-pump':
+      return { type: DeviceType.HeatPump, caps: ['heat-pump-status', 'heat-pump-control'] }
+  }
 }

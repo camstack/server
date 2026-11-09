@@ -67,8 +67,8 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `group-active` | 1 | ✓ | ✓ | none | — | — |
 | `group-commands` | 1 | ✓ | ✓ | none | — | — |
 | `group-status` | 1 | ✓ | ✓ | none | — | — |
-| `heat-pump-control` | 14 | — | — | — | — | — |
-| `heat-pump-status` | 1 | ✓ | ✓ | 8 series + 3 per item | — | — |
+| `heat-pump-control` | 14 | — | — | — | — | `bosch-homecom` |
+| `heat-pump-status` | 1 | ✓ | ✓ | 8 series + 3 per item | — | `bosch-homecom` |
 | `heating-valve` | 1 | ✓ | ✓ | 1 series | — | — |
 | `humidifier` | 4 | ✓ | ✓ | 2 series | — | `provider-homeassistant` |
 | `humidity-sensor` | 1 | ✓ | ✓ | 1 series | — | — |

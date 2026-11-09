@@ -26,7 +26,7 @@ export interface HomeComAdoptionProviderDeps {
     readonly integrationId: string
     readonly type: DeviceType
     readonly name: string
-    readonly kind: 'heating-circuit' | 'dhw'
+    readonly kind: 'heating-circuit' | 'dhw' | 'heat-pump'
     readonly circuitId?: string
   }) => Promise<{ readonly deviceId: number }>
   readonly removeDevice: (camDeviceId: number) => Promise<void>

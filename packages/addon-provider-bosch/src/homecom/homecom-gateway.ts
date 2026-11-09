@@ -3,7 +3,7 @@ import type { HomeComApiClient, HomeComSystemSnapshot } from './homecom-api-clie
 export interface HomeComDiscoverableDevice {
   readonly nativeId: string
   readonly name: string
-  readonly kind: 'heating-circuit' | 'dhw'
+  readonly kind: 'heating-circuit' | 'dhw' | 'heat-pump'
   readonly circuitId?: string
 }
 
@@ -76,6 +76,9 @@ export function buildDiscoverables(snapshot: HomeComSystemSnapshot): HomeComDisc
       name: 'Domestic hot water',
       kind: 'dhw',
     })
+  }
+  if (snapshot.heatPump !== undefined) {
+    out.push({ nativeId: 'hp:0', name: 'Heat pump', kind: 'heat-pump' })
   }
   return out
 }

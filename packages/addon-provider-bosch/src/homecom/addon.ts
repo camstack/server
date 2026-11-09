@@ -43,6 +43,7 @@ import {
 import { homeComConnections } from './homecom-gateway.js'
 import { HomeComClimateDevice } from './devices/homecom-climate-device.js'
 import { HomeComWaterHeaterDevice } from './devices/homecom-water-heater-device.js'
+import { HomeComHeatPumpDevice } from './devices/homecom-heat-pump-device.js'
 
 export class BoschHomeComProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'bosch-homecom'
@@ -50,6 +51,7 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
     [DeviceType.Climate]: HomeComClimateDevice,
     [DeviceType.WaterHeater]: HomeComWaterHeaterDevice,
+    [DeviceType.HeatPump]: HomeComHeatPumpDevice,
   }
 
   private clients: HomeComClientRegistry | null = null
