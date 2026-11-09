@@ -29,10 +29,7 @@ import { buildNotifierAdapters } from './adapters/registry.js'
 import { iconMediaTypeFor, iconRoutes, iconUrlFor } from './icon-routes.js'
 import { ADDON_MIGRATIONS, OLD_TARGETS_KIND, oldTargetKinds } from './migrations/index.js'
 import { makeNcTargetHandlers, type NcTargetActions, ncTargetActions } from './nc-target-actions.js'
-import {
-  createNotificationOutputProvider,
-  NOTIFIERS_ADDON_ID,
-} from './provider.js'
+import { createNotificationOutputProvider, NOTIFIERS_ADDON_ID } from './provider.js'
 import { notifierDescriptors, notifiersRecordKinds } from './record-kinds.js'
 import { sampleRoutes } from './sample-routes.js'
 import { TargetStore } from './target-store.js'
@@ -177,19 +174,25 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
       meta: { adapterCount: adapters.length },
     })
 
-    const instances = buildUserScopedNotificationTargetInstances(records, {
-      descriptors,
-      kinds: notifiersRecordKinds,
-      mintId: () => randomUUID(),
-      canProbe: (kind) =>
-        adapters.some((adapter) => adapter.descriptor.kind === kind && adapter.probe !== undefined),
-      probe: (input) =>
-        provider.probeTargetConfig({
-          kind: input.kind,
-          config: { ...input.config },
-          ...(input.targetId !== undefined ? { targetId: input.targetId } : {}),
-        }),
-    })
+    const instances = buildUserScopedNotificationTargetInstances(
+      records,
+      {
+        descriptors,
+        kinds: notifiersRecordKinds,
+        mintId: () => randomUUID(),
+        canProbe: (kind) =>
+          adapters.some(
+            (adapter) => adapter.descriptor.kind === kind && adapter.probe !== undefined,
+          ),
+        probe: (input) =>
+          provider.probeTargetConfig({
+            kind: input.kind,
+            config: { ...input.config },
+            ...(input.targetId !== undefined ? { targetId: input.targetId } : {}),
+          }),
+      },
+      this.ctx.logger,
+    )
 
     return {
       providers: [

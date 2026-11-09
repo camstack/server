@@ -453,6 +453,7 @@ export const TARGET_OWNER_KEY = 'ownerUserId'
  */
 export function scopeInstancesToCaller(
   inner: IIntegrationInstancesProvider,
+  logger: IScopedLogger,
 ): IIntegrationInstancesProvider {
   const ownerOf = (instance: IntegrationInstance): unknown => instance.formValues[TARGET_OWNER_KEY]
   const owned = (
@@ -491,23 +492,47 @@ export function scopeInstancesToCaller(
       if (user === undefined) return inner.createInstance(input)
       // A user never names the id (it could collide with, or adopt, somebody else's row).
       const { id: _id, seed: _seed, ...rest } = input
-      return inner.createInstance({ ...rest, values: stamped(input.values, user.userId) })
+      const created = await inner.createInstance({
+        ...rest,
+        values: stamped(input.values, user.userId),
+      })
+      logger.info('notification target created', {
+        meta: { targetId: created.id, owner: user.userId },
+      })
+      return created
     },
     updateInstance: async (input) => {
       const user = userOnly(input.caller)
       if (user === undefined) return inner.updateInstance(input)
       await requireOwned(input.id, user.userId)
-      return inner.updateInstance({ ...input, values: stamped(input.values, user.userId) })
+      const updated = await inner.updateInstance({
+        ...input,
+        values: stamped(input.values, user.userId),
+      })
+      logger.info('notification target updated', {
+        meta: { targetId: input.id, owner: user.userId },
+      })
+      return updated
     },
     setInstanceEnabled: async (input) => {
       const user = userOnly(input.caller)
-      if (user !== undefined) await requireOwned(input.id, user.userId)
-      return inner.setInstanceEnabled(input)
+      if (user === undefined) return inner.setInstanceEnabled(input)
+      await requireOwned(input.id, user.userId)
+      const switched = await inner.setInstanceEnabled(input)
+      logger.info('notification target switched', {
+        meta: { targetId: input.id, owner: user.userId, enabled: input.enabled },
+      })
+      return switched
     },
     deleteInstance: async (input) => {
       const user = userOnly(input.caller)
-      if (user !== undefined) await requireOwned(input.id, user.userId)
-      return inner.deleteInstance(input)
+      if (user === undefined) return inner.deleteInstance(input)
+      await requireOwned(input.id, user.userId)
+      const deleted = await inner.deleteInstance(input)
+      logger.info('notification target deleted', {
+        meta: { targetId: input.id, owner: user.userId },
+      })
+      return deleted
     },
     ...(inner.testInstance === undefined
       ? {}
@@ -551,8 +576,9 @@ export function buildNotificationTargetInstances(
 export function buildUserScopedNotificationTargetInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
   spec: NotificationTargetInstancesSpec,
+  logger: IScopedLogger,
 ): IIntegrationInstancesProvider {
-  return scopeInstancesToCaller(buildNotificationTargetInstances(records, spec))
+  return scopeInstancesToCaller(buildNotificationTargetInstances(records, spec), logger)
 }
 
 // ── The D987 procedure: the old `config` blob becomes the flat body ──────────────────────────────

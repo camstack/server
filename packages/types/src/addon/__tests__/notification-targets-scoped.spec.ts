@@ -7,6 +7,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { CapCaller } from '../../capabilities/capability-definition.js'
 import type { IIntegrationInstancesProvider } from '../../capabilities/integration-instances.cap.js'
+import type { IScopedLogger } from '../../interfaces/logging.js'
 import type { TargetKind } from '../../capabilities/notification-output.cap.js'
 import { makeInMemoryRecords } from '../../records/in-memory-records.js'
 import {
@@ -53,21 +54,40 @@ const NTFY: TargetKind = {
 
 let seq = 0
 let tested: string[] = []
+let audit: Array<{ message: string; meta: unknown }> = []
+
+function recordingLogger(): IScopedLogger {
+  const logger: IScopedLogger = {
+    debug: () => undefined,
+    info: (message, extras) => {
+      audit.push({ message, meta: extras?.meta })
+    },
+    warn: () => undefined,
+    error: () => undefined,
+    child: () => logger,
+    withTags: () => logger,
+  }
+  return logger
+}
 
 async function world(): Promise<IIntegrationInstancesProvider> {
   const memory = makeInMemoryRecords(OWNER)
   const kinds = notificationTargetKinds([NTFY])
   await memory.records.declare(kinds)
-  return buildUserScopedNotificationTargetInstances(memory.records, {
-    descriptors: [NTFY],
-    kinds,
-    mintId: () => `minted-${++seq}`,
-    canProbe: () => true,
-    probe: async (input) => {
-      tested.push(input.targetId ?? 'draft')
-      return { ok: true, resolvedUrl: 'x' }
+  return buildUserScopedNotificationTargetInstances(
+    memory.records,
+    {
+      descriptors: [NTFY],
+      kinds,
+      mintId: () => `minted-${++seq}`,
+      canProbe: () => true,
+      probe: async (input) => {
+        tested.push(input.targetId ?? 'draft')
+        return { ok: true, resolvedUrl: 'x' }
+      },
     },
-  })
+    recordingLogger(),
+  )
 }
 
 describe('notification targets at the instance door', () => {
@@ -75,6 +95,7 @@ describe('notification targets at the instance door', () => {
   beforeEach(async () => {
     seq = 0
     tested = []
+    audit = []
     door = await world()
     // Pre-existing records keep their ids: an admin seeds one global and one per user.
     await door.createInstance({
@@ -176,6 +197,29 @@ describe('notification targets at the instance door', () => {
     await door.deleteInstance({ id: 'a1', caller: U1 })
     expect(await door.getInstance({ id: 'a1', caller: ADMIN })).toBeNull()
     expect(await door.getInstance({ id: 'b1', caller: ADMIN })).not.toBeNull()
+  })
+
+  it('audit: every write a user makes names the target and its owner; a refused one writes nothing', async () => {
+    audit = []
+    const created = await door.createInstance({
+      name: 'Phone',
+      kind: 'ntfy',
+      values: { topic: 'p' },
+      caller: U1,
+    })
+    await door.updateInstance({ id: created.id, values: { topic: 'p2' }, caller: U1 })
+    await door.setInstanceEnabled({ id: created.id, enabled: false, caller: U1 })
+    await door.deleteInstance({ id: created.id, caller: U1 })
+    await door.deleteInstance({ id: 'b1', caller: U1 }).catch(() => undefined)
+    expect(audit).toEqual([
+      { message: 'notification target created', meta: { targetId: created.id, owner: 'u1' } },
+      { message: 'notification target updated', meta: { targetId: created.id, owner: 'u1' } },
+      {
+        message: 'notification target switched',
+        meta: { targetId: created.id, owner: 'u1', enabled: false },
+      },
+      { message: 'notification target deleted', meta: { targetId: created.id, owner: 'u1' } },
+    ])
   })
 
   it('test: a stored own target only; a foreign one and an unsaved form are refused for a user', async () => {
