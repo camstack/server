@@ -39,6 +39,8 @@ export interface ContainerPrimaryHeroProps {
    *  null/undefined ⇒ no durable override (falls back to linkDeviceId, then
    *  priority default). */
   readonly primaryChildEntityId?: string | null | undefined
+  /** The container device's type. A type that stands for itself resolves no child. */
+  readonly containerType: string | undefined
 }
 
 export function ContainerPrimaryHero({
@@ -46,9 +48,15 @@ export function ContainerPrimaryHero({
   children,
   linkDeviceId,
   primaryChildEntityId,
+  containerType,
 }: ContainerPrimaryHeroProps): ReactNode {
   const t = useUiText()
-  const primary = resolveContainerPrimary(children, linkDeviceId, primaryChildEntityId)
+  const primary = resolveContainerPrimary(
+    children,
+    linkDeviceId,
+    primaryChildEntityId,
+    containerType,
+  )
   const primaryChild = primary === null ? undefined : children.find((c) => c.id === primary.id)
 
   if (primaryChild === undefined) {

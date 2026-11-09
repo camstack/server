@@ -1,5 +1,6 @@
 import {
   type ConfigOption,
+  CONTAINER_PRIMARY_CHILD_RULES,
   type DeviceSelectFilter,
   DeviceType,
   resolveContainerPrimaryChild,
@@ -185,6 +186,19 @@ function hasLocation(device: SuggestionFleetDevice, location: string): boolean {
   return device.location === location
 }
 
+function declaresPrimary(type: string): boolean {
+  return CONTAINER_PRIMARY_CHILD_RULES.some((rule) => rule.deviceType === type)
+}
+
+function isStructuralContainer(device: SuggestionFleetDevice | undefined): boolean {
+  return device !== undefined && device.type === DeviceType.Container
+}
+
+/** A container, or a device type that names its own primary child. */
+function groupsChildren(device: SuggestionFleetDevice | undefined): boolean {
+  return device !== undefined && (isStructuralContainer(device) || declaresPrimary(device.type))
+}
+
 /** The child a container stands for — the shared resolver, keyed as the server keys it. */
 function primaryChildId(
   container: SuggestionFleetDevice,
@@ -200,6 +214,7 @@ function primaryChildId(
     })),
     container.primaryChildEntityId,
     container.name,
+    container.type,
   )
   return primary === null ? null : primary.id
 }
@@ -214,6 +229,8 @@ function primaryChildId(
  *    the child the container stands for — the operator's stored pick, else
  *    the automatic one (`resolveContainerPrimaryChild`, role → namesake →
  *    type). Its other children are not suggested; they stay pickable.
+ *  - a type that stands for itself (a heat pump) is suggested as that device;
+ *    its circuits are not.
  *  - a container with no child (nothing to stand for) contributes nothing.
  *
  * Validity for the card (kind, capability, already assigned, the host itself)
@@ -230,12 +247,10 @@ export function sameLocationSuggestions(
     if (d.parentDeviceId === null || d.parentDeviceId === undefined) continue
     childrenOf.set(d.parentDeviceId, [...(childrenOf.get(d.parentDeviceId) ?? []), d])
   }
-  const isContainer = (d: SuggestionFleetDevice | undefined): boolean =>
-    d !== undefined && d.type === DeviceType.Container
   const containersInRoom = new Set<number>()
   const out = new Set<number>()
   for (const d of fleet) {
-    if (isContainer(d)) {
+    if (groupsChildren(d)) {
       if (hasLocation(d, location)) containersInRoom.add(d.id)
       continue
     }
@@ -244,15 +259,17 @@ export function sameLocationSuggestions(
       d.parentDeviceId === null || d.parentDeviceId === undefined
         ? undefined
         : byId.get(d.parentDeviceId)
-    if (parent !== undefined && isContainer(parent)) containersInRoom.add(parent.id)
+    if (parent !== undefined && groupsChildren(parent)) containersInRoom.add(parent.id)
     else out.add(d.id)
   }
   for (const containerId of containersInRoom) {
     const container = byId.get(containerId)
     if (container === undefined) continue
     const primary = primaryChildId(container, childrenOf.get(containerId) ?? [])
-    // A container-of-containers is not a suggestion either.
-    if (primary !== null && !isContainer(byId.get(primary))) out.add(primary)
+    // A container-of-containers is not a suggestion either. A type that stands
+    // for itself has no primary child: the device itself is the suggestion.
+    if (primary !== null && !isStructuralContainer(byId.get(primary))) out.add(primary)
+    else if (primary === null && !isStructuralContainer(container)) out.add(container.id)
   }
   return out
 }

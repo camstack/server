@@ -361,8 +361,14 @@ export function DeviceDetailPage() {
     const link = typeof device?.linkDeviceId === 'number' ? device.linkDeviceId : null
     const pcid =
       typeof device?.primaryChildEntityId === 'string' ? device.primaryChildEntityId : null
-    return resolveContainerPrimary(containerChildren, link, pcid)?.id ?? null
-  }, [isContainer, containerChildren, device?.linkDeviceId, device?.primaryChildEntityId])
+    return resolveContainerPrimary(containerChildren, link, pcid, deviceTypeStr)?.id ?? null
+  }, [
+    isContainer,
+    containerChildren,
+    device?.linkDeviceId,
+    device?.primaryChildEntityId,
+    deviceTypeStr,
+  ])
 
   // The primary child's aggregate — fetched only for a container with a
   // resolved primary child. Powers the promoted top-tabs below.

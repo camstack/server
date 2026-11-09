@@ -287,6 +287,20 @@ describe('sameLocationSuggestions', () => {
   it('a container with no child suggests nothing', () => {
     expect(sameLocationSuggestions([container], 'Hall').size).toBe(0)
   })
+
+  it('suggests a heat pump itself and not its climate circuit', () => {
+    const pump = fleetRow({ id: 1, type: 'heat-pump', name: 'Heat pump', location: 'Hall' })
+    const circuit = fleetRow({
+      id: 2,
+      type: 'climate',
+      name: 'Circuit 1',
+      location: 'Hall',
+      parentDeviceId: 1,
+    })
+    expect([...sameLocationSuggestions([pump, circuit], 'Hall')]).toEqual([1])
+    // A container in the same room still contributes its primary child.
+    expect([...sameLocationSuggestions([container, spot1, spot2], 'Hall')]).toEqual([3519])
+  })
 })
 
 describe('matchesFacets with several values per facet', () => {

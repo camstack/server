@@ -83,7 +83,7 @@ export function PrimaryChildRow({ deviceId }: { readonly deviceId: number }) {
       : null
 
   const refs: readonly ContainerChild[] = options
-  const primary = resolveContainerPrimary(refs, linkDeviceId, primaryChildEntityId)
+  const primary = resolveContainerPrimary(refs, linkDeviceId, primaryChildEntityId, deviceType)
   // resolveContainerPrimary returns null only for an empty child set; we've
   // already gated on options.length > 1, so primary is always a live child here.
   const selectedId = primary === null ? options[0].id : primary.id

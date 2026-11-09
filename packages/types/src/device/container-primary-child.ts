@@ -252,8 +252,8 @@ function sameName(childName: string, containerName: string): boolean {
 export function resolveContainerPrimaryChild(
   children: readonly ContainerChildRef[],
   overrideEntityId: string | null | undefined,
-  containerName?: string,
-  containerType?: string,
+  containerName: string | undefined,
+  containerType: string | undefined,
 ): ContainerChildRef | null {
   if (overrideEntityId !== undefined && overrideEntityId !== null) {
     // Canonical key first, then the legacy one — a pick written before

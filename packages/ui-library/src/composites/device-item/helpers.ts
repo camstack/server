@@ -518,6 +518,7 @@ export function effectiveOnline(
     children,
     device.linkDeviceId,
     device.primaryChildEntityId,
+    device.type,
   )
   if (primary === null) return device.online
   const primaryChild = children.find((c) => c.id === primary.id)
@@ -542,6 +543,7 @@ export function effectiveType(
     children,
     device.linkDeviceId,
     device.primaryChildEntityId,
+    device.type,
   )
   if (primary === null) return device.type
   const primaryChild = children.find((c) => c.id === primary.id)
@@ -575,6 +577,7 @@ export function effectiveIconDevice(
     children,
     device.linkDeviceId,
     device.primaryChildEntityId,
+    device.type,
   )
   if (primary === null) return device
   const primaryChild = children.find((c) => c.id === primary.id)

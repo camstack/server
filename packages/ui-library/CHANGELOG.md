@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device-manager hooks for rendering and checking device templates
 - The device list shows Run or Stop for a timed run, and the time left while one is armed.
 
+### Fixed
+
+- A heat pump keeps its own name and is the suggested device; a climate circuit is not treated as its primary child
+
 ## [1.2.412] - 2026-11-09
 
 ### Changed

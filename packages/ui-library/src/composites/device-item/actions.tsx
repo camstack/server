@@ -92,6 +92,7 @@ export function DeviceItemActions({
       containerChildren,
       device.linkDeviceId,
       device.primaryChildEntityId,
+      device.type,
     )
     const primaryChild =
       primary === null ? undefined : containerChildren.find((c) => c.id === primary.id)

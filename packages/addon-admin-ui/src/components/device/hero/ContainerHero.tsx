@@ -43,6 +43,9 @@ export function ContainerHero({ deviceId }: HeroProps): ReactElement {
   const linkDeviceId = typeof device?.linkDeviceId === 'number' ? device.linkDeviceId : null
   const primaryChildEntityId =
     typeof device?.primaryChildEntityId === 'string' ? device.primaryChildEntityId : null
+  // Absent while the device row has not answered. The hero holds a placeholder
+  // until then; this is only read once loading has finished.
+  const containerType = typeof device?.type === 'string' ? device.type : undefined
 
   // Loading guard: render a neutral skeleton instead of the "No child
   // entities" fallback while the device/children queries resolve, so a
@@ -63,6 +66,7 @@ export function ContainerHero({ deviceId }: HeroProps): ReactElement {
         children={children}
         linkDeviceId={linkDeviceId}
         primaryChildEntityId={primaryChildEntityId}
+        containerType={containerType}
       />
     </div>
   )

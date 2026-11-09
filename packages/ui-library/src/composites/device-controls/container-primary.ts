@@ -101,7 +101,8 @@ export function overrideEntityIdFromLink(
 export function resolveContainerPrimary(
   children: readonly ContainerChild[],
   linkDeviceId: number | null | undefined,
-  primaryChildEntityId?: string | null | undefined,
+  primaryChildEntityId: string | null | undefined,
+  containerType: string | undefined,
 ): ChildRef | null {
   const refs = children.map(containerChildToRef)
   const override =
@@ -110,5 +111,6 @@ export function resolveContainerPrimary(
     primaryChildEntityId !== ''
       ? primaryChildEntityId
       : overrideEntityIdFromLink(children, linkDeviceId)
-  return resolvePrimaryChild(refs, override)
+  // This adapter has no container name, so the namesake tie-break stays off.
+  return resolvePrimaryChild(refs, override, undefined, containerType)
 }

@@ -5,7 +5,11 @@
  * The viewer mirrors this file; `scripts/check-device-name-in-sync.ts` diffs the two.
  * Noun strings stay outside — this file only decides which noun to ask for.
  */
-import { resolveContainerPrimaryChild } from '@camstack/types/client'
+import {
+  CONTAINER_PRIMARY_CHILD_RULES,
+  DeviceType,
+  resolveContainerPrimaryChild,
+} from '@camstack/types/client'
 
 /** Middle dot used between a container and its noun, and before a room. */
 export const DEVICE_NAME_JOIN: string = ' · '
@@ -150,6 +154,12 @@ function meaningfulChildCount(siblings: readonly DeviceNameFields[]): number {
   return count
 }
 
+/** A container, or a type that declares which child it stands for. */
+function parentAsksWhichChild(parent: DeviceNameFields): boolean {
+  if (parent.type === DeviceType.Container) return true
+  return CONTAINER_PRIMARY_CHILD_RULES.some((rule) => rule.deviceType === parent.type)
+}
+
 function isContainerPrimary(
   device: DeviceNameFields,
   parent: DeviceNameFields,
@@ -168,6 +178,7 @@ function isContainerPrimary(
     }),
     parent.primaryChildEntityId,
     parent.name,
+    parent.type,
   )
   return picked !== null && picked.id === device.id
 }
@@ -183,7 +194,7 @@ function childLine(
   if (foldsIntoParent(device, parent, noun)) return parent.name
   const onlyMeaningful =
     form === 'compact' &&
-    parent.type === 'container' &&
+    parentAsksWhichChild(parent) &&
     isContainerPrimary(device, parent, siblings) &&
     meaningfulChildCount(siblings) === 1
   if (onlyMeaningful) return parent.name

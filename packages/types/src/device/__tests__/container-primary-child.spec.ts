@@ -3,8 +3,22 @@ import { DeviceType } from '../device-type.js'
 import {
   applyPrimaryChildRule,
   CONTAINER_CHILD_PRIORITY,
-  resolveContainerPrimaryChild,
+  resolveContainerPrimaryChild as resolveWithType,
+  type ContainerChildRef,
 } from '../container-primary-child.js'
+
+/**
+ * Heuristic cases have no device type under test. The declaration table is
+ * covered by the describe at the bottom of this file.
+ */
+function resolveContainerPrimaryChild(
+  children: readonly ContainerChildRef[],
+  overrideEntityId: string | null | undefined,
+  containerName?: string,
+  containerType?: string,
+): ContainerChildRef | null {
+  return resolveWithType(children, overrideEntityId, containerName, containerType)
+}
 
 /**
  * One definition of "which child IS the container", in the package everything
@@ -12,7 +26,6 @@ import {
  * the Home Assistant adoption mapping and the viewer's panel — each with a
  * comment asking the others to stay in sync.
  */
-import type { ContainerChildRef } from '../container-primary-child.js'
 
 const child = (id: number, type: string, stableId = `s${String(id)}`): ContainerChildRef => ({
   id,

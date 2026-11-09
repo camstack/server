@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
+import { DeviceType } from '@camstack/types'
 import { childEntityId, type ContainerChild } from '../container-primary'
 import { resolveContainerPrimaryChild } from '@camstack/types'
+
+/** Container 4127 declares nothing, so the heuristic still decides. */
+const CONTAINER_TYPE = DeviceType.Container
 
 /**
  * REGRESSION (container 4127, 2026-09-04). The picker wrote
@@ -32,14 +36,21 @@ const refs = CHILDREN.map((c) => ({ id: c.id, stableId: c.stableId, type: c.type
 
 describe('the key a primary-child pick is written under', () => {
   it('resolves when the pick is the stableId — the canonical key', () => {
-    expect(resolveContainerPrimaryChild(refs, CHILDREN[0]!.stableId)?.id).toBe(4131)
+    expect(
+      resolveContainerPrimaryChild(refs, CHILDREN[0]!.stableId, undefined, CONTAINER_TYPE)?.id,
+    ).toBe(4131)
   })
 
   it('does NOT resolve when the pick is the sourceInfo id and the ref carries no entityId', () => {
     // Exactly what the picker used to write. Falls through to priority, and
     // `button` outranks `sensor`, so the operator gets back the very child they
     // just replaced.
-    const fallback = resolveContainerPrimaryChild(refs, childEntityId(CHILDREN[0]!))
+    const fallback = resolveContainerPrimaryChild(
+      refs,
+      childEntityId(CHILDREN[0]!),
+      undefined,
+      CONTAINER_TYPE,
+    )
     expect(fallback?.id).toBe(4337)
   })
 
@@ -51,7 +62,12 @@ describe('the key a primary-child pick is written under', () => {
       type: c.type,
     }))
     expect(
-      resolveContainerPrimaryChild(legacyRefs, 'binary_sensor.contatto_porta_front_door')?.id,
+      resolveContainerPrimaryChild(
+        legacyRefs,
+        'binary_sensor.contatto_porta_front_door',
+        undefined,
+        CONTAINER_TYPE,
+      )?.id,
     ).toBe(4131)
   })
 

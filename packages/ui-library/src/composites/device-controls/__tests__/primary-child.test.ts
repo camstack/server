@@ -1,6 +1,16 @@
 import { describe, it, expect } from 'vitest'
+import { DeviceType } from '@camstack/types'
 import { resolvePrimaryChild, PRIORITY } from '../primary-child'
 import type { ChildRef } from '../primary-child'
+
+/** Priority cases: no device type is under test, so the heuristic decides. */
+function resolveHeuristic(
+  children: readonly ChildRef[],
+  overrideEntityId: string | undefined,
+  containerName?: string,
+): ChildRef | null {
+  return resolvePrimaryChild(children, overrideEntityId, containerName, undefined)
+}
 
 const children: readonly ChildRef[] = [
   { id: 7, entityId: 'e.batt', type: 'sensor' },
@@ -10,23 +20,23 @@ const children: readonly ChildRef[] = [
 // --- Plan's 3 required cases ---
 
 it('defaults to the highest-priority child type', () => {
-  expect(resolvePrimaryChild(children, undefined)?.id).toBe(9) // lock > sensor
+  expect(resolveHeuristic(children, undefined)?.id).toBe(9) // lock > sensor
 })
 
 it('honors an explicit override by entityId, resolving to the numeric id', () => {
-  expect(resolvePrimaryChild(children, 'e.batt')?.id).toBe(7)
+  expect(resolveHeuristic(children, 'e.batt')?.id).toBe(7)
 })
 
 it('falls back to default when the override entityId is gone (re-sync)', () => {
-  expect(resolvePrimaryChild(children, 'e.removed')?.id).toBe(9)
+  expect(resolveHeuristic(children, 'e.removed')?.id).toBe(9)
 })
 
 // --- Additional edge cases ---
 
 describe('resolvePrimaryChild — edge cases', () => {
   it('returns null for an empty children array', () => {
-    expect(resolvePrimaryChild([], undefined)).toBeNull()
-    expect(resolvePrimaryChild([], 'e.missing')).toBeNull()
+    expect(resolveHeuristic([], undefined)).toBeNull()
+    expect(resolveHeuristic([], 'e.missing')).toBeNull()
   })
 
   it('override beats priority — entityId pointing to a lower-priority child still wins', () => {
@@ -35,7 +45,7 @@ describe('resolvePrimaryChild — edge cases', () => {
       { id: 2, entityId: 'e.sensor', type: 'sensor' },
     ]
     // sensor is lower priority than lock, but override should still return it
-    expect(resolvePrimaryChild(mixed, 'e.sensor')?.id).toBe(2)
+    expect(resolveHeuristic(mixed, 'e.sensor')?.id).toBe(2)
   })
 
   it('types not in PRIORITY rank after all known types and preserve input order among themselves', () => {
@@ -45,7 +55,7 @@ describe('resolvePrimaryChild — edge cases', () => {
       { id: 12, entityId: 'e.sensor', type: 'sensor' },
     ]
     // sensor is in PRIORITY, should rank before unknowns
-    expect(resolvePrimaryChild(unknown, undefined)?.id).toBe(12)
+    expect(resolveHeuristic(unknown, undefined)?.id).toBe(12)
   })
 
   it('unknown types among themselves preserve input order (stable sort)', () => {
@@ -53,7 +63,7 @@ describe('resolvePrimaryChild — edge cases', () => {
       { id: 10, entityId: 'e.foo', type: 'unknown-a' },
       { id: 11, entityId: 'e.bar', type: 'unknown-b' },
     ]
-    expect(resolvePrimaryChild(unknown, undefined)?.id).toBe(10)
+    expect(resolveHeuristic(unknown, undefined)?.id).toBe(10)
   })
 
   it('tie/multiple same-priority children returns the first in input order', () => {
@@ -61,7 +71,7 @@ describe('resolvePrimaryChild — edge cases', () => {
       { id: 3, entityId: 'e.switch1', type: 'switch' },
       { id: 4, entityId: 'e.switch2', type: 'switch' },
     ]
-    expect(resolvePrimaryChild(tied, undefined)?.id).toBe(3)
+    expect(resolveHeuristic(tied, undefined)?.id).toBe(3)
   })
 
   it('does not mutate the input children array', () => {
@@ -70,7 +80,7 @@ describe('resolvePrimaryChild — edge cases', () => {
       { id: 9, entityId: 'e.lock', type: 'lock' },
     ]
     const originalOrder = mutable.map((c) => c.id)
-    resolvePrimaryChild(mutable, undefined)
+    resolveHeuristic(mutable, undefined)
     expect(mutable.map((c) => c.id)).toEqual(originalOrder)
   })
 
@@ -113,9 +123,9 @@ describe('resolvePrimaryChild — edge cases', () => {
       { id: 2, entityId: 'e.fan', type: 'fan' },
       { id: 3, entityId: 'e.osc-v', type: 'switch' },
     ]
-    expect(resolvePrimaryChild(fanWithSwitches, undefined)?.id).toBe(2) // fan, not a switch
+    expect(resolveHeuristic(fanWithSwitches, undefined)?.id).toBe(2) // fan, not a switch
     expect(
-      resolvePrimaryChild(
+      resolveHeuristic(
         [
           { id: 4, entityId: 'e.sw', type: 'switch' },
           { id: 5, entityId: 'e.cover', type: 'cover' },
@@ -135,7 +145,7 @@ describe('resolvePrimaryChild — edge cases', () => {
       { id: 900, entityId: 'switch.climatizzatore_hall', type: 'switch' },
       { id: 917, entityId: 'climate.climatizzatore_hall', type: 'thermostat' },
     ]
-    expect(resolvePrimaryChild(climateWithSwitch, undefined)?.id).toBe(917) // thermostat, not switch
+    expect(resolveHeuristic(climateWithSwitch, undefined)?.id).toBe(917) // thermostat, not switch
   })
 
   // A native air-conditioner is DeviceType.Climate ('climate'). The Gree
@@ -149,7 +159,7 @@ describe('resolvePrimaryChild — edge cases', () => {
       { id: 527, entityId: 'gree.xfan', type: 'switch' },
       { id: 528, entityId: 'gree.health', type: 'switch' },
     ]
-    expect(resolvePrimaryChild(acWithSwitches, undefined)?.id).toBe(525) // climate, not a switch
+    expect(resolveHeuristic(acWithSwitches, undefined)?.id).toBe(525) // climate, not a switch
   })
 
   // Same root cause as climate: every actuator DeviceType whose string value
@@ -168,7 +178,24 @@ describe('resolvePrimaryChild — edge cases', () => {
       { id: 1, entityId: 'switch.power', type: 'switch' },
       { id: 2, entityId: `e.${type}`, type },
     ]
-    expect(resolvePrimaryChild(actuatorWithSwitch, undefined)?.id).toBe(2)
+    expect(resolveHeuristic(actuatorWithSwitch, undefined)?.id).toBe(2)
+  })
+
+  it('a heat pump resolves no primary child; a container still resolves the climate child', () => {
+    const circuits: readonly ChildRef[] = [
+      { id: 1, entityId: 'circuit-1', stableId: 'circuit-1', type: 'climate', name: 'Circuit 1' },
+      {
+        id: 2,
+        entityId: 'hot-water',
+        stableId: 'hot-water',
+        type: 'water-heater',
+        name: 'Hot water',
+      },
+    ]
+    expect(resolvePrimaryChild(circuits, undefined, 'Heat pump', DeviceType.HeatPump)).toBeNull()
+    expect(resolvePrimaryChild(circuits, undefined, 'Box', DeviceType.Container)?.type).toBe(
+      'climate',
+    )
   })
 
   // siren is a switch-family actuator and deliberately ranks BELOW switch
@@ -178,6 +205,6 @@ describe('resolvePrimaryChild — edge cases', () => {
       { id: 1, entityId: 'siren.alarm', type: 'siren' },
       { id: 2, entityId: 'switch.power', type: 'switch' },
     ]
-    expect(resolvePrimaryChild(switchAndSiren, undefined)?.id).toBe(2)
+    expect(resolveHeuristic(switchAndSiren, undefined)?.id).toBe(2)
   })
 })

@@ -428,6 +428,47 @@ describe('formatDeviceName — hub examples', () => {
   })
 })
 
+describe('a heat pump does not lend its name to a climate circuit', () => {
+  const pump = row({
+    id: 1,
+    name: 'Heat pump',
+    type: 'heat-pump',
+    stableId: 'hp',
+    parentDeviceId: null,
+  })
+  const circuit = row({
+    id: 2,
+    name: 'Circuit 1',
+    type: 'climate',
+    parentDeviceId: 1,
+    stableId: 'c1',
+  })
+  const box = row({
+    id: 3,
+    name: 'Porch light switch',
+    type: 'container',
+    stableId: 'box',
+    parentDeviceId: null,
+  })
+  const onlySwitch = row({
+    id: 4,
+    name: 'Porch lights',
+    type: 'switch',
+    parentDeviceId: 3,
+    stableId: 'sw',
+  })
+
+  it("keeps the circuit noun and still collapses a container's only child", () => {
+    const nouns = deviceNameNouns('en')
+    expect(formatDeviceName(circuit, 'compact', { parent: pump, siblings: [circuit] }, nouns)).toBe(
+      'Heat pump · Circuit 1',
+    )
+    expect(
+      formatDeviceName(onlySwitch, 'compact', { parent: box, siblings: [onlySwitch] }, nouns),
+    ).toBe('Porch light switch')
+  })
+})
+
 describe('stripDeviceParentPrefix separators', () => {
   it.each([
     ['Zigbee hub - Door contact', 'Door contact'],

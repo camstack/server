@@ -33,7 +33,8 @@ export interface ChildRef {
 
 /**
  * Resolve a container's primary child: the operator's pick when it still
- * matches a live child, else the highest-priority type.
+ * matches a live child, else the type's declaration, else the highest-priority
+ * type. `containerType` is required so a caller cannot skip the declaration.
  *
  * `entityId` here is `sourceInfo?.id ?? stableId` (see `containerChildToRef`);
  * `stableId` is the child's own. The shared resolver matches the canonical
@@ -42,7 +43,8 @@ export interface ChildRef {
 export function resolvePrimaryChild(
   children: readonly ChildRef[],
   overrideEntityId: string | undefined,
-  containerName?: string,
+  containerName: string | undefined,
+  containerType: string | undefined,
 ): ChildRef | null {
   const picked = resolveContainerPrimaryChild(
     children.map((c) => ({
@@ -55,6 +57,7 @@ export function resolvePrimaryChild(
     })),
     overrideEntityId,
     containerName,
+    containerType,
   )
   return picked === null ? null : (children.find((c) => c.id === picked.id) ?? null)
 }

@@ -11,6 +11,7 @@
  * controls (which need a live trpc client).
  */
 import { describe, it, expect, vi } from 'vitest'
+import { DeviceType } from '@camstack/types'
 import { render, screen } from '@testing-library/react'
 
 vi.mock('../control-registry', () => ({
@@ -50,23 +51,45 @@ const children: readonly ContainerHeroChild[] = [battery, lock]
 
 describe('ContainerPrimaryHero', () => {
   it('renders the priority-default child hero (lock) bound to the child id', () => {
-    render(<ContainerPrimaryHero trpc={trpc} children={children} linkDeviceId={null} />)
+    render(
+      <ContainerPrimaryHero
+        containerType={DeviceType.Container}
+        trpc={trpc}
+        children={children}
+        linkDeviceId={null}
+      />,
+    )
     expect(screen.getByTestId('hero').textContent).toBe('hero:lock:9')
   })
 
   it('renders the legacy override hero (battery) when linkDeviceId points at it', () => {
-    render(<ContainerPrimaryHero trpc={trpc} children={children} linkDeviceId={7} />)
+    render(
+      <ContainerPrimaryHero
+        containerType={DeviceType.Container}
+        trpc={trpc}
+        children={children}
+        linkDeviceId={7}
+      />,
+    )
     expect(screen.getByTestId('hero').textContent).toBe('hero:sensor:7')
   })
 
   it('falls back to the priority default when linkDeviceId is stale', () => {
-    render(<ContainerPrimaryHero trpc={trpc} children={children} linkDeviceId={9999} />)
+    render(
+      <ContainerPrimaryHero
+        containerType={DeviceType.Container}
+        trpc={trpc}
+        children={children}
+        linkDeviceId={9999}
+      />,
+    )
     expect(screen.getByTestId('hero').textContent).toBe('hero:lock:9')
   })
 
   it('renders the durable override hero (battery) when primaryChildEntityId points at it', () => {
     render(
       <ContainerPrimaryHero
+        containerType={DeviceType.Container}
         trpc={trpc}
         children={children}
         linkDeviceId={null}
@@ -77,12 +100,26 @@ describe('ContainerPrimaryHero', () => {
   })
 
   it('does not render a picker on the hero (the selector moved to the config block)', () => {
-    render(<ContainerPrimaryHero trpc={trpc} children={children} linkDeviceId={null} />)
+    render(
+      <ContainerPrimaryHero
+        containerType={DeviceType.Container}
+        trpc={trpc}
+        children={children}
+        linkDeviceId={null}
+      />,
+    )
     expect(screen.queryByRole('combobox')).toBeNull()
   })
 
   it('degrades gracefully for a container with no children (no crash, no hero)', () => {
-    render(<ContainerPrimaryHero trpc={trpc} children={[]} linkDeviceId={null} />)
+    render(
+      <ContainerPrimaryHero
+        containerType={DeviceType.Container}
+        trpc={trpc}
+        children={[]}
+        linkDeviceId={null}
+      />,
+    )
     expect(screen.queryByTestId('hero')).toBeNull()
     expect(screen.getByText(/no child entities/i)).toBeTruthy()
   })
