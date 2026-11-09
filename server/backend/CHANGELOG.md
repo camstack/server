@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The server exposes the OSD manager previewTemplate call and the thisDevice input of the device-template calls; getSourceCatalog is gone.
 
+- Capability method signatures now mark optional cover, fan, climate, lock and media-player methods; bindings report implemented methods
+
 ## [1.2.826] - 2026-11-10
 
 ### Changed
