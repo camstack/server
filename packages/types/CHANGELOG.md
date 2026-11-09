@@ -55,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Removed
-
+- Action step arguments may carry device value templates, rendered at run time
 
 ## [1.2.531] - 2026-11-08
 

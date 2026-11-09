@@ -868,3 +868,14 @@ Diagnostic children (battery, temperature, humidity, illuminance, signal, last-s
 - Aggregation is binding-driven: [D12](../decisions/adr-0012.md)
 - One resolver, never branch on `kind`: [D13](../decisions/adr-0013.md)
 - Device-config UI is derived: [D14](../decisions/adr-0014.md)
+
+## Device templates in action args ([D1025](../decisions/adr-1025-a-device-template-is-resolved-at-run-time-by-the-one-hub-renderer-for-the-caller-scope.md))
+
+A string in an action step's `args` (an action, a scheduler point, a fan preset,
+a generated automation block) may carry a device template (D1021). The ONE place
+args are resolved, `resolveStepArgsWithTemplates` (`packages/types/src/automation/step-runner.ts`),
+sends such strings to `device-manager.renderDeviceTemplates` before variables are
+substituted; the trace of the step lists every value that printed `—` with its
+reason (`templates`). A refused render fails the step as `[reason]` and nothing
+is dispatched. A non-admin `actions.run` naming a device it cannot see is refused
+with `template-scope`.

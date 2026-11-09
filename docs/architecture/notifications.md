@@ -1335,6 +1335,16 @@ them through `notificationRules.*` — the same coupling as D628.
 `template-var-parity.spec.ts` sample that exercises it — either guard fails
 closed if one is missing.
 
+## Device values in a rule's text ([D1025](../decisions/adr-1025-a-device-template-is-resolved-at-run-time-by-the-one-hub-renderer-for-the-caller-scope.md))
+
+A rule's authored title and body may carry device templates
+(`{{ states('sensor.x') }}`, D1021). `withDeviceTemplates` in the dispatcher
+renders them through `device-manager.renderDeviceTemplates` BEFORE the `{{var}}`
+pass, with the `{{var}}` placeholders set aside (`device-template-pass.ts`), so a
+variable value is never template source. An unknown value prints `—` and the
+reason is logged with `tags: { deviceId }`; a refused render sends the catalog
+sentence and logs why.
+
 ## Emptying a field on update — `clear` ([D628](../decisions/adr-0628-an-editor-empties-a-rule-field-by-naming-it.md), 2026-09-24)
 
 `updateRule` persists `{ ...existing, ...patch }`. That merge cannot tell "the
