@@ -95,6 +95,7 @@ import { armBlocksIntegration, reconcileBlocksIntegration } from './blocks-integ
 import { blocksInstanceRecordKinds, buildBlocksInstances } from './blocks-instances.js'
 import { type BlockTranspiler, compileBlock } from './compile-block.js'
 import { buildCompositionApi, type CompositionApi } from './composition-api.js'
+import { writeComposedDeviceName } from './sync-composed-device-name.js'
 import { describeCompositionSources } from './composition-sources.js'
 import { CoreBlockStore } from './core-block-store.js'
 import { coreBlocksRecordKinds } from './record-kinds.js'
@@ -1022,6 +1023,19 @@ export class CoreBlocksAddon extends BaseAddon {
         logger: this.ctx.logger.child('running-proposal'),
       },
       logger: this.ctx.logger.child('compositions'),
+      writeComposedDeviceName: (blockId, name) =>
+        writeComposedDeviceName(
+          {
+            listPersistedByAddon: async (addonId) =>
+              requireApi().deviceManager.listPersistedByAddon.query({ addonId }),
+            setOperatorName: async (deviceId, deviceName) => {
+              await requireApi().deviceManager.setName.mutate({ deviceId, name: deviceName })
+            },
+          },
+          this.ctx.logger.child('compositions'),
+          blockId,
+          name,
+        ),
       capabilityDefinitions: ALL_CAPABILITY_DEFINITIONS,
     })
   }

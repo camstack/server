@@ -177,7 +177,8 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
         return { devices: handles }
       },
       devices: {
-        setName: (deviceId, name) => devices.setName(deviceId, name, { stampUserNamed: false }),
+        setName: (deviceId, name, write) =>
+          devices.setName(deviceId, name, { stampUserNamed: write?.stampUserNamed === true }),
         decommission: (deviceId) => devices.decommission(deviceId),
         applyDerivedSpec: (deviceId, derived) => devices.applyDerivedSpec(deviceId, derived),
       },

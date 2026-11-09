@@ -60,6 +60,10 @@ let persistedScript: PersistedComposedRow[][]
 let decommissionFails: number
 let minted: number
 let named: Array<readonly [number, string]>
+/** True when that `setName` was an operator stamp (editor retry), false for a system copy. */
+let nameStamps: boolean[]
+/** The next N device-name writes throw, then succeed. */
+let nameWriteFails: number
 let blockRenames: Array<readonly [string, string]>
 let decommissioned: number[]
 let composer: Composer
@@ -107,8 +111,13 @@ function makeComposer(): Composer {
       return { devices: handles }
     },
     devices: {
-      setName: async (id, name) => {
+      setName: async (id, name, write) => {
+        if (nameWriteFails > 0) {
+          nameWriteFails -= 1
+          throw new Error('device name refused')
+        }
         named.push([id, name])
+        nameStamps.push(write?.stampUserNamed === true)
       },
       decommission: async (id) => {
         if (decommissionFails > 0) {
@@ -143,6 +152,8 @@ beforeEach(async () => {
   persistedFails = 0
   minted = 0
   named = []
+  nameStamps = []
+  nameWriteFails = 0
   blockRenames = []
   decommissioned = []
   persistedScript = []
@@ -231,6 +242,73 @@ describe('apply', () => {
         }),
       ]),
     )
+  })
+
+  it('an editor rename of a user-named device is written onto the device, and a re-apply keeps the block name', async () => {
+    await composer.apply(input())
+    const device = targets.get('composed-b1')
+    if (device === undefined) throw new Error('the room was not declared')
+    // Legacy rows are already userNamed. The live handle still shows the old
+    // name: setName does not rewrite it. The block is what the editor saved.
+    device.userNamed = true
+    named = []
+    nameStamps = []
+    blockRenames = []
+    const garden = input({
+      blocks: [{ id: 'b1', name: 'Garden', enabled: true, updatedAt: 2, composition: ROOM }],
+    })
+    await composer.apply(garden)
+    expect(blockRenames).toEqual([])
+    expect(named).toEqual([[device.id, 'Garden']])
+    expect(nameStamps).toEqual([true])
+    expect(device.name).toBe('Living room')
+    named = []
+    nameStamps = []
+    blockRenames = []
+    await composer.apply(garden)
+    expect(blockRenames).toEqual([])
+    expect(named).toEqual([])
+  })
+
+  it('a missed editor device write is retried on the next apply and still does not revert the block', async () => {
+    await composer.apply(input())
+    const device = targets.get('composed-b1')
+    if (device === undefined) throw new Error('the room was not declared')
+    device.userNamed = true
+    nameWriteFails = 1
+    named = []
+    nameStamps = []
+    blockRenames = []
+    const garden = input({
+      blocks: [{ id: 'b1', name: 'Garden', enabled: true, updatedAt: 2, composition: ROOM }],
+    })
+    await composer.apply(garden)
+    expect(blockRenames).toEqual([])
+    expect(named).toEqual([])
+    await composer.apply(garden)
+    expect(blockRenames).toEqual([])
+    expect(named).toEqual([[device.id, 'Garden']])
+    expect(nameStamps).toEqual([true])
+  })
+
+  it('an editor rename that reached the device survives a composer restart', async () => {
+    await composer.apply(input())
+    const device = targets.get('composed-b1')
+    if (device === undefined) throw new Error('the room was not declared')
+    device.userNamed = true
+    device.name = 'Garden'
+    named = []
+    nameStamps = []
+    blockRenames = []
+    composer = makeComposer()
+    const garden = input({
+      blocks: [{ id: 'b1', name: 'Garden', enabled: true, updatedAt: 2, composition: ROOM }],
+    })
+    await composer.apply(garden)
+    await composer.apply(garden)
+    expect(named).toEqual([])
+    expect(blockRenames).toEqual([])
+    expect(device.name).toBe('Garden')
   })
 
   it('the block name is the device name', async () => {

@@ -74,6 +74,12 @@ export interface CompositionApiDeps {
   /** The history reads behind `proposeRunningThreshold`. */
   readonly runningProposal: RunningProposalPorts
   readonly logger: IScopedLogger
+  /**
+   * After an operator renames a composed device's block, write that name onto
+   * the device row (stamped). Absent in tests that predate it: the block save
+   * still lands, and the composer retries the device write on its next apply.
+   */
+  readonly writeComposedDeviceName?: (blockId: string, name: string) => Promise<void>
   /** Every capability definition — the listing is derived from them, never from the registry's live state. */
   readonly capabilityDefinitions: readonly CapabilityDefinition[]
 }
@@ -369,6 +375,32 @@ async function refuseRetarget(
     return refuseSave(deps, subject, pinned, DEVICE_IS_FIXED)
 }
 
+/**
+ * An editor rename of a composed device (not a customization, not a create)
+ * writes the device name after the block has been saved. A failed device
+ * write is logged and does not fail the save.
+ */
+async function followComposedRename(
+  deps: CompositionApiDeps,
+  previous: CoreBlock | null,
+  name: string | undefined,
+): Promise<void> {
+  const write = deps.writeComposedDeviceName
+  if (write === undefined || previous === null || name === undefined || name === previous.name) {
+    return
+  }
+  const composition = coreBlockComposition(previous)
+  if (composition === null || existingTarget(composition) !== null) return
+  try {
+    await write(previous.id, name)
+  } catch (err: unknown) {
+    deps.logger.warn(
+      'composed block was renamed but the device name was not written — retried on the next apply',
+      { meta: { blockId: previous.id, error: errMsg(err) } },
+    )
+  }
+}
+
 /** The block customizing `device`, found by TARGET — never by its derived name (rule 4). */
 function customizationOf(
   blocks: readonly CoreBlock[],
@@ -425,7 +457,9 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
             )
           }
         }
+        const previous = deps.store.get(blockId)
         const updated = await deps.store.updateComposition(blockId, block)
+        await followComposedRename(deps, previous, block.name)
         deps.logger.info('composition updated', {
           meta: { blockId, by: caller?.userId ?? 'system' },
         })

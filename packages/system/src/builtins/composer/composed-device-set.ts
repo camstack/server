@@ -22,8 +22,13 @@ import type { ComposedDeviceHandle } from './composed-device.js'
 import type { ComposerDerivedSpec, PlannedBlock } from './composer-plan.js'
 import type { PersistedComposedRow } from './composition-declarations.js'
 
+/** `stampUserNamed` marks an operator write. Absent is a system copy of the block name. */
+export interface ComposerDeviceNameWrite {
+  readonly stampUserNamed: boolean
+}
+
 export interface ComposerDevicePorts {
-  setName(deviceId: number, name: string): Promise<void>
+  setName(deviceId: number, name: string, write?: ComposerDeviceNameWrite): Promise<void>
   decommission(deviceId: number): Promise<void>
   applyDerivedSpec(deviceId: number, derived: ComposerDerivedSpec): Promise<void>
 }

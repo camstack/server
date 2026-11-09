@@ -83,6 +83,7 @@ import {
   isActuatorGroupDevice,
 } from './actuator-groups.js'
 import type { ComposedDeviceHandle } from './composed-device.js'
+import { composedNameAuthority, type RememberedCompositionName } from './composed-name.js'
 import {
   type ComposerDeclare,
   ComposedDeviceSet,
@@ -274,6 +275,11 @@ export class Composer {
   private readonly claimSeed: ConfirmedSeed<FieldClaim>
   /** Applies never interleave: each one reads and replaces the whole live set. */
   private applyChain: Promise<unknown> = Promise.resolve()
+  /**
+   * Block names an editor rename still owes the device row. In memory only:
+   * a restart has no entry, and the row's name wins (see `composedNameAuthority`).
+   */
+  private readonly nameOwed = new Map<string, string>()
   /**
    * Runtimes built by an apply and not started yet: that apply's sync starts
    * them, with their sources tracked. An event in between never does (N-5) —
@@ -645,7 +651,18 @@ export class Composer {
           ? null
           : p.block.name === null
             ? (previous?.appliedName ?? device.name)
-            : await this.applyName(device, p.block.id, p.block.name, previous?.appliedName ?? null)
+            : await this.applyName(
+                device,
+                p.block.id,
+                p.block.name,
+                previous === undefined
+                  ? null
+                  : {
+                      appliedName: previous.appliedName,
+                      blockName: previous.planned.block.name,
+                      nameOwed: this.nameOwed.get(p.block.id) ?? null,
+                    },
+              )
       const unchanged =
         previous?.runtime != null &&
         previous.device === device &&
@@ -854,18 +871,42 @@ export class Composer {
     device: ComposedDeviceHandle,
     blockId: string,
     name: string,
-    applied: string | null,
+    remembered: RememberedCompositionName | null,
   ): Promise<string> {
-    // The operator's rename is the authority. A restart has no remembered
-    // `applied`, so without this the block name would be written back.
+    // See `composedNameAuthority`: the device wins when nothing is remembered
+    // (restart) or the live handle moved and the block did not. An editor
+    // rename keeps the block and retries the stamped device write.
     if (device.userNamed === true && device.name !== name) {
-      this.deps.logger.info('composed device keeps the name the operator gave it', {
-        tags: { deviceId: device.id },
-        meta: { name: device.name, blockName: name },
-      })
-      await this.syncBlockName(device.id, blockId, device.name)
-      return device.name
+      if (composedNameAuthority(device.name, name, remembered) === 'device') {
+        this.nameOwed.delete(blockId)
+        this.deps.logger.info('composed device keeps the name the operator gave it', {
+          tags: { deviceId: device.id },
+          meta: { name: device.name, blockName: name },
+        })
+        await this.syncBlockName(device.id, blockId, device.name)
+        return device.name
+      }
+      const owed = remembered?.nameOwed === name
+      if (!owed && remembered?.appliedName === name) return name
+      try {
+        await this.deps.devices.setName(device.id, name, { stampUserNamed: true })
+        this.nameOwed.delete(blockId)
+        this.deps.logger.info('composed device renamed after its block', {
+          tags: { deviceId: device.id },
+          meta: { name },
+        })
+        return name
+      } catch (err: unknown) {
+        this.nameOwed.set(blockId, name)
+        this.deps.logger.warn(
+          'composed block was renamed but the device name was not written — retried on the next apply',
+          { tags: { deviceId: device.id }, meta: { blockId, name, error: errMsg(err) } },
+        )
+        return remembered?.appliedName ?? device.name
+      }
     }
+    this.nameOwed.delete(blockId)
+    const applied = remembered?.appliedName ?? null
     if ((applied ?? device.name) === name) return name
     try {
       await this.deps.devices.setName(device.id, name)

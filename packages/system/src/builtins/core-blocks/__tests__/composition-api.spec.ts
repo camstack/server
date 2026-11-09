@@ -774,8 +774,68 @@ describe('customizing an existing device (D663, D944)', () => {
     expect(stored.find((b) => b.id === 'b1')?.updatedAt).toBe(1)
   })
 
+  it('an editor rename of a composed device writes the device name after the block save', async () => {
+    const writes: Array<{ blockId: string; name: string }> = []
+    stored = [compositionBlock('b1', ROOM)]
+    const api = buildCompositionApi(
+      deps({
+        writeComposedDeviceName: async (blockId, name) => {
+          writes.push({ blockId, name })
+        },
+      }),
+    )
+    const before = stored[0]
+    if (before === undefined) throw new Error('the block was not stored')
+    const { block } = await api.updateComposition({
+      blockId: before.id,
+      expectedUpdatedAt: before.updatedAt,
+      block: { name: 'Garden' },
+      caller: CALLER,
+    })
+    expect(block.name).toBe('Garden')
+    expect(stored[0]?.name).toBe('Garden')
+    expect(writes).toEqual([{ blockId: 'b1', name: 'Garden' }])
+  })
+
+  it('a failed device-name write does not undo the block save', async () => {
+    const log = recordingLogger()
+    stored = [compositionBlock('b1', ROOM)]
+    const api = buildCompositionApi(
+      deps({
+        logger: log.logger,
+        writeComposedDeviceName: async () => {
+          throw new Error('device row locked')
+        },
+      }),
+    )
+    const before = stored[0]
+    if (before === undefined) throw new Error('the block was not stored')
+    const { block } = await api.updateComposition({
+      blockId: before.id,
+      expectedUpdatedAt: before.updatedAt,
+      block: { name: 'Garden' },
+      caller: CALLER,
+    })
+    expect(block.name).toBe('Garden')
+    expect(log.lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          level: 'warn',
+          message: expect.stringContaining('device name was not written'),
+        }),
+      ]),
+    )
+  })
+
   it('updateComposition cannot move a customization to another device, nor give it a name', async () => {
-    const api = buildCompositionApi(deps())
+    const writes: string[] = []
+    const api = buildCompositionApi(
+      deps({
+        writeComposedDeviceName: async (_blockId, name) => {
+          writes.push(name)
+        },
+      }),
+    )
     const { block: a } = await api.createComposition(customize())
     await expect(
       api.updateComposition({
@@ -796,6 +856,7 @@ describe('customizing an existing device (D663, D944)', () => {
       }),
     ).rejects.toThrow('a customization has no name of its own')
     expect(stored[0]?.updatedAt).toBe(a.updatedAt)
+    expect(writes).toEqual([])
   })
 
   it('a target whose bindings cannot be read refuses the save as target-unreadable, and nothing is stored', async () => {

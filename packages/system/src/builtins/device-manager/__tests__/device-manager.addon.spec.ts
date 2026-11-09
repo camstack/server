@@ -535,6 +535,10 @@ describe('DeviceManagerAddon', () => {
         userNamed: true,
       })
 
+      // The editor's setName (stamp) sees the block already renamed and writes nothing again.
+      await provider.setName({ deviceId: id, name: 'Garden' })
+      expect(writes).toEqual([{ blockId: 'b1', name: 'Garden' }])
+
       // The composer copying the block name back is not the operator.
       await provider.setName({ deviceId: id, name: 'Room', stampUserNamed: false })
       const kept = await readMetaRow(store, id)

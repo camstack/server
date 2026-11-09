@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An action step can carry an if condition and an else list; a state that cannot be read runs neither side
 - A device row shows a running timed run, with the time left and Run or Stop.
 - Renaming a composed device keeps the new name after a restart.
+- Renaming a composed device keeps the new name after a restart, whether the rename was made on the device page or in the composition editor.
 
 ## [1.2.535] - 2026-11-09
 
