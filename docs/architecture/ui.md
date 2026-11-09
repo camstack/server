@@ -464,7 +464,7 @@ way to switch an instance. The switch is ONE stored field, the record body's `en
 never write it (the form hands back the whole body it was shown, and a stale `enabled` in it would
 undo a switch moved meanwhile). The `integrations` registry flag of a `role: devices` addon is still
 its own store (D1007); folding it needs a records-side door for an addon to reach the registry, and is
-left open. A notification target (`setTargetEnabled`), a core block, a scheduler job and a terminal
+left open. A notification rule (`setRuleEnabled`), a core block, a scheduler job and a terminal
 session are not integration-instance records yet and keep their own switch, listed with the reason in
 `scripts/one-row-switch-baseline.json`; `scripts/check-one-row-switch.ts` refuses a new one.
 

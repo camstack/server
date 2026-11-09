@@ -173,9 +173,10 @@ wins** over that remote, so the rollback is a single env var on the container â€
 Two things follow that surprise people. Reads REJECT when the hub is
 unreachable, never answering empty â€” an empty answer is indistinguishable from
 an empty store, and the next read-modify-write would persist the patch alone.
-And the agent's `storage_locations` stay in memory, re-seeded from declarations
-at every boot: that table is keyed by a bare location id every node shares, so
-forwarding it would land on the hub's rows.
+And the agent's storage locations stay in memory, re-seeded from declarations
+at every boot: a location is keyed by a bare id every node shares, so forwarding
+it would land on the hub's rows. (The legacy `storage_locations` table was
+dropped 2026-11-06; locations are the `storage-orchestrator/locations` record kind.)
 
 ### A runner's V8 heap is shaped by the manifests it hosts
 

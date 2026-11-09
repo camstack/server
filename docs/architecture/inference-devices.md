@@ -412,8 +412,8 @@ below:
 
 ```
 # write (goes through the schema's per-node scoping)
-addonSettings.updateGlobalSettings
-  {"addonId":"detection-pipeline","patch":{"numWorkers":2},
+addonSettings.updateScopedSettings
+  {"addonId":"detection-pipeline","cap":"pipeline-executor","scope":"node","patch":{"numWorkers":2},
    "nodeId":"MacMiniAgent.localdomain"}
 
 # read back the raw blob the addon actually resolves from

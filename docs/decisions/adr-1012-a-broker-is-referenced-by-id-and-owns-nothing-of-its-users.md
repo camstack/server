@@ -2,6 +2,7 @@
 id: D1012
 title: A broker is referenced by id and owns nothing of its users
 status: accepted
+superseded-in-part-by: D1013
 date: 2026-11-05
 supersedes: D950 (the integrationId foreign key on a broker), D1007 (the registry id as a broker key)
 applies-to:

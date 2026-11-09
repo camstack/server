@@ -1,7 +1,8 @@
 ---
 id: D996
 title: Connection-holding addons are integration instances, a system collection cap over typed record kinds
-status: proposed
+status: accepted
+superseded-in-part-by: D1013
 date: 2026-11-02
 supersedes:
 applies-to:

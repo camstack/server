@@ -571,7 +571,8 @@ Those pages speak English and Italian (D858 amendment). All prose is in `app-pag
 
 The hub's human name is one `system-settings` row, `server.name`, edited on
 System -> Settings (the `system-config` addon's Server section) or by the
-first-login dialog, which calls the same `addonSettings.updateGlobalSettings`.
+first-login dialog, which both save through the same bootstrap form action (`saveBootstrapForm`,
+`packages/system/src/builtins/system-config/bootstrap-form-actions.ts`), not through the scoped settings API.
 `ServerNameSchema` validates every write (trimmed, 1-48 characters, no control
 characters). Nothing writes it by itself: unset reads as the hostname without its
 domain with `isDefault: true` (`resolveServerName`, `ServerNameReader`), and a

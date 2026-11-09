@@ -2,6 +2,7 @@
 id: D950
 title: A broker is created, edited and signed in through one dialog, and a kind declares its own sign-in
 status: accepted
+superseded-in-part-by: D1013
 date: 2026-10-27
 applies-to:
   - packages/addon-admin-ui/src/components/brokers/**

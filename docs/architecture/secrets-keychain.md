@@ -278,7 +278,7 @@ npx tsx scripts/hub/migrate-raw-secrets.ts --server <host> --apply   # blocks + 
 ## The save path
 
 Every settings write of a `BaseAddon` goes through `transformSecretWrite`
-(the context's `settings` is wrapped, so `updateGlobalSettings`, `state()` and
+(the context's `settings` is wrapped, so `addonSettings.updateScopedSettings`, `state()` and
 direct `writeAddonStore` calls all qualify). Per secret path:
 
 | Incoming | Result |
@@ -311,7 +311,7 @@ An undeclared key that holds an own marker joins the secret tree for that write
 (`widenTreeWithStoredMarkers`), so CLEAR and KEEP work on it too. After the
 transform, keys equal to the stored value are dropped; a write that changes
 neither the blob nor the keychain is not written and is not a config change —
-`updateGlobalSettings` then skips `onConfigChanged`, `AddonUpdated` and the
+a scoped write then skips `onConfigChanged`, `AddonUpdated` and the
 auto-restart. Another owner's marker in the blob (device-manager keeps each
 driver's) is never resolved, widened or taken over.
 

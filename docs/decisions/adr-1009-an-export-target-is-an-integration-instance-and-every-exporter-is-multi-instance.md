@@ -2,6 +2,7 @@
 id: D1009
 title: An export target is an integration instance, and every exporter is multi-instance
 status: accepted
+superseded-in-part-by: D1013
 date: 2026-11-05
 supersedes: the "an exporter keeps its configuration in addon-level settings" part of D986 for the four exporters
 applies-to:

@@ -1,7 +1,7 @@
 ---
 id: D1007
 title: Every integration is a typed instance record; the registry keeps identity and the on/off switch of a device integration
-status: proposed
+status: accepted
 superseded-in-part-by: D1015
 date: 2026-11-04
 supersedes: the "legacy integration_settings rows stay for addons that bring devices" part of D996, and the integrationSettingSections / per-integration settings rows part of D986
