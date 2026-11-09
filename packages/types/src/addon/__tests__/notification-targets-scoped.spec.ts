@@ -77,7 +77,12 @@ describe('notification targets at the instance door', () => {
     tested = []
     door = await world()
     // Pre-existing records keep their ids: an admin seeds one global and one per user.
-    await door.createInstance({ id: 'global-1', name: 'House', kind: 'ntfy', values: { topic: 'g' } })
+    await door.createInstance({
+      id: 'global-1',
+      name: 'House',
+      kind: 'ntfy',
+      values: { topic: 'g' },
+    })
     await door.createInstance({
       id: 'a1',
       name: 'Alice',
@@ -115,6 +120,19 @@ describe('notification targets at the instance door', () => {
     expect(await ids()).toEqual(['a1', 'b1', 'global-1'])
   })
 
+  it('lists: an admin asking for `mine` gets only their own, never the global or foreign rows', async () => {
+    await door.createInstance({
+      name: 'Root phone',
+      kind: 'ntfy',
+      values: { topic: 'r' },
+      caller: ADMIN,
+    })
+    const mine = await door.listInstances({ mine: true, caller: ADMIN })
+    expect(mine.map((i) => i.name)).toEqual([])
+    const stamped = await door.listInstances({ mine: true, caller: U1 })
+    expect(stamped.map((i) => i.id)).toEqual(['a1'])
+  })
+
   it('get: a foreign or ownerless target reads as absent to a user', async () => {
     expect((await door.getInstance({ id: 'a1', caller: U1 }))?.id).toBe('a1')
     expect(await door.getInstance({ id: 'b1', caller: U1 })).toBeNull()
@@ -149,9 +167,9 @@ describe('notification targets at the instance door', () => {
   })
 
   it('switch and delete: only an own target', async () => {
-    await expect(
-      door.setInstanceEnabled({ id: 'b1', enabled: false, caller: U1 }),
-    ).rejects.toThrow('forbidden')
+    await expect(door.setInstanceEnabled({ id: 'b1', enabled: false, caller: U1 })).rejects.toThrow(
+      'forbidden',
+    )
     await expect(door.deleteInstance({ id: 'b1', caller: U1 })).rejects.toThrow('forbidden')
     await door.setInstanceEnabled({ id: 'a1', enabled: false, caller: U1 })
     expect((await door.getInstance({ id: 'a1', caller: U1 }))?.enabled).toBe(false)
@@ -161,7 +179,9 @@ describe('notification targets at the instance door', () => {
   })
 
   it('test: a stored own target only; a foreign one and an unsaved form are refused for a user', async () => {
-    await expect(door.testInstance?.({ id: 'b1', values: {}, caller: U1 })).rejects.toThrow('forbidden')
+    await expect(door.testInstance?.({ id: 'b1', values: {}, caller: U1 })).rejects.toThrow(
+      'forbidden',
+    )
     await expect(
       door.testInstance?.({ id: null, values: { topic: 'z' }, kind: 'ntfy', caller: U1 }),
     ).rejects.toThrow('forbidden')

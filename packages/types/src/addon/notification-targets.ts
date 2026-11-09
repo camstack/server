@@ -455,8 +455,10 @@ export function scopeInstancesToCaller(
   inner: IIntegrationInstancesProvider,
 ): IIntegrationInstancesProvider {
   const ownerOf = (instance: IntegrationInstance): unknown => instance.formValues[TARGET_OWNER_KEY]
-  const owned = (instance: IntegrationInstance | null, userId: string): instance is IntegrationInstance =>
-    instance !== null && ownerOf(instance) === userId
+  const owned = (
+    instance: IntegrationInstance | null,
+    userId: string,
+  ): instance is IntegrationInstance => instance !== null && ownerOf(instance) === userId
   const requireOwned = async (id: string, userId: string): Promise<void> => {
     if (!owned(await inner.getInstance({ id }), userId)) {
       throw new Error(`forbidden: target not owned: ${id}`)
@@ -475,7 +477,8 @@ export function scopeInstancesToCaller(
     describe: async () => ({ ...(await inner.describe()), userScoped: true }),
     listInstances: async (input) => {
       const all = await inner.listInstances(input)
-      const user = userOnly(input?.caller)
+      // An admin sees every row; one that asks for `mine` (a "my targets" screen) gets its own.
+      const user = input?.['mine'] === true ? input.caller : userOnly(input?.caller)
       return user === undefined ? all : all.filter((instance) => owned(instance, user.userId))
     },
     getInstance: async (input) => {
@@ -514,7 +517,8 @@ export function scopeInstancesToCaller(
             // A user tests a STORED target of their own: an unsaved form would make the hub
             // probe any address the user types.
             if (user !== undefined) {
-              if (input.id === null) throw new Error('forbidden: a draft target is tested by an admin')
+              if (input.id === null)
+                throw new Error('forbidden: a draft target is tested by an admin')
               await requireOwned(input.id, user.userId)
             }
             return inner.testInstance === undefined
