@@ -44,7 +44,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AddDeviceModal } from '../components/integrations/AddDeviceModal'
 import { useAdminDeviceRemoval } from '../hooks/useAdminDeviceRemoval'
 import { MatterPairingPanel } from '../components/integrations/MatterPairingPanel'
-import { IntegrationConfigModal } from '../components/integrations/IntegrationConfigModal'
+import { IntegrationInstanceEditor } from '../components/integrations/IntegrationInstanceEditor'
 import type { IntegrationFormSeed } from '../components/integrations/integration-setup-seed'
 import { deviceIntegrationIcon } from '../components/shared/device-integration-icon'
 import { useAddonIconUrl } from '../contexts/addon-icons-context'
@@ -178,7 +178,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
 
   // Broker kind for a `device-adoption` integration — sourced from the same
   // available-types entry the wizard uses (the addon manifest's `brokerKind`).
-  // Drives the config modal's broker re-link step.
+  // Tells the Add device dialog which broker flow to offer.
   const integrationBrokerKind = useMemo<string | null>(() => {
     const addonId = integration?.addonId
     if (!addonId || !typesReady) return null
@@ -191,13 +191,6 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   const addDeviceLabel = !fabReady
     ? t('integrations.addDeviceLoading', { defaultValue: 'Loading…' })
     : t('integrations.addDevice', 'Add device')
-
-  const integrationCanTest = useMemo(() => {
-    const addonId = integration?.addonId
-    if (!addonId || !typesReady) return false
-    const entry = (availableTypes ?? []).find((a) => a.addonId === addonId)
-    return entry?.canTest === true
-  }, [availableTypes, integration?.addonId, typesReady])
 
   // Integration wizard `mode` (LOCKED MODEL) — sourced from the same
   // available-types entry. `standalone` integrations have NO integration-level
@@ -650,16 +643,15 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
         />
       )}
 
-      {showConfig && integrationId && integrationKind !== null && integrationMode !== null && (
-        <IntegrationConfigModal
-          integrationId={integrationId}
+      {showConfig && integrationId && (
+        <IntegrationInstanceEditor
           addonId={integration.addonId}
+          integrationId={integrationId}
           name={integration.name}
-          kind={integrationKind}
-          mode={integrationMode}
-          brokerKind={integrationBrokerKind}
-          canTest={integrationCanTest}
           onClose={() => setShowConfig(false)}
+          onSaved={() => {
+            void queryClient.invalidateQueries()
+          }}
         />
       )}
 

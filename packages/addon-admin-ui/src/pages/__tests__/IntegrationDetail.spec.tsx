@@ -118,8 +118,8 @@ vi.mock('../../components/integrations/AddDeviceDialog', () => ({
 vi.mock('../../components/integrations/AdoptDevicesModal', () => ({
   AdoptDevicesModal: () => null,
 }))
-vi.mock('../../components/integrations/IntegrationConfigModal', () => ({
-  IntegrationConfigModal: () => null,
+vi.mock('../../components/integrations/IntegrationInstanceEditor', () => ({
+  IntegrationInstanceEditor: () => null,
 }))
 vi.mock('../../components/integrations/ScanNetworkModal', () => ({
   ScanNetworkModal: () => null,

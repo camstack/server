@@ -1,5 +1,10 @@
 import { omitTransientConfig } from '@camstack/types'
-import { Button, useAddonsCustom, useIntegrationInstancesTestInstance, Input } from '@camstack/ui-library'
+import {
+  Button,
+  useAddonsCustom,
+  useIntegrationInstancesTestInstance,
+  Input,
+} from '@camstack/ui-library'
 import { Radar } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

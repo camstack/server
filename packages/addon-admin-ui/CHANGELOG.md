@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Integration page: a fixed builtin switches like every other integration, and a switch the addon could not answer shows Unknown instead of a stale on/off
+- Integration page: Config opens the shared instance editor (name, test connection, sign-in) instead of a second form
 
 ## [1.2.624] - 2026-11-08
 

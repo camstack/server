@@ -11812,7 +11812,8 @@
     "typedId": "Id",
     "typedIdHint": "Chosen once; it cannot be changed after the record is created.",
     "typedIdInvalid": "Lowercase letters, digits and dashes, starting with a letter or digit (up to 64).",
-    "switchFailed": "Could not change {{name}}: {{message}}"
+    "switchFailed": "Could not change {{name}}: {{message}}",
+    "noForm": "This record has no configuration form beyond its name."
   },
   "instances": {
     "colStatus": "Status",

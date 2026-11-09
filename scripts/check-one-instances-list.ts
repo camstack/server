@@ -46,8 +46,10 @@ const ADMIN_UI_SRC = 'packages/addon-admin-ui/src/'
 const INSTANCES_DIR = 'packages/addon-admin-ui/src/components/instances/'
 
 const SURFACE_RE = /\b(?:ItemFormDialog|DataTable)\b/
-const FAMILY_CAPS = 'NotificationOutput|Llm|Storage|MeshNetwork|TrainingProvider'
-const FAMILY_TRPC = 'notificationOutput|llm|storage|meshNetwork|trainingProvider'
+const FAMILY_CAPS =
+  'NotificationOutput|Llm|Storage|MeshNetwork|TrainingProvider|IntegrationInstances'
+const FAMILY_TRPC =
+  'notificationOutput|llm|storage|meshNetwork|trainingProvider|integrationInstances'
 const CRUD_NOUN = 'Target|Profile|Connection|Source|Entry'
 /** A CRUD call of a configured thing: the editor of a family, whatever surface draws it. */
 const CRUD_RES: readonly RegExp[] = [

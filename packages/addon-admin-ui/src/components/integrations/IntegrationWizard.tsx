@@ -287,10 +287,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
     }
   }
 
-  async function handleConfigSave(data: {
-    name: string
-    config: Record<string, unknown>
-  }) {
+  async function handleConfigSave(data: { name: string; config: Record<string, unknown> }) {
     if (!selectedAddonId) return
 
     try {

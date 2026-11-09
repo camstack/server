@@ -237,6 +237,9 @@ export function InstanceEditorDialog({
     () => (schemaQuery.data ? hydrateSchema(schemaQuery.data, { ...stored }) : null),
     [schemaQuery.data, stored],
   )
+  // The provider ANSWERED with no form for this record: say so (name and switch are still editable),
+  // never a spinner that does not end.
+  const noForm = schemaQuery.isSuccess && !schemaQuery.data
 
   // Connection widgets of the kind draw some fields themselves (a path browser); the plain form
   // then leaves those out. An id this build does not know draws nothing.
@@ -334,7 +337,7 @@ export function InstanceEditorDialog({
               size="sm"
               variant="outline"
               type="button"
-              disabled={test.isPending || hydrated === null}
+              disabled={test.isPending || (hydrated === null && !noForm)}
               onClick={() => {
                 setVerdict(null)
                 test.mutate()
@@ -349,7 +352,7 @@ export function InstanceEditorDialog({
             type="button"
             disabled={
               save.isPending ||
-              hydrated === null ||
+              (hydrated === null && !noForm) ||
               name.length === 0 ||
               restoreMissing ||
               typedState !== 'ok'
@@ -407,7 +410,14 @@ export function InstanceEditorDialog({
           </Button>
         )}
         {hydrated === null ? (
-          schemaQuery.isError ? null : (
+          schemaQuery.isError ? null : noForm ? (
+            <p className="text-xs text-foreground-muted">
+              {t(
+                'providerInstances.noForm',
+                'This record has no configuration form beyond its name.',
+              )}
+            </p>
+          ) : (
             <div className="flex items-center gap-2 text-xs text-foreground-subtle">
               <Loader2 className="h-3 w-3 animate-spin" />
               {t('providerInstances.loading', 'Loading…')}

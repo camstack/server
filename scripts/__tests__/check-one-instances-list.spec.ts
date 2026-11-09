@@ -31,7 +31,33 @@ const BASELINE = {
   },
 }
 
+const SECOND_EDITOR = file(
+  'components/integrations/IntegrationConfigModal.tsx',
+  'await system.trpcClient.integrationInstances.updateInstance.mutate({ addonId, id, values: patch })\n',
+)
+
 describe('check-one-instances-list', () => {
+  it('sees a second editor of integration-instances itself, outside the shared components', () => {
+    expect(isBespokeInstanceList(SECOND_EDITOR)).toBe(true)
+    expect(
+      isBespokeInstanceList(
+        file(
+          'pages/Hook.tsx',
+          "import { useIntegrationInstancesUpdateInstance } from 'x'\nuseIntegrationInstancesUpdateInstance()",
+        ),
+      ),
+    ).toBe(true)
+    expect(
+      isBespokeInstanceList(
+        file(
+          'components/instances/InstanceEditorDialog.tsx',
+          'await system.trpcClient.integrationInstances.updateInstance.mutate({})',
+        ),
+      ),
+    ).toBe(false)
+    expect(findViolations([SECOND_EDITOR], { families: {} })).toHaveLength(1)
+  })
+
   it('flags a CRUD call of a family, with or without a surface, and a surface with a family mutation', () => {
     expect(isBespokeInstanceList(STORAGE_PAGE)).toBe(true)
     expect(isBespokeInstanceList(LLM_EDITOR)).toBe(true)

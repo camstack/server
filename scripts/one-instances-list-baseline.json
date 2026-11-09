@@ -1,5 +1,12 @@
 {
   "_why": "Pages that draw their own list or editor for a family of configured things (planning#440 step 6, D1013). A family is a contiguous block that its U packet deletes with the page. The list only shrinks.",
   "families": {
+    "integrationInstances": {
+      "packages/addon-admin-ui/src/components/integrations/IntegrationWizard.tsx": "the Add-integration wizard (discovery, mode and broker steps) creates the record itself; it is a create flow with steps InstanceCreateDialog does not have, and it lists no instances",
+      "packages/addon-admin-ui/src/components/storage/StorageLocationLead.tsx": "a lead block drawn INSIDE InstanceEditorDialog (its `lead` slot): it patches one field of the record the dialog is editing; the list and the editor are the shared ones",
+      "packages/addon-admin-ui/src/pages/IntegrationDetail.tsx": "the integration page's Delete button calls deleteInstance on the record the page shows; its list is the integration's devices, not instances, and its editor is IntegrationInstanceEditor over InstanceEditorDialog",
+      "packages/addon-admin-ui/src/pages/system/AiProfileLead.tsx": "a lead block drawn inside InstanceEditorDialog: it patches one field of the profile record being edited",
+      "packages/addon-admin-ui/src/pages/system/terminal/TerminalProfileSettingsLead.tsx": "a lead block drawn inside InstanceEditorDialog: it patches the settings of the terminal profile record being edited"
+    }
   }
 }
