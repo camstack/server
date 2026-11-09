@@ -30,8 +30,39 @@ export interface SmtpProviderOption {
   readonly value: string
   readonly label: string
   readonly description?: string
-  /** False when Connectivity → Email has not verified this entry yet. */
+  /** False unless the entry's last send worked. */
   readonly ready?: boolean
+  /** The tri-state behind `ready`: false = its last send failed, absent = it has not sent yet. */
+  readonly verified?: boolean
+}
+
+/** What `smtp-provider.getStatus` answers, as far as the picker reads it. */
+export interface SmtpProviderStatusView {
+  readonly ready: boolean
+  readonly verified?: boolean
+  readonly host: string
+}
+
+/** The picker entry of a provider: an unverified entry says "not verified" only when a send FAILED. */
+export function smtpProviderOption(
+  addonId: string,
+  name: string,
+  status: SmtpProviderStatusView,
+): SmtpProviderOption {
+  const hostBit = status.host !== '' ? status.host : addonId
+  const base = `${name} — ${hostBit}`
+  const label = status.ready
+    ? base
+    : status.verified === false
+      ? `${base} (not verified)`
+      : `${base} (not checked yet)`
+  return {
+    value: addonId,
+    label,
+    description: addonId,
+    ready: status.ready,
+    ...(status.verified !== undefined ? { verified: status.verified } : {}),
+  }
 }
 
 /** One relay (integration instance) a provider holds. */

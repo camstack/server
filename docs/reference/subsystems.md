@@ -23,7 +23,7 @@ commits. A generated page may not.
 
 | Subsystem | Files | Documents | Freshest | State |
 | --- | --- | --- | --- | --- |
-| Kernel, addon lifecycle and boot | 125 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/overview.md` _(covers)_, +94 more, 14 ADRs | 2026-11-02 | ✅ |
+| Kernel, addon lifecycle and boot | 124 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/overview.md` _(covers)_, +94 more, 14 ADRs | 2026-11-02 | ✅ |
 | Transport and cross-node routing | 111 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +58 more, 12 ADRs | 2026-10-22 | ✅ |
 | Capability system and codegen | 332 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +248 more, 51 ADRs | 2026-11-08 | ✅ |
 | Device model and the provider contract | 151 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +64 more, 6 ADRs | 2026-11-08 | ✅ |
@@ -63,7 +63,7 @@ Owns processes: loads addon manifests, forks runners, supervises crashes and dec
 
 - **Owner doc**: `docs/architecture/addon-lifecycle.md`
 - **Code**: `packages/system/src/kernel/*.ts`, `packages/system/src/kernel/lifecycle/**`, `packages/system/src/kernel/deps/**`, `packages/system/src/kernel/utils/**`, `packages/system/src/addon/**`, `packages/system/src/addon-routes/**`, `packages/system/src/lifecycle/**`, `packages/system/src/process/**`, `packages/system/src/feature/**`, `packages/system/src/*.ts`, `packages/types/src/addon/**`, `packages/types/src/lifecycle/**`, `packages/types/src/readiness/**`, `server/backend/src/boot/**`, `packages/node-root/**`
-- **Files**: 125 (122 claimed by some document)
+- **Files**: 124 (121 claimed by some document)
 - **Uncovered**: `server/backend/src/boot` (3)
 
 ### ✅ Transport and cross-node routing

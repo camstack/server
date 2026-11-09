@@ -466,6 +466,7 @@
   "integrationInstances.setInstanceEnabled": "protected",
   "integrationInstances.testInstance": "protected",
   "integrationInstances.updateInstance": "protected",
+  "integrations.delete": "admin",
   "integrations.get": "protected",
   "integrations.getAvailableTypes": "admin",
   "integrations.getByAddonId": "protected",

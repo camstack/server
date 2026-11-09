@@ -22,7 +22,9 @@ import {
   useIntegrationInstancesDeleteInstance,
   useIntegrationsGet,
   useIntegrationsGetAvailableTypes,
+  useIntegrationsDelete,
   useIntegrationsList,
+  useIntegrationsUpdate,
   useIntegrationInstancesSetInstanceEnabled,
   useSystem,
   Button,
@@ -254,9 +256,10 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     ['integrations', 'get'],
     { input: { id: integrationId }, type: 'query' },
   ] as const
-  // The ONE switch is `setInstanceEnabled` for every row; for a fixed builtin (no instance body) the
-  // hub half of that call writes the registry flag. Without the addon's provider it cannot, and the
-  // row arrives marked `switchUnknown`.
+  // The switch of an instance is `setInstanceEnabled`. A FIXED builtin has no instance body: its
+  // switch is the hub's own registry flag, written by `integrations.update`, which needs no addon
+  // provider, so it works while the addon is down. Any other row whose addon did not answer
+  // arrives marked `switchUnknown`.
   const switchHandlers = {
     onMutate: async (vars: { readonly enabled?: boolean }) => {
       await queryClient.cancelQueries({ queryKey: integrationKey })
@@ -280,16 +283,36 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
     },
   }
-  const toggleMutation = useIntegrationInstancesSetInstanceEnabled(switchHandlers)
+  const instanceSwitch = useIntegrationInstancesSetInstanceEnabled(switchHandlers)
+  const fixedSwitch = useIntegrationsUpdate(switchHandlers)
+  const toggleMutation = {
+    isPending: instanceSwitch.isPending || fixedSwitch.isPending,
+    mutate: (vars: { id: string; addonId: string | undefined; enabled: boolean }) =>
+      isFixed
+        ? fixedSwitch.mutate({ id: vars.id, enabled: vars.enabled })
+        : instanceSwitch.mutate(vars),
+  }
   const switchUnknown = integration?.switchUnknown === true
 
-  const deleteMutation = useIntegrationInstancesDeleteInstance({
+  const afterDelete = {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [['integrations']] })
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
       navigate(instances.length > 1 ? integrationDetailUrl(addonId) : '/integrations')
     },
-  })
+  }
+  // The door is `integration-instances.deleteInstance`. An addon that is installed but not running
+  // has no provider to route to: the hub deletes the integration itself (`integrations.delete`).
+  const instanceDelete = useIntegrationInstancesDeleteInstance(afterDelete)
+  const hubDelete = useIntegrationsDelete(afterDelete)
+  const addonRunning = integration?.processState === 'running'
+  const deleteMutation = {
+    isPending: instanceDelete.isPending || hubDelete.isPending,
+    mutateAsync: async (vars: { addonId: string; id: string }): Promise<void> => {
+      if (addonRunning) await instanceDelete.mutateAsync(vars)
+      else await hubDelete.mutateAsync({ id: vars.id })
+    },
+  }
 
   // Kernel-level addon restart — same path as DeviceDetail's restart
   // button, but here it's the canonical surface (one button, one

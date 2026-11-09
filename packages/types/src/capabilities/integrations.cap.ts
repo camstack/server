@@ -144,12 +144,17 @@ const UpdateIntegrationInputSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
   /**
-   * REFUSED, always (a typed `BAD_REQUEST`): the field stays in the schema only so the refusal
-   * names the right door. Every integration, a fixed builtin included, is switched through
-   * `integration-instances.setInstanceEnabled`.
+   * Honoured ONLY for a fixed builtin (`info.fixed`), whose switch is the hub's own registry flag
+   * and works while its addon is down. Any other row is refused (a typed `BAD_REQUEST`): its
+   * switch is `integration-instances.setInstanceEnabled`.
    */
   enabled: z.boolean().optional(),
   info: z.record(z.string(), z.unknown()).optional(),
+})
+
+const DeleteIntegrationResultSchema = z.object({
+  success: z.boolean(),
+  deletedId: z.string(),
 })
 
 export const integrationsCapability = {
@@ -161,6 +166,17 @@ export const integrationsCapability = {
     get: method(z.object({ id: z.string() }), IntegrationWithStateSchema),
     getByAddonId: method(z.object({ addonId: z.string() }), IntegrationLiteSchema.nullable()),
     update: method(UpdateIntegrationInputSchema, IntegrationLiteSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+    /**
+     * Delete an integration from the hub side: its devices, its registry row and its record, and
+     * announce it. It works while the addon that owns the instance is down (installed but
+     * crashed), where `integration-instances.deleteInstance` has no provider to route to; with the
+     * provider up the record is removed through it as well. A fixed builtin and an instance a link
+     * names are refused first.
+     */
+    delete: method(z.object({ id: z.string() }), DeleteIntegrationResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
@@ -176,6 +192,7 @@ export type IntegrationTestConnectionResult = z.infer<typeof TestConnectionResul
 
 export {
   AvailableIntegrationTypeSchema,
+  DeleteIntegrationResultSchema,
   IntegrationLiteSchema,
   IntegrationWithStateSchema,
   TestConnectionResultSchema,

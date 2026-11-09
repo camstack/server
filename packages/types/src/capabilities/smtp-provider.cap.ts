@@ -54,6 +54,11 @@ const SendEmailResultSchema = z.object({
 const SmtpStatusSchema = z.object({
   /** True iff the addon has successfully verified the relay. */
   ready: z.boolean(),
+  /**
+   * The tri-state behind `ready` (D315): true when the last send worked, false when it failed,
+   * ABSENT when the relay has not sent yet (unknown, never "not verified").
+   */
+  verified: z.boolean().optional(),
   /** Operator-visible host string (no credentials). */
   host: z.string(),
   /** Last error message reported by the relay, when not ready. */

@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The account sign-in field no longer polls a claim action; it shows a paste hint under the sign-in button.
 ### Changed
 
-- The generated integrations.delete hook is gone
+- A generated integrations.delete hook is available again.
 
 ### Removed
 

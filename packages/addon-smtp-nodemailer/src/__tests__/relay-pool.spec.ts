@@ -108,6 +108,34 @@ describe('RelayPool', () => {
       )
     })
 
+    it('verification is a tri-state: a relay that has not sent reads unknown, a failed send false, a good one true', async () => {
+      const { factory } = fakeFactory()
+      const pool = new RelayPool(factory, log)
+      pool.apply('int_0001', relay('a', 'smtp.a.test'))
+      // Not sent yet: not ready, and NOT "failed" either.
+      expect(pool.status('int_0001')).toEqual({ ready: false, host: 'smtp.a.test' })
+      await pool.sendEmail('int_0001', mail)
+      expect(pool.status('int_0001')).toMatchObject({ ready: true, verified: true })
+
+      const failing = new RelayPool(
+        () => ({
+          sendMail: async () => {
+            throw new Error('535 bad credentials')
+          },
+          verify: async () => false,
+          close: () => undefined,
+        }),
+        log,
+      )
+      failing.apply('int_0002', relay('b', 'smtp.b.test'))
+      await expect(failing.sendEmail('int_0002', mail)).rejects.toThrow('535')
+      expect(failing.status('int_0002')).toMatchObject({
+        ready: false,
+        verified: false,
+        error: '535 bad credentials',
+      })
+    })
+
     it('a switched-off relay reports not ready without an error', () => {
       const { factory } = fakeFactory()
       const pool = new RelayPool(factory, log)

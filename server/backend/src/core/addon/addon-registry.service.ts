@@ -1618,9 +1618,10 @@ export class AddonRegistryService {
 
   /**
    * What the hub half of an `integration-instances` create and delete reads (epic #440, H3).
-   * Every member is read when used, so a not-yet-wired registry fails the call, not the boot.
+   * Every member is read when used, so a not-yet-wired registry fails the call, not the boot. Also what
+   * the hub-owned calls that need no addon provider read (`integrations.delete`, the switch of a fixed builtin).
    */
-  private instanceLifecycleDeps(): InstanceLifecycleDeps {
+  instanceLifecycleDeps(): InstanceLifecycleDeps {
     return {
       logger: this.loggingService.createLogger('integrations'),
       integrations: () => {

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A relay reads as verified after a delivered message; the separate verify call is gone (Test connection tests it)
 - A relay that never sent a message reads as unknown, not as failed
+- A relay's status says whether its last send worked, failed, or has not happened yet; a relay that has not sent is no longer reported as not verified.
 
 ## [1.2.154] - 2026-11-08
 

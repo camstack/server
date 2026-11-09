@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The account sign-in paste hint asks for the address the browser stopped on, or only its code
+### Changed
+
+- An integration whose addon is not running can be deleted, and a fixed builtin can be switched on while its addon is down.
 
 ## [1.2.625] - 2026-11-09
 

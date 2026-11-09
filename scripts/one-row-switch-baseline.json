@@ -6,9 +6,11 @@
     "notification-rules.cap.ts:setRuleEnabled": "a notification rule is a rule row with its own cap, not an integration instance",
     "schedulers.cap.ts:setEnabled": "a scheduler job has its own cap and store, not an integration-instances provider",
     "packages/addon-post-analysis/src/notification-center/nc-actions.ts:nc.setRuleTargetEnabled": "a rule's per-target switch inside a notification rule row, not an integration instance",
+    "packages/addon-notifiers/src/nc-target-actions.ts:nc.setMyTargetEnabled": "the shipped viewer still calls it; a thin delegate onto the instance door. Removed with the viewer release that uses the door",
     "stream-broker.cap.ts:setRtspEnabled": "the broker's RTSP server toggle, a node setting, not an instance"
   },
   "setInstanceEnabledImplementations": {
+    "packages/addon-notifiers/src/nc-target-actions.ts": "calls the door's setInstanceEnabled for the shipped viewer's nc.setMyTargetEnabled; it stores nothing (removed with that action)",
     "packages/types/src/addon/notification-targets.ts": "a per-user notification target: the wrapper only refuses a caller who does not own the row, then delegates to RecordIntegrationInstances.setInstanceEnabled (no second stored field)",
     "packages/system/src/builtins/storage-orchestrator/location-instances.ts": "a storage location keeps ONE typed state, mode, read only through storage-location-mode.ts (D385/D386); the row switch writes that state, never a second enabled field",
     "server/backend/src/core/addon/instance-lifecycle.ts": "the hub half of the one switch: for a FIXED builtin (no instance body) it writes the registry flag, the only store of that row; for every other row it forwards to the addon's provider. integrations.update refuses enabled for everyone (D1015)"

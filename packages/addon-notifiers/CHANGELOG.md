@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notification targets are listed, edited, switched, tested and deleted through the instance door
 - A notification target the migration could not move stays served from the retired kind, and the migration runs again on the next boot until it has moved
 - The Notification Center keeps working on the previous viewer release: the five my-target actions answer again, as delegates onto the same per-user instance door.
+- The email target's provider picker shows a relay that has not sent yet as not checked yet, and not verified only after a failed send.
 
 ## [1.2.634] - 2026-11-08
 

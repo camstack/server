@@ -34,6 +34,11 @@ function harness(rows: readonly Integration[], instancesOf: (addonId: string) =>
   const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
   const addonReg = {
     getIntegrationRegistry: vi.fn(() => registry),
+    instanceLifecycleDeps: vi.fn(() => ({
+      logger: log,
+      integrations: () => registry,
+      eventBus: { emit },
+    })),
     listAddons: vi.fn(() => []),
     restartAddon: vi.fn(async () => undefined),
     getCapabilityRegistry: vi.fn(() => ({
@@ -148,8 +153,8 @@ describe('integrations.update and the switch', () => {
     expect(h.registry.updateIntegration).not.toHaveBeenCalled()
   })
 
-  it('refuses enabled for a fixed builtin too: its switch is setInstanceEnabled', async () => {
-    const h = harness([row('int_9', 'core-blocks', true, true)], () => instancesProvider([]))
+  it('refuses enabled for a row that is not a fixed builtin: its switch is setInstanceEnabled', async () => {
+    const h = harness([row('int_9', 'provider-x', true)], () => instancesProvider([]))
     await expect(h.provider.update({ id: 'int_9', enabled: false })).rejects.toMatchObject({
       code: 'BAD_REQUEST',
       message: expect.stringContaining('setInstanceEnabled'),
@@ -157,8 +162,19 @@ describe('integrations.update and the switch', () => {
     expect(h.registry.updateIntegration).not.toHaveBeenCalled()
   })
 
-  it('marks a fixed builtin switchUnknown while its addon provider is absent (the hub half cannot write)', async () => {
-    const h = harness([row('int_9', 'core-blocks', true, true)], () => null)
-    expect((await h.provider.get({ id: 'int_9' })).switchUnknown).toBe(true)
+  it('a fixed builtin whose addon is DOWN reads as its registry flag, not unknown', async () => {
+    const h = harness([row('int_9', 'core-blocks', false, true)], () => null)
+    const got = await h.provider.get({ id: 'int_9' })
+    expect(got.switchUnknown).toBeUndefined()
+    expect(got.enabled).toBe(false)
+    expect((await h.provider.list())[0]?.switchUnknown).toBeUndefined()
+  })
+
+  it('a fixed builtin whose addon is DOWN can still be switched on: the hub writes the flag and emits', async () => {
+    const h = harness([row('int_9', 'core-blocks', false, true)], () => null)
+    await h.provider.update({ id: 'int_9', enabled: true })
+    expect(h.registry.updateIntegration).toHaveBeenCalledWith('int_9', { enabled: true })
+    expect(h.emit).toHaveBeenCalledTimes(1)
+    expect(h.emit.mock.calls[0]?.[0]).toMatchObject({ category: 'integration.enabled' })
   })
 })

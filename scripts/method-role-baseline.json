@@ -519,6 +519,7 @@
   "integrationInstances.setInstanceEnabled": "admin",
   "integrationInstances.testInstance": "admin",
   "integrationInstances.updateInstance": "admin",
+  "integrations.delete": "admin",
   "integrations.get": "admin",
   "integrations.getAvailableTypes": "admin",
   "integrations.getByAddonId": "admin",

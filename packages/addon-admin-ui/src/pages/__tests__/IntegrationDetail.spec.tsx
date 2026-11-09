@@ -37,7 +37,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 const fleetReads = vi.hoisted(() => ({ calls: [] as unknown[][] }))
-const switches = vi.hoisted(() => ({ instance: vi.fn() }))
+const switches = vi.hoisted(() => ({ instance: vi.fn(), fixed: vi.fn(), remove: vi.fn(), removeInstance: vi.fn() }))
 
 const BASE_INTEGRATION = {
   id: 'int_reolink',
@@ -103,7 +103,12 @@ vi.mock('@camstack/ui-library', async () => {
       mutate: switches.instance,
       isPending: false,
     }),
-    useIntegrationInstancesDeleteInstance: mutationStub,
+    useIntegrationsUpdate: () => ({ mutate: switches.fixed, isPending: false }),
+    useIntegrationsDelete: () => ({ mutateAsync: switches.remove, isPending: false }),
+    useIntegrationInstancesDeleteInstance: () => ({
+      mutateAsync: switches.removeInstance,
+      isPending: false,
+    }),
     useAddonsRestartAddon: mutationStub,
     useDeviceManagerRemove: mutationStub,
     useDeviceManagerDisable: mutationStub,
@@ -177,7 +182,7 @@ describe('IntegrationDetailPage - no addon-level settings read', () => {
   })
 })
 
-describe('IntegrationDetailPage - the one switch', () => {
+describe('IntegrationDetailPage - the switch', () => {
   it('toggles an integration through setInstanceEnabled with its addon', () => {
     shown.integration = null
     switches.instance.mockReset()
@@ -192,18 +197,18 @@ describe('IntegrationDetailPage - the one switch', () => {
     })
   })
 
-  it('switches a FIXED builtin through setInstanceEnabled too: there is no second door', () => {
-    shown.integration = { ...BASE_INTEGRATION, info: { fixed: true } }
+  it('switches a FIXED builtin through the hub (integrations.update), which needs no addon provider', () => {
+    shown.integration = { ...BASE_INTEGRATION, info: { fixed: true }, processState: 'failed' }
     switches.instance.mockReset()
+    switches.fixed.mockReset()
     render(renderPage())
 
-    fireEvent.click(screen.getByRole('switch', { name: 'Disable integration' }))
+    const toggle = screen.getByRole('switch', { name: 'Disable integration' })
+    expect(toggle).not.toBeDisabled()
+    fireEvent.click(toggle)
 
-    expect(switches.instance).toHaveBeenCalledWith({
-      id: 'int_reolink',
-      addonId: 'provider-reolink',
-      enabled: false,
-    })
+    expect(switches.fixed).toHaveBeenCalledWith({ id: 'int_reolink', enabled: false })
+    expect(switches.instance).not.toHaveBeenCalled()
     shown.integration = null
   })
 
@@ -220,6 +225,41 @@ describe('IntegrationDetailPage - the one switch', () => {
     expect(
       screen.getAllByText('Unknown').every((el) => !el.className.includes('text-success')),
     ).toBe(true)
+    shown.integration = null
+  })
+})
+
+describe('IntegrationDetailPage - delete', () => {
+  const confirmDelete = async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete integration' }))
+  }
+
+  it('deletes through the instance door while the addon runs', async () => {
+    shown.integration = null
+    switches.remove.mockReset().mockResolvedValue(undefined)
+    switches.removeInstance.mockReset().mockResolvedValue(undefined)
+    render(renderPage())
+    await confirmDelete()
+    await vi.waitFor(() => {
+      expect(switches.removeInstance).toHaveBeenCalledWith({
+        addonId: 'provider-reolink',
+        id: 'int_reolink',
+      })
+    })
+    expect(switches.remove).not.toHaveBeenCalled()
+  })
+
+  it('an addon that is installed but not running is deleted by the hub: there is no provider to route to', async () => {
+    shown.integration = { ...BASE_INTEGRATION, processState: 'failed' }
+    switches.remove.mockReset().mockResolvedValue(undefined)
+    switches.removeInstance.mockReset().mockResolvedValue(undefined)
+    render(renderPage())
+    await confirmDelete()
+    await vi.waitFor(() => {
+      expect(switches.remove).toHaveBeenCalledWith({ id: 'int_reolink' })
+    })
+    expect(switches.removeInstance).not.toHaveBeenCalled()
     shown.integration = null
   })
 })

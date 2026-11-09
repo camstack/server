@@ -472,7 +472,9 @@ export function rawInstancesProvider(
 /**
  * The switch of a FIXED builtin: the registry flag, the one store, written here and nowhere else.
  * It needs no addon provider, so a builtin whose addon is down or failed can still be turned back
- * on. The enabled / disabled event follows a real change only.
+ * on: `integrations.update({ enabled })` (the hub's own cap, no provider in the path) reaches it
+ * directly, and `setInstanceEnabled` reaches it when the provider is up. The enabled / disabled
+ * event follows a real change only.
  */
 export async function setFixedBuiltinEnabled(
   deps: Pick<InstanceLifecycleDeps, 'integrations' | 'eventBus' | 'logger'>,

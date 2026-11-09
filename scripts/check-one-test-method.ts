@@ -65,7 +65,10 @@ export const PERMANENT: Readonly<Record<string, string>> = {
 }
 
 /** Folds into `testInstance` at step 5/6 of planning#440; delete the entry then. */
-export const PENDING: Readonly<Record<string, string>> = {}
+export const PENDING: Readonly<Record<string, string>> = {
+  'packages/addon-notifiers/src/nc-target-actions.ts:nc.testMyTarget':
+    'the shipped viewer still calls it; a thin delegate onto testInstance, removed with the viewer release that uses the door',
+}
 
 export interface SourceFile {
   /** Repo-relative, forward slashes. */

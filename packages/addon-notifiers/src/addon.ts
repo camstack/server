@@ -24,7 +24,11 @@ import {
   secretKeysOf,
   targetRowPortsOver,
 } from '@camstack/types'
-import type { EmailSmtpClient, SmtpProviderOption } from './adapters/email.js'
+import {
+  type EmailSmtpClient,
+  type SmtpProviderOption,
+  smtpProviderOption,
+} from './adapters/email.js'
 import { buildNotifierAdapters } from './adapters/registry.js'
 import { iconMediaTypeFor, iconRoutes, iconUrlFor } from './icon-routes.js'
 import { ADDON_MIGRATIONS, OLD_TARGETS_KIND, oldTargetKinds } from './migrations/index.js'
@@ -88,16 +92,7 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
         const name = names.get(p.addonId) ?? p.addonId
         try {
           const status = await api.smtpProvider.getStatus.query({ addonId: p.addonId })
-          const hostBit = status.host !== '' ? status.host : p.addonId
-          const label = status.ready
-            ? `${name} — ${hostBit}`
-            : `${name} — ${hostBit} (not verified)`
-          out.push({
-            value: p.addonId,
-            label,
-            description: p.addonId,
-            ready: status.ready,
-          })
+          out.push(smtpProviderOption(p.addonId, name, status))
         } catch {
           out.push({
             value: p.addonId,

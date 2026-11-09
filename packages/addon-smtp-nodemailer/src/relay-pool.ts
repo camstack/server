@@ -39,11 +39,13 @@ export interface SendEmailRequest {
 
 /**
  * `ready` is "the last send worked". A relay that never sent anything is NOT known to be broken:
- * it reads `ready: false` with neither `error` nor `lastVerifiedAt`, which a reader takes as
- * unknown (the connection check is `testInstance`, not this).
+ * it reads `ready: false` with no `verified` (unknown), where a failed send reads `verified: false`
+ * (the connection check is `testInstance`, not this).
  */
 export interface RelayStatus {
   ready: boolean
+  /** The last send's outcome; absent until the first send (unknown, not failed). */
+  verified?: boolean
   host: string
   error?: string
   lastVerifiedAt?: number
@@ -257,6 +259,7 @@ export class RelayPool {
       ready: isOn(relay.body) && relay.lastSendOk === true,
       host: relay.body.host,
     }
+    if (isOn(relay.body) && relay.lastSendOk !== undefined) status.verified = relay.lastSendOk
     if (relay.lastError) status.error = relay.lastError
     if (relay.lastVerifiedAt !== undefined) status.lastVerifiedAt = relay.lastVerifiedAt
     return status

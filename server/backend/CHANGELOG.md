@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A provider's refusal of a caller answers FORBIDDEN (403) instead of a server error.
+- integrations.delete is back for an addon that is installed but not running; a fixed builtin can be switched while its addon is down.
 
 ## [1.2.818] - 2026-11-09
 
@@ -27,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A fixed builtin can be switched back on while its addon is down, and every switch emits the enabled / disabled event again
 - A fixed builtin whose addon is down reads as an unknown switch; the enabled / disabled event follows the instance record, not the registry flag
 - A viewer user manages only their own notification targets through integration-instances
-- integrations.delete is gone: delete an integration through integrationInstances.deleteInstance
 
 ### Removed
 

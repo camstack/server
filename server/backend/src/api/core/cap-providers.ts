@@ -65,7 +65,10 @@ import type {
 import { errMsg } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
 import {
+  deleteRegisteredInstance,
   isFixedBuiltin,
+  rawInstancesProvider,
+  setFixedBuiltinEnabled,
 } from '../../core/addon/instance-lifecycle'
 import type { AddonPackageService } from '../../core/addon/addon-package.service'
 import { SYSTEM_PACKAGE } from '../../core/addon/addon-package.service.js'
@@ -1091,10 +1094,11 @@ function getInstancesProvider(
  * marked `switchUnknown`: that flag is stale, not the state, and a reader must not draw it as on or
  * off (D315). A failure is logged: a listing never fails because one addon did not answer.
  *
- * A FIXED builtin is the exception: its switch is the registry flag, written only by the hub half
- * of `setInstanceEnabled` (`instance-lifecycle.ts`), and the name-only record it is seeded with
- * carries no flag, which a body reads as "on". Its row is never projected and the flag is the
- * answer.
+ * A FIXED builtin is the exception: its switch is the registry flag, the hub's own, written by
+ * `setFixedBuiltinEnabled` (`instance-lifecycle.ts`) from `setInstanceEnabled` or from
+ * `integrations.update({ enabled })`, and the name-only record it is seeded with carries no flag,
+ * which a body reads as "on". Its row is never projected and the flag is the answer, whether or
+ * not its addon is up.
  */
 async function projectSwitches(
   ar: AddonRegistryService,
@@ -1118,14 +1122,8 @@ async function projectSwitches(
     }
   }
   return integrations.map((i) => {
-    // A fixed builtin's switch is the registry flag, written by the hub half of `setInstanceEnabled`,
-    // which runs only while the owning addon's provider is registered: without it the switch
-    // cannot be written, so the row reads unknown rather than a switch that does nothing.
-    if (isFixedBuiltin(i)) {
-      return getInstancesProvider(ar, i.addonId) === null
-        ? { ...i, switchUnknown: true as const }
-        : i
-    }
+    // A fixed builtin's switch is the registry flag: the hub owns it, the addon does not answer for it.
+    if (isFixedBuiltin(i)) return i
     const enabled = byAddon.get(i.addonId)?.get(i.id)
     return enabled === undefined ? { ...i, switchUnknown: true as const } : { ...i, enabled }
   })
@@ -1176,7 +1174,10 @@ export function buildIntegrationsProvider(
         })
         throw new Error(`Integration "${input.id}" not found`)
       }
-      if (input.enabled !== undefined) {
+      if (input.enabled !== undefined && isFixedBuiltin(previous)) {
+        // The hub owns a fixed builtin's switch (the registry flag): it works while the addon is down.
+        await setFixedBuiltinEnabled(ar.instanceLifecycleDeps(), previous, input.enabled)
+      } else if (input.enabled !== undefined) {
         logger.warn('refused: integrations.update does not switch', {
           tags: { integrationId: input.id, addonId: previous.addonId },
           meta: { phase: 'update', reason: 'switch-through-set-instance-enabled' },
@@ -1186,7 +1187,7 @@ export function buildIntegrationsProvider(
           message: `Integration "${input.id}" is switched through integration-instances.setInstanceEnabled, not integrations.update`,
         })
       }
-      const { id, ...updates } = input
+      const { id, enabled: _switched, ...updates } = input
       const changedFields = Object.keys(updates).filter(
         (k) => (updates as Record<string, unknown>)[k] !== undefined,
       )
@@ -1226,6 +1227,33 @@ export function buildIntegrationsProvider(
         })
       }
       return result
+    },
+    delete: async (input) => {
+      const reg = requireIntegrationRegistry(ar)
+      logger.info('request', {
+        tags: { integrationId: input.id },
+        meta: { phase: 'delete' },
+      })
+      const integration = await reg.getIntegration(input.id)
+      if (!integration) {
+        logger.warn('not found', {
+          tags: { integrationId: input.id },
+          meta: { phase: 'delete' },
+        })
+        throw new Error(`Integration "${input.id}" not found`)
+      }
+      // The hub half shared with the registered `integration-instances` provider
+      // (`instance-lifecycle.ts`), reachable WITHOUT that provider: an addon that is installed but
+      // crashed keeps its integration deletable. A fixed builtin and a linked instance are refused
+      // BEFORE the first mutation, then the devices, the record (when the provider is up), the row
+      // and the event.
+      const instances = getInstancesProvider(ar, integration.addonId)
+      await deleteRegisteredInstance(
+        ar.instanceLifecycleDeps(),
+        instances === null ? null : rawInstancesProvider(instances),
+        integration,
+      )
+      return { success: true, deletedId: input.id }
     },
     getAvailableTypes: async () => {
       const reg = requireIntegrationRegistry(ar)
