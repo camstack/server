@@ -135,6 +135,48 @@ describe('scheduler engine — a conditional step (#472)', () => {
   })
 })
 
+describe('scheduler engine — an unreadable step condition (#472)', () => {
+  it('runs neither side and logs the skipped step with the device tag', async () => {
+    const conditions: StepConditionDoor = () => async () => ({
+      result: 'unknown',
+      reason: 'no reading',
+    })
+    const w = await harness({ start: MIDNIGHT, devices: [{ id: 1 }], conditions })
+    const step: ActionStep = {
+      kind: 'cap',
+      target: { kind: 'devices', ids: [1] },
+      cap: 'display',
+      method: 'show',
+      args: { text: 'then' },
+      if: {
+        kind: 'device-is',
+        deviceId: 1,
+        cap: 'switch',
+        fieldPath: 'on',
+        operator: 'eq',
+        value: true,
+      },
+      else: [
+        {
+          kind: 'cap',
+          target: { kind: 'devices', ids: [1] },
+          cap: 'display',
+          method: 'show',
+          args: { text: 'else' },
+        },
+      ],
+    }
+    await w.create(scheduler([profile([point('a', 8, 0, 'edge', [step])])]))
+    await w.engine.start()
+    await w.advanceTo(h(9))
+    expect(w.calls).toEqual([])
+    const line = w.logs.lines.find(
+      (l) => l.level === 'warn' && l.message.includes('condition could not be read'),
+    )
+    expect(line?.extras?.tags).toEqual({ deviceId: 1 })
+  })
+})
+
 describe('scheduler engine — edges and the queue', () => {
   it('states which scheduler asked for the device call (D1022)', async () => {
     const w = await harness({ start: MIDNIGHT, devices: [{ id: 1 }] })

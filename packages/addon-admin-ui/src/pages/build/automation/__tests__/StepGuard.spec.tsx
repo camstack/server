@@ -67,4 +67,10 @@ describe('a step guard in the action list', () => {
     fireEvent.change(screen.getAllByRole('spinbutton')[0]!, { target: { value: '9' } })
     expect(latest[0]).toMatchObject({ seconds: 9, if: { kind: 'all' }, else: [{ seconds: 1 }] })
   })
+
+  it('the condition editor does not claim to say what starts a run', () => {
+    render(<Harness initial={[{ kind: 'wait', seconds: 3, if: { kind: 'all', children: [] } }]} />)
+    expect(screen.getByTestId('when-tree')).toBeTruthy()
+    expect(screen.queryByText(/starts a run/)).toBeNull()
+  })
 })

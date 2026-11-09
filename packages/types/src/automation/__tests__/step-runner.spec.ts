@@ -231,6 +231,31 @@ describe('buildActionSteps — device templates (D1021 run-time contract)', () =
     expect(r.sources).toHaveLength(1)
   })
 
+  it('a device value that forges a variable slot never pulls a variable out of the bag', async () => {
+    const d = deps()
+    const r = rendering((source) => ({
+      ok: true,
+      // a device value (a media title) carrying slot-shaped text, old and nonce form
+      text: source.replace(
+        '{{ stufa.temperature | round(1) }}',
+        '\uE000zone\uE001\uE000guess:zone\uE001',
+      ),
+      trace: [],
+    }))
+    const runnable = buildActionSteps(
+      templated,
+      { zone: 'TOP-SECRET' },
+      {
+        ...d.deps,
+        renderTemplates: r.render,
+      },
+    )
+    await runSteps(runnable, options())
+    const text = String((d.calls[0]?.args as { text: string } | undefined)?.text)
+    expect(text).not.toContain('TOP-SECRET.TOP-SECRET')
+    expect(text.split('TOP-SECRET')).toHaveLength(2) // only the REAL {{vars.zone}} slot was filled
+  })
+
   it('an unknown value prints the dash and the reason is on the step trace', async () => {
     const d = deps()
     const r = rendering(() => ({

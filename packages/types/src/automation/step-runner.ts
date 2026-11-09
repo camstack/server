@@ -66,6 +66,14 @@ export interface StepFailure {
   readonly deviceId: number | undefined
 }
 
+/** A guarded step that was skipped because its condition could not be read (D49). */
+export interface StepGuardUnknown {
+  readonly index: number
+  readonly path: string
+  readonly reason: string
+  readonly deviceId: number | undefined
+}
+
 export interface RunStepsOptions {
   /** `actions` for an automation, `steps` for an Action run. */
   readonly pathPrefix: string
@@ -75,6 +83,8 @@ export interface RunStepsOptions {
   readonly now: () => number
   /** Called once, for the step that failed. */
   readonly onFailure: (failure: StepFailure) => void
+  /** Called for a step skipped because its `if` read unknown: a branch that drops work says so (#472). */
+  readonly onGuardUnknown?: (skipped: StepGuardUnknown) => void
 }
 
 export interface RunStepsResult {
@@ -128,6 +138,14 @@ export async function runSteps(
     if (step.guard !== undefined) {
       const verdict = await readGuard(step.guard)
       guardTrace = { condition: verdict.result, conditionReason: verdict.reason }
+      if (verdict.result === 'unknown') {
+        options.onGuardUnknown?.({
+          index,
+          path,
+          reason: verdict.reason,
+          deviceId: step.meta.deviceId,
+        })
+      }
       if (verdict.result !== 'true') {
         const branch = verdict.result === 'false' ? (step.otherwise ?? []) : []
         if (branch.length === 0) {
@@ -296,14 +314,22 @@ export class StepTemplateError extends Error {
   }
 }
 
-/** The text of `{{vars.x}}` slots, kept out of a template's source (a variable VALUE is never rendered). */
+/**
+ * A `{{vars.x}}` slot, set aside while a template renders. The slot carries a
+ * nonce drawn per call, so a device value that happens to contain the sentinel
+ * characters can never name a held variable.
+ */
 const VAR_SLOT_OPEN = '\uE000'
 const VAR_SLOT_CLOSE = '\uE001'
-const PROTECTED_SLOT_RE = new RegExp(
-  `${VAR_SLOT_OPEN}([A-Za-z_][A-Za-z0-9_]*)${VAR_SLOT_CLOSE}`,
-  'g',
-)
 const TEMPLATE_MARKUP_RE = /\{\{|\{%/
+
+function newSlotNonce(): string {
+  return Math.random().toString(36).slice(2, 12)
+}
+
+function slotPattern(nonce: string): RegExp {
+  return new RegExp(`${VAR_SLOT_OPEN}${nonce}:([A-Za-z_][A-Za-z0-9_]*)${VAR_SLOT_CLOSE}`, 'g')
+}
 
 /** True when a string, once its `{{vars.x}}` slots are set aside, still carries template markup. */
 export function carriesDeviceTemplate(text: string): boolean {
@@ -326,12 +352,20 @@ export function collectDeviceTemplates(value: unknown): string[] {
   return [...found]
 }
 
-function protectVarSlots(text: string): string {
-  return text.replace(TEMPLATE_RE, (_m, key: string) => `${VAR_SLOT_OPEN}${key}${VAR_SLOT_CLOSE}`)
+function protectVarSlots(text: string, nonce: string): string {
+  return text.replace(
+    TEMPLATE_RE,
+    (_m, key: string) => `${VAR_SLOT_OPEN}${nonce}:${key}${VAR_SLOT_CLOSE}`,
+  )
 }
 
-function restoreVarSlots(text: string, vars: StepVars, onMissing: (name: string) => void): string {
-  return text.replace(PROTECTED_SLOT_RE, (_m, key: string) => {
+function restoreVarSlots(
+  text: string,
+  nonce: string,
+  vars: StepVars,
+  onMissing: (name: string) => void,
+): string {
+  return text.replace(slotPattern(nonce), (_m, key: string) => {
     const v = vars[key]
     if (v === undefined) {
       onMissing(key)
@@ -361,6 +395,7 @@ export async function resolveStepArgsWithTemplates(
   onMissing: (name: string) => void,
   render: RenderStepTemplates | undefined,
 ): Promise<TemplatedArgs> {
+  const nonce = newSlotNonce()
   const sources: string[] = []
   const indexOf = new Map<string, number>()
   const hold = (text: string): number => {
@@ -377,7 +412,7 @@ export async function resolveStepArgsWithTemplates(
     if (isVarRef(node)) return resolveStepArgs(node, vars, onMissing)
     if (typeof node === 'string') {
       return carriesDeviceTemplate(node)
-        ? new Pending(hold(protectVarSlots(node)))
+        ? new Pending(hold(protectVarSlots(node, nonce)))
         : resolveStepArgs(node, vars, onMissing)
     }
     if (Array.isArray(node)) return node.map(collect)
@@ -405,7 +440,7 @@ export async function resolveStepArgsWithTemplates(
       throw new StepTemplateError('unavailable', `no answer for template ${index + 1}`)
     }
     if (!answer.ok) throw new StepTemplateError(answer.refusal.reason, answer.refusal.message)
-    texts.push(restoreVarSlots(answer.text, vars, onMissing))
+    texts.push(restoreVarSlots(answer.text, nonce, vars, onMissing))
     for (const entry of answer.trace) {
       const note = `${entry.ref}: ${entry.reason}`
       if (!notes.includes(note)) notes.push(note)

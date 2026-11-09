@@ -457,4 +457,36 @@ describe('FanPresetsService.applyPreset — a conditional step (#472)', () => {
     expect(w.calls.map((c) => c.args)).toEqual([{ label: 'else' }])
     expect(built).toEqual([[FAN]])
   })
+
+  it('an unreadable condition runs neither side and logs the skipped step against the fan', async () => {
+    const conditions: StepConditionDoor = () => async () => ({
+      result: 'unknown',
+      reason: 'no reading',
+    })
+    const preset: FanPreset = {
+      id: 'unk',
+      name: 'Unk',
+      steps: [
+        {
+          ...cap(FAN, 'fan-control', 'setLabel', { label: 'then' }),
+          if: {
+            kind: 'device-is',
+            deviceId: FAN,
+            cap: 'switch',
+            fieldPath: 'on',
+            operator: 'eq',
+            value: true,
+          },
+          else: [cap(FAN, 'fan-control', 'setLabel', { label: 'else' })],
+        },
+      ],
+    }
+    const w = world({ initial: [preset], conditions })
+    await w.service.applyPreset({ deviceId: FAN, presetId: 'unk' })
+    expect(w.calls).toEqual([])
+    const line = w.lines.find(
+      (l) => l.level === 'warn' && l.message.includes('condition could not be read'),
+    )
+    expect(line?.extras?.tags).toEqual({ deviceId: FAN })
+  })
 })

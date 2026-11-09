@@ -58,7 +58,9 @@ async function send(
         warnings.push(msg)
       },
     },
-    listTargets: async () => [{ id: 'tgt-1', addonId: 'x', name: 'echo', kind: 'k', enabled: true }],
+    listTargets: async () => [
+      { id: 'tgt-1', addonId: 'x', name: 'echo', kind: 'k', enabled: true },
+    ],
     send: async (input) => {
       sends.push(input)
       return { success: true }
@@ -96,9 +98,33 @@ describe('NcDispatcher — device templates in authored text (D1021)', () => {
       seen.push(...templates)
       return templates.map((t) => answer(t))
     }
-    const { sent } = await send(entry({ body: 'At {{device}}' }), render, "{{ states('sensor.x') }}")
+    const { sent } = await send(
+      entry({ body: 'At {{device}}' }),
+      render,
+      "{{ states('sensor.x') }}",
+    )
     expect(seen).toEqual([])
     expect(sent.notification.body).toContain("{{ states('sensor.x') }}")
+  })
+
+  it('a device value that reads {{ device }} is injected verbatim, not substituted by the {{var}} pass (D629)', async () => {
+    const render: NcRenderDeviceTemplates = async (templates) =>
+      templates.map((t) =>
+        answer(t.replace("{{ states('sensor.x') }}", '{{ device }} and {% if %}')),
+      )
+    const { sent } = await send(entry({ body: TEMP }), render)
+    expect(sent.notification.body).toBe('Temp {{ device }} and {% if %} at cancello')
+  })
+
+  it('a device value that forges a held placeholder pulls nothing from the held bag', async () => {
+    const render: NcRenderDeviceTemplates = async (templates) =>
+      templates.map((t) =>
+        answer(t.replace("{{ states('sensor.x') }}", '\uE000x:0\uE001\uE0000\uE001')),
+      )
+    const { sent } = await send(entry({ body: TEMP }), render)
+    expect(sent.notification.body).not.toContain('cancello at')
+    expect(sent.notification.body.endsWith(' at cancello')).toBe(true)
+    expect(sent.notification.body.split('cancello')).toHaveLength(2)
   })
 
   it('a refused render falls back to the catalog sentence and says why', async () => {

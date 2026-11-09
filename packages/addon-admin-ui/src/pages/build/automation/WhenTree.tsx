@@ -59,6 +59,8 @@ export interface WhenTreeProps {
   readonly onChange: (next: AutomationRecipe) => void
   /** The selected run: what each node decided (by path key, `when.0.1`) and the trigger's values. */
   readonly run?: WhenRunView | null
+  /** Hide the run-start sentence: the tree is a plain condition (a step's `if`), not what starts a run. */
+  readonly hideRule?: boolean
 }
 
 interface TreeContext {
@@ -92,7 +94,13 @@ function nodeAt(ctx: TreeContext, path: WhenPath): ConditionNodeView | undefined
   return ctx.run?.nodes.get(pathKey(path))
 }
 
-export function WhenTree({ recipe, devices, onChange, run = null }: WhenTreeProps) {
+export function WhenTree({
+  recipe,
+  devices,
+  onChange,
+  run = null,
+  hideRule = false,
+}: WhenTreeProps) {
   const { t } = useTranslation()
   const root = whenRoot(recipe)
   const budget = whenBudget(recipe)
@@ -101,12 +109,14 @@ export function WhenTree({ recipe, devices, onChange, run = null }: WhenTreeProp
   const empty = root.children.length === 0
   return (
     <div className="space-y-2" data-testid="when-tree">
-      <p className="text-xs text-foreground-subtle">
-        {t(
-          'automation.whenTree.rule',
-          'An event starts a run when it happens and everything here is true at that moment. With only states, a run starts when they become true.',
-        )}
-      </p>
+      {!hideRule && (
+        <p className="text-xs text-foreground-subtle">
+          {t(
+            'automation.whenTree.rule',
+            'An event starts a run when it happens and everything here is true at that moment. With only states, a run starts when they become true.',
+          )}
+        </p>
+      )}
       <BlockView
         block={root}
         path={[]}

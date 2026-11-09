@@ -12,6 +12,7 @@
  * back to the catalog sentence rather than losing the notification.
  */
 import type { DeviceTemplateRender } from '@camstack/types'
+import { escapeLiteralMarkup } from './render-template.js'
 
 /** The hub's renderer, as a dependency. */
 export type NcRenderDeviceTemplates = (
@@ -19,9 +20,9 @@ export type NcRenderDeviceTemplates = (
 ) => Promise<readonly DeviceTemplateRender[]>
 
 const PLACEHOLDER = /\{\{\s*(\w+)\s*\}\}/g
-const SLOT_OPEN = ''
-const SLOT_CLOSE = ''
-const SLOT = new RegExp(`${SLOT_OPEN}(\\d+)${SLOT_CLOSE}`, 'g')
+/** A held `{{var}}`; the slot carries a nonce drawn per call, so a device value cannot forge one. */
+const SLOT_OPEN = '\uE000'
+const SLOT_CLOSE = '\uE001'
 const MARKUP = /\{\{|\{%/
 
 export interface NcDevicePassResult {
@@ -43,6 +44,8 @@ export async function renderAuthoredDeviceTemplates(
   texts: readonly (string | undefined)[],
   render: NcRenderDeviceTemplates | undefined,
 ): Promise<readonly NcDevicePassResult[]> {
+  const nonce = Math.random().toString(36).slice(2, 12)
+  const slot = new RegExp(`${SLOT_OPEN}${nonce}:(\\d+)${SLOT_CLOSE}`, 'g')
   const held: string[][] = texts.map(() => [])
   const sources: string[] = []
   const slotOf: number[] = []
@@ -52,7 +55,7 @@ export async function renderAuthoredDeviceTemplates(
     sources.push(
       text.replace(PLACEHOLDER, (whole) => {
         bag.push(whole)
-        return `${SLOT_OPEN}${bag.length - 1}${SLOT_CLOSE}`
+        return `${SLOT_OPEN}${nonce}:${bag.length - 1}${SLOT_CLOSE}`
       }),
     )
     slotOf.push(i)
@@ -73,13 +76,22 @@ export async function renderAuthoredDeviceTemplates(
     if (at < 0) return { template, notes: [] }
     if (failure !== undefined) return { template: undefined, notes: [], refused: failure }
     const answer = answers[at]
-    if (answer === undefined) return { template: undefined, notes: [], refused: 'unavailable: no answer' }
+    if (answer === undefined)
+      return { template: undefined, notes: [], refused: 'unavailable: no answer' }
     if (!answer.ok) {
-      return { template: undefined, notes: [], refused: `${answer.refusal.reason}: ${answer.refusal.message}` }
+      return {
+        template: undefined,
+        notes: [],
+        refused: `${answer.refusal.reason}: ${answer.refusal.message}`,
+      }
     }
     const bag = held[i] ?? []
     return {
-      template: answer.text.replace(SLOT, (_m, n: string) => bag[Number(n)] ?? ''),
+      // device text is escaped BEFORE the held placeholders come back, so only those stay live for the {{var}} pass
+      template: escapeLiteralMarkup(answer.text).replace(
+        slot,
+        (_m, n: string) => bag[Number(n)] ?? '',
+      ),
       notes: answer.trace.map((entry) => `${entry.ref}: ${entry.reason}`),
     }
   })

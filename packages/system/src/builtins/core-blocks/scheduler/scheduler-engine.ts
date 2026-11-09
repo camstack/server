@@ -569,6 +569,12 @@ export class SchedulerEngine {
             meta: { ...vars, step: failure.index, error: failure.message },
           })
         },
+        onGuardUnknown: (skipped) => {
+          this.deps.logger.warn('scheduler edge step skipped — its condition could not be read', {
+            ...(skipped.deviceId === undefined ? {} : { tags: { deviceId: skipped.deviceId } }),
+            meta: { ...vars, step: skipped.index, reason: skipped.reason },
+          })
+        },
       })
       steps = result.steps
       const failure = result.steps.find((s) => s.outcome === 'error')

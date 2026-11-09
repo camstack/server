@@ -66,6 +66,35 @@ describe('DeviceTemplateHost', () => {
     expect(good).toMatchObject({ ok: true, text: '21.5' })
   })
 
+  it('a restricted caller gets the same refusal for a missing alias as for one it may not see, resolves each alias once and warns once', async () => {
+    const lookups: string[] = []
+    const warns: string[] = []
+    const counting = new DeviceTemplateHost({
+      renderer,
+      logger: { ...logger, warn: (m: string) => void warns.push(m) },
+      findByAlias: async (alias) => {
+        lookups.push(alias)
+        return rows[alias] ?? null
+      },
+      capsOf: async () => ['temperature-sensor'],
+      fetchSlice: async (id, cap) => slices[`${id}|${cap}`] ?? null,
+    })
+    const out = await counting.render(
+      ['{{ garage.temperature }}', '{{ ghost.temperature }}', '{{ stufa.temperature }}'],
+      new Set([7]),
+    )
+    const [hidden, missing, fine] = out
+    expect(hidden).toMatchObject({ ok: false, refusal: { reason: 'out-of-scope' } })
+    expect(missing).toMatchObject({ ok: false, refusal: { reason: 'out-of-scope' } })
+    const shape = (m: string | undefined, alias: string) => m?.replace(alias, '<alias>')
+    expect(shape(missing?.ok === false ? missing.refusal.message : undefined, 'ghost')).toBe(
+      shape(hidden?.ok === false ? hidden.refusal.message : undefined, 'garage'),
+    )
+    expect(fine).toMatchObject({ ok: true, text: '21.5' })
+    expect([...lookups].sort()).toEqual(['garage', 'ghost', 'stufa'])
+    expect(warns).toHaveLength(1)
+  })
+
   it('the escape payloads P1 refuses are still refused through the host', async () => {
     const [out] = await host.render(["{{ range.constructor('return process')() }}"], undefined)
     expect(out?.ok).toBe(false)
@@ -76,8 +105,8 @@ describe('DeviceTemplateHost', () => {
     expect(check).toEqual({
       ok: true,
       aliases: [
-        { alias: 'garage', deviceId: 9, allowed: false },
-        { alias: 'stufa', deviceId: 7, allowed: true },
+        { alias: 'garage', deviceId: 9, allowed: false, row: rows['garage'] },
+        { alias: 'stufa', deviceId: 7, allowed: true, row: rows['stufa'] },
       ],
     })
   })

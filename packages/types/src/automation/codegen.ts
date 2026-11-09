@@ -609,7 +609,7 @@ export default function block(ctx: AddonContext) {
       fetchSlice: (deviceId, cap) => ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap }),
       fetchStableIds: async () => {
         const all = await ctx.api.deviceManager.listAll.query({})
-        return stableIdMapOf(all.devices)
+        return stableIdMapOf(all)
       },
     })
     if (report.kept > 0) {
@@ -775,7 +775,7 @@ export default function block(ctx: AddonContext) {
       fetchSlice: (deviceId, cap) => ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap }),
       fetchStableIds: async () => {
         const all = await ctx.api.deviceManager.listAll.query({})
-        return stableIdMapOf(all.devices)
+        return stableIdMapOf(all)
       },
     })
   }
@@ -802,6 +802,13 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
           ...(failure.deviceId === undefined ? {} : { tags: { deviceId: failure.deviceId } }),
           step: failure.index,
           error: failure.message,
+        })
+      },
+      onGuardUnknown: (skipped) => {
+        ctx.logger.warn('step skipped — its condition could not be read', {
+          ...(skipped.deviceId === undefined ? {} : { tags: { deviceId: skipped.deviceId } }),
+          step: skipped.index,
+          reason: skipped.reason,
         })
       },
     })

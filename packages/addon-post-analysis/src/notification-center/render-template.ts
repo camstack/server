@@ -28,6 +28,25 @@
 const PLACEHOLDER_PATTERN = /\{\{\s*(\w+)\s*\}\}/g
 
 /**
+ * A device value that reads `{{ zone }}` is DATA (D1021), but it lands inside
+ * the template text the `{{var}}` pass is about to scan. The device pass
+ * escapes `{{` and `{%` to these private-use characters so the scan cannot see
+ * them, and `renderTemplate` — the one renderer every text goes through —
+ * restores them as the literal braces they were.
+ */
+const LITERAL_OPEN_BRACES = '\uE010'
+const LITERAL_OPEN_BLOCK = '\uE011'
+
+/** Hide `{{` and `{%` of rendered device text from the `{{var}}` pass. */
+export function escapeLiteralMarkup(text: string): string {
+  return text.replaceAll('{{', LITERAL_OPEN_BRACES).replaceAll('{%', LITERAL_OPEN_BLOCK)
+}
+
+function restoreLiteralMarkup(text: string): string {
+  return text.replaceAll(LITERAL_OPEN_BRACES, '{{').replaceAll(LITERAL_OPEN_BLOCK, '{%')
+}
+
+/**
  * Names that were renamed and still resolve at render time, mapped to the name
  * that replaced them. `{{camera}}` became `{{device}}` (a rule on an appliance
  * names that device, not a camera); a template written by an older client still
@@ -75,10 +94,12 @@ export function renderTemplate(
   vars: Readonly<Record<string, string>>,
 ): string | null {
   if (template === undefined || template.trim().length === 0) return null
-  return template.replace(PLACEHOLDER_PATTERN, (_m, name: string) => {
-    const current = vars[name]
-    if (current !== undefined) return current
-    const renamed = NC_DEPRECATED_TEMPLATE_VARS[name]
-    return (renamed !== undefined ? vars[renamed] : undefined) ?? ''
-  })
+  return restoreLiteralMarkup(
+    template.replace(PLACEHOLDER_PATTERN, (_m, name: string) => {
+      const current = vars[name]
+      if (current !== undefined) return current
+      const renamed = NC_DEPRECATED_TEMPLATE_VARS[name]
+      return (renamed !== undefined ? vars[renamed] : undefined) ?? ''
+    }),
+  )
 }

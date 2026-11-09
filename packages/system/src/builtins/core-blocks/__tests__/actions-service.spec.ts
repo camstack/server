@@ -913,6 +913,11 @@ describe('actions — a conditional step (#472)', () => {
     const { w, action } = await guarded(undefined)
     await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
     expect(w.calls).toEqual([])
+    const logged = w.log.lines.find(
+      (l) => l.level === 'warn' && l.message.includes('condition could not be read'),
+    )
+    expect(logged?.extras?.tags).toEqual({ deviceId: 616 })
+    expect(logged?.extras?.meta).toMatchObject({ actionId: action.id, step: 0 })
   })
 
   it('a non-admin run builds its evaluator bound to the camera it came through', async () => {

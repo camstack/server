@@ -72,7 +72,14 @@ export class DeviceTemplateActions {
       const check = await host.check(source, allowed)
       results.push(
         check.ok
-          ? { ok: true, aliases: [...check.aliases] }
+          ? {
+              ok: true,
+              aliases: check.aliases.map((use) => ({
+                alias: use.alias,
+                deviceId: use.deviceId,
+                allowed: use.allowed,
+              })),
+            }
           : { ok: false, refusal: { reason: check.reason, message: check.message } },
       )
     }

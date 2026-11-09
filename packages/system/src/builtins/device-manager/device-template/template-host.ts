@@ -48,6 +48,8 @@ export interface TemplateAliasUse {
   readonly alias: string
   readonly deviceId: number | null
   readonly allowed: boolean
+  /** The persisted row, resolved once here and reused by the render. */
+  readonly row: TemplateDeviceRow | null
 }
 
 export type TemplateCheck =
@@ -64,7 +66,8 @@ export class DeviceTemplateHost {
   /**
    * Which devices a template names, without rendering it. `allowed` is the set
    * of device ids the caller was proven to see; `undefined` means no
-   * restriction (an admin, a system run).
+   * restriction (an admin, a system run). A restricted caller gets the same
+   * answer for an alias that does not exist and one it may not see.
    */
   async check(source: string, allowed: ReadonlySet<number> | undefined): Promise<TemplateCheck> {
     const analysis = this.deps.renderer.validate(source)
@@ -77,7 +80,8 @@ export class DeviceTemplateHost {
       aliases.push({
         alias,
         deviceId: row === null ? null : row.deviceId,
-        allowed: row === null || allowed === undefined || allowed.has(row.deviceId),
+        allowed: allowed === undefined || (row !== null && allowed.has(row.deviceId)),
+        row,
       })
     }
     return { ok: true, aliases }
@@ -93,10 +97,8 @@ export class DeviceTemplateHost {
     for (const check of checks) {
       if (!check.ok) continue
       for (const use of check.aliases) {
-        if (!use.allowed || use.deviceId === null || rows.has(use.alias)) continue
-        const row = await this.deps.findByAlias(use.alias)
-        if (row === null) continue
-        rows.set(use.alias, { ...row, caps: await this.deps.capsOf(row.deviceId) })
+        if (!use.allowed || use.row === null || rows.has(use.alias)) continue
+        rows.set(use.alias, { ...use.row, caps: await this.deps.capsOf(use.row.deviceId) })
       }
     }
     const entries = [...rows.values()]
@@ -112,6 +114,7 @@ export class DeviceTemplateHost {
     }
     const resolver = mirrorTemplateResolver(mirror, entries, this.deps.unitOf)
     const out: DeviceTemplateRender[] = []
+    let warned = false
     for (const [index, source] of sources.entries()) {
       const check = checks[index]
       if (check === undefined || !check.ok) {
@@ -127,13 +130,16 @@ export class DeviceTemplateHost {
       }
       const refused = check.aliases.find((use) => !use.allowed)
       if (refused !== undefined) {
-        this.deps.logger.warn(
-          'device template refused — it names a device the caller was not proven to see',
-          {
-            ...(refused.deviceId === null ? {} : { tags: { deviceId: refused.deviceId } }),
-            meta: { alias: refused.alias },
-          },
-        )
+        if (!warned) {
+          warned = true
+          this.deps.logger.warn(
+            'device template refused — it names a device the caller was not proven to see',
+            {
+              ...(refused.deviceId === null ? {} : { tags: { deviceId: refused.deviceId } }),
+              meta: { alias: refused.alias },
+            },
+          )
+        }
         out.push({
           ok: false,
           refusal: {

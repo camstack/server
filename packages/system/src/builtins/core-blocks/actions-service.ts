@@ -436,6 +436,12 @@ export class ActionsService implements IActionsProvider {
             },
           })
         },
+        onGuardUnknown: (skipped) => {
+          this.logger.warn('action step skipped — its condition could not be read', {
+            ...(skipped.deviceId === undefined ? {} : { tags: { deviceId: skipped.deviceId } }),
+            meta: { actionId: entry.id, runId, step: skipped.index, reason: skipped.reason },
+          })
+        },
       })
       const result = await Promise.race([running, deadline.expired])
       if (result !== 'expired') {

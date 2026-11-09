@@ -246,6 +246,12 @@ export class FanPresetsService implements IFanPresetsProvider {
           meta: { fanDeviceId: deviceId, presetId, step: failure.index, error: failure.message },
         })
       },
+      onGuardUnknown: (skipped) => {
+        this.deps.logger.warn('fan preset step skipped — its condition could not be read', {
+          tags: { deviceId: skipped.deviceId ?? deviceId },
+          meta: { fanDeviceId: deviceId, presetId, step: skipped.index, reason: skipped.reason },
+        })
+      },
     })
     const steps: FanPresetStepResult[] = result.steps.map((trace, index) => ({
       index,

@@ -84,6 +84,8 @@ async function load(input: RecipeInput, name = 'Test automation'): Promise<Block
 
 interface Options {
   readonly slices?: Record<string, object>
+  /** What `deviceManager.listAll({})` answers: the array, as production returns it. */
+  readonly listing?: ReadonlyArray<{ id: number; stableId: string; addonId: string }>
   readonly failSliceReads?: boolean
   readonly ledger?: Ledger
   /** The hub cannot answer the stamp read. */
@@ -183,7 +185,7 @@ function start(block: BlockFn, options: Options = {}): Harness {
         listAll: {
           query: async (q: { deviceIds?: number[] }) =>
             q.deviceIds === undefined
-              ? { devices: [] }
+              ? (options.listing ?? [])
               : (options.registry?.directory.listDevices(q.deviceIds) ?? []),
         },
         listDeviceIdsByCaps: {
@@ -1034,5 +1036,41 @@ describe('a conditional step (#472)', () => {
       outcome: 'skipped',
       condition: 'unknown',
     })
+    const line = unknown.logs.find(
+      (l) => l.level === 'warn' && l.msg.includes('condition could not be read'),
+    )
+    expect(line?.meta).toMatchObject({ tags: { deviceId: 616 }, step: 0 })
+  })
+
+  it('a stable-id leaf resolves through the device listing: true runs the step, false runs the else', async () => {
+    const STABLE_IF = {
+      kind: 'expression',
+      expr: 'outdoor < 5',
+      bindings: {
+        outdoor: {
+          kind: 'global',
+          sourceStableId: 'ha:out',
+          cap: 'sensor',
+          fieldPath: 'value',
+          addonId: 'ha',
+        },
+      },
+    } as const
+    const block = await load({
+      when: MOTION,
+      actions: [{ ...GUARDED[0]!, if: STABLE_IF } as AutomationRecipe['actions'][number]],
+    })
+    const listing = [{ id: 9, stableId: 'ha:out', addonId: 'ha' }]
+    const run = async (value: number) => {
+      const h = start(block, { listing, slices: { '9|sensor': { value } } })
+      await settle()
+      h.emit('motion.on-motion-changed', {}, 1)
+      await settle()
+      return h
+    }
+    const cold = await run(2)
+    expect(cold.mutate.mock.calls.map(([a]) => (a as { label: string }).label)).toEqual(['then'])
+    const warm = await run(20)
+    expect(warm.mutate.mock.calls.map(([a]) => (a as { label: string }).label)).toEqual(['else'])
   })
 })
