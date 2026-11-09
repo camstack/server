@@ -17,7 +17,12 @@ export interface SetInstanceEnabled {
 
 export function useSetInstanceEnabled(options: {
   readonly onSuccess: () => void
+  /** The write failed: the record is unchanged, the caller says why. */
+  readonly onError?: (message: string) => void
 }): SetInstanceEnabled {
-  const mutation = useIntegrationInstancesSetInstanceEnabled({ onSuccess: options.onSuccess })
+  const mutation = useIntegrationInstancesSetInstanceEnabled({
+    onSuccess: options.onSuccess,
+    onError: (error) => options.onError?.(error.message),
+  })
   return { mutate: (input) => mutation.mutate({ ...input }), isPending: mutation.isPending }
 }

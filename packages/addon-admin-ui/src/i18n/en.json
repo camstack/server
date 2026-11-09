@@ -6678,7 +6678,11 @@
       "emptySources": "No calendar sources yet. <link>Open Connectivity → Calendars</link> to install or connect a source (Google Calendar, waste collections, Home Assistant, …).",
       "allDay": "All day",
       "dayAllDay": "{{date}} · All day",
-      "rangeAllDay": "{{from}} – {{to}} · All day"
+      "rangeAllDay": "{{from}} – {{to}} · All day",
+      "switchesError": "Could not load the calendar switches",
+      "importedCalendars": "Imported calendars",
+      "importCalendar": "Import {{name}}",
+      "switchFailed": "Could not change {{name}}: {{message}}"
     },
     "terminal": {
       "executable": "Executable",

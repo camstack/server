@@ -30,6 +30,7 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-reac
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { AdminPage } from '../../components/AdminPage'
+import { CalendarSourceSwitches } from '../../components/calendars/CalendarSourceSwitches'
 import { Trans, useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
 
@@ -784,6 +785,7 @@ export function CalendarsPage() {
       )}
     >
       {body}
+      <CalendarSourceSwitches />
       {selectedEvent !== null ? (
         <EventDetailDialog
           ev={selectedEvent}

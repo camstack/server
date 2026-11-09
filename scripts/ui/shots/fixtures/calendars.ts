@@ -24,6 +24,43 @@ export default defineFixtures({
         color: '#3B82F6',
       },
     ],
+    'addons.listCapabilityProviders': (i: { capName: string }) =>
+      i.capName === 'calendar-source' || i.capName === 'integration-instances'
+        ? [{ addonId: 'google-services', capName: i.capName, isActive: true }]
+        : [],
+    'integrationInstances.describe': {
+      role: 'services',
+      instanceMode: 'multiple',
+      kind: 'calendar',
+      canTest: false,
+      kinds: [
+        {
+          id: 'calendar',
+          label: 'Google calendar',
+          functionCap: 'calendar-source',
+          role: 'services',
+        },
+      ],
+    },
+    'integrationInstances.listInstances': [
+      {
+        id: 'cal_a1',
+        name: 'Family',
+        configured: true,
+        enabled: true,
+        kind: 'calendar',
+        formValues: {},
+      },
+      {
+        id: 'cal_b2',
+        name: 'Work',
+        configured: true,
+        enabled: false,
+        kind: 'calendar',
+        formValues: {},
+      },
+    ],
+    'mut:integrationInstances.setInstanceEnabled': { ok: true },
     'calendars.getPreferences': { calendars: {} },
     'calendars.listEvents': [
       {

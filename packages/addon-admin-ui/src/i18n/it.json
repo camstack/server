@@ -6753,7 +6753,11 @@
       "emptySources": "Ancora nessuna fonte di calendario. <link>Apri Connettività → Calendari</link> per installare o collegare una fonte (Google Calendar, raccolta rifiuti, Home Assistant, …).",
       "allDay": "Tutto il giorno",
       "dayAllDay": "{{date}} · Tutto il giorno",
-      "rangeAllDay": "{{from}} – {{to}} · Tutto il giorno"
+      "rangeAllDay": "{{from}} – {{to}} · Tutto il giorno",
+      "switchesError": "Impossibile caricare gli interruttori dei calendari",
+      "importedCalendars": "Calendari importati",
+      "importCalendar": "Importa {{name}}",
+      "switchFailed": "Impossibile modificare {{name}}: {{message}}"
     },
     "terminal": {
       "executable": "Eseguibile",
