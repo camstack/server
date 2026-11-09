@@ -22,11 +22,15 @@ import {
 interface RecordedProcedure {
   kind: 'query' | 'mutation' | 'subscription'
   call: (input: unknown, ctx: unknown) => unknown
+  /** The input schema the procedure was declared with: what tRPC parses the wire value against. */
+  schema: unknown
 }
 
 function makeProcedureBuilder(): ProcedureBuilder {
+  let declared: unknown
   const builder: ProcedureBuilder = {
-    input() {
+    input(schema) {
+      declared = schema
       return builder
     },
     output() {
@@ -36,6 +40,7 @@ function makeProcedureBuilder(): ProcedureBuilder {
       const proc: RecordedProcedure = {
         kind: 'query',
         call: (input, ctx) => resolver({ input, ctx }),
+        schema: declared,
       }
       return proc
     },
@@ -43,6 +48,7 @@ function makeProcedureBuilder(): ProcedureBuilder {
       const proc: RecordedProcedure = {
         kind: 'mutation',
         call: (input, ctx) => resolver({ input, ctx }),
+        schema: declared,
       }
       return proc
     },
@@ -50,6 +56,7 @@ function makeProcedureBuilder(): ProcedureBuilder {
       const proc: RecordedProcedure = {
         kind: 'subscription',
         call: (input, ctx) => resolver({ input, ctx }),
+        schema: declared,
       }
       return proc
     },
@@ -193,5 +200,26 @@ describe("caller: 'scoped' — default-deny for a non-admin", () => {
     const { services, calls } = makeServices({ forbidden: forbid })
     await build(services).listThings!.call({}, adminCtx)
     expect(calls[0]!.args[0]).toEqual({ caller: { userId: 'user-7', isAdmin: true } })
+  })
+})
+
+describe("caller: 'scoped' — a call with no input", () => {
+  it('parses: a method that took no input before it was scoped still takes none', () => {
+    const { services } = makeServices({ forbidden: forbid })
+    const schema = build(services).listThings!.schema
+    expect(schema instanceof z.ZodType && schema.safeParse(undefined).success).toBe(true)
+  })
+
+  it('and an unscoped method with an object input keeps requiring one', () => {
+    const plain = {
+      name: 'plain-fixture',
+      scope: 'system',
+      mode: 'collection',
+      methods: { listThings: method(z.looseObject({}), z.array(z.unknown())) },
+    } as const satisfies CapabilityDefinition
+    const { services } = makeServices()
+    const router = buildOneCapRouter(plain, makePrimitives(), services) as Router
+    const schema = router.listThings!.schema
+    expect(schema instanceof z.ZodType && schema.safeParse(undefined).success).toBe(false)
   })
 })

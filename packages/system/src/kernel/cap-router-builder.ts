@@ -631,7 +631,13 @@ export function buildOneCapRouter(
 
     if (method.isObject) {
       const stampedCap = CALLER_STAMPED_CAPABILITIES.includes(capName)
-      const schema = nodeIdData ? inputSchema : looseSchema(inputSchema)
+      const routed = nodeIdData ? inputSchema : looseSchema(inputSchema)
+      // A scoped method whose input takes `{}` is also callable with no input at all (it was
+      // `void` before the caller was stamped on it): the parse must not turn that into a 400.
+      const schema =
+        method.callerScoped && routed instanceof z.ZodType && routed.safeParse({}).success
+          ? routed.optional()
+          : routed
       procedures[method.name] = base.input(schema)[procKind](({ input: wireInput, ctx }) => {
         // HTTP/WS mounts: strip a session-supplied stamp (spoof). Mesh / $core-caps have no `req`.
         const hasHttpReq =
