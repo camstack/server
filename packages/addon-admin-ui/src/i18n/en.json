@@ -6386,7 +6386,8 @@
     "restart": "Restart",
     "restart2": "Restart \"{{name}}\"?",
     "restartingTheAddonWillBriefly": "Restarting the addon will briefly disconnect every device backed by it ({{topLevelCountLabel}} active). Streams will reconnect automatically.",
-    "instances": "Integration"
+    "instances": "Integration",
+    "switchUnknown": "Unknown"
   },
   "library": {
     "peopleVehiclesCapturedEventsAnd": "People, vehicles, captured events and scenes — what detection has recognised.",

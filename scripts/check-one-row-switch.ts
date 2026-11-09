@@ -16,7 +16,7 @@
  *    implementation. A file outside them that defines one is in the baseline
  *    (`setInstanceEnabledImplementations`) or refused.
  *
- * Textual: the source is read, not run. Specs, `__tests__`, `dist` and generated code are skipped.
+ * Textual: the source under `packages/` and `server/backend/src` is read, not run. Specs, `__tests__`, `dist` and generated code are skipped.
  *
  * Usage: npx tsx scripts/check-one-row-switch.ts
  */
@@ -28,6 +28,8 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 
 const CAP_METHOD_RE = /^\s{2,4}(set\w*Enabled)\s*:\s*(?:optionalMethod|method)\s*\(/
 const NEXT_METHOD_RE = /^\s{2,4}\w+\s*:\s*(?:optionalMethod|method)\s*\(/
+/** Where an implementation of the switch is looked for: addons and the hub's own half. */
+export const SOURCE_ROOTS: readonly string[] = ['packages', 'server/backend/src']
 const HELPER_FILES: ReadonlySet<string> = new Set([
   'packages/types/src/addon/record-integration-instances.ts',
   'packages/types/src/addon/compose-instance-kinds.ts',
@@ -151,7 +153,7 @@ function main(): number {
   const srcFiles: string[] = []
   const skip = (f: string): boolean =>
     f.endsWith('.ts') && !f.endsWith('.spec.ts') && !f.endsWith('.d.ts') && !f.endsWith('.cap.ts')
-  walk(path.join(ROOT, 'packages'), skip, srcFiles)
+  for (const root of SOURCE_ROOTS) walk(path.join(ROOT, root), skip, srcFiles)
   const baseline: Baseline = JSON.parse(
     readFileSync(path.join(ROOT, 'scripts/one-row-switch-baseline.json'), 'utf8'),
   )

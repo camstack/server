@@ -37,9 +37,9 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 const fleetReads = vi.hoisted(() => ({ calls: [] as unknown[][] }))
-const switches = vi.hoisted(() => ({ instance: vi.fn(), update: vi.fn() }))
+const switches = vi.hoisted(() => ({ instance: vi.fn() }))
 
-const INTEGRATION = {
+const BASE_INTEGRATION = {
   id: 'int_reolink',
   addonId: 'provider-reolink',
   name: 'Reolink',
@@ -47,6 +47,7 @@ const INTEGRATION = {
   processState: 'running',
   kind: 'device-provider',
 }
+const shown = vi.hoisted(() => ({ integration: null as null | Record<string, unknown> }))
 
 const DEVICES = [
   {
@@ -83,14 +84,14 @@ vi.mock('@camstack/ui-library', async () => {
       return { data: DEVICES, isLoading: false, isError: false, refetch: vi.fn() }
     },
     useIntegrationsGet: () => ({
-      data: INTEGRATION,
+      data: shown.integration ?? BASE_INTEGRATION,
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
     }),
     // Membership is resolved against `integrations.list` (the one rule).
     useIntegrationsList: () => ({
-      data: [INTEGRATION],
+      data: [shown.integration ?? BASE_INTEGRATION],
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
@@ -99,7 +100,6 @@ vi.mock('@camstack/ui-library', async () => {
     useAddonSettingsGetIntegrationFormSchema: emptyQuery,
     useAddonSettingsGetIntegrationSettings: integrationSettingsRead,
     useDeviceManagerDiscoveryProviders: emptyQuery,
-    useIntegrationsUpdate: () => ({ mutate: switches.update, isPending: false }),
     useIntegrationInstancesSetInstanceEnabled: () => ({
       mutate: switches.instance,
       isPending: false,
@@ -179,9 +179,9 @@ describe('IntegrationDetailPage - no addon-level settings read', () => {
 })
 
 describe('IntegrationDetailPage - the one switch', () => {
-  it('toggles an integration through setInstanceEnabled with its addon, never integrations.update', () => {
+  it('toggles an integration through setInstanceEnabled with its addon', () => {
+    shown.integration = null
     switches.instance.mockReset()
-    switches.update.mockReset()
     render(renderPage())
 
     fireEvent.click(screen.getByRole('switch', { name: 'Disable integration' }))
@@ -191,6 +191,32 @@ describe('IntegrationDetailPage - the one switch', () => {
       addonId: 'provider-reolink',
       enabled: false,
     })
-    expect(switches.update).not.toHaveBeenCalled()
+  })
+
+  it('switches a FIXED builtin through setInstanceEnabled too: there is no second door', () => {
+    shown.integration = { ...BASE_INTEGRATION, info: { fixed: true } }
+    switches.instance.mockReset()
+    render(renderPage())
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Disable integration' }))
+
+    expect(switches.instance).toHaveBeenCalledWith({
+      id: 'int_reolink',
+      addonId: 'provider-reolink',
+      enabled: false,
+    })
+    shown.integration = null
+  })
+
+  it('does not draw a switch the addon could not answer for as on or off (D315)', () => {
+    shown.integration = { ...BASE_INTEGRATION, switchUnknown: true }
+    switches.instance.mockReset()
+    render(renderPage())
+
+    const unknown = screen.getByRole('switch', { name: 'Unknown' })
+    expect(unknown).toBeDisabled()
+    expect(screen.queryByText('Enabled')).toBeNull()
+    expect(screen.queryByText('Disabled')).toBeNull()
+    shown.integration = null
   })
 })

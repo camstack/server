@@ -26,6 +26,12 @@ const IntegrationWithStateSchema = z.object({
   name: z.string(),
   /** A projection of the instance body's switch (`setInstanceEnabled` is the only writer). */
   enabled: z.boolean(),
+  /**
+   * True when the addon that holds the switch did not answer (down, failed, or keeps no record for
+   * this row): `enabled` is then the stored registry flag, a stale value, not the state. A reader
+   * must not draw it as on or off (D315).
+   */
+  switchUnknown: z.literal(true).optional(),
   info: z.record(z.string(), z.unknown()).readonly(),
   /** The discovery candidate this integration was set up from (D984). */
   originStableId: z.string().optional(),
@@ -40,6 +46,12 @@ const IntegrationLiteSchema = z.object({
   name: z.string(),
   /** A projection of the instance body's switch (`setInstanceEnabled` is the only writer). */
   enabled: z.boolean(),
+  /**
+   * True when the addon that holds the switch did not answer (down, failed, or keeps no record for
+   * this row): `enabled` is then the stored registry flag, a stale value, not the state. A reader
+   * must not draw it as on or off (D315).
+   */
+  switchUnknown: z.literal(true).optional(),
   info: z.record(z.string(), z.unknown()).readonly(),
   /** The discovery candidate this integration was set up from (D984). */
   originStableId: z.string().optional(),
@@ -132,9 +144,9 @@ const UpdateIntegrationInputSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
   /**
-   * Accepted for a FIXED builtin only (`info.fixed`: alarm panel, camera grid, core blocks,
-   * terminal), which keeps no instance record: the registry flag is its one store. Any other
-   * integration is switched through `integration-instances.setInstanceEnabled`.
+   * REFUSED, always (a typed `BAD_REQUEST`): the field stays in the schema only so the refusal
+   * names the right door. Every integration, a fixed builtin included, is switched through
+   * `integration-instances.setInstanceEnabled`.
    */
   enabled: z.boolean().optional(),
   info: z.record(z.string(), z.unknown()).optional(),

@@ -24,7 +24,6 @@ import {
   useIntegrationsGetAvailableTypes,
   useIntegrationsList,
   useIntegrationInstancesSetInstanceEnabled,
-  useIntegrationsUpdate,
   useSystem,
   Button,
 } from '@camstack/ui-library'
@@ -262,8 +261,8 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     ['integrations', 'get'],
     { input: { id: integrationId }, type: 'query' },
   ] as const
-  // The ONE switch is `setInstanceEnabled` (the instance body). A fixed builtin keeps no instance
-  // record, so its registry flag is switched through `integrations.update`.
+  // The ONE switch is `setInstanceEnabled` for every row; for a fixed builtin (no instance body) the
+  // hub half of that call writes the registry flag.
   const switchHandlers = {
     onMutate: async (vars: { readonly enabled?: boolean }) => {
       await queryClient.cancelQueries({ queryKey: integrationKey })
@@ -287,15 +286,8 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
     },
   }
-  const fixedToggle = useIntegrationsUpdate(switchHandlers)
-  const instanceToggle = useIntegrationInstancesSetInstanceEnabled(switchHandlers)
-  const toggleMutation = {
-    isPending: fixedToggle.isPending || instanceToggle.isPending,
-    mutate: (vars: { readonly id: string; readonly enabled: boolean }) =>
-      isFixed
-        ? fixedToggle.mutate(vars)
-        : instanceToggle.mutate({ ...vars, addonId: integration?.addonId }),
-  }
+  const toggleMutation = useIntegrationInstancesSetInstanceEnabled(switchHandlers)
+  const switchUnknown = integration?.switchUnknown === true
 
   const deleteMutation = useIntegrationInstancesDeleteInstance({
     onSuccess: () => {
@@ -474,20 +466,28 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
             className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 transition-colors ${
               toggleMutation.isPending ? 'opacity-60' : ''
             } ${
-              integration.enabled ? 'border-success/30 bg-success/5' : 'border-border bg-surface'
+              integration.enabled && !switchUnknown
+                ? 'border-success/30 bg-success/5'
+                : 'border-border bg-surface'
             }`}
             title={t('integrations.toggleHint', { defaultValue: 'Click to toggle' })}
           >
             <Switch
-              checked={integration.enabled}
+              checked={integration.enabled && !switchUnknown}
               onCheckedChange={(next) =>
-                toggleMutation.mutate({ id: integrationId!, enabled: next })
+                toggleMutation.mutate({
+                  id: integrationId!,
+                  addonId: integration?.addonId,
+                  enabled: next,
+                })
               }
-              disabled={toggleMutation.isPending}
+              disabled={toggleMutation.isPending || switchUnknown}
               aria-label={
-                integration.enabled
-                  ? t('integrationDetail.disableIntegration', 'Disable integration')
-                  : t('integrationDetail.enableIntegration', 'Enable integration')
+                switchUnknown
+                  ? t('integrationDetail.switchUnknown', 'Unknown')
+                  : integration.enabled
+                    ? t('integrationDetail.disableIntegration', 'Disable integration')
+                    : t('integrationDetail.enableIntegration', 'Enable integration')
               }
             />
             <span
@@ -495,9 +495,11 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
                 integration.enabled ? 'text-success' : 'text-foreground-subtle'
               }`}
             >
-              {integration.enabled
-                ? t('integrationDetail.enabled', 'Enabled')
-                : t('integrationDetail.disabled', 'Disabled')}
+              {switchUnknown
+                ? t('integrationDetail.switchUnknown', 'Unknown')
+                : integration.enabled
+                  ? t('integrationDetail.enabled', 'Enabled')
+                  : t('integrationDetail.disabled', 'Disabled')}
             </span>
             {toggleMutation.isPending && (
               <Loader2 className="h-3 w-3 animate-spin text-foreground-subtle" />

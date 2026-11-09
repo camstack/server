@@ -453,7 +453,7 @@ The role is, in order: the manifest's `integrationRole` (`devices`, `services` o
 `role` the addon's `integration-instances` provider answers in `describe()` (with its `discovery`:
 `none | lan | account`, which the wizard reads as `auto` for `lan` and `manual` otherwise), and, for an addon
 still on legacy rows, the capabilities it declares (`integration-instances` means `services`, anything else
-`devices`). The instance record body owns `enabled` for every role, switched only through `integration-instances.setInstanceEnabled`; the registry list projects it ([D1015](../decisions/adr-1015-one-switch-one-store-an-instance-is-on-or-off-in-its-record-body.md)); only `info.fixed` rows still switch through `integrations.update`. A dual entry declares `both`, is listed
+`devices`). The instance record body owns `enabled` for every role, switched only through `integration-instances.setInstanceEnabled`; the registry list projects it, marking a row whose addon did not answer `switchUnknown` ([D1015](../decisions/adr-1015-one-switch-one-store-an-instance-is-on-or-off-in-its-record-body.md)); an `info.fixed` row is switched the same way and the hub half writes its registry flag (`integrations.update` refuses `enabled`). A dual entry declares `both`, is listed
 on Integrations for its devices, and keeps its service instances on the function page. Loki, the SMTP relays
 and the TURN servers (static and Cloudflare) therefore have no Integrations row; the TURN Servers page holds
 their records.

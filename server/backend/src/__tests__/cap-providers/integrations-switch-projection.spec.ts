@@ -4,9 +4,9 @@ import { buildIntegrationsProvider } from '../../api/core/cap-providers'
 
 /**
  * An integration's `enabled` is a projection of its instance body (epic #440, step 3): the addon's
- * `integration-instances` provider answers it, the registry's stored flag is only the answer for a
- * row the addon cannot speak for (no provider, no instance, an addon that fails), and
- * `integrations.update` no longer writes it for anything but a fixed builtin.
+ * `integration-instances` provider answers it, the registry's stored flag is returned for a
+ * row the addon cannot speak for (no provider, no instance, an addon that fails) but marked `switchUnknown`, and
+ * `integrations.update` writes it for no row at all.
  */
 
 function row(id: string, addonId: string, enabled: boolean, fixed = false): Integration {
@@ -78,7 +78,7 @@ describe('integrations.list / get / getByAddonId project enabled from the instan
     expect((await h.provider.getByAddonId({ addonId: 'provider-x' }))?.enabled).toBe(false)
   })
 
-  it('keeps the stored flag for a row the addon cannot speak for, and logs an addon that fails', async () => {
+  it('marks a row the addon cannot speak for as switchUnknown (the stored flag is stale, not the state), and logs an addon that fails', async () => {
     const failing = {
       createInstance: vi.fn(),
       getInstance: vi.fn(),
@@ -103,12 +103,13 @@ describe('integrations.list / get / getByAddonId project enabled from the instan
 
     const listed = await h.provider.list()
 
-    expect(listed.map((i) => [i.id, i.enabled])).toEqual([
-      ['int_1', false],
-      ['int_2', false],
-      ['int_3', false],
-      ['int_4', true],
+    expect(listed.map((i) => [i.id, i.switchUnknown])).toEqual([
+      ['int_1', true],
+      ['int_2', true],
+      ['int_3', true],
+      ['int_4', undefined],
     ])
+    expect(listed.find((i) => i.id === 'int_4')?.enabled).toBe(true)
     expect(h.log.warn).toHaveBeenCalledWith(
       expect.stringContaining('not projected'),
       expect.objectContaining({ tags: { addonId: 'provider-fails' } }),
@@ -135,6 +136,7 @@ describe('a fixed builtin keeps its switch in the registry, whatever its record 
     ])
     expect((await h.provider.get({ id: 'int_9' })).enabled).toBe(false)
     expect((await h.provider.getByAddonId({ addonId: 'core-blocks' }))?.enabled).toBe(false)
+    expect(listed.map((i) => i.switchUnknown)).toEqual([undefined, undefined])
   })
 })
 
@@ -147,9 +149,12 @@ describe('integrations.update and the switch', () => {
     expect(h.registry.updateIntegration).not.toHaveBeenCalled()
   })
 
-  it('still switches a fixed builtin, which keeps no instance record', async () => {
+  it('refuses enabled for a fixed builtin too: its switch is setInstanceEnabled', async () => {
     const h = harness([row('int_9', 'core-blocks', true, true)], () => null)
-    await h.provider.update({ id: 'int_9', enabled: false })
-    expect(h.registry.updateIntegration).toHaveBeenCalledWith('int_9', { enabled: false })
+    await expect(h.provider.update({ id: 'int_9', enabled: false })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: expect.stringContaining('setInstanceEnabled'),
+    })
+    expect(h.registry.updateIntegration).not.toHaveBeenCalled()
   })
 })

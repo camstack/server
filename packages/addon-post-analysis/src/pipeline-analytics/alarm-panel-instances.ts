@@ -3,7 +3,8 @@
  * fixed builtin `DeclaredDevices` mints for the alarm panel (`boot/build-alarm-panel.ts`) has an
  * instance record under its registry id, holding only its name. It is name-only on purpose: the
  * integration's `enabled` switch stays in the registry (a fixed builtin is switched through
- * `integrations.update`, and `integrations.list` never projects it from a record), and the panel
+ * `setInstanceEnabled`, whose hub half writes that flag, and `integrations.list` never projects it
+ * from a record), and the panel
  * is configured on its own device, not on the integration.
  */
 import {

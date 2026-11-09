@@ -2,8 +2,8 @@
  * The Blocks integration as an `integration-instances` provider (epic #440): the fixed builtin
  * `DeclaredDevices` mints for `core-blocks` (`blocks-integration.ts`) has an instance record under
  * its registry id, holding only its name. It is name-only on purpose: the integration's `enabled`
- * switch stays in the registry (a fixed builtin is switched through `integrations.update`, and
- * `integrations.list` never projects it from a record), and there is nothing to configure.
+ * switch stays in the registry (a fixed builtin is switched through `setInstanceEnabled`, whose hub
+ * half writes that flag, and `integrations.list` never projects it from a record), and there is nothing to configure.
  */
 import {
   type DefinedRecordKind,

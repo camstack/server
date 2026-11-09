@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - SMTP: the duplicate smtp-provider verify call is removed; test a relay from its instance (Test connection)
+- Integrations: update no longer accepts enabled for any row; a row whose addon did not answer is marked switchUnknown
 
 ## [1.2.531] - 2026-11-08
 

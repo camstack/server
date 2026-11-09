@@ -1,7 +1,7 @@
 ---
 id: D1015
 title: One switch, one store - an instance is on or off in its record body, for every role
-status: proposed
+status: accepted
 date: 2026-11-06
 supersedes: D1007 (the clause "the registry owns `enabled` for `role: devices`", and `setInstanceEnabled` refusing a devices addon)
 applies-to:
@@ -32,7 +32,9 @@ only way to write it; it creates a missing record from the addon's `initialBody(
 registry `enabled` column is neither read nor written by the switch (its drop is step 5).
 `integrations.list`, `get` and `getByAddonId` project `enabled` from the instance body. The one
 exception is a row with `info.fixed` (alarm panel, camera-grid, core-blocks, terminal): it has no
-record, and `integrations.update({enabled})` still switches it.
+record, so the hub half of `setInstanceEnabled` (`instance-lifecycle.ts`) writes its registry flag,
+which is the answer for that row. There is no second door: `integrations.update({enabled})` is
+refused for every row.
 
 An addon learns of a switch through `RecordIntegrationInstances.onSwitched((id, enabled) => ...)`,
 called after `onChanged`, in the process that serves the instance. The event subscription is gone.
@@ -43,9 +45,11 @@ a rerun does nothing.
 
 ## Consequences
 
-- `integrations.update({enabled})` refuses every row that is not `info.fixed`.
-- The projection falls back to the stored registry flag for a row with no provider, no instance
-  or an addon that failed to answer (logged). Step 5 removes the column and the fallback.
+- `integrations.update({enabled})` refuses every row (a typed `BAD_REQUEST`), a fixed builtin
+  included; the admin-ui switches a fixed row through `setInstanceEnabled` like any other.
+- A row with no provider, no instance or an addon that failed to answer (logged) is returned with
+  `switchUnknown: true`: its `enabled` is the stale registry flag, not the state, and a reader draws
+  it as unknown, never as off (D315). Step 5 removes the column and that fallback.
 - The hub emits no `integration.enabled` telemetry for an instance switch any more; the admin-ui
   invalidates its own queries. Nothing durable depended on the event.
 - The switch migration is `block-owner`: a body without `enabled` reads as on, so an addon whose

@@ -1092,13 +1092,15 @@ function getInstancesProvider(
 /**
  * An integration's `enabled` is a projection of its instance body (epic #440, step 3): the one
  * switch is `setInstanceEnabled`, stored in the addon's record. One `listInstances` call per
- * addon answers every row of it. An addon whose provider is not up, that keeps no instance for the
- * row, or that fails to answer keeps the registry's stored flag for that row, and a failure is
- * logged: a listing never fails because one addon did not answer.
+ * addon answers every row of it. A row the addon cannot speak for (its provider is not up, it
+ * keeps no instance for the row, it fails to answer) keeps the registry's stored flag but is
+ * marked `switchUnknown`: that flag is stale, not the state, and a reader must not draw it as on or
+ * off (D315). A failure is logged: a listing never fails because one addon did not answer.
  *
- * A FIXED builtin is the exception: its switch is the registry flag, the one store
- * (`integrations.update`), and the name-only record it is seeded with carries no flag, which a
- * body reads as "on". Its row is never projected.
+ * A FIXED builtin is the exception: its switch is the registry flag, written only by the hub half
+ * of `setInstanceEnabled` (`instance-lifecycle.ts`), and the name-only record it is seeded with
+ * carries no flag, which a body reads as "on". Its row is never projected and the flag is the
+ * answer.
  */
 async function projectSwitches(
   ar: AddonRegistryService,
@@ -1106,7 +1108,9 @@ async function projectSwitches(
   integrations: readonly Integration[],
 ): Promise<readonly Integration[]> {
   const byAddon = new Map<string, ReadonlyMap<string, boolean>>()
-  for (const addonId of new Set(integrations.filter((i) => !isFixedBuiltin(i)).map((i) => i.addonId))) {
+  for (const addonId of new Set(
+    integrations.filter((i) => !isFixedBuiltin(i)).map((i) => i.addonId),
+  )) {
     const provider = getInstancesProvider(ar, addonId)
     if (provider === null) continue
     try {
@@ -1122,7 +1126,7 @@ async function projectSwitches(
   return integrations.map((i) => {
     if (isFixedBuiltin(i)) return i
     const enabled = byAddon.get(i.addonId)?.get(i.id)
-    return enabled === undefined ? i : { ...i, enabled }
+    return enabled === undefined ? { ...i, switchUnknown: true as const } : { ...i, enabled }
   })
 }
 
@@ -1183,10 +1187,15 @@ export function buildIntegrationsProvider(
         })
         throw new Error(`Integration "${input.id}" not found`)
       }
-      if (input.enabled !== undefined && previous.info['fixed'] !== true) {
-        throw new Error(
-          `Integration "${input.id}" is switched through integration-instances.setInstanceEnabled, not integrations.update`,
-        )
+      if (input.enabled !== undefined) {
+        logger.warn('refused: integrations.update does not switch', {
+          tags: { integrationId: input.id, addonId: previous.addonId },
+          meta: { phase: 'update', reason: 'switch-through-set-instance-enabled' },
+        })
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Integration "${input.id}" is switched through integration-instances.setInstanceEnabled, not integrations.update`,
+        })
       }
       const { id, ...updates } = input
       const changedFields = Object.keys(updates).filter(
@@ -1199,22 +1208,6 @@ export function buildIntegrationsProvider(
 
       const result = await reg.updateIntegration(id, updates)
       if (!result) throw new Error(`Integration "${id}" not found`)
-
-      const enabledChanged = input.enabled !== undefined && input.enabled !== previous.enabled
-      if (enabledChanged) {
-        const category = input.enabled ? 'integration.enabled' : 'integration.disabled'
-        logger.info('enabled state changed', {
-          tags: { integrationId: result.id, addonId: result.addonId },
-          meta: { phase: 'update', enabled: input.enabled },
-        })
-        eb.emit({
-          id: `integration-${category}-${Date.now()}`,
-          timestamp: new Date(),
-          source: { type: 'integration', id: result.id },
-          category,
-          data: { integrationId: result.id, addonId: result.addonId },
-        })
-      }
 
       if (input.name !== undefined && input.name !== previous.name) {
         logger.info('renamed', {

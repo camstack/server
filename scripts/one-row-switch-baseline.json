@@ -8,10 +8,7 @@
     "stream-broker.cap.ts:setRtspEnabled": "the broker's RTSP server toggle, a node setting, not an instance"
   },
   "setInstanceEnabledImplementations": {
-    "packages/system/src/builtins/storage-orchestrator/location-instances.ts": "a storage location keeps ONE typed state, mode, read only through storage-location-mode.ts (D385/D386); the row switch writes that state, never a second enabled field"
-  },
-  "notes": {
-    "fixedBuiltinException": "integrations.update({enabled}) is still accepted for rows with info.fixed (alarm panel, camera-grid, core-blocks, terminal): they have no instance record, and the admin-ui shows their toggle. Narrow exception pending the operator answer; every other row is switched through integration-instances.setInstanceEnabled.",
-    "step5Todo": "planning#440 step 5: drop the registry `enabled` column and the stored-flag fallback in projectSwitches (cap-providers.ts) and in the registry-switch-to-body migration read. Also: while an addon is down the projection shows the stale stored registry flag; with the column gone a down addon must read as unknown, not as a stale value (D315, D393)."
+    "packages/system/src/builtins/storage-orchestrator/location-instances.ts": "a storage location keeps ONE typed state, mode, read only through storage-location-mode.ts (D385/D386); the row switch writes that state, never a second enabled field",
+    "server/backend/src/core/addon/instance-lifecycle.ts": "the hub half of the one switch: for a FIXED builtin (no instance body) it writes the registry flag, the only store of that row; for every other row it forwards to the addon's provider. integrations.update refuses enabled for everyone (D1015)"
   }
 }

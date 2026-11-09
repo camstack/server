@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { type Baseline, findViolations, switchMethodsOf } from '../check-one-row-switch.js'
+import {
+  type Baseline,
+  findViolations,
+  SOURCE_ROOTS,
+  switchMethodsOf,
+} from '../check-one-row-switch.js'
 
 const EMPTY: Baseline = {
   capMethods: {},
@@ -88,5 +93,16 @@ describe('check-one-row-switch', () => {
       setInstanceEnabledImplementations: { 'packages/gone/src/a.ts': 'x' },
     })
     expect(found).toHaveLength(2)
+  })
+
+  it('walks the hub backend too: a second switch implementation there is refused', () => {
+    expect(SOURCE_ROOTS).toContain('server/backend/src')
+    const hub = {
+      path: 'server/backend/src/core/addon/second-switch.ts',
+      text: 'const setInstanceEnabled: IIntegrationInstancesProvider["setInstanceEnabled"] = async (input) => ({ ok: true as const })',
+    }
+    const found = findViolations([], [hub], EMPTY)
+    expect(found).toHaveLength(1)
+    expect(found[0]?.where).toBe(hub.path)
   })
 })

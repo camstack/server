@@ -6461,7 +6461,8 @@
     "restart": "Riavvia",
     "restart2": "Riavviare \"{{name}}\"?",
     "restartingTheAddonWillBriefly": "Riavviare l'addon disconnetterà brevemente tutti i dispositivi che ne dipendono ({{topLevelCountLabel}} attivi). Gli stream si riconnetteranno automaticamente.",
-    "instances": "Integrazione"
+    "instances": "Integrazione",
+    "switchUnknown": "Sconosciuto"
   },
   "library": {
     "peopleVehiclesCapturedEventsAnd": "Persone, veicoli, eventi acquisiti e scene — ciò che la detection ha riconosciuto.",

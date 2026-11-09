@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
+### Changed
+
+- Integrations: integrations.update refuses enabled for every row; the integration list reports an unanswered switch as unknown
 
 ## [1.2.817] - 2026-11-08
 
