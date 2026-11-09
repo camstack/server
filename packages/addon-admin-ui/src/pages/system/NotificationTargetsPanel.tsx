@@ -16,7 +16,7 @@ import { InstancesTable } from '../../components/instances/InstancesTable'
 import type { InstanceRow, PanelRow } from '../../components/instances/instances-model'
 import { NotificationTestPanel } from './NotificationTestPanel'
 
-/** The key a target's owner is stored under, in its form values (the viewer's `nc.upsertMyTarget` stamps it). */
+/** The key a target's owner is stored under, in its form values (the scoped integration-instances write stamps it). */
 const TARGET_OWNER_KEY = 'ownerUserId'
 
 const NOTIFICATION_OUTPUT_CAP = 'notification-output'

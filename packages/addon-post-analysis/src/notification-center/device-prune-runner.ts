@@ -30,7 +30,7 @@
  *
  * ── Targets ────────────────────────────────────────────────────────────────
  *
- * `nc.deleteMyTarget` emits nothing, so targets have only the reconcile. The
+ * A target deleted through integration-instances is not an event the pruner relies on, so targets have only the reconcile. The
  * catalog is a concat fan-out across every `notification-output` provider,
  * which makes it PARTIAL whenever one provider is down, not only empty. So a
  * target is a candidate only when two consecutive answered (non-empty,

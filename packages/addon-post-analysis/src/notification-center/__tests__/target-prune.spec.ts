@@ -1,5 +1,5 @@
 /**
- * A deleted delivery TARGET (`nc.deleteMyTarget` emits nothing) is found by the
+ * A deleted delivery TARGET (a delete through integration-instances is not an event the pruner relies on) is found by the
  * reload-tick reconcile against the target catalog the DELIVERY path already
  * cached (`NcDispatcher.catalogSnapshot`) — the prune never reads a catalog of
  * its own (fix round 1: no cluster fan-out every 30 s).

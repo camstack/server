@@ -499,8 +499,8 @@ export async function reloadRules(host: SystemEventsHost): Promise<void> {
   await host.occupancyStore.pruneExcept(host.activeOccupancyKeys())
   // The deleted-device / deleted-target reconcile rides this tick for the
   // same reason as everything above it (D8: `DeviceUnregistered` is
-  // telemetry and may be dropped; `nc.deleteMyTarget` emits nothing at
-  // all). AFTER the directory refresh, because its first read is "missing
+  // telemetry and may be dropped; a delete through integration-instances is not
+  // an event it relies on). AFTER the directory refresh, because its first read is "missing
   // from the last two answered refreshes". No timer of its own (D3).
   // The prune record is written only here, through its own mirror, so this
   // node never re-queries it — except to retry a load that has not yet
