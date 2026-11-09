@@ -1,11 +1,16 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import { createInstance } from 'i18next'
+import { I18nextProvider, initReactI18next } from 'react-i18next'
 import { describe, expect, it, vi } from 'vitest'
 import { HeroModelCard } from '../HeroModelCard'
 import { buildModel } from './fixtures'
 
 const host = (run = vi.fn()) => ({ lang: 'en' as const, busy: false, run })
 
-const option = (value: string, allowed: readonly string[]) => ({ value, allowed: [...allowed] })
+const option = (value: string, allowed: readonly string[]) => ({
+  value,
+  allowed: [...allowed],
+})
 const range = { value: 21, min: 5, max: 30, step: 0.5 }
 
 const circuit = (id: string, label: string) => ({
@@ -82,5 +87,92 @@ describe('HeroModelCard heat pump', () => {
     render(<HeroModelCard model={model(null)} host={host()} />)
     expect(screen.queryByText(/COP/)).toBeNull()
     expect(screen.getByText('Thermal 9.2 kW')).toBeTruthy()
+  })
+})
+
+describe('HeroModelCard heat pump selectors', () => {
+  it('draws holiday as an off / programme segmented control, not a select, for nine allowed values', () => {
+    const run = vi.fn()
+    const nine = ['off', 'hm1', 'hm2', 'hm3', 'hm4', 'hm5', 'hm6', 'hm7', 'hm8']
+    const base = slice(2991)
+    const full = buildModel('heat-pump', ['heat-pump-status', 'heat-pump-control'], {
+      'heat-pump-status': {
+        ...base,
+        system: { ...base.system, holiday: option('off', nine) },
+      },
+    })
+    render(<HeroModelCard model={full} host={host(run)} />)
+    const holiday = screen
+      .getAllByTestId('hero-row-system-mode')
+      .find((row) => within(row).queryByText('Holiday') !== null)
+    if (holiday === undefined) throw new Error('no holiday row')
+    expect(within(holiday).queryByRole('combobox')).toBeNull()
+    expect(within(holiday).getAllByRole('button')).toHaveLength(2)
+    fireEvent.click(within(holiday).getByText('Programme'))
+    expect(run.mock.calls[0]?.[0].args).toEqual({ mode: 'hm1' })
+  })
+
+  it('still draws a circuit whose every value is unknown, with its label', () => {
+    const base = slice(2991)
+    const blank = {
+      ...circuit('hc3', 'Circuit 3'),
+      currentTemp: null,
+      targetTemp: null,
+      operationMode: null,
+      comfortSetpoint: null,
+      ecoSetpoint: null,
+      maxFlowTemp: null,
+    }
+    const silent = buildModel('heat-pump', ['heat-pump-status', 'heat-pump-control'], {
+      'heat-pump-status': { ...base, circuits: [blank] },
+    })
+    render(<HeroModelCard model={silent} host={host()} />)
+    const row = screen.getByTestId('hero-row-circuit')
+    expect(within(row).getByText('Circuit 3')).toBeTruthy()
+    expect(within(row).getByText('—')).toBeTruthy()
+  })
+
+  it('names the active holiday programme in the status', () => {
+    const base = slice(2991)
+    const on = buildModel('heat-pump', ['heat-pump-status', 'heat-pump-control'], {
+      'heat-pump-status': {
+        ...base,
+        system: {
+          ...base.system,
+          holiday: option('hm3', ['off', 'hm1', 'hm3']),
+        },
+      },
+    })
+    render(<HeroModelCard model={on} host={host()} />)
+    expect(screen.getByText('Programme 3')).toBeTruthy()
+  })
+
+  it('takes the placeholder of an unset long picker from the i18n key', async () => {
+    const instance = createInstance()
+    await instance.use(initReactI18next).init({
+      lng: 'en',
+      resources: {
+        en: { translation: { deviceHero: { model: { noValue: 'NOT-SET' } } } },
+      },
+    })
+    const base = slice(2991)
+    const unset = buildModel('heat-pump', ['heat-pump-status', 'heat-pump-control'], {
+      'heat-pump-status': {
+        ...base,
+        system: {
+          ...base.system,
+          silent: {
+            value: null,
+            allowed: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+          },
+        },
+      },
+    })
+    render(
+      <I18nextProvider i18n={instance}>
+        <HeroModelCard model={unset} host={host()} />
+      </I18nextProvider>,
+    )
+    expect(screen.getByRole('option', { name: 'NOT-SET' })).toBeTruthy()
   })
 })

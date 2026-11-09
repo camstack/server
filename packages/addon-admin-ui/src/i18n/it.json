@@ -11688,7 +11688,8 @@
           "message": "Il dispositivo agisce appena confermi.",
           "confirm": "Esegui"
         }
-      }
+      },
+      "noValue": "–"
     }
   },
   "cliLogin": {

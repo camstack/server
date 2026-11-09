@@ -65,6 +65,10 @@ twice.
 - A resource path the HomeCom addon reads for the system modes and the power is
   recorded in one table and was written from the public resource tree, not a live
   census; the first live read corrects the table, not the cap.
+- Holiday is drawn as two segments, off / programme, with the active programme
+  (`hmN`) in the status. Choosing "programme" keeps the programme that is set, else
+  the first `hmN` the gateway allowed, and never writes a value outside `allowed`.
+  The full hm1..hm8 pick is not in the hero.
 
 ## Enforcement
 

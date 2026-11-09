@@ -27,6 +27,7 @@ import {
 } from '@camstack/ui-library'
 import { Minus, Plus } from 'lucide-react'
 import { Fragment, type ReactNode, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   badgeVariantOf,
   clockText,
@@ -134,6 +135,7 @@ function PickerControl({
   readonly host: HeroCardHost
   readonly tone: Parameters<typeof HeroProgressBar>[0]['tone']
 }): ReactNode {
+  const { t } = useTranslation()
   const choose = (value: string): void =>
     host.run(
       {
@@ -154,7 +156,10 @@ function PickerControl({
         tone={tone}
         value={control.current}
         disabled={host.busy}
-        options={control.options.map((o) => ({ value: o, label: optionLabel(o) }))}
+        options={control.options.map((o) => ({
+          value: o,
+          label: optionLabel(o),
+        }))}
         onChange={choose}
       />
     )
@@ -166,7 +171,9 @@ function PickerControl({
       value={control.current ?? ''}
       disabled={host.busy}
       options={[
-        ...(control.current === null ? [{ value: '', label: '–' }] : []),
+        ...(control.current === null
+          ? [{ value: '', label: t('deviceHero.model.noValue', '–') }]
+          : []),
         ...control.options.map((o) => ({ value: o, label: optionLabel(o) })),
       ]}
       onChange={(e) => choose(e.target.value)}
@@ -179,7 +186,11 @@ type SliderModel = Extract<HeroControl, { kind: 'slider' }>
 /** A row without the slider the scene already draws in its centre. */
 function withoutDial(row: HeroRow, dial: Dial | null): HeroRow {
   if (dial === null || row.controls.every((c) => c !== dial.control)) return row
-  return { ...row, status: null, controls: row.controls.filter((c) => c !== dial.control) }
+  return {
+    ...row,
+    status: null,
+    controls: row.controls.filter((c) => c !== dial.control),
+  }
 }
 
 /** What the centre dial prints: the number, the small mark after it and an optional heading. */
@@ -213,7 +224,11 @@ function dialView(dial: Dial, lang: HeroLang): DialView {
   const { control } = dial
   const value = control.value
   if (dial.kind === 'setpoint') {
-    return { text: value === null ? '–' : String(value), mark: control.unit, heading: null }
+    return {
+      text: value === null ? '–' : String(value),
+      mark: control.unit,
+      heading: null,
+    }
   }
   const heading = pickText(control.label, lang)
   if (value === null) return { text: '–', mark: '', heading }
@@ -242,7 +257,10 @@ function DialCentre({
     const next = Math.min(control.max, Math.max(control.min, value + direction * control.step))
     if (next === value) return
     host.run(
-      { ...control.call, args: heroArgsWithValue(control.call.args, control.valueArg, next) },
+      {
+        ...control.call,
+        args: heroArgsWithValue(control.call.args, control.valueArg, next),
+      },
       null,
     )
   }
@@ -389,7 +407,7 @@ function ControlView({
 }
 
 /** Rows whose status (the circuit's temperatures) stays beside their selector instead of giving way to it. */
-const STATUS_BESIDE_CONTROLS: ReadonlySet<HeroRow['id']> = new Set(['circuit'])
+const STATUS_BESIDE_CONTROLS: ReadonlySet<HeroRow['id']> = new Set(['circuit', 'system-mode'])
 
 function GroupHeader({ text }: { readonly text: string }): ReactNode {
   return (
