@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The account sign-in paste hint asks for the address the browser stopped on, or only its code
+
 ## [1.2.625] - 2026-11-09
 
 ### Changed

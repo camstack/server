@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Removed the unused claimAction from the account-sign-in config field.
+
 ## [1.2.532] - 2026-11-09
 
 ### Changed
 
 - A calendar names the integration-instances record that owns it (calendar-source CalendarInfo.instanceId, passed through the calendars listing)
 - Remote: an infrared source may leave its emitter out (the remote's default one is used), the power mode setting is gone, and the colour keys have one set of roles
-- Removed the unused claimAction from the account-sign-in config field.
 
 ## [1.2.531] - 2026-11-08
 
