@@ -47,6 +47,7 @@ export const RemoteComponentButtonSchema = z.object({
   label: z.string().min(1).max(40).optional(),
   shape: RemoteButtonShapeSchema.optional(),
   tone: RemoteButtonToneSchema.optional(),
+  showLegend: z.boolean().optional(),
 })
 export type RemoteComponentButton = z.infer<typeof RemoteComponentButtonSchema>
 

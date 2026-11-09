@@ -157,7 +157,6 @@ describe('remoteCallRedirect — the state hook (D963)', () => {
   const toggle: RemoteConfig = {
     ...EMPTY_REMOTE_CONFIG,
     bindings: { power: ir },
-    power: { mode: 'toggle' },
   }
 
   it('serves the assumed state when no running source exists, marked assumed', async () => {

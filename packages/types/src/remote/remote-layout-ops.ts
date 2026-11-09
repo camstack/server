@@ -44,6 +44,12 @@ export interface InsertOptions {
   readonly extras?: readonly ComponentButtonSpec[]
   /** Replaces the component's own frame title ("Section" -> "Volume"). */
   readonly title?: string
+  /**
+   * Legends printed on a component's keys, by button `idSuffix`: the label
+   * changes and the key shows it even on a colour tone (Samsung's A B C D on
+   * the red / green / yellow / blue keys).
+   */
+  readonly legends?: Readonly<Record<string, string>>
 }
 
 const refuse = (reason: LayoutEditRefusal): { ok: false; reason: LayoutEditRefusal } => ({
@@ -79,6 +85,19 @@ export function fillWidthScale(
 
 function titleOf(title: string | undefined): { title?: string } {
   return title === undefined ? {} : { title }
+}
+
+/** The label (and whether it shows on a colour key) a component button is inserted with. */
+function legendOf(
+  spec: ComponentButtonSpec,
+  legends: InsertOptions['legends'],
+): { label?: string; showLegend?: boolean } {
+  const legend = legends?.[spec.idSuffix]
+  if (legend !== undefined) return { label: legend, showLegend: true }
+  return {
+    ...(spec.label === undefined ? {} : { label: spec.label }),
+    ...(spec.showLegend === undefined ? {} : { showLegend: spec.showLegend }),
+  }
 }
 
 function slug(value: string): string {
@@ -165,7 +184,7 @@ export function insertComponent(
     ...rect,
     role: spec.role,
     ...(spec.icon === undefined ? {} : { icon: spec.icon }),
-    ...(spec.label === undefined ? {} : { label: spec.label }),
+    ...legendOf(spec, options.legends),
     ...(spec.shape === undefined ? {} : { shape: spec.shape }),
     ...(spec.tone === undefined ? {} : { tone: spec.tone }),
     ...(groupId === null ? {} : { groupId }),

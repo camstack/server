@@ -1,7 +1,7 @@
 /**
  * The `remote` cap (D963, D964): a button panel over a media-player device. It
  * keeps the per-device configuration (layout template, role bindings, custom
- * buttons, power mode) in the device's settings store and runs a bound ROLE by
+ * buttons) in the device's settings store and runs a bound ROLE by
  * calling the action it is bound to — the shape an Action step has, so an
  * infrared code and a smart-TV call are the same thing here.
  *
@@ -218,7 +218,6 @@ export class RemoteService implements IRemoteProvider {
     })
     return {
       layoutTemplateId: config.layoutTemplateId,
-      power: config.power,
       commands,
       sources: config.sources,
     }
@@ -404,14 +403,10 @@ export class RemoteService implements IRemoteProvider {
     return null
   }
 
-  /** A role is reachable when bound, or when a toggle `power` stands for `power_on` / `power_off`. */
+  /** A role is reachable when bound, or when a bound `power` stands for `power_on` / `power_off`. */
   private isBound(config: RemoteConfig, role: string): boolean {
     if (config.bindings[role] !== undefined) return true
-    return (
-      (role === 'power_on' || role === 'power_off') &&
-      config.power.mode === 'toggle' &&
-      config.bindings['power'] !== undefined
-    )
+    return (role === 'power_on' || role === 'power_off') && config.bindings['power'] !== undefined
   }
 
   private async currentState(deviceId: number): Promise<PowerState | null> {
@@ -618,7 +613,7 @@ export class RemoteService implements IRemoteProvider {
     config: RemoteConfig,
     source: RemoteSource,
   ): Promise<RemoteSendResult> {
-    if (source.kind === 'ir') return this.runIrSource(deviceId, source)
+    if (source.kind === 'ir') return this.runIrSource(deviceId, config, source)
     const steps = remoteSourceSteps(source)
     const missing = steps.findIndex((role) => !this.isBound(config, role))
     if (missing >= 0) {
@@ -677,12 +672,28 @@ export class RemoteService implements IRemoteProvider {
   }
 
   /** One train through the source's own transmitter; the source is remembered only after it landed. */
-  private async runIrSource(deviceId: number, source: RemoteIrSource): Promise<RemoteSendResult> {
+  private async runIrSource(
+    deviceId: number,
+    config: RemoteConfig,
+    source: RemoteIrSource,
+  ): Promise<RemoteSendResult> {
+    const transmitterId = source.transmitterId ?? config.defaultTransmitterId
+    if (transmitterId === null) {
+      this.deps.logger.warn('remote: an infrared source has no emitter, nothing was sent', {
+        tags: { deviceId },
+        meta: { source: source.name },
+      })
+      return {
+        status: 'refused',
+        reason: 'no-transmitter',
+        detail: `"${source.name}" names no emitter and the remote has no default one`,
+      }
+    }
     return this.withLock(deviceId, async () => {
       const { timings, settings } = toTimings(source.payload)
       try {
         await this.deps.invoke({
-          deviceId: source.transmitterId,
+          deviceId: transmitterId,
           cap: IR_TRANSMITTER_CAP,
           method: IR_SEND_METHOD,
           args: { timings, settings },
@@ -690,7 +701,7 @@ export class RemoteService implements IRemoteProvider {
       } catch (err: unknown) {
         this.deps.logger.warn('remote: the infrared source failed to send, nothing was assumed', {
           tags: { deviceId },
-          meta: { source: source.name, transmitterId: source.transmitterId, error: errorText(err) },
+          meta: { source: source.name, transmitterId, error: errorText(err) },
         })
         return { status: 'refused', reason: 'action-failed', detail: errorText(err) }
       }
@@ -715,11 +726,20 @@ export class RemoteService implements IRemoteProvider {
     role: string,
     repeat: number,
   ): Promise<RemoteSendResult> {
+    // Explicit on / off exist only when BOTH are bound; otherwise a bound `power`
+    // toggles against the known (or assumed) state.
+    const explicit =
+      config.bindings['power_on'] !== undefined && config.bindings['power_off'] !== undefined
+    if (role === 'power' && config.bindings['power'] === undefined && explicit) {
+      // The Power key of a remote that only has the pair: on when off, off when on.
+      const now = await this.currentState(deviceId)
+      return this.runRole(deviceId, config, now === 'on' ? 'power_off' : 'power_on', repeat)
+    }
     const wantsState: PowerState | null =
       role === 'power_on' ? 'on' : role === 'power_off' ? 'off' : null
-    const viaToggle = wantsState !== null && config.bindings[role] === undefined
+    const viaToggle = wantsState !== null && !explicit && config.bindings['power'] !== undefined
     const bound = viaToggle ? config.bindings['power'] : config.bindings[role]
-    if (bound === undefined || (viaToggle && config.power.mode !== 'toggle')) {
+    if (bound === undefined) {
       return {
         status: 'refused',
         reason: 'unbound-role',

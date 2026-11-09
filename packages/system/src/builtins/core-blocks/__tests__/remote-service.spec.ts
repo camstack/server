@@ -6,6 +6,7 @@ import {
   type RemoteConfig,
   type RemoteSource,
   customRole,
+  readStoredRemoteConfig,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { RemoteService, type RemoteServiceDeps } from '../remote-service.js'
@@ -218,7 +219,6 @@ describe('RemoteService.sendCommand', () => {
 describe('power on a toggle remote', () => {
   const toggle = config({
     bindings: { power: ir('pwr') },
-    power: { mode: 'toggle' },
   })
 
   it('sends only when the current state differs from the requested one', async () => {
@@ -292,23 +292,61 @@ describe('power on a toggle remote', () => {
     expect(w.calls).toHaveLength(0)
   })
 
-  it('a discrete remote always sends', async () => {
+  it('a remote with both power_on and power_off bound sends them explicitly, whatever the state', async () => {
+    const w = world(config({ bindings: { power_on: ir('on'), power_off: ir('off') } }))
+    await w.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 })
+    await w.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 })
+    await w.service.sendCommand({ deviceId: TV, role: 'power_off', repeat: 1 })
+    expect(w.calls.map((c) => c.args)).toEqual([
+      { timings: [9000, -4500], tag: 'on' },
+      { timings: [9000, -4500], tag: 'on' },
+      { timings: [9000, -4500], tag: 'off' },
+    ])
+  })
+
+  it('the pair wins over a power toggle bound next to it: no state guard, no toggle', async () => {
     const w = world(
-      config({
-        bindings: { power_on: ir('on'), power_off: ir('off') },
-        power: { mode: 'discrete' },
-      }),
+      config({ bindings: { power: ir('pwr'), power_on: ir('on'), power_off: ir('off') } }),
     )
-    await w.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 })
-    await w.service.sendCommand({ deviceId: TV, role: 'power_on', repeat: 1 })
-    expect(w.calls).toHaveLength(2)
+    await w.service.sendCommand({ deviceId: TV, role: 'power_off', repeat: 1 })
+    await w.service.sendCommand({ deviceId: TV, role: 'power_off', repeat: 1 })
+    expect(w.calls.map((c) => c.args)).toEqual([
+      { timings: [9000, -4500], tag: 'off' },
+      { timings: [9000, -4500], tag: 'off' },
+    ])
+  })
+
+  it('with only one of the pair bound, a bound power toggles for both directions', async () => {
+    const w = world(config({ bindings: { power: ir('pwr'), power_on: ir('on') } }))
+    await w.service.sendCommand({ deviceId: TV, role: 'power_off', repeat: 1 })
+    expect(w.calls.map((c) => c.args)).toEqual([{ timings: [9000, -4500], tag: 'pwr' }])
+  })
+
+  it('the Power key of a remote that only has the pair sends on when off, off when on', async () => {
+    const w = world(config({ bindings: { power_on: ir('on'), power_off: ir('off') } }), {
+      running: false,
+    })
+    await w.service.sendCommand({ deviceId: TV, role: 'power', repeat: 1 })
+    expect(w.calls.map((c) => c.args)).toEqual([{ timings: [9000, -4500], tag: 'on' }])
+    const on = world(config({ bindings: { power_on: ir('on'), power_off: ir('off') } }), {
+      running: true,
+    })
+    await on.service.sendCommand({ deviceId: TV, role: 'power', repeat: 1 })
+    expect(on.calls.map((c) => c.args)).toEqual([{ timings: [9000, -4500], tag: 'off' }])
+  })
+
+  it('a stored configuration that still carries power.mode reads, and the field is gone', () => {
+    const read = readStoredRemoteConfig({
+      ...EMPTY_REMOTE_CONFIG,
+    })
+    expect(read.success).toBe(true)
+    if (read.success) expect('power' in read.data).toBe(false)
   })
 })
 
 describe('the power source', () => {
   const toggle = config({
     bindings: { power: ir('pwr') },
-    power: { mode: 'toggle' },
   })
 
   it('reads the running-state source before anything else', async () => {
@@ -529,7 +567,6 @@ describe('RemoteService config', () => {
     const next = config({
       layoutTemplateId: 'tpl',
       bindings: { power: ir('p'), volume_up: ir('v') },
-      power: { mode: 'toggle' },
     })
     expect(await w.service.setConfig({ deviceId: TV, config: next })).toEqual({
       status: 'saved',
@@ -583,7 +620,6 @@ describe('RemoteService — a repeat is N full sends, 150 ms apart (D964)', () =
 describe('RemoteService.assumedStatus — power truth from the linked plug', () => {
   const standing = config({
     bindings: { power: ir('power') },
-    power: { mode: 'toggle' },
   })
 
   it('a plug that is off reports the television off, as a reading', async () => {
@@ -640,7 +676,6 @@ describe('RemoteService.assumedStatus — power truth from the linked plug', () 
 describe('RemoteService — ONE power truth for the status and the toggle guard', () => {
   const standing = config({
     bindings: { power: ir('power') },
-    power: { mode: 'toggle' },
   })
 
   it('a plug cut after turnOn makes the next turnOn send, not skip as already-on', async () => {
@@ -688,7 +723,6 @@ describe('RemoteService — ONE power truth for the status and the toggle guard'
 
 describe('RemoteService — the device media-player slice is written, not only answered', () => {
   const tvConfig = config({
-    power: { mode: 'toggle' },
     bindings: { power: ir('power') },
   })
 
@@ -825,7 +859,6 @@ describe('declared sources (planning#460)', () => {
         power: press('pwr'),
         power_off: press('off'),
       },
-      power: { mode: 'discrete' },
       sources: [RAI1, C24, HDMI],
       ...patch,
     })
@@ -881,6 +914,30 @@ describe('declared sources (planning#460)', () => {
         { name: 'HDMI 2', kind: 'ir' },
       ],
     })
+  })
+
+  it('an infrared source with no emitter goes through the remote default transmitter', async () => {
+    const { transmitterId: _own, ...noEmitter } = HDMI2
+    const w = world(declared({ sources: [RAI1, noEmitter], defaultTransmitterId: 9 }))
+    expect(await select(w, 'HDMI 2')).toEqual({ status: 'sent', sends: 1 })
+    expect(w.calls.map((c) => c.deviceId)).toEqual([9])
+  })
+
+  it('an infrared source naming its own emitter overrides the remote default', async () => {
+    const w = world(declared({ sources: [RAI1, HDMI2], defaultTransmitterId: 9 }))
+    await select(w, 'HDMI 2')
+    expect(w.calls.map((c) => c.deviceId)).toEqual([7])
+  })
+
+  it('an infrared source with no emitter and no default is refused no-transmitter, sending nothing', async () => {
+    const { transmitterId: _own, ...noEmitter } = HDMI2
+    const w = world(declared({ sources: [RAI1, noEmitter], defaultTransmitterId: null }))
+    expect(await select(w, 'HDMI 2')).toMatchObject({
+      status: 'refused',
+      reason: 'no-transmitter',
+    })
+    expect(w.calls).toHaveLength(0)
+    expect(w.kept()?.source ?? null).toBeNull()
   })
 
   it('an infrared source whose transmitter fails is refused as action-failed and forgets nothing', async () => {

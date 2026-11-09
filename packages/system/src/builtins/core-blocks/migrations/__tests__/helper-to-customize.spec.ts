@@ -46,6 +46,7 @@ import { makeRecordsWorld } from '../../../sqlite-storage/__tests__/support/reco
 import { coreBlocksRecordKinds, type CoreBlockRowBody } from '../../record-kinds.js'
 import { recordingLogger } from '../../__tests__/fixtures.js'
 import { ADDON_MIGRATIONS, coreBlocksMigrationPorts, HELPER_TO_CUSTOMIZE_ID } from '../index.js'
+import { NO_REMOTE_PORTS } from './no-remote-ports.js'
 
 const ref = (name: string): CompositionSourceRef => ({
   addonId: 'provider-homeassistant',
@@ -204,7 +205,7 @@ beforeEach(async () => {
 async function execute() {
   const handle = records.kind(coreBlocksRecordKinds.blocks)
   const { logger } = recordingLogger()
-  const ports = coreBlocksMigrationPorts(handle, logger, () => NOW)
+  const ports = { ...coreBlocksMigrationPorts(handle, logger, () => NOW), ...NO_REMOTE_PORTS }
   const bound = defineAddonMigrations(ADDON_MIGRATIONS, ports)
   const migration = bound.find((m) => m.meta.id === HELPER_TO_CUSTOMIZE_ID)
   if (migration === undefined) throw new Error('migration is not in the catalogue')

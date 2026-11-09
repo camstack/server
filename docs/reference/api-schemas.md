@@ -669,6 +669,7 @@ Enum: `"idle" \| "connecting" \| "streaming" \| "error" \| "stopped"`
 - `name`: `string`
 - `source`: `CalendarSourceKindSchema`
 - `enabled`: `boolean`
+- `instanceId?`: `string`
 - `providerAddonId?`: `string`
 - `defaultColor`: `string`
 - `color`: `string`
@@ -691,6 +692,7 @@ Enum: `"idle" \| "connecting" \| "streaming" \| "error" \| "stopped"`
 - `name`: `string`
 - `source`: `CalendarSourceKindSchema`
 - `enabled`: `boolean`
+- `instanceId?`: `string`
 
 ### `CalendarListEventsInputSchema`
 
@@ -5561,9 +5563,8 @@ Enum: `"continuous" \| "motion" \| "person" \| "vehicle" \| "animal" \| "lineCro
 ### `RemoteCommandListSchema`
 
 - `layoutTemplateId`: `string \| null`
-- `power`: `{ mode: "toggle" \| "discrete" }`
 - `commands`: `RemoteBoundCommandSchema[]`
-- `sources`: `({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] } \| { id: string; name: string; kind: "ir"; transmitterId: number; payload: { kind: "raw"; timings: number[]; settings?: { carrierHz?: number; dutyCyclePercent?: number; repeat?: number; repeatDelayMs?: number } } \| { kind: "pronto"; code: string } })[]`
+- `sources`: `({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] } \| { id: string; name: string; kind: "ir"; transmitterId?: number; payload: { kind: "raw"; timings: number[]; settings?: { carrierHz?: number; dutyCyclePercent?: number; repeat?: number; repeatDelayMs?: number } } \| { kind: "pronto"; code: string } })[]`
 
 ### `RemoteMediaCommandResultSchema`
 
@@ -5578,7 +5579,7 @@ Enum: `"play" \| "pause" \| "stop" \| "next" \| "previous" \| "setMute" \| "sele
 
 ### `RemoteRefusalReasonSchema`
 
-Enum: `"no-remote" \| "unbound-role" \| "action-failed" \| "unknown-source" \| "unbound-step" \| "undeclared-channel" \| "press-timeout"`
+Enum: `"no-remote" \| "unbound-role" \| "action-failed" \| "unknown-source" \| "unbound-step" \| "undeclared-channel" \| "press-timeout" \| "no-transmitter"`
 
 ### `RemoteSendResultSchema`
 

@@ -190,3 +190,24 @@ describe('removeGroup / ungroup', () => {
     expect(result.layout.groups).toBeUndefined()
   })
 })
+
+describe('insertComponent legends', () => {
+  it('the colour keys component can print a letter on each coloured key, and prints none by default', () => {
+    const colour = builtinRemoteComponent('core:colour-keys')
+    const plain = insertComponent(empty(), colour, { row: 0, col: 0 })
+    const lettered = insertComponent(
+      empty(),
+      colour,
+      { row: 0, col: 0 },
+      { legends: { red: 'A', green: 'B', yellow: 'C', blue: 'D' } },
+    )
+    if (!plain.ok || !lettered.ok) throw new Error('insert refused')
+    expect(plain.layout.buttons.every((b) => b.showLegend !== true)).toBe(true)
+    expect(lettered.layout.buttons.map((b) => [b.role, b.tone, b.label, b.showLegend])).toEqual([
+      ['custom:color_red', 'red', 'A', true],
+      ['custom:color_green', 'green', 'B', true],
+      ['custom:color_yellow', 'yellow', 'C', true],
+      ['custom:color_blue', 'blue', 'D', true],
+    ])
+  })
+})

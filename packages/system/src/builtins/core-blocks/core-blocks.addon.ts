@@ -51,7 +51,12 @@ import {
   EventCategory,
   historyRetentionFromSettings,
 } from '@camstack/types'
-import { ADDON_MIGRATIONS, coreBlocksMigrationPorts } from './migrations/index.js'
+import {
+  ADDON_MIGRATIONS,
+  coreBlocksMigrationPorts,
+  remoteMigrationPortsOver,
+} from './migrations/index.js'
+import type { RemoteDeviceStores } from './migrations/remote-config-migrations.js'
 import { isRecord, parseDeviceStateChanged } from '../shared/device-state-changed.js'
 import { armTimedRuns, buildTimedRunService } from './timed-run/timed-run-wiring.js'
 import type { TimedRunService } from './timed-run/timed-run-service.js'
@@ -107,6 +112,14 @@ const CONVERGE_INTERVAL_MS = 15_000
 
 /** Where block packages are materialised, under this node's data root. */
 const BLOCK_PACKAGE_DIRNAME = 'core-blocks'
+
+/** A node without the per-device settings store cannot read a stored remote: the migration fails loudly rather than record itself as done. */
+const NO_DEVICE_STORES: RemoteDeviceStores = {
+  listDeviceStoreIds: () => Promise.reject(new Error('core-blocks: no per-device settings store')),
+  readDeviceStoreBatch: () =>
+    Promise.reject(new Error('core-blocks: no per-device settings store')),
+  writeDeviceStore: () => Promise.reject(new Error('core-blocks: no per-device settings store')),
+}
 
 export class CoreBlocksAddon extends BaseAddon {
   /**
@@ -164,14 +177,18 @@ export class CoreBlocksAddon extends BaseAddon {
     // Stored compositions take the shape the current caps validate BEFORE the store loads
     // them: a fountain still carrying its pump cycle on `pet-fountain` would not build.
     await this.runMigrations(
-      defineAddonMigrations(
-        ADDON_MIGRATIONS,
-        coreBlocksMigrationPorts(
+      defineAddonMigrations(ADDON_MIGRATIONS, {
+        ...coreBlocksMigrationPorts(
           records.kind(coreBlocksRecordKinds.blocks),
           this.ctx.logger.child('migrations'),
           () => Date.now(),
         ),
-      ),
+        ...remoteMigrationPortsOver(
+          this.ctx.settings ?? NO_DEVICE_STORES,
+          records.kind(coreBlocksRecordKinds.templates),
+          this.ctx.logger.child('migrations'),
+        ),
+      }),
     )
     this.store = CoreBlockStore.of(records, this.ctx.logger.child('store'))
     this.prefs = new BlockSettingsStore({

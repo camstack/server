@@ -13,7 +13,7 @@ import { IrCodecError } from '../ir/ir-error.js'
 import { toTimings } from '../ir/ir-payload.js'
 import type { IrTimings, TransmitSettings } from '../ir/ir-timings.js'
 import type { RemoteCommandTable } from '../ir/smartir.js'
-import type { RemoteBinding, RemoteCustomButton, RemotePowerMode } from './remote-config.js'
+import type { RemoteBinding, RemoteCustomButton } from './remote-config.js'
 import { customRole } from './remote-roles.js'
 
 /** SmartIR's own command keys and the role each one fills. */
@@ -43,7 +43,6 @@ export interface SmartIrDraftOptions {
 export interface SmartIrDraft {
   readonly bindings: Record<string, RemoteBinding>
   readonly customButtons: RemoteCustomButton[]
-  readonly power: { readonly mode: RemotePowerMode }
   readonly skipped: SmartIrSkipped[]
 }
 
@@ -135,9 +134,7 @@ export function smartIrDraft(
     commands.find((c) => c.group === 'command' && c.name === name)
   const on = find('on')
   const off = find('off')
-  let mode: RemotePowerMode = 'discrete'
   if (on !== undefined && off !== undefined && sameTrain(on, off)) {
-    mode = 'toggle'
     bindings['power'] = bindingOf(on)
   } else {
     if (on !== undefined) bindings['power_on'] = bindingOf(on)
@@ -157,8 +154,7 @@ export function smartIrDraft(
       skipped.push({ name: command.name, reason: `duplicate of the ${role} button already bound` })
     } else {
       bindings[role] = bindingOf(command)
-      if (role === 'power') mode = 'toggle'
     }
   }
-  return { bindings, customButtons, power: { mode }, skipped }
+  return { bindings, customButtons, skipped }
 }

@@ -1930,7 +1930,7 @@
 
 ### `calendar-source` → `calendarSource.*`
 
-- **Source:** `packages/types/src/capabilities/calendar-source.cap.ts:57`
+- **Source:** `packages/types/src/capabilities/calendar-source.cap.ts:64`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `calendar`
 - **Archetypes:** internal
 - **Provider interface:** `ICalendarSourceProvider`
@@ -4268,15 +4268,15 @@
 
 ### `remote` → `remote.*`
 
-- **Source:** `packages/types/src/capabilities/remote.cap.ts:145`
+- **Source:** `packages/types/src/capabilities/remote.cap.ts:146`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IRemoteProvider`
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
-| getConfig | `remote.getConfig` | query | admin | `{ deviceId: number }` | `{ layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> } }>; customButtons: ({ key: string; name: string })[]; sources?: ({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] } \| { id: string; name: string; kind: "ir"; transmitterId: number; payload: { kind: "raw"; timings: number[]; settings?: { carrierHz?: number; dutyCyclePercent?: number; repeat?: number; repeatDelayMs?: number } } \| { kind: "pronto"; code: string } })[] = []; stepDelayMs?: number = 500; power: { mode: "toggle" \| "discrete" }; refusedSources?: ({ index: number; id: string \| null; name: string \| null; reason: string })[] }` |
-| setConfig | `remote.setConfig` | mutation | admin | `{ deviceId: number; config: { layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> } }>; customButtons: ({ key: string; name: string })[]; sources?: ({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] } \| { id: string; name: string; kind: "ir"; transmitterId: number; payload: { kind: "raw"; timings: number[]; settings?: {…} } \| { kind: "pronto"; code: string } })[] = []; stepDelayMs?: number = 500; power: { mode: "toggle" \| "discrete" }; refusedSources?: ({ index: number; id: string \| null; name: string \| null; reason: string })[] } }` | `RemoteSetConfigResultSchema` |
+| getConfig | `remote.getConfig` | query | admin | `{ deviceId: number }` | `{ layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> } }>; customButtons: ({ key: string; name: string })[]; sources?: ({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] } \| { id: string; name: string; kind: "ir"; transmitterId?: number; payload: { kind: "raw"; timings: number[]; settings?: { carrierHz?: number; dutyCyclePercent?: number; repeat?: number; repeatDelayMs?: number } } \| { kind: "pronto"; code: string } })[] = []; stepDelayMs?: number = 500; refusedSources?: ({ index: number; id: string \| null; name: string \| null; reason: string })[] }` |
+| setConfig | `remote.setConfig` | mutation | admin | `{ deviceId: number; config: { layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> } }>; customButtons: ({ key: string; name: string })[]; sources?: ({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] } \| { id: string; name: string; kind: "ir"; transmitterId?: number; payload: { kind: "raw"; timings: number[]; settings?: {…} } \| { kind: "pronto"; code: string } })[] = []; stepDelayMs?: number = 500; refusedSources?: ({ index: number; id: string \| null; name: string \| null; reason: string })[] } }` | `RemoteSetConfigResultSchema` |
 | listCommands | `remote.listCommands` | query | protected | `{ deviceId: number }` | `RemoteCommandListSchema` |
 | sendCommand | `remote.sendCommand` | mutation | protected | `{ deviceId: number; role: string; repeat?: number = 1 }` | `RemoteSendResultSchema` |
 | getAssumedStatus | `remote.getAssumedStatus` | query | protected | `{ deviceId: number }` | `MediaPlayerStatusSchema \| null` |
@@ -4291,7 +4291,7 @@
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
-| listComponents | `remoteLayoutComponents.listComponents` | query | protected | `{}` | `({ id: string; name: string; nameI18n?: { en: string; it: string }; icon: string; category: "power" \| "navigation" \| "volume" \| "numbers" \| "media" \| "colour" \| "apps" \| "layout"; size: { rows: number; cols: number }; group: { frame: "none" \| "panel" \| "divider" \| "dpad" \| "rocker-v" \| "rocker-h" \| "keypad"; title?: string } \| null; buttons: ({ idSuffix: string; row: number; col: number; rowSpan: number; colSpan: number; role: string; icon?: string; label?: string; shape?: "rect" \| "rounded" \| "round" \| "pill"; tone?: "neutral" \| "accent" \| "danger" \| "red" \| "green" \| "yellow" \| "blue" })[] })[]` |
+| listComponents | `remoteLayoutComponents.listComponents` | query | protected | `{}` | `({ id: string; name: string; nameI18n?: { en: string; it: string }; icon: string; category: "power" \| "navigation" \| "volume" \| "numbers" \| "media" \| "colour" \| "apps" \| "layout"; size: { rows: number; cols: number }; group: { frame: "none" \| "panel" \| "divider" \| "dpad" \| "rocker-v" \| "rocker-h" \| "keypad"; title?: string } \| null; buttons: ({ idSuffix: string; row: number; col: number; rowSpan: number; colSpan: number; role: string; icon?: string; label?: string; shape?: "rect" \| "rounded" \| "round" \| "pill"; tone?: "neutral" \| "accent" \| "danger" \| "red" \| "green" \| "yellow" \| "blue"; showLegend?: boolean })[] })[]` |
 
 ### `running-state` → `runningState.*`
 

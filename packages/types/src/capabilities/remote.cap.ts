@@ -3,7 +3,7 @@ import { method, type CapabilityDefinition, type InferProvider } from './capabil
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { MediaPlayerStatusSchema } from './media-player.cap.js'
-import { RemoteConfigSchema, RemotePowerModeSchema } from '../remote/remote-config.js'
+import { RemoteConfigSchema } from '../remote/remote-config.js'
 import { RemoteRoleSchema } from '../remote/remote-roles.js'
 import { RemoteSourceSchema } from '../remote/remote-sources.js'
 
@@ -39,7 +39,6 @@ export type RemoteBoundCommand = z.infer<typeof RemoteBoundCommandSchema>
 
 export const RemoteCommandListSchema = z.object({
   layoutTemplateId: z.string().nullable(),
-  power: z.object({ mode: RemotePowerModeSchema }),
   /** Only the roles that are BOUND — the ones a press can reach. */
   commands: z.array(RemoteBoundCommandSchema),
   /** The sources the operator declared; empty when none (planning#460). */
@@ -53,6 +52,7 @@ export type RemoteCommandList = z.infer<typeof RemoteCommandListSchema>
  * `unbound-step`: a step of the source has no binding (named in `step`).
  * `press-timeout`: a press never finished within the bound, so it was given up
  * and the device's later presses are not held behind it.
+ * `no-transmitter`: an infrared source names no emitter and the remote has no default one.
  */
 export const REMOTE_REFUSAL_REASONS = [
   'no-remote',
@@ -62,6 +62,7 @@ export const REMOTE_REFUSAL_REASONS = [
   'unbound-step',
   'undeclared-channel',
   'press-timeout',
+  'no-transmitter',
 ] as const
 export const RemoteRefusalReasonSchema = z.enum(REMOTE_REFUSAL_REASONS)
 export type RemoteRefusalReason = z.infer<typeof RemoteRefusalReasonSchema>

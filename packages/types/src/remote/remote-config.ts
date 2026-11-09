@@ -50,10 +50,6 @@ export const RemoteCustomButtonSchema = z.object({
 })
 export type RemoteCustomButton = z.infer<typeof RemoteCustomButtonSchema>
 
-export const REMOTE_POWER_MODES = ['toggle', 'discrete'] as const
-export const RemotePowerModeSchema = z.enum(REMOTE_POWER_MODES)
-export type RemotePowerMode = z.infer<typeof RemotePowerModeSchema>
-
 export const MAX_REMOTE_BINDINGS = 200
 export const MAX_REMOTE_CUSTOM_BUTTONS = 100
 
@@ -144,7 +140,6 @@ export const RemoteConfigSchema = z
       .min(REMOTE_STEP_DELAY_MIN_MS)
       .max(REMOTE_STEP_DELAY_MAX_MS)
       .default(REMOTE_STEP_DELAY_DEFAULT_MS),
-    power: z.object({ mode: RemotePowerModeSchema }),
     /**
      * READ-ONLY: sources a stored configuration carries that no longer parse,
      * left out of `sources` with the reason (`readStoredRemoteConfig`). Never
@@ -256,7 +251,6 @@ export const EMPTY_REMOTE_CONFIG: RemoteConfig = {
   customButtons: [],
   sources: [],
   stepDelayMs: REMOTE_STEP_DELAY_DEFAULT_MS,
-  power: { mode: 'discrete' },
 }
 
 /**
@@ -330,6 +324,11 @@ export const RemoteLayoutButtonSchema = z.object({
   /** Absent = the plain rendering every layout had before shapes existed. */
   shape: RemoteButtonShapeSchema.optional(),
   tone: RemoteButtonToneSchema.optional(),
+  /**
+   * Draw the label on a colour-toned key. A colour key shows only its colour
+   * by default; a remote whose plastic prints letters on them (A B C D) sets it.
+   */
+  showLegend: z.boolean().optional(),
   /** The group this button belongs to; it must lie inside that group's rectangle. */
   groupId: z.string().min(1).max(40).optional(),
 })

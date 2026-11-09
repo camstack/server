@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A calendar names the integration-instances record that owns it (calendar-source CalendarInfo.instanceId, passed through the calendars listing)
+- Remote: an infrared source may leave its emitter out (the remote's default one is used), the power mode setting is gone, and the colour keys have one set of roles
 
 ## [1.2.531] - 2026-11-08
 

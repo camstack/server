@@ -59,7 +59,6 @@ describe('flipperIrDraft', () => {
   const draft = flipperIrDraft(parseFlipperIr(text), { transmitterDeviceId: 11 })
 
   it('binds known names to roles through the transmitter', () => {
-    expect(draft.power.mode).toBe('toggle')
     expect(Object.keys(draft.bindings).sort()).toEqual([
       'custom:netflix',
       'digit_3',
@@ -89,7 +88,6 @@ describe('flipperIrDraft', () => {
       parseFlipperIr(HEAD + sam('Power_On', '02') + sam('Power_Off', '03')),
       { transmitterDeviceId: 1 },
     )
-    expect(d.power.mode).toBe('discrete')
     expect(Object.keys(d.bindings).sort()).toEqual(['power_off', 'power_on'])
   })
 })

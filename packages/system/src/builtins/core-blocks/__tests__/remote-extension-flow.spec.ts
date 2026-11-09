@@ -133,7 +133,6 @@ async function world(bound: Partial<RemoteConfig>): Promise<World> {
       customButtons: [],
       sources: [],
       stepDelayMs: 500,
-      power: { mode: 'toggle' },
       ...bound,
     },
   })

@@ -207,6 +207,6 @@ describe('reading a stored remote with a bad source (planning#464)', () => {
   })
 
   it('another defect still fails the whole read', () => {
-    expect(readStoredRemoteConfig({ ...stored, power: 3 }).success).toBe(false)
+    expect(readStoredRemoteConfig({ ...stored, bindings: 3 }).success).toBe(false)
   })
 })

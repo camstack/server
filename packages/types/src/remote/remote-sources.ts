@@ -55,8 +55,12 @@ export type RemoteSequenceSource = z.infer<typeof RemoteSequenceSourceSchema>
 export const RemoteIrSourceSchema = z.object({
   ...sourceBase,
   kind: z.literal('ir'),
-  /** The `ir-transmitter` device the code is sent through. */
-  transmitterId: z.number().int().nonnegative(),
+  /**
+   * The `ir-transmitter` device the code is sent through. Absent = the remote's
+   * `defaultTransmitterId` at run time (a source stored before this field was
+   * optional keeps the emitter it names).
+   */
+  transmitterId: z.number().int().nonnegative().optional(),
   /** The code itself; whether a transmitter could send it is `irSourceProblem`. */
   payload: IrPayloadSchema,
 })

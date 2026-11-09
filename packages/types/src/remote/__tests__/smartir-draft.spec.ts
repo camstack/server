@@ -63,12 +63,10 @@ describe('smartIrDraft', () => {
 
   it('identical on and off codes are ONE power toggle, different codes a discrete pair', () => {
     const toggle = draftOf(fixture())
-    expect(toggle.power.mode).toBe('toggle')
     expect(toggle.bindings['power']).toBeDefined()
     expect(toggle.bindings['power_on']).toBeUndefined()
 
     const discrete = draftOf(fixture({ on: JSON.stringify(burst([1, 1, 1, 1])) }))
-    expect(discrete.power.mode).toBe('discrete')
     expect(discrete.bindings['power_on']).toBeDefined()
     expect(discrete.bindings['power_off']).toBeDefined()
     expect(discrete.bindings['power']).toBeUndefined()
@@ -120,7 +118,6 @@ describe('smartIrDraft', () => {
       defaultTransmitterId: null,
       bindings: draft.bindings,
       customButtons: draft.customButtons,
-      power: draft.power,
     })
     expect(parsed.success).toBe(true)
   })
