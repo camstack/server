@@ -152,11 +152,6 @@ const UpdateIntegrationInputSchema = z.object({
   info: z.record(z.string(), z.unknown()).optional(),
 })
 
-const DeleteIntegrationResultSchema = z.object({
-  success: z.boolean(),
-  deletedId: z.string(),
-})
-
 export const integrationsCapability = {
   name: 'integrations',
   scope: 'system',
@@ -166,10 +161,6 @@ export const integrationsCapability = {
     get: method(z.object({ id: z.string() }), IntegrationWithStateSchema),
     getByAddonId: method(z.object({ addonId: z.string() }), IntegrationLiteSchema.nullable()),
     update: method(UpdateIntegrationInputSchema, IntegrationLiteSchema, {
-      kind: 'mutation',
-      auth: 'admin',
-    }),
-    delete: method(z.object({ id: z.string() }), DeleteIntegrationResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
@@ -185,7 +176,6 @@ export type IntegrationTestConnectionResult = z.infer<typeof TestConnectionResul
 
 export {
   AvailableIntegrationTypeSchema,
-  DeleteIntegrationResultSchema,
   IntegrationLiteSchema,
   IntegrationWithStateSchema,
   TestConnectionResultSchema,

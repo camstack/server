@@ -8335,19 +8335,6 @@ export function createCapRouter_integrations(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.update(methodInput as any)
       }),
-    delete: adminProcedure
-      .input(integrationsCapability.methods.delete.input.loose())
-      .output(integrationsCapability.methods.delete.output)
-      .mutation(async ({ input, ctx }) => {
-        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider('integrations', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.delete(methodInput as any)
-      }),
     getAvailableTypes: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(integrationsCapability.methods.getAvailableTypes.output)

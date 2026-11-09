@@ -44,9 +44,7 @@ function harness(rows: readonly Integration[], instancesOf: (addonId: string) =>
   }
   const provider = buildIntegrationsProvider(
     addonReg as never,
-    { emit } as never,
     { createLogger: vi.fn(() => log) } as never,
-    null,
   )
   return { provider, registry, log, emit }
 }

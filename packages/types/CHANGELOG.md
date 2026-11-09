@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integrations: update no longer accepts enabled for any row; a row whose addon did not answer is marked switchUnknown
 - A user's own notification targets are now integration instances scoped to the signed-in user; capability methods can declare caller-scoped access
 - A user's writes to their own notification targets are audit-logged
+- integrations.delete is gone: delete an integration through integrationInstances.deleteInstance
 
 ## [1.2.531] - 2026-11-08
 

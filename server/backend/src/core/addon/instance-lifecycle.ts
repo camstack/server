@@ -12,9 +12,8 @@
  * There is ONE create door: the registered `integration-instances` provider
  * ({@link withInstanceLifecycle}), which calls {@link createRegisteredInstance}. A seed (an
  * addon making its own fixed or migrated instance) goes through the same door and is accepted
- * only from the addon it names. Delete has two callers of {@link deleteRegisteredInstance}: the
- * provider's `deleteInstance` and `integrations.delete`, which stays for registry rows no addon
- * provides any more (an orphan).
+ * only from the addon it names. Delete has one caller of {@link deleteRegisteredInstance}: the
+ * provider's `deleteInstance` (`integrations` has no delete method).
  */
 import { IntegrationRegistry } from '@camstack/server/system'
 import type {

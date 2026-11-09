@@ -2510,7 +2510,6 @@ export {
 } from './image-settings.cap.js'
 export {
   AvailableIntegrationTypeSchema,
-  DeleteIntegrationResultSchema,
   type IIntegrationsProvider,
   IntegrationLiteSchema,
   type IntegrationTestConnectionResult,

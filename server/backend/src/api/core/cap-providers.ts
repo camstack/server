@@ -65,13 +65,8 @@ import type {
 import { errMsg } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
 import {
-  deleteRegisteredInstance,
-  type DeviceCascadePort,
-  type InstanceLifecycleDeps,
   isFixedBuiltin,
-  rawInstancesProvider,
 } from '../../core/addon/instance-lifecycle'
-import { holdersOf } from '../../core/addon/instance-links.service'
 import type { AddonPackageService } from '../../core/addon/addon-package.service'
 import { SYSTEM_PACKAGE } from '../../core/addon/addon-package.service.js'
 import type { AddonRegistryService } from '../../core/addon/addon-registry.service'
@@ -85,7 +80,6 @@ import {
 import { isAgentTrackedPackage } from '../../core/agent/agent-desired-set'
 import type { AgentRegistryService } from '../../core/agent/agent-registry.service'
 import type { ConfigService } from '../../core/config/config.service'
-import type { EventBusService } from '../../core/events/event-bus.service'
 import type { FeatureService } from '../../core/feature/feature.service'
 import { getLifecycleRunner } from '../../core/lifecycle/lifecycle-runner.singleton.js'
 import type { LoggingService } from '../../core/logging/logging.service'
@@ -1139,21 +1133,9 @@ async function projectSwitches(
 
 export function buildIntegrationsProvider(
   ar: AddonRegistryService,
-  eb: EventBusService,
   loggingService: LoggingService,
-  capabilityRegistry: CapabilityRegistry | null,
 ): IIntegrationsProvider {
   const logger = loggingService.createLogger('integrations')
-  const lifecycleDeps: InstanceLifecycleDeps = {
-    logger,
-    integrations: () => requireIntegrationRegistry(ar),
-    deviceManager: () =>
-      capabilityRegistry?.getSingleton<DeviceCascadePort>('device-manager') ?? null,
-    eventBus: eb,
-    providerFor: (addonId) => getInstancesProvider(ar, addonId),
-    holders: () => holdersOf(ar.getCapabilityRegistry()),
-    manifestRole: () => undefined,
-  }
   const withProcessState = (i: Integration): IntegrationWithProcessState => ({
     ...i,
     processState:
@@ -1244,32 +1226,6 @@ export function buildIntegrationsProvider(
         })
       }
       return result
-    },
-    delete: async (input) => {
-      const reg = requireIntegrationRegistry(ar)
-      logger.info('request', {
-        tags: { integrationId: input.id },
-        meta: { phase: 'delete' },
-      })
-
-      const integration = await reg.getIntegration(input.id)
-      if (!integration) {
-        logger.warn('not found', {
-          tags: { integrationId: input.id },
-          meta: { phase: 'delete' },
-        })
-        throw new Error(`Integration "${input.id}" not found`)
-      }
-      // The hub half is shared with the registered `integration-instances` provider
-      // (`instance-lifecycle.ts`): a fixed builtin and a linked instance are refused BEFORE the
-      // first mutation, then the devices, the record, the row and the event.
-      const instances = getInstancesProvider(ar, integration.addonId)
-      await deleteRegisteredInstance(
-        lifecycleDeps,
-        instances === null ? null : rawInstancesProvider(instances),
-        integration,
-      )
-      return { success: true, deletedId: input.id }
     },
     getAvailableTypes: async () => {
       const reg = requireIntegrationRegistry(ar)

@@ -62,10 +62,6 @@ function makeAddonRegistry(addons: FakeAddonRow[] = []) {
   }
 }
 
-function makeEventBus() {
-  return { emit: vi.fn() }
-}
-
 function makeLogger() {
   return {
     info: vi.fn(),
@@ -97,9 +93,7 @@ describe('getAvailableTypes — supportsLocationImport flag', () => {
     const ar = makeAddonRegistry([addon])
     const provider = buildIntegrationsProvider(
       ar as never,
-      makeEventBus() as never,
       makeLoggingService() as never,
-      null,
     )
     const types = await provider.getAvailableTypes()
 
@@ -125,9 +119,7 @@ describe('getAvailableTypes — supportsLocationImport flag', () => {
     const ar = makeAddonRegistry([addon])
     const provider = buildIntegrationsProvider(
       ar as never,
-      makeEventBus() as never,
       makeLoggingService() as never,
-      null,
     )
     const types = await provider.getAvailableTypes()
 
@@ -154,9 +146,7 @@ describe('getAvailableTypes — supportsLocationImport flag', () => {
     const ar = makeAddonRegistry([addon])
     const provider = buildIntegrationsProvider(
       ar as never,
-      makeEventBus() as never,
       makeLoggingService() as never,
-      null,
     )
     const types = await provider.getAvailableTypes()
 
@@ -188,9 +178,7 @@ describe('getAvailableTypes — supportsLocationImport flag', () => {
     const ar = makeAddonRegistry([addon])
     const provider = buildIntegrationsProvider(
       ar as never,
-      makeEventBus() as never,
       makeLoggingService() as never,
-      null,
     )
     const types = await provider.getAvailableTypes()
 

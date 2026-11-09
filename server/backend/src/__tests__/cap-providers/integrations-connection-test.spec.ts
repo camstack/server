@@ -116,9 +116,7 @@ function makeHarness(opts: HarnessOptions = {}) {
   }
   const provider = buildIntegrationsProvider(
     addonReg as never,
-    { emit: vi.fn() } as never,
     { createLogger: vi.fn(() => log) } as never,
-    null,
   )
   const create = (input: SeedCreateInput) =>
     seedCreate(

@@ -353,9 +353,7 @@ function buildServerProviders(
     integrations: wrap(() =>
       buildIntegrationsProvider(
         services.addonRegistry,
-        services.eventBus,
         services.loggingService,
-        services.capabilityRegistry,
       ),
     ),
     nodes: wrap(() =>

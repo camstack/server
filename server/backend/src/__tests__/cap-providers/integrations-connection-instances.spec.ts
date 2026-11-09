@@ -119,9 +119,7 @@ function harness(
   }
   const provider = buildIntegrationsProvider(
     addonReg as never,
-    { emit: vi.fn() } as never,
     { createLogger: vi.fn(() => log) } as never,
-    null,
   )
   const create = (input: SeedCreateInput) => seedCreate({ registry, log }, instances, input)
   return { provider, registry, instances, restartAddon, log, addonReg, create }
@@ -264,14 +262,6 @@ describe('integrations over an integration-instances provider', () => {
       }),
     ).rejects.toThrow('bad credentials')
     expect(h.registry.createIntegration).not.toHaveBeenCalled()
-  })
-
-  it('delete removes the record, then the registry row', async () => {
-    const h = harness()
-    await h.create({ addonId: ADDON_ID, name: 'Loki' })
-    await h.provider.delete({ id: 'int_0001' })
-    expect(h.instances.deleteInstance).toHaveBeenCalledWith({ id: 'int_0001' })
-    expect(h.registry.deleteIntegration).toHaveBeenCalledWith('int_0001')
   })
 })
 

@@ -54,9 +54,7 @@ async function listedWith(entries: readonly ManifestEntry[], rows: readonly Inte
   const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
   const provider = buildIntegrationsProvider(
     addonReg as never,
-    { emit: vi.fn() } as never,
     { createLogger: vi.fn(() => log) } as never,
-    null,
   )
   return (await provider.list()).map((i) => i.id)
 }

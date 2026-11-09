@@ -305,6 +305,16 @@ describe('deleteInstance of an integration', () => {
     )
   })
 
+  it('does not abort the delete when the device cascade throws: the record, the row and the event still follow', async () => {
+    kit.removeByIntegration.mockRejectedValueOnce(new Error('device-manager transient error'))
+    await kit.wrapped.deleteInstance({ id })
+    expect(await kit.registry.getIntegration(id)).toBeNull()
+    expect(kit.stored.has(id)).toBe(false)
+    expect(kit.emit).toHaveBeenCalledWith(
+      expect.objectContaining({ category: EventCategory.IntegrationDeleted }),
+    )
+  })
+
   it('refuses a fixed builtin before touching any device', async () => {
     await kit.registry.updateIntegration(id, { info: { fixed: true } })
     await expect(kit.wrapped.deleteInstance({ id })).rejects.toThrow(/is fixed/)
