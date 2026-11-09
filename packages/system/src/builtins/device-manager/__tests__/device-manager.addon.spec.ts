@@ -619,7 +619,7 @@ describe('DeviceManagerAddon', () => {
         type: 'camera',
         name: 'X',
         parentDeviceId: null,
-        features: ['motion-trigger'],
+        features: ['battery-operated'],
         config: {},
       }
       await provider.registerDevice(input)
@@ -647,7 +647,9 @@ describe('DeviceManagerAddon', () => {
         type: 'camera',
         name: 'X',
         parentDeviceId: null,
-        features: ['motion-trigger', 'pan-tilt-zoom'],
+        // Driver-reported features only: a kernel-derived one (ptz, motion-trigger…) is
+        // the bindings' to change, so a re-register claiming it moves nothing (#459).
+        features: ['battery-operated', 'switch'],
         config: {},
       })
       const fps = provisionedFingerprints(emitted)
@@ -3546,6 +3548,7 @@ describe('DeviceManagerAddon', () => {
         getNativeCapsForDevice: (_id: number) =>
           ['vacuum-control', 'device-ops', 'snapshot'] as string[],
         getNativeAddonId: (_cap: string, _id: number) => 'ha',
+        getNativeProvider: () => null,
         getCapsWithDefaultWrapper: () => [] as string[],
         // `getBindings` step 0 asks this for the COLLECTION caps a device is
         // bound to. A stub that omits it reads as "no capabilities declared",
@@ -3623,6 +3626,7 @@ describe('DeviceManagerAddon', () => {
       const registry = {
         getNativeCapsForDevice: (_id: number) => ['consumables'] as string[],
         getNativeAddonId: (_cap: string, _id: number) => 'ha',
+        getNativeProvider: () => null,
         getCapsWithDefaultWrapper: () => [] as string[],
         // `getBindings` step 0 asks this for the COLLECTION caps a device is
         // bound to. A stub that omits it reads as "no capabilities declared",
@@ -3691,6 +3695,7 @@ describe('DeviceManagerAddon', () => {
       const registry = {
         getNativeCapsForDevice: (_id: number) => [] as string[],
         getNativeAddonId: (_cap: string, _id: number) => null,
+        getNativeProvider: () => null,
         getCapsWithDefaultWrapper: () => [] as string[],
         // `getBindings` step 0 asks this for the COLLECTION caps a device is
         // bound to. A stub that omits it reads as "no capabilities declared",
