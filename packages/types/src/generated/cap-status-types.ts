@@ -38,6 +38,7 @@ import type { GasStatusSchema } from '../capabilities/gas.cap.js'
 import type { groupActiveCapability } from '../capabilities/group-active.cap.js'
 import type { groupCommandsCapability } from '../capabilities/group-commands.cap.js'
 import type { groupStatusCapability } from '../capabilities/group-status.cap.js'
+import type { heatPumpStatusCapability } from '../capabilities/heat-pump-status.cap.js'
 import type { HeatingValveStatusSchema } from '../capabilities/heating-valve.cap.js'
 import type { HumidifierStatusSchema } from '../capabilities/humidifier.cap.js'
 import type { HumiditySensorStatusSchema } from '../capabilities/humidity-sensor.cap.js'
@@ -128,6 +129,7 @@ export type CapStatusTypeMap = {
   readonly 'group-active': z.infer<(typeof groupActiveCapability)['status']['schema']>
   readonly 'group-commands': z.infer<(typeof groupCommandsCapability)['status']['schema']>
   readonly 'group-status': z.infer<(typeof groupStatusCapability)['status']['schema']>
+  readonly 'heat-pump-status': z.infer<(typeof heatPumpStatusCapability)['status']['schema']>
   readonly 'heating-valve': z.infer<typeof HeatingValveStatusSchema>
   readonly 'humidifier': z.infer<typeof HumidifierStatusSchema>
   readonly 'humidity-sensor': z.infer<typeof HumiditySensorStatusSchema>
@@ -222,6 +224,7 @@ export const CAP_NAMES_WITH_STATUS = [
   'group-active',
   'group-commands',
   'group-status',
+  'heat-pump-status',
   'heating-valve',
   'humidifier',
   'humidity-sensor',

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device detail hero, History and runs are one props-only module (DeviceDetailModule) that the admin page mounts directly
 - Device hero card: countdown with Stop and run again for a timed run, speed dial for a fan, end clock time on appliances
 - Device hero: an AC no longer repeats its power in a second row, and a device with only tiles or facts is drawn by the hero
+- The heat pump card lists every circuit with its own label, a power row with the instantaneous COP, and a System group of mode selectors
 
 ## [1.2.627] - 2026-11-09
 

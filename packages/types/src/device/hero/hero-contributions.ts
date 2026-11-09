@@ -54,6 +54,7 @@ import { ACTUATORS_FAMILY_CONTRIBUTIONS } from './hero-contributions-actuators.j
 import { GROUPS_FAMILY_CONTRIBUTIONS } from './hero-contributions-groups.js'
 import { SENSORS_FAMILY_CONTRIBUTIONS } from './hero-contributions-sensors.js'
 import { CLIMATE_FAMILY_CONTRIBUTIONS } from './hero-contributions-climate.js'
+import { HEAT_PUMP_FAMILY_CONTRIBUTIONS } from './hero-contributions-heat-pump.js'
 import {
   deriveMediaPlayerView,
   projectedPositionMs,
@@ -983,4 +984,5 @@ export const HERO_CAP_CONTRIBUTIONS: readonly HeroContribution[] = [
   ...Object.values(ACTUATORS_FAMILY_CONTRIBUTIONS),
   ...Object.values(SENSORS_FAMILY_CONTRIBUTIONS),
   ...Object.values(CLIMATE_FAMILY_CONTRIBUTIONS),
+  ...Object.values(HEAT_PUMP_FAMILY_CONTRIBUTIONS),
 ]

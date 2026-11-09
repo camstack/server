@@ -319,6 +319,8 @@ export const CONTROL_FILLS: Record<DeviceType, boolean> = {
   // ── natural width: readouts ────────────────────────────────────────
   // Water heater inline = current→target° readout + mode hint (natural width).
   [DeviceType.WaterHeater]: false,
+  // Heat pump inline = no inline control yet; the hero carries the modes (D1026).
+  [DeviceType.HeatPump]: false,
   [DeviceType.Sensor]: false,
   [DeviceType.Presence]: false,
   // ── natural width: readout (event stream, no interactive control) ──────

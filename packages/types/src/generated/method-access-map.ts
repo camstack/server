@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1470 method paths across 203 capabilities.
+ * Coverage: 1485 method paths across 205 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -521,6 +521,21 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'groupCommands.getStatus': { capName: "group-commands", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'groupStatus.getStatus': { capName: "group-status", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'heatingValve.getStatus': { capName: "heating-valve", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'heatPumpControl.setAdditionalHeaterMode': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setAwayMode': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setCircuitComfortSetpoint': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setCircuitEcoSetpoint': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setCircuitHeatCoolMode': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setCircuitMaxFlowTemp': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setCircuitOperationMode': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setCircuitSummerWinter': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setDhwChargeDuration': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setDhwOperationMode': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setDhwTemperatureLevel': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setHolidayMode': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.setSilentMode': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpControl.startExtraHotWater': { capName: "heat-pump-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'heatPumpStatus.getStatus': { capName: "heat-pump-status", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'heroLayout.getHeroModel': { capName: "hero-layout", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
   'heroLayout.getLayout': { capName: "hero-layout", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
   'heroLayout.getRowModels': { capName: "hero-layout", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
@@ -1579,6 +1594,8 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "group-active",
   "group-commands",
   "group-status",
+  "heat-pump-control",
+  "heat-pump-status",
   "heating-valve",
   "hero-layout",
   "humidifier",
@@ -1747,6 +1764,8 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "group-active",
   "group-commands",
   "group-status",
+  "heat-pump-control",
+  "heat-pump-status",
   "heating-valve",
   "humidifier",
   "humidity-sensor",

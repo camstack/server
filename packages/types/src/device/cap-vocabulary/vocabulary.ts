@@ -12,6 +12,7 @@
 import { ACTUATOR_CAP_VOCABULARY } from './entries/actuators.js'
 import { APPLIANCE_CAP_VOCABULARY } from './entries/appliances.js'
 import { CAMERA_CAP_VOCABULARY } from './entries/camera.js'
+import { HEAT_PUMP_CAP_VOCABULARY } from './entries/heat-pump.js'
 import { SENSOR_CAP_VOCABULARY } from './entries/sensors.js'
 import { SYSTEM_CAP_VOCABULARY } from './entries/system.js'
 import type { CapVocabularyMap, LooseCapVocabularyEntry } from './types.js'
@@ -21,6 +22,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
   ...ACTUATOR_CAP_VOCABULARY,
   ...APPLIANCE_CAP_VOCABULARY,
   ...CAMERA_CAP_VOCABULARY,
+  ...HEAT_PUMP_CAP_VOCABULARY,
   ...SENSOR_CAP_VOCABULARY,
   ...SYSTEM_CAP_VOCABULARY,
 }

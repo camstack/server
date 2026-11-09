@@ -20,13 +20,14 @@
  */
 import { z } from 'zod'
 import { TimedRunQuickRunSchema } from '../../capabilities/timed-run.cap.js'
-import { IconKeySchema } from '../icon-catalog.js'
+import { IconKeySchema, type IconKey } from '../icon-catalog.js'
 import {
   HERO_ANIMATIONS,
   HERO_BACKGROUNDS,
   HeroStateSchema,
   HeroToneSchema,
   StateLookSchema,
+  type HeroTone,
 } from './hero-state.js'
 import { HeroSceneSchema } from './hero-scene.js'
 import { HeroTextSchema, heroText, type HeroText } from './hero-text.js'
@@ -68,6 +69,9 @@ export const HERO_ROW_IDS = [
   'setpoint',
   'channel',
   'control',
+  'circuit',
+  'heat-pump-power',
+  'system-mode',
 ] as const
 export const HeroRowIdSchema = z.enum(HERO_ROW_IDS)
 export type HeroRowId = z.infer<typeof HeroRowIdSchema>
@@ -112,6 +116,9 @@ export const HERO_ROW_LABELS: Readonly<Record<HeroRowId, HeroText>> = {
   setpoint: heroText('Setpoint', 'Temperatura'),
   channel: heroText('Channel', 'Canale'),
   control: heroText('Control', 'Controllo'),
+  circuit: heroText('Circuit', 'Circuito'),
+  'heat-pump-power': heroText('Power', 'Potenza'),
+  'system-mode': heroText('Mode', 'Modalità'),
 }
 
 /** Argument values an action carries; the device id is added by the renderer. */
@@ -204,8 +211,27 @@ export const HeroControlSchema = z.discriminatedUnion('kind', [
 ])
 export type HeroControl = z.infer<typeof HeroControlSchema>
 
+/** One value drawn as a pill: an icon, the words, a tone. `null` icon = text only. */
+export interface HeroPill {
+  readonly icon: IconKey | null
+  readonly text: HeroText
+  readonly tone: HeroTone
+}
+/** Declared by its interface: a `z.infer` of one more icon union pushes the cap's inferred type past what the compiler can print. */
+export const HeroPillSchema: z.ZodType<HeroPill> = z.object({
+  icon: IconKeySchema.nullable(),
+  text: HeroTextSchema,
+  tone: HeroToneSchema,
+})
+
 export const HeroRowSchema = z.object({
   id: HeroRowIdSchema,
+  /** The row's own name when the kind's label would not tell rows of one kind apart (a circuit's label). */
+  label: HeroTextSchema.optional(),
+  /** A group header drawn above the row when it differs from the previous row's ("System"). */
+  group: HeroTextSchema.optional(),
+  /** Values drawn as pills across the row (a heat pump's powers). */
+  pills: z.array(HeroPillSchema).optional(),
   icon: IconKeySchema,
   /** The row's status, in words. `null` = nothing to say. */
   status: HeroTextSchema.nullable(),

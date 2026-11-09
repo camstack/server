@@ -9059,7 +9059,8 @@
         "dryer": "Asciugatrice",
         "petFountain": "Fontana per animali",
         "gateway": "Gateway",
-        "heater": "Stufa"
+        "heater": "Stufa",
+        "heatPump": "Pompa di calore"
       },
       "role": {
         "siren": "Sirena",

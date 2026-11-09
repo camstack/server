@@ -242,8 +242,8 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
 
   const allRows = fragments.flatMap((f) => f.rows ?? [])
   const rows: HeroRow[] = resolveHeroLayout(device.type).rows.flatMap((id) => {
-    const row = allRows.find((r) => r.id === id)
-    return row === undefined ? [] : [row]
+    // A kind may repeat (one row per circuit of a heat pump), in the order the cap listed them.
+    return allRows.filter((r) => r.id === id)
   })
 
   const ownPower = resolveOwnPower(

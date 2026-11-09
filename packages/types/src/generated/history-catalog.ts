@@ -10,7 +10,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 43 caps with series (79 series), 37 caps answered `'none'`.
+ * 44 caps with series (87 series), 37 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -82,6 +82,16 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
   },
   'gas': {
     'detected': { kind: 'boolean' },
+  },
+  'heat-pump-status': {
+    'power.thermalW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Thermal power' },
+    'power.electricalW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Electrical power' },
+    'power.compressorPct': { kind: 'gauge', unit: '%', deadband: 2, displayName: 'Compressor' },
+    'temperatures.supply': { kind: 'gauge', unit: '°C', deadband: 0.5, displayName: 'Supply' },
+    'temperatures.return': { kind: 'gauge', unit: '°C', deadband: 0.5, displayName: 'Return' },
+    'temperatures.outdoor': { kind: 'gauge', unit: '°C', deadband: 0.5, displayName: 'Outdoor' },
+    'energy.thermalKwh': { kind: 'counter', unit: 'kWh', displayName: 'Thermal energy' },
+    'energy.electricalKwh': { kind: 'counter', unit: 'kWh', displayName: 'Electrical energy' },
   },
   'heating-valve': {
     'position': { kind: 'gauge', unit: '%', deadband: 1 },
@@ -183,7 +193,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
 
 /**
  * Keyed-array series (D917), projected from every `history.items` block:
- * 1 caps (3 item fields). The item key is the series SCOPE;
+ * 2 caps (6 item fields). The item key is the series SCOPE;
  * the series key is `cap:<capName>.<path>[].<field>`.
  */
 export const HISTORY_ITEM_CATALOG: Readonly<Record<string, CapabilityHistoryItems>> = {
@@ -195,6 +205,16 @@ export const HISTORY_ITEM_CATALOG: Readonly<Record<string, CapabilityHistoryItem
       'level': { kind: 'gauge', unit: '%', deadband: 2, displayName: 'Level' },
       'status': { kind: 'enum', displayName: 'Status', values: ['ok', 'low', 'empty', 'full', 'replace'] },
       'remaining.value': { kind: 'gauge', deadband: 1, displayName: 'Remaining' },
+    },
+  },
+  'heat-pump-status': {
+    path: 'circuits',
+    key: 'id',
+    label: 'label',
+    fields: {
+      'currentTemp': { kind: 'gauge', unit: '°C', deadband: 0.5, displayName: 'Temperature' },
+      'targetTemp': { kind: 'gauge', unit: '°C', minIntervalMs: 0, displayName: 'Setpoint' },
+      'mode': { kind: 'enum', displayName: 'Mode' },
     },
   },
 }

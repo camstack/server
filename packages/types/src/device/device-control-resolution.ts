@@ -81,6 +81,7 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   [DeviceType.Valve]: 'valve',
   [DeviceType.Humidifier]: 'humidifier',
   [DeviceType.WaterHeater]: 'water-heater',
+  [DeviceType.HeatPump]: 'dummy',
   [DeviceType.Camera]: 'dummy',
   [DeviceType.Hub]: 'dummy',
   [DeviceType.Switch]: 'switch',

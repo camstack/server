@@ -2467,6 +2467,34 @@ export {
   type IGroupStatusProvider,
 } from './group-status.cap.js'
 export {
+  type HeatPumpCircuit,
+  type HeatPumpCircuitKind,
+  type HeatPumpEnergy,
+  type HeatPumpOptionSetting,
+  type HeatPumpPower,
+  type HeatPumpRangeSetting,
+  type HeatPumpStatus,
+  type HeatPumpSystem,
+  type HeatPumpTemperatures,
+  type IHeatPumpStatusProvider,
+  HEAT_PUMP_CIRCUIT_KINDS,
+  HeatPumpCircuitKindSchema,
+  HeatPumpCircuitSchema,
+  HeatPumpEnergySchema,
+  HeatPumpOptionSettingSchema,
+  HeatPumpPowerSchema,
+  HeatPumpRangeSettingSchema,
+  HeatPumpStatusSchema,
+  HeatPumpSystemSchema,
+  HeatPumpTemperaturesSchema,
+  heatPumpInstantCop,
+  heatPumpStatusCapability,
+} from './heat-pump-status.cap.js'
+export {
+  type IHeatPumpControlProvider,
+  heatPumpControlCapability,
+} from './heat-pump-control.cap.js'
+export {
   type HeatingValveStatus,
   HeatingValveStatusSchema,
   heatingValveCapability,
@@ -3489,6 +3517,8 @@ import type { groupActiveCapability } from './group-active.cap.js'
 import type { groupCommandsCapability } from './group-commands.cap.js'
 import type { groupStatusCapability } from './group-status.cap.js'
 import type { heatingValveCapability } from './heating-valve.cap.js'
+import type { heatPumpStatusCapability } from './heat-pump-status.cap.js'
+import type { heatPumpControlCapability } from './heat-pump-control.cap.js'
 import type { humidifierCapability } from './humidifier.cap.js'
 import type { humiditySensorCapability } from './humidity-sensor.cap.js'
 import type { imageCapability } from './image.cap.js'
@@ -3738,6 +3768,8 @@ type AnyCapability =
   | typeof binaryCapability
   | typeof temperatureSensorCapability
   | typeof heatingValveCapability
+  | typeof heatPumpStatusCapability
+  | typeof heatPumpControlCapability
   | typeof humiditySensorCapability
   | typeof ambientLightSensorCapability
   | typeof pressureSensorCapability

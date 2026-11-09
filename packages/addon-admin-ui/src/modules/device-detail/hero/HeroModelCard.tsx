@@ -26,7 +26,7 @@ import {
   useDisplayIconResolver,
 } from '@camstack/ui-library'
 import { Minus, Plus } from 'lucide-react'
-import { type ReactNode, useEffect, useState } from 'react'
+import { Fragment, type ReactNode, useEffect, useState } from 'react'
 import {
   badgeVariantOf,
   clockText,
@@ -388,6 +388,53 @@ function ControlView({
   }
 }
 
+/** Rows whose status (the circuit's temperatures) stays beside their selector instead of giving way to it. */
+const STATUS_BESIDE_CONTROLS: ReadonlySet<HeroRow['id']> = new Set(['circuit'])
+
+function GroupHeader({ text }: { readonly text: string }): ReactNode {
+  return (
+    <div
+      data-testid="hero-row-group"
+      className="px-1 pt-1 text-xs font-semibold uppercase tracking-wide text-foreground-muted"
+    >
+      {text}
+    </div>
+  )
+}
+
+function PillsRow({
+  row,
+  host,
+}: {
+  readonly row: HeroRow
+  readonly host: HeroCardHost
+}): ReactNode {
+  const label = pickText(row.label ?? HERO_ROW_LABELS[row.id], host.lang)
+  return (
+    <div
+      data-testid={`hero-row-${row.id}`}
+      className="flex flex-col gap-1.5 rounded-lg border border-border-subtle bg-surface px-3 py-2"
+    >
+      <span className="text-xs font-semibold uppercase tracking-wide text-foreground-muted">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-1.5">
+        {(row.pills ?? []).map((pill, i) => (
+          <Badge
+            key={i}
+            variant={badgeVariantOf(pill.tone)}
+            style={pill.tone === 'muted' ? 'outline' : 'solid'} // ui-check-ok: Badge's own fill-style prop, not CSS
+            size="md"
+            {...(pill.icon === null ? {} : { icon: <IconGlyph name={pill.icon} /> })}
+          >
+            {pickText(pill.text, host.lang)}
+          </Badge>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function ModelRow({
   row,
   host,
@@ -397,7 +444,8 @@ function ModelRow({
   readonly host: HeroCardHost
   readonly tone: Parameters<typeof HeroProgressBar>[0]['tone']
 }): ReactNode {
-  const label = pickText(HERO_ROW_LABELS[row.id], host.lang)
+  if (row.pills !== undefined && row.pills.length > 0) return <PillsRow row={row} host={host} />
+  const label = pickText(row.label ?? HERO_ROW_LABELS[row.id], host.lang)
   const valueControls = row.controls.filter(isValueControl)
   const actionControls = row.controls.filter((c) => !isValueControl(c))
   const status = row.status === null ? null : pickText(row.status, host.lang)
@@ -411,7 +459,10 @@ function ModelRow({
     >
       {row.progress === undefined || row.progress === null ? (
         <>
-          {status === null || valueControls.length > 0 ? null : <div>{status}</div>}
+          {status === null ||
+          (valueControls.length > 0 && !STATUS_BESIDE_CONTROLS.has(row.id)) ? null : (
+            <div>{status}</div>
+          )}
           {valueControls.map((control, i) => (
             <ControlView key={i} control={control} host={host} tone={tone} />
           ))}
@@ -587,10 +638,24 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
                 !(countdown && row.id === 'run-for'),
             )
             .map((row) => withoutDial(row, dial))
-            .filter((row) => row.controls.length > 0 || row.status !== null || row.progress != null)
-            .map((row) => (
-              <ModelRow key={row.id} row={row} host={host} tone={tone} />
-            ))}
+            .filter(
+              (row) =>
+                row.controls.length > 0 ||
+                row.status !== null ||
+                row.progress != null ||
+                (row.pills?.length ?? 0) > 0,
+            )
+            .map((row, i, shown) => {
+              const group = row.group === undefined ? null : pickText(row.group, lang)
+              const previous = shown[i - 1]
+              const same = previous?.group !== undefined && pickText(previous.group, lang) === group
+              return (
+                <Fragment key={`${row.id}-${i}`}>
+                  {group === null || same ? null : <GroupHeader text={group} />}
+                  <ModelRow row={row} host={host} tone={tone} />
+                </Fragment>
+              )
+            })}
         </>
       }
       footChips={footItems.length > 0 ? <FootChips items={footItems} /> : undefined}

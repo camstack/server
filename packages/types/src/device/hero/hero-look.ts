@@ -410,6 +410,15 @@ const WATER_HEATER_LOOK = lookOf({
   standby: MUTED,
 })
 
+const HEAT_PUMP_LOOK = lookOf({
+  icon: 'thermometer-sun',
+  on: ['warning', 'heat-rise', 'rise'],
+  off: MUTED,
+  running: ['warning', 'heat-rise', 'rise'],
+  idle: INFO,
+  standby: MUTED,
+})
+
 /** What a climate device draws while it is on, by mode: warm air rises, cold falls, drops dry, the fan spins. */
 export const HERO_MODE_LOOK: Readonly<Record<HeroSceneMode, StateLook | null>> = {
   heat: look('flame', 'warning', 'heat-rise', 'rise'),
@@ -446,6 +455,7 @@ export const HERO_LOOK_BY_TYPE = {
   [DeviceType.Valve]: VALVE_LOOK,
   [DeviceType.Humidifier]: HUMIDIFIER_LOOK,
   [DeviceType.WaterHeater]: WATER_HEATER_LOOK,
+  [DeviceType.HeatPump]: HEAT_PUMP_LOOK,
   [DeviceType.Fan]: FAN_LOOK,
   [DeviceType.MediaPlayer]: MEDIA_PLAYER_LOOK,
   [DeviceType.AlarmPanel]: ALARM_LOOK,

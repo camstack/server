@@ -4,7 +4,7 @@
 
 # Capabilities
 
-203 capability definitions in `packages/types/src/capabilities/`.
+205 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -17,7 +17,7 @@ has no `runtimeState`.
 installed addon declares it — either it is server-provided, or the cap is
 registered at runtime only (`registerNativeCap` from a `BaseDevice`).
 
-## Device-scoped (103)
+## Device-scoped (105)
 
 Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`.
 
@@ -67,6 +67,8 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `group-active` | 1 | ✓ | ✓ | none | — | — |
 | `group-commands` | 1 | ✓ | ✓ | none | — | — |
 | `group-status` | 1 | ✓ | ✓ | none | — | — |
+| `heat-pump-control` | 14 | — | — | — | — | — |
+| `heat-pump-status` | 1 | ✓ | ✓ | 8 series + 3 per item | — | — |
 | `heating-valve` | 1 | ✓ | ✓ | 1 series | — | — |
 | `humidifier` | 4 | ✓ | ✓ | 2 series | — | `provider-homeassistant` |
 | `humidity-sensor` | 1 | ✓ | ✓ | 1 series | — | — |

@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 82 caps with 378 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 83 caps with 388 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -106,6 +106,8 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "group-active",
   "group-commands",
   "group-status",
+  "heat-pump-control",
+  "heat-pump-status",
   "heating-valve",
   "hero-layout",
   "humidifier",
@@ -264,6 +266,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "gas": [{"path":"detected","valueType":"boolean"}],
   "group-active": [{"path":"active","valueType":"boolean"}],
   "group-status": [{"path":"included","valueType":"number"}, {"path":"excluded","valueType":"number"}, {"path":"total","valueType":"number"}],
+  "heat-pump-status": [{"path":"power.thermalW","valueType":"number"}, {"path":"power.electricalW","valueType":"number"}, {"path":"power.compressorPct","valueType":"number"}, {"path":"temperatures.supply","valueType":"number"}, {"path":"temperatures.return","valueType":"number"}, {"path":"temperatures.outdoor","valueType":"number"}, {"path":"energy.thermalKwh","valueType":"number"}, {"path":"energy.electricalKwh","valueType":"number"}, {"path":"waterPressureBar","valueType":"number"}, {"path":"starts","valueType":"number"}],
   "heating-valve": [{"path":"position","valueType":"number"}],
   "humidifier": [{"path":"on","valueType":"boolean"}, {"path":"currentHumidity","valueType":"number"}, {"path":"targetHumidity","valueType":"number"}, {"path":"mode","valueType":"string"}, {"path":"action","valueType":"string"}, {"path":"minHumidity","valueType":"number"}, {"path":"maxHumidity","valueType":"number"}],
   "humidity-sensor": [{"path":"humidity","valueType":"number"}],

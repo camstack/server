@@ -2344,6 +2344,18 @@ export interface UnexportedCap {
 
 export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
   {
+    cap: 'heat-pump-status',
+    reason:
+      'A keyed list of circuits plus system readings: one entity per circuit and per ' +
+      'reading needs a keyed-array mapping the export does not have yet (D1026).',
+  },
+  {
+    cap: 'heat-pump-control',
+    reason:
+      'Typed setters keyed by circuit and mode; they need the same per-circuit entity ' +
+      'mapping as the status, which the export does not have yet (D1026).',
+  },
+  {
     cap: 'do-not-disturb',
     reason:
       'A vendor switch of a speaker, provided so far only by an imported Echo: its ' +

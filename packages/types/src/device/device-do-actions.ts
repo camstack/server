@@ -193,6 +193,7 @@ export const DEVICE_TYPE_DO_CAPS: Record<DeviceType, readonly string[]> = {
   [DeviceType.Valve]: ['valve'],
   [DeviceType.Humidifier]: ['humidifier'],
   [DeviceType.WaterHeater]: ['water-heater'],
+  [DeviceType.HeatPump]: ['heat-pump-control'],
   [DeviceType.Fan]: ['fan-control', 'switch'],
   [DeviceType.MediaPlayer]: ['media-player'],
   [DeviceType.AlarmPanel]: ['alarm-panel'],
@@ -240,6 +241,7 @@ export function deviceDoFamily(type: string): string {
     case DeviceType.Thermostat:
     case DeviceType.Humidifier:
     case DeviceType.WaterHeater:
+    case DeviceType.HeatPump:
       return 'climate-family'
     case DeviceType.Cover:
     case DeviceType.Valve:

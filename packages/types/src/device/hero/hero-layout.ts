@@ -32,6 +32,8 @@ const DISHWASHER_LAYOUT: HeroLayout = {
 const CLIMATE_LAYOUT: HeroLayout = {
   rows: ['climate-mode', 'climate-fan', 'setpoint'],
 }
+/** The circuits, then the power pills, then the System group, one row per mode (D1026). */
+const HEAT_PUMP_LAYOUT: HeroLayout = { rows: ['circuit', 'heat-pump-power', 'system-mode'] }
 const SWITCH_LAYOUT: HeroLayout = { rows: ['motion-trigger'] }
 const LOCK_LAYOUT: HeroLayout = { rows: ['lock'] }
 const ALARM_LAYOUT: HeroLayout = { rows: ['alarm'] }
@@ -71,6 +73,7 @@ export const HERO_LAYOUT_BY_TYPE = {
   [DeviceType.Valve]: VALVE_LAYOUT,
   [DeviceType.Humidifier]: HUMIDIFIER_LAYOUT,
   [DeviceType.WaterHeater]: CLIMATE_LAYOUT,
+  [DeviceType.HeatPump]: HEAT_PUMP_LAYOUT,
   [DeviceType.Fan]: FAN_LAYOUT,
   [DeviceType.MediaPlayer]: MEDIA_PLAYER_LAYOUT,
   [DeviceType.AlarmPanel]: ALARM_LAYOUT,

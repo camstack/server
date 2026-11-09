@@ -115,6 +115,10 @@ export enum DeviceType {
    *  (`reboot`, `device-admin-link`). Products are NOT its children — they are
    *  adopted beside it — and its connection settings stay on the integration. */
   Gateway = 'gateway',
+  /** A heat pump (any vendor): the compressor unit with its circuits (heating, hot
+   *  water, cooling, solar), its system modes and its power. One main read-only
+   *  `heat-pump-status` cap carries all of it; `heat-pump-control` sets it (D1026). */
+  HeatPump = 'heat-pump',
 }
 
 export enum DeviceFeature {

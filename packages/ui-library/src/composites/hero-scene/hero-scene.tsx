@@ -45,6 +45,7 @@ export const HERO_SCENE_ICON: Readonly<Record<HeroSceneId, LucideIcon>> = {
   ac: AirVent,
   thermostat: Thermometer,
   heater: Flame,
+  'heat-pump': Flame,
   fan: Fan,
   washer: WashingMachine,
   dryer: Shirt,

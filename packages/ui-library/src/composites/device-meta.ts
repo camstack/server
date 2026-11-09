@@ -144,6 +144,11 @@ export const DEVICE_TYPE_META: Record<DeviceType, DeviceMetaEntry> = {
     labelKey: 'uiLibrary.deviceMeta.type.climate',
     labelFallback: 'Air conditioner',
   },
+  [DeviceType.HeatPump]: {
+    icon: Flame,
+    labelKey: 'uiLibrary.deviceMeta.type.heatPump',
+    labelFallback: 'Heat pump',
+  },
   [DeviceType.Button]: {
     icon: CircleDot,
     labelKey: 'uiLibrary.deviceMeta.type.button',

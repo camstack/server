@@ -60,6 +60,7 @@ function resolveByScene(scene: HeroSceneId, state: string, on: boolean): SceneVi
       if (state === 'heat') return visual('rise', 'warning')
       if (state === 'cool') return visual('fall', 'info')
       return DIM
+    case 'heat-pump':
     case 'heater':
       return on ? visual('rise', 'warning') : DIM
     case 'fan':

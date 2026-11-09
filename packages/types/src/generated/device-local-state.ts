@@ -36,6 +36,7 @@ import { groupActiveCapability } from '../capabilities/group-active.cap.js'
 import { groupCommandsCapability } from '../capabilities/group-commands.cap.js'
 import { groupStatusCapability } from '../capabilities/group-status.cap.js'
 import { heatingValveCapability } from '../capabilities/heating-valve.cap.js'
+import { heatPumpStatusCapability } from '../capabilities/heat-pump-status.cap.js'
 import { humidifierCapability } from '../capabilities/humidifier.cap.js'
 import { humiditySensorCapability } from '../capabilities/humidity-sensor.cap.js'
 import { imageCapability } from '../capabilities/image.cap.js'
@@ -130,6 +131,7 @@ export interface DeviceLocalState {
   groupCommands: InferRuntimeState<typeof groupCommandsCapability>
   groupStatus: InferRuntimeState<typeof groupStatusCapability>
   heatingValve: InferRuntimeState<typeof heatingValveCapability>
+  heatPumpStatus: InferRuntimeState<typeof heatPumpStatusCapability>
   humidifier: InferRuntimeState<typeof humidifierCapability>
   humiditySensor: InferRuntimeState<typeof humiditySensorCapability>
   image: InferRuntimeState<typeof imageCapability>
@@ -220,6 +222,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   groupCommands: groupCommandsCapability,
   groupStatus: groupStatusCapability,
   heatingValve: heatingValveCapability,
+  heatPumpStatus: heatPumpStatusCapability,
   humidifier: humidifierCapability,
   humiditySensor: humiditySensorCapability,
   image: imageCapability,
@@ -317,6 +320,7 @@ export interface CapNameToRuntimeStateMap {
   'group-commands': InferRuntimeState<typeof groupCommandsCapability>
   'group-status': InferRuntimeState<typeof groupStatusCapability>
   'heating-valve': InferRuntimeState<typeof heatingValveCapability>
+  'heat-pump-status': InferRuntimeState<typeof heatPumpStatusCapability>
   'humidifier': InferRuntimeState<typeof humidifierCapability>
   'humidity-sensor': InferRuntimeState<typeof humiditySensorCapability>
   'image': InferRuntimeState<typeof imageCapability>

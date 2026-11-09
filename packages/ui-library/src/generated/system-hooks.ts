@@ -1382,6 +1382,51 @@ export const useGroupStatusGetStatus: typeof trpc.groupStatus.getStatus.useQuery
 /** Generated alias around `trpc.heatingValve.getStatus.useQuery`. */
 export const useHeatingValveGetStatus: typeof trpc.heatingValve.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.heatingValve.getStatus.useQuery)
 
+/** Generated alias around `trpc.heatPumpControl.setSilentMode.useMutation`. */
+export const useHeatPumpControlSetSilentMode: typeof trpc.heatPumpControl.setSilentMode.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.setSilentMode.useMutation)
+
+/** Generated alias around `trpc.heatPumpControl.setAwayMode.useMutation`. */
+export const useHeatPumpControlSetAwayMode: typeof trpc.heatPumpControl.setAwayMode.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.setAwayMode.useMutation)
+
+/** Generated alias around `trpc.heatPumpControl.setAdditionalHeaterMode.useMutation`. */
+export const useHeatPumpControlSetAdditionalHeaterMode: typeof trpc.heatPumpControl.setAdditionalHeaterMode.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.setAdditionalHeaterMode.useMutation)
+
+/** Generated alias around `trpc.heatPumpControl.setHolidayMode.useMutation`. */
+export const useHeatPumpControlSetHolidayMode: typeof trpc.heatPumpControl.setHolidayMode.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.setHolidayMode.useMutation)
+
+/** Generated alias around `trpc.heatPumpControl.setCircuitOperationMode.useMutation`. */
+export const useHeatPumpControlSetCircuitOperationMode: typeof trpc.heatPumpControl.setCircuitOperationMode.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.setCircuitOperationMode.useMutation)
+
+/** Generated alias around `trpc.heatPumpControl.setCircuitHeatCoolMode.useMutation`. */
+export const useHeatPumpControlSetCircuitHeatCoolMode: typeof trpc.heatPumpControl.setCircuitHeatCoolMode.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.setCircuitHeatCoolMode.useMutation)
+
+/** Generated alias around `trpc.heatPumpControl.setCircuitSummerWinter.useMutation`. */
+export const useHeatPumpControlSetCircuitSummerWinter: typeof trpc.heatPumpControl.setCircuitSummerWinter.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.setCircuitSummerWinter.useMutation)
+
+/** Generated alias around `trpc.heatPumpControl.setCircuitComfortSetpoint.useMutation`. */
+export const useHeatPumpControlSetCircuitComfortSetpoint: typeof trpc.heatPumpControl.setCircuitComfortSetpoint.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.setCircuitComfortSetpoint.useMutation)
+
+/** Generated alias around `trpc.heatPumpControl.setCircuitEcoSetpoint.useMutation`. */
+export const useHeatPumpControlSetCircuitEcoSetpoint: typeof trpc.heatPumpControl.setCircuitEcoSetpoint.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.setCircuitEcoSetpoint.useMutation)
+
+/** Generated alias around `trpc.heatPumpControl.setCircuitMaxFlowTemp.useMutation`. */
+export const useHeatPumpControlSetCircuitMaxFlowTemp: typeof trpc.heatPumpControl.setCircuitMaxFlowTemp.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.setCircuitMaxFlowTemp.useMutation)
+
+/** Generated alias around `trpc.heatPumpControl.setDhwOperationMode.useMutation`. */
+export const useHeatPumpControlSetDhwOperationMode: typeof trpc.heatPumpControl.setDhwOperationMode.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.setDhwOperationMode.useMutation)
+
+/** Generated alias around `trpc.heatPumpControl.setDhwTemperatureLevel.useMutation`. */
+export const useHeatPumpControlSetDhwTemperatureLevel: typeof trpc.heatPumpControl.setDhwTemperatureLevel.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.setDhwTemperatureLevel.useMutation)
+
+/** Generated alias around `trpc.heatPumpControl.setDhwChargeDuration.useMutation`. */
+export const useHeatPumpControlSetDhwChargeDuration: typeof trpc.heatPumpControl.setDhwChargeDuration.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.setDhwChargeDuration.useMutation)
+
+/** Generated alias around `trpc.heatPumpControl.startExtraHotWater.useMutation`. */
+export const useHeatPumpControlStartExtraHotWater: typeof trpc.heatPumpControl.startExtraHotWater.useMutation = /*#__PURE__*/ alias(() => trpc.heatPumpControl.startExtraHotWater.useMutation)
+
+/** Generated alias around `trpc.heatPumpStatus.getStatus.useQuery`. */
+export const useHeatPumpStatusGetStatus: typeof trpc.heatPumpStatus.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.heatPumpStatus.getStatus.useQuery)
+
 /** Generated alias around `trpc.heroLayout.getHeroModel.useQuery`. */
 export const useHeroLayoutGetHeroModel: typeof trpc.heroLayout.getHeroModel.useQuery = /*#__PURE__*/ alias(() => trpc.heroLayout.getHeroModel.useQuery)
 

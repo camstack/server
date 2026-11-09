@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 601 methods carry a device reference, of which
+ * Coverage: 616 methods carry a device reference, of which
  * 194 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -241,6 +241,21 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'groupCommands.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'groupStatus.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heatingValve.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setAdditionalHeaterMode': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setAwayMode': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setCircuitComfortSetpoint': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setCircuitEcoSetpoint': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setCircuitHeatCoolMode': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setCircuitMaxFlowTemp': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setCircuitOperationMode': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setCircuitSummerWinter': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setDhwChargeDuration': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setDhwOperationMode': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setDhwTemperatureLevel': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setHolidayMode': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.setSilentMode': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpControl.startExtraHotWater': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'heatPumpStatus.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heroLayout.getHeroModel': [{ name: "deviceId", form: "single", optional: false }] as const,
   'heroLayout.getRowModels': [{ name: "deviceIds", form: "array", optional: false }] as const,
   'humidifier.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hero scene: side tiles no longer truncate, the caption splits state from detail, and the centre can follow the scene tone
 - Hero scene: tiles never wrap, raised tile and row backing, larger muted fan blades
 - Device hero scenes: drawn art for vacuum, mower, TV, speaker, light, blinds, lock, alarm, siren, contact, presence, weather, plug, button, update, control, events, gateway and script devices
+- A heat pump device shows a compressor scene
 
 ## [1.2.411] - 2026-11-09
 

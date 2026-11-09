@@ -53,6 +53,8 @@ import type { groupActiveCapability } from '../capabilities/group-active.cap.js'
 import type { groupCommandsCapability } from '../capabilities/group-commands.cap.js'
 import type { groupStatusCapability } from '../capabilities/group-status.cap.js'
 import type { heatingValveCapability } from '../capabilities/heating-valve.cap.js'
+import type { heatPumpControlCapability } from '../capabilities/heat-pump-control.cap.js'
+import type { heatPumpStatusCapability } from '../capabilities/heat-pump-status.cap.js'
 import type { humidifierCapability } from '../capabilities/humidifier.cap.js'
 import type { humiditySensorCapability } from '../capabilities/humidity-sensor.cap.js'
 import type { imageCapability } from '../capabilities/image.cap.js'
@@ -171,6 +173,7 @@ export interface DeviceProxyState {
   readonly groupCommands: SliceHandle<InferRuntimeState<typeof groupCommandsCapability>>
   readonly groupStatus: SliceHandle<InferRuntimeState<typeof groupStatusCapability>>
   readonly heatingValve: SliceHandle<InferRuntimeState<typeof heatingValveCapability>>
+  readonly heatPumpStatus: SliceHandle<InferRuntimeState<typeof heatPumpStatusCapability>>
   readonly humidifier: SliceHandle<InferRuntimeState<typeof humidifierCapability>>
   readonly humiditySensor: SliceHandle<InferRuntimeState<typeof humiditySensorCapability>>
   readonly image: SliceHandle<InferRuntimeState<typeof imageCapability>>
@@ -284,6 +287,8 @@ export interface DeviceProxy {
   readonly groupCommands?: InferDeviceProxyCap<typeof groupCommandsCapability>
   readonly groupStatus?: InferDeviceProxyCap<typeof groupStatusCapability>
   readonly heatingValve?: InferDeviceProxyCap<typeof heatingValveCapability>
+  readonly heatPumpControl?: InferDeviceProxyCap<typeof heatPumpControlCapability>
+  readonly heatPumpStatus?: InferDeviceProxyCap<typeof heatPumpStatusCapability>
   readonly humidifier?: InferDeviceProxyCap<typeof humidifierCapability>
   readonly humiditySensor?: InferDeviceProxyCap<typeof humiditySensorCapability>
   readonly image?: InferDeviceProxyCap<typeof imageCapability>
@@ -700,6 +705,27 @@ export function createDeviceProxy(
 
   const heatingValveInterface = {
     getStatus: (input?: unknown) => dispatch('heating-valve', 'heatingValve', 'getStatus', 'query', input),
+  }
+
+  const heatPumpControlInterface = {
+    setSilentMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setSilentMode', 'mutation', input),
+    setAwayMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setAwayMode', 'mutation', input),
+    setAdditionalHeaterMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setAdditionalHeaterMode', 'mutation', input),
+    setHolidayMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setHolidayMode', 'mutation', input),
+    setCircuitOperationMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitOperationMode', 'mutation', input),
+    setCircuitHeatCoolMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitHeatCoolMode', 'mutation', input),
+    setCircuitSummerWinter: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitSummerWinter', 'mutation', input),
+    setCircuitComfortSetpoint: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitComfortSetpoint', 'mutation', input),
+    setCircuitEcoSetpoint: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitEcoSetpoint', 'mutation', input),
+    setCircuitMaxFlowTemp: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitMaxFlowTemp', 'mutation', input),
+    setDhwOperationMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setDhwOperationMode', 'mutation', input),
+    setDhwTemperatureLevel: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setDhwTemperatureLevel', 'mutation', input),
+    setDhwChargeDuration: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setDhwChargeDuration', 'mutation', input),
+    startExtraHotWater: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'startExtraHotWater', 'mutation', input),
+  }
+
+  const heatPumpStatusInterface = {
+    getStatus: (input?: unknown) => dispatch('heat-pump-status', 'heatPumpStatus', 'getStatus', 'query', input),
   }
 
   const humidifierInterface = {
@@ -1427,6 +1453,7 @@ export function createDeviceProxy(
       groupCommands: createSliceHandle<InferRuntimeState<typeof groupCommandsCapability>>(stateSource, binding.deviceId, 'group-commands'),
       groupStatus: createSliceHandle<InferRuntimeState<typeof groupStatusCapability>>(stateSource, binding.deviceId, 'group-status'),
       heatingValve: createSliceHandle<InferRuntimeState<typeof heatingValveCapability>>(stateSource, binding.deviceId, 'heating-valve'),
+      heatPumpStatus: createSliceHandle<InferRuntimeState<typeof heatPumpStatusCapability>>(stateSource, binding.deviceId, 'heat-pump-status'),
       humidifier: createSliceHandle<InferRuntimeState<typeof humidifierCapability>>(stateSource, binding.deviceId, 'humidifier'),
       humiditySensor: createSliceHandle<InferRuntimeState<typeof humiditySensorCapability>>(stateSource, binding.deviceId, 'humidity-sensor'),
       image: createSliceHandle<InferRuntimeState<typeof imageCapability>>(stateSource, binding.deviceId, 'image'),
@@ -1521,6 +1548,8 @@ export function createDeviceProxy(
     ...(bound('group-commands') ? { groupCommands: groupCommandsInterface } : {}),
     ...(bound('group-status') ? { groupStatus: groupStatusInterface } : {}),
     ...(bound('heating-valve') ? { heatingValve: heatingValveInterface } : {}),
+    ...(bound('heat-pump-control') ? { heatPumpControl: heatPumpControlInterface } : {}),
+    ...(bound('heat-pump-status') ? { heatPumpStatus: heatPumpStatusInterface } : {}),
     ...(bound('humidifier') ? { humidifier: humidifierInterface } : {}),
     ...(bound('humidity-sensor') ? { humiditySensor: humiditySensorInterface } : {}),
     ...(bound('image') ? { image: imageInterface } : {}),

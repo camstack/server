@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device hero model gains an end clock time, a timer tile, fan oscillation and mode, tank and volume tiles, and a valve caption
 - Device hero: the vacuum gets a Suction row and tile, media, lock, alarm, cover and light carry their own tiles, and the climate mode picker ends with Off
 - Device hero model: media-player shuffle/repeat/next/previous and progress, washing and dishwasher cycle rows, phase and started tiles, hero args with a dotted value path, update cap read-only
+- A heat pump is a device type of its own, with a heat-pump-status reading of every circuit and typed heat-pump-control setters
 
 ## [1.2.534] - 2026-11-09
 

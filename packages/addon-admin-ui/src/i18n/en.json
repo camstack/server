@@ -9037,7 +9037,8 @@
         "dryer": "Dryer",
         "petFountain": "Pet fountain",
         "gateway": "Gateway",
-        "heater": "Heater"
+        "heater": "Heater",
+        "heatPump": "Heat pump"
       },
       "role": {
         "siren": "Siren",

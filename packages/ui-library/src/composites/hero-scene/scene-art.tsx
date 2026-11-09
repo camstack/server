@@ -230,6 +230,54 @@ function Feeder({
   )
 }
 
+/**
+ * The outdoor unit: housing, a grille with the fan (spins while the compressor runs, like
+ * the pump of the fountain), warm air rising off the top (`art-heat`), and the water
+ * circuit leaving the side (`art-stream`, warm supply over a cool return).
+ */
+function HeatPump({ running }: { readonly running: boolean }): ReactNode {
+  return (
+    <svg viewBox="0 0 200 170" aria-hidden="true" className="h-36 w-auto max-w-full">
+      <rect x="28" y="26" width="112" height="128" rx="14" className={BODY} strokeWidth="2" />
+      <circle cx="46" cy="42" r="3.5" className="fill-current" />
+      <rect x="56" y="38" width="40" height="8" rx="4" className="fill-surface-hover" />
+      <circle cx="84" cy="98" r="44" className="fill-surface stroke-border" strokeWidth="3" />
+      <circle cx="84" cy="98" r="36" className="fill-none stroke-border" strokeWidth="1.5" />
+      <g className={running ? 'art-spin-fast' : undefined}>
+        <path
+          d="M84 98 q-8 -18 0 -32 q10 12 0 32z M84 98 q18 -8 32 0 q-12 10 -32 0z M84 98 q8 18 0 32 q-10 -12 0 -32z M84 98 q-18 8 -32 0 q12 -10 32 0z"
+          className="fill-current opacity-80"
+        />
+        <circle cx="84" cy="98" r="5" className="fill-background stroke-border" strokeWidth="2" />
+      </g>
+      {running ? (
+        <g className="stroke-current" fill="none" strokeWidth="2" strokeLinecap="round">
+          <path className="art-heat" d="M52 22 q4 -6 0 -12 q-4 -6 0 -12" />
+          <path className="art-heat" d="M84 22 q4 -6 0 -12 q-4 -6 0 -12" />
+          <path className="art-heat" d="M116 22 q4 -6 0 -12 q-4 -6 0 -12" />
+        </g>
+      ) : null}
+      <path d="M140 70 H176 V150" className="fill-none stroke-border" strokeWidth="7" />
+      <path d="M140 118 H160 V150" className="fill-none stroke-border" strokeWidth="7" />
+      <path
+        d="M140 70 H176 V150"
+        className={running ? 'art-stream stroke-warning' : 'stroke-warning opacity-30'}
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M160 150 V118 H140"
+        className={running ? 'art-stream stroke-info' : 'stroke-info opacity-30'}
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <circle cx="176" cy="154" r="4" className="fill-success" />
+    </svg>
+  )
+}
+
 /** The scene ids that have an illustration; every other scene keeps its icon in the centre. */
 export const SCENES_WITH_ART: ReadonlySet<HeroSceneId> = new Set<HeroSceneId>([
   'washer',
@@ -237,6 +285,7 @@ export const SCENES_WITH_ART: ReadonlySet<HeroSceneId> = new Set<HeroSceneId>([
   'dishwasher',
   'pet-fountain',
   'pet-feeder',
+  'heat-pump',
   ...HOME_SCENES_WITH_ART,
 ])
 
@@ -252,6 +301,8 @@ export function SceneArt({ scene, running, level = 0.7, mode = null }: SceneArtP
       return <Fountain running={running} level={level} />
     case 'pet-feeder':
       return <Feeder running={running} level={level} />
+    case 'heat-pump':
+      return <HeatPump running={running} />
     default:
       return <HomeSceneArt scene={scene} running={running} level={level} mode={mode} />
   }
