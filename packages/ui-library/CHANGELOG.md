@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.410] - 2026-11-09
+
 ### Changed
 
 - The account sign-in field no longer polls a claim action; it shows a paste hint under the sign-in button.
