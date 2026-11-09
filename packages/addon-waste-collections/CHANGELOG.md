@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.42] - 2026-11-09
+
 ### Changed
+
 - A boot where the migration engine is unreachable, or legacy sources have no record, logs an error
 - Waste sources are served only from their records; a source still in the legacy setting stays unavailable until the migration has copied it
 

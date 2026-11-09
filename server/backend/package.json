@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.819",
+  "version": "1.2.820",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,9 +66,24 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.626",
-        "@camstack/addon-agent-ui": ">=1.2.351",
-        "@camstack/addon-provider-bosch": ">=0.1.44"
+        "@camstack/addon-admin-ui": ">=1.2.627",
+        "@camstack/addon-agent-ui": ">=1.2.352",
+        "@camstack/addon-auth": ">=1.2.180",
+        "@camstack/addon-google-services": ">=0.2.46",
+        "@camstack/addon-import-alexa": ">=0.2.200",
+        "@camstack/addon-matter-broker": ">=0.2.165",
+        "@camstack/addon-mqtt-broker": ">=1.2.158",
+        "@camstack/addon-notifiers": ">=1.2.635",
+        "@camstack/addon-pipeline-orchestrator": ">=1.2.675",
+        "@camstack/addon-post-analysis": ">=1.2.688",
+        "@camstack/addon-provider-dreame": ">=0.2.173",
+        "@camstack/addon-provider-dreo": ">=0.2.163",
+        "@camstack/addon-provider-homeassistant": ">=1.2.676",
+        "@camstack/addon-provider-petkit": ">=0.2.168",
+        "@camstack/addon-provider-tuya": ">=0.2.158",
+        "@camstack/addon-provider-wyze": ">=0.2.172",
+        "@camstack/addon-smtp-nodemailer": ">=1.2.155",
+        "@camstack/addon-waste-collections": ">=0.1.42"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

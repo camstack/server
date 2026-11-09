@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.627] - 2026-11-09
+
 ### Changed
+
 - The add-integration wizard reads its create form from the one instance door
 - An unknown integration switch is no longer drawn green; a fixed builtin switches without its addon
 - Integration page: Config opens the shared instance editor (name, test connection, sign-in) instead of a second form

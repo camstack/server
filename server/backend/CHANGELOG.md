@@ -7,16 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Removed
-- addonSettings.getIntegrationFormSchema is removed; the create form is integrationInstances.instanceFormSchema with no id
+## [1.2.820] - 2026-11-09
 
 ### Changed
+
 - A viewer user manages only their own notification targets through integration-instances
 - A fixed builtin whose addon is down reads as an unknown switch; the enabled / disabled event follows the instance record, not the registry flag
 - A fixed builtin can be switched back on while its addon is down, and every switch emits the enabled / disabled event again
 - Integrations: integrations.update refuses enabled for every row; the integration list reports an unanswered switch as unknown
 - integrations.delete is back for an addon that is installed but not running; a fixed builtin can be switched while its addon is down.
 - A provider's refusal of a caller answers FORBIDDEN (403) instead of a server error.
+
+### Removed
+
+- addonSettings.getIntegrationFormSchema is removed; the create form is integrationInstances.instanceFormSchema with no id
 
 ## [1.2.819] - 2026-11-09
 

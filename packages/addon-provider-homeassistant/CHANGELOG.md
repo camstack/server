@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.676] - 2026-11-09
+
 ### Changed
+
 - Notify targets: a target the migration could not move stays served from the retired ha-notification-targets kind, and the migration runs again on the next boot until it has moved
 
 ## [1.2.675] - 2026-11-09
