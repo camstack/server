@@ -2735,6 +2735,7 @@ Enum: `"not-electron" \| "no-app-state" \| "app-state-stale" \| "not-downloaded"
 - `allowRestoreId?`: `boolean`
 - `mintsId?`: `boolean`
 - `links?`: `IntegrationInstanceLinkSchema[]`
+- `userScoped?`: `boolean`
 
 ### `IntegrationInstanceDiscoverySchema`
 
