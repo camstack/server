@@ -178,19 +178,110 @@ function safeGet(get: ResourceGet, onFailure: HeatPumpReadInput['onFailure']): R
   }
 }
 
+const SYSTEM_MODE_KEYS = ['silent', 'away', 'additionalHeater', 'holiday'] as const
+const HEAT_PUMP_ONLY_READINGS = ['thermalW', 'electricalW', 'compressorPct'] as const
+
 /**
- * True when a HEAT PUMP answered: silent mode, the auxiliary heater, heat-pump
- * power or compressor modulation. Flow temperatures, pressure and starts are left
- * out on purpose: a gas boiler's heat source answers those too, and it is no heat pump.
+ * True when the gateway should be offered as a system device (`hp:0`).
+ *
+ * A system mode counts when the gateway answered it: silent, away, the
+ * additional heater, or holiday. An empty string is an answer (holiday often
+ * comes back empty); a path that did not answer is not. HomeCom returns no
+ * value for silent mode and the auxiliary heater on some heat-pump firmware,
+ * so away and holiday alone are enough. A heat-pump-only reading counts too
+ * (thermal power, electrical power, compressor modulation). Supply, return,
+ * outdoor, pressure, starts and the energy meters do not: a gas boiler's heat
+ * source answers flow, pressure and starts, and that is not a heat pump.
  */
-export function hasHeatSource(reading: HomeComHeatPumpReading): boolean {
+export function hasSystemDevice(reading: HomeComHeatPumpReading): boolean {
+  const modeAnswered = SYSTEM_MODE_KEYS.some((key) => reading[key] !== null)
+  if (modeAnswered) return true
+  return HEAT_PUMP_ONLY_READINGS.some((key) => reading[key] !== null)
+}
+
+interface PathPresence {
+  readonly path: string
+  readonly present: boolean
+}
+
+export interface HeatPumpPathCensus {
+  readonly answered: readonly string[]
+  readonly unanswered: readonly string[]
+}
+
+/** Which heat-pump paths this gateway answered. One log per gateway corrects the path table. */
+export function heatPumpPathCensus(reading: HomeComHeatPumpReading): HeatPumpPathCensus {
+  const rows = [
+    ...systemPathRows(reading),
+    ...readingPathRows(reading),
+    ...reading.circuits.flatMap(circuitPathRows),
+  ]
+  const answered: string[] = []
+  const unanswered: string[] = []
+  for (const row of rows) {
+    if (row.present) answered.push(row.path)
+    else unanswered.push(row.path)
+  }
+  return { answered, unanswered }
+}
+
+function systemPathRows(reading: HomeComHeatPumpReading): readonly PathPresence[] {
+  const s = HEAT_PUMP_PATHS.system
   return [
-    reading.silent,
-    reading.additionalHeater,
-    reading.thermalW,
-    reading.electricalW,
-    reading.compressorPct,
-  ].some((v) => v !== null)
+    { path: s.silent, present: reading.silent !== null },
+    { path: s.away, present: reading.away !== null },
+    { path: s.additionalHeater, present: reading.additionalHeater !== null },
+    { path: s.holiday, present: reading.holiday !== null },
+  ]
+}
+
+function readingPathRows(reading: HomeComHeatPumpReading): readonly PathPresence[] {
+  const r = HEAT_PUMP_PATHS.readings
+  return [
+    { path: r.thermalW, present: reading.thermalW !== null },
+    { path: r.electricalW, present: reading.electricalW !== null },
+    { path: r.compressorPct, present: reading.compressorPct !== null },
+    { path: r.supply, present: reading.supply !== null },
+    { path: r.return, present: reading.return !== null },
+    { path: r.outdoor, present: reading.outdoor !== null },
+    { path: r.thermalKwh, present: reading.thermalKwh !== null },
+    { path: r.electricalKwh, present: reading.electricalKwh !== null },
+    { path: r.pressureBar, present: reading.pressureBar !== null },
+    { path: r.starts, present: reading.starts !== null },
+  ]
+}
+
+function circuitPathRows(circuit: HomeComHeatPumpCircuitReading): readonly PathPresence[] {
+  if (circuit.kind === 'dhw') return dhwPathRows(circuit)
+  return hcPathRows(circuit)
+}
+
+function hcPathRows(circuit: HomeComHeatPumpCircuitReading): readonly PathPresence[] {
+  const base = `/heatingCircuits/${circuit.id}`
+  const p = HEAT_PUMP_PATHS.circuit
+  return [
+    { path: `${base}/${p.operationMode}`, present: circuit.operationMode !== null },
+    { path: `${base}/${p.heatCoolMode}`, present: circuit.heatCoolMode !== null },
+    { path: `${base}/${p.summerWinter}`, present: circuit.summerWinter !== null },
+    { path: `${base}/${p.comfort}`, present: circuit.comfort !== null },
+    { path: `${base}/${p.eco}`, present: circuit.eco !== null },
+    { path: `${base}/${p.maxFlow}`, present: circuit.maxFlow !== null },
+    { path: `${base}/${p.current}`, present: circuit.currentTemp !== null },
+    { path: `${base}/${p.target}`, present: circuit.targetTemp !== null },
+  ]
+}
+
+function dhwPathRows(circuit: HomeComHeatPumpCircuitReading): readonly PathPresence[] {
+  const base = `/dhwCircuits/${circuit.id}`
+  const p = HEAT_PUMP_PATHS.dhw
+  return [
+    { path: `${base}/${p.operationMode}`, present: circuit.operationMode !== null },
+    { path: `${base}/${p.level}`, present: circuit.level !== null },
+    { path: `${base}/${p.chargeDuration}`, present: circuit.chargeDuration !== null },
+    { path: `${base}/${p.charge}`, present: circuit.charge !== null },
+    { path: `${base}/${p.current}`, present: circuit.currentTemp !== null },
+    { path: `${base}/${p.target}`, present: circuit.targetTemp !== null },
+  ]
 }
 
 async function readHc(get: ResourceGet, id: string): Promise<HomeComHeatPumpCircuitReading> {
@@ -303,7 +394,6 @@ export function heatPumpStatusFrom(reading: HomeComHeatPumpReading, now: number)
 
 function circuitOf(c: HomeComHeatPumpCircuitReading): HeatPumpCircuit {
   const kind = kindOf(c)
-  const mode = textOf(c.operationMode)
   return {
     id: c.id,
     kind,
@@ -311,7 +401,7 @@ function circuitOf(c: HomeComHeatPumpCircuitReading): HeatPumpCircuit {
     icon: kind === 'dhw' ? 'droplets' : kind === 'cooling' ? 'snowflake' : 'flame',
     currentTemp: c.currentTemp,
     targetTemp: c.targetTemp,
-    mode,
+    mode: modeValue(c.operationMode),
     active: null,
     operationMode: optionOf(c.operationMode),
     heatCoolMode: optionOf(c.heatCoolMode),
@@ -333,16 +423,26 @@ function kindOf(c: HomeComHeatPumpCircuitReading): HeatPumpCircuitKind {
 function labelOf(c: HomeComHeatPumpCircuitReading): string {
   const n = c.id.replace(/^\D+/, '')
   if (c.kind === 'dhw') return n === '1' || n === '' ? 'Hot water' : `Hot water ${n}`
-  return n === '' ? 'Circuit' : `Circuit ${n}`
+  return n === '' ? 'Heating circuit' : `Heating circuit ${n}`
 }
 
 function textOf(s: HomeComHeatPumpSetting | null): string | null {
   return s !== null && typeof s.value === 'string' && s.value.length > 0 ? s.value : null
 }
 
+/**
+ * A mode the gateway answered with an empty value is off (or "none" when the
+ * gateway did not list off). A mode it did not answer at all stays null.
+ */
+function modeValue(s: HomeComHeatPumpSetting | null): string | null {
+  if (s === null || typeof s.value !== 'string') return null
+  if (s.value.length > 0) return s.value
+  return s.allowed.includes('off') ? 'off' : 'none'
+}
+
 function optionOf(s: HomeComHeatPumpSetting | null): HeatPumpOptionSetting | null {
   if (s === null) return null
-  return { value: textOf(s), allowed: [...s.allowed] }
+  return { value: modeValue(s), allowed: [...s.allowed] }
 }
 
 function rangeOf(s: HomeComHeatPumpSetting | null): HeatPumpRangeSetting | null {

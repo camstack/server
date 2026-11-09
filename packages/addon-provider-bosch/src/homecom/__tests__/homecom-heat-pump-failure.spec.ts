@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
+import { heatPumpStatusFrom } from '../homecom-heat-pump.js'
+import { buildDiscoverables } from '../homecom-gateway.js'
 import { createHomeComApiClient, type FetchFn } from '../homecom-api-client.js'
 
 const CONFIG = {
@@ -74,6 +76,69 @@ describe('HomeCom heat pump reads never break the working devices', () => {
       logger: logger(),
     })
     expect((await client.fetchSystem()).heatPump).toBeUndefined()
+  })
+
+  it('offers hp:0 when the gateway answers only away=off and an empty holiday', async () => {
+    const log = logger()
+    const client = createHomeComApiClient(CONFIG, 'g1', {
+      fetchFn: gateway({
+        ...BASE,
+        '/heatingCircuits': REFS(['/heatingCircuits/hc1', '/heatingCircuits/hc2']),
+        '/system/awayMode': { ...envelope('off'), allowedValues: ['off', 'on'] },
+        '/system/holidayMode': envelope(''),
+      }),
+      deviceType: 'k40',
+      logger: log,
+    })
+    const snapshot = await client.fetchSystem()
+    await client.fetchSystem()
+    const heatPump = snapshot.heatPump
+    if (heatPump === undefined) throw new Error('expected a heat pump')
+    expect(buildDiscoverables(snapshot).map((d) => [d.nativeId, d.name])).toEqual([
+      ['hc:hc1', 'Heating circuit 1'],
+      ['hc:hc2', 'Heating circuit 2'],
+      ['dhw:0', 'Domestic hot water'],
+      ['hp:0', 'Heat pump'],
+    ])
+    const status = heatPumpStatusFrom(heatPump, 1)
+    expect(status.system.away?.value).toBe('off')
+    expect(status.system.holiday?.value).toBe('none')
+    expect(status.system.silent).toBeNull()
+    expect(status.system.additionalHeater).toBeNull()
+    expect(status.power).toEqual({ thermalW: null, electricalW: null, compressorPct: null })
+    expect(status.temperatures.supply).toBeNull()
+    expect(status.waterPressureBar).toBeNull()
+    expect(status.starts).toBeNull()
+    const census = log.info.mock.calls.filter((call) => call[0] === 'HomeCom heat-pump paths')
+    expect(census).toHaveLength(1)
+    expect(census[0]?.[1]?.tags).toEqual({ gatewayId: 'g1' })
+    expect(census[0]?.[1]?.meta?.answered).toEqual(
+      expect.arrayContaining(['/system/awayMode', '/system/holidayMode']),
+    )
+    expect(census[0]?.[1]?.meta?.unanswered).toEqual(
+      expect.arrayContaining([
+        '/heatSources/hs1/silentMode',
+        '/heatSources/hs1/additionalHeaterMode',
+        '/heatSources/hs1/heatPumpPower',
+      ]),
+    )
+  })
+
+  it('keeps a heating-circuit name the gateway already gave', async () => {
+    const client = createHomeComApiClient(CONFIG, 'g1', {
+      fetchFn: gateway({
+        ...BASE,
+        '/heatingCircuits': {
+          references: [{ id: '/heatingCircuits/hc1', name: 'Living room' }],
+        },
+      }),
+      deviceType: 'k40',
+      logger: logger(),
+    })
+    const snapshot = await client.fetchSystem()
+    expect(buildDiscoverables(snapshot).find((d) => d.nativeId === 'hc:hc1')?.name).toBe(
+      'Living room',
+    )
   })
 
   it('attaches the heat pump once a heat source answers', async () => {

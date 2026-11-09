@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A HomeCom heat pump whose gateway reports only its system modes is now offered for adoption.
+
 ## [0.1.45] - 2026-11-09
 
 ### Changed

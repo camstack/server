@@ -6,7 +6,12 @@ import {
   HomeComUnknownDeviceTypeError,
   type HomeComResourceFamily,
 } from './homecom-device-type.js'
-import { hasHeatSource, readHeatPump, type HomeComHeatPumpReading } from './homecom-heat-pump.js'
+import {
+  hasSystemDevice,
+  heatPumpPathCensus,
+  readHeatPump,
+  type HomeComHeatPumpReading,
+} from './homecom-heat-pump.js'
 import { HOMECOM_CLIENT_ID, HOMECOM_TOKEN_URL } from './homecom-oauth.js'
 import {
   circuitModeWrites,
@@ -186,6 +191,7 @@ export function createHomeComApiClient(
   let last: HomeComSystemSnapshot | null = null
   let refreshTail: Promise<void> = Promise.resolve()
   const dropped = new Set<string>()
+  let heatPumpPathsLogged = false
   const base = homeComApiBase(config.region)
 
   function authHeaders(): Record<string, string> {
@@ -354,7 +360,18 @@ export function createHomeComApiClient(
         dhw: dhwId === undefined ? [] : [dhwId],
       },
     })
-    return hasHeatSource(heatPump) ? { ...snapshot, heatPump } : snapshot
+    logHeatPumpPaths(heatPump)
+    return hasSystemDevice(heatPump) ? { ...snapshot, heatPump } : snapshot
+  }
+
+  function logHeatPumpPaths(reading: HomeComHeatPumpReading): void {
+    if (heatPumpPathsLogged) return
+    heatPumpPathsLogged = true
+    const census = heatPumpPathCensus(reading)
+    logger?.info('HomeCom heat-pump paths', {
+      tags: { gatewayId },
+      meta: { answered: census.answered, unanswered: census.unanswered },
+    })
   }
 
   function logHeatPumpFailure(path: string, error: unknown): void {

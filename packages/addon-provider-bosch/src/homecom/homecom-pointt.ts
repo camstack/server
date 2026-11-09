@@ -149,8 +149,8 @@ async function readHydronic(input: PointtReadInput): Promise<HomeComSystemSnapsh
   const heating = await input.get('/heatingCircuits')
   const dhwBody = await input.get('/dhwCircuits')
   const circuits: HomeComHeatingCircuit[] = []
-  for (const id of referenceKeys(heating, 'hc')) {
-    circuits.push(await readCircuit(input.get, id))
+  for (const ref of circuitRefs(heating, 'hc')) {
+    circuits.push(await readCircuit(input.get, ref.id, ref.name))
   }
   const dhwIds = referenceKeys(dhwBody, 'dhw')
   const first = dhwIds[0]
@@ -213,7 +213,11 @@ async function readRac(input: PointtReadInput): Promise<HomeComSystemSnapshot> {
   return snapshotOf(input, [circuit], null)
 }
 
-async function readCircuit(get: ResourceGet, id: string): Promise<HomeComHeatingCircuit> {
+async function readCircuit(
+  get: ResourceGet,
+  id: string,
+  givenName: string | null,
+): Promise<HomeComHeatingCircuit> {
   const base = `/heatingCircuits/${id}`
   const loaded = await loadEnvelopes(get, [
     `${base}/operationMode`,
@@ -236,7 +240,7 @@ async function readCircuit(get: ResourceGet, id: string): Promise<HomeComHeating
   const humidity = numberOf(loaded.get(`${base}/actualHumidity`) ?? null)
   return {
     id,
-    name: id,
+    name: heatingCircuitName(id, givenName),
     operationMode: stringOf(operation) ?? 'off',
     setpoint: cooling
       ? (numberOf(coolingSet) ?? numberOf(current) ?? numberOf(manual))
@@ -372,20 +376,46 @@ function pointtMode(mode: string): string {
   }
 }
 
-function referenceKeys(body: unknown, prefix: string): readonly string[] {
+interface CircuitRef {
+  readonly id: string
+  readonly name: string | null
+}
+
+/** `hc1` → "Heating circuit 1", unless the gateway already named the circuit. */
+function heatingCircuitName(id: string, given: string | null): string {
+  if (given !== null && given.length > 0 && given !== id) return given
+  const n = id.replace(/^hc/, '')
+  return /^\d+$/.test(n) ? `Heating circuit ${n}` : 'Heating circuit'
+}
+
+function circuitRefs(body: unknown, prefix: string): readonly CircuitRef[] {
   if (!isRecord(body) || !Array.isArray(body['references'])) return []
   const pattern = prefix === 'hc' ? /^hc\d+$/ : /^dhw\d+$/
-  const out: string[] = []
+  const out: CircuitRef[] = []
   for (const ref of body['references']) {
     if (!isRecord(ref) || typeof ref['id'] !== 'string') continue
     const tail = ref['id']
       .split('/')
       .filter((part) => part.length > 0)
       .at(-1)
-    if (tail === undefined || !pattern.test(tail) || out.includes(tail)) continue
-    out.push(tail)
+    if (tail === undefined || !pattern.test(tail) || out.some((item) => item.id === tail)) {
+      continue
+    }
+    out.push({ id: tail, name: refName(ref, tail) })
   }
   return out
+}
+
+function refName(ref: Record<string, unknown>, id: string): string | null {
+  const raw = ref['name']
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  if (trimmed.length === 0 || trimmed === id) return null
+  return trimmed
+}
+
+function referenceKeys(body: unknown, prefix: string): readonly string[] {
+  return circuitRefs(body, prefix).map((ref) => ref.id)
 }
 
 function indexStandard(body: unknown): ReadonlyMap<string, PointtEnvelope> {

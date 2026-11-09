@@ -76,7 +76,7 @@ describe('HomeCom heat pump mapping (D1026)', () => {
     const status = heatPumpStatusFrom(await read(true), 1000)
     expect(HeatPumpStatusSchema.safeParse(status).success).toBe(true)
     expect(status.circuits.map((c) => [c.id, c.kind, c.label])).toEqual([
-      ['hc1', 'heating', 'Circuit 1'],
+      ['hc1', 'heating', 'Heating circuit 1'],
       ['dhw1', 'dhw', 'Hot water'],
     ])
     expect(status.circuits[0]?.operationMode).toEqual({
@@ -86,6 +86,23 @@ describe('HomeCom heat pump mapping (D1026)', () => {
     expect(status.circuits[0]?.maxFlowTemp).toEqual({ value: 55, min: 25, max: 75, step: null })
     expect(status.system.holiday?.allowed).toEqual(['off', 'hm1', 'hm2'])
     expect(status.temperatures).toEqual({ supply: 59.7, return: 52.3, outdoor: 8.8 })
+  })
+
+  it('offers an empty holiday as off when the gateway listed off, and leaves a missing mode out', async () => {
+    const reading = await readHeatPump({
+      get: async (path) => {
+        if (path === '/system/holidayMode') {
+          return envelope('', { allowedValues: ['off', 'hm1'] })
+        }
+        if (path === '/system/awayMode') return envelope('off', { allowedValues: ['off', 'on'] })
+        return null
+      },
+      circuitIds: { hc: [], dhw: [] },
+    })
+    const status = heatPumpStatusFrom(reading, 1)
+    expect(status.system.holiday).toEqual({ value: 'off', allowed: ['off', 'hm1'] })
+    expect(status.system.silent).toBeNull()
+    expect(status.power.thermalW).toBeNull()
   })
 
   it('reads an absent resource as null, never 0', async () => {
