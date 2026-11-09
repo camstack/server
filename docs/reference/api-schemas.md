@@ -2797,6 +2797,7 @@ Enum: `"devices" \| "services"`
 - `addonId`: `string`
 - `name`: `string`
 - `enabled`: `boolean`
+- `switchUnknown?`: `true`
 - `info`: `Record<string, unknown>`
 - `originStableId?`: `string`
 - `createdAt`: `number`
@@ -2808,6 +2809,7 @@ Enum: `"devices" \| "services"`
 - `addonId`: `string`
 - `name`: `string`
 - `enabled`: `boolean`
+- `switchUnknown?`: `true`
 - `info`: `Record<string, unknown>`
 - `originStableId?`: `string`
 - `createdAt`: `number`

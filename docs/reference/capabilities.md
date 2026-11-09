@@ -213,7 +213,7 @@ Singleton or collection providers, addressed without a device.
 | `schedulers` | 10 | — | — | — | — | `core-blocks` |
 | `server-management` | 8 | — | — | — | — | — |
 | `settings-store` | 17 | — | — | — | — | `storage-orchestrator` |
-| `smtp-provider` | 3 | — | — | — | ✓ | `google-services` `smtp-nodemailer` |
+| `smtp-provider` | 2 | — | — | — | ✓ | `google-services` `smtp-nodemailer` |
 | `sso-bridge` | 2 | — | — | — | ✓ | — |
 | `storage` | 17 | — | — | — | — | `storage-orchestrator` |
 | `storage-admin` | 7 | — | — | — | ✓ | `sqlite-settings` |
