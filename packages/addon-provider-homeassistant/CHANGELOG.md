@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.675] - 2026-11-09
+
 ### Fixed
 
 - Each imported calendar names the record that owns it, so two connections sharing an entity id keep separate switches

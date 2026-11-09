@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.817",
+  "version": "1.2.818",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,17 +66,11 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.624",
-        "@camstack/addon-agent-ui": ">=1.2.350",
-        "@camstack/addon-ai": ">=0.4.182",
-        "@camstack/addon-mqtt-broker": ">=1.2.157",
-        "@camstack/addon-notifiers": ">=1.2.634",
-        "@camstack/addon-post-analysis": ">=1.2.687",
-        "@camstack/addon-provider-ecowitt": ">=0.2.161",
-        "@camstack/addon-provider-petkit": ">=0.2.167",
-        "@camstack/addon-provider-reolink": ">=1.2.235",
-        "@camstack/addon-provider-vesync": ">=0.2.155",
-        "@camstack/addon-terminal": ">=0.1.163"
+        "@camstack/addon-admin-ui": ">=1.2.625",
+        "@camstack/addon-google-services": ">=0.2.45",
+        "@camstack/addon-pipeline-orchestrator": ">=1.2.674",
+        "@camstack/addon-provider-homeassistant": ">=1.2.675",
+        "@camstack/addon-waste-collections": ">=0.1.41"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

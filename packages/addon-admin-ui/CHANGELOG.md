@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.625] - 2026-11-09
+
 ### Changed
 
 - The Calendars page lists every imported calendar with an on/off switch, so a calendar can be switched off and back on without leaving the page

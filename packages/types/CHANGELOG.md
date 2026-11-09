@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.532] - 2026-11-09
+
 ### Changed
 
 - A calendar names the integration-instances record that owns it (calendar-source CalendarInfo.instanceId, passed through the calendars listing)
