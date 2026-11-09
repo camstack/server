@@ -471,6 +471,40 @@ export function rawInstancesProvider(
 }
 
 /**
+ * The switch of a FIXED builtin: the registry flag, the one store, written here and nowhere else.
+ * It needs no addon provider, so a builtin whose addon is down or failed can still be turned back
+ * on. The enabled / disabled event follows a real change only.
+ */
+export async function setFixedBuiltinEnabled(
+  deps: Pick<InstanceLifecycleDeps, 'integrations' | 'eventBus' | 'logger'>,
+  integration: Integration,
+  enabled: boolean,
+): Promise<void> {
+  await deps.integrations().updateIntegration(integration.id, { enabled })
+  await emitSwitchEvent(deps, integration, enabled)
+}
+
+/** `integration.enabled` / `integration.disabled`, only when the switch actually moved. */
+async function emitSwitchEvent(
+  deps: Pick<InstanceLifecycleDeps, 'eventBus' | 'logger'>,
+  integration: Integration,
+  enabled: boolean,
+): Promise<void> {
+  if (integration.enabled === enabled) return
+  deps.logger.info('enabled state changed', {
+    tags: { integrationId: integration.id, addonId: integration.addonId },
+    meta: { phase: 'set-enabled', enabled },
+  })
+  deps.eventBus.emit({
+    id: `integration-enabled-${integration.id}-${Date.now()}`,
+    timestamp: new Date(),
+    source: { type: 'integration', id: integration.id },
+    category: enabled ? EventCategory.IntegrationEnabled : EventCategory.IntegrationDisabled,
+    data: { integrationId: integration.id, addonId: integration.addonId },
+  })
+}
+
+/**
  * `provider` with a `createInstance` / `deleteInstance` that carry the hub half for an instance
  * that brings devices. An instance of a kind that does not (a notifier, a broker account, a
  * destination) is the addon's record alone and goes straight through, as does a call naming a
@@ -555,9 +589,16 @@ export function withInstanceLifecycle(
     return instance === null ? null : withRegistryFlag(instance)
   }
   const setInstanceEnabled: IIntegrationInstancesProvider['setInstanceEnabled'] = async (input) => {
-    if ((await fixedRow(input.id)) === null) return provider.setInstanceEnabled(input)
-    await deps.integrations().updateIntegration(input.id, { enabled: input.enabled })
-    return { ok: true as const }
+    const fixed = await fixedRow(input.id)
+    if (fixed !== null) {
+      await setFixedBuiltinEnabled(deps, fixed, input.enabled)
+      return { ok: true as const }
+    }
+    const before = await deps.integrations().getIntegration(input.id)
+    const result = await provider.setInstanceEnabled(input)
+    if (before !== null && before.addonId === bare)
+      await emitSwitchEvent(deps, before, input.enabled)
+    return result
   }
   const wrapped: IIntegrationInstancesProvider = new Proxy(provider, {
     get(target, prop) {

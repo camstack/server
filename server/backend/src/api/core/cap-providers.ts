@@ -66,6 +66,7 @@ import { errMsg } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
 import {
   deleteRegisteredInstance,
+  setFixedBuiltinEnabled,
   type DeviceCascadePort,
   type InstanceLifecycleDeps,
   isFixedBuiltin,
@@ -1187,7 +1188,11 @@ export function buildIntegrationsProvider(
         })
         throw new Error(`Integration "${input.id}" not found`)
       }
-      if (input.enabled !== undefined) {
+      if (input.enabled !== undefined && isFixedBuiltin(previous)) {
+        // A fixed builtin's switch is the registry flag: no addon provider is needed, so a builtin
+        // whose addon is down can be turned back on.
+        await setFixedBuiltinEnabled(lifecycleDeps, previous, input.enabled)
+      } else if (input.enabled !== undefined) {
         logger.warn('refused: integrations.update does not switch', {
           tags: { integrationId: input.id, addonId: previous.addonId },
           meta: { phase: 'update', reason: 'switch-through-set-instance-enabled' },
@@ -1197,7 +1202,7 @@ export function buildIntegrationsProvider(
           message: `Integration "${input.id}" is switched through integration-instances.setInstanceEnabled, not integrations.update`,
         })
       }
-      const { id, ...updates } = input
+      const { id, enabled: _switched, ...updates } = input
       const changedFields = Object.keys(updates).filter(
         (k) => (updates as Record<string, unknown>)[k] !== undefined,
       )

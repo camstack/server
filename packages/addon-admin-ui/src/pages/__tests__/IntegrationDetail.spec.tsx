@@ -37,7 +37,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 const fleetReads = vi.hoisted(() => ({ calls: [] as unknown[][] }))
-const switches = vi.hoisted(() => ({ instance: vi.fn() }))
+const switches = vi.hoisted(() => ({ instance: vi.fn(), fixed: vi.fn() }))
 
 const BASE_INTEGRATION = {
   id: 'int_reolink',
@@ -104,6 +104,7 @@ vi.mock('@camstack/ui-library', async () => {
       mutate: switches.instance,
       isPending: false,
     }),
+    useIntegrationsUpdate: () => ({ mutate: switches.fixed, isPending: false }),
     useIntegrationInstancesDeleteInstance: mutationStub,
     useAddonsRestartAddon: mutationStub,
     useDeviceManagerRemove: mutationStub,
@@ -193,18 +194,16 @@ describe('IntegrationDetailPage - the one switch', () => {
     })
   })
 
-  it('switches a FIXED builtin through setInstanceEnabled too: there is no second door', () => {
+  it('switches a FIXED builtin through the registry flag (no addon provider needed), not setInstanceEnabled', () => {
     shown.integration = { ...BASE_INTEGRATION, info: { fixed: true } }
     switches.instance.mockReset()
+    switches.fixed.mockReset()
     render(renderPage())
 
     fireEvent.click(screen.getByRole('switch', { name: 'Disable integration' }))
 
-    expect(switches.instance).toHaveBeenCalledWith({
-      id: 'int_reolink',
-      addonId: 'provider-reolink',
-      enabled: false,
-    })
+    expect(switches.fixed).toHaveBeenCalledWith({ id: 'int_reolink', enabled: false })
+    expect(switches.instance).not.toHaveBeenCalled()
     shown.integration = null
   })
 
@@ -217,6 +216,10 @@ describe('IntegrationDetailPage - the one switch', () => {
     expect(unknown).toBeDisabled()
     expect(screen.queryByText('Enabled')).toBeNull()
     expect(screen.queryByText('Disabled')).toBeNull()
+    // The label is not drawn green either (the stored flag is stale, not the state).
+    expect(
+      screen.getAllByText('Unknown').every((el) => !el.className.includes('text-success')),
+    ).toBe(true)
     shown.integration = null
   })
 })

@@ -30,6 +30,7 @@ function harness(rows: readonly Integration[], instancesOf: (addonId: string) =>
     ),
     updateIntegration: vi.fn(async (id: string) => rows.find((r) => r.id === id) ?? null),
   }
+  const emit = vi.fn()
   const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
   const addonReg = {
     getIntegrationRegistry: vi.fn(() => registry),
@@ -43,11 +44,11 @@ function harness(rows: readonly Integration[], instancesOf: (addonId: string) =>
   }
   const provider = buildIntegrationsProvider(
     addonReg as never,
-    { emit: vi.fn() } as never,
+    { emit } as never,
     { createLogger: vi.fn(() => log) } as never,
     null,
   )
-  return { provider, registry, log }
+  return { provider, registry, log, emit }
 }
 
 function instancesProvider(entries: readonly { id: string; enabled?: boolean }[]) {
@@ -149,12 +150,16 @@ describe('integrations.update and the switch', () => {
     expect(h.registry.updateIntegration).not.toHaveBeenCalled()
   })
 
-  it('refuses enabled for a fixed builtin too: its switch is setInstanceEnabled', async () => {
-    const h = harness([row('int_9', 'core-blocks', true, true)], () => null)
-    await expect(h.provider.update({ id: 'int_9', enabled: false })).rejects.toMatchObject({
-      code: 'BAD_REQUEST',
-      message: expect.stringContaining('setInstanceEnabled'),
-    })
-    expect(h.registry.updateIntegration).not.toHaveBeenCalled()
+  it('switches a fixed builtin through the registry although its addon provider is absent, and emits the event', async () => {
+    const rows = [row('int_9', 'core-blocks', false, true)]
+    const h = harness(rows, () => null)
+    await h.provider.update({ id: 'int_9', enabled: true })
+    expect(h.registry.updateIntegration).toHaveBeenCalledWith('int_9', { enabled: true })
+    expect(h.emit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'integration.enabled',
+        data: expect.objectContaining({ integrationId: 'int_9' }),
+      }),
+    )
   })
 })

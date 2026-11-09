@@ -23,6 +23,7 @@ import {
   useIntegrationsGet,
   useIntegrationsGetAvailableTypes,
   useIntegrationsList,
+  useIntegrationsUpdate,
   useIntegrationInstancesSetInstanceEnabled,
   useSystem,
   Button,
@@ -254,8 +255,9 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     ['integrations', 'get'],
     { input: { id: integrationId }, type: 'query' },
   ] as const
-  // The ONE switch is `setInstanceEnabled` for every row; for a fixed builtin (no instance body) the
-  // hub half of that call writes the registry flag.
+  // The switch is `setInstanceEnabled` for an instance row. A FIXED builtin has no instance body: its
+  // switch is the registry flag, written by the hub without its addon (a failed builtin can be
+  // turned back on), so it goes through `integrations.update`.
   const switchHandlers = {
     onMutate: async (vars: { readonly enabled?: boolean }) => {
       await queryClient.cancelQueries({ queryKey: integrationKey })
@@ -279,7 +281,15 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
       queryClient.invalidateQueries({ queryKey: [['deviceManager']] })
     },
   }
-  const toggleMutation = useIntegrationInstancesSetInstanceEnabled(switchHandlers)
+  const instanceToggle = useIntegrationInstancesSetInstanceEnabled(switchHandlers)
+  const fixedToggle = useIntegrationsUpdate(switchHandlers)
+  const toggleMutation = {
+    isPending: instanceToggle.isPending || fixedToggle.isPending,
+    mutate: (vars: { id: string; addonId?: string; enabled: boolean }) =>
+      isFixed
+        ? fixedToggle.mutate({ id: vars.id, enabled: vars.enabled })
+        : instanceToggle.mutate(vars),
+  }
   const switchUnknown = integration?.switchUnknown === true
 
   const deleteMutation = useIntegrationInstancesDeleteInstance({
@@ -485,7 +495,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
             />
             <span
               className={`text-[11px] font-medium ${
-                integration.enabled ? 'text-success' : 'text-foreground-subtle'
+                integration.enabled && !switchUnknown ? 'text-success' : 'text-foreground-subtle'
               }`}
             >
               {switchUnknown
