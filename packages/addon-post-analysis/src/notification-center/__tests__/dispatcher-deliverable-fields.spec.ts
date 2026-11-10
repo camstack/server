@@ -4,13 +4,24 @@
  * the title and an empty body — nothing joined to it. A target whose kind the
  * catalog did not answer keeps everything.
  */
-import type { IScopedLogger, NotificationField } from '@camstack/types'
+import {
+  type IScopedLogger,
+  NC_TEMPLATE_TITLE_MAX_CHARS,
+  type NotificationField,
+} from '@camstack/types'
 import { describe, expect, it, type MockInstance, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { NcDispatcher, type NcSendInput } from '../dispatcher.js'
 import type { NcOutboxEntry } from '../outbox.js'
 
-function entry(): NcOutboxEntry {
+interface Template {
+  readonly title: string
+  readonly body: string
+}
+
+const DEFAULT_TEMPLATE: Template = { title: 'Someone at {{device}}', body: 'A person was seen' }
+
+function entry(template: Template): NcOutboxEntry {
   return {
     id: 'rule-1:trk-1:tgt-1',
     ruleId: 'rule-1',
@@ -29,7 +40,7 @@ function entry(): NcOutboxEntry {
       delivery: 'immediate',
       priority: 4,
       media: 'none',
-      template: { title: 'Someone at {{device}}', body: 'A person was seen' },
+      template,
       params: { sound: 'chime' },
       subject: {
         deviceId: 101,
@@ -48,7 +59,10 @@ interface Delivered {
   readonly info: MockInstance<IScopedLogger['info']>
 }
 
-async function sendTo(fields: readonly NotificationField[] | undefined): Promise<Delivered> {
+async function sendTo(
+  fields: readonly NotificationField[] | undefined,
+  template: Template = DEFAULT_TEMPLATE,
+): Promise<Delivered> {
   const sends: NcSendInput[] = []
   const logger = makeSilentLogger()
   const info = vi.spyOn(logger, 'info')
@@ -72,7 +86,7 @@ async function sendTo(fields: readonly NotificationField[] | undefined): Promise
     getDeviceName: async () => 'Cancello',
     now: () => 1_800_000_000_000,
   })
-  await dispatcher.deliver(entry())
+  await dispatcher.deliver(entry(template))
   const [sent] = sends
   if (sent === undefined) throw new Error('nothing was sent')
   return { sent, info }
@@ -104,5 +118,34 @@ describe('NcDispatcher — deliverable fields (#483)', () => {
     const { sent } = await sendTo(undefined)
     expect(sent.notification.body).toBe('A person was seen')
     expect(sent.notification.sound).toBe('chime')
+  })
+
+  // An empty authored title falls back to the rule name before this point; the
+  // title that reaches a target empty is one whose variables render to nothing.
+  const EMPTY_RENDERED_TITLE = '{{noSuchVariable}} '
+
+  it('a title-only target whose title renders empty speaks the body, cut to the title limit', async () => {
+    const body = `A person was seen at {{device}} ${'x'.repeat(NC_TEMPLATE_TITLE_MAX_CHARS)}`
+    const { sent, info } = await sendTo(['title'], { title: EMPTY_RENDERED_TITLE, body })
+    expect(sent.notification.title).toBe(
+      `A person was seen at cancello ${'x'.repeat(NC_TEMPLATE_TITLE_MAX_CHARS)}`.slice(
+        0,
+        NC_TEMPLATE_TITLE_MAX_CHARS,
+      ),
+    )
+    expect(sent.notification.body).toBe('')
+    const line = info.mock.calls.find(([msg]) => msg === 'notification delivered')
+    expect(line?.[1]).toMatchObject({ meta: { titleFromBody: true } })
+  })
+
+  it('a target that also delivers the body keeps an empty title empty', async () => {
+    const { sent, info } = await sendTo(['title', 'body'], {
+      title: EMPTY_RENDERED_TITLE,
+      body: 'A person was seen',
+    })
+    expect(sent.notification.title?.trim() ?? '').toBe('')
+    expect(sent.notification.body).toBe('A person was seen')
+    const line = info.mock.calls.find(([msg]) => msg === 'notification delivered')
+    expect(line?.[1]).not.toMatchObject({ meta: { titleFromBody: true } })
   })
 })

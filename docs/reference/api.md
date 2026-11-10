@@ -3603,7 +3603,7 @@
 
 ### `notification-rules` → `notificationRules.*`
 
-- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3231`
+- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3244`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `INotificationRulesProvider`

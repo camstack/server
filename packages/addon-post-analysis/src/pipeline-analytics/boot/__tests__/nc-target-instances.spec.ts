@@ -139,7 +139,7 @@ describe('readNcTargets', () => {
         ownerUserId: 'u-7',
         bodyMaxLen: 4096,
         maxActions: 3,
-        // What the kind delivers (D1029), read from its caps.
+        // What the kind delivers (D1030), read from its caps.
         fields: ['title', 'body', 'actions'],
       },
     ])

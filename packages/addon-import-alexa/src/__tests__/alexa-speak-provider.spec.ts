@@ -48,7 +48,7 @@ function target(config: Record<string, unknown> = {}): Target {
   }
 }
 
-// The kind declares a title only (D1029): the spoken sentence is the title,
+// The kind declares a title only (D1030): the spoken sentence is the title,
 // and a body beside it is never joined to it.
 const note = (title: string): Notification => ({
   title,

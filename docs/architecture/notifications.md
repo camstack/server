@@ -3586,7 +3586,7 @@ Home Assistant's provider — one concatenated catalog, since `listTargetKinds` 
 collection cap. This is why asking for footage is always safe, and why
 per-target special-casing must never leak back into rule authoring.
 
-### Which fields a target delivers, and a target's own settings ([D1029](../decisions/adr-1029-a-notifier-declares-the-message-fields-a-target-delivers-and-a-rule-target-overrides-them.md))
+### Which fields a target delivers, and a target's own settings ([D1030](../decisions/adr-1030-a-notifier-declares-the-message-fields-a-target-delivers-and-a-rule-target-overrides-them.md))
 
 The notifier declares the text a kind delivers: `TargetKindCaps.text =
 { title, body }`; absent means both. `deliverableFields(caps)` reads the whole

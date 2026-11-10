@@ -1622,7 +1622,7 @@ function RuleFormDialog({
         <TabsContent value="notification" className="space-y-4">
           {/* Priority + media */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* D1029: shown when a selected target delivers it; the hint names
+            {/* D1030: shown when a selected target delivers it; the hint names
                   the selected targets that do not. */}
             {shows('priority') && (
               <div data-testid="rule-priority">
@@ -1866,7 +1866,7 @@ function RuleFormDialog({
           {/* Template */}
           <div className="space-y-2">
             {/* The rule's texts are every target's DEFAULT; a target's own
-                  panel (Rule tab) overrides them for that target (D1029). */}
+                  panel (Rule tab) overrides them for that target (D1030). */}
             {shows('title') && (
               <>
                 <TemplateField

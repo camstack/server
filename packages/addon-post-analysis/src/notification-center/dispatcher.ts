@@ -1253,6 +1253,7 @@ export class NcDispatcher {
           // What the kind does not deliver, named (D391): a title-only speaker
           // that never reads the body must say so on its own delivery line.
           ...(deliverable.dropped.length > 0 ? { fieldsDropped: deliverable.dropped } : {}),
+          ...(deliverable.titleFromBody ? { titleFromBody: true } : {}),
           // The gate's verdict rides out WITH the delivery, counters included:
           // `failedOpen` climbing while `suppressed` stays at zero is the only
           // way a permanently-open gate is distinguishable from a working one.

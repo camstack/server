@@ -1187,6 +1187,7 @@ export {
   NcRuleTargetSchema,
   type NcTargetOverride,
   NcTargetOverrideSchema,
+  NC_TEMPLATE_TITLE_MAX_CHARS,
   type NcTargetOverrides,
   NcTargetOverridesSchema,
   type NcRuleUpdateInput,

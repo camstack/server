@@ -6,21 +6,27 @@
  * Alexa declares a title and nothing else, so it speaks the title and joins
  * nothing to it. A target whose kind the catalog did not answer (`fields`
  * undefined) keeps everything: unknown is not "unsupported" (D315).
+ *
+ * A kind that delivers the title but not the body, handed a title that
+ * rendered empty, is given the rendered body instead, cut to the title's
+ * limit — a speaker must not say nothing (D1030).
  */
-import type { NotificationField } from '@camstack/types'
+import { NC_TEMPLATE_TITLE_MAX_CHARS, type NotificationField } from '@camstack/types'
 import type { NcNotificationInput } from './dispatcher.js'
 
 /** The notification to send, and the fields that were dropped from it (for the log line). */
 export interface NcDeliverableNotification {
   readonly notification: NcNotificationInput
   readonly dropped: readonly NotificationField[]
+  /** True when the title was empty and the body stood in for it. */
+  readonly titleFromBody: boolean
 }
 
 export function deliverableNotification(
   notification: NcNotificationInput,
   fields: readonly NotificationField[] | undefined,
 ): NcDeliverableNotification {
-  if (fields === undefined) return { notification, dropped: [] }
+  if (fields === undefined) return { notification, dropped: [], titleFromBody: false }
   const has = (field: NotificationField): boolean => fields.includes(field)
   const dropped: NotificationField[] = []
   const note = (field: NotificationField, present: boolean): boolean => {
@@ -37,8 +43,20 @@ export function deliverableNotification(
   )
   const keepSound = note('sound', notification.sound !== undefined)
   const keepClickUrl = note('clickUrl', notification.clickUrl !== undefined)
-  const { title, attachments, actions, priority, level, sound, clickUrl, body, ...rest } =
-    notification
+  const {
+    title: rendered,
+    attachments,
+    actions,
+    priority,
+    level,
+    sound,
+    clickUrl,
+    body,
+    ...rest
+  } = notification
+  const titleFromBody =
+    keepTitle && !keepBody && (rendered ?? '').trim().length === 0 && body.trim().length > 0
+  const title = titleFromBody ? body.trim().slice(0, NC_TEMPLATE_TITLE_MAX_CHARS) : rendered
   return {
     notification: {
       ...rest,
@@ -54,5 +72,6 @@ export function deliverableNotification(
       ...(keepClickUrl && clickUrl !== undefined ? { clickUrl } : {}),
     },
     dropped,
+    titleFromBody,
   }
 }

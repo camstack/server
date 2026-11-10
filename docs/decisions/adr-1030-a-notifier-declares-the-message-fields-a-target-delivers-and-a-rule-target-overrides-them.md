@@ -1,5 +1,5 @@
 ---
-id: D1029
+id: D1030
 title: A notifier declares the message fields a target delivers, and a rule's target overrides the rule only within them
 status: accepted
 date: 2026-11-10
@@ -46,6 +46,10 @@ outbox row and the skip is logged (D391); the others still deliver. The
 rule's template is merged with the target's, and a target priority replaces
 both the rule's and a legacy `params.priority`. At send, the dispatcher drops
 every field the target's kind does not deliver and logs `fieldsDropped`.
+A kind that delivers the title but not the body, handed a title that
+rendered empty, is sent the rendered body as its title, cut to
+`NC_TEMPLATE_TITLE_MAX_CHARS`, and the delivery line says `titleFromBody` —
+a speaker never says nothing.
 
 ## Consequences
 

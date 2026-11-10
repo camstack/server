@@ -1140,9 +1140,19 @@ export type NcRuleTarget = z.infer<typeof NcRuleTargetSchema>
  * volume…) stay where they already live per target: the rule target's
  * `params`. One store per fact.
  */
+/**
+ * The longest title a rule (or one of its targets) may carry. Also the cut a
+ * title-only target's body falls back to when its rendered title is empty
+ * (D1030).
+ */
+export const NC_TEMPLATE_TITLE_MAX_CHARS = 500
+
 export const NcTargetOverrideSchema = z.object({
   template: z
-    .object({ title: z.string().max(500).optional(), body: z.string().max(2000).optional() })
+    .object({
+      title: z.string().max(NC_TEMPLATE_TITLE_MAX_CHARS).optional(),
+      body: z.string().max(2000).optional(),
+    })
     .optional(),
   schedule: NcScheduleSchema.optional(),
   priority: z.number().int().min(1).max(5).optional(),
@@ -1483,7 +1493,10 @@ export const NcRuleInputSchema = z.object({
   throttle: NcThrottleSchema.default({ cooldownSec: 60, scope: 'rule-device' }),
   /** `{{var}}` title/body. The variables are declared in `NC_TEMPLATE_VARS` (@camstack/types) and depend on the rule kind — see `templateVarsFor`. */
   template: z
-    .object({ title: z.string().max(500).optional(), body: z.string().max(2000).optional() })
+    .object({
+      title: z.string().max(NC_TEMPLATE_TITLE_MAX_CHARS).optional(),
+      body: z.string().max(2000).optional(),
+    })
     .optional(),
   /** Canonical notification priority ordinal (1..5); per-target overridable. */
   priority: z.number().int().min(1).max(5).default(3),
