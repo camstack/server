@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.417] - 2026-11-10
+
 ### Changed
 
 - DeviceTemplateField asks the hub about every {{ … }} except {{ vars.x }}, as an action run does; heldSlots="placeholders" also holds a bare {{name}} for notification texts

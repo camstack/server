@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-post-analysis",
-  "version": "1.2.690",
+  "version": "1.2.691",
   "description": "Post-Analysis bundle — enrichment, embedding-encoder, pipeline-analytics. Multi-entry npm package shipping addons that consume pipeline output.",
   "keywords": [
     "camstack",
@@ -143,7 +143,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.824"
+      "server": ">=1.2.826"
     }
   },
   "scripts": {
