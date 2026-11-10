@@ -28,11 +28,14 @@ import {
   Sprout,
   ShieldCheck,
   Dot,
+  Power,
   Siren,
   WashingMachine,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { cn } from '../../lib/cn'
+import { Button } from '../../primitives/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../primitives/tooltip'
 import { SceneBackdrop } from './backdrops'
 import { SceneArt, SCENES_WITH_ART } from './scene-art'
 import { HERO_SCENE_CSS } from './hero-scene-css'
@@ -89,6 +92,20 @@ function CaptionText({ text }: { readonly text: string }): ReactNode {
   )
 }
 
+/** The device's own on/off, read at the top of the scene; `action` makes that value the switch. */
+export interface HeroScenePower {
+  /** The state word ("On", "Off"), printed before the caption. */
+  readonly value: string
+  readonly on: boolean
+  /** Absent: the value is only read (a session that may not act). */
+  readonly action?: {
+    /** The verb the press performs ("Turn off"): the tooltip and the accessible name. */
+    readonly label: string
+    readonly onPress: () => void
+    readonly disabled?: boolean
+  }
+}
+
 export interface HeroSceneProps extends HeroSceneParams {
   readonly scene: HeroSceneId
   /** Scene-specific state (see `resolveSceneVisual`). */
@@ -97,6 +114,10 @@ export interface HeroSceneProps extends HeroSceneParams {
   readonly size?: 'hero' | 'mini'
   /** A short state caption at the top of the scene ("Cooling", "Rinsing"), in the scene's tone. */
   readonly caption?: string
+  /** The device's own on/off: its value leads the caption and, with an `action`, is the switch. */
+  readonly power?: HeroScenePower
+  /** Command controls drawn along the scene's foot (a cover's open / stop / close, a player's transport). */
+  readonly controls?: ReactNode
   /** Draws the centre slot in the scene's tone (a setpoint, a countdown) instead of the text colour. */
   readonly toneCentre?: boolean
   readonly leftTiles?: readonly SceneTile[]
@@ -134,6 +155,51 @@ function Tiles({ tiles }: { tiles: readonly SceneTile[] | undefined }): ReactNod
   )
 }
 
+function SceneCaption({
+  caption,
+  power,
+}: {
+  readonly caption: string | undefined
+  readonly power: HeroScenePower | undefined
+}): ReactNode {
+  const text = (
+    <>
+      {power === undefined ? null : (
+        <span data-testid="scene-power-value" className="mr-1.5">
+          {power.value}
+        </span>
+      )}
+      {caption === undefined ? null : <CaptionText text={caption} />}
+    </>
+  )
+  const action = power?.action
+  if (power === undefined || action === undefined)
+    return <span className="min-w-0 truncate py-1">{text}</span>
+  return (
+    <Tooltip className="block max-w-full min-w-0">
+      <TooltipTrigger>
+        <Button
+          variant="ghost"
+          size="sm"
+          role="switch"
+          aria-checked={power.on}
+          aria-label={action.label}
+          data-testid="scene-power-toggle"
+          disabled={action.disabled === true}
+          className="h-auto max-w-full gap-1.5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-current"
+          onClick={action.onPress}
+        >
+          <Power className="size-3.5 shrink-0" aria-hidden />
+          <span className="min-w-0 truncate">{text}</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent className="bottom-auto top-full mb-0 mt-1 normal-case">
+        {action.label}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
 /**
  * A rectangular scene: an animated backdrop chosen by scene id + state, side
  * tiles and a centre slot. The same ids render at mini size inside a DeviceRow.
@@ -143,6 +209,8 @@ export function HeroScene({
   state,
   size = 'hero',
   caption,
+  power,
+  controls,
   toneCentre,
   leftTiles,
   rightTiles,
@@ -192,7 +260,7 @@ export function HeroScene({
       data-scene-size="hero"
       className={cn(
         'relative w-full overflow-hidden rounded-xl border border-current/40 bg-surface/30',
-        art ? 'h-48' : 'h-44',
+        controls === undefined && (art ? 'h-48' : 'h-44'),
         tone,
         className,
       )}
@@ -200,15 +268,20 @@ export function HeroScene({
       <style>{AIRFLOW_KEYFRAMES}</style>
       <style>{HERO_SCENE_CSS}</style>
       {backdrop}
-      {caption === undefined ? null : (
+      {caption === undefined && power === undefined ? null : (
         <div
           data-testid="scene-caption"
-          className="absolute inset-x-0 top-1.5 z-20 truncate text-center text-[11px] font-semibold uppercase tracking-wide"
+          className="absolute inset-x-0 top-1 z-20 flex justify-center px-2 text-[11px] font-semibold uppercase tracking-wide"
         >
-          <CaptionText text={caption} />
+          <SceneCaption caption={caption} power={power} />
         </div>
       )}
-      <div className="relative z-10 grid h-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-2 pt-4 text-foreground">
+      <div
+        className={cn(
+          'relative z-10 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-2 pt-4 text-foreground',
+          controls === undefined ? 'h-full' : art ? 'h-48' : 'h-44',
+        )}
+      >
         <Tiles tiles={leftTiles} />
         <div
           data-testid="scene-centre"
@@ -225,6 +298,14 @@ export function HeroScene({
           <Tiles tiles={rightTiles} />
         </div>
       </div>
+      {controls === undefined ? null : (
+        <div
+          data-testid="scene-controls"
+          className="relative z-20 flex flex-col items-center justify-center gap-2 px-3 pb-3 text-foreground"
+        >
+          {controls}
+        </div>
+      )}
     </div>
   )
 }

@@ -9,7 +9,13 @@ export {
   type HeroRowLineProps,
   type HeroSegmentedProps,
 } from './hero-row'
-export { HeroScene, HERO_SCENE_ICON, type HeroSceneProps } from './hero-scene'
+export {
+  HeroUtilityGrid,
+  type HeroUtility,
+  type HeroUtilityGridProps,
+} from './hero-utility-grid'
+export { heroUtilityLayout, type HeroUtilitySpan } from './hero-utility-layout'
+export { HeroScene, HERO_SCENE_ICON, type HeroSceneProps, type HeroScenePower } from './hero-scene'
 export { resolveSceneVisual } from './scene-map'
 export { SCENES_WITH_ART } from './scene-art'
 export {

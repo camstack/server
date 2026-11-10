@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The device page and its hero follow the child a container declares as its primary
 - Admin UI: Authentication, Connectivity, Remote Access and TURN Servers each show one provider table (Remote Access tunnel state and Start/Stop are in the rows; the Calendars legend links to Connectivity instead of repeating the source switch)
+- The device page and its hero follow the child a container declares as its primary
+- The device hero card drops the Power, Supply and cover rows: the scene is the on/off, commands sit beside the animation, and history, consumables and the power source are buttons at the card foot
 
 ## [1.2.634] - 2026-11-10
 

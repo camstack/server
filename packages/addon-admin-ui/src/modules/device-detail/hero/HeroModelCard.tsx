@@ -3,7 +3,6 @@ import {
   HERO_ROW_LABELS,
   type HeroAction,
   type HeroCall,
-  type HeroConsumableItem,
   type HeroControl,
   type HeroModel,
   type HeroRow,
@@ -16,26 +15,25 @@ import {
   HeroProgressBar,
   HeroRowLine,
   HeroScene,
+  type HeroScenePower,
   HeroSegmented,
+  HeroUtilityGrid,
   IconButton,
   resolveSceneVisual,
   SCENES_WITH_ART,
   Select,
   Slider,
   Switch,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
   useDisplayIconResolver,
 } from '@camstack/ui-library'
 import { Minus, Plus } from 'lucide-react'
 import { Fragment, type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  badgeVariantOf,
-  clockText,
-  type HeroLang,
-  pickText,
-  sceneOf,
-  tilesOf,
-} from './hero-model-view'
+import { badgeVariantOf, type HeroLang, pickText, sceneOf, tilesOf } from './hero-model-view'
+import { useHeroUtilities } from './hero-utilities'
 
 /** What the card asks its host to do: run the cap method an action or a control names. */
 export interface HeroCardHost {
@@ -43,7 +41,7 @@ export interface HeroCardHost {
   readonly busy: boolean
   /** Runs the call; `confirm` asks first. Resolves when the call settled. */
   readonly run: (call: HeroCall, action: HeroAction | null) => void
-  /** Opens the device's history (cycles, meals, access ...). Absent: the foot button is not drawn. */
+  /** Opens the device's history (cycles, meals, access ...). Absent: the history utility is not drawn. */
   readonly openHistory?: () => void
 }
 
@@ -182,6 +180,13 @@ function PickerControl({
 }
 
 type SliderModel = Extract<HeroControl, { kind: 'slider' }>
+
+/** A scene-placed row without the controls the scene draws; what only a row can hold (a picker) stays. */
+function withoutSceneControls(row: HeroRow): HeroRow {
+  if (row.placement !== 'scene') return row
+  const rest = row.controls.filter((c) => !isSceneControl(c))
+  return { ...row, status: rest.length === 0 ? null : row.status, controls: rest }
+}
 
 /** A row without the slider the scene already draws in its centre. */
 function withoutDial(row: HeroRow, dial: Dial | null): HeroRow {
@@ -406,6 +411,67 @@ function ControlView({
   }
 }
 
+/** A command on the scene: an icon button, named by its label in a tooltip and for assistive tech. */
+function SceneAction({
+  action,
+  host,
+}: {
+  readonly action: HeroAction
+  readonly host: HeroCardHost
+}): ReactNode {
+  const resolve = useDisplayIconResolver()
+  const label = pickText(action.label, host.lang)
+  return (
+    <Tooltip className="inline-block">
+      <TooltipTrigger>
+        <IconButton
+          aria-label={label}
+          icon={resolve(action.icon) ?? Minus}
+          size="md"
+          variant={action.emphasis === 'primary' ? 'primary' : 'outline'}
+          disabled={host.busy}
+          data-testid={`scene-action-${action.id}`}
+          onClick={() => host.run(action.call, action)}
+        />
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+/** The controls of a scene-placed row that the scene can draw: commands and sliders. */
+const isSceneControl = (control: HeroControl): boolean =>
+  control.kind === 'action' || control.kind === 'slider'
+
+function SceneControls({
+  rows,
+  host,
+}: {
+  readonly rows: readonly HeroRow[]
+  readonly host: HeroCardHost
+}): ReactNode {
+  const controls = rows.flatMap((r) => r.controls.filter(isSceneControl))
+  if (controls.length === 0) return null
+  const actions = controls.filter((c) => c.kind === 'action')
+  const sliders = controls.filter((c) => c.kind === 'slider')
+  return (
+    <>
+      {actions.length === 0 ? null : (
+        <div className="flex items-center gap-1.5">
+          {actions.map((c) => (
+            <SceneAction key={c.action.id} action={c.action} host={host} />
+          ))}
+        </div>
+      )}
+      {sliders.map((c) => (
+        <div key={c.id} className="w-full max-w-64">
+          <SliderControl control={c} host={host} />
+        </div>
+      ))}
+    </>
+  )
+}
+
 /** Rows whose status (the circuit's temperatures) stays beside their selector instead of giving way to it. */
 const STATUS_BESIDE_CONTROLS: ReadonlySet<HeroRow['id']> = new Set(['circuit', 'system-mode'])
 
@@ -492,67 +558,34 @@ function ModelRow({
   )
 }
 
-function BaseSlotRows({
-  model,
-  host,
-}: {
-  readonly model: HeroModel
-  readonly host: HeroCardHost
-}): ReactNode {
-  const gated = new Set(model.gated)
-  const { ownPower, timedRun, powerSupply } = model
-  const stopsAt = timedRun?.activeUntil ?? null
-  // A climate device switches off through its own mode picker: a second Power row would say it twice.
-  const powerCarriedByMode = ownPower?.source === 'climate-control'
-  return (
-    <>
-      {ownPower !== null && !powerCarriedByMode && !gated.has('own-power') ? (
-        <HeroRowLine
-          testId="hero-own-power"
-          label={host.lang === 'it' ? 'Accensione' : 'Power'}
-          actions={
-            <ToggleControl
-              host={host}
-              control={{
-                kind: 'toggle',
-                id: 'own-power',
-                label: ownPower.turnOn.label,
-                on: ownPower.on,
-                turnOn: ownPower.turnOn,
-                turnOff: ownPower.turnOff,
-              }}
-            />
-          }
-        >
-          {stopsAt === null ? null : (
-            <div>
-              {host.lang === 'it' ? 'si spegne alle ' : 'turns off at '}
-              {clockText(stopsAt, host.lang)}
-            </div>
-          )}
-        </HeroRowLine>
-      ) : null}
-      {powerSupply !== null && !gated.has('power-supply') ? (
-        <HeroRowLine
-          testId="hero-power-supply"
-          label={host.lang === 'it' ? 'Alimentazione' : 'Supply'}
-          actions={
-            <>
-              <ActionButton
-                action={powerSupply.on === true ? powerSupply.powerOff : powerSupply.powerOn}
-                host={host}
-              />
-              <ActionButton
-                action={powerSupply.restart}
-                host={host}
-                disabled={powerSupply.on !== true}
-              />
-            </>
-          }
-        />
-      ) : null}
-    </>
-  )
+/**
+ * The device's own on/off, drawn by the scene: its state leads the caption and, for a
+ * session that may act, is the switch. A climate device switches off through its own mode
+ * picker, so it carries none; an unanswered device carries none either.
+ */
+function powerOf(model: HeroModel, host: HeroCardHost): HeroScenePower | undefined {
+  const { ownPower } = model
+  if (ownPower === null || ownPower.source === 'climate-control' || ownPower.on === null) {
+    return undefined
+  }
+  const value = ownPower.on
+    ? host.lang === 'it'
+      ? 'Acceso'
+      : 'On'
+    : host.lang === 'it'
+      ? 'Spento'
+      : 'Off'
+  if (model.gated.includes('own-power')) return { value, on: ownPower.on }
+  const next = ownPower.on ? ownPower.turnOff : ownPower.turnOn
+  return {
+    value,
+    on: ownPower.on,
+    action: {
+      label: pickText(next.label, host.lang),
+      disabled: host.busy,
+      onPress: () => host.run(next.call, next),
+    },
+  }
 }
 
 function Chips({ model, lang }: { readonly model: HeroModel; readonly lang: HeroLang }): ReactNode {
@@ -581,18 +614,6 @@ function Chips({ model, lang }: { readonly model: HeroModel; readonly lang: Hero
   )
 }
 
-function FootChips({ items }: { readonly items: HeroConsumableItem[] }): ReactNode {
-  return (
-    <>
-      {items.map((item) => (
-        <Badge key={item.key} variant={item.needsAttention ? 'warning' : 'neutral'} size="sm">
-          {item.level === null ? item.label : `${item.label} ${String(Math.round(item.level))}%`}
-        </Badge>
-      ))}
-    </>
-  )
-}
-
 export interface HeroModelCardProps {
   readonly model: HeroModel
   readonly host: HeroCardHost
@@ -607,9 +628,15 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
   const gated = new Set(model.gated)
   const showRemote = model.remote !== null && !gated.has('remote')
   const tone = resolveSceneVisual(scene).tone
-  const footItems = model.consumables?.items ?? []
-  const hasFoot = host.openHistory !== undefined || showRemote
+  const utilities = useHeroUtilities(model, host)
+  const power = powerOf(model, host)
+  const captionText = pickText(model.caption ?? model.title, lang)
+  // "ON" already leads the caption: a state title that only says it again is dropped.
+  const captionRepeatsPower =
+    power !== undefined && captionText.toLowerCase() === power.value.toLowerCase()
   const dial = dialOf(model)
+  const sceneRows = model.rows.filter((r) => r.placement === 'scene' && !gated.has(r.id))
+  const hasSceneControls = sceneRows.some((r) => r.controls.some(isSceneControl))
   const timed = model.timedRun
   const countdown =
     timed !== null && timed.activeUntil !== null && model.scene.id !== 'pet-fountain'
@@ -621,9 +648,11 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
       scene={
         <HeroScene
           {...scene}
-          {...(dial?.kind === 'speed'
-            ? {}
-            : { caption: pickText(model.caption ?? model.title, lang) })}
+          {...(dial?.kind === 'speed' || captionRepeatsPower ? {} : { caption: captionText })}
+          {...(power === undefined ? {} : { power })}
+          {...(hasSceneControls
+            ? { controls: <SceneControls rows={sceneRows} host={host} /> }
+            : {})}
           toneCentre={tonedCentre}
           leftTiles={tilesOf(model.sideTiles.left, lang)}
           rightTiles={tilesOf(model.sideTiles.right, lang)}
@@ -647,7 +676,6 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
       }
       rows={
         <>
-          <BaseSlotRows model={model} host={host} />
           {model.rows
             .filter(
               (row) =>
@@ -655,7 +683,7 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
                 !(dial?.kind === 'setpoint' && row.id === 'setpoint') &&
                 !(countdown && row.id === 'run-for'),
             )
-            .map((row) => withoutDial(row, dial))
+            .map((row) => withoutSceneControls(withoutDial(row, dial)))
             .filter(
               (row) =>
                 row.controls.length > 0 ||
@@ -676,19 +704,8 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
             })}
         </>
       }
-      footChips={footItems.length > 0 ? <FootChips items={footItems} /> : undefined}
-      footAction={
-        hasFoot ? (
-          <div className="flex items-center gap-1.5">
-            {showRemote ? remote : null}
-            {host.openHistory === undefined ? null : (
-              <Button size="sm" variant="outline" onClick={host.openHistory}>
-                {pickText(model.historyLabel, lang)}
-              </Button>
-            )}
-          </div>
-        ) : undefined
-      }
+      footAction={showRemote && remote !== undefined ? remote : undefined}
+      utility={utilities.length > 0 ? <HeroUtilityGrid items={utilities} /> : undefined}
     />
   )
 }

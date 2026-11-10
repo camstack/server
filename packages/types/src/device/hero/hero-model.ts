@@ -224,8 +224,24 @@ export const HeroPillSchema: z.ZodType<HeroPill> = z.object({
   tone: HeroToneSchema,
 })
 
+/**
+ * Rows whose action and slider controls belong ON the scene (the curtain's buttons, the
+ * lock's key, the player's transport) and not in a row under it. The model says it, so
+ * every client draws the same placement; a control of another kind stays in a row.
+ */
+export const HERO_SCENE_ROW_IDS: ReadonlySet<HeroRowId> = new Set([
+  'cover',
+  'valve',
+  'lock',
+  'vacuum',
+  'playback',
+  'brightness',
+])
+
 export const HeroRowSchema = z.object({
   id: HeroRowIdSchema,
+  /** `scene`: the row's action and slider controls are drawn on the scene. Absent: an ordinary row. */
+  placement: z.enum(['row', 'scene']).optional(),
   /** The row's own name when the kind's label would not tell rows of one kind apart (a circuit's label). */
   label: HeroTextSchema.optional(),
   /** A group header drawn above the row when it differs from the previous row's ("System"). */

@@ -16,9 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Generated system hooks include the new deviceManager.search query
 - Generated hooks for the cluster-update capability
 - An illustrated hero (washer, dryer, fountain…) no longer shows a second animated drum or ring poking out beside its illustration.
-
 - Device rows and the container hero follow the child a container declares as its primary
 - Device names and room suggestions follow the child a container declares as its primary
+- The device hero card gains a utility section (history, consumables, power source) and puts the on/off and the cover, valve, lock, vacuum and media commands in the scene itself
 
 ## [1.2.418] - 2026-11-10
 

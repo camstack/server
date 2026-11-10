@@ -26,7 +26,7 @@ import type {
   HeroSideTile,
   HeroSideTiles,
 } from './hero-model.js'
-import { HERO_SIDE_TILES_MAX } from './hero-model.js'
+import { HERO_SCENE_ROW_IDS, HERO_SIDE_TILES_MAX } from './hero-model.js'
 import type { HeroState } from './hero-state.js'
 import { heroText, type HeroText } from './hero-text.js'
 import { resolveOwnPower } from './own-power.js'
@@ -243,7 +243,9 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
   const allRows = fragments.flatMap((f) => f.rows ?? [])
   const rows: HeroRow[] = resolveHeroLayout(device.type).rows.flatMap((id) => {
     // A kind may repeat (one row per circuit of a heat pump), in the order the cap listed them.
-    return allRows.filter((r) => r.id === id)
+    return allRows
+      .filter((r) => r.id === id)
+      .map((r): HeroRow => (HERO_SCENE_ROW_IDS.has(r.id) ? { ...r, placement: 'scene' } : r))
   })
 
   const ownPower = resolveOwnPower(

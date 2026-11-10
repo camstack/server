@@ -18,14 +18,26 @@ describe('HeroModelCard', () => {
     const run = vi.fn()
     const model = buildModel('switch', ['switch', 'power-meter'], PLUG_SLICES)
     render(<HeroModelCard model={model} host={host(run)} />)
-    fireEvent.click(screen.getByRole('switch'))
+    expect(screen.queryByTestId('hero-own-power')).toBeNull()
+    fireEvent.click(screen.getByTestId('scene-power-toggle'))
     expect(run).toHaveBeenCalledWith(model.ownPower?.turnOff.call, model.ownPower?.turnOff)
+  })
+
+  it('draws the switch state on the scene with a named toggle, and no power row', () => {
+    const model = buildModel('switch', ['switch', 'power-meter'], PLUG_SLICES)
+    render(<HeroModelCard model={model} host={host()} />)
+    const toggle = screen.getByRole('switch', { name: 'Turn off' })
+    expect(toggle.getAttribute('aria-checked')).toBe('true')
+    expect(screen.getByTestId('scene-power-value').textContent).toBe('On')
+    expect(screen.queryByTestId('hero-own-power')).toBeNull()
   })
 
   it('hides every actuating part for a session that may not act', () => {
     const model = buildModel('switch', ['switch', 'power-meter'], PLUG_SLICES, false)
     render(<HeroModelCard model={model} host={host()} />)
     expect(screen.queryByRole('switch')).toBeNull()
+    expect(screen.queryByTestId('scene-power-toggle')).toBeNull()
+    expect(screen.getByTestId('scene-power-value').textContent).toBe('On')
     expect(screen.queryByTestId('hero-own-power')).toBeNull()
   })
 

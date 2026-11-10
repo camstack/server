@@ -11724,6 +11724,25 @@
         }
       },
       "noValue": "–"
+    },
+    "utility": {
+      "history": {
+        "tooltip": "Opens the history of this device."
+      },
+      "consumables": {
+        "label": "Consumables",
+        "low_one": "{{count}} low",
+        "low_other": "{{count}} low",
+        "ok": "OK",
+        "tooltip": "Shows the level of each consumable and which ones need attention."
+      },
+      "power": {
+        "label": "Power source",
+        "on": "On",
+        "off": "Off",
+        "tooltip": "Opens a menu to cut or restore the power feeding this device, or to restart it.",
+        "tooltipReadOnly": "Whether the power source feeding this device is on. Your session cannot change it."
+      }
     }
   },
   "cliLogin": {

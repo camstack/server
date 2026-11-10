@@ -36,10 +36,11 @@ describe('HeroModelCard scene centre', () => {
     expect(screen.getByTestId('hero-row-run-for')).toBeTruthy()
   })
 
-  it('the own-power row says when the timer switches the device off', () => {
+  it('a timer that will switch the device off shows its countdown in the scene, with no power row', () => {
     const model = buildModel('heater', ['switch', 'timed-run'], HEATER(Date.now() + 25 * 60_000))
     render(<HeroModelCard model={model} host={host()} />)
-    expect(screen.getByTestId('hero-own-power').textContent).toMatch(/turns off at \d/)
+    expect(screen.getByTestId('countdown-centre')).toBeTruthy()
+    expect(screen.queryByTestId('hero-own-power')).toBeNull()
   })
 
   it('a fan speed is the centre dial in steps of its scale, and plus asks for the next step', () => {

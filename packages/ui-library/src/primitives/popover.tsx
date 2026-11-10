@@ -41,12 +41,15 @@ interface PopoverProps {
   children: ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  /** Extra classes for the wrapper (`block w-full` to stretch the trigger across a grid cell). */
+  className?: string
 }
 
 export function Popover({
   children,
   open: controlledOpen,
   onOpenChange,
+  className,
 }: PopoverProps): JSX.Element | null {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const open = controlledOpen ?? uncontrolledOpen
@@ -64,7 +67,7 @@ export function Popover({
 
   return (
     <PopoverContext.Provider value={{ open, setOpen, triggerId, contentId, triggerRef }}>
-      <div className="relative inline-block">{children}</div>
+      <div className={cn('relative', className ?? 'inline-block')}>{children}</div>
     </PopoverContext.Provider>
   )
 }

@@ -11746,6 +11746,25 @@
         }
       },
       "noValue": "–"
+    },
+    "utility": {
+      "history": {
+        "tooltip": "Apre la cronologia di questo dispositivo."
+      },
+      "consumables": {
+        "label": "Materiali di consumo",
+        "low_one": "{{count}} in esaurimento",
+        "low_other": "{{count}} in esaurimento",
+        "ok": "OK",
+        "tooltip": "Mostra il livello di ogni materiale di consumo e quali richiedono attenzione."
+      },
+      "power": {
+        "label": "Alimentazione",
+        "on": "Acceso",
+        "off": "Spento",
+        "tooltip": "Apre un menu per togliere o ridare corrente al dispositivo, o per riavviarlo.",
+        "tooltipReadOnly": "Indica se la fonte di alimentazione del dispositivo è accesa. La tua sessione non può modificarla."
+      }
     }
   },
   "cliLogin": {

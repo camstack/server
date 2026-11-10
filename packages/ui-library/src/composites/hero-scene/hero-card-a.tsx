@@ -13,6 +13,8 @@ export interface HeroCardAProps {
   readonly footChips?: ReactNode
   /** Foot, right: the history action. */
   readonly footAction?: ReactNode
+  /** The utility section: a divided block at the very bottom of the card (`HeroUtilityGrid`). */
+  readonly utility?: ReactNode
   readonly className?: string
 }
 
@@ -28,6 +30,7 @@ export function HeroCardA({
   rows,
   footChips,
   footAction,
+  utility,
   className,
 }: HeroCardAProps): ReactNode {
   const hasFoot = footChips !== undefined || footAction !== undefined
@@ -59,6 +62,11 @@ export function HeroCardA({
             {footChips}
           </div>
           {footAction !== undefined ? <div className="shrink-0">{footAction}</div> : null}
+        </div>
+      ) : null}
+      {utility !== undefined ? (
+        <div data-testid="hero-card-utility" className="border-t border-border pt-3">
+          {utility}
         </div>
       ) : null}
     </section>

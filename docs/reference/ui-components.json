@@ -415,7 +415,7 @@
       "need": "A device hero card, layout A",
       "admin": "`HeroCardA` + `HeroScene`",
       "viewer": "—",
-      "notes": "One-line top row, scene (id + state + params from the hero model), rows, foot. One animation per state; reduced motion stops it"
+      "notes": "One-line top row, scene (id + state + params from the hero model), rows, a utility section (`HeroUtilityGrid`: history, consumables, power source; 2 columns, an odd last button spans both). The on/off is the scene caption and cover/valve/lock/vacuum/media commands sit under the animation (`placement: \"scene\"` on the model row). One animation per state; reduced motion stops it"
     },
     {
       "need": "Switch a list between table and grid",
@@ -6417,6 +6417,12 @@
           "doc": "Foot, right: the history action."
         },
         {
+          "name": "utility",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "The utility section: a divided block at the very bottom of the card (`HeroUtilityGrid`)."
+        },
+        {
           "name": "className",
           "type": "string",
           "optional": true,
@@ -6529,6 +6535,18 @@
           "doc": "A short state caption at the top of the scene (\"Cooling\", \"Rinsing\"), in the scene's tone."
         },
         {
+          "name": "power",
+          "type": "HeroScenePower",
+          "optional": true,
+          "doc": "The device's own on/off: its value leads the caption and, with an `action`, is the switch."
+        },
+        {
+          "name": "controls",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Command controls drawn along the scene's foot (a cover's open / stop / close, a player's transport)."
+        },
+        {
           "name": "toneCentre",
           "type": "boolean",
           "optional": true,
@@ -6610,6 +6628,34 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "HeroUtilityGrid",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/hero-utility-grid.tsx",
+      "summary": "The utility section of the hero card: one button per utility the device has, on a two-column grid (`heroUtilityLayout`), each with its own tooltip. No utility, no section.",
+      "props": [
+        {
+          "name": "items",
+          "type": "readonly HeroUtility[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "heroUtilityLayout",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-scene/hero-utility-layout.ts",
+      "summary": "How `count` utility buttons lay out on the hero card's two-column grid: pairs share a row and an odd one out takes the last row whole, so no row has a hole (1 = full width, 2 = one row, 3 = two + one full width, 4 = 2…"
     },
     {
       "name": "HISTORY_PAGE_PATH",
@@ -9559,6 +9605,12 @@
           "type": "(open: boolean) => void",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": "Extra classes for the wrapper (`block w-full` to stretch the trigger across a grid cell)."
         }
       ]
     },
