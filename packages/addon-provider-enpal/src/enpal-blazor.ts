@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process'
 import { z } from 'zod'
 import type { EnpalConnection } from './config.js'
 import { normalizeEnpalUnit } from './enpal-units.js'
-import type { EnpalFallbackReason, EnpalReading } from './enpal-snapshot.js'
+import type { EnpalFallbackReason, EnpalReading, EnpalText } from './enpal-snapshot.js'
 
 /**
  * Firmware 8.51 and later render the device tables of the box's web page only through a
@@ -32,7 +32,12 @@ const BridgeResultSchema = z.discriminatedUnion('ok', [
   }),
 ])
 
-export type BlazorBridgeErrorKind = 'unreachable' | 'bad-response' | 'empty' | 'protocol' | 'timeout'
+export type BlazorBridgeErrorKind =
+  | 'unreachable'
+  | 'bad-response'
+  | 'empty'
+  | 'protocol'
+  | 'timeout'
 
 /** A failed bridge run. The message never carries the bridge's stderr beyond a short tail. */
 export class BlazorBridgeError extends Error {
@@ -121,7 +126,9 @@ export function createBlazorReader(deps: BlazorBridgeDeps): BlazorReader {
   const timeoutMs = deps.timeoutMs ?? DEFAULT_TIMEOUT_MS
   return (target) =>
     new Promise<readonly BlazorRow[]>((resolve, reject) => {
-      const child = spawn(deps.pythonPath, [deps.scriptPath], { stdio: ['pipe', 'pipe', 'pipe'] })
+      const child = spawn(deps.pythonPath, [deps.scriptPath], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+      })
       let stdout = ''
       let stderr = ''
       let settled = false
@@ -135,7 +142,10 @@ export function createBlazorReader(deps: BlazorBridgeDeps): BlazorReader {
         child.kill('SIGKILL')
         finish(() =>
           reject(
-            new BlazorBridgeError('timeout', `Enpal box ${target.host} did not answer within ${timeoutMs / 1000}s`),
+            new BlazorBridgeError(
+              'timeout',
+              `Enpal box ${target.host} did not answer within ${timeoutMs / 1000}s`,
+            ),
           ),
         )
       }, timeoutMs)
@@ -144,7 +154,12 @@ export function createBlazorReader(deps: BlazorBridgeDeps): BlazorReader {
         if (stdout.length > MAX_STDOUT_BYTES) {
           child.kill('SIGKILL')
           finish(() =>
-            reject(new BlazorBridgeError('protocol', 'the Enpal bridge wrote more output than any box answer')),
+            reject(
+              new BlazorBridgeError(
+                'protocol',
+                'the Enpal bridge wrote more output than any box answer',
+              ),
+            ),
           )
         }
       })
@@ -153,7 +168,9 @@ export function createBlazorReader(deps: BlazorBridgeDeps): BlazorReader {
       })
       child.on('error', (err) => {
         finish(() =>
-          reject(new BlazorBridgeError('protocol', `cannot start the Enpal bridge: ${err.message}`)),
+          reject(
+            new BlazorBridgeError('protocol', `cannot start the Enpal bridge: ${err.message}`),
+          ),
         )
       })
       child.on('close', (code) => {
@@ -184,7 +201,13 @@ export function createBlazorReader(deps: BlazorBridgeDeps): BlazorReader {
         })
       })
       child.stdin.on('error', () => undefined)
-      child.stdin.end(JSON.stringify({ host: target.host, port: target.port, windowMs: WINDOW_MS }))
+      child.stdin.end(
+        JSON.stringify({
+          host: target.host,
+          port: target.port,
+          windowMs: WINDOW_MS,
+        }),
+      )
     })
 }
 
@@ -213,4 +236,20 @@ export function blazorRowsToReadings(rows: readonly BlazorRow[]): EnpalReading[]
     })
   }
   return readings
+}
+
+/**
+ * Every row's text as delivered, for state labels, serial numbers and firmware strings. A
+ * row with no value, or whose value is markup (the inverter's `<ul>` bitfield), carries no
+ * text worth showing and is left out.
+ */
+export function blazorRowsToTexts(rows: readonly BlazorRow[]): EnpalText[] {
+  const texts: EnpalText[] = []
+  for (const row of rows) {
+    if (!KEY_SHAPE.test(row.key)) continue
+    const value = row.value.trim()
+    if (value.length === 0 || value.startsWith('<')) continue
+    texts.push({ key: row.key, value })
+  }
+  return texts
 }

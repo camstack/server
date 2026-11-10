@@ -4,6 +4,8 @@ import {
   type BatteryStatus,
   type DeviceContext,
   type DeviceFeature,
+  enumSensorCapability,
+  type EnumSensorStatus,
   errMsg,
   type InferNativeProvider,
   meterCapability,
@@ -23,6 +25,7 @@ const POWER_CAP = powerMeterCapability.name
 const BATTERY_CAP = batteryCapability.name
 const METER_CAP = meterCapability.name
 const NUMERIC_CAP = numericSensorCapability.name
+const ENUM_CAP = enumSensorCapability.name
 
 const POWER_COLD: PowerMeterStatus = { lastFetchedAt: 0 }
 const BATTERY_COLD: BatteryStatus = {
@@ -32,6 +35,8 @@ const BATTERY_COLD: BatteryStatus = {
   lastUpdated: 0,
 }
 const VALUE_COLD: NumericSensorStatus = { value: null, lastFetchedAt: 0 }
+/** A text has no null: until the box sends one the slice is empty and never read as a state. */
+const TEXT_COLD: EnumSensorStatus = { value: '', lastFetchedAt: 0 }
 
 /**
  * Persisted config of an Enpal Sensor. `specId` selects the entry of the catalog;
@@ -74,6 +79,9 @@ export class EnpalSensorDevice extends BaseDevice<typeof enpalSensorSchema> {
       id: `${this.integrationId}:${spec.id}`,
       system: ENPAL_SYSTEM,
       ...(spec.kind === 'meter' || spec.kind === 'numeric' ? { quantity: spec.quantity } : {}),
+      ...(spec.kind === 'text' && spec.timestamp === true
+        ? { dateTimeShape: 'date' as const }
+        : {}),
     })
   }
 
@@ -142,6 +150,7 @@ export class EnpalSensorDevice extends BaseDevice<typeof enpalSensorSchema> {
       })
     }
     if (slices.numeric !== undefined) this.runtimeState.setCapState(NUMERIC_CAP, slices.numeric)
+    if (slices.text !== undefined) this.runtimeState.setCapState(ENUM_CAP, slices.text)
   }
 
   private registerCaps(): void {
@@ -160,6 +169,15 @@ export class EnpalSensorDevice extends BaseDevice<typeof enpalSensorSchema> {
         }
         this.ctx.registerNativeCap(meterCapability, provider)
         this.runtimeState.setCapState(METER_CAP, VALUE_COLD)
+        return
+      }
+      case 'text': {
+        const provider: InferNativeProvider<typeof enumSensorCapability> = {
+          getStatus: async () =>
+            this.runtimeState.getCapState<EnumSensorStatus>(ENUM_CAP) ?? TEXT_COLD,
+        }
+        this.ctx.registerNativeCap(enumSensorCapability, provider)
+        this.runtimeState.setCapState(ENUM_CAP, TEXT_COLD)
         return
       }
       case 'numeric': {

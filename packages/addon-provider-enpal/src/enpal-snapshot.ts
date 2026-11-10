@@ -9,6 +9,12 @@ export interface EnpalReading {
   readonly measurement: string | undefined
 }
 
+/** One value the box sent as text: a state label, a serial number, a firmware string, as delivered. */
+export interface EnpalText {
+  readonly key: string
+  readonly value: string
+}
+
 export type EnpalSourceKind = 'blazor' | 'influxdb' | 'device-page'
 
 export type EnpalErrorKind =
@@ -30,6 +36,12 @@ export interface EnpalFallbackReason {
 export interface EnpalSnapshot {
   readonly source: EnpalSourceKind
   readonly readings: ReadonlyMap<string, EnpalReading>
+  /**
+   * The raw text of every row the web channel sent, numeric-looking ones included (a serial
+   * number that is all digits must keep its leading zeros). Empty from InfluxDB and the device
+   * page, which carry numbers only.
+   */
+  readonly texts: ReadonlyMap<string, string>
   /** Ms epoch of the poll. */
   readonly fetchedAt: number
   readonly fallbackReason?: EnpalFallbackReason
@@ -64,6 +76,7 @@ export function createSnapshot(
   readings: readonly EnpalReading[],
   fetchedAt: number,
   fallbackReason?: EnpalFallbackReason,
+  texts: readonly EnpalText[] = [],
 ): EnpalSnapshot {
   const map = new Map<string, EnpalReading>()
   for (const reading of readings) {
@@ -71,9 +84,15 @@ export function createSnapshot(
     if (map.has(key)) continue
     map.set(key, { ...reading, key })
   }
+  const textMap = new Map<string, string>()
+  for (const text of texts) {
+    const key = canonicalKey(text.key)
+    if (!textMap.has(key)) textMap.set(key, text.value)
+  }
   return {
     source,
     readings: map,
+    texts: textMap,
     fetchedAt,
     ...(fallbackReason !== undefined ? { fallbackReason } : {}),
   }

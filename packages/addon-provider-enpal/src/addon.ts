@@ -46,8 +46,8 @@ const ENPAL_MIGRATIONS_DATE = '2026-11-05'
  * host, InfluxDB access and token live on the integration's settings, and the addon polls it
  * with one manager per `integrationId`. Discovery offers the box itself
  * ({@link DeviceType.Gateway}, with a link to its device page) and one
- * {@link DeviceType.Container} per piece of equipment it reports (photovoltaic, battery,
- * grid, house, heat pump), and adopting a container adopts its Sensor children.
+ * {@link DeviceType.Container} per piece of equipment it reports (the box's own diagnostics,
+ * the installation, the heat pump), and adopting a container adopts its Sensor children.
  *
  * The box does not advertise itself on the network, so the integration is added by hand.
  */
@@ -89,7 +89,11 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
           fixtureMark: 'host',
         }),
       ],
-      (api) => integrationRowsPortsOver({ ...rowsDepsOver(api), kind: enpalConnectionsEntryKind }),
+      (api) =>
+        integrationRowsPortsOver({
+          ...rowsDepsOver(api),
+          kind: enpalConnectionsEntryKind,
+        }),
     )
     this.instances = buildEnpalInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
@@ -141,10 +145,15 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
     try {
       const pythonPath = await this.ctx.deps.ensurePython()
       if (pythonPath === null) {
-        this.ctx.logger.warn('Enpal: embedded Python is unavailable, the Blazor channel is not used')
+        this.ctx.logger.warn(
+          'Enpal: embedded Python is unavailable, the Blazor channel is not used',
+        )
         return null
       }
-      return createBlazorReader({ pythonPath, scriptPath: resolveEnpalWorker() })
+      return createBlazorReader({
+        pythonPath,
+        scriptPath: resolveEnpalWorker(),
+      })
     } catch (err) {
       this.ctx.logger.warn('Enpal: the Python bridge could not be prepared', {
         meta: { error: errMsg(err) },
@@ -270,7 +279,7 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
         }
         return out
       },
-      adoptDevice: async ({ equipment, specIds, integrationId, name }) => {
+      adoptDevice: async ({ equipment, specIds, integrationId, name, childLayout }) => {
         const devices = this.ctx.kernel.devices
         if (!devices) throw new Error('enpal adopt: kernel.devices unavailable')
         const config = {
@@ -284,6 +293,7 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
           type: DeviceType.Container,
           name,
           integrationId,
+          ...(childLayout.length > 0 ? { childLayout } : {}),
         })
         const children = await devices.getChildren(device.id)
         return {
@@ -294,7 +304,11 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
       adoptGateway: async ({ integrationId, name }) => {
         const devices = this.ctx.kernel.devices
         if (!devices) throw new Error('enpal adopt: kernel.devices unavailable')
-        const config = { equipment: ENPAL_BOX_ID, integrationId, system: ENPAL_SYSTEM }
+        const config = {
+          equipment: ENPAL_BOX_ID,
+          integrationId,
+          system: ENPAL_SYSTEM,
+        }
         const stableId = this.generateStableId(DeviceType.Gateway, config)
         const device = await devices.create(stableId, EnpalGatewayDevice, config, null, {
           type: DeviceType.Gateway,

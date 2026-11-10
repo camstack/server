@@ -8,37 +8,51 @@ import {
 import { createSnapshot, type EnpalReading } from '../enpal-snapshot.js'
 
 function snapshotOf(...keys: string[]) {
+  return snapshotWithTexts(keys, [])
+}
+
+function snapshotWithTexts(keys: readonly string[], textKeys: readonly string[]) {
   const readings: EnpalReading[] = keys.map((key) => ({
     key,
     value: 1,
     unit: undefined,
     measurement: undefined,
   }))
-  return createSnapshot('influxdb', readings, 1)
+  return createSnapshot(
+    'blazor',
+    readings,
+    1,
+    undefined,
+    textKeys.map((key) => ({ key, value: 'On' })),
+  )
 }
 
-const FULL = snapshotOf(
-  'Power.DC.Total',
-  'Energy.Production.Total.Lifetime',
-  'Temperature.Housing.Inside',
-  'Energy.Battery.Charge.Level',
-  'Power.Battery.Charge.Discharge',
-  'Voltage.Battery',
-  'Current.Battery',
-  'Energy.Battery.Charge.Lifetime',
-  'Energy.Battery.Discharge.Lifetime',
-  'Temperature.Battery',
-  'Battery.SOH',
-  'Grid.Import.Power.Total.Calculated',
-  'Energy.Grid.Import.Lifetime',
-  'Power.Grid.Export',
-  'Energy.Grid.Export.Lifetime',
-  'Power.Consumption.Total',
-  'Energy.Consumption.Total.Lifetime',
-  'Heatpump.Power.Consumption.Total',
-  'Heatpump.Energy.Consumption.Total.Lifetime',
-  'Heatpump.DomesticHotWater.Temperature',
-  'Heatpump.Outside.Temperature',
+const FULL = snapshotWithTexts(
+  [
+    'Power.DC.Total',
+    'Energy.Production.Total.Lifetime',
+    'Temperature.Housing.Inside',
+    'Energy.Battery.Charge.Level',
+    'Power.Battery.Charge.Discharge',
+    'Voltage.Battery',
+    'Current.Battery',
+    'Energy.Battery.Charge.Lifetime',
+    'Energy.Battery.Discharge.Lifetime',
+    'Temperature.Battery',
+    'Battery.SOH',
+    'Grid.Import.Power.Total.Calculated',
+    'Energy.Grid.Import.Lifetime',
+    'Power.Grid.Export',
+    'Energy.Grid.Export.Lifetime',
+    'Power.Consumption.Total',
+    'Energy.Consumption.Total.Lifetime',
+    'Heatpump.Power.Consumption.Total',
+    'Heatpump.Energy.Consumption.Total.Lifetime',
+    'Heatpump.DomesticHotWater.Temperature',
+    'Heatpump.Outside.Temperature',
+    'Cpu.Load',
+  ],
+  ['IoT.MainState', 'Inverter.System.State', 'Heatpump.Local.ConnectionState'],
 )
 
 const BOX = { name: 'Enpal box', online: true } as const
@@ -54,30 +68,30 @@ const childIds = (c: { children?: readonly { childNativeId: string }[] }): strin
   (c.children ?? []).map((x) => x.childNativeId)
 
 describe('Enpal discovery: containers per equipment', () => {
-  it('offers one Container per physical equipment, each with its children', () => {
+  it('offers the box, the installation and the heat pump as three Containers', () => {
     const out = buildEnpalCandidates({ snapshot: FULL, adopted: new Map() })
     expect(out.map((c) => [c.childNativeId, c.name, c.type])).toEqual([
-      ['pv', 'Photovoltaic', DeviceType.Container],
-      ['battery', 'Battery', DeviceType.Container],
-      ['grid', 'Grid', DeviceType.Container],
-      ['house', 'House', DeviceType.Container],
+      ['enpal-box', 'Enpal Box', DeviceType.Container],
+      ['impianto', 'Impianto', DeviceType.Container],
       ['heatpump', 'Heat pump', DeviceType.Container],
     ])
     const byId = Object.fromEntries(out.map((c) => [c.childNativeId, childIds(c)]))
-    expect(byId['pv']).toEqual(['pv#pv', 'pv#inverter-temperature'])
-    expect(byId['battery']).toEqual([
-      'battery#battery',
-      'battery#battery-charged',
-      'battery#battery-discharged',
-      'battery#battery-temperature',
-      'battery#battery-health',
-    ])
-    expect(byId['grid']).toEqual(['grid#grid-import', 'grid#grid-export'])
-    expect(byId['house']).toEqual(['house#house'])
+    expect(byId['enpal-box']).toEqual(['enpal-box#box-main-state', 'enpal-box#box-cpu-load'])
+    expect(byId['impianto']).toEqual(
+      expect.arrayContaining([
+        'impianto#pv',
+        'impianto#battery',
+        'impianto#grid-import',
+        'impianto#house',
+        'impianto#inverter-temperature',
+        'impianto#inverter-state',
+      ]),
+    )
     expect(byId['heatpump']).toEqual([
       'heatpump#heatpump',
       'heatpump#heatpump-hot-water',
       'heatpump#heatpump-outside',
+      'heatpump#heatpump-connection',
     ])
   })
 
@@ -86,8 +100,16 @@ describe('Enpal discovery: containers per equipment', () => {
       snapshot: snapshotOf('Power.Consumption.Total', 'Energy.Battery.Charge.Level'),
       adopted: new Map(),
     })
-    expect(out.map((c) => c.childNativeId)).toEqual(['battery', 'house'])
-    expect(childIds(out[0]!)).toEqual(['battery#battery'])
+    expect(out.map((c) => c.childNativeId)).toEqual(['impianto'])
+    expect(childIds(out[0]!)).toEqual(['impianto#battery', 'impianto#house'])
+  })
+
+  it('a text-only reading (a state label) is enough to offer its equipment', () => {
+    const out = buildEnpalCandidates({
+      snapshot: snapshotWithTexts([], ['Heatpump.Local.ConnectionState']),
+      adopted: new Map(),
+    })
+    expect(out.map((c) => c.childNativeId)).toEqual(['heatpump'])
   })
 
   it('offers no equipment while the box has no snapshot', () => {
@@ -97,20 +119,21 @@ describe('Enpal discovery: containers per equipment', () => {
   it('flags an adopted container with its device id', () => {
     const out = buildEnpalCandidates({
       snapshot: FULL,
-      adopted: new Map([['grid', 42]]),
+      adopted: new Map([['impianto', 42]]),
     })
-    const grid = out.find((c) => c.childNativeId === 'grid')
-    expect(grid?.alreadyAdopted).toBe(true)
-    expect(grid?.adoptedDeviceId).toBe(42)
-    expect(out.find((c) => c.childNativeId === 'pv')?.alreadyAdopted).toBe(false)
+    const impianto = out.find((c) => c.childNativeId === 'impianto')
+    expect(impianto?.alreadyAdopted).toBe(true)
+    expect(impianto?.adoptedDeviceId).toBe(42)
+    expect(out.find((c) => c.childNativeId === 'heatpump')?.alreadyAdopted).toBe(false)
   })
 
   it('children are Sensors carrying the caps their spec registers', () => {
     const out = buildEnpalCandidates({ snapshot: FULL, adopted: new Map() })
-    const battery = out.find((c) => c.childNativeId === 'battery')
-    const soc = battery?.children?.find((c) => c.childNativeId === 'battery#battery')
-    expect(soc?.type).toBe(DeviceType.Sensor)
-    expect(soc?.capabilities).toEqual(['battery', 'power-meter'])
+    const impianto = out.find((c) => c.childNativeId === 'impianto')
+    const child = (id: string) => impianto?.children?.find((c) => c.childNativeId === id)
+    expect(child('impianto#battery')?.type).toBe(DeviceType.Sensor)
+    expect(child('impianto#battery')?.capabilities).toEqual(['battery', 'power-meter'])
+    expect(child('impianto#inverter-state')?.capabilities).toEqual(['enum-sensor'])
   })
 })
 
@@ -134,7 +157,7 @@ describe('Enpal discovery: the box as a Gateway', () => {
     expect(out.flatMap((c) => c.children ?? []).some((c) => c.childNativeId === ENPAL_BOX_ID)).toBe(
       false,
     )
-    expect(out.filter((c) => c.type === DeviceType.Container)).toHaveLength(5)
+    expect(out.filter((c) => c.type === DeviceType.Container)).toHaveLength(3)
   })
 
   it('is still offered, offline, while the box has no snapshot', () => {

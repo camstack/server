@@ -1,37 +1,237 @@
-import { DeviceType, type AccessoryChildSpec } from '@camstack/types'
+import {
+  DeviceType,
+  type AccessoryChildSpec,
+  type ChildLayout,
+  type ChildLayoutEntry,
+} from '@camstack/types'
 import { z } from 'zod'
 import { ENPAL_SYSTEM } from './config.js'
 import { findSpec } from './enpal-catalog.js'
+import type { EnpalSnapshot } from './enpal-snapshot.js'
 import { enpalSensorFactory } from './devices/enpal-sensor-factory.js'
+
+/**
+ * One child of an equipment Container: the catalog entry, the accordion section it sits in
+ * (none when the Container has no sections), and whether it is a diagnostic. A diagnostic keeps
+ * its history but is hidden from the Container's list by default (`display.hidden`, the field
+ * the child list already honours).
+ */
+export interface EquipmentChild {
+  readonly specId: string
+  readonly section?: string
+  readonly diagnostic: boolean
+}
+
+/** One identity fact of the equipment: a device attribute fed by a text key of the box. */
+export interface MetadataField {
+  readonly attribute: string
+  readonly key: string
+}
 
 /** One physical piece of the installation: a Container, with the catalog entries it owns. */
 export interface EnpalEquipment {
   readonly id: string
   readonly name: string
+  readonly children: readonly EquipmentChild[]
+  /** Model, hardware type, serials and firmware: attributes of the Container, never sensors. */
+  readonly metadata: readonly MetadataField[]
+  /**
+   * Which child stands for the Container, most preferred first. The kernel has no ordered
+   * candidate list yet (see `docs/architecture/device-model.md`): until it has, the children
+   * are spawned in this order and the container resolver's tie-break takes the first.
+   */
+  readonly primaryOrder: readonly string[]
+  /** Derived: the spec ids of {@link children}, in order. */
   readonly specIds: readonly string[]
 }
 
-/** Order is the order the candidates are listed in. Every catalog entry belongs to one. */
+const live = (section: string | undefined, ...specIds: string[]): EquipmentChild[] =>
+  specIds.map((specId) => ({
+    specId,
+    ...(section !== undefined ? { section } : {}),
+    diagnostic: false,
+  }))
+
+const diag = (section: string | undefined, ...specIds: string[]): EquipmentChild[] =>
+  specIds.map((specId) => ({
+    specId,
+    ...(section !== undefined ? { section } : {}),
+    diagnostic: true,
+  }))
+
+function equipment(input: Omit<EnpalEquipment, 'specIds'>): EnpalEquipment {
+  return { ...input, specIds: input.children.map((c) => c.specId) }
+}
+
+/** The id of the Container that holds the box's own diagnostics (the Gateway is `box`). */
+export const ENPAL_BOX_EQUIPMENT_ID = 'enpal-box'
+
+/**
+ * Three Containers: the box, the installation (Sungrow inverter, battery, grid, home), and
+ * the heat pump. Order is the order the candidates are listed in. Every catalog entry belongs
+ * to one. The ids of the older catalog entries are unchanged.
+ */
 export const ENPAL_EQUIPMENT: readonly EnpalEquipment[] = [
-  { id: 'pv', name: 'Photovoltaic', specIds: ['pv', 'inverter-temperature'] },
-  {
-    id: 'battery',
-    name: 'Battery',
-    specIds: [
-      'battery',
-      'battery-charged',
-      'battery-discharged',
-      'battery-temperature',
-      'battery-health',
+  equipment({
+    id: ENPAL_BOX_EQUIPMENT_ID,
+    name: 'Enpal Box',
+    children: [
+      ...diag('Box', 'box-main-state', 'box-cpu-load', 'box-memory-usage', 'box-hardware-check'),
+      ...diag('EEBUS', 'eebus-connection', 'eebus-discovery', 'eebus-cert-expiry'),
+      ...diag(
+        'Connectivity',
+        'lte-state',
+        'lte-connection-type',
+        'lte-quality',
+        'lte-rsrp',
+        'lte-rsrq',
+        'lte-rssi',
+        'lte-snr',
+        'lte-failover',
+        'lte-signal-check',
+        'wifi-state',
+        'data-lan-down',
+        'data-lan-up',
+        'data-lte-down',
+        'data-lte-up',
+      ),
     ],
-  },
-  { id: 'grid', name: 'Grid', specIds: ['grid-import', 'grid-export'] },
-  { id: 'house', name: 'House', specIds: ['house'] },
-  {
+    metadata: [
+      { attribute: 'deviceName', key: 'Device.Name' },
+      { attribute: 'model', key: 'IoTEdgeDevice.Device.Type' },
+      { attribute: 'serialNumber', key: 'IoTEdgeDevice.SerialNumber' },
+      { attribute: 'hardware', key: 'Generation.HW' },
+      { attribute: 'softwareGeneration', key: 'Generation.SW' },
+      { attribute: 'eebusSki', key: 'Eebus.Ski' },
+      { attribute: 'modemModel', key: 'LTE.Modem.Type' },
+      { attribute: 'modemFirmware', key: 'LTE.Modem.Firmware.Version' },
+    ],
+    primaryOrder: ['box-main-state', 'lte-state'],
+  }),
+  equipment({
+    id: 'impianto',
+    name: 'Impianto',
+    children: [
+      ...live('Photovoltaic', 'pv', 'pv-string-1-power', 'pv-string-2-power', 'pv-energy-day'),
+      ...diag(
+        'Photovoltaic',
+        'pv-string-1-voltage',
+        'pv-string-2-voltage',
+        'pv-string-1-current',
+        'pv-string-2-current',
+      ),
+      ...live(
+        'Battery',
+        'battery',
+        'battery-stored-energy',
+        'battery-temperature',
+        'battery-charge-day',
+        'battery-discharge-day',
+        'battery-charged',
+        'battery-discharged',
+      ),
+      ...diag(
+        'Battery',
+        'battery-health',
+        'battery-capacity',
+        'battery-power-rating',
+        'battery-level-max',
+        'battery-level-min',
+        'battery-power-set',
+        'battery-charge-power-max',
+        'battery-discharge-power-max',
+        'battery-charge-current-max',
+        'battery-discharge-current-max',
+      ),
+      ...live(
+        'Grid',
+        'grid-import',
+        'grid-export',
+        'grid-phase-a',
+        'grid-phase-b',
+        'grid-phase-c',
+        'grid-import-day',
+        'grid-export-day',
+      ),
+      ...diag(
+        'Grid',
+        'grid-voltage-a',
+        'grid-voltage-b',
+        'grid-voltage-c',
+        'grid-frequency',
+        'grid-feed-max',
+      ),
+      ...live('Home', 'house', 'house-energy-day'),
+      ...live('Inverter', 'inverter-state', 'inverter-ems-mode', 'inverter-ac-power'),
+      ...diag(
+        'Inverter',
+        'inverter-start-stop',
+        'inverter-forcible-mode',
+        'inverter-temperature',
+        'inverter-power-rating',
+        'inverter-phase-type',
+        'inverter-modbus-rtu',
+        'inverter-modbus-tcp',
+      ),
+    ],
+    metadata: [
+      { attribute: 'model', key: 'Code.Device.Type' },
+      { attribute: 'firmware', key: 'SoftwareVersion.Service.1' },
+      { attribute: 'communicationFirmware', key: 'SoftwareVersion.Service.2' },
+      { attribute: 'dongleSerialNumber', key: 'Dongle.SerialNumber' },
+      { attribute: 'batterySerialNumber', key: 'SerialNumber.Battery' },
+      {
+        attribute: 'batteryFirmware',
+        key: 'SoftwareVersion.Service.Battery.Unit.1',
+      },
+    ],
+    primaryOrder: ['pv', 'battery', 'house'],
+  }),
+  equipment({
     id: 'heatpump',
     name: 'Heat pump',
-    specIds: ['heatpump', 'heatpump-hot-water', 'heatpump-outside'],
-  },
+    children: [
+      ...live(
+        undefined,
+        'heatpump',
+        'heatpump-hot-water',
+        'heatpump-outside',
+        'heatpump-hot-water-mode',
+        'heatpump-heating-mode',
+        'heatpump-generator-state',
+        'heatpump-heater-state',
+      ),
+      ...diag(
+        undefined,
+        'heatpump-energy-management',
+        'heatpump-power-desired',
+        'heatpump-pv-optimization',
+        'heatpump-power-min',
+        'heatpump-power-max',
+        'heatpump-connection',
+      ),
+    ],
+    metadata: [
+      { attribute: 'model', key: 'Heatpump.IndoorUnit.DeviceType' },
+      { attribute: 'serialNumber', key: 'Heatpump.SerialNumber' },
+      {
+        attribute: 'indoorUnitSerialNumber',
+        key: 'Heatpump.IndoorUnit.SerialNumber',
+      },
+      { attribute: 'firmware', key: 'Heatpump.SoftwareVersion' },
+      {
+        attribute: 'indoorUnitFirmware',
+        key: 'Heatpump.IndoorUnit.SoftwareVersion',
+      },
+      { attribute: 'gatewayModel', key: 'Heatpump.Gateway.Device.Type' },
+      {
+        attribute: 'gatewaySerialNumber',
+        key: 'Heatpump.Gateway.SerialNumber',
+      },
+      { attribute: 'gatewayFirmware', key: 'Heatpump.Gateway.SoftwareVersion' },
+    ],
+    primaryOrder: ['heatpump', 'heatpump-hot-water', 'heatpump-outside'],
+  }),
 ]
 
 export function findEquipment(id: string): EnpalEquipment | undefined {
@@ -48,7 +248,12 @@ export function childNativeId(equipmentId: string, specId: string): string {
  * they stay, whatever the box reports later, so a restart with the box off keeps them.
  */
 export const enpalEquipmentSchema = z.object({
-  equipment: z.string().min(1).describe('Equipment id (pv, battery, grid, house, heatpump)'),
+  equipment: z
+    .string()
+    .min(1)
+    .describe(
+      'Equipment id (enpal-box, impianto, heatpump; older adoptions: pv, battery, grid, house)',
+    ),
   specIds: z.array(z.string().min(1)).describe('Catalog entries adopted as children'),
   integrationId: z.string().min(1).describe('Owning integration'),
   system: z.literal(ENPAL_SYSTEM).optional(),
@@ -56,16 +261,58 @@ export const enpalEquipmentSchema = z.object({
 
 export type EnpalEquipmentConfig = z.infer<typeof enpalEquipmentSchema>
 
+/** The adopted spec ids with the preferred ones first, in preference order; the rest keep theirs. */
+export function orderedByPreference(
+  found: EnpalEquipment | undefined,
+  specIds: readonly string[],
+): readonly string[] {
+  if (found === undefined) return specIds
+  const preferred = found.primaryOrder.filter((id) => specIds.includes(id))
+  return [...preferred, ...specIds.filter((id) => !preferred.includes(id))]
+}
+
+/**
+ * The accordion layout of an equipment Container, for the children it was adopted with.
+ * Empty for a Container with no sections (the heat pump) or an unknown equipment.
+ */
+export function childLayoutOf(
+  found: EnpalEquipment | undefined,
+  specIds: readonly string[],
+): ChildLayout {
+  if (found === undefined) return []
+  const entries: ChildLayoutEntry[] = []
+  found.children.forEach((child, order) => {
+    if (child.section === undefined || !specIds.includes(child.specId)) return
+    entries.push({ childKey: child.specId, section: child.section, order })
+  })
+  return entries
+}
+
+/** The identity facts the box reported for an equipment, by device attribute. */
+export function metadataOf(
+  found: EnpalEquipment | undefined,
+  snapshot: EnpalSnapshot,
+): Readonly<Record<string, string>> {
+  const out: Record<string, string> = {}
+  for (const field of found?.metadata ?? []) {
+    const value = snapshot.texts.get(field.key)
+    if (value !== undefined) out[field.attribute] = value
+  }
+  return out
+}
+
 /** The Sensor children the kernel spawns under an equipment Container. */
 export function accessoryChildSpecs(config: {
   readonly equipment: string
   readonly specIds: readonly string[]
   readonly integrationId: string
 }): readonly AccessoryChildSpec[] {
+  const found = findEquipment(config.equipment)
   const out: AccessoryChildSpec[] = []
-  for (const specId of config.specIds) {
+  for (const specId of orderedByPreference(found, config.specIds)) {
     const spec = findSpec(specId)
     if (spec === undefined) continue
+    const diagnostic = found?.children.find((c) => c.specId === specId)?.diagnostic === true
     out.push({
       stableIdSuffix: spec.id,
       meta: {
@@ -73,6 +320,7 @@ export function accessoryChildSpecs(config: {
         name: spec.name,
         role: spec.role,
         integrationId: config.integrationId,
+        ...(diagnostic ? { display: { hidden: true } } : {}),
       },
       config: {
         specId: spec.id,

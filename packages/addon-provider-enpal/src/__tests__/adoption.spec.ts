@@ -28,6 +28,7 @@ function harness(keys: string[]) {
     equipment: string
     specIds: readonly string[]
     name: string
+    layout: ReadonlyArray<readonly [string, string]>
   }> = []
   const removed: number[] = []
   const gatewayCalls: Array<{ integrationId: string; name: string }> = []
@@ -42,6 +43,7 @@ function harness(keys: string[]) {
         equipment: input.equipment,
         specIds: input.specIds,
         name: input.name,
+        layout: input.childLayout.map((e) => [e.childKey, e.section]),
       })
       return {
         deviceId: 10 + adoptCalls.length,
@@ -69,27 +71,36 @@ describe('Enpal adoption', () => {
       page: 1,
       pageSize: 50,
     })
-    expect(page.candidates.map((c) => c.childNativeId)).toEqual([ENPAL_BOX_ID, 'house', 'heatpump'])
+    expect(page.candidates.map((c) => c.childNativeId)).toEqual([
+      ENPAL_BOX_ID,
+      'impianto',
+      'heatpump',
+    ])
   })
 
   it('adopting a container adopts its reported children and returns their ids', async () => {
     const h = harness(['Energy.Battery.Charge.Level', 'Battery.SOH', 'Temperature.Housing.Inside'])
     const out = await h.provider.adopt({
       integrationId: 'int-1',
-      childNativeIds: ['battery'],
+      childNativeIds: ['impianto'],
     })
     expect(h.adoptCalls).toEqual([
       {
-        equipment: 'battery',
-        specIds: ['battery', 'battery-health'],
-        name: 'Battery',
+        equipment: 'impianto',
+        specIds: ['battery', 'battery-health', 'inverter-temperature'],
+        name: 'Impianto',
+        layout: [
+          ['battery', 'Battery'],
+          ['battery-health', 'Battery'],
+          ['inverter-temperature', 'Inverter'],
+        ],
       },
     ])
     expect(out.adopted).toEqual([
       {
-        childNativeId: 'battery',
+        childNativeId: 'impianto',
         parentDeviceId: 11,
-        accessoryDeviceIds: [100, 101],
+        accessoryDeviceIds: [100, 101, 102],
       },
     ])
   })
@@ -98,8 +109,8 @@ describe('Enpal adoption', () => {
     const h = harness(['Power.Consumption.Total'])
     await h.provider.adopt({
       integrationId: 'int-1',
-      childNativeIds: ['house'],
-      perCandidate: { house: { name: 'Villa' } },
+      childNativeIds: ['impianto'],
+      perCandidate: { impianto: { name: 'Villa' } },
     })
     expect(h.adoptCalls[0]?.name).toBe('Villa')
   })

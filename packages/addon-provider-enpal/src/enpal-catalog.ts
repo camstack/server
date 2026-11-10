@@ -1,6 +1,7 @@
 import {
   DeviceRole,
   type BatteryStatus,
+  type EnumSensorStatus,
   type MeterStatus,
   type NumericSensorStatus,
   type PowerMeterStatus,
@@ -21,6 +22,11 @@ export interface PointSource {
 export interface Point {
   readonly quantity: ReadingQuantity
   readonly sources: readonly PointSource[]
+  /**
+   * Take the number as it is and ignore the unit the box wrote. For a reading whose unit no
+   * stored quantity has (a grid frequency in Hz): shown without a unit, never converted.
+   */
+  readonly ignoreUnit?: boolean
 }
 
 interface SpecBase {
@@ -60,7 +66,15 @@ export interface NumericSpec extends SpecBase {
   readonly value: Point
 }
 
-export type EnpalSpec = PowerMeterSpec | BatterySpec | MeterSpec | NumericSpec
+/** A state label, as the box delivers it (`Running (0)`), on `enum-sensor`. */
+export interface TextSpec extends SpecBase {
+  readonly kind: 'text'
+  readonly key: string
+  /** The value is a clock (a certificate expiry), not a state: history does not learn it. */
+  readonly timestamp?: boolean
+}
+
+export type EnpalSpec = PowerMeterSpec | BatterySpec | MeterSpec | NumericSpec | TextSpec
 
 const point = (
   quantity: ReadingQuantity,
@@ -68,6 +82,30 @@ const point = (
 ): Point => ({
   quantity,
   sources: sources.map((s) => (typeof s === 'string' ? { key: s } : s)),
+})
+
+const numeric = (
+  id: string,
+  name: string,
+  quantity: ReadingQuantity,
+  key: string,
+  role: DeviceRole = DeviceRole.NumericSensor,
+): NumericSpec => ({
+  kind: 'numeric',
+  id,
+  name,
+  role,
+  quantity,
+  value: point(quantity, key),
+})
+
+const text = (id: string, name: string, key: string, timestamp = false): TextSpec => ({
+  kind: 'text',
+  id,
+  name,
+  role: timestamp ? DeviceRole.DateTimeSensor : DeviceRole.EnumSensor,
+  key,
+  ...(timestamp ? { timestamp: true } : {}),
 })
 
 /**
@@ -151,7 +189,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
     id: 'house',
     name: 'Consumption',
     role: DeviceRole.PowerSensor,
-    power: point('power', 'Power.Consumption.Total', 'Power.Consumption.AC'),
+    power: point('power', 'Power.Consumption.Total'),
     kwh: point('energy', 'Energy.Consumption.Total.Lifetime'),
   },
   {
@@ -202,6 +240,272 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
     quantity: 'percentage',
     value: point('percentage', 'Battery.SOH'),
   },
+  // Photovoltaic
+  numeric(
+    'pv-string-1-power',
+    'String 1 power',
+    'power',
+    'Power.DC.String.1',
+    DeviceRole.PowerSensor,
+  ),
+  numeric(
+    'pv-string-2-power',
+    'String 2 power',
+    'power',
+    'Power.DC.String.2',
+    DeviceRole.PowerSensor,
+  ),
+  numeric(
+    'pv-energy-day',
+    'Production today',
+    'energy',
+    'Energy.Production.Total.Day',
+    DeviceRole.EnergySensor,
+  ),
+  numeric(
+    'pv-string-1-voltage',
+    'String 1 voltage',
+    'voltage',
+    'Voltage.String.1',
+    DeviceRole.VoltageSensor,
+  ),
+  numeric(
+    'pv-string-2-voltage',
+    'String 2 voltage',
+    'voltage',
+    'Voltage.String.2',
+    DeviceRole.VoltageSensor,
+  ),
+  numeric(
+    'pv-string-1-current',
+    'String 1 current',
+    'current',
+    'Current.String.1',
+    DeviceRole.CurrentSensor,
+  ),
+  numeric(
+    'pv-string-2-current',
+    'String 2 current',
+    'current',
+    'Current.String.2',
+    DeviceRole.CurrentSensor,
+  ),
+  // Battery
+  numeric(
+    'battery-stored-energy',
+    'Stored energy',
+    'energy',
+    'Energy.Battery.Charge.Load',
+    DeviceRole.EnergySensor,
+  ),
+  numeric(
+    'battery-charge-day',
+    'Charged today',
+    'energy',
+    'Energy.Battery.Charge.Day',
+    DeviceRole.EnergySensor,
+  ),
+  numeric(
+    'battery-discharge-day',
+    'Discharged today',
+    'energy',
+    'Energy.Battery.Discharge.Day',
+    DeviceRole.EnergySensor,
+  ),
+  numeric(
+    'battery-capacity',
+    'Capacity',
+    'energy',
+    'Energy.Battery.Capacity',
+    DeviceRole.EnergySensor,
+  ),
+  numeric(
+    'battery-power-rating',
+    'Maximum power rating',
+    'power',
+    'Battery.Power.Rating.Maximum',
+    DeviceRole.PowerSensor,
+  ),
+  numeric('battery-level-max', 'Maximum charge level', 'percentage', 'Battery.ChargeLevel.Max'),
+  numeric('battery-level-min', 'Minimum charge level', 'percentage', 'Battery.ChargeLevel.Min'),
+  numeric(
+    'battery-power-set',
+    'Power setpoint',
+    'power',
+    'Power.Battery.Charge.Discharge.Set',
+    DeviceRole.PowerSensor,
+  ),
+  numeric(
+    'battery-charge-power-max',
+    'Maximum charge power',
+    'power',
+    'Power.Battery.Charge.Max',
+    DeviceRole.PowerSensor,
+  ),
+  numeric(
+    'battery-discharge-power-max',
+    'Maximum discharge power',
+    'power',
+    'Power.Battery.Discharge.Max',
+    DeviceRole.PowerSensor,
+  ),
+  numeric(
+    'battery-charge-current-max',
+    'Maximum charge current',
+    'current',
+    'Current.Battery.Charge.Max',
+    DeviceRole.CurrentSensor,
+  ),
+  numeric(
+    'battery-discharge-current-max',
+    'Maximum discharge current',
+    'current',
+    'Current.Battery.Discharge.Max',
+    DeviceRole.CurrentSensor,
+  ),
+  // Grid
+  numeric('grid-phase-a', 'Phase A power', 'power', 'Power.AC.Phase.A', DeviceRole.PowerSensor),
+  numeric('grid-phase-b', 'Phase B power', 'power', 'Power.AC.Phase.B', DeviceRole.PowerSensor),
+  numeric('grid-phase-c', 'Phase C power', 'power', 'Power.AC.Phase.C', DeviceRole.PowerSensor),
+  numeric(
+    'grid-import-day',
+    'Imported today',
+    'energy',
+    'Energy.Grid.Import.Day',
+    DeviceRole.EnergySensor,
+  ),
+  numeric(
+    'grid-export-day',
+    'Exported today',
+    'energy',
+    'Energy.Grid.Export.Day',
+    DeviceRole.EnergySensor,
+  ),
+  numeric(
+    'grid-voltage-a',
+    'Phase A voltage',
+    'voltage',
+    'Voltage.Phase.A',
+    DeviceRole.VoltageSensor,
+  ),
+  numeric(
+    'grid-voltage-b',
+    'Phase B voltage',
+    'voltage',
+    'Voltage.Phase.B',
+    DeviceRole.VoltageSensor,
+  ),
+  numeric(
+    'grid-voltage-c',
+    'Phase C voltage',
+    'voltage',
+    'Voltage.Phase.C',
+    DeviceRole.VoltageSensor,
+  ),
+  {
+    kind: 'numeric',
+    id: 'grid-frequency',
+    name: 'Frequency',
+    role: DeviceRole.NumericSensor,
+    quantity: 'index',
+    value: { ...point('index', 'Frequency.Grid'), ignoreUnit: true },
+  },
+  numeric(
+    'grid-feed-max',
+    'Maximum feed-in power',
+    'power',
+    'Power.Grid.Maximum.Feed',
+    DeviceRole.PowerSensor,
+  ),
+  // Home
+  numeric(
+    'house-energy-day',
+    'Consumption today',
+    'energy',
+    'Energy.Consumption.Total.Day',
+    DeviceRole.EnergySensor,
+  ),
+  // Inverter
+  text('inverter-state', 'System state', 'Inverter.System.State'),
+  text('inverter-ems-mode', 'EMS mode', 'Command.EMS.Mode'),
+  numeric(
+    'inverter-ac-power',
+    'AC power',
+    'power',
+    'Power.Inverter.AC.Export',
+    DeviceRole.PowerSensor,
+  ),
+  text('inverter-start-stop', 'Start/stop command', 'Command.Start.Stop'),
+  text(
+    'inverter-forcible-mode',
+    'Forcible charge/discharge mode',
+    'Mode.Forcible.Charge.Discharge',
+  ),
+  numeric(
+    'inverter-power-rating',
+    'Maximum power rating',
+    'power',
+    'Inverter.Power.Rating.Maximum',
+    DeviceRole.PowerSensor,
+  ),
+  text('inverter-phase-type', 'Phase type', 'Type.Phase.Inverter'),
+  text('inverter-modbus-rtu', 'Modbus RTU status', 'Inverter.Modbus.Health.Rtu.Status'),
+  text('inverter-modbus-tcp', 'Modbus TCP status', 'Inverter.Modbus.Health.Tcp.Status'),
+  // Heat pump
+  text('heatpump-hot-water-mode', 'Hot water mode', 'Heatpump.DomesticHotWater.1.Mode'),
+  text('heatpump-heating-mode', 'Heating circuit mode', 'Heatpump.HeatingCircuit.1.Mode'),
+  text('heatpump-generator-state', 'Generator state', 'Heatpump.Generator.State.Running'),
+  text('heatpump-heater-state', 'Electric heater state', 'Heatpump.ElectricHeater.State.Running'),
+  text('heatpump-energy-management', 'Energy management state', 'Heatpump.EnergyManagement.State'),
+  text('heatpump-power-desired', 'Power requested', 'Heatpump.Power.Desired.Enabled'),
+  text('heatpump-pv-optimization', 'PV optimisation', 'Heatpump.Settings.PvOptimizationStatus'),
+  numeric(
+    'heatpump-power-min',
+    'Generator minimum power',
+    'power',
+    'Heatpump.Generator.Power.Min',
+    DeviceRole.PowerSensor,
+  ),
+  numeric(
+    'heatpump-power-max',
+    'Generator maximum power',
+    'power',
+    'Heatpump.Generator.Power.Max',
+    DeviceRole.PowerSensor,
+  ),
+  text('heatpump-connection', 'Local connection', 'Heatpump.Local.ConnectionState'),
+  // Enpal Box
+  text('box-main-state', 'Main state', 'IoT.MainState'),
+  numeric('box-cpu-load', 'CPU load', 'percentage', 'Cpu.Load'),
+  numeric('box-memory-usage', 'Memory usage', 'percentage', 'Memory.Usage'),
+  text('box-hardware-check', 'Hardware check', 'HW.Cronny.Result'),
+  text('eebus-connection', 'Connection state', 'Eebus.ConnectionState'),
+  text('eebus-discovery', 'Discovery state', 'Eebus.DiscoveryState'),
+  text('eebus-cert-expiry', 'Certificate expiry', 'Eebus.CertExpiry', true),
+  text('lte-state', 'LTE state', 'LTE.State'),
+  text('lte-connection-type', 'Connection type', 'LTE.Connection.Type'),
+  numeric('lte-quality', 'LTE quality', 'percentage', 'LTE.Quality'),
+  numeric('lte-rsrp', 'RSRP', 'signal-level', 'LTE.RSRP'),
+  numeric('lte-rsrq', 'RSRQ', 'index', 'LTE.RSRQ'),
+  numeric('lte-rssi', 'RSSI', 'signal-level', 'LTE.RSSI'),
+  numeric('lte-snr', 'SNR', 'index', 'LTE.SNR'),
+  text('lte-failover', 'Failover result', 'LTE.Failover.Result'),
+  text('lte-signal-check', 'Signal check', 'LTE.Cronny.Result'),
+  text('wifi-state', 'Wi-Fi state', 'WiFi.State'),
+  numeric(
+    'data-lan-down',
+    'LAN download this month',
+    'count',
+    'IoT.Data.Consumption.Lan.Down.Month',
+  ),
+  numeric('data-lan-up', 'LAN upload this month', 'count', 'IoT.Data.Consumption.Lan.Up.Month'),
+  numeric(
+    'data-lte-down',
+    'LTE download this month',
+    'count',
+    'IoT.Data.Consumption.Lte.Down.Month',
+  ),
+  numeric('data-lte-up', 'LTE upload this month', 'count', 'IoT.Data.Consumption.Lte.Up.Month'),
 ]
 
 export function findSpec(id: string): EnpalSpec | undefined {
@@ -219,6 +523,8 @@ export function capsOfSpec(spec: EnpalSpec): readonly string[] {
       return ['meter']
     case 'numeric':
       return ['numeric-sensor']
+    case 'text':
+      return ['enum-sensor']
   }
 }
 
@@ -231,7 +537,17 @@ function pointsOf(spec: EnpalSpec): readonly Point[] {
     case 'meter':
     case 'numeric':
       return [spec.value]
+    case 'text':
+      return []
   }
+}
+
+/** Every box key a spec reads (a text spec's key included). */
+export function keysOfSpec(spec: EnpalSpec): readonly string[] {
+  const keys = pointsOf(spec).flatMap((p) => p.sources.map((s) => s.key))
+  if (spec.kind === 'text') return [spec.key]
+  if (spec.kind === 'battery') return [...keys, ...spec.capacity.sources.map((s) => s.key)]
+  return keys
 }
 
 type Resolved =
@@ -244,7 +560,11 @@ function resolve(target: Point, snapshot: EnpalSnapshot): Resolved {
   for (const source of target.sources) {
     const reading = snapshot.readings.get(source.key)
     if (reading === undefined) continue
-    const converted = toBase(reading.value, reading.unit, target.quantity)
+    const converted = toBase(
+      reading.value,
+      target.ignoreUnit === true ? undefined : reading.unit,
+      target.quantity,
+    )
     if (!converted.ok) {
       refusal = `${source.key}: ${converted.reason} (unit ${reading.unit ?? 'none'})`
       continue
@@ -262,7 +582,9 @@ function resolve(target: Point, snapshot: EnpalSnapshot): Resolved {
 /** Specs whose data the box reported: a refused point still counts, the device exists. */
 export function availableSpecs(snapshot: EnpalSnapshot): readonly EnpalSpec[] {
   return ENPAL_SPECS.filter((spec) =>
-    pointsOf(spec).some((p) => resolve(p, snapshot).state !== 'absent'),
+    spec.kind === 'text'
+      ? snapshot.texts.has(spec.key)
+      : pointsOf(spec).some((p) => resolve(p, snapshot).state !== 'absent'),
   )
 }
 
@@ -280,6 +602,7 @@ export interface SpecSlices {
   readonly battery?: BatteryStatus
   readonly meter?: MeterStatus
   readonly numeric?: NumericSensorStatus
+  readonly text?: EnumSensorStatus
   /** One line per reading the box sent that could not be converted. */
   readonly refusals: readonly string[]
 }
@@ -317,7 +640,10 @@ function stateOfCharge(spec: BatterySpec, snapshot: EnpalSnapshot): Resolved {
       why: `${reading.key}: no usable capacity for a ${reading.unit} level`,
     }
   }
-  return { state: 'value', value: clampPercent((level.value / capacity.value) * 100) }
+  return {
+    state: 'value',
+    value: clampPercent((level.value / capacity.value) * 100),
+  }
 }
 
 export function computeSlices(
@@ -382,13 +708,33 @@ export function computeSlices(
     }
     case 'meter': {
       const value = resolve(spec.value, snapshot)
-      return { meter: { value: nullableOf(value), lastFetchedAt: now }, refusals: refusalOf(value) }
+      return {
+        meter: { value: nullableOf(value), lastFetchedAt: now },
+        refusals: refusalOf(value),
+      }
     }
     case 'numeric': {
       const value = resolve(spec.value, snapshot)
       return {
         numeric: { value: nullableOf(value), lastFetchedAt: now },
         refusals: refusalOf(value),
+      }
+    }
+    case 'text': {
+      // The label as delivered. A box that sent none leaves the slice alone: a text has no
+      // null to say "unknown" with, and an invented empty state would read as a value.
+      const value = snapshot.texts.get(spec.key)
+      return {
+        ...(value !== undefined
+          ? {
+              text: {
+                value,
+                ...(spec.timestamp === true ? { timestamp: true } : {}),
+                lastFetchedAt: now,
+              },
+            }
+          : {}),
+        refusals: [],
       }
     }
   }

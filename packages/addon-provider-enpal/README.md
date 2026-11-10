@@ -8,19 +8,20 @@ Enpal solar box provider for CamStack: the box is an integration, and the equipm
   - Node placement: `hub-only`.
   - Capabilities: `device-provider`, `device-adoption`.
 
-Containers and their children (a container is offered only when the box reported at least one of its values; a child only when the box reported its value):
+Containers (a container is offered only when the box reported at least one of its values; a child only when the box reported its value):
 
-| Container | Child | Caps |
+| Container | Sections | Children |
 | --- | --- | --- |
-| Photovoltaic | Production | `power-meter` (W, lifetime kWh) |
-| | Inverter temperature | `numeric-sensor` |
-| Battery | Battery | `battery` (state of charge), `power-meter` (signed W, V, A) |
-| | Energy charged / discharged | `meter` (lifetime kWh) |
-| | Temperature, Health | `numeric-sensor` |
-| Grid | Import, Export | `power-meter` (W, lifetime kWh) |
-| House | Consumption | `power-meter` |
-| Heat pump | Consumption | `power-meter` |
-| | Hot water temperature, Outside temperature | `numeric-sensor` |
+| Enpal Box | Box, EEBUS, Connectivity | state, load and link sensors, all diagnostic |
+| Impianto | Photovoltaic, Battery, Grid, Home, Inverter | live sensors (power, level, day and lifetime energy, states) and diagnostic ones (voltages, currents, limits, ratings) |
+| Heat pump | none | live sensors (power, temperatures, modes, running states) and diagnostic ones; offered only when the box reports heat-pump keys |
+
+- A diagnostic child is hidden by default (`display.hidden`); its history is still recorded.
+- Identity facts (model, serial numbers, firmware) are device attributes of the container, never sensors.
+- A text value (a state, a mode) is an `enum-sensor` and keeps the label the box sent; a certificate expiry is a date-time sensor.
+- Texts and attributes come only from the web-page channel; InfluxDB and the device page carry numbers only.
+- The primary child of each container is the first of an ordered preference that was adopted: Impianto PV power, battery level, home consumption; Heat pump power, hot water, outside temperature; Enpal Box main state, LTE state.
+- Not exposed on purpose: AC consumption duplicate, AC maximum, the network-traffic, cellular-guard and predictor internals.
 
 Removing the integration removes its devices. An unreachable box marks its devices offline; it never publishes zeros. A lifetime counter that drops for one poll is held at its previous value.
 

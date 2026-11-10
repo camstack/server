@@ -3,6 +3,7 @@ import {
   BlazorBridgeError,
   type BlazorBackoff,
   blazorRowsToReadings,
+  blazorRowsToTexts,
   type BlazorReader,
 } from './enpal-blazor.js'
 import { parseDeviceMessages } from './enpal-device-page.js'
@@ -14,6 +15,7 @@ import {
   type EnpalReading,
   type EnpalSnapshot,
   type EnpalSourceKind,
+  type EnpalText,
 } from './enpal-snapshot.js'
 
 /** The slice of `fetch` the client uses, so a test hands in a fake box. */
@@ -37,6 +39,12 @@ export class EnpalError extends Error {
     this.kind = kind
     this.source = source
   }
+}
+
+/** What one source returned: the numbers, and the text rows when the source carries them. */
+interface SourceRead {
+  readonly readings: EnpalReading[]
+  readonly texts: readonly EnpalText[]
 }
 
 export interface ReadEnpalSnapshotInput {
@@ -65,7 +73,10 @@ async function request(
 ): Promise<string> {
   let response: Response
   try {
-    response = await fetchFn(url, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
+    response = await fetchFn(url, {
+      ...init,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
   } catch (error) {
     const kind = describeFailure(error)
     throw new EnpalError(
@@ -93,7 +104,7 @@ async function request(
   return response.text()
 }
 
-async function readInflux(input: ReadEnpalSnapshotInput): Promise<EnpalReading[]> {
+async function readInflux(input: ReadEnpalSnapshotInput): Promise<SourceRead> {
   const { connection } = input
   if (input.tokenLocked === true) {
     throw new EnpalError(
@@ -132,10 +143,10 @@ async function readInflux(input: ReadEnpalSnapshotInput): Promise<EnpalReading[]
       `Enpal InfluxDB on ${connection.host} returned no series for bucket "${connection.bucket}" in the last two hours`,
     )
   }
-  return readings
+  return { readings, texts: [] }
 }
 
-async function readBlazor(input: ReadEnpalSnapshotInput): Promise<EnpalReading[]> {
+async function readBlazor(input: ReadEnpalSnapshotInput): Promise<SourceRead> {
   const { connection } = input
   if (input.blazor === undefined) {
     throw new EnpalError(
@@ -145,10 +156,14 @@ async function readBlazor(input: ReadEnpalSnapshotInput): Promise<EnpalReading[]
     )
   }
   let readings: EnpalReading[]
+  let texts: EnpalText[]
   try {
-    readings = blazorRowsToReadings(
-      await input.blazor({ host: connection.host, port: connection.pagePort }),
-    )
+    const rows = await input.blazor({
+      host: connection.host,
+      port: connection.pagePort,
+    })
+    readings = blazorRowsToReadings(rows)
+    texts = blazorRowsToTexts(rows)
   } catch (error) {
     if (!(error instanceof BlazorBridgeError)) throw error
     const kind: EnpalErrorKind = error.kind === 'protocol' ? 'bad-response' : error.kind
@@ -161,10 +176,10 @@ async function readBlazor(input: ReadEnpalSnapshotInput): Promise<EnpalReading[]
       `Enpal box ${connection.host} sent no numeric sensor rows`,
     )
   }
-  return readings
+  return { readings, texts }
 }
 
-async function readPage(input: ReadEnpalSnapshotInput): Promise<EnpalReading[]> {
+async function readPage(input: ReadEnpalSnapshotInput): Promise<SourceRead> {
   const { connection } = input
   const url = `http://${connection.host}:${connection.pagePort}/deviceMessages`
   const body = await request('device-page', connection.host, url, { method: 'GET' }, input.fetch)
@@ -176,7 +191,7 @@ async function readPage(input: ReadEnpalSnapshotInput): Promise<EnpalReading[]> 
       `The device page of ${connection.host} lists no device rows (firmware 8.51 and later render them only through the web socket)`,
     )
   }
-  return readings
+  return { readings, texts: [] }
 }
 
 function reasonOf(error: EnpalError): EnpalFallbackReason {
@@ -184,7 +199,7 @@ function reasonOf(error: EnpalError): EnpalFallbackReason {
 }
 
 const READERS: Readonly<
-  Record<EnpalSourceKind, (input: ReadEnpalSnapshotInput) => Promise<EnpalReading[]>>
+  Record<EnpalSourceKind, (input: ReadEnpalSnapshotInput) => Promise<SourceRead>>
 > = {
   blazor: readBlazor,
   influxdb: readInflux,
@@ -237,9 +252,9 @@ export async function readEnpalSnapshot(input: ReadEnpalSnapshotInput): Promise<
 
   for (const source of order) {
     try {
-      const readings = await READERS[source](input)
+      const read = await READERS[source](input)
       if (source === 'blazor') input.blazorBackoff?.recovered()
-      return createSnapshot(source, readings, now, joinReasons(reasons))
+      return createSnapshot(source, read.readings, now, joinReasons(reasons), read.texts)
     } catch (error) {
       if (!(error instanceof EnpalError)) throw error
       if (source === 'blazor' && mode === 'auto') {

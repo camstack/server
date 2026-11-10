@@ -2,13 +2,14 @@ import {
   errMsg,
   type AdoptionFilter,
   type AdoptionStatus,
+  type ChildLayout,
   type DiscoveredChildDevice,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
 } from '@camstack/types'
 import { buildEnpalCandidates, ENPAL_BOX_ID } from './enpal-discovery.js'
 import { ENPAL_SYSTEM } from './config.js'
-import { findEquipment } from './enpal-equipment.js'
+import { childLayoutOf, findEquipment } from './enpal-equipment.js'
 import type { EnpalSnapshot } from './enpal-snapshot.js'
 
 export interface EnpalAdoptionProviderDeps {
@@ -29,6 +30,8 @@ export interface EnpalAdoptionProviderDeps {
     readonly specIds: readonly string[]
     readonly integrationId: string
     readonly name: string
+    /** Accordion sections of the adopted children; empty when the equipment has none. */
+    readonly childLayout: ChildLayout
   }) => Promise<{
     readonly deviceId: number
     readonly accessoryDeviceIds: readonly number[]
@@ -171,6 +174,7 @@ export function buildEnpalAdoptionProvider(
             specIds,
             integrationId,
             name: perCandidate?.[equipmentId]?.name ?? equipment.name,
+            childLayout: childLayoutOf(equipment, specIds),
           })
           adopted.push({
             childNativeId: equipmentId,
