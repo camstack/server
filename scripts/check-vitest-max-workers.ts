@@ -13,9 +13,15 @@
  *
  * ## What it checks
  *
- * Each tracked `vitest.config.ts` imports `vitestMaxWorkers` from the root
- * `vitest.workers` module and sets `maxWorkers: vitestMaxWorkers()`. A literal
- * match, present or absent.
+ * Each tracked `vitest.config.ts` imports `vitestWorkers` from the root
+ * `vitest.workers` module, spreads `...vitestWorkers()` into `test`, and writes
+ * no `maxWorkers` / `minWorkers` key of its own. A literal match.
+ *
+ * Why both bounds: a `maxWorkers` alone is refused at startup by vitest 2
+ * (still pinned by some addon packages), whose default `minWorkers` is
+ * cores - 1 — tinypool throws "options.minThreads and options.maxThreads must
+ * not conflict" on any machine with more cores than the cap (2026-11-10, 17
+ * packages red in verify:push).
  *
  * Exempt: {@link EXEMPT}, each with its reason.
  */
@@ -33,8 +39,9 @@ export const EXEMPT: ReadonlyMap<string, string> = new Map([
   ],
 ])
 
-const IMPORT_PATTERN = /import\s*\{[^}]*\bvitestMaxWorkers\b[^}]*\}\s*from\s*'(?:\.\.?\/)+vitest\.workers(?:\.ts|\.js)?'/
-const SETTING_PATTERN = /\bmaxWorkers\s*:\s*vitestMaxWorkers\(\)/
+const IMPORT_PATTERN = /import\s*\{[^}]*\bvitestWorkers\b[^}]*\}\s*from\s*'(?:\.\.?\/)+vitest\.workers(?:\.ts|\.js)?'/
+const SETTING_PATTERN = /\.\.\.vitestWorkers\(\)/
+const OWN_BOUND_PATTERN = /\b(?:maxWorkers|minWorkers)\s*:/
 
 export interface VitestConfigViolation {
   readonly file: string
@@ -43,8 +50,9 @@ export interface VitestConfigViolation {
 
 /** Why a config's source misses the shared default; null when it has it. */
 export function missingSharedDefault(source: string): string | null {
-  if (!IMPORT_PATTERN.test(source)) return "does not import `vitestMaxWorkers` from the root 'vitest.workers'"
-  if (!SETTING_PATTERN.test(source)) return 'does not set `maxWorkers: vitestMaxWorkers()` in `test`'
+  if (!IMPORT_PATTERN.test(source)) return "does not import `vitestWorkers` from the root 'vitest.workers'"
+  if (!SETTING_PATTERN.test(source)) return 'does not spread `...vitestWorkers()` into `test`'
+  if (OWN_BOUND_PATTERN.test(source)) return 'writes its own `maxWorkers` / `minWorkers` instead of the shared pair'
   return null
 }
 
@@ -78,8 +86,8 @@ function main(): void {
   console.error('check-vitest-max-workers: a vitest config without the shared worker default:')
   for (const v of violations) console.error(`  ${v.file}: ${v.reason}`)
   console.error(
-    "\n  Add `import { vitestMaxWorkers } from '<relative>/vitest.workers'` and\n" +
-      '  `maxWorkers: vitestMaxWorkers()` under `test` (see vitest.workers.ts).',
+    "\n  Add `import { vitestWorkers } from '<relative>/vitest.workers'` and\n" +
+      '  `...vitestWorkers()` under `test` (see vitest.workers.ts).',
   )
   process.exit(1)
 }

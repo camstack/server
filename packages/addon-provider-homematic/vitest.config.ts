@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
-import { vitestMaxWorkers } from '../../vitest.workers'
+import { vitestWorkers } from '../../vitest.workers'
 
 /**
  * Vitest config for `@camstack/addon-provider-homematic`.
@@ -15,7 +15,7 @@ import { vitestMaxWorkers } from '../../vitest.workers'
 export default defineConfig({
   plugins: [react()],
   test: {
-    maxWorkers: vitestMaxWorkers(),
+    ...vitestWorkers(),
     globals: true,
     testTimeout: 10_000,
     exclude: ['**/node_modules/**', '**/dist/**'],

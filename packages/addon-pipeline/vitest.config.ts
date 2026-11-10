@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
-import { vitestMaxWorkers } from '../../vitest.workers'
+import { vitestWorkers } from '../../vitest.workers'
 
 /**
  * Vitest config for the `@camstack/addon-pipeline` bundle.
@@ -37,7 +37,7 @@ import { vitestMaxWorkers } from '../../vitest.workers'
 export default defineConfig({
   plugins: [react()],
   test: {
-    maxWorkers: vitestMaxWorkers(),
+    ...vitestWorkers(),
     globals: true,
     testTimeout: 20_000,
     // The shm crash-safety / soak-style specs fork child processes and decode

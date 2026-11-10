@@ -87,7 +87,7 @@ machine-wide test slot (`scripts/ci/test-slot.sh`: 2 slots, `nice -n 15`,
 3 vitest workers; `verify:push` takes one at nice 0 with priority). A run
 that prints "waiting" is queued behind another agent: wait, never bypass it
 with a bare `npx vitest`. Every `vitest.config.ts` defaults to
-`VITEST_MAX_WORKERS ?? 3` (`vitest.workers.ts`; guard
+`VITEST_MAX_WORKERS ?? 3`, min = max for vitest 2 (`...vitestWorkers()` from `vitest.workers.ts`; guard
 `check-vitest-max-workers`).
 
 **A new worktree:** `scripts/worktree-setup.sh <name> <branch>` (from

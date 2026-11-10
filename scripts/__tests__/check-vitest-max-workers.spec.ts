@@ -4,14 +4,14 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { findViolations, missingSharedDefault } from '../check-vitest-max-workers.ts'
-import { DEFAULT_VITEST_MAX_WORKERS, vitestMaxWorkers } from '../../vitest.workers.ts'
+import { DEFAULT_VITEST_MAX_WORKERS, vitestMaxWorkers, vitestWorkers } from '../../vitest.workers.ts'
 
 const WITH_DEFAULT = `import { defineConfig } from 'vitest/config'
-import { vitestMaxWorkers } from '../../vitest.workers'
+import { vitestWorkers } from '../../vitest.workers'
 
 export default defineConfig({
   test: {
-    maxWorkers: vitestMaxWorkers(),
+    ...vitestWorkers(),
     globals: true,
   },
 })
@@ -32,6 +32,11 @@ describe('vitestMaxWorkers', () => {
     expect(vitestMaxWorkers({ VITEST_MAX_WORKERS: '0' })).toBe(3)
     expect(vitestMaxWorkers({ VITEST_MAX_WORKERS: 'many' })).toBe(3)
   })
+
+  it('gives a minimum that never exceeds the maximum (vitest 2 refuses min > max at startup)', () => {
+    expect(vitestWorkers({})).toEqual({ maxWorkers: 3, minWorkers: 3 })
+    expect(vitestWorkers({ VITEST_MAX_WORKERS: '4' })).toEqual({ maxWorkers: 4, minWorkers: 4 })
+  })
 })
 
 describe('check-vitest-max-workers', () => {
@@ -43,9 +48,14 @@ describe('check-vitest-max-workers', () => {
     expect(missingSharedDefault(WITHOUT)).toMatch(/does not import/)
   })
 
-  it('refuses a hand-written number in place of the shared default', () => {
-    const literal = WITH_DEFAULT.replace('maxWorkers: vitestMaxWorkers()', 'maxWorkers: 8')
-    expect(missingSharedDefault(literal)).toMatch(/does not set/)
+  it('refuses a maxWorkers without the minimum (the vitest 2 startup RangeError)', () => {
+    const maxOnly = WITH_DEFAULT.replace('...vitestWorkers()', 'maxWorkers: vitestWorkers().maxWorkers')
+    expect(missingSharedDefault(maxOnly)).toMatch(/does not spread/)
+  })
+
+  it('refuses a hand-written bound beside the shared pair', () => {
+    const override = WITH_DEFAULT.replace('...vitestWorkers(),', '...vitestWorkers(),\n    maxWorkers: 8,')
+    expect(missingSharedDefault(override)).toMatch(/writes its own/)
   })
 
   describe('over a tree', () => {

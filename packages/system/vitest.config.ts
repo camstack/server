@@ -1,6 +1,6 @@
 import { configDefaults, defineConfig, mergeConfig } from 'vitest/config'
 import viteConfig from './vite.config.js'
-import { vitestMaxWorkers } from '../../vitest.workers'
+import { vitestWorkers } from '../../vitest.workers'
 
 /**
  * Per-push unit lane. Specs that boot a REAL multi-broker cluster (several
@@ -12,7 +12,7 @@ export default mergeConfig(
   viteConfig,
   defineConfig({
     test: {
-      maxWorkers: vitestMaxWorkers(),
+      ...vitestWorkers(),
       exclude: [
         ...configDefaults.exclude,
         '**/*.cluster.spec.ts',

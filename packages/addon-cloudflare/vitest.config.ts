@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config'
-import { vitestMaxWorkers } from '../../vitest.workers'
+import { vitestWorkers } from '../../vitest.workers'
 
 /**
  * Vitest config for the `@camstack/addon-cloudflare` bundle.
@@ -14,7 +14,7 @@ import { vitestMaxWorkers } from '../../vitest.workers'
  */
 export default defineConfig({
   test: {
-    maxWorkers: vitestMaxWorkers(),
+    ...vitestWorkers(),
     globals: true,
     environment: 'node',
     exclude: ['**/node_modules/**', '**/dist/**'],

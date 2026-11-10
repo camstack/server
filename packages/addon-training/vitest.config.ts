@@ -2,7 +2,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
-import { vitestMaxWorkers } from '../../vitest.workers'
+import { vitestWorkers } from '../../vitest.workers'
 
 const root = path.dirname(fileURLToPath(import.meta.url))
 
@@ -15,7 +15,7 @@ export default defineConfig({
     },
   },
   test: {
-    maxWorkers: vitestMaxWorkers(),
+    ...vitestWorkers(),
     environment: 'jsdom',
     globals: true,
     setupFiles: [path.resolve(root, 'src/test-setup.ts')],

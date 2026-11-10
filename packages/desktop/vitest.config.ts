@@ -1,6 +1,6 @@
 import { resolve } from 'node:path'
 import { defineConfig } from 'vitest/config'
-import { vitestMaxWorkers } from '../../vitest.workers'
+import { vitestWorkers } from '../../vitest.workers'
 
 /**
  * `@camstack/owner-only-file` is the shell's alias for ONE source file of
@@ -9,7 +9,7 @@ import { vitestMaxWorkers } from '../../vitest.workers'
  */
 export default defineConfig({
   test: {
-    maxWorkers: vitestMaxWorkers(),
+    ...vitestWorkers(),
   },
   resolve: {
     alias: {
