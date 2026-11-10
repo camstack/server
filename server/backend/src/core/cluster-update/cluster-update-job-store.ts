@@ -16,6 +16,10 @@ import type { ClusterUpdateJobStore } from './cluster-update-seams.js'
 
 export const CLUSTER_UPDATE_JOB_FILE = path.join('cluster-update', 'job.json')
 
+function isNotFound(error: unknown): boolean {
+  return error instanceof Error && 'code' in error && error.code === 'ENOENT'
+}
+
 export class FileClusterUpdateJobStore implements ClusterUpdateJobStore {
   readonly filePath: string
 
@@ -26,22 +30,34 @@ export class FileClusterUpdateJobStore implements ClusterUpdateJobStore {
     this.filePath = path.join(dataDir, CLUSTER_UPDATE_JOB_FILE)
   }
 
+  /**
+   * `null` = no job (file absent, or its content is not a job: nothing to
+   * resume). A file that EXISTS but cannot be read THROWS — the caller must
+   * not mistake a transient read failure for "no job".
+   */
   load(): ClusterUpdateJob | null {
+    let text: string
     try {
-      if (!fs.existsSync(this.filePath)) return null
-      const raw: unknown = JSON.parse(fs.readFileSync(this.filePath, 'utf-8'))
-      const parsed = ClusterUpdateJobSchema.safeParse(raw)
-      if (parsed.success) return parsed.data
-      this.logger.warn('Cluster update job file does not parse; ignoring it', {
-        meta: { path: this.filePath, error: parsed.error.message },
-      })
-      return null
+      text = fs.readFileSync(this.filePath, 'utf-8')
     } catch (error: unknown) {
-      this.logger.warn('Cluster update job file unreadable; ignoring it', {
+      if (isNotFound(error)) return null
+      throw error
+    }
+    let raw: unknown
+    try {
+      raw = JSON.parse(text)
+    } catch (error: unknown) {
+      this.logger.warn('Cluster update job file does not parse; ignoring it', {
         meta: { path: this.filePath, error: errMsg(error) },
       })
       return null
     }
+    const parsed = ClusterUpdateJobSchema.safeParse(raw)
+    if (parsed.success) return parsed.data
+    this.logger.warn('Cluster update job file does not parse; ignoring it', {
+      meta: { path: this.filePath, error: parsed.error.message },
+    })
+    return null
   }
 
   save(job: ClusterUpdateJob): void {

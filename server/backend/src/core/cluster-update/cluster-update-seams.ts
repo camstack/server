@@ -53,6 +53,7 @@ export interface ClusterInstallation {
 
 /** Durable job state: survives the hub restart the job itself causes. */
 export interface ClusterUpdateJobStore {
+  /** `null` = no job. THROWS when the job exists but cannot be read. */
   readonly load: () => ClusterUpdateJob | null
   readonly save: (job: ClusterUpdateJob) => void
 }

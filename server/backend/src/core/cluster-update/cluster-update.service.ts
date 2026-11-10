@@ -27,6 +27,7 @@ import {
   runAddonsStep,
   runBackupStep,
   runServerStep,
+  waitForAgentOnline,
   verifyServerStep,
   type StepOutcome,
 } from './cluster-update-steps.js'
@@ -45,7 +46,14 @@ export class ClusterUpdateService {
   async preview(options: ClusterUpdateOptions): Promise<ClusterUpdatePlan> {
     this.resume()
     const plan = await readClusterUpdatePlan(this.seams, options)
-    const active = this.activeJob()
+    const { job: active, unreadable } = this.activeJobOrUnreadable()
+    if (unreadable !== null) {
+      return {
+        ...plan,
+        blocker: 'status-unreadable',
+        blockerDetail: `the cluster update job file is unreadable: ${unreadable}`,
+      }
+    }
     if (active !== null) {
       return {
         ...plan,
@@ -62,7 +70,15 @@ export class ClusterUpdateService {
     requestedBy: string,
   ): Promise<StartClusterUpdateResult> {
     this.resume()
-    const active = this.activeJob()
+    const { job: active, unreadable } = this.activeJobOrUnreadable()
+    if (unreadable !== null) {
+      return {
+        accepted: false,
+        jobId: null,
+        blocker: 'status-unreadable',
+        message: `the cluster update job file is unreadable: ${unreadable}`,
+      }
+    }
     if (active !== null) {
       return {
         accepted: false,
@@ -122,8 +138,17 @@ export class ClusterUpdateService {
    */
   resume(): void {
     if (this.resumed) return
+    let job: ClusterUpdateJob | null
+    try {
+      job = this.seams.store.load()
+    } catch (err) {
+      // Unreadable is not absent: stay resumable, the next call retries.
+      this.seams.logger.warn('Cluster update job unreadable; will retry to resume it', {
+        meta: { error: errText(err) },
+      })
+      return
+    }
     this.resumed = true
-    const job = this.seams.store.load()
     if (job === null || job.state !== 'running' || this.running !== null) return
     const index = job.steps.findIndex(isOpen)
     const step = index >= 0 ? job.steps[index] : undefined
@@ -150,9 +175,22 @@ export class ClusterUpdateService {
     await this.running
   }
 
+  /** The running job; throws when the store is unreadable (absent is `null`). */
   private activeJob(): ClusterUpdateJob | null {
     const job = this.seams.store.load()
     return job !== null && job.state === 'running' ? job : null
+  }
+
+  /** `activeJob`, but an unreadable store is a refusal the caller reports, not a crash. */
+  private activeJobOrUnreadable(): { job: ClusterUpdateJob | null; unreadable: string | null } {
+    try {
+      return { job: this.activeJob(), unreadable: null }
+    } catch (err) {
+      this.seams.logger.warn('Cluster update job store unreadable', {
+        meta: { error: errText(err) },
+      })
+      return { job: null, unreadable: errText(err) }
+    }
   }
 
   private launch(job: ClusterUpdateJob, from: number, resumingHub = false): void {
@@ -161,7 +199,7 @@ export class ClusterUpdateService {
         this.seams.logger.error('Cluster update crashed', {
           meta: { jobId: job.id, error: errText(err) },
         })
-        const latest = this.seams.store.load() ?? job
+        const latest = this.loadOr(job)
         const index = latest.steps.findIndex(isOpen)
         if (latest.state === 'running') {
           this.stop(latest, index >= 0 ? index : latest.steps.length - 1, {
@@ -174,6 +212,14 @@ export class ClusterUpdateService {
       .finally(() => {
         this.running = null
       })
+  }
+
+  private loadOr(fallback: ClusterUpdateJob): ClusterUpdateJob {
+    try {
+      return this.seams.store.load() ?? fallback
+    } catch {
+      return fallback
+    }
   }
 
   private async execute(job: ClusterUpdateJob, from: number, resumingHub: boolean): Promise<void> {
@@ -228,14 +274,11 @@ export class ClusterUpdateService {
         return runServerStep(this.seams, null, job.targetVersion)
       case 'agent-server': {
         const nodeId = step.nodeId ?? ''
-        const topology = await this.seams.readTopology()
-        const node = topology.find((n) => n.id === nodeId)
-        if (node === undefined || !node.isOnline) {
-          return {
-            status: 'skipped',
-            detail: `${nodeId} went offline before its turn; not touched`,
-          }
+        if (job.skippedOffline.includes(nodeId)) {
+          return { status: 'skipped', detail: `${nodeId} was offline when the plan was made` }
         }
+        const notOnline = await waitForAgentOnline(this.seams, nodeId)
+        if (notOnline !== null) return notOnline
         return runServerStep(this.seams, nodeId, job.targetVersion)
       }
       case 'addons':

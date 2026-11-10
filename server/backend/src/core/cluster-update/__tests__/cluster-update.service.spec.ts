@@ -418,4 +418,205 @@ describe('ClusterUpdateService', () => {
       jobId: null,
     })
   })
+
+  describe('unreachable nodes and unreadable reads (not an instant fake world)', () => {
+    /** The hub's apply drops agent-a off the mesh; it is back after `polls` waits (never: Infinity). */
+    function agentFlaps(w: World, polls: number): ClusterUpdateSeams['sleep'] {
+      let left = polls
+      const baseApply = w.apply
+      w.apply = async (nodeId) => {
+        const result = await baseApply(nodeId)
+        if (nodeId === 'hub') {
+          w.nodes = w.nodes.map((n) => (n.id === 'agent-a' ? { ...n, isOnline: false } : n))
+        }
+        return result
+      }
+      return async () => {
+        left -= 1
+        if (left <= 0) {
+          w.nodes = w.nodes.map((n) => (n.id === 'agent-a' ? { ...n, isOnline: true } : n))
+        }
+      }
+    }
+
+    async function runWith(
+      w: World,
+      over: Partial<ClusterUpdateSeams>,
+      store = new MemoryStore(),
+    ): Promise<ClusterUpdateJob> {
+      const service = new ClusterUpdateService({ ...seams(w, store), ...over })
+      const started = await service.start({ addons: false }, 'admin')
+      expect(started.accepted).toBe(true)
+      await service.idle()
+      const job = service.getJob(started.jobId ?? undefined)
+      if (job === null) throw new Error('job missing')
+      return job
+    }
+
+    it('an agent offline at its turn that comes back is waited for and updated', async () => {
+      const w = world()
+      const sleep = agentFlaps(w, 3)
+      const job = await runWith(w, { sleep })
+      expect(job.state).toBe('succeeded')
+      expect(job.steps.find((s) => s.nodeId === 'agent-a')?.status).toBe('ok')
+      expect(w.calls).toContain('apply:agent-a@2.0.0')
+    })
+
+    it('an agent that never comes back FAILS the job with a typed reason, never skipped', async () => {
+      const w = world()
+      const sleep = agentFlaps(w, Number.POSITIVE_INFINITY)
+      let clock = 0
+      const job = await runWith(w, {
+        sleep: async (ms) => {
+          clock += ms
+          await sleep(ms)
+        },
+        now: () => 1_000_000 + clock,
+      })
+      expect(job.state).toBe('failed')
+      expect(job.stoppedAt).toBe('agent-a')
+      expect(job.reason).toBe('server-not-on-target')
+      const a = job.steps.find((s) => s.nodeId === 'agent-a')
+      expect(a?.status).toBe('failed')
+      expect(a?.detail).toContain('not online at its turn')
+      expect(w.calls).not.toContain('apply:agent-a@2.0.0')
+      expect(w.calls).not.toContain('apply:agent-b@2.0.0')
+    })
+
+    it('an agent the PLAN marked offline is skipped, not waited for', async () => {
+      const w = world()
+      const store = new MemoryStore()
+      store.job = {
+        id: 'job-s',
+        state: 'running',
+        targetVersion: TARGET,
+        requestedBy: 'admin',
+        startedAt: 1,
+        skippedOffline: ['agent-a'],
+        steps: [
+          { kind: 'backup', status: 'ok', detail: 'ok' },
+          { kind: 'hub-server', nodeId: 'hub', status: 'running', detail: 'updating' },
+          { kind: 'agent-server', nodeId: 'agent-a', status: 'pending', detail: '' },
+        ],
+      }
+      w.versions.set('hub', TARGET)
+      w.nodes = w.nodes.map((n) => (n.id === 'agent-a' ? { ...n, isOnline: false } : n))
+      const service = new ClusterUpdateService(seams(w, store))
+      service.resume()
+      await service.idle()
+      expect(store.job?.state).toBe('succeeded')
+      expect(store.job?.steps[2]?.status).toBe('skipped')
+      expect(w.calls).toEqual([])
+    })
+
+    it('a hub status read that throws during the wait is retried, then recovers', async () => {
+      const w = world()
+      let throws = 2
+      const job = await runWith(w, {
+        readServerStatus: async (nodeId) => {
+          if (nodeId === null && w.versions.get('hub') === TARGET && throws > 0) {
+            throws -= 1
+            throw new Error('hub busy restarting')
+          }
+          return status(w.versions.get(nodeId ?? 'hub') ?? 'unknown')
+        },
+      })
+      expect(throws).toBe(0)
+      expect(job.state).toBe('succeeded')
+    })
+
+    it('a status that stays unreadable fails at the bound with status-unreadable', async () => {
+      const w = world()
+      let clock = 0
+      const job = await runWith(w, {
+        readServerStatus: async (nodeId) => {
+          if (nodeId === null && w.versions.get('hub') === TARGET) throw new Error('down')
+          return status(w.versions.get(nodeId ?? 'hub') ?? 'unknown')
+        },
+        sleep: async (ms) => {
+          clock += ms
+        },
+        now: () => 1_000_000 + clock,
+      })
+      expect(job.state).toBe('failed')
+      expect(job.reason).toBe('status-unreadable')
+      expect(clock).toBeGreaterThanOrEqual(60_000)
+    })
+
+    it('readTopology throwing while an agent is verified is retried, not a crash', async () => {
+      const w = world()
+      let throws = 3
+      let applied = false
+      const job = await runWith(w, {
+        readTopology: async () => {
+          if (w.versions.get('agent-a') === TARGET && !applied) {
+            applied = true
+          }
+          if (applied && throws > 0) {
+            throws -= 1
+            throw new Error('topology busy')
+          }
+          return w.nodes
+        },
+      })
+      expect(throws).toBe(0)
+      expect(job.state).toBe('succeeded')
+      expect(job.reason).toBeUndefined()
+    })
+
+    it('readTopology throwing in the plan is a typed refusal, nothing starts', async () => {
+      const w = world()
+      const store = new MemoryStore()
+      const service = new ClusterUpdateService({
+        ...seams(w, store),
+        readTopology: async () => {
+          throw new Error('topology down')
+        },
+      })
+      const preview = await service.preview({})
+      expect(preview.blocker).toBe('status-unreadable')
+      const started = await service.start({}, 'admin')
+      expect(started).toMatchObject({ accepted: false, blocker: 'status-unreadable' })
+      expect(store.job).toBeNull()
+    })
+
+    it('an unreadable job file stays resumable: the flag is set only after a load', async () => {
+      const store = new MemoryStore()
+      const running: ClusterUpdateJob = {
+        id: 'job-u',
+        state: 'running',
+        targetVersion: TARGET,
+        requestedBy: 'admin',
+        startedAt: 1,
+        skippedOffline: [],
+        steps: [
+          { kind: 'backup', status: 'ok', detail: 'ok' },
+          { kind: 'hub-server', nodeId: 'hub', status: 'running', detail: 'updating' },
+        ],
+      }
+      let unreadable = true
+      const w = world()
+      w.versions.set('hub', TARGET)
+      const service = new ClusterUpdateService({
+        ...seams(w, store),
+        store: {
+          load: () => {
+            if (unreadable) throw new Error('EIO')
+            return store.job
+          },
+          save: store.save,
+        },
+      })
+      store.job = running
+      service.resume()
+      expect(store.job?.state).toBe('running')
+      // While unreadable a new job is refused (blocker), never started over it.
+      const refused = await service.start({}, 'admin')
+      expect(refused).toMatchObject({ accepted: false, blocker: 'status-unreadable' })
+      unreadable = false
+      service.resume()
+      await service.idle()
+      expect(store.job?.state).toBe('succeeded')
+    })
+  })
 })

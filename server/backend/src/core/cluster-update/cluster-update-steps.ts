@@ -13,6 +13,7 @@ import {
   errText,
   type ClusterAddonUpdate,
   type ClusterBackupClient,
+  type ClusterNodeView,
   type ClusterUpdateSeams,
 } from './cluster-update-seams.js'
 
@@ -165,7 +166,12 @@ export async function nodeNotReady(
     }
   }
   if (nodeId === null) return null
-  const topology = await seams.readTopology()
+  let topology: readonly ClusterNodeView[]
+  try {
+    topology = await seams.readTopology()
+  } catch (err) {
+    return { reason: 'status-unreadable', why: `topology unreadable (${errText(err)})` }
+  }
   const node = topology.find((n) => n.id === nodeId)
   if (node === undefined) return { reason: 'server-not-on-target', why: 'absent from the topology' }
   if (!node.isOnline) return { reason: 'server-not-on-target', why: 'not online yet' }
@@ -179,6 +185,31 @@ export async function nodeNotReady(
     }
   }
   return null
+}
+
+/**
+ * An agent's turn: wait (bounded) for it to be online. Offline at its turn is
+ * usually the mesh reconnecting after the hub's restart, not a node to leave
+ * behind: expiry FAILS the step, it never skips it.
+ */
+export async function waitForAgentOnline(
+  seams: ClusterUpdateSeams,
+  nodeId: string,
+): Promise<StepOutcome | null> {
+  const wait = await waitUntil(seams, seams.timeouts.serverMs, async () => {
+    let topology: readonly ClusterNodeView[]
+    try {
+      topology = await seams.readTopology()
+    } catch (err) {
+      return { reason: 'status-unreadable', why: `topology unreadable (${errText(err)})` }
+    }
+    const node = topology.find((n) => n.id === nodeId)
+    if (node === undefined) return { reason: 'server-not-on-target', why: 'absent from the topology' }
+    return node.isOnline ? null : { reason: 'server-not-on-target', why: 'still offline' }
+  })
+  return wait.ok
+    ? null
+    : failed(wait.last.reason, `${nodeId} was not online at its turn: ${wait.last.why}; not updated`)
 }
 
 /** Did the apply answer say "this will not happen"? */

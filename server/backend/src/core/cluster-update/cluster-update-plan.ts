@@ -10,7 +10,7 @@ import {
   type ClusterUpdateStep,
   type ServerPackageStatus,
 } from '@camstack/types'
-import { errText, type ClusterUpdateSeams } from './cluster-update-seams.js'
+import { errText, type ClusterNodeView, type ClusterUpdateSeams } from './cluster-update-seams.js'
 
 /** Does a node running `status` need the target? Unknown running = yes. */
 export function needsServer(status: ServerPackageStatus, target: string): boolean {
@@ -72,7 +72,12 @@ export async function readClusterUpdatePlan(
       null,
     )
   }
-  const topology = await seams.readTopology()
+  let topology: readonly ClusterNodeView[]
+  try {
+    topology = await seams.readTopology()
+  } catch (err) {
+    return blocked('status-unreadable', `the topology is unreadable: ${errText(err)}`, target)
+  }
   const offline = topology.filter((n) => !n.isHub && !n.isOnline).map((n) => n.id)
   const busy: string[] = []
   if (isBusy(hubStatus)) busy.push(`hub (${hubStatus.updateState})`)
