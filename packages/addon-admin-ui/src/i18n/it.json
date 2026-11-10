@@ -984,7 +984,9 @@
       "disconnected": "Disconnesso",
       "stop": "Ferma",
       "start": "Avvia",
-      "tunnelControl": "Controllo tunnel"
+      "tunnelControl": "Controllo tunnel",
+      "colTunnel": "Tunnel",
+      "tunnelNotSortable": "Lo stato della connessione non è un valore per ordinare."
     },
     "storage": {
       "disable": "Disabilitare \"{{displayName}}\"?",

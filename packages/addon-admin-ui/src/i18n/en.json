@@ -984,7 +984,9 @@
       "disconnected": "Disconnected",
       "stop": "Stop",
       "start": "Start",
-      "tunnelControl": "Tunnel control"
+      "tunnelControl": "Tunnel control",
+      "colTunnel": "Tunnel",
+      "tunnelNotSortable": "A live connection state is not a value to order by."
     },
     "storage": {
       "disable": "Disable \"{{displayName}}\"?",
