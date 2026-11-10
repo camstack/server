@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A power-source link added through Customize no longer shadows the power-source status for device-scoped callers, so the Velux gateway power recovery sees the link
+
 ## [1.2.827] - 2026-11-10
 
 ### Changed

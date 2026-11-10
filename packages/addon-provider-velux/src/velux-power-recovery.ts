@@ -1,4 +1,9 @@
-import { errMsg, type IScopedLogger, type PowerSourceActionResult } from '@camstack/types'
+import {
+  errMsg,
+  type IScopedLogger,
+  type PowerSourceActionResult,
+  PowerSourceInfoSchema,
+} from '@camstack/types'
 
 /** The gateway has been unreachable this long before a power cycle is considered. */
 export const RECOVERY_UNREACHABLE_MS = 10 * 60 * 1000
@@ -22,7 +27,8 @@ export type GatewayDeviceLookup =
 export interface PowerSourcePort {
   /** The gateway device of this integration; a failed read is `unknown`, never `missing` (D49). */
   gatewayDevice(integrationId: string): Promise<GatewayDeviceLookup>
-  getStatus(deviceId: number): Promise<{ readonly linked: boolean }>
+  /** The raw answer: the caller parses it, so a wrong shape is named instead of read as unlinked. */
+  getStatus(deviceId: number): Promise<unknown>
   forceRestart(deviceId: number): Promise<PowerSourceActionResult>
 }
 
@@ -118,7 +124,7 @@ export class VeluxPowerRecovery {
     if (!powerSource)
       return this.#skip(
         'no-source',
-        `gateway unreachable for ${minutes} min; no power source linked`,
+        `gateway unreachable for ${minutes} min; the power-source capability is unavailable on this node`,
       )
     this.#inFlight = true
     try {
@@ -160,9 +166,9 @@ export class VeluxPowerRecovery {
     const deviceId = await this.#resolveDevice(powerSource, minutes)
     if (typeof deviceId !== 'number') return deviceId
     const tags = { deviceId }
-    let linked: boolean
+    let raw: unknown
     try {
-      linked = (await powerSource.getStatus(deviceId)).linked
+      raw = await powerSource.getStatus(deviceId)
     } catch (err) {
       return this.#skip(
         'status-failed',
@@ -170,10 +176,19 @@ export class VeluxPowerRecovery {
         deviceId,
       )
     }
-    if (!linked) {
+    const parsed = PowerSourceInfoSchema.safeParse(raw)
+    if (!parsed.success) {
+      const keys = typeof raw === 'object' && raw !== null ? Object.keys(raw).join(',') : typeof raw
+      return this.#skip(
+        'status-unparseable',
+        `gateway unreachable for ${minutes} min; the power source status is not a PowerSourceInfo (got: ${keys})`,
+        deviceId,
+      )
+    }
+    if (!parsed.data.linked) {
       return this.#skip(
         'no-source',
-        `gateway unreachable for ${minutes} min; no power source linked`,
+        `gateway unreachable for ${minutes} min; the gateway device has no power source link stored`,
         deviceId,
       )
     }

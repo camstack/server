@@ -58,10 +58,21 @@ class FakePowerSource implements PowerSourcePort {
       ? { kind: 'missing' }
       : { kind: 'found', deviceId: this.gatewayId }
   }
-  async getStatus(): Promise<{ linked: boolean }> {
+  /** When set, the answer is this value verbatim (a wrong-shaped provider answer). */
+  rawStatus: unknown = undefined
+  async getStatus(): Promise<unknown> {
     this.statusCalls += 1
     if (this.statusError !== null) throw this.statusError
-    return { linked: this.linked }
+    if (this.rawStatus !== undefined) return this.rawStatus
+    return {
+      linked: this.linked,
+      switchDeviceId: this.linked ? 7 : null,
+      switchName: this.linked ? 'Plug' : null,
+      switchOn: this.linked ? true : null,
+      switchOnline: this.linked ? true : null,
+      restartInProgress: false,
+      offSeconds: 10,
+    }
   }
   async forceRestart(deviceId: number): Promise<PowerSourceActionResult> {
     this.restarts.push(deviceId)
@@ -174,7 +185,9 @@ describe('gateway recovery through the power-source link', () => {
     await manager.start()
     await vi.advanceTimersByTimeAsync(RECOVERY_UNREACHABLE_MS + 20 * 60_000)
     expect(source.restarts).toEqual([])
-    expect(logger.lines.filter((l) => l.message.includes('no power source linked'))).toHaveLength(1)
+    expect(
+      logger.lines.filter((l) => l.message.includes('has no power source link stored')),
+    ).toHaveLength(1)
     await manager.stop()
 
     const broken = new FakePowerSource()
@@ -193,7 +206,24 @@ describe('gateway recovery through the power-source link', () => {
     const { manager, logger } = build(undefined, new MemoryStore())
     await manager.start()
     await vi.advanceTimersByTimeAsync(RECOVERY_UNREACHABLE_MS + 5 * 60_000)
-    expect(logger.lines.some((l) => l.message.includes('no power source linked'))).toBe(true)
+    expect(
+      logger.lines.some((l) => l.message.includes('power-source capability is unavailable')),
+    ).toBe(true)
+    await manager.stop()
+  })
+
+  it('a status that is not a PowerSourceInfo is skipped as status-unparseable, naming the shape, never as unlinked', async () => {
+    const source = new FakePowerSource()
+    // The composer-slice shape a graft once answered with.
+    source.rawStatus = { switchOn: true, offSeconds: 10, lastFetchedAt: 1 }
+    const { manager, logger } = build(source, new MemoryStore())
+    await manager.start()
+    await vi.advanceTimersByTimeAsync(RECOVERY_UNREACHABLE_MS + 20 * 60_000)
+    expect(source.restarts).toEqual([])
+    const lines = logger.lines.filter((l) => l.message.includes('not a PowerSourceInfo'))
+    expect(lines).toHaveLength(1)
+    expect(lines[0]?.message).toContain('switchOn,offSeconds,lastFetchedAt')
+    expect(logger.lines.some((l) => l.message.includes('no power source link stored'))).toBe(false)
     await manager.stop()
   })
 

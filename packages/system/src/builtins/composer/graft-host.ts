@@ -39,6 +39,13 @@ export interface GraftPorts {
 export type GraftOutcome =
   | { readonly kind: 'grafted' }
   | { readonly kind: 'already' }
+  /**
+   * The cap has no method a graft can answer (every method is system-only and
+   * its `getStatus`, if any, is not the slice): nothing is registered, so the
+   * cap's own system provider keeps answering device-scoped calls. The claim
+   * and the slice are unaffected — they never needed a native.
+   */
+  | { readonly kind: 'nothing-to-serve' }
   | { readonly kind: 'refused'; readonly reason: string }
 
 /** The merged (effective) slice of `cap` on `deviceId`, as every consumer reads it; null when there is none. */
@@ -118,9 +125,17 @@ export class GraftHost implements ComposerGraftPorts {
         `\`${capName}\` has ${missing.map((m) => `\`${m}\``).join(', ')} with no composed answer — a graft cannot serve it until commands arrive (slice 3)`,
       )
     }
+    const provider = this.providerFor(deviceId, def)
+    if (Object.keys(provider).length === 0) {
+      this.ports.logger.info('graft skipped — the cap has no method a graft can answer', {
+        tags: { deviceId },
+        meta: { cap: capName, stableId },
+      })
+      return { kind: 'nothing-to-serve' }
+    }
     const ctx = this.contextFor(deviceId, stableId)
     try {
-      ctx.registerNativeCap(def, this.providerFor(deviceId, def))
+      ctx.registerNativeCap(def, provider)
     } catch (err: unknown) {
       return this.refuse(deviceId, capName, `registerNativeCap threw — ${errMsg(err)}`)
     }
@@ -217,8 +232,12 @@ export class GraftHost implements ComposerGraftPorts {
     const answers = Object.entries(def.composedMethods ?? {}).map(
       ([name, answer]) => [name, composedMethod(answer, readSlice)] as const,
     )
+    // `getStatus` is the slice ONLY when the cap's `status` schema is the slice.
+    // A cap that declares its own `getStatus` over another shape (`power-source`:
+    // runtimeState is the mirrored switch, the method answers `PowerSourceInfo`)
+    // would be answered with the wrong shape.
     const withStatus =
-      def.status === undefined && def.runtimeState === undefined
+      def.status === undefined
         ? []
         : [['getStatus', async () => this.readMerged(deviceId, def.name)] as const]
     return Object.fromEntries([...answers, ...withStatus])

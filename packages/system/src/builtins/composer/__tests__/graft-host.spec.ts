@@ -164,6 +164,17 @@ describe('graft — the provider is the cap’s composedMethods', () => {
     const line = log.lines.find((l) => l.message.startsWith('graft refused'))
     expect(line?.extras?.tags).toEqual({ deviceId: FEEDER_ID })
   })
+
+  it('power-source: getStatus is not the slice, so nothing is registered and the system provider keeps answering', () => {
+    expect(host.graft(FEEDER_ID, 'ha:gateway', 'power-source')).toEqual({
+      kind: 'nothing-to-serve',
+    })
+    expect(contexts.registered).toEqual([])
+    expect(bindings.owner(FEEDER_ID, 'power-source')).toBeUndefined()
+    expect(host.grafted(FEEDER_ID)).toEqual(new Set())
+    const line = log.lines.find((l) => l.message.startsWith('graft skipped'))
+    expect(line?.extras?.tags).toEqual({ deviceId: FEEDER_ID })
+  })
 })
 
 describe('ungraft — only what this host registered (Kernel ruling)', () => {

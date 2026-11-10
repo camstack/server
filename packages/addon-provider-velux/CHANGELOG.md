@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Gateway power recovery now reports an unreadable power-source status separately from a missing power-source link, and tells an unavailable capability from an unlinked gateway
+
 ## [0.2.165] - 2026-11-10
 
 ### Changed
