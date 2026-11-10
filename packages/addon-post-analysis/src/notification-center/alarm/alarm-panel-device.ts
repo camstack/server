@@ -59,7 +59,7 @@ import {
   ruleFireOfClaim,
   syncActiveAlarmProfileSettings,
 } from '@camstack/types'
-import { readCurrentCommandOrigin } from '@camstack/server/system'
+import { readCurrentCommandOrigin } from '@camstack/server/system/addon-utils'
 import { z } from 'zod'
 import { fireRefOf } from '../rule-fire-origin.js'
 import {

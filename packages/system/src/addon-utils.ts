@@ -68,3 +68,4 @@ export {
   type CourtesyReason,
   type CourtesyFrameSpec,
 } from './builtins/snapshot/snapshot-courtesy.js'
+export { readCurrentCommandOrigin } from './kernel/cap-call-scope.js'
