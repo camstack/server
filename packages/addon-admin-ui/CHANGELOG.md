@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.634] - 2026-11-10
+
 ### Changed
 
 - The rule editor opens each selected target to its own texts, priority, schedule and options, and shows only the fields the selected targets can deliver, naming the targets that drop each one.

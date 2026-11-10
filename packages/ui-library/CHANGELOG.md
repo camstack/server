@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.418] - 2026-11-10
+
 ### Added
 
 - The device-template field takes the device the text is written for: inserting that device's value writes the copyable camera alias, and the check and preview run against it.

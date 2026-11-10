@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.201] - 2026-11-10
+
 ### Changed
 
 - An Echo announces the notification title only; the body is no longer joined to it.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.317] - 2026-11-10
+
 ### Changed
 
 - An OSD slot's text is now a device template ({{ garage.temperature | unit('°C') | round(1) }}, with {% if %}); the clock and the last person/plate are the template variables now, camera.lastPerson and camera.lastPlate. Existing bindings and named templates are converted automatically on first start; a slot is re-rendered when a device its text reads changes, at most every few seconds, and a failed render keeps the last text on the camera.

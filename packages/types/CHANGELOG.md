@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.540] - 2026-11-10
+
 ### Added
 
 - Device templates can use now (server time, the time filter) and the reserved camera alias with thisDevice on renderDeviceTemplates and checkDeviceTemplates; checkDeviceTemplates reports reads and readsClock; the OSD manager capability drops getSourceCatalog and gains previewTemplate.

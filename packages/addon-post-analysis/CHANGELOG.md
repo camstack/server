@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.692] - 2026-11-10
+
 ### Changed
 
 - A rule's targets each have their own settings: title and body, priority and an active schedule; a target outside its schedule is skipped and logged, and every target receives only the fields its notifier delivers.
