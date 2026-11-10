@@ -52,6 +52,8 @@ const RESERVED_ALIASES: ReadonlySet<string> = new Set([
   'block',
   'macro',
   'now',
+  // `camera` names the device a render is FOR (device-template.ts); an alias spelled so would shadow it.
+  'camera',
 ])
 
 export const DeviceAliasSchema = z.string().max(DEVICE_ALIAS_MAX_LENGTH).regex(DEVICE_ALIAS_PATTERN)

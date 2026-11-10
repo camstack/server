@@ -18,6 +18,7 @@ import { Worker } from 'node:worker_threads'
 import {
   DEVICE_TEMPLATE_BUDGET_MS,
   DEVICE_TEMPLATE_FILTERS,
+  DEVICE_TEMPLATE_NOW_ALIAS,
   DEVICE_TEMPLATE_MAX_LENGTH,
   DEVICE_TEMPLATE_MAX_OUTPUT,
   DEVICE_TEMPLATE_UNAVAILABLE,
@@ -301,6 +302,12 @@ export class DeviceTemplateRenderer {
       { view: DeviceTemplateView; cap: string; fieldPath: readonly (string | number)[] }
     >()
     for (const ref of analysis.refs) {
+      if (ref.alias === DEVICE_TEMPLATE_NOW_ALIAS) {
+        // The clock is not a device: the request's own instant, never a clock read in the worker.
+        if (ref.path.length === 0) tree.place(ref.alias, [], this.now())
+        else trace.push({ ref: refText(ref), reason: 'unknown-field' })
+        continue
+      }
       const view = resolver.viewOf(ref.alias)
       if (view === undefined) {
         trace.push({ ref: refText(ref), reason: 'unknown-alias' })

@@ -130,6 +130,42 @@ export function makeAgoFilter(nowMs: number): (input: unknown) => unknown {
   }
 }
 
+const TIME_TOKENS: readonly string[] = ['YYYY', 'MM', 'DD', 'HH', 'mm', 'ss']
+
+/**
+ * `time('HH:mm')`: an epoch timestamp as clock text, in the zone of the process
+ * (the server's). Tokens `YYYY MM DD HH mm ss`; everything else is literal and a
+ * source character is consumed once, so a substituted digit is never re-read.
+ */
+export function timeFilter(input: unknown, pattern: unknown): unknown {
+  const at = epochMs(input)
+  if (at === undefined || typeof pattern !== 'string') return undefined
+  const date = new Date(at)
+  if (Number.isNaN(date.getTime())) return undefined
+  const two = (n: number): string => String(n).padStart(2, '0')
+  const parts: Readonly<Record<string, string>> = {
+    YYYY: String(date.getFullYear()).padStart(4, '0'),
+    MM: two(date.getMonth() + 1),
+    DD: two(date.getDate()),
+    HH: two(date.getHours()),
+    mm: two(date.getMinutes()),
+    ss: two(date.getSeconds()),
+  }
+  let out = ''
+  let i = 0
+  while (i < pattern.length) {
+    const token = TIME_TOKENS.find((t) => pattern.startsWith(t, i))
+    if (token !== undefined) {
+      out += parts[token] ?? ''
+      i += token.length
+    } else {
+      out += pattern[i]
+      i += 1
+    }
+  }
+  return out
+}
+
 /** `format('%.1f')`, `format('%d items')`, `format('%s')`: one value, one placeholder. */
 export function formatFilter(input: unknown, pattern: unknown): unknown {
   if (typeof pattern !== 'string') return input

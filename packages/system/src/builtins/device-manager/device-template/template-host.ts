@@ -10,8 +10,12 @@
  */
 import {
   ConditionMirror,
+  DEVICE_TEMPLATE_NOW_ALIAS,
+  DEVICE_TEMPLATE_THIS_ALIAS,
+  DEVICE_TEMPLATE_VALUES_CAP,
   type DeviceTemplateRefusalReason,
   type DeviceTemplateRender,
+  type DeviceTemplateThisDevice,
   type DeviceTemplateView,
   type IScopedLogger,
 } from '@camstack/types'
@@ -34,6 +38,8 @@ export interface DeviceTemplateHostDeps {
   readonly renderer: Pick<DeviceTemplateRenderer, 'render' | 'validate'>
   /** The device that owns an alias, from the persisted rows. */
   findByAlias(alias: string): Promise<TemplateDeviceRow | null>
+  /** The device row behind an id, for the device a render is FOR (`camera`). */
+  findById(deviceId: number): Promise<TemplateDeviceRow | null>
   /** The capabilities a device is bound to (its template namespace). */
   capsOf(deviceId: number): Promise<readonly string[]>
   /** One runtime-state slice, as the effective merge every consumer sees. */
@@ -50,10 +56,17 @@ export interface TemplateAliasUse {
   readonly allowed: boolean
   /** The persisted row, resolved once here and reused by the render. */
   readonly row: TemplateDeviceRow | null
+  /** The fields the text reads on this alias, as written (`temperature`, `cap.field`). */
+  readonly reads: readonly string[]
 }
 
 export type TemplateCheck =
-  | { readonly ok: true; readonly aliases: readonly TemplateAliasUse[] }
+  | {
+      readonly ok: true
+      readonly aliases: readonly TemplateAliasUse[]
+      /** The text reads `now`: its output moves with the clock. */
+      readonly readsClock: boolean
+    }
   | {
       readonly ok: false
       readonly reason: DeviceTemplateRefusalReason
@@ -69,36 +82,72 @@ export class DeviceTemplateHost {
    * restriction (an admin, a system run). A restricted caller gets the same
    * answer for an alias that does not exist and one it may not see.
    */
-  async check(source: string, allowed: ReadonlySet<number> | undefined): Promise<TemplateCheck> {
+  async check(
+    source: string,
+    allowed: ReadonlySet<number> | undefined,
+    thisDevice?: DeviceTemplateThisDevice,
+  ): Promise<TemplateCheck> {
     const analysis = this.deps.renderer.validate(source)
     if (!analysis.ok) {
       return { ok: false, reason: analysis.refusal.reason, message: analysis.refusal.message }
     }
     const aliases: TemplateAliasUse[] = []
-    for (const alias of new Set(analysis.refs.map((ref) => ref.alias))) {
-      const row = await this.deps.findByAlias(alias)
+    const named = analysis.refs.filter((ref) => ref.alias !== DEVICE_TEMPLATE_NOW_ALIAS)
+    for (const alias of new Set(named.map((ref) => ref.alias))) {
+      const row = await this.rowOf(alias, thisDevice)
       aliases.push({
         alias,
         deviceId: row === null ? null : row.deviceId,
         allowed: allowed === undefined || (row !== null && allowed.has(row.deviceId)),
         row,
+        reads: [
+          ...new Set(
+            named.filter((ref) => ref.alias === alias).map((ref) => ref.path.map(String).join('.')),
+          ),
+        ].filter((read) => read !== ''),
       })
     }
-    return { ok: true, aliases }
+    return {
+      ok: true,
+      aliases,
+      readsClock: analysis.refs.some((ref) => ref.alias === DEVICE_TEMPLATE_NOW_ALIAS),
+    }
+  }
+
+  /** `camera` is the device the render is for when the call names one; every other alias is a device's own. */
+  private async rowOf(
+    alias: string,
+    thisDevice: DeviceTemplateThisDevice | undefined,
+  ): Promise<TemplateDeviceRow | null> {
+    if (alias === DEVICE_TEMPLATE_THIS_ALIAS && thisDevice !== undefined) {
+      const row = await this.deps.findById(thisDevice.deviceId)
+      return row === null ? null : { ...row, alias }
+    }
+    return this.deps.findByAlias(alias)
   }
 
   /** Render every template; answers are index-aligned with the questions. */
   async render(
     sources: readonly string[],
     allowed: ReadonlySet<number> | undefined,
+    thisDevice?: DeviceTemplateThisDevice,
   ): Promise<DeviceTemplateRender[]> {
-    const checks = await Promise.all(sources.map((source) => this.check(source, allowed)))
+    const checks = await Promise.all(
+      sources.map((source) => this.check(source, allowed, thisDevice)),
+    )
     const rows = new Map<string, TemplateDeviceEntry>()
     for (const check of checks) {
       if (!check.ok) continue
       for (const use of check.aliases) {
         if (!use.allowed || use.row === null || rows.has(use.alias)) continue
-        rows.set(use.alias, { ...use.row, caps: await this.deps.capsOf(use.row.deviceId) })
+        const caps = await this.deps.capsOf(use.row.deviceId)
+        rows.set(use.alias, {
+          ...use.row,
+          caps,
+          ...(use.alias === DEVICE_TEMPLATE_THIS_ALIAS && thisDevice?.values !== undefined
+            ? { values: { [DEVICE_TEMPLATE_VALUES_CAP]: thisDevice.values } }
+            : {}),
+        })
       }
     }
     const entries = [...rows.values()]

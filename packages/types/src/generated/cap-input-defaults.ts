@@ -80,8 +80,8 @@ export const CAP_INPUT_DEFAULTS: Readonly<
     "testRule": {"rule":{"__nested__":{"enabled":true,"conditions":{},"media":{},"throttle":{"cooldownSec":60,"scope":"rule-device"},"priority":3}},"lookbackMinutes":60},
   },
   "osd-manager": {
-    "setSlotBinding": {"binding":{"__nested__":{"enabled":true,"template":"${value}","maxDecimals":1}}},
-    "upsertTemplate": {"template":{"__nested__":{"bindings":[],"parser":""}}},
+    "setSlotBinding": {"binding":{"__nested__":{"enabled":true}}},
+    "upsertTemplate": {"template":{"__nested__":{"text":""}}},
   },
   "pipeline-analytics": {
     "getAudioEvents": {"limit":1000},

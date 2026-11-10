@@ -12145,15 +12145,6 @@ export function createCapRouter_osdManager(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceOsd(methodInput as any)
       }),
-    getSourceCatalog: adminProcedure
-      .input(osdManagerCapability.methods.getSourceCatalog.input.loose())
-      .output(osdManagerCapability.methods.getSourceCatalog.output)
-      .query(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider('osd-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.getSourceCatalog(methodInput as any)
-      }),
     getConditionSupport: adminProcedure
       .input(osdManagerCapability.methods.getConditionSupport.input.loose())
       .output(osdManagerCapability.methods.getConditionSupport.output)
@@ -12207,6 +12198,15 @@ export function createCapRouter_osdManager(
         const p = resolveProvider('osd-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.previewSlot(methodInput as any)
+      }),
+    previewTemplate: adminProcedure
+      .input(osdManagerCapability.methods.previewTemplate.input.loose())
+      .output(osdManagerCapability.methods.previewTemplate.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('osd-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.previewTemplate(methodInput as any)
       }),
     renderDevice: adminProcedure
       .input(osdManagerCapability.methods.renderDevice.input.loose())

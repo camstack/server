@@ -25,6 +25,37 @@ export const DEVICE_TEMPLATE_UNAVAILABLE = '—'
 
 export const DeviceTemplateSchema = z.string().min(1).max(DEVICE_TEMPLATE_MAX_LENGTH)
 
+/**
+ * The clock, as a template value: `{{ now | time('HH:mm') }}` (epoch ms; the
+ * zone is the server's). Reserved: no device alias may be spelled `now`.
+ */
+export const DEVICE_TEMPLATE_NOW_ALIAS = 'now'
+
+/**
+ * The device a caller renders FOR, as a template name: `{{ camera.temperature }}`.
+ * It resolves only when the call names `thisDevice`, so a template stays copyable
+ * between devices. It shadows a device whose own alias is `camera`.
+ */
+export const DEVICE_TEMPLATE_THIS_ALIAS = 'camera'
+
+/** One value a caller hands the renderer for `thisDevice`. */
+export const DeviceTemplateValueSchema = z.union([z.string(), z.number(), z.boolean()])
+
+/**
+ * The device a render is FOR (`camera` in the text) and the values the caller
+ * knows about it that no capability carries, for example `lastPerson` and
+ * `lastPlate`. `values` read as `camera.<name>`; a name a capability also carries
+ * is `ambiguous` and is written `camera.values.<name>`.
+ */
+export const DeviceTemplateThisDeviceSchema = z.object({
+  deviceId: z.number().int(),
+  values: z.record(z.string().min(1).max(64), DeviceTemplateValueSchema).optional(),
+})
+export type DeviceTemplateThisDevice = z.infer<typeof DeviceTemplateThisDeviceSchema>
+
+/** The synthetic slice `thisDevice.values` is exposed under. */
+export const DEVICE_TEMPLATE_VALUES_CAP = 'values'
+
 /** The filters a template may use. Anything else is refused at parse time. */
 export const DEVICE_TEMPLATE_FILTERS = [
   'unit',
@@ -53,6 +84,8 @@ export const DEVICE_TEMPLATE_FILTERS = [
   'string',
   'list',
   'truncate',
+  /** `{{ now | time('HH:mm') }}`: an epoch timestamp as clock text in the server's zone. */
+  'time',
 ] as const
 export type DeviceTemplateFilter = (typeof DEVICE_TEMPLATE_FILTERS)[number]
 

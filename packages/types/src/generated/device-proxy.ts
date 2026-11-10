@@ -359,7 +359,7 @@ export interface DeviceProxy {
   readonly faceGallery: Pick<InferDeviceProxyCap<typeof faceGalleryCapability>, 'listRecentFaces' | 'getFaceByTrack'>
   readonly networkQuality: Pick<InferDeviceProxyCap<typeof networkQualityCapability>, 'getDeviceStats' | 'reportClientStats'>
   readonly notificationRules: Pick<InferDeviceProxyCap<typeof notificationRulesCapability>, 'setDeviceMuted'>
-  readonly osdManager: Pick<InferDeviceProxyCap<typeof osdManagerCapability>, 'getDeviceOsd' | 'getSourceCatalog' | 'setSlotBinding' | 'clearSlotBinding' | 'setSlotCameraEnabled' | 'previewSlot' | 'renderDevice'>
+  readonly osdManager: Pick<InferDeviceProxyCap<typeof osdManagerCapability>, 'getDeviceOsd' | 'setSlotBinding' | 'clearSlotBinding' | 'setSlotCameraEnabled' | 'previewSlot' | 'previewTemplate' | 'renderDevice'>
   readonly pipelineExecutor: Pick<InferDeviceProxyCap<typeof pipelineExecutorCapability>, 'runPipeline' | 'runPipelineBatch'>
   readonly pipelineOrchestrator: Pick<InferDeviceProxyCap<typeof pipelineOrchestratorCapability>, 'assignPipeline' | 'unassignPipeline' | 'setPipelineDevicePin' | 'getPipelineDevicePin' | 'getPipelineAssignment' | 'getCameraMetrics' | 'assignAudio' | 'unassignAudio' | 'getAudioAssignment' | 'getCameraSettings' | 'setCameraStepToggle' | 'getCameraDetectionSource' | 'setCameraDetectionSource' | 'setCameraStepSettings' | 'resolvePipeline' | 'getCameraSwitches' | 'setCameraSwitch' | 'getCameraStatus' | 'getDeviceSettingsContribution' | 'getDeviceLiveContribution' | 'applyDeviceSettingsPatch'>
   readonly pipelineRunner: Pick<InferDeviceProxyCap<typeof pipelineRunnerCapability>, 'detachCamera' | 'getCameraMetrics' | 'requestOccupancyBurst' | 'runDetailSubtree' | 'parkTrackFrame' | 'getParkedTrackFrame' | 'releaseParkedTrackFrames'>
@@ -1325,11 +1325,11 @@ export function createDeviceProxy(
 
   const osdManagerInterface = {
     getDeviceOsd: (input?: unknown) => dispatchSystem('osdManager', 'getDeviceOsd', 'query', input),
-    getSourceCatalog: (input?: unknown) => dispatchSystem('osdManager', 'getSourceCatalog', 'query', input),
     setSlotBinding: (input?: unknown) => dispatchSystem('osdManager', 'setSlotBinding', 'mutation', input),
     clearSlotBinding: (input?: unknown) => dispatchSystem('osdManager', 'clearSlotBinding', 'mutation', input),
     setSlotCameraEnabled: (input?: unknown) => dispatchSystem('osdManager', 'setSlotCameraEnabled', 'mutation', input),
     previewSlot: (input?: unknown) => dispatchSystem('osdManager', 'previewSlot', 'mutation', input),
+    previewTemplate: (input?: unknown) => dispatchSystem('osdManager', 'previewTemplate', 'mutation', input),
     renderDevice: (input?: unknown) => dispatchSystem('osdManager', 'renderDevice', 'mutation', input),
   }
 

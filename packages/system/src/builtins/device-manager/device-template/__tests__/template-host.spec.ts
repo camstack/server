@@ -36,6 +36,7 @@ beforeAll(() => {
     renderer,
     logger,
     findByAlias: async (alias) => rows[alias] ?? null,
+    findById: async (id) => Object.values(rows).find((r) => r.deviceId === id) ?? null,
     capsOf: async () => ['temperature-sensor'],
     fetchSlice: async (id, cap) => slices[`${id}|${cap}`] ?? null,
   })
@@ -76,6 +77,7 @@ describe('DeviceTemplateHost', () => {
         lookups.push(alias)
         return rows[alias] ?? null
       },
+      findById: async (id) => Object.values(rows).find((r) => r.deviceId === id) ?? null,
       capsOf: async () => ['temperature-sensor'],
       fetchSlice: async (id, cap) => slices[`${id}|${cap}`] ?? null,
     })
@@ -105,8 +107,93 @@ describe('DeviceTemplateHost', () => {
     expect(check).toEqual({
       ok: true,
       aliases: [
-        { alias: 'garage', deviceId: 9, allowed: false, row: rows['garage'] },
-        { alias: 'stufa', deviceId: 7, allowed: true, row: rows['stufa'] },
+        {
+          alias: 'garage',
+          deviceId: 9,
+          allowed: false,
+          row: rows['garage'],
+          reads: ['temperature'],
+        },
+        { alias: 'stufa', deviceId: 7, allowed: true, row: rows['stufa'], reads: ['temperature'] },
+      ],
+      readsClock: false,
+    })
+  })
+})
+
+describe('the clock and the device a render is for (BYS #450 P5)', () => {
+  // 2026-11-10 14:05:09 in the SERVER zone, so the expectation is zone independent.
+  const at = new Date(2026, 10, 10, 14, 5, 9).getTime()
+  let clocked: DeviceTemplateRenderer
+  let hostFor: DeviceTemplateHost
+  beforeAll(() => {
+    clocked = new DeviceTemplateRenderer({
+      workerPath: WORKER,
+      workerExecArgv: ['--import', 'tsx'],
+      budgetMs: 2000,
+      now: () => at,
+    })
+    hostFor = new DeviceTemplateHost({
+      renderer: clocked,
+      logger,
+      findByAlias: async (alias) => rows[alias] ?? null,
+      findById: async (id) => Object.values(rows).find((row) => row.deviceId === id) ?? null,
+      capsOf: async () => ['temperature-sensor'],
+      fetchSlice: async (id, cap) => slices[`${id}|${cap}`] ?? null,
+    })
+  })
+  afterAll(() => clocked.dispose())
+
+  it('now prints the clock in the server zone through time()', async () => {
+    const [out] = await hostFor.render(["{{ now | time('HH:mm') }} {{ now | time('DD/MM/YYYY') }}"], undefined)
+    expect(out).toMatchObject({ ok: true, text: '14:05 10/11/2026' })
+  })
+
+  it('camera is the device the render is for, so one text serves every device', async () => {
+    const text = '{{ camera.temperature | round(0) }}'
+    const [forStufa] = await hostFor.render([text], undefined, { deviceId: 7 })
+    const [forGarage] = await hostFor.render([text], undefined, { deviceId: 9 })
+    expect(forStufa).toMatchObject({ ok: true, text: '22' })
+    expect(forGarage).toMatchObject({ ok: true, text: '4' })
+  })
+
+  it('camera carries the values the caller knows of the device', async () => {
+    const [named, empty] = await hostFor.render(
+      ["{{ camera.lastPerson | default('') }}|{{ camera.lastPlate }}", "[{{ camera.lastPerson | default('') }}]"],
+      undefined,
+      { deviceId: 7, values: { lastPerson: 'Mario', lastPlate: 'AB123CD' } },
+    )
+    expect(named).toMatchObject({ ok: true, text: 'Mario|AB123CD' })
+    const [none] = await hostFor.render(["[{{ camera.lastPerson | default('') }}]"], undefined, {
+      deviceId: 7,
+    })
+    expect(none).toMatchObject({ ok: true, text: '[]' })
+    expect(empty).toMatchObject({ ok: true, text: '[Mario]' })
+  })
+
+  it('camera without a device to render for is an unknown alias, not another device', async () => {
+    const [out] = await hostFor.render(['{{ camera.temperature }}'], undefined)
+    expect(out).toMatchObject({ ok: true, text: '—' })
+    expect(out?.trace[0]).toMatchObject({ reason: 'unknown-alias' })
+  })
+
+  it('camera is checked against the allowed set like any device', async () => {
+    const [out] = await hostFor.render(['{{ camera.temperature }}'], new Set([9]), { deviceId: 7 })
+    expect(out).toMatchObject({ ok: false, refusal: { reason: 'out-of-scope' } })
+  })
+
+  it('check names what a text reads: the device, the fields, and the clock', async () => {
+    const check = await hostFor.check(
+      "{{ camera.temperature }} {{ stufa.temperature_sensor.temperature }} {{ now | time('HH:mm') }}",
+      undefined,
+      { deviceId: 9 },
+    )
+    expect(check).toMatchObject({
+      ok: true,
+      readsClock: true,
+      aliases: [
+        { alias: 'camera', deviceId: 9, reads: ['temperature'] },
+        { alias: 'stufa', deviceId: 7, reads: ['temperature_sensor.temperature'] },
       ],
     })
   })

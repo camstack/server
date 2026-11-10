@@ -2126,9 +2126,6 @@ export const useOsdGetStatus: typeof trpc.osd.getStatus.useQuery = /*#__PURE__*/
 /** Generated alias around `trpc.osdManager.getDeviceOsd.useQuery`. */
 export const useOsdManagerGetDeviceOsd: typeof trpc.osdManager.getDeviceOsd.useQuery = /*#__PURE__*/ alias(() => trpc.osdManager.getDeviceOsd.useQuery)
 
-/** Generated alias around `trpc.osdManager.getSourceCatalog.useQuery`. */
-export const useOsdManagerGetSourceCatalog: typeof trpc.osdManager.getSourceCatalog.useQuery = /*#__PURE__*/ alias(() => trpc.osdManager.getSourceCatalog.useQuery)
-
 /** Generated alias around `trpc.osdManager.getConditionSupport.useQuery`. */
 export const useOsdManagerGetConditionSupport: typeof trpc.osdManager.getConditionSupport.useQuery = /*#__PURE__*/ alias(() => trpc.osdManager.getConditionSupport.useQuery)
 
@@ -2146,6 +2143,9 @@ export const useOsdManagerCopyDeviceConfiguration: typeof trpc.osdManager.copyDe
 
 /** Generated alias around `trpc.osdManager.previewSlot.useMutation`. */
 export const useOsdManagerPreviewSlot: typeof trpc.osdManager.previewSlot.useMutation = /*#__PURE__*/ alias(() => trpc.osdManager.previewSlot.useMutation)
+
+/** Generated alias around `trpc.osdManager.previewTemplate.useMutation`. */
+export const useOsdManagerPreviewTemplate: typeof trpc.osdManager.previewTemplate.useMutation = /*#__PURE__*/ alias(() => trpc.osdManager.previewTemplate.useMutation)
 
 /** Generated alias around `trpc.osdManager.renderDevice.useMutation`. */
 export const useOsdManagerRenderDevice: typeof trpc.osdManager.renderDevice.useMutation = /*#__PURE__*/ alias(() => trpc.osdManager.renderDevice.useMutation)

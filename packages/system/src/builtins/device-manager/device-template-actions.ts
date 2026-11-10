@@ -20,6 +20,7 @@ type CheckOutput = Awaited<ReturnType<IDeviceManagerProvider['checkDeviceTemplat
 /** What the actions need from the device-manager addon, beyond the provider context. */
 export interface TemplateActionDeps {
   findByAlias(alias: string): Promise<TemplateDeviceRow | null>
+  findById(deviceId: number): Promise<TemplateDeviceRow | null>
   capsOf(deviceId: number): Promise<readonly string[]>
   fetchSlice(deviceId: number, cap: string): Promise<unknown>
 }
@@ -48,6 +49,7 @@ export class DeviceTemplateActions {
       this.host = new DeviceTemplateHost({
         renderer: this.renderer,
         findByAlias: this.deps.findByAlias,
+        findById: this.deps.findById,
         capsOf: this.deps.capsOf,
         fetchSlice: this.deps.fetchSlice,
         unitOf: baseUnitOfRuntimeField,
@@ -60,7 +62,7 @@ export class DeviceTemplateActions {
   async render(input: RenderInput): Promise<RenderOutput> {
     const allowed =
       input.allowedDeviceIds === undefined ? undefined : new Set(input.allowedDeviceIds)
-    return { results: await this.hostOf().render(input.templates, allowed) }
+    return { results: await this.hostOf().render(input.templates, allowed, input.thisDevice) }
   }
 
   async check(input: CheckInput): Promise<CheckOutput> {
@@ -69,7 +71,7 @@ export class DeviceTemplateActions {
     const host = this.hostOf()
     const results: CheckOutput['results'] = []
     for (const source of input.templates) {
-      const check = await host.check(source, allowed)
+      const check = await host.check(source, allowed, input.thisDevice)
       results.push(
         check.ok
           ? {
@@ -78,7 +80,9 @@ export class DeviceTemplateActions {
                 alias: use.alias,
                 deviceId: use.deviceId,
                 allowed: use.allowed,
+                reads: [...use.reads],
               })),
+              readsClock: check.readsClock,
             }
           : { ok: false, refusal: { reason: check.reason, message: check.message } },
       )

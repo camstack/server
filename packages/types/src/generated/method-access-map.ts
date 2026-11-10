@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1487 method paths across 205 capabilities.
+ * Coverage: 1482 method paths across 205 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -789,11 +789,9 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'notificationRules.cancelSnooze': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.createAlarmProfile': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.createRule': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'notificationRules.createSequence': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.createSnooze': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.deleteAlarmProfile': { capName: "notification-rules", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'notificationRules.deleteRule': { capName: "notification-rules", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
-  'notificationRules.deleteSequence': { capName: "notification-rules", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'notificationRules.getAlarmConfig': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.getAlarmSensors': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.getClipRetentionAsks': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -801,11 +799,9 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'notificationRules.getHistory': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.getRule': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.getRuleLastRuns': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'notificationRules.getSequence': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.getTemplateCatalog': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.listDeviceMutes': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.listRules': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'notificationRules.listSequences': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.listSnoozes': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.previewStateSummary': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.previewTemplate': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -816,7 +812,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'notificationRules.setRuleEnabled': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.testRule': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.updateRule': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'notificationRules.updateSequence': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notifier.cancel': { capName: "notifier", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'notifier.getStatus': { capName: "notifier", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'notifier.send': { capName: "notifier", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
@@ -829,9 +824,9 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'osdManager.deleteTemplate': { capName: "osd-manager", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'osdManager.getConditionSupport': { capName: "osd-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'osdManager.getDeviceOsd': { capName: "osd-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
-  'osdManager.getSourceCatalog': { capName: "osd-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'osdManager.listTemplates': { capName: "osd-manager", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'osdManager.previewSlot': { capName: "osd-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'osdManager.previewTemplate': { capName: "osd-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'osdManager.renderDevice': { capName: "osd-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'osdManager.setSlotBinding': { capName: "osd-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'osdManager.setSlotCameraEnabled': { capName: "osd-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

@@ -14,6 +14,8 @@ export interface TemplateDeviceEntry {
   readonly stableId: string
   readonly alias: string
   readonly caps: readonly string[]
+  /** Slices the caller supplies itself (`camera.values`), beside the ones the mirror holds. */
+  readonly values?: Readonly<Record<string, unknown>>
 }
 
 /** The slices the mirror must hold so these devices' templates can render. */
@@ -36,7 +38,7 @@ export function mirrorTemplateResolver(
     viewOf(alias) {
       const device = byAlias.get(alias)
       if (device === undefined) return undefined
-      const slices: Record<string, unknown> = {}
+      const slices: Record<string, unknown> = { ...device.values }
       for (const cap of device.caps) {
         const slice = mirror.sliceOf(device.deviceId, cap)
         if (slice !== undefined) slices[cap] = slice

@@ -25,6 +25,7 @@ import {
   DeviceTemplateRefusalSchema,
   DeviceTemplateRenderSchema,
   DeviceTemplateSchema,
+  DeviceTemplateThisDeviceSchema,
 } from '../expression/device-template.js'
 
 import { IconKeySchema } from '../device/icon-catalog.js'
@@ -681,6 +682,8 @@ export const deviceManagerCapability = {
       z.object({
         templates: z.array(DeviceTemplateSchema).max(DEVICE_TEMPLATES_PER_CALL_MAX),
         allowedDeviceIds: z.array(z.number().int()).optional(),
+        /** The device `camera` names in the texts, and the values the caller knows of it. */
+        thisDevice: DeviceTemplateThisDeviceSchema.optional(),
       }),
       z.object({ results: z.array(DeviceTemplateRenderSchema) }),
       { auth: 'admin' },
@@ -695,6 +698,7 @@ export const deviceManagerCapability = {
       z.object({
         templates: z.array(z.string()).max(DEVICE_TEMPLATES_PER_CALL_MAX),
         allowedDeviceIds: z.array(z.number().int()).optional(),
+        thisDevice: DeviceTemplateThisDeviceSchema.optional(),
       }),
       z.object({
         results: z.array(
@@ -706,8 +710,12 @@ export const deviceManagerCapability = {
                   alias: z.string(),
                   deviceId: z.number().int().nullable(),
                   allowed: z.boolean(),
+                  /** The fields the text reads on this alias, as written (`temperature`, `cap.field`). */
+                  reads: z.array(z.string()),
                 }),
               ),
+              /** Whether the text reads the clock (`now`): it changes every minute. */
+              readsClock: z.boolean(),
             }),
             z.object({ ok: z.literal(false), refusal: DeviceTemplateRefusalSchema }),
           ]),

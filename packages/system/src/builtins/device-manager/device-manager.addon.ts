@@ -1238,6 +1238,16 @@ export class DeviceManagerAddon extends BaseAddon {
           alias,
         }
       },
+      findById: async (deviceId) => {
+        const row = await this.deviceRows?.get(deviceId)
+        if (row === undefined || row === null) return null
+        return {
+          deviceId: row.meta.id,
+          addonId: row.meta.addonId,
+          stableId: row.meta.stableId,
+          alias: row.meta.alias ?? '',
+        }
+      },
       capsOf: async (deviceId) =>
         (await this.getBindings({ deviceId })).entries.map((entry) => entry.capName),
       fetchSlice: async (deviceId, cap) => {

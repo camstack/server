@@ -133,6 +133,7 @@ const FILTER_MAX_PARAMS: Readonly<Record<string, number>> = {
   string: 0,
   list: 0,
   truncate: 3,
+  time: 1,
 }
 
 const FORBIDDEN_KEYWORDS: ReadonlySet<string> = new Set(['attribute', 'attr'])
