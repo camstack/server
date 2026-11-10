@@ -173,7 +173,7 @@ function FacetDropdown({
   )
 }
 
-function FieldShell({
+export function FieldShell({
   label,
   description,
   required,
@@ -185,7 +185,7 @@ function FieldShell({
   required?: boolean
   translationFn?: TranslationFn
   children: React.ReactNode
-}) {
+}): JSX.Element {
   const resolvedLabel = resolveLabel(label, translationFn)
   const resolvedDescription = resolveLabel(description, translationFn)
   const hasLabel = resolvedLabel !== undefined && resolvedLabel !== ''

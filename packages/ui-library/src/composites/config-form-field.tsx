@@ -59,7 +59,10 @@ import { PasswordInput } from '../primitives/password-input'
 import { Select } from '../primitives/select'
 import { DisclosureChevron } from '../primitives/disclosure-chevron'
 import { isKeychainFieldValue, SecretFieldControl } from './config-secret-field'
-import { DeviceSelectField, DeviceMultiSelectField } from './device-select-field'
+import {
+  DeviceMultiSelectFormField,
+  DeviceSelectFormField,
+} from './device-value-picker/device-value-form-fields'
 import {
   ConfigNotificationTargetMultiSelectFieldView,
   ConfigNotificationTargetSelectFieldView,
@@ -3064,7 +3067,7 @@ export function FormField({
       )
     case 'device-select':
       return (
-        <DeviceSelectField
+        <DeviceSelectFormField
           field={field as ConfigDeviceSelectField}
           value={value}
           onChange={handleChange}
@@ -3074,7 +3077,7 @@ export function FormField({
       )
     case 'device-multiselect':
       return (
-        <DeviceMultiSelectField
+        <DeviceMultiSelectFormField
           field={field as ConfigDeviceMultiSelectField}
           value={value}
           onChange={handleChange}

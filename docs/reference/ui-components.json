@@ -580,10 +580,10 @@
       "notes": "Offline nodes disabled; hidden on a single-node cluster"
     },
     {
-      "need": "Pick one or more devices",
-      "admin": "`DeviceSelectField` / `DeviceMultiSelectField` (the one smart picker)",
-      "viewer": "the same rule (D636)",
-      "notes": ""
+      "need": "Pick a device, or a VALUE of a capability on a device (one or several)",
+      "admin": "`DeviceValuePicker` (`requires`, `multiple`, `variant` `inline` / `popover`, `pick` `value` / `device`). A schema form's `device-select` / `device-multiselect` render it",
+      "viewer": "`DevicePicker` (viewer, until its sheet lands)",
+      "notes": "Backed by `deviceManager.search`: only compatible devices, one generic \"No device provides {capability}\" message (`capabilityLabel`), failed is not empty. A device with several values opens a second level. A form stores the device id string as before. `DeviceSelectField` / `DeviceMultiSelectField` remain only for a union `caps`+`types` filter or `suggestLocation` until their call sites migrate"
     },
     {
       "need": "A device's name",
@@ -4098,6 +4098,13 @@
       ]
     },
     {
+      "name": "deviceIdStrings",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/device-value-picker-model.ts",
+      "summary": "Back to the stored shape: ids as strings, each device once."
+    },
+    {
       "name": "deviceIntegrationResolver",
       "kind": "function",
       "area": "composites",
@@ -4910,6 +4917,13 @@
           "doc": "The host gives a definite height: the columns scroll on their own."
         }
       ]
+    },
+    {
+      "name": "DeviceValuePicker",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/DeviceValuePicker.tsx",
+      "summary": "The one device → value picker: a field asks for a VALUE of a capability (or just a device), and only devices that can supply it are offered, from `deviceManager.search`. One matching value is picked with its row; seve…"
     },
     {
       "name": "DevShell",
@@ -9132,6 +9146,20 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "pickedFromDeviceIdString",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/device-value-picker-model.ts",
+      "summary": "A schema form stores device ids as strings; the picker speaks ."
+    },
+    {
+      "name": "pickedFromDeviceIdStrings",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/device-value-picker-model.ts",
+      "summary": "The device → value picker's model: selection, grouping, labels and states."
     },
     {
       "name": "PICKER_CHIP_LIMIT",

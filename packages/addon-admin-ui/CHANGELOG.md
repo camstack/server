@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Device fields in settings forms use the new device → value picker, with search, filters and live readings
+
 - Nodes and Addons follow the hub cluster-update job (preview, confirm, step list) instead of updating each node from the browser.
 
 ## [1.2.634] - 2026-11-10

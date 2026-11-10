@@ -636,5 +636,6 @@ export {
   type TimelineTone,
 } from './timeline-slider'
 export * from './device-value-field/index.js'
+export * from './device-value-picker/index.js'
 export * from './device-template-field/index.js'
 export * from './expression-input/index.js'
