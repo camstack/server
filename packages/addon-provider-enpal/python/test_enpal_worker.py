@@ -4,6 +4,7 @@ Serial-like values in the capture are masked with X, byte for byte, so the offse
 """
 import gzip
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -16,6 +17,19 @@ from enpal_worker import merge_rows  # noqa: E402
 
 def load_batch() -> bytes:
     return gzip.decompress((HERE / "fixtures" / "render-batch-fw852.bin.gz").read_bytes())
+
+
+def test_the_fixture_carries_no_serial_certificate_or_imei_like_value():
+    raw = load_batch()
+    forbidden = {
+        "long digit run (serial, IMEI)": rb"\d{12,}",
+        "letter plus long digit run": rb"[A-Z]\d{9,}",
+        "long hex or colon run (SKI, key id)": rb"[0-9A-Fa-f:]{20,}",
+        "PEM block": rb"-----BEGIN",
+        "MAC address": rb"(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}",
+    }
+    for label, pattern in forbidden.items():
+        assert re.search(pattern, raw) is None, label
 
 
 def test_the_initial_render_yields_every_device_table():

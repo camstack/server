@@ -29,7 +29,7 @@ Removing the integration removes its devices. An unreachable box marks its devic
 - **Box host / IP** — the box on the LAN. The box does not advertise itself, so the integration is added by hand.
 - **Source** — `auto` (the box web channel, then InfluxDB when a token is set, then the device page; the first that answers wins), `blazor`, `influx`, or `page`.
 - **InfluxDB access token** — issued by Enpal support (ask in the Enpal app chat). Stored in the keychain. Organisation (`enpal`), bucket (`solar`) and port (`8086`) default to the usual values.
-- **Poll interval** — 30 s by default, 10 s minimum.
+- **Poll interval** — 30 s by default, 10 s minimum. With the web channel in use (`auto` or `blazor`) the effective interval is never below 20 s, the worst-case read time. In `auto`, a failed web channel is skipped for 10 minutes and the snapshot says why; a node without Python says so too.
 - **Invert battery power sign** — flip it when charging shows as negative.
 
 Firmware 8.51 and later render the device rows of the device page only through a Blazor Server web socket. The `blazor` source opens that channel the way the box's own page does (read-only: it only acknowledges renders, it never sends a UI event) and needs no credential. Its protocol modules are copied from the Home Assistant component derolli1976/enpal (MIT, see `THIRD_PARTY.md`). It needs the platform's embedded Python; without it `auto` falls back to InfluxDB or the page, which on those boxes hold less. Only numeric sensors are read; wallbox and heat-pump controls are not part of this addon.

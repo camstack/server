@@ -1,6 +1,7 @@
 import type { EnpalConnection } from './config.js'
 import {
   BlazorBridgeError,
+  type BlazorBackoff,
   blazorRowsToReadings,
   type BlazorReader,
 } from './enpal-blazor.js'
@@ -45,6 +46,8 @@ export interface ReadEnpalSnapshotInput {
   readonly fetch: FetchLike
   /** The Python bridge to the box's Blazor channel; absent while Python is unavailable. */
   readonly blazor?: BlazorReader
+  /** Shared across polls: `auto` skips a Blazor channel that failed recently. */
+  readonly blazorBackoff?: BlazorBackoff
   readonly now: () => number
 }
 
@@ -188,47 +191,62 @@ const READERS: Readonly<
   'device-page': readPage,
 }
 
-/** The sources to try, in order, for a connection's `source` setting. */
-function sourceOrder(input: ReadEnpalSnapshotInput): readonly EnpalSourceKind[] {
-  switch (input.connection.source) {
-    case 'blazor':
-      return ['blazor']
-    case 'influx':
-      return ['influxdb']
-    case 'page':
-      return ['device-page']
-    case 'auto': {
-      const hasToken = input.tokenLocked !== true && input.connection.token.trim().length > 0
-      return [
-        ...(input.blazor !== undefined ? (['blazor'] as const) : []),
-        ...(hasToken ? (['influxdb'] as const) : []),
-        'device-page',
-      ]
-    }
-  }
+/** One reason from several: the kind of the first real failure, every message. */
+function joinReasons(reasons: readonly EnpalFallbackReason[]): EnpalFallbackReason | undefined {
+  if (reasons.length === 0) return undefined
+  const kind = reasons.find((r) => r.kind !== 'bridge-unavailable')?.kind ?? 'bridge-unavailable'
+  return { kind, message: reasons.map((r) => r.message).join('; ') }
+}
+
+const PYTHON_MISSING: EnpalFallbackReason = {
+  kind: 'bridge-unavailable',
+  message:
+    'Python is not available on this node, so the box web channel (the only complete source on firmware 8.51 and later) is not used',
 }
 
 /**
  * Read every data point the box reports, once. `auto` tries the Blazor channel first (the
  * only one that carries the device tables on firmware 8.51 and later, no credential), then
- * InfluxDB when a token is set, then the device page; the snapshot records why a preferred
- * source was skipped. When every source fails the FIRST failure is the one reported. A failed
- * read throws {@link EnpalError}: it never yields a snapshot of zeros.
+ * InfluxDB when a token is set, then the device page. The snapshot records why a preferred
+ * source was not used: Python missing, the channel skipped after a recent failure, or the
+ * failure itself. A Blazor failure in `auto` is remembered for {@link BLAZOR_BACKOFF_MS}.
+ * When every source fails the FIRST real failure is the one reported. A failed read throws
+ * {@link EnpalError}: it never yields a snapshot of zeros.
  */
 export async function readEnpalSnapshot(input: ReadEnpalSnapshotInput): Promise<EnpalSnapshot> {
+  const { source: mode } = input.connection
+  const now = input.now()
+  const hasToken = input.tokenLocked !== true && input.connection.token.trim().length > 0
+  const reasons: EnpalFallbackReason[] = []
   let first: EnpalError | undefined
-  for (const source of sourceOrder(input)) {
+  const order: EnpalSourceKind[] = []
+
+  if (mode === 'blazor') order.push('blazor')
+  else if (mode === 'influx') order.push('influxdb')
+  else if (mode === 'page') order.push('device-page')
+  else {
+    if (input.blazor === undefined) reasons.push(PYTHON_MISSING)
+    else {
+      const skip = input.blazorBackoff?.skipReason(now) ?? null
+      if (skip !== null) reasons.push(skip)
+      else order.push('blazor')
+    }
+    if (hasToken) order.push('influxdb')
+    order.push('device-page')
+  }
+
+  for (const source of order) {
     try {
       const readings = await READERS[source](input)
-      return createSnapshot(
-        source,
-        readings,
-        input.now(),
-        first !== undefined ? reasonOf(first) : undefined,
-      )
+      if (source === 'blazor') input.blazorBackoff?.recovered()
+      return createSnapshot(source, readings, now, joinReasons(reasons))
     } catch (error) {
       if (!(error instanceof EnpalError)) throw error
+      if (source === 'blazor' && mode === 'auto') {
+        input.blazorBackoff?.failed(now, reasonOf(error))
+      }
       first ??= error
+      reasons.push(reasonOf(error))
     }
   }
   if (first === undefined) throw new Error('readEnpalSnapshot: no source to read')

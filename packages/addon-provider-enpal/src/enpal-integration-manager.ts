@@ -1,7 +1,8 @@
 import type { IScopedLogger } from '@camstack/types'
 import type { EnpalConnection } from './config.js'
 import { EnpalError, readEnpalSnapshot, type FetchLike } from './enpal-client.js'
-import type { BlazorReader } from './enpal-blazor.js'
+import { BlazorBackoff, effectivePollIntervalMs, type BlazorReader } from './enpal-blazor.js'
+import type { EnpalSourceKind } from './enpal-snapshot.js'
 import type { EnpalSnapshot } from './enpal-snapshot.js'
 
 export type EnpalManagerStatus = 'disconnected' | 'connecting' | 'connected' | 'error'
@@ -41,6 +42,9 @@ export class EnpalIntegrationManager {
   #snapshot: EnpalSnapshot | null = null
   #lastError: EnpalLastError | null = null
   #timer: ReturnType<typeof setInterval> | null = null
+  readonly #blazorBackoff = new BlazorBackoff()
+  #lastSource: EnpalSourceKind | null = null
+  #lastFallbackKey: string | null = null
   #inFlight: Promise<void> | null = null
   #stopped = true
   #failureLogged = false
@@ -79,7 +83,7 @@ export class EnpalIntegrationManager {
     if (this.#stopped || this.#timer !== null) return
     this.#timer = setInterval(() => {
       void this.poll()
-    }, this.#options.connection.pollIntervalMs)
+    }, effectivePollIntervalMs(this.#options.connection))
     this.#timer.unref()
   }
 
@@ -102,6 +106,25 @@ export class EnpalIntegrationManager {
     return run
   }
 
+  /**
+   * A preferred source that is not in use is said once per change of source or of reason kind (the back-off text changes every poll, the cause does not), not
+   * once per boot: a box that drops from the web channel to the page mid-run is visible.
+   */
+  #logSourceChange(source: EnpalSourceKind, fallback: EnpalSnapshot['fallbackReason']): void {
+    const fallbackMessage = fallback?.message
+    const fallbackKey = fallback?.kind ?? null
+    const changed = source !== this.#lastSource || fallbackKey !== this.#lastFallbackKey
+    if (changed && fallbackMessage !== undefined) {
+      this.#options.logger.warn(
+        `Enpal box ${this.name}: preferred source not used (${fallbackMessage}), reading ${source}`,
+      )
+    } else if (changed && this.#lastSource !== null && source !== this.#lastSource) {
+      this.#options.logger.info(`Enpal box ${this.name}: now reading ${source}`)
+    }
+    this.#lastSource = source
+    this.#lastFallbackKey = fallbackKey
+  }
+
   async #pollOnce(): Promise<void> {
     const wasConnected = this.#status === 'connected'
     try {
@@ -110,6 +133,7 @@ export class EnpalIntegrationManager {
         tokenLocked: this.#options.tokenLocked,
         fetch: this.#fetch,
         blazor: this.#options.blazor?.(),
+        blazorBackoff: this.#blazorBackoff,
         now: this.#options.now ?? Date.now,
       })
       if (this.#stopped) return
@@ -121,11 +145,7 @@ export class EnpalIntegrationManager {
           `Enpal box ${this.name} reachable through ${snapshot.source} (${snapshot.readings.size} data points)`,
         )
       }
-      if (snapshot.fallbackReason !== undefined && !wasConnected) {
-        this.#options.logger.warn(
-          `Enpal box ${this.name}: preferred source not used (${snapshot.fallbackReason.kind}: ${snapshot.fallbackReason.message}), reading ${snapshot.source}`,
-        )
-      }
+      this.#logSourceChange(snapshot.source, snapshot.fallbackReason)
       this.#failureLogged = false
       if (!wasConnected) this.#options.onConnected()
       this.#options.onPolled()

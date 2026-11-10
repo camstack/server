@@ -66,7 +66,7 @@ describe('EnpalClientRegistry', () => {
     const h = registryHarness('up')
     await h.registry.upsert('int-1', 'Home', CONNECTION, false)
     h.set('down')
-    await vi.advanceTimersByTimeAsync(10_000)
+    await vi.advanceTimersByTimeAsync(20_000)
     expect(h.events).toEqual(['connected:int-1', 'disconnected:int-1'])
     expect(enpalConnections.getSnapshot('int-1')).toBeNull()
     await h.registry.shutdown()
