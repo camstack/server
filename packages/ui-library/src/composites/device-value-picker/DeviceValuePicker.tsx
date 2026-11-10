@@ -118,7 +118,7 @@ export function DeviceValuePicker(props: DeviceValuePickerProps): JSX.Element {
   )
 
   const panel = (
-    <PopoverContent className="w-[min(44rem,calc(100vw-1rem))] overflow-hidden p-0">
+    <PopoverContent className="w-[min(36rem,calc(100vw-1rem))] overflow-hidden p-0">
       <DeviceValuePanel
         requires={props.requires}
         contextDeviceId={props.contextDeviceId}

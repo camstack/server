@@ -94,7 +94,7 @@ export function DeviceRows(props: DeviceRowsProps): JSX.Element {
         <div key={section.id}>
           <SectionHeading section={section} />
           {section.items.map((item) => (
-            <DeviceRow key={item.id} item={item} {...props} />
+            <DeviceRow key={item.id} item={item} showType={section.kind !== 'type'} {...props} />
           ))}
         </div>
       ))}
@@ -111,7 +111,8 @@ function DeviceRow({
   inPlace,
   expandedId,
   onDrill,
-}: DeviceRowsProps & { readonly item: DeviceSearchItem }): JSX.Element {
+  showType,
+}: DeviceRowsProps & { readonly item: DeviceSearchItem; readonly showType: boolean }): JSX.Element {
   const t = useUiText()
   const mode = rowMode(item, kind)
   const disabled = !item.compatible
@@ -122,7 +123,7 @@ function DeviceRow({
     <>
       <span className="min-w-0 flex-1">
         <span className="block truncate">{item.name}</span>
-        <span className={SUB}>{humanizeIdentifier(item.type)}</span>
+        {showType && <span className={SUB}>{humanizeIdentifier(item.type)}</span>}
       </span>
       {item.online === false && <OfflineBadge />}
       {disabled && (

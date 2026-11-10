@@ -51,6 +51,9 @@ if (window.location.pathname === '/sso-complete') {
 } else if (window.location.pathname.startsWith('/hero-476-preview')) {
   const { Hero476Preview } = await import('./hero-476-preview')
   createRoot(root).render(<Hero476Preview />)
+} else if (window.location.pathname.startsWith('/device-value-picker-preview')) {
+  const { DeviceValuePickerPreview } = await import('./device-value-picker-preview')
+  createRoot(root).render(<DeviceValuePickerPreview />)
 } else if (window.location.pathname.startsWith('/device-module-preview')) {
   const { DeviceModulePreview } = await import('./device-module-preview')
   createRoot(root).render(<DeviceModulePreview />)

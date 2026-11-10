@@ -1,3 +1,4 @@
+import { DeviceType } from '@camstack/types'
 import type { DeviceSearchItem, DeviceSearchResult } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
@@ -148,7 +149,7 @@ describe('sections', () => {
   it('lists a device once: suggestions, recents, then by type; a search drops the shortlist', () => {
     const a = item(1, 'A', [temp])
     const b = item(2, 'B', [temp])
-    const c = item(3, 'C', [temp], { type: 'plug' })
+    const c = item(3, 'C', [temp], { type: DeviceType.Switch })
     const input = { items: [a, b, c], suggested: [b], recent: [a], shortlist: true }
     const sections = buildSections(input)
     expect(sections.map((s) => [s.kind, s.items.map((i) => i.id)])).toEqual([
