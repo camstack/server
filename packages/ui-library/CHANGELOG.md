@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Generated hooks for the cluster-update capability
 - An illustrated hero (washer, dryer, fountain…) no longer shows a second animated drum or ring poking out beside its illustration.
 
+- Device rows and the container hero follow the child a container declares as its primary
+
 ## [1.2.418] - 2026-11-10
 
 ### Added

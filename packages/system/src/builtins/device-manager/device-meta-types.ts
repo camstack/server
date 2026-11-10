@@ -169,6 +169,10 @@ export interface PersistedDeviceMeta {
    *  re-sync-stable accessory `stableIdSuffix`. Set at create, preserved across
    *  re-register/restore — same lifecycle as `primaryChildEntityId`. */
   childLayout?: ChildLayout
+  /** Provider-declared primary-child preference of a CONTAINER: accessory
+   *  `childKey`s, most preferred first. Set at create, preserved across
+   *  re-register/restore — same lifecycle as `childLayout`. */
+  primaryChildPreference?: readonly string[]
   /** Semantic role string (`DeviceRole`), stamped at create via `setRole`.
    *  Optional: only present for accessory children that carry a known role
    *  (e.g. 'numeric-sensor', 'binary-sensor'). `null` clears a previous role. */

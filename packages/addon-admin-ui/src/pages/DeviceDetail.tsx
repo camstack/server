@@ -5,6 +5,7 @@ import {
   type PowerSourceActionResult,
   WELL_KNOWN_TAB_MAP,
   type WellKnownTab,
+  primaryChildPreferenceOf,
 } from '@camstack/types'
 import {
   BatteryBadge,
@@ -361,12 +362,17 @@ export function DeviceDetailPage() {
     const link = typeof device?.linkDeviceId === 'number' ? device.linkDeviceId : null
     const pcid =
       typeof device?.primaryChildEntityId === 'string' ? device.primaryChildEntityId : null
-    return resolveContainerPrimary(containerChildren, link, pcid, deviceTypeStr)?.id ?? null
+    const preference = device ? primaryChildPreferenceOf(device) : undefined
+    return (
+      resolveContainerPrimary(containerChildren, link, pcid, deviceTypeStr, preference)?.id ?? null
+    )
   }, [
     isContainer,
     containerChildren,
     device?.linkDeviceId,
     device?.primaryChildEntityId,
+    device?.stableId,
+    device?.primaryChildPreference,
     deviceTypeStr,
   ])
 

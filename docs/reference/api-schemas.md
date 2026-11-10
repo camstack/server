@@ -1676,6 +1676,7 @@ Enum: `"raw" \| "5m" \| "1h" \| "1d"`
 - `linkDeviceId?`: `number \| null`
 - `primaryChildEntityId?`: `string \| null`
 - `childLayout?`: `({ childKey: string; section: string; order?: number; collapsed?: boolean })[]`
+- `primaryChildPreference?`: `string[]`
 - `display?`: `{ icon?: string; label?: string; unit?: string; precision?: number; hidden?: boolean; perCap?: Record<string, { unit?: string; precision?: number }> }`
 
 ### `DeviceNetworkStatsSchema`

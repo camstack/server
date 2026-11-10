@@ -16,6 +16,7 @@
  * admin-ui `PrimaryChildRow`), wired to `deviceManager.setPrimaryChildEntityId`.
  */
 import { useUiText } from '../../contexts/ui-text'
+import type { ContainerPrimaryChildPreference } from '@camstack/types'
 import type { ReactNode } from 'react'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { resolveDeviceControl } from './control-registry'
@@ -41,6 +42,8 @@ export interface ContainerPrimaryHeroProps {
   readonly primaryChildEntityId?: string | null | undefined
   /** The container device's type. A type that stands for itself resolves no child. */
   readonly containerType: string | undefined
+  /** The container's provider-declared preference (`primaryChildPreferenceOf(device)`). */
+  readonly primaryChildPreference: ContainerPrimaryChildPreference | undefined
 }
 
 export function ContainerPrimaryHero({
@@ -49,6 +52,7 @@ export function ContainerPrimaryHero({
   linkDeviceId,
   primaryChildEntityId,
   containerType,
+  primaryChildPreference,
 }: ContainerPrimaryHeroProps): ReactNode {
   const t = useUiText()
   const primary = resolveContainerPrimary(
@@ -56,6 +60,7 @@ export function ContainerPrimaryHero({
     linkDeviceId,
     primaryChildEntityId,
     containerType,
+    primaryChildPreference,
   )
   const primaryChild = primary === null ? undefined : children.find((c) => c.id === primary.id)
 

@@ -23,9 +23,11 @@
  * priority-in-sync.ts` fails the build when either drifts — the comment that
  * used to ask for this could not.
  *
- * The rule has three halves and the ORDER matters: an operator's explicit pick
- * wins outright; else a declaration on the device type
- * ({@link CONTAINER_PRIMARY_CHILD_RULES}); else role, namesake, then type
+ * The rule has four steps and the ORDER matters: an operator's explicit pick
+ * wins outright; else the container's own declaration, an ordered list of
+ * child keys its provider stamped at create
+ * ({@link ContainerPrimaryChildPreference}); else a declaration on the device
+ * type ({@link CONTAINER_PRIMARY_CHILD_RULES}); else role, namesake, then type
  * priority. The pick is keyed on the child's re-sync-stable `entityId`, not
  * its numeric id, so it survives a re-sync that reallocates ids.
  */
@@ -56,6 +58,54 @@ export interface ContainerPrimaryChildRule {
 export const CONTAINER_PRIMARY_CHILD_RULES: readonly ContainerPrimaryChildRule[] = [
   { deviceType: DeviceType.HeatPump, primary: 'self' },
 ]
+
+/**
+ * What one CONTAINER declares it stands for, in preference order.
+ *
+ * A device type cannot tell a vendor's children apart when they all share one
+ * type (an energy installation whose PV, battery and house readings are all
+ * `sensor` children). The provider knows, so it stamps an ordered list of
+ * accessory `childKey`s (the `stableIdSuffix` it spawned each child with) on
+ * the container's meta (`DeviceMeta.primaryChildPreference`). The first key
+ * whose child exists wins. A child matches when its `stableId` is
+ * `${parentStableId}-${childKey}`, the convention `childLayout` uses.
+ */
+export interface ContainerPrimaryChildPreference {
+  /** The container's own `stableId`. */
+  readonly parentStableId: string
+  /** Accessory `childKey`s, most preferred first. */
+  readonly childKeys: readonly string[]
+}
+
+/** The slice of a container's meta its declaration is read from. */
+export interface ContainerPreferenceSource {
+  readonly stableId?: string | undefined
+  readonly primaryChildPreference?: readonly string[] | null | undefined
+}
+
+/** The declaration of a container read from its meta, or undefined when it declared none. */
+export function primaryChildPreferenceOf(
+  container: ContainerPreferenceSource,
+): ContainerPrimaryChildPreference | undefined {
+  const keys = container.primaryChildPreference
+  if (container.stableId === undefined || keys === undefined || keys === null) return undefined
+  if (keys.length === 0) return undefined
+  return { parentStableId: container.stableId, childKeys: keys }
+}
+
+/** The first declared child that exists, or undefined when none does. */
+export function applyPrimaryChildPreference(
+  preference: ContainerPrimaryChildPreference | undefined,
+  children: readonly ContainerChildRef[],
+): ContainerChildRef | undefined {
+  if (preference === undefined) return undefined
+  for (const key of preference.childKeys) {
+    const expected = `${preference.parentStableId}-${key}`
+    const match = children.find((child) => child.stableId === expected)
+    if (match !== undefined) return match
+  }
+  return undefined
+}
 
 export type AppliedPrimaryChildRule =
   | { readonly kind: 'fall-through' }
@@ -212,7 +262,8 @@ function rank(type: string): number {
 
 /**
  * The child a container stands for: the operator's pick when it still exists,
- * else the device type's declaration, else the highest-priority type. `null`
+ * else the container's declared preference, else the device type's
+ * declaration, else the highest-priority type. `null`
  * for a childless container, and for a type that stands for itself — a caller
  * must decide what "no child" means for it, rather than being handed a child
  * that is not the device.
@@ -254,6 +305,12 @@ export function resolveContainerPrimaryChild(
   overrideEntityId: string | null | undefined,
   containerName: string | undefined,
   containerType: string | undefined,
+  /**
+   * The container's own declaration. Optional only so a caller built against
+   * an older release keeps compiling; every caller that has the container's
+   * meta passes it.
+   */
+  preference?: ContainerPrimaryChildPreference,
 ): ContainerChildRef | null {
   if (overrideEntityId !== undefined && overrideEntityId !== null) {
     // Canonical key first, then the legacy one — a pick written before
@@ -268,6 +325,8 @@ export function resolveContainerPrimaryChild(
     // itself still answers no child.
     if (picked !== undefined) return picked
   }
+  const preferred = applyPrimaryChildPreference(preference, children)
+  if (preferred !== undefined) return preferred
   const rule = CONTAINER_PRIMARY_CHILD_RULES.find((entry) => entry.deviceType === containerType)
   const declared = applyPrimaryChildRule(rule, children)
   if (declared.kind === 'none') return null

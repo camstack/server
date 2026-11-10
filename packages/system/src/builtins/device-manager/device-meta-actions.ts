@@ -10,7 +10,7 @@
  * removeDevice), config persistence (persistConfig, loadConfig), the meta
  * surface load (loadMeta, loadRuntimeState), every meta setter (setName,
  * setLocation, setType, setIntegrationId, setLinkDeviceId,
- * setPrimaryChildEntityId, setChildLayout, setRole, setDisplay,
+ * setPrimaryChildEntityId, setChildLayout, setPrimaryChildPreference, setRole, setDisplay,
  * applyInitialMeta, setMetadata, setDisabled), and the location registry
  * (listLocations, addLocation, removeLocation, renameLocation) with its icon
  * map (listLocationIcons, setLocationIcon).
@@ -1396,6 +1396,31 @@ export async function setChildLayout(
     source: { type: 'device', id: deviceId },
     category: EventCategory.DeviceMetaChanged,
     data: { deviceId, field: 'childLayout', value: childLayout },
+  })
+}
+
+/**
+ * Set (or replace) a container's provider-declared primary-child preference:
+ * accessory `childKey`s, most preferred first. Mirrors {@link setChildLayout}.
+ * The operator's `primaryChildEntityId` still wins over it at resolution.
+ */
+export async function setPrimaryChildPreference(
+  pctx: ProviderContext,
+  input: Parameters<IDeviceManagerProvider['setPrimaryChildPreference']>[0],
+): ReturnType<IDeviceManagerProvider['setPrimaryChildPreference']> {
+  const { deviceId, primaryChildPreference } = input
+  await pctx.metaStore.withMetaWriteLock(async () => {
+    const persisted = await pctx.metaStore.resolvePersistedById(deviceId)
+    if (!persisted)
+      throw new Error(`[device-manager] setPrimaryChildPreference: unknown device id=${deviceId}`)
+    await pctx.metaStore.rows.patch(deviceId, { primaryChildPreference })
+  })
+  pctx.host.ctx.eventBus.emit({
+    id: randomUUID(),
+    timestamp: new Date(),
+    source: { type: 'device', id: deviceId },
+    category: EventCategory.DeviceMetaChanged,
+    data: { deviceId, field: 'primaryChildPreference', value: primaryChildPreference },
   })
 }
 

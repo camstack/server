@@ -269,6 +269,9 @@ export function toDeviceInfo(
       ? { primaryChildEntityId: metaRow.primaryChildEntityId }
       : {}),
     ...(metaRow?.childLayout !== undefined ? { childLayout: metaRow.childLayout } : {}),
+    ...(metaRow?.primaryChildPreference !== undefined
+      ? { primaryChildPreference: metaRow.primaryChildPreference }
+      : {}),
     ...(metaRow?.display !== undefined ? { display: metaRow.display } : {}),
   }
 }

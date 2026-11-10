@@ -27,6 +27,7 @@
  * Resolution prefers `primaryChildEntityId` and only consults `linkDeviceId`
  * when no durable override is present, so existing persisted links keep working.
  */
+import type { ContainerPrimaryChildPreference } from '@camstack/types'
 import type { ChildRef } from './primary-child'
 import { resolvePrimaryChild } from './primary-child'
 
@@ -103,6 +104,7 @@ export function resolveContainerPrimary(
   linkDeviceId: number | null | undefined,
   primaryChildEntityId: string | null | undefined,
   containerType: string | undefined,
+  preference: ContainerPrimaryChildPreference | undefined,
 ): ChildRef | null {
   const refs = children.map(containerChildToRef)
   const override =
@@ -112,5 +114,5 @@ export function resolveContainerPrimary(
       ? primaryChildEntityId
       : overrideEntityIdFromLink(children, linkDeviceId)
   // This adapter has no container name, so the namesake tie-break stays off.
-  return resolvePrimaryChild(refs, override, undefined, containerType)
+  return resolvePrimaryChild(refs, override, undefined, containerType, preference)
 }

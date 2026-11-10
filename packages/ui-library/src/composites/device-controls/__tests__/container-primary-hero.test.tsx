@@ -54,6 +54,7 @@ describe('ContainerPrimaryHero', () => {
     render(
       <ContainerPrimaryHero
         containerType={DeviceType.Container}
+        primaryChildPreference={undefined}
         trpc={trpc}
         children={children}
         linkDeviceId={null}
@@ -66,6 +67,7 @@ describe('ContainerPrimaryHero', () => {
     render(
       <ContainerPrimaryHero
         containerType={DeviceType.Container}
+        primaryChildPreference={undefined}
         trpc={trpc}
         children={children}
         linkDeviceId={7}
@@ -78,6 +80,7 @@ describe('ContainerPrimaryHero', () => {
     render(
       <ContainerPrimaryHero
         containerType={DeviceType.Container}
+        primaryChildPreference={undefined}
         trpc={trpc}
         children={children}
         linkDeviceId={9999}
@@ -90,6 +93,7 @@ describe('ContainerPrimaryHero', () => {
     render(
       <ContainerPrimaryHero
         containerType={DeviceType.Container}
+        primaryChildPreference={undefined}
         trpc={trpc}
         children={children}
         linkDeviceId={null}
@@ -103,6 +107,7 @@ describe('ContainerPrimaryHero', () => {
     render(
       <ContainerPrimaryHero
         containerType={DeviceType.Container}
+        primaryChildPreference={undefined}
         trpc={trpc}
         children={children}
         linkDeviceId={null}
@@ -115,6 +120,7 @@ describe('ContainerPrimaryHero', () => {
     render(
       <ContainerPrimaryHero
         containerType={DeviceType.Container}
+        primaryChildPreference={undefined}
         trpc={trpc}
         children={[]}
         linkDeviceId={null}

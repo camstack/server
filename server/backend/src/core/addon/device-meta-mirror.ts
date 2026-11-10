@@ -80,6 +80,7 @@ export const MIRROR_IRRELEVANT_META_FIELDS: ReadonlySet<string> = new Set([
   'linkDeviceId',
   'primaryChildEntityId',
   'childLayout',
+  'primaryChildPreference',
 ])
 
 /** How much of the fleet one device event obliges the mirror to re-read. */

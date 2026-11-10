@@ -571,6 +571,23 @@ describe('pure helpers', () => {
     expect(parseLinkedDevicesConfig({ [LINKED_MODE_CONFIG_KEY]: 'auto' }).mode).toBe('manual')
   })
 
+  it('legacyAutoLinkIds: a container stands for the child it DECLARED, not the first one listed', () => {
+    const candidates: LinkCandidate[] = [
+      { id: 1, stableId: 'cam', parentDeviceId: null, location: 'garden', type: DeviceType.Camera },
+      {
+        id: 10,
+        stableId: 'sys',
+        parentDeviceId: null,
+        location: 'garden',
+        type: DeviceType.Container,
+        primaryChildPreference: ['pv', 'house'],
+      },
+      { id: 11, stableId: 'sys-house', parentDeviceId: 10, location: 'garden', type: DeviceType.Sensor },
+      { id: 12, stableId: 'sys-pv', parentDeviceId: 10, location: 'garden', type: DeviceType.Sensor },
+    ]
+    expect(legacyAutoLinkIds({ selfId: 1, selfLocation: 'garden', candidates })).toEqual([12])
+  })
+
   it('resolveLinkedDeviceIds: children always, the manual list, self excluded — the legacy auto rule stays testable for the backfill', () => {
     const candidates: LinkCandidate[] = [
       { id: 1, stableId: 's1', parentDeviceId: null, location: 'garden', type: DeviceType.Camera }, // self

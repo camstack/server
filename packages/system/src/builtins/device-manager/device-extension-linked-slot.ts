@@ -131,6 +131,9 @@ function toLinkCandidate(row: DeviceRow): LinkCandidate | null {
     ...(row.meta.primaryChildEntityId !== undefined
       ? { primaryChildEntityId: row.meta.primaryChildEntityId }
       : {}),
+    ...(row.meta.primaryChildPreference !== undefined
+      ? { primaryChildPreference: row.meta.primaryChildPreference }
+      : {}),
     ...(row.meta.role !== undefined ? { role: row.meta.role } : {}),
     name: row.meta.name,
   }

@@ -188,6 +188,12 @@ export interface DeviceMeta {
    *  same lifecycle as `primaryChildEntityId`. Absent ⇒ no layout declared (all
    *  children render in the plain Overview list). */
   readonly childLayout?: ChildLayout
+  /** Which children a CONTAINER stands for, most preferred first, as accessory
+   *  `childKey`s (the child's `stableIdSuffix`). Declared by the PROVIDER at
+   *  create, so the pick does not depend on the order children come back in;
+   *  the operator's `primaryChildEntityId` still wins. Same create/persist/
+   *  project/restore lifecycle as `childLayout`. Absent ⇒ no declaration. */
+  readonly primaryChildPreference?: readonly string[]
   /** Operator-authored per-device display override (icon/label/unit/precision/
    *  hidden). Same create/persist/project/restore lifecycle as `childLayout`.
    *  Absent ⇒ no override; the renderer falls back to role default → live slice
@@ -223,6 +229,9 @@ export interface InitialDeviceMeta {
    *  across re-register/restore. Optional: only set for CONTAINER devices that
    *  declare a layout. */
   readonly childLayout?: ChildLayout
+  /** The children a CONTAINER stands for, most preferred first, by accessory
+   *  `childKey`. Mirrors `DeviceMeta.primaryChildPreference`. */
+  readonly primaryChildPreference?: readonly string[]
   /** Per-device display override set at create. Mirrors `DeviceMeta.display`. */
   readonly display?: DeviceDisplayOverride
 }

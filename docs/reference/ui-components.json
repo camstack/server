@@ -2807,6 +2807,12 @@
           "type": "string | undefined",
           "optional": false,
           "doc": "The container device's type. A type that stands for itself resolves no child."
+        },
+        {
+          "name": "primaryChildPreference",
+          "type": "ContainerPrimaryChildPreference | undefined",
+          "optional": false,
+          "doc": "The container's provider-declared preference (`primaryChildPreferenceOf(device)`)."
         }
       ]
     },
@@ -10234,7 +10240,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/primary-child.ts",
-      "summary": "Resolve a container's primary child: the operator's pick when it still matches a live child, else the type's declaration, else the highest-priority type. `containerType` is required so a caller cannot skip the declara…"
+      "summary": "Resolve a container's primary child: the operator's pick when it still matches a live child, else the container's declared preference, else the type's declaration, else the highest-priority type. `containerType` is re…"
     },
     {
       "name": "resolveSceneVisual",

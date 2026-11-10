@@ -111,6 +111,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renaming a composed device keeps the new name after a restart, whether the rename was made on the device page or in the composition editor.
 - The hub id is stored under tls next to the mesh CA, so a system backup keeps it; a file still at the data root is copied there once
 
+- Device manager stores a container's declared primary-child preference (setPrimaryChildPreference) and applies it when a room suggests a camera's linked devices
+
 ## [1.2.537] - 2026-11-01
 
 ### Changed

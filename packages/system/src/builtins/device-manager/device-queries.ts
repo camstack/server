@@ -329,6 +329,9 @@ export async function listAll(
         ? { primaryChildEntityId: m.primaryChildEntityId }
         : {}),
       ...(m.childLayout !== undefined ? { childLayout: m.childLayout } : {}),
+      ...(m.primaryChildPreference !== undefined
+        ? { primaryChildPreference: m.primaryChildPreference }
+        : {}),
       ...(m.display !== undefined ? { display: m.display } : {}),
       // Forked-worker accessory children (e.g. HA sensor entities)
       // persist entityId + system in the config blob. Reconstruct
@@ -410,6 +413,9 @@ export async function getDevice(
       ? { primaryChildEntityId: m.primaryChildEntityId }
       : {}),
     ...(m.childLayout !== undefined ? { childLayout: m.childLayout } : {}),
+    ...(m.primaryChildPreference !== undefined
+      ? { primaryChildPreference: m.primaryChildPreference }
+      : {}),
     ...(m.display !== undefined ? { display: m.display } : {}),
     // Forked-worker accessory children (e.g. HA sensor entities)
     // persist entityId + system in the config blob. Reconstruct
@@ -523,6 +529,9 @@ function projectChildren(
         ? { primaryChildEntityId: m.primaryChildEntityId }
         : {}),
       ...(m.childLayout !== undefined ? { childLayout: m.childLayout } : {}),
+      ...(m.primaryChildPreference !== undefined
+        ? { primaryChildPreference: m.primaryChildPreference }
+        : {}),
       ...(m.display !== undefined ? { display: m.display } : {}),
       // Forked-worker accessory children (e.g. HA sensor entities)
       // persist entityId + system in the config blob. Reconstruct

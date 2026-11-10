@@ -19,6 +19,7 @@ function resolveContainer(
     linkDeviceId,
     primaryChildEntityId ?? null,
     DeviceType.Container,
+    undefined,
   )
 }
 

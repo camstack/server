@@ -28,7 +28,7 @@ import {
   type ContainerChild,
   type PrimaryChildOption,
 } from '@camstack/ui-library'
-import { DeviceType } from '@camstack/types'
+import { DeviceType, primaryChildPreferenceOf } from '@camstack/types'
 import { useDevice, useDeviceChildren } from '../../../../hooks/useDevice'
 import { InfoRow } from './overview-primitives'
 import { useTranslation } from 'react-i18next'
@@ -83,7 +83,13 @@ export function PrimaryChildRow({ deviceId }: { readonly deviceId: number }) {
       : null
 
   const refs: readonly ContainerChild[] = options
-  const primary = resolveContainerPrimary(refs, linkDeviceId, primaryChildEntityId, deviceType)
+  const primary = resolveContainerPrimary(
+    refs,
+    linkDeviceId,
+    primaryChildEntityId,
+    deviceType,
+    primaryChildPreferenceOf(device),
+  )
   // resolveContainerPrimary returns null only for an empty child set; we've
   // already gated on options.length > 1, so primary is always a live child here.
   const selectedId = primary === null ? options[0].id : primary.id

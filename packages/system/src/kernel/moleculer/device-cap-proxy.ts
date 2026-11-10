@@ -1203,6 +1203,17 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
             })
           })
         }
+        if (initialMeta.primaryChildPreference !== undefined) {
+          await callDeviceManager(api, 'setPrimaryChildPreference', {
+            deviceId: id,
+            primaryChildPreference: initialMeta.primaryChildPreference,
+          }).catch((err: unknown) => {
+            opts.logger.warn('create: setPrimaryChildPreference pre-seed failed', {
+              tags: { stableId, deviceId: id },
+              meta: { error: err instanceof Error ? err.message : String(err) },
+            })
+          })
+        }
         if (initialMeta.display !== undefined) {
           await callDeviceManager(api, 'setDisplay', {
             deviceId: id,

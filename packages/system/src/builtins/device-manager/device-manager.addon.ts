@@ -945,6 +945,7 @@ export class DeviceManagerAddon extends BaseAddon {
       setLinkDeviceId: (input) => metaActions.setLinkDeviceId(pctx, input),
       setPrimaryChildEntityId: (input) => metaActions.setPrimaryChildEntityId(pctx, input),
       setChildLayout: (input) => metaActions.setChildLayout(pctx, input),
+      setPrimaryChildPreference: (input) => metaActions.setPrimaryChildPreference(pctx, input),
       setRole: (input) => metaActions.setRole(pctx, input),
       setDisplay: (input) => metaActions.setDisplay(pctx, input),
       getRoleDisplayDefaults: (input) => metaActions.getRoleDisplayDefaults(pctx, input),

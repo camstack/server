@@ -352,6 +352,7 @@
   "deviceManager.setMetadata": "admin",
   "deviceManager.setName": "admin",
   "deviceManager.setPrimaryChildEntityId": "admin",
+  "deviceManager.setPrimaryChildPreference": "admin",
   "deviceManager.setRole": "admin",
   "deviceManager.setRoleDisplayDefaults": "admin",
   "deviceManager.setSiteZone": "admin",

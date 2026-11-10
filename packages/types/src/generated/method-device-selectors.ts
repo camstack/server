@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 616 methods carry a device reference, of which
- * 194 are on SYSTEM-scope caps.
+ * Coverage: 617 methods carry a device reference, of which
+ * 195 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -173,6 +173,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'deviceManager.setMetadata': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setName': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setPrimaryChildEntityId': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'deviceManager.setPrimaryChildPreference': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setRole': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setStreamProfileMap': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setType': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -715,6 +716,7 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "deviceManager.setMetadata",
   "deviceManager.setName",
   "deviceManager.setPrimaryChildEntityId",
+  "deviceManager.setPrimaryChildPreference",
   "deviceManager.setRole",
   "deviceManager.setStreamProfileMap",
   "deviceManager.setType",

@@ -1922,6 +1922,47 @@ describe('DeviceManagerAddon', () => {
     })
   })
 
+  // ── setPrimaryChildPreference ───────────────────────────────────────────────
+
+  describe('setPrimaryChildPreference', () => {
+    it('persists the ordered keys, projects them on getDevice and listAll, and survives a re-register', async () => {
+      const { provider } = await setup(null)
+      const { id } = await provider.allocateDeviceId({ addonId: 'enpal', stableId: 'system-1' })
+      const register = () =>
+        provider.registerDevice({
+          addonId: 'enpal',
+          stableId: 'system-1',
+          id,
+          type: 'container',
+          name: 'System',
+          parentDeviceId: null,
+          config: {},
+        })
+      await register()
+      await provider.setPrimaryChildPreference({
+        deviceId: id,
+        primaryChildPreference: ['pv', 'battery', 'house'],
+      })
+      await register()
+
+      const info = await provider.getDevice({ deviceId: id })
+      expect(info?.primaryChildPreference).toEqual(['pv', 'battery', 'house'])
+      const all = await provider.listAll({})
+      expect(all.find((d) => d.id === id)?.primaryChildPreference).toEqual([
+        'pv',
+        'battery',
+        'house',
+      ])
+    })
+
+    it('throws for an unknown device id', async () => {
+      const { provider } = await setup(null)
+      await expect(
+        provider.setPrimaryChildPreference({ deviceId: 99999, primaryChildPreference: ['x'] }),
+      ).rejects.toThrow()
+    })
+  })
+
   // ── setPrimaryChildEntityId ──────────────────────────────────────────────────
 
   describe('setPrimaryChildEntityId', () => {

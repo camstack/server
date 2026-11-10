@@ -130,6 +130,7 @@ export const DEVICE_ROWS_COLUMNS: readonly CollectionColumn[] = [
   { name: 'linkDeviceId', type: 'INTEGER' },
   { name: 'primaryChildEntityId', type: 'TEXT' },
   { name: 'childLayout', type: 'JSON' },
+  { name: 'primaryChildPreference', type: 'JSON' },
   { name: 'role', type: 'TEXT' },
   { name: 'display', type: 'JSON' },
   { name: 'metadata', type: 'JSON' },
@@ -249,6 +250,7 @@ export interface DeviceRowPatch {
   readonly linkDeviceId?: number | null
   readonly primaryChildEntityId?: string | null
   readonly childLayout?: ChildLayout | null
+  readonly primaryChildPreference?: readonly string[] | null
   readonly role?: string | null
   readonly display?: DeviceDisplayOverride | null
   readonly metadata?: Record<string, unknown> | null
@@ -265,7 +267,7 @@ export interface DeviceRowPatch {
  * required here, and the type is what keeps it that way.
  *
  * Columns NOT listed — `integrationId`, `linkDeviceId`, `primaryChildEntityId`,
- * `childLayout`, `role`, `display`, `metadata` — are not in the statement at
+ * `childLayout`, `primaryChildPreference`, `role`, `display`, `metadata` — are not in the statement at
  * all, so re-registering preserves them. The blob shape had to re-state each
  * one to avoid clobbering it, and every field added since has been one more
  * spread somebody had to remember.
@@ -367,6 +369,7 @@ export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null
   const role = readString(data['role'])
   const alias = readString(data['alias'])
   const rawChildLayout = data['childLayout']
+  const primaryChildPreference = readStringArray(data['primaryChildPreference'])
   const rawDisplay = data['display']
   const rawMetadata = data['metadata']
 
@@ -392,6 +395,7 @@ export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null
     ...(linkDeviceId !== undefined ? { linkDeviceId } : {}),
     ...(primaryChildEntityId !== undefined ? { primaryChildEntityId } : {}),
     ...(isChildLayout(rawChildLayout) ? { childLayout: rawChildLayout } : {}),
+    ...(primaryChildPreference !== undefined ? { primaryChildPreference } : {}),
     ...(role !== undefined ? { role } : {}),
     ...(isPlainObject(rawDisplay) ? { display: toDisplayOverride(rawDisplay) } : {}),
   }
@@ -445,6 +449,8 @@ export function encodeDeviceRow(
     linkDeviceId: meta.linkDeviceId ?? null,
     primaryChildEntityId: meta.primaryChildEntityId ?? null,
     childLayout: meta.childLayout ?? null,
+    primaryChildPreference:
+      meta.primaryChildPreference === undefined ? null : [...meta.primaryChildPreference],
     role: meta.role ?? null,
     display: meta.display ?? null,
   }

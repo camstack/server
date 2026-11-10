@@ -24,6 +24,7 @@ import {
   type RoleDisplayDefault,
   type SourceInfo,
   canonicalIconKey,
+  primaryChildPreferenceOf,
 } from '@camstack/types'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -111,6 +112,9 @@ export interface DeviceItemDevice {
    *  `groupChildrenByLayout` for the device-detail list + the table row
    *  expansion. */
   readonly childLayout?: ChildLayout
+  /** The container's provider-declared primary-child preference (accessory
+   *  `childKey`s, most preferred first). Mirrors `DeviceInfo.primaryChildPreference`. */
+  readonly primaryChildPreference?: readonly string[]
   /** Hardware + identity blob (manufacturer / model / firmware / sn / uid /
    *  mac / …). Driver-populated; keys are free-form and values arbitrary, so
    *  consumers MUST treat them defensively (string-coerce for display, skip
@@ -519,6 +523,7 @@ export function effectiveOnline(
     device.linkDeviceId,
     device.primaryChildEntityId,
     device.type,
+    primaryChildPreferenceOf(device),
   )
   if (primary === null) return device.online
   const primaryChild = children.find((c) => c.id === primary.id)
@@ -544,6 +549,7 @@ export function effectiveType(
     device.linkDeviceId,
     device.primaryChildEntityId,
     device.type,
+    primaryChildPreferenceOf(device),
   )
   if (primary === null) return device.type
   const primaryChild = children.find((c) => c.id === primary.id)
@@ -578,6 +584,7 @@ export function effectiveIconDevice(
     device.linkDeviceId,
     device.primaryChildEntityId,
     device.type,
+    primaryChildPreferenceOf(device),
   )
   if (primary === null) return device
   const primaryChild = children.find((c) => c.id === primary.id)

@@ -148,7 +148,9 @@ export {
   // Which child a container presents as itself — read by the shared
   // device-name rule, whose viewer copy may only import from this entry.
   CONTAINER_PRIMARY_CHILD_RULES,
+  primaryChildPreferenceOf,
   resolveContainerPrimaryChild,
 } from './index.js'
+export type { ContainerPrimaryChildPreference } from './index.js'
 export type { PaletteReady, PaletteResult, PaletteEntryId, PalettePresetId } from './index.js'
 export type { RemoteRoleVocabEntry, VocabLocale } from './index.js'

@@ -25,7 +25,7 @@ import { useDeviceLabel } from '../device-name'
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Activity, Gamepad2 } from 'lucide-react'
-import { DeviceType } from '@camstack/types'
+import { DeviceType, primaryChildPreferenceOf } from '@camstack/types'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { usePTZ } from '../../hooks/use-ptz'
@@ -93,6 +93,7 @@ export function DeviceItemActions({
       device.linkDeviceId,
       device.primaryChildEntityId,
       device.type,
+      primaryChildPreferenceOf(device),
     )
     const primaryChild =
       primary === null ? undefined : containerChildren.find((c) => c.id === primary.id)

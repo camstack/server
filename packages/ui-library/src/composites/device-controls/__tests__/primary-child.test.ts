@@ -9,7 +9,7 @@ function resolveHeuristic(
   overrideEntityId: string | undefined,
   containerName?: string,
 ): ChildRef | null {
-  return resolvePrimaryChild(children, overrideEntityId, containerName, undefined)
+  return resolvePrimaryChild(children, overrideEntityId, containerName, undefined, undefined)
 }
 
 const children: readonly ChildRef[] = [
@@ -192,8 +192,8 @@ describe('resolvePrimaryChild — edge cases', () => {
         name: 'Hot water',
       },
     ]
-    expect(resolvePrimaryChild(circuits, undefined, 'Heat pump', DeviceType.HeatPump)).toBeNull()
-    expect(resolvePrimaryChild(circuits, undefined, 'Box', DeviceType.Container)?.type).toBe(
+    expect(resolvePrimaryChild(circuits, undefined, 'Heat pump', DeviceType.HeatPump, undefined)).toBeNull()
+    expect(resolvePrimaryChild(circuits, undefined, 'Box', DeviceType.Container, undefined)?.type).toBe(
       'climate',
     )
   })

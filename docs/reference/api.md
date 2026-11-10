@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**206 capabilities · 1486 methods.**
+**206 capabilities · 1487 methods.**
 
 ## Method index
 
@@ -330,6 +330,7 @@
 | `deviceManager.setLinkDeviceId` | mutation | admin | device-manager |
 | `deviceManager.setPrimaryChildEntityId` | mutation | admin | device-manager |
 | `deviceManager.setChildLayout` | mutation | admin | device-manager |
+| `deviceManager.setPrimaryChildPreference` | mutation | admin | device-manager |
 | `deviceManager.setDisplay` | mutation | admin | device-manager |
 | `deviceManager.getRoleDisplayDefaults` | query | protected | device-manager |
 | `deviceManager.setRoleDisplayDefaults` | mutation | admin | device-manager |
@@ -2411,7 +2412,7 @@
 
 ### `device-manager` → `deviceManager.*`
 
-- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:529`
+- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:535`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceManagerProvider`
@@ -2425,7 +2426,7 @@
 | persistConfig | `deviceManager.persistConfig` | mutation | admin | `{ deviceId: number; data: Record<string, unknown>; secretConfigPaths?: string[] }` | `void` |
 | loadConfig | `deviceManager.loadConfig` | query | admin | `{ deviceId: number }` | `Record<string, unknown>` |
 | loadRuntimeState | `deviceManager.loadRuntimeState` | query | admin | `{ deviceId: number }` | `Record<string, unknown>` |
-| loadMeta | `deviceManager.loadMeta` | query | protected | `{ deviceId: number }` | `{ id: number; stableId: string; addonId: string; type: string; name: string; userNamed?: boolean; location: string \| null; disabled: boolean; parentDeviceId: number \| null; metadata?: Record<string, unknown> \| null; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; integrationId?: string; linkDeviceId?: number \| null; primaryChildEntityId?: string \| null; childLayout?: ({ childKey: string; section: string; order?: number; collapsed?: boolean })[]; role?: string \| null; display?: { icon?: string; label?: string; unit?: string; precision?: number; hidden?: boolean; perCap?: Record<string, { unit?: string; precision?: number }> } } \| null` |
+| loadMeta | `deviceManager.loadMeta` | query | protected | `{ deviceId: number }` | `{ id: number; stableId: string; addonId: string; type: string; name: string; userNamed?: boolean; location: string \| null; disabled: boolean; parentDeviceId: number \| null; metadata?: Record<string, unknown> \| null; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; integrationId?: string; linkDeviceId?: number \| null; primaryChildEntityId?: string \| null; childLayout?: ({ childKey: string; section: string; order?: number; collapsed?: boolean })[]; primaryChildPreference?: string[]; role?: string \| null; display?: { icon?: string; label?: string; unit?: string; precision?: number; hidden?: boolean; perCap?: Record<string, { unit?: string; precision?: number }> } } \| null` |
 | setName | `deviceManager.setName` | mutation | admin | `{ deviceId: number; name: string; stampUserNamed?: boolean }` | `void` |
 | setAlias | `deviceManager.setAlias` | mutation | admin | `{ deviceId: number; alias: string }` | `{ ok: true; alias: string } \| { ok: false; reason: "empty" \| "too-long" \| "grammar" \| "reserved" \| "taken"; takenBy?: number }` |
 | renderDeviceTemplates | `deviceManager.renderDeviceTemplates` | query | admin | `{ templates: string[]; allowedDeviceIds?: number[]; thisDevice?: { deviceId: number; values?: Record<string, string \| number \| boolean> } }` | `{ results: ({ ok: true; text: string; trace: ({ ref: string; reason: "unknown-alias" \| "unknown-field" \| "no-field" \| "unavailable" })[] } \| { ok: false; refusal: { reason: "too-long" \| "syntax" \| "forbidden-syntax" \| "forbidden-member" \| "unknown-filter" \| "ambiguous-field" \| "busy" \| "budget-exceeded" \| "timeout" \| "output-too-large" \| "render-failed" \| "out-of-scope" \| "unavailable"; message: string }; trace: ({ ref: string; reason: "unknown-alias" \| "unknown-field" \| "no-field" \| "unavailable" })[] })[] }` |
@@ -2436,6 +2437,7 @@
 | setLinkDeviceId | `deviceManager.setLinkDeviceId` | mutation | admin | `{ deviceId: number; linkDeviceId: number \| null }` | `void` |
 | setPrimaryChildEntityId | `deviceManager.setPrimaryChildEntityId` | mutation | admin | `{ deviceId: number; primaryChildEntityId: string \| null }` | `void` |
 | setChildLayout | `deviceManager.setChildLayout` | mutation | admin | `{ deviceId: number; childLayout: ({ childKey: string; section: string; order?: number; collapsed?: boolean })[] }` | `void` |
+| setPrimaryChildPreference | `deviceManager.setPrimaryChildPreference` | mutation | admin | `{ deviceId: number; primaryChildPreference: string[] }` | `void` |
 | setDisplay | `deviceManager.setDisplay` | mutation | admin | `{ deviceId: number; display: { icon?: string; label?: string; unit?: string; precision?: number; hidden?: boolean; perCap?: Record<string, { unit?: string; precision?: number }> } \| null }` | `void` |
 | getRoleDisplayDefaults | `deviceManager.getRoleDisplayDefaults` | query | protected | `{}` | `{ defaults: Record<string, { unit?: string; precision?: number; icon?: string }> }` |
 | setRoleDisplayDefaults | `deviceManager.setRoleDisplayDefaults` | mutation | admin | `{ defaults: Record<string, { unit?: string; precision?: number; icon?: string }> }` | `void` |

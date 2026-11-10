@@ -181,6 +181,9 @@ export const DeviceInfoSchema = z.object({
    *  named accordion sections (with optional intra-section order). See
    *  `DeviceMeta.childLayout`. Absent ⇒ no layout declared. */
   childLayout: z.array(ChildLayoutEntrySchema).readonly().optional(),
+  /** The children a container stands for, most preferred first, by accessory
+   *  `childKey`. Provider-declared. See `DeviceMeta.primaryChildPreference`. */
+  primaryChildPreference: z.array(z.string()).readonly().optional(),
   /** Operator-authored per-device display override. See `DeviceMeta.display`. */
   display: DeviceDisplayOverrideSchema.optional(),
 })
@@ -384,6 +387,9 @@ export const DeviceMetaSchema = z.object({
    *  accordion sections (with optional intra-section order). See
    *  `DeviceMeta.childLayout`. Absent ⇒ no layout declared. */
   childLayout: z.array(ChildLayoutEntrySchema).readonly().optional(),
+  /** The children a container stands for, most preferred first, by accessory
+   *  `childKey`. Provider-declared. See `DeviceMeta.primaryChildPreference`. */
+  primaryChildPreference: z.array(z.string()).readonly().optional(),
   /** Semantic role string (`DeviceRole`) — propagated from the spawn pre-seed.
    *  Optional: only present for accessory children that carry a known role. */
   role: z.string().nullable().optional(),
@@ -782,6 +788,16 @@ export const deviceManagerCapability = {
      *  projected, and preserved across re-register/restore. Idempotent. */
     setChildLayout: method(
       z.object({ deviceId: z.number(), childLayout: z.array(ChildLayoutEntrySchema).readonly() }),
+      z.void(),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+
+    /** Set (or replace) a container's provider-declared primary-child
+     *  preference: accessory `childKey`s, most preferred first. Mirrors
+     *  `setChildLayout`; the operator's `primaryChildEntityId` still wins.
+     *  Persisted, projected, and preserved across re-register/restore. Idempotent. */
+    setPrimaryChildPreference: method(
+      z.object({ deviceId: z.number(), primaryChildPreference: z.array(z.string()).readonly() }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),

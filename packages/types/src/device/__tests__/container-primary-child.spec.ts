@@ -3,6 +3,7 @@ import { DeviceType } from '../device-type.js'
 import {
   applyPrimaryChildRule,
   CONTAINER_CHILD_PRIORITY,
+  primaryChildPreferenceOf,
   resolveContainerPrimaryChild as resolveWithType,
   type ContainerChildRef,
 } from '../container-primary-child.js'
@@ -356,5 +357,80 @@ describe('a device type declares its primary child', () => {
       circuits,
     )
     expect(missing.kind).toBe('fall-through')
+  })
+})
+
+/**
+ * A provider may declare, per container, an ordered list of the children it
+ * stands for (`primaryChildPreference`, by accessory `childKey`). It replaces a
+ * pick that depended on the order children came back in.
+ */
+describe('a container declares its preferred primary children', () => {
+  const parent = 'enpal-system'
+  const sensor = (id: number, key: string): ContainerChildRef => ({
+    id,
+    stableId: `${parent}-${key}`,
+    type: 'sensor',
+  })
+  const house = sensor(10, 'house')
+  const battery = sensor(11, 'battery')
+  const pv = sensor(12, 'pv')
+  const preference = { parentStableId: parent, childKeys: ['pv', 'battery', 'house'] }
+
+  it('takes the first declared child, whatever order the children arrive in', () => {
+    for (const order of [
+      [house, battery, pv],
+      [pv, house, battery],
+      [battery, pv, house],
+    ]) {
+      expect(
+        resolveWithType(order, undefined, 'System', DeviceType.Container, preference)?.id,
+      ).toBe(12)
+    }
+  })
+
+  it('skips a declared child that is absent and takes the next one', () => {
+    expect(
+      resolveWithType([house, battery], undefined, 'System', DeviceType.Container, preference)?.id,
+    ).toBe(11)
+  })
+
+  it("lets the operator's pick win over the declaration", () => {
+    expect(
+      resolveWithType(
+        [house, battery, pv],
+        `${parent}-house`,
+        'System',
+        DeviceType.Container,
+        preference,
+      )?.id,
+    ).toBe(10)
+  })
+
+  it('matches a key only under its own container', () => {
+    const foreign: ContainerChildRef = { id: 20, stableId: 'other-pv', type: 'sensor' }
+    expect(
+      resolveWithType([foreign, house], undefined, 'System', DeviceType.Container, preference)?.id,
+    ).toBe(10)
+  })
+
+  it('falls through to the type rule and the heuristic when nothing declared matches', () => {
+    const climate: ContainerChildRef = { id: 30, stableId: `${parent}-c`, type: 'climate' }
+    const light: ContainerChildRef = { id: 31, stableId: `${parent}-l`, type: 'light' }
+    expect(
+      resolveWithType([light, climate], undefined, 'Box', DeviceType.Container, preference)?.id,
+    ).toBe(30)
+  })
+})
+
+describe('primaryChildPreferenceOf', () => {
+  it('reads the declaration from a container meta, and nothing from an empty one', () => {
+    expect(primaryChildPreferenceOf({ stableId: 'c', primaryChildPreference: ['pv'] })).toEqual({
+      parentStableId: 'c',
+      childKeys: ['pv'],
+    })
+    expect(primaryChildPreferenceOf({ stableId: 'c', primaryChildPreference: [] })).toBeUndefined()
+    expect(primaryChildPreferenceOf({ stableId: 'c', primaryChildPreference: null })).toBeUndefined()
+    expect(primaryChildPreferenceOf({ primaryChildPreference: ['pv'] })).toBeUndefined()
   })
 })

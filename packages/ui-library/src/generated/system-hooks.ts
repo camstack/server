@@ -866,6 +866,9 @@ export const useDeviceManagerSetPrimaryChildEntityId: typeof trpc.deviceManager.
 /** Generated alias around `trpc.deviceManager.setChildLayout.useMutation`. */
 export const useDeviceManagerSetChildLayout: typeof trpc.deviceManager.setChildLayout.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.setChildLayout.useMutation)
 
+/** Generated alias around `trpc.deviceManager.setPrimaryChildPreference.useMutation`. */
+export const useDeviceManagerSetPrimaryChildPreference: typeof trpc.deviceManager.setPrimaryChildPreference.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.setPrimaryChildPreference.useMutation)
+
 /** Generated alias around `trpc.deviceManager.setDisplay.useMutation`. */
 export const useDeviceManagerSetDisplay: typeof trpc.deviceManager.setDisplay.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.setDisplay.useMutation)
 

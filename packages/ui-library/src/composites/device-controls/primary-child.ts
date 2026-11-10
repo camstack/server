@@ -10,7 +10,11 @@
  * historical `ChildRef` shape.
  */
 
-import { CONTAINER_CHILD_PRIORITY, resolveContainerPrimaryChild } from '@camstack/types'
+import {
+  CONTAINER_CHILD_PRIORITY,
+  resolveContainerPrimaryChild,
+  type ContainerPrimaryChildPreference,
+} from '@camstack/types'
 
 /** The shared precedence, under this module's historical name. */
 export const PRIORITY: readonly string[] = CONTAINER_CHILD_PRIORITY
@@ -33,8 +37,8 @@ export interface ChildRef {
 
 /**
  * Resolve a container's primary child: the operator's pick when it still
- * matches a live child, else the type's declaration, else the highest-priority
- * type. `containerType` is required so a caller cannot skip the declaration.
+ * matches a live child, else the container's declared preference, else the
+ * type's declaration, else the highest-priority type. `containerType` is required so a caller cannot skip the declaration.
  *
  * `entityId` here is `sourceInfo?.id ?? stableId` (see `containerChildToRef`);
  * `stableId` is the child's own. The shared resolver matches the canonical
@@ -45,6 +49,7 @@ export function resolvePrimaryChild(
   overrideEntityId: string | undefined,
   containerName: string | undefined,
   containerType: string | undefined,
+  preference: ContainerPrimaryChildPreference | undefined,
 ): ChildRef | null {
   const picked = resolveContainerPrimaryChild(
     children.map((c) => ({
@@ -58,6 +63,7 @@ export function resolvePrimaryChild(
     overrideEntityId,
     containerName,
     containerType,
+    preference,
   )
   return picked === null ? null : (children.find((c) => c.id === picked.id) ?? null)
 }
