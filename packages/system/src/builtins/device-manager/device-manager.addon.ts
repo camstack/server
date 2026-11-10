@@ -1202,6 +1202,9 @@ export class DeviceManagerAddon extends BaseAddon {
       bindingsOf: async (deviceId) => (await getBindings(this.bindingsDeps, { deviceId })).entries,
       allBindings: () => getAllBindings(this.bindingsDeps),
       apply: (deviceId, entries) => metaActions.applyDerivedFeatures(pctx, deviceId, entries),
+      nodeOnline: (nodeId) =>
+        nodeId === (this.ctx.kernel.localNodeId ?? 'hub') ||
+        (this.ctx.kernel.isNodeRegistered?.(nodeId) ?? false),
       logger: this.ctx.logger.child('features'),
     })
     this.unsubscribeFeatureDeriver = subscribeFeatureDeriver(this.ctx.eventBus, featureDeriver)

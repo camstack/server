@@ -45,6 +45,7 @@ describe('FeatureDeriver', () => {
       bindingsOf: async () => [entry('ptz')],
       allBindings: async () => [],
       apply,
+      nodeOnline: () => true,
       logger: logger(),
     })
     await deriver.onBindingsChanged(7)
@@ -67,6 +68,7 @@ describe('FeatureDeriver', () => {
       },
       allBindings: async () => [],
       apply,
+      nodeOnline: () => true,
       logger: logger(),
     })
     const running = deriver.onBindingsChanged(7)
@@ -92,6 +94,7 @@ describe('FeatureDeriver', () => {
         inFlight -= 1
         return false
       },
+      nodeOnline: () => true,
       logger: logger(),
     })
     await Promise.all([deriver.onBindingsChanged(7), deriver.onBindingsChanged(7)])
@@ -108,6 +111,7 @@ describe('FeatureDeriver', () => {
       },
       allBindings: async () => [],
       apply,
+      nodeOnline: () => true,
       logger: log,
     })
     await deriver.onBindingsChanged(7)
@@ -124,6 +128,7 @@ describe('FeatureDeriver', () => {
       bindingsOf: async () => [],
       allBindings: async () => [{ deviceId: 8, entries: [] }],
       apply,
+      nodeOnline: () => true,
       logger: logger(),
     })
     await deriver.onBindingsChanged(7)
@@ -148,6 +153,7 @@ describe('FeatureDeriver', () => {
       bindingsOf: async () => [wrapper('snapshot'), wrapper('motion-detection')],
       allBindings: async () => [{ deviceId: 8, entries: [wrapper('snapshot')] }],
       apply,
+      nodeOnline: () => true,
       logger: logger(),
     })
     await deriver.onBindingsChanged(7)
@@ -155,7 +161,49 @@ describe('FeatureDeriver', () => {
     expect(apply).not.toHaveBeenCalled()
   })
 
-  it('derives once the device provider reported a cap, wrapped or not', async () => {
+  it('derives once the device provider answers from a node the registry calls online', async () => {
+    const wrapped: DeviceBindingEntry = {
+      capName: 'snapshot',
+      kind: 'wrapped',
+      providerAddonId: 'pipeline',
+      providerNodeId: 'hub',
+      nativeAddonId: 'prov',
+    }
+    const native: DeviceBindingEntry = { ...entry('ptz'), providerNodeId: 'agent-1' }
+    const apply = vi.fn(async () => true)
+    const deriver = new FeatureDeriver({
+      bindingsOf: async () => [wrapped, native],
+      allBindings: async () => [],
+      apply,
+      nodeOnline: (nodeId) => nodeId === 'agent-1',
+      logger: logger(),
+    })
+    await deriver.onBindingsChanged(7)
+    expect(apply).toHaveBeenCalledWith(7, [wrapped, native])
+  })
+
+  it('does not derive from a cached native whose agent is offline', async () => {
+    // `remoteNativeCaps` keeps an agent's natives until the caps are removed,
+    // so an offline agent's camera still answers ptz/reboot/intercom from the
+    // cache. Those are stale, not known: the stored features stay.
+    const native: DeviceBindingEntry = { ...entry('ptz'), providerNodeId: 'agent-1' }
+    const apply = vi.fn(async () => true)
+    const deriver = new FeatureDeriver({
+      bindingsOf: async () => [native],
+      allBindings: async () => [{ deviceId: 8, entries: [native] }],
+      apply,
+      nodeOnline: () => false,
+      logger: logger(),
+    })
+    await deriver.onBindingsChanged(7)
+    expect(await deriver.reconcileAll()).toBe(0)
+    expect(apply).not.toHaveBeenCalled()
+  })
+
+  it('never derives a device whose own provider serves no cap (its features are declared)', async () => {
+    // Intended: with no native of its own, nothing can say a feature is
+    // ABSENT, so the declared set stays. A wrapper naming a native it
+    // decorates does not say where that native runs.
     const wrapped: DeviceBindingEntry = {
       capName: 'snapshot',
       kind: 'wrapped',
@@ -168,10 +216,11 @@ describe('FeatureDeriver', () => {
       bindingsOf: async () => [wrapped],
       allBindings: async () => [],
       apply,
+      nodeOnline: () => true,
       logger: logger(),
     })
     await deriver.onBindingsChanged(7)
-    expect(apply).toHaveBeenCalledWith(7, [wrapped])
+    expect(apply).not.toHaveBeenCalled()
   })
 
   it('a write that throws is logged against the device and the others still settle', async () => {
@@ -187,6 +236,7 @@ describe('FeatureDeriver', () => {
         { deviceId: 2, entries: [entry('ptz')] },
       ],
       apply,
+      nodeOnline: () => true,
       logger: log,
     })
     expect(await deriver.reconcileAll()).toBe(1)
@@ -205,6 +255,7 @@ describe('FeatureDeriver', () => {
         { deviceId: 2, entries: [entry('reboot')] },
       ],
       apply,
+      nodeOnline: () => true,
       logger: logger(),
     })
     expect(await deriver.reconcileAll()).toBe(2)
@@ -219,6 +270,7 @@ describe('FeatureDeriver', () => {
         throw new Error('sqlite busy')
       },
       apply,
+      nodeOnline: () => true,
       logger: logger(),
     })
     expect(await deriver.reconcileAll()).toBe(0)
@@ -245,6 +297,7 @@ describe('subscribeFeatureDeriver', () => {
         bindingsOf: async () => [],
         allBindings: async () => [],
         apply: async () => false,
+        nodeOnline: () => true,
         logger: logger(),
       }),
       { onBindingsChanged },

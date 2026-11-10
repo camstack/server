@@ -158,6 +158,8 @@ interface ReloadCall {
 }
 
 export interface SetupOptions {
+  /** The cluster registry's node membership (`kernel.isNodeRegistered`); omitted ⇒ absent. */
+  readonly isNodeRegistered?: (nodeId: string) => boolean
   /**
    * Addon ids for which the fake capability registry serves a
    * device-provider implementing `reloadDevice`. Omitted entirely ⇒ no
@@ -408,6 +410,7 @@ export async function setup(opts: SetupOptions = {}): Promise<Harness> {
     kernel: {
       deviceRegistry: registry,
       ...(opts.localNodeId !== undefined ? { localNodeId: opts.localNodeId } : {}),
+      ...(opts.isNodeRegistered !== undefined ? { isNodeRegistered: opts.isNodeRegistered } : {}),
       ...(opts.capabilityRegistry !== undefined
         ? { capabilityRegistry: opts.capabilityRegistry }
         : opts.reloadableProviders !== undefined

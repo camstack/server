@@ -62,9 +62,18 @@ async function featuresOf(
 }
 
 describe('device features follow the bindings (#459)', () => {
+  it('an offline agent keeps its camera features as stored', async () => {
+    const { bus } = deliveringBus()
+    const h = await setup({ eventBus: bus, isNodeRegistered: () => false })
+    const id = await registerCamera(h, 'rtsp', 'cam-1')
+    bus.emit(bindingEvent(id, 'ptz', 'native-registered'))
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(await featuresOf(h, id)).toEqual([])
+  })
+
   it('a cap bound after registration becomes a persisted feature, and exporters are told once', async () => {
     const { bus, emitted } = deliveringBus()
-    const h = await setup({ eventBus: bus })
+    const h = await setup({ eventBus: bus, isNodeRegistered: (nodeId) => nodeId === 'agent-a' })
     const id = await registerCamera(h, 'rtsp', 'cam-1')
     expect(await featuresOf(h, id)).toEqual([])
 
@@ -86,7 +95,7 @@ describe('device features follow the bindings (#459)', () => {
 
   it('a driver re-registering does not undo, or invent, a derived feature', async () => {
     const { bus } = deliveringBus()
-    const h = await setup({ eventBus: bus })
+    const h = await setup({ eventBus: bus, isNodeRegistered: (nodeId) => nodeId === 'agent-a' })
     const id = await registerCamera(h, 'rtsp', 'cam-1')
     bus.emit(bindingEvent(id, 'ptz', 'native-registered'))
     await vi.waitFor(async () => {
@@ -109,7 +118,7 @@ describe('device features follow the bindings (#459)', () => {
 
   it('unbinding the cap takes the feature away', async () => {
     const { bus } = deliveringBus()
-    const h = await setup({ eventBus: bus })
+    const h = await setup({ eventBus: bus, isNodeRegistered: (nodeId) => nodeId === 'agent-a' })
     const id = await registerCamera(h, 'rtsp', 'cam-1')
     bus.emit(bindingEvent(id, 'ptz', 'native-registered'))
     bus.emit(bindingEvent(id, 'reboot', 'native-registered'))
@@ -124,7 +133,7 @@ describe('device features follow the bindings (#459)', () => {
 
   it('a cap bound without the method a feature needs does not grant it', async () => {
     const { bus } = deliveringBus()
-    const h = await setup({ eventBus: bus })
+    const h = await setup({ eventBus: bus, isNodeRegistered: (nodeId) => nodeId === 'agent-a' })
     const id = await registerCamera(h, 'rtsp', 'cam-1')
     bus.emit(bindingEvent(id, 'reboot', 'native-registered', []))
     bus.emit(bindingEvent(id, 'motion-trigger', 'native-registered', ['setMotionTrigger']))
@@ -135,7 +144,7 @@ describe('device features follow the bindings (#459)', () => {
 
   it('an event for a device that was allocated but never registered writes no features', async () => {
     const { bus } = deliveringBus()
-    const h = await setup({ eventBus: bus })
+    const h = await setup({ eventBus: bus, isNodeRegistered: (nodeId) => nodeId === 'agent-a' })
     const { id } = await h.provider.allocateDeviceId({
       addonId: 'rtsp',
       stableId: 'cam-ghost',

@@ -393,6 +393,13 @@ export interface IKernelServices {
     readonly deviceId: number
   }>
   /**
+   * Is `nodeId` online in the cluster registry (hub only)? The same
+   * membership cap dispatch's `nodeOnline` reads: a node is removed on
+   * disconnect, so a held manifest means connected. Absent on hosts that
+   * have no registry; a caller then treats the node as unknown.
+   */
+  readonly isNodeRegistered?: (nodeId: string) => boolean
+  /**
    * Node-routed capability proxy (hub-side builtins only): every method call
    * on the returned object forwards to `capName`'s provider ON `nodeId` via
    * the cluster transport — the same routing the generated cap routers use

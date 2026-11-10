@@ -18,6 +18,12 @@ export interface FeatureDeriverDeps {
   >
   /** Settle and persist; resolves `true` when the stored features moved. */
   readonly apply: (deviceId: number, entries: readonly DeviceBindingEntry[]) => Promise<boolean>
+  /**
+   * Is `nodeId` (a binding's routable `providerNodeId`) online? The cluster
+   * registry's membership, the answer cap dispatch already trusts; the local
+   * node is online by definition. Never a cache of its own.
+   */
+  readonly nodeOnline: (nodeId: string) => boolean
   readonly logger: IScopedLogger
 }
 
@@ -30,8 +36,9 @@ export interface FeatureDeriverDeps {
  * that fails changes nothing: the stored features stay as they were, because a
  * feature set derived from an empty answer would strip every feature of a
  * device the registry merely could not describe yet (D49). The same holds for
- * an answer that does not yet carry the device's own provider: wrapper entries
- * alone mean "unknown", never "absent" (D315, {@link nativeProviderReported}).
+ * an answer that does not carry the device's own provider ONLINE: wrapper
+ * entries alone, or natives cached for an agent that went offline, mean
+ * "unknown", never "absent" (D315, {@link nativeProviderOnline}).
  *
  * Writes for one device run one after another and a burst collapses into the
  * run already waiting, so a worker registering twenty caps costs two settles.
@@ -99,12 +106,12 @@ export class FeatureDeriver {
   ): Promise<boolean> {
     // Unknown is not absent (D315, D49). A device's bindings are never empty
     // just because its provider is missing: the `defaultActive` wrappers bind
-    // with no native behind them. So the gate is the provider itself — until
-    // one of its caps is in the answer (after a hub restart the push-fed
-    // native cache starts empty; an agent can be offline), the derived
-    // features stay as stored rather than being settled to absent.
-    if (!nativeProviderReported(entries)) {
-      this.deps.logger.debug('feature derive deferred — the device provider has reported no cap', {
+    // with no native behind them, and `remoteNativeCaps` keeps an offline
+    // agent's natives until they are removed. So the gate is the provider
+    // itself, answering from a node the registry calls online; otherwise the
+    // derived features stay as stored rather than being settled to absent.
+    if (!nativeProviderOnline(entries, this.deps.nodeOnline)) {
+      this.deps.logger.debug('feature derive deferred — the device provider is not online', {
         tags: { deviceId },
         meta: { entries: entries.length },
       })
@@ -123,13 +130,23 @@ export class FeatureDeriver {
 }
 
 /**
- * True when the device's own provider is in the answer: some entry names a
- * native addon. A native cap is registered only by the process the device
- * lives in, so one is proof the provider is up and the registry heard it; a
- * set of wrapper entries with no native behind them proves nothing.
+ * True when the device's own provider serves at least one of its caps and
+ * every node it serves them from is online. A native cap is registered only
+ * by the process the device lives in, so its `providerNodeId` is where the
+ * device runs. This is a liveness question, not routing (D13 untouched).
+ *
+ * A device whose own provider serves NO cap (wrapper-only, or a native it
+ * only decorates) never derives, on purpose: with no native of its own,
+ * nothing can say a feature is absent, so its declared features stay.
  */
-export function nativeProviderReported(entries: readonly DeviceBindingEntry[]): boolean {
-  return entries.some((entry) => entry.nativeAddonId.length > 0)
+export function nativeProviderOnline(
+  entries: readonly DeviceBindingEntry[],
+  nodeOnline: (nodeId: string) => boolean,
+): boolean {
+  const served = entries.filter(
+    (entry) => entry.nativeAddonId.length > 0 && entry.providerAddonId === entry.nativeAddonId,
+  )
+  return served.length > 0 && served.every((entry) => nodeOnline(entry.providerNodeId))
 }
 
 /** Feed the deriver from the bus; returns the unsubscribe. */

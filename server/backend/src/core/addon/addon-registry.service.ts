@@ -3760,6 +3760,9 @@ export class AddonRegistryService {
         // over filtering the whole-cluster flat view.
         listClusterNativeCapsForDevice: (deviceId: number) =>
           this.moleculer.listClusterNativeCapsForDevice(deviceId),
+        // Registry membership, the liveness cap dispatch trusts — device
+        // features derive only from a provider on an online node (#459).
+        isNodeRegistered: (nodeId: string) => this.moleculer.isNodeRegistered(nodeId),
         // Node-routed cap proxy — lets hub builtins (storage-orchestrator)
         // dispatch provider work to the node that OWNS the data.
         resolveNodeCapability: (capName: string, nodeId: string) =>
