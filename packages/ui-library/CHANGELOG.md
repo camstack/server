@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.415] - 2026-11-10
+
 ### Changed
 
 - Notification sequence hooks removed (the notification centre runs Actions)

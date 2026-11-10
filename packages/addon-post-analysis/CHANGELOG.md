@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.690] - 2026-11-10
+
 ### Changed
 
 - Notification rules and buttons run Actions from the Actions page; existing rule actions and sequences are converted to Actions on the first start

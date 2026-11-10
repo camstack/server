@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.538] - 2026-11-10
+
 ### Changed
 
 - A notification rule or button now runs existing Actions by id; the rule's own action steps and shared sequences are gone

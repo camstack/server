@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.631] - 2026-11-10
+
 ### Changed
 
 - Notification rules and buttons now pick an existing Action instead of authoring steps; the notification Sequences tab is gone (a rule's steps move to Actions automatically).
