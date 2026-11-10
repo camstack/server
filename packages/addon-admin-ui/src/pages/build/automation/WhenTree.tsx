@@ -5,10 +5,14 @@
  * Every block offers "Add row" and "Add block" from inside it, so a nested
  * condition is built where it belongs instead of by grouping afterwards.
  *
+ * Every row and block moves up / down among its siblings (the same arrows as
+ * the THEN steps), and every nested block or NOT collapses to one line naming
+ * what it holds. Order inside a block changes nothing the engine decides.
+ *
  * The editor lets the tree pass through a shape the engine refuses (two events
- * under ALL, a block nested too deep) and says so ON the block at fault, with
- * `validateWhenTree`'s own sentence — never re-worded here, so the screen and
- * the save path cannot disagree. Save stays blocked until it is fixed.
+ * under ALL, a block nested too deep). The refusal is NOT drawn inside the
+ * tree: the save path shows `validateRecipeBounds`' sentence beside the
+ * disabled Save, so the screen and the save path cannot disagree.
  *
  * Firing rule, in one line for the operator: an event starts a run when it
  * happens and the whole tree is true at that moment; a tree of states alone
@@ -22,34 +26,37 @@ import type {
   DeviceIsLeaf,
   TraceNodeOutcome,
 } from '@camstack/types'
-import { baseUnitForQuantity, isLeaf } from '@camstack/types'
-import { Badge, Button, Select } from '@camstack/ui-library'
+import { baseUnitForQuantity, countWhenLeaves, isLeaf } from '@camstack/types'
+import { Badge, Button, DisclosureChevron, Select } from '@camstack/ui-library'
 import { Plus, Trash2, Ungroup } from 'lucide-react'
-import { useMemo } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toneBorderClass, toneEdgeClass } from '../flow/RunsPanel'
 import { ConditionResult } from '../flow/TraceResult'
 import { type ConditionNodeView, valueInUnit, type WhenRunView } from '../flow/trace-view'
 import type { AutomationDevice } from './automation-data'
 import { useFieldDescriptor } from './FieldPicker'
-import { newLeaf } from './recipe-parts'
+import { type MoveControls, MoveButtons } from './MoveButtons'
+import { leafKindLabel, newLeaf } from './recipe-parts'
 import { WhenLeafRow } from './WhenLeafRow'
 import { declaredQuantity } from './ValueInput'
 import {
   addNode,
   type ContainerKind,
   canNestBlockAt,
+  moveNode,
   negate,
   pathKey,
   removeNode,
   seedBlock,
   setContainerKind,
+  summarizeWhen,
+  swapPathKeys,
   ungroup,
   unnegate,
   updateNode,
   type WhenPath,
   whenBudget,
-  whenIssues,
   whenRoot,
 } from './when-ops'
 
@@ -66,9 +73,14 @@ export interface WhenTreeProps {
 interface TreeContext {
   readonly recipe: AutomationRecipe
   readonly devices: readonly AutomationDevice[]
-  readonly issues: ReadonlyMap<string, string>
   readonly run: WhenRunView | null
   readonly onChange: (next: AutomationRecipe) => void
+  /** An edit that shifts indices (remove, ungroup, NOT): collapsed blocks reopen. */
+  readonly reshape: (next: AutomationRecipe) => void
+  readonly collapsed: ReadonlySet<string>
+  readonly toggleCollapsed: (path: WhenPath) => void
+  /** Up / down for the child at `index` of a block with `count` children. */
+  readonly moveControls: (path: WhenPath, count: number) => MoveControls
 }
 
 function asContainerKind(value: string): ContainerKind {
@@ -104,8 +116,38 @@ export function WhenTree({
   const { t } = useTranslation()
   const root = whenRoot(recipe)
   const budget = whenBudget(recipe)
-  const issues = useMemo(() => whenIssues(root), [root])
-  const ctx: TreeContext = { recipe, devices, issues, run, onChange }
+  // Collapse is keyed by path (rows carry no id): a move swaps the two
+  // subtrees' keys, an edit that shifts indices reopens everything.
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set())
+  const ctx: TreeContext = {
+    recipe,
+    devices,
+    run,
+    onChange,
+    reshape: (next) => {
+      setCollapsed(new Set())
+      onChange(next)
+    },
+    collapsed,
+    toggleCollapsed: (path) => {
+      const key = pathKey(path)
+      setCollapsed((prev) =>
+        prev.has(key) ? new Set([...prev].filter((k) => k !== key)) : new Set([...prev, key]),
+      )
+    },
+    moveControls: (path, count) => {
+      const index = path[path.length - 1] ?? 0
+      const step = (delta: -1 | 1) => () => {
+        const sibling = [...path.slice(0, -1), index + delta]
+        setCollapsed((prev) => swapPathKeys(prev, path, sibling))
+        onChange(moveNode(recipe, path, delta))
+      }
+      return {
+        up: index > 0 ? step(-1) : null,
+        down: index < count - 1 ? step(1) : null,
+      }
+    },
+  }
   const empty = root.children.length === 0
   return (
     <div className="space-y-2" data-testid="when-tree">
@@ -128,8 +170,9 @@ export function WhenTree({
           leaves: budget.leaves,
           leafLimit: budget.leafLimit,
         })}
+        move={null}
         emptyHint={
-          empty
+          empty && !hideRule
             ? t(
                 'automation.whenTree.empty',
                 'Add a row to say when this runs. Without one nothing can ever start this automation.',
@@ -147,17 +190,22 @@ interface NodeViewProps {
   readonly ctx: TreeContext
   /** The parent is a NOT: a second one is never offered (it would cancel). */
   readonly underNot: boolean
+  /** Up / down among its siblings; null for the child of a NOT (it has none). */
+  readonly move: MoveControls | null
 }
 
-function NodeView({ node, path, ctx, underNot }: NodeViewProps) {
-  if (isLeaf(node)) return <LeafView leaf={node} path={path} ctx={ctx} underNot={underNot} />
-  if (node.kind === 'not') return <NotView child={node.child} path={path} ctx={ctx} />
+function NodeView({ node, path, ctx, underNot, move }: NodeViewProps) {
+  if (isLeaf(node)) {
+    return <LeafView leaf={node} path={path} ctx={ctx} underNot={underNot} move={move} />
+  }
+  if (node.kind === 'not') return <NotView child={node.child} path={path} ctx={ctx} move={move} />
   return (
     <BlockView
       block={node}
       path={path}
       ctx={ctx}
       underNot={underNot}
+      move={move}
       budgetText={null}
       emptyHint={null}
     />
@@ -169,9 +217,10 @@ interface LeafViewProps {
   readonly path: WhenPath
   readonly ctx: TreeContext
   readonly underNot: boolean
+  readonly move: MoveControls | null
 }
 
-function LeafView({ leaf, path, ctx, underNot }: LeafViewProps) {
+function LeafView({ leaf, path, ctx, underNot, move }: LeafViewProps) {
   const node = nodeAt(ctx, path)
   const vars = ctx.run !== null && ctx.run.triggerPath === pathKey(path) ? ctx.run.vars : undefined
   return (
@@ -180,9 +229,10 @@ function LeafView({ leaf, path, ctx, underNot }: LeafViewProps) {
       devices={ctx.devices}
       toneClass={toneFor(node?.outcome, 'border-border')}
       result={node === undefined ? undefined : <LeafResult leaf={leaf} node={node} vars={vars} />}
-      onNegate={underNot ? null : () => ctx.onChange(negate(ctx.recipe, path))}
+      onNegate={underNot ? null : () => ctx.reshape(negate(ctx.recipe, path))}
+      {...(move === null ? {} : { move })}
       onChange={(next) => ctx.onChange(updateNode(ctx.recipe, path, next))}
-      onRemove={() => ctx.onChange(removeNode(ctx.recipe, path))}
+      onRemove={() => ctx.reshape(removeNode(ctx.recipe, path))}
     />
   )
 }
@@ -229,15 +279,41 @@ function BlockResult({ node }: { readonly node: ConditionNodeView | undefined })
   return <ConditionResult node={node} expected={null} observed={null} />
 }
 
-function IssueLine({ message }: { readonly message: string | undefined }) {
-  if (message === undefined) return null
+interface CollapseToggleProps {
+  readonly expanded: boolean
+  readonly onToggle: () => void
+}
+
+/** The disclosure marker of a nested block or NOT header. */
+function CollapseToggle({ expanded, onToggle }: CollapseToggleProps) {
+  const { t } = useTranslation()
+  const label = expanded
+    ? t('automation.whenTree.collapse', 'Collapse this block')
+    : t('automation.whenTree.expand', 'Expand this block')
+  return (
+    <Button
+      variant="ghost"
+      aria-expanded={expanded}
+      aria-label={label}
+      title={label}
+      onClick={onToggle}
+    >
+      <DisclosureChevron expanded={expanded} />
+    </Button>
+  )
+}
+
+/** A collapsed block's one line: how many rows, and each by its type. */
+function BlockSummary({ node }: { readonly node: AutomationWhen }) {
+  const { t } = useTranslation()
+  const text = `${t('automation.whenTree.rowCount', { count: countWhenLeaves(node) })} · ${summarizeWhen(node, leafKindLabel)}`
   return (
     <p
-      role="alert"
-      data-testid="when-issue"
-      className="rounded border border-warning/40 bg-warning/10 p-2 text-xs text-warning"
+      data-testid="when-block-summary"
+      title={text}
+      className="break-words text-xs text-foreground-muted sm:truncate"
     >
-      {message}
+      {text}
     </p>
   )
 }
@@ -246,35 +322,42 @@ interface NotViewProps {
   readonly child: AutomationWhen
   readonly path: WhenPath
   readonly ctx: TreeContext
+  readonly move: MoveControls | null
 }
 
-function NotView({ child, path, ctx }: NotViewProps) {
+function NotView({ child, path, ctx, move }: NotViewProps) {
   const { t } = useTranslation()
+  const expanded = !ctx.collapsed.has(pathKey(path))
   return (
     <div
       className={`space-y-1.5 rounded border p-2 ${toneFor(nodeAt(ctx, path)?.outcome, 'border-warning/40', false)}`}
       data-testid="when-not"
     >
       <div className="flex flex-wrap items-center gap-2">
+        <CollapseToggle expanded={expanded} onToggle={() => ctx.toggleCollapsed(path)} />
         <Badge variant="warning">{'NOT'}</Badge>
         <span className="text-xs text-foreground-subtle">
           {t('automation.whenTree.notHint', 'True when what is below is not')}
         </span>
         <span className="flex-1" />
+        {move !== null && <MoveButtons move={move} />}
         <Button
           variant="ghost"
-          onClick={() => ctx.onChange(unnegate(ctx.recipe, path))}
+          onClick={() => ctx.reshape(unnegate(ctx.recipe, path))}
           title={t('automation.whenTree.removeNot', 'Remove the NOT, keeping what is inside')}
         >
           <Ungroup className="h-3.5 w-3.5" />{' '}
           {t('automation.whenTree.removeNotLabel', 'Remove NOT')}
         </Button>
       </div>
-      <IssueLine message={ctx.issues.get(pathKey(path))} />
       <BlockResult node={nodeAt(ctx, path)} />
-      <div className="pl-3">
-        <NodeView node={child} path={[...path, 0]} ctx={ctx} underNot />
-      </div>
+      {expanded ? (
+        <div className="pl-3">
+          <NodeView node={child} path={[...path, 0]} ctx={ctx} underNot move={null} />
+        </div>
+      ) : (
+        <BlockSummary node={child} />
+      )}
     </div>
   )
 }
@@ -284,29 +367,33 @@ interface BlockViewProps {
   readonly path: WhenPath
   readonly ctx: TreeContext
   readonly underNot: boolean
+  /** Up / down among its siblings; null for the root and the child of a NOT. */
+  readonly move: MoveControls | null
   /** Shown on the root only. */
   readonly budgetText: string | null
   readonly emptyHint: string | null
 }
 
-function BlockView({ block, path, ctx, underNot, budgetText, emptyHint }: BlockViewProps) {
+function BlockView({ block, path, ctx, underNot, move, budgetText, emptyHint }: BlockViewProps) {
   const { t } = useTranslation()
   const isRoot = path.length === 0
+  // The root is the section itself: only nested blocks collapse.
+  const expanded = isRoot || !ctx.collapsed.has(pathKey(path))
   const nestable = canNestBlockAt(ctx.recipe, path)
   const kinds = [
     { value: 'all', label: t('automation.whenTree.allOf', 'All of (AND)') },
     { value: 'any', label: t('automation.whenTree.anyOf', 'Any of (OR)') },
   ]
-  // An empty root is the fresh-automation state: the hint says what to do, the
-  // engine's "a group is empty" would only repeat it as a complaint.
-  const issue = emptyHint === null ? ctx.issues.get(pathKey(path)) : undefined
   return (
     <div
-      className={`space-y-2 rounded border p-2 ${toneFor(nodeAt(ctx, path)?.outcome, 'border-border', false)} bg-surface-subtle/40`}
+      className={`space-y-2 rounded border p-2 ${toneFor(nodeAt(ctx, path)?.outcome, 'border-border', false)}`}
       data-testid="when-block"
       data-kind={block.kind}
     >
       <div className="flex flex-wrap items-center gap-2">
+        {!isRoot && (
+          <CollapseToggle expanded={expanded} onToggle={() => ctx.toggleCollapsed(path)} />
+        )}
         <div className="w-40">
           <Select
             aria-label={t('automation.whenTree.blockKind', 'How the rows below combine')}
@@ -322,10 +409,11 @@ function BlockView({ block, path, ctx, underNot, budgetText, emptyHint }: BlockV
           <span className="text-xs text-foreground-subtle">{budgetText}</span>
         )}
         <span className="flex-1" />
+        {move !== null && <MoveButtons move={move} />}
         {!isRoot && !underNot && (
           <Button
             variant="ghost"
-            onClick={() => ctx.onChange(negate(ctx.recipe, path))}
+            onClick={() => ctx.reshape(negate(ctx.recipe, path))}
             title={t('automation.whenTree.negateBlock', 'Invert this block (NOT)')}
           >
             {'NOT'}
@@ -334,16 +422,16 @@ function BlockView({ block, path, ctx, underNot, budgetText, emptyHint }: BlockV
         {!isRoot && (
           <Button
             variant="ghost"
-            onClick={() => ctx.onChange(ungroup(ctx.recipe, path))}
+            onClick={() => ctx.reshape(ungroup(ctx.recipe, path))}
             title={t('automation.whenTree.ungroup', 'Dissolve this block, keeping its rows')}
           >
-            <Ungroup className="h-3.5 w-3.5" />
+            <Ungroup className="h-3.5 w-3.5" /> {t('automation.whenTree.ungroupLabel', 'Ungroup')}
           </Button>
         )}
         {!isRoot && (
           <Button
             variant="ghost"
-            onClick={() => ctx.onChange(removeNode(ctx.recipe, path))}
+            onClick={() => ctx.reshape(removeNode(ctx.recipe, path))}
             title={t('automation.whenTree.removeBlock', 'Delete this block and everything in it')}
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -351,11 +439,11 @@ function BlockView({ block, path, ctx, underNot, budgetText, emptyHint }: BlockV
         )}
       </div>
 
-      <IssueLine message={issue} />
       <BlockResult node={nodeAt(ctx, path)} />
-      {emptyHint !== null && <p className="text-xs text-warning">{emptyHint}</p>}
+      {emptyHint !== null && <p className="text-xs text-foreground-subtle">{emptyHint}</p>}
+      {!expanded && <BlockSummary node={block} />}
 
-      {block.children.length > 0 && (
+      {expanded && block.children.length > 0 && (
         <div className="space-y-1.5 border-l border-border pl-3">
           {block.children.map((child, index) => (
             <NodeView
@@ -365,36 +453,41 @@ function BlockView({ block, path, ctx, underNot, budgetText, emptyHint }: BlockV
               path={[...path, index]}
               ctx={ctx}
               underNot={false}
+              move={ctx.moveControls([...path, index], block.children.length)}
             />
           ))}
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          onClick={() => ctx.onChange(addNode(ctx.recipe, path, newLeaf('device-is')))}
-          title={t('automation.whenTree.addRowTitle', 'Add one row: an event or a state')}
-        >
-          <Plus className="h-4 w-4" /> {t('automation.whenTree.addRow', 'Add row')}
-        </Button>
-        <Button
-          variant="outline"
-          disabled={!nestable}
-          onClick={() =>
-            ctx.onChange(addNode(ctx.recipe, path, seedBlock(block.kind === 'all' ? 'any' : 'all')))
-          }
-          title={
-            nestable
-              ? t('automation.whenTree.addBlockTitle', 'Add a nested block of rows')
-              : t('automation.whenTree.tooDeep', 'The rules nest at most {{max}} levels deep', {
-                  max: whenBudget(ctx.recipe).depthLimit,
-                })
-          }
-        >
-          <Plus className="h-4 w-4" /> {t('automation.whenTree.addBlock', 'Add block')}
-        </Button>
-      </div>
+      {expanded && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => ctx.onChange(addNode(ctx.recipe, path, newLeaf('device-is')))}
+            title={t('automation.whenTree.addRowTitle', 'Add one row: an event or a state')}
+          >
+            <Plus className="h-4 w-4" /> {t('automation.whenTree.addRow', 'Add row')}
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!nestable}
+            onClick={() =>
+              ctx.onChange(
+                addNode(ctx.recipe, path, seedBlock(block.kind === 'all' ? 'any' : 'all')),
+              )
+            }
+            title={
+              nestable
+                ? t('automation.whenTree.addBlockTitle', 'Add a nested block of rows')
+                : t('automation.whenTree.tooDeep', 'The rules nest at most {{max}} levels deep', {
+                    max: whenBudget(ctx.recipe).depthLimit,
+                  })
+            }
+          >
+            <Plus className="h-4 w-4" /> {t('automation.whenTree.addBlock', 'Add block')}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

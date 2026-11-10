@@ -1,6 +1,6 @@
 /**
- * The When tree editor: nested blocks, the row-type menu, the engine's refusal
- * shown on the block at fault, the label picker and a stored legacy class.
+ * The When tree editor: nested blocks, the row-type menu, reorder and collapse,
+ * no in-tree warnings, the label picker and a stored legacy class.
  */
 import {
   type AutomationRecipe,
@@ -33,14 +33,20 @@ vi.mock('@camstack/ui-library', async () => {
     useSystem: () => ({
       trpcClient: {
         notificationRules: {
-          getConditionCatalog: { query: () => Promise.reject(new Error('no taxonomy')) },
+          getConditionCatalog: {
+            query: () => Promise.reject(new Error('no taxonomy')),
+          },
         },
       },
     }),
     useDeviceManagerGetDevice: () => ({ data: undefined }),
     useZonesListZones: () => ({ data: [] }),
-    useFaceGalleryListIdentities: () => ({ data: [{ id: 'id-anna', name: 'Anna' }] }),
-    usePlateGalleryListPlates: () => ({ data: [{ text: 'AB123CD' }, { text: 'AB123CD' }] }),
+    useFaceGalleryListIdentities: () => ({
+      data: [{ id: 'id-anna', name: 'Anna' }],
+    }),
+    usePlateGalleryListPlates: () => ({
+      data: [{ text: 'AB123CD' }, { text: 'AB123CD' }],
+    }),
   }
 })
 
@@ -127,22 +133,123 @@ describe('WhenTree', () => {
     expect(JSON.stringify(last)).toContain('"device-becomes"')
   })
 
-  it('shows the refusal for two events at once on the offending AND block', () => {
+  it('shows no warning inside the tree: the refusal belongs to the save path', () => {
     render(
       <Harness
         initial={recipeOf({
           kind: 'all',
           children: [
             IS_ROW,
-            { kind: 'all', children: [{ kind: 'manual' }, { kind: 'interval', minutes: 5 }] },
+            {
+              kind: 'all',
+              children: [{ kind: 'manual' }, { kind: 'interval', minutes: 5 }],
+            },
           ],
         })}
       />,
     )
-    const issues = screen.getAllByTestId('when-issue')
-    expect(issues).toHaveLength(1)
-    const blocks = screen.getAllByTestId('when-block')
-    expect(within(blocks[1] as HTMLElement).getByTestId('when-issue')).toBe(issues[0])
+    expect(screen.queryByTestId('when-issue')).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('does not tell an empty IF that nothing can start the automation', () => {
+    render(
+      <WhenTree
+        hideRule
+        recipe={recipeOf({ kind: 'all', children: [] })}
+        devices={DEVICES}
+        onChange={() => {}}
+      />,
+    )
+    expect(screen.queryByText(/nothing can ever start/)).toBeNull()
+  })
+
+  it('moves a row down and a block up among its siblings', () => {
+    let last: AutomationRecipe | null = null
+    render(
+      <Harness
+        initial={recipeOf({
+          kind: 'all',
+          children: [{ kind: 'manual' }, { kind: 'any', children: [IS_ROW] }],
+        })}
+        onRecipe={(r) => (last = r)}
+      />,
+    )
+    const ups = screen.getAllByRole('button', { name: 'Move up' })
+    const downs = screen.getAllByRole('button', { name: 'Move down' })
+    // manual row, the ANY block, and the row inside it (alone: both disabled)
+    expect(ups).toHaveLength(3)
+    expect((ups[0] as HTMLButtonElement).disabled).toBe(true)
+    expect((downs[1] as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(downs[0] as HTMLElement)
+    expect(JSON.stringify(last)).toContain(
+      JSON.stringify({
+        kind: 'all',
+        children: [{ kind: 'any', children: [IS_ROW] }, { kind: 'manual' }],
+      }),
+    )
+    const rows = screen.getAllByTestId('when-row')
+    expect(rows.map((row) => row.getAttribute('data-kind'))).toEqual(['device-is', 'manual'])
+  })
+
+  it('collapses a block to a one-line summary and opens it again', () => {
+    render(
+      <Harness
+        initial={recipeOf({
+          kind: 'all',
+          children: [{ kind: 'manual' }, { kind: 'any', children: [IS_ROW, { kind: 'manual' }] }],
+        })}
+      />,
+    )
+    const block = screen.getAllByTestId('when-block')[1] as HTMLElement
+    const toggle = within(block).getByRole('button', {
+      name: 'Collapse this block',
+    })
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    fireEvent.click(toggle)
+    const collapsed = screen.getAllByTestId('when-block')[1] as HTMLElement
+    expect(within(collapsed).queryAllByTestId('when-row')).toHaveLength(0)
+    expect(within(collapsed).getByTestId('when-block-summary').textContent).toMatch(/2 rows/)
+    fireEvent.click(within(collapsed).getByRole('button', { name: 'Expand this block' }))
+    expect(
+      within(screen.getAllByTestId('when-block')[1] as HTMLElement).getAllByTestId('when-row'),
+    ).toHaveLength(2)
+  })
+
+  it('keeps a collapsed block collapsed when it moves', () => {
+    render(
+      <Harness
+        initial={recipeOf({
+          kind: 'all',
+          children: [{ kind: 'manual' }, { kind: 'any', children: [IS_ROW] }],
+        })}
+      />,
+    )
+    const block = screen.getAllByTestId('when-block')[1] as HTMLElement
+    fireEvent.click(within(block).getByRole('button', { name: 'Collapse this block' }))
+    fireEvent.click(
+      within(screen.getAllByTestId('when-block')[1] as HTMLElement).getByRole('button', {
+        name: 'Move up',
+      }),
+    )
+    expect(screen.getAllByTestId('when-row')).toHaveLength(1)
+    expect(screen.getAllByTestId('when-row')[0]?.getAttribute('data-kind')).toBe('manual')
+    expect(screen.getByTestId('when-block-summary')).toBeTruthy()
+  })
+
+  it('labels the ungroup button in words', () => {
+    render(
+      <Harness
+        initial={recipeOf({
+          kind: 'all',
+          children: [{ kind: 'any', children: [IS_ROW] }],
+        })}
+      />,
+    )
+    const button = screen.getByRole('button', { name: /Ungroup/ })
+    expect(button.textContent).toContain('Ungroup')
+    fireEvent.click(button)
+    expect(screen.getAllByTestId('when-block')).toHaveLength(1)
   })
 
   it('files animal species, known faces and plates under the macro', () => {
@@ -150,7 +257,13 @@ describe('WhenTree', () => {
       <Harness
         initial={recipeOf({
           kind: 'all',
-          children: [{ kind: 'detection', subjects: [{ macro: 'animal' }], deviceIds: [101] }],
+          children: [
+            {
+              kind: 'detection',
+              subjects: [{ macro: 'animal' }],
+              deviceIds: [101],
+            },
+          ],
         })}
       />,
     )
@@ -161,10 +274,14 @@ describe('WhenTree', () => {
       )
     expect(labelOptions()).toContain('dog')
 
-    fireEvent.change(screen.getByTestId('subject-macro'), { target: { value: 'person' } })
+    fireEvent.change(screen.getByTestId('subject-macro'), {
+      target: { value: 'person' },
+    })
     expect(labelOptions()).toContain('Anna')
 
-    fireEvent.change(screen.getByTestId('subject-macro'), { target: { value: 'vehicle' } })
+    fireEvent.change(screen.getByTestId('subject-macro'), {
+      target: { value: 'vehicle' },
+    })
     expect(labelOptions().filter((l) => l.includes('AB123CD'))).toHaveLength(1)
   })
 
@@ -208,8 +325,18 @@ describe('WhenTree with a selected run', () => {
     },
     conditions: [
       { path: 'when', kind: 'all', outcome: 'fail', reason: '' },
-      { path: 'when.0', kind: 'any', outcome: 'pass', reason: 'one event fired' },
-      { path: 'when.0.0', kind: 'detection', outcome: 'pass', reason: 'animal seen' },
+      {
+        path: 'when.0',
+        kind: 'any',
+        outcome: 'pass',
+        reason: 'one event fired',
+      },
+      {
+        path: 'when.0.0',
+        kind: 'detection',
+        outcome: 'pass',
+        reason: 'animal seen',
+      },
       {
         path: 'when.1',
         kind: 'device-is',

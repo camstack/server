@@ -7,14 +7,15 @@ import {
   convertLeafKind,
   negate,
   nodeAt,
-  pathKey,
   removeNode,
   seedBlock,
   setContainerKind,
   ungroup,
   unnegate,
+  moveNode,
+  summarizeWhen,
+  swapPathKeys,
   whenBudget,
-  whenIssues,
 } from '../when-ops'
 
 const IS: AutomationLeaf = {
@@ -53,14 +54,23 @@ describe('when-ops', () => {
 
   it('removing the last row of a block removes the block, but the root only empties', () => {
     const nested = recipeOf(IS, { kind: 'any', children: [MANUAL] })
-    expect(removeNode(nested, [1, 0]).when).toEqual({ kind: 'all', children: [IS] })
-    expect(removeNode(recipeOf(IS), [0]).when).toEqual({ kind: 'all', children: [] })
+    expect(removeNode(nested, [1, 0]).when).toEqual({
+      kind: 'all',
+      children: [IS],
+    })
+    expect(removeNode(recipeOf(IS), [0]).when).toEqual({
+      kind: 'all',
+      children: [],
+    })
   })
 
   it('negates and un-negates a row, never the root', () => {
     const base = recipeOf(IS)
     const negated = negate(base, [0])
-    expect(negated.when).toEqual({ kind: 'all', children: [{ kind: 'not', child: IS }] })
+    expect(negated.when).toEqual({
+      kind: 'all',
+      children: [{ kind: 'not', child: IS }],
+    })
     expect(unnegate(negated, [0]).when).toEqual(base.when)
     expect(negate(base, [])).toBe(base)
   })
@@ -70,7 +80,10 @@ describe('when-ops', () => {
     expect(setContainerKind(nested, [1], 'any').when).toMatchObject({
       children: [IS, { kind: 'any' }],
     })
-    expect(ungroup(nested, [1]).when).toEqual({ kind: 'all', children: [IS, BECOMES, MANUAL] })
+    expect(ungroup(nested, [1]).when).toEqual({
+      kind: 'all',
+      children: [IS, BECOMES, MANUAL],
+    })
   })
 
   it('keeps the device field when a row switches between is and becomes', () => {
@@ -79,15 +92,45 @@ describe('when-ops', () => {
     expect(convertLeafKind(IS, 'manual')).toEqual({ kind: 'manual' })
   })
 
-  it('blames two events under ALL on that ALL, not on the root', () => {
-    const tree = recipeOf(IS, {
-      kind: 'all',
-      children: [BECOMES, { kind: 'manual' }],
-    })
-    const issues = whenIssues(tree.when)
-    expect([...issues.keys()]).toEqual([pathKey([1])])
-    expect(issues.get('when.1')).toBeTruthy()
-    expect(whenIssues(recipeOf(IS, { kind: 'any', children: [BECOMES, MANUAL] }).when).size).toBe(0)
+  it('moves a row or block one place among its siblings, never past either end', () => {
+    const tree = recipeOf(IS, { kind: 'any', children: [BECOMES, MANUAL] }, MANUAL)
+    const down = moveNode(tree, [0], 1)
+    expect(nodeAt(down.when, [0])?.kind).toBe('any')
+    expect(nodeAt(down.when, [1])).toEqual(IS)
+    const up = moveNode(tree, [2], -1)
+    expect(nodeAt(up.when, [1])).toEqual(MANUAL)
+    expect(nodeAt(up.when, [2])?.kind).toBe('any')
+    expect(moveNode(tree, [0], -1)).toBe(tree)
+    expect(moveNode(tree, [2], 1)).toBe(tree)
+    expect(moveNode(tree, [], 1)).toBe(tree)
+  })
+
+  it('moves a row inside a nested block without touching the rest', () => {
+    const tree = recipeOf(IS, { kind: 'any', children: [BECOMES, MANUAL] })
+    const next = moveNode(tree, [1, 1], -1)
+    expect(nodeAt(next.when, [1, 0])).toEqual(MANUAL)
+    expect(nodeAt(next.when, [1, 1])).toEqual(BECOMES)
+    expect(nodeAt(next.when, [0])).toEqual(IS)
+  })
+
+  it('summarises a block in one line, nested blocks and NOT included', () => {
+    const block = {
+      kind: 'all' as const,
+      children: [
+        IS,
+        { kind: 'any' as const, children: [BECOMES, MANUAL] },
+        { kind: 'not' as const, child: MANUAL },
+      ],
+    }
+    expect(summarizeWhen(block, (kind) => kind)).toBe(
+      'device-is · ANY (device-becomes · manual) · NOT manual',
+    )
+  })
+
+  it('swaps the remembered keys of two moved siblings, and their subtrees', () => {
+    const keys = new Set(['when.0', 'when.0.1', 'when.2'])
+    const next = swapPathKeys(keys, [0], [1])
+    expect([...next].sort()).toEqual(['when.1', 'when.1.1', 'when.2'])
   })
 
   it('stops offering a nested block once the depth limit would be crossed', () => {

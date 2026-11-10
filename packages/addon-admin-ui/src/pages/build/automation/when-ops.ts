@@ -3,11 +3,9 @@
  * rules that matter can be tested without mounting the page.
  *
  * The tree is edited in place and MAY pass through an illegal shape (a block
- * holding two events under ALL, a block nested too deep): {@link whenIssues}
- * attributes the refusal to the lowest block it belongs to, and the editor
- * shows the engine's own sentence there. Save stays blocked until it is fixed.
- * Nothing here re-words `validateWhenTree`, so the editor and the save path can
- * never say different things about the same tree.
+ * holding two events under ALL, a block nested too deep). The refusal is the
+ * save path's alone: the editor shows `validateRecipeBounds`' sentence beside
+ * the disabled Save, never a second copy inside the tree.
  *
  * Addressing is by {@link WhenPath} — child indices from the root block, where
  * a `not` has exactly one child at index 0 (the scheme the run trace uses:
@@ -28,10 +26,9 @@ import {
   isLeaf,
   MAX_WHEN_DEPTH,
   MAX_WHEN_LEAVES,
-  validateWhenTree,
   whenDepth,
 } from '@camstack/types'
-import { type LeafKind, newLeaf } from './recipe-parts'
+import { type LeafKind, moveItem, newLeaf } from './recipe-parts'
 
 export type WhenPath = readonly number[]
 
@@ -203,7 +200,14 @@ export function convertLeafKind(leaf: AutomationLeaf, kind: LeafKind): Automatio
   }
   if (leaf.kind === 'device-becomes' && kind === 'device-is') {
     const { deviceId, cap, fieldPath, becomes } = leaf
-    return { kind, deviceId, cap, fieldPath, operator: 'eq', value: becomes ?? '' }
+    return {
+      kind,
+      deviceId,
+      cap,
+      fieldPath,
+      operator: 'eq',
+      value: becomes ?? '',
+    }
   }
   return newLeaf(kind)
 }
@@ -237,26 +241,60 @@ export function canNestBlockAt(recipe: AutomationRecipe, path: WhenPath): boolea
 }
 
 /**
- * What `validateWhenTree` objects to, attributed to the LOWEST block (or `not`)
- * whose own subtree is already refused — so "two events under ALL" lands on
- * that ALL, not on the root, and a message is never repeated up the chain.
- * Keyed by {@link pathKey}.
+ * Move the row or block at `path` one place up (`-1`) or down (`+1`) among its
+ * siblings. Order inside a block changes nothing the engine decides (ALL and
+ * ANY are commutative); it is how the operator reads the tree. The root, the
+ * child of a `not`, and a move past either end return the recipe unchanged.
  */
-export function whenIssues(when: AutomationWhen): ReadonlyMap<string, string> {
-  const issues = new Map<string, string>()
-  const visit = (node: AutomationWhen, path: WhenPath): boolean => {
-    if (isLeaf(node)) return false
-    const kids = node.kind === 'not' ? [node.child] : node.children
-    let below = false
-    kids.forEach((child, index) => {
-      if (visit(child, [...path, index])) below = true
-    })
-    if (below) return true
-    const message = validateWhenTree(node)
-    if (message === null) return false
-    issues.set(pathKey(path), message)
-    return true
+export function moveNode(
+  recipe: AutomationRecipe,
+  path: WhenPath,
+  delta: -1 | 1,
+): AutomationRecipe {
+  const index = path[path.length - 1]
+  if (index === undefined) return recipe
+  const parentPath = path.slice(0, -1)
+  const parent = nodeAt(whenRoot(recipe), parentPath)
+  if (parent === null || !isContainer(parent)) return recipe
+  const target = index + delta
+  if (target < 0 || target >= parent.children.length) return recipe
+  return applyEdit(recipe, parentPath, () => ({
+    kind: parent.kind,
+    children: moveItem(parent.children, index, target),
+  }))
+}
+
+/**
+ * Remembered per-node keys (collapsed blocks) after two siblings swapped: every
+ * key under `a` moves under `b` and back, so a collapsed block stays collapsed
+ * where it went.
+ */
+export function swapPathKeys(
+  keys: ReadonlySet<string>,
+  a: WhenPath,
+  b: WhenPath,
+): ReadonlySet<string> {
+  const ka = pathKey(a)
+  const kb = pathKey(b)
+  const swap = (key: string): string => {
+    if (key === ka || key.startsWith(`${ka}.`)) return kb + key.slice(ka.length)
+    if (key === kb || key.startsWith(`${kb}.`)) return ka + key.slice(kb.length)
+    return key
   }
-  visit(when, [])
-  return issues
+  return new Set([...keys].map(swap))
+}
+
+/**
+ * One line naming what a block holds, for its collapsed header: each row by its
+ * type, a nested block as `ALL (…)` / `ANY (…)`, a negation as `NOT …`.
+ */
+export function summarizeWhen(node: AutomationWhen, label: (kind: LeafKind) => string): string {
+  if (isLeaf(node)) return label(node.kind)
+  if (node.kind === 'not') return `NOT ${summarizeWhen(node.child, label)}`
+  return node.children.map((child) => summarizeChild(child, label)).join(' · ')
+}
+
+function summarizeChild(node: AutomationWhen, label: (kind: LeafKind) => string): string {
+  if (!isContainer(node)) return summarizeWhen(node, label)
+  return `${node.kind.toUpperCase()} (${summarizeWhen(node, label)})`
 }

@@ -20,6 +20,7 @@ import { DeviceIsFields } from './DeviceIsFields'
 import { DeviceBecomesFields, DeviceEventFields, ManualFields, ScheduleFields } from './EventFields'
 import { ExpressionLeafRow } from './ExpressionLeafRow'
 import { PickerLabel } from './FieldPicker'
+import { type MoveControls, MoveButtons } from './MoveButtons'
 import { EVENT_LEAF_KINDS, LEAF_KINDS, type LeafKind, leafKindLabel } from './recipe-parts'
 import {
   DetectionFields,
@@ -71,6 +72,8 @@ export interface WhenLeafRowProps {
   readonly result?: ReactNode
   /** Null where a NOT is not offered (the row is already negated). */
   readonly onNegate: (() => void) | null
+  /** Up / down among its siblings; absent where the row has none (the child of a NOT). */
+  readonly move?: MoveControls
   readonly onChange: (next: AutomationLeaf) => void
   readonly onRemove: () => void
 }
@@ -81,6 +84,7 @@ export function WhenLeafRow({
   toneClass,
   result,
   onNegate,
+  move,
   onChange,
   onRemove,
 }: WhenLeafRowProps) {
@@ -111,6 +115,7 @@ export function WhenLeafRow({
             : t('automation.whenTree.natureState', 'State')}
         </Badge>
         <span className="flex-1" />
+        {move !== undefined && <MoveButtons move={move} />}
         {onNegate !== null && (
           <Button
             variant="ghost"

@@ -6181,7 +6181,14 @@
       "removeClass": "Remove this class",
       "orSubject": "or",
       "onlySomeClasses": "Only some classes",
-      "addClass": "Add a class"
+      "addClass": "Add a class",
+      "rowCount_one": "{{count}} row",
+      "rowCount_other": "{{count}} rows",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "collapse": "Collapse this block",
+      "expand": "Expand this block",
+      "ungroupLabel": "Ungroup"
     },
     "stepGuard": {
       "if": "Only if…",

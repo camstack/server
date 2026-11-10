@@ -6256,7 +6256,14 @@
       "removeClass": "Rimuovi questa classe",
       "orSubject": "oppure",
       "onlySomeClasses": "Solo alcune classi",
-      "addClass": "Aggiungi una classe"
+      "addClass": "Aggiungi una classe",
+      "rowCount_one": "{{count}} riga",
+      "rowCount_other": "{{count}} righe",
+      "moveUp": "Sposta su",
+      "moveDown": "Sposta giù",
+      "collapse": "Comprimi questo blocco",
+      "expand": "Espandi questo blocco",
+      "ungroupLabel": "Sciogli"
     },
     "stepGuard": {
       "if": "Solo se…",
