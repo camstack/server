@@ -73,4 +73,24 @@ describe('a step guard in the action list', () => {
     expect(screen.getByTestId('when-tree')).toBeTruthy()
     expect(screen.queryByText(/starts a run/)).toBeNull()
   })
+
+  it('an IF that can never be true says why, under the tree, without blocking anything', () => {
+    render(
+      <Harness
+        initial={[
+          {
+            kind: 'wait',
+            seconds: 3,
+            if: { kind: 'all', children: [{ kind: 'manual' }, { kind: 'interval', minutes: 5 }] },
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByRole('alert').textContent).toMatch(/both have to happen at the same instant/)
+  })
+
+  it('a freshly switched-on, still empty IF shows no note', () => {
+    render(<Harness initial={[{ kind: 'wait', seconds: 3, if: { kind: 'all', children: [] } }]} />)
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
 })

@@ -222,8 +222,9 @@ export function PetFeederPanel({
             {t('uiLibrary.petFeeder.cancel', 'Cancel')}
           </Button>
         ) : (
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="sm"
             aria-label={t('uiLibrary.petFeeder.feedNow', 'Feed now')}
             disabled={busy}
             onClick={(e) => {
@@ -231,14 +232,10 @@ export function PetFeederPanel({
               if (busy) return
               applyOptimisticAction({ feeding: true }, () => cap.feed({ grams: DEFAULT_PORTION }))
             }}
-            className={cn(
-              'inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-surface-hover',
-              busy && 'opacity-40 cursor-not-allowed',
-            )}
           >
             <PawPrint className="h-3.5 w-3.5" aria-hidden />
             {t('uiLibrary.petFeeder.feed', 'Feed')}
-          </button>
+          </Button>
         )}
       </div>
     )

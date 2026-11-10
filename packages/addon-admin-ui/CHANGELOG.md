@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Notification texts (the shipped-sentence catalog) stay plain text with their variable chips: the device-value picker only appears where the hub renders device values
 - The mosaic caption and the timelapse preview caption stay plain text with their variable chips: no device-value picker where the hub fills variables only
-- Automation editor: rows and blocks in WHEN and IF move up and down, nested blocks collapse to a one-line summary, the Ungroup button is labelled, and the duplicate warnings inside the tree are gone (the Save refusal still says what is wrong).
+- Automation editor: rows and blocks in WHEN and IF move up and down, nested blocks collapse to a one-line summary, the Ungroup button is labelled, and the per-block warnings inside the tree are gone: a WHEN that cannot run is still explained beside the disabled Save, and a step's IF that can never be true now shows one non-blocking note under its tree.
 
 ## [1.2.632] - 2026-11-10
 

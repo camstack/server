@@ -4,8 +4,14 @@
  * Else list that runs when the condition reads false. A state that cannot be
  * read runs neither side.
  */
-import type { AutomationAction, AutomationRecipe, AutomationWhen } from '@camstack/types'
-import { Switch, type DeviceListState } from '@camstack/ui-library'
+import {
+  isLeaf,
+  validateWhenTree,
+  type AutomationAction,
+  type AutomationRecipe,
+  type AutomationWhen,
+} from '@camstack/types'
+import { ErrorBox, Switch, type DeviceListState } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { ScopeVariable } from '../flow/ArgField'
 import { ActionList } from './ActionList'
@@ -30,6 +36,17 @@ export interface StepGuardProps {
   readonly onChange: (next: GuardableStep) => void
 }
 
+/**
+ * Why this IF can never be read true, or null. Nothing refuses an IF at save
+ * (`validateRecipeBounds` reads only the WHEN), so this note is its only
+ * feedback. The seed state — an empty root just switched on — is not a
+ * mistake yet and says nothing.
+ */
+export function guardProblem(when: AutomationWhen): string | null {
+  if (!isLeaf(when) && when.kind !== 'not' && when.children.length === 0) return null
+  return validateWhenTree(when)
+}
+
 function withoutGuard(step: GuardableStep): GuardableStep {
   const { if: _if, else: _else, ...rest } = step
   return rest
@@ -39,6 +56,7 @@ export function StepGuard({ step, devices, devicesState, variables, onChange }: 
   const { t } = useTranslation()
   const when = step.if
   const recipe: AutomationRecipe | null = when === undefined ? null : { when, actions: [] }
+  const problem = when === undefined ? null : guardProblem(when)
   return (
     <div className="space-y-2 border-t border-border-subtle pt-2">
       <Switch
@@ -61,6 +79,7 @@ export function StepGuard({ step, devices, devicesState, variables, onChange }: 
             devices={devices}
             onChange={(next) => onChange({ ...step, if: next.when })}
           />
+          {problem !== null && <ErrorBox variant="warning" message={problem} />}
           <Switch
             checked={step.else !== undefined}
             label={t('automation.stepGuard.else', 'Otherwise, run…')}
