@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Hub-served viewer 1.0.699: offline devices wear an Offline badge, power-source row, per-destination settings kept on edit
+
 ## [1.2.677] - 2026-11-10
 
 ### Changed
