@@ -296,6 +296,7 @@ jobs:
             scripts/check-collection-crud-is-instances.ts \
             scripts/check-no-settings-fallback-for-kinds.ts \
             scripts/check-one-instances-list.ts \
+            scripts/check-no-stacked-provider-lists.ts \
             scripts/check-one-instance-create-door.ts \
             scripts/check-no-addon-level-settings.ts \
             scripts/check-no-integration-settings.ts \

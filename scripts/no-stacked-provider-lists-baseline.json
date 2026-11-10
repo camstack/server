@@ -1,0 +1,29 @@
+{
+  "_why": "Files that draw a second list or control of a collection next to its InstancesTable (planning#505). Each entry names the page work that deletes it. The list only shrinks.",
+  "families": {
+    "authentication": {
+      "packages/addon-admin-ui/src/pages/system/Authentication.tsx": "#504: IntegrationHub addon pills over the login-method InstancesTable, two switches, a per-addon hint map"
+    },
+    "connectivity": {
+      "packages/addon-admin-ui/src/pages/system/Integrations.tsx": "#505 item 3: IntegrationHub pill rows under the Exporters / Email / Brokers / Calendars tables"
+    },
+    "remote-access": {
+      "packages/addon-admin-ui/src/pages/system/RemoteAccess.tsx": "#505 item 2: the Tunnel control card re-lists the providers with a Start/Stop button"
+    },
+    "settings": {
+      "packages/addon-admin-ui/src/pages/system/Settings.tsx": "#505 item 4: hand-written omitSectionIds for provider sections drawn on their own page"
+    },
+    "terminal": {
+      "packages/addon-admin-ui/src/pages/system/Terminal.tsx": "#505 item 6: a Nodes card and a legacy-cameras list under the table"
+    },
+    "calendars": {
+      "packages/addon-admin-ui/src/pages/system/Calendars.tsx": "#505 item 5: the legend draws the source switch the Connectivity table owns"
+    },
+    "turn": {
+      "packages/addon-admin-ui/src/pages/system/TurnServers.tsx": "#505 item 7: the combined ICE server list card beside the table"
+    },
+    "registry-maps": {
+      "packages/addon-admin-ui/src/components/addons/NodeOnlyPackagesPanel.tsx": "#505 item 8: SELF_MANAGED_PACKAGES is a literal list of package names"
+    }
+  }
+}

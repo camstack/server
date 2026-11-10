@@ -4,12 +4,12 @@
 
 # Guards
 
-238 repository guards: 233 in `scripts/`,
+239 repository guards: 234 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (228)
+## Enforced by CI checks (229)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -157,6 +157,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-retired-fanout-heap-env.ts` | No runtime code reads the retired heap-snapshot or event-fanout mode envs. |
 | `scripts/check-no-service-account-keys.ts` | Credential guard — no Google service-account key, and no private key of any kind, may be committed to this repository. |
 | `scripts/check-no-settings-fallback-for-kinds.ts` | A record kind has ONE store (planning#440 step 5, D1013). |
+| `scripts/check-no-stacked-provider-lists.ts` | One collection, one surface (planning#505, sibling of #504; D996/D1007/D1013). |
 | `scripts/check-no-state-unit-sibling.ts` | D944 §4 — device state has no root `unit` / `precision` / `*Unit` sibling, and every device-native numeric reading names a quantity (or is listed in the debt file until it is classified). |
 | `scripts/check-no-system-package.ts` | The old system package is gone: its source ships as `@camstack/server/system`. |
 | `scripts/check-no-third-party-products.ts` | Third-party product names — name the mechanism. |
