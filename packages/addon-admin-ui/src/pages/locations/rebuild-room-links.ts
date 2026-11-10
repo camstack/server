@@ -68,6 +68,9 @@ function toCandidate(d: SiteDevice): LinkCandidate {
     ...(d.primaryChildEntityId !== undefined
       ? { primaryChildEntityId: d.primaryChildEntityId }
       : {}),
+    ...(d.primaryChildPreference !== undefined
+      ? { primaryChildPreference: d.primaryChildPreference }
+      : {}),
     ...(d.role !== undefined && d.role !== null ? { role: d.role } : {}),
     name: d.name,
   }

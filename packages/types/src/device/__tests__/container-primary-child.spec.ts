@@ -18,7 +18,7 @@ function resolveContainerPrimaryChild(
   containerName?: string,
   containerType?: string,
 ): ContainerChildRef | null {
-  return resolveWithType(children, overrideEntityId, containerName, containerType)
+  return resolveWithType(children, overrideEntityId, containerName, containerType, undefined)
 }
 
 /**

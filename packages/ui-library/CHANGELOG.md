@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An illustrated hero (washer, dryer, fountain…) no longer shows a second animated drum or ring poking out beside its illustration.
 
 - Device rows and the container hero follow the child a container declares as its primary
+- Device names and room suggestions follow the child a container declares as its primary
 
 ## [1.2.418] - 2026-11-10
 

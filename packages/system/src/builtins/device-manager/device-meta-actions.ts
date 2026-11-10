@@ -10,10 +10,10 @@
  * removeDevice), config persistence (persistConfig, loadConfig), the meta
  * surface load (loadMeta, loadRuntimeState), every meta setter (setName,
  * setLocation, setType, setIntegrationId, setLinkDeviceId,
- * setPrimaryChildEntityId, setChildLayout, setPrimaryChildPreference, setRole, setDisplay,
- * applyInitialMeta, setMetadata, setDisabled), and the location registry
- * (listLocations, addLocation, removeLocation, renameLocation) with its icon
- * map (listLocationIcons, setLocationIcon).
+ * setPrimaryChildEntityId, setChildLayout, setPrimaryChildPreference,
+ * setRole, setDisplay, applyInitialMeta, setMetadata, setDisabled), and the
+ * location registry (listLocations, addLocation, removeLocation,
+ * renameLocation) with its icon map (listLocationIcons, setLocationIcon).
  *
  * EXACT ordering and side effects preserved — notably registerDevice's
  * name-precedence reconcile + field-preservation spreads, the

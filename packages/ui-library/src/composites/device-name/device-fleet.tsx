@@ -34,6 +34,9 @@ function copyDevice(device: DeviceNameFields): DeviceNameFields {
     ...(device.primaryChildEntityId !== undefined
       ? { primaryChildEntityId: device.primaryChildEntityId }
       : {}),
+    ...(device.primaryChildPreference !== undefined
+      ? { primaryChildPreference: device.primaryChildPreference }
+      : {}),
     ...(device.userNamed === undefined ? {} : { userNamed: device.userNamed }),
   }
 }

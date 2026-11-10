@@ -8,6 +8,7 @@
 import {
   CONTAINER_PRIMARY_CHILD_RULES,
   DeviceType,
+  primaryChildPreferenceOf,
   resolveContainerPrimaryChild,
 } from '@camstack/types/client'
 
@@ -35,6 +36,8 @@ export interface DeviceNameFields {
   readonly display?: { readonly label?: string | null } | null
   readonly userNamed?: boolean
   readonly primaryChildEntityId?: string | null
+  /** A container's provider-declared child keys, most preferred first (`DeviceMeta.primaryChildPreference`). */
+  readonly primaryChildPreference?: readonly string[] | null
 }
 
 export interface DeviceNameContext {
@@ -179,6 +182,7 @@ function isContainerPrimary(
     parent.primaryChildEntityId,
     parent.name,
     parent.type,
+    primaryChildPreferenceOf(parent),
   )
   return picked !== null && picked.id === device.id
 }

@@ -127,6 +127,7 @@ export function LocationsPage() {
         role: d.role ?? null,
         stableId: d.stableId,
         primaryChildEntityId: d.primaryChildEntityId ?? null,
+        primaryChildPreference: d.primaryChildPreference ?? null,
       })),
     [raw],
   )

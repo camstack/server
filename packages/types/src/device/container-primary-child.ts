@@ -306,11 +306,12 @@ export function resolveContainerPrimaryChild(
   containerName: string | undefined,
   containerType: string | undefined,
   /**
-   * The container's own declaration. Optional only so a caller built against
-   * an older release keeps compiling; every caller that has the container's
-   * meta passes it.
+   * The container's own declaration (`primaryChildPreferenceOf(container)`).
+   * Required, `undefined` when the container declared none: a caller that
+   * forgets it would silently answer the heuristic's child instead of the one
+   * the provider named, so the compiler must find every caller.
    */
-  preference?: ContainerPrimaryChildPreference,
+  preference: ContainerPrimaryChildPreference | undefined,
 ): ContainerChildRef | null {
   if (overrideEntityId !== undefined && overrideEntityId !== null) {
     // Canonical key first, then the legacy one — a pick written before

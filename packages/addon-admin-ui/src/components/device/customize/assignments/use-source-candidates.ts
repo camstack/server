@@ -60,6 +60,7 @@ export function useCandidateDevices(enabled: boolean): Known<readonly CandidateD
             integration: integrationName(d, integrations),
             parentDeviceId: d.parentDeviceId,
             primaryChildEntityId: d.primaryChildEntityId ?? null,
+            primaryChildPreference: d.primaryChildPreference ?? null,
             role: d.role ?? null,
           })),
       ),

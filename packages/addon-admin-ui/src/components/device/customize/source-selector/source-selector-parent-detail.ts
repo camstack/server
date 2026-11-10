@@ -22,6 +22,7 @@ export interface DeviceNameSource {
   readonly location?: string | null
   readonly role?: string | null
   readonly primaryChildEntityId?: string | null
+  readonly primaryChildPreference?: readonly string[] | null
 }
 
 export function candidateFields(entry: DeviceNameSource): DeviceNameFields {
@@ -37,6 +38,9 @@ export function candidateFields(entry: DeviceNameSource): DeviceNameFields {
     ...(entry.role !== undefined && entry.role !== null ? { role: entry.role } : {}),
     ...(entry.primaryChildEntityId !== undefined && entry.primaryChildEntityId !== null
       ? { primaryChildEntityId: entry.primaryChildEntityId }
+      : {}),
+    ...(entry.primaryChildPreference !== undefined && entry.primaryChildPreference !== null
+      ? { primaryChildPreference: entry.primaryChildPreference }
       : {}),
   }
 }

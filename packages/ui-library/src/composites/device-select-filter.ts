@@ -3,6 +3,7 @@ import {
   CONTAINER_PRIMARY_CHILD_RULES,
   type DeviceSelectFilter,
   DeviceType,
+  primaryChildPreferenceOf,
   resolveContainerPrimaryChild,
 } from '@camstack/types'
 
@@ -179,6 +180,8 @@ export interface SuggestionFleetDevice {
   readonly parentDeviceId?: number | null
   /** A container's stored primary-child pick (the child's `stableId`). */
   readonly primaryChildEntityId?: string | null
+  /** A container's provider-declared child keys, most preferred first. */
+  readonly primaryChildPreference?: readonly string[] | null
   readonly role?: string | null
 }
 
@@ -215,6 +218,7 @@ function primaryChildId(
     container.primaryChildEntityId,
     container.name,
     container.type,
+    primaryChildPreferenceOf(container),
   )
   return primary === null ? null : primary.id
 }

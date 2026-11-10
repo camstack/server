@@ -484,3 +484,39 @@ describe('stripDeviceParentPrefix separators', () => {
     expect(stripDeviceParentPrefix('Zigbee hubble', 'Zigbee hub')).toBe('Zigbee hubble')
   })
 })
+
+describe('a container that declared which child stands for it', () => {
+  // An energy installation: every child is a `sensor`, so the heuristic
+  // cannot tell them apart and the namesake tie-break hands the container to
+  // its own "System" status reading. The provider declared PV first.
+  const system = row({
+    id: 700,
+    name: 'System',
+    type: 'container',
+    stableId: 'enpal-sys',
+    parentDeviceId: null,
+    primaryChildPreference: ['pv', 'battery', 'house'],
+  })
+  const status = row({
+    id: 701,
+    name: 'System',
+    type: 'sensor',
+    role: 'connectivity-sensor',
+    parentDeviceId: 700,
+    stableId: 'enpal-sys-online',
+  })
+  const pv = row({
+    id: 702,
+    name: 'Photovoltaic',
+    type: 'sensor',
+    parentDeviceId: 700,
+    stableId: 'enpal-sys-pv',
+  })
+
+  it('names the declared PV child as the container', () => {
+    const nouns = deviceNameNouns('en')
+    expect(
+      formatDeviceName(pv, 'compact', { parent: system, siblings: [status, pv] }, nouns),
+    ).toBe('System')
+  })
+})

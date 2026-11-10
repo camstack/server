@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enpal: a failed web channel is skipped for 10 minutes, a missing Python is named as the reason, and the bridge output is capped
 - Enpal: three containers (Enpal Box, Impianto, Heat pump) with accordion sections, text sensors, hidden diagnostics and identity facts as device attributes
 - Enpal: the box is adopted as the Enpal Box gateway with its firmware and diagnostics; the System (PV, battery, grid, house) and the Heat pump (Enpal) are separate containers, each showing the child it declares first (PV power, heat-pump power)
+- Enpal: a System or Heat pump adopted before the primary-child declaration gets it on its next start
 
 ## [0.1.15] - 2026-11-10
 

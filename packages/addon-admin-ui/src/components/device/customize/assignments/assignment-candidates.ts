@@ -60,6 +60,8 @@ export interface CandidateDevice {
   readonly parentDeviceId?: number | null
   /** A container's stored primary-child pick (the child's `stableId`). */
   readonly primaryChildEntityId?: string | null
+  /** A container's provider-declared child keys, most preferred first. */
+  readonly primaryChildPreference?: readonly string[] | null
   /** `DeviceRole`, ranked above type when a container's primary is resolved. */
   readonly role?: string | null
 }

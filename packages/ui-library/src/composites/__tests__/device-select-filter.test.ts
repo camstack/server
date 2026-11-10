@@ -301,6 +301,35 @@ describe('sameLocationSuggestions', () => {
     // A container in the same room still contributes its primary child.
     expect([...sameLocationSuggestions([container, spot1, spot2], 'Hall')]).toEqual([3519])
   })
+
+  it("suggests the child a container DECLARED, not the heuristic's", () => {
+    // Every child is a `sensor`: the namesake tie-break would pick the
+    // container's own "System" status reading. The provider declared PV.
+    const system = fleetRow({
+      id: 700,
+      type: 'container',
+      name: 'System',
+      stableId: 'enpal-sys',
+      location: 'Roof',
+      primaryChildPreference: ['pv', 'battery', 'house'],
+    })
+    const status = fleetRow({
+      id: 701,
+      name: 'System',
+      role: 'connectivity-sensor',
+      stableId: 'enpal-sys-online',
+      location: 'Roof',
+      parentDeviceId: 700,
+    })
+    const pv = fleetRow({
+      id: 702,
+      name: 'Photovoltaic',
+      stableId: 'enpal-sys-pv',
+      location: 'Roof',
+      parentDeviceId: 700,
+    })
+    expect([...sameLocationSuggestions([system, status, pv], 'Roof')]).toEqual([702])
+  })
 })
 
 describe('matchesFacets with several values per facet', () => {

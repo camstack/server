@@ -50,6 +50,11 @@ const DESC_CLASS = 'text-[10px] text-foreground-subtle mt-0.5 break-words'
 /** A listAll row as the fields read it: the option's facts, and what the suggestion rule needs. */
 type FieldCandidate = DeviceSelectCandidate & SuggestionFleetDevice
 
+function stringsOrNull(v: unknown): readonly string[] | null {
+  if (!Array.isArray(v)) return null
+  return v.filter((s): s is string => typeof s === 'string')
+}
+
 function stringOrNull(v: unknown): string | null {
   return typeof v === 'string' ? v : null
 }
@@ -86,6 +91,7 @@ function toCandidates(rows: unknown): readonly FieldCandidate[] {
       stableId: typeof r.stableId === 'string' ? r.stableId : '',
       parentDeviceId: typeof r.parentDeviceId === 'number' ? r.parentDeviceId : null,
       primaryChildEntityId: stringOrNull(r.primaryChildEntityId),
+      primaryChildPreference: stringsOrNull(r.primaryChildPreference),
       role: stringOrNull(r.role),
     })
   }

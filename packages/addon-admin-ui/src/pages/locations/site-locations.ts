@@ -26,6 +26,7 @@ export interface SiteDevice {
    */
   readonly stableId?: string
   readonly primaryChildEntityId?: string | null
+  readonly primaryChildPreference?: readonly string[] | null
 }
 
 export function siteDeviceFields(device: SiteDevice): DeviceNameFields {
@@ -39,6 +40,9 @@ export function siteDeviceFields(device: SiteDevice): DeviceNameFields {
     ...(device.role !== undefined && device.role !== null ? { role: device.role } : {}),
     ...(device.primaryChildEntityId !== undefined && device.primaryChildEntityId !== null
       ? { primaryChildEntityId: device.primaryChildEntityId }
+      : {}),
+    ...(device.primaryChildPreference !== undefined && device.primaryChildPreference !== null
+      ? { primaryChildPreference: device.primaryChildPreference }
       : {}),
   }
 }
