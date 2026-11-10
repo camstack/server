@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.636] - 2026-11-10
+
 ### Changed
 
 - Summary, timelapse and calendar-events editors now have per-target settings (text, priority, picture, schedule) like the notification rule editor

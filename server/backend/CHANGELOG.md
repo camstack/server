@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.830] - 2026-11-10
+
 ### Changed
 
 - Device list rows served by hero-layout carry extra inline controls (climate, robots, media players)
