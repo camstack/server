@@ -78,7 +78,7 @@ describe('hero-layout provider', () => {
 
   it('the remote is offered to any type when it holds commands', async () => {
     const model = await service({ remoteCommands: async () => 3 }).getHeroModel({ deviceId: 7 })
-    expect(model?.remote).toEqual({ commands: 3 })
+    expect(model?.remote).toMatchObject({ commands: 3, open: { id: 'remote.open' } })
   })
 
   it('a remote that cannot be asked still shows its button, without a count', async () => {
@@ -87,7 +87,7 @@ describe('hero-layout provider', () => {
     }).getHeroModel({
       deviceId: 7,
     })
-    expect(model?.remote).toEqual({ commands: null })
+    expect(model?.remote).toMatchObject({ commands: null, open: { id: 'remote.open' } })
   })
 
   it('a remote with no commands shows no button', async () => {
