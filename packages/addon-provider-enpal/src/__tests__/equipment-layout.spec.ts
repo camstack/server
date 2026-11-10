@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { DeviceType, resolveContainerPrimaryChild } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { blazorRowsToReadings, blazorRowsToTexts, BlazorRowsSchema } from '../enpal-blazor.js'
 import {
@@ -16,9 +17,10 @@ import {
   ENPAL_EQUIPMENT,
   findEquipment,
   metadataOf,
-  orderedByPreference,
+  primaryChildPreferenceOf,
   type EnpalEquipment,
 } from '../enpal-equipment.js'
+import { ENPAL_BOX_ID } from '../enpal-discovery.js'
 import { createSnapshot, type EnpalSnapshot } from '../enpal-snapshot.js'
 
 const rows = BlazorRowsSchema.parse(
@@ -228,16 +230,24 @@ function everyKeyIsPlaced(equipmentId: string, table: readonly Row[]): void {
   }
 }
 
-describe('Enpal Box container', () => {
-  everyKeyIsPlaced('enpal-box', BOX)
+describe('Enpal Box: the Gateway carries the box diagnostics', () => {
+  everyKeyIsPlaced(ENPAL_BOX_ID, BOX)
+  it('is the gateway, named Enpal Box', () => {
+    expect(equipmentOf(ENPAL_BOX_ID).kind).toBe('gateway')
+    expect(equipmentOf(ENPAL_BOX_ID).name).toBe('Enpal Box')
+  })
   it('has exactly the sections Box, EEBUS and Connectivity', () => {
-    const layout = childLayoutOf(equipmentOf('enpal-box'), equipmentOf('enpal-box').specIds)
+    const layout = childLayoutOf(equipmentOf(ENPAL_BOX_ID), equipmentOf(ENPAL_BOX_ID).specIds)
     expect([...new Set(layout.map((e) => e.section))]).toEqual(['Box', 'EEBUS', 'Connectivity'])
   })
 })
 
-describe('Impianto container', () => {
+describe('System container', () => {
   everyKeyIsPlaced('impianto', IMPIANTO)
+  it('is a container named System', () => {
+    expect(equipmentOf('impianto').kind).toBe('container')
+    expect(equipmentOf('impianto').name).toBe('System')
+  })
   it('carries battery voltage and current on the battery child, which is not hidden', () => {
     for (const key of CARRIED_BY_BATTERY) {
       const placed = placementOf('impianto', key)
@@ -259,6 +269,10 @@ describe('Impianto container', () => {
 
 describe('Heat pump container', () => {
   everyKeyIsPlaced('heatpump', HEATPUMP)
+  it('is a container named Heat pump (Enpal)', () => {
+    expect(equipmentOf('heatpump').kind).toBe('container')
+    expect(equipmentOf('heatpump').name).toBe('Heat pump (Enpal)')
+  })
   it('has no accordion sections', () => {
     const heatpump = equipmentOf('heatpump')
     expect(childLayoutOf(heatpump, heatpump.specIds)).toEqual([])
@@ -308,7 +322,7 @@ describe('keys the catalog must not expose', () => {
 
 describe('identity facts are attributes, never sensors', () => {
   const EXPECTED: Readonly<Record<string, readonly string[]>> = {
-    'enpal-box': [
+    [ENPAL_BOX_ID]: [
       'Device.Name',
       'IoTEdgeDevice.Device.Type',
       'IoTEdgeDevice.SerialNumber',
@@ -399,7 +413,7 @@ describe('diagnostics are hidden, history untouched', () => {
   })
 
   it('every child of the Enpal Box is a diagnostic', () => {
-    expect(equipmentOf('enpal-box').children.every((c) => c.diagnostic)).toBe(true)
+    expect(equipmentOf(ENPAL_BOX_ID).children.every((c) => c.diagnostic)).toBe(true)
   })
 })
 
@@ -416,70 +430,64 @@ describe('child layout', () => {
   })
 })
 
-describe('the primary child: an ordered preference, the first available wins', () => {
-  const firstChild = (equipment: string, specIds: readonly string[]): string | undefined =>
-    accessoryChildSpecs({ equipment, specIds, integrationId: 'int-1' })[0]?.stableIdSuffix
-
-  it('Impianto prefers PV power, then the battery level, then the home consumption', () => {
-    const all = equipmentOf('impianto').specIds
-    expect(firstChild('impianto', all)).toBe('pv')
-    expect(
-      firstChild(
-        'impianto',
-        all.filter((id) => id !== 'pv'),
-      ),
-    ).toBe('battery')
-    expect(
-      firstChild(
-        'impianto',
-        all.filter((id) => id !== 'pv' && id !== 'battery'),
-      ),
-    ).toBe('house')
+describe('the primary child: a declared preference, the first adopted one wins', () => {
+  it('System prefers PV power, then the battery level, then the home consumption', () => {
+    expect(primaryChildPreferenceOf(equipmentOf('impianto'), equipmentOf('impianto').specIds)).toEqual(
+      ['pv', 'battery', 'house'],
+    )
   })
 
   it('Heat pump prefers its power, then the hot water, then the outside temperature', () => {
-    const all = equipmentOf('heatpump').specIds
-    expect(firstChild('heatpump', all)).toBe('heatpump')
     expect(
-      firstChild(
-        'heatpump',
-        all.filter((id) => id !== 'heatpump'),
-      ),
-    ).toBe('heatpump-hot-water')
-    expect(
-      firstChild(
-        'heatpump',
-        all.filter((id) => id !== 'heatpump' && id !== 'heatpump-hot-water'),
-      ),
-    ).toBe('heatpump-outside')
+      primaryChildPreferenceOf(equipmentOf('heatpump'), equipmentOf('heatpump').specIds),
+    ).toEqual(['heatpump', 'heatpump-hot-water', 'heatpump-outside'])
   })
 
-  it('Enpal Box prefers the main state, then the LTE state', () => {
-    const all = equipmentOf('enpal-box').specIds
-    expect(firstChild('enpal-box', all)).toBe('box-main-state')
-    expect(
-      firstChild(
-        'enpal-box',
-        all.filter((id) => id !== 'box-main-state'),
-      ),
-    ).toBe('lte-state')
+  it('declares only the children that were adopted', () => {
+    expect(primaryChildPreferenceOf(equipmentOf('impianto'), ['house', 'battery'])).toEqual([
+      'battery',
+      'house',
+    ])
+  })
+
+  it('the gateway and an older container declare nothing', () => {
+    expect(primaryChildPreferenceOf(equipmentOf(ENPAL_BOX_ID), equipmentOf(ENPAL_BOX_ID).specIds)).toEqual([])
+    expect(primaryChildPreferenceOf(findEquipment('pv'), ['pv'])).toEqual([])
   })
 
   it('names no sensor in the rule: a candidate is a catalog entry of any kind', () => {
     const kinds = new Set(
-      ENPAL_EQUIPMENT.flatMap((e) => e.primaryOrder).map((id) => findSpec(id)?.kind),
+      ENPAL_EQUIPMENT.flatMap((e) => e.primaryChildPreference).map((id) => findSpec(id)?.kind),
     )
-    expect(kinds).toEqual(new Set(['power-meter', 'battery', 'numeric', 'text']))
+    expect(kinds).toEqual(new Set(['power-meter', 'battery', 'numeric']))
   })
 
-  it('leaves the other children in their order, after the preferred ones', () => {
-    expect(
-      orderedByPreference(equipmentOf('impianto'), ['house-energy-day', 'house', 'pv']),
-    ).toEqual(['pv', 'house', 'house-energy-day'])
-  })
-
-  it('an older adopted container, with an equipment id the catalog dropped, keeps its order', () => {
-    expect(firstChild('pv', ['inverter-temperature', 'pv'])).toBe('inverter-temperature')
+  it('the framework resolves the declared child whatever order the children come back in', () => {
+    const parentStableId = 'enpal-system'
+    const specIds = equipmentOf('impianto').specIds
+    const children = accessoryChildSpecs({ equipment: 'impianto', specIds, integrationId: 'i' }).map(
+      (spec, index) => ({
+        id: index + 1,
+        stableId: `${parentStableId}-${spec.stableIdSuffix}`,
+        type: spec.meta.type,
+        ...(spec.meta.role !== undefined ? { role: spec.meta.role } : {}),
+        name: spec.meta.name,
+      }),
+    )
+    const preference = {
+      parentStableId,
+      childKeys: primaryChildPreferenceOf(equipmentOf('impianto'), specIds),
+    }
+    for (const order of [children, [...children].reverse()]) {
+      const primary = resolveContainerPrimaryChild(
+        order,
+        undefined,
+        'System',
+        DeviceType.Container,
+        preference,
+      )
+      expect(primary?.stableId).toBe(`${parentStableId}-pv`)
+    }
   })
 })
 

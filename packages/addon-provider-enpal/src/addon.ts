@@ -44,17 +44,18 @@ const ENPAL_MIGRATIONS_DATE = '2026-11-05'
 /**
  * Enpal solar box provider, `mode: account` and broker-less. An integration is one box: its
  * host, InfluxDB access and token live on the integration's settings, and the addon polls it
- * with one manager per `integrationId`. Discovery offers the box itself
- * ({@link DeviceType.Gateway}, with a link to its device page) and one
- * {@link DeviceType.Container} per piece of equipment it reports (the box's own diagnostics,
- * the installation, the heat pump), and adopting a container adopts its Sensor children.
+ * with one manager per `integrationId`. Discovery offers three pieces, each adopted only when
+ * the operator picks it: the box itself ("Enpal Box", a {@link DeviceType.Gateway} carrying its
+ * firmware, its diagnostics and a link to its device page), the "System" (PV, battery, grid,
+ * house meter) and the "Heat pump (Enpal)", both {@link DeviceType.Container}s. Adopting a
+ * piece adopts its Sensor children; a Container declares which of them stands for it.
  *
  * The box does not advertise itself on the network, so the integration is added by hand.
  */
 export class EnpalProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'provider-enpal'
   protected readonly providerName = 'Enpal'
-  // The Sensor children are spawned by the Container's accessory specs, not restored here.
+  // The Sensor children are spawned by the parent's accessory specs, not restored here.
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
     [DeviceType.Container]: EnpalEquipmentDevice,
     [DeviceType.Gateway]: EnpalGatewayDevice,
@@ -279,7 +280,14 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
         }
         return out
       },
-      adoptDevice: async ({ equipment, specIds, integrationId, name, childLayout }) => {
+      adoptDevice: async ({
+        equipment,
+        specIds,
+        integrationId,
+        name,
+        childLayout,
+        primaryChildPreference,
+      }) => {
         const devices = this.ctx.kernel.devices
         if (!devices) throw new Error('enpal adopt: kernel.devices unavailable')
         const config = {
@@ -294,6 +302,7 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
           name,
           integrationId,
           ...(childLayout.length > 0 ? { childLayout } : {}),
+          ...(primaryChildPreference.length > 0 ? { primaryChildPreference } : {}),
         })
         const children = await devices.getChildren(device.id)
         return {
@@ -301,11 +310,12 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
           accessoryDeviceIds: children.map((c) => c.id),
         }
       },
-      adoptGateway: async ({ integrationId, name }) => {
+      adoptGateway: async ({ integrationId, name, specIds, childLayout }) => {
         const devices = this.ctx.kernel.devices
         if (!devices) throw new Error('enpal adopt: kernel.devices unavailable')
         const config = {
           equipment: ENPAL_BOX_ID,
+          specIds,
           integrationId,
           system: ENPAL_SYSTEM,
         }
@@ -314,8 +324,13 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
           type: DeviceType.Gateway,
           name,
           integrationId,
+          ...(childLayout.length > 0 ? { childLayout } : {}),
         })
-        return { deviceId: device.id }
+        const children = await devices.getChildren(device.id)
+        return {
+          deviceId: device.id,
+          accessoryDeviceIds: children.map((c) => c.id),
+        }
       },
       removeDevice: async (id) => {
         await this.ctx.kernel.devices?.remove(id)

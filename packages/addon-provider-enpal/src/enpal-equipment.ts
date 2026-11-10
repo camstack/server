@@ -28,19 +28,27 @@ export interface MetadataField {
   readonly key: string
 }
 
-/** One physical piece of the installation: a Container, with the catalog entries it owns. */
+/**
+ * How a piece is adopted: the box itself is the integration's {@link DeviceType.Gateway}, and
+ * each other piece is a {@link DeviceType.Container}. Both carry Sensor children.
+ */
+export type EnpalEquipmentKind = 'gateway' | 'container'
+
+/** One physical piece of the installation, with the catalog entries it owns. */
 export interface EnpalEquipment {
   readonly id: string
+  readonly kind: EnpalEquipmentKind
+  /** The default name of the adopted device (the box takes its integration's name first). */
   readonly name: string
   readonly children: readonly EquipmentChild[]
   /** Model, hardware type, serials and firmware: attributes of the Container, never sensors. */
   readonly metadata: readonly MetadataField[]
   /**
-   * Which child stands for the Container, most preferred first. The kernel has no ordered
-   * candidate list yet (see `docs/architecture/device-model.md`): until it has, the children
-   * are spawned in this order and the container resolver's tie-break takes the first.
+   * Which child stands for the Container, most preferred first. Stamped on the adopted device
+   * as `primaryChildPreference`; the framework takes the first one that exists, whatever order
+   * the children come back in. Empty for the gateway, which stands for itself.
    */
-  readonly primaryOrder: readonly string[]
+  readonly primaryChildPreference: readonly string[]
   /** Derived: the spec ids of {@link children}, in order. */
   readonly specIds: readonly string[]
 }
@@ -63,17 +71,19 @@ function equipment(input: Omit<EnpalEquipment, 'specIds'>): EnpalEquipment {
   return { ...input, specIds: input.children.map((c) => c.specId) }
 }
 
-/** The id of the Container that holds the box's own diagnostics (the Gateway is `box`). */
-export const ENPAL_BOX_EQUIPMENT_ID = 'enpal-box'
+/** The equipment id, and `childNativeId`, of the box itself: the integration's Gateway. */
+export const ENPAL_BOX_ID = 'box'
 
 /**
- * Three Containers: the box, the installation (Sungrow inverter, battery, grid, home), and
- * the heat pump. Order is the order the candidates are listed in. Every catalog entry belongs
- * to one. The ids of the older catalog entries are unchanged.
+ * Three adoptable pieces: the box (the Gateway, with its connection, firmware and
+ * diagnostics), the installation (System: Sungrow inverter, battery, grid, house meter), and
+ * the heat pump as the box reads it. Order is the order the candidates are listed in. Every
+ * catalog entry belongs to one. The ids of the older catalog entries are unchanged.
  */
 export const ENPAL_EQUIPMENT: readonly EnpalEquipment[] = [
   equipment({
-    id: ENPAL_BOX_EQUIPMENT_ID,
+    id: ENPAL_BOX_ID,
+    kind: 'gateway',
     name: 'Enpal Box',
     children: [
       ...diag('Box', 'box-main-state', 'box-cpu-load', 'box-memory-usage', 'box-hardware-check'),
@@ -106,11 +116,12 @@ export const ENPAL_EQUIPMENT: readonly EnpalEquipment[] = [
       { attribute: 'modemModel', key: 'LTE.Modem.Type' },
       { attribute: 'modemFirmware', key: 'LTE.Modem.Firmware.Version' },
     ],
-    primaryOrder: ['box-main-state', 'lte-state'],
+    primaryChildPreference: [],
   }),
   equipment({
     id: 'impianto',
-    name: 'Impianto',
+    kind: 'container',
+    name: 'System',
     children: [
       ...live('Photovoltaic', 'pv', 'pv-string-1-power', 'pv-string-2-power', 'pv-energy-day'),
       ...diag(
@@ -185,11 +196,12 @@ export const ENPAL_EQUIPMENT: readonly EnpalEquipment[] = [
         key: 'SoftwareVersion.Service.Battery.Unit.1',
       },
     ],
-    primaryOrder: ['pv', 'battery', 'house'],
+    primaryChildPreference: ['pv', 'battery', 'house'],
   }),
   equipment({
     id: 'heatpump',
-    name: 'Heat pump',
+    kind: 'container',
+    name: 'Heat pump (Enpal)',
     children: [
       ...live(
         undefined,
@@ -230,7 +242,7 @@ export const ENPAL_EQUIPMENT: readonly EnpalEquipment[] = [
       },
       { attribute: 'gatewayFirmware', key: 'Heatpump.Gateway.SoftwareVersion' },
     ],
-    primaryOrder: ['heatpump', 'heatpump-hot-water', 'heatpump-outside'],
+    primaryChildPreference: ['heatpump', 'heatpump-hot-water', 'heatpump-outside'],
   }),
 ]
 
@@ -252,7 +264,7 @@ export const enpalEquipmentSchema = z.object({
     .string()
     .min(1)
     .describe(
-      'Equipment id (enpal-box, impianto, heatpump; older adoptions: pv, battery, grid, house)',
+      'Equipment id (impianto, heatpump; older adoptions: pv, battery, grid, house)',
     ),
   specIds: z.array(z.string().min(1)).describe('Catalog entries adopted as children'),
   integrationId: z.string().min(1).describe('Owning integration'),
@@ -261,14 +273,16 @@ export const enpalEquipmentSchema = z.object({
 
 export type EnpalEquipmentConfig = z.infer<typeof enpalEquipmentSchema>
 
-/** The adopted spec ids with the preferred ones first, in preference order; the rest keep theirs. */
-export function orderedByPreference(
+/**
+ * The declared primary children of an adopted piece: its preference, limited to the children
+ * it was adopted with. Empty for the gateway and for an equipment id the catalog dropped.
+ */
+export function primaryChildPreferenceOf(
   found: EnpalEquipment | undefined,
   specIds: readonly string[],
 ): readonly string[] {
-  if (found === undefined) return specIds
-  const preferred = found.primaryOrder.filter((id) => specIds.includes(id))
-  return [...preferred, ...specIds.filter((id) => !preferred.includes(id))]
+  if (found === undefined) return []
+  return found.primaryChildPreference.filter((id) => specIds.includes(id))
 }
 
 /**
@@ -301,7 +315,7 @@ export function metadataOf(
   return out
 }
 
-/** The Sensor children the kernel spawns under an equipment Container. */
+/** The Sensor children the kernel spawns under an adopted piece (a Container or the Gateway). */
 export function accessoryChildSpecs(config: {
   readonly equipment: string
   readonly specIds: readonly string[]
@@ -309,7 +323,7 @@ export function accessoryChildSpecs(config: {
 }): readonly AccessoryChildSpec[] {
   const found = findEquipment(config.equipment)
   const out: AccessoryChildSpec[] = []
-  for (const specId of orderedByPreference(found, config.specIds)) {
+  for (const specId of config.specIds) {
     const spec = findSpec(specId)
     if (spec === undefined) continue
     const diagnostic = found?.children.find((c) => c.specId === specId)?.diagnostic === true

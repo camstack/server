@@ -29,9 +29,15 @@ function harness(keys: string[]) {
     specIds: readonly string[]
     name: string
     layout: ReadonlyArray<readonly [string, string]>
+    primary: readonly string[]
   }> = []
   const removed: number[] = []
-  const gatewayCalls: Array<{ integrationId: string; name: string }> = []
+  const gatewayCalls: Array<{
+    integrationId: string
+    name: string
+    specIds: readonly string[]
+    layout: ReadonlyArray<readonly [string, string]>
+  }> = []
   const provider = buildEnpalAdoptionProvider({
     getSnapshot: (id) => (id === 'int-1' ? snapshotOf(...keys) : null),
     hasIntegration: (id) => id === 'int-1',
@@ -44,6 +50,7 @@ function harness(keys: string[]) {
         specIds: input.specIds,
         name: input.name,
         layout: input.childLayout.map((e) => [e.childKey, e.section]),
+        primary: input.primaryChildPreference,
       })
       return {
         deviceId: 10 + adoptCalls.length,
@@ -51,8 +58,16 @@ function harness(keys: string[]) {
       }
     },
     adoptGateway: async (input) => {
-      gatewayCalls.push(input)
-      return { deviceId: 77 }
+      gatewayCalls.push({
+        integrationId: input.integrationId,
+        name: input.name,
+        specIds: input.specIds,
+        layout: input.childLayout.map((e) => [e.childKey, e.section]),
+      })
+      return {
+        deviceId: 77,
+        accessoryDeviceIds: input.specIds.map((_, i) => 200 + i),
+      }
     },
     removeDevice: async (id) => {
       removed.push(id)
@@ -71,10 +86,10 @@ describe('Enpal adoption', () => {
       page: 1,
       pageSize: 50,
     })
-    expect(page.candidates.map((c) => c.childNativeId)).toEqual([
-      ENPAL_BOX_ID,
-      'impianto',
-      'heatpump',
+    expect(page.candidates.map((c) => [c.childNativeId, c.type])).toEqual([
+      [ENPAL_BOX_ID, 'gateway'],
+      ['impianto', 'container'],
+      ['heatpump', 'container'],
     ])
   })
 
@@ -88,12 +103,13 @@ describe('Enpal adoption', () => {
       {
         equipment: 'impianto',
         specIds: ['battery', 'battery-health', 'inverter-temperature'],
-        name: 'Impianto',
+        name: 'System',
         layout: [
           ['battery', 'Battery'],
           ['battery-health', 'Battery'],
           ['inverter-temperature', 'Inverter'],
         ],
+        primary: ['battery'],
       },
     ])
     expect(out.adopted).toEqual([
@@ -132,16 +148,39 @@ describe('Enpal adoption', () => {
     expect(h.removed).toEqual([7])
   })
 
-  it('adopts the box as a top-level Gateway device, never as equipment', async () => {
-    const h = harness(['Power.Consumption.Total'])
+  it('adopts the box as a top-level Gateway device with the diagnostics it reported', async () => {
+    const h = harness(['Power.Consumption.Total', 'Cpu.Load', 'LTE.Quality'])
     const out = await h.provider.adopt({
       integrationId: 'int-1',
       childNativeIds: [ENPAL_BOX_ID],
     })
-    expect(h.gatewayCalls).toEqual([{ integrationId: 'int-1', name: 'Roof box' }])
+    expect(h.gatewayCalls).toEqual([
+      {
+        integrationId: 'int-1',
+        name: 'Roof box',
+        specIds: ['box-cpu-load', 'lte-quality'],
+        layout: [
+          ['box-cpu-load', 'Box'],
+          ['lte-quality', 'Connectivity'],
+        ],
+      },
+    ])
     expect(h.adoptCalls).toEqual([])
     expect(out.adopted).toEqual([
-      { childNativeId: ENPAL_BOX_ID, parentDeviceId: 77, accessoryDeviceIds: [] },
+      { childNativeId: ENPAL_BOX_ID, parentDeviceId: 77, accessoryDeviceIds: [200, 201] },
     ])
+  })
+
+  it('adopts the box with no children when it reported no diagnostics', async () => {
+    const h = harness([])
+    const out = await h.provider.adopt({ integrationId: 'int-1', childNativeIds: [ENPAL_BOX_ID] })
+    expect(h.gatewayCalls[0]?.specIds).toEqual([])
+    expect(out.adopted[0]?.accessoryDeviceIds).toEqual([])
+  })
+
+  it('declares the primary child of a container in preference order, adopted ones only', async () => {
+    const h = harness(['Power.Consumption.Total', 'Energy.Battery.Charge.Level'])
+    await h.provider.adopt({ integrationId: 'int-1', childNativeIds: ['impianto'] })
+    expect(h.adoptCalls[0]?.primary).toEqual(['battery', 'house'])
   })
 })

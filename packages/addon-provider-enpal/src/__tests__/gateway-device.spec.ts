@@ -26,7 +26,11 @@ const quiet: IScopedLogger = {
   withTags: () => quiet,
 }
 
-function rig(): { readonly ctx: DeviceContext; readonly providers: Map<string, unknown> } {
+const BOX_CONFIG = { equipment: 'box', integrationId: INT, system: 'enpal' }
+
+function rig(
+  persistedConfig: Record<string, unknown> = BOX_CONFIG,
+): { readonly ctx: DeviceContext; readonly providers: Map<string, unknown> } {
   const providers = new Map<string, unknown>()
   let runtime: IDeviceRuntimeState | null = null
   // A DeviceContext is the kernel's own object; the spec supplies only what the device reads.
@@ -42,7 +46,7 @@ function rig(): { readonly ctx: DeviceContext; readonly providers: Map<string, u
       addonId: 'provider-enpal',
       metadata: {},
     },
-    persistedConfig: { equipment: 'box', integrationId: INT, system: 'enpal' },
+    persistedConfig,
     initialRuntimeState: {},
     eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => {}), getRecent: vi.fn(() => []) },
     persistConfig: vi.fn(async () => {}),
@@ -111,5 +115,19 @@ describe('EnpalGatewayDevice', () => {
       url: 'http://192.0.2.10:8080/deviceMessages',
       host: '192.0.2.10',
     })
+  })
+
+  it('spawns the box diagnostics it was adopted with as hidden Sensor children', () => {
+    const { ctx } = rig({ ...BOX_CONFIG, specIds: ['box-cpu-load', 'lte-quality'] })
+    const children = new EnpalGatewayDevice(ctx).getAccessoryChildren()
+    expect(children.map((c) => [c.stableIdSuffix, c.meta.type, c.meta.display?.hidden])).toEqual([
+      ['box-cpu-load', DeviceType.Sensor, true],
+      ['lte-quality', DeviceType.Sensor, true],
+    ])
+  })
+
+  it('a box adopted before it carried diagnostics keeps no children', () => {
+    const { ctx } = rig()
+    expect(new EnpalGatewayDevice(ctx).getAccessoryChildren()).toEqual([])
   })
 })

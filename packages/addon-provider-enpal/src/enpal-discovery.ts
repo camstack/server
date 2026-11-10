@@ -1,34 +1,66 @@
 import { DeviceType, type DiscoveredChildDevice, deviceAdminLinkCapability } from '@camstack/types'
 import { availableSpecs, capsOfSpec } from './enpal-catalog.js'
-import { ENPAL_EQUIPMENT, childNativeId } from './enpal-equipment.js'
+import {
+  ENPAL_BOX_ID,
+  ENPAL_EQUIPMENT,
+  childNativeId,
+  findEquipment,
+  type EnpalEquipment,
+} from './enpal-equipment.js'
 import type { EnpalSnapshot } from './enpal-snapshot.js'
 
-/** The `childNativeId` and equipment id of the box itself, one per integration. */
-export const ENPAL_BOX_ID = 'box'
+export { ENPAL_BOX_ID }
 
 export interface BuildEnpalCandidatesInput {
   /** The box behind the integration: its name, and whether its last poll succeeded. */
   readonly box: { readonly name: string; readonly online: boolean }
   /** The latest poll of the integration, or null while its box is unreachable. */
   readonly snapshot: EnpalSnapshot | null
-  /** Adopted container device id per equipment id. */
+  /** Adopted device id per equipment id (the box under {@link ENPAL_BOX_ID}). */
   readonly adopted: ReadonlyMap<string, number>
 }
 
 const METADATA = { manufacturer: 'Enpal', integration: 'enpal' } as const
 
+/** The Sensor candidates of one piece: the catalog entries of it the box reported. */
+function reportedChildren(
+  equipment: EnpalEquipment,
+  snapshot: EnpalSnapshot | null,
+): readonly DiscoveredChildDevice[] {
+  if (snapshot === null) return []
+  const reported = new Map(availableSpecs(snapshot).map((spec) => [spec.id, spec]))
+  return equipment.specIds.flatMap((id): DiscoveredChildDevice[] => {
+    const spec = reported.get(id)
+    if (spec === undefined) return []
+    return [
+      {
+        childNativeId: childNativeId(equipment.id, spec.id),
+        name: spec.name,
+        type: DeviceType.Sensor,
+        status: 'online',
+        metadata: METADATA,
+        alreadyAdopted: false,
+        adoptedDeviceId: null,
+        capabilities: capsOfSpec(spec),
+      },
+    ]
+  })
+}
+
 /**
- * The box ({@link DeviceType.Gateway}, always offered, offline while it is unreachable), then one
- * Container candidate per equipment the box reported at least one value for, with the
- * Sensor children it reported. Pure.
+ * The box ({@link DeviceType.Gateway}, always offered, offline while it is unreachable, with the
+ * diagnostics it reported as children), then one Container candidate per other piece the box
+ * reported at least one value for, with the Sensor children it reported. Pure.
  */
 export function buildEnpalCandidates(
   input: BuildEnpalCandidatesInput,
 ): readonly DiscoveredChildDevice[] {
   const { snapshot } = input
   const boxAdopted = input.adopted.get(ENPAL_BOX_ID) ?? null
-  // A sibling of the equipment, never its parent. The only thing the box offers is its local
-  // device page; it has no reboot or update.
+  const box = findEquipment(ENPAL_BOX_ID)
+  const boxChildren = box === undefined ? [] : reportedChildren(box, snapshot)
+  // A sibling of the equipment, never its parent. Besides its diagnostics, the only thing the
+  // box offers is its local device page; it has no reboot or update.
   const out: DiscoveredChildDevice[] = [
     {
       childNativeId: ENPAL_BOX_ID,
@@ -39,13 +71,13 @@ export function buildEnpalCandidates(
       alreadyAdopted: boxAdopted !== null,
       adoptedDeviceId: boxAdopted,
       capabilities: [deviceAdminLinkCapability.name],
+      ...(boxChildren.length > 0 ? { children: boxChildren } : {}),
     },
   ]
-  if (snapshot === null) return out
-  const reported = new Map(availableSpecs(snapshot).map((spec) => [spec.id, spec]))
   for (const equipment of ENPAL_EQUIPMENT) {
-    const specs = equipment.specIds.flatMap((id) => reported.get(id) ?? [])
-    if (specs.length === 0) continue
+    if (equipment.kind !== 'container') continue
+    const children = reportedChildren(equipment, snapshot)
+    if (children.length === 0) continue
     const adoptedId = input.adopted.get(equipment.id) ?? null
     out.push({
       childNativeId: equipment.id,
@@ -56,18 +88,7 @@ export function buildEnpalCandidates(
       alreadyAdopted: adoptedId !== null,
       adoptedDeviceId: adoptedId,
       capabilities: [],
-      children: specs.map(
-        (spec): DiscoveredChildDevice => ({
-          childNativeId: childNativeId(equipment.id, spec.id),
-          name: spec.name,
-          type: DeviceType.Sensor,
-          status: 'online',
-          metadata: METADATA,
-          alreadyAdopted: false,
-          adoptedDeviceId: null,
-          capabilities: capsOfSpec(spec),
-        }),
-      ),
+      children,
     })
   }
   return out

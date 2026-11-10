@@ -4,23 +4,19 @@ import {
   type AccessoryChildSpec,
   type DeviceContext,
   type DeviceFeature,
-  errMsg,
 } from '@camstack/types'
 import { ENPAL_SYSTEM } from '../config.js'
-import {
-  accessoryChildSpecs,
-  enpalEquipmentSchema,
-  findEquipment,
-  metadataOf,
-} from '../enpal-equipment.js'
+import { accessoryChildSpecs, enpalEquipmentSchema } from '../enpal-equipment.js'
 import { enpalConnections } from '../enpal-resolver.js'
+import { EnpalMetadataSync } from './enpal-metadata-sync.js'
 
 /**
- * One physical piece (the box, the installation, the heat pump) as a
+ * One piece Enpal measures (the System: PV, battery, grid, house; the heat pump) as a
  * {@link DeviceType.Container}. It owns no caps: it declares the Sensor children it was
- * adopted with, and the kernel spawns and restores them. Its model, serials and firmware are
- * device attributes, written from the box's text rows whenever they change. Online follows the integration's
- * box; the integration marks it offline when a poll fails.
+ * adopted with, and the kernel spawns and restores them; which child stands for it is the
+ * `primaryChildPreference` stamped at adoption. Its model, serials and firmware are device
+ * attributes, written from the box's text rows whenever they change. Online follows the
+ * integration's box; the integration marks it offline when a poll fails.
  */
 export class EnpalEquipmentDevice extends BaseDevice<typeof enpalEquipmentSchema> {
   readonly features: readonly DeviceFeature[] = []
@@ -28,7 +24,6 @@ export class EnpalEquipmentDevice extends BaseDevice<typeof enpalEquipmentSchema
   private readonly equipment: string
   private readonly specIds: readonly string[]
   private readonly integrationId: string
-  private appliedMetadata = ''
   private snapshotUnsub: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
@@ -46,37 +41,25 @@ export class EnpalEquipmentDevice extends BaseDevice<typeof enpalEquipmentSchema
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
-    this.snapshotUnsub = enpalConnections.onSnapshot(this.integrationId, () => {
-      void this.applyMetadata()
+    const metadata = new EnpalMetadataSync({
+      equipment: this.equipment,
+      deviceId: this.id,
+      getSnapshot: () => enpalConnections.getSnapshot(this.integrationId),
+      write: async (patch) => {
+        await this.ctx.api.deviceManager.setMetadata.mutate({ deviceId: this.id, patch })
+      },
+      logger: this.ctx.logger,
     })
-    await this.applyMetadata()
+    this.snapshotUnsub = enpalConnections.onSnapshot(this.integrationId, () => {
+      void metadata.apply()
+    })
+    await metadata.apply()
   }
 
   override async removeDevice(): Promise<void> {
     this.snapshotUnsub?.()
     this.snapshotUnsub = null
     await super.removeDevice()
-  }
-
-  /** Write the identity facts the box reported; a poll that changed none writes nothing. */
-  private async applyMetadata(): Promise<void> {
-    const snapshot = enpalConnections.getSnapshot(this.integrationId)
-    if (snapshot === null) return
-    const attributes = metadataOf(findEquipment(this.equipment), snapshot)
-    const fingerprint = JSON.stringify(attributes)
-    if (fingerprint === this.appliedMetadata || Object.keys(attributes).length === 0) return
-    try {
-      await this.ctx.api.deviceManager.setMetadata.mutate({
-        deviceId: this.id,
-        patch: attributes,
-      })
-      this.appliedMetadata = fingerprint
-    } catch (err) {
-      this.ctx.logger.warn('enpal equipment: could not write the device attributes', {
-        tags: { deviceId: this.id },
-        meta: { equipment: this.equipment, error: errMsg(err) },
-      })
-    }
   }
 
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {

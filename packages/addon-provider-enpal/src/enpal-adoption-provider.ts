@@ -9,7 +9,12 @@ import {
 } from '@camstack/types'
 import { buildEnpalCandidates, ENPAL_BOX_ID } from './enpal-discovery.js'
 import { ENPAL_SYSTEM } from './config.js'
-import { childLayoutOf, findEquipment } from './enpal-equipment.js'
+import {
+  childLayoutOf,
+  findEquipment,
+  primaryChildPreferenceOf,
+  type EnpalEquipment,
+} from './enpal-equipment.js'
 import type { EnpalSnapshot } from './enpal-snapshot.js'
 
 export interface EnpalAdoptionProviderDeps {
@@ -32,15 +37,22 @@ export interface EnpalAdoptionProviderDeps {
     readonly name: string
     /** Accordion sections of the adopted children; empty when the equipment has none. */
     readonly childLayout: ChildLayout
+    /** The children the Container stands for, most preferred first (`primaryChildPreference`). */
+    readonly primaryChildPreference: readonly string[]
   }) => Promise<{
     readonly deviceId: number
     readonly accessoryDeviceIds: readonly number[]
   }>
-  /** Create the top-level Gateway device of the box. */
+  /** Create the top-level Gateway device of the box, with the diagnostics it reported. */
   readonly adoptGateway: (input: {
     readonly integrationId: string
     readonly name: string
-  }) => Promise<{ readonly deviceId: number }>
+    readonly specIds: readonly string[]
+    readonly childLayout: ChildLayout
+  }) => Promise<{
+    readonly deviceId: number
+    readonly accessoryDeviceIds: readonly number[]
+  }>
   readonly removeDevice: (deviceId: number) => Promise<void>
   readonly findDeviceConfig: (deviceId: number) => Promise<Record<string, unknown> | null>
   readonly logger: IScopedLogger
@@ -56,7 +68,17 @@ export function buildEnpalAdoptionProvider(
   deps: EnpalAdoptionProviderDeps,
 ): IDeviceAdoptionProvider {
   const { getSnapshot, hasIntegration, listIntegrations, listAdopted, logger } = deps
-  const boxName = (integrationId: string): string => deps.integrationName(integrationId) ?? 'Enpal'
+  const boxName = (integrationId: string): string =>
+    deps.integrationName(integrationId) ?? findEquipment(ENPAL_BOX_ID)?.name ?? 'Enpal Box'
+
+  /** The catalog entries of a piece the offered candidate reports as children. */
+  const reportedSpecIds = (
+    equipment: EnpalEquipment,
+    candidate: DiscoveredChildDevice | undefined,
+  ): readonly string[] => {
+    const reported = new Set((candidate?.children ?? []).map((c) => c.childNativeId))
+    return equipment.specIds.filter((id) => reported.has(`${equipment.id}#${id}`))
+  }
 
   async function adoptedMap(integrationId: string): Promise<ReadonlyMap<string, number>> {
     const map = new Map<string, number>()
@@ -146,20 +168,20 @@ export function buildEnpalAdoptionProvider(
       let failures = 0
       for (const equipmentId of childNativeIds) {
         try {
-          if (equipmentId === ENPAL_BOX_ID) {
-            const { deviceId } = await deps.adoptGateway({
-              integrationId,
-              name: perCandidate?.[equipmentId]?.name ?? boxName(integrationId),
-            })
-            adopted.push({
-              childNativeId: equipmentId,
-              parentDeviceId: deviceId,
-              accessoryDeviceIds: [],
-            })
-            continue
-          }
           const candidate = offered.find((c) => c.childNativeId === equipmentId)
           const equipment = findEquipment(equipmentId)
+          if (equipmentId === ENPAL_BOX_ID && equipment !== undefined) {
+            // The box is offered even while it is unreachable; it is then adopted bare.
+            const specIds = reportedSpecIds(equipment, candidate)
+            const { deviceId, accessoryDeviceIds } = await deps.adoptGateway({
+              integrationId,
+              name: perCandidate?.[equipmentId]?.name ?? boxName(integrationId),
+              specIds,
+              childLayout: childLayoutOf(equipment, specIds),
+            })
+            adopted.push({ childNativeId: equipmentId, parentDeviceId: deviceId, accessoryDeviceIds })
+            continue
+          }
           if (candidate === undefined || equipment === undefined) {
             logger.warn('enpal adopt: the box reports nothing for this equipment — skipping', {
               meta: { equipment: equipmentId, integrationId },
@@ -167,14 +189,14 @@ export function buildEnpalAdoptionProvider(
             failures++
             continue
           }
-          const reported = new Set((candidate.children ?? []).map((c) => c.childNativeId))
-          const specIds = equipment.specIds.filter((id) => reported.has(`${equipment.id}#${id}`))
+          const specIds = reportedSpecIds(equipment, candidate)
           const { deviceId, accessoryDeviceIds } = await deps.adoptDevice({
             equipment: equipment.id,
             specIds,
             integrationId,
             name: perCandidate?.[equipmentId]?.name ?? equipment.name,
             childLayout: childLayoutOf(equipment, specIds),
+            primaryChildPreference: primaryChildPreferenceOf(equipment, specIds),
           })
           adopted.push({
             childNativeId: equipmentId,

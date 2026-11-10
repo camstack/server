@@ -68,15 +68,13 @@ const childIds = (c: { children?: readonly { childNativeId: string }[] }): strin
   (c.children ?? []).map((x) => x.childNativeId)
 
 describe('Enpal discovery: containers per equipment', () => {
-  it('offers the box, the installation and the heat pump as three Containers', () => {
+  it('offers the installation and the heat pump as two Containers, System and Heat pump (Enpal)', () => {
     const out = buildEnpalCandidates({ snapshot: FULL, adopted: new Map() })
     expect(out.map((c) => [c.childNativeId, c.name, c.type])).toEqual([
-      ['enpal-box', 'Enpal Box', DeviceType.Container],
-      ['impianto', 'Impianto', DeviceType.Container],
-      ['heatpump', 'Heat pump', DeviceType.Container],
+      ['impianto', 'System', DeviceType.Container],
+      ['heatpump', 'Heat pump (Enpal)', DeviceType.Container],
     ])
     const byId = Object.fromEntries(out.map((c) => [c.childNativeId, childIds(c)]))
-    expect(byId['enpal-box']).toEqual(['enpal-box#box-main-state', 'enpal-box#box-cpu-load'])
     expect(byId['impianto']).toEqual(
       expect.arrayContaining([
         'impianto#pv',
@@ -150,14 +148,18 @@ describe('Enpal discovery: the box as a Gateway', () => {
     expect(box?.capabilities).toEqual(['device-admin-link'])
   })
 
-  it('is a sibling of the equipment: no children, and no candidate nests it', () => {
+  it('carries the box diagnostics as its children, and no candidate nests it', () => {
     const out = buildAllEnpalCandidates({ box: BOX, snapshot: FULL, adopted: new Map() })
     const box = out.find((c) => c.type === DeviceType.Gateway)
-    expect(box?.children).toBeUndefined()
+    expect(childIds(box ?? {})).toEqual([
+      `${ENPAL_BOX_ID}#box-main-state`,
+      `${ENPAL_BOX_ID}#box-cpu-load`,
+    ])
+    expect(box?.children?.every((c) => c.type === DeviceType.Sensor)).toBe(true)
     expect(out.flatMap((c) => c.children ?? []).some((c) => c.childNativeId === ENPAL_BOX_ID)).toBe(
       false,
     )
-    expect(out.filter((c) => c.type === DeviceType.Container)).toHaveLength(3)
+    expect(out.filter((c) => c.type === DeviceType.Container)).toHaveLength(2)
   })
 
   it('is still offered, offline, while the box has no snapshot', () => {
