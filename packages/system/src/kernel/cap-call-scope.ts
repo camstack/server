@@ -9,7 +9,7 @@
  */
 
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { readCommandOrigin, type CommandOriginClaim } from '@camstack/types'
+import { readCommandOrigin, type CommandOriginClaim } from '@camstack/types/addon'
 
 const scope = new AsyncLocalStorage<unknown>()
 
