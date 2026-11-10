@@ -131,6 +131,49 @@ describe('FeatureDeriver', () => {
     expect(apply).not.toHaveBeenCalled()
   })
 
+  it('does not derive while only default wrappers answer for the device (D315)', async () => {
+    // After a hub restart the push-fed native cache starts empty, and an
+    // agent can be offline: the camera then still has its `defaultActive`
+    // wrapper entries, but none of its own provider's caps. Its ptz, reboot
+    // and intercom are UNKNOWN, not absent.
+    const wrapper = (capName: string): DeviceBindingEntry => ({
+      capName,
+      kind: 'wrapped',
+      providerAddonId: 'pipeline',
+      providerNodeId: 'hub',
+      nativeAddonId: '',
+    })
+    const apply = vi.fn(async () => true)
+    const deriver = new FeatureDeriver({
+      bindingsOf: async () => [wrapper('snapshot'), wrapper('motion-detection')],
+      allBindings: async () => [{ deviceId: 8, entries: [wrapper('snapshot')] }],
+      apply,
+      logger: logger(),
+    })
+    await deriver.onBindingsChanged(7)
+    expect(await deriver.reconcileAll()).toBe(0)
+    expect(apply).not.toHaveBeenCalled()
+  })
+
+  it('derives once the device provider reported a cap, wrapped or not', async () => {
+    const wrapped: DeviceBindingEntry = {
+      capName: 'snapshot',
+      kind: 'wrapped',
+      providerAddonId: 'pipeline',
+      providerNodeId: 'hub',
+      nativeAddonId: 'prov',
+    }
+    const apply = vi.fn(async () => true)
+    const deriver = new FeatureDeriver({
+      bindingsOf: async () => [wrapped],
+      allBindings: async () => [],
+      apply,
+      logger: logger(),
+    })
+    await deriver.onBindingsChanged(7)
+    expect(apply).toHaveBeenCalledWith(7, [wrapped])
+  })
+
   it('a write that throws is logged against the device and the others still settle', async () => {
     const log = logger()
     const apply = vi.fn(async (deviceId: number) => {

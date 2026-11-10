@@ -11,6 +11,18 @@
  *
  * Scope: runtime source, comment lines skipped, specs and the types package
  * (which owns the table) excluded. Textual: a name assembled at runtime passes.
+ *
+ * Caught: `refreshFeatures(` / `syncBoundFeatures(`, a `get features()`,
+ * `this.features =`, a literal `features: [` / `features = [`, and growing a
+ * list or set in place (`features.push(`, `features.add(`).
+ *
+ * Not caught, on purpose: a COMPUTED value, `features: deriveFeatures(x)`.
+ * The textual form (`features:` followed by a call) hits 27 files today, and
+ * about half are read models that copy a device's features through
+ * (projections, the export panel, the MCP tools, auth's own `features`), so
+ * the ratchet could not tell a driver from a reader without a hand-kept skip
+ * list. A driver that hands a helper's result to `features:` therefore
+ * passes this guard; the helper itself, if it pushes or adds, does not.
  */
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -19,7 +31,7 @@ import { compareToPins, countMatchingLines, readRuntimeSource } from './lib/pinn
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 const HAND_SET =
-  /\b(?:refreshFeatures|syncBoundFeatures)\s*\(|\bget features\s*\(|\bthis\.features\s*=|\bfeatures\s*[:=]\s*\[|\bfeatures\.push\s*\(/
+  /\b(?:refreshFeatures|syncBoundFeatures)\s*\(|\bget features\s*\(|\bthis\.features\s*=|\bfeatures\s*[:=]\s*\[|\bfeatures\.(?:push|add)\s*\(/
 
 /**
  * Not drivers: the types package owns the table, the admin UI's `features:`

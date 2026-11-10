@@ -29,7 +29,9 @@ export interface FeatureDeriverDeps {
  * costs only until the next one. There are no timers and no retries. A read
  * that fails changes nothing: the stored features stay as they were, because a
  * feature set derived from an empty answer would strip every feature of a
- * device the registry merely could not describe yet (D49).
+ * device the registry merely could not describe yet (D49). The same holds for
+ * an answer that does not yet carry the device's own provider: wrapper entries
+ * alone mean "unknown", never "absent" (D315, {@link nativeProviderReported}).
  *
  * Writes for one device run one after another and a burst collapses into the
  * run already waiting, so a worker registering twenty caps costs two settles.
@@ -95,9 +97,19 @@ export class FeatureDeriver {
     deviceId: number,
     entries: readonly DeviceBindingEntry[],
   ): Promise<boolean> {
-    // No binding at all is what a device looks like before its provider has
-    // registered anything; deriving from it would strip every feature (D49).
-    if (entries.length === 0) return false
+    // Unknown is not absent (D315, D49). A device's bindings are never empty
+    // just because its provider is missing: the `defaultActive` wrappers bind
+    // with no native behind them. So the gate is the provider itself — until
+    // one of its caps is in the answer (after a hub restart the push-fed
+    // native cache starts empty; an agent can be offline), the derived
+    // features stay as stored rather than being settled to absent.
+    if (!nativeProviderReported(entries)) {
+      this.deps.logger.debug('feature derive deferred — the device provider has reported no cap', {
+        tags: { deviceId },
+        meta: { entries: entries.length },
+      })
+      return false
+    }
     try {
       return await this.deps.apply(deviceId, entries)
     } catch (err) {
@@ -108,6 +120,16 @@ export class FeatureDeriver {
       return false
     }
   }
+}
+
+/**
+ * True when the device's own provider is in the answer: some entry names a
+ * native addon. A native cap is registered only by the process the device
+ * lives in, so one is proof the provider is up and the registry heard it; a
+ * set of wrapper entries with no native behind them proves nothing.
+ */
+export function nativeProviderReported(entries: readonly DeviceBindingEntry[]): boolean {
+  return entries.some((entry) => entry.nativeAddonId.length > 0)
 }
 
 /** Feed the deriver from the bus; returns the unsubscribe. */
