@@ -302,6 +302,8 @@ export interface PairingOfferClaims {
   readonly commitment: string
   readonly hubUrl: string
   readonly hubMeshAddress: string
+  /** The hub's announced identity (#494); absent from a hub that predates it. */
+  readonly hubId?: string
   readonly iat: number
 }
 
@@ -357,6 +359,7 @@ export function verifyPairingOffer(caCertPem: string, token: string): PairingOff
   const commitment = str('commitment')
   const hubUrl = str('hubUrl')
   const hubMeshAddress = str('hubMeshAddress')
+  const hubId = str('hubId')
   if (Reflect.get(payload, 'use') !== PAIRING_OFFER_USE) return null
   if (typeof iat !== 'number' || !Number.isFinite(iat)) return null
   if (
@@ -377,6 +380,7 @@ export function verifyPairingOffer(caCertPem: string, token: string): PairingOff
     commitment,
     hubUrl,
     hubMeshAddress,
+    ...(hubId !== null ? { hubId } : {}),
     iat,
   }
 }

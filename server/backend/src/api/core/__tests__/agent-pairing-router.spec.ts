@@ -6,6 +6,9 @@
  * The agent is the real `AgentPairing` behind an in-memory transport; the CA, the
  * certificate registry and the CRL are the real ones.
  */
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
 import type { SettingsStoreClient } from '@camstack/types'
 import {
   AgentPairing,
@@ -75,11 +78,14 @@ function unwrap<T extends object>(result: PairingResult<T>): T {
   return result
 }
 
-async function setup(options: { agentReachableForUnpair?: boolean } = {}) {
+async function setup(
+  options: { agentReachableForUnpair?: boolean; hubDataDir?: string } = {},
+) {
   const ca = await generateMeshCa()
   const registry = new MeshCertificateRegistry(memoryStore())
   const crl = new MeshCrl()
   const installed: string[] = []
+  const installedHubIds: Array<string | null> = []
   const events: string[] = []
   const local = new Map<string, LocalPairingSecret>()
   const agent = new AgentPairing({
@@ -89,6 +95,7 @@ async function setup(options: { agentReachableForUnpair?: boolean } = {}) {
     isPaired: () => installed.length > 0,
     install: async (p) => {
       installed.push(p.meshTls.certPem)
+      installedHubIds.push(p.hubId)
     },
     onLocalSecret: (secret) => local.set(secret.pairingId, secret),
     onLocalSecretCleared: (id) => local.delete(id),
@@ -178,6 +185,7 @@ async function setup(options: { agentReachableForUnpair?: boolean } = {}) {
       hubMeshAddress: 'hub.example.test:6443',
     }),
     browse: async () => found,
+    ...(options.hubDataDir !== undefined ? { hubDataDir: options.hubDataDir } : {}),
   })
   const ctx: TrpcContext = { user: admin }
   return {
@@ -187,6 +195,7 @@ async function setup(options: { agentReachableForUnpair?: boolean } = {}) {
     registry,
     crl,
     installed,
+    installedHubIds,
     events,
     ca,
   }
@@ -251,6 +260,24 @@ describe('agentPairing router', () => {
     expect(installed).toHaveLength(1)
     expect(registry.list('agent-a')).toHaveLength(1)
     expect(registry.list('agent-a')[0]?.issuedVia).toBe('pairing')
+  })
+
+  it("gives the agent the hub's persisted hub id, so it can find this hub again (#494)", async () => {
+    const hubDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pairing-hub-id-'))
+    try {
+      const { caller, operator, installedHubIds } = await setup({ hubDataDir })
+      const started = await caller.beginPairing({ host: '192.168.10.128', port: 4444 })
+      operator.confirm(started.code)
+      await caller.confirmPairing({ pairingId: started.pairingId, code: operator.code() })
+      const onDisk: unknown = JSON.parse(
+        fs.readFileSync(path.join(hubDataDir, 'hub-identity.json'), 'utf8'),
+      )
+      expect(installedHubIds).toHaveLength(1)
+      expect(installedHubIds[0]).toMatch(/^hub-[0-9a-f]{16}$/)
+      expect(onDisk).toEqual({ hubId: installedHubIds[0] })
+    } finally {
+      fs.rmSync(hubDataDir, { recursive: true, force: true })
+    }
   })
 
   it('rejecting cancels the agent as well', async () => {

@@ -126,7 +126,8 @@ import { createAgentNodeCertificates } from './agent-node-certificates.js'
 import { createReconnectRunner } from './agent-reconnect.js'
 import { createSerialQueue } from './serial-queue.js'
 import type { SniffingListener } from './agent-sniffing-listener.js'
-import { decideAgentBootMode } from './agent-boot-mode.js'
+import { type AgentBootModeInput, decideAgentBootMode } from './agent-boot-mode.js'
+import { rediscoverPairedHub, startHubRediscoveryWatch } from './agent-hub-rediscovery.js'
 import { resolveStatusMetrics } from './agent-status-metrics.js'
 import {
   agentSelfUpdateEnabled,
@@ -196,7 +197,17 @@ async function startAgent(configPath?: string): Promise<void> {
   // record; lines reach the hub through the same LogManager the addons use.
   const heapWatchLogger = agentLogManager.createLogger().withTags({ addonId: 'heap-watch' })
   startAgentHeapWatch(heapWatchLogger)
-  const config = loadAgentConfig(configPath)
+  // A paired agent with no hub address finds its hub by the id it recorded at pairing (#494)
+  // BEFORE the broker is built, so a found address is dialled by this very boot.
+  const bootConfig = loadAgentConfig(configPath)
+  const rediscoveryLogger = agentLogManager
+    .createLogger()
+    .withTags({ addonId: 'hub-rediscovery', nodeId: bootConfig.nodeId })
+  const rediscovered =
+    bootConfig.hubAddress === undefined
+      ? await rediscoverPairedHub({ configPath: bootConfig.configPath, log: rediscoveryLogger })
+      : null
+  const config = rediscovered?.kind === 'found' ? loadAgentConfig(configPath) : bootConfig
 
   // Derive CAMSTACK_HUB_URL from the configured hub address so remote agents
   // no longer need a second, redundant env var set by hand (the cross-node
@@ -218,9 +229,14 @@ async function startAgent(configPath?: string): Promise<void> {
     console.log(
       `[Agent] Starting node "${config.nodeId}" (name="${config.name}") connecting to ${config.hubAddress}`,
     )
+  } else if (isAgentPaired(config.configPath)) {
+    console.error(
+      `[Agent] Node "${config.nodeId}" is paired but has no hub address and found none on the LAN — UNCONFIGURED. ` +
+        'Set the hub address on this agent; addons boot once it is set',
+    )
   } else {
     console.log(
-      `[Agent] Starting node "${config.nodeId}" (name="${config.name}") with no hub address — set one from the agent UI`,
+      `[Agent] Starting node "${config.nodeId}" (name="${config.name}") with no hub address — pair it from the hub`,
     )
   }
   console.log(`[Agent] Config: ${config.configPath}`)
@@ -417,6 +433,11 @@ async function startAgent(configPath?: string): Promise<void> {
     const hubAddressConfigured =
       typeof configNow.hubAddress === 'string' && configNow.hubAddress.length > 0
     return hubAddressConfigured ? 'disconnected' : 'unconfigured'
+  }
+
+  /** What decides the boot (agent-boot-mode.ts): paired, and the address this process dials. */
+  function bootModeInput(): AgentBootModeInput {
+    return { paired: isAgentPaired(config.configPath), hubAddress: config.hubAddress }
   }
 
   function readConfigFile(p: string): Record<string, unknown> {
@@ -701,8 +722,7 @@ async function startAgent(configPath?: string): Promise<void> {
     getMetricsProvider: resolveStatusMetrics(
       () => capabilityRegistry.getSingleton<IMetricsProvider>('metrics-provider'),
       () => {
-        if (decideAgentBootMode({ paired: isAgentPaired(config.configPath) }) === 'full')
-          return null
+        if (decideAgentBootMode(bootModeInput()) === 'full') return null
         if (unpairedMetrics === null) {
           unpairedMetrics = new NativeMetricsProvider()
           unpairedMetrics.startSampling(5000)
@@ -1118,7 +1138,8 @@ async function startAgent(configPath?: string): Promise<void> {
       leafFingerprint: pairedLeafFingerprint(config.configPath),
     })
   }
-  const addonsBooted = decideAgentBootMode({ paired: isAgentPaired(config.configPath) }) === 'full'
+  const bootMode = decideAgentBootMode(bootModeInput())
+  const addonsBooted = bootMode === 'full'
   // ── Self-update (agent-self-update.ts): keep this closure current with nobody driving it.
   // Unpaired -> npm latest, at boot; paired -> the hub's version, at the first registration ack.
   // Then on the update-check cadence (a periodic check, no retry loop). Lifecycle = respawn (D5).
@@ -1248,7 +1269,10 @@ async function startAgent(configPath?: string): Promise<void> {
     nodeId: config.nodeId,
     dataDir: config.dataDir,
     configPath: config.configPath,
-    onReconnect: reconnect,
+    // Nothing was booted without a hub (agent-boot-mode.ts): a new address is applied by a relaunch (D5).
+    onReconnect: addonsBooted
+      ? reconnect
+      : async () => scheduleAgentRestart(consoleLogger, 'hub address set', config.dataDir),
     pairing,
     onForgetHub: () => forgetHubNow('requested on this agent'),
     getHubConnectionState,
@@ -1315,10 +1339,25 @@ async function startAgent(configPath?: string): Promise<void> {
 
   // An unpaired agent has no hub to read settings from (D857): serve pairing only and
   // relaunch after the certificate is installed (D5). See agent-boot-mode.ts.
-  if (!addonsBooted) {
+  if (bootMode === 'pairing-only') {
     console.log(
       `[Agent] Node "${config.nodeId}" is unpaired - serving pairing only; addons boot after pairing`,
     )
+    return
+  }
+  // Paired, no hub address, none found by hub id (#494): report `unconfigured` and stay up - no
+  // addon dials a hub that is not there, so nothing aborts the process into a respawn loop.
+  if (bootMode === 'awaiting-hub') {
+    consoleLogger.error(
+      'Paired but no hub address: UNCONFIGURED - addons are not started. Set the hub address on this agent',
+      { tags: { nodeId: config.nodeId } },
+    )
+    startHubRediscoveryWatch({
+      configPath: config.configPath,
+      log: rediscoveryLogger,
+      onFound: () =>
+        scheduleAgentRestart(consoleLogger, 'found the paired hub on the LAN', config.dataDir),
+    })
     return
   }
 

@@ -20,6 +20,8 @@ export interface HubCandidate {
   readonly host: string
   readonly port: number
   readonly nodeId: string | null
+  /** The hub's announced identity (#494); absent when no source named one. */
+  readonly hubId?: string
   readonly version: string | null
   /** Human labels: "LAN (mDNS)", "saved session admin", "CAMSTACK_HUB_URL"… */
   readonly sources: readonly string[]
@@ -30,6 +32,7 @@ export interface RawCandidate {
   readonly url: string
   readonly source: string
   readonly nodeId?: string | null
+  readonly hubId?: string
   readonly version?: string | null
 }
 
@@ -60,6 +63,10 @@ export function normalizeHubUrl(value: string): { url: string; host: string; por
   return { url: `https://${shown}:${port}`, host, port }
 }
 
+function hubIdField(hubId: string | undefined): { readonly hubId?: string } {
+  return hubId !== undefined ? { hubId } : {}
+}
+
 /** Merge raw candidates by host:port, keeping every source and any identity. */
 export function mergeCandidates(raw: readonly RawCandidate[]): readonly HubCandidate[] {
   const merged = new Map<string, HubCandidate>()
@@ -73,6 +80,7 @@ export function mergeCandidates(raw: readonly RawCandidate[]): readonly HubCandi
       host: n.host,
       port: n.port,
       nodeId: prev?.nodeId ?? r.nodeId ?? null,
+      ...hubIdField(prev?.hubId ?? r.hubId),
       version: prev?.version ?? r.version ?? null,
       sources: prev?.sources.includes(r.source)
         ? prev.sources
@@ -95,6 +103,7 @@ export async function discoverHubs(deps: DiscoverHubsDeps = {}): Promise<readonl
       url: h.url,
       source: MDNS_SOURCE_LABEL,
       nodeId: h.nodeId,
+      ...hubIdField(h.hubId),
       version: h.version,
     })),
     ...(deps.known ?? []),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { handleNodeExit, type NodeExitDeps } from '../node-exit-handler'
+import { createLineTail, handleNodeExit, type NodeExitDeps } from '../node-exit-handler'
 import type { RestartIntentMarker } from '../node-supervisor'
 import type { RespawnState } from '../renderer-diagnostics'
 
@@ -119,5 +119,40 @@ describe('handleNodeExit', () => {
     const h = harness({}, null)
     handleNodeExit(h.deps, null, 'SIGKILL', false)
     expect(h.state.consecutiveCrashes).toBe(3)
+  })
+})
+
+describe('a crash leaves the child last stderr lines in the shell log (#494)', () => {
+  it('writes the FATAL line the child printed before it died', () => {
+    const lines: string[] = []
+    const h = harness(
+      {
+        log: (line) => lines.push(line),
+        lastChildErrors: () => [
+          "FATAL: Required infrastructure addon \"filesystem-storage\" failed: settings-store not found",
+        ],
+      },
+      null,
+    )
+    handleNodeExit(h.deps, 1, null, false)
+    expect(lines.some((l) => l.includes('respawning'))).toBe(true)
+    expect(lines).toContain(
+      '[node-stderr] FATAL: Required infrastructure addon "filesystem-storage" failed: settings-store not found',
+    )
+  })
+
+  it('an intended exit does not dump the tail', () => {
+    const lines: string[] = []
+    const h = harness({ log: (line) => lines.push(line), lastChildErrors: () => ['noise'] }, FRESH)
+    handleNodeExit(h.deps, 0, null, false)
+    expect(lines.some((l) => l.startsWith('[node-stderr]'))).toBe(false)
+  })
+
+  it('the tail keeps only the last lines', () => {
+    const tail = createLineTail(3)
+    for (const n of [1, 2, 3, 4, 5]) tail.push(`line ${n}`)
+    expect(tail.lines()).toEqual(['line 3', 'line 4', 'line 5'])
+    tail.clear()
+    expect(tail.lines()).toEqual([])
   })
 })

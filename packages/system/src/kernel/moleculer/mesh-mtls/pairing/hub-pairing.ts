@@ -92,6 +92,11 @@ export interface HubPairingDeps {
   readonly hubNodeId: string
   readonly hubUrl: () => Promise<string>
   readonly hubMeshAddress: () => Promise<string>
+  /**
+   * The hub's announced identity (`hub-<16 hex>`, #494), given to the agent in the signed offer so
+   * it can find this hub again over mDNS. `null` (or absent) offers none.
+   */
+  readonly hubId?: () => string | null
   /** True when `nodeId` is connected to the mesh with a verified certificate. */
   readonly isNodeConnected: (nodeId: string) => boolean
   /** Node ids the hub already knows (certificates issued, nodes seen), for the case-insensitive collision check. */
@@ -168,6 +173,8 @@ export class HubPairing {
     const hubNonce = randomHex(32)
     const hubUrl = await this.deps.hubUrl()
     const hubMeshAddress = await this.deps.hubMeshAddress()
+    const hubId = this.deps.hubId?.() ?? null
+    const hubIdField = hubId !== null ? { hubId } : {}
     const commitment = computePairingCommitment(ca.certPem, hubNonce)
     const answer = await this.deps.transport.offer(endpoint, {
       protocol: PAIRING_PROTOCOL,
@@ -176,6 +183,7 @@ export class HubPairing {
       commitment,
       hubUrl,
       hubMeshAddress,
+      ...hubIdField,
       // Signed with the CA KEY: the certificate alone is public, so only this hub can offer as itself.
       signature: signPairingOffer(ca.keyPem, {
         use: PAIRING_OFFER_USE,
@@ -185,6 +193,7 @@ export class HubPairing {
         commitment,
         hubUrl,
         hubMeshAddress,
+        ...hubIdField,
         iat: this.now(),
       }),
     })

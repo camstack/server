@@ -29,6 +29,34 @@ export interface NodeExitDeps {
   readonly relaunch: (delayMs: number) => void
   readonly refreshTray: () => void
   readonly log: (line: string) => void
+  /**
+   * The child's last stderr lines. Written to the shell log after a CRASH, so the reason the
+   * child gave (a FATAL line) survives next to its exit code (#494).
+   */
+  readonly lastChildErrors?: () => readonly string[]
+}
+
+/** How many trailing child stderr lines a crash writes to the shell log. */
+export const CRASH_STDERR_TAIL_LINES = 20
+
+export interface LineTail {
+  push(line: string): void
+  lines(): readonly string[]
+  clear(): void
+}
+
+/** A bounded ring of the most recent lines. */
+export function createLineTail(max: number = CRASH_STDERR_TAIL_LINES): LineTail {
+  let kept: readonly string[] = []
+  return {
+    push: (line) => {
+      kept = [...kept, line].slice(-max)
+    },
+    lines: () => kept,
+    clear: () => {
+      kept = []
+    },
+  }
 }
 
 /** Run a reporting step; its failure must never reach the relaunch. */
@@ -94,4 +122,7 @@ export function handleNodeExit(
   report(
     ` — respawning in ${decision.delayMs}ms (consecutive crashes: ${decision.state.consecutiveCrashes})`,
   )
+  bestEffort(() => {
+    for (const line of deps.lastChildErrors?.() ?? []) deps.log(`[node-stderr] ${line}`)
+  })
 }

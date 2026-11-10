@@ -85,6 +85,7 @@ import {
   withRoleFlag,
 } from './address-book.js'
 import { HubMdnsAdvertiser, internalUrlOf } from './hub-mdns.js'
+import { loadOrCreateHubId } from '../../kernel/hub-identity.js'
 import { createCiaoPublisher } from './hub-mdns-ciao.js'
 import {
   ipv6AllowlistMatches,
@@ -911,10 +912,20 @@ export class LocalNetworkAddon extends BaseAddon<LocalNetworkConfig> {
       return
     }
     if (this.mdns === null) {
+      // The announced identity (#494): random, generated once, never the mesh node id.
+      const identity = loadOrCreateHubId(this.tlsDataDir())
+      if (identity.hubId === null) {
+        this.ctx.logger.warn('hub mDNS: announcing without a hub id', {
+          meta: { problem: identity.problem },
+        })
+      } else if (identity.created) {
+        this.ctx.logger.info('hub id generated', { meta: { hubId: identity.hubId } })
+      }
       this.mdns = new HubMdnsAdvertiser({
         publisher: createCiaoPublisher(),
         logger: this.ctx.logger,
         nodeId: this.ctx.kernel.localNodeId ?? 'hub',
+        hubId: identity.hubId,
         version: null,
         readInternalUrl: async () => internalUrlOf(await this.addressBook('https')),
       })

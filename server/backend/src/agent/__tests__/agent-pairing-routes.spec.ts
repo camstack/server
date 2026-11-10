@@ -28,6 +28,7 @@ import { createAgentHttpServer } from '../agent-http.js'
 import { forgetPairing, isAgentPaired, persistPairing } from '../agent-pairing-store.js'
 
 const NODE_ID = 'agent-a'
+const HUB_ID = 'hub-0123456789abcdef'
 
 function stubBroker(): ServiceBroker {
   return {
@@ -98,6 +99,7 @@ async function start(): Promise<Rig> {
     hubNodeId: 'hub',
     hubUrl: async () => 'https://hub.example.test:4443',
     hubMeshAddress: async () => 'hub.example.test:6443',
+    hubId: () => HUB_ID,
     isNodeConnected: () => false,
     recordIssued: async () => undefined,
     revokeNode: async () => undefined,
@@ -181,6 +183,8 @@ describe('pairing over the agent HTTP routes', () => {
       new X509Certificate(meshTls.certPem).verify(new X509Certificate(r.ca.certPem).publicKey),
     ).toBe(true)
     expect(raw['hubAddress']).toBe('hub.example.test')
+    // The hub's announced identity: how this agent finds ITS hub again with no address (#494).
+    expect(raw['hubId']).toBe(HUB_ID)
     // The retired secret is neither read nor removed by pairing.
     expect(raw['secret']).toBe('retired')
 
@@ -313,6 +317,7 @@ describe('pairing over the agent HTTP routes', () => {
     const raw = read(r.configPath)
     expect(raw['meshTls']).toBeUndefined()
     expect(raw['hubAddress']).toBeUndefined()
+    expect(raw['hubId']).toBeUndefined()
     expect(raw['secret']).toBe('retired')
     const hello = await (await fetch(`http://127.0.0.1:${r.port}/api/agent/pairing/hello`)).json()
     expect(hello).toMatchObject({ state: 'unpaired' })
@@ -350,5 +355,53 @@ describe('pairing over the agent HTTP routes', () => {
       .catch((e: unknown) => e)
     expect(error).toBeInstanceOf(PairingHttpError)
     expect(error).toMatchObject({ status: 404, code: 'no-pairing' })
+  })
+})
+
+describe('a paired agent keeps the hub address it paired with (#494)', () => {
+  async function paired(r: Rig): Promise<void> {
+    const started = await r.hub.begin({ host: '127.0.0.1', port: r.port })
+    await r.post('/api/agent/pairing/confirm', { code: started.code })
+    await r.hub.confirm(started.pairingId, started.code)
+    expect(read(r.configPath)['hubAddress']).toBe('hub.example.test')
+  }
+
+  it.each([null, '', '   '])('refuses to clear it through the config API (%j)', async (value) => {
+    const r = current()
+    await paired(r)
+    const res = await r.post('/api/agent/config', { name: 'Renamed', hubAddress: value })
+    expect(res.status).toBe(400)
+    expect(String(res.body['error'])).toMatch(/paired/)
+    const raw = read(r.configPath)
+    expect(raw['hubAddress']).toBe('hub.example.test')
+    // Refused whole: the name in the same patch is not written either.
+    expect(raw['name']).toBe('Unraid')
+  })
+
+  it('accepts a new address for the same hub (it moved)', async () => {
+    const r = current()
+    await paired(r)
+    const res = await r.post('/api/agent/config', { hubAddress: '192.0.2.44' })
+    expect(res.status).toBe(200)
+    expect(read(r.configPath)['hubAddress']).toBe('192.0.2.44')
+  })
+
+  it('an unpaired agent may still clear it', async () => {
+    const r = current()
+    const res = await r.post('/api/agent/config', { hubAddress: null })
+    expect(res.status).toBe(200)
+  })
+
+  it('persisting a pairing without a hub address is refused, never written', () => {
+    const r = current()
+    expect(() =>
+      persistPairing(r.configPath, {
+        meshTls: { certPem: 'c', keyPem: 'k', caCertPem: 'ca' },
+        hubAddress: '  ',
+        hubUrl: 'https://hub.example.test:4443',
+        hubId: HUB_ID,
+      }),
+    ).toThrow(/no hub address/)
+    expect(isAgentPaired(r.configPath)).toBe(false)
   })
 })

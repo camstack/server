@@ -19,6 +19,7 @@
  * refuses every offer.
  */
 import { createPrivateKey, webcrypto, X509Certificate } from 'node:crypto'
+import { isHubId } from '@camstack/types'
 import {
   caFingerprintCompact,
   createMeshCsrPem,
@@ -55,9 +56,11 @@ export interface InstalledPairing {
     readonly keyPem: string
     readonly caCertPem: string
   }
-  /** Host the broker dials (no port: the TLS port is the cluster default). */
+  /** Host the broker dials (no port: the TLS port is the cluster default). Never empty. */
   readonly hubAddress: string
   readonly hubUrl: string
+  /** The hub's announced identity (#494): how this agent finds ITS hub again over mDNS. `null` from a hub that predates it. */
+  readonly hubId: string | null
 }
 
 /** What the agent's own machine is told, and nobody else (console, 0600 file, local window). */
@@ -129,6 +132,8 @@ export interface OfferRequest {
   readonly commitment: string
   readonly hubUrl: string
   readonly hubMeshAddress: string
+  /** The hub's announced identity (#494), covered by the signature; absent from an older hub. */
+  readonly hubId?: string
   /** The offer, signed with the hub CA's KEY: a public CA certificate alone cannot make one. */
   readonly signature: string
 }
@@ -190,6 +195,7 @@ interface Session {
     readonly commitment: string
     readonly url: string
     readonly meshAddress: string
+    readonly hubId: string | null
   }
   readonly keyPem: string
   readonly csrPem: string
@@ -273,6 +279,21 @@ function readCaCertificate(pem: string, nowMs: number): X509Certificate | null {
   } catch {
     return null
   }
+}
+
+/**
+ * The host this agent will dial for `address`, or `null` when no other machine could reach it:
+ * empty, unspecified (`0.0.0.0`, `::`) or loopback. A pairing that would leave the agent with
+ * such an address is refused instead of completing silently (#494).
+ */
+export function dialableHubHost(address: string): string | null {
+  const host = hubHostFromMeshAddress(address)
+  const bare = host.replace(/^\[|\]$/g, '').toLowerCase()
+  // `:6443` (no host at all) comes back as written.
+  if (bare.length === 0 || /^:\d*$/.test(bare)) return null
+  if (bare === 'localhost' || bare === '0.0.0.0' || bare === '::' || bare === '::1') return null
+  if (/^127\./.test(bare) || /^::ffff:127\./.test(bare)) return null
+  return host
 }
 
 /** `host:6443` / `[::1]:6443` / `host` → the host, port dropped. */
@@ -402,6 +423,13 @@ export class AgentPairing {
       return fail(400, 'bad-offer', 'the commitment is malformed')
     }
     if (!isHttpUrl(request.hubUrl)) return fail(400, 'bad-offer', 'hubUrl is not an http(s) URL')
+    if (dialableHubHost(request.hubMeshAddress) === null) {
+      return fail(
+        400,
+        'no-hub-address',
+        `the hub offered no address this agent can dial ("${request.hubMeshAddress}") - set its LAN address on System -> Network`,
+      )
+    }
 
     const caFingerprint = caFingerprintCompact(request.hubCaCertPem)
     // An offer must be SIGNED by the CA key: the CA certificate is public, so without this anyone
@@ -437,6 +465,7 @@ export class AgentPairing {
         commitment: request.commitment,
         url: request.hubUrl,
         meshAddress: request.hubMeshAddress,
+        hubId: request.hubId ?? null,
       },
       keyPem,
       csrPem,
@@ -598,11 +627,17 @@ export class AgentPairing {
       this.end(session, 'failed')
       return refusal
     }
+    const hubAddress = dialableHubHost(session.hub.meshAddress)
+    if (hubAddress === null) {
+      this.end(session, 'failed')
+      return fail(400, 'no-hub-address', 'the hub offered no address this agent can dial')
+    }
     try {
       await this.deps.install({
         meshTls: { certPem: leafPem, keyPem: session.keyPem, caCertPem: session.hub.caCertPem },
-        hubAddress: hubHostFromMeshAddress(session.hub.meshAddress),
+        hubAddress,
         hubUrl: session.hub.url,
+        hubId: session.hub.hubId,
       })
     } catch (err) {
       this.end(session, 'failed')
@@ -703,6 +738,7 @@ export class AgentPairing {
       claims.commitment !== request.commitment ||
       claims.hubUrl !== request.hubUrl ||
       claims.hubMeshAddress !== request.hubMeshAddress ||
+      (claims.hubId ?? null) !== (request.hubId ?? null) ||
       claims.iat > at + 60_000 ||
       at - claims.iat > PAIRING_OFFER_MAX_AGE_MS
     ) {
@@ -961,10 +997,22 @@ function parseOffer(body: unknown): OfferRequest | null {
   const hubUrl: unknown = Reflect.get(body, 'hubUrl')
   const hubMeshAddress: unknown = Reflect.get(body, 'hubMeshAddress')
   const signature: unknown = Reflect.get(body, 'signature')
+  const hubId: unknown = Reflect.get(body, 'hubId')
   if (typeof protocol !== 'number') return null
+  // Optional (an older hub sends none), but a present one must be a hub id.
+  if (hubId !== undefined && !isHubId(hubId)) return null
   if (!isText(hubNodeId, 128) || !isText(hubCaCertPem, 16_384) || !isText(commitment, 128)) {
     return null
   }
   if (!isText(hubUrl) || !isText(hubMeshAddress, 255) || !isText(signature, 4096)) return null
-  return { protocol, hubNodeId, hubCaCertPem, commitment, hubUrl, hubMeshAddress, signature }
+  return {
+    protocol,
+    hubNodeId,
+    hubCaCertPem,
+    commitment,
+    hubUrl,
+    hubMeshAddress,
+    ...(hubId !== undefined ? { hubId } : {}),
+    signature,
+  }
 }

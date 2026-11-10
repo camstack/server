@@ -24,6 +24,8 @@ export interface FoundHub {
   /** What fills the agent's hub-address field. */
   readonly host: string
   readonly nodeId: string | null
+  /** The hub's announced identity (#494): tells two hubs on one LAN apart. */
+  readonly hubId?: string
   readonly version: string | null
   /** Where it was learned: "LAN (mDNS)", "configured hub address". */
   readonly sources: readonly string[]
@@ -59,6 +61,7 @@ function toFoundHub(candidate: HubCandidate): FoundHub {
     url: candidate.url,
     host: candidate.host,
     nodeId: candidate.nodeId,
+    ...(candidate.hubId !== undefined ? { hubId: candidate.hubId } : {}),
     version: candidate.version,
     sources: candidate.sources,
   }

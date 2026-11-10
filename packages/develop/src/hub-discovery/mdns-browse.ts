@@ -4,7 +4,7 @@
  * for that service — it never reads the mesh multicast channel (D826 retired
  * it on the hub, so it can only ever show pre-D826 hubs).
  */
-import { HUB_MDNS_QUERY_NAME, HUB_MDNS_ROLE, HUB_MDNS_TXT_KEYS } from '@camstack/types'
+import { HUB_MDNS_QUERY_NAME, HUB_MDNS_ROLE, HUB_MDNS_TXT_KEYS, isHubId } from '@camstack/types'
 import makeMdns from 'multicast-dns'
 
 /** The records the browse cares about, free of the wire library's types. */
@@ -37,6 +37,8 @@ export interface MdnsHub {
   /** Base https URL, no trailing slash. */
   readonly url: string
   readonly nodeId: string | null
+  /** The hub's announced identity (`hub-<16 hex>`, #494); absent when it announces none. */
+  readonly hubId?: string
   readonly version: string | null
 }
 
@@ -95,6 +97,11 @@ function originOf(value: string | undefined): string | null {
   }
 }
 
+/** `{ hubId }` when the TXT names a real hub id, else nothing (a forged `hub` is dropped). */
+function hubIdOf(value: string | undefined): { readonly hubId?: string } {
+  return isHubId(value) ? { hubId: value } : {}
+}
+
 /** Fold the responses into hubs. Pure, so it is tested without sockets. */
 export function hubsFromResponses(responses: readonly MdnsResponse[]): readonly MdnsHub[] {
   const found = new Map<string, MdnsHub>()
@@ -117,6 +124,7 @@ export function hubsFromResponses(responses: readonly MdnsResponse[]): readonly 
       found.set(url, {
         url,
         nodeId: txt.get(HUB_MDNS_TXT_KEYS.nodeId) ?? null,
+        ...hubIdOf(txt.get(HUB_MDNS_TXT_KEYS.hubId)),
         version: txt.get(HUB_MDNS_TXT_KEYS.version) ?? null,
       })
     }

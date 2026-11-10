@@ -499,6 +499,10 @@ function buildCapabilityRouters(services: RouterServices) {
       registry: services.capabilityRegistry,
       nodeClient: (nodeId) => createNodeCertificatesClient(services.moleculer, nodeId),
       log: services.loggingService.createLogger('agent-pairing'),
+      // Same root as local-network's mDNS advertisement reads the hub id from (#494).
+      hubDataDir: path.resolve(
+        services.configService.get<string>('server.dataPath') ?? 'camstack-data',
+      ),
     }),
     auth: createAuthRouter(
       services.authService,

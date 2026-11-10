@@ -24,6 +24,7 @@ import {
   getProcessMeshCertificateRegistry,
   getProcessPeerLeaf,
   HubPairing,
+  loadOrCreateHubId,
   isProcessVerifiedMeshPeer,
   dropProcessPeer,
   type AgentPairingTransport,
@@ -112,6 +113,11 @@ export interface AgentPairingRouterDeps {
     readonly hubMeshAddress: string
   }>
   readonly browse?: HubAgentPairingBrowse
+  /**
+   * The hub's data dir, where its announced identity lives (`hub-identity.json`, #494). The
+   * offer carries that id so a paired agent can find this hub again over mDNS. Absent: no id.
+   */
+  readonly hubDataDir?: string
 }
 
 type HubAgentPairingBrowse = ConstructorParameters<typeof HubAgentPairing>[0]['browse']
@@ -179,6 +185,14 @@ export function createAgentPairingRouter(deps: AgentPairingRouterDeps) {
     hubNodeId: HUB_NODE_ID,
     hubUrl: async () => (await hubAddresses()).hubUrl,
     hubMeshAddress: async () => (await hubAddresses()).hubMeshAddress,
+    hubId: () => {
+      if (deps.hubDataDir === undefined) return null
+      const identity = loadOrCreateHubId(deps.hubDataDir)
+      if (identity.hubId === null) {
+        deps.log.warn('the pairing offer carries no hub id', { meta: { problem: identity.problem } })
+      }
+      return identity.hubId
+    },
     isNodeConnected,
     recordIssued: async (nodeId, certPem) => {
       const registry = meshRegistry()

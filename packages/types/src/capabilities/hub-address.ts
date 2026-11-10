@@ -392,8 +392,22 @@ export const HUB_MDNS_TXT_KEYS = {
   version: 'version',
   role: 'role',
   url: 'url',
+  /** The hub's announced identity (`hub-<16 hex>`), see {@link isHubId}. */
+  hubId: 'hubId',
 } as const
 export const HUB_MDNS_ROLE = 'hub'
+
+/**
+ * A hub's ANNOUNCED identity: random, generated once on the hub and persisted, never derived
+ * from anything an outsider can see. Two hubs on one LAN are told apart by it, and a paired
+ * agent records it so it can find ITS hub again over mDNS (and refuse another). It is not the
+ * mesh node id (`hub`), which stays the same on every hub.
+ */
+export const HUB_ID_PATTERN = /^hub-[0-9a-f]{16}$/
+
+export function isHubId(value: unknown): value is string {
+  return typeof value === 'string' && HUB_ID_PATTERN.test(value)
+}
 
 /**
  * How a hub finds agents to pair (D857): every agent publishes ONE mDNS service for its API

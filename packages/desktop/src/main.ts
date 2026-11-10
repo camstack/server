@@ -53,7 +53,7 @@ import { loadOrCreatePlatformKeychainKey } from './keychain-platform-key'
 import { resolveLaunchArgs } from './launch-args-client'
 import type { AgentConnectionInput } from './node-env'
 import { buildNodeEnv } from './node-env'
-import { handleNodeExit } from './node-exit-handler'
+import { createLineTail, handleNodeExit } from './node-exit-handler'
 import { createChildShutdownWatch } from './node-shutdown-watch'
 import { probeHungChild } from './hang-probe'
 import { startRestartIntentWatch } from './restart-intent-watch'
@@ -325,9 +325,12 @@ startRestartIntentWatch({
   onAppear: () => childShutdownWatch.onRestartIntent(),
 })
 
+// The child's last stderr lines, written to shell.log when it crashes (#494).
+const childStderrTail = createLineTail()
 nodeManager.onLog((line, stream) => {
   const writer = stream === 'stderr' ? console.error : console.log
   writer(`[node] ${line}`)
+  if (stream === 'stderr') childStderrTail.push(line)
   childShutdownWatch.onChildLine(line)
 })
 nodeManager.onExit(() => childShutdownWatch.onChildExit())
@@ -368,6 +371,7 @@ nodeManager.onExit((code, signal, wasIntentional) => {
           appendShellLog(shellLogPath(), line)
           console.log(line)
         },
+        lastChildErrors: () => childStderrTail.lines(),
       },
       code,
       signal,
@@ -375,6 +379,9 @@ nodeManager.onExit((code, signal, wasIntentional) => {
     )
   } catch (err) {
     appendShellLog(shellLogPath(), formatFatal('uncaughtException', err))
+  } finally {
+    // The next child starts with an empty tail: a crash never reports the previous one's lines.
+    childStderrTail.clear()
   }
 })
 
@@ -387,7 +394,10 @@ nodeManager.onExit((code, signal, wasIntentional) => {
  * Combines the address + port into the `host:port` form the broker expects when
  * the port is non-default and the address doesn't already carry one. Returns
  * `undefined` when manual mode is selected but no address is configured (caller
- * shows the setup window); a `string | null` otherwise (null = auto discovery).
+ * shows the setup window); a `string | null` otherwise. `null` (auto mode) hands
+ * nothing to the node: the agent's own pairing record decides - the hub address
+ * it paired with in `agent.json`, else the hub found on the LAN by the hub id it
+ * recorded, else it reports `unconfigured` (#494).
  */
 function resolveAgentHubAddress(): string | null | undefined {
   const hubMode = store.get('hubMode')

@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The desktop app now quits cleanly on SIGTERM/SIGINT and force-kills a node that announces shutdown but never exits, with a trail in shell.log
+- When the agent crashes, shell.log keeps its last error lines next to the exit code
 
 ## [0.1.0] - 2026-10-27
 

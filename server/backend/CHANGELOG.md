@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Capability method signatures now mark optional cover, fan, climate, lock and media-player methods; bindings report implemented methods
 - Device features are re-derived only from a provider whose node is online; an offline agent's cameras keep theirs
 
+### Fixed
+
+- A paired agent keeps the hub address it paired with; one that has none finds its hub on the LAN by the hub's id, or reports it is unconfigured instead of crash-looping, and a paired agent's hub address can no longer be cleared
+
 ## [1.2.826] - 2026-11-10
 
 ### Changed

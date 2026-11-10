@@ -134,6 +134,9 @@ interface RigOptions {
   readonly ca?: MeshCaSigner
   readonly clock?: { now: number }
   readonly leafPresented?: () => boolean
+  /** The hub's announced identity; `undefined` = a hub that predates it (#494). */
+  readonly hubId?: string
+  readonly hubMeshAddress?: string
 }
 
 async function rig(options: RigOptions = {}): Promise<Rig> {
@@ -168,7 +171,8 @@ async function rig(options: RigOptions = {}): Promise<Rig> {
     ca: () => ca,
     hubNodeId: 'hub',
     hubUrl: async () => 'https://hub.example.test:4443',
-    hubMeshAddress: async () => 'hub.example.test:6443',
+    hubMeshAddress: async () => options.hubMeshAddress ?? 'hub.example.test:6443',
+    ...(options.hubId !== undefined ? { hubId: () => options.hubId ?? null } : {}),
     isNodeConnected: (nodeId) => connected.has(nodeId),
     knownNodeIds: () => known,
     recordIssued: async (nodeId) => {
@@ -1128,4 +1132,47 @@ describe('the outcome of a pairing survives the end of the others (NEW-1)', () =
     expect(view.state).toBe('paired')
     expect(r.leafRevocations).toEqual([])
   })
+})
+
+describe('pairing records the hub it paired with (#494)', () => {
+  const HUB_ID = 'hub-0123456789abcdef'
+
+  it('installs the dialable hub address and the hub id the hub announced', async () => {
+    const r = await rig({ hubId: HUB_ID })
+    const started = await r.hub.begin(ENDPOINT)
+    await bothOperatorsConfirm(r, started.pairingId, 'hub-first')
+    expect(r.installed).toHaveLength(1)
+    expect(r.installed[0]?.hubAddress).toBe('hub.example.test')
+    expect(r.installed[0]?.hubId).toBe(HUB_ID)
+  })
+
+  it('a hub that predates the hub id still pairs; the agent records no id', async () => {
+    const r = await rig()
+    const started = await r.hub.begin(ENDPOINT)
+    await bothOperatorsConfirm(r, started.pairingId, 'hub-first')
+    expect(r.installed[0]?.hubId).toBeNull()
+  })
+
+  it('refuses an offer whose hub id is not the one the CA signed', async () => {
+    const r = await rig({
+      hubId: HUB_ID,
+      transport: (agent) => ({
+        ...directTransport(agent),
+        offer: async (_e, body) =>
+          unwrap(await agent.offer({ ...body, hubId: 'hub-ffffffffffffffff' })).answer,
+      }),
+    })
+    await expect(r.hub.begin(ENDPOINT)).rejects.toThrow(/not signed by the CA/)
+    expect(r.installed).toEqual([])
+  })
+
+  it.each(['127.0.0.1:6443', 'localhost:6443', '0.0.0.0:6443', '[::]:6443', '[::1]:6443', ':6443'])(
+    'refuses a pairing whose hub mesh address %s no other machine can dial',
+    async (hubMeshAddress) => {
+      const r = await rig({ hubMeshAddress })
+      await expect(r.hub.begin(ENDPOINT)).rejects.toThrow(/no address this agent can dial/)
+      expect(r.installed).toEqual([])
+      expect(r.agent.state()).toBe('unpaired')
+    },
+  )
 })

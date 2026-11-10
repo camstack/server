@@ -99,6 +99,30 @@ describe('hub mDNS announcement', () => {
     expect(Object.keys(a?.txt ?? {}).toSorted()).toEqual(['nodeId', 'role', 'url', 'version'])
   })
 
+  it('announces the hub id in the TXT and the instance name, so two hubs are told apart (#494)', () => {
+    const a = buildHubAnnouncement({
+      nodeId: 'hub',
+      hubId: 'hub-0123456789abcdef',
+      version: null,
+      internalUrl: SIGN_IN_LAN,
+    })
+    expect(a?.txt['hubId']).toBe('hub-0123456789abcdef')
+    expect(a?.name).toBe('camstack-hub-0123456789abcdef')
+    // The mesh node id stays `hub` on every hub; only the announced identity differs.
+    expect(a?.txt['nodeId']).toBe('hub')
+  })
+
+  it('never announces a hub id that is not a generated one', () => {
+    const a = buildHubAnnouncement({
+      nodeId: 'hub',
+      hubId: 'hub',
+      version: null,
+      internalUrl: SIGN_IN_LAN,
+    })
+    expect(a?.txt).not.toHaveProperty('hubId')
+    expect(a?.name).toBe('camstack-hub')
+  })
+
   it('takes the address from the role the book resolved, never another one', () => {
     expect(internalUrlOf(book(SIGN_IN_LAN, OTHER))).toBe(SIGN_IN_LAN)
   })

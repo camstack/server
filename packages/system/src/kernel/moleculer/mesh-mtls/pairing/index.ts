@@ -1,5 +1,6 @@
 export {
   AgentPairing,
+  dialableHubHost,
   hubHostFromMeshAddress,
   type AgentHello,
   type AgentPairingDeps,

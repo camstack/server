@@ -4,8 +4,8 @@
  *
  * The hub publishes ONE `_camstack._tcp` service for its HTTPS endpoint. There
  * is no mesh channel in it (D826 retired mesh UDP discovery on purpose) and
- * nothing secret: the TXT record carries the node id, the version, the role
- * and the address URL — finding a hub grants nothing, every client still signs
+ * nothing secret: the TXT record carries the node id, the hub id (#494), the
+ * version, the role and the address URL — finding a hub grants nothing, every client still signs
  * in.
  *
  * The advertised address is NOT ranked here. It is the `internal` role of the
@@ -18,11 +18,11 @@
 import { isIP } from 'node:net'
 
 import type { HubAddressBook, IScopedLogger } from '@camstack/types'
-import { HUB_MDNS_ROLE, HUB_MDNS_SERVICE_TYPE, HUB_MDNS_TXT_KEYS } from '@camstack/types'
+import { HUB_MDNS_ROLE, HUB_MDNS_SERVICE_TYPE, HUB_MDNS_TXT_KEYS, isHubId } from '@camstack/types'
 
 /** What one published service says. Every value is public. */
 export interface HubMdnsAnnouncement {
-  /** Instance name (`camstack-<nodeId>`). */
+  /** Instance name (`camstack-<hubId>`, else `camstack-<nodeId>`). */
   readonly name: string
   readonly type: string
   readonly port: number
@@ -43,6 +43,8 @@ export interface HubMdnsPublisher {
 
 export interface HubMdnsInputs {
   readonly nodeId: string
+  /** The hub's announced identity (`hub-<16 hex>`, hub-identity.ts); omitted unless valid. */
+  readonly hubId?: string | null
   readonly version: string | null
   /** `getAddresses().roles.internal.resolved` — an https base URL or null. */
   readonly internalUrl: string | null
@@ -67,8 +69,11 @@ export function buildHubAnnouncement(inputs: HubMdnsInputs): HubMdnsAnnouncement
     [HUB_MDNS_TXT_KEYS.url]: url.origin,
   }
   if (inputs.version !== null) txt[HUB_MDNS_TXT_KEYS.version] = inputs.version
+  const hubId = isHubId(inputs.hubId) ? inputs.hubId : null
+  if (hubId !== null) txt[HUB_MDNS_TXT_KEYS.hubId] = hubId
   return {
-    name: `camstack-${inputs.nodeId}`,
+    // Two hubs on one LAN are two instance names, not `camstack-hub (2)`.
+    name: `camstack-${hubId ?? inputs.nodeId}`,
     type: HUB_MDNS_SERVICE_TYPE,
     port,
     address: isIP(host) !== 0 ? host : null,
@@ -84,6 +89,8 @@ export interface HubMdnsAdvertiserOptions {
   readonly publisher: HubMdnsPublisher
   readonly logger: IScopedLogger
   readonly nodeId: string
+  /** The hub's announced identity; `null` when it could not be read. */
+  readonly hubId?: string | null
   readonly version: string | null
   /** Reads the `internal` role from the address book; may throw. */
   readonly readInternalUrl: () => Promise<string | null>
@@ -124,6 +131,7 @@ export class HubMdnsAdvertiser {
       const internalUrl = await this.options.readInternalUrl()
       const next = buildHubAnnouncement({
         nodeId: this.options.nodeId,
+        hubId: this.options.hubId ?? null,
         version: this.options.version,
         internalUrl,
       })
@@ -140,7 +148,11 @@ export class HubMdnsAdvertiser {
       const handle = await this.options.publisher.publish(next)
       this.current = { key, handle }
       logger.info('hub mDNS: advertising _camstack._tcp', {
-        meta: { url: next.txt[HUB_MDNS_TXT_KEYS.url], port: next.port },
+        meta: {
+          url: next.txt[HUB_MDNS_TXT_KEYS.url],
+          port: next.port,
+          hubId: next.txt[HUB_MDNS_TXT_KEYS.hubId] ?? null,
+        },
       })
     } catch (err: unknown) {
       logger.warn('hub mDNS: could not advertise the hub (logins still work with --server)', {

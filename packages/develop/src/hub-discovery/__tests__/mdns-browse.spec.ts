@@ -28,6 +28,15 @@ describe('mDNS browse', () => {
     expect(without[0]?.url).toBe('https://192.0.2.10:4443')
   })
 
+  it('reads the hub id a hub announces, and ignores one that is not a hub id (#494)', () => {
+    const [announced] = hubsFromResponses([
+      response(['nodeId=hub', 'role=hub', 'hubId=hub-0123456789abcdef']),
+    ])
+    expect(announced?.hubId).toBe('hub-0123456789abcdef')
+    const [forged] = hubsFromResponses([response(['nodeId=hub', 'role=hub', 'hubId=hub'])])
+    expect(forged).not.toHaveProperty('hubId')
+  })
+
   it('lists only hubs: a service whose role is not hub is skipped', () => {
     expect(hubsFromResponses([response(['role=agent'])])).toEqual([])
   })

@@ -6,6 +6,7 @@
 import { X509Certificate } from 'node:crypto'
 import * as fs from 'node:fs'
 import { agentHttpsPaths, type InstalledPairing } from '@camstack/server/system'
+import { isHubId } from '@camstack/types'
 import { readJsonFile, writeJsonFile0600 } from './agent-json-file.js'
 
 /** Keys that exist only while this agent is paired. */
@@ -15,6 +16,7 @@ const PAIRED_KEYS: readonly string[] = [
   'meshSwap',
   'hubAddress',
   'hubUrl',
+  'hubId',
 ]
 
 /** `agent.json` holds mesh material: the agent is paired. */
@@ -37,12 +39,23 @@ export function pinnedMeshCaCert(configPath: string): string | null {
   return typeof ca === 'string' && ca.length > 0 ? ca : null
 }
 
-/** Persist a completed pairing: the leaf, its key, the pinned CA and the hub's host. */
+/**
+ * Persist a completed pairing: the leaf, its key, the pinned CA, the hub's host and its announced
+ * id. A pairing with no hub address to dial is refused (thrown: the pairing fails, nothing is
+ * written) - a paired agent without one dials nobody after its next restart (#494).
+ */
 export function persistPairing(configPath: string, pairing: InstalledPairing): void {
-  const { meshTlsPrevious: _previous, meshSwap: _swap, ...existing } = readJsonFile(configPath)
+  const hubAddress = pairing.hubAddress.trim()
+  if (hubAddress.length === 0) {
+    throw new Error('the pairing carries no hub address to dial - nothing was installed')
+  }
+  const { meshTlsPrevious: _previous, meshSwap: _swap, hubId: _hubId, ...existing } =
+    readJsonFile(configPath)
   writeJsonFile0600(configPath, {
     ...existing,
-    hubAddress: pairing.hubAddress,
+    hubAddress,
+    // The hub's announced identity: how this agent finds ITS hub again over mDNS (#494).
+    ...(pairing.hubId !== null ? { hubId: pairing.hubId } : {}),
     // The hub's API address the hub itself gave: where a refused agent asks "am I still a member?".
     hubUrl: pairing.hubUrl,
     meshTls: pairing.meshTls,
@@ -53,6 +66,8 @@ export function persistPairing(configPath: string, pairing: InstalledPairing): v
 export interface PairedHubIdentity {
   readonly hubUrl: string | null
   readonly hubAddress: string | null
+  /** The hub's announced identity recorded at pairing; `null` from a hub that predates it. */
+  readonly hubId: string | null
   readonly certPem: string
   readonly keyPem: string
   readonly caCertPem: string
@@ -70,9 +85,11 @@ export function readPairedHubIdentity(configPath: string): PairedHubIdentity | n
   }
   const hubUrl: unknown = config['hubUrl']
   const hubAddress: unknown = config['hubAddress']
+  const hubId: unknown = config['hubId']
   return {
     hubUrl: typeof hubUrl === 'string' && hubUrl.length > 0 ? hubUrl : null,
     hubAddress: typeof hubAddress === 'string' && hubAddress.length > 0 ? hubAddress : null,
+    hubId: isHubId(hubId) ? hubId : null,
     certPem,
     keyPem,
     caCertPem,

@@ -247,6 +247,7 @@ async function world() {
   persistPairing(configPath, {
     hubAddress: 'hub.example.test',
     hubUrl: 'https://hub.example.test:4443',
+    hubId: null,
     meshTls: {
       certPem: leaf.certPem,
       keyPem: leaf.keyPem,

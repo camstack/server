@@ -705,6 +705,20 @@ export async function createAgentHttpServer(
         error: `Not editable here: ${refused.join(', ')}. Editable: ${EDITABLE_CONFIG_KEYS.join(', ')}`,
       })
     }
+    // A paired agent dials the hub it paired with: clearing its address would leave it dialling
+    // nobody after the next restart (#494). Leaving the hub is `forget`, not an empty field.
+    const clearsHubAddress =
+      Object.prototype.hasOwnProperty.call(body, 'hubAddress') &&
+      (body.hubAddress === null ||
+        body.hubAddress === undefined ||
+        body.hubAddress.trim().length === 0)
+    if (clearsHubAddress && isAgentPaired(config.configPath)) {
+      return reply.status(400).send({
+        success: false,
+        error:
+          'This agent is paired: it keeps the address of the hub it paired with. Set a new address, or leave the hub.',
+      })
+    }
     const patch = Object.fromEntries(Object.entries(body))
     const existing = readConfigFile(config.configPath)
     writeConfigFile(config.configPath, { ...existing, ...patch })
