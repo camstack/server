@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Hub id format and the hubId key of the hub's LAN announcement
 - New deviceManager.search contract (DeviceSearchInput, DeviceSearchResult, DeviceValueOption) for the device-to-value picker
 
 - A power source (switch, restart) can now be driven by any user who has access to the camera it powers, not only by administrators
@@ -20,7 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Device templates can use now (server time, the time filter) and the reserved camera alias with thisDevice on renderDeviceTemplates and checkDeviceTemplates; checkDeviceTemplates reports reads and readsClock; the OSD manager capability drops getSourceCatalog and gains previewTemplate.
-- Hub id format and the hubId key of the hub's LAN announcement
 
 ### Changed
 
@@ -37,11 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-
 ### Changed
-
-
-
 
 ## [1.2.538] - 2026-11-10
 

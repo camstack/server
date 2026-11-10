@@ -9,9 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- An agent that rediscovers its hub on the LAN now also refuses a revoked answer or one naming another hub id, and names a rejected candidate at most once per 15 minutes
+- A paired agent keeps the hub address it paired with; one that has none finds its hub on the LAN by the hub's id, or reports it is unconfigured instead of crash-looping, and a paired agent's hub address can no longer be cleared
+- A paired agent saves a rediscovered hub address only after that hub answers with the CA from pairing, and an older pairing records the hub id from that answer
 - Pickers can now search devices by capability, location, integration and type with live readings, through the new deviceManager.search query
-
-
 
 - Cluster update in one job on the hub: backup, the hub, each agent (verified, an agent back without capabilities fails), then addons — clusterUpdate.startClusterUpdate / getClusterUpdateJob, resumed across the hub's own restart
 
@@ -28,12 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The server exposes the OSD manager previewTemplate call and the thisDevice input of the device-template calls; getSourceCatalog is gone.
 - Capability method signatures now mark optional cover, fan, climate, lock and media-player methods; bindings report implemented methods
 - Device features are re-derived only from a provider whose node is online; an offline agent's cameras keep theirs
-- An agent that rediscovers its hub on the LAN now also refuses a revoked answer or one naming another hub id, and names a rejected candidate at most once per 15 minutes
 
 ### Fixed
-
-- A paired agent keeps the hub address it paired with; one that has none finds its hub on the LAN by the hub's id, or reports it is unconfigured instead of crash-looping, and a paired agent's hub address can no longer be cleared
-- A paired agent saves a rediscovered hub address only after that hub answers with the CA from pairing, and an older pairing records the hub id from that answer
 
 ## [1.2.826] - 2026-11-10
 
@@ -93,7 +90,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rebuilt against updated dependencies.
 ### Changed
 
-
 ## [1.2.818] - 2026-11-09
 
 ### Changed
@@ -101,9 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rebuilt against updated dependencies.
 ### Changed
 
-
 ### Removed
-
 
 ## [1.2.817] - 2026-11-08
 
