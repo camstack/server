@@ -26,7 +26,7 @@
  * discovered: the LANGUAGE is frozen at enqueue too.
  */
 
-import type { NcRuleTarget } from '@camstack/types'
+import type { IScopedLogger, NcRuleTarget, NcTargetOverrides } from '@camstack/types'
 import { ncClockText } from '../clock-text.js'
 import {
   escapeLiteralMarkup,
@@ -35,6 +35,7 @@ import {
   templatePlaceholders,
 } from '../render-template.js'
 import type { NcOutboxEnqueueInput, NcOutboxPayload } from '../outbox.js'
+import { targetDelivery, targetsInSchedule } from '../target-settings.js'
 import type { NcTextCatalog } from '../text-catalog.js'
 import { type DetectionCounts, detectionTemplateVars } from '../timelapse/detection-counts.js'
 import type { ClosedWindow } from '../timelapse/window-bounds.js'
@@ -73,6 +74,9 @@ export interface SummaryDeliveryInput {
   readonly targets: readonly NcRuleTarget[]
   readonly disabledTargetIds?: readonly string[]
   readonly priority: number
+  /** Per-target settings (D1031); `logger` names a target skipped by its own schedule. */
+  readonly targetOverrides?: NcTargetOverrides
+  readonly logger?: IScopedLogger
   /** Tiles actually rendered into the mosaic. */
   readonly tileCount: number
   /** Cameras that contributed at least one tile. */
@@ -193,13 +197,13 @@ function derivedBody(input: SummaryDeliveryInput, vars: Readonly<Record<string, 
 /** Per-target params with the derived `clickUrl` filled in where absent. A
  *  value the operator set on the target WINS — he chose it. */
 function paramsFor(
-  target: NcRuleTarget,
+  params: Readonly<Record<string, unknown>> | undefined,
   clickUrl: string | undefined,
 ): Readonly<Record<string, unknown>> | undefined {
-  if (clickUrl === undefined) return target.params
-  if (target.params === undefined) return { clickUrl }
-  if (typeof target.params['clickUrl'] === 'string') return target.params
-  return { ...target.params, clickUrl }
+  if (clickUrl === undefined) return params
+  if (params === undefined) return { clickUrl }
+  if (typeof params['clickUrl'] === 'string') return params
+  return { ...params, clickUrl }
 }
 
 /** Stable, retry-safe outbox record id for one closed window of one rule. */
@@ -241,51 +245,69 @@ export function buildSummaryOutboxInputs(
   // model's sentence is data, so each value, and each catalog sentence, stays hidden
   // (`escapeLiteralMarkup`) until the dispatcher's final `{{var}}` pass restores it.
   const held = holdVars(vars)
-  const title =
-    renderTemplate(input.template?.title, held, { keepLiteralHeld: true }) ??
-    escapeLiteralMarkup(input.texts.text({ key: 'summary.title', vars }))
-  const body = composeSummaryBody({
-    aiText: escapeLiteralMarkup(aiSentence(input)),
-    renderedTemplateBody: renderTemplate(input.template?.body, held, { keepLiteralHeld: true }),
-    derivedBody: escapeLiteralMarkup(derivedBody(input, vars)),
-    templateNamesAi: templatePlaceholders(input.template?.body ?? '').includes('ai'),
+  // A target's own texts replace the rule's for that target only (D1031).
+  const textsFor = (template: NcSummaryTemplate | undefined): { title: string; body: string } => ({
+    title:
+      renderTemplate(template?.title, held, { keepLiteralHeld: true }) ??
+      escapeLiteralMarkup(input.texts.text({ key: 'summary.title', vars })),
+    body: composeSummaryBody({
+      aiText: escapeLiteralMarkup(aiSentence(input)),
+      renderedTemplateBody: renderTemplate(template?.body, held, {
+        keepLiteralHeld: true,
+      }),
+      derivedBody: escapeLiteralMarkup(derivedBody(input, vars)),
+      templateNamesAi: templatePlaceholders(template?.body ?? '').includes('ai'),
+    }),
   })
+  const rule = {
+    id: input.ruleId,
+    name: input.ruleName,
+    priority: input.priority,
+    targetOverrides: input.targetOverrides,
+  }
   const recordId = summaryRecordId(input.ruleId, input.window.endMs)
   const artifacts =
     input.mosaic !== undefined ? [{ mediaType: 'image' as const, ...input.mosaic }] : []
 
-  return input.targets
-    .filter((t) => !optedOut.has(t.targetId))
-    .map((target) => {
-      const payload: NcOutboxPayload = {
-        ruleName: input.ruleName,
-        delivery: 'ai-summary',
-        priority: input.priority,
-        // `{{var}}` is filled in here; the dispatcher renders the operator's device
-        // templates in what is left, then restores the hidden literal braces.
-        template: { title, body },
-        // A digest owns no event and no track, so there is no media ladder to
-        // climb. Asking for one would log "no still could be resolved" on every
-        // delivery — a real signal turned into noise.
-        media: 'none',
-        ...(artifacts.length > 0 ? { artifacts } : {}),
-        ...(paramsFor(target, input.clickUrl) !== undefined
-          ? { params: paramsFor(target, input.clickUrl) }
-          : {}),
-        subject: {
-          deviceId: input.primaryDeviceId,
-          className: 'summary',
-          zones: [],
-          timestamp: input.window.endMs,
-        },
-      }
-      return {
-        ruleId: input.ruleId,
-        targetId: target.targetId,
+  const enabled = input.targets.filter((t) => !optedOut.has(t.targetId))
+  const scheduled =
+    input.logger === undefined
+      ? enabled
+      : targetsInSchedule(input.logger, rule, enabled, input.window.endMs, input.primaryDeviceId)
+  return scheduled.map((target) => {
+    const own = targetDelivery(rule, target)
+    const { title, body } = textsFor(
+      own.texts === undefined ? input.template : { ...input.template, ...own.texts },
+    )
+    const params = paramsFor(own.params, input.clickUrl)
+    const payload: NcOutboxPayload = {
+      ruleName: input.ruleName,
+      delivery: 'ai-summary',
+      priority: own.priority,
+      ...(own.settings !== undefined ? { targetSettings: own.settings } : {}),
+      // `{{var}}` is filled in here; the dispatcher renders the operator's device
+      // templates in what is left, then restores the hidden literal braces.
+      template: { title, body },
+      // A digest owns no event and no track, so there is no media ladder to
+      // climb. Asking for one would log "no still could be resolved" on every
+      // delivery — a real signal turned into noise.
+      media: 'none',
+      ...(artifacts.length > 0 ? { artifacts } : {}),
+      ...(params !== undefined ? { params } : {}),
+      subject: {
         deviceId: input.primaryDeviceId,
-        recordKind: 'ai-summary' as const,
-        recordId,
-        payload,
-      }
-    })
+        className: 'summary',
+        zones: [],
+        timestamp: input.window.endMs,
+      },
+    }
+    return {
+      ruleId: input.ruleId,
+      targetId: target.targetId,
+      deviceId: input.primaryDeviceId,
+      recordKind: 'ai-summary' as const,
+      recordId,
+      payload,
+    }
+  })
 }

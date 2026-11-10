@@ -427,6 +427,8 @@ export class TimelapseScheduler {
           ? { disabledTargetIds: this.deps.disabledTargetIds(rule.id) }
           : {}),
         priority: rule.priority,
+        ...(rule.targetOverrides !== undefined ? { targetOverrides: rule.targetOverrides } : {}),
+        logger: this.deps.logger,
         coverage: outcome.coverage,
         ...(outcome.artifact !== null ? { artifact: outcome.artifact } : {}),
         ...(outcome.preview !== null ? { preview: outcome.preview } : {}),

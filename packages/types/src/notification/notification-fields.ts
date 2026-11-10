@@ -7,8 +7,16 @@
  * selected targets can deliver, and the viewer reads the same function — so
  * the three cannot disagree about which fields exist for a target.
  */
-import type { NotificationField, TargetKindCaps } from '../capabilities/notification-output.cap.js'
-import type { NcTargetOverride } from '../capabilities/notification-rules.cap.js'
+import type {
+  AttachmentMediaType,
+  NotificationField,
+  TargetKindCaps,
+  TargetKindLevel,
+} from '../capabilities/notification-output.cap.js'
+import type {
+  NcTargetAttachment,
+  NcTargetOverride,
+} from '../capabilities/notification-rules.cap.js'
 
 /** Every field, in the order an editor meets them. */
 export const NOTIFICATION_FIELDS: readonly NotificationField[] = [
@@ -44,6 +52,53 @@ export function deliverableFields(caps: TargetKindCaps): readonly NotificationFi
     clickUrl: caps.clickUrl,
   }
   return NOTIFICATION_FIELDS.filter((field) => supported[field])
+}
+
+/** The picture kind a produced media type belongs to. */
+const KIND_OF_MEDIA: Readonly<Partial<Record<AttachmentMediaType, NcTargetAttachment>>> = {
+  image: 'image',
+  video: 'clip',
+  gif: 'gif',
+}
+
+/**
+ * The picture kinds a target may be set to receive: `none` plus one per media
+ * type the notifier declares (`caps.attachments.mediaTypes`). Empty when the
+ * kind takes no attachment at all — there is nothing to choose.
+ */
+export function attachmentKindsOf(caps: TargetKindCaps): readonly NcTargetAttachment[] {
+  if (caps.attachments.max <= 0) return []
+  const kinds = caps.attachments.mediaTypes.flatMap((type) => {
+    const kind = KIND_OF_MEDIA[type]
+    return kind === undefined ? [] : [kind]
+  })
+  return kinds.length === 0 ? [] : ['none', ...new Set(kinds)]
+}
+
+/**
+ * Whether a target set to `kind` receives an attachment of `mediaType`.
+ * Absent = every kind the rule produced; an icon or audio part is never
+ * narrowed (it is not a picture of the event).
+ */
+export function targetAttachmentAllows(
+  kind: NcTargetAttachment | undefined,
+  mediaType: AttachmentMediaType,
+): boolean {
+  if (kind === undefined) return true
+  const own = KIND_OF_MEDIA[mediaType]
+  if (own === undefined) return true
+  return kind !== 'none' && kind === own
+}
+
+/**
+ * The levels a notifier declares that a rule can pick between: the ones that
+ * map to a canonical ordinal, in ordinal order. The editor labels the choice
+ * with the level's own label (Alexa: normal / high) and stores its ordinal.
+ */
+export function priorityLevelsOf(caps: TargetKindCaps): readonly TargetKindLevel[] {
+  return caps.levels
+    .filter((level) => level.ordinal !== null)
+    .toSorted((a, b) => (a.ordinal ?? 0) - (b.ordinal ?? 0))
 }
 
 /** One selected target as a field-support question sees it. */
@@ -98,15 +153,22 @@ export function sanitizeTargetOverride(
   const body = has('body') ? nonEmpty(override.template?.body) : undefined
   const template =
     title !== undefined || body !== undefined
-      ? { ...(title !== undefined ? { title } : {}), ...(body !== undefined ? { body } : {}) }
+      ? {
+          ...(title !== undefined ? { title } : {}),
+          ...(body !== undefined ? { body } : {}),
+        }
       : undefined
   const priority = has('priority') ? override.priority : undefined
+  const attachment = has('attachments') ? override.attachment : undefined
+  const noButtons = has('actions') && override.actions === false
   const next: NcTargetOverride = {
     ...(template !== undefined ? { template } : {}),
     ...(override.schedule !== undefined && override.schedule.windows.length > 0
       ? { schedule: override.schedule }
       : {}),
     ...(priority !== undefined ? { priority } : {}),
+    ...(attachment !== undefined ? { attachment } : {}),
+    ...(noButtons ? { actions: false } : {}),
   }
   return Object.keys(next).length > 0 ? next : undefined
 }

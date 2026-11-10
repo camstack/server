@@ -24,10 +24,9 @@ import {
   ALEXA_SPEAK_ICON_URL,
   ALEXA_SPEAK_KIND,
   type SpeakMode,
-  SPEECH_MAX_CHARS,
 } from './constants.js'
 import { admitSpeech, emptySpeechLedger, type SpeechLedger } from './rate-limit.js'
-import { ALEXA_SPEECH_CAPS, speechFromNotification } from './speech-text.js'
+import { ALEXA_LEVEL_HIGH, ALEXA_SPEECH_CAPS, speechFromNotification } from './speech-text.js'
 import type { EchoDevice, TargetDelivery } from './worker-protocol.js'
 
 export type DeliveryOutcome =
@@ -137,21 +136,15 @@ function readString(config: Readonly<Record<string, unknown>>, key: string): str
   return typeof value === 'string' ? value : ''
 }
 
-/** The level id an Echo notification uses for "quiet: no chime, no announcement". */
-const SILENT_LEVEL_ID = 'silent'
+/** The lowest priority still speaks quietly, as it did before the two declared levels. */
 const SILENT_PRIORITY = 1
 
 /**
- * Quiet or announce is decided PER NOTIFICATION, never per target: a silent
- * notification (the kind's silent level, or the lowest priority when no level
- * is named) is spoken quietly, hours-aware; every other one announces.
+ * Quiet or announce is decided PER NOTIFICATION, never per target: the lowest
+ * priority is spoken quietly, hours-aware; every other one announces.
  */
 function modeFor(notification: Notification): SpeakMode {
-  const silent =
-    notification.level !== undefined
-      ? notification.level === SILENT_LEVEL_ID
-      : notification.priority <= SILENT_PRIORITY
-  return silent ? 'speak' : 'announce'
+  return notification.priority <= SILENT_PRIORITY ? 'speak' : 'announce'
 }
 
 function respectDnd(config: Record<string, unknown>): boolean {
@@ -223,34 +216,9 @@ export function alexaTargetKind(): TargetKind {
     supportsDiscovery: true,
     destinationKeys: ['brokerId', 'echoId'],
     configSchema: configSchema(),
-    caps: {
-      // An Echo speaks the TITLE and nothing else (#483, operator 2026-11-10):
-      // the dispatcher drops the body and the rule editor offers only a title.
-      text: ALEXA_SPEECH_CAPS.text,
-      attachments: { mediaTypes: [], mode: 'url', max: 0 },
-      actions: 0,
-      actionIcons: false,
-      levels: [
-        {
-          id: SILENT_LEVEL_ID,
-          label: 'Silent',
-          ordinal: SILENT_PRIORITY,
-          flags: { silent: true },
-          description: 'Spoken quietly: no chime, quiet hours apply.',
-        },
-        {
-          id: 'default',
-          label: 'Announce',
-          ordinal: 3,
-          description: 'Announced: chime, then speech.',
-        },
-      ],
-      format: ['text'],
-      clickUrl: false,
-      sound: false,
-      ttl: false,
-      bodyMaxLen: SPEECH_MAX_CHARS,
-    },
+    // An Echo speaks the TITLE and nothing else, and has two priorities that
+    // differ in Do Not Disturb only (#483, #487; operator 2026-11-10).
+    caps: ALEXA_SPEECH_CAPS,
   }
 }
 
@@ -318,13 +286,22 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       return { success: false, error, renderedAs: speech.renderedAs }
     }
     const device = broker.devices.find((row) => row.id === echoId)
+    // `high` overrides Do Not Disturb; `normal` follows it (and the target's own
+    // `respectDnd` switch stays the way to ignore it for every notification).
+    const overridesDnd = speech.levelId === ALEXA_LEVEL_HIGH
     if (device !== undefined && respectDnd(target.config) && device.dnd) {
-      record({ targetId: target.id, outcome: 'dnd', at: ports.now() })
-      logger.info('alexa speak skipped: do not disturb', {
+      if (!overridesDnd) {
+        record({ targetId: target.id, outcome: 'dnd', at: ports.now() })
+        logger.info('alexa speak skipped: do not disturb', {
+          ...tags,
+          meta: { targetId: target.id, echoId, level: speech.levelId },
+        })
+        return { success: true, renderedAs: speech.renderedAs }
+      }
+      logger.info('alexa speak over do not disturb: high priority', {
         ...tags,
-        meta: { targetId: target.id, echoId },
+        meta: { targetId: target.id, echoId, level: speech.levelId },
       })
-      return { success: true, renderedAs: speech.renderedAs }
     }
     if (device !== undefined && !device.online) {
       record({ targetId: target.id, outcome: 'offline', at: ports.now() })

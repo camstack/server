@@ -197,6 +197,7 @@ describe('Alexa quiet vs announce is decided per notification', () => {
   function speakingProvider(
     config: Record<string, unknown>,
     warnings: { message: string; tags: unknown }[] = [],
+    deviceOver: Partial<EchoDevice> = {},
   ): { spoken: SpeakCommand[]; provider: ReturnType<typeof createAlexaNotificationProvider> } {
     const spoken: SpeakCommand[] = []
     let now = 10_000
@@ -205,7 +206,7 @@ describe('Alexa quiet vs announce is decided per notification', () => {
       warnings.push({ message, tags: options?.tags })
     }
     const provider = createAlexaNotificationProvider({
-      brokers: () => [broker('b1', 'Home', [echo()])],
+      brokers: () => [broker('b1', 'Home', [echo(deviceOver)])],
       now: () => {
         now += SPEAK_MIN_GAP_MS
         return now
@@ -220,22 +221,35 @@ describe('Alexa quiet vs announce is decided per notification', () => {
     return { spoken, provider }
   }
 
-  it('declares no delivery parameter, no volume and no mode, and a silent level', () => {
+  it('declares no delivery parameter, no volume and no mode, and two levels: normal and high', () => {
     const kind = alexaTargetKind()
     expect(kind.deliveryParams ?? []).toEqual([])
-    expect(kind.caps.levels.some((level) => level.flags?.silent === true)).toBe(true)
+    expect(kind.caps.levels.map((level) => level.id)).toEqual(['normal', 'high'])
     const keys = kind.configSchema.sections.flatMap((section) => section.fields.map((f) => f.key))
     expect(keys).not.toContain('mode')
     expect(keys).not.toContain('volume')
   })
 
-  it('a silent notification is quiet, any other announces', async () => {
+  it('the lowest priority is quiet, any other announces', async () => {
     const { spoken, provider } = speakingProvider({})
-    await provider.send({ targetId: 't1', notification: { ...note('a'), level: 'silent' } })
     await provider.send({ targetId: 't1', notification: { ...note('b'), priority: 1 } })
     await provider.send({ targetId: 't1', notification: note('c') })
-    await provider.send({ targetId: 't1', notification: { ...note('d'), level: 'default' } })
-    expect(spoken.map((c) => c.mode)).toEqual(['speak', 'speak', 'announce', 'announce'])
+    await provider.send({ targetId: 't1', notification: { ...note('d'), priority: 5 } })
+    expect(spoken.map((c) => c.mode)).toEqual(['speak', 'announce', 'announce'])
+  })
+
+  it('normal follows Do Not Disturb, high overrides it (#487)', async () => {
+    const { spoken, provider } = speakingProvider({}, [], { dnd: true })
+    await provider.send({ targetId: 't1', notification: { ...note('normal one'), priority: 3 } })
+    expect(spoken).toHaveLength(0)
+    await provider.send({ targetId: 't1', notification: { ...note('high one'), priority: 5 } })
+    expect(spoken.map((c) => c.text)).toEqual(['high one'])
+  })
+
+  it('respectDnd off still lets a normal notification through', async () => {
+    const { spoken, provider } = speakingProvider({ respectDnd: false }, [], { dnd: true })
+    await provider.send({ targetId: 't1', notification: note('anyway') })
+    expect(spoken).toHaveLength(1)
   })
 
   it('never sets a volume: the Echo speaks at its current one, whatever the config or the rule says', async () => {

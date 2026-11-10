@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Alexa announcements now have two priorities: normal follows Do Not Disturb, high speaks over it.
+
 ## [0.2.201] - 2026-11-10
 
 ### Changed

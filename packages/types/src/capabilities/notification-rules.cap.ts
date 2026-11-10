@@ -1134,7 +1134,15 @@ export type NcRuleTarget = z.infer<typeof NcRuleTargetSchema>
  *  - `schedule` — deliver to this target only inside these windows. A target
  *    outside its window gets no outbox row and the skip is logged; the other
  *    targets of the same fire still deliver.
- *  - `priority` — this target's canonical ordinal (1..5).
+ *  - `priority` — this target's canonical ordinal (1..5). An editor offers the
+ *    kind's DECLARED levels (`caps.levels`), each with its own ordinal.
+ *  - `attachment` — which of the pictures the rule produced this target
+ *    receives: `none`, `image`, `clip` (video) or `gif`. It narrows, never adds:
+ *    the rule's media policy decides what exists (#487, operator 2026-11-10).
+ *  - `actions: false` — this target gets no action buttons.
+ *
+ * The same settings apply to EVERY delivery a rule makes — an event, a
+ * summary, a timelapse, a calendar digest (D1031).
  *
  * The notifier's own declared knobs (D938 `deliveryParams`: sound, critical,
  * volume…) stay where they already live per target: the rule target's
@@ -1147,6 +1155,10 @@ export type NcRuleTarget = z.infer<typeof NcRuleTargetSchema>
  */
 export const NC_TEMPLATE_TITLE_MAX_CHARS = 500
 
+/** Which picture kind one target receives (#487). */
+export const NcTargetAttachmentSchema = z.enum(['none', 'image', 'clip', 'gif'])
+export type NcTargetAttachment = z.infer<typeof NcTargetAttachmentSchema>
+
 export const NcTargetOverrideSchema = z.object({
   template: z
     .object({
@@ -1156,6 +1168,9 @@ export const NcTargetOverrideSchema = z.object({
     .optional(),
   schedule: NcScheduleSchema.optional(),
   priority: z.number().int().min(1).max(5).optional(),
+  attachment: NcTargetAttachmentSchema.optional(),
+  /** `false` = no buttons for this target; `true` is the same as absent. */
+  actions: z.boolean().optional(),
 })
 export type NcTargetOverride = z.infer<typeof NcTargetOverrideSchema>
 

@@ -46,6 +46,7 @@ import type { NcRuleAiLanguage, NcRuleAiShape } from './rule-ai.js'
 import type { NcPackagePhase, NcRuleFireRef } from './rule-engine.js'
 import type { NcOutboxGroup } from './grouped/grouped-payload.js'
 import type { NcLastRunRead, NcLastRunRow } from './rule-last-runs.js'
+import type { NcOutboxTargetSettings } from './target-settings.js'
 import {
   hasRecordTimestamp,
   isSameOutboxRecord,
@@ -484,6 +485,12 @@ export interface NcOutboxPayload {
    * has replaced it (Task 13).
    */
   readonly cooldowns?: readonly NcCooldownStamp[]
+  /**
+   * The target's own settings the dispatcher applies at send — the picture
+   * kind it receives and whether it gets buttons (D1031). Frozen by
+   * `target-settings.ts` for every kind of row; absent = the row as produced.
+   */
+  readonly targetSettings?: NcOutboxTargetSettings
   /** Per-target passthrough params from the rule target. */
   readonly params?: Readonly<Record<string, unknown>>
   readonly subject: {

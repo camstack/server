@@ -11,10 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Hub id format and the hubId key of the hub's LAN announcement
 - New deviceManager.search contract (DeviceSearchInput, DeviceSearchResult, DeviceValueOption) for the device-to-value picker
-
 - A power source (switch, restart) can now be driven by any user who has access to the camera it powers, not only by administrators
-
 - New cluster-update capability: preview, start and follow one cluster update job
+- A notification rule's per-target settings now also carry the picture kind (none, image, clip, GIF) and a no-buttons switch, and timelapse, summary and calendar rules accept them.
 
 - A container can declare which children stand for it, most preferred first (primaryChildPreference); the framework uses it after the operator's own pick and before the type rule
 

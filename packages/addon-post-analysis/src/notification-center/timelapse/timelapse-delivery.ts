@@ -25,12 +25,18 @@
  *    rewritten on every delivery attempt.
  */
 
-import type { NcRuleTarget, TimelapseTemplate } from '@camstack/types'
+import type {
+  IScopedLogger,
+  NcRuleTarget,
+  NcTargetOverrides,
+  TimelapseTemplate,
+} from '@camstack/types'
 import { DEFAULT_TIMELAPSE_PREVIEW_TEXT } from '@camstack/types'
 import { ncClockText } from '../clock-text.js'
 import { renderTemplate } from '../dispatcher.js'
 import { escapeLiteralMarkup, holdVars } from '../render-template.js'
 import type { NcOutboxEnqueueInput, NcOutboxPayload } from '../outbox.js'
+import { targetDelivery, targetsInSchedule } from '../target-settings.js'
 import type { NcTextCatalog } from '../text-catalog.js'
 import { type DetectionCounts, detectionTemplateVars } from './detection-counts.js'
 import type { FootageCoverage } from './footage-coverage.js'
@@ -80,6 +86,9 @@ export interface TimelapseDeliveryInput {
   /** Target ids the rule owner opted out of (same semantics as `NcRule`). */
   readonly disabledTargetIds?: readonly string[]
   readonly priority: number
+  /** Per-target settings (D1031); `logger` names a target skipped by its own schedule. */
+  readonly targetOverrides?: NcTargetOverrides
+  readonly logger?: IScopedLogger
   readonly coverage: FootageCoverage
   /** Absent when the render produced no reachable link — still delivered. */
   readonly artifact?: TimelapseArtifactRef
@@ -192,7 +201,13 @@ function derivedBody(
   } else if (input.denseRanges > 0) {
     // Plural by the LANGUAGE's rules, which is why this is a catalog key and
     // not a template string: the hard-coded line said "1 intervalli ripresi".
-    parts.push(texts.text({ key: 'timelapse.body.denseRanges', count: input.denseRanges, vars }))
+    parts.push(
+      texts.text({
+        key: 'timelapse.body.denseRanges',
+        count: input.denseRanges,
+        vars,
+      }),
+    )
   }
   // What the night HELD, when it held anything. Only non-zero: a nightly
   // "0 rilevamenti" is a line nobody reads, which makes the lines beside it
@@ -205,13 +220,13 @@ function derivedBody(
 
 /** Per-target params with the derived `clickUrl` filled in where absent. */
 function paramsFor(
-  target: NcRuleTarget,
+  params: Readonly<Record<string, unknown>> | undefined,
   clickUrl: string | undefined,
 ): Readonly<Record<string, unknown>> | undefined {
-  if (clickUrl === undefined) return target.params
-  if (target.params === undefined) return { clickUrl }
-  if (typeof target.params['clickUrl'] === 'string') return target.params
-  return { ...target.params, clickUrl }
+  if (clickUrl === undefined) return params
+  if (params === undefined) return { clickUrl }
+  if (typeof params['clickUrl'] === 'string') return params
+  return { ...params, clickUrl }
 }
 
 /**
@@ -258,57 +273,73 @@ export function buildTimelapseOutboxInputs(
   // See `buildSummaryOutboxInputs`: only the operator's own markup may reach the
   // dispatcher's device-template pass; every value and catalog sentence stays hidden.
   const held = holdVars(vars)
-  const title =
-    renderTemplate(input.template?.title, held, { keepLiteralHeld: true }) ??
-    escapeLiteralMarkup(input.texts.text({ key: 'timelapse.title', vars }))
-  const body =
-    renderTemplate(input.template?.body, held, { keepLiteralHeld: true }) ??
-    escapeLiteralMarkup(derivedBody(input, vars))
+  // A target's own texts replace the rule's for that target only (D1031).
+  const textsFor = (template: TimelapseTemplate | undefined): { title: string; body: string } => ({
+    title:
+      renderTemplate(template?.title, held, { keepLiteralHeld: true }) ??
+      escapeLiteralMarkup(input.texts.text({ key: 'timelapse.title', vars })),
+    body:
+      renderTemplate(template?.body, held, { keepLiteralHeld: true }) ??
+      escapeLiteralMarkup(derivedBody(input, vars)),
+  })
+  const rule = {
+    id: input.ruleId,
+    name: input.ruleName,
+    priority: input.priority,
+    targetOverrides: input.targetOverrides,
+  }
   const recordId = timelapseRecordId(input.deviceId, input.window.endMs)
   const artifacts = [
     ...(input.preview !== undefined ? [{ mediaType: 'image' as const, ...input.preview }] : []),
     ...(input.artifact !== undefined ? [{ mediaType: 'video' as const, ...input.artifact }] : []),
   ]
 
-  return input.targets
-    .filter((t) => !optedOut.has(t.targetId))
-    .map((target) => {
-      const payload: NcOutboxPayload = {
-        ruleName: input.ruleName,
-        delivery: 'timelapse',
-        priority: input.priority,
-        // `{{var}}` is filled in here; the dispatcher renders the operator's device
-        // templates in what is left, then restores the hidden literal braces.
-        template: { title, body },
-        // A timelapse owns no event and no track, so there is no media ladder
-        // to climb. Asking for one would log "no still could be resolved" on
-        // every single delivery — a real signal, turned into noise.
-        media: 'none',
-        // IMAGE FIRST. A notifier that shows one attachment shows the first,
-        // and a card with a picture is the whole point of the preview; the
-        // video is what the recipient taps through to.
-        ...(artifacts.length > 0 ? { artifacts } : {}),
-        // `clickUrl` rides the per-target passthrough because that is where
-        // `pickParams` already reads it from — no new dispatcher field. A
-        // value the operator set on the target WINS: he chose it, and the
-        // derived link is only a default.
-        ...(paramsFor(target, input.clickUrl) !== undefined
-          ? { params: paramsFor(target, input.clickUrl) }
-          : {}),
-        subject: {
-          deviceId: input.deviceId,
-          className: 'timelapse',
-          zones: [],
-          timestamp: input.window.endMs,
-        },
-      }
-      return {
-        ruleId: input.ruleId,
-        targetId: target.targetId,
+  const enabled = input.targets.filter((t) => !optedOut.has(t.targetId))
+  const scheduled =
+    input.logger === undefined
+      ? enabled
+      : targetsInSchedule(input.logger, rule, enabled, input.window.endMs, input.deviceId)
+  return scheduled.map((target) => {
+    const own = targetDelivery(rule, target)
+    const { title, body } = textsFor(
+      own.texts === undefined ? input.template : { ...input.template, ...own.texts },
+    )
+    const params = paramsFor(own.params, input.clickUrl)
+    const payload: NcOutboxPayload = {
+      ruleName: input.ruleName,
+      delivery: 'timelapse',
+      priority: own.priority,
+      ...(own.settings !== undefined ? { targetSettings: own.settings } : {}),
+      // `{{var}}` is filled in here; the dispatcher renders the operator's device
+      // templates in what is left, then restores the hidden literal braces.
+      template: { title, body },
+      // A timelapse owns no event and no track, so there is no media ladder
+      // to climb. Asking for one would log "no still could be resolved" on
+      // every single delivery — a real signal, turned into noise.
+      media: 'none',
+      // IMAGE FIRST. A notifier that shows one attachment shows the first,
+      // and a card with a picture is the whole point of the preview; the
+      // video is what the recipient taps through to.
+      ...(artifacts.length > 0 ? { artifacts } : {}),
+      // `clickUrl` rides the per-target passthrough because that is where
+      // `pickParams` already reads it from — no new dispatcher field. A
+      // value the operator set on the target WINS: he chose it, and the
+      // derived link is only a default.
+      ...(params !== undefined ? { params } : {}),
+      subject: {
         deviceId: input.deviceId,
-        recordKind: 'timelapse' as const,
-        recordId,
-        payload,
-      }
-    })
+        className: 'timelapse',
+        zones: [],
+        timestamp: input.window.endMs,
+      },
+    }
+    return {
+      ruleId: input.ruleId,
+      targetId: target.targetId,
+      deviceId: input.deviceId,
+      recordKind: 'timelapse' as const,
+      recordId,
+      payload,
+    }
+  })
 }

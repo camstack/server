@@ -1230,6 +1230,7 @@ export class NcDispatcher {
     const deliverable = deliverableNotification(
       narration === null ? built.notification : built.withAiText(narration.text ?? ''),
       target.fields,
+      entry.payload.targetSettings,
     )
     const notification = deliverable.notification
     try {
@@ -1254,6 +1255,8 @@ export class NcDispatcher {
           // that never reads the body must say so on its own delivery line.
           ...(deliverable.dropped.length > 0 ? { fieldsDropped: deliverable.dropped } : {}),
           ...(deliverable.titleFromBody ? { titleFromBody: true } : {}),
+          // What this target's own settings (D1031) took out of the send.
+          ...(deliverable.narrowed.length > 0 ? { narrowedByTarget: deliverable.narrowed } : {}),
           // The gate's verdict rides out WITH the delivery, counters included:
           // `failedOpen` climbing while `suppressed` stays at zero is the only
           // way a permanently-open gate is distinguishable from a working one.

@@ -10,7 +10,7 @@
  * `calendarsExclude` = Except, both empty = All.
  */
 
-import { NcRuleTargetSchema, NcScheduleSchema } from '@camstack/types'
+import { NcRuleTargetSchema, NcScheduleSchema, NcTargetOverridesSchema } from '@camstack/types'
 import { z } from 'zod'
 import {
   CALENDAR_EVENTS_DEFAULT_HORIZON_DAYS,
@@ -48,6 +48,8 @@ export const NcCalendarEventsRuleInputSchema = z.object({
   targets: TargetsField,
   template: NcCalendarEventsTemplateSchema.optional(),
   priority: PriorityField.default(3),
+  /** Per-target settings keyed by target id (D1031) — absent = every target follows the rule. */
+  targetOverrides: NcTargetOverridesSchema.optional(),
 })
 export type NcCalendarEventsRuleInput = z.infer<typeof NcCalendarEventsRuleInputSchema>
 
@@ -62,6 +64,8 @@ export const NcCalendarEventsRulePatchSchema = z.object({
   targets: TargetsField.optional(),
   template: NcCalendarEventsTemplateSchema.nullable().optional(),
   priority: PriorityField.optional(),
+  /** Per-target settings keyed by target id (D1031) — absent = every target follows the rule. */
+  targetOverrides: NcTargetOverridesSchema.optional(),
 })
 export type NcCalendarEventsRulePatch = z.infer<typeof NcCalendarEventsRulePatchSchema>
 

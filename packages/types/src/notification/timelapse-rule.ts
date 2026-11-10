@@ -23,7 +23,11 @@
  */
 
 import { z } from 'zod'
-import { NcRuleTargetSchema, NcScheduleSchema } from '../capabilities/notification-rules.cap.js'
+import {
+  NcRuleTargetSchema,
+  NcScheduleSchema,
+  NcTargetOverridesSchema,
+} from '../capabilities/notification-rules.cap.js'
 
 /** `{{var}}` templating over camera/rule/time — same vocabulary as `NcRule`. */
 export const TimelapseTemplateSchema = z.object({
@@ -201,6 +205,8 @@ export const TimelapseRuleInputSchema = z.object({
   reportClasses: ReportClassesField.optional(),
   /** Canonical notification priority ordinal (1..5); per-target overridable. */
   priority: PriorityField.default(3),
+  /** Per-target settings keyed by target id (D1031) — absent = every target follows the rule. */
+  targetOverrides: NcTargetOverridesSchema.optional(),
 })
 export type TimelapseRuleInput = z.infer<typeof TimelapseRuleInputSchema>
 
@@ -244,6 +250,8 @@ export const TimelapseRulePatchSchema = z.object({
   previewMode: PreviewModeField.optional(),
   reportClasses: ReportClassesField.optional(),
   priority: PriorityField.optional(),
+  /** Per-target settings keyed by target id (D1031) — absent = every target follows the rule. */
+  targetOverrides: NcTargetOverridesSchema.optional(),
 })
 export type TimelapseRulePatch = z.infer<typeof TimelapseRulePatchSchema>
 

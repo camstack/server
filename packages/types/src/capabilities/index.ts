@@ -1209,6 +1209,8 @@ export {
   NcRuleSchema,
   type NcRuleTarget,
   NcRuleTargetSchema,
+  type NcTargetAttachment,
+  NcTargetAttachmentSchema,
   type NcTargetOverride,
   NcTargetOverrideSchema,
   NC_TEMPLATE_TITLE_MAX_CHARS,

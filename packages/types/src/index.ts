@@ -1795,9 +1795,12 @@ export {
 } from './notification/attachment-url.js'
 export { deliveryParamsDeclaredBy, resolveDeliveryParams } from './notification/delivery-params.js'
 export {
+  attachmentKindsOf,
   deliverableFields,
   fieldSupportForTargets,
   NOTIFICATION_FIELDS,
+  priorityLevelsOf,
+  targetAttachmentAllows,
   type NotificationFieldSupport,
   type NotificationFieldTarget,
   sanitizeTargetOverride,

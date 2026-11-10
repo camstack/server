@@ -149,6 +149,8 @@ export class NcCalendarEventsProducer {
       calendarIds,
       targets: rule.targets,
       priority: rule.priority,
+      ...(rule.targetOverrides !== undefined ? { targetOverrides: rule.targetOverrides } : {}),
+      logger: this.deps.logger,
       ...(rule.template !== undefined ? { template: rule.template } : {}),
     })
     // `NcOutbox.enqueue` takes a BATCH — a single row is not iterable, and the

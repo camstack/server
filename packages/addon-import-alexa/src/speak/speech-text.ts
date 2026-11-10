@@ -7,12 +7,32 @@ import type { Notification, RenderedAs, TargetKindCaps } from '@camstack/types'
 import { htmlToText, markdownToText, prepareNotification } from '@camstack/types'
 import { SPEECH_MAX_CHARS } from './constants.js'
 
+/** The level that follows Do Not Disturb. */
+export const ALEXA_LEVEL_NORMAL = 'normal'
+/** The level that overrides Do Not Disturb. */
+export const ALEXA_LEVEL_HIGH = 'high'
+
 export const ALEXA_SPEECH_CAPS: TargetKindCaps = {
   text: { title: true, body: false },
   attachments: { mediaTypes: [], mode: 'url', max: 0 },
   actions: 0,
   actionIcons: false,
-  levels: [{ id: 'default', label: 'Default', ordinal: 3 }],
+  // Two priorities, and they differ in ONE thing: Do Not Disturb (operator
+  // decision 2026-11-10). `normal` follows it; `high` overrides it.
+  levels: [
+    {
+      id: ALEXA_LEVEL_NORMAL,
+      label: 'Normal',
+      ordinal: 3,
+      description: 'Announced, but held back while the Echo is on Do Not Disturb.',
+    },
+    {
+      id: ALEXA_LEVEL_HIGH,
+      label: 'High',
+      ordinal: 5,
+      description: 'Announced even while the Echo is on Do Not Disturb.',
+    },
+  ],
   format: ['text'],
   clickUrl: false,
   sound: false,
@@ -21,6 +41,8 @@ export const ALEXA_SPEECH_CAPS: TargetKindCaps = {
 }
 
 export interface SpeechText {
+  /** The declared level the notification resolved to (`normal` | `high`). */
+  readonly levelId: string | null
   readonly text: string
   readonly renderedAs: RenderedAs
 }
@@ -53,6 +75,7 @@ export function speechFromNotification(notification: Notification): SpeechText {
     joined.length > SPEECH_MAX_CHARS ? joined.slice(0, SPEECH_MAX_CHARS).trimEnd() : joined
   const truncated = prepared.renderedAs.truncated || text.length < joined.length
   return {
+    levelId: prepared.level?.id ?? null,
     text,
     renderedAs: { ...prepared.renderedAs, truncated, format: 'text' },
   }

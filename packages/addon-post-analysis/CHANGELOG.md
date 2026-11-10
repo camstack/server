@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A rule's per-target settings (priority, text, schedule, picture kind, buttons) now apply to every delivery the rule makes: event alerts, summaries, timelapses and calendar digests.
+
 ## [1.2.692] - 2026-11-10
 
 ### Changed

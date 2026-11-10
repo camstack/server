@@ -5,10 +5,11 @@
  * spans no camera. Text is frozen at enqueue, in the hub language.
  */
 
-import type { CalendarEvent, NcRuleTarget } from '@camstack/types'
+import type { CalendarEvent, IScopedLogger, NcRuleTarget, NcTargetOverrides } from '@camstack/types'
 import type { NcOutboxEnqueueInput, NcOutboxPayload } from '../outbox.js'
 import { NC_SYSTEM_DEVICE_ID } from '../rule-engine.js'
 import { renderTemplate } from '../render-template.js'
+import { targetDelivery, targetsInSchedule } from '../target-settings.js'
 import type { NcTextCatalog } from '../text-catalog.js'
 import type { ClosedWindow } from '../timelapse/window-bounds.js'
 import { formatCalendarEventsBody } from './calendar-events-body.js'
@@ -27,6 +28,9 @@ export interface CalendarEventsDeliveryInput {
   readonly disabledTargetIds?: readonly string[]
   readonly priority: number
   readonly template?: NcCalendarEventsTemplate
+  /** Per-target settings (D1031); `logger` names a target skipped by its own schedule. */
+  readonly targetOverrides?: NcTargetOverrides
+  readonly logger?: IScopedLogger
 }
 
 function calendarEventsRecordId(ruleId: string, windowEndMs: number): string {
@@ -63,8 +67,9 @@ function templateVars(input: CalendarEventsDeliveryInput): Record<string, string
   }
 }
 
-function paramsFor(target: NcRuleTarget): Record<string, string> | undefined {
-  const params = target.params
+function stringParams(
+  params: Readonly<Record<string, unknown>> | undefined,
+): Record<string, string> | undefined {
   if (params === undefined) return undefined
   const out: Record<string, string> = {}
   for (const [k, v] of Object.entries(params)) {
@@ -81,38 +86,64 @@ export function buildCalendarEventsOutboxInputs(
 ): readonly NcOutboxEnqueueInput[] {
   const vars = templateVars(input)
   const optedOut = new Set(input.disabledTargetIds ?? [])
-  const title = input.texts.text({
-    key: 'calendar-events.title',
-    template: input.template?.title,
-    vars,
+  // A target's own texts replace the rule's for that target only (D1031).
+  const textsFor = (
+    template: NcCalendarEventsTemplate | undefined,
+  ): { title: string; body: string } => ({
+    title: input.texts.text({
+      key: 'calendar-events.title',
+      template: template?.title,
+      vars,
+    }),
+    body: renderTemplate(template?.body, vars) ?? derivedBody(input),
   })
-  const body = renderTemplate(input.template?.body, vars) ?? derivedBody(input)
+  const rule = {
+    id: input.ruleId,
+    name: input.ruleName,
+    priority: input.priority,
+    targetOverrides: input.targetOverrides,
+  }
   const recordId = calendarEventsRecordId(input.ruleId, input.scheduleWindow.endMs)
 
-  return input.targets
-    .filter((t) => !optedOut.has(t.targetId))
-    .map((target) => {
-      const payload: NcOutboxPayload = {
-        ruleName: input.ruleName,
-        delivery: 'calendar-events',
-        priority: input.priority,
-        template: { title, body },
-        media: 'none',
-        ...(paramsFor(target) !== undefined ? { params: paramsFor(target) } : {}),
-        subject: {
-          deviceId: NC_SYSTEM_DEVICE_ID,
-          className: 'calendar-events',
-          zones: [],
-          timestamp: input.scheduleWindow.endMs,
-        },
-      }
-      return {
-        ruleId: input.ruleId,
-        targetId: target.targetId,
+  const enabled = input.targets.filter((t) => !optedOut.has(t.targetId))
+  const scheduled =
+    input.logger === undefined
+      ? enabled
+      : targetsInSchedule(
+          input.logger,
+          rule,
+          enabled,
+          input.scheduleWindow.endMs,
+          NC_SYSTEM_DEVICE_ID,
+        )
+  return scheduled.map((target) => {
+    const own = targetDelivery(rule, target)
+    const { title, body } = textsFor(
+      own.texts === undefined ? input.template : { ...input.template, ...own.texts },
+    )
+    const params = stringParams(own.params)
+    const payload: NcOutboxPayload = {
+      ruleName: input.ruleName,
+      delivery: 'calendar-events',
+      priority: own.priority,
+      ...(own.settings !== undefined ? { targetSettings: own.settings } : {}),
+      template: { title, body },
+      media: 'none',
+      ...(params !== undefined ? { params } : {}),
+      subject: {
         deviceId: NC_SYSTEM_DEVICE_ID,
-        recordKind: 'calendar-events' as const,
-        recordId,
-        payload,
-      }
-    })
+        className: 'calendar-events',
+        zones: [],
+        timestamp: input.scheduleWindow.endMs,
+      },
+    }
+    return {
+      ruleId: input.ruleId,
+      targetId: target.targetId,
+      deviceId: NC_SYSTEM_DEVICE_ID,
+      recordKind: 'calendar-events' as const,
+      recordId,
+      payload,
+    }
+  })
 }

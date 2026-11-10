@@ -11,8 +11,13 @@
  * rendered empty, is given the rendered body instead, cut to the title's
  * limit — a speaker must not say nothing (D1030).
  */
-import { NC_TEMPLATE_TITLE_MAX_CHARS, type NotificationField } from '@camstack/types'
+import {
+  NC_TEMPLATE_TITLE_MAX_CHARS,
+  type NotificationField,
+  targetAttachmentAllows,
+} from '@camstack/types'
 import type { NcNotificationInput } from './dispatcher.js'
+import type { NcOutboxTargetSettings } from './target-settings.js'
 
 /** The notification to send, and the fields that were dropped from it (for the log line). */
 export interface NcDeliverableNotification {
@@ -20,13 +25,48 @@ export interface NcDeliverableNotification {
   readonly dropped: readonly NotificationField[]
   /** True when the title was empty and the body stood in for it. */
   readonly titleFromBody: boolean
+  /**
+   * What the target's OWN settings (D1031) took out of a delivery its kind
+   * could otherwise carry: the media it did not ask for, the buttons it turned
+   * off. Named on the delivery line so a missing picture has a reason.
+   */
+  readonly narrowed: readonly ('attachments' | 'actions')[]
+}
+
+/** The target's own settings, applied to what was built — before the kind's cut. */
+function narrowedBySettings(
+  notification: NcNotificationInput,
+  settings: NcOutboxTargetSettings | undefined,
+): {
+  readonly notification: NcNotificationInput
+  readonly narrowed: readonly ('attachments' | 'actions')[]
+} {
+  if (settings === undefined) return { notification, narrowed: [] }
+  const narrowed: ('attachments' | 'actions')[] = []
+  let next = notification
+  const kept = (notification.attachments ?? []).filter((part) =>
+    targetAttachmentAllows(settings.attachment, part.mediaType),
+  )
+  if (kept.length < (notification.attachments?.length ?? 0)) {
+    narrowed.push('attachments')
+    const { attachments: _all, ...rest } = next
+    next = kept.length > 0 ? { ...rest, attachments: kept } : rest
+  }
+  if (settings.actions === false && (notification.actions?.length ?? 0) > 0) {
+    narrowed.push('actions')
+    const { actions: _all, ...rest } = next
+    next = rest
+  }
+  return { notification: next, narrowed }
 }
 
 export function deliverableNotification(
-  notification: NcNotificationInput,
+  built: NcNotificationInput,
   fields: readonly NotificationField[] | undefined,
+  settings?: NcOutboxTargetSettings,
 ): NcDeliverableNotification {
-  if (fields === undefined) return { notification, dropped: [], titleFromBody: false }
+  const { notification, narrowed } = narrowedBySettings(built, settings)
+  if (fields === undefined) return { notification, dropped: [], titleFromBody: false, narrowed }
   const has = (field: NotificationField): boolean => fields.includes(field)
   const dropped: NotificationField[] = []
   const note = (field: NotificationField, present: boolean): boolean => {
@@ -73,5 +113,6 @@ export function deliverableNotification(
     },
     dropped,
     titleFromBody,
+    narrowed,
   }
 }

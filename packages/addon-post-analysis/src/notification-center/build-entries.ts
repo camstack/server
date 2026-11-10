@@ -22,7 +22,8 @@ import type {
   NcSubjectKind,
   NcSystemEventExcludingFilter,
 } from './rule-engine.js'
-import { effectiveMediaPolicyForRule, isLinkedSetSubject, isScheduleActive } from './rule-engine.js'
+import { effectiveMediaPolicyForRule, isLinkedSetSubject } from './rule-engine.js'
+import { targetDelivery, targetsInSchedule } from './target-settings.js'
 import { NcRuleStore } from './rule-store.js'
 import type { IScopedLogger, NcConditions, NcRule, NcRuleTarget } from '@camstack/types'
 import type { NotificationCenterDeps } from './index.js'
@@ -243,191 +244,159 @@ export function buildEntries(
     (subject.systemEvent !== undefined && !noMedia
       ? alarmIncidentGroup(subject.systemEvent, subject.timestamp)
       : undefined)
-  return allTargets
-    .filter((target) => !rule.disabledTargetIds.includes(target.targetId))
-    .filter((target) => targetInSchedule(host, rule, target.targetId, subject))
-    .map((target) => {
-      // #487: this target's own texts and priority over the rule's defaults.
-      const own = targetDefaults(rule, target)
-      const base: NcOutboxPayload = {
-        ruleName: rule.name,
-        delivery: rule.delivery,
-        // The marker, frozen on the durable row: a row an operator injected
-        // is identifiable forever after in the outbox and in history. It is
-        // stamped only when it is TRUE, so every pre-existing row keeps
-        // reading exactly as it did.
-        ...(origin === 'synthetic' ? { synthetic: true as const } : {}),
-        priority: own.priority,
-        ...(own.template !== undefined ? { template: own.template } : {}),
-        ...(noMedia
-          ? { media: 'none' as const }
-          : mediaPolicyFields(mediaRule, cropZoneIds, matchedZoneIds)),
-        ...(confirm !== undefined
+  // D1031: the per-target settings are the base rule of every delivery path.
+  const scheduled = targetsInSchedule(
+    host.logger,
+    rule,
+    allTargets.filter((target) => !rule.disabledTargetIds.includes(target.targetId)),
+    subject.timestamp,
+    subject.deviceId,
+  )
+  return scheduled.map((target) => {
+    // #487: this target's own texts and priority over the rule's defaults.
+    const own = targetDelivery(rule, target)
+    const base: NcOutboxPayload = {
+      ruleName: rule.name,
+      delivery: rule.delivery,
+      // The marker, frozen on the durable row: a row an operator injected
+      // is identifiable forever after in the outbox and in history. It is
+      // stamped only when it is TRUE, so every pre-existing row keeps
+      // reading exactly as it did.
+      ...(origin === 'synthetic' ? { synthetic: true as const } : {}),
+      priority: own.priority,
+      ...(own.texts !== undefined || rule.template !== undefined
+        ? { template: { ...rule.template, ...own.texts } }
+        : {}),
+      ...(own.settings !== undefined ? { targetSettings: own.settings } : {}),
+      ...(noMedia
+        ? { media: 'none' as const }
+        : mediaPolicyFields(mediaRule, cropZoneIds, matchedZoneIds)),
+      ...(confirm !== undefined
+        ? {
+            confirm,
+            ...(cooldown !== undefined ? { cooldown } : {}),
+            ...(extras?.cooldowns !== undefined && extras.cooldowns.length > 0
+              ? { cooldowns: extras.cooldowns }
+              : {}),
+          }
+        : {}),
+      ...(matchedOn !== undefined && matchedOn.length > 0 ? { matchedOn } : {}),
+      // D692: a grouped close's v2 group, written for N >= 1 (C7) — hydration and
+      // the record read it; the dispatcher treats a group of one as a plain row.
+      ...(groupV2 !== undefined ? { group: groupV2 } : {}),
+      ...(extras?.alarmIntrusion !== undefined ? { alarmIntrusion: extras.alarmIntrusion } : {}),
+      ...(own.params !== undefined ? { params: own.params } : {}),
+      subject: {
+        deviceId: subject.deviceId,
+        // The media OWNERS. Ordinarily the subject's own; on a combined
+        // alarm row they are the triggering detection's, which is the whole
+        // point — the alarm event owns no frame of anything.
+        // A SENSOR's linked set names shelf owners instead (ADR 0632): the
+        // mosaic, or one still per camera, per THIS rule's policy.
+        ...(alarmSource?.trackId !== undefined
           ? {
-              confirm,
-              ...(cooldown !== undefined ? { cooldown } : {}),
-              ...(extras?.cooldowns !== undefined && extras.cooldowns.length > 0
-                ? { cooldowns: extras.cooldowns }
+              trackId: alarmSource.trackId,
+              ...(alarmSource.extraStills !== undefined && alarmSource.extraStills.length > 0
+                ? {
+                    extraStills: alarmSource.extraStills.map((x) => ({ ...x })),
+                  }
                 : {}),
             }
-          : {}),
-        ...(matchedOn !== undefined && matchedOn.length > 0 ? { matchedOn } : {}),
-        // D692: a grouped close's v2 group, written for N >= 1 (C7) — hydration and
-        // the record read it; the dispatcher treats a group of one as a plain row.
-        ...(groupV2 !== undefined ? { group: groupV2 } : {}),
-        ...(extras?.alarmIntrusion !== undefined ? { alarmIntrusion: extras.alarmIntrusion } : {}),
-        ...(own.params !== undefined ? { params: own.params } : {}),
-        subject: {
-          deviceId: subject.deviceId,
-          // The media OWNERS. Ordinarily the subject's own; on a combined
-          // alarm row they are the triggering detection's, which is the whole
-          // point — the alarm event owns no frame of anything.
-          // A SENSOR's linked set names shelf owners instead (ADR 0632): the
-          // mosaic, or one still per camera, per THIS rule's policy.
-          ...(alarmSource?.trackId !== undefined
+          : linkedOwners !== undefined
             ? {
-                trackId: alarmSource.trackId,
-                ...(alarmSource.extraStills !== undefined && alarmSource.extraStills.length > 0
-                  ? { extraStills: alarmSource.extraStills.map((x) => ({ ...x })) }
+                trackId: linkedOwners.trackId,
+                ...(linkedOwners.extraStills.length > 0
+                  ? {
+                      extraStills: linkedOwners.extraStills.map((x) => ({
+                        ...x,
+                      })),
+                    }
                   : {}),
+                analysisTiles: linkedOwners.analysisTiles.map((x) => ({
+                  ...x,
+                })),
               }
-            : linkedOwners !== undefined
-              ? {
-                  trackId: linkedOwners.trackId,
-                  ...(linkedOwners.extraStills.length > 0
-                    ? { extraStills: linkedOwners.extraStills.map((x) => ({ ...x })) }
-                    : {}),
-                  analysisTiles: linkedOwners.analysisTiles.map((x) => ({ ...x })),
-                }
-              : subject.trackId !== undefined
-                ? { trackId: subject.trackId }
-                : {}),
-          ...(subject.linkedCameraIds !== undefined &&
-          subject.linkedCameraIds.length > 1 &&
-          isLinkedSetSubject(subject)
-            ? { linkedCameraIds: [...subject.linkedCameraIds] }
-            : {}),
-          ...(alarmSource?.eventId !== undefined
-            ? { eventId: alarmSource.eventId }
-            : hasEventMedia
-              ? { eventId: subject.recordId }
+            : subject.trackId !== undefined
+              ? { trackId: subject.trackId }
               : {}),
-          // Fall back to the sensor kind for device events (no detection class).
-          className: subject.classNames[0] ?? subject.sensorKind ?? 'event',
-          ...(subject.label !== undefined ? { label: subject.label } : {}),
-          // Frozen for the verdict buttons (D948): where the subject was.
-          ...(subject.bbox !== undefined ? { bbox: subject.bbox } : {}),
-          // Which SENTENCE this row gets — a recognised person and a read
-          // plate are not the same phrase with a different noun in it.
-          ...(subject.labelKind !== undefined ? { labelKind: subject.labelKind } : {}),
-          ...(subject.confidence !== undefined ? { confidence: subject.confidence } : {}),
-          zones: renderedZones,
-          timestamp: subject.timestamp,
-          // Frozen beside `timestamp`, never in place of it: the footage cut
-          // is anchored on the moment the change HAPPENED, and this row may
-          // drain minutes later.
-          ...(subject.observedAt !== undefined ? { observedAt: subject.observedAt } : {}),
-          ...(subject.occupancy !== undefined
-            ? { occupancy: frozenOccupancy(rule, subject.occupancy) }
+        ...(subject.linkedCameraIds !== undefined &&
+        subject.linkedCameraIds.length > 1 &&
+        isLinkedSetSubject(subject)
+          ? { linkedCameraIds: [...subject.linkedCameraIds] }
+          : {}),
+        ...(alarmSource?.eventId !== undefined
+          ? { eventId: alarmSource.eventId }
+          : hasEventMedia
+            ? { eventId: subject.recordId }
             : {}),
-          // Which half of the parcel's life — frozen here because it picks
-          // the sentence at delivery time, and the row may drain days later.
-          ...(subject.packagePhase !== undefined ? { packagePhase: subject.packagePhase } : {}),
-          ...(subject.packagePossible === true ? { packagePossible: true } : {}),
-          // SOUND — what was heard, frozen for `{{sounds}}` / `{{hitPercent}}`
-          // / `{{db}}`. `hitPercent` is LEVEL mode only.
-          ...(subject.audioWindow !== undefined
-            ? {
-                audio: {
-                  labels: subject.audioWindow.labels,
-                  ...(subject.audioWindow.mode === 'level'
-                    ? { hitPercent: subject.audioWindow.hitPercent }
-                    : {}),
-                  ...(subject.audioWindow.peakDbfs !== undefined
-                    ? { peakDbfs: subject.audioWindow.peakDbfs }
-                    : {}),
-                },
-              }
-            : {}),
-          // DEVICE-EVENT — the device's own token, for `{{eventType}}`.
-          ...(subject.eventType !== undefined ? { eventType: subject.eventType } : {}),
-          ...applianceCycleOf(subject),
-          ...sensorOf(subject, (id) => host.sensorName(id)),
-          ...(subject.systemEvent !== undefined ? { systemEvent: subject.systemEvent } : {}),
-        },
-      }
-      // AI NARRATION, frozen exactly as the confirm policy is — and derived
-      // from the ROW rather than the rule, because which of the three
-      // questions is worth asking is a property of what this row descends
-      // from (`rule-ai-policy.ts`). Identical for every target of this fire:
-      // the WORD CAP is the one part the target decides, and it is resolved
-      // at send time for that reason.
-      const aiPolicy = frozenRuleAiPolicy(host.ruleAi.get(rule.id), base, isSystemEvent)
-      const payload: NcOutboxPayload = aiPolicy === undefined ? base : { ...base, ai: aiPolicy }
-      return {
-        ruleId: rule.id,
-        targetId: target.targetId,
-        deviceId: subject.deviceId,
-        // Occupancy enqueues under `device-event` (a native `NcOutboxRecordKind`
-        // + `NcHistoryRecordKind` member — no downgrade needed, unlike audio).
-        recordKind: kind === 'occupancy-event' ? 'device-event' : kind,
-        recordId: subject.recordId,
-        ...(isTrackScoped && subject.trackId !== undefined ? { trackId: subject.trackId } : {}),
-        // D692: a grouped row's dedup reference is its window key. Passed through, never
-        // spelled here: `outboxEntryId` builds the id as for every other row (D694).
-        ...(extras?.dedupRef !== undefined ? { dedupRef: extras.dedupRef } : {}),
-        payload,
-      }
-    })
-}
-/**
- * Is this target inside its OWN schedule (#487)? A target with none follows the
- * rule (whose schedule the engine already passed). A target outside its window
- * gets no row — and says so (D391): the other targets of the fire still deliver.
- */
-function targetInSchedule(
-  host: BuildEntriesHost,
-  rule: NcRule,
-  targetId: string,
-  subject: NcRuleSubject,
-): boolean {
-  const schedule = rule.targetOverrides?.[targetId]?.schedule
-  if (schedule === undefined || isScheduleActive(schedule, subject.timestamp)) return true
-  host.logger.info('notification target skipped: outside its own schedule', {
-    tags: { deviceId: subject.deviceId },
-    meta: { ruleId: rule.id, rule: rule.name, targetId, at: subject.timestamp },
+        // Fall back to the sensor kind for device events (no detection class).
+        className: subject.classNames[0] ?? subject.sensorKind ?? 'event',
+        ...(subject.label !== undefined ? { label: subject.label } : {}),
+        // Frozen for the verdict buttons (D948): where the subject was.
+        ...(subject.bbox !== undefined ? { bbox: subject.bbox } : {}),
+        // Which SENTENCE this row gets — a recognised person and a read
+        // plate are not the same phrase with a different noun in it.
+        ...(subject.labelKind !== undefined ? { labelKind: subject.labelKind } : {}),
+        ...(subject.confidence !== undefined ? { confidence: subject.confidence } : {}),
+        zones: renderedZones,
+        timestamp: subject.timestamp,
+        // Frozen beside `timestamp`, never in place of it: the footage cut
+        // is anchored on the moment the change HAPPENED, and this row may
+        // drain minutes later.
+        ...(subject.observedAt !== undefined ? { observedAt: subject.observedAt } : {}),
+        ...(subject.occupancy !== undefined
+          ? { occupancy: frozenOccupancy(rule, subject.occupancy) }
+          : {}),
+        // Which half of the parcel's life — frozen here because it picks
+        // the sentence at delivery time, and the row may drain days later.
+        ...(subject.packagePhase !== undefined ? { packagePhase: subject.packagePhase } : {}),
+        ...(subject.packagePossible === true ? { packagePossible: true } : {}),
+        // SOUND — what was heard, frozen for `{{sounds}}` / `{{hitPercent}}`
+        // / `{{db}}`. `hitPercent` is LEVEL mode only.
+        ...(subject.audioWindow !== undefined
+          ? {
+              audio: {
+                labels: subject.audioWindow.labels,
+                ...(subject.audioWindow.mode === 'level'
+                  ? { hitPercent: subject.audioWindow.hitPercent }
+                  : {}),
+                ...(subject.audioWindow.peakDbfs !== undefined
+                  ? { peakDbfs: subject.audioWindow.peakDbfs }
+                  : {}),
+              },
+            }
+          : {}),
+        // DEVICE-EVENT — the device's own token, for `{{eventType}}`.
+        ...(subject.eventType !== undefined ? { eventType: subject.eventType } : {}),
+        ...applianceCycleOf(subject),
+        ...sensorOf(subject, (id) => host.sensorName(id)),
+        ...(subject.systemEvent !== undefined ? { systemEvent: subject.systemEvent } : {}),
+      },
+    }
+    // AI NARRATION, frozen exactly as the confirm policy is — and derived
+    // from the ROW rather than the rule, because which of the three
+    // questions is worth asking is a property of what this row descends
+    // from (`rule-ai-policy.ts`). Identical for every target of this fire:
+    // the WORD CAP is the one part the target decides, and it is resolved
+    // at send time for that reason.
+    const aiPolicy = frozenRuleAiPolicy(host.ruleAi.get(rule.id), base, isSystemEvent)
+    const payload: NcOutboxPayload = aiPolicy === undefined ? base : { ...base, ai: aiPolicy }
+    return {
+      ruleId: rule.id,
+      targetId: target.targetId,
+      deviceId: subject.deviceId,
+      // Occupancy enqueues under `device-event` (a native `NcOutboxRecordKind`
+      // + `NcHistoryRecordKind` member — no downgrade needed, unlike audio).
+      recordKind: kind === 'occupancy-event' ? 'device-event' : kind,
+      recordId: subject.recordId,
+      ...(isTrackScoped && subject.trackId !== undefined ? { trackId: subject.trackId } : {}),
+      // D692: a grouped row's dedup reference is its window key. Passed through, never
+      // spelled here: `outboxEntryId` builds the id as for every other row (D694).
+      ...(extras?.dedupRef !== undefined ? { dedupRef: extras.dedupRef } : {}),
+      payload,
+    }
   })
-  return false
 }
-
-/** The texts, priority and params one target's row freezes. */
-export interface NcTargetDefaults {
-  readonly template: { readonly title?: string; readonly body?: string } | undefined
-  readonly priority: number
-  readonly params: Readonly<Record<string, unknown>> | undefined
-}
-
-/**
- * The rule's texts and priority are the defaults every target inherits; a
- * target's override replaces a field it names and nothing else (#487). A
- * priority override also outranks a legacy `params.priority`, which the
- * dispatcher would otherwise read first.
- */
-export function targetDefaults(rule: NcRule, target: NcRuleTarget): NcTargetDefaults {
-  const override = rule.targetOverrides?.[target.targetId]
-  const template =
-    override?.template === undefined ? rule.template : { ...rule.template, ...override.template }
-  if (override?.priority === undefined) {
-    return { template, priority: rule.priority, params: target.params }
-  }
-  const { priority: _legacy, ...params } = target.params ?? {}
-  return {
-    template,
-    priority: override.priority,
-    params: Object.keys(params).length > 0 ? params : undefined,
-  }
-}
-
 /**
  * The personal targets a rule's `targetUsers` resolve to for THIS device:
  * each addressed user contributes the enabled targets they own — but only

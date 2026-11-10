@@ -79,4 +79,43 @@ describe('NcCalendarEventsProducer', () => {
     })
     expect(markGenerated).toHaveBeenCalledWith('cal-rule-1', WINDOW_END)
   })
+
+  it("hands the rule's per-target settings to the row builder (D1031)", async () => {
+    const enqueue = vi.fn(async (_batch: EnqueueBatch) => 2)
+    const store = {
+      listEnabled: () => [
+        rule({
+          targets: [{ targetId: 'phone' }, { targetId: 'echo' }],
+          targetOverrides: { echo: { priority: 5, attachment: 'none' } },
+        }),
+      ],
+      markGenerated: vi.fn(async () => rule({ generatedAt: WINDOW_END })),
+    } as unknown as NcCalendarEventsStore
+    const producer = new NcCalendarEventsProducer({
+      store,
+      outbox: { enqueue } as unknown as NcOutbox,
+      calendars: {
+        listCalendars: async () => [{ id: 'cal-a' }],
+        listEvents: async () => [
+          {
+            id: 'e1',
+            calendarId: 'cal-a',
+            title: 'Rifiuti',
+            startMs: NOW + 3_600_000,
+            endMs: NOW + 7_200_000,
+            allDay: false,
+          },
+        ],
+      },
+      texts: new NcTextCatalog({ language: 'it' }),
+      logger: { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() } as never,
+      now: () => NOW,
+    })
+    await producer.tick()
+    const [batch] = enqueue.mock.calls[0] ?? []
+    const byTarget = new Map((batch ?? []).map((row) => [row.targetId, row.payload]))
+    expect(byTarget.get('echo')?.priority).toBe(5)
+    expect(byTarget.get('echo')?.targetSettings).toEqual({ attachment: 'none' })
+    expect(byTarget.get('phone')?.priority).toBe(3)
+  })
 })

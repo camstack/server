@@ -9,9 +9,12 @@ import {
 } from '../../capabilities/notification-output.cap.js'
 import { prepareNotification } from '../degrade-engine.js'
 import {
+  attachmentKindsOf,
   deliverableFields,
   fieldSupportForTargets,
+  priorityLevelsOf,
   sanitizeTargetOverride,
+  targetAttachmentAllows,
 } from '../notification-fields.js'
 
 function push(): TargetKindCaps {
@@ -91,7 +94,11 @@ describe('fieldSupportForTargets', () => {
       { name: 'Kitchen', fields: ['title'] },
     ])
     const body = support.find((s) => s.field === 'body')
-    expect(body).toEqual({ field: 'body', shown: true, droppedBy: ['Kitchen'] })
+    expect(body).toEqual({
+      field: 'body',
+      shown: true,
+      droppedBy: ['Kitchen'],
+    })
     expect(support.find((s) => s.field === 'title')?.droppedBy).toEqual([])
   })
 
@@ -120,8 +127,12 @@ describe('sanitizeTargetOverride — an unsupported override cannot be stored', 
   })
 
   it('keeps the schedule whatever the kind delivers', () => {
-    const schedule = { windows: [{ days: [1], startMinute: 0, endMinute: 60 }] }
-    expect(sanitizeTargetOverride({ schedule }, ['title'])).toEqual({ schedule })
+    const schedule = {
+      windows: [{ days: [1], startMinute: 0, endMinute: 60 }],
+    }
+    expect(sanitizeTargetOverride({ schedule }, ['title'])).toEqual({
+      schedule,
+    })
   })
 
   it('an unknown kind keeps everything', () => {
@@ -136,7 +147,10 @@ describe('prepareNotification honours caps.text', () => {
   it('a title-only kind gets an empty body and says it dropped one', () => {
     const prepared = prepareNotification(
       speaker(),
-      NotificationSchema.parse({ title: 'Person at the gate', body: 'seen at 12:00' }),
+      NotificationSchema.parse({
+        title: 'Person at the gate',
+        body: 'seen at 12:00',
+      }),
     )
     expect(prepared.title).toBe('Person at the gate')
     expect(prepared.body).toBe('')
@@ -150,5 +164,52 @@ describe('prepareNotification honours caps.text', () => {
     )
     expect(prepared.title).toBe('T')
     expect(prepared.body).toBe('B')
+  })
+})
+
+describe('attachment kind and action buttons are per-target characteristics (#487)', () => {
+  it('offers only the kinds the notifier declares media types for, plus none', () => {
+    const caps: TargetKindCaps = {
+      ...push(),
+      attachments: { mediaTypes: ['image', 'video'], mode: 'both', max: 1 },
+    }
+    expect(attachmentKindsOf(caps)).toEqual(['none', 'image', 'clip'])
+    expect(
+      attachmentKindsOf({
+        ...push(),
+        attachments: { mediaTypes: [], mode: 'url', max: 0 },
+      }),
+    ).toEqual([])
+  })
+
+  it('narrows the produced media: clip is a video, none keeps nothing, absent keeps all', () => {
+    expect(targetAttachmentAllows('clip', 'video')).toBe(true)
+    expect(targetAttachmentAllows('clip', 'image')).toBe(false)
+    expect(targetAttachmentAllows('gif', 'gif')).toBe(true)
+    expect(targetAttachmentAllows('none', 'image')).toBe(false)
+    expect(targetAttachmentAllows(undefined, 'video')).toBe(true)
+  })
+
+  it('stores attachment and no-buttons only for a kind that delivers them', () => {
+    expect(sanitizeTargetOverride({ attachment: 'gif', actions: false }, ['title'])).toBeUndefined()
+    expect(
+      sanitizeTargetOverride({ attachment: 'gif', actions: false }, ['attachments', 'actions']),
+    ).toEqual({ attachment: 'gif', actions: false })
+  })
+
+  it('actions: true is the same as absent and is never stored', () => {
+    expect(sanitizeTargetOverride({ actions: true }, ['actions'])).toBeUndefined()
+  })
+
+  it('lists the declared priority levels with an ordinal, in ordinal order', () => {
+    const caps: TargetKindCaps = {
+      ...push(),
+      levels: [
+        { id: 'high', label: 'High', ordinal: 5 },
+        { id: 'qual', label: 'Qualitative', ordinal: null },
+        { id: 'normal', label: 'Normal', ordinal: 3 },
+      ],
+    }
+    expect(priorityLevelsOf(caps).map((l) => l.id)).toEqual(['normal', 'high'])
   })
 })

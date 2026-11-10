@@ -691,6 +691,8 @@ export class NcSummaryProducer {
           ? { disabledTargetIds: this.deps.disabledTargetIds(rule.id) }
           : {}),
         priority: rule.priority,
+        ...(rule.targetOverrides !== undefined ? { targetOverrides: rule.targetOverrides } : {}),
+        logger: this.deps.logger,
         tileCount: loaded.length,
         cameraCount: new Set(loaded.map((t) => t.candidate.deviceId)).size,
         matchedCount: filtered.kept.length,
