@@ -139,19 +139,19 @@ export const powerSourceCapability = {
   deviceTypes: POWER_SOURCE_DEVICE_TYPES,
   methods: {
     getStatus: systemMethod(deviceInput, PowerSourceInfoSchema, {
-      auth: 'admin',
+      auth: 'protected',
     }),
     powerOn: systemMethod(deviceInput, PowerSourceActionResultSchema, {
       kind: 'mutation',
-      auth: 'admin',
+      auth: 'protected',
     }),
     powerOff: systemMethod(deviceInput, PowerSourceActionResultSchema, {
       kind: 'mutation',
-      auth: 'admin',
+      auth: 'protected',
     }),
     forceRestart: systemMethod(deviceInput, PowerSourceActionResultSchema, {
       kind: 'mutation',
-      auth: 'admin',
+      auth: 'protected',
     }),
   },
   runtimeState: PowerSourceStateSchema,

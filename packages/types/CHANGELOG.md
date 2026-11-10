@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A power source (switch, restart) can now be driven by any user who has access to the camera it powers, not only by administrators
+
 - New cluster-update capability: preview, start and follow one cluster update job
 
 ## [1.2.540] - 2026-11-10

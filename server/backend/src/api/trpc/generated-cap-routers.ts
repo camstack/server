@@ -15437,7 +15437,7 @@ export function createCapRouter_powerSource(
   createRemoteProxy?: (capName: string, nodeId: string) => PowerSourceProvider | null,
 ) {
   return trpcRouter({
-    getStatus: adminProcedure
+    getStatus: protectedProcedure
       .input(DEVICE_STATUS_METHOD.getStatus.input.loose())
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
@@ -15446,7 +15446,7 @@ export function createCapRouter_powerSource(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
-    powerOn: adminProcedure
+    powerOn: protectedProcedure
       .input(powerSourceCapability.methods.powerOn.input.loose())
       .output(powerSourceCapability.methods.powerOn.output)
       .mutation(async ({ input, ctx }) => {
@@ -15455,7 +15455,7 @@ export function createCapRouter_powerSource(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.powerOn(methodInput as any)
       }),
-    powerOff: adminProcedure
+    powerOff: protectedProcedure
       .input(powerSourceCapability.methods.powerOff.input.loose())
       .output(powerSourceCapability.methods.powerOff.output)
       .mutation(async ({ input, ctx }) => {
@@ -15464,7 +15464,7 @@ export function createCapRouter_powerSource(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.powerOff(methodInput as any)
       }),
-    forceRestart: adminProcedure
+    forceRestart: protectedProcedure
       .input(powerSourceCapability.methods.forceRestart.input.loose())
       .output(powerSourceCapability.methods.forceRestart.output)
       .mutation(async ({ input, ctx }) => {

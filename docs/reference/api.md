@@ -1062,10 +1062,10 @@
 | `platformProbe.resolveHwAccel` | query | protected | platform-probe |
 | `platformProbe.rescanAccelerators` | mutation | admin | platform-probe |
 | `powerMeter.getStatus` | query | protected | power-meter (auto) |
-| `powerSource.getStatus` | query | admin | power-source |
-| `powerSource.powerOn` | mutation | admin | power-source |
-| `powerSource.powerOff` | mutation | admin | power-source |
-| `powerSource.forceRestart` | mutation | admin | power-source |
+| `powerSource.getStatus` | query | protected | power-source |
+| `powerSource.powerOn` | mutation | protected | power-source |
+| `powerSource.powerOff` | mutation | protected | power-source |
+| `powerSource.forceRestart` | mutation | protected | power-source |
 | `presence.getStatus` | query | protected | presence (auto) |
 | `pressureSensor.getStatus` | query | protected | pressure-sensor (auto) |
 | `privacyMask.getStatus` | query | protected | privacy-mask (auto) |
@@ -4068,10 +4068,10 @@
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
-| getStatus | `powerSource.getStatus` | query | admin | `{ deviceId: number }` | `PowerSourceInfoSchema` |
-| powerOn | `powerSource.powerOn` | mutation | admin | `{ deviceId: number }` | `PowerSourceActionResultSchema` |
-| powerOff | `powerSource.powerOff` | mutation | admin | `{ deviceId: number }` | `PowerSourceActionResultSchema` |
-| forceRestart | `powerSource.forceRestart` | mutation | admin | `{ deviceId: number }` | `PowerSourceActionResultSchema` |
+| getStatus | `powerSource.getStatus` | query | protected | `{ deviceId: number }` | `PowerSourceInfoSchema` |
+| powerOn | `powerSource.powerOn` | mutation | protected | `{ deviceId: number }` | `PowerSourceActionResultSchema` |
+| powerOff | `powerSource.powerOff` | mutation | protected | `{ deviceId: number }` | `PowerSourceActionResultSchema` |
+| forceRestart | `powerSource.forceRestart` | mutation | protected | `{ deviceId: number }` | `PowerSourceActionResultSchema` |
 
 ### `presence` → `presence.*`
 
