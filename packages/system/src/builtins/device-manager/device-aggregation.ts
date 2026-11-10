@@ -1246,7 +1246,10 @@ interface WireableCapEntry {
  * descriptor so the UI can address items. Returns null when the cap exposes
  * nothing wireable (no status schema / no leaf fields).
  */
-function wireableEntryForDef(capName: string, def: CapabilityDefinition): WireableCapEntry | null {
+export function wireableEntryForDef(
+  capName: string,
+  def: CapabilityDefinition,
+): WireableCapEntry | null {
   const status = def.status
   const schema = status?.schema
   if (!schema) return null

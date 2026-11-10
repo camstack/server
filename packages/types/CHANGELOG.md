@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- New deviceManager.search contract (DeviceSearchInput, DeviceSearchResult, DeviceValueOption) for the device-to-value picker
+
 - A power source (switch, restart) can now be driven by any user who has access to the camera it powers, not only by administrators
 
 - New cluster-update capability: preview, start and follow one cluster update job

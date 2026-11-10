@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Generated system hooks include the new deviceManager.search query
+
 - Generated hooks for the cluster-update capability
 
 ## [1.2.418] - 2026-11-10

@@ -935,6 +935,9 @@ export const useDeviceManagerListPersistedByAddon: typeof trpc.deviceManager.lis
 /** Generated alias around `trpc.deviceManager.listAll.useQuery`. */
 export const useDeviceManagerListAll: typeof trpc.deviceManager.listAll.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.listAll.useQuery)
 
+/** Generated alias around `trpc.deviceManager.search.useQuery`. */
+export const useDeviceManagerSearch: typeof trpc.deviceManager.search.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.search.useQuery)
+
 /** Generated alias around `trpc.deviceManager.getDevice.useQuery`. */
 export const useDeviceManagerGetDevice: typeof trpc.deviceManager.getDevice.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.getDevice.useQuery)
 

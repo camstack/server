@@ -673,6 +673,28 @@ export {
   type WrapperActivationRead,
   WrapperActivationReadSchema,
 } from './device-manager.cap.js'
+export {
+  DEVICE_SEARCH_DEFAULT_LIMIT,
+  DEVICE_SEARCH_MAX_LIMIT,
+  type DeviceSearchFacetIntegration,
+  DeviceSearchFacetIntegrationSchema,
+  type DeviceSearchFacets,
+  DeviceSearchFacetsSchema,
+  type DeviceSearchFacetValue,
+  DeviceSearchFacetValueSchema,
+  type DeviceSearchFilters,
+  DeviceSearchFiltersSchema,
+  type DeviceSearchInput,
+  DeviceSearchInputSchema,
+  type DeviceSearchItem,
+  DeviceSearchItemSchema,
+  type DeviceSearchRequires,
+  DeviceSearchRequiresSchema,
+  type DeviceSearchResult,
+  DeviceSearchResultSchema,
+  type DeviceValueOption,
+  DeviceValueOptionSchema,
+} from './device-search.js'
 // ── Providers & Integrations ─────────────────────────────────────────
 export {
   DiscoveredDeviceSchema,

@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1485 method paths across 206 capabilities.
+ * Coverage: 1486 method paths across 206 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -396,6 +396,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceManager.reportDiscoveryObservations': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.runDeviceAction': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.runDiscoverySweep': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceManager.search': { capName: "device-manager", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
   'deviceManager.setAlias': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.setChildLayout': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.setDisabled': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

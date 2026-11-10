@@ -37,6 +37,7 @@ import {
 import { SiteZoneSchema } from '../device/site-zone.js'
 import { SourceInfoSchema } from '../device/source-info.js'
 import { ReadingQuantitySchema } from '../units/quantity.js'
+import { DeviceSearchInputSchema, DeviceSearchResultSchema } from './device-search.js'
 import { AdoptionJobSchema } from '../interfaces/adoption-job.js'
 import { SettingsSchemaWithValuesSchema } from './addon-settings.cap.js'
 import { type CapabilityDefinition, method } from './capability-definition.js'
@@ -1130,6 +1131,16 @@ export const deviceManagerCapability = {
       // Projected to the caller's devices (DEVICE_ENUMERATION_METHODS).
       { role: 'viewer' },
     ),
+
+    /**
+     * The device → value picker's one query: filter by text, capability and
+     * location / integration / type, with faceted counts, cursor pagination,
+     * the live reading of each matching value, suggestions by the context
+     * device's location, and `ids` resolution for already-picked values.
+     * See `device-search.ts`. Not in `DEVICE_ENUMERATION_METHODS`: a
+     * device-scoped token is refused rather than shown the whole fleet.
+     */
+    search: method(DeviceSearchInputSchema, DeviceSearchResultSchema, { role: 'viewer' }),
 
     /** Get a single device by numeric deviceId. */
     getDevice: method(z.object({ deviceId: z.number() }), DeviceInfoSchema.nullable()),

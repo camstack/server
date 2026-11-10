@@ -373,6 +373,7 @@
   "deviceManager.reportDiscoveryObservations": "admin",
   "deviceManager.runDeviceAction": "admin",
   "deviceManager.runDiscoverySweep": "admin",
+  "deviceManager.search": "viewer",
   "deviceManager.setAlias": "admin",
   "deviceManager.setChildLayout": "admin",
   "deviceManager.setDisabled": "admin",

@@ -5507,6 +5507,24 @@ export function createCapRouter_deviceManager(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listAll(methodInput as any)
       }),
+    search: protectedProcedure
+      .input(deviceManagerCapability.methods.search.input.loose())
+      .output(deviceManagerCapability.methods.search.output)
+      .query(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.search(methodInput as any)
+      }),
     getDevice: protectedProcedure
       .input(deviceManagerCapability.methods.getDevice.input.loose())
       .output(deviceManagerCapability.methods.getDevice.output)

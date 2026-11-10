@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Pickers can now search devices by capability, location, integration and type with live readings, through the new deviceManager.search query
+
 
 
 - Cluster update in one job on the hub: backup, the hub, each agent (verified, an agent back without capabilities fails), then addons — clusterUpdate.startClusterUpdate / getClusterUpdateJob, resumed across the hub's own restart

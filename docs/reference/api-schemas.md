@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1050 shared schemas.**
+**1059 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1739,6 +1739,70 @@ Enum: `"running-state" \| "activity" \| "reconcile"`
 
 Enum: `"open" \| "closed"`
 
+### `DeviceSearchFacetIntegrationSchema`
+
+- `id`: `string`
+- `label`: `string`
+- `count`: `number`
+
+### `DeviceSearchFacetsSchema`
+
+- `locations`: `DeviceSearchFacetValueSchema[]`
+- `integrations`: `DeviceSearchFacetIntegrationSchema[]`
+- `types`: `DeviceSearchFacetValueSchema[]`
+
+### `DeviceSearchFacetValueSchema`
+
+- `value`: `string`
+- `count`: `number`
+
+### `DeviceSearchFiltersSchema`
+
+- `locations?`: `string[]`
+- `integrationIds?`: `string[]`
+- `types?`: `string[]`
+
+### `DeviceSearchInputSchema`
+
+- `text?`: `string`
+- `requires?`: `DeviceSearchRequiresSchema`
+- `filters?`: `DeviceSearchFiltersSchema`
+- `includeIncompatible?`: `boolean`
+- `contextDeviceId?`: `number`
+- `ids?`: `number[]`
+- `cursor?`: `string \| null`
+- `limit?`: `number`
+
+### `DeviceSearchItemSchema`
+
+- `id`: `number`
+- `name`: `string`
+- `type`: `"camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "heater" \| "dryer" \| "gateway" \| "heat-pump"`
+- `location`: `string \| null`
+- `integrationId`: `string \| null`
+- `integrationLabel`: `string \| null`
+- `online`: `boolean \| null`
+- `disabled`: `boolean`
+- `compatible`: `boolean`
+- `values`: `DeviceValueOptionSchema[]`
+
+### `DeviceSearchRequiresSchema`
+
+- `caps`: `string[]`
+- `mode?`: `"any" \| "all"`
+
+### `DeviceSearchResultSchema`
+
+- `items`: `DeviceSearchItemSchema[]`
+- `nextCursor`: `string \| null`
+- `total`: `number`
+- `compatibleTotal`: `number`
+- `fleetTotal`: `number`
+- `hiddenIncompatible`: `number`
+- `facets`: `DeviceSearchFacetsSchema`
+- `suggested`: `DeviceSearchItemSchema[]`
+- `missingIds`: `number[]`
+
 ### `DeviceStatusSchema`
 
 - `online`: `boolean`
@@ -1749,6 +1813,15 @@ Enum: `"open" \| "closed"`
 - `deviceId`: `number`
 - `deletedAt`: `number`
 - `providerAddonId`: `string`
+
+### `DeviceValueOptionSchema`
+
+- `cap`: `string`
+- `path`: `string`
+- `label`: `string`
+- `reading`: `string \| null`
+- `unit?`: `string \| null`
+- `quantity?`: `"temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"`
 
 ### `DiagnosticIdSchema`
 

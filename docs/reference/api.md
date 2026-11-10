@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**206 capabilities · 1485 methods.**
+**206 capabilities · 1486 methods.**
 
 ## Method index
 
@@ -353,6 +353,7 @@
 | `deviceManager.setDisabled` | mutation | admin | device-manager |
 | `deviceManager.listPersistedByAddon` | query | protected | device-manager |
 | `deviceManager.listAll` | query | protected | device-manager |
+| `deviceManager.search` | query | protected | device-manager |
 | `deviceManager.getDevice` | query | protected | device-manager |
 | `deviceManager.getChildren` | query | protected | device-manager |
 | `deviceManager.getChildrenBatch` | query | protected | device-manager |
@@ -2410,7 +2411,7 @@
 
 ### `device-manager` → `deviceManager.*`
 
-- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:528`
+- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:529`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceManagerProvider`
@@ -2458,6 +2459,7 @@
 | setDisabled | `deviceManager.setDisabled` | mutation | admin | `{ deviceId: number; disabled: boolean }` | `void` |
 | listPersistedByAddon | `deviceManager.listPersistedByAddon` | query | protected | `{ addonId: string }` | `({ id: number; stableId: string; type: string; name: string; location: string \| null; disabled: boolean; parentDeviceId: number \| null; role?: string \| null })[]` |
 | listAll | `deviceManager.listAll` | query | protected | `{ addonId?: string; projection?: "full" \| "slim"; isCamera?: boolean; deviceIds?: number[] }` | `DeviceInfoSchema[]` |
+| search | `deviceManager.search` | query | protected | `DeviceSearchInputSchema` | `DeviceSearchResultSchema` |
 | getDevice | `deviceManager.getDevice` | query | protected | `{ deviceId: number }` | `DeviceInfoSchema \| null` |
 | getChildren | `deviceManager.getChildren` | query | protected | `{ parentDeviceId: number }` | `DeviceInfoSchema[]` |
 | getChildrenBatch | `deviceManager.getChildrenBatch` | query | protected | `{ parentDeviceIds: number[] }` | `Record<string, DeviceInfoSchema[]>` |

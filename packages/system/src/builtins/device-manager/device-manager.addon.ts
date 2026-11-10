@@ -56,7 +56,9 @@ import {
   listWrappersForCap,
   updateDeviceField,
   updateDeviceFieldsBatch,
+  wireableEntryForDef,
 } from './device-aggregation.js'
+import { searchDevices } from './device-search.js'
 import { mergeAggregates } from './device-aggregation-merge.js'
 import { type DiscoveryOrchestratorDeps, discoverProviders } from './discovery-orchestrator.js'
 import {
@@ -490,6 +492,60 @@ export class DeviceManagerAddon extends BaseAddon {
       bindingsDeps: this.bindingsDeps,
       ...(this.deviceFormSecrets ? { deviceFormSecrets: this.deviceFormSecrets } : {}),
     }
+  }
+
+  /**
+   * `deviceManager.search` — the picker query (see `device-search.ts`). The
+   * fleet is `listAll`, the values are the `getWireableFields` derivation over
+   * each device's own bindings, the readings are the status aggregate.
+   */
+  private searchDevices(
+    pctx: ProviderContext,
+    input: Parameters<IDeviceManagerProvider['search']>[0],
+  ): ReturnType<IDeviceManagerProvider['search']> {
+    const registry = this.capabilityRegistry
+    return searchDevices(
+      {
+        listDevices: () => queries.listAll(pctx, { projection: 'slim' }),
+        boundCaps: async (deviceIds) => {
+          const batch = await getBindingsBatch(this.bindingsDeps, { deviceIds })
+          const out = new Map<number, readonly string[]>()
+          for (const { deviceId, entries } of batch) {
+            out.set(
+              deviceId,
+              entries
+                .map((e) => e.capName)
+                .filter((cap) => {
+                  const def = registry?.getDefinition(cap)
+                  return def !== undefined && def !== null && def.kind !== 'wrapper'
+                }),
+            )
+          }
+          return out
+        },
+        fieldsOf: (cap) => {
+          const def = registry?.getDefinition(cap)
+          return def ? wireableEntryForDef(cap, def) : null
+        },
+        readStatus: (deviceIds, caps) =>
+          getDeviceStatusAggregateBatch(this.aggregationDeps, { deviceIds, caps }),
+        integrationLabels: async () => {
+          const api = this.ctx.api
+          if (api === undefined) return new Map<string, string>()
+          try {
+            const list = await api.integrations.list.query()
+            return new Map(list.map((i) => [i.id, i.name]))
+          } catch (err: unknown) {
+            this.ctx.logger.warn('deviceManager.search: integration names unavailable', {
+              meta: { error: errMsg(err) },
+            })
+            return new Map<string, string>()
+          }
+        },
+        logger: this.ctx.logger,
+      },
+      input,
+    )
   }
 
   async getDeviceAggregate(
@@ -1068,6 +1124,7 @@ export class DeviceManagerAddon extends BaseAddon {
       getDeviceStatusAggregateBatch: async (input) =>
         getDeviceStatusAggregateBatch(this.aggregationDeps, input),
       getWireableFields: (input) => getWireableFields(this.aggregationDeps, input),
+      search: (input) => this.searchDevices(pctx, input),
     }
 
     this.ctx.logger.info('registered device-manager capability', {
