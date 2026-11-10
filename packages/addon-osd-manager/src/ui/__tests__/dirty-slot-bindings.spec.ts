@@ -7,9 +7,7 @@ describe('dirtySlotBindings', () => {
     const none = emptyBindingDraft()
     const recognition: OsdSlotBinding = {
       enabled: true,
-      source: { kind: 'latest-recognition', recognition: 'person' },
-      template: '${value}',
-      maxDecimals: 1,
+      source: { kind: 'template', templateId: 'who' },
     }
     const baseline = {
       'text-0': none,
@@ -34,8 +32,6 @@ describe('dirtySlotBindings', () => {
     const staticBound: OsdSlotBinding = {
       enabled: true,
       source: { kind: 'static', text: 'hello' },
-      template: '${value}',
-      maxDecimals: 1,
     }
     const none = emptyBindingDraft()
     expect(

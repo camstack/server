@@ -12,7 +12,6 @@ import {
   useItemFormUrl,
   useUrlQueryParam,
   type DataColumn,
-  type PickerDevice,
 } from '@camstack/ui-library'
 import type { OsdNamedTemplate } from '@camstack/types'
 import {
@@ -32,20 +31,10 @@ import {
 interface CameraOsdTableProps {
   readonly cameras: readonly { readonly id: number; readonly name: string }[]
   readonly osdCapableIds: ReadonlySet<number>
-  readonly allDevices: readonly { readonly id: number; readonly name: string }[]
-  readonly pickerDevices: readonly PickerDevice[]
-  readonly listState: 'answered' | 'pending' | 'failed'
   readonly templates: readonly OsdNamedTemplate[]
 }
 
-export function CameraOsdTable({
-  cameras,
-  osdCapableIds,
-  allDevices,
-  pickerDevices,
-  listState,
-  templates,
-}: CameraOsdTableProps) {
+export function CameraOsdTable({ cameras, osdCapableIds, templates }: CameraOsdTableProps) {
   const { t } = useT()
   const filterLabels = {
     searchPlaceholder: t('table.searchCameras'),
@@ -64,10 +53,6 @@ export function CameraOsdTable({
   const refetchers = useRef(new Map<number, () => void>())
   const seededCapability = useRef(false)
 
-  const deviceNameById = useMemo(
-    () => new Map(allDevices.map((device) => [device.id, device.name])),
-    [allDevices],
-  )
   const templateNameById = useMemo(() => new Map(templates.map((t) => [t.id, t.name])), [templates])
 
   const items = useMemo(
@@ -151,7 +136,6 @@ export function CameraOsdTable({
           <CameraOsdSourcesCell
             cameraId={camera.id}
             supportsOsd={camera.supportsOsd}
-            deviceNameById={deviceNameById}
             templateNameById={templateNameById}
           />
         ),
@@ -194,7 +178,7 @@ export function CameraOsdTable({
         ),
       },
     ],
-    [deviceNameById, formUrl, items, templateNameById, t],
+    [formUrl, items, templateNameById, t],
   )
 
   return (
@@ -224,8 +208,6 @@ export function CameraOsdTable({
       {editingCamera !== null ? (
         <CameraOsdDetail
           camera={editingCamera}
-          pickerDevices={pickerDevices}
-          listState={listState}
           templates={templates}
           onRefetchReady={registerRefetch}
           activeSlotId={slotParam}

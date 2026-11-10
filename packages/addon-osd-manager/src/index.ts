@@ -13,14 +13,7 @@ export {
   withBinding,
   withoutBinding,
 } from './bindings-store.js'
-export {
-  applyTemplate,
-  displayValue,
-  formatClock,
-  formatSlotText,
-  limitText,
-  truncateDecimals,
-} from './format.js'
+export { limitText } from './format.js'
 export {
   assertSupportedConditions,
   evaluateGate,
@@ -31,59 +24,22 @@ export {
   unsupportedConditionKeys,
 } from './gate.js'
 export {
+  CLOCK_RERENDER_MS,
   DEFAULT_TICK_MS,
   type OsdCameraStatusReader,
   type OsdDeviceSummary,
   OsdManager,
   type OsdManagerDeps,
   type OsdOverlayWriter,
+  SLOT_RERENDER_THROTTLE_MS,
 } from './osd-manager.js'
-export { type OsdFacts, renderSlot, resolveSource } from './render.js'
-export {
-  isContainerDeviceType,
-  isOsdLeafDeviceType,
-  isOsdPickerDeviceType,
-  isOsdSourceCap,
-  OSD_NON_LEAF_TYPES,
-  OSD_PICKER_EXCLUDED_TYPES,
-  OSD_SOURCE_CAP_NAMES,
-  osdStateLeavesOf,
-} from './osd-source-fields.js'
-export {
-  deviceById,
-  type OsdPickerDevice,
-  osdSupportedChildrenOf,
-  type SlimDeviceRow,
-  toOsdPickerDevices,
-} from './osd-picker-devices.js'
-export { type CatalogDevice, humanizeCapName, sourceOptionsFor } from './source-catalog.js'
-export { readStatePath, type StateLeaf, stateLeavesOf } from './state-leaves.js'
+export { type OsdFacts, renderSlot } from './render.js'
 export { generateTemplateId, templateIdFromName } from './template-id.js'
 export {
-  aliasFullToken,
-  aliasToken,
-  bindingInsertChips,
-  bindingToken,
-  parseAliasStems,
-  parseAliasTokens,
-  type ParsedAliasToken,
-  replaceToken,
-  suggestAlias,
-  type TemplateTokenKind,
-} from './template-tokens.js'
-export {
-  applyTemplateFormat,
-  applyTemplateTokenKind,
-  type BindingLiveParts,
-  expandBindingTokens,
-  type NamedTemplateFacts,
-  type NamedTemplateRender,
-  renderNamedTemplate,
-  resolveBindingLive,
-} from './named-template-render.js'
-export {
-  convertForDisplay,
-  dimensionFromSourceUnit,
-  inferSourceUnit,
-  type UnitDisplayResult,
-} from './unit-display.js'
+  mentionsRecognition,
+  type OsdTemplateCheck,
+  type OsdTemplateRenderInput,
+  outcomeOfRender,
+  RECOGNITION_VALUE_NAMES,
+  type TemplateOutcome,
+} from './template-context.js'

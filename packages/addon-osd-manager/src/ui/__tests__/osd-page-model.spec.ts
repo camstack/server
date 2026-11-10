@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { OsdSlotBinding, OsdSlotView, OsdSourceOption } from '@camstack/types'
+import type { OsdSlotBinding, OsdSlotView } from '@camstack/types'
 import {
   activeSourceChips,
   cameraOsdStatus,
   defaultActiveSlotId,
   parseSlotContentPanel,
-  parseTemplateContentPanel,
   slotTabStatus,
   slotTabStatusLabel,
   cameraStatusLabel,
@@ -14,15 +13,10 @@ import {
   emptyBindingDraft,
   outcomeLabel,
   outcomeTone,
-  sourceOptionFor,
   sourceSummary,
-  shouldReseedValueMap,
-  suggestedValueMap,
   withoutCondition,
   writableSlots,
 } from '../osd-page-model.js'
-import { nextValueMapForFieldChange } from '../../components/DeviceStatePickBlock.js'
-import { OsdTemplateBindingSchema } from '@camstack/types'
 
 function makeSlot(overrides: Partial<OsdSlotView> & { slotId: string }): OsdSlotView {
   return {
@@ -38,8 +32,6 @@ function activeBinding(source: OsdSlotBinding['source'], enabled = true): OsdSlo
   return {
     enabled,
     source,
-    template: '${value}',
-    maxDecimals: 1,
   }
 }
 
@@ -63,7 +55,7 @@ describe('cameraOsdStatus', () => {
   it('is enabled when every writable slot has an active binding', () => {
     const slots = [
       makeSlot({ slotId: 'text-1', binding: activeBinding({ kind: 'static', text: 'x' }) }),
-      makeSlot({ slotId: 'text-2', binding: activeBinding({ kind: 'clock', pattern: 'HH:mm' }) }),
+      makeSlot({ slotId: 'text-2', binding: activeBinding({ kind: 'template', templateId: 't' }) }),
     ]
     expect(cameraOsdStatus(true, slots)).toBe('enabled')
   })
@@ -117,79 +109,37 @@ describe('slotTabStatus / defaultActiveSlotId / writableSlots', () => {
 })
 
 describe('activeSourceChips', () => {
-  const deviceNames = new Map([[7, 'Backyard Sensor']])
-
   it('ignores unbound and disabled slots', () => {
     const slots = [
       makeSlot({ slotId: 'text-1', binding: null }),
       makeSlot({ slotId: 'text-2', binding: activeBinding({ kind: 'static', text: 'x' }, false) }),
     ]
-    expect(activeSourceChips(slots, deviceNames)).toEqual([])
+    expect(activeSourceChips(slots)).toEqual([])
   })
 
   it('never surfaces the raw slot id', () => {
     const slots = [
       makeSlot({ slotId: 'text-1', binding: activeBinding({ kind: 'static', text: 'x' }) }),
     ]
-    const labels = activeSourceChips(slots, deviceNames).map((c) => c.label)
+    const labels = activeSourceChips(slots).map((c) => c.label)
     expect(labels.join(' ')).not.toContain('text-1')
   })
 
-  it('labels a self-referential device-state source as "This camera"', () => {
+  it('labels static text plainly', () => {
     const slots = [
-      makeSlot({
-        slotId: 'text-1',
-        binding: activeBinding({
-          kind: 'device-state',
-          capName: 'thermometer',
-          valuePath: 'value',
-        }),
-      }),
+      makeSlot({ slotId: 'text-1', binding: activeBinding({ kind: 'static', text: 'hi' }) }),
     ]
-    expect(activeSourceChips(slots, deviceNames)).toEqual([
-      { key: 'device-state:self', label: 'This camera' },
+    expect(activeSourceChips(slots).map((c) => c.label)).toEqual(['Static text'])
+  })
+
+  it('de-duplicates the same template across multiple slots', () => {
+    const slots = [
+      makeSlot({ slotId: 'text-1', binding: activeBinding({ kind: 'template', templateId: 'a' }) }),
+      makeSlot({ slotId: 'text-2', binding: activeBinding({ kind: 'template', templateId: 'a' }) }),
+    ]
+    expect(activeSourceChips(slots, new Map([['a', 'Outside']]))).toEqual([
+      { key: 'template:a', label: 'Outside' },
     ])
-  })
-
-  it('resolves a linked device by name instead of showing its id', () => {
-    const slots = [
-      makeSlot({
-        slotId: 'text-1',
-        binding: activeBinding({
-          kind: 'device-state',
-          deviceId: 7,
-          capName: 'thermometer',
-          valuePath: 'value',
-        }),
-      }),
-    ]
-    const chips = activeSourceChips(slots, deviceNames)
-    expect(chips).toEqual([{ key: 'device-state:7', label: 'Linked: Backyard Sensor' }])
-  })
-
-  it('labels recognition sources as person/plate, and clock/static plainly', () => {
-    const slots = [
-      makeSlot({
-        slotId: 'text-1',
-        binding: activeBinding({ kind: 'latest-recognition', recognition: 'person' }),
-      }),
-      makeSlot({
-        slotId: 'text-2',
-        binding: activeBinding({ kind: 'latest-recognition', recognition: 'plate' }),
-      }),
-      makeSlot({ slotId: 'text-3', binding: activeBinding({ kind: 'clock', pattern: 'HH:mm' }) }),
-      makeSlot({ slotId: 'text-4', binding: activeBinding({ kind: 'static', text: 'hi' }) }),
-    ]
-    const labels = activeSourceChips(slots, deviceNames).map((c) => c.label)
-    expect(labels).toEqual(['Recognized person', 'Recognized plate', 'Clock', 'Static text'])
-  })
-
-  it('de-duplicates identical sources across multiple slots', () => {
-    const slots = [
-      makeSlot({ slotId: 'text-1', binding: activeBinding({ kind: 'clock', pattern: 'HH:mm' }) }),
-      makeSlot({ slotId: 'text-2', binding: activeBinding({ kind: 'clock', pattern: 'ss' }) }),
-    ]
-    expect(activeSourceChips(slots, deviceNames)).toEqual([{ key: 'clock', label: 'Clock' }])
   })
 
   it('labels named templates by name, not by id', () => {
@@ -203,7 +153,7 @@ describe('activeSourceChips', () => {
       }),
     ]
     const names = new Map([['c93f0a90-0e74-4e0c-a790-084ad195ec84', 'Temperatura esterna']])
-    expect(activeSourceChips(slots, deviceNames, names)).toEqual([
+    expect(activeSourceChips(slots, names)).toEqual([
       {
         key: 'template:c93f0a90-0e74-4e0c-a790-084ad195ec84',
         label: 'Temperatura esterna',
@@ -212,14 +162,11 @@ describe('activeSourceChips', () => {
   })
 })
 
-describe('parseSlotContentPanel / parseTemplateContentPanel', () => {
+describe('parseSlotContentPanel', () => {
   it('defaults and accepts known panel ids', () => {
     expect(parseSlotContentPanel(null)).toBe('layer')
     expect(parseSlotContentPanel('binding')).toBe('binding')
     expect(parseSlotContentPanel('nope')).toBe('layer')
-    expect(parseTemplateContentPanel(null)).toBe('template')
-    expect(parseTemplateContentPanel('bindings')).toBe('bindings')
-    expect(parseTemplateContentPanel('nope')).toBe('template')
   })
 })
 
@@ -229,8 +176,6 @@ describe('emptyBindingDraft / draftForSlot', () => {
     expect(draft).toMatchObject({
       enabled: true,
       source: { kind: 'none' },
-      template: '${value}',
-      maxDecimals: 1,
     })
   })
 
@@ -238,8 +183,6 @@ describe('emptyBindingDraft / draftForSlot', () => {
     const binding: OsdSlotBinding = {
       enabled: true,
       source: { kind: 'static', text: 'hi' },
-      template: '${value}',
-      maxDecimals: 1,
     }
     const slot: OsdSlotView = {
       slotId: 'text-1',
@@ -263,176 +206,21 @@ describe('emptyBindingDraft / draftForSlot', () => {
   })
 })
 
-describe('suggestedValueMap', () => {
-  it('is undefined with no source chosen', () => {
-    expect(suggestedValueMap(undefined)).toBeUndefined()
-  })
-
-  it('seeds ON/OFF for a boolean source', () => {
-    const option: OsdSourceOption = {
-      deviceId: 1,
-      deviceName: 'Front door',
-      capName: 'contact',
-      valuePath: 'entryOpen',
-      label: 'Contact · entryOpen',
-      valueType: 'boolean',
-    }
-    expect(suggestedValueMap(option)).toEqual({ true: 'ON', false: 'OFF' })
-  })
-
-  it('seeds identity mapping for an enum source', () => {
-    const option: OsdSourceOption = {
-      deviceId: 1,
-      deviceName: 'Alarm',
-      capName: 'alarm-panel',
-      valuePath: 'state',
-      label: 'Alarm Panel · state',
-      valueType: 'enum',
-      enumValues: ['armed-away', 'disarmed'],
-    }
-    expect(suggestedValueMap(option)).toEqual({ 'armed-away': 'armed-away', disarmed: 'disarmed' })
-  })
-
-  it('is undefined for a plain number/string source', () => {
-    const option: OsdSourceOption = {
-      deviceId: 1,
-      deviceName: 'Sensor',
-      capName: 'thermometer',
-      valuePath: 'value',
-      label: 'Thermometer · value',
-      valueType: 'number',
-    }
-    expect(suggestedValueMap(option)).toBeUndefined()
-  })
-})
-
-describe('shouldReseedValueMap / nextValueMapForFieldChange', () => {
-  const booleanOpt: OsdSourceOption = {
-    deviceId: 1,
-    deviceName: 'Door',
-    capName: 'contact',
-    valuePath: 'entryOpen',
-    label: 'Contact',
-    valueType: 'boolean',
-  }
-  const enumOpt: OsdSourceOption = {
-    deviceId: 2,
-    deviceName: 'Alarm',
-    capName: 'alarm-panel',
-    valuePath: 'state',
-    label: 'Alarm',
-    valueType: 'enum',
-    enumValues: ['armed', 'disarmed'],
-  }
-
-  it('reseeds empty, identity, and prior auto-seed maps', () => {
-    expect(shouldReseedValueMap(undefined)).toBe(true)
-    expect(shouldReseedValueMap({})).toBe(true)
-    expect(shouldReseedValueMap({ armed: 'armed', disarmed: 'disarmed' })).toBe(true)
-    expect(shouldReseedValueMap({ true: 'ON', false: 'OFF' }, { true: 'ON', false: 'OFF' })).toBe(
-      true,
-    )
-  })
-
-  it('keeps a custom operator map', () => {
-    expect(shouldReseedValueMap({ true: 'MOTION', false: '' })).toBe(false)
-  })
-
-  it('seeds the next field without clobbering a custom map', () => {
-    expect(nextValueMapForFieldChange(undefined, undefined, booleanOpt)).toEqual({
-      true: 'ON',
-      false: 'OFF',
-    })
-    expect(nextValueMapForFieldChange({ true: 'MOTION', false: '' }, booleanOpt, enumOpt)).toEqual({
-      true: 'MOTION',
-      false: '',
-    })
-    expect(nextValueMapForFieldChange({ true: 'ON', false: 'OFF' }, booleanOpt, enumOpt)).toEqual({
-      armed: 'armed',
-      disarmed: 'disarmed',
-    })
-  })
-})
-
-describe('OsdTemplateBindingSchema valueMap', () => {
-  it('accepts an optional valueMap on a template binding', () => {
-    const parsed = OsdTemplateBindingSchema.parse({
-      alias: 'm',
-      pick: { deviceId: 7 },
-      capName: 'motion',
-      valuePath: 'detected',
-      valueMap: { true: 'MOTION', false: '' },
-    })
-    expect(parsed.valueMap).toEqual({ true: 'MOTION', false: '' })
-  })
-})
-
-describe('sourceOptionFor', () => {
-  const sources: OsdSourceOption[] = [
-    {
-      deviceId: 7,
-      deviceName: 'Kitchen',
-      capName: 'thermometer',
-      valuePath: 'value',
-      label: 'Thermometer · value',
-      valueType: 'number',
-    },
-  ]
-
-  it('finds the catalog entry a device-state source points at', () => {
-    const binding: OsdSlotBinding = {
-      enabled: true,
-      source: { kind: 'device-state', deviceId: 7, capName: 'thermometer', valuePath: 'value' },
-      template: '${value}${unit}',
-      maxDecimals: 1,
-    }
-    expect(sourceOptionFor(sources, binding)?.label).toBe('Thermometer · value')
-  })
-
-  it('is undefined for a static/clock source', () => {
-    const binding: OsdSlotBinding = {
-      enabled: true,
-      source: { kind: 'static', text: 'hi' },
-      template: '${value}',
-      maxDecimals: 1,
-    }
-    expect(sourceOptionFor(sources, binding)).toBeUndefined()
-  })
-})
-
 describe('sourceSummary', () => {
   it('reports unbound', () => {
     expect(sourceSummary(null)).toBe('Unbound')
   })
 
   it('summarizes a static source', () => {
-    const binding: OsdSlotBinding = {
-      enabled: true,
-      source: { kind: 'static', text: 'Hello' },
-      template: '${value}',
-      maxDecimals: 1,
-    }
-    expect(sourceSummary(binding)).toBe('Static: "Hello"')
+    expect(sourceSummary({ enabled: true, source: { kind: 'static', text: 'Hello' } })).toBe(
+      'Static: "Hello"',
+    )
   })
 
-  it('summarizes a clock source', () => {
-    const binding: OsdSlotBinding = {
-      enabled: true,
-      source: { kind: 'clock', pattern: 'HH:mm' },
-      template: '${value}',
-      maxDecimals: 1,
-    }
-    expect(sourceSummary(binding)).toBe('Clock (HH:mm)')
-  })
-
-  it('summarizes a device-state source', () => {
-    const binding: OsdSlotBinding = {
-      enabled: true,
-      source: { kind: 'device-state', deviceId: 3, capName: 'thermometer', valuePath: 'value' },
-      template: '${value}',
-      maxDecimals: 1,
-    }
-    expect(sourceSummary(binding)).toBe('thermometer · value')
+  it('names a template source by its template, falling back to the id', () => {
+    const binding: OsdSlotBinding = { enabled: true, source: { kind: 'template', templateId: 'a' } }
+    expect(sourceSummary(binding, new Map([['a', 'Outside']]))).toBe('Outside')
+    expect(sourceSummary(binding)).toBe('a')
   })
 })
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The server exposes the OSD manager previewTemplate call and the thisDevice input of the device-template calls; getSourceCatalog is gone.
+
 ## [1.2.826] - 2026-11-10
 
 ### Changed

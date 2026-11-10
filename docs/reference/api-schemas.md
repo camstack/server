@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1040 shared schemas.**
+**1037 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -4780,8 +4780,7 @@ Enum: `"unknown-camera" \| "out-of-range" \| "no-burst-producer" \| "already-loo
 
 - `id`: `string`
 - `name`: `string`
-- `bindings?`: `OsdTemplateBindingSchema[] = []`
-- `parser?`: `string = ""`
+- `text?`: `string = ""`
 
 ### `OsdOverlayKindEnum`
 
@@ -4823,9 +4822,6 @@ Enum: `"written" \| "unchanged" \| "gated" \| "unreadable" \| "disabled" \| "unb
 
 - `enabled?`: `boolean = true`
 - `source`: `OsdSourceSchema`
-- `template?`: `string = "${value}"`
-- `maxDecimals?`: `number = 1`
-- `valueMap?`: `Record<string, string>`
 - `schedule?`: `NcScheduleSchema`
 - `conditions?`: `NcConditionsSchema`
 
@@ -4838,47 +4834,21 @@ Enum: `"written" \| "unchanged" \| "gated" \| "unreadable" \| "disabled" \| "unb
 - `cameraText?`: `string`
 - `binding`: `OsdSlotBindingSchema \| null`
 
-### `OsdSourceOptionSchema`
-
-- `deviceId`: `number`
-- `deviceName`: `string`
-- `capName`: `string`
-- `valuePath`: `string`
-- `label`: `string`
-- `valueType`: `OsdSourceValueTypeEnum`
-- `enumValues?`: `string[]`
-
 ### `OsdSourceSchema`
 
 - `{ kind: "none" }`
 - `{ kind: "static"; text: string }`
-- `{ kind: "clock"; pattern?: string = "HH:mm"; timezone?: string }`
-- `{ kind: "device-state"; deviceId?: number; capName: string; valuePath: string; displayUnit?: string }`
-- `{ kind: "latest-recognition"; recognition: "person" \| "plate" }`
 - `{ kind: "template"; templateId: string }`
-
-### `OsdSourceValueTypeEnum`
-
-Enum: `"number" \| "boolean" \| "string" \| "enum"`
 
 ### `OsdStatusSchema`
 
 - `overlays`: `OsdOverlaySchema[]`
 
-### `OsdTemplateBindingSchema`
+### `OsdTemplatePreviewSchema`
 
-- `alias`: `string`
-- `pick`: `OsdTemplatePickSchema`
-- `capName`: `string`
-- `valuePath`: `string`
-- `displayUnit?`: `string`
-- `maxDecimals?`: `number = 1`
-- `valueMap?`: `Record<string, string>`
-
-### `OsdTemplatePickSchema`
-
-- `containerId?`: `number`
-- `deviceId`: `number`
+- `ok`: `boolean`
+- `text`: `string`
+- `notes`: `string[]`
 
 ### `PackageInstallationSchema`
 

@@ -7,6 +7,7 @@
 import {
   addonPagesSourceCapability,
   BaseAddon,
+  defineAddonMigrations,
   type AddonPageDeclaration,
   type ConfigUISchema,
   EventCategory,
@@ -15,7 +16,10 @@ import {
   osdManagerCapability,
   type ProviderRegistration,
 } from '@camstack/types'
+import { z } from 'zod'
 import { OsdBindingsStore } from './bindings-handle.js'
+import { ADDON_MIGRATIONS, type OsdManagerMigrationPorts } from './migrations/index.js'
+import { readRawKeys } from './migrations/read-raw-keys.js'
 import {
   ABSENT_BOUND_INDEX,
   type BoundIndexHandle,
@@ -30,8 +34,11 @@ import {
   type TemplatesHandle,
 } from './templates-store.js'
 
+/** The part of a `DeviceStateChanged` payload the manager reads: which device moved. */
+const DeviceStateChangedSchema = z.object({ deviceId: z.number().int() })
+
 interface OsdManagerConfig {
-  /** Seconds between render passes over the bound cameras. */
+  /** Seconds between safety-net render passes over the bound cameras. */
   readonly tickSeconds: number
 }
 
@@ -71,6 +78,8 @@ export class OsdManagerAddon extends BaseAddon<OsdManagerConfig> {
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {
     const ctx = this.ctx
+    // Before anything parses a store: the manager reads the new shapes only (D987).
+    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
     const store = new OsdBindingsStore((deviceId, key, schema, fallback) =>
       this.deviceState(deviceId, key, schema, fallback),
     )
@@ -120,10 +129,6 @@ export class OsdManagerAddon extends BaseAddon<OsdManagerConfig> {
         await ctx.api.osd.setOverlay.mutate({ deviceId, overlayId, patch })
       },
       readDeviceSnapshot: (deviceId) => ctx.api.deviceState.getSnapshot.query({ deviceId }),
-      listDevices: async (): Promise<readonly OsdDeviceSummary[]> => {
-        const devices = await ctx.api.deviceManager.listAll.query({ projection: 'slim' })
-        return devices.map((d) => ({ id: d.id, name: d.name, type: d.type ?? null }))
-      },
       // Filtered SERVER-SIDE. Only a camera can carry an overlay, so the
       // reconcile has no business reading the other 946 rows of a 976-device
       // directory — and `listAll` already answers this question
@@ -136,21 +141,21 @@ export class OsdManagerAddon extends BaseAddon<OsdManagerConfig> {
         })
         return cameras.map((d) => ({ id: d.id, name: d.name }))
       },
-      // ONE cap call for the whole set. `getBindings` per device is the same
-      // resolver run N times over N round trips — measured on the live hub
-      // 2026-08-25 at 1 211 ms for seventy-five; the source catalog asks about
-      // every device there is, so on 2026-08-30 that was 1 019 of them behind
-      // one operator click. `getBindingsBatch` dedupes ids and keeps a row for
-      // a device with nothing bound, so the catalog sees exactly the devices it
-      // asked about.
-      listDeviceCapsBatch: async (deviceIds) => {
-        const rows = await ctx.api.deviceManager.getBindingsBatch.query({
-          deviceIds: [...deviceIds],
-        })
-        return new Map(
-          rows.map((row) => [row.deviceId, [...new Set(row.entries.map((e) => e.capName))]]),
-        )
-      },
+      // D1021: slot texts are rendered on the hub by the one renderer.
+      renderTemplates: async (input) =>
+        (
+          await ctx.api.deviceManager.renderDeviceTemplates.query({
+            templates: [...input.templates],
+            thisDevice: input.thisDevice,
+          })
+        ).results,
+      checkTemplates: async (input) =>
+        (
+          await ctx.api.deviceManager.checkDeviceTemplates.query({
+            templates: [...input.templates],
+            thisDevice: input.thisDevice,
+          })
+        ).results,
       readLatestRecognitions: async (deviceId) => {
         const [faces, plates] = await Promise.all([
           ctx.api.faceGallery.listRecentFaces.query({
@@ -176,6 +181,11 @@ export class OsdManagerAddon extends BaseAddon<OsdManagerConfig> {
     })
 
     this.manager = manager
+    // One subscription; the manager keeps the map of who reads which device.
+    this.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
+      const changed = DeviceStateChangedSchema.safeParse(event.data)
+      if (changed.success) manager.onDeviceStateChanged(changed.data.deviceId)
+    })
     this.subscribe({ category: EventCategory.PipelineAnalyticsTrackLifecycle }, (event) => {
       manager.onTrackLifecycle(event.data)
     })
@@ -207,6 +217,41 @@ export class OsdManagerAddon extends BaseAddon<OsdManagerConfig> {
     ]
   }
 
+  private migrationPorts(): OsdManagerMigrationPorts {
+    const ctx = this.ctx
+    const settings = ctx.settings
+    if (settings === undefined) throw new Error('the per-device settings store is unavailable')
+    return {
+      readStored: (keys) => readRawKeys((key) => this.readStoredGlobalKey(key), keys),
+      listDeviceIds: () => settings.listDeviceStoreIds(),
+      readDeviceField: async (deviceIds, field) => {
+        const found = new Map<number, unknown>()
+        for (const [deviceId, blob] of await settings.readDeviceStoreBatch(deviceIds)) {
+          if (field in blob) found.set(deviceId, blob[field])
+        }
+        return found
+      },
+      readAliases: async () => {
+        const rows = await ctx.api.deviceManager.listAll.query({ projection: 'slim' })
+        return new Map(
+          rows.flatMap((d) => (d.alias === undefined ? [] : [[d.id, d.alias] as const])),
+        )
+      },
+      readSlice: async (deviceId, capName) => {
+        try {
+          return (await ctx.api.deviceState.getSnapshot.query({ deviceId }))[capName]
+        } catch {
+          // Unknown shape: the migration then writes the generic form of the expression.
+          return undefined
+        }
+      },
+      note: (message, deviceId) =>
+        ctx.logger.warn(`osd-manager: migration — ${message}`, {
+          ...(deviceId === undefined ? {} : { tags: { deviceId } }),
+        }),
+    }
+  }
+
   protected async onConfigChanged(): Promise<void> {
     const manager = this.manager
     if (manager === null) return
@@ -234,15 +279,15 @@ export class OsdManagerAddon extends BaseAddon<OsdManagerConfig> {
           id: 'osd-manager',
           title: 'OSD Manager',
           description:
-            'Drives the text cameras burn into their own video. Slot bindings are configured per camera; this page only sets how often bound cameras are re-rendered. A slot is written only when its text changes, so a short interval costs nothing while values are steady.',
+            'Drives the text cameras burn into their own video. Slot bindings are configured per camera; this page only sets how often bound cameras are re-rendered. A slot is written only when its text changes.',
           columns: 2,
           fields: [
             this.field({
               type: 'number',
               key: 'tickSeconds',
-              label: 'Render interval (seconds)',
+              label: 'Safety-net render interval (seconds)',
               description:
-                'How often every bound camera is re-rendered. Lower means a fresher clock and a faster reaction to a state change.',
+                'How often every bound camera is re-rendered even when nothing woke it. A slot re-renders by itself when a device its text reads changes, and a clock on the minute.',
               min: 1,
               max: 300,
               step: 1,

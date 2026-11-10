@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import type { DeviceTemplateThisDevice } from '@camstack/types'
 import { Braces } from 'lucide-react'
 import { useUiText } from '../../contexts/ui-text'
 import {
@@ -55,6 +56,12 @@ export interface DeviceTemplateFieldProps {
   readonly preview?: boolean
   /** Devices the end caller may read; a template naming another is refused. */
   readonly allowedDeviceIds?: readonly number[]
+  /**
+   * The device the text is written for. `camera` then names it (so a template copies
+   * between devices), and the hub vets and previews against it. `values` are the
+   * `camera.<name>` variables the consumer supplies.
+   */
+  readonly thisDevice?: DeviceTemplateThisDevice
   readonly className?: string
   readonly testId?: string
   readonly capTitle?: (cap: string) => string
@@ -165,7 +172,11 @@ export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode 
                   >
                     <SelectedChip
                       label={chipLabel(segment)}
-                      warning={all.status === 'success' && !nameOf.has(segment.alias)}
+                      warning={
+                        all.status === 'success' &&
+                        !nameOf.has(segment.alias) &&
+                        !(props.thisDevice !== undefined && segment.alias === 'camera')
+                      }
                       onRemove={disabled ? undefined : () => removeRef(segment)}
                       testId={`${testId}-chip`}
                     />
@@ -201,6 +212,7 @@ export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode 
         preview={props.preview === true}
         heldSlots={props.heldSlots}
         allowedDeviceIds={props.allowedDeviceIds}
+        thisDevice={props.thisDevice}
         testId={testId}
       />
       <DeviceTemplateInsert
@@ -208,6 +220,7 @@ export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode 
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onInsert={insert}
+        thisDeviceId={props.thisDevice?.deviceId}
         capTitle={props.capTitle}
         fieldLabel={props.fieldLabel}
       />
@@ -220,6 +233,7 @@ interface TemplateFeedbackProps {
   readonly value: string
   readonly preview: boolean
   readonly allowedDeviceIds: readonly number[] | undefined
+  readonly thisDevice: DeviceTemplateThisDevice | undefined
   readonly testId: string
 }
 
@@ -229,6 +243,7 @@ function TemplateFeedback({
   value,
   preview,
   allowedDeviceIds,
+  thisDevice,
   testId,
 }: TemplateFeedbackProps): ReactNode {
   const t = useUiText()
@@ -238,7 +253,7 @@ function TemplateFeedback({
   const text = textForDeviceCheck(settled, heldSlots)
   const allowed = allowedDeviceIds === undefined ? undefined : [...allowedDeviceIds]
   const check = useDeviceManagerCheckDeviceTemplates(
-    { templates: [text], allowedDeviceIds: allowed },
+    { templates: [text], allowedDeviceIds: allowed, thisDevice },
     { enabled: worth },
   )
   const verdict = worth ? check.data?.results[0] : undefined
@@ -251,7 +266,7 @@ function TemplateFeedback({
     verdict?.ok === true ? verdict.aliases.filter((a) => a.deviceId !== null && !a.allowed) : []
   const vetted = verdict?.ok === true && unknownAliases.length === 0 && outOfScope.length === 0
   const rendered = useDeviceManagerRenderDeviceTemplates(
-    { templates: [text], allowedDeviceIds: allowed },
+    { templates: [text], allowedDeviceIds: allowed, thisDevice },
     { enabled: preview && vetted },
   )
   const result = preview && vetted ? rendered.data?.results[0] : undefined

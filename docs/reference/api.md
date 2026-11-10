@@ -811,13 +811,13 @@
 | `osd.getStatus` | query | protected | osd (auto) |
 | `osd.setOverlay` | mutation | admin | osd |
 | `osdManager.getDeviceOsd` | query | admin | osd-manager |
-| `osdManager.getSourceCatalog` | query | admin | osd-manager |
 | `osdManager.getConditionSupport` | query | admin | osd-manager |
 | `osdManager.setSlotBinding` | mutation | admin | osd-manager |
 | `osdManager.clearSlotBinding` | mutation | admin | osd-manager |
 | `osdManager.setSlotCameraEnabled` | mutation | admin | osd-manager |
 | `osdManager.copyDeviceConfiguration` | mutation | admin | osd-manager |
 | `osdManager.previewSlot` | mutation | admin | osd-manager |
+| `osdManager.previewTemplate` | mutation | admin | osd-manager |
 | `osdManager.renderDevice` | mutation | admin | osd-manager |
 | `osdManager.listTemplates` | query | admin | osd-manager |
 | `osdManager.upsertTemplate` | mutation | admin | osd-manager |
@@ -2394,7 +2394,7 @@
 
 ### `device-manager` → `deviceManager.*`
 
-- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:525`
+- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:526`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceManagerProvider`
@@ -2411,8 +2411,8 @@
 | loadMeta | `deviceManager.loadMeta` | query | protected | `{ deviceId: number }` | `{ id: number; stableId: string; addonId: string; type: string; name: string; userNamed?: boolean; location: string \| null; disabled: boolean; parentDeviceId: number \| null; metadata?: Record<string, unknown> \| null; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; integrationId?: string; linkDeviceId?: number \| null; primaryChildEntityId?: string \| null; childLayout?: ({ childKey: string; section: string; order?: number; collapsed?: boolean })[]; role?: string \| null; display?: { icon?: string; label?: string; unit?: string; precision?: number; hidden?: boolean; perCap?: Record<string, { unit?: string; precision?: number }> } } \| null` |
 | setName | `deviceManager.setName` | mutation | admin | `{ deviceId: number; name: string; stampUserNamed?: boolean }` | `void` |
 | setAlias | `deviceManager.setAlias` | mutation | admin | `{ deviceId: number; alias: string }` | `{ ok: true; alias: string } \| { ok: false; reason: "empty" \| "too-long" \| "grammar" \| "reserved" \| "taken"; takenBy?: number }` |
-| renderDeviceTemplates | `deviceManager.renderDeviceTemplates` | query | admin | `{ templates: string[]; allowedDeviceIds?: number[] }` | `{ results: ({ ok: true; text: string; trace: ({ ref: string; reason: "unknown-alias" \| "unknown-field" \| "no-field" \| "unavailable" })[] } \| { ok: false; refusal: { reason: "too-long" \| "syntax" \| "forbidden-syntax" \| "forbidden-member" \| "unknown-filter" \| "ambiguous-field" \| "busy" \| "budget-exceeded" \| "timeout" \| "output-too-large" \| "render-failed" \| "out-of-scope" \| "unavailable"; message: string }; trace: ({ ref: string; reason: "unknown-alias" \| "unknown-field" \| "no-field" \| "unavailable" })[] })[] }` |
-| checkDeviceTemplates | `deviceManager.checkDeviceTemplates` | query | admin | `{ templates: string[]; allowedDeviceIds?: number[] }` | `{ results: ({ ok: true; aliases: ({ alias: string; deviceId: number \| null; allowed: boolean })[] } \| { ok: false; refusal: { reason: "too-long" \| "syntax" \| "forbidden-syntax" \| "forbidden-member" \| "unknown-filter" \| "ambiguous-field" \| "busy" \| "budget-exceeded" \| "timeout" \| "output-too-large" \| "render-failed" \| "out-of-scope" \| "unavailable"; message: string } })[] }` |
+| renderDeviceTemplates | `deviceManager.renderDeviceTemplates` | query | admin | `{ templates: string[]; allowedDeviceIds?: number[]; thisDevice?: { deviceId: number; values?: Record<string, string \| number \| boolean> } }` | `{ results: ({ ok: true; text: string; trace: ({ ref: string; reason: "unknown-alias" \| "unknown-field" \| "no-field" \| "unavailable" })[] } \| { ok: false; refusal: { reason: "too-long" \| "syntax" \| "forbidden-syntax" \| "forbidden-member" \| "unknown-filter" \| "ambiguous-field" \| "busy" \| "budget-exceeded" \| "timeout" \| "output-too-large" \| "render-failed" \| "out-of-scope" \| "unavailable"; message: string }; trace: ({ ref: string; reason: "unknown-alias" \| "unknown-field" \| "no-field" \| "unavailable" })[] })[] }` |
+| checkDeviceTemplates | `deviceManager.checkDeviceTemplates` | query | admin | `{ templates: string[]; allowedDeviceIds?: number[]; thisDevice?: { deviceId: number; values?: Record<string, string \| number \| boolean> } }` | `{ results: ({ ok: true; aliases: ({ alias: string; deviceId: number \| null; allowed: boolean; reads: string[] })[]; readsClock: boolean } \| { ok: false; refusal: { reason: "too-long" \| "syntax" \| "forbidden-syntax" \| "forbidden-member" \| "unknown-filter" \| "ambiguous-field" \| "busy" \| "budget-exceeded" \| "timeout" \| "output-too-large" \| "render-failed" \| "out-of-scope" \| "unavailable"; message: string } })[] }` |
 | setLocation | `deviceManager.setLocation` | mutation | admin | `{ deviceId: number; location: string \| null }` | `void` |
 | setType | `deviceManager.setType` | mutation | admin | `{ deviceId: number; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "heater" \| "dryer" \| "gateway" \| "heat-pump" }` | `void` |
 | setIntegrationId | `deviceManager.setIntegrationId` | mutation | admin | `{ deviceId: number; integrationId: string }` | `void` |
@@ -3691,7 +3691,7 @@
 
 ### `osd-manager` → `osdManager.*`
 
-- **Source:** `packages/types/src/capabilities/osd-manager.cap.ts:235`
+- **Source:** `packages/types/src/capabilities/osd-manager.cap.ts:145`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IOsdManagerProvider`
@@ -3699,13 +3699,13 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getDeviceOsd | `osdManager.getDeviceOsd` | query | admin | `{ deviceId: number }` | `{ supported: boolean; slots: OsdSlotViewSchema[] }` |
-| getSourceCatalog | `osdManager.getSourceCatalog` | query | admin | `{ deviceId: number }` | `{ sources: OsdSourceOptionSchema[] }` |
 | getConditionSupport | `osdManager.getConditionSupport` | query | admin | `{}` | `{ supported: string[]; catalog: NcConditionDescriptorSchema[] }` |
 | setSlotBinding | `osdManager.setSlotBinding` | mutation | admin | `{ deviceId: number; slotId: string; binding: OsdSlotBindingSchema }` | `{ slot: OsdSlotViewSchema; render: OsdRenderResultSchema }` |
 | clearSlotBinding | `osdManager.clearSlotBinding` | mutation | admin | `{ deviceId: number; slotId: string }` | `{ success: true }` |
 | setSlotCameraEnabled | `osdManager.setSlotCameraEnabled` | mutation | admin | `{ deviceId: number; slotId: string; enabled: boolean }` | `{ success: true }` |
 | copyDeviceConfiguration | `osdManager.copyDeviceConfiguration` | mutation | admin | `{ sourceDeviceId: number; targetDeviceId: number }` | `{ copied: number; skipped: number }` |
 | previewSlot | `osdManager.previewSlot` | mutation | admin | `{ deviceId: number; slotId: string; binding?: OsdSlotBindingSchema }` | `OsdRenderResultSchema` |
+| previewTemplate | `osdManager.previewTemplate` | mutation | admin | `{ deviceId: number; text: string }` | `OsdTemplatePreviewSchema` |
 | renderDevice | `osdManager.renderDevice` | mutation | admin | `{ deviceId: number }` | `{ results: OsdRenderResultSchema[] }` |
 | listTemplates | `osdManager.listTemplates` | query | admin | `{}` | `{ templates: OsdNamedTemplateSchema[] }` |
 | upsertTemplate | `osdManager.upsertTemplate` | mutation | admin | `{ template: OsdNamedTemplateSchema }` | `{ template: OsdNamedTemplateSchema }` |

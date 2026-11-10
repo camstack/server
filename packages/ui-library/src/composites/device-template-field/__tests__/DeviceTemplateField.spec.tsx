@@ -173,4 +173,16 @@ describe('DeviceTemplateField', () => {
     renderUi(<Harness initial="{{ stufa.temperature }}" preview />)
     expect(screen.getByTestId('device-template-field-preview').textContent).toContain('Now 21.0 C')
   })
+
+  it('writes the copyable camera alias when the picked device is the one the text is for', () => {
+    renderUi(<Harness initial="" thisDevice={{ deviceId: 1 }} />)
+    pickAndInsert('device-value-climate.mode')
+    expect(stored()).toBe('{{ camera.mode }}')
+  })
+
+  it('without a device the text is for, the same pick writes the device alias', () => {
+    renderUi(<Harness initial="" />)
+    pickAndInsert('device-value-climate.mode')
+    expect(stored()).toBe('{{ stufa.mode }}')
+  })
 })

@@ -12,30 +12,12 @@
     "kind": {
       "none": "None",
       "static": "Static text",
-      "clock": "Clock",
-      "deviceState": "Device state",
-      "latestRecognition": "Latest recognition",
-      "template": "Named template"
+      "template": "Device template"
     },
     "noneHint": "Writes blank overlay text. The binding stays so CamStack keeps owning this slot.",
     "text": "Text",
-    "pattern": "Pattern",
-    "timezone": "Timezone (optional)",
-    "timezonePlaceholder": "Server zone",
-    "recognition": "Recognition",
-    "recognitionPerson": "Last recognized person",
-    "recognitionPlate": "Last recognized plate",
     "namedTemplate": "Named template",
-    "noTemplates": "No named templates yet — create one in the Templates tab."
-  },
-  "valueMap": {
-    "label": "Value map (raw → display text)",
-    "keyAria": "Value map key {{n}}",
-    "textAria": "Value map text {{n}}",
-    "rawPlaceholder": "raw value",
-    "displayPlaceholder": "display text",
-    "removeAria": "Remove value map row {{n}}",
-    "add": "Add mapping"
+    "noTemplates": "No templates yet — create one in the Templates tab."
   },
   "duplicate": {
     "trigger": "Duplicate into…",
@@ -64,8 +46,7 @@
     "preview": "Preview",
     "blank": "(blank)",
     "runPreview": "Run Preview to see the rendered text.",
-    "bindingHint": "Where the text comes from and how it is formatted.",
-    "templateLabel": "Value regex / template"
+    "bindingHint": "Where the text comes from."
   },
   "outcome": {
     "written": "Written",
@@ -77,15 +58,7 @@
     "failed": "Write failed"
   },
   "summary": {
-    "static": "Static: \"{{text}}\"",
-    "clock": "Clock ({{pattern}})"
-  },
-  "chip": {
-    "person": "Recognized person",
-    "plate": "Recognized plate",
-    "thisCamera": "This camera",
-    "linked": "Linked: {{name}}",
-    "linkedDevice": "Linked device"
+    "static": "Static: \"{{text}}\""
   },
   "cameraStatus": {
     "unsupported": "Unsupported",
@@ -162,8 +135,6 @@
     "copyName": "{{name}} (copy)",
     "title": "Templates",
     "colName": "Name",
-    "colBindings": "Bindings",
-    "colParser": "Parser",
     "rowActions": "Row actions",
     "duplicate": "Duplicate",
     "duplicateAria": "Duplicate {{name}}",
@@ -173,20 +144,17 @@
     "loading": "Loading templates…",
     "none": "No named templates yet.",
     "editTitle": "Edit {{name}}",
-    "tabTemplate": "Template",
-    "tabBindings": "Bindings",
     "save": "Save template",
-    "parserHint": "Parser tokens expand from the bindings on the Bindings tab.",
-    "parserLabel": "Parser",
-    "parserPlaceholder": "e.g. {t.value} {t.unit} / {h.full}",
     "livePreview": "Live preview",
-    "bindingsHint": "Each binding picks device → child (if a container) → field. The same container can appear on more than one binding.",
-    "addBinding": "Add binding",
-    "noBindings": "No bindings yet — add one to start.",
-    "pickDeviceAndField": "Pick a device and field",
-    "alias": "Alias",
-    "decimals": "Decimals",
-    "remove": "Remove",
-    "live": "Live: {{value}}"
+    "colText": "Text",
+    "insertClock": "Clock",
+    "insertPerson": "Last person",
+    "insertPlate": "Last plate",
+    "textLabel": "Template text",
+    "textHint": "Write the text with {{ alias.field | unit('°C') | round(1) }}. Use {% if %} for conditions and round(0) for whole numbers.",
+    "textPlaceholder": "{{ camera.lastPerson }} {{ now | time('HH:mm') }}",
+    "cameraHint": "camera is the camera the template is shown on, so one template serves every camera. now is the server time. camera.lastPerson and camera.lastPlate are the latest recognitions.",
+    "previewCamera": "Preview on camera",
+    "previewIdle": "Type a text to see how it reads."
   }
 }

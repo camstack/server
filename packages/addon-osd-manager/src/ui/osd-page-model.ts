@@ -11,7 +11,6 @@ import {
   type OsdSlotBinding,
   type OsdSlotView,
   type OsdSource,
-  type OsdSourceOption,
 } from '@camstack/types'
 
 export interface CameraOption {
@@ -31,8 +30,6 @@ export function emptyBindingDraft(): OsdSlotBinding {
   return {
     enabled: true,
     source: { kind: 'none' },
-    template: '${value}',
-    maxDecimals: 1,
   }
 }
 
@@ -42,14 +39,6 @@ export type SlotContentPanel = 'layer' | 'binding'
 /** Parse `?panel=` for the camera slot editor; unknown / absent → layer. */
 export function parseSlotContentPanel(raw: string | null): SlotContentPanel {
   return raw === 'binding' ? 'binding' : 'layer'
-}
-
-/** Named-template dialog content tab. */
-export type TemplateContentPanel = 'template' | 'bindings'
-
-/** Parse `?panel=` for the template editor; unknown / absent → template. */
-export function parseTemplateContentPanel(raw: string | null): TemplateContentPanel {
-  return raw === 'bindings' ? 'bindings' : 'template'
 }
 
 /** The draft a slot editor opens with: its saved binding, or a fresh one. */
@@ -95,71 +84,6 @@ export function dirtySlotBindings(
   return out
 }
 
-/** Suggested `valueMap` seed when the operator points a binding at a source. */
-export function suggestedValueMap(
-  option: OsdSourceOption | undefined,
-): Record<string, string> | undefined {
-  if (option === undefined) return undefined
-  if (option.valueType === 'boolean') return { true: 'ON', false: 'OFF' }
-  if (option.valueType === 'enum' && option.enumValues && option.enumValues.length > 0) {
-    return Object.fromEntries(option.enumValues.map((v) => [v, v]))
-  }
-  return undefined
-}
-
-function valueMapsEqual(
-  a: Record<string, string> | undefined,
-  b: Record<string, string> | undefined,
-): boolean {
-  if (a === b) return true
-  if (a === undefined || b === undefined) return false
-  const aKeys = Object.keys(a)
-  const bKeys = Object.keys(b)
-  if (aKeys.length !== bKeys.length) return false
-  return aKeys.every((key) => a[key] === b[key])
-}
-
-/**
- * Whether a field change may replace `current` with a new `suggestedValueMap`.
- * Empty, identity (raw→raw), or still equal to the previous auto-seed → reseed;
- * a custom operator edit is kept.
- */
-export function shouldReseedValueMap(
-  current: Record<string, string> | undefined,
-  previousSuggested?: Record<string, string> | undefined,
-): boolean {
-  if (current === undefined) return true
-  const entries = Object.entries(current)
-  if (entries.length === 0) return true
-  if (entries.every(([key, value]) => key === value)) return true
-  if (previousSuggested !== undefined && valueMapsEqual(current, previousSuggested)) return true
-  return false
-}
-
-/** Catalog entry for a device-state pick (deviceId/capName/valuePath). */
-export function sourceOptionForPick(
-  sources: readonly OsdSourceOption[],
-  pick: { readonly deviceId: number; readonly capName: string; readonly valuePath: string },
-): OsdSourceOption | undefined {
-  if (pick.deviceId <= 0 || pick.capName === '' || pick.valuePath === '') return undefined
-  return sources.find(
-    (s) =>
-      s.deviceId === pick.deviceId && s.capName === pick.capName && s.valuePath === pick.valuePath,
-  )
-}
-
-/** Find the catalog entry a device-state binding source currently points at. */
-export function sourceOptionFor(
-  sources: readonly OsdSourceOption[],
-  binding: OsdSlotBinding,
-): OsdSourceOption | undefined {
-  if (binding.source.kind !== 'device-state') return undefined
-  const { deviceId, capName, valuePath } = binding.source
-  return sources.find(
-    (s) => s.deviceId === deviceId && s.capName === capName && s.valuePath === valuePath,
-  )
-}
-
 /** One-line human summary of a binding's source, for the slot list row. */
 export function sourceSummary(
   binding: OsdSlotBinding | null,
@@ -169,17 +93,8 @@ export function sourceSummary(
   const source = binding.source
   if (source.kind === 'none') return translate('source.kind.none')
   if (source.kind === 'static') return translate('summary.static', { text: source.text })
-  if (source.kind === 'clock') return translate('summary.clock', { pattern: source.pattern })
-  if (source.kind === 'latest-recognition') {
-    return source.recognition === 'person'
-      ? translate('source.recognitionPerson')
-      : translate('source.recognitionPlate')
-  }
-  if (source.kind === 'template') {
-    const name = templateNameById?.get(source.templateId)
-    return name !== undefined && name !== '' ? name : source.templateId
-  }
-  return `${source.capName} · ${source.valuePath}`
+  const name = templateNameById?.get(source.templateId)
+  return name !== undefined && name !== '' ? name : source.templateId
 }
 
 export type OsdCameraStatus = 'unsupported' | 'disabled' | 'partial' | 'enabled'
@@ -256,22 +171,17 @@ export interface SourceChip {
 
 /**
  * One human-facing chip per DISTINCT active source feeding this camera's
- * overlays — never a raw slot id, cap name, or value path. A `device-state`
- * source with no `deviceId` means "this camera" (the same self-reference the
- * binding schema uses to stay copyable between cameras); one WITH a
- * `deviceId` resolves through `deviceNameById` to that device's display
- * name, i.e. "a linked sensor/device", per the operator-facing vocabulary.
+ * overlays — never a raw slot id. A template shows under its name.
  */
 export function activeSourceChips(
   slots: readonly OsdSlotView[],
-  deviceNameById: ReadonlyMap<number, string>,
   templateNameById: ReadonlyMap<string, string> = new Map(),
 ): SourceChip[] {
   const chips = new Map<string, string>()
   for (const slot of slots) {
     const binding = slot.binding
     if (binding === null || !binding.enabled) continue
-    const [key, label] = sourceChip(binding.source, deviceNameById, templateNameById)
+    const [key, label] = sourceChip(binding.source, templateNameById)
     chips.set(key, label)
   }
   return [...chips.entries()].map(([key, label]) => ({ key, label }))
@@ -279,29 +189,14 @@ export function activeSourceChips(
 
 function sourceChip(
   source: OsdSource,
-  deviceNameById: ReadonlyMap<number, string>,
   templateNameById: ReadonlyMap<string, string>,
 ): readonly [string, string] {
   if (source.kind === 'none') return ['none', translate('source.kind.none')]
   if (source.kind === 'static') return ['static', translate('source.kind.static')]
-  if (source.kind === 'clock') return ['clock', translate('source.kind.clock')]
-  if (source.kind === 'latest-recognition') {
-    return source.recognition === 'person'
-      ? ['recognition:person', translate('chip.person')]
-      : ['recognition:plate', translate('chip.plate')]
-  }
-  if (source.kind === 'template') {
-    const name = templateNameById.get(source.templateId)
-    return [
-      `template:${source.templateId}`,
-      name !== undefined && name !== '' ? name : source.templateId,
-    ]
-  }
-  if (source.deviceId === undefined) return ['device-state:self', translate('chip.thisCamera')]
-  const name = deviceNameById.get(source.deviceId)
+  const name = templateNameById.get(source.templateId)
   return [
-    `device-state:${source.deviceId}`,
-    name !== undefined ? translate('chip.linked', { name }) : translate('chip.linkedDevice'),
+    `template:${source.templateId}`,
+    name !== undefined && name !== '' ? name : source.templateId,
   ]
 }
 

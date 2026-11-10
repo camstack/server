@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
   Badge,
   Button,
-  PlaceholderChipField,
-  type PickerDevice,
   TabsContent,
   TabsList,
   TabsTrigger,
@@ -17,12 +15,10 @@ import type {
   OsdRenderResult,
   OsdSlotBinding,
   OsdSlotView,
-  OsdSourceOption,
 } from '@camstack/types'
 import { useT } from '../i18n/index.js'
 import { outcomeLabel, outcomeTone } from '../ui/osd-page-model.js'
 import { SourceEditor } from './SourceEditor.js'
-import { ValueMapEditor } from './ValueMapEditor.js'
 
 /** Content tabs under the slot strip — Layer (incl. Preview) | Binding. */
 export type SlotEditorPanel = 'layer' | 'binding'
@@ -33,9 +29,6 @@ interface SlotEditorProps {
   /** Controlled draft — parent owns Save for every layer. */
   readonly binding: OsdSlotBinding
   readonly onBindingChange: (next: OsdSlotBinding) => void
-  readonly sources: readonly OsdSourceOption[]
-  readonly pickerDevices: readonly PickerDevice[]
-  readonly listState: 'answered' | 'pending' | 'failed'
   readonly templates: readonly OsdNamedTemplate[]
   /** Re-probe overlays so `slot.cameraText` (current on-camera value) refreshes. */
   readonly onRefreshCurrent?: () => void | Promise<unknown>
@@ -63,9 +56,6 @@ export function SlotEditor({
   slot,
   binding: draft,
   onBindingChange,
-  sources,
-  pickerDevices,
-  listState,
   templates,
   onRefreshCurrent,
   refreshingCurrent = false,
@@ -82,14 +72,6 @@ export function SlotEditor({
     if (!setSlotCameraEnabled.isPending) setCameraEnabled(slot.cameraEnabled)
   }, [slot.cameraEnabled, setSlotCameraEnabled.isPending])
 
-  const templateChips = useMemo(
-    () => [
-      { id: 'value', label: '${value}', token: '${value}' },
-      { id: 'unit', label: '${unit}', token: '${unit}' },
-    ],
-    [],
-  )
-
   async function handlePreview() {
     const result = await previewSlot.mutateAsync({
       deviceId,
@@ -98,14 +80,6 @@ export function SlotEditor({
     })
     setPreview(result)
   }
-
-  // Named templates / None own formatting (or need none). Device-state
-  // valueMap lives in DeviceStatePickBlock (shared with templates).
-  const namedTemplate = draft.source.kind === 'template'
-  const noneSource = draft.source.kind === 'none'
-  const deviceStateSource = draft.source.kind === 'device-state'
-  const showSlotFormatting = !namedTemplate && !noneSource
-  const showSlotValueMap = showSlotFormatting && !deviceStateSource
 
   return (
     <>
@@ -138,7 +112,7 @@ export function SlotEditor({
         </label>
 
         <div
-          className="flex flex-wrap items-center justify-between gap-2 rounded border border-border bg-surface-raised px-3 py-2"
+          className="flex flex-wrap items-center justify-between gap-2 rounded border border-border bg-surface px-3 py-2"
           data-testid="osd-slot-current-value"
         >
           <div className="min-w-0">
@@ -214,37 +188,9 @@ export function SlotEditor({
         <p className="text-[11px] text-foreground-subtle">{t('slot.bindingHint')}</p>
         <SourceEditor
           source={draft.source}
-          sources={sources}
-          pickerDevices={pickerDevices}
-          listState={listState}
           templates={templates}
-          valueMap={draft.valueMap}
-          maxDecimals={draft.maxDecimals}
           onChange={(source) => onBindingChange({ ...draft, source })}
-          onValueMapChange={(valueMap) => onBindingChange({ ...draft, valueMap })}
-          onMaxDecimalsChange={(maxDecimals) => onBindingChange({ ...draft, maxDecimals })}
         />
-
-        {showSlotFormatting ? (
-          <>
-            <PlaceholderChipField
-              label={t('slot.templateLabel')}
-              value={draft.template}
-              onChange={(template) => onBindingChange({ ...draft, template })}
-              chips={templateChips}
-              placeholder="${value} ${unit}"
-              testId="osd-slot-template"
-              maxLength={96}
-            />
-
-            {showSlotValueMap ? (
-              <ValueMapEditor
-                valueMap={draft.valueMap}
-                onChange={(valueMap) => onBindingChange({ ...draft, valueMap })}
-              />
-            ) : null}
-          </>
-        ) : null}
       </TabsContent>
     </>
   )

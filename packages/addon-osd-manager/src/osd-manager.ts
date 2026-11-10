@@ -16,11 +16,12 @@ import {
   type IScopedLogger,
   NC_CONDITION_CATALOG,
   type NcConditionDescriptor,
+  type DeviceTemplateRender,
   type OsdNamedTemplate,
+  type OsdTemplatePreview,
   type OsdRenderResult,
   type OsdSlotBinding,
   type OsdSlotView,
-  type OsdSourceOption,
   type OsdStatus,
   type PipelineAnalyticsTrackLifecyclePayload,
   readDeviceStateFrom,
@@ -31,7 +32,13 @@ import type { BoundIndexHandle } from './bound-index.js'
 import { assertSupportedConditions, OSD_SUPPORTED_CONDITIONS } from './gate.js'
 import { mapWithConcurrency } from './lane-pool.js'
 import { type OsdFacts, renderSlot } from './render.js'
-import { sourceOptionsFor } from './source-catalog.js'
+import {
+  mentionsRecognition,
+  type OsdTemplateCheck,
+  type OsdTemplateRenderInput,
+  outcomeOfRender,
+  type TemplateOutcome,
+} from './template-context.js'
 import {
   deleteNamedTemplate,
   findNamedTemplate,
@@ -62,9 +69,6 @@ export interface OsdManagerDeps {
   readonly writeOverlay: OsdOverlayWriter
   /** `deviceState.getSnapshot` — the whole cap-keyed state blob for a device. */
   readonly readDeviceSnapshot: (deviceId: number) => Promise<Record<string, unknown>>
-  /** Every device in the cluster, for the source catalog and its labels. A slot
-   *  may render state from ANY device, so this one cannot be narrowed. */
-  readonly listDevices: () => Promise<readonly OsdDeviceSummary[]>
   /** CAMERAS only — the reconcile's work list. Only a camera can carry an
    *  overlay, so reading the other 946 rows of a 976-device directory answered
    *  a question nobody asked; the filter belongs server-side
@@ -75,26 +79,12 @@ export interface OsdManagerDeps {
   /** Cameras reconciled at once. Test seam; production takes
    *  {@link RECONCILE_CONCURRENCY}. */
   readonly reconcileConcurrency?: number
-  /**
-   * Cap names currently bound on a NAMED SET of devices — what each can
-   * actually publish.
-   *
-   * The set, never one device at a time. The source catalog asks this about
-   * every device in the cluster (see {@link OsdManagerDeps.listDevices}: a slot
-   * may render state from ANY device, so the question cannot be narrowed), and
-   * asking it per device was 1 019 sequential cross-process cap calls behind an
-   * operator opening a slot editor on the live hub 2026-08-30 — each one itself
-   * a store-backed resolve. `deviceManager.getBindingsBatch` answers the whole
-   * set in one round trip, with the same resolver and the same per-device shape
-   * as `getBindings` (a device with nothing bound answers `entries: []` rather
-   * than dropping out), so the catalog does not narrow either.
-   *
-   * A device the answer omits contributes no caps, exactly as a failed
-   * per-device read did.
-   */
-  readonly listDeviceCapsBatch: (
-    deviceIds: readonly number[],
-  ) => Promise<ReadonlyMap<number, readonly string[]>>
+  /** `deviceManager.renderDeviceTemplates` — the hub's one renderer (D1021). */
+  readonly renderTemplates: (
+    input: OsdTemplateRenderInput,
+  ) => Promise<readonly DeviceTemplateRender[]>
+  /** `deviceManager.checkDeviceTemplates` — which devices a text reads, and whether the clock. */
+  readonly checkTemplates: (input: OsdTemplateRenderInput) => Promise<readonly OsdTemplateCheck[]>
   /** Latest durable face/plate gallery values for this camera. */
   readonly readLatestRecognitions: (deviceId: number) => Promise<{
     readonly person?: TimedRecognition
@@ -107,8 +97,27 @@ export interface OsdManagerDeps {
   readonly now?: () => number
 }
 
-/** How often every bound camera is re-rendered when nothing else wakes us. */
-export const DEFAULT_TICK_MS = 10_000
+/** Safety net: how often every bound camera is re-rendered when no event wakes us. */
+export const DEFAULT_TICK_MS = 60_000
+
+/**
+ * The shortest gap between two renders of one slot woken by device events. A
+ * sensor that reports every second must not become a render (and a hub template
+ * call) every second. A fixed constant, not an operator knob.
+ */
+export const SLOT_RERENDER_THROTTLE_MS = 3_000
+
+/** A template that reads `now` changes with the minute. */
+export const CLOCK_RERENDER_MS = 60_000
+
+/** How long what a template reads (`checkDeviceTemplates`) is trusted before it is asked again. */
+const TEMPLATE_DEPENDENCY_TTL_MS = 5 * 60_000
+
+interface TemplateDependencies {
+  readonly deviceIds: ReadonlySet<number>
+  readonly readsClock: boolean
+  readonly atMs: number
+}
 
 /**
  * Cameras whose bindings the reconcile reads at once.
@@ -150,6 +159,18 @@ export class OsdManager implements IOsdManagerProvider {
   private readonly recognitionGeneration = new Map<number, number>()
   private readonly recognitionInvalidatedAt = new Map<number, number>()
   private timer: ReturnType<typeof setInterval> | null = null
+  /** Source device → the slots (`camera:slot`) whose text reads it. */
+  private readonly watchers = new Map<number, Set<string>>()
+  /** Slot → the devices it was registered on, to undo a registration. */
+  private readonly watched = new Map<string, ReadonlySet<number>>()
+  /** Slots whose template reads `now`. */
+  private readonly clockSlots = new Set<string>()
+  private clockTimer: ReturnType<typeof setTimeout> | null = null
+  private readonly lastSlotRenderAt = new Map<string, number>()
+  private readonly pendingSlotRender = new Map<string, ReturnType<typeof setTimeout>>()
+  private readonly dependencyCache = new Map<string, TemplateDependencies>()
+  /** `camera:slot` → the refusal last logged, so a standing refusal is one line. */
+  private readonly refusalLogged = new Map<string, string>()
   /** The background reconcile, while one is running. Held so a second arming
    *  cannot overlap the first — two concurrent passes would race on the index
    *  write and could persist the older of the two answers. */
@@ -186,6 +207,7 @@ export class OsdManager implements IOsdManagerProvider {
     this.timer = setInterval(() => {
       void this.renderAllBound()
     }, tickMs)
+    this.armClockTimer()
     this.logger.info('osd-manager: render loop started', {
       meta: {
         tickMs,
@@ -194,11 +216,22 @@ export class OsdManager implements IOsdManagerProvider {
       },
     })
     this.armReconcile(stored === null ? 'seed' : 'reconcile')
+    // A first pass once the work list is settled: it is also what teaches the
+    // watch map what each slot reads. Behind the reconcile, never in front of it.
+    void this.reconcile?.then(() => {
+      if (this.timer !== null) return this.renderAllBound()
+      return undefined
+    })
   }
 
   stop(): void {
     if (this.timer !== null) clearInterval(this.timer)
     this.timer = null
+    if (this.clockTimer !== null) clearTimeout(this.clockTimer)
+    this.clockTimer = null
+    for (const timer of this.pendingSlotRender.values()) clearTimeout(timer)
+    this.pendingSlotRender.clear()
+    this.lastSlotRenderAt.clear()
     this.lastWritten.clear()
   }
 
@@ -448,21 +481,6 @@ export class OsdManager implements IOsdManagerProvider {
     return { supported: true, slots }
   }
 
-  getSourceCatalog = async ({
-    deviceId,
-  }: {
-    deviceId: number
-  }): Promise<{ sources: OsdSourceOption[] }> => {
-    // UNFILTERED on purpose. A slot may render state from ANY device — the
-    // picker's whole point is binding a sensor's value onto a camera's overlay
-    // — so narrowing this to `isCamera: true` would answer with 30 rows out of
-    // 1 019 and delete the feature. The cost that had to go was the ROUND
-    // TRIPS, not the rows.
-    const devices = await this.safeListDevices()
-    const capsByDevice = await this.safeListDeviceCaps(deviceId, devices)
-    return { sources: sourceOptionsFor(deviceId, devices, capsByDevice) }
-  }
-
   getConditionSupport = async (): Promise<{
     supported: string[]
     catalog: NcConditionDescriptor[]
@@ -637,6 +655,7 @@ export class OsdManager implements IOsdManagerProvider {
     const facts = await this.collectFacts(
       deviceId,
       effective === null ? {} : { [slotId]: effective },
+      { register: false },
     )
     const maxCharacters = await this.maxCharactersForSlot(deviceId, slotId)
     // `previousText: undefined` on purpose — a preview must always report
@@ -650,6 +669,30 @@ export class OsdManager implements IOsdManagerProvider {
     deviceId: number
   }): Promise<{ results: OsdRenderResult[] }> => {
     return { results: [...(await this.renderDeviceInternal(deviceId, null))] }
+  }
+
+  previewTemplate = async ({
+    deviceId,
+    text,
+  }: {
+    deviceId: number
+    text: string
+  }): Promise<OsdTemplatePreview> => {
+    if (mentionsRecognition(text)) await this.hydrateRecognitions(deviceId)
+    const [render] = await this.deps.renderTemplates({
+      templates: [text],
+      thisDevice: this.thisDevice(deviceId),
+    })
+    if (render === undefined)
+      return { ok: false, text: '', notes: ['the renderer answered nothing'] }
+    if (!render.ok) {
+      return { ok: false, text: '', notes: [`${render.refusal.reason}: ${render.refusal.message}`] }
+    }
+    return {
+      ok: render.trace.length === 0,
+      text: render.text,
+      notes: render.trace.map((t) => `${t.ref}: ${t.reason}`),
+    }
   }
 
   listTemplates = async (): Promise<{ templates: OsdNamedTemplate[] }> => {
@@ -669,7 +712,7 @@ export class OsdManager implements IOsdManagerProvider {
       throw new Error(`osd-manager: template "${template.id}" missing after upsert`)
     }
     this.logger.info('osd-manager: named template upserted', {
-      meta: { templateId: stored.id, bindingCount: stored.bindings.length },
+      meta: { templateId: stored.id, textLength: stored.text.length },
     })
     return { template: stored }
   }
@@ -696,6 +739,17 @@ export class OsdManager implements IOsdManagerProvider {
         })
       }
     }
+  }
+
+  /** A standing refusal is one line, not one per tick; a new reason is a new line. */
+  private logRefusalOnce(deviceId: number, slotId: string, reason: string): void {
+    const key = cacheKey(deviceId, slotId)
+    if (this.refusalLogged.get(key) === reason) return
+    this.refusalLogged.set(key, reason)
+    this.logger.warn('osd-manager: slot template refused — the camera keeps its last text', {
+      tags: { deviceId },
+      meta: { slotId, reason },
+    })
   }
 
   /** Firmware text ceiling for one overlay, from the live `osd` status. */
@@ -741,6 +795,11 @@ export class OsdManager implements IOsdManagerProvider {
       )
       results.push(result)
 
+      if (result.outcome === 'unreadable') {
+        this.logRefusalOnce(deviceId, slotId, result.reason ?? 'unreadable')
+        continue
+      }
+      this.refusalLogged.delete(key)
       if (result.outcome === 'unchanged') continue
       if (result.outcome === 'unbound' || result.outcome === 'disabled') continue
 
@@ -780,45 +839,32 @@ export class OsdManager implements IOsdManagerProvider {
   }
 
   /**
-   * Read every device slice the bindings on this camera actually reference
-   * — the camera itself, each source device, and each device named by a
-   * `deviceState` gate. Nothing more: a cluster of 293 devices must not
-   * cost 293 reads to render one overlay.
+   * Everything one render pass needs about this camera: the gate's device state
+   * and every used named template, rendered by the hub in ONE call. Registers
+   * which devices each slot reads, so a state change can wake it.
    */
   private async collectFacts(
     cameraDeviceId: number,
     bindings: OsdDeviceBindings,
+    options: { readonly register: boolean } = { register: true },
   ): Promise<OsdFacts> {
-    const wanted = new Set<number>([cameraDeviceId])
-    const needsRecognition = Object.values(bindings).some(
-      (binding) => binding.source.kind === 'latest-recognition',
-    )
-    const templateIds = new Set<string>()
-    for (const binding of Object.values(bindings)) {
-      if (binding.source.kind === 'device-state' && binding.source.deviceId !== undefined) {
-        wanted.add(binding.source.deviceId)
-      }
-      if (binding.source.kind === 'template') templateIds.add(binding.source.templateId)
+    const wanted = new Set<number>()
+    const slotsByTemplate = new Map<string, string[]>()
+    for (const [slotId, binding] of Object.entries(bindings)) {
       const gated = binding.conditions?.deviceState?.deviceId
       if (gated !== undefined) wanted.add(gated)
-    }
-
-    const allTemplates = await this.deps.templates.get()
-    const templatesById = new Map<string, OsdNamedTemplate>()
-    for (const named of allTemplates) {
-      templatesById.set(named.id, named)
-      if (templateIds.has(named.id)) {
-        for (const binding of named.bindings) wanted.add(binding.pick.deviceId)
+      if (binding.source.kind === 'template') {
+        slotsByTemplate.set(binding.source.templateId, [
+          ...(slotsByTemplate.get(binding.source.templateId) ?? []),
+          slotId,
+        ])
       }
     }
 
-    const stateByDevice = new Map<number, Readonly<Record<string, unknown>>>()
     const gateState = new Map<number, string>()
     for (const id of wanted) {
       try {
-        const snapshot = await this.deps.readDeviceSnapshot(id)
-        stateByDevice.set(id, snapshot)
-        const collapsed = readDeviceStateFrom(snapshot)
+        const collapsed = readDeviceStateFrom(await this.deps.readDeviceSnapshot(id))
         if (collapsed !== undefined) gateState.set(id, collapsed)
       } catch (err) {
         // Absent, never stale: a failed read must not look like a state.
@@ -829,23 +875,169 @@ export class OsdManager implements IOsdManagerProvider {
       }
     }
 
-    if (needsRecognition) await this.hydrateRecognitions(cameraDeviceId)
-    const recognitionByDevice = new Map<number, Readonly<{ person?: string; plate?: string }>>()
-    const known = this.recognitions.get(cameraDeviceId)
-    if (known !== undefined) {
-      recognitionByDevice.set(cameraDeviceId, {
-        ...(known.person !== undefined ? { person: known.person.text } : {}),
-        ...(known.plate !== undefined ? { plate: known.plate.text } : {}),
-      })
+    const rendered = new Map<string, TemplateOutcome>()
+    const all = await this.deps.templates.get()
+    const used = all.filter((t) => slotsByTemplate.has(t.id))
+    if (used.length > 0) {
+      if (used.some((t) => mentionsRecognition(t.text))) {
+        await this.hydrateRecognitions(cameraDeviceId)
+      }
+      const outcomes = await this.renderUsed(
+        cameraDeviceId,
+        used.map((t) => t.text),
+      )
+      used.forEach((t, i) => rendered.set(t.id, outcomes[i] ?? { ok: false, reason: 'no render' }))
+      if (options.register) {
+        for (const [templateId, slotIds] of slotsByTemplate) {
+          const text = used.find((t) => t.id === templateId)?.text
+          if (text === undefined) continue
+          const deps = await this.dependenciesOf(cameraDeviceId, text)
+          for (const slotId of slotIds) this.registerSlot(cameraDeviceId, slotId, deps)
+        }
+      }
+    }
+    if (options.register) {
+      for (const slotId of Object.keys(bindings)) {
+        const binding = bindings[slotId]
+        if (binding?.source.kind !== 'template') this.registerSlot(cameraDeviceId, slotId, null)
+      }
     }
 
     return {
       atMs: this.now(),
-      stateByDevice,
-      recognitionByDevice,
       deviceState: (id) => gateState.get(id),
-      templatesById,
+      rendered,
     }
+  }
+
+  private thisDevice(cameraDeviceId: number): { deviceId: number; values: Record<string, string> } {
+    const known = this.recognitions.get(cameraDeviceId)
+    return {
+      deviceId: cameraDeviceId,
+      values: { lastPerson: known?.person?.text ?? '', lastPlate: known?.plate?.text ?? '' },
+    }
+  }
+
+  private async renderUsed(
+    cameraDeviceId: number,
+    texts: readonly string[],
+  ): Promise<readonly TemplateOutcome[]> {
+    try {
+      const renders = await this.deps.renderTemplates({
+        templates: texts,
+        thisDevice: this.thisDevice(cameraDeviceId),
+      })
+      return texts.map((_, i) => {
+        const render = renders[i]
+        return render === undefined
+          ? { ok: false, reason: 'the renderer answered nothing' }
+          : outcomeOfRender(render)
+      })
+    } catch (err) {
+      return texts.map(() => ({ ok: false, reason: `the renderer is unreachable: ${String(err)}` }))
+    }
+  }
+
+  private async dependenciesOf(
+    cameraDeviceId: number,
+    text: string,
+  ): Promise<TemplateDependencies | null> {
+    const cacheKeyOfText = `${cameraDeviceId}\u0000${text}`
+    const cached = this.dependencyCache.get(cacheKeyOfText)
+    if (cached !== undefined && this.now() - cached.atMs < TEMPLATE_DEPENDENCY_TTL_MS) return cached
+    try {
+      const [check] = await this.deps.checkTemplates({
+        templates: [text],
+        thisDevice: this.thisDevice(cameraDeviceId),
+      })
+      if (check === undefined || !check.ok) return cached ?? null
+      const deps: TemplateDependencies = {
+        deviceIds: new Set(check.aliases.flatMap((a) => (a.deviceId === null ? [] : [a.deviceId]))),
+        readsClock: check.readsClock,
+        atMs: this.now(),
+      }
+      this.dependencyCache.set(cacheKeyOfText, deps)
+      return deps
+    } catch (err) {
+      this.logger.warn(
+        'osd-manager: could not learn what a template reads — it renders on the tick only',
+        {
+          tags: { deviceId: cameraDeviceId },
+          meta: { error: String(err) },
+        },
+      )
+      return cached ?? null
+    }
+  }
+
+  /** Make `camera:slot` wake on exactly these devices (and the clock), replacing any earlier registration. */
+  private registerSlot(
+    cameraDeviceId: number,
+    slotId: string,
+    deps: TemplateDependencies | null,
+  ): void {
+    const key = cacheKey(cameraDeviceId, slotId)
+    for (const id of this.watched.get(key) ?? []) {
+      const slots = this.watchers.get(id)
+      slots?.delete(key)
+      if (slots?.size === 0) this.watchers.delete(id)
+    }
+    this.watched.delete(key)
+    this.clockSlots.delete(key)
+    if (deps === null) return
+    this.watched.set(key, deps.deviceIds)
+    for (const id of deps.deviceIds) {
+      const slots = this.watchers.get(id) ?? new Set<string>()
+      slots.add(key)
+      this.watchers.set(id, slots)
+    }
+    if (deps.readsClock) this.clockSlots.add(key)
+  }
+
+  /** A device's state changed: wake the slots that read it, each at most once per throttle window. */
+  onDeviceStateChanged(deviceId: number): void {
+    for (const key of [...(this.watchers.get(deviceId) ?? [])]) this.requestSlotRender(key)
+  }
+
+  private requestSlotRender(key: string): void {
+    if (this.pendingSlotRender.has(key)) return
+    const waited = this.now() - (this.lastSlotRenderAt.get(key) ?? Number.NEGATIVE_INFINITY)
+    if (waited >= SLOT_RERENDER_THROTTLE_MS) {
+      this.runSlotRender(key)
+      return
+    }
+    this.pendingSlotRender.set(
+      key,
+      setTimeout(() => {
+        this.pendingSlotRender.delete(key)
+        this.runSlotRender(key)
+      }, SLOT_RERENDER_THROTTLE_MS - waited),
+    )
+  }
+
+  private runSlotRender(key: string): void {
+    this.lastSlotRenderAt.set(key, this.now())
+    const colon = key.indexOf(':')
+    const deviceId = Number(key.slice(0, colon))
+    const slotId = key.slice(colon + 1)
+    if (colon < 1 || !Number.isInteger(deviceId)) return
+    void this.renderDeviceInternal(deviceId, [slotId]).catch((err) => {
+      this.logger.warn('osd-manager: event-triggered render failed', {
+        tags: { deviceId },
+        meta: { slotId, error: String(err) },
+      })
+    })
+  }
+
+  /** Wake the clock slots on the next minute boundary, then every minute. */
+  private armClockTimer(): void {
+    if (this.clockTimer !== null) clearTimeout(this.clockTimer)
+    const at = this.now()
+    const wait = CLOCK_RERENDER_MS - (at % CLOCK_RERENDER_MS)
+    this.clockTimer = setTimeout(() => {
+      for (const key of [...this.clockSlots]) this.runSlotRender(key)
+      this.armClockTimer()
+    }, wait)
   }
 
   private async hydrateRecognitions(deviceId: number): Promise<void> {
@@ -936,51 +1128,6 @@ export class OsdManager implements IOsdManagerProvider {
       throw new Error(
         `osd-manager: overlay slot "${slotId}" on device ${deviceId} is firmware-owned and cannot carry text`,
       )
-    }
-  }
-
-  private async safeListDevices(): Promise<readonly OsdDeviceSummary[]> {
-    try {
-      return await this.deps.listDevices()
-    } catch (err) {
-      this.logger.warn('osd-manager: device listing failed', {
-        meta: { error: String(err) },
-      })
-      return []
-    }
-  }
-
-  /**
-   * Every listed device's bound cap names, in ONE round trip.
-   *
-   * This used to be `listDeviceCaps(device.id)` inside the catalog loop, with a
-   * per-device `catch` that omitted the device — 1 + 1 019 sequential
-   * cross-process cap calls on the live hub 2026-08-30, behind an operator
-   * opening a slot editor. The batch has no partial failure mode: it answers
-   * for the whole set or it throws, and a throw lands where every per-device
-   * read failing already landed — an empty map, hence a catalog with no
-   * bindable sources. One log line instead of a thousand.
-   *
-   * `tags.deviceId` is the CAMERA whose editor is open, because that is the
-   * question an operator asks ("why is 101's picker empty?"); the size of the
-   * set that went unanswered rides in `meta`.
-   */
-  private async safeListDeviceCaps(
-    cameraDeviceId: number,
-    devices: readonly OsdDeviceSummary[],
-  ): Promise<ReadonlyMap<number, readonly string[]>> {
-    if (devices.length === 0) return new Map()
-    try {
-      return await this.deps.listDeviceCapsBatch(devices.map((d) => d.id))
-    } catch (err) {
-      this.logger.warn(
-        'osd-manager: cap enumeration failed — the source catalog has no bindable values',
-        {
-          tags: { deviceId: cameraDeviceId },
-          meta: { devices: devices.length, error: String(err) },
-        },
-      )
-      return new Map()
     }
   }
 }

@@ -23,6 +23,8 @@ const mockPreviewSlot = vi.fn().mockResolvedValue({
   text: 'preview text',
 })
 const mockRenderDevice = vi.fn()
+const mockPreviewTemplate = vi.fn()
+const mockUpsertTemplate = vi.fn().mockResolvedValue({ success: true })
 const mockCopyConfiguration = vi.fn().mockResolvedValue({ copied: 1, skipped: 0 })
 
 const CAMERAS = [
@@ -52,8 +54,6 @@ const SLOTS_BY_DEVICE: Record<number, unknown[]> = {
       binding: {
         enabled: true,
         source: { kind: 'static', text: 'hi' },
-        template: '${value}',
-        maxDecimals: 1,
       },
     },
     {
@@ -64,8 +64,6 @@ const SLOTS_BY_DEVICE: Record<number, unknown[]> = {
       binding: {
         enabled: true,
         source: { kind: 'none' },
-        template: '${value}',
-        maxDecimals: 1,
       },
     },
     {
@@ -102,29 +100,28 @@ vi.mock('@camstack/ui-library', async () => {
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...actual,
-    PlaceholderChipField: ({
-      label,
+    // The field's own behaviour is covered in ui-library; here only the handle the editor drives.
+    DeviceTemplateField: ({
+      handle,
       value,
       onChange,
       testId,
     }: {
-      label: string
+      handle: { current: { insertText: (text: string) => void } | null }
       value: string
       onChange: (next: string) => void
       testId: string
-    }) =>
-      React.createElement(
-        'div',
-        { 'data-testid': testId },
-        React.createElement('label', null, label),
-        React.createElement('input', {
-          'data-testid': `${testId}-input`,
-          value,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value),
-        }),
-      ),
-    DevicePicker: () => React.createElement('div', { 'data-testid': 'osd-device-picker-stub' }),
-    UnitPicker: () => React.createElement('select', { 'aria-label': 'Unit' }),
+    }) => {
+      const latest = React.useRef(value)
+      latest.current = value
+      handle.current = { insertText: (text) => onChange(latest.current + text) }
+      return React.createElement('textarea', {
+        'data-testid': `${testId}-input`,
+        value,
+        onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value),
+      })
+    },
+    useConfirm: () => vi.fn().mockResolvedValue(true),
     useDeviceManagerListAll: () => ({ data: CAMERAS, isLoading: false, error: null }),
     useDeviceManagerGetAllBindings: () => ({ data: BINDINGS, isLoading: false, error: null }),
     useOsdManagerGetDeviceOsd: (input: { deviceId: number }, opts: { enabled: boolean }) => {
@@ -143,24 +140,6 @@ vi.mock('@camstack/ui-library', async () => {
         refetch: refetchFor(input.deviceId),
       }
     },
-    useOsdManagerGetSourceCatalog: (_input: unknown, opts: { enabled: boolean }) => ({
-      data: opts.enabled
-        ? {
-            sources: [
-              {
-                deviceId: 1,
-                deviceName: 'Front Door',
-                capName: 'thermometer',
-                valuePath: 'value',
-                label: 'Thermometer · value',
-                valueType: 'number',
-              },
-            ],
-          }
-        : undefined,
-      isLoading: false,
-      error: null,
-    }),
     useOsdManagerSetSlotBinding: () => ({
       mutateAsync: mockSetSlotBinding,
       isPending: false,
@@ -192,8 +171,16 @@ vi.mock('@camstack/ui-library', async () => {
       error: null,
       refetch: vi.fn(),
     }),
+    useOsdManagerPreviewTemplate: () => ({
+      mutate: mockPreviewTemplate,
+      data: { ok: true, text: '21°C', notes: [] },
+      isPending: false,
+      error: null,
+    }),
+    useDeviceManagerCheckDeviceTemplates: () => ({ data: undefined }),
+    useDeviceManagerRenderDeviceTemplates: () => ({ data: undefined }),
     useOsdManagerUpsertTemplate: () => ({
-      mutateAsync: vi.fn(),
+      mutateAsync: mockUpsertTemplate,
       isPending: false,
       error: null,
     }),
@@ -208,8 +195,6 @@ vi.mock('@camstack/ui-library', async () => {
       error: null,
       reset: vi.fn(),
     }),
-    useDeviceStateGetSnapshot: () => ({ data: undefined, isLoading: false, error: null }),
-    useDeviceStateGetAllSnapshots: () => ({ data: undefined, isLoading: false, error: null }),
   }
 })
 
@@ -240,6 +225,8 @@ beforeEach(() => {
   mockClearSlotBinding.mockClear()
   mockPreviewSlot.mockClear()
   mockRenderDevice.mockClear()
+  mockPreviewTemplate.mockClear()
+  mockUpsertTemplate.mockClear()
   mockCopyConfiguration.mockClear()
   refetchSpies.clear()
 })
@@ -468,5 +455,38 @@ describe('OsdManagerPage — Duplicate into… (table row)', () => {
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy())
     expect(screen.getByRole('alert').textContent).toContain('camera offline')
+  })
+})
+
+describe('OsdManagerPage — template editor', () => {
+  it('inserts the clock and recognition variables, previews on a camera, and saves the text', async () => {
+    window.history.replaceState(null, '', `${window.location.pathname}?tab=templates`)
+    render(<OsdManagerPage {...pageProps} />)
+    fireEvent.click(await screen.findByTestId('osd-template-new'))
+    await waitFor(() => expect(screen.getByTestId('osd-template-editor')).toBeTruthy())
+
+    fireEvent.click(screen.getByTestId('osd-tpl-insert-person'))
+    fireEvent.click(screen.getByTestId('osd-tpl-insert-clock'))
+    const input = screen.getByTestId('osd-tpl-text-input')
+    await waitFor(() =>
+      expect((input as HTMLTextAreaElement).value).toContain('{{ camera.lastPerson }}'),
+    )
+    expect((input as HTMLTextAreaElement).value).toContain("{{ now | time('HH:mm') }}")
+
+    // The preview is asked of the hub for the first camera, with the text typed so far.
+    await waitFor(() =>
+      expect(mockPreviewTemplate).toHaveBeenCalledWith({
+        deviceId: 2,
+        text: expect.stringContaining('camera.lastPerson'),
+      }),
+    )
+    expect(screen.getByTestId('osd-tpl-preview-text').textContent).toBe('21°C')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save template' }))
+    await waitFor(() => expect(mockUpsertTemplate).toHaveBeenCalledTimes(1))
+    const sent = mockUpsertTemplate.mock.calls[0]?.[0]
+    expect(sent.template.text).toContain('{{ camera.lastPerson }}')
+    expect(sent.template).not.toHaveProperty('bindings')
+    expect(sent.template).not.toHaveProperty('parser')
   })
 })

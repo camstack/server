@@ -899,3 +899,23 @@ outcome `skipped`). Each consumer passes `evaluateCondition` (`step-condition-do
 for actions, the scheduler and fan presets; the generated block reads through its own
 mirror). The editor is the "Only if…" toggle of the shared action list
 (`StepGuard.tsx`).
+
+## Template variables of a caller, and the clock ([D1029](../decisions/adr-1029-the-osd-text-is-a-device-template-the-clock-and-the-last-recognition-are-template-variables.md))
+
+Two names are not devices and are never bound to one.
+
+- `now` is the hub clock in the server timezone. Print it through the `time`
+  filter (`{{ now | time('HH:mm') }}`, Unicode tokens `yyyy MM dd HH mm ss`); a
+  bare `{{ now }}` prints ISO. `checkDeviceTemplates` reports `readsClock` so a
+  caller that renders on its own schedule knows to re-render on the minute.
+- `camera` is a **reserved alias** for the device the caller renders FOR. The
+  caller passes `thisDevice: { deviceId, values? }` to `renderDeviceTemplates` /
+  `checkDeviceTemplates`; `camera.<field>` then reads that device exactly as
+  `<alias>.<field>` would, and `camera.<name>` also reads the caller's own `values`
+  (the OSD manager passes `lastPerson`, `lastPlate`). A text written with `camera`
+  therefore means "this camera" and survives a copy to another camera. Without
+  `thisDevice` the name `camera` is unknown. A device whose own alias is `camera`
+  is shadowed when a caller passes `thisDevice`, and aliases may not be set to `camera`.
+- The check result lists `reads` (alias to device id), which is how a caller learns
+  which devices a text depends on.
+

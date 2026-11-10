@@ -6,18 +6,11 @@ import {
   ItemFormDialog,
   Tabs,
   useOsdManagerGetDeviceOsd,
-  useOsdManagerGetSourceCatalog,
   useOsdManagerRenderDevice,
   useOsdManagerSetSlotBinding,
 } from '@camstack/ui-library'
 import { Loader2, Monitor } from 'lucide-react'
-import type {
-  OsdNamedTemplate,
-  OsdSlotBinding,
-  OsdSlotView,
-  OsdSourceOption,
-} from '@camstack/types'
-import type { PickerDevice } from '@camstack/ui-library'
+import type { OsdNamedTemplate, OsdSlotBinding, OsdSlotView } from '@camstack/types'
 import { useT } from '../i18n/index.js'
 import { SlotEditor, SlotEditorTabList } from './SlotEditor.js'
 import {
@@ -67,7 +60,6 @@ export function CameraOsdStatusCell({
 interface CameraOsdSourcesCellProps {
   readonly cameraId: number
   readonly supportsOsd: boolean
-  readonly deviceNameById: ReadonlyMap<number, string>
   readonly templateNameById: ReadonlyMap<string, string>
 }
 
@@ -75,7 +67,6 @@ interface CameraOsdSourcesCellProps {
 export function CameraOsdSourcesCell({
   cameraId,
   supportsOsd,
-  deviceNameById,
   templateNameById,
 }: CameraOsdSourcesCellProps) {
   const { t } = useT()
@@ -89,7 +80,7 @@ export function CameraOsdSourcesCell({
     return <span className="text-xs text-foreground-subtle">{t('row.loading')}</span>
   }
 
-  const chips = activeSourceChips(osdQuery.data?.slots ?? [], deviceNameById, templateNameById)
+  const chips = activeSourceChips(osdQuery.data?.slots ?? [], templateNameById)
   if (chips.length === 0) {
     return <span className="text-xs text-foreground-subtle">{t('row.noActiveSources')}</span>
   }
@@ -141,8 +132,6 @@ export function CameraRenderNowButton({
 
 interface CameraOsdDetailProps {
   readonly camera: OsdCameraRow
-  readonly pickerDevices: readonly PickerDevice[]
-  readonly listState: 'answered' | 'pending' | 'failed'
   readonly templates: readonly OsdNamedTemplate[]
   readonly onRefetchReady: (deviceId: number, refetch: () => void) => void
   /** Active slot from the URL (`?slot=`), or null to use the default. */
@@ -160,8 +149,6 @@ interface CameraOsdDetailProps {
  */
 export function CameraOsdDetail({
   camera,
-  pickerDevices,
-  listState,
   templates,
   onRefetchReady,
   activeSlotId: slotFromUrl,
@@ -224,11 +211,6 @@ export function CameraOsdDetail({
     setSaveError(null)
   }, [camera.supportsOsd, bindingSeed?.key])
 
-  const sourcesQuery = useOsdManagerGetSourceCatalog(
-    { deviceId: camera.id },
-    { enabled: camera.supportsOsd && activeSlot !== undefined },
-  )
-
   useEffect(() => {
     if (!camera.supportsOsd) return
     onRefetchReady(camera.id, () => void osdQuery.refetch())
@@ -266,7 +248,7 @@ export function CameraOsdDetail({
   }, [camera.id, drafts, onClose, osdQuery, pendingWrites, setBinding])
 
   const canSave = !saving && pendingWrites.length > 0
-  const loadError = osdQuery.error ?? sourcesQuery.error
+  const loadError = osdQuery.error
 
   const body = ((): ReactNode => {
     if (!camera.supportsOsd) {
@@ -312,9 +294,6 @@ export function CameraOsdDetail({
             [activeSlot.slotId]: next,
           }))
         }
-        sources={sourcesQuery.data?.sources ?? []}
-        pickerDevices={pickerDevices}
-        listState={listState}
         templates={templates}
         refreshingCurrent={osdQuery.isFetching}
         onRefreshCurrent={() => osdQuery.refetch()}
@@ -407,9 +386,6 @@ interface ActiveSlotPanelProps {
   readonly slot: OsdSlotView
   readonly binding: OsdSlotBinding
   readonly onBindingChange: (next: OsdSlotBinding) => void
-  readonly sources: readonly OsdSourceOption[]
-  readonly pickerDevices: readonly PickerDevice[]
-  readonly listState: 'answered' | 'pending' | 'failed'
   readonly templates: readonly OsdNamedTemplate[]
   readonly onRefreshCurrent: () => void | Promise<unknown>
   readonly refreshingCurrent: boolean
@@ -420,9 +396,6 @@ function ActiveSlotPanel({
   slot,
   binding,
   onBindingChange,
-  sources,
-  pickerDevices,
-  listState,
   templates,
   onRefreshCurrent,
   refreshingCurrent,
@@ -456,9 +429,6 @@ function ActiveSlotPanel({
       slot={slot}
       binding={binding}
       onBindingChange={onBindingChange}
-      sources={sources}
-      pickerDevices={pickerDevices}
-      listState={listState}
       templates={templates}
       onRefreshCurrent={onRefreshCurrent}
       refreshingCurrent={refreshingCurrent}

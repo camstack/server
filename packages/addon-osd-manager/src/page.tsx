@@ -8,7 +8,6 @@ import {
   SectionedPage,
   useUrlQueryParam,
   type AddonPageProps,
-  type PickerDevice,
   useDeviceManagerGetAllBindings,
   useDeviceManagerListAll,
   useOsdManagerListTemplates,
@@ -17,7 +16,6 @@ import { Loader2, Monitor, Plus } from 'lucide-react'
 import { CameraOsdTable } from './components/CameraOsdTable.js'
 import { TemplatesPanel } from './components/TemplatesPanel.js'
 import { useT } from './i18n/index.js'
-import { toOsdPickerDevices } from './osd-picker-devices.js'
 
 type PageTab = 'cameras' | 'templates'
 
@@ -53,22 +51,6 @@ export default function OsdManagerPage(_props: AddonPageProps) {
       .map((device) => ({ id: device.id, name: device.name }))
       .toSorted((a, b) => a.name.localeCompare(b.name))
   }, [devicesQuery.data])
-
-  const allDevices = useMemo(
-    () => (devicesQuery.data ?? []).map((d) => ({ id: d.id, name: d.name })),
-    [devicesQuery.data],
-  )
-
-  const pickerDevices: PickerDevice[] = useMemo(
-    () => toOsdPickerDevices(devicesQuery.data ?? []),
-    [devicesQuery.data],
-  )
-
-  const listState = devicesQuery.isError
-    ? 'failed'
-    : devicesQuery.isSuccess
-      ? 'answered'
-      : 'pending'
 
   const osdCapableIds = useMemo(
     () =>
@@ -117,9 +99,6 @@ export default function OsdManagerPage(_props: AddonPageProps) {
     <CameraOsdTable
       cameras={cameras}
       osdCapableIds={osdCapableIds}
-      allDevices={allDevices}
-      pickerDevices={pickerDevices}
-      listState={listState}
       templates={templatesQuery.data?.templates ?? []}
     />
   )
@@ -159,6 +138,7 @@ export default function OsdManagerPage(_props: AddonPageProps) {
           ownedParams: ['edit', 'new', 'panel'],
           content: (
             <TemplatesPanel
+              cameras={cameras}
               createRequested={createRequested}
               onCreateConsumed={() => setCreateRequested(false)}
             />
@@ -172,6 +152,6 @@ export default function OsdManagerPage(_props: AddonPageProps) {
 // ---------------------------------------------------------------------------
 // Dev mode: auto-mount when loaded as entry point (not as imported module)
 // ---------------------------------------------------------------------------
-if (import.meta.env?.DEV && typeof document !== 'undefined' && document.getElementById('root')) {
+if (import.meta.env?.DEV && document.getElementById('root')) {
   mountAddonPage(OsdManagerPage, { title: 'OSD Manager' })
 }

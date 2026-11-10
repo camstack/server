@@ -1,12 +1,12 @@
 import {
   type IScopedLogger,
+  type OsdNamedTemplate,
   type OsdSlotBinding,
   OsdSlotBindingSchema,
   type OsdStatus,
 } from '@camstack/types'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { BindingsHandle, OsdDeviceBindings } from '../bindings-store.js'
-import { EMPTY_TEMPLATES } from '../templates-store.js'
 import { EMPTY_BINDINGS } from '../bindings-store.js'
 import type { BoundIndexHandle, OsdBoundIndex } from '../bound-index.js'
 import { OsdManager, type OsdManagerDeps } from '../osd-manager.js'
@@ -69,12 +69,15 @@ interface Harness {
    * the change-detection test pass for the wrong reason.
    */
   readonly snapshot: Map<number, Record<string, unknown>>
+  /** The named templates the harness serves; push to add one. */
+  readonly templates: OsdNamedTemplate[]
 }
 
 function makeHarness(overrides: Partial<OsdManagerDeps> = {}): Harness {
   const writes: Harness['writes'] = []
   const stored = new Map<number, OsdDeviceBindings>()
   const snapshot = new Map<number, Record<string, unknown>>()
+  const templates: OsdNamedTemplate[] = []
 
   const bindings = (deviceId: number): BindingsHandle => ({
     get: async () => stored.get(deviceId) ?? EMPTY_BINDINGS,
@@ -103,21 +106,38 @@ function makeHarness(overrides: Partial<OsdManagerDeps> = {}): Harness {
       writes.push({ deviceId, overlayId, ...patch })
     },
     readDeviceSnapshot: async (deviceId) => snapshot.get(deviceId) ?? {},
-    listDevices: async () => [{ id: CAMERA, name: 'Gate' }],
     listCameras: async () => [{ id: CAMERA, name: 'Gate' }],
-    listDeviceCapsBatch: async (deviceIds) => new Map(deviceIds.map((id) => [id, ['motion']])),
+    // A stand-in for the hub renderer: `{{ camera.<name> }}` is the value the
+    // manager handed over; any other text renders as itself.
+    renderTemplates: async ({ templates: texts, thisDevice }) =>
+      texts.map((text) => ({
+        ok: true as const,
+        text: text.replace(/\{\{ camera\.(\w+) \}\}/g, (_m, name: string) =>
+          String(thisDevice.values?.[name] ?? ''),
+        ),
+        trace: [],
+      })),
+    checkTemplates: async ({ templates: texts }) =>
+      texts.map(() => ({ ok: true as const, readsClock: false, aliases: [] })),
     readLatestRecognitions: async () => ({}),
     bindings,
     boundIndex,
     templates: {
-      get: async () => EMPTY_TEMPLATES,
+      get: async () => templates,
       set: async () => undefined,
     },
     now: () => AT,
     ...overrides,
   })
 
-  return { manager, writes, stored, snapshot }
+  return { manager, writes, stored, snapshot, templates }
+}
+
+/** A binding on a named template made of `text`, registered on the harness. */
+function templateBinding(h: Harness, text: string): OsdSlotBinding {
+  const id = `tpl-${h.templates.length}`
+  h.templates.push({ id, name: id, text })
+  return binding({ source: { kind: 'template', templateId: id } })
 }
 
 function binding(patch: Partial<OsdSlotBinding>): OsdSlotBinding {
@@ -179,9 +199,10 @@ describe('OsdManager.setSlotBinding', () => {
           return null
         },
       })
+      h.templates.push({ id: 'who', name: 'Who', text: '{{ camera.lastPerson }}' })
       h.stored.set(CAMERA, {
         'text-2': binding({
-          source: { kind: 'latest-recognition', recognition: 'person' },
+          source: { kind: 'template', templateId: 'who' },
           conditions: { devices: [CAMERA] },
         }),
       })
@@ -193,7 +214,7 @@ describe('OsdManager.setSlotBinding', () => {
 
       expect(result).toEqual({ copied: 1, skipped: 0 })
       expect(h.stored.get(target)?.['overlay-a']).toMatchObject({
-        source: { kind: 'latest-recognition', recognition: 'person' },
+        source: { kind: 'template', templateId: 'who' },
         conditions: undefined,
       })
       expect(h.writes[0]).toMatchObject({
@@ -209,7 +230,6 @@ describe('OsdManager.setSlotBinding', () => {
       slotId: 'text-1',
       binding: binding({
         source: { kind: 'static', text: 'GATE' },
-        template: '${value}',
       }),
     })
     expect(out.render).toMatchObject({ outcome: 'written', text: 'GATE' })
@@ -255,20 +275,14 @@ describe('OsdManager.setSlotBinding', () => {
 
 describe('OsdManager render loop', () => {
   it('writes ONCE for an unchanged value — the second pass is a no-op', async () => {
-    const h = makeHarness()
-    h.snapshot.set(CAMERA, { motion: { detected: true } })
+    let latest: { person?: { text: string; atMs: number } } = {
+      person: { text: 'Alice', atMs: AT },
+    }
+    const h = makeHarness({ readLatestRecognitions: async () => latest })
     await h.manager.setSlotBinding({
       deviceId: CAMERA,
       slotId: 'text-1',
-      binding: binding({
-        source: {
-          kind: 'device-state',
-          capName: 'motion',
-          valuePath: 'detected',
-        },
-        valueMap: { true: 'MOTION', false: '' },
-        template: '${value}',
-      }),
+      binding: templateBinding(h, '{{ camera.lastPerson }}'),
     })
     expect(h.writes).toHaveLength(1)
 
@@ -278,11 +292,13 @@ describe('OsdManager render loop', () => {
 
     // And it writes again the moment the value moves — proving the guard is
     // change detection and not a one-shot latch.
-    h.snapshot.set(CAMERA, { motion: { detected: false } })
-    const moved = await h.manager.renderDevice({ deviceId: CAMERA })
-    expect(moved.results[0]).toMatchObject({ outcome: 'written', text: '' })
-    expect(h.writes).toHaveLength(2)
-    expect(h.writes[1]).toMatchObject({ text: '' })
+    latest = { person: { text: 'Bob', atMs: AT + 1 } }
+    h.manager.onRecognitionGalleryChanged(CAMERA)
+    // The gallery change wakes the camera by itself; wait for that render.
+    await vi.waitFor(() => expect(h.writes).toHaveLength(2))
+    const settled = await h.manager.renderDevice({ deviceId: CAMERA })
+    expect(settled.results[0]).toMatchObject({ outcome: 'unchanged', text: 'Bob' })
+    expect(h.writes[1]).toMatchObject({ text: 'Bob' })
     expect(h.writes[1]).not.toHaveProperty('enabled')
   })
 
@@ -299,7 +315,6 @@ describe('OsdManager render loop', () => {
         slotId: 'text-1',
         binding: binding({
           source: { kind: 'static', text: 'GATE' },
-          template: '${value}',
         }),
       }),
     ).resolves.toMatchObject({ render: { outcome: 'failed' } })
@@ -330,7 +345,6 @@ describe('OsdManager.previewSlot', () => {
     const h = makeHarness()
     const b = binding({
       source: { kind: 'static', text: 'GATE' },
-      template: '${value}',
     })
     await h.manager.setSlotBinding({
       deviceId: CAMERA,
@@ -352,11 +366,9 @@ describe('OsdManager.previewSlot', () => {
     const preview = await h.manager.previewSlot({
       deviceId: CAMERA,
       slotId: 'text-2',
-      binding: binding({
-        source: { kind: 'clock', pattern: 'HH:mm', timezone: 'UTC' },
-      }),
+      binding: binding({ source: { kind: 'static', text: 'DRAFT' } }),
     })
-    expect(preview.text).toBe('09:05')
+    expect(preview.text).toBe('DRAFT')
     expect(h.stored.get(CAMERA)).toBeUndefined()
   })
 
@@ -371,16 +383,12 @@ describe('OsdManager.previewSlot', () => {
     const person = await h.manager.previewSlot({
       deviceId: CAMERA,
       slotId: 'text-1',
-      binding: binding({
-        source: { kind: 'latest-recognition', recognition: 'person' },
-      }),
+      binding: templateBinding(h, '{{ camera.lastPerson }}'),
     })
     const plate = await h.manager.previewSlot({
       deviceId: CAMERA,
       slotId: 'text-2',
-      binding: binding({
-        source: { kind: 'latest-recognition', recognition: 'plate' },
-      }),
+      binding: templateBinding(h, '{{ camera.lastPlate }}'),
     })
 
     expect(person.text).toBe('Alice')
@@ -405,9 +413,7 @@ describe('OsdManager.previewSlot', () => {
     const preview = await h.manager.previewSlot({
       deviceId: CAMERA,
       slotId: 'text-1',
-      binding: binding({
-        source: { kind: 'latest-recognition', recognition: 'person' },
-      }),
+      binding: templateBinding(h, '{{ camera.lastPerson }}'),
     })
     expect(preview.text).toBe('Alice')
   })
@@ -419,9 +425,7 @@ describe('OsdManager.previewSlot', () => {
     const h = makeHarness({
       readLatestRecognitions: async () => latest,
     })
-    const personBinding = binding({
-      source: { kind: 'latest-recognition', recognition: 'person' },
-    })
+    const personBinding = templateBinding(h, '{{ camera.lastPerson }}')
 
     expect(
       await h.manager.previewSlot({
@@ -461,7 +465,7 @@ describe('OsdManager.previewSlot', () => {
         slotId: 'text-1',
         binding: personBinding,
       }),
-    ).toMatchObject({ outcome: 'unreadable', text: '' })
+    ).toMatchObject({ text: '' })
   })
 })
 

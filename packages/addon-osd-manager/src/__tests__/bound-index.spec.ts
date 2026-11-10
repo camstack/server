@@ -74,7 +74,7 @@ interface Harness {
   readonly lines: Recorded[]
   /** What is persisted under the index key. `null` ⇒ never written. */
   index(): OsdBoundIndex
-  readonly counts: { listCameras: number; listDevices: number; bindingReads: number }
+  readonly counts: { listCameras: number; bindingReads: number }
   readonly stored: Map<number, OsdDeviceBindings>
 }
 
@@ -95,7 +95,7 @@ interface HarnessOptions {
 function makeHarness(options: HarnessOptions = {}): Harness {
   const lines: Recorded[] = []
   const stored = new Map<number, OsdDeviceBindings>(options.bindings ?? [])
-  const counts = { listCameras: 0, listDevices: 0, bindingReads: 0 }
+  const counts = { listCameras: 0, bindingReads: 0 }
   let persisted: OsdBoundIndex = options.index === undefined ? null : [...options.index]
 
   const bindings = (deviceId: number): BindingsHandle => ({
@@ -131,16 +131,13 @@ function makeHarness(options: HarnessOptions = {}): Harness {
     readOsdStatus: async () => STATUS,
     writeOverlay: async () => undefined,
     readDeviceSnapshot: async () => ({}),
-    listDevices: async () => {
-      counts.listDevices += 1
-      return cameras
-    },
     listCameras: async () => {
       counts.listCameras += 1
       if (options.gate) await options.gate.promise
       return cameras
     },
-    listDeviceCapsBatch: async () => new Map(),
+    renderTemplates: async () => [],
+    checkTemplates: async () => [],
     readLatestRecognitions: async () => ({}),
     bindings,
     boundIndex,
@@ -198,7 +195,6 @@ describe('OsdManager — boot off the durable index', () => {
 
     // Two cameras, two binding reads. The device directory is not walked at all.
     expect(h.counts.bindingReads).toBe(2)
-    expect(h.counts.listDevices).toBe(0)
     expect(h.counts.listCameras).toBe(1)
   })
 

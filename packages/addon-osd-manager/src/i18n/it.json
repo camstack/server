@@ -12,30 +12,12 @@
     "kind": {
       "none": "Nessuna",
       "static": "Testo fisso",
-      "clock": "Orologio",
-      "deviceState": "Stato del dispositivo",
-      "latestRecognition": "Ultimo riconoscimento",
-      "template": "Template con nome"
+      "template": "Template del dispositivo"
     },
     "noneHint": "Scrive un testo vuoto nell'overlay. L'associazione resta, così CamStack continua a gestire questo slot.",
     "text": "Testo",
-    "pattern": "Formato",
-    "timezone": "Fuso orario (facoltativo)",
-    "timezonePlaceholder": "Fuso del server",
-    "recognition": "Riconoscimento",
-    "recognitionPerson": "Ultima persona riconosciuta",
-    "recognitionPlate": "Ultima targa riconosciuta",
     "namedTemplate": "Template con nome",
-    "noTemplates": "Nessun template con nome — creane uno nella scheda Template."
-  },
-  "valueMap": {
-    "label": "Mappa dei valori (valore grezzo → testo mostrato)",
-    "keyAria": "Chiave {{n}} della mappa dei valori",
-    "textAria": "Testo {{n}} della mappa dei valori",
-    "rawPlaceholder": "valore grezzo",
-    "displayPlaceholder": "testo mostrato",
-    "removeAria": "Rimuovi la riga {{n}} della mappa dei valori",
-    "add": "Aggiungi mappatura"
+    "noTemplates": "Nessun template — creane uno nella scheda Template."
   },
   "duplicate": {
     "trigger": "Duplica in…",
@@ -64,8 +46,7 @@
     "preview": "Anteprima",
     "blank": "(vuoto)",
     "runPreview": "Avvia l'anteprima per vedere il testo generato.",
-    "bindingHint": "Da dove arriva il testo e come viene formattato.",
-    "templateLabel": "Espressione / template del valore"
+    "bindingHint": "Da dove arriva il testo."
   },
   "outcome": {
     "written": "Scritto",
@@ -77,15 +58,7 @@
     "failed": "Scrittura non riuscita"
   },
   "summary": {
-    "static": "Fisso: \"{{text}}\"",
-    "clock": "Orologio ({{pattern}})"
-  },
-  "chip": {
-    "person": "Persona riconosciuta",
-    "plate": "Targa riconosciuta",
-    "thisCamera": "Questa telecamera",
-    "linked": "Collegato: {{name}}",
-    "linkedDevice": "Dispositivo collegato"
+    "static": "Fisso: \"{{text}}\""
   },
   "cameraStatus": {
     "unsupported": "Non supportato",
@@ -162,8 +135,6 @@
     "copyName": "{{name}} (copia)",
     "title": "Template",
     "colName": "Nome",
-    "colBindings": "Associazioni",
-    "colParser": "Parser",
     "rowActions": "Azioni della riga",
     "duplicate": "Duplica",
     "duplicateAria": "Duplica {{name}}",
@@ -173,20 +144,17 @@
     "loading": "Caricamento dei template…",
     "none": "Nessun template con nome.",
     "editTitle": "Modifica {{name}}",
-    "tabTemplate": "Template",
-    "tabBindings": "Associazioni",
     "save": "Salva template",
-    "parserHint": "I token del parser si espandono dalle associazioni nella scheda Associazioni.",
-    "parserLabel": "Parser",
-    "parserPlaceholder": "es. {t.value} {t.unit} / {h.full}",
     "livePreview": "Anteprima in tempo reale",
-    "bindingsHint": "Ogni associazione sceglie dispositivo → elemento figlio (se è un contenitore) → campo. Lo stesso contenitore può comparire in più associazioni.",
-    "addBinding": "Aggiungi associazione",
-    "noBindings": "Nessuna associazione — aggiungine una per iniziare.",
-    "pickDeviceAndField": "Scegli un dispositivo e un campo",
-    "alias": "Alias",
-    "decimals": "Decimali",
-    "remove": "Rimuovi",
-    "live": "Valore attuale: {{value}}"
+    "colText": "Testo",
+    "insertClock": "Ora",
+    "insertPerson": "Ultima persona",
+    "insertPlate": "Ultima targa",
+    "textLabel": "Testo del template",
+    "textHint": "Scrivi il testo con {{ alias.campo | unit('°C') | round(1) }}. Usa {% if %} per le condizioni e round(0) per i numeri interi.",
+    "textPlaceholder": "{{ camera.lastPerson }} {{ now | time('HH:mm') }}",
+    "cameraHint": "camera è la telecamera su cui appare il template, quindi lo stesso template vale per ogni telecamera. now è l'ora del server. camera.lastPerson e camera.lastPlate sono gli ultimi riconoscimenti.",
+    "previewCamera": "Anteprima sulla telecamera",
+    "previewIdle": "Scrivi un testo per vedere come appare."
   }
 }

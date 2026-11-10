@@ -4705,6 +4705,12 @@
           "doc": "Devices the end caller may read; a template naming another is refused."
         },
         {
+          "name": "thisDevice",
+          "type": "DeviceTemplateThisDevice",
+          "optional": true,
+          "doc": "The device the text is written for. `camera` then names it (so a template copies between devices), and the hub vets and previews against it."
+        },
+        {
           "name": "className",
           "type": "string",
           "optional": true,

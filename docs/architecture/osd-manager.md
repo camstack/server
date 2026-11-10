@@ -1,6 +1,6 @@
 ---
 title: OSD Manager
-last-verified: 2026-10-04
+last-verified: 2026-11-10
 applies-to:
   - packages/addon-osd-manager/**
   - packages/types/src/capabilities/osd-manager.cap.ts
@@ -17,7 +17,7 @@ to write and when.
 Its federated page lives under **Detection → OSD Manager**. The page shell
 matches the Notifications / Alarm revamp (`AdminPage` gutter, icon header,
 centered loading and empty states, content in a `Card`). Two tabs: **Cameras**
-(bindings) and **Templates** (named multi-device parsers). Cameras sit in the
+(bindings) and **Templates** (named device templates). Cameras sit in the
 shared `DeviceList` (generic mode): search, capability filter, one accordion
 row at a time. Unsupported cameras remain visible and explain that they expose
 no writable OSD capability. An expanded row keeps the camera toolbar (render
@@ -25,36 +25,59 @@ now, duplicate) and a horizontally scrollable slot tab strip — the active
 writable slot's editor is always mounted (no per-slot Edit); a read-only slot
 tab shows an explanation instead.
 
-Device picking reuses the shared `DevicePicker` from `@camstack/ui-library`
-(same component as Notifications / Alarm). Unit conversion uses
-`tryConvertUnit` / `UNIT_TABLE` from `@camstack/types`.
+Device values are picked with the shared `DeviceTemplateField` from `@camstack/ui-library`
+(the same field as Actions and Notifications).
 
-## Sources and rendering
+## Sources and rendering ([D1029](../decisions/adr-1029-the-osd-text-is-a-device-template-the-clock-and-the-last-recognition-are-template-variables.md))
 
-A writable slot can use:
+A writable slot's source is one of three kinds (`OsdSourceSchema`): `none`
+(blank overlay text; the binding stays so CamStack owns the slot), `static`
+(literal text) and `template`, which points at a **named template**. A named
+template (`listTemplates` / `upsertTemplate` / `deleteTemplate` / `previewTemplate`,
+stored under the osd-manager settings key) is `{ id, name, text }`. The text is a
+**device template** (D1021): `{{ garage.temperature | unit('°C') | round(1) }}`,
+`{% if garage.humidity > 60 %}damp{% endif %}`. Aliases are the device aliases of
+the rest of CamStack; there is no second binding shape. The editor's "insert a
+device value" button writes them, and `round(0)` gives the whole numbers some
+firmware needs.
 
-- literal text or a clock;
-- a single device-state field (DevicePicker → adaptive field → optional
-  display unit / decimals → `${value}` / `${unit}` slot template);
-- a **named template** (`source.kind: 'template'`) that evaluates a parser
-  with `{alias}` tokens; each binding names a leaf device (optionally via a
-  container → child pick), field, format (`value+unit` | `value` | `unit`),
-  display unit and decimals;
-- the latest identified person;
-- the latest recognized plate.
+Three names are not devices:
 
-Named templates are first-class (`listTemplates` / `upsertTemplate` /
-`deleteTemplate`), stored under the osd-manager settings key — the page's
-**Templates** tab. A template is a parser string with `{alias}` tokens; each
-binding on a camera slot picks a leaf device (optionally container → child),
-the field, format chip (`value+unit` | `value` | `unit` / full), display unit
-and decimals. The **alias follows the chosen leaf** (not the container name),
-so renaming or re-picking a child updates the token the parser sees. Unit
-conversion uses `tryConvertUnit` / `UNIT_TABLE` via the shared `UnitPicker`.
-Formatting, value maps, schedules and supported Notification Center
-conditions are evaluated before writing. Identical text is not written twice.
-The old `conditions.devices` camera scope remains readable for compatibility
-but is no longer offered: a binding is already scoped to its camera and slot.
+- `camera` is the camera the slot is rendered for, so ONE template serves every
+  camera and copying a camera copies nothing device-specific;
+- `now` is the server time (`{{ now | time('HH:mm') }}`);
+- `camera.lastPerson` / `camera.lastPlate` are the latest recognitions (empty text
+  when there is none).
+
+The manager renders only through `deviceManager.renderDeviceTemplates`, passing
+`thisDevice` with the two recognition values. Schedules and Notification Center
+conditions (the gate) are evaluated before rendering; identical text is not
+written twice. A **refused or unavailable** render (a device that cannot be read,
+a template error) keeps the last good text on the camera, logs once per reason
+with `tags: { deviceId }`, and never writes an error string to the overlay
+(the slot reports `unreadable`).
+
+### Re-render on events, throttled
+
+The manager does not poll the devices a text reads. `checkDeviceTemplates` tells
+it which devices a template reads (and whether it reads `now`); it subscribes to
+`DeviceStateChanged` for those devices and re-renders only the slots that read
+the one that changed. A slot renders at most once per `SLOT_RERENDER_THROTTLE_MS`
+(a leading render, then one trailing render at the end of the window). A template
+that reads `now` re-renders on the minute (`CLOCK_RERENDER_MS`). The interval timer
+(60 s by default) is a safety net, not the freshness mechanism. The dependency
+lookup is cached per template text for a few minutes.
+
+### Migration
+
+`osd-manager/2026-11-10-bindings-to-templates` (D987, owned by the addon) rewrites
+every slot binding and named template of the old shapes into template text: parser
+tokens, per-binding display unit, decimals and value map, the slot `${value}`
+template, and the `clock`, `device-state` and `latest-recognition` sources. It is
+idempotent, keeps the ledger snapshot for rollback, and a binding whose device cannot be
+converted to a known device keeps a `device_<id>` placeholder alias that renders `—`; a text over the length limit fails the migration (block-owner) rather than truncating. `round` replaces the old truncation
+and a clock in a custom timezone becomes the server zone. See the ADR for the
+semantic differences.
 
 URL restore on the federated page keeps `?tab` / `?device` / `?slot` so a
 deep link opens the same camera and slot editor.

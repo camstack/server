@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - holdVarSlots: the one helper that sets aside the {{ vars.x }} slots of a step text
 
+### Added
+
+- Device templates can use now (server time, the time filter) and the reserved camera alias with thisDevice on renderDeviceTemplates and checkDeviceTemplates; checkDeviceTemplates reports reads and readsClock; the OSD manager capability drops getSourceCatalog and gains previewTemplate.
+
 ## [1.2.538] - 2026-11-10
 
 ### Changed

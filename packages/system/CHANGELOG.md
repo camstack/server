@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The device-template renderer understands now, the time filter, and the camera alias for a caller-supplied device, and reports which devices and whether the clock a text reads.
+
 ### Changed
 
 - The log ring refuses debug lines unless that device is being watched.

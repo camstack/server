@@ -31,6 +31,8 @@ export interface DeviceTemplateInsertProps {
   readonly onOpenChange: (open: boolean) => void
   /** The finished `{{ alias.field }}` token. */
   readonly onInsert: (token: string) => void
+  /** The device the text is written for: picking it writes the copyable `camera` alias. */
+  readonly thisDeviceId?: number
   readonly capTitle?: (cap: string) => string
   readonly fieldLabel?: (cap: string, path: string) => string
 }
@@ -77,7 +79,7 @@ export function DeviceTemplateInsert(props: DeviceTemplateInsertProps): ReactNod
     setDeviceId(null)
     setPick(null)
   }
-  const alias = device?.alias
+  const alias = deviceId !== null && deviceId === props.thisDeviceId ? 'camera' : device?.alias
   const confirm = (): void => {
     if (pick === null || alias === undefined) return
     props.onInsert(deviceTemplateToken(alias, pick, caps))
