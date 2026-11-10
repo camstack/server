@@ -37,7 +37,12 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 const fleetReads = vi.hoisted(() => ({ calls: [] as unknown[][] }))
-const switches = vi.hoisted(() => ({ instance: vi.fn(), fixed: vi.fn(), remove: vi.fn(), removeInstance: vi.fn() }))
+const switches = vi.hoisted(() => ({
+  instance: vi.fn(),
+  fixed: vi.fn(),
+  remove: vi.fn(),
+  removeInstance: vi.fn(),
+}))
 
 const BASE_INTEGRATION = {
   id: 'int_reolink',
@@ -197,7 +202,24 @@ describe('IntegrationDetailPage - the switch', () => {
     })
   })
 
-  it('switches a FIXED builtin through the hub (integrations.update), which needs no addon provider', () => {
+  it('switches a RUNNING fixed builtin through the instance door like every row', () => {
+    shown.integration = { ...BASE_INTEGRATION, info: { fixed: true }, processState: 'running' }
+    switches.instance.mockReset()
+    switches.fixed.mockReset()
+    render(renderPage())
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Disable integration' }))
+
+    expect(switches.instance).toHaveBeenCalledWith({
+      id: 'int_reolink',
+      addonId: 'provider-reolink',
+      enabled: false,
+    })
+    expect(switches.fixed).not.toHaveBeenCalled()
+    shown.integration = null
+  })
+
+  it('switches a fixed builtin whose addon is down through the hub (integrations.update), which needs no provider', () => {
     shown.integration = { ...BASE_INTEGRATION, info: { fixed: true }, processState: 'failed' }
     switches.instance.mockReset()
     switches.fixed.mockReset()

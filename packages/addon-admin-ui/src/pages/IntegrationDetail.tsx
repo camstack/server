@@ -256,10 +256,10 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     ['integrations', 'get'],
     { input: { id: integrationId }, type: 'query' },
   ] as const
-  // The switch of an instance is `setInstanceEnabled`. A FIXED builtin has no instance body: its
-  // switch is the hub's own registry flag, written by `integrations.update`, which needs no addon
-  // provider, so it works while the addon is down. Any other row whose addon did not answer
-  // arrives marked `switchUnknown`.
+  // The switch of every row is `setInstanceEnabled`; for a FIXED builtin (no instance body) the hub
+  // half of that call writes the registry flag. Only when the addon is not running there is no
+  // provider to route to, and the hub writes the flag itself (`integrations.update`), the same
+  // fallback the delete has. Any other row whose addon did not answer arrives marked `switchUnknown`.
   const switchHandlers = {
     onMutate: async (vars: { readonly enabled?: boolean }) => {
       await queryClient.cancelQueries({ queryKey: integrationKey })
@@ -288,7 +288,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   const toggleMutation = {
     isPending: instanceSwitch.isPending || fixedSwitch.isPending,
     mutate: (vars: { id: string; addonId: string | undefined; enabled: boolean }) =>
-      isFixed
+      isFixed && integration?.processState !== 'running'
         ? fixedSwitch.mutate({ id: vars.id, enabled: vars.enabled })
         : instanceSwitch.mutate(vars),
   }
