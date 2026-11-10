@@ -8,10 +8,14 @@ import * as path from 'node:path'
 import type { MdnsHub } from '@camstack/develop/hub-discovery'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  REJECTED_CANDIDATE_WARN_INTERVAL_MS,
   createHubRediscoveryNotice,
   rediscoverPairedHub,
   startHubRediscoveryWatch,
 } from '../agent-hub-rediscovery.js'
+import { askHubMembership, type HubMembershipResult } from '../hub-membership-client.js'
+
+vi.mock('../hub-membership-client.js', () => ({ askHubMembership: vi.fn() }))
 
 const MINE = 'hub-0123456789abcdef'
 const OTHER = 'hub-fedcba9876543210'
@@ -193,5 +197,110 @@ describe('startHubRediscoveryWatch', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('the production pinned-CA check (no injected authenticate)', () => {
+  const URL_MINE = 'https://192.0.2.9:4443'
+  const announce = (hubId: string = MINE): readonly MdnsHub[] => [
+    { url: URL_MINE, nodeId: 'hub', hubId, version: '1' },
+  ]
+  const ask = vi.mocked(askHubMembership)
+
+  async function rediscover(): Promise<string> {
+    const outcome = await rediscoverPairedHub({ configPath, log, browse: browseOf(announce()) })
+    return outcome.kind
+  }
+  const answer = (a: Extract<HubMembershipResult, { kind: 'answer' }>['answer']): HubMembershipResult => ({
+    kind: 'answer',
+    answer: a,
+  })
+
+  beforeEach(() => {
+    ask.mockReset()
+    writeConfig({ nodeId: 'agent-a', meshTls: MESH, hubId: MINE })
+  })
+
+  it('a genuine member answer for the announced id is accepted and asked with this agent identity', async () => {
+    ask.mockResolvedValue(answer({ status: 'member', hubId: MINE }))
+    expect(await rediscover()).toBe('found')
+    expect(ask).toHaveBeenCalledWith({
+      hubUrl: URL_MINE,
+      nodeId: 'agent-a',
+      certPem: 'cert',
+      keyPem: 'key',
+      caCertPem: 'ca',
+    })
+    expect(read()['hubAddress']).toBe('192.0.2.9')
+  })
+
+  it('an answer without a hub id is accepted (a hub that announces none in its answer)', async () => {
+    ask.mockResolvedValue(answer({ status: 'member' }))
+    expect(await rediscover()).toBe('found')
+  })
+
+  it('a non-answer result is refused', async () => {
+    ask.mockResolvedValue({ kind: 'unreachable', error: 'bad signature' })
+    expect(await rediscover()).toBe('not-found')
+    expect(read()['hubAddress']).toBeUndefined()
+  })
+
+  it('a client that throws is a refusal, not a crash', async () => {
+    ask.mockRejectedValue(new Error('socket hang up'))
+    expect(await rediscover()).toBe('not-found')
+    expect(read()['hubAddress']).toBeUndefined()
+    expect(logs.some((l) => l.includes('hub authentication failed'))).toBe(true)
+  })
+
+  it('a revoked answer is refused', async () => {
+    ask.mockResolvedValue(answer({ status: 'revoked', reason: 'forgotten', hubId: MINE }))
+    expect(await rediscover()).toBe('not-found')
+    expect(read()['hubAddress']).toBeUndefined()
+  })
+
+  it('an answer naming another hub id than the announced one is refused', async () => {
+    ask.mockResolvedValue(answer({ status: 'member', hubId: OTHER }))
+    expect(await rediscover()).toBe('not-found')
+    expect(read()['hubAddress']).toBeUndefined()
+  })
+
+  it('a missing node id is refused without asking the hub', async () => {
+    writeConfig({ meshTls: MESH, hubId: MINE })
+    expect(await rediscover()).toBe('not-found')
+    // No mesh material at all: not paired, nothing to authenticate with.
+    writeConfig({ nodeId: 'agent-a', hubId: MINE })
+    expect(await rediscover()).toBe('not-needed')
+    expect(ask).not.toHaveBeenCalled()
+  })
+})
+
+describe('a rejected candidate is named at most once per interval', () => {
+  const rejected = async (
+    notice: ReturnType<typeof createHubRediscoveryNotice>,
+    now: number,
+    url = 'https://192.0.2.50:4443',
+  ): Promise<void> => {
+    await rediscoverPairedHub({
+      configPath,
+      log,
+      notice,
+      now: () => now,
+      browse: browseOf([{ url, nodeId: 'hub', hubId: MINE, version: '1' }]),
+      authenticate: async () => false,
+    })
+  }
+  const rejections = (): number => logs.filter((l) => l.includes('did not authenticate')).length
+
+  it('repeats only after the interval, and per address', async () => {
+    writeConfig({ nodeId: 'agent-a', meshTls: MESH, hubId: MINE })
+    const notice = createHubRediscoveryNotice()
+    await rejected(notice, 1_000)
+    await rejected(notice, 61_000)
+    await rejected(notice, 120_000)
+    expect(rejections()).toBe(1)
+    await rejected(notice, 120_000, 'https://192.0.2.51:4443')
+    expect(rejections()).toBe(2)
+    await rejected(notice, 1_000 + REJECTED_CANDIDATE_WARN_INTERVAL_MS)
+    expect(rejections()).toBe(3)
   })
 })

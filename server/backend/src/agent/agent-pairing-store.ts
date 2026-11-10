@@ -143,3 +143,21 @@ export function pairedLeafFingerprint(configPath: string): string | null {
     return null
   }
 }
+
+/** Paired, but `agent.json` carries no hub id: the membership watch should ask for one. */
+export function needsHubId(configPath: string): boolean {
+  return readPairedHubIdentity(configPath)?.hubId == null
+}
+
+/**
+ * A CA-verified membership answer: record the hub id it carries when the pairing has none.
+ * Returns the id when it was recorded, otherwise `null`.
+ */
+export function recordHubIdFromAnswer(
+  configPath: string,
+  answer: { readonly hubId?: string },
+): string | null {
+  const hubId = answer.hubId
+  if (typeof hubId !== 'string') return null
+  return recordHubIdIfMissing(configPath, hubId) ? hubId : null
+}

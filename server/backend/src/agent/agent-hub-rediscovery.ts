@@ -39,6 +39,8 @@ export type HubRediscovery =
 /** One announced URL the pinned CA must vouch for before it is saved. */
 export interface HubRediscoveryCandidate {
   readonly hubUrl: string
+  /** The id the candidate announced; an answer carrying another id is refused. */
+  readonly hubId: string
 }
 
 /**
@@ -48,11 +50,16 @@ export interface HubRediscoveryCandidate {
  */
 export interface HubRediscoveryNotice {
   noHubIdWarned: boolean
+  /** When a rejected candidate address was last warned about (ms), so a 60 s watch does not repeat it. */
+  readonly rejectedWarnedAt: Map<string, number>
 }
 
 export function createHubRediscoveryNotice(): HubRediscoveryNotice {
-  return { noHubIdWarned: false }
+  return { noHubIdWarned: false, rejectedWarnedAt: new Map() }
 }
+
+/** A candidate that keeps failing the pinned-CA check is named at most this often. */
+export const REJECTED_CANDIDATE_WARN_INTERVAL_MS = 15 * 60_000
 
 export interface HubRediscoveryDeps {
   readonly configPath: string
@@ -69,6 +76,8 @@ export interface HubRediscoveryDeps {
    */
   readonly authenticate?: (candidate: HubRediscoveryCandidate) => Promise<boolean>
   readonly notice?: HubRediscoveryNotice
+  /** Clock for the warn rate limit; defaults to `Date.now`. */
+  readonly now?: () => number
 }
 
 async function defaultBrowse(options: BrowseOptions): Promise<readonly MdnsHub[]> {
@@ -91,8 +100,16 @@ function hostOf(url: string): string | null {
   }
 }
 
-/** The pinned CA vouches for `hubUrl`, or the candidate is refused. A thrown client is a refusal. */
-async function pinnedCaAccepts(configPath: string, hubUrl: string): Promise<boolean> {
+/**
+ * The pinned CA vouches for `hubUrl`, or the candidate is refused: a CA-signed `member`/`unknown`
+ * answer (never `revoked`) that, when it names a hub id, names the announced one. A thrown client
+ * is a refusal.
+ */
+export async function pinnedCaAccepts(
+  configPath: string,
+  hubUrl: string,
+  announcedHubId: string,
+): Promise<boolean> {
   const identity = readPairedHubIdentity(configPath)
   const nodeId = readJsonFile(configPath)['nodeId']
   if (identity === null || typeof nodeId !== 'string' || nodeId.length === 0) return false
@@ -103,7 +120,10 @@ async function pinnedCaAccepts(configPath: string, hubUrl: string): Promise<bool
     keyPem: identity.keyPem,
     caCertPem: identity.caCertPem,
   })
-  return result.kind === 'answer'
+  if (result.kind !== 'answer') return false
+  const { answer } = result
+  if (answer.status === 'revoked') return false
+  return answer.hubId === undefined || answer.hubId === announcedHubId
 }
 
 function warnNoHubId(deps: HubRediscoveryDeps): void {
@@ -112,17 +132,33 @@ function warnNoHubId(deps: HubRediscoveryDeps): void {
   if (deps.notice !== undefined) deps.notice.noHubIdWarned = true
 }
 
-async function authenticateCandidate(deps: HubRediscoveryDeps, hubUrl: string): Promise<boolean> {
+async function authenticateCandidate(
+  deps: HubRediscoveryDeps,
+  candidate: HubRediscoveryCandidate,
+): Promise<boolean> {
   const authenticate =
-    deps.authenticate ?? ((candidate) => pinnedCaAccepts(deps.configPath, candidate.hubUrl))
+    deps.authenticate ?? ((c) => pinnedCaAccepts(deps.configPath, c.hubUrl, c.hubId))
   try {
-    return await authenticate({ hubUrl })
+    return await authenticate(candidate)
   } catch (err: unknown) {
     deps.log.warn('hub authentication failed', {
-      meta: { hubUrl, error: err instanceof Error ? err.message : String(err) },
+      meta: { hubUrl: candidate.hubUrl, error: err instanceof Error ? err.message : String(err) },
     })
     return false
   }
+}
+
+/** Once per candidate address per interval when a shared notice exists; one-shot callers always warn. */
+function warnRejectedCandidate(deps: HubRediscoveryDeps, hubId: string, hubUrl: string): void {
+  const now = (deps.now ?? Date.now)()
+  const seen = deps.notice?.rejectedWarnedAt
+  const last = seen?.get(hubUrl)
+  if (last !== undefined && now - last < REJECTED_CANDIDATE_WARN_INTERVAL_MS) return
+  seen?.set(hubUrl, now)
+  deps.log.warn(
+    'an announced hub has this hub id but did not authenticate against the CA pinned at pairing',
+    { meta: { hubId, hubUrl } },
+  )
 }
 
 export async function rediscoverPairedHub(deps: HubRediscoveryDeps): Promise<HubRediscovery> {
@@ -142,11 +178,8 @@ export async function rediscoverPairedHub(deps: HubRediscoveryDeps): Promise<Hub
     if (hub.hubId !== hubId) continue
     const hubAddress = hostOf(hub.url)
     if (hubAddress === null) continue
-    if (!(await authenticateCandidate(deps, hub.url))) {
-      deps.log.warn(
-        'an announced hub has this hub id but did not authenticate against the CA pinned at pairing',
-        { meta: { hubId, hubUrl: hub.url } },
-      )
+    if (!(await authenticateCandidate(deps, { hubUrl: hub.url, hubId }))) {
+      warnRejectedCandidate(deps, hubId, hub.url)
       continue
     }
     // Re-read right before writing: only the address keys change.

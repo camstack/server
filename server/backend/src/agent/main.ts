@@ -102,8 +102,9 @@ import {
   isAgentPaired,
   pairedLeafFingerprint,
   persistPairing,
+  needsHubId,
   readPairedHubIdentity,
-  recordHubIdIfMissing,
+  recordHubIdFromAnswer,
 } from './agent-pairing-store.js'
 import { askHubMembership } from './hub-membership-client.js'
 import type { AgentMeshTls } from './agent-config.js'
@@ -1264,11 +1265,10 @@ async function startAgent(configPath?: string): Promise<void> {
       })
     },
     onRevoked: (reason) => forgetHubNow(`the hub revoked this agent's certificate (${reason})`),
-    needsHubId: () => readPairedHubIdentity(config.configPath)?.hubId == null,
+    needsHubId: () => needsHubId(config.configPath),
     onAuthenticated: (answer) => {
-      const hubId: unknown = Reflect.get(answer, 'hubId')
-      if (typeof hubId !== 'string') return
-      if (!recordHubIdIfMissing(config.configPath, hubId)) return
+      const hubId = recordHubIdFromAnswer(config.configPath, answer)
+      if (hubId === null) return
       consoleLogger.info("Recorded the hub id from the hub's CA-signed membership answer", {
         tags: { nodeId: config.nodeId },
         meta: { hubId },

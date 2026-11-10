@@ -6,7 +6,13 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { recordHubIdIfMissing } from '../agent-pairing-store.js'
+import { AgentMembershipWatch } from '../agent-membership-watch.js'
+import {
+  isAgentPaired,
+  needsHubId,
+  recordHubIdFromAnswer,
+  recordHubIdIfMissing,
+} from '../agent-pairing-store.js'
 
 const MINE = 'hub-0123456789abcdef'
 const OTHER = 'hub-fedcba9876543210'
@@ -44,5 +50,44 @@ describe('recordHubIdIfMissing', () => {
     writeConfig({ meshTls: MESH, hubId: MINE })
     expect(recordHubIdIfMissing(configPath, OTHER)).toBe(false)
     expect(read()['hubId']).toBe(MINE)
+  })
+})
+
+describe('the membership watch wiring that backfills the hub id (needsHubId -> askBackfill -> recordHubIdFromAnswer)', () => {
+  const connectedWatch = (asked: { count: number }, hubId?: string): AgentMembershipWatch =>
+    new AgentMembershipWatch({
+      nodeId: 'agent-a',
+      isPaired: () => isAgentPaired(configPath),
+      isConnected: () => true,
+      ask: async () => {
+        asked.count += 1
+        return { kind: 'answer', answer: { status: 'member', ...(hubId !== undefined ? { hubId } : {}) } }
+      },
+      onRevoked: async () => undefined,
+      needsHubId: () => needsHubId(configPath),
+      onAuthenticated: (answer) => void recordHubIdFromAnswer(configPath, answer),
+      log: { warn: () => undefined, info: () => undefined },
+    })
+
+  it('a connected, paired agent with no hub id asks once and records the signed id', async () => {
+    writeConfig({ nodeId: 'agent-a', meshTls: MESH, hubAddress: '192.0.2.9' })
+    const asked = { count: 0 }
+    await connectedWatch(asked, MINE).tick(0)
+    expect(asked.count).toBe(1)
+    expect(read()['hubId']).toBe(MINE)
+  })
+
+  it('an agent that already has the id never asks while connected', async () => {
+    writeConfig({ nodeId: 'agent-a', meshTls: MESH, hubAddress: '192.0.2.9', hubId: MINE })
+    const asked = { count: 0 }
+    await connectedWatch(asked, OTHER).tick(0)
+    expect(asked.count).toBe(0)
+    expect(read()['hubId']).toBe(MINE)
+  })
+
+  it('an answer without an id records nothing', async () => {
+    writeConfig({ nodeId: 'agent-a', meshTls: MESH, hubAddress: '192.0.2.9' })
+    await connectedWatch({ count: 0 }).tick(0)
+    expect(read()['hubId']).toBeUndefined()
   })
 })
