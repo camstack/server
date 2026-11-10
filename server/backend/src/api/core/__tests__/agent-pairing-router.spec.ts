@@ -78,9 +78,7 @@ function unwrap<T extends object>(result: PairingResult<T>): T {
   return result
 }
 
-async function setup(
-  options: { agentReachableForUnpair?: boolean; hubDataDir?: string } = {},
-) {
+async function setup(options: { agentReachableForUnpair?: boolean; hubDataDir?: string } = {}) {
   const ca = await generateMeshCa()
   const registry = new MeshCertificateRegistry(memoryStore())
   const crl = new MeshCrl()
@@ -270,7 +268,7 @@ describe('agentPairing router', () => {
       operator.confirm(started.code)
       await caller.confirmPairing({ pairingId: started.pairingId, code: operator.code() })
       const onDisk: unknown = JSON.parse(
-        fs.readFileSync(path.join(hubDataDir, 'hub-identity.json'), 'utf8'),
+        fs.readFileSync(path.join(hubDataDir, 'tls', 'hub-identity.json'), 'utf8'),
       )
       expect(installedHubIds).toHaveLength(1)
       expect(installedHubIds[0]).toMatch(/^hub-[0-9a-f]{16}$/)

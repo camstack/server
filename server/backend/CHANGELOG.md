@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+
+
 - Cluster update in one job on the hub: backup, the hub, each agent (verified, an agent back without capabilities fails), then addons — clusterUpdate.startClusterUpdate / getClusterUpdateJob, resumed across the hub's own restart
 
 ## [1.2.828] - 2026-11-10
@@ -28,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A paired agent keeps the hub address it paired with; one that has none finds its hub on the LAN by the hub's id, or reports it is unconfigured instead of crash-looping, and a paired agent's hub address can no longer be cleared
+- A paired agent saves a rediscovered hub address only after that hub answers with the CA from pairing, and an older pairing records the hub id from that answer
 
 ## [1.2.826] - 2026-11-10
 

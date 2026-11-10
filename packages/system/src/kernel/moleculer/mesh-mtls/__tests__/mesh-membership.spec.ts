@@ -51,6 +51,32 @@ function answerOf(
 }
 
 describe('membership - the hub side', () => {
+  it('signs the hub id into a member answer, and an answer without one still verifies', async () => {
+    const ca = await generateMeshCa()
+    const registry = new MeshCertificateRegistry(memoryStore())
+    const leaf = await issueMeshLeafForNode(ca, 'agent-old')
+    await registry.recordIssued('agent-old', leaf.certPem, 'pairing')
+    const hubId = 'hub-0123456789abcdef'
+    const responder = new MembershipResponder({
+      registry: () => registry,
+      crl: () => new MeshCrl(),
+      caKeyPem: () => ca.keyPem,
+      hubId: () => hubId,
+    })
+    const nonce = responder.issueChallenge()
+    const fingerprint = new X509Certificate(leaf.certPem).fingerprint256
+    const outcome = responder.answer({
+      nodeId: 'agent-old',
+      certPem: leaf.certPem,
+      nonce,
+      signature: signMembershipProof(leaf.keyPem, 'agent-old', nonce),
+    })
+    expect(answerOf(outcome, ca.certPem, nonce, fingerprint)).toEqual({
+      status: 'member',
+      hubId,
+    })
+  })
+
   it('answers `member` to the holder of a live leaf the hub issued', async () => {
     const t = await setup()
     const nonce = t.responder.issueChallenge()

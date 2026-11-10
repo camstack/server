@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 8378 source files · 1304 file(s) in no subsystem.**
+**31 subsystems · 8380 source files · 1304 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -23,8 +23,8 @@ commits. A generated page may not.
 
 | Subsystem | Files | Documents | Freshest | State |
 | --- | --- | --- | --- | --- |
-| Kernel, addon lifecycle and boot | 125 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/overview.md` _(covers)_, +94 more, 14 ADRs | 2026-11-02 | ✅ |
-| Transport and cross-node routing | 111 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +58 more, 12 ADRs | 2026-10-22 | ✅ |
+| Kernel, addon lifecycle and boot | 126 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/overview.md` _(covers)_, +95 more, 14 ADRs | 2026-11-02 | ✅ |
+| Transport and cross-node routing | 111 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +59 more, 12 ADRs | 2026-10-22 | ✅ |
 | Capability system and codegen | 335 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +252 more, 51 ADRs | 2026-11-10 | ✅ |
 | Device model and the provider contract | 158 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +68 more, 6 ADRs | 2026-11-08 | ✅ |
 | Device providers (per vendor) | 822 | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `addons/addon-provider-homeassistant.md` _(covers)_, +89 more, 14 ADRs | 2026-11-08 | ✅ |
@@ -43,7 +43,7 @@ commits. A generated page may not.
 | Auth, scopes and method tiers | 97 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +32 more, 3 ADRs | 2026-10-21 | ⚠️ |
 | The hub API surface | 175 | `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, +114 more, 18 ADRs | 2026-11-02 | ⚠️ |
 | Shared types, schemas and enums | 105 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, `architecture/windows-agent.md`, +34 more, 5 ADRs | 2026-11-02 | ⚠️ |
-| Update, release, OTA and agent delivery | 73 | `architecture/update-and-release.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +36 more, 10 ADRs | 2026-10-27 | ✅ |
+| Update, release, OTA and agent delivery | 74 | `architecture/update-and-release.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +37 more, 10 ADRs | 2026-10-27 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 394 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, +54 more, 20 ADRs | 2026-11-08 | ⚠️ |
 | Remote access and networking | 77 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1013-one-instance-model.md`, +20 more | 2026-10-21 | ⚠️ |
 | Automations, blocks and declared devices | 199 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +43 more, 1 ADR | 2026-11-08 | ⚠️ |
@@ -63,7 +63,7 @@ Owns processes: loads addon manifests, forks runners, supervises crashes and dec
 
 - **Owner doc**: `docs/architecture/addon-lifecycle.md`
 - **Code**: `packages/system/src/kernel/*.ts`, `packages/system/src/kernel/lifecycle/**`, `packages/system/src/kernel/deps/**`, `packages/system/src/kernel/utils/**`, `packages/system/src/addon/**`, `packages/system/src/addon-routes/**`, `packages/system/src/lifecycle/**`, `packages/system/src/process/**`, `packages/system/src/feature/**`, `packages/system/src/*.ts`, `packages/types/src/addon/**`, `packages/types/src/lifecycle/**`, `packages/types/src/readiness/**`, `server/backend/src/boot/**`, `packages/node-root/**`
-- **Files**: 125 (122 claimed by some document)
+- **Files**: 126 (123 claimed by some document)
 - **Uncovered**: `server/backend/src/boot` (3)
 
 ### ✅ Transport and cross-node routing
@@ -243,7 +243,7 @@ Gets new code onto a running cluster — package publication, agent bundles and 
 
 - **Owner doc**: `docs/architecture/update-and-release.md`
 - **Code**: `server/backend/src/agent/**`, `server/backend/src/core/agent/**`, `server/backend/src/core/server-update/**`, `server/backend/src/core/updates/**`, `packages/system/src/kernel/addon-installer.ts`, `packages/system/src/kernel/addon-loader.ts`, `packages/system/src/kernel/addon-manifest.ts`, `packages/system/src/kernel/addon-residue.ts`
-- **Files**: 73 (73 claimed by some document)
+- **Files**: 74 (74 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT

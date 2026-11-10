@@ -580,17 +580,22 @@ the transporter drops any packet whose sender is missing or is the receiver itse
 Until D826 the hub announced `<namespace>|hub|<tcpPort>` over UDP 4445 and an
 agent with no `hubAddress` heard it and dialled the hub. D826 turned the hub's
 announcement off; D843 removed the agent's listening side. An agent with no
-hub address now dials nobody and reports `unconfigured`; its local UI lists the
-hubs found over mDNS (below); it is paired from the hub (D857), never by pasting a secret.
-Nothing in the mesh uses UDP 4445 any more — close it in firewalls.
+hub address dials nobody. An unpaired one stays on the pairing page. A paired
+one reports `unconfigured` and, when it recorded the hub's id at pairing,
+browses for that id (D1031). It is paired from the hub (D857), never by pasting
+a secret. Nothing in the mesh uses UDP 4445 any more — close it in firewalls.
 
 ## Clients find a hub over mDNS, not the mesh channel (D838)
 
 D826 turned the mesh UDP announcement off on every hub, so `camstack login` and
 `camstack discover` no longer listen to it. The `local-network` builtin
 advertises one `_camstack._tcp` mDNS service for the hub's HTTPS endpoint
-(`@homebridge/ciao`; TXT `nodeId`, `version`, `role=hub`, `url`; the address is
-the `internal` role of the address book, never ranked again). The CLI browses it
+(`@homebridge/ciao`; TXT `nodeId`, `version`, `role=hub`, `url`, `hubId`; the
+address is the `internal` role of the address book, never ranked again).
+`hubId` is a public random id (`hub-<16 hex>`, `<dataDir>/tls/hub-identity.json`,
+next to the mesh CA a backup already keeps). Finding it grants nothing (D838):
+an agent adopts an announced address only after that hub's membership answer
+verifies against the CA pinned at pairing (D1031). The CLI browses it
 (`multicast-dns`) and unions it with the hubs the machine knows — cached
 sessions, `$CAMSTACK_HUB_URL`, `scratchpad/.hub-url`
 — probes each on https, dedupes by host:port, and picks (one) or asks (several,
@@ -605,10 +610,11 @@ local-network addon turns the announcement off.
 
 The agent's local UI uses the same browse (D839): `GET /api/agent/hubs-found`
 (cached) and `POST /api/agent/hubs-found/refresh` (a bounded scan) list the mDNS
-hubs plus the configured hub address, each probed on https, and the page's
-"Hubs found on this network" select fills the hub-address field. The browse
-lives once in `@camstack/develop/hub-discovery`; the CLI imports the same module.
-An agent joins by being paired from that hub (D857). An agent updates an addon
+hubs plus the configured hub address, each probed on https. The hub address on
+that page is read-only; a paired agent that lost it adopts one only by the
+pinned-CA check above, and an operator re-pairs from the hub's Nodes page. The
+browse lives once in `@camstack/develop/hub-discovery`; the CLI imports the same
+module. An agent joins by being paired from that hub (D857). An agent updates an addon
 only by asking the hub to bring the package to the hub's version (D840): the
 hub's installed version is what each reconnect restores.
 

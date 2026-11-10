@@ -81,6 +81,31 @@ const revoked: HubMembershipResult = {
 }
 
 describe('AgentMembershipWatch - when it asks', () => {
+  it('while connected, asks once a hub id is missing and reports the CA-signed answer so it can be recorded', async () => {
+    const answer = { status: 'member' as const, hubId: 'hub-0123456789abcdef' }
+    const onAuthenticated = vi.fn()
+    const ask = vi.fn(async (): Promise<HubMembershipResult> => ({ kind: 'answer', answer }))
+    const watch = new AgentMembershipWatch({
+      nodeId: 'agent-old',
+      isPaired: () => true,
+      isConnected: () => true,
+      needsHubId: () => true,
+      ask,
+      onRevoked: async () => undefined,
+      onAuthenticated,
+      log: { warn: () => undefined, info: () => undefined },
+      graceMs: GRACE,
+      askIntervalMs: ASK,
+      confirmDelayMs: CONFIRM,
+    })
+    await watch.tick(0)
+    await watch.tick(ASK - 1)
+    expect(ask).toHaveBeenCalledTimes(1)
+    expect(onAuthenticated).toHaveBeenCalledWith(answer)
+    await watch.tick(ASK)
+    expect(ask).toHaveBeenCalledTimes(2)
+  })
+
   it('does not ask while connected, while unpaired, or inside the grace period', async () => {
     const t = scripted([])
     t.setConnected(true)

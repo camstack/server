@@ -27,3 +27,29 @@ export function decideAgentBootMode(input: AgentBootModeInput): AgentBootMode {
   const hasAddress = typeof input.hubAddress === 'string' && input.hubAddress.trim().length > 0
   return hasAddress ? 'full' : 'awaiting-hub'
 }
+
+/** How a saved hub address is applied. A relaunch is the only way addons that never started come up (D5). */
+export type AgentAddressApply = 'reconnect' | 'relaunch'
+
+export interface AwaitingHubBoot {
+  /** Browse once before the broker is built, so a found address is dialled by this boot. */
+  readonly rediscoverBeforeBroker: boolean
+  /** Keep browsing until one authenticated announcement is saved. */
+  readonly watchUntilFound: boolean
+  /**
+   * `/api/agent/restart` and a changed hub address. An unpaired agent is not
+   * waiting on an address — pairing installs the certificate and relaunches
+   * on its own — so a restart only replaces the transport.
+   */
+  readonly onReconnect: AgentAddressApply
+}
+
+/** What the agent does about a missing hub, from the same facts as the boot mode. */
+export function awaitingHubBoot(input: AgentBootModeInput): AwaitingHubBoot {
+  const waiting = decideAgentBootMode(input) === 'awaiting-hub'
+  return {
+    rediscoverBeforeBroker: waiting,
+    watchUntilFound: waiting,
+    onReconnect: waiting ? 'relaunch' : 'reconnect',
+  }
+}

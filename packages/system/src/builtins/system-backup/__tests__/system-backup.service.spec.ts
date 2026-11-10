@@ -157,6 +157,23 @@ describe('SystemBackupService', () => {
       ).rejects.toThrow(/no locations from/)
     })
 
+    it('a backup then a restore keeps the hub id that lives under tls/', async () => {
+      const hubId = 'hub-0123456789abcdef'
+      fs.mkdirSync(path.join(dataDir, 'tls'), { recursive: true })
+      fs.writeFileSync(
+        path.join(dataDir, 'tls', 'hub-identity.json'),
+        `${JSON.stringify({ hubId })}\n`,
+      )
+      const archivePath = path.join(tmpRoot, 'hub-id.tar.gz')
+      await service.createArchive({ archivePath })
+      const restored = path.join(tmpRoot, 'restored')
+      await extractAll(archivePath, restored)
+      expect(fs.readFileSync(path.join(restored, 'tls', 'hub-identity.json'), 'utf8')).toContain(
+        hubId,
+      )
+      expect(fs.existsSync(path.join(restored, 'hub-identity.json'))).toBe(false)
+    })
+
     it('uses default location set when none provided', async () => {
       const archivePath = path.join(tmpRoot, 'snap.tar.gz')
       const result = await service.createArchive({ archivePath })

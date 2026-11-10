@@ -4,7 +4,7 @@
 
 # Decisions
 
-995 architecture decision records. One file per decision, never
+996 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1010,6 +1010,7 @@ that rots.
 | D1028 | [A notification rule and a notification button only run existing Actions](adr-1028-a-notification-rule-only-runs-existing-actions.md) | ✅ accepted | 2026-11-09 |
 | D1029 | [The OSD text is a device template; the clock and the last recognition are template variables](adr-1029-the-osd-text-is-a-device-template-the-clock-and-the-last-recognition-are-template-variables.md) | ✅ accepted | 2026-11-10 |
 | D1030 | [A notifier declares the message fields a target delivers, and a rule's target overrides the rule only within them](adr-1030-a-notifier-declares-the-message-fields-a-target-delivers-and-a-rule-target-overrides-them.md) | ✅ accepted | 2026-11-10 |
+| D1031 | [A paired agent adopts an announced hub address only after the pinned CA answers](adr-1031-a-paired-agent-adopts-an-announced-hub-address-only-after-the-pinned-ca-answers.md) | ✅ accepted | 2026-11-10 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

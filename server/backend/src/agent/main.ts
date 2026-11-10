@@ -103,6 +103,7 @@ import {
   pairedLeafFingerprint,
   persistPairing,
   readPairedHubIdentity,
+  recordHubIdIfMissing,
 } from './agent-pairing-store.js'
 import { askHubMembership } from './hub-membership-client.js'
 import type { AgentMeshTls } from './agent-config.js'
@@ -126,8 +127,13 @@ import { createAgentNodeCertificates } from './agent-node-certificates.js'
 import { createReconnectRunner } from './agent-reconnect.js'
 import { createSerialQueue } from './serial-queue.js'
 import type { SniffingListener } from './agent-sniffing-listener.js'
-import { type AgentBootModeInput, decideAgentBootMode } from './agent-boot-mode.js'
-import { rediscoverPairedHub, startHubRediscoveryWatch } from './agent-hub-rediscovery.js'
+import { type AgentBootModeInput, awaitingHubBoot, decideAgentBootMode } from './agent-boot-mode.js'
+import {
+  createHubRediscoveryNotice,
+  HUB_ADDRESS_REPAIR_HINT,
+  rediscoverPairedHub,
+  startHubRediscoveryWatch,
+} from './agent-hub-rediscovery.js'
 import { resolveStatusMetrics } from './agent-status-metrics.js'
 import {
   agentSelfUpdateEnabled,
@@ -203,10 +209,21 @@ async function startAgent(configPath?: string): Promise<void> {
   const rediscoveryLogger = agentLogManager
     .createLogger()
     .withTags({ addonId: 'hub-rediscovery', nodeId: bootConfig.nodeId })
-  const rediscovered =
-    bootConfig.hubAddress === undefined
-      ? await rediscoverPairedHub({ configPath: bootConfig.configPath, log: rediscoveryLogger })
-      : null
+  // `consoleLogger` below does not exist yet: it is built with the broker. These
+  // lines go through the LogManager (`rediscoveryLogger`) so a paired agent with
+  // no hub is on the record before that.
+  const rediscoveryNotice = createHubRediscoveryNotice()
+  const beforeBroker = awaitingHubBoot({
+    paired: isAgentPaired(bootConfig.configPath),
+    hubAddress: bootConfig.hubAddress ?? null,
+  })
+  const rediscovered = beforeBroker.rediscoverBeforeBroker
+    ? await rediscoverPairedHub({
+        configPath: bootConfig.configPath,
+        log: rediscoveryLogger,
+        notice: rediscoveryNotice,
+      })
+    : null
   const config = rediscovered?.kind === 'found' ? loadAgentConfig(configPath) : bootConfig
 
   // Derive CAMSTACK_HUB_URL from the configured hub address so remote agents
@@ -230,9 +247,9 @@ async function startAgent(configPath?: string): Promise<void> {
       `[Agent] Starting node "${config.nodeId}" (name="${config.name}") connecting to ${config.hubAddress}`,
     )
   } else if (isAgentPaired(config.configPath)) {
-    console.error(
-      `[Agent] Node "${config.nodeId}" is paired but has no hub address and found none on the LAN — UNCONFIGURED. ` +
-        'Set the hub address on this agent; addons boot once it is set',
+    rediscoveryLogger.error(
+      `Node "${config.nodeId}" is paired but has no hub address and found none on the LAN — UNCONFIGURED. ` +
+        `${HUB_ADDRESS_REPAIR_HINT}; addons boot once an address is recorded`,
     )
   } else {
     console.log(
@@ -1139,6 +1156,7 @@ async function startAgent(configPath?: string): Promise<void> {
     })
   }
   const bootMode = decideAgentBootMode(bootModeInput())
+  const hubBoot = awaitingHubBoot(bootModeInput())
   const addonsBooted = bootMode === 'full'
   // ── Self-update (agent-self-update.ts): keep this closure current with nobody driving it.
   // Unpaired -> npm latest, at boot; paired -> the hub's version, at the first registration ack.
@@ -1246,6 +1264,16 @@ async function startAgent(configPath?: string): Promise<void> {
       })
     },
     onRevoked: (reason) => forgetHubNow(`the hub revoked this agent's certificate (${reason})`),
+    needsHubId: () => readPairedHubIdentity(config.configPath)?.hubId == null,
+    onAuthenticated: (answer) => {
+      const hubId: unknown = Reflect.get(answer, 'hubId')
+      if (typeof hubId !== 'string') return
+      if (!recordHubIdIfMissing(config.configPath, hubId)) return
+      consoleLogger.info("Recorded the hub id from the hub's CA-signed membership answer", {
+        tags: { nodeId: config.nodeId },
+        meta: { hubId },
+      })
+    },
     log: {
       // The console line has no tag column: the node id rides in the text as well.
       warn: (message, extras) => consoleLogger.warn(`${message} [nodeId=${config.nodeId}]`, extras),
@@ -1269,10 +1297,12 @@ async function startAgent(configPath?: string): Promise<void> {
     nodeId: config.nodeId,
     dataDir: config.dataDir,
     configPath: config.configPath,
-    // Nothing was booted without a hub (agent-boot-mode.ts): a new address is applied by a relaunch (D5).
-    onReconnect: addonsBooted
-      ? reconnect
-      : async () => scheduleAgentRestart(consoleLogger, 'hub address set', config.dataDir),
+    // A paired agent that booted with no addons relaunches so they start (D5).
+    // An unpaired agent only replaces the transport: pairing relaunches on its own.
+    onReconnect:
+      hubBoot.onReconnect === 'relaunch'
+        ? async () => scheduleAgentRestart(consoleLogger, 'hub address set', config.dataDir)
+        : reconnect,
     pairing,
     onForgetHub: () => forgetHubNow('requested on this agent'),
     getHubConnectionState,
@@ -1347,14 +1377,15 @@ async function startAgent(configPath?: string): Promise<void> {
   }
   // Paired, no hub address, none found by hub id (#494): report `unconfigured` and stay up - no
   // addon dials a hub that is not there, so nothing aborts the process into a respawn loop.
-  if (bootMode === 'awaiting-hub') {
+  if (hubBoot.watchUntilFound) {
     consoleLogger.error(
-      'Paired but no hub address: UNCONFIGURED - addons are not started. Set the hub address on this agent',
+      `Paired but no hub address: UNCONFIGURED - addons are not started. ${HUB_ADDRESS_REPAIR_HINT}`,
       { tags: { nodeId: config.nodeId } },
     )
     startHubRediscoveryWatch({
       configPath: config.configPath,
       log: rediscoveryLogger,
+      notice: rediscoveryNotice,
       onFound: () =>
         scheduleAgentRestart(consoleLogger, 'found the paired hub on the LAN', config.dataDir),
     })

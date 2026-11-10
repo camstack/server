@@ -1,8 +1,11 @@
 /**
  * The hub's ANNOUNCED identity (#494): `hub-<16 hex>`, random, generated once
- * and kept in `<dataDir>/hub-identity.json`. The hub announces it over mDNS and
- * gives it to an agent at pairing; the agent records it to find ITS hub again
- * when it has no address, and to refuse another hub on the same LAN.
+ * and kept in `<dataDir>/tls/hub-identity.json`, beside the mesh CA a system
+ * backup already archives. A file still at the data root (the first location)
+ * is read once and copied under `tls/`; it is never overwritten. The hub
+ * announces the id over mDNS and gives it to an agent at pairing; the agent
+ * records it to find ITS hub again when it has no address, and to refuse
+ * another hub on the same LAN.
  *
  * It is public (it grants nothing) and it is NOT the mesh node id: every hub is
  * still `hub` on its own mesh. A seed never overwrites: a file that exists but
@@ -12,9 +15,17 @@
 import { randomBytes } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { isHubId } from '@camstack/types'
 
-export const HUB_IDENTITY_FILE = 'hub-identity.json'
+/** `hub-<16 hex>`. The same shape as `@camstack/types` `isHubId`. */
+const HUB_ID_PATTERN: RegExp = /^hub-[0-9a-f]{16}$/
+
+export function isAnnouncedHubId(value: unknown): value is string {
+  return typeof value === 'string' && HUB_ID_PATTERN.test(value)
+}
+
+export const HUB_IDENTITY_FILE: string = 'hub-identity.json'
+/** Data-dir-relative path. Beside the mesh CA, so a backup of `tls/` keeps the id. */
+export const HUB_IDENTITY_RELATIVE: string = `tls/${HUB_IDENTITY_FILE}`
 
 export interface HubIdResult {
   /** The hub id, or `null` when the file exists but does not hold one. */
@@ -38,20 +49,21 @@ function readHubIdFile(file: string): HubIdResult {
   }
   const hubId: unknown =
     parsed !== null && typeof parsed === 'object' ? Reflect.get(parsed, 'hubId') : undefined
-  if (!isHubId(hubId)) {
+  if (!isAnnouncedHubId(hubId)) {
     return { hubId: null, created: false, problem: `${file} holds a value that is not a hub id` }
   }
   return { hubId, created: false, problem: null }
 }
 
-/** Read the hub id, generating and persisting it on the first call ever. Never throws. */
-export function loadOrCreateHubId(dataDir: string): HubIdResult {
-  const file = path.join(dataDir, HUB_IDENTITY_FILE)
-  if (fs.existsSync(file)) return readHubIdFile(file)
-  const hubId = `hub-${randomBytes(8).toString('hex')}`
+function identityPath(dataDir: string): string {
+  return path.join(dataDir, HUB_IDENTITY_RELATIVE)
+}
+
+/** Persist `hubId` at `file`. A file that appears meanwhile is kept (link refuses it). */
+function writeHubIdFile(file: string, hubId: string): HubIdResult {
   const tmp = `${file}.${process.pid}.tmp`
   try {
-    fs.mkdirSync(dataDir, { recursive: true })
+    fs.mkdirSync(path.dirname(file), { recursive: true })
     fs.writeFileSync(tmp, `${JSON.stringify({ hubId }, null, 2)}\n`)
     // `link` refuses an existing target: a concurrent first boot keeps the id already written.
     fs.linkSync(tmp, file)
@@ -66,4 +78,22 @@ export function loadOrCreateHubId(dataDir: string): HubIdResult {
     fs.rmSync(tmp, { force: true })
   }
   return { hubId, created: true, problem: null }
+}
+
+/**
+ * Read the hub id, generating and persisting it on the first call ever.
+ * Never throws. A file at the data root is copied under `tls/` once.
+ */
+export function loadOrCreateHubId(dataDir: string): HubIdResult {
+  const file = identityPath(dataDir)
+  if (fs.existsSync(file)) return readHubIdFile(file)
+  const legacy = path.join(dataDir, HUB_IDENTITY_FILE)
+  if (fs.existsSync(legacy)) {
+    const read = readHubIdFile(legacy)
+    if (read.hubId === null) return read
+    const copied = writeHubIdFile(file, read.hubId)
+    if (copied.hubId === null) return read
+    return { hubId: read.hubId, created: false, problem: null }
+  }
+  return writeHubIdFile(file, `hub-${randomBytes(8).toString('hex')}`)
 }

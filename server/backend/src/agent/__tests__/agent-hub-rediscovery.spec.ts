@@ -7,7 +7,11 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import type { MdnsHub } from '@camstack/develop/hub-discovery'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { rediscoverPairedHub, startHubRediscoveryWatch } from '../agent-hub-rediscovery.js'
+import {
+  createHubRediscoveryNotice,
+  rediscoverPairedHub,
+  startHubRediscoveryWatch,
+} from '../agent-hub-rediscovery.js'
 
 const MINE = 'hub-0123456789abcdef'
 const OTHER = 'hub-fedcba9876543210'
@@ -35,12 +39,12 @@ function writeConfig(value: Record<string, unknown>): void {
 }
 const read = (): Record<string, unknown> => {
   const parsed: unknown = JSON.parse(fs.readFileSync(configPath, 'utf8'))
-  return parsed !== null && typeof parsed === 'object' ? Object.fromEntries(Object.entries(parsed)) : {}
+  return parsed !== null && typeof parsed === 'object'
+    ? Object.fromEntries(Object.entries(parsed))
+    : {}
 }
-const browseOf =
-  (hubs: readonly MdnsHub[]) =>
-  async (): Promise<readonly MdnsHub[]> =>
-    hubs
+const browseOf = (hubs: readonly MdnsHub[]) => async (): Promise<readonly MdnsHub[]> => hubs
+const acceptHub = async (): Promise<boolean> => true
 
 describe('rediscoverPairedHub', () => {
   it('finds the hub with the recorded id, persists its address, ignores the other hub', async () => {
@@ -52,8 +56,13 @@ describe('rediscoverPairedHub', () => {
         { url: 'https://192.0.2.50:4443', nodeId: 'hub', hubId: OTHER, version: '1' },
         { url: 'https://192.0.2.9:4443', nodeId: 'hub', hubId: MINE, version: '1' },
       ]),
+      authenticate: acceptHub,
     })
-    expect(outcome).toEqual({ kind: 'found', hubAddress: '192.0.2.9', hubUrl: 'https://192.0.2.9:4443' })
+    expect(outcome).toEqual({
+      kind: 'found',
+      hubAddress: '192.0.2.9',
+      hubUrl: 'https://192.0.2.9:4443',
+    })
     expect(read()['hubAddress']).toBe('192.0.2.9')
     expect(read()['hubUrl']).toBe('https://192.0.2.9:4443')
     // The pairing material is untouched.
@@ -95,12 +104,59 @@ describe('rediscoverPairedHub', () => {
     expect(logs.some((l) => l.startsWith('warn'))).toBe(true)
   })
 
+  it('warns once that there is no hub id, and again only after that situation changes', async () => {
+    const notice = createHubRediscoveryNotice()
+    writeConfig({ meshTls: MESH, hubAddress: null })
+    await rediscoverPairedHub({ configPath, log, browse: browseOf([]), notice })
+    await rediscoverPairedHub({ configPath, log, browse: browseOf([]), notice })
+    const noHubId = (): number => logs.filter((l) => l.includes('no hub id')).length
+    expect(noHubId()).toBe(1)
+    writeConfig({ meshTls: MESH, hubId: MINE })
+    await rediscoverPairedHub({
+      configPath,
+      log,
+      browse: browseOf([]),
+      notice,
+      authenticate: async () => false,
+    })
+    writeConfig({ meshTls: MESH })
+    await rediscoverPairedHub({ configPath, log, browse: browseOf([]), notice })
+    expect(noHubId()).toBe(2)
+  })
+
+  it('never persists a candidate with the right hub id that fails the pinned-CA check; the genuine one after it is saved', async () => {
+    writeConfig({ nodeId: 'agent-a', meshTls: MESH, hubId: MINE })
+    const asked: string[] = []
+    const outcome = await rediscoverPairedHub({
+      configPath,
+      log,
+      browse: browseOf([
+        { url: 'https://192.0.2.50:4443', nodeId: 'hub', hubId: MINE, version: '1' },
+        { url: 'https://192.0.2.9:4443', nodeId: 'hub', hubId: MINE, version: '1' },
+      ]),
+      authenticate: async (candidate) => {
+        asked.push(candidate.hubUrl)
+        return candidate.hubUrl === 'https://192.0.2.9:4443'
+      },
+    })
+    expect(asked).toEqual(['https://192.0.2.50:4443', 'https://192.0.2.9:4443'])
+    expect(outcome).toEqual({
+      kind: 'found',
+      hubAddress: '192.0.2.9',
+      hubUrl: 'https://192.0.2.9:4443',
+    })
+    expect(read()['hubAddress']).toBe('192.0.2.9')
+    expect(read()['hubUrl']).toBe('https://192.0.2.9:4443')
+  })
+
   it('refuses an announcement it cannot dial (loopback)', async () => {
     writeConfig({ meshTls: MESH, hubId: MINE })
     const outcome = await rediscoverPairedHub({
       configPath,
       log,
-      browse: browseOf([{ url: 'https://127.0.0.1:4443', nodeId: 'hub', hubId: MINE, version: '1' }]),
+      browse: browseOf([
+        { url: 'https://127.0.0.1:4443', nodeId: 'hub', hubId: MINE, version: '1' },
+      ]),
     })
     expect(outcome.kind).toBe('not-found')
     expect(read()['hubAddress']).toBeUndefined()
@@ -119,7 +175,10 @@ describe('startHubRediscoveryWatch', () => {
         log,
         intervalMs: 1_000,
         browse: async () =>
-          online ? [{ url: 'https://192.0.2.9:4443', nodeId: 'hub', hubId: MINE, version: '1' }] : [],
+          online
+            ? [{ url: 'https://192.0.2.9:4443', nodeId: 'hub', hubId: MINE, version: '1' }]
+            : [],
+        authenticate: acceptHub,
         onFound: () => void (relaunches += 1),
       })
       await vi.advanceTimersByTimeAsync(3_000)

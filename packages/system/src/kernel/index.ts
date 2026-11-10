@@ -462,5 +462,10 @@ export { StagingArea } from './lifecycle/staging-area.js'
 export { LifecycleJobEngine } from './lifecycle/lifecycle-job-engine.js'
 export type { ApplyAddonUpdateFn, EmitFn } from './lifecycle/lifecycle-job-engine.js'
 export type { TarballFetcher, ExtractFn } from './lifecycle/staging-area.js'
-export { HUB_IDENTITY_FILE, loadOrCreateHubId } from './hub-identity.js'
+export {
+  HUB_IDENTITY_FILE,
+  HUB_IDENTITY_RELATIVE,
+  isAnnouncedHubId,
+  loadOrCreateHubId,
+} from './hub-identity.js'
 export type { HubIdResult } from './hub-identity.js'

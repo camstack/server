@@ -27,6 +27,7 @@ import {
   X509Certificate,
   type KeyObject,
 } from 'node:crypto'
+import { isAnnouncedHubId } from '../../hub-identity.js'
 import type { MeshCertificateRegistry } from './mesh-certificate-registry.js'
 import type { MeshCrl } from './mesh-crl.js'
 
@@ -50,6 +51,11 @@ export interface MembershipAnswer {
   readonly status: MembershipStatus
   /** Why the leaf was revoked (`forgotten`, `superseded by pairing`, ...), only when `revoked`. */
   readonly reason?: string
+  /**
+   * The hub's announced id, when this hub has one. Signed with the rest of the
+   * answer, so an agent paired before the id existed can record it.
+   */
+  readonly hubId?: string
 }
 
 /** What the agent signs with its leaf key: bound to this node and this nonce only. */
@@ -82,6 +88,8 @@ function mintAnswer(
     readonly nonce: string
     readonly answer: MembershipAnswer
     readonly nowMs: number
+    /** The hub's announced id, included only when it is one. */
+    readonly hubId?: string | null
   },
 ): string {
   const payload = {
@@ -92,6 +100,7 @@ function mintAnswer(
     nonce: claims.nonce,
     status: claims.answer.status,
     ...(claims.answer.reason !== undefined ? { reason: claims.answer.reason } : {}),
+    ...(isAnnouncedHubId(claims.hubId) ? { hubId: claims.hubId } : {}),
     iat: claims.nowMs,
     exp: claims.nowMs + MEMBERSHIP_TTL_MS,
   }
@@ -176,7 +185,11 @@ export function verifyMembershipAnswer(
     return null
   }
   if (exp <= nowMs || iat > nowMs + MEMBERSHIP_TTL_MS || exp - iat > MEMBERSHIP_TTL_MS) return null
-  return typeof reason === 'string' && status === 'revoked' ? { status, reason } : { status }
+  const hubId: unknown = Reflect.get(payload, 'hubId')
+  if (hubId !== undefined && !isAnnouncedHubId(hubId)) return null
+  const answer: MembershipAnswer =
+    typeof reason === 'string' && status === 'revoked' ? { status, reason } : { status }
+  return isAnnouncedHubId(hubId) ? { ...answer, hubId } : answer
 }
 
 export interface MembershipResponderDeps {
@@ -184,6 +197,8 @@ export interface MembershipResponderDeps {
   readonly crl: () => MeshCrl
   /** The mesh CA's private key (PKCS#8 PEM), `null` while the CA is not ready. */
   readonly caKeyPem: () => string | null
+  /** This hub's announced id, signed into every answer. Absent on a hub that has none. */
+  readonly hubId?: () => string | null
   readonly now?: () => number
   readonly log?: (message: string, meta: { readonly nodeId: string }) => void
 }
@@ -294,6 +309,7 @@ export class MembershipResponder {
         nonce,
         answer,
         nowMs: this.now(),
+        hubId: this.deps.hubId?.() ?? null,
       }),
     }
   }

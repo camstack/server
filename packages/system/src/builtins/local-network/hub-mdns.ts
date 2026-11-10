@@ -18,7 +18,8 @@
 import { isIP } from 'node:net'
 
 import type { HubAddressBook, IScopedLogger } from '@camstack/types'
-import { HUB_MDNS_ROLE, HUB_MDNS_SERVICE_TYPE, HUB_MDNS_TXT_KEYS, isHubId } from '@camstack/types'
+import { HUB_MDNS_ROLE, HUB_MDNS_SERVICE_TYPE, HUB_MDNS_TXT_KEYS } from '@camstack/types'
+import { isAnnouncedHubId } from '../../kernel/hub-identity.js'
 
 /** What one published service says. Every value is public. */
 export interface HubMdnsAnnouncement {
@@ -69,7 +70,7 @@ export function buildHubAnnouncement(inputs: HubMdnsInputs): HubMdnsAnnouncement
     [HUB_MDNS_TXT_KEYS.url]: url.origin,
   }
   if (inputs.version !== null) txt[HUB_MDNS_TXT_KEYS.version] = inputs.version
-  const hubId = isHubId(inputs.hubId) ? inputs.hubId : null
+  const hubId = isAnnouncedHubId(inputs.hubId) ? inputs.hubId : null
   if (hubId !== null) txt[HUB_MDNS_TXT_KEYS.hubId] = hubId
   return {
     // Two hubs on one LAN are two instance names, not `camstack-hub (2)`.

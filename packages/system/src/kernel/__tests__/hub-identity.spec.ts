@@ -6,9 +6,8 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { isHubId } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { HUB_IDENTITY_FILE, loadOrCreateHubId } from '../hub-identity.js'
+import { HUB_IDENTITY_FILE, isAnnouncedHubId, loadOrCreateHubId } from '../hub-identity.js'
 
 let dir: string
 beforeEach(() => {
@@ -22,7 +21,7 @@ describe('loadOrCreateHubId', () => {
   it('generates a random hub id once and returns the same one on every later boot', () => {
     const first = loadOrCreateHubId(dir)
     expect(first.hubId).not.toBeNull()
-    expect(isHubId(first.hubId)).toBe(true)
+    expect(isAnnouncedHubId(first.hubId)).toBe(true)
     expect(first.created).toBe(true)
     const again = loadOrCreateHubId(dir)
     expect(again).toEqual({ hubId: first.hubId, created: false, problem: null })
@@ -38,6 +37,23 @@ describe('loadOrCreateHubId', () => {
     } finally {
       fs.rmSync(other, { recursive: true, force: true })
     }
+  })
+
+  it('keeps an id written at the data root by reading it once and copying it under tls/', () => {
+    const legacy = path.join(dir, HUB_IDENTITY_FILE)
+    fs.writeFileSync(legacy, `${JSON.stringify({ hubId: 'hub-0123456789abcdef' })}\n`)
+    const result = loadOrCreateHubId(dir)
+    expect(result).toEqual({ hubId: 'hub-0123456789abcdef', created: false, problem: null })
+    const moved = path.join(dir, 'tls', HUB_IDENTITY_FILE)
+    expect(JSON.parse(fs.readFileSync(moved, 'utf8'))).toEqual({ hubId: 'hub-0123456789abcdef' })
+    expect(loadOrCreateHubId(dir).hubId).toBe('hub-0123456789abcdef')
+  })
+
+  it('writes a new id under tls/, beside the mesh CA a backup already keeps', () => {
+    const result = loadOrCreateHubId(dir)
+    expect(fs.existsSync(path.join(dir, HUB_IDENTITY_FILE))).toBe(false)
+    expect(fs.existsSync(path.join(dir, 'tls', HUB_IDENTITY_FILE))).toBe(true)
+    expect(result.created).toBe(true)
   })
 
   it('never overwrites a file it cannot read: no id, and the reason', () => {

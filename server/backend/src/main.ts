@@ -33,6 +33,7 @@ import {
   getUserManagementInternal,
   HUB_MAIN_HEAP_WATCH_LABEL,
   hubMainRssBudget,
+  loadOrCreateHubId,
   onSessionsRevoked,
   proxyToUpstream,
   registerHttpsListener,
@@ -572,6 +573,7 @@ async function bootstrap() {
     // A refused (forgotten / unpaired) agent asks here whether it is still a member (D857).
     registerMeshMembershipRoutes(fastify, {
       logger: app.get(LoggingService).createLogger('mesh-membership'),
+      hubId: () => loadOrCreateHubId(dataPath).hubId,
     })
   } catch (err) {
     console.warn('[bootstrap] Failed to register addon upload route:', err)

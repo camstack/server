@@ -5,8 +5,7 @@
  */
 import { X509Certificate } from 'node:crypto'
 import * as fs from 'node:fs'
-import { agentHttpsPaths, type InstalledPairing } from '@camstack/server/system'
-import { isHubId } from '@camstack/types'
+import { agentHttpsPaths, isAnnouncedHubId, type InstalledPairing } from '@camstack/server/system'
 import { readJsonFile, writeJsonFile0600 } from './agent-json-file.js'
 
 /** Keys that exist only while this agent is paired. */
@@ -49,8 +48,12 @@ export function persistPairing(configPath: string, pairing: InstalledPairing): v
   if (hubAddress.length === 0) {
     throw new Error('the pairing carries no hub address to dial - nothing was installed')
   }
-  const { meshTlsPrevious: _previous, meshSwap: _swap, hubId: _hubId, ...existing } =
-    readJsonFile(configPath)
+  const {
+    meshTlsPrevious: _previous,
+    meshSwap: _swap,
+    hubId: _hubId,
+    ...existing
+  } = readJsonFile(configPath)
   writeJsonFile0600(configPath, {
     ...existing,
     hubAddress,
@@ -73,6 +76,19 @@ export interface PairedHubIdentity {
   readonly caCertPem: string
 }
 
+/**
+ * Record the hub's announced id when this pairing has none. A CA-signed membership
+ * answer is the only caller: an id already on record is left as it is, and an
+ * unpaired file is not written.
+ */
+export function recordHubIdIfMissing(configPath: string, hubId: string): boolean {
+  if (!isAnnouncedHubId(hubId) || !isAgentPaired(configPath)) return false
+  const existing = readJsonFile(configPath)
+  if (isAnnouncedHubId(existing['hubId'])) return false
+  writeJsonFile0600(configPath, { ...existing, hubId })
+  return true
+}
+
 export function readPairedHubIdentity(configPath: string): PairedHubIdentity | null {
   const config = readJsonFile(configPath)
   const meshTls: unknown = config['meshTls']
@@ -89,7 +105,7 @@ export function readPairedHubIdentity(configPath: string): PairedHubIdentity | n
   return {
     hubUrl: typeof hubUrl === 'string' && hubUrl.length > 0 ? hubUrl : null,
     hubAddress: typeof hubAddress === 'string' && hubAddress.length > 0 ? hubAddress : null,
-    hubId: isHubId(hubId) ? hubId : null,
+    hubId: isAnnouncedHubId(hubId) ? hubId : null,
     certPem,
     keyPem,
     caCertPem,

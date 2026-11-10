@@ -90,7 +90,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Actions, scheduler points, fan presets and generated automations render device value templates in their arguments
 - An action step can carry an if condition and an else list, in actions, schedulers and fan presets
 - Device templates gain the trunc and onoff filters; the migration API lets an addon read its own per-device settings and the aliases of named devices
-
 - The device manager records which optional capability methods each provider implements
 - A camera keeps its PTZ, reboot and two-way-audio features after a hub restart or while its agent is offline, until its own provider answers
 
@@ -110,6 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix: a grouped addon's migrations (Home Assistant export) are no longer refused when they read the legacy rows of their sibling provider; the integrations runner starts again
 - Selecting a remote source that is an infrared code sends it through its transmitter once and remembers it as the current source.
 - Renaming a composed device keeps the new name after a restart, whether the rename was made on the device page or in the composition editor.
+- The hub id is stored under tls next to the mesh CA, so a system backup keeps it; a file still at the data root is copied there once
 
 ## [1.2.537] - 2026-11-01
 

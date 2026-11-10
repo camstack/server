@@ -26,12 +26,17 @@ export interface MeshMembershipRoutesOptions {
   readonly now?: () => number
   /** Requests per source address per minute (default 60). */
   readonly perMinute?: number
+  /** This hub's announced id, signed into every membership answer. */
+  readonly hubId?: () => string | null
 }
 
 const WINDOW_MS = 60_000
 const DEFAULT_PER_MINUTE = 60
 
-export function createProcessMembershipResponder(logger: IScopedLogger): MembershipResponder {
+export function createProcessMembershipResponder(
+  logger: IScopedLogger,
+  hubId?: () => string | null,
+): MembershipResponder {
   return new MembershipResponder({
     registry: getProcessMeshCertificateRegistry,
     crl: processMeshCrl,
@@ -39,6 +44,7 @@ export function createProcessMembershipResponder(logger: IScopedLogger): Members
       const state = getProcessMeshCaState()
       return state.state === 'ready' ? state.ca.keyPem : null
     },
+    ...(hubId !== undefined ? { hubId } : {}),
     log: (message, meta) => logger.warn(message, { tags: { nodeId: meta.nodeId } }),
   })
 }
@@ -47,7 +53,8 @@ export function registerMeshMembershipRoutes(
   fastify: FastifyInstance,
   options: MeshMembershipRoutesOptions,
 ): void {
-  const responder = options.responder ?? createProcessMembershipResponder(options.logger)
+  const responder =
+    options.responder ?? createProcessMembershipResponder(options.logger, options.hubId)
   const limiter = createRateLimiter({
     windowMs: WINDOW_MS,
     max: options.perMinute ?? DEFAULT_PER_MINUTE,

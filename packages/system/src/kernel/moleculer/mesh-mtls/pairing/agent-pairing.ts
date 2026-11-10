@@ -19,7 +19,7 @@
  * refuses every offer.
  */
 import { createPrivateKey, webcrypto, X509Certificate } from 'node:crypto'
-import { isHubId } from '@camstack/types'
+import { isAnnouncedHubId } from '../../../hub-identity.js'
 import {
   caFingerprintCompact,
   createMeshCsrPem,
@@ -292,7 +292,7 @@ export function dialableHubHost(address: string): string | null {
   // `:6443` (no host at all) comes back as written.
   if (bare.length === 0 || /^:\d*$/.test(bare)) return null
   if (bare === 'localhost' || bare === '0.0.0.0' || bare === '::' || bare === '::1') return null
-  if (/^127\./.test(bare) || /^::ffff:127\./.test(bare)) return null
+  if (bare.startsWith('127.') || bare.startsWith('::ffff:127.')) return null
   return host
 }
 
@@ -1000,7 +1000,7 @@ function parseOffer(body: unknown): OfferRequest | null {
   const hubId: unknown = Reflect.get(body, 'hubId')
   if (typeof protocol !== 'number') return null
   // Optional (an older hub sends none), but a present one must be a hub id.
-  if (hubId !== undefined && !isHubId(hubId)) return null
+  if (hubId !== undefined && !isAnnouncedHubId(hubId)) return null
   if (!isText(hubNodeId, 128) || !isText(hubCaCertPem, 16_384) || !isText(commitment, 128)) {
     return null
   }

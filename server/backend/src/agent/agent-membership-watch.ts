@@ -10,6 +10,7 @@
  *
  * Pure of timers and I/O: `tick(now)` is driven by the caller (a `setInterval` in `main.ts`).
  */
+import type { MembershipAnswer } from '@camstack/server/system'
 import type { HubMembershipResult } from './hub-membership-client'
 
 export interface AgentMembershipWatchDeps {
@@ -20,6 +21,13 @@ export interface AgentMembershipWatchDeps {
   readonly ask: () => Promise<HubMembershipResult>
   /** The hub said the leaf is revoked, twice: discard the pairing and become pairable again. */
   readonly onRevoked: (reason: string) => Promise<void>
+  /**
+   * A membership answer verified against the pinned CA. Used to record a hub id
+   * the pairing never stored. Optional: revocation does not depend on it.
+   */
+  readonly onAuthenticated?: (answer: MembershipAnswer) => void
+  /** Paired, but `agent.json` has no hub id yet: ask even while the mesh is up. */
+  readonly needsHubId?: () => boolean
   readonly log: {
     warn(
       message: string,
@@ -62,8 +70,18 @@ export class AgentMembershipWatch {
   /** One step. Resolves once any question this step asked has been handled. */
   async tick(now: number): Promise<void> {
     if (this.asking) return
-    if (!this.deps.isPaired() || this.deps.isConnected()) {
+    if (!this.deps.isPaired()) {
       this.reset()
+      return
+    }
+    if (this.deps.isConnected()) {
+      this.disconnectedSince = null
+      this.revokedReads = 0
+      if (this.deps.needsHubId?.() === true) {
+        await this.askBackfill(now)
+        return
+      }
+      this.lastAskAt = null
       return
     }
     this.disconnectedSince ??= now
@@ -88,8 +106,23 @@ export class AgentMembershipWatch {
     this.revokedReads = 0
   }
 
+  /** While connected, one CA-signed answer is enough to learn the hub id. Revocation stays on the disconnected path. */
+  private async askBackfill(now: number): Promise<void> {
+    const interval = this.deps.askIntervalMs ?? DEFAULT_MEMBERSHIP_ASK_INTERVAL_MS
+    if (this.lastAskAt !== null && now - this.lastAskAt < interval) return
+    this.lastAskAt = now
+    this.asking = true
+    try {
+      const result = await this.deps.ask()
+      if (result.kind === 'answer') this.deps.onAuthenticated?.(result.answer)
+    } finally {
+      this.asking = false
+    }
+  }
+
   private async handle(result: HubMembershipResult): Promise<void> {
     const tags = { nodeId: this.deps.nodeId }
+    if (result.kind === 'answer') this.deps.onAuthenticated?.(result.answer)
     if (result.kind === 'unreachable') {
       this.revokedReads = 0
       this.deps.log.info(

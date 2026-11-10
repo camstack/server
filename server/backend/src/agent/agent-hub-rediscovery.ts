@@ -5,15 +5,22 @@
  * random, generated once on the hub). If the address is ever missing, the
  * agent browses `_camstack._tcp` and adopts the one hub announcing that exact
  * id - never another hub on the same LAN, never a hub announcing none. The
- * address it finds is persisted, so the next boot dials it directly. Whatever
- * it finds, the mesh connection still verifies the hub's certificate against
- * the CA pinned at pairing: mDNS only says where to dial.
+ * address is persisted only after that hub answers a membership query the
+ * pinned CA verifies (the id itself is public). The next boot then dials it.
  */
 import type { BrowseOptions, MdnsHub } from '@camstack/develop/hub-discovery'
-import { dialableHubHost } from '@camstack/server/system'
-import { isHubId } from '@camstack/types'
+import { dialableHubHost, isAnnouncedHubId } from '@camstack/server/system'
 import { readJsonFile, writeJsonFile0600 } from './agent-json-file.js'
-import { isAgentPaired } from './agent-pairing-store.js'
+import { isAgentPaired, readPairedHubIdentity } from './agent-pairing-store.js'
+import { askHubMembership } from './hub-membership-client.js'
+
+/** Where an operator sets the address. The agent page shows it read-only. */
+export const HUB_ADDRESS_REPAIR_HINT =
+  "Re-pair this agent from the hub's Nodes page; the hub address on this agent is read-only"
+
+const NO_HUB_ID_WARNING =
+  'Paired, but no hub address and no hub id on record: this agent cannot find its hub on its own. ' +
+  HUB_ADDRESS_REPAIR_HINT
 
 /** How long one boot-time browse listens. */
 export const HUB_REDISCOVERY_BROWSE_MS = 4_000
@@ -29,14 +36,39 @@ export type HubRediscovery =
   | { readonly kind: 'not-found'; readonly announced: number }
   | { readonly kind: 'found'; readonly hubAddress: string; readonly hubUrl: string }
 
+/** One announced URL the pinned CA must vouch for before it is saved. */
+export interface HubRediscoveryCandidate {
+  readonly hubUrl: string
+}
+
+/**
+ * Shared by the boot browse and the watch so a `no-hub-id` warning is logged
+ * once, and again only after a later browse saw a hub id and then lost it.
+ * The two callers update `noHubIdWarned`; nothing else should.
+ */
+export interface HubRediscoveryNotice {
+  noHubIdWarned: boolean
+}
+
+export function createHubRediscoveryNotice(): HubRediscoveryNotice {
+  return { noHubIdWarned: false }
+}
+
 export interface HubRediscoveryDeps {
   readonly configPath: string
   readonly log: {
     info(message: string, extras?: { meta?: Record<string, unknown> }): void
     warn(message: string, extras?: { meta?: Record<string, unknown> }): void
+    error?(message: string, extras?: { meta?: Record<string, unknown> }): void
   }
   readonly browse?: (options: BrowseOptions) => Promise<readonly MdnsHub[]>
   readonly timeoutMs?: number
+  /**
+   * `true` when `hubUrl` answered with a token the CA pinned at pairing
+   * verifies. Defaults to `askHubMembership`.
+   */
+  readonly authenticate?: (candidate: HubRediscoveryCandidate) => Promise<boolean>
+  readonly notice?: HubRediscoveryNotice
 }
 
 async function defaultBrowse(options: BrowseOptions): Promise<readonly MdnsHub[]> {
@@ -59,16 +91,49 @@ function hostOf(url: string): string | null {
   }
 }
 
+/** The pinned CA vouches for `hubUrl`, or the candidate is refused. A thrown client is a refusal. */
+async function pinnedCaAccepts(configPath: string, hubUrl: string): Promise<boolean> {
+  const identity = readPairedHubIdentity(configPath)
+  const nodeId = readJsonFile(configPath)['nodeId']
+  if (identity === null || typeof nodeId !== 'string' || nodeId.length === 0) return false
+  const result = await askHubMembership({
+    hubUrl,
+    nodeId,
+    certPem: identity.certPem,
+    keyPem: identity.keyPem,
+    caCertPem: identity.caCertPem,
+  })
+  return result.kind === 'answer'
+}
+
+function warnNoHubId(deps: HubRediscoveryDeps): void {
+  if (deps.notice?.noHubIdWarned === true) return
+  deps.log.warn(NO_HUB_ID_WARNING)
+  if (deps.notice !== undefined) deps.notice.noHubIdWarned = true
+}
+
+async function authenticateCandidate(deps: HubRediscoveryDeps, hubUrl: string): Promise<boolean> {
+  const authenticate =
+    deps.authenticate ?? ((candidate) => pinnedCaAccepts(deps.configPath, candidate.hubUrl))
+  try {
+    return await authenticate({ hubUrl })
+  } catch (err: unknown) {
+    deps.log.warn('hub authentication failed', {
+      meta: { hubUrl, error: err instanceof Error ? err.message : String(err) },
+    })
+    return false
+  }
+}
+
 export async function rediscoverPairedHub(deps: HubRediscoveryDeps): Promise<HubRediscovery> {
   const config = readJsonFile(deps.configPath)
   if (!isAgentPaired(deps.configPath) || hasHubAddress(config)) return { kind: 'not-needed' }
   const hubId = config['hubId']
-  if (!isHubId(hubId)) {
-    deps.log.warn(
-      'Paired, but no hub address and no hub id on record: this agent cannot find its hub on its own. Set the hub address on this agent',
-    )
+  if (!isAnnouncedHubId(hubId)) {
+    warnNoHubId(deps)
     return { kind: 'no-hub-id' }
   }
+  if (deps.notice !== undefined) deps.notice.noHubIdWarned = false
   const announced = await (deps.browse ?? defaultBrowse)({
     timeoutMs: deps.timeoutMs ?? HUB_REDISCOVERY_BROWSE_MS,
     onProblem: (message) => deps.log.warn(`hub browse problem: ${message}`),
@@ -77,6 +142,13 @@ export async function rediscoverPairedHub(deps: HubRediscoveryDeps): Promise<Hub
     if (hub.hubId !== hubId) continue
     const hubAddress = hostOf(hub.url)
     if (hubAddress === null) continue
+    if (!(await authenticateCandidate(deps, hub.url))) {
+      deps.log.warn(
+        'an announced hub has this hub id but did not authenticate against the CA pinned at pairing',
+        { meta: { hubId, hubUrl: hub.url } },
+      )
+      continue
+    }
     // Re-read right before writing: only the address keys change.
     writeJsonFile0600(deps.configPath, {
       ...readJsonFile(deps.configPath),
