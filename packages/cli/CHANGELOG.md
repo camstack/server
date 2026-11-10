@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.230] - 2026-11-10
+
 ### Changed
 
 - ops_update_apply and the new `camstack cluster-update` command run the hub-side cluster update job and follow it, instead of driving the hub, agents and addons from the client

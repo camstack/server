@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.419] - 2026-11-10
+
 ### Added
 
 - Device pickers in schema forms (device-select / device-multiselect) are now the new DeviceValuePicker: compatible devices only with live readings, text search, filters and a second level for devices with several values

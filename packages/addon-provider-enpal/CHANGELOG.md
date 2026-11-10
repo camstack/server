@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.16] - 2026-11-10
+
 ### Changed
 
 - Enpal: reads boxes on firmware 8.51 and later through the box's own web-page channel (embedded Python, no token, read-only); the device-page parser accepts the 8.52 markup

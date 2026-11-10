@@ -1,6 +1,6 @@
 {
   "name": "camstack",
-  "version": "1.2.229",
+  "version": "1.2.230",
   "description": "CLI tool for managing and running CamStack server",
   "keywords": [
     "camstack",

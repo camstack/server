@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.636] - 2026-11-10
+
 ### Changed
 
 - Telegram messages can be posted into a forum topic: a rule sets the topic per target.
