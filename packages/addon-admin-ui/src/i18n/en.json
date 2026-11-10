@@ -545,7 +545,16 @@
         "schedule": "When this target is notified",
         "scheduleEmpty": "Whenever the rule fires.",
         "droppedBy": "Not delivered to: {{targets}}",
-        "noTargetShowsMedia": "None of the selected targets can show a picture or a clip, so this rule sends none."
+        "noTargetShowsMedia": "None of the selected targets can show a picture or a clip, so this rule sends none.",
+        "attachment": "Picture",
+        "attachmentRule": "Whatever the rule produces",
+        "noButtons": "No action buttons",
+        "attachmentKind": {
+          "none": "No picture",
+          "image": "Image",
+          "clip": "Clip",
+          "gif": "GIF"
+        }
       }
     },
     "notificationSimulate": {

@@ -28,7 +28,7 @@ export interface CalendarEventsDeliveryInput {
   readonly disabledTargetIds?: readonly string[]
   readonly priority: number
   readonly template?: NcCalendarEventsTemplate
-  /** Per-target settings (D1031); `logger` names a target skipped by its own schedule. */
+  /** Per-target settings (D1032); `logger` names a target skipped by its own schedule. */
   readonly targetOverrides?: NcTargetOverrides
   readonly logger?: IScopedLogger
 }
@@ -86,7 +86,7 @@ export function buildCalendarEventsOutboxInputs(
 ): readonly NcOutboxEnqueueInput[] {
   const vars = templateVars(input)
   const optedOut = new Set(input.disabledTargetIds ?? [])
-  // A target's own texts replace the rule's for that target only (D1031).
+  // A target's own texts replace the rule's for that target only (D1032).
   const textsFor = (
     template: NcCalendarEventsTemplate | undefined,
   ): { title: string; body: string } => ({

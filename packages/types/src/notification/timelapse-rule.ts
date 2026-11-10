@@ -205,7 +205,7 @@ export const TimelapseRuleInputSchema = z.object({
   reportClasses: ReportClassesField.optional(),
   /** Canonical notification priority ordinal (1..5); per-target overridable. */
   priority: PriorityField.default(3),
-  /** Per-target settings keyed by target id (D1031) — absent = every target follows the rule. */
+  /** Per-target settings keyed by target id (D1032) — absent = every target follows the rule. */
   targetOverrides: NcTargetOverridesSchema.optional(),
 })
 export type TimelapseRuleInput = z.infer<typeof TimelapseRuleInputSchema>
@@ -250,7 +250,7 @@ export const TimelapseRulePatchSchema = z.object({
   previewMode: PreviewModeField.optional(),
   reportClasses: ReportClassesField.optional(),
   priority: PriorityField.optional(),
-  /** Per-target settings keyed by target id (D1031) — absent = every target follows the rule. */
+  /** Per-target settings keyed by target id (D1032) — absent = every target follows the rule. */
   targetOverrides: NcTargetOverridesSchema.optional(),
 })
 export type TimelapseRulePatch = z.infer<typeof TimelapseRulePatchSchema>

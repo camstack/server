@@ -15,12 +15,16 @@
 import {
   deliverableFields,
   fieldSupportForTargets,
+  attachmentKindsOf,
+  type NcTargetAttachment,
   type NcTargetOverride,
   type NcTargetOverrides,
   type NotificationField,
   type NotificationFieldSupport,
+  priorityLevelsOf,
   sanitizeTargetOverride,
   type Target,
+  type TargetKindLevel,
 } from '@camstack/types'
 import type { DeliveryKindRef } from './rule-form-delivery'
 import type { NcTargetParamsMap } from './rule-form-state'
@@ -95,4 +99,25 @@ export function writeTargetParam(
   const { [key]: _dropped, ...rest } = current ?? {}
   const merged = value === undefined ? rest : { ...rest, [key]: value }
   return Object.keys(merged).length === 0 ? others : { ...others, [targetId]: merged }
+}
+
+/** What one target's notifier declares beyond its fields: the choices a panel offers. */
+export interface TargetChoices {
+  /** The declared levels a priority can pick (empty = the generic scale). */
+  readonly levels: readonly TargetKindLevel[]
+  /** `none` plus the picture kinds the notifier can send (empty = no pictures). */
+  readonly attachmentKinds: readonly NcTargetAttachment[]
+}
+
+/** `undefined` = the kind is not described (unknown): the panel offers the generic scale. */
+export function targetChoicesOf(
+  targetId: string,
+  targets: readonly Target[],
+  kinds: readonly DeliveryKindRef[],
+): TargetChoices | undefined {
+  const target = targets.find((t) => t.id === targetId)
+  if (target === undefined) return undefined
+  const caps = kinds.find((k) => k.kind === target.kind && k.addonId === target.addonId)?.caps
+  if (caps === undefined) return undefined
+  return { levels: priorityLevelsOf(caps), attachmentKinds: attachmentKindsOf(caps) }
 }

@@ -1,5 +1,5 @@
 /**
- * D1031 — a rule's per-target settings are the BASE rule of the rules engine:
+ * D1032 — a rule's per-target settings are the BASE rule of the rules engine:
  * every delivery a rule makes (an event row, a summary, a timelapse, a calendar
  * digest) reads them through the one layer, `target-settings.ts`.
  *

@@ -1142,7 +1142,7 @@ export type NcRuleTarget = z.infer<typeof NcRuleTargetSchema>
  *  - `actions: false` — this target gets no action buttons.
  *
  * The same settings apply to EVERY delivery a rule makes — an event, a
- * summary, a timelapse, a calendar digest (D1031).
+ * summary, a timelapse, a calendar digest (D1032).
  *
  * The notifier's own declared knobs (D938 `deliveryParams`: sound, critical,
  * volume…) stay where they already live per target: the rule target's

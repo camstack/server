@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A rule can set the notification group and Android channel per Home Assistant push target.
+
 ## [1.2.677] - 2026-11-09
 
 ### Changed

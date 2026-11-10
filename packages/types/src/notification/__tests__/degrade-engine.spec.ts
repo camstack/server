@@ -586,3 +586,14 @@ describe('prepareNotification — a notification that skipped schema defaults', 
     expect(() => prepareNotification(caps, raw)).not.toThrow()
   })
 })
+
+describe('delivery parameters ride on the prepared notification (D938)', () => {
+  it('hands the declared delivery block to the adapter', () => {
+    const prepared = prepareNotification(caps(), note({ delivery: { threadId: 7 } }))
+    expect(prepared.delivery).toEqual({ threadId: 7 })
+  })
+
+  it('carries none when the rule set none', () => {
+    expect(prepareNotification(caps(), note()).delivery).toBeUndefined()
+  })
+})

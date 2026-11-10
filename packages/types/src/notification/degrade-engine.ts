@@ -14,6 +14,7 @@
 import type { z } from 'zod'
 import type {
   AttachmentMediaType,
+  DeliveryParamValue,
   NotificationAction,
   NotificationFormat,
   NotificationSchema,
@@ -62,6 +63,12 @@ export interface PreparedNotification {
   readonly sound: string | null
   readonly ttl: number | null
   readonly tag: string | null
+  /**
+   * The notifier-declared delivery parameters the rule set for this target
+   * (D938), already validated by the dispatcher. An adapter reads the keys it
+   * declared; absent when none were set.
+   */
+  readonly delivery?: Readonly<Record<string, DeliveryParamValue>>
   /** Overflow: `bodyParts[0]` is the truncate view; the full array is the split. */
   readonly bodyParts: readonly string[]
   readonly renderedAs: RenderedAs
@@ -238,6 +245,7 @@ export function prepareNotification(caps: TargetKindCaps, n: Notification): Prep
     sound,
     ttl,
     tag,
+    ...(n.delivery !== undefined ? { delivery: n.delivery } : {}),
     bodyParts,
     renderedAs,
   }

@@ -111,6 +111,12 @@ export function homeassistantTargetKind(addonId: string): TargetKind {
     addonId,
     configSchema: haConfigSchema(),
     supportsDiscovery: true,
+    // Where the Companion app groups the notification (both platforms) and the
+    // Android channel it rides on: a rule may set either per target (#487).
+    deliveryParams: [
+      { key: 'group', label: 'Notification group', type: 'string' },
+      { key: 'channel', label: 'Android channel', type: 'string' },
+    ],
     caps: {
       // HA Companion push accepts one media URL per notification.
       attachments: { mediaTypes: ['image', 'video', 'audio', 'icon'], mode: 'url', max: 1 },
@@ -264,6 +270,12 @@ export function buildNotifyServiceData(prepared: PreparedNotification): NotifySe
 
   // Level → importance / priority / interruption-level.
   applyLevel(data, prepared.level)
+
+  // Per-target delivery parameters the kind declared (group, channel).
+  for (const key of ['group', 'channel']) {
+    const value = prepared.delivery?.[key]
+    if (typeof value === 'string' && value !== '') data[key] = value
+  }
 
   return {
     message: prepared.body,

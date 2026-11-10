@@ -87,6 +87,36 @@ describe('telegram descriptor', () => {
 
 // ── buildRequest table ──────────────────────────────────────────────
 
+describe('telegram topic (threadId) delivery parameter', () => {
+  it('declares threadId as a number the rule may set', () => {
+    const declared = telegramAdapter.descriptor.deliveryParams ?? []
+    expect(declared.map((p) => [p.key, p.type])).toEqual([['threadId', 'number']])
+  })
+
+  it('posts into the forum topic the rule named', () => {
+    const plan = telegramAdapter.buildRequest(CONFIG, prepared({ delivery: { threadId: 42 } }))
+    expect(jsonValue(plan)['message_thread_id']).toBe(42)
+  })
+
+  it('a byte attachment carries the topic as a multipart field', () => {
+    const plan = telegramAdapter.buildRequest(
+      CONFIG,
+      prepared({
+        delivery: { threadId: 42 },
+        attachments: [
+          { mediaType: 'image', bytes: new Uint8Array([1]), mime: 'image/jpeg', needsFetch: false },
+        ],
+      }),
+    )
+    expect(field(multipart(plan), 'message_thread_id')).toBe('42')
+  })
+
+  it('sends no topic when the rule set none', () => {
+    const plan = telegramAdapter.buildRequest(CONFIG, prepared())
+    expect(jsonValue(plan)['message_thread_id']).toBeUndefined()
+  })
+})
+
 describe('telegram buildRequest', () => {
   it('plain text → sendMessage JSON with parse_mode HTML', () => {
     const plan = telegramAdapter.buildRequest(

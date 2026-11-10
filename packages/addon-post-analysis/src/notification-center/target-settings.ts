@@ -1,5 +1,5 @@
 /**
- * Per-target settings — the BASE rule of the rules engine (D1031).
+ * Per-target settings — the BASE rule of the rules engine (D1032).
  *
  * A rule's `targetOverrides` apply to EVERY delivery the rule makes: an event
  * row, a summary, a timelapse, a calendar digest. They live here, in the one

@@ -115,6 +115,15 @@ const descriptor: TargetKind = {
       },
     ],
   },
+  // A forum supergroup posts into a topic: a rule may name it per target (#487).
+  deliveryParams: [
+    {
+      key: 'threadId',
+      label: 'Topic (thread id)',
+      type: 'number',
+      min: 1,
+    },
+  ],
   caps: {
     // 'both' → the degrade engine keeps URL attachments as URLs (Telegram
     // fetches them) and byte attachments as bytes (we upload multipart).
@@ -203,6 +212,12 @@ function chooseMethod(prepared: PreparedNotification): MethodChoice {
   return { method: 'sendDocument', mediaField: 'document' }
 }
 
+/** The forum topic the rule named for this target, when it did. */
+function topicOf(prepared: PreparedNotification): number | undefined {
+  const value = prepared.delivery?.['threadId']
+  return typeof value === 'number' ? value : undefined
+}
+
 function buildRequest(config: TargetConfig, prepared: PreparedNotification): HttpRequestPlan {
   const botToken = requireString(config, 'botToken')
   const chatId = requireString(config, 'chatId')
@@ -212,6 +227,7 @@ function buildRequest(config: TargetConfig, prepared: PreparedNotification): Htt
   const { method, mediaField } = chooseMethod(prepared)
   const url = `${TELEGRAM_API_BASE}/bot${botToken}/${method}`
   const att = prepared.attachments[0]
+  const threadId = topicOf(prepared)
 
   // Byte attachment → multipart upload.
   if (att && mediaField && att.bytes !== undefined) {
@@ -221,6 +237,9 @@ function buildRequest(config: TargetConfig, prepared: PreparedNotification): Htt
       { kind: 'field', name: 'parse_mode', value: 'HTML' },
       { kind: 'field', name: 'disable_notification', value: String(silent) },
     ]
+    if (threadId !== undefined) {
+      parts.push({ kind: 'field', name: 'message_thread_id', value: String(threadId) })
+    }
     if (markup) {
       parts.push({ kind: 'field', name: 'reply_markup', value: JSON.stringify(markup) })
     }
@@ -241,6 +260,7 @@ function buildRequest(config: TargetConfig, prepared: PreparedNotification): Htt
     parse_mode: 'HTML',
     disable_notification: silent,
   }
+  if (threadId !== undefined) value['message_thread_id'] = threadId
   if (markup) value['reply_markup'] = markup
 
   if (att && mediaField && att.url !== undefined) {

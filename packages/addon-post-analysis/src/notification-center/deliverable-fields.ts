@@ -26,7 +26,7 @@ export interface NcDeliverableNotification {
   /** True when the title was empty and the body stood in for it. */
   readonly titleFromBody: boolean
   /**
-   * What the target's OWN settings (D1031) took out of a delivery its kind
+   * What the target's OWN settings (D1032) took out of a delivery its kind
    * could otherwise carry: the media it did not ask for, the buttons it turned
    * off. Named on the delivery line so a missing picture has a reason.
    */

@@ -130,6 +130,28 @@ describe('buildNotifyServiceData', () => {
   })
 })
 
+describe('group and channel delivery parameters (#487)', () => {
+  it('declares group and channel as strings', () => {
+    const declared = homeassistantTargetKind(ADDON_ID).deliveryParams ?? []
+    expect(declared.map((p) => [p.key, p.type])).toEqual([
+      ['group', 'string'],
+      ['channel', 'string'],
+    ])
+  })
+
+  it('maps them into the notify data', () => {
+    const out = build(baseNotification({ delivery: { group: 'doors', channel: 'alerts' } }))
+    expect(out.data['group']).toBe('doors')
+    expect(out.data['channel']).toBe('alerts')
+  })
+
+  it('sends neither when the rule set none', () => {
+    const out = build(baseNotification())
+    expect(out.data['group']).toBeUndefined()
+    expect(out.data['channel']).toBeUndefined()
+  })
+})
+
 describe('parseNotifyServices', () => {
   it('returns one candidate per notify.* service, mobile_app_* first', () => {
     const result = {

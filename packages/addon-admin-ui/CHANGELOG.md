@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Device fields in settings forms use the new device → value picker, with search, filters and live readings
-
 - Nodes and Addons follow the hub cluster-update job (preview, confirm, step list) instead of updating each node from the browser.
+- The notification rule editor's per-target panel offers the notifier's own priority levels, the picture kind and a no-buttons switch.
 
 - The device page and its hero follow the child a container declares as its primary
 

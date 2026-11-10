@@ -132,6 +132,48 @@ describe('NotificationRuleTargetSettings', () => {
   })
 })
 
+describe('attachment kind, buttons and declared levels (#487)', () => {
+  it('the phone offers its own declared levels, labelled as declared', () => {
+    mount(['phone'])
+    expand('phone')
+    const select = screen.getByTestId('rule-target-phone-priority')
+    expect(Array.from(select.querySelectorAll('option')).map((o) => o.value)).toEqual([
+      '',
+      '1',
+      '5',
+    ])
+    expect(select.textContent).toContain('Low')
+    expect(select.textContent).toContain('High')
+  })
+
+  it('the phone offers a picture kind it can send, and writes the choice for it alone', () => {
+    const { onOverridesChange } = mount(['phone', 'echo'])
+    expand('phone')
+    const select = screen.getByTestId('rule-target-phone-attachment')
+    expect(Array.from(select.querySelectorAll('option')).map((o) => o.value)).toEqual([
+      '',
+      'none',
+      'image',
+    ])
+    fireEvent.change(select, { target: { value: 'none' } })
+    expect(onOverridesChange).toHaveBeenCalledWith({ phone: { attachment: 'none' } })
+  })
+
+  it('a no-buttons switch writes actions:false, and switching back clears it', () => {
+    const { onOverridesChange } = mount(['phone'], { phone: { actions: false } })
+    const toggle = screen.getByTestId('rule-target-phone-no-buttons')
+    fireEvent.click(toggle)
+    expect(onOverridesChange).toHaveBeenCalledWith({})
+  })
+
+  it('a speaker with no pictures and no buttons is offered neither', () => {
+    mount(['echo'])
+    expand('echo')
+    expect(screen.queryByTestId('rule-target-echo-attachment')).toBeNull()
+    expect(screen.queryByTestId('rule-target-echo-no-buttons')).toBeNull()
+  })
+})
+
 describe('FieldDropHint', () => {
   it('names the selected targets that drop a rule-level field', () => {
     const support: NotificationFieldSupport = {

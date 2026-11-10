@@ -3597,7 +3597,20 @@ joined to it. The dispatcher drops every field the target does not deliver,
 and the `notification delivered` line names them (`fieldsDropped`).
 
 A rule may carry `targetOverrides`, keyed by target id, with `template
-{ title?, body? }`, `schedule` (an `NcSchedule`) and `priority`.
+{ title?, body? }`, `schedule` (an `NcSchedule`) `priority`, `attachment`
+(`none | image | clip | gif`) and `actions: false` (no buttons).
+
+**Every delivery reads them (D1032).** The event, summary, timelapse and
+calendar row builders all go through `target-settings.ts`, so a target's
+schedule, priority and texts hold on all four. The picture kind and the
+no-buttons switch ride on the row (`targetSettings`) and the dispatcher
+narrows the produced media and buttons at send (`narrowedByTarget`); an
+override the notifier does not support is accepted and not delivered. A
+notifier's declared `deliveryParams` reach its adapter as
+`PreparedNotification.delivery` (Telegram `threadId`, Home Assistant
+`group` and `channel`); Alexa declares `normal` (follows Do Not Disturb) and
+`high` (overrides it).
+
 
 - **Texts.** The rule's texts are the defaults. A target's text replaces the
   rule's text for that target only, and a field the override does not name

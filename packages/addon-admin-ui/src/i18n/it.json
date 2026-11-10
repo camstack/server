@@ -545,7 +545,16 @@
         "schedule": "Quando avvisare questa destinazione",
         "scheduleEmpty": "Ogni volta che la regola scatta.",
         "droppedBy": "Non consegnato a: {{targets}}",
-        "noTargetShowsMedia": "Nessuna delle destinazioni scelte può mostrare un'immagine o una clip, quindi questa regola non ne invia."
+        "noTargetShowsMedia": "Nessuna delle destinazioni scelte può mostrare un'immagine o una clip, quindi questa regola non ne invia.",
+        "attachment": "Immagine",
+        "attachmentRule": "Quello che produce la regola",
+        "noButtons": "Nessun pulsante azione",
+        "attachmentKind": {
+          "none": "Nessuna immagine",
+          "image": "Immagine",
+          "clip": "Clip",
+          "gif": "GIF"
+        }
       }
     },
     "notificationSimulate": {

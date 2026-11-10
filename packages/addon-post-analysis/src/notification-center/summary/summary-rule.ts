@@ -261,7 +261,7 @@ export const NcSummaryRuleInputSchema = z.object({
    *  is a line nobody reads, and it costs the lines beside it their reader. */
   deliverEmpty: z.boolean().default(false),
   priority: PriorityField.default(3),
-  /** Per-target settings keyed by target id (D1031) — absent = every target follows the rule. */
+  /** Per-target settings keyed by target id (D1032) — absent = every target follows the rule. */
   targetOverrides: NcTargetOverridesSchema.optional(),
   ai: NcSummaryAiSchema.optional(),
 })
@@ -293,7 +293,7 @@ export const NcSummaryRulePatchSchema = z.object({
   captionText: z.string().max(200).optional(),
   deliverEmpty: z.boolean().optional(),
   priority: PriorityField.optional(),
-  /** Per-target settings keyed by target id (D1031) — absent = every target follows the rule. */
+  /** Per-target settings keyed by target id (D1032) — absent = every target follows the rule. */
   targetOverrides: NcTargetOverridesSchema.optional(),
   ai: NcSummaryAiSchema.nullable().optional(),
 })

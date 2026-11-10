@@ -487,7 +487,7 @@ export interface NcOutboxPayload {
   readonly cooldowns?: readonly NcCooldownStamp[]
   /**
    * The target's own settings the dispatcher applies at send — the picture
-   * kind it receives and whether it gets buttons (D1031). Frozen by
+   * kind it receives and whether it gets buttons (D1032). Frozen by
    * `target-settings.ts` for every kind of row; absent = the row as produced.
    */
   readonly targetSettings?: NcOutboxTargetSettings

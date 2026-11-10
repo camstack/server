@@ -80,7 +80,7 @@ describe('NcCalendarEventsProducer', () => {
     expect(markGenerated).toHaveBeenCalledWith('cal-rule-1', WINDOW_END)
   })
 
-  it("hands the rule's per-target settings to the row builder (D1031)", async () => {
+  it("hands the rule's per-target settings to the row builder (D1032)", async () => {
     const enqueue = vi.fn(async (_batch: EnqueueBatch) => 2)
     const store = {
       listEnabled: () => [

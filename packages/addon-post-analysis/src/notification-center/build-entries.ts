@@ -244,7 +244,7 @@ export function buildEntries(
     (subject.systemEvent !== undefined && !noMedia
       ? alarmIncidentGroup(subject.systemEvent, subject.timestamp)
       : undefined)
-  // D1031: the per-target settings are the base rule of every delivery path.
+  // D1032: the per-target settings are the base rule of every delivery path.
   const scheduled = targetsInSchedule(
     host.logger,
     rule,

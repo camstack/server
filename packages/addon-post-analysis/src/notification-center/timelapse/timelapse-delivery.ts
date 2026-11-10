@@ -86,7 +86,7 @@ export interface TimelapseDeliveryInput {
   /** Target ids the rule owner opted out of (same semantics as `NcRule`). */
   readonly disabledTargetIds?: readonly string[]
   readonly priority: number
-  /** Per-target settings (D1031); `logger` names a target skipped by its own schedule. */
+  /** Per-target settings (D1032); `logger` names a target skipped by its own schedule. */
   readonly targetOverrides?: NcTargetOverrides
   readonly logger?: IScopedLogger
   readonly coverage: FootageCoverage
@@ -273,7 +273,7 @@ export function buildTimelapseOutboxInputs(
   // See `buildSummaryOutboxInputs`: only the operator's own markup may reach the
   // dispatcher's device-template pass; every value and catalog sentence stays hidden.
   const held = holdVars(vars)
-  // A target's own texts replace the rule's for that target only (D1031).
+  // A target's own texts replace the rule's for that target only (D1032).
   const textsFor = (template: TimelapseTemplate | undefined): { title: string; body: string } => ({
     title:
       renderTemplate(template?.title, held, { keepLiteralHeld: true }) ??

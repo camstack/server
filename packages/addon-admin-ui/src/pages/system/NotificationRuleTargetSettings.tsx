@@ -9,17 +9,18 @@
  * message. A target whose kind the catalog did not describe is offered every
  * field — not-yet-known never reads as not-supported (D315).
  */
-import type {
-  DeliveryParamValue,
-  NcSchedule,
-  NcTargetOverride,
-  NcTargetOverrides,
-  NcTemplateVarDescriptor,
-  NotificationField,
-  NotificationFieldSupport,
-  Target,
+import {
+  type DeliveryParamValue,
+  type NcSchedule,
+  type NcTargetOverride,
+  type NcTargetOverrides,
+  NcTargetAttachmentSchema,
+  type NcTemplateVarDescriptor,
+  type NotificationField,
+  type NotificationFieldSupport,
+  type Target,
 } from '@camstack/types'
-import { CollapsibleCard, FormField, Select } from '@camstack/ui-library'
+import { CollapsibleCard, FormField, Select, Switch } from '@camstack/ui-library'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TemplateField } from '../../components/notifications/TemplateField'
@@ -28,7 +29,12 @@ import { ParamControl } from './NotificationRuleDeliveryOptions'
 import { declaredBy, type DeliveryKindRef } from './rule-form-delivery'
 import { NC_PRIORITY_OPTIONS } from './rule-form-parsers'
 import type { NcTargetParamsMap } from './rule-form-state'
-import { targetFieldsOf, writeTargetOverride, writeTargetParam } from './rule-form-target-settings'
+import {
+  targetChoicesOf,
+  targetFieldsOf,
+  writeTargetOverride,
+  writeTargetParam,
+} from './rule-form-target-settings'
 
 export interface NotificationRuleTargetSettingsProps {
   readonly targetIds: readonly string[]
@@ -122,7 +128,22 @@ function TargetPanel(props: TargetPanelProps) {
     const { schedule: _old, ...others } = own
     write(schedule === undefined ? others : { ...others, schedule })
   }
-  const inherited = NC_PRIORITY_OPTIONS.find((o) => o.value === props.rulePriority)?.label
+  const writeAttachment = (raw: string): void => {
+    const { attachment: _old, ...others } = own
+    const parsed = NcTargetAttachmentSchema.safeParse(raw)
+    write(parsed.success ? { ...others, attachment: parsed.data } : others)
+  }
+  const writeNoButtons = (off: boolean): void => {
+    const { actions: _old, ...others } = own
+    write(off ? { ...others, actions: false } : others)
+  }
+  const choices = targetChoicesOf(targetId, props.targets, props.kinds)
+  // The notifier's own levels when it declares any; the generic scale otherwise.
+  const priorityOptions =
+    choices !== undefined && choices.levels.length > 0
+      ? choices.levels.map((level) => ({ value: level.ordinal ?? 0, label: level.label }))
+      : NC_PRIORITY_OPTIONS
+  const inherited = priorityOptions.find((o) => o.value === props.rulePriority)?.label
   return (
     <CollapsibleCard
       expanded={props.expanded}
@@ -188,11 +209,41 @@ function TargetPanel(props: TargetPanelProps) {
                     priority: inherited ?? String(props.rulePriority),
                   }),
                 },
-                ...NC_PRIORITY_OPTIONS.map((o) => ({ value: String(o.value), label: o.label })),
+                ...priorityOptions.map((o) => ({ value: String(o.value), label: o.label })),
               ]}
               data-testid={`rule-target-${targetId}-priority`}
             />
           </FormField>
+        )}
+        {has('attachments') && choices !== undefined && choices.attachmentKinds.length > 0 && (
+          <FormField label={t('system.notificationRules.targetSettings.attachment', 'Picture')}>
+            <Select
+              value={own.attachment ?? ''}
+              onChange={(event) => writeAttachment(event.target.value)}
+              options={[
+                {
+                  value: '',
+                  label: t(
+                    'system.notificationRules.targetSettings.attachmentRule',
+                    'Whatever the rule produces',
+                  ),
+                },
+                ...choices.attachmentKinds.map((kind) => ({
+                  value: kind,
+                  label: t(`system.notificationRules.targetSettings.attachmentKind.${kind}`, kind),
+                })),
+              ]}
+              data-testid={`rule-target-${targetId}-attachment`}
+            />
+          </FormField>
+        )}
+        {has('actions') && (
+          <Switch
+            checked={own.actions === false}
+            onCheckedChange={writeNoButtons}
+            label={t('system.notificationRules.targetSettings.noButtons', 'No action buttons')}
+            data-testid={`rule-target-${targetId}-no-buttons`}
+          />
         )}
         <FormField
           label={t(
