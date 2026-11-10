@@ -1,26 +1,26 @@
 # @camstack/addon-provider-enpal
 
-Enpal solar box provider for CamStack: the box is an integration, and the equipment it reports (photovoltaic, battery, grid, house, heat pump) is adopted as Container devices with history. There is no device for the box itself.
+Enpal solar box provider for CamStack: the box is an integration, and it offers three pieces to adopt: the box itself (a Gateway), the System (photovoltaic, battery, grid, house) and the heat pump (both Containers), with history.
 
 ## What it does
 
-- **Enpal** (`provider-enpal`): add an integration with the box's host. The addon reads the box through its own web-page channel (the one its web UI uses; an embedded Python bridge), or its InfluxDB 2.x, or its local device page, and offers one Container per piece of equipment the box actually reports. Adopting a container adopts its children.
+- **Enpal** (`provider-enpal`): add an integration with the box's host. The addon reads the box through its own web-page channel (the one its web UI uses; an embedded Python bridge), or its InfluxDB 2.x, or its local device page, and offers the pieces the box actually reports. Each is adopted only when the operator picks it; adopting a piece adopts its children.
   - Node placement: `hub-only`.
   - Capabilities: `device-provider`, `device-adoption`.
 
-Containers (a container is offered only when the box reported at least one of its values; a child only when the box reported its value):
+Pieces (the box is always offered; a container only when the box reported at least one of its values; a child only when the box reported its value):
 
-| Container | Sections | Children |
-| --- | --- | --- |
-| Enpal Box | Box, EEBUS, Connectivity | state, load and link sensors, all diagnostic |
-| Impianto | Photovoltaic, Battery, Grid, Home, Inverter | live sensors (power, level, day and lifetime energy, states) and diagnostic ones (voltages, currents, limits, ratings) |
-| Heat pump | none | live sensors (power, temperatures, modes, running states) and diagnostic ones; offered only when the box reports heat-pump keys |
+| Piece | Type | Sections | Children |
+| --- | --- | --- | --- |
+| Enpal Box | Gateway | Box, EEBUS, Connectivity | state, load and link sensors, all diagnostic; plus the link to the box's device page |
+| System | Container | Photovoltaic, Battery, Grid, Home, Inverter | live sensors (power, level, day and lifetime energy, states) and diagnostic ones (voltages, currents, limits, ratings) |
+| Heat pump (Enpal) | Container | none | the power, consumption and temperatures Enpal reads, running states and diagnostic ones; offered only when the box reports heat-pump keys |
 
 - A diagnostic child is hidden by default (`display.hidden`); its history is still recorded.
-- Identity facts (model, serial numbers, firmware) are device attributes of the container, never sensors.
+- Identity facts (model, serial numbers, firmware) are device attributes of the piece (the box's on the Gateway), never sensors.
 - A text value (a state, a mode) is an `enum-sensor` and keeps the label the box sent; a certificate expiry is a date-time sensor.
 - Texts and attributes come only from the web-page channel; InfluxDB and the device page carry numbers only.
-- The primary child of each container is the first of an ordered preference that was adopted: Impianto PV power, battery level, home consumption; Heat pump power, hot water, outside temperature; Enpal Box main state, LTE state.
+- Each container declares which child stands for it (`primaryChildPreference`), and the framework takes the first one that was adopted: System PV power, battery level, home consumption; Heat pump power, hot water, outside temperature. An operator's own pick wins over it.
 - Not exposed on purpose: AC consumption duplicate, AC maximum, the network-traffic, cellular-guard and predictor internals.
 
 Removing the integration removes its devices. An unreachable box marks its devices offline; it never publishes zeros. A lifetime counter that drops for one poll is held at its previous value.

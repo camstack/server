@@ -863,6 +863,17 @@ for all providers. `instanceMode: unique` is refused by the backend (typed `CONF
 Velux keeps its Gateway (D976) and ESPHome keeps one integration with a board list (D978). A provider moves over
 with a boot migration that turns each Hub device into an integration and re-stamps its children.
 
+## Which child a container stands for
+
+A Container is shown by one of its children: its icon, its online state, the hero on its page, and the device a room suggests for a camera (D749). One function decides which, `resolveContainerPrimaryChild` in `packages/types/src/device/container-primary-child.ts`; the admin UI, the device rows and the linked-device resolver all call it, and the viewer keeps a copy. The order is fixed:
+
+1. **The operator's pick** (`primaryChildEntityId`), when that child still exists.
+2. **What the container declared** (`primaryChildPreference`): child keys, most preferred first, matched as `${stableId}-${key}` like `childLayout`. The first one that exists wins, so a piece whose children are all Sensors of one type still gets the right one (the Enpal System prefers PV, then the battery, then the house meter). A provider stamps it at adoption through `InitialDeviceMeta`; the device-manager stores it (`setPrimaryChildPreference`). A container adopted before it carried one simply has none.
+3. **The type rule** (`CONTAINER_PRIMARY_CHILD_RULES`): a container type that IS its function, a heat pump, stands for itself (`self`).
+4. **The heuristic**: a child with a role, then the namesake child, then the type priority shared with Home Assistant (`scripts/check-container-priority-in-sync.ts`).
+
+Never pick by the order a provider's response listed the children in: that order is not part of any contract, and a firmware update reorders it.
+
 ## How a device is named
 
 A device has one stored name. What a screen paints is a different string, from one function (`formatDeviceName` in `@camstack/ui-library`, mirrored in the viewer at `camstack/src/data/device-name.ts`).
