@@ -6701,7 +6701,8 @@
       "rangeAllDay": "{{from}} – {{to}} · All day",
       "allSwitchedOff": "All calendars are switched off. Switch one on in the list to see its events.",
       "switchedOff": "Switched off",
-      "switchesUnavailable": "The calendar switches could not be loaded, so they are hidden. Calendars switched off are not listed until they load."
+      "switchesUnavailable": "The calendar switches could not be loaded, so they are hidden. Calendars switched off are not listed until they load.",
+      "manageSources": "Manage sources"
     },
     "terminal": {
       "executable": "Executable",

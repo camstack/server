@@ -7,9 +7,6 @@
     "terminal": {
       "packages/addon-admin-ui/src/pages/system/Terminal.tsx": "#505 item 6: a Nodes card and a legacy-cameras list under the table"
     },
-    "calendars": {
-      "packages/addon-admin-ui/src/pages/system/Calendars.tsx": "#505 item 5: the legend draws the source switch the Connectivity table owns"
-    },
     "turn": {
       "packages/addon-admin-ui/src/pages/system/TurnServers.tsx": "#505 item 7: the combined ICE server list card beside the table"
     },

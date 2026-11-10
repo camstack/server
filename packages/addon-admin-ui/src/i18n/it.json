@@ -6776,7 +6776,8 @@
       "rangeAllDay": "{{from}} – {{to}} · Tutto il giorno",
       "allSwitchedOff": "Tutti i calendari sono disattivati. Attiva un calendario nell'elenco per vederne gli eventi.",
       "switchedOff": "Disattivato",
-      "switchesUnavailable": "Impossibile caricare gli interruttori dei calendari, quindi sono nascosti. I calendari disattivati non sono elencati finche' non vengono caricati."
+      "switchesUnavailable": "Impossibile caricare gli interruttori dei calendari, quindi sono nascosti. I calendari disattivati non sono elencati finche' non vengono caricati.",
+      "manageSources": "Gestisci le sorgenti"
     },
     "terminal": {
       "executable": "Eseguibile",
