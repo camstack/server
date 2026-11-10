@@ -9496,6 +9496,16 @@
     },
     "optimistic": {
       "refusedTitle": "The device refused the change"
+    },
+    "deviceTemplateField": {
+      "insertTitle": "Insert a device value",
+      "noFittingValue": "This device has no value that fits here.",
+      "noAlias": "This device has no name for templates yet; set one on its page first.",
+      "insert": "Insert",
+      "insertValue": "Insert a device value",
+      "unknownDevice": "No device is named {{names}}.",
+      "outOfScope": "{{names}} is outside what this can read.",
+      "preview": "Now reads: {{text}}"
     }
   },
   "helpers": {

@@ -24,16 +24,6 @@ import {
   templateVarSystemEventApplies,
 } from '@camstack/types'
 
-export interface TextSelection {
-  readonly start: number
-  readonly end: number
-}
-
-export interface InsertResult {
-  readonly value: string
-  readonly cursor: number
-}
-
 export interface PlaceholderToken {
   readonly text: string
   readonly cursorOffset: number
@@ -62,21 +52,14 @@ export const TEMPLATE_GROUP_ORDER: readonly TemplateVarGroupId[] = [
   'ai',
 ]
 
-export function insertPlaceholder(
-  value: string,
-  selection: TextSelection,
-  token: string,
-): InsertResult {
-  const start = Math.min(Math.max(selection.start, 0), value.length)
-  const end = Math.min(Math.max(selection.end, start), value.length)
-  return { value: value.slice(0, start) + token + value.slice(end), cursor: start + token.length }
-}
-
 /** A dynamic family (`count_<class>`) cannot be inserted whole: the cursor is
  *  left before the closing braces so the operator types the class. */
 export function placeholderToken(descriptor: NcTemplateVarDescriptor): PlaceholderToken {
   const text = `{{${descriptor.name}}}`
-  return { text, cursorOffset: descriptor.dynamic ? text.length - 2 : text.length }
+  return {
+    text,
+    cursorOffset: descriptor.dynamic ? text.length - 2 : text.length,
+  }
 }
 
 export function templatePlaceholders(template: string): string[] {

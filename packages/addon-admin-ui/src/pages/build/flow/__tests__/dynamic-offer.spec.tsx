@@ -6,6 +6,7 @@ import { vocabularyActionsForDevice } from '@camstack/types'
 import type { LooseVocabOpenArg } from '@camstack/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { renderWithTemplateHub } from '../../../../test-setup/device-template-hub'
 import { ArgField } from '../ArgField'
 import { capRouterKey, dynamicChoicesOf, dynamicReadName, isDynamicOffer } from '../dynamic-offer'
 
@@ -80,12 +81,14 @@ describe('ArgField on a dynamic arg', () => {
   it('stays free text while loading or when the list is unavailable', () => {
     for (const choices of [{ state: 'loading' as const }, { state: 'unavailable' as const }]) {
       const { unmount } = render(
-        <ArgField
-          {...base}
-          value={{ kind: 'fixed', value: 'x' }}
-          onChange={vi.fn()}
-          choices={choices}
-        />,
+        renderWithTemplateHub(
+          <ArgField
+            {...base}
+            value={{ kind: 'fixed', value: 'x' }}
+            onChange={vi.fn()}
+            choices={choices}
+          />,
+        ),
       )
       expect(screen.getByLabelText(arg.label.en).tagName).toBe('INPUT')
       unmount()

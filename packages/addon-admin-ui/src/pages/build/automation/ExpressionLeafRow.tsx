@@ -19,7 +19,7 @@
  */
 
 import type { ExpressionBindingSource, ExpressionLeaf } from '@camstack/types'
-import { Button, Input, Select } from '@camstack/ui-library'
+import { Button, ExpressionInput, Input, Select } from '@camstack/ui-library'
 import { Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
@@ -51,14 +51,13 @@ export function ExpressionLeafRow({ leaf, devices, onChange }: ExpressionLeafRow
 
   return (
     <div className="space-y-2">
-      <label className="block">
-        <PickerLabel>{t('automation.expressionLeafRow.expression', 'Expression')}</PickerLabel>
-        <Input
+      <div className="block">
+        <ExpressionInput
+          label={t('automation.expressionLeafRow.expression', 'Expression')}
           value={leaf.expr}
           placeholder={t('automation.expressionLeafRow.indoorOutdoor5', 'indoor - outdoor > 5')}
-          onChange={(e) =>
-            onChange({ kind: 'expression', expr: e.target.value, bindings: leaf.bindings })
-          }
+          bindings={Object.keys(leaf.bindings)}
+          onChange={(expr) => onChange({ kind: 'expression', expr, bindings: leaf.bindings })}
         />
         <span className="mt-1 block text-xs text-foreground-subtle">
           {t(
@@ -66,7 +65,7 @@ export function ExpressionLeafRow({ leaf, devices, onChange }: ExpressionLeafRow
             'Must evaluate to true or false. Every name in it has to be bound below — an unbound name is refused when the automation is saved, not when it runs.',
           )}
         </span>
-      </label>
+      </div>
 
       <div className="space-y-1.5">
         {entries.length === 0 && (
@@ -91,7 +90,10 @@ export function ExpressionLeafRow({ leaf, devices, onChange }: ExpressionLeafRow
         <Button
           variant="ghost"
           onClick={() =>
-            withBindings({ ...leaf.bindings, [freshAlias(leaf.bindings)]: EMPTY_GLOBAL })
+            withBindings({
+              ...leaf.bindings,
+              [freshAlias(leaf.bindings)]: EMPTY_GLOBAL,
+            })
           }
         >
           <Plus className="h-3.5 w-3.5" /> {t('common.name')}
@@ -144,7 +146,10 @@ function BindingRow({ alias, source, devices, onRename, onChange, onRemove }: Bi
               value: 'global',
               label: t('automation.expressionLeafRow.aDeviceField', 'A device field'),
             },
-            { value: 'literal', label: t('automation.expressionLeafRow.aConstant', 'A constant') },
+            {
+              value: 'literal',
+              label: t('automation.expressionLeafRow.aConstant', 'A constant'),
+            },
           ]}
         />
       </label>

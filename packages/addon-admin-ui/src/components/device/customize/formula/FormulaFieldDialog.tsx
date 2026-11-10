@@ -16,11 +16,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  ExpressionInput,
 } from '@camstack/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { nextBindingName } from '../../../composition-editor/draft-reducer'
-import { ExpressionInput } from '../../../composition-editor/ExpressionInput'
 import { LivePreview } from '../../../composition-editor/LivePreview'
 import { vocabularyFieldLabel } from '../vocabulary-field-label'
 import { SourceSelector } from '../source-selector/SourceSelector'
@@ -95,8 +95,13 @@ export function FormulaFieldDialog({
   const [pickDevice, setPickDevice] = useState<ReturnType<typeof toPickerDevices>[number] | null>(
     null,
   )
-  const [pickField, setPickField] = useState<{ cap: string; path: string } | null>(null)
-  const wireable = useDeviceManagerGetWireableFields({ deviceId: pickDevice?.id ?? 0 })
+  const [pickField, setPickField] = useState<{
+    cap: string
+    path: string
+  } | null>(null)
+  const wireable = useDeviceManagerGetWireableFields({
+    deviceId: pickDevice?.id ?? 0,
+  })
   const snapshot = useDeviceStateGetSnapshot({ deviceId: pickDevice?.id ?? 0 })
   const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
   const problem = formulaProblem(draft.expr, draft.bindings)
@@ -123,7 +128,9 @@ export function FormulaFieldDialog({
             {fieldLabel ?? vocabularyFieldLabel('', fieldPath, i18n.language)}
           </span>
           <ExpressionInput
-            label={t('compositionEditor.formulaFor', { path: fieldLabel ?? fieldPath })}
+            label={t('compositionEditor.formulaFor', {
+              path: fieldLabel ?? fieldPath,
+            })}
             value={draft.expr}
             bindings={bindingNames}
             onChange={(expr) => setDraft({ ...draft, expr })}

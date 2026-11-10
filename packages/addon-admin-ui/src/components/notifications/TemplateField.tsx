@@ -9,12 +9,11 @@
  * ANSWERED with nothing."
  */
 import type { NcTemplateVarContext, NcTemplateVarDescriptor } from '@camstack/types'
-import { Input, Button, Textarea } from '@camstack/ui-library'
+import { Button, DeviceTemplateField, type DeviceTemplateFieldHandle } from '@camstack/ui-library'
 import { AlertTriangle } from 'lucide-react'
-import { type ChangeEvent, useRef } from 'react'
+import { useRef } from 'react'
 import {
   groupTemplateVars,
-  insertPlaceholder,
   placeholderToken,
   type TemplateVarGroupId,
   unknownPlaceholders,
@@ -36,8 +35,6 @@ const GROUP_LABELS: Readonly<Record<TemplateVarGroupId, string>> = {
 }
 
 const LABEL_CLASS = 'block text-[11px] font-medium text-foreground mb-1'
-const TEXTAREA_CLASS =
-  'w-full rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-1 focus:ring-primary'
 
 export interface TemplateFieldProps {
   readonly label: string
@@ -62,53 +59,27 @@ export function TemplateField({
   testId,
 }: TemplateFieldProps) {
   const { t } = useTranslation()
-  const inputRef = useRef<HTMLInputElement>(null)
-  const areaRef = useRef<HTMLTextAreaElement>(null)
+  const field = useRef<DeviceTemplateFieldHandle | null>(null)
   const unknown = vars ? unknownPlaceholders(value, vars) : []
 
   const insert = (descriptor: NcTemplateVarDescriptor): void => {
-    const element = multiline ? areaRef.current : inputRef.current
-    const selection = {
-      start: element?.selectionStart ?? value.length,
-      end: element?.selectionEnd ?? value.length,
-    }
     const token = placeholderToken(descriptor)
-    const result = insertPlaceholder(value, selection, token.text)
-    onChange(result.value)
-    const cursor = result.cursor - token.text.length + token.cursorOffset
-    requestAnimationFrame(() => {
-      element?.focus()
-      element?.setSelectionRange(cursor, cursor)
-    })
+    field.current?.insertText(token.text, token.cursorOffset)
   }
-
-  const handle = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void =>
-    onChange(e.target.value)
 
   return (
     <div className="space-y-1">
       <label className={LABEL_CLASS}>{label}</label>
-      {multiline ? (
-        <Textarea
-          ref={areaRef}
-          value={value}
-          rows={2}
-          disabled={disabled}
-          placeholder={placeholder}
-          onChange={handle}
-          className={TEXTAREA_CLASS}
-          data-testid={`${testId}-input`}
-        />
-      ) : (
-        <Input
-          ref={inputRef}
-          value={value}
-          disabled={disabled}
-          placeholder={placeholder}
-          onChange={handle}
-          data-testid={`${testId}-input`}
-        />
-      )}
+      <DeviceTemplateField
+        label={label}
+        value={value}
+        onChange={onChange}
+        multiline={multiline}
+        placeholder={placeholder}
+        disabled={disabled}
+        handle={field}
+        testId={testId}
+      />
       {vars && vars.length === 0 ? (
         <p className="text-[10px] text-foreground-subtle">
           {t('notifications.templateField.noVariablesForThisField', 'No variables for this field.')}

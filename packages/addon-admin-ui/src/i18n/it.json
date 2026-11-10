@@ -9518,6 +9518,16 @@
     },
     "optimistic": {
       "refusedTitle": "Il dispositivo ha rifiutato la modifica"
+    },
+    "deviceTemplateField": {
+      "insertTitle": "Inserisci un valore di un dispositivo",
+      "noFittingValue": "Questo dispositivo non ha valori adatti qui.",
+      "noAlias": "Questo dispositivo non ha ancora un nome per i modelli; impostane uno dalla sua pagina.",
+      "insert": "Inserisci",
+      "insertValue": "Inserisci un valore di un dispositivo",
+      "unknownDevice": "Nessun dispositivo si chiama {{names}}.",
+      "outOfScope": "{{names}} è fuori da ciò che questo può leggere.",
+      "preview": "Ora legge: {{text}}"
     }
   },
   "helpers": {

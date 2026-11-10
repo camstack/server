@@ -2,7 +2,8 @@
  * One open argument of a device command, shaped by the vocabulary offer: a
  * number with its unit and bounds, a closed list, a yes/no, free text. Any of
  * them can be replaced by a variable chip — the "{x}" button lists the
- * variables in scope, and typing "{" opens the same list.
+ * variables in scope. Typing "{" in a number field opens the same list; free
+ * text takes device values instead (`DeviceTemplateField`).
  */
 
 import type { LooseVocabOpenArg, VocabLocale } from '@camstack/types'
@@ -10,6 +11,7 @@ import {
   QuantityValueInput,
   boundsInPicked,
   typedToStored,
+  DeviceTemplateField,
   Dropdown,
   DropdownContent,
   DropdownItem,
@@ -132,7 +134,10 @@ function FixedInput({ arg, locale, value, onChange, onBrace, choices }: FixedInp
                   label: value.value === '' ? t('flow.arg.choose', 'Choose…') : String(value.value),
                 },
               ]),
-          ...choices.choices.map((c) => ({ value: String(c.value), label: c.label })),
+          ...choices.choices.map((c) => ({
+            value: String(c.value),
+            label: c.label,
+          })),
         ]}
       />
     )
@@ -147,7 +152,10 @@ function FixedInput({ arg, locale, value, onChange, onBrace, choices }: FixedInp
           const picked = offer.values.find((v) => String(v.value) === e.target.value)
           if (picked !== undefined) onChange({ kind: 'fixed', value: picked.value })
         }}
-        options={offer.values.map((v) => ({ value: String(v.value), label: v.label[locale] }))}
+        options={offer.values.map((v) => ({
+          value: String(v.value),
+          label: v.label[locale],
+        }))}
       />
     )
   }
@@ -195,19 +203,25 @@ function FixedInput({ arg, locale, value, onChange, onBrace, choices }: FixedInp
       />
     )
   }
+  if (offer.kind === 'text' && offer.secret === true) {
+    return (
+      <Input
+        aria-label={label}
+        type="password"
+        className="w-40"
+        value={fixedText(value)}
+        onChange={(e) => onChange({ kind: 'fixed', value: e.target.value })}
+      />
+    )
+  }
+  // Free text may carry device values (`{{ alias.field }}`): the hub renders it when the step runs.
   return (
-    <Input
-      aria-label={label}
-      type={offer.kind === 'text' && offer.secret === true ? 'password' : 'text'}
-      className="w-40"
+    <DeviceTemplateField
+      label={label}
+      className="flex w-56 flex-col gap-1"
+      testId={`arg-text-${arg.key}`}
       value={fixedText(value)}
-      onChange={(e) => {
-        if (e.target.value.includes('{')) {
-          onBrace()
-          return
-        }
-        onChange({ kind: 'fixed', value: e.target.value })
-      }}
+      onChange={(text) => onChange({ kind: 'fixed', value: text })}
     />
   )
 }
@@ -269,8 +283,14 @@ function ArgHint({ arg, value, issue }: ArgHintProps) {
           unit: unitText,
         })
       : bounds.min !== undefined
-        ? t('flow.arg.atLeast', 'at least {{min}} {{unit}}', { min: bounds.min, unit: unitText })
-        : t('flow.arg.atMost', 'at most {{max}} {{unit}}', { max: bounds.max, unit: unitText })
+        ? t('flow.arg.atLeast', 'at least {{min}} {{unit}}', {
+            min: bounds.min,
+            unit: unitText,
+          })
+        : t('flow.arg.atMost', 'at most {{max}} {{unit}}', {
+            max: bounds.max,
+            unit: unitText,
+          })
   return (
     <span
       className={`text-[11px] ${issue === null ? 'text-foreground-subtle' : 'text-danger'}`}

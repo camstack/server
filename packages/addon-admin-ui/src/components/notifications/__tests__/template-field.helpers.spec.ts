@@ -16,7 +16,6 @@ import {
 } from '@camstack/types'
 import {
   groupTemplateVars,
-  insertPlaceholder,
   placeholderToken,
   restoreHeldBackKinds,
   restoreHeldBackVars,
@@ -33,27 +32,6 @@ const v = (
   group: 'subject',
   families: ['rule'],
   ...over,
-})
-
-describe('insertPlaceholder', () => {
-  it('inserts at a collapsed cursor and puts the cursor after the token', () => {
-    expect(insertPlaceholder('ab', { start: 1, end: 1 }, '{{camera}}')).toEqual({
-      value: 'a{{camera}}b',
-      cursor: 11,
-    })
-  })
-  it('replaces a selection', () => {
-    expect(insertPlaceholder('hello world', { start: 6, end: 11 }, '{{rule}}')).toEqual({
-      value: 'hello {{rule}}',
-      cursor: 14,
-    })
-  })
-  it('clamps a stale selection past the end to an append', () => {
-    expect(insertPlaceholder('ab', { start: 9, end: 9 }, '{{x}}')).toEqual({
-      value: 'ab{{x}}',
-      cursor: 7,
-    })
-  })
 })
 
 describe('placeholderToken', () => {
@@ -233,7 +211,10 @@ describe('restoreHeldBackKinds', () => {
       NC_TEMPLATE_VARS.filter((d) => !isHeldBackTemplateVar(d)).map((d) => d.systemEventKinds),
     )
     // A descriptor this build does not know is served through untouched.
-    const unknown = v({ name: 'fromANewerHub', systemEventKinds: ['node-offline'] })
+    const unknown = v({
+      name: 'fromANewerHub',
+      systemEventKinds: ['node-offline'],
+    })
     expect(restoreHeldBackKinds([unknown])).toEqual([unknown])
   })
 })
