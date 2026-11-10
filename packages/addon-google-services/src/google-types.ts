@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
-/** One Google account connection (broker entry). Credentials for the OAuth
- *  *app* live here; tokens live in durable oauthAccounts state keyed by id. */
+/** One Google account connection (broker entry): the OAuth *app* credentials. The account's
+ *  session (refresh token, email, scopes) is on the same record: {@link GoogleSessionSchema}. */
 export const GoogleBrokerEntrySchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -19,8 +19,8 @@ export const GoogleBrokerEntrySchema = z.object({
 export type GoogleBrokerEntry = z.infer<typeof GoogleBrokerEntrySchema>
 
 /**
- * The addon keeps no addon-level settings: every account is a `brokers` record and its tokens
- * live in the durable `oauthAccounts` state.
+ * The addon keeps no addon-level settings: every account is a `brokers` record, its OAuth session
+ * included.
  */
 export const GoogleServicesConfigSchema = z.object({})
 export type GoogleServicesConfig = z.infer<typeof GoogleServicesConfigSchema>
@@ -43,13 +43,15 @@ export const DEFAULT_OAUTH_STATE: GoogleOauthState = {
   accountEmail: '',
 }
 
-/** Per-broker OAuth tokens (durable state `oauthAccounts`). */
-export const GoogleOauthAccountSchema = z.object({
-  id: z.string().min(1),
+/**
+ * The OAuth session an account carries ON its `brokers` record (planning#480): the refresh token
+ * is a secret field (a keychain marker in the row), the email and the granted scopes are plain.
+ */
+export const GoogleSessionSchema = z.object({
   refreshToken: z.string().default('').meta({ secret: true }),
-  accessToken: z.string().default('').meta({ secret: true }),
-  accessExpiresAt: z.number().default(0),
   accountEmail: z.string().default(''),
+  /** Space-separated scopes Google granted, as its token answer said; '' when unknown. */
+  scopes: z.string().default(''),
   /**
    * Google refused the refresh token (`invalid_grant`): it is dead and only a
    * new sign-in replaces it. Set where the refusal is seen, cleared by the
@@ -58,14 +60,20 @@ export const GoogleOauthAccountSchema = z.object({
    */
   needsReauth: z.boolean().default(false),
 })
-export type GoogleOauthAccount = z.infer<typeof GoogleOauthAccountSchema>
-/** What callers may hand over: defaults (`needsReauth`) are filled by the schema. */
-export type GoogleOauthAccountInput = z.input<typeof GoogleOauthAccountSchema>
+export type GoogleSession = z.infer<typeof GoogleSessionSchema>
 
-export const GoogleOauthAccountsStateSchema = z.object({
-  accounts: z.array(GoogleOauthAccountSchema).default([]),
+/**
+ * One account's session at run time: the record's session plus the short-lived access token,
+ * which lives in memory only (a restart costs one refresh, never a stored copy).
+ */
+export const GoogleOauthAccountSchema = GoogleSessionSchema.extend({
+  id: z.string().min(1),
+  accessToken: z.string().default('').meta({ secret: true }),
+  accessExpiresAt: z.number().default(0),
 })
-export type GoogleOauthAccountsState = z.infer<typeof GoogleOauthAccountsStateSchema>
+export type GoogleOauthAccount = z.infer<typeof GoogleOauthAccountSchema>
+/** What callers may hand over: defaults (`needsReauth`, `scopes`) are filled by the schema. */
+export type GoogleOauthAccountInput = z.input<typeof GoogleOauthAccountSchema>
 
 export const GOOGLE_BROKER_KIND = 'google'
 export const GOOGLE_BROKER_KIND_LABEL = 'Google'

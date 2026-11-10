@@ -21,6 +21,7 @@ import {
   type GoogleMigrationPorts,
 } from '../index.js'
 import { leftoverLegacyKeys } from '../legacy-brokers-to-records.js'
+import { NO_OAUTH_ACCOUNTS_PORTS } from './inert-ports.js'
 import { calendarIdsPortsOver } from '../ports.js'
 
 const NO_RECORD_PORTS: CalendarRecordPorts = {
@@ -56,6 +57,7 @@ async function start(stored: Record<string, unknown>, existing: readonly string[
   const ports = (readStored: Parameters<typeof calendarIdsPortsOver>[1]): GoogleMigrationPorts => ({
     ...calendarIdsPortsOver(raw, readStored),
     ...NO_RECORD_PORTS,
+    ...NO_OAUTH_ACCOUNTS_PORTS,
     putBroker: (entry) => store.putOne(entry),
     readBroker: async (id) => (await store.listResolved()).find((b) => b.id === id) ?? null,
     listOauthAccountIds: async () => accounts.map((a) => a.id),
@@ -88,7 +90,7 @@ describe('google-services: legacy accounts move into records before the drop', (
       clientSecret: 'csecret',
       fromAddress: 'me@x.io',
       oauth: OAUTH,
-      // In production the oauthAccounts handle writes this row; the fake account store does not.
+      // In production the legacy oauth-account port writes this row; the fake account store does not.
       oauthAccounts: { accounts: [{ id: 'google_001' }] },
       other: { mark: 'survive' },
     })

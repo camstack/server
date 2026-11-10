@@ -4,7 +4,11 @@ import {
   type RecordKindHandle,
   type StoredKeyRead,
 } from '@camstack/types'
+import type { GoogleBrokerStore } from '../google-broker-store.js'
+import { GoogleBrokerEntrySchema } from '../google-types.js'
 import type { CalendarIdsPorts } from './calendar-ids-to-brokers.js'
+import type { LegacyBrokerPorts } from './legacy-brokers-to-records.js'
+import { OAUTH_ACCOUNTS_KEY, type OauthAccountsPorts } from './oauth-accounts-to-records.js'
 
 /** A broker record read as stored: the migrations see fields the current schema no longer names. */
 export type RawBrokerBody = Record<string, unknown>
@@ -63,6 +67,70 @@ export function calendarRecordPortsOver(deps: {
     },
     clearCalendarIds: async (accountId) => {
       await deps.brokers.patch(accountId, { calendarIds: null })
+    },
+  }
+}
+
+/** The ports of the `oauthAccounts` → account records move (planning#480). */
+export function oauthAccountsPortsOver(deps: {
+  readonly store: GoogleBrokerStore
+  readonly readStored: (key: string) => Promise<StoredKeyRead>
+  readonly warn: (message: string) => void
+  readonly releaseStateSecrets: () => Promise<void>
+}): OauthAccountsPorts {
+  return {
+    readStored: deps.readStored,
+    warn: deps.warn,
+    releaseStateSecrets: deps.releaseStateSecrets,
+    readSession: (id) => deps.store.readSession(id),
+    writeSession: (id, session) => deps.store.saveSession(id, session),
+    createAccount: (id, name, session) =>
+      deps.store.putOne(GoogleBrokerEntrySchema.parse({ id, name }), session),
+  }
+}
+
+/**
+ * The `oauthAccounts` entries the legacy-broker migration (seq 4) writes on an install older than
+ * the records: that migration predates planning#480, so it still fills the state, and the move
+ * (seq 6) carries it onto the records. Only migrations reach this key.
+ */
+export function legacyOauthAccountPortsOver(deps: {
+  readonly readStored: (key: string) => Promise<StoredKeyRead>
+  readonly writeStored: (patch: Record<string, unknown>) => Promise<void>
+}): Pick<LegacyBrokerPorts, 'listOauthAccountIds' | 'putOauthAccount' | 'readOauthAccount'> {
+  const accounts = async (): Promise<readonly unknown[]> => {
+    const answer = await deps.readStored(OAUTH_ACCOUNTS_KEY)
+    if (answer.kind === 'unreadable') {
+      throw new Error(
+        `google-services: the stored '${OAUTH_ACCOUNTS_KEY}' cannot be read (${answer.reason})`,
+      )
+    }
+    if (answer.kind === 'absent') return []
+    const list: unknown =
+      typeof answer.value === 'object' && answer.value !== null
+        ? Reflect.get(answer.value, 'accounts')
+        : undefined
+    return Array.isArray(list) ? list : []
+  }
+  const idOf = (entry: unknown): string | null => {
+    const id: unknown =
+      typeof entry === 'object' && entry !== null ? Reflect.get(entry, 'id') : undefined
+    return typeof id === 'string' ? id : null
+  }
+  return {
+    listOauthAccountIds: async () =>
+      (await accounts()).map(idOf).filter((id): id is string => id !== null),
+    putOauthAccount: async (account) => {
+      await deps.writeStored({
+        [OAUTH_ACCOUNTS_KEY]: { accounts: [...(await accounts()), account] },
+      })
+    },
+    readOauthAccount: async (id) => {
+      const found = (await accounts()).find((entry) => idOf(entry) === id)
+      if (found === undefined) return null
+      const token: unknown =
+        typeof found === 'object' && found !== null ? Reflect.get(found, 'refreshToken') : undefined
+      return { refreshToken: typeof token === 'string' ? token : '' }
     },
   }
 }

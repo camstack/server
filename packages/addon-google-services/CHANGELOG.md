@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Google accounts keep their sign-in (refresh token through the keychain, email, scopes) on the account itself; the old OAuth state is moved once at boot, with no new consent
+
 ## [0.2.46] - 2026-11-09
 
 ### Changed

@@ -1,6 +1,6 @@
 import { declareLinkKind, defineEntryKind, entryBody } from '@camstack/types'
 import { z } from 'zod'
-import { GOOGLE_BROKER_KIND, GoogleBrokerEntrySchema } from './google-types.js'
+import { GOOGLE_BROKER_KIND, GoogleBrokerEntrySchema, GoogleSessionSchema } from './google-types.js'
 
 export const GOOGLE_BROKERS_OWNER = 'google-services'
 
@@ -10,6 +10,12 @@ export const GoogleBrokerBodySchema = entryBody({
   calendarFilter: GoogleBrokerEntrySchema.shape.calendarFilter,
   fromAddress: GoogleBrokerEntrySchema.shape.fromAddress,
   fromName: GoogleBrokerEntrySchema.shape.fromName,
+  // The OAuth session of the account (planning#480): the refresh token is a keychain marker on
+  // this record, never a value; the short-lived access token is kept in memory only.
+  refreshToken: GoogleSessionSchema.shape.refreshToken,
+  accountEmail: GoogleSessionSchema.shape.accountEmail,
+  scopes: GoogleSessionSchema.shape.scopes,
+  needsReauth: GoogleSessionSchema.shape.needsReauth,
 })
 export type GoogleBrokerBody = z.infer<typeof GoogleBrokerBodySchema>
 

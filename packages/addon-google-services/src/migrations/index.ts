@@ -11,6 +11,11 @@ import {
 } from './calendar-ids-to-brokers.js'
 import { planDropConfigBrokersAndLegacyOauth } from './drop-config-brokers-and-legacy-oauth.js'
 import { copyLegacyBrokersToRecords, type LegacyBrokerPorts } from './legacy-brokers-to-records.js'
+import {
+  moveOauthAccountsToRecords,
+  type OauthAccountsPorts,
+  planDropOauthAccountsState,
+} from './oauth-accounts-to-records.js'
 
 export type { CalendarIdsPorts } from './calendar-ids-to-brokers.js'
 
@@ -22,8 +27,15 @@ export const LEGACY_BROKERS_TO_RECORDS_ID = 'google-services/2026-11-06-legacy-b
 export const DROP_CONFIG_BROKERS_AND_LEGACY_OAUTH_ID =
   'google-services/2026-11-06-drop-config-brokers-and-legacy-oauth'
 
+export const OAUTH_ACCOUNTS_TO_RECORDS_ID = 'google-services/2026-11-10-oauth-accounts-to-records'
+
+export const DROP_OAUTH_ACCOUNTS_STATE_ID = 'google-services/2026-11-10-drop-oauth-accounts-state'
+
 /** What the catalogue's migrations read and write through. */
-export type GoogleMigrationPorts = CalendarIdsPorts & CalendarRecordPorts & LegacyBrokerPorts
+export type GoogleMigrationPorts = CalendarIdsPorts &
+  CalendarRecordPorts &
+  LegacyBrokerPorts &
+  OauthAccountsPorts
 
 /** The `google-services` catalogue (D987): offered to the engine when the addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<GoogleMigrationPorts>[] = [
@@ -117,5 +129,39 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<GoogleMigrationPorts>[] =
       fixtureMark: 'the brokers setting kept when its records are missing',
     },
     plan: planDropConfigBrokersAndLegacyOauth,
+  },
+  {
+    meta: {
+      id: OAUTH_ACCOUNTS_TO_RECORDS_ID,
+      owner: 'google-services',
+      level: 'addon-state',
+      seq: 6,
+      dependsOn: [DROP_CONFIG_BROKERS_AND_LEGACY_OAUTH_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'Move each oauthAccounts entry onto its account record (refresh token through the keychain, email, needsReauth), each read back; a failed entry is logged and retried at the next boot',
+      fixtureMark: 'the refresh token and email of a marked account, read back from its record',
+    },
+    procedure: moveOauthAccountsToRecords,
+  },
+  {
+    meta: {
+      id: DROP_OAUTH_ACCOUNTS_STATE_ID,
+      owner: 'google-services',
+      level: 'addon-state',
+      seq: 7,
+      dependsOn: [OAUTH_ACCOUNTS_TO_RECORDS_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'plan',
+      description:
+        'Release the oauthAccounts keychain entries and delete the state once a second read shows every token on its record',
+      fixtureMark: 'the state kept while a record does not hold its token',
+    },
+    plan: planDropOauthAccountsState,
   },
 ]

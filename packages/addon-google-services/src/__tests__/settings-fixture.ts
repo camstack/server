@@ -29,6 +29,8 @@ const silentLogger: IScopedLogger = {
 
 export interface SettingsFixture {
   readonly rows: () => Record<string, Record<string, unknown>>
+  /** The addon's write of one key (what a secret-aware state write leaves in the row). */
+  readonly writeStored: (key: string, value: unknown) => void
   /** The addon's three-way read of one key. */
   readonly readStored: (key: string) => Promise<StoredKeyRead>
   readonly boot: (afterRead?: () => void) => Promise<{
@@ -130,6 +132,9 @@ export function settingsFixture<TPorts>(
   }
   return {
     rows,
+    writeStored: (key, value) => {
+      insert.run(`${addonId}.${key}`, JSON.stringify({ addonId, key, value }))
+    },
     readStored,
     boot: async (afterRead) => {
       hook = afterRead

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   BASELINE_PATH,
   findViolations,
+  credentialStateKeysOf,
   legacyIdentifiersOf,
 } from '../check-no-settings-fallback-for-kinds.js'
 import { isProductSource, loadBaseline, ROOT, readSources, walk } from '../lib/family-baseline.js'
@@ -124,6 +125,37 @@ describe('check-no-settings-fallback-for-kinds', () => {
     )
     expect(found.map((v) => v.where)).toEqual(['packages/addon-x/src/addon.ts'])
     expect(found[0]?.message).toContain('old rows beside a record kind')
+  })
+
+  it('names only the state keys that root a declared secret path', () => {
+    const text =
+      "secretStatePaths = ['tokens[userId].accessToken', \"signingKey\"]\nthis.state('tokens', S, [])\nthis.state('signingKey', z.string(), '')\nthis.state('linked', S, [])"
+    expect(credentialStateKeysOf(text)).toEqual(['tokens', 'signingKey'])
+    expect(credentialStateKeysOf("this.state('tokens', S, [])")).toEqual([])
+    // A comment in the list, with a quote of its own, does not hide the paths under it.
+    const commented =
+      "secretStatePaths = [\n  // only for the migration; the live one is the record's\n  'signingKey',\n]\nthis.state('signingKey', z.string(), '')"
+    expect(credentialStateKeysOf(commented)).toEqual(['signingKey'])
+  })
+
+  it('flags a credential kept in durable state beside a record kind (the planning#480 shape)', () => {
+    const addon = [
+      "protected override readonly secretStatePaths = ['accounts.items[id].refreshToken', 'apiKey']",
+      "this.handle = this.state('accounts', AccountsSchema, { items: [] })",
+      "const cursor = this.state('cursor', z.number(), 0)",
+    ].join('\n')
+    const found = findViolations(
+      [
+        file('packages/addon-x/src/kinds.ts', 'records.kind(Thing)'),
+        file('packages/addon-x/src/addon.ts', addon),
+        file('packages/addon-x/src/migrations/m.ts', addon),
+        file('packages/addon-y/src/addon.ts', addon),
+      ],
+      { families: {} },
+    )
+    // Only the credential root, only in the kind package, never in a migration; `cursor` holds no secret.
+    expect(found.map((v) => v.where)).toEqual(['packages/addon-x/src/addon.ts'])
+    expect(found[0]?.message).toContain("durable state ('accounts')")
   })
 
   itRealTree('holds on the committed tree and baseline', { timeout: 120_000 }, () => {

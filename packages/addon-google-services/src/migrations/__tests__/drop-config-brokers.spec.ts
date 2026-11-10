@@ -15,7 +15,7 @@ import {
   type GoogleMigrationPorts,
 } from '../index.js'
 import { calendarIdsPortsOver } from '../ports.js'
-import { NO_LEGACY_PORTS, NO_RECORD_PORTS } from './inert-ports.js'
+import { NO_LEGACY_PORTS, NO_RECORD_PORTS, NO_OAUTH_ACCOUNTS_PORTS } from './inert-ports.js'
 
 type Body = Record<string, unknown>
 
@@ -38,6 +38,7 @@ async function start(stored: Record<string, unknown>, records: Record<string, Bo
       ...calendarIdsPortsOver(kind, readStored),
       ...NO_RECORD_PORTS,
       ...NO_LEGACY_PORTS,
+      ...NO_OAUTH_ACCOUNTS_PORTS,
     }),
     stored,
     'keep-me',
@@ -124,7 +125,12 @@ describe('google-services: drop the addon-level brokers setting and the singleto
     expect(plan?.meta.bodyKind).toBe('plan')
     await expect(
       plan !== undefined && 'plan' in plan
-        ? plan.plan({ ...ports, ...NO_RECORD_PORTS, ...NO_LEGACY_PORTS })
+        ? plan.plan({
+            ...ports,
+            ...NO_RECORD_PORTS,
+            ...NO_LEGACY_PORTS,
+            ...NO_OAUTH_ACCOUNTS_PORTS,
+          })
         : Promise.reject(new Error('no plan')),
     ).rejects.toThrow(/cannot be read/)
     expect(f.rows()['google-services.brokers']).toBeDefined()

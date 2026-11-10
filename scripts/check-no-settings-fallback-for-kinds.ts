@@ -17,6 +17,11 @@
  * 3. `legacy-identifier`: an identifier that names the old storage (`*_LEGACY`, `*_LEGACY_COLLECTION`,
  *    `LEGACY_*COLLECTION`, `Legacy*Schema`) or a `*_COLLECTION` constant whose doc comment calls it a legacy / settings-store
  *    collection. A `migrations/` directory may name the old shape; nothing else may.
+ * 4. `credential-state`: a package that registers a kind does not keep a CREDENTIAL in durable state
+ *    (`this.state('<key>'` whose `<key>` roots one of the file's `secretStatePaths`) outside a
+ *    migration. An account's token belongs on its record (a secret field): the state blob is the
+ *    second store the Google accounts kept beside their `brokers` records (planning#480). Key:
+ *    `<path>:credential-state:<key>`.
  *
  * Every site that exists today is in `scripts/no-settings-fallback-baseline.json`, in the family whose
  * packet deletes it, with its reason. The baseline only shrinks; a listed site that is gone is an
@@ -52,6 +57,9 @@ const LEGACY_IDENTIFIER_RE =
   /\b[A-Z0-9_]+_LEGACY(?:_COLLECTIONS?)?\b|\bLEGACY_\w*COLLECTION\w*\b|\bLegacy\w+Schema\b/g
 const LEGACY_COLLECTION_DOC_RE = /\b(?:legacy|settings-store)\s+collections?\b/i
 const COLLECTION_CONST_RE = /^export const (\w*COLLECTION\w*)\s*=/
+const SECRET_STATE_PATHS_RE = /secretStatePaths\s*=\s*\[([\s\S]*?)\]\s*$/m
+const STRING_LITERAL_RE = /['"`]([^'"`]+)['"`]/g
+const STATE_CALL_RE = /\bthis\.state\(\s*['"`]([\w-]+)['"`]/g
 /** The automation recipe reader: a different domain with a legacy shape of its own (not an instance family). */
 const OTHER_DOMAIN_IDENTIFIER_RE =
   /^Legacy(?:Automation|Condition|Trigger|Step|Stationary|Expression)/
@@ -86,6 +94,30 @@ export function legacyIdentifiersOf(text: string): string[] {
     if (m?.[1] === undefined) return
     if (LEGACY_COLLECTION_DOC_RE.test(docCommentAbove(lines, index))) found.add(m[1])
   })
+  return [...found]
+}
+
+/** The roots (`a` of `a.b[id].c`) of the `secretStatePaths` a file declares inline. */
+function secretStateRootsOf(text: string): Set<string> {
+  const roots = new Set<string>()
+  const list = SECRET_STATE_PATHS_RE.exec(text)?.[1]
+  if (list === undefined) return roots
+  // A comment inside the list (`// … the record's …`) is not a path, and its quotes would pair.
+  const entries = list.replace(/\/\/[^\n]*/g, '')
+  for (const m of entries.matchAll(STRING_LITERAL_RE)) {
+    const root = m[1]?.split(/[.[]/)[0]
+    if (root !== undefined && root.length > 0) roots.add(root)
+  }
+  return roots
+}
+
+/** The durable-state keys of one file that hold a declared secret, de-duplicated, in order. */
+export function credentialStateKeysOf(text: string): string[] {
+  const roots = secretStateRootsOf(text)
+  const found = new Set<string>()
+  for (const m of text.matchAll(STATE_CALL_RE)) {
+    if (m[1] !== undefined && roots.has(m[1])) found.add(m[1])
+  }
   return [...found]
 }
 
@@ -151,6 +183,15 @@ export function findViolations(
         message:
           'seeds a store from this.config on boot (replaceAll(this.config...)): the settings then overwrite what the operator edited. Move the rows once, in a migration',
       })
+    }
+    if (inKindPackage) {
+      for (const key of credentialStateKeysOf(source.text)) {
+        findings.push({
+          key: `${source.path}:credential-state:${key}`,
+          where: source.path,
+          message: `keeps a credential in durable state ('${key}') beside a record kind: put it on the record as a secret field, and read the old state only from a migration (**/migrations/**)`,
+        })
+      }
     }
     for (const identifier of legacyIdentifiersOf(source.text)) {
       findings.push({

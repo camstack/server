@@ -11,7 +11,7 @@ import { googleBrokersEntryKind } from '../../broker-record-kinds.js'
 import { settingsFixture } from '../../__tests__/settings-fixture.js'
 import { ADDON_MIGRATIONS, type GoogleMigrationPorts } from '../index.js'
 import { calendarIdsPortsOver } from '../ports.js'
-import { NO_LEGACY_PORTS, NO_RECORD_PORTS } from './inert-ports.js'
+import { NO_LEGACY_PORTS, NO_RECORD_PORTS, NO_OAUTH_ACCOUNTS_PORTS } from './inert-ports.js'
 
 const COPY = 'google-services/2026-11-03-calendar-ids-to-brokers'
 const DROP = 'google-services/2026-11-03-drop-shared-calendar-ids'
@@ -55,6 +55,7 @@ async function start(
       ...calendarIdsPortsOver(kind, readStored),
       ...NO_RECORD_PORTS,
       ...NO_LEGACY_PORTS,
+      ...NO_OAUTH_ACCOUNTS_PORTS,
     }),
     stored,
     'keep-me',

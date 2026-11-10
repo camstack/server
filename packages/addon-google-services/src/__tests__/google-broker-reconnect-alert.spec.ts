@@ -6,6 +6,7 @@ import {
   isInvalidGrantRefreshError,
 } from '../google-broker-reconnect-alert.js'
 import { GoogleServicesAddon } from '../google-services.addon.js'
+import { seededBrokerStore } from './seeded-broker-store.js'
 
 vi.mock('../google-oauth.js', async (importOriginal) => {
   const original = await importOriginal<typeof import('../google-oauth.js')>()
@@ -30,14 +31,14 @@ function mockLogger(): IScopedLogger {
   }
 }
 
-function seedAddon(
+async function seedAddon(
   emitMutate: ReturnType<typeof vi.fn<(alert: unknown) => Promise<void>>> = vi.fn(
     async () => undefined,
   ),
   updateMutate: ReturnType<
     typeof vi.fn<(input: { alertId: string; patch: unknown }) => Promise<void>>
   > = vi.fn(async () => undefined),
-): GoogleServicesAddon {
+): Promise<GoogleServicesAddon> {
   const addon = new GoogleServicesAddon()
   const registry = new GoogleBrokerRegistry()
   registry.seedFrom(
@@ -59,10 +60,13 @@ function seedAddon(
         accessToken: 'at',
         accessExpiresAt: 0,
         accountEmail: 'a@example.com',
+        scopes: '',
+        needsReauth: false,
       },
     ],
   )
   Reflect.set(addon, 'registry', registry)
+  Reflect.set(addon, 'brokerStore', await seededBrokerStore())
   Reflect.set(addon, '_ctx', {
     api: {
       alerts: {
@@ -105,7 +109,7 @@ describe('GoogleServicesAddon ensureAccessToken', () => {
     vi.mocked(refreshAccessToken).mockRejectedValue(
       new Error('Google token refresh failed (400): {"error":"invalid_grant"}'),
     )
-    const addon = seedAddon(emitMutate)
+    const addon = await seedAddon(emitMutate)
     await expect(
       Reflect.apply(Reflect.get(addon, 'ensureAccessToken'), addon, ['google_001']),
     ).rejects.toThrow(/invalid_grant/)
@@ -123,7 +127,7 @@ describe('GoogleServicesAddon ensureAccessToken', () => {
     vi.mocked(refreshAccessToken).mockRejectedValue(
       new Error('Google token refresh failed (401): invalid_client'),
     )
-    const addon = seedAddon(emitMutate)
+    const addon = await seedAddon(emitMutate)
     await expect(
       Reflect.apply(Reflect.get(addon, 'ensureAccessToken'), addon, ['google_001']),
     ).rejects.toThrow(/invalid_client/)
@@ -134,7 +138,7 @@ describe('GoogleServicesAddon ensureAccessToken', () => {
     const updateMutate = vi.fn<(input: { alertId: string; patch: unknown }) => Promise<void>>(
       async () => undefined,
     )
-    const addon = seedAddon(vi.fn(), updateMutate)
+    const addon = await seedAddon(vi.fn(), updateMutate)
     await Reflect.apply(Reflect.get(addon, 'resolveGoogleBrokerReconnectAlert'), addon, [
       'google_001',
     ])
@@ -153,7 +157,7 @@ describe('GoogleServicesAddon ensureAccessToken', () => {
     const updateMutate = vi.fn<(input: { alertId: string; patch: unknown }) => Promise<void>>(
       async () => undefined,
     )
-    const addon = seedAddon(vi.fn(), updateMutate)
+    const addon = await seedAddon(vi.fn(), updateMutate)
     const oauthState = 'test-oauth-state-hex'
     const pendingStates = Reflect.get(addon, 'pendingStates') as Map<
       string,

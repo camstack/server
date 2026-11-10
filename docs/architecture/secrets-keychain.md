@@ -190,6 +190,20 @@ has three parts, and two rules came from an operator report (2026-10-08):
   paged 25 at a time over the last 500 entries. `unknown` usage reads
   "Unavailable" and is never offered for deletion.
 
+## An account's OAuth token lives on its record (planning#480)
+
+A credential that belongs to one configured thing goes on that thing's record, as a
+`.meta({ secret: true })` field — never in an addon-level `this.state(...)` blob beside the
+record kind. The Google accounts are the worked example: the refresh token, email, scopes and
+`needsReauth` sit on the `brokers` record; the access token stays in memory. Their old
+`oauthAccounts` state was moved by a D987 migration that reads the token RESOLVED and writes
+it through the records door (a new ref, the same value, no new consent), reads it back, and only
+after a second read releases the state's keychain values and deletes the key. Rollback is the
+pre-migration snapshot: the settings, the records and `keychain:secrets` are one database.
+`scripts/check-no-settings-fallback-for-kinds.ts` (rule `credential-state`) refuses a new
+`this.state('<key>')` whose key roots a `secretStatePaths` entry in a package that registers a
+record kind.
+
 ## Hidden per-device credentials (D870)
 
 `secretStatePaths` also name credentials in the PER-DEVICE store. The stream-broker keeps

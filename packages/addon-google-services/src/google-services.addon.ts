@@ -23,7 +23,6 @@ import {
   type AddonHttpReply,
   type AddonHttpRequest,
   type AddonInitResult,
-  type DurableState,
   type IAddonHttpRoute,
   type IBrokerProvider,
   type ICalendarSourceProvider,
@@ -54,9 +53,7 @@ import {
   DEFAULT_OAUTH_STATE,
   GOOGLE_CALENDAR_LIST_URL,
   GOOGLE_USERINFO_URL,
-  GoogleOauthAccountsStateSchema,
   type GoogleOauthAccount,
-  type GoogleOauthAccountsState,
   type GoogleOauthState,
   type GoogleServicesConfig,
 } from './google-types.js'
@@ -79,9 +76,13 @@ import {
   type LegacyBrokerPorts,
   leftoverLegacyKeys,
 } from './migrations/legacy-brokers-to-records.js'
-import { calendarIdsPortsOver, calendarRecordPortsOver } from './migrations/ports.js'
+import {
+  calendarIdsPortsOver,
+  calendarRecordPortsOver,
+  legacyOauthAccountPortsOver,
+  oauthAccountsPortsOver,
+} from './migrations/ports.js'
 import { GoogleBrokerStore } from './google-broker-store.js'
-import type { GoogleBrokerEntry } from './google-types.js'
 
 const ADDON_ID = 'google-services'
 
@@ -99,19 +100,19 @@ const START_PATH = '/oauth/start'
 const DISCONNECT_PATH = '/oauth/disconnect'
 
 export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
+  // Declared only so the migrations read the legacy `oauthAccounts` state resolved and release its
+  // keychain values; the live session is on the account record (planning#480).
   protected override readonly secretStatePaths = [
     'oauthAccounts.accounts[id].refreshToken',
     'oauthAccounts.accounts[id].accessToken',
   ]
 
-  private oauthAccountsHandle: DurableState<GoogleOauthAccountsState> | null = null
   private registry = new GoogleBrokerRegistry()
   private brokerStore: GoogleBrokerStore | null = null
   private instances: RecordIntegrationInstances<GoogleBrokerBody> | null = null
   private calendarInstances: RecordIntegrationInstances<GoogleCalendarBody> | null = null
   /** The stamped calendar ids each account imports, from the `calendars` records. */
   private calendarSelection: ReadonlyMap<string, ReadonlyMap<string, string>> = new Map()
-  private activeBrokers: readonly GoogleBrokerEntry[] = []
   /** CSRF state → { brokerId, issuedAt } for the in-flight OAuth consents. */
   private pendingStates = new Map<string, { brokerId: string; issuedAt: number }>()
   private publicOrigin: string | null = null
@@ -121,10 +122,6 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
   }
 
   protected async onInitialize(): Promise<AddonInitResult> {
-    this.oauthAccountsHandle = this.state('oauthAccounts', GoogleOauthAccountsStateSchema, {
-      accounts: [],
-    })
-
     const records = this.ctx.records
     if (records === undefined) {
       throw new Error('google-services: ctx.records is required (hub-only addon)')
@@ -136,12 +133,9 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
       catalog: (accountId) => this.loadCalendarCatalog(accountId),
       onChanged: () => this.refreshCalendarSelection(),
     })
-    this.activeBrokers = await this.loadPersistedBrokers()
-    await this.migrateCalendarIds(records)
+    await this.migrateAccounts(records)
+    await this.reloadAccounts()
     await this.refreshCalendarSelection()
-
-    const oauthAccounts = await this.oauthAccountsHandle.get()
-    this.registry.seedFrom(this.activeBrokers, oauthAccounts.accounts)
     await this.refreshPublicOrigin()
 
     const calendarProvider: ICalendarSourceProvider = createGoogleCalendarSource({
@@ -219,9 +213,56 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
   }
 
   protected override async onConfigChanged(): Promise<void> {
-    const accounts = this.registry.listOauthAccounts()
-    this.activeBrokers = await this.loadPersistedBrokers()
-    this.registry.seedFrom(this.activeBrokers, accounts)
+    await this.reloadAccounts()
+  }
+
+  /**
+   * Seed the registry from the account records: the client and the session (refresh token,
+   * email, scopes, needsReauth). The access token is memory only, so it is carried over for an
+   * account whose refresh token did not change. A record the keychain cannot serve keeps the
+   * session the registry already had (a locked keychain is never "signed out", D49).
+   */
+  private async reloadAccounts(): Promise<void> {
+    const store = this.requireBrokerStore()
+    const read = await store.loadAll()
+    const sessions: GoogleOauthAccount[] = read.sessions.map((session) => {
+      const prev = this.registry.getOauth(session.id)
+      const sameToken = prev !== null && prev.refreshToken === session.refreshToken
+      return {
+        ...session,
+        accessToken: sameToken ? prev.accessToken : '',
+        accessExpiresAt: sameToken ? prev.accessExpiresAt : 0,
+      }
+    })
+    for (const id of read.unresolved) {
+      const prev = this.registry.getOauth(id)
+      if (prev !== null) sessions.push(prev)
+    }
+    if (read.unresolved.length > 0) {
+      this.ctx.logger.warn(
+        'google-services: the keychain could not serve some accounts; their sign-in is unknown until it can',
+        {
+          meta: { accounts: read.unresolved },
+        },
+      )
+    }
+    this.registry.seedFrom(read.entries, sessions)
+  }
+
+  private requireBrokerStore(): GoogleBrokerStore {
+    if (this.brokerStore === null)
+      throw new Error('google-services: the brokers store is not ready')
+    return this.brokerStore
+  }
+
+  /** Write one account's session onto its record: the ONE place a session is persisted. */
+  private async persistSession(account: GoogleOauthAccount): Promise<void> {
+    await this.requireBrokerStore().saveSession(account.id, {
+      refreshToken: account.refreshToken,
+      accountEmail: account.accountEmail,
+      scopes: account.scopes,
+      needsReauth: account.needsReauth,
+    })
   }
 
   private requireInstances(): RecordIntegrationInstances<GoogleBrokerBody> {
@@ -289,10 +330,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
             ? 'reauth'
             : 'none',
       onChanged: async () => {
-        const accounts = this.registry.listOauthAccounts()
-        this.activeBrokers = await this.loadPersistedBrokers()
-        this.registry.seedFrom(this.activeBrokers, accounts)
-        await this.persistOauthAccounts()
+        await this.reloadAccounts()
       },
       testSaved: (id) => this.probeSavedAccount(id),
       testClient: (clientId, clientSecret) => this.probeOauthClient(clientId, clientSecret),
@@ -389,8 +427,9 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
       if (email.length > 0) {
         const oauth = this.registry.getOauth(id)
         if (oauth !== null && oauth.accountEmail !== email) {
-          this.registry.setOauth({ ...oauth, accountEmail: email })
-          await this.persistOauthAccounts()
+          const next = { ...oauth, accountEmail: email }
+          await this.persistSession(next)
+          this.registry.setOauth(next)
         }
       }
       return { ok: true, latencyMs: Date.now() - started }
@@ -514,6 +553,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
       const prev = this.registry.getOauth(brokerId) ?? {
         id: brokerId,
         ...DEFAULT_OAUTH_STATE,
+        scopes: '',
         needsReauth: false,
       }
       if (!tokens.refresh_token && (!prev.refreshToken || prev.needsReauth)) {
@@ -538,11 +578,13 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
         accessToken: applied.accessToken,
         accessExpiresAt: applied.accessExpiresAt,
         accountEmail: email || applied.accountEmail,
+        scopes: tokens.scope ?? prev.scopes,
         // A fresh sign-in is what clears a refused token.
         needsReauth: false,
       }
+      // The record first: a session the record does not hold is not a sign-in.
+      await this.persistSession(next)
       this.registry.setOauth(next)
-      await this.persistOauthAccounts()
       if (next.refreshToken.length > 0) {
         void this.resolveGoogleBrokerReconnectAlert(brokerId)
       }
@@ -552,10 +594,10 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
         (entry.name === 'Google account' || entry.name.startsWith('google_'))
       ) {
         const renamed = { ...entry, name: next.accountEmail }
+        await this.requireBrokerStore().rename(brokerId, renamed.name)
         this.registry.replaceEntries(
           this.registry.listEntries().map((e) => (e.id === brokerId ? renamed : e)),
         )
-        await this.persistBrokers()
       }
       this.ctx.logger.info('google oauth connected', {
         tags: { brokerId },
@@ -614,11 +656,12 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
   }
 
   /**
-   * The shared calendar set becomes each broker's own (D985, D987), then each broker's set becomes
-   * `calendars` records linked to the account (D1013). Brokers are reloaded once a migration
-   * landed, so the registry is seeded with what it wrote.
+   * The `google-services` catalogue (D987): the shared calendar set becomes each broker's own
+   * (D985), each broker's set becomes `calendars` records linked to the account (D1013), and the
+   * `oauthAccounts` state moves onto the account records (planning#480). The registry is seeded
+   * after, from what they wrote.
    */
-  private async migrateCalendarIds(records: Pick<RecordsAccess, 'kind'>): Promise<void> {
+  private async migrateAccounts(records: Pick<RecordsAccess, 'kind'>): Promise<void> {
     const brokers = records.kind({
       name: googleBrokersEntryKind.name,
       declaration: googleBrokersEntryKind.declaration,
@@ -632,10 +675,15 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
         warn: (message) => this.ctx.logger.warn(message),
       }),
       ...this.legacyBrokerPorts(),
+      ...oauthAccountsPortsOver({
+        store: this.requireBrokerStore(),
+        readStored: (key) => this.readStoredGlobalKey(key),
+        warn: (message) => this.ctx.logger.warn(message),
+        releaseStateSecrets: () => this.writeOwnStore({ oauthAccounts: { accounts: [] } }),
+      }),
     }
     const report = await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, ports))
-    if (report.applied.length > 0) this.activeBrokers = await this.loadPersistedBrokers()
-    if (this.activeBrokers.length === 0) {
+    if ((await this.requireBrokerStore().listResolved()).length === 0) {
       const left = await leftoverLegacyKeys(ports)
       if (left.length > 0) {
         this.ctx.logger.error(
@@ -644,6 +692,18 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
         )
       }
     }
+  }
+
+  /**
+   * The migrations' write of the legacy `oauthAccounts` key, through the secret-aware door
+   * (markers in, dropped refs released) that a `this.state` handle writes through. Migration-only:
+   * a state handle here would keep the credential blob alive beside the records (planning#480).
+   */
+  private async writeOwnStore(patch: Record<string, unknown>): Promise<void> {
+    const settings = this.ctx.settings
+    if (settings === undefined) throw new Error('google-services: the settings store is not ready')
+    // biome-ignore lint/plugin: migration-only write of a retired key; the same secret-aware write a state handle makes, without keeping a handle on the credential blob
+    await settings.writeAddonStore(patch)
   }
 
   /** The legacy-broker migration's writes: a broker record and an `oauthAccounts` entry, each read back. */
@@ -660,41 +720,11 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
         const found = (await store.listResolved()).find((b) => b.id === id)
         return found === undefined ? null : found
       },
-      listOauthAccountIds: async () => {
-        const handle = this.oauthAccountsHandle
-        if (handle === null) return []
-        return (await handle.get()).accounts.map((a) => a.id)
-      },
-      putOauthAccount: async (account) => {
-        const handle = this.oauthAccountsHandle
-        if (handle === null) throw new Error('google-services: oauthAccounts is not ready')
-        const current = await handle.get()
-        await handle.set({ accounts: [...current.accounts, account] })
-      },
-      readOauthAccount: async (id) => {
-        const handle = this.oauthAccountsHandle
-        if (handle === null) return null
-        return (await handle.get()).accounts.find((a) => a.id === id) ?? null
-      },
+      ...legacyOauthAccountPortsOver({
+        readStored: (key) => this.readStoredGlobalKey(key),
+        writeStored: (patch) => this.writeOwnStore(patch),
+      }),
     }
-  }
-
-  private async loadPersistedBrokers(): Promise<readonly GoogleBrokerEntry[]> {
-    const store = this.brokerStore
-    return store === null ? [] : store.listResolved()
-  }
-
-  private async persistBrokers(): Promise<void> {
-    const entries = [...this.registry.listEntries()]
-    this.activeBrokers = entries
-    const store = this.brokerStore
-    if (store === null) throw new Error('google-services: the brokers store is not ready')
-    await store.replaceAll(entries)
-  }
-
-  private async persistOauthAccounts(): Promise<void> {
-    if (!this.oauthAccountsHandle) return
-    await this.oauthAccountsHandle.set({ accounts: [...this.registry.listOauthAccounts()] })
   }
 
   /** The calendars one signed-in account lists, by their own id (the picker of a calendar record). */
@@ -799,7 +829,8 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
       if (isInvalidGrantRefreshError(err)) {
         // Record it: status, Sign-in visibility and the alert then agree.
         if (this.registry.markNeedsReauth(brokerId)) {
-          await this.persistOauthAccounts()
+          const marked = this.registry.getOauth(brokerId)
+          if (marked !== null) await this.persistSession(marked)
         }
         void this.emitGoogleBrokerReconnectAlert(brokerId, entry.name)
       }
@@ -811,15 +842,21 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
       )
     }
     const nextState = applyTokenResponse(state, tokens)
-    this.registry.setOauth({
+    const next: GoogleOauthAccount = {
       id: brokerId,
       refreshToken: nextState.refreshToken,
       accessToken: nextState.accessToken,
       accessExpiresAt: nextState.accessExpiresAt,
       accountEmail: nextState.accountEmail,
+      scopes: tokens.scope ?? oauth.scopes,
       needsReauth: false,
-    })
-    await this.persistOauthAccounts()
+    }
+    // The access token is memory only: the record is written only when the session itself moved
+    // (Google rotated the refresh token, or granted other scopes), never on every refresh.
+    if (next.refreshToken !== oauth.refreshToken || next.scopes !== oauth.scopes) {
+      await this.persistSession(next)
+    }
+    this.registry.setOauth(next)
     return nextState.accessToken
   }
 
@@ -835,9 +872,13 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
       reply.status(404).send({ error: `Unknown Google broker: ${brokerId}` })
       return
     }
+    // The refresh token leaves the record and the keychain; then the runtime forgets it.
+    await this.requireBrokerStore().clearSession(brokerId)
     this.registry.removeOauth(brokerId)
-    await this.persistOauthAccounts()
-    this.ctx.logger.info('google oauth disconnected', { tags: { brokerId }, meta: { brokerId } })
+    this.ctx.logger.info('google oauth disconnected', {
+      tags: { brokerId },
+      meta: { brokerId },
+    })
     await this.landOnAdminUi(reply, {
       status: 'success',
       addonId: ADDON_ID,

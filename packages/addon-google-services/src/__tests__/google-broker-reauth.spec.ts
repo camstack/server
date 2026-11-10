@@ -3,6 +3,7 @@ import type { AddonContext, IScopedLogger } from '@camstack/types'
 import { GoogleBrokerRegistry } from '../google-broker-registry.js'
 import { buildGoogleBrokerReconnectAlert } from '../google-broker-reconnect-alert.js'
 import { GoogleServicesAddon } from '../google-services.addon.js'
+import { brokerStoreOf, seededBrokerStore } from './seeded-broker-store.js'
 
 vi.mock('../google-oauth.js', async (importOriginal) => {
   const original = await importOriginal<typeof import('../google-oauth.js')>()
@@ -30,7 +31,9 @@ function mockLogger(): IScopedLogger {
   }
 }
 
-function seedAddon(emit = vi.fn(async (_alert: unknown) => undefined)): GoogleServicesAddon {
+async function seedAddon(
+  emit = vi.fn(async (_alert: unknown) => undefined),
+): Promise<GoogleServicesAddon> {
   const addon = new GoogleServicesAddon()
   const registry = new GoogleBrokerRegistry()
   registry.seedFrom(
@@ -52,11 +55,13 @@ function seedAddon(emit = vi.fn(async (_alert: unknown) => undefined)): GoogleSe
         accessToken: 'at',
         accessExpiresAt: 0,
         accountEmail: 'a@example.com',
+        scopes: '',
         needsReauth: false,
       },
     ],
   )
   Reflect.set(addon, 'registry', registry)
+  Reflect.set(addon, 'brokerStore', await seededBrokerStore())
   Reflect.set(addon, '_ctx', {
     api: {
       alerts: { emit: { mutate: emit }, update: { mutate: vi.fn(async () => undefined) } },
@@ -113,7 +118,7 @@ describe('a dead refresh token is reported as needing a new sign-in', () => {
 
   it('invalid_grant flips the broker to auth-failed, not connected', async () => {
     vi.mocked(refreshAccessToken).mockRejectedValue(INVALID_GRANT)
-    const addon = seedAddon()
+    const addon = await seedAddon()
     const registry = registryOf(addon)
     expect(registry.isConnected('google_001')).toBe(true)
 
@@ -122,12 +127,16 @@ describe('a dead refresh token is reported as needing a new sign-in', () => {
     expect(registry.isConnected('google_001')).toBe(false)
     expect(registry.needsReauth('google_001')).toBe(true)
     expect(registry.connectedSize()).toBe(0)
+    // Persisted on the account record: a restart does not ask Google again with the dead token.
+    expect(await brokerStoreOf(addon).readSession('google_001')).toMatchObject({
+      needsReauth: true,
+    })
   })
 
   it('does not ask Google again with a token it knows is dead, nor re-raise the alert', async () => {
     vi.mocked(refreshAccessToken).mockRejectedValue(INVALID_GRANT)
     const emit = vi.fn(async (_alert: unknown) => undefined)
-    const addon = seedAddon(emit)
+    const addon = await seedAddon(emit)
     await expect(call(addon, 'ensureAccessToken', 'google_001')).rejects.toThrow()
     await expect(call(addon, 'ensureAccessToken', 'google_001')).rejects.toThrow(/sign in/i)
     expect(refreshAccessToken).toHaveBeenCalledTimes(1)
@@ -141,7 +150,7 @@ describe('a dead refresh token is reported as needing a new sign-in', () => {
       expires_in: 3600,
       refresh_token: 'new-refresh',
     })
-    const addon = seedAddon()
+    const addon = await seedAddon()
     const registry = registryOf(addon)
     await expect(call(addon, 'ensureAccessToken', 'google_001')).rejects.toThrow()
     expect(registry.isConnected('google_001')).toBe(false)
@@ -153,6 +162,10 @@ describe('a dead refresh token is reported as needing a new sign-in', () => {
 
     expect(registry.isConnected('google_001')).toBe(true)
     expect(registry.getOauth('google_001')?.needsReauth).toBe(false)
+    // The callback writes the account record itself: the new token, the refusal cleared.
+    const stored = await brokerStoreOf(addon).readSession('google_001')
+    expect(stored?.needsReauth).toBe(false)
+    expect(stored?.refreshToken === 'new-refresh').toBe(true)
   })
 })
 
@@ -179,7 +192,7 @@ describe('the OAuth callback lands in CamStack, never on a bare text page', () =
       expires_in: 3600,
       refresh_token: 'r',
     })
-    const addon = seedAddon()
+    const addon = await seedAddon()
     Reflect.set(addon, 'fetchAccountEmail', async () => '')
     const reply = await runCallback(addon, { code: 'c', state: 'st' })
     expect(reply.redirect).toHaveBeenCalledWith(
@@ -194,7 +207,7 @@ describe('the OAuth callback lands in CamStack, never on a bare text page', () =
       expires_in: 3600,
       refresh_token: 'r',
     })
-    const addon = seedAddon()
+    const addon = await seedAddon()
     Reflect.set(addon, 'fetchAccountEmail', async () => '')
     const reply = await runCallback(addon, { code: 'c', state: 'st' }, true)
     expect(reply.redirect).toHaveBeenCalledWith(
@@ -203,7 +216,10 @@ describe('the OAuth callback lands in CamStack, never on a bare text page', () =
   })
 
   it('a consent the user refused lands as access_denied', async () => {
-    const reply = await runCallback(seedAddon(), { error: 'access_denied', state: 'st' })
+    const reply = await runCallback(await seedAddon(), {
+      error: 'access_denied',
+      state: 'st',
+    })
     expect(reply.redirect).toHaveBeenCalledWith(
       `${LANDING}&status=error&addon=google-services&broker=google_001&reason=access_denied`,
     )
@@ -211,7 +227,7 @@ describe('the OAuth callback lands in CamStack, never on a bare text page', () =
 
   it('an unknown state lands as invalid_state', async () => {
     const reply = fakeReply()
-    await call(seedAddon(), 'handleCallback', { query: { code: 'c', state: 'nope' } }, reply)
+    await call(await seedAddon(), 'handleCallback', { query: { code: 'c', state: 'nope' } }, reply)
     expect(reply.redirect).toHaveBeenCalledWith(
       `${LANDING}&status=error&addon=google-services&reason=invalid_state`,
     )
@@ -219,7 +235,10 @@ describe('the OAuth callback lands in CamStack, never on a bare text page', () =
 
   it('a failed code exchange lands as exchange_failed and leaks neither code nor message', async () => {
     vi.mocked(exchangeCode).mockRejectedValue(new Error('boom code=SECRET-CODE'))
-    const reply = await runCallback(seedAddon(), { code: 'SECRET-CODE', state: 'st' })
+    const reply = await runCallback(await seedAddon(), {
+      code: 'SECRET-CODE',
+      state: 'st',
+    })
     const url = String(reply.redirect.mock.calls[0]?.[0])
     expect(url).toContain('reason=exchange_failed')
     expect(url).not.toContain('SECRET')
@@ -227,9 +246,12 @@ describe('the OAuth callback lands in CamStack, never on a bare text page', () =
   })
 
   it('sign-out lands on the same page', async () => {
-    const addon = seedAddon()
+    const addon = await seedAddon()
     const reply = fakeReply()
     await call(addon, 'handleDisconnect', { query: { brokerId: 'google_001' } }, reply)
+    // Sign-out forgets the refresh token on the record (and so in the keychain).
+    const stored = await brokerStoreOf(addon).readSession('google_001')
+    expect(stored?.refreshToken === '').toBe(true)
     expect(reply.redirect).toHaveBeenCalledWith(
       `${LANDING}&status=success&addon=google-services&broker=google_001&action=disconnect`,
     )

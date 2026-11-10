@@ -1,8 +1,8 @@
 /**
  * The Google accounts as `integration-instances` (planning#408 P3): one instance per broker
  * record, over the SAME `brokers` records and ids the `broker` cap serves (`google_NNN`), so
- * nothing moves. The OAuth session lives beside the record (`oauthAccounts`), so an instance's
- * status is the registry's answer and a change re-seeds the registry.
+ * nothing moves. The OAuth session is on the record itself (refresh token through the keychain,
+ * planning#480); an instance's status is the registry's answer and a change re-seeds the registry.
  */
 import {
   type IntegrationInstanceKind,
@@ -26,13 +26,19 @@ export interface GoogleInstancesDeps {
   /** Re-seed the runtime from the records after any change. */
   readonly onChanged: (id: string) => Promise<void>
   /** Probe a saved broker, or an unsaved OAuth client. */
-  readonly testSaved: (
-    id: string,
-  ) => Promise<{ readonly ok: boolean; readonly error?: string; readonly latencyMs?: number }>
+  readonly testSaved: (id: string) => Promise<{
+    readonly ok: boolean
+    readonly error?: string
+    readonly latencyMs?: number
+  }>
   readonly testClient: (
     clientId: string,
     clientSecret: string,
-  ) => Promise<{ readonly ok: boolean; readonly error?: string; readonly latencyMs?: number }>
+  ) => Promise<{
+    readonly ok: boolean
+    readonly error?: string
+    readonly latencyMs?: number
+  }>
 }
 
 function asTestResult(r: {
@@ -85,6 +91,10 @@ export function buildGoogleInstances(
       calendarFilter: '',
       fromAddress: '',
       fromName: '',
+      refreshToken: '',
+      accountEmail: '',
+      scopes: '',
+      needsReauth: false,
     }),
     mintId: deps.mintId,
     kindOf: () => GOOGLE_BROKER_KIND,

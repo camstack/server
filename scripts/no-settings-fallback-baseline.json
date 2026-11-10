@@ -32,6 +32,9 @@
       "packages/system/src/builtins/alerts/record-kinds.ts:ALERTS_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store",
       "packages/system/src/builtins/calendars/record-kinds.ts:CALENDARS_USER_PREFS_COLLECTION": "a `*_COLLECTION` constant documented as the legacy name, kept for an adoption mapper that has run; not an instance family, delete with the next cleanup of that store"
     },
+    "alexa": {
+      "packages/addon-export-alexa/src/export-alexa.addon.ts:credential-state:tokens": "the legacy LWA token ledger the skill-link migrations read and write through ports in the addon file; delete with the D1014 move of those ports"
+    },
     "permanent": {
       "packages/addon-pipeline/src/stream-broker/rtmp/flv-parser.ts:H265_LEGACY": "an RTMP codec id, not storage",
       "packages/system/src/builtins/keychain/keychain-store.ts:declareCollection": "the keychain owns physical secret tables next to its record kinds; not a configured-thing family",
@@ -39,7 +42,8 @@
       "packages/system/src/builtins/local-auth/record-kinds.ts:LOCAL_AUTH_RECORDS_LEGACY_COLLECTIONS": "collections the local-auth record import skips; not an instance family",
       "packages/system/src/builtins/sqlite-storage/sqlite-settings-backend.ts:LEGACY_SCOPED_KV_COLLECTIONS": "the scoped key-value collections of the settings backend; not an instance family",
       "server/backend/src/api/core/site-location.ts:LEGACY_ADDON_COLLECTION": "one-time read of the site coordinates an old addon store held; not an instance family",
-      "server/backend/src/core/auth/record-kinds.ts:SHARE_VIEW_TOKENS_LEGACY": "pre-D892 share-link rows nothing reads; not an instance family"
+      "server/backend/src/core/auth/record-kinds.ts:SHARE_VIEW_TOKENS_LEGACY": "pre-D892 share-link rows nothing reads; not an instance family",
+      "packages/addon-export-alexa/src/export-alexa.addon.ts:credential-state:snapshotSigningKey": "the addon's own HMAC key for snapshot URLs, one per hub; not a per-instance credential"
     }
   }
 }

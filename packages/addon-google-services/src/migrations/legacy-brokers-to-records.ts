@@ -191,6 +191,7 @@ export async function copyLegacyBrokersToRecords(
         accessToken: oauth.accessToken,
         accessExpiresAt: oauth.accessExpiresAt,
         accountEmail: oauth.accountEmail,
+        scopes: '',
         needsReauth: false,
       })
       const back = await ports.readOauthAccount(primary.id)

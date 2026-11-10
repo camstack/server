@@ -58,8 +58,8 @@ migrates once on boot to `google_001`.
 
 ## When Google refuses the refresh token
 
-`invalid_grant` on a refresh sets `needsReauth` on that account's durable
-state (`oauthAccounts`). While it is set the broker is NOT connected:
+`invalid_grant` on a refresh sets `needsReauth` on that account's `brokers`
+record. While it is set the broker is NOT connected:
 `isConnected` is false, the broker instance's status reports `error` ("Google session
 expired — sign in again"), the Sign in button shows, feature caps skip the
 account, and `ensureAccessToken` fails fast without asking Google again. The
@@ -70,9 +70,24 @@ transition. A successful OAuth callback clears the flag and resolves the alert.
 
 ## Secrets
 
-- Broker settings: `clientSecret` (`.meta({ secret: true })`).
-- Durable state: `oauthAccounts.accounts[id].refreshToken` /
-  `accessToken` via `secretStatePaths`.
+- The account record (`brokers` kind) holds the OAuth client AND the session:
+  `clientSecret` and `refreshToken` are `.meta({ secret: true })` fields, so
+  the row holds a keychain marker; `accountEmail`, `scopes` and `needsReauth`
+  sit beside them. The OAuth callback writes the record before the runtime
+  counts the account as connected; sign-out patches `refreshToken: null`, which
+  removes the keychain value too.
+- The access token is memory only: after a restart the first call refreshes it.
+  A refresh writes the record only when Google rotated the refresh token or
+  changed the scopes.
+- The old `oauthAccounts` durable state is gone (planning#480). Two D987
+  migrations moved it: `google-services/2026-11-10-oauth-accounts-to-records`
+  carries each entry onto its record (the same token, so no new consent; an
+  entry with no record becomes one named after its email; a record holding a
+  newer token keeps it; a failed entry is logged by id and reason and blocks
+  only the drop), then `google-services/2026-11-10-drop-oauth-accounts-state`
+  re-reads every record, releases the state's keychain values and deletes the
+  key. `secretStatePaths` stays declared only so those migrations can resolve
+  the legacy markers.
 
 ## Traps
 
