@@ -1,8 +1,10 @@
 import { defineConfig } from 'vitest/config'
 import swc from 'unplugin-swc'
+import { vitestMaxWorkers } from '../../vitest.workers'
 
 export default defineConfig({
   test: {
+    maxWorkers: vitestMaxWorkers(),
     globals: true,
     root: './src',
     // Use threads pool (default) - inherits env vars

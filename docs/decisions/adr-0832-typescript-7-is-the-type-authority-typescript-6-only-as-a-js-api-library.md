@@ -8,6 +8,7 @@ applies-to:
   - scripts/check-ci-baselines.ts
   - scripts/typecheck-tsgo.ts
   - package.json
+  - scripts/check-no-tsc6-typecheck.ts
 ---
 
 ## Context
@@ -33,9 +34,16 @@ is the type authority: `npm run typecheck`, the pinned-debt guard in Checks, and
 `--update` of `scripts/ci-baseline.json` all use it by default. `typescript` 6
 stays installed only as a JS-API library for tools that cannot yet use the TS 7
 API (ts-morph, typescript-eslint, the AST-only guard scripts, `expo lint`), and
-as the editor's workspace version. `npm run typecheck:tsc6` and
-`check-ci-baselines.ts --engine=tsc` keep the reference engine one command away;
-`typecheck-tsgo.ts --parity` compares both by hand when TypeScript is bumped.
+as the editor's workspace version.
+
+**Amended 2026-11-10: TypeScript 7 is the ONLY type-check engine.** The
+reference path (`npm run typecheck:tsc6`, `check-ci-baselines.ts --engine=tsc`,
+`typecheck-tsgo.ts --parity`, `typecheck:raw`) is removed: agents kept running
+TS 6 `tsc --noEmit` (1.4 GB, 1.5 cores per package) on a machine that was
+already swapping, and a second engine answered a question the gate does not
+ask. A package's own `typecheck` script still SPELLS `tsc --noEmit -p
+tsconfig.spec.json`; it is only the input the tsgo runner rewrites to the TS 7
+binary by absolute path, never run on TS 6 by a gate.
 
 ## Consequences
 
@@ -44,10 +52,12 @@ as the editor's workspace version. `npm run typecheck:tsc6` and
 - tsc 6 is not removed: while any dependency needs its JS API it must stay in
   the lockfile. Upstream tracking (TS 7 JS API, typescript-eslint, ts-morph)
   stays open, re-evaluated at each TS 7.x release.
-- A TypeScript bump must be followed by one `--parity` run before the pins are
-  trusted.
+- A TypeScript bump re-pins with `check-ci-baselines.ts --update` and the
+  diff is reviewed; there is no second engine to compare against.
 
 ## Enforcement
 
 `scripts/check-ci-baselines.ts` (default engine tsgo) in the Checks pinned-debt
 guard, and `scripts/ci/verify-push.sh`, which grades with tsgo.
+`scripts/check-no-tsc6-typecheck.ts` refuses a TS 6 type-check path in
+`scripts/`, `.claude/agents`, `.claude/skills` and package scripts.

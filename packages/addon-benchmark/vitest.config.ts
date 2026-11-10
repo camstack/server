@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { defineConfig } from 'vitest/config'
+import { vitestMaxWorkers } from '../../vitest.workers'
 
 /**
  * Test config, deliberately SEPARATE from `vite.config.ts`.
@@ -26,6 +27,7 @@ export default defineConfig({
     },
   },
   test: {
+    maxWorkers: vitestMaxWorkers(),
     globals: true,
     environment: 'node',
     include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],

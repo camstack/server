@@ -89,6 +89,13 @@ if [[ ! -f packages/nx-plugin/dist/index.js ]]; then
   npm run build -w @camstack/nx-plugin
 fi
 
+# Test load knobs (env overrides). NX_DAEMON passes through untouched to every
+# nx call below; it is printed so a run can be measured with it on and off.
+VERIFY_VITEST_MAX_WORKERS="${VERIFY_VITEST_MAX_WORKERS:-4}"
+VERIFY_LIGHT_PARALLEL="${VERIFY_LIGHT_PARALLEL:-3}"
+if [[ -n "${NX_DAEMON:-}" ]]; then export NX_DAEMON; fi
+echo "verify:push: NX_DAEMON=${NX_DAEMON:-<nx default>}"
+
 TC_RESULT="skipped"
 TEST_RESULT="skipped"
 SCRIPTS_RESULT="skipped"
@@ -128,9 +135,14 @@ else
     RC=1
   fi
 
-  echo "verify:push: tests (affected)"
-  if NODE_OPTIONS="--max-old-space-size=3072" VITEST_MAX_WORKERS=2 LIGHT_PARALLEL=2 \
-    scripts/ci/test-affected.sh --files "$CHANGED"; then
+  # Through the machine-wide test slot with priority (nice 0, jumps waiting
+  # agents): agents are capped at 3 workers under nice 15 there, so the batch
+  # gate can take more. VERIFY_VITEST_MAX_WORKERS / VERIFY_LIGHT_PARALLEL
+  # override (CI keeps its own 2/2 in ci.yml).
+  echo "verify:push: tests (affected) — workers ${VERIFY_VITEST_MAX_WORKERS}, light parallel ${VERIFY_LIGHT_PARALLEL}"
+  if NODE_OPTIONS="--max-old-space-size=3072" VITEST_MAX_WORKERS="$VERIFY_VITEST_MAX_WORKERS" \
+    LIGHT_PARALLEL="$VERIFY_LIGHT_PARALLEL" \
+    scripts/ci/test-slot.sh --priority -- scripts/ci/test-affected.sh --files "$CHANGED"; then
     TEST_RESULT="ok"
   else
     TEST_RESULT="RED"
@@ -162,11 +174,22 @@ fi
 # runs on any affected change; the dist half reads packages/system/dist, which
 # the build above refreshed only when types or system moved (TC_DIRS=ALL), so
 # it runs then.
+# Test-load and single-engine guards (~1 s, no build needed): every
+# vitest.config.ts takes the shared worker default, and no TS 6 type-check
+# path comes back.
+echo "verify:push: test-load guards"
+if npx tsx scripts/check-vitest-max-workers.ts && npx tsx scripts/check-no-tsc6-typecheck.ts; then
+  GUARDS_RESULT="ok"
+else
+  GUARDS_RESULT="RED"
+  RC=1
+fi
+
 if [[ -n "$TC_DIRS" ]]; then
   if [[ "$TC_DIRS" == "ALL" ]]; then GUARD_MODE=all; else GUARD_MODE=source; fi
   echo "verify:push: barrel guards ($GUARD_MODE)"
   if scripts/ci/run-barrel-guards.sh "$GUARD_MODE"; then
-    GUARDS_RESULT="ok"
+    if [[ "$GUARDS_RESULT" != "RED" ]]; then GUARDS_RESULT="ok"; fi
   else
     GUARDS_RESULT="RED"
     RC=1
@@ -178,7 +201,8 @@ fi
 # branch is skipped and the gate prints `scripts: skipped`.
 if [[ ",${CHANGED}," == *",scripts/"* ]]; then
   echo "verify:push: repo scripts tests"
-  if NODE_OPTIONS="--max-old-space-size=3072" npm run test:scripts; then
+  if NODE_OPTIONS="--max-old-space-size=3072" VITEST_MAX_WORKERS="$VERIFY_VITEST_MAX_WORKERS" \
+    scripts/ci/test-slot.sh --priority -- npm run test:scripts; then
     SCRIPTS_RESULT="ok"
   else
     SCRIPTS_RESULT="RED"

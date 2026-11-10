@@ -5,30 +5,26 @@
  * Runs every workspace project's OWN `typecheck` script with `tsc` swapped for
  * `tsgo --checkers 1`, splits the diagnostics exactly as
  * `check-ci-baselines.ts typecheck` does, and grades them against the same
- * pins in `scripts/ci-baseline.json`. It does NOT re-pin: `npm run typecheck`
- * (tsc 6) stays the reference and the only `--update` path.
+ * pins in `scripts/ci-baseline.json`. It does NOT re-pin: that is
+ * `check-ci-baselines.ts --update`. TypeScript 7 is the only type-check engine
+ * (D832); there is no tsc 6 reference to compare against.
  *
  * Why `--checkers 1`: tsgo's default of 4 parallel checkers each hold their own
- * copy of the checker state, so it uses MORE memory than tsc 6 on the big
+ * copy of the checker state, so it uses MORE memory than one checker on the big
  * projects; one checker is the RAM floor (P1, docs/design/2026-10-09-ts7-
  * transition-plan.md). Override with `TSGO_CHECKERS`.
  *
- * `--parity`: also run each project's original `tsc` script and fail when the
- * normalized error sets (`file(line,col): TSxxxx`) differ. Message text is
- * ignored (union-order noise). Grading against the baseline still runs.
- *
- * Usage: tsx scripts/typecheck-tsgo.ts [--parity] [project-dir-basename …]
+ * Usage: tsx scripts/typecheck-tsgo.ts [project-dir-basename …]
+ *        npm run typecheck:pkg -- <project-dir-basename …>
  */
 import { spawn, spawnSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 import {
-  diffErrorSets,
   gradeAgainstBaseline,
   isTsgoVersionOutput,
   listTypecheckProjects,
-  normalizeErrorSet,
   resolveTsgoBinary,
   type TypecheckBaseline,
   toTsgoCommand,
@@ -71,17 +67,18 @@ function runShell(command: string, cwd: string): Promise<ShellResult> {
   })
 }
 
-function parseArgs(argv: readonly string[]): {
-  readonly parity: boolean
-  readonly only: ReadonlySet<string>
-} {
+/**
+ * Project directory basenames to check. A path is accepted too
+ * (`packages/addon-pipeline/`, `server/backend`): its last segment names it.
+ */
+function parseArgs(argv: readonly string[]): ReadonlySet<string> {
   const only = new Set<string>()
-  let parity = false
   for (const arg of argv) {
-    if (arg === '--parity') parity = true
-    else if (!arg.startsWith('--')) only.add(arg)
+    if (arg.startsWith('--')) continue
+    const base = path.basename(arg.replace(/\/+$/, ''))
+    if (base.length > 0) only.add(base)
   }
-  return { parity, only }
+  return only
 }
 
 async function main(): Promise<number> {
@@ -98,10 +95,16 @@ async function main(): Promise<number> {
     return 2
   }
 
-  const { parity, only } = parseArgs(process.argv.slice(2))
+  const only = parseArgs(process.argv.slice(2))
   const baseline = (readJson(path.join(ROOT, 'scripts', 'ci-baseline.json')) ??
     {}) as TypecheckBaseline
   const projects = listTypecheckProjects(ROOT, only)
+  if (only.size > 0 && projects.length < only.size) {
+    const found = new Set(projects.map((p) => path.basename(p.dir)))
+    const missing = [...only].filter((name) => !found.has(name))
+    console.error(`no typecheck project named: ${missing.join(', ')} (want a packages/<dir> or server/backend basename)`)
+    return 2
+  }
   const failures: string[] = []
   const started = Date.now()
   const tsgoPrefix = `${tsgoBin} --checkers ${CHECKERS}`
@@ -137,25 +140,10 @@ async function main(): Promise<number> {
     const worse = split === null ? [] : gradeAgainstBaseline(project.name, split, baseline)
     failures.push(...worse)
 
-    if (parity) {
-      const tsc = await runShell(project.script, project.dir)
-      const diff = diffErrorSets(normalizeErrorSet(tsc.output), normalizeErrorSet(tsgo.output))
-      if (diff.onlyInLeft.length > 0 || diff.onlyInRight.length > 0) {
-        const lines = [
-          `${project.name}: tsc↔tsgo error-set mismatch`,
-          ...diff.onlyInLeft.map((e) => `  only-tsc:  ${e}`),
-          ...diff.onlyInRight.map((e) => `  only-tsgo: ${e}`),
-        ]
-        failures.push(lines.join('\n'))
-        console.log(`✗ ${project.name} (${seconds}s) — parity mismatch`)
-        return
-      }
-    }
-
     const total =
       split === null ? 0 : split.production + [...split.specs.values()].reduce((a, b) => a + b, 0)
     console.log(
-      `${worse.length > 0 ? '✗' : '✓'} ${project.name} (${seconds}s, ${total} pinned-or-new error(s)${parity ? ', parity ok' : ''})`,
+      `${worse.length > 0 ? '✗' : '✓'} ${project.name} (${seconds}s, ${total} pinned-or-new error(s))`,
     )
   }
   await Promise.all(Array.from({ length: Math.min(jobs, projects.length) }, worker))
@@ -163,13 +151,13 @@ async function main(): Promise<number> {
   const elapsed = ((Date.now() - started) / 1000).toFixed(0)
   if (failures.length > 0) {
     console.error(
-      `\ntsgo typecheck: ${failures.length} failure(s) (${elapsed}s)${parity ? ' [parity]' : ''}:`,
+      `\ntsgo typecheck: ${failures.length} failure(s) (${elapsed}s):`,
     )
     for (const f of failures) console.error(`  ${f}`)
     return 1
   }
   console.log(
-    `\ntsgo typecheck: ${projects.length} project(s) within baseline (${elapsed}s)${parity ? ', parity clean' : ''}`,
+    `\ntsgo typecheck: ${projects.length} project(s) within baseline (${elapsed}s)`,
   )
   return 0
 }

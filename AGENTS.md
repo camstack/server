@@ -59,9 +59,11 @@ npm run dev:full                                  # watch all + server + admin-u
 npm run serve -w server/backend                   # server only (tsx watch)
 npm run build                                     # build all
 npm run codegen                                   # regenerate cap routers + types + DeviceProxy
-npm run typecheck                                 # packages and specs, against the pinned spec debt (D695)
-npm run typecheck:raw                             # raw nx sweep (red while pinned spec debt exists)
-npm run test                                      # all packages
+npm run typecheck                                 # tsgo (the only engine, D832): packages and specs vs the pins (D695)
+npm run typecheck:pkg -- <dir>…                   # tsgo on the packages you touched
+npm run test:related -- <files>…                  # the specs related to your change, in a machine-wide test slot
+npm run test:pkg -- <pkg>                         # one package's suite, in a test slot (only when asked)
+npm run test                                      # all packages (verify:push / CI territory)
 npm run lint && npm run format:check
 npm run docs:check                                # docs generated + no dead paths
 ```

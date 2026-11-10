@@ -213,6 +213,8 @@ jobs:
             scripts/check-retention-settings-consumed.ts \
             scripts/check-prune-settings-consumed.ts \
             scripts/check-orphan-reclaimers.ts \
+            scripts/check-vitest-max-workers.ts \
+            scripts/check-no-tsc6-typecheck.ts \
             scripts/check-object-media-scope-required.ts \
             scripts/check-event-media-generation-url.ts \
             scripts/check-runner-barrel-free.ts \
@@ -395,7 +397,7 @@ jobs:
       # steps: running those as well would just be a guaranteed red.
       #
       # SPECS ARE TYPECHECKED HERE TOO (D695, 2026-10-01). A package with specs
-      # runs `tsc -p tsconfig.spec.json` as its `typecheck` — one program over
+      # runs `-p tsconfig.spec.json` as its `typecheck` — one program over
       # code and specs — and the guard splits the diagnostics by file: code in
       # `typecheck` (held at zero), specs in `typecheck-specs` (pinned per file,
       # 1 762 on the day it started). One program instead of a second target
@@ -407,9 +409,9 @@ jobs:
       # will say the guard is unenforced.
       #
       # Graded on TypeScript 7 (tsgo --checkers 1) since the 2026-10-13 flip
-      # (D832, docs/design/2026-10-09-ts7-transition-plan.md): `check-ci-baselines.ts`
-      # defaults to tsgo; `--engine=tsc` is the tsc 6 reference and
-      # `typecheck-tsgo.ts --parity` compares both by hand when a TS bump needs it.
+      # (D832, docs/design/2026-10-09-ts7-transition-plan.md), the only engine
+      # since 2026-11-10: the tsc 6 reference (`--engine`, `typecheck:tsc6`,
+      # `--parity`) is gone, and `check-no-tsc6-typecheck.ts` keeps it out.
       - name: Pinned-debt guard (typecheck, oxlint, format, scripts/lint-double-cast.sh)
         run: scripts/ci/mem-step.sh pinned-debt 12000 -- npx tsx scripts/check-ci-baselines.ts
 

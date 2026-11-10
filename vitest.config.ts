@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
+import { vitestMaxWorkers } from './vitest.workers'
 
 const repoRoot = path.dirname(fileURLToPath(import.meta.url))
 
@@ -47,6 +48,7 @@ export default defineConfig({
     ],
   },
   test: {
+    maxWorkers: vitestMaxWorkers(),
     globals: true,
     environment: isAdminUiRun ? 'jsdom' : 'node',
     /**

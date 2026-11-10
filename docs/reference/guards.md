@@ -4,12 +4,12 @@
 
 # Guards
 
-234 repository guards: 229 in `scripts/`,
+236 repository guards: 231 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (224)
+## Enforced by CI checks (226)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -159,6 +159,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-system-package.ts` | The old system package is gone: its source ships as `@camstack/server/system`. |
 | `scripts/check-no-third-party-products.ts` | Third-party product names — name the mechanism. |
 | `scripts/check-no-token-file-lookup.ts` | No tool looks for a specific token file: the `camstack login` session is the credential. |
+| `scripts/check-no-tsc6-typecheck.ts` | TypeScript 7 (tsgo) is the only type-check engine (D832). No TS 6 type-check path comes back. |
 | `scripts/check-notification-tap-targets.ts` | A notification's tap URL lands on a page that PARSES it. |
 | `scripts/check-npm-orphan-packages.ts` | A published package whose source left the workspace must be DEPRECATED, not merely forgotten. |
 | `scripts/check-object-media-scope-required.ts` | an `object` media read MUST require NcEventMediaScope. |
@@ -238,6 +239,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-viewer-link-builder-is-the-only-source.ts` | Viewer-link guard — **`buildViewerLink` (`@camstack/types` `viewer-link-url.ts`) is the only place a link to a VIEWER page, or to the CamStack app link domain, is assembled.** (D709) ## The failure this catches The address a notification… |
 | `scripts/check-viewer-pin-resolves.ts` | Viewer ship-chain guard — refuses a `camstack` submodule pointer that is not a viewer commit. |
 | `scripts/check-viewer-web-build.ts` | Viewer ship-chain guard — refuses a commit whose EMBEDDED WEB VIEWER lags the viewer version the repository pins. |
+| `scripts/check-vitest-max-workers.ts` | Every `vitest.config.ts` takes the ONE shared worker default. |
 | `scripts/lint-double-cast.sh` | — |
 
 ## Enforced as package tests (5)

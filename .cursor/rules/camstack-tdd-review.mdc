@@ -18,9 +18,12 @@ Load `camstack-workflow` first. Pure implementation goes to project agents
    again — then restore. A suite that only passes because a fake supplied the
    missing value is not proof.
 4. Specs live next to sources (`__tests__/*.spec.ts`). Run:
-   - `npx vitest run <spec>` / `npm run test -w <pkg>` / `npm run test:scripts`
-5. Before push: `npm run verify:push` GREEN (TS7 pins + affected tests). A
-   local `tsc` is not the CI gate. **Viewer (`camstack/`):** before every
+   - `npm run test:related -- <changed files> <specs you edited>` (a
+     machine-wide test slot) and `npm run typecheck:pkg -- <dir>` (tsgo).
+     Never a TypeScript 6
+  type check; never a full suite unless the brief asks.
+5. Before push: `npm run verify:push` GREEN (TS7 pins + affected tests),
+   run by the coordinator once per batch. A related run is not the CI gate. **Viewer (`camstack/`):** before every
    commit and push, `npm run verify:push` GREEN in that checkout (TypeScript
    Check gates + `ui:check` on changed UI files) — `camstack-ui-viewer`.
 

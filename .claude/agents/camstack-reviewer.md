@@ -41,7 +41,8 @@ commit messages, not the worker's report.
    it FAIL if the fix were reverted? Fakes that pre-supply the value production
    must fetch, specs that assert the implementation instead of the contract,
    and branches (from step 2) with no spec at all are findings. You may run
-   `npx vitest run <spec>` and, to prove a spec discriminates, a temporary
+   `npm run test:related -- <spec>` (one machine-wide test slot; never a full
+   suite, never TS 6 `tsc`) and, to prove a spec discriminates, a temporary
    revert in a scratch copy — never modify the worktree under review.
 
 5. **Rules.** AGENTS.md: no casts (`as any`, `as unknown as`, `as never`),

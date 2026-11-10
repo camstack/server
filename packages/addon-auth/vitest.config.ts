@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config'
+import { vitestMaxWorkers } from '../../vitest.workers'
 
 /**
  * Vitest config for the `@camstack/addon-auth` bundle.
@@ -10,6 +11,7 @@ import { defineConfig } from 'vitest/config'
  */
 export default defineConfig({
   test: {
+    maxWorkers: vitestMaxWorkers(),
     globals: true,
     environment: 'node',
     exclude: ['**/node_modules/**', '**/dist/**'],

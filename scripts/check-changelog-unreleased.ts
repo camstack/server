@@ -7,8 +7,8 @@
  * `publish-*` tag (see "Find last publish tag" in
  * .github/workflows/publish-packages.yml), and "own files" is the same
  * `directOwners` the workflow's affected detection runs. Changes that say
- * nothing to an operator do not count: specs, the changelog and README
- * themselves, and the agent notes.
+ * nothing to an operator do not count: specs and their vitest configs, the
+ * changelog and README themselves, and the agent notes.
  *
  * A second check: every entry line a CHANGELOG.md gained since the base must sit
  * under `## [Unreleased]` — a hunk cherry-picked across a publish lands under
@@ -39,13 +39,19 @@ export interface MissingEntry {
 
 const IGNORED_NAMES = new Set(['CHANGELOG.md', 'README.md', 'AGENTS.md', 'CLAUDE.md'])
 const SPEC_PATTERN = /\.(spec|test)\.[cm]?[jt]sx?$/
+/**
+ * A vitest config wires the specs and builds nothing that ships (publish-scope
+ * already keeps it out of the bundle-config set, #332). The shared worker
+ * default touched all of them at once (2026-11-10) — not an operator change.
+ */
+const VITEST_CONFIG_PATTERN = /^vitest(?:\.[a-z0-9-]+)?\.config\.[cm]?[jt]s$/
 
 /** True when a package-relative path is a change an operator could notice. */
 export function isUserVisibleChange(relativePath: string): boolean {
   const segments = relativePath.split('/')
   if (segments.includes('__tests__') || segments.includes('docs')) return false
   const base = segments[segments.length - 1] ?? ''
-  if (IGNORED_NAMES.has(base) || SPEC_PATTERN.test(base)) return false
+  if (IGNORED_NAMES.has(base) || SPEC_PATTERN.test(base) || VITEST_CONFIG_PATTERN.test(base)) return false
   return true
 }
 

@@ -9,6 +9,9 @@ export interface CheckCommand {
 
 const DENY = ['gh workflow run checks.yml', 'workflow run checks', 'npm publish', 'docker ', 'ssh ']
 
+/** Files `vitest related` can trace to a spec. */
+const RELATED_CODE = /^(?:packages|server|scripts)\/.*\.[cm]?[jt]sx?$/
+
 export function isDeniedCommand(command: string): boolean {
   const lower = command.toLowerCase()
   return DENY.some((d) => lower.includes(d.trim().toLowerCase()))
@@ -48,12 +51,22 @@ export function affectedChecks(
     }
   }
 
-  for (const pkg of packages) {
-    add(`test:${pkg}`, `npm test -w packages/${pkg}`, `Tests for changed package ${pkg}`)
+  // The specs related to the changed code, through the machine-wide test slot;
+  // full package suites belong to verify:push, once per batch.
+  const codePaths = paths.filter((p) => RELATED_CODE.test(p))
+  if (codePaths.length > 0) {
     add(
-      `typecheck:${pkg}`,
-      `npm run typecheck -w packages/${pkg}`,
-      `Typecheck for changed package ${pkg}`,
+      'test:related',
+      `npm run test:related -- ${codePaths.join(' ')}`,
+      'Specs related to the changed code (one test slot)',
+    )
+  }
+  if (packages.size > 0) {
+    const dirs = [...packages].sort()
+    add(
+      'typecheck:pkg',
+      `npm run typecheck:pkg -- ${dirs.join(' ')}`,
+      'tsgo typecheck of the changed packages, graded against the pins',
     )
   }
 

@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config'
+import { vitestMaxWorkers } from '../../vitest.workers'
 
 /**
  * Vitest config for `@camstack/werift-turn-fix`.
@@ -11,6 +12,7 @@ import { defineConfig } from 'vitest/config'
  */
 export default defineConfig({
   test: {
+    maxWorkers: vitestMaxWorkers(),
     globals: true,
     testTimeout: 30_000,
     pool: 'forks',

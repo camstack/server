@@ -6,11 +6,12 @@
  * diagnostics as tsc 6 at ~1/8 of the wall time (measured 2026-10-09,
  * docs/design/2026-10-09-ci-build-memory-and-ts7.md). It has no JS API, so
  * tooling that imports `typescript` as a library (eslint, ts-morph, tsup)
- * stays on 6 until ~7.1. Emit and typecheck scripts call the binary via
- * `scripts/tsc7` or this rewriter.
+ * keeps the `typescript` 6 package as a LIBRARY until ~7.1 — never as a type
+ * checker: TypeScript 7 is the only type-check engine (D832). Emit and
+ * typecheck scripts call the binary via `scripts/tsc7` or this rewriter.
  *
- * Default checkers: 1. tsgo's default of 4 holds a checker copy per thread and
- * uses MORE RAM than tsc 6; `--checkers 1` is the RAM floor (P1). Override with
+ * Default checkers: 1. tsgo's default of 4 holds a checker copy per thread;
+ * `--checkers 1` is the RAM floor (P1). Override with
  * `TSGO_CHECKERS`. Binary: `typescript-7` npm alias when present, else the
  * `@typescript/native-preview` `tsgo` shim.
  */
@@ -51,50 +52,6 @@ export function gradeAgainstBaseline(
     if (n > pinned) failures.push(`${key}: ${n} error(s), pinned ${pinned}`)
   }
   return failures
-}
-
-/**
- * Normalized diagnostic identity for tsc↔tsgo parity.
- *
- * Entry form: `file(line,col): TSxxxx` — message text is dropped because TS 7
- * can reorder union members in the message without changing the diagnostic
- * (docs/design/2026-10-09-ts7-transition-plan.md §4.1).
- */
-const FLAT_DIAGNOSTIC = /^(\S[^\n]*?)\((\d+),(\d+)\): error (TS\d+):/gm
-const PRETTY_DIAGNOSTIC = /^(\S[^\n]*?):(\d+):(\d+) - error (TS\d+):/gm
-
-export function normalizeErrorSet(output: string): ReadonlySet<string> {
-  const out = new Set<string>()
-  for (const pattern of [FLAT_DIAGNOSTIC, PRETTY_DIAGNOSTIC]) {
-    pattern.lastIndex = 0
-    for (const match of output.matchAll(pattern)) {
-      const file = match[1]
-      const line = match[2]
-      const col = match[3]
-      const code = match[4]
-      if (file === undefined || line === undefined || col === undefined || code === undefined) {
-        continue
-      }
-      out.add(`${file}(${line},${col}): ${code}`)
-    }
-  }
-  return out
-}
-
-export interface ErrorSetDiff {
-  readonly onlyInLeft: readonly string[]
-  readonly onlyInRight: readonly string[]
-}
-
-/** Symmetric difference of two normalized error sets, sorted for stable logs. */
-export function diffErrorSets(left: ReadonlySet<string>, right: ReadonlySet<string>): ErrorSetDiff {
-  const onlyInLeft: string[] = []
-  const onlyInRight: string[] = []
-  for (const e of left) if (!right.has(e)) onlyInLeft.push(e)
-  for (const e of right) if (!left.has(e)) onlyInRight.push(e)
-  onlyInLeft.sort()
-  onlyInRight.sort()
-  return { onlyInLeft, onlyInRight }
 }
 
 export interface TypecheckProject {

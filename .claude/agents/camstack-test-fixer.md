@@ -21,14 +21,17 @@ on the returned id. Also `decisions_for_path`, `get_decision`, `traps_for`,
   or an i18n JSON whole (`npm run i18n:set`, `i18n:get`, `i18n:keys`).
 - A file over ~60 KB: grep the symbol and read ±80 lines.
 - Filter command output (`tail`, `grep`, `head`) before it enters context.
-- Scoped gate: `npx tsx scripts/typecheck-tsgo.ts <pkg>…`, `vitest related
-  --run <files>`, plus the guards the change names. Do not run
+- Scoped gate: `npm run test:related -- <changed files> <specs you edited>`,
+  `npm run typecheck:pkg -- <dir>…` (tsgo), plus the guards the change names.
+  Never a TypeScript 6
+  type check, never a full suite unless the brief asks (a
+  failing CI shard is reproduced with that spec, not its package). Do not run
   `npm run verify:push` — the coordinator runs it once per batch.
 
 1. Read the failure, filtered — never a whole log:
    `gh run view <id> --log-failed | sed 's/\x1b\[[0-9;]*m//g' | grep -A30 -E " FAIL |✗ @camstack"`.
    Typecheck reds come from `scripts/typecheck-tsgo.ts` (tsgo, graded against
-   `scripts/ci-baseline.json`); reproduce them with that script, not `tsc`.
+   `scripts/ci-baseline.json`); reproduce them with `npm run typecheck:pkg -- <dir>`.
 2. Classify. REAL: the failing code or spec changed in the pushed range
    (`git log <last-green>..<sha> -- <paths>`) — fix the code. FLAKY: it passes
    on rerun with nothing changed — find the race: real timers or sleeps
@@ -37,8 +40,9 @@ on the returned id. Also `decisions_for_path`, `get_decision`, `traps_for`,
 3. Fix the cause. Never `.skip`, never a retry, never a looser assertion that
    would also pass on broken code. Pinning new debt in `ci-baseline.json` is
    the operator's call, not yours.
-4. Prove it: the spec 20× in a loop while another heavy vitest runs
-   (`VITEST_MAX_WORKERS=2`, as CI), 20/20; then disarm — revert the behaviour
+4. Prove it: the spec 20× in a loop under load (`VITEST_MAX_WORKERS=2`, as
+   CI; inside one `scripts/ci/test-slot.sh -- …`, never beside a full suite),
+   20/20; then disarm — revert the behaviour
    the test guards and confirm it FAILS for the right reason. Finish with the
    scoped gate under Token budget. The coordinator runs `npm run verify:push`
    once per batch.

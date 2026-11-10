@@ -34,19 +34,20 @@ from code `main.ts` loads at runtime.
 ## 2. Test and build — what counts as evidence
 
 ```bash
-npx vitest run <path/to/spec>                 # the spec you touched, fast
-npm run test -w <package-path>                # the package
-npm run typecheck                             # tsgo / TS 7 (D832), code + specs vs the pinned debt (D695): red only on something NEW; typecheck:tsc6 = reference
+npm run test:related -- <changed files> <specs>   # your change, in a machine-wide test slot
+npm run test:pkg -- <package>                 # the package suite — only when the brief asks
+npm run typecheck:pkg -- <dir>…               # tsgo on the packages you touched, vs the pins
+npm run typecheck                             # tsgo / TS 7 (D832), the only engine: code + specs vs the pinned debt (D695); red only on something NEW
 npm run build -w packages/types && npm run build -w packages/system   # then the consumers
 npm run build                                 # everything (nx run-many)
 ```
 
-- **The backend typecheck is not verification.** `npm run typecheck -w
-  server/backend` resolves `@camstack/types` / `@camstack/server/system` from their
+- **The backend typecheck is not verification.** `npm run typecheck:pkg --
+  backend` resolves `@camstack/types` / `@camstack/server/system` from their
   BUILT `dist/`, so a signature you changed in source is invisible to it until
   you rebuild them. After touching `types` or `system`: build them first, then
   typecheck or build the consumers. tsup/vite builds do not type-check either —
-  run the package's `typecheck` as well.
+  run `npm run typecheck:pkg -- <dir>` as well.
 - **A green suite is not proof.** When you fix a gate, remove the fix and
   confirm the test fails. Twice here a fake supplied the value production
   forgot to fetch.

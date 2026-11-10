@@ -25,7 +25,7 @@ The canonical PUBLIC text of this skill is `packages/develop/skills/camstack-add
 ADDON DONE — <addonId>
 placement:  <builtin | packages/addon-…>, manifest entries: <ids>
 wiring:     manifest + vite entries + index re-export (+ system index for a builtin); npx tsx scripts/check-addon-entries.ts — <ok>
-checks:     npm run typecheck -w packages/<pkg> — <ok>; tests — <result>; build emitted <dist path>
+checks:     npm run typecheck:pkg -- <pkg> — <ok>; npm run test:related -- <files> — <result>; build emitted <dist path>
 deployed:   <hub | node ids> — fresh runner: <pid / boot line>; caps registered: <listCapabilities result>
 proved:     <the call / log line / behaviour observed on the node>
 docs:       camstack-docs gate — <files | none needed: reason>

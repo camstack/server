@@ -72,11 +72,28 @@ architecture page.
 - A file over ~60 KB: grep the symbol and read ±80 lines.
 - Filter command output (`tail`, `grep`, `head`) before it enters context.
 
-**Scoped gate.** A worker runs `npx tsx scripts/typecheck-tsgo.ts <pkg>…` on
-packages it touched, `vitest related --run <files>`, `npm run ui:check` on
-touched UI, the guards the change names, and `npm run codegen` when a
-`*.cap.ts` changed. The coordinator runs `npm run verify:push` once per batch.
-A worker does not.
+**Scoped gate — the one test rule.** During the work and at the end, a worker
+runs `npm run test:related -- <changed files> <specs it edited>` and
+`npm run typecheck:pkg -- <dir>…` (tsgo) on the packages it touched, plus
+`npm run ui:check` on touched UI, the guards the change names, and
+`npm run codegen` when a `*.cap.ts` changed. A worker never runs a TypeScript 6 type check (tsgo is the only engine, D832; guard
+`check-no-tsc6-typecheck`) and never a full suite (`npm run test`,
+`npx vitest run` on a package, `test:pkg`) unless its brief asks. Full suites
+belong to `npm run verify:push`, which the coordinator runs once per batch; a
+worker does not.
+
+**The machine is shared.** `test:related` and `test:pkg` run inside a
+machine-wide test slot (`scripts/ci/test-slot.sh`: 2 slots, `nice -n 15`,
+3 vitest workers; `verify:push` takes one at nice 0 with priority). A run
+that prints "waiting" is queued behind another agent: wait, never bypass it
+with a bare `npx vitest`. Every `vitest.config.ts` defaults to
+`VITEST_MAX_WORKERS ?? 3` (`vitest.workers.ts`; guard
+`check-vitest-max-workers`).
+
+**A new worktree:** `scripts/worktree-setup.sh <name> <branch>` (from
+`origin/main`, the clone's `user.email`, `node_modules` symlinked to main —
+never `npm install` in a worktree). `scripts/worktree-setup.sh --prune` lists
+stray directories in the worktree folder; it never deletes them.
 
 Cursor also has `.cursor/rules/camstack-model-routing.mdc` (always on).
 
@@ -172,9 +189,11 @@ top of it:
   supplied the value production forgot to fetch).
 - Specs live next to their package's sources (`__tests__/*.spec.ts`), never
   in a shared bucket. Run them:
-  - one spec: `npx vitest run <path/to/spec.ts>`;
-  - a package: `npm run test -w <package-path>`;
-  - repo scripts and guards: `npm run test:scripts`.
+  - your change: `npm run test:related -- <changed files> <specs you edited>`
+    (the specs that import them, per owning package, in a test slot);
+  - one package's suite, only when the brief asks: `npm run test:pkg -- <pkg>`;
+  - repo scripts and guards: `npm run test:related -- scripts/<file>` (the
+    whole `npm run test:scripts` is verify:push's).
   - **real-cluster specs** (several Moleculer brokers over real TCP/TLS) are
     named `*.cluster.spec.ts`, are excluded from `npm run test` and the
     per-push CI, and run in the `test:cluster` lane (`npm run test:cluster`;
@@ -198,7 +217,11 @@ here:
   (adoption, adoption + scan, hub, manual, …) checked on the dev hub before it
   is labelled `status: to test`.
 
-- **Test output** of the suites you touched, run fresh, with the counts.
+- **Test output**, run fresh, with the counts. A worker shows
+  `npm run test:related` over its changed files and edited specs, plus
+  `npm run typecheck:pkg` (tsgo) on the packages it touched — and the disarm
+  run below. The full suites are the coordinator's `npm run verify:push`,
+  once per batch: that is the gate, the related run is the worker's evidence.
 - **Build output** of the real build (`camstack-server-change` §2).
 - **Live proof** on the running system when behaviour changed
   (`camstack-diagnose`): say WHERE it ran (node, process) and prove it by
@@ -265,7 +288,7 @@ The index is `../planning/sessions/sessions.md`; do not append to it.
   (`scripts/typecheck-tsgo.ts`), the affected tests in CI's lanes and
   workers (`scripts/ci/test-affected.sh`), `test:scripts` when
   `scripts/` moved, the addon footprint guard, and the D28 barrel guards
-  (`scripts/ci/run-barrel-guards.sh`, the list CI's guards lane calls too). A local `tsc`, `nx affected -t typecheck` or one green
+  (`scripts/ci/run-barrel-guards.sh`, the list CI's guards lane calls too). A related run, a per-package tsgo check or one green
   spec is NOT the CI gate — that gap turned 9 of 13 red runs of 2026-10-12/13
   into "pinned-or-new error(s)" nobody had seen. RED means you do not push.
 - **Viewer (`camstack/` submodule) — same rule, before every commit and

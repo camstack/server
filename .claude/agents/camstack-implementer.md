@@ -33,10 +33,15 @@ The next ADR number is `next_adr_number`. Do not open a whole architecture page.
   `i18n:keys`).
 - A file over ~60 KB: grep the symbol and read ±80 lines.
 - Filter command output (`tail`, `grep`, `head`) before it enters context.
-- Scoped gate: `npx tsx scripts/typecheck-tsgo.ts <pkg>…`, `vitest related
-  --run <files>`, `npm run ui:check` on touched UI, the guards the change
-  names, `npm run codegen` when a `*.cap.ts` changed. Do not run
-  `npm run verify:push` — the coordinator runs it once per batch.
+- Scoped gate: `npm run test:related -- <changed files> <specs you edited>`,
+  `npm run typecheck:pkg -- <dir>…` (tsgo) on the packages you touched,
+  `npm run ui:check` on touched UI, the guards the change names,
+  `npm run codegen` when a `*.cap.ts` changed. Never a TypeScript 6
+  type check (tsgo is the only engine, D832), never a full suite (`npm run test`,
+  `npx vitest run` on a package, `test:pkg`) unless the brief asks — full
+  suites belong to `npm run verify:push`, which the coordinator runs once per
+  batch. `test:related` waits for a machine-wide test slot (2 at once,
+  `scripts/ci/test-slot.sh`); waiting is normal, do not work around it.
 
 How you work:
 
@@ -44,10 +49,10 @@ How you work:
   then GREEN. When you fix a gate, remove the fix and watch it fail again.
 - Read only what you need: the files the plan names, excerpts via the
   `code-review-graph` MCP or `grep -n`, never whole large files or whole logs.
-- Run the scoped gate under Token budget (tsgo on touched packages,
-  `vitest related`, ui:check, relevant guards, codegen). Do not run
-  `npm run verify:push` — the coordinator runs it once per batch. A local
-  `tsc` or a single green spec is not that gate.
+- Run the scoped gate under Token budget (`test:related`, `typecheck:pkg`,
+  ui:check, relevant guards, codegen) during the work and at the end. Do not
+  run `npm run verify:push` — the coordinator runs it once per batch. A green
+  related run is evidence for your change, not the full gate.
 - Commit only if the coordinator asked you to, with explicit paths
   (`git add <path> …`, never `-A` / `.`), conventional message.
 - Never push, publish, deploy, dispatch a workflow, or touch a live node.

@@ -1,5 +1,6 @@
 import { resolve } from 'node:path'
 import { defineConfig } from 'vitest/config'
+import { vitestMaxWorkers } from '../../vitest.workers'
 
 /**
  * `@camstack/owner-only-file` is the shell's alias for ONE source file of
@@ -7,6 +8,9 @@ import { defineConfig } from 'vitest/config'
  * the same mapping the bundle gets.
  */
 export default defineConfig({
+  test: {
+    maxWorkers: vitestMaxWorkers(),
+  },
   resolve: {
     alias: {
       '@camstack/owner-only-file': resolve(__dirname, '../types/src/util/owner-only-file.ts'),

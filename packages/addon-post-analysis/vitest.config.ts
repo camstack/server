@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config'
+import { vitestMaxWorkers } from '../../vitest.workers'
 
 /**
  * Vitest config for `@camstack/addon-post-analysis`.
@@ -17,6 +18,7 @@ import { defineConfig } from 'vitest/config'
  */
 export default defineConfig({
   test: {
+    maxWorkers: vitestMaxWorkers(),
     globals: true,
     environment: 'node',
     testTimeout: 20_000,

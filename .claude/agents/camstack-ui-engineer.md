@@ -29,8 +29,10 @@ a large component. Do not open a whole architecture page.
 - A file over ~60 KB (`config-form-field.tsx`, a large `*.cap.ts`): grep the
   symbol and read ±80 lines.
 - Filter command output (`tail`, `grep`, `head`) before it enters context.
-- Scoped gate: `npm run ui:check -- <files>`, the package tests, and
-  `npx tsx scripts/typecheck-tsgo.ts` on touched packages. Do not run
+- Scoped gate: `npm run ui:check -- <files>`,
+  `npm run test:related -- <changed files> <specs you edited>`, and
+  `npm run typecheck:pkg -- <dir>…` (tsgo) on touched packages. Never a TypeScript 6
+  type check, never a full package suite unless the brief asks. Do not run
   `npm run verify:push` — the coordinator runs it once per batch, including
   the viewer checkout when `camstack/` changed.
 

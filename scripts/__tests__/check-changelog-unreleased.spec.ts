@@ -84,6 +84,13 @@ describe('check-changelog-unreleased', () => {
     expect(isUserVisibleChange('src/__tests__/a.ts')).toBe(false)
     expect(isUserVisibleChange('AGENTS.md')).toBe(false)
   })
+
+  it('a vitest config is test wiring, not something an operator could notice', () => {
+    expect(isUserVisibleChange('vitest.config.ts')).toBe(false)
+    expect(isUserVisibleChange('src/stream-broker/vitest.config.ts')).toBe(false)
+    expect(isUserVisibleChange('vitest.cluster.config.ts')).toBe(false)
+    expect(isUserVisibleChange('vite.config.ts')).toBe(true)
+  })
 })
 
 describe('release step', () => {

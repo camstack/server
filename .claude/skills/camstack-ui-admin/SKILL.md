@@ -107,9 +107,9 @@ spells its offset with `env(safe-area-inset-*)`.
 ## Verify
 
 - `npm run ui:check -- <touched files>` — 0 new findings.
-- Specs: `npx vitest run packages/addon-admin-ui/src/<path>` (jsdom) or the
-  package's `npm test`; typecheck the package (`npm run typecheck -w
-  <package>` or `npm run typecheck`).
+- Specs: `npm run test:related -- <changed files> <specs you edited>` (jsdom
+  for admin-ui; a machine-wide test slot); the package's whole suite only when
+  the brief asks. Typecheck with tsgo: `npm run typecheck:pkg -- <dir>`.
 - A new page package: `npx tsx scripts/check-addon-page-css.ts`.
 - Screenshots per the umbrella's done-gate against `npm run dev:admin` (or the
   addon's own page dev server for layout only — its CSS is not the host's).
