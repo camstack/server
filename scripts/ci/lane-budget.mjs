@@ -249,6 +249,49 @@ export function lanePlan({ cpus, heavy, light, env = {} }) {
   return { ...budget, cpus, heavy: orderLongestFirst(heavy), light: [...light] }
 }
 
+/**
+ * Vitest processes alive at once: one parent per slot plus its workers.
+ * A serial plan (one core) only has one lane running.
+ *
+ * @param {{ concurrent: boolean, heavyParallel: number, lightParallel: number, heavyWorkers: number, lightWorkers: number }} budget
+ * @returns {number}
+ */
+export function laneProcessCount(budget) {
+  const heavy = budget.heavyParallel * (budget.heavyWorkers + 1)
+  const light = budget.lightParallel * (budget.lightWorkers + 1)
+  const atOnce = budget.concurrent ? heavy + light : Math.max(heavy, light)
+  return Math.max(1, atOnce)
+}
+
+/**
+ * Heap per process so the lanes fit in RAM with 8 GB left for the OS.
+ * Capped at 2 GB: a 3 GB heap on every worker is what swapped the 36 GB Mac
+ * (admin-ui 328 s → 926 s) when verify:push's NODE_OPTIONS was inherited.
+ *
+ * @param {{ totalBytes: number, processCount: number }} input
+ * @returns {number} megabytes
+ */
+export function laneHeapMb({ totalBytes, processCount }) {
+  const reserve = 8 * 1024 * 1024 * 1024
+  const available = Math.max(512 * 1024 * 1024, totalBytes - reserve)
+  const perProcess = Math.floor(available / Math.max(1, processCount) / (1024 * 1024))
+  return Math.min(2048, Math.max(512, perProcess))
+}
+
+/**
+ * @param {string | undefined} current
+ * @param {number} heapMb
+ * @returns {string}
+ */
+export function nodeOptionsWithHeap(current, heapMb) {
+  const stripped = (current ?? '')
+    .replace(/--max-old-space-size=\d+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const flag = `--max-old-space-size=${heapMb}`
+  return stripped === '' ? flag : `${stripped} ${flag}`
+}
+
 const invokedDirectly =
   process.argv[1] !== undefined &&
   pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url

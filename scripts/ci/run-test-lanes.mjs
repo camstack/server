@@ -22,18 +22,69 @@
  * every project that ran.
  */
 import { spawn, execFileSync } from 'node:child_process'
-import { renameSync, writeFileSync } from 'node:fs'
-import { cpus } from 'node:os'
+import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { cpus, totalmem } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-import { lanePlan } from './lane-budget.mjs'
+import { laneHeapMb, lanePlan, laneProcessCount, nodeOptionsWithHeap } from './lane-budget.mjs'
 import { parseVitestSummary } from './verify-timing.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
+/**
+ * Nx project name → directory. `sdk` is the project.json name; the npm
+ * workspace is `@camstack/sdk`, so `npm run test -w sdk` exits in under a
+ * second and fails the lane.
+ *
+ * @param {string} [root]
+ * @returns {Map<string, string>}
+ */
+export function workspacePackageDirs(root = ROOT) {
+  /** @type {Map<string, string>} */
+  const dirs = new Map()
+  for (const base of ['packages', 'server']) {
+    const abs = path.join(root, base)
+    if (!existsSync(abs)) continue
+    for (const entry of readdirSync(abs, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue
+      rememberPackage(dirs, root, path.join(base, entry.name))
+    }
+  }
+  return dirs
+}
+
+/**
+ * @param {Map<string, string>} dirs
+ * @param {string} root
+ * @param {string} dir relative directory
+ */
+function rememberPackage(dirs, root, dir) {
+  const pkgPath = path.join(root, dir, 'package.json')
+  if (existsSync(pkgPath)) {
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
+    if (typeof pkg.name === 'string') dirs.set(pkg.name, dir)
+  }
+  const projectPath = path.join(root, dir, 'project.json')
+  if (!existsSync(projectPath)) return
+  const project = JSON.parse(readFileSync(projectPath, 'utf8'))
+  if (typeof project.name === 'string') dirs.set(project.name, dir)
+}
+
 /** @type {Set<import('node:child_process').ChildProcess>} */
 const children = new Set()
+
+/** @type {Map<string, string> | undefined} */
+let packageDirs
+
+/**
+ * @param {string} project
+ * @returns {string | undefined}
+ */
+function packageDir(project) {
+  if (packageDirs === undefined) packageDirs = workspacePackageDirs()
+  return packageDirs.get(project)
+}
 
 /**
  * @param {string[]} argv
@@ -133,13 +184,27 @@ function linesOf(stream, onLine) {
  * @param {string} shard
  * @returns {Promise<{ exitCode: number, collectSeconds: number | null, testsSeconds: number | null, vitestSeconds: number | null }>}
  */
-function runProject(project, workers, shard) {
-  const args = ['run', 'test', '-w', project, '--silent']
+function runProject(project, workers, shard, heapMb) {
+  const dir = packageDir(project)
+  if (dir === undefined) {
+    process.stderr.write(`${project} has no package directory — skipped\n`)
+    return Promise.resolve({
+      exitCode: 1,
+      collectSeconds: null,
+      testsSeconds: null,
+      vitestSeconds: null,
+    })
+  }
+  const args = ['run', 'test']
   if (shard !== '') args.push('--', `--shard=${shard}`)
   return new Promise((resolve) => {
     const child = spawn('npm', args, {
-      cwd: ROOT,
-      env: { ...process.env, VITEST_MAX_WORKERS: String(workers) },
+      cwd: path.join(ROOT, dir),
+      env: {
+        ...process.env,
+        VITEST_MAX_WORKERS: String(workers),
+        NODE_OPTIONS: nodeOptionsWithHeap(process.env.NODE_OPTIONS, heapMb),
+      },
       stdio: ['ignore', 'pipe', 'pipe'],
     })
     children.add(child)
@@ -178,7 +243,7 @@ function runProject(project, workers, shard) {
  * @param {number} workers
  * @param {string} shard
  */
-async function runLane(projects, lane, parallel, workers, shard) {
+async function runLane(projects, lane, parallel, workers, shard, heapMb) {
   const pending = [...projects]
   /** @type {object[]} */
   const results = []
@@ -189,7 +254,7 @@ async function runLane(projects, lane, parallel, workers, shard) {
       const project = pending.shift()
       if (project === undefined) return
       const started = Date.now()
-      const outcome = await runProject(project, workers, shard)
+      const outcome = await runProject(project, workers, shard, heapMb)
       const seconds = (Date.now() - started) / 1000
       process.stdout.write(
         `lane ${lane} ${project} ${seconds.toFixed(1)}s exit ${outcome.exitCode}\n`,
@@ -210,11 +275,11 @@ async function runLane(projects, lane, parallel, workers, shard) {
  * @param {string} shard
  * @returns {Promise<object[]>}
  */
-async function runPlanned(runnable, shard) {
+async function runPlanned(runnable, shard, heapMb) {
   const heavy = () =>
-    runLane(runnable.heavy, 'heavy', runnable.heavyParallel, runnable.heavyWorkers, shard)
+    runLane(runnable.heavy, 'heavy', runnable.heavyParallel, runnable.heavyWorkers, shard, heapMb)
   const light = () =>
-    runLane(runnable.light, 'light', runnable.lightParallel, runnable.lightWorkers, shard)
+    runLane(runnable.light, 'light', runnable.lightParallel, runnable.lightWorkers, shard, heapMb)
   if (!runnable.concurrent) return [...(await heavy()), ...(await light())]
   const [heavyResults, lightResults] = await Promise.all([heavy(), light()])
   return [...heavyResults, ...lightResults]
@@ -261,10 +326,11 @@ async function main(argv) {
   const heavy = keepTestable(plan.heavy, known)
   const light = keepTestable(plan.light, known)
   const runnable = lanePlan({ cpus: cpuCount, heavy, light, env: process.env })
+  const heapMb = laneHeapMb({ totalBytes: totalmem(), processCount: laneProcessCount(runnable) })
   process.stderr.write(
-    `test-affected: local heavy ${runnable.heavyParallel}×${runnable.heavyWorkers} [${runnable.heavy.join(', ')}]; light ${runnable.lightParallel}×${runnable.lightWorkers} (${cpuCount} cores, ${runnable.concurrent ? 'together' : 'one lane then the other'})\n`,
+    `test-affected: local heavy ${runnable.heavyParallel}×${runnable.heavyWorkers} [${runnable.heavy.join(', ')}]; light ${runnable.lightParallel}×${runnable.lightWorkers} (${cpuCount} cores, heap ${heapMb}mb, ${runnable.concurrent ? 'together' : 'one lane then the other'})\n`,
   )
-  const results = await runPlanned(runnable, args.shard)
+  const results = await runPlanned(runnable, args.shard, heapMb)
   writeTimings(results)
   const failed = results.find((row) => row.exitCode !== 0)
   return failed === undefined ? 0 : Number(failed.exitCode)

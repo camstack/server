@@ -292,7 +292,9 @@ The index is `../planning/sessions/sessions.md`; do not append to it.
   projects start longest-first at `VERIFY_HEAVY_PARALLEL` (default 2), and the
   worker counts are sized from the CPU count so the lanes together do not
   oversubscribe (default heavy 4 workers, light 2 — on 12 cores that is 2×4 +
-  2×2). `VERIFY_LOCAL=0` forces the serial schedule CI uses. CI itself is
+  2×2). The 3 GB `NODE_OPTIONS` heap verify:push sets for one vitest is replaced
+  per process so those lanes fit in RAM (a 3 GB heap on every worker swapped a
+  36 GB machine). `VERIFY_LOCAL=0` forces the serial schedule CI uses. CI itself is
   unchanged: it calls `test-affected.sh --shard` and keeps the heavy lane at
   `--parallel=1`. Each run appends one JSON line to
   `~/.cache/camstack/verify-timings.jsonl` and prints a stage summary.

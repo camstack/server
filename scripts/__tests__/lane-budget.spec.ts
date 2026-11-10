@@ -4,10 +4,14 @@ import { describe, expect, it } from 'vitest'
 
 import {
   HEAVY_WEIGHT_SECONDS,
+  laneHeapMb,
+  laneProcessCount,
   localLaneBudget,
   localLanesEnabled,
+  nodeOptionsWithHeap,
   orderLongestFirst,
 } from '../ci/lane-budget.mjs'
+import { workspacePackageDirs } from '../ci/run-test-lanes.mjs'
 
 interface LaneBudget {
   readonly concurrent: boolean
@@ -93,6 +97,25 @@ describe('local lane budget', () => {
     })
     expect(budget.heavyParallel).toBe(1)
     expect(slots(budget)).toBeLessThanOrEqual(12)
+  })
+})
+
+describe('lane heap', () => {
+  it('fits the 12-core split in a 36 GB machine instead of inheriting a 3 GB heap per process', () => {
+    const budget = localLaneBudget({ cpus: 12, heavyCount: 8, lightCount: 30, env: {} })
+    const processes = laneProcessCount(budget)
+    expect(processes).toBe(16)
+    const heap = laneHeapMb({ totalBytes: 36 * 1024 * 1024 * 1024, processCount: processes })
+    expect(heap).toBe(1792)
+    expect(nodeOptionsWithHeap('--max-old-space-size=3072', heap)).toBe('--max-old-space-size=1792')
+  })
+})
+
+describe('package directories', () => {
+  it('resolves the sdk nx project to its directory — the npm workspace name is different', () => {
+    const dirs = workspacePackageDirs()
+    expect(dirs.get('sdk')).toBe('packages/sdk')
+    expect(dirs.get('@camstack/server-framework')).toBe('packages/system')
   })
 })
 
