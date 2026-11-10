@@ -30,8 +30,11 @@ import { declaredBy, type DeliveryKindRef } from './rule-form-delivery'
 import { NC_PRIORITY_OPTIONS } from './rule-form-parsers'
 import type { NcTargetParamsMap } from './rule-form-state'
 import {
+  surfaceAttachmentKinds,
+  surfaceShows,
   targetChoicesOf,
   targetFieldsOf,
+  type TargetSettingsSurface,
   writeTargetOverride,
   writeTargetParam,
 } from './rule-form-target-settings'
@@ -41,11 +44,14 @@ export interface NotificationRuleTargetSettingsProps {
   readonly targets: readonly Target[]
   readonly kinds: readonly DeliveryKindRef[]
   readonly overrides: NcTargetOverrides
-  readonly targetParams: NcTargetParamsMap
+  /** Which kind of rule this edits; decides the fields offered. Default `rule`. */
+  readonly surface?: TargetSettingsSurface
+  /** Delivery parameters per target (D938); absent = this editor has none to offer. */
+  readonly targetParams?: NcTargetParamsMap
   /** The rule's own priority — what a target without an override inherits. */
   readonly rulePriority: number
   readonly onOverridesChange: (next: NcTargetOverrides) => void
-  readonly onTargetParamsChange: (next: NcTargetParamsMap) => void
+  readonly onTargetParamsChange?: (next: NcTargetParamsMap) => void
   readonly varsFor: (slot: 'title' | 'body') => readonly NcTemplateVarDescriptor[] | undefined
 }
 
@@ -103,9 +109,14 @@ function TargetPanel(props: TargetPanelProps) {
   const { t } = useTranslation()
   const { targetId, fields } = props
   const own: NcTargetOverride = props.overrides[targetId] ?? {}
-  const has = (field: NotificationField): boolean => fields === undefined || fields.includes(field)
-  const params = declaredBy(targetId, props.targets, props.kinds)
-  const customised = Object.keys(own).length > 0 || props.targetParams[targetId] !== undefined
+  const surface = props.surface ?? 'rule'
+  const has = (field: NotificationField): boolean =>
+    surfaceShows(surface, field) && (fields === undefined || fields.includes(field))
+  const onParamsChange = props.onTargetParamsChange
+  const targetParams = props.targetParams ?? {}
+  const params =
+    onParamsChange === undefined ? [] : declaredBy(targetId, props.targets, props.kinds)
+  const customised = Object.keys(own).length > 0 || targetParams[targetId] !== undefined
   const write = (next: NcTargetOverride): void =>
     props.onOverridesChange(
       writeTargetOverride(
@@ -137,7 +148,14 @@ function TargetPanel(props: TargetPanelProps) {
     const { actions: _old, ...others } = own
     write(off ? { ...others, actions: false } : others)
   }
-  const choices = targetChoicesOf(targetId, props.targets, props.kinds)
+  const declaredChoices = targetChoicesOf(targetId, props.targets, props.kinds)
+  const choices =
+    declaredChoices === undefined
+      ? undefined
+      : {
+          ...declaredChoices,
+          attachmentKinds: surfaceAttachmentKinds(surface, declaredChoices.attachmentKinds),
+        }
   // The notifier's own levels when it declares any; the generic scale otherwise.
   const priorityOptions =
     choices !== undefined && choices.levels.length > 0
@@ -264,11 +282,9 @@ function TargetPanel(props: TargetPanelProps) {
           <FormField key={param.key} label={param.label}>
             <ParamControl
               param={param}
-              value={props.targetParams[targetId]?.[param.key]}
+              value={targetParams[targetId]?.[param.key]}
               onChange={(next: DeliveryParamValue | undefined) =>
-                props.onTargetParamsChange(
-                  writeTargetParam(props.targetParams, targetId, param.key, next),
-                )
+                onParamsChange?.(writeTargetParam(targetParams, targetId, param.key, next))
               }
             />
           </FormField>

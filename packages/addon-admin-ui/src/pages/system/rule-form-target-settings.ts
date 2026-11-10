@@ -26,6 +26,7 @@ import {
   type Target,
   type TargetKindLevel,
 } from '@camstack/types'
+import type { NotificationTargetOption } from '@camstack/ui-library'
 import type { DeliveryKindRef } from './rule-form-delivery'
 import type { NcTargetParamsMap } from './rule-form-state'
 
@@ -120,4 +121,72 @@ export function targetChoicesOf(
   const caps = kinds.find((k) => k.kind === target.kind && k.addonId === target.addonId)?.caps
   if (caps === undefined) return undefined
   return { levels: priorityLevelsOf(caps), attachmentKinds: attachmentKindsOf(caps) }
+}
+
+/**
+ * Which kind of rule a per-target panel edits. What a panel offers is decided
+ * from what the server honours for that kind (`target-settings.ts` at enqueue,
+ * `deliverable-fields.ts` at send), not from what the notifier could do: an
+ * override the kind never produces would be a control that does nothing.
+ */
+export type TargetSettingsSurface = 'rule' | 'summary' | 'timelapse' | 'calendar-events'
+
+export interface TargetSettingsSurfaceSpec {
+  /** The message fields a panel for this kind shows (the schedule is always shown). */
+  readonly fields: readonly NotificationField[]
+  /** The picture kinds this kind produces; empty = it produces none. */
+  readonly attachmentKinds: readonly NcTargetAttachment[]
+}
+
+export const TARGET_SETTINGS_SURFACES: Readonly<
+  Record<TargetSettingsSurface, TargetSettingsSurfaceSpec>
+> = {
+  // An event rule: stills, clips, GIFs and action buttons.
+  rule: {
+    fields: ['title', 'body', 'priority', 'attachments', 'actions'],
+    attachmentKinds: ['none', 'image', 'clip', 'gif'],
+  },
+  // One mosaic image; no buttons.
+  summary: {
+    fields: ['title', 'body', 'priority', 'attachments'],
+    attachmentKinds: ['none', 'image'],
+  },
+  // A preview image and the rendered clip; no buttons.
+  timelapse: {
+    fields: ['title', 'body', 'priority', 'attachments'],
+    attachmentKinds: ['none', 'image', 'clip'],
+  },
+  // Text only.
+  'calendar-events': { fields: ['title', 'body', 'priority'], attachmentKinds: [] },
+}
+
+export function surfaceShows(surface: TargetSettingsSurface, field: NotificationField): boolean {
+  return TARGET_SETTINGS_SURFACES[surface].fields.includes(field)
+}
+
+/** The picture kinds to offer: what the notifier declares, cut to what this kind produces. */
+export function surfaceAttachmentKinds(
+  surface: TargetSettingsSurface,
+  declared: readonly NcTargetAttachment[],
+): readonly NcTargetAttachment[] {
+  const produced = TARGET_SETTINGS_SURFACES[surface].attachmentKinds
+  return declared.filter((kind) => produced.includes(kind))
+}
+
+/**
+ * The picker options an editor already holds, as the `Target`s the panel reads.
+ * An option without a kind is a target whose kind is unknown: it gets the empty
+ * kind, which matches no catalog entry (every field offered, never narrowed).
+ */
+export function targetsFromOptions(
+  options: readonly NotificationTargetOption[],
+): readonly Target[] {
+  return options.map((option) => ({
+    id: option.id,
+    name: option.name,
+    enabled: option.enabled,
+    kind: option.kind ?? '',
+    addonId: option.addonId ?? '',
+    config: {},
+  }))
 }

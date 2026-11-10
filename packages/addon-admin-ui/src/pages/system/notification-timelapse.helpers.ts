@@ -37,7 +37,7 @@
  * box cannot express the first two, which is why `previewTextSet` exists.
  */
 
-import type { NcRuleTarget, NcSchedule } from '@camstack/types'
+import type { NcRuleTarget, NcSchedule, NcTargetOverrides } from '@camstack/types'
 import {
   DEFAULT_TIMELAPSE_PREVIEW_TEXT,
   TIMELAPSE_DENSE_FLOOR_SEC,
@@ -46,6 +46,7 @@ import {
 import { z } from 'zod'
 
 import { agoLabel, sameShape, scheduleLabel, targetsFromIds } from './notification-digest.helpers'
+import { overridesForSave, type TargetFieldsOf } from './rule-form-target-settings'
 import i18n from '../../i18n/index'
 
 // ── The bridge ───────────────────────────────────────────────────────
@@ -152,6 +153,7 @@ export interface TimelapseFormState {
   readonly previewMode: TimelapsePreviewModeChoice
   readonly reportClasses: readonly string[]
   readonly priority: number
+  readonly targetOverrides: NcTargetOverrides
 }
 
 /** The defaults a NEW timelapse opens on — the schema's own, verbatim. */
@@ -173,6 +175,7 @@ export function emptyTimelapseForm(): TimelapseFormState {
     previewMode: 'image',
     reportClasses: [],
     priority: 3,
+    targetOverrides: {},
   }
 }
 
@@ -194,6 +197,7 @@ export function timelapseRuleToForm(rule: TimelapseRuleView): TimelapseFormState
     previewMode: rule.previewMode,
     reportClasses: [...(rule.reportClasses ?? [])],
     priority: rule.priority,
+    targetOverrides: rule.targetOverrides ?? {},
   }
 }
 
@@ -214,6 +218,7 @@ export interface TimelapseRuleInputWire {
   readonly previewMode: TimelapsePreviewModeChoice
   readonly reportClasses?: readonly string[]
   readonly priority: number
+  readonly targetOverrides?: NcTargetOverrides
 }
 
 export interface TimelapseTemplateWire {
@@ -237,6 +242,8 @@ export interface TimelapseRulePatchWire {
   readonly previewMode?: TimelapsePreviewModeChoice
   readonly reportClasses?: readonly string[]
   readonly priority?: number
+  /** Replaces the stored map whole — send every target, never only the edited one. */
+  readonly targetOverrides?: NcTargetOverrides
 }
 
 /**
@@ -259,8 +266,12 @@ function formTemplate(form: TimelapseFormState): TimelapseTemplateWire | undefin
   }
 }
 
-export function buildTimelapseCreateInput(form: TimelapseFormState): TimelapseRuleInputWire {
+export function buildTimelapseCreateInput(
+  form: TimelapseFormState,
+  fieldsOf?: TargetFieldsOf,
+): TimelapseRuleInputWire {
   const template = formTemplate(form)
+  const targetOverrides = overridesForSave(form.targetIds, form.targetOverrides, fieldsOf)
   return {
     name: form.name.trim(),
     enabled: form.enabled,
@@ -278,6 +289,7 @@ export function buildTimelapseCreateInput(form: TimelapseFormState): TimelapseRu
     previewMode: form.previewMode,
     ...(form.reportClasses.length > 0 ? { reportClasses: [...form.reportClasses] } : {}),
     priority: form.priority,
+    ...(Object.keys(targetOverrides).length > 0 ? { targetOverrides } : {}),
   }
 }
 
@@ -291,8 +303,9 @@ export function buildTimelapseCreateInput(form: TimelapseFormState): TimelapseRu
 export function buildTimelapsePatch(
   form: TimelapseFormState,
   existing: TimelapseRuleView,
+  fieldsOf?: TargetFieldsOf,
 ): TimelapseRulePatchWire {
-  const next = buildTimelapseCreateInput(form)
+  const next = buildTimelapseCreateInput(form, fieldsOf)
   const patch: {
     name?: string
     enabled?: boolean
@@ -308,6 +321,7 @@ export function buildTimelapsePatch(
     previewMode?: TimelapsePreviewModeChoice
     reportClasses?: readonly string[]
     priority?: number
+    targetOverrides?: NcTargetOverrides
   } = {}
 
   if (next.name !== existing.name) patch.name = next.name
@@ -336,6 +350,10 @@ export function buildTimelapsePatch(
     patch.reportClasses = next.reportClasses ?? []
   }
   if (next.priority !== existing.priority) patch.priority = next.priority
+  if (!sameShape(next.targetOverrides ?? {}, existing.targetOverrides ?? {})) {
+    // The map replaces the stored one whole: every target, untouched ones included.
+    patch.targetOverrides = next.targetOverrides ?? {}
+  }
   return patch
 }
 
@@ -570,6 +588,7 @@ export const NC_TIMELAPSE_TABS: readonly TimelapseTab[] = [
       'templateTitle',
       'templateBody',
       'reportClasses',
+      'targetOverrides',
     ],
   },
 ]

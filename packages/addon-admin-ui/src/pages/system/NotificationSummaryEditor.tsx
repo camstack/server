@@ -56,6 +56,11 @@ import {
 import { useMutation } from '@tanstack/react-query'
 import { Images, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import {
+  NotificationTargetOverridesField,
+  useTargetKinds,
+} from './NotificationTargetOverridesField'
+import { targetFieldsOf, targetsFromOptions } from './rule-form-target-settings'
 
 import { TemplateField } from '../../components/notifications/TemplateField'
 import { varsForContext } from '../../components/notifications/template-field.helpers'
@@ -209,12 +214,16 @@ export function NotificationSummaryEditor({
   const profilesQuery = useInstancesOfCap({ functionCap: 'llm' })
   const visionProfiles = (profilesQuery.data ?? []).filter(profileSupportsVision)
 
+  // What each selected notifier delivers: an override it cannot deliver is not saved.
+  const kinds = useTargetKinds()
+  const fieldsOf = targetFieldsOf(targetsFromOptions(targets), kinds)
+
   const save = useMutation({
     mutationFn: async (): Promise<void> => {
       const input =
         rule === null
-          ? { rule: buildSummaryCreateInput(form) }
-          : { ruleId: rule.id, patch: buildSummaryPatch(form, rule) }
+          ? { rule: buildSummaryCreateInput(form, fieldsOf) }
+          : { ruleId: rule.id, patch: buildSummaryPatch(form, rule, fieldsOf) }
       await system.trpcClient.addons.custom.mutate({
         addonId: NC_ADDON_ID,
         action: NC_UPSERT_SUMMARY_RULE_ACTION,
@@ -945,6 +954,15 @@ export function NotificationSummaryEditor({
                     components={{ code: <code /> }}
                   />
                 </p>
+                <NotificationTargetOverridesField
+                  surface="summary"
+                  templateFamily="summary"
+                  targetIds={form.targetIds}
+                  targets={targets}
+                  overrides={form.targetOverrides}
+                  rulePriority={form.priority}
+                  onChange={(next) => patch({ targetOverrides: next })}
+                />
               </DigestSection>
             </TabsContent>
           </DialogBody>

@@ -41,7 +41,12 @@
  * and cannot be opened in the editor.
  */
 
-import type { NcRuleTarget, NcSchedule } from '@camstack/types'
+import {
+  NcTargetOverridesSchema,
+  type NcRuleTarget,
+  type NcSchedule,
+  type NcTargetOverrides,
+} from '@camstack/types'
 
 import {
   agoLabel,
@@ -51,6 +56,7 @@ import {
   targetsFromIds,
 } from './notification-digest.helpers'
 import i18n from '../../i18n/index'
+import { overridesForSave, type TargetFieldsOf } from './rule-form-target-settings'
 
 // ── The bridge ───────────────────────────────────────────────────────
 
@@ -206,6 +212,8 @@ export interface SummaryRuleView {
   readonly captionText?: string
   readonly deliverEmpty: boolean
   readonly priority: number
+  /** Per-target settings keyed by target id (D1032); absent = every target follows the rule. */
+  readonly targetOverrides?: NcTargetOverrides
   /** Epoch-ms of the END of the last window delivered; absent = never run. */
   readonly generatedAt?: number
   /** Last write to the rule — the prune banner's "touched since" check. */
@@ -416,6 +424,16 @@ function parseTargets(raw: unknown): readonly NcRuleTarget[] | null {
   return out
 }
 
+/**
+ * An overrides map this build cannot read refuses the rule: reading it as
+ * absent would let the next save write `{}` over what the hub holds.
+ */
+function parseTargetOverrides(raw: unknown): NcTargetOverrides | undefined | null {
+  if (raw === undefined) return undefined
+  const parsed = NcTargetOverridesSchema.safeParse(raw)
+  return parsed.success ? parsed.data : null
+}
+
 function parseRule(raw: unknown): SummaryRuleView | null {
   if (!isRecord(raw)) return null
   const { id, name, enabled, maxTiles, maxAiImages, rank, barrierSeconds, deliverEmpty } = raw
@@ -439,6 +457,8 @@ function parseRule(raw: unknown): SummaryRuleView | null {
   if (captions === null) return null
   const ai = parseAi(raw['ai'])
   if (ai === null) return null
+  const targetOverrides = parseTargetOverrides(raw['targetOverrides'])
+  if (targetOverrides === null) return null
   return {
     id,
     name,
@@ -456,6 +476,7 @@ function parseRule(raw: unknown): SummaryRuleView | null {
     ...(captionText !== undefined ? { captionText } : {}),
     deliverEmpty,
     priority: raw['priority'],
+    ...(targetOverrides !== undefined ? { targetOverrides } : {}),
     ...(generatedAt !== undefined ? { generatedAt } : {}),
     ...(updatedAt !== undefined ? { updatedAt } : {}),
     readOnly: raw['readOnly'] === true,
@@ -583,6 +604,7 @@ export interface SummaryFormState {
   readonly captionText: string
   readonly deliverEmpty: boolean
   readonly priority: number
+  readonly targetOverrides: NcTargetOverrides
   // ── The AI section (#35 P2) ────────────────────────────────────────
   //
   // EVERY field of `NcSummaryAiSchema` has a home here. That is not tidiness:
@@ -630,6 +652,7 @@ export function emptySummaryForm(): SummaryFormState {
     captionText: '',
     deliverEmpty: false,
     priority: 3,
+    targetOverrides: {},
     aiEnabled: false,
     aiProfileId: '',
     aiPrompt: '',
@@ -669,6 +692,7 @@ export function summaryRuleToForm(rule: SummaryEditableRule): SummaryFormState {
     captionText: rule.captionText ?? '',
     deliverEmpty: rule.deliverEmpty,
     priority: rule.priority,
+    targetOverrides: rule.targetOverrides ?? {},
     aiEnabled: rule.ai?.enabled ?? base.aiEnabled,
     aiProfileId: rule.ai?.profileId ?? '',
     aiPrompt: rule.ai?.prompt ?? '',
@@ -700,6 +724,7 @@ export interface SummaryRuleInputWire {
   readonly captionText?: string
   readonly deliverEmpty: boolean
   readonly priority: number
+  readonly targetOverrides?: NcTargetOverrides
   readonly ai?: SummaryAiView
 }
 
@@ -724,6 +749,8 @@ export interface SummaryRulePatchWire {
   readonly captionText?: string
   readonly deliverEmpty?: boolean
   readonly priority?: number
+  /** Replaces the stored map whole — send every target, never only the edited one. */
+  readonly targetOverrides?: NcTargetOverrides
   readonly ai?: SummaryAiView | null
 }
 
@@ -801,11 +828,15 @@ function formAi(form: SummaryFormState): SummaryAiView | undefined {
   }
 }
 
-export function buildSummaryCreateInput(form: SummaryFormState): SummaryRuleInputWire {
+export function buildSummaryCreateInput(
+  form: SummaryFormState,
+  fieldsOf?: TargetFieldsOf,
+): SummaryRuleInputWire {
   const filters = formFilters(form)
   const template = formTemplate(form)
   const ai = formAi(form)
   const caption = form.captionText.trim()
+  const targetOverrides = overridesForSave(form.targetIds, form.targetOverrides, fieldsOf)
   return {
     name: form.name.trim(),
     enabled: form.enabled,
@@ -822,6 +853,7 @@ export function buildSummaryCreateInput(form: SummaryFormState): SummaryRuleInpu
     ...(caption.length > 0 ? { captionText: caption } : {}),
     deliverEmpty: form.deliverEmpty,
     priority: form.priority,
+    ...(Object.keys(targetOverrides).length > 0 ? { targetOverrides } : {}),
     ...(ai !== undefined ? { ai } : {}),
   }
 }
@@ -838,8 +870,9 @@ export function buildSummaryCreateInput(form: SummaryFormState): SummaryRuleInpu
 export function buildSummaryPatch(
   form: SummaryFormState,
   existing: SummaryEditableRule,
+  fieldsOf?: TargetFieldsOf,
 ): SummaryRulePatchWire {
-  const next = buildSummaryCreateInput(form)
+  const next = buildSummaryCreateInput(form, fieldsOf)
   const patch: {
     name?: string
     enabled?: boolean
@@ -856,6 +889,7 @@ export function buildSummaryPatch(
     captionText?: string
     deliverEmpty?: boolean
     priority?: number
+    targetOverrides?: NcTargetOverrides
     ai?: SummaryAiView | null
   } = {}
 
@@ -881,6 +915,11 @@ export function buildSummaryPatch(
   }
   if (next.deliverEmpty !== existing.deliverEmpty) patch.deliverEmpty = next.deliverEmpty
   if (next.priority !== existing.priority) patch.priority = next.priority
+  if (!sameShape(next.targetOverrides ?? {}, existing.targetOverrides ?? {})) {
+    // The map replaces the stored one whole: it carries every target, the
+    // untouched ones included. `{}` is how the last override is cleared.
+    patch.targetOverrides = next.targetOverrides ?? {}
+  }
   if (!sameShape(next.ai, existing.ai)) {
     // A form that expresses no section on a rule that HAD one is a clear, not a
     // no-op — the same treatment `filters` and `template` already get.
@@ -1112,7 +1151,14 @@ export const NC_SUMMARY_TABS: readonly SummaryTab[] = [
     get label() {
       return i18n.t('helpers.notificationSummaries.tab_delivery')
     },
-    fields: ['targetIds', 'priority', 'deliverEmpty', 'templateTitle', 'templateBody'],
+    fields: [
+      'targetIds',
+      'priority',
+      'deliverEmpty',
+      'templateTitle',
+      'templateBody',
+      'targetOverrides',
+    ],
   },
 ]
 

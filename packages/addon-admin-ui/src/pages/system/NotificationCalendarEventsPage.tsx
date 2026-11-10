@@ -93,6 +93,8 @@ export function NotificationCalendarEventsPage() {
     id: t.id,
     name: t.name,
     enabled: t.enabled,
+    kind: t.kind,
+    addonId: t.addonId,
   }))
   const targetNameById = new Map(targetOptions.map((t) => [t.id, t.name]))
   const unavailable = rulesQuery.isError || rulesQuery.data === null

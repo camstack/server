@@ -294,6 +294,8 @@ export function useProducerRulesHost({
     id: t.id,
     name: t.name,
     enabled: t.enabled,
+    kind: t.kind,
+    addonId: t.addonId,
   }))
   const targetNameById = new Map(targetOptions.map((t) => [t.id, t.name]))
   const cameraNameById = new Map(digestCameras.map((c) => [c.id, c.name]))

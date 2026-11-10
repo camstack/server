@@ -79,7 +79,7 @@ import { useTemplateCatalog } from '../../components/notifications/use-template-
 import { useScenesFeed } from '../../hooks/use-scenes-feed'
 import { NotificationRuleActions } from './NotificationRuleActions'
 import { FieldDropHint, NotificationRuleTargetSettings } from './NotificationRuleTargetSettings'
-import { type DeliveryKindRef } from './rule-form-delivery'
+import { useTargetKinds } from './NotificationTargetOverridesField'
 import { fieldSupportForSelection, targetFieldsOf } from './rule-form-target-settings'
 import { formToActions, referencedActionIds } from './notification-rule-actions'
 import {
@@ -904,12 +904,7 @@ function RuleFormDialog({
   // What each selected notifier declares: the parameters a target can be given
   // (D938) and the message fields it delivers (#483). A kind catalog that has
   // not answered narrows nothing and offers no parameter — never a guess.
-  const kinds =
-    useQuery({
-      queryKey: ['notificationOutput', 'listTargetKinds', 'forRuleDelivery'],
-      queryFn: (): Promise<readonly DeliveryKindRef[]> =>
-        system.trpcClient.notificationOutput.listTargetKinds.query({}),
-    }).data ?? []
+  const kinds = useTargetKinds()
   const fieldSupport = fieldSupportForSelection(form.targetIds, targets, kinds)
   const shows = (field: NotificationField): boolean => fieldSupport.get(field)?.shown ?? true
   const fieldsOf = targetFieldsOf(targets, kinds)

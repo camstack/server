@@ -67,6 +67,11 @@ import type { DeviceFleetView } from './device-fleet-view'
 import { NotificationPruneBanner } from './NotificationPruneBanner'
 import { ScheduleField } from './notification-schedule-field'
 import {
+  NotificationTargetOverridesField,
+  useTargetKinds,
+} from './NotificationTargetOverridesField'
+import { targetFieldsOf, targetsFromOptions } from './rule-form-target-settings'
+import {
   buildTimelapseCreateInput,
   buildTimelapsePatch,
   DEFAULT_TIMELAPSE_PREVIEW_TEXT,
@@ -140,12 +145,16 @@ export function NotificationTimelapseEditor({
     ? varsForContext(catalog.data, { family: 'timelapse', field: 'previewText' })
     : undefined
 
+  // What each selected notifier delivers: an override it cannot deliver is not saved.
+  const kinds = useTargetKinds()
+  const fieldsOf = targetFieldsOf(targetsFromOptions(targets), kinds)
+
   const save = useMutation({
     mutationFn: async (): Promise<void> => {
       const input =
         rule === null
-          ? { rule: buildTimelapseCreateInput(form) }
-          : { ruleId: rule.id, patch: buildTimelapsePatch(form, rule) }
+          ? { rule: buildTimelapseCreateInput(form, fieldsOf) }
+          : { ruleId: rule.id, patch: buildTimelapsePatch(form, rule, fieldsOf) }
       await system.trpcClient.addons.custom.mutate({
         addonId: NC_ADDON_ID,
         action: NC_UPSERT_TIMELAPSE_RULE_ACTION,
@@ -512,6 +521,15 @@ export function NotificationTimelapseEditor({
                     components={{ code: <code /> }}
                   />
                 </p>
+                <NotificationTargetOverridesField
+                  surface="timelapse"
+                  templateFamily="timelapse"
+                  targetIds={form.targetIds}
+                  targets={targets}
+                  overrides={form.targetOverrides}
+                  rulePriority={form.priority}
+                  onChange={(next) => patch({ targetOverrides: next })}
+                />
               </DigestSection>
             </TabsContent>
           </DialogBody>

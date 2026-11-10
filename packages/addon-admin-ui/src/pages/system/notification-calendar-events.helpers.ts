@@ -6,12 +6,15 @@
 import {
   type NcRuleTarget,
   type NcSchedule,
+  type NcTargetOverrides,
+  NcTargetOverridesSchema,
   scheduleForSendTimes,
   sendTimesOfSchedule,
 } from '@camstack/types'
 import { z } from 'zod'
 import { scheduleLabel } from './notification-digest.helpers'
 import { NC_ADDON_ID } from './notification-texts.helpers'
+import { overridesForSave, type TargetFieldsOf } from './rule-form-target-settings'
 import i18n from '../../i18n/index'
 
 export { NC_ADDON_ID }
@@ -71,6 +74,7 @@ const CalendarEventsRuleViewSchema = z.object({
     })
     .optional(),
   priority: z.number().int(),
+  targetOverrides: NcTargetOverridesSchema.optional(),
   generatedAt: z.number().optional(),
   readOnly: z.boolean().optional(),
 })
@@ -146,6 +150,7 @@ export interface CalendarEventsFormState {
   readonly targetIds: readonly string[]
   readonly templateTitle: string
   readonly templateBody: string
+  readonly targetOverrides: NcTargetOverrides
 }
 
 function defaultSchedule(): NcSchedule {
@@ -180,6 +185,7 @@ export function emptyCalendarEventsForm(): CalendarEventsFormState {
     targetIds: [],
     templateTitle: '',
     templateBody: '',
+    targetOverrides: {},
   }
 }
 
@@ -196,6 +202,7 @@ export function calendarEventsRuleToForm(rule: CalendarEventsRuleView): Calendar
     targetIds: rule.targets.map((t) => t.targetId),
     templateTitle: rule.template?.title ?? '',
     templateBody: rule.template?.body ?? '',
+    targetOverrides: rule.targetOverrides ?? {},
   }
 }
 
@@ -211,7 +218,9 @@ export function isCalendarEventsFormValid(form: CalendarEventsFormState): boolea
 
 export function buildCalendarEventsCreateInput(
   form: CalendarEventsFormState,
+  fieldsOf?: TargetFieldsOf,
 ): Record<string, unknown> {
+  const targetOverrides = overridesForSave(form.targetIds, form.targetOverrides, fieldsOf)
   const targets: NcRuleTarget[] = form.targetIds.map((targetId) => ({ targetId }))
   return {
     name: form.name.trim(),
@@ -225,6 +234,7 @@ export function buildCalendarEventsCreateInput(
       ? { calendarsExclude: [...form.calendarsExclude] }
       : {}),
     targets,
+    ...(Object.keys(targetOverrides).length > 0 ? { targetOverrides } : {}),
     ...(form.templateTitle.trim().length > 0 || form.templateBody.trim().length > 0
       ? {
           template: {
@@ -239,10 +249,17 @@ export function buildCalendarEventsCreateInput(
 export function buildCalendarEventsPatch(
   form: CalendarEventsFormState,
   existing: CalendarEventsRuleView,
+  fieldsOf?: TargetFieldsOf,
 ): Record<string, unknown> {
-  const create = buildCalendarEventsCreateInput(form)
+  const create = buildCalendarEventsCreateInput(form, fieldsOf)
   return {
     ...create,
+    // The map replaces the stored one whole: every target, untouched ones
+    // included. `{}` clears it, and only on a rule that had one.
+    ...(create['targetOverrides'] === undefined &&
+    Object.keys(existing.targetOverrides ?? {}).length > 0
+      ? { targetOverrides: {} }
+      : {}),
     // Explicit clears when scope emptied after Only/Except.
     calendars:
       form.calendars.length === 0 && (existing.calendars?.length ?? 0) > 0

@@ -24,6 +24,11 @@ import {
   type DigestTargetOption,
 } from './notification-digest-fields'
 import { ScheduleField } from './notification-schedule-field'
+import {
+  NotificationTargetOverridesField,
+  useTargetKinds,
+} from './NotificationTargetOverridesField'
+import { targetFieldsOf, targetsFromOptions } from './rule-form-target-settings'
 import { DevicePicker } from './DevicePicker'
 import { RuleScopeField } from './RuleScopeField'
 import { projectRuleScope, ruleScopeDraftOf, type RuleScopeDraft } from './rule-scope-model'
@@ -77,6 +82,10 @@ export function NotificationCalendarEventsEditor({
   const patch = (next: Partial<CalendarEventsFormState>): void =>
     setForm((prev) => ({ ...prev, ...next }))
 
+  // What each selected notifier delivers: an override it cannot deliver is not saved.
+  const kinds = useTargetKinds()
+  const fieldsOf = targetFieldsOf(targetsFromOptions(targets), kinds)
+
   const save = useMutation({
     mutationFn: async () => {
       const scoped = projectRuleScope(scope)
@@ -90,10 +99,10 @@ export function NotificationCalendarEventsEditor({
       }
       const input =
         rule === null
-          ? { rule: buildCalendarEventsCreateInput(withScope) }
+          ? { rule: buildCalendarEventsCreateInput(withScope, fieldsOf) }
           : {
               ruleId: rule.id,
-              patch: buildCalendarEventsPatch(withScope, rule),
+              patch: buildCalendarEventsPatch(withScope, rule, fieldsOf),
             }
       await system.trpcClient.addons.custom.mutate({
         addonId: NC_ADDON_ID,
@@ -299,6 +308,14 @@ export function NotificationCalendarEventsEditor({
                     onChange={(e) => patch({ templateBody: e.target.value })}
                   />
                 </label>
+                <NotificationTargetOverridesField
+                  surface="calendar-events"
+                  targetIds={form.targetIds}
+                  targets={targets}
+                  overrides={form.targetOverrides}
+                  rulePriority={form.priority}
+                  onChange={(next) => patch({ targetOverrides: next })}
+                />
               </DigestSection>
             </TabsContent>
           </DialogBody>
