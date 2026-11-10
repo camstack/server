@@ -12,7 +12,8 @@ import {
   type HeroText,
   type HeroTone,
 } from '@camstack/types'
-import type { BadgeVariant, HeroSceneParams, SceneTile } from '@camstack/ui-library'
+import type { BadgeVariant } from '../../primitives/badge'
+import type { HeroSceneParams, SceneTile } from '../hero-scene'
 
 export type HeroLang = 'en' | 'it'
 

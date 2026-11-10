@@ -210,6 +210,18 @@ is published and applied; server-side redirects other than the login bounce
 root-absolute `Location`s; and the viewer app under `/viewer/camstack/` has
 its own base and is unchanged.
 
+### One device's card as a page (`/embed/device/<deviceId>`)
+
+`pages/EmbedDevicePage.tsx` draws the `DeviceDetailModule` (hero card, History,
+actions) for ONE device with no admin chrome — the page a viewer WebView loads.
+It sits in `App.tsx` inside `ProtectedRoute` but outside `AppLayout`, so it
+signs in through the existing session (cookie / stored session; unlike
+`/embed/player` there is no injected token and none in the URL). Query:
+`?theme=light|dark`, `?lang=en|it`; the session may act only when it is admin.
+The hero card itself is `HeroModelCard` / `ModelHero` in `ui-library`
+(`composites/hero-model`): every string the model does not carry comes from a
+`HeroLabels` the host supplies (admin-ui: `modules/device-detail/use-hero-labels.ts`).
+
 ### Who may frame the hub, and how the viewer is framed
 
 Every HTML document the hub serves carries `Content-Security-Policy:

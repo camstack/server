@@ -8,9 +8,17 @@ import {
   type HeroRow,
   type HeroTimedRunSlot,
 } from '@camstack/types'
+import { Minus, Plus } from 'lucide-react'
+import { Fragment, type ReactNode, useEffect, useState } from 'react'
+import { Badge } from '../../primitives/badge'
+import { Button } from '../../primitives/button'
+import { IconButton } from '../../primitives/icon-button'
+import { Select } from '../../primitives/select'
+import { Slider } from '../../primitives/slider'
+import { Switch } from '../../primitives/switch'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../primitives/tooltip'
+import { useDisplayIconResolver } from '../icon-glyphs'
 import {
-  Badge,
-  Button,
   HeroCardA,
   HeroProgressBar,
   HeroRowLine,
@@ -18,26 +26,18 @@ import {
   type HeroScenePower,
   HeroSegmented,
   HeroUtilityGrid,
-  IconButton,
   resolveSceneVisual,
   SCENES_WITH_ART,
-  Select,
-  Slider,
-  Switch,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  useDisplayIconResolver,
-} from '@camstack/ui-library'
-import { Minus, Plus } from 'lucide-react'
-import { Fragment, type ReactNode, useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+} from '../hero-scene'
 import { badgeVariantOf, type HeroLang, pickText, sceneOf, tilesOf } from './hero-model-view'
+import type { HeroLabels } from './hero-labels'
 import { useHeroUtilities } from './hero-utilities'
 
 /** What the card asks its host to do: run the cap method an action or a control names. */
 export interface HeroCardHost {
   readonly lang: HeroLang
+  /** The words the model does not carry, in the host's language. */
+  readonly labels: HeroLabels
   readonly busy: boolean
   /** Runs the call; `confirm` asks first. Resolves when the call settled. */
   readonly run: (call: HeroCall, action: HeroAction | null) => void
@@ -133,7 +133,6 @@ function PickerControl({
   readonly host: HeroCardHost
   readonly tone: Parameters<typeof HeroProgressBar>[0]['tone']
 }): ReactNode {
-  const { t } = useTranslation()
   const choose = (value: string): void =>
     host.run(
       {
@@ -169,9 +168,7 @@ function PickerControl({
       value={control.current ?? ''}
       disabled={host.busy}
       options={[
-        ...(control.current === null
-          ? [{ value: '', label: t('deviceHero.model.noValue', '–') }]
-          : []),
+        ...(control.current === null ? [{ value: '', label: host.labels.noValue }] : []),
         ...control.options.map((o) => ({ value: o, label: optionLabel(o) })),
       ]}
       onChange={(e) => choose(e.target.value)}
@@ -568,13 +565,7 @@ function powerOf(model: HeroModel, host: HeroCardHost): HeroScenePower | undefin
   if (ownPower === null || ownPower.source === 'climate-control' || ownPower.on === null) {
     return undefined
   }
-  const value = ownPower.on
-    ? host.lang === 'it'
-      ? 'Acceso'
-      : 'On'
-    : host.lang === 'it'
-      ? 'Spento'
-      : 'Off'
+  const value = ownPower.on ? host.labels.power.on : host.labels.power.off
   if (model.gated.includes('own-power')) return { value, on: ownPower.on }
   const next = ownPower.on ? ownPower.turnOff : ownPower.turnOn
   return {

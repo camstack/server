@@ -1,11 +1,9 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { createInstance } from 'i18next'
-import { I18nextProvider, initReactI18next } from 'react-i18next'
 import { describe, expect, it, vi } from 'vitest'
 import { HeroModelCard } from '../HeroModelCard'
-import { buildModel } from './fixtures'
+import { TEST_LABELS, buildModel } from './fixtures'
 
-const host = (run = vi.fn()) => ({ lang: 'en' as const, busy: false, run })
+const host = (run = vi.fn()) => ({ lang: 'en' as const, labels: TEST_LABELS, busy: false, run })
 
 const option = (value: string, allowed: readonly string[]) => ({
   value,
@@ -147,14 +145,7 @@ describe('HeroModelCard heat pump selectors', () => {
     expect(screen.getByText('Programme 3')).toBeTruthy()
   })
 
-  it('takes the placeholder of an unset long picker from the i18n key', async () => {
-    const instance = createInstance()
-    await instance.use(initReactI18next).init({
-      lng: 'en',
-      resources: {
-        en: { translation: { deviceHero: { model: { noValue: 'NOT-SET' } } } },
-      },
-    })
+  it('takes the placeholder of an unset long picker from the host labels', () => {
     const base = slice(2991)
     const unset = buildModel('heat-pump', ['heat-pump-status', 'heat-pump-control'], {
       'heat-pump-status': {
@@ -169,9 +160,10 @@ describe('HeroModelCard heat pump selectors', () => {
       },
     })
     render(
-      <I18nextProvider i18n={instance}>
-        <HeroModelCard model={unset} host={host()} />
-      </I18nextProvider>,
+      <HeroModelCard
+        model={unset}
+        host={{ ...host(), labels: { ...TEST_LABELS, noValue: 'NOT-SET' } }}
+      />,
     )
     expect(screen.getByRole('option', { name: 'NOT-SET' })).toBeTruthy()
   })

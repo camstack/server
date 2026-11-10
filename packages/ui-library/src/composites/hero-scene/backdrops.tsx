@@ -31,6 +31,9 @@ const CENTRED_FIGURE_KINDS: ReadonlySet<BackdropKind> = new Set<BackdropKind>([
   'orbit',
   'fan',
   'breathe',
+  // The idle grid sits along the scene's foot: under an illustration it would run
+  // behind the command controls (a cover's open / stop / close), so the art stands alone.
+  'none',
 ])
 
 function Particles({ direction, drop }: { direction: 'fall' | 'rise'; drop?: boolean }): ReactNode {

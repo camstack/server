@@ -2,7 +2,7 @@ import type { SystemTrpcClient } from '@camstack/ui-library'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { DeviceDetailModule } from '../DeviceDetailModule'
-import { buildModel, WASHER_SLICES } from '../hero/__tests__/fixtures'
+import { WASHER_MODEL } from './washer-model'
 import { fakeSystemClient } from './fake-system-client'
 
 /** A client that answers each tRPC path from a table and nothing else - no System behind it. */
@@ -10,7 +10,7 @@ function clientAnswering(answers: Readonly<Record<string, unknown>>): SystemTrpc
   return fakeSystemClient((call) => ({ kind: 'data', value: answers[call.path] ?? null }))
 }
 
-const washer = buildModel('washer', ['running-state', 'power-meter'], WASHER_SLICES)
+const washer = WASHER_MODEL
 
 describe('DeviceDetailModule', () => {
   it('draws the hero from props alone, with no System or router mounted', async () => {

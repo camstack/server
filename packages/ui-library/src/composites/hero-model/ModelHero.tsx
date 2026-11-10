@@ -1,73 +1,52 @@
-import type { HeroAction, HeroCall, HeroConfirm } from '@camstack/types'
+import type { HeroAction, HeroCall } from '@camstack/types'
+import { type ReactNode, useCallback, useEffect, useState } from 'react'
+import { useTrpcClient } from '../../contexts/system-context'
+import { Skeleton } from '../../primitives/skeleton'
 import {
-  Skeleton,
-  useAlertIfAvailable,
-  useConfirm,
   useDeviceManagerGetBindings,
   useHeroLayoutGetHeroModel,
-  useTrpcClient,
-} from '@camstack/ui-library'
-import { type ReactNode, useCallback, useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { RemoteHeroButton } from '../../../components/remote/RemoteHeroButton'
+} from '../../generated/system-hooks'
+import { useAlertIfAvailable, useConfirm } from '../confirm-dialog'
 import { callHeroAction } from './call-hero-action'
+import type { HeroLabels } from './hero-labels'
 import { HeroModelCard } from './HeroModelCard'
-import { heroLang, heroModelCovers } from './hero-model-view'
+import { type HeroLang, heroModelCovers } from './hero-model-view'
 import { useHeroLiveRefresh } from './use-hero-live-refresh'
-
-const CONFIRM_COPY: Readonly<
-  Record<HeroConfirm, { title: string; message: string; confirm: string }>
-> = {
-  'off-while-running': {
-    title: 'Turn off while running?',
-    message: 'The device is running. Cutting its power now interrupts what it is doing.',
-    confirm: 'Turn off',
-  },
-  unlock: {
-    title: 'Unlock?',
-    message: 'The lock will open.',
-    confirm: 'Unlock',
-  },
-  install: {
-    title: 'Install the update?',
-    message: 'The device may restart and be unavailable for a while.',
-    confirm: 'Install',
-  },
-  press: {
-    title: 'Run it now?',
-    message: 'The device acts as soon as you confirm.',
-    confirm: 'Run',
-  },
-}
-
-/** The i18n namespace of a confirmation; the first one predates the others. */
-const confirmKey = (kind: HeroConfirm): string =>
-  kind === 'off-while-running' ? 'deviceHero.model.confirmOff' : `deviceHero.model.confirm.${kind}`
 
 export interface ModelHeroProps {
   readonly deviceId: number
   readonly canActuate: boolean
+  /** The language the model's own `{ en, it }` texts are picked in. */
+  readonly lang: HeroLang
+  /** The words the model does not carry, in `lang`. */
+  readonly labels: HeroLabels
   /** Drawn while the model does not cover the device (or could not be read). */
   readonly fallback: ReactNode
-  /** Opens the device's history; absent when the page has no history to open. */
+  /** Opens the device's history; absent when the host has no history to open. */
   readonly onOpenHistory?: () => void
+  /** The remote's foot button for a device whose model carries the `remote` slot; given the device name. */
+  readonly renderRemote?: (deviceName: string) => ReactNode
   /** Told whether the model hero (not the fallback) is what is on screen. */
   readonly onDrawn?: (drawn: boolean) => void
 }
 
 /**
- * The device hero drawn from the hero model (D1023). While the model or the
- * bindings are unanswered a skeleton shows; when the model is absent, errored or
- * does not cover the device's caps yet, `fallback` (the legacy hero) renders.
+ * The device hero drawn from the hero model (D1023), mountable by any host that
+ * provides the tRPC client (`TrpcClientProvider` / `SystemProvider`) and a
+ * confirm dialog. While the model or the bindings are unanswered a skeleton
+ * shows; when the model is absent, errored or does not cover the device's caps
+ * yet, `fallback` renders.
  */
 export function ModelHero({
   deviceId,
   canActuate,
+  lang,
+  labels,
   fallback,
   onOpenHistory,
+  renderRemote,
   onDrawn,
 }: ModelHeroProps): ReactNode {
-  const { t, i18n } = useTranslation()
   const client = useTrpcClient()
   const confirm = useConfirm()
   const alert = useAlertIfAvailable()
@@ -80,16 +59,11 @@ export function ModelHero({
     (call: HeroCall, action: HeroAction | null): void => {
       void (async () => {
         if (action?.confirm != null) {
+          const copy = labels.confirm[action.confirm]
           const ok = await confirm({
-            title: t(`${confirmKey(action.confirm)}.title`, CONFIRM_COPY[action.confirm].title),
-            message: t(
-              `${confirmKey(action.confirm)}.message`,
-              CONFIRM_COPY[action.confirm].message,
-            ),
-            confirmLabel: t(
-              `${confirmKey(action.confirm)}.confirm`,
-              CONFIRM_COPY[action.confirm].confirm,
-            ),
+            title: copy.title,
+            message: copy.message,
+            confirmLabel: copy.confirm,
             variant: action.confirm === 'press' ? 'default' : 'danger',
           })
           if (!ok) return
@@ -101,7 +75,7 @@ export function ModelHero({
           await model.refetch()
         } catch (err) {
           await alert?.({
-            title: t('deviceHero.model.callFailed', 'The device did not accept the command'),
+            title: labels.callFailed,
             message: err instanceof Error ? err.message : String(err),
             variant: 'danger',
           })
@@ -110,7 +84,7 @@ export function ModelHero({
         }
       })()
     },
-    [alert, bindings.data, confirm, deviceId, model, client, t],
+    [alert, bindings.data, confirm, deviceId, model, client, labels],
   )
 
   const drawn =
@@ -147,12 +121,13 @@ export function ModelHero({
       <HeroModelCard
         model={built}
         host={{
-          lang: heroLang(i18n.language),
+          lang,
+          labels,
           busy,
           run,
           ...(onOpenHistory === undefined ? {} : { openHistory: onOpenHistory }),
         }}
-        remote={<RemoteHeroButton deviceId={deviceId} deviceName={built.name} />}
+        remote={renderRemote?.(built.name)}
       />
     </div>
   )

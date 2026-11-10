@@ -12005,5 +12005,8 @@
       "nothing-to-do": "Nothing to update.",
       "status-unreadable": "Status could not be read."
     }
+  },
+  "embedDevice": {
+    "invalidId": "This link does not name a device."
   }
 }

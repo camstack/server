@@ -12027,5 +12027,8 @@
       "nothing-to-do": "Niente da aggiornare.",
       "status-unreadable": "Stato illeggibile."
     }
+  },
+  "embedDevice": {
+    "invalidId": "Questo link non indica un dispositivo."
   }
 }

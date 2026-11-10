@@ -1,9 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { HeroModelCard } from '../HeroModelCard'
-import { buildModel, MEDIA_FEATURES, MEDIA_SLICE, PLUG_SLICES, WASHER_SLICES } from './fixtures'
+import {
+  TEST_LABELS,
+  buildModel,
+  MEDIA_FEATURES,
+  MEDIA_SLICE,
+  PLUG_SLICES,
+  WASHER_SLICES,
+} from './fixtures'
 
-const host = (run = vi.fn()) => ({ lang: 'en' as const, busy: false, run })
+const host = (run = vi.fn()) => ({ lang: 'en' as const, labels: TEST_LABELS, busy: false, run })
 
 describe('HeroModelCard', () => {
   it('draws the washer scene with the model name and state, and no controls it lacks', () => {
@@ -65,7 +72,9 @@ describe('HeroModelCard', () => {
     const slice = {
       ...MEDIA_SLICE,
       currentMedia: {
-        ...MEDIA_SLICE.currentMedia,
+        type: 'music',
+        title: 'Song',
+        artist: 'Band',
         imageUrl: 'https://example.com/cover.jpg',
       },
     }

@@ -2,7 +2,7 @@ import type { HeroModel } from '@camstack/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { HeroModelCard } from '../HeroModelCard'
-import { buildModel, WASHER_SLICES } from './fixtures'
+import { TEST_LABELS, buildModel, WASHER_SLICES } from './fixtures'
 
 const NOW = 1_700_000_000_000
 
@@ -29,6 +29,7 @@ const CAPS = ['running-state', 'power-meter', 'power-source', 'consumables']
 const washer = (canActuate = true): HeroModel => buildModel('washer', CAPS, SLICES, canActuate)
 const host = (run = vi.fn(), history = vi.fn()) => ({
   lang: 'en' as const,
+  labels: TEST_LABELS,
   busy: false,
   run,
   openHistory: history,
@@ -89,7 +90,12 @@ describe('HeroModelCard utility section', () => {
 
   it('draws no section for a device with no utility', () => {
     const model = buildModel('washer', ['running-state', 'power-meter'], WASHER_SLICES)
-    render(<HeroModelCard model={model} host={{ lang: 'en', busy: false, run: vi.fn() }} />)
+    render(
+      <HeroModelCard
+        model={model}
+        host={{ lang: 'en', labels: TEST_LABELS, busy: false, run: vi.fn() }}
+      />,
+    )
     expect(screen.queryByTestId('hero-utility-grid')).toBeNull()
     expect(screen.queryByTestId('hero-card-utility')).toBeNull()
   })

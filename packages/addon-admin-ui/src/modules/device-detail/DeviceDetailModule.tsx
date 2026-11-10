@@ -8,6 +8,8 @@ import {
   TrpcClientProvider,
   UiTextProvider,
   DeviceHistoryView,
+  heroLang,
+  ModelHero,
   trpc,
   useDeviceSeriesList,
 } from '@camstack/ui-library'
@@ -17,8 +19,9 @@ import { I18nextProvider, useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
 import { bridgeUiText } from '../../i18n/ui-text-bridge'
 import { historyTabVisible } from '../../components/device/history-tab'
-import { ModelHero } from './hero/ModelHero'
+import { RemoteHeroButton } from '../../components/remote/RemoteHeroButton'
 import { DeviceModuleProvider } from './module-context'
+import { useHeroLabels } from './use-hero-labels'
 import type { DeviceDetailModuleProps } from './types'
 
 /** One cache per mounted module when the host does not lend its own. */
@@ -38,7 +41,8 @@ function ModuleBody({
 }: Pick<DeviceDetailModuleProps, 'deviceId' | 'fallback' | 'onDrawn' | 'defaultHistoryOpen'> & {
   readonly canActuate: boolean
 }): ReactNode {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const labels = useHeroLabels()
   const [historyOpen, setHistoryOpen] = useState(defaultHistoryOpen === true)
   const series = useDeviceSeriesList(deviceId)
   const hasHistory = historyTabVisible(series.presence, series.list)
@@ -48,6 +52,11 @@ function ModuleBody({
       <ModelHero
         deviceId={deviceId}
         canActuate={canActuate}
+        lang={heroLang(i18n.language)}
+        labels={labels}
+        renderRemote={(deviceName) => (
+          <RemoteHeroButton deviceId={deviceId} deviceName={deviceName} />
+        )}
         fallback={fallback ?? null}
         {...(hasHistory ? { onOpenHistory: openHistory } : {})}
         {...(onDrawn === undefined ? {} : { onDrawn })}

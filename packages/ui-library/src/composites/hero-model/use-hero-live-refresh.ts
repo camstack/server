@@ -1,5 +1,6 @@
-import { useDeviceProxy, useTrpcClient } from '@camstack/ui-library'
 import { useEffect } from 'react'
+import { useTrpcClient } from '../../contexts/system-context'
+import { useDeviceProxy } from '../../hooks/use-device-proxy'
 
 const COALESCE_MS = 250
 

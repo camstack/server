@@ -91,6 +91,9 @@ const EmbedPlayerPage = lazy(() =>
     default: m.EmbedPlayerPage,
   })),
 )
+const EmbedDevicePage = lazy(() =>
+  import('./pages/EmbedDevicePage').then((m) => ({ default: m.EmbedDevicePage })),
+)
 const LibraryPage = lazy(() => import('./pages/Library').then((m) => ({ default: m.LibraryPage })))
 const RecordingsPage = lazy(() =>
   import('./pages/Recordings').then((m) => ({ default: m.RecordingsPage })),
@@ -406,6 +409,17 @@ export function App() {
                         window.__CAMSTACK_EMBED__ before load — NO auth gate,
                         so it must stay OUTSIDE ProtectedRoute/AppLayout. */}
                               <Route path="/embed/player" element={<EmbedPlayerPage />} />
+                              {/* One device's card with no chrome, for a viewer WebView.
+                        Signed in through the existing session — ProtectedRoute,
+                        no token in the URL — but outside AppLayout. */}
+                              <Route
+                                path="/embed/device/:deviceId"
+                                element={
+                                  <ProtectedRoute>
+                                    <EmbedDevicePage />
+                                  </ProtectedRoute>
+                                }
+                              />
                               <Route
                                 element={
                                   <ProtectedRoute>

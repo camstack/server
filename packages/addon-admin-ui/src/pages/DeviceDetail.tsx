@@ -10,6 +10,7 @@ import {
 import {
   BatteryBadge,
   Breadcrumb,
+  heroLang,
   DeviceHistoryView,
   type ContainerChild,
   DeviceContextProvider,
@@ -80,7 +81,6 @@ import { DeviceAdminLinkButton } from '../components/device/DeviceAdminLinkButto
 import { ChildrenList } from '../components/device/ChildrenList'
 import { DeviceHero } from '../components/device/hero/HeroRegistry'
 import { DeviceDetailModule } from '../modules/device-detail'
-import { heroLang } from '../modules/device-detail/hero/hero-model-view'
 import { heroDrawnWidgets } from '../components/device/hero/hero-drawn-widgets'
 import { DeviceHeroWidgets } from '../components/device/hero/DeviceHeroWidgets'
 import { heroWidgets } from '../components/device/hero/hero-widgets'

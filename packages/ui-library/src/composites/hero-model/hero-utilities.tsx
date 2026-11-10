@@ -1,8 +1,9 @@
 import type { HeroAction, HeroModel } from '@camstack/types'
-import { Badge, Button, type HeroUtility } from '@camstack/ui-library'
 import { History, Package, Power } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Badge } from '../../primitives/badge'
+import { Button } from '../../primitives/button'
+import type { HeroUtility } from '../hero-scene'
 import type { HeroCardHost } from './HeroModelCard'
 import { pickText } from './hero-model-view'
 
@@ -63,7 +64,7 @@ function PowerPanel({
  * a device without the slot gets no button. The remote keeps its own foot button.
  */
 export function useHeroUtilities(model: HeroModel, host: HeroCardHost): readonly HeroUtility[] {
-  const { t } = useTranslation()
+  const labels = host.labels
   const gated = new Set(model.gated)
   const out: HeroUtility[] = []
   if (host.openHistory !== undefined) {
@@ -71,7 +72,7 @@ export function useHeroUtilities(model: HeroModel, host: HeroCardHost): readonly
       id: 'history',
       icon: History,
       label: pickText(model.historyLabel, host.lang),
-      tooltip: t('deviceHero.utility.history.tooltip', 'Opens the history of this device.'),
+      tooltip: labels.historyTooltip,
       onPress: host.openHistory,
     })
   }
@@ -80,18 +81,13 @@ export function useHeroUtilities(model: HeroModel, host: HeroCardHost): readonly
     out.push({
       id: 'consumables',
       icon: Package,
-      label: t('deviceHero.utility.consumables.label', 'Consumables'),
+      label: labels.consumables.label,
       value:
         consumables.attention > 0
-          ? t('deviceHero.utility.consumables.low', '{{count}} low', {
-              count: consumables.attention,
-            })
-          : t('deviceHero.utility.consumables.ok', 'OK'),
+          ? labels.consumables.low(consumables.attention)
+          : labels.consumables.ok,
       tone: consumables.attention > 0 ? 'warning' : 'default',
-      tooltip: t(
-        'deviceHero.utility.consumables.tooltip',
-        'Shows the level of each consumable and which ones need attention.',
-      ),
+      tooltip: labels.consumables.tooltip,
       panel: () => <ConsumablesPanel model={model} />,
     })
   }
@@ -101,24 +97,11 @@ export function useHeroUtilities(model: HeroModel, host: HeroCardHost): readonly
     out.push({
       id: 'power-supply',
       icon: Power,
-      label: t('deviceHero.utility.power.label', 'Power source'),
+      label: labels.power.label,
       ...(supply.on === null
         ? {}
-        : {
-            value:
-              supply.on === true
-                ? t('deviceHero.utility.power.on', 'On')
-                : t('deviceHero.utility.power.off', 'Off'),
-          }),
-      tooltip: readOnly
-        ? t(
-            'deviceHero.utility.power.tooltipReadOnly',
-            'Whether the power source feeding this device is on. Your session cannot change it.',
-          )
-        : t(
-            'deviceHero.utility.power.tooltip',
-            'Opens a menu to cut or restore the power feeding this device, or to restart it.',
-          ),
+        : { value: supply.on === true ? labels.power.on : labels.power.off }),
+      tooltip: readOnly ? labels.power.tooltipReadOnly : labels.power.tooltip,
       ...(readOnly
         ? { disabled: true }
         : { panel: (close: () => void) => <PowerPanel model={model} host={host} close={close} /> }),

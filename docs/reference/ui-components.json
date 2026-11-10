@@ -6431,6 +6431,47 @@
       ]
     },
     {
+      "name": "heroLang",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-model/hero-model-view.ts",
+      "summary": "Hero model -> component props. Pure: it selects and renames what the model already says; it decides nothing about a device type (D1023, D14)."
+    },
+    {
+      "name": "HeroModelCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-model/HeroModelCard.tsx",
+      "summary": "Layout A, drawn from the hero model and nothing else (D1023).",
+      "props": [
+        {
+          "name": "model",
+          "type": "HeroModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "host",
+          "type": "HeroCardHost",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "remote",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "The remote button, when the model carries the `remote` slot."
+        }
+      ]
+    },
+    {
+      "name": "heroModelCovers",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-model/hero-model-view.ts",
+      "summary": "Whether the hero model draws this device. `false` keeps the legacy hero, which still has parts (brightness, climate modes, ...) the model does not carry."
+    },
+    {
       "name": "HeroProgressBar",
       "kind": "component",
       "area": "composites",
@@ -8355,6 +8396,63 @@
       "summary": "Exhaustive colour map — one entry per HvacMode. Build will fail if a mode is added to the enum and not reflected here (Record<HvacMode, ...> + `satisfies` means TypeScript enforces full coverage)."
     },
     {
+      "name": "ModelHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-model/ModelHero.tsx",
+      "summary": "The device hero drawn from the hero model (D1023), mountable by any host that provides the tRPC client (`TrpcClientProvider` / `SystemProvider`) and a confirm dialog. While the model or the bindings are unanswered a s…",
+      "props": [
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "canActuate",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "lang",
+          "type": "HeroLang",
+          "optional": false,
+          "doc": "The language the model's own `{ en, it }` texts are picked in."
+        },
+        {
+          "name": "labels",
+          "type": "HeroLabels",
+          "optional": false,
+          "doc": "The words the model does not carry, in `lang`."
+        },
+        {
+          "name": "fallback",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": "Drawn while the model does not cover the device (or could not be read)."
+        },
+        {
+          "name": "onOpenHistory",
+          "type": "() => void",
+          "optional": true,
+          "doc": "Opens the device's history; absent when the host has no history to open."
+        },
+        {
+          "name": "renderRemote",
+          "type": "(deviceName: string) => ReactNode",
+          "optional": true,
+          "doc": "The remote's foot button for a device whose model carries the `remote` slot; given the device name."
+        },
+        {
+          "name": "onDrawn",
+          "type": "(drawn: boolean) => void",
+          "optional": true,
+          "doc": "Told whether the model hero (not the fallback) is what is on screen."
+        }
+      ]
+    },
+    {
       "name": "ModelPicker",
       "kind": "component",
       "area": "composites",
@@ -9359,6 +9457,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-picker/device-picker-model.ts",
       "summary": "A zone filter is chosen but the zones read has not answered: it is paused, not applied."
+    },
+    {
+      "name": "pickText",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/hero-model/hero-model-view.ts",
+      "summary": "Hero model -> component props. Pure: it selects and renames what the model already says; it decides nothing about a device type (D1023, D14)."
     },
     {
       "name": "pinnedStreamChoices",

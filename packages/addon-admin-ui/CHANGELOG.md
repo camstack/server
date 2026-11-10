@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- New chrome-less /embed/device/<id> page that draws one device's card through the signed-in session
+
 ## [1.2.636] - 2026-11-10
 
 ### Changed
