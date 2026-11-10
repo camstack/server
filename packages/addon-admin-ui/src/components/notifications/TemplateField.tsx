@@ -7,11 +7,22 @@
  * variables", which is what `vars: []` (answered, none apply) means. See
  * CLAUDE.md: "A UI claims something is ABSENT only from a query that
  * ANSWERED with nothing."
+ *
+ * `deviceValues: false` renders a plain box with the same chips: for a text the hub
+ * does not pass through the device-template renderer (the shipped-sentence catalog,
+ * which is `{{var}}` substitution only), a device-value picker would promise a
+ * feature that does nothing.
  */
 import type { NcTemplateVarContext, NcTemplateVarDescriptor } from '@camstack/types'
-import { Button, DeviceTemplateField, type DeviceTemplateFieldHandle } from '@camstack/ui-library'
+import {
+  Button,
+  DeviceTemplateField,
+  type DeviceTemplateFieldHandle,
+  Input,
+  Textarea,
+} from '@camstack/ui-library'
 import { AlertTriangle } from 'lucide-react'
-import { useRef } from 'react'
+import { type ChangeEvent, useRef } from 'react'
 import {
   groupTemplateVars,
   placeholderToken,
@@ -45,6 +56,8 @@ export interface TemplateFieldProps {
   readonly multiline?: boolean
   readonly placeholder?: string
   readonly disabled?: boolean
+  /** Whether the hub renders this text's `{{ alias.field }}` device values. Default true. */
+  readonly deviceValues?: boolean
   readonly testId: string
 }
 
@@ -56,30 +69,69 @@ export function TemplateField({
   multiline = false,
   placeholder,
   disabled = false,
+  deviceValues = true,
   testId,
 }: TemplateFieldProps) {
   const { t } = useTranslation()
   const field = useRef<DeviceTemplateFieldHandle | null>(null)
+  const plain = useRef<(HTMLInputElement & HTMLTextAreaElement) | null>(null)
   const unknown = vars ? unknownPlaceholders(value, vars) : []
 
   const insert = (descriptor: NcTemplateVarDescriptor): void => {
     const token = placeholderToken(descriptor)
-    field.current?.insertText(token.text, token.cursorOffset)
+    if (deviceValues) {
+      field.current?.insertText(token.text, token.cursorOffset)
+      return
+    }
+    const element = plain.current
+    const start = element?.selectionStart ?? value.length
+    const end = element?.selectionEnd ?? value.length
+    onChange(value.slice(0, start) + token.text + value.slice(end))
+    const cursor = start + token.cursorOffset
+    requestAnimationFrame(() => {
+      element?.focus()
+      element?.setSelectionRange(cursor, cursor)
+    })
   }
+  const edit = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void =>
+    onChange(e.target.value)
 
   return (
     <div className="space-y-1">
       <label className={LABEL_CLASS}>{label}</label>
-      <DeviceTemplateField
-        label={label}
-        value={value}
-        onChange={onChange}
-        multiline={multiline}
-        placeholder={placeholder}
-        disabled={disabled}
-        handle={field}
-        testId={testId}
-      />
+      {deviceValues ? (
+        <DeviceTemplateField
+          label={label}
+          value={value}
+          onChange={onChange}
+          multiline={multiline}
+          placeholder={placeholder}
+          disabled={disabled}
+          handle={field}
+          testId={testId}
+        />
+      ) : multiline ? (
+        <Textarea
+          ref={plain}
+          aria-label={label}
+          value={value}
+          rows={2}
+          disabled={disabled}
+          placeholder={placeholder}
+          onChange={edit}
+          data-testid={`${testId}-input`}
+        />
+      ) : (
+        <Input
+          ref={plain}
+          aria-label={label}
+          value={value}
+          disabled={disabled}
+          placeholder={placeholder}
+          onChange={edit}
+          data-testid={`${testId}-input`}
+        />
+      )}
       {vars && vars.length === 0 ? (
         <p className="text-[10px] text-foreground-subtle">
           {t('notifications.templateField.noVariablesForThisField', 'No variables for this field.')}

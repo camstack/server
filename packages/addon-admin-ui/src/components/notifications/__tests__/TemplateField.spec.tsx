@@ -13,14 +13,23 @@ const vars: NcTemplateVarDescriptor[] = [
 function Harness({
   initial,
   list,
+  deviceValues = true,
 }: {
   readonly initial: string
   readonly list: readonly NcTemplateVarDescriptor[] | undefined
+  readonly deviceValues?: boolean
 }) {
   const [value, setValue] = useState(initial)
   return (
     <>
-      <TemplateField label="Title" value={value} onChange={setValue} vars={list} testId="tf" />
+      <TemplateField
+        label="Title"
+        value={value}
+        onChange={setValue}
+        vars={list}
+        deviceValues={deviceValues}
+        testId="tf"
+      />
       <output data-testid="stored">{value}</output>
     </>
   )
@@ -33,6 +42,16 @@ describe('TemplateField', () => {
     if (!(input instanceof HTMLInputElement)) throw new Error('not an input')
     input.setSelectionRange(1, 1)
     fireEvent.select(input)
+    fireEvent.click(screen.getByTestId('tf-chip-camera'))
+    expect(input.value).toBe('a{{camera}}b')
+  })
+
+  it('a plain field (no device values) has no picker and still inserts a chip at the cursor', () => {
+    render(renderWithTemplateHub(<Harness initial="ab" list={vars} deviceValues={false} />))
+    expect(screen.queryByTestId('tf-insert')).toBeNull()
+    const input = screen.getByTestId('tf-input')
+    if (!(input instanceof HTMLInputElement)) throw new Error('not an input')
+    input.setSelectionRange(1, 1)
     fireEvent.click(screen.getByTestId('tf-chip-camera'))
     expect(input.value).toBe('a{{camera}}b')
   })

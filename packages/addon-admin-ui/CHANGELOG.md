@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Free-text action arguments and notification texts take device values: pick a device and a field to insert it, see it as a chip, and get the hub's verdict under the field; the expression box of an automation condition now autocompletes the names it binds
+- Notification texts (the shipped-sentence catalog) stay plain text with their variable chips: the device-value picker only appears where the hub renders device values
 
 ## [1.2.631] - 2026-11-10
 

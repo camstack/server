@@ -139,6 +139,12 @@ describe('NotificationTexts page', () => {
     })
   })
 
+  it('a catalog sentence is plain text: no device-value picker, same {{var}} PATCH', async () => {
+    renderPage()
+    await waitFor(() => expect(screen.getByTestId('text-input-detection.body-input')).toBeTruthy())
+    expect(screen.queryByTestId('text-input-detection.body-insert')).toBeNull()
+  })
+
   it('a per-key reset asks the server to drop the override', async () => {
     renderPage()
     await waitFor(() => expect(screen.getByTestId('text-reset-class.person')).toBeTruthy())

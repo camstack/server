@@ -100,6 +100,7 @@ function KeyRow({ entry, value, busy, onChange, onReset }: KeyRowProps) {
             value={value}
             onChange={onChange}
             vars={textsKeyVars(entry)}
+            deviceValues={false}
             disabled={busy}
             testId={`text-input-${entry.key}`}
           />

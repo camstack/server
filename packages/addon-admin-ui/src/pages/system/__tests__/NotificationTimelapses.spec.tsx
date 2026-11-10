@@ -263,6 +263,29 @@ describe('NotificationTimelapses page', () => {
     expect(screen.queryByTestId('timelapse-template-body-chip-tiles')).toBeNull()
   })
 
+  it('the digest body takes device values and keeps the typed text verbatim', async () => {
+    renderPage()
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('timelapse-edit-80b14eac-be1b-4a8f-bccb-1aa04acc4c14'),
+      ).toBeTruthy(),
+    )
+    fireEvent.click(screen.getByTestId('timelapse-edit-80b14eac-be1b-4a8f-bccb-1aa04acc4c14'))
+    await waitFor(() => expect(screen.getByTestId('timelapse-name')).toBeTruthy())
+    fireEvent.click(screen.getByRole('tab', { name: 'Delivery' }))
+    const body = await screen.findByTestId('timelapse-template-body-input')
+    expect(screen.getByTestId('timelapse-template-body-insert')).toBeTruthy()
+    fireEvent.change(body, { target: { value: '{{events}} - {{ door.state }}' } })
+    // The device reference shows as a chip; opening it for edit gives back the typed text.
+    expect(screen.getByTestId('timelapse-template-body-chip')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('timelapse-template-body-chips'))
+    await waitFor(() =>
+      expect((screen.getByTestId('timelapse-template-body-input') as HTMLInputElement).value).toBe(
+        '{{events}} - {{ door.state }}',
+      ),
+    )
+  })
+
   it('Test asks first, and asks WHICH camera — one rule is several videos', async () => {
     renderPage()
     await waitFor(() =>

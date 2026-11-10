@@ -598,10 +598,10 @@
       "notes": "Wraps `DeviceValueField`. `kind: 'members'` is the multi-select a group helper asks for (`SourcePickRequest`: one device type, the catalog fields, direct matches only). Behaviour params for an extension still come from the customize catalog (D944)"
     },
     {
-      "need": "A text that may carry device values (`{{ alias.field }}`): an action argument, a notification title or body",
+      "need": "A text that may carry device values (`{{ alias.field }}`): an action argument, a notification rule or digest (summary, timelapse) title or body",
       "admin": "`DeviceTemplateField` (`accepts`, `preview`, `handle` to insert at the caret)",
       "viewer": "a plain `Input`",
-      "notes": "Device references show as chips; the insert control offers only fields that fit `accepts`; the hub's verdict (`checkDeviceTemplates`) shows under the field. An evaluator expression (formula, automation condition) is not a template: use `ExpressionInput`"
+      "notes": "Device references show as chips; the insert control offers only fields that fit `accepts`; the hub's verdict (`checkDeviceTemplates`) shows under the field. A text the hub does not render as a template (the Texts catalog sentences, an AI question) stays plain; `TemplateField` takes `deviceValues={false}` for it. An evaluator expression (formula, automation condition) is not a template: use `ExpressionInput`"
     },
     {
       "need": "Pick ONE device value (device, then cap, then field; only what fits)",

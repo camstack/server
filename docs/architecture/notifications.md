@@ -1345,6 +1345,21 @@ variable value is never template source. An unknown value prints `—` and the
 reason is logged with `tags: { deviceId }`; a refused render sends the catalog
 sentence and logs why.
 
+### Which editors take a device value
+
+| Editor (admin UI) | Text | Rendered by the hub as a device template |
+| --- | --- | --- |
+| Notification rule dialog | title, body | yes: `withDeviceTemplates` in the dispatcher |
+| Summaries editor, Delivery tab | digest title, body | yes: the producer fills `{{var}}` first and enqueues the row with `payload.template`, which the same dispatcher pass renders |
+| Timelapses editor, Delivery tab | digest title, body | yes, same path as a summary |
+| Texts tab (shipped-sentence catalog) | one sentence per key | no: the catalog is `{{var}}` substitution only (`text-catalog.ts`), so the field is a plain box with the variable chips (`TemplateField` with `deviceValues={false}`) |
+| Summaries editor, "Your question" | the question given to the model | no: sent to the model as written |
+| Build → Actions, scheduler points, fan presets | free-text step arguments | yes: `resolveStepArgsWithTemplates` (see [device-model](device-model.md)) |
+
+The `camstack` MCP tool `configure_automation_save` vets every templated step argument
+with `deviceManager.checkDeviceTemplates` before offering the save and prints the
+hub's refusal with its reason.
+
 ## Emptying a field on update — `clear` ([D628](../decisions/adr-0628-an-editor-empties-a-rule-field-by-naming-it.md), 2026-09-24)
 
 `updateRule` persists `{ ...existing, ...patch }`. That merge cannot tell "the

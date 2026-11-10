@@ -455,6 +455,22 @@ describe('the digest EDITOR', () => {
     expect(screen.queryByTestId('summary-template-body-chip-tiles')).toBeNull()
   })
 
+  it('the digest body takes device values and keeps the typed text verbatim', async () => {
+    await openEditor()
+    fireEvent.click(screen.getByRole('tab', { name: 'Delivery' }))
+    const body = await screen.findByTestId('summary-template-body-input')
+    expect(screen.getByTestId('summary-template-body-insert')).toBeTruthy()
+    fireEvent.change(body, { target: { value: '{{events}} - {{ door.state }}' } })
+    // The device reference shows as a chip; opening it for edit gives back the typed text.
+    expect(screen.getByTestId('summary-template-body-chip')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('summary-template-body-chips'))
+    await waitFor(() =>
+      expect((screen.getByTestId('summary-template-body-input') as HTMLInputElement).value).toBe(
+        '{{events}} - {{ door.state }}',
+      ),
+    )
+  })
+
   it('SAVES the AI section it authored — the whole point of P2', async () => {
     await openEditor()
     fireEvent.change(screen.getByTestId('summary-name'), { target: { value: 'Notte' } })
