@@ -463,6 +463,7 @@ export function NotificationTimelapseEditor({
                     )}
                     onChange={(next) => patch({ previewText: next, previewTextSet: true })}
                     vars={previewTextVars}
+                    deviceValues={false}
                     testId="timelapse-preview-text"
                   />
                   <p className={DIGEST_HINT_CLASS}>

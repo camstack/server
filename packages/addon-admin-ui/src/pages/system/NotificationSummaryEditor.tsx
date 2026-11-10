@@ -651,6 +651,7 @@ export function NotificationSummaryEditor({
                       'Leave empty for no caption',
                     )}
                     vars={captionVars}
+                    deviceValues={false}
                     testId="summary-caption"
                   />
                   <p className={DIGEST_HINT_CLASS}>

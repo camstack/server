@@ -455,6 +455,13 @@ describe('the digest EDITOR', () => {
     expect(screen.queryByTestId('summary-template-body-chip-tiles')).toBeNull()
   })
 
+  it('the mosaic caption is plain text: the hub fills {{var}} only, so no device-value picker', async () => {
+    await openEditor()
+    fireEvent.click(screen.getByRole('tab', { name: 'Mosaic' }))
+    await waitFor(() => expect(screen.getByTestId('summary-caption-input')).toBeTruthy())
+    expect(screen.queryByTestId('summary-caption-insert')).toBeNull()
+  })
+
   it('the digest body takes device values and keeps the typed text verbatim', async () => {
     await openEditor()
     fireEvent.click(screen.getByRole('tab', { name: 'Delivery' }))

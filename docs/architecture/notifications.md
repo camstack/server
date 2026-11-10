@@ -1350,8 +1350,10 @@ sentence and logs why.
 | Editor (admin UI) | Text | Rendered by the hub as a device template |
 | --- | --- | --- |
 | Notification rule dialog | title, body | yes: `withDeviceTemplates` in the dispatcher |
-| Summaries editor, Delivery tab | digest title, body | yes: the producer fills `{{var}}` first and enqueues the row with `payload.template`, which the same dispatcher pass renders |
+| Summaries editor, Delivery tab | digest title, body | yes: the producer fills `{{var}}` first, keeping every value (camera name, the model's sentence) and every catalog sentence hidden with `escapeLiteralMarkup`, and enqueues the row with `payload.template`; the dispatcher renders only the operator's own markup, and its final `{{var}}` pass restores the hidden braces |
 | Timelapses editor, Delivery tab | digest title, body | yes, same path as a summary |
+| Summaries editor, Mosaic tab | caption burned onto the mosaic | no: `summaryCaptionText` is `{{var}}` substitution only |
+| Timelapses editor, Delivery tab | caption on the preview frame | no: `timelapsePreviewText` is `{{var}}` substitution only |
 | Texts tab (shipped-sentence catalog) | one sentence per key | no: the catalog is `{{var}}` substitution only (`text-catalog.ts`), so the field is a plain box with the variable chips (`TemplateField` with `deviceValues={false}`) |
 | Summaries editor, "Your question" | the question given to the model | no: sent to the model as written |
 | Build → Actions, scheduler points, fan presets | free-text step arguments | yes: `resolveStepArgsWithTemplates` (see [device-model](device-model.md)) |

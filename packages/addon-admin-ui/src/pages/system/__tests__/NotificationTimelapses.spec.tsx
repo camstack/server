@@ -263,6 +263,20 @@ describe('NotificationTimelapses page', () => {
     expect(screen.queryByTestId('timelapse-template-body-chip-tiles')).toBeNull()
   })
 
+  it('the preview caption is plain text: the hub fills {{var}} only, so no device-value picker', async () => {
+    renderPage()
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('timelapse-edit-80b14eac-be1b-4a8f-bccb-1aa04acc4c14'),
+      ).toBeTruthy(),
+    )
+    fireEvent.click(screen.getByTestId('timelapse-edit-80b14eac-be1b-4a8f-bccb-1aa04acc4c14'))
+    await waitFor(() => expect(screen.getByTestId('timelapse-name')).toBeTruthy())
+    fireEvent.click(screen.getByRole('tab', { name: 'Delivery' }))
+    expect(await screen.findByTestId('timelapse-preview-text-input')).toBeTruthy()
+    expect(screen.queryByTestId('timelapse-preview-text-insert')).toBeNull()
+  })
+
   it('the digest body takes device values and keeps the typed text verbatim', async () => {
     renderPage()
     await waitFor(() =>
