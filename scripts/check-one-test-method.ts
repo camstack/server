@@ -33,6 +33,8 @@ export const PERMANENT: Readonly<Record<string, string>> = {
   'notification-output.cap.ts:testTarget':
     'sends a test notification to one target, not a settings check',
   'notification-rules.cap.ts:testRule': 'dry-runs a notification rule against an event',
+  'device-manager.cap.ts:checkDeviceTemplates':
+    'parses device-value templates and reports unknown aliases/fields, no connection involved',
   'user-management.cap.ts:validateCredentials': 'a user login, not an integration',
   'auth-provider.cap.ts:validateCredentials': 'a user login through an auth provider',
   'device-manager.cap.ts:testCreationField':
