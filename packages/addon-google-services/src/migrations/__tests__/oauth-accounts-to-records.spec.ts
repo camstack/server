@@ -14,8 +14,10 @@ import {
   DROP_OAUTH_ACCOUNTS_STATE_ID as DROP,
   type GoogleMigrationPorts,
   OAUTH_ACCOUNTS_TO_RECORDS_ID as MOVE,
+  RELEASE_OAUTH_ACCOUNTS_SECRETS_ID as RELEASE,
 } from '../index.js'
 import { NO_LEGACY_PORTS, NO_RECORD_PORTS } from './inert-ports.js'
+import { planDropOauthAccountsState } from '../oauth-accounts-to-records.js'
 import { oauthAccountsPortsOver } from '../ports.js'
 
 const MARK_TOKEN = 'rt-marked-001'
@@ -51,7 +53,7 @@ async function start(stored: Record<string, unknown>, existing: readonly string[
   const released: string[] = []
   const fixture: SettingsFixture = settingsFixture(
     'google-services',
-    ADDON_MIGRATIONS.filter((m) => m.meta.id === MOVE || m.meta.id === DROP),
+    ADDON_MIGRATIONS.filter((m) => [MOVE, RELEASE, DROP].includes(m.meta.id)),
     (readStored: (key: string) => Promise<StoredKeyRead>): GoogleMigrationPorts => ({
       ...NO_RECORD_PORTS,
       ...NO_LEGACY_PORTS,
@@ -84,7 +86,7 @@ describe('google-services: oauthAccounts move onto the account records', () => {
       },
       ['google_001'],
     )
-    expect(await fixture.boot()).toEqual({ failed: [], applied: [MOVE, DROP] })
+    expect(await fixture.boot()).toEqual({ failed: [], applied: [MOVE, RELEASE, DROP] })
 
     // As stored: the row holds a keychain MARKER, never the token.
     const raw = storedRow('google_001')?.data
@@ -117,7 +119,7 @@ describe('google-services: oauthAccounts move onto the account records', () => {
     )
     await fixture.boot()
     const rev = storedRow('google_001')?.rev
-    expect(await fixture.boot()).toEqual({ failed: [], applied: [MOVE, DROP] })
+    expect(await fixture.boot()).toEqual({ failed: [], applied: [MOVE, RELEASE, DROP] })
     expect(storedRow('google_001')?.rev).toBe(rev)
   })
 
@@ -133,6 +135,7 @@ describe('google-services: oauthAccounts move onto the account records', () => {
     )
     const report = await fixture.boot()
     expect(report.failed).toContain(MOVE)
+    expect(report.applied).not.toContain(RELEASE)
     expect(report.applied).not.toContain(DROP)
     const sessions = (await store.loadAll()).sessions
     expect(sessions.find((s) => s.id === 'google_002')?.refreshToken).toBe('rt-two')
@@ -192,8 +195,25 @@ describe('google-services: oauthAccounts move onto the account records', () => {
     world.failWrites(true)
     const report = await fixture.boot()
     expect(report.failed).toContain(MOVE)
+    expect(report.applied).not.toContain(RELEASE)
     expect(report.applied).not.toContain(DROP)
     expect(warnings.join('\n')).not.toContain('rt-secret-xyz')
     expect(fixture.rows()['google-services.oauthAccounts']).toBeDefined()
+  })
+
+  it('building the drop plan is pure: it releases nothing, and refuses while an account is left', async () => {
+    let released = 0
+    let stored: unknown = { accounts: [account('google_001', MARK_TOKEN, MARK_EMAIL)] }
+    const ports = {
+      readStored: async (): Promise<StoredKeyRead> => ({ kind: 'present', value: stored }),
+      releaseStateSecrets: async () => {
+        released += 1
+      },
+    }
+    await expect(planDropOauthAccountsState(ports)).rejects.toThrow(/still holds 1 account/)
+    stored = { accounts: [] }
+    const plan = await planDropOauthAccountsState(ports)
+    expect(plan.edits.map((e) => e.op)).toEqual(['deleteKeys'])
+    expect(released).toBe(0)
   })
 })

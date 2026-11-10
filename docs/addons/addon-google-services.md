@@ -79,14 +79,17 @@ transition. A successful OAuth callback clears the flag and resolves the alert.
 - The access token is memory only: after a restart the first call refreshes it.
   A refresh writes the record only when Google rotated the refresh token or
   changed the scopes.
-- The old `oauthAccounts` durable state is gone (planning#480). Two D987
+- The old `oauthAccounts` durable state is gone (planning#480). Three D987
   migrations moved it: `google-services/2026-11-10-oauth-accounts-to-records`
   carries each entry onto its record (the same token, so no new consent; an
   entry with no record becomes one named after its email; a record holding a
   newer token keeps it; a failed entry is logged by id and reason and blocks
-  only the drop), then `google-services/2026-11-10-drop-oauth-accounts-state`
-  re-reads every record, releases the state's keychain values and deletes the
-  key. `secretStatePaths` stays declared only so those migrations can resolve
+  only what follows), then `google-services/2026-11-10-release-oauth-accounts-secrets`
+  (a procedure) re-reads every record and releases the state's keychain
+  values, and `google-services/2026-11-10-drop-oauth-accounts-state` (a pure
+  plan) deletes the emptied key.
+- A refresh whose record write fails keeps the fresh token in memory, logs the
+  account id, and the next write carries the session. `secretStatePaths` stays declared only so those migrations can resolve
   the legacy markers.
 
 ## Traps

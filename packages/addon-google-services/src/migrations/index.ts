@@ -15,6 +15,7 @@ import {
   moveOauthAccountsToRecords,
   type OauthAccountsPorts,
   planDropOauthAccountsState,
+  releaseOauthAccountsSecrets,
 } from './oauth-accounts-to-records.js'
 
 export type { CalendarIdsPorts } from './calendar-ids-to-brokers.js'
@@ -29,6 +30,8 @@ export const DROP_CONFIG_BROKERS_AND_LEGACY_OAUTH_ID =
 
 export const OAUTH_ACCOUNTS_TO_RECORDS_ID = 'google-services/2026-11-10-oauth-accounts-to-records'
 
+export const RELEASE_OAUTH_ACCOUNTS_SECRETS_ID =
+  'google-services/2026-11-10-release-oauth-accounts-secrets'
 export const DROP_OAUTH_ACCOUNTS_STATE_ID = 'google-services/2026-11-10-drop-oauth-accounts-state'
 
 /** What the catalogue's migrations read and write through. */
@@ -149,7 +152,7 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<GoogleMigrationPorts>[] =
   },
   {
     meta: {
-      id: DROP_OAUTH_ACCOUNTS_STATE_ID,
+      id: RELEASE_OAUTH_ACCOUNTS_SECRETS_ID,
       owner: 'google-services',
       level: 'addon-state',
       seq: 7,
@@ -157,10 +160,27 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<GoogleMigrationPorts>[] =
       store: 'settings',
       scope: 'cluster',
       onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'Release the oauthAccounts keychain entries (the state written with no accounts) once a second read shows every token on its record',
+      fixtureMark: 'the state kept while a record does not hold its token',
+    },
+    procedure: releaseOauthAccountsSecrets,
+  },
+  {
+    meta: {
+      id: DROP_OAUTH_ACCOUNTS_STATE_ID,
+      owner: 'google-services',
+      level: 'addon-state',
+      seq: 8,
+      dependsOn: [RELEASE_OAUTH_ACCOUNTS_SECRETS_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
       bodyKind: 'plan',
       description:
-        'Release the oauthAccounts keychain entries and delete the state once a second read shows every token on its record',
-      fixtureMark: 'the state kept while a record does not hold its token',
+        'Delete the emptied oauthAccounts state key; refused while it still holds an account',
+      fixtureMark: 'the neighbour row of another addon kept',
     },
     plan: planDropOauthAccountsState,
   },

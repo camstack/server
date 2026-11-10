@@ -198,7 +198,7 @@ record kind. The Google accounts are the worked example: the refresh token, emai
 `needsReauth` sit on the `brokers` record; the access token stays in memory. Their old
 `oauthAccounts` state was moved by a D987 migration that reads the token RESOLVED and writes
 it through the records door (a new ref, the same value, no new consent), reads it back, and only
-after a second read releases the state's keychain values and deletes the key. Rollback is the
+after a second read releases the state's keychain values (a procedure), and a pure plan deletes the key. Rollback is the
 pre-migration snapshot: the settings, the records and `keychain:secrets` are one database.
 `scripts/check-no-settings-fallback-for-kinds.ts` (rule `credential-state`) refuses a new
 `this.state('<key>')` whose key roots a `secretStatePaths` entry in a package that registers a

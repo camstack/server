@@ -11,13 +11,17 @@
  *     differs) blocks only itself: it is logged with its reason, the others land, and the step
  *     then FAILS so the drop is blocked and the next boot retries what is left (the landed ones
  *     are skipped as already joined). Idempotent: a second run finds every entry joined.
- *  7. `planDropOauthAccountsState` (plan): only after a SECOND read shows every entry's token on
- *     its record, the state's keychain values are released (the state is written with no
- *     accounts, the secret-aware write deletes the refs it dropped) and the key is deleted. A plan
- *     precondition is compared with the RAW row, and an addon reads only resolved values, so the
- *     markers must be gone before the precondition is taken (the `export-alexa` drop does the
- *     same). Rollback is the D987 pre-migration snapshot of the hub database: the settings, the
- *     records and the `keychain:secrets` rows come back together.
+ *  7. `releaseOauthAccountsSecrets` (procedure): only after a SECOND read shows every entry's
+ *     token on its record, the state is written with no accounts; the secret-aware write deletes
+ *     the keychain refs it dropped. A side effect, so it is a procedure: it runs when the ledger
+ *     applies it, never while a plan is being built.
+ *  8. `planDropOauthAccountsState` (plan, pure): it reads the state and, once no account is left
+ *     in it, deletes the key. A plan precondition is compared with the RAW row and an addon reads
+ *     only resolved values, so a precondition can be taken only on a row that holds no keychain
+ *     marker any more; that is why step 7 empties it first. (The `export-alexa` drop takes its
+ *     precondition after the same kind of release.) Rollback is the D987 pre-migration snapshot
+ *     of the hub database: the settings, the records and the `keychain:secrets` rows come back
+ *     together.
  *
  * No message here carries a token: an entry is named by its id, a failure by its reason.
  */
@@ -87,7 +91,7 @@ function entryOf(raw: unknown): LegacyEntry | null {
 }
 
 /** The entries of the stored state, or null when there is no state. Throws when unreadable. */
-async function storedEntries(ports: OauthAccountsPorts): Promise<{
+async function storedEntries(ports: Pick<OauthAccountsPorts, 'readStored'>): Promise<{
   readonly entries: readonly LegacyEntry[]
   readonly value: unknown
 } | null> {
@@ -204,11 +208,11 @@ export async function moveOauthAccountsToRecords(
   }
 }
 
-export async function planDropOauthAccountsState(
+export async function releaseOauthAccountsSecrets(
   ports: OauthAccountsPorts,
-): Promise<MigrationPlan> {
+): Promise<MigrationProcedureResult> {
   const stored = await storedEntries(ports)
-  if (stored === null) return { edits: [] }
+  if (stored === null) return { outcome: 'already-done', summary: { reason: 'no-oauth-accounts' } }
   for (const entry of stored.entries) {
     if (entry.session === null) {
       throw new Error(
@@ -223,12 +227,31 @@ export async function planDropOauthAccountsState(
       )
     }
   }
-  if (stored.entries.length > 0) await ports.releaseStateSecrets()
+  if (stored.entries.length === 0) {
+    return { outcome: 'already-done', summary: { reason: 'no-oauth-accounts' } }
+  }
+  await ports.releaseStateSecrets()
+  const left = await storedEntries(ports)
+  if (left !== null && left.entries.length > 0) {
+    throw new Error(
+      'google-services: the OAuth accounts state still holds accounts after the release — kept',
+    )
+  }
+  return { outcome: 'done', summary: { released: stored.entries.length } }
+}
+
+/**
+ * Pure: reads the state and plans its deletion. It refuses while any account is still in it (the
+ * release of step 7 has not landed), so the key never goes with a token the records lack.
+ */
+export async function planDropOauthAccountsState(
+  ports: Pick<OauthAccountsPorts, 'readStored'>,
+): Promise<MigrationPlan> {
   const left = await storedEntries(ports)
   if (left === null) return { edits: [] }
   if (left.entries.length > 0) {
     throw new Error(
-      'google-services: the OAuth accounts state still holds accounts after the release — kept',
+      `google-services: the OAuth accounts state still holds ${left.entries.length} account(s) — kept until they are released`,
     )
   }
   const rowId = `${GOOGLE_ADDON_ID}.${OAUTH_ACCOUNTS_KEY}`

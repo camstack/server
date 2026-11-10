@@ -109,6 +109,11 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
 
   private registry = new GoogleBrokerRegistry()
   private brokerStore: GoogleBrokerStore | null = null
+  /**
+   * Accounts whose refreshed session is newer in memory than on the record (the record write
+   * failed). The next write carries it, and a reload keeps the memory copy until then.
+   */
+  private readonly unsavedSessions = new Set<string>()
   private instances: RecordIntegrationInstances<GoogleBrokerBody> | null = null
   private calendarInstances: RecordIntegrationInstances<GoogleCalendarBody> | null = null
   /** The stamped calendar ids each account imports, from the `calendars` records. */
@@ -227,6 +232,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     const read = await store.loadAll()
     const sessions: GoogleOauthAccount[] = read.sessions.map((session) => {
       const prev = this.registry.getOauth(session.id)
+      if (prev !== null && this.unsavedSessions.has(session.id)) return prev
       const sameToken = prev !== null && prev.refreshToken === session.refreshToken
       return {
         ...session,
@@ -263,6 +269,24 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
       scopes: account.scopes,
       needsReauth: account.needsReauth,
     })
+    this.unsavedSessions.delete(account.id)
+  }
+
+  /**
+   * Save a session Google just refreshed. A failure keeps the fresh token in memory (the caller
+   * already has a working access token) and is retried at the next write; the log names the
+   * account, never a token.
+   */
+  private async saveRefreshedSession(account: GoogleOauthAccount): Promise<void> {
+    try {
+      await this.persistSession(account)
+    } catch (err: unknown) {
+      this.unsavedSessions.add(account.id)
+      this.ctx.logger.warn(
+        'google-services: a refreshed Google session could not be saved on its account record; kept in memory and retried at the next write',
+        { meta: { brokerId: account.id, error: err instanceof Error ? err.message : 'unknown' } },
+      )
+    }
   }
 
   private requireInstances(): RecordIntegrationInstances<GoogleBrokerBody> {
@@ -702,7 +726,10 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
   private async writeOwnStore(patch: Record<string, unknown>): Promise<void> {
     const settings = this.ctx.settings
     if (settings === undefined) throw new Error('google-services: the settings store is not ready')
-    // biome-ignore lint/plugin: migration-only write of a retired key; the same secret-aware write a state handle makes, without keeping a handle on the credential blob
+    // No migration door writes an addon's own store through the keychain: a plan's `setKeys` is
+    // compared and written RAW (it would store the token in clear, or leave its refs unreleased),
+    // and google-services is still on the D1014 pending list (no ports helper for its store).
+    // biome-ignore lint/plugin: migration-only, secret-aware write of the retired `oauthAccounts` key (the write a state handle makes); no D987 door writes an addon store through the keychain, and a state handle would keep the credential blob alive
     await settings.writeAddonStore(patch)
   }
 
@@ -853,10 +880,9 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     }
     // The access token is memory only: the record is written only when the session itself moved
     // (Google rotated the refresh token, or granted other scopes), never on every refresh.
-    if (next.refreshToken !== oauth.refreshToken || next.scopes !== oauth.scopes) {
-      await this.persistSession(next)
-    }
+    const moved = next.refreshToken !== oauth.refreshToken || next.scopes !== oauth.scopes
     this.registry.setOauth(next)
+    if (moved || this.unsavedSessions.has(brokerId)) await this.saveRefreshedSession(next)
     return nextState.accessToken
   }
 
@@ -874,6 +900,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     }
     // The refresh token leaves the record and the keychain; then the runtime forgets it.
     await this.requireBrokerStore().clearSession(brokerId)
+    this.unsavedSessions.delete(brokerId)
     this.registry.removeOauth(brokerId)
     this.ctx.logger.info('google oauth disconnected', {
       tags: { brokerId },

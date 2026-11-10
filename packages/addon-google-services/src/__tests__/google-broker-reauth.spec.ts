@@ -169,6 +169,38 @@ describe('a dead refresh token is reported as needing a new sign-in', () => {
   })
 })
 
+describe('a refreshed session the record refuses is kept, and saved at the next write', () => {
+  beforeEach(() => {
+    vi.mocked(refreshAccessToken).mockReset()
+  })
+
+  it('keeps the fresh token in memory, logs the account (never the token), retries the save', async () => {
+    vi.mocked(refreshAccessToken).mockResolvedValue({
+      access_token: 'fresh-access',
+      expires_in: 3600,
+      refresh_token: 'rotated-refresh',
+    })
+    const addon = await seedAddon()
+    const store = brokerStoreOf(addon)
+    const save = vi.spyOn(store, 'saveSession').mockRejectedValueOnce(new Error('engine down'))
+
+    // Google answered: the caller gets the fresh access token although the record write failed.
+    expect((await call(addon, 'ensureAccessToken', 'google_001')) === 'fresh-access').toBe(true)
+    expect(registryOf(addon).getOauth('google_001')?.refreshToken === 'rotated-refresh').toBe(true)
+    const logger = Reflect.get(addon, '_ctx').logger
+    const warned = JSON.stringify(vi.mocked(logger.warn).mock.calls)
+    expect(warned).toContain('google_001')
+    expect(warned.includes('rotated-refresh') || warned.includes('fresh-access')).toBe(false)
+    expect((await store.readSession('google_001'))?.refreshToken === 'rt').toBe(true)
+
+    // The next write carries the session that did not land, although nothing moved this time.
+    vi.mocked(refreshAccessToken).mockResolvedValue({ access_token: 'fresh-2', expires_in: 3600 })
+    await call(addon, 'ensureAccessToken', 'google_001')
+    expect(save).toHaveBeenCalledTimes(2)
+    expect((await store.readSession('google_001'))?.refreshToken === 'rotated-refresh').toBe(true)
+  })
+})
+
 describe('the OAuth callback lands in CamStack, never on a bare text page', () => {
   beforeEach(() => {
     vi.mocked(exchangeCode).mockReset()
