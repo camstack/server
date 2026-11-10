@@ -865,11 +865,16 @@ describe('one when tree: an instant is an event, the rest is state', () => {
     h.emit('device.state-changed', { deviceId: 3, capName: 'contact', slice: { open: true } }, 3)
 
   it('rule 1: fires when the event occurs AND the rest of the tree is true at that instant', async () => {
+    const slices: Record<string, object> = {
+      '3|contact': { open: true },
+      '5|switch': { on: false },
+    }
     const h = start(
       await load({ when: { kind: 'all', children: [lightOn, doorOpenNow] }, actions: [SIREN] }),
-      { slices: { '3|contact': { open: true }, '5|switch': { on: true } } },
+      { slices },
     )
     await settle()
+    slices['5|switch'] = { on: true } // the light turns on: the instant
     lightEvent(h)
     await settle()
     expect(h.mutate).toHaveBeenCalledTimes(1)
@@ -878,11 +883,16 @@ describe('one when tree: an instant is an event, the rest is state', () => {
   })
 
   it('rule 1: the same event with the state false does not fire, and says which row failed', async () => {
+    const slices: Record<string, object> = {
+      '3|contact': { open: false },
+      '5|switch': { on: false },
+    }
     const h = start(
       await load({ when: { kind: 'all', children: [lightOn, doorOpenNow] }, actions: [SIREN] }),
-      { slices: { '3|contact': { open: false }, '5|switch': { on: true } } },
+      { slices },
     )
     await settle()
+    slices['5|switch'] = { on: true }
     lightEvent(h)
     await settle(5_000)
     expect(h.mutate).not.toHaveBeenCalled()
@@ -925,25 +935,32 @@ describe('one when tree: an instant is an event, the rest is state', () => {
   })
 
   it('conversion equivalence: "light becomes on while door open" differs from "door opens while light already on", by the marked trace', async () => {
-    const slices = { '3|contact': { open: true }, '5|switch': { on: true } }
+    const sliceA: Record<string, object> = {
+      '3|contact': { open: true },
+      '5|switch': { on: false },
+    }
+    const sliceB: Record<string, object> = {
+      '3|contact': { open: false },
+      '5|switch': { on: true },
+    }
     const a = start(
       await load({ when: { kind: 'all', children: [lightOn, doorOpenNow] }, actions: [SIREN] }),
-      { slices },
+      { slices: sliceA },
     )
     const b = start(
       await load({ when: { kind: 'all', children: [doorOpens, lightOnNow] }, actions: [SIREN] }),
-      { slices },
+      { slices: sliceB },
     )
     await settle()
-    doorEvent(a)
+    doorEvent(a) // a re-report of an unchanged door: no instant for A
+    sliceB['3|contact'] = { open: true } // the door opens: the instant for B
     doorEvent(b)
     await settle(5_000)
-    // The door event is the instant for B, and only a state for A.
     expect(a.mutate).not.toHaveBeenCalled()
     expect(b.mutate).toHaveBeenCalledTimes(1)
     expect(b.traces()[0]?.trigger.vars).toMatchObject({ deviceId: 3 })
+    sliceA['5|switch'] = { on: true } // the light turns on: the instant for A
     lightEvent(a)
-    lightEvent(b)
     await settle(5_000)
     expect(a.mutate).toHaveBeenCalledTimes(1)
     expect(a.traces().find((t) => t.outcome === 'ran')?.trigger.vars).toMatchObject({ deviceId: 5 })
@@ -1072,5 +1089,393 @@ describe('a conditional step (#472)', () => {
     expect(cold.mutate.mock.calls.map(([a]) => (a as { label: string }).label)).toEqual(['then'])
     const warm = await run(20)
     expect(warm.mutate.mock.calls.map(([a]) => (a as { label: string }).label)).toEqual(['else'])
+  })
+})
+
+describe('device-becomes: hold semantics (#498)', () => {
+  const KEY = '5|switch'
+  const wake = (h: Harness): void =>
+    h.emit('device.state-changed', { deviceId: 5, capName: 'switch' }, 5)
+  const set = (slices: Record<string, object>, value: unknown): void => {
+    slices[KEY] = { on: value }
+  }
+  const becomes = (extra: Record<string, unknown>): RecipeInput => ({
+    when: {
+      kind: 'device-becomes',
+      deviceId: 5,
+      cap: 'switch',
+      fieldPath: 'on',
+      ...extra,
+    } as AutomationRecipe['when'],
+    actions: [SIREN],
+  })
+
+  it('bug 1: any change + hold fires once, after the value stayed for the whole window', async () => {
+    const slices: Record<string, object> = { [KEY]: { on: 1 } }
+    const h = start(await load(becomes({ forMs: 10_000 })), { slices })
+    await settle()
+    set(slices, 2)
+    wake(h)
+    await settle(9_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    await settle(2_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    await settle(120_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('bug 1: a change inside the window restarts it', async () => {
+    const slices: Record<string, object> = { [KEY]: { on: 1 } }
+    const h = start(await load(becomes({ forMs: 10_000 })), { slices })
+    await settle()
+    set(slices, 2)
+    wake(h)
+    await settle(6_000)
+    set(slices, 3)
+    wake(h)
+    await settle(6_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    await settle(5_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('bug 2: edge + hold fires', async () => {
+    const slices: Record<string, object> = { [KEY]: { on: false } }
+    const h = start(await load(becomes({ becomes: true, edge: true, forMs: 10_000 })), { slices })
+    await settle()
+    set(slices, true)
+    wake(h)
+    await settle(12_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('bug 3: a held value fires ONCE per episode, and again only after it left and came back', async () => {
+    const slices: Record<string, object> = { [KEY]: { on: false } }
+    const h = start(await load(becomes({ becomes: true, forMs: 10_000 })), { slices })
+    await settle()
+    set(slices, true)
+    wake(h)
+    await settle(100_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    set(slices, false)
+    wake(h)
+    await settle(1_000)
+    set(slices, true)
+    wake(h)
+    await settle(12_000)
+    expect(h.mutate).toHaveBeenCalledTimes(2)
+  })
+
+  it('bug 3: a dip inside the window cancels the hold', async () => {
+    const slices: Record<string, object> = { [KEY]: { on: false } }
+    const h = start(await load(becomes({ becomes: true, forMs: 10_000 })), { slices })
+    await settle()
+    set(slices, true)
+    wake(h)
+    await settle(5_000)
+    set(slices, false)
+    wake(h)
+    await settle(30_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+  })
+
+  it('bug 4: without hold or edge it never fires on a re-report or on the reconcile', async () => {
+    const slices: Record<string, object> = { [KEY]: { on: true } }
+    const h = start(await load(becomes({ becomes: true })), { slices })
+    await settle()
+    wake(h)
+    await settle(60_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    set(slices, false)
+    wake(h)
+    await settle(1_000)
+    set(slices, true)
+    wake(h)
+    await settle(1_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    wake(h)
+    await settle(60_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('bug 5: the deadline is a timer, not the next reconcile', async () => {
+    const slices: Record<string, object> = { [KEY]: { on: false } }
+    const h = start(await load(becomes({ becomes: true, forMs: 3_000 })), { slices })
+    await settle()
+    set(slices, true)
+    wake(h)
+    await settle(2_900)
+    expect(h.mutate).not.toHaveBeenCalled()
+    await settle(1_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('hold semantics: for / operator on device-becomes, device-is and guards (#498)', () => {
+  const KEY = '9|meter'
+  const wake = (h: Harness, slice: Record<string, unknown> = {}): void =>
+    h.emit('device.state-changed', { deviceId: 9, capName: 'meter', slice }, 9)
+  const put = (slices: Record<string, object>, power: number): void => {
+    slices[KEY] = { power }
+  }
+  const leaf = (extra: Record<string, unknown>): RecipeInput => ({
+    when: {
+      kind: 'device-becomes',
+      deviceId: 9,
+      cap: 'meter',
+      fieldPath: 'power',
+      ...extra,
+    } as AutomationRecipe['when'],
+    actions: [SIREN],
+  })
+  const heldOver = { operator: 'gt', value: 3000, for: { ms: 300_000, mode: 'held' } }
+
+  it('stable: "unchanged (±0.5) for 30 s" fires once, 30 s after the last change, and again only after a new change', async () => {
+    const slices: Record<string, object> = { [KEY]: { power: 100 } }
+    const h = start(await load(leaf({ for: { ms: 30_000, mode: 'stable', tolerance: 0.5 } })), {
+      slices,
+    })
+    await settle()
+    put(slices, 120)
+    wake(h)
+    await settle(10_000)
+    put(slices, 120.3) // inside the tolerance: not a change
+    wake(h)
+    await settle(19_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    await settle(2_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    await settle(300_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    put(slices, 150)
+    wake(h)
+    await settle(31_000)
+    expect(h.mutate).toHaveBeenCalledTimes(2)
+  })
+
+  it('stable: a move beyond the tolerance restarts the window', async () => {
+    const slices: Record<string, object> = { [KEY]: { power: 100 } }
+    const h = start(await load(leaf({ for: { ms: 30_000, mode: 'stable', tolerance: 0.5 } })), {
+      slices,
+    })
+    await settle()
+    put(slices, 120)
+    wake(h)
+    await settle(20_000)
+    put(slices, 121)
+    wake(h)
+    await settle(20_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    await settle(11_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('threshold + hold: "power > 3000 for 5 min" fires once per episode', async () => {
+    const slices: Record<string, object> = { [KEY]: { power: 2000 } }
+    const h = start(await load(leaf(heldOver)), { slices })
+    await settle()
+    put(slices, 3500)
+    wake(h)
+    await settle(299_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    put(slices, 3700) // still above: the same episode
+    wake(h)
+    await settle(2_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    await settle(600_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('threshold + hold: a dip below inside the window cancels it, and the trace says pending then cancelled', async () => {
+    const slices: Record<string, object> = { [KEY]: { power: 2000 } }
+    const h = start(await load(leaf(heldOver)), { slices })
+    await settle()
+    put(slices, 3500)
+    wake(h)
+    await settle(120_000)
+    put(slices, 2900)
+    wake(h)
+    await settle(600_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    const phases = h.traces().map((t) => t.trigger.hold?.phase)
+    expect(phases).toEqual(['pending', 'cancelled'])
+    expect(h.traces()[1]?.trigger.reason).toContain('cancelled')
+  })
+
+  it('a fired hold is on the run trace', async () => {
+    const slices: Record<string, object> = { [KEY]: { power: 2000 } }
+    const h = start(await load(leaf({ ...heldOver, for: { ms: 10_000, mode: 'held' } })), {
+      slices,
+    })
+    await settle()
+    put(slices, 3500)
+    wake(h)
+    await settle(11_000)
+    const ran = h.traces().find((t) => t.outcome === 'ran')
+    expect(ran?.trigger.hold).toMatchObject({ phase: 'fired', ms: 10_000, mode: 'held' })
+  })
+
+  it('crossing without a hold fires on the transition only, again after it left', async () => {
+    const slices: Record<string, object> = { [KEY]: { power: 2000 } }
+    const h = start(await load(leaf({ operator: 'gt', value: 3000 })), { slices })
+    await settle()
+    put(slices, 3500)
+    wake(h)
+    await settle(1_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    put(slices, 3600)
+    wake(h)
+    await settle(60_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    put(slices, 1000)
+    wake(h)
+    await settle(1_000)
+    put(slices, 4000)
+    wake(h)
+    await settle(1_000)
+    expect(h.mutate).toHaveBeenCalledTimes(2)
+  })
+
+  it('a range: enters fires, leaves fires on "outside"', async () => {
+    const slices: Record<string, object> = { [KEY]: { power: 10 } }
+    const enter = start(await load(leaf({ operator: 'between', value: [18, 24] })), { slices })
+    await settle()
+    put(slices, 20)
+    wake(enter)
+    await settle(1_000)
+    expect(enter.mutate).toHaveBeenCalledTimes(1)
+    const leave = start(await load(leaf({ operator: 'outside', value: [18, 24] })), { slices })
+    await settle()
+    put(slices, 30)
+    wake(leave)
+    await settle(1_000)
+    expect(leave.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('a restart re-seeds a running hold without firing it, and says so on the trace', async () => {
+    const slices: Record<string, object> = { [KEY]: { power: 3500 } }
+    const h = start(await load(leaf({ ...heldOver, for: { ms: 10_000, mode: 'held' } })), {
+      slices,
+    })
+    await settle(60_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    expect(h.traces().map((t) => t.trigger.hold?.phase)).toEqual(['reseeded'])
+    put(slices, 1000)
+    wake(h)
+    await settle(1_000)
+    put(slices, 4000)
+    wake(h)
+    await settle(11_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('a failed read never cancels a hold (D49)', async () => {
+    const slices: Record<string, object> = { [KEY]: { power: 2000 } }
+    const h = start(await load(leaf({ ...heldOver, for: { ms: 30_000, mode: 'held' } })), {
+      slices,
+    })
+    await settle()
+    put(slices, 3500)
+    wake(h)
+    await settle(5_000)
+    delete slices[KEY] // the mirror cannot answer
+    wake(h)
+    await settle(40_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('a legacy leaf (forMs, edge) still runs: forMs reads as a held window', async () => {
+    const slices: Record<string, object> = { [KEY]: { power: 0 } }
+    const h = start(await load(leaf({ becomes: 5, edge: true, forMs: 4_000 })), { slices })
+    await settle()
+    put(slices, 5)
+    wake(h)
+    await settle(5_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  describe('a state leaf with a hold', () => {
+    const power = (extra: Record<string, unknown>): RecipeInput => ({
+      when: {
+        kind: 'device-is',
+        deviceId: 9,
+        cap: 'meter',
+        fieldPath: 'power',
+        operator: 'gt',
+        value: 3000,
+        for: { ms: 300_000, mode: 'held' },
+        ...extra,
+      } as AutomationRecipe['when'],
+      actions: [SIREN],
+    })
+
+    it('"power > 3000 for 5 min" fires once at the deadline, and not when it dipped inside the window', async () => {
+      const slices: Record<string, object> = { [KEY]: { power: 2000 } }
+      const h = start(await load(power({})), { slices })
+      await settle()
+      put(slices, 3500)
+      wake(h, { power: 3500 })
+      await settle(299_000)
+      expect(h.mutate).not.toHaveBeenCalled()
+      await settle(2_000)
+      expect(h.mutate).toHaveBeenCalledTimes(1)
+      await settle(900_000)
+      expect(h.mutate).toHaveBeenCalledTimes(1)
+      h.stop()
+
+      const slices2: Record<string, object> = { [KEY]: { power: 2000 } }
+      const dip = start(await load(power({})), { slices: slices2 })
+      await settle()
+      put(slices2, 3500)
+      wake(dip, { power: 3500 })
+      await settle(150_000)
+      put(slices2, 2900)
+      wake(dip, { power: 2900 })
+      await settle(60_000)
+      put(slices2, 3500)
+      wake(dip, { power: 3500 })
+      await settle(299_000)
+      expect(dip.mutate).not.toHaveBeenCalled()
+    })
+
+    it('already held when the block starts: it does not fire for that episode', async () => {
+      const slices: Record<string, object> = { [KEY]: { power: 3500 } }
+      const h = start(await load(power({})), { slices })
+      await settle(900_000)
+      expect(h.mutate).not.toHaveBeenCalled()
+    })
+
+    it('in a guard: a step runs only once the value has held for the window', async () => {
+      const slices: Record<string, object> = { [KEY]: { power: 2000 } }
+      const guarded: RecipeInput = {
+        when: MOTION,
+        actions: [
+          {
+            ...SIREN,
+            if: {
+              kind: 'device-is',
+              deviceId: 9,
+              cap: 'meter',
+              fieldPath: 'power',
+              operator: 'gt',
+              value: 3000,
+              for: { ms: 60_000, mode: 'held' },
+            },
+          },
+        ],
+      } as RecipeInput
+      const h = start(await load(guarded), { slices })
+      await settle()
+      put(slices, 3500)
+      wake(h, { power: 3500 })
+      await settle(30_000)
+      h.emit('motion.on-motion-changed', {}, 616)
+      await settle(1_000)
+      expect(h.mutate).not.toHaveBeenCalled()
+      await settle(40_000)
+      h.emit('motion.on-motion-changed', {}, 616)
+      await settle(1_000)
+      expect(h.mutate).toHaveBeenCalledTimes(1)
+    })
   })
 })

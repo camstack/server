@@ -25,7 +25,31 @@ export {
   stableIdMapOf,
   evaluateConditionTree,
   evaluateWhenTree,
+  hasHoldLeaves,
+  observeHoldLeaves,
 } from './condition-eval.js'
+export type {
+  BecomesDeps,
+  BecomesEffect,
+  BecomesOperator,
+  BecomesSpec,
+  HoldMode,
+  HoldReading,
+  HoldSpec,
+  HoldTrace,
+  LegacyHoldFields,
+} from './hold.js'
+export {
+  BecomesOperatorSchema,
+  BecomesWatch,
+  describeHold,
+  describeHoldMs,
+  HoldCore,
+  HoldSpecSchema,
+  HoldTraceSchema,
+  HoldTracker,
+  holdOf,
+} from './hold.js'
 export type {
   DetectionDecision,
   DetectionTrigger,

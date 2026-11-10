@@ -98,7 +98,8 @@ describe('state leaves', () => {
   it('keeps the mirror fresh: filled at start, updated by state-changed events, reconciled', () => {
     expect(GEN).toContain('EventCategory.DeviceStateChanged')
     expect(GEN).toContain('mirror.apply(')
-    expect(GEN).toContain('void refreshMirror().then(evaluateStateTree)')
+    expect(GEN).toContain('void refreshMirror().then(() => {')
+    expect(GEN).toContain('evaluateStateTree()')
     expect(GEN).toContain('await refreshMirror()')
   })
 

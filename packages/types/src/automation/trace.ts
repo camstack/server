@@ -17,6 +17,7 @@
 
 import { z } from 'zod'
 import { isSecretMarkerLike } from '../keychain/secret-marker.js'
+import { HoldTraceSchema } from './hold.js'
 import { AutomationRunModeSchema } from './recipe.js'
 import { SchedulerOutcomeSchema } from './scheduler.js'
 
@@ -54,6 +55,8 @@ export const AutomationTriggerTraceSchema = z.object({
   reason: z.string(),
   /** deviceId, className, trackId, score … — only what the trigger exposes. */
   vars: z.record(z.string(), TraceValueSchema),
+  /** A hold (`for`) this occurrence went through: pending, cancelled, fired or re-seeded. */
+  hold: HoldTraceSchema.optional(),
 })
 export type AutomationTriggerTrace = z.infer<typeof AutomationTriggerTraceSchema>
 
@@ -341,5 +344,13 @@ export function buildTriggerTrace(
   }
   const kind = typeof trigger['kind'] === 'string' ? trigger['kind'] : 'unknown'
   const path = typeof trigger['leaf'] === 'string' ? trigger['leaf'] : undefined
-  return { kind, ...(path === undefined ? {} : { path }), outcome, reason, vars }
+  const hold = HoldTraceSchema.safeParse(trigger['hold'])
+  return {
+    kind,
+    ...(path === undefined ? {} : { path }),
+    outcome,
+    reason,
+    vars,
+    ...(hold.success ? { hold: hold.data } : {}),
+  }
 }

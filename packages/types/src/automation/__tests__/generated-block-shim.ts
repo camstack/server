@@ -8,6 +8,7 @@ export {
   collectWhenMirrorSources,
   ConditionMirror,
   evaluateWhenTree,
+  observeHoldLeaves,
   stableIdMapOf,
 } from '../condition-eval.js'
 export {
@@ -32,3 +33,4 @@ export {
   validateTimeSpecForSite,
   zoneOnlySite,
 } from '../../time/time-spec.js'
+export { BecomesWatch, HoldTracker, describeHold } from '../hold.js'

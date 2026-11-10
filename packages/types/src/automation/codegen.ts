@@ -27,6 +27,8 @@
 import type { AutomationAction, AutomationRecipe } from './recipe.js'
 import { DEFAULT_TRACE_KEEP, normalizeCapStep, validateRecipeBounds } from './recipe.js'
 import type { TimeSpec, WeekdayKey } from '../time/time-spec.js'
+import { hasHoldLeaves } from './condition-eval.js'
+import { holdOf } from './hold.js'
 import { triggerLeafVariables } from './trigger-variables.js'
 import { type AutomationEventLeaf, forEachLeaf, hasEventLeaves, isEventLeaf } from './when.js'
 
@@ -161,48 +163,69 @@ function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
     ),
   )`
     case 'device-becomes': {
-      const becomes = trigger.becomes === undefined ? 'undefined' : j(trigger.becomes)
+      const hold = holdOf(trigger)
+      const spec: Record<string, unknown> = {
+        ...(trigger.becomes === undefined ? {} : { becomes: trigger.becomes }),
+        ...(trigger.operator === undefined
+          ? {}
+          : { operator: trigger.operator, value: trigger.value }),
+        ...(hold === undefined ? {} : { hold }),
+      }
       return `  // event leaf ${path}: device state — the mirror is the authority, the
   // event only WAKES the evaluation, so a dropped event delays and never loses.
+  // It fires on a TRANSITION (never on a re-report or the reconcile); a hold is
+  // a timer armed when the transition happens and fired ONCE per episode.
   {
-    let previous: unknown = undefined
     let debounce: ReturnType<typeof setTimeout> | undefined
-    let heldSince: number | undefined
+    const watch = new BecomesWatch(${j(spec)}, {
+      timers: {
+        set: (fn, ms) => setTimeout(fn, ms),
+        clear: (handle) => clearTimeout(handle),
+        now: () => Date.now(),
+      },
+      read: () => readField(${j(trigger.deviceId)}, ${j(trigger.cap)}, ${j(trigger.fieldPath)}),
+      emit: (effect) => {
+        const occurrence = {
+          kind: 'device-becomes',
+          leaf: ${at},
+          at: Date.now(),
+          deviceId: ${j(trigger.deviceId)},
+          cap: ${j(trigger.cap)},
+          field: ${j(trigger.fieldPath)},
+          to: toTraceScalar(effect.value),
+          ...(effect.hold === undefined ? {} : { hold: effect.hold }),
+        }
+        if (effect.kind === 'fire') {
+          if (effect.hold !== undefined) {
+            ctx.logger.info(describeHold(effect.hold), { tags: { deviceId: ${j(trigger.deviceId)} }, leaf: ${at} })
+          }
+          void run(occurrence, effect.hold === undefined ? 'fired' : describeHold(effect.hold))
+          return
+        }
+        ctx.logger.debug(describeHold(effect.hold), { tags: { deviceId: ${j(trigger.deviceId)} }, leaf: ${at} })
+        record(
+          skipTrace(occurrence, describeHold(effect.hold), 'skipped-trigger', undefined, effect.hold.phase === 'pending'),
+        )
+      },
+    })
+    disposers.push(() => watch.dispose())
     const check = async (): Promise<void> => {
-      const value = await readField(${j(trigger.deviceId)}, ${j(trigger.cap)}, ${j(
-        trigger.fieldPath,
-      )})
-      const want = ${becomes}
-      const matches = want === undefined ? value !== previous : value === want
-      const changed = value !== previous
-      previous = value
-      if (!matches) { heldSince = undefined; return }
-      if (${trigger.edge === true ? 'true' : 'false'} && !changed) return
-      const forMs = ${j(trigger.forMs ?? 0)}
-      if (forMs > 0) {
-        if (heldSince === undefined) { heldSince = Date.now(); return }
-        if (Date.now() - heldSince < forMs) return
-      }
-      heldSince = undefined
-      void run({
-        kind: 'device-becomes',
-        leaf: ${at},
-        at: Date.now(),
-        deviceId: ${j(trigger.deviceId)},
-        cap: ${j(trigger.cap)},
-        field: ${j(trigger.fieldPath)},
-        to: value,
-      })
+      const read = await readField(${j(trigger.deviceId)}, ${j(trigger.cap)}, ${j(trigger.fieldPath)})
+      if (!read.ok) return // a failed read changes nothing, and never cancels a hold (D49)
+      watch.observe(read.value)
     }
     const wake = (): void => {
       if (debounce !== undefined) clearTimeout(debounce)
       debounce = setTimeout(() => { void check() }, ${j(trigger.debounceMs ?? 0)})
     }
+    disposers.push(() => { if (debounce !== undefined) clearTimeout(debounce) })
     disposers.push(
       ctx.eventBus.subscribe({ category: 'device.state-changed', deviceId: ${j(
         trigger.deviceId,
       )} }, wake),
     )
+    // Seed what the field holds NOW without firing: a restart is not a transition.
+    void check()
     const reconcile = setInterval(() => { void check() }, RECONCILE_MS)
     disposers.push(() => clearInterval(reconcile))
   }`
@@ -300,7 +323,7 @@ function emitLeafBody(action: AutomationAction): string | null {
 }
 
 /** A step's `if` (#472) and its else list, as the fields of a RunnableStep. */
-function emitGuard(action: AutomationAction): string {
+function emitGuard(action: AutomationAction, index: number): string {
   if (action.kind !== 'wait' && action.kind !== 'cap') return ''
   if (action.if === undefined) return ''
   const otherwise = (action.else ?? [])
@@ -309,7 +332,7 @@ function emitGuard(action: AutomationAction): string {
       return `{ meta: ${j(stepMetaOf(el))}, run: async (scope) => {\n${body ?? ''}\n } }`
     })
     .join(', ')
-  return `      guard: () => evaluateCondition(${j(action.if)}),${
+  return `      guard: () => evaluateCondition(${j(action.if)}, ${j(`actions.${index}.if`)}),${
     otherwise === '' ? '' : `\n      otherwise: [${otherwise}],`
   }
 `
@@ -318,7 +341,7 @@ function emitGuard(action: AutomationAction): string {
 function emitAction(action: AutomationAction, index: number): string {
   const step = (body: string): string => `    {
       meta: STEP_META[${index}]!,
-${emitGuard(action)}      run: async (scope) => {
+${emitGuard(action, index)}      run: async (scope) => {
 ${body}
       },
     },`
@@ -373,6 +396,11 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   const hasDomainTarget = recipe.actions.some(
     (a) => a.kind === 'cap' && normalizeCapStep(a).target.kind === 'domain',
   )
+  const guardHoldTrees = recipe.actions.flatMap((a, i) =>
+    (a.kind === 'wait' || a.kind === 'cap') && a.if !== undefined && hasHoldLeaves(a.if)
+      ? [{ path: `actions.${i}.if`, when: a.if }]
+      : [],
+  )
   const eventLeaves: { leaf: AutomationEventLeaf; path: string }[] = []
   forEachLeaf(recipe.when, (leaf, path) => {
     if (isEventLeaf(leaf)) eventLeaves.push({ leaf, path })
@@ -394,18 +422,22 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
 import {
   ACTION_TARGET_INVALIDATION_EVENTS,
   ActionTargetResolver,
+  BecomesWatch,
   ConditionMirror,
+  HoldTracker,
   DetectionTriggerFilter,
   EventCategory,
   RunGate,
   buildTriggerTrace,
   collectWhenMirrorSources,
   coreBlockIdFromAddonId,
+  describeHold,
   evaluateWhenTree,
   evaluateStationaryTrigger,
   isSkippedTrace,
   mergeSkipTraces,
   nextOccurrence,
+  observeHoldLeaves,
   stableIdMapOf,
   resolveStepArgs,
   resolveStepArgsWithTemplates,
@@ -449,6 +481,12 @@ const STEP_META: ReadonlyArray<{ kind: string; cap?: string; method?: string; ac
 
 /** True when a step acts on a whole domain: only then does the block listen for registry changes. */
 const HAS_DOMAIN_TARGET = ${hasDomainTarget}
+
+/** A state leaf of the tree carries a \`for\`: its clock is fed on every mirror update, so it counts while nothing fires. */
+const HAS_HOLD = ${hasHoldLeaves(recipe.when)}
+
+/** Guards (a step's \`if\`) with a \`for\`: they keep their own mirror and clocks, fed the same way. */
+const GUARD_HOLD_TREES: ReadonlyArray<{ path: string; when: AutomationWhen }> = ${j(guardHoldTrees)}
 
 /** setTimeout cannot arm past 2^31-1 ms; a longer wait re-arms on wake. */
 const MAX_TIMER_MS = 2_000_000_000
@@ -506,6 +544,12 @@ export default function block(ctx: AddonContext) {
   const gate = new RunGate(RUN_MODE)
   const MIRROR_SOURCES = collectWhenMirrorSources(WHEN)
   const mirror = new ConditionMirror(MIRROR_SOURCES)
+  const holds = new HoldTracker()
+  const guardMirror = new ConditionMirror(
+    collectWhenMirrorSources({ kind: 'all', children: GUARD_HOLD_TREES.map((t) => t.when) }),
+  )
+  const guardHolds = new HoldTracker()
+  let holdTimer: ReturnType<typeof setTimeout> | undefined
   const BLOCK_ID = coreBlockIdFromAddonId(ctx.id)
   /** The cooldown stamp: memory is the authority at fire time (D49); the hub ledger is read once at start. */
   let lastRunStartedAt: number | null = null
@@ -615,6 +659,40 @@ export default function block(ctx: AddonContext) {
     if (report.kept > 0) {
       ctx.logger.debug('condition mirror kept stale values for sources it could not read', report)
     }
+    if (GUARD_HOLD_TREES.length > 0) await guardMirror.refresh(mirrorFetchers())
+  }
+
+  function mirrorFetchers() {
+    return {
+      fetchSlice: (deviceId: number, cap: string) => ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap }),
+      fetchStableIds: async () => {
+        const all = await ctx.api.deviceManager.listAll.query({})
+        return stableIdMapOf(all)
+      },
+    }
+  }
+
+  /** Feed the clock of every \`for\` (the tree's and the guards'), and arm a timer for the
+   *  soonest pending one so a hold completes ON TIME, not at the next reconcile. */
+  function feedHolds(): void {
+    if (stopped) return
+    const now = Date.now()
+    const dues: number[] = []
+    if (HAS_HOLD) {
+      const due = observeHoldLeaves(WHEN, mirror, now, holds)
+      if (due !== undefined) dues.push(due)
+    }
+    for (const tree of GUARD_HOLD_TREES) {
+      const due = observeHoldLeaves(tree.when, guardMirror, now, guardHolds, tree.path)
+      if (due !== undefined) dues.push(due)
+    }
+    if (holdTimer !== undefined) clearTimeout(holdTimer)
+    holdTimer = undefined
+    if (dues.length === 0) return
+    holdTimer = setTimeout(() => {
+      feedHolds()
+      evaluateStateTree()
+    }, Math.min(Math.max(Math.min(...dues), 0), MAX_TIMER_MS))
   }
 
   /** The next moment a schedule leaf fires, from the CURRENT site. A sun spec on
@@ -645,26 +723,37 @@ export default function block(ctx: AddonContext) {
     }
   }
 
-  /** Read one cap field off the state mirror. Returns undefined when the device,
+  /** Read one cap field off the state mirror. \`ok: false\` when the device,
    *  the cap or the field cannot be resolved — the caller decides what that
-   *  means, and it always logs. (Used by the device-state TRIGGER, which the
-   *  reconcile backs; conditions read the ConditionMirror instead.) */
+   *  means (the device-state trigger changes nothing), and it is logged at
+   *  debug with the device. (Conditions read the ConditionMirror instead.) */
   async function readField(
     deviceId: number,
     cap: string,
     fieldPath: string,
-  ): Promise<unknown> {
+  ): Promise<{ readonly ok: true; readonly value: unknown } | { readonly ok: false }> {
     try {
       const slice = await ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap })
       let cursor: unknown = slice
       for (const part of fieldPath.split('.')) {
-        if (cursor === null || typeof cursor !== 'object') return undefined
-        cursor = (cursor as Record<string, unknown>)[part]
+        if (cursor === null || typeof cursor !== 'object') return { ok: false }
+        cursor = Reflect.get(cursor, part)
       }
-      return cursor
-    } catch {
-      return undefined
+      if (cursor === undefined) return { ok: false }
+      return { ok: true, value: cursor }
+    } catch (err: unknown) {
+      ctx.logger.debug('device state read failed — the leaf keeps what it knew', {
+        tags: { deviceId },
+        cap,
+        error: err instanceof Error ? err.message : String(err),
+      })
+      return { ok: false }
     }
+  }
+
+  /** A trigger var keeps primitives only. */
+  function toTraceScalar(value: unknown): string | number | boolean | null {
+    return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? value : null
   }
 
   /** WHO a step acts on (D983): picked devices, a \`$var\`, or a whole domain
@@ -770,14 +859,11 @@ export default function block(ctx: AddonContext) {
   }
 
   /** A step's \`if\` (#472), read on a mirror filled for exactly its leaves, NOW (D49: unread = unknown). */
-  function evaluateCondition(when: AutomationWhen) {
-    return evaluateStepCondition(when, {
-      fetchSlice: (deviceId, cap) => ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap }),
-      fetchStableIds: async () => {
-        const all = await ctx.api.deviceManager.listAll.query({})
-        return stableIdMapOf(all)
-      },
-    })
+  function evaluateCondition(when: AutomationWhen, path: string) {
+    const history = GUARD_HOLD_TREES.some((t) => t.path === path)
+      ? { mirror: guardMirror, holds: guardHolds, rootPath: path }
+      : undefined
+    return evaluateStepCondition(when, mirrorFetchers(), Date.now, history)
   }
 
   /** The THEN half, through the ONE shared step runner: stops at the first
@@ -864,6 +950,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
     try {
       const firedLeaf = trigger['leaf']
       const evaluation = evaluateWhenTree(WHEN, mirror, Date.now(), {
+        holds,
         ...(typeof firedLeaf === 'string' ? { firedPath: firedLeaf } : {}),
       })
       nodes = [...evaluation.nodes]
@@ -978,6 +1065,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
   const ready: Promise<void> = (async () => {
     await loadState()
     await refreshMirror()
+    feedHolds()
     stateWatching = true
     evaluateStateTree()
   })()
@@ -992,7 +1080,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
   let stateWatching = false
   function evaluateStateTree(): void {
     if (!STATE_ONLY || !stateWatching || stopped) return
-    const evaluation = evaluateWhenTree(WHEN, mirror, Date.now())
+    const evaluation = evaluateWhenTree(WHEN, mirror, Date.now(), { holds })
     if (evaluation.unknown) return
     const was = treeWasTrue
     treeWasTrue = evaluation.pass
@@ -1001,7 +1089,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
     }
   }
 
-  if (MIRROR_SOURCES.length > 0) {
+  if (MIRROR_SOURCES.length > 0 || GUARD_HOLD_TREES.length > 0) {
     disposers.push(
       ctx.eventBus.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
         const data = event.data
@@ -1009,12 +1097,17 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
         const capName = data['capName']
         if (typeof deviceId === 'number' && typeof capName === 'string') {
           mirror.apply(deviceId, capName, data['slice'])
+          guardMirror.apply(deviceId, capName, data['slice'])
+          feedHolds()
           evaluateStateTree()
         }
       }),
     )
     const mirrorReconcile = setInterval(() => {
-      void refreshMirror().then(evaluateStateTree)
+      void refreshMirror().then(() => {
+        feedHolds()
+        evaluateStateTree()
+      })
     }, RECONCILE_MS)
     disposers.push(() => clearInterval(mirrorReconcile))
   }
@@ -1023,6 +1116,7 @@ ${eventLeaves.map(({ leaf, path }) => emitLeaf(leaf, path)).join('\n\n')}
 
   return () => {
     stopped = true
+    if (holdTimer !== undefined) clearTimeout(holdTimer)
     queue.length = 0
     flushSkip()
     for (const running of runningTokens) {

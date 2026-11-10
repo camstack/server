@@ -16,12 +16,20 @@
 import { isQuantityValue } from '../units/quantity-input.js'
 import { evaluateExpressionSource, toExpressionValue } from '../expression/expression-source.js'
 import { anySubjectMatches } from './detection-subject.js'
+import {
+  type HoldReading,
+  type HoldSpec,
+  type HoldTracker,
+  compareValues,
+  describeHoldMs,
+} from './hold.js'
 import { type LegacyCondition, convertLegacyCondition } from './legacy-recipe.js'
 import {
   type AutomationConditionOperator,
   type AutomationEventLeaf,
   type AutomationWhen,
   type StationaryPresentLeaf,
+  forEachLeaf,
   isEventLeaf,
 } from './when.js'
 import type { AutomationConditionTraceNode, TraceValue } from './trace.js'
@@ -266,30 +274,7 @@ const OPERATOR_SYMBOL: Readonly<Record<AutomationConditionOperator, string>> = {
   in: 'in',
 }
 
-function compare(
-  actual: unknown,
-  operator: AutomationConditionOperator,
-  expected: unknown,
-): boolean {
-  switch (operator) {
-    case 'eq':
-      return actual === expected
-    case 'ne':
-      return actual !== expected
-    case 'gt':
-      return typeof actual === 'number' && typeof expected === 'number' && actual > expected
-    case 'gte':
-      return typeof actual === 'number' && typeof expected === 'number' && actual >= expected
-    case 'lt':
-      return typeof actual === 'number' && typeof expected === 'number' && actual < expected
-    case 'lte':
-      return typeof actual === 'number' && typeof expected === 'number' && actual <= expected
-    case 'contains':
-      return typeof actual === 'string' && typeof expected === 'string' && actual.includes(expected)
-    case 'in':
-      return Array.isArray(expected) && expected.some((v) => v === actual)
-  }
-}
+const compare = compareValues
 
 function toTraceValue(value: unknown): TraceValue {
   if (value === undefined || value === null) return null
@@ -313,6 +298,8 @@ export interface ConditionEvaluation {
   readonly unknown: boolean
   /** Pre-order: a container, then its children. */
   readonly nodes: readonly AutomationConditionTraceNode[]
+  /** The soonest a pending `for` completes (ms from now); absent when none is pending. */
+  readonly holdDueInMs?: number
 }
 
 function markSkipped(
@@ -427,7 +414,60 @@ function judgeStationaryPresent(
 interface EvalState {
   /** The path of the event leaf that occurred; every other event leaf is false. */
   readonly firedPath: string | undefined
+  /** Where a leaf's `for` keeps its clock; absent, a hold cannot be judged. */
+  readonly holds: HoldTracker | undefined
   unknown: boolean
+  /** The soonest a pending hold completes (ms from `now`), so the caller can arm a timer for it. */
+  holdDueInMs: number | undefined
+}
+
+interface HoldVerdict {
+  /** Pending only: ms until the window completes. */
+  readonly due?: number
+  readonly pass: boolean
+  readonly unknown: boolean
+  readonly why: string
+}
+
+function noteDue(state: EvalState, hold: HoldVerdict | undefined): void {
+  if (hold?.due === undefined) return
+  state.holdDueInMs =
+    state.holdDueInMs === undefined ? hold.due : Math.min(state.holdDueInMs, hold.due)
+}
+
+/** What a state leaf's hold says, given whether the leaf's own condition is true NOW. */
+function judgeHold(
+  hold: HoldSpec,
+  reading: HoldReading | undefined,
+  conditionTrue: boolean,
+): HoldVerdict {
+  const window = `${hold.mode === 'stable' ? 'stable' : 'held'} for ${describeHoldMs(hold.ms)}`
+  if (reading === undefined) {
+    return { pass: false, unknown: true, why: `${window}: nothing keeps this leaf's history here` }
+  }
+  switch (reading.phase) {
+    case 'met':
+      return { pass: true, unknown: false, why: `${window}: met` }
+    case 'pending':
+      return {
+        due: reading.remainingMs,
+        pass: false,
+        unknown: false,
+        why: `${window}: ${describeHoldMs(hold.ms - reading.remainingMs)} so far`,
+      }
+    case 'inherited':
+      return {
+        pass: false,
+        unknown: true,
+        why: `${window}: it was already true when watching began, so how long it has held is not known`,
+      }
+    case 'idle':
+      return {
+        pass: false,
+        unknown: false,
+        why: conditionTrue ? `${window}: just changed` : `${window}: the condition is not true`,
+      }
+  }
 }
 
 function evalEventLeaf(
@@ -483,11 +523,22 @@ function evalNode(
         out.push({ ...base, outcome: 'fail', reason: `${cond.fieldPath} value unknown → fail` })
         return false
       }
-      const ok = compare(observed, cond.operator, cond.value)
+      const compared = compare(observed, cond.operator, cond.value)
+      const hold =
+        cond.for === undefined
+          ? undefined
+          : judgeHold(
+              cond.for,
+              state.holds?.observe(path, cond.for, { holds: compared, value: observed }, now),
+              compared,
+            )
+      if (hold?.unknown === true) state.unknown = true
+      noteDue(state, hold)
+      const ok = compared && (hold === undefined || hold.pass)
       out.push({
         ...base,
         outcome: ok ? 'pass' : 'fail',
-        reason: `${cond.fieldPath} ${show(observed)}, expected ${OPERATOR_SYMBOL[cond.operator]} ${show(cond.value)} → ${ok ? 'pass' : 'fail'}`,
+        reason: `${cond.fieldPath} ${show(observed)}, expected ${OPERATOR_SYMBOL[cond.operator]} ${show(cond.value)}${hold === undefined ? '' : ` (${hold.why})`} → ${ok ? 'pass' : 'fail'}`,
       })
       return ok
     }
@@ -542,12 +593,23 @@ function evalNode(
         })
         return false
       }
-      const ok = result.value === true
+      const truth = result.value === true
+      const hold =
+        cond.for === undefined
+          ? undefined
+          : judgeHold(
+              cond.for,
+              state.holds?.observe(path, cond.for, { holds: truth, value: truth }, now),
+              truth,
+            )
+      if (hold?.unknown === true) state.unknown = true
+      noteDue(state, hold)
+      const ok = truth && (hold === undefined || hold.pass)
       out.push({
         path,
         kind: cond.kind,
         outcome: ok ? 'pass' : 'fail',
-        reason: `${cond.expr} with ${JSON.stringify(values)} → ${ok ? 'pass' : 'fail'}`,
+        reason: `${cond.expr} with ${JSON.stringify(values)}${hold === undefined ? '' : ` (${hold.why})`} → ${ok ? 'pass' : 'fail'}`,
       })
       return ok
     }
@@ -598,6 +660,8 @@ function evalNode(
 export interface WhenEvaluationOptions {
   /** The path of the event leaf that occurred (`when.0`); absent for a state-only tree. */
   readonly firedPath?: string
+  /** Keeps the clock of every `for` in the tree. Without it a hold cannot be judged (unknown). */
+  readonly holds?: HoldTracker
   /** The root path (default `when`; the legacy wrapper keeps `conditions`). */
   readonly rootPath?: string
 }
@@ -610,9 +674,63 @@ export function evaluateWhenTree(
   options: WhenEvaluationOptions = {},
 ): ConditionEvaluation {
   const nodes: AutomationConditionTraceNode[] = []
-  const state: EvalState = { firedPath: options.firedPath, unknown: false }
+  const state: EvalState = {
+    firedPath: options.firedPath,
+    holds: options.holds,
+    unknown: false,
+    holdDueInMs: undefined,
+  }
   const pass = evalNode(when, options.rootPath ?? 'when', reader, now, nodes, state)
-  return { pass, unknown: state.unknown, nodes }
+  return {
+    pass,
+    unknown: state.unknown,
+    nodes,
+    ...(state.holdDueInMs === undefined ? {} : { holdDueInMs: state.holdDueInMs }),
+  }
+}
+
+/** Does any state leaf of the tree carry a `for`? */
+export function hasHoldLeaves(when: AutomationWhen): boolean {
+  let found = false
+  forEachLeaf(when, (leaf) => {
+    if ((leaf.kind === 'device-is' || leaf.kind === 'expression') && leaf.for !== undefined) {
+      found = true
+    }
+  })
+  return found
+}
+
+/**
+ * Feed the clock of EVERY `for` leaf, each on its own: a short-circuit in the
+ * tree (an event leaf that is false right now) must not stop a hold from
+ * counting. Returns the soonest a pending hold completes (ms), or undefined.
+ */
+export function observeHoldLeaves(
+  when: AutomationWhen,
+  reader: ConditionReader,
+  now: number,
+  holds: HoldTracker,
+  rootPath = 'when',
+): number | undefined {
+  let due: number | undefined
+  forEachLeaf(
+    when,
+    (leaf, path) => {
+      if ((leaf.kind !== 'device-is' && leaf.kind !== 'expression') || leaf.for === undefined)
+        return
+      const state: EvalState = {
+        firedPath: undefined,
+        holds,
+        unknown: false,
+        holdDueInMs: undefined,
+      }
+      evalNode(leaf, path, reader, now, [], state)
+      if (state.holdDueInMs !== undefined)
+        due = due === undefined ? state.holdDueInMs : Math.min(due, state.holdDueInMs)
+    },
+    rootPath,
+  )
+  return due
 }
 
 /** Legacy name, for blocks generated before the single tree. No tree is a pass with no nodes. */

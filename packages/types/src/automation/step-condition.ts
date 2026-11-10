@@ -11,6 +11,7 @@ import {
   evaluateWhenTree,
   type MirrorRefreshFetchers,
 } from './condition-eval.js'
+import type { HoldTracker } from './hold.js'
 import type { AutomationWhen } from './when.js'
 
 export type StepConditionResult = 'true' | 'false' | 'unknown'
@@ -24,15 +25,29 @@ export interface StepConditionVerdict {
 /** What a consumer provides to evaluate a step's `if`. */
 export type EvaluateStepCondition = (when: AutomationWhen) => Promise<StepConditionVerdict>
 
+/**
+ * A `for` in a guard needs history, which a mirror built for one evaluation
+ * cannot have: the caller hands in the long-lived mirror and hold tracker it
+ * has been feeding, and the path the tree is fed under.
+ */
+export interface StepConditionHistory {
+  readonly mirror: ConditionMirror
+  readonly holds: HoldTracker
+  readonly rootPath: string
+}
+
 /** Fill a mirror for the tree's leaves from `fetchers` and judge it NOW. */
 export async function evaluateStepCondition(
   when: AutomationWhen,
   fetchers: MirrorRefreshFetchers,
   now: () => number = Date.now,
+  history?: StepConditionHistory,
 ): Promise<StepConditionVerdict> {
-  const mirror = new ConditionMirror(collectWhenMirrorSources(when))
+  const mirror = history?.mirror ?? new ConditionMirror(collectWhenMirrorSources(when))
   await mirror.refresh(fetchers)
-  const evaluation = evaluateWhenTree(when, mirror, now())
+  const evaluation = evaluateWhenTree(when, mirror, now(), {
+    ...(history === undefined ? {} : { holds: history.holds, rootPath: history.rootPath }),
+  })
   const reasons = evaluation.nodes.filter((n) => n.outcome !== 'pass').map((n) => n.reason)
   const first = reasons[0]
   if (evaluation.unknown) {

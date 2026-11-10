@@ -27,6 +27,7 @@ import { EXPRESSION_IDENTIFIER_RE, MAX_EXPRESSION_SOURCE_LENGTH } from '../expre
 import { TimeSpecSchema, WeekdayKeySchema } from '../time/time-spec.js'
 import { QuantityValueSchema } from '../units/quantity-input.js'
 import { DetectionSubjectSchema, StationarySubjectSchema } from './detection-subject.js'
+import { BecomesOperatorSchema, HOLD_MAX_MS, HoldSpecSchema } from './hold.js'
 
 /**
  * Depth of the `when` tree, counting the root container as level 1. The old
@@ -64,20 +65,57 @@ export type AutomationConditionOperator = z.infer<typeof AutomationConditionOper
  * and an event only WAKES the evaluation. A dropped event therefore DELAYS a
  * fire; it does not lose it.
  */
-const DeviceBecomesLeafSchema = z.object({
-  kind: z.literal('device-becomes'),
-  deviceId: z.number().int().nonnegative(),
-  cap: z.string().min(1),
-  fieldPath: z.string().min(1),
-  /** Fire when the field takes this value. Omit to fire on any change. */
-  becomes: z.union([z.string(), z.number(), z.boolean()]).optional(),
-  /** Only on a CHANGE of value, not on every re-report. */
-  edge: z.boolean().optional(),
-  /** The new value must hold this long before it counts. */
-  forMs: z.number().int().min(0).max(86_400_000).optional(),
-  /** Collapse a burst into one occurrence. */
-  debounceMs: z.number().int().min(0).max(600_000).optional(),
-})
+const DeviceBecomesLeafSchema = z
+  .object({
+    kind: z.literal('device-becomes'),
+    deviceId: z.number().int().nonnegative(),
+    cap: z.string().min(1),
+    fieldPath: z.string().min(1),
+    /** Fire when the field takes this value. Omit (with no `operator`) to fire on any change. */
+    becomes: z.union([z.string(), z.number(), z.boolean()]).optional(),
+    /**
+     * A threshold or a range instead of an equality: "crosses above 3000", "enters
+     * 18..24". The leaf fires on the TRANSITION into the predicate, never on a re-report.
+     * `value` is in the field's base unit; `between` / `outside` take `[low, high]`.
+     */
+    operator: BecomesOperatorSchema.optional(),
+    value: z.union([z.number(), z.string(), z.boolean(), z.array(z.number()).length(2)]).optional(),
+    /**
+     * Hold: the transition (or, with no predicate, the new value) must stay for
+     * `for.ms` before the leaf fires, ONCE per episode. See `hold.ts`.
+     */
+    for: HoldSpecSchema.optional(),
+    /** @deprecated every leaf fires on a transition now; read as always on. */
+    edge: z.boolean().optional(),
+    /** @deprecated legacy `held` window — read through `holdOf` as `for: { ms, mode: 'held' }`. */
+    forMs: z.number().int().min(0).max(HOLD_MAX_MS).optional(),
+    /** Collapse a burst into one occurrence. */
+    debounceMs: z.number().int().min(0).max(600_000).optional(),
+  })
+  .superRefine((leaf, ctx) => {
+    if (leaf.becomes !== undefined && leaf.operator !== undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'a leaf names `becomes` or `operator`, not both',
+        path: ['operator'],
+      })
+    }
+    if (leaf.operator !== undefined && leaf.value === undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'an operator needs the value to compare to',
+        path: ['value'],
+      })
+    }
+    const range = leaf.operator === 'between' || leaf.operator === 'outside'
+    if (leaf.operator !== undefined && range !== Array.isArray(leaf.value)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: range ? 'a range takes [low, high]' : 'only a range takes [low, high]',
+        path: ['value'],
+      })
+    }
+  })
 
 const DeviceEventLeafSchema = z.object({
   kind: z.literal('device-event'),
@@ -158,6 +196,8 @@ const DeviceIsLeafSchema = z.object({
   ]),
   /** The unit the person picked for `value` (display only; `value` is in the base unit). */
   unit: z.string().min(1).optional(),
+  /** The comparison must hold (`held`) or the value stay put (`stable`) this long. */
+  for: HoldSpecSchema.optional(),
 })
 
 /**
@@ -184,10 +224,19 @@ const ExpressionLeafSchema = z
     kind: z.literal('expression'),
     expr: z.string().min(1).max(MAX_EXPRESSION_SOURCE_LENGTH),
     bindings: z.record(z.string().regex(EXPRESSION_IDENTIFIER_RE), ExpressionBindingSourceSchema),
+    /** The expression must stay true this long. An expression has no single value, so only `held`. */
+    for: HoldSpecSchema.optional(),
   })
   .superRefine((src, ctx) => {
     const err = validateExpressionSource(src)
     if (err !== null) ctx.addIssue({ code: 'custom', message: err, path: ['expr'] })
+    if (src.for?.mode === 'stable') {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'an expression is held, not stable: it has no single value to keep still',
+        path: ['for', 'mode'],
+      })
+    }
   })
 
 export type AutomationEventLeaf =
