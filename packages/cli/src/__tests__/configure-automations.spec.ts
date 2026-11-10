@@ -208,6 +208,66 @@ describe('configure_automation_save', () => {
     })
   })
 
+  describe('device templates in step text', () => {
+    const textRecipe = (message: string) => ({
+      when: { kind: 'schedule' as const, cron: '30 7 * * *' },
+      actions: [
+        {
+          kind: 'cap' as const,
+          target: { kind: 'devices' as const, ids: [7] },
+          cap: 'notifier',
+          method: 'send',
+          args: { message },
+        },
+      ],
+    })
+
+    it('vets a templated argument before offering the save, and passes a valid one', async () => {
+      const { ctx, calls } = fakeHub({
+        ...hubReads,
+        'deviceManager.checkDeviceTemplates': { results: [{ ok: true, aliases: [] }] },
+      })
+      const out = await saveAutomation(
+        withWrites(ctx),
+        {
+          name: 'Door',
+          recipe: textRecipe('Door is {{ door.state }} {{vars.who}}'),
+          enabled: true,
+        },
+        undefined,
+      )
+      expect(out.status).toBe('dry-run')
+      const check = calls.find((c) => c.path === 'deviceManager.checkDeviceTemplates')
+      expect(check?.input).toEqual({ templates: ['Door is {{ door.state }} ·'] })
+    })
+
+    it('prints the hub refusal with its reason and offers no save', async () => {
+      const { ctx, calls } = fakeHub({
+        ...hubReads,
+        'deviceManager.checkDeviceTemplates': {
+          results: [{ ok: false, refusal: { reason: 'syntax', message: 'unexpected }}' } }],
+        },
+      })
+      const out = await saveAutomation(
+        withWrites(ctx),
+        { name: 'Door', recipe: textRecipe('{{ door.state'), enabled: true },
+        undefined,
+      )
+      expect(JSON.stringify(out)).toMatch(/refused \(syntax\): unexpected/)
+      expect(calls.some((c) => c.path === 'coreBlocks.create')).toBe(false)
+    })
+
+    it('does not ask the hub when no step text carries a device template', async () => {
+      const { ctx, calls } = fakeHub(hubReads)
+      await saveAutomation(
+        withWrites(ctx),
+        { name: 'Door', recipe: textRecipe('plain {{who}}'), enabled: true },
+        undefined,
+      )
+      expect(calls.some((c) => c.path === 'deviceManager.checkDeviceTemplates')).toBe(false)
+    })
+  })
+
   it('refuses a name that already exists', async () => {
     const { ctx } = fakeHub({
       ...hubReads,

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The automation MCP save checks device templates in step text with the hub first and prints the refusal and its reason
+
 ## [1.2.228] - 2026-11-07
 
 ### Changed

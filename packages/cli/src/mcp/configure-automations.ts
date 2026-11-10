@@ -53,6 +53,7 @@ import {
   type ZoneRef,
 } from './configure-hub-reads.js'
 import type { McpContext, ToolTextResult } from './context.js'
+import { templateTexts, vetDeviceTemplates } from './device-template-check.js'
 import { readQuery, withHub, type NoSessionResult } from './ops-hub.js'
 
 // ---------------------------------------------------------------------------
@@ -876,6 +877,15 @@ export function saveAutomationSpec(client: HubClient): GatedToolSpec<SaveAutomat
             problem: error instanceof Error ? error.message : String(error),
           },
         }
+      }
+      const vetted = await vetDeviceTemplates(
+        client,
+        finished.recipe.actions.flatMap((action) =>
+          action.kind === 'cap' ? templateTexts(action.args) : [],
+        ),
+      )
+      if (!vetted.ok) {
+        return { confirmable: false, describe: { problem: vetted.problem } }
       }
       const blocks = await readQuery(client, 'coreBlocks.list', {}, BlockListSchema)
       if (!blocks.ok) {
