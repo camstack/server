@@ -111,7 +111,8 @@
       "connectionsSubtitle": "Provider di identità con cui gli utenti accedono. Ogni connessione ha un proprio id, che non si può cambiare in seguito.",
       "connectionsEmptyTitle": "Nessuna connessione di accesso",
       "connectionsEmptyDescription": "Aggiungi una connessione per far accedere gli utenti tramite un provider di identità.",
-      "addConnection": "Aggiungi connessione"
+      "addConnection": "Aggiungi connessione",
+      "localAlwaysOn": "L'accesso con nome utente e password è sempre attivo e non si può disattivare. Non è una connessione, quindi non ha una riga qui sopra."
     },
     "backup": {
       "restartServerNow": "Riavviare il server ora?",

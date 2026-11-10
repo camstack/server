@@ -111,7 +111,8 @@
       "connectionsSubtitle": "Identity providers that sign users in. Each connection has its own id, which cannot be changed later.",
       "connectionsEmptyTitle": "No sign-in connections",
       "connectionsEmptyDescription": "Add a connection to let users sign in through an identity provider.",
-      "addConnection": "Add connection"
+      "addConnection": "Add connection",
+      "localAlwaysOn": "Username and password sign-in is always on and cannot be turned off. It is not a connection, so it has no row above."
     },
     "backup": {
       "restartServerNow": "Restart server now?",

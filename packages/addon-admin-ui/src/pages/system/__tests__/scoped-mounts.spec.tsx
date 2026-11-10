@@ -58,7 +58,6 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
-import { PasskeyRelyingPartyCard } from '../Authentication'
 import { LocalAccessPage } from '../LocalAccess'
 import { TerminalNodeSettings } from '../terminal/TerminalNodeSettings'
 
@@ -101,19 +100,6 @@ describe('fixed scoped settings mounts', () => {
         cap: 'terminal-session',
         scope: 'node',
         nodeId: 'edge-1',
-      }),
-    )
-  })
-
-  it('Passkey relying party: auth-webauthn login-method, cluster scope, the webauthn section only', async () => {
-    render(withClient(<PasskeyRelyingPartyCard />))
-    expect(await screen.findByDisplayValue('value of Passkey field')).toBeInTheDocument()
-    expect(screen.queryByDisplayValue('value of Other section field')).toBeNull()
-    await waitFor(() =>
-      expect(query).toHaveBeenCalledWith({
-        addonId: 'auth-webauthn',
-        cap: 'login-method',
-        scope: 'cluster',
       }),
     )
   })

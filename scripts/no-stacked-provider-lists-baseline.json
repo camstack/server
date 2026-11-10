@@ -1,9 +1,6 @@
 {
   "_why": "Files that draw a second list or control of a collection next to its InstancesTable (planning#505). Each entry names the page work that deletes it. The list only shrinks.",
   "families": {
-    "authentication": {
-      "packages/addon-admin-ui/src/pages/system/Authentication.tsx": "#504: IntegrationHub addon pills over the login-method InstancesTable, two switches, a per-addon hint map"
-    },
     "connectivity": {
       "packages/addon-admin-ui/src/pages/system/Integrations.tsx": "#505 item 3: IntegrationHub pill rows under the Exporters / Email / Brokers / Calendars tables"
     },
