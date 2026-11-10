@@ -90,10 +90,7 @@ export function ExpressionLeafRow({ leaf, devices, onChange }: ExpressionLeafRow
         <Button
           variant="ghost"
           onClick={() =>
-            withBindings({
-              ...leaf.bindings,
-              [freshAlias(leaf.bindings)]: EMPTY_GLOBAL,
-            })
+            withBindings({ ...leaf.bindings, [freshAlias(leaf.bindings)]: EMPTY_GLOBAL })
           }
         >
           <Plus className="h-3.5 w-3.5" /> {t('common.name')}
@@ -146,10 +143,7 @@ function BindingRow({ alias, source, devices, onRename, onChange, onRemove }: Bi
               value: 'global',
               label: t('automation.expressionLeafRow.aDeviceField', 'A device field'),
             },
-            {
-              value: 'literal',
-              label: t('automation.expressionLeafRow.aConstant', 'A constant'),
-            },
+            { value: 'literal', label: t('automation.expressionLeafRow.aConstant', 'A constant') },
           ]}
         />
       </label>

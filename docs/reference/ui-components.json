@@ -600,12 +600,12 @@
     {
       "need": "A text that may carry device values (`{{ alias.field }}`): an action argument, a notification title or body",
       "admin": "`DeviceTemplateField` (`accepts`, `preview`, `handle` to insert at the caret)",
-      "viewer": "a plain `Input` plus `DeviceValueTokenField`",
+      "viewer": "a plain `Input`",
       "notes": "Device references show as chips; the insert control offers only fields that fit `accepts`; the hub's verdict (`checkDeviceTemplates`) shows under the field. An evaluator expression (formula, automation condition) is not a template: use `ExpressionInput`"
     },
     {
       "need": "Pick ONE device value (device, then cap, then field; only what fits)",
-      "admin": "`DeviceValueField` + `useDeviceValueSource`; as a `{{dev:<stableId>/<cap>.<field>}}` chip, `DeviceValueTokenField`",
+      "admin": "`DeviceValueField` + `useDeviceValueSource`",
       "viewer": "`DevicePicker`, a second value list",
       "notes": "Never lists an incompatible device or value. A chosen source is one compact card (source row with Change, transform, proposal, preview); picking is two columns from `sm`, one accordion list on a phone. Adapters add what the pick means (a transform and a preview, or a token)"
     },
@@ -4896,57 +4896,6 @@
           "type": "boolean",
           "optional": true,
           "doc": "The host gives a definite height: the columns scroll on their own."
-        }
-      ]
-    },
-    {
-      "name": "DeviceValueTokenField",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-value-field/device-value-token-field.tsx",
-      "summary": "The template-token adapter of the device → value picker: pick a device, then one of its fitting values, and get the token a template writes. Picking only; a template engine renders the token elsewhere.",
-      "props": [
-        {
-          "name": "stableIdOf",
-          "type": "(deviceId: number) => string | null",
-          "optional": false,
-          "doc": "Resolves the picked device's `stableId` once the operator confirms."
-        },
-        {
-          "name": "capNames",
-          "type": "readonly string[]",
-          "optional": true,
-          "doc": ""
-        },
-        {
-          "name": "fit",
-          "type": "(field: DeviceValueCandidate) => string | null",
-          "optional": true,
-          "doc": ""
-        },
-        {
-          "name": "capTitle",
-          "type": "(cap: string) => string",
-          "optional": true,
-          "doc": ""
-        },
-        {
-          "name": "fieldLabel",
-          "type": "(cap: string, path: string) => string",
-          "optional": true,
-          "doc": ""
-        },
-        {
-          "name": "onPick",
-          "type": "(token: string, ref: DeviceValueRef) => void",
-          "optional": false,
-          "doc": "Receives the token text (`{{dev:<stableId>/<cap>.<fieldPath>}}`) and what it points at."
-        },
-        {
-          "name": "trigger",
-          "type": "ReactNode",
-          "optional": false,
-          "doc": ""
         }
       ]
     },

@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**242 units · 8347 source files · 236 units claimed by at least one document (8317 files).**
+**242 units · 8352 source files · 236 units claimed by at least one document (8322 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -23,7 +23,7 @@ it never describes how the thing works, and it is never re-verified.
 | `scripts` | 546 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +148 more, 14 ADRs | 2026-11-02 |
 | `packages/system/src/builtins` | 501 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, +192 more, 21 ADRs | 2026-11-08 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 477 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-10-14 |
-| `packages/ui-library/src/composites` | 383 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +55 more, 3 ADRs | 2026-11-02 |
+| `packages/ui-library/src/composites` | 387 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +55 more, 3 ADRs | 2026-11-02 |
 | `packages/types/src/capabilities` | 234 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +218 more, 41 ADRs | 2026-11-08 |
 | `packages/addon-post-analysis/src/notification-center` | 216 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `decisions/adr-1013-one-instance-model.md`, +88 more, 27 ADRs | 2026-10-07 |
 | `packages/addon-admin-ui/src/pages` | 199 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +55 more, 8 ADRs | 2026-11-02 |
@@ -205,6 +205,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/ui-library/src/i18n` | 3 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/addon-admin-ui/src/contexts` | 2 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +3 more | 2026-11-02 |
 | `packages/addon-admin-ui/src/server` | 2 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-02 |
+| `packages/addon-admin-ui/src/test-setup` | 2 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-02 |
 | `packages/addon-import-alexa/src/devices` | 2 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/addon-model-studio/src/bundle` | 2 | `cloud-training`, `tooling` | `architecture/cloud-training.md`, `decisions/adr-0806-a-model-that-arrives-as-files-is-imported-as-one-verified-bundle-over-peer-bytes.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-10-14 |
 | `packages/addon-pipeline-orchestrator/src/auto-tune` | 2 | `pipeline-orchestration` | `architecture/inference-devices.md`, `decisions/adr-0745-best-settings-picks-one-detector-family-from-static-hardware-and-applies-only-the-confirmed-plan.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +2 more, 1 ADR | 2026-10-23 |
@@ -226,7 +227,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/training` | 2 | `cloud-training` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/cloud-training.md`, `decisions/adr-0805-cloud-training-is-one-orchestrator-over-a-provider-collection-and-never-registers-on-its-own.md` | 2026-10-14 |
 | `packages/werift-turn-fix` | 2 | `stream-broker` | — | — |
 | `packages/addon-admin-ui/src/services` | 1 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-02 |
-| `packages/addon-admin-ui/src/test-setup` | 1 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-02 |
 | `packages/addon-admin-ui/src/types` | 1 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-02 |
 | `packages/addon-export-hap/src/reconcile` | 1 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` _(covers)_, +2 more, 1 ADR | 2026-09-29 |
 | `packages/addon-import-alexa/src/types` | 1 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md` | — |

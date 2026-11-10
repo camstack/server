@@ -7,10 +7,6 @@ export {
   type DeviceValuesState,
 } from './device-value-field'
 export {
-  DeviceValueTokenField,
-  type DeviceValueTokenFieldProps,
-} from './device-value-token-field'
-export {
   type DeviceValueRef,
   formatDeviceValueToken,
   parseDeviceValueToken,

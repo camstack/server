@@ -22,6 +22,7 @@ vi.mock('@camstack/ui-library', async () => {
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     Input: actual.Input,
+    ExpressionInput: actual.ExpressionInput,
     CollapsibleCard: ({
       header,
       children,

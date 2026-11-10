@@ -17,6 +17,7 @@ import { NC_AUDIO_DB_OFFERED, NC_CONDITION_CATALOG } from '@camstack/types'
 import type { System } from '@camstack/sdk'
 import { ConfirmDialogProvider, SystemProvider } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { TemplateHubTrpc } from '../../../test-setup/device-template-hub'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
@@ -299,11 +300,13 @@ function renderPage(props: NotificationRulesPageProps = {}) {
   return render(
     <QueryClientProvider client={queryClient}>
       <SystemProvider system={mockSystemForPicker()}>
-        <ConfirmDialogProvider>
-          <MemoryRouter>
-            <NotificationRulesPage {...props} />
-          </MemoryRouter>
-        </ConfirmDialogProvider>
+        <TemplateHubTrpc withSystem={false}>
+          <ConfirmDialogProvider>
+            <MemoryRouter>
+              <NotificationRulesPage {...props} />
+            </MemoryRouter>
+          </ConfirmDialogProvider>
+        </TemplateHubTrpc>
       </SystemProvider>
     </QueryClientProvider>,
   )

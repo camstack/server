@@ -14,6 +14,7 @@
  * did.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { TemplateHubTrpc } from '../../../test-setup/device-template-hub'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -46,7 +47,9 @@ function renderPage() {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <NotificationTextsPage />
+      <TemplateHubTrpc>
+        <NotificationTextsPage />
+      </TemplateHubTrpc>
     </QueryClientProvider>,
   )
 }
