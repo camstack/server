@@ -90,6 +90,7 @@ describe('MigrationApiV1: the surface', () => {
       ...Object.keys(a.ledger).map((m) => `ledger.${m}`),
       ...Object.keys(a.legacyRows).map((m) => `legacyRows.${m}`),
       ...Object.keys(a.settings).map((m) => `settings.${m}`),
+      ...Object.keys(a.deviceSettings).map((m) => `deviceSettings.${m}`),
       ...Object.keys(a.secrets).map((m) => `secrets.${m}`),
       ...Object.keys(a.integrations).map((m) => `integrations.${m}`),
       ...Object.keys(a.devices).map((m) => `devices.${m}`),
@@ -409,10 +410,37 @@ describe('MigrationApiV1.devices', () => {
     })
   })
 
+  it('devices.aliases.answers-for-the-named-ids-only', async () => {
+    world.addDevice({ id: 4, addonId: FOREIGN, name: 'four', alias: 'garage' })
+    world.addDevice({ id: 5, addonId: OWNER, name: 'five', alias: 'camera' })
+    world.addDevice({ id: 6, addonId: OWNER, name: 'six' })
+    const out = await api().devices.aliases({ deviceIds: [4, 6, 99] })
+    // Named ids only (5 was not asked for); a device with no alias and an unknown id are absent.
+    expect(out.aliases).toEqual({ '4': 'garage' })
+  })
+
   it('devices.setIntegrationId.links-the-device', async () => {
     await api().devices.setIntegrationId({ deviceId: 2, integrationId: INTEGRATION })
     expect((await api().devices.get({ deviceId: 2 }))?.integrationId).toBe(INTEGRATION)
     expect((await api().devices.get({ deviceId: 3 }))?.integrationId).toBe('int_other')
+  })
+})
+
+describe('MigrationApiV1.deviceSettings', () => {
+  it('deviceSettings.listIds.names-only-the-addons-own-devices', async () => {
+    await world.settingsFor(OWNER).writeDeviceStore(7, { a: 1 })
+    await world.settingsFor(OWNER).writeDeviceStore(9, { a: 2 })
+    await world.settingsFor(FOREIGN).writeDeviceStore(11, { a: 3 })
+    const ids = (await api().deviceSettings.listIds({})).deviceIds
+    expect([...ids].sort((x, y) => x - y)).toEqual([7, 9])
+  })
+
+  it('deviceSettings.read.returns-only-the-addons-own-blobs', async () => {
+    await world.settingsFor(OWNER).writeDeviceStore(7, { slotBindings: { 'text-1': 1 } })
+    await world.settingsFor(FOREIGN).writeDeviceStore(7, { slotBindings: 'theirs' })
+    await world.settingsFor(FOREIGN).writeDeviceStore(11, { slotBindings: 'theirs' })
+    const out = await api().deviceSettings.read({ deviceIds: [7, 11, 99] })
+    expect(out.blobs).toEqual({ '7': { slotBindings: { 'text-1': 1 } } })
   })
 })
 

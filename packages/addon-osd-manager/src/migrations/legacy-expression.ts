@@ -6,7 +6,7 @@
  * Frozen on purpose: a migration states the shape it READS, so these schemas
  * never follow the live ones.
  */
-import { normalizeUnit, templateCapKey } from '@camstack/types'
+import { normalizeUnit, runtimeFieldUnit, templateCapKey } from '@camstack/types'
 import { z } from 'zod'
 
 export const LegacySourceSchema = z.object({ kind: z.string() }).passthrough()
@@ -67,21 +67,19 @@ export const LegacyNamedTemplateSchema = z
   .passthrough()
 export type LegacyNamedTemplate = z.infer<typeof LegacyNamedTemplateSchema>
 
-/** What the migration can learn of a value's live shape to pick the faithful expression. */
-export interface ValueSample {
-  /** The raw value as the device publishes it now; `undefined` = unknown. */
-  readonly raw: unknown
-  /** The unit the slice reports next to the value, if any. */
-  readonly sliceUnit: string | undefined
-}
-
 export interface ExpressionSpec {
   /** The template reference, e.g. `camera.motion.detected`. */
   readonly ref: string
   readonly displayUnit: string | undefined
   readonly maxDecimals: number
   readonly valueMap: Readonly<Record<string, string>> | undefined
-  readonly sample: ValueSample
+  /** The field's D944 base unit from the capability schema (`runtimeFieldUnit`); `undefined` = none. */
+  readonly baseUnit: string | undefined
+}
+
+/** The base unit a capability field declares, the same table the editor and `unit()` read. */
+export function baseUnitOf(capName: string, valuePath: string): string | undefined {
+  return runtimeFieldUnit(capName, valuePath)
 }
 
 /** The two halves the old tokens named: what `${value}` / `{a.value}` and `${unit}` / `{a.unit}` print. */
@@ -104,43 +102,45 @@ export function fieldRef(alias: string, capName: string, valuePath: string): str
   return `${alias}.${templateCapKey(capName)}.${valuePath}`
 }
 
+/**
+ * Whether the value is the one an old `valueMap` key named. The old map keyed on `String(raw)`, so the
+ * test is STRICT (`sameas`): the engine's `==` is JavaScript's loose one, where `1 == true`.
+ */
 function matchesKey(ref: string, key: string): string {
-  if (key === 'true' || key === 'false') return `(${ref} == ${key} or ${ref} == '${key}')`
-  if (/^-?\d+(\.\d+)?$/.test(key)) return `(${ref} == ${key} or ${ref} == '${key}')`
-  return `${ref} == ${quote(key)}`
+  if (key === 'true' || key === 'false')
+    return `(${ref} is sameas(${key}) or ${ref} is sameas('${key}'))`
+  if (/^-?\d+(\.\d+)?$/.test(key))
+    return `((${ref} is number and ${ref} == ${key}) or ${ref} is sameas('${key}'))`
+  return `${ref} is sameas(${quote(key)})`
 }
 
-/** Unit the old code would print: the display unit, else the one the slice reported. */
+/** Unit the old code printed: the display unit, else the one the field is published in. */
 function unitOf(spec: ExpressionSpec): { convertTo: string | undefined; shown: string } {
   const to = spec.displayUnit === undefined ? undefined : normalizeUnit(spec.displayUnit)
-  const from =
-    spec.sample.sliceUnit === undefined ? undefined : normalizeUnit(spec.sample.sliceUnit)
+  const from = spec.baseUnit === undefined ? undefined : normalizeUnit(spec.baseUnit)
   return { convertTo: to, shown: to ?? from ?? '' }
 }
 
-function numericValue(spec: ExpressionSpec, convertTo: string | undefined): string {
-  const digits = Math.min(Math.max(spec.maxDecimals, 0), 12)
-  if (convertTo === undefined) return `{{ ${spec.ref} | round(${digits}) }}`
-  const symbol = escapeLiteral(convertTo)
-  // `format('%s')` hands back text, so the unit symbol the engine appends (with a
-  // space) can be cut and the old, tight `21.5°C` reproduced.
-  return `{{ ${spec.ref} | unit(${quote(convertTo)}) | round(${digits}) | format('%s') | replace(${quote(` ${symbol}`)}, '') }}`
-}
-
-/** The text a state value prints when no `valueMap` entry claims it. */
+/**
+ * The text a state value prints when no `valueMap` entry claims it. One shape for every value kind,
+ * chosen from nothing the device is doing right now: `onoff` turns a boolean into ON/OFF, `trunc` cuts a
+ * number to the decimals toward zero (the old formatter never rounded: 19.99 at one decimal printed 19.9)
+ * and both hand a string back as it is. An offline device migrates the same as an online one.
+ */
 function plainValue(spec: ExpressionSpec, convertTo: string | undefined): string {
-  const { raw } = spec.sample
-  const ref = spec.ref
-  if (typeof raw === 'number') return numericValue(spec, convertTo)
-  if (typeof raw === 'string') return `{{ ${ref} }}`
-  return `{% if ${ref} == true %}ON{% elif ${ref} == false %}OFF{% else %}${numericValue(spec, convertTo)}{% endif %}`
+  const digits = Math.min(Math.max(spec.maxDecimals, 0), 12)
+  if (convertTo === undefined) return `{{ ${spec.ref} | onoff | trunc(${digits}) }}`
+  const symbol = escapeLiteral(convertTo)
+  // `unit` must come first (the engine hands it the field's base unit there). `format('%s')` hands back text, so the unit symbol the engine appends (with a
+  // space) can be cut and the old, tight `21.5°C` reproduced.
+  return `{{ ${spec.ref} | unit(${quote(convertTo)}) | onoff | trunc(${digits}) | format('%s') | replace(${quote(` ${symbol}`)}, '') }}`
 }
 
 export function expressionParts(spec: ExpressionSpec): ExpressionParts {
   const { convertTo, shown } = unitOf(spec)
   const plain = plainValue(spec, convertTo)
   const entries = Object.entries(spec.valueMap ?? {})
-  const unitLiteral = typeof spec.sample.raw === 'boolean' ? '' : escapeLiteral(shown)
+  const unitLiteral = escapeLiteral(shown)
   if (entries.length === 0) return { value: plain, unit: unitLiteral }
 
   const branches = entries.map(
@@ -172,30 +172,6 @@ export function clockExpression(pattern: string): string {
 
 export function recognitionExpression(kind: 'person' | 'plate'): string {
   return kind === 'person' ? '{{ camera.lastPerson }}' : '{{ camera.lastPlate }}'
-}
-
-/** Best-effort unit a slice reports beside a value (same rule the old renderer used). */
-export function sliceUnitOf(slice: unknown, valuePath: string): string | undefined {
-  if (typeof slice !== 'object' || slice === null || Array.isArray(slice)) return undefined
-  const read = (node: unknown, key: string): unknown =>
-    typeof node === 'object' && node !== null && !Array.isArray(node)
-      ? Object.entries(node).find(([k]) => k === key)?.[1]
-      : undefined
-  let parent: unknown = slice
-  for (const segment of valuePath.split('.').slice(0, -1)) parent = read(parent, segment)
-  const near = read(parent, 'unit')
-  if (typeof near === 'string' && near.length > 0) return near
-  const top = read(slice, 'unit')
-  return typeof top === 'string' && top.length > 0 ? top : undefined
-}
-
-export function sliceValueAt(slice: unknown, valuePath: string): unknown {
-  let node: unknown = slice
-  for (const segment of valuePath.split('.')) {
-    if (typeof node !== 'object' || node === null || Array.isArray(node)) return undefined
-    node = Object.entries(node).find(([k]) => k === segment)?.[1]
-  }
-  return node
 }
 
 /** Which old tokens a parser carries, in order: `{a}`, `{a.value}`, `{a.unit}`, `{a.full}`. */

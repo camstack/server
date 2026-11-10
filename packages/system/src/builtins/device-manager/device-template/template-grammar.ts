@@ -109,6 +109,8 @@ const CALLABLE_GLOBAL = 'range'
 const FILTER_MAX_PARAMS: Readonly<Record<string, number>> = {
   unit: 2,
   round: 1,
+  trunc: 1,
+  onoff: 0,
   default: 2,
   d: 2,
   since: 0,

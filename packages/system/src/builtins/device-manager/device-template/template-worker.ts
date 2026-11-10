@@ -21,7 +21,9 @@ import {
   makeSinceFilter,
   type Printer,
   rangeGlobal,
+  onoffFilter,
   roundFilter,
+  truncFilter,
   unitFilter,
 } from './template-filters.js'
 import { analyzeTemplate } from './template-grammar.js'
@@ -96,6 +98,8 @@ function environmentFor(nowMs: number, printer: Printer): TemplateEnvironment {
       d: defaultFilter,
       unit: unitFilter,
       round: roundFilter,
+      trunc: truncFilter,
+      onoff: onoffFilter,
       default: defaultFilter,
       format: formatFilter,
       time: timeFilter,

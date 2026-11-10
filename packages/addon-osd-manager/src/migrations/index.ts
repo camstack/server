@@ -8,6 +8,7 @@ import {
 
 export type { BindingsToTemplatesPorts } from './bindings-to-templates.js'
 export { BINDINGS_TO_TEMPLATES_MIGRATION_ID } from './bindings-to-templates.js'
+export { osdMigrationPortsOver, type OsdMigrationApi } from './ports.js'
 
 /** Everything the `osd-manager` catalogue reads and writes. */
 export type OsdManagerMigrationPorts = BindingsToTemplatesPorts

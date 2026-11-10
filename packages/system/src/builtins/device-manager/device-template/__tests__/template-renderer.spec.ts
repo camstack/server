@@ -51,6 +51,22 @@ describe('device template renderer', () => {
     expect(await text('{{ stufa_veranda.temperature | round(0) }}')).toBe('22')
   })
 
+  it('trunc cuts toward zero where round would carry', async () => {
+    expect(await text('{{ 19.99 | trunc(1) }}|{{ 19.99 | round(1) }}')).toBe('19.9|20')
+    expect(await text('{{ 21.96 | trunc(1) }}|{{ 21.96 | round(1) }}')).toBe('21.9|22')
+    expect(await text('{{ -3.75 | trunc(1) }}|{{ 19.99 | trunc(0) }}')).toBe('-3.7|19')
+    expect(await text("{{ stufa_veranda.temperature | unit('°F') | trunc(1) }}")).toBe('70.7 °F')
+    expect(await text("{{ 'abc' | trunc(1) }}")).toBe('abc')
+  })
+
+  it('onoff reads a boolean as ON/OFF and leaves a number or a string alone', async () => {
+    expect(await text('{{ stufa_veranda.switch.on | onoff }}')).toBe('ON')
+    expect(
+      await text('{{ false | onoff }}|{{ 1 | onoff }}|{{ 0 | onoff }}|{{ 20 | onoff | trunc(1) }}'),
+    ).toBe('OFF|1|0|20')
+    expect(await text("{{ 'high' | onoff }}")).toBe('high')
+  })
+
   it('runs conditionals, loops and the other filters', async () => {
     expect(await text("{{ 'on' if stufa_veranda.switch.on else 'off' }}")).toBe('on')
     expect(await text('{% if stufa_veranda.temperature > 20 %}warm{% else %}cold{% endif %}')).toBe(

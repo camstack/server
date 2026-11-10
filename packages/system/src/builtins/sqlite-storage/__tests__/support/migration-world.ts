@@ -73,8 +73,11 @@ export interface MigrationWorld {
     integrationId?: string
     parentDeviceId?: number
     name?: string
+    alias?: string
     config?: Record<string, unknown>
   }): void
+  /** `ctx.settings` of `owner`, to seed its per-device store before a migration reads it. */
+  settingsFor(owner: string): ReturnType<typeof createDoorSettingsView>
   /** The migration API as `owner` sees it. */
   apiFor(owner: string): MigrationApiV1
   /** `ctx.records` of `owner`: declare its kinds here before a migration binds one. */
@@ -150,7 +153,7 @@ export async function makeMigrationWorld(
     'CREATE TABLE IF NOT EXISTS integrations (id TEXT PRIMARY KEY NOT NULL, addon_id TEXT NOT NULL, name TEXT)',
   )
   db.exec(
-    "CREATE TABLE IF NOT EXISTS spec_devices (id INTEGER PRIMARY KEY NOT NULL, addon_id TEXT NOT NULL, integration_id TEXT, parent_device_id INTEGER, name TEXT, config TEXT NOT NULL DEFAULT '{}')",
+    "CREATE TABLE IF NOT EXISTS spec_devices (id INTEGER PRIMARY KEY NOT NULL, addon_id TEXT NOT NULL, integration_id TEXT, parent_device_id INTEGER, name TEXT, config TEXT NOT NULL DEFAULT '{}', alias TEXT)",
   )
   const provider = new MigrationsProvider(engine, {
     database: () => db,
@@ -205,7 +208,7 @@ export async function makeMigrationWorld(
     },
     addDevice: (row) => {
       db.prepare(
-        'INSERT INTO spec_devices (id, addon_id, integration_id, parent_device_id, name, config) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT INTO spec_devices (id, addon_id, integration_id, parent_device_id, name, config, alias) VALUES (?, ?, ?, ?, ?, ?, ?)',
       ).run(
         row.id,
         row.addonId,
@@ -213,9 +216,15 @@ export async function makeMigrationWorld(
         row.parentDeviceId ?? null,
         row.name ?? `device-${row.id}`,
         JSON.stringify(row.config ?? {}),
+        row.alias ?? null,
       )
     },
     hostFor,
+    settingsFor: (owner) =>
+      createDoorSettingsView(owner, door, {
+        getSection: async () => ({}),
+        setSection: () => undefined,
+      }),
     apiFor: (owner) => {
       const secrets = createSecretsAccess({ owner, transport: keychain })
       const legacy: Pick<
@@ -274,6 +283,7 @@ const DeviceRowSchema = z.object({
   parent_device_id: z.number().nullable(),
   name: z.string(),
   config: z.string(),
+  alias: z.string().nullable(),
 })
 
 /** The real SQL behind the devices door of the spec world. */
@@ -305,5 +315,12 @@ function devicesDoor(db: Database.Database): DevicesDoor {
         deviceId,
       )
     },
+    aliasesOf: async (deviceIds) =>
+      new Map(
+        deviceIds.flatMap((id) => {
+          const found = rows('SELECT * FROM spec_devices WHERE id = ?', id)[0]
+          return found?.alias == null ? [] : [[id, found.alias] as const]
+        }),
+      ),
   }
 }

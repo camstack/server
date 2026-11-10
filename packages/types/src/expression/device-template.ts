@@ -60,6 +60,9 @@ export const DEVICE_TEMPLATE_VALUES_CAP = 'values'
 export const DEVICE_TEMPLATE_FILTERS = [
   'unit',
   'round',
+  'trunc',
+  /** `{{ x | onoff }}`: `true` reads ON, `false` OFF, anything else is left as it is. */
+  'onoff',
   'default',
   'since',
   'ago',

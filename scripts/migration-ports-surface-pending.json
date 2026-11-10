@@ -7,7 +7,6 @@
   "packages/addon-google-services/src/google-services.addon.ts",
   "packages/addon-matter-broker/src/addon.ts",
   "packages/addon-mqtt-broker/src/mqtt-broker.addon.ts",
-  "packages/addon-osd-manager/src/addon.ts",
   "packages/addon-pipeline-orchestrator/src/index.ts",
   "packages/addon-pipeline/src/audio-analyzer/addons/analyzer/index.ts",
   "packages/addon-pipeline/src/pipeline-runner/index.ts",

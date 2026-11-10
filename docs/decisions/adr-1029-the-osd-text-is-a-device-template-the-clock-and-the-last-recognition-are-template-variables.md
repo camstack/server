@@ -42,8 +42,9 @@ An owned D987 migration rewrites every stored binding and named template.
 
 ## Consequences
 
-- Behaviour differences the operator may see after the migration: `round` rounds
-  where the old code truncated; a clock in a custom timezone follows the server zone
+- Behaviour differences the operator may see after the migration: the migration
+  emits the truncating `trunc(n)` filter (19.99 stays 19.9 at one decimal), as the old
+  code truncated; a clock in a custom timezone follows the server zone
   (the migration notes it); a template that prints `—` no longer blanks the overlay,
   it keeps the last text; the safety-net tick is 60 s (was 10 s) because events and
   the minute timer drive freshness; a device whose own alias is `camera` is shadowed
@@ -51,11 +52,20 @@ An owned D987 migration rewrites every stored binding and named template.
 - A migrated text that kept the old tight `20°C` form uses a
   `format('%s') | replace(...)` chain, longer than a hand-written one; the operator can
   simplify it.
-- A converted text over 1024 characters makes the migration fail rather than truncate.
-- The migration reads per-device settings, device state and aliases, which
-  `MigrationApiV1` cannot reach, so the addon stays on the old
-  `defineAddonMigrations` seam, listed in `scripts/migration-ports-surface-pending.json`
-  (shrink-only).
+- One bad row never blocks the cameras (the migration is `block-owner`): a slot whose
+  text would pass 1024 characters or whose row is malformed becomes disabled with source
+  `none`, a named template that cannot be converted keeps its id and name with an empty
+  text, and each is named in a `note()` (with `tags: { deviceId }`). The original stays
+  recoverable in the ledger snapshot.
+- The expression is chosen from the cap's static base unit (`runtimeFieldUnit`), never
+  from the live value, so it is the same whether the device is online or not; booleans
+  read through the `onoff` filter. A device whose own alias is `camera` is named
+  `camera_<id>` in migrated texts, with a `note()` asking the operator to give it that
+  alias.
+- The migration reads over `MigrationApiV1` (`deviceSettings.listIds`,
+  `deviceSettings.read`, `devices.aliases`, all read only and scoped to the addon's own
+  rows or the named ids) and the addon is off the pending list. A missing
+  `ctx.settings` or migration API logs and skips the migration instead of failing init.
 - The viewer does not read OSD schemas (its own `osd-source-fields` mirror covers
   live fields only) and is unchanged.
 

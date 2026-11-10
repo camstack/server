@@ -75,8 +75,7 @@ every slot binding and named template of the old shapes into template text: pars
 tokens, per-binding display unit, decimals and value map, the slot `${value}`
 template, and the `clock`, `device-state` and `latest-recognition` sources. It is
 idempotent, keeps the ledger snapshot for rollback, and a binding whose device cannot be
-converted to a known device keeps a `device_<id>` placeholder alias that renders `—`; a text over the length limit fails the migration (block-owner) rather than truncating. `round` replaces the old truncation
-and a clock in a custom timezone becomes the server zone. See the ADR for the
+converted to a known device keeps a `device_<id>` placeholder alias that renders `—`; a slot over the length limit or malformed is disabled (source `none`) and a named template that cannot be converted keeps its name with an empty text, each named in a log line, so one bad row never blocks the other cameras. Decimals are cut with the engine's `trunc(n)` filter like the old formatter, a boolean reads through `onoff`, and the expression never depends on the live value. A clock in a custom timezone becomes the server zone. See the ADR for the
 semantic differences.
 
 URL restore on the federated page keeps `?tab` / `?device` / `?slot` so a

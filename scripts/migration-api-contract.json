@@ -1,6 +1,27 @@
 {
   "version": 1,
   "methods": {
+    "devices.aliases": {
+      "input": {
+        "deviceIds": {
+          "required": true
+        },
+        "deviceIds[]": {
+          "required": false
+        }
+      },
+      "output": {
+        "aliases": {
+          "required": true
+        },
+        "aliases{}": {
+          "required": false
+        }
+      },
+      "behaviours": [
+        "devices.aliases.answers-for-the-named-ids-only"
+      ]
+    },
     "devices.get": {
       "input": {
         "deviceId": {
@@ -77,6 +98,44 @@
         "devices.setIntegrationId.links-the-device"
       ]
     },
+    "deviceSettings.listIds": {
+      "input": {},
+      "output": {
+        "deviceIds": {
+          "required": true
+        },
+        "deviceIds[]": {
+          "required": false
+        }
+      },
+      "behaviours": [
+        "deviceSettings.listIds.names-only-the-addons-own-devices"
+      ]
+    },
+    "deviceSettings.read": {
+      "input": {
+        "deviceIds": {
+          "required": true
+        },
+        "deviceIds[]": {
+          "required": false
+        }
+      },
+      "output": {
+        "blobs": {
+          "required": true
+        },
+        "blobs{}": {
+          "required": false
+        },
+        "blobs{}{}": {
+          "required": false
+        }
+      },
+      "behaviours": [
+        "deviceSettings.read.returns-only-the-addons-own-blobs"
+      ]
+    },
     "integrations.get": {
       "input": {
         "id": {
@@ -86,6 +145,9 @@
       "output": {
         "addonId": {
           "required": true
+        },
+        "enabled": {
+          "required": false
         },
         "id": {
           "required": true
@@ -118,6 +180,9 @@
         },
         "integrations[].addonId": {
           "required": true
+        },
+        "integrations[].enabled": {
+          "required": false
         },
         "integrations[].id": {
           "required": true

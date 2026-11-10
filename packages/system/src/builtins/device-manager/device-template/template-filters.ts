@@ -91,6 +91,29 @@ export function roundFilter(input: unknown, digits: unknown): unknown {
   return input
 }
 
+/**
+ * `trunc(n)`: cut to `n` decimals toward zero, never round (19.99 at one decimal is 19.9).
+ * The same arithmetic as the OSD's old formatter, so a migrated text prints what it did.
+ */
+export function truncFilter(input: unknown, digits: unknown): unknown {
+  const places =
+    typeof digits === 'number' && Number.isInteger(digits) && digits >= 0 && digits <= 12
+      ? digits
+      : 0
+  const factor = 10 ** places
+  if (input instanceof Quantity)
+    return new Quantity(Math.trunc(input.value * factor) / factor, input.symbol)
+  if (typeof input === 'number') return Math.trunc(input * factor) / factor
+  return input
+}
+
+/** `onoff`: a boolean reads `ON` / `OFF`; anything else passes through untouched (a number stays a number). */
+export function onoffFilter(input: unknown): unknown {
+  if (input === true) return 'ON'
+  if (input === false) return 'OFF'
+  return input
+}
+
 export function defaultFilter(input: unknown, fallback: unknown): unknown {
   return isMissing(input) ? fallback : input
 }

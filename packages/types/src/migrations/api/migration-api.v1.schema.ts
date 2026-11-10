@@ -222,6 +222,18 @@ export const MIGRATION_API_V1_METHODS = {
     output: z.object({ removed: z.array(z.string()) }),
     behaviours: ['settings.deleteKeys.removes-only-the-named-keys'],
   },
+  'deviceSettings.listIds': {
+    // The addon's OWN per-device settings: the ids that have a blob in its store, never another addon's.
+    input: z.object({}),
+    output: z.object({ deviceIds: z.array(z.number().int()) }),
+    behaviours: ['deviceSettings.listIds.names-only-the-addons-own-devices'],
+  },
+  'deviceSettings.read': {
+    input: z.object({ deviceIds: z.array(z.number().int()) }),
+    // Keyed by the device id as text (JSON has no numeric keys); a device with no blob is absent.
+    output: z.object({ blobs: z.record(z.string(), Rows) }),
+    behaviours: ['deviceSettings.read.returns-only-the-addons-own-blobs'],
+  },
   'secrets.resolve': {
     input: z.object({ refs: z.array(z.string()) }),
     output: z.object({ values: z.record(z.string(), z.string().nullable()) }),
@@ -264,6 +276,13 @@ export const MIGRATION_API_V1_METHODS = {
       })
       .nullable(),
     behaviours: ['devices.get.null-for-an-unknown-id', 'devices.get.reports-link-and-config'],
+  },
+  'devices.aliases': {
+    // By explicit id, never a walk: a migration asks about the devices ITS rows name. Read only.
+    input: z.object({ deviceIds: z.array(z.number().int()) }),
+    // Keyed by the device id as text; a device without an alias (or unknown) is absent.
+    output: z.object({ aliases: z.record(z.string(), z.string()) }),
+    behaviours: ['devices.aliases.answers-for-the-named-ids-only'],
   },
   'devices.setIntegrationId': {
     input: z.object({ deviceId: z.number().int(), integrationId: z.string().min(1) }),

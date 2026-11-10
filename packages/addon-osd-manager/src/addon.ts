@@ -7,7 +7,6 @@
 import {
   addonPagesSourceCapability,
   BaseAddon,
-  defineAddonMigrations,
   type AddonPageDeclaration,
   type ConfigUISchema,
   EventCategory,
@@ -18,8 +17,7 @@ import {
 } from '@camstack/types'
 import { z } from 'zod'
 import { OsdBindingsStore } from './bindings-handle.js'
-import { ADDON_MIGRATIONS, type OsdManagerMigrationPorts } from './migrations/index.js'
-import { readRawKeys } from './migrations/read-raw-keys.js'
+import { ADDON_MIGRATIONS, osdMigrationPortsOver } from './migrations/index.js'
 import {
   ABSENT_BOUND_INDEX,
   type BoundIndexHandle,
@@ -79,7 +77,14 @@ export class OsdManagerAddon extends BaseAddon<OsdManagerConfig> {
   protected async onInitialize(): Promise<ProviderRegistration[]> {
     const ctx = this.ctx
     // Before anything parses a store: the manager reads the new shapes only (D987).
-    await this.runMigrations(defineAddonMigrations(ADDON_MIGRATIONS, this.migrationPorts()))
+    if (ctx.settings === undefined || ctx.migrationApi === undefined) {
+      // No store to move rows in: the manager still starts, on whatever shape is there.
+      ctx.logger.warn(
+        'osd-manager: the per-device settings store or the migration API is unavailable; the bindings-to-templates migration is skipped',
+      )
+    } else {
+      await this.runMigrations(ADDON_MIGRATIONS, osdMigrationPortsOver)
+    }
     const store = new OsdBindingsStore((deviceId, key, schema, fallback) =>
       this.deviceState(deviceId, key, schema, fallback),
     )
@@ -215,41 +220,6 @@ export class OsdManagerAddon extends BaseAddon<OsdManagerConfig> {
       { capability: osdManagerCapability, provider: manager },
       { capability: addonPagesSourceCapability, provider: pagesProvider },
     ]
-  }
-
-  private migrationPorts(): OsdManagerMigrationPorts {
-    const ctx = this.ctx
-    const settings = ctx.settings
-    if (settings === undefined) throw new Error('the per-device settings store is unavailable')
-    return {
-      readStored: (keys) => readRawKeys((key) => this.readStoredGlobalKey(key), keys),
-      listDeviceIds: () => settings.listDeviceStoreIds(),
-      readDeviceField: async (deviceIds, field) => {
-        const found = new Map<number, unknown>()
-        for (const [deviceId, blob] of await settings.readDeviceStoreBatch(deviceIds)) {
-          if (field in blob) found.set(deviceId, blob[field])
-        }
-        return found
-      },
-      readAliases: async () => {
-        const rows = await ctx.api.deviceManager.listAll.query({ projection: 'slim' })
-        return new Map(
-          rows.flatMap((d) => (d.alias === undefined ? [] : [[d.id, d.alias] as const])),
-        )
-      },
-      readSlice: async (deviceId, capName) => {
-        try {
-          return (await ctx.api.deviceState.getSnapshot.query({ deviceId }))[capName]
-        } catch {
-          // Unknown shape: the migration then writes the generic form of the expression.
-          return undefined
-        }
-      },
-      note: (message, deviceId) =>
-        ctx.logger.warn(`osd-manager: migration — ${message}`, {
-          ...(deviceId === undefined ? {} : { tags: { deviceId } }),
-        }),
-    }
   }
 
   protected async onConfigChanged(): Promise<void> {

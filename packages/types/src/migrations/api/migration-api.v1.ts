@@ -71,6 +71,15 @@ export interface MigrationApiV1 {
     write(input: In<'settings.write'>): Promise<Out<'settings.write'>>
     deleteKeys(input: In<'settings.deleteKeys'>): Promise<Out<'settings.deleteKeys'>>
   }
+  /**
+   * The addon's own PER-DEVICE settings (`ctx.settings.*DeviceStore`), read only: the ids that
+   * have a blob and the blobs, as stored. A migration that rewrites them returns the edits and the
+   * engine applies them under its snapshot.
+   */
+  readonly deviceSettings: {
+    listIds(input: In<'deviceSettings.listIds'>): Promise<Out<'deviceSettings.listIds'>>
+    read(input: In<'deviceSettings.read'>): Promise<Out<'deviceSettings.read'>>
+  }
   /** The addon's own keychain handle. */
   readonly secrets: {
     resolve(input: In<'secrets.resolve'>): Promise<Out<'secrets.resolve'>>
@@ -85,6 +94,8 @@ export interface MigrationApiV1 {
   readonly devices: {
     list(input: In<'devices.list'>): Promise<Out<'devices.list'>>
     get(input: In<'devices.get'>): Promise<Out<'devices.get'>>
+    /** The template aliases of the NAMED devices (any addon's), read only. */
+    aliases(input: In<'devices.aliases'>): Promise<Out<'devices.aliases'>>
     setIntegrationId(
       input: In<'devices.setIntegrationId'>,
     ): Promise<Out<'devices.setIntegrationId'>>

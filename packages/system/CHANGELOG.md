@@ -88,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A timed run turns itself on only for stoves and fountains. Any other switch stays off until Customize enables it.
 - Actions, scheduler points, fan presets and generated automations render device value templates in their arguments
 - An action step can carry an if condition and an else list, in actions, schedulers and fan presets
+- Device templates gain the trunc and onoff filters; the migration API lets an addon read its own per-device settings and the aliases of named devices
 
 ### Removed
 

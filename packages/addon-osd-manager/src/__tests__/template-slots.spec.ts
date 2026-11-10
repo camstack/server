@@ -17,6 +17,7 @@ import {
   CLOCK_RERENDER_MS,
   OsdManager,
   type OsdManagerDeps,
+  DEPENDENCY_CACHE_MAX,
   SLOT_RERENDER_THROTTLE_MS,
 } from '../osd-manager.js'
 import type { OsdTemplateCheck } from '../template-context.js'
@@ -68,6 +69,10 @@ interface Harness {
   readonly renders: Array<{ templates: readonly string[]; thisDevice: DeviceTemplateThisDevice }>
   readonly checks: number[]
   readonly logs: LogLine[]
+  readonly stored: Map<number, OsdDeviceBindings>
+  /** How many times a camera's bindings were read: work a forgotten slot must not cause. */
+  reads: number
+  templates: OsdNamedTemplate[]
   next: DeviceTemplateRender
   check: OsdTemplateCheck
 }
@@ -80,7 +85,10 @@ function makeHarness(options: { readonly text?: string } = {}): Harness {
   const template: OsdNamedTemplate = { ...TEMPLATE, text: options.text ?? TEMPLATE.text }
   const stored = new Map<number, OsdDeviceBindings>([[CAMERA, { 'text-1': BINDING }]])
   const bindings = (deviceId: number): BindingsHandle => ({
-    get: async () => stored.get(deviceId) ?? EMPTY_BINDINGS,
+    get: async () => {
+      harness.reads += 1
+      return stored.get(deviceId) ?? EMPTY_BINDINGS
+    },
     set: async (next) => {
       stored.set(deviceId, next)
     },
@@ -101,6 +109,9 @@ function makeHarness(options: { readonly text?: string } = {}): Harness {
     renders,
     checks,
     logs,
+    stored,
+    reads: 0,
+    templates: [template],
     next: { ok: true, text: '21°C', trace: [] },
     check: {
       ok: true,
@@ -127,7 +138,7 @@ function makeHarness(options: { readonly text?: string } = {}): Harness {
     },
     bindings,
     boundIndex,
-    templates: { get: async () => [template], set: async () => undefined },
+    templates: { get: async () => harness.templates, set: async () => undefined },
     now: () => Date.now(),
   }
   return Object.assign(harness, { manager: new OsdManager(deps) })
@@ -237,5 +248,86 @@ describe('re-render on the devices a template reads', () => {
     await vi.advanceTimersByTimeAsync(CLOCK_RERENDER_MS)
     expect(h.renders.length).toBe(before + 2)
     h.manager.stop()
+  })
+})
+
+describe('what the event path remembers is let go with the slot', () => {
+  async function startedClock(): Promise<Harness> {
+    const h = makeHarness({ text: "{{ now | time('HH:mm') }}" })
+    h.check = { ok: true, readsClock: true, aliases: [] }
+    await h.manager.start(10 * 60_000)
+    await h.manager.settleReconcile()
+    await vi.advanceTimersByTimeAsync(0)
+    return h
+  }
+
+  it('a cleared clock slot stops ticking', async () => {
+    const h = await startedClock()
+    await vi.advanceTimersByTimeAsync(41_000)
+    const ticking = h.renders.length
+    await vi.advanceTimersByTimeAsync(CLOCK_RERENDER_MS)
+    expect(h.renders.length).toBe(ticking + 1)
+
+    await h.manager.clearSlotBinding({ deviceId: CAMERA, slotId: 'text-1' })
+    const readsAfterClear = h.reads
+    await vi.advanceTimersByTimeAsync(CLOCK_RERENDER_MS * 3)
+    // A slot still on the clock list would read the camera's bindings again at every minute.
+    expect(h.reads).toBe(readsAfterClear)
+    h.manager.stop()
+  })
+
+  it('a slot a rewrite of the bindings dropped no longer wakes on its device', async () => {
+    const h = makeHarness()
+    await h.manager.renderDevice({ deviceId: CAMERA })
+    await vi.advanceTimersByTimeAsync(SLOT_RERENDER_THROTTLE_MS)
+    h.stored.set(CAMERA, {})
+    await h.manager.renderDevice({ deviceId: CAMERA })
+    const readsBefore = h.reads
+
+    h.manager.onDeviceStateChanged(SENSOR)
+    await vi.advanceTimersByTimeAsync(SLOT_RERENDER_THROTTLE_MS * 2)
+    expect(h.reads).toBe(readsBefore)
+  })
+
+  it('a slot whose template was deleted stops waking on the next pass', async () => {
+    const h = makeHarness()
+    await h.manager.renderDevice({ deviceId: CAMERA })
+    await vi.advanceTimersByTimeAsync(SLOT_RERENDER_THROTTLE_MS)
+    h.templates = []
+    await h.manager.deleteTemplate({ templateId: 'tpl' })
+    await h.manager.renderDevice({ deviceId: CAMERA })
+    const readsBefore = h.reads
+
+    h.manager.onDeviceStateChanged(SENSOR)
+    await vi.advanceTimersByTimeAsync(SLOT_RERENDER_THROTTLE_MS * 2)
+    expect(h.reads).toBe(readsBefore)
+  })
+
+  it('keeps the dependency answers to a bounded number', async () => {
+    const h = makeHarness()
+    const many = DEPENDENCY_CACHE_MAX + 40
+    h.templates = Array.from({ length: many }, (_, i) => ({
+      id: `t${i}`,
+      name: `T${i}`,
+      text: `{{ garage.v${i} }}`,
+    }))
+    h.stored.set(
+      CAMERA,
+      Object.fromEntries(
+        h.templates.map(
+          (t, i) =>
+            [
+              `text-${i}`,
+              { enabled: true, source: { kind: 'template', templateId: t.id } },
+            ] as const,
+        ),
+      ),
+    )
+    await h.manager.renderDevice({ deviceId: CAMERA })
+    const first = h.checks.reduce((sum, n) => sum + n, 0)
+    expect(first).toBe(many)
+    await h.manager.renderDevice({ deviceId: CAMERA })
+    // Unbounded, every answer would still be cached and the second pass would ask nothing.
+    expect(h.checks.reduce((sum, n) => sum + n, 0)).toBeGreaterThan(first)
   })
 })

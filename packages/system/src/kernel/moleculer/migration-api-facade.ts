@@ -60,6 +60,8 @@ export interface DevicesDoor {
     readonly config?: Readonly<Record<string, unknown>> | undefined
   } | null>
   setIntegrationId(deviceId: number, integrationId: string): Promise<void>
+  /** The template alias of each named device that has one (explicit ids, never a walk). */
+  aliasesOf(deviceIds: readonly number[]): Promise<ReadonlyMap<number, string>>
 }
 
 export interface MigrationApiBacking {
@@ -72,7 +74,10 @@ export interface MigrationApiBacking {
   readonly records: RecordsAccess | undefined
   readonly secrets: SecretsAccess | undefined
   readonly settings:
-    | Pick<NonNullable<AddonContext['settings']>, 'readAddonStore' | 'writeAddonStore'>
+    | Pick<
+        NonNullable<AddonContext['settings']>,
+        'readAddonStore' | 'writeAddonStore' | 'listDeviceStoreIds' | 'readDeviceStoreBatch'
+      >
     | undefined
 }
 
@@ -177,7 +182,31 @@ export function createMigrationApi(backing: MigrationApiBacking): MigrationApiV1
         return found === undefined ? null : toIntegration(found)
       },
     },
+    deviceSettings: {
+      listIds: async () => ({
+        deviceIds: [...(await requireSettings(backing.settings).listDeviceStoreIds())],
+      }),
+      read: async ({ deviceIds }) => {
+        const found = await requireSettings(backing.settings).readDeviceStoreBatch(deviceIds)
+        return {
+          // A device with nothing stored answers `{}` from the store; the contract calls that absent.
+          blobs: Object.fromEntries(
+            [...found]
+              .filter(([, blob]) => Object.keys(blob).length > 0)
+              .map(([id, blob]) => [String(id), { ...blob }]),
+          ),
+        }
+      },
+    },
     devices: {
+      aliases: async ({ deviceIds }) => ({
+        aliases: Object.fromEntries(
+          [...(await backing.devices.aliasesOf(deviceIds))].map(([id, alias]) => [
+            String(id),
+            alias,
+          ]),
+        ),
+      }),
       list: async ({ addonId, integrationId }) => ({
         devices: (await backing.devices.list(addonId))
           .filter((d) => integrationId === undefined || d.integrationId === integrationId)
@@ -269,6 +298,14 @@ export function createMigrationApiOverContext(deps: MigrationApiContextDeps): Mi
       get: (deviceId) => deps.api().deviceManager.getDevice.query({ deviceId }),
       setIntegrationId: async (deviceId, integrationId) => {
         await deps.api().deviceManager.setIntegrationId.mutate({ deviceId, integrationId })
+      },
+      aliasesOf: async (deviceIds) => {
+        const found = new Map<number, string>()
+        for (const deviceId of new Set(deviceIds)) {
+          const device = await deps.api().deviceManager.getDevice.query({ deviceId })
+          if (device?.alias !== undefined) found.set(deviceId, device.alias)
+        }
+        return found
       },
     },
     records: deps.records,

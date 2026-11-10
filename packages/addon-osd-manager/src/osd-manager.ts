@@ -110,6 +110,9 @@ export const SLOT_RERENDER_THROTTLE_MS = 3_000
 /** A template that reads `now` changes with the minute. */
 export const CLOCK_RERENDER_MS = 60_000
 
+/** Most (camera, text) dependency answers kept; the oldest go first. */
+export const DEPENDENCY_CACHE_MAX = 256
+
 /** How long what a template reads (`checkDeviceTemplates`) is trusted before it is asked again. */
 const TEMPLATE_DEPENDENCY_TTL_MS = 5 * 60_000
 
@@ -232,6 +235,11 @@ export class OsdManager implements IOsdManagerProvider {
     for (const timer of this.pendingSlotRender.values()) clearTimeout(timer)
     this.pendingSlotRender.clear()
     this.lastSlotRenderAt.clear()
+    this.watchers.clear()
+    this.watched.clear()
+    this.clockSlots.clear()
+    this.dependencyCache.clear()
+    this.refusalLogged.clear()
     this.lastWritten.clear()
   }
 
@@ -345,6 +353,7 @@ export class OsdManager implements IOsdManagerProvider {
         added.push(probe.deviceId)
       } else if (!bound && this.boundDevices.has(probe.deviceId)) {
         this.boundDevices.delete(probe.deviceId)
+        this.forgetCamera(probe.deviceId)
         removed.push(probe.deviceId)
       }
     }
@@ -538,6 +547,7 @@ export class OsdManager implements IOsdManagerProvider {
   }): Promise<{ success: true }> => {
     await this.deps.bindings(deviceId).update((prev) => withoutBinding(prev, slotId))
     this.lastWritten.delete(cacheKey(deviceId, slotId))
+    this.forgetSlot(cacheKey(deviceId, slotId))
     const remaining = await this.readBindings(deviceId)
     if (Object.keys(remaining).length === 0) this.boundDevices.delete(deviceId)
     await this.persistBoundIndex(deviceId)
@@ -624,7 +634,10 @@ export class OsdManager implements IOsdManagerProvider {
       if (key.startsWith(`${targetDeviceId}:`)) this.lastWritten.delete(key)
     }
     if (Object.keys(copiedBindings).length > 0) this.boundDevices.add(targetDeviceId)
-    else this.boundDevices.delete(targetDeviceId)
+    else {
+      this.boundDevices.delete(targetDeviceId)
+      this.forgetCamera(targetDeviceId)
+    }
     await this.persistBoundIndex(targetDeviceId)
     await this.renderDeviceInternal(targetDeviceId, null)
     this.logger.info('osd-manager: camera configuration copied', {
@@ -720,6 +733,10 @@ export class OsdManager implements IOsdManagerProvider {
   deleteTemplate = async ({ templateId }: { templateId: string }): Promise<{ success: true }> => {
     const prev = await this.deps.templates.get()
     await this.deps.templates.set(deleteNamedTemplate(prev, templateId))
+    // What its text was known to read is no longer asked of anyone; the slots that pointed at it
+    // stop waking at their next pass (`collectFacts` finds no template for them).
+    const gone = prev.find((t) => t.id === templateId)
+    if (gone !== undefined) this.dropDependenciesOfText(gone.text)
     this.logger.info('osd-manager: named template deleted', {
       meta: { templateId },
     })
@@ -767,6 +784,7 @@ export class OsdManager implements IOsdManagerProvider {
     onlySlots: readonly string[] | null,
   ): Promise<readonly OsdRenderResult[]> {
     const bindings = await this.readBindings(deviceId)
+    this.pruneSlots(deviceId, bindings)
     const slotIds = onlySlots ?? Object.keys(bindings)
     if (slotIds.length === 0) return []
 
@@ -876,6 +894,7 @@ export class OsdManager implements IOsdManagerProvider {
     }
 
     const rendered = new Map<string, TemplateOutcome>()
+    const registered = new Set<string>()
     const all = await this.deps.templates.get()
     const used = all.filter((t) => slotsByTemplate.has(t.id))
     if (used.length > 0) {
@@ -892,14 +911,17 @@ export class OsdManager implements IOsdManagerProvider {
           const text = used.find((t) => t.id === templateId)?.text
           if (text === undefined) continue
           const deps = await this.dependenciesOf(cameraDeviceId, text)
-          for (const slotId of slotIds) this.registerSlot(cameraDeviceId, slotId, deps)
+          for (const slotId of slotIds) {
+            this.registerSlot(cameraDeviceId, slotId, deps)
+            registered.add(slotId)
+          }
         }
       }
     }
     if (options.register) {
+      // Every slot not registered above reads nothing: a literal, nothing, or a deleted template.
       for (const slotId of Object.keys(bindings)) {
-        const binding = bindings[slotId]
-        if (binding?.source.kind !== 'template') this.registerSlot(cameraDeviceId, slotId, null)
+        if (!registered.has(slotId)) this.registerSlot(cameraDeviceId, slotId, null)
       }
     }
 
@@ -956,7 +978,7 @@ export class OsdManager implements IOsdManagerProvider {
         readsClock: check.readsClock,
         atMs: this.now(),
       }
-      this.dependencyCache.set(cacheKeyOfText, deps)
+      this.rememberDependencies(cacheKeyOfText, deps)
       return deps
     } catch (err) {
       this.logger.warn(
@@ -984,7 +1006,10 @@ export class OsdManager implements IOsdManagerProvider {
     }
     this.watched.delete(key)
     this.clockSlots.delete(key)
-    if (deps === null) return
+    if (deps === null) {
+      this.dropThrottle(key)
+      return
+    }
     this.watched.set(key, deps.deviceIds)
     for (const id of deps.deviceIds) {
       const slots = this.watchers.get(id) ?? new Set<string>()
@@ -992,6 +1017,78 @@ export class OsdManager implements IOsdManagerProvider {
       this.watchers.set(id, slots)
     }
     if (deps.readsClock) this.clockSlots.add(key)
+  }
+
+  /** A slot that reads nothing keeps no throttle record and no timer waiting to fire. */
+  private dropThrottle(key: string): void {
+    this.lastSlotRenderAt.delete(key)
+    const pending = this.pendingSlotRender.get(key)
+    if (pending !== undefined) clearTimeout(pending)
+    this.pendingSlotRender.delete(key)
+  }
+
+  /** Everything the event path and the refusal log remember about one slot. */
+  private forgetSlot(key: string): void {
+    this.unwatchSlot(key)
+    this.refusalLogged.delete(key)
+  }
+
+  private unwatchSlot(key: string): void {
+    for (const id of this.watched.get(key) ?? []) {
+      const slots = this.watchers.get(id)
+      slots?.delete(key)
+      if (slots?.size === 0) this.watchers.delete(id)
+    }
+    this.watched.delete(key)
+    this.clockSlots.delete(key)
+    this.dropThrottle(key)
+  }
+
+  private keysOfCamera(deviceId: number): string[] {
+    const prefix = `${deviceId}:`
+    const keys = new Set<string>()
+    for (const source of [
+      this.watched.keys(),
+      this.lastSlotRenderAt.keys(),
+      this.pendingSlotRender.keys(),
+      this.refusalLogged.keys(),
+    ]) {
+      for (const key of source) if (key.startsWith(prefix)) keys.add(key)
+    }
+    return [...keys]
+  }
+
+  /** A camera with no binding left (or gone): no slot of it wakes, waits or remembers a refusal. */
+  private forgetCamera(deviceId: number): void {
+    for (const key of this.keysOfCamera(deviceId)) this.forgetSlot(key)
+  }
+
+  /** Slots of a camera that its bindings no longer hold (a copy, a reconcile, a rewrite). */
+  private pruneSlots(deviceId: number, bindings: OsdDeviceBindings): void {
+    for (const key of this.keysOfCamera(deviceId)) {
+      const slotId = key.slice(key.indexOf(':') + 1)
+      if (!(slotId in bindings)) this.forgetSlot(key)
+    }
+  }
+
+  private rememberDependencies(key: string, deps: TemplateDependencies): void {
+    this.dependencyCache.delete(key)
+    this.dependencyCache.set(key, deps)
+    if (this.dependencyCache.size <= DEPENDENCY_CACHE_MAX) return
+    const now = this.now()
+    for (const [k, v] of this.dependencyCache) {
+      if (now - v.atMs >= TEMPLATE_DEPENDENCY_TTL_MS) this.dependencyCache.delete(k)
+    }
+    for (const k of this.dependencyCache.keys()) {
+      if (this.dependencyCache.size <= DEPENDENCY_CACHE_MAX) break
+      this.dependencyCache.delete(k)
+    }
+  }
+
+  private dropDependenciesOfText(text: string): void {
+    const suffix = `\u0000${text}`
+    for (const k of [...this.dependencyCache.keys()])
+      if (k.endsWith(suffix)) this.dependencyCache.delete(k)
   }
 
   /** A device's state changed: wake the slots that read it, each at most once per throttle window. */

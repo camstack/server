@@ -11,14 +11,20 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { DeviceTemplateRenderer } from '../../../../system/src/builtins/device-manager/device-template/template-renderer.js'
 import { settingsFixture } from '../../../../system/src/builtins/sqlite-storage/__tests__/support/addon-settings-fixture.js'
 import {
+  CAMERA,
+  CONDITIONS,
+  GARAGE,
+  LEGACY_SLOTS,
+  LEGACY_TEMPLATES,
+  SCHEDULE,
+} from '../__fixtures__/seed.js'
+import {
   ADDON_MIGRATIONS,
   BINDINGS_TO_TEMPLATES_MIGRATION_ID,
   type OsdManagerMigrationPorts,
 } from '../index.js'
 
 const OWNER = 'osd-manager'
-const CAMERA = 101
-const GARAGE = 7
 const WORKER = fileURLToPath(
   new URL(
     '../../../../system/src/builtins/device-manager/device-template/template-worker.ts',
@@ -35,90 +41,6 @@ const SLICES: Record<number, Record<string, unknown>> = {
     switch: { on: true },
   },
   [CAMERA]: { motion: { detected: true }, values: { lastPerson: 'Anna', lastPlate: '' } },
-}
-
-const SCHEDULE = { windows: [{ days: [1, 2], startMinute: 60, endMinute: 120 }] }
-const CONDITIONS = { deviceState: { deviceId: GARAGE, states: ['on'] } }
-
-const LEGACY_TEMPLATES = [
-  {
-    id: 'garage',
-    name: 'Garage',
-    bindings: [
-      {
-        alias: 't',
-        pick: { deviceId: GARAGE },
-        capName: 'temperature-sensor',
-        valuePath: 'temperature',
-        displayUnit: '°C',
-        maxDecimals: 1,
-      },
-      {
-        alias: 'h',
-        pick: { deviceId: GARAGE },
-        capName: 'humidity-sensor',
-        valuePath: 'humidity',
-        maxDecimals: 0,
-      },
-      {
-        alias: 's',
-        pick: { deviceId: GARAGE },
-        capName: 'switch',
-        valuePath: 'on',
-        maxDecimals: 1,
-        valueMap: { true: 'OPEN', false: 'CLOSED' },
-      },
-    ],
-    parser: '{t.full} ({h.full}) {s} {t.value} {t.unit}',
-  },
-]
-
-const LEGACY_SLOTS = {
-  'text-1': {
-    enabled: true,
-    source: { kind: 'device-state', capName: 'motion', valuePath: 'detected' },
-    template: '[${value}]',
-    maxDecimals: 1,
-    valueMap: { true: 'MOTION', false: '' },
-    schedule: SCHEDULE,
-    conditions: CONDITIONS,
-  },
-  'text-2': {
-    enabled: true,
-    source: { kind: 'clock', pattern: 'HH:mm' },
-    template: '${value}',
-    maxDecimals: 1,
-  },
-  'text-3': {
-    enabled: false,
-    source: { kind: 'latest-recognition', recognition: 'person' },
-    template: 'Who: ${value}',
-    maxDecimals: 1,
-  },
-  'text-4': {
-    enabled: true,
-    source: {
-      kind: 'device-state',
-      deviceId: GARAGE,
-      capName: 'temperature-sensor',
-      valuePath: 'temperature',
-      displayUnit: '°F',
-    },
-    template: '${value}${unit}',
-    maxDecimals: 0,
-  },
-  'text-5': {
-    enabled: true,
-    source: { kind: 'static', text: 'GATE' },
-    template: '${value}',
-    maxDecimals: 1,
-  },
-  'text-6': {
-    enabled: true,
-    source: { kind: 'template', templateId: 'garage' },
-    template: '${value}',
-    maxDecimals: 1,
-  },
 }
 
 /** What the OLD renderer wrote for each of the above, from the same state. */
@@ -166,7 +88,6 @@ async function migrated() {
       listDeviceIds: async () => [CAMERA],
       readDeviceField: rows.readDeviceField,
       readAliases: async () => new Map([[GARAGE, 'garage']]),
-      readSlice: async (deviceId, capName) => SLICES[deviceId]?.[capName],
       note: (message) => void notes.push(message),
     }),
   })
@@ -264,7 +185,6 @@ describe('osd-manager bindings-to-templates', () => {
         listDeviceIds: async () => [],
         readDeviceField: rows.readDeviceField,
         readAliases: async () => new Map(),
-        readSlice: async () => undefined,
         note: () => undefined,
       }),
     })
@@ -308,12 +228,257 @@ describe('osd-manager bindings-to-templates', () => {
         listDeviceIds: async () => [CAMERA],
         readDeviceField: rows.readDeviceField,
         readAliases: async () => new Map(),
-        readSlice: async () => undefined,
         note: (message) => void notes.push(message),
       }),
     })
     await f.boot()
     expect(notes.some((n) => n.includes('Asia/Tokyo'))).toBe(true)
     expect(notes.some((n) => n.includes('device 55 has no alias'))).toBe(true)
+  })
+
+  describe('one bad row never blocks the rest', () => {
+    const OTHER = 202
+    const GOOD_SLOT = {
+      enabled: true,
+      source: {
+        kind: 'device-state',
+        deviceId: GARAGE,
+        capName: 'humidity-sensor',
+        valuePath: 'humidity',
+      },
+      template: '${value}%',
+      maxDecimals: 0,
+    }
+
+    function fixture(input: {
+      readonly templates?: readonly unknown[]
+      readonly bindings: Record<number, Record<string, unknown>>
+      readonly aliases?: ReadonlyMap<number, string>
+      readonly notes: { message: string; deviceId?: number }[]
+    }) {
+      return settingsFixture<OsdManagerMigrationPorts>({
+        addonId: OWNER,
+        catalogue: ADDON_MIGRATIONS,
+        seed: input.templates === undefined ? {} : { namedTemplates: input.templates },
+        neighbour: 'keep-me',
+        deviceSeed: Object.fromEntries(
+          Object.entries(input.bindings).map(([id, slots]) => [id, { slotBindings: slots }]),
+        ),
+        ports: (rows) => ({
+          readStored: rows.readStored,
+          listDeviceIds: async () => Object.keys(input.bindings).map(Number),
+          readDeviceField: rows.readDeviceField,
+          readAliases: async () => input.aliases ?? new Map([[GARAGE, 'garage']]),
+          note: (message, deviceId) =>
+            void input.notes.push({ message, ...(deviceId === undefined ? {} : { deviceId }) }),
+        }),
+      })
+    }
+
+    const slotsOf = (f: ReturnType<typeof fixture>, camera: number): Record<string, unknown> => {
+      const row = value(f.deviceRows()[`${OWNER}:${camera}.slotBindings`])
+      if (typeof row !== 'object' || row === null) throw new Error('no bindings stored')
+      return { ...row }
+    }
+
+    it('sets a slot over the bound aside, names it, and migrates the other cameras', async () => {
+      const notes: { message: string; deviceId?: number }[] = []
+      const f = fixture({
+        notes,
+        bindings: {
+          [CAMERA]: {
+            'text-1': { ...GOOD_SLOT, template: 'x'.repeat(1100) + '${value}' },
+            'text-2': GOOD_SLOT,
+          },
+          [OTHER]: { 'text-1': GOOD_SLOT },
+        },
+      })
+      const report = await f.boot()
+      expect(report.failed).toEqual([])
+      expect(report.applied).toContain(BINDINGS_TO_TEMPLATES_MIGRATION_ID)
+      const bad = slotsOf(f, CAMERA)['text-1']
+      expect(bad).toEqual({ enabled: false, source: { kind: 'none' } })
+      expect(slotsOf(f, CAMERA)['text-2']).toMatchObject({
+        enabled: true,
+        source: { kind: 'template' },
+      })
+      expect(slotsOf(f, OTHER)['text-1']).toMatchObject({ source: { kind: 'template' } })
+      const named = notes.find((n) => n.message.includes('text-1'))
+      expect(named?.deviceId).toBe(CAMERA)
+      expect(named?.message).toContain('1024')
+    })
+
+    it('sets a malformed slot aside, names it, and migrates the others', async () => {
+      const notes: { message: string; deviceId?: number }[] = []
+      const f = fixture({
+        notes,
+        bindings: {
+          [CAMERA]: {
+            'text-1': { enabled: 'yes', source: 42, maxDecimals: 'lots', template: 7 },
+            'text-2': GOOD_SLOT,
+          },
+        },
+      })
+      const report = await f.boot()
+      expect(report.failed).toEqual([])
+      expect(slotsOf(f, CAMERA)['text-1']).toEqual({ enabled: false, source: { kind: 'none' } })
+      expect(slotsOf(f, CAMERA)['text-2']).toMatchObject({ source: { kind: 'template' } })
+      expect(notes.some((n) => n.message.includes('"text-1"') && n.deviceId === CAMERA)).toBe(true)
+      // a rerun finds nothing legacy left
+      const once = JSON.stringify(f.deviceRows())
+      await f.boot()
+      expect(JSON.stringify(f.deviceRows())).toBe(once)
+    })
+
+    it('keeps the id and name of a named template it cannot convert, with no text', async () => {
+      const notes: { message: string; deviceId?: number }[] = []
+      const f = fixture({
+        notes,
+        templates: [
+          { id: 'huge', name: 'Huge', bindings: [], parser: 'y'.repeat(1100) },
+          { id: 'broken', name: 'Broken', bindings: 'nope', parser: '{a}' },
+          { id: 'fine', name: 'Fine', bindings: [], parser: 'plain' },
+        ],
+        bindings: { [CAMERA]: { 'text-1': GOOD_SLOT } },
+      })
+      const report = await f.boot()
+      expect(report.failed).toEqual([])
+      const templates = value(f.rows()[`${OWNER}.namedTemplates`])
+      expect(templates).toEqual(
+        expect.arrayContaining([
+          { id: 'huge', name: 'Huge', text: '' },
+          { id: 'broken', name: 'Broken', text: '' },
+          { id: 'fine', name: 'Fine', text: 'plain' },
+        ]),
+      )
+      expect(notes.some((n) => n.message.includes('"Huge"'))).toBe(true)
+      expect(notes.some((n) => n.message.includes('"Broken"'))).toBe(true)
+    })
+  })
+
+  describe('the expression does not depend on the live value', () => {
+    const THERMO = {
+      enabled: true,
+      source: {
+        kind: 'device-state',
+        deviceId: GARAGE,
+        capName: 'humidity-sensor',
+        valuePath: 'humidity',
+      },
+      template: '${value}${unit}',
+      maxDecimals: 1,
+    }
+
+    async function textOf(
+      f: ReturnType<typeof settingsFixture<OsdManagerMigrationPorts>>,
+    ): Promise<string> {
+      const templates = value(f.rows()[`${OWNER}.namedTemplates`])
+      if (!Array.isArray(templates)) throw new Error('no templates')
+      const first: unknown = templates[0]
+      if (typeof first !== 'object' || first === null || !('text' in first))
+        throw new Error('no text')
+      return String(first.text)
+    }
+
+    async function renderWith(text: string, humidity: unknown): Promise<string> {
+      const out = await renderer.render(text, {
+        viewOf: (alias) =>
+          alias === 'garage'
+            ? { ...view(GARAGE), slices: { 'humidity-sensor': { humidity } } }
+            : undefined,
+      })
+      return out.ok ? out.text : `REFUSED ${out.refusal.message}`
+    }
+
+    it('prints a number, a 0/1, a string and a boolean the way the old formatter did, device offline at migration', async () => {
+      const f = settingsFixture<OsdManagerMigrationPorts>({
+        addonId: OWNER,
+        catalogue: ADDON_MIGRATIONS,
+        seed: {},
+        neighbour: 'keep-me',
+        deviceSeed: { [String(CAMERA)]: { slotBindings: { 'text-1': THERMO } } },
+        ports: (rows) => ({
+          readStored: rows.readStored,
+          listDeviceIds: async () => [CAMERA],
+          readDeviceField: rows.readDeviceField,
+          // The device is offline: the migration is given no way to read its state at all.
+          readAliases: async () => new Map([[GARAGE, 'garage']]),
+          note: () => undefined,
+        }),
+      })
+      expect((await f.boot()).failed).toEqual([])
+      const text = await textOf(f)
+      expect(await renderWith(text, 1)).toMatch(/^1\b/)
+      expect(await renderWith(text, 0)).toMatch(/^0\b/)
+      expect(await renderWith(text, 'high')).toMatch(/^high/)
+      expect(await renderWith(text, true)).toMatch(/^ON/)
+      expect(await renderWith(text, false)).toMatch(/^OFF/)
+    })
+
+    it('truncates like the old formatter, never rounds (19.99 -> 19.9, 21.96 -> 21.9)', async () => {
+      const f = settingsFixture<OsdManagerMigrationPorts>({
+        addonId: OWNER,
+        catalogue: ADDON_MIGRATIONS,
+        seed: {},
+        neighbour: 'keep-me',
+        deviceSeed: {
+          [String(CAMERA)]: { slotBindings: { 'text-1': { ...THERMO, template: '${value}' } } },
+        },
+        ports: (rows) => ({
+          readStored: rows.readStored,
+          listDeviceIds: async () => [CAMERA],
+          readDeviceField: rows.readDeviceField,
+          readAliases: async () => new Map([[GARAGE, 'garage']]),
+          note: () => undefined,
+        }),
+      })
+      await f.boot()
+      const text = await textOf(f)
+      expect(text).toContain('trunc(1)')
+      expect(await renderWith(text, 19.99)).toBe('19.9')
+      expect(await renderWith(text, 21.96)).toBe('21.9')
+    })
+  })
+
+  it('names a clashing "camera" alias with a renamed one and says so', async () => {
+    const notes: { message: string; deviceId?: number }[] = []
+    const f = settingsFixture<OsdManagerMigrationPorts>({
+      addonId: OWNER,
+      catalogue: ADDON_MIGRATIONS,
+      seed: {},
+      neighbour: 'keep-me',
+      deviceSeed: {
+        [String(CAMERA)]: {
+          slotBindings: {
+            'text-1': {
+              enabled: true,
+              source: {
+                kind: 'device-state',
+                deviceId: GARAGE,
+                capName: 'switch',
+                valuePath: 'on',
+              },
+              template: '${value}',
+              maxDecimals: 1,
+            },
+          },
+        },
+      },
+      ports: (rows) => ({
+        readStored: rows.readStored,
+        listDeviceIds: async () => [CAMERA],
+        readDeviceField: rows.readDeviceField,
+        readAliases: async () => new Map([[GARAGE, 'camera']]),
+        note: (message, deviceId) =>
+          void notes.push({ message, ...(deviceId === undefined ? {} : { deviceId }) }),
+      }),
+    })
+    expect((await f.boot()).failed).toEqual([])
+    const text = JSON.stringify(value(f.rows()[`${OWNER}.namedTemplates`]))
+    expect(text).toContain(`camera_${GARAGE}.switch.on`)
+    expect(text).not.toContain('camera.switch.on')
+    expect(notes.some((n) => n.deviceId === GARAGE && n.message.includes(`camera_${GARAGE}`))).toBe(
+      true,
+    )
   })
 })

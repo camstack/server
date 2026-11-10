@@ -16,6 +16,15 @@
  *
  * Idempotent: a row already in the new shape has nothing to rewrite, so a rerun plans no edit.
  * A read that fails throws and nothing is written. The engine snapshots before applying.
+ *
+ * ONE BAD ROW NEVER BLOCKS THE REST. A slot or template that cannot be converted (malformed,
+ * or a text over the bound) is set to `none` / an empty text, named through `note()`, and the
+ * others migrate; the original JSON stays in the engine's snapshot. The owner is `block-owner`,
+ * so a throw here would stop the manager for every camera over one row.
+ *
+ * Nothing here reads a device's live state: the shape of an expression follows the field's
+ * schema (`runtimeFieldUnit`) and a type-agnostic form, so an offline sensor migrates the
+ * same as an online one.
  */
 import {
   type MigrationEdit,
@@ -40,8 +49,7 @@ import {
   LegacyStaticSourceSchema,
   LegacyTemplateSourceSchema,
   recognitionExpression,
-  sliceUnitOf,
-  sliceValueAt,
+  baseUnitOf,
 } from './legacy-expression.js'
 
 export const OSD_MANAGER_ID = 'osd-manager'
@@ -53,6 +61,8 @@ const SETTINGS_TABLE = 'addon-settings'
 const DEVICE_SETTINGS_TABLE = 'addon-device-settings'
 /** Longest literal a `static` source keeps (the live schema's bound). */
 const STATIC_TEXT_MAX = 64
+/** The alias a text uses for the camera it renders for (the engine reserves it). */
+const RESERVED_CAMERA_ALIAS = 'camera'
 
 export interface BindingsToTemplatesPorts {
   /** The addon's cluster rows as stored, for each of `keys` that has one. Throws when unreadable. */
@@ -64,11 +74,9 @@ export interface BindingsToTemplatesPorts {
     deviceIds: readonly number[],
     field: string,
   ): Promise<ReadonlyMap<number, unknown>>
-  /** `deviceId` → the alias a template names it by (devices without one are absent). */
-  readAliases(): Promise<ReadonlyMap<number, string>>
-  /** One capability's current state slice on a device; `undefined` when it has none. */
-  readSlice(deviceId: number, capName: string): Promise<unknown>
-  /** One line for the operator: a conversion that could not be exact. */
+  /** `deviceId` → the alias a template names it by, for the named devices (a device without one is absent). */
+  readAliases(deviceIds: readonly number[]): Promise<ReadonlyMap<number, string>>
+  /** One line for the operator: a conversion that could not be exact, or a row that was set aside. */
   note(message: string, deviceId?: number): void
 }
 
@@ -134,9 +142,23 @@ class Converter {
     private readonly aliases: ReadonlyMap<number, string>,
   ) {}
 
+  private readonly clashNoted = new Set<number>()
+
   private aliasFor(deviceId: number, cameraId: number | null): string {
     if (cameraId !== null && deviceId === cameraId) return 'camera'
     const alias = this.aliases.get(deviceId)
+    if (alias === RESERVED_CAMERA_ALIAS) {
+      // `camera` now means "the camera this text renders for", so another device wearing it cannot be named.
+      const renamed = `${RESERVED_CAMERA_ALIAS}_${deviceId}`
+      if (!this.clashNoted.has(deviceId)) {
+        this.clashNoted.add(deviceId)
+        this.ports.note(
+          `device ${deviceId} has the alias "camera", which is now reserved for the camera a text renders for; migrated texts name it "${renamed}" - give the device that alias in Devices`,
+          deviceId,
+        )
+      }
+      return renamed
+    }
     if (alias !== undefined) return alias
     this.ports.note(
       `device ${deviceId} has no alias; its values will read as unavailable until it has one`,
@@ -145,7 +167,7 @@ class Converter {
   }
 
   /** The two halves of one device field as the old tokens printed them. */
-  private async partsOf(input: {
+  private partsOf(input: {
     readonly deviceId: number
     readonly cameraId: number | null
     readonly capName: string
@@ -153,28 +175,22 @@ class Converter {
     readonly displayUnit: string | undefined
     readonly maxDecimals: number
     readonly valueMap: Readonly<Record<string, string>> | undefined
-  }): Promise<ExpressionParts> {
-    const slice = await this.ports.readSlice(input.deviceId, input.capName)
+  }): ExpressionParts {
     return expressionParts({
       ref: fieldRef(this.aliasFor(input.deviceId, input.cameraId), input.capName, input.valuePath),
       displayUnit: input.displayUnit,
       maxDecimals: input.maxDecimals,
       valueMap: input.valueMap,
-      sample: {
-        raw: sliceValueAt(slice, input.valuePath),
-        sliceUnit: sliceUnitOf(slice, input.valuePath),
-      },
+      baseUnit: baseUnitOf(input.capName, input.valuePath),
     })
   }
 
-  async namedTemplate(
-    row: LegacyNamedTemplate,
-  ): Promise<{ id: string; name: string; text: string }> {
+  namedTemplate(row: LegacyNamedTemplate): { id: string; name: string; text: string } {
     const parts = new Map<string, ExpressionParts>()
     for (const binding of row.bindings) {
       parts.set(
         binding.alias,
-        await this.partsOf({
+        this.partsOf({
           deviceId: binding.pick.deviceId,
           cameraId: null,
           capName: binding.capName,
@@ -190,10 +206,10 @@ class Converter {
   }
 
   /** A slot's source as new-shape source; generates a named template when the text needs one. */
-  async source(
+  source(
     cameraId: number,
     slot: ReturnType<typeof LegacySlotBindingSchema.parse>,
-  ): Promise<{ kind: string; [key: string]: unknown }> {
+  ): { kind: string; [key: string]: unknown } {
     const wrapper = slot.template ?? '${value}'
     const maxDecimals = slot.maxDecimals ?? 1
     const asTemplate = (text: string): { kind: 'template'; templateId: string } => {
@@ -204,7 +220,7 @@ class Converter {
 
     const device = LegacyDeviceStateSourceSchema.safeParse(slot.source)
     if (device.success) {
-      const parts = await this.partsOf({
+      const parts = this.partsOf({
         deviceId: device.data.deviceId ?? cameraId,
         cameraId,
         capName: device.data.capName,
@@ -249,11 +265,19 @@ class Converter {
   }
 }
 
-async function convertedBindings(
+/** What a slot that could not be converted becomes: nothing is drawn, nothing is lost (the snapshot has the row). */
+const SKIPPED_SLOT = { enabled: false, source: { kind: 'none' } } as const
+
+function reasonOf(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
+}
+
+function convertedBindings(
   converter: Converter,
+  ports: BindingsToTemplatesPorts,
   cameraId: number,
   stored: unknown,
-): Promise<Record<string, unknown> | null> {
+): Record<string, unknown> | null {
   if (!isRecord(stored)) return null
   let changed = false
   const next: Record<string, unknown> = {}
@@ -263,26 +287,73 @@ async function convertedBindings(
       continue
     }
     changed = true
-    const slot = LegacySlotBindingSchema.parse(row)
-    next[slotId] = {
-      enabled: slot.enabled,
-      source: await converter.source(cameraId, slot),
-      ...(slot.schedule !== undefined ? { schedule: slot.schedule } : {}),
-      ...(slot.conditions !== undefined ? { conditions: slot.conditions } : {}),
+    try {
+      const slot = LegacySlotBindingSchema.parse(row)
+      next[slotId] = {
+        enabled: slot.enabled,
+        source: converter.source(cameraId, slot),
+        ...(slot.schedule !== undefined ? { schedule: slot.schedule } : {}),
+        ...(slot.conditions !== undefined ? { conditions: slot.conditions } : {}),
+      }
+    } catch (err) {
+      next[slotId] = SKIPPED_SLOT
+      ports.note(
+        `slot "${slotId}" of device ${cameraId} could not be converted (${reasonOf(err)}); it is switched off with no source, the original is in the migration snapshot`,
+        cameraId,
+      )
     }
   }
   return changed ? next : null
+}
+
+/** A legacy named template that could not be converted: the same id and name (slots keep pointing at it), no text. */
+function setAsideTemplate(row: unknown): { id: string; name: string; text: string } | null {
+  if (!isRecord(row)) return null
+  const id = row['id']
+  const name = row['name']
+  if (typeof id !== 'string' || id.length === 0) return null
+  const label = typeof name === 'string' && name.length > 0 ? name : id
+  return { id: id.slice(0, 64), name: label.slice(0, 64), text: '' }
+}
+
+/** Every device a legacy row names, so the aliases are asked for those and no others. */
+function referencedDevices(
+  templates: readonly unknown[],
+  bindingRows: ReadonlyMap<number, unknown>,
+): number[] {
+  const ids = new Set<number>()
+  for (const row of templates) {
+    if (!isLegacyNamedTemplate(row)) continue
+    const parsed = LegacyNamedTemplateSchema.safeParse(row)
+    if (parsed.success) for (const binding of parsed.data.bindings) ids.add(binding.pick.deviceId)
+  }
+  for (const value of bindingRows.values()) {
+    if (!isRecord(value)) continue
+    for (const row of Object.values(value)) {
+      if (!isLegacySlot(row) || !isRecord(row)) continue
+      const device = LegacyDeviceStateSourceSchema.safeParse(row['source'])
+      if (device.success && device.data.deviceId !== undefined) ids.add(device.data.deviceId)
+    }
+  }
+  return [...ids]
 }
 
 export async function planBindingsToTemplates(
   ports: BindingsToTemplatesPorts,
 ): Promise<MigrationPlan> {
   const stored = await ports.readStored([OSD_TEMPLATES_FIELD])
-  const aliases = await ports.readAliases()
-  const converter = new Converter(ports, aliases)
-
   const storedTemplates = stored[OSD_TEMPLATES_FIELD]
   const oldTemplates = Array.isArray(storedTemplates) ? storedTemplates : []
+
+  const deviceIds = await ports.listDeviceIds()
+  const bindingRows =
+    deviceIds.length === 0
+      ? new Map<number, unknown>()
+      : await ports.readDeviceField(deviceIds, OSD_BINDINGS_FIELD)
+
+  const aliases = await ports.readAliases(referencedDevices(oldTemplates, bindingRows))
+  const converter = new Converter(ports, aliases)
+
   const rewrittenTemplates: unknown[] = []
   let templatesChanged = false
   for (const row of oldTemplates) {
@@ -291,17 +362,22 @@ export async function planBindingsToTemplates(
       continue
     }
     templatesChanged = true
-    rewrittenTemplates.push(await converter.namedTemplate(LegacyNamedTemplateSchema.parse(row)))
+    try {
+      rewrittenTemplates.push(converter.namedTemplate(LegacyNamedTemplateSchema.parse(row)))
+    } catch (err) {
+      const aside = setAsideTemplate(row)
+      ports.note(
+        `named template ${aside === null ? '(without an id)' : `"${aside.name}"`} could not be converted (${reasonOf(err)}); ${
+          aside === null ? 'it is dropped' : 'it keeps its id and name with an empty text'
+        }, the original is in the migration snapshot`,
+      )
+      if (aside !== null) rewrittenTemplates.push(aside)
+    }
   }
 
-  const deviceIds = await ports.listDeviceIds()
-  const bindingRows =
-    deviceIds.length === 0
-      ? new Map<number, unknown>()
-      : await ports.readDeviceField(deviceIds, OSD_BINDINGS_FIELD)
   const deviceEdits: MigrationEdit[] = []
   for (const [deviceId, value] of bindingRows) {
-    const next = await convertedBindings(converter, deviceId, value)
+    const next = convertedBindings(converter, ports, deviceId, value)
     if (next === null) continue
     const rowId = `${OSD_MANAGER_ID}:${deviceId}.${OSD_BINDINGS_FIELD}`
     const row = (v: unknown): Record<string, unknown> => ({
