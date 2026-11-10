@@ -100,6 +100,51 @@ const SPECS: Readonly<Record<number, Spec>> = {
     ],
     slices: { 'media-player': MEDIA },
   },
+  981: {
+    name: 'Bedroom blind',
+    type: 'cover',
+    caps: ['cover', 'device-status'],
+    features: [DeviceFeature.CoverStoppable, DeviceFeature.CoverPositionable],
+    slices: { cover: { state: 'open', position: 40, tiltPosition: null, lastChangedAt: NOW } },
+  },
+  982: {
+    name: 'Lavatrice',
+    type: 'washer',
+    caps: ['device-status', 'running-state', 'power-meter', 'power-source', 'consumables'],
+    features: [],
+    slices: {
+      'running-state': {
+        running: true,
+        since: NOW - 35 * 60_000,
+        source: 'native',
+        phase: 'Rinse',
+        lastFetchedAt: NOW,
+      },
+      'power-meter': { power: 412, energy: 18.42, lastFetchedAt: NOW },
+      'power-source': { switchOn: true, offSeconds: 20, lastFetchedAt: NOW },
+      consumables: {
+        items: [
+          {
+            key: 'detergent',
+            label: 'Detergent',
+            level: 12,
+            status: 'low',
+            lastResetAt: null,
+            resettable: false,
+          },
+          {
+            key: 'softener',
+            label: 'Softener',
+            level: 64,
+            status: 'ok',
+            lastResetAt: null,
+            resettable: false,
+          },
+        ],
+        lastChangedAt: NOW,
+      },
+    },
+  },
   971: {
     name: 'Washer plug',
     type: 'switch',
@@ -114,7 +159,8 @@ const SPECS: Readonly<Record<number, Spec>> = {
 
 export default defineFixtures({
   area: 'hero-model',
-  description: 'Model-driven device hero: washer 505, AC 521, Echo 961, plug 971',
+  description:
+    'Model-driven device hero: washer 505, AC 521, Echo 961, plug 971, blind 981, washer 982',
   handlers: {
     'heroLayout.getHeroModel': (i: { deviceId?: number; canActuate?: boolean }) => {
       const spec = SPECS[i.deviceId ?? 0]
