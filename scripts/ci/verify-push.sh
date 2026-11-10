@@ -101,6 +101,7 @@ TEST_RESULT="skipped"
 SCRIPTS_RESULT="skipped"
 FOOTPRINT_RESULT="skipped"
 GUARDS_RESULT="skipped"
+LOAD_GUARDS_RESULT="skipped"
 RC=0
 
 # Affected nx projects -> package directory basenames (what typecheck-tsgo takes)
@@ -179,9 +180,9 @@ fi
 # path comes back.
 echo "verify:push: test-load guards"
 if npx tsx scripts/check-vitest-max-workers.ts && npx tsx scripts/check-no-tsc6-typecheck.ts; then
-  GUARDS_RESULT="ok"
+  LOAD_GUARDS_RESULT="ok"
 else
-  GUARDS_RESULT="RED"
+  LOAD_GUARDS_RESULT="RED"
   RC=1
 fi
 
@@ -189,7 +190,7 @@ if [[ -n "$TC_DIRS" ]]; then
   if [[ "$TC_DIRS" == "ALL" ]]; then GUARD_MODE=all; else GUARD_MODE=source; fi
   echo "verify:push: barrel guards ($GUARD_MODE)"
   if scripts/ci/run-barrel-guards.sh "$GUARD_MODE"; then
-    if [[ "$GUARDS_RESULT" != "RED" ]]; then GUARDS_RESULT="ok"; fi
+    GUARDS_RESULT="ok"
   else
     GUARDS_RESULT="RED"
     RC=1
@@ -211,5 +212,5 @@ if [[ ",${CHANGED}," == *",scripts/"* ]]; then
 fi
 
 if [[ $RC -eq 0 ]]; then VERDICT=GREEN; else VERDICT=RED; fi
-echo "verify:push $VERDICT — typecheck: $TC_RESULT, tests: $TEST_RESULT, scripts: $SCRIPTS_RESULT, footprint: $FOOTPRINT_RESULT, guards: $GUARDS_RESULT"
+echo "verify:push $VERDICT — typecheck: $TC_RESULT, tests: $TEST_RESULT, scripts: $SCRIPTS_RESULT, footprint: $FOOTPRINT_RESULT, guards: $GUARDS_RESULT, test-load guards: $LOAD_GUARDS_RESULT"
 exit $RC

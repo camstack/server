@@ -12,6 +12,16 @@
 # reclaimed under a small reap lock, re-checked inside it. Nothing is ever
 # killed — a live owner keeps its slot however long it runs.
 #
+# Two limits follow from "never kill", and are accepted:
+#   - a pid the OS reused for an unrelated live process keeps the slot until
+#     that process exits (kill -0 cannot tell the two apart);
+#   - a wrapper that is SIGKILLed cannot run its trap: the slot is reclaimed
+#     once its pid is gone, but the vitest children it started keep running
+#     outside any slot until they finish.
+#
+# Portable across GNU (Linux) and BSD (macOS) stat: the mtime is read with
+# `stat -c %Y`, falling back to `stat -f %m`.
+#
 # Priority (`--priority`, verify:push): runs at nice 0 and keeps the caller's
 # VITEST_MAX_WORKERS. While a priority caller waits, normal callers do not take
 # a free slot, so the batch gate goes next.
@@ -74,7 +84,7 @@ alive() {
 
 age_s() {
   local mtime
-  mtime=$(stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0)
+  mtime=$(stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || echo 0)
   echo $(($(date +%s) - mtime))
 }
 

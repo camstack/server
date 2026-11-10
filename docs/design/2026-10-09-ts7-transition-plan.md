@@ -5,6 +5,15 @@ last-verified: 2026-10-13
 
 # TypeScript 7 transition plan — lowest possible RAM (2026-10-09)
 
+> **Amended 2026-11-10 — historical record.** TypeScript 7 (tsgo) is now the
+> ONLY type-check engine (D832, amended the same day). `npm run typecheck:tsc6`,
+> `check-ci-baselines.ts --engine=tsc` and `typecheck-tsgo.ts --parity` were
+> removed, and the guard `check-no-tsc6-typecheck` refuses them. Everything below
+> that names them as live — the status paragraph, the §1.2 "reference checker"
+> row, and P1 items 2–4 and 7, its validation gate and its rollback — describes
+> the plan as it stood in October 2026, not the repository today. Type-check
+> with `npm run typecheck` or `npm run typecheck:pkg -- <dir>`.
+
 **Status (2026-10-13): the transition is done; the reference is flipped.** P0
 guardrails, P1 (tsgo `--checkers 1`, the `typescript-7` alias), P2 emit, P3
 `isolatedDeclarations` for sdk / ui-library / system and P1v (the viewer's
@@ -84,7 +93,7 @@ therefore carry two compilers for the whole transition:
 
 | role | package | pinned version | used by |
 | --- | --- | --- | --- |
-| JS API and reference checker | `typescript` | `~6.0.3` (6.0.3 installed; 64 dedupes) | everything in §1.4, `npm run typecheck` (the reference and the only re-pin path) |
+| JS API and reference checker | `typescript` | `~6.0.3` (6.0.3 installed; 64 dedupes) | everything in §1.4, `npm run typecheck` (the reference and the only re-pin path) — historical: since 2026-11-10 `typescript` is the JS API and emit only, never a checker (D832) |
 | native checker | `typescript-7` (npm alias → `typescript@7.0.2`) | `7.0.2` | `npm run typecheck:tsgo` via `node_modules/typescript-7/bin/tsc` (`--checkers 1`, `--parity`); P1 retired `@typescript/native-preview` |
 | nested | `typescript@5.9.3` | via `@module-federation/dts-plugin@2.5.1` | admin-ui's MF plugin. `dts: false`, so it is not loaded during the build. |
 | ts-morph's own copy | TypeScript 6.0.2 bundled in `@ts-morph/common` | via `ts-morph@28.0.0` | `scripts/generate-api-types.ts`. This copy is independent of the root `typescript`. |
@@ -208,6 +217,10 @@ compiler change.
 **Effort.** ~1 day, plus watching the first runs.
 
 ### P1 — typecheck on tsgo `--checkers 1`
+
+> Historical (2026-11-10): the `--parity` mode, the `--engine=tsc` path and
+> `typecheck:tsc6` this phase kept were removed; see the banner at the top and
+> D832.
 
 **Scope.**
 - All type *checking*: Checks' pinned-debt typecheck, local `npm run typecheck`, the viewer's `ts-check` (P1v, below) and the `--noEmit` build gates of admin-ui, agent-ui and desktop.
