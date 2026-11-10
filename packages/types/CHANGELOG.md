@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device features are now derived from the capabilities a device is bound to; bindings report which optional methods a provider implements
 - The kernel tells hub builtins whether a node is online in the cluster registry
 
+- Notifier kinds declare which texts they deliver (caps.text), and rules gain optional per-target overrides (targetOverrides).
+
 ## [1.2.538] - 2026-11-10
 
 ### Changed

@@ -532,7 +532,21 @@
       },
       "wakeSleepingCamera": "Sveglia una telecamera a batteria in sospensione per la foto",
       "wakeSleepingCameraHelp": "Consuma batteria e attende fino a 15 s prima di inviare la notifica.",
-      "sendSummaryHint": "Il riepilogo programmato viene inviato a parte: a tutti i destinatari, ora."
+      "sendSummaryHint": "Il riepilogo programmato viene inviato a parte: a tutti i destinatari, ora.",
+      "targetSettings": {
+        "title": "Impostazioni per destinazione",
+        "help": "Ogni destinazione segue la regola, salvo modifiche qui. Ogni destinazione offre solo ciò che il suo notificatore può consegnare.",
+        "customised": "Impostazioni proprie",
+        "followsRule": "Segue la regola",
+        "titleOverride": "Titolo per questa destinazione",
+        "bodyOverride": "Testo per questa destinazione",
+        "useRuleText": "Il testo della regola",
+        "rulePriority": "La priorità della regola ({{priority}})",
+        "schedule": "Quando avvisare questa destinazione",
+        "scheduleEmpty": "Ogni volta che la regola scatta.",
+        "droppedBy": "Non consegnato a: {{targets}}",
+        "noTargetShowsMedia": "Nessuna delle destinazioni scelte può mostrare un'immagine o una clip, quindi questa regola non ne invia."
+      }
     },
     "notificationSimulate": {
       "simulateAnEvent": "Simula un evento",

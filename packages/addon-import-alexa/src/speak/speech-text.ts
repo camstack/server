@@ -8,6 +8,7 @@ import { htmlToText, markdownToText, prepareNotification } from '@camstack/types
 import { SPEECH_MAX_CHARS } from './constants.js'
 
 export const ALEXA_SPEECH_CAPS: TargetKindCaps = {
+  text: { title: true, body: false },
   attachments: { mediaTypes: [], mode: 'url', max: 0 },
   actions: 0,
   actionIcons: false,
@@ -38,7 +39,9 @@ export function toPlainSpeech(value: string): string {
 }
 
 /**
- * Title then body, as one sentence, never longer than {@link SPEECH_MAX_CHARS}.
+ * The TITLE, as one sentence, never longer than {@link SPEECH_MAX_CHARS}. The
+ * kind declares title-only (`caps.text`), so the degrade engine hands back an
+ * empty body and nothing is joined to the title (#483).
  * An empty result is an empty string — the caller refuses to send it.
  */
 export function speechFromNotification(notification: Notification): SpeechText {

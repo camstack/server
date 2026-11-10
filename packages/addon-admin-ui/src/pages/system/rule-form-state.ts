@@ -17,6 +17,7 @@ import type {
   NcRuleSectionSubject,
   NcSchedule,
   NcSystemEventDelivery,
+  NcTargetOverrides,
   NcSystemEventFamily,
   NcThrottle,
   NcThrottleGranularity,
@@ -85,6 +86,12 @@ export interface NcRuleFormState {
   readonly targetUsers: readonly string[]
   /** Preserved per-target passthrough params (L2) — carried, never authored in D2. */
   readonly targetParams: NcTargetParamsMap
+  /**
+   * Each selected target's own settings (#487): texts, schedule, priority.
+   * Absent for a target = it follows the rule. Pruned to the selected targets
+   * and to what each target's notifier delivers when the rule is saved.
+   */
+  readonly targetOverrides: NcTargetOverrides
   readonly priority: number
   /** The notification's picture (D897) — one mode, rendered from the clean frame. */
   readonly mediaImage: NcMediaImage
@@ -378,6 +385,7 @@ export function emptyRuleForm(
     targetIds: [],
     targetUsers: [],
     targetParams: {},
+    targetOverrides: {},
     priority: 3,
     // The kind's own default picture: a subject crop for a detection, the
     // clean scene for a sensor or a sound (`resolveNcMediaImage`).
@@ -426,6 +434,7 @@ export function ruleToForm(rule: NcRule): NcRuleFormState {
     targetIds: rule.targets.map((t) => t.targetId),
     targetUsers: rule.targetUsers ?? [],
     targetParams,
+    targetOverrides: rule.targetOverrides ?? {},
     priority: rule.priority,
     // A rule the hub has not re-saved since D897 still reads right: the same
     // mapping the hub's migration applies.

@@ -1,10 +1,6 @@
 import type { Target, TargetKind } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import {
-  deliveryParamsForSelection,
-  readDeliveryValue,
-  writeDeliveryValue,
-} from '../rule-form-delivery'
+import { declaredBy } from '../rule-form-delivery'
 
 function target(id: string, kind: string): Target {
   return { id, name: id, kind, addonId: 'a', enabled: true, config: {} }
@@ -37,35 +33,21 @@ function kind(name: string, declares: boolean): TargetKind {
   }
 }
 
+// Writing a value lives in `writeTargetParam` (rule-form-target-settings.spec):
+// since #487 a declared parameter is set per target, never on every target.
 const targets = [target('echo', 'speaker'), target('phone', 'push')]
 const kinds = [kind('speaker', true), kind('push', false)]
 
-describe('rule delivery params', () => {
-  it('offers nothing when no selected notifier declares a parameter', () => {
-    expect(deliveryParamsForSelection(['phone'], targets, kinds)).toEqual([])
+describe('rule delivery params (per target, D938)', () => {
+  it('offers nothing on a target whose notifier declares no parameter', () => {
+    expect(declaredBy('phone', targets, kinds)).toEqual([])
   })
 
-  it('offers the declared parameter once a declaring notifier is selected', () => {
-    expect(deliveryParamsForSelection(['phone', 'echo'], targets, kinds).map((p) => p.key)).toEqual(
-      ['volume'],
-    )
+  it('offers the declared parameter on a target whose notifier declares it', () => {
+    expect(declaredBy('echo', targets, kinds).map((p) => p.key)).toEqual(['volume'])
   })
 
-  it('writes only onto targets whose kind declares the key, and clears it', () => {
-    const input = { targetIds: ['phone', 'echo'], targets, kinds, targetParams: {} }
-    const written = writeDeliveryValue(input, 'volume', 60)
-    expect(written).toEqual({ echo: { volume: 60 } })
-    expect(readDeliveryValue(['phone', 'echo'], written, 'volume')).toBe(60)
-    expect(writeDeliveryValue({ ...input, targetParams: written }, 'volume', undefined)).toEqual({})
-  })
-
-  it('keeps the other params authored on the target', () => {
-    const input = {
-      targetIds: ['echo'],
-      targets,
-      kinds,
-      targetParams: { echo: { sound: 'x' } },
-    }
-    expect(writeDeliveryValue(input, 'volume', 10)).toEqual({ echo: { sound: 'x', volume: 10 } })
+  it('offers nothing for a target the list does not know', () => {
+    expect(declaredBy('gone', targets, kinds)).toEqual([])
   })
 })

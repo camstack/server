@@ -241,6 +241,9 @@ const SCHEMA_KEYS: readonly SchemaKeysPair[] = [
       path: 'camstack/src/data/notification-center.ts',
       marker: 'export const NcRuleInputSchema = z.object(',
     },
+    // #487: each target's own texts / schedule / priority. The viewer keeps the
+    // map through the hub's patch merge until its editor mirrors it.
+    aheadOfViewer: ['targetOverrides'],
   },
 ]
 

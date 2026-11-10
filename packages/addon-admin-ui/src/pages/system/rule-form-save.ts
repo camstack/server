@@ -29,6 +29,7 @@ import {
 import { pruneSystemEventForSave } from './notification-system-events'
 import { formToActions } from './notification-rule-actions'
 import { conditionSupportedByRule } from './rule-form-parsers'
+import { overridesForSave, type TargetFieldsOf } from './rule-form-target-settings'
 import {
   formScopedConditions,
   groupingIsSent,
@@ -237,6 +238,7 @@ export function buildRuleInput(
   form: NcRuleFormState,
   preserve?: NcRulePreserved,
   catalog: readonly NcConditionDescriptor[] = [],
+  fieldsOf?: TargetFieldsOf,
 ): NcRuleInput {
   const title = form.templateTitle.trim()
   const body = form.templateBody.trim()
@@ -308,6 +310,10 @@ export function buildRuleInput(
       return params && Object.keys(params).length > 0 ? { targetId, params } : { targetId }
     }),
     ...(form.targetUsers.length > 0 ? { targetUsers: [...form.targetUsers] } : {}),
+    // Each target's own settings (#487), always written so clearing the last
+    // one reaches the hub (an update replaces the map only when it is named).
+    // Pruned to the selected targets and to what each one delivers (#483).
+    targetOverrides: overridesForSave(form.targetIds, form.targetOverrides, fieldsOf),
     // A subject that owns NO FRAME gets `image: 'none'`: a system event freezes
     // no media owner, and the editor SAYS so rather than showing controls that
     // would do nothing.

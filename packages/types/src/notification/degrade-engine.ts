@@ -204,8 +204,18 @@ export function prepareNotification(caps: TargetKindCaps, n: Notification): Prep
   // `tag` has no cap flag — passed through (dedup/replace is adapter-side).
   const tag: string | null = n.tag ?? null
 
+  // ── Text fields (#483) ──────────────────────────────────────────
+  // A kind that declares it delivers no body (Alexa speaks a title) gets an
+  // empty one; a kind that delivers no title gets none. Absent `caps.text` =
+  // both, which is every kind declared before the field.
+  const bodyDelivered = caps.text?.body ?? true
+  const titleDelivered = caps.text?.title ?? true
+  if (!bodyDelivered && transcoded.length > 0) dropped.push('body')
+  const title = titleDelivered ? n.title : undefined
+  if (!titleDelivered && n.title !== undefined) dropped.push('title')
+
   // ── Body overflow ───────────────────────────────────────────────
-  const bodyParts = splitBody(transcoded, caps.bodyMaxLen)
+  const bodyParts = splitBody(bodyDelivered ? transcoded : '', caps.bodyMaxLen)
   const truncated = bodyParts.length > 1
 
   const renderedAs: RenderedAs = {
@@ -219,7 +229,7 @@ export function prepareNotification(caps: TargetKindCaps, n: Notification): Prep
 
   return {
     body: bodyParts[0] ?? '',
-    ...(n.title !== undefined ? { title: n.title } : {}),
+    ...(title !== undefined ? { title } : {}),
     format,
     level,
     attachments,

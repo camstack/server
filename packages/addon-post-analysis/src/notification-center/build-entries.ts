@@ -22,7 +22,7 @@ import type {
   NcSubjectKind,
   NcSystemEventExcludingFilter,
 } from './rule-engine.js'
-import { effectiveMediaPolicyForRule, isLinkedSetSubject } from './rule-engine.js'
+import { effectiveMediaPolicyForRule, isLinkedSetSubject, isScheduleActive } from './rule-engine.js'
 import { NcRuleStore } from './rule-store.js'
 import type { IScopedLogger, NcConditions, NcRule, NcRuleTarget } from '@camstack/types'
 import type { NotificationCenterDeps } from './index.js'
@@ -245,7 +245,10 @@ export function buildEntries(
       : undefined)
   return allTargets
     .filter((target) => !rule.disabledTargetIds.includes(target.targetId))
+    .filter((target) => targetInSchedule(host, rule, target.targetId, subject))
     .map((target) => {
+      // #487: this target's own texts and priority over the rule's defaults.
+      const own = targetDefaults(rule, target)
       const base: NcOutboxPayload = {
         ruleName: rule.name,
         delivery: rule.delivery,
@@ -254,8 +257,8 @@ export function buildEntries(
         // stamped only when it is TRUE, so every pre-existing row keeps
         // reading exactly as it did.
         ...(origin === 'synthetic' ? { synthetic: true as const } : {}),
-        priority: rule.priority,
-        ...(rule.template !== undefined ? { template: rule.template } : {}),
+        priority: own.priority,
+        ...(own.template !== undefined ? { template: own.template } : {}),
         ...(noMedia
           ? { media: 'none' as const }
           : mediaPolicyFields(mediaRule, cropZoneIds, matchedZoneIds)),
@@ -273,7 +276,7 @@ export function buildEntries(
         // the record read it; the dispatcher treats a group of one as a plain row.
         ...(groupV2 !== undefined ? { group: groupV2 } : {}),
         ...(extras?.alarmIntrusion !== undefined ? { alarmIntrusion: extras.alarmIntrusion } : {}),
-        ...(target.params !== undefined ? { params: target.params } : {}),
+        ...(own.params !== undefined ? { params: own.params } : {}),
         subject: {
           deviceId: subject.deviceId,
           // The media OWNERS. Ordinarily the subject's own; on a combined
@@ -377,6 +380,54 @@ export function buildEntries(
       }
     })
 }
+/**
+ * Is this target inside its OWN schedule (#487)? A target with none follows the
+ * rule (whose schedule the engine already passed). A target outside its window
+ * gets no row — and says so (D391): the other targets of the fire still deliver.
+ */
+function targetInSchedule(
+  host: BuildEntriesHost,
+  rule: NcRule,
+  targetId: string,
+  subject: NcRuleSubject,
+): boolean {
+  const schedule = rule.targetOverrides?.[targetId]?.schedule
+  if (schedule === undefined || isScheduleActive(schedule, subject.timestamp)) return true
+  host.logger.info('notification target skipped: outside its own schedule', {
+    tags: { deviceId: subject.deviceId },
+    meta: { ruleId: rule.id, rule: rule.name, targetId, at: subject.timestamp },
+  })
+  return false
+}
+
+/** The texts, priority and params one target's row freezes. */
+export interface NcTargetDefaults {
+  readonly template: { readonly title?: string; readonly body?: string } | undefined
+  readonly priority: number
+  readonly params: Readonly<Record<string, unknown>> | undefined
+}
+
+/**
+ * The rule's texts and priority are the defaults every target inherits; a
+ * target's override replaces a field it names and nothing else (#487). A
+ * priority override also outranks a legacy `params.priority`, which the
+ * dispatcher would otherwise read first.
+ */
+export function targetDefaults(rule: NcRule, target: NcRuleTarget): NcTargetDefaults {
+  const override = rule.targetOverrides?.[target.targetId]
+  const template =
+    override?.template === undefined ? rule.template : { ...rule.template, ...override.template }
+  if (override?.priority === undefined) {
+    return { template, priority: rule.priority, params: target.params }
+  }
+  const { priority: _legacy, ...params } = target.params ?? {}
+  return {
+    template,
+    priority: override.priority,
+    params: Object.keys(params).length > 0 ? params : undefined,
+  }
+}
+
 /**
  * The personal targets a rule's `targetUsers` resolve to for THIS device:
  * each addressed user contributes the enabled targets they own — but only

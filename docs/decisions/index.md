@@ -4,7 +4,7 @@
 
 # Decisions
 
-994 architecture decision records. One file per decision, never
+995 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1008,6 +1008,7 @@ that rots.
 | D1026 | [An action step may carry one `if` and one else list, read on the condition mirror when the step is reached](adr-1026-an-action-step-may-carry-one-if-and-one-else-read-on-the-condition-mirror.md) | ✅ accepted | 2026-11-09 |
 | D1027 | [A device row draws its timed run from the hero slot](adr-1027-a-device-row-draws-its-timed-run-from-the-hero-slot.md) | ✅ accepted | 2026-11-09 |
 | D1028 | [A notification rule and a notification button only run existing Actions](adr-1028-a-notification-rule-only-runs-existing-actions.md) | ✅ accepted | 2026-11-09 |
+| D1029 | [A notifier declares the message fields a target delivers, and a rule's target overrides the rule only within them](adr-1029-a-notifier-declares-the-message-fields-a-target-delivers-and-a-rule-target-overrides-them.md) | ✅ accepted | 2026-11-10 |
 | D1029 | [The OSD text is a device template; the clock and the last recognition are template variables](adr-1029-the-osd-text-is-a-device-template-the-clock-and-the-last-recognition-are-template-variables.md) | ✅ accepted | 2026-11-10 |
 
 Conventions, and why the numbering looks the way it does:

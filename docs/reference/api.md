@@ -3588,7 +3588,7 @@
 
 ### `notification-output` → `notificationOutput.*`
 
-- **Source:** `packages/types/src/capabilities/notification-output.cap.ts:409`
+- **Source:** `packages/types/src/capabilities/notification-output.cap.ts:441`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `INotificationOutputProvider`
@@ -3603,7 +3603,7 @@
 
 ### `notification-rules` → `notificationRules.*`
 
-- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3192`
+- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3231`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `INotificationRulesProvider`

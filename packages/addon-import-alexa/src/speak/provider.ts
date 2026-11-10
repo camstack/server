@@ -27,7 +27,7 @@ import {
   SPEECH_MAX_CHARS,
 } from './constants.js'
 import { admitSpeech, emptySpeechLedger, type SpeechLedger } from './rate-limit.js'
-import { speechFromNotification } from './speech-text.js'
+import { ALEXA_SPEECH_CAPS, speechFromNotification } from './speech-text.js'
 import type { EchoDevice, TargetDelivery } from './worker-protocol.js'
 
 export type DeliveryOutcome =
@@ -224,6 +224,9 @@ export function alexaTargetKind(): TargetKind {
     destinationKeys: ['brokerId', 'echoId'],
     configSchema: configSchema(),
     caps: {
+      // An Echo speaks the TITLE and nothing else (#483, operator 2026-11-10):
+      // the dispatcher drops the body and the rule editor offers only a title.
+      text: ALEXA_SPEECH_CAPS.text,
       attachments: { mediaTypes: [], mode: 'url', max: 0 },
       actions: 0,
       actionIcons: false,

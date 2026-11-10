@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A summary or timelapse notification no longer evaluates braces that sit inside a camera name or the AI sentence: only the text you wrote is rendered as a device template
 
+- A rule's targets each have their own settings: title and body, priority and an active schedule; a target outside its schedule is skipped and logged, and every target receives only the fields its notifier delivers.
+
 ## [1.2.690] - 2026-11-10
 
 ### Changed

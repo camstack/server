@@ -1791,6 +1791,14 @@ export {
 } from './notification/attachment-url.js'
 export { deliveryParamsDeclaredBy, resolveDeliveryParams } from './notification/delivery-params.js'
 export {
+  deliverableFields,
+  fieldSupportForTargets,
+  NOTIFICATION_FIELDS,
+  type NotificationFieldSupport,
+  type NotificationFieldTarget,
+  sanitizeTargetOverride,
+} from './notification/notification-fields.js'
+export {
   htmlToText,
   markdownToHtmlLite,
   markdownToText,

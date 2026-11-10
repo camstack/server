@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1037 shared schemas.**
+**1040 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -4278,6 +4278,7 @@ Enum: `"template" \| "schedule" \| "targetUsers" \| "snoozeOptions" \| "snoozeAl
 - `systemEventDelivery?`: `NcSystemEventDeliverySchema`
 - `targets`: `NcRuleTargetSchema[]`
 - `targetUsers?`: `string[]`
+- `targetOverrides?`: `NcTargetOverridesSchema`
 - `media?`: `NcMediaPolicySchema = {}`
 - `throttle?`: `NcThrottleSchema = {"cooldownSec":60,"scope":"rule-device"}`
 - `template?`: `{ title?: string; body?: string }`
@@ -4324,6 +4325,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `systemEventDelivery?`: `NcSystemEventDeliverySchema`
 - `targets?`: `NcRuleTargetSchema[]`
 - `targetUsers?`: `string[]`
+- `targetOverrides?`: `NcTargetOverridesSchema`
 - `media?`: `NcMediaPolicySchema`
 - `throttle?`: `NcThrottleSchema`
 - `template?`: `{ title?: string; body?: string }`
@@ -4347,6 +4349,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `systemEventDelivery?`: `NcSystemEventDeliverySchema`
 - `targets`: `NcRuleTargetSchema[]`
 - `targetUsers?`: `string[]`
+- `targetOverrides?`: `NcTargetOverridesSchema`
 - `media?`: `NcMediaPolicySchema = {}`
 - `throttle?`: `NcThrottleSchema = {"cooldownSec":60,"scope":"rule-device"}`
 - `template?`: `{ title?: string; body?: string }`
@@ -4482,6 +4485,16 @@ Enum: `"instant" \| "summary"`
 ### `NcSystemEventKindSchema`
 
 Enum: `"device-online" \| "device-offline" \| "device-disabled" \| "device-enabled" \| "device-battery-low" \| "device-battery-normal" \| "device-consumable-low" \| "device-consumable-normal" \| "stream-online" \| "stream-offline" \| "node-online" \| "node-offline" \| "node-restarting" \| "node-updating" \| "node-inference-unavailable" \| "detection-blind" \| "motion-noisy" \| "motion-calm" \| "package-llm-silent" \| "package-llm-answered" \| "recording-stalled" \| "recording-healthy" \| "recording-degraded" \| "device-attention-required" \| "device-attention-resolved" \| "storage-location-low" \| "storage-location-critical" \| "storage-location-ok" \| "addon-crash-loop" \| "addon-update-available" \| "server-update-available" \| "wrapper-update-available" \| "alarm-triggered" \| "alarm-armed" \| "alarm-disarmed" \| "alarm-arming" \| "alarm-arm-refused" \| "alarm-pending" \| "alarm-rearmed" \| "alarm-sensor-bypass" \| "alarm-check-failed" \| "addon-updated" \| "server-updated" \| "export-completed" \| "backup-completed" \| "alert-critical" \| "alert-error" \| "alert-critical-resolved" \| "rule-broken" \| "rule-repaired" \| "camera-online" \| "camera-offline" \| "camera-disabled" \| "camera-enabled"`
+
+### `NcTargetOverrideSchema`
+
+- `template?`: `{ title?: string; body?: string }`
+- `schedule?`: `NcScheduleSchema`
+- `priority?`: `number`
+
+### `NcTargetOverridesSchema`
+
+`Record<string, NcTargetOverrideSchema>`
 
 ### `NcTemplateDefaultSchema`
 
@@ -6762,6 +6775,7 @@ Enum: `"jwt-signing-key"`
 
 ### `TargetKindCapsSchema`
 
+- `text?`: `TargetKindTextCapsSchema`
 - `attachments`: `{ mediaTypes: AttachmentMediaTypeSchema[]; mode: "url" \| "bytes" \| "both"; max: number; maxBytes?: number }`
 - `actions`: `number`
 - `actionIcons?`: `boolean`
@@ -6794,6 +6808,11 @@ Enum: `"jwt-signing-key"`
 - `supportsDiscovery`: `boolean`
 - `deliveryParams?`: `DeliveryParamSchema[]`
 - `caps`: `TargetKindCapsSchema`
+
+### `TargetKindTextCapsSchema`
+
+- `title`: `boolean`
+- `body`: `boolean`
 
 ### `TemperatureSensorStatusSchema`
 

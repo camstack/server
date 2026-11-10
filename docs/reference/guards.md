@@ -4,12 +4,12 @@
 
 # Guards
 
-236 repository guards: 231 in `scripts/`,
+238 repository guards: 233 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (226)
+## Enforced by CI checks (228)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -78,6 +78,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-device-selection-in-sync.ts` | The device-picker selection helper has TWO copies that cannot import each other. This makes "they are the same" checkable instead of promised. |
 | `scripts/check-device-settings-standard.ts` | Device-settings standard guard (D865) — per-device CONFIGURATION has one home. |
 | `scripts/check-device-template-grammar.ts` | Guard (D1021): the template engine is reachable through ONE module. |
+| `scripts/check-device-type-declared.ts` | A device's type is declared, never guessed (#459). |
 | `scripts/check-docs-drift.ts` | Docs drift guard — the half of the sync story that `docs-generate.ts` cannot cover. |
 | `scripts/check-docs-english.ts` | Docs-language guard — documentation under docs/ is written in English. |
 | `scripts/check-drain-listener-rearmed.ts` | Drain-listener guard (D618) — a one-shot drain listener may only be registered from the path that was REFUSED, never once at setup. |
@@ -140,6 +141,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-dynamic-eval.ts` | Stage X security guard — fail the build if ANY production source file uses a dynamic code-execution primitive. This is the enforce-by-construction backstop for the safe expression engine (spec §4 rule 1): the engine exists precisely so n… |
 | `scripts/check-no-glyph-chevrons.ts` | No text-glyph disclosure markers (▸ ▾ ▶ ▼) in UI source. |
 | `scripts/check-no-hand-rolled-modal.ts` | No hand-rolled `fixed inset-0` overlay outside the UI library. |
+| `scripts/check-no-hand-set-features.ts` | No new hand-set device features (#459). |
 | `scripts/check-no-heap-dump-command.ts` | There is NO operator-triggerable heap dump. Twice is enough. |
 | `scripts/check-no-hero-self-drawn-power.ts` | No device-controls hero card draws the device's electrical draw itself (D1004). |
 | `scripts/check-no-hub-address-env.ts` | No runtime code reads the hub's address from the environment. |

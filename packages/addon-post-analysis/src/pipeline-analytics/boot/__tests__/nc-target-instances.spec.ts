@@ -126,7 +126,7 @@ function entry(targetId: string): NcOutboxEntry {
 }
 
 describe('readNcTargets', () => {
-  it('resolves a switched-off Telegram target by its id, with the budgets of its kind and its owner', async () => {
+  it('resolves a switched-off Telegram target by its id, with the budgets and fields of its kind and its owner', async () => {
     const read = await readNcTargets(instanceSourceOverApi(await api()), [TELEGRAM])
     expect(read.unreadable).toEqual([])
     expect(read.targets).toEqual([
@@ -139,6 +139,8 @@ describe('readNcTargets', () => {
         ownerUserId: 'u-7',
         bodyMaxLen: 4096,
         maxActions: 3,
+        // What the kind delivers (D1029), read from its caps.
+        fields: ['title', 'body', 'actions'],
       },
     ])
   })

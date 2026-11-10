@@ -62,6 +62,7 @@ export const NC_RULE_TABS: readonly NcRuleTab[] = [
       'targetIds',
       'targetUsers',
       'targetParams',
+      'targetOverrides',
     ],
   },
   {

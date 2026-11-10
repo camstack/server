@@ -532,7 +532,21 @@
       },
       "wakeSleepingCamera": "Wake a sleeping battery camera for the picture",
       "wakeSleepingCameraHelp": "Costs battery and waits up to 15 s before the notification is sent.",
-      "sendSummaryHint": "The scheduled summary is sent on its own: to every target, now."
+      "sendSummaryHint": "The scheduled summary is sent on its own: to every target, now.",
+      "targetSettings": {
+        "title": "Per-target settings",
+        "help": "Each target follows the rule unless you change it here. A target offers only what its notifier can deliver.",
+        "customised": "Own settings",
+        "followsRule": "Follows the rule",
+        "titleOverride": "Title for this target",
+        "bodyOverride": "Body for this target",
+        "useRuleText": "The rule's text",
+        "rulePriority": "The rule's priority ({{priority}})",
+        "schedule": "When this target is notified",
+        "scheduleEmpty": "Whenever the rule fires.",
+        "droppedBy": "Not delivered to: {{targets}}",
+        "noTargetShowsMedia": "None of the selected targets can show a picture or a clip, so this rule sends none."
+      }
     },
     "notificationSimulate": {
       "simulateAnEvent": "Simulate an event",

@@ -48,7 +48,15 @@ function target(config: Record<string, unknown> = {}): Target {
   }
 }
 
-const note = (body: string): Notification => ({ body, format: 'text', priority: 3, deviceId: 7 })
+// The kind declares a title only (D1029): the spoken sentence is the title,
+// and a body beside it is never joined to it.
+const note = (title: string): Notification => ({
+  title,
+  body: 'never spoken',
+  format: 'text',
+  priority: 3,
+  deviceId: 7,
+})
 
 const broker = (
   id: string,

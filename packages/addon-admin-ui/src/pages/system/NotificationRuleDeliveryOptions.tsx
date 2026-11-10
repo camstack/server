@@ -1,25 +1,19 @@
 /**
- * The delivery options of a rule — one control per parameter a SELECTED
- * notifier declares (D938). Renders nothing when no selected notifier declares
- * any, so a rule that only addresses phones never sees it.
+ * One control for one delivery parameter a notifier declares (D938), shown in
+ * that target's own panel of the rule editor (`NotificationRuleTargetSettings`,
+ * #487) — never written onto every selected target at once.
  */
 import type { DeliveryParam, DeliveryParamValue } from '@camstack/types'
-import { FormField, Input, Select, Switch } from '@camstack/ui-library'
+import { Input, Select, Switch } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 
-export interface NotificationRuleDeliveryOptionsProps {
-  readonly params: readonly DeliveryParam[]
-  readonly valueOf: (key: string) => unknown
-  readonly onChange: (key: string, value: DeliveryParamValue | undefined) => void
-}
-
-interface ParamControlProps {
+export interface ParamControlProps {
   readonly param: DeliveryParam
   readonly value: unknown
   readonly onChange: (value: DeliveryParamValue | undefined) => void
 }
 
-function ParamControl({ param, value, onChange }: ParamControlProps) {
+export function ParamControl({ param, value, onChange }: ParamControlProps) {
   const { t } = useTranslation()
   const placeholder = param.default === undefined ? undefined : String(param.default)
   if (param.type === 'enum') {
@@ -64,30 +58,5 @@ function ParamControl({ param, value, onChange }: ParamControlProps) {
         onChange(Number.isFinite(parsed) ? parsed : undefined)
       }}
     />
-  )
-}
-
-export function NotificationRuleDeliveryOptions({
-  params,
-  valueOf,
-  onChange,
-}: NotificationRuleDeliveryOptionsProps) {
-  const { t } = useTranslation()
-  if (params.length === 0) return null
-  return (
-    <div className="flex flex-col gap-3" data-testid="rule-delivery-options">
-      <p className="text-sm font-medium text-foreground">
-        {t('system.notificationRules.deliveryOptions.title', 'Delivery options')}
-      </p>
-      {params.map((param) => (
-        <FormField key={param.key} label={param.label}>
-          <ParamControl
-            param={param}
-            value={valueOf(param.key)}
-            onChange={(next) => onChange(param.key, next)}
-          />
-        </FormField>
-      ))}
-    </div>
   )
 }

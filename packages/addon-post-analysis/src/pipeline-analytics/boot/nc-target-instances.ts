@@ -8,7 +8,12 @@
  * answer, so one broken holder cannot stall delivery to the healthy ones, and a target missing from a
  * partial answer is transient (retried), never "deleted". Nothing readable at all is an error.
  */
-import { type InstanceSource, instancesOfCap, type TargetKind } from '@camstack/types'
+import {
+  deliverableFields,
+  type InstanceSource,
+  instancesOfCap,
+  type TargetKind,
+} from '@camstack/types'
 import type { NcTargetRef, NcUnreadableHolder } from '../../notification-center/dispatcher.js'
 
 const NOTIFICATION_OUTPUT = 'notification-output'
@@ -47,6 +52,8 @@ export async function readNcTargets(
       ...(typeof owner === 'string' && owner.length > 0 ? { ownerUserId: owner } : {}),
       ...(declared !== undefined ? { bodyMaxLen: declared.caps.bodyMaxLen } : {}),
       ...(declared !== undefined ? { maxActions: declared.caps.actions } : {}),
+      // #483: what this target delivers, from its kind's ONE declaration.
+      ...(declared !== undefined ? { fields: deliverableFields(declared.caps) } : {}),
       ...(deliveryParams !== undefined && deliveryParams.length > 0 ? { deliveryParams } : {}),
     }
   })

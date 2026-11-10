@@ -249,8 +249,40 @@ export const TargetKindAttachmentsCapsSchema = z.object({
   maxBytes: z.number().int().positive().optional(),
 })
 
+/**
+ * Which TEXT fields a kind delivers (#483). Alexa speaks a title and nothing
+ * else; a push service shows both.
+ *
+ * `.optional()` on the caps block, never defaulted: absent = both, which is
+ * what every kind declared before this field meant (D938's rule for a Zod
+ * default on the addon cap path).
+ */
+export const TargetKindTextCapsSchema = z.object({
+  title: z.boolean(),
+  body: z.boolean(),
+})
+export type TargetKindTextCaps = z.infer<typeof TargetKindTextCapsSchema>
+
+/**
+ * The message fields a rule can author for a target (#483). Derived from a
+ * kind's caps by `deliverableFields` — the ONE reading of the declaration, used
+ * by the dispatcher (drop), the admin rule editor (show) and the viewer.
+ */
+export const NotificationFieldSchema = z.enum([
+  'title',
+  'body',
+  'attachments',
+  'actions',
+  'priority',
+  'sound',
+  'clickUrl',
+])
+export type NotificationField = z.infer<typeof NotificationFieldSchema>
+
 /** The full capability block consulted before dispatch. */
 export const TargetKindCapsSchema = z.object({
+  /** Text fields this kind delivers (#483). Absent = title AND body. */
+  text: TargetKindTextCapsSchema.optional(),
   attachments: TargetKindAttachmentsCapsSchema,
   /** Max action buttons (0 = none). */
   actions: z.number().int().nonnegative(),

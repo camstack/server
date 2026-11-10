@@ -25,6 +25,7 @@ import { resolveParentNames, Checkbox } from '@camstack/ui-library'
 import type {
   NcConditionDescriptor,
   NcRule,
+  NotificationField,
   NcTaxonomy,
   NcTemplateVarContext,
   NcTestResult,
@@ -77,13 +78,9 @@ import { varsForContext } from '../../components/notifications/template-field.he
 import { useTemplateCatalog } from '../../components/notifications/use-template-catalog'
 import { useScenesFeed } from '../../hooks/use-scenes-feed'
 import { NotificationRuleActions } from './NotificationRuleActions'
-import { NotificationRuleDeliveryOptions } from './NotificationRuleDeliveryOptions'
-import {
-  type DeliveryKindRef,
-  deliveryParamsForSelection,
-  readDeliveryValue,
-  writeDeliveryValue,
-} from './rule-form-delivery'
+import { FieldDropHint, NotificationRuleTargetSettings } from './NotificationRuleTargetSettings'
+import { type DeliveryKindRef } from './rule-form-delivery'
+import { fieldSupportForSelection, targetFieldsOf } from './rule-form-target-settings'
 import { formToActions, referencedActionIds } from './notification-rule-actions'
 import {
   type RuleCameraOption,
@@ -872,7 +869,7 @@ function RuleFormDialog({
 
   const save = useMutation({
     mutationFn: async (): Promise<void> => {
-      const input = buildRuleInput(form, preserve, catalog)
+      const input = buildRuleInput(form, preserve, catalog, fieldsOf)
       if (isExisting && rule) {
         const clears = buildRuleClears(form, catalog)
         await system.trpcClient.notificationRules.updateRule.mutate({
@@ -890,7 +887,7 @@ function RuleFormDialog({
 
   const testRun = useMutation({
     mutationFn: async (): Promise<readonly NcTestResult[]> => {
-      const input = buildRuleInput(form, preserve, catalog)
+      const input = buildRuleInput(form, preserve, catalog, fieldsOf)
       const res = await system.trpcClient.notificationRules.testRule.mutate({
         rule: input,
         lookbackMinutes: 60,
@@ -904,15 +901,18 @@ function RuleFormDialog({
 
   const targetNames = form.targetIds.map((id) => targets.find((t) => t.id === id)?.name ?? id)
 
-  // What the selected notifiers let a rule set at send time (D938). A kind
-  // catalog that has not answered offers nothing — never a guess.
+  // What each selected notifier declares: the parameters a target can be given
+  // (D938) and the message fields it delivers (#483). A kind catalog that has
+  // not answered narrows nothing and offers no parameter — never a guess.
   const kinds =
     useQuery({
       queryKey: ['notificationOutput', 'listTargetKinds', 'forRuleDelivery'],
       queryFn: (): Promise<readonly DeliveryKindRef[]> =>
         system.trpcClient.notificationOutput.listTargetKinds.query({}),
     }).data ?? []
-  const deliveryParams = deliveryParamsForSelection(form.targetIds, targets, kinds)
+  const fieldSupport = fieldSupportForSelection(form.targetIds, targets, kinds)
+  const shows = (field: NotificationField): boolean => fieldSupport.get(field)?.shown ?? true
+  const fieldsOf = targetFieldsOf(targets, kinds)
 
   // Read through `system.trpcClient` like every other query on this page: the
   // generated React hook needs a tRPC provider this page never mounts in, so
@@ -1173,10 +1173,7 @@ function RuleFormDialog({
                 onClick={() => {
                   setProblemsRevealed(true)
                   setError(null)
-                  if (
-                    !isRuleFormValid(form, preserve, knownActionIds) ||
-                    save.isPending
-                  ) {
+                  if (!isRuleFormValid(form, preserve, knownActionIds) || save.isPending) {
                     return
                   }
                   save.mutate()
@@ -1307,24 +1304,16 @@ function RuleFormDialog({
             testIdPrefix="rule-target"
           />
 
-          <NotificationRuleDeliveryOptions
-            params={deliveryParams}
-            valueOf={(key) => readDeliveryValue(form.targetIds, form.targetParams, key)}
-            onChange={(key, value) =>
-              setForm((prev) => ({
-                ...prev,
-                targetParams: writeDeliveryValue(
-                  {
-                    targetIds: prev.targetIds,
-                    targets,
-                    kinds,
-                    targetParams: prev.targetParams,
-                  },
-                  key,
-                  value,
-                ),
-              }))
-            }
+          <NotificationRuleTargetSettings
+            targetIds={form.targetIds}
+            targets={targets}
+            kinds={kinds}
+            overrides={form.targetOverrides}
+            targetParams={form.targetParams}
+            rulePriority={form.priority}
+            onOverridesChange={(next) => patch({ targetOverrides: next })}
+            onTargetParamsChange={(next) => patch({ targetParams: next })}
+            varsFor={varsFor}
           />
 
           {/* Users — fan out to each user's OWN targets at fire time */}
@@ -1633,19 +1622,24 @@ function RuleFormDialog({
         <TabsContent value="notification" className="space-y-4">
           {/* Priority + media */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-medium text-foreground mb-1">
-                {t('system.notificationRules.priority', 'Priority')}
-              </label>
-              <Select
-                value={String(form.priority)}
-                onChange={(e) => patch({ priority: Number(e.target.value) })}
-                options={NC_PRIORITY_OPTIONS.map((o) => ({
-                  value: String(o.value),
-                  label: o.label,
-                }))}
-              />
-            </div>
+            {/* D1029: shown when a selected target delivers it; the hint names
+                  the selected targets that do not. */}
+            {shows('priority') && (
+              <div data-testid="rule-priority">
+                <label className="block text-[11px] font-medium text-foreground mb-1">
+                  {t('system.notificationRules.priority', 'Priority')}
+                </label>
+                <Select
+                  value={String(form.priority)}
+                  onChange={(e) => patch({ priority: Number(e.target.value) })}
+                  options={NC_PRIORITY_OPTIONS.map((o) => ({
+                    value: String(o.value),
+                    label: o.label,
+                  }))}
+                />
+                <FieldDropHint support={fieldSupport.get('priority')} />
+              </div>
+            )}
             {/* A subject that owns NO FRAME has no media controls, because
                   every one of them would be a knob that does nothing: the
                   attachment ladder resolves media by owner, and a system event
@@ -1668,7 +1662,18 @@ function RuleFormDialog({
                   )}
               </div>
             )}
-            {kindSpec.carriesMedia && kindSpec.mediaBlurb !== undefined && (
+            {kindSpec.carriesMedia && !shows('attachments') && (
+              <div
+                className="rounded-md border border-border px-3 py-2 text-[11px] text-foreground-subtle"
+                data-testid="rule-media-undeliverable"
+              >
+                {t(
+                  'system.notificationRules.targetSettings.noTargetShowsMedia',
+                  'None of the selected targets can show a picture or a clip, so this rule sends none.',
+                )}
+              </div>
+            )}
+            {kindSpec.carriesMedia && shows('attachments') && kindSpec.mediaBlurb !== undefined && (
               <div className="rounded-md border border-border px-3 py-2 text-[11px] text-foreground-subtle">
                 {kindSpec.mediaBlurb}
               </div>
@@ -1678,11 +1683,12 @@ function RuleFormDialog({
                   from the clean frame of the moment, so the rule says only
                   what it wants to SEE. The modes offered are the kind's own
                   (`imageModesForKind`: a sound is never offered a crop). */}
-            {kindSpec.carriesMedia && (
+            {kindSpec.carriesMedia && shows('attachments') && (
               <div>
                 <label className="block text-[11px] font-medium text-foreground mb-1">
                   {t('system.notificationRules.notificationImage', 'Image')}
                 </label>
+                <FieldDropHint support={fieldSupport.get('attachments')} />
                 <Select
                   value={form.mediaImage}
                   onChange={(e) => {
@@ -1859,21 +1865,33 @@ function RuleFormDialog({
 
           {/* Template */}
           <div className="space-y-2">
-            <TemplateField
-              label={t('system.notificationRules.notificationTitle', 'Notification title')}
-              value={form.templateTitle}
-              onChange={(next) => patch({ templateTitle: next })}
-              vars={varsFor('title')}
-              testId="rule-template-title"
-            />
-            <TemplateField
-              label={t('system.notificationRules.notificationBody', 'Notification body')}
-              value={form.templateBody}
-              onChange={(next) => patch({ templateBody: next })}
-              vars={varsFor('body')}
-              multiline
-              testId="rule-template-body"
-            />
+            {/* The rule's texts are every target's DEFAULT; a target's own
+                  panel (Rule tab) overrides them for that target (D1029). */}
+            {shows('title') && (
+              <>
+                <TemplateField
+                  label={t('system.notificationRules.notificationTitle', 'Notification title')}
+                  value={form.templateTitle}
+                  onChange={(next) => patch({ templateTitle: next })}
+                  vars={varsFor('title')}
+                  testId="rule-template-title"
+                />
+                <FieldDropHint support={fieldSupport.get('title')} />
+              </>
+            )}
+            {shows('body') && (
+              <>
+                <TemplateField
+                  label={t('system.notificationRules.notificationBody', 'Notification body')}
+                  value={form.templateBody}
+                  onChange={(next) => patch({ templateBody: next })}
+                  vars={varsFor('body')}
+                  multiline
+                  testId="rule-template-body"
+                />
+                <FieldDropHint support={fieldSupport.get('body')} />
+              </>
+            )}
             <p className="text-[10px] text-foreground-subtle">
               {t(
                 'system.notificationRules.leaveBothBlankForThe',
@@ -1899,7 +1917,7 @@ function RuleFormDialog({
               family={systemFamily}
               kinds={form.conditions.systemEvent?.kinds ?? []}
               onChange={(next) => patch({ systemEventDelivery: next })}
-              draft={() => buildRuleInput(form, preserve, catalog)}
+              draft={() => buildRuleInput(form, preserve, catalog, fieldsOf)}
             />
           )}
         </TabsContent>
@@ -2039,10 +2057,7 @@ function RuleFormDialog({
                   size="sm"
                   variant="outline"
                   type="button"
-                  disabled={
-                    testRun.isPending ||
-                    !isRuleFormValid(form, preserve, knownActionIds)
-                  }
+                  disabled={testRun.isPending || !isRuleFormValid(form, preserve, knownActionIds)}
                   onClick={() => {
                     setError(null)
                     testRun.mutate()

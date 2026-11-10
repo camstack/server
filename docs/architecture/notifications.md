@@ -3586,6 +3586,48 @@ Home Assistant's provider — one concatenated catalog, since `listTargetKinds` 
 collection cap. This is why asking for footage is always safe, and why
 per-target special-casing must never leak back into rule authoring.
 
+### Which fields a target delivers, and a target's own settings ([D1029](../decisions/adr-1029-a-notifier-declares-the-message-fields-a-target-delivers-and-a-rule-target-overrides-them.md))
+
+The notifier declares the text a kind delivers: `TargetKindCaps.text =
+{ title, body }`; absent means both. `deliverableFields(caps)` reads the whole
+declaration into fields: `title`, `body`, `attachments`, `actions`,
+`priority` (two distinct level ordinals or more), `sound` and `clickUrl`. The
+Alexa speaker declares a title only, so it speaks the title and nothing is
+joined to it. The dispatcher drops every field the target does not deliver,
+and the `notification delivered` line names them (`fieldsDropped`).
+
+A rule may carry `targetOverrides`, keyed by target id, with `template
+{ title?, body? }`, `schedule` (an `NcSchedule`) and `priority`.
+
+- **Texts.** The rule's texts are the defaults. A target's text replaces the
+  rule's text for that target only, and a field the override does not name
+  is inherited.
+- **Priority.** A target's priority replaces the rule's priority. It also
+  replaces a legacy `params.priority`.
+- **Schedule.** A target outside its own schedule gets no outbox row. The
+  skip is logged as `notification target skipped: outside its own schedule`,
+  with `tags: { deviceId }`, and the other targets of the fire still deliver.
+  When every target is skipped, the fire produces no row, so the cooldown is
+  not consumed.
+- **Notifier knobs.** The knobs a notifier declares (D938) stay in
+  `targets[].params`.
+- **Updates.** A partial `updateRule` keeps the map unless the patch names it.
+- **Old rules.** A rule without the key reads exactly as before.
+
+The admin editor sends the map on every save, pruned to the selected targets
+and to what each target delivers. An unsupported override is therefore never
+saved, but the hub does not refuse one.
+
+**Editor.** On the Rule tab, each selected target expands to its own panel,
+which offers only the fields that target's notifier delivers. On the
+Notification tab, the rule-level fields are the union of what the selected
+targets deliver. Under a field, a hint names the targets that drop it. A
+target whose kind the catalog did not describe narrows nothing.
+
+**Not covered yet.** Summary, timelapse and calendar-event producers ignore
+the overrides. The viewer does not mirror the map yet (`aheadOfViewer` in the
+NC mirrors guard).
+
 ## Occupancy and timelapse both fire
 
 - **Occupancy** — live. A durable per-zone watcher consumes ≤1 Hz zone

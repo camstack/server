@@ -1122,6 +1122,38 @@ export const NcRuleTargetSchema = z.object({
 export type NcRuleTarget = z.infer<typeof NcRuleTargetSchema>
 
 /**
+ * One target's own settings on a rule (#487) — everything about THAT target.
+ *
+ * Every key is optional and ABSENT means "the rule's own value": the rule's
+ * texts, priority and schedule are the defaults every target inherits, so a
+ * rule saved before this field reads exactly as it did, with no migration.
+ *
+ *  - `template` — the target's own title / body, the same `{{var}}` template
+ *    the rule's texts use. A field the target's kind does not deliver (#483,
+ *    `deliverableFields`) is never written by an editor and dropped at send.
+ *  - `schedule` — deliver to this target only inside these windows. A target
+ *    outside its window gets no outbox row and the skip is logged; the other
+ *    targets of the same fire still deliver.
+ *  - `priority` — this target's canonical ordinal (1..5).
+ *
+ * The notifier's own declared knobs (D938 `deliveryParams`: sound, critical,
+ * volume…) stay where they already live per target: the rule target's
+ * `params`. One store per fact.
+ */
+export const NcTargetOverrideSchema = z.object({
+  template: z
+    .object({ title: z.string().max(500).optional(), body: z.string().max(2000).optional() })
+    .optional(),
+  schedule: NcScheduleSchema.optional(),
+  priority: z.number().int().min(1).max(5).optional(),
+})
+export type NcTargetOverride = z.infer<typeof NcTargetOverrideSchema>
+
+/** Per-target settings keyed by target id (#487). */
+export const NcTargetOverridesSchema = z.record(z.string(), NcTargetOverrideSchema)
+export type NcTargetOverrides = z.infer<typeof NcTargetOverridesSchema>
+
+/**
  * WHAT THE NOTIFICATION'S PICTURE IS (D897) — the ONE media choice of a rule.
  *
  * Every mode starts from the same CLEAN source frame of the trigger moment
@@ -1438,6 +1470,13 @@ export const NcRuleInputSchema = z.object({
    * targets.
    */
   targetUsers: z.array(z.string()).optional(),
+  /**
+   * Per-target settings keyed by target id (#487): texts, schedule, priority.
+   * Absent (and an absent entry) = the rule's own values. A patch that omits
+   * the key keeps the stored map; a patch that names it REPLACES it whole —
+   * `{}` empties it.
+   */
+  targetOverrides: NcTargetOverridesSchema.optional(),
   /** Absent = the kind's default picture (`resolveNcMediaImage`): the subject crop for a
    *  detection, the clean scene for a sensor or a sound. Set explicitly on save (D897). */
   media: NcMediaPolicySchema.default({}),

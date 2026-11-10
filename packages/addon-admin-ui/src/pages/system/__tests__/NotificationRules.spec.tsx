@@ -30,9 +30,12 @@ import {
   fleetListResult,
 } from './fleet-read-spy'
 import { templateCatalogAnswer } from './template-catalog.fixture'
+import type { DeliveryKindRef } from '../rule-form-delivery'
 
 let mockRules: NcRule[] = []
 let mockTargets: Target[] = []
+/** The kind catalog (#483): `[]` = no kind described, nothing narrowed. */
+let mockKinds: readonly DeliveryKindRef[] = []
 
 const mockListRules = vi.fn(
   (): Promise<{ rules: readonly NcRule[] }> => Promise.resolve({ rules: mockRules }),
@@ -184,6 +187,7 @@ vi.mock('@camstack/ui-library', async () => {
     useSystem: () => ({
       trpcClient: {
         zones: { listZones: { query: () => Promise.resolve([]) } },
+        notificationOutput: { listTargetKinds: { query: () => Promise.resolve(mockKinds) } },
         pipelineAnalytics: { listEventKinds: { query: () => Promise.resolve([]) } },
         notificationRules: {
           listRules: { query: mockListRules },
@@ -358,6 +362,7 @@ function resetHarness(): void {
   }
   mockRules = []
   mockTargets = []
+  mockKinds = []
   mockBridgeAnswers = {}
   mockListRules.mockClear()
   mockCustom.mockClear()
@@ -1985,5 +1990,82 @@ describe('the unified Rules table', () => {
     await waitFor(() =>
       expect(screen.getByText('Summary rules are not available on this hub')).toBeTruthy(),
     )
+  })
+})
+
+// ── What the selected targets deliver (#483) ────────────────────────
+
+/** A speaker that says a title and nothing else: one level, no media, no body. */
+const SPEAKER_KIND: DeliveryKindRef = {
+  kind: 'speaker',
+  addonId: 'speakers',
+  caps: {
+    text: { title: true, body: false },
+    attachments: { mediaTypes: [], mode: 'url', max: 0 },
+    actions: 0,
+    levels: [{ id: 'default', label: 'Announce', ordinal: 3 }],
+    format: ['text'],
+    clickUrl: false,
+    sound: false,
+    ttl: false,
+    bodyMaxLen: 250,
+  },
+}
+const PUSH_KIND: DeliveryKindRef = {
+  kind: 'ntfy',
+  addonId: 'notifiers',
+  caps: {
+    attachments: { mediaTypes: ['image'], mode: 'both', max: 1 },
+    actions: 3,
+    levels: [
+      { id: 'low', label: 'Low', ordinal: 1 },
+      { id: 'high', label: 'High', ordinal: 5 },
+    ],
+    format: ['text'],
+    clickUrl: true,
+    sound: false,
+    ttl: false,
+    bodyMaxLen: 4096,
+  },
+}
+const ECHO: Target = {
+  id: 'echo',
+  name: 'Kitchen Echo',
+  kind: 'speaker',
+  addonId: 'speakers',
+  enabled: true,
+  config: {},
+}
+
+describe('the rule editor shows only what the selected targets deliver (#483)', () => {
+  beforeEach(resetHarness)
+
+  async function openNotificationTab(targetIds: readonly string[]): Promise<void> {
+    mockKinds = [SPEAKER_KIND, PUSH_KIND]
+    mockTargets = [target('t1', 'Alerts'), ECHO]
+    mockRules = [rule({ name: 'Gate', targets: targetIds.map((targetId) => ({ targetId })) })]
+    renderPage()
+    await waitFor(() => expect(screen.getByText('Gate')).toBeTruthy())
+    openRuleRow('Gate')
+    await waitFor(() => expect(screen.getByText('Edit Gate')).toBeTruthy())
+    fireEvent.click(screen.getByRole('tab', { name: 'Notification' }))
+  }
+
+  it('a rule that addresses only the speaker shows the title alone', async () => {
+    await openNotificationTab(['echo'])
+    await waitFor(() => expect(screen.queryByTestId('rule-template-body')).toBeNull())
+    expect(screen.getByTestId('rule-template-title')).toBeTruthy()
+    expect(screen.queryByTestId('rule-priority')).toBeNull()
+    expect(screen.queryByTestId('rule-media-image')).toBeNull()
+    expect(screen.getByTestId('rule-media-undeliverable')).toBeTruthy()
+  })
+
+  it('a mixed rule shows the union, naming the target that drops the body', async () => {
+    await openNotificationTab(['t1', 'echo'])
+    await waitFor(() =>
+      expect(screen.getByTestId('rule-field-dropped-body').textContent).toContain('Kitchen Echo'),
+    )
+    expect(screen.getByTestId('rule-template-body')).toBeTruthy()
+    expect(screen.getByTestId('rule-priority')).toBeTruthy()
   })
 })

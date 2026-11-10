@@ -37,10 +37,12 @@ import {
   NC_CLIP_POST_ROLL_DEFAULT_SEC,
   NC_CLIP_PRE_ROLL_DEFAULT_SEC,
   type NotificationAction,
+  type NotificationField,
   resolveDeliveryParams,
   type ViewerLinkBase,
 } from '@camstack/types'
 import { isStateSummaryData } from './state-summary/state-summary-delivery.js'
+import { deliverableNotification } from './deliverable-fields.js'
 
 // The gate's OWN input shape, defined where the gate is. Two copies of a shape
 // that must agree is the defect this repo keeps paying for; re-exported here so
@@ -94,7 +96,10 @@ import {
   recordedCutKey,
 } from './recorded-cut-memo.js'
 import type { NcRecordedGifRequest, NcRecordedGifResult } from './recorded-gif.js'
-import { type NcRenderDeviceTemplates, renderAuthoredDeviceTemplates } from './device-template-pass.js'
+import {
+  type NcRenderDeviceTemplates,
+  renderAuthoredDeviceTemplates,
+} from './device-template-pass.js'
 import { deprecatedPlaceholders, renderTemplate, templatePlaceholders } from './render-template.js'
 import { NC_RULE_AI_TRACK_FRAMES, pickTrackNarrationFrames, ruleAiWordCap } from './rule-ai.js'
 import type {
@@ -207,6 +212,11 @@ export interface NcTargetRef {
    * `delivery`.
    */
   readonly deliveryParams?: readonly DeliveryParam[]
+  /**
+   * The message fields the KIND delivers (#483, `deliverableFields`). Absent =
+   * the kind catalog did not answer: UNKNOWN, so nothing is dropped.
+   */
+  readonly fields?: readonly NotificationField[]
 }
 
 /**
@@ -1216,8 +1226,12 @@ export class NcDispatcher {
     // vision call, and on the SAME picture the gate judged and the recipient
     // will see. Its only possible output is a sentence: it never suppresses.
     const narration = await this.runRuleAi(entry, built, target)
-    const notification =
-      narration === null ? built.notification : built.withAiText(narration.text ?? '')
+    // #483: only the fields this target's kind delivers leave the hub.
+    const deliverable = deliverableNotification(
+      narration === null ? built.notification : built.withAiText(narration.text ?? ''),
+      target.fields,
+    )
+    const notification = deliverable.notification
     try {
       const result = await this.deps.send({
         addonId: target.addonId,
@@ -1236,6 +1250,9 @@ export class NcDispatcher {
           target: target.name,
           kind: target.kind,
           recordKind: entry.recordKind,
+          // What the kind does not deliver, named (D391): a title-only speaker
+          // that never reads the body must say so on its own delivery line.
+          ...(deliverable.dropped.length > 0 ? { fieldsDropped: deliverable.dropped } : {}),
           // The gate's verdict rides out WITH the delivery, counters included:
           // `failedOpen` climbing while `suppressed` stays at zero is the only
           // way a permanently-open gate is distinguishable from a working one.
@@ -1787,7 +1804,10 @@ export class NcDispatcher {
       const result = await this.deps.send({
         addonId: target.addonId,
         targetId: target.id,
-        notification: { title: input.title, body: input.body, priority: 2 },
+        notification: deliverableNotification(
+          { title: input.title, body: input.body, priority: 2 },
+          target.fields,
+        ).notification,
       })
       if (!result.success) {
         this.deps.logger.warn('snooze digest send failed', {
@@ -1838,12 +1858,15 @@ export class NcDispatcher {
       const result = await this.deps.send({
         addonId: target.addonId,
         targetId: target.id,
-        notification: {
-          title: input.title,
-          body: input.body,
-          priority: 2,
-          ...(input.deviceId !== undefined ? { deviceId: input.deviceId } : {}),
-        },
+        notification: deliverableNotification(
+          {
+            title: input.title,
+            body: input.body,
+            priority: 2,
+            ...(input.deviceId !== undefined ? { deviceId: input.deviceId } : {}),
+          },
+          target.fields,
+        ).notification,
       })
       if (!result.success) {
         this.deps.logger.warn('announcement send failed', {
@@ -2073,11 +2096,17 @@ export class NcDispatcher {
       this.deps.renderDeviceTemplates,
     )
     if (title === undefined || body === undefined) return entry
-    for (const [field, pass] of [['title', title], ['body', body]] as const) {
+    for (const [field, pass] of [
+      ['title', title],
+      ['body', body],
+    ] as const) {
       if (pass.refused !== undefined) {
         this.deps.logger.warn(
           'rule device template not rendered — the catalog sentence is sent instead',
-          { tags: { deviceId: entry.deviceId, ruleId: entry.ruleId }, meta: { field, reason: pass.refused } },
+          {
+            tags: { deviceId: entry.deviceId, ruleId: entry.ruleId },
+            meta: { field, reason: pass.refused },
+          },
         )
       } else if (pass.notes.length > 0) {
         this.deps.logger.info('rule device template printed — for some values', {
