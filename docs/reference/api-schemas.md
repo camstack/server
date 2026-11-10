@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1040 shared schemas.**
+**1050 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1104,6 +1104,65 @@ Enum: `"authorised"`
 - `{ kind: "stored"; modelId: string }`
 - `{ kind: "absent"; defaultModelId: string }`
 - `{ kind: "unreadable"; reason: "owner-not-ready" \| "store-read-failed" \| "three-way-read-unavailable" \| "invalid-stored" \| "not-cluster-scoped"; error?: string }`
+
+### `ClusterUpdateBlockerSchema`
+
+Enum: `"no-target" \| "node-busy" \| "job-running" \| "nothing-to-do" \| "status-unreadable"`
+
+### `ClusterUpdateFailureReasonSchema`
+
+Enum: `"backup-unavailable" \| "backup-failed" \| "server-refused" \| "server-not-on-target" \| "node-capless" \| "status-unreadable" \| "addon-update-failed" \| "addons-not-converged" \| "interrupted"`
+
+### `ClusterUpdateJobSchema`
+
+- `id`: `string`
+- `state`: `ClusterUpdateJobStateSchema`
+- `targetVersion`: `string`
+- `requestedBy`: `string`
+- `startedAt`: `number`
+- `finishedAt?`: `number`
+- `steps`: `ClusterUpdateStepSchema[]`
+- `stoppedAt?`: `string`
+- `reason?`: `ClusterUpdateFailureReasonSchema`
+- `skippedOffline`: `string[]`
+
+### `ClusterUpdateJobStateSchema`
+
+Enum: `"running" \| "succeeded" \| "failed"`
+
+### `ClusterUpdateOptionsSchema`
+
+- `version?`: `string`
+- `addons?`: `boolean`
+- `backup?`: `boolean`
+
+### `ClusterUpdatePlanSchema`
+
+- `targetVersion`: `string \| null`
+- `steps`: `ClusterUpdateStepSchema[]`
+- `skippedOffline`: `string[]`
+- `blocker`: `ClusterUpdateBlockerSchema \| null`
+- `blockerDetail`: `string \| null`
+
+### `ClusterUpdateStepKindSchema`
+
+Enum: `"backup" \| "hub-server" \| "agent-server" \| "addons"`
+
+### `ClusterUpdateStepSchema`
+
+- `kind`: `ClusterUpdateStepKindSchema`
+- `nodeId?`: `string`
+- `status`: `ClusterUpdateStepStatusSchema`
+- `detail`: `string`
+- `reason?`: `ClusterUpdateFailureReasonSchema`
+- `fromVersion?`: `string \| null`
+- `packages?`: `string[]`
+- `startedAt?`: `number`
+- `finishedAt?`: `number`
+
+### `ClusterUpdateStepStatusSchema`
+
+Enum: `"pending" \| "running" \| "ok" \| "failed" \| "skipped"`
 
 ### `CollectionColumnSchema`
 
@@ -6537,6 +6596,13 @@ Enum: `"operator-set" \| "derived-from-ip"`
 - `addonId`: `string`
 - `key`: `string`
 - `secretRefs`: `string[]`
+
+### `StartClusterUpdateResultSchema`
+
+- `accepted`: `boolean`
+- `jobId`: `string \| null`
+- `blocker`: `ClusterUpdateBlockerSchema \| null`
+- `message`: `string`
 
 ### `StartEmbeddedInputSchema`
 

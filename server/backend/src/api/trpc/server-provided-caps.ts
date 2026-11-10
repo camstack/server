@@ -25,6 +25,7 @@ export const HUB_SERVICE_CAP_NAMES = [
   'integrations',
   'nodes',
   'server-management',
+  'cluster-update',
   'addons',
 ] as const
 

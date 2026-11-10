@@ -57,6 +57,8 @@ import { NotificationServiceWrapper } from './core/notification/notification-wra
 import { ToastServiceWrapper } from './core/notification/toast-wrapper.service'
 import { ReplEngineService } from './core/repl/repl-engine.service'
 import { ServerUpdateService } from './core/server-update/server-update.service'
+import { ClusterUpdateService } from './core/cluster-update/cluster-update.service'
+import { buildClusterUpdateSeams } from './api/core/cluster-update.provider'
 import {
   describeRunnerBootCheck,
   isRunnerBootCheckDegraded,
@@ -471,6 +473,21 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
       loggingService.createLogger('UpdateAvailability'),
     ),
   })
+  // The one cluster update flow (planning#493). Its job survives the hub's own
+  // restart: it is resumed once the addons are up (below), and by any RPC that
+  // reads it first, so a dropped boot event cannot leave it "running".
+  const clusterUpdateService = new ClusterUpdateService(
+    buildClusterUpdateSeams({
+      dataDir: availabilityDataDir,
+      serverUpdate: serverUpdateService,
+      moleculer: moleculerService,
+      agentRegistry: agentRegistryService,
+      addonRegistry: addonRegistryService,
+      addonPackages: addonPackageService,
+      configService,
+      loggingService,
+    }),
+  )
   const topologyEmitterService = new TopologyEmitterService(
     eventBusService,
     agentRegistryService,
@@ -559,6 +576,9 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
   })
   addonPackageService.setUpdateCheckRescheduler(() => updateCheckScheduler.reschedule())
   updateCheckScheduler.start()
+  eventBusService.subscribe({ category: EventCategory.SystemAddonsReady }, () => {
+    clusterUpdateService.resume()
+  })
   // The running server's `requires.addons` are brought current once the addons
   // are up, with auto-update on or off (planning#447). A failure is an alert and
   // the boot goes on; agents follow through the registration reconcile (D840).
@@ -616,6 +636,7 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
   container.register(AddonPackageService, addonPackageService)
   container.register(ReplEngineService, replEngineService)
   container.register(ServerUpdateService, serverUpdateService)
+  container.register(ClusterUpdateService, clusterUpdateService)
   container.register(RunnerBootCheckService, hubRunnerBootCheck)
   // A runner settling (READY / crashed / failed / refused) re-evaluates a verdict
   // that still had runners on their way (D877).

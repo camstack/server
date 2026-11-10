@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**205 capabilities · 1482 methods.**
+**206 capabilities · 1485 methods.**
 
 ## Method index
 
@@ -188,6 +188,9 @@
 | `climateControl.setTargetHumidity` | mutation | protected | climate-control |
 | `climateControl.setSwingVertical` | mutation | protected | climate-control |
 | `climateControl.setSwingHorizontal` | mutation | protected | climate-control |
+| `clusterUpdate.previewClusterUpdate` | query | admin | cluster-update |
+| `clusterUpdate.startClusterUpdate` | mutation | admin | cluster-update |
+| `clusterUpdate.getClusterUpdateJob` | query | admin | cluster-update |
 | `color.getStatus` | query | protected | color (auto) |
 | `color.setColor` | mutation | protected | color |
 | `composer.applyBlocks` | mutation | admin | composer |
@@ -2051,6 +2054,19 @@
 | setTargetHumidity | `climateControl.setTargetHumidity` | mutation | protected | `{ deviceId: number; targetHumidity: number }` | `void` |
 | setSwingVertical | `climateControl.setSwingVertical` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
 | setSwingHorizontal | `climateControl.setSwingHorizontal` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
+
+### `cluster-update` → `clusterUpdate.*`
+
+- **Source:** `packages/types/src/capabilities/cluster-update.cap.ts:144`
+- **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
+- **Archetypes:** —
+- **Provider interface:** `IClusterUpdateProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| previewClusterUpdate | `clusterUpdate.previewClusterUpdate` | query | admin | `ClusterUpdateOptionsSchema` | `ClusterUpdatePlanSchema` |
+| startClusterUpdate | `clusterUpdate.startClusterUpdate` | mutation | admin | `ClusterUpdateOptionsSchema` | `StartClusterUpdateResultSchema` |
+| getClusterUpdateJob | `clusterUpdate.getClusterUpdateJob` | query | admin | `{ jobId?: string }` | `ClusterUpdateJobSchema \| null` |
 
 ### `color` → `color.*`
 

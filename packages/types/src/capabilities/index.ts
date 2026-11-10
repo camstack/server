@@ -1685,6 +1685,30 @@ export {
   type SensorEventKindDescriptor,
 } from './sensor-event-kinds.js'
 export {
+  type ClusterUpdateBlocker,
+  ClusterUpdateBlockerSchema,
+  clusterUpdateCapability,
+  type ClusterUpdateFailureReason,
+  ClusterUpdateFailureReasonSchema,
+  type ClusterUpdateJob,
+  ClusterUpdateJobSchema,
+  type ClusterUpdateJobState,
+  ClusterUpdateJobStateSchema,
+  type ClusterUpdateOptions,
+  ClusterUpdateOptionsSchema,
+  type ClusterUpdatePlan,
+  ClusterUpdatePlanSchema,
+  type ClusterUpdateStep,
+  type ClusterUpdateStepKind,
+  ClusterUpdateStepKindSchema,
+  ClusterUpdateStepSchema,
+  type ClusterUpdateStepStatus,
+  ClusterUpdateStepStatusSchema,
+  type IClusterUpdateProvider,
+  type StartClusterUpdateResult,
+  StartClusterUpdateResultSchema,
+} from './cluster-update.cap.js'
+export {
   type ImageContract,
   ImageContractSchema,
   type ImageContractState,
@@ -3576,6 +3600,7 @@ import type { recordingSignalCapability } from './recording-signal.cap.js'
 import type { sceneMonitorCapability } from './scene-monitor.cap.js'
 import type { scriptRunnerCapability } from './script-runner.cap.js'
 import type { serverManagementCapability } from './server-management.cap.js'
+import type { clusterUpdateCapability } from './cluster-update.cap.js'
 import type { settingsStoreCapability } from './settings-store.cap.js'
 import type { smokeCapability } from './smoke.cap.js'
 import type { smtpProviderCapability } from './smtp-provider.cap.js'
@@ -3782,6 +3807,7 @@ type AnyCapability =
   | typeof toastCapability
   | typeof nodesCapability
   | typeof serverManagementCapability
+  | typeof clusterUpdateCapability
   | typeof integrationsCapability
   | typeof integrationInstancesCapability
   | typeof addonsCapability

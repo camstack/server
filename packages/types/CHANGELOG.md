@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- New cluster-update capability: preview, start and follow one cluster update job
+
 ## [1.2.540] - 2026-11-10
 
 ### Added

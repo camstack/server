@@ -512,6 +512,15 @@ export const useClimateControlSetSwingHorizontal: typeof trpc.climateControl.set
 /** Generated alias around `trpc.climateControl.getStatus.useQuery`. */
 export const useClimateControlGetStatus: typeof trpc.climateControl.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.climateControl.getStatus.useQuery)
 
+/** Generated alias around `trpc.clusterUpdate.previewClusterUpdate.useQuery`. */
+export const useClusterUpdatePreviewClusterUpdate: typeof trpc.clusterUpdate.previewClusterUpdate.useQuery = /*#__PURE__*/ alias(() => trpc.clusterUpdate.previewClusterUpdate.useQuery)
+
+/** Generated alias around `trpc.clusterUpdate.startClusterUpdate.useMutation`. */
+export const useClusterUpdateStartClusterUpdate: typeof trpc.clusterUpdate.startClusterUpdate.useMutation = /*#__PURE__*/ alias(() => trpc.clusterUpdate.startClusterUpdate.useMutation)
+
+/** Generated alias around `trpc.clusterUpdate.getClusterUpdateJob.useQuery`. */
+export const useClusterUpdateGetClusterUpdateJob: typeof trpc.clusterUpdate.getClusterUpdateJob.useQuery = /*#__PURE__*/ alias(() => trpc.clusterUpdate.getClusterUpdateJob.useQuery)
+
 /** Generated alias around `trpc.color.setColor.useMutation`. */
 export const useColorSetColor: typeof trpc.color.setColor.useMutation = /*#__PURE__*/ alias(() => trpc.color.setColor.useMutation)
 

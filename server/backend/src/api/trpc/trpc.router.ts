@@ -41,6 +41,7 @@ import type { MoleculerService } from '../../core/moleculer/moleculer.service'
 import type { NetworkQualityService } from '../../core/network/network-quality.service'
 import type { ReplEngineService } from '../../core/repl/repl-engine.service'
 import type { ServerUpdateService } from '../../core/server-update/server-update.service'
+import type { ClusterUpdateService } from '../../core/cluster-update/cluster-update.service'
 import type { StreamProbeService } from '../../core/streaming/stream-probe.service'
 import { createAddonSettingsRouter } from '../core/addon-settings.router.js'
 import type { AuthNetworkPolicy } from '../../auth/auth-network-policy.js'
@@ -69,6 +70,7 @@ import { createLogsRouter } from '../core/logs.router.js'
 import { createNotificationsRouter } from '../core/notifications.router.js'
 import { createPreferencesRouter, preferencesFromRegistry } from '../core/preferences.router.js'
 import { createReplRouter } from '../core/repl.router.js'
+import { buildClusterUpdateProvider } from '../core/cluster-update.provider.js'
 import { buildServerManagementProvider } from '../core/server-management.provider.js'
 import { createStreamProbeRouter } from '../core/stream-probe.router.js'
 import { createSystemEventsRouter } from '../core/system-events.router.js'
@@ -114,6 +116,8 @@ export interface RouterServices {
   capabilityRegistry: CapabilityRegistry | null
   streamProbe: StreamProbeService | null
   serverUpdateService: ServerUpdateService | null
+  /** The one cluster update flow (planning#493); `null` off the hub. */
+  clusterUpdateService?: ClusterUpdateService | null
 }
 
 type WebrtcSessionProvider = InferProvider<typeof webrtcSessionCapability>
@@ -351,10 +355,7 @@ function buildServerProviders(
     ),
     toast: wrap((ctx) => buildToastProvider(services.toastService, ctx)),
     integrations: wrap(() =>
-      buildIntegrationsProvider(
-        services.addonRegistry,
-        services.loggingService,
-      ),
+      buildIntegrationsProvider(services.addonRegistry, services.loggingService),
     ),
     nodes: wrap(() =>
       buildNodesProvider(
@@ -371,6 +372,10 @@ function buildServerProviders(
         services.serverUpdateService,
         path.resolve(process.env['CAMSTACK_DATA'] ?? 'camstack-data'),
       ),
+    ),
+    // cluster-update — backup, hub, agents, addons as one hub-side job.
+    'cluster-update': wrap((ctx) =>
+      buildClusterUpdateProvider(services.clusterUpdateService ?? null, ctx),
     ),
     addons: wrap((ctx) =>
       buildAddonsProvider(

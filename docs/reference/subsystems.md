@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 8367 source files · 1299 file(s) in no subsystem.**
+**31 subsystems · 8374 source files · 1304 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -25,7 +25,7 @@ commits. A generated page may not.
 | --- | --- | --- | --- | --- |
 | Kernel, addon lifecycle and boot | 125 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/overview.md` _(covers)_, +94 more, 14 ADRs | 2026-11-02 | ✅ |
 | Transport and cross-node routing | 111 | `architecture/transport.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/overview.md` _(covers)_, +58 more, 12 ADRs | 2026-10-22 | ✅ |
-| Capability system and codegen | 334 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +252 more, 51 ADRs | 2026-11-10 | ✅ |
+| Capability system and codegen | 335 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/capabilities.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +252 more, 51 ADRs | 2026-11-10 | ✅ |
 | Device model and the provider contract | 158 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/device-model.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +68 more, 6 ADRs | 2026-11-08 | ✅ |
 | Device providers (per vendor) | 822 | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `addons/addon-provider-homeassistant.md` _(covers)_, +89 more, 14 ADRs | 2026-11-08 | ✅ |
 | Decode and the data planes | 81 | `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, +29 more, 7 ADRs | 2026-10-13 | ⚠️ |
@@ -41,7 +41,7 @@ commits. A generated page may not.
 | Storage, retention and backup | 141 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0328-the-live-sqlite-file-is-the-bind-the-container-has-open.md`, +65 more, 11 ADRs | 2026-11-02 | ⚠️ |
 | Secrets and the keychain | 29 | `architecture/secrets-keychain.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0787-a-secret-field-stores-a-keychain-marker-and-the-value-lives-in-the-keychain.md`, +25 more, 5 ADRs | 2026-11-02 | ✅ |
 | Auth, scopes and method tiers | 97 | `architecture/authentication.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +32 more, 3 ADRs | 2026-10-21 | ⚠️ |
-| The hub API surface | 174 | `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, +114 more, 18 ADRs | 2026-11-02 | ⚠️ |
+| The hub API surface | 175 | `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, +114 more, 18 ADRs | 2026-11-02 | ⚠️ |
 | Shared types, schemas and enums | 105 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, `architecture/windows-agent.md`, +34 more, 5 ADRs | 2026-11-02 | ⚠️ |
 | Update, release, OTA and agent delivery | 73 | `architecture/update-and-release.md`, `decisions/adr-0175-an-update-notification-is-polled-on-its-own-clock-and-remembered-across-restarts.md`, `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, +36 more, 10 ADRs | 2026-10-27 | ✅ |
 | Ecosystem exports — HomeKit, Home Assistant, Alexa, Google Home, Matter, MQTT | 394 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `design/ecosystem-export-plan.md` _(covers)_, +54 more, 20 ADRs | 2026-11-08 | ⚠️ |
@@ -81,7 +81,7 @@ Declares what a node can do — every `*.cap.ts`, the routers generated from the
 
 - **Owner doc**: `docs/architecture/capabilities.md`
 - **Code**: `packages/types/src/capabilities/**`, `packages/types/src/generated/**`, `packages/types/src/interfaces/**`, `packages/types/src/cap-call-context.ts`, `packages/system/src/kernel/capability-registry.ts`, `packages/system/src/kernel/capability-handle.ts`, `packages/system/src/kernel/cap-router-builder.ts`, `packages/system/src/kernel/infra-capabilities.ts`, `server/backend/src/core/capability/**`
-- **Files**: 334 (333 claimed by some document)
+- **Files**: 335 (334 claimed by some document)
 - **Uncovered**: `server/backend/src/core/capability` (1)
 
 ### ✅ Device model and the provider contract
@@ -225,8 +225,8 @@ The Fastify + tRPC server itself: routers, HTTP routes, the event bus wiring and
 
 - **Owner doc**: — none
 - **Code**: `server/backend/src/api/**`, `server/backend/src/core/app-links/**`, `server/backend/src/core/addon/**`, `server/backend/src/core/addon-bridge/**`, `server/backend/src/core/addon-pages/**`, `server/backend/src/core/addon-widgets/**`, `server/backend/src/core/config/**`, `server/backend/src/core/events/**`, `server/backend/src/core/feature/**`, `server/backend/src/core/lifecycle/**`, `server/backend/src/core/repl/**`, `server/backend/src/core/*.ts`, `server/backend/src/*.ts`, `server/backend/src/server-root/**`, `packages/system/src/http/**`, `packages/system/src/events/**`, `packages/system/src/repl/**`, `packages/system/src/download/**`
-- **Files**: 174 (107 claimed by some document)
-- **Uncovered**: `server/backend/src/core/addon` (18), `server/backend/src/api/core` (10), `server/backend/src/api/trpc` (9), `server/backend/src` (8), `server/backend/src/api` (6), `server/backend/src/api/static` (2), +12 more directories
+- **Files**: 175 (107 claimed by some document)
+- **Uncovered**: `server/backend/src/core/addon` (18), `server/backend/src/api/core` (11), `server/backend/src/api/trpc` (9), `server/backend/src` (8), `server/backend/src/api` (6), `server/backend/src/api/static` (2), +12 more directories
 
 ### ⚠️ Shared types, schemas and enums
 
@@ -341,4 +341,4 @@ Everything that measures or builds CamStack rather than running it — the bench
 The taxonomy has a hole here. This list is the `--max-orphans` ratchet in
 `.github/workflows/ci.yml`; it only ever goes down.
 
-`packages/addon-waste-collections/python/vendor/waste_collection_schedule/source` (978), `packages/addon-waste-collections/python/vendor/waste_collection_schedule/service` (30), `packages/addon-google-services/src` (15), `packages/addon-waste-collections/src` (15), `packages/types/src/records` (13), `packages/types/src/migrations` (12), +72 more directories
+`packages/addon-waste-collections/python/vendor/waste_collection_schedule/source` (978), `packages/addon-waste-collections/python/vendor/waste_collection_schedule/service` (30), `packages/addon-google-services/src` (15), `packages/addon-waste-collections/src` (15), `packages/types/src/records` (13), `packages/types/src/migrations` (12), +73 more directories

@@ -42,6 +42,7 @@ export const SYSTEM_CAP_VOCABULARY: CapVocabularySlice<SystemVocabCapName> = {
   backup: system('system backups — run and restored from the Backups page'),
   broker: system('message-broker connections — configured, not actuated'),
   'calendar-source': system(INTERNAL),
+  'cluster-update': system(CLUSTER),
   calendars: system('calendars feed schedules and conditions, not device actions'),
   composer: system('device composition — an authoring tool, not an action'),
   'core-blocks': system(INTERNAL),

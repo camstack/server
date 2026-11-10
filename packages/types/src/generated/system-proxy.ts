@@ -18,6 +18,7 @@ import type { backupCapability } from '../capabilities/backup.cap.js'
 import type { boardKeySourceCapability } from '../capabilities/board-key-source.cap.js'
 import type { brokerCapability } from '../capabilities/broker.cap.js'
 import type { calendarsCapability } from '../capabilities/calendars.cap.js'
+import type { clusterUpdateCapability } from '../capabilities/cluster-update.cap.js'
 import type { coreBlocksCapability } from '../capabilities/core-blocks.cap.js'
 import type { decoderCapability } from '../capabilities/decoder.cap.js'
 import type { deviceAdoptionCapability } from '../capabilities/device-adoption.cap.js'
@@ -91,6 +92,7 @@ export interface SystemProxy {
   readonly boardKeySource: Pick<InferProvider<typeof boardKeySourceCapability>, 'listSources' | 'listBoards' | 'getBoardKey'>
   readonly broker: Pick<InferProvider<typeof brokerCapability>, 'getBrokerConfig' | 'publish' | 'subscribe' | 'unsubscribe' | 'getState' | 'getStatus'>
   readonly calendars: Pick<InferProvider<typeof calendarsCapability>, 'listCalendars' | 'listEvents' | 'getPreferences' | 'setCalendarPreference'>
+  readonly clusterUpdate: Pick<InferProvider<typeof clusterUpdateCapability>, 'previewClusterUpdate' | 'startClusterUpdate' | 'getClusterUpdateJob'>
   readonly coreBlocks: Pick<InferProvider<typeof coreBlocksCapability>, 'list' | 'get' | 'create' | 'update' | 'delete' | 'setEnabled' | 'restart' | 'compile' | 'getBlockSettings' | 'updateBlockSettings' | 'migrateRawSecrets' | 'getTypeDefs' | 'createComposition' | 'updateComposition' | 'getComposition' | 'listCompositions' | 'getCustomization' | 'listComposableCaps' | 'validateComposition' | 'reportAutomationRun' | 'getAutomationRunState' | 'getTraces'>
   readonly decoder: Pick<InferProvider<typeof decoderCapability>, 'getInfo' | 'reprobeHwaccel'>
   readonly deviceAdoption: Pick<InferProvider<typeof deviceAdoptionCapability>, 'listCandidateFilters' | 'listCandidates' | 'getCandidate' | 'refresh' | 'adopt' | 'release' | 'resync'>
@@ -303,6 +305,12 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     listEvents: (input?: unknown) => dispatch('calendars', 'listEvents', 'query', input),
     getPreferences: (input?: unknown) => dispatch('calendars', 'getPreferences', 'query', input),
     setCalendarPreference: (input?: unknown) => dispatch('calendars', 'setCalendarPreference', 'mutation', input),
+  }
+
+  const clusterUpdateInterface = {
+    previewClusterUpdate: (input?: unknown) => dispatch('clusterUpdate', 'previewClusterUpdate', 'query', input),
+    startClusterUpdate: (input?: unknown) => dispatch('clusterUpdate', 'startClusterUpdate', 'mutation', input),
+    getClusterUpdateJob: (input?: unknown) => dispatch('clusterUpdate', 'getClusterUpdateJob', 'query', input),
   }
 
   const coreBlocksInterface = {
@@ -1070,6 +1078,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     boardKeySource: boardKeySourceInterface,
     broker: brokerInterface,
     calendars: calendarsInterface,
+    clusterUpdate: clusterUpdateInterface,
     coreBlocks: coreBlocksInterface,
     decoder: decoderInterface,
     deviceAdoption: deviceAdoptionInterface,

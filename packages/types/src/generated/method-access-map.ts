@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1482 method paths across 205 capabilities.
+ * Coverage: 1485 method paths across 206 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -197,6 +197,9 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'climateControl.setTarget': { capName: "climate-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'climateControl.setTargetHumidity': { capName: "climate-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'climateControl.setTargetRange': { capName: "climate-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'clusterUpdate.getClusterUpdateJob': { capName: "cluster-update", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'clusterUpdate.previewClusterUpdate': { capName: "cluster-update", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'clusterUpdate.startClusterUpdate': { capName: "cluster-update", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'color.getStatus': { capName: "color", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'color.setColor': { capName: "color", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'composer.applyBlocks': { capName: "composer", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1544,6 +1547,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "camera-streams",
   "carbon-monoxide",
   "climate-control",
+  "cluster-update",
   "color",
   "composer",
   "connectivity",
@@ -1845,6 +1849,7 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "broker",
   "calendar-source",
   "calendars",
+  "cluster-update",
   "composer",
   "core-blocks",
   "custom-model-registry",

@@ -166,6 +166,7 @@ import { MoleculerService } from './core/moleculer/moleculer.service'
 import { NetworkQualityService } from './core/network/network-quality.service'
 import { ReplEngineService } from './core/repl/repl-engine.service'
 import { ServerUpdateService } from './core/server-update/server-update.service'
+import { ClusterUpdateService } from './core/cluster-update/cluster-update.service'
 import { StorageService } from './core/storage/storage.service'
 import { StreamProbeService } from './core/streaming/stream-probe.service'
 import { bootManual } from './manual-boot'
@@ -788,6 +789,7 @@ async function bootstrap() {
       capabilityRegistry,
       streamProbe: app.get(StreamProbeService),
       serverUpdateService: app.get(ServerUpdateService),
+      clusterUpdateService: app.get(ClusterUpdateService),
     })
 
   // ── The core-cap mesh bridge, mounted BEFORE a single addon boots (D171) ──
