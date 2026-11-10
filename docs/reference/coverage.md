@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**243 units · 8413 source files · 236 units claimed by at least one document (8382 files).**
+**243 units · 8414 source files · 236 units claimed by at least one document (8383 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -129,9 +129,9 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-smtp-nodemailer` | 12 | `notification-center` | `decisions/adr-0999-inbound-camera-alarms-ride-existing-planes-smtp-is-a-broker-kind-http-is-the-addon-data-plane.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0996-connection-holding-addons-are-integration-instances.md` | — |
 | `packages/types/src/expression` | 12 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-08-automation-scripts-custom-devices.md`, `design/2026-08-09-automation-recipe-phase6-design.md`, +4 more | — |
 | `packages/types/src/ffmpeg` | 12 | `decode-and-data-planes` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ffmpeg.md`, `decisions/adr-0527-a-composites-tile-skew-is-a-probe-budget-not-a-clock.md`, +5 more, 3 ADRs | 2026-10-13 |
+| `packages/addon-admin-ui/src/modules` | 11 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-02 |
 | `packages/addon-pipeline-orchestrator/src/camera-sensors` | 11 | `pipeline-orchestration` | `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0673-a-camera-sensor-has-a-mode-and-one-bridge-emits-the-cameras-effective-onboard-motion.md`, +2 more, 1 ADR | 2026-10-24 |
 | `packages/addon-pipeline-orchestrator/src/widgets` | 11 | `pipeline-orchestration` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0931-a-packages-rule-can-open-a-candidate-from-a-scene-difference-and-confirm-it-with-the-llm.md`, 1 ADR | — |
-| `packages/addon-admin-ui/src/modules` | 10 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-02 |
 | `packages/addon-export-hap/src/multi-tier` | 10 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` _(covers)_, +3 more, 1 ADR | 2026-09-29 |
 | `packages/addon-pipeline/src/audio-analyzer` | 10 | `audio` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, +5 more | 2026-10-02 |
 | `packages/sdk` | 10 | `tooling` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0812-every-session-token-belongs-to-a-server-side-login-session-checked-on-every-verify.md` | 2026-10-21 |

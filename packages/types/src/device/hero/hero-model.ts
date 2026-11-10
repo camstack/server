@@ -160,17 +160,29 @@ export type HeroCall = z.infer<typeof HeroCallSchema>
 export const HeroConfirmSchema = z.enum(['off-while-running', 'unlock', 'install', 'press'])
 export type HeroConfirm = z.infer<typeof HeroConfirmSchema>
 
-export const HeroActionSchema = z.object({
+/**
+ * Declared by its interface, like {@link HeroPill}: an action sits in every control,
+ * and a second inferred copy of it pushes the `hero-layout` capability's type past what
+ * the compiler can print (TS7056).
+ */
+export interface HeroAction {
   /** Unique within the model; the `gated` list and the specs name it. */
+  readonly id: string
+  readonly label: HeroText
+  readonly icon: IconKey
+  readonly call: HeroCall
+  readonly emphasis: 'primary' | 'normal'
+  /** Ask before running it. */
+  readonly confirm: HeroConfirm | null
+}
+export const HeroActionSchema: z.ZodType<HeroAction> = z.object({
   id: z.string(),
   label: HeroTextSchema,
   icon: IconKeySchema,
   call: HeroCallSchema,
   emphasis: z.enum(['primary', 'normal']),
-  /** Ask before running it. */
   confirm: HeroConfirmSchema.nullable(),
 })
-export type HeroAction = z.infer<typeof HeroActionSchema>
 
 export const HeroControlSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('action'), action: HeroActionSchema }),
@@ -274,9 +286,18 @@ export const HeroBadgeSchema = z.object({
 })
 export type HeroBadge = z.infer<typeof HeroBadgeSchema>
 
+/** The id of the action a row recognises as "open the device's remote". */
+export const REMOTE_OPEN_ACTION_ID = 'remote.open'
+
 export const HeroRemoteSlotSchema = z.object({
   /** Saved commands; `null` = not known yet (the button still shows). */
   commands: z.number().int().nullable(),
+  /**
+   * The control a list row draws as the "open the remote" icon. Recognised by its id
+   * ({@link REMOTE_OPEN_ACTION_ID}); it changes no state, so a client opens the remote
+   * instead of running `call`. Absent on a model from an older server.
+   */
+  open: HeroActionSchema.optional(),
 })
 export type HeroRemoteSlot = z.infer<typeof HeroRemoteSlotSchema>
 

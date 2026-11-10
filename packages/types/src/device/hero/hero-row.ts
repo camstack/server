@@ -19,12 +19,21 @@
  *     time left on an armed timed run;
  *   - the trailing fact is the first of power, battery, consumables.
  *
+ *   - `extras` are the further inline controls of the types that carry more than one
+ *     ({@link ROW_EXTRAS_BY_TYPE}): climate mode and setpoint, a robot's return to base,
+ *     a player's volume and remote. Each is a control the model already has, named by id,
+ *     in that order and at most {@link ROW_EXTRAS_MAX}; one the model lacks, or lists in
+ *     `gated`, is absent, and the one `primary` already is never repeats. Empty = the
+ *     row of an older server: `primary` alone.
+ *
  * `projectDeviceRow` is pure and computes nothing: it selects from a
  * {@link HeroModel}. A row that needed a value the hero lacks would mean the
  * model is missing it, so the fix goes in the model.
  */
 import { z } from 'zod'
+import { DeviceType } from '../device-type.js'
 import {
+  REMOTE_OPEN_ACTION_ID,
   HeroControlSchema,
   HeroFactSchema,
   type HeroControl,
@@ -64,6 +73,12 @@ export const HeroRowModelSchema = z.object({
    * while armed. `null` when there is no slot, or the caller may not act.
    */
   timedRun: HeroRowTimedRunSchema.nullable(),
+  /**
+   * The further inline controls after `primary`, in order (see the header). The remote
+   * is an `action` with id `remote.open`: the client opens the remote, it does not run
+   * the call. Absent or empty = `primary` alone.
+   */
+  extras: z.array(HeroControlSchema).max(2).optional(),
   trailing: HeroFactSchema.nullable(),
 })
 export type HeroRowModel = z.infer<typeof HeroRowModelSchema>
@@ -103,6 +118,50 @@ function primaryOf(model: HeroModel): HeroControl | null {
   return null
 }
 
+/** The most extra controls one row carries. */
+export const ROW_EXTRAS_MAX = 2
+
+/**
+ * The extras of a type, by control id, in the order they are drawn. The ids are the
+ * model's own: a `remote.open` is read from the model's remote slot, every other
+ * from the rows. A type not listed has no extras.
+ */
+export const ROW_EXTRAS_BY_TYPE: Readonly<Record<string, readonly string[]>> = {
+  [DeviceType.Climate]: ['climate.mode', 'climate.target'],
+  [DeviceType.Thermostat]: ['climate.mode', 'climate.target'],
+  [DeviceType.Vacuum]: ['vacuum.base'],
+  [DeviceType.LawnMower]: ['mower.dock'],
+  [DeviceType.MediaPlayer]: ['volume.level', REMOTE_OPEN_ACTION_ID],
+}
+
+const controlId = (c: HeroControl): string => (c.kind === 'action' ? c.action.id : c.id)
+
+function extraOf(model: HeroModel, id: string): HeroControl | null {
+  if (id === REMOTE_OPEN_ACTION_ID) {
+    const open = model.remote?.open
+    if (open === undefined || model.gated.includes('remote')) return null
+    return { kind: 'action', action: open }
+  }
+  for (const row of model.rows) {
+    if (model.gated.includes(row.id)) continue
+    const found = row.controls.find((c) => controlId(c) === id)
+    if (found !== undefined) return found
+  }
+  return null
+}
+
+function extrasOf(model: HeroModel, primary: HeroControl | null): HeroControl[] {
+  const ids = ROW_EXTRAS_BY_TYPE[model.type] ?? []
+  const taken = primary === null ? null : controlId(primary)
+  return ids
+    .filter((id) => id !== taken)
+    .flatMap((id) => {
+      const found = extraOf(model, id)
+      return found === null ? [] : [found]
+    })
+    .slice(0, ROW_EXTRAS_MAX)
+}
+
 function statusLineOf(model: HeroModel, trailing: HeroFact | null): HeroText[] {
   const playing = model.rows.find((r) => r.id === 'now-playing')?.status ?? null
   const head = playing ?? model.title
@@ -133,6 +192,7 @@ function timedRunOf(model: HeroModel): HeroRowTimedRun | null {
 
 export function projectDeviceRow(model: HeroModel): HeroRowModel {
   const trailing = trailingOf(model.facts)
+  const primary = primaryOf(model)
   return {
     deviceId: model.deviceId,
     name: model.name,
@@ -142,8 +202,9 @@ export function projectDeviceRow(model: HeroModel): HeroRowModel {
     look: model.look,
     scene: model.scene,
     statusLine: statusLineOf(model, trailing),
-    primary: primaryOf(model),
+    primary,
     timedRun: timedRunOf(model),
+    extras: extrasOf(model, primary),
     trailing,
   }
 }

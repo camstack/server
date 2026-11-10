@@ -52,6 +52,7 @@ export {
   type HeroPowerSupplySlot,
   type HeroProvenance,
   type HeroRemoteSlot,
+  REMOTE_OPEN_ACTION_ID,
   type HeroRow,
   type HeroRowId,
   type HeroTimedRunSlot,

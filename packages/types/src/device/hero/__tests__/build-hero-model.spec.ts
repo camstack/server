@@ -394,15 +394,20 @@ describe('corner slots', () => {
       DeviceType.Switch,
       DeviceType.Generic,
     ]) {
-      expect(build(type, ['remote'], {}, { remoteCommands: 3 }).remote).toEqual({ commands: 3 })
+      expect(build(type, ['remote'], {}, { remoteCommands: 3 }).remote).toMatchObject({
+        commands: 3,
+        open: { id: 'remote.open' },
+      })
     }
   })
 
   it('no saved command means no button; not knowing how many still shows it', () => {
     expect(build(DeviceType.Switch, ['remote'], {}, { remoteCommands: 0 }).remote).toBeNull()
-    expect(build(DeviceType.Switch, ['remote'], {}, { remoteCommands: null }).remote).toEqual({
-      commands: null,
-    })
+    expect(build(DeviceType.Switch, ['remote'], {}, { remoteCommands: null }).remote).toMatchObject(
+      {
+        commands: null,
+      },
+    )
     expect(build(DeviceType.Switch, [], {}, { remoteCommands: 3 }).remote).toBeNull()
   })
 

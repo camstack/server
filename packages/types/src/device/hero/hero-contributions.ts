@@ -39,6 +39,7 @@ import {
   type HeroContribution,
 } from './hero-contribution-kit.js'
 import type { HeroContext, StateReading } from './hero-fragment.js'
+import { REMOTE_OPEN_ACTION_ID } from './hero-model.js'
 import type {
   HeroArgs,
   HeroBadge,
@@ -463,7 +464,20 @@ const powerSourceContribution = contribution(
 const remoteContribution: HeroContribution = {
   cap: 'remote',
   contribute: (_slice, ctx) =>
-    ctx.remoteCommands === 0 ? {} : { remote: { commands: ctx.remoteCommands } },
+    ctx.remoteCommands === 0
+      ? {}
+      : {
+          remote: {
+            commands: ctx.remoteCommands,
+            open: action(
+              REMOTE_OPEN_ACTION_ID,
+              heroText('Remote', 'Telecomando'),
+              'gamepad-2',
+              'remote',
+              'open',
+            ),
+          },
+        },
 }
 
 const ATTENTION_STATUSES: readonly string[] = ['low', 'empty', 'replace']
