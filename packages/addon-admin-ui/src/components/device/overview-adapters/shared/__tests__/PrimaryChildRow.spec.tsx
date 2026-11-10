@@ -45,6 +45,8 @@ interface StubChild {
 
 vi.mock('@camstack/types', () => ({
   DeviceType: { Container: 'container' },
+  // No container in these specs declares a preference.
+  primaryChildPreferenceOf: () => undefined,
 }))
 
 // Stub the ui-library boundary: a lightweight picker that emits the chosen

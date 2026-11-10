@@ -37,7 +37,13 @@ const refs = CHILDREN.map((c) => ({ id: c.id, stableId: c.stableId, type: c.type
 describe('the key a primary-child pick is written under', () => {
   it('resolves when the pick is the stableId — the canonical key', () => {
     expect(
-      resolveContainerPrimaryChild(refs, CHILDREN[0]!.stableId, undefined, CONTAINER_TYPE)?.id,
+      resolveContainerPrimaryChild(
+        refs,
+        CHILDREN[0]!.stableId,
+        undefined,
+        CONTAINER_TYPE,
+        undefined,
+      )?.id,
     ).toBe(4131)
   })
 
@@ -50,6 +56,7 @@ describe('the key a primary-child pick is written under', () => {
       childEntityId(CHILDREN[0]!),
       undefined,
       CONTAINER_TYPE,
+      undefined,
     )
     expect(fallback?.id).toBe(4337)
   })
@@ -67,6 +74,7 @@ describe('the key a primary-child pick is written under', () => {
         'binary_sensor.contatto_porta_front_door',
         undefined,
         CONTAINER_TYPE,
+        undefined,
       )?.id,
     ).toBe(4131)
   })
