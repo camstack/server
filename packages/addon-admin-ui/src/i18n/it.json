@@ -6206,7 +6206,17 @@
       "fromDevice": "Dal dispositivo",
       "anyDevice": "Qualsiasi dispositivo",
       "cronHint": "Sei campi, prima i secondi. <code>0 30 23 * * *</code> significa ogni notte alle 23:30.",
-      "manualHint": "Viene eseguito solo quando qualcuno preme <b>Esegui azioni</b>. Le condizioni vengono comunque valutate — un'esecuzione manuale è un'esecuzione, non un override."
+      "manualHint": "Viene eseguito solo quando qualcuno preme <b>Esegui azioni</b>. Le condizioni vengono comunque valutate — un'esecuzione manuale è un'esecuzione, non un override.",
+      "becomesValue": "diventa un valore",
+      "stopsBeing": "smette di essere",
+      "crossesAbove": "supera",
+      "reachesAtLeast": "raggiunge almeno",
+      "dropsBelow": "scende sotto",
+      "reachesAtMost": "raggiunge al massimo",
+      "entersRange": "entra nell'intervallo",
+      "leavesRange": "esce dall'intervallo",
+      "rangeFrom": "Da",
+      "rangeTo": "A"
     },
     "valueInput": {
       "oneTwoThree": "uno, due, tre"
@@ -6295,6 +6305,14 @@
       "if": "Solo se…",
       "hint": "Controllato quando si arriva a questo passo. Se uno stato non è leggibile, il passo e il suo alternativo vengono saltati.",
       "else": "Altrimenti, esegui…"
+    },
+    "hold": {
+      "label": "Per",
+      "held": "mantenuto",
+      "stable": "stabile",
+      "none": "nessuna attesa",
+      "seconds": "Secondi",
+      "tolerance": "± tolleranza"
     }
   },
   "accessDenied": {

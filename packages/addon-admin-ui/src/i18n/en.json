@@ -6131,7 +6131,17 @@
       "fromDevice": "From device",
       "anyDevice": "Any device",
       "cronHint": "Six fields, seconds first. <code>0 30 23 * * *</code> is every night at 23:30.",
-      "manualHint": "Runs only when someone presses <b>Run actions</b>. The conditions are still evaluated — a manual run is a run, not an override."
+      "manualHint": "Runs only when someone presses <b>Run actions</b>. The conditions are still evaluated — a manual run is a run, not an override.",
+      "becomesValue": "becomes a value",
+      "stopsBeing": "stops being",
+      "crossesAbove": "rises above",
+      "reachesAtLeast": "reaches at least",
+      "dropsBelow": "drops below",
+      "reachesAtMost": "reaches at most",
+      "entersRange": "enters the range",
+      "leavesRange": "leaves the range",
+      "rangeFrom": "From",
+      "rangeTo": "To"
     },
     "valueInput": {
       "oneTwoThree": "one, two, three"
@@ -6220,6 +6230,14 @@
       "if": "Only if…",
       "hint": "Checked when this step is reached. If a state cannot be read, the step and its else are both skipped.",
       "else": "Otherwise, run…"
+    },
+    "hold": {
+      "label": "For",
+      "held": "held",
+      "stable": "stable",
+      "none": "no hold",
+      "seconds": "Seconds",
+      "tolerance": "± tolerance"
     }
   },
   "accessDenied": {

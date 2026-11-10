@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
 import { deviceIdOfBinding, globalBindingFor } from './expression-binding-devices'
 import { FieldPicker, type FieldSelection, PickerLabel } from './FieldPicker'
+import { HoldFields } from './HoldFields'
 
 export interface ExpressionLeafRowProps {
   readonly leaf: ExpressionLeaf
@@ -46,7 +47,7 @@ export function ExpressionLeafRow({ leaf, devices, onChange }: ExpressionLeafRow
   const entries = Object.entries(leaf.bindings)
 
   const withBindings = (bindings: BindingMap): void => {
-    onChange({ kind: 'expression', expr: leaf.expr, bindings })
+    onChange({ ...leaf, bindings })
   }
 
   return (
@@ -57,7 +58,7 @@ export function ExpressionLeafRow({ leaf, devices, onChange }: ExpressionLeafRow
           value={leaf.expr}
           placeholder={t('automation.expressionLeafRow.indoorOutdoor5', 'indoor - outdoor > 5')}
           bindings={Object.keys(leaf.bindings)}
-          onChange={(expr) => onChange({ kind: 'expression', expr, bindings: leaf.bindings })}
+          onChange={(expr) => onChange({ ...leaf, expr })}
         />
         <span className="mt-1 block text-xs text-foreground-subtle">
           {t(
@@ -95,6 +96,17 @@ export function ExpressionLeafRow({ leaf, devices, onChange }: ExpressionLeafRow
         >
           <Plus className="h-3.5 w-3.5" /> {t('common.name')}
         </Button>
+      </div>
+
+      <div className="flex flex-wrap items-end gap-2">
+        <HoldFields
+          hold={leaf.for}
+          modes={['held']}
+          onChange={(next) => {
+            const { for: _for, ...rest } = leaf
+            onChange(next === undefined ? rest : { ...rest, for: next })
+          }}
+        />
       </div>
     </div>
   )

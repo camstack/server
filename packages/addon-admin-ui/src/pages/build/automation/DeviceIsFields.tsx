@@ -16,6 +16,7 @@ import { baseUnitForQuantity } from '@camstack/types'
 import { QuantityValueInput, Select, typedToStored } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
+import { HoldFields } from './HoldFields'
 import { FieldPicker, type FieldSelection, PickerLabel, useFieldDescriptor } from './FieldPicker'
 import { type OperatorChoice, operatorChoices } from './recipe-parts'
 import { declaredQuantity, ListValueInput, ScalarValueInput, toList, toScalar } from './ValueInput'
@@ -100,6 +101,15 @@ export function DeviceIsFields({ leaf, devices, onChange }: DeviceIsFieldsProps)
           />
         )}
       </label>
+
+      <HoldFields
+        hold={leaf.for}
+        modes={['held', 'stable']}
+        onChange={(next) => {
+          const { for: _for, ...rest } = leaf
+          onChange(next === undefined ? rest : { ...rest, for: next })
+        }}
+      />
     </div>
   )
 }

@@ -2,24 +2,25 @@
  * The event rows of the `when` tree that are not a scene: a device value that
  * BECOMES something, a system event, a schedule and a manual run.
  *
- * The three timing knobs on a "becomes" row are not decoration and are worth
- * the screen space:
+ * The knobs on a "becomes" row are not decoration and are worth the screen space:
  *
- *  - **becomes** — empty means *any change*, which is a different automation
- *    from one that fires on a particular value. It is a checkbox rather than an
- *    empty text box because "" is itself a value a string field can take.
- *  - **held for** — the new value must HOLD. This is what separates "the door
- *    opened" from "the door has been open for two minutes".
+ *  - **becomes** — any change, one value, a threshold (rises above / drops
+ *    below) or a range (enters / leaves). A row fires on the TRANSITION into it,
+ *    never on a re-report, so there is no separate "only on a change" switch.
+ *  - **for** — the transition must HOLD (or, with "any change", the new value
+ *    must stay put). This is what separates "the door opened" from "the door
+ *    has been open for two minutes". See `HoldFields`.
  *  - **debounce** — a burst collapses into one run. A contact sensor that
  *    reports three times in 400 ms is one event to a person.
  */
 
-import type { AutomationLeaf, DeviceBecomesLeaf } from '@camstack/types'
-import { EventCategory } from '@camstack/types'
-import { Checkbox, Input, Select } from '@camstack/ui-library'
+import type { AutomationLeaf, BecomesOperator, DeviceBecomesLeaf, HoldSpec } from '@camstack/types'
+import { BecomesOperatorSchema, EventCategory, holdOf } from '@camstack/types'
+import { Input, Select } from '@camstack/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
 import { BuildDevicePicker } from '../flow/BuildDevicePicker'
 import type { AutomationDevice } from './automation-data'
+import { HoldFields } from './HoldFields'
 import { FieldPicker, type FieldSelection, PickerLabel, useFieldDescriptor } from './FieldPicker'
 import { type ScalarValue, ScalarValueInput } from './ValueInput'
 
@@ -78,8 +79,9 @@ interface DeviceBecomesFieldsProps {
  */
 interface DeviceBecomesOptions {
   readonly becomes?: ScalarValue
-  readonly edge?: boolean
-  readonly forMs?: number
+  readonly operator?: BecomesOperator
+  readonly value?: DeviceBecomesLeaf['value']
+  readonly hold?: HoldSpec
   readonly debounceMs?: number
 }
 
@@ -90,10 +92,49 @@ function buildBecomesLeaf(field: FieldSelection, options: DeviceBecomesOptions):
     cap: field.cap,
     fieldPath: field.fieldPath,
     ...(options.becomes === undefined ? {} : { becomes: options.becomes }),
-    ...(options.edge === undefined ? {} : { edge: options.edge }),
-    ...(options.forMs === undefined ? {} : { forMs: options.forMs }),
+    ...(options.operator === undefined || options.value === undefined
+      ? {}
+      : {
+          operator: options.operator,
+          value: options.value,
+        }),
+    ...(options.hold === undefined ? {} : { for: options.hold }),
     ...(options.debounceMs === undefined ? {} : { debounceMs: options.debounceMs }),
   }
+}
+
+/** What a row says it waits for: no predicate, one value, a threshold or a range. */
+type BecomesChoice = 'any' | 'becomes' | BecomesOperator
+
+function choiceOf(leaf: DeviceBecomesLeaf): BecomesChoice {
+  if (leaf.operator !== undefined) return leaf.operator
+  return leaf.becomes === undefined ? 'any' : 'becomes'
+}
+
+const CHOICES: readonly BecomesChoice[] = [
+  'any',
+  'becomes',
+  'gt',
+  'gte',
+  'lt',
+  'lte',
+  'between',
+  'outside',
+]
+
+function isRange(choice: BecomesChoice): boolean {
+  return choice === 'between' || choice === 'outside'
+}
+
+function numberOf(raw: string): number | undefined {
+  if (raw.trim() === '') return undefined
+  const n = Number(raw)
+  return Number.isNaN(n) ? undefined : n
+}
+
+/** The numeric operand of a threshold row, when the stored value is one. */
+function operandOf(value: DeviceBecomesLeaf['value']): number | undefined {
+  return typeof value === 'number' ? value : undefined
 }
 
 export function DeviceBecomesFields({
@@ -108,11 +149,54 @@ export function DeviceBecomesFields({
     fieldPath: trigger.fieldPath,
   }
   const descriptor = useFieldDescriptor(selection)
+  const hold = holdOf(trigger)
+  const choice = choiceOf(trigger)
+  const threshold = operandOf(trigger.value)
+  const bounds: readonly [number | undefined, number | undefined] = Array.isArray(trigger.value)
+    ? [trigger.value[0], trigger.value[1]]
+    : [undefined, undefined]
+  // A leaf stored before holds carried `forMs` and `edge`: editing it writes `for` and drops both.
   const options: DeviceBecomesOptions = {
     ...(trigger.becomes === undefined ? {} : { becomes: trigger.becomes }),
-    ...(trigger.edge === undefined ? {} : { edge: trigger.edge }),
-    ...(trigger.forMs === undefined ? {} : { forMs: trigger.forMs }),
+    ...(trigger.operator === undefined || trigger.value === undefined
+      ? {}
+      : { operator: trigger.operator, value: trigger.value }),
+    ...(hold === undefined ? {} : { hold }),
     ...(trigger.debounceMs === undefined ? {} : { debounceMs: trigger.debounceMs }),
+  }
+  const { becomes: _becomes, operator: _operator, value: _value, ...kept } = options
+
+  const setChoice = (raw: string): void => {
+    if (raw === 'any') {
+      onChange(buildBecomesLeaf(selection, kept))
+      return
+    }
+    if (raw === 'becomes') {
+      onChange(buildBecomesLeaf(selection, { ...kept, becomes: '' }))
+      return
+    }
+    const operator = BecomesOperatorSchema.safeParse(raw)
+    if (!operator.success) return
+    onChange(
+      buildBecomesLeaf(selection, {
+        ...kept,
+        operator: operator.data,
+        value: isRange(operator.data) ? [0, 0] : 0,
+      }),
+    )
+  }
+
+  const choiceLabels: Readonly<Record<BecomesChoice, string>> = {
+    any: t('automation.triggerEditor.anyChange', 'any change'),
+    becomes: t('automation.triggerEditor.becomesValue', 'becomes a value'),
+    gt: t('automation.triggerEditor.crossesAbove', 'rises above'),
+    gte: t('automation.triggerEditor.reachesAtLeast', 'reaches at least'),
+    lt: t('automation.triggerEditor.dropsBelow', 'drops below'),
+    lte: t('automation.triggerEditor.reachesAtMost', 'reaches at most'),
+    between: t('automation.triggerEditor.entersRange', 'enters the range'),
+    outside: t('automation.triggerEditor.leavesRange', 'leaves the range'),
+    eq: t('automation.triggerEditor.becomesValue', 'becomes a value'),
+    ne: t('automation.triggerEditor.stopsBeing', 'stops being'),
   }
 
   return (
@@ -123,67 +207,84 @@ export function DeviceBecomesFields({
         onChange={(next) => onChange(buildBecomesLeaf(next, options))}
       />
 
-      <div className="min-w-[11rem] flex-1">
+      <label className="min-w-[10rem]">
         <PickerLabel>{t('automation.triggerEditor.becomes', 'Becomes')}</PickerLabel>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-1.5 text-xs text-foreground-subtle">
-            <Checkbox
-              checked={trigger.becomes === undefined}
-              onChange={(e) =>
+        <Select
+          value={choice}
+          onChange={(e) => setChoice(e.target.value)}
+          options={CHOICES.map((c) => ({ value: c, label: choiceLabels[c] }))}
+        />
+      </label>
+
+      {choice === 'becomes' && trigger.becomes !== undefined && (
+        <div className="min-w-[9rem] flex-1">
+          <PickerLabel>{t('automation.conditionRow.value', 'Value')}</PickerLabel>
+          <ScalarValueInput
+            value={trigger.becomes}
+            field={descriptor}
+            deviceId={selection.deviceId}
+            cap={selection.cap}
+            onChange={(becomes) => onChange(buildBecomesLeaf(selection, { ...options, becomes }))}
+          />
+        </div>
+      )}
+
+      {trigger.operator !== undefined && !isRange(choice) && (
+        <label className="w-28">
+          <PickerLabel>{t('automation.conditionRow.value', 'Value')}</PickerLabel>
+          <Input
+            type="number"
+            step="any"
+            value={threshold === undefined ? '' : String(threshold)}
+            onChange={(e) => {
+              const value = numberOf(e.target.value)
+              if (value === undefined) return
+              onChange(
+                buildBecomesLeaf(selection, { ...options, operator: trigger.operator, value }),
+              )
+            }}
+          />
+        </label>
+      )}
+
+      {trigger.operator !== undefined &&
+        isRange(choice) &&
+        [0, 1].map((i) => (
+          <label key={i} className="w-24">
+            <PickerLabel>
+              {i === 0
+                ? t('automation.triggerEditor.rangeFrom', 'From')
+                : t('automation.triggerEditor.rangeTo', 'To')}
+            </PickerLabel>
+            <Input
+              type="number"
+              step="any"
+              value={bounds[i] === undefined ? '' : String(bounds[i])}
+              onChange={(e) => {
+                const value = numberOf(e.target.value)
+                if (value === undefined) return
+                const next: [number, number] = [bounds[0] ?? 0, bounds[1] ?? 0]
+                next[i] = value
                 onChange(
                   buildBecomesLeaf(selection, {
                     ...options,
-                    ...(e.target.checked ? { becomes: undefined } : { becomes: '' }),
+                    operator: trigger.operator,
+                    value: next,
                   }),
                 )
-              }
+              }}
             />
-            {t('automation.triggerEditor.anyChange', 'any change')}
           </label>
-          {trigger.becomes !== undefined && (
-            <ScalarValueInput
-              value={trigger.becomes}
-              field={descriptor}
-              deviceId={selection.deviceId}
-              cap={selection.cap}
-              onChange={(becomes) => onChange(buildBecomesLeaf(selection, { ...options, becomes }))}
-            />
-          )}
-        </div>
-      </div>
+        ))}
 
-      <label className="flex items-center gap-1.5 text-xs text-foreground-subtle">
-        <Checkbox
-          checked={trigger.edge === true}
-          onChange={(e) =>
-            onChange(
-              buildBecomesLeaf(selection, {
-                ...options,
-                ...(e.target.checked ? { edge: true } : { edge: undefined }),
-              }),
-            )
-          }
-        />
-        {t('automation.triggerEditor.onlyOnAChange', 'only on a change')}
-      </label>
-
-      <label className="w-28">
-        <PickerLabel>{t('automation.triggerEditor.heldForS', 'Held for (s)')}</PickerLabel>
-        <Input
-          type="number"
-          min={0}
-          value={trigger.forMs === undefined ? '' : String(trigger.forMs / 1000)}
-          placeholder="0"
-          onChange={(e) =>
-            onChange(
-              buildBecomesLeaf(selection, {
-                ...options,
-                forMs: toMs(e.target.value),
-              }),
-            )
-          }
-        />
-      </label>
+      <HoldFields
+        hold={hold}
+        modes={['held', 'stable']}
+        onChange={(next) => {
+          const { hold: _hold, ...rest } = options
+          onChange(buildBecomesLeaf(selection, next === undefined ? rest : { ...rest, hold: next }))
+        }}
+      />
 
       <label className="w-28">
         <PickerLabel>{t('automation.triggerEditor.debounceS', 'Debounce (s)')}</PickerLabel>
