@@ -2,7 +2,9 @@ import {
   type ActionEntry,
   type ActionStep,
   type ActionRunChanged,
+  type CapCall,
   type CapCaller,
+  commandOrigin,
   type DeviceDirectory,
   DeviceType,
   createRecordsAccess,
@@ -10,6 +12,7 @@ import {
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 
+import { runWithCapCallContext } from '../../../kernel/cap-call-scope.js'
 import { makeRecordsWorld } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { ActionsService, type ActionSources } from '../actions-service.js'
 import { ActionsStore } from '../actions-store.js'
@@ -81,12 +84,7 @@ async function world(options?: {
     logger: log.logger,
     now: () => clock,
   })
-  const calls: Array<{
-    deviceId: number
-    cap: string
-    method: string
-    args: unknown
-  }> = []
+  const calls: CapCall[] = []
   const sourceRuns: Array<{
     addonId: string
     actionId: string
@@ -176,6 +174,35 @@ describe('actions — internal actions', () => {
     expect(traces).toHaveLength(1)
     expect(traces[0]?.steps.map((s) => s.path)).toEqual(['steps.0'])
     expect(traces[0]?.outcome).toBe('ran')
+  })
+
+  it('threads a rule fire from the call context onto every cap call (D705)', async () => {
+    const w = await world()
+    const { action } = await w.service.create({
+      action: {
+        name: 'Alarm',
+        steps: [
+          { kind: 'cap', deviceId: 1023, cap: 'alarm-panel', method: 'trigger', args: {} },
+          { kind: 'cap', deviceId: 44, cap: 'switch', method: 'setState', args: { on: true } },
+        ],
+      },
+    })
+    const fire = {
+      ruleId: 'rule-night',
+      ruleName: 'Night',
+      deviceId: 12,
+      sourceDeviceId: 44,
+      recordId: 'rec-1',
+      timestamp: 9,
+    }
+    const result = await runWithCapCallContext(commandOrigin({ kind: 'rule', fire }).context, () =>
+      w.service.run({ actionId: action.id, wait: true, caller: ADMIN }),
+    )
+    expect(result.outcome).toBe('ran')
+    expect(w.calls.map((call) => call.origin)).toEqual([
+      { kind: 'action', actionId: action.id, runId: result.runId, ruleFire: fire },
+      { kind: 'action', actionId: action.id, runId: result.runId, ruleFire: fire },
+    ])
   })
 
   it('a failed step stops the sequence: later steps are not-run and the run is failed', async () => {
@@ -272,8 +299,12 @@ describe('actions — internal actions', () => {
   it('an action without minDelaySec is never throttled, and update can clear the window with 0', async () => {
     const w = await world()
     const { action } = await w.service.create({ action: { name: 'Free', steps: [STEP(1)] } })
-    expect((await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })).outcome).toBe('ran')
-    expect((await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })).outcome).toBe('ran')
+    expect((await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })).outcome).toBe(
+      'ran',
+    )
+    expect((await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })).outcome).toBe(
+      'ran',
+    )
     const set = await w.service.update({ actionId: action.id, action: { minDelaySec: 60 } })
     expect(set.action.minDelaySec).toBe(60)
     const cleared = await w.service.update({ actionId: action.id, action: { minDelaySec: 0 } })

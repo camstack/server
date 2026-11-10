@@ -1,4 +1,6 @@
+import { commandOrigin } from '@camstack/types/addon'
 import { describe, it, expect } from 'vitest'
+import { readCurrentCommandOrigin } from '../../cap-call-scope.js'
 import {
   CAP_METHOD_NOT_IMPLEMENTED,
   createChildCapDispatch,
@@ -411,6 +413,29 @@ describe('createChildCapDispatch', () => {
     ])
     const union = perProvider.flat()
     expect(union).toEqual([])
+  })
+
+  it('enters the command-origin scope for the provider, and only when the call carried one', async () => {
+    let seen: unknown
+    const provider: FakeProvider = {
+      trigger: () => {
+        seen = readCurrentCommandOrigin()
+        return undefined
+      },
+    }
+    const dispatch = createChildCapDispatch(makeSingletonDeps('alarm-panel', provider))
+    const claim = { kind: 'action' as const, actionId: 'a', runId: 'r' }
+    await dispatch({
+      capName: 'alarm-panel',
+      method: 'trigger',
+      args: { deviceId: 1 },
+      origin: claim,
+    })
+    expect(seen).toEqual(claim)
+    expect(readCurrentCommandOrigin()).toBeUndefined()
+    await dispatch({ capName: 'alarm-panel', method: 'trigger', args: { deviceId: 1 } })
+    expect(seen).toBeUndefined()
+    expect(commandOrigin(claim).context).toBeDefined()
   })
 
   it('(m) a SINGLETON cap missing a method still throws (not silently emptied)', async () => {

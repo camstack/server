@@ -56,9 +56,12 @@ import {
   type NcAlarmModeNotifyPolicy,
   resolveModeDelays,
   resolveModeNotifyPolicy,
+  ruleFireOfClaim,
   syncActiveAlarmProfileSettings,
 } from '@camstack/types'
+import { readCurrentCommandOrigin } from '@camstack/server/system'
 import { z } from 'zod'
+import { fireRefOf } from '../rule-fire-origin.js'
 import {
   ARM_ANYWAY_TTL_MS,
   decideArm,
@@ -1909,14 +1912,40 @@ export class NcAlarmPanelDevice extends BaseDevice<typeof ncAlarmPanelSchema> {
         }
       },
       disarm: async () => this.disarm(),
-      // A MANUAL or external press: a person in the UI, an API caller, an exporter. It
-      // carries no source by construction — a rule press on this panel never comes through
-      // here, it is {@link triggerFromRule} with its match in the call.
+      // A person's press carries no command origin. An Action run does: the rule fire
+      // that started it (D705), or none — and none is refused while the arm excludes
+      // sensors (D735). `triggerFromRule` stays the in-process door for the auto-trigger.
       trigger: async () => {
-        this.press(null, Date.now())
+        this.pressFromCall(Date.now())
       },
     }
     this.ctx.registerNativeCap(alarmPanelCapability, provider)
+  }
+
+  /**
+   * `alarm-panel.trigger` as an Action step sees it. A rule fire on the call is
+   * the match; an Action with none is anonymous and fail-closed while anything
+   * is excluded. A press with no command origin at all is a person (the control).
+   */
+  private pressFromCall(now: number): void {
+    const claim = readCurrentCommandOrigin()
+    const fire = ruleFireOfClaim(claim)
+    if (fire !== undefined) {
+      this.press(fireRefOf(fire), now)
+      return
+    }
+    const excluded = this.excludedDevices()
+    if (claim?.kind === 'action' && excluded.length > 0) {
+      this.ctx.logger.error(
+        'alarm trigger REFUSED — an action press carried no source while the arm excludes sensors',
+        {
+          tags: { deviceId: this.id },
+          meta: { excluded: excluded.join(','), state: this.currentState() },
+        },
+      )
+      throw new Error('alarm trigger refused: no source, and the current arm excludes sensors')
+    }
+    this.press(null, now)
   }
 
   /**

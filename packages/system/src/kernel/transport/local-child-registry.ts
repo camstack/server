@@ -955,6 +955,7 @@ export class LocalChildRegistry {
       // args (overwriting any claim) — the sibling short-circuit's half of
       // D787. Absent for a hub-originated call: the child then strips a claim.
       ...(input.callerAddonId !== undefined ? { callerAddonId: input.callerAddonId } : {}),
+      ...(input.origin !== undefined ? { origin: input.origin } : {}),
     }
   }
 
@@ -1286,6 +1287,7 @@ export class LocalChildRegistry {
           args: materialise(),
           ...(out.deviceId !== undefined ? { deviceId: out.deviceId } : {}),
           ...(out.nodeId !== undefined ? { nodeId: out.nodeId } : {}),
+          ...(out.origin !== undefined ? { origin: out.origin } : {}),
           ...(out.native === true ? { native: true } : {}),
           // The ORIGINATING addon, known here because the parent owns the UDS
           // connection this frame arrived on (`childId` was captured at

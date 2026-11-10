@@ -30,6 +30,7 @@ import {
   readNodePin,
   withCapInputDefaults,
 } from '@camstack/types/addon'
+import { runWithCapCallContext } from '../cap-call-scope.js'
 import { liftRoutingHints } from '../transport/cap-routing-hints.js'
 import { stampCallerAddonId } from '../transport/cap-route-resolver.js'
 import { TRPCClientError, type TRPCLink } from '@trpc/client'
@@ -833,16 +834,20 @@ export function deviceCapResolverLink<TRouter extends AnyRouter>(
       if (typeof deviceId !== 'number' || !Number.isFinite(deviceId)) return next(op)
 
       return observable((observer) => {
-        dispatch(parsed.capName, parsed.method, input)
-          .then((data) => {
-            observer.next({ result: { type: 'data', data } })
-            observer.complete()
-          })
-          .catch((cause: unknown) => {
-            observer.error(
-              TRPCClientError.from(cause instanceof Error ? cause : new Error(String(cause))),
-            )
-          })
+        // The origin is on `op.context` (D1022). Enter it before dispatch so a
+        // hub-local child call can copy the claim onto the wire.
+        runWithCapCallContext(op.context, () => {
+          dispatch(parsed.capName, parsed.method, input)
+            .then((data) => {
+              observer.next({ result: { type: 'data', data } })
+              observer.complete()
+            })
+            .catch((cause: unknown) => {
+              observer.error(
+                TRPCClientError.from(cause instanceof Error ? cause : new Error(String(cause))),
+              )
+            })
+        })
         return () => {}
       })
     }

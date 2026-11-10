@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Notification rules and buttons run Actions from the Actions page; existing rule actions and sequences are converted to Actions on the first start
+- A rule fire's Action that presses the alarm panel is attributed to that fire; an Action press with no fire is refused while the arm excludes sensors
 
 ## [1.2.689] - 2026-11-09
 

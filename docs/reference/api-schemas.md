@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1044 shared schemas.**
+**1040 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -3920,11 +3920,6 @@ Enum: `"idle" \| "cleaning" \| "spot" \| "following" \| "goto" \| "returning" \|
 - `lightLevel`: `number`
 - `lastChangedAt`: `number`
 
-### `NcActionBindingSchema`
-
-- `{ kind: "sequence"; sequenceId: string }`
-- `{ kind: "do"; action: NcRuleActionSchema }`
-
 ### `NcAlarmBlockingEditSchema`
 
 - `mode`: `AlarmArmModeSchema`
@@ -4215,9 +4210,9 @@ Enum: `"pending" \| "sent" \| "dead"`
 - `timestamp`: `number`
 - `systemEvent?`: `{ kind: NcSystemEventKindSchema; subject: string; title: string; body: string; data: Record<string, unknown> }`
 
-### `NcHookBindingsSchema`
+### `NcHookActionIdsSchema`
 
-Array of `NcActionBindingSchema`
+Array of `string`
 
 ### `NcLinkedCameraModeSchema`
 
@@ -4261,17 +4256,12 @@ Enum: `"scene-boxes" \| "crop" \| "clean" \| "none"`
 - `values`: `string[]`
 - `maxDistance?`: `number = 1`
 
-### `NcRuleActionSchema`
-
-- `{ kind: "wait"; seconds: number }`
-- `{ kind: "cap"; target?: { kind: "devices"; ids: number[] } \| { kind: "domain"; deviceType?: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "heater" \| "dryer" \| "gateway" \| "heat-pump"; roomId?: string } \| { kind: "var"; name: string }; actionId?: string; deviceId?: number; cap: string; method: string; args?: Record<string, unknown> }`
-
 ### `NcRuleActionsSchema`
 
-- `onActivation?`: `NcHookBindingsSchema`
-- `onDeactivation?`: `NcHookBindingsSchema`
-- `onTrigger?`: `NcHookBindingsSchema`
-- `onTriggerOff?`: `NcHookBindingsSchema`
+- `onActivation?`: `NcHookActionIdsSchema`
+- `onDeactivation?`: `NcHookActionIdsSchema`
+- `onTrigger?`: `NcHookActionIdsSchema`
+- `onTriggerOff?`: `NcHookActionIdsSchema`
 - `buttons?`: `NcRuleNotificationButtonSchema[]`
 
 ### `NcRuleClearableKeySchema`
@@ -4320,7 +4310,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 
 - `id`: `string`
 - `label`: `string`
-- `sequenceId`: `string`
+- `actionId`: `string`
 - `icon?`: `NotificationActionIconSchema`
 - `destructive?`: `boolean`
 
@@ -4407,19 +4397,6 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 ### `NcSensorTransitionSchema`
 
 Enum: `"raised" \| "cleared"`
-
-### `NcSharedSequenceInputSchema`
-
-- `name`: `string`
-- `minDelaySec?`: `number`
-- `actions`: `NcRuleActionSchema[]`
-
-### `NcSharedSequenceSchema`
-
-- `id`: `string`
-- `name`: `string`
-- `minDelaySec?`: `number`
-- `actions`: `NcRuleActionSchema[]`
 
 ### `NcSnoozeInputSchema`
 

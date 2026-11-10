@@ -120,7 +120,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-migrations-well-formed.ts` | The migration catalogue is well formed (D987). |
 | `scripts/check-model-notices-shipped.ts` | Model-notice guard: every package that DOWNLOADS model weights, or carries the code that does, ships the third-party model notice, byte-identical to the root copy, and the Docker image bakes it in. |
 | `scripts/check-nc-mirrors-in-sync.ts` | The viewer (`camstack/`) keeps hand MIRRORS of notification-center shapes it cannot import, and nothing kept them equal (final review m4). This makes "they are the same" checkable instead of promised. |
-| `scripts/check-nc-no-executor.ts` | The notification centre runs Actions; it does not execute steps (planning#473, D1025). |
+| `scripts/check-nc-no-executor.ts` | The notification centre runs Actions; it does not execute steps (planning#473, D1028). |
 | `scripts/check-nc-one-shot.ts` | A notification is ONE message and nothing follows it (D692). |
 | `scripts/check-nc-simulate-mirror.ts` | NC simulate-payload mirror guard — what the admin UI SENDS is what the server ACCEPTS. |
 | `scripts/check-nc-system-filter-scope.ts` | System-event filter-scope guard — the ENGINE narrows exactly what the EDITOR says it narrows. |

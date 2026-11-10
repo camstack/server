@@ -24,7 +24,12 @@
  *               and fans the call over UDS to route.childId.
  */
 
-import { CALLER_STAMPED_CAPABILITIES } from '@camstack/types/addon'
+import {
+  CALLER_STAMPED_CAPABILITIES,
+  commandOrigin,
+  type CommandOriginClaim,
+} from '@camstack/types/addon'
+import { readCurrentCommandOrigin, runWithCapCallContext } from '../cap-call-scope.js'
 import type { ServiceDiscoveryBroker } from '../moleculer/resilient-cap-call.js'
 import { callWithServiceDiscovery } from '../moleculer/resilient-cap-call.js'
 import { capActionName } from './cap-action-name.js'
@@ -374,9 +379,10 @@ export class CapRouteResolver {
     args: unknown,
     addonId?: string,
     callerAddonId?: string,
+    origin?: CommandOriginClaim,
   ): Promise<unknown> {
     try {
-      return await this.dispatchInner(route, method, args, addonId, callerAddonId)
+      return await this.dispatchInner(route, method, args, addonId, callerAddonId, origin)
     } catch (err) {
       // CapRouteErrors (from classify or from dispatchInner validation) propagate unchanged.
       if (err instanceof CapRouteError) throw err
@@ -415,10 +421,17 @@ export class CapRouteResolver {
     args: unknown,
     addonId?: string,
     callerAddonId?: string,
+    origin?: CommandOriginClaim,
   ): Promise<unknown> {
+    const carried = origin ?? readCurrentCommandOrigin()
     switch (route.kind) {
-      case 'hub-in-process':
-        return route.ref.invoke(method, stampCallerAddonId(args, callerAddonId))
+      case 'hub-in-process': {
+        const invoke = (): Promise<unknown> =>
+          route.ref.invoke(method, stampCallerAddonId(args, callerAddonId))
+        return carried === undefined
+          ? invoke()
+          : runWithCapCallContext(commandOrigin(carried).context, invoke)
+      }
 
       case 'hub-local-uds': {
         const registry = this.hubLocalRegistry
@@ -436,6 +449,7 @@ export class CapRouteResolver {
           args,
           ...(deviceId !== undefined ? { deviceId } : {}),
           ...(wireCaller !== undefined ? { callerAddonId: wireCaller } : {}),
+          ...(carried !== undefined ? { origin: carried } : {}),
         }
         return registry.callCapOnChild(route.childId, input)
       }

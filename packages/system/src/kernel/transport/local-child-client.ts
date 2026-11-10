@@ -283,6 +283,7 @@ export class LocalChildClient {
           // bug — every wire field must survive this extraction seam).
           ...(msg.addonId !== undefined ? { addonId: msg.addonId } : {}),
           ...(msg.callerAddonId !== undefined ? { callerAddonId: msg.callerAddonId } : {}),
+          ...(msg.origin !== undefined ? { origin: msg.origin } : {}),
         })
         // The requester decides the shape: a payload request gets a payload
         // reply, so the parent can forward the answer as opaquely as it

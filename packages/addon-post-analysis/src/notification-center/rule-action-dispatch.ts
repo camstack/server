@@ -167,7 +167,8 @@ export function runRuleActions(
   const actionIds = triggerOff ? rule.actions?.onTriggerOff : rule.actions?.onTrigger
   if (actionIds === undefined || actionIds.length === 0) return phase
   const className = subject.classNames[0]
-  const deviceName = sensorNameOf(host, subject) ?? host.deviceDirectory.get(subject.deviceId)?.name
+  const sensorName = sensorNameOf(host, subject)
+  const deviceName = sensorName ?? host.deviceDirectory.get(subject.deviceId)?.name
   void host.actionRunner.runHook({
     ruleId: rule.id,
     ruleName: rule.name,
@@ -180,6 +181,7 @@ export function runRuleActions(
       ...(deviceName !== undefined ? { device: deviceName } : {}),
       ...(className !== undefined ? { class: className } : {}),
     },
+    origin: fireRefFor(rule, subject, kind, sensorName),
   })
   return phase
 }

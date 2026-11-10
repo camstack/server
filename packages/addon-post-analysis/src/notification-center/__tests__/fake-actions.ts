@@ -4,8 +4,9 @@
  * A rule names an Action by id; the Action's steps belong to the Actions
  * surface. `capAction(deviceId, cap, method)` registers a one-step Action and
  * answers its id, so a spec writes `onTrigger: [capAction(PANEL, 'alarm-panel', 'trigger')]`.
- * The fake's `run` records each cap step as an actuation, like the real
- * surface would invoke it; it forwards NO origin — the Actions cap carries none.
+ * The fake's `run` records each cap step as an actuation. It does not carry a
+ * command origin: the specs that use it are about the auto-trigger path, which
+ * reaches the panel without an Action run.
  */
 import type { ActionEntry, ActionStep } from '@camstack/types'
 import type { NcActionsPort } from '../rule-actions.js'
@@ -21,7 +22,13 @@ const registry = new Map<string, ActionEntry>()
 export function capAction(deviceId: number, cap: string, method: string): string {
   const id = `internal:cap-${deviceId}-${cap}-${method}`
   if (!registry.has(id)) {
-    const step: ActionStep = { kind: 'cap', target: { kind: 'devices', ids: [deviceId] }, cap, method, args: {} }
+    const step: ActionStep = {
+      kind: 'cap',
+      target: { kind: 'devices', ids: [deviceId] },
+      cap,
+      method,
+      args: {},
+    }
     registry.set(id, {
       id,
       name: id,
@@ -35,7 +42,7 @@ export function capAction(deviceId: number, cap: string, method: string): string
   return id
 }
 
-export function makeFakeActions(onActuate: (actuation: FakeActuation) => void | Promise<void>): NcActionsPort {
+export function makeFakeActions(onActuate: (actuation: FakeActuation) => unknown): NcActionsPort {
   return {
     list: async () => [...registry.values()],
     run: async ({ actionId }) => {

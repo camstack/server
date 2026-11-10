@@ -6,12 +6,14 @@
 
 import type { CameraOccupancySnapshot, IScopedLogger } from '@camstack/types'
 import {
+  commandOrigin,
   errMsg,
   instanceSourceOverApi,
   kebabToCamel,
   readDeviceStateFrom,
   viewerLinkBaseOf,
 } from '@camstack/types'
+import { ruleFireOriginOf } from '../../notification-center/rule-fire-origin.js'
 import { readAlarmOpenings } from '../../notification-center/alarm/alarm-openings.js'
 import {
   createDisplayPalettePainter,
@@ -336,7 +338,15 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
       // feeds the centre's mirror, `actions.run` is the only way anything runs.
       actions: {
         list: () => api.actions.list.query({}),
-        run: (input) => api.actions.run.mutate(input),
+        run: (input) => {
+          const { origin, ...body } = input
+          return api.actions.run.mutate(
+            body,
+            origin === undefined
+              ? undefined
+              : commandOrigin({ kind: 'rule', fire: ruleFireOriginOf(origin) }),
+          )
+        },
       },
       // AI CONFIRM — `llm.generateVision`, through `ctx.api` like every other
       // cross-addon call. The centre constructs no gate when this is absent,
@@ -567,7 +577,8 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
       dispatcher: {
         // D1021: a rule's device value templates are rendered on the hub by the one renderer.
         renderDeviceTemplates: async (templates: readonly string[]) =>
-          (await api.deviceManager.renderDeviceTemplates.query({ templates: [...templates] })).results,
+          (await api.deviceManager.renderDeviceTemplates.query({ templates: [...templates] }))
+            .results,
         // Rendering-only zone-name lookup: `subject.zones` carries IDs (what
         // the conditions match on), and a body full of UUIDs is what an
         // operator actually received on 2026-07-30.

@@ -2774,6 +2774,12 @@
           "type": "string | null | undefined",
           "optional": true,
           "doc": "Container's DURABLE primary-child override (chosen child's entityId) — null/undefined ⇒ no durable override (falls back to linkDeviceId, the"
+        },
+        {
+          "name": "containerType",
+          "type": "string | undefined",
+          "optional": false,
+          "doc": "The container device's type. A type that stands for itself resolves no child."
         }
       ]
     },
@@ -10038,7 +10044,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/primary-child.ts",
-      "summary": "Resolve a container's primary child: the operator's pick when it still matches a live child, else the highest-priority type."
+      "summary": "Resolve a container's primary child: the operator's pick when it still matches a live child, else the type's declaration, else the highest-priority type. `containerType` is required so a caller cannot skip the declara…"
     },
     {
       "name": "resolveSceneVisual",

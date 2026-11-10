@@ -50,12 +50,14 @@ import {
   normalizeActionUnits,
   QuantityUnitError,
   resolveActionVariables,
+  ruleFireOfClaim,
   type RunnableStep,
   runSteps,
   type TraceValue,
   type UnitResolver,
   type UnitWarning,
 } from '@camstack/types'
+import { readCurrentCommandOrigin } from '../../kernel/cap-call-scope.js'
 import type { ActionsStore } from './actions-store.js'
 import { type DeviceTemplateDoor, stepRenderer } from './device-template-door.js'
 import {
@@ -584,9 +586,18 @@ export class ActionsService implements IActionsProvider {
     readable: readonly number[] | undefined,
   ): RunnableStep[] {
     if (entry.source === 'internal') {
+      const ruleFire = ruleFireOfClaim(readCurrentCommandOrigin())
       return buildActionSteps(entry.steps ?? [], values, {
         invokeCap: (call) =>
-          this.invokeCap({ ...call, origin: { kind: 'action', actionId: entry.id, runId } }),
+          this.invokeCap({
+            ...call,
+            origin: {
+              kind: 'action',
+              actionId: entry.id,
+              runId,
+              ...(ruleFire !== undefined ? { ruleFire } : {}),
+            },
+          }),
         sleep: (ms) => token.sleep(ms),
         resolveTarget: (target, actionId, vars, origin) =>
           this.targets.resolve(target, actionId, vars, origin),

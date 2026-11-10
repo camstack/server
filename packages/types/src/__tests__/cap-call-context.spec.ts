@@ -50,8 +50,25 @@ describe('commandOrigin', () => {
     expect(readCommandOrigin(options.context)).toEqual(claim)
   })
 
+  it('round-trips a rule fire, including one nested on an action run', () => {
+    const fire = {
+      ruleId: 'r1',
+      ruleName: 'Gate',
+      deviceId: 12,
+      sourceDeviceId: 44,
+      recordId: 'rec',
+      timestamp: 5,
+    }
+    const rule = { kind: 'rule' as const, fire }
+    expect(readCommandOrigin(commandOrigin(rule).context)).toEqual(rule)
+    const action = { kind: 'action' as const, actionId: 'a1', runId: 'run', ruleFire: fire }
+    expect(readCommandOrigin(commandOrigin(action).context)).toEqual(action)
+  })
+
   it('drops a value that is not a well-formed claim', () => {
-    expect(readCommandOrigin({ [CAP_COMMAND_ORIGIN_CONTEXT_KEY]: { kind: 'user', userId: 'x' } })).toBeUndefined()
+    expect(
+      readCommandOrigin({ [CAP_COMMAND_ORIGIN_CONTEXT_KEY]: { kind: 'user', userId: 'x' } }),
+    ).toBeUndefined()
     expect(readCommandOrigin({ [CAP_COMMAND_ORIGIN_CONTEXT_KEY]: 'action' })).toBeUndefined()
     expect(readCommandOrigin(undefined)).toBeUndefined()
   })

@@ -28,6 +28,7 @@ interface RunCall {
   readonly variables?: Readonly<Record<string, string | number | boolean>>
   readonly wait: boolean
   readonly deviceId?: number
+  readonly origin?: { readonly ruleId: string }
 }
 
 function world(
@@ -61,13 +62,15 @@ const GATE = entry({
 
 describe('variablesFor', () => {
   it('hands an Action only the variables it declared, matched by name and type', () => {
-    expect(variablesFor(GATE, { deviceId: 12, class: 'person', rule: 'Gate', ruleId: 'r1' })).toEqual(
-      { deviceId: 12, class: 'person' },
-    )
+    expect(
+      variablesFor(GATE, { deviceId: 12, class: 'person', rule: 'Gate', ruleId: 'r1' }),
+    ).toEqual({ deviceId: 12, class: 'person' })
   })
 
   it('hands nothing to an Action that declares nothing', () => {
-    expect(variablesFor(entry({ id: 'internal:plain' }), { deviceId: 12, class: 'cat' })).toEqual({})
+    expect(variablesFor(entry({ id: 'internal:plain' }), { deviceId: 12, class: 'cat' })).toEqual(
+      {},
+    )
     expect(variablesFor(undefined, { deviceId: 12 })).toEqual({})
   })
 
@@ -133,9 +136,36 @@ describe('NcRuleActionRunner.runGranted', () => {
   it('resolves when the Action ran to its end', async () => {
     const w = world([GATE])
     await expect(
-      w.runner.runGranted({ ruleId: 'r1', ruleName: 'Rule', deviceId: 5, actionId: 'internal:gate' }),
+      w.runner.runGranted({
+        ruleId: 'r1',
+        ruleName: 'Rule',
+        deviceId: 5,
+        actionId: 'internal:gate',
+      }),
     ).resolves.toBeUndefined()
     expect(w.calls[0]).toMatchObject({ actionId: 'internal:gate', wait: true, deviceId: 5 })
+    expect(w.calls[0]?.origin).toBeUndefined()
+  })
+
+  it('a rule fire is the run origin; a granted button press is not', async () => {
+    const w = world([GATE])
+    await w.catalog.load()
+    const origin = {
+      ruleId: 'r1',
+      ruleName: 'Gate rule',
+      deviceId: 12,
+      recordId: 'rec',
+      timestamp: 5,
+    }
+    await w.runner.runHook({
+      ruleId: 'r1',
+      ruleName: 'Gate rule',
+      deviceId: 12,
+      actionIds: ['internal:gate'],
+      fire: { deviceId: 12 },
+      origin,
+    })
+    expect(w.calls[0]?.origin).toEqual(origin)
   })
 
   it('throws when the Actions surface refused or failed the run, so the page can say so', async () => {
@@ -154,7 +184,12 @@ describe('NcRuleActionRunner.runGranted', () => {
     ).rejects.toThrow('skipped-cooldown')
     const down = world([GATE], () => new Error('not reachable'))
     await expect(
-      down.runner.runGranted({ ruleId: 'r1', ruleName: 'Rule', deviceId: 5, actionId: 'internal:gate' }),
+      down.runner.runGranted({
+        ruleId: 'r1',
+        ruleName: 'Rule',
+        deviceId: 5,
+        actionId: 'internal:gate',
+      }),
     ).rejects.toThrow('not reachable')
   })
 })

@@ -2125,7 +2125,7 @@ from one that is only gone for a moment.
   dead id goes, the last one deleting the key, and the rule stays on — removing
   an excluded device widens the rule only by a device that can no longer fire. A
   `cap` step on a deleted device belongs to the Action, which the Actions
-  surface prunes (D1025). Alarm `nonBlocking` lists and
+  surface prunes (D1028). Alarm `nonBlocking` lists and
   exclusions shrink, mutes are unset, and the device's battery and consumable
   alert rows are forgotten ([D636](../decisions/adr-0636-battery-alerts-are-authored-apart-and-an-unheard-raise-stays-pending.md) — the reconcile also looks at alert devices no
   rule names). Zones, liveness and history are untouched. The planner is pure: `device-prune.ts`; the writes are
@@ -3394,7 +3394,7 @@ the mesh.
 ## A tap-through button is a credential, and it is the notification
 
 A rule may carry **buttons** (`actions.buttons[]`), each naming one `actionId` of
-the Actions surface ([D1025](../decisions/adr-1025-a-notification-rule-only-runs-existing-actions.md)).
+the Actions surface ([D1028](../decisions/adr-1028-a-notification-rule-only-runs-existing-actions.md)).
 Tapping one runs that Action through `actions.run`, so the Action's own
 device-scope check, stop-at-first-failure rule and `minDelaySec` throttle apply.
 The centre has no step vocabulary of its own.
@@ -4577,7 +4577,7 @@ state-word transition.
   matching the viewer's family list. URL restore keeps `?tab` / `?section` /
   `?rule` / `?editTab` (and Build Automations `?block=`, OSD `?tab` /
   `?device` / `?slot`) so back/forward and a shared link open the same editor.
-- **Shared sequences + Device→Action (the sequences were retired by D1025; steps are Actions now).** Curated `DEVICE_DO_ACTIONS` /
+- **Shared sequences + Device→Action (the sequences were retired by D1028; steps are Actions now).** Curated `DEVICE_DO_ACTIONS` /
   `actionsForBoundCaps` drive a single `DeviceDoActionFields` picker (device,
   then friendly action from bound caps) in NC Sequences / rule Do and in Build
   Automations (`$trigger` device option). Sequences are reusable across rules
@@ -4647,7 +4647,7 @@ template (`rules`, `timelapse-rules`, `texts` overrides), idempotent, `tolerate`
 client still writes: it renders, the catalog never offers it, and the dispatcher
 logs the rule once (`tags: { ruleId }`).
 
-## A rule runs existing Actions only (D1025, 2026-11-09)
+## A rule runs existing Actions only (D1028, 2026-11-09)
 
 A rule hook is a list of Action ids and a button names one `actionId`; both run
 through `actions.run` (`notification-center/rule-actions.ts`, `NcRuleActionRunner`).
@@ -4658,12 +4658,16 @@ it declare, and does it press the alarm panel (alarm membership and the snooze
 exemption read the Action's steps). A match hands an Action only the variables it
 declared among `device`, `deviceId`, `class`, `rule`, `ruleId`.
 
+The same match is the run's command origin (`commandOrigin({ kind: 'rule', fire })`,
+out of band, D1022). The Actions provider reads it with `readCommandOrigin` and
+threads it onto every cap call, so an Action pressing `alarm-panel.trigger` reaches
+the panel as that fire (D705). An Action run with no origin that presses the panel
+while the arm excludes sensors is refused (D735). A button press sends no origin
+(D47). A press from the panel's own control is not an Action run and is unchanged.
+
 Existing data moves by the migration
 `pipeline-analytics/2026-11-09-rule-actions-to-actions` (sequences become Actions,
 the inline steps of a hook become one Action named after the rule, rules and
 buttons are rebound; old rows are deleted after a verified second read).
-
-Known gap: the Actions surface forwards no origin, so an Action pressing
-`alarm-panel.trigger` is not attributed to the rule (D705) and the anonymous-press
-refusal (D735) does not apply on that path. `scripts/check-nc-no-executor.ts` keeps
-a step vocabulary, an executor and the sequences record kind out of the centre.
+`scripts/check-nc-no-executor.ts` keeps a step vocabulary, an executor and the
+sequences record kind out of the centre.

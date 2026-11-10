@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * The notification centre runs Actions; it does not execute steps (planning#473, D1025).
+ * The notification centre runs Actions; it does not execute steps (planning#473, D1028).
  *
  * ## The failure this catches
  *

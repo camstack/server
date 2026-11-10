@@ -22,6 +22,7 @@ import type {
   ActionVariableValue,
   IScopedLogger,
 } from '@camstack/types'
+import type { NcRuleFireRef } from './rule-engine.js'
 
 /** The `actions` cap as the centre uses it — a port, so a spec can stand in. */
 export interface NcActionsPort {
@@ -31,6 +32,8 @@ export interface NcActionsPort {
     readonly variables?: Readonly<Record<string, ActionVariableValue>>
     readonly wait: boolean
     readonly deviceId?: number
+    /** The match this run descends from. Absent for a button (D47). */
+    readonly origin?: NcRuleFireRef
   }): Promise<ActionRunResult>
 }
 
@@ -120,6 +123,8 @@ export interface NcHookRunInput {
   readonly deviceId: number
   readonly actionIds: readonly string[]
   readonly fire: NcFireVariables
+  /** The match, forwarded as the Action run's command origin (D705). */
+  readonly origin?: NcRuleFireRef
 }
 
 /** The variables an Action declared, filled from what the match offers. */
@@ -177,7 +182,11 @@ export class NcRuleActionRunner {
     readonly deviceId: number
     readonly actionId: string
   }): Promise<void> {
-    const result = await this.runOne({ ...input, actionIds: [input.actionId], fire: {} }, input.actionId, true)
+    const result = await this.runOne(
+      { ...input, actionIds: [input.actionId], fire: {} },
+      input.actionId,
+      true,
+    )
     if (result.error !== undefined) throw new Error(result.error)
     if (!result.ran) {
       throw new Error(`the action did not run (${result.outcome ?? 'unknown'})`)
@@ -196,6 +205,7 @@ export class NcRuleActionRunner {
         variables: variablesFor(this.catalog.get(actionId), input.fire),
         wait,
         deviceId: input.deviceId,
+        ...(input.origin !== undefined ? { origin: input.origin } : {}),
       })
       const ran = result.outcome === 'ran' || result.outcome === 'started'
       const meta = {

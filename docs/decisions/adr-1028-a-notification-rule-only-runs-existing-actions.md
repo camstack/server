@@ -1,5 +1,5 @@
 ---
-id: D1025
+id: D1028
 title: A notification rule and a notification button only run existing Actions
 status: accepted
 date: 2026-11-09
@@ -44,12 +44,13 @@ Action listed by the Actions surface (D49).
   Actions it names, from a RAM mirror of the Actions list (revalidated every 60 s
   and refreshed on a rule save). A freshly made Action is seen at the next
   refresh.
-- **Gap, open:** the Actions surface forwards no origin, so an Action that presses
-  `alarm-panel.trigger` is no longer attributed to the rule's fire (D705), and
-  the fail-closed refusal of an anonymous press while the arm excludes sensors
-  (D735) no longer applies on that path. Rules that must keep both gate on the
-  armed state, which reaches the panel through the auto-trigger path. Closing the
-  gap means Actions forwarding an origin the centre fills with the fire ref.
+- A rule fire passes its match as the command origin of `actions.run` (out of
+  band, `commandOrigin`, the same channel D1022 uses — not an argument). The
+  Actions provider threads that origin onto every cap call the run makes, so an
+  Action that presses `alarm-panel.trigger` is attributed to the rule (D705). An
+  Action run that presses the panel with no such origin, while the arm excludes
+  sensors, is refused (D735). A notification button still passes no origin (D47).
+  A press of the panel from its own control, outside an Action, is unchanged.
 - The Actions throttle is in memory. A button token minted for the old
   `sequence` kind dies at deploy.
 - Per-user notification TARGETS are unchanged.

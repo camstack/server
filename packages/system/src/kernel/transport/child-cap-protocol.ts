@@ -203,7 +203,7 @@ export interface CapCallMessage {
   readonly deviceId?: number
   /** Optional per-call node pin (out-of-band routing hint; see {@link CapCallOutMessage.nodeId}). */
   readonly nodeId?: string
-  /** Optional command origin claim (see {@link CapCallOutMessage.origin}); child → parent leg only. */
+  /** Optional command origin claim (see {@link CapCallOutMessage.origin}). Both legs carry it. */
   readonly origin?: CommandOriginClaim
   /**
    * Out-of-band PROVIDER-selection hint: the addonId of the provider the hub

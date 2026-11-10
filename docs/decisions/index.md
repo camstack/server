@@ -4,7 +4,7 @@
 
 # Decisions
 
-992 architecture decision records. One file per decision, never
+993 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1007,6 +1007,7 @@ that rots.
 | D1026 | [A heat pump is one device type with one status cap that carries its circuits as a keyed array](adr-1026-a-heat-pump-is-one-device-type-with-a-keyed-circuits-status-cap.md) | ✅ accepted | 2026-11-09 |
 | D1026 | [An action step may carry one `if` and one else list, read on the condition mirror when the step is reached](adr-1026-an-action-step-may-carry-one-if-and-one-else-read-on-the-condition-mirror.md) | ✅ accepted | 2026-11-09 |
 | D1027 | [A device row draws its timed run from the hero slot](adr-1027-a-device-row-draws-its-timed-run-from-the-hero-slot.md) | ✅ accepted | 2026-11-09 |
+| D1028 | [A notification rule and a notification button only run existing Actions](adr-1028-a-notification-rule-only-runs-existing-actions.md) | ✅ accepted | 2026-11-09 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

@@ -1,3 +1,5 @@
+import { commandOrigin } from '@camstack/types/addon'
+import { runWithCapCallContext } from '../cap-call-scope.js'
 import type { CapCallInput } from '../transport/child-cap-protocol.js'
 
 /** A cap method, resolved structurally from a provider object at dispatch time. */
@@ -136,7 +138,11 @@ export function createChildCapDispatch(
 
     // ── Invoke — match the call(provider, args) convention used by both
     //    device-cap-proxy and addon-service-factory. The full args object
-    //    (including deviceId when present) is forwarded as-is.
-    return await fn.call(provider, args)
+    //    (including deviceId when present) is forwarded as-is. The origin, when
+    //    the parent forwarded one, is the call's context — never an arg (D1022).
+    const run = (): unknown => fn.call(provider, args)
+    return await (call.origin === undefined
+      ? run()
+      : runWithCapCallContext(commandOrigin(call.origin).context, run))
   }
 }

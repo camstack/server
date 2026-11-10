@@ -95,8 +95,12 @@ export const DeviceTransitionSchema = z.object({
 export type DeviceTransition = z.infer<typeof DeviceTransitionSchema>
 
 // Its own module so the runner closure can parse a claim without the transition schemas (D28).
-export { CommandOriginClaimSchema } from './command-origin-claim.js'
-export type { CommandOriginClaim } from './command-origin-claim.js'
+export {
+  CommandOriginClaimSchema,
+  RuleFireOriginSchema,
+  ruleFireOfClaim,
+} from './command-origin-claim.js'
+export type { CommandOriginClaim, RuleFireOrigin } from './command-origin-claim.js'
 
 /** The actor of a command: every kind but `device`, which is what nobody asked for. */
 export type CommandActor = Exclude<TransitionActor, { readonly kind: 'device' }>

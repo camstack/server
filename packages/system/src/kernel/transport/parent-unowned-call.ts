@@ -29,7 +29,7 @@
  */
 
 import type { CapCallInput } from './child-cap-protocol.js'
-import { CapRouteError } from './cap-route.js'
+import { CapRouteError, type CapRoute } from './cap-route.js'
 import type { CapRouteResolver, HubLocalChildDispatcher } from './cap-route-resolver.js'
 import { extractDeviceId, extractNodeId, stampCallerAddonId } from './cap-route-resolver.js'
 import { brokerCallForCap } from '../moleculer/trpc-links.js'
@@ -331,6 +331,28 @@ const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout
  *   - surfaces a clear error when the call is genuinely unroutable (so the
  *     child's call rejects rather than hanging).
  */
+/** Resolver dispatch that keeps a 3-arg call when the frame carried nothing extra. */
+function dispatchInbound(
+  resolver: CapRouteResolver,
+  route: CapRoute,
+  input: CapCallInput,
+): Promise<unknown> {
+  if (input.origin !== undefined) {
+    return resolver.dispatch(
+      route,
+      input.method,
+      input.args,
+      undefined,
+      input.callerAddonId,
+      input.origin,
+    )
+  }
+  if (input.callerAddonId !== undefined) {
+    return resolver.dispatch(route, input.method, input.args, undefined, input.callerAddonId)
+  }
+  return resolver.dispatch(route, input.method, input.args)
+}
+
 export function createParentUnownedCallHandler(
   deps: ParentUnownedCallDeps,
 ): (input: CapCallInput) => Promise<unknown> {
@@ -497,9 +519,7 @@ export function createParentUnownedCallHandler(
         // entirely (not passed as an explicit `undefined`) when absent, so a
         // caller that never carried one keeps the exact 3-arg call this path
         // has always made.
-        return input.callerAddonId !== undefined
-          ? await resolver.dispatch(route, input.method, input.args, undefined, input.callerAddonId)
-          : await resolver.dispatch(route, input.method, input.args)
+        return await dispatchInbound(resolver, route, input)
       } catch (err) {
         // Only a no-provider miss is eligible for the broker fallback: the cap
         // is not a registered capability the resolver can see (e.g. a `$`-infra
@@ -653,15 +673,7 @@ export function createParentUnownedCallHandler(
               // The caller stamp survives the retry: a provider that
               // owner-checks (the keychain) must not see a stamped call
               // turn anonymous because the first attempt raced its boot.
-              return input.callerAddonId !== undefined
-                ? await retryResolver.dispatch(
-                    route,
-                    input.method,
-                    input.args,
-                    undefined,
-                    input.callerAddonId,
-                  )
-                : await retryResolver.dispatch(route, input.method, input.args)
+              return await dispatchInbound(retryResolver, route, input)
             } catch (err) {
               // Keep retrying only on a no-provider miss (provider still booting);
               // any real routing failure propagates.

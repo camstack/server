@@ -77,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Storage locations are stamped with their mode and the retired default flag removed by a one-time migration, not at every boot
 - A storage type with no enabled location is repaired at every boot, not only by the one-time migration
 - Actions can be throttled with a minimum delay between starts
+- An action run forwards the command origin it was started with onto each device call it makes
 - Remote: the Power key always sends power, explicit on/off is used when both are bound; a stored power mode and the lettered colour roles are migrated
 - Integration-instances calls from a non-admin session are admitted only for an addon that serves user-scoped rows, and are filtered to the caller
 - A scoped capability method whose input takes {} is also callable with no input

@@ -547,6 +547,11 @@ export {
 export { readAllRows } from './records/read-all-rows.js'
 // D986: the node twin of `clearDeviceSettings` (one central delete of a forgotten node's rows).
 export { clearNodeSettings } from './kernel/addon-settings-store.js'
+export {
+  currentCapCallContext,
+  readCurrentCommandOrigin,
+  runWithCapCallContext,
+} from './kernel/cap-call-scope.js'
 // The records engine itself, for specs that must run a kind against the REAL
 // rules (index order, keyset paging) rather than the in-memory fake.
 export {
