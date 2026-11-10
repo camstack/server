@@ -92,14 +92,30 @@ export function templatePlaceholders(template: string): readonly string[] {
 export function renderTemplate(
   template: string | undefined,
   vars: Readonly<Record<string, string>>,
+  options?: RenderTemplateOptions,
 ): string | null {
   if (template === undefined || template.trim().length === 0) return null
-  return restoreLiteralMarkup(
-    template.replace(PLACEHOLDER_PATTERN, (_m, name: string) => {
-      const current = vars[name]
-      if (current !== undefined) return current
-      const renamed = NC_DEPRECATED_TEMPLATE_VARS[name]
-      return (renamed !== undefined ? vars[renamed] : undefined) ?? ''
-    }),
+  const substituted = template.replace(PLACEHOLDER_PATTERN, (_m, name: string) => {
+    const current = vars[name]
+    if (current !== undefined) return current
+    const renamed = NC_DEPRECATED_TEMPLATE_VARS[name]
+    return (renamed !== undefined ? vars[renamed] : undefined) ?? ''
+  })
+  return options?.keepLiteralHeld === true ? substituted : restoreLiteralMarkup(substituted)
+}
+
+export interface RenderTemplateOptions {
+  /**
+   * Leave the `{{` / `{%` that {@link escapeLiteralMarkup} hid still hidden. A producer
+   * that enqueues a row for the dispatcher sets it: the dispatcher's device-template pass
+   * must see only the operator's own markup, and its final `{{var}}` pass restores the rest.
+   */
+  readonly keepLiteralHeld?: boolean
+}
+
+/** Every value hidden from the dispatcher's device-template pass (see {@link RenderTemplateOptions}). */
+export function holdVars(vars: Readonly<Record<string, string>>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(vars).map(([name, value]) => [name, escapeLiteralMarkup(value)]),
   )
 }

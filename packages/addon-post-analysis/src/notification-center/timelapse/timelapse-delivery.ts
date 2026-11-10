@@ -29,6 +29,7 @@ import type { NcRuleTarget, TimelapseTemplate } from '@camstack/types'
 import { DEFAULT_TIMELAPSE_PREVIEW_TEXT } from '@camstack/types'
 import { ncClockText } from '../clock-text.js'
 import { renderTemplate } from '../dispatcher.js'
+import { escapeLiteralMarkup, holdVars } from '../render-template.js'
 import type { NcOutboxEnqueueInput, NcOutboxPayload } from '../outbox.js'
 import type { NcTextCatalog } from '../text-catalog.js'
 import { type DetectionCounts, detectionTemplateVars } from './detection-counts.js'
@@ -254,10 +255,15 @@ export function buildTimelapseOutboxInputs(
 ): readonly NcOutboxEnqueueInput[] {
   const vars = timelapseTemplateVars(input)
   const optedOut = new Set(input.disabledTargetIds ?? [])
+  // See `buildSummaryOutboxInputs`: only the operator's own markup may reach the
+  // dispatcher's device-template pass; every value and catalog sentence stays hidden.
+  const held = holdVars(vars)
   const title =
-    renderTemplate(input.template?.title, vars) ??
-    input.texts.text({ key: 'timelapse.title', vars })
-  const body = renderTemplate(input.template?.body, vars) ?? derivedBody(input, vars)
+    renderTemplate(input.template?.title, held, { keepLiteralHeld: true }) ??
+    escapeLiteralMarkup(input.texts.text({ key: 'timelapse.title', vars }))
+  const body =
+    renderTemplate(input.template?.body, held, { keepLiteralHeld: true }) ??
+    escapeLiteralMarkup(derivedBody(input, vars))
   const recordId = timelapseRecordId(input.deviceId, input.window.endMs)
   const artifacts = [
     ...(input.preview !== undefined ? [{ mediaType: 'image' as const, ...input.preview }] : []),
@@ -271,8 +277,8 @@ export function buildTimelapseOutboxInputs(
         ruleName: input.ruleName,
         delivery: 'timelapse',
         priority: input.priority,
-        // Fully rendered here, so the dispatcher's own `{{}}` pass is a no-op
-        // and the frozen row reads exactly as it will be delivered.
+        // `{{var}}` is filled in here; the dispatcher renders the operator's device
+        // templates in what is left, then restores the hidden literal braces.
         template: { title, body },
         // A timelapse owns no event and no track, so there is no media ladder
         // to climb. Asking for one would log "no still could be resolved" on

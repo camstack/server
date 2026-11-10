@@ -8,6 +8,8 @@
  * same notifier. Nothing here talks to a notifier.
  */
 import { describe, expect, it } from 'vitest'
+import { renderAuthoredDeviceTemplates } from '../../device-template-pass.js'
+import { renderTemplate } from '../../render-template.js'
 import { NcTextCatalog } from '../../text-catalog.js'
 import type { TimelapseTrackInterval } from '../dense-ranges.js'
 import { countDetections } from '../detection-counts.js'
@@ -36,6 +38,29 @@ const NIGHT: readonly TimelapseTrackInterval[] = [
   { firstSeen: 1, lastSeen: 2, className: 'vehicle' },
   { firstSeen: 1, lastSeen: 2, className: 'animal' },
 ]
+
+/**
+ * The row as the dispatcher treats it: the device-template pass (a fake hub that knows one
+ * value) over the authored text, then the final `{{var}}` pass that restores hidden braces.
+ */
+async function deliveredAs(
+  template: { readonly title?: string; readonly body?: string } | undefined,
+): Promise<{ readonly title: string; readonly body: string }> {
+  const render = async (templates: readonly string[]) =>
+    templates.map((source) => ({
+      ok: true as const,
+      text: source.replaceAll('{{ door.state }}', 'open'),
+      trace: [],
+    }))
+  const [title, body] = await renderAuthoredDeviceTemplates(
+    [template?.title, template?.body],
+    render,
+  )
+  return {
+    title: renderTemplate(title?.template, {}) ?? '',
+    body: renderTemplate(body?.template, {}) ?? '',
+  }
+}
 
 function makeInput(over: Partial<TimelapseDeliveryInput> = {}): TimelapseDeliveryInput {
   return {
@@ -362,5 +387,26 @@ describe('the derived body, per language', () => {
         }),
       }),
     ).toContain(`Camera retro · ${WINDOW_FROM}-${WINDOW_TO}`)
+  })
+})
+
+describe('a timelapse row and the dispatcher device-template pass', () => {
+  it('renders the operator-authored device value, and keeps a camera name as data', async () => {
+    const rows = buildTimelapseOutboxInputs(
+      makeInput({
+        deviceName: 'Gate {{ door.state }}',
+        template: { title: '{{device}} / {{ door.state }}', body: '{{device}}: {{ door.state }}' },
+      }),
+    )
+    const delivered = await deliveredAs(rows[0]?.payload.template)
+    expect(delivered.title).toBe('Gate {{ door.state }} / open')
+    expect(delivered.body).toBe('Gate {{ door.state }}: open')
+  })
+
+  it('the derived text keeps a camera name as data', async () => {
+    const rows = buildTimelapseOutboxInputs(makeInput({ deviceName: '{{ door.state }}' }))
+    const delivered = await deliveredAs(rows[0]?.payload.template)
+    expect(delivered.title).toContain('{{ door.state }}')
+    expect(delivered.body).not.toContain('open')
   })
 })

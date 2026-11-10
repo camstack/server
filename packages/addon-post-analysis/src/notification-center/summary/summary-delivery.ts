@@ -28,7 +28,12 @@
 
 import type { NcRuleTarget } from '@camstack/types'
 import { ncClockText } from '../clock-text.js'
-import { renderTemplate, templatePlaceholders } from '../render-template.js'
+import {
+  escapeLiteralMarkup,
+  holdVars,
+  renderTemplate,
+  templatePlaceholders,
+} from '../render-template.js'
 import type { NcOutboxEnqueueInput, NcOutboxPayload } from '../outbox.js'
 import type { NcTextCatalog } from '../text-catalog.js'
 import { type DetectionCounts, detectionTemplateVars } from '../timelapse/detection-counts.js'
@@ -231,12 +236,18 @@ export function buildSummaryOutboxInputs(
 ): readonly NcOutboxEnqueueInput[] {
   const vars = summaryTemplateVars(input)
   const optedOut = new Set(input.disabledTargetIds ?? [])
+  // The row is rendered for the dispatcher, whose device-template pass evaluates every
+  // `{{ … }}` it finds. Only the operator's own markup may reach it: a camera name or the
+  // model's sentence is data, so each value, and each catalog sentence, stays hidden
+  // (`escapeLiteralMarkup`) until the dispatcher's final `{{var}}` pass restores it.
+  const held = holdVars(vars)
   const title =
-    renderTemplate(input.template?.title, vars) ?? input.texts.text({ key: 'summary.title', vars })
+    renderTemplate(input.template?.title, held, { keepLiteralHeld: true }) ??
+    escapeLiteralMarkup(input.texts.text({ key: 'summary.title', vars }))
   const body = composeSummaryBody({
-    aiText: aiSentence(input),
-    renderedTemplateBody: renderTemplate(input.template?.body, vars),
-    derivedBody: derivedBody(input, vars),
+    aiText: escapeLiteralMarkup(aiSentence(input)),
+    renderedTemplateBody: renderTemplate(input.template?.body, held, { keepLiteralHeld: true }),
+    derivedBody: escapeLiteralMarkup(derivedBody(input, vars)),
     templateNamesAi: templatePlaceholders(input.template?.body ?? '').includes('ai'),
   })
   const recordId = summaryRecordId(input.ruleId, input.window.endMs)
@@ -250,7 +261,8 @@ export function buildSummaryOutboxInputs(
         ruleName: input.ruleName,
         delivery: 'ai-summary',
         priority: input.priority,
-        // Fully rendered here, so the dispatcher's own `{{}}` pass is a no-op.
+        // `{{var}}` is filled in here; the dispatcher renders the operator's device
+        // templates in what is left, then restores the hidden literal braces.
         template: { title, body },
         // A digest owns no event and no track, so there is no media ladder to
         // climb. Asking for one would log "no still could be resolved" on every

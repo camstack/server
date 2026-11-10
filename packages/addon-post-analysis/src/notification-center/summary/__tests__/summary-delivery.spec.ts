@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { renderAuthoredDeviceTemplates } from '../../device-template-pass.js'
+import { renderTemplate } from '../../render-template.js'
 import { NcTextCatalog } from '../../text-catalog.js'
 import {
   buildSummaryOutboxInputs,
@@ -27,6 +29,29 @@ function makeInput(over: Partial<SummaryDeliveryInput> = {}): SummaryDeliveryInp
     matchedCount: 5,
     generatedAt: WINDOW.endMs + 60_000,
     ...over,
+  }
+}
+
+/**
+ * The row as the dispatcher treats it: the device-template pass (a fake hub that knows one
+ * value) over the authored text, then the final `{{var}}` pass that restores hidden braces.
+ */
+async function deliveredAs(
+  template: { readonly title?: string; readonly body?: string } | undefined,
+): Promise<{ readonly title: string; readonly body: string }> {
+  const render = async (templates: readonly string[]) =>
+    templates.map((source) => ({
+      ok: true as const,
+      text: source.replaceAll('{{ door.state }}', 'open'),
+      trace: [],
+    }))
+  const [title, body] = await renderAuthoredDeviceTemplates(
+    [template?.title, template?.body],
+    render,
+  )
+  return {
+    title: renderTemplate(title?.template, {}) ?? '',
+    body: renderTemplate(body?.template, {}) ?? '',
   }
 }
 
@@ -208,5 +233,50 @@ describe('summaryCaptionText', () => {
         window: WINDOW,
       }),
     ).toMatch(/^N \d\d:\d\d-\d\d:\d\d$/)
+  })
+})
+
+describe('a digest row and the dispatcher device-template pass', () => {
+  it('renders the operator-authored device value, and keeps a camera name and the AI text as data', async () => {
+    const rows = buildSummaryOutboxInputs(
+      makeInput({
+        ruleName: 'Gate {{ door.state }}',
+        aiText: 'A person at {{ door.state }} and {% x %}',
+        template: {
+          title: '{{rule}} / {{ door.state }}',
+          body: 'door {{ door.state }}: {{ai}}',
+        },
+      }),
+    )
+    const delivered = await deliveredAs(rows[0]?.payload.template)
+    expect(delivered.title).toBe('Gate {{ door.state }} / open')
+    expect(delivered.body).toBe('door open: A person at {{ door.state }} and {% x %}')
+  })
+
+  it('a stray brace in the AI text does not get the authored template refused', async () => {
+    const rows = buildSummaryOutboxInputs(
+      makeInput({ aiText: 'a {{ broken', template: { title: 't', body: 'x {{ door.state }}' } }),
+    )
+    const [, body] = await renderAuthoredDeviceTemplates(
+      [rows[0]?.payload.template?.title, rows[0]?.payload.template?.body],
+      async (templates) =>
+        templates.map((source) =>
+          source.includes('{{ broken')
+            ? {
+                ok: false as const,
+                refusal: { reason: 'syntax' as const, message: 'x' },
+                trace: [],
+              }
+            : { ok: true as const, text: source, trace: [] },
+        ),
+    )
+    expect(body?.refused).toBeUndefined()
+  })
+
+  it('catalog sentences stay data too: a camera named like a template prints as written', async () => {
+    const rows = buildSummaryOutboxInputs(makeInput({ ruleName: '{{ door.state }}' }))
+    const delivered = await deliveredAs(rows[0]?.payload.template)
+    expect(delivered.title).not.toContain('open')
+    expect(delivered.body).not.toContain('open')
   })
 })

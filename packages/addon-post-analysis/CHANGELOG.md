@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A summary or timelapse notification no longer evaluates braces that sit inside a camera name or the AI sentence: only the text you wrote is rendered as a device template
+
 ## [1.2.690] - 2026-11-10
 
 ### Changed
