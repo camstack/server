@@ -614,7 +614,10 @@ Need → component: **a collection of connections** (log destinations, SMTP rela
 servers, tunnels — anything whose provider keeps `integration-instances` records) →
 `components/instances/InstancesTable`. A page names only the function cap and its wording
 (`functionCap`, `icon`, `title`, `subtitle`, `emptyTitle`, `emptyDescription`, `addLabel`,
-optional `install`); there are no per-cap columns.
+optional `install`); there are no per-cap columns. A page that must add one fact or action to the
+rows passes `extraColumns`, `rowActions` (instance rows) and `fixedRowActions` (fixed rows) — it
+never draws a second list or card of the same providers beside the table (Remote Access puts the
+tunnel state and Start/Stop in the rows this way).
 
 - **Pill row.** `InstanceProviderPills`: ONE row, one pill per provider (icon, name, count, a dot
   for the worst status), no "All" pill. A pill FILTERS the table; nothing selected lists every
@@ -633,7 +636,13 @@ optional `install`); there are no per-cap columns.
 - **States (D315).** Pending is a spinner, never "empty"; failed is `ErrorBox` with retry; empty
   is `EmptyState`, shown only once every query answered with nothing.
 
-Do not write a page-local list of connections or a raw `<table>` for one.
+Do not write a page-local list of connections or a raw `<table>` for one. Two guards keep this:
+`scripts/check-one-instances-list.ts` (no hub over the same cap) and
+`scripts/check-no-stacked-provider-lists.ts` (no hub and table in one file, no provider fetch
+beside the table, no `AddonIntegrationBody` / enable switch outside the owner dirs, no
+hand-written addon or package id, no per-provider card under the table, no `omitSectionIds` in a
+page). Its baseline (`scripts/no-stacked-provider-lists-baseline.json`) only shrinks; each entry
+names the page work that removes it.
 
 ## System is one page with tabs; a page with its own `?tab=` stays out
 

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The notification rule editor's per-target panel offers the notifier's own priority levels, the picture kind and a no-buttons switch.
 
 - The device page and its hero follow the child a container declares as its primary
+- Admin UI: Authentication, Connectivity, Remote Access and TURN Servers each show one provider table (Remote Access tunnel state and Start/Stop are in the rows; the Calendars legend links to Connectivity instead of repeating the source switch)
 
 ## [1.2.634] - 2026-11-10
 

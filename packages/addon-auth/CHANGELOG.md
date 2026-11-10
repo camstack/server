@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- OIDC connection form: the identity section carries the setup steps that used to sit on the Authentication page
+
 ## [1.2.181] - 2026-11-10
 
 ### Changed
