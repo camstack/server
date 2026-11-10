@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**243 units · 8403 source files · 236 units claimed by at least one document (8372 files).**
+**243 units · 8404 source files · 236 units claimed by at least one document (8373 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -61,8 +61,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-homeassistant/src/ha-export` | 37 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +9 more, 9 ADRs | 2026-11-08 |
 | `server/backend/src/auth` | 36 | `auth` | `architecture/authentication.md`, `decisions/adr-0858-the-native-app-signs-in-through-dedicated-hub-app-flows-never-the-admin-ui.md`, `decisions/adr-0782-an-oidc-identity-signs-in-only-the-user-who-linked-it-from-their-own-session.md`, +13 more, 2 ADRs | 2026-10-21 |
 | `packages/addon-provider-amcrest` | 35 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0615-an-amcrest-clip-catalog-gates-on-findfile-and-an-ambiguous-refusal-is-settled-by-a-control-search.md`, +9 more | 2026-11-08 |
+| `packages/addon-provider-enpal` | 33 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-esphome` | 33 | `device-providers` | `addons/addon-provider-esphome.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0952-esphome-speaks-its-native-api-from-node-through-esphome-client-one-broker-per-board.md`, +4 more | 2026-11-08 |
-| `packages/addon-provider-enpal` | 32 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/types/src/pipeline` | 31 | `pipeline-orchestration` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/inference-devices.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +27 more, 2 ADRs | 2026-10-24 |
 | `packages/addon-export-alexa` | 30 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +15 more, 3 ADRs | 2026-08-26 |
 | `packages/addon-matter-broker` | 30 | `ecosystem-exports` | `addons/addon-matter-broker.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md`, +1 more | 2026-09-29 |
