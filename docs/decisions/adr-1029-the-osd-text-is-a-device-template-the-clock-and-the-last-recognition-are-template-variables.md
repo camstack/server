@@ -59,9 +59,10 @@ An owned D987 migration rewrites every stored binding and named template.
   recoverable in the ledger snapshot.
 - The expression is chosen from the cap's static base unit (`runtimeFieldUnit`), never
   from the live value, so it is the same whether the device is online or not; booleans
-  read through the `onoff` filter. A device whose own alias is `camera` is named
-  `camera_<id>` in migrated texts, with a `note()` asking the operator to give it that
-  alias.
+  read through the `onoff` filter. A text can name a device only by its alias, so a slot or
+  template that names a device whose own alias is `camera` is set aside like any bad row
+  (a `note()` asks the operator to give that device another alias); the migration never
+  writes a name that cannot resolve.
 - The migration reads over `MigrationApiV1` (`deviceSettings.listIds`,
   `deviceSettings.read`, `devices.aliases`, all read only and scoped to the addon's own
   rows or the named ids) and the addon is off the pending list. A missing

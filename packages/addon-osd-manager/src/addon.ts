@@ -7,10 +7,12 @@
 import {
   addonPagesSourceCapability,
   BaseAddon,
+  type AddonContext,
   type AddonPageDeclaration,
   type ConfigUISchema,
   EventCategory,
   type IAddonPageProvider,
+  type IScopedLogger,
   OsdStatusSchema,
   osdManagerCapability,
   type ProviderRegistration,
@@ -77,14 +79,7 @@ export class OsdManagerAddon extends BaseAddon<OsdManagerConfig> {
   protected async onInitialize(): Promise<ProviderRegistration[]> {
     const ctx = this.ctx
     // Before anything parses a store: the manager reads the new shapes only (D987).
-    if (ctx.settings === undefined || ctx.migrationApi === undefined) {
-      // No store to move rows in: the manager still starts, on whatever shape is there.
-      ctx.logger.warn(
-        'osd-manager: the per-device settings store or the migration API is unavailable; the bindings-to-templates migration is skipped',
-      )
-    } else {
-      await this.runMigrations(ADDON_MIGRATIONS, osdMigrationPortsOver)
-    }
+    await this.migrateBindings(ctx)
     const store = new OsdBindingsStore((deviceId, key, schema, fallback) =>
       this.deviceState(deviceId, key, schema, fallback),
     )
@@ -220,6 +215,24 @@ export class OsdManagerAddon extends BaseAddon<OsdManagerConfig> {
       { capability: osdManagerCapability, provider: manager },
       { capability: addonPagesSourceCapability, provider: pagesProvider },
     ]
+  }
+
+  /**
+   * Without the per-device settings store or the migration API there is nowhere to move rows: the
+   * manager still starts, on whatever shape is there, and says so.
+   */
+  protected async migrateBindings(
+    ctx: Pick<AddonContext, 'settings' | 'migrationApi'> & {
+      readonly logger: Pick<IScopedLogger, 'warn'>
+    },
+  ): Promise<void> {
+    if (ctx.settings === undefined || ctx.migrationApi === undefined) {
+      ctx.logger.warn(
+        'osd-manager: the per-device settings store or the migration API is unavailable; the bindings-to-templates migration is skipped',
+      )
+      return
+    }
+    await this.runMigrations(ADDON_MIGRATIONS, osdMigrationPortsOver)
   }
 
   protected async onConfigChanged(): Promise<void> {

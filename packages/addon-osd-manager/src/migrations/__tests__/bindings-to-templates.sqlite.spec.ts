@@ -440,7 +440,7 @@ describe('osd-manager bindings-to-templates', () => {
     })
   })
 
-  it('names a clashing "camera" alias with a renamed one and says so', async () => {
+  it('sets a slot aside when it names a device whose alias is "camera", and every migrated text renders', async () => {
     const notes: { message: string; deviceId?: number }[] = []
     const f = settingsFixture<OsdManagerMigrationPorts>({
       addonId: OWNER,
@@ -461,6 +461,12 @@ describe('osd-manager bindings-to-templates', () => {
               template: '${value}',
               maxDecimals: 1,
             },
+            'text-2': {
+              enabled: true,
+              source: { kind: 'device-state', capName: 'motion', valuePath: 'detected' },
+              template: '${value}',
+              maxDecimals: 1,
+            },
           },
         },
       },
@@ -474,11 +480,18 @@ describe('osd-manager bindings-to-templates', () => {
       }),
     })
     expect((await f.boot()).failed).toEqual([])
-    const text = JSON.stringify(value(f.rows()[`${OWNER}.namedTemplates`]))
-    expect(text).toContain(`camera_${GARAGE}.switch.on`)
-    expect(text).not.toContain('camera.switch.on')
-    expect(notes.some((n) => n.deviceId === GARAGE && n.message.includes(`camera_${GARAGE}`))).toBe(
-      true,
-    )
+    const bindings = value(f.deviceRows()[`${OWNER}:${CAMERA}.slotBindings`])
+    expect(bindings).toMatchObject({ 'text-1': { enabled: false, source: { kind: 'none' } } })
+    expect(notes.some((n) => n.deviceId === CAMERA && n.message.includes('"camera"'))).toBe(true)
+    // Every text the migration wrote resolves against the aliases that exist (the host names the
+    // camera `camera` and nothing named after the clashing device).
+    const texts = JSON.stringify(f.rows()[`${OWNER}.namedTemplates`]).match(/\{\{[^"]*?\}\}/g) ?? []
+    expect(texts.length).toBeGreaterThan(0)
+    for (const text of texts) {
+      const out = await renderer.render(text.replace(/\\"/g, '"'), {
+        viewOf: (alias) => (alias === 'camera' ? view(CAMERA) : undefined),
+      })
+      expect(out.ok).toBe(true)
+    }
   })
 })

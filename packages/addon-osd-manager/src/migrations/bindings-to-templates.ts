@@ -142,22 +142,15 @@ class Converter {
     private readonly aliases: ReadonlyMap<number, string>,
   ) {}
 
-  private readonly clashNoted = new Set<number>()
-
   private aliasFor(deviceId: number, cameraId: number | null): string {
     if (cameraId !== null && deviceId === cameraId) return 'camera'
     const alias = this.aliases.get(deviceId)
     if (alias === RESERVED_CAMERA_ALIAS) {
-      // `camera` now means "the camera this text renders for", so another device wearing it cannot be named.
-      const renamed = `${RESERVED_CAMERA_ALIAS}_${deviceId}`
-      if (!this.clashNoted.has(deviceId)) {
-        this.clashNoted.add(deviceId)
-        this.ports.note(
-          `device ${deviceId} has the alias "camera", which is now reserved for the camera a text renders for; migrated texts name it "${renamed}" - give the device that alias in Devices`,
-          deviceId,
-        )
-      }
-      return renamed
+      // `camera` now means "the camera this text renders for", and a text can name a device only by
+      // its alias: no text can reach this one. The caller sets the slot or template aside.
+      throw new Error(
+        `device ${deviceId} has the alias "camera", which is now reserved for the camera a text renders for; give that device another alias in Devices and set the text again`,
+      )
     }
     if (alias !== undefined) return alias
     this.ports.note(
