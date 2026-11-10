@@ -1,0 +1,3 @@
+# Runtime deps of the vendored Blazor protocol modules (derolli1976/enpal, MIT).
+aiohttp>=3.9.0
+msgpack>=1.0.7

@@ -1,5 +1,6 @@
 import type { IScopedLogger } from '@camstack/types'
 import { sameConnection, type EnpalConnection } from './config.js'
+import type { BlazorReader } from './enpal-blazor.js'
 import type { FetchLike } from './enpal-client.js'
 import { EnpalIntegrationManager } from './enpal-integration-manager.js'
 import { enpalConnections } from './enpal-resolver.js'
@@ -10,6 +11,8 @@ export interface EnpalClientRegistryDeps {
   /** The box stopped answering, or never did. */
   readonly onDisconnected: (integrationId: string) => void
   readonly fetch?: FetchLike
+  /** The Python bridge to the box, or undefined while the node has no embedded Python. */
+  readonly blazor?: () => BlazorReader | undefined
   readonly now?: () => number
 }
 
@@ -59,6 +62,7 @@ export class EnpalClientRegistry {
       tokenLocked,
       logger: this.#logger.withTags({ integrationId }),
       fetch: this.#deps.fetch,
+      blazor: this.#deps.blazor,
       now: this.#deps.now,
       onConnected: () => {
         this.#deps.onConnected(integrationId)

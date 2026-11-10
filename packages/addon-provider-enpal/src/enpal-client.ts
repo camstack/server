@@ -1,4 +1,9 @@
 import type { EnpalConnection } from './config.js'
+import {
+  BlazorBridgeError,
+  blazorRowsToReadings,
+  type BlazorReader,
+} from './enpal-blazor.js'
 import { parseDeviceMessages } from './enpal-device-page.js'
 import { parseFluxCsv } from './enpal-flux-csv.js'
 import {
@@ -38,6 +43,8 @@ export interface ReadEnpalSnapshotInput {
   /** The token is stored but the keychain cannot serve it right now. */
   readonly tokenLocked?: boolean
   readonly fetch: FetchLike
+  /** The Python bridge to the box's Blazor channel; absent while Python is unavailable. */
+  readonly blazor?: BlazorReader
   readonly now: () => number
 }
 
@@ -125,6 +132,35 @@ async function readInflux(input: ReadEnpalSnapshotInput): Promise<EnpalReading[]
   return readings
 }
 
+async function readBlazor(input: ReadEnpalSnapshotInput): Promise<EnpalReading[]> {
+  const { connection } = input
+  if (input.blazor === undefined) {
+    throw new EnpalError(
+      'bridge-unavailable',
+      'blazor',
+      'The embedded Python the Enpal bridge needs is not available on this node',
+    )
+  }
+  let readings: EnpalReading[]
+  try {
+    readings = blazorRowsToReadings(
+      await input.blazor({ host: connection.host, port: connection.pagePort }),
+    )
+  } catch (error) {
+    if (!(error instanceof BlazorBridgeError)) throw error
+    const kind: EnpalErrorKind = error.kind === 'protocol' ? 'bad-response' : error.kind
+    throw new EnpalError(kind, 'blazor', error.message)
+  }
+  if (readings.length === 0) {
+    throw new EnpalError(
+      'empty',
+      'blazor',
+      `Enpal box ${connection.host} sent no numeric sensor rows`,
+    )
+  }
+  return readings
+}
+
 async function readPage(input: ReadEnpalSnapshotInput): Promise<EnpalReading[]> {
   const { connection } = input
   const url = `http://${connection.host}:${connection.pagePort}/deviceMessages`
@@ -144,34 +180,57 @@ function reasonOf(error: EnpalError): EnpalFallbackReason {
   return { kind: error.kind, message: error.message }
 }
 
-/**
- * Read every data point the box reports, once. `auto` tries InfluxDB first (stable, numeric)
- * and falls back to the device page, recording why on the snapshot; when both fail the
- * InfluxDB failure is the one reported. A failed read throws {@link EnpalError}: it never
- * yields a snapshot of zeros.
- */
-export async function readEnpalSnapshot(input: ReadEnpalSnapshotInput): Promise<EnpalSnapshot> {
-  const { source } = input.connection
-  if (source === 'influx') {
-    return createSnapshot('influxdb', await readInflux(input), input.now())
-  }
-  if (source === 'page') {
-    return createSnapshot('device-page', await readPage(input), input.now())
-  }
+const READERS: Readonly<
+  Record<EnpalSourceKind, (input: ReadEnpalSnapshotInput) => Promise<EnpalReading[]>>
+> = {
+  blazor: readBlazor,
+  influxdb: readInflux,
+  'device-page': readPage,
+}
 
-  const hasToken = input.tokenLocked !== true && input.connection.token.trim().length > 0
-  if (!hasToken) {
-    return createSnapshot('device-page', await readPage(input), input.now())
-  }
-  try {
-    return createSnapshot('influxdb', await readInflux(input), input.now())
-  } catch (primary) {
-    if (!(primary instanceof EnpalError)) throw primary
-    try {
-      return createSnapshot('device-page', await readPage(input), input.now(), reasonOf(primary))
-    } catch (secondary) {
-      if (!(secondary instanceof EnpalError)) throw secondary
-      throw primary
+/** The sources to try, in order, for a connection's `source` setting. */
+function sourceOrder(input: ReadEnpalSnapshotInput): readonly EnpalSourceKind[] {
+  switch (input.connection.source) {
+    case 'blazor':
+      return ['blazor']
+    case 'influx':
+      return ['influxdb']
+    case 'page':
+      return ['device-page']
+    case 'auto': {
+      const hasToken = input.tokenLocked !== true && input.connection.token.trim().length > 0
+      return [
+        ...(input.blazor !== undefined ? (['blazor'] as const) : []),
+        ...(hasToken ? (['influxdb'] as const) : []),
+        'device-page',
+      ]
     }
   }
+}
+
+/**
+ * Read every data point the box reports, once. `auto` tries the Blazor channel first (the
+ * only one that carries the device tables on firmware 8.51 and later, no credential), then
+ * InfluxDB when a token is set, then the device page; the snapshot records why a preferred
+ * source was skipped. When every source fails the FIRST failure is the one reported. A failed
+ * read throws {@link EnpalError}: it never yields a snapshot of zeros.
+ */
+export async function readEnpalSnapshot(input: ReadEnpalSnapshotInput): Promise<EnpalSnapshot> {
+  let first: EnpalError | undefined
+  for (const source of sourceOrder(input)) {
+    try {
+      const readings = await READERS[source](input)
+      return createSnapshot(
+        source,
+        readings,
+        input.now(),
+        first !== undefined ? reasonOf(first) : undefined,
+      )
+    } catch (error) {
+      if (!(error instanceof EnpalError)) throw error
+      first ??= error
+    }
+  }
+  if (first === undefined) throw new Error('readEnpalSnapshot: no source to read')
+  throw first
 }

@@ -1,7 +1,7 @@
 {
   "name": "@camstack/addon-provider-enpal",
   "version": "0.1.15",
-  "description": "Enpal solar-box device-provider addon for CamStack — PV, battery, grid, house and heat-pump readings from the box's local InfluxDB (device page as fallback)",
+  "description": "Enpal solar-box device-provider addon for CamStack — PV, battery, grid, house and heat-pump readings from the box's own web-page channel, its local InfluxDB or its device page",
   "keywords": [
     "camstack",
     "addon",
@@ -40,7 +40,7 @@
         "category": "providers",
         "name": "Enpal",
         "version": "0.1.0",
-        "description": "Add an Enpal solar box as an integration (InfluxDB, device page as fallback) and adopt its equipment: photovoltaic, battery, grid, house and heat pump",
+        "description": "Add an Enpal solar box as an integration (its own web-page channel, InfluxDB or the device page) and adopt its equipment: photovoltaic, battery, grid, house and heat pump",
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#f5a623",
@@ -59,7 +59,10 @@
           {
             "name": "device-adoption"
           }
-        ]
+        ],
+        "python": {
+          "requirements": "./python/requirements.txt"
+        }
       }
     ],
     "requires": {
@@ -68,6 +71,7 @@
   },
   "files": [
     "dist",
+    "python",
     "i18n",
     "assets",
     "README.md",

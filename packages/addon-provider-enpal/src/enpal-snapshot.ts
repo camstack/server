@@ -9,13 +9,14 @@ export interface EnpalReading {
   readonly measurement: string | undefined
 }
 
-export type EnpalSourceKind = 'influxdb' | 'device-page'
+export type EnpalSourceKind = 'blazor' | 'influxdb' | 'device-page'
 
 export type EnpalErrorKind =
   | 'unreachable'
   | 'timeout'
   | 'unauthorized'
   | 'token-missing'
+  | 'bridge-unavailable'
   | 'bad-response'
   | 'empty'
 

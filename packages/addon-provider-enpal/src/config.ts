@@ -6,13 +6,15 @@ import type { ConfigUISchema } from '@camstack/types'
  * settings of the integration itself, not of a device. Every equipment the box reports is
  * adopted as a Container from it.
  *
- * Two sources behind `source`:
+ * Sources behind `source`:
+ *   - `blazor`: the box's own web-page channel (Blazor Server, firmware 8.51 and later),
+ *     read by an embedded Python bridge. No token, nothing written to the box.
  *   - `influx`: the box's InfluxDB 2.x (port 8086, org `enpal`, bucket `solar`).
  *     Needs the access token Enpal support issues; it is a keychain secret.
  *   - `page`: the box's local device page (`/deviceMessages`). No token; fewer
  *     boxes and firmware versions still serve it.
- *   - `auto` (default): InfluxDB when a token is set, the page otherwise or when
- *     InfluxDB cannot be read.
+ *   - `auto` (default): `blazor`, then InfluxDB when a token is set, then the page; the first
+ *     one that answers wins and the snapshot records why a preferred one was skipped.
  */
 
 /** Strip a pasted scheme and path: `http://192.0.2.10/deviceMessages` -> `192.0.2.10`. */
@@ -38,7 +40,7 @@ const FLUX_NAME = /^[A-Za-z0-9_.-]+$/
 /** The device-registry `system` tag every Enpal device carries. */
 export const ENPAL_SYSTEM = 'enpal'
 
-export const ENPAL_SOURCES = ['auto', 'influx', 'page'] as const
+export const ENPAL_SOURCES = ['auto', 'blazor', 'influx', 'page'] as const
 export type EnpalSource = (typeof ENPAL_SOURCES)[number]
 
 export const enpalConnectionSchema = z.object({
@@ -141,7 +143,7 @@ export function buildConnectionFormSchema(): ConfigUISchema {
         title: 'Data source',
         titleKey: 'provider-enpal:connection.s_source.title',
         description:
-          'InfluxDB needs the access token Enpal support issues (ask in the Enpal app chat). Without it the box device page is used.',
+          "The box's own web-page channel needs no credential and is used first. InfluxDB is used only with the access token Enpal support issues; the device page is the last resort.",
         descriptionKey: 'provider-enpal:connection.s_source.description',
         columns: 2,
         fields: [
@@ -154,8 +156,13 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             options: [
               {
                 value: 'auto',
-                label: 'Automatic (InfluxDB, then device page)',
+                label: 'Automatic (box web channel, InfluxDB, then device page)',
                 labelKey: 'provider-enpal:connection.s_source.source.o_auto.label',
+              },
+              {
+                value: 'blazor',
+                label: 'Box web channel only (firmware 8.51 and later)',
+                labelKey: 'provider-enpal:connection.s_source.source.o_blazor.label',
               },
               {
                 value: 'influx',

@@ -1,6 +1,7 @@
 import type { IScopedLogger } from '@camstack/types'
 import type { EnpalConnection } from './config.js'
 import { EnpalError, readEnpalSnapshot, type FetchLike } from './enpal-client.js'
+import type { BlazorReader } from './enpal-blazor.js'
 import type { EnpalSnapshot } from './enpal-snapshot.js'
 
 export type EnpalManagerStatus = 'disconnected' | 'connecting' | 'connected' | 'error'
@@ -12,6 +13,8 @@ export interface EnpalIntegrationManagerOptions {
   readonly tokenLocked: boolean
   readonly logger: IScopedLogger
   readonly fetch?: FetchLike
+  /** Resolved per poll, so a bridge that becomes available later is used from the next one. */
+  readonly blazor?: () => BlazorReader | undefined
   readonly now?: () => number
   /** First successful poll after a failure (or after start). */
   readonly onConnected: () => void
@@ -106,6 +109,7 @@ export class EnpalIntegrationManager {
         connection: this.#options.connection,
         tokenLocked: this.#options.tokenLocked,
         fetch: this.#fetch,
+        blazor: this.#options.blazor?.(),
         now: this.#options.now ?? Date.now,
       })
       if (this.#stopped) return
@@ -119,7 +123,7 @@ export class EnpalIntegrationManager {
       }
       if (snapshot.fallbackReason !== undefined && !wasConnected) {
         this.#options.logger.warn(
-          `Enpal box ${this.name}: InfluxDB not used (${snapshot.fallbackReason.kind}), reading the device page`,
+          `Enpal box ${this.name}: preferred source not used (${snapshot.fallbackReason.kind}: ${snapshot.fallbackReason.message}), reading ${snapshot.source}`,
         )
       }
       this.#failureLogged = false

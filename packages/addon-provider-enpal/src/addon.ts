@@ -21,7 +21,9 @@ import {
 import { ENPAL_SYSTEM } from './config.js'
 import { EnpalEquipmentDevice } from './devices/enpal-equipment-device.js'
 import { buildEnpalAdoptionProvider } from './enpal-adoption-provider.js'
+import { createBlazorReader, type BlazorReader } from './enpal-blazor.js'
 import { EnpalClientRegistry } from './enpal-client-registry.js'
+import { resolveEnpalWorker } from './enpal-python-paths.js'
 import {
   buildEnpalInstances,
   enpalConnectionOf,
@@ -61,6 +63,8 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
   private integrationReconciler: EnpalReconciler | null = null
   private clients: EnpalClientRegistry | null = null
   private instances: RecordIntegrationInstances<EnpalConnectionBody> | null = null
+  /** The Python bridge to the box's Blazor channel; null while the node has no embedded Python. */
+  private blazorReader: BlazorReader | null = null
 
   constructor() {
     super({})
@@ -90,7 +94,9 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
     this.instances = buildEnpalInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
     })
+    this.blazorReader = await this.createBlazorBridge()
     this.clients = new EnpalClientRegistry(this.ctx.logger, {
+      blazor: () => this.blazorReader ?? undefined,
       onConnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, true),
       onDisconnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, false),
     })
@@ -120,10 +126,31 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
       })
     }
     this.clients = null
+    this.blazorReader = null
     this.integrationReconciler?.dispose()
     this.integrationReconciler = null
     enpalConnections.clear()
     await super.onShutdown()
+  }
+
+  /**
+   * The embedded Python and the bundled worker, or null with a logged reason: the addon then
+   * reads InfluxDB or the device page, which on firmware 8.51 and later hold less.
+   */
+  private async createBlazorBridge(): Promise<BlazorReader | null> {
+    try {
+      const pythonPath = await this.ctx.deps.ensurePython()
+      if (pythonPath === null) {
+        this.ctx.logger.warn('Enpal: embedded Python is unavailable, the Blazor channel is not used')
+        return null
+      }
+      return createBlazorReader({ pythonPath, scriptPath: resolveEnpalWorker() })
+    } catch (err) {
+      this.ctx.logger.warn('Enpal: the Python bridge could not be prepared', {
+        meta: { error: errMsg(err) },
+      })
+      return null
+    }
   }
 
   private requireInstances(): RecordIntegrationInstances<EnpalConnectionBody> {

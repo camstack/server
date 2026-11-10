@@ -1,8 +1,9 @@
 import { normalizeEnpalUnit } from './enpal-units.js'
 import type { EnpalReading } from './enpal-snapshot.js'
 
-const CARD_HEADER = /<div class="card-header">\s*<h2>([^<]+)<\/h2>/g
-const ROW = /<tr>\s*<td>([^<]+)<\/td>\s*<td>([^<]*)<\/td>\s*<td>[^<]*<\/td>\s*<\/tr>/g
+// Firmware 8.52 writes `card-header d-flex ...` and `<tr class="">`; older ones had neither.
+const CARD_HEADER = /<div class="card-header[^"]*">\s*<h2>([^<]+)<\/h2>/g
+const ROW = /<tr(?:\s[^>]*)?>\s*<td>([^<]+)<\/td>\s*<td>([^<]*)<\/td>\s*<td>[^<]*<\/td>\s*<\/tr>/g
 const KEY_SHAPE = /^[A-Za-z][A-Za-z0-9]*(\.[A-Za-z0-9-]+)+$/
 /** `10231W`, `-350W`, `1.85kW`, `51°C`, `62.5%`, `3` */
 const VALUE = /^(-?\d+(?:[.,]\d+)?)\s*(\S*)$/
@@ -31,7 +32,7 @@ function cardOffsets(html: string): ReadonlyArray<{ readonly at: number; readonl
  * no zone, so it is not used: the poll time is.
  *
  * Firmware 8.51 and later pre-render only the "Site Data" card; the device rows then never
- * appear and this returns `[]`.
+ * appear here (they come through the Blazor circuit, `enpal-blazor.ts`).
  */
 export function parseDeviceMessages(html: string): EnpalReading[] {
   const cards = cardOffsets(html)
