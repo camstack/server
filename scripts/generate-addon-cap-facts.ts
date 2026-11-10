@@ -15,8 +15,8 @@
  *     `events[*].fromState: { field, on: 'advance' }`). Consumer: the sensor
  *     transition gate (`addon-post-analysis`).
  *   - `CAP_STATE_LEAVES`    cap name -> the bindable scalar leaves of its
- *     runtime state (`stateLeavesOf`, the Zod introspection the OSD source
- *     picker used to run per request). Consumer: `addon-osd-manager`.
+ *     runtime state (`stateLeavesOf` in `scripts/lib/cap-state-leaves.ts`,
+ *     Zod introspection run here so no runner pays for it).
  *
  *   - `CAP_METHOD_TIMEOUTS_MS`  cap name -> method -> the declared `timeoutMs`.
  *     A forked addon's outbound `ctx.api` call is bounded on the CHILD's socket,
@@ -35,7 +35,7 @@
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ALL_CAPABILITY_DEFINITIONS } from '../packages/types/src/generated/capability-router-map.ts'
-import { stateLeavesOf } from '../packages/addon-osd-manager/src/state-leaves.ts'
+import { stateLeavesOf } from './lib/cap-state-leaves.ts'
 import { writeIfChanged } from './codegen-write.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
