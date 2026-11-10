@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.827 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.828 | the update itself | — |
 
 ## Framework (4)
 
@@ -73,7 +73,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-provider-tuya` | `packages/addon-provider-tuya` | 0.2.159 | addons dir | Tuya / Smart Life device-provider addon for CamStack — account-onboarded (Tuya IoT cloud fetch of device localKeys) + LOCAL DP control via the @apocaliss92/nodetuya encrypted-LAN client, exposing switch / water-heater-family kettle entities |
 | `@camstack/addon-provider-unifi` | `packages/addon-provider-unifi` | 0.2.162 | addons dir | UniFi Network controller device-provider addon for CamStack — local-controller infra switches/APs (as containers) + network-client presence. No cameras. |
 | `@camstack/addon-provider-unraid` | `packages/addon-provider-unraid` | 0.2.163 | addons dir | Unraid device-provider addon for CamStack — one Container per Unraid instance fanning out array, disk, docker and notification entities |
-| `@camstack/addon-provider-velux` | `packages/addon-provider-velux` | 0.2.165 | addons dir | Velux KLF-200 integration for CamStack — the gateway, local-gateway windows (with rain sensor) and shutter covers (positional, no tilt) |
+| `@camstack/addon-provider-velux` | `packages/addon-provider-velux` | 0.2.166 | addons dir | Velux KLF-200 integration for CamStack — the gateway, local-gateway windows (with rain sensor) and shutter covers (positional, no tilt) |
 | `@camstack/addon-provider-vesync` | `packages/addon-provider-vesync` | 0.2.156 | addons dir | VeSync cloud-account device-provider addon for CamStack — Levoit / Cosori air purifiers as Fan devices (power, speed, preset, child-lock, display, air-quality + filter-life sensors) |
 | `@camstack/addon-provider-wyze` | `packages/addon-provider-wyze` | 0.2.173 | addons dir | Wyze camera device-provider addon for CamStack — wraps the @apocaliss92/wyze-bridge-js P2P/DTLS client, feeding the stream-broker via the pull-rfc4571 lazy-publish path (a structural twin of addon-provider-reolink) |
 | `@camstack/addon-remote-storage` | `packages/addon-remote-storage` | 1.2.146 | addons dir | Remote storage providers (SFTP, S3, WebDAV, SMB) — unifies remote backends behind the storage-provider cap |
