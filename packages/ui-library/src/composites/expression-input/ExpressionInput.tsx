@@ -1,13 +1,16 @@
 import { type ReactNode, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useUiText } from '../../contexts/ui-text'
 import { applySuggestion, expressionSuggestions } from './expression-suggestions'
-import { Input } from '@camstack/ui-library'
+import { Input } from '../../primitives/input'
+
+const NOW_HINT = 'the time of this evaluation (ms)'
 
 export interface ExpressionInputProps {
   readonly label: string
   readonly value: string
   readonly bindings: readonly string[]
   readonly onChange: (next: string) => void
+  readonly placeholder?: string
 }
 
 export function ExpressionInput({
@@ -15,8 +18,9 @@ export function ExpressionInput({
   value,
   bindings,
   onChange,
+  placeholder,
 }: ExpressionInputProps): ReactNode {
-  const { t } = useTranslation()
+  const t = useUiText()
   const input = useRef<HTMLInputElement>(null)
   const [cursor, setCursor] = useState(value.length)
   const suggestions = expressionSuggestions(value, cursor, bindings)
@@ -28,6 +32,7 @@ export function ExpressionInput({
           ref={input}
           className="font-mono px-1.5 py-0.5 text-[11px] bg-background border border-border rounded"
           value={value}
+          placeholder={placeholder}
           onChange={(e) => {
             onChange(e.target.value)
             setCursor(e.target.selectionStart ?? e.target.value.length)
@@ -38,7 +43,7 @@ export function ExpressionInput({
       {suggestions.length > 0 && (
         <ul
           role="listbox"
-          aria-label={t('compositionEditor.suggestions')}
+          aria-label={t('compositionEditor.suggestions', 'Suggestions')}
           className="rounded border border-border bg-surface text-[11px]"
         >
           {suggestions.map((s) => (
@@ -56,7 +61,11 @@ export function ExpressionInput({
               }}
             >
               <span className="font-mono">{s.label}</span>
-              {s.hintKey !== null && <span className="text-foreground-subtle">{t(s.hintKey)}</span>}
+              {s.hintKey !== null && (
+                <span className="text-foreground-subtle">
+                  {t(s.hintKey, s.kind === 'now' ? NOW_HINT : s.label)}
+                </span>
+              )}
             </li>
           ))}
         </ul>

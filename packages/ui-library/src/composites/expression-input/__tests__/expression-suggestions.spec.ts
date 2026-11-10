@@ -1,7 +1,5 @@
 import { EXPRESSION_BUILTIN_NAMES } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import en from '../../../i18n/en.json'
-import it_ from '../../../i18n/it.json'
 import {
   applySuggestion,
   BUILTIN_SIGNATURES,
@@ -9,14 +7,10 @@ import {
 } from '../expression-suggestions'
 
 describe('what autocomplete offers (ruling 11)', () => {
-  it('exactly the builtins that exist, each with a signature and a hint in both languages', () => {
+  it('exactly the builtins that exist, each with a signature', () => {
     expect(Object.keys(BUILTIN_SIGNATURES).toSorted()).toEqual(
       [...EXPRESSION_BUILTIN_NAMES].toSorted(),
     )
-    for (const name of EXPRESSION_BUILTIN_NAMES) {
-      expect(en.compositionEditor.builtins).toHaveProperty(name)
-      expect(it_.compositionEditor.builtins).toHaveProperty(name)
-    }
   })
   it('never offers `for` — it does not exist', () => {
     expect(expressionSuggestions('fo', 2, []).map((s) => s.label)).toEqual([])

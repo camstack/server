@@ -14,13 +14,12 @@ import {
   type RollingSpan,
   STATISTIC_STATS,
 } from '@camstack/types'
-import { Button, Input, Select } from '@camstack/ui-library'
+import { Button, ExpressionInput, Input, Select } from '@camstack/ui-library'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { SourceSelector } from '../device/customize/source-selector/SourceSelector'
 import { devicePath } from '../../lib/customization-routes'
-import { ExpressionInput } from './ExpressionInput'
 import { RefusalList } from './RefusalList'
 import { HelperTemplatePicker } from './HelperTemplatePicker'
 import {

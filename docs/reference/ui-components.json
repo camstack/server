@@ -598,6 +598,12 @@
       "notes": "Wraps `DeviceValueField`. `kind: 'members'` is the multi-select a group helper asks for (`SourcePickRequest`: one device type, the catalog fields, direct matches only). Behaviour params for an extension still come from the customize catalog (D944)"
     },
     {
+      "need": "A text that may carry device values (`{{ alias.field }}`): an action argument, a notification title or body",
+      "admin": "`DeviceTemplateField` (`accepts`, `preview`, `handle` to insert at the caret)",
+      "viewer": "a plain `Input` plus `DeviceValueTokenField`",
+      "notes": "Device references show as chips; the insert control offers only fields that fit `accepts`; the hub's verdict (`checkDeviceTemplates`) shows under the field. An evaluator expression (formula, automation condition) is not a template: use `ExpressionInput`"
+    },
+    {
       "need": "Pick ONE device value (device, then cap, then field; only what fits)",
       "admin": "`DeviceValueField` + `useDeviceValueSource`; as a `{{dev:<stableId>/<cap>.<field>}}` chip, `DeviceValueTokenField`",
       "viewer": "`DevicePicker`, a second value list",
@@ -962,6 +968,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-picker/device-picker-model.ts",
       "summary": "Search, then Type, Zone (only from an answered read), Location. No filter: the list itself."
+    },
+    {
+      "name": "applySuggestion",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/expression-input/expression-suggestions.ts",
+      "summary": "Formula autocomplete (spec §3, D676 ruling 11). It offers only what the engine has: the binding names, `now`, and every builtin in `EXPRESSION_BUILTIN_NAMES` — a spec pins the signature table to that set, so a builtin…"
     },
     {
       "name": "AppShell",
@@ -1666,6 +1679,13 @@
       "summary": "Align, stack (non-compare series only) and find the shared holes."
     },
     {
+      "name": "BUILTIN_SIGNATURES",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/expression-input/expression-suggestions.ts",
+      "summary": "Formula autocomplete (spec §3, D676 ruling 11). It offers only what the engine has: the binding names, `now`, and every builtin in `EXPRESSION_BUILTIN_NAMES` — a spec pins the signature table to that set, so a builtin…"
+    },
+    {
       "name": "Button",
       "kind": "component",
       "area": "primitives",
@@ -1948,6 +1968,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "carriesDeviceTemplate",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-template-field/device-template-model.ts",
+      "summary": "True when the text carries template markup beyond the consumer's own slots."
     },
     {
       "name": "catalogHasDraft",
@@ -4605,6 +4632,106 @@
       ]
     },
     {
+      "name": "DeviceTemplateField",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-template-field/DeviceTemplateField.tsx",
+      "summary": "A text field for a device template (`{{ alias.field | filter }}`). Device references show as chips (alias.field, the device name on hover) until the field is edited; an \"insert value\" button picks device → field and w…",
+      "props": [
+        {
+          "name": "handle",
+          "type": "MutableRefObject<DeviceTemplateFieldHandle | null>",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(next: string) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "accepts",
+          "type": "DeviceTemplateAccepts",
+          "optional": true,
+          "doc": "The kind of value the slot takes; the insert dialog offers only fields that fit. Default `any`."
+        },
+        {
+          "name": "multiline",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "preview",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Show the rendered text under the field (one hub call per pause in typing)."
+        },
+        {
+          "name": "allowedDeviceIds",
+          "type": "readonly number[]",
+          "optional": true,
+          "doc": "Devices the end caller may read; a template naming another is refused."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "capTitle",
+          "type": "(cap: string) => string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "fieldLabel",
+          "type": "(cap: string, path: string) => string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "deviceTemplateToken",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-template-field/device-template-model.ts",
+      "summary": "The token for one value. The short form `{{ alias.field }}` resolves only when exactly one cap of the device carries a field of that name; otherwise the cap is spelled out (`{{ alias.cap_name.field }}`), as the render…"
+    },
+    {
       "name": "deviceTypeLabel",
       "kind": "function",
       "area": "composites",
@@ -5505,6 +5632,52 @@
       ]
     },
     {
+      "name": "ExpressionInput",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/expression-input/ExpressionInput.tsx",
+      "summary": "",
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "bindings",
+          "type": "readonly string[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(next: string) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "expressionSuggestions",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/expression-input/expression-suggestions.ts",
+      "summary": "Formula autocomplete (spec §3, D676 ruling 11). It offers only what the engine has: the binding names, `now`, and every builtin in `EXPRESSION_BUILTIN_NAMES` — a spec pins the signature table to that set, so a builtin…"
+    },
+    {
       "name": "ExtensionsPanel",
       "kind": "component",
       "area": "composites",
@@ -5571,6 +5744,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-meta.ts",
       "summary": "The glyphs the admin draws on FIRST PAINT, synchronously — the ones the device-type and role meta tables above already import. Everything else in the icon catalog is drawn from the lazily loaded full table (`icon-glyp…"
+    },
+    {
+      "name": "fieldAccepts",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-template-field/device-template-model.ts",
+      "summary": "A number slot takes numbers, a yes/no slot takes booleans; a text slot prints anything, so it takes every kind (a temperature in a sentence is the common case). An unknown kind is never offered to a typed slot."
     },
     {
       "name": "FileInput",
@@ -6190,6 +6370,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-list/hardware.ts",
       "summary": "Compact cell text: `manufacturer · model`, or whichever is present, or `null` when neither is a usable string (caller renders the empty state)."
+    },
+    {
+      "name": "hasDeviceRefs",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-template-field/device-template-model.ts",
+      "summary": ""
     },
     {
       "name": "HERO_SCENE_ICON",
@@ -7262,6 +7449,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/placeholder-field/PlaceholderChipField.tsx",
       "summary": "Text field with insertable placeholder chips — the same interaction model as Notification Center's TemplateField, without the NC variable catalog."
+    },
+    {
+      "name": "insertTemplateToken",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-template-field/device-template-model.ts",
+      "summary": "Put `token` at the selection (replacing it), clamped to the text."
     },
     {
       "name": "InstancePickerSlotProvider",
@@ -8867,6 +9061,13 @@
       "area": "lib",
       "file": "packages/ui-library/src/lib/recorded-control-protocol.ts",
       "summary": "Parse a raw server→client control frame. Returns `null` on any malformed payload (bad JSON, unknown discriminator, wrong field types)."
+    },
+    {
+      "name": "parseTemplateSegments",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-template-field/device-template-model.ts",
+      "summary": "Split a template into text and device references; the pieces re-join to the input."
     },
     {
       "name": "partitionOptionSelectSelected",
@@ -12821,6 +13022,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "textForDeviceCheck",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-template-field/device-template-model.ts",
+      "summary": "What the hub is asked to vet: the text with the consumer's own slots set aside, as the run-time does."
     },
     {
       "name": "ThemeProvider",
