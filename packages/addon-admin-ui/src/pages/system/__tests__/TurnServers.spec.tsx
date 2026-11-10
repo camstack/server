@@ -14,15 +14,6 @@ vi.mock('../../../components/instances/InstancesTable', () => ({
   ),
 }))
 
-vi.mock('@camstack/ui-library', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@camstack/ui-library')>()),
-  useTurnProviderGetTurnServers: () => ({
-    data: [{ urls: ['turn:203.0.113.7:3478'], username: 'u', credential: 'SECRET' }],
-    refetch: vi.fn(),
-    isFetching: false,
-  }),
-}))
-
 import { TurnServersPage } from '../TurnServers'
 
 describe('TurnServersPage', () => {
@@ -33,9 +24,8 @@ describe('TurnServersPage', () => {
     expect(panel.textContent).toBe('TURN Servers')
   })
 
-  it('keeps the combined ICE list below the panel, never showing the credential', () => {
+  it('draws no second list of the ICE servers beside the table', () => {
     const { container } = render(<TurnServersPage />)
-    expect(screen.getByText('turn:203.0.113.7:3478')).toBeTruthy()
-    expect(container.textContent).not.toContain('SECRET')
+    expect(container.querySelectorAll('[data-testid]').length).toBe(1)
   })
 })
