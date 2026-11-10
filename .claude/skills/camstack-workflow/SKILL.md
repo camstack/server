@@ -285,10 +285,18 @@ The index is `../planning/sessions/sessions.md`; do not append to it.
   It runs exactly the
   CI gates for what you are about to push (merge-base with `origin/main`,
   working tree included): the TypeScript 7 typecheck graded against the pins
-  (`scripts/typecheck-tsgo.ts`), the affected tests in CI's lanes and
-  workers (`scripts/ci/test-affected.sh`), `test:scripts` when
-  `scripts/` moved, the addon footprint guard, and the D28 barrel guards
-  (`scripts/ci/run-barrel-guards.sh`, the list CI's guards lane calls too). A related run, a per-package tsgo check or one green
+  (`scripts/typecheck-tsgo.ts`), the affected tests (`scripts/ci/test-affected.sh`),
+  `test:scripts` when `scripts/` moved, the addon footprint guard, and the D28
+  barrel guards (`scripts/ci/run-barrel-guards.sh`, the list CI's guards lane
+  calls too). Outside CI the heavy and light lanes run at the same time: heavy
+  projects start longest-first at `VERIFY_HEAVY_PARALLEL` (default 2), and the
+  worker counts are sized from the CPU count so the lanes together do not
+  oversubscribe (default heavy 4 workers, light 2 — on 12 cores that is 2×4 +
+  2×2). `VERIFY_LOCAL=0` forces the serial schedule CI uses. CI itself is
+  unchanged: it calls `test-affected.sh --shard` and keeps the heavy lane at
+  `--parallel=1`. Each run appends one JSON line to
+  `~/.cache/camstack/verify-timings.jsonl` and prints a stage summary.
+  A related run, a per-package tsgo check or one green
   spec is NOT the CI gate — that gap turned 9 of 13 red runs of 2026-10-12/13
   into "pinned-or-new error(s)" nobody had seen. RED means you do not push.
 - **Viewer (`camstack/` submodule) — same rule, before every commit and

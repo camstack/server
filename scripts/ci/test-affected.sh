@@ -8,9 +8,11 @@
 # Light addons are small enough to share --parallel safely.
 #
 # Shards: CI runs one matrix job per shard (heavy package(s) alone, light addons
-# in two hash-assigned groups); the default is every shard in turn, which is what
-# `npm run verify:push` runs — the same projects, the same commands, so the local
-# gate and CI cannot grade different sets. The shard table lives HERE only.
+# in three hash-assigned groups). A shard job is the serial schedule below —
+# the same projects and the same nx commands as before. `npm run verify:push`
+# on a developer machine (no `CI` env) does not walk the shards: it runs the
+# heavy and light lanes together (`scripts/ci/run-test-lanes.mjs`). The shard
+# table lives HERE only.
 #
 # Usage:
 #   scripts/ci/test-affected.sh [--shard <name>] --files "$CHANGED"
@@ -193,18 +195,25 @@ if [[ -n "$PROJECTS_ONLY" ]]; then
   exit 0
 fi
 
-if [[ -n "${HEAVY_CSV}" ]]; then
-  echo "test-affected: heavy (parallel=1): ${HEAVY_CSV}"
-  # A split shard hands vitest its slice after `--`; `all` (verify:push) runs whole.
-  npx nx run-many -t test --projects="${HEAVY_CSV}" --parallel=1 --output-style stream \
-    ${VITEST_SHARD:+-- "--shard=${VITEST_SHARD}"}
+# CI keeps the serial heavy lane (timing specs failed when heavy suites overlapped
+# on the shared runner). A machine without CI runs both lanes together; the
+# worker budget is scripts/ci/lane-budget.mjs. VERIFY_LOCAL=0 forces this branch.
+if node scripts/ci/lane-budget.mjs --enabled; then
+  node scripts/ci/run-test-lanes.mjs --heavy "${HEAVY_CSV}" --light "${LIGHT_CSV}" --shard "${VITEST_SHARD}"
 else
-  echo "test-affected: heavy lane empty"
-fi
+  if [[ -n "${HEAVY_CSV}" ]]; then
+    echo "test-affected: heavy (parallel=1): ${HEAVY_CSV}"
+    # A split shard hands vitest its slice after `--`; `all` (verify:push) runs whole.
+    npx nx run-many -t test --projects="${HEAVY_CSV}" --parallel=1 --output-style stream \
+      ${VITEST_SHARD:+-- "--shard=${VITEST_SHARD}"}
+  else
+    echo "test-affected: heavy lane empty"
+  fi
 
-if [[ -n "${LIGHT_CSV}" ]]; then
-  echo "test-affected: light (parallel=${LIGHT_PARALLEL}): ${LIGHT_CSV}"
-  npx nx run-many -t test --projects="${LIGHT_CSV}" --parallel="${LIGHT_PARALLEL}" --output-style stream
-else
-  echo "test-affected: light lane empty"
+  if [[ -n "${LIGHT_CSV}" ]]; then
+    echo "test-affected: light (parallel=${LIGHT_PARALLEL}): ${LIGHT_CSV}"
+    npx nx run-many -t test --projects="${LIGHT_CSV}" --parallel="${LIGHT_PARALLEL}" --output-style stream
+  else
+    echo "test-affected: light lane empty"
+  fi
 fi
