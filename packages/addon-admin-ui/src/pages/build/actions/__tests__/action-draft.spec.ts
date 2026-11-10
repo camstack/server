@@ -1,6 +1,13 @@
 import type { ActionEntry } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { checkDraft, draftOf, newVariable, renameVariable, variablesUsedBy } from '../action-draft'
+import {
+  checkDraft,
+  draftOf,
+  newVariable,
+  renameVariable,
+  triggerAlarmDraft,
+  variablesUsedBy,
+} from '../action-draft'
 
 const ENTRY: ActionEntry = {
   id: 'internal:feed-dog',
@@ -23,6 +30,21 @@ const ENTRY: ActionEntry = {
 }
 
 describe('action draft', () => {
+  it('prefills a trigger-the-alarm Action as one alarm-panel.trigger step', () => {
+    const check = checkDraft(triggerAlarmDraft(1023, 'Trigger the alarm'))
+    expect(check.ok).toBe(true)
+    if (!check.ok) return
+    expect(check.input.steps).toEqual([
+      {
+        kind: 'cap',
+        target: { kind: 'devices', ids: [1023] },
+        cap: 'alarm-panel',
+        method: 'trigger',
+        args: {},
+      },
+    ])
+  })
+
   it('round-trips an entry through the draft to the input the hub accepts', () => {
     const check = checkDraft(draftOf(ENTRY))
     expect(check.ok).toBe(true)

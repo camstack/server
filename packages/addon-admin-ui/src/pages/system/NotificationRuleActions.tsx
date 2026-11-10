@@ -12,6 +12,7 @@ import type { ReactNode } from 'react'
 import { Button, Input, Select } from '@camstack/ui-library'
 import { AlertTriangle, ExternalLink, Plus, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { TRIGGER_ALARM_PRESET } from '../build/actions/action-draft'
 import { Trans, useTranslation } from 'react-i18next'
 import {
   NC_ACTION_ICON_OPTIONS,
@@ -26,6 +27,9 @@ import {
 
 /** Where an Action is made: the Actions section of Build, create dialog open. */
 export const CREATE_ACTION_PATH = '/build?tab=actions&create=1'
+
+/** The same door, prefilled with one `alarm-panel.trigger` step. */
+export const TRIGGER_ALARM_ACTION_PATH = `/build?tab=actions&create=1&preset=${TRIGGER_ALARM_PRESET}`
 
 export interface NotificationRuleActionsProps {
   readonly value: NcRuleActionsFormState
@@ -81,6 +85,25 @@ function CreateActionLink() {
   )
 }
 
+/** Opens the Actions editor prefilled with one press of the alarm panel. */
+function TriggerAlarmLink() {
+  const { t } = useTranslation()
+  return (
+    <Link
+      to={TRIGGER_ALARM_ACTION_PATH}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={t(
+        'system.notificationRuleActions.presetAlarmHint',
+        "Presses the alarm panel. The panel's entry delay still runs, and a disarm during it cancels the alarm.",
+      )}
+      className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+    >
+      {t('system.notificationRuleActions.presetAlarm', 'Trigger the alarm')}
+    </Link>
+  )
+}
+
 /** One Action chosen from the hub's list; a stored id the hub no longer lists stays visible. */
 function ActionSelect({
   value,
@@ -101,9 +124,7 @@ function ActionSelect({
       onChange={(e) => onChange(e.target.value)}
     >
       {value === '' && (
-        <option value="">
-          {t('system.notificationRuleActions.pickAction', 'Pick an Action')}
-        </option>
+        <option value="">{t('system.notificationRuleActions.pickAction', 'Pick an Action')}</option>
       )}
       {missing && (
         <option value={value}>
@@ -153,7 +174,7 @@ export function NotificationRuleActions({
             'system.notificationRuleActions.noActionsYet',
             'There are no Actions yet. Create one on the Actions page — a rule or a button runs an Action, it does not define its own steps.',
           )}{' '}
-          <CreateActionLink />
+          <CreateActionLink /> <TriggerAlarmLink />
         </p>
       )}
 
@@ -193,6 +214,7 @@ export function NotificationRuleActions({
             <Plus className="h-3.5 w-3.5 shrink-0" /> {t('system.notificationRuleActions.button')}
           </Button>
           <CreateActionLink />
+          <TriggerAlarmLink />
         </SectionHeader>
 
         {value.buttons.length > 0 && (
@@ -269,7 +291,9 @@ function HookSection({
             className="flex flex-wrap items-end gap-2 rounded-md border border-border p-3"
           >
             <div className="min-w-0 flex-1">
-              <label className={LABEL}>{t('system.notificationRuleActions.action', 'Action')}</label>
+              <label className={LABEL}>
+                {t('system.notificationRuleActions.action', 'Action')}
+              </label>
               <ActionSelect
                 value={actionId}
                 actions={actions}

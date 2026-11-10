@@ -25,6 +25,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { ListChecks, Play, Plus } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { formatRelativeTime } from '../../../components/device/hero/format'
 import { ActionEditor } from './ActionEditor'
@@ -64,6 +65,7 @@ function useStatusView(): (entry: ActionEntry) => StatusView {
 
 export function ActionsTab({ createRequested = false, onCreateConsumed }: ActionsTabProps) {
   const { t } = useTranslation()
+  const [params] = useSearchParams()
   const queryClient = useQueryClient()
   const statusView = useStatusView()
   const { state, openNew, openEdit, close } = useItemFormUrl({ editKey: 'action', newKey: 'new' })
@@ -150,7 +152,13 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
 
   if (state.mode !== 'closed') {
     return (
-      <ActionEditor key={editing?.id ?? 'new'} entry={editing} onClose={close} onSaved={openEdit} />
+      <ActionEditor
+        key={editing?.id ?? 'new'}
+        entry={editing}
+        onClose={close}
+        onSaved={openEdit}
+        preset={state.mode === 'new' ? params.get('preset') : null}
+      />
     )
   }
 

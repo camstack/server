@@ -390,7 +390,9 @@
       "missingAction": "Azione mancante ({{id}})",
       "createActionLink": "Crea una nuova azione",
       "noActionsYet": "Non ci sono ancora azioni. Creane una nella pagina Azioni: una regola o un pulsante esegue un'azione, non ne definisce i passi.",
-      "createActionHint": "Apre la pagina Azioni in una nuova scheda. Poi riapri l'elenco qui."
+      "createActionHint": "Apre la pagina Azioni in una nuova scheda. Poi riapri l'elenco qui.",
+      "presetAlarm": "Fai scattare l'allarme",
+      "presetAlarmHint": "Premi il pannello allarme. Il ritardo di ingresso resta attivo, e un disinserimento durante quel ritardo annulla l'allarme."
     },
     "notificationRuleColumns": {
       "rule": "Regola",
@@ -10938,7 +10940,8 @@
         "title": "Esegui {{name}}",
         "description": "Indica le variabili da usare in questa esecuzione.",
         "choose": "Scegli…"
-      }
+      },
+      "triggerAlarmName": "Fai scattare l'allarme"
     },
     "list": {
       "couldNotRead": "Impossibile leggere le azioni",

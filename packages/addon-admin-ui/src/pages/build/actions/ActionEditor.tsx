@@ -12,6 +12,7 @@ import {
   type ActionStep,
   type AutomationAction,
   type AutomationRunTrace,
+  DeviceType,
 } from '@camstack/types'
 import {
   Badge,
@@ -27,7 +28,7 @@ import {
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { ListChecks, Loader2, Play, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActionList } from '../automation/ActionList'
 import { useAutomationDevices } from '../automation/automation-data'
@@ -40,6 +41,8 @@ import {
   type DraftProblem,
   draftOf,
   renameVariable,
+  TRIGGER_ALARM_PRESET,
+  triggerAlarmDraft,
 } from './action-draft'
 import { needsRunInput } from './run-variables'
 import { RunVariablesDialog } from './RunVariablesDialog'
@@ -53,6 +56,8 @@ export interface ActionEditorProps {
   readonly onClose: () => void
   /** Called with the id after a create, so the URL follows the saved action. */
   readonly onSaved: (actionId: string) => void
+  /** `trigger-alarm` prefills one `alarm-panel.trigger` step once a panel is known. */
+  readonly preset?: string | null
 }
 
 function isActionStep(action: AutomationAction): action is ActionStep {
@@ -93,13 +98,21 @@ function useProblemText(): (problem: DraftProblem) => string {
   }
 }
 
-export function ActionEditor({ entry, onClose, onSaved }: ActionEditorProps) {
+export function ActionEditor({ entry, onClose, onSaved, preset = null }: ActionEditorProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const confirm = useConfirm()
   const devices = useAutomationDevices()
   const problemText = useProblemText()
   const [draft, setDraft] = useState<ActionDraft>(() => draftOf(entry))
+  const presetApplied = useRef(false)
+  useEffect(() => {
+    if (entry !== null || preset !== TRIGGER_ALARM_PRESET || presetApplied.current) return
+    const panel = devices.find((device) => device.type === DeviceType.AlarmPanel)
+    if (panel === undefined) return
+    presetApplied.current = true
+    setDraft(triggerAlarmDraft(panel.id, t('actions.editor.triggerAlarmName', 'Trigger the alarm')))
+  }, [devices, entry, preset, t])
   const [runId, setRunId] = useState<string | null>(null)
   const [askVariables, setAskVariables] = useState(false)
   const readOnly = entry !== null && entry.readOnly

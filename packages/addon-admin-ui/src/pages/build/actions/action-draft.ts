@@ -39,6 +39,26 @@ export type DraftProblem =
 
 export const EMPTY_DRAFT: ActionDraft = { name: '', steps: [], variables: [] }
 
+/** Query value that opens the editor on a one-step alarm-panel trigger. */
+export const TRIGGER_ALARM_PRESET = 'trigger-alarm'
+
+/** A new Action whose only step presses the alarm panel. The entry delay still runs. */
+export function triggerAlarmDraft(panelDeviceId: number, name: string): ActionDraft {
+  return {
+    name,
+    variables: [],
+    steps: [
+      {
+        kind: 'cap',
+        target: { kind: 'devices', ids: [panelDeviceId] },
+        cap: 'alarm-panel',
+        method: 'trigger',
+        args: {},
+      },
+    ],
+  }
+}
+
 export function draftOf(entry: ActionEntry | null): ActionDraft {
   if (entry === null) return EMPTY_DRAFT
   return {
