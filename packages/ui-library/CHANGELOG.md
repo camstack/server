@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.416] - 2026-11-10
+
 ### Changed
 
 - New DeviceTemplateField: a text field whose device references show as chips, with an insert-value picker that offers only the fields that fit and a hub check under the field; ExpressionInput moves here from the admin UI
