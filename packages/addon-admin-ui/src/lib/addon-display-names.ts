@@ -1,7 +1,7 @@
 /**
  * Shared display-name resolution for per-ADDON provider rows
- * (`<IntegrationHub>` pages: Remote Access, Mesh Networks, TURN servers,
- * Authentication, Log destinations). `addons.listCapabilityProviders` returns only
+ * (the `InstancesTable` family: `use-instances-data` builds the map once for every
+ * collection-of-connections page). `addons.listCapabilityProviders` returns only
  * `{ addonId, mode, isActive }`, so pages cross-reference `addons.list`.
  *
  * Preference: the ADDON-level `name` ("Cloudflare Tunnel", "Tailscale

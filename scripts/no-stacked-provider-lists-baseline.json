@@ -6,9 +6,6 @@
     },
     "terminal": {
       "packages/addon-admin-ui/src/pages/system/Terminal.tsx": "#505 item 6: a Nodes card and a legacy-cameras list under the table"
-    },
-    "registry-maps": {
-      "packages/addon-admin-ui/src/components/addons/NodeOnlyPackagesPanel.tsx": "#505 item 8: SELF_MANAGED_PACKAGES is a literal list of package names"
     }
   }
 }
