@@ -4,14 +4,17 @@
  * through the one renderer; a template it would refuse is refused here, with its reason,
  * instead of failing silently the first time the automation runs.
  */
-import { DeviceTemplateRefusalSchema } from '@camstack/types'
+import { DeviceTemplateRefusalSchema, collectDeviceTemplates } from '@camstack/types'
 import type { HubClient } from '@camstack/develop'
 import { z } from 'zod'
 import { readQuery } from './ops-hub.js'
 
-/** The consumer's own slots (`{{name}}`, `{{vars.name}}`) are set aside, as the run-time does. */
-const HELD_SLOT = /\{\{\s*(?:vars\.)?\w+\s*\}\}/g
-const MARKUP = /\{\{|\{%/
+/**
+ * The one slot the run-time sets aside before it renders: `{{vars.name}}`
+ * (`TEMPLATE_RE` in `resolveStepArgsWithTemplates`'s module). A bare `{{name}}` is NOT a slot
+ * there, so it is vetted like any other template markup.
+ */
+const HELD_SLOT = /\{\{\s*vars\.([A-Za-z_][A-Za-z0-9_]*)\s*\}\}/g
 /** The hub vets at most this many templates per call (`checkDeviceTemplates`). */
 const TEMPLATES_PER_CHECK = 64
 
@@ -24,14 +27,9 @@ const CheckAnswerSchema = z.object({
   ),
 })
 
-/** Every string in `value`, at any depth, that carries device template markup. */
+/** Every string in `value` that the run-time renders as a device template. */
 export function templateTexts(value: unknown): readonly string[] {
-  if (typeof value === 'string') return MARKUP.test(value.replace(HELD_SLOT, '·')) ? [value] : []
-  if (Array.isArray(value)) return value.flatMap(templateTexts)
-  if (typeof value === 'object' && value !== null) {
-    return Object.values(value).flatMap(templateTexts)
-  }
-  return []
+  return collectDeviceTemplates(value)
 }
 
 export type TemplateVerdict =
@@ -54,6 +52,12 @@ export async function vetDeviceTemplates(
     )
     if (!answer.ok) {
       return { ok: false, problem: `could not vet the device templates: ${answer.reason}` }
+    }
+    if (answer.value.results.length !== batch.length) {
+      return {
+        ok: false,
+        problem: `could not vet the device templates: the hub answered ${answer.value.results.length} verdict(s) for ${batch.length} template(s)`,
+      }
     }
     for (const [index, result] of answer.value.results.entries()) {
       if (!result.ok) {

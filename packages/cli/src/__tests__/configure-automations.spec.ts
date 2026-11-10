@@ -231,7 +231,7 @@ describe('configure_automation_save', () => {
         withWrites(ctx),
         {
           name: 'Door',
-          recipe: textRecipe('Door is {{ door.state }} {{vars.who}}'),
+          recipe: textRecipe('Door is {{ door.state }} {{ vars.who }}'),
           enabled: true,
         },
         undefined,
@@ -261,10 +261,81 @@ describe('configure_automation_save', () => {
       const { ctx, calls } = fakeHub(hubReads)
       await saveAutomation(
         withWrites(ctx),
-        { name: 'Door', recipe: textRecipe('plain {{who}}'), enabled: true },
+        { name: 'Door', recipe: textRecipe('plain {{ vars.who }}'), enabled: true },
         undefined,
       )
       expect(calls.some((c) => c.path === 'deviceManager.checkDeviceTemplates')).toBe(false)
+    })
+
+    it('a bare {{name}} is template markup at run time, so it is vetted (only {{vars.x}} is a held slot)', async () => {
+      const { ctx, calls } = fakeHub({
+        ...hubReads,
+        'deviceManager.checkDeviceTemplates': { results: [{ ok: true, aliases: [] }] },
+      })
+      await saveAutomation(
+        withWrites(ctx),
+        { name: 'Door', recipe: textRecipe('hi {{who}} {{vars.x}}'), enabled: true },
+        undefined,
+      )
+      expect(calls.find((c) => c.path === 'deviceManager.checkDeviceTemplates')?.input).toEqual({
+        templates: ['hi {{who}} ·'],
+      })
+    })
+
+    it('refuses when the hub cannot be asked', async () => {
+      const { ctx, calls } = fakeHub({
+        ...hubReads,
+        'deviceManager.checkDeviceTemplates': new Error('hub unreachable'),
+      })
+      const out = await saveAutomation(
+        withWrites(ctx),
+        { name: 'Door', recipe: textRecipe('{{ door.state }}'), enabled: true },
+        undefined,
+      )
+      expect(JSON.stringify(out)).toMatch(/could not vet the device templates: .*hub unreachable/)
+      expect(JSON.stringify(out)).not.toContain('confirm_token')
+      expect(calls.some((c) => c.path === 'coreBlocks.create')).toBe(false)
+    })
+
+    it('refuses when the hub answers fewer verdicts than templates', async () => {
+      const { ctx } = fakeHub({
+        ...hubReads,
+        'deviceManager.checkDeviceTemplates': { results: [] },
+      })
+      const out = await saveAutomation(
+        withWrites(ctx),
+        { name: 'Door', recipe: textRecipe('{{ door.state }}'), enabled: true },
+        undefined,
+      )
+      expect(JSON.stringify(out)).toMatch(/0 verdict\(s\) for 1 template/)
+    })
+
+    it('vets more than 64 templates in several calls and stops at the first refusal', async () => {
+      const many = {
+        when: { kind: 'schedule' as const, cron: '30 7 * * *' },
+        actions: Array.from({ length: 70 }, (_, i) => ({
+          kind: 'cap' as const,
+          target: { kind: 'devices' as const, ids: [7] },
+          cap: 'notifier',
+          method: 'send',
+          args: { message: `{{ door${i}.state }}` },
+        })),
+      }
+      const sizes: number[] = []
+      const { ctx } = fakeHub({
+        ...hubReads,
+        'deviceManager.checkDeviceTemplates': (input: { templates: string[] }) => {
+          sizes.push(input.templates.length)
+          return { results: input.templates.map(() => ({ ok: true, aliases: [] })) }
+        },
+      })
+      const out = await saveAutomation(
+        withWrites(ctx),
+        { name: 'Many', recipe: many, enabled: true },
+        undefined,
+      )
+      expect(sizes).toEqual([64, 6])
+      expect(out.status).toBe('dry-run')
     })
   })
 
