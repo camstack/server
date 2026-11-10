@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Notification rules and buttons run existing Actions; the notification-centre sequence methods are gone
+
 ## [1.2.823] - 2026-11-09
 
 ### Changed

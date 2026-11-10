@@ -7,11 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Notification sequence hooks removed (the notification centre runs Actions)
+
 ## [1.2.414] - 2026-11-09
 
 ### Changed
 
-- Notification sequence hooks removed (the notification centre runs Actions)
 - A heat pump keeps its own name and is the suggested device; a climate circuit is not treated as its primary child
 
 ## [1.2.413] - 2026-11-09

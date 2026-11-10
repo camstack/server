@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.537] - 2026-11-09
-
 ### Changed
 
 - A notification rule or button now runs existing Actions by id; the rule's own action steps and shared sequences are gone
 - An action run can carry the notification rule fire that started it, out of band, so a device command stays attributed to that match
+
+## [1.2.537] - 2026-11-09
+
+### Changed
+
 - Renaming a composed device keeps the new name after a restart.
 - Renaming a composed device keeps the new name after a restart, whether the rename was made on the device page or in the composition editor.
 - A device type can declare which child it stands for; a heat pump stands for itself, so its hero stays its own
