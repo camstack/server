@@ -26,6 +26,7 @@ import {
 } from '@camstack/develop'
 import { runDiscover } from './commands/discover.js'
 import { runUpdate } from './commands/update.js'
+import { CLUSTER_UPDATE_HELP, runClusterUpdate } from './commands/cluster-update.js'
 import { runDev } from './commands/dev.js'
 import { runWatch } from './commands/watch.js'
 import { developHelp, runDevelop } from './commands/develop.js'
@@ -378,6 +379,12 @@ function buildCommands(): readonly CommandSpec[] {
           '  -V, --version <x.y.z>  Install a specific version (pin/downgrade)',
           '  -y, --yes              Skip confirmation (useful for scripts)',
         ].join('\n'),
+    },
+    {
+      name: 'cluster-update',
+      summary: 'Update the whole cluster through the hub job (backup, hub, agents, addons)',
+      run: runClusterUpdate,
+      help: () => CLUSTER_UPDATE_HELP,
     },
     {
       name: 'info',

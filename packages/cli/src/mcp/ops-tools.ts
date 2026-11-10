@@ -209,20 +209,22 @@ export function registerOpsTools(
 
   server.tool(
     UPDATE_APPLY_TOOL,
-    'Bring the cluster up to date, verified step by step: hub server closure, wait until the hub runs it, then each online agent, then addons (agents follow by reconciliation, verified), then this CLI last. Two steps: call without confirm_token for a preview (order, versions, wrapper instructions, timeouts) and a one-shot token, then again with the SAME arguments and that token. A failed step stops the chain and names the node. Wrapper (image/app) updates are only reported with instructions. Needs an admin `camstack login`.',
+    'Bring the cluster up to date through the ONE hub-side job (clusterUpdate.startClusterUpdate, the same as the admin UI "Update all"): backup, hub server closure, each online agent verified (target + capabilities registered), then addons (agents follow by reconciliation, verified); this tool follows the job by its id, then updates this CLI last. Two steps: call without confirm_token for a preview (order, versions, wrapper instructions, timeouts) and a one-shot token, then again with the SAME arguments and that token. A failed step stops the chain and names the node. Wrapper (image/app) updates are only reported with instructions. Needs an admin `camstack login`.',
     {
       version: z.string().min(1).optional().describe("Server target; default = the hub's latest."),
       addons: z.boolean().optional().describe('Update addons too (default true).'),
+      backup: z.boolean().optional().describe('Back up first (default true; false opts out).'),
       cli: z.boolean().optional().describe('Update this CLI last (default true).'),
       confirm_token: z.string().optional(),
     },
-    async ({ version, addons, cli, confirm_token }): Promise<ToolTextResult> =>
+    async ({ version, addons, backup, cli, confirm_token }): Promise<ToolTextResult> =>
       text(
         await opsUpdateApply(
           ctx,
           {
             ...(version !== undefined ? { version } : {}),
             ...(addons !== undefined ? { addons } : {}),
+            ...(backup !== undefined ? { backup } : {}),
             ...(cli !== undefined ? { cli } : {}),
           },
           confirm_token,

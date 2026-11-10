@@ -128,9 +128,7 @@ const FAST: UpdateApplyDeps = {
   },
   now: () => clock,
   pollMs: 1000,
-  hubTimeoutMs: 5000,
-  agentTimeoutMs: 5000,
-  addonTimeoutMs: 5000,
+  jobTimeoutMs: 5000,
   entryPath: '/usr/local/lib/node_modules/camstack/dist/cli.js',
 }
 
@@ -206,146 +204,249 @@ describe('ops_update_check', () => {
   })
 })
 
+/** One step of the hub's job, as `clusterUpdate.*` answers it. */
+function step(kind: string, status: string, over: object = {}): object {
+  return { kind, status, detail: `${kind} ${status}`, ...over }
+}
+
+function job(state: string, steps: object[], over: object = {}): object {
+  return {
+    id: 'job-1',
+    state,
+    targetVersion: '2.0.0',
+    requestedBy: 'admin',
+    startedAt: 1,
+    steps,
+    skippedOffline: [],
+    ...over,
+  }
+}
+
+const PLAN_STEPS = [
+  step('backup', 'pending'),
+  step('hub-server', 'pending', { nodeId: 'hub' }),
+  step('agent-server', 'pending', { nodeId: 'a1' }),
+  step('addons', 'pending', { packages: ['addon-x 1 -> 2'] }),
+]
+
+function plan(over: object = {}): object {
+  return {
+    targetVersion: '2.0.0',
+    steps: PLAN_STEPS,
+    skippedOffline: [],
+    blocker: null,
+    blockerDetail: null,
+    ...over,
+  }
+}
+
+interface ClusterHub {
+  plan: object | Error
+  start: object
+  /** Successive `getClusterUpdateJob` answers; the last one repeats. */
+  reads: (object | Error | null)[]
+}
+
+/** The cluster-update cap on top of the node reads the wrapper report uses. */
+function clusterHub(c: ClusterHub, fetchFn = NPM_OK): { ctx: McpContext; calls: RecordedCall[] } {
+  let read = 0
+  const hub = fakeHub({
+    ...answers(world({ versions: { hub: '2.0.0', a1: '2.0.0' } })),
+    'clusterUpdate.previewClusterUpdate': c.plan,
+    'clusterUpdate.startClusterUpdate': () => c.start,
+    'clusterUpdate.getClusterUpdateJob': () => {
+      const answer = c.reads[Math.min(read, c.reads.length - 1)] ?? null
+      read += 1
+      if (answer instanceof Error) throw answer
+      return answer
+    },
+  })
+  return { ctx: withWrites({ ...hub.ctx, fetch: fetchFn }), calls: hub.calls }
+}
+
+const STARTED = { accepted: true, jobId: 'job-1', blocker: null, message: 'started' }
+const NEWER_CLI = async (): Promise<Response> => new Response(JSON.stringify({ version: '9.9.10' }))
+
+function recorder(): { ran: string[][]; deps: UpdateApplyDeps } {
+  const ran: string[][] = []
+  return {
+    ran,
+    deps: {
+      ...FAST,
+      runCommand: async (f, a) => {
+        ran.push([f, ...a])
+        return { ok: true, output: '' }
+      },
+    },
+  }
+}
+
+const orchestrationCalls = (calls: RecordedCall[]): string[] =>
+  calls
+    .map((c) => c.path)
+    .filter(
+      (p) =>
+        p === 'serverManagement.applyServerUpdate' ||
+        p === 'addons.updatePackage' ||
+        p === 'backup.trigger',
+    )
+
 describe('ops_update_apply', () => {
-  it('runs the hub before the agents, then addons, then the CLI last', async () => {
-    const w = world({
-      hubAddons: [
-        {
-          name: 'addon-x',
-          currentVersion: '1',
-          latestVersion: '2',
-          category: 'addon',
-          isSystem: false,
-        },
-      ],
-    })
-    w.installs = [
+  it('starts the hub-side job, follows it across the hub restart, then updates the CLI', async () => {
+    const done = job('succeeded', [
+      step('backup', 'ok'),
+      step('hub-server', 'ok', { nodeId: 'hub' }),
+      step('agent-server', 'ok', { nodeId: 'a1' }),
+      step('addons', 'ok'),
+    ])
+    const { ctx, calls } = clusterHub(
       {
-        packageName: 'addon-x',
-        nodeId: 'hub',
-        isHub: true,
-        isOnline: true,
-        version: '2',
+        plan: plan(),
+        start: STARTED,
+        reads: [
+          job('running', PLAN_STEPS),
+          new Error('fetch failed: ECONNREFUSED (the hub restarts)'),
+          done,
+        ],
       },
-      {
-        packageName: 'addon-x',
-        nodeId: 'a1',
-        isHub: false,
-        isOnline: true,
-        version: '2',
-      },
-    ]
-    const ran: string[][] = []
-    const { ctx, calls } = ctxFor(
-      w,
-      async () => new Response(JSON.stringify({ version: '9.9.10' })),
+      NEWER_CLI,
     )
-    const r = await confirmed(
-      ctx,
-      {},
-      {
-        ...FAST,
-        runCommand: async (f, a) => {
-          ran.push([f, ...a])
-          return { ok: true, output: '' }
-        },
-      },
-    )
+    const { ran, deps } = recorder()
+    const r = await confirmed(ctx, { backup: false, version: '2.0.0' }, deps)
     expect(r.status).toBe('executed')
     expect(r.result.outcome).toBe('complete')
-    expect(w.applied.map((a) => a.nodeId)).toEqual(['hub', 'a1'])
-    const order = r.result.steps.map((s) => s.step)
-    expect(order).toEqual(['hub-server', 'agent-server', 'addons', 'cli'])
+    expect(r.result.steps.map((s) => s.step)).toEqual([
+      'backup',
+      'hub-server',
+      'agent-server',
+      'addons',
+      'cli',
+    ])
+    const start = calls.filter((c) => c.path === 'clusterUpdate.startClusterUpdate')
+    expect(start).toEqual([
+      expect.objectContaining({ method: 'POST', input: { backup: false, version: '2.0.0' } }),
+    ])
+    expect(calls.find((c) => c.path === 'clusterUpdate.previewClusterUpdate')?.input).toEqual({
+      backup: false,
+      version: '2.0.0',
+    })
+    // the MCP drives nothing itself any more: the hub runs every step
+    expect(orchestrationCalls(calls)).toEqual([])
     expect(ran).toEqual([['npm', 'install', '-g', 'camstack@latest']])
     expect(r.result.mcpRestartNeeded).toBe(true)
-    expect(calls.filter((c) => c.path === 'addons.updatePackage')).toHaveLength(1)
     expect(r.result.wrapperUpdates?.map((x) => x.nodeId)).toEqual(['hub', 'a1'])
   })
 
-  it('stops on a failed hub step: no agent, no addons, no CLI', async () => {
-    const w = world({
-      hubAddons: [
-        {
-          name: 'addon-x',
-          currentVersion: '1',
-          latestVersion: '2',
-          category: 'addon',
-          isSystem: false,
-        },
-      ],
-      applyReply: () => ({
-        accepted: false,
-        outcome: 'failed',
-        error: 'npm ECONNRESET',
-      }),
-    })
-    const ran: string[] = []
-    const { ctx, calls } = ctxFor(
-      w,
-      async () => new Response(JSON.stringify({ version: '9.9.10' })),
-    )
-    const r = await confirmed(
-      ctx,
-      {},
+  it('an agent back online without capabilities fails the job: named, typed, no CLI', async () => {
+    const { ctx } = clusterHub(
       {
-        ...FAST,
-        runCommand: async (f) => {
-          ran.push(f)
-          return { ok: true, output: '' }
-        },
+        plan: plan(),
+        start: STARTED,
+        reads: [
+          job(
+            'failed',
+            [
+              step('backup', 'ok'),
+              step('hub-server', 'ok', { nodeId: 'hub' }),
+              step('agent-server', 'failed', {
+                nodeId: 'a1',
+                reason: 'node-capless',
+                detail: 'a1 runs 2.0.0 but registered no capabilities',
+              }),
+              step('addons', 'skipped', { detail: 'not run: a1 failed' }),
+            ],
+            { stoppedAt: 'a1', reason: 'node-capless' },
+          ),
+        ],
       },
+      NEWER_CLI,
     )
+    const { ran, deps } = recorder()
+    const r = await confirmed(ctx, {}, deps)
     expect(r.result.outcome).toBe('failed')
-    expect(r.result.stoppedAt).toBe('hub')
-    expect(r.result.reason).toContain('ECONNRESET')
-    expect(w.applied.map((a) => a.nodeId)).toEqual(['hub'])
-    expect(calls.some((c) => c.path === 'addons.updatePackage')).toBe(false)
+    expect(r.result.stoppedAt).toBe('a1')
+    expect(r.result.reason).toContain('node-capless')
+    expect(r.result.reason).toContain('no capabilities')
+    expect(r.result.steps.map((s) => s.status)).toEqual([
+      'ok',
+      'ok',
+      'failed',
+      'skipped',
+      'skipped',
+    ])
     expect(ran).toEqual([])
-    expect(r.result.steps.at(-1)).toMatchObject({
-      step: 'cli',
-      status: 'skipped',
-    })
   })
 
-  it('fails (bounded) when an agent comes back online with zero capabilities', async () => {
-    const w = world()
-    const hub = fakeHub({
-      ...answers(w),
-      'nodes.topology': () => [node('hub'), node('a1', { addons: [] })],
+  it('a refused start is a failure that names the blocker', async () => {
+    const { ctx } = clusterHub({
+      plan: plan(),
+      start: {
+        accepted: false,
+        jobId: 'job-0',
+        blocker: 'job-running',
+        message: 'cluster update job-0 is already running',
+      },
+      reads: [null],
     })
-    const ctx = withWrites({ ...hub.ctx, fetch: NPM_OK })
     const r = await confirmed(ctx, { cli: false }, FAST)
     expect(r.result.outcome).toBe('failed')
-    expect(r.result.reason).toContain('a1')
-    expect(r.result.reason).toContain('no capabilities')
-    expect(r.result.steps.map((s) => s.status)).toEqual(['ok', 'failed'])
+    expect(r.result.reason).toContain('job-running')
+  })
+
+  it('a job still running past the bound is reported partial, never a loop', async () => {
+    const { ctx } = clusterHub(
+      { plan: plan(), start: STARTED, reads: [job('running', PLAN_STEPS)] },
+      NEWER_CLI,
+    )
+    const { ran, deps } = recorder()
+    const r = await confirmed(ctx, {}, deps)
+    expect(r.result.outcome).toBe('partial')
+    expect(r.result.reason).toContain('still running')
+    expect(r.result.steps.at(-1)).toMatchObject({ step: 'cli', status: 'skipped' })
+    expect(ran).toEqual([])
+  })
+
+  it('a hub without the cluster-update cap says to update the hub first', async () => {
+    const { ctx, calls } = clusterHub({
+      plan: new Error('No procedure found on path "clusterUpdate.previewClusterUpdate"'),
+      start: STARTED,
+      reads: [null],
+    })
+    const r = await opsUpdateApply(ctx, { cli: false }, undefined, FAST)
+    expect(r.status).toBe('dry-run')
+    expect(JSON.stringify(r)).toContain('predates the one-job cluster update')
+    expect(calls.some((c) => c.path === 'clusterUpdate.startClusterUpdate')).toBe(false)
   })
 
   it('reports a wrapper update as instructions and performs nothing for it', async () => {
-    const w = world({ versions: { hub: '2.0.0', a1: '2.0.0' } })
-    const { ctx, calls } = ctxFor(w)
+    const { ctx, calls } = clusterHub({
+      plan: plan({ steps: [], blocker: 'nothing-to-do', blockerDetail: 'all current' }),
+      start: STARTED,
+      reads: [null],
+    })
     const r = await opsUpdateApply(ctx, { cli: false }, undefined, FAST)
-    // the server is current, so nothing is confirmable, but the wrapper report is in the answer
+    // the cluster is current, so nothing is confirmable, but the wrapper report is in the answer
     expect(r.status).toBe('dry-run')
-    const text = JSON.stringify(r)
-    expect(text).toContain('docker compose pull')
-    expect(calls.some((c) => c.path === 'serverManagement.applyServerUpdate')).toBe(false)
+    expect(JSON.stringify(r)).toContain('docker compose pull')
+    expect(calls.some((c) => c.path === 'clusterUpdate.startClusterUpdate')).toBe(false)
   })
 
   it('an unknown CLI install method yields instructions and runs no command', async () => {
-    const w = world({ versions: { hub: '2.0.0', a1: '2.0.0' } })
-    const { ctx } = ctxFor(w, async () => new Response(JSON.stringify({ version: '9.9.10' })))
-    const ran: string[] = []
+    const { ctx, calls } = clusterHub(
+      {
+        plan: plan({ steps: [], blocker: 'nothing-to-do', blockerDetail: 'all current' }),
+        start: STARTED,
+        reads: [null],
+      },
+      NEWER_CLI,
+    )
+    const { ran, deps } = recorder()
     const r = await confirmed(
       ctx,
       {},
       {
-        ...FAST,
+        ...deps,
         entryPath: '/home/u/.bun/install/global/node_modules/camstack/cli.js',
-        runCommand: async (f) => {
-          ran.push(f)
-          return { ok: true, output: '' }
-        },
       },
     )
     expect(r.result.steps).toEqual([
@@ -353,6 +454,7 @@ describe('ops_update_apply', () => {
     ])
     expect(ran).toEqual([])
     expect(r.result.mcpRestartNeeded).toBe(true)
+    expect(calls.some((c) => c.path === 'clusterUpdate.startClusterUpdate')).toBe(false)
   })
 })
 
