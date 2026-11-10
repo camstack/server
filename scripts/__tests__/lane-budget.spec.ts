@@ -116,6 +116,7 @@ describe('package directories', () => {
     const dirs = workspacePackageDirs()
     expect(dirs.get('sdk')).toBe('packages/sdk')
     expect(dirs.get('@camstack/server-framework')).toBe('packages/system')
+    expect(dirs.get('@camstack/e2e')).toBe('e2e')
   })
 })
 

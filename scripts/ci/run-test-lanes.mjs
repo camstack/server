@@ -35,7 +35,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 /**
  * Nx project name → directory. `sdk` is the project.json name; the npm
  * workspace is `@camstack/sdk`, so `npm run test -w sdk` exits in under a
- * second and fails the lane.
+ * second and fails the lane. Roots come from the root `package.json`
+ * workspaces (`packages/*`, `server/*`, and the `e2e` package, which is not
+ * under either tree).
  *
  * @param {string} [root]
  * @returns {Map<string, string>}
@@ -43,15 +45,49 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 export function workspacePackageDirs(root = ROOT) {
   /** @type {Map<string, string>} */
   const dirs = new Map()
-  for (const base of ['packages', 'server']) {
+  for (const dir of workspaceDirs(root)) rememberPackage(dirs, root, dir)
+  return dirs
+}
+
+/**
+ * One directory per workspace entry. A `*` pattern expands one level, which
+ * is every pattern this repo declares.
+ *
+ * @param {string} root
+ * @returns {string[]}
+ */
+function workspaceDirs(root) {
+  /** @type {string[]} */
+  const dirs = []
+  for (const pattern of workspacePatterns(root)) {
+    if (!pattern.includes('*')) {
+      dirs.push(pattern.replace(/\/$/, ''))
+      continue
+    }
+    const base = pattern.slice(0, pattern.indexOf('*')).replace(/\/$/, '')
     const abs = path.join(root, base)
     if (!existsSync(abs)) continue
     for (const entry of readdirSync(abs, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue
-      rememberPackage(dirs, root, path.join(base, entry.name))
+      if (entry.isDirectory()) dirs.push(path.join(base, entry.name))
     }
   }
   return dirs
+}
+
+/**
+ * @param {string} root
+ * @returns {string[]}
+ */
+function workspacePatterns(root) {
+  const pkgPath = path.join(root, 'package.json')
+  if (!existsSync(pkgPath)) return ['packages/*', 'server/*']
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
+  const raw = pkg.workspaces
+  if (Array.isArray(raw)) return raw.filter((entry) => typeof entry === 'string')
+  if (raw !== null && typeof raw === 'object' && Array.isArray(raw.packages)) {
+    return raw.packages.filter((entry) => typeof entry === 'string')
+  }
+  return ['packages/*', 'server/*']
 }
 
 /**
