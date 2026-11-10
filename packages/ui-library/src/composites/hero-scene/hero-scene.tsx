@@ -152,12 +152,14 @@ export function HeroScene({
   ...params
 }: HeroSceneProps): ReactNode {
   const visual = resolveSceneVisual({ scene, state, ...params })
+  const art = SCENES_WITH_ART.has(scene)
   const backdrop = (
     <SceneBackdrop
       visual={visual}
       level={params.level}
       points={params.points}
       timer={params.timer}
+      withArt={size !== 'mini' && art && children === undefined}
     />
   )
   const tone = TONE_CLASS[visual.tone]
@@ -184,7 +186,6 @@ export function HeroScene({
     )
   }
 
-  const art = SCENES_WITH_ART.has(scene)
   return (
     <div
       data-scene={scene}

@@ -194,3 +194,23 @@ describe('scene tiles', () => {
     expect(left?.lastElementChild?.className).toContain('text-foreground')
   })
 })
+
+describe('a scene with its own illustration', () => {
+  it('draws no centred backdrop figure behind the illustration (the washer drum peeked out beside it)', () => {
+    const { container } = render(
+      <HeroScene
+        scene="washer"
+        state="on"
+        rightTiles={[{ label: 'Started', value: '29 min ago' }]}
+      />,
+    )
+    const backdrop = container.querySelector('[data-backdrop="drum"]')
+    expect(backdrop).not.toBeNull()
+    expect(backdrop?.querySelector('.hs-spin')).toBeNull()
+  })
+
+  it('keeps the figure when the scene has no illustration of its own', () => {
+    const { container } = render(<HeroScene scene="fan" state="on" />)
+    expect(container.querySelector('[data-backdrop="fan"]')?.childElementCount).toBeGreaterThan(0)
+  })
+})

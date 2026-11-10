@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { AirflowViz, FanBlades } from '../device-controls/ac-panel'
 import { levelClass } from './hero-scene-css'
-import type { SceneSpeed, SceneVisual } from './types'
+import type { BackdropKind, SceneSpeed, SceneVisual } from './types'
 
 /** Backdrop periods handed to the ac-panel pieces we reuse (seconds). */
 const PERIOD: Readonly<Record<SceneSpeed, number>> = { slow: 2.2, normal: 1.6, fast: 1.0 }
@@ -14,7 +14,24 @@ interface BackdropProps {
   readonly level?: number
   readonly points?: readonly number[]
   readonly timer?: boolean
+  /**
+   * The scene draws its own illustration in the centre (`SCENES_WITH_ART`). A backdrop
+   * that draws a centred FIGURE (a drum, a ring, a ripple) would then sit behind it at
+   * the card's centre — not the illustration's, which side tiles push off-centre — and
+   * show as a second machine poking out. Such a scene keeps only the ambient backdrops.
+   */
+  readonly withArt?: boolean
 }
+
+/** Backdrops that draw a figure at the card's centre, rather than an ambient field. */
+const CENTRED_FIGURE_KINDS: ReadonlySet<BackdropKind> = new Set<BackdropKind>([
+  'drum',
+  'ripple',
+  'ring',
+  'orbit',
+  'fan',
+  'breathe',
+])
 
 function Particles({ direction, drop }: { direction: 'fall' | 'rise'; drop?: boolean }): ReactNode {
   return (
@@ -185,7 +202,8 @@ function DimGrid(): ReactNode {
 }
 
 /** The one background animation a resolved scene visual draws. */
-export function SceneBackdrop({ visual, level, points, timer }: BackdropProps): ReactNode {
+export function SceneBackdrop({ visual, level, points, timer, withArt }: BackdropProps): ReactNode {
+  const figureHidden = withArt === true && CENTRED_FIGURE_KINDS.has(visual.kind)
   const speedClass = visual.speed === 'fast' ? 'hs-fast' : visual.speed === 'slow' ? 'hs-slow' : ''
   return (
     <div
@@ -196,7 +214,7 @@ export function SceneBackdrop({ visual, level, points, timer }: BackdropProps): 
         speedClass,
       )}
     >
-      <BackdropBody visual={visual} level={level} points={points} />
+      {figureHidden ? null : <BackdropBody visual={visual} level={level} points={points} />}
       {timer === true ? (
         <span
           className={cn(

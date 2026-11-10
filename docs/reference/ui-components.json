@@ -10679,6 +10679,12 @@
           "type": "boolean",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "withArt",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The scene draws its own illustration in the centre (`SCENES_WITH_ART`). A backdrop that draws a centred FIGURE (a drum, a ring, a ripple) wo"
         }
       ]
     },
