@@ -4,17 +4,11 @@
  * through the one renderer; a template it would refuse is refused here, with its reason,
  * instead of failing silently the first time the automation runs.
  */
-import { DeviceTemplateRefusalSchema, collectDeviceTemplates } from '@camstack/types'
+import { DeviceTemplateRefusalSchema, collectDeviceTemplates, holdVarSlots } from '@camstack/types'
 import type { HubClient } from '@camstack/develop'
 import { z } from 'zod'
 import { readQuery } from './ops-hub.js'
 
-/**
- * The one slot the run-time sets aside before it renders: `{{vars.name}}`
- * (`TEMPLATE_RE` in `resolveStepArgsWithTemplates`'s module). A bare `{{name}}` is NOT a slot
- * there, so it is vetted like any other template markup.
- */
-const HELD_SLOT = /\{\{\s*vars\.([A-Za-z_][A-Za-z0-9_]*)\s*\}\}/g
 /** The hub vets at most this many templates per call (`checkDeviceTemplates`). */
 const TEMPLATES_PER_CHECK = 64
 
@@ -47,7 +41,7 @@ export async function vetDeviceTemplates(
     const answer = await readQuery(
       client,
       'deviceManager.checkDeviceTemplates',
-      { templates: batch.map((text) => text.replace(HELD_SLOT, '·')) },
+      { templates: batch.map((text) => holdVarSlots(text, '·')) },
       CheckAnswerSchema,
     )
     if (!answer.ok) {

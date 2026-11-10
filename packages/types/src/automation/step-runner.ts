@@ -331,6 +331,11 @@ function slotPattern(nonce: string): RegExp {
   return new RegExp(`${VAR_SLOT_OPEN}${nonce}:([A-Za-z_][A-Za-z0-9_]*)${VAR_SLOT_CLOSE}`, 'g')
 }
 
+/** `text` with every `{{vars.x}}` slot (the only slot the run-time holds) replaced by `replacement`. */
+export function holdVarSlots(text: string, replacement: string): string {
+  return text.replace(TEMPLATE_RE, () => replacement)
+}
+
 /** True when a string, once its `{{vars.x}}` slots are set aside, still carries template markup. */
 export function carriesDeviceTemplate(text: string): boolean {
   return TEMPLATE_MARKUP_RE.test(text.replace(TEMPLATE_RE, ''))

@@ -72,11 +72,16 @@ describe('insertTemplateToken', () => {
 })
 
 describe('what the hub is asked to vet', () => {
-  it('sets the consumer slots aside, as the run-time does', () => {
-    expect(textForDeviceCheck('{{camera}} {{ vars.x }} {{ a.b }}')).toBe('· · {{ a.b }}')
+  it('sets only {{ vars.x }} aside by default, as an action run does', () => {
+    expect(textForDeviceCheck('{{camera}} {{ vars.x }} {{ a.b }}')).toBe('{{camera}} · {{ a.b }}')
+    expect(carriesDeviceTemplate('Motion on {{camera}}')).toBe(true)
+    expect(carriesDeviceTemplate('Now {{ vars.x }}')).toBe(false)
   })
-  it('plain text and slots alone carry no device template', () => {
-    expect(carriesDeviceTemplate('Motion on {{camera}}')).toBe(false)
-    expect(carriesDeviceTemplate('Now {{ a.b }}')).toBe(true)
+  it('a notification text also holds its bare {{name}} variables', () => {
+    expect(textForDeviceCheck('{{camera}} {{ vars.x }} {{ a.b }}', 'placeholders')).toBe(
+      '· · {{ a.b }}',
+    )
+    expect(carriesDeviceTemplate('Motion on {{camera}}', 'placeholders')).toBe(false)
+    expect(carriesDeviceTemplate('Now {{ a.b }}', 'placeholders')).toBe(true)
   })
 })

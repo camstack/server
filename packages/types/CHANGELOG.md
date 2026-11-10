@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- holdVarSlots: the one helper that sets aside the {{ vars.x }} slots of a step text
+
 ## [1.2.538] - 2026-11-10
 
 ### Changed

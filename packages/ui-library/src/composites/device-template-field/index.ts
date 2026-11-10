@@ -12,5 +12,6 @@ export {
   carriesDeviceTemplate,
   parseTemplateSegments,
   textForDeviceCheck,
+  type DeviceTemplateHeldSlots,
   type TemplateSegment,
 } from './device-template-model'

@@ -21,6 +21,7 @@ import { SelectedChip } from '../device-picker/SelectedChip'
 import { DeviceTemplateInsert } from './device-template-insert'
 import {
   carriesDeviceTemplate,
+  type DeviceTemplateHeldSlots,
   chipLabel,
   type DeviceTemplateAccepts,
   hasDeviceRefs,
@@ -48,6 +49,8 @@ export interface DeviceTemplateFieldProps {
   readonly multiline?: boolean
   readonly placeholder?: string
   readonly disabled?: boolean
+  /** Which `{{…}}` the consumer fills itself and the hub is not asked about. Default `vars` (an action run). */
+  readonly heldSlots?: DeviceTemplateHeldSlots
   /** Show the rendered text under the field (one hub call per pause in typing). */
   readonly preview?: boolean
   /** Devices the end caller may read; a template naming another is refused. */
@@ -196,6 +199,7 @@ export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode 
       <TemplateFeedback
         value={value}
         preview={props.preview === true}
+        heldSlots={props.heldSlots}
         allowedDeviceIds={props.allowedDeviceIds}
         testId={testId}
       />
@@ -212,6 +216,7 @@ export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode 
 }
 
 interface TemplateFeedbackProps {
+  readonly heldSlots?: DeviceTemplateHeldSlots
   readonly value: string
   readonly preview: boolean
   readonly allowedDeviceIds: readonly number[] | undefined
@@ -220,6 +225,7 @@ interface TemplateFeedbackProps {
 
 /** The hub's verdict on the text: a refusal, an unknown device name, or the rendered preview. */
 function TemplateFeedback({
+  heldSlots,
   value,
   preview,
   allowedDeviceIds,
@@ -228,8 +234,8 @@ function TemplateFeedback({
   const t = useUiText()
   const settled = useDebouncedString(value, CHECK_DEBOUNCE_MS)
   // Plain text carries no device reference: nothing to vet, nothing to ask the hub.
-  const worth = carriesDeviceTemplate(settled)
-  const text = textForDeviceCheck(settled)
+  const worth = carriesDeviceTemplate(settled, heldSlots)
+  const text = textForDeviceCheck(settled, heldSlots)
   const allowed = allowedDeviceIds === undefined ? undefined : [...allowedDeviceIds]
   const check = useDeviceManagerCheckDeviceTemplates(
     { templates: [text], allowedDeviceIds: allowed },

@@ -108,6 +108,7 @@ export function TemplateField({
           placeholder={placeholder}
           disabled={disabled}
           handle={field}
+          heldSlots="placeholders"
           testId={testId}
         />
       ) : multiline ? (

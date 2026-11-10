@@ -1,4 +1,4 @@
-import { templateCapKey } from '@camstack/types'
+import { holdVarSlots, templateCapKey } from '@camstack/types'
 
 /** What a field of the text may hold: the declared value kind of the place the template feeds. */
 export type DeviceTemplateAccepts = 'number' | 'string' | 'boolean' | 'any'
@@ -108,15 +108,24 @@ export function chipLabel(segment: Extract<TemplateSegment, { kind: 'ref' }>): s
   return `${segment.alias}.${segment.path}`
 }
 
-/** The slots a consumer fills itself: `{{name}}` and `{{vars.name}}` are set aside before the hub renders. */
-const HELD_SLOT = /\{\{\s*(?:vars\.)?\w+\s*\}\}/g
+/**
+ * Which `{{…}}` the consumer fills itself, so the hub is not asked about them:
+ *  - `vars` (default): only `{{ vars.name }}`, the one slot an action run holds (`holdVarSlots`);
+ *  - `placeholders`: also a bare `{{name}}`, the notification text variables.
+ */
+export type DeviceTemplateHeldSlots = 'vars' | 'placeholders'
+
+const PLACEHOLDER_SLOT = /\{\{\s*(?:vars\.)?\w+\s*\}\}/g
 
 /** What the hub is asked to vet: the text with the consumer's own slots set aside, as the run-time does. */
-export function textForDeviceCheck(text: string): string {
-  return text.replace(HELD_SLOT, '·')
+export function textForDeviceCheck(text: string, held: DeviceTemplateHeldSlots = 'vars'): string {
+  return held === 'placeholders' ? text.replace(PLACEHOLDER_SLOT, '·') : holdVarSlots(text, '·')
 }
 
 /** True when the text carries template markup beyond the consumer's own slots. */
-export function carriesDeviceTemplate(text: string): boolean {
-  return /\{\{|\{%/.test(textForDeviceCheck(text))
+export function carriesDeviceTemplate(
+  text: string,
+  held: DeviceTemplateHeldSlots = 'vars',
+): boolean {
+  return /\{\{|\{%/.test(textForDeviceCheck(text, held))
 }
