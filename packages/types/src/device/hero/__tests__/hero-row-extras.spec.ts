@@ -86,11 +86,17 @@ function media(remoteCommands: number | null, caps: readonly string[]): HeroMode
 }
 
 describe('row extras', () => {
-  it('climate: mode then temperature, after the power primary', () => {
+  it('climate: mode is the primary, temperature the extra, no power toggle', () => {
     for (const type of [DeviceType.Climate, DeviceType.Thermostat]) {
       const row = projectDeviceRow(build(type, ['climate-control'], { 'climate-control': AC }))
-      expect(ids(row.primary === null ? [] : [row.primary])).toEqual(['own-power'])
-      expect(ids(row.extras)).toEqual(['climate.mode', 'climate.target'])
+      expect(ids(row.primary === null ? [] : [row.primary])).toEqual(['climate.mode'])
+      expect(ids(row.extras)).toEqual(['climate.target'])
+      const gated = projectDeviceRow({
+        ...build(type, ['climate-control'], { 'climate-control': AC }),
+        gated: ['climate-mode'],
+      })
+      expect(ids(gated.primary === null ? [] : [gated.primary])).toEqual(['own-power'])
+      expect(ids(gated.extras)).toEqual(['climate.target'])
     }
   })
 

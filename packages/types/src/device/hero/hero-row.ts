@@ -12,6 +12,8 @@
  *     the FIRST row that has any (a later row's control is never promoted). When
  *     the model lists that part in `gated`, the row has no inline control: the
  *     projection never falls through to another control the caller could use.
+ *   - a climate or thermostat row's primary is its `climate.mode` control (no power
+ *     toggle: "off" is a mode); when the model gates it the rule above applies as before;
  *   - a timed run, when the model carries the slot, sits beside that primary:
  *     Run while idle, Stop while armed. Gating the slot hides the control.
  *   - the status line is the head (what plays, else the state) plus at most
@@ -20,7 +22,7 @@
  *   - the trailing fact is the first of power, battery, consumables.
  *
  *   - `extras` are the further inline controls of the types that carry more than one
- *     ({@link ROW_EXTRAS_BY_TYPE}): climate mode and setpoint, a robot's return to base,
+ *     ({@link ROW_EXTRAS_BY_TYPE}): climate setpoint, a robot's return to base,
  *     a player's volume and remote. Each is a control the model already has, named by id,
  *     in that order and at most {@link ROW_EXTRAS_MAX}; one the model lacks, or lists in
  *     `gated`, is absent, and the one `primary` already is never repeats. Empty = the
@@ -97,7 +99,21 @@ function trailingOf(facts: readonly HeroFact[]): HeroFact | null {
   return null
 }
 
+/**
+ * A type whose primary is a named control, not its power: a climate row is the mode
+ * (which carries "off") and the setpoint, with no power toggle.
+ */
+export const ROW_PRIMARY_BY_TYPE: Readonly<Record<string, string>> = {
+  [DeviceType.Climate]: 'climate.mode',
+  [DeviceType.Thermostat]: 'climate.mode',
+}
+
 function primaryOf(model: HeroModel): HeroControl | null {
+  const named = ROW_PRIMARY_BY_TYPE[model.type]
+  if (named !== undefined) {
+    const found = extraOf(model, named)
+    if (found !== null) return found
+  }
   const power = model.ownPower
   if (power !== null) {
     if (model.gated.includes('own-power')) return null
@@ -127,8 +143,8 @@ export const ROW_EXTRAS_MAX = 2
  * from the rows. A type not listed has no extras.
  */
 export const ROW_EXTRAS_BY_TYPE: Readonly<Record<string, readonly string[]>> = {
-  [DeviceType.Climate]: ['climate.mode', 'climate.target'],
-  [DeviceType.Thermostat]: ['climate.mode', 'climate.target'],
+  [DeviceType.Climate]: ['climate.target'],
+  [DeviceType.Thermostat]: ['climate.target'],
   [DeviceType.Vacuum]: ['vacuum.base'],
   [DeviceType.LawnMower]: ['mower.dock'],
   [DeviceType.MediaPlayer]: ['volume.level', REMOTE_OPEN_ACTION_ID],
