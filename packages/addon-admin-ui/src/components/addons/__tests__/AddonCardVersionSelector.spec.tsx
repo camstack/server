@@ -170,5 +170,19 @@ describe('AddonCard held update (D989)', () => {
     )
     expect(screen.getByText(/requires server ≥ 1\.3\.0/i)).toBeTruthy()
     expect(screen.queryByRole('button', { name: /^update$/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /update server/i })).toBeNull()
+  })
+
+  it('offers Update server, which opens the cluster update', () => {
+    const onUpdateServer = vi.fn()
+    render(
+      <AddonCard
+        addon={addon()}
+        blockedUpdate={{ latestVersion: '2.0.0', requiredServer: '1.3.0' }}
+        onUpdateServer={onUpdateServer}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /update server/i }))
+    expect(onUpdateServer).toHaveBeenCalledOnce()
   })
 })

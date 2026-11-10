@@ -10176,15 +10176,6 @@
       "stateUnreadable": "the device state could not be read",
       "notReported": "not reported"
     },
-    "clusterUpdateAll": {
-      "noAnswer": "no answer",
-      "unknown": "unknown",
-      "landed": "Connection dropped, and the node confirms the update landed (state {{state}}, running {{version}}).",
-      "unchanged": "Connection dropped and the node came back unchanged (still {{version}}, update still available). Nothing was staged.",
-      "unconfirmed": "Connection dropped and the node could not be confirmed after {{attempts}} attempts ({{error}}). It may be restarting — re-check this node.",
-      "skippedAfterHub": "Not attempted: the {{hub}} step did not land first ({{why}}). Agents are updated only after the hub runs the new version.",
-      "hubNotSettled": "it did not come back on the new version in time"
-    },
     "ssoReturn": {
       "signInFallback": "sign-in",
       "notLinked": "This {{provider}} account is not linked to a CamStack user. Sign in normally and link it from your profile.",
@@ -11894,5 +11885,56 @@
   },
   "deviceModule": {
     "history": "History"
+  },
+  "clusterUpdate": {
+    "title": "Update the cluster",
+    "previewBody": "Backup, then the hub, then each online agent, then the addons. This page keeps the progress while the hub restarts.",
+    "skipBackup": "Skip the backup",
+    "skipAddons": "Skip addon updates",
+    "start": "Start update",
+    "cancel": "Cancel",
+    "close": "Close",
+    "target": "Target {{version}}",
+    "restarting": "The hub is restarting. Progress resumes when it answers.",
+    "offline": "Offline, not updated: {{nodes}}",
+    "updateAll": "Update all nodes",
+    "updateAllHint": "Preview the hub plan, then follow the same job the CLI uses.",
+    "updateServer": "Update server",
+    "stepsLabel": "Cluster update steps",
+    "loadingPlan": "Reading what this update would do…",
+    "planFailed": "Could not read the plan: {{message}}",
+    "succeeded": "Cluster update finished.",
+    "failed": "Stopped at {{where}}.",
+    "step": {
+      "backup": "Backup",
+      "hub-server": "Hub",
+      "agent-server": "Agent",
+      "addons": "Addons"
+    },
+    "status": {
+      "pending": "Pending",
+      "running": "Running",
+      "ok": "Done",
+      "failed": "Failed",
+      "skipped": "Skipped"
+    },
+    "reason": {
+      "backup-unavailable": "No backup is available.",
+      "backup-failed": "The backup did not land.",
+      "server-refused": "The node refused the server update.",
+      "server-not-on-target": "The node did not reach the target version.",
+      "node-capless": "The node is on the target but registered no capabilities.",
+      "status-unreadable": "The node's status could not be read.",
+      "addon-update-failed": "An addon update failed.",
+      "addons-not-converged": "The agents did not converge on the addon versions.",
+      "interrupted": "The hub restarted in the middle of this step."
+    },
+    "blocker": {
+      "no-target": "No target version.",
+      "node-busy": "A node is already updating.",
+      "job-running": "An update is already running.",
+      "nothing-to-do": "Nothing to update.",
+      "status-unreadable": "Status could not be read."
+    }
   }
 }

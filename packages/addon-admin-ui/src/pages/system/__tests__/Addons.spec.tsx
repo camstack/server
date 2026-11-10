@@ -40,6 +40,7 @@ let mockUpdates: Array<{
   isSystem: boolean
   category: string
   requiresRestart: boolean
+  blockedBy?: ReadonlyArray<{ readonly kind: string; readonly required: string }>
 }> = []
 let mockLastRestart: {
   kind: string
@@ -306,6 +307,11 @@ vi.mock('@tanstack/react-query', async () => {
 // Import page AFTER mocks
 // ---------------------------------------------------------------------------
 
+vi.mock('../../../components/cluster/ClusterUpdateDialog', () => ({
+  ClusterUpdateDialog: ({ open }: { readonly open: boolean }) =>
+    open ? <div role="dialog" aria-label="cluster-update" /> : null,
+}))
+
 import { AddonsPage } from '../Addons'
 
 // ---------------------------------------------------------------------------
@@ -482,6 +488,43 @@ describe('Addons page — "Update all" engine job + layout', () => {
 
     // The toast text is rendered inside the local toast element
     expect(screen.getByText(/bulk update completed/i)).toBeTruthy()
+  })
+})
+
+describe('Addons page — a server-too-old hold opens the cluster update', () => {
+  it('Update server opens the same cluster-update dialog', () => {
+    mockSearch = ''
+    mockClusterNodes = []
+    mockLastRestart = null
+    mockUpdates = [
+      {
+        name: '@camstack/addon-a',
+        currentVersion: '1.0.0',
+        latestVersion: '2.0.0',
+        isSystem: false,
+        category: 'addon',
+        requiresRestart: false,
+        blockedBy: [{ kind: 'server-too-old', required: '1.3.0' }],
+      },
+    ]
+    mockAddons = [
+      {
+        manifest: {
+          id: 'addon-a',
+          name: 'Addon A',
+          packageName: '@camstack/addon-a',
+          version: '1.0.0',
+          packageVersion: '1.0.0',
+          capabilities: [],
+        },
+        source: 'installed',
+        hasBackup: false,
+      },
+    ]
+    renderPage()
+    expect(screen.queryByRole('dialog', { name: 'cluster-update' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /update server/i }))
+    expect(screen.getByRole('dialog', { name: 'cluster-update' })).toBeTruthy()
   })
 })
 

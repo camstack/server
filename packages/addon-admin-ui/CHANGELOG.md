@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Nodes and Addons follow the hub cluster-update job (preview, confirm, step list) instead of updating each node from the browser.
+
 ## [1.2.634] - 2026-11-10
 
 ### Changed

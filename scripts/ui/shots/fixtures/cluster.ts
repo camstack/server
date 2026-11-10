@@ -82,5 +82,48 @@ export default defineFixtures({
     'metricsProvider.getLoadSeries': (i: { forNodeId: string }) => loadSeries(i.forNodeId),
     'system.getLoadContributions': [],
     'pipelineOrchestrator.listAgentSettings': [],
+    'serverManagement.getLaunchOverrides': { heapMb: 4096, rssBudgetMb: null },
+    // A job already running: the Nodes page shows the resume strip on load.
+    'clusterUpdate.getClusterUpdateJob': {
+      id: 'job-493',
+      state: 'running',
+      targetVersion: '1.2.900',
+      requestedBy: 'admin',
+      startedAt: 1_700_000_000_000,
+      steps: [
+        { kind: 'backup', status: 'ok', detail: 'Stored on the hub disk.' },
+        {
+          kind: 'hub-server',
+          status: 'running',
+          detail: 'Hub is restarting onto 1.2.900.',
+          fromVersion: '1.2.880',
+        },
+        {
+          kind: 'agent-server',
+          nodeId: 'garage-nuc',
+          status: 'pending',
+          detail: 'Waits until the hub runs 1.2.900.',
+        },
+        {
+          kind: 'agent-server',
+          nodeId: 'attic-pi',
+          status: 'failed',
+          detail: 'attic-pi came back with no capabilities.',
+          reason: 'node-capless',
+        },
+        { kind: 'addons', status: 'skipped', detail: 'Not reached: a previous step failed.' },
+      ],
+      skippedOffline: ['shed-box'],
+    },
+    'clusterUpdate.previewClusterUpdate': {
+      targetVersion: '1.2.900',
+      steps: [
+        { kind: 'backup', status: 'pending', detail: 'Back up before anything changes.' },
+        { kind: 'hub-server', status: 'pending', detail: 'Then the hub.' },
+      ],
+      skippedOffline: ['shed-box'],
+      blocker: null,
+      blockerDetail: null,
+    },
   },
 })

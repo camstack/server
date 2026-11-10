@@ -10198,15 +10198,6 @@
       "stateUnreadable": "impossibile leggere lo stato del dispositivo",
       "notReported": "non riportato"
     },
-    "clusterUpdateAll": {
-      "noAnswer": "nessuna risposta",
-      "unknown": "sconosciuta",
-      "landed": "Connessione interrotta; il nodo conferma che l'aggiornamento è andato a buon fine (stato {{state}}, versione in esecuzione {{version}}).",
-      "unchanged": "Connessione interrotta e il nodo è tornato invariato (ancora {{version}}, aggiornamento ancora disponibile). Nulla è stato preparato.",
-      "unconfirmed": "Connessione interrotta e il nodo non è stato confermato dopo {{attempts}} tentativi ({{error}}). Potrebbe essere in riavvio: ricontrolla questo nodo.",
-      "skippedAfterHub": "Non tentato: il passo {{hub}} non è andato a buon fine prima ({{why}}). Gli agent si aggiornano solo dopo che l'hub esegue la nuova versione.",
-      "hubNotSettled": "non è tornato in tempo sulla nuova versione"
-    },
     "ssoReturn": {
       "signInFallback": "accesso",
       "notLinked": "Questo account {{provider}} non è collegato a nessun utente CamStack. Accedi normalmente e collegalo dal tuo profilo.",
@@ -11916,5 +11907,56 @@
   },
   "deviceModule": {
     "history": "Storico"
+  },
+  "clusterUpdate": {
+    "title": "Aggiorna il cluster",
+    "previewBody": "Backup, poi l'hub, poi ogni agent online, poi gli addon. Questa pagina tiene il progresso mentre l'hub si riavvia.",
+    "skipBackup": "Salta il backup",
+    "skipAddons": "Salta gli aggiornamenti degli addon",
+    "start": "Avvia aggiornamento",
+    "cancel": "Annulla",
+    "close": "Chiudi",
+    "target": "Versione {{version}}",
+    "restarting": "L'hub si sta riavviando. Il progresso riprende quando risponde.",
+    "offline": "Offline, non aggiornati: {{nodes}}",
+    "updateAll": "Aggiorna tutti i nodi",
+    "updateAllHint": "Anteprima del piano dell'hub, poi lo stesso job della CLI.",
+    "updateServer": "Aggiorna il server",
+    "stepsLabel": "Passi dell'aggiornamento del cluster",
+    "loadingPlan": "Lettura di cosa farebbe questo aggiornamento…",
+    "planFailed": "Impossibile leggere il piano: {{message}}",
+    "succeeded": "Aggiornamento del cluster completato.",
+    "failed": "Fermato su {{where}}.",
+    "step": {
+      "backup": "Backup",
+      "hub-server": "Hub",
+      "agent-server": "Agent",
+      "addons": "Addon"
+    },
+    "status": {
+      "pending": "In attesa",
+      "running": "In corso",
+      "ok": "Fatto",
+      "failed": "Fallito",
+      "skipped": "Saltato"
+    },
+    "reason": {
+      "backup-unavailable": "Nessun backup disponibile.",
+      "backup-failed": "Il backup non è andato a buon fine.",
+      "server-refused": "Il nodo ha rifiutato l'aggiornamento del server.",
+      "server-not-on-target": "Il nodo non ha raggiunto la versione richiesta.",
+      "node-capless": "Il nodo è sulla versione richiesta ma non ha registrato capacità.",
+      "status-unreadable": "Impossibile leggere lo stato del nodo.",
+      "addon-update-failed": "Un aggiornamento addon è fallito.",
+      "addons-not-converged": "Gli agent non si sono allineati alle versioni degli addon.",
+      "interrupted": "L'hub si è riavviato nel mezzo di questo passo."
+    },
+    "blocker": {
+      "no-target": "Nessuna versione di destinazione.",
+      "node-busy": "Un nodo si sta già aggiornando.",
+      "job-running": "Un aggiornamento è già in corso.",
+      "nothing-to-do": "Niente da aggiornare.",
+      "status-unreadable": "Stato illeggibile."
+    }
   }
 }

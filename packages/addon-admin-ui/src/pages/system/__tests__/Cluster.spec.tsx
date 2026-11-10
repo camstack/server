@@ -79,12 +79,10 @@ const topology = vi.hoisted((): { nodes: TopologyNode[] } => ({
 /** What `system.info` answers: `undefined` until the hub has (D861). */
 const systemInfo = vi.hoisted(() => ({ current: undefined as undefined | object }))
 
-/** The `applyServerUpdate` result the stubbed mutation hands back per call. */
-const applyAll = vi.hoisted(() => ({
-  results: [] as Array<{ accepted: boolean; message: string } | Error>,
-  calls: [] as unknown[],
-  /** Whether the read-back still reports an update available (false = the node runs the target). */
-  updateAvailable: true,
+/** The hub job dialog has its own spec. Here it only has to open. */
+vi.mock('../../../components/cluster/ClusterUpdateDialog', () => ({
+  ClusterUpdateDialog: ({ open }: { readonly open: boolean }) =>
+    open ? <div role="dialog" aria-label="cluster-update" /> : null,
 }))
 
 // The launch-settings card has its own spec; here it would only need more mocks.
@@ -199,12 +197,7 @@ vi.mock('@camstack/ui-library', () => ({
   }),
   useServerManagementCheckServerUpdate: () => ({ mutate: vi.fn(), isPending: false }),
   useServerManagementApplyServerUpdate: () => ({
-    mutateAsync: async (routing: unknown) => {
-      applyAll.calls.push(routing)
-      const next = applyAll.results.shift()
-      if (next instanceof Error) throw next
-      return next ?? { accepted: true, targetVersion: '1.2.205', restarting: true, message: 'ok' }
-    },
+    mutateAsync: vi.fn(),
     isPending: false,
   }),
   useServerManagementRollbackServerUpdate: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -234,7 +227,7 @@ vi.mock('@camstack/ui-library', () => ({
             previousVersion: null,
             seedVersion: '1.2.200',
             latestVersion: '1.2.205',
-            updateAvailable: applyAll.updateAvailable,
+            updateAvailable: false,
             bootMode: 'data-root',
             updateState: 'idle',
             pendingVersion: null,
@@ -488,53 +481,15 @@ describe('ClusterPage — a notification link names a node', () => {
 })
 
 /**
- * "Update all nodes" — the 2026-09-01 defect, at the page level.
- *
- * The loop used to `catch {}` every rejection AND ignore `accepted`, so a
- * cluster where nothing updated looked exactly like one where everything did.
- * The page must now say, per node, what happened.
+ * "Update all" opens the hub's cluster-update job. The page does not loop
+ * `applyServerUpdate` itself — that job, and the step list, are the dialog.
  */
-describe('ClusterPage — Update all nodes reports per node', () => {
-  it('shows a REFUSED node instead of silently counting it as updated', async () => {
+describe('ClusterPage — Update all opens the hub job', () => {
+  it('opens the cluster-update dialog', () => {
     topology.nodes = [node('hub', 'hub', true, true), node('a', 'agent-a', false, true)]
-    // Hub first: it consumes the first queued result, then the agent the second.
-    applyAll.results = [
-      { accepted: true, message: 'Staged 1.2.205' },
-      { accepted: false, message: 'Refused: @camstack/server@1.2.205 is already running.' },
-    ]
-    applyAll.calls = []
-    // The hub came back on the target, so the agents are let through.
-    applyAll.updateAvailable = false
     renderAt('/system/nodes')
-
+    expect(screen.queryByRole('dialog', { name: 'cluster-update' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /Update all nodes/i }))
-
-    const report = await screen.findByLabelText('update-all-report')
-    const rows = within(report).getAllByRole('listitem')
-    expect(rows).toHaveLength(2)
-    // The AGENT is the one that refused. Read the OUTCOME, not the prose: the
-    // detail already contains the word "Refused".
-    expect(rows[0]?.getAttribute('data-outcome')).toBe('applied')
-    expect(rows[1]?.getAttribute('data-outcome')).toBe('refused')
-    expect(rows[1]?.textContent).toMatch(/already running/i)
-  })
-
-  it('calls a dropped hub call FAILED when nothing was staged, and updates no agent past it', async () => {
-    topology.nodes = [node('hub', 'hub', true, true), node('a', 'agent-a', false, true)]
-    applyAll.results = [new Error('Request is timed out')]
-    applyAll.calls = []
-    // The read-back finds the hub settled and unchanged: nothing was ever staged.
-    applyAll.updateAvailable = true
-    renderAt('/system/nodes')
-
-    fireEvent.click(screen.getByRole('button', { name: /Update all nodes/i }))
-
-    const report = await screen.findByLabelText('update-all-report')
-    // Only the hub was called; the agent waits for a hub that runs the target.
-    expect(applyAll.calls).toEqual([{}])
-    const rows = within(report).getAllByRole('listitem')
-    expect(rows[0]?.getAttribute('data-outcome')).toBe('failed')
-    expect(rows[0]?.textContent).toMatch(/nothing was staged/i)
-    expect(rows[1]?.getAttribute('data-outcome')).toBe('skipped')
+    expect(screen.getByRole('dialog', { name: 'cluster-update' })).toBeTruthy()
   })
 })

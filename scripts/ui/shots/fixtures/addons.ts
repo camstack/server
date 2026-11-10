@@ -73,6 +73,17 @@ export default defineFixtures({
   description: 'npm catalog search filtered by capability',
   handlers: {
     'addons.list': INSTALLED,
+    'addons.listUpdates': [
+      {
+        name: '@camstack/addon-reolink',
+        currentVersion: '1.2.3',
+        latestVersion: '1.4.0',
+        isSystem: false,
+        category: 'addon',
+        requiresRestart: false,
+        blockedBy: [{ kind: 'server-too-old', required: '1.3.0' }],
+      },
+    ],
     'addons.listInstallations': { installations: [], unreachable: [] },
     'nodes.clusterAddonStatus': {},
     'addons.searchAvailable': (input: { capability?: string; query?: string } | undefined) =>

@@ -307,6 +307,31 @@ the backup can tar the whole folder with no exclusion list ([D27](../decisions/a
 > The Node `onnxruntime-node` runtime is **gone** — ONNX inference runs as a
 > Python subprocess now, so no addon carries it and it is not a host-external.
 
+## The cluster update job
+
+One hub-side job updates the cluster. The admin UI (Nodes → Update all, and
+Addons → Update server when an addon is held because the server is too old),
+the CLI (`camstack cluster-update`) and the MCP (`ops_update_apply`) all call
+the `cluster-update` capability. None of them loops over nodes itself.
+
+`previewClusterUpdate` is what a start would do, plus a typed refusal when it
+cannot: `no-target`, `node-busy`, `job-running`, `nothing-to-do`,
+`status-unreadable`. The UI shows that plan and asks before it starts. Backup
+runs unless the operator skips it; addon updates run unless they are skipped.
+`startClusterUpdate` returns a job id. `getClusterUpdateJob` is the report.
+
+The steps, in order, are the backup, the hub's server closure, each online
+agent, then the addons. A step is `pending`, `running`, `ok`, `failed` or
+`skipped`. The job stops on the first failure and names a typed reason. An
+agent that comes back on the target version with no capabilities registered
+is `node-capless` — failed, not done. Agents that were offline when the plan
+was read are listed and not touched.
+
+The job is stored on the hub and survives the restart the hub step causes.
+A read that fails during that restart is "the hub is restarting": the last
+steps stay on screen and the next successful read continues the same job.
+The UI, the CLI and the MCP all follow the job that way.
+
 ## Updating a node
 
 `applyServerUpdate` runs `npm install @camstack/server@X` into

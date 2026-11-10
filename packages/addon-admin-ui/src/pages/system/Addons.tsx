@@ -33,6 +33,7 @@ import {
 } from '../../lib/addon-kind-filter'
 import { AdminPage } from '../../components/AdminPage'
 import type { AddonListItem, BlockedUpdate, BundleGroup } from '../../components/addons/AddonCard'
+import { ClusterUpdateDialog } from '../../components/cluster/ClusterUpdateDialog'
 import { AddonCard } from '../../components/addons/AddonCard'
 import {
   isTaskProgressActive,
@@ -295,6 +296,7 @@ function InstalledTab({
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [searchInput, setSearchInput] = useState('')
+  const [serverUpdateOpen, setServerUpdateOpen] = useState(false)
   const deferredSearch = useDeferredValue(searchInput)
   const [showSearch, setShowSearch] = useState(false)
   const searchContainerRef = useRef<HTMLDivElement>(null)
@@ -707,6 +709,7 @@ function InstalledTab({
 
   return (
     <div className="space-y-3">
+      <ClusterUpdateDialog open={serverUpdateOpen} onOpenChange={setServerUpdateOpen} />
       {[...updateErrors.entries()].map(([name, message]) => (
         <div
           key={name}
@@ -1118,6 +1121,9 @@ function InstalledTab({
                 bundle={isBundled(item) ? item.bundle : undefined}
                 availableUpdate={update}
                 {...(blocked !== undefined ? { blockedUpdate: blocked } : {})}
+                {...(blocked !== undefined
+                  ? { onUpdateServer: () => setServerUpdateOpen(true) }
+                  : {})}
                 isUpdating={updatingPackages.has(pkgName) || jobActive}
                 jobProgress={jobProgress}
                 onUpdate={onUpdate}

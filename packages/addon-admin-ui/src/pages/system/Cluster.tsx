@@ -31,30 +31,19 @@
  * `isOnline: false` rows for disconnected nodes) — there is no separate
  * "Offline agents" tab/panel.
  */
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-import { ArrowDownToLine, Loader2, Network } from 'lucide-react'
+import { ArrowDownToLine, Network } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import {
-  Button,
-  NodePicker,
-  useConfirm,
-  useClusterTopology,
-  useServerManagementApplyServerUpdate,
-  useSystem,
-} from '@camstack/ui-library'
+import { Button, NodePicker, useClusterTopology, useSystem } from '@camstack/ui-library'
 import { AdminPage } from '../../components/AdminPage'
+import { ClusterUpdateDialog } from '../../components/cluster/ClusterUpdateDialog'
 import { AgentsFoundSection } from '../../components/cluster/pairing/AgentsFoundSection'
 import { NodeCard, type NodeData } from '../../components/cluster/NodeCard'
 import { StaleNodeNotice } from '../../components/shared/StaleNodeNotice'
 import { useNodeUrlSelection } from '../../hooks/useNodeUrlSelection'
 import { parseMintUnlockResult } from '../../lib/agent-dashboard-unlock'
-import {
-  updateAllNodes,
-  type NodeUpdateReport,
-  type UpdateAllTarget,
-} from '../../lib/cluster-update-all'
 
 /**
  * Hook: topology from event stream with query bootstrap.
@@ -75,22 +64,8 @@ function useTopologyStream(): {
   return { nodes, isLoading: isLoading && nodes.length === 0 }
 }
 
-/**
- * One tone per outcome. `unconfirmed` is deliberately NOT green: a node that
- * could not be read back has not been shown to have updated, and the whole
- * defect this page shipped was treating "we don't know" as "it worked".
- */
-const OUTCOME_STYLE: Record<NodeUpdateReport['outcome'], string> = {
-  applied: 'border-success/40 bg-success/10 text-success',
-  refused: 'border-warning/40 bg-warning/10 text-warning',
-  failed: 'border-danger/40 bg-danger/10 text-danger',
-  unconfirmed: 'border-warning/40 bg-warning/10 text-warning',
-  skipped: 'border-warning/40 bg-warning/10 text-warning',
-}
-
 export function ClusterPage() {
   const { t } = useTranslation()
-  const confirm = useConfirm()
   const { nodes, isLoading } = useTopologyStream()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -101,27 +76,12 @@ export function ClusterPage() {
   const onlineCount = onlineNodes.length
   const offlineCount = nodes.filter((n) => !n.isOnline).length
 
-  // Cluster-wide "Update all nodes" convenience — sequences nodes AGENTS-FIRST,
-  // HUB-LAST so the hub (which hosts the cap routing to every agent) is never
-  // restarted before the agents have been kicked. It is sequential, never
-  // parallel: each call awaits the previous. This is a GLOBAL action (moved
-  // here from the former Server page); per-node update/restart live in each
-  // node card's General tab.
-  //
-  // The sequencing, the outcome classification and the read-back that resolves
-  // a dropped connection all live in `lib/cluster-update-all.ts` — including
-  // the account of the 2026-09-01 failure this shape exists to prevent. What
-  // stays here is the confirm, the seams, and RENDERING the reports: a node
-  // whose update was refused or could not be confirmed must say so on screen,
-  // because the previous version of this loop said nothing at all.
-  //
-  // NOTE: there is no probation boot / auto-rollback safety net any more — the
-  // single-framework-copy collapse (2026-07-18) removed it. The confirm copy
-  // below used to promise one.
-  const applyAllMutation = useServerManagementApplyServerUpdate()
+  // "Update all" opens the hub's cluster-update job (preview, confirm, then
+  // the step list). The hub runs backup, itself, each agent and the addons;
+  // this page only follows `getClusterUpdateJob`. A job already running is
+  // the resume strip inside `ClusterUpdateDialog`.
   const system = useSystem()
-  const [updatingAll, setUpdatingAll] = useState(false)
-  const [updateReports, setUpdateReports] = useState<readonly NodeUpdateReport[]>([])
+  const [clusterUpdateOpen, setClusterUpdateOpen] = useState(false)
 
   // D821 Continue-with-hub: agent unlock screen redirects here with
   // `unlockNode` + `returnTo`; mint a ticket and send the browser back.
@@ -169,37 +129,6 @@ export function ClusterPage() {
     }
   }, [unlockNode, unlockReturnTo, searchParams, setSearchParams, system.trpcClient])
 
-  const handleUpdateAll = useCallback(async (): Promise<void> => {
-    const targets: readonly UpdateAllTarget[] = onlineNodes.map((n) => ({
-      id: n.id,
-      name: n.name,
-      isHub: n.isHub,
-    }))
-    const ok = await confirm({
-      title: t('serverManagement.confirmUpdateAllTitle', 'Update all nodes'),
-      message: t(
-        'serverManagement.confirmUpdateAllBody',
-        'Update and restart every online node, hub first, then the agents once the hub runs the new version. Up-to-date nodes are skipped; this page reconnects when the hub comes back.',
-      ),
-      confirmLabel: t('serverManagement.confirmUpdateAllAction', 'Update all & restart'),
-      variant: 'warning',
-    })
-    if (!ok) return
-    setUpdatingAll(true)
-    setUpdateReports([])
-    try {
-      const reports = await updateAllNodes(targets, {
-        apply: (routing) => applyAllMutation.mutateAsync(routing),
-        readStatus: (routing) =>
-          system.trpcClient.serverManagement.getServerPackageStatus.query(routing),
-        wait: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
-      })
-      setUpdateReports(reports)
-    } finally {
-      setUpdatingAll(false)
-    }
-  }, [applyAllMutation, confirm, onlineNodes, system, t])
-
   // Natural page flow — `<main>` in AppLayout is the scroll container
   // (`overflow-auto`). `h-full` + an inner `flex-1 overflow-auto` nested a
   // second scroller that only had the leftover viewport after the secret
@@ -227,46 +156,22 @@ export function ClusterPage() {
               {t('common.offlineCount', { count: offlineCount })}
             </span>
           )}
-          {onlineCount > 1 && (
-            <Button
-              type="button"
-              size="sm"
-              disabled={updatingAll}
-              title={t(
-                'serverManagement.updateAllHint',
-                'Sequenced hub-first, agents after — up-to-date nodes are skipped.',
-              )}
-              onClick={() => void handleUpdateAll()}
-            >
-              {updatingAll ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <ArrowDownToLine className="h-3.5 w-3.5" />
-              )}
-              {t('serverManagement.updateAll', 'Update all nodes')}
-            </Button>
-          )}
+          <Button
+            type="button"
+            size="sm"
+            title={t(
+              'clusterUpdate.updateAllHint',
+              'Preview the hub plan, then follow the same job the CLI uses.',
+            )}
+            onClick={() => setClusterUpdateOpen(true)}
+          >
+            <ArrowDownToLine className="h-3.5 w-3.5" />
+            {t('clusterUpdate.updateAll', 'Update all nodes')}
+          </Button>
         </>
       }
     >
-      {updateReports.length > 0 && (
-        <ul aria-label="update-all-report" className="flex flex-col gap-1 text-xs">
-          {updateReports.map((report) => (
-            <li
-              key={report.nodeId}
-              // The outcome as DATA, not only as rendered prose: the detail
-              // string for a refusal starts with "Refused:", so a test reading
-              // text alone would pass on a page that mislabels it "applied".
-              data-outcome={report.outcome}
-              className={`rounded border px-2 py-1 ${OUTCOME_STYLE[report.outcome]}`}
-            >
-              <span className="font-medium">{report.nodeName}</span>
-              <span className="mx-1 uppercase tracking-wide">{report.outcome}</span>
-              <span className="opacity-80">{report.detail}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ClusterUpdateDialog open={clusterUpdateOpen} onOpenChange={setClusterUpdateOpen} />
 
       {unlockError !== null && (
         <p

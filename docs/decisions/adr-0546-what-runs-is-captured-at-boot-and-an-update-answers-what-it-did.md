@@ -8,7 +8,6 @@ applies-to:
   - packages/node-root/src/root-update-service.ts
   - packages/node-root/src/__tests__/root-update-truthful-status.spec.ts
   - packages/types/src/capabilities/server-management.cap.ts
-  - packages/addon-admin-ui/src/lib/cluster-update-all.ts
   - packages/addon-admin-ui/src/components/cluster/tabs/NodeServerManagementSection.tsx
 ---
 
@@ -128,5 +127,6 @@ rewritten on disk after boot" fails and the other sixteen pass.
 
 UI: `NodeServerManagementOutcome.spec.tsx` ("renders a staging FAILURE as an
 error", "says a restart is required when the copy on disk is not the code
-running") and `cluster-update-all.spec.ts` ("files a staging install that DIED
-as failed").
+running"). The old browser loop that filed a dead staging install as failed
+now follows the hub's cluster-update job instead of classifying
+`applyServerUpdate` itself.

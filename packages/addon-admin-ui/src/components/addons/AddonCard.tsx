@@ -423,6 +423,11 @@ interface AddonCardProps {
    * no Update button, the card says what it waits for.
    */
   readonly blockedUpdate?: BlockedUpdate
+  /**
+   * The update is held because this node runs a server that is too old.
+   * Opens the cluster-update job (the same dialog as Nodes → Update all).
+   */
+  readonly onUpdateServer?: () => void
   /** Callback when user clicks the update button — receives the SELECTED version */
   onUpdate?: (version: string) => void
   /** Whether an update is in progress for this addon */
@@ -455,6 +460,7 @@ export function AddonCard({
   hideVersion,
   availableUpdate,
   blockedUpdate,
+  onUpdateServer,
   onUpdate,
   isUpdating,
   jobProgress,
@@ -706,6 +712,11 @@ export function AddonCard({
                   version: blockedUpdate.requiredServer,
                 })}
               </Badge>
+            )}
+            {blockedUpdate !== undefined && onUpdateServer !== undefined && (
+              <Button type="button" size="sm" variant="secondary" onClick={onUpdateServer}>
+                {t('clusterUpdate.updateServer', 'Update server')}
+              </Button>
             )}
             {/* F4: live per-addon lifecycle-job progress — keyed per job on
                 the page, so concurrent updates render independently. */}
