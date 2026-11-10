@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - DeviceTemplateField asks the hub about every {{ … }} except {{ vars.x }}, as an action run does; heldSlots="placeholders" also holds a bare {{name}} for notification texts
+- Pet feeder: while a feed runs, Cancel replaces Feed on the device row and in the feeder card.
 
 ## [1.2.416] - 2026-11-10
 

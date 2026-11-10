@@ -106,6 +106,22 @@ describe('PetFeederInlineControl', () => {
     expect(container.firstChild).toBeNull()
   })
 
+  it('replaces Feed with Cancel while a feed runs (#481)', () => {
+    mockResult = { ...mockResult, slice: makeSlice({ feeding: true }) }
+    render(<PetFeederInlineControl trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.queryByLabelText('Feed now')).toBeNull()
+    fireEvent.click(screen.getByLabelText('Cancel feed'))
+    expect(cancelFeed).toHaveBeenCalledWith({})
+  })
+
+  it('shows Cancel the moment Feed is tapped, before the device reports it', () => {
+    feed.mockReturnValue(new Promise(() => {}))
+    render(<PetFeederInlineControl trpc={trpc} deviceId={1} features={[]} />)
+    fireEvent.click(screen.getByLabelText('Feed now'))
+    expect(screen.queryByLabelText('Feed now')).toBeNull()
+    expect(screen.getByLabelText('Cancel feed')).toBeTruthy()
+  })
+
   it('disables the Feed button when not available', () => {
     mockResult = { ...mockResult, available: false }
     render(<PetFeederInlineControl trpc={trpc} deviceId={1} features={[]} />)
@@ -169,6 +185,23 @@ describe('PetFeederHeroCard', () => {
     mockResult = { ...mockResult, slice: makeSlice({ feeding: true }) }
     render(<PetFeederHeroCard trpc={trpc} deviceId={2} features={[]} />)
     fireEvent.click(screen.getByText('Cancel feed'))
+    expect(cancelFeed).toHaveBeenCalledWith({})
+  })
+
+  it('replaces the Feed button with Cancel while a feed runs (#481)', () => {
+    mockResult = { ...mockResult, slice: makeSlice({ feeding: true }) }
+    render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.queryByRole('button', { name: 'Feed' })).toBeNull()
+    expect(screen.getByRole('button', { name: /Cancel feed/ })).toBeTruthy()
+  })
+
+  it('replaces each hopper Feed button with Cancel on a dual hopper', () => {
+    mockResult = { ...mockResult, slice: makeSlice({ feeding: true, isDualHopper: true }) }
+    render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    expect(screen.queryAllByRole('button', { name: 'Feed' })).toHaveLength(0)
+    const cancels = screen.getAllByRole('button', { name: /Cancel feed/ })
+    expect(cancels).toHaveLength(2)
+    fireEvent.click(cancels[0] as HTMLElement)
     expect(cancelFeed).toHaveBeenCalledWith({})
   })
 

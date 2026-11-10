@@ -45,6 +45,7 @@ import { useDeviceCapability } from '../../hooks/use-device-capability.js'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
 import { cn } from '../../lib/cn.js'
 import { resolveSensorDisplay } from '../../lib/resolve-sensor-display.js'
+import { Button } from '../../primitives/button'
 import type { ControlPanelProps } from './types.js'
 
 /** Default one-tap manual-feed portion (grams) — the low end of the
@@ -203,30 +204,53 @@ export function PetFeederPanel({
             {onMains ? backupLabel : `${display.batteryPower}%`}
           </span>
         )}
-        <button
-          type="button"
-          aria-label={t('uiLibrary.petFeeder.feedNow', 'Feed now')}
-          disabled={busy || display.feeding}
-          onClick={(e) => {
-            e.stopPropagation()
-            if (busy || display.feeding) return
-            applyOptimisticAction({ feeding: true }, () => cap.feed({ grams: DEFAULT_PORTION }))
-          }}
-          className={cn(
-            'inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-surface-hover',
-            (busy || display.feeding) && 'opacity-40 cursor-not-allowed',
-          )}
-        >
-          <PawPrint className="h-3.5 w-3.5" aria-hidden />
-          {t('uiLibrary.petFeeder.feed', 'Feed')}
-        </button>
+        {/* While a feed runs, Cancel takes Feed's place: a second feed cannot
+            start, and stopping this one is the only thing left to do. */}
+        {display.feeding ? (
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label={t('uiLibrary.petFeeder.cancelFeed', 'Cancel feed')}
+            disabled={busy}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (busy) return
+              applyOptimisticAction({ feeding: false }, () => cap.cancelFeed({}))
+            }}
+          >
+            <Ban className="h-3.5 w-3.5" aria-hidden />
+            {t('uiLibrary.petFeeder.cancel', 'Cancel')}
+          </Button>
+        ) : (
+          <button
+            type="button"
+            aria-label={t('uiLibrary.petFeeder.feedNow', 'Feed now')}
+            disabled={busy}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (busy) return
+              applyOptimisticAction({ feeding: true }, () => cap.feed({ grams: DEFAULT_PORTION }))
+            }}
+            className={cn(
+              'inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-surface-hover',
+              busy && 'opacity-40 cursor-not-allowed',
+            )}
+          >
+            <PawPrint className="h-3.5 w-3.5" aria-hidden />
+            {t('uiLibrary.petFeeder.feed', 'Feed')}
+          </button>
+        )}
       </div>
     )
   }
 
   // ── Full layout (hero card) ──────────────────────────────────────────────────
+  const cancel = (): void => {
+    if (busy) return
+    applyOptimisticAction({ feeding: false }, () => cap.cancelFeed({}))
+  }
   const feedSingle = (grams: number): void => {
-    if (busy || display.feeding) return
+    if (busy) return
     applyOptimisticAction({ feeding: true }, () => cap.feed({ grams: clampPortion(grams) }))
   }
 
@@ -308,15 +332,19 @@ export function PetFeederPanel({
       )}
 
       {/* ── Manual feed (single or per-hopper) ────────────────────────────── */}
+      {/* While a feed runs, each Feed button becomes Cancel; the
+          portion stepper stays usable for the next feed. */}
       {display.isDualHopper ? (
         <div className="grid grid-cols-2 gap-2">
           <HopperFeed
             label={t('uiLibrary.petFeeder.hopper1', 'Hopper 1')}
             grams={hopper1}
-            busy={busy || display.feeding}
+            busy={busy}
+            feeding={display.feeding}
+            onCancel={cancel}
             onGrams={setHopper1}
             onFeed={() => {
-              if (busy || display.feeding) return
+              if (busy) return
               applyOptimisticAction({ feeding: true }, () =>
                 cap.feed({ hopper1: clampPortion(hopper1) }),
               )
@@ -325,10 +353,12 @@ export function PetFeederPanel({
           <HopperFeed
             label={t('uiLibrary.petFeeder.hopper2', 'Hopper 2')}
             grams={hopper2}
-            busy={busy || display.feeding}
+            busy={busy}
+            feeding={display.feeding}
+            onCancel={cancel}
             onGrams={setHopper2}
             onFeed={() => {
-              if (busy || display.feeding) return
+              if (busy) return
               applyOptimisticAction({ feeding: true }, () =>
                 cap.feed({ hopper2: clampPortion(hopper2) }),
               )
@@ -339,7 +369,9 @@ export function PetFeederPanel({
         <HopperFeed
           label={t('uiLibrary.petFeeder.manualFeed', 'Manual feed')}
           grams={portion}
-          busy={busy || display.feeding}
+          busy={busy}
+          feeding={display.feeding}
+          onCancel={cancel}
           onGrams={setPortion}
           onFeed={() => feedSingle(portion)}
         />
@@ -362,23 +394,6 @@ export function PetFeederPanel({
           />
         )}
       </div>
-      {display.feeding && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => {
-            applyOptimisticAction({ feeding: false }, () => cap.cancelFeed({}))
-          }}
-          className={cn(
-            'flex items-center justify-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-2 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20',
-            busy && 'opacity-40 cursor-not-allowed',
-          )}
-        >
-          <Ban className="h-4 w-4" aria-hidden />
-          {t('uiLibrary.petFeeder.cancelFeed', 'Cancel feed')}
-        </button>
-      )}
-
       {/* ── Settings ──────────────────────────────────────────────────────── */}
       <Field label={t('uiLibrary.petFeeder.settings', 'Settings')}>
         <div className="grid grid-cols-3 gap-2">
@@ -570,12 +585,23 @@ interface HopperFeedProps {
   readonly label: string
   readonly grams: number
   readonly busy: boolean
+  /** A feed is running: the Feed button is Cancel until it ends. */
+  readonly feeding: boolean
   readonly onGrams: (update: (current: number) => number) => void
   readonly onFeed: () => void
+  readonly onCancel: () => void
 }
 
-/** Manual-feed portion stepper + Feed button, honouring the 4-200 g range. */
-function HopperFeed({ label, grams, busy, onGrams, onFeed }: HopperFeedProps): ReactNode {
+/** Manual-feed portion stepper + Feed button (Cancel while feeding), honouring the 4-200 g range. */
+function HopperFeed({
+  label,
+  grams,
+  busy,
+  feeding,
+  onGrams,
+  onFeed,
+  onCancel,
+}: HopperFeedProps): ReactNode {
   const t = useUiText()
   return (
     <div className="flex flex-col gap-1">
@@ -607,18 +633,25 @@ function HopperFeed({ label, grams, busy, onGrams, onFeed }: HopperFeedProps): R
             onStep={(step) => onGrams((current) => current + step)}
           />
         </div>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={onFeed}
-          className={cn(
-            'flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-transparent bg-amber-400 px-2 py-2 text-sm font-semibold text-amber-950 transition-colors hover:bg-amber-300 active:scale-95',
-            busy && 'opacity-40 cursor-not-allowed',
-          )}
-        >
-          <PawPrint className="h-4 w-4" aria-hidden />
-          {t('uiLibrary.petFeeder.feed', 'Feed')}
-        </button>
+        {feeding ? (
+          <Button variant="danger" size="md" className="flex-1" disabled={busy} onClick={onCancel}>
+            <Ban className="h-4 w-4" aria-hidden />
+            {t('uiLibrary.petFeeder.cancelFeed', 'Cancel feed')}
+          </Button>
+        ) : (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onFeed}
+            className={cn(
+              'flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-transparent bg-amber-400 px-2 py-2 text-sm font-semibold text-amber-950 transition-colors hover:bg-amber-300 active:scale-95',
+              busy && 'opacity-40 cursor-not-allowed',
+            )}
+          >
+            <PawPrint className="h-4 w-4" aria-hidden />
+            {t('uiLibrary.petFeeder.feed', 'Feed')}
+          </button>
+        )}
       </div>
     </div>
   )

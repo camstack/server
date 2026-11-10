@@ -7843,7 +7843,8 @@
       "decreasePortion": "Riduci la porzione {{label}}",
       "increasePortion": "Aumenta la porzione {{label}}",
       "mains": "Rete elettrica",
-      "backupBattery": "Backup {{percent}}%"
+      "backupBattery": "Backup {{percent}}%",
+      "cancel": "Annulla"
     },
     "recordingBands": {
       "mon": "Lun",

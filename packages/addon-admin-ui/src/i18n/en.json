@@ -7821,7 +7821,8 @@
       "decreasePortion": "Decrease {{label}} portion",
       "increasePortion": "Increase {{label}} portion",
       "mains": "Mains",
-      "backupBattery": "Backup {{percent}}%"
+      "backupBattery": "Backup {{percent}}%",
+      "cancel": "Cancel"
     },
     "recordingBands": {
       "mon": "Mon",
