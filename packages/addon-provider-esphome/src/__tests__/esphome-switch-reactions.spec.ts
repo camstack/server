@@ -41,9 +41,10 @@ function migrationApi(): MigrationApiV1 {
       }),
     },
     settings: { read: none, write: none, deleteKeys: none },
+    deviceSettings: { listIds: none, read: none },
     secrets: { resolve: none, put: none, delete: none },
     integrations: { list: async () => ({ integrations: [] }), get: none },
-    devices: { list: none, get: none, setIntegrationId: none },
+    devices: { list: none, get: none, aliases: none, setIntegrationId: none },
     node: { localNodeId: none },
     log: { info: none, warn: none },
   }
