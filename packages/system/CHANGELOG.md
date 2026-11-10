@@ -91,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device templates gain the trunc and onoff filters; the migration API lets an addon read its own per-device settings and the aliases of named devices
 
 - The device manager records which optional capability methods each provider implements
+- A camera keeps its PTZ, reboot and two-way-audio features after a hub restart or while its agent is offline, until its own provider answers
 
 ### Removed
 
