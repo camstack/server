@@ -110,6 +110,7 @@ function client(fetchSystem: HomeComApiClient['fetchSystem']): HomeComApiClient 
     setSwingVertical: unused,
     setSwingHorizontal: unused,
     writeHeatPump: vi.fn(async () => {}),
+    readResource: vi.fn(async () => ({ status: 404, body: null })),
   }
 }
 

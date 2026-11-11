@@ -27,6 +27,7 @@ import {
   type PointtWrite,
 } from './homecom-pointt.js'
 import type { HomeComDhw, HomeComHeatingCircuit } from './homecom-domain-mapping.js'
+import type { HomeComResourceAnswer } from './homecom-resource-explorer.js'
 
 export { HomeComUnknownDeviceTypeError } from './homecom-device-type.js'
 
@@ -96,6 +97,8 @@ export interface HomeComApiClient {
   setSwingHorizontal(circuitId: string, on: boolean): Promise<void>
   /** Sends already validated heat-pump writes (D1026). */
   writeHeatPump(writes: readonly PointtWrite[]): Promise<void>
+  /** One raw GET of a resource path, status and body as the gateway answered (diagnostics). */
+  readResource(path: string): Promise<HomeComResourceAnswer>
 }
 
 export type FetchFn = (
@@ -452,6 +455,10 @@ export function createHomeComApiClient(
     async writeHeatPump(writes) {
       for (const write of writes) await putWrite(write)
     },
+    async readResource(path) {
+      const res = await authed(homeComResourceUrl(gatewayId, path), { method: 'GET' })
+      return { status: res.status, body: res.body }
+    },
   }
 }
 
@@ -529,6 +536,9 @@ export function createInMemoryHomeComApiClient(input: {
     },
     async writeHeatPump(writes) {
       for (const write of writes) mutations.push({ path: write.path, body: write.value })
+    },
+    async readResource() {
+      return { status: 404, body: null }
     },
   }
 }

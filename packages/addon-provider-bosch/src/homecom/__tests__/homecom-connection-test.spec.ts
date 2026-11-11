@@ -97,6 +97,7 @@ describe('HomeCom connection-test', () => {
         setSwingVertical: async () => undefined,
         setSwingHorizontal: async () => undefined,
         writeHeatPump: async () => undefined,
+        readResource: async () => ({ status: 404, body: null }),
       }),
     })
     const none = await empty.testSettings({
@@ -129,6 +130,7 @@ describe('HomeCom connection-test', () => {
         setSwingVertical: async () => undefined,
         setSwingHorizontal: async () => undefined,
         writeHeatPump: async () => undefined,
+        readResource: async () => ({ status: 404, body: null }),
       }),
     })
     const listed = await failed.testSettings({

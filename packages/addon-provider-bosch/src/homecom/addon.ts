@@ -18,6 +18,7 @@ import {
 import { cascadeRemoveDevicesForIntegration } from '../shared/account-integration-cascade.js'
 import { setIntegrationDevicesOnline } from '../shared/account-integration-offline.js'
 import { homeComActions } from './custom-actions.js'
+import { runHomeComExplore } from './homecom-explore-action.js'
 import {
   finishHomeComSignIn,
   homeComSignInAttempts,
@@ -132,6 +133,16 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
           signedOut: true as const,
           summary: 'Signed out.',
         }),
+        exploreResources: async (input) =>
+          runHomeComExplore(input, {
+            listConnected: () =>
+              this.requireClients()
+                .list()
+                .filter((id) => homeComConnections.getClient(id) !== null),
+            getClient: (id) => homeComConnections.getClient(id),
+            getGatewayId: (id) => homeComConnections.getSnapshot(id)?.gateway.gatewayId ?? null,
+            logger: this.ctx.logger,
+          }),
       },
     }
   }
