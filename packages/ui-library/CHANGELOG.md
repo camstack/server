@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.426] - 2026-11-11
+
 ### Changed
 
 - Device cards and rows read the role: a switch with the heater role gets the timed run and heater card, a switch with the fan role is drawn as a fan; the thermostat and heater types are gone (climate roles label each climate device).

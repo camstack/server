@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.840",
+  "version": "1.2.841",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,8 +66,18 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-pipeline-orchestrator": ">=1.2.681",
-        "@camstack/addon-provider-reolink": ">=1.2.239"
+        "@camstack/addon-admin-ui": ">=1.2.645",
+        "@camstack/addon-agent-ui": ">=1.2.366",
+        "@camstack/addon-export-alexa": ">=1.2.194",
+        "@camstack/addon-export-hap": ">=1.2.199",
+        "@camstack/addon-import-alexa": ">=0.2.204",
+        "@camstack/addon-matter-broker": ">=0.2.167",
+        "@camstack/addon-provider-bosch": ">=0.1.52",
+        "@camstack/addon-provider-gree": ">=0.2.158",
+        "@camstack/addon-provider-homeassistant": ">=1.2.680",
+        "@camstack/addon-provider-homematic": ">=1.2.190",
+        "@camstack/addon-provider-mqtt-ha": ">=0.1.45",
+        "@camstack/addon-provider-velux": ">=0.2.167"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

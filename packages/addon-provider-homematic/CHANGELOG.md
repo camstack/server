@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.190] - 2026-11-11
+
 ### Changed
 
 - Homematic thermostats are now climate devices: a radiator valve gets the radiator role, a floor-heating actuator the floor role, any other thermostat the thermostat role.

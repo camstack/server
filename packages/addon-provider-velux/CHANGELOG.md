@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.167] - 2026-11-11
+
 ### Changed
 
 - The rain sensor's role is set when it is first created and can then be changed by the operator (comment only; behaviour comes from the server).

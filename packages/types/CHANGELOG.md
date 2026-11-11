@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.549] - 2026-11-11
+
 ### Changed
 
 - Devices are typed by their controls and told apart by role: a plug-in heater is a switch with role switch-heater (timed run included), a plug-powered fan a switch with role switch-fan, and the thermostat type is folded into climate with climate-* roles (AC, thermostat, radiator, floor, heater, heat-pump circuit).

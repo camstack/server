@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.645] - 2026-11-11
+
 ### Changed
 
 - Customize: the role of a provider-spawned accessory device (e.g. a Home Assistant cover) is now editable, like its name.
