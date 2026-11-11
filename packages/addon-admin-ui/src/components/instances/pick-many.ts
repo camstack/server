@@ -58,37 +58,3 @@ export function manyCreateItems(input: {
     values: { ...values, [key]: value },
   }))
 }
-
-type ScalarValue = string | number | boolean
-
-function isFilledScalar(value: unknown): value is ScalarValue {
-  if (typeof value === 'string') return value.trim().length > 0
-  return typeof value === 'number' || typeof value === 'boolean'
-}
-
-/** The non-empty scalar form values: what the discovery is asked about (as the picker asks it). */
-export function discoveryConfigOf(
-  values: Readonly<Record<string, unknown>>,
-): Record<string, ScalarValue> {
-  const config: Record<string, ScalarValue> = {}
-  for (const [key, value] of Object.entries(values)) {
-    if (isFilledScalar(value)) config[key] = value
-  }
-  return config
-}
-
-/** The candidate names by the value they give `key`: what each new record is named after. */
-export function candidateLabels(
-  candidates: readonly {
-    readonly suggestedName: string
-    readonly config: Readonly<Record<string, unknown>>
-  }[],
-  key: string,
-): ReadonlyMap<string, string> {
-  const labels = new Map<string, string>()
-  for (const candidate of candidates) {
-    const value = candidate.config[key]
-    if (typeof value === 'string' && !labels.has(value)) labels.set(value, candidate.suggestedName)
-  }
-  return labels
-}

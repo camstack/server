@@ -12002,7 +12002,8 @@
     "addonNotRunning": "{{addon}} is not running: start it first",
     "createMany": "Create {{count}}",
     "createManyHint": "One is created per ticked choice, each named after it.",
-    "createManyStopped": "{{done}} of {{total}} created: {{message}}"
+    "createManyStopped": "{{done}} of {{total}} created: {{message}}",
+    "createManyLabelsFailed": "The names of the choices could not be read ({{message}}); each is named after its value."
   },
   "instances": {
     "colStatus": "Status",

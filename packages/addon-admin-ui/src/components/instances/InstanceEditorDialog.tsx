@@ -27,7 +27,15 @@ import {
 } from '@camstack/ui-library'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link2, Loader2 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import { fillBrokerConnectPath, startServerNavigation } from '../../lib/broker-oauth-popup'
 import type { ConfigUISchema } from '../../types/config-ui'
@@ -40,13 +48,8 @@ import {
 } from '../integrations/connection-test-verdict'
 import { pushToast } from '../ui/toast-bus'
 import { kindWidget, withoutFields } from './kind-widgets'
-import {
-  candidateLabels,
-  discoveryConfigOf,
-  manyCreateItems,
-  pickManyField,
-  withMultiplePick,
-} from './pick-many'
+import { ManyPickLabels } from './ManyPickLabels'
+import { manyCreateItems, pickManyField, withMultiplePick } from './pick-many'
 import { HOLDER_QUERY_KEY } from './use-instances-data'
 import {
   checkTypedId,
@@ -259,6 +262,11 @@ export function InstanceEditorDialog({
   )
   const picked = manyField === null ? [] : pickedValues(values[manyField.key])
   const many = picked.length > 1
+  // The candidate names, from the query that fills the picker (ManyPickLabels); none = named by value.
+  const [pickLabels, setPickLabels] = useState<ReadonlyMap<string, string>>(() => new Map())
+  const onPickLabels = useCallback((labels: ReadonlyMap<string, string>) => {
+    setPickLabels(labels)
+  }, [])
   const hydrated = useMemo(
     () => (formSchema ? hydrateSchema(formSchema, { ...stored }) : null),
     [formSchema, stored],
@@ -278,33 +286,21 @@ export function InstanceEditorDialog({
       ? []
       : connectionWidgets.flatMap(({ widget }) => widget.ownedKeys(hydrated, values))
 
-  /** The names of the ticked candidates, asked once at save; a failed ask names them by value. */
-  const pickLabels = async (
-    field: ConfigSelectField,
-    formValues: Readonly<Record<string, unknown>>,
-  ): Promise<ReadonlyMap<string, string>> => {
-    const discover = field.discoverOptions
-    if (discover === undefined || pickedValues(formValues[field.key]).length < 2) return new Map()
-    try {
-      const candidates = await system.trpcClient.notificationOutput.discoverTargets.query({
-        kind: discover.kind,
-        config: discoveryConfigOf(formValues),
-      })
-      return candidateLabels(candidates, field.key)
-    } catch {
-      return new Map()
-    }
-  }
-
   const save = useMutation({
     mutationFn: async (): Promise<string> => {
       const client = system.trpcClient.integrationInstances
-      const patch = diffInstanceValues(stored, edited)
-      if (instance === null && manyField !== null && picked.length > 0) {
+      const diff = diffInstanceValues(stored, edited)
+      // One tick is an ordinary create of one record holding that value.
+      const patch =
+        manyField !== null && picked.length === 1 ? { ...diff, [manyField.key]: picked[0] } : diff
+      // Several ticks: one record per value. A typed id and "restore under its old id" each name
+      // ONE record, so neither applies here (the dialog hides both): every record gets the id the
+      // provider or the UI mints, exactly as a create without a typed id does.
+      if (instance === null && manyField !== null && many) {
         const items = manyCreateItems({
           key: manyField.key,
           picked,
-          labels: await pickLabels(manyField, values),
+          labels: pickLabels,
           typedName: name,
           values: patch,
         })
@@ -445,8 +441,7 @@ export function InstanceEditorDialog({
               save.isPending ||
               (hydrated === null && !noForm) ||
               (name.length === 0 && !many) ||
-              restoreMissing ||
-              typedState !== 'ok'
+              (!many && (restoreMissing || typedState !== 'ok'))
             }
             onClick={() => {
               setError(null)
@@ -468,10 +463,22 @@ export function InstanceEditorDialog({
       <div className="space-y-4">
         {instance !== null ? lead : null}
         <FormBuilder
-          schema={many ? withoutFields(identitySchema, [IDENTITY_NAME]) : identitySchema}
+          schema={
+            many
+              ? withoutFields(identitySchema, [
+                  IDENTITY_NAME,
+                  IDENTITY_TYPED_ID,
+                  IDENTITY_RESTORE,
+                  IDENTITY_RESTORE_ID,
+                ])
+              : identitySchema
+          }
           values={identity}
           onChange={setIdentity}
         />
+        {manyField !== null && many && (
+          <ManyPickLabels field={manyField} values={values} onLabels={onPickLabels} />
+        )}
         {many && (
           <p className="text-xs text-foreground-muted">
             {t(
