@@ -1,8 +1,7 @@
 /**
- * A native `<select>` is written in ONE place: the `Select` primitive
- * (`packages/ui-library/src/primitives/select.tsx`), which carries the field
- * chrome, the chevron and the disabled affordance. A raw `<select>` anywhere
- * else in the admin UI or the library is a second, unstyled dropdown.
+ * A native `<select>` is written NOWHERE in the admin UI or the library: the
+ * `Select` primitive (`packages/ui-library/src/primitives/select.tsx`) renders
+ * our own list, so a raw `<select>` would bring back the browser's popup.
  *
  * Specs may render a raw `<select>` as a test double; they are not scanned.
  * Baseline is empty: there is no allow-list to grow.
@@ -12,7 +11,6 @@ import { join, relative } from 'node:path'
 
 const ROOT = join(import.meta.dirname, '..')
 const ROOTS: readonly string[] = ['packages/addon-admin-ui/src', 'packages/ui-library/src']
-const PRIMITIVE = 'packages/ui-library/src/primitives/select.tsx'
 const TEST_FILE = /(__tests__\/|\.(test|spec)\.tsx?$)/
 const RAW_SELECT = /<select[\s>/]/
 
@@ -31,7 +29,7 @@ for (const root of ROOTS) {
   walk(join(ROOT, root), files)
   for (const file of files) {
     const rel = relative(ROOT, file)
-    if (rel === PRIMITIVE || TEST_FILE.test(rel)) continue
+    if (TEST_FILE.test(rel)) continue
     readFileSync(file, 'utf8')
       .split('\n')
       .forEach((line, index) => {
@@ -44,9 +42,9 @@ for (const root of ROOTS) {
 
 if (offenders.length > 0) {
   console.error(
-    '✗ native <select> outside the Select primitive — use `Select` from @camstack/ui-library',
+    '✗ native <select> — the browser popup is not ours; use `Select` from @camstack/ui-library',
   )
   for (const o of offenders) console.error(`  ${o}`)
   process.exit(1)
 }
-console.log('  ✔ no native <select> outside the Select primitive')
+console.log('  ✔ no native <select> in the admin UI or the library')
