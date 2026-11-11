@@ -3,6 +3,7 @@
  * page's one Save — the same footer the quick-detail modal uses. There is
  * no Display section Save and no per-field save.
  */
+import { selectOption, selectOptionValues } from '@camstack/ui-library/testing'
 import { type DeviceInfo, DeviceType } from '@camstack/types'
 import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -207,13 +208,13 @@ describe('identity display — one Save, every device', () => {
   it('a temperature sensor offers only temperature units, and Save writes the unit', () => {
     renderRow(TEMPERATURE)
     const unitSelect = screen.getByLabelText('Unit')
-    const values = [...unitSelect.querySelectorAll('option')].map((o) => o.value)
+    const values = selectOptionValues(unitSelect)
     expect(values).toContain('°C')
     expect(values).toContain('°F')
     expect(values).toContain('K')
     expect(values).not.toContain('hPa')
     expect(values).not.toContain('m/s')
-    fireEvent.change(unitSelect, { target: { value: '°F' } })
+    selectOption(unitSelect, '°F')
     expect(setDisplay).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(setDisplay).toHaveBeenCalledWith({ deviceId: 88, display: { unit: '°F' } })

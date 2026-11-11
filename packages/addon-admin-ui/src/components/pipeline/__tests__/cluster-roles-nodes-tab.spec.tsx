@@ -1,5 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 
+import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, within } from '@testing-library/react'
@@ -91,13 +92,12 @@ describe('Cluster → Roles & nodes', () => {
 
   it('a role is picked with the library select, nodes by name, and writes the node id', () => {
     renderTab()
-    const select = screen.getByLabelText('Audio node') as HTMLSelectElement
-    // The library Select: one bordered native select inside its own wrapper.
+    const select = screen.getByLabelText('Audio node') as HTMLButtonElement
     expect(select.className).toMatch(/\bh-7\b/)
-    expect(within(select).getByRole('option', { name: 'Hub (default)' })).toBeInTheDocument()
-    expect(within(select).getByRole('option', { name: 'macmini' })).toBeInTheDocument()
-    expect(within(select).queryByRole('option', { name: /localdomain/ })).toBeNull()
-    fireEvent.change(select, { target: { value: 'MacMiniAgent.localdomain' } })
+    expect(selectOptionLabels(select)).toContain('Hub (default)')
+    expect(selectOptionLabels(select)).toContain('macmini')
+    expect(selectOptionLabels(select).some((l) => /localdomain/.test(l))).toBe(false)
+    selectOption(select, 'MacMiniAgent.localdomain')
     expect(updateScoped).toHaveBeenCalledWith({
       addonId: 'pipeline-orchestrator',
       cap: 'pipeline-orchestrator',
@@ -109,24 +109,24 @@ describe('Cluster → Roles & nodes', () => {
 
   it('the recording and post-processing roles read the cluster form of their own capability', () => {
     renderTab()
-    expect((screen.getByLabelText('Recording node') as HTMLSelectElement).value).toBe(
+    expect((screen.getByLabelText('Recording node') as HTMLButtonElement).value).toBe(
       'MacMiniAgent.localdomain',
     )
-    expect((screen.getByLabelText('Post-processing node') as HTMLSelectElement).value).toBe(
+    expect((screen.getByLabelText('Post-processing node') as HTMLButtonElement).value).toBe(
       'MacMiniAgent.localdomain',
     )
   })
 
   it('writes the recording and post-processing roles through the scoped cluster write', () => {
     renderTab()
-    fireEvent.change(screen.getByLabelText('Recording node'), { target: { value: 'hub' } })
+    selectOption(screen.getByLabelText('Recording node'), 'hub')
     expect(updateScoped).toHaveBeenCalledWith({
       addonId: 'recorder',
       cap: 'recording',
       scope: 'cluster',
       patch: { recordingNodeId: 'hub' },
     })
-    fireEvent.change(screen.getByLabelText('Post-processing node'), { target: { value: 'hub' } })
+    selectOption(screen.getByLabelText('Post-processing node'), 'hub')
     expect(updateScoped).toHaveBeenCalledWith({
       addonId: 'pipeline-analytics',
       cap: 'pipeline-analytics',

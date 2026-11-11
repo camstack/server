@@ -3,6 +3,7 @@
  * written through the account-preference hook, and nothing can be written
  * while the row is pending, failed to load, or unreadable.
  */
+import { selectOption } from '@camstack/ui-library/testing'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AccountUnitPreferencesState } from '@camstack/ui-library'
@@ -47,16 +48,12 @@ describe('UnitsSection', () => {
 
   it('writes only the field that changed', async () => {
     render(<UnitsSection />)
-    fireEvent.change(screen.getByLabelText('Temperature'), {
-      target: { value: 'fahrenheit' },
-    })
+    selectOption(screen.getByLabelText('Temperature'), 'fahrenheit')
     expect(update).toHaveBeenCalledWith({ temperature: 'fahrenheit' })
     await waitFor(() =>
       expect(screen.getByLabelText('Temperature')).toHaveProperty('disabled', false),
     )
-    fireEvent.change(screen.getByLabelText('Other measurements'), {
-      target: { value: 'imperial' },
-    })
+    selectOption(screen.getByLabelText('Other measurements'), 'imperial')
     expect(update).toHaveBeenLastCalledWith({ system: 'imperial' })
     await waitFor(() =>
       expect(screen.getByLabelText('Temperature')).toHaveProperty('disabled', false),
@@ -92,9 +89,7 @@ describe('UnitsSection', () => {
   it('shows the reason when a write fails', async () => {
     update.mockRejectedValue(new Error('the row changed while saving'))
     render(<UnitsSection />)
-    fireEvent.change(screen.getByLabelText('Temperature'), {
-      target: { value: 'fahrenheit' },
-    })
+    selectOption(screen.getByLabelText('Temperature'), 'fahrenheit')
     expect(await screen.findByText('the row changed while saving')).toBeTruthy()
   })
 })

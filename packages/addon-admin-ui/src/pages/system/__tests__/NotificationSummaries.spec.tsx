@@ -11,6 +11,7 @@
  * (so it may not be one click), it aims at an EXPLICIT window (so a motion rule
  * that has seen nothing still produces something to look at), and Delete asks.
  */
+import { selectOption, selectOptionLabels, waitForSelectRows } from '@camstack/ui-library/testing'
 import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TemplateHubTrpc } from '../../../test-setup/device-template-hub'
@@ -75,7 +76,13 @@ const mockListAllRaw = vi.fn(() => Promise.resolve([]))
 
 /** What the shared fleet query answers in these tests. */
 const FLEET_ROWS: readonly FleetRow[] = [
-  { id: 101, name: 'Camera front door', type: 'camera', stableId: 'cam-101', location: null },
+  {
+    id: 101,
+    name: 'Camera front door',
+    type: 'camera',
+    stableId: 'cam-101',
+    location: null,
+  },
   {
     id: 42,
     name: 'Serratura front door',
@@ -117,8 +124,12 @@ vi.mock('@camstack/ui-library', async () => {
         deviceManager: { listAll: { query: mockListAllRaw } },
         notificationRules: {
           getConditionCatalog: { query: () => Promise.resolve({}) },
-          getTemplateCatalog: { query: () => Promise.resolve(templateCatalogAnswer()) },
-          previewTemplate: { mutate: () => Promise.resolve({ title: null, body: null }) },
+          getTemplateCatalog: {
+            query: () => Promise.resolve(templateCatalogAnswer()),
+          },
+          previewTemplate: {
+            mutate: () => Promise.resolve({ title: null, body: null }),
+          },
         },
       },
     }),
@@ -227,7 +238,9 @@ describe('NotificationSummaries page', () => {
 
   it('says AI OFF for a rule that carries a configured-but-disabled section', async () => {
     listAnswer = () =>
-      Promise.resolve({ rules: [{ ...RULE, ai: { enabled: false, prompt: 'what happened?' } }] })
+      Promise.resolve({
+        rules: [{ ...RULE, ai: { enabled: false, prompt: 'what happened?' } }],
+      })
     renderPage()
     await waitFor(() => expect(screen.getByText('Overnight sweep')).toBeTruthy())
     expect(screen.getByText('AI off')).toBeTruthy()
@@ -318,6 +331,7 @@ describe('the digest EDITOR', () => {
     calls.length = 0
     mockCustom.mockClear()
     listAnswer = () => Promise.resolve({ rules: [] })
+    profilesAnswer = TWO_PROFILES
   })
 
   async function openEditor(): Promise<void> {
@@ -354,11 +368,17 @@ describe('the digest EDITOR', () => {
   it('offers only VISION profiles — a vision call against a text profile is refused', async () => {
     await openEditor()
     fireEvent.click(screen.getByRole('tab', { name: 'AI' }))
-    await waitFor(() => expect(screen.getByTestId('summary-ai-profile')).toBeTruthy())
-    const options = [...screen.getByTestId('summary-ai-profile').querySelectorAll('option')].map(
-      (o) => o.textContent ?? '',
+    await waitFor(() => expect(screen.getByTestId('summary-ai-enabled')).toBeTruthy())
+    // The list only opens on a live control: switch the section on first.
+    fireEvent.click(screen.getByTestId('summary-ai-enabled'))
+    const profile = screen.getByTestId('summary-ai-profile')
+    await waitForSelectRows(profile, (rows) =>
+      rows
+        .map((r) => r.label)
+        .join(' ')
+        .includes('LM Studio'),
     )
-    expect(options.join(' ')).toContain('LM Studio')
+    const options = selectOptionLabels(profile)
     expect(options.join(' ')).not.toContain('Text ·')
   })
 
@@ -408,7 +428,7 @@ describe('the digest EDITOR', () => {
     const language = screen.getByTestId('summary-ai-language') as HTMLSelectElement
     expect(language.disabled).toBe(false)
     expect(screen.queryByTestId('summary-ai-off-note')).toBeNull()
-    fireEvent.change(language, { target: { value: 'it' } })
+    selectOption(language, 'it')
     expect(language.value).toBe('it')
   })
 
@@ -418,9 +438,10 @@ describe('the digest EDITOR', () => {
     // that had not registered the click.
     await openEditor()
     fireEvent.click(screen.getByRole('tab', { name: 'AI' }))
-    await waitFor(() => expect(screen.getByTestId('summary-ai-language')).toBeTruthy())
-    const labels = [...screen.getByTestId('summary-ai-language').querySelectorAll('option')].map(
-      (o) => (o.textContent ?? '').trim(),
+    await waitFor(() => expect(screen.getByTestId('summary-ai-enabled')).toBeTruthy())
+    fireEvent.click(screen.getByTestId('summary-ai-enabled'))
+    const labels = selectOptionLabels(screen.getByTestId('summary-ai-language')).map((l) =>
+      l.trim(),
     )
     expect(labels).toHaveLength(3)
     expect(new Set(labels).size).toBe(3)
@@ -443,7 +464,7 @@ describe('the digest EDITOR', () => {
     await openEditor()
     fireEvent.click(screen.getByRole('tab', { name: 'Mosaic' }))
     await waitFor(() => expect(screen.getByTestId('summary-captions')).toBeTruthy())
-    fireEvent.change(screen.getByTestId('summary-captions'), { target: { value: 'all' } })
+    selectOption(screen.getByTestId('summary-captions'), 'all')
     expect((screen.getByTestId('summary-captions') as HTMLSelectElement).value).toBe('all')
     expect((screen.getByTestId('summary-caption-input') as HTMLInputElement).disabled).toBe(false)
   })
@@ -467,7 +488,9 @@ describe('the digest EDITOR', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Delivery' }))
     const body = await screen.findByTestId('summary-template-body-input')
     expect(screen.getByTestId('summary-template-body-insert')).toBeTruthy()
-    fireEvent.change(body, { target: { value: '{{events}} - {{ door.state }}' } })
+    fireEvent.change(body, {
+      target: { value: '{{events}} - {{ door.state }}' },
+    })
     // The device reference shows as a chip; opening it for edit gives back the typed text.
     expect(screen.getByTestId('summary-template-body-chip')).toBeTruthy()
     fireEvent.click(screen.getByTestId('summary-template-body-chips'))
@@ -480,16 +503,19 @@ describe('the digest EDITOR', () => {
 
   it('SAVES the AI section it authored — the whole point of P2', async () => {
     await openEditor()
-    fireEvent.change(screen.getByTestId('summary-name'), { target: { value: 'Notte' } })
+    fireEvent.change(screen.getByTestId('summary-name'), {
+      target: { value: 'Notte' },
+    })
     fireEvent.click(screen.getByRole('tab', { name: 'AI' }))
     await waitFor(() => expect(screen.getByTestId('summary-ai-prompt')).toBeTruthy())
     fireEvent.click(screen.getByTestId('summary-ai-enabled'))
     fireEvent.change(screen.getByTestId('summary-ai-prompt'), {
       target: { value: 'cosa è successo?' },
     })
-    fireEvent.change(screen.getByTestId('summary-ai-profile'), {
-      target: { value: 'mac-lmstudio-qwen3vl' },
-    })
+    await waitForSelectRows(screen.getByTestId('summary-ai-profile'), (rows) =>
+      rows.some((r) => r.value === 'mac-lmstudio-qwen3vl'),
+    )
+    selectOption(screen.getByTestId('summary-ai-profile'), 'mac-lmstudio-qwen3vl')
     // A digest still needs a camera and a target to be saveable; this asserts
     // what the FORM carries, which is the half P2 changed.
     const state = screen.getByTestId('summary-ai-prompt') as HTMLTextAreaElement

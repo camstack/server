@@ -4,6 +4,7 @@
  * an answer without a phone-reachable address says there is none. The link
  * shown and copied carries the hub origin and nothing else.
  */
+import { selectOption } from '@camstack/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ConnectionEndpoint } from '@camstack/types'
@@ -125,9 +126,7 @@ describe('ConnectPhoneCard', () => {
     expect(screen.getByText(meshLink)).toBeTruthy()
     expect(screen.queryByText(/Plain HTTP address/)).toBeNull()
 
-    fireEvent.change(screen.getByRole('combobox'), {
-      target: { value: 'http://192.168.10.9:4080' },
-    })
+    selectOption(screen.getByRole('combobox'), 'http://192.168.10.9:4080')
     expect(
       screen.getByText('https://camstack.zentik.app/connect?hub=http%3A%2F%2F192.168.10.9%3A4080'),
     ).toBeTruthy()

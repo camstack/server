@@ -3,6 +3,7 @@
  * Every change is written through `integrationInstances.updateInstance`, and the changes one
  * widget makes together (config and model) travel as ONE patch.
  */
+import { selectOption, waitForSelectRows } from '@camstack/ui-library/testing'
 import type { IntegrationInstance, IntegrationInstanceDescription } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -102,7 +103,9 @@ const ROW: InstanceRow = {
 }
 
 function renderLead(row: InstanceRow = ROW): void {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   render(
     <QueryClientProvider client={client}>
       <AiProfileLead row={row} />
@@ -150,7 +153,10 @@ describe('AiProfileLead', () => {
         widgets: [{ id: 'ai/managed-model', placement: 'model' }],
       },
     ]
-    formValues = { model: 'f', modelRef: { kind: 'catalog', catalogId: 'stored' } }
+    formValues = {
+      model: 'f',
+      modelRef: { kind: 'catalog', catalogId: 'stored' },
+    }
     renderLead()
     const widget = await screen.findByTestId('stub-widget')
     expect(widget.getAttribute('data-ref')).toContain('stored')
@@ -181,8 +187,8 @@ describe('AiProfileLead', () => {
       }),
     )
     const select = await screen.findByLabelText('Model')
-    await waitFor(() => expect(select.querySelector('option[value="m-vision"]')).not.toBeNull())
-    fireEvent.change(select, { target: { value: 'm-vision' } })
+    await waitForSelectRows(select, (rows) => rows.some((r) => r.value === 'm-vision'))
+    selectOption(select, 'm-vision')
     await waitFor(() =>
       expect(mockUpdate).toHaveBeenCalledWith({
         addonId: 'ai',

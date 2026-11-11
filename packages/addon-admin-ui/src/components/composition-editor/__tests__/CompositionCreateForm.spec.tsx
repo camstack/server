@@ -2,6 +2,7 @@
  * The empty create form does not wear Incomplete. Save lands on the new
  * device's Customize tab when the persisted list already names it.
  */
+import { selectOption } from '@camstack/ui-library/testing'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
@@ -85,9 +86,7 @@ describe('CompositionCreateForm', () => {
   it('a heater needs its plug before it can be saved, then forwards on/off to it', async () => {
     create.mockClear()
     render(<CompositionCreateForm mode="blank" onTitle={() => undefined} />)
-    fireEvent.change(screen.getByRole('combobox', { name: /type/i }), {
-      target: { value: 'heater' },
-    })
+    selectOption(screen.getByRole('combobox', { name: /type/i }), 'heater')
     expect((screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement).disabled).toBe(true)
     fireEvent.click(screen.getByText('pick-plug'))
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))

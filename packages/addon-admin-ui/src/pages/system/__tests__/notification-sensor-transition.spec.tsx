@@ -2,6 +2,7 @@
  * D640 in the admin editor: "Notify when" on a sensor rule — shown only when
  * every chosen sensor kind has a raise, and pruned on save when it is not.
  */
+import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
 import {
   NC_CONDITION_CATALOG,
   type NcConditionDescriptor,
@@ -128,19 +129,17 @@ describe('RuleConditionsEditor — Notify when', () => {
   it('offers both / raise / clear on a flood rule, starting at both', () => {
     renderEditor({ sensorKinds: ['flood'] })
     const select = screen.getByRole('combobox')
-    expect(Array.from(select.querySelectorAll('option')).map((o) => o.textContent)).toEqual([
+    expect(selectOptionLabels(select)).toEqual([
       'When it starts and when it finishes',
       'Only when it starts',
       'Only when it finishes',
     ])
-    expect(select instanceof HTMLSelectElement && select.value === '').toBe(true)
+    expect((select as HTMLButtonElement).value).toBe('')
   })
 
   it('authors the raise, and returns to ABSENT for both', () => {
     const { changes } = renderEditor({ sensorKinds: ['flood'] })
-    fireEvent.change(screen.getByRole('combobox'), {
-      target: { value: 'raised' },
-    })
+    selectOption(screen.getByRole('combobox'), 'raised')
     expect(changes).toEqual([{ sensorKinds: ['flood'], sensorTransition: 'raised' }])
   })
 
@@ -149,7 +148,7 @@ describe('RuleConditionsEditor — Notify when', () => {
       sensorKinds: ['flood'],
       sensorTransition: 'raised',
     })
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: '' } })
+    selectOption(screen.getByRole('combobox'), '')
     expect(changes).toEqual([{ sensorKinds: ['flood'] }])
   })
 
@@ -214,7 +213,14 @@ describe('RuleConditionsEditor — an alarm rule that asks for the clear (D640 �
       },
       (id) =>
         id === 'internal:panel'
-          ? [{ kind: 'cap', cap: 'alarm-panel', method: 'trigger', target: { kind: 'devices', ids: [900] } }]
+          ? [
+              {
+                kind: 'cap',
+                cap: 'alarm-panel',
+                method: 'trigger',
+                target: { kind: 'devices', ids: [900] },
+              },
+            ]
           : undefined,
     )
     expect(screen.queryByTestId('nc-sensor-transition-never-fires')).not.toBeNull()

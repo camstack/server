@@ -2,6 +2,7 @@
  * Helper steps keep what was chosen. A different template is the only reset.
  * Create ends with two saves: open the new device, or stay and start another.
  */
+import { selectOption } from '@camstack/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
@@ -66,7 +67,7 @@ describe('HelperWizard', () => {
     renderWizard(async () => ({ kind: 'saved', deviceId: 1 }))
     pick('temperature')
     fireEvent.change(screen.getByTestId('helper-name'), { target: { value: 'Front door' } })
-    fireEvent.change(screen.getByTestId('helper-reducer'), { target: { value: 'max' } })
+    selectOption(screen.getByTestId('helper-reducer'), 'max')
     fireEvent.click(screen.getByTestId('helper-to-members'))
     expect(screen.getByTestId('source-selector')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
@@ -164,7 +165,7 @@ describe('HelperWizard', () => {
     renderWizard(async () => ({ kind: 'saved', deviceId: 1 }))
     pick('derivative')
     expect((screen.getByTestId('helper-per') as HTMLSelectElement).value).toBe('hour')
-    fireEvent.change(screen.getByTestId('helper-per'), { target: { value: 'minute' } })
+    selectOption(screen.getByTestId('helper-per'), 'minute')
     expect((screen.getByTestId('helper-per') as HTMLSelectElement).value).toBe('minute')
   })
 

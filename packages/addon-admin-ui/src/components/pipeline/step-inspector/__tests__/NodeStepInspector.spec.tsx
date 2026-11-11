@@ -15,6 +15,7 @@
  *     to where it is edited;
  *   - the selection lives in the URL.
  */
+import { selectOption, selectShowing } from '@camstack/ui-library/testing'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
@@ -129,7 +130,7 @@ describe('NodeStepInspector', () => {
     const { state, hub } = await mount()
     await openDetectorOnNpu()
     fireEvent.click(screen.getByRole('button', { name: /change model for hub · Intel NPU/i }))
-    fireEvent.change(await screen.findByDisplayValue('YOLOv9 M 320'), { target: { value: Y26 } })
+    selectOption(selectShowing('YOLOv9 M 320'), Y26)
     await waitFor(() => expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled())
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(hub.calls).toHaveLength(1))

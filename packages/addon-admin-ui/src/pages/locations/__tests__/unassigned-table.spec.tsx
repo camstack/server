@@ -10,6 +10,7 @@
  *    operator's search filter, and a number read off the filtered slice would
  *    quietly understate it.
  */
+import { selectOption } from '@camstack/ui-library/testing'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
@@ -142,9 +143,7 @@ describe('unassigned table — assignment', () => {
 
     fireEvent.click(screen.getByLabelText('Select Camera Hall'))
     fireEvent.click(screen.getByLabelText('Select Serratura'))
-    fireEvent.change(screen.getByLabelText('Assign selected devices to'), {
-      target: { value: 'Kitchen' },
-    })
+    selectOption(screen.getByLabelText('Assign selected devices to'), 'Kitchen')
     fireEvent.click(screen.getByRole('button', { name: 'Assign' }))
 
     expect(onAssign).toHaveBeenCalledTimes(1)
@@ -165,9 +164,7 @@ describe('unassigned table — assignment', () => {
     renderTable(onAssign)
 
     fireEvent.click(screen.getByLabelText('Select all unassigned devices'))
-    fireEvent.change(screen.getByLabelText('Assign selected devices to'), {
-      target: { value: 'Hall' },
-    })
+    selectOption(screen.getByLabelText('Assign selected devices to'), 'Hall')
     fireEvent.click(screen.getByRole('button', { name: 'Assign' }))
 
     const [ids] = onAssign.mock.calls[0] as [readonly number[], string]
@@ -185,9 +182,7 @@ describe('unassigned table — assignment', () => {
   it('the inline select assigns exactly one row', () => {
     const onAssign = vi.fn()
     renderTable(onAssign)
-    fireEvent.change(screen.getByLabelText('Location for Serratura'), {
-      target: { value: 'Hall' },
-    })
+    selectOption(screen.getByLabelText('Location for Serratura'), 'Hall')
     expect(onAssign).toHaveBeenCalledTimes(1)
     expect(onAssign).toHaveBeenCalledWith([5], 'Hall')
   })

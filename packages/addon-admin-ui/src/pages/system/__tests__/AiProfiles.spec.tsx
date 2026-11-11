@@ -7,10 +7,11 @@
  * function cap with the model / vision / node columns read from each record's form values.
  */
 
+import { selectOption, selectOptionValues, waitForSelectRows } from '@camstack/ui-library/testing'
 import type { LlmDefault } from '@camstack/types'
 import type { LinkableInstance } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -116,7 +117,11 @@ vi.mock('../../../components/instances/InstancesTable', () => ({
 
 const { AiProfilesPage } = await import('../AiProfiles')
 
-function profile(over: Partial<LinkableInstance> & { formValues?: Record<string, unknown> } = {}) {
+function profile(
+  over: Partial<LinkableInstance> & {
+    formValues?: Record<string, unknown>
+  } = {},
+) {
   const { formValues, ...rest } = over
   return {
     id: 'p-vision',
@@ -127,14 +132,20 @@ function profile(over: Partial<LinkableInstance> & { formValues?: Record<string,
     stateLabel: null,
     usable: true,
     enabled: true,
-    formValues: { model: 'qwen/qwen3-vl-8b', supportsVision: true, ...formValues },
+    formValues: {
+      model: 'qwen/qwen3-vl-8b',
+      supportsVision: true,
+      ...formValues,
+    },
     ...rest,
     recordKind: rest.recordKind ?? 'openai-compatible',
   } satisfies LinkableInstance
 }
 
 function renderPage(initialUrl = '/system/ai'): void {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   render(
     <MemoryRouter initialEntries={[initialUrl]}>
       <QueryClientProvider client={client}>
@@ -162,8 +173,8 @@ describe('AiProfilesPage — default profiles', () => {
   it('offers a vision default picker listing only vision-capable profiles', async () => {
     renderPage()
     const picker = await screen.findByLabelText('Default vision profile')
-    await waitFor(() => expect(picker.querySelectorAll('option')).toHaveLength(2))
-    const options = [...picker.querySelectorAll('option')].map((o) => o.getAttribute('value'))
+    await waitForSelectRows(picker, (rows) => rows.length === 2)
+    const options = selectOptionValues(picker)
     expect(options).toContain('p-vision')
     expect(options).not.toContain('p-text')
   })
@@ -171,8 +182,8 @@ describe('AiProfilesPage — default profiles', () => {
   it('sets the vision default through llm.setDefault', async () => {
     renderPage()
     const picker = await screen.findByLabelText('Default vision profile')
-    await waitFor(() => expect(picker.querySelector('option[value="p-vision"]')).not.toBeNull())
-    fireEvent.change(picker, { target: { value: 'p-vision' } })
+    await waitForSelectRows(picker, (rows) => rows.some((r) => r.value === 'p-vision'))
+    selectOption(picker, 'p-vision')
     await waitFor(() =>
       expect(mockSetDefault).toHaveBeenCalledWith({
         selector: { purpose: 'vision' },
@@ -186,7 +197,7 @@ describe('AiProfilesPage — default profiles', () => {
     renderPage()
     const picker = await screen.findByLabelText('Default text profile')
     await waitFor(() => expect(picker).toHaveValue('p-text'))
-    fireEvent.change(picker, { target: { value: '' } })
+    selectOption(picker, '')
     await waitFor(() =>
       expect(mockSetDefault).toHaveBeenCalledWith({
         selector: { purpose: 'text' },
@@ -222,7 +233,13 @@ describe('AiProfilesPage — the profiles section', () => {
 
   it('draws model, vision and node from the record form values', async () => {
     mockProfiles = [
-      profile({ formValues: { model: 'qwen/qwen3-vl-8b', supportsVision: true, nodeId: 'hub' } }),
+      profile({
+        formValues: {
+          model: 'qwen/qwen3-vl-8b',
+          supportsVision: true,
+          nodeId: 'hub',
+        },
+      }),
     ]
     renderPage()
     expect(await screen.findByTestId('p-vision-model')).toHaveTextContent('qwen/qwen3-vl-8b')

@@ -3,9 +3,10 @@
  * (falling back to the static map), and the stationary-present leaf exposes
  * `minCount` as the key's presence, never a stored default.
  */
+import { selectOptionLabels, waitForSelectRows } from '@camstack/ui-library/testing'
 import { DeviceType, type StationaryPresentLeaf } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -22,7 +23,9 @@ vi.mock('../../../../../../ui-library/src/contexts/system-context.js', () => ({
               : Promise.resolve({ taxonomy: served.taxonomy }),
         },
       },
-      deviceManager: { listSiteZones: { query: () => new Promise(() => undefined) } },
+      deviceManager: {
+        listSiteZones: { query: () => new Promise(() => undefined) },
+      },
     },
   }),
 }))
@@ -79,7 +82,7 @@ describe('sub-class labels come from the served taxonomy', () => {
       ),
     )
     const select = await screen.findByTestId('subject-label')
-    expect(await within(select).findByText('Good boy')).toBeTruthy()
+    await waitForSelectRows(select, (rows) => rows.some((r) => r.label === 'Good boy'))
   })
 
   it('falls back to the static sub-classes when no taxonomy is served', async () => {
@@ -96,7 +99,7 @@ describe('sub-class labels come from the served taxonomy', () => {
       ),
     )
     const select = await screen.findByTestId('subject-label')
-    expect(within(select).getByText('dog')).toBeTruthy()
+    expect(selectOptionLabels(select)).toContain('dog')
   })
 })
 

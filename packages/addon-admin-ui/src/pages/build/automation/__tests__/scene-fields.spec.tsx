@@ -2,6 +2,7 @@
  * The scene blocks and the run mode: what the editor builds is exactly what the
  * recipe schema accepts, and survives the save → generated code → reopen trip.
  */
+import { selectOption } from '@camstack/ui-library/testing'
 import {
   type AutomationLeaf,
   type AutomationRecipe,
@@ -103,7 +104,7 @@ describe('scene rows build recipe parts the schema accepts', () => {
       </QueryClientProvider>,
     )
 
-    fireEvent.change(screen.getByTestId('subject-macro'), { target: { value: 'animal' } })
+    selectOption(screen.getByTestId('subject-macro'), 'animal')
     fireEvent.click(screen.getByRole('button', { name: /Add cameras/ }))
     fireEvent.click(screen.getByRole('checkbox', { name: /Kitchen/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Bowl' }))

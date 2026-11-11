@@ -1,3 +1,4 @@
+import { selectOption } from '@camstack/ui-library/testing'
 import { type DeviceInfo, DeviceType } from '@camstack/types'
 import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -85,7 +86,7 @@ describe('IdentityRow (spec U9)', () => {
   it('the role waits for Save; none is null', () => {
     const withRole = { ...DEVICE, id: 585, role: 'doorbell' }
     render(wrap(<IdentityRow device={withRole} />, withRole))
-    fireEvent.change(screen.getByRole('combobox', { name: 'Role' }), { target: { value: '' } })
+    selectOption(screen.getByRole('combobox', { name: 'Role' }), '')
     expect(setRole).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(setRole).toHaveBeenCalledWith({ deviceId: 585, role: null })

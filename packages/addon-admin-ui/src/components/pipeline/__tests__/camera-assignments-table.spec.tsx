@@ -10,6 +10,7 @@
  *   - The node page lists only cameras CURRENTLY placed there, and shows the
  *     roles it holds as labels, not as checkbox look-alikes.
  */
+import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import type { ReactElement } from 'react'
@@ -176,9 +177,9 @@ describe('CameraAssignmentsTable (cluster)', () => {
 
   it('pins a camera to a node, named in the option, and returns it to Auto', () => {
     renderWithRouter(<CameraAssignmentsTable />)
-    const select = within(rowOf('Garden')).getByLabelText('Node pin') as HTMLSelectElement
-    expect(within(select).getByRole('option', { name: 'Pin → macmini' })).toBeInTheDocument()
-    fireEvent.change(select, { target: { value: MAC } })
+    const select = within(rowOf('Garden')).getByLabelText('Node pin') as HTMLButtonElement
+    expect(selectOptionLabels(select)).toContain('Pin → macmini')
+    selectOption(select, MAC)
     expect(mockAssignPipeline).toHaveBeenCalledWith({ deviceId: 102, agentNodeId: MAC })
   })
 
@@ -187,9 +188,9 @@ describe('CameraAssignmentsTable (cluster)', () => {
       data: [{ deviceId: 101, agentNodeId: 'hub', pinned: true, reason: 'manual' }],
     })
     renderWithRouter(<CameraAssignmentsTable />)
-    const select = within(rowOf('Front Door')).getByLabelText('Node pin') as HTMLSelectElement
+    const select = within(rowOf('Front Door')).getByLabelText('Node pin') as HTMLButtonElement
     expect(select.value).toBe('hub')
-    fireEvent.change(select, { target: { value: 'auto' } })
+    selectOption(select, 'auto')
     expect(mockUnassignPipeline).toHaveBeenCalledWith({ deviceId: 101 })
   })
 
@@ -206,11 +207,11 @@ describe('CameraAssignmentsTable (cluster)', () => {
     renderWithRouter(<CameraAssignmentsTable />)
     const select = within(rowOf('Front Door')).getByLabelText(
       'Inference device pin',
-    ) as HTMLSelectElement
+    ) as HTMLButtonElement
     expect(select.value).toBe('auto')
-    expect(within(select).getByRole('option', { name: 'Coral Edge TPU · tflite' })).toBeTruthy()
-    expect(within(select).queryByRole('option', { name: /CPU/ })).toBeNull()
-    fireEvent.change(select, { target: { value: 'edgetpu:usb' } })
+    expect(selectOptionLabels(select)).toContain('Coral Edge TPU · tflite')
+    expect(selectOptionLabels(select).some((l) => /CPU/.test(l))).toBe(false)
+    selectOption(select, 'edgetpu:usb')
     expect(mockSetDevicePin).toHaveBeenCalledWith({ deviceId: 101, deviceKey: 'edgetpu:usb' })
   })
 
@@ -220,11 +221,11 @@ describe('CameraAssignmentsTable (cluster)', () => {
     renderWithRouter(<CameraAssignmentsTable />)
     const select = within(rowOf('Front Door')).getByLabelText(
       'Inference device pin',
-    ) as HTMLSelectElement
+    ) as HTMLButtonElement
     expect(select.value).toBe('openvino:npu')
-    expect(
-      within(select).getByRole('option', { name: /openvino:npu \(not enabled\)/ }),
-    ).toBeTruthy()
+    expect(selectOptionLabels(select).some((l) => /openvino:npu \(not enabled\)/.test(l))).toBe(
+      true,
+    )
   })
 
   it('has exactly one device-pin editor per placed camera — no duplicate elsewhere in the row', () => {

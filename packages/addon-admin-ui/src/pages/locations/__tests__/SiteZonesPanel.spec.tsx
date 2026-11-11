@@ -6,6 +6,7 @@
  * empty rather than look broken, and a room's zone must be edited in exactly
  * one place.
  */
+import { selectOption } from '@camstack/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -132,9 +133,7 @@ describe('LocationZoneField', () => {
         onChange={onChange}
       />,
     )
-    fireEvent.change(screen.getByLabelText('Zone'), {
-      target: { value: 'night zone' },
-    })
+    selectOption(screen.getByLabelText('Zone'), 'night zone')
     expect(onChange).toHaveBeenCalledWith('Night zone')
   })
 
@@ -149,9 +148,7 @@ describe('LocationZoneField', () => {
         onChange={onChange}
       />,
     )
-    fireEvent.change(screen.getByLabelText('Zone'), {
-      target: { value: ' none' },
-    })
+    selectOption(screen.getByLabelText('Zone'), ' none')
     expect(onChange).toHaveBeenCalledWith(null)
   })
 

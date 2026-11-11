@@ -4,9 +4,10 @@
  * Verifies the THREE states are distinguishable: rows, empty (query succeeded
  * with zero rows), and unavailable (query errored → "requires server update").
  */
+import { selectOption, waitForSelectRows } from '@camstack/ui-library/testing'
 import type { NcHistoryEntry } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -17,8 +18,9 @@ import {
   fleetListResult,
 } from './fleet-read-spy'
 
-let mockHistoryImpl: () => Promise<{ entries: readonly NcHistoryEntry[] }> = () =>
-  Promise.resolve({ entries: [] })
+let mockHistoryImpl: () => Promise<{
+  entries: readonly NcHistoryEntry[]
+}> = () => Promise.resolve({ entries: [] })
 
 /** What the page sent — the filter is the whole assertion surface. */
 interface HistoryCall {
@@ -141,7 +143,12 @@ describe('NotificationHistory page', () => {
       Promise.resolve({
         entries: [
           entry(),
-          entry({ id: 'o2', status: 'dead', error: 'target rejected', attempts: 4 }),
+          entry({
+            id: 'o2',
+            status: 'dead',
+            error: 'target rejected',
+            attempts: 4,
+          }),
         ],
       })
     renderPage()
@@ -174,9 +181,9 @@ describe('NotificationHistory page', () => {
 
   it('the rule filter still works after a URL seed', async () => {
     renderPage('/system/notifications?tab=history&ruleId=r1')
-    await waitFor(() => expect(screen.getByRole('option', { name: 'Garage' })).toBeTruthy())
     const select = screen.getByTestId('history-rule-filter')
-    fireEvent.change(select, { target: { value: 'r2' } })
+    await waitForSelectRows(select, (rows) => rows.some((r) => r.label === 'Garage'))
+    selectOption(select, 'r2')
     await waitFor(() => {
       const last = mockGetHistory.mock.calls.at(-1)
       expect(last?.[0].filter['ruleId']).toBe('r2')

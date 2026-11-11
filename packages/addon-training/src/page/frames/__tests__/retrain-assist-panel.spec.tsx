@@ -11,6 +11,7 @@ import type {
   RetrainFrame,
   RetrainLlmAssistResult,
 } from '@camstack/types'
+import { selectOption } from '@camstack/ui-library/testing'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { seedEditor } from '../lib/retrain-editor'
@@ -176,7 +177,7 @@ describe('RetrainAssistPanel', () => {
 
   it('both: the AI reviews the teacher’s boxes, and its own boxes arrive as llm drafts', async () => {
     render(<Harness />)
-    fireEvent.change(screen.getByLabelText('Assist engine'), { target: { value: 'both' } })
+    selectOption(screen.getByLabelText('Assist engine'), 'both')
     fireEvent.click(screen.getByRole('button', { name: /Run/ }))
     await waitFor(() => {
       expect(llmCall).toHaveBeenCalledTimes(1)
@@ -195,7 +196,7 @@ describe('RetrainAssistPanel', () => {
   it('a cloud profile is named, and the run asks before the frame leaves', async () => {
     profiles = [{ id: 'p', name: 'Cloud', model: 'vision', kind: 'anthropic', leavesHouse: true }]
     render(<Harness />)
-    fireEvent.change(screen.getByLabelText('Assist engine'), { target: { value: 'llm' } })
+    selectOption(screen.getByLabelText('Assist engine'), 'llm')
     expect(screen.getByText(/sends the frame outside your home/)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Run/ }))
     expect(llmCall).not.toHaveBeenCalled()

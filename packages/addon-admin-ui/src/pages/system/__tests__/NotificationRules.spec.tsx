@@ -6,6 +6,7 @@
  * enabled toggle + delete-confirm wiring, and that the create modal builds a
  * valid `NcRuleInput` (empty conditions, selected targets).
  */
+import { selectOption, selectOptionValues, selectShowing } from '@camstack/ui-library/testing'
 import type {
   NcConditionDescriptor,
   NcRule,
@@ -577,7 +578,7 @@ describe('the System events section', () => {
     await waitFor(() => expect(screen.getByText('New notification rule')).toBeTruthy())
 
     // The trigger select now HAS the option, and shows it selected.
-    const trigger = screen.getByDisplayValue('System event')
+    const trigger = selectShowing('System event')
     expect(trigger).toBeTruthy()
     // The Devices tab is dropped — `conditions.devices` is not evaluated for
     // this trigger, so a tab that authored it would be a lie.
@@ -640,16 +641,15 @@ describe('the System events section', () => {
     })
     fireEvent.click(screen.getByText('Alerts'))
 
-    fireEvent.change(screen.getByDisplayValue('Immediate'), { target: { value: 'system-event' } })
+    selectOption(selectShowing('Immediate'), 'system-event')
     // A family, seeded — the conditions tab is named after it, not "To recreate".
     const family = screen.getByLabelText('Kind of system rule')
-    if (!(family instanceof HTMLSelectElement)) throw new Error('not a select')
-    expect(family.value).toBe('device-events')
+    expect((family as HTMLButtonElement).value).toBe('device-events')
     expect(screen.getByRole('tab', { name: 'Device events' })).toBeTruthy()
     expect(screen.queryByRole('tab', { name: 'To recreate' })).toBeNull()
 
     // Picking another family re-seeds its kinds.
-    fireEvent.change(family, { target: { value: 'alarm' } })
+    selectOption(family, 'alarm')
     expect(screen.getByRole('tab', { name: 'Alarm' })).toBeTruthy()
 
     fireEvent.click(screen.getByText('Create rule'))
@@ -670,7 +670,7 @@ describe('the System events section', () => {
     await waitFor(() => expect(screen.getByText('Edit Eventi di sistema')).toBeTruthy())
     // THE DEFECT THIS CLOSES: before the system-event option existed, this
     // select displayed "Immediate" and the next change event rewrote the rule.
-    expect(screen.getByDisplayValue('System event')).toBeTruthy()
+    expect(selectShowing('System event')).toBeTruthy()
     // D637: a saved rule's family is fixed — only a NEW rule picks one.
     expect(screen.queryByLabelText('Kind of system rule')).toBeNull()
 
@@ -986,7 +986,7 @@ describe('the Sound and Occupancy sections', () => {
     fireEvent.click(screen.getByText('New sound rule'))
     await waitFor(() => expect(screen.getByText('New notification rule')).toBeTruthy())
     // The trigger a sound rule rides, chosen for the operator.
-    expect(screen.getByDisplayValue('Immediate')).toBeTruthy()
+    expect(selectShowing('Immediate')).toBeTruthy()
     // And the tab is NAMED for it — this is the word the operator was looking
     // for and could not find anywhere on the page.
     expect(screen.getByRole('tab', { name: 'Sound' })).toBeTruthy()
@@ -1047,7 +1047,7 @@ describe('the Sound and Occupancy sections', () => {
 
     fireEvent.click(screen.getByText('New occupancy rule'))
     await waitFor(() => expect(screen.getByText('New notification rule')).toBeTruthy())
-    expect(screen.getByDisplayValue('Device event')).toBeTruthy()
+    expect(selectShowing('Device event')).toBeTruthy()
     expect(screen.getByRole('tab', { name: 'Occupancy' })).toBeTruthy()
 
     fireEvent.change(screen.getByPlaceholderText(/Front door package/i), {
@@ -1120,7 +1120,7 @@ describe('the Sensors section — its own kind, not folded into Detections (oper
     await waitFor(() => expect(screen.getByText('New notification rule')).toBeTruthy())
     // Same trigger as occupancy (`device-event`) — the CONDITION is what
     // tells them apart, and a sensor seed carries none.
-    expect(screen.getByDisplayValue('Device event')).toBeTruthy()
+    expect(selectShowing('Device event')).toBeTruthy()
     expect(screen.queryByTestId('condition-occupancy')).toBeNull()
 
     fireEvent.change(screen.getByPlaceholderText(/Front door package/i), {
@@ -1321,7 +1321,7 @@ describe('the linked-cameras option on a sensor rule', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Notification' }))
 
     const select = await screen.findByTestId('rule-media-linked-cameras')
-    fireEvent.change(select, { target: { value: 'each' } })
+    selectOption(select, 'each')
     fireEvent.click(screen.getByText('Save changes'))
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1))
     const arg = mockUpdate.mock.calls[0]![0] as { patch: NcRule }
@@ -1367,7 +1367,7 @@ describe('ONE picture selector for every kind that carries media (D897)', () => 
   }
 
   function optionValues(select: HTMLElement): readonly string[] {
-    return [...select.querySelectorAll('option')].map((o) => o.getAttribute('value') ?? '')
+    return selectOptionValues(select)
   }
 
   it('a SENSOR rule gets the selector, the footage controls and the linked-cameras picker', async () => {
@@ -1396,9 +1396,9 @@ describe('ONE picture selector for every kind that carries media (D897)', () => 
     mockTargets = [target('t1', 'Alerts')]
     await openNotificationTab('Uscio')
     expect(await screen.findByTestId('rule-media-show-trigger-zone')).toBeTruthy()
-    fireEvent.change(screen.getByTestId('rule-media-image'), { target: { value: 'crop' } })
+    selectOption(screen.getByTestId('rule-media-image'), 'crop')
     expect(screen.queryByTestId('rule-media-show-trigger-zone')).toBeNull()
-    fireEvent.change(screen.getByTestId('rule-media-image'), { target: { value: 'scene-boxes' } })
+    selectOption(screen.getByTestId('rule-media-image'), 'scene-boxes')
     fireEvent.click(screen.getByTestId('rule-media-show-trigger-zone'))
     fireEvent.click(screen.getByText('Save changes'))
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1))
@@ -1420,9 +1420,9 @@ describe('ONE picture selector for every kind that carries media (D897)', () => 
     await openNotificationTab('Vialetto')
     const flag = (await screen.findByTestId('rule-media-show-subject-path')) as HTMLInputElement
     expect(flag.checked).toBe(false)
-    fireEvent.change(screen.getByTestId('rule-media-image'), { target: { value: 'none' } })
+    selectOption(screen.getByTestId('rule-media-image'), 'none')
     expect(screen.queryByTestId('rule-media-show-subject-path')).toBeNull()
-    fireEvent.change(screen.getByTestId('rule-media-image'), { target: { value: 'crop' } })
+    selectOption(screen.getByTestId('rule-media-image'), 'crop')
     fireEvent.click(screen.getByTestId('rule-media-show-subject-path'))
     fireEvent.click(screen.getByText('Save changes'))
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1))
@@ -1736,16 +1736,14 @@ describe('the "Immediate, grouped" trigger choice', () => {
     await openNewEventRuleFromAll()
   }
 
-  function triggerSelect(): HTMLSelectElement {
-    const select = screen.getByDisplayValue('Immediate')
-    if (!(select instanceof HTMLSelectElement)) throw new Error('trigger is not a <select>')
-    return select
+  function triggerSelect(): HTMLElement {
+    return selectShowing('Immediate')
   }
 
   it('shows the seconds input pre-filled with 20, and the hint naming 20 s', async () => {
     await openNewRule()
     expect(screen.queryByTestId('rule-grouping-sec')).toBeNull()
-    fireEvent.change(triggerSelect(), { target: { value: 'immediate-grouped' } })
+    selectOption(triggerSelect(), 'immediate-grouped')
     const input = await screen.findByTestId('rule-grouping-sec')
     expect((input as HTMLInputElement).value).toBe('20')
     expect(screen.getByText(/waits up to 20 s for subjects to be recognised/)).toBeTruthy()
@@ -1756,7 +1754,7 @@ describe('the "Immediate, grouped" trigger choice', () => {
 
   it('creates the rule with delivery immediate and groupingSec, edited seconds included', async () => {
     await openNewRule()
-    fireEvent.change(triggerSelect(), { target: { value: 'immediate-grouped' } })
+    selectOption(triggerSelect(), 'immediate-grouped')
     fireEvent.change(await screen.findByTestId('rule-grouping-sec'), { target: { value: '30' } })
     fireEvent.change(screen.getByPlaceholderText(/Front door package/i), {
       target: { value: 'Grouped rule' },
@@ -1771,7 +1769,7 @@ describe('the "Immediate, grouped" trigger choice', () => {
 
   it('shows the reason after Create when the seconds leave 5..60', async () => {
     await openNewRule()
-    fireEvent.change(triggerSelect(), { target: { value: 'immediate-grouped' } })
+    selectOption(triggerSelect(), 'immediate-grouped')
     fireEvent.change(await screen.findByTestId('rule-grouping-sec'), { target: { value: '3' } })
     expect(screen.queryByTestId('rule-form-problems')).toBeNull()
     fireEvent.click(screen.getByText('Create rule'))
@@ -1832,9 +1830,7 @@ describe('the "Immediate, grouped" trigger choice', () => {
   it('switching a grouped rule to plain Immediate saves with groupingSec in clear', async () => {
     mockRules = [rule({ delivery: 'immediate', groupingSec: 20 })]
     const arg = await saveEditedRule(async () => {
-      fireEvent.change(screen.getByDisplayValue('Immediate, grouped'), {
-        target: { value: 'immediate' },
-      })
+      selectOption(selectShowing('Immediate, grouped'), 'immediate')
     })
     expect(arg.clear).toContain('groupingSec')
     expect('groupingSec' in arg.patch).toBe(false)

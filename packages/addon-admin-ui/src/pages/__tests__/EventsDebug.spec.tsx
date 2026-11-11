@@ -27,6 +27,7 @@
  * below is preceded by a positive assertion that the panel it is about is on
  * screen.
  */
+import { selectOption } from '@camstack/ui-library/testing'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -450,7 +451,7 @@ describe('Export all', () => {
 
     renderAt('/library?tab=events&section=debug')
     await screen.findByText(/postman/)
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: '102' } })
+    selectOption(screen.getByRole('combobox'), '102')
     // The filter change starts a new list query; until it lands the set is empty
     // and the button is (correctly) disabled, so clicking now would be a no-op.
     await waitFor(() => {

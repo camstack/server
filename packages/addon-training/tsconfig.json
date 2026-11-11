@@ -20,6 +20,9 @@
       "@camstack/ui": [
         "../ui-library/src/index.ts"
       ],
+      "@camstack/ui-library/testing": [
+        "../ui-library/src/testing/select-option.ts"
+      ],
       "@camstack/ui-library": [
         "../ui-library/src/index.ts"
       ]

@@ -2,6 +2,7 @@
  * The When tree editor: nested blocks, the row-type menu, reorder and collapse,
  * no in-tree warnings, the label picker and a stored legacy class.
  */
+import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
 import {
   type AutomationRecipe,
   AutomationRecipeSchema,
@@ -267,21 +268,14 @@ describe('WhenTree', () => {
         })}
       />,
     )
-    const labelOptions = (): string[] =>
-      Array.from(
-        (screen.getByTestId('subject-label') as HTMLSelectElement).options,
-        (o) => o.textContent ?? '',
-      )
+    const labelOptions = (): readonly string[] =>
+      selectOptionLabels(screen.getByTestId('subject-label'))
     expect(labelOptions()).toContain('dog')
 
-    fireEvent.change(screen.getByTestId('subject-macro'), {
-      target: { value: 'person' },
-    })
+    selectOption(screen.getByTestId('subject-macro'), 'person')
     expect(labelOptions()).toContain('Anna')
 
-    fireEvent.change(screen.getByTestId('subject-macro'), {
-      target: { value: 'vehicle' },
-    })
+    selectOption(screen.getByTestId('subject-macro'), 'vehicle')
     expect(labelOptions().filter((l) => l.includes('AB123CD'))).toHaveLength(1)
   })
 
@@ -292,8 +286,8 @@ describe('WhenTree', () => {
     }
     const parsed = AutomationRecipeSchema.parse(legacy)
     render(<Harness initial={parsed} />)
-    expect((screen.getByTestId('subject-macro') as HTMLSelectElement).value).toBe('animal')
-    expect((screen.getByTestId('subject-label') as HTMLSelectElement).value).toBe('dog')
+    expect((screen.getByTestId('subject-macro') as HTMLButtonElement).value).toBe('animal')
+    expect((screen.getByTestId('subject-label') as HTMLButtonElement).value).toBe('dog')
   })
 })
 

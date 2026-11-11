@@ -8,6 +8,7 @@
  *      hides. The server cascade does not know about the search box, and a
  *      count read off the filtered slice would understate what a tap moves.
  */
+import { selectOption } from '@camstack/ui-library/testing'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
@@ -105,9 +106,7 @@ describe('unassigned table — its own filter', () => {
     renderTable(onAssign)
     fireEvent.change(searchBox(), { target: { value: 'camera' } })
     fireEvent.click(screen.getByLabelText('Select all unassigned devices'))
-    fireEvent.change(screen.getByLabelText('Assign selected devices to'), {
-      target: { value: 'Hall' },
-    })
+    selectOption(screen.getByLabelText('Assign selected devices to'), 'Hall')
     fireEvent.click(screen.getByRole('button', { name: 'Assign' }))
     const [ids] = onAssign.mock.calls[0] as [readonly number[], string]
     expect(ids.toSorted((a, b) => a - b)).toEqual([1, 6])

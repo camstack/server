@@ -1,3 +1,4 @@
+import { selectOption, selectOptionValues } from '@camstack/ui-library/testing'
 import { EMPTY_REMOTE_CONFIG, type RemoteConfig } from '@camstack/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
@@ -67,14 +68,12 @@ describe('SourcesPanel', () => {
   it('builds a sequence from bound roles only', () => {
     render(<Harness initial={BOUND} />)
     fireEvent.click(screen.getByTestId('source-add'))
-    fireEvent.change(screen.getByTestId('source-kind'), { target: { value: 'sequence' } })
+    selectOption(screen.getByTestId('source-kind'), 'sequence')
     fireEvent.change(screen.getByTestId('source-name'), { target: { value: 'HDMI' } })
-    const offered = within(screen.getByTestId('source-step-pick'))
-      .getAllByRole('option')
-      .map((o) => o.getAttribute('value'))
+    const offered = selectOptionValues(screen.getByTestId('source-step-pick'))
     expect(offered).toEqual(['', 'input', 'ok', 'digit_1', 'digit_2'])
     for (const role of ['input', 'ok']) {
-      fireEvent.change(screen.getByTestId('source-step-pick'), { target: { value: role } })
+      selectOption(screen.getByTestId('source-step-pick'), role)
       fireEvent.click(screen.getByTestId('source-step-add'))
     }
     fireEvent.click(screen.getByTestId('source-save'))
@@ -95,10 +94,10 @@ describe('SourcesPanel', () => {
   it('declares an infrared code of its own through the default transmitter, and refuses a broken one (planning#464)', () => {
     render(<Harness initial={{ ...BOUND, defaultTransmitterId: 7 }} />)
     fireEvent.click(screen.getByTestId('source-add'))
-    fireEvent.change(screen.getByTestId('source-kind'), { target: { value: 'ir' } })
+    selectOption(screen.getByTestId('source-kind'), 'ir')
     fireEvent.change(screen.getByTestId('source-name'), { target: { value: 'HDMI 2' } })
     // Blank = the remote's default emitter; nothing is pinned on the source.
-    expect((screen.getByTestId('source-transmitter') as HTMLSelectElement).value).toBe('')
+    expect((screen.getByTestId('source-transmitter') as HTMLButtonElement).value).toBe('')
     fireEvent.change(screen.getByTestId('source-code'), { target: { value: '9000 4500' } })
     fireEvent.click(screen.getByTestId('source-save'))
     expect(screen.getByText(/must be a non-zero space/)).toBeTruthy()
@@ -122,7 +121,7 @@ describe('SourcesPanel', () => {
   it('asks for a transmitter when the remote has none', () => {
     render(<Harness initial={BOUND} />)
     fireEvent.click(screen.getByTestId('source-add'))
-    fireEvent.change(screen.getByTestId('source-kind'), { target: { value: 'ir' } })
+    selectOption(screen.getByTestId('source-kind'), 'ir')
     fireEvent.change(screen.getByTestId('source-name'), { target: { value: 'HDMI 2' } })
     fireEvent.change(screen.getByTestId('source-code'), { target: { value: '9000, -4500' } })
     fireEvent.click(screen.getByTestId('source-save'))

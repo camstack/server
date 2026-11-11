@@ -1,3 +1,4 @@
+import { selectOption } from '@camstack/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { HotkeyProvider } from '@camstack/ui-library'
 import { describe, expect, it, vi } from 'vitest'
@@ -25,7 +26,7 @@ describe('TemplateEditorDialog presets', () => {
         onClose={() => undefined}
       />,
     )
-    fireEvent.change(screen.getByTestId('template-preset'), { target: { value: 'hisense-vidaa' } })
+    selectOption(screen.getByTestId('template-preset'), 'hisense-vidaa')
     fireEvent.click(screen.getByTestId('template-save'))
     expect(onSave).toHaveBeenCalledTimes(1)
     const saved = onSave.mock.calls[0]?.[0]
@@ -109,7 +110,7 @@ describe('TemplateEditorDialog edit history', () => {
     open()
     const gridButtons = (): number => screen.queryAllByTestId(/^remote-grid-button-/).length
     expect(gridButtons()).toBe(0)
-    fireEvent.change(screen.getByTestId('template-preset'), { target: { value: 'hisense-vidaa' } })
+    selectOption(screen.getByTestId('template-preset'), 'hisense-vidaa')
     const withPreset = gridButtons()
     expect(withPreset).toBeGreaterThan(0)
     fireEvent.click(screen.getByTestId('template-undo'))
@@ -121,7 +122,7 @@ describe('TemplateEditorDialog edit history', () => {
   it('binds mod+Z and mod+shift+Z through the hotkey registry', () => {
     open()
     const gridButtons = (): number => screen.queryAllByTestId(/^remote-grid-button-/).length
-    fireEvent.change(screen.getByTestId('template-preset'), { target: { value: 'hisense-vidaa' } })
+    selectOption(screen.getByTestId('template-preset'), 'hisense-vidaa')
     const withPreset = gridButtons()
     fireEvent.keyDown(window, { key: 'z', ctrlKey: true })
     expect(gridButtons()).toBe(0)

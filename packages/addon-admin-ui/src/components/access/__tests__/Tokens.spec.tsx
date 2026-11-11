@@ -7,6 +7,7 @@
  * is a view of some cameras; an admin script's token holds all permissions and
  * needs a fresh re-authentication first.
  */
+import { selectOption, selectOptionValues } from '@camstack/ui-library/testing'
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -259,16 +260,12 @@ describe('TokensSection — one list of tokens, shown by their scopes', () => {
   it('a view link is a token whose only scope is a view of the chosen cameras; only it may never expire', async () => {
     render(<TokensSection />)
     await openCreate()
-    const lifetime = (): HTMLSelectElement => {
-      const el = screen.getByLabelText(/expires after/i)
-      if (!(el instanceof HTMLSelectElement)) throw new Error('not a select')
-      return el
-    }
-    expect([...lifetime().options].map((o) => o.value)).not.toContain('never')
+    const lifetime = (): HTMLElement => screen.getByLabelText(/expires after/i)
+    expect(selectOptionValues(lifetime())).not.toContain('never')
     fireEvent.click(screen.getByTestId('token-reach-view-link'))
     fireEvent.click(screen.getByRole('button', { name: 'pick cameras' }))
     fireEvent.click(screen.getByTestId('token-view-talk'))
-    fireEvent.change(lifetime(), { target: { value: 'never' } })
+    selectOption(lifetime(), 'never')
     fireEvent.change(screen.getByLabelText(/label/i), { target: { value: 'kitchen wall' } })
     await submit()
     expect(requestProof).not.toHaveBeenCalled()

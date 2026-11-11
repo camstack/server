@@ -7,6 +7,7 @@
  * hub registered, and that the payload it puts on the wire still omits an
  * untouched optional rather than sending it as zero.
  */
+import { selectOption, waitForSelectRows } from '@camstack/ui-library/testing'
 import { DeviceType, type NcRule } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -43,7 +44,12 @@ const mockCustom = vi.fn((_input: unknown) =>
 /** What the shared fleet query answers in these tests. */
 const FLEET_ROWS: readonly FleetRow[] = [
   { id: 101, name: 'Front door', type: DeviceType.Camera, location: null },
-  { id: 42, name: 'Serratura front door', type: 'lock', location: 'Front door' },
+  {
+    id: 42,
+    name: 'Serratura front door',
+    type: 'lock',
+    location: 'Front door',
+  },
 ]
 
 /** The generated fleet hook — the ONLY client these pages may read the fleet
@@ -107,17 +113,24 @@ describe('NotificationSimulate page', () => {
   it('injects through the registered custom action and omits untouched optionals', async () => {
     renderPage()
     const camera = await screen.findByTestId('simulate-camera')
-    await waitFor(() => expect(screen.getByText('Front door')).toBeTruthy())
-    fireEvent.change(camera, { target: { value: '101' } })
-    fireEvent.change(screen.getByTestId('simulate-trigger'), { target: { value: 'track-end' } })
+    await waitForSelectRows(camera, (rows) => rows.some((r) => r.label === 'Front door'))
+    selectOption(camera, '101')
+    selectOption(screen.getByTestId('simulate-trigger'), 'track-end')
 
     fireEvent.click(screen.getByRole('button', { name: /Inject event/i }))
     await waitFor(() => expect(mockCustom).toHaveBeenCalledTimes(1))
 
     const call = mockCustom.mock.calls[0]![0]
-    expect(call).toMatchObject({ addonId: 'pipeline-analytics', action: 'nc.injectTestEvent' })
+    expect(call).toMatchObject({
+      addonId: 'pipeline-analytics',
+      action: 'nc.injectTestEvent',
+    })
     const input = (call as { input: Record<string, unknown> }).input
-    expect(input).toMatchObject({ trigger: 'track-end', deviceId: 101, still: 'live' })
+    expect(input).toMatchObject({
+      trigger: 'track-end',
+      deviceId: 101,
+      still: 'live',
+    })
     // Untouched optionals are ABSENT, not zero.
     expect(input).not.toHaveProperty('confidence')
     expect(input).not.toHaveProperty('importance')
@@ -127,8 +140,8 @@ describe('NotificationSimulate page', () => {
   it('renders the answer, including a run where nothing was evaluated', async () => {
     renderPage()
     const camera = await screen.findByTestId('simulate-camera')
-    await waitFor(() => expect(screen.getByText('Front door')).toBeTruthy())
-    fireEvent.change(camera, { target: { value: '101' } })
+    await waitForSelectRows(camera, (rows) => rows.some((r) => r.label === 'Front door'))
+    selectOption(camera, '101')
     fireEvent.click(screen.getByRole('button', { name: /Inject event/i }))
 
     await waitFor(() => expect(screen.getByText('synthetic:abc')).toBeTruthy())

@@ -7,6 +7,7 @@
  * group, a value type with no admin widget. Pinning the shipped catalog would
  * only prove today's snapshot renders.
  */
+import { selectOption, selectOptionLabels, selectOptionValues } from '@camstack/ui-library/testing'
 import {
   NC_AUDIO_DB_OFFERED,
   type NcConditionDescriptor,
@@ -264,12 +265,8 @@ describe('RuleConditionsAdvancedFields — zone-crossing direction', () => {
   it('offers three directions — no "not set" — and shows an absent rule as Entering (R11)', () => {
     renderCrossing()
     const select = screen.getByRole('combobox')
-    expect(Array.from(select.querySelectorAll('option')).map((o) => o.textContent)).toEqual([
-      'Entering',
-      'Leaving',
-      'Entering or leaving',
-    ])
-    expect(select instanceof HTMLSelectElement && select.value === 'enter').toBe(true)
+    expect(selectOptionLabels(select)).toEqual(['Entering', 'Leaving', 'Entering or leaving'])
+    expect((select as HTMLButtonElement).value).toBe('enter')
   })
 
   it("reads the served absent choice `''` as Entering — the D690 hub serves entering that way", () => {
@@ -288,9 +285,8 @@ describe('RuleConditionsAdvancedFields — zone-crossing direction', () => {
       'immediate',
     )
     const select = screen.getByRole('combobox')
-    const options = Array.from(select.querySelectorAll('option'))
-    expect(options.map((o) => o.getAttribute('value'))).toEqual(['enter', 'exit', 'any'])
-    fireEvent.change(select, { target: { value: 'enter' } })
+    expect(selectOptionValues(select)).toEqual(['enter', 'exit', 'any'])
+    selectOption(select, 'enter')
     expect(changes).toEqual([{}])
   })
 
@@ -310,8 +306,7 @@ describe('RuleConditionsAdvancedFields — zone-crossing direction', () => {
       {},
       'immediate',
     )
-    const options = Array.from(screen.getByRole('combobox').querySelectorAll('option'))
-    expect(options.map((o) => o.getAttribute('value'))).toEqual(['enter', 'exit', 'any'])
+    expect(selectOptionValues(screen.getByRole('combobox'))).toEqual(['enter', 'exit', 'any'])
   })
 
   it('writes NOTHING while the operator only looks at it', () => {
@@ -323,13 +318,13 @@ describe('RuleConditionsAdvancedFields — zone-crossing direction', () => {
 
   it('authors an explicit direction', () => {
     const { changes } = renderCrossing()
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'exit' } })
+    selectOption(screen.getByRole('combobox'), 'exit')
     expect(changes).toEqual([{ crossing: 'exit' }])
   })
 
   it('choosing Entering returns the rule to ABSENT rather than writing enter', () => {
     const { changes } = renderCrossing({ crossing: 'exit' })
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'enter' } })
+    selectOption(screen.getByRole('combobox'), 'enter')
     expect(changes).toEqual([{}])
   })
 
@@ -374,7 +369,7 @@ describe('RuleConditionsAdvancedFields — detection source', () => {
 
   it('writes to `conditions.source`', () => {
     const { changes } = renderAdvancedFields([SOURCE], {}, 'immediate')
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'pipeline' } })
+    selectOption(screen.getByRole('combobox'), 'pipeline')
     expect(changes).toEqual([{ source: 'pipeline' }])
   })
 })
@@ -464,14 +459,19 @@ describe('RuleConditionsEditor — the shared picker vocabulary', () => {
     valueType: 'occupancy',
   })
 
+  /** Every row label of the occupancy class picker (the combobox that offers `Animal`). */
+  function occupancyLabels(): readonly string[] {
+    return screen.getAllByRole('combobox').flatMap((box) => selectOptionLabels(box))
+  }
+
   it('scopes occupancy by a MACRO class from the shared vocabulary, showing its label', () => {
     renderEditor([OCCUPANCY_DESCRIPTOR], {}, TAXONOMY)
-    expect(screen.getByRole('option', { name: 'Animal' })).toBeTruthy()
+    expect(occupancyLabels()).toContain('Animal')
   })
 
   it('never offers occupancy a sub-type — its counter would be 0 forever', () => {
     renderEditor([OCCUPANCY_DESCRIPTOR], {}, TAXONOMY)
-    expect(screen.queryByRole('option', { name: 'Dog' })).toBeNull()
+    expect(occupancyLabels()).not.toContain('Dog')
   })
 
   it('still SHOWS a stored sub-type, flagged — a hidden value cannot be fixed', () => {
@@ -480,7 +480,7 @@ describe('RuleConditionsEditor — the shared picker vocabulary', () => {
       { occupancy: { className: 'dog', op: 'became-occupied', count: 1, sustainSeconds: 30 } },
       TAXONOMY,
     )
-    expect(screen.getByRole('option', { name: /dog/ }).textContent).toMatch(/never counts/i)
+    expect(occupancyLabels().find((l) => /dog/.test(l))).toMatch(/never counts/i)
   })
 })
 

@@ -1,3 +1,4 @@
+import { selectOption } from '@camstack/ui-library/testing'
 import {
   composedDeviceStableId,
   CompositionSchema,
@@ -180,9 +181,7 @@ describe('RemoteConfigDialog', () => {
 
   it('imports a SmartIR file through the default transmitter and saves only the bindings', async () => {
     renderDialog()
-    fireEvent.change(screen.getByTestId('remote-transmitter'), {
-      target: { value: String(BOARD) },
-    })
+    selectOption(screen.getByTestId('remote-transmitter'), String(BOARD))
     fireEvent.change(screen.getByTestId('smartir-text'), {
       target: { value: SMARTIR },
     })
@@ -190,9 +189,7 @@ describe('RemoteConfigDialog', () => {
     expect(screen.getByTestId('smartir-summary').textContent).toMatch(/fills 3 commands/)
     fireEvent.click(screen.getByTestId('smartir-apply'))
     // volume_up is not on the test layout: it is reached through the off-layout picker.
-    fireEvent.change(screen.getByTestId('binding-other'), {
-      target: { value: 'volume_up' },
-    })
+    selectOption(screen.getByTestId('binding-other'), 'volume_up')
     expect(screen.getByTestId('transmitter-volume_up')).toBeTruthy()
     fireEvent.click(screen.getByTestId('remote-save'))
     await waitFor(() => expect(setConfig).toHaveBeenCalledTimes(1))
@@ -265,7 +262,7 @@ describe('RemoteConfigDialog', () => {
     }
     renderDialog()
     pick('a')
-    const select = screen.getByTestId('transmitter-power') as HTMLSelectElement
+    const select = screen.getByTestId('transmitter-power') as HTMLButtonElement
     expect(select.textContent).toContain('send_raw_command · Kitchen board')
     expect(screen.getByTestId('summary-power').textContent).toBe(
       'Sends an infrared code of 6 pulses through send_raw_command · Kitchen board.',

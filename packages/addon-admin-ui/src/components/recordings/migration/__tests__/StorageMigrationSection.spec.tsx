@@ -1,5 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 
+import { selectOption } from '@camstack/ui-library/testing'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 /**
  * StorageMigrationSection — capability gate + core interaction.
@@ -225,7 +226,7 @@ describe('StorageMigrationSection — plan / start', () => {
     renderSection()
 
     const recordingsSelect = screen.getByLabelText('Recordings to') as HTMLSelectElement
-    fireEvent.change(recordingsSelect, { target: { value: 'recordings:nas' } })
+    selectOption(recordingsSelect, 'recordings:nas')
 
     fireEvent.click(screen.getByRole('button', { name: 'Plan' }))
     await waitFor(() => {

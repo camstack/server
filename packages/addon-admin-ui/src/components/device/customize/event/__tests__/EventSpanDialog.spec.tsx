@@ -167,6 +167,6 @@ describe('EventSpanDialog edit', () => {
     expect(declared.textContent).toMatch(/false/)
     expect(screen.getByText('No motion.')).toBeTruthy()
     const mode = screen.getByRole('combobox')
-    expect(mode instanceof HTMLSelectElement && mode.value).toBe('confirm')
+    expect((mode as HTMLButtonElement).value).toBe('confirm')
   })
 })

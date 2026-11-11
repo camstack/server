@@ -11,6 +11,7 @@
  *     device identities and has no undo; a declined dialog must leave the hub
  *     untouched.
  */
+import { selectOption, selectOptionValues } from '@camstack/ui-library/testing'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
@@ -78,9 +79,7 @@ function renderCard(): void {
 
 /** Pick the replacement, then press Migrate and let the confirm settle. */
 async function chooseAndMigrate(targetId = NEW): Promise<void> {
-  fireEvent.change(screen.getByLabelText('Replacement camera'), {
-    target: { value: String(targetId) },
-  })
+  selectOption(screen.getByLabelText('Replacement camera'), String(targetId))
   fireEvent.click(screen.getByRole('button', { name: 'Migrate' }))
   await waitFor(() => expect(confirmSpy).toHaveBeenCalled())
 }
@@ -102,9 +101,7 @@ afterEach(() => {
 describe('MigrateDeviceCard — the target picker', () => {
   it('offers adopted cameras and never the device itself', () => {
     renderCard()
-    const options = screen
-      .getAllByRole('option')
-      .map((option) => (option as HTMLOptionElement).value)
+    const options = selectOptionValues(screen.getByRole('combobox'))
     expect(options).toContain(String(NEW))
     expect(options).not.toContain(String(OLD))
     // Non-cameras are not plausible replacements for a camera.

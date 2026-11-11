@@ -1,5 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 
+import { selectOption } from '@camstack/ui-library/testing'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
@@ -76,7 +77,7 @@ describe('Cluster → Events post-processing node', () => {
       cap: 'pipeline-analytics',
       scope: 'cluster',
     })
-    fireEvent.change(select, { target: { value: 'hub' } })
+    selectOption(select, 'hub')
     expect(updateScoped).toHaveBeenCalledWith({
       addonId: 'pipeline-analytics',
       cap: 'pipeline-analytics',
@@ -98,7 +99,7 @@ describe('Cluster → Recording node', () => {
       cap: 'recording',
       scope: 'cluster',
     })
-    fireEvent.change(select, { target: { value: 'hub' } })
+    selectOption(select, 'hub')
     expect(updateScoped).toHaveBeenCalledWith({
       addonId: 'recorder',
       cap: 'recording',

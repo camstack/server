@@ -5,6 +5,7 @@
  * computed at (headroom, min sessions per device), and a `stale` answer
  * replaces the plan on screen instead of being written over.
  */
+import { selectOption } from '@camstack/ui-library/testing'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -125,9 +126,7 @@ describe('ClusterAutoTuneTab', () => {
   it('the minimum sessions per device is an option, sent with the plan and the apply', () => {
     render(<ClusterAutoTuneTab />)
     expect(lastPlanInput).toEqual({ headroom: 0.4, minSessionsPerDevice: 2 })
-    fireEvent.change(screen.getByLabelText('Minimum parallel sessions per device'), {
-      target: { value: '3' },
-    })
+    selectOption(screen.getByLabelText('Minimum parallel sessions per device'), '3')
     expect(lastPlanInput).toEqual({ headroom: 0.4, minSessionsPerDevice: 3 })
     fireEvent.click(screen.getByRole('button', { name: 'Compute plan' }))
     fireEvent.click(screen.getByRole('button', { name: 'Apply…' }))

@@ -3,6 +3,7 @@
  * stored option differs from its `default` must render the stored one, and a sign-in started
  * from an existing record must carry the record's effective values, not only the edited ones.
  */
+import { selectOption } from '@camstack/ui-library/testing'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -107,7 +108,7 @@ afterEach(() => {
 describe('InstanceEditorDialog — stored values', () => {
   it('a select shows its stored option, not the schema default', async () => {
     renderDialog()
-    const select = (await screen.findByLabelText(/amazon domain/i)) as HTMLSelectElement
+    const select = (await screen.findByLabelText(/amazon domain/i)) as HTMLButtonElement
     await waitFor(() => expect(select.value).toBe('amazon.it'))
   })
 
@@ -194,11 +195,9 @@ describe('InstanceEditorDialog — create a record of a provider with several ki
     await screen.findByText('Add Recordings')
     const nameInput = async (): Promise<HTMLInputElement | null | undefined> =>
       (await screen.findByText(/^Name\b/)).parentElement?.querySelector('input')
-    const kindSelect = (await screen.findByText(/^Kind\b/)).parentElement?.querySelector('select')
+    const kindSelect = (await screen.findByText(/^Kind\b/)).parentElement?.querySelector('button')
     expect(kindSelect).toBeTruthy()
-    fireEvent.change(kindSelect as HTMLSelectElement, {
-      target: { value: 'events' },
-    })
+    selectOption(kindSelect as HTMLButtonElement, 'events')
     await screen.findByText('Add Event media')
     expect((await nameInput())?.value).toBe('Event media')
   })
@@ -209,10 +208,8 @@ describe('InstanceEditorDialog — create a record of a provider with several ki
     const nameLabel = await screen.findByText(/^Name\b/)
     const input = nameLabel.parentElement?.querySelector('input') as HTMLInputElement
     fireEvent.change(input, { target: { value: 'Garage disk' } })
-    const kindSelect = (await screen.findByText(/^Kind\b/)).parentElement?.querySelector('select')
-    fireEvent.change(kindSelect as HTMLSelectElement, {
-      target: { value: 'events' },
-    })
+    const kindSelect = (await screen.findByText(/^Kind\b/)).parentElement?.querySelector('button')
+    selectOption(kindSelect as HTMLButtonElement, 'events')
     await screen.findByText('Add Event media')
     expect(input.value).toBe('Garage disk')
   })

@@ -16,6 +16,7 @@
  *  5. **Nothing is persisted.**
  */
 
+import { selectOption, waitForSelectRows } from '@camstack/ui-library/testing'
 import type { DeviceInfo } from '@camstack/types'
 import type { LinkableInstance } from '@camstack/ui-library'
 import { DeviceType } from '@camstack/types'
@@ -74,7 +75,11 @@ const VISION_PROFILE = {
   stateLabel: null,
   usable: true,
   enabled: true,
-  formValues: { model: 'qwen/qwen3-vl-8b', supportsVision: true, firstTokenTimeoutMs: 120_000 },
+  formValues: {
+    model: 'qwen/qwen3-vl-8b',
+    supportsVision: true,
+    firstTokenTimeoutMs: 120_000,
+  },
 } satisfies LinkableInstance
 
 const CAMERA: DeviceInfo = {
@@ -111,7 +116,13 @@ const mockListAllRaw = vi.fn(() => Promise.resolve([CAMERA]))
 
 /** What the shared fleet query answers here — the same camera. */
 const FLEET_ROWS: readonly FleetRow[] = [
-  { id: CAMERA.id, name: CAMERA.name, type: 'camera', isCamera: true, disabled: false },
+  {
+    id: CAMERA.id,
+    name: CAMERA.name,
+    type: 'camera',
+    isCamera: true,
+    disabled: false,
+  },
 ]
 
 /** The generated fleet hook — the ONLY client this page may read the fleet
@@ -138,7 +149,9 @@ vi.mock('@camstack/ui-library', async () => {
       trpcClient: {
         deviceManager: { listAll: { query: mockListAllRaw } },
         pipelineAnalytics: {
-          listRecentTracks: { query: () => Promise.resolve({ tracks: [], nextCursor: null }) },
+          listRecentTracks: {
+            query: () => Promise.resolve({ tracks: [], nextCursor: null }),
+          },
         },
       },
     }),
@@ -148,7 +161,9 @@ vi.mock('@camstack/ui-library', async () => {
 const { AiTestChatPage } = await import('../AiTestChat')
 
 function renderChat(): void {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   render(
     <QueryClientProvider client={client}>
       <AiTestChatPage />
@@ -158,8 +173,8 @@ function renderChat(): void {
 
 async function pickProfile(): Promise<void> {
   const select = await screen.findByLabelText('Profile')
-  await waitFor(() => expect(select.querySelector('option[value="p-vision"]')).not.toBeNull())
-  fireEvent.change(select, { target: { value: 'p-vision' } })
+  await waitForSelectRows(select, (rows) => rows.some((r) => r.value === 'p-vision'))
+  selectOption(select, 'p-vision')
 }
 
 function type(value: string): void {
@@ -345,7 +360,10 @@ describe('AiTestChatPage — the transport', () => {
   it('surfaces a rejected request body instead of failing silently', async () => {
     nextResponse = () =>
       new Response(
-        JSON.stringify({ error: 'invalid request', detail: 'imageRef: Unrecognized key' }),
+        JSON.stringify({
+          error: 'invalid request',
+          detail: 'imageRef: Unrecognized key',
+        }),
         {
           status: 400,
         },
@@ -394,12 +412,22 @@ describe('AiTestChatPage — the attachment', () => {
       kind: 'meta',
       profileName: 'Mac LM Studio',
       model: 'm',
-      mediaSent: { kind: 'snapshot', mimeType: 'image/jpeg', sizeBytes: 120 * 1024 },
+      mediaSent: {
+        kind: 'snapshot',
+        mimeType: 'image/jpeg',
+        sizeBytes: 120 * 1024,
+      },
       streamed: true,
       firstTokenTimeoutMs: 120_000,
     })
     stream.line({ kind: 'token', text: 'a white van' })
-    stream.line({ kind: 'done', inputTokens: 812, outputTokens: 4, latencyMs: 1, truncated: false })
+    stream.line({
+      kind: 'done',
+      inputTokens: 812,
+      outputTokens: 4,
+      latencyMs: 1,
+      truncated: false,
+    })
     stream.close()
     expect(await screen.findByText(/camera snapshot · 120 KB/)).toBeTruthy()
   })
@@ -433,7 +461,13 @@ describe('AiTestChatPage — stop and clear', () => {
     fireEvent.click(screen.getByText('Send'))
     await waitFor(() => expect(fetchCalls).toHaveLength(1))
     stream.line({ kind: 'token', text: 'pong' })
-    stream.line({ kind: 'done', inputTokens: 1, outputTokens: 1, latencyMs: 1, truncated: false })
+    stream.line({
+      kind: 'done',
+      inputTokens: 1,
+      outputTokens: 1,
+      latencyMs: 1,
+      truncated: false,
+    })
     stream.close()
     expect(await screen.findByText('pong')).toBeTruthy()
 
@@ -500,7 +534,13 @@ describe('AiTestChatPage — persistent chats', () => {
       firstTokenTimeoutMs: 120_000,
     })
     stream.line({ kind: 'token', text: 'a van' })
-    stream.line({ kind: 'done', inputTokens: 1, outputTokens: 1, latencyMs: 1, truncated: false })
+    stream.line({
+      kind: 'done',
+      inputTokens: 1,
+      outputTokens: 1,
+      latencyMs: 1,
+      truncated: false,
+    })
     stream.close()
     const img = await screen.findByRole('img', { name: /sent to the model/i })
     expect(img.getAttribute('src')).toMatch(/^data:image\/jpeg;base64,/)

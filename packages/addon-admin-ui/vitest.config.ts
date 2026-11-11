@@ -41,6 +41,10 @@ export default defineConfig({
         replacement: path.join(repoRoot, 'packages/types/dist/index.mjs'),
       },
       {
+        find: '@camstack/ui-library/testing',
+        replacement: path.join(repoRoot, 'packages/ui-library/src/testing/select-option.ts'),
+      },
+      {
         find: '@camstack/ui-library',
         replacement: path.join(repoRoot, 'packages/ui-library/src/index.ts'),
       },

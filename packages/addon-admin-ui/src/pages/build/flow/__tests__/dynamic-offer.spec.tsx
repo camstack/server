@@ -2,6 +2,7 @@
  * A `dynamic` offer resolves into a select from what the device answers, and
  * stays a free field when it cannot (D920).
  */
+import { selectOption } from '@camstack/ui-library/testing'
 import { vocabularyActionsForDevice } from '@camstack/types'
 import type { LooseVocabOpenArg } from '@camstack/types'
 import { fireEvent, render, screen } from '@testing-library/react'
@@ -73,8 +74,8 @@ describe('ArgField on a dynamic arg', () => {
       />,
     )
     const select = screen.getByLabelText(arg.label.en)
-    expect(select.tagName).toBe('SELECT')
-    fireEvent.change(select, { target: { value: 'turbo' } })
+    expect(select.getAttribute('aria-haspopup')).toBe('listbox')
+    selectOption(select, 'turbo')
     expect(onChange).toHaveBeenCalledWith({ kind: 'fixed', value: 'turbo' })
   })
 
@@ -104,6 +105,6 @@ describe('ArgField on a dynamic arg', () => {
         choices={{ state: 'ready', choices: [{ value: 'quiet', label: 'Quiet' }] }}
       />,
     )
-    expect((screen.getByLabelText(arg.label.en) as HTMLSelectElement).value).toBe('ludicrous')
+    expect((screen.getByLabelText(arg.label.en) as HTMLButtonElement).value).toBe('ludicrous')
   })
 })
