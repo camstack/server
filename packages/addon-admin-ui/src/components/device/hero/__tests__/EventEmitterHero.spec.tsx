@@ -17,12 +17,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 interface EventFire {
   readonly deviceId: number
   readonly eventType: string
+  readonly sourceId?: string
   readonly data: Record<string, unknown> | null
   readonly timestamp: number
   readonly seq: number
 }
+interface VocabularyEntry {
+  readonly id: string
+  readonly source?: { readonly id: string; readonly label: string }
+  readonly label: string
+  readonly kind?: string
+}
 interface EmitterSlice {
   readonly eventTypes: readonly string[]
+  readonly vocabulary?: readonly VocabularyEntry[]
   readonly lastEvent: EventFire | null
   readonly eventCountSinceStart: number
 }
@@ -108,6 +116,31 @@ describe('EventEmitterHero', () => {
       'PRESS_LONG',
       'PRESS_LONG_START',
     ])
+  })
+
+  it('a declared vocabulary shows one row per button with labelled presses, and names the last press by them', () => {
+    const button = (n: string) => ({ id: n, label: `Button ${n} (channel ${n})` })
+    slice.current = {
+      eventTypes: ['PRESS_SHORT', 'PRESS_LONG'],
+      vocabulary: ['1', '2', '3', '4', '5', '6'].flatMap((n) => [
+        { id: 'PRESS_SHORT', source: button(n), label: 'Short press', kind: 'press' },
+        { id: 'PRESS_LONG', source: button(n), label: 'Long press', kind: 'long-press' },
+      ]),
+      lastEvent: { ...fire(4, 'PRESS_LONG'), sourceId: '3', data: { channel: '3' } },
+      eventCountSinceStart: 4,
+    }
+    render(<EventEmitterHero {...heroProps} />)
+    const rows = screen.getAllByTestId('event-emitter-source-row')
+    expect(rows).toHaveLength(6)
+    expect(rows[2]?.textContent).toBe('Button 3 (channel 3)Short pressLong press')
+    expect(screen.getByTestId('event-emitter-headline').textContent).toBe(
+      'Button 3 (channel 3) · Long press',
+    )
+    const lit = screen
+      .getAllByTestId('event-emitter-chip')
+      .filter((chip) => chip.className.includes('text-primary'))
+    expect(lit).toHaveLength(1)
+    expect(rows[2]?.contains(lit[0] ?? null)).toBe(true)
   })
 
   // ── the discriminating test ────────────────────────────────────────────────

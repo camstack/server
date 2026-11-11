@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { channelIndexOf, formatEventAge, formatEventHeadline } from '../event-emitter-format'
+import {
+  channelIndexOf,
+  describeFire,
+  formatEventAge,
+  formatEventHeadline,
+  groupVocabulary,
+} from '../event-emitter-format'
 
 describe('channelIndexOf', () => {
   it('reads an integer channel', () => {
@@ -62,5 +68,52 @@ describe('formatEventAge', () => {
   it('renders a dash for a missing timestamp', () => {
     expect(formatEventAge(null, now)).toBe('—')
     expect(formatEventAge(0, now)).toBe('—')
+  })
+})
+
+describe('the declared vocabulary', () => {
+  const button = (n: string) => ({ id: n, label: `Button ${n}` })
+  const VOCABULARY = [
+    { id: 'PRESS_SHORT', source: button('1'), label: 'Short press', kind: 'press' as const },
+    { id: 'PRESS_LONG', source: button('1'), label: 'Long press', kind: 'long-press' as const },
+    { id: 'PRESS_SHORT', source: button('2'), label: 'Short press', kind: 'press' as const },
+    { id: 'TILT', label: 'Tilted' },
+  ]
+
+  it('groups the events under the part that fires them, sourceless ones last', () => {
+    const groups = groupVocabulary(VOCABULARY)
+    expect(groups.map((g) => g.source?.label ?? null)).toEqual(['Button 1', 'Button 2', null])
+    expect(groups[0]?.entries.map((e) => e.label)).toEqual(['Short press', 'Long press'])
+    expect(groups[2]?.entries.map((e) => e.id)).toEqual(['TILT'])
+  })
+
+  it('names a fire by its button and its label, as the device declares them', () => {
+    const fire = {
+      eventType: 'PRESS_LONG',
+      sourceId: '1',
+      data: { channel: '1' },
+      timestamp: 1,
+      seq: 1,
+    }
+    expect(describeFire(fire, VOCABULARY)).toEqual({ source: 'Button 1', label: 'Long press' })
+  })
+
+  it('a fire the vocabulary does not declare keeps its token, and its button when that is known', () => {
+    const fire = { eventType: 'PRESS_NEW', sourceId: '2', data: null, timestamp: 1, seq: 1 }
+    expect(describeFire(fire, VOCABULARY)).toEqual({ source: 'Button 2', label: 'PRESS_NEW' })
+    expect(describeFire({ ...fire, sourceId: '9' }, VOCABULARY)).toEqual({
+      source: null,
+      label: 'PRESS_NEW',
+    })
+  })
+
+  it('a fire with no source reads a numeric data.channel as before, and nothing otherwise', () => {
+    const fire = { eventType: 'TILT', data: { channel: 3 }, timestamp: 1, seq: 1 }
+    expect(describeFire(fire, VOCABULARY)).toEqual({ source: 'Button 3', label: 'Tilted' })
+    expect(describeFire({ ...fire, data: {} }, VOCABULARY)).toEqual({
+      source: null,
+      label: 'Tilted',
+    })
+    expect(describeFire(null, VOCABULARY)).toBeNull()
   })
 })

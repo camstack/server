@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automations: inside a repeat over devices, a command step can run on the device of each round and offers the commands all the listed devices share
 - Automations: block steps (choose, repeat, at the same time, wait until) can be placed inside a branch or a repeat, one level deep; the run view shows their steps
 
+### Changed
+
+- The page of an event device (a remote, a button) lists each button with its labelled presses, and the last event names its button
+
 ## [1.2.644] - 2026-11-11
 
 ### Added

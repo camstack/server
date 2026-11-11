@@ -11,11 +11,15 @@
  * contract, not the provider.
  */
 
+import type { EventVocabularyEntry, EventVocabularySource } from '@camstack/types'
+import { findVocabularyEntry } from '@camstack/types'
 import i18n from '../../../i18n/index'
 
 /** The `lastEvent` shape this module reads (a structural subset of `EventFire`). */
 export interface EventFireLike {
   readonly eventType: string
+  /** The part of the device that fired (a button), when the fire names one. */
+  readonly sourceId?: string
   readonly data: Record<string, unknown> | null
   readonly timestamp: number
   readonly seq: number
@@ -74,4 +78,63 @@ export function formatEventAge(timestampMs: number | null | undefined, now: numb
   if (delta < DAY_MS)
     return i18n.t('helpers.relativeTime.hoursAgo', { count: Math.floor(delta / HOUR_MS) })
   return i18n.t('helpers.relativeTime.daysAgo', { count: Math.floor(delta / DAY_MS) })
+}
+
+/** The events one part of the device fires; `source: null` holds the ones that name no part. */
+export interface VocabularyGroup {
+  readonly source: EventVocabularySource | null
+  readonly entries: readonly EventVocabularyEntry[]
+}
+
+/** The declared vocabulary under the part that fires each event, in declared order, sourceless last. */
+export function groupVocabulary(
+  vocabulary: readonly EventVocabularyEntry[],
+): readonly VocabularyGroup[] {
+  const bySource = new Map<string, VocabularyGroup>()
+  const loose: EventVocabularyEntry[] = []
+  for (const entry of vocabulary) {
+    if (entry.source === undefined) {
+      loose.push(entry)
+      continue
+    }
+    const group = bySource.get(entry.source.id)
+    bySource.set(entry.source.id, {
+      source: entry.source,
+      entries: [...(group?.entries ?? []), entry],
+    })
+  }
+  return [...bySource.values(), ...(loose.length === 0 ? [] : [{ source: null, entries: loose }])]
+}
+
+/** A fire in the device's own words: the part that fired and what it did. */
+export interface FireDescription {
+  readonly source: string | null
+  readonly label: string
+}
+
+/**
+ * Names a fire from the vocabulary: the entry of that token and source gives
+ * the label, the source gives the button. A token the device does not declare
+ * keeps its verbatim name. A fire that names no source falls back to the
+ * numeric `data.channel` older providers sent.
+ */
+export function describeFire(
+  fire: EventFireLike | null | undefined,
+  vocabulary: readonly EventVocabularyEntry[],
+): FireDescription | null {
+  if (!fire) return null
+  const entry =
+    findVocabularyEntry(vocabulary, fire.eventType, fire.sourceId) ??
+    findVocabularyEntry(vocabulary, fire.eventType)
+  const label = entry?.label ?? fire.eventType
+  if (fire.sourceId !== undefined) {
+    const source = vocabulary.find((e) => e.source?.id === fire.sourceId)?.source
+    return { source: source?.label ?? null, label }
+  }
+  const channel = channelIndexOf(fire.data)
+  return {
+    source:
+      channel === null ? null : i18n.t('hero.eventEmitterHero.button', { value1: String(channel) }),
+    label,
+  }
 }

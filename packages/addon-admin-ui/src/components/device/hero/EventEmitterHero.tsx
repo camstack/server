@@ -1,7 +1,8 @@
+import { findVocabularyEntry, readEventVocabulary } from '@camstack/types'
 import { useDeviceProxy, useDeviceStateSlice, useSystem } from '@camstack/ui-library'
 import { Hand, MousePointerClick } from 'lucide-react'
 import { type ReactElement, useEffect, useRef, useState } from 'react'
-import { channelIndexOf, formatEventAge, formatEventHeadline } from './event-emitter-format'
+import { describeFire, formatEventAge, groupVocabulary } from './event-emitter-format'
 import type { HeroProps } from './HeroRegistry'
 import { useTranslation } from 'react-i18next'
 
@@ -11,10 +12,11 @@ import { useTranslation } from 'react-i18next'
  * hero exists to answer "did it fire, which button, how long ago".
  *
  * It reads the `event-emitter` cap's runtime-state slice, so it is
- * cap-derived and works for ANY provider that registers the cap — the
- * vocabulary chips are whatever the device declared (`eventTypes`), and the
- * button index is read from the OPTIONAL `data.channel` (absent → the event
- * type alone renders). No provider is named anywhere in this file.
+ * cap-derived and works for ANY provider that registers the cap. What the
+ * device can fire is its declared vocabulary (D1044): one row per part of the
+ * device (a button) with the events of that part, in the device's own labels.
+ * A slice written before the vocabulary existed shows its plain tokens. No
+ * provider is named anywhere in this file.
  *
  * Two reads, per D8 (events are telemetry and may be dropped):
  *   - the push subscription, which is what makes a live press flash; and
@@ -87,11 +89,21 @@ export function EventEmitterHero({ deviceId }: HeroProps): ReactElement {
     }
   }, [])
 
-  const headline = formatEventHeadline(lastEvent)
-  const eventTypes = slice?.eventTypes ?? []
+  const vocabulary = slice === undefined ? [] : readEventVocabulary(slice)
+  const groups = groupVocabulary(vocabulary)
+  const described = describeFire(lastEvent, vocabulary)
+  const headline =
+    described === null
+      ? null
+      : described.source === null
+        ? described.label
+        : `${described.source} · ${described.label}`
+  const lastEntry =
+    lastEvent === null
+      ? undefined
+      : findVocabularyEntry(vocabulary, lastEvent.eventType, lastEvent.sourceId)
   const count = slice?.eventCountSinceStart ?? 0
   const hasState = slice !== undefined
-  const channel = channelIndexOf(lastEvent?.data)
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-4">
@@ -110,9 +122,12 @@ export function EventEmitterHero({ deviceId }: HeroProps): ReactElement {
       </div>
 
       <div className="text-center">
-        {channel !== null && (
-          <div className="text-xs font-semibold uppercase tracking-wide text-primary">
-            {t('hero.eventEmitterHero.button', 'Button {{value1}}', { value1: String(channel) })}
+        {described !== null && described.source !== null && (
+          <div
+            data-testid="event-emitter-source"
+            className="text-xs font-semibold uppercase tracking-wide text-primary"
+          >
+            {described.source}
           </div>
         )}
         <div
@@ -131,20 +146,34 @@ export function EventEmitterHero({ deviceId }: HeroProps): ReactElement {
         </div>
       </div>
 
-      {eventTypes.length > 0 && (
-        <div className="flex max-w-full flex-wrap justify-center gap-1">
-          {eventTypes.map((type) => (
-            <span
-              key={type}
-              data-testid="event-emitter-chip"
-              className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-                type === lastEvent?.eventType
-                  ? 'border-primary bg-primary/15 text-primary'
-                  : 'border-border bg-surface text-foreground-subtle'
-              }`}
+      {groups.length > 0 && (
+        <div className="flex max-w-full flex-col items-center gap-1">
+          {groups.map((group) => (
+            <div
+              key={group.source?.id ?? ''}
+              data-testid="event-emitter-source-row"
+              className="flex max-w-full flex-wrap items-center justify-center gap-1"
             >
-              {type}
-            </span>
+              {group.source !== null && (
+                <span className="text-[10px] font-semibold text-foreground-subtle">
+                  {group.source.label}
+                </span>
+              )}
+              {group.entries.map((entry) => (
+                <span
+                  key={entry.id}
+                  data-testid="event-emitter-chip"
+                  title={entry.description ?? entry.id}
+                  className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+                    entry === lastEntry
+                      ? 'border-primary bg-primary/15 text-primary'
+                      : 'border-border bg-surface text-foreground-subtle'
+                  }`}
+                >
+                  {entry.label}
+                </span>
+              ))}
+            </div>
           ))}
         </div>
       )}
