@@ -28,7 +28,9 @@ const STATUS: ClimateControlStatus = {
 
 const setTarget = vi.fn()
 
-vi.mock('../../../contexts/system-context', () => ({ useTrpcClient: () => ({}) }))
+vi.mock('../../../contexts/system-context', () => ({
+  useTrpcClient: () => ({}),
+}))
 vi.mock('../../../hooks/use-device-proxy', () => ({
   useDeviceProxy: () => ({
     climateControl: { setTarget, setMode: vi.fn() },
@@ -50,7 +52,8 @@ vi.mock('../connected/use-card-common', async () => {
       return {
         common: { ...common, consumables: null, supply: null, notice },
         actions: {},
-        deviceType: 'thermostat',
+        deviceType: 'climate',
+        role: 'climate-thermostat',
         fail,
         succeed,
       }

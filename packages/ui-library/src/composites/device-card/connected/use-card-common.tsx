@@ -45,6 +45,7 @@ export interface CardCommonResult {
   readonly actions: CardCommonActions
   /** The device's type, once the registry answered. */
   readonly deviceType: string | null
+  readonly role: string | null
   /** Puts a failed command's reason on the card's reason line. */
   readonly fail: (error: unknown) => void
   /** Clears it: the next command went through. */
@@ -68,7 +69,14 @@ const reading = (
   group = false,
 ): CardPowerDetail[] =>
   typeof value === 'number'
-    ? [{ id, label, value: `${value.toFixed(digits)} ${unit}`, ...(group ? { group } : {}) }]
+    ? [
+        {
+          id,
+          label,
+          value: `${value.toFixed(digits)} ${unit}`,
+          ...(group ? { group } : {}),
+        },
+      ]
     : []
 
 export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCommonResult {
@@ -184,7 +192,10 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
     remote:
       remote.data === undefined || remote.data === null || remote.data.commands.length === 0
         ? null
-        : remote.data.commands.map((c) => ({ id: c.role, label: c.label ?? c.role })),
+        : remote.data.commands.map((c) => ({
+            id: c.role,
+            label: c.label ?? c.role,
+          })),
     history: hasHistory
       ? { charts: <DeviceHistoryView deviceId={deviceId} />, events: null }
       : null,
@@ -195,7 +206,11 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
       const call = action === 'on' ? powerOn : action === 'off' ? powerOff : restart
       call.mutate(
         { deviceId },
-        { onSuccess: succeed, onError: fail, onSettled: () => void supply.refetch() },
+        {
+          onSuccess: succeed,
+          onError: fail,
+          onSettled: () => void supply.refetch(),
+        },
       )
     },
     onConsumableReset: (key: string) =>
@@ -210,5 +225,12 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
     },
   }
 
-  return { common, actions, deviceType: device.data?.type ?? null, fail, succeed }
+  return {
+    common,
+    actions,
+    deviceType: device.data?.type ?? null,
+    role: device.data?.role ?? null,
+    fail,
+    succeed,
+  }
 }

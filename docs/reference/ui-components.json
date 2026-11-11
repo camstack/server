@@ -2629,7 +2629,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/climate-model.ts",
-      "summary": "What draws the heat or the cold, from what the device IS and binds."
+      "summary": "What draws the heat or the cold, from the device's ROLE. A bound valve makes a plain thermostat (or an unset role) a radiator; a role the operator named (floor, heat pump circuit, ac...) is kept."
     },
     {
       "name": "clusterRootModelIds",
@@ -3119,7 +3119,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedDeviceCard.tsx",
-      "summary": "Which card draws a device, from what it IS and what it binds."
+      "summary": "Which card draws a device, from what it IS (type + role, D1033) and what it binds. A `switch` with the role `switch-heater` is the plug scene with its timed run, like the hero."
     },
     {
       "name": "ConnectedClimateCard",

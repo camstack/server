@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { type ClimateControlStatus, DeviceType } from '@camstack/types'
+import { type ClimateControlStatus, DeviceRole, DeviceType } from '@camstack/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CLIMATE_FIXTURES } from '../__fixtures__/climate'
@@ -72,7 +72,7 @@ function modelOf(
   valve?: number | null,
 ): ClimateCardModel {
   const scene = climateModelOf({
-    deviceType: DeviceType.Thermostat,
+    role: DeviceRole.ClimateThermostat,
     climate,
     valve: valve === undefined ? undefined : { position: valve, lastFetchedAt: 0 },
     commands: ALL,
@@ -85,7 +85,12 @@ function modelOf(
 const present = (id: string): boolean => screen.queryByTestId(id) !== null
 
 describe('a held band (heat_cool) — two setpoints on one dial', () => {
-  const band = status({ mode: 'heat_cool', target: null, targetLow: 19, targetHigh: 24 })
+  const band = status({
+    mode: 'heat_cool',
+    target: null,
+    targetLow: 19,
+    targetHigh: 24,
+  })
 
   it('is a band in heat_cool mode, and whenever both ends are reported', () => {
     expect(climateRangeOf(band, true)).toEqual({
@@ -136,22 +141,41 @@ describe('a held band (heat_cool) — two setpoints on one dial', () => {
   it('sends the whole band when a handle moves', () => {
     const acts = actions()
     render(<ClimateCard model={modelOf(band)} actions={acts} />)
-    fireEvent.keyDown(screen.getByTestId('dc-range-dial-low'), { key: 'ArrowUp' })
+    fireEvent.keyDown(screen.getByTestId('dc-range-dial-low'), {
+      key: 'ArrowUp',
+    })
     expect(acts.onRange).toHaveBeenLastCalledWith(20, 24)
-    fireEvent.keyDown(screen.getByTestId('dc-range-dial-high'), { key: 'ArrowDown' })
+    fireEvent.keyDown(screen.getByTestId('dc-range-dial-high'), {
+      key: 'ArrowDown',
+    })
     expect(acts.onRange).toHaveBeenLastCalledWith(19, 23)
   })
 
   it('clamps the low handle to the high one, and the high to the low', () => {
     const acts = actions()
-    const tight = status({ mode: 'heat_cool', target: null, targetLow: 22, targetHigh: 22 })
+    const tight = status({
+      mode: 'heat_cool',
+      target: null,
+      targetLow: 22,
+      targetHigh: 22,
+    })
     render(<ClimateCard model={modelOf(tight)} actions={acts} />)
-    fireEvent.keyDown(screen.getByTestId('dc-range-dial-low'), { key: 'ArrowUp' })
+    fireEvent.keyDown(screen.getByTestId('dc-range-dial-low'), {
+      key: 'ArrowUp',
+    })
     expect(acts.onRange).toHaveBeenLastCalledWith(22, 22)
-    fireEvent.keyDown(screen.getByTestId('dc-range-dial-high'), { key: 'ArrowDown' })
+    fireEvent.keyDown(screen.getByTestId('dc-range-dial-high'), {
+      key: 'ArrowDown',
+    })
     expect(acts.onRange).toHaveBeenLastCalledWith(22, 22)
-    expect(moveRangeHandle({ low: 19, high: 24 }, 'low', 30)).toEqual({ low: 24, high: 24 })
-    expect(moveRangeHandle({ low: 19, high: 24 }, 'high', 10)).toEqual({ low: 19, high: 19 })
+    expect(moveRangeHandle({ low: 19, high: 24 }, 'low', 30)).toEqual({
+      low: 24,
+      high: 24,
+    })
+    expect(moveRangeHandle({ low: 19, high: 24 }, 'high', 10)).toEqual({
+      low: 19,
+      high: 19,
+    })
   })
 
   it('a drag takes the nearer handle', () => {
@@ -163,7 +187,7 @@ describe('a held band (heat_cool) — two setpoints on one dial', () => {
 
   it('shows the band without handles when the device cannot set it', () => {
     const scene = climateModelOf({
-      deviceType: DeviceType.Thermostat,
+      role: DeviceRole.ClimateThermostat,
       climate: band,
       valve: undefined,
       commands: { ...ALL, targetRange: false },
@@ -186,8 +210,12 @@ describe('a held band (heat_cool) — two setpoints on one dial', () => {
 
 describe('a radiator valve — its opening is always shown', () => {
   it('is a climate card for a device that binds only heating-valve', () => {
-    expect(connectedCardKindOf(DeviceType.Thermostat, ['heating-valve'])).toBe('climate')
-    expect(connectedCardKindOf(DeviceType.Thermostat, ['battery'])).toBeNull()
+    expect(
+      connectedCardKindOf(DeviceType.Climate, DeviceRole.ClimateRadiator, ['heating-valve']),
+    ).toBe('climate')
+    expect(
+      connectedCardKindOf(DeviceType.Climate, DeviceRole.ClimateRadiator, ['battery']),
+    ).toBeNull()
   })
 
   it('a valve-only device has a model: no power, no setpoint, the opening', () => {
@@ -205,7 +233,7 @@ describe('a radiator valve — its opening is always shown', () => {
   it('a device that declares neither capability has no climate card', () => {
     expect(
       climateModelOf({
-        deviceType: DeviceType.Thermostat,
+        role: DeviceRole.ClimateThermostat,
         climate: undefined,
         valve: undefined,
         commands: ALL,
@@ -243,7 +271,11 @@ describe('a radiator valve — its opening is always shown', () => {
 })
 
 describe('horizontal swing — drawn only when the device can set it', () => {
-  const swinging = status({ mode: 'cool', swingVertical: true, swingHorizontal: false })
+  const swinging = status({
+    mode: 'cool',
+    swingVertical: true,
+    swingHorizontal: false,
+  })
 
   it('is its own toggle next to the vertical one', () => {
     const acts = actions()
@@ -255,7 +287,7 @@ describe('horizontal swing — drawn only when the device can set it', () => {
 
   it('is absent without the command or without the reading', () => {
     const without = climateModelOf({
-      deviceType: DeviceType.Climate,
+      role: DeviceRole.ClimateAc,
       climate: swinging,
       valve: undefined,
       commands: { ...ALL, swingHorizontal: false },
@@ -289,7 +321,10 @@ describe('reachability and failed commands', () => {
     const model = modelOf(status({}))
     render(
       <ClimateCard
-        model={{ ...model, common: { ...model.common, notice: 'Command failed: timeout' } }}
+        model={{
+          ...model,
+          common: { ...model.common, notice: 'Command failed: timeout' },
+        }}
         actions={actions()}
       />,
     )

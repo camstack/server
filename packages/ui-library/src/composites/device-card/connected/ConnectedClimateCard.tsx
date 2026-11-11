@@ -24,7 +24,10 @@ export function ConnectedClimateCard({
   const t = useUiText()
   const client = useTrpcClient()
   const dev = useDeviceProxy(client, deviceId)
-  const { common, actions, deviceType, fail, succeed } = useCardCommon({ deviceId, canActuate })
+  const { common, actions, role, fail, succeed } = useCardCommon({
+    deviceId,
+    canActuate,
+  })
   const slice = useDeviceStateSlice(
     dev?.climateControl === undefined ? undefined : dev.state.climateControl,
   )
@@ -51,7 +54,7 @@ export function ConnectedClimateCard({
     dry: t('uiLibrary.deviceCard.climate.modes.dry', 'Dry'),
   }
   const scene = climateModelOf({
-    deviceType,
+    role,
     climate: cap === undefined ? undefined : display,
     valve: dev.heatingValve === undefined ? undefined : (valveSlice ?? null),
     commands: {

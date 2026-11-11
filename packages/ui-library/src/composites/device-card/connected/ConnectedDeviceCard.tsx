@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceType, resolveDeviceControlKind } from '@camstack/types'
 import type { ReactElement } from 'react'
 import {
   useDeviceManagerGetBindings,
@@ -15,17 +15,23 @@ export type ConnectedCardResolution = ConnectedCardKind | 'pending' | null
 
 /** Either draws the climate card: a radiator valve that only reports is still one. */
 const CLIMATE_CAPS: readonly string[] = ['climate-control', 'heating-valve']
-const CLIMATE_TYPES: ReadonlySet<string> = new Set([DeviceType.Thermostat, DeviceType.Climate])
 
-/** Which card draws a device, from what it IS and what it binds. */
+/**
+ * Which card draws a device, from what it IS (type + role, D1033) and what it
+ * binds. A `switch` with the role `switch-heater` is the plug scene with its
+ * timed run, like the hero.
+ */
 export function connectedCardKindOf(
   deviceType: string | null,
+  role: string | null | undefined,
   capNames: readonly string[],
 ): ConnectedCardKind | null {
-  if (deviceType === DeviceType.Switch && capNames.includes('switch')) return 'plug'
+  if (deviceType === null) return null
+  const control = resolveDeviceControlKind(deviceType, role)
+  if ((control === 'switch' || control === 'heater') && deviceType === DeviceType.Switch)
+    return capNames.includes('switch') ? 'plug' : null
   if (
-    deviceType !== null &&
-    CLIMATE_TYPES.has(deviceType) &&
+    (control === 'thermostat' || control === 'climate') &&
     CLIMATE_CAPS.some((cap) => capNames.includes(cap))
   )
     return 'climate'
@@ -40,6 +46,7 @@ export function useConnectedCardKind(deviceId: number): ConnectedCardResolution 
   if (device.status === 'error' || bindings.status === 'error') return null
   return connectedCardKindOf(
     device.data?.type ?? null,
+    device.data?.role ?? null,
     bindings.data.entries.map((entry) => entry.capName),
   )
 }

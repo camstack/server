@@ -36,14 +36,20 @@ export function ConnectedPlugCard({
   const t = useUiText()
   const client = useTrpcClient()
   const dev = useDeviceProxy(client, deviceId)
-  const { common, actions, deviceType, fail, succeed } = useCardCommon({ deviceId, canActuate })
+  const { common, actions, deviceType, role, fail, succeed } = useCardCommon({
+    deviceId,
+    canActuate,
+  })
   const slice = useDeviceStateSlice(dev?.state.switch)
   const run = useDeviceStateSlice(dev?.timedRun === undefined ? undefined : dev.state.timedRun)
-  const { display, applyOptimisticAction } = useOptimisticSlice(slice, { enabled: optimistic })
+  const { display, applyOptimisticAction } = useOptimisticSlice(slice, {
+    enabled: optimistic,
+  })
   const cap = dev?.switch
   if (cap === undefined || display === undefined) return null
 
-  const limit = deviceType !== null && isDeviceType(deviceType) ? timedRunLimitOf(deviceType) : null
+  const limit =
+    deviceType !== null && isDeviceType(deviceType) ? timedRunLimitOf(deviceType, role) : null
   const timedRun = dev?.timedRun
   const timer: PlugTimer | null =
     timedRun === undefined || run === undefined || limit === null || limit.unit !== 'min'

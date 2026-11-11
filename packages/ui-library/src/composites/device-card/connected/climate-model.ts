@@ -5,8 +5,10 @@
  * pinned by a spec without a device.
  */
 import {
+  CLIMATE_ROLES,
+  climateRoleOf as deviceClimateRoleOf,
   type ClimateControlStatus,
-  DeviceType,
+  DeviceRole,
   type HeatingValveStatus,
   type HvacMode,
 } from '@camstack/types'
@@ -31,7 +33,8 @@ export interface ClimateCommands {
 }
 
 export interface ClimateModelInput {
-  readonly deviceType: string | null
+  /** The device's role (D1033): which kind of climate device it is. */
+  readonly role: string | null
   /** Undefined when the device binds no `climate-control`. */
   readonly climate: ClimateControlStatus | undefined
   /** Undefined when the device binds no `heating-valve`; null until it reports. */
@@ -53,12 +56,26 @@ const DEFAULT_MIN = 16
 const DEFAULT_MAX = 30
 const DEFAULT_STEP = 0.5
 
-/** What draws the heat or the cold, from what the device IS and binds. */
-export function climateRoleOf(deviceType: string | null, hasValve: boolean): ClimateRole {
-  if (hasValve) return 'radiator'
-  if (deviceType === DeviceType.Thermostat) return 'thermostat'
-  if (deviceType === DeviceType.Heater) return 'heater'
-  return 'ac'
+/** The card's glyph for each climate device role (D1033). */
+const CARD_ROLE: Readonly<Record<string, ClimateRole>> = {
+  [DeviceRole.ClimateAc]: 'ac',
+  [DeviceRole.ClimateThermostat]: 'thermostat',
+  [DeviceRole.ClimateFloor]: 'floor',
+  [DeviceRole.ClimateRadiator]: 'radiator',
+  [DeviceRole.ClimateHeater]: 'heater',
+  [DeviceRole.ClimateHeatPumpCircuit]: 'hpcircuit',
+}
+
+/**
+ * What draws the heat or the cold, from the device's ROLE. A bound valve
+ * makes a plain thermostat (or an unset role) a radiator; a role the operator
+ * named (floor, heat pump circuit, ac...) is kept.
+ */
+export function climateRoleOf(role: string | null | undefined, hasValve: boolean): ClimateRole {
+  const named = role !== null && role !== undefined && CLIMATE_ROLES.some((r) => r === role)
+  const resolved = deviceClimateRoleOf(role)
+  if (hasValve && (!named || resolved === DeviceRole.ClimateThermostat)) return 'radiator'
+  return CARD_ROLE[resolved] ?? 'thermostat'
 }
 
 const titled = (id: string): string =>
@@ -88,13 +105,10 @@ export function climateRangeOf(status: ClimateControlStatus, canSet: boolean): C
 }
 
 /** A valve that only reports: no setpoint, no mode, no power. */
-function valveOnlyModel(
-  deviceType: string | null,
-  valve: HeatingValveStatus | null,
-): ClimateSceneModel {
+function valveOnlyModel(role: string | null, valve: HeatingValveStatus | null): ClimateSceneModel {
   const position = valve?.position ?? null
   return {
-    role: climateRoleOf(deviceType, true),
+    role: climateRoleOf(role, true),
     on: true,
     canPower: false,
     activity: position === null ? 'unknown' : position > 0 ? 'heat' : 'idle',
@@ -116,9 +130,9 @@ function valveOnlyModel(
 
 /** Null when the device declares neither capability: there is no climate card to draw. */
 export function climateModelOf(input: ClimateModelInput): ClimateSceneModel | null {
-  const { climate, valve, commands, deviceType } = input
+  const { climate, valve, commands, role } = input
   const hasValve = valve !== undefined
-  if (climate === undefined) return hasValve ? valveOnlyModel(deviceType, valve) : null
+  if (climate === undefined) return hasValve ? valveOnlyModel(role, valve) : null
 
   const on = climate.mode !== 'off'
   const modes = climate.availableModes.filter((m) => m !== 'off')
@@ -132,7 +146,7 @@ export function climateModelOf(input: ClimateModelInput): ClimateSceneModel | nu
       current !== null &&
       target < current)
   return {
-    role: climateRoleOf(deviceType, hasValve),
+    role: climateRoleOf(role, hasValve),
     on,
     canPower: true,
     activity: deriveClimateActivity({ on, cooling, target, current, range }),

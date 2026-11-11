@@ -1,36 +1,59 @@
-import { DeviceType } from '@camstack/types'
+import {
+  CLIMATE_ROLES,
+  DeviceRole,
+  DeviceType,
+  TIMED_RUN_HEATER_LIMIT,
+  timedRunLimitOf,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { climateRoleOf } from '../connected/climate-model'
 import { connectedCardKindOf } from '../connected/ConnectedDeviceCard'
 import { defaultUiText } from '../../../contexts/ui-text'
 import { coarseDuration } from '../connected/coarse-duration'
 
-describe('connectedCardKindOf — a card only for what the device IS and binds', () => {
+describe('connectedCardKindOf — a card only for what the device IS (type + role) and binds', () => {
   it('draws a switch that binds the switch cap as a plug', () => {
-    expect(connectedCardKindOf(DeviceType.Switch, ['switch', 'power-meter'])).toBe('plug')
-    expect(connectedCardKindOf(DeviceType.Switch, ['power-meter'])).toBeNull()
+    expect(connectedCardKindOf(DeviceType.Switch, null, ['switch', 'power-meter'])).toBe('plug')
+    expect(connectedCardKindOf(DeviceType.Switch, null, ['power-meter'])).toBeNull()
   })
 
-  it('draws a thermostat or an air conditioner that binds climate-control as climate', () => {
-    expect(connectedCardKindOf(DeviceType.Thermostat, ['climate-control'])).toBe('climate')
-    expect(connectedCardKindOf(DeviceType.Climate, ['climate-control'])).toBe('climate')
-    expect(connectedCardKindOf(DeviceType.Climate, ['switch'])).toBeNull()
+  it('draws a heater (switch + switch-heater) as a plug, with its timed run', () => {
+    expect(
+      connectedCardKindOf(DeviceType.Switch, DeviceRole.SwitchHeater, ['switch', 'timed-run']),
+    ).toBe('plug')
+    expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchHeater)).toBe(TIMED_RUN_HEATER_LIMIT)
+    expect(timedRunLimitOf(DeviceType.Switch, null)).toBeNull()
+  })
+
+  it('draws every climate role that binds climate-control as climate', () => {
+    for (const role of CLIMATE_ROLES)
+      expect(connectedCardKindOf(DeviceType.Climate, role, ['climate-control'])).toBe('climate')
+    expect(connectedCardKindOf(DeviceType.Climate, null, ['climate-control'])).toBe('climate')
+    expect(connectedCardKindOf(DeviceType.Climate, null, ['switch'])).toBeNull()
   })
 
   it('leaves every other type to the hero it already has', () => {
-    expect(connectedCardKindOf(DeviceType.Siren, ['switch'])).toBeNull()
-    expect(connectedCardKindOf(DeviceType.Light, ['switch'])).toBeNull()
-    expect(connectedCardKindOf(null, ['switch', 'climate-control'])).toBeNull()
+    expect(connectedCardKindOf(DeviceType.Siren, null, ['switch'])).toBeNull()
+    expect(connectedCardKindOf(DeviceType.Light, null, ['switch'])).toBeNull()
+    expect(connectedCardKindOf(null, null, ['switch', 'climate-control'])).toBeNull()
   })
 })
 
-describe('climateRoleOf', () => {
-  it('reads the role from the type, and a bound valve makes it a radiator', () => {
-    expect(climateRoleOf(DeviceType.Thermostat, false)).toBe('thermostat')
-    expect(climateRoleOf(DeviceType.Thermostat, true)).toBe('radiator')
-    expect(climateRoleOf(DeviceType.Heater, false)).toBe('heater')
-    expect(climateRoleOf(DeviceType.Climate, false)).toBe('ac')
-    expect(climateRoleOf(null, false)).toBe('ac')
+describe('climateRoleOf — the card reads the device ROLE', () => {
+  it('maps every climate role to its card role', () => {
+    expect(climateRoleOf(DeviceRole.ClimateThermostat, false)).toBe('thermostat')
+    expect(climateRoleOf(DeviceRole.ClimateAc, false)).toBe('ac')
+    expect(climateRoleOf(DeviceRole.ClimateFloor, false)).toBe('floor')
+    expect(climateRoleOf(DeviceRole.ClimateRadiator, false)).toBe('radiator')
+    expect(climateRoleOf(DeviceRole.ClimateHeater, false)).toBe('heater')
+    expect(climateRoleOf(DeviceRole.ClimateHeatPumpCircuit, false)).toBe('hpcircuit')
+  })
+
+  it('a climate device with no role is a thermostat, and a bound valve makes it a radiator', () => {
+    expect(climateRoleOf(null, false)).toBe('thermostat')
+    expect(climateRoleOf(null, true)).toBe('radiator')
+    expect(climateRoleOf(DeviceRole.ClimateThermostat, true)).toBe('radiator')
+    expect(climateRoleOf(DeviceRole.ClimateFloor, true)).toBe('floor')
   })
 })
 

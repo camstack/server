@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device card reads a climate device's kind and a heater from the device role, so a heater switch gets the plug card with its timed run and every climate role gets its own illustration.
+
 ## [1.2.425] - 2026-11-11
 
 ### Added
