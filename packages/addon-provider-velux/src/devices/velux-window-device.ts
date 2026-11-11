@@ -45,7 +45,7 @@ export class VeluxWindowDevice extends BaseDevice<typeof veluxWindowSchema> {
       },
       {
         stableIdSuffix: 'rain',
-        // The role is stamped from THIS spec on every spawn (restore included); the
+        // The role is stamped from THIS spec on the first spawn only (like the name); the
         // child constructor's `role` option only sets the in-memory field.
         meta: {
           type: DeviceType.Sensor,

@@ -2,8 +2,8 @@
  * Identity (name, room, type, role, hidden, icon and the rest of the display
  * override). Every value is edited here and only here. Writes wait for the
  * page's one Save — the same footer the quick-detail modal uses. Role is
- * shown, not edited, on a spawned accessory child (`roleIsProviderOwned`).
- * Type is read-only.
+ * editable like the name, spawned accessory children included: the provider's
+ * role is only the first value. Type is read-only.
  */
 import type { DeviceInfo } from '@camstack/types'
 import {
@@ -22,7 +22,7 @@ import { EditableNameRow } from '../overview-adapters/shared/EditableNameRow'
 import { LocationRow } from '../overview-adapters/shared/LocationRow'
 import { InfoRow } from '../overview-adapters/shared/overview-primitives'
 import { IdentityDisplayFields } from './IdentityDisplayFields'
-import { isKnownRole, roleIsProviderOwned, roleOptions } from './identity-model'
+import { isKnownRole, roleOptions } from './identity-model'
 
 export interface IdentityRowProps {
   readonly device: DeviceInfo
@@ -88,7 +88,7 @@ export function IdentityRow({ device }: IdentityRowProps): ReactNode {
           label={t('customize.identity.role')}
           layout="stacked"
           value={
-            roleIsProviderOwned(device) || !bound ? (
+            !bound ? (
               <span>{roleLabel(role, t('customize.identity.noRole'), uiText)}</span>
             ) : (
               <Select

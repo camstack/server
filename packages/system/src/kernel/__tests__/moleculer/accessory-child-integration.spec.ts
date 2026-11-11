@@ -2,6 +2,9 @@
  * A spawned accessory child inherits its parent's integrationId unless its
  * spec names one. Without it, accessories of a hub-child camera showed under
  * the addon's default integration. Through the real kernel reconcile.
+ *
+ * Role is seeded like the name: on the FIRST spawn only, so an operator's
+ * role survives a respawn.
  */
 import type {
   AccessoryChildSpec,
@@ -51,21 +54,33 @@ function childDevice(ctx: { id: number; stableId: string }): IDevice {
   return device as unknown as IDevice
 }
 
-function spec(suffix: string, integrationId?: string): AccessoryChildSpec {
+interface SpecExtras {
+  readonly integrationId?: string
+  readonly role?: string
+}
+
+function spec(suffix: string, extras: SpecExtras = {}): AccessoryChildSpec {
   return {
     stableIdSuffix: suffix,
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- enum value in a test double
     meta: {
       type: 'sensor' as DeviceType,
       name: suffix,
-      ...(integrationId ? { integrationId } : {}),
+      ...(extras.integrationId ? { integrationId: extras.integrationId } : {}),
+      ...(extras.role ? { role: extras.role } : {}),
     },
     config: {},
     factory: (ctx) => childDevice(ctx),
   }
 }
 
-async function spawn(specs: AccessoryChildSpec[]): Promise<Map<string, unknown>> {
+/** What `loadMeta` answers for a child: null = brand new row. */
+type ChildMeta = Readonly<Record<string, unknown>> | null
+
+async function spawn(
+  specs: AccessoryChildSpec[],
+  childMeta: ChildMeta = null,
+): Promise<Map<string, unknown>> {
   const applied = new Map<string, unknown>()
   let next = 9200
   const ids = new Map<string, number>()
@@ -97,7 +112,7 @@ async function spawn(specs: AccessoryChildSpec[]): Promise<Map<string, unknown>>
           if (method === 'loadMeta') {
             return Reflect.get(Object(input), 'deviceId') === PARENT_ID
               ? { integrationId: 'int_hub' }
-              : null
+              : childMeta
           }
           if (method === 'applyInitialMeta') {
             applied.set(String(Reflect.get(Object(input), 'deviceId')), input)
@@ -135,7 +150,26 @@ describe('accessory child integration', () => {
   })
 
   it('an explicit spec integrationId wins', async () => {
-    const applied = await spawn([spec('siren', 'int_other')])
+    const applied = await spawn([spec('siren', { integrationId: 'int_other' })])
     expect([...applied.values()].map(integrationOf)).toEqual(['int_other'])
+  })
+})
+
+const roleOf = (m: unknown): unknown => Reflect.get(Object(m), 'role')
+const hasRole = (m: unknown): boolean => Object.hasOwn(Object(m), 'role')
+
+describe('accessory child role — seeded like the name', () => {
+  it("a first spawn writes the provider's role", async () => {
+    const applied = await spawn([spec('awning', { role: 'cover-awning' })])
+    expect([...applied.values()].map(roleOf)).toEqual(['cover-awning'])
+  })
+
+  it("a respawn leaves the operator's role alone", async () => {
+    // The row exists and was renamed (not the placeholder): not a first spawn.
+    const applied = await spawn([spec('awning', { role: 'cover-awning' })], {
+      name: 'Markise',
+      role: 'cover-shutter',
+    })
+    expect([...applied.values()].map(hasRole)).toEqual([false])
   })
 })

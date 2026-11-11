@@ -1010,13 +1010,13 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     expect(calls.some((c) => c.method === 'setRole')).toBe(false)
   })
 
-  it('spawnAccessoryChild re-applies spec-derived meta (type/role/integrationId/linkDeviceId) on restore without clobbering operator-renamed name', async () => {
-    // Regression test for: spec-derived fields (type, role, integrationId, linkDeviceId)
+  it('spawnAccessoryChild re-applies spec-derived meta (type/integrationId/linkDeviceId) on restore without clobbering operator name, location or role', async () => {
+    // Regression test for: spec-derived fields (type, integrationId, linkDeviceId)
     // were gated to the first-spawn branch. On restore (existingMeta exists AND
     // name !== childStableId, i.e. operator renamed it), the branch was SKIPPED →
-    // those fields stayed stale/null. This test verifies the fix: spec-derived
-    // fields fire on EVERY spawn (including restore), while setName/setLocation
-    // are NOT called on restore (operator edits must be preserved).
+    // those fields stayed stale/null. Spec-derived fields fire on EVERY spawn
+    // (including restore); name, location and role are first-spawn-only, so the
+    // operator's edits survive a restore.
 
     const childSpec: import('@camstack/types').AccessoryChildSpec = {
       stableIdSuffix: 'acc-sensor',
@@ -1140,11 +1140,11 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
     expect(applyInput['type']).toBe('sensor')
     expect(applyInput['integrationId']).toBe('int_restore')
     expect(applyInput['linkDeviceId']).toBe(42)
-    expect(applyInput['role']).toBe('numeric-sensor')
 
     // OPERATOR-EDITABLE fields must be ABSENT on restore (do not clobber edits):
     expect('name' in applyInput).toBe(false)
     expect('location' in applyInput).toBe(false)
+    expect('role' in applyInput).toBe(false)
 
     // And no per-field setters survive (all collapsed into applyInitialMeta).
     expect(callsWithRestore.some((c) => c.method === 'setName')).toBe(false)

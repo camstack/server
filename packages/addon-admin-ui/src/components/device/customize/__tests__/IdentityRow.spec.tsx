@@ -92,9 +92,12 @@ describe('IdentityRow (spec U9)', () => {
     expect(setRole).toHaveBeenCalledWith({ deviceId: 585, role: null })
   })
 
-  it('a provider-owned role is shown, not edited', () => {
-    render(wrap(<IdentityRow device={{ ...DEVICE, linkDeviceId: 12 }} />))
-    expect(screen.queryByRole('combobox', { name: 'Role' })).toBeNull()
+  it("a spawned accessory child's role is edited like its name", () => {
+    const child = { ...DEVICE, id: 2048, linkDeviceId: 2044, role: 'doorbell' }
+    render(wrap(<IdentityRow device={child} />, child))
+    selectOption(screen.getByRole('combobox', { name: 'Role' }), '')
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect(setRole).toHaveBeenCalledWith({ deviceId: 2048, role: null })
   })
 
   it('hidden waits for Save and writes the one display override', () => {

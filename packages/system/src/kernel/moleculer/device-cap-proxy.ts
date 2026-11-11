@@ -910,16 +910,16 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
     // reconciling a many-entity container). Two field groups, same gating
     // semantics as before:
     //
-    //  - FIRST-SPAWN-ONLY operator-editable fields (name, location): a
-    //    restore must NOT clobber a name/location the operator changed after
-    //    first spawn, so these are only included when the row is brand new
-    //    (no existing meta, or its name still equals the placeholder
-    //    childStableId).
-    //  - EVERY-SPAWN spec-derived fields (type, integrationId, linkDeviceId,
-    //    role): computed by the provider's getAccessoryChildren() from the
-    //    upstream mapping and NOT operator-editable. Re-applied on every spawn
-    //    (incl. restore) so the meta reflects the current spec (e.g. a restored
-    //    sensor gets its role back after a reboot). Idempotent.
+    //  - FIRST-SPAWN-ONLY operator-editable fields (name, location, role): a
+    //    restore must NOT clobber a name/location/role the operator changed
+    //    after first spawn, so these are only included when the row is brand
+    //    new (no existing meta, or its name still equals the placeholder
+    //    childStableId). The provider's value is the initial one; a later
+    //    change of it by the provider does not reach an existing device.
+    //  - EVERY-SPAWN spec-derived fields (type, integrationId, linkDeviceId):
+    //    computed by the provider's getAccessoryChildren() from the upstream
+    //    mapping and NOT operator-editable. Re-applied on every spawn (incl.
+    //    restore) so the meta reflects the current spec. Idempotent.
     //
     // Always stamp the parent link. This is the STRUCTURAL marker that "this
     // child is an accessory managed by the parent's getAccessoryChildren() spec
@@ -939,9 +939,9 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       linkDeviceId,
       ...(isFirstSpawn && spec.meta.name !== undefined ? { name: spec.meta.name } : {}),
       ...(isFirstSpawn && spec.meta.location !== undefined ? { location: spec.meta.location } : {}),
+      ...(isFirstSpawn && spec.meta.role !== undefined ? { role: spec.meta.role } : {}),
       ...(spec.meta.type !== undefined ? { type: spec.meta.type } : {}),
       ...(integrationId !== undefined ? { integrationId } : {}),
-      ...(spec.meta.role !== undefined ? { role: spec.meta.role } : {}),
     }
     await callDeviceManager(api, 'applyInitialMeta', initialMeta).catch((err: unknown) => {
       opts.logger.warn('spawnAccessoryChild: applyInitialMeta pre-seed failed', {

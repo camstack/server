@@ -3,12 +3,7 @@
  * other key is kept — the identity draft writes the same object on Save — and
  * an override with nothing left is cleared (`null`).
  */
-import {
-  type DeviceDisplayOverride,
-  type DeviceInfo,
-  DeviceRole,
-  DeviceType,
-} from '@camstack/types'
+import { type DeviceDisplayOverride, DeviceRole, DeviceType } from '@camstack/types'
 
 export function displayWithHidden(
   display: DeviceDisplayOverride | undefined,
@@ -17,25 +12,6 @@ export function displayWithHidden(
   const { hidden: _previous, ...rest } = display ?? {}
   const next: DeviceDisplayOverride = hidden ? { ...rest, hidden: true } : rest
   return Object.keys(next).length === 0 ? null : next
-}
-
-/** The only field `roleIsProviderOwned` reads. */
-export type RoleAuthorityView = Pick<DeviceInfo, 'linkDeviceId'>
-
-/**
- * True when the device's PROVIDER re-applies its role, so an operator's
- * `setRole` would revert (D676 fix round 1, H1). `spawnAccessoryChild`
- * (device-cap-proxy) stamps `linkDeviceId` on EVERY accessory child it spawns
- * — its structural "managed by the parent's `getAccessoryChildren()` spec"
- * marker — and re-applies the spec's `role` through `applyInitialMeta` on
- * every spawn, restore included. A hub-adopted child carries a
- * `parentDeviceId` but never a `linkDeviceId`, and its role is durable.
- *
- * Conservative: a spec that names no role leaves the stored one alone, but
- * the UI cannot see the spec, so every spawned accessory child is read-only.
- */
-export function roleIsProviderOwned(device: RoleAuthorityView): boolean {
-  return typeof device.linkDeviceId === 'number'
 }
 
 const KNOWN_ROLES: ReadonlySet<string> = new Set(Object.values(DeviceRole))

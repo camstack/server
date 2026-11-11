@@ -93,6 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device templates gain the trunc and onoff filters; the migration API lets an addon read its own per-device settings and the aliases of named devices
 - The device manager records which optional capability methods each provider implements
 - A camera keeps its PTZ, reboot and two-way-audio features after a hub restart or while its agent is offline, until its own provider answers
+- A provider-spawned accessory device's role is set only when it is first created, like its name: a role the operator changes now survives restarts. A later role change by the integration does not reach an existing device (same as names).
 
 ### Removed
 
