@@ -12,6 +12,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { exportAlexaActions } from '../custom-actions.js'
+import { effectiveAlexaSettings, ExportAlexaAddon } from '../export-alexa.addon.js'
 import { maskSecretTail } from '../ingress-token.js'
 
 describe('maskSecretTail', () => {
@@ -110,9 +111,7 @@ describe('the status setup block — the address the operator types into the Ale
 })
 
 describe('effectiveAlexaSettings', () => {
-  it('never requires the ingress token in public mode, and keeps it in custom mode', async () => {
-    const { effectiveAlexaSettings } = await import('../export-alexa.addon.js')
-    const { ExportAlexaAddon } = await import('../export-alexa.addon.js')
+  it('never requires the ingress token in public mode, and keeps it in custom mode', () => {
     const base = (new ExportAlexaAddon() as unknown as { _config: Record<string, unknown> })._config
     const make = (skillMode: 'public' | 'custom') =>
       effectiveAlexaSettings({
