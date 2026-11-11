@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.834] - 2026-11-11
+
 ### Changed
+
 - Removed the retired device-discovery capability routes (deviceDiscovery.*) from the API.
 
 ## [1.2.833] - 2026-11-11

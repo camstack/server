@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.422] - 2026-11-11
+
 ### Changed
+
 - Removed the unused DiscoveryPanel composite (adoption goes through the integration adoption modal).
 
 ## [1.2.421] - 2026-11-11

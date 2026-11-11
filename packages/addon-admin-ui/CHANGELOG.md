@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.640] - 2026-11-11
+
 ### Changed
+
 - An integration's page says "<addon> is not running: start it first" under its On/Off switch when the switch is refused because the addon is down
 - The device page offers a History tab only when the device has recorded history; a gateway no longer opens an empty one
 
