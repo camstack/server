@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.425] - 2026-11-11
+
 ### Added
 
 - The automation row picker offers a 'Time is' condition with its own icon.
 - Condition picker: the "Started by" condition has its icon
+
 ### Changed
+
 - The device hero card can leave out its own name when the page around it already shows it
 - The device hero card and the plug and climate device card can leave out their own name when the page around them already shows it
 

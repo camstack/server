@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.839] - 2026-11-11
+
 ### Added
 
 - Automations and step conditions can gate on the time of day with a new 'time is' condition, read on the site clock.
