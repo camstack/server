@@ -77,12 +77,12 @@ collection list shells.
 **A page about the integrations of one kind** is an `IntegrationHub`: the
 header's pills are the context switcher (one integration on screen, its id in
 `?integration=`), and the body is usually `AddonIntegrationBody`. Identity →
-Authentication (`pages/system/Authentication.tsx`) is the smallest complete
-example: it lists the providers of the `auth-provider` and `user-passkeys`
-capabilities, and its only page-specific contribution is an About panel.
-Identity → Tokens & sessions (`pages/system/Access.tsx`) is the same base
-over things that are not addons — credential kinds. See "Integration pages"
-below for the whole contract.
+Tokens & sessions (`pages/system/Access.tsx`) uses that address over things
+that are not addons — credential kinds — as pill tabs, not the hub component.
+A collection of connections is one `InstancesTable` instead: Identity →
+Authentication (`pages/system/Authentication.tsx`) is that table over
+`login-method`, the same component as Connectivity → Brokers, with the sign-in
+policy card under it. See "A collection of connections is one `InstancesTable`".
 
 **A managed list** is a `DataTable` — never a stack of Cards for named
 items the operator compares by column. `DeviceList` is the only other table
@@ -281,7 +281,7 @@ one instance bare and several as one named section each, passes the instance id 
 read and write, shows a disabled instance as disabled, and treats an unanswered instance
 list as loading or unknown, never as "nothing exposed".
 
-The integration pages (Connectivity, Remote Access, Mesh, TURN, Authentication,
+The integration pages (Connectivity, Remote Access, Mesh, TURN,
 Log destinations) were a third such table until 2026-10-08 — `AddonCollectionPage`,
 one collapsible row per addon. They are a pill selector now; see
 "Integration pages" below.
@@ -468,8 +468,9 @@ lists the integrations of a kind. Connectivity (`/system/integrations`) is an
 `AdminSectionedPage` with one section per provider kind (Exporters, Email,
 Brokers, Calendars); each section embeds a single-group `IntegrationHub`.
 Other hubs: Network → Remote Access / Mesh Networks / TURN Servers, Identity →
-Authentication, Identity → Tokens & sessions (credential kinds, not addons) and
-Logs → Destinations.
+Tokens & sessions (credential kinds, not addons) and Logs → Destinations.
+Identity → Authentication is not one of them: it is the `login-method`
+`InstancesTable` plus the sign-in policy card.
 
 - **Header.** `AdminPage`'s usual title + subtitle, and its `nav` slot carries
   the pills: one per integration, the addon's own `assets/icon.svg` next to its
@@ -482,8 +483,8 @@ Logs → Destinations.
   `AddonIntegrationBody` is the same for every addon-backed one: a slim status
   strip (Enabled badge, page badges, addon id; primary action, Enable/Disable,
   Restart), an optional unheaded `lead` block, the page's own panels
-  (Connectivity → Connections, Mesh → Status, TURN → Discovered ICE servers,
-  Authentication → About), **Settings**, **Activity**, and last the panels a
+  (Connectivity → Connections, Mesh → Status, TURN → Discovered ICE servers),
+  **Settings**, **Activity**, and last the panels a
   page marks `placement: 'end'`. Settings and Activity stay on one scroll on
   purpose — the operator edits a setting while watching what the addon logs
   about it.
@@ -638,7 +639,8 @@ tunnel state and Start/Stop in the rows this way).
 
 Do not write a page-local list of connections or a raw `<table>` for one. Two guards keep this:
 `scripts/check-one-instances-list.ts` (no hub over the same cap) and
-`scripts/check-no-stacked-provider-lists.ts` (no hub and table in one file, no provider fetch
+`scripts/check-no-stacked-provider-lists.ts` (no hub and table in one file, no
+`<IntegrationHub>` over a function cap that has `integration-instances` providers, no provider fetch
 beside the table, no `AddonIntegrationBody` / enable switch outside the owner dirs, no
 hand-written addon or package id, no per-provider card under the table, no `omitSectionIds` in a
 page). Its baseline (`scripts/no-stacked-provider-lists-baseline.json`) only shrinks; each entry

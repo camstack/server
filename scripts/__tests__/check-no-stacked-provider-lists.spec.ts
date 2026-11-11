@@ -43,6 +43,25 @@ describe('check-no-stacked-provider-lists', () => {
     expect(stackedListBreaches(HUB_OVER_TABLE).join()).toContain('IntegrationHub')
   })
 
+  it('flags an IntegrationHub over a function cap that keeps integration-instances, without a table', () => {
+    const caps = new Set(['login-method'])
+    const hub = file(
+      'pages/system/Authentication.tsx',
+      '<IntegrationHub groups={g} capName="login-method" />',
+    )
+    expect(stackedListBreaches(hub, caps).join()).toContain('login-method')
+    expect(stackedListBreaches(hub, new Set(['smtp-provider']))).toEqual([])
+    expect(
+      stackedListBreaches(
+        file(
+          'components/integration-hub/IntegrationHub.tsx',
+          '<IntegrationHub cap="login-method" />',
+        ),
+        caps,
+      ),
+    ).toEqual([])
+  })
+
   it('flags providers listed twice beside an InstancesTable', () => {
     expect(stackedListBreaches(PROVIDERS_TWICE).join()).toContain(
       'useAddonsListCapabilityProviders',

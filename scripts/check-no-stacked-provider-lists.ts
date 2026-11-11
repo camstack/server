@@ -20,6 +20,9 @@
  * 6. `omitSectionIds` written in a page: one surface hand-excluding what another one draws.
  * 7. `buildAddonDisplayNameMap` in a page or component outside the instances table: a per-addon name
  *    map for pill rows the table replaces.
+ * 8. `<IntegrationHub>` in a page over a function cap that an `integration-instances` kind names
+ *    (`functionCap:` anywhere in the scanned sources): the hub stacked on the same collection,
+ *    even when the file no longer also renders `InstancesTable` (#504).
  *
  * Every file that matches today is in `scripts/no-stacked-provider-lists-baseline.json`, with the
  * reason and the page work that deletes it. The baseline only shrinks; a listed file that no longer
@@ -59,7 +62,10 @@ const OWNER_DIRS: readonly string[] = [
 ]
 
 const HUB_RE = /\bIntegrationHub\b/
+/** A rendered hub, not a comment that names the component. */
+const HUB_TAG_RE = /<IntegrationHub\b/
 const TABLE_RE = /\bInstancesTable\b/
+const FUNCTION_CAP_RE = /functionCap:\s*['"]([^'"]+)['"]/g
 const PROVIDER_LIST_RE = /\buseAddonsListCapabilityProviders\b/
 const SWITCH_RE =
   /\b(?:AddonIntegrationBody|EnableToggleButton|useAddonsSetCapabilityProviderEnabled|InstanceSwitchCell)\b/
@@ -87,8 +93,27 @@ function inOwnerDir(file: SourceFile): boolean {
   return OWNER_DIRS.some((dir) => file.path.startsWith(dir))
 }
 
+/** Function caps an `integration-instances` kind names (`functionCap: '…'`). */
+export function instanceFunctionCaps(sources: readonly SourceFile[]): ReadonlySet<string> {
+  const caps = new Set<string>()
+  for (const file of sources) {
+    for (const match of file.text.matchAll(FUNCTION_CAP_RE)) {
+      const cap = match[1]
+      if (cap !== undefined && cap.length > 0) caps.add(cap)
+    }
+  }
+  return caps
+}
+
+function quotesCap(text: string, cap: string): boolean {
+  return text.includes(`'${cap}'`) || text.includes(`"${cap}"`)
+}
+
 /** The rules a file breaks, as short sentences. Empty when it is clean. */
-export function stackedListBreaches(file: SourceFile): string[] {
+export function stackedListBreaches(
+  file: SourceFile,
+  instanceCaps: ReadonlySet<string> = new Set(),
+): string[] {
   if (!inScope(file)) return []
   const owner = inOwnerDir(file) || DECLARATION_FILES.includes(file.path)
   const text = file.text
@@ -96,6 +121,14 @@ export function stackedListBreaches(file: SourceFile): string[] {
   const out: string[] = []
   if (!owner && HUB_RE.test(text) && hasTable) {
     out.push('an IntegrationHub pill row and an InstancesTable in one file')
+  }
+  if (!owner && HUB_TAG_RE.test(text)) {
+    const named = [...instanceCaps].filter((cap) => quotesCap(text, cap)).sort()
+    if (named.length > 0) {
+      out.push(
+        `an IntegrationHub over a function cap with integration-instances providers (${named.join(', ')})`,
+      )
+    }
   }
   if (!owner && hasTable && PROVIDER_LIST_RE.test(text)) {
     out.push('an InstancesTable and a second list of providers (useAddonsListCapabilityProviders)')
@@ -121,10 +154,11 @@ export function stackedListBreaches(file: SourceFile): string[] {
 export function findViolations(
   sources: readonly SourceFile[],
   baseline: FamilyBaseline,
+  instanceCaps: ReadonlySet<string> = instanceFunctionCaps(sources),
 ): Violation[] {
   const findings: Finding[] = []
   for (const file of sources) {
-    const breaches = stackedListBreaches(file)
+    const breaches = stackedListBreaches(file, instanceCaps)
     if (breaches.length === 0) continue
     findings.push({
       key: file.path,
