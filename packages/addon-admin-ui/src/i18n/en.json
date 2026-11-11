@@ -11341,7 +11341,7 @@
       "pickDevice": "Pick a device",
       "pickDeviceFirst": "Pick a device first",
       "roundDevice": "On the device of this round",
-      "roundHint": "Runs on each device of the loop in turn. Only the commands all of them have are offered.",
+      "roundHint": "Runs on each device of the loop in turn. Only the commands all of them have are offered; a command whose choices belong to one device (its presets, for example) is not.",
       "pickLoopDevicesFirst": "Pick the devices of the loop first",
       "noCommonCommands": "The devices of this loop share no command."
     },

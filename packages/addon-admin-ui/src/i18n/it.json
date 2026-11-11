@@ -11363,7 +11363,7 @@
       "pickDevice": "Scegli un dispositivo",
       "pickDeviceFirst": "Scegli prima un dispositivo",
       "roundDevice": "Sul dispositivo di questo giro",
-      "roundHint": "Viene eseguito a turno su ogni dispositivo del ciclo. Sono proposti solo i comandi che hanno tutti.",
+      "roundHint": "Viene eseguito a turno su ogni dispositivo del ciclo. Sono proposti solo i comandi che hanno tutti; un comando le cui scelte appartengono a un solo dispositivo (i suoi preset, per esempio) non lo è.",
       "pickLoopDevicesFirst": "Scegli prima i dispositivi del ciclo",
       "noCommonCommands": "I dispositivi di questo ciclo non hanno comandi in comune."
     },
