@@ -4,12 +4,12 @@
 
 # Guards
 
-241 repository guards: 236 in `scripts/`,
+242 repository guards: 237 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (231)
+## Enforced by CI checks (232)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -181,6 +181,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-patches-reach-production.ts` | A patch is only worth something if it reaches production. (D478) ## The failure this catches `patches/` is applied by `patch-package` on the repo root's `postinstall`, which runs in a developer's and a CI runner's `node_modules` and nowh… |
 | `scripts/check-physical-tables-ratchet.ts` | Physical-table ratchet — **the set of SQLite tables the code can create is a committed list, and it only shrinks** (D901). |
 | `scripts/check-pkg-allowlist.ts` | Privileged-helper allowlist drift (D326). |
+| `scripts/check-power-hint.ts` | GUARD: `switch` is the one on/off control of a device (#462 P1). |
 | `scripts/check-prune-settings-consumed.ts` | Prune-window guard — **every configurable prune window is declared, rendered and READ.** ## The failure this catches This repo has shipped four knobs that decided nothing: D62's per-family retention windows, `zoneMembershipMinOverlap`, `… |
 | `scripts/check-public-docs-private-data.ts` | Public-working-docs guard — design notes carry no private data. |
 | `scripts/check-pull-demuxer-open.ts` | Pull-dial guard — the session-decode worker opens its demuxer through ONE seam, and that seam is the one that skips the redundant stream-info probe. |

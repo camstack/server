@@ -1,4 +1,5 @@
 import {
+  registerPowerSwitch,
   climateControlCapability,
   ingestReading,
   type DeviceContext,
@@ -127,6 +128,7 @@ export class HaClimateDevice extends HaBaseChildDevice {
       },
     }
     this.ctx.registerNativeCap(climateControlCapability, provider)
+    registerPowerSwitch(this, climateControlCapability, provider)
   }
 }
 

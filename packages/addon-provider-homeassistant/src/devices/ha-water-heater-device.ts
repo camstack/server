@@ -1,4 +1,5 @@
 import {
+  registerPowerSwitch,
   waterHeaterCapability,
   type DeviceContext,
   type InferNativeProvider,
@@ -75,6 +76,7 @@ export class HaWaterHeaterDevice extends HaBaseChildDevice {
       },
     }
     this.ctx.registerNativeCap(waterHeaterCapability, provider)
+    registerPowerSwitch(this, waterHeaterCapability, provider)
   }
 }
 

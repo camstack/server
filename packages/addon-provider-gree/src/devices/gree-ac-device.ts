@@ -1,5 +1,6 @@
 import { type AcDevice, getAcCapabilities } from '@apocaliss92/nodegree'
 import {
+  registerPowerSwitch,
   BaseDevice,
   type ClimateControlStatus,
   climateControlCapability,
@@ -299,6 +300,7 @@ export class GreeAcDevice extends BaseDevice<typeof greeAcSchema> {
       },
     }
     this.ctx.registerNativeCap(climateControlCapability, climateProvider)
+    registerPowerSwitch(this, climateControlCapability, climateProvider)
     this.runtimeState.setCapState(CLIMATE_CAP, this.applyClimateFilters(CLIMATE_COLD_START))
 
     const fanProvider: InferNativeProvider<typeof fanControlCapability> = {

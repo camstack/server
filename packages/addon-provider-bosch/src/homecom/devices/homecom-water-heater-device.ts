@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import {
+  registerPowerSwitch,
   BaseDevice,
   waterHeaterCapability,
   type DeviceContext,
@@ -83,5 +84,6 @@ export class HomeComWaterHeaterDevice extends BaseDevice<typeof homeComWaterHeat
       },
     }
     this.ctx.registerNativeCap(waterHeaterCapability, provider)
+    registerPowerSwitch(this, waterHeaterCapability, provider)
   }
 }

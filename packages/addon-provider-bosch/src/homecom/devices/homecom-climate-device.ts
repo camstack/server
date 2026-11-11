@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import {
+  registerPowerSwitch,
   BaseDevice,
   climateControlCapability,
   type ClimateControlStatus,
@@ -119,6 +120,7 @@ export class HomeComClimateDevice extends BaseDevice<typeof homeComClimateSchema
       },
     }
     this.ctx.registerNativeCap(climateControlCapability, provider)
+    registerPowerSwitch(this, climateControlCapability, provider)
   }
 }
 

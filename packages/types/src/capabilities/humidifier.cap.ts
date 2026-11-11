@@ -50,6 +50,7 @@ export const humidifierCapability = {
   deviceNative: true,
   mode: 'singleton',
   deviceTypes: [DeviceType.Humidifier],
+  power: { kind: 'field', field: 'on', set: 'setOn' },
   methods: {
     setOn: method(
       z.object({

@@ -1,4 +1,5 @@
 import {
+  registerPowerSwitch,
   mediaPlayerCapability,
   type DeviceContext,
   type InferNativeProvider,
@@ -156,6 +157,7 @@ export class HaMediaPlayerDevice extends HaBaseChildDevice {
       },
     }
     this.ctx.registerNativeCap(mediaPlayerCapability, provider)
+    registerPowerSwitch(this, mediaPlayerCapability, provider)
   }
 }
 

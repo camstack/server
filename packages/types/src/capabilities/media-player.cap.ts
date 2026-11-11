@@ -146,6 +146,13 @@ export const mediaPlayerCapability = {
   deviceNative: true,
   mode: 'singleton',
   deviceTypes: [DeviceType.MediaPlayer],
+  power: {
+    kind: 'methods',
+    field: 'state',
+    offValues: ['off', 'standby'],
+    on: 'turnOn',
+    off: 'turnOff',
+  },
   methods: {
     turnOn: optionalMethod(deviceOnly, z.void(), { kind: 'mutation', auth: 'protected' }),
     turnOff: optionalMethod(deviceOnly, z.void(), { kind: 'mutation', auth: 'protected' }),

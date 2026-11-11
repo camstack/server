@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Bosch Smart Home radiator valves and room climates are now climate devices with the radiator and thermostat roles; HomeCom heating circuits get the heat-pump circuit role.
+- Bosch HomeCom climate units and water heaters, and Bosch Smart Home room climate, now carry an on/off switch; turning it on restores the last mode.
 
 ## [0.1.51] - 2026-11-11
 

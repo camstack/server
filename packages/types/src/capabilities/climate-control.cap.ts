@@ -116,6 +116,13 @@ export const climateControlCapability = {
   deviceNative: true,
   mode: 'singleton',
   deviceTypes: [DeviceType.Climate],
+  power: {
+    kind: 'mode',
+    field: 'mode',
+    offValue: 'off',
+    set: 'setMode',
+    lastField: 'lastActiveMode',
+  },
   methods: {
     setMode: method(
       z.object({

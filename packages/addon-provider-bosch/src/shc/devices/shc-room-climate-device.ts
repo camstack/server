@@ -1,4 +1,5 @@
 import {
+  registerPowerSwitch,
   climateControlCapability,
   type ClimateControlStatus,
   type DeviceContext,
@@ -85,6 +86,7 @@ export class ShcRoomClimateDevice extends ShcBaseDevice {
       setSwingHorizontal: async () => this.unsupported('climate swing'),
     }
     this.ctx.registerNativeCap(climateControlCapability, provider)
+    registerPowerSwitch(this, climateControlCapability, provider)
     this.runtimeState.setCapState(CLIMATE_CAP, COLD_START)
   }
 

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Gree air conditioners carry the air-conditioner role.
+- A Gree air conditioner now carries an on/off switch; turning it on restores its last mode.
 
 ## [0.2.157] - 2026-11-10
 

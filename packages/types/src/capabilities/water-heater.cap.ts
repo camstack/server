@@ -53,6 +53,13 @@ export const waterHeaterCapability = {
   deviceNative: true,
   mode: 'singleton',
   deviceTypes: [DeviceType.WaterHeater],
+  power: {
+    kind: 'mode',
+    field: 'operationMode',
+    offValue: 'off',
+    set: 'setOperationMode',
+    lastField: 'lastActiveMode',
+  },
   methods: {
     setTargetTemp: method(
       z.object({

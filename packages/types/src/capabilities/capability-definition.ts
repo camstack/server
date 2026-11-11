@@ -665,6 +665,46 @@ export type ComposedMethodAnswer =
   /** Read one field of the composed slice. Unknown is a throw, never false (D393). */
   | { readonly kind: 'slice'; readonly field: string }
 
+/*
+ * How long a device may be run for (`switch.runFor`) is NOT here: it is the one
+ * type + role table of the timed run (`TIMED_RUN_LIMITS`), never a second copy.
+ */
+
+/** A boolean slice field and its setter, e.g. `humidifier.on` + `setOn({ on })`. */
+export interface PowerHintField {
+  readonly kind: 'field'
+  readonly field: string
+  readonly set: string
+}
+
+/**
+ * A state field read as on unless it is one of `offValues`, and two argument-
+ * less methods, e.g. `media-player.state` + `turnOn` / `turnOff`.
+ */
+export interface PowerHintMethods {
+  readonly kind: 'methods'
+  readonly field: string
+  readonly offValues: readonly string[]
+  readonly on: string
+  readonly off: string
+}
+
+/**
+ * A mode whose `offValue` is off, e.g. `climate-control.mode` + `setMode({ mode })`.
+ * On restores `lastField`, the last non-off mode kept in the same slice by
+ * `registerPowerSwitch`; with none it refuses (`no-last-mode`), never guesses.
+ */
+export interface PowerHintMode {
+  readonly kind: 'mode'
+  readonly field: string
+  readonly offValue: string
+  readonly set: string
+  readonly lastField: string
+}
+
+/** Which field and method of a cap are the device's own power (#462). */
+export type CapabilityPowerHint = PowerHintField | PowerHintMethods | PowerHintMode
+
 // ── Capability Definition ────────────────────────────────────────────
 
 /**
@@ -848,6 +888,14 @@ export interface CapabilityDefinition<
    * vendor providers carry NO contribution methods.
    */
   readonly deviceConfig?: DeviceConfigSpec
+  /**
+   * Which field and method of THIS cap are the device's own power (#462). The
+   * owner registers `switch` for such a device through `registerPowerSwitch`,
+   * which reads `switch.on` from this cap's slice and routes `setState` here.
+   * Behavioural metadata, so it lives here and only here (D4).
+   * `scripts/check-power-hint.ts` refuses another on/off field or setter.
+   */
+  readonly power?: CapabilityPowerHint
   /** For `scope: 'device'` caps — allowed device types. Omit → applies to every type. */
   readonly deviceTypes?: readonly DeviceType[]
   /**

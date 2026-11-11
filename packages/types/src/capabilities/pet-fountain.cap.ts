@@ -80,6 +80,7 @@ export const petFountainCapability = {
   deviceNative: true,
   mode: 'singleton',
   deviceTypes: [DeviceType.PetFountain],
+  power: { kind: 'field', field: 'pumpRunning', set: 'setPump' },
   methods: {
     /** Start or stop the pump. */
     setPump: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {

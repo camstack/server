@@ -1,4 +1,5 @@
 import {
+  registerPowerSwitch,
   humidifierCapability,
   type DeviceContext,
   type InferNativeProvider,
@@ -78,6 +79,7 @@ export class HaHumidifierDevice extends HaBaseChildDevice {
       },
     }
     this.ctx.registerNativeCap(humidifierCapability, provider)
+    registerPowerSwitch(this, humidifierCapability, provider)
   }
 }
 

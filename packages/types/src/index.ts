@@ -1428,6 +1428,21 @@ export {
   RUNTIME_STATE_REFRESH_MISS_COOLDOWN_MS,
 } from './device/runtime-state-helpers.js'
 export type { WireableField, WireableScalarKind } from './device/schema-fields.js'
+export type {
+  BuiltPowerSwitch,
+  PowerSwitchDevice,
+  PowerSwitchHost,
+  PowerSwitchHubApi,
+  PowerSwitchOwner,
+  PowerSwitchRefusal,
+} from './device/power-switch.js'
+export {
+  buildPowerSwitch,
+  powerOnFromSlice,
+  powerServedBy,
+  PowerSwitchRefusedError,
+  registerPowerSwitch,
+} from './device/power-switch.js'
 // Cap status schema → wireable leaf field enumerator (wiring UI field pickers)
 export {
   enumerateItemArrayFields,
