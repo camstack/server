@@ -86,6 +86,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-drain-listener-rearmed.ts` | Drain-listener guard (D618) — a one-shot drain listener may only be registered from the path that was REFUSED, never once at setup. |
 | `scripts/check-durable-state-declared.ts` | Durable-state guard — a NEW declared collection must say what class of fact it holds, and the duplicated durable primitives must not drift apart. |
 | `scripts/check-event-bus-usage.ts` | D11 event-bus guard — fail the build if any file OUTSIDE the kernel's event-bus module hand-rolls a raw cross-process event topic. |
+| `scripts/check-event-emitter-vocabulary.ts` | Every `event-emitter` provider declares its event vocabulary (D1044). |
 | `scripts/check-event-kind-coverage.ts` | Event-kind coverage guard — fail the build if an EVENTFUL sensor / control cap lacks an `EVENT_KIND_BY_CAP` (taxonomy) entry. |
 | `scripts/check-event-media-generation-url.ts` | event-media plane URLs that name an event owner MUST be able to carry the event's generation (`/g/<deviceId>/<recordAt>`), and slim / search emitters MUST mint through `mediaOwnerUrl` rather than a bare `${base}/${id}` that neither names… |
 | `scripts/check-export-coverage.ts` | Ecosystem-export coverage guard — a capability either exports, or someone wrote down why it does not. |

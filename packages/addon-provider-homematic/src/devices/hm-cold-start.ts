@@ -7,6 +7,7 @@ import type {
   MotionStatus,
   SwitchStatus,
 } from '@camstack/types'
+import { plainEventVocabulary } from '@camstack/types'
 import type { HmChannel } from 'nodehomematic'
 
 /**
@@ -89,7 +90,12 @@ export const HM_KEY_PRESS_SET: ReadonlySet<string> = new Set(HM_KEY_PRESS_DATAPO
 
 /** Cold-start event-emitter slice; vocabulary supplied per-device. */
 export function coldEventEmitter(eventTypes: readonly string[]): EventEmitterStatus {
-  return { eventTypes: [...eventTypes], lastEvent: null, eventCountSinceStart: 0 }
+  return {
+    eventTypes: [...eventTypes],
+    vocabulary: plainEventVocabulary(eventTypes),
+    lastEvent: null,
+    eventCountSinceStart: 0,
+  }
 }
 
 /**

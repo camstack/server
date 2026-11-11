@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 82 caps with 386 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 82 caps with 387 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -258,7 +258,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "do-not-disturb": [{"path":"enabled","valueType":"boolean"}],
   "doorbell": [{"path":"lastPressedAt","valueType":"number"}, {"path":"pressCountSinceStart","valueType":"number"}],
   "enum-sensor": [{"path":"value","valueType":"string"}, {"path":"timestamp","valueType":"boolean"}],
-  "event-emitter": [{"path":"lastEvent.deviceId","valueType":"number"}, {"path":"lastEvent.eventType","valueType":"string"}, {"path":"lastEvent.timestamp","valueType":"number"}, {"path":"lastEvent.seq","valueType":"number"}, {"path":"eventCountSinceStart","valueType":"number"}],
+  "event-emitter": [{"path":"lastEvent.deviceId","valueType":"number"}, {"path":"lastEvent.eventType","valueType":"string"}, {"path":"lastEvent.sourceId","valueType":"string"}, {"path":"lastEvent.timestamp","valueType":"number"}, {"path":"lastEvent.seq","valueType":"number"}, {"path":"eventCountSinceStart","valueType":"number"}],
   "fan-control": [{"path":"speed","valueType":"number"}, {"path":"percentageStep","valueType":"number"}, {"path":"preset","valueType":"string"}, {"path":"direction","valueType":"enum","enumValues":["forward","reverse"]}, {"path":"oscillating","valueType":"boolean"}],
   "feature-probe": [{"path":"deviceType","valueType":"string"}, {"path":"model","valueType":"string"}, {"path":"channelCount","valueType":"number"}, {"path":"lastProbedAt","valueType":"number"}],
   "flood": [{"path":"flooded","valueType":"boolean"}],

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Event devices declare their event vocabulary; each event is listed under its native name for now
+
 ## [0.1.18] - 2026-11-10
 
 ### Changed

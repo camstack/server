@@ -13,6 +13,7 @@ import {
   errMsg,
   EventCategory,
   eventEmitterCapability,
+  plainEventVocabulary,
   type EventEmitterStatus,
   type EventFire,
   type InferNativeProvider,
@@ -64,6 +65,7 @@ const COLD_BINARY: BinaryStatus = { on: false, lastChangedAt: 0 }
 const COLD_SWITCH: SwitchStatus = { on: false, lastChangedAt: 0 }
 const COLD_EVENT: EventEmitterStatus = {
   eventTypes: [EVENT_TYPE_NOTIFICATION_CREATED],
+  vocabulary: plainEventVocabulary([EVENT_TYPE_NOTIFICATION_CREATED]),
   lastEvent: null,
   eventCountSinceStart: 0,
 }
@@ -252,6 +254,7 @@ export class UnraidEntityDevice extends BaseDevice<typeof unraidEntitySchema> {
     )
     const slice: EventEmitterStatus = {
       eventTypes: [EVENT_TYPE_NOTIFICATION_CREATED],
+      vocabulary: plainEventVocabulary([EVENT_TYPE_NOTIFICATION_CREATED]),
       lastEvent: fire,
       eventCountSinceStart: ++this.eventCount,
     }

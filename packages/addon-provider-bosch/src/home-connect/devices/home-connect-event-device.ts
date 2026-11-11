@@ -5,6 +5,7 @@ import {
   DeviceType,
   EventCategory,
   eventEmitterCapability,
+  plainEventVocabulary,
   type DeviceContext,
   type EventEmitterStatus,
   type EventFire,
@@ -77,6 +78,7 @@ export class HomeConnectEventDevice extends BaseDevice<typeof homeConnectEventSc
   ): void {
     this.runtimeState.setCapState(EVENT_CAP, {
       eventTypes: [...eventTypes],
+      vocabulary: plainEventVocabulary(eventTypes),
       lastEvent: lastEvent ?? previous?.lastEvent ?? null,
       eventCountSinceStart:
         (previous?.eventCountSinceStart ?? 0) + (lastEvent !== undefined ? 1 : 0),
@@ -143,7 +145,8 @@ export class HomeConnectEventDevice extends BaseDevice<typeof homeConnectEventSc
     const provider: InferNativeProvider<typeof eventEmitterCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<EventEmitterStatus>(EVENT_CAP) ?? {
-          eventTypes: [],
+          eventTypes: [...this.eventTypes()],
+          vocabulary: plainEventVocabulary(this.eventTypes()),
           lastEvent: null,
           eventCountSinceStart: 0,
         },

@@ -2,6 +2,7 @@ import {
   EventCategory,
   createEvent,
   eventEmitterCapability,
+  plainEventVocabulary,
   type DeviceContext,
   type EventEmitterStatus,
   type EventFire,
@@ -33,7 +34,12 @@ export class EspEventDevice extends EspChildDevice {
   }
 
   private cold(): EventEmitterStatus {
-    return { eventTypes: [...this.eventTypes], lastEvent: null, eventCountSinceStart: 0 }
+    return {
+      eventTypes: [...this.eventTypes],
+      vocabulary: plainEventVocabulary(this.eventTypes),
+      lastEvent: null,
+      eventCountSinceStart: 0,
+    }
   }
 
   protected ownedEntityIds(): readonly string[] {
@@ -65,6 +71,7 @@ export class EspEventDevice extends EspChildDevice {
     )
     this.runtimeState.setCapState('event-emitter', {
       eventTypes: [...this.eventTypes],
+      vocabulary: plainEventVocabulary(this.eventTypes),
       lastEvent: fire,
       eventCountSinceStart: ++this.#count,
     })

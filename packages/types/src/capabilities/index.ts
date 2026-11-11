@@ -2458,6 +2458,22 @@ export {
   type IEventEmitterProvider,
 } from './event-emitter.cap.js'
 export {
+  EVENT_VOCABULARY_KINDS,
+  type EventVocabularyCarrier,
+  type EventVocabularyEntry,
+  EventVocabularyEntrySchema,
+  type EventVocabularyField,
+  EventVocabularyFieldSchema,
+  type EventVocabularyKind,
+  EventVocabularyKindSchema,
+  type EventVocabularySource,
+  EventVocabularySourceSchema,
+  eventTypesOfVocabulary,
+  findVocabularyEntry,
+  plainEventVocabulary,
+  readEventVocabulary,
+} from './event-vocabulary.js'
+export {
   type FaceCluster,
   type FaceInfo,
   type FaceSortDirection,

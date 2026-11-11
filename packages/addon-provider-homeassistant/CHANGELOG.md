@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Home Assistant climate entities are now climate devices: one with cooling or fan modes gets the air-conditioner role, any other the thermostat role. The Home Assistant export no longer offers a separate thermostat type.
 - Home Assistant humidifiers, media players, climate units and water heaters now carry an on/off switch read from their own state.
+- Event devices declare their event vocabulary; each event is listed under its native name for now
 
 ## [1.2.679] - 2026-11-11
 

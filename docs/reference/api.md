@@ -2710,7 +2710,7 @@
 
 ### `event-emitter` → `eventEmitter.*`
 
-- **Source:** `packages/types/src/capabilities/event-emitter.cap.ts:32`
+- **Source:** `packages/types/src/capabilities/event-emitter.cap.ts:44`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `event-emitter`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IEventEmitterProvider`

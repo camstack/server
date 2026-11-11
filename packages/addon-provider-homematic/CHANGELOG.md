@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Homematic thermostats are now climate devices: a radiator valve gets the radiator role, a floor-heating actuator the floor role, any other thermostat the thermostat role.
+- Event devices declare their event vocabulary; each event is listed under its native name for now
 
 ## [1.2.189] - 2026-11-11
 

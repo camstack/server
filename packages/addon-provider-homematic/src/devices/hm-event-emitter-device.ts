@@ -3,6 +3,7 @@ import {
   EventCategory,
   createEvent,
   eventEmitterCapability,
+  plainEventVocabulary,
   type DeviceContext,
   type EventEmitterStatus,
   type EventFire,
@@ -98,6 +99,7 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
 
     const slice: EventEmitterStatus = {
       eventTypes: [...this.eventTypes],
+      vocabulary: plainEventVocabulary(this.eventTypes),
       lastEvent: fire,
       eventCountSinceStart: ++this.#eventCount,
     }

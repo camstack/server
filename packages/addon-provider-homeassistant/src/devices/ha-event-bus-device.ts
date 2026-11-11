@@ -72,6 +72,7 @@ export class HaEventBusDevice extends BaseDevice<typeof haEventBusDeviceSchema> 
     this.registerEventEmitterCap()
     const seed: EventEmitterStatus = {
       eventTypes: [], // OPEN vocabulary — bus events have no declared set.
+      vocabulary: [],
       lastEvent: null,
       eventCountSinceStart: 0,
     }
@@ -110,6 +111,7 @@ export class HaEventBusDevice extends BaseDevice<typeof haEventBusDeviceSchema> 
 
     const slice: EventEmitterStatus = {
       eventTypes: [], // OPEN vocabulary — never narrows.
+      vocabulary: [],
       lastEvent: fire,
       eventCountSinceStart: ++this.#count,
     }
@@ -127,6 +129,7 @@ export class HaEventBusDevice extends BaseDevice<typeof haEventBusDeviceSchema> 
     return (
       this.runtimeState.getCapState<EventEmitterStatus>('event-emitter') ?? {
         eventTypes: [],
+        vocabulary: [],
         lastEvent: null,
         eventCountSinceStart: 0,
       }
