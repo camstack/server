@@ -58,11 +58,7 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
     const descriptors = notifierDescriptors()
     // The retired single kind is declared on the store's first list, on every boot (not only while
     // the migration runs), so a stuck row stays visible through `legacy`; never declared here.
-    const legacy = retiredTargetsOver(
-      records,
-      oldTargetKinds[OLD_TARGETS_KIND],
-      this.ctx.logger,
-    )
+    const legacy = retiredTargetsOver(records, oldTargetKinds[OLD_TARGETS_KIND], this.ctx.logger)
     const store = TargetStore.of(records, descriptors, { logger: this.ctx.logger, legacy })
     // The old single kind is flattened into the per-kind records BEFORE anything reads a target.
     await this.runMigrations(
@@ -187,8 +183,8 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
       this.ctx.logger,
     )
 
-    // The shipped Notification Center viewer still calls `nc.*`: thin delegates onto `instances`.
-    const ncHandlers = makeNcTargetHandlers({ provider, instances })
+    // The viewer's add form reads the kind catalogue through `nc.listTargetKinds`.
+    const ncHandlers = makeNcTargetHandlers({ provider })
 
     return {
       providers: [

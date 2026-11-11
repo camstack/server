@@ -2158,7 +2158,7 @@ from one that is only gone for a moment.
   rule / timelapse / digest screens say "Disabled on <date>: its last device
   (#id) was deleted" while the rule is still off (outcome `kept-disabled`;
   `kept` means the rule was already off and gets no banner).
-- **Targets** (`nc.deleteMyTarget` emits nothing) ride the same tick against
+- **Targets** (deleting one emits nothing) ride the same tick against
   the catalog the delivery path already CACHED (`NcDispatcher.catalogSnapshot`)
   — the prune never reads one of its own; each cache refresh is one answer (a
   generation). The catalog is a concat fan-out across providers, so it can be

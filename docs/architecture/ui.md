@@ -1291,7 +1291,7 @@ expo-router `Href`.
   authority `isRuleFormValid` derives from).
 - **Save waits for two answers.** Who is saving (`AdminVerdict` =
   `pending | admin | not-admin | unknown`, `camstack/src/data/use-me.ts`) and
-  which targets are his (the shipped viewer reads `nc.listMyTargets`, a thin delegate onto the caller-scoped `integrationInstances.listInstances`; a viewer release that calls the door directly replaces it) decide which stored targets a save
+  which targets are his (the viewer reads them from the caller-scoped `integrationInstances.listInstances` pinned to `notifiers`) decide which stored targets a save
   keeps (`target-ownership.ts`: an admin keeps unlisted ones verbatim, a
   non-admin's are filtered to his own). `save-gate.ts` blocks every Save — rule,
   timelapse, digest — on `pending`, on `unknown` (a FAILED `auth.me`) and on a
