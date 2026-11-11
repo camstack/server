@@ -150,7 +150,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-legacy-tracker.ts` | The old tracker stays deleted (D683). |
 | `scripts/check-no-literal-addon-process-mode.ts` | Addon-process guard (D877) - `addons.list` never reports a LITERAL process mode. |
 | `scripts/check-no-native-form-controls.ts` | Admin and addon pages use the library's form controls, never the browser's. |
-| `scripts/check-no-native-select.ts` | A native `<select>` is written in ONE place: the `Select` primitive (`packages/ui-library/src/primitives/select.tsx`), which carries the field chrome, the chevron and the disabled affordance. A raw `<select>` anywhere else in the admin U… |
+| `scripts/check-no-native-select.ts` | A native `<select>` is written NOWHERE in the admin UI or the library: the `Select` primitive (`packages/ui-library/src/primitives/select.tsx`) renders our own list, so a raw `<select>` would bring back the browser's popup. |
 | `scripts/check-no-private-lan-scan.ts` | An addon does not scan the LAN itself (D977). |
 | `scripts/check-no-raw-secret-read.ts` | Addon code never reads its settings through a MARKER-bearing view (D798). |
 | `scripts/check-no-raw-secrets-in-collections.ts` | A credential never sits in plain text in a persisted row (D879). |
