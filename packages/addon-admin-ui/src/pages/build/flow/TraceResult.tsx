@@ -165,6 +165,11 @@ export function StepResult({ step, deviceName }: StepResultProps) {
             : t('flow.runs.choseBranch', 'Ran branch {{n}}', { n: step.chose.index + 1 })}
         </div>
       )}
+      {step.rounds !== null && step.nested.length > 0 && (
+        <div className="text-foreground-subtle" data-testid="step-last-round">
+          {t('flow.runs.lastRound', 'The last of {{n}} rounds:', { n: step.rounds })}
+        </div>
+      )}
       {step.nested.length > 0 && (
         <ol className="space-y-0.5 text-[11px]" data-testid="step-nested">
           {step.nested.map((inner, at) => (

@@ -44,6 +44,7 @@ import { type ActionKind, moveItem, newAction, removeAt, replaceAt } from './rec
 import { ChooseFields } from './ChooseFields'
 import { isParallelMember, PARALLEL_KINDS } from './choose-model'
 import { SetVarsFields } from './SetVarsFields'
+import { RepeatFields } from './RepeatFields'
 import { StepGuard, StepIf } from './StepGuard'
 import { WaitUntilFields } from './WaitUntilFields'
 import { Trans, useTranslation } from 'react-i18next'
@@ -57,11 +58,19 @@ const ACTION_KINDS: readonly { readonly value: ActionKind; readonly labelKey: st
   { value: 'stop', labelKey: 'automation.actionList.kindStop' },
   { value: 'choose', labelKey: 'automation.actionList.kindChoose' },
   { value: 'parallel', labelKey: 'automation.actionList.kindParallel' },
+  { value: 'repeat', labelKey: 'automation.actionList.kindRepeat' },
   { value: 'code', labelKey: 'automation.actionList.kindCode' },
 ]
 
 /** The steps that only an automation's own list runs (#500). */
-const FLOW_KINDS: readonly ActionKind[] = ['set', 'stop', 'choose', 'wait-until', 'parallel']
+const FLOW_KINDS: readonly ActionKind[] = [
+  'set',
+  'stop',
+  'choose',
+  'wait-until',
+  'parallel',
+  'repeat',
+]
 
 export interface ActionListProps {
   readonly actions: readonly AutomationAction[]
@@ -235,6 +244,17 @@ export function ActionList({
               index={index}
               step={action}
               devices={devices}
+              onChange={(next) => onChange(replaceAt(actions, index, next))}
+            />
+          )}
+
+          {action.kind === 'repeat' && (
+            <RepeatFields
+              index={index}
+              step={action}
+              devices={devices}
+              devicesState={devicesState}
+              variables={variables}
               onChange={(next) => onChange(replaceAt(actions, index, next))}
             />
           )}

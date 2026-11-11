@@ -22,6 +22,7 @@ import type {
 import { AUTOMATION_LEAF_KINDS, leafCatalogEntry, seedLeaf } from '@camstack/types'
 import type { z } from 'zod'
 import i18n from '../../../i18n/index'
+import { newRepeat } from './repeat-model'
 import { newWaitUntil } from './wait-until-model'
 
 type WireableFieldsOutput = z.infer<typeof deviceManagerCapability.methods.getWireableFields.output>
@@ -155,6 +156,8 @@ export function newAction(kind: ActionKind): AutomationAction {
       return newWaitUntil()
     case 'parallel':
       return { kind, steps: [] }
+    case 'repeat':
+      return newRepeat()
     case 'choose':
       return { kind, branches: [{ if: { kind: 'all', children: [] }, steps: [] }] }
     default:

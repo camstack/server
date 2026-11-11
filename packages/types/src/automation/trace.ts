@@ -167,8 +167,10 @@ export const AutomationStepTraceSchema = StepTraceBaseSchema.extend({
       }),
     )
     .optional(),
-  /** A `choose` step: the steps of the list that ran. */
+  /** A `choose` step: the steps of the list that ran. A `parallel`: its members. A `repeat`: the LAST iteration. */
   steps: z.array(StepTraceBaseSchema).optional(),
+  /** A `repeat` step (#500): how many times its steps ran. */
+  iterations: z.number().int().optional(),
 })
 export type AutomationStepTrace = z.infer<typeof AutomationStepTraceSchema>
 

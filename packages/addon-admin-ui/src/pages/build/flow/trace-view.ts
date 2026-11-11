@@ -168,6 +168,8 @@ export interface StepDetailView {
   readonly chose: ChoseView | null
   /** A choose step: the steps of the list that ran, in order. */
   readonly nested: readonly NestedStepView[]
+  /** A repeat step: how many rounds ran; `nested` is then the LAST round only. Null for any other step. */
+  readonly rounds: number | null
 }
 
 export type ChoseView =
@@ -240,6 +242,7 @@ export function traceDetails(trace: AutomationRunTrace): TraceDetails {
         tone: stepTone(inner.outcome),
         message: nonEmpty(inner.message),
       })),
+      rounds: step.iterations ?? null,
     })),
   }
 }

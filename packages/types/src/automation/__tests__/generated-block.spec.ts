@@ -1822,6 +1822,149 @@ describe('parallel (#500): several steps at once, all awaited', () => {
   })
 })
 
+describe('repeat (#500): the same steps several times, always bounded', () => {
+  const siren = (label: string) =>
+    ({ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on', args: { label } }) as const
+  const press = { kind: 'device-event', category: 'button.pressed' } as const
+  const doorOpen = {
+    kind: 'device-is',
+    deviceId: 3,
+    cap: 'contact',
+    fieldPath: 'open',
+    operator: 'eq',
+    value: true,
+  } as const
+  const labels = (h: { mutate: { mock: { calls: unknown[][] } } }): string[] =>
+    h.mutate.mock.calls.map(([a]) => (a as { label: string }).label)
+
+  it('a count runs the steps that many times, then the next step', async () => {
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          { kind: 'repeat', loop: { by: 'count', count: 3 }, steps: [siren('beep')] },
+          siren('after'),
+        ],
+      }),
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(100)
+    expect(labels(h)).toEqual(['beep', 'beep', 'beep', 'after'])
+    expect(h.traces()[0]?.steps[0]).toMatchObject({
+      kind: 'repeat',
+      outcome: 'ok',
+      iterations: 3,
+      steps: [{ kind: 'cap', path: 'actions.0.steps.0', outcome: 'ok' }],
+    })
+  })
+
+  it('a while stops when its condition turns false, pausing between iterations', async () => {
+    const slices: Record<string, object> = { '3|contact': { open: true } }
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          {
+            kind: 'repeat',
+            loop: { by: 'while', when: doorOpen, maxIterations: 10, waitS: 60 },
+            steps: [siren('door is open')],
+          },
+          siren('after'),
+        ],
+      }),
+      { slices },
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(1_000)
+    expect(labels(h)).toEqual(['door is open'])
+    await settle(60_000)
+    expect(labels(h)).toEqual(['door is open', 'door is open'])
+    slices['3|contact'] = { open: false }
+    await settle(60_000)
+    expect(labels(h)).toEqual(['door is open', 'door is open', 'after'])
+    expect(h.traces()[0]?.steps[0]).toMatchObject({
+      outcome: 'ok',
+      iterations: 2,
+      message: 'ran 2 times: the condition is no longer true',
+    })
+  })
+
+  it('an until whose condition never comes stops at its bound, timed-out, and the run goes on', async () => {
+    const slices: Record<string, object> = { '3|contact': { open: false } }
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          {
+            kind: 'repeat',
+            loop: { by: 'until', when: doorOpen, maxIterations: 3 },
+            steps: [siren('knock')],
+          },
+          siren('after'),
+        ],
+      }),
+      { slices },
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(100)
+    expect(labels(h)).toEqual(['knock', 'knock', 'knock', 'after'])
+    expect(h.traces()[0]).toMatchObject({ outcome: 'ran' })
+    expect(h.traces()[0]?.steps[0]).toMatchObject({
+      outcome: 'timed-out',
+      iterations: 3,
+      message: 'stopped at 3 iterations',
+    })
+  })
+
+  it('a loop over devices hands each device id to its steps as vars.item', async () => {
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          {
+            kind: 'repeat',
+            loop: { by: 'forEach', target: { kind: 'devices', ids: [11, 12] } },
+            steps: [siren('device {{vars.item}}')],
+          },
+        ],
+      }),
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(100)
+    expect(labels(h)).toEqual(['device 11', 'device 12'])
+    expect(h.traces()[0]?.steps[0]).toMatchObject({ iterations: 2, outcome: 'ok' })
+  })
+
+  it('a restart cuts the pause of a loop short', async () => {
+    const slices: Record<string, object> = { '3|contact': { open: true } }
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          {
+            kind: 'repeat',
+            loop: { by: 'while', when: doorOpen, maxIterations: 10, waitS: 3000 },
+            steps: [siren('door is open')],
+          },
+        ],
+        runMode: { mode: 'restart' },
+      }),
+      { slices },
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(1_000)
+    h.emit('button.pressed', {}, 1)
+    await settle(1_000)
+    expect(h.traces().some((t) => t.outcome === 'aborted')).toBe(true)
+    expect(labels(h)).toEqual(['door is open', 'door is open'])
+  })
+})
+
 describe('choose (#500): one step, the first branch that is true', () => {
   const motion = { ...MOTION, id: 'motion' } as const
   const press = { kind: 'device-event', category: 'button.pressed', id: 'press' } as const

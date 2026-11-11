@@ -16,6 +16,22 @@ vi.mock('../FieldPicker', async () => {
 vi.mock('../../flow/CommandStep', () => ({ CommandStep: () => null }))
 vi.mock('../RunActionFields', () => ({ RunActionFields: () => null }))
 vi.mock('../WhenTree', () => ({ WhenTree: () => null }))
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  return {
+    ...actual,
+    DeviceValuePicker: (props: {
+      readonly onChange: (next: readonly { deviceId: number }[]) => void
+    }) => (
+      <button
+        type="button"
+        data-testid="fake-device-picker"
+        onClick={() => props.onChange([{ deviceId: 11 }, { deviceId: 12 }])}
+      />
+    ),
+  }
+})
 
 import { ActionList } from '../ActionList'
 
@@ -222,6 +238,67 @@ describe('ActionList parallel (#500)', () => {
     expect(inner).toEqual(expect.arrayContaining(['Wait', 'Run an action']))
     expect(inner).not.toContain('Stop the run')
     expect(inner).not.toContain('Set variables')
+    expect(inner).not.toContain('At the same time')
+  })
+})
+
+describe('ActionList repeat (#500)', () => {
+  const REPEAT: AutomationAction = { kind: 'repeat', loop: { by: 'count', count: 2 }, steps: [] }
+  const pick = (testId: string, name: string): void => {
+    fireEvent.click(screen.getByTestId(testId))
+    fireEvent.click(screen.getByRole('option', { name }))
+  }
+
+  it('is offered in an automation list only', () => {
+    render(<Harness flow initial={[CAP]} />)
+    fireEvent.click(screen.getByTestId('step-kind-0'))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toContain('Repeat')
+  })
+
+  it('is not offered where the list is not an automation', () => {
+    render(<Harness flow={false} initial={[CAP]} />)
+    fireEvent.click(screen.getByTestId('step-kind-0'))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).not.toContain('Repeat')
+  })
+
+  it('keeps the count between 1 and 20', () => {
+    render(<Harness flow initial={[REPEAT]} />)
+    fireEvent.change(screen.getByTestId('repeat-count-0'), { target: { value: '99' } })
+    expect(latest[0]).toMatchObject({ loop: { by: 'count', count: 20 } })
+  })
+
+  it('a loop on a condition always carries its maximum, kept at 50 or less', () => {
+    render(<Harness flow initial={[REPEAT]} />)
+    pick('repeat-by-0', 'While a condition is true')
+    expect(latest[0]).toMatchObject({ loop: { by: 'while', maxIterations: 10 } })
+    fireEvent.change(screen.getByTestId('repeat-max-0'), { target: { value: '400' } })
+    expect(latest[0]).toMatchObject({ loop: { by: 'while', maxIterations: 50 } })
+    fireEvent.change(screen.getByTestId('repeat-wait-0'), { target: { value: '30' } })
+    expect(latest[0]).toMatchObject({ loop: { waitS: 30 } })
+    fireEvent.change(screen.getByTestId('repeat-wait-0'), { target: { value: '' } })
+    expect(latest[0]?.kind === 'repeat' ? latest[0].loop : null).not.toHaveProperty('waitS')
+  })
+
+  it('a loop over devices stores the picked device ids', () => {
+    render(<Harness flow initial={[REPEAT]} />)
+    pick('repeat-by-0', 'Once for each device')
+    fireEvent.click(screen.getByTestId('fake-device-picker'))
+    expect(latest[0]).toMatchObject({
+      loop: { by: 'forEach', target: { kind: 'devices', ids: [11, 12] } },
+    })
+  })
+
+  it('its steps are plain steps, ten at most, with no block step inside', () => {
+    render(<Harness flow initial={[REPEAT]} />)
+    const box = within(screen.getByTestId('repeat-steps-0'))
+    const add = box.getByRole('button', { name: 'Step' })
+    for (let i = 0; i < 10; i++) fireEvent.click(add)
+    expect(latest[0]?.kind === 'repeat' ? latest[0].steps.length : 0).toBe(10)
+    expect(box.getByRole('button', { name: 'Step' })).toHaveProperty('disabled', true)
+    fireEvent.click(box.getByTestId('step-kind-0'))
+    const inner = screen.getAllByRole('option').map((o) => o.textContent)
+    expect(inner).toEqual(expect.arrayContaining(['Wait', 'Stop the run', 'Set variables']))
+    expect(inner).not.toContain('Repeat')
     expect(inner).not.toContain('At the same time')
   })
 })

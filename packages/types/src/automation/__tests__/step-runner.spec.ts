@@ -6,8 +6,10 @@ import { evaluateStepCondition } from '../step-condition.js'
 import {
   type ActionStep,
   ActionStepSchema,
+  AutomationActionSchema,
   CHOOSE_BRANCHES_MAX,
   CurrentAutomationRecipeSchema,
+  nestedStepsOf,
   stepConditionsOf,
   validateRecipeBounds,
 } from '../recipe.js'
@@ -15,6 +17,7 @@ import {
   buildActionSteps,
   type CapCall,
   type RunnableStep,
+  repeatCheck,
   type RunStepsOptions,
   runSteps,
 } from '../step-runner.js'
@@ -958,5 +961,292 @@ describe('a conditional step (#472): if / else on the ONE when tree', () => {
     expect(d.calls).toEqual([])
     expect(result.steps[0]).toMatchObject({ outcome: 'skipped', condition: 'unknown' })
     expect(result.steps[0]?.message).toMatch(/no condition evaluator/i)
+  })
+})
+
+describe('runSteps — repeat (#500)', () => {
+  const body = (log: string[]): RunnableStep => ({
+    meta: { kind: 'cap' },
+    run: async () => void log.push('run'),
+  })
+  const loop = (repeat: RunnableStep['repeat']): RunnableStep => ({
+    meta: { kind: 'repeat' },
+    run: async () => undefined,
+    repeat,
+  })
+
+  it('runs the body the counted number of times, then the next step', async () => {
+    const log: string[] = []
+    const result = await runSteps(
+      [
+        loop({ steps: [body(log)], limit: 3, limitIsTimeout: false }),
+        { meta: { kind: 'cap' }, run: async () => void log.push('after') },
+      ],
+      options(),
+    )
+    expect(log).toEqual(['run', 'run', 'run', 'after'])
+    expect(result.failed).toBe(false)
+    expect(result.steps[0]).toMatchObject({
+      kind: 'repeat',
+      outcome: 'ok',
+      iterations: 3,
+      message: 'ran 3 times',
+      steps: [{ path: 'steps.0.steps.0', outcome: 'ok' }],
+    })
+  })
+
+  it('a while is read before each iteration and ends the loop with its reason', async () => {
+    const log: string[] = []
+    const result = await runSteps(
+      [
+        loop({
+          steps: [body(log)],
+          limit: 5,
+          limitIsTimeout: true,
+          before: async (n) =>
+            n < 2 ? { go: true } : { go: false, reason: 'the condition is no longer true' },
+        }),
+      ],
+      options(),
+    )
+    expect(log).toEqual(['run', 'run'])
+    expect(result.steps[0]).toMatchObject({
+      outcome: 'ok',
+      iterations: 2,
+      message: 'ran 2 times: the condition is no longer true',
+    })
+  })
+
+  it('a while that is false at the start runs nothing and keeps no nested rows', async () => {
+    const log: string[] = []
+    const result = await runSteps(
+      [
+        loop({
+          steps: [body(log)],
+          limit: 5,
+          limitIsTimeout: true,
+          before: async () => ({ go: false, reason: 'the condition is no longer true' }),
+        }),
+      ],
+      options(),
+    )
+    expect(log).toEqual([])
+    expect(result.steps[0]).toMatchObject({ outcome: 'ok', iterations: 0 })
+    expect(result.steps[0]?.steps).toBeUndefined()
+  })
+
+  it('an until is read after each iteration, so the body runs at least once', async () => {
+    const log: string[] = []
+    const result = await runSteps(
+      [
+        loop({
+          steps: [body(log)],
+          limit: 5,
+          limitIsTimeout: true,
+          after: async () => ({ go: false, reason: 'the condition is true' }),
+        }),
+      ],
+      options(),
+    )
+    expect(log).toEqual(['run'])
+    expect(result.steps[0]).toMatchObject({ iterations: 1, outcome: 'ok' })
+  })
+
+  it('the bound ends a loop whose condition still asks: timed-out, and the run goes on', async () => {
+    const log: string[] = []
+    const result = await runSteps(
+      [
+        loop({
+          steps: [body(log)],
+          limit: 4,
+          limitIsTimeout: true,
+          before: async () => ({ go: true }),
+        }),
+        { meta: { kind: 'cap' }, run: async () => void log.push('after') },
+      ],
+      options(),
+    )
+    expect(log).toEqual(['run', 'run', 'run', 'run', 'after'])
+    expect(result.failed).toBe(false)
+    expect(result.steps[0]).toMatchObject({
+      outcome: 'timed-out',
+      iterations: 4,
+      message: 'stopped at 4 iterations',
+    })
+  })
+
+  it('a condition that throws ends the loop and the run goes on (D49)', async () => {
+    const log: string[] = []
+    const result = await runSteps(
+      [
+        loop({
+          steps: [body(log)],
+          limit: 4,
+          limitIsTimeout: true,
+          before: async () => {
+            throw new Error('hub away')
+          },
+        }),
+        { meta: { kind: 'cap' }, run: async () => void log.push('after') },
+      ],
+      options(),
+    )
+    expect(log).toEqual(['after'])
+    expect(result.steps[0]).toMatchObject({
+      outcome: 'ok',
+      message: 'ran 0 times: the condition could not be read: hub away',
+    })
+  })
+
+  it('a failure in the body ends the loop and fails the run; the rows are the last iteration', async () => {
+    let n = 0
+    const result = await runSteps(
+      [
+        loop({
+          steps: [
+            {
+              meta: { kind: 'cap' },
+              run: async () => {
+                n += 1
+                if (n === 2) throw new Error('offline')
+              },
+            },
+          ],
+          limit: 5,
+          limitIsTimeout: false,
+        }),
+        { meta: { kind: 'cap' }, run: async () => undefined },
+      ],
+      options(),
+    )
+    expect(n).toBe(2)
+    expect(result.failed).toBe(true)
+    expect(result.steps[0]).toMatchObject({
+      outcome: 'error',
+      iterations: 2,
+      message: 'a step failed in iteration 2',
+      steps: [{ outcome: 'error', message: 'offline' }],
+    })
+    expect(result.steps[1]).toMatchObject({ outcome: 'not-run' })
+  })
+
+  it('a stop in the body ends the loop and the run', async () => {
+    const log: string[] = []
+    const result = await runSteps(
+      [
+        loop({
+          steps: [
+            { meta: { kind: 'stop' }, run: async (scope) => scope.stop('enough', 'ok') },
+            body(log),
+          ],
+          limit: 5,
+          limitIsTimeout: false,
+        }),
+        { meta: { kind: 'cap' }, run: async () => void log.push('after') },
+      ],
+      options(),
+    )
+    expect(log).toEqual([])
+    expect(result.stopped).toMatchObject({ reason: 'enough' })
+    expect(result.steps[0]).toMatchObject({ iterations: 1 })
+    expect(result.steps[1]).toMatchObject({ outcome: 'not-run' })
+  })
+
+  it('pauses between iterations, never after the last', async () => {
+    const log: string[] = []
+    await runSteps(
+      [
+        loop({
+          steps: [body(log)],
+          limit: 3,
+          limitIsTimeout: false,
+          between: async () => void log.push('pause'),
+        }),
+      ],
+      options(),
+    )
+    expect(log).toEqual(['run', 'pause', 'run', 'pause', 'run'])
+  })
+})
+
+describe('repeatCheck (#500)', () => {
+  it('a while goes on while true, an until goes on while false', () => {
+    expect(repeatCheck('while', { result: 'true', reason: 'open' })).toEqual({ go: true })
+    expect(repeatCheck('while', { result: 'false', reason: 'closed' })).toEqual({
+      go: false,
+      reason: 'the condition is no longer true',
+    })
+    expect(repeatCheck('until', { result: 'false', reason: 'closed' })).toEqual({ go: true })
+    expect(repeatCheck('until', { result: 'true', reason: 'open' })).toEqual({
+      go: false,
+      reason: 'the condition is true',
+    })
+  })
+
+  it('a condition that cannot be read ends either loop and says why (D49)', () => {
+    for (const by of ['while', 'until'] as const) {
+      expect(repeatCheck(by, { result: 'unknown', reason: 'no value yet' })).toEqual({
+        go: false,
+        reason: 'the condition could not be read: no value yet',
+        unknown: true,
+      })
+    }
+  })
+})
+
+describe('repeat schema (#500)', () => {
+  const cap = { kind: 'cap', target: { kind: 'devices', ids: [1] }, cap: 'switch', method: 'on' }
+  const when = { kind: 'all', children: [] }
+  const parse = (loop: unknown, steps: unknown[] = [cap]) =>
+    CurrentAutomationRecipeSchema.safeParse({
+      when: { kind: 'manual' },
+      actions: [{ kind: 'repeat', loop, steps }],
+    })
+  const words = (r: ReturnType<typeof parse>) => JSON.stringify(r.error?.issues)
+
+  it('takes a count, a while, an until and a device list', () => {
+    expect(parse({ by: 'count', count: 20 }).success).toBe(true)
+    expect(parse({ by: 'while', when, maxIterations: 50, waitS: 5 }).success).toBe(true)
+    expect(parse({ by: 'until', when, maxIterations: 1 }).success).toBe(true)
+    expect(parse({ by: 'forEach', target: { kind: 'devices', ids: [1, 2] } }).success).toBe(true)
+  })
+
+  it('refuses a count over 20 in words', () => {
+    expect(words(parse({ by: 'count', count: 21 }))).toMatch(/a repeat runs at most 20 times/)
+  })
+
+  it('a repeat while or until without a maximum cannot be saved, nor one over 50', () => {
+    expect(words(parse({ by: 'while', when }))).toMatch(
+      /a repeat on a condition needs a maximum number of iterations/,
+    )
+    expect(words(parse({ by: 'until', when }))).toMatch(
+      /a repeat on a condition needs a maximum number of iterations/,
+    )
+    expect(words(parse({ by: 'while', when, maxIterations: 51 }))).toMatch(
+      /a repeat on a condition runs at most 50 times/,
+    )
+  })
+
+  it('refuses an empty body, a block step inside, and more than 50 devices', () => {
+    expect(words(parse({ by: 'count', count: 2 }, []))).toMatch(/a repeat needs at least one step/)
+    expect(
+      parse({ by: 'count', count: 2 }, [
+        { kind: 'repeat', loop: { by: 'count', count: 2 }, steps: [cap] },
+      ]).success,
+    ).toBe(false)
+    const ids = Array.from({ length: 51 }, (_, i) => i + 1)
+    expect(words(parse({ by: 'forEach', target: { kind: 'devices', ids } }))).toMatch(
+      /a repeat over devices takes at most 50 devices/,
+    )
+  })
+
+  it('names its condition and its body to the walkers', () => {
+    const step = AutomationActionSchema.parse({
+      kind: 'repeat',
+      loop: { by: 'while', when, maxIterations: 3 },
+      steps: [cap],
+    })
+    expect(stepConditionsOf(step)).toEqual([{ path: 'loop.when', when }])
+    expect(nestedStepsOf(step)).toHaveLength(1)
   })
 })

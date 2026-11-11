@@ -6113,7 +6113,8 @@
       "flowGuardHint": "Verificata quando si arriva a questo passo. Se è falsa, o uno stato non è leggibile, il passo non fa nulla.",
       "kindChoose": "Scegli",
       "kindWaitUntil": "Attendi finché",
-      "kindParallel": "Contemporaneamente"
+      "kindParallel": "Contemporaneamente",
+      "kindRepeat": "Ripeti"
     },
     "automationEditor": {
       "name": "Nome",
@@ -6460,6 +6461,23 @@
     },
     "parallel": {
       "hint": "Partono insieme e l'esecuzione prosegue quando tutti hanno finito. Se uno fallisce, l'esecuzione fallisce dopo che gli altri hanno finito."
+    },
+    "repeat": {
+      "by": "Ripeti",
+      "byCount": "Un numero di volte",
+      "byWhile": "Finché una condizione è vera",
+      "byUntil": "Fino a quando una condizione è vera",
+      "byForEach": "Una volta per ogni dispositivo",
+      "count": "Volte",
+      "whileHint": "Letta prima di ogni giro: se all'inizio non è vera, non viene eseguito nulla. Una condizione che non si può leggere termina il ciclo.",
+      "untilHint": "Letta dopo ogni giro, quindi i passi vengono eseguiti almeno una volta. Una condizione che non si può leggere termina il ciclo.",
+      "max": "Al massimo (giri)",
+      "wait": "Pausa tra i giri (s)",
+      "noWait": "nessuna",
+      "maxHint": "Un ciclo che raggiunge il massimo si ferma lì, viene segnalato nell'esecuzione e l'esecuzione prosegue.",
+      "forEachHint": "Un giro per dispositivo, in quest'ordine. In ogni giro i passi leggono il dispositivo come variabile \"item\".",
+      "itemHint": "il dispositivo di questo giro",
+      "steps": "Ogni volta, esegui"
     }
   },
   "accessDenied": {
@@ -11383,7 +11401,8 @@
       "show": "Mostra le esecuzioni",
       "hide": "Nascondi le esecuzioni",
       "choseElse": "Eseguita la lista \"altrimenti\"",
-      "choseBranch": "Eseguito il ramo {{n}}"
+      "choseBranch": "Eseguito il ramo {{n}}",
+      "lastRound": "L'ultimo di {{n}} giri:"
     },
     "scope": {
       "className": "cosa ha visto",

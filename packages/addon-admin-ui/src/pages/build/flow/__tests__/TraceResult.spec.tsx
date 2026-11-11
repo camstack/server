@@ -77,6 +77,7 @@ describe('StepResult', () => {
     ],
     chose: null,
     nested: [],
+    rounds: null,
   }
 
   it('a choose step names the branch that ran and lists its steps (#500)', () => {

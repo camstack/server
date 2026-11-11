@@ -376,6 +376,84 @@ export const AutomationParallelStepSchema = z
   .strict()
 export type AutomationParallelStep = z.infer<typeof AutomationParallelStepSchema>
 
+export const REPEAT_COUNT_MAX = 20
+export const REPEAT_ITERATIONS_MAX = 50
+export const REPEAT_STEPS_MAX = STEP_ELSE_MAX
+export const REPEAT_DEVICES_MAX = 50
+/** The run variable a loop over devices writes before each iteration: the device id. */
+export const REPEAT_ITEM_VAR = 'item'
+
+const REPEAT_NEEDS_MAX = 'a repeat on a condition needs a maximum number of iterations'
+
+/** A loop on a condition: the bound is mandatory, so a run never loops without an end. */
+const repeatConditionShape = {
+  when: AutomationWhenSchema,
+  maxIterations: z
+    .number({ error: REPEAT_NEEDS_MAX })
+    .int()
+    .min(1, REPEAT_NEEDS_MAX)
+    .max(
+      REPEAT_ITERATIONS_MAX,
+      `a repeat on a condition runs at most ${REPEAT_ITERATIONS_MAX} times`,
+    ),
+  /** A pause between two iterations, never after the last. */
+  waitS: z.number().int().min(1).max(WAIT_MAX_SECONDS, WAIT_TOO_LONG).optional(),
+}
+
+/** What decides how many times a `repeat` runs. */
+export const AutomationRepeatLoopSchema = z.discriminatedUnion('by', [
+  z
+    .object({
+      by: z.literal('count'),
+      count: z
+        .number()
+        .int()
+        .min(1)
+        .max(REPEAT_COUNT_MAX, `a repeat runs at most ${REPEAT_COUNT_MAX} times`),
+    })
+    .strict(),
+  /** Read BEFORE each iteration: false at the start runs nothing. */
+  z.object({ by: z.literal('while'), ...repeatConditionShape }).strict(),
+  /** Read AFTER each iteration: the steps run at least once. */
+  z.object({ by: z.literal('until'), ...repeatConditionShape }).strict(),
+  /** Once per device, with the device id in `vars.item`. */
+  z
+    .object({
+      by: z.literal('forEach'),
+      target: z
+        .object({
+          kind: z.literal('devices'),
+          ids: z
+            .array(z.number().int())
+            .min(1, 'a repeat over devices needs at least one device')
+            .max(
+              REPEAT_DEVICES_MAX,
+              `a repeat over devices takes at most ${REPEAT_DEVICES_MAX} devices`,
+            ),
+        })
+        .strict(),
+    })
+    .strict(),
+])
+export type AutomationRepeatLoop = z.infer<typeof AutomationRepeatLoopSchema>
+
+/**
+ * The same steps several times (#500). Every form is bounded at save, so a
+ * run cannot loop without an end. A failure or a `stop` in the steps ends the
+ * loop and the run, as in a sequence.
+ */
+export const AutomationRepeatStepSchema = z
+  .object({
+    kind: z.literal('repeat'),
+    loop: AutomationRepeatLoopSchema,
+    steps: z
+      .array(AutomationBranchStepSchema)
+      .min(1, 'a repeat needs at least one step')
+      .max(REPEAT_STEPS_MAX, `a repeat takes at most ${REPEAT_STEPS_MAX} steps`),
+  })
+  .strict()
+export type AutomationRepeatStep = z.infer<typeof AutomationRepeatStepSchema>
+
 /**
  * One step, several ways (#500): the branches are read in order and the FIRST
  * whose condition is true runs; `else` runs when every branch is false. A
@@ -406,6 +484,7 @@ export const AutomationActionSchema = z.discriminatedUnion('kind', [
   AutomationChooseStepSchema,
   AutomationWaitUntilStepSchema,
   AutomationParallelStepSchema,
+  AutomationRepeatStepSchema,
   AutomationRunActionStepSchema,
   z.object({
     kind: z.literal('code'),
@@ -491,6 +570,7 @@ export function stepGuardOf(action: AutomationAction): AutomationWhen | undefine
     case 'choose':
     case 'wait-until':
     case 'parallel':
+    case 'repeat':
       return undefined
     default:
       return action.if
@@ -510,13 +590,18 @@ export function stepConditionsOf(action: AutomationAction): StepConditionRef[] {
     return action.branches.map((branch, i) => ({ path: `branches.${i}.if`, when: branch.if }))
   }
   if (action.kind === 'wait-until') return [{ path: 'when', when: action.when }]
+  if (action.kind === 'repeat') {
+    return action.loop.by === 'while' || action.loop.by === 'until'
+      ? [{ path: 'loop.when', when: action.loop.when }]
+      : []
+  }
   const when = stepGuardOf(action)
   return when === undefined ? [] : [{ path: 'if', when }]
 }
 
 /** The steps a block step holds (a `choose`'s branches and else, a `parallel`'s members); none for a plain step. */
 export function nestedStepsOf(action: AutomationAction): AutomationBranchStep[] {
-  if (action.kind === 'parallel') return [...action.steps]
+  if (action.kind === 'parallel' || action.kind === 'repeat') return [...action.steps]
   if (action.kind !== 'choose') return []
   return [...action.branches.flatMap((branch) => branch.steps), ...(action.else ?? [])]
 }

@@ -6038,7 +6038,8 @@
       "flowGuardHint": "Checked when this step is reached. If it is false, or a state cannot be read, the step does nothing.",
       "kindChoose": "Choose",
       "kindWaitUntil": "Wait until",
-      "kindParallel": "At the same time"
+      "kindParallel": "At the same time",
+      "kindRepeat": "Repeat"
     },
     "automationEditor": {
       "name": "Name",
@@ -6385,6 +6386,23 @@
     },
     "parallel": {
       "hint": "These start together and the run goes on when all are done. If one fails, the run fails once the others finished."
+    },
+    "repeat": {
+      "by": "Repeat",
+      "byCount": "A number of times",
+      "byWhile": "While a condition is true",
+      "byUntil": "Until a condition is true",
+      "byForEach": "Once for each device",
+      "count": "Times",
+      "whileHint": "Read before each round: if it is not true at the start, nothing runs. A condition that cannot be read ends the loop.",
+      "untilHint": "Read after each round, so the steps run at least once. A condition that cannot be read ends the loop.",
+      "max": "At most (rounds)",
+      "wait": "Pause between rounds (s)",
+      "noWait": "none",
+      "maxHint": "A loop that reaches its maximum stops there, is marked in the run, and the run goes on.",
+      "forEachHint": "One round per device, in this order. In a round the steps read the device as the variable \"item\".",
+      "itemHint": "the device of this round",
+      "steps": "Each time, run"
     }
   },
   "accessDenied": {
@@ -11361,7 +11379,8 @@
       "show": "Show runs",
       "hide": "Hide runs",
       "choseElse": "Ran the \"otherwise\" list",
-      "choseBranch": "Ran branch {{n}}"
+      "choseBranch": "Ran branch {{n}}",
+      "lastRound": "The last of {{n}} rounds:"
     },
     "scope": {
       "className": "what it saw",

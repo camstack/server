@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automations: a Choose step in the action list, with branches read top to bottom and an optional Otherwise list; a run shows which branch ran and its steps
 - Automations: a Wait until step in the action list (condition, timeout, what to do when it runs out); a "started by" row inside a stop condition, a Choose branch or a Wait until now gives the trigger rows their ids
 - Automation editor: an "At the same time" step runs up to five commands, actions or waits together; each one has its own row in the run trace
+- Automation editor: a Repeat step (a count, while/until a condition under a maximum, or once for each device); the run shows how many rounds ran and why the loop ended
 
 ## [1.2.644] - 2026-11-11
 

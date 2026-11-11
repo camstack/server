@@ -24,11 +24,12 @@
  * repo-wide.
  */
 
-import type { AutomationAction, AutomationRecipe } from './recipe.js'
+import type { AutomationAction, AutomationRecipe, AutomationRepeatLoop } from './recipe.js'
 import {
   DEFAULT_TRACE_KEEP,
   normalizeCapStep,
   nestedStepsOf,
+  REPEAT_ITEM_VAR,
   stepConditionsOf,
   stepGuardOf,
   validateRecipeBounds,
@@ -79,6 +80,8 @@ function stepMetaOf(action: AutomationAction): StepMeta {
       return { kind: 'wait-until' }
     case 'parallel':
       return { kind: 'parallel' }
+    case 'repeat':
+      return { kind: 'repeat' }
     case 'set':
       return { kind: 'set' }
     case 'choose':
@@ -332,7 +335,7 @@ function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
 }
 
 /** The steps the runner handles itself, or that own more than a body. */
-type BlockStepKind = 'choose' | 'wait-until' | 'parallel'
+type BlockStepKind = 'choose' | 'wait-until' | 'parallel' | 'repeat'
 
 /** What a plain step does when it runs: the body of its `run`, wherever the step sits. */
 function emitStepBody(action: Exclude<AutomationAction, { kind: BlockStepKind }>): string {
@@ -455,7 +458,41 @@ function emitWaitUntil(
     },`
 }
 
+/** How a `repeat` decides its iterations, as the fields of a RunnableRepeat. */
+function emitRepeatLoop(loop: AutomationRepeatLoop, index: number): string {
+  switch (loop.by) {
+    case 'count':
+      return `limit: ${j(loop.count)}, limitIsTimeout: false,`
+    case 'forEach':
+      return `// once per device: the device id is in vars.${REPEAT_ITEM_VAR} for the steps of that iteration
+        limit: ${j(loop.target.ids.length)}, limitIsTimeout: false,
+        before: async (iteration) => {
+          vars[${j(REPEAT_ITEM_VAR)}] = ${j(loop.target.ids)}[iteration]
+          return { go: true }
+        },`
+    case 'while':
+    case 'until': {
+      const read = `repeatCheck(${j(loop.by)}, await evaluateCondition(${j(loop.when)}, ${j(`actions.${index}.loop.when`)}, vars))`
+      const pause =
+        loop.waitS === undefined ? '' : `\n        between: () => sleep(${j(loop.waitS * 1000)}),`
+      return `limit: ${j(loop.maxIterations)}, limitIsTimeout: true,
+        ${loop.by === 'while' ? 'before' : 'after'}: async () => ${read},${pause}`
+    }
+  }
+}
+
 function emitAction(action: AutomationAction, index: number): string {
+  if (action.kind === 'repeat') {
+    return `    {
+      meta: STEP_META[${index}]!,
+      // a repeat step: the runner runs these once per iteration, under the bound
+      run: async () => {},
+      repeat: {
+        steps: [${action.steps.map(emitNestedStep).join(', ')}],
+        ${emitRepeatLoop(action.loop, index)}
+      },
+    },`
+  }
   if (action.kind === 'choose') return emitChoose(action, index)
   if (action.kind === 'wait-until') return emitWaitUntil(action, index)
   if (action.kind === 'parallel') {
@@ -550,6 +587,7 @@ import {
   runForDevices,
   evaluateStepCondition,
   runSteps,
+  repeatCheck,
   waitUntil,
   waitTimedOutMessage,
   siteFor,

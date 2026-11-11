@@ -83,6 +83,32 @@ export interface RunnableStep {
   readonly choose?: RunnableChoose
   /** A `parallel` step (#500): `run` is not called, these are started together and all awaited. */
   readonly parallel?: readonly RunnableStep[]
+  /** A `repeat` step (#500): `run` is not called, the steps are, once per iteration. */
+  readonly repeat?: RunnableRepeat
+}
+
+/** What a loop's condition answers: go on, or end the loop and why. */
+export type RepeatCheck =
+  | { readonly go: true }
+  | {
+      readonly go: false
+      readonly reason: string
+      /** The condition could not be read: the loop ends and says so (D49). */
+      readonly unknown?: true
+    }
+
+export interface RunnableRepeat {
+  readonly steps: readonly RunnableStep[]
+  /** The most iterations the loop runs, whatever its condition says. */
+  readonly limit: number
+  /** True when reaching `limit` means the condition never ended the loop: traced `timed-out`. */
+  readonly limitIsTimeout: boolean
+  /** Asked before iteration `n` (0-based): a `while`, or the next device of a list. */
+  readonly before?: (iteration: number) => Promise<RepeatCheck>
+  /** Asked after iteration `n`: an `until`. */
+  readonly after?: (iteration: number) => Promise<RepeatCheck>
+  /** A pause between two iterations, never after the last. */
+  readonly between?: () => Promise<void>
 }
 
 /** One branch of a `choose`: its condition and the steps it runs. */
@@ -197,6 +223,102 @@ async function readGuard(
   }
 }
 
+/**
+ * What a loop's condition says about going on. A `while` goes on while it
+ * reads true, an `until` goes on while it reads false; `unknown` ends either,
+ * with the reason (D49): a loop never runs on a value it could not read.
+ */
+export function repeatCheck(by: 'while' | 'until', verdict: StepConditionVerdict): RepeatCheck {
+  if (verdict.result === 'unknown') {
+    return {
+      go: false,
+      reason: `the condition could not be read: ${verdict.reason}`,
+      unknown: true,
+    }
+  }
+  if (by === 'while') {
+    return verdict.result === 'true'
+      ? { go: true }
+      : { go: false, reason: 'the condition is no longer true' }
+  }
+  return verdict.result === 'true' ? { go: false, reason: 'the condition is true' } : { go: true }
+}
+
+/** A loop condition that throws ends the loop as unreadable, never a crash of the run. */
+async function readRepeatCheck(
+  check: ((iteration: number) => Promise<RepeatCheck>) | undefined,
+  iteration: number,
+): Promise<RepeatCheck> {
+  if (check === undefined) return { go: true }
+  try {
+    return await check(iteration)
+  } catch (err: unknown) {
+    return {
+      go: false,
+      reason: `the condition could not be read: ${errorMessage(err)}`,
+      unknown: true,
+    }
+  }
+}
+
+/** How a loop ended, before it is written on its trace row. */
+interface RepeatRun {
+  readonly iterations: number
+  readonly last: RunStepsResult | undefined
+  /** Why the loop ended on its own; absent when a failure, a stop or an abort ended it. */
+  readonly ended?: string
+  readonly timedOut: boolean
+  readonly unknown?: string
+}
+
+/** Run a loop's steps until its count, its condition, its bound, a failure, a stop or an abort ends it. */
+async function runRepeat(
+  repeat: RunnableRepeat,
+  options: RunStepsOptions,
+  path: string,
+): Promise<RepeatRun> {
+  let iterations = 0
+  let last: RunStepsResult | undefined
+  for (;;) {
+    if (options.isAborted()) return { iterations, last, timedOut: false }
+    const before = await readRepeatCheck(repeat.before, iterations)
+    if (!before.go) {
+      return {
+        iterations,
+        last,
+        ended: before.reason,
+        timedOut: false,
+        ...(before.unknown === true ? { unknown: before.reason } : {}),
+      }
+    }
+    if (iterations >= repeat.limit) {
+      return repeat.limitIsTimeout
+        ? { iterations, last, ended: `stopped at ${repeat.limit} iterations`, timedOut: true }
+        : { iterations, last, ended: '', timedOut: false }
+    }
+    last = await runSteps(repeat.steps, {
+      ...options,
+      pathPrefix: `${path}.steps`,
+      indexOffset: 0,
+    })
+    iterations += 1
+    if (last.failed || last.aborted || last.stopped !== undefined) {
+      return { iterations, last, timedOut: false }
+    }
+    const after = await readRepeatCheck(repeat.after, iterations - 1)
+    if (!after.go) {
+      return {
+        iterations,
+        last,
+        ended: after.reason,
+        timedOut: false,
+        ...(after.unknown === true ? { unknown: after.reason } : {}),
+      }
+    }
+    if (repeat.between !== undefined && iterations < repeat.limit) await repeat.between()
+  }
+}
+
 /** The else level of a trace is one level deep: a nested trace carries no `else` of its own. */
 function withoutElse(trace: AutomationStepTrace): Omit<AutomationStepTrace, 'else'> {
   const { else: _else, ...rest } = trace
@@ -259,6 +381,43 @@ export async function runSteps(
         outcome: anyFailed ? 'error' : 'ok',
         ...(anyFailed ? { message: 'a parallel step failed' } : {}),
         steps: members.flatMap((m) => m.steps.map(withoutNested)),
+      })
+      continue
+    }
+    if (step.repeat !== undefined) {
+      const loop = await runRepeat(step.repeat, options, path)
+      const sub = loop.last
+      if (loop.unknown !== undefined) {
+        options.onGuardUnknown?.({
+          index,
+          path: `${path}.loop.when`,
+          reason: loop.unknown,
+          deviceId: step.meta.deviceId,
+        })
+      }
+      const bodyFailed = loop.ended === undefined && sub?.failed === true
+      if (bodyFailed) failed = true
+      else if (loop.ended === undefined && sub?.stopped !== undefined) stopped = sub.stopped
+      else if (loop.ended === undefined) aborted = true
+      const times = `ran ${loop.iterations} times`
+      const message = bodyFailed
+        ? `a step failed in iteration ${loop.iterations}`
+        : loop.ended === undefined
+          ? times
+          : loop.timedOut
+            ? loop.ended
+            : loop.ended === ''
+              ? times
+              : `${times}: ${loop.ended}`
+      traces.push({
+        ...step.meta,
+        path,
+        startedAt,
+        endedAt: options.now(),
+        outcome: bodyFailed ? 'error' : loop.timedOut ? 'timed-out' : 'ok',
+        message,
+        iterations: loop.iterations,
+        ...(sub === undefined ? {} : { steps: sub.steps.map(withoutNested) }),
       })
       continue
     }

@@ -27,6 +27,7 @@ export {
   resolveDeviceTarget,
   resolveStepArgs,
   resolveStepArgsWithTemplates,
+  repeatCheck,
   runForDevices,
   runSteps,
 } from '../step-runner.js'

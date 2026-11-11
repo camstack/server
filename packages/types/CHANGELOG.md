@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automations: a `choose` step runs the first branch whose condition is true (up to 6 branches, optional otherwise list); a branch that cannot be read runs nothing
 - Automations: a `wait-until` step pauses a run until a condition is true, under a mandatory timeout of at most six hours; on timeout the run goes on (step traced `timed-out`) or stops as a failure
 - Automations: a parallel step starts two to five device commands, actions or waits together and waits for all of them
+- Automations: a repeat step runs its steps a number of times, while or until a condition (with a mandatory maximum), or once per device
 
 ## [1.2.548] - 2026-11-11
 

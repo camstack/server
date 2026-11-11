@@ -98,6 +98,28 @@ describe('a choose step (#500)', () => {
     expect(third?.chose).toBeNull()
     expect(third?.nested).toEqual([])
   })
+
+  it('a repeat says its nested rows are the last round only (#500)', () => {
+    const trace: AutomationRunTrace = {
+      ...BASE,
+      steps: [
+        {
+          path: 'actions.0',
+          kind: 'repeat',
+          outcome: 'timed-out',
+          message: 'stopped at 3 iterations',
+          iterations: 3,
+          steps: [{ path: 'actions.0.steps.0', kind: 'cap', outcome: 'ok' }],
+        },
+        { path: 'actions.1', kind: 'parallel', outcome: 'ok', steps: [] },
+      ],
+    }
+    const [loop, other] = traceDetails(trace).steps
+    expect(loop?.rounds).toBe(3)
+    expect(loop?.tone).toBe('fail')
+    expect(loop?.nested).toHaveLength(1)
+    expect(other?.rounds).toBeNull()
+  })
 })
 
 describe('traceView', () => {
@@ -233,6 +255,7 @@ describe('traceDetails', () => {
         devices: [],
         chose: null,
         nested: [],
+        rounds: null,
       },
     ])
   })
