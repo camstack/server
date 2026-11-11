@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.237] - 2026-11-11
+
 ### Changed
 
 - A Reolink Home Hub that returns an empty channel list no longer flags sleeping battery cameras offline; the missing-from-list grace now starts at boot and sleeping cameras are never marked offline

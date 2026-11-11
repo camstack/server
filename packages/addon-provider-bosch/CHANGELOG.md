@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.49] - 2026-11-11
+
 ### Changed
 
 - HomeCom: a hydronic gateway that answers heatCoolMode or refuses its heat source (403/500) is now recognised as a heat pump, and the gateway itself can be adopted as a Gateway device.
