@@ -19,6 +19,7 @@ import type {
   AutomationWhen,
   deviceManagerCapability,
 } from '@camstack/types'
+import { AUTOMATION_LEAF_KINDS, leafCatalogEntry, seedLeaf } from '@camstack/types'
 import type { z } from 'zod'
 import i18n from '../../../i18n/index'
 
@@ -101,48 +102,25 @@ export function operatorChoices(kind: WireableFieldKind | undefined): readonly O
   return operatorsForFieldKind(kind).map((value) => ({ value, label: operatorLabel(value) }))
 }
 
-/** Row types that HAPPEN (an instant); the rest of {@link LEAF_KINDS} hold (a fact). */
-export const EVENT_LEAF_KINDS: readonly LeafKind[] = [
-  'detection',
-  'stationary',
-  'device-becomes',
-  'device-event',
-  'schedule',
-  'interval',
-  'manual',
-]
+/** Row types that HAPPEN (an instant); the rest of {@link LEAF_KINDS} hold (a fact).
+ *  Derived from the one catalogue in `@camstack/types`: a kind is never listed here. */
+export const EVENT_LEAF_KINDS: readonly LeafKind[] = AUTOMATION_LEAF_KINDS.filter(
+  (kind) => leafCatalogEntry(kind).role === 'event',
+)
 
-export const STATE_LEAF_KINDS: readonly LeafKind[] = [
-  'device-is',
-  'stationary-present',
-  'expression',
-]
+export const STATE_LEAF_KINDS: readonly LeafKind[] = AUTOMATION_LEAF_KINDS.filter(
+  (kind) => leafCatalogEntry(kind).role === 'state',
+)
 
-export const LEAF_KINDS: readonly LeafKind[] = [...EVENT_LEAF_KINDS, ...STATE_LEAF_KINDS]
+export const LEAF_KINDS: readonly LeafKind[] = AUTOMATION_LEAF_KINDS
 
 export function leafKindLabel(kind: LeafKind): string {
-  switch (kind) {
-    case 'device-becomes':
-      return i18n.t('automation.whenTree.kind_device_becomes')
-    case 'device-is':
-      return i18n.t('automation.whenTree.kind_device_is')
-    case 'device-event':
-      return i18n.t('helpers.recipeParts.trigger_device_event')
-    case 'schedule':
-      return i18n.t('helpers.recipeParts.trigger_schedule')
-    case 'stationary':
-      return i18n.t('flow.trigger.stationary')
-    case 'stationary-present':
-      return i18n.t('automation.whenTree.kind_stationary_present')
-    case 'detection':
-      return i18n.t('flow.trigger.detection')
-    case 'interval':
-      return i18n.t('flow.trigger.interval')
-    case 'expression':
-      return i18n.t('automation.whenTree.kind_expression')
-    default:
-      return i18n.t('helpers.recipeParts.trigger_manual')
-  }
+  return i18n.t(`${leafCatalogEntry(kind).i18nKey}.label`)
+}
+
+/** The one-line description of a row type, under its label in a picker. */
+export function leafKindDescription(kind: LeafKind): string {
+  return i18n.t(`${leafCatalogEntry(kind).i18nKey}.description`)
 }
 
 /** A brand-new automation. Deliberately empty: a pre-seeded row pointing at
@@ -150,31 +128,9 @@ export function leafKindLabel(kind: LeafKind): string {
  *  says exactly what is missing until they do. */
 export const EMPTY_RECIPE: AutomationRecipe = { when: { kind: 'all', children: [] }, actions: [] }
 
-/** A blank row of one type. Optional keys are OMITTED, never `undefined`: the
- *  recipe is serialised into the generated file. */
+/** A blank row of one type — the catalogue's seed. */
 export function newLeaf(kind: LeafKind): AutomationLeaf {
-  switch (kind) {
-    case 'device-becomes':
-      return { kind, deviceId: 0, cap: '', fieldPath: '' }
-    case 'device-event':
-      return { kind, category: '' }
-    case 'schedule':
-      return { kind, cron: '0 30 23 * * *' }
-    case 'detection':
-      return { kind, subjects: [{ macro: 'person' }], deviceIds: [] }
-    case 'stationary':
-      return { kind, deviceIds: [], phase: 'appeared' }
-    case 'interval':
-      return { kind, minutes: 5 }
-    case 'device-is':
-      return { kind, deviceId: 0, cap: '', fieldPath: '', operator: 'eq', value: '' }
-    case 'stationary-present':
-      return { kind, deviceId: 0 }
-    case 'expression':
-      return { kind, expr: '', bindings: {} }
-    default:
-      return { kind: 'manual' }
-  }
+  return seedLeaf(kind)
 }
 
 export function newAction(kind: ActionKind): AutomationAction {

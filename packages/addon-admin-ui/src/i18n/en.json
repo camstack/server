@@ -6229,6 +6229,58 @@
       "none": "no hold",
       "seconds": "Seconds",
       "tolerance": "± tolerance"
+    },
+    "leafCatalog": {
+      "detection": {
+        "label": "An object is detected",
+        "description": "A camera sees a person, a vehicle or another object class",
+        "example": "a person in the driveway"
+      },
+      "stationary": {
+        "label": "An object stops or leaves",
+        "description": "An object parks in front of a camera, or one that was parked goes away",
+        "example": "a car parks in the yard"
+      },
+      "device-becomes": {
+        "label": "Device value becomes",
+        "description": "A device value changes to a value, at the moment it does",
+        "example": "the door sensor turns open"
+      },
+      "device-event": {
+        "label": "An event happens",
+        "description": "The system or a device reports an event",
+        "example": "the doorbell is pressed"
+      },
+      "schedule": {
+        "label": "On a schedule",
+        "description": "At a time of day, on the days you choose, or around sunrise and sunset",
+        "example": "every day at 23:30"
+      },
+      "interval": {
+        "label": "Every few minutes",
+        "description": "Again and again, at a fixed pace",
+        "example": "every 5 minutes"
+      },
+      "manual": {
+        "label": "Only when run by hand",
+        "description": "Nothing starts it: it runs when you press Run",
+        "example": "a scene you start yourself"
+      },
+      "device-is": {
+        "label": "Device value is",
+        "description": "A device value is a value right now, optionally for a duration",
+        "example": "power above 3 kW for 5 min"
+      },
+      "stationary-present": {
+        "label": "Object is parked",
+        "description": "An object is parked in front of a camera right now",
+        "example": "a car is in the yard"
+      },
+      "expression": {
+        "label": "Expression",
+        "description": "Arithmetic across device values, compared right now",
+        "example": "solar minus load above 1 kW"
+      }
     }
   },
   "accessDenied": {

@@ -207,3 +207,19 @@ export {
 export type { UnitResolver, UnitWarning, UnitsNormalized } from './normalize-units.js'
 export { prepareRecipeUnits } from './prepare-units.js'
 export type { PreparedRecipe } from './prepare-units.js'
+export type {
+  AutomationLeafCatalog,
+  AutomationLeafCatalogEntry,
+  AutomationLeafCategory,
+  AutomationLeafContext,
+  AutomationLeafKind,
+  AutomationLeafRole,
+} from './leaf-catalog.js'
+export {
+  AUTOMATION_LEAF_CATALOG,
+  AUTOMATION_LEAF_CATEGORIES,
+  AUTOMATION_LEAF_KINDS,
+  leafCatalogEntry,
+  leafKindsFor,
+  seedLeaf,
+} from './leaf-catalog.js'

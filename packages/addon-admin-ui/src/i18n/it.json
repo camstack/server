@@ -6304,6 +6304,58 @@
       "none": "nessuna attesa",
       "seconds": "Secondi",
       "tolerance": "± tolleranza"
+    },
+    "leafCatalog": {
+      "detection": {
+        "label": "Viene rilevato un oggetto",
+        "description": "Una camera vede una persona, un veicolo o un'altra classe di oggetto",
+        "example": "una persona nel vialetto"
+      },
+      "stationary": {
+        "label": "Un oggetto si ferma o se ne va",
+        "description": "Un oggetto si ferma davanti a una camera, o uno fermo se ne va",
+        "example": "un'auto si ferma in cortile"
+      },
+      "device-becomes": {
+        "label": "Un valore del dispositivo diventa",
+        "description": "Un valore di un dispositivo cambia e raggiunge un valore, nel momento in cui accade",
+        "example": "il sensore della porta passa ad aperto"
+      },
+      "device-event": {
+        "label": "Accade un evento",
+        "description": "Il sistema o un dispositivo segnala un evento",
+        "example": "il campanello viene premuto"
+      },
+      "schedule": {
+        "label": "A orario pianificato",
+        "description": "A un'ora del giorno, nei giorni scelti, o attorno ad alba e tramonto",
+        "example": "ogni giorno alle 23:30"
+      },
+      "interval": {
+        "label": "Ogni tot minuti",
+        "description": "Ancora e ancora, a ritmo fisso",
+        "example": "ogni 5 minuti"
+      },
+      "manual": {
+        "label": "Solo quando eseguita a mano",
+        "description": "Niente la avvia: parte quando premi Esegui",
+        "example": "una scena che avvii tu"
+      },
+      "device-is": {
+        "label": "Un valore del dispositivo è",
+        "description": "Un valore di un dispositivo ha un certo valore in questo momento, anche da un certo tempo",
+        "example": "potenza sopra 3 kW da 5 min"
+      },
+      "stationary-present": {
+        "label": "Un oggetto è parcheggiato",
+        "description": "Un oggetto è fermo davanti a una camera in questo momento",
+        "example": "c'è un'auto in cortile"
+      },
+      "expression": {
+        "label": "Espressione",
+        "description": "Aritmetica fra valori di dispositivi, confrontata in questo momento",
+        "example": "solare meno consumo sopra 1 kW"
+      }
     }
   },
   "accessDenied": {

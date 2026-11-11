@@ -21,7 +21,13 @@ import { DeviceBecomesFields, DeviceEventFields, ManualFields, ScheduleFields } 
 import { ExpressionLeafRow } from './ExpressionLeafRow'
 import { PickerLabel } from './FieldPicker'
 import { type MoveControls, MoveButtons } from './MoveButtons'
-import { EVENT_LEAF_KINDS, LEAF_KINDS, type LeafKind, leafKindLabel } from './recipe-parts'
+import {
+  EVENT_LEAF_KINDS,
+  LEAF_KINDS,
+  type LeafKind,
+  leafKindDescription,
+  leafKindLabel,
+} from './recipe-parts'
 import {
   DetectionFields,
   IntervalFields,
@@ -32,30 +38,12 @@ import { convertLeafKind } from './when-ops'
 
 function useKindOptions(): readonly OptionSelectOption[] {
   const { t } = useTranslation()
-  const hint: Readonly<Record<LeafKind, string>> = {
-    detection: t('flow.triggerHint.detection', 'An object class is detected on a camera'),
-    stationary: t('flow.triggerHint.stationary', 'An object stops, or leaves'),
-    'device-becomes': t('automation.whenTree.hint_device_becomes', 'A device value takes a value'),
-    'device-event': t('flow.triggerHint.deviceEvent', 'An event on the system'),
-    schedule: t('flow.triggerHint.schedule', 'At a time of day'),
-    interval: t('flow.triggerHint.interval', 'Again and again, every few minutes'),
-    manual: t('flow.triggerHint.manual', 'Only when you run it'),
-    'device-is': t('automation.whenTree.hint_device_is', 'A device value is, right now'),
-    'stationary-present': t(
-      'automation.whenTree.hint_stationary_present',
-      'An object is parked on a camera, right now',
-    ),
-    expression: t(
-      'automation.whenTree.hint_expression',
-      'Arithmetic across device values, right now',
-    ),
-  }
   const events = t('automation.whenTree.groupEvents', 'Happens (an event)')
   const states = t('automation.whenTree.groupStates', 'Is true (a state)')
   return LEAF_KINDS.map((kind) => ({
     value: kind,
     label: leafKindLabel(kind),
-    description: hint[kind],
+    description: leafKindDescription(kind),
     group: EVENT_LEAF_KINDS.includes(kind) ? events : states,
   }))
 }

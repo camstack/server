@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- One catalogue of automation row kinds (category, event or state, where it may be used, texts, blank row); a new kind without an entry does not compile.
+
 ## [1.2.545] - 2026-11-11
 
 ### Changed

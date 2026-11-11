@@ -873,6 +873,7 @@ export type {
 } from './automation/index.js'
 export * from './automation/action.js'
 export * from './automation/action-target.js'
+export * from './automation/leaf-catalog.js'
 export * from './automation/scheduler.js'
 export * from './automation/step-condition.js'
 export * from './automation/step-runner.js'
