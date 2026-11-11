@@ -77,6 +77,7 @@ function recordingDevice(calls: RecordedCall[]): CapCommandDevice {
       setPreset: rec(calls, 'fanControl.setPreset'),
       setDirection: rec(calls, 'fanControl.setDirection'),
       setOscillating: rec(calls, 'fanControl.setOscillating'),
+      setOscillationAxis: async () => ({ status: 'applied' as const }),
       getStatus: async () => null,
     },
     humidifier: {
