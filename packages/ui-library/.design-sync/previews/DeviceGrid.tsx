@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { DeviceGrid, DeviceCard } from '@camstack/ui-library'
+import { DeviceGrid, DeviceSummaryCard } from '@camstack/ui-library'
 import { Move, Bell } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (
@@ -23,7 +23,7 @@ export const Hero = () => (
   <Frame>
     <DeviceGrid minCardWidth={200}>
       {CAMS.map((c) => (
-        <DeviceCard
+        <DeviceSummaryCard
           key={c.title}
           {...c}
           badges={[{ label: 'main' }, { label: 'sub' }]}
@@ -41,7 +41,7 @@ export const TwoColumn = () => (
   <Frame>
     <DeviceGrid minCardWidth={320} gap={4}>
       {CAMS.slice(0, 4).map((c) => (
-        <DeviceCard key={c.title} {...c} badges={[{ label: '1080p' }]} />
+        <DeviceSummaryCard key={c.title} {...c} badges={[{ label: '1080p' }]} />
       ))}
     </DeviceGrid>
   </Frame>

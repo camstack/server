@@ -5,6 +5,7 @@
  * `scripts/check-device-card-parts.ts` refuses it.
  */
 import {
+  ArrowLeftRight,
   ArrowUpDown,
   BatteryLow,
   BatteryMedium,
@@ -59,6 +60,7 @@ export const CARD_GLYPHS = [
   'fan',
   'auto',
   'swing',
+  'swingHorizontal',
   'remote',
 ] as const
 
@@ -90,5 +92,6 @@ export const CARD_ICONS: Readonly<Record<CardGlyph, LucideIcon>> = {
   fan: Fan,
   auto: RefreshCw,
   swing: ArrowUpDown,
+  swingHorizontal: ArrowLeftRight,
   remote: RemoteControl,
 }

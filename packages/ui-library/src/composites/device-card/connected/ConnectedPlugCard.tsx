@@ -15,6 +15,8 @@ export interface ConnectedCardProps {
   /** False when the viewer may look but not command (default: true). */
   readonly canActuate?: boolean
   readonly orientation?: CardOrientation
+  /** Show a command's effect before the device confirms it (default: true). */
+  readonly optimistic?: boolean
 }
 
 const DEVICE_TYPES: ReadonlySet<string> = new Set(Object.values(DeviceType))
@@ -25,14 +27,15 @@ export function ConnectedPlugCard({
   deviceId,
   canActuate = true,
   orientation,
+  optimistic = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
   const client = useTrpcClient()
   const dev = useDeviceProxy(client, deviceId)
-  const { common, actions, deviceType } = useCardCommon({ deviceId, canActuate })
+  const { common, actions, deviceType, fail, succeed } = useCardCommon({ deviceId, canActuate })
   const slice = useDeviceStateSlice(dev?.state.switch)
   const run = useDeviceStateSlice(dev?.timedRun === undefined ? undefined : dev.state.timedRun)
-  const { display, applyOptimisticAction } = useOptimisticSlice(slice, { enabled: true })
+  const { display, applyOptimisticAction } = useOptimisticSlice(slice, { enabled: optimistic })
   const cap = dev?.switch
   if (cap === undefined || display === undefined) return null
 
@@ -62,8 +65,9 @@ export function ConnectedPlugCard({
       actions={{
         ...actions,
         onPower: (on) => applyOptimisticAction({ on }, () => cap.setState({ on })),
-        onTimerStart: (minutes) => void timedRun?.runFor({ duration: minutes, unit: 'min' }),
-        onTimerStop: () => void timedRun?.cancel({}),
+        onTimerStart: (minutes) =>
+          void timedRun?.runFor({ duration: minutes, unit: 'min' }).then(succeed, fail),
+        onTimerStop: () => void timedRun?.cancel({}).then(succeed, fail),
       }}
     />
   )

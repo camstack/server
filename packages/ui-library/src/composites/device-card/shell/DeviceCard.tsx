@@ -31,8 +31,15 @@ export function CardTop({ common }: { readonly common: CardCommon }): ReactEleme
   return (
     <div className="flex items-center justify-between gap-2" data-testid="dc-top">
       {common.integration === null ? <span /> : <ValueChip>{common.integration}</ValueChip>}
-      {common.online ? (
-        <span className="inline-flex items-center gap-1.5 text-xs text-foreground-muted">
+      {common.online === null ? (
+        <span className="text-xs text-foreground-subtle" data-testid="dc-reach-unknown">
+          {t('uiLibrary.deviceCard.reachUnknown', 'Status unknown')}
+        </span>
+      ) : common.online ? (
+        <span
+          className="inline-flex items-center gap-1.5 text-xs text-foreground-muted"
+          data-testid="dc-reach-online"
+        >
           <span className="h-2 w-2 rounded-full bg-foreground-muted" />
           {t('uiLibrary.deviceCard.online', 'Online')}
         </span>
@@ -48,7 +55,7 @@ export function CardTop({ common }: { readonly common: CardCommon }): ReactEleme
 function useGating(common: CardCommon): CardGating {
   const t = useUiText()
   return useMemo(() => {
-    if (!common.online) {
+    if (common.online === false) {
       return {
         blocked: true,
         reason: t('uiLibrary.deviceCard.reason.offline', '{{offline}}: commands unavailable', {
@@ -90,7 +97,10 @@ export function DeviceCard({
   const hasHistory = history !== null && (history.charts !== null || history.events !== null)
   const hasRemote = common.remote !== null && common.remote.length > 0
   const hasBottomLine =
-    gating.reason !== null || common.supply !== null || common.consumables !== null
+    gating.reason !== null ||
+    common.notice !== null ||
+    common.supply !== null ||
+    common.consumables !== null
   return (
     <CardGatingProvider value={gating}>
       <article
@@ -138,7 +148,7 @@ export function DeviceCard({
         )}
         {hasBottomLine ? (
           <div className="flex flex-wrap items-center gap-2" data-testid="dc-bottom-line">
-            <ReasonLine />
+            <ReasonLine notice={common.notice} />
             {common.supply === null ? null : (
               <SupplyChip
                 supply={common.supply}

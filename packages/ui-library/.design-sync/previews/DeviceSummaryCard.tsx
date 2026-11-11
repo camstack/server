@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { DeviceCard } from '@camstack/ui-library'
+import { DeviceSummaryCard } from '@camstack/ui-library'
 import { Move, Bell, Camera, Plug } from 'lucide-react'
 
 const Frame = ({ children }: { children: ReactNode }) => (
@@ -11,7 +11,7 @@ const noop = () => {}
 export const Hero = () => (
   <Frame>
     <div style={{ width: 240 }}>
-      <DeviceCard
+      <DeviceSummaryCard
         title="Front Door"
         subtitle="Reolink · 192.168.10.42"
         status="online"
@@ -29,7 +29,7 @@ export const Hero = () => (
 export const Selected = () => (
   <Frame>
     <div style={{ width: 240 }}>
-      <DeviceCard
+      <DeviceSummaryCard
         title="Backyard"
         subtitle="ONVIF · restreamer"
         status="online"
@@ -44,7 +44,7 @@ export const Selected = () => (
 export const Offline = () => (
   <Frame>
     <div style={{ width: 240 }}>
-      <DeviceCard
+      <DeviceSummaryCard
         title="Garage"
         subtitle="Hikvision · RTSP"
         status="offline"
@@ -61,7 +61,7 @@ export const Offline = () => (
 export const Warning = () => (
   <Frame>
     <div style={{ width: 240 }}>
-      <DeviceCard
+      <DeviceSummaryCard
         title="Driveway"
         subtitle="Home Assistant · degraded"
         status="warning"
@@ -74,10 +74,10 @@ export const Warning = () => (
 export const Statuses = () => (
   <Frame>
     <div className="grid grid-cols-2 gap-2" style={{ width: 500 }}>
-      <DeviceCard title="Front Door" subtitle="Online" status="online" />
-      <DeviceCard title="Garage" subtitle="Offline" status="offline" />
-      <DeviceCard title="Driveway" subtitle="Warning" status="warning" />
-      <DeviceCard title="Side Gate" subtitle="Unknown" status="unknown" />
+      <DeviceSummaryCard title="Front Door" subtitle="Online" status="online" />
+      <DeviceSummaryCard title="Garage" subtitle="Offline" status="offline" />
+      <DeviceSummaryCard title="Driveway" subtitle="Warning" status="warning" />
+      <DeviceSummaryCard title="Side Gate" subtitle="Unknown" status="unknown" />
     </div>
   </Frame>
 )

@@ -38,6 +38,7 @@ export function mockupCommon(input: CommonFixtureInput): CardCommon {
     name: input.name,
     integration: input.integration,
     online: true,
+    notice: null,
     offlineLabel: null,
     readOnly: false,
     power: mockupPower(input.watts),

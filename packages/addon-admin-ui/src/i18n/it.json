@@ -9755,7 +9755,12 @@
           "dry": "Deumidifica",
           "fan": "Ventola",
           "heat": "Caldo"
-        }
+        },
+        "valve": "Valvola",
+        "rangeLow": "Riscalda sotto",
+        "rangeHigh": "Raffresca sopra",
+        "rangeShort": "intervallo",
+        "swingHorizontal": "Oscill. laterale"
       },
       "days": "{{n}} g",
       "hours": "{{n}} h",
@@ -9766,7 +9771,9 @@
         "energy": "Energia totale",
         "factor": "Fattore di potenza",
         "voltage": "Tensione"
-      }
+      },
+      "reachUnknown": "Stato sconosciuto",
+      "commandFailed": "Comando non riuscito: {{reason}}"
     }
   },
   "helpers": {

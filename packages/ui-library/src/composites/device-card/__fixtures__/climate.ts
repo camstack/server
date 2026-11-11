@@ -214,6 +214,7 @@ function build(spec: Spec, orientation: CardOrientation): ClimateFixture {
       }),
       role: spec.role,
       on: spec.activity !== 'off',
+      canPower: true,
       activity: spec.activity,
       since: spec.since,
       current: spec.current,
@@ -226,9 +227,12 @@ function build(spec: Spec, orientation: CardOrientation): ClimateFixture {
         step: spec.current === null && spec.flow === undefined ? 1 : 0.5,
         label: spec.targetLabel ?? null,
       },
+      range: null,
+      valve: null,
       mode: spec.mode ?? null,
       fan: spec.fan === undefined ? null : choice(spec.fan, FANS),
       swing: spec.swing ?? null,
+      swingHorizontal: null,
       preset: spec.preset ?? null,
       heatCool: spec.heatCool ?? null,
     },
@@ -238,4 +242,66 @@ function build(spec: Spec, orientation: CardOrientation): ClimateFixture {
 export const CLIMATE_FIXTURES: readonly ClimateFixture[] = [
   ...SPECS.map((s) => build(s, 'vertical')),
   ...SPECS.slice(0, 1).map((s) => build(s, 'horizontal')),
+]
+
+const THERMOSTAT = CLIMATE_FIXTURES.find((f) => f.id === 'climate-thermostat-heat')
+
+function extra(
+  id: string,
+  caption: string,
+  orientation: CardOrientation,
+  patch: Partial<ClimateCardModel>,
+): ClimateFixture[] {
+  if (THERMOSTAT === undefined) return []
+  return [{ id, caption, orientation, model: { ...THERMOSTAT.model, ...patch } }]
+}
+
+/**
+ * Variants real devices have and the mockup page does not draw: a held band
+ * (two setpoints), a radiator valve next to its thermostat, a valve that only
+ * reports, and a device whose reachability is not known.
+ */
+export const CLIMATE_EXTRA_FIXTURES: readonly ClimateFixture[] = [
+  ...extra('climate-band', 'Banda caldo / freddo', 'vertical', {
+    activity: 'idle',
+    target: null,
+    range: { low: 19, high: 24, min: 5, max: 35, step: 0.5, editable: true },
+    preset: null,
+    swing: false,
+    swingHorizontal: true,
+  }),
+  ...extra('climate-band-horizontal', 'Banda, orizzontale', 'horizontal', {
+    activity: 'idle',
+    target: null,
+    range: { low: 19, high: 24, min: 5, max: 35, step: 0.5, editable: true },
+  }),
+  ...extra('climate-valve', 'Termostato con valvola', 'vertical', {
+    role: 'radiator',
+    valve: { position: 65 },
+  }),
+  ...extra('climate-valve-only', 'Solo valvola', 'vertical', {
+    role: 'radiator',
+    canPower: false,
+    current: null,
+    humidity: null,
+    target: null,
+    mode: null,
+    preset: null,
+    valve: { position: 40 },
+    common: {
+      ...THERMOSTAT?.model.common,
+      name: 'Valvola bagno',
+      integration: 'Homematic',
+      online: null,
+      offlineLabel: null,
+      readOnly: false,
+      notice: null,
+      power: null,
+      battery: { level: 61 },
+      supply: null,
+      consumables: null,
+      remote: null,
+      history: null,
+    },
+  }),
 ]

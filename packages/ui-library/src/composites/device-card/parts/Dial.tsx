@@ -38,13 +38,32 @@ const ARC = 273.3
 const START_DEG = 135
 const SWEEP_DEG = 270
 
-const TONE: Readonly<Record<DialTone, string>> = {
+/** The arc every round control of the card is drawn on. */
+export const DIAL_GEOMETRY: {
+  readonly size: number
+  readonly center: number
+  readonly radius: number
+  readonly arc: number
+  readonly startDeg: number
+  readonly sweepDeg: number
+} = {
+  size: SIZE,
+  center: CENTER,
+  radius: RADIUS,
+  arc: ARC,
+  startDeg: START_DEG,
+  sweepDeg: SWEEP_DEG,
+}
+
+export const DIAL_TONE_CLASS: Readonly<Record<DialTone, string>> = {
   primary: 'text-primary',
   info: 'text-info',
   warning: 'text-warning',
   muted: 'text-foreground-muted',
   off: 'text-border',
 }
+
+const TONE = DIAL_TONE_CLASS
 
 /** The value a pointer at (x, y) from the dial centre names, as a 0..1 fraction. */
 export function dialFractionAt(x: number, y: number): number {

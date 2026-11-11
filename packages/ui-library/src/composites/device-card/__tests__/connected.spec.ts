@@ -1,6 +1,6 @@
 import { DeviceType } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { climateRoleOf } from '../connected/ConnectedClimateCard'
+import { climateRoleOf } from '../connected/climate-model'
 import { connectedCardKindOf } from '../connected/ConnectedDeviceCard'
 import { defaultUiText } from '../../../contexts/ui-text'
 import { coarseDuration } from '../connected/coarse-duration'

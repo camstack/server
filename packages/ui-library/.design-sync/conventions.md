@@ -42,7 +42,7 @@ Standard Tailwind layout utilities (flex, grid, gap-*, p-*, w-*, etc.) all work.
 - `Dialog` (+ `DialogContent/Header/Footer/Title/Description/Trigger`) — controlled via `open`
 - `Tabs` (+ `TabsList/TabsTrigger/TabsContent`), `Popover`, `Tooltip`
 - `DataTable` (`columns: DataColumn<T>[]`, `rows`), `KeyValueList`, `StatCard`, `EmptyState`, `ErrorBox`
-- `DeviceCard`, `DeviceGrid`, `AppShell`, `Sidebar`/`SidebarItem`, `PageHeader`, `Breadcrumb`
+- `DeviceSummaryCard`, `DeviceGrid`, `AppShell`, `Sidebar`/`SidebarItem`, `PageHeader`, `Breadcrumb`
 
 Domain device controls (`*HeroCard`, `*Panel`, `*InlineControl`) exist on the bundle and are
 importable, but they read live device state from a tRPC/device-proxy layer — drive them with

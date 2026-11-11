@@ -34,6 +34,8 @@ function climateActions(): ClimateCardActions {
     onPreset: vi.fn(),
     onHeatCool: vi.fn(),
     onSwing: vi.fn(),
+    onSwingHorizontal: vi.fn(),
+    onRange: vi.fn(),
     onSupply: vi.fn(),
     onConsumableReset: vi.fn(),
     onRemoteKey: vi.fn(),

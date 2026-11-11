@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { AppShell, DeviceCard } from '@camstack/ui-library'
+import { AppShell, DeviceSummaryCard } from '@camstack/ui-library'
 import { Camera, Bell, LayoutGrid, Video, Cpu, Settings, Plus, RefreshCw } from 'lucide-react'
 
 // AppShell roots with `flex h-screen`; pin a fixed-height, clipped viewport so
@@ -63,20 +63,20 @@ export const Hero = () => (
       }}
     >
       <div className="grid grid-cols-2 gap-3" style={{ maxWidth: 480 }}>
-        <DeviceCard
+        <DeviceSummaryCard
           title="Front Door"
           subtitle="Reolink · 2560×1920"
           status="online"
           badges={[{ label: 'main' }]}
         />
-        <DeviceCard
+        <DeviceSummaryCard
           title="Backyard"
           subtitle="ONVIF · Recording"
           status="online"
           badges={[{ label: '1080p' }]}
         />
-        <DeviceCard title="Garage" subtitle="RTSP · offline" status="offline" />
-        <DeviceCard title="Driveway" subtitle="Hikvision" status="warning" />
+        <DeviceSummaryCard title="Garage" subtitle="RTSP · offline" status="offline" />
+        <DeviceSummaryCard title="Driveway" subtitle="Hikvision" status="warning" />
       </div>
     </AppShell>
   </Frame>

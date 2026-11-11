@@ -9733,7 +9733,12 @@
           "dry": "Dry",
           "fan": "Fan",
           "heat": "Heat"
-        }
+        },
+        "valve": "Valve",
+        "rangeLow": "Heat below",
+        "rangeHigh": "Cool above",
+        "rangeShort": "range",
+        "swingHorizontal": "Side swing"
       },
       "days": "{{n}} d",
       "hours": "{{n}} h",
@@ -9744,7 +9749,9 @@
         "energy": "Total energy",
         "factor": "Power factor",
         "voltage": "Voltage"
-      }
+      },
+      "reachUnknown": "Status unknown",
+      "commandFailed": "Command failed: {{reason}}"
     }
   },
   "helpers": {

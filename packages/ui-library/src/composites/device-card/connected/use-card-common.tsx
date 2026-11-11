@@ -5,7 +5,7 @@
  * source answered with something — a card never draws a zone the device does
  * not declare.
  */
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import {
@@ -44,6 +44,18 @@ export interface CardCommonResult {
   readonly actions: CardCommonActions
   /** The device's type, once the registry answered. */
   readonly deviceType: string | null
+  /** Puts a failed command's reason on the card's reason line. */
+  readonly fail: (error: unknown) => void
+  /** Clears it: the next command went through. */
+  readonly succeed: () => void
+}
+
+/**
+ * Reachability as the device reports it. A device whose `device-status` has
+ * not answered is unknown: neither drawn as online nor blocked as offline.
+ */
+export function reachabilityOf(status: { readonly online: boolean } | undefined): boolean | null {
+  return status === undefined ? null : status.online
 }
 
 const reading = (
@@ -83,8 +95,18 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
   const reset = useConsumablesReset()
   const series = useDeviceSeriesList(deviceId)
 
-  const online = status?.online ?? true
-  const offlineSince = online ? null : (status?.lastChangedAt ?? null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const fail = useCallback(
+    (error: unknown): void => {
+      const reason = error instanceof Error ? error.message : String(error)
+      setNotice(t('uiLibrary.deviceCard.commandFailed', 'Command failed: {{reason}}', { reason }))
+    },
+    [t],
+  )
+  const succeed = useCallback((): void => setNotice(null), [])
+
+  const online = reachabilityOf(status)
+  const offlineSince = online === false ? (status?.lastChangedAt ?? null) : null
 
   const power = useMemo((): CardPower | null => {
     if (meter === undefined) return null
@@ -150,6 +172,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
             duration: coarseDuration(Date.now() - offlineSince, t),
           }),
     readOnly: !canActuate,
+    notice,
     power,
     battery: typeof battery?.level === 'number' ? { level: battery.level } : null,
     supply:
@@ -177,14 +200,22 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
   const actions: CardCommonActions = {
     onSupply: (action: CardSupplyAction) => {
       const call = action === 'on' ? powerOn : action === 'off' ? powerOff : restart
-      call.mutate({ deviceId }, { onSettled: () => void supply.refetch() })
+      call.mutate(
+        { deviceId },
+        { onSuccess: succeed, onError: fail, onSettled: () => void supply.refetch() },
+      )
     },
-    onConsumableReset: (key: string) => reset.mutate({ deviceId, key }),
+    onConsumableReset: (key: string) =>
+      reset.mutate({ deviceId, key }, { onSuccess: succeed, onError: fail }),
     onRemoteKey: (id: string) => {
       const command = remote.data?.commands.find((c) => c.role === id)
-      if (command !== undefined) send.mutate({ deviceId, role: command.role, repeat: 1 })
+      if (command !== undefined)
+        send.mutate(
+          { deviceId, role: command.role, repeat: 1 },
+          { onSuccess: succeed, onError: fail },
+        )
     },
   }
 
-  return { common, actions, deviceType: device.data?.type ?? null }
+  return { common, actions, deviceType: device.data?.type ?? null, fail, succeed }
 }

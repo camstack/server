@@ -56,11 +56,14 @@ export interface CardHistory {
 export interface CardCommon {
   readonly name: string
   readonly integration: string | null
-  readonly online: boolean
+  /** Null when reachability has not been reported: unknown is neither online nor offline. */
+  readonly online: boolean | null
   /** "Offline for 2 h" — shown in place of Online, and leading the reason line. */
   readonly offlineLabel: string | null
   /** The viewer may look but not command. */
   readonly readOnly: boolean
+  /** Why the last command failed; shown on the reason line until one succeeds. */
+  readonly notice: string | null
   /** Null on every optional block means: the device does not declare it. */
   readonly power: CardPower | null
   readonly battery: { readonly level: number } | null

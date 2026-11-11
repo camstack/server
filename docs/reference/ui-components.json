@@ -2488,13 +2488,6 @@
       "summary": "Remove every device of the group; ids outside it are untouched."
     },
     {
-      "name": "CLIMATE_FIXTURES",
-      "kind": "constant",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/__fixtures__/climate.ts",
-      "summary": "The climate page of the approved mockup: its nine role variants and the horizontal one."
-    },
-    {
       "name": "CLIMATE_ROLES",
       "kind": "constant",
       "area": "composites",
@@ -2570,11 +2563,25 @@
       "summary": "Which animation a (role, activity) pair plays; null is a still scene."
     },
     {
+      "name": "climateModelOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/climate-model.ts",
+      "summary": "Null when the device declares neither capability: there is no climate card to draw."
+    },
+    {
       "name": "ClimatePanel",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/climate-panel.tsx",
       "summary": ""
+    },
+    {
+      "name": "climateRangeOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/climate-model.ts",
+      "summary": "The band a device holds: in `heat_cool` mode, or whenever it reports both a low and a high setpoint. Null when either end is missing — one handle alone is not a band."
     },
     {
       "name": "ClimateRoleGlyph",
@@ -2601,7 +2608,7 @@
       "name": "climateRoleOf",
       "kind": "function",
       "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedClimateCard.tsx",
+      "file": "packages/ui-library/src/composites/device-card/connected/climate-model.ts",
       "summary": "What draws the heat or the cold, from what the device IS and binds."
     },
     {
@@ -3093,7 +3100,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedClimateCard.tsx",
-      "summary": "The climate card of a real device, from its `climate-control` slice."
+      "summary": "The climate card of a real device: its `climate-control` slice, its `heating-valve` slice, or both. A valve that only reports still draws."
     },
     {
       "name": "ConnectedDeviceCard",
@@ -3135,6 +3142,12 @@
           "type": "CardOrientation",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "optimistic",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Show a command's effect before the device confirms it (default: true)."
         }
       ]
     },
@@ -5633,6 +5646,20 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "DIAL_GEOMETRY",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/Dial.tsx",
+      "summary": "The arc every round control of the card is drawn on."
+    },
+    {
+      "name": "DIAL_TONE_CLASS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/Dial.tsx",
+      "summary": ""
     },
     {
       "name": "dialFractionAt",
@@ -9256,20 +9283,6 @@
       ]
     },
     {
-      "name": "mockupCommon",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/__fixtures__/common.ts",
-      "summary": "The shell data the approved mockup draws on every card (its \"common to every type\" options, all on): power, upstream supply, battery, consumables, remote. Wording is the mockup's, in Italian, so the parity shots compa…"
-    },
-    {
-      "name": "mockupPower",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/__fixtures__/common.ts",
-      "summary": "The shell data the approved mockup draws on every card (its \"common to every type\" options, all on): power, upstream supply, battery, consumables, remote. Wording is the mockup's, in Italian, so the parity shots compa…"
-    },
-    {
       "name": "MODE_COLOR",
       "kind": "constant",
       "area": "composites",
@@ -9362,6 +9375,13 @@
       "summary": "The path the app is mounted at, with a trailing slash: `/` or `/<prefix>/`. Resolved once — the shell is the only thing that can say where it lives, and it says so before any script runs."
     },
     {
+      "name": "moveRangeHandle",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/RangeDial.tsx",
+      "summary": "Moves one handle; the low one never passes the high one, nor the reverse."
+    },
+    {
       "name": "NatResultCard",
       "kind": "component",
       "area": "composites",
@@ -9381,6 +9401,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/cap-settings/NavigationPanel.tsx",
       "summary": "NavigationPanel — the `navigation` cap's own panel (`host/navigation-panel`): a drive pad, the data-driven action and sound buttons, the fill light."
+    },
+    {
+      "name": "nearestRangeHandle",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/RangeDial.tsx",
+      "summary": "The handle a value is nearer to; a tie goes to the side the value lies on."
     },
     {
       "name": "NetworkLinkBadge",
@@ -9775,13 +9802,6 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-history/history-model.ts",
       "summary": "The pure half of a device's History view: which charts a device's series make, in which sections, and how a `query` answer becomes chart data."
-    },
-    {
-      "name": "offline",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/__fixtures__/common.ts",
-      "summary": "The mockup's \"Offline\" option."
     },
     {
       "name": "OfflineBadge",
@@ -10668,13 +10688,6 @@
       "summary": "The plug and climate heroes ARE the device card (`composites/device-card`): one frame for every device type, the scene filling its zones. The registry keeps handing a hero per control kind; these two adapt its props."
     },
     {
-      "name": "plugFixtures",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/__fixtures__/plug.ts",
-      "summary": "`now` anchors the running cycle, so a shot always shows the same countdown."
-    },
-    {
       "name": "PlugIllustration",
       "kind": "component",
       "area": "composites",
@@ -11167,6 +11180,100 @@
       "props": []
     },
     {
+      "name": "RangeDial",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/RangeDial.tsx",
+      "summary": "The dial of a device that holds a band: a low and a high setpoint on one arc.",
+      "props": [
+        {
+          "name": "low",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "high",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "min",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "tone",
+          "type": "DialTone",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "lowLabel",
+          "type": "string",
+          "optional": false,
+          "doc": "Names of the two handles, for assistive technology."
+        },
+        {
+          "name": "highLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "enabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": "False when the device is off or cannot set a range: no handles, no drag."
+        },
+        {
+          "name": "onInput",
+          "type": "(range: DialRange) => void",
+          "optional": true,
+          "doc": "Every range the dragged handle passes (the scene shows it live)."
+        },
+        {
+          "name": "onCommit",
+          "type": "(range: DialRange) => void",
+          "optional": false,
+          "doc": "The range to send: on release, and on each arrow key."
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "reachabilityOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/use-card-common.tsx",
+      "summary": "Reachability as the device reports it. A device whose `device-status` has not answered is unknown: neither drawn as online nor blocked as offline."
+    },
+    {
       "name": "readHistory",
       "kind": "function",
       "area": "composites",
@@ -11188,13 +11295,6 @@
       "summary": "Identity of a read item: subject + key (+ scope when narrowed)."
     },
     {
-      "name": "readOnly",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/__fixtures__/common.ts",
-      "summary": "The mockup's \"Sola lettura (senza permesso)\" option."
-    },
-    {
       "name": "readStoredGroupBy",
       "kind": "function",
       "area": "composites",
@@ -11213,7 +11313,15 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/BottomLine.tsx",
-      "summary": "Why the card cannot be commanded; nothing when it can."
+      "summary": "",
+      "props": [
+        {
+          "name": "notice",
+          "type": "string | null",
+          "optional": true,
+          "doc": "Why the last command failed; the gating reason wins when both exist."
+        }
+      ]
     },
     {
       "name": "RECONNECT_POLICY",

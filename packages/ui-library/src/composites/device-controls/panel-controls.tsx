@@ -279,12 +279,12 @@ export function AcInlineControl({
  * one frame for every device type, the scene filling its zones. The registry
  * keeps handing a hero per control kind; these two adapt its props.
  */
-export function PlugCardHero({ deviceId }: DeviceControlProps): ReactNode {
-  return <ConnectedPlugCard deviceId={deviceId} />
+export function PlugCardHero({ deviceId, optimistic }: DeviceControlProps): ReactNode {
+  return <ConnectedPlugCard deviceId={deviceId} optimistic={optimistic} />
 }
 
-export function ClimateCardHero({ deviceId }: DeviceControlProps): ReactNode {
-  return <ConnectedClimateCard deviceId={deviceId} />
+export function ClimateCardHero({ deviceId, optimistic }: DeviceControlProps): ReactNode {
+  return <ConnectedClimateCard deviceId={deviceId} optimistic={optimistic} />
 }
 
 // ── MediaPlayer ───────────────────────────────────────────────────────────────

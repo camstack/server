@@ -880,10 +880,12 @@ every other type).
   chip, the consumables button and its popover, the history and remote views,
   and the gating. An offline device or a viewer that may not actuate
   (`canActuate={false}`) gets every commanding control disabled with the reason
-  as its title; a scene does not gate on its own.
+  as its title; a scene does not gate on its own. Reachability that has not
+  been reported is shown as unknown, never as online, and a command that fails
+  puts its reason on the reason line (`CardCommon.notice`).
 - **`parts/`** are the controls a scene composes: `CardButton`, `ArmedButton`
   (the one two-step confirmation: 5 s to confirm, with Cancel), `MenuButton`,
-  `ButtonGroup`, `Dial`, `LevelBar`, the sliders, `useCountdown`.
+  `ButtonGroup`, `Dial`, `RangeDial` (two setpoints on one arc), `LevelBar`, the sliders, `useCountdown`.
 - **`illustrations/`** hold the drawings; **`icons.ts`** is the only file that
   imports `lucide-react` (`CardGlyph`).
 - **`scenes/<type>/`** is a model (`model.ts`, plain data and callbacks) and the
@@ -891,8 +893,11 @@ every other type).
   option appears only when the device declares the capability or the field.
 - **`connected/`** reads a real device through the capability hooks and fills
   the model; nothing else in the tree touches tRPC.
-- **`__fixtures__/`** carry the approved mockup's data. The harness route
-  `/device-card-preview?type=plug|climate` renders them, and
+- **`__fixtures__/`** carry the approved mockup's data and are not exported
+  from the package. The harness route
+  `/device-card-preview?type=plug|climate|climate-extra` renders them
+  (`climate-extra`: a held band, a radiator valve, a valve that only reports,
+  unknown reachability — variants the mockup page does not draw), and
   `node scripts/ui/card-parity.mjs --mockup <card mockup html>` shoots mockup and
   implementation side by side (light and dark, desktop and phone) into
   `scratchpad/ui-shots/card-parity/`.

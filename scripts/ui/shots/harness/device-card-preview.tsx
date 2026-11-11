@@ -1,6 +1,7 @@
 /**
  * Fixture page for the device card. Not an admin route: `ui:shots` mounts it for
- * the path `/device-card-preview`; `?type=plug|climate` picks the scene. Every
+ * the path `/device-card-preview`; `?type=plug|climate|climate-extra` picks the scene (`climate-extra`: the
+ * variants real devices have and the mockup does not draw). Every
  * fixture carries the data of one variant of the approved mockup, so
  * `scripts/ui/card-parity.mjs` can shoot the two side by side. Strings are the
  * Italian catalogue, the mockup's language.
@@ -8,14 +9,17 @@
 import i18n from '@admin/i18n'
 import { bridgeUiText } from '@admin/i18n/ui-text-bridge'
 import {
-  CLIMATE_FIXTURES,
   ClimateCard,
   type ClimateCardActions,
   PlugCard,
   type PlugCardActions,
-  plugFixtures,
   UiTextProvider,
 } from '@camstack/ui-library'
+import {
+  CLIMATE_EXTRA_FIXTURES,
+  CLIMATE_FIXTURES,
+} from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/climate'
+import { plugFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/plug'
 import { type ReactElement, type ReactNode, useMemo } from 'react'
 
 const noop = (): void => undefined
@@ -26,6 +30,8 @@ const CLIMATE_ACTIONS: ClimateCardActions = {
   onMode: noop,
   onFan: noop,
   onSwing: noop,
+  onSwingHorizontal: noop,
+  onRange: noop,
   onPreset: noop,
   onHeatCool: noop,
 }
@@ -67,8 +73,8 @@ export function DeviceCardPreview(): ReactElement {
         data-card-type={type}
         className={`${theme} flex min-h-screen flex-wrap content-start items-start gap-4 bg-background p-4 text-foreground`}
       >
-        {type === 'climate'
-          ? CLIMATE_FIXTURES.map((f) => (
+        {type === 'climate' || type === 'climate-extra'
+          ? (type === 'climate' ? CLIMATE_FIXTURES : CLIMATE_EXTRA_FIXTURES).map((f) => (
               <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
                 <ClimateCard
                   model={f.model}

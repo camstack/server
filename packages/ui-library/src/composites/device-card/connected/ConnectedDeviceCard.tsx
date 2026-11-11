@@ -13,6 +13,8 @@ export type ConnectedCardKind = 'plug' | 'climate'
 /** `pending` until both the device and its bindings answered; `null` = no card for it. */
 export type ConnectedCardResolution = ConnectedCardKind | 'pending' | null
 
+/** Either draws the climate card: a radiator valve that only reports is still one. */
+const CLIMATE_CAPS: readonly string[] = ['climate-control', 'heating-valve']
 const CLIMATE_TYPES: ReadonlySet<string> = new Set([DeviceType.Thermostat, DeviceType.Climate])
 
 /** Which card draws a device, from what it IS and what it binds. */
@@ -21,7 +23,11 @@ export function connectedCardKindOf(
   capNames: readonly string[],
 ): ConnectedCardKind | null {
   if (deviceType === DeviceType.Switch && capNames.includes('switch')) return 'plug'
-  if (deviceType !== null && CLIMATE_TYPES.has(deviceType) && capNames.includes('climate-control'))
+  if (
+    deviceType !== null &&
+    CLIMATE_TYPES.has(deviceType) &&
+    CLIMATE_CAPS.some((cap) => capNames.includes(cap))
+  )
     return 'climate'
   return null
 }

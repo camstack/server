@@ -8,6 +8,8 @@ import { CardButton } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
 import { Dial, type DialTone } from '../../parts/Dial'
 import { MenuButton } from '../../parts/MenuButton'
+import { type DialRange, RangeDial } from '../../parts/RangeDial'
+import { ValueChip } from '../../parts/ValueChip'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import { type ClimateCardActions, type ClimateCardModel, nextChoice } from './model'
@@ -47,7 +49,11 @@ export function ClimateCard({
 }: ClimateCardProps): ReactElement {
   const t = useUiText()
   const [draft, setDraft] = useState<number | null>(null)
-  const { target, activity } = model
+  const [bandDraft, setBandDraft] = useState<DialRange | null>(null)
+  const { target, range, valve, activity } = model
+  const band = range === null ? null : (bandDraft ?? { low: range.low, high: range.high })
+  /** A valve that only reports: its opening is the number of the card. */
+  const valveOnly = valve !== null && target === null && range === null && model.current === null
   const tone = TONE[activity]
   const dialTone: DialTone = activity === 'off' ? 'off' : tone
   const shown = draft ?? target?.value ?? null
@@ -63,6 +69,12 @@ export function ClimateCard({
     setDraft(null)
     actions.onTarget(value)
   }
+  const commitBand = (next: DialRange): void => {
+    setBandDraft(null)
+    actions.onRange(next.low, next.high)
+  }
+  const valveText =
+    valve === null || valve.position === null ? '—' : `${Math.round(valve.position)}%`
   const stepBy = (direction: 1 | -1): void => {
     if (target === null) return
     const next = Math.min(target.max, Math.max(target.min, target.value + direction * target.step))
@@ -78,16 +90,59 @@ export function ClimateCard({
       </>
     ) : model.current !== null ? (
       <span className="text-xl font-semibold tabular-nums">{degrees(model.current, 1)}</span>
+    ) : valveOnly ? (
+      <>
+        <span className="text-xl font-semibold tabular-nums" data-testid="dc-climate-valve">
+          {valveText}
+        </span>
+        <span className="text-xs lowercase text-foreground-muted">
+          {t('uiLibrary.deviceCard.climate.valve', 'Valve')}
+        </span>
+      </>
     ) : (
       <CardIcon
         glyph={model.mode?.options.find((o) => o.id === model.mode?.value)?.glyph ?? 'power'}
         className="h-8 w-8"
       />
     )
+  const inside = (
+    <>
+      <div className={cn('flex flex-col items-center', !model.on && 'text-foreground-muted')}>
+        {centre}
+        {model.humidity === null ? null : (
+          <span
+            className="inline-flex items-center gap-0.5 text-xs text-foreground-muted"
+            data-testid="dc-climate-humidity"
+          >
+            <CardIcon glyph="humidity" className="h-3 w-3 text-info" />
+            {Math.round(model.humidity)}%
+          </span>
+        )}
+      </div>
+      <ClimateRoleGlyph role={model.role} className={cn('absolute bottom-1', TEXT[tone])} />
+    </>
+  )
   const image = (
     <div className="relative" data-testid="dc-climate-dial">
-      {target === null || shown === null ? (
-        <div className="flex h-26 w-26 flex-col items-center justify-center">{centre}</div>
+      {range !== null && band !== null ? (
+        <RangeDial
+          low={band.low}
+          high={band.high}
+          min={range.min}
+          max={range.max}
+          step={range.step}
+          tone={dialTone}
+          enabled={model.on && range.editable}
+          lowLabel={t('uiLibrary.deviceCard.climate.rangeLow', 'Heat below')}
+          highLabel={t('uiLibrary.deviceCard.climate.rangeHigh', 'Cool above')}
+          onInput={setBandDraft}
+          onCommit={commitBand}
+          testId="dc-range-dial"
+        >
+          {inside}
+        </RangeDial>
+      ) : target === null || shown === null ? (
+        <div className="relative flex h-26 w-26 flex-col items-center justify-center">{inside}</div>
       ) : (
         <Dial
           value={shown}
@@ -101,19 +156,7 @@ export function ClimateCard({
           onCommit={commit}
           testId="dc-dial"
         >
-          <div className={cn('flex flex-col items-center', !model.on && 'text-foreground-muted')}>
-            {centre}
-            {model.humidity === null ? null : (
-              <span
-                className="inline-flex items-center gap-0.5 text-xs text-foreground-muted"
-                data-testid="dc-climate-humidity"
-              >
-                <CardIcon glyph="humidity" className="h-3 w-3 text-info" />
-                {Math.round(model.humidity)}%
-              </span>
-            )}
-          </div>
-          <ClimateRoleGlyph role={model.role} className={cn('absolute bottom-1', TEXT[tone])} />
+          {inside}
         </Dial>
       )}
       {activity === 'window' ? (
@@ -124,7 +167,24 @@ export function ClimateCard({
     </div>
   )
   const left =
-    target === null || shown === null ? null : (
+    range !== null && band !== null ? (
+      <span
+        className="flex flex-col items-center text-center leading-tight"
+        data-testid="dc-climate-range"
+      >
+        <b
+          className={cn(
+            'text-sm tabular-nums',
+            model.on ? 'text-primary' : 'text-foreground-muted',
+          )}
+        >
+          {degrees(band.low, 1)} – {degrees(band.high, 1)}
+        </b>
+        <small className="text-xs lowercase text-foreground-muted">
+          {t('uiLibrary.deviceCard.climate.rangeShort', 'range')}
+        </small>
+      </span>
+    ) : target === null || shown === null ? null : (
       <>
         <CardButton
           glyph="plus"
@@ -155,16 +215,18 @@ export function ClimateCard({
     )
   const right = (
     <>
-      <CardButton
-        glyph="power"
-        tone={model.on ? 'primary' : 'default'}
-        data-testid="dc-climate-power"
-        onClick={() => actions.onPower(!model.on)}
-      >
-        {model.on
-          ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
-          : t('uiLibrary.deviceCard.turnOn', 'Turn on')}
-      </CardButton>
+      {model.canPower ? (
+        <CardButton
+          glyph="power"
+          tone={model.on ? 'primary' : 'default'}
+          data-testid="dc-climate-power"
+          onClick={() => actions.onPower(!model.on)}
+        >
+          {model.on
+            ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
+            : t('uiLibrary.deviceCard.turnOn', 'Turn on')}
+        </CardButton>
+      ) : null}
       {model.mode === null ? null : (
         <MenuButton
           options={model.mode.options}
@@ -191,7 +253,13 @@ export function ClimateCard({
       )}
     </>
   )
-  const hasBottom = model.preset !== null || model.heatCool !== null || model.swing !== null
+  const valveChip = valve !== null && !valveOnly
+  const hasBottom =
+    model.preset !== null ||
+    model.heatCool !== null ||
+    model.swing !== null ||
+    model.swingHorizontal !== null ||
+    valveChip
   const bottom = hasBottom ? (
     <>
       {model.preset === null ? null : (
@@ -226,6 +294,25 @@ export function ClimateCard({
           {t('uiLibrary.deviceCard.climate.swing', 'Swing')}
         </CardButton>
       )}
+      {model.swingHorizontal === null ? null : (
+        <CardButton
+          glyph="swingHorizontal"
+          tone={model.swingHorizontal ? 'on' : 'default'}
+          aria-pressed={model.swingHorizontal}
+          disabled={!model.on}
+          data-testid="dc-climate-swing-horizontal"
+          onClick={() => actions.onSwingHorizontal(model.swingHorizontal !== true)}
+        >
+          {t('uiLibrary.deviceCard.climate.swingHorizontal', 'Side swing')}
+        </CardButton>
+      )}
+      {valveChip ? (
+        <ValueChip>
+          <span data-testid="dc-climate-valve">
+            {t('uiLibrary.deviceCard.climate.valve', 'Valve')} {valveText}
+          </span>
+        </ValueChip>
+      ) : null}
     </>
   ) : null
   return (

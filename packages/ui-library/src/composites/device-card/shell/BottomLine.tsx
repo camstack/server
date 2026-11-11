@@ -19,12 +19,22 @@ const POP =
   'absolute bottom-full z-20 mb-2 flex flex-col gap-2 rounded-xl border border-border bg-surface p-3 shadow-lg'
 
 /** Why the card cannot be commanded; nothing when it can. */
-export function ReasonLine(): ReactElement | null {
+export interface ReasonLineProps {
+  /** Why the last command failed; the gating reason wins when both exist. */
+  readonly notice?: string | null
+}
+
+export function ReasonLine({ notice = null }: ReasonLineProps): ReactElement | null {
   const gating = useCardGating()
-  if (gating.reason === null) return null
+  const text = gating.reason ?? notice
+  if (text === null) return null
   return (
-    <p data-testid="dc-reason" className="order-first w-full text-xs text-danger">
-      {gating.reason}
+    <p
+      data-testid="dc-reason"
+      role={gating.reason === null ? 'alert' : undefined}
+      className="order-first w-full text-xs text-danger"
+    >
+      {text}
     </p>
   )
 }
