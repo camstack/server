@@ -668,22 +668,21 @@ export interface ConfigNodeMultiSelectField extends ConfigFieldBase {
 }
 
 /**
- * Declarative, client-evaluated filter for `device-select` /
- * `device-multiselect`. The field carries ONLY this filter — the renderer
- * lists every system device (`deviceManager.listAll`) and narrows the
- * options CLIENT-SIDE. There is deliberately NO server-computed option
- * list (that path depended on `deviceManager.getAllBindings`, which returns
- * an empty set on the live cluster and left pickers blank).
+ * Declarative filter for `device-select` / `device-multiselect`. The field
+ * carries ONLY this filter; the renderer asks `deviceManager.search` for the
+ * devices that pass it. There is deliberately NO server-computed option list
+ * on the field (that path depended on `deviceManager.getAllBindings`, which
+ * returned an empty set on the live cluster and left pickers blank).
  *
- * Match rule (union — a device is kept when ANY provided clause matches;
- * an absent/empty filter matches every device):
- *   - `caps`  → the device's advertised `features` intersect this list.
+ * Match rule (every provided clause must hold; an absent/empty filter
+ * matches every device):
+ *   - `caps`  → the device provides ANY of these capabilities.
  *   - `types` → the device's `type` is one of these.
- * `excludeDeviceId` is always subtracted last (typically the device whose
- * settings host the field — e.g. a camera must not list itself as a source).
+ * `excludeDeviceId` / `excludeTypes` are always subtracted (typically the
+ * device whose settings host the field — a camera must not list itself).
  */
 export interface DeviceSelectFilter {
-  /** Keep devices whose `features` intersect ANY of these capability names. */
+  /** Keep devices that provide ANY of these capabilities. */
   readonly caps?: readonly string[]
   /** Keep devices whose `type` is one of these `DeviceType` strings. */
   readonly types?: readonly string[]
@@ -695,8 +694,8 @@ export interface DeviceSelectFilter {
 }
 
 /**
- * Pick a SINGLE device from the live device catalogue. Options are the
- * result of `deviceManager.listAll` filtered client-side by `deviceFilter`.
+ * Pick a SINGLE device from the live device catalogue, narrowed by
+ * `deviceFilter` (see {@link DeviceSelectFilter}).
  * Stored value is the chosen device id as a string.
  */
 export interface ConfigDeviceSelectField extends ConfigFieldBase {
@@ -705,22 +704,14 @@ export interface ConfigDeviceSelectField extends ConfigFieldBase {
 }
 
 /**
- * Pick MULTIPLE devices from the live device catalogue — the searchable
- * sibling of `device-select` (same client-side `deviceFilter`). Stored
+ * Pick MULTIPLE devices from the live device catalogue — the sibling of
+ * `device-select` (same `deviceFilter`). Stored
  * value is a `string[]` of device ids.
  */
 export interface ConfigDeviceMultiSelectField extends ConfigFieldBase {
   type: 'device-multiselect'
   deviceFilter?: DeviceSelectFilter
   maxItems?: number
-  /**
-   * Devices sharing this location are listed FIRST, under a "Suggested"
-   * heading, and the location / type facet chips are shown — the shape the
-   * linked-devices picker needs (D356): a catalogue of hundreds narrowed by
-   * where and what before the free-text search, and the room's own devices
-   * offered without being linked on anybody's behalf. `null` = no suggestion.
-   */
-  suggestLocation?: string | null
 }
 
 /**

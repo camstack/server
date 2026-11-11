@@ -359,10 +359,6 @@ export * from './device-meta'
 export * from './device-name'
 export * from './icon-glyphs'
 export * from './icon-picker'
-export {
-  DeviceMultiSelectField,
-  DeviceSelectField,
-} from './device-select-field'
 export type {
   NotificationTargetOption,
   NotificationTargetSelectFieldProps,

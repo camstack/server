@@ -14,7 +14,51 @@ vi.mock('../../../contexts/system-context.js', () => ({
   }),
 }))
 
+/** The insert dialog's device column is the picker panel over `deviceManager.search`. */
+const STUFA_ITEM = {
+  id: 1,
+  name: 'Stufa veranda',
+  type: 'sensor',
+  location: null,
+  integrationId: null,
+  integrationLabel: null,
+  online: true,
+  disabled: false,
+  compatible: true,
+  values: [],
+}
+const searchAnswer = {
+  items: [STUFA_ITEM],
+  nextCursor: null,
+  total: 1,
+  compatibleTotal: 1,
+  fleetTotal: 1,
+  hiddenIncompatible: 0,
+  facets: { locations: [], integrations: [], types: [] },
+  suggested: [],
+  missingIds: [],
+}
+vi.mock('../../../trpc-react', () => ({
+  trpc: {
+    deviceManager: {
+      search: {
+        useInfiniteQuery: () => ({
+          data: { pages: [searchAnswer] },
+          isPending: false,
+          isError: false,
+          isFetching: false,
+          isFetchingNextPage: false,
+          hasNextPage: false,
+          fetchNextPage: () => undefined,
+          refetch: () => undefined,
+        }),
+      },
+    },
+  },
+}))
+
 vi.mock('../../../generated/system-hooks', () => ({
+  useDeviceManagerSearch: () => ({ data: searchAnswer, isError: false, isPending: false }),
   useDeviceManagerListAll: () => ({
     status: 'success',
     data: [
@@ -89,7 +133,7 @@ const stored = () => screen.getByTestId('stored').textContent
 /** Device → value → Insert, through the real picker. */
 function pickAndInsert(rowTestId: string) {
   fireEvent.click(screen.getByTestId('device-template-field-insert'))
-  fireEvent.click(screen.getByRole('radio', { name: /Stufa veranda/ }))
+  fireEvent.click(screen.getByRole('option', { name: /Stufa veranda/ }))
   fireEvent.click(screen.getByTestId(rowTestId))
   fireEvent.click(screen.getByTestId('device-template-insert-confirm'))
 }
@@ -135,7 +179,7 @@ describe('DeviceTemplateField', () => {
   it('a number slot offers only number fields', () => {
     renderUi(<Harness initial="" accepts="number" />)
     fireEvent.click(screen.getByTestId('device-template-field-insert'))
-    fireEvent.click(screen.getByRole('radio', { name: /Stufa veranda/ }))
+    fireEvent.click(screen.getByRole('option', { name: /Stufa veranda/ }))
     expect(screen.getByTestId('device-value-temperature-sensor.temperature')).toBeTruthy()
     expect(screen.getByTestId('device-value-climate.temperature')).toBeTruthy()
     expect(screen.queryByTestId('device-value-temperature-sensor.label')).toBeNull()

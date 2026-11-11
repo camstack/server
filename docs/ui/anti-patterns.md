@@ -24,7 +24,7 @@ dialogs, status tokens, daily paths) is planned in
 | `raw-button` | 445 / 165 | 300 / 111 | 92 | `Button`, `IconButton` |
 | `raw-hex` | 45 / 7 | 106 / 15 | 55 | a token; `var(--color-*)` in SVG |
 | `inline-style` | 50 / 28 | 129 / 48 | 20 | utilities; style only for computed geometry |
-| `raw-select` | 42 / 29 | 41 / 27 | 18 | `Select`, `NodePicker`, `DeviceSelectField` |
+| `raw-select` | 42 / 29 | 41 / 27 | 18 | `Select`, `NodePicker`, `DeviceValuePicker` |
 | `raw-dialog` | 0 | 1 / 1 | 4 | `Dialog` + `DialogContent`, `useConfirm` |
 | `raw-table` | 13 / 12 | 6 / 6 | 1 | `DataTable`, `DeviceList mode="generic"` |
 | `raw-color-fn` | 1 / 1 | 11 / 8 | 0 | a token with an opacity modifier |

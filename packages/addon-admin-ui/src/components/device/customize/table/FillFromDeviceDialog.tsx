@@ -62,7 +62,6 @@ export function FillFromDeviceDialog(props: FillFromDeviceDialogProps): ReactNod
   const source = useDeviceValueSource({
     deviceId,
     capNames: [props.cap],
-    excludeIds: [props.device.id],
     fit: () => '',
     capTitle: (cap) => vocabularyCapTitle(cap, i18n.language),
     fieldLabel: (cap, path) => vocabularyFieldLabel(cap, path, i18n.language),
@@ -126,8 +125,8 @@ export function FillFromDeviceDialog(props: FillFromDeviceDialogProps): ReactNod
         <DialogBody className="flex flex-col gap-3 p-2 sm:p-4">
           <DeviceValueField
             testId="fill-from-device"
-            devices={source.devices}
-            listState={source.listState}
+            requires={source.requires}
+            contextDeviceId={props.device.id}
             deviceId={deviceId}
             onDeviceChange={setDeviceId}
             deviceLabel={picked?.name ?? ''}

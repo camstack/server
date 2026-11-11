@@ -10,11 +10,6 @@ export function formatRemaining(ms: number): string {
   return `${minutes}m ${String(seconds).padStart(2, '0')}s`
 }
 
-/** The picker hands back strings; only whole numbers are device ids. */
-export function parseDeviceIds(values: readonly string[]): readonly number[] {
-  return values.filter((v) => /^\d+$/.test(v)).map((v) => Number(v))
-}
-
 /** What a watch has left, and what the hard cap leaves of it. */
 export function watchCountdown(
   watch: DebugWatchState,

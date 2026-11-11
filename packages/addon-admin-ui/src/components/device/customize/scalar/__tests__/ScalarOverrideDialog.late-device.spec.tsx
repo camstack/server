@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'
+import { DeviceSearchTrpc } from '../../../../../test-setup/device-search-hub'
 import type { CompositionFieldsFeature } from '@camstack/types'
 import {
   DISHWASHER,
@@ -47,6 +48,12 @@ const GARAGE = {
   stableId: 'lamp',
   location: 'Garage',
 }
+
+/** What the picker's `deviceManager.search` answers: the two candidate sources. */
+const SEARCH_FLEET = [
+  { id: METER.id, name: METER.name, type: DeviceType.Sensor, location: METER.location },
+  { id: GARAGE.id, name: GARAGE.name, type: DeviceType.Sensor, location: GARAGE.location },
+]
 
 const proposalResult = vi.hoisted(() => {
   const current: { current: { status: string; data?: unknown } } = {
@@ -160,7 +167,9 @@ function renderPhone(ui: ReactElement) {
   }))
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const wrap = (node: ReactElement) => (
-    <QueryClientProvider client={client}>{node}</QueryClientProvider>
+    <QueryClientProvider client={client}>
+      <DeviceSearchTrpc fleet={SEARCH_FLEET}>{node}</DeviceSearchTrpc>
+    </QueryClientProvider>
   )
   const view = render(wrap(ui))
   return { rerender: (node: ReactElement) => view.rerender(wrap(node)) }
@@ -208,11 +217,11 @@ describe('ScalarOverrideDialog change mode on a phone, fleet answering after mou
     ).toBe(true)
   })
 
-  it('create mode starts with the device list, not a card', () => {
+  it('create mode starts with the device list, not a card', async () => {
     proposalResult.current = { status: 'pending' }
     fleet.current = { status: 'success', data: [HOST, METER] }
     renderPhone(dialog(false))
     expect(mode()).toBe('picker')
-    expect(screen.getByText('Porch power meter')).toBeTruthy()
+    expect(await screen.findByText('Porch power meter')).toBeTruthy()
   })
 })

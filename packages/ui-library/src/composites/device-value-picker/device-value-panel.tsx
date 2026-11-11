@@ -45,6 +45,8 @@ export interface DeviceValuePanelProps {
   readonly railFirst: boolean
   /** Ids this field offered last time, most recent first. */
   readonly recentIds: readonly number[]
+  /** Focus the search on mount (default true: the panel opened from a click). */
+  readonly autoFocus?: boolean
 }
 
 /**
@@ -123,7 +125,7 @@ export function DeviceValuePanel(props: DeviceValuePanelProps): JSX.Element {
             <Search className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" aria-hidden="true" />
             <input
               type="search"
-              autoFocus
+              autoFocus={props.autoFocus !== false}
               value={text}
               onChange={(e) => {
                 setText(e.target.value)

@@ -41,6 +41,7 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
+import { DeviceSearchTrpc, SEARCH_HUB_CAMERAS } from '../../../../test-setup/device-search-hub'
 import type { AutomationDevice } from '../automation-data'
 import { StationaryPresentFields } from '../SceneFields'
 import { SubjectPicker } from '../SubjectPicker'
@@ -54,7 +55,7 @@ function wrap(node: React.ReactNode) {
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      {node}
+      <DeviceSearchTrpc fleet={SEARCH_HUB_CAMERAS}>{node}</DeviceSearchTrpc>
     </QueryClientProvider>
   )
 }

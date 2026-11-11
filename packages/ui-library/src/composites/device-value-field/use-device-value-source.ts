@@ -1,12 +1,9 @@
+import type { DeviceSearchRequires } from '@camstack/types'
 import { useMemo } from 'react'
 import {
   useDeviceManagerGetWireableFields,
-  useDeviceManagerListAll,
-  useDeviceManagerListDeviceIdsByCaps,
   useDeviceStateGetSnapshot,
 } from '../../generated/system-hooks'
-import type { PickerItem } from '../device-picker/device-picker-model'
-import type { DeviceListState } from '../device-picker/device-selection'
 import type { DeviceValueGroup, DeviceValuesState } from './device-value-field'
 
 /** A field the picked device offers, as the adapter judges it. */
@@ -21,8 +18,6 @@ export interface DeviceValueSourceOptions {
   readonly deviceId: number | null
   /** Devices holding none of these caps are not listed (a device with no fitting value never shows). */
   readonly capNames?: readonly string[]
-  /** Never offered: the host device itself. */
-  readonly excludeIds?: readonly number[]
   /** The fit of a field as a short phrase ('' = as is), or null when it does not fit: then it is not offered. */
   readonly fit: (field: DeviceValueCandidate) => string | null
   readonly capTitle: (cap: string) => string
@@ -30,8 +25,8 @@ export interface DeviceValueSourceOptions {
 }
 
 export interface DeviceValueSource {
-  readonly devices: readonly PickerItem<number>[]
-  readonly listState: DeviceListState
+  /** What the device search must require: pass it to `DeviceValueField`'s `requires`. */
+  readonly requires: DeviceSearchRequires | undefined
   readonly valuesState: DeviceValuesState
   readonly groups: readonly DeviceValueGroup[]
 }
@@ -53,35 +48,24 @@ function readField(slice: unknown, path: string): unknown {
   return current
 }
 
-/** The data half of the device → value picker: the fleet, and the picked device's fitting values. */
+/**
+ * The data half of the device → value picker: what the device search requires,
+ * and the picked device's fitting values. The device list itself is the field's
+ * search panel.
+ */
 export function useDeviceValueSource(options: DeviceValueSourceOptions): DeviceValueSource {
-  const all = useDeviceManagerListAll({ projection: 'slim' })
-  const capFilter = options.capNames !== undefined && options.capNames.length > 0
-  const holders = useDeviceManagerListDeviceIdsByCaps(
-    { capNames: [...(options.capNames ?? [])] },
-    { enabled: capFilter },
+  const capNames = options.capNames
+  const requires = useMemo(
+    (): DeviceSearchRequires | undefined =>
+      capNames !== undefined && capNames.length > 0
+        ? { caps: [...capNames], mode: 'any' }
+        : undefined,
+    [capNames],
   )
   const id = options.deviceId ?? 0
   const wireable = useDeviceManagerGetWireableFields({ deviceId: id }, { enabled: id !== 0 })
   const snapshot = useDeviceStateGetSnapshot({ deviceId: id }, { enabled: id !== 0 })
-  const { fit, capTitle, fieldLabel, excludeIds } = options
-
-  const devices = useMemo(() => {
-    if (all.data === undefined) return []
-    const holding = capFilter && holders.data !== undefined ? new Set(holders.data) : null
-    return all.data
-      .filter((d) => !(excludeIds ?? []).includes(d.id))
-      .filter((d) => holding === null || holding.has(d.id))
-      .map(
-        (d): PickerItem<number> => ({
-          id: d.id,
-          name: d.name,
-          type: d.type,
-          location: d.location,
-          parentDeviceId: d.parentDeviceId,
-        }),
-      )
-  }, [all.data, holders.data, capFilter, excludeIds])
+  const { fit, capTitle, fieldLabel } = options
 
   const groups = useMemo((): readonly DeviceValueGroup[] => {
     // A unit is read from the snapshot: judge the values only once it answered (D315).
@@ -111,17 +95,11 @@ export function useDeviceValueSource(options: DeviceValueSourceOptions): DeviceV
       .filter((g) => g.rows.length > 0)
   }, [wireable.data, snapshot.status, snapshot.data, fit, capTitle, fieldLabel])
 
-  const listState: DeviceListState =
-    all.status === 'error' || (capFilter && holders.status === 'error')
-      ? 'failed'
-      : all.status === 'success' && (!capFilter || holders.status === 'success')
-        ? 'answered'
-        : 'pending'
   const valuesState: DeviceValuesState =
     wireable.status === 'error' || snapshot.status === 'error'
       ? 'failed'
       : wireable.status === 'success' && snapshot.status === 'success'
         ? 'ready'
         : 'loading'
-  return { devices, listState, valuesState, groups }
+  return { requires, valuesState, groups }
 }

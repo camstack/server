@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Discovered selects can declare pickManyOnCreate and multiple, so a create form ticks several candidates at once.
+- A schema device-select filter's clauses must all hold, and suggestLocation is gone (the picker suggests the host's room)
 
 ## [1.2.546] - 2026-11-11
 

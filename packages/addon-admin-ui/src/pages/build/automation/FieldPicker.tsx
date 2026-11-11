@@ -17,13 +17,14 @@
 
 import { Button, ItemFormDialog, useDeviceManagerListAll } from '@camstack/ui-library'
 import { ChevronDown } from 'lucide-react'
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   type PickerDevice,
   toPickerDevices,
 } from '../../../components/device/customize/source-picker-model'
 import { SourceSelector } from '../../../components/device/customize/source-selector/SourceSelector'
+import { BUILD_EXCLUDED_TYPES } from '../flow/build-device-filters'
 import { type AutomationDevice, fieldsOfCap, useWireableFields } from './automation-data'
 import type { WireableField } from './recipe-parts'
 
@@ -84,7 +85,6 @@ export function FieldPicker({ value, devices, onChange }: FieldPickerProps) {
       {open && (
         <FieldPickerDialog
           value={value}
-          devices={devices}
           onCancel={() => setOpen(false)}
           onConfirm={(next) => {
             setOpen(false)
@@ -98,27 +98,14 @@ export function FieldPicker({ value, devices, onChange }: FieldPickerProps) {
 
 interface FieldPickerDialogProps {
   readonly value: FieldSelection
-  readonly devices: readonly AutomationDevice[]
   readonly onCancel: () => void
   readonly onConfirm: (next: FieldSelection) => void
 }
 
 /** The common selector in a dialog: destination (this surface) → device → value. */
-function FieldPickerDialog({
-  value,
-  devices,
-  onCancel,
-  onConfirm,
-}: FieldPickerDialogProps): ReactNode {
+function FieldPickerDialog({ value, onCancel, onConfirm }: FieldPickerDialogProps): ReactNode {
   const { t } = useTranslation()
   const fleet = useDeviceManagerListAll({ projection: 'slim' })
-  const allowed = useMemo(() => new Set(devices.map((d) => d.id)), [devices])
-  const deviceFilter = useMemo(
-    () =>
-      (d: PickerDevice): boolean =>
-        allowed.has(d.id),
-    [allowed],
-  )
   const [picked, setPicked] = useState<PickerDevice | null>(null)
   const [seeded, setSeeded] = useState(false)
   const [field, setField] = useState<{ cap: string; path: string } | null>(
@@ -172,7 +159,7 @@ function FieldPickerDialog({
         }}
         device={picked}
         field={field}
-        deviceFilter={deviceFilter}
+        excludeTypes={BUILD_EXCLUDED_TYPES}
         onDeviceChange={setPicked}
         onFieldChange={setField}
       />

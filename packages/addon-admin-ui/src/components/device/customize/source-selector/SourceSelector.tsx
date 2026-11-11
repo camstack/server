@@ -1,6 +1,6 @@
 /**
  * Pick the device and value that feed a Customize extension (D944 §5). The left
- * column is the ui-library `DevicePicker`; Build-your-self helpers (D944 §3)
+ * column is the ui-library device search panel; Build-your-self helpers (D944 §3)
  * import this component next — they must not grow a second device list.
  */
 import { liveWireableCatalog } from '../source-picker-model'
@@ -11,7 +11,6 @@ import {
 } from '@camstack/types'
 import {
   Button,
-  type DeviceListState,
   DeviceName,
   DeviceValueField,
   Input,
@@ -24,7 +23,6 @@ import { useTranslation } from 'react-i18next'
 import { SuggestedDevices } from '../assignments/SuggestedDevices'
 import { useCapIndex } from '../assignments/use-cap-index'
 import { keyedFieldFit, keyedFieldOffers } from '../keyed/keyed-fit'
-import type { Known } from '../known'
 import { ScalarTransformControls } from '../scalar/ScalarTransformControls'
 import { fieldUnit, type ScalarFieldFit, scalarFieldFit } from '../scalar/scalar-fit'
 import {
@@ -56,8 +54,8 @@ import {
   type SourceCompatibility,
   type SourceDestination,
   type SourceWireableField,
+  sourceSearchRequires,
 } from './source-selector-model'
-import { compatiblePickerItems } from './source-selector-parent-detail'
 import { siblingSuggestions } from './source-selector-siblings'
 
 export type { EventPickedRow }
@@ -109,8 +107,8 @@ export interface SourceSelectorFormulaProps {
   readonly onDeviceChange: (device: PickerDevice | null) => void
   readonly onFieldChange: (field: SourceFieldPick | null) => void
   readonly preview?: ReactNode
-  /** A surface's own validity rule on the device list (keep it referentially stable). */
-  readonly deviceFilter?: (device: PickerDevice) => boolean
+  /** Device types this surface never offers (an automation never targets a container). */
+  readonly excludeTypes?: readonly string[]
   /** The host gives a definite height (a fill dialog): both columns take it and scroll on their own. */
   readonly fillHeight?: boolean
 }
@@ -146,15 +144,6 @@ export type SourceSelectorProps =
   | SourceSelectorMembersProps
 
 type SingleSelectorProps = Exclude<SourceSelectorProps, SourceSelectorMembersProps>
-
-function listStateOf(
-  devices: 'pending' | 'error' | 'success',
-  capIndex: Known<ReadonlyMap<number, readonly string[]>>,
-): DeviceListState {
-  if (devices === 'pending' || capIndex.kind === 'pending') return 'pending'
-  if (devices === 'error') return 'failed'
-  return 'answered'
-}
 
 function toCandidates(
   fleet: readonly PickerDevice[],
@@ -199,33 +188,22 @@ export function SourceSelector(props: SourceSelectorProps): ReactNode {
 function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
   const { t, i18n } = useTranslation()
   const devices = useDeviceManagerListAll({ projection: 'slim' })
-  const deviceFilter = props.kind === 'formula' ? props.deviceFilter : undefined
-  const fleet = useMemo(() => {
-    if (devices.status !== 'success') return []
-    const all = toPickerDevices(devices.data)
-    return deviceFilter === undefined ? all : all.filter(deviceFilter)
-  }, [devices.status, devices.data, deviceFilter])
+  const fleet = useMemo(
+    () => (devices.status === 'success' ? toPickerDevices(devices.data) : []),
+    [devices.status, devices.data],
+  )
+  const requires = useMemo(() => sourceSearchRequires(props.destination), [props.destination])
   const indexCaps = useMemo(() => indexCapsForDestination(props.destination), [props.destination])
   const capIndex = useCapIndex(indexCaps, props.enabled)
-  const { compatible } = useMemo(() => {
-    if (capIndex.kind !== 'known') {
-      return { compatible: [] as SourceCandidateDevice[] }
-    }
-    return partitionSourceDevices(
-      toCandidates(fleet, capIndex.value),
-      props.destination,
-      props.hostId,
-    )
+  // The host's siblings in its own container that already fit (D951); the
+  // panel's own suggestions are the room's, a different and wider set.
+  const siblings = useMemo(() => {
+    if (capIndex.kind !== 'known') return null
+    const candidates = toCandidates(fleet, capIndex.value)
+    const { compatible } = partitionSourceDevices(candidates, props.destination, props.hostId)
+    return siblingSuggestions(compatible, candidates, props.hostId)
   }, [capIndex, fleet, props.destination, props.hostId])
-  const siblings = useMemo(
-    () =>
-      capIndex.kind === 'known'
-        ? siblingSuggestions(compatible, toCandidates(fleet, capIndex.value), props.hostId)
-        : null,
-    [capIndex, compatible, fleet, props.hostId],
-  )
   const hostDeviceType = deviceTypeOf(fleet.find((row) => row.id === props.hostId)?.type)
-  const listState = listStateOf(devices.status, capIndex)
   const deviceId = props.device?.id ?? 0
   const wireable = useDeviceManagerGetWireableFields({ deviceId })
   const snapshot = useDeviceStateGetSnapshot({
@@ -275,7 +253,6 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
     )
     if (next !== null) eventBinding.onPickedChange(next)
   }, [eventBinding, declared])
-  const compatibleDeviceItems = useMemo(() => compatiblePickerItems(compatible), [compatible])
   const fillHeight = props.kind === 'formula' && props.fillHeight === true
   const pickedList =
     props.kind === 'event' && props.picked.length > 0 ? (
@@ -393,8 +370,8 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       deviceListTestId={devicePickerTestId}
       fillHeight={fillHeight}
       heading={t('customize.sourceSelector.pickDevice', { title: props.destination.title })}
-      devices={compatibleDeviceItems}
-      listState={listState}
+      {...(requires === undefined ? {} : { requires })}
+      contextDeviceId={props.hostId}
       suggestions={
         devices.status !== 'error' && siblings !== null ? (
           <SuggestedDevices
@@ -410,6 +387,9 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
           />
         ) : undefined
       }
+      {...(props.kind === 'formula' && props.excludeTypes !== undefined
+        ? { excludeTypes: props.excludeTypes }
+        : {})}
       deviceId={props.device?.id ?? null}
       onDeviceChange={pickDevice}
       deviceLabel={

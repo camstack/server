@@ -5,10 +5,11 @@ import {
   FIRST_LEVEL_MACRO_CLASSES,
   MAX_SENSOR_TRIGGER_DEVICES,
   SOURCE_CAP_ACTIVE_FIELD,
-  type ConfigDeviceMultiSelectField,
   type RecordingObjectTriggerClass,
 } from '@camstack/types'
-import { DeviceMultiSelectField } from '../device-select-field'
+import { DeviceValuePicker } from '../device-value-picker/DeviceValuePicker'
+import { deviceIdsOf, pickedFromDeviceIds } from '../device-value-picker/device-id-values'
+import { FieldShell } from '../device-value-picker/device-value-form-fields'
 import { Plus, Trash2, Volume2, VolumeX } from 'lucide-react'
 import {
   DEFAULT_EVENTS_BAND_BUFFER_SEC,
@@ -99,11 +100,10 @@ export function RecordingBandsEditor({
 
 /**
  * The camera a band belongs to, for the sensor picker: its own id is never a
- * sensor of itself, and its location is what the picker suggests first.
+ * sensor of itself, and its room is what the picker suggests first.
  */
 export interface RecordingSensorContext {
   readonly cameraId: number
-  readonly location: string | null
   /**
    * Does this camera publish its own `recording-signal` — the LEVEL the
    * `on-device-decision` MODE follows (D380)? Asked of the camera's bindings by
@@ -121,32 +121,43 @@ export interface RecordingSensorContext {
  */
 export type DeviceSignalPresence = 'pending' | 'present' | 'absent' | 'unknown'
 
-/** Devices that can trigger a band: those carrying a sensor SOURCE cap (the
- *  recorder listens on exactly these — `SOURCE_CAP_ACTIVE_FIELD`) or typed
- *  `sensor`. A light or a siren is never offered. */
+/** Devices that can trigger a band: those carrying a sensor SOURCE cap — the
+ *  recorder listens on exactly these (`SOURCE_CAP_ACTIVE_FIELD`). A light or a
+ *  siren is never offered, nor a `sensor`-typed device without one. */
 const SENSOR_SOURCE_CAPS: readonly string[] = Object.keys(SOURCE_CAP_ACTIVE_FIELD)
 
-function sensorPickerField(
-  t: UiTextFn,
-  context: RecordingSensorContext,
-): ConfigDeviceMultiSelectField {
-  return {
-    type: 'device-multiselect',
-    key: 'sensorDeviceIds',
-    label: t('uiLibrary.recordingBands.sensors', 'Sensors'),
-    description: t(
-      'uiLibrary.recordingBands.sensorsHint',
-      'Sensors whose ACTIVE edge starts a recording — a contact opening, a PIR firing. Same-location devices are suggested first.',
-    ),
-    placeholder: t('uiLibrary.recordingBands.addSensor', 'Add a sensor…'),
-    maxItems: MAX_SENSOR_TRIGGER_DEVICES,
-    deviceFilter: {
-      caps: SENSOR_SOURCE_CAPS,
-      types: ['sensor'],
-      excludeDeviceId: context.cameraId,
-    },
-    ...(context.location !== null ? { suggestLocation: context.location } : {}),
-  }
+interface SensorPickerProps {
+  readonly context: RecordingSensorContext
+  readonly value: readonly number[]
+  readonly onChange: (ids: readonly number[]) => void
+}
+
+/** The band's trigger sensors: the camera's own room is suggested first. */
+function SensorPicker({ context, value, onChange }: SensorPickerProps): JSX.Element {
+  const t = useUiText()
+  return (
+    <FieldShell
+      label={t('uiLibrary.recordingBands.sensors', 'Sensors')}
+      description={t(
+        'uiLibrary.recordingBands.sensorsHint',
+        'Sensors whose ACTIVE edge starts a recording — a contact opening, a PIR firing. Same-location devices are suggested first.',
+      )}
+    >
+      <DeviceValuePicker
+        multiple
+        pick="device"
+        requires={{ caps: SENSOR_SOURCE_CAPS, mode: 'any' }}
+        contextDeviceId={context.cameraId}
+        excludeIds={[context.cameraId]}
+        maxItems={MAX_SENSOR_TRIGGER_DEVICES}
+        recentKey="recording-band-sensors"
+        placeholder={t('uiLibrary.recordingBands.addSensor', 'Add a sensor…')}
+        testId="recording-band-sensors"
+        value={pickedFromDeviceIds(value)}
+        onChange={(picked) => onChange(deviceIdsOf(picked))}
+      />
+    </FieldShell>
+  )
 }
 
 interface BandRowProps {
@@ -331,15 +342,12 @@ function BandRow({ band, onChange, onRemove, sensorContext }: BandRowProps) {
             })}
           </div>
           {sensorContext !== undefined ? (
-            <DeviceMultiSelectField
-              field={sensorPickerField(t, sensorContext)}
-              value={(band.triggers?.sensorDeviceIds ?? []).map(String)}
-              onChange={(v) => {
-                const ids = Array.isArray(v)
-                  ? v.map((x) => Number(x)).filter((n) => Number.isInteger(n) && n > 0)
-                  : []
-                setTriggers({ sensorDeviceIds: ids.length > 0 ? ids : undefined })
-              }}
+            <SensorPicker
+              context={sensorContext}
+              value={band.triggers?.sensorDeviceIds ?? []}
+              onChange={(ids) =>
+                setTriggers({ sensorDeviceIds: ids.length > 0 ? [...ids] : undefined })
+              }
             />
           ) : null}
           <div className="flex flex-wrap items-center gap-3 text-xs">

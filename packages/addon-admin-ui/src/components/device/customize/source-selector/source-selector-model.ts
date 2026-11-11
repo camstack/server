@@ -363,3 +363,13 @@ export function indexCapsForDestination(destination: SourceDestination): readonl
   }
   return [...caps]
 }
+
+/** What the device search must require for this destination; none when every device qualifies. */
+export function sourceSearchRequires(
+  destination: SourceDestination,
+): { readonly caps: readonly string[]; readonly mode: 'any' } | undefined {
+  if (destination.pickerTargetKind !== undefined || destination.acceptAnyField === true) {
+    return undefined
+  }
+  return { caps: indexCapsForDestination(destination), mode: 'any' }
+}

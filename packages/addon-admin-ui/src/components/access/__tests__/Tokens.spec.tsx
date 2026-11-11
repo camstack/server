@@ -59,11 +59,23 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
   }),
   // The pickers are specced in the library; here they only have to hand back values.
   ScopePicker: () => <div>scope picker</div>,
-  DeviceMultiSelectField: ({ onChange }: { onChange: (v: unknown) => void }) => (
-    <button type="button" onClick={() => onChange(['11', '12'])}>
+  DeviceValuePicker: ({
+    onChange,
+    fixedTypes,
+  }: {
+    onChange: (v: readonly { deviceId: number }[]) => void
+    fixedTypes?: readonly string[]
+  }) => (
+    <button
+      type="button"
+      data-types={fixedTypes?.join(',')}
+      onClick={() => onChange([{ deviceId: 11 }, { deviceId: 12 }])}
+    >
       pick cameras
     </button>
   ),
+  pickedFromDeviceIds: (ids: readonly number[]) => ids.map((deviceId) => ({ deviceId })),
+  deviceIdsOf: (picked: readonly { deviceId: number }[]) => picked.map((p) => p.deviceId),
   trpc: {
     useUtils: () => ({
       auth: {
@@ -263,6 +275,11 @@ describe('TokensSection — one list of tokens, shown by their scopes', () => {
     const lifetime = (): HTMLElement => screen.getByLabelText(/expires after/i)
     expect(selectOptionValues(lifetime())).not.toContain('never')
     fireEvent.click(screen.getByTestId('token-reach-view-link'))
+    // A view link reaches cameras only: the picker is asked for that type.
+    expect(screen.getByRole('button', { name: 'pick cameras' })).toHaveAttribute(
+      'data-types',
+      'camera',
+    )
     fireEvent.click(screen.getByRole('button', { name: 'pick cameras' }))
     fireEvent.click(screen.getByTestId('token-view-talk'))
     selectOption(lifetime(), 'never')

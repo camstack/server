@@ -14,10 +14,9 @@ import type {
   StationaryLeaf,
   StationaryPresentLeaf,
 } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
-import { SegmentedChoice, Slider } from '@camstack/ui-library'
+import { DeviceValuePicker, SegmentedChoice, Slider } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
-import { BuildDevicePicker } from '../flow/BuildDevicePicker'
+import { CAMERA_TYPES } from '../flow/build-device-filters'
 import { DraftNumberInput } from '../flow/DraftNumberInput'
 import { CameraPicker, FieldLabel, ZonePicker } from '../flow/scene-pickers'
 import type { AutomationDevice } from './automation-data'
@@ -56,7 +55,6 @@ export function DetectionFields({ leaf: trigger, devices, onChange }: DetectionF
         onChange={(subjects) => onChange({ ...trigger, subjects: [...subjects] })}
       />
       <CameraPicker
-        devices={devices}
         selected={trigger.deviceIds}
         onChange={(deviceIds) => onChange({ ...trigger, deviceIds: [...deviceIds] })}
       />
@@ -114,7 +112,6 @@ export function StationaryFields({ leaf: trigger, devices, onChange }: Stationar
         onChange={setSubjects}
       />
       <CameraPicker
-        devices={devices}
         selected={trigger.deviceIds}
         onChange={(deviceIds) => onChange({ ...trigger, deviceIds: [...deviceIds] })}
       />
@@ -172,7 +169,6 @@ export interface StationaryPresentFieldsProps {
 /** "On <camera>, a <class> is parked in <zones>". */
 export function StationaryPresentFields({ leaf, devices, onChange }: StationaryPresentFieldsProps) {
   const { t } = useTranslation()
-  const cameras = devices.filter((d) => d.type === DeviceType.Camera)
   const setSubjects = (subjects: readonly DetectionSubject[]): void => {
     const { subjects: _dropped, ...rest } = leaf
     onChange(subjects.length === 0 ? rest : { ...rest, subjects: [...subjects] })
@@ -194,15 +190,16 @@ export function StationaryPresentFields({ leaf, devices, onChange }: StationaryP
     <div className="space-y-3" data-testid="stationary-present-fields">
       <div className="space-y-1">
         <FieldLabel>{t('flow.scene.parkedOn', 'An object is parked on')}</FieldLabel>
-        <BuildDevicePicker
-          devices={cameras}
-          selection="single"
+        <DeviceValuePicker
+          pick="device"
           noun="camera"
-          value={leaf.deviceId > 0 ? [leaf.deviceId] : []}
+          fixedTypes={CAMERA_TYPES}
+          recentKey="build-cameras"
+          clearable={false}
+          value={leaf.deviceId > 0 ? { deviceId: leaf.deviceId } : null}
           testId="stationary-present-camera"
-          onChange={(ids) => {
-            const id = ids[0]
-            if (id !== undefined && id !== leaf.deviceId) setCamera(id)
+          onChange={(picked) => {
+            if (picked !== null && picked.deviceId !== leaf.deviceId) setCamera(picked.deviceId)
           }}
         />
       </div>

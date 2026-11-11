@@ -186,8 +186,9 @@ which never holds the stored value and reveals through the audited
 `docs/architecture/secrets-keychain.md`.
 
 **Pickers.** A node is `NodePicker` (hidden on a single-node cluster, offline
-nodes disabled) or `NodeSelectField` in a form; devices are the one smart
-picker, `DeviceSelectField` / `DeviceMultiSelectField` (D636). Selection that
+nodes disabled) or `NodeSelectField` in a form; a device, or a value on one,
+is `DeviceValuePicker` over `deviceManager.search` (`pick="device"` when only
+the device matters; a form's `device-select` renders it). Selection that
 should survive a reload goes in the URL with `replace: true`.
 
 **One control per option set.** A control with a single option is not

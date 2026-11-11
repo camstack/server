@@ -15,31 +15,21 @@ import { useTranslation } from 'react-i18next'
 import {
   Button,
   Checkbox,
-  DeviceMultiSelectField,
+  DeviceValuePicker,
+  deviceIdsOf,
+  pickedFromDeviceIds,
   LogStream,
   SectionCard,
   useSystemDebugWatch,
   useSystemGetLoggingSettings,
 } from '@camstack/ui-library'
-import {
-  DEBUG_WATCH_REARM_EVERY_MS,
-  type ConfigDeviceMultiSelectField,
-  type DebugWatchState,
-} from '@camstack/types'
+import { DEBUG_WATCH_REARM_EVERY_MS, type DebugWatchState, DeviceType } from '@camstack/types'
 import { AdminPage } from '../../components/AdminPage'
-import {
-  channelsToRearm,
-  formatRemaining,
-  parseDeviceIds,
-  watchCountdown,
-} from './log-watch.helpers'
+import { channelsToRearm, formatRemaining, watchCountdown } from './log-watch.helpers'
 
-const DEVICE_FIELD: Omit<ConfigDeviceMultiSelectField, 'label'> = {
-  type: 'device-multiselect',
-  key: 'watch-devices',
-  deviceFilter: { types: ['camera'] },
-  maxItems: 8,
-}
+/** A watch follows cameras only, and at most this many. */
+const WATCH_TYPES: readonly string[] = [DeviceType.Camera]
+const MAX_WATCH_DEVICES = 8
 
 const CLOCK_MS = 1_000
 const LIST_EVERY_MS = 15_000
@@ -50,7 +40,7 @@ export function LogWatchPage(): ReactElement {
   const watch = useSystemDebugWatch()
   const [watches, setWatches] = useState<readonly DebugWatchState[]>([])
   const [selected, setSelected] = useState<readonly string[]>([])
-  const [devices, setDevices] = useState<readonly string[]>([])
+  const [deviceIds, setDeviceIds] = useState<readonly number[]>([])
   const [nowMs, setNowMs] = useState<number>(() => Date.now())
   const [lapsedNotice, setLapsedNotice] = useState<readonly string[]>([])
 
@@ -100,7 +90,6 @@ export function LogWatchPage(): ReactElement {
     return () => clearInterval(rearm)
   }, [rearming, call])
 
-  const deviceIds = parseDeviceIds(devices)
   const canStart = selected.length > 0 && deviceIds.length > 0 && !watch.isPending
   const watchedDevices = [...new Set(watches.flatMap((w) => w.deviceIds))]
 
@@ -151,13 +140,22 @@ export function LogWatchPage(): ReactElement {
                 </label>
               ))}
             </div>
-            <DeviceMultiSelectField
-              field={{ ...DEVICE_FIELD, label: t('logging.watch.devices', 'Devices') }}
-              value={devices}
-              onChange={(next) =>
-                setDevices(Array.isArray(next) ? next.filter((v) => typeof v === 'string') : [])
-              }
-            />
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-foreground">
+                {t('logging.watch.devices', 'Devices')}
+              </span>
+              <DeviceValuePicker
+                multiple
+                pick="device"
+                noun="camera"
+                fixedTypes={WATCH_TYPES}
+                maxItems={MAX_WATCH_DEVICES}
+                recentKey="log-watch-devices"
+                testId="log-watch-devices"
+                value={pickedFromDeviceIds(deviceIds)}
+                onChange={(next) => setDeviceIds(deviceIdsOf(next))}
+              />
+            </div>
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"

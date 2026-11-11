@@ -83,6 +83,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 })
 
 import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { DeviceSearchTrpc, SEARCH_HUB_CAMERAS } from '../../test-setup/device-search-hub'
 import { BuildPage } from '../Build'
 import { CompositionEditorPage } from '../CompositionEditorPage'
 
@@ -171,9 +172,11 @@ function renderAt(path: string, child: ReactNode): void {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const ui: ReactElement = (
     <QueryClientProvider client={client}>
-      <ConfirmDialogProvider>
-        <BrowserRouter>{child}</BrowserRouter>
-      </ConfirmDialogProvider>
+      <DeviceSearchTrpc fleet={SEARCH_HUB_CAMERAS}>
+        <ConfirmDialogProvider>
+          <BrowserRouter>{child}</BrowserRouter>
+        </ConfirmDialogProvider>
+      </DeviceSearchTrpc>
     </QueryClientProvider>
   )
   render(ui)

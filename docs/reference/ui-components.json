@@ -583,7 +583,7 @@
       "need": "Pick a device, or a VALUE of a capability on a device (one or several)",
       "admin": "`DeviceValuePicker` (`requires`, `multiple`, `variant` `inline` / `popover`, `pick` `value` / `device`). A schema form's `device-select` / `device-multiselect` render it",
       "viewer": "`DevicePicker` (viewer, until its sheet lands)",
-      "notes": "Backed by `deviceManager.search`: only compatible devices, one generic \"No device provides {capability}\" message (`capabilityLabel`), failed is not empty. A device with several values opens a second level. A form stores the device id string as before. `DeviceSelectField` / `DeviceMultiSelectField` remain only for a union `caps`+`types` filter or `suggestLocation` until their call sites migrate"
+      "notes": "Backed by `deviceManager.search`: only compatible devices, one generic \"No device provides {capability}\" message (`capabilityLabel`), failed is not empty. A device with several values opens a second level. A form stores the device id string as before; a `deviceFilter`'s clauses all hold (AND). `contextDeviceId` suggests the host's room and never lists the host. `variant=\"embedded\"` keeps the list open in a modal step; `emptyMeansAll` / `savedHadDevices` for an \"every device\" scope. The Customize source column (`DeviceValueField`) is the same panel"
     },
     {
       "need": "A device's name",
@@ -4693,6 +4693,13 @@
       ]
     },
     {
+      "name": "deviceIdsOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/device-id-values.ts",
+      "summary": "Back to the stored shape: each device once, in pick order."
+    },
+    {
       "name": "deviceIdStrings",
       "kind": "function",
       "area": "composites",
@@ -4733,13 +4740,6 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-select-filter.ts",
       "summary": "Does a device satisfy the filter?"
-    },
-    {
-      "name": "DeviceMultiSelectField",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-select-field.tsx",
-      "summary": ""
     },
     {
       "name": "DeviceName",
@@ -5053,13 +5053,6 @@
           "doc": ""
         }
       ]
-    },
-    {
-      "name": "DeviceSelectField",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-select-field.tsx",
-      "summary": ""
     },
     {
       "name": "DeviceSelectorPicker",
@@ -5434,18 +5427,36 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-value-field/device-value-field.tsx",
-      "summary": "The ONE device → value picker. With a source already chosen (a device AND a value) it is one compact card at every width: the source row with a Change button, the transform slot, the proposal slot and the \"would read\"…",
+      "summary": "A device → value SOURCE editor (a Customize source, a fill, a formula input). With a source already chosen (a device AND a value) it is one compact card at every width: the source row with a Change button, the transfo…",
       "props": [
         {
-          "name": "devices",
-          "type": "readonly PickerItem<number>[]",
-          "optional": false,
-          "doc": "Only the devices that offer a fitting value: an incompatible device is not listed."
+          "name": "requires",
+          "type": "DeviceSearchRequires | undefined",
+          "optional": true,
+          "doc": "The capabilities a fitting value comes from: only devices providing one are listed (`deviceManager.search`). Absent = every device."
         },
         {
-          "name": "listState",
-          "type": "DeviceListState",
-          "optional": false,
+          "name": "contextDeviceId",
+          "type": "number",
+          "optional": true,
+          "doc": "The device the field belongs to: never listed, and its room is suggested first."
+        },
+        {
+          "name": "excludeIds",
+          "type": "readonly number[]",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "excludeTypes",
+          "type": "readonly string[]",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "fixedTypes",
+          "type": "readonly string[]",
+          "optional": true,
           "doc": ""
         },
         {
@@ -5573,6 +5584,87 @@
           "type": "boolean",
           "optional": true,
           "doc": "The host gives a definite height: the columns scroll on their own."
+        }
+      ]
+    },
+    {
+      "name": "DeviceValuePanel",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/device-value-panel.tsx",
+      "summary": "The picker's dropdown body: search, the \"{Capability} · N match of M\" line, the optional filter rail, and the list. The inline variant starts without the rail and escalates to it with \"Browse all…\" keeping the query.",
+      "props": [
+        {
+          "name": "requires",
+          "type": "DeviceSearchRequires",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "contextDeviceId",
+          "type": "number",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "fixedTypes",
+          "type": "readonly string[]",
+          "optional": true,
+          "doc": "Device types the field is fixed to (a `device-select` filter), narrowed by the Type facet."
+        },
+        {
+          "name": "excludeIds",
+          "type": "readonly number[]",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "excludeTypes",
+          "type": "readonly string[]",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "kind",
+          "type": "PickKind",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "multiple",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "picked",
+          "type": "readonly PickedValue[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onSelect",
+          "type": "(value: PickedValue) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "railFirst",
+          "type": "boolean",
+          "optional": false,
+          "doc": "Start with the filter rail (the popover variant)."
+        },
+        {
+          "name": "recentIds",
+          "type": "readonly number[]",
+          "optional": false,
+          "doc": "Ids this field offered last time, most recent first."
+        },
+        {
+          "name": "autoFocus",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Focus the search on mount (default true: the panel opened from a click)."
         }
       ]
     },
@@ -10305,6 +10397,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "pickedFromDeviceIds",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/device-id-values.ts",
+      "summary": "The picker speaks {@link PickedValue}; most admin call sites store plain numeric device ids (a rule's devices, a trigger's source, a token's cameras). These two convert at that boundary, and nowhere else."
     },
     {
       "name": "pickedFromDeviceIdString",
@@ -15433,7 +15532,7 @@
       "kind": "hook",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-value-field/use-device-value-source.ts",
-      "summary": "The data half of the device → value picker: the fleet, and the picked device's fitting values."
+      "summary": "The data half of the device → value picker: what the device search requires, and the picked device's fitting values. The device list itself is the field's search panel."
     },
     {
       "name": "useDeviceWebrtc",

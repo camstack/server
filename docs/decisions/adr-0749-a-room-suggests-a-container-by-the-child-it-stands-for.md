@@ -6,7 +6,6 @@ date: 2026-10-07
 supersedes:
 applies-to:
   - packages/ui-library/src/composites/device-select-filter.ts
-  - packages/ui-library/src/composites/device-select-field.tsx
   - packages/addon-admin-ui/src/components/device/customize/assignments/room-suggestions.ts
   - packages/addon-admin-ui/src/components/device/customize/assignments/SuggestedDevices.tsx
 ---
@@ -36,8 +35,9 @@ contributes ONE suggestion, the child the container stands for — its stored
 a container with no child suggests nothing. Its other children are not hidden:
 they stay in the picker's normal list. The rule is ONE function,
 `sameLocationSuggestions` in `ui-library/composites/device-select-filter.ts`,
-applied by the `device-multiselect` field's `suggestLocation` and by every
-Customize picker; each surface intersects it with its own validity filter
+applied by every Customize picker (the `device-multiselect` field's
+`suggestLocation` was retired with the device search picker, whose
+`contextDeviceId` suggests the host's room on the hub); each surface intersects it with its own validity filter
 (capability, kind, already assigned, the host). A suggestion is never assigned
 on its own (D356): Customize shows "N suggested · <room>" on a card's header,
 which opens the picker, and a "Suggested · <room>" group at the top of the

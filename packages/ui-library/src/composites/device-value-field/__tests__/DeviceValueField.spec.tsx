@@ -1,18 +1,75 @@
+import { type DeviceSearchItem, type DeviceSearchResult, DeviceType } from '@camstack/types'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { type ReactElement, useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DeviceValueField, type DeviceValueFieldProps } from '../device-value-field'
 
-vi.mock('../../../contexts/system-context.js', () => ({
-  useSystem: () => ({
-    trpcClient: {
-      deviceManager: {
-        listSiteZones: { query: () => new Promise(() => undefined) },
+function device(id: number, name: string): DeviceSearchItem {
+  return {
+    id,
+    name,
+    type: DeviceType.Switch,
+    location: 'Porch',
+    integrationId: 'hue',
+    integrationLabel: 'Hue',
+    online: true,
+    disabled: false,
+    compatible: true,
+    values: [],
+  }
+}
+
+function answer(items: readonly DeviceSearchItem[]): DeviceSearchResult {
+  return {
+    items: [...items],
+    nextCursor: null,
+    total: items.length,
+    compatibleTotal: items.length,
+    fleetTotal: 40,
+    hiddenIncompatible: 0,
+    facets: { locations: [], integrations: [], types: [] },
+    suggested: [],
+    missingIds: [],
+  }
+}
+
+/** The device column is the picker panel over `deviceManager.search`; only the query is faked. */
+const search = {
+  data: answer([device(1, 'Porch meter'), device(2, 'Garage lamp')]) as
+    | DeviceSearchResult
+    | undefined,
+  isError: false,
+  lastQuery: undefined as unknown,
+  refetch: vi.fn(),
+}
+
+vi.mock('../../../trpc-react', () => ({
+  trpc: {
+    deviceManager: {
+      search: {
+        useInfiniteQuery: (query: unknown) => {
+          search.lastQuery = query
+          return {
+            data: search.data === undefined ? undefined : { pages: [search.data] },
+            isPending: search.data === undefined && !search.isError,
+            isError: search.isError,
+            isFetching: false,
+            isFetchingNextPage: false,
+            hasNextPage: false,
+            fetchNextPage: () => undefined,
+            refetch: search.refetch,
+          }
+        },
       },
     },
-  }),
+  },
 }))
+vi.mock('../../../generated/system-hooks', () => ({
+  useDeviceManagerSearch: () => ({ data: undefined, isError: false, isPending: false }),
+}))
+
+const { DeviceValueField } = await import('../device-value-field')
+type DeviceValueFieldProps = import('../device-value-field').DeviceValueFieldProps
 
 /** The REAL picker runs; only the viewport is faked (phone = below `sm`). */
 function setPhone(phone: boolean): void {
@@ -46,8 +103,7 @@ const GROUPS = [
 
 function props(over: Partial<DeviceValueFieldProps> = {}): DeviceValueFieldProps {
   return {
-    devices: [{ id: 1, name: 'Porch meter' }],
-    listState: 'answered',
+    requires: { caps: ['power-meter'] },
     deviceId: null,
     onDeviceChange: () => undefined,
     deviceLabel: 'Porch meter',
@@ -84,7 +140,11 @@ describe.each([
   ['phone', true],
   ['desktop', false],
 ])('DeviceValueField on %s', (_name, phone) => {
-  beforeEach(() => setPhone(phone))
+  beforeEach(() => {
+    setPhone(phone)
+    search.data = answer([device(1, 'Porch meter'), device(2, 'Garage lamp')])
+    search.isError = false
+  })
 
   it('create mode starts with the device list, no card', () => {
     renderField(<DeviceValueField {...props()} />)
@@ -182,10 +242,26 @@ describe.each([
   })
 })
 
-describe('DeviceValueField phone accordion', () => {
-  beforeEach(() => setPhone(true))
+describe('DeviceValueField device column', () => {
+  beforeEach(() => {
+    setPhone(false)
+    search.data = answer([device(1, 'Porch meter'), device(2, 'Garage lamp')])
+    search.isError = false
+    window.localStorage.clear()
+  })
 
-  it('opens the picked device values inline, under it, one device at a time', () => {
+  it('asks the search for the devices that provide the required caps, never the host', () => {
+    renderField(<DeviceValueField {...props({ contextDeviceId: 7 })} />)
+    expect(search.lastQuery).toMatchObject({
+      requires: { caps: ['power-meter'] },
+      contextDeviceId: 7,
+    })
+    search.data = answer([device(7, 'The host'), device(1, 'Porch meter')])
+    renderField(<DeviceValueField {...props({ contextDeviceId: 7 })} />)
+    expect(screen.queryByRole('option', { name: /The host/ })).toBeNull()
+  })
+
+  it('a picked row reports the device, and its fitting values follow', () => {
     const onValue = vi.fn()
     function Host() {
       const [deviceId, setDeviceId] = useState<number | null>(null)
@@ -193,10 +269,6 @@ describe('DeviceValueField phone accordion', () => {
       return (
         <DeviceValueField
           {...props({
-            devices: [
-              { id: 1, name: 'Porch meter' },
-              { id: 2, name: 'Garage lamp' },
-            ],
             deviceId,
             onDeviceChange: setDeviceId,
             value,
@@ -210,39 +282,18 @@ describe('DeviceValueField phone accordion', () => {
     }
     renderField(<Host />)
     expect(screen.queryByTestId('device-value-power-meter.power')).toBeNull()
-    fireEvent.click(screen.getByRole('radio', { name: /Porch meter/ }))
-    expect(screen.getAllByTestId('device-value-field-values')).toHaveLength(1)
-    fireEvent.click(screen.getByRole('radio', { name: /Garage lamp/ }))
-    expect(screen.getAllByTestId('device-value-field-values')).toHaveLength(1)
+    fireEvent.click(screen.getByRole('option', { name: /Porch meter/ }))
     fireEvent.click(screen.getByTestId('device-value-power-meter.power'))
     expect(onValue).toHaveBeenCalledWith(PICK)
     expect(mode()).toBe('card')
   })
 
-  it('folds the open device when it is tapped again, and opens it on the next tap', () => {
-    function Host() {
-      const [deviceId, setDeviceId] = useState<number | null>(null)
-      return <DeviceValueField {...props({ deviceId, onDeviceChange: setDeviceId })} />
-    }
-    renderField(<Host />)
-    const radio = () => screen.getByRole('radio', { name: /Porch meter/ })
-    fireEvent.click(radio())
-    expect(screen.queryByTestId('device-value-power-meter.power')).toBeTruthy()
-    fireEvent.click(radio())
-    expect(screen.queryByTestId('device-value-power-meter.power')).toBeNull()
-    fireEvent.click(radio())
-    expect(screen.queryByTestId('device-value-power-meter.power')).toBeTruthy()
-  })
-
-  it('still shows the values below the list when the stored device has no row', () => {
-    renderField(
-      <DeviceValueField
-        {...props({ devices: [{ id: 2, name: 'Garage lamp' }], deviceId: 1, value: PICK })}
-      />,
-    )
-    fireEvent.click(screen.getByTestId('device-value-field-change'))
-    expect(screen.queryByRole('radio', { name: /Porch meter/ })).toBeNull()
-    expect(screen.getAllByTestId('device-value-field-values')).toHaveLength(1)
-    expect(screen.getByTestId('device-value-power-meter.power')).toBeTruthy()
+  it('a failed device search is not an empty list: it offers Retry (D315)', () => {
+    search.data = undefined
+    search.isError = true
+    renderField(<DeviceValueField {...props()} />)
+    expect(screen.queryByText(/No device provides/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /retry/i }))
+    expect(search.refetch).toHaveBeenCalled()
   })
 })

@@ -1,7 +1,6 @@
 import type { ConfigDeviceMultiSelectField, ConfigDeviceSelectField } from '@camstack/types'
-import type { JSX } from 'react'
-import type { TranslationFn } from '../config-form-builder'
-import { DeviceMultiSelectField, DeviceSelectField, FieldShell } from '../device-select-field'
+import type { JSX, ReactNode } from 'react'
+import { resolveLabel, type TranslationFn } from '../config-form-builder'
 import { DeviceValuePicker } from './DeviceValuePicker'
 import {
   deviceIdStrings,
@@ -17,26 +16,59 @@ interface FormFieldProps<F> {
   readonly translationFn?: TranslationFn
 }
 
+const LABEL_CLASS = 'block text-[11px] font-medium text-foreground mb-1 break-words'
+const DESC_CLASS = 'text-[10px] text-foreground-subtle mt-0.5 break-words'
+
+export interface FieldShellProps {
+  readonly label?: string
+  readonly description?: string
+  readonly required?: boolean
+  readonly translationFn?: TranslationFn
+  readonly children: ReactNode
+}
+
+/** A schema field's label, required mark and description around its control. */
+export function FieldShell({
+  label,
+  description,
+  required,
+  translationFn,
+  children,
+}: FieldShellProps): JSX.Element {
+  const resolvedLabel = resolveLabel(label, translationFn)
+  const resolvedDescription = resolveLabel(description, translationFn)
+  const hasLabel = resolvedLabel !== undefined && resolvedLabel !== ''
+  return (
+    <div className="min-w-0">
+      {hasLabel && (
+        <label className={LABEL_CLASS}>
+          {resolvedLabel}
+          {required && <span className="ml-0.5 text-danger">*</span>}
+        </label>
+      )}
+      {children}
+      {resolvedDescription && <p className={DESC_CLASS}>{resolvedDescription}</p>}
+    </div>
+  )
+}
+
 /**
  * `device-select` / `device-multiselect` in a schema form. The stored shape
  * is unchanged — device ids as strings — so a form stores only the device
  * even though the picker offers values: rows pick the whole device.
  *
  * `deviceFilter` maps onto the search: `caps` become the required
- * capabilities, `types` the fixed types, the two exclusions are applied to
- * the list. A filter that UNIONs `caps` with `types`, and `suggestLocation`
- * (a room NAME, where the search takes a context device), have no search
- * equivalent yet: those fields keep the earlier client-side picker.
+ * capabilities (any of them), `types` the fixed types, the two exclusions
+ * are applied to the list. With both `caps` and `types`, a device must
+ * satisfy both.
  */
 function filterParts(filter: ConfigDeviceSelectField['deviceFilter']) {
   const caps = filter?.caps ?? []
   return {
-    caps,
     requires: caps.length > 0 ? { caps, mode: 'any' as const } : undefined,
     fixedTypes: filter?.types,
     excludeIds: filter?.excludeDeviceId === undefined ? undefined : [filter.excludeDeviceId],
     excludeTypes: filter?.excludeTypes,
-    union: caps.length > 0 && (filter?.types?.length ?? 0) > 0,
   }
 }
 
@@ -45,7 +77,6 @@ export function DeviceSelectFormField(
 ): JSX.Element | null {
   const { field, value, onChange, disabled, translationFn } = props
   const parts = filterParts(field.deviceFilter)
-  if (parts.union) return <DeviceSelectField {...props} />
   return (
     <FieldShell
       label={field.label}
@@ -75,9 +106,6 @@ export function DeviceMultiSelectFormField(
 ): JSX.Element | null {
   const { field, value, onChange, disabled, translationFn } = props
   const parts = filterParts(field.deviceFilter)
-  if (parts.union || (field.suggestLocation ?? null) !== null) {
-    return <DeviceMultiSelectField {...props} />
-  }
   return (
     <FieldShell
       label={field.label}

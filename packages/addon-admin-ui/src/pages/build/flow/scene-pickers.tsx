@@ -4,11 +4,16 @@
  * the same.
  */
 
-import { DeviceType } from '@camstack/types'
-import { Button, useZonesListZones } from '@camstack/ui-library'
+import {
+  Button,
+  DeviceValuePicker,
+  deviceIdsOf,
+  pickedFromDeviceIds,
+  useZonesListZones,
+} from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from '../automation/automation-data'
-import { BuildDevicePicker } from './BuildDevicePicker'
+import { CAMERA_TYPES } from './build-device-filters'
 
 const FIELD_LABEL = 'text-xs text-foreground-subtle'
 
@@ -21,25 +26,25 @@ function toggled(selected: readonly string[], value: string): readonly string[] 
 }
 
 export interface CameraPickerProps {
-  readonly devices: readonly AutomationDevice[]
   readonly selected: readonly number[]
   readonly onChange: (next: readonly number[]) => void
 }
 
 /** The chosen cameras, picked with the common device picker. */
-export function CameraPicker({ devices, selected, onChange }: CameraPickerProps) {
+export function CameraPicker({ selected, onChange }: CameraPickerProps) {
   const { t } = useTranslation()
-  const cameras = devices.filter((d) => d.type === DeviceType.Camera)
   return (
     <div className="space-y-1">
       <FieldLabel>{t('flow.scene.cameras', 'Cameras')}</FieldLabel>
-      <BuildDevicePicker
-        devices={cameras}
-        selection="multiple"
+      <DeviceValuePicker
+        multiple
+        pick="device"
         noun="camera"
-        value={selected}
+        fixedTypes={CAMERA_TYPES}
+        recentKey="build-cameras"
+        value={pickedFromDeviceIds(selected)}
         testId="scene-cameras"
-        onChange={onChange}
+        onChange={(next) => onChange(deviceIdsOf(next))}
       />
     </div>
   )

@@ -18,7 +18,6 @@ import {
 import { useCallback, useMemo, type JSX } from 'react'
 import {
   useDeviceManagerGetBindings,
-  useDeviceManagerGetDevice,
   useRecordingArchiveGetDeviceConfig,
   useRecordingArchiveGetStatus,
   useRecordingArchiveRescanStorage,
@@ -43,10 +42,6 @@ export function RecordingPanel({ deviceId }: HostWidgetProps): JSX.Element {
   const queryClient = useQueryClient()
   const statusQuery = useRecordingArchiveGetStatus({ deviceId })
   const configQuery = useRecordingArchiveGetDeviceConfig({ deviceId })
-  // The camera's own row, for the sensor picker's location suggestion (D356
-  // spirit: suggest the same location, never link on its own).
-  const deviceQuery = useDeviceManagerGetDevice({ deviceId })
-  const cameraLocation = deviceQuery.data?.location ?? null
   // Does this camera publish its own `recording-signal`? Asked of ITS bindings
   // (D12: per-device, never the global cap list), answered in four states so
   // an unanswered query is never rendered as "no signal" (D315).
@@ -128,7 +123,7 @@ export function RecordingPanel({ deviceId }: HostWidgetProps): JSX.Element {
             availableProfiles={availableProfiles}
             saving={setConfig.isPending}
             onSave={saveConfig}
-            sensorContext={{ cameraId: deviceId, location: cameraLocation, deviceSignal }}
+            sensorContext={{ cameraId: deviceId, deviceSignal }}
           />
         ) : (
           <div className="px-1 py-2 text-xs text-foreground-subtle">

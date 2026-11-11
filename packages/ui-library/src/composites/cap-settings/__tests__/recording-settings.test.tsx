@@ -1,46 +1,55 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import type { CamProfile, RecordingBand, RecordingConfig } from '@camstack/types'
+/** Only the search is faked: it answers what the hub would for the sensor caps. */
+const search = { lastQuery: undefined as unknown }
+const sensor = (id: number, name: string) => ({
+  id,
+  name,
+  type: 'sensor',
+  location: 'Front door',
+  integrationId: 'zigbee',
+  integrationLabel: 'Zigbee',
+  online: true,
+  disabled: false,
+  compatible: true,
+  values: [],
+})
+const answer = {
+  items: [sensor(3001, 'Contatto porta'), sensor(3002, 'PIR hallway')],
+  nextCursor: null,
+  total: 2,
+  compatibleTotal: 2,
+  fleetTotal: 4,
+  hiddenIncompatible: 0,
+  facets: { locations: [], integrations: [], types: [] },
+  suggested: [],
+  missingIds: [],
+}
+vi.mock('../../../trpc-react', () => ({
+  trpc: {
+    deviceManager: {
+      search: {
+        useInfiniteQuery: (query: unknown) => {
+          search.lastQuery = query
+          return {
+            data: { pages: [answer] },
+            isPending: false,
+            isError: false,
+            isFetching: false,
+            isFetchingNextPage: false,
+            hasNextPage: false,
+            fetchNextPage: () => undefined,
+            refetch: () => undefined,
+          }
+        },
+      },
+    },
+  },
+}))
 vi.mock('../../../generated/system-hooks', () => ({
-  useDeviceManagerListAll: () => ({
-    data: [
-      {
-        id: 101,
-        type: 'camera',
-        name: 'Front door',
-        location: 'Front door',
-        features: [],
-        isCamera: true,
-      },
-      {
-        id: 3001,
-        type: 'sensor',
-        name: 'Contatto porta',
-        location: 'Front door',
-        features: ['contact'],
-        isCamera: false,
-      },
-      {
-        id: 3002,
-        type: 'sensor',
-        name: 'PIR hallway',
-        location: 'Hallway',
-        features: ['motion'],
-        isCamera: false,
-      },
-      {
-        id: 3003,
-        type: 'light',
-        name: 'Lampada',
-        location: 'Front door',
-        features: ['light'],
-        isCamera: false,
-      },
-    ],
-    isLoading: false,
-    error: null,
-  }),
+  useDeviceManagerSearch: () => ({ data: answer, isError: false, isPending: false }),
 }))
 
 import { RecordingSettings } from '../RecordingSettings'
@@ -219,8 +228,8 @@ describe('RecordingSettings — flat bands, no advanced tab', () => {
   it('an events band can name the SENSORS that trigger it — the field the schema had and no UI wrote', () => {
     // `RecordingTriggers.sensorDeviceIds` existed for weeks with nothing to
     // set it: the operator saw Motion and Audio and asked where the sensors
-    // were. Offered only for devices carrying a source cap (contact, motion,
-    // binary, …), the camera's own location first.
+    // were. The search is asked for devices carrying a source cap (contact,
+    // motion, binary, …), the camera's own room suggested and the camera never.
     const onSave: SaveSpy = vi.fn()
     render(
       <RecordingSettings
@@ -228,15 +237,18 @@ describe('RecordingSettings — flat bands, no advanced tab', () => {
         availableProfiles={ALL_SLOTS}
         saving={false}
         onSave={onSave}
-        sensorContext={{ cameraId: 101, location: 'Front door' }}
+        sensorContext={{ cameraId: 101 }}
       />,
     )
     fireEvent.click(screen.getByRole('button', { name: 'Mode Events' }))
-    const box = screen.getByRole('combobox', { name: 'Sensors' })
-    fireEvent.focus(box)
-    fireEvent.change(box, { target: { value: 'porta' } })
-    fireEvent.click(screen.getByRole('option', { name: /Contatto porta/ }))
-    expect(screen.queryByRole('option', { name: /Lampada/ })).toBeNull()
+    fireEvent.click(
+      within(screen.getByTestId('recording-band-sensors')).getByRole('button', { name: /add/i }),
+    )
+    expect(search.lastQuery).toMatchObject({
+      requires: { caps: expect.arrayContaining(['contact', 'motion']), mode: 'any' },
+      contextDeviceId: 101,
+    })
+    fireEvent.click(screen.getByRole('checkbox', { name: /Contatto porta/ }))
     fireEvent.click(screen.getByText('Save'))
     const [band] = savedConfig(onSave).bands
     expect(band?.triggers).toEqual({ sensorDeviceIds: [3001] })
@@ -252,7 +264,7 @@ describe('RecordingSettings — flat bands, no advanced tab', () => {
         availableProfiles={ALL_SLOTS}
         saving={false}
         onSave={onSave}
-        sensorContext={{ cameraId: 4374, location: null, deviceSignal: 'present' }}
+        sensorContext={{ cameraId: 4374, deviceSignal: 'present' }}
       />,
     )
     fireEvent.click(screen.getByRole('button', { name: 'Mode Device decides' }))
@@ -272,7 +284,7 @@ describe('RecordingSettings — flat bands, no advanced tab', () => {
         availableProfiles={ALL_SLOTS}
         saving={false}
         onSave={vi.fn()}
-        sensorContext={{ cameraId: 101, location: null, deviceSignal: 'pending' }}
+        sensorContext={{ cameraId: 101, deviceSignal: 'pending' }}
       />,
     )
     const pending = screen.getByRole('button', { name: 'Mode Device decides' })
@@ -287,7 +299,7 @@ describe('RecordingSettings — flat bands, no advanced tab', () => {
         availableProfiles={ALL_SLOTS}
         saving={false}
         onSave={vi.fn()}
-        sensorContext={{ cameraId: 101, location: null, deviceSignal: 'absent' }}
+        sensorContext={{ cameraId: 101, deviceSignal: 'absent' }}
       />,
     )
     const absent = screen.getByRole('button', { name: 'Mode Device decides' })
@@ -305,7 +317,7 @@ describe('RecordingSettings — flat bands, no advanced tab', () => {
         availableProfiles={ALL_SLOTS}
         saving={false}
         onSave={onSave}
-        sensorContext={{ cameraId: 4374, location: null, deviceSignal: 'unknown' }}
+        sensorContext={{ cameraId: 4374, deviceSignal: 'unknown' }}
       />,
     )
     expect(

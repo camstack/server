@@ -1,11 +1,12 @@
-import { type ReactNode, useEffect, useState } from 'react'
+import type { DeviceSearchRequires } from '@camstack/types'
+import { type ReactNode, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'
 import { useIsPhone } from '../../hooks/use-is-mobile'
+import { cn } from '../../lib/cn'
 import { Button } from '../../primitives/button'
 import { Radio } from '../../primitives/radio'
-import { DevicePicker } from '../device-picker/DevicePicker'
-import type { PickerItem } from '../device-picker/device-picker-model'
-import type { DeviceListState } from '../device-picker/device-selection'
+import { DeviceValuePanel } from '../device-value-picker/device-value-panel'
+import { useRecentDevices } from '../device-value-picker/use-recent-devices'
 
 /** One value a device offers. Only values that FIT are ever passed in. */
 export interface DeviceValueRow {
@@ -33,9 +34,16 @@ export interface DeviceValuePick {
 export type DeviceValuesState = 'ready' | 'loading' | 'failed'
 
 export interface DeviceValueFieldProps {
-  /** Only the devices that offer a fitting value: an incompatible device is not listed. */
-  readonly devices: readonly PickerItem<number>[]
-  readonly listState: DeviceListState
+  /**
+   * The capabilities a fitting value comes from: only devices providing one
+   * are listed (`deviceManager.search`). Absent = every device.
+   */
+  readonly requires?: DeviceSearchRequires | undefined
+  /** The device the field belongs to: never listed, and its room is suggested first. */
+  readonly contextDeviceId?: number
+  readonly excludeIds?: readonly number[]
+  readonly excludeTypes?: readonly string[]
+  readonly fixedTypes?: readonly string[]
   /** Above the device list: same-room suggestions. */
   readonly suggestions?: ReactNode
   readonly deviceId: number | null
@@ -70,30 +78,28 @@ export interface DeviceValueFieldProps {
 }
 
 /**
- * The ONE device → value picker. With a source already chosen (a device AND a value) it
- * is one compact card at every width: the source row with a Change button, the transform
- * slot, the proposal slot and the "would read" line. Without one, or after Change, it is
- * the picker: two columns from `sm` (devices | their fitting values); on a phone ONE list
- * where the picked device opens its fitting values inline. A value that does not fit is
- * never offered. Adapters decide what fits and what is done with the pick.
+ * A device → value SOURCE editor (a Customize source, a fill, a formula input). With a
+ * source already chosen (a device AND a value) it is one compact card at every width: the
+ * source row with a Change button, the transform slot, the proposal slot and the "would
+ * read" line. Without one, or after Change, it is two columns from `sm`: the device list
+ * (the `DeviceValuePicker` panel over `deviceManager.search`, narrowed to `requires`) and
+ * the picked device's fitting values, each with its fit; on a phone the values follow the
+ * list. A value that does not fit is never offered. Adapters decide what fits and what is
+ * done with the pick.
  */
 export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
   const t = useUiText()
   const phone = useIsPhone()
   const [changing, setChanging] = useState(false)
-  // Phone accordion: the open device's values can be folded; `rowDrawn` is whether the picker
-  // draws the device's row at all (a device that no longer fits, or a search, can hide it).
-  const [folded, setFolded] = useState(false)
-  const [rowDrawn, setRowDrawn] = useState(false)
   const testId = props.testId ?? 'device-value-field'
   const chosenRow = props.groups
     .flatMap((group) => group.rows)
     .find((row) => row.cap === props.value?.cap && row.path === props.value.path)
   const cardMode =
     props.deviceId !== null && props.value !== null && props.valuesOverride === undefined
-  const pickDevice = (ids: readonly number[]): void => {
-    const id = ids[0] ?? null
-    setFolded(false)
+  const recents = useRecentDevices(props.deviceListTestId ?? testId)
+  const pickDevice = (id: number): void => {
+    recents.push(id)
     if (id !== props.deviceId) props.onDeviceChange(id)
   }
   const pickValue = (pick: DeviceValuePick): void => {
@@ -120,10 +126,7 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
             variant="outline"
             size="sm"
             data-testid={`${testId}-change`}
-            onClick={() => {
-              setFolded(false)
-              setChanging(true)
-            }}
+            onClick={() => setChanging(true)}
           >
             {t('uiLibrary.deviceValueField.change', 'Change')}
           </Button>
@@ -161,33 +164,32 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
       <div data-testid={`${testId}-devices`} className="flex min-h-0 flex-col gap-2">
         <h3 className="text-[11px] font-medium text-foreground-muted">{props.heading}</h3>
         {props.suggestions}
-        <DevicePicker
-          devices={props.devices}
-          listState={props.listState}
-          value={props.deviceId === null ? [] : [props.deviceId]}
-          selection="single"
-          groupBy="location"
-          onChange={pickDevice}
-          noun="device"
-          showAll
-          fillHeight={props.fillHeight === true}
-          testId={props.deviceListTestId ?? `${testId}-device-picker`}
-          {...(phone
-            ? {
-                onReselect: () => setFolded((current) => !current),
-                renderExpanded: () => (
-                  <DrawnMarker onDrawn={setRowDrawn}>
-                    {folded ? null : (
-                      <div data-testid={`${testId}-values`} className="flex flex-col gap-2">
-                        {values}
-                      </div>
-                    )}
-                  </DrawnMarker>
-                ),
-              }
-            : {})}
-        />
-        {phone && props.deviceId !== null && !rowDrawn && (
+        <div
+          data-testid={props.deviceListTestId ?? `${testId}-device-picker`}
+          className={cn(
+            'overflow-hidden rounded-md border border-border',
+            props.fillHeight === true && 'flex min-h-0 flex-1 flex-col',
+          )}
+        >
+          <DeviceValuePanel
+            requires={props.requires}
+            contextDeviceId={props.contextDeviceId}
+            fixedTypes={props.fixedTypes}
+            excludeIds={[
+              ...(props.excludeIds ?? []),
+              ...(props.contextDeviceId === undefined ? [] : [props.contextDeviceId]),
+            ]}
+            excludeTypes={props.excludeTypes}
+            kind="device"
+            multiple={false}
+            picked={props.deviceId === null ? [] : [{ deviceId: props.deviceId }]}
+            onSelect={(picked) => pickDevice(picked.deviceId)}
+            railFirst={false}
+            recentIds={recents.ids}
+            autoFocus={false}
+          />
+        </div>
+        {phone && props.deviceId !== null && (
           <div data-testid={`${testId}-values`} className="flex flex-col gap-2">
             {values}
           </div>
@@ -217,19 +219,6 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
       )}
     </div>
   )
-}
-
-/** Tells its parent while the picked device's row is on screen. */
-function DrawnMarker(props: {
-  readonly onDrawn: (drawn: boolean) => void
-  readonly children: ReactNode
-}): ReactNode {
-  const { onDrawn } = props
-  useEffect(() => {
-    onDrawn(true)
-    return () => onDrawn(false)
-  }, [onDrawn])
-  return props.children
 }
 
 function ValuesBody(

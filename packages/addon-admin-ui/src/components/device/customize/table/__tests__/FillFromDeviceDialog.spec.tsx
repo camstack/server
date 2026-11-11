@@ -2,7 +2,6 @@ import { DeviceType } from '@camstack/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../../../i18n'
-import { DeviceValueFieldStub } from '../../__tests__/device-value-field-stub'
 import type { FieldRow } from '../field-rows'
 
 const POND = {
@@ -25,10 +24,11 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
-    DeviceValueField: DeviceValueFieldStub,
+    DeviceValueField: (
+      await import('../../__tests__/device-value-field-stub')
+    ).deviceValueFieldStub([POND]),
     useDeviceValueSource: () => ({
-      devices: [{ id: 7, name: 'Pond sensor', location: 'Garden' }],
-      listState: 'answered' as const,
+      requires: { caps: ['temperature-sensor'], mode: 'any' as const },
       valuesState: 'ready' as const,
       groups: [],
     }),

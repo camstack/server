@@ -16,7 +16,9 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Eye, KeyRound, Loader2, ShieldAlert, ShieldCheck } from 'lucide-react'
 import {
   Button,
-  DeviceMultiSelectField,
+  DeviceValuePicker,
+  deviceIdsOf,
+  pickedFromDeviceIds,
   Input,
   ItemFormDialog,
   Label,
@@ -29,7 +31,7 @@ import {
   useUiText,
   Checkbox,
 } from '@camstack/ui-library'
-import type { ConfigDeviceMultiSelectField, CredentialScope, TokenScope } from '@camstack/types'
+import { type CredentialScope, DeviceType, type TokenScope } from '@camstack/types'
 
 import { useAuth } from '../../contexts/auth-context'
 import { Trans, useTranslation } from 'react-i18next'
@@ -72,13 +74,9 @@ export interface CreateTokenModalProps {
   readonly awaitingProof: boolean
 }
 
-/** The camera picker's field; its translated `label` is added where it renders. */
-const CAMERA_FIELD: Omit<ConfigDeviceMultiSelectField, 'label'> = {
-  type: 'device-multiselect',
-  key: 'cameras',
-  deviceFilter: { types: ['camera'] },
-  maxItems: 64,
-}
+/** A view link reaches cameras only, and at most this many. */
+const CAMERA_TYPES: readonly string[] = [DeviceType.Camera]
+const MAX_LINK_CAMERAS = 64
 
 const DEFAULT_SCOPE: TokenScope = { type: 'capability', target: '', access: ['view', 'create'] }
 
@@ -101,7 +99,7 @@ export function CreateTokenModal({
   const [userId, setUserId] = useState(caller?.id ?? '')
   const [label, setLabel] = useState('')
   const [scopes, setScopes] = useState<TokenScope[]>([DEFAULT_SCOPE])
-  const [cameras, setCameras] = useState<readonly string[]>([])
+  const [cameras, setCameras] = useState<readonly number[]>([])
   const [viewKind, setViewKind] = useState<'grid-view' | 'events-view'>('grid-view')
   const [talk, setTalk] = useState(false)
   const [lifetime, setLifetime] = useState('30')
@@ -138,7 +136,7 @@ export function CreateTokenModal({
 
   const trimmed = label.trim()
   const validationError = reach === 'scopes' ? validateScopes(scopes, uiText) : null
-  const deviceIds = cameras.map(Number).filter((n) => Number.isInteger(n) && n >= 0)
+  const deviceIds = [...cameras]
   const expiresIn = LIFETIMES.find((l) => l.value === lifetime)?.seconds ?? 30 * DAY_SEC
 
   const chosenScopes = (): readonly CredentialScope[] => {
@@ -290,13 +288,20 @@ export function CreateTokenModal({
         {reach === 'view-link' ? (
           <div className="space-y-2" data-testid="token-view-link">
             <div className="space-y-1">
-              <Label>{t('access.createTokenModal.cameras', 'Cameras')}</Label>
-              <DeviceMultiSelectField
-                field={{ ...CAMERA_FIELD, label: t('access.createTokenModal.cameras', 'Cameras') }}
-                value={cameras}
-                onChange={(next) =>
-                  setCameras(Array.isArray(next) ? next.filter((v) => typeof v === 'string') : [])
-                }
+              <Label htmlFor="token-view-cameras">
+                {t('access.createTokenModal.cameras', 'Cameras')}
+              </Label>
+              <DeviceValuePicker
+                id="token-view-cameras"
+                multiple
+                pick="device"
+                noun="camera"
+                fixedTypes={CAMERA_TYPES}
+                maxItems={MAX_LINK_CAMERAS}
+                recentKey="token-view-cameras"
+                testId="token-view-cameras"
+                value={pickedFromDeviceIds(cameras)}
+                onChange={(next) => setCameras(deviceIdsOf(next))}
               />
             </div>
             <div className="space-y-1">

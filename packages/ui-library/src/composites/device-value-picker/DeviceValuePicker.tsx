@@ -1,12 +1,18 @@
 import type { DeviceSearchRequires } from '@camstack/types'
 import { ChevronDown, X } from 'lucide-react'
-import { type JSX, useCallback, useMemo, useState } from 'react'
+import { type JSX, type ReactNode, useCallback, useMemo, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'
 import { Button } from '../../primitives/button'
 import { IconButton } from '../../primitives/icon-button'
 import { Popover, PopoverContent, PopoverTrigger } from '../../primitives/popover'
 import { INPUT_SHELL, SelectedChip } from '../device-picker/SelectedChip'
+import { emptyDevicesWidens } from '../device-picker/device-selection'
+import {
+  DevicesWidenWarning,
+  type PickerNoun,
+  pickerNounLabel,
+} from '../device-picker/device-selection-rows'
 import { DeviceValuePanel } from './device-value-panel'
 import {
   CHIP_LIMIT,
@@ -33,8 +39,12 @@ interface DeviceValuePickerCommon {
   readonly pick?: PickKind
   /** The device the field belongs to; its room is suggested first. */
   readonly contextDeviceId?: number
-  /** `inline`: dropdown under the field, "Browse all…" adds the filter rail. `popover`: rail from the start. */
-  readonly variant?: 'inline' | 'popover'
+  /**
+   * `inline`: dropdown under the field, "Browse all…" adds the filter rail.
+   * `popover`: rail from the start. `embedded`: the list is always open under
+   * the field (a dialog step or a tab whose job is the pick) — no popover.
+   */
+  readonly variant?: 'inline' | 'popover' | 'embedded'
   /** Device types the field is fixed to, narrowed by the Type facet. */
   readonly fixedTypes?: readonly string[]
   readonly excludeIds?: readonly number[]
@@ -45,6 +55,9 @@ interface DeviceValuePickerCommon {
   readonly disabled?: boolean
   readonly className?: string
   readonly id?: string
+  readonly testId?: string
+  /** What the field picks, for the empty and widening sentences (default `device`). */
+  readonly noun?: PickerNoun
 }
 
 export interface DeviceValuePickerSingleProps extends DeviceValuePickerCommon {
@@ -60,6 +73,12 @@ export interface DeviceValuePickerMultiProps extends DeviceValuePickerCommon {
   readonly value: readonly PickedValue[]
   readonly onChange: (value: readonly PickedValue[]) => void
   readonly maxItems?: number
+  /** An empty selection means EVERY device: say so, and warn when emptying it widens a rule. */
+  readonly emptyMeansAll?: boolean
+  /** Whether the saved value had devices — the widening warning survives a remount. */
+  readonly savedHadDevices?: boolean
+  /** What an empty selection reads as, in place of the chips. */
+  readonly emptyLabel?: string
 }
 
 export type DeviceValuePickerProps = DeviceValuePickerSingleProps | DeviceValuePickerMultiProps
@@ -135,63 +154,73 @@ export function DeviceValuePicker(props: DeviceValuePickerProps): JSX.Element {
     </PopoverContent>
   )
 
+  const embedded = props.variant === 'embedded'
+  const listBody = (
+    <DeviceValuePanel
+      requires={props.requires}
+      contextDeviceId={props.contextDeviceId}
+      fixedTypes={props.fixedTypes}
+      excludeIds={props.excludeIds}
+      excludeTypes={props.excludeTypes}
+      kind={kind}
+      multiple={props.multiple === true}
+      picked={pickedList}
+      onSelect={onSelect}
+      railFirst={false}
+      recentIds={recents.ids}
+      autoFocus={false}
+    />
+  )
+  const embeddedList = (
+    <div className="overflow-hidden rounded-md border border-border">{listBody}</div>
+  )
+
   if (props.multiple) {
-    const { shown, hidden } = chipsExpanded
-      ? { shown: props.value, hidden: 0 }
-      : splitChips(props.value, CHIP_LIMIT)
     return (
-      <div id={props.id} className={cn('flex flex-col gap-1.5', props.className)}>
-        {props.value.length > 0 && (
+      <MultiPicker
+        props={props}
+        describe={describe}
+        open={open}
+        setOpen={setOpen}
+        chipsExpanded={chipsExpanded}
+        expandChips={() => setChipsExpanded(true)}
+        popover={panel}
+        embeddedList={embedded ? embeddedList : null}
+      />
+    )
+  }
+  if (embedded) {
+    const current = props.value === null ? null : describe(props.value)
+    return (
+      <div
+        id={props.id}
+        data-testid={props.testId}
+        className={cn('flex flex-col gap-1.5', props.className)}
+      >
+        {current !== null && (
           <div className="flex flex-wrap items-center gap-1">
-            {shown.map((p) => {
-              const d = describe(p)
-              return (
-                <SelectedChip
-                  key={`${p.deviceId}|${p.cap ?? ''}|${p.path ?? ''}`}
-                  label={describeLine(d, t)}
-                  warning={d.status !== 'ok'}
-                  onRemove={
-                    props.disabled ? undefined : () => props.onChange(removeValue(props.value, p))
-                  }
-                />
-              )
-            })}
-            {hidden > 0 && (
-              <Button
-                variant="unstyled"
-                type="button"
-                className="rounded-md bg-surface px-1.5 py-0.5 text-[11px] text-foreground-muted hover:bg-surface-hover"
-                onClick={() => setChipsExpanded(true)}
-              >
-                {t('uiLibrary.deviceValuePicker.moreChips', '+{{count}}', { count: hidden })}
-              </Button>
-            )}
+            <SelectedChip
+              label={describeLine(current, t)}
+              warning={current.status !== 'ok'}
+              onRemove={
+                props.disabled || props.clearable === false ? undefined : () => props.onChange(null)
+              }
+            />
           </div>
         )}
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger
-            disabled={props.disabled}
-            className={cn(
-              INPUT_SHELL,
-              'justify-between text-left text-xs text-foreground-subtle disabled:opacity-50',
-            )}
-          >
-            <span className="truncate">
-              {props.placeholder ?? t('uiLibrary.deviceValuePicker.add', 'Add device…')}
-            </span>
-            <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          </PopoverTrigger>
-          {panel}
-        </Popover>
+        {!props.disabled && embeddedList}
       </div>
     )
   }
-
   const current = props.value === null ? null : describe(props.value)
   const clearable = props.clearable !== false
   return (
-    <div id={props.id} className={cn('flex flex-col gap-1', props.className)}>
-      <Popover open={open} onOpenChange={setOpen}>
+    <div
+      id={props.id}
+      data-testid={props.testId}
+      className={cn('flex flex-col gap-1', props.className)}
+    >
+      <Popover open={open} onOpenChange={setOpen} className="block w-full">
         <div className={cn(INPUT_SHELL, 'justify-between')}>
           <PopoverTrigger
             disabled={props.disabled}
@@ -243,6 +272,102 @@ export function DeviceValuePicker(props: DeviceValuePickerProps): JSX.Element {
             {t('uiLibrary.deviceValuePicker.remove', 'Remove')}
           </Button>
         </div>
+      )}
+    </div>
+  )
+}
+
+interface MultiPickerProps {
+  readonly props: DeviceValuePickerMultiProps
+  readonly describe: (p: PickedValue) => PickedDescription
+  readonly open: boolean
+  readonly setOpen: (open: boolean) => void
+  readonly chipsExpanded: boolean
+  readonly expandChips: () => void
+  readonly popover: ReactNode
+  /** The always-open list of the embedded variant; `null` = a popover trigger. */
+  readonly embeddedList: ReactNode
+}
+
+/** The multi variant: chips (collapsed after five), the empty / widening lines, then the list. */
+function MultiPicker(m: MultiPickerProps): JSX.Element {
+  const t = useUiText()
+  const { props } = m
+  const noun = props.noun ?? 'device'
+  const emptyMeansAll = props.emptyMeansAll === true
+  const [hadDevices, setHadDevices] = useState(
+    props.savedHadDevices === true || props.value.length > 0,
+  )
+  if (props.value.length > 0 && !hadDevices) setHadDevices(true)
+  const widening = emptyDevicesWidens(emptyMeansAll, props.value.length, hadDevices)
+  const { shown, hidden } = m.chipsExpanded
+    ? { shown: props.value, hidden: 0 }
+    : splitChips(props.value, CHIP_LIMIT)
+  const emptyText =
+    props.emptyLabel ??
+    (emptyMeansAll
+      ? t('uiLibrary.devicePicker.everyNoRestriction', 'Every {{noun}} — no restriction', {
+          noun: pickerNounLabel(noun, t),
+        })
+      : null)
+  return (
+    <div
+      id={props.id}
+      data-testid={props.testId}
+      className={cn('flex flex-col gap-1.5', props.className)}
+    >
+      {props.value.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1">
+          {shown.map((p) => {
+            const d = m.describe(p)
+            return (
+              <SelectedChip
+                key={`${p.deviceId}|${p.cap ?? ''}|${p.path ?? ''}`}
+                label={describeLine(d, t)}
+                warning={d.status !== 'ok'}
+                onRemove={
+                  props.disabled ? undefined : () => props.onChange(removeValue(props.value, p))
+                }
+              />
+            )
+          })}
+          {hidden > 0 && (
+            <Button
+              variant="unstyled"
+              type="button"
+              className="rounded-md bg-surface px-1.5 py-0.5 text-[11px] text-foreground-muted hover:bg-surface-hover"
+              onClick={m.expandChips}
+            >
+              {t('uiLibrary.deviceValuePicker.moreChips', '+{{count}}', { count: hidden })}
+            </Button>
+          )}
+        </div>
+      ) : (
+        emptyText !== null && (
+          <span className="text-[11px] text-foreground-subtle" data-testid="dvp-empty-selection">
+            {emptyText}
+          </span>
+        )
+      )}
+      {widening && <DevicesWidenWarning noun={noun} />}
+      {m.embeddedList !== null ? (
+        !props.disabled && m.embeddedList
+      ) : (
+        <Popover open={m.open} onOpenChange={m.setOpen} className="block w-full">
+          <PopoverTrigger
+            disabled={props.disabled}
+            className={cn(
+              INPUT_SHELL,
+              'w-full justify-between text-left text-xs text-foreground-subtle disabled:opacity-50',
+            )}
+          >
+            <span className="truncate">
+              {props.placeholder ?? t('uiLibrary.deviceValuePicker.add', 'Add device…')}
+            </span>
+            <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          </PopoverTrigger>
+          {m.popover}
+        </Popover>
       )}
     </div>
   )

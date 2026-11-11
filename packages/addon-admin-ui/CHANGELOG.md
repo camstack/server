@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Device page and embedded device view show the new device card for plugs and climate devices
 - Adding a target, relay or log destination opens the New Integration dialog with provider icons; ticking several Echoes creates one Alexa target per Echo in one confirm.
+- Token view links, Log watch and the automation device fields (event source, command target, scene cameras) use the device search picker
 
 ## [1.2.641] - 2026-11-11
 

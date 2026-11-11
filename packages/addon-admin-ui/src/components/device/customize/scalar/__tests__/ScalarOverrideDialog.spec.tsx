@@ -58,8 +58,9 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
-    DeviceValueField: (await import('../../__tests__/device-value-field-stub'))
-      .DeviceValueFieldStub,
+    DeviceValueField: (
+      await import('../../__tests__/device-value-field-stub')
+    ).deviceValueFieldStub([HOST, METER, GARAGE]),
     useCoreBlocksProposeRunningThreshold: () => proposalResult.current,
     useDeviceManagerListAll: () => ({ status: 'success', data: [HOST, METER, GARAGE] }),
     useDeviceManagerGetWireableFields: ({ deviceId }: { deviceId: number }) =>

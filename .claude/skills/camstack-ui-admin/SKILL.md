@@ -70,8 +70,9 @@ right on its own dev server and broken in the hub.
 - **Secrets:** `PasswordInput`; keychain settings are `SecretFieldControl`
   (a schema `secret` field renders it), revealed only via
   `SecretRevealProvider` → audited `keychain-admin.reveal`.
-- **Pickers:** `NodePicker` / `NodeSelectField` for nodes; the one smart
-  device picker `DeviceSelectField` / `DeviceMultiSelectField` (D636).
+- **Pickers:** `NodePicker` / `NodeSelectField` for nodes; a device or a
+  device's value is `DeviceValuePicker` (`pick="device"`, `fixedTypes`,
+  `excludeTypes`, `variant="embedded"`), backed by `deviceManager.search`.
 - **Status and feedback:** `StatusBadge`, `Badge`, `EmptyState`, `ErrorBox`,
   `Skeleton`; presence via `useCapabilityPresence` (pending ≠ absent).
 - **Buttons and menus:** `Button`, `IconButton` (+ `aria-label`), `KebabMenu`,

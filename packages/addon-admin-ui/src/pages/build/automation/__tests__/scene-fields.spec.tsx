@@ -12,7 +12,7 @@ import {
   generateAutomationBlock,
 } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -39,6 +39,7 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
+import { DeviceSearchTrpc, SEARCH_HUB_CAMERAS } from '../../../../test-setup/device-search-hub'
 import type { AutomationDevice } from '../automation-data'
 import { defaultRunMode, runModeOf, withRunMode } from '../RunModeSelector'
 import { parseRecipeFromCode } from '../recipe-from-code'
@@ -94,19 +95,23 @@ describe('scene rows build recipe parts the schema accepts', () => {
     expect(AutomationRecipeSchema.safeParse(recipeWith(picked)).success).toBe(true)
   })
 
-  it('picking class, camera and zone in the editor yields a valid row without empty keys', () => {
+  it('picking class, camera and zone in the editor yields a valid row without empty keys', async () => {
     let last: DetectionLeaf | null = null
     render(
       <QueryClientProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
       >
-        <DetectionHarness onLeaf={(l) => (last = l)} />
+        <DeviceSearchTrpc fleet={SEARCH_HUB_CAMERAS}>
+          <DetectionHarness onLeaf={(l) => (last = l)} />
+        </DeviceSearchTrpc>
       </QueryClientProvider>,
     )
 
     selectOption(screen.getByTestId('subject-macro'), 'animal')
-    fireEvent.click(screen.getByRole('button', { name: /Add cameras/ }))
-    fireEvent.click(screen.getByRole('checkbox', { name: /Kitchen/ }))
+    fireEvent.click(
+      within(screen.getByTestId('scene-cameras')).getByRole('button', { name: /add/i }),
+    )
+    fireEvent.click(await screen.findByRole('checkbox', { name: /Kitchen/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Bowl' }))
 
     expect(last).toEqual({
@@ -130,7 +135,15 @@ describe('scene rows build recipe parts the schema accepts', () => {
     const seed = newLeaf('stationary')
     if (seed.kind !== 'stationary') throw new Error('expected a stationary row')
     const onChange = vi.fn()
-    render(<StationaryFields leaf={seed} devices={DEVICES} onChange={onChange} />)
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <DeviceSearchTrpc fleet={SEARCH_HUB_CAMERAS}>
+          <StationaryFields leaf={seed} devices={DEVICES} onChange={onChange} />
+        </DeviceSearchTrpc>
+      </QueryClientProvider>,
+    )
     fireEvent.click(screen.getByRole('radio', { name: 'Left' }))
     expect(onChange).toHaveBeenCalledWith({ ...seed, phase: 'departed' })
   })

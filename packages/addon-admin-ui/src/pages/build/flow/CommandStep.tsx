@@ -9,12 +9,13 @@
  * kept exactly as stored; the "Advanced" switch offers that row for any step.
  */
 
-import { isDoPickerDeviceType, vocabularyActionsForDevice } from '@camstack/types'
+import { vocabularyActionsForDevice } from '@camstack/types'
 import type { ResolvedVocabAction } from '@camstack/types'
 import {
   Badge,
   Button,
   type DeviceListState,
+  DeviceValuePicker,
   OptionSelect,
   type OptionSelectOption,
 } from '@camstack/ui-library'
@@ -27,7 +28,7 @@ import {
 import { useDeviceBoundCaps } from '../../../components/device-do-action/use-device-bound-caps'
 import type { AutomationDevice } from '../automation/automation-data'
 import type { ScopeVariable } from './ArgField'
-import { BuildDevicePicker } from './BuildDevicePicker'
+import { BUILD_EXCLUDED_TYPES } from './build-device-filters'
 import { DynamicArgField } from './DynamicArgField'
 import {
   buildCapStep,
@@ -107,8 +108,6 @@ export function CommandStep({
     )
   }
 
-  const doDevices = devices.filter((d) => isDoPickerDeviceType(d.type ?? ''))
-
   return (
     <div className="space-y-2" data-testid="command-step">
       <div className="flex flex-wrap items-center gap-2">
@@ -124,14 +123,14 @@ export function CommandStep({
         </Button>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
-        <BuildDevicePicker
-          devices={doDevices}
-          selection="single"
-          listState={devicesState}
-          value={deviceId > 0 ? [deviceId] : []}
+        <DeviceValuePicker
+          pick="device"
+          excludeTypes={BUILD_EXCLUDED_TYPES}
+          recentKey="build-targets"
+          value={deviceId > 0 ? { deviceId } : null}
           testId="command-step-device"
-          onChange={(ids) => {
-            const id = ids[0] ?? 0
+          onChange={(picked) => {
+            const id = picked?.deviceId ?? 0
             if (id !== deviceId) onChange({ kind: 'cap', deviceId: id, cap: '', method: '' })
           }}
         />

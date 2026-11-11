@@ -16,9 +16,9 @@
 
 import type { AutomationLeaf, BecomesOperator, DeviceBecomesLeaf, HoldSpec } from '@camstack/types'
 import { BecomesOperatorSchema, EventCategory, holdOf } from '@camstack/types'
-import { Input, Select } from '@camstack/ui-library'
+import { DeviceValuePicker, Input, Select } from '@camstack/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
-import { BuildDevicePicker } from '../flow/BuildDevicePicker'
+import { BUILD_EXCLUDED_TYPES } from '../flow/build-device-filters'
 import type { AutomationDevice } from './automation-data'
 import { HoldFields } from './HoldFields'
 import { FieldPicker, type FieldSelection, PickerLabel, useFieldDescriptor } from './FieldPicker'
@@ -348,17 +348,18 @@ export function DeviceEventFields({ leaf: trigger, devices, onChange }: DeviceEv
       </label>
       <div className="min-w-[11rem] flex-1">
         <PickerLabel>{t('automation.triggerEditor.fromDevice', 'From device')}</PickerLabel>
-        <BuildDevicePicker
-          devices={devices}
-          selection="single"
-          value={trigger.deviceId === undefined ? [] : [trigger.deviceId]}
-          emptyLabel={t('automation.triggerEditor.anyDevice', 'Any device')}
+        <DeviceValuePicker
+          pick="device"
+          excludeTypes={BUILD_EXCLUDED_TYPES}
+          recentKey="build-targets"
+          value={trigger.deviceId === undefined ? null : { deviceId: trigger.deviceId }}
+          placeholder={t('automation.triggerEditor.anyDevice', 'Any device')}
           testId="trigger-event-device"
-          onChange={(ids) =>
+          onChange={(picked) =>
             onChange({
               kind: 'device-event',
               category: trigger.category,
-              ...(ids[0] === undefined ? {} : { deviceId: ids[0] }),
+              ...(picked === null ? {} : { deviceId: picked.deviceId }),
             })
           }
         />
