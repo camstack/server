@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   deriveChargingSource,
+  isMeasuredCameraBatteryLevel,
   type PowerSourceFields,
   reportsPowerSource,
 } from '../battery-charging.js'
@@ -78,5 +79,35 @@ describe('reportsPowerSource', () => {
     const levelOnly: PowerSourceFields & { batteryPercent: number } = { batteryPercent: 83 }
     expect(reportsPowerSource(levelOnly)).toBe(false)
     expect(reportsPowerSource({})).toBe(false)
+  })
+})
+
+/**
+ * REGRESSION, measured on the live hub 2026-11-11: device 3628 (on its adapter,
+ * really at 100%) answered the hourly wake-refresh read with `0`, and a
+ * low-battery notification followed by a normal one fired every hour. The hub
+ * session already discarded its own placeholder zeros; the camera's own read did not.
+ */
+describe('isMeasuredCameraBatteryLevel', () => {
+  it('discards a 0 from a camera on its adapter (3628 at 100%, wake refresh)', () => {
+    expect(isMeasuredCameraBatteryLevel(0, { sleeping: false, charging: 'dc' })).toBe(false)
+  })
+
+  it('discards a 0 from a camera on a solar panel', () => {
+    expect(isMeasuredCameraBatteryLevel(0, { sleeping: false, charging: 'solar' })).toBe(false)
+  })
+
+  it('discards a 0 read while the camera is asleep', () => {
+    expect(isMeasuredCameraBatteryLevel(0, { sleeping: true, charging: 'none' })).toBe(false)
+  })
+
+  it('keeps a 0 from an awake camera on its cell alone — a genuinely empty battery', () => {
+    expect(isMeasuredCameraBatteryLevel(0, { sleeping: false, charging: 'none' })).toBe(true)
+    expect(isMeasuredCameraBatteryLevel(0, { sleeping: false, charging: 'unknown' })).toBe(true)
+  })
+
+  it('keeps every non-zero level, powered or asleep', () => {
+    expect(isMeasuredCameraBatteryLevel(100, { sleeping: true, charging: 'dc' })).toBe(true)
+    expect(isMeasuredCameraBatteryLevel(7, { sleeping: false, charging: 'none' })).toBe(true)
   })
 })

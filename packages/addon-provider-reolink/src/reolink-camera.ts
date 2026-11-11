@@ -87,7 +87,11 @@ import {
   BAICHUAN_WEBHOOK_URL_GENERATION,
   type BaichuanWebhookParamsResolver,
 } from './baichuan-webhook-shared.js'
-import { deriveChargingSource, reportsPowerSource } from './battery-charging.js'
+import {
+  deriveChargingSource,
+  isMeasuredCameraBatteryLevel,
+  reportsPowerSource,
+} from './battery-charging.js'
 import {
   BATTERY_REFRESH_TICK_MS,
   BatteryHourlyRefresh,
@@ -2897,18 +2901,29 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * tracker is more reliable.
    */
   private mapBatteryInfo(info: import('@apocaliss92/nodelink-js').BatteryInfo): BatteryStatus {
-    const level =
-      typeof info.batteryPercent === 'number'
-        ? Math.max(0, Math.min(100, Math.round(info.batteryPercent)))
-        : // A push with no numeric level says nothing about the level. Keep the
-          // last real reading; when there is none the answer is `null`, never 0.
-          (this.state.battery.level ?? null)
     // A push that says nothing about power keeps the previous belief — the
-    // same rule `percentage` applies to a push with no numeric level.
+    // same rule `level` applies to a push with no numeric level.
     const charging = reportsPowerSource(info)
       ? deriveChargingSource(info.adapterStatus, info.chargeStatus)
       : (this.state.battery.charging ?? 'unknown')
     const sleeping = info.sleeping === true || this.sleeping
+    const reported =
+      typeof info.batteryPercent === 'number'
+        ? Math.max(0, Math.min(100, Math.round(info.batteryPercent)))
+        : undefined
+    const measured =
+      reported !== undefined && isMeasuredCameraBatteryLevel(reported, { sleeping, charging })
+    if (reported === 0) {
+      // Proof for the live camera: the raw read behind every 0 it reports.
+      this.ctx.logger.info('battery read reporting 0', {
+        tags: { deviceId: this.id },
+        meta: { measured, sleeping, charging, raw: info },
+      })
+    }
+    // A read with no numeric level, or a placeholder 0, says nothing about the
+    // level. Keep the last real reading; when there is none the answer is
+    // `null`, never 0.
+    const level = reported !== undefined && measured ? reported : (this.state.battery.level ?? null)
     return {
       level,
       charging,
