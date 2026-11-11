@@ -5,7 +5,7 @@ import {
   localizeConfigTree,
   viewerScopeOf,
 } from '@camstack/types'
-import { personSessionScopes } from '../../auth/person-session-scopes.js'
+import { enforcedScopesOf } from './device-access.js'
 import { logPersonWithoutViewer } from './person-without-viewer.js'
 import { initTRPC, TRPCError } from '@trpc/server'
 import superjson from 'superjson'
@@ -144,8 +144,8 @@ export const protectedProcedure = localized.use(async ({ ctx, next, path, getRaw
   // A person is an admin or a viewer (D921). Grant rows on the user record
   // are not a role: the session is decided by its viewer row alone, and a
   // person with none reaches no labelled method. Tokens keep their rows.
-  const scopes =
-    user.interactive === true && !user.isAdmin ? personSessionScopes(rawScopes) : rawScopes
+  // `auth.deviceAccess` answers from the same scopes (`enforcedScopesOf`).
+  const scopes = enforcedScopesOf(user)
   const verdict = authorizeProcedure(scopes, path, await getRawInput(), ctx.deviceScopeLookup)
   if (!verdict.ok) {
     if (

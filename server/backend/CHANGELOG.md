@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
+- New auth.deviceAccess answers, per device, whether the signed-in user may view and command it, decided by the same rules that enforce the command
 
 ## [1.2.837] - 2026-11-11
 

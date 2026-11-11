@@ -71,6 +71,7 @@ import { CliApprovalService } from '../../core/auth/cli-approval.service.js'
 import { createCliLoginProcedures } from './auth-cli-login.procedures.js'
 import type { MoleculerService } from '../../core/moleculer/moleculer.service.js'
 import type { TrpcRequest } from '../trpc/trpc.context.js'
+import { deviceAccessOf } from '../trpc/device-access.js'
 import {
   adminProcedure,
   protectedProcedure,
@@ -349,6 +350,9 @@ const EffectiveScopeSchema = z.object({
   capabilities: z.array(ScopeGrantSummarySchema).readonly(),
   addons: z.array(ScopeGrantSummarySchema).readonly(),
 })
+
+/** Wire shape of `auth.deviceAccess`: what the caller may do on one device. */
+const DeviceAccessSchema = z.object({ view: z.boolean(), command: z.boolean() })
 
 /** Wire shape of the authenticated user returned by `auth.me`. */
 const MeSchema = z
@@ -1148,6 +1152,22 @@ export function createAuthRouter(
           ctx.user.isAdmin,
         )
         return { ...ctx.user, scope }
+      }),
+
+    /**
+     * What the caller may do on ONE device: `view` and `command`. A device card
+     * draws its controls from it (disabled with the reason when `command` is
+     * false). Answered by the middleware's own matcher over the middleware's
+     * own scopes (`deviceAccessOf`), so it cannot disagree with enforcement;
+     * the hub still checks every real call. `auth.me`'s `scope` is counts, not
+     * this device.
+     */
+    deviceAccess: protectedProcedure
+      .input(z.object({ deviceId: z.number().int() }))
+      .output(DeviceAccessSchema)
+      .query(({ ctx, input }) => {
+        if (!ctx.user) return { view: false, command: false }
+        return deviceAccessOf(ctx.user, input.deviceId, ctx.deviceScopeLookup)
       }),
 
     /**
