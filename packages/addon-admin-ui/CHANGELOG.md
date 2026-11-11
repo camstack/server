@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.641] - 2026-11-11
+
 ### Changed
 
 - Automation row types take their name and description from one catalogue; the type list shows the same wording everywhere.

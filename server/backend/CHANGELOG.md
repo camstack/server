@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.836] - 2026-11-11
+
 ### Changed
 
 - Log shutdown now waits for the rotating log file to close, so a stopping hub no longer leaves a late file open.
