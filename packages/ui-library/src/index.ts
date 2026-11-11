@@ -115,10 +115,4 @@ export const PrivacyMaskSettings: LazyExoticComponent<ComponentType<CapSettingsC
       default: m.PrivacyMaskSettings,
     })),
   )
-export {
-  selectOption,
-  selectOptionLabels,
-  selectOptionValues,
-  selectRows,
-  waitForSelectRows,
-} from './testing/select-option'
+// Select spec helpers live on the '@camstack/ui-library/testing' subpath only: they import `act`, which the host's shared react does not provide.
