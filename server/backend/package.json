@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.834",
+  "version": "1.2.835",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,9 +66,8 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.640",
-        "@camstack/addon-agent-ui": ">=1.2.362",
-        "@camstack/addon-provider-homeassistant": ">=1.2.679"
+        "@camstack/addon-pipeline-orchestrator": ">=1.2.680",
+        "@camstack/addon-provider-bosch": ">=0.1.51"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

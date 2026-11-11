@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.680] - 2026-11-11
+
 ### Changed
 
 - The three settings maps already copied to per-node and per-camera rows (node bindings, agent settings, camera settings) are deleted by a ledgered migration that runs only after each copy is recorded as applied.
