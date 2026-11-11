@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- configure-automations: answers may carry a wait-until step, with the editor's six-hour ceiling
+
 ### Changed
 
 - The guided automation flow takes the editor's steps (stop, set variables, continue if a step fails, a wait up to one hour) and refuses a sun-based time window when the site has no location

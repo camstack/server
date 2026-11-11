@@ -19,6 +19,7 @@ import {
   ActionTargetSchema,
   AutomationRecipeSchema,
   AutomationSetStepSchema,
+  AutomationWaitUntilStepSchema,
   AutomationStopStepSchema,
   AutomationWaitStepSchema,
   MACRO_LABELS,
@@ -100,13 +101,14 @@ export type ConditionAnswer = z.infer<typeof ConditionAnswerSchema>
 
 /**
  * The steps an answer may name are the automation list's own (`AutomationActionSchema`):
- * wait, stop and set are the shared schemas, so their bounds and refusals are
+ * wait, wait-until, stop and set are the shared schemas, so their bounds and refusals are
  * the editor's. Only the cap step differs, by its `deviceId` shorthand.
  */
 export const ActionAnswerSchema = z.discriminatedUnion('kind', [
   AutomationWaitStepSchema,
   AutomationStopStepSchema,
   AutomationSetStepSchema,
+  AutomationWaitUntilStepSchema,
   z
     .object({
       kind: z.literal('cap'),
@@ -721,6 +723,10 @@ function summarize(
   }
   for (const a of actions) {
     if (a.kind === 'wait') lines.push(`  then wait ${a.seconds}s`)
+    else if (a.kind === 'wait-until')
+      lines.push(
+        `  then wait until a condition is true, at most ${a.timeoutS}s (${a.onTimeout === 'stop' ? 'else stop the run as a failure' : 'else go on'})`,
+      )
     else if (a.kind === 'stop') lines.push(`  then stop the run (${a.outcome}): ${a.reason}`)
     else if (a.kind === 'set') {
       const pairs = Object.entries(a.vars).map(

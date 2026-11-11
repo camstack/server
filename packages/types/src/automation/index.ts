@@ -120,6 +120,7 @@ export type {
   LegacyAutomationRecipe,
   AutomationBranchStep,
   AutomationChooseStep,
+  AutomationWaitUntilStep,
   AutomationSetStep,
   StepConditionRef,
   AutomationStopStep,
@@ -131,8 +132,10 @@ export {
   AutomationCapStepSchema,
   AutomationWaitStepSchema,
   AutomationChooseStepSchema,
+  AutomationWaitUntilStepSchema,
   AutomationSetStepSchema,
   CHOOSE_BRANCHES_MAX,
+  WAIT_UNTIL_TIMEOUT_MAX_S,
   nestedStepsOf,
   stepConditionsOf,
   AutomationStopStepSchema,
@@ -227,6 +230,7 @@ export * from './action.js'
 export * from './action-target.js'
 export * from './step-condition.js'
 export * from './step-runner.js'
+export * from './wait-until.js'
 export {
   UnitWarningSchema,
   capUnitResolver,

@@ -10,7 +10,13 @@ import type {
   AutomationWhen,
   TriggeredByLeaf,
 } from '@camstack/types'
-import { forEachLeaf, hasTriggeredByLeaves, isEventLeaf, isLeaf } from '@camstack/types'
+import {
+  forEachLeaf,
+  hasTriggeredByLeaves,
+  isEventLeaf,
+  isLeaf,
+  stepConditionsOf,
+} from '@camstack/types'
 
 /** One trigger row a `triggered-by` row can name. */
 export interface TriggerRow {
@@ -34,11 +40,8 @@ export function triggerRowsOf(when: AutomationWhen): readonly TriggerRow[] {
 
 function asksForTrigger(recipe: AutomationRecipe): boolean {
   if (hasTriggeredByLeaves(recipe.when)) return true
-  return recipe.actions.some(
-    (action) =>
-      (action.kind === 'wait' || action.kind === 'cap') &&
-      action.if !== undefined &&
-      hasTriggeredByLeaves(action.if),
+  return recipe.actions.some((action) =>
+    stepConditionsOf(action).some((condition) => hasTriggeredByLeaves(condition.when)),
   )
 }
 

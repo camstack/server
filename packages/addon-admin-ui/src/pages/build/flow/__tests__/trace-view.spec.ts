@@ -38,6 +38,27 @@ describe('a step that failed and was passed over (#500)', () => {
   })
 })
 
+describe('a wait that ran out and went on (#500)', () => {
+  it('is red with its reason, not "not run", and the run stays green', () => {
+    const trace: AutomationRunTrace = {
+      ...BASE,
+      steps: [
+        {
+          path: 'actions.0',
+          kind: 'wait-until',
+          outcome: 'timed-out',
+          message: 'timed out after 600 s: the door is open',
+        },
+        { path: 'actions.1', kind: 'cap', outcome: 'ok' },
+      ],
+    }
+    const view = traceView(trace)
+    expect(stepToneAt(view, 0)).toBe('fail')
+    expect(view.thenBlock.tone).toBe('pass')
+    expect(traceDetails(trace).steps[0]?.message).toBe('timed out after 600 s: the door is open')
+  })
+})
+
 describe('a choose step (#500)', () => {
   it('names the list that ran and carries its steps', () => {
     const trace: AutomationRunTrace = {

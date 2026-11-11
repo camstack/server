@@ -6036,7 +6036,8 @@
       "setHint": "The steps after this one can use it as {{slot}}.",
       "continueOnError": "Continue if this step fails",
       "flowGuardHint": "Checked when this step is reached. If it is false, or a state cannot be read, the step does nothing.",
-      "kindChoose": "Choose"
+      "kindChoose": "Choose",
+      "kindWaitUntil": "Wait until"
     },
     "automationEditor": {
       "name": "Name",
@@ -6369,6 +6370,17 @@
       "maxBranches": "A choose takes at most 6 branches",
       "addBranch": "Add a branch",
       "else": "Otherwise, run…"
+    },
+    "waitUntil": {
+      "hint": "The run pauses here until this is true. A value that cannot be read is not \"true\": the run keeps waiting.",
+      "timeout": "At most",
+      "unit": "Unit",
+      "unitSeconds": "seconds",
+      "unitMinutes": "minutes",
+      "unitHours": "hours",
+      "onTimeout": "If it does not happen in time",
+      "continue": "Go on with the next step",
+      "stop": "Stop the run as a failure"
     }
   },
   "accessDenied": {

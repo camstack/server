@@ -1642,6 +1642,126 @@ describe('a time-is state leaf wakes a state-only tree at its boundary', () => {
   })
 })
 
+describe('wait-until (#500): the run pauses until a condition is true, under a timeout', () => {
+  const doorClosed = {
+    kind: 'device-is',
+    deviceId: 3,
+    cap: 'contact',
+    fieldPath: 'open',
+    operator: 'eq',
+    value: false,
+  } as const
+  const recipe = (onTimeout: 'continue' | 'stop'): RecipeInput => ({
+    when: { kind: 'device-event', category: 'button.pressed' },
+    actions: [{ kind: 'wait-until', when: doorClosed, timeoutS: 120, onTimeout }, SIREN],
+  })
+  const doorEvent = (h: Harness, open: boolean): void =>
+    h.emit('device.state-changed', { deviceId: 3, capName: 'contact', slice: { open } }, 3)
+
+  it('goes on when the device reports the state, woken by its event and not by the clock', async () => {
+    const slices: Record<string, object> = { '3|contact': { open: true } }
+    const h = start(await load(recipe('stop')), { slices })
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(1_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    slices['3|contact'] = { open: false }
+    doorEvent(h, false)
+    await settle(10)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    expect(h.traces()[0]).toMatchObject({
+      outcome: 'ran',
+      steps: [
+        { kind: 'wait-until', outcome: 'ok' },
+        { kind: 'cap', outcome: 'ok' },
+      ],
+    })
+  })
+
+  it('an event of another device does not read the condition again', async () => {
+    const slices: Record<string, object> = { '3|contact': { open: true } }
+    const h = start(await load(recipe('stop')), { slices })
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(100)
+    const before = h.sliceReads.count
+    h.emit('device.state-changed', { deviceId: 9, capName: 'switch', slice: { on: true } }, 9)
+    await settle(100)
+    expect(h.sliceReads.count).toBe(before)
+  })
+
+  it('without an event the reconcile still sees it', async () => {
+    const slices: Record<string, object> = { '3|contact': { open: true } }
+    const h = start(await load(recipe('stop')), { slices })
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(1_000)
+    slices['3|contact'] = { open: false }
+    await settle(16_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('on timeout "continue" runs the next step and the trace says it timed out', async () => {
+    const h = start(await load(recipe('continue')), { slices: { '3|contact': { open: true } } })
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(119_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    await settle(2_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    const [waited] = h.traces()[0]?.steps ?? []
+    expect(waited).toMatchObject({ kind: 'wait-until', outcome: 'timed-out' })
+    expect(waited?.message).toMatch(/^timed out after 120 s: /)
+    expect(h.traces()[0]?.outcome).toBe('ran')
+  })
+
+  it('on timeout "stop" ends the run as a failure and the next step is not run', async () => {
+    const h = start(await load(recipe('stop')), { slices: { '3|contact': { open: true } } })
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(121_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    expect(h.traces()[0]).toMatchObject({
+      outcome: 'failed',
+      steps: [
+        { kind: 'wait-until', outcome: 'error' },
+        { kind: 'cap', outcome: 'not-run' },
+      ],
+    })
+    expect(h.traces()[0]?.steps[0]?.message).toMatch(/timed out after 120 s/)
+  })
+
+  it('a restart ends a paused run at once: only the new run goes on when the state comes', async () => {
+    const slices: Record<string, object> = { '3|contact': { open: true } }
+    const h = start(await load({ ...recipe('stop'), runMode: { mode: 'restart' } }), { slices })
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(1_000)
+    h.emit('button.pressed', {}, 1)
+    await settle(1_000)
+    expect(
+      h
+        .traces()
+        .find((t) => t.outcome === 'aborted')
+        ?.steps.map((s) => s.outcome),
+    ).toEqual(['ok', 'not-run'])
+    slices['3|contact'] = { open: false }
+    doorEvent(h, false)
+    await settle(10)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('a condition that cannot be read is not "met": the wait runs to its timeout', async () => {
+    const h = start(await load(recipe('continue')), { failSliceReads: true })
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(60_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    await settle(61_000)
+    expect(h.traces()[0]?.steps[0]).toMatchObject({ outcome: 'timed-out' })
+  })
+})
+
 describe('choose (#500): one step, the first branch that is true', () => {
   const motion = { ...MOTION, id: 'motion' } as const
   const press = { kind: 'device-event', category: 'button.pressed', id: 'press' } as const

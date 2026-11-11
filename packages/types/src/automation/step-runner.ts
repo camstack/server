@@ -54,6 +54,8 @@ export interface StepScope {
   setTemplateNotes(notes: readonly string[]): void
   /** End the run here, on purpose (#500): the later steps are `not-run` with this reason. */
   stop(reason: string, outcome: StepStopOutcome): void
+  /** The step waited for something that did not come and the run goes on (#500): traced `timed-out`. */
+  markTimedOut(reason: string): void
 }
 
 /** How a `stop` step ends the run: as a success, or as a failure. */
@@ -325,6 +327,7 @@ export async function runSteps(
     let sent: Readonly<Record<string, unknown>> | undefined
     const perDevice: StepDeviceTrace[] = []
     let emptyReason: string | undefined
+    let timedOutReason: string | undefined
     let templateNotes: readonly string[] = []
     const scope: StepScope = {
       setDeviceId: (id) => {
@@ -344,6 +347,9 @@ export async function runSteps(
       },
       stop: (reason, outcome) => {
         stopped = { reason, outcome, path }
+      },
+      markTimedOut: (reason) => {
+        timedOutReason = reason
       },
     }
     const templatesTrace = (): { templates?: string[] } =>
@@ -383,8 +389,13 @@ export async function runSteps(
         path,
         startedAt,
         endedAt: options.now(),
-        outcome: emptyReason === undefined ? 'ok' : 'empty',
-        ...(emptyReason === undefined ? {} : { message: emptyReason }),
+        outcome:
+          timedOutReason !== undefined ? 'timed-out' : emptyReason === undefined ? 'ok' : 'empty',
+        ...(timedOutReason !== undefined
+          ? { message: timedOutReason }
+          : emptyReason === undefined
+            ? {}
+            : { message: emptyReason }),
       })
     } catch (err: unknown) {
       const message = errorMessage(err)

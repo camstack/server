@@ -44,12 +44,14 @@ import { type ActionKind, moveItem, newAction, removeAt, replaceAt } from './rec
 import { ChooseFields } from './ChooseFields'
 import { SetVarsFields } from './SetVarsFields'
 import { StepGuard, StepIf } from './StepGuard'
+import { WaitUntilFields } from './WaitUntilFields'
 import { Trans, useTranslation } from 'react-i18next'
 
 const ACTION_KINDS: readonly { readonly value: ActionKind; readonly labelKey: string }[] = [
   { value: 'cap', labelKey: 'automation.actionList.kindCap' },
   { value: 'action', labelKey: 'automation.actionList.kindAction' },
   { value: 'wait', labelKey: 'automation.actionList.kindWait' },
+  { value: 'wait-until', labelKey: 'automation.actionList.kindWaitUntil' },
   { value: 'set', labelKey: 'automation.actionList.kindSet' },
   { value: 'stop', labelKey: 'automation.actionList.kindStop' },
   { value: 'choose', labelKey: 'automation.actionList.kindChoose' },
@@ -57,7 +59,7 @@ const ACTION_KINDS: readonly { readonly value: ActionKind; readonly labelKey: st
 ]
 
 /** The steps that only an automation's own list runs (#500). */
-const FLOW_KINDS: readonly ActionKind[] = ['set', 'stop', 'choose']
+const FLOW_KINDS: readonly ActionKind[] = ['set', 'stop', 'choose', 'wait-until']
 
 export interface ActionListProps {
   readonly actions: readonly AutomationAction[]
@@ -220,6 +222,15 @@ export function ActionList({
               index={index}
               vars={action.vars}
               onChange={(vars) => onChange(replaceAt(actions, index, { ...action, vars }))}
+            />
+          )}
+
+          {action.kind === 'wait-until' && (
+            <WaitUntilFields
+              index={index}
+              step={action}
+              devices={devices}
+              onChange={(next) => onChange(replaceAt(actions, index, next))}
             />
           )}
 

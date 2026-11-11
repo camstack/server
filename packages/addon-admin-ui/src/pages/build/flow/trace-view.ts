@@ -53,7 +53,9 @@ function stepIndex(path: string): number {
 /** A step that failed is red whether the run stopped there or was told to go on. */
 function stepTone(outcome: AutomationRunTrace['steps'][number]['outcome']): BlockTone {
   if (outcome === 'ok') return 'pass'
-  return outcome === 'error' || outcome === 'failed-continued' ? 'fail' : 'idle'
+  return outcome === 'error' || outcome === 'failed-continued' || outcome === 'timed-out'
+    ? 'fail'
+    : 'idle'
 }
 
 function stepsOf(trace: AutomationRunTrace): readonly StepView[] {

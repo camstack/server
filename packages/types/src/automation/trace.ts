@@ -150,7 +150,7 @@ const StepTraceBaseSchema = z.object({
   /** Why the condition read what it read, in the evaluator's own words. */
   conditionReason: z.string().optional(),
   /** `empty`: the target resolved to no device, so nothing was done — never silently `ok`. `skipped`: its `if` was false (or unknown) and nothing ran in its place. `failed-continued`: it failed and was marked to be passed over (#500). */
-  outcome: z.enum(['ok', 'error', 'not-run', 'empty', 'skipped', 'failed-continued']),
+  outcome: z.enum(['ok', 'error', 'not-run', 'empty', 'skipped', 'failed-continued', 'timed-out']),
   message: z.string().optional(),
 })
 /** A step trace; the `else` steps that ran are one level of the same shape (the nesting is bounded at one). */

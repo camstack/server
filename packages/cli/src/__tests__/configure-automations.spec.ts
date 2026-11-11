@@ -209,6 +209,41 @@ describe('configure_automation_questionnaire', () => {
     expect(ready.summary.join('\n')).toMatch(/continue if it fails/)
   })
 
+  it("takes a wait for a condition, with the editor's six-hour ceiling", async () => {
+    const { ctx } = fakeHub(hubReads)
+    const until = {
+      kind: 'wait-until' as const,
+      when: {
+        kind: 'device-is' as const,
+        deviceId: 7,
+        cap: 'pet-feeder',
+        fieldPath: 'bowlFood',
+        operator: 'gt' as const,
+        value: 0,
+      },
+      timeoutS: 600,
+      onTimeout: 'stop' as const,
+    }
+    const ready = await automationQuestionnaire(ctx, {
+      name: 'Feed, then check',
+      trigger: { kind: 'schedule', time: '07:30' },
+      conditions: [],
+      actions: [until],
+    })
+    if (ready.status !== 'ready') throw new Error(JSON.stringify(ready))
+    expect(ready.recipe.actions).toEqual([until])
+    expect(ready.summary.join('\n')).toMatch(
+      /wait until a condition is true, at most 600s \(else stop/,
+    )
+    const over = await automationQuestionnaire(ctx, {
+      name: 'Too long',
+      trigger: { kind: 'schedule', time: '07:30' },
+      conditions: [],
+      actions: [{ ...until, timeoutS: 21601 }],
+    })
+    expect(JSON.stringify(over)).toMatch(/at most six hours/)
+  })
+
   it('refuses a wait over the shared ceiling with the shared sentence', async () => {
     const { ctx } = fakeHub(hubReads)
     const out = await automationQuestionnaire(ctx, {

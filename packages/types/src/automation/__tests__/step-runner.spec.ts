@@ -197,6 +197,30 @@ describe('runSteps — flow control (#500)', () => {
   })
 })
 
+describe('runSteps — a step that timed out and went on (#500)', () => {
+  it('is traced timed-out with its reason, and the sequence continues without failing', async () => {
+    const ran: string[] = []
+    const result = await runSteps(
+      [
+        {
+          meta: { kind: 'wait-until' },
+          run: async (scope) => scope.markTimedOut('timed out after 600 s: the door is open'),
+        },
+        { meta: { kind: 'cap' }, run: async () => void ran.push('after') },
+      ],
+      options(),
+    )
+    expect(ran).toEqual(['after'])
+    expect(result.failed).toBe(false)
+    expect(result.steps[0]).toMatchObject({
+      kind: 'wait-until',
+      outcome: 'timed-out',
+      message: 'timed out after 600 s: the door is open',
+    })
+    expect(result.steps[1]).toMatchObject({ outcome: 'ok' })
+  })
+})
+
 describe('runSteps — choose (#500)', () => {
   const ok = (ran: string[], name: string): RunnableStep => ({
     meta: { kind: 'cap' },

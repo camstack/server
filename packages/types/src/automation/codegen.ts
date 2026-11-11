@@ -35,9 +35,16 @@ import {
 } from './recipe.js'
 import type { TimeSpec, WeekdayKey } from '../time/time-spec.js'
 import { hasHoldLeaves, hasTimeLeaves } from './condition-eval.js'
+import { collectWhenMirrorSources } from './condition-eval.js'
 import { holdOf } from './hold.js'
 import { triggerLeafVariables } from './trigger-variables.js'
-import { type AutomationEventLeaf, forEachLeaf, hasEventLeaves, isEventLeaf } from './when.js'
+import {
+  type AutomationEventLeaf,
+  type AutomationWhen,
+  forEachLeaf,
+  hasEventLeaves,
+  isEventLeaf,
+} from './when.js'
 
 export interface GenerateAutomationBlockInput {
   /** The block's name — the ONE name for the artefact (§2.1). */
@@ -68,6 +75,8 @@ function stepMetaOf(action: AutomationAction): StepMeta {
       return { kind: 'action' }
     case 'stop':
       return { kind: 'stop' }
+    case 'wait-until':
+      return { kind: 'wait-until' }
     case 'set':
       return { kind: 'set' }
     case 'choose':
@@ -321,7 +330,9 @@ function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
 }
 
 /** What a plain step does when it runs: the body of its `run`, wherever the step sits. */
-function emitStepBody(action: Exclude<AutomationAction, { kind: 'choose' }>): string {
+function emitStepBody(
+  action: Exclude<AutomationAction, { kind: 'choose' | 'wait-until' }>,
+): string {
   switch (action.kind) {
     case 'wait':
       return `        await sleep(${j(action.seconds * 1000)})`
@@ -364,7 +375,9 @@ function continues(action: AutomationAction): boolean {
 }
 
 /** A step of a branch (or of an else list), as a whole RunnableStep literal. */
-function emitNestedStep(step: Exclude<AutomationAction, { kind: 'choose' }>): string {
+function emitNestedStep(
+  step: Exclude<AutomationAction, { kind: 'choose' | 'wait-until' }>,
+): string {
   return `{ meta: ${j(stepMetaOf(step))},${continues(step) ? ' continueOnError: true,' : ''} run: async (scope) => {\n${emitStepBody(step)}\n } }`
 }
 
@@ -404,8 +417,46 @@ ${branches}
     },`
 }
 
+/** The devices whose report can change a tree's answer; null when one is named by a stable id (any report wakes it). */
+function wakeDevicesOf(when: AutomationWhen): number[] | null {
+  const ids: number[] = []
+  for (const source of collectWhenMirrorSources(when)) {
+    if (source.kind !== 'device') return null
+    if (!ids.includes(source.deviceId)) ids.push(source.deviceId)
+  }
+  return ids
+}
+
+/** A `wait-until` step: read the condition, wait for a wake, read again, until the timeout. */
+function emitWaitUntil(
+  action: Extract<AutomationAction, { kind: 'wait-until' }>,
+  index: number,
+): string {
+  const onTimeout =
+    action.onTimeout === 'stop' ? `scope.stop(message, 'failed')` : 'scope.markTimedOut(message)'
+  return `    {
+      meta: STEP_META[${index}]!,
+      run: async (scope) => {
+        // woken by a report of one of its devices, by the reconcile tick, or by a restart
+        const waited = await waitUntil({
+          read: () => evaluateCondition(${j(action.when)}, ${j(`actions.${index}.when`)}, vars),
+          timeoutMs: ${j(action.timeoutS * 1000)},
+          now: () => Date.now(),
+          isAborted: () => token.aborted,
+          nextWake: (ms) => waitForWake(ms, token, ${j(wakeDevicesOf(action.when))}),
+        })
+        if (waited.result === 'timed-out') {
+          const message = waitTimedOutMessage(${j(action.timeoutS)}, waited.lastReason)
+          ctx.logger.info('wait-until timed out', { step: ${index}, onTimeout: ${j(action.onTimeout)}, reason: waited.lastReason })
+          ${onTimeout}
+        }
+      },
+    },`
+}
+
 function emitAction(action: AutomationAction, index: number): string {
   if (action.kind === 'choose') return emitChoose(action, index)
+  if (action.kind === 'wait-until') return emitWaitUntil(action, index)
   return `    {
       meta: STEP_META[${index}]!,
 ${emitGuard(action, index)}${continues(action) ? '      continueOnError: true,\n' : ''}      run: async (scope) => {
@@ -443,6 +494,7 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   const hasTime =
     hasTimeLeaves(recipe.when) ||
     recipe.actions.some((a) => stepConditionsOf(a).some(({ when }) => hasTimeLeaves(when)))
+  const hasWaitUntil = recipe.actions.some((a) => a.kind === 'wait-until')
   const eventLeaves: { leaf: AutomationEventLeaf; path: string }[] = []
   forEachLeaf(recipe.when, (leaf, path) => {
     if (isEventLeaf(leaf)) eventLeaves.push({ leaf, path })
@@ -489,6 +541,8 @@ import {
   runForDevices,
   evaluateStepCondition,
   runSteps,
+  waitUntil,
+  waitTimedOutMessage,
   siteFor,
   validateTimeSpecForSite,
   zoneOnlySite,
@@ -636,6 +690,21 @@ ${
         clearTimeout(timer)
         resolve()
       }
+    })
+
+  /** The runs paused on a \`wait-until\`, each with the devices whose report wakes it (null = any). */
+  const stateWaiters = new Map<() => void, readonly number[] | null>()
+  /** Resolve at a report of one of \`deviceIds\`, at the reconcile tick, at a restart, or after \`ms\`. */
+  const waitForWake = (ms: number, token: RunToken, deviceIds: readonly number[] | null): Promise<void> =>
+    new Promise((resolve) => {
+      const done = (): void => {
+        clearTimeout(timer)
+        stateWaiters.delete(done)
+        resolve()
+      }
+      const timer = setTimeout(done, Math.min(ms, RECONCILE_MS))
+      stateWaiters.set(done, deviceIds)
+      token.wake = done
     })
 
   // ── the hub's runs ledger: the stamp is read ONCE here, the ring is written through RPC ──
@@ -1200,6 +1269,20 @@ ${hasTime ? '    await refreshSite()\n' : ''}    await refreshMirror()
     disposers.push(() => clearInterval(mirrorReconcile))
   }
 
+${
+  hasWaitUntil
+    ? `  // a paused run reads its condition again when one of its devices reports
+  disposers.push(
+    ctx.eventBus.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
+      const deviceId = event.data['deviceId']
+      for (const [wake, deviceIds] of [...stateWaiters]) {
+        if (deviceIds === null || (typeof deviceId === 'number' && deviceIds.includes(deviceId))) wake()
+      }
+    }),
+  )
+`
+    : ''
+}
 ${eventLeaves.map(({ leaf, path }) => emitLeaf(leaf, path)).join('\n\n')}
 
   return () => {

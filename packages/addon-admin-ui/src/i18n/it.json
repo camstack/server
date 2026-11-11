@@ -6111,7 +6111,8 @@
       "setHint": "I passi successivi possono usarla come {{slot}}.",
       "continueOnError": "Continua se questo passo fallisce",
       "flowGuardHint": "Verificata quando si arriva a questo passo. Se è falsa, o uno stato non è leggibile, il passo non fa nulla.",
-      "kindChoose": "Scegli"
+      "kindChoose": "Scegli",
+      "kindWaitUntil": "Attendi finché"
     },
     "automationEditor": {
       "name": "Nome",
@@ -6444,6 +6445,17 @@
       "maxBranches": "Una scelta ha al massimo 6 rami",
       "addBranch": "Aggiungi un ramo",
       "else": "Altrimenti, esegui…"
+    },
+    "waitUntil": {
+      "hint": "L'esecuzione si ferma qui finché questo è vero. Un valore che non può essere letto non è \"vero\": l'esecuzione continua ad attendere.",
+      "timeout": "Al massimo",
+      "unit": "Unità",
+      "unitSeconds": "secondi",
+      "unitMinutes": "minuti",
+      "unitHours": "ore",
+      "onTimeout": "Se non accade in tempo",
+      "continue": "Prosegui con il passaggio successivo",
+      "stop": "Ferma l'esecuzione come errore"
     }
   },
   "accessDenied": {

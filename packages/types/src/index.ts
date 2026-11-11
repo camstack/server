@@ -740,6 +740,7 @@ export type {
   LegacyAutomationRecipe,
   AutomationBranchStep,
   AutomationChooseStep,
+  AutomationWaitUntilStep,
   AutomationSetStep,
   StepConditionRef,
   AutomationStopStep,
@@ -786,8 +787,10 @@ export {
   AutomationCapStepSchema,
   AutomationWaitStepSchema,
   AutomationChooseStepSchema,
+  AutomationWaitUntilStepSchema,
   AutomationSetStepSchema,
   CHOOSE_BRANCHES_MAX,
+  WAIT_UNTIL_TIMEOUT_MAX_S,
   nestedStepsOf,
   stepConditionsOf,
   AutomationStopStepSchema,
@@ -911,6 +914,7 @@ export * from './automation/leaf-catalog.js'
 export * from './automation/scheduler.js'
 export * from './automation/step-condition.js'
 export * from './automation/step-runner.js'
+export * from './automation/wait-until.js'
 export * from './automation/export-entities.js'
 export * from './automation/draft/index.js'
 // Per-call node pinning for ctx.api capability calls

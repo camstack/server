@@ -156,3 +156,38 @@ describe('ActionList choose (#500)', () => {
     ])
   })
 })
+
+describe('ActionList wait-until (#500)', () => {
+  const WAIT_UNTIL: AutomationAction = {
+    kind: 'wait-until',
+    when: { kind: 'all', children: [] },
+    timeoutS: 600,
+    onTimeout: 'continue',
+  }
+
+  it('is offered in an automation list', () => {
+    render(<Harness flow initial={[CAP]} />)
+    fireEvent.click(screen.getByTestId('step-kind-0'))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toContain('Wait until')
+  })
+
+  it('is not offered where the list is not an automation', () => {
+    render(<Harness flow={false} initial={[CAP]} />)
+    fireEvent.click(screen.getByTestId('step-kind-0'))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).not.toContain('Wait until')
+  })
+
+  it('edits the timeout in its unit and what happens when it runs out', () => {
+    render(<Harness flow initial={[WAIT_UNTIL]} />)
+    const value = screen.getByTestId('wait-until-timeout-0')
+    expect(value).toHaveProperty('value', '10')
+    fireEvent.change(value, { target: { value: '30' } })
+    expect(latest).toEqual([{ ...WAIT_UNTIL, timeoutS: 1800 }])
+    fireEvent.click(screen.getByTestId('wait-until-unit-0'))
+    fireEvent.click(screen.getByRole('option', { name: 'hours' }))
+    expect(latest).toEqual([{ ...WAIT_UNTIL, timeoutS: 21600 }])
+    fireEvent.click(screen.getByTestId('wait-until-on-timeout-0'))
+    fireEvent.click(screen.getByRole('option', { name: 'Stop the run as a failure' }))
+    expect(latest).toEqual([{ ...WAIT_UNTIL, timeoutS: 21600, onTimeout: 'stop' }])
+  })
+})

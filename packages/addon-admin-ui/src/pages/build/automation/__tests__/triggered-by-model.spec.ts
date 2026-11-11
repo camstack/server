@@ -31,6 +31,19 @@ describe('ensureTriggerIds', () => {
     expect(ensureTriggerIds(named)).toBe(named)
   })
 
+  it('names them when the question sits in a stop condition, a branch of a choose or a wait (#500)', () => {
+    const when: AutomationRecipe['when'] = { kind: 'any', children: [MOTION, PRESS] }
+    const askers: AutomationRecipe['actions'] = [
+      { kind: 'stop', reason: 'no', outcome: 'ok', if: ASK },
+      { kind: 'choose', branches: [{ if: ASK, steps: [{ kind: 'wait', seconds: 1 }] }] },
+      { kind: 'wait-until', when: ASK, timeoutS: 60, onTimeout: 'continue' },
+    ]
+    for (const step of askers) {
+      const named = ensureTriggerIds({ when, actions: [step] })
+      expect(triggerRowsOf(named.when).map((row) => row.id)).toEqual(['t1', 't2'])
+    }
+  })
+
   it('does the same for a triggered-by row inside the rules', () => {
     const recipe: AutomationRecipe = {
       when: { kind: 'all', children: [{ kind: 'any', children: [MOTION, PRESS] }, ASK] },

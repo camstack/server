@@ -305,6 +305,32 @@ export const CHOOSE_BRANCHES_MAX = 6
  * own (the branch is the condition) and no block inside it. Strict, so an `if`
  * written on such a step is refused rather than dropped.
  */
+/** The longest a `wait-until` may wait: six hours. */
+export const WAIT_UNTIL_TIMEOUT_MAX_S = 21_600
+
+/**
+ * Pause the run until a condition is true (#500). The timeout is mandatory: a
+ * run never waits without an end. `onTimeout` says what a wait that ran out
+ * does: `continue` goes on to the next step, `stop` ends the run as a failure.
+ * A condition that cannot be read is not "true": the wait goes on (D49).
+ */
+export const AutomationWaitUntilStepSchema = z
+  .object({
+    kind: z.literal('wait-until'),
+    when: AutomationWhenSchema,
+    timeoutS: z
+      .number()
+      .int()
+      .min(1, 'a wait needs a timeout of at least one second')
+      .max(
+        WAIT_UNTIL_TIMEOUT_MAX_S,
+        `a wait for a condition is at most six hours (${WAIT_UNTIL_TIMEOUT_MAX_S} s)`,
+      ),
+    onTimeout: z.enum(['continue', 'stop']),
+  })
+  .strict()
+export type AutomationWaitUntilStep = z.infer<typeof AutomationWaitUntilStepSchema>
+
 const AutomationBranchStepSchema = z.discriminatedUnion('kind', [
   AutomationWaitStepSchema.strict(),
   AutomationCapStepBaseSchema.extend(continueOnErrorShape)
@@ -353,6 +379,7 @@ export const AutomationActionSchema = z.discriminatedUnion('kind', [
   AutomationStopStepSchema,
   AutomationSetStepSchema,
   AutomationChooseStepSchema,
+  AutomationWaitUntilStepSchema,
   AutomationRunActionStepSchema,
   z.object({
     kind: z.literal('code'),
@@ -430,11 +457,17 @@ export const AutomationRecipeSchema = z.union([
   LegacyAutomationRecipeSchema.transform(convertLegacyRecipe),
 ])
 
-/** The `if` of a step that can carry one (`action`, `code` and `choose` steps cannot). */
+/** The `if` of a step that can carry one (`action`, `code`, `choose` and `wait-until` steps cannot). */
 export function stepGuardOf(action: AutomationAction): AutomationWhen | undefined {
-  return action.kind === 'action' || action.kind === 'code' || action.kind === 'choose'
-    ? undefined
-    : action.if
+  switch (action.kind) {
+    case 'action':
+    case 'code':
+    case 'choose':
+    case 'wait-until':
+      return undefined
+    default:
+      return action.if
+  }
 }
 
 /** A condition a step reads when it is reached, and where it is under the step. */
@@ -449,6 +482,7 @@ export function stepConditionsOf(action: AutomationAction): StepConditionRef[] {
   if (action.kind === 'choose') {
     return action.branches.map((branch, i) => ({ path: `branches.${i}.if`, when: branch.if }))
   }
+  if (action.kind === 'wait-until') return [{ path: 'when', when: action.when }]
   const when = stepGuardOf(action)
   return when === undefined ? [] : [{ path: 'if', when }]
 }

@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automations: a "device becomes" trigger hands the run the device, the value before the change and the new value (vars.deviceId, vars.from, vars.to)
 - Automations gain a stop step, a set-variables step and "continue if this step fails"; a wait may last up to one hour
 - Automations: a `choose` step runs the first branch whose condition is true (up to 6 branches, optional otherwise list); a branch that cannot be read runs nothing
+- Automations: a `wait-until` step pauses a run until a condition is true, under a mandatory timeout of at most six hours; on timeout the run goes on (step traced `timed-out`) or stops as a failure
 
 ## [1.2.547] - 2026-11-11
 
