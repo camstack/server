@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.544] - 2026-11-11
+
 ### Changed
 
 - A node picker field can name a capability; nodes without it are listed disabled with the reason

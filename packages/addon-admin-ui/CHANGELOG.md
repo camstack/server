@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.639] - 2026-11-11
+
 ### Changed
 
 - System → Terminal is one table: the Nodes card and the legacy-cameras list are gone; a node without Terminal is offered disabled, with the reason, and legacy cameras are adopted with one button
