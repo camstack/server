@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- New ConditionKindPicker: a searchable modal that lists the automation row kinds by category, with icon, description, example and event/state badge.
+
 ## [1.2.422] - 2026-11-11
 
 ### Changed

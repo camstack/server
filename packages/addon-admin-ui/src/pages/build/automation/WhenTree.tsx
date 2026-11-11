@@ -21,12 +21,13 @@
 
 import type {
   AutomationLeaf,
+  AutomationLeafContext,
   AutomationRecipe,
   AutomationWhen,
   DeviceIsLeaf,
   TraceNodeOutcome,
 } from '@camstack/types'
-import { baseUnitForQuantity, countWhenLeaves, isLeaf } from '@camstack/types'
+import { baseUnitForQuantity, countWhenLeaves, isLeaf, MAX_WHEN_LEAVES } from '@camstack/types'
 import { Badge, Button, DisclosureChevron, Select } from '@camstack/ui-library'
 import { Plus, Trash2, Ungroup } from 'lucide-react'
 import { useState } from 'react'
@@ -38,6 +39,7 @@ import type { AutomationDevice } from './automation-data'
 import { useFieldDescriptor } from './FieldPicker'
 import { type MoveControls, MoveButtons } from './MoveButtons'
 import { leafKindLabel, newLeaf } from './recipe-parts'
+import { LeafKindPickerModal } from './LeafKindPickerModal'
 import { WhenLeafRow } from './WhenLeafRow'
 import { declaredQuantity } from './ValueInput'
 import {
@@ -68,9 +70,12 @@ export interface WhenTreeProps {
   readonly run?: WhenRunView | null
   /** Hide the run-start sentence: the tree is a plain condition (a step's `if`), not what starts a run. */
   readonly hideRule?: boolean
+  /** Where the tree lives: the automation's `when` (default) or a step's `if`, which takes states only. */
+  readonly context?: Extract<AutomationLeafContext, 'trigger' | 'guard'>
 }
 
 interface TreeContext {
+  readonly leafContext: Extract<AutomationLeafContext, 'trigger' | 'guard'>
   readonly recipe: AutomationRecipe
   readonly devices: readonly AutomationDevice[]
   readonly run: WhenRunView | null
@@ -112,6 +117,7 @@ export function WhenTree({
   onChange,
   run = null,
   hideRule = false,
+  context = 'trigger',
 }: WhenTreeProps) {
   const { t } = useTranslation()
   const root = whenRoot(recipe)
@@ -120,6 +126,7 @@ export function WhenTree({
   // subtrees' keys, an edit that shifts indices reopens everything.
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set())
   const ctx: TreeContext = {
+    leafContext: context,
     recipe,
     devices,
     run,
@@ -227,6 +234,8 @@ function LeafView({ leaf, path, ctx, underNot, move }: LeafViewProps) {
     <WhenLeafRow
       leaf={leaf}
       devices={ctx.devices}
+      context={ctx.leafContext}
+      underNot={underNot}
       toneClass={toneFor(node?.outcome, 'border-border')}
       result={node === undefined ? undefined : <LeafResult leaf={leaf} node={node} vars={vars} />}
       onNegate={underNot ? null : () => ctx.reshape(negate(ctx.recipe, path))}
@@ -380,6 +389,7 @@ function BlockView({ block, path, ctx, underNot, move, budgetText, emptyHint }: 
   // The root is the section itself: only nested blocks collapse.
   const expanded = isRoot || !ctx.collapsed.has(pathKey(path))
   const nestable = canNestBlockAt(ctx.recipe, path)
+  const [picking, setPicking] = useState(false)
   const kinds = [
     { value: 'all', label: t('automation.whenTree.allOf', 'All of (AND)') },
     { value: 'any', label: t('automation.whenTree.anyOf', 'Any of (OR)') },
@@ -463,11 +473,20 @@ function BlockView({ block, path, ctx, underNot, move, budgetText, emptyHint }: 
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => ctx.onChange(addNode(ctx.recipe, path, newLeaf('device-is')))}
+            onClick={() => setPicking(true)}
             title={t('automation.whenTree.addRowTitle', 'Add one row: an event or a state')}
           >
             <Plus className="h-4 w-4" /> {t('automation.whenTree.addRow', 'Add row')}
           </Button>
+          <LeafKindPickerModal
+            open={picking}
+            onOpenChange={setPicking}
+            mode="add"
+            context={ctx.leafContext}
+            underNot={underNot}
+            treeFull={countWhenLeaves(whenRoot(ctx.recipe)) >= MAX_WHEN_LEAVES}
+            onPick={(kind) => ctx.onChange(addNode(ctx.recipe, path, newLeaf(kind)))}
+          />
           <Button
             variant="outline"
             disabled={!nestable}

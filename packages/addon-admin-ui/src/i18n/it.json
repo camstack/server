@@ -6356,6 +6356,24 @@
         "description": "Aritmetica fra valori di dispositivi, confrontata in questo momento",
         "example": "solare meno consumo sopra 1 kW"
       }
+    },
+    "leafPicker": {
+      "title": "Aggiungi una riga",
+      "changeTitle": "Cambia il tipo di riga",
+      "changeType": "Cambia tipo",
+      "category": {
+        "devices": "Dispositivi",
+        "time": "Tempo",
+        "cameras": "Telecamere",
+        "events": "Eventi di sistema",
+        "logic": "Logica",
+        "system": "Manuale"
+      },
+      "reason": {
+        "event-in-guard": "Un evento qui non si può verificare: un passo non ha un istante da attendere. Usa uno stato.",
+        "event-under-not": "Un evento non si può invertire con NOT. Usa uno stato.",
+        "tree-full": "Le regole sono piene: rimuovi prima una riga."
+      }
     }
   },
   "accessDenied": {
@@ -9654,6 +9672,15 @@
       "clear": "Cancella",
       "pickAnother": "Sceglierne un altro",
       "remove": "Rimuovi"
+    },
+    "conditionKindPicker": {
+      "search": "Cerca condizioni…",
+      "suggested": "Suggerite",
+      "recent": "Usate di recente",
+      "event": "evento",
+      "state": "stato",
+      "example": "es. {{example}}",
+      "empty": "Nessun risultato per “{{query}}”"
     }
   },
   "helpers": {

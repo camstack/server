@@ -9,11 +9,11 @@
  * accidental pick costs at most one row.
  */
 
-import type { AutomationLeaf } from '@camstack/types'
+import type { AutomationLeaf, AutomationLeafContext } from '@camstack/types'
 import { isEventLeaf } from '@camstack/types'
-import { Badge, Button, OptionSelect, type OptionSelectOption } from '@camstack/ui-library'
+import { Badge, Button } from '@camstack/ui-library'
 import { Trash2 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from './automation-data'
 import { DeviceIsFields } from './DeviceIsFields'
@@ -21,13 +21,8 @@ import { DeviceBecomesFields, DeviceEventFields, ManualFields, ScheduleFields } 
 import { ExpressionLeafRow } from './ExpressionLeafRow'
 import { PickerLabel } from './FieldPicker'
 import { type MoveControls, MoveButtons } from './MoveButtons'
-import {
-  EVENT_LEAF_KINDS,
-  LEAF_KINDS,
-  type LeafKind,
-  leafKindDescription,
-  leafKindLabel,
-} from './recipe-parts'
+import { LeafKindPickerModal } from './LeafKindPickerModal'
+import { leafKindLabel } from './recipe-parts'
 import {
   DetectionFields,
   IntervalFields,
@@ -36,25 +31,13 @@ import {
 } from './SceneFields'
 import { convertLeafKind } from './when-ops'
 
-function useKindOptions(): readonly OptionSelectOption[] {
-  const { t } = useTranslation()
-  const events = t('automation.whenTree.groupEvents', 'Happens (an event)')
-  const states = t('automation.whenTree.groupStates', 'Is true (a state)')
-  return LEAF_KINDS.map((kind) => ({
-    value: kind,
-    label: leafKindLabel(kind),
-    description: leafKindDescription(kind),
-    group: EVENT_LEAF_KINDS.includes(kind) ? events : states,
-  }))
-}
-
-function asLeafKind(value: string): LeafKind | null {
-  return LEAF_KINDS.find((k) => k === value) ?? null
-}
-
 export interface WhenLeafRowProps {
   readonly leaf: AutomationLeaf
   readonly devices: readonly AutomationDevice[]
+  /** Where the row lives: decides which kinds "Change type" may offer. */
+  readonly context: Extract<AutomationLeafContext, 'trigger' | 'guard'>
+  /** The row is the child of a NOT: an event cannot take its place. */
+  readonly underNot: boolean
   readonly toneClass: string
   /** What the selected run held at this row, shown inside it. */
   readonly result?: ReactNode
@@ -69,6 +52,8 @@ export interface WhenLeafRowProps {
 export function WhenLeafRow({
   leaf,
   devices,
+  context,
+  underNot,
   toneClass,
   result,
   onNegate,
@@ -77,23 +62,34 @@ export function WhenLeafRow({
   onRemove,
 }: WhenLeafRowProps) {
   const { t } = useTranslation()
-  const options = useKindOptions()
+  const [changing, setChanging] = useState(false)
   const event = isEventLeaf(leaf)
   return (
     <div className={`rounded border p-2 ${toneClass}`} data-testid="when-row" data-kind={leaf.kind}>
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-[13rem] max-w-xs flex-1">
           <PickerLabel>{t('automation.whenTree.rowType', 'Row type')}</PickerLabel>
-          <OptionSelect
-            mode="single"
-            singleDisplay="field"
-            options={options}
-            value={leaf.kind}
-            testId="when-row-type"
-            optionTestIdPrefix="when-kind"
-            onChange={(value) => {
-              const kind = asLeafKind(value)
-              if (kind !== null && kind !== leaf.kind) onChange(convertLeafKind(leaf, kind))
+          <Button
+            variant="outline"
+            data-testid="when-row-type"
+            className="w-full justify-between"
+            onClick={() => setChanging(true)}
+            title={t('automation.leafPicker.changeType', 'Change type')}
+          >
+            <span className="truncate">{leafKindLabel(leaf.kind)}</span>
+            <span className="text-foreground-subtle">
+              {t('automation.leafPicker.changeType', 'Change type')}
+            </span>
+          </Button>
+          <LeafKindPickerModal
+            open={changing}
+            onOpenChange={setChanging}
+            mode="change"
+            context={context}
+            underNot={underNot}
+            treeFull={false}
+            onPick={(kind) => {
+              if (kind !== leaf.kind) onChange(convertLeafKind(leaf, kind))
             }}
           />
         </div>

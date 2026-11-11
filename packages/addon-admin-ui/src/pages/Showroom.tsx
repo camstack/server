@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  ConditionKindPicker,
   StatusBadge,
   Button,
   Checkbox,
@@ -98,6 +99,8 @@ const DEMO_SCHEMA: ConfigUISchema = {
 // ---------------------------------------------------------------------------
 
 export function ShowroomPage() {
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [picked, setPicked] = useState<string | null>(null)
   const [formValues, setFormValues] = useState<Record<string, unknown>>({
     name: 'Example',
     count: 10,
@@ -287,6 +290,31 @@ export function ShowroomPage() {
             </div>
           </div>
         </div>
+      </Section>
+
+      <Section title="ConditionKindPicker">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="outline" onClick={() => setPickerOpen(true)}>
+            Add a condition
+          </Button>
+          <span className="text-xs text-foreground-subtle">{picked ?? 'Nothing picked'}</span>
+        </div>
+        <ConditionKindPicker
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          title="Add a condition"
+          context="trigger"
+          underNot={false}
+          treeFull={false}
+          recentKey="showroom"
+          textsOf={(kind) => ({ label: kind, description: `A ${kind} row`, example: kind })}
+          categoryLabelOf={(category) => category}
+          reasonOf={(reason) => reason}
+          onPick={(kind) => {
+            setPicked(kind)
+            setPickerOpen(false)
+          }}
+        />
       </Section>
 
       {/* ------------------------------------------------------------------ */}

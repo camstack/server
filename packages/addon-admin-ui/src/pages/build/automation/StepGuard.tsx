@@ -75,6 +75,7 @@ export function StepGuard({ step, devices, devicesState, variables, onChange }: 
           </p>
           <WhenTree
             hideRule
+            context="guard"
             recipe={recipe}
             devices={devices}
             onChange={(next) => onChange({ ...step, if: next.when })}

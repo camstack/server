@@ -5,9 +5,9 @@
  */
 import type { AutomationAction } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../FieldPicker', async () => {
   const actual = await vi.importActual<typeof import('../FieldPicker')>('../FieldPicker')
@@ -16,6 +16,16 @@ vi.mock('../FieldPicker', async () => {
 vi.mock('../../flow/CommandStep', () => ({ CommandStep: () => null }))
 
 import { ActionList } from '../ActionList'
+
+// jsdom has no <dialog> modal API: the kind picker opens one.
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal ??= function showModal(this: HTMLDialogElement) {
+    this.setAttribute('open', '')
+  }
+  HTMLDialogElement.prototype.close ??= function close(this: HTMLDialogElement) {
+    this.removeAttribute('open')
+  }
+})
 
 let latest: readonly AutomationAction[] = []
 
@@ -92,5 +102,19 @@ describe('a step guard in the action list', () => {
   it('a freshly switched-on, still empty IF shows no note', () => {
     render(<Harness initial={[{ kind: 'wait', seconds: 3, if: { kind: 'all', children: [] } }]} />)
     expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('Add row in a guard offers states only: every event kind is disabled with its reason', () => {
+    render(<Harness initial={[{ kind: 'wait', seconds: 3, if: { kind: 'all', children: [] } }]} />)
+    fireEvent.click(screen.getByRole('button', { name: /Add row/ }))
+    const rows = screen.getAllByRole('option')
+    const events = rows.filter((row) => within(row).queryByText('event') !== null)
+    expect(events.length).toBeGreaterThan(0)
+    for (const row of rows) {
+      const isEvent = within(row).queryByText('event') !== null
+      expect(row.getAttribute('aria-disabled') === 'true').toBe(isEvent)
+    }
+    fireEvent.click(events[0] as HTMLElement)
+    expect(latest[0]).toMatchObject({ if: { kind: 'all', children: [] } })
   })
 })

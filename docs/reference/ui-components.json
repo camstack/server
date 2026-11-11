@@ -2429,6 +2429,87 @@
       "summary": "<Pagination> — numbered-pages-with-ellipsis control."
     },
     {
+      "name": "ConditionKindPicker",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/condition-kind-picker/ConditionKindPicker.tsx",
+      "summary": "The modal that adds (or retypes) a `when`-tree row: search, groups by category, an icon / label / description / example per kind, and a kind this place cannot take shown disabled with the reason. All filtering and ran…",
+      "props": [
+        {
+          "name": "open",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onOpenChange",
+          "type": "(open: boolean) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "context",
+          "type": "AutomationLeafContext",
+          "optional": false,
+          "doc": "Where the row is added: a trigger tree, or a step's guard (states only)."
+        },
+        {
+          "name": "underNot",
+          "type": "boolean",
+          "optional": false,
+          "doc": "The row sits under a NOT: an instant cannot be negated."
+        },
+        {
+          "name": "treeFull",
+          "type": "boolean",
+          "optional": false,
+          "doc": "Adding to a tree already at its row bound. False when changing a row's type."
+        },
+        {
+          "name": "suggested",
+          "type": "readonly AutomationLeafKind[]",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "recentKey",
+          "type": "string",
+          "optional": true,
+          "doc": "Remembers the kinds picked here last time (per place)."
+        },
+        {
+          "name": "textsOf",
+          "type": "(kind: AutomationLeafKind) => KindTexts",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "categoryLabelOf",
+          "type": "(category: AutomationLeafCategory) => string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "reasonOf",
+          "type": "(reason: KindDisabledReason) => string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onPick",
+          "type": "(kind: AutomationLeafKind) => void",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "ConfigFormBuilder",
       "kind": "component",
       "area": "composites",

@@ -8,11 +8,12 @@ import {
   AutomationRecipeSchema,
   type AutomationWhen,
   DeviceType,
+  MAX_WHEN_LEAVES,
 } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render as plainRender, screen, within } from '@testing-library/react'
 import { type ReactElement, useState } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../FieldPicker', async () => {
   const actual = await vi.importActual<typeof import('../FieldPicker')>('../FieldPicker')
@@ -91,6 +92,16 @@ function Harness({
   )
 }
 
+// jsdom has no <dialog> modal API: the kind picker opens one.
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal ??= function showModal(this: HTMLDialogElement) {
+    this.setAttribute('open', '')
+  }
+  HTMLDialogElement.prototype.close ??= function close(this: HTMLDialogElement) {
+    this.removeAttribute('open')
+  }
+})
+
 const IS_ROW = {
   kind: 'device-is',
   deviceId: 7,
@@ -116,6 +127,69 @@ describe('WhenTree', () => {
     expect(within(blocks[1] as HTMLElement).getByRole('button', { name: /Add row/ })).toBeTruthy()
   })
 
+  it('Add row opens the kind picker and a pick adds a seeded row of that kind', () => {
+    let last: AutomationRecipe | null = null
+    render(
+      <Harness
+        initial={recipeOf({ kind: 'all', children: [IS_ROW] })}
+        onRecipe={(r) => (last = r)}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Add row/ }))
+    fireEvent.click(screen.getByRole('option', { name: /Every few minutes/ }))
+    expect(screen.getAllByTestId('when-row')).toHaveLength(2)
+    expect(screen.getAllByTestId('when-row')[1]?.getAttribute('data-kind')).toBe('interval')
+    expect(JSON.stringify(last)).toContain('"minutes":5')
+  })
+
+  it('the change-type picker offers the row its own place: nothing is added or lost on cancel', () => {
+    let last: AutomationRecipe | null = null
+    render(
+      <Harness
+        initial={recipeOf({ kind: 'all', children: [IS_ROW] })}
+        onRecipe={(r) => (last = r)}
+      />,
+    )
+    fireEvent.click(screen.getByTestId('when-row-type'))
+    expect(screen.getByRole('searchbox')).toBeTruthy()
+    expect(last).toBeNull()
+  })
+
+  it('offers no event row under a NOT: an instant cannot be negated', () => {
+    render(
+      <Harness
+        initial={recipeOf({
+          kind: 'all',
+          children: [{ kind: 'not', child: { kind: 'all', children: [IS_ROW] } }],
+        })}
+      />,
+    )
+    const addButtons = screen.getAllByRole('button', { name: /Add row/ })
+    // The negated block is drawn inside the root, so its button comes first.
+    expect(addButtons).toHaveLength(2)
+    fireEvent.click(addButtons[0] as HTMLElement)
+    // A kind may show twice (recently used + its group): every copy obeys.
+    const events = screen.getAllByRole('option', { name: /Every few minutes/ })
+    for (const option of events) expect(option.getAttribute('aria-disabled')).toBe('true')
+    const states = screen.getAllByRole('option', { name: /Device value is/ })
+    for (const option of states) expect(option.getAttribute('aria-disabled')).toBe('false')
+  })
+
+  it('offers no row at all once the tree holds its last allowed row', () => {
+    render(
+      <Harness
+        initial={recipeOf({
+          kind: 'all',
+          children: Array.from({ length: MAX_WHEN_LEAVES }, () => IS_ROW),
+        })}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Add row/ }))
+    const options = screen.getAllByRole('option')
+    expect(options.length).toBeGreaterThan(0)
+    for (const option of options) expect(option.getAttribute('aria-disabled')).toBe('true')
+  })
+
   it('changes a row from state to event through the one type menu', () => {
     let last: AutomationRecipe | null = null
     render(
@@ -125,10 +199,9 @@ describe('WhenTree', () => {
       />,
     )
     expect(screen.getByTestId('when-row-nature').textContent).toBe('State')
-    const typeMenu = within(screen.getByTestId('when-row-type')).getByRole('combobox')
-    fireEvent.focus(typeMenu)
-    fireEvent.click(typeMenu)
-    fireEvent.click(screen.getByTestId('when-kind-device-becomes'))
+    // Interaction changed: the row-type combobox became a "Change type" modal.
+    fireEvent.click(screen.getByTestId('when-row-type'))
+    fireEvent.click(screen.getByRole('option', { name: /Device value becomes/ }))
     expect(screen.getByTestId('when-row-nature').textContent).toBe('Event')
     expect(last).not.toBeNull()
     expect(JSON.stringify(last)).toContain('"device-becomes"')

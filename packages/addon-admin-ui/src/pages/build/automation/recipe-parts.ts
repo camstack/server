@@ -123,6 +123,11 @@ export function leafKindDescription(kind: LeafKind): string {
   return i18n.t(`${leafCatalogEntry(kind).i18nKey}.description`)
 }
 
+/** The short example of a row type ("a person in the driveway"), shown after "e.g." in a picker. */
+export function leafKindExample(kind: LeafKind): string {
+  return i18n.t(`${leafCatalogEntry(kind).i18nKey}.example`)
+}
+
 /** A brand-new automation. Deliberately empty: a pre-seeded row pointing at
  *  device 0 is a decision the operator did not make, and `validateRecipeBounds`
  *  says exactly what is missing until they do. */

@@ -6281,6 +6281,24 @@
         "description": "Arithmetic across device values, compared right now",
         "example": "solar minus load above 1 kW"
       }
+    },
+    "leafPicker": {
+      "title": "Add a row",
+      "changeTitle": "Change the row type",
+      "changeType": "Change type",
+      "category": {
+        "devices": "Devices",
+        "time": "Time",
+        "cameras": "Cameras",
+        "events": "System events",
+        "logic": "Logic",
+        "system": "Manual"
+      },
+      "reason": {
+        "event-in-guard": "An event cannot be checked here: a step has no instant to wait for. Use a state.",
+        "event-under-not": "An event cannot be inverted with NOT. Use a state.",
+        "tree-full": "The rules are full: remove a row first."
+      }
     }
   },
   "accessDenied": {
@@ -9632,6 +9650,15 @@
       "clear": "Clear",
       "pickAnother": "Pick another",
       "remove": "Remove"
+    },
+    "conditionKindPicker": {
+      "search": "Search conditions…",
+      "suggested": "Suggested",
+      "recent": "Recently used",
+      "event": "event",
+      "state": "state",
+      "example": "e.g. {{example}}",
+      "empty": "Nothing matches “{{query}}”"
     }
   },
   "helpers": {

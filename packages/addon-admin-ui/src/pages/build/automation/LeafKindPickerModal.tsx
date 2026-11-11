@@ -1,0 +1,68 @@
+/**
+ * The one condition-kind modal of the automation editor: "Add row" in the
+ * trigger tree, "Add condition" in a step's guard and "Change type" on a row
+ * all open this, so the labels, categories and disabled reasons are written
+ * once. The searching, ranking and grouping are the library's.
+ */
+import type {
+  AutomationLeafCategory,
+  AutomationLeafContext,
+  AutomationLeafKind,
+} from '@camstack/types'
+import { ConditionKindPicker, type KindDisabledReason, type KindTexts } from '@camstack/ui-library'
+import { useTranslation } from 'react-i18next'
+import { leafKindDescription, leafKindExample, leafKindLabel } from './recipe-parts'
+
+export interface LeafKindPickerModalProps {
+  readonly open: boolean
+  readonly onOpenChange: (open: boolean) => void
+  readonly mode: 'add' | 'change'
+  readonly context: AutomationLeafContext
+  readonly underNot: boolean
+  readonly treeFull: boolean
+  readonly onPick: (kind: AutomationLeafKind) => void
+}
+
+function textsOf(kind: AutomationLeafKind): KindTexts {
+  return {
+    label: leafKindLabel(kind),
+    description: leafKindDescription(kind),
+    example: leafKindExample(kind),
+  }
+}
+
+export function LeafKindPickerModal({
+  open,
+  onOpenChange,
+  mode,
+  context,
+  underNot,
+  treeFull,
+  onPick,
+}: LeafKindPickerModalProps) {
+  const { t } = useTranslation()
+  return (
+    <ConditionKindPicker
+      open={open}
+      onOpenChange={onOpenChange}
+      title={
+        mode === 'add'
+          ? t('automation.leafPicker.title', 'Add a row')
+          : t('automation.leafPicker.changeTitle', 'Change the row type')
+      }
+      context={context}
+      underNot={underNot}
+      treeFull={treeFull}
+      recentKey={`automation-${context}`}
+      textsOf={textsOf}
+      categoryLabelOf={(category: AutomationLeafCategory) =>
+        t(`automation.leafPicker.category.${category}`)
+      }
+      reasonOf={(reason: KindDisabledReason) => t(`automation.leafPicker.reason.${reason}`)}
+      onPick={(kind) => {
+        onPick(kind)
+        onOpenChange(false)
+      }}
+    />
+  )
+}
