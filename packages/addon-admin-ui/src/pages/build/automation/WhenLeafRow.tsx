@@ -29,6 +29,7 @@ import {
   StationaryFields,
   StationaryPresentFields,
 } from './SceneFields'
+import { TimeIsFields } from './TimeIsFields'
 import { convertLeafKind } from './when-ops'
 
 export interface WhenLeafRowProps {
@@ -154,7 +155,6 @@ function LeafFields({ leaf, devices, onChange }: LeafFieldsProps) {
     case 'expression':
       return <ExpressionLeafRow leaf={leaf} devices={devices} onChange={onChange} />
     case 'time-is':
-      // the window editor is a separate task: the row shows its kind and nothing to edit yet
-      return null
+      return <TimeIsFields leaf={leaf} onChange={onChange} />
   }
 }

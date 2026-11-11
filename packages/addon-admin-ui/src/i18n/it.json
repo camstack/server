@@ -6381,6 +6381,15 @@
         "event-under-not": "Un evento non si può invertire con NOT. Usa uno stato.",
         "tree-full": "Le regole sono piene: rimuovi prima una riga."
       }
+    },
+    "timeIs": {
+      "window": "Momento del giorno",
+      "wholeDay": "Tutto il giorno",
+      "between": "Tra due orari",
+      "from": "Da",
+      "to": "A",
+      "wraps": "Questa finestra termina il giorno dopo. I giorni sono quelli in cui inizia.",
+      "noDays": "Scegli almeno un giorno."
     }
   },
   "accessDenied": {

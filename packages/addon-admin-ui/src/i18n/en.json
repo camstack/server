@@ -6306,6 +6306,15 @@
         "event-under-not": "An event cannot be inverted with NOT. Use a state.",
         "tree-full": "The rules are full: remove a row first."
       }
+    },
+    "timeIs": {
+      "window": "Time of day",
+      "wholeDay": "The whole day",
+      "between": "Between two times",
+      "from": "From",
+      "to": "To",
+      "wraps": "This window ends the next day. The days are the days it starts on.",
+      "noDays": "Pick at least one day."
     }
   },
   "accessDenied": {

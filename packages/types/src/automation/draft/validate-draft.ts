@@ -30,6 +30,8 @@ import type { AutomationWhen } from '../when.js'
 import { forEachLeaf } from '../when.js'
 import { ActionInputSchema } from '../action.js'
 import { SchedulerInputSchema, validateSchedulerInput } from '../scheduler.js'
+import type { SiteReading } from '../../time/time-spec.js'
+import { recipeSiteIssues, stepGuardSiteIssues } from '../when-site.js'
 import { expandDraft, isRecord } from './draft-json.js'
 import { sliceCapOf } from './vocabulary-slice.js'
 import type { DraftKind, DraftSite, DraftSiteDevice, DraftValidation } from './draft-types.js'
@@ -228,6 +230,11 @@ function describeTarget(
   }
 }
 
+/** The site as the time checks read it. */
+function readingOf(site: DraftSite): SiteReading {
+  return { location: site.location, timeZone: site.timeZone }
+}
+
 function validateAutomation(site: DraftSite, json: unknown): DraftValidation {
   const parsed = CurrentAutomationRecipeSchema.safeParse(json)
   if (!parsed.success) return { ok: false, issues: zodIssues(parsed.error) }
@@ -237,6 +244,7 @@ function validateAutomation(site: DraftSite, json: unknown): DraftValidation {
     ...(bounds === null ? [] : [`when: ${bounds}`]),
     ...leafIssues(site, recipe.when, 'when'),
     ...recipe.actions.flatMap((a, i) => stepIssues(site, a, `actions.${i}`)),
+    ...recipeSiteIssues(recipe, readingOf(site)).map((i) => `${i.path}: ${i.message}`),
   ]
   if (issues.length > 0) return { ok: false, issues }
   const prepared = prepareRecipeUnits(recipe, capUnitResolver(ALL_CAPABILITY_DEFINITIONS))
@@ -248,7 +256,12 @@ function validateAutomation(site: DraftSite, json: unknown): DraftValidation {
 function validateAction(site: DraftSite, json: unknown): DraftValidation {
   const parsed = ActionInputSchema.safeParse(json)
   if (!parsed.success) return { ok: false, issues: zodIssues(parsed.error) }
-  const issues = parsed.data.steps.flatMap((s, i) => stepIssues(site, s, `steps.${i}`))
+  const issues = [
+    ...parsed.data.steps.flatMap((s, i) => stepIssues(site, s, `steps.${i}`)),
+    ...stepGuardSiteIssues(parsed.data.steps, readingOf(site), 'steps').map(
+      (i) => `${i.path}: ${i.message}`,
+    ),
+  ]
   return issues.length > 0 ? { ok: false, issues } : { ok: true, draft: parsed.data }
 }
 
@@ -256,10 +269,7 @@ function validateScheduler(site: DraftSite, json: unknown): DraftValidation {
   const parsed = SchedulerInputSchema.safeParse(json)
   if (!parsed.success) return { ok: false, issues: zodIssues(parsed.error) }
   const input = parsed.data
-  const verdict = validateSchedulerInput(input, {
-    location: site.location,
-    timeZone: site.timeZone,
-  })
+  const verdict = validateSchedulerInput(input, readingOf(site))
   const issues: string[] = [
     ...(verdict.ok ? [] : verdict.issues.map((i) => `${i.path}: ${i.message}`)),
     ...(input.activeWhen === undefined ? [] : leafIssues(site, input.activeWhen, 'activeWhen')),
@@ -296,7 +306,10 @@ function validateCompositionDraft(site: DraftSite, json: unknown): DraftValidati
   })
   return verdict.ok
     ? { ok: true, draft: composition }
-    : { ok: false, issues: verdict.problems.map((p) => `${p.path}: ${p.message}`) }
+    : {
+        ok: false,
+        issues: verdict.problems.map((p) => `${p.path}: ${p.message}`),
+      }
 }
 
 export function validateDraft(kind: DraftKind, json: unknown, site: DraftSite): DraftValidation {

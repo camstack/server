@@ -125,7 +125,11 @@ describe('validateDraft', () => {
   it('refuses a device that does not exist, readably', () => {
     const broken = edited(caseEntity('automation', 'auto-02'), (r) => {
       r['actions'] = [
-        { kind: 'cap', actionId: 'switch.on', target: { kind: 'devices', ids: [999] } },
+        {
+          kind: 'cap',
+          actionId: 'switch.on',
+          target: { kind: 'devices', ids: [999] },
+        },
       ]
     })
     expect(issuesOf('automation', broken)).toEqual(['actions.0.target: no device has id 999'])
@@ -133,7 +137,13 @@ describe('validateDraft', () => {
 
   it('refuses an action the device cannot do', () => {
     const broken = edited(caseEntity('automation', 'auto-02'), (r) => {
-      r['actions'] = [{ kind: 'cap', actionId: 'switch.on', target: { kind: 'devices', ids: [3] } }]
+      r['actions'] = [
+        {
+          kind: 'cap',
+          actionId: 'switch.on',
+          target: { kind: 'devices', ids: [3] },
+        },
+      ]
     })
     const [issue] = issuesOf('automation', broken)
     expect(issue).toContain('"Tapparella Salone"')
@@ -182,7 +192,11 @@ describe('validateDraft', () => {
   it('refuses missing and out-of-range open args', () => {
     const missing = edited(caseEntity('action', 'act-07'), (r) => {
       r['steps'] = [
-        { kind: 'cap', actionId: 'brightness.set', target: { kind: 'devices', ids: [7] } },
+        {
+          kind: 'cap',
+          actionId: 'brightness.set',
+          target: { kind: 'devices', ids: [7] },
+        },
       ]
     })
     expect(issuesOf('action', missing)).toEqual(['steps.0.args: brightness.set needs "level"'])
@@ -230,7 +244,11 @@ describe('validateDraft', () => {
               at: { kind: 'clock', hh: 2, mm: 0 },
               mode: 'release',
               steps: [
-                { kind: 'cap', actionId: 'cover.close', target: { kind: 'devices', ids: [23] } },
+                {
+                  kind: 'cap',
+                  actionId: 'cover.close',
+                  target: { kind: 'devices', ids: [23] },
+                },
               ],
             },
           ],
@@ -273,6 +291,33 @@ describe('validateDraft', () => {
     expect(issuesOf('composition', unknown).join('\n')).toContain('nope')
   })
 
+  it('refuses a sun-bounded time window on a site with no location', () => {
+    const sunGated = edited(caseEntity('automation', 'auto-02'), (r) => {
+      r['when'] = {
+        kind: 'all',
+        children: [
+          r['when'],
+          {
+            kind: 'time-is',
+            between: {
+              from: { kind: 'sun', event: 'sunset', offsetMin: 0 },
+              to: { kind: 'clock', hh: 23, mm: 0 },
+            },
+          },
+        ],
+      }
+    })
+    const located = { ...SITE, location: { latitude: 41.9, longitude: 12.5 } }
+    expect(validateDraft('automation', sunGated, located).ok).toBe(true)
+    const verdict = validateDraft('automation', sunGated, {
+      ...SITE,
+      location: null,
+    })
+    expect(verdict.ok ? [] : verdict.issues).toEqual([
+      expect.stringMatching(/^when\.1\.between\.from: .*needs the site location/),
+    ])
+  })
+
   it('refuses a non-object', () => {
     expect(validateDraft('automation', 'hello', SITE)).toEqual({
       ok: false,
@@ -311,8 +356,16 @@ describe('compareDraft', () => {
     expect(compareDraft('scheduler', swapped, sch)).toBe(1)
     const ids = edited(caseEntity('action', 'act-01'), (r) => {
       r['steps'] = [
-        { kind: 'cap', actionId: 'switch.off', target: { kind: 'devices', ids: [7, 1] } },
-        { kind: 'cap', actionId: 'cover.close', target: { kind: 'devices', ids: [3] } },
+        {
+          kind: 'cap',
+          actionId: 'switch.off',
+          target: { kind: 'devices', ids: [7, 1] },
+        },
+        {
+          kind: 'cap',
+          actionId: 'cover.close',
+          target: { kind: 'devices', ids: [3] },
+        },
       ]
     })
     expect(compareDraft('action', ids, caseEntity('action', 'act-01'))).toBe(1)
@@ -351,7 +404,13 @@ describe('compareDraft', () => {
         operator: 'gt',
         value,
       },
-      actions: [{ kind: 'cap', actionId: 'cover.close', target: { kind: 'devices', ids: [18] } }],
+      actions: [
+        {
+          kind: 'cap',
+          actionId: 'cover.close',
+          target: { kind: 'devices', ids: [18] },
+        },
+      ],
     })
     expect(compareDraft('automation', celsius({ value: 82.4, unit: '°F' }), celsius(28))).toBe(1)
     expect(compareDraft('automation', celsius(30), celsius(28))).toBeLessThan(0.9)
@@ -360,13 +419,21 @@ describe('compareDraft', () => {
   it('scores a wrong device, a wrong action and a missing step below the match bar', () => {
     const wrongDevice = edited(auto, (r) => {
       r['actions'] = [
-        { kind: 'cap', actionId: 'climate.off', target: { kind: 'devices', ids: [3] } },
+        {
+          kind: 'cap',
+          actionId: 'climate.off',
+          target: { kind: 'devices', ids: [3] },
+        },
       ]
     })
     expect(compareDraft('automation', wrongDevice, auto)).toBeLessThan(0.9)
     const wrongAction = edited(auto, (r) => {
       r['actions'] = [
-        { kind: 'cap', actionId: 'climate.heat', target: { kind: 'devices', ids: [4] } },
+        {
+          kind: 'cap',
+          actionId: 'climate.heat',
+          target: { kind: 'devices', ids: [4] },
+        },
       ]
     })
     expect(compareDraft('automation', wrongAction, auto)).toBeLessThan(0.9)

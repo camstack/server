@@ -70,6 +70,36 @@ describe('validateSchedulerInput', () => {
     })
   })
 
+  it('refuses a sun-bounded time-is window when the site has no location, wherever the tree sits', () => {
+    const afterSunset = {
+      kind: 'time-is',
+      between: {
+        from: { kind: 'sun', event: 'sunset', offsetMin: 0 },
+        to: { kind: 'clock', hh: 23, mm: 0 },
+      },
+    }
+    const guarded = { ...SWITCH_ON, if: afterSunset }
+    const base = input('edge', guarded)
+    const whole = SchedulerInputSchema.parse({
+      ...base,
+      activeWhen: afterSunset,
+      profiles: base.profiles.map((p) => ({
+        ...p,
+        activeWhen: afterSunset,
+        points: p.points.map((pt) => ({ ...pt, conditions: afterSunset })),
+      })),
+    })
+    const result = validateSchedulerInput(whole, NO_LOCATION)
+    expect(result.ok ? [] : result.issues.map((i) => i.path)).toEqual([
+      'activeWhen.between.from',
+      'profiles.0.activeWhen.between.from',
+      'profiles.0.points.0.conditions.between.from',
+      'profiles.0.points.0.steps.0.if.between.from',
+    ])
+    expect(result.ok ? '' : result.issues[0]?.message).toContain('needs the site location')
+    expect(validateSchedulerInput(whole, WITH_LOCATION)).toEqual({ ok: true })
+  })
+
   it('refuses an event leaf in a state tree', () => {
     const event = {
       kind: 'device-event',

@@ -27,6 +27,7 @@ import {
   hasEventLeaves,
   validateWhenTree,
 } from './when.js'
+import { stepGuardSiteIssues, type WhenSiteIssue, whenSiteIssues } from './when-site.js'
 
 /** A `when` tree that is a STATE: no event leaf, and legal as a tree. */
 export const SchedulerStateTreeSchema: z.ZodType<AutomationWhen> = AutomationWhenSchema.superRefine(
@@ -179,10 +180,21 @@ export function validateSchedulerInput(
   reading: SiteReading,
 ): SchedulerValidation {
   const issues: SchedulerIssue[] = []
+  // a time-is window this site cannot place (a sun end without a location) is refused wherever its tree sits
+  const siteIssues = (found: readonly WhenSiteIssue[]): void => {
+    for (const issue of found) issues.push({ path: issue.path, message: issue.message })
+  }
+  if (input.activeWhen !== undefined)
+    siteIssues(whenSiteIssues(input.activeWhen, reading, 'activeWhen'))
   input.profiles.forEach((profile, pi) => {
     const ids = new Set<string>()
+    if (profile.activeWhen !== undefined)
+      siteIssues(whenSiteIssues(profile.activeWhen, reading, `profiles.${pi}.activeWhen`))
     profile.points.forEach((point, qi) => {
       const base = `profiles.${pi}.points.${qi}`
+      if (point.conditions !== undefined)
+        siteIssues(whenSiteIssues(point.conditions, reading, `${base}.conditions`))
+      siteIssues(stepGuardSiteIssues(point.steps, reading, `${base}.steps`))
       if (ids.has(point.id))
         issues.push({
           path: `${base}.id`,

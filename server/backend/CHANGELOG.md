@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
+### Added
+- Automations and step conditions can gate on the time of day with a new 'time is' condition, read on the site clock.
 
 ## [1.2.837] - 2026-11-11
 
@@ -24,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Log shutdown now waits for the rotating log file to close, so a stopping hub no longer leaves a late file open.
-- Automations can gate on the time of day with a new 'time is' condition; a sun-based window on a site without a location is treated as unknown.
 
 ## [1.2.835] - 2026-11-11
 

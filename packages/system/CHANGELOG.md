@@ -7,14 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Removed
-
-- Device history no longer special-cases the retired Hub device type
-
 ### Added
 
 - The device-template renderer understands now, the time filter, and the camera alias for a caller-supplied device, and reports which devices and whether the clock a text reads.
 - The hub announces a stable random hub id on the LAN and signs it into the pairing offer; a pairing without an address the agent can dial is refused with the reason
+- A step's 'only if' can use a time-of-day window, and a scheduler follows a time-of-day condition at the moment the window opens or closes.
 
 ### Changed
 
@@ -99,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Device history no longer special-cases the retired Hub device type
 - Drop the legacy integration settings table once every owning addon's copy migration is applied
 - The settings addon-call no longer carries getIntegrationFormSchema
 

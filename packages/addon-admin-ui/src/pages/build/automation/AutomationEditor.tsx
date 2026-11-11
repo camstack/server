@@ -35,6 +35,7 @@ import {
   Input,
   LogStream,
   useCoreBlocksGetTraces,
+  useSystemGetSiteLocation,
 } from '@camstack/ui-library'
 import { Loader2, ScrollText } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -48,6 +49,7 @@ import { useAutomationDevices } from './automation-data'
 import { GeneratedCodePanel } from './GeneratedCodePanel'
 import { RunModeSelector, runModeOf, withRunMode } from './RunModeSelector'
 import { withActions } from './recipe-parts'
+import { recipeSiteError } from './time-is-model'
 import { prepareRecipeUnits } from './recipe-units'
 import { WhenTree } from './WhenTree'
 import { normalizeRecipe } from './when-ops'
@@ -115,9 +117,21 @@ export function AutomationEditor({
     [name, recipe],
   )
 
+  // A time window this site cannot place (a sun end with no site location) is refused before the
+  // save. Only a site that ANSWERED can refuse: while the read is pending the save is not blocked.
+  const siteReading = useSystemGetSiteLocation().data
+  const siteError = useMemo(
+    () => (schemaError !== null ? null : recipeSiteError(recipe, siteReading)),
+    [recipe, siteReading, schemaError],
+  )
+
   const nameMissing = name.trim() === ''
   const blocked =
-    nameMissing || boundsError !== null || schemaError !== null || generated.code === null
+    nameMissing ||
+    boundsError !== null ||
+    schemaError !== null ||
+    siteError !== null ||
+    generated.code === null
 
   const save = (): void => {
     if (generated.code === null) return
@@ -215,6 +229,14 @@ export function AutomationEditor({
             {schemaError}
           </p>
         )}
+        {boundsError === null && siteError !== null && (
+          <p
+            className="rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning"
+            data-testid="automation-site-error"
+          >
+            {siteError}
+          </p>
+        )}
         {saveError !== null && (
           <p className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger">
             {saveError}
@@ -303,7 +325,10 @@ function generate(name: string, recipe: AutomationRecipe): GeneratedSource {
   const prepared = prepareRecipeUnits(recipe)
   if (!prepared.ok) return { code: null, error: prepared.error }
   try {
-    return { code: generateAutomationBlock({ name, recipe: prepared.recipe }), error: null }
+    return {
+      code: generateAutomationBlock({ name, recipe: prepared.recipe }),
+      error: null,
+    }
   } catch (error: unknown) {
     return {
       code: null,

@@ -18,6 +18,12 @@ export type {
   MirrorSource,
 } from './condition-eval.js'
 export {
+  recipeSiteIssues,
+  stepGuardSiteIssues,
+  whenSiteIssues,
+} from './when-site.js'
+export type { GuardedStepLike, WhenSiteIssue } from './when-site.js'
+export {
   collectMirrorSources,
   collectWhenMirrorSources,
   ConditionMirror,
@@ -72,8 +78,15 @@ export type {
 } from './stationary-trigger.js'
 export { evaluateStationaryTrigger } from './stationary-trigger.js'
 export type { TriggerVariable } from './trigger-variables.js'
-export { triggerLeafVariables, triggerVariablesOf } from './trigger-variables.js'
-export type { CooldownInput, CooldownVerdict, RunGateAdmission } from './run-gate.js'
+export {
+  triggerLeafVariables,
+  triggerVariablesOf,
+} from './trigger-variables.js'
+export type {
+  CooldownInput,
+  CooldownVerdict,
+  RunGateAdmission,
+} from './run-gate.js'
 export { RunGate } from './run-gate.js'
 export type {
   AutomationConditionTraceNode,
@@ -167,10 +180,7 @@ export {
   validateWhenTree,
   whenDepth,
 } from './when.js'
-export type {
-  LegacyCondition,
-  LegacyTrigger,
-} from './legacy-recipe.js'
+export type { LegacyCondition, LegacyTrigger } from './legacy-recipe.js'
 export {
   convertLegacyCondition,
   convertLegacyWhen,
@@ -207,7 +217,11 @@ export {
   normalizeConditionUnits,
   normalizeRecipeUnits,
 } from './normalize-units.js'
-export type { UnitResolver, UnitWarning, UnitsNormalized } from './normalize-units.js'
+export type {
+  UnitResolver,
+  UnitWarning,
+  UnitsNormalized,
+} from './normalize-units.js'
 export { prepareRecipeUnits } from './prepare-units.js'
 export type { PreparedRecipe } from './prepare-units.js'
 export type {

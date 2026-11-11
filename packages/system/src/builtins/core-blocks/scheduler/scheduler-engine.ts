@@ -30,6 +30,7 @@ import {
   type IScopedLogger,
   type MirrorSource,
   nextOccurrence,
+  nextTimeBoundaryInMs,
   normalizeCapStep,
   type Scheduler,
   type SchedulerOutcome,
@@ -430,10 +431,38 @@ export class SchedulerEngine {
       for (const id of ids) {
         const s = this.schedulers.find((x) => x.id === id)
         if (s === undefined) this.holds.end(id)
-        else await this.holds.reconcile(s)
+        else {
+          await this.holds.reconcile(s)
+          this.wakeAtTimeBoundary(s)
+        }
       }
     }
     this.arm()
+  }
+
+  /**
+   * A `time-is` leaf changes sides at a boundary with no device event and no
+   * point of the timeline: queue a wake there, so the scheduler is reconciled
+   * AT the boundary. Every tree of the scheduler is walked; the wake it leads to
+   * reconciles and arms the next one.
+   */
+  private wakeAtTimeBoundary(s: Scheduler): void {
+    if (!s.enabled) return
+    const now = this.clock.now()
+    const trees = [
+      s.activeWhen,
+      ...s.profiles.flatMap((profile) => [
+        profile.activeWhen,
+        ...profile.points.map((point) => point.conditions),
+      ]),
+    ]
+    let due: number | undefined
+    for (const tree of trees) {
+      if (tree === undefined) continue
+      const ms = nextTimeBoundaryInMs(tree, now, this.site)
+      if (ms !== undefined) due = due === undefined ? ms : Math.min(due, ms)
+    }
+    if (due !== undefined) this.insert({ kind: 'wake', at: now + due, schedulerId: s.id })
   }
 
   // ── points ─────────────────────────────────────────────────────────────

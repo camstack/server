@@ -1,5 +1,5 @@
 ---
-id: D1033
+id: D1035
 title: A time window is a state leaf — days bind to the day it starts, the site is held in memory, and a sun window without a location is unknown
 status: accepted
 date: 2026-11-11
@@ -10,6 +10,8 @@ applies-to:
   - packages/types/src/automation/condition-eval.ts
   - packages/types/src/automation/codegen.ts
   - packages/types/src/automation/step-condition.ts
+  - packages/types/src/automation/when-site.ts
+  - packages/system/src/builtins/core-blocks/step-condition-door.ts
 ---
 
 ## Context
@@ -48,14 +50,35 @@ a clock time or a sun event repeats daily). It is judged by the pure
 ## Consequences
 
 `TimeSite` gains an optional `zoneOnly` marker (set by `zoneOnlySite`) so the
-judge can tell a placeholder location from a real one. A tree evaluated where no
-site is reachable (the hub-side step-condition door) reads a `time-is` leaf as
-unknown, so neither branch runs. The scheduler core block passes its own site,
-but its timeline does not yet arm a wake at a time boundary.
+judge can tell a placeholder location from a real one.
+
+- **The hub-side step-condition door reads the site per evaluation**, and only
+  for a tree that holds a `time-is` leaf. A guard is already a fresh read of the
+  state it depends on, so the site is one more: a read that fails is `unknown`
+  with its reason, and neither branch runs.
+- **A window the site cannot place is refused at save**, with the typed reason
+  of `validateTimeSpecForSite` (`sun-needs-site-location`, `unknown-time-zone`):
+  `whenSiteIssues` / `recipeSiteIssues` walk the tree and every step guard. The
+  scheduler save (`validateSchedulerInput`), the draft validator and the
+  automation editor call it. The editor refuses only on a site that ANSWERED; an
+  unanswered read does not block a save. The run-time `unknown` stays as the
+  backstop for a location removed after the save.
+- **The scheduler engine queues a wake at the next boundary** of any `time-is`
+  leaf of a scheduler (`activeWhen`, a profile's, a point's conditions) each
+  time it reconciles that scheduler, so a hold is suspended and resumed AT the
+  boundary rather than at the next device event.
+
+Not covered: the action save (`actions-service`) and the CLI's automation save
+do not run the site check; a sun-bounded guard saved there on a site with no
+location reads `unknown` at run time, with the reason on the trace.
 
 ## Enforcement
 
 `time-window.spec.ts` (judge, DST nights, start-day semantics),
-`time-is-leaf.spec.ts` (schema refusals, evaluator, unknown, short-circuit) and
+`time-is-leaf.spec.ts` (schema refusals, evaluator, unknown, short-circuit),
 `generated-block.spec.ts` (a state-only tree fires once at the boundary, not at
-start-up).
+start-up), `step-condition-door.spec.ts` (the guard is judged on the site, a
+failed site read is unknown, no site read without a time leaf),
+`when-site.spec.ts` and `scheduler.spec.ts` (the save-time refusal and its
+paths), `scheduler-engine.spec.ts` (a hold follows a `time-is` `activeWhen` at
+both boundaries with no device event).

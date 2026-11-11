@@ -73,7 +73,11 @@ describe('scheduler engine — device templates (D1021)', () => {
       templates: {
         render: async (sources, allowed) => {
           seen.push(allowed)
-          return sources.map(() => ({ ok: true as const, text: 'Warm 21.5', trace: [] }))
+          return sources.map(() => ({
+            ok: true as const,
+            text: 'Warm 21.5',
+            trace: [],
+          }))
         },
         check: async () => [],
       },
@@ -101,7 +105,11 @@ describe('scheduler engine — a conditional step (#472)', () => {
       built.push(readable)
       return async () => ({ result: 'false', reason: 'not on' })
     }
-    const w = await harness({ start: MIDNIGHT, devices: [{ id: 1 }], conditions })
+    const w = await harness({
+      start: MIDNIGHT,
+      devices: [{ id: 1 }],
+      conditions,
+    })
     const step: ActionStep = {
       kind: 'cap',
       target: { kind: 'devices', ids: [1] },
@@ -141,7 +149,11 @@ describe('scheduler engine — an unreadable step condition (#472)', () => {
       result: 'unknown',
       reason: 'no reading',
     })
-    const w = await harness({ start: MIDNIGHT, devices: [{ id: 1 }], conditions })
+    const w = await harness({
+      start: MIDNIGHT,
+      devices: [{ id: 1 }],
+      conditions,
+    })
     const step: ActionStep = {
       kind: 'cap',
       target: { kind: 'devices', ids: [1] },
@@ -337,7 +349,12 @@ describe('scheduler engine — edges and the queue', () => {
     const w = await harness({ start: MIDNIGHT, devices: [{ id: 1 }] })
     await w.create(scheduler([profile([point('a', 8, 0, 'edge', [turn(true, 'domain')])])]))
     await w.engine.start()
-    w.devices.push({ id: 2, type: DeviceType.Switch, location: null, disabled: false })
+    w.devices.push({
+      id: 2,
+      type: DeviceType.Switch,
+      location: null,
+      disabled: false,
+    })
     w.engine.invalidateTargets()
     await w.advanceTo(h(9))
     expect(w.calls.map((c) => c.deviceId).sort()).toEqual([1, 2])
@@ -460,6 +477,31 @@ describe('scheduler engine — holds', () => {
     await w.settle()
     expect(w.calls).toHaveLength(1)
     await w.manual(9, 'switch', { on: false })
+    expect(w.engine.status()[0]?.hold?.suspendedInactive).toBe(true)
+    expect(w.calls).toHaveLength(1)
+  })
+
+  it('a time-is activeWhen wakes the hold AT its boundaries, with no device event', async () => {
+    const w = await harness({
+      start: MIDNIGHT,
+      devices: [{ id: 1 }],
+      seed: new Map([['1|switch', { on: false }]]),
+    })
+    const activeWhen: AutomationWhen = {
+      kind: 'time-is',
+      between: {
+        from: { kind: 'clock', hh: 8, mm: 30 },
+        to: { kind: 'clock', hh: 9, mm: 30 },
+      },
+    }
+    await w.create(scheduler([hold()], { activeWhen }))
+    await w.engine.start()
+    await w.advanceTo(h(8, 1))
+    expect(w.calls).toHaveLength(0)
+    await w.advanceTo(h(8, 31))
+    expect(w.calls).toHaveLength(1)
+    expect(w.engine.status()[0]?.hold?.suspendedInactive).toBe(false)
+    await w.advanceTo(h(9, 31))
     expect(w.engine.status()[0]?.hold?.suspendedInactive).toBe(true)
     expect(w.calls).toHaveLength(1)
   })

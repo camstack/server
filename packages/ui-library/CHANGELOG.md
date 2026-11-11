@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The automation row picker offers a 'Time is' condition with its own icon.
+
 ## [1.2.424] - 2026-11-11
 
 ### Changed
@@ -21,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - New ConditionKindPicker: a searchable modal that lists the automation row kinds by category, with icon, description, example and event/state badge.
-- The automation row picker offers a 'Time is' condition with its own icon.
 
 ## [1.2.422] - 2026-11-11
 

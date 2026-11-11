@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Automations can gate on the time of day: a new 'time is' condition (a window such as 22:00 to 06:00, and/or chosen weekdays) that also starts a state-only automation when the window opens. A window bounded by a sun event is refused at save when the site has no location.
+
 ## [1.2.547] - 2026-11-11
 
 ### Changed
@@ -18,7 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - One catalogue of automation row kinds (category, event or state, where it may be used, texts, blank row); a new kind without an entry does not compile.
-- Automations can gate on the time of day: a new 'time is' condition (a window such as 22:00 to 06:00, and/or chosen weekdays) that also starts a state-only automation when the window opens.
 
 ## [1.2.545] - 2026-11-11
 
