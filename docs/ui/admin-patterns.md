@@ -10,6 +10,9 @@ applies-to:
   - packages/ui-library/src/composites/node-picker.tsx
   - packages/ui-library/src/hooks/use-device-removal.ts
   - packages/addon-admin-ui/src/hooks/useAdminDeviceRemoval.ts
+  - packages/ui-library/src/composites/device-card/index.ts
+  - packages/addon-admin-ui/src/modules/device-detail/DeviceDetailModule.tsx
+  - scripts/check-device-card-parts.ts
   - packages/ui-library/src/composites/charts/time-series-model.ts
   - packages/ui-library/src/composites/charts/chart-scale.ts
   - packages/ui-library/src/composites/device-history/DeviceHistoryView.tsx
@@ -861,3 +864,43 @@ popover) so it stays visible over an open dialog. Classifier:
 `packages/addon-admin-ui/src/lib/debug-layers.ts`; overlay:
 `packages/addon-admin-ui/src/components/debug/DebugLayers.tsx`. Use it before
 guessing at a blur or dimming that does not reproduce in Chromium.
+
+## The device card: one block, assembled from shared parts
+
+A plug and a climate device are drawn by ONE card,
+`packages/ui-library/src/composites/device-card/`, on the admin device page, in
+`/embed/device/<id>` and in the viewer's webview (all three mount
+`DeviceDetailModule`, which hands the device to `ConnectedDeviceCard` when
+`useConnectedCardKind` answers `plug` or `climate`, and keeps `ModelHero` for
+every other type).
+
+- **`shell/`** is what every type shares: the integration and reachability
+  line, the name, the corners (state, power, battery, remote), the scene grid
+  (`left | image | right` over `bottom`), the reason line, the upstream-supply
+  chip, the consumables button and its popover, the history and remote views,
+  and the gating. An offline device or a viewer that may not actuate
+  (`canActuate={false}`) gets every commanding control disabled with the reason
+  as its title; a scene does not gate on its own.
+- **`parts/`** are the controls a scene composes: `CardButton`, `ArmedButton`
+  (the one two-step confirmation: 5 s to confirm, with Cancel), `MenuButton`,
+  `ButtonGroup`, `Dial`, `LevelBar`, the sliders, `useCountdown`.
+- **`illustrations/`** hold the drawings; **`icons.ts`** is the only file that
+  imports `lucide-react` (`CardGlyph`).
+- **`scenes/<type>/`** is a model (`model.ts`, plain data and callbacks) and the
+  card that lays it out. A block the model leaves `null` is not drawn — an
+  option appears only when the device declares the capability or the field.
+- **`connected/`** reads a real device through the capability hooks and fills
+  the model; nothing else in the tree touches tRPC.
+- **`__fixtures__/`** carry the approved mockup's data. The harness route
+  `/device-card-preview?type=plug|climate` renders them, and
+  `node scripts/ui/card-parity.mjs --mockup <card mockup html>` shoots mockup and
+  implementation side by side (light and dark, desktop and phone) into
+  `scratchpad/ui-shots/card-parity/`.
+
+A new type is a new `scenes/<type>/` plus its fixtures and a row in the
+structural spec (`__tests__/scenes.spec.tsx`), never a page-local look-alike.
+`scripts/check-device-card-parts.ts` refuses, under that directory: an emoji, a
+`lucide-react` import outside `icons.ts`, an inline `<svg>` outside
+`illustrations/` and `parts/`, and a timer inside `scenes/`.
+
+The summary tile used by lists is `DeviceSummaryCard` (formerly `DeviceCard`).

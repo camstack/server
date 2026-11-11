@@ -4,12 +4,12 @@
 
 # Guards
 
-240 repository guards: 235 in `scripts/`,
+241 repository guards: 236 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (230)
+## Enforced by CI checks (231)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -71,6 +71,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-decode-worker-child-lean.ts` | Guard: nothing reachable from the decode-worker CHILD entry may VALUE-import a workspace package. Type-only imports are free; a value import is not. |
 | `scripts/check-deps.ts` | Verify that every @camstack/* import in each package is declared as a dependency (dependencies, peerDependencies, or devDependencies). |
 | `scripts/check-desktop-update-feeds.ts` | Desktop update-feed guard — two products, never one feed file. |
+| `scripts/check-device-card-parts.ts` | GUARD: a device card is assembled from the shared parts, never redrawn. |
 | `scripts/check-device-field-quantity-names.ts` | A device-scoped capability's status field names its QUANTITY, not its unit (`power`, not `watts`; `signal`, not `signalPercent`). The unit is the D944 base of the quantity, displayed and converted elsewhere. |
 | `scripts/check-device-name-in-sync.ts` | The device-name rule has one definition. The viewer cannot import ui-library (it is a web package; the viewer is React Native) and it resolves `@camstack/types` from an installed release, so it keeps a copy of `format-device-name.ts`. Th… |
 | `scripts/check-device-name-rendered-via-component.ts` | A device's name is painted by `DeviceName` / `useDeviceLabel`. A JSX file that interpolates `device.name` (and the sibling shapes below) is a second naming rule. |

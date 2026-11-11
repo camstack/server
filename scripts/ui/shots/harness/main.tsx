@@ -54,6 +54,9 @@ if (window.location.pathname === '/sso-complete') {
 } else if (window.location.pathname.startsWith('/device-value-picker-preview')) {
   const { DeviceValuePickerPreview } = await import('./device-value-picker-preview')
   createRoot(root).render(<DeviceValuePickerPreview />)
+} else if (window.location.pathname.startsWith('/device-card-preview')) {
+  const { DeviceCardPreview } = await import('./device-card-preview')
+  createRoot(root).render(<DeviceCardPreview />)
 } else if (window.location.pathname.startsWith('/device-module-preview')) {
   const { DeviceModulePreview } = await import('./device-module-preview')
   createRoot(root).render(<DeviceModulePreview />)
