@@ -1,7 +1,8 @@
 /**
  * Build → Automations editor of an automation whose WHEN holds nested blocks
- * (ALL with an ANY and a NOT inside), so the block headers, their reorder and
- * collapse controls and the Ungroup button are on screen (#482).
+ * (ALL with two sibling ANY blocks, one holding a nested ALL, and a NOT), so
+ * the block headers, their group rails, reorder and collapse controls are on
+ * screen (#482).
  * Open with `--route "/build?tab=automations&block=blk-blocks"`.
  */
 import { generateAutomationBlock } from '../../../../packages/types/src/automation/codegen.ts'
@@ -26,12 +27,46 @@ const RECIPE = {
             value: 10,
           },
           {
+            kind: 'all' as const,
+            children: [
+              {
+                kind: 'device-is' as const,
+                deviceId: 201,
+                cap: 'pet-feeder',
+                fieldPath: 'hopperLevel',
+                operator: 'lt' as const,
+                value: 90,
+              },
+              {
+                kind: 'device-is' as const,
+                deviceId: 201,
+                cap: 'pet-feeder',
+                fieldPath: 'hopperLevel',
+                operator: 'gt' as const,
+                value: 50,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        kind: 'any' as const,
+        children: [
+          {
             kind: 'device-is' as const,
             deviceId: 201,
             cap: 'pet-feeder',
             fieldPath: 'hopperLevel',
             operator: 'lt' as const,
-            value: 90,
+            value: 20,
+          },
+          {
+            kind: 'device-is' as const,
+            deviceId: 201,
+            cap: 'pet-feeder',
+            fieldPath: 'hopperLevel',
+            operator: 'gt' as const,
+            value: 80,
           },
         ],
       },

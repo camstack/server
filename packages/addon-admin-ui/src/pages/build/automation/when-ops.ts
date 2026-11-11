@@ -165,25 +165,6 @@ export function unnegate(recipe: AutomationRecipe, path: WhenPath): AutomationRe
   return applyEdit(recipe, path, (node) => (node.kind === 'not' ? node.child : node))
 }
 
-/** Dissolve the block at `path` into its parent, keeping its rows. */
-export function ungroup(recipe: AutomationRecipe, path: WhenPath): AutomationRecipe {
-  const root = whenRoot(recipe)
-  const target = nodeAt(root, path)
-  const parentPath = path.slice(0, -1)
-  const index = path[path.length - 1]
-  const parent = nodeAt(root, parentPath)
-  if (target === null || !isContainer(target) || index === undefined) return recipe
-  if (parent === null || !isContainer(parent)) return recipe
-  return applyEdit(recipe, parentPath, () => ({
-    kind: parent.kind,
-    children: [
-      ...parent.children.slice(0, index),
-      ...target.children,
-      ...parent.children.slice(index + 1),
-    ],
-  }))
-}
-
 /**
  * Change a row's type. The device field a "becomes" row watches is the one an
  * "is" row compares, so switching between those two keeps the field (and a

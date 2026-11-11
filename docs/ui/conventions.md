@@ -124,6 +124,13 @@ and viewport-centred `translate` positioning are deliberately not flagged. The
 viewer is out of scope: it is React Native and solves this with
 `react-native-safe-area-context`, not CSS.
 
+**A disabled `Button` shows no tooltip of its own.** The library's `Button`
+carries `disabled:pointer-events-none`, so a `title` on a disabled button never
+appears on hover. A control that stays on screen disabled at an edge (the
+automation editor's move arrows, `pages/build/automation/MoveButtons.tsx`) puts
+the reason on a wrapping `<span title>` and keeps both directions drawn, so the
+controls never jump and an edge never looks like a missing feature.
+
 ## Narrow viewports
 
 [D43](../decisions/adr-0043.md): a concession that only holds at desktop width is

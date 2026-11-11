@@ -10,7 +10,6 @@ import {
   removeNode,
   seedBlock,
   setContainerKind,
-  ungroup,
   unnegate,
   moveNode,
   summarizeWhen,
@@ -75,14 +74,10 @@ describe('when-ops', () => {
     expect(negate(base, [])).toBe(base)
   })
 
-  it('flips a block between ALL and ANY and dissolves it into its parent', () => {
+  it('flips a block between ALL and ANY', () => {
     const nested = recipeOf(IS, { kind: 'all', children: [BECOMES, MANUAL] })
     expect(setContainerKind(nested, [1], 'any').when).toMatchObject({
       children: [IS, { kind: 'any' }],
-    })
-    expect(ungroup(nested, [1]).when).toEqual({
-      kind: 'all',
-      children: [IS, BECOMES, MANUAL],
     })
   })
 

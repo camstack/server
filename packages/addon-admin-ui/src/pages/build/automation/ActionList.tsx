@@ -21,7 +21,7 @@
 
 import type { AutomationAction } from '@camstack/types'
 import { Badge, Button, Input, Select, type DeviceListState, Textarea } from '@camstack/ui-library'
-import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { CommandStep } from '../flow/CommandStep'
 import { toneBorderClass } from '../flow/RunsPanel'
 import { StepResult } from '../flow/TraceResult'
@@ -30,6 +30,7 @@ import type { ScopeVariable } from '../flow/ArgField'
 import { type AutomationDevice } from './automation-data'
 import { PickerLabel } from './FieldPicker'
 import { RunActionFields } from './RunActionFields'
+import { MoveButtons, type MoveTexts } from './MoveButtons'
 import { type ActionKind, moveItem, newAction, removeAt, replaceAt } from './recipe-parts'
 import { StepGuard } from './StepGuard'
 import { Trans, useTranslation } from 'react-i18next'
@@ -73,6 +74,12 @@ export function ActionList({
   const kinds = ACTION_KINDS.filter(
     (k) => allowedKinds === undefined || allowedKinds.includes(k.value),
   )
+  const moveTexts: MoveTexts = {
+    up: t('automation.actionList.runThisStepEarlier', 'Run this step earlier'),
+    down: t('automation.actionList.runThisStepLater', 'Run this step later'),
+    atFirst: t('automation.actionList.alreadyFirstStep', 'This step already runs first'),
+    atLast: t('automation.actionList.alreadyLastStep', 'This step already runs last'),
+  }
   return (
     <div className="space-y-2">
       {actions.length === 0 && (
@@ -104,22 +111,16 @@ export function ActionList({
               />
             </label>
             <div className="ml-auto flex items-center gap-1">
-              <Button
-                variant="ghost"
-                disabled={index === 0}
-                onClick={() => onChange(moveItem(actions, index, index - 1))}
-                title={t('automation.actionList.runThisStepEarlier', 'Run this step earlier')}
-              >
-                <ArrowUp className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                disabled={index === actions.length - 1}
-                onClick={() => onChange(moveItem(actions, index, index + 1))}
-                title={t('automation.actionList.runThisStepLater', 'Run this step later')}
-              >
-                <ArrowDown className="h-3.5 w-3.5" />
-              </Button>
+              <MoveButtons
+                move={{
+                  up: index === 0 ? null : () => onChange(moveItem(actions, index, index - 1)),
+                  down:
+                    index === actions.length - 1
+                      ? null
+                      : () => onChange(moveItem(actions, index, index + 1)),
+                }}
+                texts={moveTexts}
+              />
               <Button
                 variant="ghost"
                 onClick={() => onChange(removeAt(actions, index))}

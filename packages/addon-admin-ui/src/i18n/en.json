@@ -6003,7 +6003,9 @@
       "kindCode": "Run code",
       "codeHint": "Compiled into this automation's own block by the same compiler as a script — not evaluated at run time. <code>ctx</code> and <code>vars</code> are in scope.",
       "addStep": "Step",
-      "kindAction": "Run an action"
+      "kindAction": "Run an action",
+      "alreadyFirstStep": "This step already runs first",
+      "alreadyLastStep": "This step already runs last"
     },
     "automationEditor": {
       "name": "Name",
@@ -6189,7 +6191,6 @@
       "removeNotLabel": "Remove NOT",
       "removeRow": "Remove this row",
       "removeBlock": "Delete this block and everything in it",
-      "ungroup": "Dissolve this block, keeping its rows",
       "budget": "Depth {{depth}} of {{depthLimit}}, rows {{leaves}} of {{leafLimit}}",
       "rule": "An event starts a run when it happens and everything here is true at that moment. With only states, a run starts when they become true.",
       "empty": "Add a row to say when this runs. Without one nothing can ever start this automation.",
@@ -6215,7 +6216,8 @@
       "moveDown": "Move down",
       "collapse": "Collapse this block",
       "expand": "Expand this block",
-      "ungroupLabel": "Ungroup"
+      "alreadyFirst": "Already first in this block",
+      "alreadyLast": "Already last in this block"
     },
     "stepGuard": {
       "if": "Only if…",

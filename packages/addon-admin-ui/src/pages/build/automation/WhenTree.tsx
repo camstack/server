@@ -37,6 +37,7 @@ import { ConditionResult } from '../flow/TraceResult'
 import { type ConditionNodeView, valueInUnit, type WhenRunView } from '../flow/trace-view'
 import type { AutomationDevice } from './automation-data'
 import { useFieldDescriptor } from './FieldPicker'
+import { childRails, railClass, ROOT_RAIL } from './group-rail'
 import { type MoveControls, MoveButtons } from './MoveButtons'
 import { leafKindLabel, newLeaf } from './recipe-parts'
 import { LeafKindPickerModal } from './LeafKindPickerModal'
@@ -54,7 +55,6 @@ import {
   setContainerKind,
   summarizeWhen,
   swapPathKeys,
-  ungroup,
   unnegate,
   updateNode,
   type WhenPath,
@@ -80,7 +80,7 @@ interface TreeContext {
   readonly devices: readonly AutomationDevice[]
   readonly run: WhenRunView | null
   readonly onChange: (next: AutomationRecipe) => void
-  /** An edit that shifts indices (remove, ungroup, NOT): collapsed blocks reopen. */
+  /** An edit that shifts indices (remove, NOT): collapsed blocks reopen. */
   readonly reshape: (next: AutomationRecipe) => void
   readonly collapsed: ReadonlySet<string>
   readonly toggleCollapsed: (path: WhenPath) => void
@@ -171,6 +171,7 @@ export function WhenTree({
         path={[]}
         ctx={ctx}
         underNot={false}
+        rail={ROOT_RAIL}
         budgetText={t('automation.whenTree.budget', {
           depth: budget.depth,
           depthLimit: budget.depthLimit,
@@ -199,13 +200,17 @@ interface NodeViewProps {
   readonly underNot: boolean
   /** Up / down among its siblings; null for the child of a NOT (it has none). */
   readonly move: MoveControls | null
+  /** The group rail a block (or the block inside a NOT) here draws; unused by a row. */
+  readonly rail: number
 }
 
-function NodeView({ node, path, ctx, underNot, move }: NodeViewProps) {
+function NodeView({ node, path, ctx, underNot, move, rail }: NodeViewProps) {
   if (isLeaf(node)) {
     return <LeafView leaf={node} path={path} ctx={ctx} underNot={underNot} move={move} />
   }
-  if (node.kind === 'not') return <NotView child={node.child} path={path} ctx={ctx} move={move} />
+  if (node.kind === 'not') {
+    return <NotView child={node.child} path={path} ctx={ctx} move={move} rail={rail} />
+  }
   return (
     <BlockView
       block={node}
@@ -213,6 +218,7 @@ function NodeView({ node, path, ctx, underNot, move }: NodeViewProps) {
       ctx={ctx}
       underNot={underNot}
       move={move}
+      rail={rail}
       budgetText={null}
       emptyHint={null}
     />
@@ -332,9 +338,10 @@ interface NotViewProps {
   readonly path: WhenPath
   readonly ctx: TreeContext
   readonly move: MoveControls | null
+  readonly rail: number
 }
 
-function NotView({ child, path, ctx, move }: NotViewProps) {
+function NotView({ child, path, ctx, move, rail }: NotViewProps) {
   const { t } = useTranslation()
   const expanded = !ctx.collapsed.has(pathKey(path))
   return (
@@ -362,7 +369,7 @@ function NotView({ child, path, ctx, move }: NotViewProps) {
       <BlockResult node={nodeAt(ctx, path)} />
       {expanded ? (
         <div className="pl-3">
-          <NodeView node={child} path={[...path, 0]} ctx={ctx} underNot move={null} />
+          <NodeView node={child} path={[...path, 0]} ctx={ctx} underNot move={null} rail={rail} />
         </div>
       ) : (
         <BlockSummary node={child} />
@@ -378,18 +385,30 @@ interface BlockViewProps {
   readonly underNot: boolean
   /** Up / down among its siblings; null for the root and the child of a NOT. */
   readonly move: MoveControls | null
+  /** This block's group colour, drawn as the rail down its rows (`group-rail.ts`). */
+  readonly rail: number
   /** Shown on the root only. */
   readonly budgetText: string | null
   readonly emptyHint: string | null
 }
 
-function BlockView({ block, path, ctx, underNot, move, budgetText, emptyHint }: BlockViewProps) {
+function BlockView({
+  block,
+  path,
+  ctx,
+  underNot,
+  move,
+  rail,
+  budgetText,
+  emptyHint,
+}: BlockViewProps) {
   const { t } = useTranslation()
   const isRoot = path.length === 0
   // The root is the section itself: only nested blocks collapse.
   const expanded = isRoot || !ctx.collapsed.has(pathKey(path))
   const nestable = canNestBlockAt(ctx.recipe, path)
   const [picking, setPicking] = useState(false)
+  const rails = childRails(block.children, rail)
   const kinds = [
     { value: 'all', label: t('automation.whenTree.allOf', 'All of (AND)') },
     { value: 'any', label: t('automation.whenTree.anyOf', 'Any of (OR)') },
@@ -432,15 +451,6 @@ function BlockView({ block, path, ctx, underNot, move, budgetText, emptyHint }: 
         {!isRoot && (
           <Button
             variant="ghost"
-            onClick={() => ctx.reshape(ungroup(ctx.recipe, path))}
-            title={t('automation.whenTree.ungroup', 'Dissolve this block, keeping its rows')}
-          >
-            <Ungroup className="h-3.5 w-3.5" /> {t('automation.whenTree.ungroupLabel', 'Ungroup')}
-          </Button>
-        )}
-        {!isRoot && (
-          <Button
-            variant="ghost"
             onClick={() => ctx.reshape(removeNode(ctx.recipe, path))}
             title={t('automation.whenTree.removeBlock', 'Delete this block and everything in it')}
           >
@@ -454,7 +464,11 @@ function BlockView({ block, path, ctx, underNot, move, budgetText, emptyHint }: 
       {!expanded && <BlockSummary node={block} />}
 
       {expanded && block.children.length > 0 && (
-        <div className="space-y-1.5 border-l border-border pl-3">
+        <div
+          className={`space-y-1.5 border-l-2 pl-3 ${railClass(rail)}`}
+          data-testid="when-block-rail"
+          data-rail={rail}
+        >
           {block.children.map((child, index) => (
             <NodeView
               // Path is the identity: rows carry no id.
@@ -464,6 +478,7 @@ function BlockView({ block, path, ctx, underNot, move, budgetText, emptyHint }: 
               ctx={ctx}
               underNot={false}
               move={ctx.moveControls([...path, index], block.children.length)}
+              rail={rails[index] ?? rail}
             />
           ))}
         </div>

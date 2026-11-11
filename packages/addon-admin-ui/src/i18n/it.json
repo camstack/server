@@ -6078,7 +6078,9 @@
       "kindCode": "Esegui codice",
       "codeHint": "Compilato nel blocco proprio di questa automazione dallo stesso compilatore di uno script — non valutato a runtime. <code>ctx</code> e <code>vars</code> sono disponibili.",
       "addStep": "Passaggio",
-      "kindAction": "Esegui un'azione"
+      "kindAction": "Esegui un'azione",
+      "alreadyFirstStep": "Questo passo viene già eseguito per primo",
+      "alreadyLastStep": "Questo passo viene già eseguito per ultimo"
     },
     "automationEditor": {
       "name": "Nome",
@@ -6264,7 +6266,6 @@
       "removeNotLabel": "Rimuovi NOT",
       "removeRow": "Rimuovi questa riga",
       "removeBlock": "Elimina questo blocco e tutto ciò che contiene",
-      "ungroup": "Sciogli questo blocco, mantenendo le sue righe",
       "budget": "Profondità {{depth}} di {{depthLimit}}, righe {{leaves}} di {{leafLimit}}",
       "rule": "Un evento avvia un'esecuzione quando accade e tutto qui è vero in quel momento. Con soli stati, l'esecuzione parte quando diventano veri.",
       "empty": "Aggiungi una riga per dire quando parte. Senza, nulla può avviare questa automazione.",
@@ -6290,7 +6291,8 @@
       "moveDown": "Sposta giù",
       "collapse": "Comprimi questo blocco",
       "expand": "Espandi questo blocco",
-      "ungroupLabel": "Sciogli"
+      "alreadyFirst": "Già primo in questo blocco",
+      "alreadyLast": "Già ultimo in questo blocco"
     },
     "stepGuard": {
       "if": "Solo se…",

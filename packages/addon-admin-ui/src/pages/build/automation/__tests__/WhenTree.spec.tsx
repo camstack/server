@@ -311,7 +311,7 @@ describe('WhenTree', () => {
     expect(screen.getByTestId('when-block-summary')).toBeTruthy()
   })
 
-  it('labels the ungroup button in words', () => {
+  it('offers no ungroup: a nested block is deleted, inverted or moved, never dissolved', () => {
     render(
       <Harness
         initial={recipeOf({
@@ -320,10 +320,57 @@ describe('WhenTree', () => {
         })}
       />,
     )
-    const button = screen.getByRole('button', { name: /Ungroup/ })
-    expect(button.textContent).toContain('Ungroup')
-    fireEvent.click(button)
-    expect(screen.getAllByTestId('when-block')).toHaveLength(1)
+    const block = screen.getAllByTestId('when-block')[1] as HTMLElement
+    expect(within(block).queryByRole('button', { name: /ungroup|dissolve/i })).toBeNull()
+    expect(within(block).queryByTitle(/dissolve/i)).toBeNull()
+  })
+
+  it('always draws both arrows, the edge one disabled with its reason as the tooltip', () => {
+    render(
+      <Harness
+        initial={recipeOf({
+          kind: 'all',
+          children: [{ kind: 'manual' }, { kind: 'manual' }],
+        })}
+      />,
+    )
+    const ups = screen.getAllByTestId('move-up') as HTMLButtonElement[]
+    const downs = screen.getAllByTestId('move-down') as HTMLButtonElement[]
+    expect(ups).toHaveLength(2)
+    expect(downs).toHaveLength(2)
+    expect(ups[0]?.disabled).toBe(true)
+    expect(screen.getAllByTestId('move-up-wrap')[0]?.getAttribute('title')).toBe(
+      'Already first in this block',
+    )
+    expect(downs[1]?.disabled).toBe(true)
+    expect(screen.getAllByTestId('move-down-wrap')[1]?.getAttribute('title')).toBe(
+      'Already last in this block',
+    )
+    expect(ups[1]?.disabled).toBe(false)
+    expect(screen.getAllByTestId('move-up-wrap')[1]?.getAttribute('title')).toBe('Move up')
+  })
+
+  it('draws a group rail per block: siblings differ, a nested block keeps its own', () => {
+    render(
+      <Harness
+        initial={recipeOf({
+          kind: 'all',
+          children: [
+            { kind: 'any', children: [IS_ROW, { kind: 'all', children: [IS_ROW] }] },
+            { kind: 'any', children: [IS_ROW] },
+          ],
+        })}
+      />,
+    )
+    const rails = screen.getAllByTestId('when-block-rail').map((el) => el.className)
+    // DOM order: root, first ANY, its nested ALL, second ANY.
+    expect(rails).toHaveLength(4)
+    const [root, first, nested, second] = rails
+    expect(first).not.toBe(root)
+    expect(second).not.toBe(root)
+    expect(second).not.toBe(first)
+    expect(nested).not.toBe(first)
+    for (const rail of rails) expect(rail).toMatch(/border-chart-series-[a-h]/)
   })
 
   it('files animal species, known faces and plates under the macro', () => {
