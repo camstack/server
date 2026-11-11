@@ -65,11 +65,36 @@ type BlockFn = (ctx: unknown) => () => void
 const workDir = mkdtempSync(path.join(tmpdir(), 'camstack-generated-block-'))
 let seq = 0
 
+/**
+ * The shim (zod, the icon catalogue…) is ~1.2 MB once bundled. It is built ONCE and
+ * every block imports it by URL: inlining it into each block kept one copy per test
+ * alive in the module cache and ran the suite out of a 1.8 GB heap.
+ */
+let shimUrl: Promise<string> | undefined
+
+function sharedShimUrl(): Promise<string> {
+  shimUrl ??= build({
+    entryPoints: [SHIM],
+    bundle: true,
+    write: false,
+    format: 'esm',
+    platform: 'node',
+    logLevel: 'silent',
+  }).then((out) => {
+    const file = path.join(workDir, 'shim.mjs')
+    writeFileSync(file, out.outputFiles[0]?.text ?? '')
+    return pathToFileURL(file).href
+  })
+  return shimUrl
+}
+
 async function load(input: RecipeInput, name = 'Test automation'): Promise<BlockFn> {
   const source = generateAutomationBlock({ name, recipe: AutomationRecipeSchema.parse(input) })
+  const shim = await sharedShimUrl()
   const bundled = await build({
     stdin: { contents: source, loader: 'ts', resolveDir: HERE, sourcefile: 'generated.ts' },
-    alias: { '@camstack/types': SHIM },
+    alias: { '@camstack/types': shim },
+    external: [shim],
     bundle: true,
     write: false,
     format: 'esm',
