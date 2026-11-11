@@ -26,6 +26,7 @@ import {
   Flashlight,
   Footprints,
   Gauge,
+  Heater,
   Hash,
   Image,
   Lightbulb,
@@ -134,15 +135,10 @@ export const DEVICE_TYPE_META: Record<DeviceType, DeviceMetaEntry> = {
     labelKey: 'uiLibrary.deviceMeta.type.sensor',
     labelFallback: 'Sensor',
   },
-  [DeviceType.Thermostat]: {
-    icon: Thermometer,
-    labelKey: 'uiLibrary.deviceMeta.type.thermostat',
-    labelFallback: 'Thermostat',
-  },
   [DeviceType.Climate]: {
-    icon: AirVent,
+    icon: Thermometer,
     labelKey: 'uiLibrary.deviceMeta.type.climate',
-    labelFallback: 'Air conditioner',
+    labelFallback: 'Climate',
   },
   [DeviceType.HeatPump]: {
     icon: Flame,
@@ -265,11 +261,6 @@ export const DEVICE_TYPE_META: Record<DeviceType, DeviceMetaEntry> = {
     labelKey: 'uiLibrary.deviceMeta.type.petFountain',
     labelFallback: 'Pet fountain',
   },
-  [DeviceType.Heater]: {
-    icon: Flame,
-    labelKey: 'uiLibrary.deviceMeta.type.heater',
-    labelFallback: 'Heater',
-  },
   [DeviceType.Dishwasher]: {
     icon: Waves,
     labelKey: 'uiLibrary.deviceMeta.type.dishwasher',
@@ -387,6 +378,46 @@ export const DEVICE_ROLE_META: Record<DeviceRole, DeviceMetaEntry> = {
     icon: Plug,
     labelKey: 'uiLibrary.deviceMeta.role.outlet',
     labelFallback: 'Outlet',
+  },
+  [DeviceRole.SwitchHeater]: {
+    icon: Flame,
+    labelKey: 'uiLibrary.deviceMeta.role.switchHeater',
+    labelFallback: 'Heater',
+  },
+  [DeviceRole.SwitchFan]: {
+    icon: Fan,
+    labelKey: 'uiLibrary.deviceMeta.role.switchFan',
+    labelFallback: 'Fan',
+  },
+  [DeviceRole.ClimateAc]: {
+    icon: AirVent,
+    labelKey: 'uiLibrary.deviceMeta.role.climateAc',
+    labelFallback: 'Air conditioner',
+  },
+  [DeviceRole.ClimateThermostat]: {
+    icon: Thermometer,
+    labelKey: 'uiLibrary.deviceMeta.role.climateThermostat',
+    labelFallback: 'Thermostat',
+  },
+  [DeviceRole.ClimateFloor]: {
+    icon: Waves,
+    labelKey: 'uiLibrary.deviceMeta.role.climateFloor',
+    labelFallback: 'Floor heating',
+  },
+  [DeviceRole.ClimateRadiator]: {
+    icon: Heater,
+    labelKey: 'uiLibrary.deviceMeta.role.climateRadiator',
+    labelFallback: 'Radiator',
+  },
+  [DeviceRole.ClimateHeater]: {
+    icon: Flame,
+    labelKey: 'uiLibrary.deviceMeta.role.climateHeater',
+    labelFallback: 'Heater',
+  },
+  [DeviceRole.ClimateHeatPumpCircuit]: {
+    icon: RefreshCw,
+    labelKey: 'uiLibrary.deviceMeta.role.climateHeatPumpCircuit',
+    labelFallback: 'Heat pump circuit',
   },
   [DeviceRole.MotionSensor]: {
     icon: Footprints,

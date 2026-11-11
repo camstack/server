@@ -171,7 +171,7 @@ describe('cover row — ControlColumn FILL alignment', () => {
 
 describe('thermostat row — ControlColumn FILL alignment', () => {
   it('thermostat device row wraps ThermostatInlineControl in a w-[140px] [&>*:last-child]:w-full column', () => {
-    const device = makeDevice(DeviceType.Thermostat)
+    const device = makeDevice(DeviceType.Climate)
     const { container } = render(
       <Wrapper>
         <DeviceItemActions trpc={mockTrpc} device={device} flags={flags} />
@@ -293,7 +293,7 @@ describe('table view — natural-width controls CENTER, FILL controls still stre
   })
 
   it('thermostat row (FILL) still stretches to full width even in table view', () => {
-    const device = makeDevice(DeviceType.Thermostat)
+    const device = makeDevice(DeviceType.Climate)
     const { container } = render(
       <Wrapper>
         <DeviceItemActions
@@ -342,7 +342,7 @@ describe("'table' placement — content-width column (no fixed w-[140px])", () =
   })
 
   it('thermostat row (FILL) does NOT stretch to a fixed width under placement="table"', () => {
-    const device = makeDevice(DeviceType.Thermostat)
+    const device = makeDevice(DeviceType.Climate)
     const { container } = render(
       <Wrapper>
         <DeviceItemActions trpc={mockTrpc} device={device} flags={flags} controlPlacement="table" />
@@ -371,7 +371,7 @@ describe('resolveControlAlign', () => {
     expect(resolveControlAlign(DeviceType.Sensor, 'table')).toBe(FIT)
     expect(resolveControlAlign(DeviceType.Switch, 'table')).toBe(FIT)
     expect(resolveControlAlign(DeviceType.Cover, 'table')).toBe(FIT)
-    expect(resolveControlAlign(DeviceType.Thermostat, 'table')).toBe(FIT)
+    expect(resolveControlAlign(DeviceType.Climate, 'table')).toBe(FIT)
   })
 
   it("keeps FILL types stretching under placement='right'/'center'", () => {

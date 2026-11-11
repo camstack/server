@@ -9154,7 +9154,7 @@
         "switch": "Interruttore",
         "sensor": "Sensore",
         "thermostat": "Termostato",
-        "climate": "Condizionatore",
+        "climate": "Clima",
         "button": "Pulsante",
         "eventEmitter": "Emettitore di eventi",
         "update": "Aggiornamento",
@@ -9244,7 +9244,15 @@
         "coverGate": "Cancello",
         "coverDoor": "Porta",
         "coverWindow": "Finestra",
-        "irTransmitter": "Trasmettitore IR/RF"
+        "irTransmitter": "Trasmettitore IR/RF",
+        "switchHeater": "Stufa",
+        "switchFan": "Ventilatore",
+        "climateAc": "Condizionatore",
+        "climateThermostat": "Termostato",
+        "climateFloor": "Riscaldamento a pavimento",
+        "climateRadiator": "Termosifone",
+        "climateHeater": "Stufa",
+        "climateHeatPumpCircuit": "Circuito pompa di calore"
       },
       "noun": {
         "role": {

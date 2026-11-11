@@ -1,5 +1,5 @@
 /**
- * Heater controls for a `DeviceType.Heater` device (a dumb plug-in stove).
+ * Heater controls for a plug-in heater: a `switch` with role `switch-heater` (D1033).
  *
  * A heater is a switch that heats while it is on, and the hub can switch it off
  * again after a chosen time (`timed-run`, D993):
@@ -15,7 +15,7 @@
  */
 import { Flame } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { TIMED_RUN_LIMITS, type SwitchStatus, DeviceType } from '@camstack/types'
+import { TIMED_RUN_HEATER_LIMIT, type SwitchStatus } from '@camstack/types'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
@@ -25,7 +25,7 @@ import { AirflowViz, KEYFRAMES } from './ac-panel'
 import type { DeviceControlProps } from './control-registry'
 import { TimedRunControl } from './timed-run-control'
 
-const HEATER_LIMIT = TIMED_RUN_LIMITS[DeviceType.Heater]
+const HEATER_LIMIT = TIMED_RUN_HEATER_LIMIT
 const HEAT_ACCENT = 'var(--color-warning)'
 const HEAT_PERIOD_SEC = 1.8
 

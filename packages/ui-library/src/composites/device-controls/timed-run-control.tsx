@@ -6,7 +6,7 @@
  * Stop, the time left (counted down from the slice's `activeUntil`) and Restart
  * replace the start field. Restart runs again for the duration the field holds (the
  * device's one-tap run unless edited); the slice does not carry the running duration. The
- * maximum is the device type's own bound (`TIMED_RUN_LIMITS`); a value above it
+ * maximum is the device type's own bound (`timedRunLimitOf`, by type and role); a value above it
  * is refused by the hub with a typed reason, which this control says in words.
  *
  * Rendered only when the device binds `timed-run`. An unknown slice is "nothing

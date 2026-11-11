@@ -88,7 +88,6 @@ describe('resolvePrimaryChild — edge cases', () => {
     expect(PRIORITY).toEqual([
       'media-player',
       'alarm-panel',
-      'thermostat',
       'climate',
       'humidifier',
       'water-heater',
@@ -135,17 +134,16 @@ describe('resolvePrimaryChild — edge cases', () => {
     ).toBe(5) // cover beats switch
   })
 
-  // Regression: an HA climate entity maps to DeviceType.Thermostat ('thermostat',
-  // NOT 'climate'), so the child's `type` is 'thermostat'. A container exposing a
-  // climate + a switch (e.g. "Climatizzatore hall") must link the thermostat as
-  // primary, not the switch. The earlier PRIORITY used the string 'climate', which
-  // never matched 'thermostat' → it ranked below 'switch' and the switch won.
-  it("a climate child (DeviceType.Thermostat = 'thermostat') outranks a switch", () => {
+  // Regression: a container exposing an HA climate entity + a switch (e.g.
+  // "Climatizzatore hall") must link the climate child as primary, not the
+  // switch. D1033 folded the old 'thermostat' type into 'climate' (a stored
+  // 'thermostat' row is read as climate), so the child's type is 'climate'.
+  it('an HA climate child outranks a switch', () => {
     const climateWithSwitch: readonly ChildRef[] = [
       { id: 900, entityId: 'switch.climatizzatore_hall', type: 'switch' },
-      { id: 917, entityId: 'climate.climatizzatore_hall', type: 'thermostat' },
+      { id: 917, entityId: 'climate.climatizzatore_hall', type: 'climate' },
     ]
-    expect(resolveHeuristic(climateWithSwitch, undefined)?.id).toBe(917) // thermostat, not switch
+    expect(resolveHeuristic(climateWithSwitch, undefined)?.id).toBe(917) // climate, not switch
   })
 
   // A native air-conditioner is DeviceType.Climate ('climate'). The Gree

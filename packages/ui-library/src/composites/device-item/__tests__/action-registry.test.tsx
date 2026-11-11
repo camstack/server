@@ -56,7 +56,7 @@ describe('DEVICE_TYPE_CONTROL (replaces DEVICE_TYPE_ACTIONS)', () => {
       [DeviceType.Fan, FanInlineControl],
       [DeviceType.Sensor, SensorInlineControl],
       [DeviceType.Presence, SensorInlineControl],
-      [DeviceType.Thermostat, ThermostatInlineControl],
+      [DeviceType.Climate, ThermostatInlineControl],
       [DeviceType.Button, ButtonControl],
       [DeviceType.Lock, LockInlineControl],
       [DeviceType.MediaPlayer, MediaPlayerInlineControl],

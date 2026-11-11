@@ -106,7 +106,7 @@ export function DeviceItemActions({
   //    (which needs device.role + sourceInfo). All other types use the
   //    registry's InlineControl directly (cover → ↑■↓; rest → DummyInline).
   const isSensorRow = SENSOR_VALUE_TYPES.has(device.type)
-  const control = isSensorRow ? null : resolveDeviceControl(device.type)
+  const control = isSensorRow ? null : resolveDeviceControl(device.type, device.role)
   const InlineControl = control?.InlineControl ?? null
   // Alignment for the uniform control column. FILL types stretch; natural-width
   // types are placed per `placement` (right for card view, center for table).
@@ -145,7 +145,12 @@ export function DeviceItemActions({
             <OnMotionToggle trpc={trpc} deviceId={device.id} features={device.features} />
           )}
           <InlineControl trpc={trpc} deviceId={device.id} features={device.features} />
-          <TimedRunRowControl trpc={trpc} deviceId={device.id} deviceType={device.type} />
+          <TimedRunRowControl
+            trpc={trpc}
+            deviceId={device.id}
+            deviceType={device.type}
+            deviceRole={device.role ?? null}
+          />
         </ControlColumn>
       )}
       {!isSensorRow && InlineControl === null && showOnMotion && (
@@ -201,14 +206,19 @@ function ContainerPrimaryInline({
       </ControlColumn>
     )
   }
-  const control = resolveDeviceControl(child.type)
+  const control = resolveDeviceControl(child.type, child.role)
   const InlineControl = control?.InlineControl ?? null
   if (InlineControl === null) return null
   const columnAlign = resolveControlAlign(child.type, placement)
   return (
     <ControlColumn align={columnAlign} onClick={(e) => e.stopPropagation()}>
       <InlineControl trpc={trpc} deviceId={child.id} features={child.features} />
-      <TimedRunRowControl trpc={trpc} deviceId={child.id} deviceType={child.type} />
+      <TimedRunRowControl
+        trpc={trpc}
+        deviceId={child.id}
+        deviceType={child.type}
+        deviceRole={child.role ?? null}
+      />
     </ControlColumn>
   )
 }

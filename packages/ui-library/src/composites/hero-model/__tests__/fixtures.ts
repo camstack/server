@@ -37,9 +37,10 @@ export function buildModel(
   slices: Record<string, unknown>,
   canActuate = true,
   features: readonly string[] = [],
+  role: string | null = null,
 ): HeroModel {
   return buildHeroModel({
-    device: { id: 7, type, role: null, name: 'Device', online: true },
+    device: { id: 7, type, role, name: 'Device', online: true },
     caps,
     features,
     slices,

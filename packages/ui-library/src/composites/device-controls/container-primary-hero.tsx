@@ -73,7 +73,7 @@ export function ContainerPrimaryHero({
     )
   }
 
-  const control = resolveDeviceControl(primaryChild.type)
+  const control = resolveDeviceControl(primaryChild.type, primaryChild.role)
   const HeroCard = control?.HeroCard ?? DummyHeroCard
 
   return (

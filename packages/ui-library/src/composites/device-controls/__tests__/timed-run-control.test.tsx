@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/react'
-import { DeviceType, TIMED_RUN_LIMITS, type TimedRunLimit } from '@camstack/types'
+import {
+  TIMED_RUN_HEATER_LIMIT,
+  TIMED_RUN_PET_FOUNTAIN_LIMIT,
+  type TimedRunLimit,
+} from '@camstack/types'
 import { TimedRunControl, formatCountdown, maxInUnit } from '../timed-run-control'
 
 const runFor = vi.fn()
@@ -13,14 +17,8 @@ vi.mock('../../../hooks/use-device-capability', () => ({
   useDeviceCapability: () => mockResult,
 }))
 
-const HEATER: TimedRunLimit = requireLimit(DeviceType.Heater)
-const FOUNTAIN: TimedRunLimit = requireLimit(DeviceType.PetFountain)
-
-function requireLimit(type: DeviceType): TimedRunLimit {
-  const limit = TIMED_RUN_LIMITS[type]
-  if (limit === undefined) throw new Error(`no timed-run limit for ${type}`)
-  return limit
-}
+const HEATER: TimedRunLimit = TIMED_RUN_HEATER_LIMIT
+const FOUNTAIN: TimedRunLimit = TIMED_RUN_PET_FOUNTAIN_LIMIT
 
 const trpc = {} as never
 

@@ -462,6 +462,8 @@ export {
   type ITimedRunProvider,
   TIMED_RUN_DEVICE_TYPES,
   TIMED_RUN_DEVICE_ROLES,
+  TIMED_RUN_HEATER_LIMIT,
+  TIMED_RUN_PET_FOUNTAIN_LIMIT,
   type TimedRunActuator,
   TimedRunActuatorSchema,
   type TimedRunLimit,

@@ -19,8 +19,7 @@
 import { AlertTriangle, Droplet, Droplets, Pause, Play, Timer } from 'lucide-react'
 import type { ReactNode } from 'react'
 import {
-  DeviceType,
-  TIMED_RUN_LIMITS,
+  TIMED_RUN_PET_FOUNTAIN_LIMIT,
   type PetFountainStatus,
   type PumpCycleStatus,
 } from '@camstack/types'
@@ -44,7 +43,7 @@ const KEYFRAMES = `
   .pfn-ripple, .pfn-bubble { animation: none !important; opacity: 0; }
 }
 `
-const PUMP_LIMIT = TIMED_RUN_LIMITS[DeviceType.PetFountain]
+const PUMP_LIMIT = TIMED_RUN_PET_FOUNTAIN_LIMIT
 
 const LITRES_TO_ML = 1000
 const SECONDS_PER_MINUTE = 60

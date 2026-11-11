@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { HeroModelCard } from '../HeroModelCard'
+import { DeviceRole } from '@camstack/types'
 import { TEST_LABELS, buildModel } from './fixtures'
 
 const host = (run = vi.fn()) => ({ lang: 'en' as const, labels: TEST_LABELS, busy: false, run })
@@ -16,10 +17,14 @@ const HEATER = (activeUntil: number | null) => ({
   },
 })
 
+// D1033 — a plug-in heater is a switch with the heater role.
+const buildHeater = (slices: Record<string, unknown>) =>
+  buildModel('switch', ['switch', 'timed-run'], slices, true, [], DeviceRole.SwitchHeater)
+
 describe('HeroModelCard scene centre', () => {
   it('a run on a timer is the big countdown, with Stop and the run again, and no run-for row', () => {
     const run = vi.fn()
-    const model = buildModel('heater', ['switch', 'timed-run'], HEATER(Date.now() + 25 * 60_000))
+    const model = buildHeater(HEATER(Date.now() + 25 * 60_000))
     render(<HeroModelCard model={model} host={host(run)} />)
     const centre = screen.getByTestId('countdown-centre')
     expect(centre.textContent).toMatch(/2[45]:\d\d/)
@@ -30,14 +35,14 @@ describe('HeroModelCard scene centre', () => {
   })
 
   it('a heater with nothing armed keeps its run-for row and draws no countdown', () => {
-    const model = buildModel('heater', ['switch', 'timed-run'], HEATER(null))
+    const model = buildHeater(HEATER(null))
     render(<HeroModelCard model={model} host={host()} />)
     expect(screen.queryByTestId('countdown-centre')).toBeNull()
     expect(screen.getByTestId('hero-row-run-for')).toBeTruthy()
   })
 
   it('a timer that will switch the device off shows its countdown in the scene, with no power row', () => {
-    const model = buildModel('heater', ['switch', 'timed-run'], HEATER(Date.now() + 25 * 60_000))
+    const model = buildHeater(HEATER(Date.now() + 25 * 60_000))
     render(<HeroModelCard model={model} host={host()} />)
     expect(screen.getByTestId('countdown-centre')).toBeTruthy()
     expect(screen.queryByTestId('hero-own-power')).toBeNull()

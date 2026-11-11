@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@camstack/types'
 import { TimedRunRowControl } from '../timed-run-row-control'
 
 const runFor = vi.fn()
@@ -43,6 +43,9 @@ afterEach(() => {
   cleanup()
 })
 
+// D1033 — a plug-in heater is a switch with the heater role.
+const HEATER_SWITCH = { deviceType: DeviceType.Switch, deviceRole: DeviceRole.SwitchHeater }
+
 describe('TimedRunRowControl', () => {
   it('runs for the duration the hub reports for THIS device, and says it', () => {
     timer = {
@@ -51,7 +54,7 @@ describe('TimedRunRowControl', () => {
       available: true,
       online: true,
     }
-    render(<TimedRunRowControl trpc={trpc} deviceId={5} deviceType={DeviceType.Heater} />)
+    render(<TimedRunRowControl trpc={trpc} deviceId={5} {...HEATER_SWITCH} />)
     fireEvent.click(screen.getByRole('button', { name: /45/ }))
     expect(runFor).toHaveBeenCalledWith({ duration: 45, unit: 'min' })
   })
@@ -63,14 +66,14 @@ describe('TimedRunRowControl', () => {
       available: true,
       online: true,
     }
-    render(<TimedRunRowControl trpc={trpc} deviceId={5} deviceType={DeviceType.Heater} />)
+    render(<TimedRunRowControl trpc={trpc} deviceId={5} {...HEATER_SWITCH} />)
     fireEvent.click(screen.getByRole('button', { name: /30/ }))
     expect(runFor).toHaveBeenCalledWith({ duration: 30, unit: 'min' })
   })
 
   it('an armed heater offers Stop and the minutes left', () => {
     timer = armed(23 * 60_000, { duration: 30, unit: 'min' })
-    render(<TimedRunRowControl trpc={trpc} deviceId={5} deviceType={DeviceType.Heater} />)
+    render(<TimedRunRowControl trpc={trpc} deviceId={5} {...HEATER_SWITCH} />)
     expect(screen.getByText(/23 min/)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Stop/ }))
     expect(cancel).toHaveBeenCalledWith({})
@@ -80,7 +83,30 @@ describe('TimedRunRowControl', () => {
   it('draws nothing when the cap is not bound', () => {
     timer = { cap: undefined, slice: undefined, available: true, online: true }
     const { container } = render(
-      <TimedRunRowControl trpc={trpc} deviceId={5} deviceType={DeviceType.Switch} />,
+      <TimedRunRowControl
+        trpc={trpc}
+        deviceId={5}
+        deviceType={DeviceType.Switch}
+        deviceRole={null}
+      />,
+    )
+    expect(container.textContent).toBe('')
+  })
+
+  it('a bound cap on a switch WITHOUT the heater role draws nothing (no limit by type alone)', () => {
+    timer = {
+      cap: { runFor, cancel },
+      slice: { activeUntil: null, requestedBy: null, quickRun: null },
+      available: true,
+      online: true,
+    }
+    const { container } = render(
+      <TimedRunRowControl
+        trpc={trpc}
+        deviceId={5}
+        deviceType={DeviceType.Switch}
+        deviceRole={null}
+      />,
     )
     expect(container.textContent).toBe('')
   })

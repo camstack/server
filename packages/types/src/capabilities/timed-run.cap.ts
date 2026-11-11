@@ -38,14 +38,16 @@ export interface TimedRunLimit {
   readonly quickRunDefault: number
 }
 
-const HEATER_LIMIT: TimedRunLimit = {
+/** A plug-in heater (switch + `switch-heater`): up to 3 h, in minutes. */
+export const TIMED_RUN_HEATER_LIMIT: TimedRunLimit = {
   actuator: 'switch',
   maxSeconds: 180 * 60,
   unit: 'min',
   quickRunDefault: 30,
 }
 
-const PET_FOUNTAIN_LIMIT: TimedRunLimit = {
+/** A pet fountain's pump: up to 5 min, in seconds. */
+export const TIMED_RUN_PET_FOUNTAIN_LIMIT: TimedRunLimit = {
   actuator: 'pet-fountain',
   maxSeconds: 300,
   unit: 's',
@@ -76,8 +78,9 @@ export function timedRunLimitOf(
   deviceType: string,
   role: string | null | undefined,
 ): TimedRunLimit | null {
-  if (deviceType === DeviceType.PetFountain) return PET_FOUNTAIN_LIMIT
-  if (deviceType === DeviceType.Switch && role === DeviceRole.SwitchHeater) return HEATER_LIMIT
+  if (deviceType === DeviceType.PetFountain) return TIMED_RUN_PET_FOUNTAIN_LIMIT
+  if (deviceType === DeviceType.Switch && role === DeviceRole.SwitchHeater)
+    return TIMED_RUN_HEATER_LIMIT
   return null
 }
 

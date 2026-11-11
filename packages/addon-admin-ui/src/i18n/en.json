@@ -9132,7 +9132,7 @@
         "switch": "Switch",
         "sensor": "Sensor",
         "thermostat": "Thermostat",
-        "climate": "Air conditioner",
+        "climate": "Climate",
         "button": "Button",
         "eventEmitter": "Event Emitter",
         "update": "Update",
@@ -9222,7 +9222,15 @@
         "coverGate": "Gate",
         "coverDoor": "Door",
         "coverWindow": "Window",
-        "irTransmitter": "IR/RF transmitter"
+        "irTransmitter": "IR/RF transmitter",
+        "switchHeater": "Heater",
+        "switchFan": "Fan",
+        "climateAc": "Air conditioner",
+        "climateThermostat": "Thermostat",
+        "climateFloor": "Floor heating",
+        "climateRadiator": "Radiator",
+        "climateHeater": "Heater",
+        "climateHeatPumpCircuit": "Heat pump circuit"
       },
       "noun": {
         "role": {

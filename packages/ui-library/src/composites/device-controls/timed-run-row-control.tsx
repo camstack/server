@@ -6,7 +6,7 @@
  */
 import { Square, Timer } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
-import { DeviceType, timedRunLimitOf, timedRunRemaining, type TimedRunUnit } from '@camstack/types'
+import { timedRunLimitOf, timedRunRemaining, type TimedRunUnit } from '@camstack/types'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
@@ -18,13 +18,8 @@ export interface TimedRunRowControlProps {
   readonly trpc: UseDeviceProxyTrpc
   readonly deviceId: number
   readonly deviceType: string
-}
-
-function deviceTypeOf(value: string): DeviceType | null {
-  for (const candidate of Object.values(DeviceType)) {
-    if (candidate === value) return candidate
-  }
-  return null
+  /** With the type, which device this is: a switch has a timed run only as a heater (D1033). */
+  readonly deviceRole: string | null
 }
 
 function useNow(active: boolean): number {
@@ -41,10 +36,10 @@ export function TimedRunRowControl({
   trpc,
   deviceId,
   deviceType,
+  deviceRole,
 }: TimedRunRowControlProps): ReactNode {
   const t = useUiText()
-  const type = deviceTypeOf(deviceType)
-  const limit = type === null ? null : timedRunLimitOf(type)
+  const limit = timedRunLimitOf(deviceType, deviceRole)
   const { cap, slice, online } = useDeviceCapability({
     trpc,
     deviceId,

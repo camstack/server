@@ -297,7 +297,6 @@ export const CONTROL_FILLS: Record<DeviceType, boolean> = {
   [DeviceType.Cover]: true,
   // Valve has the cover-style ▲■▼ triad → FILL.
   [DeviceType.Valve]: true,
-  [DeviceType.Thermostat]: true,
   [DeviceType.Climate]: true,
   [DeviceType.Control]: true,
   [DeviceType.Button]: true,
@@ -345,7 +344,6 @@ export const CONTROL_FILLS: Record<DeviceType, boolean> = {
   [DeviceType.PetFeeder]: false,
   // Pet fountain inline = tank level + a pump toggle (natural width).
   [DeviceType.PetFountain]: false,
-  [DeviceType.Heater]: false,
   [DeviceType.Dishwasher]: false,
   [DeviceType.Washer]: false,
   [DeviceType.Dryer]: false,
@@ -371,8 +369,12 @@ const DEVICE_TYPE_VALUES = new Set<string>(Object.values(DeviceType))
  * (`resolveDeviceControlKind`, null for an unrecognised type); this maps the
  * resolved kind onto the web components.
  */
-export function resolveDeviceControl(type: string): DeviceTypeControl | null {
-  const kind = resolveDeviceControlKind(type)
+export function resolveDeviceControl(
+  type: string,
+  role: string | null | undefined = null,
+): DeviceTypeControl | null {
+  // D1033 — the role picks among same-control devices (a heater switch, an AC).
+  const kind = resolveDeviceControlKind(type, role)
   return kind ? CONTROL_KIND_COMPONENTS[kind] : null
 }
 
