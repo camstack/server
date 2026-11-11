@@ -146,6 +146,10 @@ export function newAction(kind: ActionKind): AutomationAction {
       return { kind, code: '// runs inside this automation, with ctx in scope\n' }
     case 'action':
       return { kind, actionId: '' }
+    case 'stop':
+      return { kind, reason: '', outcome: 'ok' }
+    case 'set':
+      return { kind, vars: {} }
     default:
       return { kind: 'cap', deviceId: 0, cap: '', method: '' }
   }

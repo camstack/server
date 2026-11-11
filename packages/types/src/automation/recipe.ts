@@ -52,9 +52,13 @@ export type { ActionTarget }
  * every caller — automations, Actions, and the notification centre, which runs
  * only Actions (planning#473).
  */
+/** The longest one `wait` step lasts. It is cut by a restart of the run and does not survive a hub restart. */
+export const WAIT_MAX_SECONDS = 3600
+const WAIT_TOO_LONG = `a wait is at most one hour (${WAIT_MAX_SECONDS} s)`
+
 export const AutomationWaitStepSchema = z.object({
   kind: z.literal('wait'),
-  seconds: z.number().min(0).max(300),
+  seconds: z.number().min(0).max(WAIT_MAX_SECONDS, WAIT_TOO_LONG),
 })
 
 /** The legacy `deviceId` of a cap step: still READ, never written (D983). */
@@ -214,15 +218,88 @@ export const ActionStepSchema = z
   })
 export type ActionStep = z.infer<typeof ActionStepSchema>
 
+/**
+ * Flow control of an AUTOMATION's list (#500). A standalone list (an action, a
+ * scheduler point, a preset) stays `wait` and `cap`: it has no run of its own
+ * to end and no variable bag to write.
+ */
+const continueOnErrorShape = {
+  /** A failure of this step is traced `failed-continued` and the next step runs. */
+  continueOnError: z.literal(true).optional(),
+}
+
+/** An automation's cap step: the shared guarded cap step, plus `continueOnError`. */
+const AutomationGuardedCapStepSchema = AutomationCapStepBaseSchema.extend({
+  ...stepGuardShape,
+  ...continueOnErrorShape,
+})
+  .refine((step) => step.target !== undefined || step.deviceId !== undefined, {
+    message: 'a cap step needs a target',
+    path: ['target'],
+  })
+  .refine((step) => step.target?.kind !== 'domain' || step.actionId !== undefined, {
+    message: 'a domain target needs the vocabulary action it applies to (actionId)',
+    path: ['actionId'],
+  })
+  .refine((step) => step.else === undefined || step.if !== undefined, elseNeedsIf)
+
+export const STOP_REASON_MAX = 200
+
+/** End the run here, on purpose. `reason` may carry `{{vars.x}}` slots. */
+export const AutomationStopStepSchema = z.object({
+  kind: z.literal('stop'),
+  reason: z
+    .string()
+    .min(1, 'a stop needs a reason: it is what the run trace shows')
+    .max(STOP_REASON_MAX),
+  /** `ok`: the run ends as a success. `failed`: it ends as a failure, with the reason. */
+  outcome: z.enum(['ok', 'failed']),
+  /** Stop only when this reads true; false or unknown does not stop. */
+  if: AutomationWhenSchema.optional(),
+})
+export type AutomationStopStep = z.infer<typeof AutomationStopStepSchema>
+
+export const SET_VARS_MAX = 20
+export const SET_VAR_VALUE_MAX = 500
+export const SET_VAR_NAME_RE = /^[A-Za-z_][A-Za-z0-9_]{0,39}$/
+/** Names the run itself writes and reads (`leaf` is what `triggered-by` judges): a step may not overwrite them. */
+export const RESERVED_RUN_VARS: readonly string[] = ['kind', 'leaf', 'at']
+
+/**
+ * Write variables into the run's bag, for the steps after it. SUBSTITUTION
+ * only, never evaluation: a text value may carry `{{vars.x}}` slots.
+ */
+export const AutomationSetStepSchema = z.object({
+  kind: z.literal('set'),
+  vars: z
+    .record(z.string(), z.union([z.string().max(SET_VAR_VALUE_MAX), z.number(), z.boolean()]))
+    .refine((vars) => Object.keys(vars).every((name) => SET_VAR_NAME_RE.test(name)), {
+      message: 'a variable name is letters, digits and _, not starting with a digit (max 40)',
+    })
+    .refine((vars) => Object.keys(vars).length >= 1, { message: 'set needs at least one variable' })
+    .refine((vars) => Object.keys(vars).length <= SET_VARS_MAX, {
+      message: `set holds at most ${SET_VARS_MAX} variables`,
+    })
+    .refine((vars) => Object.keys(vars).every((name) => !RESERVED_RUN_VARS.includes(name)), {
+      message: `the names ${RESERVED_RUN_VARS.join(', ')} belong to the run and cannot be set`,
+    }),
+  /** Set only when this reads true; false or unknown leaves the bag as it is. */
+  if: AutomationWhenSchema.optional(),
+})
+export type AutomationSetStep = z.infer<typeof AutomationSetStepSchema>
+
 export const AutomationActionSchema = z.discriminatedUnion('kind', [
   GuardedWaitStepSchema,
-  GuardedCapStepSchema,
+  AutomationGuardedCapStepSchema,
+  AutomationStopStepSchema,
+  AutomationSetStepSchema,
   z.object({
     kind: z.literal('action'),
     /** An entry of the `actions` surface (`internal:<uuid>` or `<addonId>:<localId>`). */
     actionId: z.string().min(1),
     /** Values for the action's declared variables; the others take their default. */
     variables: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
+    ...continueOnErrorShape,
   }),
   z.object({
     kind: z.literal('code'),
@@ -300,6 +377,11 @@ export const AutomationRecipeSchema = z.union([
   LegacyAutomationRecipeSchema.transform(convertLegacyRecipe),
 ])
 
+/** The `if` of a step that can carry one (`action` and `code` steps cannot). */
+export function stepGuardOf(action: AutomationAction): AutomationWhen | undefined {
+  return action.kind === 'action' || action.kind === 'code' ? undefined : action.if
+}
+
 /** Bounds, shared by `when` and the old names the guards still know. */
 export const MAX_CONDITION_DEPTH = MAX_WHEN_DEPTH
 export const MAX_CONDITION_LEAVES = MAX_WHEN_LEAVES
@@ -320,8 +402,9 @@ export function validateRecipeBounds(recipe: AutomationRecipe): string | null {
   const inRules = triggeredByIssue(recipe.when, ids, 'the rules')
   if (inRules !== null) return inRules
   for (const [index, action] of recipe.actions.entries()) {
-    if ((action.kind !== 'wait' && action.kind !== 'cap') || action.if === undefined) continue
-    const issue = triggeredByIssue(action.if, ids, `step ${index + 1}`)
+    const guard = stepGuardOf(action)
+    if (guard === undefined) continue
+    const issue = triggeredByIssue(guard, ids, `step ${index + 1}`)
     if (issue !== null) return issue
   }
   return null

@@ -20,7 +20,16 @@
  */
 
 import type { AutomationAction } from '@camstack/types'
-import { Badge, Button, Input, Select, type DeviceListState, Textarea } from '@camstack/ui-library'
+import {
+  Badge,
+  Button,
+  Input,
+  Select,
+  Switch,
+  type DeviceListState,
+  Textarea,
+} from '@camstack/ui-library'
+import { STOP_REASON_MAX, WAIT_MAX_SECONDS } from '@camstack/types'
 import { Plus, Trash2 } from 'lucide-react'
 import { CommandStep } from '../flow/CommandStep'
 import { toneBorderClass } from '../flow/RunsPanel'
@@ -32,15 +41,21 @@ import { PickerLabel } from './FieldPicker'
 import { RunActionFields } from './RunActionFields'
 import { MoveButtons, type MoveTexts } from './MoveButtons'
 import { type ActionKind, moveItem, newAction, removeAt, replaceAt } from './recipe-parts'
-import { StepGuard } from './StepGuard'
+import { SetVarsFields } from './SetVarsFields'
+import { StepGuard, StepIf } from './StepGuard'
 import { Trans, useTranslation } from 'react-i18next'
 
 const ACTION_KINDS: readonly { readonly value: ActionKind; readonly labelKey: string }[] = [
   { value: 'cap', labelKey: 'automation.actionList.kindCap' },
   { value: 'action', labelKey: 'automation.actionList.kindAction' },
   { value: 'wait', labelKey: 'automation.actionList.kindWait' },
+  { value: 'set', labelKey: 'automation.actionList.kindSet' },
+  { value: 'stop', labelKey: 'automation.actionList.kindStop' },
   { value: 'code', labelKey: 'automation.actionList.kindCode' },
 ]
+
+/** The steps that only an automation's own list runs (#500). */
+const FLOW_KINDS: readonly ActionKind[] = ['set', 'stop']
 
 export interface ActionListProps {
   readonly actions: readonly AutomationAction[]
@@ -56,6 +71,11 @@ export interface ActionListProps {
   readonly stepResults?: readonly (StepDetailView | undefined)[]
   /** An else list: its steps carry no `if` of their own (one level of else). */
   readonly nested?: boolean
+  /**
+   * The list is an AUTOMATION's: it offers the stop and set steps and "continue
+   * if this fails". A standalone list (an action, a scheduler point) does not.
+   */
+  readonly flowControl?: boolean
   readonly onChange: (next: readonly AutomationAction[]) => void
 }
 
@@ -68,11 +88,18 @@ export function ActionList({
   stepTones,
   stepResults,
   nested = false,
+  flowControl = false,
   onChange,
 }: ActionListProps) {
   const { t } = useTranslation()
   const kinds = ACTION_KINDS.filter(
-    (k) => allowedKinds === undefined || allowedKinds.includes(k.value),
+    (k) =>
+      (allowedKinds === undefined || allowedKinds.includes(k.value)) &&
+      (flowControl || !FLOW_KINDS.includes(k.value)),
+  )
+  const guardHint = t(
+    'automation.actionList.flowGuardHint',
+    'Checked when this step is reached. If it is false, or a state cannot be read, the step does nothing.',
   )
   const moveTexts: MoveTexts = {
     up: t('automation.actionList.runThisStepEarlier', 'Run this step earlier'),
@@ -103,6 +130,7 @@ export function ActionList({
             <label className="w-40">
               <PickerLabel>{t('automation.actionList.step', 'Step')}</PickerLabel>
               <Select
+                data-testid={`step-kind-${String(index)}`}
                 value={action.kind}
                 onChange={(e) =>
                   onChange(replaceAt(actions, index, newAction(asKind(e.target.value))))
@@ -137,7 +165,7 @@ export function ActionList({
               <Input
                 type="number"
                 min={0}
-                max={300}
+                max={WAIT_MAX_SECONDS}
                 value={String(action.seconds)}
                 onChange={(e) =>
                   onChange(
@@ -146,6 +174,65 @@ export function ActionList({
                 }
               />
             </label>
+          )}
+
+          {action.kind === 'stop' && (
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="min-w-48 flex-1">
+                <PickerLabel>{t('automation.actionList.stopReason', 'Reason')}</PickerLabel>
+                <Input
+                  data-testid={`stop-reason-${String(index)}`}
+                  value={action.reason}
+                  maxLength={STOP_REASON_MAX}
+                  onChange={(e) =>
+                    onChange(replaceAt(actions, index, { ...action, reason: e.target.value }))
+                  }
+                />
+              </label>
+              <label className="w-48">
+                <PickerLabel>
+                  {t('automation.actionList.stopOutcome', 'The run ends as')}
+                </PickerLabel>
+                <Select
+                  data-testid={`stop-outcome-${String(index)}`}
+                  value={action.outcome}
+                  onChange={(e) =>
+                    onChange(
+                      replaceAt(actions, index, {
+                        ...action,
+                        outcome: e.target.value === 'failed' ? 'failed' : 'ok',
+                      }),
+                    )
+                  }
+                  options={[
+                    { value: 'ok', label: t('automation.actionList.stopOk', 'A success') },
+                    { value: 'failed', label: t('automation.actionList.stopFailed', 'A failure') },
+                  ]}
+                />
+              </label>
+            </div>
+          )}
+
+          {action.kind === 'set' && (
+            <SetVarsFields
+              index={index}
+              vars={action.vars}
+              onChange={(vars) => onChange(replaceAt(actions, index, { ...action, vars }))}
+            />
+          )}
+
+          {(action.kind === 'stop' || action.kind === 'set') && (
+            <StepIf
+              when={action.if}
+              devices={devices}
+              hint={guardHint}
+              onChange={(next) => {
+                const { if: _if, ...rest } = action
+                onChange(
+                  replaceAt(actions, index, next === undefined ? rest : { ...rest, if: next }),
+                )
+              }}
+            />
           )}
 
           {action.kind === 'code' && (
@@ -175,6 +262,7 @@ export function ActionList({
                 onChange(
                   replaceAt(actions, index, {
                     ...next,
+                    ...(action.continueOnError === true ? { continueOnError: true } : {}),
                     ...(action.if === undefined ? {} : { if: action.if }),
                     ...(action.else === undefined ? {} : { else: action.else }),
                   }),
@@ -186,7 +274,27 @@ export function ActionList({
           {action.kind === 'action' && (
             <RunActionFields
               step={action}
-              onChange={(next) => onChange(replaceAt(actions, index, next))}
+              onChange={(next) =>
+                onChange(
+                  replaceAt(actions, index, {
+                    ...next,
+                    ...(action.continueOnError === true ? { continueOnError: true } : {}),
+                  }),
+                )
+              }
+            />
+          )}
+
+          {flowControl && !nested && (action.kind === 'cap' || action.kind === 'action') && (
+            <Switch
+              data-testid={`continue-on-error-${String(index)}`}
+              checked={action.continueOnError === true}
+              label={t('automation.actionList.continueOnError', 'Continue if this step fails')}
+              aria-label={t('automation.actionList.continueOnError', 'Continue if this step fails')}
+              onCheckedChange={(on) => {
+                const { continueOnError: _flag, ...rest } = action
+                onChange(replaceAt(actions, index, on ? { ...rest, continueOnError: true } : rest))
+              }}
             />
           )}
 

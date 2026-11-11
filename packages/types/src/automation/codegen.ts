@@ -25,7 +25,12 @@
  */
 
 import type { AutomationAction, AutomationRecipe } from './recipe.js'
-import { DEFAULT_TRACE_KEEP, normalizeCapStep, validateRecipeBounds } from './recipe.js'
+import {
+  DEFAULT_TRACE_KEEP,
+  normalizeCapStep,
+  stepGuardOf,
+  validateRecipeBounds,
+} from './recipe.js'
 import type { TimeSpec, WeekdayKey } from '../time/time-spec.js'
 import { hasHoldLeaves, hasTimeLeaves } from './condition-eval.js'
 import { holdOf } from './hold.js'
@@ -59,6 +64,10 @@ function stepMetaOf(action: AutomationAction): StepMeta {
       return { kind: 'code' }
     case 'action':
       return { kind: 'action' }
+    case 'stop':
+      return { kind: 'stop' }
+    case 'set':
+      return { kind: 'set' }
     case 'cap': {
       const { target, actionId } = normalizeCapStep(action)
       return {
@@ -325,24 +334,26 @@ function emitLeafBody(action: AutomationAction): string | null {
 
 /** A step's `if` (#472) and its else list, as the fields of a RunnableStep. */
 function emitGuard(action: AutomationAction, index: number): string {
-  if (action.kind !== 'wait' && action.kind !== 'cap') return ''
-  if (action.if === undefined) return ''
-  const otherwise = (action.else ?? [])
+  const when = stepGuardOf(action)
+  if (when === undefined) return ''
+  const otherwise = (action.kind === 'wait' || action.kind === 'cap' ? (action.else ?? []) : [])
     .map((el) => {
       const body = emitLeafBody(el)
       return `{ meta: ${j(stepMetaOf(el))}, run: async (scope) => {\n${body ?? ''}\n } }`
     })
     .join(', ')
-  return `      guard: () => evaluateCondition(${j(action.if)}, ${j(`actions.${index}.if`)}, vars),${
+  return `      guard: () => evaluateCondition(${j(when)}, ${j(`actions.${index}.if`)}, vars),${
     otherwise === '' ? '' : `\n      otherwise: [${otherwise}],`
   }
 `
 }
 
 function emitAction(action: AutomationAction, index: number): string {
+  const continues =
+    (action.kind === 'cap' || action.kind === 'action') && action.continueOnError === true
   const step = (body: string): string => `    {
       meta: STEP_META[${index}]!,
-${emitGuard(action, index)}      run: async (scope) => {
+${emitGuard(action, index)}${continues ? '      continueOnError: true,\n' : ''}      run: async (scope) => {
 ${body}
       },
     },`
@@ -368,6 +379,16 @@ ${body}
         if (result.outcome !== 'ran') {
           throw new Error('action ' + ${j(action.actionId)} + ' ' + result.outcome + (result.message === undefined ? '' : ': ' + result.message))
         }`)
+    case 'stop':
+      return step(
+        `        // end the run here, on purpose: the steps after it are not-run with this reason
+        scope.stop(String(substitute(${j(action.reason)}, vars)), ${j(action.outcome)})`,
+      )
+    case 'set':
+      return step(
+        `        // write the run's own bag, for the steps after this one — substitution only
+        Object.assign(vars, substituteVariables(${j(action.vars)}, vars))`,
+      )
     case 'code':
       return step(`        // inline code action — a fragment of THIS block, bundled by esbuild
         await (async () => {
@@ -397,17 +418,17 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   const hasDomainTarget = recipe.actions.some(
     (a) => a.kind === 'cap' && normalizeCapStep(a).target.kind === 'domain',
   )
-  const guardHoldTrees = recipe.actions.flatMap((a, i) =>
-    (a.kind === 'wait' || a.kind === 'cap') && a.if !== undefined && hasHoldLeaves(a.if)
-      ? [{ path: `actions.${i}.if`, when: a.if }]
-      : [],
-  )
+  const guardHoldTrees = recipe.actions.flatMap((a, i) => {
+    const when = stepGuardOf(a)
+    return when !== undefined && hasHoldLeaves(when) ? [{ path: `actions.${i}.if`, when }] : []
+  })
   // A \`time-is\` leaf reads the site clock: the site is held in memory, refreshed off the event path (D49).
   const hasTime =
     hasTimeLeaves(recipe.when) ||
-    recipe.actions.some(
-      (a) => (a.kind === 'wait' || a.kind === 'cap') && a.if !== undefined && hasTimeLeaves(a.if),
-    )
+    recipe.actions.some((a) => {
+      const when = stepGuardOf(a)
+      return when !== undefined && hasTimeLeaves(when)
+    })
   const eventLeaves: { leaf: AutomationEventLeaf; path: string }[] = []
   forEachLeaf(recipe.when, (leaf, path) => {
     if (isEventLeaf(leaf)) eventLeaves.push({ leaf, path })
@@ -931,6 +952,13 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
       now: () => Date.now(),
       onFailure: (failure) => {
         ctx.logger.warn('action failed — stopping the sequence', {
+          ...(failure.deviceId === undefined ? {} : { tags: { deviceId: failure.deviceId } }),
+          step: failure.index,
+          error: failure.message,
+        })
+      },
+      onContinuedFailure: (failure) => {
+        ctx.logger.warn('action failed — continuing, the step is marked to be passed over', {
           ...(failure.deviceId === undefined ? {} : { tags: { deviceId: failure.deviceId } }),
           step: failure.index,
           error: failure.message,

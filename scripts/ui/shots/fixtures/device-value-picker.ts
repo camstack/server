@@ -91,7 +91,10 @@ export default defineFixtures({
         fleetTotal: 64,
         hiddenIncompatible: 57,
         facets: {
-          locations: [...count(FLEET, (d) => d.location)].map(([value, n]) => ({ value, count: n })),
+          locations: [...count(FLEET, (d) => d.location)].map(([value, n]) => ({
+            value,
+            count: n,
+          })),
           integrations: [...count(FLEET, (d) => d.integrationId)].map(([id, n]) => ({
             id,
             label: FLEET.find((d) => d.integrationId === id)?.integrationLabel ?? id,

@@ -3,7 +3,7 @@ import type { DeviceTemplateRender } from '../../expression/device-template.js'
 import { type ActionVariable, resolveActionVariables } from '../action.js'
 import { ActionTargetResolver } from '../action-target.js'
 import { evaluateStepCondition } from '../step-condition.js'
-import type { ActionStep } from '../recipe.js'
+import { type ActionStep, ActionStepSchema, CurrentAutomationRecipeSchema } from '../recipe.js'
 import {
   buildActionSteps,
   type CapCall,
@@ -89,6 +89,143 @@ describe('runSteps', () => {
     expect(result.aborted).toBe(true)
     expect(result.failed).toBe(false)
     expect(result.steps[1]).toMatchObject({ outcome: 'not-run', message: 'aborted' })
+  })
+})
+
+describe('runSteps — flow control (#500)', () => {
+  const ok = (ran: string[], name: string): RunnableStep => ({
+    meta: { kind: 'cap' },
+    run: async () => void ran.push(name),
+  })
+  const boom: RunnableStep = {
+    meta: { kind: 'cap' },
+    continueOnError: true,
+    run: async () => {
+      throw new Error('boom')
+    },
+  }
+
+  it('continueOnError: the failure is traced failed-continued, the run goes on and is not failed', async () => {
+    const ran: string[] = []
+    const failures: string[] = []
+    const continued: string[] = []
+    const result = await runSteps(
+      [ok(ran, 'a'), boom, ok(ran, 'c')],
+      options({
+        onFailure: (f) => void failures.push(f.path),
+        onContinuedFailure: (f) => void continued.push(`${f.path}:${f.message}`),
+      }),
+    )
+    expect(ran).toEqual(['a', 'c'])
+    expect(result.failed).toBe(false)
+    expect(result.steps).toMatchObject([
+      { outcome: 'ok' },
+      { path: 'steps.1', outcome: 'failed-continued', message: 'boom' },
+      { outcome: 'ok' },
+    ])
+    expect(failures).toEqual([])
+    expect(continued).toEqual(['steps.1:boom'])
+  })
+
+  it('stop (ok): the later steps are not-run with the reason, and the run is not failed', async () => {
+    const ran: string[] = []
+    const stop: RunnableStep = {
+      meta: { kind: 'stop' },
+      run: async (scope) => scope.stop('nobody is home', 'ok'),
+    }
+    const result = await runSteps([ok(ran, 'a'), stop, ok(ran, 'c')], options())
+    expect(ran).toEqual(['a'])
+    expect(result.failed).toBe(false)
+    expect(result.aborted).toBe(false)
+    expect(result.stopped).toEqual({ reason: 'nobody is home', outcome: 'ok', path: 'steps.1' })
+    expect(result.steps).toMatchObject([
+      { outcome: 'ok' },
+      { path: 'steps.1', outcome: 'ok', message: 'stopped: nobody is home' },
+      { path: 'steps.2', outcome: 'not-run', message: 'stopped at steps.1: nobody is home' },
+    ])
+  })
+
+  it('stop (failed): the run is failed and the failure is reported once', async () => {
+    const failures: string[] = []
+    const stop: RunnableStep = {
+      meta: { kind: 'stop' },
+      run: async (scope) => scope.stop('the pump did not start', 'failed'),
+    }
+    const result = await runSteps(
+      [stop, ok([], 'b')],
+      options({ onFailure: (f) => void failures.push(`${f.path}:${f.message}`) }),
+    )
+    expect(result.failed).toBe(true)
+    expect(result.steps).toMatchObject([
+      { outcome: 'error', message: 'stopped: the pump did not start' },
+      { outcome: 'not-run', message: 'stopped at steps.0: the pump did not start' },
+    ])
+    expect(failures).toEqual(['steps.0:stopped: the pump did not start'])
+  })
+
+  it('a stop whose condition is false does not stop; a stop in an else list stops the whole run', async () => {
+    const ran: string[] = []
+    const guarded: RunnableStep = {
+      meta: { kind: 'stop' },
+      guard: async () => ({ result: 'false', reason: 'the door is closed' }),
+      run: async (scope) => scope.stop('door open', 'ok'),
+    }
+    const first = await runSteps([guarded, ok(ran, 'b')], options())
+    expect(ran).toEqual(['b'])
+    expect(first.stopped).toBeUndefined()
+    expect(first.steps[0]).toMatchObject({ outcome: 'skipped' })
+
+    const inElse: RunnableStep = {
+      meta: { kind: 'cap' },
+      guard: async () => ({ result: 'false', reason: 'no' }),
+      otherwise: [
+        { meta: { kind: 'stop' }, run: async (scope) => scope.stop('else said stop', 'ok') },
+      ],
+      run: async () => void ran.push('never'),
+    }
+    const second = await runSteps([inElse, ok(ran, 'after')], options())
+    expect(ran).toEqual(['b'])
+    expect(second.stopped).toMatchObject({ reason: 'else said stop', path: 'steps.0.else.0' })
+    expect(second.steps[1]).toMatchObject({ outcome: 'not-run' })
+  })
+})
+
+describe('flow-control schema (#500)', () => {
+  const recipe = (actions: unknown[]) =>
+    CurrentAutomationRecipeSchema.safeParse({ when: { kind: 'manual' }, actions })
+
+  it('an automation list takes stop, set, continueOnError and a one-hour wait', () => {
+    expect(
+      recipe([
+        { kind: 'set', vars: { room: 'kitchen', level: 3, on: true } },
+        { kind: 'stop', reason: 'nobody home', outcome: 'ok', if: { kind: 'manual' } },
+        { kind: 'wait', seconds: 3600 },
+        { kind: 'action', actionId: 'internal:x', continueOnError: true },
+      ]).success,
+    ).toBe(true)
+  })
+
+  it('refuses the bounds with a reason an operator can read', () => {
+    const issue = (actions: unknown[]): string => {
+      const parsed = recipe(actions)
+      return parsed.success ? '' : (parsed.error.issues[0]?.message ?? '')
+    }
+    expect(issue([{ kind: 'wait', seconds: 3601 }])).toBe('a wait is at most one hour (3600 s)')
+    expect(issue([{ kind: 'stop', reason: '', outcome: 'ok' }])).toBe(
+      'a stop needs a reason: it is what the run trace shows',
+    )
+    expect(recipe([{ kind: 'stop', reason: 'x', outcome: 'maybe' }]).success).toBe(false)
+    expect(issue([{ kind: 'set', vars: {} }])).toBe('set needs at least one variable')
+    expect(issue([{ kind: 'set', vars: { leaf: 'when.0' } }])).toContain('belong to the run')
+    expect(issue([{ kind: 'set', vars: { 'not a name': 1 } }])).toContain('variable name')
+  })
+
+  it('a standalone list keeps wait and cap only', () => {
+    expect(ActionStepSchema.safeParse({ kind: 'stop', reason: 'x', outcome: 'ok' }).success).toBe(
+      false,
+    )
+    expect(ActionStepSchema.safeParse({ kind: 'set', vars: { a: 1 } }).success).toBe(false)
+    expect(ActionStepSchema.safeParse({ kind: 'wait', seconds: 3600 }).success).toBe(true)
   })
 })
 

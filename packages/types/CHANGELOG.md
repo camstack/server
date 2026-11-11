@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automations can gate on the time of day: a new 'time is' condition (a window such as 22:00 to 06:00, and/or chosen weekdays) that also starts a state-only automation when the window opens. A window bounded by a sun event is refused at save when the site has no location.
 - Automations: a "Started by" condition tells which trigger row started the run, so one automation can run a different step per trigger
 - Automations: a "device becomes" trigger hands the run the device, the value before the change and the new value (vars.deviceId, vars.from, vars.to)
+- Automations gain a stop step, a set-variables step and "continue if this step fails"; a wait may last up to one hour
 
 ## [1.2.547] - 2026-11-11
 

@@ -21,6 +21,23 @@ const BASE: AutomationRunTrace = {
   lastAt: 2,
 }
 
+describe('a step that failed and was passed over (#500)', () => {
+  it('is red with its message, and the run stays green', () => {
+    const trace: AutomationRunTrace = {
+      ...BASE,
+      steps: [
+        { path: 'actions.0', kind: 'cap', outcome: 'failed-continued', message: 'device refused' },
+        { path: 'actions.1', kind: 'cap', outcome: 'ok' },
+      ],
+    }
+    const view = traceView(trace)
+    expect(stepToneAt(view, 0)).toBe('fail')
+    expect(stepToneAt(view, 1)).toBe('pass')
+    expect(view.thenBlock.tone).toBe('pass')
+    expect(traceDetails(trace).steps[0]).toMatchObject({ tone: 'fail', message: 'device refused' })
+  })
+})
+
 describe('traceView', () => {
   it('paints a clean run green end to end', () => {
     const view = traceView({

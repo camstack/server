@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automation editor: a 'Time is' condition with its window (clock time or sun event with an offset) and weekdays; a sun-based window is refused at save when the site has no location.
 - Automation editor: the "Started by" condition picks among the automation's own trigger rows, in the rules and in a step's condition
 - Automation editor: a step argument can insert the device, the old value and the new value of a "device becomes" trigger
+- The automation editor offers "Stop the run", "Set variables" and "Continue if this step fails"; a failed step the run passed over is shown red in the run trace
 
 ### Changed
 

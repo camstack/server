@@ -184,6 +184,7 @@ export function AutomationEditor({
             )}
           >
             <ActionList
+              flowControl
               actions={recipe.actions}
               devices={devices}
               variables={scope}

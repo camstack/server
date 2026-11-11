@@ -12,6 +12,7 @@ import {
   type AutomationWhen,
 } from '@camstack/types'
 import { ErrorBox, Switch, type DeviceListState } from '@camstack/ui-library'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ScopeVariable } from '../flow/ArgField'
 import { ActionList } from './ActionList'
@@ -52,9 +53,21 @@ function withoutGuard(step: GuardableStep): GuardableStep {
   return rest
 }
 
-export function StepGuard({ step, devices, devicesState, variables, onChange }: StepGuardProps) {
+export interface StepIfProps {
+  /** The step's condition; absent when the step always runs. */
+  readonly when: AutomationWhen | undefined
+  readonly devices: readonly AutomationDevice[]
+  /** What happens when the condition cannot be read, in one sentence. */
+  readonly hint: string
+  /** `undefined` switches the condition off. */
+  readonly onChange: (next: AutomationWhen | undefined) => void
+  /** Shown under the tree while the condition is on (the else part of a wait or cap step). */
+  readonly children?: ReactNode
+}
+
+/** The "Only if…" switch and its condition tree, for any step that carries an `if`. */
+export function StepIf({ when, devices, hint, onChange, children }: StepIfProps) {
   const { t } = useTranslation()
-  const when = step.if
   const recipe: AutomationRecipe | null = when === undefined ? null : { when, actions: [] }
   const problem = when === undefined ? null : guardProblem(when)
   return (
@@ -63,51 +76,63 @@ export function StepGuard({ step, devices, devicesState, variables, onChange }: 
         checked={when !== undefined}
         label={t('automation.stepGuard.if', 'Only if…')}
         aria-label={t('automation.stepGuard.if', 'Only if…')}
-        onCheckedChange={(on) => onChange(on ? { ...step, if: EMPTY_TREE } : withoutGuard(step))}
+        onCheckedChange={(on) => onChange(on ? EMPTY_TREE : undefined)}
       />
       {recipe !== null && (
         <>
-          <p className="text-xs text-foreground-subtle">
-            {t(
-              'automation.stepGuard.hint',
-              'Checked when this step is reached. If a state cannot be read, the step and its else are both skipped.',
-            )}
-          </p>
+          <p className="text-xs text-foreground-subtle">{hint}</p>
           <WhenTree
             hideRule
             context="guard"
             recipe={recipe}
             devices={devices}
-            onChange={(next) => onChange({ ...step, if: next.when })}
+            onChange={(next) => onChange(next.when)}
           />
           {problem !== null && <ErrorBox variant="warning" message={problem} />}
-          <Switch
-            checked={step.else !== undefined}
-            label={t('automation.stepGuard.else', 'Otherwise, run…')}
-            aria-label={t('automation.stepGuard.else', 'Otherwise, run…')}
-            onCheckedChange={(on) => {
-              if (on) onChange({ ...step, else: [] })
-              else {
-                const { else: _else, ...rest } = step
-                onChange(rest)
-              }
-            }}
-          />
-          {step.else !== undefined && (
-            <div className="border-l-2 border-border-subtle pl-3">
-              <ActionList
-                nested
-                actions={step.else}
-                devices={devices}
-                {...(devicesState === undefined ? {} : { devicesState })}
-                {...(variables === undefined ? {} : { variables })}
-                allowedKinds={['cap', 'wait']}
-                onChange={(next) => onChange({ ...step, else: next.filter(isElseStep) })}
-              />
-            </div>
-          )}
+          {children}
         </>
       )}
     </div>
+  )
+}
+
+export function StepGuard({ step, devices, devicesState, variables, onChange }: StepGuardProps) {
+  const { t } = useTranslation()
+  return (
+    <StepIf
+      when={step.if}
+      devices={devices}
+      hint={t(
+        'automation.stepGuard.hint',
+        'Checked when this step is reached. If a state cannot be read, the step and its else are both skipped.',
+      )}
+      onChange={(next) => onChange(next === undefined ? withoutGuard(step) : { ...step, if: next })}
+    >
+      <Switch
+        checked={step.else !== undefined}
+        label={t('automation.stepGuard.else', 'Otherwise, run…')}
+        aria-label={t('automation.stepGuard.else', 'Otherwise, run…')}
+        onCheckedChange={(on) => {
+          if (on) onChange({ ...step, else: [] })
+          else {
+            const { else: _else, ...rest } = step
+            onChange(rest)
+          }
+        }}
+      />
+      {step.else !== undefined && (
+        <div className="border-l-2 border-border-subtle pl-3">
+          <ActionList
+            nested
+            actions={step.else}
+            devices={devices}
+            {...(devicesState === undefined ? {} : { devicesState })}
+            {...(variables === undefined ? {} : { variables })}
+            allowedKinds={['cap', 'wait']}
+            onChange={(next) => onChange({ ...step, else: next.filter(isElseStep) })}
+          />
+        </div>
+      )}
+    </StepIf>
   )
 }

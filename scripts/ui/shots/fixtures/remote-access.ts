@@ -38,7 +38,14 @@ export default defineFixtures({
     'integrationInstances.instanceFormSchema': FORM,
     'integrationInstances.listInstances': (i: { addonId: string }) =>
       i.addonId === 'cloudflare-tunnel'
-        ? [{ id: 'tun_001', name: 'cams.example.com', configured: true, formValues: { label: 'x' } }]
+        ? [
+            {
+              id: 'tun_001',
+              name: 'cams.example.com',
+              configured: true,
+              formValues: { label: 'x' },
+            },
+          ]
         : [],
     'networkAccess.getStatus': (i: { addonId: string }) =>
       i.addonId === 'cloudflare-tunnel'

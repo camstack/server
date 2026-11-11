@@ -37,7 +37,9 @@ export default defineFixtures({
           delivery: 'immediate',
           actions: {
             onTrigger: ['internal:siren'],
-            buttons: [{ id: 'open', label: 'Open gate', actionId: 'internal:gate', icon: 'unlock' }],
+            buttons: [
+              { id: 'open', label: 'Open gate', actionId: 'internal:gate', icon: 'unlock' },
+            ],
           },
           conditions: { classes: ['person'], zones: { ids: ['zone-door'] } },
           // The legacy triple rides along so the pre-D897 editor (the 'before' shot) shows the same choice.

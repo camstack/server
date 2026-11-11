@@ -728,6 +728,72 @@ describe('step args in the trace', () => {
   })
 })
 
+describe('flow control (#500): stop, set, continueOnError', () => {
+  it('set writes the bag for the later steps; stop ends the run as a success and the rest is not-run', async () => {
+    const block = await load({
+      triggers: [MOTION],
+      actions: [
+        { kind: 'set', vars: { room: 'cam {{vars.deviceId}}', level: 4 } },
+        {
+          kind: 'action',
+          actionId: 'internal:night',
+          variables: { zone: '{{vars.room}}', level: '{{vars.level}}' },
+        },
+        { kind: 'stop', reason: 'done for {{vars.room}}', outcome: 'ok' },
+        SIREN,
+      ],
+    })
+    const h = start(block)
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 616)
+    await settle()
+    expect(h.actionRuns.map((r) => r.variables)).toEqual([{ zone: 'cam 616', level: '4' }])
+    expect(h.mutate).not.toHaveBeenCalled()
+    expect(h.traces()[0]).toMatchObject({
+      outcome: 'ran',
+      steps: [
+        { kind: 'set', outcome: 'ok' },
+        { kind: 'action', outcome: 'ok' },
+        { kind: 'stop', outcome: 'ok', message: 'stopped: done for cam 616' },
+        { kind: 'cap', outcome: 'not-run', message: 'stopped at actions.2: done for cam 616' },
+      ],
+    })
+  })
+
+  it('stop with outcome failed fails the run', async () => {
+    const block = await load({
+      triggers: [MOTION],
+      actions: [{ kind: 'stop', reason: 'no', outcome: 'failed' }, SIREN],
+    })
+    const h = start(block)
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 616)
+    await settle()
+    expect(h.mutate).not.toHaveBeenCalled()
+    expect(h.traces()[0]).toMatchObject({
+      outcome: 'failed',
+      steps: [{ outcome: 'error' }, { outcome: 'not-run' }],
+    })
+  })
+
+  it('a failing step marked continueOnError is failed-continued and the next step runs', async () => {
+    const block = await load({
+      triggers: [MOTION],
+      actions: [{ ...SIREN, continueOnError: true }, SIREN],
+    })
+    const h = start(block)
+    h.mutate.mockRejectedValueOnce(new Error('device refused'))
+    await settle()
+    h.emit('motion.on-motion-changed', {}, 616)
+    await settle()
+    expect(h.mutate).toHaveBeenCalledTimes(2)
+    expect(h.traces()[0]).toMatchObject({
+      outcome: 'ran',
+      steps: [{ outcome: 'failed-continued', message: 'device refused' }, { outcome: 'ok' }],
+    })
+  })
+})
+
 describe('action step', () => {
   const ACTION: AutomationRecipe['actions'] = [
     {

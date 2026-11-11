@@ -35,7 +35,14 @@ export default defineFixtures({
     'integrationInstances.instanceFormSchema': FORM,
     'integrationInstances.listInstances': (i: { addonId: string }) =>
       i.addonId === 'coturn'
-        ? [{ id: 'turn_001', name: 'turn.example.com', configured: true, formValues: { label: 'x' } }]
+        ? [
+            {
+              id: 'turn_001',
+              name: 'turn.example.com',
+              configured: true,
+              formValues: { label: 'x' },
+            },
+          ]
         : [],
     'turnProvider.getTurnServers': [
       { urls: ['turn:203.0.113.7:3478'], username: 'u', credential: 'x' },

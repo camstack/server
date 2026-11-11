@@ -50,10 +50,16 @@ function stepIndex(path: string): number {
   return Number.isInteger(n) ? n : 0
 }
 
+/** A step that failed is red whether the run stopped there or was told to go on. */
+function stepTone(outcome: AutomationRunTrace['steps'][number]['outcome']): BlockTone {
+  if (outcome === 'ok') return 'pass'
+  return outcome === 'error' || outcome === 'failed-continued' ? 'fail' : 'idle'
+}
+
 function stepsOf(trace: AutomationRunTrace): readonly StepView[] {
   return trace.steps.map((s) => ({
     index: stepIndex(s.path),
-    tone: s.outcome === 'ok' ? 'pass' : s.outcome === 'error' ? 'fail' : 'idle',
+    tone: stepTone(s.outcome),
     message: nonEmpty(s.message),
   }))
 }
@@ -194,7 +200,7 @@ export function traceDetails(trace: AutomationRunTrace): TraceDetails {
     steps: trace.steps.map((step) => ({
       index: stepIndex(step.path),
       kind: step.kind,
-      tone: step.outcome === 'ok' ? 'pass' : step.outcome === 'error' ? 'fail' : 'idle',
+      tone: stepTone(step.outcome),
       message: nonEmpty(step.message),
       args: Object.entries(step.args ?? {}).map(([name, value]) => ({
         name,

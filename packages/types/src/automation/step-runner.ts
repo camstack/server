@@ -7,6 +7,11 @@
  * sequence STOPS at the first failure (continuing past a failed step executes
  * an intent the operator never expressed), and every step is traced — the ones
  * after a failure, or after an abort, are `not-run` with the reason.
+ *
+ * Flow control (#500) is the operator EXPRESSING that intent: a step marked
+ * `continueOnError` is traced `failed-continued` and the sequence goes on; a
+ * `stop` step ends the run on purpose, as a success or as a failure, and the
+ * steps after it are `not-run` with its reason.
  */
 
 import type { CommandOriginClaim } from '../audit/device-transition.js'
@@ -47,6 +52,19 @@ export interface StepScope {
   setArgs(args: Readonly<Record<string, unknown>>): void
   /** The device values the step's templates printed as `—`, with the reason (D1021). */
   setTemplateNotes(notes: readonly string[]): void
+  /** End the run here, on purpose (#500): the later steps are `not-run` with this reason. */
+  stop(reason: string, outcome: StepStopOutcome): void
+}
+
+/** How a `stop` step ends the run: as a success, or as a failure. */
+export type StepStopOutcome = 'ok' | 'failed'
+
+/** The `stop` that ended a run. */
+export interface StepStop {
+  readonly reason: string
+  readonly outcome: StepStopOutcome
+  /** The step that stopped it. */
+  readonly path: string
 }
 
 /** One step as the runner sees it: its meta and a closure that does the work. */
@@ -57,6 +75,8 @@ export interface RunnableStep {
   readonly guard?: () => Promise<StepConditionVerdict>
   /** Run when the guard reads `false`; never when it reads `unknown`. */
   readonly otherwise?: readonly RunnableStep[]
+  /** A failure of THIS step is traced `failed-continued` and the sequence goes on (#500). */
+  readonly continueOnError?: boolean
 }
 
 export interface StepFailure {
@@ -85,12 +105,16 @@ export interface RunStepsOptions {
   readonly onFailure: (failure: StepFailure) => void
   /** Called for a step skipped because its `if` read unknown: a branch that drops work says so (#472). */
   readonly onGuardUnknown?: (skipped: StepGuardUnknown) => void
+  /** Called for a step that failed and was passed over (`continueOnError`): work that was dropped says so. */
+  readonly onContinuedFailure?: (failure: StepFailure) => void
 }
 
 export interface RunStepsResult {
   readonly steps: readonly AutomationStepTrace[]
   readonly failed: boolean
   readonly aborted: boolean
+  /** Set when a `stop` step ended the run. */
+  readonly stopped?: StepStop
 }
 
 function errorMessage(err: unknown): string {
@@ -121,8 +145,18 @@ export async function runSteps(
   const traces: AutomationStepTrace[] = []
   let failed = false
   let aborted = false
+  let stopped: StepStop | undefined
   for (const [index, step] of steps.entries()) {
     const path = `${options.pathPrefix}.${index}`
+    if (stopped !== undefined) {
+      traces.push({
+        ...step.meta,
+        path,
+        outcome: 'not-run',
+        message: `stopped at ${stopped.path}: ${stopped.reason}`,
+      })
+      continue
+    }
     if (failed || aborted || options.isAborted()) {
       if (!failed) aborted = true
       traces.push({
@@ -166,6 +200,7 @@ export async function runSteps(
         const sub = await runSteps(branch, { ...options, pathPrefix: `${path}.else` })
         if (sub.failed) failed = true
         else if (sub.aborted) aborted = true
+        if (sub.stopped !== undefined) stopped = sub.stopped
         traces.push({
           ...step.meta,
           ...guardTrace,
@@ -200,6 +235,9 @@ export async function runSteps(
       setTemplateNotes: (notes) => {
         templateNotes = notes.slice(0, MAX_STEP_TEMPLATE_NOTES)
       },
+      stop: (reason, outcome) => {
+        stopped = { reason, outcome, path }
+      },
     }
     const templatesTrace = (): { templates?: string[] } =>
       templateNotes.length === 0 ? {} : { templates: [...templateNotes] }
@@ -209,6 +247,25 @@ export async function runSteps(
       perDevice.length === 0 ? {} : { devices: perDevice.slice(0, MAX_STEP_DEVICE_OUTCOMES) }
     try {
       await step.run(scope)
+      // a closure wrote it: read it back through a call so the narrowing above does not hide it
+      const stop = ((): StepStop | undefined => stopped)()
+      if (stop !== undefined) {
+        const message = `stopped: ${stop.reason}`
+        if (stop.outcome === 'failed') {
+          failed = true
+          options.onFailure({ index, path, message, deviceId })
+        }
+        traces.push({
+          ...step.meta,
+          ...guardTrace,
+          path,
+          startedAt,
+          endedAt: options.now(),
+          outcome: stop.outcome === 'failed' ? 'error' : 'ok',
+          message,
+        })
+        continue
+      }
       traces.push({
         ...step.meta,
         ...(deviceId === undefined || perDevice.length > 1 ? {} : { deviceId }),
@@ -223,9 +280,14 @@ export async function runSteps(
         ...(emptyReason === undefined ? {} : { message: emptyReason }),
       })
     } catch (err: unknown) {
-      failed = true
       const message = errorMessage(err)
-      options.onFailure({ index, path, message, deviceId })
+      const continued = step.continueOnError === true
+      if (continued) {
+        options.onContinuedFailure?.({ index, path, message, deviceId })
+      } else {
+        failed = true
+        options.onFailure({ index, path, message, deviceId })
+      }
       traces.push({
         ...step.meta,
         ...(deviceId === undefined || perDevice.length > 1 ? {} : { deviceId }),
@@ -236,12 +298,17 @@ export async function runSteps(
         path,
         startedAt,
         endedAt: options.now(),
-        outcome: 'error',
+        outcome: continued ? 'failed-continued' : 'error',
         message,
       })
     }
   }
-  return { steps: traces, failed, aborted: aborted && !failed }
+  return {
+    steps: traces,
+    failed,
+    aborted: aborted && !failed,
+    ...(stopped === undefined ? {} : { stopped }),
+  }
 }
 
 /** The bag of values `{ $var }` and `{{vars.x}}` read from. */

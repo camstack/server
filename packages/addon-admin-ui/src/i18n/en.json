@@ -6022,7 +6022,20 @@
       "addStep": "Step",
       "kindAction": "Run an action",
       "alreadyFirstStep": "This step already runs first",
-      "alreadyLastStep": "This step already runs last"
+      "alreadyLastStep": "This step already runs last",
+      "kindStop": "Stop the run",
+      "kindSet": "Set variables",
+      "stopReason": "Reason",
+      "stopOutcome": "The run ends as",
+      "stopOk": "A success",
+      "stopFailed": "A failure",
+      "setName": "Variable",
+      "setValue": "Value",
+      "setRemove": "Remove this variable",
+      "setAdd": "Add a variable",
+      "setHint": "The steps after this one can use it as {{slot}}.",
+      "continueOnError": "Continue if this step fails",
+      "flowGuardHint": "Checked when this step is reached. If it is false, or a state cannot be read, the step does nothing."
     },
     "automationEditor": {
       "name": "Name",

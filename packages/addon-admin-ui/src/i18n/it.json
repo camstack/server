@@ -6097,7 +6097,20 @@
       "addStep": "Passaggio",
       "kindAction": "Esegui un'azione",
       "alreadyFirstStep": "Questo passo viene già eseguito per primo",
-      "alreadyLastStep": "Questo passo viene già eseguito per ultimo"
+      "alreadyLastStep": "Questo passo viene già eseguito per ultimo",
+      "kindStop": "Ferma l'esecuzione",
+      "kindSet": "Imposta variabili",
+      "stopReason": "Motivo",
+      "stopOutcome": "L'esecuzione termina come",
+      "stopOk": "Un successo",
+      "stopFailed": "Un errore",
+      "setName": "Variabile",
+      "setValue": "Valore",
+      "setRemove": "Rimuovi questa variabile",
+      "setAdd": "Aggiungi una variabile",
+      "setHint": "I passi successivi possono usarla come {{slot}}.",
+      "continueOnError": "Continua se questo passo fallisce",
+      "flowGuardHint": "Verificata quando si arriva a questo passo. Se è falsa, o uno stato non è leggibile, il passo non fa nulla."
     },
     "automationEditor": {
       "name": "Nome",
