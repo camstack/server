@@ -28,6 +28,8 @@ export interface ModelHeroProps {
   readonly renderRemote?: (deviceName: string) => ReactNode
   /** Told whether the model hero (not the fallback) is what is on screen. */
   readonly onDrawn?: (drawn: boolean) => void
+  /** Draw the device name on the card (default true); false when the host's own header names it. */
+  readonly showName?: boolean
 }
 
 /**
@@ -46,6 +48,7 @@ export function ModelHero({
   onOpenHistory,
   renderRemote,
   onDrawn,
+  showName = true,
 }: ModelHeroProps): ReactNode {
   const client = useTrpcClient()
   const confirm = useConfirm()
@@ -128,6 +131,7 @@ export function ModelHero({
           ...(onOpenHistory === undefined ? {} : { openHistory: onOpenHistory }),
         }}
         remote={renderRemote?.(built.name)}
+        showName={showName}
       />
     </div>
   )

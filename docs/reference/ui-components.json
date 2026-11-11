@@ -7118,6 +7118,12 @@
           "doc": ""
         },
         {
+          "name": "showTitle",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Draw the title in the top row. Default true; a host whose own header already names the device (the viewer's device screen) passes false, and"
+        },
+        {
           "name": "chips",
           "type": "ReactNode",
           "optional": true,
@@ -7192,6 +7198,12 @@
           "type": "ReactNode",
           "optional": true,
           "doc": "The remote button, when the model carries the `remote` slot."
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Draw the device name in the top row (default true); see `HeroCardA.showTitle`."
         }
       ]
     },
@@ -9363,6 +9375,12 @@
           "type": "(drawn: boolean) => void",
           "optional": true,
           "doc": "Told whether the model hero (not the fallback) is what is on screen."
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Draw the device name on the card (default true); false when the host's own header names it."
         }
       ]
     },

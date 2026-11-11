@@ -33,4 +33,6 @@ export interface DeviceDetailModuleProps extends DeviceModuleNavigation {
   readonly fallback?: ReactNode
   /** Told whether the hero model (not the fallback) is on screen. */
   readonly onDrawn?: (drawn: boolean) => void
+  /** Draw the device name on the card (default true); false when the host's own header names it. */
+  readonly showName?: boolean
 }

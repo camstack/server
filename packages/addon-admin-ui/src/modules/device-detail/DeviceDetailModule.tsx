@@ -31,7 +31,10 @@ import type { DeviceDetailModuleProps } from './types'
 /** One cache per mounted module when the host does not lend its own. */
 function useOwnQueryClient(lent: QueryClient | undefined): QueryClient {
   const [own] = useState(
-    () => new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 5_000 } } }),
+    () =>
+      new QueryClient({
+        defaultOptions: { queries: { retry: false, staleTime: 5_000 } },
+      }),
   )
   return lent ?? own
 }
@@ -94,7 +97,11 @@ function HeroBody({
   fallback,
   onDrawn,
   defaultHistoryOpen,
-}: Pick<DeviceDetailModuleProps, 'deviceId' | 'fallback' | 'onDrawn' | 'defaultHistoryOpen'> & {
+  showName,
+}: Pick<
+  DeviceDetailModuleProps,
+  'deviceId' | 'fallback' | 'onDrawn' | 'defaultHistoryOpen' | 'showName'
+> & {
   readonly canActuate: boolean
 }): ReactNode {
   const { t, i18n } = useTranslation()
@@ -114,6 +121,7 @@ function HeroBody({
           <RemoteHeroButton deviceId={deviceId} deviceName={deviceName} />
         )}
         fallback={fallback ?? null}
+        showName={showName !== false}
         {...(hasHistory ? { onOpenHistory: openHistory } : {})}
         {...(onDrawn === undefined ? {} : { onDrawn })}
       />
@@ -154,6 +162,7 @@ export function DeviceDetailModule({
   onOpenCamera,
   onClose,
   onNavigate,
+  showName,
 }: DeviceDetailModuleProps): ReactNode {
   const client = useOwnQueryClient(queryClient)
   const moduleI18n = useMemo(() => i18n.cloneInstance({ lng: locale }), [locale])
@@ -177,6 +186,7 @@ export function DeviceDetailModule({
                       fallback={fallback}
                       onDrawn={onDrawn}
                       defaultHistoryOpen={defaultHistoryOpen}
+                      showName={showName}
                     />
                   </DeviceModuleProvider>
                 </ConfirmDialogProvider>

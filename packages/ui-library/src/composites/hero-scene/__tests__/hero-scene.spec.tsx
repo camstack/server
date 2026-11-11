@@ -55,7 +55,12 @@ describe('scene selection', () => {
   })
 
   it('params override the derived tone and speed', () => {
-    const v = resolveSceneVisual({ scene: 'light', state: 'on', tone: 'success', speed: 'fast' })
+    const v = resolveSceneVisual({
+      scene: 'light',
+      state: 'on',
+      tone: 'success',
+      speed: 'fast',
+    })
     expect(v).toMatchObject({ tone: 'success', speed: 'fast' })
   })
 
@@ -119,6 +124,27 @@ describe('HeroCardA', () => {
       <HeroCardA title="x" scene={<div />} footChips={<i>filter</i>} footAction={<b>History</b>} />,
     )
     expect(screen.getByTestId('hero-card-foot').textContent).toContain('History')
+  })
+
+  it('a host that names the device itself drops the title and keeps the chips', () => {
+    const named = render(
+      <HeroCardA title="Washer plug" chips={<span>Shelly</span>} scene={<div />} />,
+    )
+    expect(screen.getByText('Washer plug')).toBeTruthy()
+    named.unmount()
+    const bare = render(
+      <HeroCardA
+        title="Washer plug"
+        showTitle={false}
+        chips={<span>Shelly</span>}
+        scene={<div />}
+      />,
+    )
+    expect(screen.queryByText('Washer plug')).toBeNull()
+    expect(screen.getByTestId('hero-card-top').textContent).toBe('Shelly')
+    bare.unmount()
+    render(<HeroCardA title="Washer plug" showTitle={false} scene={<div />} />)
+    expect(screen.queryByTestId('hero-card-top')).toBeNull()
   })
 })
 

@@ -3,6 +3,12 @@ import { cn } from '../../lib/cn'
 
 export interface HeroCardAProps {
   readonly title: string
+  /**
+   * Draw the title in the top row. Default true; a host whose own header
+   * already names the device (the viewer's device screen) passes false, and the
+   * top row keeps only the chips.
+   */
+  readonly showTitle?: boolean
   /** Inline chips next to the title (brand, power, state). Never wrap: the row clips. */
   readonly chips?: ReactNode
   /** The HeroScene. */
@@ -25,6 +31,7 @@ export interface HeroCardAProps {
  */
 export function HeroCardA({
   title,
+  showTitle = true,
   chips,
   scene,
   rows,
@@ -34,6 +41,7 @@ export function HeroCardA({
   className,
 }: HeroCardAProps): ReactNode {
   const hasFoot = footChips !== undefined || footAction !== undefined
+  const hasTop = showTitle || chips !== undefined
   return (
     <section
       data-testid="hero-card-a"
@@ -42,15 +50,24 @@ export function HeroCardA({
         className,
       )}
     >
-      <div
-        data-testid="hero-card-top"
-        className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden whitespace-nowrap"
-      >
-        <h3 className="min-w-0 flex-1 truncate text-base font-semibold text-foreground">{title}</h3>
-        {chips !== undefined ? (
-          <div className="flex shrink-0 flex-nowrap items-center gap-1.5">{chips}</div>
-        ) : null}
-      </div>
+      {hasTop ? (
+        <div
+          data-testid="hero-card-top"
+          className={cn(
+            'flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden whitespace-nowrap',
+            !showTitle && 'justify-end',
+          )}
+        >
+          {showTitle ? (
+            <h3 className="min-w-0 flex-1 truncate text-base font-semibold text-foreground">
+              {title}
+            </h3>
+          ) : null}
+          {chips !== undefined ? (
+            <div className="flex shrink-0 flex-nowrap items-center gap-1.5">{chips}</div>
+          ) : null}
+        </div>
+      ) : null}
       {scene}
       {rows !== undefined ? <div className="flex flex-col gap-2">{rows}</div> : null}
       {hasFoot ? (

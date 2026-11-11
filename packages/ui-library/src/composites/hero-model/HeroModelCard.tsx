@@ -182,7 +182,11 @@ type SliderModel = Extract<HeroControl, { kind: 'slider' }>
 function withoutSceneControls(row: HeroRow): HeroRow {
   if (row.placement !== 'scene') return row
   const rest = row.controls.filter((c) => !isSceneControl(c))
-  return { ...row, status: rest.length === 0 ? null : row.status, controls: rest }
+  return {
+    ...row,
+    status: rest.length === 0 ? null : row.status,
+    controls: rest,
+  }
 }
 
 /** A row without the slider the scene already draws in its centre. */
@@ -610,10 +614,17 @@ export interface HeroModelCardProps {
   readonly host: HeroCardHost
   /** The remote button, when the model carries the `remote` slot. */
   readonly remote?: ReactNode
+  /** Draw the device name in the top row (default true); see `HeroCardA.showTitle`. */
+  readonly showName?: boolean
 }
 
 /** Layout A, drawn from the hero model and nothing else (D1023). */
-export function HeroModelCard({ model, host, remote }: HeroModelCardProps): ReactNode {
+export function HeroModelCard({
+  model,
+  host,
+  remote,
+  showName = true,
+}: HeroModelCardProps): ReactNode {
   const { lang } = host
   const scene = sceneOf(model)
   const gated = new Set(model.gated)
@@ -635,6 +646,7 @@ export function HeroModelCard({ model, host, remote }: HeroModelCardProps): Reac
   return (
     <HeroCardA
       title={model.name}
+      showTitle={showName}
       chips={<Chips model={model} lang={lang} />}
       scene={
         <HeroScene
