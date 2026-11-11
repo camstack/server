@@ -11,6 +11,9 @@ import type {
 import { formatLogLine } from '../../logging/formatter.js'
 import { LogFileReadClient, type LogFileReadClientOptions } from './log-file-read-client.js'
 
+/** How long `shutdown` waits for the rotating file to close before giving up. */
+const LOG_FILE_CLOSE_BOUND_MS = 5_000
+
 interface WinstonConfig {
   readonly level: string
   readonly retentionDays: number
@@ -26,6 +29,7 @@ interface WinstonConfig {
  */
 export class WinstonDestination implements ILogDestination {
   private logger: winston.Logger | null = null
+  private fileTransport: DailyRotateFile | null = null
   private reader: LogFileReadClient | null = null
   private retentionDays = 30
 
@@ -75,18 +79,15 @@ export class WinstonDestination implements ILogDestination {
     // above stays wired in so a future opt-in transport can use it
     // without re-deriving the layout.
     void consoleFormat
-    this.logger = winston.createLogger({
-      level,
-      transports: [
-        new DailyRotateFile({
-          dirname: logsDir,
-          filename: 'camstack-%DATE%.log',
-          datePattern: 'YYYY-MM-DD',
-          maxFiles: `${retentionDays}d`,
-          format: fileFormat,
-        }),
-      ],
+    const fileTransport = new DailyRotateFile({
+      dirname: logsDir,
+      filename: 'camstack-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      maxFiles: `${retentionDays}d`,
+      format: fileFormat,
     })
+    this.fileTransport = fileTransport
+    this.logger = winston.createLogger({ level, transports: [fileTransport] })
   }
 
   write(entry: LogEntry): void {
@@ -148,12 +149,31 @@ export class WinstonDestination implements ILogDestination {
   async shutdown(): Promise<void> {
     this.reader?.stop()
     this.reader = null
-    if (!this.logger) return
-
-    await new Promise<void>((resolve) => {
-      this.logger!.on('finish', resolve)
-      this.logger!.end()
-    })
+    const logger = this.logger
+    const fileTransport = this.fileTransport
+    if (!logger) return
     this.logger = null
+    this.fileTransport = null
+
+    // The logger's 'finish' fires when the transport's writable side ended,
+    // not when the rotating file stream under it opened, flushed and closed
+    // (that closes later, on unpipe). Resolving there let the file open land
+    // after the caller removed the directory. Wait for the descriptor itself.
+    // Bounded: a stream that never reports its close must not hang a stopping
+    // node. The bound is far above a healthy close (milliseconds).
+    const fileClosed = new Promise<void>((resolve) => {
+      if (fileTransport === null) return resolve()
+      const bound = setTimeout(resolve, LOG_FILE_CLOSE_BOUND_MS)
+      bound.unref()
+      fileTransport.logStream.once('close', () => {
+        clearTimeout(bound)
+        resolve()
+      })
+    })
+    await new Promise<void>((resolve) => {
+      logger.on('finish', resolve)
+      logger.end()
+    })
+    await fileClosed
   }
 }
