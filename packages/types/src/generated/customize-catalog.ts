@@ -7,7 +7,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Customize catalog, projected from every `*.cap.ts` `customize` block.
- * 10 caps. Field keys are `runtimeState` paths. No Zod.
+ * 11 caps. Field keys are `runtimeState` paths. No Zod.
  */
 export const CAP_CUSTOMIZE_CATALOG = {
   'battery': {
@@ -256,6 +256,339 @@ export const CAP_CUSTOMIZE_CATALOG = {
         counterPath: 'pressCountSinceStart',
         highWater: 'composer-advance',
         debounceMs: 2000,
+      },
+    ],
+  },
+  'fan-control': {
+    version: 1,
+    targets: [
+      {
+        id: 'horizontal-oscillating',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Fan],
+        apply: 'replace',
+        vocabularyCap: 'fan-control',
+        vocabularyStateField: 'oscillating',
+        sources: [
+          {
+            kind: 'switch',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        section: 'oscillation-axes',
+        path: 'oscillationAxes.horizontal.oscillating',
+        valueKind: 'boolean',
+        nullable: true,
+      },
+      {
+        id: 'horizontal-angle',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Fan],
+        apply: 'replace',
+        vocabularyCap: 'fan-control',
+        sources: [
+          {
+            kind: 'numeric',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        section: 'oscillation-axes',
+        path: 'oscillationAxes.horizontal.angle',
+        valueKind: 'number',
+        nullable: true,
+        companions: [
+          {
+            kind: 'source-field',
+            path: 'oscillationAxes.horizontal.min',
+            field: 'min',
+          },
+          {
+            kind: 'source-field',
+            path: 'oscillationAxes.horizontal.max',
+            field: 'max',
+          },
+          {
+            kind: 'source-field',
+            path: 'oscillationAxes.horizontal.step',
+            field: 'step',
+          },
+        ],
+      },
+      {
+        id: 'horizontal-sweepFrom',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Fan],
+        apply: 'replace',
+        vocabularyCap: 'fan-control',
+        sources: [
+          {
+            kind: 'numeric',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        section: 'oscillation-axes',
+        path: 'oscillationAxes.horizontal.sweepFrom',
+        valueKind: 'number',
+        nullable: true,
+      },
+      {
+        id: 'horizontal-sweepTo',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Fan],
+        apply: 'replace',
+        vocabularyCap: 'fan-control',
+        sources: [
+          {
+            kind: 'numeric',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        section: 'oscillation-axes',
+        path: 'oscillationAxes.horizontal.sweepTo',
+        valueKind: 'number',
+        nullable: true,
+      },
+      {
+        id: 'vertical-oscillating',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Fan],
+        apply: 'replace',
+        vocabularyCap: 'fan-control',
+        vocabularyStateField: 'oscillating',
+        sources: [
+          {
+            kind: 'switch',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        section: 'oscillation-axes',
+        path: 'oscillationAxes.vertical.oscillating',
+        valueKind: 'boolean',
+        nullable: true,
+      },
+      {
+        id: 'vertical-angle',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Fan],
+        apply: 'replace',
+        vocabularyCap: 'fan-control',
+        sources: [
+          {
+            kind: 'numeric',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        section: 'oscillation-axes',
+        path: 'oscillationAxes.vertical.angle',
+        valueKind: 'number',
+        nullable: true,
+        companions: [
+          {
+            kind: 'source-field',
+            path: 'oscillationAxes.vertical.min',
+            field: 'min',
+          },
+          {
+            kind: 'source-field',
+            path: 'oscillationAxes.vertical.max',
+            field: 'max',
+          },
+          {
+            kind: 'source-field',
+            path: 'oscillationAxes.vertical.step',
+            field: 'step',
+          },
+        ],
+      },
+      {
+        id: 'vertical-sweepFrom',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Fan],
+        apply: 'replace',
+        vocabularyCap: 'fan-control',
+        sources: [
+          {
+            kind: 'numeric',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        section: 'oscillation-axes',
+        path: 'oscillationAxes.vertical.sweepFrom',
+        valueKind: 'number',
+        nullable: true,
+      },
+      {
+        id: 'vertical-sweepTo',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Fan],
+        apply: 'replace',
+        vocabularyCap: 'fan-control',
+        sources: [
+          {
+            kind: 'numeric',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        section: 'oscillation-axes',
+        path: 'oscillationAxes.vertical.sweepTo',
+        valueKind: 'number',
+        nullable: true,
+      },
+      {
+        id: 'preset',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Fan],
+        apply: 'replace',
+        vocabularyCap: 'fan-control',
+        sources: [
+          {
+            kind: 'field',
+            valueKinds: [
+              'string',
+            ],
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        path: 'preset',
+        valueKind: 'string',
+        nullable: false,
+      },
+    ],
+    overridable: [
+      {
+        path: 'oscillationAxes.horizontal.oscillating',
+        by: 'horizontal-oscillating',
+      },
+      {
+        path: 'oscillationAxes.horizontal.angle',
+        by: 'horizontal-angle',
+      },
+      {
+        path: 'oscillationAxes.horizontal.sweepFrom',
+        by: 'horizontal-sweepFrom',
+      },
+      {
+        path: 'oscillationAxes.horizontal.sweepTo',
+        by: 'horizontal-sweepTo',
+      },
+      {
+        path: 'oscillationAxes.vertical.oscillating',
+        by: 'vertical-oscillating',
+      },
+      {
+        path: 'oscillationAxes.vertical.angle',
+        by: 'vertical-angle',
+      },
+      {
+        path: 'oscillationAxes.vertical.sweepFrom',
+        by: 'vertical-sweepFrom',
+      },
+      {
+        path: 'oscillationAxes.vertical.sweepTo',
+        by: 'vertical-sweepTo',
+      },
+      {
+        path: 'preset',
+        by: 'preset',
       },
     ],
   },

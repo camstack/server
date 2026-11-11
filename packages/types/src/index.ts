@@ -1655,6 +1655,7 @@ export {
   CUSTOMIZE_APPLY_AUTHORITY_KINDS,
   CUSTOMIZE_CARDINALITIES,
   CUSTOMIZE_EVENT_SHAPES,
+  CUSTOMIZE_TARGET_SECTIONS,
 } from './capabilities/customize-spec.js'
 export type {
   CapabilityCustomizeSpec,
@@ -1663,6 +1664,7 @@ export type {
   CustomizeCardinality,
   CustomizeEventShape,
   CustomizeEventEdge,
+  CustomizeTargetSection,
   EventCustomizeTarget,
   PulseEventCustomizeTarget,
   SpanEventCustomizeTarget,

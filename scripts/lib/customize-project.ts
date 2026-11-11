@@ -226,6 +226,7 @@ function identity(
     sources: [],
     sourceReport: target.sourceReport,
     advancedExpression: target.advancedExpression === true,
+    ...(target.section === undefined ? {} : { section: target.section }),
   }
 }
 

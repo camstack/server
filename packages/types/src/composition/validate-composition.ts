@@ -61,6 +61,7 @@ import {
 } from './composition-report.js'
 import { planCompositionEvents } from './composition-events.js'
 import {
+  describeStateField,
   describeTopLevelStateFields,
   requiredTopLevelKeys,
   type StateFieldDescription,
@@ -280,23 +281,40 @@ interface TopLevelField {
   readonly source: CompositionFieldSource
 }
 
+/**
+ * A dotted leaf is planned only on a `replace` (D1033): the feature already
+ * passed `overridesOnlyDeclared`, so the leaf is one the cap lists in its
+ * `overridable`, and the hub sets it into the native object. Anywhere else a
+ * nested field is still refused.
+ */
+function stateFieldOf(
+  { fields, state }: ComposableCap,
+  path: string,
+  mode: CompositionFeatureMode,
+): StateFieldDescription | undefined | 'nested' {
+  if (!path.includes('.')) return fields.get(path)
+  if (mode !== 'replace') return 'nested'
+  return describeStateField(state, path) ?? undefined
+}
+
 function planTopLevelField(
-  { def, fields }: ComposableCap,
+  cap: ComposableCap,
   field: TopLevelField,
   mode: CompositionFeatureMode,
   lookupCap: CapabilityLookup,
 ): CompositionPlanResult {
+  const { def } = cap
   const { featureIndex, path, source } = field
   const fieldAt = `features[${featureIndex}].fields.${path}`
-  if (path.includes('.'))
+  const tf = stateFieldOf(cap, path, mode)
+  if (tf === 'nested')
     return refused(
       problem(
         'nested-field',
         fieldAt,
-        `\`${path}\` is nested — nested fields arrive in a later slice`,
+        `\`${path}\` is nested — a nested field is planned only on a declared replace (D1033)`,
       ),
     )
-  const tf = fields.get(path)
   if (tf === undefined)
     return refused(problem('unknown-field', fieldAt, `\`${def.name}\` has no field \`${path}\``))
   const kinds = sourceKinds(source, lookupCap)
@@ -483,7 +501,7 @@ function overridesOnlyDeclared(feature: CompositionFieldsFeature): boolean {
       const target = entry?.targets.find((t) => t.id === o.by && t.path === o.path)
       // A target's replace-time companions (source, clock, transition time) ride with its field.
       const companions = (target?.companions ?? []).filter(
-        (c) => c.kind === 'transition-time' || c.when === 'always',
+        (c) => c.kind === 'transition-time' || c.kind === 'source-field' || c.when === 'always',
       )
       return [o.path, ...companions.map((c) => c.path)]
     }),

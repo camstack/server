@@ -25,6 +25,14 @@ export type CustomizeEventShape = (typeof CUSTOMIZE_EVENT_SHAPES)[number]
 export const CUSTOMIZE_APPLY_AUTHORITY_KINDS = ['composition-claim', 'camera-sensors'] as const
 export type CustomizeApplyAuthorityKind = (typeof CUSTOMIZE_APPLY_AUTHORITY_KINDS)[number]
 export type CustomizeValueKind = 'boolean' | 'number' | 'string' | 'enum'
+
+/**
+ * A named group a cap may file its targets under in the Customize table
+ * (D1033). Admin-ui keys a section title off this list; a target without one
+ * lands in the section its cardinality implies.
+ */
+export const CUSTOMIZE_TARGET_SECTIONS = ['oscillation-axes'] as const
+export type CustomizeTargetSection = (typeof CUSTOMIZE_TARGET_SECTIONS)[number]
 /**
  * `add`: an extension is offered only when the device lacks the capability (D944).
  * `replace`: the extension replaces a NATIVE field, and only a field the cap
@@ -34,7 +42,11 @@ export type CustomizeApplyMode = 'add' | 'replace'
 
 /** A native field a named extension of the same cap may replace. The only door to `apply: 'replace'`. */
 export interface CustomizeOverridable {
-  /** Top-level state field of the cap's runtime slice. */
+  /**
+   * State field of the cap's runtime slice: top-level, or a dotted leaf
+   * (`oscillationAxes.horizontal.angle`, D1033) — the claim then owns that
+   * leaf only and the hub sets it into the native object.
+   */
   readonly path: string
   /** The id of the scalar target allowed to replace it. */
   readonly by: string
@@ -76,6 +88,8 @@ export interface CustomizeTargetBase {
   readonly apply: CustomizeApplyMode
   readonly sourceReport: CustomizeSourceReport
   readonly advancedExpression?: boolean
+  /** The Customize section the target is listed under (D1033). */
+  readonly section?: CustomizeTargetSection
 }
 
 export type CustomizeSourceSpec =
@@ -210,6 +224,7 @@ export type CustomizeCompanion =
   | CustomizeConstantCompanion
   | CustomizeClockCompanion
   | CustomizeTransitionTimeCompanion
+  | CustomizeSourceFieldCompanion
 
 export interface CustomizeConstantCompanion {
   readonly kind: 'constant'
@@ -228,6 +243,18 @@ export interface CustomizeClockCompanion {
   readonly kind: 'clock'
   readonly path: string
   readonly when: 'add' | 'always'
+}
+
+/**
+ * Another field of the SAME linked source, written beside the assigned value
+ * (D1033): a fan axis takes its limits from the `min`/`max`/`step` of the
+ * control linked to its angle. Rides with the field on an add and a replace.
+ */
+export interface CustomizeSourceFieldCompanion {
+  readonly kind: 'source-field'
+  readonly path: string
+  /** The field of the linked source device's cap. */
+  readonly field: string
 }
 
 export interface CustomizeTransitionTimeCompanion {

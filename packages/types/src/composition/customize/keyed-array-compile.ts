@@ -277,7 +277,7 @@ function compileCompanions(
 }
 
 function companionIncluded(companion: CustomizeCompanion, apply: 'add' | 'replace'): boolean {
-  if (companion.kind === 'transition-time') return false
+  if (companion.kind === 'transition-time' || companion.kind === 'source-field') return false
   return companion.when === 'always' || apply === 'add'
 }
 

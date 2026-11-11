@@ -2814,7 +2814,8 @@
         "extensions": "Extensions",
         "offCatalog": "Other fields",
         "actions": "Linked actions",
-        "linked": "Linked devices"
+        "linked": "Linked devices",
+        "oscillation-axes": "Oscillation axes"
       },
       "caps": {
         "battery": "Battery",
@@ -2826,7 +2827,8 @@
         "power-meter": "Power and energy",
         "power-source": "Power source",
         "remote": "Remote",
-        "running-state": "Running"
+        "running-state": "Running",
+        "fan-control": "Fan"
       },
       "edit": "Edit",
       "editWhat": "Edit {{title}}",

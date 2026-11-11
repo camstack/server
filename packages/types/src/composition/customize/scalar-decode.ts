@@ -189,7 +189,9 @@ function inferApply(
   fields: CompositionFieldsFeature['fields'],
 ): 'add' | 'replace' | null {
   const addPaths = (target.companions ?? []).flatMap((companion) =>
-    companion.kind !== 'transition-time' && companion.when === 'add' ? [companion.path] : [],
+    (companion.kind === 'constant' || companion.kind === 'clock') && companion.when === 'add'
+      ? [companion.path]
+      : [],
   )
   if (addPaths.length === 0) return 'replace'
   const present = addPaths.filter((path) => fields[path] !== undefined)

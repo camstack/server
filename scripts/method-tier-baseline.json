@@ -443,6 +443,7 @@
   "failureContribution.list": "admin",
   "fanControl.setDirection": "protected",
   "fanControl.setOscillating": "protected",
+  "fanControl.setOscillationAxis": "protected",
   "fanControl.setPercentage": "protected",
   "fanControl.setPreset": "protected",
   "fanPresets.applyPreset": "protected",

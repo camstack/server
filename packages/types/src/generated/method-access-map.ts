@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1482 method paths across 205 capabilities.
+ * Coverage: 1483 method paths across 205 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -507,6 +507,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'fanControl.getStatus': { capName: "fan-control", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'fanControl.setDirection': { capName: "fan-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'fanControl.setOscillating': { capName: "fan-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'fanControl.setOscillationAxis': { capName: "fan-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'fanControl.setPercentage': { capName: "fan-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'fanControl.setPreset': { capName: "fan-control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'fanPresets.applyPreset': { capName: "fan-presets", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

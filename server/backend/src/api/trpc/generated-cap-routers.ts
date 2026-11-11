@@ -7776,6 +7776,22 @@ export function createCapRouter_fanControl(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return fn.call(p, methodInput as any)
       }),
+    setOscillationAxis: protectedProcedure
+      .input(fanControlCapability.methods.setOscillationAxis.input.loose())
+      .output(fanControlCapability.methods.setOscillationAxis.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('fan-control', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.setOscillationAxis
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "fan-control" provider does not implement "setOscillationAxis"',
+          })
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
+      }),
   })
 }
 

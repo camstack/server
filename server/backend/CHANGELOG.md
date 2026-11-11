@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
+- fan-control gains the setOscillationAxis route.
 
 ## [1.2.839] - 2026-11-11
 

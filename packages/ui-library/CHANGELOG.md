@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Device cards and rows read the role: a switch with the heater role gets the timed run and heater card, a switch with the fan role is drawn as a fan; the thermostat and heater types are gone (climate roles label each climate device).
 - The device card reads a climate device's kind and a heater from the device role, so a heater switch gets the plug card with its timed run and every climate role gets its own illustration.
+- Generated hook for fan-control setOscillationAxis.
 
 ## [1.2.425] - 2026-11-11
 

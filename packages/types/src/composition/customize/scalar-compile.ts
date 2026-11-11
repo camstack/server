@@ -141,7 +141,7 @@ function compileValue(input: ScalarCompileInput): CustomizeRoundTrip<Composition
   const read = fromRead(refOf(input.draft), input.draft.source.cap, input.draft.source.fieldPath)
   const transform = input.draft.transform
   if (transform.kind === 'identity' || transform.kind === 'number') {
-    return { ok: true, value: identityValue(read, input.sourceValueKind) }
+    return { ok: true, value: identityValue(read, input.sourceValueKind, targetValueKind(input)) }
   }
   if (transform.kind === 'invert') {
     if (input.sourceValueKind !== 'boolean') return fail('source-kind')
@@ -153,11 +153,23 @@ function compileValue(input: ScalarCompileInput): CustomizeRoundTrip<Composition
   return fail('transform')
 }
 
+/** The kind of the field a draft writes, from the catalog. */
+function targetValueKind(input: ScalarCompileInput): CustomizeCatalogTarget['valueKind'] {
+  return catalogTarget(input.draft.cap, input.draft.targetId)?.valueKind
+}
+
+/**
+ * A string reading feeds a NUMBER field through `number(x)`; a string field
+ * (a fan `preset` linked to a select, D1033) takes the string as it is.
+ */
 function identityValue(
   read: CompositionFromSource,
   valueKind: ScalarValueKind,
+  targetKind: CustomizeCatalogTarget['valueKind'],
 ): CompositionFieldSource {
-  if (valueKind === 'string') return expression('number(x)', { x: read })
+  if (valueKind === 'string' && targetKind !== 'string' && targetKind !== 'enum') {
+    return expression('number(x)', { x: read })
+  }
   return read
 }
 
@@ -257,7 +269,7 @@ function compileCompanions(
 }
 
 function companionIncluded(companion: CustomizeCompanion, apply: 'add' | 'replace'): boolean {
-  if (companion.kind === 'transition-time') return true
+  if (companion.kind === 'transition-time' || companion.kind === 'source-field') return true
   return companion.when === 'always' || apply === 'add'
 }
 
@@ -273,6 +285,12 @@ function companionField(
     return { ok: true, value: literal(expr) }
   }
   if (companion.kind === 'clock') return { ok: true, value: literal('now') }
+  if (companion.kind === 'source-field') {
+    return {
+      ok: true,
+      value: fromRead(refOf(input.draft), input.draft.source.cap, companion.field),
+    }
+  }
   return transitionField(input, path, companion.sourceChangedAt, value)
 }
 

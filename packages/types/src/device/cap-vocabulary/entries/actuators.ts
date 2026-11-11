@@ -1089,6 +1089,50 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
         effect: { field: 'oscillating', value: false },
         args: { oscillating: false },
       },
+      {
+        id: 'fan.horizontalOscillateOn',
+        method: 'setOscillationAxis',
+        label: t('Horizontal oscillation on', 'Oscillazione orizzontale attiva'),
+        phrase: t(
+          'Start the horizontal oscillation of {device}',
+          'Attiva l’oscillazione orizzontale di {device}',
+        ),
+        icon: 'move-horizontal',
+        args: { axis: 'horizontal', oscillating: true },
+      },
+      {
+        id: 'fan.horizontalOscillateOff',
+        method: 'setOscillationAxis',
+        label: t('Horizontal oscillation off', 'Oscillazione orizzontale spenta'),
+        phrase: t(
+          'Stop the horizontal oscillation of {device}',
+          'Ferma l’oscillazione orizzontale di {device}',
+        ),
+        icon: 'move-horizontal',
+        args: { axis: 'horizontal', oscillating: false },
+      },
+      {
+        id: 'fan.verticalOscillateOn',
+        method: 'setOscillationAxis',
+        label: t('Vertical oscillation on', 'Oscillazione verticale attiva'),
+        phrase: t(
+          'Start the vertical oscillation of {device}',
+          'Attiva l’oscillazione verticale di {device}',
+        ),
+        icon: 'move-vertical',
+        args: { axis: 'vertical', oscillating: true },
+      },
+      {
+        id: 'fan.verticalOscillateOff',
+        method: 'setOscillationAxis',
+        label: t('Vertical oscillation off', 'Oscillazione verticale spenta'),
+        phrase: t(
+          'Stop the vertical oscillation of {device}',
+          'Ferma l’oscillazione verticale di {device}',
+        ),
+        icon: 'move-vertical',
+        args: { axis: 'vertical', oscillating: false },
+      },
     ],
     state: [
       {

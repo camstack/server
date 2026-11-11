@@ -484,6 +484,7 @@
   "fanControl.getStatus": "viewer",
   "fanControl.setDirection": "viewer",
   "fanControl.setOscillating": "viewer",
+  "fanControl.setOscillationAxis": "viewer",
   "fanControl.setPercentage": "viewer",
   "fanControl.setPreset": "viewer",
   "fanPresets.applyPreset": "admin",

@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1059 shared schemas.**
+**1066 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -2477,11 +2477,44 @@ Enum: `"fan" \| "oscillation" \| "angles"`
 - `availablePresets`: `string[]`
 - `direction`: `FanDirectionSchema \| null`
 - `oscillating`: `boolean \| null`
+- `oscillationAxes?`: `FanOscillationAxesSchema`
 - `lastChangedAt`: `number`
 
 ### `FanDirectionSchema`
 
 Enum: `"forward" \| "reverse"`
+
+### `FanOscillationAxesSchema`
+
+- `horizontal?`: `FanOscillationAxisSchema \| null = null`
+- `vertical?`: `FanOscillationAxisSchema \| null = null`
+
+### `FanOscillationAxisFieldSchema`
+
+Enum: `"oscillating" \| "angle" \| "sweepFrom" \| "sweepTo"`
+
+### `FanOscillationAxisNameSchema`
+
+Enum: `"horizontal" \| "vertical"`
+
+### `FanOscillationAxisRefusalSchema`
+
+Enum: `"nothing-to-set" \| "axis-not-linked" \| "out-of-range" \| "source-gone" \| "source-unknown" \| "source-call-failed"`
+
+### `FanOscillationAxisResultSchema`
+
+- `{ status: "applied" }`
+- `{ status: "refused"; reason: FanOscillationAxisRefusalSchema; field?: FanOscillationAxisFieldSchema; detail: string; applied: FanOscillationAxisFieldSchema[] }`
+
+### `FanOscillationAxisSchema`
+
+- `oscillating?`: `boolean \| null = null`
+- `angle?`: `number \| null = null`
+- `sweepFrom?`: `number \| null = null`
+- `sweepTo?`: `number \| null = null`
+- `min?`: `number \| null = null`
+- `max?`: `number \| null = null`
+- `step?`: `number \| null = null`
 
 ### `FanPresetApplyResultSchema`
 
@@ -6570,6 +6603,15 @@ Enum: `"idle" \| "checking" \| "staging" \| "pending-restart" \| "awaiting-confi
 - `scopeNodeId?`: `string`
 - `scopeComponent?`: `string`
 - `patch`: `LoggingSettingsPatchSchema`
+
+### `SetOscillationAxisInputSchema`
+
+- `deviceId`: `number`
+- `axis`: `FanOscillationAxisNameSchema`
+- `oscillating?`: `boolean`
+- `angle?`: `number`
+- `sweepFrom?`: `number`
+- `sweepTo?`: `number`
 
 ### `SettingsPatchSchema`
 

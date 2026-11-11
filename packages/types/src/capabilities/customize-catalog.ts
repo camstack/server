@@ -13,6 +13,7 @@ import type {
   CustomizeOverridable,
   CustomizeOverrideRule,
   CustomizeSourceReport,
+  CustomizeTargetSection,
   CustomizeValueKind,
   ThresholdDeviceTypeDefaults,
 } from './customize-spec.js'
@@ -115,6 +116,8 @@ export interface CustomizeCatalogTarget {
   readonly companions?: readonly CustomizeCompanion[]
   readonly sourceReport: CustomizeSourceReport
   readonly advancedExpression: boolean
+  /** The Customize section the cap files this target under (D1033). */
+  readonly section?: CustomizeTargetSection
 }
 
 export interface CustomizeCatalogEntry {

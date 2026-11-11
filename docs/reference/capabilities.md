@@ -59,7 +59,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `doorbell` | 1 | ✓ | ✓ | none | — | — |
 | `enum-sensor` | 1 | ✓ | ✓ | 1 series | — | — |
 | `event-emitter` | 1 | ✓ | ✓ | none | — | — |
-| `fan-control` | 5 | ✓ | ✓ | 2 series | — | — |
+| `fan-control` | 6 | ✓ | ✓ | 2 series | — | — |
 | `feature-probe` | 1 | ✓ | ✓ | none | — | — |
 | `flood` | 1 | ✓ | ✓ | 1 series | — | — |
 | `gas` | 1 | ✓ | ✓ | 1 series | — | — |

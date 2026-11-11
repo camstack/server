@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**205 capabilities · 1482 methods.**
+**205 capabilities · 1483 methods.**
 
 ## Method index
 
@@ -500,6 +500,7 @@
 | `fanControl.setPreset` | mutation | protected | fan-control |
 | `fanControl.setDirection` | mutation | protected | fan-control |
 | `fanControl.setOscillating` | mutation | protected | fan-control |
+| `fanControl.setOscillationAxis` | mutation | protected | fan-control |
 | `fanPresets.getPresets` | query | protected | fan-presets |
 | `fanPresets.setPresets` | mutation | admin | fan-presets |
 | `fanPresets.applyPreset` | mutation | protected | fan-presets |
@@ -2759,7 +2760,7 @@
 
 ### `fan-control` → `fanControl.*`
 
-- **Source:** `packages/types/src/capabilities/fan-control.cap.ts:56`
+- **Source:** `packages/types/src/capabilities/fan-control.cap.ts:267`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `fan`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IFanControlProvider`
@@ -2772,6 +2773,7 @@
 | setPreset | `fanControl.setPreset` | mutation | protected | `{ deviceId: number; preset: string }` | `void` |
 | setDirection | `fanControl.setDirection` | mutation | protected | `{ deviceId: number; direction: FanDirectionSchema }` | `void` |
 | setOscillating | `fanControl.setOscillating` | mutation | protected | `{ deviceId: number; oscillating: boolean }` | `void` |
+| setOscillationAxis | `fanControl.setOscillationAxis` | mutation | protected | `SetOscillationAxisInputSchema` | `FanOscillationAxisResultSchema` |
 
 ### `fan-presets` → `fanPresets.*`
 

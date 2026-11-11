@@ -1352,6 +1352,9 @@ export const useFanControlSetDirection: typeof trpc.fanControl.setDirection.useM
 /** Generated alias around `trpc.fanControl.setOscillating.useMutation`. */
 export const useFanControlSetOscillating: typeof trpc.fanControl.setOscillating.useMutation = /*#__PURE__*/ alias(() => trpc.fanControl.setOscillating.useMutation)
 
+/** Generated alias around `trpc.fanControl.setOscillationAxis.useMutation`. */
+export const useFanControlSetOscillationAxis: typeof trpc.fanControl.setOscillationAxis.useMutation = /*#__PURE__*/ alias(() => trpc.fanControl.setOscillationAxis.useMutation)
+
 /** Generated alias around `trpc.fanControl.getStatus.useQuery`. */
 export const useFanControlGetStatus: typeof trpc.fanControl.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.fanControl.getStatus.useQuery)
 

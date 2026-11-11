@@ -204,7 +204,8 @@ function judgeScalar(
       ? judgeValueSources(view, target.id, resolved, target.sources)
       : judgeOverrideSources(view, target)),
     ...judgeCompanions(view, target.id, runtime, target.companions),
-    ...(target.override === undefined
+    // A replace writes over the native slice, which keeps every other field (D984, D1033).
+    ...(target.override === undefined && target.apply !== 'replace'
       ? judgeAddCoverage(view, target.id, runtime, target.path, target.companions)
       : []),
     ...judgeOverride(view, target, resolved),
@@ -233,20 +234,20 @@ function judgeOverrideSources(
       ]
 }
 
-/** A `replace` target carries its override rule, an `add` target never does; every value is one the field can hold (D984). */
+/**
+ * Only a `replace` target may carry an override rule (D984): the boolean source
+ * combined with the native value. A replace without one writes its source's
+ * value over the native field as it is (D1033). Every value the rule names is
+ * one the field can hold.
+ */
 function judgeOverride(
   view: CustomizeCapView,
   target: ScalarCustomizeTarget,
   resolved: CustomizePathResult,
 ): readonly CustomizeViolation[] {
-  if ((target.apply === 'replace') !== (target.override !== undefined)) {
+  if (target.apply !== 'replace' && target.override !== undefined) {
     return [
-      fail(
-        view,
-        target.id,
-        'bad-override',
-        'a replace target declares an override rule, and only a replace target does',
-      ),
+      fail(view, target.id, 'bad-override', 'only a replace target declares an override rule'),
     ]
   }
   if (target.override === undefined || !resolved.ok) return []
@@ -457,6 +458,8 @@ function judgeCompanions(
             ),
           ]
     }
+    // A source field (D1033) is another reading of the linked source: any leaf it resolves to.
+    if (companion.kind === 'source-field') return []
     if (resolved.hit.kind !== 'number') {
       return [fail(view, targetId, 'bad-companion', `${companion.path} is not a timestamp`)]
     }

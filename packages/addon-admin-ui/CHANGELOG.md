@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Customize: the role of a provider-spawned accessory device (e.g. a Home Assistant cover) is now editable, like its name.
 - Customize offers the heater and fan roles on a switch and the climate roles (thermostat, AC, floor, radiator, heater, heat pump circuit) on a climate device; a composed heater can no longer be created, a switch with the heater role replaces it.
+- Customize labels for the fan-control card and its oscillation-axes section.
 
 ## [1.2.644] - 2026-11-11
 

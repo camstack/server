@@ -665,6 +665,7 @@ export function createDeviceProxy(
     setPreset: (input?: unknown) => dispatch('fan-control', 'fanControl', 'setPreset', 'mutation', input),
     setDirection: (input?: unknown) => dispatch('fan-control', 'fanControl', 'setDirection', 'mutation', input),
     setOscillating: (input?: unknown) => dispatch('fan-control', 'fanControl', 'setOscillating', 'mutation', input),
+    setOscillationAxis: (input?: unknown) => dispatch('fan-control', 'fanControl', 'setOscillationAxis', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('fan-control', 'fanControl', 'getStatus', 'query', input),
   }
 

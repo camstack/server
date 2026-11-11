@@ -2889,7 +2889,8 @@
         "extensions": "Estensioni",
         "offCatalog": "Altri campi",
         "actions": "Azioni collegate",
-        "linked": "Dispositivi collegati"
+        "linked": "Dispositivi collegati",
+        "oscillation-axes": "Assi di oscillazione"
       },
       "caps": {
         "battery": "Batteria",
@@ -2901,7 +2902,8 @@
         "power-meter": "Potenza ed energia",
         "power-source": "Fonte di alimentazione",
         "remote": "Telecomando",
-        "running-state": "In funzione"
+        "running-state": "In funzione",
+        "fan-control": "Ventola"
       },
       "edit": "Modifica",
       "editWhat": "Modifica {{title}}",
