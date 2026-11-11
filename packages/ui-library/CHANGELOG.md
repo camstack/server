@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Condition picker: an icon for the 'device fires' row
+
 ## [1.2.427] - 2026-11-12
 
 ### Changed

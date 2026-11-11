@@ -6329,6 +6329,11 @@
         "label": "Started by",
         "description": "This run was started by one of the chosen triggers of this automation",
         "example": "the button was pressed, not the motion sensor"
+      },
+      "device-fired": {
+        "label": "A button or device fires",
+        "description": "A device reports one of the events it declares: a button press, a long press",
+        "example": "button 3 of the remote is held down"
       }
     },
     "leafPicker": {
@@ -6406,6 +6411,18 @@
       "forEachHint": "One round per device, in this order. In a round the steps read the device as the variable \"item\".",
       "itemHint": "the device of this round",
       "steps": "Each time, run"
+    },
+    "fired": {
+      "device": "Device",
+      "source": "From",
+      "anySource": "Any button",
+      "event": "Event",
+      "anyEvent": "Any event",
+      "loading": "Reading what this device can fire…",
+      "unknown": "What this device can fire could not be read.",
+      "gone": "{{id}} (no longer declared)",
+      "staleHint": "This row names something the device no longer declares, so it will not start a run. Pick again.",
+      "extraHint": "This row also carries filters set outside the editor ({{what}}); they are kept as they are."
     }
   },
   "accessDenied": {
@@ -11471,7 +11488,11 @@
       "becomesDeviceId": "the device that changed",
       "triggerDeviceId": "the device that started the run",
       "from": "the value before the change, empty when it is not known",
-      "to": "the value it changed to"
+      "to": "the value it changed to",
+      "firedDeviceId": "the device that fired",
+      "eventType": "the event, as the device names it",
+      "sourceId": "the part of the device that fired (a button), empty when it names none",
+      "eventKind": "the kind of press (press, long-press …), empty when the device declares none"
     },
     "class": {
       "animal": "Animal",

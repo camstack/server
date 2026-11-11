@@ -18,6 +18,7 @@ import {
   type CapCall,
   type RunnableStep,
   repeatCheck,
+  resolveStepArgs,
   type RunStepsOptions,
   runSteps,
 } from '../step-runner.js'
@@ -1366,5 +1367,19 @@ describe('two levels of block steps (#500)', () => {
         },
       ],
     })
+  })
+})
+
+describe('resolveStepArgs — dotted names', () => {
+  it('a dotted {{vars.…}} slot and a dotted $var read the flat key', () => {
+    const vars = { 'data.channel': '3', 'data.level': 2 }
+    expect(resolveStepArgs('ch {{vars.data.channel}}', vars, () => undefined)).toBe('ch 3')
+    expect(resolveStepArgs({ $var: 'data.level' }, vars, () => undefined)).toBe(2)
+  })
+
+  it('a dotted name that is not set is reported whole and rendered empty', () => {
+    const missing: string[] = []
+    expect(resolveStepArgs('[{{vars.data.nope}}]', {}, (name) => missing.push(name))).toBe('[]')
+    expect(missing).toEqual(['data.nope'])
   })
 })

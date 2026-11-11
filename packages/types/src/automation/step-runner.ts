@@ -635,7 +635,8 @@ function isVarRef(value: unknown): value is { readonly $var: string } {
   return keys.length === 1 && keys[0] === '$var' && typeof Reflect.get(value, '$var') === 'string'
 }
 
-const TEMPLATE_RE = /\{\{\s*vars\.([A-Za-z_][A-Za-z0-9_]*)\s*\}\}/g
+/** `{{vars.name}}`, or a dotted name (`{{vars.data.channel}}`): the bag is flat, the dots are part of the key. */
+const TEMPLATE_RE = /\{\{\s*vars\.([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*)\s*\}\}/g
 
 /**
  * Substitute a step's args from the run's variables. SUBSTITUTION only, never
@@ -710,7 +711,7 @@ function newSlotNonce(): string {
 }
 
 function slotPattern(nonce: string): RegExp {
-  return new RegExp(`${VAR_SLOT_OPEN}${nonce}:([A-Za-z_][A-Za-z0-9_]*)${VAR_SLOT_CLOSE}`, 'g')
+  return new RegExp(`${VAR_SLOT_OPEN}${nonce}:([A-Za-z_][A-Za-z0-9_.]*)${VAR_SLOT_CLOSE}`, 'g')
 }
 
 /** `text` with every `{{vars.x}}` slot (the only slot the run-time holds) replaced by `replacement`. */

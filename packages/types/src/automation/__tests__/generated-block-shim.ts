@@ -18,6 +18,7 @@ export {
 } from '../action-target.js'
 export { DetectionTriggerFilter } from '../detection-trigger.js'
 export { evaluateStationaryTrigger } from '../stationary-trigger.js'
+export { DeviceFiredWatch } from '../fired-trigger.js'
 export { RunGate } from '../run-gate.js'
 export { waitTimedOutMessage, waitUntil } from '../wait-until.js'
 export { evaluateStepCondition } from '../step-condition.js'

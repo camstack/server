@@ -111,6 +111,11 @@ function leafIssues(site: DraftSite, when: AutomationWhen, root: string): readon
         }
         return
       }
+      if (leaf.kind === 'device-fired') {
+        if (deviceOf(site, leaf.deviceId) === undefined)
+          issues.push(`${at}: no device has id ${leaf.deviceId}`)
+        return
+      }
       if (leaf.kind === 'device-event' && leaf.deviceId !== undefined) {
         if (deviceOf(site, leaf.deviceId) === undefined)
           issues.push(`${at}: no device has id ${leaf.deviceId}`)

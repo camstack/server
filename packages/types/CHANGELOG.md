@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Comment only: the per-instance OAuth comparison now has its first caller (the Alexa export)
+- Automations: a 'device fired' trigger row runs on one button and one kind of press of a remote, once per press, and hands the button and the press to the steps
 
 ## [1.2.550] - 2026-11-12
 

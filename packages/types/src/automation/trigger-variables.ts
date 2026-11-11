@@ -8,6 +8,7 @@
  * here does not compile.
  */
 import type { DetectionVars } from './detection-trigger.js'
+import type { DeviceFiredVars } from './fired-trigger.js'
 import type { BecomesVars } from './hold.js'
 import type { StationaryVars } from './stationary-trigger.js'
 import type { AutomationWhen } from './when.js'
@@ -43,6 +44,17 @@ const BECOMES_DESCRIPTIONS: Readonly<Record<keyof BecomesVars, string>> = {
   to: 'the value it changed to',
 }
 
+/**
+ * A fire's payload is offered too, as `data.<path>` (`{{vars.data.channel}}`):
+ * those names depend on the device, so they are not in this list.
+ */
+const FIRED_DESCRIPTIONS: Readonly<Record<keyof DeviceFiredVars, string>> = {
+  deviceId: 'the device that fired',
+  eventType: 'the event, as the device names it',
+  sourceId: 'the part of the device that fired (a button), empty when it names none',
+  eventKind: 'the kind of press (press, long-press …), empty when the device declares none',
+}
+
 function describe(descriptions: Readonly<Record<string, string>>): readonly TriggerVariable[] {
   return Object.entries(descriptions).map(([name, description]) => ({
     name,
@@ -52,6 +64,9 @@ function describe(descriptions: Readonly<Record<string, string>>): readonly Trig
 
 const DETECTION_VARIABLES = describe(DETECTION_DESCRIPTIONS)
 const STATIONARY_VARIABLES = describe(STATIONARY_DESCRIPTIONS)
+const FIRED_VARIABLES: readonly TriggerVariable[] = describe(FIRED_DESCRIPTIONS).map((v) =>
+  v.name === 'deviceId' ? { ...v, hintKey: 'firedDeviceId' } : v,
+)
 const BECOMES_VARIABLES: readonly TriggerVariable[] = describe(BECOMES_DESCRIPTIONS).map((v) =>
   v.name === 'deviceId' ? { ...v, hintKey: 'becomesDeviceId' } : v,
 )
@@ -70,6 +85,7 @@ export function triggerLeafVariables(kind: string): readonly TriggerVariable[] {
   if (kind === 'detection') return DETECTION_VARIABLES
   if (kind === 'stationary') return STATIONARY_VARIABLES
   if (kind === 'device-becomes') return BECOMES_VARIABLES
+  if (kind === 'device-fired') return FIRED_VARIABLES
   return []
 }
 

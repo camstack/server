@@ -21,6 +21,7 @@
  */
 
 import { z } from 'zod'
+import { EventVocabularyKindSchema } from '../capabilities/event-vocabulary.js'
 import { ExpressionBindingSourceSchema } from '../expression/binding-source.js'
 import { validateExpressionSource } from '../expression/expression-source.js'
 import { EXPRESSION_IDENTIFIER_RE, MAX_EXPRESSION_SOURCE_LENGTH } from '../expression/limits.js'
@@ -155,6 +156,32 @@ const ScheduleLeafSchema = z
   .refine((leaf) => leaf.days === undefined || leaf.at !== undefined, {
     message: '`days` goes with `at`; a cron expression carries its own days',
   })
+
+/**
+ * One payload predicate of a `device-fired` row: the value at `path` inside
+ * the fire's `data` (dotted) equals `equals`. Compared strictly, no coercion.
+ */
+export const DeviceFiredMatchSchema = z.object({
+  path: z.string().min(1).max(120),
+  equals: z.union([z.string(), z.number(), z.boolean()]),
+})
+export type DeviceFiredMatch = z.infer<typeof DeviceFiredMatchSchema>
+
+/**
+ * "fires": one device of the `event-emitter` capability reported an event
+ * (D1045). Every list is an OR, the lists together an AND; an absent list does
+ * not narrow. `eventIds` are the device's own tokens, `sourceIds` the parts of
+ * the device (a button), `kinds` the shared press kinds of its vocabulary.
+ */
+const DeviceFiredLeafSchema = z.object({
+  kind: z.literal('device-fired'),
+  ...eventLeafId,
+  deviceId: z.number().int().nonnegative(),
+  eventIds: z.array(z.string().min(1)).min(1).max(64).optional(),
+  sourceIds: z.array(z.string().min(1)).min(1).max(64).optional(),
+  kinds: z.array(EventVocabularyKindSchema).min(1).optional(),
+  match: z.array(DeviceFiredMatchSchema).min(1).max(8).optional(),
+})
 
 const ManualLeafSchema = z.object({ kind: z.literal('manual'), ...eventLeafId })
 
@@ -301,6 +328,7 @@ const ExpressionLeafSchema = z
 export type AutomationEventLeaf =
   | z.infer<typeof DeviceBecomesLeafSchema>
   | z.infer<typeof DeviceEventLeafSchema>
+  | z.infer<typeof DeviceFiredLeafSchema>
   | z.infer<typeof ScheduleLeafSchema>
   | z.infer<typeof ManualLeafSchema>
   | z.infer<typeof IntervalLeafSchema>
@@ -317,6 +345,7 @@ export type AutomationStateLeaf =
 export type AutomationLeaf = AutomationEventLeaf | AutomationStateLeaf
 
 export type DeviceBecomesLeaf = Extract<AutomationEventLeaf, { kind: 'device-becomes' }>
+export type DeviceFiredLeaf = Extract<AutomationEventLeaf, { kind: 'device-fired' }>
 export type DetectionLeaf = Extract<AutomationEventLeaf, { kind: 'detection' }>
 export type StationaryLeaf = Extract<AutomationEventLeaf, { kind: 'stationary' }>
 export type DeviceIsLeaf = Extract<AutomationStateLeaf, { kind: 'device-is' }>
@@ -346,6 +375,7 @@ export const AutomationWhenSchema: z.ZodType<AutomationWhen> = z.lazy(() =>
     z.object({ kind: z.literal('not'), child: AutomationWhenSchema }),
     DeviceBecomesLeafSchema,
     DeviceEventLeafSchema,
+    DeviceFiredLeafSchema,
     ScheduleLeafSchema,
     ManualLeafSchema,
     IntervalLeafSchema,
@@ -374,6 +404,7 @@ void _whenTypeMatchesSchema
 const EVENT_KINDS: ReadonlySet<string> = new Set([
   'device-becomes',
   'device-event',
+  'device-fired',
   'schedule',
   'manual',
   'interval',
@@ -501,6 +532,7 @@ function hasEmptyContainer(node: AutomationWhen): boolean {
 const LEAF_WORDS: Readonly<Record<string, string>> = {
   'device-becomes': 'a device value that becomes',
   'device-event': 'a device event',
+  'device-fired': 'a device firing an event',
   schedule: 'a schedule',
   manual: 'a manual run',
   interval: 'an interval',

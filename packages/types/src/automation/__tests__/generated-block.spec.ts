@@ -2248,3 +2248,118 @@ describe('two levels of block steps (#500)', () => {
     expect(labels(h).toSorted()).toEqual(['a', 'a', 'b', 'b'])
   })
 })
+
+describe('device-fired trigger', () => {
+  const FIRED = 'event-emitter.event'
+  const VOCABULARY = [
+    {
+      id: 'PRESS_LONG',
+      source: { id: '3', label: 'Button 3' },
+      label: 'Long press',
+      kind: 'long-press',
+    },
+    {
+      id: 'PRESS_SHORT',
+      source: { id: '3', label: 'Button 3' },
+      label: 'Short press',
+      kind: 'press',
+    },
+    {
+      id: 'PRESS_LONG',
+      source: { id: '4', label: 'Button 4' },
+      label: 'Long press',
+      kind: 'long-press',
+    },
+  ]
+  let n = 0
+  const press = (over: Record<string, unknown> = {}) => ({
+    deviceId: 40,
+    eventType: 'PRESS_LONG',
+    sourceId: '3',
+    data: { channel: '3' },
+    timestamp: Date.now() + (n += 1),
+    seq: n,
+    ...over,
+  })
+  const status = (lastEvent: unknown) => ({
+    eventTypes: ['PRESS_LONG', 'PRESS_SHORT'],
+    vocabulary: VOCABULARY,
+    lastEvent,
+    eventCountSinceStart: 0,
+  })
+  const recipe: RecipeInput = {
+    when: { kind: 'device-fired', deviceId: 40, sourceIds: ['3'], kinds: ['long-press'] },
+    actions: [
+      {
+        kind: 'action',
+        actionId: 'notify',
+        variables: { text: 'button {{vars.sourceId}} {{vars.eventKind}} ch {{vars.data.channel}}' },
+      },
+    ],
+  }
+
+  it('button 3 long press runs twice for two presses and hands sourceId, kind and the payload to the steps', async () => {
+    const h = start(await load(recipe), { slices: { '40|event-emitter': status(null) } })
+    await settle()
+    h.emit(FIRED, press(), 40)
+    await settle()
+    h.emit(FIRED, press(), 40)
+    await settle()
+    expect(h.actionRuns).toHaveLength(2)
+    expect(h.actionRuns[0]).toMatchObject({ variables: { text: 'button 3 long-press ch 3' } })
+    expect(h.traces()[0]?.trigger).toMatchObject({ kind: 'device-fired', outcome: 'pass' })
+    expect(h.traces()[0]?.trigger.vars).toMatchObject({
+      deviceId: 40,
+      eventType: 'PRESS_LONG',
+      sourceId: '3',
+      eventKind: 'long-press',
+      'data.channel': '3',
+    })
+  })
+
+  it('another button and another kind of press do not run, and leave no trace', async () => {
+    const h = start(await load(recipe), { slices: { '40|event-emitter': status(null) } })
+    await settle()
+    h.emit(FIRED, press({ sourceId: '4' }), 40)
+    h.emit(FIRED, press({ eventType: 'PRESS_SHORT' }), 40)
+    await settle(1_000)
+    expect(h.actionRuns).toHaveLength(0)
+    expect(h.traces()).toHaveLength(0)
+    expect(
+      h.logs.some((l) => l.msg.includes('did not run') && l.meta?.['tags'] !== undefined),
+    ).toBe(true)
+  })
+
+  it('what fired before the start is not a trigger; a fire whose event was dropped is recovered once', async () => {
+    const slices: Record<string, object> = { '40|event-emitter': status(press()) }
+    const h = start(await load(recipe), { slices })
+    await settle(16_000)
+    expect(h.actionRuns).toHaveLength(0)
+    slices['40|event-emitter'] = status(press()) // the press happened, its event never arrived
+    await settle(16_000)
+    expect(h.actionRuns).toHaveLength(1)
+    expect(h.traces()[0]?.trigger.reason).toContain('recovered by reconcile')
+    await settle(31_000)
+    expect(h.actionRuns).toHaveLength(1)
+  })
+
+  it('a fire the bus delivered is not run again by the reconcile', async () => {
+    const slices: Record<string, object> = { '40|event-emitter': status(null) }
+    const h = start(await load(recipe), { slices })
+    await settle()
+    const one = press()
+    h.emit(FIRED, one, 40)
+    slices['40|event-emitter'] = status(one)
+    await settle(31_000)
+    expect(h.actionRuns).toHaveLength(1)
+  })
+
+  it('a slice that cannot be read at the start does not turn the first good read into a press', async () => {
+    const slices: Record<string, object> = {}
+    const h = start(await load(recipe), { slices })
+    await settle(16_000)
+    slices['40|event-emitter'] = status(press())
+    await settle(31_000)
+    expect(h.actionRuns).toHaveLength(0)
+  })
+})

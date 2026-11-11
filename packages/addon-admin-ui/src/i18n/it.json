@@ -6404,6 +6404,11 @@
         "label": "Avviata da",
         "description": "Questa esecuzione è stata avviata da uno dei trigger scelti di questa automazione",
         "example": "è stato premuto il pulsante, non il sensore di movimento"
+      },
+      "device-fired": {
+        "label": "Un pulsante o dispositivo scatta",
+        "description": "Un dispositivo segnala uno degli eventi che dichiara: una pressione, una pressione lunga",
+        "example": "il pulsante 3 del telecomando viene tenuto premuto"
       }
     },
     "leafPicker": {
@@ -6481,6 +6486,18 @@
       "forEachHint": "Un giro per dispositivo, in quest'ordine. In ogni giro i passi leggono il dispositivo come variabile \"item\".",
       "itemHint": "il dispositivo di questo giro",
       "steps": "Ogni volta, esegui"
+    },
+    "fired": {
+      "device": "Dispositivo",
+      "source": "Da",
+      "anySource": "Qualsiasi pulsante",
+      "event": "Evento",
+      "anyEvent": "Qualsiasi evento",
+      "loading": "Lettura di ciò che il dispositivo può segnalare…",
+      "unknown": "Non è stato possibile leggere ciò che il dispositivo può segnalare.",
+      "gone": "{{id}} (non più dichiarato)",
+      "staleHint": "Questa riga indica qualcosa che il dispositivo non dichiara più, quindi non avvierà un'esecuzione. Scegli di nuovo.",
+      "extraHint": "Questa riga contiene anche filtri impostati fuori dall'editor ({{what}}); restano invariati."
     }
   },
   "accessDenied": {
@@ -11493,7 +11510,11 @@
       "becomesDeviceId": "il dispositivo che è cambiato",
       "triggerDeviceId": "il dispositivo che ha avviato l'esecuzione",
       "from": "il valore prima del cambiamento, vuoto se non è noto",
-      "to": "il valore a cui è passato"
+      "to": "il valore a cui è passato",
+      "firedDeviceId": "il dispositivo che ha segnalato l'evento",
+      "eventType": "l'evento, come lo chiama il dispositivo",
+      "sourceId": "la parte del dispositivo che ha segnalato (un pulsante), vuoto se non ne indica",
+      "eventKind": "il tipo di pressione (press, long-press …), vuoto se il dispositivo non ne dichiara"
     },
     "class": {
       "animal": "Animale",

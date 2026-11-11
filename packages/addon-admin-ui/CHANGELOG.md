@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Automation editor: a 'A button or device fires' row picks the device, then the button and the event it declares
+
 ## [1.2.646] - 2026-11-12
 
 ### Added

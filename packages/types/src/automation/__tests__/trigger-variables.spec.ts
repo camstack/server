@@ -8,6 +8,7 @@ import { generateAutomationBlock } from '../codegen.js'
 import {
   type AutomationWhen,
   DetectionTriggerFilter,
+  DeviceFiredWatch,
   evaluateStationaryTrigger,
   triggerVariablesOf,
 } from '../index.js'
@@ -22,6 +23,22 @@ const detection: AutomationWhen = {
 const stationary: AutomationWhen = { kind: 'stationary', deviceIds: [7], phase: 'appeared' }
 
 describe('triggerVariablesOf', () => {
+  it('device-fired names exactly what a fire decision carries, and its device is shared with a camera row', () => {
+    const fired: AutomationWhen = { kind: 'device-fired', deviceId: 40 }
+    if (fired.kind !== 'device-fired') throw new Error('fixture')
+    const decision = new DeviceFiredWatch(fired).onEvent({
+      deviceId: 40,
+      eventType: 'PRESS_LONG',
+      sourceId: '3',
+      data: null,
+      timestamp: 1,
+      seq: 1,
+    })
+    if (decision.kind === 'ignore') throw new Error(decision.why)
+    expect([...names(fired)].sort()).toEqual(Object.keys(decision.vars).sort())
+    expect(names({ kind: 'any', children: [fired, detection] })).toEqual(['deviceId'])
+  })
+
   it('detection names exactly what a detection decision carries', () => {
     if (detection.kind !== 'detection') throw new Error('fixture')
     const filter = new DetectionTriggerFilter(detection)

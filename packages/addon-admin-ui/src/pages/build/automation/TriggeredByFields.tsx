@@ -20,9 +20,21 @@ export interface TriggeredByFieldsProps {
 /** What tells two trigger rows of one kind apart: the event they wait for and the device they watch. */
 function rowDetail(row: TriggerRow, devices: readonly AutomationDevice[]): string | undefined {
   const leaf = row.leaf
-  if (leaf.kind !== 'device-becomes' && leaf.kind !== 'device-event') return undefined
+  if (
+    leaf.kind !== 'device-becomes' &&
+    leaf.kind !== 'device-event' &&
+    leaf.kind !== 'device-fired'
+  ) {
+    return undefined
+  }
   const device = devices.find((candidate) => candidate.id === leaf.deviceId)?.name
   if (leaf.kind === 'device-becomes') return device
+  if (leaf.kind === 'device-fired') {
+    const what = [...(leaf.sourceIds ?? []), ...(leaf.eventIds ?? [])].join(' ')
+    return (
+      [device, what].filter((part) => part !== undefined && part !== '').join(' · ') || undefined
+    )
+  }
   return device === undefined ? leaf.category : `${leaf.category} · ${device}`
 }
 

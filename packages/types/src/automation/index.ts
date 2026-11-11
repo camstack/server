@@ -72,6 +72,13 @@ export type {
   StationaryVars,
 } from './stationary-trigger.js'
 export { evaluateStationaryTrigger } from './stationary-trigger.js'
+export type {
+  DeviceFiredDecision,
+  DeviceFiredVars,
+  FiredDataScalar,
+  FiredDataVars,
+} from './fired-trigger.js'
+export { DeviceFiredWatch, FIRED_RECOVERED_NOTE, firedDataVars } from './fired-trigger.js'
 export type { TriggerVariable } from './trigger-variables.js'
 export { triggerLeafVariables, triggerVariablesOf } from './trigger-variables.js'
 export type { CooldownInput, CooldownVerdict, RunGateAdmission } from './run-gate.js'
@@ -187,6 +194,8 @@ export type {
   AutomationWhen,
   DetectionLeaf,
   DeviceBecomesLeaf,
+  DeviceFiredLeaf,
+  DeviceFiredMatch,
   DeviceIsLeaf,
   ExpressionLeaf,
   TimeIsLeaf,
@@ -198,6 +207,7 @@ export type {
 export {
   AutomationConditionOperatorSchema,
   AutomationWhenSchema,
+  DeviceFiredMatchSchema,
   countWhenLeaves,
   eventLeafIdAt,
   identifiedEventLeaves,

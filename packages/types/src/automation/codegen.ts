@@ -189,6 +189,53 @@ function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
       },
     ),
   )`
+    case 'device-fired':
+      return `  // event leaf ${path}: device fired — the bus event is the normal door; the
+  // reconcile reads the device's event-emitter slice, so a fire whose event was
+  // dropped is still seen while it is the LATEST one (D8, D1045). The first good
+  // read only seeds: what fired before the start is not a trigger.
+  {
+    const watch = new DeviceFiredWatch(${j(trigger)})
+    // The reconcile answers the same "nothing new" every tick: said once per reason.
+    let lastQuiet = ''
+    const land = (decision: ReturnType<DeviceFiredWatch['onEvent']>, door: 'event' | 'reconcile'): void => {
+      if (decision.kind === 'ignore') {
+        if (door === 'reconcile' && decision.why === lastQuiet) return
+        if (door === 'reconcile') lastQuiet = decision.why
+        ctx.logger.debug('device-fired trigger did not run — ' + decision.why, {
+          tags: { deviceId: ${j(trigger.deviceId)} },
+          leaf: ${at},
+          door,
+        })
+        return
+      }
+      if (decision.kind === 'reject') {
+        ctx.logger.debug('device-fired trigger rejected a fire', {
+          tags: { deviceId: decision.vars.deviceId },
+          reason: decision.reason,
+        })
+      }
+      void run(
+        { kind: 'device-fired', leaf: ${at}, at: Date.now(), ${varsPick('device-fired')}, ...decision.data },
+        decision.reason,
+        decision.kind === 'fire',
+      )
+    }
+    disposers.push(
+      ctx.eventBus.subscribe(
+        { category: EventCategory.EventEmitted, deviceId: ${j(trigger.deviceId)} },
+        (event) => land(watch.onEvent(event.data), 'event'),
+      ),
+    )
+    const check = async (): Promise<void> => {
+      const read = await readCapSlice(${j(trigger.deviceId)}, 'event-emitter')
+      if (!read.ok) return // a failed read changes nothing: the next good one still seeds (D49)
+      land(watch.onStatus(read.slice), 'reconcile')
+    }
+    void check()
+    const reconcile = setInterval(() => { void check() }, RECONCILE_MS)
+    disposers.push(() => clearInterval(reconcile))
+  }`
     case 'device-becomes': {
       const hold = holdOf(trigger)
       const spec: Record<string, unknown> = {
@@ -606,6 +653,7 @@ import {
   ConditionMirror,
   HoldTracker,
   DetectionTriggerFilter,
+  DeviceFiredWatch,
   EventCategory,
   RunGate,
   buildTriggerTrace,
@@ -960,24 +1008,15 @@ ${
     }
   }
 
-  /** Read one cap field off the state mirror. \`ok: false\` when the device,
-   *  the cap or the field cannot be resolved — the caller decides what that
-   *  means (the device-state trigger changes nothing), and it is logged at
-   *  debug with the device. (Conditions read the ConditionMirror instead.) */
-  async function readField(
+  /** One cap slice off the state mirror. \`ok: false\` when the read threw —
+   *  logged at debug with the device; the caller decides what that means. */
+  async function readCapSlice(
     deviceId: number,
     cap: string,
-    fieldPath: string,
-  ): Promise<{ readonly ok: true; readonly value: unknown } | { readonly ok: false }> {
+  ): Promise<{ readonly ok: true; readonly slice: unknown } | { readonly ok: false }> {
     try {
       const slice = await ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap })
-      let cursor: unknown = slice
-      for (const part of fieldPath.split('.')) {
-        if (cursor === null || typeof cursor !== 'object') return { ok: false }
-        cursor = Reflect.get(cursor, part)
-      }
-      if (cursor === undefined) return { ok: false }
-      return { ok: true, value: cursor }
+      return { ok: true, slice }
     } catch (err: unknown) {
       ctx.logger.debug('device state read failed — the leaf keeps what it knew', {
         tags: { deviceId },
@@ -986,6 +1025,26 @@ ${
       })
       return { ok: false }
     }
+  }
+
+  /** Read one cap field off the state mirror. \`ok: false\` when the device,
+   *  the cap or the field cannot be resolved — the caller decides what that
+   *  means (the device-state trigger changes nothing). (Conditions read the
+   *  ConditionMirror instead.) */
+  async function readField(
+    deviceId: number,
+    cap: string,
+    fieldPath: string,
+  ): Promise<{ readonly ok: true; readonly value: unknown } | { readonly ok: false }> {
+    const read = await readCapSlice(deviceId, cap)
+    if (!read.ok) return { ok: false }
+    let cursor: unknown = read.slice
+    for (const part of fieldPath.split('.')) {
+      if (cursor === null || typeof cursor !== 'object') return { ok: false }
+      cursor = Reflect.get(cursor, part)
+    }
+    if (cursor === undefined) return { ok: false }
+    return { ok: true, value: cursor }
   }
 
   /** A trigger var keeps primitives only. */
