@@ -11,6 +11,7 @@ applies-to:
   - packages/types/src/automation/trace.ts
   - packages/addon-admin-ui/src/pages/build/automation/ActionList.tsx
   - packages/addon-admin-ui/src/pages/build/automation/set-vars-model.ts
+  - packages/cli/src/mcp/configure-automations.ts
 ---
 
 ## Context
@@ -51,11 +52,15 @@ checks and the per-step run trace. The longest pause was five minutes.
 
 ## Consequences
 
-- A hub that crashes during a wait leaves no trace of that run: the trace is
-  written when a run ends. A clean stop traces it `aborted`.
+- **Known limit: a hub crash in the middle of a wait leaves no trace of that
+  run.** The trace is written when a run ends, so a run cut by a crash is
+  simply absent from the run list; nothing resumes it after the restart. A
+  clean stop of the block traces it `aborted`.
 - A one-hour wait in run mode `queue` holds the queue for that hour.
-- The command-line tool's guided automation flow keeps its own, stricter step
-  schema (wait up to 300 s, no stop or set).
+- The command-line tool's guided automation flow takes the same steps: its
+  answers reuse the shared wait, stop and set schemas, and its cap answer
+  carries `continueOnError`. Its save runs the editor's site check
+  (`recipeSiteIssues`) before the block is written.
 - The next steps of planning#500 (`choose`, `wait-until`, `repeat`, `parallel`)
   build on the same runner contract: a step asks the scope to stop, and every
   step leaves a trace row with an outcome and a reason.
@@ -66,4 +71,6 @@ checks and the per-step run trace. The longest pause was five minutes.
 failure, the refusals and their sentences, the standalone list unchanged),
 `generated-block.spec.ts` ("flow control (#500)": the generated block),
 `ActionList.flow.spec.tsx` and `set-vars-model.spec.ts` (the editor, and its
-absence outside an automation), `trace-view.spec.ts` (a continued failure is red).
+absence outside an automation), `trace-view.spec.ts` (a continued failure is red),
+`configure-automations.spec.ts` (the command-line flow takes the same steps and
+refuses a time window the site cannot place).

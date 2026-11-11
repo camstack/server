@@ -11,19 +11,26 @@
  * bounds check and the same `prepareRecipeUnits` save boundary (D972), so a
  * number on a quantity field is saved with its unit and a unit that cannot
  * belong to the field is refused here with the server's own message. The save
- * writes the generated block through `coreBlocks.create`, exactly as the editor.
+ * writes the generated block through `coreBlocks.create`, exactly as the editor,
+ * after the editor's site check (a time window the site cannot place is refused).
  */
 import {
   ALL_CAPABILITY_DEFINITIONS,
   ActionTargetSchema,
   AutomationRecipeSchema,
+  AutomationSetStepSchema,
+  AutomationStopStepSchema,
+  AutomationWaitStepSchema,
   MACRO_LABELS,
   capUnitResolver,
   convertLegacyWhen,
   countWhenLeaves,
+  forEachLeaf,
   generateAutomationBlock,
   isReadingQuantity,
   prepareRecipeUnits,
+  recipeSiteIssues,
+  stepGuardOf,
   unitsForQuantity,
   validateRecipeBounds,
   type ActionTarget,
@@ -91,8 +98,15 @@ export const ConditionAnswerSchema = z.object({
 })
 export type ConditionAnswer = z.infer<typeof ConditionAnswerSchema>
 
+/**
+ * The steps an answer may name are the automation list's own (`AutomationActionSchema`):
+ * wait, stop and set are the shared schemas, so their bounds and refusals are
+ * the editor's. Only the cap step differs, by its `deviceId` shorthand.
+ */
 export const ActionAnswerSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('wait'), seconds: z.number().min(0).max(300) }),
+  AutomationWaitStepSchema,
+  AutomationStopStepSchema,
+  AutomationSetStepSchema,
   z
     .object({
       kind: z.literal('cap'),
@@ -108,6 +122,8 @@ export const ActionAnswerSchema = z.discriminatedUnion('kind', [
       method: z.string().min(1),
       /** A quantity argument is `{ value, unit }`; a bare number is stamped with the declared unit. */
       args: z.record(z.string(), z.unknown()).optional(),
+      /** The run goes on when this step fails; the trace marks it `failed-continued`. */
+      continueOnError: z.literal(true).optional(),
     })
     .refine((a) => a.target !== undefined || a.deviceId !== undefined, {
       message: 'a cap step needs a target (or a deviceId)',
@@ -647,7 +663,7 @@ function toCondition(leaves: readonly ConditionAnswer[]): LegacyCondition | unde
 
 function toActions(actions: readonly ActionAnswer[]): AutomationAction[] {
   return actions.map((a): AutomationAction => {
-    if (a.kind === 'wait') return { kind: 'wait', seconds: a.seconds }
+    if (a.kind !== 'cap') return a
     return {
       kind: 'cap',
       target: targetOfAnswer(a),
@@ -655,6 +671,7 @@ function toActions(actions: readonly ActionAnswer[]): AutomationAction[] {
       cap: a.cap,
       method: a.method,
       ...(a.args !== undefined ? { args: a.args } : {}),
+      ...(a.continueOnError === true ? { continueOnError: true } : {}),
     }
   })
 }
@@ -704,7 +721,13 @@ function summarize(
   }
   for (const a of actions) {
     if (a.kind === 'wait') lines.push(`  then wait ${a.seconds}s`)
-    else {
+    else if (a.kind === 'stop') lines.push(`  then stop the run (${a.outcome}): ${a.reason}`)
+    else if (a.kind === 'set') {
+      const pairs = Object.entries(a.vars).map(
+        ([name, value]) => `${name} = ${JSON.stringify(value)}`,
+      )
+      lines.push(`  then set ${pairs.join(', ')}`)
+    } else {
       const t = targetOfAnswer(a)
       const who =
         t.kind === 'devices'
@@ -713,7 +736,7 @@ function summarize(
             ? `device $${t.name}`
             : `every device that can ${a.actionId ?? a.method}${t.roomId === undefined ? '' : ` in ${t.roomId}`}${t.deviceType === undefined ? '' : ` of type ${t.deviceType}`}`
       lines.push(
-        `  then ${a.cap}.${a.method} on ${who}${a.args ? ` with ${JSON.stringify(a.args)}` : ''}`,
+        `  then ${a.cap}.${a.method} on ${who}${a.args ? ` with ${JSON.stringify(a.args)}` : ''}${a.continueOnError === true ? ' (continue if it fails)' : ''}`,
       )
     }
   }
@@ -828,6 +851,40 @@ export function finishRecipe(recipe: AutomationRecipe): Finished {
   return prepareRecipeUnits(parsed.data, unitResolver())
 }
 
+/** What the site check reads of `system.getSiteLocation`: where the site is and its time zone. */
+const SiteReadingSchema = z.looseObject({
+  location: z.looseObject({ latitude: z.number(), longitude: z.number() }).nullable(),
+  timeZone: z.string().min(1),
+})
+
+/** A recipe asks about the site only through a time window, in its rules or in a step's condition. */
+function hasTimeWindow(recipe: AutomationRecipe): boolean {
+  const trees = [recipe.when, ...recipe.actions.flatMap((a) => stepGuardOf(a) ?? [])]
+  let found = false
+  for (const tree of trees) {
+    forEachLeaf(tree, (leaf) => {
+      if (leaf.kind === 'time-is') found = true
+    })
+  }
+  return found
+}
+
+/**
+ * The editor's save-time site check: a time window this site cannot place (a
+ * sun end with no site location) is refused with where it is. `null` when the
+ * recipe can be saved; the hub is asked only for a recipe with a time window.
+ */
+export async function recipeSiteProblem(
+  client: HubClient,
+  recipe: AutomationRecipe,
+): Promise<string | null> {
+  if (!hasTimeWindow(recipe)) return null
+  const site = await readQuery(client, 'system.getSiteLocation', undefined, SiteReadingSchema)
+  if (!site.ok) return `could not read the site location and time zone: ${site.reason}`
+  const issue = recipeSiteIssues(recipe, site.value)[0]
+  return issue === undefined ? null : `${issue.path}: ${issue.message}`
+}
+
 export async function automationQuestionnaire(
   ctx: McpContext,
   answers: AutomationAnswers,
@@ -878,6 +935,8 @@ export function saveAutomationSpec(client: HubClient): GatedToolSpec<SaveAutomat
           },
         }
       }
+      const site = await recipeSiteProblem(client, finished.recipe)
+      if (site !== null) return { confirmable: false, describe: { problem: site } }
       const vetted = await vetDeviceTemplates(
         client,
         finished.recipe.actions.flatMap((action) =>
@@ -924,6 +983,8 @@ export function saveAutomationSpec(client: HubClient): GatedToolSpec<SaveAutomat
     async execute(args) {
       const finished = finishRecipe(args.recipe)
       if (!finished.ok) throw new Error(finished.error)
+      const site = await recipeSiteProblem(client, finished.recipe)
+      if (site !== null) throw new Error(site)
       const code = generateAutomationBlock({
         name: args.name,
         recipe: finished.recipe,

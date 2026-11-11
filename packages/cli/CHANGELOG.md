@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The guided automation flow takes the editor's steps (stop, set variables, continue if a step fails, a wait up to one hour) and refuses a sun-based time window when the site has no location
+
 ## [1.2.230] - 2026-11-10
 
 ### Changed

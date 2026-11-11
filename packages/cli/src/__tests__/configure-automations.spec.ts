@@ -177,6 +177,48 @@ describe('configure_automation_questionnaire', () => {
     expect(out).toMatchObject({ status: 'need-answers' })
     expect(JSON.stringify(out)).toMatch(/cross-dimension/)
   })
+
+  it('takes the steps the editor takes: an hour-long wait, set, stop and a step allowed to fail', async () => {
+    const { ctx } = fakeHub(hubReads)
+    const ready = await automationQuestionnaire(ctx, {
+      name: 'Feed, unless told not to',
+      trigger: { kind: 'schedule', time: '07:30' },
+      conditions: [],
+      actions: [
+        { kind: 'set', vars: { grams: 30 } },
+        { kind: 'cap', deviceId: 7, cap: 'pet-feeder', method: 'feed', continueOnError: true },
+        { kind: 'wait', seconds: 3600 },
+        { kind: 'stop', reason: 'fed', outcome: 'ok' },
+      ],
+    })
+    if (ready.status !== 'ready') throw new Error(JSON.stringify(ready))
+    expect(ready.recipe.actions).toEqual([
+      { kind: 'set', vars: { grams: 30 } },
+      {
+        kind: 'cap',
+        target: { kind: 'devices', ids: [7] },
+        cap: 'pet-feeder',
+        method: 'feed',
+        continueOnError: true,
+      },
+      { kind: 'wait', seconds: 3600 },
+      { kind: 'stop', reason: 'fed', outcome: 'ok' },
+    ])
+    expect(ready.summary.join('\n')).toMatch(/set grams/)
+    expect(ready.summary.join('\n')).toMatch(/stop the run \(ok\): fed/)
+    expect(ready.summary.join('\n')).toMatch(/continue if it fails/)
+  })
+
+  it('refuses a wait over the shared ceiling with the shared sentence', async () => {
+    const { ctx } = fakeHub(hubReads)
+    const out = await automationQuestionnaire(ctx, {
+      name: 'Too long',
+      trigger: { kind: 'schedule', time: '07:30' },
+      conditions: [],
+      actions: [{ kind: 'wait', seconds: 3601 }],
+    })
+    expect(JSON.stringify(out)).toMatch(/a wait is at most one hour/)
+  })
 })
 
 describe('configure_automation_save', () => {
@@ -336,6 +378,74 @@ describe('configure_automation_save', () => {
       )
       expect(sizes).toEqual([64, 6])
       expect(out.status).toBe('dry-run')
+    })
+  })
+
+  describe('a time window the site cannot place', () => {
+    const sunset = {
+      when: { kind: 'schedule' as const, cron: '30 7 * * *' },
+      actions: [
+        {
+          kind: 'wait' as const,
+          seconds: 1,
+          if: {
+            kind: 'time-is' as const,
+            between: {
+              from: { kind: 'sun' as const, event: 'sunset' as const, offsetMin: 0 },
+              to: { kind: 'clock' as const, hh: 23, mm: 0 },
+            },
+          },
+        },
+      ],
+    }
+
+    it('refuses a sun window when the site has no location, naming the step', async () => {
+      const { ctx, calls } = fakeHub({
+        ...hubReads,
+        'system.getSiteLocation': { location: null, timeZone: 'Europe/Rome' },
+      })
+      const out = await saveAutomation(
+        withWrites(ctx),
+        { name: 'Evening', recipe: sunset, enabled: true },
+        undefined,
+      )
+      expect(out).not.toHaveProperty('confirm_token')
+      expect(JSON.stringify(out)).toMatch(/actions\.0\.if\.between\.from/)
+      expect(calls.some((c) => c.path === 'coreBlocks.create')).toBe(false)
+    })
+
+    it('offers the save once the site has a location', async () => {
+      const { ctx } = fakeHub({
+        ...hubReads,
+        'system.getSiteLocation': {
+          location: { latitude: 45.07, longitude: 7.69 },
+          timeZone: 'Europe/Rome',
+        },
+      })
+      const out = await saveAutomation(
+        withWrites(ctx),
+        { name: 'Evening', recipe: sunset, enabled: true },
+        undefined,
+      )
+      expect(out).toHaveProperty('confirm_token')
+    })
+
+    it('refuses when the site cannot be read, and does not ask for a recipe with no time window', async () => {
+      const { ctx, calls } = fakeHub(hubReads)
+      const out = await saveAutomation(
+        withWrites(ctx),
+        { name: 'Evening', recipe: sunset, enabled: true },
+        undefined,
+      )
+      expect(JSON.stringify(out)).toMatch(/could not read the site/)
+      calls.length = 0
+      const plain = await saveAutomation(
+        withWrites(ctx),
+        { name: 'Morning', recipe, enabled: true },
+        undefined,
+      )
+      expect(plain).toHaveProperty('confirm_token')
+      expect(calls.some((c) => c.path === 'system.getSiteLocation')).toBe(false)
     })
   })
 
