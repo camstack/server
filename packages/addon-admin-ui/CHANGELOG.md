@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The shared device card follows the signed-in user's real device permission instead of assuming admin; inside the viewer it drops its duplicate name and is centred at a readable width on desktop
+- The shared device card asks the hub whether the signed-in user may command THIS device (instead of assuming admin) and disables its controls with the reason when not; inside the viewer it drops its duplicate name and is centred at a readable width on desktop
 - The "Started by" condition is offered only inside an automation, not in a standalone action list or a scheduler
 
 ## [1.2.643] - 2026-11-11
@@ -22,8 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Automation editor: each WHEN block draws its rows on a coloured rail of its own, so sibling and nested blocks are told apart; move arrows at an edge stay disabled and say why; the Ungroup button is gone.
-- The shared device card follows the signed-in user's real device permission instead of assuming admin; inside the viewer it drops its duplicate name and is centred at a readable width on desktop
-- The shared device card asks the hub whether the signed-in user may command THIS device (instead of assuming admin) and disables its controls with the reason when not; inside the viewer it drops its duplicate name and is centred at a readable width on desktop
 
 ## [1.2.642] - 2026-11-11
 
@@ -103,7 +103,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notification texts (the shipped-sentence catalog) stay plain text with their variable chips: the device-value picker only appears where the hub renders device values
 - The mosaic caption and the timelapse preview caption stay plain text with their variable chips: no device-value picker where the hub fills variables only
 - Automation editor: rows and blocks in WHEN and IF move up and down, nested blocks collapse to a one-line summary, the Ungroup button is labelled, and the per-block warnings inside the tree are gone: a WHEN that cannot run is still explained beside the disabled Save, and a step's IF that can never be true now shows one non-blocking note under its tree.
-
 
 ## [1.2.632] - 2026-11-10
 
