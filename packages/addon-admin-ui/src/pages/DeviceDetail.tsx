@@ -53,6 +53,7 @@ import {
   ZoneEditingProvider,
   useDeviceLabel,
   useUiText,
+  useDeviceSeriesList,
   type DeviceNameFields,
   Button,
 } from '@camstack/ui-library'
@@ -105,6 +106,7 @@ import {
 } from '../components/device/tabs/device-export-tab'
 import { OverviewTab } from '../components/device/tabs/OverviewTab'
 import { HISTORY_TAB_ID, structuralTabsFor } from '../components/device/tabs/structural-tabs'
+import { historyTabVisible } from '../components/device/history-tab'
 import { CapabilityBadges } from '../components/shared/CapabilityBadges'
 import { IntegrationLogoLink } from '../components/shared/IntegrationLogoLink'
 import { useAuth } from '../contexts/auth-context'
@@ -408,6 +410,10 @@ export function DeviceDetailPage() {
   // Data, not device type — the server emits the section per binding.
   // The model hero draws its own power line (D1023); the legacy strip repeats it.
   const [modelDrawn, setModelDrawn] = useState(false)
+  // The History tab is offered only once device-history ANSWERED with a series
+  // for this device: a device whose caps record nothing gets no empty tab (D315).
+  const historySeries = useDeviceSeriesList(deviceId)
+  const hasHistory = historyTabVisible(historySeries.presence, historySeries.list)
   const heroSectionWidgets = useMemo(
     () =>
       heroWidgets({
@@ -485,7 +491,7 @@ export function DeviceDetailPage() {
     // tabs. The dedup keeps the FIRST entry for a given id, so the container's
     // own tab always wins a collision and a child tab only fills a gap.
     for (const t of [
-      ...structuralTabsFor(deviceTypeStr, isAdmin).filter(
+      ...structuralTabsFor(deviceTypeStr, isAdmin, hasHistory).filter(
         // The module's hero opens History itself (D1023): a drawn hero owns it.
         (tab) => !(tab.id === HISTORY_TAB_ID && modelDrawn && !isCamera),
       ),
@@ -498,7 +504,16 @@ export function DeviceDetailPage() {
       out.push(t)
     }
     return out
-  }, [deviceTypeStr, isAdmin, addonTabs, childAddonTabs, showConfigTab, modelDrawn, isCamera])
+  }, [
+    deviceTypeStr,
+    isAdmin,
+    hasHistory,
+    addonTabs,
+    childAddonTabs,
+    showConfigTab,
+    modelDrawn,
+    isCamera,
+  ])
 
   // Effective active tab — the desired id from the URL if (and only if)
   // it's present in the available `tabs`, else 'overview'. We do NOT

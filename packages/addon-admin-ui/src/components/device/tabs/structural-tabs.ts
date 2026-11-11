@@ -47,9 +47,12 @@ export interface StructuralTab {
 /** The device page's History tab id (`?tab=history`). */
 export const HISTORY_TAB_ID = 'history'
 
-// `history` (D899) is structural on every REAL device: its body is the
-// library's `DeviceHistoryView`, not a schema, and device-history records
-// nothing for a hub or a container (D850), so neither gets the tab.
+// `history` (D899) is structural on every REAL device that has recorded
+// series: its body is the library's `DeviceHistoryView`, not a schema.
+// device-history records nothing for a container (D850), and a device whose
+// bound caps declare no `history` (a gateway) has no series — neither gets an
+// empty tab. The series gate is the caller's `historyTabVisible` answer: a
+// pending or failed read hides the tab, it never shows one that empties (D315).
 const STRUCTURAL_TABS_ALL = [
   {
     id: 'overview',
@@ -96,9 +99,10 @@ const NOT_RECORDED_TYPES: ReadonlySet<string> = new Set([DeviceType.Container])
 export function structuralTabsFor(
   deviceType: string | undefined,
   isAdmin: boolean,
+  hasHistory: boolean,
 ): readonly StructuralTab[] {
   const isCamera = deviceType === DeviceType.Camera
-  const recorded = deviceType === undefined || !NOT_RECORDED_TYPES.has(deviceType)
+  const recorded = hasHistory && (deviceType === undefined || !NOT_RECORDED_TYPES.has(deviceType))
   return STRUCTURAL_TABS_ALL.filter(
     (t) =>
       (isCamera || !t.cameraOnly) &&

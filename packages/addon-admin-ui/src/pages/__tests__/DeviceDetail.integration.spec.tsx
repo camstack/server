@@ -37,6 +37,7 @@ const DEVICE = {
 }
 
 const integrationState = vi.hoisted(() => ({ answered: true }))
+const historyState = vi.hoisted(() => ({ series: [] as readonly { readonly key: string }[] }))
 
 vi.mock('@camstack/ui-library', async () => {
   const actual =
@@ -70,6 +71,11 @@ vi.mock('@camstack/ui-library', async () => {
     usePowerSourceForceRestart: mutationStub,
     useAddonsRestartAddon: mutationStub,
     useDeviceBattery: () => null,
+    useDeviceSeriesList: () => ({
+      presence: 'present',
+      list: { status: 'ok', data: historyState.series },
+    }),
+    DeviceHistoryView: () => <div>history-body</div>,
     useDeviceNetworkLink: () => null,
     useIsMobile: () => false,
     usePipelineOrchestratorGetPipelineAssignment: emptyQuery,
@@ -167,5 +173,25 @@ describe('DeviceDetailPage — the Customize tab (D676)', () => {
     auth.isAdmin = false
     render(renderPage('/devices/4603?tab=customize'))
     expect(screen.queryByText('customize-body')).toBeNull()
+  })
+})
+
+describe('DeviceDetailPage — the History tab (D899)', () => {
+  beforeEach(() => {
+    integrationState.answered = true
+    auth.isAdmin = true
+    historyState.series = []
+    localStorage.clear()
+  })
+
+  it('a device whose history answered with no series is not offered an empty tab', () => {
+    render(renderPage('/devices/4603?tab=history'))
+    expect(screen.queryByText('history-body')).toBeNull()
+  })
+
+  it('a device with a recorded series opens its History', () => {
+    historyState.series = [{ key: 'cap:switch.on' }]
+    render(renderPage('/devices/4603?tab=history'))
+    expect(screen.getByText('history-body')).toBeTruthy()
   })
 })
