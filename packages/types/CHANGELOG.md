@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Event names that many integrations share for a button are recognised by convention
 - Automations: a 'device fired' trigger row runs on one button and one kind of press of a remote, once per press, and hands the button and the press to the steps
 - An addon route can be declared per instance: the hub serves it at /addon/<addonId>/instances/<instanceId>/<path>, and the address without an instance stays the default one
+- An account can be linked to one instance of an integration: /api/oauth2/authorize takes instance= beside integration=, and the link, its tokens and oauthVerifyAccessToken name the instance
 
 ## [1.2.549] - 2026-11-11
 

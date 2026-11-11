@@ -73,6 +73,12 @@ export type {
   AddonRouteReplyEnvelope,
 } from './addon/build-addon-route-provider.js'
 export { buildAddonRouteProvider } from './addon/build-addon-route-provider.js'
+export {
+  isAddonInstanceId,
+  oauthLinkInstanceId,
+  oauthLinkServesInstance,
+  type OauthLinkInstance,
+} from './addon/addon-instance.js'
 export type {
   BuildSessionLostAlertInput,
   IntegrationSessionBinding,

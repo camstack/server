@@ -50,6 +50,8 @@ const OauthSessionSummarySchema = z.object({
   userId: z.string(),
   username: z.string(),
   integrationId: z.string(),
+  /** The instance the link was made for; `null` = the default instance. */
+  instanceId: z.string().nullable().optional(),
   scopes: z.array(TokenScopeSchema),
   createdAt: z.number(),
   lastUsedAt: z.number(),
@@ -212,6 +214,9 @@ export const userManagementCapability = {
     oauthIssueCode: method(
       z.object({
         integrationId: z.string(),
+        /** The integration instance the link is for. Omit for the default
+         *  instance — never pass the addon id to mean it. */
+        instanceId: z.string().optional(),
         userId: z.string(),
         username: z.string(),
         scopes: z.array(TokenScopeSchema),
@@ -263,6 +268,10 @@ export const userManagementCapability = {
           userId: z.string(),
           username: z.string(),
           scopes: z.array(TokenScopeSchema),
+          /** The instance the link was made for, read from the SESSION.
+           *  Absent = the default instance. A route served per instance
+           *  compares it with the instance of its path (`oauthLinkServesInstance`). */
+          instanceId: z.string().optional(),
         })
         .nullable(),
       { access: 'view' },

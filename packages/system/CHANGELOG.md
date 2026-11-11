@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The hub announces a stable random hub id on the LAN and signs it into the pairing offer; a pairing without an address the agent can dial is refused with the reason
 - A step's 'only if' can use a time-of-day window, and a scheduler follows a time-of-day condition at the moment the window opens or closes.
 - An addon route can be declared per instance: the hub serves it at /addon/<addonId>/instances/<instanceId>/<path>, and the address without an instance stays the default one
+- An account can be linked to one instance of an integration: /api/oauth2/authorize takes instance= beside integration=, and the link, its tokens and oauthVerifyAccessToken name the instance
 
 ### Changed
 

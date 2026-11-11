@@ -4886,6 +4886,7 @@ Enum: `"text" \| "markdown" \| "html"`
 - `requiresPkce?`: `boolean`
 - `hubUrl?`: `string`
 - `refreshTokenTtlSec?`: `number \| "never"`
+- `instances?`: `({ id: string; displayName: string })[]`
 
 ### `ObjectEventSchema`
 
@@ -6708,6 +6709,7 @@ Enum: `"operator-set" \| "derived-from-ip"`
 - `scopes?`: `pipe[]`
 - `redirectUri?`: `string`
 - `integrationId?`: `string`
+- `instanceId?`: `string`
 - `jti?`: `string`
 - `codeChallenge?`: `string`
 - `sessionId?`: `string`

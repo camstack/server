@@ -112,6 +112,7 @@ function fakeSessionManager() {
       userId: string
       username: string
       integrationId: string
+      instanceId?: string | null
       scopes: TokenScope[]
     }): Promise<OauthSession> {
       const now = Date.now()
@@ -120,6 +121,7 @@ function fakeSessionManager() {
         userId: input.userId,
         username: input.username,
         integrationId: input.integrationId,
+        instanceId: input.instanceId ?? null,
         scopes: input.scopes,
         createdAt: now,
         lastUsedAt: now,
@@ -196,6 +198,8 @@ interface FakeRegistryOptions {
   /** Addons that have actually REGISTERED their provider. Anything declared
    *  but absent here is a descriptor the hub is still waiting for. */
   readonly registered?: readonly string[]
+  /** Instances the Alexa descriptor declares beside the default one. */
+  readonly alexaInstances?: readonly { readonly id: string; readonly displayName: string }[]
 }
 
 function buildFakeRegistry(
@@ -204,7 +208,10 @@ function buildFakeRegistry(
   options: FakeRegistryOptions = {},
 ): { getCollectionEntries: any; getManifestDeclarers: any; hasProvider: any; getSingleton: any } {
   const alexaProvider: IOauthIntegrationProvider = {
-    getDescriptor: async () => ALEXA_DESCRIPTOR,
+    getDescriptor: async () =>
+      options.alexaInstances === undefined
+        ? ALEXA_DESCRIPTOR
+        : { ...ALEXA_DESCRIPTOR, instances: [...options.alexaInstances] },
   }
 
   const userMgmt: IUserManagementProvider = {
@@ -1752,5 +1759,89 @@ describe('Home Assistant descriptor covers every path the component calls', () =
       deviceId: 101,
     })
     expect(result.ok).toBe(true)
+  })
+})
+
+describe('OAuth2 account-linking — a link to an INSTANCE (planning#415)', () => {
+  let grants: ReturnType<typeof createOauthGrants>
+  let sessionManager: ReturnType<typeof fakeSessionManager>
+  let app: ReturnType<typeof buildApp>
+
+  beforeEach(() => {
+    sessionManager = fakeSessionManager()
+    grants = createOauthGrants(realSsoBridge, sessionManager)
+    capturedWarnings = []
+    app = buildApp(grants, sessionManager, {
+      alexaInstances: [{ id: 'second', displayName: 'Second home' }],
+    })
+  })
+
+  const cookieHeader = { cookie: `${SESSION_COOKIE}=${VALID_SESSION_TOKEN}` }
+
+  async function consent(instance: string | undefined) {
+    return app.inject({
+      method: 'POST',
+      url: '/api/oauth2/authorize',
+      headers: { 'content-type': 'application/x-www-form-urlencoded', ...cookieHeader },
+      body: new URLSearchParams({
+        consent: 'allow',
+        integration: 'export-alexa',
+        ...(instance !== undefined ? { instance } : {}),
+        redirect_uri: REDIRECT_URI,
+        state: STATE,
+        response_type: 'code',
+      }).toString(),
+    })
+  }
+
+  async function accessTokenOf(location: string): Promise<string> {
+    const code = decodeURIComponent(location.match(/[?&]code=([^&]+)/)![1]!)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/oauth2/token',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: REDIRECT_URI,
+      }).toString(),
+    })
+    expect(res.statusCode).toBe(200)
+    return res.json<{ access_token: string }>().access_token
+  }
+
+  it('the consent page carries the instance into the form it posts', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/oauth2/authorize?response_type=code&integration=export-alexa&instance=second&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${STATE}`,
+      headers: cookieHeader,
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body).toMatch(/name="instance"[^>]*value="second"/)
+  })
+
+  it('a consent for an instance mints a link that verifies as that instance', async () => {
+    const res = await consent('second')
+    expect(res.statusCode).toBe(302)
+    const token = await accessTokenOf(String(res.headers['location']))
+    const verified = await grants.oauthVerifyAccessToken({ token })
+    expect(verified?.instanceId).toBe('second')
+    expect((await sessionManager.list())[0]?.instanceId).toBe('second')
+  })
+
+  it('a consent with no instance mints a link to the default one', async () => {
+    const res = await consent(undefined)
+    expect(res.statusCode).toBe(302)
+    const token = await accessTokenOf(String(res.headers['location']))
+    const verified = await grants.oauthVerifyAccessToken({ token })
+    expect(verified).not.toBeNull()
+    expect(verified?.instanceId).toBeUndefined()
+  })
+
+  it('a consent for an instance the integration did not declare issues no code', async () => {
+    const res = await consent('fourth')
+    expect(res.statusCode).toBe(400)
+    expect(res.headers['location']).toBeUndefined()
+    expect((await sessionManager.list()).length).toBe(0)
   })
 })

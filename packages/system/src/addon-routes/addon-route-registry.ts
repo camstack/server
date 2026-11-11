@@ -1,4 +1,4 @@
-import type { IAddonHttpRoute, IAddonRouteProvider } from '@camstack/types'
+import { type IAddonHttpRoute, type IAddonRouteProvider, isAddonInstanceId } from '@camstack/types'
 
 interface RouteMatch {
   readonly route: IAddonHttpRoute
@@ -14,9 +14,6 @@ interface RouteMatch {
 
 /** The path segment that introduces an instance id: `/addon/<addonId>/instances/<instanceId>/…`. */
 export const ADDON_INSTANCE_SEGMENT = 'instances'
-
-/** An instance id as it may appear in a path: no separator, no escape, bounded. */
-const INSTANCE_ID_RE = /^[A-Za-z0-9._-]{1,64}$/
 
 /** A request path read as "this addon, this instance, this route path". */
 export interface AddonInstancePath {
@@ -41,7 +38,7 @@ export function resolveAddonInstancePath(addonId: string, path: string): AddonIn
   if (parts[0] !== '' || parts[1] !== 'addon' || parts[2] !== addonId) return null
   if (parts[3] !== ADDON_INSTANCE_SEGMENT) return { instanceId: addonId, routePath: path }
   const instanceId = parts[4]
-  if (instanceId === undefined || !INSTANCE_ID_RE.test(instanceId)) return null
+  if (instanceId === undefined || !isAddonInstanceId(instanceId)) return null
   return { instanceId, routePath: ['', 'addon', addonId, ...parts.slice(5)].join('/') }
 }
 

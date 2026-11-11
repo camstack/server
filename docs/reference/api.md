@@ -3668,7 +3668,7 @@
 
 ### `oauth-integration` → `oauthIntegration.*`
 
-- **Source:** `packages/types/src/capabilities/oauth-integration.cap.ts:137`
+- **Source:** `packages/types/src/capabilities/oauth-integration.cap.ts:145`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** internal
 - **Provider interface:** `IOauthIntegrationProvider`
@@ -4493,7 +4493,7 @@
 
 ### `sso-bridge` → `ssoBridge.*`
 
-- **Source:** `packages/types/src/capabilities/sso-bridge.cap.ts:97`
+- **Source:** `packages/types/src/capabilities/sso-bridge.cap.ts:104`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `ISsoBridgeProvider`
@@ -4901,7 +4901,7 @@
 
 ### `user-management` → `userManagement.*`
 
-- **Source:** `packages/types/src/capabilities/user-management.cap.ts:113`
+- **Source:** `packages/types/src/capabilities/user-management.cap.ts:115`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IUserManagementProvider`
@@ -4922,14 +4922,14 @@
 | getTotpStatus | `userManagement.getTotpStatus` | query | admin | `{ userId: string }` | `{ enabled: boolean; confirmedAt: number \| null }` |
 | migrateRawSecrets | `userManagement.migrateRawSecrets` | mutation | admin | `RawSecretMigrationInputSchema` | `RawSecretMigrationReportSchema` |
 | verifyTotp | `userManagement.verifyTotp` | mutation | protected | `{ userId: string; code: string }` | `{ valid: boolean }` |
-| oauthIssueCode | `userManagement.oauthIssueCode` | mutation | protected | `{ integrationId: string; userId: string; username: string; scopes: pipe[]; redirectUri: string; hubUrl: string; codeChallenge?: string; refreshTtlSec?: number \| "never" }` | `{ code: string }` |
+| oauthIssueCode | `userManagement.oauthIssueCode` | mutation | protected | `{ integrationId: string; instanceId?: string; userId: string; username: string; scopes: pipe[]; redirectUri: string; hubUrl: string; codeChallenge?: string; refreshTtlSec?: number \| "never" }` | `{ code: string }` |
 | oauthExchangeCode | `userManagement.oauthExchangeCode` | mutation | protected | `{ code: string; redirectUri: string; codeVerifier?: string }` | `{ accessToken: string; refreshToken: string; expiresIn: number } \| null` |
 | oauthRefresh | `userManagement.oauthRefresh` | mutation | protected | `{ refreshToken: string }` | `{ accessToken: string; refreshToken: string; expiresIn: number } \| null` |
-| oauthVerifyAccessToken | `userManagement.oauthVerifyAccessToken` | query | protected | `{ token: string }` | `{ userId: string; username: string; scopes: pipe[] } \| null` |
+| oauthVerifyAccessToken | `userManagement.oauthVerifyAccessToken` | query | protected | `{ token: string }` | `{ userId: string; username: string; scopes: pipe[]; instanceId?: string } \| null` |
 | listExternalIdentities | `userManagement.listExternalIdentities` | query | admin | `{ userId: string }` | `ExternalIdentitySchema[]` |
 | findUserByExternalIdentity | `userManagement.findUserByExternalIdentity` | query | admin | `ExternalIdentityKeySchema` | `{ userId: string; issuer: string } \| null` |
 | unlinkExternalIdentity | `userManagement.unlinkExternalIdentity` | mutation | admin | `{ provider: string; subject: string; userId: string }` | `{ success: boolean }` |
-| listOauthSessions | `userManagement.listOauthSessions` | query | admin | `void` | `({ id: string; userId: string; username: string; integrationId: string; scopes: pipe[]; createdAt: number; lastUsedAt: number; revokedAt: number \| null })[]` |
+| listOauthSessions | `userManagement.listOauthSessions` | query | admin | `void` | `({ id: string; userId: string; username: string; integrationId: string; instanceId?: string \| null; scopes: pipe[]; createdAt: number; lastUsedAt: number; revokedAt: number \| null })[]` |
 | revokeOauthSession | `userManagement.revokeOauthSession` | mutation | admin | `{ id: string }` | `{ success: boolean }` |
 
 ### `user-passkeys` → `userPasskeys.*`

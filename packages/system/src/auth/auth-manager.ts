@@ -211,6 +211,7 @@ export class AuthManager {
       ...(payload.scopes !== undefined ? { scopes: payload.scopes } : {}),
       ...(payload.redirectUri !== undefined ? { redirectUri: payload.redirectUri } : {}),
       ...(payload.integrationId !== undefined ? { integrationId: payload.integrationId } : {}),
+      ...(payload.instanceId !== undefined ? { instanceId: payload.instanceId } : {}),
       ...(payload.jti !== undefined ? { jti: payload.jti } : {}),
       ...(payload.sessionId !== undefined ? { sessionId: payload.sessionId } : {}),
       ...(payload.refreshTtl !== undefined ? { refreshTtl: payload.refreshTtl } : {}),
@@ -270,6 +271,8 @@ export class AuthManager {
         typeof decoded['redirectUri'] === 'string' ? decoded['redirectUri'] : undefined
       const integrationId =
         typeof decoded['integrationId'] === 'string' ? decoded['integrationId'] : undefined
+      const instanceId =
+        typeof decoded['instanceId'] === 'string' ? decoded['instanceId'] : undefined
       const jti = typeof decoded['jti'] === 'string' ? decoded['jti'] : undefined
       const sessionId = typeof decoded['sessionId'] === 'string' ? decoded['sessionId'] : undefined
       const linkIntent =
@@ -299,6 +302,7 @@ export class AuthManager {
         ...(scopes !== undefined ? { scopes } : {}),
         ...(redirectUri !== undefined ? { redirectUri } : {}),
         ...(integrationId !== undefined ? { integrationId } : {}),
+        ...(instanceId !== undefined ? { instanceId } : {}),
         ...(jti !== undefined ? { jti } : {}),
         ...(sessionId !== undefined ? { sessionId } : {}),
         ...(refreshTtl !== undefined ? { refreshTtl } : {}),

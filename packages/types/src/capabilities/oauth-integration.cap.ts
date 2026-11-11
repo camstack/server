@@ -132,6 +132,14 @@ const OauthIntegrationDescriptorSchema = z.object({
    * on the tokens, so editing this field changes FUTURE links only.
    */
   refreshTokenTtlSec: z.union([z.number().int().positive(), z.literal('never')]).optional(),
+  /**
+   * The integration instances an account can be linked to (planning#415),
+   * beside the default one. `/api/oauth2/authorize?instance=<id>` is accepted
+   * only for an id listed here; with no `instance=` the link is made to the
+   * default instance, which is never listed and always accepted — it is the
+   * address third parties already hold. Omit for a single-instance integration.
+   */
+  instances: z.array(z.object({ id: z.string(), displayName: z.string() })).optional(),
 })
 
 export const oauthIntegrationCapability = {

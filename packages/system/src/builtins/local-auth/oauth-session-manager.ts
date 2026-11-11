@@ -9,6 +9,12 @@ export interface OauthSession {
   readonly userId: string
   readonly username: string
   readonly integrationId: string
+  /**
+   * The integration instance the link was made for, `null` for the default
+   * one (every link made before instances existed, and every link made
+   * without `instance=`). One spelling of "default": never the addon id.
+   */
+  readonly instanceId: string | null
   readonly scopes: TokenScope[]
   readonly createdAt: number
   readonly lastUsedAt: number
@@ -19,6 +25,8 @@ interface CreateInput {
   readonly userId: string
   readonly username: string
   readonly integrationId: string
+  /** Omitted or `null` = the default instance. */
+  readonly instanceId?: string | null
   readonly scopes: TokenScope[]
 }
 
@@ -27,6 +35,7 @@ function sessionToBody(session: OauthSession): OauthSessionBody {
     userId: session.userId,
     username: session.username,
     integrationId: session.integrationId,
+    ...(session.instanceId !== null ? { instanceId: session.instanceId } : {}),
     scopes: session.scopes,
     createdAt: session.createdAt,
     lastUsedAt: session.lastUsedAt,
@@ -40,6 +49,7 @@ function rowToSession(id: string, body: OauthSessionBody): OauthSession {
     userId: body.userId,
     username: body.username,
     integrationId: body.integrationId,
+    instanceId: body.instanceId ?? null,
     scopes: body.scopes,
     createdAt: body.createdAt,
     lastUsedAt: body.lastUsedAt,
@@ -76,6 +86,7 @@ export class OauthSessionManager {
       userId: input.userId,
       username: input.username,
       integrationId: input.integrationId,
+      instanceId: input.instanceId ?? null,
       scopes: input.scopes.map((s) => ({ ...s })),
       createdAt: now,
       lastUsedAt: now,

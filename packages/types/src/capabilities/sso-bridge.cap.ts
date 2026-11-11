@@ -38,6 +38,13 @@ const SsoBridgeClaimsSchema = z.object({
   /** OAuth authorization-code binding — set only on `oauth-code` tokens. */
   redirectUri: z.string().optional(),
   integrationId: z.string().optional(),
+  /**
+   * The integration INSTANCE an OAuth link was made for (planning#415). Set on
+   * `oauth-code`, `oauth-access` and `oauth-refresh` tokens of a link made
+   * with `instance=`; absent on a link to the default instance. A cloud relay
+   * reads it off the access token to route; the hub answers from the session.
+   */
+  instanceId: z.string().optional(),
   /** JWT ID — unique per issued code; consumed-set enforces single-use. */
   jti: z.string().optional(),
   /** PKCE S256 challenge — set only on `oauth-code` tokens issued to a public

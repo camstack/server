@@ -16,6 +16,8 @@ export type RefreshTtl = number | 'never'
 
 interface IssueCodeInput {
   integrationId: string
+  /** The instance the link is for; absent = the default instance. */
+  instanceId?: string
   userId: string
   username: string
   scopes: TokenScope[]
@@ -57,7 +59,15 @@ interface VerifiedAccess {
   userId: string
   username: string
   scopes: TokenScope[]
+  /** From the session; absent = the default instance. */
+  instanceId?: string
 }
+
+/** The two calls of the signer the grants use. */
+export type OauthGrantSigner = Pick<ISsoBridgeProvider, 'signBridgeToken' | 'verifyBridgeToken'>
+
+/** The three calls of the session store the grants use. */
+export type OauthGrantSessions = Pick<OauthSessionManager, 'create' | 'getById' | 'touch'>
 
 /** OAuth account-linking grant logic. Pure over an injected sso-bridge
  *  signer so it is unit-testable without the capability registry.
@@ -68,10 +78,7 @@ interface VerifiedAccess {
  *  enforced by a `jti` consumed-set. The old in-process `pendingCodes`
  *  Map is gone — a hub restart no longer breaks in-flight exchanges,
  *  only risking a single replay within the remaining 60 s TTL. */
-export function createOauthGrants(
-  ssoBridge: ISsoBridgeProvider,
-  sessionManager: OauthSessionManager,
-) {
+export function createOauthGrants(ssoBridge: OauthGrantSigner, sessionManager: OauthGrantSessions) {
   // Consumed jti set — maps jti → expiry timestamp (ms).
   // Entries are pruned after TTL['oauth-code'] seconds to bound memory.
   const consumedJtis = new Map<string, number>()
@@ -98,12 +105,17 @@ export function createOauthGrants(
     hubUrl: string,
     sessionId: string,
     refreshTtl: RefreshTtl,
+    instanceId: string | null,
   ): Promise<TokenPair> {
+    // The instance is copied from the SESSION onto both tokens: a relay that
+    // cannot call the hub routes on the access token's claim.
+    const instanceClaim = instanceId !== null ? { instanceId } : {}
     const access = await ssoBridge.signBridgeToken({
       claims: {
         ...baseClaims(userId, username, scopes, hubUrl),
         provider: 'oauth-access',
         sessionId,
+        ...instanceClaim,
       },
       ttlSec: TTL['oauth-access'],
     })
@@ -112,6 +124,7 @@ export function createOauthGrants(
         ...baseClaims(userId, username, scopes, hubUrl),
         provider: 'oauth-refresh',
         sessionId,
+        ...instanceClaim,
         // Carried on the token so the NEXT refresh re-mints with the same
         // lifetime instead of silently dropping back to the default.
         refreshTtl,
@@ -141,6 +154,7 @@ export function createOauthGrants(
           provider: 'oauth-code',
           redirectUri: input.redirectUri,
           integrationId: input.integrationId,
+          ...(input.instanceId !== undefined ? { instanceId: input.instanceId } : {}),
           jti,
           ...(input.codeChallenge ? { codeChallenge: input.codeChallenge } : {}),
           ...(input.refreshTtlSec !== undefined ? { refreshTtl: input.refreshTtlSec } : {}),
@@ -186,6 +200,7 @@ export function createOauthGrants(
         username: claims.username,
         integrationId:
           typeof claims.integrationId === 'string' ? claims.integrationId : '<unknown>',
+        instanceId: typeof claims.instanceId === 'string' ? claims.instanceId : null,
         scopes,
       })
       return mintPair(
@@ -195,6 +210,7 @@ export function createOauthGrants(
         claims.hubUrl ?? '',
         session.id,
         readRefreshTtl(claims.refreshTtl),
+        session.instanceId,
       )
     },
 
@@ -217,6 +233,7 @@ export function createOauthGrants(
         claims.hubUrl ?? '',
         sessionId,
         readRefreshTtl(claims.refreshTtl),
+        session.instanceId,
       )
     },
 
@@ -234,6 +251,7 @@ export function createOauthGrants(
         userId: claims.userId,
         username: claims.username,
         scopes: (claims.scopes ?? []) as TokenScope[],
+        ...(session.instanceId !== null ? { instanceId: session.instanceId } : {}),
       }
     },
   }

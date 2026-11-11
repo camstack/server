@@ -116,6 +116,8 @@ export type OauthSessionBody = {
   readonly userId: string
   readonly username: string
   readonly integrationId: string
+  /** The instance the link was made for; absent = the default instance (planning#415). */
+  readonly instanceId?: string
   readonly scopes: z.infer<typeof TokenScopeSchema>[]
   readonly createdAt: number
   readonly lastUsedAt: number
@@ -125,6 +127,7 @@ const _oauthSessionBody: z.ZodType<OauthSessionBody> = z.object({
   userId: z.string(),
   username: z.string(),
   integrationId: z.string(),
+  instanceId: z.string().optional(),
   scopes: z.array(TokenScopeSchema),
   createdAt: z.number(),
   lastUsedAt: z.number(),

@@ -452,6 +452,7 @@ export class LocalAuthAddon extends BaseAddon {
           userId: s.userId,
           username: s.username,
           integrationId: s.integrationId,
+          instanceId: s.instanceId,
           scopes: s.scopes,
           createdAt: s.createdAt,
           lastUsedAt: s.lastUsedAt,

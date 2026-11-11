@@ -7,7 +7,7 @@ import type {
   OauthLandingReason,
   TokenScope,
 } from '@camstack/types'
-import { oauthLandingUrl } from '@camstack/types'
+import { isAddonInstanceId, oauthLandingUrl } from '@camstack/types'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import {
   isSessionGradeJwtPayload,
@@ -27,6 +27,9 @@ export interface AuthorizeQuery {
    *  duplicated `integration` reach `Map.get` as an array and come back
    *  `undefined`, i.e. indistinguishable from an integration nobody declared. */
   integration?: string | readonly string[]
+  /** Which instance of the integration the account is linked to (planning#415).
+   *  Absent = the default instance. */
+  instance?: string | readonly string[]
   redirect_uri?: string
   state?: string
   code_challenge?: string
@@ -35,6 +38,8 @@ export interface AuthorizeQuery {
 
 export interface AuthorizeRequest {
   integration: string
+  /** The instance to link to; `null` = the default instance. */
+  instance: string | null
   redirectUri: string
   state: string
   /** Empty string when the integration does not use PKCE. */
@@ -124,6 +129,7 @@ export interface AuthorizeCallContext {
 const VALUE_SAFE_QUERY_KEYS: readonly string[] = [
   'response_type',
   'integration',
+  'instance',
   'code_challenge_method',
   'client_id',
 ]
@@ -193,6 +199,45 @@ export type AuthorizeValidation =
 /** What the authorize validator needs to know about the target integration. */
 export interface IntegrationPolicy {
   readonly requiresPkce?: boolean
+  /** The instances an account can be linked to beside the default one. */
+  readonly instances?: readonly { readonly id: string }[]
+  /** The addon that declared the integration: the id of its default instance. */
+  readonly addonId?: string
+}
+
+type InstanceParam =
+  | { readonly ok: true; readonly instance: string | null }
+  | { readonly ok: false; readonly error: string }
+
+/**
+ * Resolve the `instance` parameter against what the integration declared.
+ *
+ * The default instance is `null` here whichever way the caller spelled it
+ * (absent, empty, or the addon id), so a link stores ONE spelling of it. It is
+ * always accepted: it is the address third parties held before instances
+ * existed. Any other id must be one the integration declared.
+ */
+function resolveInstanceParam(
+  raw: string | readonly string[] | undefined,
+  policy: IntegrationPolicy,
+): InstanceParam {
+  const values = raw === undefined ? [] : typeof raw === 'string' ? [raw] : raw
+  const distinct = [...new Set(values.filter((v) => v !== ''))]
+  if (distinct.length > 1) {
+    return {
+      ok: false,
+      error: 'invalid_request — instance parameter repeated with conflicting values',
+    }
+  }
+  const [value] = distinct
+  if (value === undefined) return { ok: true, instance: null }
+  if (!isAddonInstanceId(value)) {
+    return { ok: false, error: 'invalid_request — instance is not a valid id' }
+  }
+  if (value === policy.addonId) return { ok: true, instance: null }
+  const declared = (policy.instances ?? []).some((i) => i.id === value)
+  if (!declared) return { ok: false, error: 'invalid_request — unknown instance' }
+  return { ok: true, instance: value }
 }
 
 /** Longest caller-supplied `integration` value echoed back in an error. */
@@ -300,6 +345,8 @@ export function validateAuthorizeQuery(
       diagnostics,
     }
   }
+  const instance = resolveInstanceParam(q.instance, policy)
+  if (!instance.ok) return { ok: false, status: 400, error: instance.error }
   if (!q.redirect_uri)
     return { ok: false, status: 400, error: 'invalid_request — redirect_uri required' }
   if (!q.state) return { ok: false, status: 400, error: 'invalid_request — state required' }
@@ -317,6 +364,7 @@ export function validateAuthorizeQuery(
   return {
     ok: true,
     integration: param.value,
+    instance: instance.instance,
     redirectUri: q.redirect_uri,
     state: q.state,
     codeChallenge: challenge,
@@ -534,6 +582,8 @@ function refuseUnauthenticated(
  */
 export interface IntegrationRegistrySnapshot {
   readonly descriptors: ReadonlyMap<string, OauthIntegrationDescriptor>
+  /** integrationId → what the authorize validator checks, with the declaring addon. */
+  readonly policies: ReadonlyMap<string, IntegrationPolicy>
   /** Addons whose manifest declares `oauth-integration` and whose provider has
    *  not registered. Non-empty ⇒ `descriptors` is not final. */
   readonly pendingAddons: readonly string[]
@@ -546,14 +596,20 @@ async function readIntegrationRegistry(
 ): Promise<IntegrationRegistrySnapshot> {
   const entries = registry.getCollectionEntries<IOauthIntegrationProvider>('oauth-integration')
   const descriptors = new Map<string, OauthIntegrationDescriptor>()
-  for (const [, provider] of entries) {
+  const policies = new Map<string, IntegrationPolicy>()
+  for (const [addonId, provider] of entries) {
     const descriptor = await provider.getDescriptor()
     descriptors.set(descriptor.integrationId, descriptor)
+    policies.set(descriptor.integrationId, {
+      addonId,
+      ...(descriptor.requiresPkce !== undefined ? { requiresPkce: descriptor.requiresPkce } : {}),
+      ...(descriptor.instances !== undefined ? { instances: descriptor.instances } : {}),
+    })
   }
   const pendingAddons = registry
     .getManifestDeclarers('oauth-integration')
     .filter((addonId) => !registry.hasProvider('oauth-integration', addonId))
-  return { descriptors, pendingAddons }
+  return { descriptors, policies, pendingAddons }
 }
 
 export function registerOauth2Routes(fastify: FastifyInstance, deps: Oauth2Deps): void {
@@ -583,9 +639,9 @@ export function registerOauth2Routes(fastify: FastifyInstance, deps: Oauth2Deps)
       return answerRefusal(request, reply, 503, { error: 'service_unavailable' }, 'unavailable')
     }
 
-    const { descriptors, pendingAddons } = await readIntegrationRegistry(registry)
+    const { descriptors, policies, pendingAddons } = await readIntegrationRegistry(registry)
     const query = request.query as AuthorizeQuery
-    const v = validateAuthorizeQuery(query, descriptors, pendingAddons)
+    const v = validateAuthorizeQuery(query, policies, pendingAddons)
     if (!v.ok) {
       return refuseAuthorize(request, reply, deps.logger, 'GET', call, v)
     }
@@ -633,6 +689,7 @@ export function registerOauth2Routes(fastify: FastifyInstance, deps: Oauth2Deps)
       redirectUri: v.redirectUri,
       hidden: {
         integration: v.integration,
+        ...(v.instance !== null ? { instance: v.instance } : {}),
         redirect_uri: v.redirectUri,
         state: v.state,
         response_type: 'code',
@@ -699,11 +756,12 @@ export function registerOauth2Routes(fastify: FastifyInstance, deps: Oauth2Deps)
       return answerRefusal(request, reply, 503, { error: 'service_unavailable' }, 'unavailable')
     }
 
-    const { descriptors, pendingAddons } = await readIntegrationRegistry(registry)
+    const { descriptors, policies, pendingAddons } = await readIntegrationRegistry(registry)
     const body = request.body as Record<string, string | undefined>
     const formQuery: AuthorizeQuery = {
       response_type: body.response_type,
       integration: body.integration,
+      instance: body.instance,
       redirect_uri: body.redirect_uri,
       state: body.state,
       code_challenge: body.code_challenge,
@@ -711,7 +769,7 @@ export function registerOauth2Routes(fastify: FastifyInstance, deps: Oauth2Deps)
     }
     // Re-validated, not trusted: the hidden fields came back from a browser
     // and every one of them is attacker-editable.
-    const v = validateAuthorizeQuery(formQuery, descriptors, pendingAddons)
+    const v = validateAuthorizeQuery(formQuery, policies, pendingAddons)
     if (!v.ok) {
       return refuseAuthorize(request, reply, deps.logger, 'POST', call, v)
     }
@@ -757,6 +815,7 @@ export function registerOauth2Routes(fastify: FastifyInstance, deps: Oauth2Deps)
 
     const { code } = await userMgmt.oauthIssueCode({
       integrationId: v.integration,
+      ...(v.instance !== null ? { instanceId: v.instance } : {}),
       userId: tokenInfo.userId,
       username: tokenInfo.username,
       scopes: descriptor.requestedScopes,

@@ -44,6 +44,7 @@ function fakeSessionManager() {
         userId: input.userId,
         username: input.username,
         integrationId: input.integrationId,
+        instanceId: null,
         scopes: input.scopes,
         createdAt: now,
         lastUsedAt: now,
