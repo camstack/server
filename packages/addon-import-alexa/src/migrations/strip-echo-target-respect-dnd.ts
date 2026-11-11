@@ -22,14 +22,36 @@ export interface StoredEchoRecord {
   readonly data: Readonly<Record<string, unknown>>
 }
 
-/** The Echo target records, read and replaced whole (a patch cannot remove a key). */
+/** One target the pass changed; `wasOff` = it had the switch off, so it now goes quiet in DND. */
+export interface EchoDndStripped {
+  readonly id: string
+  readonly name: string | null
+  readonly wasOff: boolean
+}
+
+/**
+ * The Echo target records, read and replaced whole: a records `put` replaces the stored body
+ * (`data = excluded.data` in the SQLite engine, the same in the in-memory engine), while a patch
+ * cannot remove a key.
+ */
 export interface EchoDndRecordPorts {
   listEchoRecords(): Promise<readonly StoredEchoRecord[]>
   replaceEchoRecord(id: string, data: Readonly<Record<string, unknown>>): Promise<void>
+  /** Logs the targets the pass changed, by id and name, flagging the ones that had the switch off. */
+  echoDndStripped(changed: readonly EchoDndStripped[]): void
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function strippedOf(id: string, row: Readonly<Record<string, unknown>>): EchoDndStripped {
+  const name = row['name']
+  return {
+    id,
+    name: typeof name === 'string' ? name : null,
+    wasOff: row[RETIRED_KEY] === false,
+  }
 }
 
 function withoutRetiredKey(row: Readonly<Record<string, unknown>>): Record<string, unknown> {
@@ -45,14 +67,25 @@ export async function stripEchoTargetRespectDnd(
     await ports.replaceEchoRecord(record.id, withoutRetiredKey(record.data))
   }
   const rows = await ports.readRows()
-  const markedRows = rows.filter((row) => isRecord(row) && RETIRED_KEY in row).length
+  const markedRowList = rows.filter(
+    (row): row is Record<string, unknown> => isRecord(row) && RETIRED_KEY in row,
+  )
+  const markedRows = markedRowList.length
   if (markedRows > 0) {
     await ports.writeRows(rows.map((row) => (isRecord(row) ? withoutRetiredKey(row) : row)))
   }
+  const changed = [
+    ...marked.map((record) => strippedOf(record.id, record.data)),
+    ...markedRowList.map((row) => strippedOf(typeof row['id'] === 'string' ? row['id'] : '?', row)),
+  ]
+  if (changed.length > 0) ports.echoDndStripped(changed)
+  // A target that had the switch OFF spoke through Do Not Disturb; from now on a `normal`
+  // notification is quiet there. Counted so the ledger says how many behave differently.
   const summary = {
     records: records.length,
     stripped: marked.length,
     settingRows: markedRows,
+    wasOff: changed.filter((c) => c.wasOff).length,
   }
   return {
     outcome: marked.length + markedRows === 0 ? 'already-done' : 'done',

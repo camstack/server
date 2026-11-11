@@ -3,6 +3,10 @@
  * in the `echoTargets` setting. Driven the way the addon drives it: the catalogue through
  * `runAddonMigrations` against a ledger, the records the real engine in memory. A marked record
  * proves every other field survives; a rerun reports `already-done` and writes nothing.
+ *
+ * The in-memory engine's `put` replaces the stored body exactly as the SQLite engine does
+ * (`ON CONFLICT … DO UPDATE SET data = excluded.data` in `records-engine.ts`), so a key left out of
+ * the body is gone in production too — no merge to hide it.
  */
 import {
   type AddonMigrationHost,
@@ -14,6 +18,7 @@ import {
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { alexaNotifyRecordKinds, echoRecordPortsOver } from '../../speak/echo-store.js'
+import type { EchoDndStripped } from '../strip-echo-target-respect-dnd.js'
 import {
   ADDON_MIGRATIONS,
   type AlexaMigrationPorts,
@@ -69,7 +74,13 @@ async function world(initialRows: readonly unknown[]) {
   const memory = makeInMemoryRecords('import-alexa')
   await memory.records.declare(alexaNotifyRecordKinds)
   const setting = { rows: initialRows, writes: 0 }
-  const echo = echoRecordPortsOver(memory.records, silentLogger)
+  const logged: EchoDndStripped[][] = []
+  const echo = {
+    ...echoRecordPortsOver(memory.records, silentLogger),
+    echoDndStripped: (changed: readonly EchoDndStripped[]) => {
+      logged.push([...changed])
+    },
+  }
   const ports: Pick<AlexaMigrationPorts, 'readRows' | 'writeRows'> & typeof echo = {
     readRows: async () => setting.rows,
     writeRows: async (rows) => {
@@ -88,7 +99,7 @@ async function world(initialRows: readonly unknown[]) {
       ),
       silentLogger,
     )
-  return { setting, echo, run }
+  return { setting, echo, run, logged }
 }
 
 const MARKED_RECORD = {
@@ -126,9 +137,11 @@ describe('strip-echo-target-respect-dnd', () => {
     expect(outcomes.get(STRIP_ECHO_TARGET_RESPECT_DND_ID)).toMatchObject({
       result: {
         outcome: 'done',
-        summary: { records: 2, stripped: 1, settingRows: 0 },
+        summary: { records: 2, stripped: 1, settingRows: 0, wasOff: 1 },
       },
     })
+    // The operator can find the target that now goes quiet in DND by id and name.
+    expect(w.logged).toEqual([[{ id: 'echo-kitchen', name: MARK, wasOff: true }]])
   })
 
   it('strips it from a row still in the setting, keeping the rest of the row', async () => {
@@ -154,6 +167,7 @@ describe('strip-echo-target-respect-dnd', () => {
     const second = ledgerHost()
     await w.run(second.host)
     expect(w.setting.writes).toBe(writes)
+    expect(w.logged).toHaveLength(1)
     expect(second.outcomes.get(STRIP_ECHO_TARGET_RESPECT_DND_ID)).toMatchObject({
       result: { outcome: 'already-done' },
     })

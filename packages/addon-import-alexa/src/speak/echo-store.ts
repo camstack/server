@@ -99,6 +99,12 @@ export function echoRecordPortsOver(
     replaceEchoRecord: async (id, data) => {
       await handle.put({ id, data: { ...data } })
     },
+    echoDndStripped: (changed) => {
+      logger.warn(
+        'Echo targets lost their Do Not Disturb switch; the priority decides now (wasOff: a normal notification is now quiet in DND)',
+        { meta: { targets: changed } },
+      )
+    },
     echoSkipped: (row) => {
       logger.warn('Echo target left in the echoTargets setting; it keeps being served', {
         meta: { targetId: row.id, reason: row.reason },
