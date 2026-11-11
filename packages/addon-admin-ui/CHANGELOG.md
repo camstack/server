@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Customize offers the heater and fan roles on a switch and the climate roles (thermostat, AC, floor, radiator, heater, heat pump circuit) on a climate device; a composed heater can no longer be created, a switch with the heater role replaces it.
 - Customize labels for the fan-control card and its oscillation-axes section.
 - The fan preset editor sets speed, preset mode, direction and each oscillation axis directly, and Customize lists a fan’s axis links under their own section with readable titles.
+### Added
+
+- The automation editor offers "Stop the run", "Set variables" and "Continue if this step fails"; a failed step the run passed over is shown red in the run trace
+- Automations: a Choose step in the action list, with branches read top to bottom and an optional Otherwise list; a run shows which branch ran and its steps
+- Automations: a Wait until step in the action list (condition, timeout, what to do when it runs out); a "started by" row inside a stop condition, a Choose branch or a Wait until now gives the trigger rows their ids
+- Automation editor: an "At the same time" step runs up to five commands, actions or waits together; each one has its own row in the run trace
 
 ## [1.2.644] - 2026-11-11
 
@@ -27,10 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automation editor: a 'Time is' condition with its window (clock time or sun event with an offset) and weekdays; a sun-based window is refused at save when the site has no location.
 - Automation editor: the "Started by" condition picks among the automation's own trigger rows, in the rules and in a step's condition
 - Automation editor: a step argument can insert the device, the old value and the new value of a "device becomes" trigger
-- The automation editor offers "Stop the run", "Set variables" and "Continue if this step fails"; a failed step the run passed over is shown red in the run trace
-- Automations: a Choose step in the action list, with branches read top to bottom and an optional Otherwise list; a run shows which branch ran and its steps
-- Automations: a Wait until step in the action list (condition, timeout, what to do when it runs out); a "started by" row inside a stop condition, a Choose branch or a Wait until now gives the trigger rows their ids
-- Automation editor: an "At the same time" step runs up to five commands, actions or waits together; each one has its own row in the run trace
 
 ### Changed
 
