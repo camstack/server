@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CLIMATE_FIXTURES } from '../__fixtures__/climate'
 import { offline, readOnly } from '../__fixtures__/common'
 import { plugFixtures } from '../__fixtures__/plug'
-import { climateFxKind } from '../illustrations/ClimateFx'
+import { ambientLayers } from '../illustrations/AmbientFx'
 import { ClimateCard } from '../scenes/climate/ClimateCard'
 import type { ClimateCardActions } from '../scenes/climate/model'
 import { PlugCard } from '../scenes/plug/PlugCard'
@@ -77,26 +77,26 @@ interface ClimateVariant {
 const CLIMATE_VARIANTS: Readonly<Record<string, ClimateVariant>> = {
   'climate-ac-cool': {
     blocks: ['dc-climate-humidity', 'dc-climate-mode', 'dc-climate-fan', 'dc-climate-swing'],
-    fx: 'air',
+    fx: 'wash-down air',
     role: 'ac',
   },
   'climate-thermostat-heat': {
     blocks: ['dc-climate-humidity', 'dc-climate-mode', 'dc-climate-preset'],
-    fx: 'particles',
+    fx: 'wash-up particles-rise',
     role: 'thermostat',
   },
-  'climate-floor-heat': { blocks: [], fx: 'floor', role: 'floor' },
+  'climate-floor-heat': { blocks: [], fx: 'wash-up serpentine wisps-floor', role: 'floor' },
   'climate-radiator-window': { blocks: [], fx: 'draft', role: 'radiator' },
-  'climate-heater-heat': { blocks: [], fx: 'unit', role: 'heater' },
+  'climate-heater-heat': { blocks: [], fx: 'wash-up heater wisps-unit', role: 'heater' },
   'climate-ac-infrared': {
     blocks: ['dc-climate-mode', 'dc-climate-fan', 'dc-climate-swing'],
     fx: null,
     role: 'ac',
   },
-  'climate-floor-idle': { blocks: [], fx: 'breathe', role: 'floor' },
+  'climate-floor-idle': { blocks: [], fx: 'breathe serpentine', role: 'floor' },
   'climate-circuit-heat': {
     blocks: ['dc-climate-mode', 'dc-climate-preset', 'dc-climate-heatcool'],
-    fx: 'pipe',
+    fx: 'wash-up pipe',
     role: 'hpcircuit',
   },
   'climate-ac-off': {
@@ -205,7 +205,9 @@ describe('climate scene — the zones of each mockup variant', () => {
       for (const id of CLIMATE_BLOCKS) expect(present(id), id).toBe(variant.blocks.includes(id))
       expect(card.querySelector('[data-fx]')?.getAttribute('data-fx') ?? null).toBe(variant.fx)
       expect(card.querySelector('[data-role]')?.getAttribute('data-role')).toBe(variant.role)
-      expect(climateFxKind(fixture.model.role, fixture.model.activity)).toBe(variant.fx)
+      expect(ambientLayers(fixture.model.role, fixture.model.activity).join(' ')).toBe(
+        variant.fx ?? '',
+      )
     })
   }
 })

@@ -1,7 +1,7 @@
 import { type ReactElement, useState } from 'react'
 import { cn } from '../../../../lib/cn'
 import { useUiText } from '../../../../contexts/ui-text'
-import { ClimateFx, type ClimateActivity } from '../../illustrations/ClimateFx'
+import { AmbientFx } from '../../illustrations/AmbientFx'
 import { ClimateRoleGlyph } from '../../illustrations/ClimateRoleGlyph'
 import { ButtonGroup } from '../../parts/ButtonGroup'
 import { CardButton } from '../../parts/CardButton'
@@ -12,7 +12,12 @@ import { type DialRange, RangeDial } from '../../parts/RangeDial'
 import { ValueChip } from '../../parts/ValueChip'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
-import { type ClimateCardActions, type ClimateCardModel, nextChoice } from './model'
+import {
+  type ClimateActivity,
+  type ClimateCardActions,
+  type ClimateCardModel,
+  nextChoice,
+} from './model'
 
 export interface ClimateCardProps {
   readonly model: ClimateCardModel
@@ -330,7 +335,7 @@ export function ClimateCard({
       scene={{
         // A valve that only reports has no appliance drawn for an animation to rise from.
         fx: valveOnly ? null : (
-          <ClimateFx role={model.role} activity={activity} swing={model.swing === true} />
+          <AmbientFx role={model.role} activity={activity} swing={model.swing === true} />
         ),
         left,
         image,

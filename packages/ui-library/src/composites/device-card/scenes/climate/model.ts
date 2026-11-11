@@ -1,7 +1,10 @@
-import type { ClimateActivity } from '../../illustrations/ClimateFx'
+import type { AmbientActivity } from '../../illustrations/AmbientFx'
 import type { ClimateRole } from '../../illustrations/ClimateRoleGlyph'
 import type { MenuOption } from '../../parts/MenuButton'
 import type { CardCommon, CardCommonActions } from '../../shell/model'
+
+/** What a climate device is doing: the ambient layer's activity. */
+export type ClimateActivity = AmbientActivity
 
 export interface ClimateChoice {
   readonly value: string | null

@@ -1,5 +1,5 @@
 /** The climate page of the approved mockup: its nine role variants and the horizontal one. */
-import type { ClimateActivity } from '../illustrations/ClimateFx'
+import type { ClimateActivity } from '../scenes/climate/model'
 import type { ClimateRole } from '../illustrations/ClimateRoleGlyph'
 import type { MenuOption } from '../parts/MenuButton'
 import type { CardOrientation } from '../shell/model'

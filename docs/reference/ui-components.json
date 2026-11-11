@@ -949,6 +949,54 @@
       "summary": ""
     },
     {
+      "name": "AMBIENT_LAYERS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/AmbientFx.tsx",
+      "summary": ""
+    },
+    {
+      "name": "AmbientFx",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/AmbientFx.tsx",
+      "summary": "The ambient layer of a scene; renders nothing when the scene is still.",
+      "props": [
+        {
+          "name": "role",
+          "type": "AmbientRole",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "activity",
+          "type": "AmbientActivity",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "swing",
+          "type": "boolean",
+          "optional": false,
+          "doc": "The air stream sways from side to side."
+        }
+      ]
+    },
+    {
+      "name": "ambientLayers",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/AmbientFx.tsx",
+      "summary": "The layers a (role, activity) pair draws, back to front; empty is a still scene."
+    },
+    {
+      "name": "ambientPace",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/AmbientFx.tsx",
+      "summary": "How fast the stack moves: in standby the air and the water slow down, the rest holds still."
+    },
+    {
       "name": "anchorNow",
       "kind": "function",
       "area": "composites",
@@ -2527,40 +2575,6 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
       "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
-    },
-    {
-      "name": "ClimateFx",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/illustrations/ClimateFx.tsx",
-      "summary": "The animation behind a climate scene: what the role is doing right now.",
-      "props": [
-        {
-          "name": "role",
-          "type": "ClimateRole",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "activity",
-          "type": "ClimateActivity",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "swing",
-          "type": "boolean",
-          "optional": false,
-          "doc": ""
-        }
-      ]
-    },
-    {
-      "name": "climateFxKind",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/illustrations/ClimateFx.tsx",
-      "summary": "Which animation a (role, activity) pair plays; null is a still scene."
     },
     {
       "name": "climateModelOf",

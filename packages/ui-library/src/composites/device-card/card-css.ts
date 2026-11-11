@@ -17,7 +17,7 @@ export const DEVICE_CARD_CSS = `
 .dc-dial circle{fill:none;stroke-linecap:round}
 .dc-dial .dc-arc{transition:stroke-dasharray .2s}
 .dc-fx{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;z-index:-1}
-.dc-fx[data-dim="true"]{opacity:.45}
+.dc-fx-layer{position:absolute;inset:0}
 .dc-fx-p i{position:absolute;top:0;width:4px;height:26px;border-radius:9px;background:currentColor;opacity:0;animation:dc-fall 2s linear infinite}
 .dc-fx-p[data-dir="rise"] i{animation-name:dc-rise}
 .dc-fx-p i:nth-child(1){left:8%}.dc-fx-p i:nth-child(2){left:23%;animation-delay:.35s}.dc-fx-p i:nth-child(3){left:38%;animation-delay:.7s}
@@ -29,7 +29,7 @@ export const DEVICE_CARD_CSS = `
 .dc-fx-air{position:absolute;top:28px;left:50%;width:150px;margin-left:-75px;height:75%}
 .dc-fx-air[data-sway="true"]{animation:dc-sway 4s ease-in-out infinite}
 .dc-fx-air i{position:absolute;top:0;width:3px;height:22px;border-radius:3px;background:currentColor;opacity:0;animation:dc-air 1.8s linear infinite}
-.dc-fx-air[data-slow="true"] i{animation-duration:3.4s}
+.dc-fx[data-pace="slow"] .dc-fx-air i{animation-duration:3.4s}
 .dc-fx-air i:nth-child(1){left:6%}.dc-fx-air i:nth-child(2){left:24%;animation-delay:.4s}.dc-fx-air i:nth-child(3){left:42%;animation-delay:.8s}
 .dc-fx-air i:nth-child(4){left:60%;animation-delay:.2s}.dc-fx-air i:nth-child(5){left:78%;animation-delay:.6s}.dc-fx-air i:nth-child(6){left:94%;animation-delay:1s}
 @keyframes dc-air{0%{transform:translateY(0);opacity:0}18%{opacity:.6}82%{opacity:.6}100%{transform:translateY(200px);opacity:0}}
@@ -45,14 +45,22 @@ export const DEVICE_CARD_CSS = `
 .dc-fx-draft i{position:absolute;left:0;height:2px;width:60px;border-radius:2px;background:currentColor;opacity:0;animation:dc-draft 2.4s linear infinite}
 .dc-fx-draft i:nth-child(1){top:22%}.dc-fx-draft i:nth-child(2){top:40%;animation-delay:.6s}.dc-fx-draft i:nth-child(3){top:58%;animation-delay:1.2s}.dc-fx-draft i:nth-child(4){top:76%;animation-delay:1.8s}
 @keyframes dc-draft{0%{transform:translateX(-70px);opacity:0}15%,85%{opacity:.6}100%{transform:translateX(420px);opacity:0}}
-.dc-fx-glow{position:absolute;left:0;right:0;bottom:0;height:45%;background:linear-gradient(to top,currentColor,transparent);animation:dc-warm 3s ease-in-out infinite}
-.dc-fx-glow[data-low="true"]{height:30%}
+.dc-fx-wash{position:absolute;left:0;right:0;height:45%;animation:dc-warm 3s ease-in-out infinite}
+.dc-fx-wash[data-from="bottom"]{bottom:0;background:linear-gradient(to top,currentColor,transparent)}
+.dc-fx-wash[data-from="top"]{top:0;background:linear-gradient(to bottom,currentColor,transparent)}
 @keyframes dc-warm{0%,100%{opacity:.08}50%{opacity:.2}}
 .dc-fx-pipe{position:absolute;left:0;top:4%;width:100%;height:62%}
-.dc-fx-pipe path{fill:none;stroke:currentColor;stroke-linecap:round}
+.dc-fx-serp{position:absolute;left:22%;bottom:8px;width:56%;height:44px}
+.dc-fx-pipe path,.dc-fx-serp path{fill:none;stroke:currentColor;stroke-linecap:round}
 .dc-fx-pipe .dc-p0{stroke-width:9;opacity:.07}
 .dc-fx-pipe .dc-p1{stroke-width:3;opacity:.35;stroke-dasharray:8 16;animation:dc-flow 1.4s linear infinite}
-.dc-fx-pipe[data-slow="true"] .dc-p1{animation-duration:4s}
+.dc-fx[data-pace="slow"] .dc-fx-pipe .dc-p1{animation-duration:4s}
+.dc-fx-serp .dc-p0{stroke-width:6;opacity:.14}
+.dc-fx-serp .dc-p1{stroke-width:2.5;opacity:.5;stroke-dasharray:8 16;animation:dc-flow 1.4s linear infinite}
+.dc-fx-unit{position:absolute;bottom:10px;left:50%;width:96px;margin-left:-48px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;opacity:.28}
+.dc-fx-unit .dc-fx-coil{stroke-width:3;animation:dc-coil 1.6s ease-in-out infinite}
+@keyframes dc-coil{0%,100%{opacity:.5}50%{opacity:1}}
+.dc-fx[data-pace="slow"] .dc-fx-serp .dc-p1,.dc-fx[data-pace="slow"] .dc-fx-coil{animation:none}
 @keyframes dc-flow{to{stroke-dashoffset:-48}}
 .dc-flash{animation:dc-flash .25s ease-out}
 @keyframes dc-flash{0%{opacity:.4}100%{opacity:1}}

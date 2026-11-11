@@ -888,6 +888,11 @@ every other type).
   `ButtonGroup`, `Dial`, `RangeDial` (two setpoints on one arc), `LevelBar`, the sliders, `useCountdown`.
 - **`illustrations/`** hold the drawings; **`icons.ts`** is the only file that
   imports `lucide-react` (`CardGlyph`).
+  `AmbientFx` is the one animated background of a scene: `ambientLayers(role,
+  activity)` returns the stack to draw (wash, particles, air, serpentine,
+  appliance, pipe, draught, standby glow), coloured by the activity through a
+  theme token and stopped under `prefers-reduced-motion`. A new environmental
+  card adds its role to that table — it never draws its own background.
 - **`scenes/<type>/`** is a model (`model.ts`, plain data and callbacks) and the
   card that lays it out. A block the model leaves `null` is not drawn — an
   option appears only when the device declares the capability or the field.
