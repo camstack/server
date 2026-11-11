@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { selectOption, selectOptionLabels } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ControlPanel } from '../control-panel'
@@ -42,7 +43,12 @@ describe('ControlPanel', () => {
     beforeEach(() => {
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'select', value: 'eco', options: ['eco', 'boost', 'off'], lastChangedAt: 0 },
+        slice: {
+          kind: 'select',
+          value: 'eco',
+          options: ['eco', 'boost', 'off'],
+          lastChangedAt: 0,
+        },
         available: true,
       }
     })
@@ -51,9 +57,7 @@ describe('ControlPanel', () => {
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
       const select = screen.getByRole('combobox') as HTMLSelectElement
       expect(select).toBeTruthy()
-      expect(screen.getByRole('option', { name: 'eco' })).toBeTruthy()
-      expect(screen.getByRole('option', { name: 'boost' })).toBeTruthy()
-      expect(screen.getByRole('option', { name: 'off' })).toBeTruthy()
+      expect(selectOptionLabels(select)).toEqual(expect.arrayContaining(['eco', 'boost', 'off']))
     })
 
     it('shows the current value as selected', () => {
@@ -64,14 +68,21 @@ describe('ControlPanel', () => {
 
     it('calls setValue with select kind when option is changed', () => {
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
-      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'boost' } })
-      expect(setValue).toHaveBeenCalledWith({ control: { kind: 'select', value: 'boost' } })
+      selectOption(screen.getByRole('combobox'), 'boost')
+      expect(setValue).toHaveBeenCalledWith({
+        control: { kind: 'select', value: 'boost' },
+      })
     })
 
     it('disables the dropdown when not available', () => {
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'select', value: 'eco', options: ['eco', 'boost', 'off'], lastChangedAt: 0 },
+        slice: {
+          kind: 'select',
+          value: 'eco',
+          options: ['eco', 'boost', 'off'],
+          lastChangedAt: 0,
+        },
         available: false,
       }
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
@@ -134,20 +145,28 @@ describe('ControlPanel', () => {
 
     it('calls setValue with numeric kind when input changes', () => {
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
-      fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '22' } })
-      expect(setValue).toHaveBeenCalledWith({ control: { kind: 'numeric', value: 22 } })
+      fireEvent.change(screen.getByRole('spinbutton'), {
+        target: { value: '22' },
+      })
+      expect(setValue).toHaveBeenCalledWith({
+        control: { kind: 'numeric', value: 22 },
+      })
     })
 
     it('calls setValue with numeric kind when stepper increment is clicked', () => {
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
       fireEvent.click(screen.getByRole('button', { name: 'Increment' }))
-      expect(setValue).toHaveBeenCalledWith({ control: { kind: 'numeric', value: 22 } })
+      expect(setValue).toHaveBeenCalledWith({
+        control: { kind: 'numeric', value: 22 },
+      })
     })
 
     it('calls setValue with numeric kind when stepper decrement is clicked', () => {
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
       fireEvent.click(screen.getByRole('button', { name: 'Decrement' }))
-      expect(setValue).toHaveBeenCalledWith({ control: { kind: 'numeric', value: 20 } })
+      expect(setValue).toHaveBeenCalledWith({
+        control: { kind: 'numeric', value: 20 },
+      })
     })
 
     it('disables the input and steppers when not available', () => {
@@ -159,7 +178,9 @@ describe('ControlPanel', () => {
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
       const input = screen.getByRole('spinbutton') as HTMLInputElement
       expect(input.disabled).toBe(true)
-      const incBtn = screen.getByRole('button', { name: 'Increment' }) as HTMLButtonElement
+      const incBtn = screen.getByRole('button', {
+        name: 'Increment',
+      }) as HTMLButtonElement
       expect(incBtn.disabled).toBe(true)
     })
   })
@@ -183,7 +204,9 @@ describe('ControlPanel', () => {
       const input = screen.getByRole('textbox') as HTMLInputElement
       fireEvent.change(input, { target: { value: 'hello' } })
       fireEvent.blur(input)
-      expect(setValue).toHaveBeenCalledWith({ control: { kind: 'text', value: 'hello' } })
+      expect(setValue).toHaveBeenCalledWith({
+        control: { kind: 'text', value: 'hello' },
+      })
     })
 
     it('calls setValue with text kind on Enter keypress', () => {
@@ -191,7 +214,9 @@ describe('ControlPanel', () => {
       const input = screen.getByRole('textbox') as HTMLInputElement
       fireEvent.change(input, { target: { value: 'hello' } })
       fireEvent.keyDown(input, { key: 'Enter' })
-      expect(setValue).toHaveBeenCalledWith({ control: { kind: 'text', value: 'hello' } })
+      expect(setValue).toHaveBeenCalledWith({
+        control: { kind: 'text', value: 'hello' },
+      })
     })
 
     it('disables the text input when not available', () => {
@@ -210,7 +235,12 @@ describe('ControlPanel', () => {
     beforeEach(() => {
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'datetime', value: '2024-01-15T10:30', options: [], lastChangedAt: 0 },
+        slice: {
+          kind: 'datetime',
+          value: '2024-01-15T10:30',
+          options: [],
+          lastChangedAt: 0,
+        },
         available: true,
       }
     })
@@ -234,7 +264,12 @@ describe('ControlPanel', () => {
     it('disables the datetime input when not available', () => {
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'datetime', value: '2024-01-15T10:30', options: [], lastChangedAt: 0 },
+        slice: {
+          kind: 'datetime',
+          value: '2024-01-15T10:30',
+          options: [],
+          lastChangedAt: 0,
+        },
         available: false,
       }
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
@@ -268,7 +303,12 @@ describe('ControlPanel', () => {
       getDeviceInfo.mockReturnValue({ sourceInfo: { dateTimeShape: 'time' } })
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'datetime', value: '07:30:00', options: [], lastChangedAt: 0 },
+        slice: {
+          kind: 'datetime',
+          value: '07:30:00',
+          options: [],
+          lastChangedAt: 0,
+        },
         available: true,
       }
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
@@ -333,7 +373,13 @@ describe('ControlPanel', () => {
     it('renders a muted placeholder when the value is empty', () => {
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'datetime', value: '', options: [], lastChangedAt: 0, format: 'date' },
+        slice: {
+          kind: 'datetime',
+          value: '',
+          options: [],
+          lastChangedAt: 0,
+          format: 'date',
+        },
         available: true,
       }
       const { container } = render(
@@ -346,7 +392,9 @@ describe('ControlPanel', () => {
 
   describe('numeric kind — unit/min/max/step', () => {
     it('shows the unit label from the device quantity', () => {
-      getDeviceInfo.mockReturnValue({ sourceInfo: { quantity: 'temperature' } })
+      getDeviceInfo.mockReturnValue({
+        sourceInfo: { quantity: 'temperature' },
+      })
       mockResult = {
         cap: { setValue },
         slice: { kind: 'numeric', value: 21, options: [], lastChangedAt: 0 },
@@ -373,58 +421,100 @@ describe('ControlPanel', () => {
     it('uses step from slice for the increment button', () => {
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'numeric', value: 20, options: [], lastChangedAt: 0, step: 0.5 },
+        slice: {
+          kind: 'numeric',
+          value: 20,
+          options: [],
+          lastChangedAt: 0,
+          step: 0.5,
+        },
         available: true,
       }
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
       fireEvent.click(screen.getByRole('button', { name: 'Increment' }))
-      expect(setValue).toHaveBeenCalledWith({ control: { kind: 'numeric', value: 20.5 } })
+      expect(setValue).toHaveBeenCalledWith({
+        control: { kind: 'numeric', value: 20.5 },
+      })
     })
 
     it('uses step from slice for the decrement button', () => {
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'numeric', value: 20, options: [], lastChangedAt: 0, step: 0.5 },
+        slice: {
+          kind: 'numeric',
+          value: 20,
+          options: [],
+          lastChangedAt: 0,
+          step: 0.5,
+        },
         available: true,
       }
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
       fireEvent.click(screen.getByRole('button', { name: 'Decrement' }))
-      expect(setValue).toHaveBeenCalledWith({ control: { kind: 'numeric', value: 19.5 } })
+      expect(setValue).toHaveBeenCalledWith({
+        control: { kind: 'numeric', value: 19.5 },
+      })
     })
 
     it('clamps the value to max when incrementing past the maximum', () => {
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'numeric', value: 30, options: [], lastChangedAt: 0, max: 30 },
+        slice: {
+          kind: 'numeric',
+          value: 30,
+          options: [],
+          lastChangedAt: 0,
+          max: 30,
+        },
         available: true,
       }
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
       fireEvent.click(screen.getByRole('button', { name: 'Increment' }))
       // value + step(1) = 31 clamped to max(30)
-      expect(setValue).toHaveBeenCalledWith({ control: { kind: 'numeric', value: 30 } })
+      expect(setValue).toHaveBeenCalledWith({
+        control: { kind: 'numeric', value: 30 },
+      })
     })
 
     it('clamps a typed value above max to max on change', () => {
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'numeric', value: 25, options: [], lastChangedAt: 0, max: 30 },
+        slice: {
+          kind: 'numeric',
+          value: 25,
+          options: [],
+          lastChangedAt: 0,
+          max: 30,
+        },
         available: true,
       }
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
-      fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '50' } })
-      expect(setValue).toHaveBeenCalledWith({ control: { kind: 'numeric', value: 30 } })
+      fireEvent.change(screen.getByRole('spinbutton'), {
+        target: { value: '50' },
+      })
+      expect(setValue).toHaveBeenCalledWith({
+        control: { kind: 'numeric', value: 30 },
+      })
     })
 
     it('clamps the value to min when decrementing past the minimum', () => {
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'numeric', value: 5, options: [], lastChangedAt: 0, min: 5 },
+        slice: {
+          kind: 'numeric',
+          value: 5,
+          options: [],
+          lastChangedAt: 0,
+          min: 5,
+        },
         available: true,
       }
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
       fireEvent.click(screen.getByRole('button', { name: 'Decrement' }))
       // value - step(1) = 4 clamped to min(5)
-      expect(setValue).toHaveBeenCalledWith({ control: { kind: 'numeric', value: 5 } })
+      expect(setValue).toHaveBeenCalledWith({
+        control: { kind: 'numeric', value: 5 },
+      })
     })
 
     it('falls back to step=1 when step is absent in the slice', () => {
@@ -435,7 +525,9 @@ describe('ControlPanel', () => {
       }
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
       fireEvent.click(screen.getByRole('button', { name: 'Increment' }))
-      expect(setValue).toHaveBeenCalledWith({ control: { kind: 'numeric', value: 11 } })
+      expect(setValue).toHaveBeenCalledWith({
+        control: { kind: 'numeric', value: 11 },
+      })
     })
   })
 
@@ -447,7 +539,12 @@ describe('ControlPanel', () => {
       })
       mockResult = {
         cap: { setValue },
-        slice: { kind: 'numeric', value: 24.567, options: [], lastChangedAt: 0 },
+        slice: {
+          kind: 'numeric',
+          value: 24.567,
+          options: [],
+          lastChangedAt: 0,
+        },
         available: true,
       }
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
@@ -475,7 +572,9 @@ describe('ControlPanel', () => {
       render(<ControlPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
       fireEvent.click(screen.getByRole('button', { name: 'Increment' }))
       // commit value = 24.5 + 0.5 = 25.0
-      expect(setValue).toHaveBeenCalledWith({ control: { kind: 'numeric', value: 25 } })
+      expect(setValue).toHaveBeenCalledWith({
+        control: { kind: 'numeric', value: 25 },
+      })
       // draft shown in input should be "25.0" (precision=1)
       const input = screen.getByRole('spinbutton') as HTMLInputElement
       expect(input.value).toBe('25.0')

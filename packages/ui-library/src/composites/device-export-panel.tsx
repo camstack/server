@@ -49,6 +49,7 @@
  * co-installed each panel shows its own provider, not provider[0].
  */
 
+import { Checkbox } from '../primitives/checkbox'
 import { useUiText, type UiTextFn } from '../contexts/ui-text'
 import {
   DeviceExportStatusSchema,
@@ -454,8 +455,7 @@ function ExportSelectCell({ device, checked, onToggle }: ExportSelectCellProps):
   const t = useUiText()
   const label = useDeviceLabel(device, 'compact')
   return (
-    <input
-      type="checkbox"
+    <Checkbox
       checked={checked}
       onChange={onToggle}
       onClick={(e) => e.stopPropagation()}

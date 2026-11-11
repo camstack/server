@@ -3,7 +3,8 @@
  * dimension disables the control and names why — never an all-units list
  * that could author a refused conversion.
  */
-import { fireEvent, render, screen } from '@testing-library/react'
+import { selectOption, selectOptionValues } from '../../testing/select-option'
+import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { UnitPicker } from './UnitPicker'
 
@@ -20,7 +21,7 @@ describe('UnitPicker', () => {
       />,
     )
     const select = screen.getByLabelText('Unit')
-    const options = [...select.querySelectorAll('option')].map((o) => o.value)
+    const options = selectOptionValues(select)
     expect(options).toEqual(['', '°C', '°F', 'K'])
     expect(options).not.toContain('hPa')
     expect(options).not.toContain('m/s')
@@ -45,7 +46,7 @@ describe('UnitPicker', () => {
   it('normalizes the chosen unit before calling onChange', () => {
     const onChange = vi.fn()
     render(<UnitPicker dimension="temperature" value="" onChange={onChange} aria-label="Unit" />)
-    fireEvent.change(screen.getByLabelText('Unit'), { target: { value: '°F' } })
+    selectOption(screen.getByLabelText('Unit'), '°F')
     expect(onChange).toHaveBeenCalledWith('°F')
   })
 })

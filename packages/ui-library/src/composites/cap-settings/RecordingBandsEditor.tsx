@@ -1,3 +1,4 @@
+import { Checkbox } from '../../primitives/checkbox'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { JSX } from 'react'
 import {
@@ -272,16 +273,14 @@ function BandRow({ band, onChange, onRemove, sensorContext }: BandRowProps) {
       {band.mode === 'events' ? (
         <div className="space-y-1.5 border-t border-border pt-1.5">
           <label className="flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={band.triggers?.motion ?? false}
               onChange={(e) => setTriggers({ motion: e.target.checked ? true : undefined })}
             />
             {t('uiLibrary.recordingBands.motion', 'Motion')}
           </label>
           <label className="flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={band.triggers?.audioThresholdDbfs != null}
               onChange={(e) =>
                 setTriggers({

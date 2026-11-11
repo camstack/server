@@ -3,6 +3,7 @@
  * AddProviderEntryDialog + ProviderEntryPills — types in the dialog, entries
  * on the strip. Pills never invent a row from a bare type.
  */
+import { selectOption, selectOptionLabels } from '../../../testing/select-option'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -53,8 +54,9 @@ describe('AddProviderEntryDialog', () => {
 
     const typeSelect = screen.getByLabelText('Provider type')
     expect(typeSelect).toBeTruthy()
-    expect(screen.getByRole('option', { name: 'Modal Labs' })).toBeTruthy()
-    expect(screen.getByRole('option', { name: 'Fake provider' })).toBeTruthy()
+    const labels = selectOptionLabels(typeSelect)
+    expect(labels).toContain('Modal Labs')
+    expect(labels).toContain('Fake provider')
   })
 
   it('submit calls onCreate with typeId and name', () => {
@@ -68,12 +70,17 @@ describe('AddProviderEntryDialog', () => {
       />,
     )
 
-    fireEvent.change(screen.getByLabelText('Provider type'), { target: { value: 'fake' } })
-    fireEvent.change(screen.getByLabelText('Name'), { target: { value: ' Night run ' } })
+    selectOption(screen.getByLabelText('Provider type'), 'fake')
+    fireEvent.change(screen.getByLabelText('Name'), {
+      target: { value: ' Night run ' },
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
 
     expect(onCreate).toHaveBeenCalledTimes(1)
-    expect(onCreate).toHaveBeenCalledWith({ typeId: 'fake', name: 'Night run' })
+    expect(onCreate).toHaveBeenCalledWith({
+      typeId: 'fake',
+      name: 'Night run',
+    })
   })
 
   it('does not submit an empty name', () => {

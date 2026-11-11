@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { selectOption, selectOptionValues } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ClimatePanel } from '../climate-panel'
@@ -42,7 +43,14 @@ beforeEach(() => {
   setTargetHumidity.mockReset()
   setTargetRange.mockReset()
   mockResult = {
-    cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
+    cap: {
+      setMode,
+      setTarget,
+      setFanMode,
+      setPreset,
+      setTargetHumidity,
+      setTargetRange,
+    },
     slice: { ...baseSlice },
     available: true,
   }
@@ -63,7 +71,14 @@ describe('ClimatePanel', () => {
 
     it('renders only current temp when target is null', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
         slice: { ...baseSlice, target: null },
         available: true,
       }
@@ -73,15 +88,19 @@ describe('ClimatePanel', () => {
 
     it('renders a mode select with all available modes as options', () => {
       render(<ClimatePanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
-      const select = screen.getByRole('combobox', { name: 'Mode' }) as HTMLSelectElement
+      const select = screen.getByRole('combobox', {
+        name: 'Mode',
+      }) as HTMLSelectElement
       expect(select).toBeTruthy()
-      const options = Array.from(select.options).map((o) => o.value)
+      const options = selectOptionValues(select)
       expect(options).toEqual(['off', 'heat', 'cool', 'auto'])
     })
 
     it('reflects the active mode as the selected value', () => {
       render(<ClimatePanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
-      const select = screen.getByRole('combobox', { name: 'Mode' }) as HTMLSelectElement
+      const select = screen.getByRole('combobox', {
+        name: 'Mode',
+      }) as HTMLSelectElement
       expect(select.value).toBe('heat')
     })
 
@@ -93,9 +112,7 @@ describe('ClimatePanel', () => {
 
     it('calls setMode when the mode select changes', () => {
       render(<ClimatePanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
-      fireEvent.change(screen.getByRole('combobox', { name: 'Mode' }), {
-        target: { value: 'cool' },
-      })
+      selectOption(screen.getByRole('combobox', { name: 'Mode' }), 'cool')
       expect(setMode).toHaveBeenCalledWith({ mode: 'cool' })
     })
 
@@ -135,8 +152,12 @@ describe('ClimatePanel', () => {
 
     it('renders the −/+ stepper buttons at h-5 w-5 to match the cover inline', () => {
       render(<ClimatePanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
-      const dec = screen.getByRole('button', { name: 'Decrease target' }) as HTMLButtonElement
-      const inc = screen.getByRole('button', { name: 'Increase target' }) as HTMLButtonElement
+      const dec = screen.getByRole('button', {
+        name: 'Decrease target',
+      }) as HTMLButtonElement
+      const inc = screen.getByRole('button', {
+        name: 'Increase target',
+      }) as HTMLButtonElement
       expect(dec.className).toContain('h-5')
       expect(dec.className).toContain('w-5')
       expect(inc.className).toContain('h-5')
@@ -148,7 +169,9 @@ describe('ClimatePanel', () => {
 
     it('renders a borderless minimal mode select (no bordered field classes)', () => {
       render(<ClimatePanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
-      const select = screen.getByRole('combobox', { name: 'Mode' }) as HTMLSelectElement
+      const select = screen.getByRole('combobox', {
+        name: 'Mode',
+      }) as HTMLSelectElement
       expect(select.className).not.toContain('border border-border')
       expect(select.className).not.toContain('bg-surface')
       expect(select.className).toContain('bg-transparent')
@@ -162,7 +185,14 @@ describe('ClimatePanel', () => {
 
     it('steps by tempStep when set (0.5 °C)', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
         slice: { ...baseSlice, target: 20, tempStep: 0.5 },
         available: true,
       }
@@ -173,7 +203,14 @@ describe('ClimatePanel', () => {
 
     it('steps by 1 when tempStep is absent', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
         slice: { ...baseSlice, target: 20 },
         available: true,
       }
@@ -198,31 +235,58 @@ describe('ClimatePanel', () => {
 
     it('disables stepper controls when not available', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
         slice: { ...baseSlice },
         available: false,
       }
       render(<ClimatePanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
-      const decBtn = screen.getByRole('button', { name: 'Decrease target' }) as HTMLButtonElement
+      const decBtn = screen.getByRole('button', {
+        name: 'Decrease target',
+      }) as HTMLButtonElement
       expect(decBtn.disabled).toBe(true)
-      const incBtn = screen.getByRole('button', { name: 'Increase target' }) as HTMLButtonElement
+      const incBtn = screen.getByRole('button', {
+        name: 'Increase target',
+      }) as HTMLButtonElement
       expect(incBtn.disabled).toBe(true)
     })
 
     it('disables mode select when not available', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
         slice: { ...baseSlice },
         available: false,
       }
       render(<ClimatePanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
-      const select = screen.getByRole('combobox', { name: 'Mode' }) as HTMLSelectElement
+      const select = screen.getByRole('combobox', {
+        name: 'Mode',
+      }) as HTMLSelectElement
       expect(select.disabled).toBe(true)
     })
 
     it('applies the cool mode color as a TEXT accent when mode is cool', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
         slice: { ...baseSlice, mode: 'cool' as const },
         available: true,
       }
@@ -236,8 +300,19 @@ describe('ClimatePanel', () => {
   describe('full layout', () => {
     it('renders a fan mode selector when availableFanModes are present', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
-        slice: { ...baseSlice, availableFanModes: ['auto', 'low', 'high'], fanMode: 'auto' },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
+        slice: {
+          ...baseSlice,
+          availableFanModes: ['auto', 'low', 'high'],
+          fanMode: 'auto',
+        },
         available: true,
       }
       render(<ClimatePanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
@@ -246,19 +321,41 @@ describe('ClimatePanel', () => {
 
     it('calls setFanMode when fan mode selector changes', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
-        slice: { ...baseSlice, availableFanModes: ['auto', 'low', 'high'], fanMode: 'auto' },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
+        slice: {
+          ...baseSlice,
+          availableFanModes: ['auto', 'low', 'high'],
+          fanMode: 'auto',
+        },
         available: true,
       }
       render(<ClimatePanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
-      fireEvent.change(screen.getByLabelText('Fan mode'), { target: { value: 'low' } })
+      selectOption(screen.getByLabelText('Fan mode'), 'low')
       expect(setFanMode).toHaveBeenCalledWith({ fanMode: 'low' })
     })
 
     it('renders a preset selector when availablePresets are present', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
-        slice: { ...baseSlice, availablePresets: ['eco', 'away'], preset: 'eco' },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
+        slice: {
+          ...baseSlice,
+          availablePresets: ['eco', 'away'],
+          preset: 'eco',
+        },
         available: true,
       }
       render(<ClimatePanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
@@ -267,18 +364,36 @@ describe('ClimatePanel', () => {
 
     it('calls setPreset when preset selector changes', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
-        slice: { ...baseSlice, availablePresets: ['eco', 'away'], preset: 'eco' },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
+        slice: {
+          ...baseSlice,
+          availablePresets: ['eco', 'away'],
+          preset: 'eco',
+        },
         available: true,
       }
       render(<ClimatePanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
-      fireEvent.change(screen.getByLabelText('Preset'), { target: { value: 'away' } })
+      selectOption(screen.getByLabelText('Preset'), 'away')
       expect(setPreset).toHaveBeenCalledWith({ preset: 'away' })
     })
 
     it('renders humidity setpoint when targetHumidity is non-null', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
         slice: { ...baseSlice, targetHumidity: 50 },
         available: true,
       }
@@ -288,18 +403,34 @@ describe('ClimatePanel', () => {
 
     it('calls setTargetHumidity when the humidity input changes', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
         slice: { ...baseSlice, targetHumidity: 50 },
         available: true,
       }
       render(<ClimatePanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
-      fireEvent.change(screen.getByLabelText('Target humidity'), { target: { value: '60' } })
+      fireEvent.change(screen.getByLabelText('Target humidity'), {
+        target: { value: '60' },
+      })
       expect(setTargetHumidity).toHaveBeenCalledWith({ targetHumidity: 60 })
     })
 
     it('renders dual setpoint when mode is heat_cool', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
         slice: {
           ...baseSlice,
           mode: 'heat_cool' as const,
@@ -316,7 +447,14 @@ describe('ClimatePanel', () => {
 
     it('calls setTargetRange when dual setpoint inputs change', () => {
       mockResult = {
-        cap: { setMode, setTarget, setFanMode, setPreset, setTargetHumidity, setTargetRange },
+        cap: {
+          setMode,
+          setTarget,
+          setFanMode,
+          setPreset,
+          setTargetHumidity,
+          setTargetRange,
+        },
         slice: {
           ...baseSlice,
           mode: 'heat_cool' as const,
@@ -327,8 +465,13 @@ describe('ClimatePanel', () => {
         available: true,
       }
       render(<ClimatePanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
-      fireEvent.change(screen.getByLabelText('Target low'), { target: { value: '17' } })
-      expect(setTargetRange).toHaveBeenCalledWith({ targetLow: 17, targetHigh: 24 })
+      fireEvent.change(screen.getByLabelText('Target low'), {
+        target: { value: '17' },
+      })
+      expect(setTargetRange).toHaveBeenCalledWith({
+        targetLow: 17,
+        targetHigh: 24,
+      })
     })
   })
 })

@@ -10,6 +10,7 @@
  *  (d) for a heat/cool range status, renders TWO knobs
  *  (e) returns null (renders nothing) when the climate cap is absent
  */
+import { selectOptionValues } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 
@@ -147,16 +148,20 @@ describe('ThermostatHeroCard', () => {
 
   it('renders a mode select with available modes as options', () => {
     render(<ThermostatHeroCard trpc={trpc} deviceId={1} features={undefined} />)
-    const select = screen.getByRole('combobox', { name: 'Mode' }) as HTMLSelectElement
+    const select = screen.getByRole('combobox', {
+      name: 'Mode',
+    }) as HTMLSelectElement
     expect(select).toBeTruthy()
-    const options = Array.from(select.options).map((o) => o.value)
+    const options = selectOptionValues(select)
     expect(options).toContain('heat')
     expect(options).toContain('cool')
   })
 
   it('reflects the active mode as the selected value in the mode select', () => {
     render(<ThermostatHeroCard trpc={trpc} deviceId={1} features={undefined} />)
-    const select = screen.getByRole('combobox', { name: 'Mode' }) as HTMLSelectElement
+    const select = screen.getByRole('combobox', {
+      name: 'Mode',
+    }) as HTMLSelectElement
     expect(select.value).toBe('heat')
   })
 

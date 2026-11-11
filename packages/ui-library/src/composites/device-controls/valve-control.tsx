@@ -14,6 +14,7 @@
  * `coverHighlight` — the valve state enum is identical to the cover one.
  * Buttons are gated on `available`.
  */
+import { Slider } from '../../primitives/slider'
 import { useUiText, defaultUiText, type UiTextFn } from '../../contexts/ui-text'
 import { useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { ChevronUp, ChevronDown, Square } from 'lucide-react'
@@ -641,9 +642,8 @@ export function ValveHeroCard({
       {positionable && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span className="w-12 shrink-0">{t('uiLibrary.valveControl.position', 'Position')}</span>
-          <input
+          <Slider
             aria-label={t('uiLibrary.valveControl.position', 'Position')}
-            type="range"
             min={0}
             max={100}
             step={1}
@@ -662,9 +662,8 @@ export function ValveHeroCard({
       {!positionable && hasPosition && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span className="w-12 shrink-0">{t('uiLibrary.valveControl.position', 'Position')}</span>
-          <input
+          <Slider
             aria-label={t('uiLibrary.valveControl.position', 'Position')}
-            type="range"
             min={0}
             max={100}
             step={1}

@@ -34,6 +34,8 @@
  * caller refetches (D62).
  */
 
+import { Slider } from '../../primitives/slider'
+import { Checkbox } from '../../primitives/checkbox'
 import { Select } from '../../primitives/select'
 import type { SceneCheck, SceneMonitor, SceneUncoveredPolicy } from '@camstack/types'
 import { useEffect, useState, type JSX } from 'react'
@@ -192,8 +194,7 @@ export function SceneSettingsForm({
         </label>
 
         <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={monitor.enabled}
             disabled={disabled}
             onChange={(e) => commit({ enabled: e.target.checked })}
@@ -288,8 +289,7 @@ export function SceneSettingsForm({
                   values={{ value: draft.threshold.toFixed(2) }}
                 />
               </span>
-              <input
-                type="range"
+              <Slider
                 min={0.3}
                 max={0.99}
                 step={0.01}
@@ -502,8 +502,7 @@ export function SceneSettingsForm({
         </p>
 
         <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={monitor.autoRestore}
             disabled={disabled}
             onChange={(e) => commit({ autoRestore: e.target.checked })}
@@ -529,8 +528,7 @@ export function SceneSettingsForm({
           {t('uiLibrary.sceneSettingsForm.aiDoubleCheck', 'AI double-check')}
         </p>
         <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={confirmEnabled}
             disabled={disabled || draft.confirmPrompt.trim().length === 0}
             onChange={(e) =>

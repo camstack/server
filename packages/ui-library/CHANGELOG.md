@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The device hero card (HeroModelCard, ModelHero) is now a library component with host-supplied labels, and the idle backdrop no longer runs behind a scene's command controls
+- Every dropdown (Select) now opens a CamStack list with the same keyboard and screen-reader behaviour as the browser's, above any dialog it sits in, instead of the browser's own popup
 
 ## [1.2.419] - 2026-11-10
 

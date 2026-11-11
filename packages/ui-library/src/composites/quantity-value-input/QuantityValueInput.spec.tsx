@@ -3,6 +3,7 @@
  * without converting it again, emits `{ value, unit }`, converts the offer's
  * bounds into the picked unit, and has no picker when only one unit exists.
  */
+import { selectOption } from '../../testing/select-option'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { QuantityValueInput } from './QuantityValueInput'
@@ -19,7 +20,10 @@ describe('quantity-value helpers', () => {
   })
 
   it('converts the bounds of the offer into the picked unit', () => {
-    expect(boundsInPicked({ min: 10, max: 500 }, 'g', 'kg')).toEqual({ min: 0.01, max: 0.5 })
+    expect(boundsInPicked({ min: 10, max: 500 }, 'g', 'kg')).toEqual({
+      min: 0.01,
+      max: 0.5,
+    })
   })
 
   it('judges a stored number against stored-unit bounds', () => {
@@ -28,7 +32,10 @@ describe('quantity-value helpers', () => {
   })
 
   it('stores what was typed in the stored unit and keeps the picked unit', () => {
-    expect(typedToStored({ value: 2, unit: 'oz' }, 'g')).toEqual({ value: 56.699, unit: 'oz' })
+    expect(typedToStored({ value: 2, unit: 'oz' }, 'g')).toEqual({
+      value: 56.699,
+      unit: 'oz',
+    })
   })
 
   it('refuses a unit of another dimension', () => {
@@ -64,7 +71,9 @@ describe('QuantityValueInput', () => {
         onChange={onChange}
       />,
     )
-    fireEvent.change(screen.getByLabelText('Portion'), { target: { value: '45' } })
+    fireEvent.change(screen.getByLabelText('Portion'), {
+      target: { value: '45' },
+    })
     expect(onChange).toHaveBeenCalledWith({ value: 45, unit: 'g' })
   })
 
@@ -80,7 +89,7 @@ describe('QuantityValueInput', () => {
         onChange={onChange}
       />,
     )
-    fireEvent.change(screen.getByLabelText('Portion unit'), { target: { value: 'kg' } })
+    selectOption(screen.getByLabelText('Portion unit'), 'kg')
     expect(onChange).toHaveBeenCalledWith({ value: 1, unit: 'kg' })
   })
 

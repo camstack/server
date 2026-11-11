@@ -16,6 +16,7 @@
  * `cap` accessor invoked against a sentinel-tagged fake DeviceProxy, returning
  * the matching mocked slot.
  */
+import { selectOption } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { DeviceFeature } from '@camstack/types'
@@ -57,7 +58,12 @@ vi.mock('../../../hooks/use-device-capability', () => ({
     const tag = (picked as { __cap?: CapName } | undefined)?.__cap
     if (tag !== undefined && slots[tag] !== undefined) {
       const slot = slots[tag]
-      return { dev: {}, cap: slot.cap, slice: slot.slice, available: slot.available }
+      return {
+        dev: {},
+        cap: slot.cap,
+        slice: slot.slice,
+        available: slot.available,
+      }
     }
     return { dev: {}, cap: undefined, slice: undefined, available: false }
   },
@@ -75,7 +81,11 @@ const switchCap = { setState: vi.fn() }
 
 function switchSlots(over?: Partial<Record<CapName, CapSlot>>): Record<CapName, CapSlot> {
   return {
-    switch: { cap: switchCap, slice: { on: false, lastChangedAt: 0 }, available: true },
+    switch: {
+      cap: switchCap,
+      slice: { on: false, lastChangedAt: 0 },
+      available: true,
+    },
     mediaPlayer: { cap: undefined, slice: undefined, available: false },
     alarmPanel: { cap: undefined, slice: undefined, available: false },
     ...over,
@@ -165,7 +175,9 @@ beforeEach(() => {
 
 describe('SwitchHeroCard', () => {
   it('returns null when the switch cap is absent (cap-gate)', () => {
-    slots = switchSlots({ switch: { cap: undefined, slice: undefined, available: false } })
+    slots = switchSlots({
+      switch: { cap: undefined, slice: undefined, available: false },
+    })
     const { container } = render(<SwitchHeroCard trpc={trpc} deviceId={1} features={undefined} />)
     expect(container.firstChild).toBeNull()
   })
@@ -189,7 +201,9 @@ describe('SwitchHeroCard', () => {
 
 describe('MediaPlayerHeroCard', () => {
   it('returns null when the media-player cap is absent (cap-gate)', () => {
-    slots = mediaSlots({ mediaPlayer: { cap: undefined, slice: undefined, available: false } })
+    slots = mediaSlots({
+      mediaPlayer: { cap: undefined, slice: undefined, available: false },
+    })
     const { container } = render(
       <MediaPlayerHeroCard trpc={trpc} deviceId={1} features={undefined} />,
     )
@@ -229,7 +243,11 @@ describe('MediaPlayerHeroCard', () => {
 
   it('does not render the volume GripTrack when no volume is declared and no level is read', () => {
     slots = mediaSlots({
-      mediaPlayer: { cap: mediaCap, slice: mediaSlice({ volumeLevel: null }), available: true },
+      mediaPlayer: {
+        cap: mediaCap,
+        slice: mediaSlice({ volumeLevel: null }),
+        available: true,
+      },
     })
     render(
       <MediaPlayerHeroCard
@@ -250,7 +268,11 @@ describe('MediaPlayerHeroCard', () => {
 
   it('does not render the seek track when duration is null (feature present)', () => {
     slots = mediaSlots({
-      mediaPlayer: { cap: mediaCap, slice: mediaSlice({ duration: null }), available: true },
+      mediaPlayer: {
+        cap: mediaCap,
+        slice: mediaSlice({ duration: null }),
+        available: true,
+      },
     })
     render(<MediaPlayerHeroCard trpc={trpc} deviceId={1} features={ALL_MEDIA_FEATURES} />)
     expect(screen.queryByTestId('media-seek')).toBeNull()
@@ -258,7 +280,11 @@ describe('MediaPlayerHeroCard', () => {
 
   it('does not render the seek track when duration is zero (degenerate)', () => {
     slots = mediaSlots({
-      mediaPlayer: { cap: mediaCap, slice: mediaSlice({ duration: 0 }), available: true },
+      mediaPlayer: {
+        cap: mediaCap,
+        slice: mediaSlice({ duration: 0 }),
+        available: true,
+      },
     })
     render(<MediaPlayerHeroCard trpc={trpc} deviceId={1} features={ALL_MEDIA_FEATURES} />)
     expect(screen.queryByTestId('media-seek')).toBeNull()
@@ -275,7 +301,9 @@ describe('MediaPlayerHeroCard', () => {
 
 describe('AlarmHeroCard', () => {
   it('returns null when the alarm-panel cap is absent (cap-gate)', () => {
-    slots = alarmSlots({ alarmPanel: { cap: undefined, slice: undefined, available: false } })
+    slots = alarmSlots({
+      alarmPanel: { cap: undefined, slice: undefined, available: false },
+    })
     const { container } = render(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} />)
     expect(container.firstChild).toBeNull()
   })
@@ -317,7 +345,11 @@ describe('AlarmHeroCard', () => {
 
   it('calls disarm({}) when Disarm is clicked', () => {
     slots = alarmSlots({
-      alarmPanel: { cap: alarmCap, slice: alarmSlice({ state: 'armed_away' }), available: true },
+      alarmPanel: {
+        cap: alarmCap,
+        slice: alarmSlice({ state: 'armed_away' }),
+        available: true,
+      },
     })
     render(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} />)
     fireEvent.click(screen.getByRole('button', { name: /disarm/i }))
@@ -326,7 +358,11 @@ describe('AlarmHeroCard', () => {
 
   it('reflects the current armed state via data-state', () => {
     slots = alarmSlots({
-      alarmPanel: { cap: alarmCap, slice: alarmSlice({ state: 'triggered' }), available: true },
+      alarmPanel: {
+        cap: alarmCap,
+        slice: alarmSlice({ state: 'triggered' }),
+        available: true,
+      },
     })
     render(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} />)
     expect(screen.getByTestId('alarm-state').getAttribute('data-state')).toBe('triggered')
@@ -334,7 +370,11 @@ describe('AlarmHeroCard', () => {
 
   it('highlights no segment while transitioning (arming) — Disarm not active', () => {
     slots = alarmSlots({
-      alarmPanel: { cap: alarmCap, slice: alarmSlice({ state: 'arming' }), available: true },
+      alarmPanel: {
+        cap: alarmCap,
+        slice: alarmSlice({ state: 'arming' }),
+        available: true,
+      },
     })
     render(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} />)
     const disarm = screen.getByRole('button', { name: /disarm/i })
@@ -350,7 +390,9 @@ describe('AlarmHeroCard', () => {
 
 describe('AlarmInlineControl', () => {
   it('returns null when the alarm-panel cap is absent (cap-gate)', () => {
-    slots = alarmSlots({ alarmPanel: { cap: undefined, slice: undefined, available: false } })
+    slots = alarmSlots({
+      alarmPanel: { cap: undefined, slice: undefined, available: false },
+    })
     const { container } = render(
       <AlarmInlineControl trpc={trpc} deviceId={1} features={undefined} />,
     )
@@ -375,14 +417,29 @@ describe('AlarmInlineControl', () => {
 
   it('calls arm({ mode: "home" }) / disarm({}) from the select', () => {
     slots = alarmSlots({
-      alarmPanel: { cap: alarmCap, slice: alarmSlice({ state: 'armed_away' }), available: true },
+      alarmPanel: {
+        cap: alarmCap,
+        slice: alarmSlice({ state: 'armed_away' }),
+        available: true,
+      },
     })
     render(<AlarmInlineControl trpc={trpc} deviceId={1} features={undefined} />)
     const select = screen.getByRole('combobox', { name: /alarm mode/i })
-    fireEvent.change(select, { target: { value: 'home' } })
+    selectOption(select, 'home')
     expect(alarmCap.arm).toHaveBeenCalledWith({ mode: 'home' })
+  })
+
+  it('calls disarm({}) when the Disarm row is picked from an armed state', () => {
+    slots = alarmSlots({
+      alarmPanel: {
+        cap: alarmCap,
+        slice: alarmSlice({ state: 'armed_home' }),
+        available: true,
+      },
+    })
+    render(<AlarmInlineControl trpc={trpc} deviceId={1} features={undefined} />)
     // The empty value is Disarm — it must not read as "no selection".
-    fireEvent.change(select, { target: { value: '' } })
+    selectOption(screen.getByRole('combobox', { name: /alarm mode/i }), '')
     expect(alarmCap.disarm).toHaveBeenCalledWith({})
   })
 })

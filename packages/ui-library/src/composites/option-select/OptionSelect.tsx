@@ -14,6 +14,7 @@ import {
 import { Check, ChevronDown, Plus, Search } from 'lucide-react'
 import { Badge } from '../../primitives/badge'
 import { TopLayerPortal } from '../../primitives/top-layer-portal'
+import { computeListboxCoords, type ListboxCoords } from '../../lib/listbox-position'
 import { EventKindGlyph } from '../event-kind-visuals'
 import { INPUT_SHELL, SelectedChip } from '../device-picker/SelectedChip'
 import type { OptionSelectOption } from './option-select-model'
@@ -25,18 +26,6 @@ import {
   shouldShowAddNewFooter,
   shouldShowUseQueryRow,
 } from './option-select-model'
-
-const LISTBOX_GAP_PX = 4
-const LISTBOX_MAX_HEIGHT_PX = 224 // max-h-56
-const VIEWPORT_MARGIN_PX = 8
-
-type ListboxCoords = {
-  readonly top: number
-  readonly left: number
-  readonly width: number
-  readonly maxHeight: number
-  readonly placement: 'below' | 'above'
-}
 
 const LABEL_CLASS = 'block text-[11px] font-medium text-foreground mb-1 break-words'
 const DESC_CLASS = 'text-[10px] text-foreground-subtle mt-0.5 break-words'
@@ -134,38 +123,9 @@ export function OptionSelect(props: OptionSelectProps): JSX.Element | null {
     [],
   )
 
-  const computeListboxCoords = (): ListboxCoords | null => {
+  const computeCoords = (): ListboxCoords | null => {
     const trigger = triggerRef.current
-    if (trigger === null) return null
-    const rect = trigger.getBoundingClientRect()
-    const spaceBelow = window.innerHeight - rect.bottom - VIEWPORT_MARGIN_PX
-    const spaceAbove = rect.top - VIEWPORT_MARGIN_PX
-    const preferBelow =
-      spaceBelow >= Math.min(LISTBOX_MAX_HEIGHT_PX, spaceAbove) || spaceBelow >= 120
-    const maxHeight = Math.max(
-      96,
-      Math.min(LISTBOX_MAX_HEIGHT_PX, preferBelow ? spaceBelow : spaceAbove),
-    )
-    const left = Math.max(
-      VIEWPORT_MARGIN_PX,
-      Math.min(rect.left, window.innerWidth - rect.width - VIEWPORT_MARGIN_PX),
-    )
-    if (preferBelow) {
-      return {
-        top: rect.bottom + LISTBOX_GAP_PX,
-        left,
-        width: rect.width,
-        maxHeight,
-        placement: 'below',
-      }
-    }
-    return {
-      top: Math.max(VIEWPORT_MARGIN_PX, rect.top - LISTBOX_GAP_PX - maxHeight),
-      left,
-      width: rect.width,
-      maxHeight,
-      placement: 'above',
-    }
+    return trigger === null ? null : computeListboxCoords(trigger)
   }
 
   const { selectedOptions } = useMemo(
@@ -209,7 +169,7 @@ export function OptionSelect(props: OptionSelectProps): JSX.Element | null {
       return
     }
     const update = (): void => {
-      setCoords(computeListboxCoords())
+      setCoords(computeCoords())
     }
     update()
     window.addEventListener('resize', update)

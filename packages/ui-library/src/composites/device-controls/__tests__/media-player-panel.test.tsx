@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { selectOption } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { DeviceFeature } from '@camstack/types'
@@ -196,7 +197,9 @@ describe('MediaPlayerPanel', () => {
         available: false,
       }
       render(<MediaPlayerPanel trpc={trpc} deviceId={1} features={[]} layout="compact" />)
-      const btn = screen.getByRole('button', { name: 'Pause' }) as HTMLButtonElement
+      const btn = screen.getByRole('button', {
+        name: 'Pause',
+      }) as HTMLButtonElement
       expect(btn.disabled).toBe(true)
     })
   })
@@ -229,7 +232,9 @@ describe('MediaPlayerPanel', () => {
 
     it('changing volume slider calls setVolume with volumeLevel', () => {
       render(<MediaPlayerPanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
-      fireEvent.change(screen.getByLabelText('Volume'), { target: { value: '75' } })
+      fireEvent.change(screen.getByLabelText('Volume'), {
+        target: { value: '75' },
+      })
       expect(setVolume).toHaveBeenCalledWith({ volumeLevel: 75 })
     })
 
@@ -255,7 +260,10 @@ describe('MediaPlayerPanel', () => {
     })
 
     it('renders the volume slider and mute for a declared feature even when the level is null', () => {
-      mockResult = { ...mockResult, slice: { ...baseSlice, volumeLevel: null, isMuted: null } }
+      mockResult = {
+        ...mockResult,
+        slice: { ...baseSlice, volumeLevel: null, isMuted: null },
+      }
       render(
         <MediaPlayerPanel
           trpc={trpc}
@@ -330,7 +338,7 @@ describe('MediaPlayerPanel', () => {
 
     it('changing source selector calls selectSource', () => {
       render(<MediaPlayerPanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
-      fireEvent.change(screen.getByLabelText('Source'), { target: { value: 'TV' } })
+      selectOption(screen.getByLabelText('Source'), 'TV')
       expect(selectSource).toHaveBeenCalledWith({ source: 'TV' })
     })
 
@@ -416,7 +424,7 @@ describe('MediaPlayerPanel', () => {
         available: true,
       }
       render(<MediaPlayerPanel trpc={trpc} deviceId={1} features={[]} layout="full" />)
-      fireEvent.change(screen.getByLabelText('Repeat'), { target: { value: 'all' } })
+      selectOption(screen.getByLabelText('Repeat'), 'all')
       expect(setRepeat).toHaveBeenCalledWith({ repeat: 'all' })
     })
   })

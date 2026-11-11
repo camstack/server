@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { selectOption } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import type { VacuumControlStatus } from '@camstack/types'
@@ -99,7 +100,7 @@ describe('VacuumHeroCard', () => {
 
   it('calls setFanSpeed on selector change', () => {
     render(<VacuumHeroCard trpc={trpc} deviceId={1} features={[]} />)
-    fireEvent.change(screen.getByLabelText('Fan speed'), { target: { value: 'turbo' } })
+    selectOption(screen.getByLabelText('Fan speed'), 'turbo')
     expect(setFanSpeed).toHaveBeenCalledWith({ speed: 'turbo' })
   })
 

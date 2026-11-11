@@ -21,6 +21,7 @@
  * Access panel both render this. Two editors for one wire shape is how a
  * selector ends up meaning different things in two places.
  */
+import { Checkbox } from '../primitives/checkbox'
 import { useUiText, UiTrans, defaultUiText, type UiTextFn } from '../contexts/ui-text'
 import { useMemo, useRef, useState } from 'react'
 import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
@@ -306,8 +307,7 @@ export function DeviceSelectorPicker({
                   key={d.id}
                   className="flex cursor-pointer items-center gap-2 px-2 py-1.5 text-[11px] hover:bg-foreground-subtle/10"
                 >
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={checked}
                     onChange={() => toggleId(d.id)}
                     className="rounded border-border focus:ring-primary"
@@ -375,8 +375,7 @@ function CheckboxGrid({
               key={o.value}
               className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-[11px] hover:bg-foreground-subtle/10"
             >
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={selected.includes(o.value)}
                 onChange={() => onToggle(o.value)}
                 className="rounded border-border focus:ring-primary"
@@ -415,8 +414,7 @@ function IncludeLinkedToggle({
   return (
     <div className={`rounded border border-border bg-surface ${pad}`}>
       <label className="flex cursor-pointer items-start gap-2">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={value}
           onChange={(e) => onChange(e.target.checked)}
           className="mt-0.5 rounded border-border focus:ring-primary"

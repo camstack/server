@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { selectOption, selectOptionValues } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -16,7 +17,10 @@ beforeAll(() => {
     unobserve() {}
     disconnect() {}
   }
-  Object.defineProperty(globalThis, 'ResizeObserver', { writable: true, value: RO })
+  Object.defineProperty(globalThis, 'ResizeObserver', {
+    writable: true,
+    value: RO,
+  })
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: () => ({
@@ -38,7 +42,9 @@ beforeEach(() => {
 })
 
 const mockTrpc = {
-  deviceManager: { getBindings: { query: async () => ({ deviceId: 0, entries: [] }) } },
+  deviceManager: {
+    getBindings: { query: async () => ({ deviceId: 0, entries: [] }) },
+  },
 } as unknown as UseDeviceProxyTrpc
 
 const dev = (id: number, overrides: Partial<DeviceItemDevice> = {}): DeviceItemDevice => ({
@@ -55,7 +61,9 @@ const dev = (id: number, overrides: Partial<DeviceItemDevice> = {}): DeviceItemD
 })
 
 function withQuery(node: React.ReactNode): React.ReactNode {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  })
   return (
     <QueryClientProvider client={qc}>
       <ConfirmDialogProvider>{node}</ConfirmDialogProvider>
@@ -119,7 +127,11 @@ describe('<DeviceList>', () => {
 
   it('a composer-served device created by "Blocks" is listed under the Blocks filter', () => {
     const devices = [
-      dev(4603, { addonId: 'composer', integrationId: 'int_0024', name: 'Porch (composto)' }),
+      dev(4603, {
+        addonId: 'composer',
+        integrationId: 'int_0024',
+        name: 'Porch (composto)',
+      }),
       dev(2, { addonId: 'reolink', name: 'B' }),
     ]
     window.history.replaceState(null, '', '/devices?addon=int_0024')
@@ -139,7 +151,11 @@ describe('<DeviceList>', () => {
 
   it('a list forced to the Blocks integration lists the composer-served device', () => {
     const devices = [
-      dev(4603, { addonId: 'composer', integrationId: 'int_0024', name: 'Porch (composto)' }),
+      dev(4603, {
+        addonId: 'composer',
+        integrationId: 'int_0024',
+        name: 'Porch (composto)',
+      }),
       dev(2, { addonId: 'reolink', name: 'B' }),
     ]
     const { container } = render(
@@ -197,8 +213,18 @@ describe('<DeviceList>', () => {
   it('groups accessories under their parent (only top-level rows shown by default)', () => {
     const devices = [
       dev(1, { name: 'Cam' }),
-      dev(2, { name: 'Floodlight', role: 'floodlight', parentDeviceId: 1, type: 'light' }),
-      dev(3, { name: 'Siren', role: 'siren', parentDeviceId: 1, type: 'siren' }),
+      dev(2, {
+        name: 'Floodlight',
+        role: 'floodlight',
+        parentDeviceId: 1,
+        type: 'light',
+      }),
+      dev(3, {
+        name: 'Siren',
+        role: 'siren',
+        parentDeviceId: 1,
+        type: 'siren',
+      }),
     ]
     const { container } = render(withQuery(<DeviceList devices={devices} trpc={mockTrpc} />))
     const rows = container.querySelectorAll('tbody tr')
@@ -230,7 +256,12 @@ describe('<DeviceList>', () => {
     const onSelectionChange = vi.fn()
     const devices = [
       dev(1, { name: 'Cam' }),
-      dev(2, { name: 'Floodlight', role: 'floodlight', parentDeviceId: 1, type: 'light' }),
+      dev(2, {
+        name: 'Floodlight',
+        role: 'floodlight',
+        parentDeviceId: 1,
+        type: 'light',
+      }),
     ]
     // Expand the parent first to surface accessory rows, then verify
     // that only one checkbox exists (for the top-level row).
@@ -316,7 +347,11 @@ describe('<DeviceList> context-configured columns (device mode)', () => {
 })
 
 describe('<DeviceList> batch mode (off by default + activation)', () => {
-  const batchActions = () => ({ remove: vi.fn(), disable: vi.fn(), enable: vi.fn() })
+  const batchActions = () => ({
+    remove: vi.fn(),
+    disable: vi.fn(),
+    enable: vi.fn(),
+  })
 
   it('batch mode is OFF by default — no checkboxes and no bulk toolbar on initial render', () => {
     const devices = [dev(1, { name: 'Cam One' }), dev(2, { name: 'Cam Two' })]
@@ -556,8 +591,18 @@ describe('<DeviceList> characterization — accessory expansion', () => {
   it('expands accessory sub-rows when the parent chevron is clicked', () => {
     const devices = [
       dev(1, { name: 'Cam' }),
-      dev(2, { name: 'Floodlight', role: 'floodlight', parentDeviceId: 1, type: 'light' }),
-      dev(3, { name: 'Siren', role: 'siren', parentDeviceId: 1, type: 'siren' }),
+      dev(2, {
+        name: 'Floodlight',
+        role: 'floodlight',
+        parentDeviceId: 1,
+        type: 'light',
+      }),
+      dev(3, {
+        name: 'Siren',
+        role: 'siren',
+        parentDeviceId: 1,
+        type: 'siren',
+      }),
     ]
     const { container } = render(withQuery(<DeviceList devices={devices} trpc={mockTrpc} />))
     // Collapsed: only the parent row.
@@ -602,7 +647,7 @@ describe('<DeviceList> page-size selector + total (Item D)', () => {
     render(withQuery(<DeviceList devices={devices} trpc={mockTrpc} />))
     expect(screen.getByText('30 devices')).toBeDefined()
     const select = screen.getByLabelText(/devices per page/i) as HTMLSelectElement
-    const options = [...select.querySelectorAll('option')].map((o) => o.value)
+    const options = selectOptionValues(select)
     expect(options).toEqual(['25', '50', '100', '200'])
     // Default table page size is 50.
     expect(select.value).toBe('50')
@@ -634,7 +679,7 @@ describe('<DeviceList> page-size selector + total (Item D)', () => {
 
     // Shrink the page size to 25 → page 3 is out of range, so the clamp
     // effect drops the user to a valid page and re-slices to 25 rows.
-    fireEvent.change(screen.getByLabelText(/devices per page/i), { target: { value: '25' } })
+    selectOption(screen.getByLabelText(/devices per page/i), '25')
     expect(container.querySelectorAll('tbody tr').length).toBe(25)
     expect(screen.getByText(/Showing \d+–\d+ of 120/i)).toBeDefined()
     // The dropped page is still in range (≤ totalPages), not forced back to 1.
@@ -646,13 +691,13 @@ describe('<DeviceList> page-size selector + total (Item D)', () => {
     const { container } = render(withQuery(<DeviceList devices={devices} trpc={mockTrpc} />))
 
     // Switch to size 25 → 4 pages (90 = 25·3 + 15). Go to page 2.
-    fireEvent.change(screen.getByLabelText(/devices per page/i), { target: { value: '25' } })
+    selectOption(screen.getByLabelText(/devices per page/i), '25')
     fireEvent.click(screen.getByText('2'))
     expect(screen.getByText(/Showing 26–50 of 90/i)).toBeDefined()
 
     // Grow to 50 → page 2 is still valid (2 pages: 50 + 40). The user must
     // STAY on page 2 (rows 51–90), NOT get bounced back to page 1.
-    fireEvent.change(screen.getByLabelText(/devices per page/i), { target: { value: '50' } })
+    selectOption(screen.getByLabelText(/devices per page/i), '50')
     expect(container.querySelectorAll('tbody tr').length).toBe(40)
     expect(screen.getByText(/Showing 51–90 of 90/i)).toBeDefined()
   })
@@ -664,7 +709,7 @@ describe('<DeviceList> page-size selector + total (Item D)', () => {
     expect(container.querySelectorAll('tbody tr').length).toBe(50)
     expect(screen.getByLabelText(/next page/i)).toBeDefined()
 
-    fireEvent.change(screen.getByLabelText(/devices per page/i), { target: { value: '100' } })
+    selectOption(screen.getByLabelText(/devices per page/i), '100')
     // All 80 now fit; the pager self-hides but the selector + total remain.
     expect(container.querySelectorAll('tbody tr').length).toBe(80)
     expect(screen.queryByLabelText(/next page/i)).toBeNull()
@@ -674,7 +719,7 @@ describe('<DeviceList> page-size selector + total (Item D)', () => {
   it('persists the preference globally across mounts (shared key)', () => {
     const devices = Array.from({ length: 120 }, (_, i) => dev(i + 1))
     const first = render(withQuery(<DeviceList devices={devices} trpc={mockTrpc} />))
-    fireEvent.change(first.getByLabelText(/devices per page/i), { target: { value: '100' } })
+    selectOption(first.getByLabelText(/devices per page/i), '100')
     first.unmount()
 
     // A fresh device-list surface picks up the persisted global preference.
@@ -741,7 +786,11 @@ describe('<DeviceList mode="generic">', () => {
         getKey={(item: GItem) => item.id}
         getSearchText={(item: GItem) => item.label}
         columns={[
-          { key: 'label', header: 'Label', cell: (item: GItem) => <span>{item.label}</span> },
+          {
+            key: 'label',
+            header: 'Label',
+            cell: (item: GItem) => <span>{item.label}</span>,
+          },
         ]}
       />,
     )

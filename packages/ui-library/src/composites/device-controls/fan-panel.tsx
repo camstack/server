@@ -1,3 +1,4 @@
+import { Slider } from '../../primitives/slider'
 import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
@@ -51,9 +52,8 @@ export function FanPanel({
     >
       {showSpeed && (
         <div className="flex items-center gap-2 text-xs text-foreground-subtle">
-          <input
+          <Slider
             aria-label={t('uiLibrary.fanPanel.speed', 'Fan speed')}
-            type="range"
             min={0}
             max={100}
             step={step}

@@ -1,3 +1,4 @@
+import { Checkbox } from '../../primitives/checkbox'
 import { Loader2, Play } from 'lucide-react'
 import { EventThumb, EventKindIcon, type ClipKind } from './event-thumb'
 import { type JSX } from 'react'
@@ -54,8 +55,7 @@ export function EventBucketStrip({
           key={kind}
           className="flex cursor-pointer items-center gap-1 text-xs text-foreground-subtle select-none"
         >
-          <input
-            type="checkbox"
+          <Checkbox
             checked={enabledKinds.has(kind)}
             onChange={() => onToggleKind(kind)}
             className="h-3.5 w-3.5 accent-primary"

@@ -10,6 +10,7 @@
  * while rfdetr was in fact right there in the list and the seed was a model
  * (the device's elected `yolov9m-320-int8`) the package catalog never had.
  */
+import { selectOptionValues } from '../../testing/select-option'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import type { PipelineAddonSchema, DeviceStepConfig } from '@camstack/types'
@@ -64,7 +65,7 @@ describe('AgentStepEditor — package step options', () => {
       />,
     )
     const select = screen.getByRole<HTMLSelectElement>('combobox')
-    expect([...select.options].map((o) => o.getAttribute('value'))).toContain('rfdetr-package')
+    expect(selectOptionValues(select)).toContain('rfdetr-package')
     expect(select.value).toBe('rfdetr-package')
   })
 

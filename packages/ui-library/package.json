@@ -30,6 +30,10 @@
       "import": "./dist/theme/tokens.js",
       "require": "./dist/theme/tokens.cjs"
     },
+    "./testing": {
+      "types": "./src/testing/select-option.ts",
+      "import": "./src/testing/select-option.ts"
+    },
     "./tailwind/*": "./src/tailwind/*"
   },
   "camstack": {

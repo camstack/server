@@ -7,6 +7,7 @@
  * file so the 5 existing call sites compile unchanged. The new
  * `view` prop defaults to `'card'`.
  */
+import { Checkbox } from '../../primitives/checkbox'
 import { useUiText } from '../../contexts/ui-text'
 import { type KeyboardEvent, type ReactNode, useState } from 'react'
 import { AlertCircle, Loader2 } from 'lucide-react'
@@ -218,8 +219,7 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
           )}
         >
           {selection && (
-            <input
-              type="checkbox"
+            <Checkbox
               checked={selection.selected}
               onChange={selection.onToggle}
               onClick={(e) => e.stopPropagation()}
@@ -333,8 +333,7 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
       >
         <div className="flex items-start justify-between gap-2">
           {selection && (
-            <input
-              type="checkbox"
+            <Checkbox
               checked={selection.selected}
               onChange={selection.onToggle}
               onClick={(e) => e.stopPropagation()}
@@ -606,8 +605,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
       >
         <div className="flex items-center gap-1.5">
           {selection && (
-            <input
-              type="checkbox"
+            <Checkbox
               checked={selection.selected}
               onChange={selection.onToggle}
               onClick={(e) => e.stopPropagation()}

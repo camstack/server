@@ -1,3 +1,4 @@
+import { Slider } from '../../primitives/slider'
 import type { ReactNode } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
@@ -37,9 +38,8 @@ export function BrightnessPanel({
     >
       {/* No visible "Brightness" text label between the switch and the slider —
           the slider carries an aria-label for a11y. */}
-      <input
+      <Slider
         aria-label={t('uiLibrary.brightnessPanel.brightness', 'Brightness')}
-        type="range"
         min={0}
         max={100}
         step={1}

@@ -21,6 +21,7 @@
  * This is the RAW editor, for TOKENS. People are not edited here: a person
  * is an Admin or a Viewer (D921), set from `/system/identity?tab=users`.
  */
+import { Checkbox } from '../primitives/checkbox'
 import { Select } from '../primitives/select'
 import { useMemo, type ReactNode } from 'react'
 import { Plus, X, Eye, Pencil, Trash2 } from 'lucide-react'
@@ -405,8 +406,7 @@ export function ScopePicker({
                           : 'text-foreground-subtle hover:bg-foreground-subtle/10'
                       } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={checked}
                         disabled={disabled}
                         onChange={(e) => {

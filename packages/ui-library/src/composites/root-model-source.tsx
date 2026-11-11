@@ -8,6 +8,7 @@
  * the flag waits, inactive, for a root that can. Whether it is in force is
  * `resolveRootSupply` — the same function the runner decides with.
  */
+import { Checkbox } from '../primitives/checkbox'
 import type { JSX } from 'react'
 import { defaultUiText, useUiText, type UiTextFn } from '../contexts/ui-text'
 import {
@@ -151,8 +152,7 @@ export function RootModelSourceControl({
   return (
     <div className="space-y-1" data-testid="root-model-source">
       <label className="flex items-center gap-2 text-xs text-foreground">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={checked}
           disabled={disabled}
           onChange={(e) => onChange(e.target.checked)}

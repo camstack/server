@@ -7,6 +7,7 @@
  * from `enabled`) and "does not fetch until the broker is picked" fails; render
  * `field.options` only and "lists the candidates" fails.
  */
+import { selectOption, selectOptionLabels } from '../../testing/select-option'
 import type { ConfigField } from '@camstack/types'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -70,12 +71,36 @@ vi.mock('../../generated/system-hooks', () => ({
   ) => {
     if (options.enabled) asked.push(input)
     if (!options.enabled)
-      return { data: undefined, isLoading: false, isFetching: false, isError: false, error: null }
+      return {
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        isError: false,
+        error: null,
+      }
     if (loading)
-      return { data: undefined, isLoading: true, isFetching: true, isError: false, error: null }
+      return {
+        data: undefined,
+        isLoading: true,
+        isFetching: true,
+        isError: false,
+        error: null,
+      }
     if (failure !== null)
-      return { data: undefined, isLoading: false, isFetching: false, isError: true, error: failure }
-    return { data: candidates, isLoading: false, isFetching: false, isError: false, error: null }
+      return {
+        data: undefined,
+        isLoading: false,
+        isFetching: false,
+        isError: true,
+        error: failure,
+      }
+    return {
+      data: candidates,
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      error: null,
+    }
   },
 }))
 
@@ -131,8 +156,9 @@ describe('instance-select over a broker', () => {
 
   it('without a host picker lists only the brokers of its kind', () => {
     render(<Form />)
-    expect(screen.getByRole('option', { name: 'Home HA' })).toBeInTheDocument()
-    expect(screen.queryByRole('option', { name: 'Other' })).toBeNull()
+    const labels = selectOptionLabels(screen.getByRole('combobox'))
+    expect(labels).toContain('Home HA')
+    expect(labels).not.toContain('Other')
   })
 })
 
@@ -164,12 +190,17 @@ describe('select with discoverOptions', () => {
 
   it('lists the candidates with their names after the broker is picked, storing the id', async () => {
     render(<Form />)
-    fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'b1' } })
+    selectOption(screen.getAllByRole('combobox')[0]!, 'b1')
     await waitFor(() => expect(screen.getAllByRole('combobox')).toHaveLength(2), {
       timeout: 3000,
     })
-    expect(asked.at(-1)).toEqual({ kind: 'homeassistant', config: { brokerId: 'b1' } })
-    fireEvent.change(screen.getAllByRole('combobox')[1]!, { target: { value: 'pixel' } })
+    expect(asked.at(-1)).toEqual({
+      kind: 'homeassistant',
+      config: { brokerId: 'b1' },
+    })
+    fireEvent.change(screen.getAllByRole('combobox')[1]!, {
+      target: { value: 'pixel' },
+    })
     expect(screen.queryByTestId('config-select-service-option-smtp_relay')).toBeNull()
     fireEvent.click(screen.getByTestId('config-select-service-option-mobile_app_pixel_7'))
     expect(screen.getByTestId('values').textContent).toContain('"service":"mobile_app_pixel_7"')
@@ -185,7 +216,9 @@ describe('select with discoverOptions', () => {
         ),
       { timeout: 3000 },
     )
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'my_service' } })
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'my_service' },
+    })
     expect(screen.getByTestId('values').textContent).toContain('"service":"my_service"')
   })
 
@@ -236,8 +269,16 @@ describe('optional discovered picker (noneLabel)', () => {
     failure = null
     loading = false
     candidates = [
-      { kind: 'email', suggestedName: 'Office relay', config: { smtpInstanceId: 'relay-1' } },
-      { kind: 'email', suggestedName: 'Backup relay', config: { smtpInstanceId: 'relay-2' } },
+      {
+        kind: 'email',
+        suggestedName: 'Office relay',
+        config: { smtpInstanceId: 'relay-1' },
+      },
+      {
+        kind: 'email',
+        suggestedName: 'Backup relay',
+        config: { smtpInstanceId: 'relay-2' },
+      },
     ]
   })
 

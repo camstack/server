@@ -1,3 +1,4 @@
+import { Slider } from '../../primitives/slider'
 import type { ReactNode } from 'react'
 import { ChevronUp, ChevronDown, Square } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
@@ -59,9 +60,8 @@ export function CoverPanel({ trpc, deviceId, features, layout }: ControlPanelPro
       {positionable && layout === 'full' && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span>{t('uiLibrary.coverPanel.position', 'Position')}</span>
-          <input
+          <Slider
             aria-label={t('uiLibrary.coverPanel.position', 'Position')}
-            type="range"
             min={0}
             max={100}
             step={1}

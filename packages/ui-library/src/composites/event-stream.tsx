@@ -14,6 +14,7 @@
  * tRPC subscription cleans up automatically. The historical query
  * input refreshes when the active category set changes.
  */
+import { Checkbox } from '../primitives/checkbox'
 import { useEffect, useRef, useState, useMemo, useCallback, type JSX } from 'react'
 import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
 import {
@@ -1225,7 +1226,7 @@ function CategoryFilterPopover({
               onClick={() => onToggle(cat)}
               className="w-full flex items-center gap-2 px-2 py-1 text-left hover:bg-surface-hover/40 text-[10px]"
             >
-              <input type="checkbox" readOnly checked={checked} className="accent-violet-500" />
+              <Checkbox readOnly checked={checked} className="" />
               <span
                 className={cn(
                   'inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-medium shrink-0',

@@ -4,6 +4,7 @@
  * that cannot curate, disabled without a playhead, and the instant is the one
  * the dialog opened on — playback keeps moving underneath it.
  */
+import { selectOption } from '../../../testing/select-option'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -29,7 +30,10 @@ vi.mock('../../../generated/system-hooks', () => ({
     isLoading: false,
     refetch: vi.fn(),
   }),
-  usePipelineAnalyticsCreateRetrainCollection: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  usePipelineAnalyticsCreateRetrainCollection: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
   usePipelineAnalyticsAddRetrainFrameFromRecording: () => ({
     mutateAsync: (input: SendInput) => send(input),
     isPending: false,
@@ -69,7 +73,7 @@ describe('SendFrameToTrainingButton', () => {
     fireEvent.click(screen.getByTestId('send-frame-to-training'))
     // Playback moves on while the dialog is open.
     rerender(<SendFrameToTrainingButton deviceId={101} epochMs={1_700_000_005_000} />)
-    fireEvent.change(screen.getByLabelText('Collection'), { target: { value: 'col-1' } })
+    selectOption(screen.getByLabelText('Collection'), 'col-1')
     fireEvent.click(screen.getByRole('button', { name: 'Send' }))
     await waitFor(() => {
       expect(send).toHaveBeenCalledWith({
@@ -89,7 +93,7 @@ describe('SendFrameToTrainingButton', () => {
     })
     render(<SendFrameToTrainingButton deviceId={101} epochMs={1_700_000_000_000} />)
     fireEvent.click(screen.getByTestId('send-frame-to-training'))
-    fireEvent.change(screen.getByLabelText('Collection'), { target: { value: 'col-1' } })
+    selectOption(screen.getByLabelText('Collection'), 'col-1')
     fireEvent.click(screen.getByRole('button', { name: 'Send' }))
     expect(
       await screen.findByText(/No frame could be taken from the recording at that moment/),

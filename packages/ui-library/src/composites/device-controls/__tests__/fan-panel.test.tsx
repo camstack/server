@@ -1,10 +1,13 @@
+import { selectOption } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { FanPanel } from '../fan-panel'
 const setPercentage = vi.fn()
 const setPreset = vi.fn()
 let mockResult: { cap: unknown; slice: unknown; available: boolean }
-vi.mock('../../../hooks/use-device-capability', () => ({ useDeviceCapability: () => mockResult }))
+vi.mock('../../../hooks/use-device-capability', () => ({
+  useDeviceCapability: () => mockResult,
+}))
 const trpc = {} as never
 beforeEach(() => {
   setPercentage.mockReset()
@@ -34,11 +37,15 @@ describe('FanPanel', () => {
   })
   it('shows preset picker only with fan-preset feature', () => {
     render(<FanPanel trpc={trpc} deviceId={1} features={['fan-preset']} layout="full" />)
-    fireEvent.change(screen.getByLabelText('Fan preset'), { target: { value: 'turbo' } })
+    selectOption(screen.getByLabelText('Fan preset'), 'turbo')
     expect(setPreset).toHaveBeenCalledWith({ preset: 'turbo' })
   })
   it('renders nothing when unbound', () => {
-    mockResult = { cap: { setPercentage, setPreset }, slice: undefined, available: false }
+    mockResult = {
+      cap: { setPercentage, setPreset },
+      slice: undefined,
+      available: false,
+    }
     const { container } = render(
       <FanPanel trpc={trpc} deviceId={1} features={['fan-speed']} layout="full" />,
     )

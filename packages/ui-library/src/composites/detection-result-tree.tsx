@@ -10,6 +10,7 @@
  *   - `labels[]` (ScoredLabel — own + inherited)
  *   - `debug.alternateLabels` (top-N per source) when present
  */
+import { Checkbox } from '../primitives/checkbox'
 import { useUiText } from '../contexts/ui-text'
 import { DisclosureChevron } from '../primitives/disclosure-chevron'
 import { useState, type JSX } from 'react'
@@ -118,8 +119,7 @@ function DetectionNode({
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           {onToggleVisibility && (
-            <input
-              type="checkbox"
+            <Checkbox
               checked={isVisible}
               onChange={() => onToggleVisibility(detection.id, !isVisible)}
               className="h-3.5 w-3.5 rounded border-border accent-primary cursor-pointer shrink-0"
@@ -212,8 +212,7 @@ function ChildrenTree({
           <div key={child.id} className={`text-xs space-y-0.5 ${isVisible ? '' : 'opacity-40'}`}>
             <div className="flex items-center gap-1.5">
               {onToggleVisibility && (
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={isVisible}
                   onChange={() => onToggleVisibility(child.id, !isVisible)}
                   className="h-3 w-3 rounded border-border accent-primary cursor-pointer shrink-0"

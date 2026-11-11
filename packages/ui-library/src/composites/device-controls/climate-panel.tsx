@@ -1,3 +1,4 @@
+import { Slider } from '../../primitives/slider'
 import { Select } from '../../primitives/select'
 import type { ReactNode } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
@@ -436,9 +437,8 @@ export function ClimatePanel({
       {display.targetHumidity !== null && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span>{t('uiLibrary.climatePanel.humidity', 'Humidity')}</span>
-          <input
+          <Slider
             aria-label={t('uiLibrary.climatePanel.targetHumidity', 'Target humidity')}
-            type="range"
             min={0}
             max={100}
             step={1}

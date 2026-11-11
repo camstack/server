@@ -8,7 +8,8 @@
  * under the caller's key. A caller that does not keeps the fixed size and shows
  * no selector — the HA adoption modal is unchanged.
  */
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { selectOption, selectOptionLabels } from '../../../testing/select-option'
+import { render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { GenericModeList } from '../generic-mode'
 import { PAGE_SIZE_ALL } from '../../../hooks/use-persisted-page-size'
@@ -59,22 +60,20 @@ describe('generic list — page size', () => {
     renderList(true)
     expect(bodyRows()).toBe(25)
     expect(perPage().value).toBe('25')
-    const labels = within(perPage())
-      .getAllByRole('option')
-      .map((o) => o.textContent)
+    const labels = selectOptionLabels(perPage())
     expect(labels).toEqual(['10', '25', '50', '100', 'All'])
   })
 
   it('changes the rows shown and remembers the choice', () => {
     renderList(true)
-    fireEvent.change(perPage(), { target: { value: '10' } })
+    selectOption(perPage(), '10')
     expect(bodyRows()).toBe(10)
     expect(localStorage.getItem(KEY)).toBe('10')
   })
 
   it('"All" shows every row and drops the pager', () => {
     renderList(true)
-    fireEvent.change(perPage(), { target: { value: String(PAGE_SIZE_ALL) } })
+    selectOption(perPage(), String(PAGE_SIZE_ALL))
     expect(bodyRows()).toBe(60)
     expect(screen.queryByRole('button', { name: 'Next page' })).toBeNull()
   })

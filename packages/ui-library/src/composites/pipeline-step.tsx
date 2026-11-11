@@ -5,6 +5,8 @@
  * Renders: colored left border, header with I/O class tags, expandable config
  * (Model → Confidence), children recursively.
  */
+import { Slider } from '../primitives/slider'
+import { Checkbox } from '../primitives/checkbox'
 import { Select } from '../primitives/select'
 import { useState, type JSX } from 'react'
 import type { PipelineSlot, PipelineAddonSchema, ConfigField, ConfigOption } from '@camstack/types'
@@ -459,8 +461,7 @@ function ConfigSchemaFieldControl({
         {field.description && (
           <p className="text-[10px] text-foreground-subtle/60 mb-1.5">{field.description}</p>
         )}
-        <input
-          type="range"
+        <Slider
           min={min}
           max={max}
           step={step_}
@@ -478,8 +479,7 @@ function ConfigSchemaFieldControl({
     const current = typeof raw === 'boolean' ? raw : field.default === true
     return (
       <label className="flex items-center gap-2">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={current}
           disabled={disabled || field.disabled}
           onChange={(e) => handleChange(e.target.checked)}

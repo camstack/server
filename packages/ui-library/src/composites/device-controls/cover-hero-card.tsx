@@ -1,3 +1,4 @@
+import { Slider } from '../../primitives/slider'
 import { useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { ChevronUp, ChevronDown, Square } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
@@ -417,9 +418,8 @@ export function CoverHeroCard({
       {positionable && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span className="w-12 shrink-0">{t('uiLibrary.coverHeroCard.position', 'Position')}</span>
-          <input
+          <Slider
             aria-label={t('uiLibrary.coverHeroCard.position', 'Position')}
-            type="range"
             min={0}
             max={100}
             step={1}
@@ -438,9 +438,8 @@ export function CoverHeroCard({
       {!positionable && position !== null && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span className="w-12 shrink-0">{t('uiLibrary.coverHeroCard.position', 'Position')}</span>
-          <input
+          <Slider
             aria-label={t('uiLibrary.coverHeroCard.position', 'Position')}
-            type="range"
             min={0}
             max={100}
             step={1}
@@ -457,9 +456,8 @@ export function CoverHeroCard({
       {tiltable && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span className="w-12 shrink-0">{t('uiLibrary.coverHeroCard.tilt', 'Tilt')}</span>
-          <input
+          <Slider
             aria-label={t('uiLibrary.coverHeroCard.tiltPosition', 'Tilt position')}
-            type="range"
             min={0}
             max={100}
             step={1}

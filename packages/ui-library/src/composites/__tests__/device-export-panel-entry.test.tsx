@@ -16,6 +16,7 @@
  *     "export failed" would leave the operator re-running the whole set to
  *     find out which ones actually landed.
  */
+import { selectOption, selectOptionLabels } from '../../testing/select-option'
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
@@ -80,10 +81,22 @@ vi.mock('../../generated/system-hooks', () => ({
     isLoading: false,
   }),
   // An exporter that does not answer what else it can expose: devices only.
-  useDeviceExportListSupportedEntityKinds: () => ({ data: undefined, isLoading: false }),
-  useDeviceExportListExposedEntities: () => ({ data: undefined, isLoading: false }),
-  useDeviceExportExposeEntity: () => ({ mutateAsync: vi.fn(), isPending: false }),
-  useDeviceExportUnexposeEntity: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeviceExportListSupportedEntityKinds: () => ({
+    data: undefined,
+    isLoading: false,
+  }),
+  useDeviceExportListExposedEntities: () => ({
+    data: undefined,
+    isLoading: false,
+  }),
+  useDeviceExportExposeEntity: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
+  useDeviceExportUnexposeEntity: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
   useActionsList: () => ({ data: undefined, isLoading: false }),
   useDeviceManagerListAll: () => ({ data: DEVICES, isLoading: false }),
   useIntegrationsList: () => ({
@@ -117,7 +130,9 @@ vi.mock('../../hooks/use-instances-of-cap', () => ({
 const { DeviceExportPanel } = await import('../device-export-panel')
 
 function renderPanel(onOpenDevice?: (deviceId: string) => void) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   return render(
     <QueryClientProvider client={client}>
       <DeviceExportPanel addonId="export-hap" onOpenDevice={onOpenDevice} />
@@ -324,21 +339,13 @@ describe('the exposed-devices table picks its own page size', () => {
     renderPanel()
     const select = screen.getByRole('combobox', { name: 'Rows per page' })
     expect((select as HTMLSelectElement).value).toBe('25')
-    expect(Array.from((select as HTMLSelectElement).options).map((o) => o.textContent)).toEqual([
-      '10',
-      '25',
-      '50',
-      '100',
-      'All',
-    ])
+    expect(selectOptionLabels(select)).toEqual(['10', '25', '50', '100', 'All'])
   })
 
   it('remembers the choice per viewer, under a key of its own', () => {
     localStorage.clear()
     renderPanel()
-    fireEvent.change(screen.getByRole('combobox', { name: 'Rows per page' }), {
-      target: { value: '50' },
-    })
+    selectOption(screen.getByRole('combobox', { name: 'Rows per page' }), '50')
     expect(localStorage.getItem('camstack.device-export.pageSize')).toBe('50')
     // The Devices page's global choice is a different key, left alone.
     expect(localStorage.getItem('camstack.device-list.pageSize')).toBeNull()

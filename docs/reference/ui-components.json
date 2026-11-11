@@ -11240,14 +11240,56 @@
       "kind": "component",
       "area": "primitives",
       "file": "packages/ui-library/src/primitives/select.tsx",
-      "summary": "A native `<select>` styled to match the rest of the field set.",
-      "propsExtends": ["SelectHTMLAttributes<HTMLSelectElement>"],
+      "summary": "The common dropdown. It renders OUR list (a token-styled listbox in the top layer), never the browser's native popup, and keeps the `<select>` calling convention: `value` / `defaultValue`, `onChange` with `e.target.va…",
+      "propsExtends": ["SelectButtonAttributes"],
       "props": [
         {
           "name": "options",
           "type": "SelectOption[]",
           "optional": true,
           "doc": "The choices. Omit it and pass `<option>` / `<optgroup>` children for a grouped or computed list."
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "`<option>` / `<optgroup>` children, read once per render into the dropdown list."
+        },
+        {
+          "name": "value",
+          "type": "string | number",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "defaultValue",
+          "type": "string | number",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(event: SelectChangeEvent) => void",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": true,
+          "doc": "Submitted with a surrounding `<form>` through a hidden input."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "optional": true,
+          "doc": "Shown while the value matches no row."
         },
         {
           "name": "wrapperClassName",
@@ -11330,11 +11372,39 @@
       "summary": "Resolve the currently-selected values into options IN SELECTION ORDER (so chips stay stable while searching). A selected value with no matching option becomes a synthetic `{ value, label: value }` — a stale id still s…"
     },
     {
+      "name": "selectOption",
+      "kind": "function",
+      "area": "testing",
+      "file": "packages/ui-library/src/testing/select-option.ts",
+      "summary": "Test helper: pick `value` on a `Select` the way an operator does — open the trigger, click the row. Replaces `fireEvent.change(select, ...)` / `userEvent.selectOptions`, which drove the native `<select>` and cannot re…"
+    },
+    {
+      "name": "selectOptionLabels",
+      "kind": "function",
+      "area": "testing",
+      "file": "packages/ui-library/src/testing/select-option.ts",
+      "summary": "Test helper: the row labels, in order."
+    },
+    {
+      "name": "selectOptionValues",
+      "kind": "function",
+      "area": "testing",
+      "file": "packages/ui-library/src/testing/select-option.ts",
+      "summary": "Test helper: the row values, in order."
+    },
+    {
       "name": "selectPickerGroup",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-picker/device-picker-model.ts",
       "summary": "Add every device of the group (only the ones the current search shows)."
+    },
+    {
+      "name": "selectRows",
+      "kind": "function",
+      "area": "testing",
+      "file": "packages/ui-library/src/testing/select-option.ts",
+      "summary": "Test helper: the rows the list offers, in order — the replacement for reading `select.options`. Opens the list to read it and closes it again."
     },
     {
       "name": "SemanticBadge",
@@ -14602,6 +14672,13 @@
       "area": "contexts",
       "file": "packages/ui-library/src/contexts/vod-playback.tsx",
       "summary": "VodPlayback — shared context coordinating recorded (VOD) playback between a widget/section (the Recording panel) and the hero StreamPanel."
+    },
+    {
+      "name": "waitForSelectRows",
+      "kind": "function",
+      "area": "testing",
+      "file": "packages/ui-library/src/testing/select-option.ts",
+      "summary": "Test helper: wait until the rows the list offers satisfy `check`. Use it instead of `waitFor(() => expect(selectOptionLabels(...)))`: reading the rows opens and closes the list, and that DOM change re-triggers a `wait…"
     },
     {
       "name": "WaterHeaterHeroCard",

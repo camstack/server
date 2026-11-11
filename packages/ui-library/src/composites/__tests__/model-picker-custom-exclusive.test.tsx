@@ -5,6 +5,7 @@
  * the selected provider; there is no hidden "Use a custom model…" toggle.
  */
 
+import { selectOptionValues } from '../../testing/select-option'
 import type { PipelineAddonSchema } from '@camstack/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -86,7 +87,7 @@ describe('ModelPicker — provider-first', () => {
     render(<ModelPicker models={MODELS} value="frigate-yolonas" onChange={() => {}} />)
     const select = screen.getByRole('combobox') as HTMLSelectElement
     expect(select.value).toBe('frigate-yolonas')
-    expect([...select.options].some((o) => o.value === 'yolo26n')).toBe(false)
+    expect(selectOptionValues(select).some((v) => v === 'yolo26n')).toBe(false)
   })
 
   it('puts BYO models under Custom', () => {

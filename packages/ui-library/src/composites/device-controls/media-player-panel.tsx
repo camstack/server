@@ -1,3 +1,4 @@
+import { Slider } from '../../primitives/slider'
 import { Select } from '../../primitives/select'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
@@ -173,9 +174,8 @@ export function MediaPlayerPanel({
           {(declared.volume === 'slider' || display.volumeLevel !== null) && (
             <label className="flex items-center gap-2 text-xs text-foreground-subtle">
               <span>{t('uiLibrary.mediaPlayerPanel.vol', 'Vol')}</span>
-              <input
+              <Slider
                 aria-label={t('uiLibrary.mediaPlayerPanel.volume', 'Volume')}
-                type="range"
                 min={0}
                 max={100}
                 step={1}

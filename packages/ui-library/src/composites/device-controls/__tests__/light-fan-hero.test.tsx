@@ -28,6 +28,7 @@
  *      availablePresets is non-empty, and calls setPreset on change
  *  (g) dragging the gauge snaps to percentageStep and calls setPercentage
  */
+import { selectOption } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { DeviceFeature } from '@camstack/types'
@@ -76,7 +77,12 @@ vi.mock('../../../hooks/use-device-capability', () => ({
     const tag = (picked as { __cap?: CapName } | undefined)?.__cap
     if (tag !== undefined && slots[tag] !== undefined) {
       const slot = slots[tag]
-      return { dev: {}, cap: slot.cap, slice: slot.slice, available: slot.available }
+      return {
+        dev: {},
+        cap: slot.cap,
+        slice: slot.slice,
+        available: slot.available,
+      }
     }
     return { dev: {}, cap: undefined, slice: undefined, available: false }
   },
@@ -101,7 +107,11 @@ const fanCap = {
 
 function lightSlots(over?: Partial<Record<CapName, CapSlot>>): Record<CapName, CapSlot> {
   return {
-    switch: { cap: switchCap, slice: { on: true, lastChangedAt: 0 }, available: true },
+    switch: {
+      cap: switchCap,
+      slice: { on: true, lastChangedAt: 0 },
+      available: true,
+    },
     brightness: {
       cap: brightnessCap,
       slice: { level: 80, lastChangedAt: 0 },
@@ -119,7 +129,11 @@ function lightSlots(over?: Partial<Record<CapName, CapSlot>>): Record<CapName, C
 
 function fanSlots(over?: Partial<Record<CapName, CapSlot>>): Record<CapName, CapSlot> {
   return {
-    switch: { cap: switchCap, slice: { on: true, lastChangedAt: 0 }, available: true },
+    switch: {
+      cap: switchCap,
+      slice: { on: true, lastChangedAt: 0 },
+      available: true,
+    },
     brightness: { cap: undefined, slice: undefined, available: false },
     color: { cap: undefined, slice: undefined, available: false },
     fanControl: {
@@ -149,7 +163,9 @@ beforeEach(() => {
 
 describe('LightHeroCard', () => {
   it('returns null when the light (switch) cap is absent (cap-gate)', () => {
-    slots = lightSlots({ switch: { cap: undefined, slice: undefined, available: false } })
+    slots = lightSlots({
+      switch: { cap: undefined, slice: undefined, available: false },
+    })
     const { container } = render(<LightHeroCard trpc={trpc} deviceId={1} features={undefined} />)
     expect(container.firstChild).toBeNull()
   })
@@ -185,13 +201,17 @@ describe('LightHeroCard', () => {
   })
 
   it('does NOT render a color-temp GripTrack when LightColorMired is unsupported', () => {
-    slots = lightSlots({ color: { cap: undefined, slice: undefined, available: false } })
+    slots = lightSlots({
+      color: { cap: undefined, slice: undefined, available: false },
+    })
     render(<LightHeroCard trpc={trpc} deviceId={1} features={[]} />)
     expect(screen.queryByTestId('color-temp-strip')).toBeNull()
   })
 
   it('does NOT render the brightness slider when the brightness cap is absent (switch only)', () => {
-    slots = lightSlots({ brightness: { cap: undefined, slice: undefined, available: false } })
+    slots = lightSlots({
+      brightness: { cap: undefined, slice: undefined, available: false },
+    })
     render(<LightHeroCard trpc={trpc} deviceId={1} features={undefined} />)
     // The interactive slider must be gone, but the switch tap toggle stays.
     expect(screen.queryByLabelText('Brightness')).toBeNull()
@@ -224,7 +244,9 @@ describe('LightHeroCard', () => {
 
 describe('FanHeroCard', () => {
   it('returns null when the fan (switch) cap is absent (cap-gate)', () => {
-    slots = fanSlots({ switch: { cap: undefined, slice: undefined, available: false } })
+    slots = fanSlots({
+      switch: { cap: undefined, slice: undefined, available: false },
+    })
     const { container } = render(<FanHeroCard trpc={trpc} deviceId={1} features={undefined} />)
     expect(container.firstChild).toBeNull()
   })
@@ -330,7 +352,7 @@ describe('FanHeroCard', () => {
     )
     const select = screen.getByLabelText('Fan preset')
     expect(select).toBeTruthy()
-    fireEvent.change(select, { target: { value: 'turbo' } })
+    selectOption(select, 'turbo')
     expect(fanCap.setPreset).toHaveBeenCalledWith({ preset: 'turbo' })
   })
 

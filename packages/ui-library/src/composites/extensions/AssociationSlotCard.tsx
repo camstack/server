@@ -18,6 +18,7 @@
  *   and any stored opt-in no longer linked, so each can be removed — saved
  *   with the picks, whole.
  */
+import { Checkbox } from '../../primitives/checkbox'
 import { useState, type JSX, useRef } from 'react'
 import { useSearchFieldHotkey } from '../../hotkeys/use-search-field-hotkey'
 import { Plus, X } from 'lucide-react'
@@ -226,8 +227,7 @@ function TrackedToggles({ options, tracked, nameOf, onToggle }: TrackedTogglesPr
       </legend>
       {options.map(({ deviceId: id, origin }) => (
         <label key={id} className="flex items-center gap-2 text-[11px] text-foreground">
-          <input
-            type="checkbox"
+          <Checkbox
             aria-label={t(
               'uiLibrary.associationSlotCard.trackedFrom',
               'Tracked events from {{name}}',

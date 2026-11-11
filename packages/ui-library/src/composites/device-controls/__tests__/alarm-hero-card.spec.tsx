@@ -9,6 +9,7 @@
  * `useOptimisticSlice` runs for REAL, so a rollback is asserted against the
  * actual hook, not a stub (mirrors optimistic-controls.test.tsx).
  */
+import { selectOption } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 
@@ -192,9 +193,7 @@ describe('AlarmInlineControl — arm refusal (D630)', () => {
 
     expect(screen.queryByTestId('alarm-inline-error')).toBeNull()
 
-    fireEvent.change(screen.getByRole('combobox', { name: /alarm mode/i }), {
-      target: { value: 'away' },
-    })
+    selectOption(screen.getByRole('combobox', { name: /alarm mode/i }), 'away')
     expect(arm).toHaveBeenCalledWith({ mode: 'away' })
 
     await waitFor(() => {

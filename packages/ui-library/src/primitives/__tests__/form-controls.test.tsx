@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { selectOptionLabels } from '../../testing/select-option'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { Button, FileInput, Radio, Slider, Textarea } from '..'
@@ -49,7 +50,7 @@ describe('Select children and wrapper', () => {
         <option value="b">B</option>
       </Select>,
     )
-    expect(screen.getAllByRole('option')).toHaveLength(2)
+    expect(selectOptionLabels(screen.getByLabelText('sel'))).toEqual(['A', 'B'])
     expect((container.firstChild as HTMLElement).className).toContain('inline-block')
     expect((container.firstChild as HTMLElement).className).not.toContain('w-full')
   })

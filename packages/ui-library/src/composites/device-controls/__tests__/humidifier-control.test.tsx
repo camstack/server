@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { selectOption } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { HumidifierInlineControl, HumidifierHeroCard, humidifierTint } from '../humidifier-control'
@@ -107,13 +108,15 @@ describe('HumidifierHeroCard', () => {
 
   it('calls setTargetHumidity on slider change', () => {
     render(<HumidifierHeroCard trpc={trpc} deviceId={1} features={[]} />)
-    fireEvent.change(screen.getByLabelText('Target humidity'), { target: { value: '70' } })
+    fireEvent.change(screen.getByLabelText('Target humidity'), {
+      target: { value: '70' },
+    })
     expect(setTargetHumidity).toHaveBeenCalledWith({ humidity: 70 })
   })
 
   it('calls setMode on select change', () => {
     render(<HumidifierHeroCard trpc={trpc} deviceId={1} features={[]} />)
-    fireEvent.change(screen.getByLabelText('Mode'), { target: { value: 'baby' } })
+    selectOption(screen.getByLabelText('Mode'), 'baby')
     expect(setMode).toHaveBeenCalledWith({ mode: 'baby' })
   })
 

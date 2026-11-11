@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { selectOption } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import {
@@ -119,7 +120,10 @@ describe('WaterHeaterHeroCard', () => {
   })
 
   it('clamps the target temp to maxTemp on increment', () => {
-    mockResult = { ...mockResult, slice: { ...fullSlice, targetTemp: 80, maxTemp: 80 } }
+    mockResult = {
+      ...mockResult,
+      slice: { ...fullSlice, targetTemp: 80, maxTemp: 80 },
+    }
     render(<WaterHeaterHeroCard trpc={trpc} deviceId={1} features={[]} />)
     fireEvent.click(screen.getByLabelText('Increment'))
     expect(setTargetTemp).toHaveBeenCalledWith({ temp: 80 })
@@ -127,7 +131,7 @@ describe('WaterHeaterHeroCard', () => {
 
   it('calls setOperationMode on select change', () => {
     render(<WaterHeaterHeroCard trpc={trpc} deviceId={1} features={[]} />)
-    fireEvent.change(screen.getByLabelText('Operation mode'), { target: { value: 'gas' } })
+    selectOption(screen.getByLabelText('Operation mode'), 'gas')
     expect(setOperationMode).toHaveBeenCalledWith({ mode: 'gas' })
   })
 

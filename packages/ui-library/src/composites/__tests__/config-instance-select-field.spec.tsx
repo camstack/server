@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
+import { selectOption, selectOptionLabels } from '../../testing/select-option'
 import type { ConfigInstanceSelectField } from '@camstack/types'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { InstancePickerSlotProvider } from '../../contexts/instance-picker-slot'
 import type { LinkableInstance } from '../../hooks/use-instances-of-cap'
@@ -53,10 +54,10 @@ describe('instance-select field', () => {
     const onChange = vi.fn()
     render(<FormField field={FIELD} values={{ brokerId: '' }} onChange={onChange} />)
     expect(asked.at(-1)).toEqual({ functionCap: 'broker', kind: 'mqtt' })
-    const options = screen.getAllByRole('option').map((o) => o.textContent)
+    const options = selectOptionLabels(screen.getByRole('combobox'))
     expect(options).toContain('name-good')
     expect(options).not.toContain('name-bad')
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'good' } })
+    selectOption(screen.getByRole('combobox'), 'good')
     expect(onChange).toHaveBeenCalledWith('brokerId', 'good')
   })
 
@@ -68,12 +69,12 @@ describe('instance-select field', () => {
         onChange={vi.fn()}
       />,
     )
-    expect(screen.getAllByRole('option').map((o) => o.textContent)).toContain('Default relay')
+    expect(selectOptionLabels(screen.getByRole('combobox'))).toContain('Default relay')
   })
 
   it('keeps the chosen instance visible even when it is not usable', () => {
     render(<FormField field={FIELD} values={{ brokerId: 'bad' }} onChange={vi.fn()} />)
-    expect(screen.getAllByRole('option').map((o) => o.textContent)).toContain('name-bad')
+    expect(selectOptionLabels(screen.getByRole('combobox'))).toContain('name-bad')
   })
 
   it('mounts the host picker with the cap and kind when the host provided one', () => {
@@ -89,7 +90,11 @@ describe('instance-select field', () => {
       </InstancePickerSlotProvider>,
     )
     expect(screen.getByText('host picker')).toBeTruthy()
-    expect(seen[0]).toMatchObject({ functionCap: 'broker', kind: 'mqtt', value: 'good' })
+    expect(seen[0]).toMatchObject({
+      functionCap: 'broker',
+      kind: 'mqtt',
+      value: 'good',
+    })
   })
 
   it('hands the host picker disabled and required, which an optional link turns off', () => {

@@ -1,3 +1,5 @@
+import { Slider } from '../primitives/slider'
+import { Checkbox } from '../primitives/checkbox'
 import { useState, useCallback, useRef, useEffect, type JSX } from 'react'
 import {
   Wifi,
@@ -389,8 +391,7 @@ function BooleanField({
         translationFn={translationFn}
       >
         <label className="flex items-center gap-2 cursor-pointer select-none">
-          <input
-            type="checkbox"
+          <Checkbox
             className="h-3.5 w-3.5 rounded border-border accent-primary"
             checked={checked}
             disabled={isDisabled}
@@ -650,8 +651,7 @@ function MultiSelectField({
                 disabled || field.disabled ? 'opacity-50 cursor-not-allowed' : '',
               ].join(' ')}
             >
-              <input
-                type="checkbox"
+              <Checkbox
                 className="sr-only"
                 checked={checked}
                 disabled={disabled || field.disabled}
@@ -830,8 +830,7 @@ function SliderField({
           <span className="text-[10px] text-foreground-subtle tabular-nums shrink-0">
             {displayMin}
           </span>
-          <input
-            type="range"
+          <Slider
             className="min-w-0 flex-1 h-1 accent-primary cursor-pointer disabled:opacity-50"
             min={displayMin}
             max={displayMax}

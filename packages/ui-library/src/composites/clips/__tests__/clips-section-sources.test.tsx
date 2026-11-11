@@ -26,10 +26,11 @@
  * (Device 107 is no longer such a camera: measured 2026-09-20 it is bound to
  * both `recorder` and `provider-reolink`.)
  */
+import { selectOption, selectOptionLabels } from '../../../testing/select-option'
 import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const CAMSTACK = {
@@ -89,9 +90,9 @@ beforeEach(() => {
 })
 
 /** The one control the section offers for choosing a provider. */
-function picker(): HTMLSelectElement {
+function picker(): HTMLButtonElement {
   const found = screen.getByRole('combobox', { name: /source/i })
-  if (!(found instanceof HTMLSelectElement)) throw new Error('the picker is not a <select>')
+  if (!(found instanceof HTMLButtonElement)) throw new Error('the picker is not the shared Select')
   return found
 }
 
@@ -104,7 +105,7 @@ describe('ClipsSection — the picker is the shared Select, never a hand-rolled 
 
   it('offers every provider the camera is bound to, by the label its rows carry', () => {
     render(<ClipsSection deviceId={107} />)
-    const labels = Array.from(picker().options).map((o) => o.textContent ?? '')
+    const labels = selectOptionLabels(picker())
     expect(labels.join('|')).toContain('CamStack recordings')
     expect(labels.join('|')).toContain('SD card')
   })
@@ -134,7 +135,9 @@ describe('ClipsSection — a provider is always NAMED', () => {
 
   it('defaults to the FIRST source the camera lists, which is what the control shows', () => {
     render(<ClipsSection deviceId={107} />)
-    expect(listClipsInputs.at(-1)).toMatchObject({ provider: CAMSTACK.addonId })
+    expect(listClipsInputs.at(-1)).toMatchObject({
+      provider: CAMSTACK.addonId,
+    })
     expect(picker().value).toBe(CAMSTACK.addonId)
   })
 
@@ -146,8 +149,10 @@ describe('ClipsSection — a provider is always NAMED', () => {
 
   it('sends the ADDON id — never a source id — once one is chosen', () => {
     render(<ClipsSection deviceId={107} />)
-    fireEvent.change(picker(), { target: { value: 'addon-provider-reolink' } })
-    expect(listClipsInputs.at(-1)).toMatchObject({ provider: 'addon-provider-reolink' })
+    selectOption(picker(), 'addon-provider-reolink')
+    expect(listClipsInputs.at(-1)).toMatchObject({
+      provider: 'addon-provider-reolink',
+    })
   })
 })
 
@@ -159,11 +164,7 @@ describe('ClipsSection — one bound provider is a fleet STATE, not an empty con
     render(<ClipsSection deviceId={107} />)
     const only = picker()
     expect(only.disabled).toBe(true)
-    expect(
-      Array.from(only.options)
-        .map((o) => o.textContent ?? '')
-        .join(''),
-    ).toContain('CamStack recordings')
+    expect(only.textContent).toContain('CamStack recordings')
     expect(screen.getByText(/one clip provider/i)).toBeTruthy()
   })
 })
@@ -176,10 +177,10 @@ describe('ClipsSection — every source the camera has stays PICKABLE', () => {
     // because the first one is being read would be the two-derivations defect
     // wearing a control.
     render(<ClipsSection deviceId={107} />)
-    fireEvent.change(picker(), { target: { value: 'addon-provider-reolink' } })
+    selectOption(picker(), 'addon-provider-reolink')
     // The picker carries LABELS, which is what the operator picks by — the
     // addon id is the wire's business and was only ever visible in the table.
-    const options = Array.from(picker().querySelectorAll('option')).map((o) => o.textContent ?? '')
+    const options = selectOptionLabels(picker())
     expect(options).toContain('CamStack recordings')
     expect(options).toContain('SD card')
   })

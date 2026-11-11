@@ -1,3 +1,4 @@
+import { Slider } from '../../primitives/slider'
 import { useUiText } from '../../contexts/ui-text'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
@@ -448,9 +449,8 @@ export function MediaPlayerHeroCard({
         <div data-testid="media-seek" className="flex flex-col gap-1">
           <label className="relative block">
             <span className="sr-only">{t('uiLibrary.mediaPlayerHero.seek', 'Seek')}</span>
-            <input
+            <Slider
               aria-label={t('uiLibrary.mediaPlayerHero.seek', 'Seek')}
-              type="range"
               min={0}
               max={status.duration ?? 0}
               step={1000}
@@ -564,9 +564,8 @@ export function MediaPlayerHeroCard({
           )}
           <label className="relative block flex-1">
             <span className="sr-only">{t('uiLibrary.mediaPlayerHero.volume', 'Volume')}</span>
-            <input
+            <Slider
               aria-label={t('uiLibrary.mediaPlayerHero.volume', 'Volume')}
-              type="range"
               min={0}
               max={100}
               step={1}

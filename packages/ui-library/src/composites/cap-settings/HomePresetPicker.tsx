@@ -30,6 +30,7 @@
  *   `none`     — Home REFUSES, and the UI says so. A disabled feature must
  *                never look like a broken one (D62).
  */
+import { Checkbox } from '../../primitives/checkbox'
 import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
 import { useState } from 'react'
@@ -115,8 +116,7 @@ export function HomePresetPicker({ controls }: HomePresetPickerProps): React.Rea
       {homeReturn !== null && (
         <div className="flex flex-col gap-1">
           <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={homeReturn.enabled}
               disabled={disabled}
               onChange={(e) => run(() => setHomeReturn(e.target.checked, homeReturn.seconds))}

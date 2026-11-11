@@ -1,3 +1,4 @@
+import { Slider } from '../../primitives/slider'
 import type { ReactNode } from 'react'
 import { Lightbulb, Thermometer } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
@@ -136,9 +137,8 @@ export function LightHeroCard({
         {bright.cap !== undefined && (
           <label className="flex w-full items-center gap-2 text-xs text-foreground-subtle">
             <span className="w-16">{t('uiLibrary.lightHeroCard.brightness', 'Brightness')}</span>
-            <input
+            <Slider
               aria-label={t('uiLibrary.lightHeroCard.brightness', 'Brightness')}
-              type="range"
               min={0}
               max={100}
               step={1}
@@ -174,9 +174,8 @@ export function LightHeroCard({
             <span className="sr-only">
               {t('uiLibrary.lightHeroCard.colourTemperature', 'Colour temperature')}
             </span>
-            <input
+            <Slider
               aria-label={t('uiLibrary.lightHeroCard.colourTemperature', 'Colour temperature')}
-              type="range"
               min={CT_COOL_MIREDS}
               max={CT_WARM_MIREDS}
               step={1}

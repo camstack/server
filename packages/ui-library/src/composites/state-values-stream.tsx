@@ -22,6 +22,7 @@
  * so the parent can mount/unmount it on tab switches and the tRPC
  * subscription is torn down automatically when hidden.
  */
+import { Checkbox } from '../primitives/checkbox'
 import { useEffect, useMemo, useRef, useState, useCallback, type JSX } from 'react'
 import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
 import { useQuery } from '@tanstack/react-query'
@@ -1155,7 +1156,7 @@ function CapFilterPopover({
               onClick={() => onToggle(cap)}
               className="w-full flex items-center gap-2 px-2 py-1 text-left hover:bg-surface-hover/40 text-[10px]"
             >
-              <input type="checkbox" readOnly checked={checked} className="accent-violet-500" />
+              <Checkbox readOnly checked={checked} className="" />
               <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/15 text-violet-400 px-1.5 py-0.5 text-[9px] font-medium shrink-0">
                 {cap}
               </span>

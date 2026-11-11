@@ -19,6 +19,8 @@
  * the server nothing and it is wrong in exactly the ways the real composition
  * would be wrong.
  */
+import { Slider } from '../../primitives/slider'
+import { Checkbox } from '../../primitives/checkbox'
 import { Select } from '../../primitives/select'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { useDeviceLabel } from '../device-name'
@@ -494,8 +496,7 @@ function GridProfileReport({ offers, cameras, onToggle }: GridProfileReportProps
         <div key={offer.profile} className="flex items-baseline gap-2">
           {/* Only a SERVICEABLE profile can be toggled: the checkbox says what
               this grid publishes, never what its cameras can do. */}
-          <input
-            type="checkbox"
+          <Checkbox
             checked={offer.published}
             disabled={!offer.offered}
             aria-label={t('uiLibrary.cameraGridLayout.publish', 'publish {{profile}}', {
@@ -881,8 +882,7 @@ function CropSlider({ label, value, onChange }: CropSliderProps) {
           className="w-12 rounded border border-border bg-transparent px-1 py-0.5 text-right"
         />
       </span>
-      <input
-        type="range"
+      <Slider
         min={0}
         max={1}
         step={0.005}

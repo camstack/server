@@ -17,6 +17,7 @@
  * The rule itself is `resolveModelBoundSetting` in `@camstack/types` — the same
  * one the runner applies — never re-derived here.
  */
+import { Slider } from '../primitives/slider'
 import type { ConfigField, ConfigNumberField, ConfigSliderField } from '@camstack/types'
 import { useUiText, type UiTextFn } from '../contexts/ui-text'
 import type { JSX } from 'react'
@@ -116,8 +117,7 @@ export function ModelBoundSlider({
       {field.description && (
         <p className="text-[10px] text-foreground-subtle/60 mb-1.5">{field.description}</p>
       )}
-      <input
-        type="range"
+      <Slider
         min={field.min ?? 0}
         max={field.max ?? 1}
         step={field.step ?? 0.01}

@@ -12,6 +12,7 @@
  * box or a zero. It also does not echo a command before the appliance confirms it: the
  * slice moves when the appliance says so.
  */
+import { Checkbox } from '../../primitives/checkbox'
 import { Select } from '../../primitives/select'
 import { useUiText, defaultUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
@@ -530,8 +531,7 @@ function ToggleRow({
   if (checked === null && shown) return null
   return (
     <label className="inline-flex items-center gap-2 cursor-pointer">
-      <input
-        type="checkbox"
+      <Checkbox
         checked={checked === true}
         aria-checked={checked === null ? 'mixed' : checked}
         disabled={busy || checked === null}

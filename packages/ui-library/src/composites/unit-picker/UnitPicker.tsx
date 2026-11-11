@@ -3,9 +3,9 @@
  * empty dimension disables the control and shows `emptyReason` so the operator
  * never sees a refused conversion as a pickable option.
  */
-import { Select } from '../../primitives/select'
+import { Select, type SelectChangeEvent } from '../../primitives/select'
 import { normalizeUnit, type UnitDimension, unitsForDimension } from '@camstack/types'
-import type { ChangeEvent, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 const FIELD_CLASS =
   'w-full min-w-0 px-1.5 py-0.5 text-[11px] bg-background border border-border rounded focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed'
@@ -39,7 +39,7 @@ export function UnitPicker({
   const isEmpty = dimension === undefined
   const selectDisabled = disabled || isEmpty
 
-  const handleChange = (event: ChangeEvent<HTMLSelectElement>): void => {
+  const handleChange = (event: SelectChangeEvent): void => {
     const raw = event.target.value
     if (raw === '') {
       onChange('')
