@@ -13,8 +13,8 @@
  * never swallows a failed store: an unanswered read throws, it is never "no entry". An entry
  * that fails its schema is skipped and named in the log, never replaced by a default.
  *
- * The legacy map keys stay in the store for one release for a rolled-back build (the migrations
- * of `migrations/index.ts` copied them); nothing here reads them.
+ * The legacy map keys were copied by the migrations of `migrations/index.ts`, whose last step
+ * deletes them once every copy is applied; nothing here reads them.
  */
 import type { DurableState, IScopedLogger } from '@camstack/types'
 import type { ZodType } from 'zod'

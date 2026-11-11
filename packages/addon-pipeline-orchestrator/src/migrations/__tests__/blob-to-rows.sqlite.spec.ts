@@ -12,6 +12,7 @@ import {
   ADDON_MIGRATIONS,
   AGENT_SETTINGS_TO_NODE_ROWS_ID,
   CAMERA_SETTINGS_TO_DEVICE_ROWS_ID,
+  DROP_BINDINGS_MIGRATION_FLAG_ID,
   NODE_BINDINGS_TO_NODE_ROWS_ID,
   PIPELINE_ORCHESTRATOR_ID,
 } from '../index.js'
@@ -79,7 +80,7 @@ const nodeRow = (field: string, nodeId: string, value: unknown) => ({
 })
 
 describe('pipeline-orchestrator maps to rows', () => {
-  it('writes one node row per node and one device row per camera, values exact, and keeps the old keys', async () => {
+  it('writes one node row per node and one device row per camera, values exact', async () => {
     const f = seeded()
     const report = await f.boot()
     expect(report.failed).toEqual([])
@@ -103,10 +104,9 @@ describe('pipeline-orchestrator maps to rows', () => {
         value: entry,
       })
     }
-    // The old keys stay for a release; a field the migrations do not know survives byte for byte.
-    expect(rows[`${ID}.agentSettings`]?.['value']).toEqual(AGENTS)
-    expect(rows[`${ID}.nodeBindings`]?.['value']).toEqual(BINDINGS)
-    expect(rows[`${ID}.cameraSettings`]?.['value']).toEqual(CAMERAS)
+    // The copied maps are deleted by the catalogue's last step (drop-moved-maps.sqlite.spec.ts);
+    // a field the migrations do not know survives byte for byte.
+    expect(rows[`${ID}.agentSettings`]).toBeUndefined()
     expect(rows[`${ID}.unknownMarked`]?.['value']).toEqual({ mark: 'survive' })
     expect(rows['other-addon.agentSettings']?.['value']).toBe(NEIGHBOUR)
     expect(devices['other-addon:101.cameraSettings']).toBeUndefined()
@@ -148,8 +148,10 @@ describe('pipeline-orchestrator maps to rows', () => {
     )
     const before = JSON.stringify(f.rows())
     const report = await f.boot()
-    expect(report.failed).toEqual(expect.arrayContaining([NODE_BINDINGS_TO_NODE_ROWS_ID]))
-    expect(report.applied).not.toContain(NODE_BINDINGS_TO_NODE_ROWS_ID)
+    // The first step of the catalogue reads the same store and fails; the engine then blocks
+    // every later step of the owner, so no mover runs at all.
+    expect(report.failed).toEqual([DROP_BINDINGS_MIGRATION_FLAG_ID])
+    expect(report.applied).toEqual([])
     expect(JSON.stringify(f.rows())).toBe(before)
     expect(f.deviceRows()).toEqual({})
   })

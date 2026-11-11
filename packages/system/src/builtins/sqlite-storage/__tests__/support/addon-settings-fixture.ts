@@ -9,6 +9,7 @@ import {
   type AddonMigrationHost,
   defineAddonMigrations,
   type IScopedLogger,
+  type MigrationMeta,
   type MigrationOwnerResult,
   preconditionOf,
   runAddonMigrations,
@@ -26,6 +27,12 @@ const silentLogger: IScopedLogger = {
   error: () => undefined,
   child: () => silentLogger,
   withTags: () => silentLogger,
+}
+
+interface FixtureOutcome {
+  readonly status: 'applied' | 'failed'
+  readonly error: string | null
+  readonly rowsChanged: number
 }
 
 export interface SettingsRows {
@@ -143,56 +150,89 @@ export function settingsFixture<TPorts>(input: {
   }
   const remove = (key: string): void =>
     void db.prepare(`DELETE FROM "${TABLE}" WHERE id = ?`).run(`${addonId}.${key}`)
+  const finish = async (result: MigrationOwnerResult): Promise<FixtureOutcome> => {
+    if (result.kind === 'failed') {
+      return { status: 'failed' as const, error: result.error, rowsChanged: 0 }
+    }
+    if (result.kind === 'procedure') {
+      return { status: 'applied' as const, error: null, rowsChanged: 0 }
+    }
+    try {
+      let changed = 0
+      db.exec('BEGIN')
+      for (const edit of result.plan.edits) {
+        if (edit.op !== 'setKeys' && edit.op !== 'deleteKeys') {
+          throw new Error(`unexpected edit ${edit.op}`)
+        }
+        if (!TABLES.includes(edit.scope)) throw new Error(`no such table ${edit.scope}`)
+        const now = rowsOf(edit.scope)
+        const ids = edit.op === 'setKeys' ? Object.keys(edit.values) : edit.keys
+        const seen = Object.fromEntries(ids.map((id) => [id, now[id] ?? null]))
+        if (edit.precondition !== preconditionOf(seen)) throw new Error('precondition mismatch')
+        for (const id of ids) {
+          if (edit.op === 'setKeys') {
+            db.prepare(`INSERT OR REPLACE INTO "${edit.scope}" (id, data) VALUES (?, ?)`).run(
+              id,
+              JSON.stringify(edit.values[id]),
+            )
+          } else db.prepare(`DELETE FROM "${edit.scope}" WHERE id = ?`).run(id)
+          changed += 1
+        }
+      }
+      db.exec('COMMIT')
+      return { status: 'applied' as const, error: null, rowsChanged: changed }
+    } catch (err) {
+      db.exec('ROLLBACK')
+      return {
+        status: 'failed' as const,
+        error: err instanceof Error ? err.message : String(err),
+        rowsChanged: 0,
+      }
+    }
+  }
+  // The engine's gate (`MigrationEngine.start`): a migration runs only once its `dependsOn` and
+  // the previous `seq` of its owner are applied. A host that always said "proceed" let a
+  // dependent migration run over a predecessor that had failed.
+  let declaredMetas: readonly MigrationMeta[] = []
+  const settled = new Map<string, 'applied' | 'failed'>()
+  const predecessorsOf = (id: string): readonly string[] => {
+    const meta = declaredMetas.find((m) => m.id === id)
+    if (meta === undefined) return []
+    const previous = declaredMetas
+      .filter((other) => other.owner === meta.owner && other.seq < meta.seq)
+      .sort((a, b) => a.seq - b.seq)
+      .at(-1)
+    return [...meta.dependsOn, ...(previous === undefined ? [] : [previous.id])]
+  }
   const host: AddonMigrationHost = {
-    declareOwner: async (declared) => ({
-      bootId: 'boot',
-      snapshot: 'none' as const,
-      steps: declared.metas.map((m) => ({
-        id: m.id,
-        action: 'run' as const,
-        state: 'pending' as const,
-      })),
-    }),
-    startMigration: async () => ({ proceed: true, state: 'pending' as const, reason: null }),
-    finishMigration: async ({ result }: { result: MigrationOwnerResult }) => {
-      if (result.kind === 'failed') {
-        return { status: 'failed' as const, error: result.error, rowsChanged: 0 }
+    declareOwner: async (declared) => {
+      declaredMetas = declared.metas
+      settled.clear()
+      return {
+        bootId: 'boot',
+        snapshot: 'none' as const,
+        steps: declared.metas.map((m) => ({
+          id: m.id,
+          action: 'run' as const,
+          state: 'pending' as const,
+        })),
       }
-      if (result.kind === 'procedure') {
-        return { status: 'applied' as const, error: null, rowsChanged: 0 }
-      }
-      try {
-        let changed = 0
-        db.exec('BEGIN')
-        for (const edit of result.plan.edits) {
-          if (edit.op !== 'setKeys' && edit.op !== 'deleteKeys') {
-            throw new Error(`unexpected edit ${edit.op}`)
-          }
-          if (!TABLES.includes(edit.scope)) throw new Error(`no such table ${edit.scope}`)
-          const now = rowsOf(edit.scope)
-          const ids = edit.op === 'setKeys' ? Object.keys(edit.values) : edit.keys
-          const seen = Object.fromEntries(ids.map((id) => [id, now[id] ?? null]))
-          if (edit.precondition !== preconditionOf(seen)) throw new Error('precondition mismatch')
-          for (const id of ids) {
-            if (edit.op === 'setKeys') {
-              db.prepare(`INSERT OR REPLACE INTO "${edit.scope}" (id, data) VALUES (?, ?)`).run(
-                id,
-                JSON.stringify(edit.values[id]),
-              )
-            } else db.prepare(`DELETE FROM "${edit.scope}" WHERE id = ?`).run(id)
-            changed += 1
-          }
-        }
-        db.exec('COMMIT')
-        return { status: 'applied' as const, error: null, rowsChanged: changed }
-      } catch (err) {
-        db.exec('ROLLBACK')
+    },
+    startMigration: async ({ id }) => {
+      const unmet = predecessorsOf(id).find((dep) => settled.get(dep) !== 'applied')
+      if (unmet !== undefined) {
         return {
-          status: 'failed' as const,
-          error: err instanceof Error ? err.message : String(err),
-          rowsChanged: 0,
+          proceed: false,
+          state: 'blocked' as const,
+          reason: `dependency-${settled.get(unmet) ?? 'pending'}:${unmet}`,
         }
       }
+      return { proceed: true, state: 'pending' as const, reason: null }
+    },
+    finishMigration: async ({ id, result }: { id: string; result: MigrationOwnerResult }) => {
+      const outcome = await finish(result)
+      settled.set(id, outcome.status)
+      return outcome
     },
   }
   return {

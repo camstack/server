@@ -720,9 +720,8 @@ export default class PipelineOrchestratorAddon
         },
       }),
     )
-    // The three maps are not read any more but stay stored for one release (a rolled-back build
-    // reads them). Declared, so the stale-key audit does not offer them (or the node rows
-    // `<field>@<node>` that share their name) for removal.
+    // The three maps are deleted by the last migration above. Their names stay declared: the node
+    // rows `<field>@<node>` share them, and the stale-key audit must not offer those for removal.
     this.state(NODE_BINDINGS_FIELD, NodeBindingsSchema, {})
     this.state(AGENT_SETTINGS_FIELD, AgentSettingsMapSchema, {})
     this.state(CAMERA_SETTINGS_FIELD, CameraSettingsMapSchema, {})

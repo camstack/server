@@ -11,8 +11,9 @@ export const AGENT_SETTINGS_TO_NODE_ROWS_ID =
   'pipeline-orchestrator/2026-11-03-agent-settings-to-node-rows'
 export const CAMERA_SETTINGS_TO_DEVICE_ROWS_ID =
   'pipeline-orchestrator/2026-11-03-camera-settings-to-device-rows'
+export const DROP_MOVED_MAPS_ID = 'pipeline-orchestrator/2026-11-11-drop-moved-maps'
 
-/** The three id-keyed maps this version stopped reading; their keys stay one release. */
+/** The three id-keyed maps the movers copied into rows; nothing reads them. */
 export const NODE_BINDINGS_FIELD = 'nodeBindings'
 export const AGENT_SETTINGS_FIELD = 'agentSettings'
 export const CAMERA_SETTINGS_FIELD = 'cameraSettings'
@@ -104,5 +105,36 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<BlobToRowsPorts>[] = [
       fixtureMark: 'a step toggle and a step setting of one camera',
     },
     plan: (ports) => planBlobToDeviceRows(PIPELINE_ORCHESTRATOR_ID, CAMERA_SETTINGS_FIELD, ports),
+  },
+  {
+    // The maps go here and not through `retired-settings-keys.ts`: that purge runs when the
+    // settings engine boots, BEFORE this catalogue, so an install that jumps over the release
+    // of the movers (or a restored older backup) would lose the maps before they were copied.
+    // A ledgered step after the three movers deletes a map only once its copy is applied.
+    meta: {
+      id: DROP_MOVED_MAPS_ID,
+      owner: PIPELINE_ORCHESTRATOR_ID,
+      level: 'addon-state',
+      seq: 5,
+      dependsOn: [
+        NODE_BINDINGS_TO_NODE_ROWS_ID,
+        AGENT_SETTINGS_TO_NODE_ROWS_ID,
+        CAMERA_SETTINGS_TO_DEVICE_ROWS_ID,
+      ],
+      store: 'settings',
+      scope: 'cluster',
+      // Nothing reads the maps: a failed delete leaves dead rows, it must not stop the owner.
+      onFailure: 'tolerate',
+      bodyKind: 'plan',
+      description:
+        'Delete the nodeBindings, agentSettings and cameraSettings maps once their rows are written',
+      fixtureMark: 'a marked field of each map, read back from the row its mover wrote',
+    },
+    plan: (ports) =>
+      planDropKeys(
+        PIPELINE_ORCHESTRATOR_ID,
+        [NODE_BINDINGS_FIELD, AGENT_SETTINGS_FIELD, CAMERA_SETTINGS_FIELD],
+        ports,
+      ),
   },
 ]

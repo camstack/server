@@ -7,8 +7,8 @@
  *   `<addonId>:<deviceId>.cameraSettings` in `addon-device-settings`.
  *
  * Each entry is copied VERBATIM (the value of a row is the entry the map held), so a field the
- * schema does not know yet survives byte for byte. The map key stays for a release (the purge is
- * `retired-settings-keys.ts`, one release later), so a rolled-back build still reads it.
+ * schema does not know yet survives byte for byte. The mover leaves the map key in place; the
+ * catalogue's last step (`drop-moved-maps`) deletes it once all three movers are applied.
  *
  * A row that already exists is never overwritten: it was written by the build that reads rows,
  * and a seed never overwrites. A plan that has nothing left to copy is empty, so a second run is
