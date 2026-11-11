@@ -331,7 +331,22 @@ export const AutomationWaitUntilStepSchema = z
   .strict()
 export type AutomationWaitUntilStep = z.infer<typeof AutomationWaitUntilStepSchema>
 
-const AutomationBranchStepSchema = z.discriminatedUnion('kind', [
+/** The step kinds that hold steps of their own, or pause on a condition: they nest two levels at most. */
+const BLOCK_STEP_KINDS: readonly string[] = ['choose', 'repeat', 'parallel', 'wait-until']
+export const STEP_NEST_MAX = 2
+const NEST_TOO_DEEP = `steps nest two levels at most: a step inside a nested choose or repeat can be a plain step only`
+
+function kindOf(input: unknown): unknown {
+  return typeof input === 'object' && input !== null ? Reflect.get(input, 'kind') : undefined
+}
+
+/** Where the nesting ends, a block step is refused in words rather than as an unknown kind. */
+function nestTooDeep(issue: { readonly input?: unknown }): string | undefined {
+  const kind = kindOf(issue.input)
+  return typeof kind === 'string' && BLOCK_STEP_KINDS.includes(kind) ? NEST_TOO_DEEP : undefined
+}
+
+const plainStepSchemas = [
   AutomationWaitStepSchema.strict(),
   AutomationCapStepBaseSchema.extend(continueOnErrorShape)
     .strict()
@@ -346,10 +361,16 @@ const AutomationBranchStepSchema = z.discriminatedUnion('kind', [
   AutomationStopStepSchema.omit({ if: true }).strict(),
   AutomationSetStepSchema.omit({ if: true }).strict(),
   AutomationRunActionStepSchema.strict(),
-])
-export type AutomationBranchStep = z.infer<typeof AutomationBranchStepSchema>
+] as const
 
-const branchSteps = z.array(AutomationBranchStepSchema).max(STEP_ELSE_MAX)
+/**
+ * A plain step: a flow step with no condition of its own and no step inside
+ * it. The second (last) level of nesting holds these only.
+ */
+const AutomationBranchStepSchema = z.discriminatedUnion('kind', plainStepSchemas, {
+  error: nestTooDeep,
+})
+export type AutomationBranchStep = z.infer<typeof AutomationBranchStepSchema>
 
 export const PARALLEL_STEPS_MIN = 2
 export const PARALLEL_STEPS_MAX = 5
@@ -442,17 +463,18 @@ export type AutomationRepeatLoop = z.infer<typeof AutomationRepeatLoopSchema>
  * run cannot loop without an end. A failure or a `stop` in the steps ends the
  * loop and the run, as in a sequence.
  */
-export const AutomationRepeatStepSchema = z
-  .object({
-    kind: z.literal('repeat'),
-    loop: AutomationRepeatLoopSchema,
-    steps: z
-      .array(AutomationBranchStepSchema)
-      .min(1, 'a repeat needs at least one step')
-      .max(REPEAT_STEPS_MAX, `a repeat takes at most ${REPEAT_STEPS_MAX} steps`),
-  })
-  .strict()
-export type AutomationRepeatStep = z.infer<typeof AutomationRepeatStepSchema>
+function repeatSchemaOf<S extends z.ZodType>(step: S) {
+  return z
+    .object({
+      kind: z.literal('repeat'),
+      loop: AutomationRepeatLoopSchema,
+      steps: z
+        .array(step)
+        .min(1, 'a repeat needs at least one step')
+        .max(REPEAT_STEPS_MAX, `a repeat takes at most ${REPEAT_STEPS_MAX} steps`),
+    })
+    .strict()
+}
 
 /**
  * One step, several ways (#500): the branches are read in order and the FIRST
@@ -461,19 +483,45 @@ export type AutomationRepeatStep = z.infer<typeof AutomationRepeatStepSchema>
  * after it and not the else (D49). The #472 `if` / `else` of a wait or cap
  * step is the one-branch case and stays as it is stored.
  */
-export const AutomationChooseStepSchema = z.object({
-  kind: z.literal('choose'),
-  branches: z
-    .array(
-      z.object({
-        if: AutomationWhenSchema,
-        steps: branchSteps.min(1, 'a branch needs at least one step'),
-      }),
-    )
-    .min(1, 'a choose needs at least one branch')
-    .max(CHOOSE_BRANCHES_MAX, `a choose takes at most ${CHOOSE_BRANCHES_MAX} branches`),
-  else: branchSteps.optional(),
-})
+function chooseSchemaOf<S extends z.ZodType>(step: S) {
+  const steps = z.array(step).max(STEP_ELSE_MAX)
+  return z.object({
+    kind: z.literal('choose'),
+    branches: z
+      .array(
+        z.object({
+          if: AutomationWhenSchema,
+          steps: steps.min(1, 'a branch needs at least one step'),
+        }),
+      )
+      .min(1, 'a choose needs at least one branch')
+      .max(CHOOSE_BRANCHES_MAX, `a choose takes at most ${CHOOSE_BRANCHES_MAX} branches`),
+    else: steps.optional(),
+  })
+}
+
+/**
+ * A step INSIDE a top-level choose or repeat (the first level of nesting): a
+ * plain step, or a block step whose own steps are plain. That second level is
+ * where the nesting ends (`STEP_NEST_MAX`).
+ */
+const bodyStepUnion = z.discriminatedUnion('kind', [
+  ...plainStepSchemas,
+  AutomationWaitUntilStepSchema,
+  AutomationParallelStepSchema,
+  chooseSchemaOf(AutomationBranchStepSchema),
+  repeatSchemaOf(AutomationBranchStepSchema),
+])
+export type AutomationBodyStep = z.infer<typeof bodyStepUnion>
+export type AutomationBodyStepInput = z.input<typeof bodyStepUnion>
+// Named, so the schemas built on it refer to the type instead of spelling the whole union out again.
+const AutomationBodyStepSchema: z.ZodType<AutomationBodyStep, AutomationBodyStepInput> =
+  bodyStepUnion
+
+export const AutomationRepeatStepSchema = repeatSchemaOf(AutomationBodyStepSchema)
+export type AutomationRepeatStep = z.infer<typeof AutomationRepeatStepSchema>
+
+export const AutomationChooseStepSchema = chooseSchemaOf(AutomationBodyStepSchema)
 export type AutomationChooseStep = z.infer<typeof AutomationChooseStepSchema>
 
 export const AutomationActionSchema = z.discriminatedUnion('kind', [
@@ -534,7 +582,15 @@ export const CurrentAutomationRecipeSchema = z.object({
   /** How many run traces the automation keeps (default {@link DEFAULT_TRACE_KEEP}). */
   keepTraces: z.number().int().min(1).max(MAX_TRACE_KEEP).optional(),
 })
-export type AutomationRecipe = z.infer<typeof CurrentAutomationRecipeSchema>
+/**
+ * Declared as an interface so it is printed by NAME: a capability that embeds
+ * the recipe would otherwise inline the whole step tree into its own type,
+ * past what the compiler can print (TS7056).
+ */
+export interface AutomationRecipe extends z.infer<typeof CurrentAutomationRecipeSchema> {}
+/** The current shape as the parser accepts it (before defaults). */
+export interface CurrentAutomationRecipeInput
+  extends z.input<typeof CurrentAutomationRecipeSchema> {}
 
 /** A recipe as it was stored before the single tree. Read-only: nothing writes this. */
 export const LegacyAutomationRecipeSchema = z.object({
@@ -545,6 +601,8 @@ export const LegacyAutomationRecipeSchema = z.object({
   keepTraces: z.number().int().min(1).max(MAX_TRACE_KEEP).optional(),
 })
 export type LegacyAutomationRecipe = z.infer<typeof LegacyAutomationRecipeSchema>
+/** The legacy shape as the parser accepts it. Named for the same reason as {@link AutomationRecipe}. */
+export interface LegacyAutomationRecipeInput extends z.input<typeof LegacyAutomationRecipeSchema> {}
 
 /** The old shape as the new one, lossless. */
 export function convertLegacyRecipe(legacy: LegacyAutomationRecipe): AutomationRecipe {
@@ -557,10 +615,14 @@ export function convertLegacyRecipe(legacy: LegacyAutomationRecipe): AutomationR
  * saved block carries): the new shape as it is, or the old shape converted to
  * it. The output type is always the new one.
  */
-export const AutomationRecipeSchema = z.union([
+const recipeUnion = z.union([
   CurrentAutomationRecipeSchema,
   LegacyAutomationRecipeSchema.transform(convertLegacyRecipe),
 ])
+/** What the recipe parser accepts: the current shape or the legacy one. */
+export type AutomationRecipeInput = CurrentAutomationRecipeInput | LegacyAutomationRecipeInput
+export const AutomationRecipeSchema: z.ZodType<AutomationRecipe, AutomationRecipeInput> =
+  recipeUnion
 
 /** The `if` of a step that can carry one (`action`, `code`, `choose` and `wait-until` steps cannot). */
 export function stepGuardOf(action: AutomationAction): AutomationWhen | undefined {
@@ -586,24 +648,41 @@ export interface StepConditionRef {
 
 /** Every condition of a step: its own `if`, or the `if` of each branch of a `choose`. */
 export function stepConditionsOf(action: AutomationAction): StepConditionRef[] {
+  const under = (prefix: string, steps: readonly AutomationAction[]): StepConditionRef[] =>
+    steps.flatMap((step, at) =>
+      stepConditionsOf(step).map((ref) => ({ ...ref, path: `${prefix}.${at}.${ref.path}` })),
+    )
   if (action.kind === 'choose') {
-    return action.branches.map((branch, i) => ({ path: `branches.${i}.if`, when: branch.if }))
+    return [
+      ...action.branches.flatMap((branch, i) => [
+        { path: `branches.${i}.if`, when: branch.if },
+        ...under(`branches.${i}.steps`, branch.steps),
+      ]),
+      ...under('else', action.else ?? []),
+    ]
   }
   if (action.kind === 'wait-until') return [{ path: 'when', when: action.when }]
   if (action.kind === 'repeat') {
-    return action.loop.by === 'while' || action.loop.by === 'until'
-      ? [{ path: 'loop.when', when: action.loop.when }]
-      : []
+    return [
+      ...(action.loop.by === 'while' || action.loop.by === 'until'
+        ? [{ path: 'loop.when', when: action.loop.when }]
+        : []),
+      ...under('steps', action.steps),
+    ]
   }
   const when = stepGuardOf(action)
   return when === undefined ? [] : [{ path: 'if', when }]
 }
 
-/** The steps a block step holds (a `choose`'s branches and else, a `parallel`'s members); none for a plain step. */
-export function nestedStepsOf(action: AutomationAction): AutomationBranchStep[] {
-  if (action.kind === 'parallel' || action.kind === 'repeat') return [...action.steps]
-  if (action.kind !== 'choose') return []
-  return [...action.branches.flatMap((branch) => branch.steps), ...(action.else ?? [])]
+/** Every step a block step holds, at both levels, in the order they are written; none for a plain step. */
+export function nestedStepsOf(action: AutomationAction): AutomationBodyStep[] {
+  const direct: readonly AutomationBodyStep[] =
+    action.kind === 'parallel' || action.kind === 'repeat'
+      ? action.steps
+      : action.kind === 'choose'
+        ? [...action.branches.flatMap((branch) => branch.steps), ...(action.else ?? [])]
+        : []
+  return direct.flatMap((step) => [step, ...nestedStepsOf(step)])
 }
 
 /** Bounds, shared by `when` and the old names the guards still know. */

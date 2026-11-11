@@ -32,7 +32,8 @@ script block with a loop nothing bounded.
     Before each round the run variable `item` (`REPEAT_ITEM_VAR`) is set to
     that device's id.
 - **Its steps are plain steps**, 1 to 10: the same set a branch of a
-  `choose` takes (D1038). No block step inside until block steps nest.
+  `choose` takes (D1038). No block step inside until block steps nest
+  (D1043 nests them: the steps of a top-level repeat may be block steps).
 - **`while` is read before each round, `until` after each round.** A `while`
   that is false at the start runs nothing; an `until` runs its steps at
   least once.

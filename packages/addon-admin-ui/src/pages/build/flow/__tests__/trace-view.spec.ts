@@ -91,8 +91,8 @@ describe('a choose step (#500)', () => {
     const [first, second, third] = traceDetails(trace).steps
     expect(first?.chose).toEqual({ kind: 'branch', index: 1 })
     expect(first?.nested).toEqual([
-      { kind: 'wait', tone: 'pass', message: null },
-      { kind: 'cap', tone: 'fail', message: 'lamp offline' },
+      { kind: 'wait', tone: 'pass', message: null, chose: null, rounds: null, inner: [] },
+      { kind: 'cap', tone: 'fail', message: 'lamp offline', chose: null, rounds: null, inner: [] },
     ])
     expect(second?.chose).toEqual({ kind: 'else' })
     expect(third?.chose).toBeNull()
@@ -119,6 +119,62 @@ describe('a choose step (#500)', () => {
     expect(loop?.tone).toBe('fail')
     expect(loop?.nested).toHaveLength(1)
     expect(other?.rounds).toBeNull()
+  })
+
+  it('a block step one level down keeps what it chose, its rounds and its own steps', () => {
+    const trace: AutomationRunTrace = {
+      ...BASE,
+      steps: [
+        {
+          path: 'actions.0',
+          kind: 'repeat',
+          outcome: 'ok',
+          iterations: 2,
+          steps: [
+            {
+              path: 'actions.0.steps.0',
+              kind: 'choose',
+              outcome: 'ok',
+              branch: 'else',
+              steps: [
+                {
+                  path: 'actions.0.steps.0.else.0',
+                  kind: 'cap',
+                  outcome: 'error',
+                  message: 'lamp offline',
+                },
+              ],
+            },
+            {
+              path: 'actions.0.steps.1',
+              kind: 'repeat',
+              outcome: 'ok',
+              iterations: 4,
+              steps: [{ path: 'actions.0.steps.1.steps.0', kind: 'wait', outcome: 'ok' }],
+            },
+          ],
+        },
+      ],
+    }
+    const [loop] = traceDetails(trace).steps
+    expect(loop?.nested).toEqual([
+      {
+        kind: 'choose',
+        tone: 'pass',
+        message: null,
+        chose: { kind: 'else' },
+        rounds: null,
+        inner: [{ kind: 'cap', tone: 'fail', message: 'lamp offline' }],
+      },
+      {
+        kind: 'repeat',
+        tone: 'pass',
+        message: null,
+        chose: null,
+        rounds: 4,
+        inner: [{ kind: 'wait', tone: 'pass', message: null }],
+      },
+    ])
   })
 })
 

@@ -551,7 +551,20 @@ describe('choose schema (#500)', () => {
     )
     expect(
       recipe([
-        { kind: 'choose', branches: [{ if: IF, steps: [{ kind: 'choose', branches: [branch] }] }] },
+        {
+          kind: 'choose',
+          branches: [
+            {
+              if: IF,
+              steps: [
+                {
+                  kind: 'choose',
+                  branches: [{ if: IF, steps: [{ kind: 'choose', branches: [branch] }] }],
+                },
+              ],
+            },
+          ],
+        },
       ]).success,
     ).toBe(false)
     expect(
@@ -1227,11 +1240,15 @@ describe('repeat schema (#500)', () => {
     )
   })
 
-  it('refuses an empty body, a block step inside, and more than 50 devices', () => {
+  it('refuses an empty body, a third level of block steps, and more than 50 devices', () => {
     expect(words(parse({ by: 'count', count: 2 }, []))).toMatch(/a repeat needs at least one step/)
     expect(
       parse({ by: 'count', count: 2 }, [
-        { kind: 'repeat', loop: { by: 'count', count: 2 }, steps: [cap] },
+        {
+          kind: 'repeat',
+          loop: { by: 'count', count: 2 },
+          steps: [{ kind: 'repeat', loop: { by: 'count', count: 2 }, steps: [cap] }],
+        },
       ]).success,
     ).toBe(false)
     const ids = Array.from({ length: 51 }, (_, i) => i + 1)
@@ -1248,5 +1265,106 @@ describe('repeat schema (#500)', () => {
     })
     expect(stepConditionsOf(step)).toEqual([{ path: 'loop.when', when }])
     expect(nestedStepsOf(step)).toHaveLength(1)
+  })
+})
+
+describe('two levels of block steps (#500)', () => {
+  const cap = { kind: 'cap', target: { kind: 'devices', ids: [1] }, cap: 'switch', method: 'on' }
+  const when = { kind: 'all', children: [] }
+  const count = (steps: unknown[]) => ({ kind: 'repeat', loop: { by: 'count', count: 2 }, steps })
+  const choose = (steps: unknown[]) => ({ kind: 'choose', branches: [{ if: when, steps }] })
+  const parse = (action: unknown) =>
+    CurrentAutomationRecipeSchema.safeParse({ when: { kind: 'manual' }, actions: [action] })
+  const words = (r: ReturnType<typeof parse>) => JSON.stringify(r.error?.issues)
+
+  it('a block step holds one more level: a choose, a repeat, a parallel or a wait-until', () => {
+    expect(parse(count([choose([cap])])).success).toBe(true)
+    expect(parse(choose([count([cap])])).success).toBe(true)
+    expect(parse(count([{ kind: 'parallel', steps: [cap, cap] }])).success).toBe(true)
+    expect(
+      parse(choose([{ kind: 'wait-until', when, timeoutS: 60, onTimeout: 'continue' }, cap]))
+        .success,
+    ).toBe(true)
+    expect(parse({ ...choose([cap]), else: [count([cap])] }).success).toBe(true)
+  })
+
+  it('refuses a third level in words, whatever holds it', () => {
+    const deep = /steps nest two levels at most/
+    expect(words(parse(count([choose([count([cap])])])))).toMatch(deep)
+    expect(words(parse(choose([choose([choose([cap])])])))).toMatch(deep)
+    expect(words(parse(count([count([{ kind: 'parallel', steps: [cap, cap] }])])))).toMatch(deep)
+    expect(
+      words(
+        parse(
+          choose([choose([{ kind: 'wait-until', when, timeoutS: 60, onTimeout: 'continue' }])]),
+        ),
+      ),
+    ).toMatch(deep)
+  })
+
+  it('a parallel still holds leaf steps only', () => {
+    expect(parse({ kind: 'parallel', steps: [cap, choose([cap])] }).success).toBe(false)
+  })
+
+  it('the walkers reach the second level, with the path under the step', () => {
+    const inner = {
+      kind: 'device-is',
+      deviceId: 3,
+      cap: 'contact',
+      fieldPath: 'open',
+      operator: 'eq',
+      value: true,
+    }
+    const step = AutomationActionSchema.parse(
+      count([
+        { kind: 'choose', branches: [{ if: inner, steps: [cap] }] },
+        { kind: 'wait-until', when: inner, timeoutS: 60, onTimeout: 'continue' },
+      ]),
+    )
+    expect(stepConditionsOf(step).map((c) => c.path)).toEqual([
+      'steps.0.branches.0.if',
+      'steps.1.when',
+    ])
+    expect(nestedStepsOf(step).map((s) => s.kind)).toEqual(['choose', 'cap', 'wait-until'])
+  })
+
+  it('a nested block keeps its own rows in the trace, one level down', async () => {
+    const leaf: RunnableStep = { meta: { kind: 'cap' }, run: async () => undefined }
+    const result = await runSteps(
+      [
+        {
+          meta: { kind: 'repeat' },
+          run: async () => undefined,
+          repeat: {
+            limit: 2,
+            limitIsTimeout: false,
+            steps: [
+              {
+                meta: { kind: 'choose' },
+                run: async () => undefined,
+                choose: {
+                  branches: [
+                    { guard: async () => ({ result: 'true', reason: 'yes' }), steps: [leaf] },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ],
+      options(),
+    )
+    expect(result.steps[0]).toMatchObject({
+      kind: 'repeat',
+      iterations: 2,
+      steps: [
+        {
+          kind: 'choose',
+          path: 'steps.0.steps.0',
+          branch: 'branches.0',
+          steps: [{ kind: 'cap', path: 'steps.0.steps.0.branches.0.steps.0', outcome: 'ok' }],
+        },
+      ],
+    })
   })
 })

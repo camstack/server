@@ -176,10 +176,29 @@ export type ChoseView =
   | { readonly kind: 'branch'; readonly index: number }
   | { readonly kind: 'else' }
 
-export interface NestedStepView {
+/** A row with nothing under it: a plain step, or a step two levels down. */
+export interface LeafStepView {
   readonly kind: string
   readonly tone: BlockTone
   readonly message: string | null
+}
+
+/** A step one level down. It may be a block step itself (#500): then it says what it chose, its rounds and its own steps. */
+export interface NestedStepView extends LeafStepView {
+  readonly chose: ChoseView | null
+  /** A repeat: how many rounds ran; `inner` is then the LAST round only. */
+  readonly rounds: number | null
+  readonly inner: readonly LeafStepView[]
+}
+
+interface LeafTraceRow {
+  readonly kind: string
+  readonly outcome: AutomationRunTrace['steps'][number]['outcome']
+  readonly message?: string | undefined
+}
+
+function leafView(row: LeafTraceRow): LeafStepView {
+  return { kind: row.kind, tone: stepTone(row.outcome), message: nonEmpty(row.message) }
 }
 
 function choseOf(branch: string | undefined): ChoseView | null {
@@ -238,9 +257,10 @@ export function traceDetails(trace: AutomationRunTrace): TraceDetails {
       })),
       chose: choseOf(step.branch),
       nested: (step.steps ?? []).map((inner) => ({
-        kind: inner.kind,
-        tone: stepTone(inner.outcome),
-        message: nonEmpty(inner.message),
+        ...leafView(inner),
+        chose: choseOf(inner.branch),
+        rounds: inner.iterations ?? null,
+        inner: (inner.steps ?? []).map(leafView),
       })),
       rounds: step.iterations ?? null,
     })),

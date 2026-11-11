@@ -40,7 +40,9 @@ alarm was armed, or was written as a script block.
   set of wake callbacks, one per sleeping member; a single slot would wake
   only the member that slept last.
 - **The editor offers `parallel` in an automation list only**, never inside
-  a branch or another parallel, and disables "add step" at five.
+  a branch or another parallel, and disables "add step" at five. (D1043: a
+  parallel is now also offered one level down, in a branch or a repeat; its
+  own members stay a command, an action or a wait.)
 
 ## Consequences
 

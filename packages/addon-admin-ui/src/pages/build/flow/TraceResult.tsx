@@ -173,12 +173,55 @@ export function StepResult({ step, deviceName }: StepResultProps) {
       {step.nested.length > 0 && (
         <ol className="space-y-0.5 text-[11px]" data-testid="step-nested">
           {step.nested.map((inner, at) => (
-            <li key={String(at)} className="flex flex-wrap items-center gap-2">
-              <Badge variant={TONE_VARIANT[inner.tone]}>
-                {String(at + 1)} · {inner.kind}
-              </Badge>
-              {inner.message !== null && (
-                <span className="min-w-0 break-words text-foreground-subtle">{inner.message}</span>
+            <li key={String(at)} className="space-y-0.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={TONE_VARIANT[inner.tone]}>
+                  {String(at + 1)} · {inner.kind}
+                </Badge>
+                {inner.message !== null && (
+                  <span className="min-w-0 break-words text-foreground-subtle">
+                    {inner.message}
+                  </span>
+                )}
+                {inner.chose !== null && (
+                  <span
+                    className="text-foreground-subtle"
+                    data-testid={`nested-chose-${String(at)}`}
+                  >
+                    {inner.chose.kind === 'else'
+                      ? t('flow.runs.choseElse', 'Ran the "otherwise" list')
+                      : t('flow.runs.choseBranch', 'Ran branch {{n}}', {
+                          n: inner.chose.index + 1,
+                        })}
+                  </span>
+                )}
+                {inner.rounds !== null && inner.inner.length > 0 && (
+                  <span
+                    className="text-foreground-subtle"
+                    data-testid={`nested-rounds-${String(at)}`}
+                  >
+                    {t('flow.runs.lastRound', 'The last of {{n}} rounds:', { n: inner.rounds })}
+                  </span>
+                )}
+              </div>
+              {inner.inner.length > 0 && (
+                <ol
+                  className="space-y-0.5 border-l border-border-subtle pl-2"
+                  data-testid={`nested-inner-${String(at)}`}
+                >
+                  {inner.inner.map((leaf, i) => (
+                    <li key={String(i)} className="flex flex-wrap items-center gap-2">
+                      <Badge variant={TONE_VARIANT[leaf.tone]}>
+                        {String(i + 1)} · {leaf.kind}
+                      </Badge>
+                      {leaf.message !== null && (
+                        <span className="min-w-0 break-words text-foreground-subtle">
+                          {leaf.message}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
               )}
             </li>
           ))}

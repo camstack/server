@@ -98,6 +98,8 @@ export interface ActionListProps {
    * its devices, and a command step may be aimed at the device of the round.
    */
   readonly roundDevices?: readonly number[]
+  /** How deep this list sits: 0 = the automation's own, 1 = a block step's, 2 = a block step's inside that. */
+  readonly depth?: number
   readonly onChange: (next: readonly AutomationAction[]) => void
 }
 
@@ -113,6 +115,7 @@ export function ActionList({
   flowControl = false,
   maxSteps,
   roundDevices,
+  depth = 0,
   onChange,
 }: ActionListProps) {
   const { t } = useTranslation()
@@ -261,6 +264,8 @@ export function ActionList({
               devices={devices}
               devicesState={devicesState}
               variables={variables}
+              depth={depth}
+              {...(roundDevices === undefined ? {} : { roundDevices })}
               onChange={(next) => onChange(replaceAt(actions, index, next))}
             />
           )}
@@ -282,6 +287,8 @@ export function ActionList({
                   devicesState={devicesState}
                   variables={variables}
                   allowedKinds={PARALLEL_KINDS}
+                  depth={depth + 1}
+                  {...(roundDevices === undefined ? {} : { roundDevices })}
                   maxSteps={PARALLEL_STEPS_MAX}
                   onChange={(next) =>
                     onChange(
@@ -303,6 +310,8 @@ export function ActionList({
               devices={devices}
               devicesState={devicesState}
               variables={variables}
+              depth={depth}
+              {...(roundDevices === undefined ? {} : { roundDevices })}
               onChange={(next) => onChange(replaceAt(actions, index, next))}
             />
           )}

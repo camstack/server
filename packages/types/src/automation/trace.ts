@@ -153,9 +153,8 @@ const StepTraceBaseSchema = z.object({
   outcome: z.enum(['ok', 'error', 'not-run', 'empty', 'skipped', 'failed-continued', 'timed-out']),
   message: z.string().optional(),
 })
-/** A step trace; the `else` steps that ran are one level of the same shape (the nesting is bounded at one). */
-export const AutomationStepTraceSchema = StepTraceBaseSchema.extend({
-  else: z.array(StepTraceBaseSchema).optional(),
+/** What a block step adds to its row: which list ran, what each branch read, how many rounds. */
+const blockTraceShape = {
   /** A `choose` step (#500): the list that ran, `branches.<n>` or `else`. Absent when none did. */
   branch: z.string().optional(),
   /** A `choose` step: what each branch read, in order, up to the one that decided. */
@@ -167,14 +166,25 @@ export const AutomationStepTraceSchema = StepTraceBaseSchema.extend({
       }),
     )
     .optional(),
-  /** A `choose` step: the steps of the list that ran. A `parallel`: its members. A `repeat`: the LAST iteration. */
-  steps: z.array(StepTraceBaseSchema).optional(),
   /** A `repeat` step (#500): how many times its steps ran. */
   iterations: z.number().int().optional(),
+}
+/** A step one level down: it may be a block step itself, whose own steps are plain rows (the nesting ends there). */
+export const NestedStepTraceSchema = StepTraceBaseSchema.extend({
+  ...blockTraceShape,
+  steps: z.array(StepTraceBaseSchema).optional(),
+})
+export type NestedStepTrace = z.infer<typeof NestedStepTraceSchema>
+/** A step trace; the `else` steps that ran are one level of the same shape (the nesting is bounded at one). */
+export const AutomationStepTraceSchema = StepTraceBaseSchema.extend({
+  else: z.array(StepTraceBaseSchema).optional(),
+  ...blockTraceShape,
+  /** A `choose` step: the steps of the list that ran. A `parallel`: its members. A `repeat`: the LAST iteration. */
+  steps: z.array(NestedStepTraceSchema).optional(),
 })
 export type AutomationStepTrace = z.infer<typeof AutomationStepTraceSchema>
 
-export const AutomationRunTraceSchema = z.object({
+const runTraceObject = z.object({
   runId: z.string().min(1),
   startedAt: z.number(),
   endedAt: z.number(),
@@ -194,7 +204,13 @@ export const AutomationRunTraceSchema = z.object({
    */
   scheduler: SchedulerOutcomeSchema.optional(),
 })
-export type AutomationRunTrace = z.infer<typeof AutomationRunTraceSchema>
+/**
+ * Declared as an interface so it is printed by NAME: a capability that embeds
+ * the trace would otherwise inline every nested row into its own type, past
+ * what the compiler can print (TS7056).
+ */
+export interface AutomationRunTrace extends z.infer<typeof runTraceObject> {}
+export const AutomationRunTraceSchema: z.ZodType<AutomationRunTrace> = runTraceObject
 
 /**
  * What the hub's `runs` ledger holds for one owner (`automation:<blockId>` or

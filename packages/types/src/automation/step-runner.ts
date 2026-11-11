@@ -25,6 +25,7 @@ import type {
 } from './step-condition.js'
 import {
   type AutomationStepTrace,
+  type NestedStepTrace,
   buildStepArgsTrace,
   MAX_STEP_DEVICE_OUTCOMES,
   MAX_STEP_TEMPLATE_NOTES,
@@ -325,12 +326,16 @@ function withoutElse(trace: AutomationStepTrace): Omit<AutomationStepTrace, 'els
   return rest
 }
 
-/** A step of a branch is a plain step: its trace carries no list of its own. */
-function withoutNested(
-  trace: AutomationStepTrace,
-): Omit<AutomationStepTrace, 'else' | 'branch' | 'branchChecks' | 'steps'> {
-  const { else: _else, branch: _branch, branchChecks: _checks, steps: _steps, ...rest } = trace
+/** A plain row: the last level of a trace carries no list of its own. */
+function plainRow(trace: AutomationStepTrace): Omit<NestedStepTrace, 'steps'> {
+  const { else: _else, steps: _steps, ...rest } = trace
   return rest
+}
+
+/** A row one level down: it keeps its own steps as plain rows, and no `else`. */
+function withoutNested(trace: AutomationStepTrace): NestedStepTrace {
+  const { else: _else, steps, ...rest } = trace
+  return steps === undefined ? rest : { ...rest, steps: steps.map(plainRow) }
 }
 
 export async function runSteps(

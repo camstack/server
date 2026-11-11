@@ -1,7 +1,8 @@
 /**
  * The fields of a `choose` step: branches read top to bottom (the first whose
- * condition is true runs) and an optional "otherwise" list. A branch holds
- * plain steps only, so the nesting stops here.
+ * condition is true runs) and an optional "otherwise" list. What a branch
+ * may hold depends on how deep the choose sits (`bodyKindsAt`): block steps
+ * one level down, plain steps only below that.
  */
 import type { AutomationChooseStep, AutomationRecipe } from '@camstack/types'
 import { Button, type DeviceListState, ErrorBox, Switch } from '@camstack/ui-library'
@@ -12,15 +13,14 @@ import { ActionList } from './ActionList'
 import type { AutomationDevice } from './automation-data'
 import {
   addBranch,
-  BRANCH_KINDS,
   canAddBranch,
   canRemoveBranch,
-  isBranchStep,
   removeBranch,
   replaceBranch,
   setElse,
 } from './choose-model'
 import { PickerLabel } from './FieldPicker'
+import { bodyKindsAt, isBodyStep } from './nest-model'
 import { guardProblem } from './StepGuard'
 import { WhenTree } from './WhenTree'
 
@@ -31,6 +31,10 @@ export interface ChooseFieldsProps {
   readonly devices: readonly AutomationDevice[]
   readonly devicesState?: DeviceListState
   readonly variables?: readonly ScopeVariable[]
+  /** How deep the list holding this step sits (0 = the automation's own list). */
+  readonly depth?: number
+  /** The devices of the repeat over devices this step sits in, if any. */
+  readonly roundDevices?: readonly number[]
   readonly onChange: (next: AutomationChooseStep) => void
 }
 
@@ -40,6 +44,8 @@ export function ChooseFields({
   devices,
   devicesState,
   variables,
+  depth = 0,
+  roundDevices,
   onChange,
 }: ChooseFieldsProps) {
   const { t } = useTranslation()
@@ -47,7 +53,9 @@ export function ChooseFields({
     nested: true,
     flowControl: true,
     devices,
-    allowedKinds: BRANCH_KINDS,
+    depth: depth + 1,
+    allowedKinds: bodyKindsAt(depth + 1),
+    ...(roundDevices === undefined ? {} : { roundDevices }),
     ...(devicesState === undefined ? {} : { devicesState }),
     ...(variables === undefined ? {} : { variables }),
   }
@@ -102,7 +110,7 @@ export function ChooseFields({
               {...listProps}
               actions={branch.steps}
               onChange={(next) =>
-                onChange(replaceBranch(step, at, { ...branch, steps: next.filter(isBranchStep) }))
+                onChange(replaceBranch(step, at, { ...branch, steps: next.filter(isBodyStep) }))
               }
             />
           </div>
@@ -133,7 +141,7 @@ export function ChooseFields({
           <ActionList
             {...listProps}
             actions={step.else}
-            onChange={(next) => onChange(setElse(step, next.filter(isBranchStep)))}
+            onChange={(next) => onChange(setElse(step, next.filter(isBodyStep)))}
           />
         </div>
       )}

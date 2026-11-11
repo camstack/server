@@ -380,43 +380,59 @@ function continues(action: AutomationAction): boolean {
   return (action.kind === 'cap' || action.kind === 'action') && action.continueOnError === true
 }
 
-/** A step of a branch (or of an else list), as a whole RunnableStep literal. */
-function emitNestedStep(step: Exclude<AutomationAction, { kind: BlockStepKind }>): string {
-  return `{ meta: ${j(stepMetaOf(step))},${continues(step) ? ' continueOnError: true,' : ''} run: async (scope) => {\n${emitStepBody(step)}\n } }`
+/** Where a step sits: the expression of its trace meta, and its path in the recipe. */
+interface StepSite {
+  readonly meta: string
+  readonly path: string
+}
+
+/** Whether the site is inside a block step: the automation's own steps sit at `actions.<n>`. */
+function isNestedSite(site: StepSite): boolean {
+  return site.path.split('.').length > 2
+}
+
+/** A list of steps under `path` (a branch, an else list, the steps of a repeat or a parallel). */
+function emitList(steps: readonly AutomationAction[], path: string): string {
+  return steps
+    .map((step, at) => emitStep(step, { meta: j(stepMetaOf(step)), path: `${path}.${at}` }))
+    .join('\n')
 }
 
 /** A step's `if` (#472) and its else list, as the fields of a RunnableStep. */
-function emitGuard(action: AutomationAction, index: number): string {
+function emitGuard(action: AutomationAction, site: StepSite): string {
   const when = stepGuardOf(action)
   if (when === undefined) return ''
-  const otherwise = (action.kind === 'wait' || action.kind === 'cap' ? (action.else ?? []) : [])
-    .map(emitNestedStep)
-    .join(', ')
-  return `      guard: () => evaluateCondition(${j(when)}, ${j(`actions.${index}.if`)}, vars),${
-    otherwise === '' ? '' : `\n      otherwise: [${otherwise}],`
+  const otherwise = emitList(
+    action.kind === 'wait' || action.kind === 'cap' ? (action.else ?? []) : [],
+    `${site.path}.else`,
+  )
+  return `      guard: () => evaluateCondition(${j(when)}, ${j(`${site.path}.if`)}, vars),${
+    otherwise === '' ? '' : `\n      otherwise: [\n${otherwise}\n],`
   }
 `
 }
 
 /** A `choose` step: its branches, each a condition and a list, and its else list. */
-function emitChoose(action: Extract<AutomationAction, { kind: 'choose' }>, index: number): string {
+function emitChoose(action: Extract<AutomationAction, { kind: 'choose' }>, site: StepSite): string {
   const branches = action.branches
     .map(
       (branch, b) => `          {
-            guard: () => evaluateCondition(${j(branch.if)}, ${j(`actions.${index}.branches.${b}.if`)}, vars),
-            steps: [${branch.steps.map(emitNestedStep).join(', ')}],
+            guard: () => evaluateCondition(${j(branch.if)}, ${j(`${site.path}.branches.${b}.if`)}, vars),
+            steps: [
+${emitList(branch.steps, `${site.path}.branches.${b}.steps`)}
+            ],
           },`,
     )
     .join('\n')
-  const otherwise = (action.else ?? []).map(emitNestedStep).join(', ')
+  const otherwise = emitList(action.else ?? [], `${site.path}.else`)
   return `    {
-      meta: STEP_META[${index}]!,
+      meta: ${site.meta},
       // a choose step: the runner reads the branches in order and runs the first that is true
       run: async () => {},
       choose: {
         branches: [
 ${branches}
-        ],${otherwise === '' ? '' : `\n        otherwise: [${otherwise}],`}
+        ],${otherwise === '' ? '' : `\n        otherwise: [\n${otherwise}\n],`}
       },
     },`
 }
@@ -434,16 +450,16 @@ function wakeDevicesOf(when: AutomationWhen): number[] | null {
 /** A `wait-until` step: read the condition, wait for a wake, read again, until the timeout. */
 function emitWaitUntil(
   action: Extract<AutomationAction, { kind: 'wait-until' }>,
-  index: number,
+  site: StepSite,
 ): string {
   const onTimeout =
     action.onTimeout === 'stop' ? `scope.stop(message, 'failed')` : 'scope.markTimedOut(message)'
   return `    {
-      meta: STEP_META[${index}]!,
+      meta: ${site.meta},
       run: async (scope) => {
         // woken by a report of one of its devices, by the reconcile tick, or by a restart
         const waited = await waitUntil({
-          read: () => evaluateCondition(${j(action.when)}, ${j(`actions.${index}.when`)}, vars),
+          read: () => evaluateCondition(${j(action.when)}, ${j(`${site.path}.when`)}, vars),
           timeoutMs: ${j(action.timeoutS * 1000)},
           now: () => Date.now(),
           isAborted: () => token.aborted,
@@ -451,7 +467,7 @@ function emitWaitUntil(
         })
         if (waited.result === 'timed-out') {
           const message = waitTimedOutMessage(${j(action.timeoutS)}, waited.lastReason)
-          ctx.logger.info('wait-until timed out', { step: ${index}, onTimeout: ${j(action.onTimeout)}, reason: waited.lastReason })
+          ctx.logger.info('wait-until timed out', { step: ${j(site.path)}, onTimeout: ${j(action.onTimeout)}, reason: waited.lastReason })
           ${onTimeout}
         }
       },
@@ -459,20 +475,32 @@ function emitWaitUntil(
 }
 
 /** How a `repeat` decides its iterations, as the fields of a RunnableRepeat. */
-function emitRepeatLoop(loop: AutomationRepeatLoop, index: number): string {
+function emitRepeatLoop(loop: AutomationRepeatLoop, site: StepSite): string {
   switch (loop.by) {
     case 'count':
       return `limit: ${j(loop.count)}, limitIsTimeout: false,`
     case 'forEach':
+      // `before` is also called once past the last device (the runner reads it
+      // before its limit): that call ends the loop. A loop one level down then
+      // gives back the device of the loop around it, when there is one; any
+      // other loop leaves its last device in place.
       return `// once per device: the device id is in vars.${REPEAT_ITEM_VAR} for the steps of that iteration
         limit: ${j(loop.target.ids.length)}, limitIsTimeout: false,
-        before: async (iteration) => {
-          vars[${j(REPEAT_ITEM_VAR)}] = ${j(loop.target.ids)}[iteration]
-          return { go: true }
-        },`
+        ...(() => {
+          const ids = ${j(loop.target.ids)}
+          let outer: unknown
+          return {
+            before: async (iteration) => {
+              if (iteration === 0) outer = vars[${j(REPEAT_ITEM_VAR)}]
+              if (iteration < ids.length) vars[${j(REPEAT_ITEM_VAR)}] = ids[iteration]
+              else if (${j(isNestedSite(site))} && outer !== undefined) vars[${j(REPEAT_ITEM_VAR)}] = outer
+              return { go: true }
+            },
+          }
+        })(),`
     case 'while':
     case 'until': {
-      const read = `repeatCheck(${j(loop.by)}, await evaluateCondition(${j(loop.when)}, ${j(`actions.${index}.loop.when`)}, vars))`
+      const read = `repeatCheck(${j(loop.by)}, await evaluateCondition(${j(loop.when)}, ${j(`${site.path}.loop.when`)}, vars))`
       const pause =
         loop.waitS === undefined ? '' : `\n        between: () => sleep(${j(loop.waitS * 1000)}),`
       return `limit: ${j(loop.maxIterations)}, limitIsTimeout: true,
@@ -481,34 +509,43 @@ function emitRepeatLoop(loop: AutomationRepeatLoop, index: number): string {
   }
 }
 
-function emitAction(action: AutomationAction, index: number): string {
+/** One step, wherever it sits: a block step emits its own steps one level down, under its path. */
+function emitStep(action: AutomationAction, site: StepSite): string {
   if (action.kind === 'repeat') {
     return `    {
-      meta: STEP_META[${index}]!,
+      meta: ${site.meta},
       // a repeat step: the runner runs these once per iteration, under the bound
       run: async () => {},
       repeat: {
-        steps: [${action.steps.map(emitNestedStep).join(', ')}],
-        ${emitRepeatLoop(action.loop, index)}
+        steps: [
+${emitList(action.steps, `${site.path}.steps`)}
+        ],
+        ${emitRepeatLoop(action.loop, site)}
       },
     },`
   }
-  if (action.kind === 'choose') return emitChoose(action, index)
-  if (action.kind === 'wait-until') return emitWaitUntil(action, index)
+  if (action.kind === 'choose') return emitChoose(action, site)
+  if (action.kind === 'wait-until') return emitWaitUntil(action, site)
   if (action.kind === 'parallel') {
     return `    {
-      meta: STEP_META[${index}]!,
+      meta: ${site.meta},
       // a parallel step: the runner starts these together and awaits them all
       run: async () => {},
-      parallel: [${action.steps.map(emitNestedStep).join(', ')}],
+      parallel: [
+${emitList(action.steps, `${site.path}.steps`)}
+      ],
     },`
   }
   return `    {
-      meta: STEP_META[${index}]!,
-${emitGuard(action, index)}${continues(action) ? '      continueOnError: true,\n' : ''}      run: async (scope) => {
+      meta: ${site.meta},
+${emitGuard(action, site)}${continues(action) ? '      continueOnError: true,\n' : ''}      run: async (scope) => {
 ${emitStepBody(action)}
       },
     },`
+}
+
+function emitAction(action: AutomationAction, index: number): string {
+  return emitStep(action, { meta: `STEP_META[${index}]!`, path: `actions.${index}` })
 }
 
 /**
@@ -540,7 +577,9 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   const hasTime =
     hasTimeLeaves(recipe.when) ||
     recipe.actions.some((a) => stepConditionsOf(a).some(({ when }) => hasTimeLeaves(when)))
-  const hasWaitUntil = recipe.actions.some((a) => a.kind === 'wait-until')
+  const hasWaitUntil = recipe.actions.some(
+    (a) => a.kind === 'wait-until' || nestedStepsOf(a).some((n) => n.kind === 'wait-until'),
+  )
   const eventLeaves: { leaf: AutomationEventLeaf; path: string }[] = []
   forEachLeaf(recipe.when, (leaf, path) => {
     if (isEventLeaf(leaf)) eventLeaves.push({ leaf, path })

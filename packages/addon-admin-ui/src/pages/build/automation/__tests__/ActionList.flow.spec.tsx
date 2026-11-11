@@ -118,7 +118,7 @@ describe('ActionList choose (#500)', () => {
     branches: [{ if: { kind: 'all', children: [] }, steps: [] }],
   }
 
-  it('an automation list offers the choose step, a branch list does not', () => {
+  it('an automation list offers the choose step, and so does a branch list, without code', () => {
     render(<Harness flow initial={[CHOOSE]} />)
     fireEvent.click(screen.getByTestId('step-kind-0'))
     expect(screen.getAllByRole('option').map((o) => o.textContent)).toContain('Choose')
@@ -127,8 +127,17 @@ describe('ActionList choose (#500)', () => {
     fireEvent.click(branch.getByRole('button', { name: 'Step' }))
     fireEvent.click(branch.getByTestId('step-kind-0'))
     const inner = screen.getAllByRole('option').map((o) => o.textContent)
-    expect(inner).toEqual(expect.arrayContaining(['Wait', 'Stop the run', 'Set variables']))
-    expect(inner).not.toContain('Choose')
+    expect(inner).toEqual(
+      expect.arrayContaining([
+        'Wait',
+        'Stop the run',
+        'Set variables',
+        'Choose',
+        'Repeat',
+        'At the same time',
+        'Wait until',
+      ]),
+    )
     expect(inner).not.toContain('Run code')
   })
 
@@ -309,7 +318,7 @@ describe('ActionList repeat (#500)', () => {
     expect(outside.map((el) => el.getAttribute('data-round'))).toEqual(['none'])
   })
 
-  it('its steps are plain steps, ten at most, with no block step inside', () => {
+  it('its steps are ten at most and may be block steps, never code', () => {
     render(<Harness flow initial={[REPEAT]} />)
     const box = within(screen.getByTestId('repeat-steps-0'))
     const add = box.getByRole('button', { name: 'Step' })
@@ -318,8 +327,87 @@ describe('ActionList repeat (#500)', () => {
     expect(box.getByRole('button', { name: 'Step' })).toHaveProperty('disabled', true)
     fireEvent.click(box.getByTestId('step-kind-0'))
     const inner = screen.getAllByRole('option').map((o) => o.textContent)
-    expect(inner).toEqual(expect.arrayContaining(['Wait', 'Stop the run', 'Set variables']))
-    expect(inner).not.toContain('Repeat')
-    expect(inner).not.toContain('At the same time')
+    expect(inner).toEqual(
+      expect.arrayContaining(['Wait', 'Stop the run', 'Set variables', 'Repeat', 'Choose']),
+    )
+    expect(inner).not.toContain('Run code')
+  })
+})
+
+describe('ActionList, two levels of block steps (#500)', () => {
+  const pick = (box: ReturnType<typeof within>, testId: string, name: string): void => {
+    fireEvent.click(box.getByTestId(testId))
+    fireEvent.click(screen.getByRole('option', { name }))
+  }
+  const REPEAT: AutomationAction = {
+    kind: 'repeat',
+    loop: { by: 'count', count: 2 },
+    steps: [{ kind: 'wait', seconds: 1 }],
+  }
+
+  it('a step of a repeat becomes a choose and is kept, with its own steps', () => {
+    render(<Harness flow initial={[REPEAT]} />)
+    const body = within(screen.getByTestId('repeat-steps-0'))
+    pick(body, 'step-kind-0', 'Choose')
+    expect(latest[0]).toMatchObject({ kind: 'repeat', steps: [{ kind: 'choose' }] })
+    const branch = within(body.getByTestId('choose-branch-0-0'))
+    fireEvent.click(branch.getByRole('button', { name: 'Step' }))
+    expect(latest[0]).toMatchObject({
+      kind: 'repeat',
+      steps: [{ kind: 'choose', branches: [{ steps: [{ kind: 'cap' }] }] }],
+    })
+  })
+
+  it('the steps of that inner choose are plain: no third level is offered', () => {
+    const inner: AutomationAction = {
+      kind: 'repeat',
+      loop: { by: 'count', count: 2 },
+      steps: [
+        {
+          kind: 'choose',
+          branches: [{ if: { kind: 'all', children: [] }, steps: [{ kind: 'wait', seconds: 1 }] }],
+        },
+      ],
+    }
+    render(<Harness flow initial={[inner]} />)
+    const branch = within(
+      within(screen.getByTestId('repeat-steps-0')).getByTestId('choose-branch-0-0'),
+    )
+    fireEvent.click(branch.getByTestId('step-kind-0'))
+    const kinds = screen.getAllByRole('option').map((o) => o.textContent)
+    expect(kinds).toEqual(expect.arrayContaining(['Wait', 'Stop the run', 'Set variables']))
+    for (const block of ['Choose', 'Repeat', 'At the same time', 'Wait until', 'Run code']) {
+      expect(kinds).not.toContain(block)
+    }
+  })
+
+  it('a repeat inside the branch of a choose is kept and edits its count', () => {
+    const choose: AutomationAction = {
+      kind: 'choose',
+      branches: [{ if: { kind: 'all', children: [] }, steps: [{ kind: 'wait', seconds: 1 }] }],
+    }
+    render(<Harness flow initial={[choose]} />)
+    const branch = within(screen.getByTestId('choose-branch-0-0'))
+    pick(branch, 'step-kind-0', 'Repeat')
+    fireEvent.change(branch.getByTestId('repeat-count-0'), { target: { value: '4' } })
+    expect(latest[0]).toMatchObject({
+      kind: 'choose',
+      branches: [{ steps: [{ kind: 'repeat', loop: { by: 'count', count: 4 } }] }],
+    })
+  })
+
+  it('a command two levels inside a loop over devices still knows the devices of the loop', () => {
+    const loop: AutomationAction = {
+      kind: 'repeat',
+      loop: { by: 'forEach', target: { kind: 'devices', ids: [11, 12] } },
+      steps: [
+        {
+          kind: 'choose',
+          branches: [{ if: { kind: 'all', children: [] }, steps: [CAP] }],
+        },
+      ],
+    }
+    render(<Harness flow initial={[loop]} />)
+    expect(screen.getByTestId('fake-command').getAttribute('data-round')).toBe('11,12')
   })
 })

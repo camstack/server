@@ -25,7 +25,8 @@ slowest day, or as a script block.
 - **`wait-until` is a step of the automation list**: `{ when, timeoutS,
   onTimeout }`. `when` is the same tree a step condition takes, read by the
   same evaluator. The step is not offered inside a branch of a `choose`
-  (D1038 keeps branches to plain steps until block steps nest).
+  (D1038 keeps branches to plain steps until block steps nest; D1043 nests
+  them, so a wait-until is now offered one level down).
 - **The timeout is mandatory, from one second to six hours**
   (`WAIT_UNTIL_TIMEOUT_MAX_S`). A run never waits without an end.
 - **`unknown` is never "met".** A condition that cannot be read keeps the run

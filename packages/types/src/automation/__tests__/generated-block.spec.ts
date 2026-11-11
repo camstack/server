@@ -2098,3 +2098,153 @@ describe('triggered-by: one automation, a different step per trigger (#499)', ()
     ])
   })
 })
+
+describe('two levels of block steps (#500)', () => {
+  const siren = (label: string) =>
+    ({ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on', args: { label } }) as const
+  const press = { kind: 'device-event', category: 'button.pressed' } as const
+  const doorIs = (open: boolean) =>
+    ({
+      kind: 'device-is',
+      deviceId: 3,
+      cap: 'contact',
+      fieldPath: 'open',
+      operator: 'eq',
+      value: open,
+    }) as const
+  const labels = (h: { mutate: { mock: { calls: unknown[][] } } }): string[] =>
+    h.mutate.mock.calls.map(([a]) => (a as { label: string }).label)
+
+  it('a choose inside a repeat reads its condition each round and is traced one level down', async () => {
+    const slices: Record<string, object> = { '3|contact': { open: true } }
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          {
+            kind: 'repeat',
+            loop: { by: 'count', count: 2 },
+            steps: [
+              {
+                kind: 'choose',
+                branches: [{ if: doorIs(true), steps: [siren('open')] }],
+                else: [siren('closed')],
+              },
+            ],
+          },
+        ],
+      }),
+      { slices },
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(100)
+    expect(labels(h)).toEqual(['open', 'open'])
+    expect(h.traces()[0]?.steps[0]).toMatchObject({
+      kind: 'repeat',
+      iterations: 2,
+      steps: [{ kind: 'choose', branch: 'branches.0', steps: [{ kind: 'cap', outcome: 'ok' }] }],
+    })
+  })
+
+  it('a repeat inside the branch of a choose runs its rounds, then the step after the choose', async () => {
+    const slices: Record<string, object> = { '3|contact': { open: false } }
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          {
+            kind: 'choose',
+            branches: [{ if: doorIs(true), steps: [siren('never')] }],
+            else: [{ kind: 'repeat', loop: { by: 'count', count: 3 }, steps: [siren('round')] }],
+          },
+          siren('after'),
+        ],
+      }),
+      { slices },
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(100)
+    expect(labels(h)).toEqual(['round', 'round', 'round', 'after'])
+    expect(h.traces()[0]?.steps[0]).toMatchObject({
+      kind: 'choose',
+      branch: 'else',
+      steps: [{ kind: 'repeat', iterations: 3, outcome: 'ok' }],
+    })
+  })
+
+  it('a wait-until one level down is woken by its device, not by the clock', async () => {
+    const slices: Record<string, object> = { '3|contact': { open: true } }
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          {
+            kind: 'repeat',
+            loop: { by: 'count', count: 1 },
+            steps: [
+              { kind: 'wait-until', when: doorIs(false), timeoutS: 120, onTimeout: 'stop' },
+              siren('closed'),
+            ],
+          },
+        ],
+      }),
+      { slices },
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(1_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    slices['3|contact'] = { open: false }
+    h.emit('device.state-changed', { deviceId: 3, capName: 'contact', slice: { open: false } }, 3)
+    await settle(10)
+    expect(labels(h)).toEqual(['closed'])
+  })
+
+  it('a loop over devices inside another gives the outer device back when it ends', async () => {
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          {
+            kind: 'repeat',
+            loop: { by: 'forEach', target: { kind: 'devices', ids: [11, 12] } },
+            steps: [
+              {
+                kind: 'repeat',
+                loop: { by: 'forEach', target: { kind: 'devices', ids: [21, 22] } },
+                steps: [siren('in {{vars.item}}')],
+              },
+              siren('out {{vars.item}}'),
+            ],
+          },
+          siren('after {{vars.item}}'),
+        ],
+      }),
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(100)
+    expect(labels(h)).toEqual(['in 21', 'in 22', 'out 11', 'in 21', 'in 22', 'out 12', 'after 12'])
+  })
+
+  it('a parallel inside a repeat runs its members every round', async () => {
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          {
+            kind: 'repeat',
+            loop: { by: 'count', count: 2 },
+            steps: [{ kind: 'parallel', steps: [siren('a'), siren('b')] }],
+          },
+        ],
+      }),
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(100)
+    expect(labels(h).toSorted()).toEqual(['a', 'a', 'b', 'b'])
+  })
+})

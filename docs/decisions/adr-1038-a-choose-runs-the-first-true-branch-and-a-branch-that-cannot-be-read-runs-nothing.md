@@ -39,7 +39,8 @@ written as each other's negation, or a script block.
   set, stop. No condition of their own, no code, no `choose` inside a `choose`.
   The issue allows two levels of block steps; the second level is deferred to
   the change that adds the next block step, where the depth check is written
-  once for all of them.
+  once for all of them. (Done in D1043: a branch may now hold one more level
+  of block steps.)
 - **A stop or a failure inside a branch is the run's.** A `stop` ends the run
   from inside a branch; a step that fails ends the run unless it is marked
   "continue if this fails", in which case the branch goes on (D1037).

@@ -25,7 +25,7 @@ import { useTranslation } from 'react-i18next'
 import type { ScopeVariable } from '../flow/ArgField'
 import { ActionList } from './ActionList'
 import type { AutomationDevice } from './automation-data'
-import { BRANCH_KINDS, isBranchStep } from './choose-model'
+import { bodyKindsAt, isBodyStep } from './nest-model'
 import { PickerLabel } from './FieldPicker'
 import {
   clampCount,
@@ -46,6 +46,10 @@ export interface RepeatFieldsProps {
   readonly devices: readonly AutomationDevice[]
   readonly devicesState?: DeviceListState
   readonly variables?: readonly ScopeVariable[]
+  /** How deep the list holding this step sits (0 = the automation's own list). */
+  readonly depth?: number
+  /** The devices of an OUTER repeat over devices, when this step sits in one. */
+  readonly roundDevices?: readonly number[]
   readonly onChange: (next: AutomationRepeatStep) => void
 }
 
@@ -55,6 +59,8 @@ export function RepeatFields({
   devices,
   devicesState,
   variables,
+  depth = 0,
+  roundDevices,
   onChange,
 }: RepeatFieldsProps) {
   const { t } = useTranslation()
@@ -72,6 +78,8 @@ export function RepeatFields({
     hint: t('automation.repeat.itemHint', 'the device of this round'),
   }
   const bodyVariables = loop.by === 'forEach' ? [...(variables ?? []), item] : variables
+  /** This loop's own devices when it runs once per device; else the outer loop's, whose `item` still holds. */
+  const bodyRound = loop.by === 'forEach' ? loop.target.ids : roundDevices
   return (
     <div className="space-y-2">
       <div className="w-64">
@@ -201,12 +209,13 @@ export function RepeatFields({
           flowControl
           actions={step.steps}
           devices={devices}
-          allowedKinds={BRANCH_KINDS}
+          depth={depth + 1}
+          allowedKinds={bodyKindsAt(depth + 1)}
           maxSteps={REPEAT_STEPS_MAX}
           {...(devicesState === undefined ? {} : { devicesState })}
           {...(bodyVariables === undefined ? {} : { variables: bodyVariables })}
-          {...(loop.by === 'forEach' ? { roundDevices: loop.target.ids } : {})}
-          onChange={(next) => onChange({ ...step, steps: next.filter(isBranchStep) })}
+          {...(bodyRound === undefined ? {} : { roundDevices: bodyRound })}
+          onChange={(next) => onChange({ ...step, steps: next.filter(isBodyStep) })}
         />
       </div>
     </div>

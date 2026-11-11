@@ -92,8 +92,15 @@ describe('StepResult', () => {
           devices: [],
           chose: { kind: 'branch', index: 1 },
           nested: [
-            { kind: 'wait', tone: 'pass', message: null },
-            { kind: 'cap', tone: 'fail', message: 'Lamp offline' },
+            { kind: 'wait', tone: 'pass', message: null, chose: null, rounds: null, inner: [] },
+            {
+              kind: 'cap',
+              tone: 'fail',
+              message: 'Lamp offline',
+              chose: null,
+              rounds: null,
+              inner: [],
+            },
           ],
         }}
         deviceName={(id) => `#${String(id)}`}
@@ -103,6 +110,47 @@ describe('StepResult', () => {
     const nested = within(screen.getByTestId('step-nested'))
     expect(nested.getByText('Lamp offline')).toBeTruthy()
     expect(nested.getAllByRole('listitem')).toHaveLength(2)
+  })
+
+  it('a block step one level down shows what it chose, its rounds and its own steps', () => {
+    render(
+      <StepResult
+        step={{
+          ...STEP,
+          kind: 'repeat',
+          tone: 'pass',
+          message: null,
+          args: [],
+          devices: [],
+          rounds: 2,
+          nested: [
+            {
+              kind: 'choose',
+              tone: 'pass',
+              message: null,
+              chose: { kind: 'branch', index: 2 },
+              rounds: null,
+              inner: [{ kind: 'cap', tone: 'fail', message: 'Desk offline' }],
+            },
+            {
+              kind: 'repeat',
+              tone: 'pass',
+              message: null,
+              chose: null,
+              rounds: 4,
+              inner: [{ kind: 'wait', tone: 'pass', message: null }],
+            },
+          ],
+        }}
+        deviceName={(id) => `#${String(id)}`}
+      />,
+    )
+    const rows = within(screen.getByTestId('step-nested'))
+    expect(rows.getByTestId('nested-chose-0').textContent).toContain('3')
+    expect(rows.getByTestId('nested-rounds-1').textContent).toContain('4')
+    expect(within(rows.getByTestId('nested-inner-0')).getByText('Desk offline')).toBeTruthy()
+    expect(rows.queryByTestId('nested-chose-1')).toBeNull()
+    expect(rows.queryByTestId('nested-rounds-0')).toBeNull()
   })
 
   it('a step that is not a choose shows no branch line', () => {

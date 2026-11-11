@@ -4,6 +4,7 @@
  */
 import {
   type AutomationAction,
+  type AutomationBodyStep,
   type AutomationBranchStep,
   type AutomationChooseStep,
   type AutomationParallelStep,
@@ -29,9 +30,9 @@ export function isParallelMember(action: AutomationAction): action is ParallelMe
 
 const EMPTY_TREE: AutomationWhen = { kind: 'all', children: [] }
 
-/** A step a branch can hold: one of its kinds, with no condition of its own. */
+/** A plain step: one of the branch kinds, with no condition of its own. */
 export function isBranchStep(action: AutomationAction): action is AutomationBranchStep {
-  if (action.kind === 'choose' || action.kind === 'code') return false
+  if (!BRANCH_KINDS.includes(action.kind)) return false
   return !('if' in action) && !('else' in action)
 }
 
@@ -72,7 +73,7 @@ export function replaceBranch(
 /** `undefined` removes the else list: the key is omitted, never stored empty-handed. */
 export function setElse(
   step: AutomationChooseStep,
-  steps: readonly AutomationBranchStep[] | undefined,
+  steps: readonly AutomationBodyStep[] | undefined,
 ): AutomationChooseStep {
   const { else: _else, ...rest } = step
   return steps === undefined ? rest : { ...rest, else: [...steps] }
