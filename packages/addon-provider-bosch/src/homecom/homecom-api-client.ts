@@ -269,6 +269,12 @@ export function createHomeComApiClient(
     return res.body
   }
 
+  /** Any HTTP status but 404 means the resource exists, readable or not. */
+  async function resourceAnswers(path: string): Promise<boolean> {
+    const res = await authed(homeComResourceUrl(gatewayId, path), { method: 'GET' })
+    return res.status !== 404
+  }
+
   async function putWrite(write: PointtWrite): Promise<void> {
     const res = await authed(homeComResourceUrl(gatewayId, write.path), {
       method: 'PUT',
@@ -355,6 +361,7 @@ export function createHomeComApiClient(
     const heatPump = await readHeatPump({
       get: getResource,
       onFailure: logHeatPumpFailure,
+      answers: resourceAnswers,
       circuitIds: {
         hc: snapshot.circuits.map((circuit) => circuit.id),
         dhw: dhwId === undefined ? [] : [dhwId],

@@ -67,6 +67,7 @@ const holiday = {
 }
 const READING: HomeComHeatPumpReading = {
   circuits: [],
+  heatSourceAnswered: false,
   silent: null,
   away: null,
   additionalHeater: null,

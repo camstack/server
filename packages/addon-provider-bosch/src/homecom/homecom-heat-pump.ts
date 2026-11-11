@@ -41,6 +41,14 @@ export const HEAT_PUMP_PATHS = {
     pressureBar: '/heatSources/hs1/waterPressure',
     starts: '/heatSources/hs1/numberOfStarts',
   },
+  /**
+   * Resources only a heat pump's heat source has. A gateway that answers one of them with
+   * anything but 404 (a 403 or a 500 included) has a heat pump it will not let us read.
+   */
+  identity: {
+    heatPumpType: '/heatSources/hs1/heatPumpType',
+    heatPumpPower: '/heatSources/hs1/heatPumpPower',
+  },
   circuit: {
     operationMode: 'operationMode',
     heatCoolMode: 'heatCoolMode',
@@ -88,6 +96,8 @@ export interface HomeComHeatPumpCircuitReading {
 
 export interface HomeComHeatPumpReading {
   readonly circuits: readonly HomeComHeatPumpCircuitReading[]
+  /** The heat source answered a heat-pump-only resource with anything but 404, readable or not. */
+  readonly heatSourceAnswered: boolean
   readonly silent: HomeComHeatPumpSetting | null
   readonly away: HomeComHeatPumpSetting | null
   readonly additionalHeater: HomeComHeatPumpSetting | null
@@ -116,6 +126,8 @@ export interface HeatPumpReadInput {
   readonly get: ResourceGet
   /** Told once per failed read; the read itself carries on with `null` (never throws). */
   readonly onFailure?: (path: string, error: unknown) => void
+  /** True when the path answered with any HTTP status but 404. Absent: no gateway evidence. */
+  readonly answers?: (path: string) => Promise<boolean>
   readonly circuitIds: { readonly hc: readonly string[]; readonly dhw: readonly string[] }
 }
 
@@ -127,6 +139,10 @@ export async function readHeatPump(input: HeatPumpReadInput): Promise<HomeComHea
   ])
   const r = HEAT_PUMP_PATHS.readings
   const s = HEAT_PUMP_PATHS.system
+  const heatSourceAnswered = await anyAnswers(input.answers, [
+    HEAT_PUMP_PATHS.identity.heatPumpType,
+    HEAT_PUMP_PATHS.identity.heatPumpPower,
+  ])
   const [silent, away, additionalHeater, holiday] = await Promise.all([
     setting(get, s.silent),
     setting(get, s.away),
@@ -149,6 +165,7 @@ export async function readHeatPump(input: HeatPumpReadInput): Promise<HomeComHea
   ])
   return {
     circuits,
+    heatSourceAnswered,
     silent,
     away,
     additionalHeater,
@@ -164,6 +181,15 @@ export async function readHeatPump(input: HeatPumpReadInput): Promise<HomeComHea
     pressureBar,
     starts,
   }
+}
+
+async function anyAnswers(
+  answers: HeatPumpReadInput['answers'],
+  paths: readonly string[],
+): Promise<boolean> {
+  if (answers === undefined) return false
+  const found = await Promise.all(paths.map((path) => answers(path).catch(() => false)))
+  return found.some(Boolean)
 }
 
 /** Any failure of a heat-pump read (HTTP 4xx/5xx, a throw) is "not answered", never an error. */
@@ -186,17 +212,20 @@ const HEAT_PUMP_ONLY_READINGS = ['thermalW', 'electricalW', 'compressorPct'] as 
  *
  * A system mode counts when the gateway answered it: silent, away, the
  * additional heater, or holiday. An empty string is an answer (holiday often
- * comes back empty); a path that did not answer is not. HomeCom returns no
- * value for silent mode and the auxiliary heater on some heat-pump firmware,
- * so away and holiday alone are enough. A heat-pump-only reading counts too
- * (thermal power, electrical power, compressor modulation). Supply, return,
- * outdoor, pressure, starts and the energy meters do not: a gas boiler's heat
- * source answers flow, pressure and starts, and that is not a heat pump.
+ * comes back empty); a path that did not answer is not. A heat-pump-only
+ * reading counts too (thermal power, electrical power, compressor modulation).
+ * So does a circuit that answers `heatCoolMode`, and a heat source that
+ * answers a heat-pump-only resource with any status but 404: some gateways
+ * refuse (403) or fail (500) the whole system tree and still serve the
+ * circuits. Supply, return, outdoor, pressure, starts and the energy meters do
+ * not count: a gas boiler's heat source answers flow, pressure and starts, and
+ * that is not a heat pump.
  */
 export function hasSystemDevice(reading: HomeComHeatPumpReading): boolean {
-  const modeAnswered = SYSTEM_MODE_KEYS.some((key) => reading[key] !== null)
-  if (modeAnswered) return true
-  return HEAT_PUMP_ONLY_READINGS.some((key) => reading[key] !== null)
+  if (SYSTEM_MODE_KEYS.some((key) => reading[key] !== null)) return true
+  if (HEAT_PUMP_ONLY_READINGS.some((key) => reading[key] !== null)) return true
+  if (reading.heatSourceAnswered) return true
+  return reading.circuits.some((c) => c.kind === 'hc' && c.heatCoolMode !== null)
 }
 
 interface PathPresence {
