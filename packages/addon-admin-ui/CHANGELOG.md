@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- System → Settings no longer repeats sign-in and connection settings that already live on their own page.
+
 ## [1.2.637] - 2026-11-11
 
 ### Changed
@@ -14,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New chrome-less /embed/device/<id> page that draws one device's card through the signed-in session
 - Automation editor: a hold control (for N s, held or stable ± tolerance) on device and expression conditions, and a Becomes picker with thresholds and ranges
 - A running fixed builtin switches through the one instance switch; the hub flag is written directly only while its addon is down
-- System → Settings no longer repeats sign-in and connection settings that already live on their own page.
 
 ## [1.2.636] - 2026-11-10
 
