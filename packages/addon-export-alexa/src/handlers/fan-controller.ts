@@ -6,7 +6,7 @@
  *   `Alexa.ToggleController` TurnOn / TurnOff on `Fan.Oscillating`;
  *   `Alexa.ModeController` SetMode on `Fan.Preset` — a NATIVE preset goes to
  *   `fan-control.setPreset`, a CUSTOM one (the operator's `fan-presets`) to
- *   `fan-presets.applyPreset`, which runs its steps and reports each.
+ *   `fan-presets.applyPreset`, which applies its fan-control fields and reports each.
  *
  * The commands are quick, so the answer is synchronous: the Response carries
  * the state the command set, projected from the slice read before it. A custom
@@ -266,13 +266,13 @@ async function applyCustom(
     if (result.status === 'applied') {
       deps.logger.info('alexa fan-controller: custom preset applied', {
         tags: { deviceId: c.deviceId },
-        meta: { preset: preset.name, steps: result.steps.length },
+        meta: { preset: preset.name, fields: result.fields.length },
       })
       return successResponse(c, [])
     }
-    const bad = result.steps.find((s) => s.outcome === 'failed' || s.outcome === 'refused')
+    const bad = result.fields.find((f) => f.outcome === 'failed' || f.outcome === 'refused')
     const detail =
-      bad === undefined ? result.status : `step ${bad.index}: ${bad.message ?? bad.outcome}`
+      bad === undefined ? result.status : `${bad.field}: ${bad.message ?? bad.outcome}`
     deps.logger.warn('alexa fan-controller: custom preset did not fully apply', {
       tags: { deviceId: c.deviceId },
       meta: { preset: preset.name, status: result.status, detail },

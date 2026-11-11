@@ -117,12 +117,12 @@ function fanApi(state: unknown, custom: readonly { id: string; name: string }[] 
     },
     fanPresets: {
       getPresets: {
-        query: vi.fn(async () => custom.map((p) => ({ ...p, steps: [] }))),
+        query: vi.fn(async () => custom.map((p) => ({ ...p, state: {} }))),
       },
       applyPreset: {
         mutate: vi.fn(async () => ({
           status: 'applied' as 'applied' | 'partial' | 'refused',
-          steps: [] as unknown[],
+          fields: [] as unknown[],
         })),
       },
     },
@@ -259,11 +259,11 @@ describe('fan directives', () => {
     expect(api.fanControl.setPreset.mutate).not.toHaveBeenCalled()
   })
 
-  it('names the failed step when a custom preset only partly applied', async () => {
+  it('names the failed field when a custom preset only partly applied', async () => {
     const api = fanApi(fanSlice(), [{ id: 'n', name: 'Notte' }])
     api.fanPresets.applyPreset.mutate.mockResolvedValueOnce({
       status: 'partial',
-      steps: [{ index: 1, outcome: 'failed', message: 'lamp offline' }],
+      fields: [{ field: 'speed', outcome: 'failed', message: 'lamp offline' }],
     })
     const answer = await run(
       'Alexa.ModeController/SetMode',

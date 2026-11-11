@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Alexa shows a climate device as an air conditioner only when its role is air conditioner; every other climate device (thermostat, radiator, floor, heat-pump circuit) is a thermostat. Plug-in heaters are exported as switches.
+- A custom fan preset that only partly applies names the fan-control field that failed
 
 ## [1.2.193] - 2026-11-11
 
