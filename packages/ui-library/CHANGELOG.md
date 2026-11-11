@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.420] - 2026-11-11
+
 ### Changed
 
 - The device hero card (HeroModelCard, ModelHero) is now a library component with host-supplied labels, and the idle backdrop no longer runs behind a scene's command controls

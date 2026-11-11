@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-osd-manager",
-  "version": "0.1.317",
+  "version": "0.1.318",
   "description": "Binds camera on-screen-display slots to live state and recognitions",
   "keywords": [
     "camstack",
@@ -68,9 +68,9 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.827",
+      "server": ">=1.2.831",
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.634"
+        "@camstack/addon-admin-ui": ">=1.2.637"
       }
     }
   },

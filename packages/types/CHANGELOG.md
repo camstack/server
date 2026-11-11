@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.543] - 2026-11-11
+
 ### Changed
 
 - Automations: a condition can now be held ("for N s", held or stable ± tolerance) on a device value that becomes, a device state and an expression; thresholds and ranges are supported, a hold fires once per episode at its deadline, and a hold survives a restart without firing

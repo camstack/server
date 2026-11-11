@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.138] - 2026-11-11
+
 ### Changed
 
 - Training page dropdowns use the CamStack list (keyboard and screen-reader alike), no visible change otherwise

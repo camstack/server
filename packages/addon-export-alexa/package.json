@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-export-alexa",
-  "version": "1.2.192",
+  "version": "1.2.193",
   "description": "Alexa Smart Home Skill export — hub-side OAuth provider + directive handler. The companion AWS Lambda forwards Alexa directives to this addon's /addon/export-alexa/directive endpoint.",
   "keywords": [
     "camstack",
@@ -59,7 +59,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.814"
+      "server": ">=1.2.831"
     }
   },
   "files": [
