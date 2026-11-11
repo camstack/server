@@ -63,6 +63,7 @@ import {
   compositionFieldKey,
 } from './composition-report.js'
 import { planCompositionEvents } from './composition-events.js'
+import { powerSourceActuatorConflicts } from './power-source-link.js'
 import {
   describeStateField,
   describeTopLevelStateFields,
@@ -911,6 +912,13 @@ export function validateComposition(
     ...forwardSourceProblems(composition, ctx.sources),
     ...cycles,
     ...helperSaveProblems(composition, facts),
+    ...powerSourceActuatorConflicts(composition).map((c) =>
+      problem(
+        'power-source-is-actuator',
+        c.path,
+        `the power source \`${c.switch.stableId}\` is one of this device's own switches — pick the plug that feeds it`,
+      ),
+    ),
   ]
   return {
     ok: problems.length === 0,

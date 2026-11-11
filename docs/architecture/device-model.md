@@ -711,6 +711,11 @@ second copy (D676). The `core-blocks` builtin serves `powerOn`, `powerOff`,
 is switch off, wait `offSeconds`, switch on, on an injected scheduler cancelled
 on stop. Every refusal is a typed result (`switch-offline`, `switch-unknown`,
 `restart-in-progress`, ...), logged with the device tag and the switch id.
+The supply plug is never one of the device's own actuators: a link whose switch
+is the device itself, or a source of the device's own `switch` feature (a
+composed heater's plug, a switch-group member), is refused at save time
+(`power-source-is-actuator`, `powerSourceActuatorConflicts`), and a link stored
+before that check is refused on every action (`switch-is-actuator`).
 It is manual by default, and separate from the native `reboot` cap, which it
 never replaces or wraps. One exception
 ([D997](../decisions/adr-0997-a-device-provider-may-restart-its-own-device-through-power-source-as-bounded-self-recovery.md)):

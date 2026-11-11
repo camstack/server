@@ -49,6 +49,11 @@ export const PowerSourceRefusalReasonSchema = z.enum([
   'restart-in-progress',
   /** The switch call itself failed. */
   'switch-call-failed',
+  /**
+   * The linked switch is one of the device's own actuators (or the device
+   * itself): a link stored before save-time validation refused it (#462).
+   */
+  'switch-is-actuator',
 ])
 export type PowerSourceRefusalReason = z.infer<typeof PowerSourceRefusalReasonSchema>
 

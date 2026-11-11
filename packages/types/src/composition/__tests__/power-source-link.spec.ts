@@ -9,6 +9,7 @@ import { CAP_CUSTOMIZE_CATALOG } from '../../generated/customize-catalog.js'
 import {
   buildCapabilityLookup,
   CompositionSchema,
+  powerSourceActuatorConflicts,
   powerSourceLinkOfComposition,
   validateComposition,
   type Composition,
@@ -192,5 +193,70 @@ describe('powerSourceLinkOfComposition on a new-target composed device', () => {
 
   it('has no link without the block id', () => {
     expect(powerSourceLinkOfComposition(stored)).toBeNull()
+  })
+})
+
+describe("a composed device's own actuator plug is never its power source", () => {
+  const lookupCap = buildCapabilityLookup(ALL_CAPABILITY_DEFINITIONS)
+  const OTHER_PLUG: CompositionSourceRef = { addonId: 'provider-x', stableId: 'plug-2' }
+
+  function actuatorFeature(source: CompositionSourceRef): CompositionFieldsFeature {
+    return {
+      kind: 'fields',
+      cap: 'switch',
+      fields: { on: { kind: 'from', source, cap: 'switch', fieldPath: 'on' } },
+    }
+  }
+
+  function heater(actuator: CompositionSourceRef): Composition {
+    return CompositionSchema.parse({
+      target: { kind: 'new', type: DeviceType.Switch },
+      features: [actuatorFeature(actuator), compiledFeature()],
+    })
+  }
+
+  function ctxOver(...refs: readonly CompositionSourceRef[]): ValidateCompositionContext {
+    return {
+      lookupCap,
+      self: null,
+      blockId: 'blk1',
+      peers: [],
+      target: null,
+      sources: new Map(
+        refs.map((ref, i) => [
+          `${ref.addonId}/${ref.stableId}`,
+          { kind: 'found', deviceId: 60 + i, caps: new Set(['switch']) },
+        ]),
+      ),
+    }
+  }
+
+  it('names the actuator member, by the power-source field', () => {
+    expect(powerSourceActuatorConflicts(heater(PLUG))).toEqual([
+      { path: 'features[1].fields.switchOn', switch: PLUG },
+    ])
+    expect(powerSourceActuatorConflicts(heater(OTHER_PLUG))).toEqual([])
+  })
+
+  it('is a typed refusal at save time', () => {
+    const v = validateComposition(heater(PLUG), ctxOver(PLUG))
+    expect(
+      v.problems.filter((p) => p.code === 'power-source-is-actuator').map((p) => p.path),
+    ).toEqual(['features[1].fields.switchOn'])
+  })
+
+  it('accepts a supply plug that is not one of the actuators', () => {
+    const v = validateComposition(heater(OTHER_PLUG), ctxOver(OTHER_PLUG, PLUG))
+    expect(v.problems.filter((p) => p.code === 'power-source-is-actuator')).toEqual([])
+  })
+
+  it('refuses a device linked as its own power source', () => {
+    const self = CompositionSchema.parse({
+      target: { kind: 'existing', device: PLUG },
+      features: [compiledFeature()],
+    })
+    expect(powerSourceActuatorConflicts(self)).toEqual([
+      { path: 'features[0].fields.switchOn', switch: PLUG },
+    ])
   })
 })

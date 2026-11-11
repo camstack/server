@@ -10,8 +10,16 @@ import {
   POWER_SOURCE_OFF_SECONDS_MAX,
   POWER_SOURCE_OFF_SECONDS_MIN,
 } from '../capabilities/power-source.cap.js'
-import { composedDeviceRef, fieldReads, type Composition } from './composition.js'
+import {
+  composedDeviceRef,
+  compositionFeatureEnabled,
+  compositionSourceKey,
+  featureSources,
+  fieldReads,
+  type Composition,
+} from './composition.js'
 import type { CompositionSourceRef } from './source-ref.js'
+import { featureForwards } from './validate-forward.js'
 
 export interface PowerSourceLink {
   /** The device the customization is on. */
@@ -70,4 +78,58 @@ export function powerSourceLinkOfComposition(
     switch: read.source,
     offSeconds: normalizeOffSeconds(storedOffSeconds(composition)),
   }
+}
+
+/** A power-source link that names one of the device's own actuators: the field, and the switch it names. */
+export interface PowerSourceActuatorConflict {
+  /** Where the link sits: `features[N].fields.switchOn`. */
+  readonly path: string
+  /** The switch that is both the supply and an actuator (or the device itself). */
+  readonly switch: CompositionSourceRef
+}
+
+const ACTUATOR_CAP = 'switch'
+
+/**
+ * The devices that ACT for this composition: the device itself when it is an
+ * existing one, and every source its own `switch` feature reads or forwards a
+ * command to (a heater's plug, every member of a switch group).
+ */
+function actuatorKeys(composition: Composition): ReadonlySet<string> {
+  const keys = new Set<string>()
+  if (composition.target.kind === 'existing') {
+    keys.add(compositionSourceKey(composition.target.device))
+  }
+  composition.features.forEach((feature, index) => {
+    if (feature.kind !== 'fields' || feature.cap !== ACTUATOR_CAP) return
+    if (!compositionFeatureEnabled(feature)) return
+    for (const source of featureSources(feature)) {
+      for (const read of fieldReads(source)) keys.add(compositionSourceKey(read.source))
+    }
+    for (const forward of featureForwards(feature, index)) {
+      keys.add(compositionSourceKey(forward.command.source))
+    }
+  })
+  return keys
+}
+
+/**
+ * The supply plug is never one of the device's own actuators (#462): cutting
+ * power through the switch that IS the device's on/off leaves nothing to
+ * restart, and makes "power off" and "turn off" the same press. Refused at save
+ * time (`power-source-is-actuator`) and again by the power-source provider for a
+ * link stored before this check existed (`switch-is-actuator`).
+ */
+export function powerSourceActuatorConflicts(
+  composition: Composition,
+): readonly PowerSourceActuatorConflict[] {
+  const index = composition.features.findIndex((f) => f.cap === 'power-source')
+  const feature = composition.features[index]
+  if (feature === undefined || feature.kind !== 'fields' || feature.enabled === false) return []
+  const field = feature.fields['switchOn']
+  if (field === undefined) return []
+  const actuators = actuatorKeys(composition)
+  return fieldReads(field)
+    .filter((read) => read.cap === ACTUATOR_CAP && actuators.has(compositionSourceKey(read.source)))
+    .map((read) => ({ path: `features[${index}].fields.switchOn`, switch: read.source }))
 }

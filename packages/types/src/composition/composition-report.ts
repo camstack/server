@@ -63,6 +63,8 @@ export const CompositionProblemCodeSchema = z.enum([
   'command-input-unknown',
   /** A forward leaves a required input of the source method unprovided (D967). */
   'command-input-missing',
+  /** The power-source switch is one of the device's own actuators, or the device itself (#462). */
+  'power-source-is-actuator',
 ])
 export type CompositionProblemCode = z.infer<typeof CompositionProblemCodeSchema>
 

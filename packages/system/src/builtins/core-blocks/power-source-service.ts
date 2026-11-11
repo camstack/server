@@ -24,6 +24,7 @@ import {
   type PowerSourceInfo,
   type PowerSourceLink,
   type PowerSourceRefusalReason,
+  powerSourceActuatorConflicts,
   powerSourceLinkOfComposition,
 } from '@camstack/types'
 
@@ -62,6 +63,12 @@ export interface PowerSourceServiceDeps {
   readonly devices: PowerSourceDevices
   readonly scheduler: PowerSourceScheduler
   readonly logger: IScopedLogger
+}
+
+interface StoredLink {
+  readonly link: PowerSourceLink
+  /** The link names one of the device's own actuators: every action is refused. */
+  readonly isActuator: boolean
 }
 
 interface Resolved {
@@ -215,12 +222,20 @@ export class PowerSourceService implements IPowerSourceProvider {
 
   /** The link and the switch, or the reason there is nothing to act on. Reads the switch state: unknown is refused. */
   private async lookup(deviceId: number): Promise<Lookup> {
-    const link = await this.linkOf(deviceId)
-    if (link === null) {
+    const stored = await this.storedLinkOf(deviceId)
+    if (stored === null) {
       return {
         kind: 'refused',
         reason: 'no-power-source',
         message: 'no power source is linked',
+      }
+    }
+    const { link } = stored
+    if (stored.isActuator) {
+      return {
+        kind: 'refused',
+        reason: 'switch-is-actuator',
+        message: `the linked switch ${link.switch.stableId} is one of this device's own switches, not its supply`,
       }
     }
     const switchDevice = await this.deps.devices.find(link.switch).catch(() => null)
@@ -251,11 +266,19 @@ export class PowerSourceService implements IPowerSourceProvider {
 
   /** The stored link of the device `deviceId`, read from the customizations now. */
   private async linkOf(deviceId: number): Promise<PowerSourceLink | null> {
+    return (await this.storedLinkOf(deviceId))?.link ?? null
+  }
+
+  /** The stored link, and whether it names one of the device's own actuators (#462). */
+  private async storedLinkOf(deviceId: number): Promise<StoredLink | null> {
     for (const block of this.deps.blocks()) {
-      const link = powerSourceLinkOfComposition(coreBlockComposition(block), block.id)
-      if (link === null) continue
+      const composition = coreBlockComposition(block)
+      const link = powerSourceLinkOfComposition(composition, block.id)
+      if (link === null || composition === null) continue
       const device = await this.deps.devices.find(link.device).catch(() => null)
-      if (device !== null && device.id === deviceId) return link
+      if (device !== null && device.id === deviceId) {
+        return { link, isActuator: powerSourceActuatorConflicts(composition).length > 0 }
+      }
     }
     return null
   }

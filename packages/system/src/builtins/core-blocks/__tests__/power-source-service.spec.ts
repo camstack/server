@@ -65,7 +65,12 @@ function fakeScheduler() {
 }
 
 /** A composed washer: a NEW-target composition whose own device carries the plug. */
-function applianceBlock() {
+function applianceBlock(plugIsActuator = false) {
+  const actuator = {
+    kind: 'fields',
+    cap: 'switch',
+    fields: { on: { kind: 'from', source: PLUG_REF, cap: 'switch', fieldPath: 'on' } },
+  }
   return {
     id: 'blk-washer',
     source: {
@@ -73,6 +78,7 @@ function applianceBlock() {
       composition: CompositionSchema.parse({
         target: { kind: 'new', type: 'washer' },
         features: [
+          ...(plugIsActuator ? [actuator] : []),
           {
             kind: 'fields',
             cap: 'power-source',
@@ -88,7 +94,13 @@ function applianceBlock() {
 }
 
 function world(
-  opts: { online?: boolean; on?: boolean | null; offSeconds?: number; appliance?: boolean } = {},
+  opts: {
+    online?: boolean
+    on?: boolean | null
+    offSeconds?: number
+    appliance?: boolean
+    plugIsActuator?: boolean
+  } = {},
 ) {
   const calls: { id: number; on: boolean }[] = []
   const state = {
@@ -114,7 +126,11 @@ function world(
   const log = recordingLogger()
   const timers = fakeScheduler()
   const service = new PowerSourceService({
-    blocks: () => [opts.appliance === true ? applianceBlock() : block(opts.offSeconds)],
+    blocks: () => [
+      opts.appliance === true
+        ? applianceBlock(opts.plugIsActuator === true)
+        : block(opts.offSeconds),
+    ],
     devices,
     scheduler: timers.scheduler,
     logger: log.logger,
@@ -146,6 +162,20 @@ describe('forceRestart', () => {
       accepted: true,
     })
     expect(w.calls).toEqual([{ id: PLUG_ID, on: false }])
+  })
+
+  it('is refused when a stored link names the device’s own actuator plug, and cuts nothing', async () => {
+    const w = world({ appliance: true, plugIsActuator: true })
+    for (const call of [w.service.forceRestart, w.service.powerOff, w.service.powerOn]) {
+      expect(await call({ deviceId: GATEWAY_ID })).toMatchObject({
+        accepted: false,
+        reason: 'switch-is-actuator',
+      })
+    }
+    expect(w.calls).toEqual([])
+    expect(w.timers.pending).toHaveLength(0)
+    const warn = w.log.lines.find((l) => l.level === 'warn')
+    expect(warn?.extras?.tags).toEqual({ deviceId: GATEWAY_ID })
   })
 
   it('uses 10 s when no off time is stored', async () => {
