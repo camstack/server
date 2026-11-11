@@ -13,6 +13,7 @@ import {
   deriveState,
   type FunctionProvider,
   type HolderData,
+  notRunningAddons,
   type PanelRow,
   type PanelState,
   sectionHolder,
@@ -106,9 +107,12 @@ export function useInstancesData(functionCap: string): InstancesData {
   )
   const descriptions = useMemo(() => descriptionMap(addonsQuery.data ?? []), [addonsQuery.data])
 
+  // Only an ANSWERED `addons.list` says an addon is down; while it is pending nothing is claimed.
+  const notRunning = useMemo(() => notRunningAddons(addonsQuery.data ?? []), [addonsQuery.data])
+
   const rows = useMemo<readonly PanelRow[]>(
-    () => buildRows({ functionProviders, holders, displayNames, descriptions }),
-    [functionProviders, holders, displayNames, descriptions],
+    () => buildRows({ functionProviders, holders, displayNames, descriptions, notRunning }),
+    [functionProviders, holders, displayNames, descriptions, notRunning],
   )
 
   const firstError =

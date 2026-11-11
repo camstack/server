@@ -29,6 +29,7 @@ import { bareAddonId, EventCategory, errMsg } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
 import { planDeleteTimeStamps } from '../../boot/integration-id-backfill'
 import { bringsDevices, describedRoleOf } from '../../api/core/integration-role'
+import { trpcUserError } from '../../api/trpc/user-error'
 import type { EventBusService } from '../events/event-bus.service'
 import {
   assertInstanceDeletable,
@@ -621,12 +622,32 @@ export function withInstanceLifecycle(
   return wrapped
 }
 
+/** The stable code (D863) of {@link addonNotRunningError}: a client reads it from `data.i18n`. */
+export const ADDON_NOT_RUNNING_CODE = 'integration-instances.addon-not-running'
+
+/**
+ * The refusal of a call pinned to an addon whose `integration-instances` provider is not
+ * registered — the addon is stopped, crashed, failed, not started yet, or up without its holder.
+ * The switch of an instance has ONE store, the addon's own record (a fixed builtin's registry flag
+ * is the exception, written by `integrations.update`), so with nobody to reach it is refused by
+ * name: never answered by another provider, never queued, never kept anywhere else.
+ */
+export function addonNotRunningError(addonId: string): TRPCError {
+  const addon = bareAddonId(addonId)
+  return trpcUserError(
+    'PRECONDITION_FAILED',
+    ADDON_NOT_RUNNING_CODE,
+    { addon },
+    `"${addon}" is not running: start it first`,
+  )
+}
+
 /**
  * A {@link InstanceLifecycleWrap} that is looked up when a create or delete ARRIVES, not when the
  * provider is registered. A forked holder can register before the hub half exists (the broker
  * is up before `AddonRegistryService` has initialised); capturing the wrap then would leave that
  * holder without the registry row, the test gate and the device cascade for good. Until the
- * wrap exists a create or delete is refused, and says so.
+ * wrap exists a create, a delete or a switch is refused, and says so.
  */
 export function deferInstanceLifecycle(
   resolve: () => InstanceLifecycleWrap | null,
@@ -634,7 +655,7 @@ export function deferInstanceLifecycle(
 ): InstanceLifecycleWrap {
   return (addonId, provider) => {
     const bare = bareAddonId(addonId)
-    const wrapNow = (phase: 'create' | 'delete'): IIntegrationInstancesProvider => {
+    const wrapNow = (phase: 'create' | 'delete' | 'switch'): IIntegrationInstancesProvider => {
       const wrap = resolve()
       if (wrap !== null) return wrap(addonId, provider)
       logger.warn('refused: the hub half of integration-instances is not ready yet', {
@@ -650,14 +671,16 @@ export function deferInstanceLifecycle(
       wrapNow('create').createInstance(input)
     const deleteInstance: IIntegrationInstancesProvider['deleteInstance'] = async (input) =>
       wrapNow('delete').deleteInstance(input)
-    // Reads and the switch never refuse: before the hub half exists the holder's own answer stands.
+    // Reads never refuse: before the hub half exists the holder's own answer stands. The switch
+    // does: only the hub half knows a fixed builtin's switch is the registry flag (a raw write
+    // would land in a body nobody reads) and announces the move.
     const readNow = (): IIntegrationInstancesProvider => resolve()?.(addonId, provider) ?? provider
     const listInstances: IIntegrationInstancesProvider['listInstances'] = async () =>
       readNow().listInstances()
     const getInstance: IIntegrationInstancesProvider['getInstance'] = async (input) =>
       readNow().getInstance(input)
     const setInstanceEnabled: IIntegrationInstancesProvider['setInstanceEnabled'] = async (input) =>
-      readNow().setInstanceEnabled(input)
+      wrapNow('switch').setInstanceEnabled(input)
     const deferred: IIntegrationInstancesProvider = new Proxy(provider, {
       get(target, prop) {
         if (prop === 'createInstance') return createInstance

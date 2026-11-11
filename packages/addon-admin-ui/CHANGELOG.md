@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The On/Off switch of an instance whose addon is not running is disabled and says "<addon> is not running: start it first"
+
 ### Removed
 
 - Removed the Hub device hero and the Hub discovery panel on the device Overview tab; Hub devices are retired

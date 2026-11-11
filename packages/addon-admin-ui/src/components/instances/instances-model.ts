@@ -47,6 +47,12 @@ export interface InstanceRow {
   /** The kind's interactive link / unlink paths (may carry `{{brokerId}}`). */
   readonly connectPath?: string
   readonly disconnectPath?: string
+  /**
+   * The owning addon's process state when `addons.list` ANSWERED that it is not running
+   * (`crashed`, `failed`, `stopped` ...). The hub refuses the switch then, so it is drawn
+   * disabled with the reason. Absent when running or not known.
+   */
+  readonly notRunning?: string
 }
 
 export interface FixedRow {
@@ -66,6 +72,8 @@ export interface BuildRowsInput {
   readonly holders: readonly HolderData[]
   readonly displayNames: ReadonlyMap<string, string>
   readonly descriptions: ReadonlyMap<string, string>
+  /** addonId -> process state, for the addons known NOT to be running ({@link notRunningAddons}). */
+  readonly notRunning?: ReadonlyMap<string, string>
 }
 
 /** Instance rows for providers that hold records, fixed rows for the rest, in provider order. */
@@ -87,6 +95,7 @@ export function buildRows(input: BuildRowsInput): readonly PanelRow[] {
       })
       continue
     }
+    const notRunning = input.notRunning?.get(provider.addonId)
     for (const instance of holder.instances) {
       const kind = findKind(holder.description, instance.kind)
       rows.push({
@@ -105,10 +114,34 @@ export function buildRows(input: BuildRowsInput): readonly PanelRow[] {
         ...(instance.lastCheckedAt !== undefined ? { lastCheckedAt: instance.lastCheckedAt } : {}),
         ...(kind?.connectPath !== undefined ? { connectPath: kind.connectPath } : {}),
         ...(kind?.disconnectPath !== undefined ? { disconnectPath: kind.disconnectPath } : {}),
+        ...(notRunning !== undefined ? { notRunning } : {}),
       })
     }
   }
   return rows
+}
+
+/** A process state that says the addon CAN answer, or that nobody knows (D315): never a refusal. */
+const NOT_A_STOP = new Set(['running', 'unknown'])
+
+function fieldOf(value: unknown, key: string): unknown {
+  return typeof value === 'object' && value !== null ? Reflect.get(value, key) : undefined
+}
+
+/**
+ * The addons `addons.list` answered are NOT running, with their process state: their
+ * `integration-instances` switch has nobody to reach and the hub refuses it. Only an answered
+ * `process.state` counts - an addon without one, or `unknown`, is not known to be stopped.
+ */
+export function notRunningAddons(addons: readonly unknown[]): ReadonlyMap<string, string> {
+  const out = new Map<string, string>()
+  for (const addon of addons) {
+    const id = fieldOf(fieldOf(addon, 'manifest'), 'id')
+    const state = fieldOf(fieldOf(addon, 'process'), 'state')
+    if (typeof id !== 'string' || typeof state !== 'string') continue
+    if (!NOT_A_STOP.has(state)) out.set(id, state)
+  }
+  return out
 }
 
 /** The kind a record names, among the kinds its provider declared. */

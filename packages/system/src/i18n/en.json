@@ -256,5 +256,6 @@
   "globalSettings.s_local-access.tlsEnabled.description": "On by default. Turn off only behind a reverse proxy that terminates TLS for you: browsers refuse passkeys, the camera and the microphone over plain HTTP. Applies after the hub restarts.",
   "timedRunConfig.timedRun_quickRunDuration.label": "One-tap run",
   "section.s_timed-run.title": "One-tap run",
-  "section.s_timed-run.description": "How long the Run button starts this device for. The hub switches it off when the time is up."
+  "section.s_timed-run.description": "How long the Run button starts this device for. The hub switches it off when the time is up.",
+  "integration-instances.addon-not-running": "\"{{addon}}\" is not running: start it first"
 }

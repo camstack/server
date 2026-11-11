@@ -31,7 +31,13 @@ vi.mock('react-i18next', () => ({
 
 import { InstanceSwitchCell } from '../InstanceSwitchCell'
 
-const row = { addonId: 'google-services', id: 'cal_a', name: 'Work', enabled: false }
+const row = {
+  addonId: 'google-services',
+  providerName: 'Google',
+  id: 'cal_a',
+  name: 'Work',
+  enabled: false,
+}
 
 function mount(onChanged?: () => void) {
   return render(

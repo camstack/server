@@ -256,5 +256,6 @@
   "globalSettings.s_local-access.tlsEnabled.description": "Attivo per impostazione predefinita. Disattivalo solo dietro un reverse proxy che termina il TLS: i browser rifiutano passkey, fotocamera e microfono su HTTP semplice. Si applica al riavvio dell'hub.",
   "timedRunConfig.timedRun_quickRunDuration.label": "Avvio rapido",
   "section.s_timed-run.title": "Avvio rapido",
-  "section.s_timed-run.description": "Per quanto tempo il pulsante Avvia accende questo dispositivo. L'hub lo spegne allo scadere del tempo."
+  "section.s_timed-run.description": "Per quanto tempo il pulsante Avvia accende questo dispositivo. L'hub lo spegne allo scadere del tempo.",
+  "integration-instances.addon-not-running": "\"{{addon}}\" non è in esecuzione: avvialo prima"
 }

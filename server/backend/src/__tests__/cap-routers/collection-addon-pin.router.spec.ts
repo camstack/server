@@ -241,8 +241,15 @@ describe('system-collection caps: the pin refusal covers every collection cap', 
         addonId: 'fabricated-addon-id',
       })
       expect(out.ok).toBe(false)
-      expect(out.ok === false && out.code).toBe('BAD_REQUEST')
       expect(out.ok === false && out.message).toContain('fabricated-addon-id')
+      if (def.name === 'integration-instances') {
+        // Every holder registers on the hub, so a pin that misses names an addon that is not
+        // running: refused by name, with the typed reason (instance-switch-addon-not-running spec).
+        expect(out.ok === false && out.code).toBe('PRECONDITION_FAILED')
+        expect(out.ok === false && out.message).toContain('is not running')
+        return
+      }
+      expect(out.ok === false && out.code).toBe('BAD_REQUEST')
       expect(out.ok === false && out.message).toContain('real-owner')
     })
   }

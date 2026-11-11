@@ -3,22 +3,16 @@
  * a fixed row (with its registry switch) for a provider that has none, and three different
  * answers for loading, failed and empty. Only the cap hooks and the tRPC client are stubbed.
  */
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
-import type { ConfigUISchema } from "@camstack/types";
-import { Mail } from "lucide-react";
-import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import type { ConfigUISchema } from '@camstack/types'
+import { Mail } from 'lucide-react'
+import { MemoryRouter } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 interface ProviderRow {
-  addonId: string;
-  isActive: boolean;
+  addonId: string
+  isActive: boolean
 }
 
 const h = vi.hoisted(() => ({
@@ -33,55 +27,52 @@ const h = vi.hoisted(() => ({
   setEnabled: vi.fn(),
   setInstanceEnabled: vi.fn(),
   restart: vi.fn(async (_input: unknown) => ({ ok: true as const })),
-  create: vi.fn(async (_input: unknown) => ({ id: "x" })),
+  create: vi.fn(async (_input: unknown) => ({ id: 'x' })),
   update: vi.fn(async (_input: unknown) => ({ ok: true as const })),
   remove: vi.fn(async (_input: unknown) => ({ ok: true as const })),
   targets: [] as { name: string; formValues: Record<string, unknown> }[],
-}));
+  smtpProcess: undefined as { mode: string; state: string } | undefined,
+}))
 
 const FORM: ConfigUISchema = {
   sections: [
     {
-      id: "smtp",
-      title: "Relay",
+      id: 'smtp',
+      title: 'Relay',
       columns: 2,
       fields: [
-        { type: "text", key: "host", label: "Host", default: "" },
-        { type: "password", key: "password", label: "Password" },
+        { type: 'text', key: 'host', label: 'Host', default: '' },
+        { type: 'password', key: 'password', label: 'Password' },
       ],
     },
   ],
-};
+}
 
-const PASSWORD_VIEW = { $secret: "ref", v: 1, set: true };
+const PASSWORD_VIEW = { $secret: 'ref', v: 1, set: true }
 
-vi.mock("@camstack/ui-library", async () => {
-  const actual = await vi.importActual<typeof import("@camstack/ui-library")>(
-    "@camstack/ui-library",
-  );
-  const query = (slot: {
-    data: ProviderRow[] | undefined;
-    error: Error | null;
-  }) => ({
+vi.mock('@camstack/ui-library', async () => {
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
+  const query = (slot: { data: ProviderRow[] | undefined; error: Error | null }) => ({
     data: slot.data,
     error: slot.error,
     isPending: slot.data === undefined && slot.error === null,
     isError: slot.error !== null,
     refetch: vi.fn(),
-  });
+  })
   return {
     ...actual,
     useAddonsListCapabilityProviders: (input: { capName: string }) =>
-      query(input.capName === "integration-instances" ? h.holders : h.fn),
+      query(input.capName === 'integration-instances' ? h.holders : h.fn),
     // The notification targets, as the instances of `notification-output` the delete hint reads.
     useInstancesOfCap: () => ({
       data: h.targets.map((target, index) => ({
         id: `target-${index}`,
         name: target.name,
-        kind: "notify-ntfy",
-        recordKind: "notify-ntfy",
-        addonId: "notifiers",
-        state: "ok" as const,
+        kind: 'notify-ntfy',
+        recordKind: 'notify-ntfy',
+        addonId: 'notifiers',
+        state: 'ok' as const,
         stateLabel: null,
         usable: true,
         enabled: true,
@@ -93,13 +84,16 @@ vi.mock("@camstack/ui-library", async () => {
       data: [
         {
           manifest: {
-            id: "winston-logging",
-            name: "Winston",
-            description: "Rotated files",
+            id: 'winston-logging',
+            name: 'Winston',
+            description: 'Rotated files',
           },
         },
-        { manifest: { id: "loki-logging", name: "Loki" } },
-        { manifest: { id: "smtp-nodemailer", name: "SMTP" } },
+        { manifest: { id: 'loki-logging', name: 'Loki' } },
+        {
+          manifest: { id: 'smtp-nodemailer', name: 'SMTP' },
+          ...(h.smtpProcess !== undefined ? { process: h.smtpProcess } : {}),
+        },
       ],
     }),
     useAddonsSetCapabilityProviderEnabled: () => ({
@@ -111,9 +105,7 @@ vi.mock("@camstack/ui-library", async () => {
       mutate: h.restart,
       isPending: false,
     }),
-    LogStream: ({ addonId }: { addonId: string }) => (
-      <div data-testid="log-stream">{addonId}</div>
-    ),
+    LogStream: ({ addonId }: { addonId: string }) => <div data-testid="log-stream">{addonId}</div>,
     EventStream: ({ addonId }: { addonId: string }) => (
       <div data-testid="event-stream">{addonId}</div>
     ),
@@ -122,19 +114,17 @@ vi.mock("@camstack/ui-library", async () => {
         integrationInstances: {
           describe: {
             query: async ({ addonId }: { addonId: string }) => {
-              if (h.describeFails) throw new Error("describe failed");
+              if (h.describeFails) throw new Error('describe failed')
               return {
-                instanceMode:
-                  addonId === "loki-logging" ? "single" : "multiple",
-                kind: "x",
+                instanceMode: addonId === 'loki-logging' ? 'single' : 'multiple',
+                kind: 'x',
                 canTest: true,
                 ...h.descriptionExtra[addonId],
-              };
+              }
             },
           },
           listInstances: {
-            query: async ({ addonId }: { addonId: string }) =>
-              h.records[addonId],
+            query: async ({ addonId }: { addonId: string }) => h.records[addonId],
           },
           instanceFormSchema: { query: async () => FORM },
           createInstance: { mutate: h.create },
@@ -143,39 +133,39 @@ vi.mock("@camstack/ui-library", async () => {
         },
       },
     }),
-  };
-});
+  }
+})
 
-vi.mock("../use-set-instance-enabled", () => ({
+vi.mock('../use-set-instance-enabled', () => ({
   useSetInstanceEnabled: () => ({
     mutate: h.setInstanceEnabled,
     isPending: false,
   }),
-}));
+}))
 
-import { ConfirmDialogProvider, PageShell } from "@camstack/ui-library";
-import { InstancesTable, type InstancesTableProps } from "../InstancesTable";
+import { ConfirmDialogProvider, PageShell } from '@camstack/ui-library'
+import { InstancesTable, type InstancesTableProps } from '../InstancesTable'
 
 function renderPanel(
-  search = "",
+  search = '',
   extra: Partial<
     Pick<
       InstancesTableProps,
-      | "extraColumns"
-      | "lead"
-      | "rowActions"
-      | "fixedRowActions"
-      | "pageActions"
-      | "rowFilter"
-      | "typedId"
+      | 'extraColumns'
+      | 'lead'
+      | 'rowActions'
+      | 'fixedRowActions'
+      | 'pageActions'
+      | 'rowFilter'
+      | 'typedId'
     >
   > = {},
 ) {
   // The open dialog lives in the real URL (`useUrlQueryParam` reads `window.location`).
-  window.history.replaceState(null, "", `/${search}`);
+  window.history.replaceState(null, '', `/${search}`)
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
-  });
+  })
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
@@ -193,210 +183,207 @@ function renderPanel(
         </ConfirmDialogProvider>
       </MemoryRouter>
     </QueryClientProvider>,
-  );
+  )
 }
 
 beforeEach(() => {
-  h.fn = { data: [], error: null };
-  h.holders = { data: [], error: null };
-  h.records = {};
-  h.describeFails = false;
-  h.descriptionExtra = {};
-  h.setEnabled.mockReset();
-  h.setInstanceEnabled.mockReset();
-  h.restart.mockClear();
-  h.create.mockClear();
-  h.update.mockClear();
-  h.remove.mockClear();
-  h.targets = [];
-  window.history.replaceState(null, "", "/");
-});
+  h.fn = { data: [], error: null }
+  h.holders = { data: [], error: null }
+  h.records = {}
+  h.describeFails = false
+  h.descriptionExtra = {}
+  h.setEnabled.mockReset()
+  h.setInstanceEnabled.mockReset()
+  h.restart.mockClear()
+  h.create.mockClear()
+  h.update.mockClear()
+  h.remove.mockClear()
+  h.targets = []
+  h.smtpProcess = undefined
+  window.history.replaceState(null, '', '/')
+})
 
-describe("InstancesTable", () => {
-  describe("provider kinds, status label and restore id", () => {
+describe('InstancesTable', () => {
+  describe('provider kinds, status label and restore id', () => {
     beforeEach(() => {
-      h.fn.data = [{ addonId: "smtp-nodemailer", isActive: true }];
-      h.holders.data = [{ addonId: "smtp-nodemailer", isActive: true }];
+      h.fn.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
+      h.holders.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
       h.records = {
-        "smtp-nodemailer": [
+        'smtp-nodemailer': [
           {
-            id: "a",
-            name: "Relay A",
+            id: 'a',
+            name: 'Relay A',
             configured: true,
             enabled: true,
             formValues: {},
-            kind: "k2",
-            status: { state: "ok", label: "Signed in" },
+            kind: 'k2',
+            status: { state: 'ok', label: 'Signed in' },
             lastCheckedAt: 1_700_000_000_000,
           },
         ],
-      };
+      }
       h.descriptionExtra = {
-        "smtp-nodemailer": {
+        'smtp-nodemailer': {
           kinds: [
-            { id: "k1", label: "Kind one", functionCap: "log-destination" },
+            { id: 'k1', label: 'Kind one', functionCap: 'log-destination' },
             {
-              id: "k2",
-              label: "Kind two",
-              functionCap: "log-destination",
-              connectPath: "/addon/x/connect/{{brokerId}}",
+              id: 'k2',
+              label: 'Kind two',
+              functionCap: 'log-destination',
+              connectPath: '/addon/x/connect/{{brokerId}}',
             },
           ],
           allowRestoreId: true,
           mintsId: true,
         },
-      };
-    });
+      }
+    })
 
-    it("shows the kind column, the status label instead of the state, and a connect action", async () => {
-      renderPanel();
-      expect(await screen.findByText("Relay A")).toBeTruthy();
-      expect(screen.getByText("Kind two")).toBeTruthy();
-      expect(screen.getByText("Signed in")).toBeTruthy();
-      expect(screen.queryByText("ok")).toBeNull();
-      expect(
-        screen.getByRole("button", { name: "Connect Relay A" }),
-      ).toBeTruthy();
-    });
+    it('shows the kind column, the status label instead of the state, and a connect action', async () => {
+      renderPanel()
+      expect(await screen.findByText('Relay A')).toBeTruthy()
+      expect(screen.getByText('Kind two')).toBeTruthy()
+      expect(screen.getByText('Signed in')).toBeTruthy()
+      expect(screen.queryByText('ok')).toBeNull()
+      expect(screen.getByRole('button', { name: 'Connect Relay A' })).toBeTruthy()
+    })
 
-    it("Add asks the kind and offers restore; the provider mints the id so none is sent", async () => {
-      renderPanel("?instance=smtp-nodemailer:%2B");
+    it('Add asks the kind and offers restore; the provider mints the id so none is sent', async () => {
+      renderPanel('?instance=smtp-nodemailer:%2B')
       // Several kinds: the dialog says which one is being added, not the provider's name.
-      expect(await screen.findByText("Add Kind one")).toBeTruthy();
-      expect(await screen.findByLabelText("Kind")).toBeTruthy();
-      expect(screen.getByText("Restore under its old id")).toBeTruthy();
-      fireEvent.click(await screen.findByRole("button", { name: "Create" }));
-      await waitFor(() => expect(h.create).toHaveBeenCalledTimes(1));
-      const sent = h.create.mock.calls[0]?.[0] as Record<string, unknown>;
-      expect(sent).toMatchObject({ addonId: "smtp-nodemailer", kind: "k1" });
-      expect(sent).not.toHaveProperty("id");
-    });
+      expect(await screen.findByText('Add Kind one')).toBeTruthy()
+      expect(await screen.findByLabelText('Kind')).toBeTruthy()
+      expect(screen.getByText('Restore under its old id')).toBeTruthy()
+      fireEvent.click(await screen.findByRole('button', { name: 'Create' }))
+      await waitFor(() => expect(h.create).toHaveBeenCalledTimes(1))
+      const sent = h.create.mock.calls[0]?.[0] as Record<string, unknown>
+      expect(sent).toMatchObject({ addonId: 'smtp-nodemailer', kind: 'k1' })
+      expect(sent).not.toHaveProperty('id')
+    })
 
-    it("without the new fields Add shows no kind picker and no restore, and still mints an id", async () => {
-      h.descriptionExtra = {};
-      renderPanel("?instance=smtp-nodemailer:%2B");
-      expect(await screen.findByText("Add SMTP")).toBeTruthy();
-      expect(screen.queryByLabelText("Kind")).toBeNull();
-      expect(screen.queryByText("Restore under its old id")).toBeNull();
-      fireEvent.click(await screen.findByRole("button", { name: "Create" }));
-      await waitFor(() => expect(h.create).toHaveBeenCalledTimes(1));
+    it('without the new fields Add shows no kind picker and no restore, and still mints an id', async () => {
+      h.descriptionExtra = {}
+      renderPanel('?instance=smtp-nodemailer:%2B')
+      expect(await screen.findByText('Add SMTP')).toBeTruthy()
+      expect(screen.queryByLabelText('Kind')).toBeNull()
+      expect(screen.queryByText('Restore under its old id')).toBeNull()
+      fireEvent.click(await screen.findByRole('button', { name: 'Create' }))
+      await waitFor(() => expect(h.create).toHaveBeenCalledTimes(1))
       expect(h.create.mock.calls[0]?.[0]).toMatchObject({
-        addonId: "smtp-nodemailer",
+        addonId: 'smtp-nodemailer',
         id: expect.stringMatching(/^inst-/),
-      });
-    });
-  });
+      })
+    })
+  })
 
-  it("lists an instance row per record of two providers, and a fixed row with a switch", async () => {
+  it('lists an instance row per record of two providers, and a fixed row with a switch', async () => {
     h.fn.data = [
-      { addonId: "winston-logging", isActive: true },
-      { addonId: "loki-logging", isActive: true },
-      { addonId: "smtp-nodemailer", isActive: true },
-    ];
+      { addonId: 'winston-logging', isActive: true },
+      { addonId: 'loki-logging', isActive: true },
+      { addonId: 'smtp-nodemailer', isActive: true },
+    ]
     h.holders.data = [
-      { addonId: "loki-logging", isActive: true },
-      { addonId: "smtp-nodemailer", isActive: true },
-    ];
+      { addonId: 'loki-logging', isActive: true },
+      { addonId: 'smtp-nodemailer', isActive: true },
+    ]
     h.records = {
-      "loki-logging": [
+      'loki-logging': [
         {
-          id: "loki-logging",
-          name: "Loki prod",
+          id: 'loki-logging',
+          name: 'Loki prod',
           configured: true,
           enabled: true,
           formValues: {},
         },
       ],
-      "smtp-nodemailer": [
+      'smtp-nodemailer': [
         {
-          id: "relay-default",
-          name: "Default relay",
+          id: 'relay-default',
+          name: 'Default relay',
           configured: true,
           enabled: true,
           formValues: {},
         },
         {
-          id: "inst-aaaaaaaa",
-          name: "Office relay",
+          id: 'inst-aaaaaaaa',
+          name: 'Office relay',
           configured: false,
           enabled: true,
           formValues: {},
         },
       ],
-    };
-    renderPanel();
-    expect(await screen.findByText("Loki prod")).toBeTruthy();
-    expect(screen.getByText("Default relay")).toBeTruthy();
-    expect(screen.getByText("Office relay")).toBeTruthy();
-    expect(screen.getByText("Not configured")).toBeTruthy();
-    expect(screen.getByText("Rotated files")).toBeTruthy();
+    }
+    renderPanel()
+    expect(await screen.findByText('Loki prod')).toBeTruthy()
+    expect(screen.getByText('Default relay')).toBeTruthy()
+    expect(screen.getByText('Office relay')).toBeTruthy()
+    expect(screen.getByText('Not configured')).toBeTruthy()
+    expect(screen.getByText('Rotated files')).toBeTruthy()
     // The fixed row (Winston) carries the registry switch, each record its own.
-    expect(screen.getAllByRole("switch")).toHaveLength(4);
-  });
+    expect(screen.getAllByRole('switch')).toHaveLength(4)
+  })
 
-  describe("sub-header pills and Add", () => {
+  describe('sub-header pills and Add', () => {
     beforeEach(() => {
       h.fn.data = [
-        { addonId: "loki-logging", isActive: true },
-        { addonId: "smtp-nodemailer", isActive: true },
-      ];
+        { addonId: 'loki-logging', isActive: true },
+        { addonId: 'smtp-nodemailer', isActive: true },
+      ]
       h.holders.data = [
-        { addonId: "loki-logging", isActive: true },
-        { addonId: "smtp-nodemailer", isActive: true },
-      ];
+        { addonId: 'loki-logging', isActive: true },
+        { addonId: 'smtp-nodemailer', isActive: true },
+      ]
       h.records = {
-        "loki-logging": [
+        'loki-logging': [
           {
-            id: "loki-logging",
-            name: "Loki prod",
+            id: 'loki-logging',
+            name: 'Loki prod',
             configured: true,
             enabled: true,
             formValues: {},
           },
         ],
-        "smtp-nodemailer": [
+        'smtp-nodemailer': [
           {
-            id: "a",
-            name: "Relay A",
+            id: 'a',
+            name: 'Relay A',
             configured: true,
             enabled: true,
             formValues: {},
           },
           {
-            id: "b",
-            name: "Relay B",
+            id: 'b',
+            name: 'Relay B',
             configured: true,
             enabled: true,
             formValues: {},
           },
         ],
-      };
-    });
+      }
+    })
 
-    it("has one pill row and no All pill: nothing selected lists every provider, the active pill deselects", async () => {
-      renderPanel();
-      expect(await screen.findByText("Loki prod")).toBeTruthy();
-      expect(
-        screen.getAllByRole("group", { name: "Filter by provider" }),
-      ).toHaveLength(1);
-      expect(screen.queryByTestId("instance-pill-all")).toBeNull();
-      expect(screen.queryByRole("button", { name: /^All\b/ })).toBeNull();
-      const pill = screen.getByTestId("instance-pill-smtp-nodemailer");
-      expect(pill.getAttribute("aria-pressed")).toBe("false");
-      fireEvent.click(pill);
-      expect(screen.queryByText("Loki prod")).toBeNull();
-      expect(screen.getByText("Relay A")).toBeTruthy();
-      expect(pill.getAttribute("aria-pressed")).toBe("true");
-      fireEvent.click(pill);
-      expect(screen.getByText("Loki prod")).toBeTruthy();
-      expect(pill.getAttribute("aria-pressed")).toBe("false");
-    });
+    it('has one pill row and no All pill: nothing selected lists every provider, the active pill deselects', async () => {
+      renderPanel()
+      expect(await screen.findByText('Loki prod')).toBeTruthy()
+      expect(screen.getAllByRole('group', { name: 'Filter by provider' })).toHaveLength(1)
+      expect(screen.queryByTestId('instance-pill-all')).toBeNull()
+      expect(screen.queryByRole('button', { name: /^All\b/ })).toBeNull()
+      const pill = screen.getByTestId('instance-pill-smtp-nodemailer')
+      expect(pill.getAttribute('aria-pressed')).toBe('false')
+      fireEvent.click(pill)
+      expect(screen.queryByText('Loki prod')).toBeNull()
+      expect(screen.getByText('Relay A')).toBeTruthy()
+      expect(pill.getAttribute('aria-pressed')).toBe('true')
+      fireEvent.click(pill)
+      expect(screen.getByText('Loki prod')).toBeTruthy()
+      expect(pill.getAttribute('aria-pressed')).toBe('false')
+    })
 
-    it("Add sits in the page header, not in the pill row", async () => {
-      window.history.replaceState(null, "", "/");
+    it('Add sits in the page header, not in the pill row', async () => {
+      window.history.replaceState(null, '', '/')
       const client = new QueryClient({
         defaultOptions: { queries: { retry: false } },
-      });
+      })
       render(
         <QueryClientProvider client={client}>
           <MemoryRouter>
@@ -415,443 +402,435 @@ describe("InstancesTable", () => {
             </ConfirmDialogProvider>
           </MemoryRouter>
         </QueryClientProvider>,
-      );
-      await screen.findByText("Relay A");
-      const add = screen.getByRole("button", { name: /Add destination/ });
+      )
+      await screen.findByText('Relay A')
+      const add = screen.getByRole('button', { name: /Add destination/ })
       const header = screen
-        .getByRole("heading", { name: "Connectivity" })
-        .closest("div")?.parentElement;
-      expect(header?.contains(add)).toBe(true);
-      expect(
-        screen.getByRole("group", { name: "Filter by provider" }).contains(add),
-      ).toBe(false);
-    });
+        .getByRole('heading', { name: 'Connectivity' })
+        .closest('div')?.parentElement
+      expect(header?.contains(add)).toBe(true)
+      expect(screen.getByRole('group', { name: 'Filter by provider' }).contains(add)).toBe(false)
+    })
 
-    it("Add is offered for a multiple provider that already holds two rows, and goes straight to its form", async () => {
-      renderPanel();
-      await screen.findByText("Relay A");
-      fireEvent.click(screen.getByTestId("instance-pill-smtp-nodemailer"));
-      fireEvent.click(screen.getByRole("button", { name: /Add destination/ }));
-      expect(await screen.findByText("Add SMTP")).toBeTruthy();
-    });
+    it('Add is offered for a multiple provider that already holds two rows, and goes straight to its form', async () => {
+      renderPanel()
+      await screen.findByText('Relay A')
+      fireEvent.click(screen.getByTestId('instance-pill-smtp-nodemailer'))
+      fireEvent.click(screen.getByRole('button', { name: /Add destination/ }))
+      expect(await screen.findByText('Add SMTP')).toBeTruthy()
+    })
 
-    it("Add stays visible but disabled, with the reason, when nothing is creatable", async () => {
-      h.fn.data = [{ addonId: "loki-logging", isActive: true }];
-      h.holders.data = [{ addonId: "loki-logging", isActive: true }];
-      renderPanel();
-      await screen.findByText("Loki prod");
-      const add = screen.getByRole("button", {
+    it('Add stays visible but disabled, with the reason, when nothing is creatable', async () => {
+      h.fn.data = [{ addonId: 'loki-logging', isActive: true }]
+      h.holders.data = [{ addonId: 'loki-logging', isActive: true }]
+      renderPanel()
+      await screen.findByText('Loki prod')
+      const add = screen.getByRole('button', {
         name: /Add destination/,
-      }) as HTMLButtonElement;
-      expect(add.disabled).toBe(true);
-      expect(screen.getByText(/only one instance is allowed/)).toBeTruthy();
+      }) as HTMLButtonElement
+      expect(add.disabled).toBe(true)
+      expect(screen.getByText(/only one instance is allowed/)).toBeTruthy()
       // A lone provider filters nothing, so no pill row is drawn.
-      expect(screen.queryByTestId("instance-pill-loki-logging")).toBeNull();
-    });
+      expect(screen.queryByTestId('instance-pill-loki-logging')).toBeNull()
+    })
 
-    it("a single provider with a row is not offered: the only creatable one opens directly", async () => {
-      renderPanel();
-      await screen.findByText("Relay A");
-      fireEvent.click(screen.getByRole("button", { name: /Add destination/ }));
+    it('a single provider with a row is not offered: the only creatable one opens directly', async () => {
+      renderPanel()
+      await screen.findByText('Relay A')
+      fireEvent.click(screen.getByRole('button', { name: /Add destination/ }))
       // Loki is `single` and holds one record, so SMTP is the only choice and opens its form.
-      expect(await screen.findByText("Add SMTP")).toBeTruthy();
-      expect(screen.queryByText("Add loki-logging")).toBeNull();
-    });
-  });
+      expect(await screen.findByText('Add SMTP')).toBeTruthy()
+      expect(screen.queryByText('Add loki-logging')).toBeNull()
+    })
+  })
 
-  describe("standalone", () => {
+  describe('standalone', () => {
     beforeEach(() => {
-      h.fn.data = [{ addonId: "smtp-nodemailer", isActive: true }];
-      h.holders.data = [{ addonId: "smtp-nodemailer", isActive: true }];
+      h.fn.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
+      h.holders.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
       h.records = {
-        "smtp-nodemailer": [
+        'smtp-nodemailer': [
           {
-            id: "a",
-            name: "Relay A",
+            id: 'a',
+            name: 'Relay A',
             configured: true,
             enabled: true,
             formValues: {},
           },
         ],
-      };
-    });
+      }
+    })
 
-    it("stands alone with its own title and Activity", async () => {
-      renderPanel();
-      await screen.findByText("Relay A");
-      expect(
-        screen.getByRole("heading", { name: "Destinations" }),
-      ).toBeTruthy();
-      expect(screen.getByRole("heading", { name: "Activity" })).toBeTruthy();
-    });
-  });
+    it('stands alone with its own title and Activity', async () => {
+      renderPanel()
+      await screen.findByText('Relay A')
+      expect(screen.getByRole('heading', { name: 'Destinations' })).toBeTruthy()
+      expect(screen.getByRole('heading', { name: 'Activity' })).toBeTruthy()
+    })
+  })
 
-  it("shows no empty text while a query is still unanswered", () => {
-    h.fn.data = undefined;
-    renderPanel();
-    expect(screen.getByText("Loading…")).toBeTruthy();
-    expect(screen.queryByText("Nothing configured")).toBeNull();
-  });
+  it('shows no empty text while a query is still unanswered', () => {
+    h.fn.data = undefined
+    renderPanel()
+    expect(screen.getByText('Loading…')).toBeTruthy()
+    expect(screen.queryByText('Nothing configured')).toBeNull()
+  })
 
-  it("shows the empty state only once every query answered with nothing", async () => {
-    renderPanel();
-    expect(await screen.findByText("Nothing configured")).toBeTruthy();
-  });
+  it('shows the empty state only once every query answered with nothing', async () => {
+    renderPanel()
+    expect(await screen.findByText('Nothing configured')).toBeTruthy()
+  })
 
-  it("shows an error box, not the empty state, when a query failed", async () => {
-    h.fn.data = [{ addonId: "loki-logging", isActive: true }];
-    h.holders.data = [{ addonId: "loki-logging", isActive: true }];
-    h.describeFails = true;
-    renderPanel();
-    await waitFor(() =>
-      expect(screen.getByText("Could not load the list")).toBeTruthy(),
-    );
-    expect(screen.getByText("describe failed")).toBeTruthy();
-    expect(screen.queryByText("Nothing configured")).toBeNull();
-  });
+  it('shows an error box, not the empty state, when a query failed', async () => {
+    h.fn.data = [{ addonId: 'loki-logging', isActive: true }]
+    h.holders.data = [{ addonId: 'loki-logging', isActive: true }]
+    h.describeFails = true
+    renderPanel()
+    await waitFor(() => expect(screen.getByText('Could not load the list')).toBeTruthy())
+    expect(screen.getByText('describe failed')).toBeTruthy()
+    expect(screen.queryByText('Nothing configured')).toBeNull()
+  })
 
-  describe("with instances", () => {
+  describe('with instances', () => {
     beforeEach(() => {
       h.fn.data = [
-        { addonId: "loki-logging", isActive: true },
-        { addonId: "smtp-nodemailer", isActive: true },
-      ];
+        { addonId: 'loki-logging', isActive: true },
+        { addonId: 'smtp-nodemailer', isActive: true },
+      ]
       h.holders.data = [
-        { addonId: "loki-logging", isActive: true },
-        { addonId: "smtp-nodemailer", isActive: true },
-      ];
+        { addonId: 'loki-logging', isActive: true },
+        { addonId: 'smtp-nodemailer', isActive: true },
+      ]
       h.records = {
-        "loki-logging": [],
-        "smtp-nodemailer": [
+        'loki-logging': [],
+        'smtp-nodemailer': [
           {
-            id: "relay-default",
-            name: "Default relay",
+            id: 'relay-default',
+            name: 'Default relay',
             configured: true,
             enabled: true,
-            formValues: { host: "smtp.example.com", password: PASSWORD_VIEW },
+            formValues: { host: 'smtp.example.com', password: PASSWORD_VIEW },
           },
         ],
-      };
-    });
+      }
+    })
 
-    it("add opens the picker, then the form, and creates then patches only the typed keys", async () => {
-      renderPanel();
-      fireEvent.click(
-        await screen.findByRole("button", { name: /Add destination/ }),
-      );
+    it('add opens the picker, then the form, and creates then patches only the typed keys', async () => {
+      renderPanel()
+      fireEvent.click(await screen.findByRole('button', { name: /Add destination/ }))
       // Loki has no record yet and SMTP takes several: two providers, so a picker.
       fireEvent.click(
-        within(await screen.findByRole("dialog")).getByRole("button", {
+        within(await screen.findByRole('dialog')).getByRole('button', {
           name: /SMTP/,
         }),
-      );
+      )
       // The form's labels are not bound to their inputs: the empty text input is Host.
-      await screen.findByDisplayValue("SMTP");
+      await screen.findByDisplayValue('SMTP')
       const host = await waitFor(() => {
         const empty = screen
-          .getAllByDisplayValue("")
-          .find((el) => el.getAttribute("type") === "text");
-        if (empty === undefined) throw new Error("form not drawn yet");
-        return empty;
-      });
-      fireEvent.change(host, { target: { value: "mail.example.com" } });
-      fireEvent.click(screen.getByRole("button", { name: "Create" }));
-      await waitFor(() => expect(h.create).toHaveBeenCalledTimes(1));
+          .getAllByDisplayValue('')
+          .find((el) => el.getAttribute('type') === 'text')
+        if (empty === undefined) throw new Error('form not drawn yet')
+        return empty
+      })
+      fireEvent.change(host, { target: { value: 'mail.example.com' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+      await waitFor(() => expect(h.create).toHaveBeenCalledTimes(1))
       expect(h.create.mock.calls[0]?.[0]).toMatchObject({
-        addonId: "smtp-nodemailer",
+        addonId: 'smtp-nodemailer',
         id: expect.stringMatching(/^inst-[0-9a-f]{8}$/),
-        name: "SMTP",
-      });
-      await waitFor(() => expect(h.update).toHaveBeenCalledTimes(1));
+        name: 'SMTP',
+      })
+      await waitFor(() => expect(h.update).toHaveBeenCalledTimes(1))
       expect(h.update.mock.calls[0]?.[0]).toMatchObject({
-        addonId: "smtp-nodemailer",
-        values: { host: "mail.example.com" },
-      });
-      const patch = h.update.mock.calls[0]?.[0] as { values: object };
-      expect(Object.keys(patch.values)).toEqual(["host"]);
-    });
+        addonId: 'smtp-nodemailer',
+        values: { host: 'mail.example.com' },
+      })
+      const patch = h.update.mock.calls[0]?.[0] as { values: object }
+      expect(Object.keys(patch.values)).toEqual(['host'])
+    })
 
-    it("editing a record with a stored password sends no password", async () => {
-      renderPanel("?instance=smtp-nodemailer:relay-default");
-      const host = await screen.findByDisplayValue("smtp.example.com");
-      fireEvent.change(host, { target: { value: "mail2.example.com" } });
-      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
-      await waitFor(() => expect(h.update).toHaveBeenCalledTimes(1));
+    it('editing a record with a stored password sends no password', async () => {
+      renderPanel('?instance=smtp-nodemailer:relay-default')
+      const host = await screen.findByDisplayValue('smtp.example.com')
+      fireEvent.change(host, { target: { value: 'mail2.example.com' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+      await waitFor(() => expect(h.update).toHaveBeenCalledTimes(1))
       const sent = h.update.mock.calls[0]?.[0] as {
-        id: string;
-        values: Record<string, unknown>;
-      };
-      expect(sent.id).toBe("relay-default");
-      expect(sent.values).toEqual({ host: "mail2.example.com" });
-      expect("password" in sent.values).toBe(false);
-    });
+        id: string
+        values: Record<string, unknown>
+      }
+      expect(sent.id).toBe('relay-default')
+      expect(sent.values).toEqual({ host: 'mail2.example.com' })
+      expect('password' in sent.values).toBe(false)
+    })
 
-    it("delete asks first, and names the notification targets that pin the relay", async () => {
-      h.targets = [
-        { name: "Mail ops", formValues: { smtpInstanceId: "relay-default" } },
-      ];
-      renderPanel();
-      fireEvent.click(
-        await screen.findByRole("button", { name: "Delete Default relay" }),
-      );
-      expect(await screen.findByText(/Mail ops/)).toBeTruthy();
-      expect(h.remove).not.toHaveBeenCalled();
-      fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
-      await waitFor(() => expect(h.remove).toHaveBeenCalledTimes(1));
+    it('delete asks first, and names the notification targets that pin the relay', async () => {
+      h.targets = [{ name: 'Mail ops', formValues: { smtpInstanceId: 'relay-default' } }]
+      renderPanel()
+      fireEvent.click(await screen.findByRole('button', { name: 'Delete Default relay' }))
+      expect(await screen.findByText(/Mail ops/)).toBeTruthy()
+      expect(h.remove).not.toHaveBeenCalled()
+      fireEvent.click(await screen.findByRole('button', { name: 'Delete' }))
+      await waitFor(() => expect(h.remove).toHaveBeenCalledTimes(1))
       expect(h.remove.mock.calls[0]?.[0]).toEqual({
-        addonId: "smtp-nodemailer",
-        id: "relay-default",
-      });
-    });
-  });
+        addonId: 'smtp-nodemailer',
+        id: 'relay-default',
+      })
+    })
+  })
 
-  describe("per-instance switch, restart and activity", () => {
+  describe('per-instance switch, restart and activity', () => {
     beforeEach(() => {
       h.fn.data = [
-        { addonId: "loki-logging", isActive: true },
-        { addonId: "smtp-nodemailer", isActive: true },
-      ];
+        { addonId: 'loki-logging', isActive: true },
+        { addonId: 'smtp-nodemailer', isActive: true },
+      ]
       h.holders.data = [
-        { addonId: "loki-logging", isActive: true },
-        { addonId: "smtp-nodemailer", isActive: true },
-      ];
+        { addonId: 'loki-logging', isActive: true },
+        { addonId: 'smtp-nodemailer', isActive: true },
+      ]
       h.records = {
-        "loki-logging": [],
-        "smtp-nodemailer": [
+        'loki-logging': [],
+        'smtp-nodemailer': [
           {
-            id: "relay-default",
-            name: "Default relay",
+            id: 'relay-default',
+            name: 'Default relay',
             configured: true,
             formValues: {},
-            status: { state: "error", detail: "refused" },
+            status: { state: 'error', detail: 'refused' },
             enabled: false,
           },
           {
-            id: "inst-aaaaaaaa",
-            name: "Office relay",
+            id: 'inst-aaaaaaaa',
+            name: 'Office relay',
             configured: true,
             enabled: true,
             formValues: {},
           },
         ],
-      };
-    });
+      }
+    })
 
-    it("the switch of a record calls setInstanceEnabled with the addon, the id and the new value", async () => {
-      renderPanel();
-      fireEvent.click(
-        await screen.findByRole("switch", { name: "Enable Office relay" }),
-      );
+    it('the switch of a record calls setInstanceEnabled with the addon, the id and the new value', async () => {
+      renderPanel()
+      fireEvent.click(await screen.findByRole('switch', { name: 'Enable Office relay' }))
       expect(h.setInstanceEnabled).toHaveBeenCalledWith({
-        addonId: "smtp-nodemailer",
-        id: "inst-aaaaaaaa",
+        addonId: 'smtp-nodemailer',
+        id: 'inst-aaaaaaaa',
         enabled: false,
-      });
-    });
+      })
+    })
 
-    it("a row that is off shows one Off badge and no error or configured badge", async () => {
-      renderPanel();
-      await screen.findByText("Default relay");
-      expect(screen.getAllByText("Off")).toHaveLength(1);
-      expect(screen.queryByText("error")).toBeNull();
+    it('the switch of an addon that is not running is disabled and says why', async () => {
+      h.smtpProcess = { mode: 'forked', state: 'crashed' }
+      renderPanel()
+      const toggle = await screen.findByRole('switch', {
+        name: 'Enable Office relay',
+      })
+      expect(toggle.hasAttribute('disabled')).toBe(true)
+      expect(screen.getAllByText('SMTP is not running: start it first').length).toBeGreaterThan(0)
+      fireEvent.click(toggle)
+      expect(h.setInstanceEnabled).not.toHaveBeenCalled()
+    })
+
+    it('an unknown process state is not a stopped addon: the switch stays usable', async () => {
+      h.smtpProcess = { mode: 'forked', state: 'unknown' }
+      renderPanel()
+      const toggle = await screen.findByRole('switch', {
+        name: 'Enable Office relay',
+      })
+      expect(toggle.hasAttribute('disabled')).toBe(false)
+      expect(screen.queryByText('SMTP is not running: start it first')).toBeNull()
+    })
+
+    it('a row that is off shows one Off badge and no error or configured badge', async () => {
+      renderPanel()
+      await screen.findByText('Default relay')
+      expect(screen.getAllByText('Off')).toHaveLength(1)
+      expect(screen.queryByText('error')).toBeNull()
       // The other record is on and keeps its Configured badge.
-      expect(screen.getAllByText("Configured")).toHaveLength(1);
-      const toggle = screen.getByRole("switch", {
-        name: "Enable Default relay",
-      });
-      expect(toggle.getAttribute("aria-checked")).toBe("false");
-    });
+      expect(screen.getAllByText('Configured')).toHaveLength(1)
+      const toggle = screen.getByRole('switch', {
+        name: 'Enable Default relay',
+      })
+      expect(toggle.getAttribute('aria-checked')).toBe('false')
+    })
 
-    it("restart confirms, names the runner group, then restarts the addon", async () => {
-      renderPanel();
-      fireEvent.click(
-        (await screen.findAllByRole("button", { name: "Restart SMTP" }))[0]!,
-      );
-      expect(await screen.findByText(/runner group/)).toBeTruthy();
-      expect(h.restart).not.toHaveBeenCalled();
-      fireEvent.click(screen.getByRole("button", { name: "Restart" }));
+    it('restart confirms, names the runner group, then restarts the addon', async () => {
+      renderPanel()
+      fireEvent.click((await screen.findAllByRole('button', { name: 'Restart SMTP' }))[0]!)
+      expect(await screen.findByText(/runner group/)).toBeTruthy()
+      expect(h.restart).not.toHaveBeenCalled()
+      fireEvent.click(screen.getByRole('button', { name: 'Restart' }))
+      await waitFor(() => expect(h.restart).toHaveBeenCalledWith({ addonId: 'smtp-nodemailer' }))
+    })
+
+    it('activity follows the first row provider and switches with the chips', async () => {
+      renderPanel()
       await waitFor(() =>
-        expect(h.restart).toHaveBeenCalledWith({ addonId: "smtp-nodemailer" }),
-      );
-    });
+        expect(screen.getByTestId('log-stream').textContent).toBe('smtp-nodemailer'),
+      )
+      fireEvent.click(screen.getByRole('button', { name: 'Events' }))
+      expect(screen.getByTestId('event-stream').textContent).toBe('smtp-nodemailer')
+    })
 
-    it("activity follows the first row provider and switches with the chips", async () => {
-      renderPanel();
-      await waitFor(() =>
-        expect(screen.getByTestId("log-stream").textContent).toBe(
-          "smtp-nodemailer",
-        ),
-      );
-      fireEvent.click(screen.getByRole("button", { name: "Events" }));
-      expect(screen.getByTestId("event-stream").textContent).toBe(
-        "smtp-nodemailer",
-      );
-    });
+    it('says how many targets pin a relay', async () => {
+      h.targets = [{ name: 'Mail ops', formValues: { smtpInstanceId: 'inst-aaaaaaaa' } }]
+      renderPanel()
+      expect(await screen.findByText('1 target pins this relay')).toBeTruthy()
+    })
+  })
+})
 
-    it("says how many targets pin a relay", async () => {
-      h.targets = [
-        { name: "Mail ops", formValues: { smtpInstanceId: "inst-aaaaaaaa" } },
-      ];
-      renderPanel();
-      expect(await screen.findByText("1 target pins this relay")).toBeTruthy();
-    });
-  });
-});
-
-describe("InstancesTable extensions", () => {
+describe('InstancesTable extensions', () => {
   beforeEach(() => {
     h.fn.data = [
-      { addonId: "smtp-nodemailer", isActive: true },
-      { addonId: "loki-logging", isActive: true },
-    ];
-    h.holders.data = [{ addonId: "smtp-nodemailer", isActive: true }];
+      { addonId: 'smtp-nodemailer', isActive: true },
+      { addonId: 'loki-logging', isActive: true },
+    ]
+    h.holders.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
     h.records = {
-      "smtp-nodemailer": [
+      'smtp-nodemailer': [
         {
-          id: "a",
-          name: "Relay A",
+          id: 'a',
+          name: 'Relay A',
           configured: true,
           enabled: true,
           formValues: {},
         },
       ],
-    };
-  });
+    }
+  })
 
-  it("draws extra columns between On and the actions, for instance and fixed rows alike", async () => {
-    renderPanel("", {
+  it('draws extra columns between On and the actions, for instance and fixed rows alike', async () => {
+    renderPanel('', {
       extraColumns: [
         {
-          key: "devices",
-          header: "Devices",
-          notSortableReason: "A button",
+          key: 'devices',
+          header: 'Devices',
+          notSortableReason: 'A button',
           render: (row) => <span>{`cell:${row.kind}:${row.name}`}</span>,
         },
       ],
-    });
-    expect(await screen.findByText("cell:instance:Relay A")).toBeTruthy();
-    expect(screen.getByText("cell:fixed:Loki")).toBeTruthy();
-    const headers = screen
-      .getAllByRole("columnheader")
-      .map((c) => c.textContent?.trim());
-    expect(headers.indexOf("Devices")).toBe(headers.indexOf("On") + 1);
-  });
+    })
+    expect(await screen.findByText('cell:instance:Relay A')).toBeTruthy()
+    expect(screen.getByText('cell:fixed:Loki')).toBeTruthy()
+    const headers = screen.getAllByRole('columnheader').map((c) => c.textContent?.trim())
+    expect(headers.indexOf('Devices')).toBe(headers.indexOf('On') + 1)
+  })
 
-  it("shows the lead of an instance at the top of its edit dialog", async () => {
-    renderPanel("?instance=smtp-nodemailer:a", {
+  it('shows the lead of an instance at the top of its edit dialog', async () => {
+    renderPanel('?instance=smtp-nodemailer:a', {
       lead: (row) => <p>{`lead for ${row.id}`}</p>,
-    });
-    expect(await screen.findByText("lead for a")).toBeTruthy();
-  });
+    })
+    expect(await screen.findByText('lead for a')).toBeTruthy()
+  })
 
   it("opens the new record's editor after a create, so its lead shows there and not before", async () => {
     h.create.mockImplementationOnce(async () => {
-      h.records["smtp-nodemailer"] = [
-        ...(h.records["smtp-nodemailer"] ?? []),
+      h.records['smtp-nodemailer'] = [
+        ...(h.records['smtp-nodemailer'] ?? []),
         {
-          id: "x",
-          name: "New relay",
+          id: 'x',
+          name: 'New relay',
           configured: false,
           enabled: true,
           formValues: {},
         },
-      ];
-      return { id: "x" };
-    });
-    renderPanel("?instance=smtp-nodemailer:%2B", {
+      ]
+      return { id: 'x' }
+    })
+    renderPanel('?instance=smtp-nodemailer:%2B', {
       lead: (row) => <p>{`lead for ${row.id}`}</p>,
-    });
-    expect(await screen.findByText("Add SMTP")).toBeTruthy();
-    expect(screen.queryByText(/lead for/)).toBeNull();
-    fireEvent.click(await screen.findByRole("button", { name: "Create" }));
-    expect(await screen.findByText("lead for x")).toBeTruthy();
-    expect(window.location.search).toContain("instance=smtp-nodemailer%3Ax");
-  });
+    })
+    expect(await screen.findByText('Add SMTP')).toBeTruthy()
+    expect(screen.queryByText(/lead for/)).toBeNull()
+    fireEvent.click(await screen.findByRole('button', { name: 'Create' }))
+    expect(await screen.findByText('lead for x')).toBeTruthy()
+    expect(window.location.search).toContain('instance=smtp-nodemailer%3Ax')
+  })
 
-  it("shows no lead when the prop is absent", async () => {
-    renderPanel("?instance=smtp-nodemailer:a");
-    expect(await screen.findByText("Edit Relay A")).toBeTruthy();
-    expect(screen.queryByText(/lead for/)).toBeNull();
-  });
-});
+  it('shows no lead when the prop is absent', async () => {
+    renderPanel('?instance=smtp-nodemailer:a')
+    expect(await screen.findByText('Edit Relay A')).toBeTruthy()
+    expect(screen.queryByText(/lead for/)).toBeNull()
+  })
+})
 
-describe("InstancesTable slots", () => {
+describe('InstancesTable slots', () => {
   beforeEach(() => {
     h.fn.data = [
-      { addonId: "smtp-nodemailer", isActive: true },
-      { addonId: "loki-logging", isActive: true },
-    ];
-    h.holders.data = [{ addonId: "smtp-nodemailer", isActive: true }];
+      { addonId: 'smtp-nodemailer', isActive: true },
+      { addonId: 'loki-logging', isActive: true },
+    ]
+    h.holders.data = [{ addonId: 'smtp-nodemailer', isActive: true }]
     h.records = {
-      "smtp-nodemailer": [
+      'smtp-nodemailer': [
         {
-          id: "a",
-          name: "Relay A",
+          id: 'a',
+          name: 'Relay A',
           configured: true,
           enabled: true,
           formValues: {},
         },
       ],
-    };
-  });
+    }
+  })
 
-  it("draws rowActions on instance rows only, before Edit", async () => {
-    renderPanel("", {
+  it('draws rowActions on instance rows only, before Edit', async () => {
+    renderPanel('', {
       rowActions: (row) => <button type="button">{`join ${row.id}`}</button>,
-    });
-    const join = await screen.findByRole("button", { name: "join a" });
-    const edit = screen.getByRole("button", { name: "Edit Relay A" });
-    expect(
-      join.compareDocumentPosition(edit) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    })
+    const join = await screen.findByRole('button', { name: 'join a' })
+    const edit = screen.getByRole('button', { name: 'Edit Relay A' })
+    expect(join.compareDocumentPosition(edit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     // The fixed Loki row gets none.
-    expect(screen.getAllByRole("button", { name: /^join / })).toHaveLength(1);
-  });
+    expect(screen.getAllByRole('button', { name: /^join / })).toHaveLength(1)
+  })
 
-  it("draws fixedRowActions on fixed rows only, before Edit", async () => {
-    renderPanel("", {
-      fixedRowActions: (row) => (
-        <button type="button">{`start ${row.addonId}`}</button>
-      ),
-    });
-    expect(await screen.findByText("Relay A")).toBeTruthy();
+  it('draws fixedRowActions on fixed rows only, before Edit', async () => {
+    renderPanel('', {
+      fixedRowActions: (row) => <button type="button">{`start ${row.addonId}`}</button>,
+    })
+    expect(await screen.findByText('Relay A')).toBeTruthy()
     // The fixed Loki row gets the control; the instance rows get none.
-    expect(screen.getAllByRole("button", { name: /^start / })).toHaveLength(1);
-    expect(screen.queryByRole("button", { name: /^join / })).toBeNull();
-  });
+    expect(screen.getAllByRole('button', { name: /^start / })).toHaveLength(1)
+    expect(screen.queryByRole('button', { name: /^join / })).toBeNull()
+  })
 
-  it("narrows the rows to those the page keeps, and leaves the rest out", async () => {
+  it('narrows the rows to those the page keeps, and leaves the rest out', async () => {
     h.records = {
-      "smtp-nodemailer": [
+      'smtp-nodemailer': [
         {
-          id: "a",
-          name: "Relay A",
+          id: 'a',
+          name: 'Relay A',
           configured: true,
           enabled: true,
           formValues: {},
         },
         {
-          id: "b",
-          name: "Relay B",
+          id: 'b',
+          name: 'Relay B',
           configured: true,
           enabled: true,
           formValues: {},
         },
       ],
-    };
-    renderPanel("", {
-      rowFilter: (row) => row.kind === "fixed" || row.id !== "b",
-    });
-    expect(await screen.findByText("Relay A")).toBeTruthy();
-    expect(screen.queryByText("Relay B")).toBeNull();
-  });
+    }
+    renderPanel('', {
+      rowFilter: (row) => row.kind === 'fixed' || row.id !== 'b',
+    })
+    expect(await screen.findByText('Relay A')).toBeTruthy()
+    expect(screen.queryByText('Relay B')).toBeNull()
+  })
 
-  it("draws pageActions in the page header with the instance rows only, beside Add", async () => {
-    const seen: string[][] = [];
-    window.history.replaceState(null, "", "/");
+  it('draws pageActions in the page header with the instance rows only, beside Add', async () => {
+    const seen: string[][] = []
+    window.history.replaceState(null, '', '/')
     const client = new QueryClient({
       defaultOptions: { queries: { retry: false } },
-    });
+    })
     render(
       <QueryClientProvider client={client}>
         <MemoryRouter>
@@ -866,69 +845,65 @@ describe("InstancesTable slots", () => {
                 emptyDescription="Add one."
                 addLabel="Add destination"
                 pageActions={(rows) => {
-                  seen.push(rows.map((row) => row.id));
-                  return <button type="button">refresh all</button>;
+                  seen.push(rows.map((row) => row.id))
+                  return <button type="button">refresh all</button>
                 }}
               />
             </PageShell>
           </ConfirmDialogProvider>
         </MemoryRouter>
       </QueryClientProvider>,
-    );
-    const refresh = await screen.findByRole("button", { name: "refresh all" });
-    const add = screen.getByRole("button", { name: /Add destination/ });
-    expect(refresh.parentElement).toBe(add.parentElement);
-    expect(seen.at(-1)).toEqual(["a"]);
-  });
+    )
+    const refresh = await screen.findByRole('button', { name: 'refresh all' })
+    const add = screen.getByRole('button', { name: /Add destination/ })
+    expect(refresh.parentElement).toBe(add.parentElement)
+    expect(seen.at(-1)).toEqual(['a'])
+  })
 
-  it("draws no rowActions control when the prop is absent", async () => {
-    renderPanel();
-    expect(await screen.findByText("Relay A")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /^join / })).toBeNull();
-  });
+  it('draws no rowActions control when the prop is absent', async () => {
+    renderPanel()
+    expect(await screen.findByText('Relay A')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /^join / })).toBeNull()
+  })
 
-  describe("operator-typed id on create", () => {
-    const rule = { pattern: /^[a-z0-9][a-z0-9-]{0,63}$/ };
+  describe('operator-typed id on create', () => {
+    const rule = { pattern: /^[a-z0-9][a-z0-9-]{0,63}$/ }
     // The form builder's labels are not bound to their controls: step from the label to its input.
     const idInput = async (): Promise<HTMLInputElement> => {
-      const label = await screen.findByText(/^Id\b/);
-      const input = label.parentElement?.querySelector("input");
-      if (!input) throw new Error("no input beside the Id label");
-      return input;
-    };
+      const label = await screen.findByText(/^Id\b/)
+      const input = label.parentElement?.querySelector('input')
+      if (!input) throw new Error('no input beside the Id label')
+      return input
+    }
 
-    it("asks for an id, blocks Create until it is valid and sends it as the record id", async () => {
-      renderPanel("?instance=smtp-nodemailer:%2B", { typedId: () => rule });
-      const id = await idInput();
-      const create = await screen.findByRole("button", { name: "Create" });
-      expect((create as HTMLButtonElement).disabled).toBe(true);
-      fireEvent.change(id, { target: { value: "Bad Id!" } });
-      expect((create as HTMLButtonElement).disabled).toBe(true);
-      expect(
-        screen.getByText(/Lowercase letters, digits and dashes/),
-      ).toBeTruthy();
-      fireEvent.change(id, { target: { value: "office-sso" } });
-      await waitFor(() =>
-        expect((create as HTMLButtonElement).disabled).toBe(false),
-      );
-      fireEvent.click(create);
-      await waitFor(() => expect(h.create).toHaveBeenCalledTimes(1));
+    it('asks for an id, blocks Create until it is valid and sends it as the record id', async () => {
+      renderPanel('?instance=smtp-nodemailer:%2B', { typedId: () => rule })
+      const id = await idInput()
+      const create = await screen.findByRole('button', { name: 'Create' })
+      expect((create as HTMLButtonElement).disabled).toBe(true)
+      fireEvent.change(id, { target: { value: 'Bad Id!' } })
+      expect((create as HTMLButtonElement).disabled).toBe(true)
+      expect(screen.getByText(/Lowercase letters, digits and dashes/)).toBeTruthy()
+      fireEvent.change(id, { target: { value: 'office-sso' } })
+      await waitFor(() => expect((create as HTMLButtonElement).disabled).toBe(false))
+      fireEvent.click(create)
+      await waitFor(() => expect(h.create).toHaveBeenCalledTimes(1))
       expect(h.create.mock.calls[0]?.[0]).toMatchObject({
-        addonId: "smtp-nodemailer",
-        id: "office-sso",
-      });
-    });
+        addonId: 'smtp-nodemailer',
+        id: 'office-sso',
+      })
+    })
 
-    it("without a rule the id stays minted and no Id field is drawn", async () => {
-      renderPanel("?instance=smtp-nodemailer:%2B");
-      expect(await screen.findByText("Add SMTP")).toBeTruthy();
-      expect(screen.queryByText(/^Id\b/)).toBeNull();
-    });
+    it('without a rule the id stays minted and no Id field is drawn', async () => {
+      renderPanel('?instance=smtp-nodemailer:%2B')
+      expect(await screen.findByText('Add SMTP')).toBeTruthy()
+      expect(screen.queryByText(/^Id\b/)).toBeNull()
+    })
 
-    it("does not offer the field when editing an existing record", async () => {
-      renderPanel("?instance=smtp-nodemailer:a", { typedId: () => rule });
-      expect(await screen.findByText("Edit Relay A")).toBeTruthy();
-      expect(screen.queryByText(/^Id\b/)).toBeNull();
-    });
-  });
-});
+    it('does not offer the field when editing an existing record', async () => {
+      renderPanel('?instance=smtp-nodemailer:a', { typedId: () => rule })
+      expect(await screen.findByText('Edit Relay A')).toBeTruthy()
+      expect(screen.queryByText(/^Id\b/)).toBeNull()
+    })
+  })
+})

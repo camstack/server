@@ -11946,7 +11946,8 @@
     "typedIdHint": "Scelto una sola volta; non si può cambiare dopo la creazione.",
     "typedIdInvalid": "Lettere minuscole, cifre e trattini, a partire da una lettera o cifra (massimo 64).",
     "switchFailed": "Impossibile modificare {{name}}: {{message}}",
-    "noForm": "Questo record non ha un modulo di configurazione oltre al nome."
+    "noForm": "Questo record non ha un modulo di configurazione oltre al nome.",
+    "addonNotRunning": "{{addon}} non è in esecuzione: avvialo prima"
   },
   "instances": {
     "colStatus": "Stato",

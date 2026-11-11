@@ -425,6 +425,22 @@ describe('registration', () => {
     expect(await kit.registry.listIntegrations()).toHaveLength(1)
     expect(rawInstancesProvider(registered)).not.toBe(registered)
   })
+
+  it('refuses the switch before the hub half exists: the holder record alone is not its one store', async () => {
+    const kit = await makeKit()
+    const registry = { getCollectionEntries: () => [] }
+    const registered = instancesProviderOrThrow(
+      registeredProviderFor('integration-instances', kit.provider, registry, {
+        addonId: ADDON,
+        wrap: deferInstanceLifecycle(() => null, silentLogger()),
+      }),
+    )
+    const setOnRecord = vi.spyOn(kit.provider, 'setInstanceEnabled')
+    await expect(
+      registered.setInstanceEnabled({ id: 'any', enabled: false }),
+    ).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' })
+    expect(setOnRecord).not.toHaveBeenCalled()
+  })
 })
 
 describe('the switch of a fixed builtin is the registry flag', () => {

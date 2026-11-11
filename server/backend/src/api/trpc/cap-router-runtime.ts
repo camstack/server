@@ -38,6 +38,7 @@ import {
   resolveCapMount,
 } from '@camstack/types'
 import { TRPCError } from '@trpc/server'
+import { addonNotRunningError } from '../../core/addon/instance-lifecycle.js'
 import { requireDeviceScoped } from './cap-mount-helpers.js'
 import { requireDeviceCollection } from './device-collection-dispatch.js'
 import {
@@ -488,6 +489,8 @@ async function inferDeviceAdoptionCollectionAddonPin(
   })
 }
 
+const INSTANCES_CAP = 'integration-instances'
+
 /**
  * May a NON-admin session call a `caller: 'scoped'` method on this provider? Only an
  * `integration-instances` provider that declares `describe().userScoped`: the provider is asked,
@@ -497,7 +500,7 @@ async function userScopedAdmission(
   capName: string,
   provider: Readonly<Record<string, (input?: unknown) => unknown>>,
 ): Promise<boolean> {
-  if (capName !== 'integration-instances') return false
+  if (capName !== INSTANCES_CAP) return false
   const describe = provider['describe']
   if (typeof describe !== 'function') return false
   const description: unknown = await describe.call(provider)
@@ -573,12 +576,25 @@ export function createCapRouterServices(deps: CapRouterRuntimeDeps): CapRouterSe
    *
    * Refuses ONLY when the cap has providers and none matches: with zero local
    * providers the fallthrough is the legitimate forked-worker route and stays.
+   *
+   * `integration-instances` is the exception, refused in both cases and by
+   * name: every holder (forked ones included) registers here, so a pin that
+   * misses names an addon that is not running, and the hub proxy would answer
+   * for it from some other holder. The switch of an instance has one store,
+   * the addon's record — nothing keeps it while the addon is down (D1013).
    */
   const rejectUnresolvedAddonPin: NonNullable<CapRouterServices['rejectUnresolvedAddonPin']> = (
     capName,
     addonId,
   ) => {
     if (!reg) return
+    if (capName === INSTANCES_CAP) {
+      deps.logger?.warn('Refusing cap call: the pinned addon is not running', {
+        tags: { addonId },
+        meta: { capability: capName },
+      })
+      throw addonNotRunningError(addonId)
+    }
     const known = reg.getProviderAddonIds(capName)
     if (known.length === 0) return
     deps.logger?.warn('Refusing cap call: pinned addonId is not a provider of this capability', {

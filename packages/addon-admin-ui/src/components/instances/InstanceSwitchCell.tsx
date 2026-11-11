@@ -3,6 +3,8 @@
  * the same records (the Calendars list). It shows the record's answered `enabled`, writes only
  * `integrationInstances.setInstanceEnabled`, refreshes the instance queries on success, and says
  * why when the write fails (the switch then still shows the record, never the attempted value).
+ * When `addons.list` answered that the owning addon is not running, the hub would refuse the
+ * write: the switch is drawn disabled and says why, before anyone tries.
  */
 import { Switch } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
@@ -13,7 +15,10 @@ import { HOLDER_QUERY_KEY } from './use-instances-data'
 import { useSetInstanceEnabled } from './use-set-instance-enabled'
 
 export interface InstanceSwitchCellProps {
-  readonly row: Pick<InstanceRow, 'addonId' | 'id' | 'name' | 'enabled'>
+  readonly row: Pick<
+    InstanceRow,
+    'addonId' | 'providerName' | 'id' | 'name' | 'enabled' | 'notRunning'
+  >
   /** How many notification targets pin this instance; 0 shows no hint. */
   readonly pinning: number
   /** A page whose own queries depend on the switch refreshes them here. */
@@ -36,11 +41,17 @@ export function InstanceSwitchCell({
     },
     onError: setFailure,
   })
+  const notRunning =
+    row.notRunning === undefined
+      ? null
+      : t('providerInstances.addonNotRunning', '{{addon}} is not running: start it first', {
+          addon: row.providerName,
+        })
   return (
-    <span className="flex flex-col items-end gap-1">
+    <span className="flex flex-col items-end gap-1" title={notRunning ?? undefined}>
       <Switch
         checked={row.enabled}
-        disabled={setEnabled.isPending}
+        disabled={setEnabled.isPending || notRunning !== null}
         aria-label={t('providerInstances.enable', 'Enable {{name}}', { name: row.name })}
         data-testid={`instance-switch-${row.id}`}
         onCheckedChange={(enabled) => {
@@ -48,6 +59,9 @@ export function InstanceSwitchCell({
           setEnabled.mutate({ addonId: row.addonId, id: row.id, enabled })
         }}
       />
+      {notRunning !== null && (
+        <span className="text-[11px] text-foreground-subtle">{notRunning}</span>
+      )}
       {pinning > 0 && (
         <span className="text-[11px] text-foreground-subtle">
           {t('providerInstances.pinnedBy', { count: pinning })}
