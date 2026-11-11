@@ -1391,6 +1391,7 @@ export function DeviceDetailPage() {
                                 deviceId={deviceId}
                                 deviceName={name}
                                 deviceType={deviceTypeStr ?? 'unknown'}
+                                deviceRole={device?.role ?? null}
                                 provider={provider}
                                 isOnline={isOnline}
                                 features={capabilities}

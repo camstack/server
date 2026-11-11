@@ -17,7 +17,7 @@ const handle: CustomizationHandle = {
 describe('the running opt-out is the toggle, not a stored source', () => {
   it('reads as nothing stored, so the row never calls it another formula', () => {
     held.composition = {
-      target: { kind: 'new', type: DeviceType.Heater },
+      target: { kind: 'new', type: DeviceType.Fan },
       features: [runningOptOutFeature()],
     }
     expect(storedScalarFeature(handle, 'running-state', 'running')).toBeNull()

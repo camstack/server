@@ -37,10 +37,11 @@ export function ControlHero({
   deviceId,
   deviceName,
   deviceType,
+  deviceRole,
   features,
 }: HeroProps): ReactElement {
   const system = useSystem()
-  const control = resolveDeviceControl(deviceType)
+  const control = resolveDeviceControl(deviceType, deviceRole)
   const HeroCard = control?.HeroCard ?? DummyHeroCard
 
   const dev = useDeviceProxy(system.trpcClient, deviceId)

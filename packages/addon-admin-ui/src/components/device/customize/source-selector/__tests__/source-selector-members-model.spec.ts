@@ -49,7 +49,7 @@ describe('partitionMemberDevices', () => {
   it('offers a climate device to a temperature group and reads it from its current temperature', () => {
     const request = requestFor('temperature')
     const climate = device(5, 'climate', ['climate-control'], 'Climate veranda')
-    const both = device(6, 'thermostat', ['climate-control', 'temperature-sensor'], 'Hall')
+    const both = device(6, 'climate', ['climate-control', 'temperature-sensor'], 'Hall')
     expect(
       partitionMemberDevices([climate, both], request).compatible.map((row) => row.id),
     ).toEqual([5, 6])

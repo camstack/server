@@ -5,7 +5,7 @@ import {
   mediaPlayerExtensionCommands,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { canCreate, createNeedOf, nakedComposition, sourceRequestOf } from '../device-create-model'
+import { createNeedOf, nakedComposition, sourceRequestOf } from '../device-create-model'
 
 const PLUG: HelperMember = {
   source: { addonId: 'provider-homeassistant', stableId: 'switch.stove_plug' },
@@ -17,9 +17,7 @@ const PLAYER: HelperMember = {
   cap: 'media-player',
   fieldPath: 'state',
 }
-const METER: HelperMember = { ...PLUG, cap: 'power-meter', fieldPath: 'power' }
-
-const capsOf = (c: Composition | null): readonly string[] => (c?.features ?? []).map((f) => f.cap)
+const capsOf = (c: Composition): readonly string[] => (c?.features ?? []).map((f) => f.cap)
 
 describe('a device is created naked (D1004)', () => {
   it.each([
@@ -34,7 +32,7 @@ describe('a device is created naked (D1004)', () => {
   })
 
   it('never attaches power metrics, running state or consumables, whatever the source', () => {
-    for (const type of [DeviceType.Heater, DeviceType.MediaPlayer, DeviceType.Washer]) {
+    for (const type of [DeviceType.Switch, DeviceType.MediaPlayer, DeviceType.Washer]) {
       const caps = capsOf(nakedComposition(type, PLUG))
       for (const cap of ['power-meter', 'running-state', 'consumables', 'power-source']) {
         expect(caps).not.toContain(cap)
@@ -70,28 +68,21 @@ describe('media player', () => {
 
   it('asks for a media-player source, and the source is optional', () => {
     expect(sourceRequestOf(DeviceType.MediaPlayer)?.accept[0]?.cap).toBe('media-player')
-    expect(canCreate(DeviceType.MediaPlayer, null)).toBe(true)
+    expect(nakedComposition(DeviceType.MediaPlayer, null)).not.toBeNull()
   })
 })
 
-describe('heater', () => {
-  it('cannot be created before its plug is picked, nor from a non-switch member', () => {
-    expect(nakedComposition(DeviceType.Heater, null)).toBeNull()
-    expect(canCreate(DeviceType.Heater, METER)).toBe(false)
-    expect(nakedComposition(DeviceType.Heater, METER)).toBeNull()
+// D1033 — a plug-in heater is the plug itself (a switch with the heater
+// role), never a composed device that forwards to it.
+describe('no composed heater', () => {
+  it('no creatable type asks for a plug', () => {
+    for (const type of Object.values(DeviceType)) {
+      expect(sourceRequestOf(type)?.mustBindCaps ?? []).not.toContain('switch')
+      expect(createNeedOf(type)).not.toBe('control-source')
+    }
   })
 
-  it('is created with only the plug control: on/off forward to the plug', () => {
-    const composition = nakedComposition(DeviceType.Heater, PLUG)
-    expect(capsOf(composition)).toEqual(['switch'])
-    const feature = composition?.features[0]
-    expect(feature?.kind === 'fields' ? feature.commands : undefined).toEqual({
-      setState: { kind: 'forward', source: PLUG.source, cap: 'switch', method: 'setState' },
-    })
-  })
-
-  it('asks for a plug', () => {
-    expect(createNeedOf(DeviceType.Heater)).toBe('control-source')
-    expect(sourceRequestOf(DeviceType.Heater)?.mustBindCaps).toEqual(['switch'])
+  it('a switch is created naked, even with a plug picked', () => {
+    expect(nakedComposition(DeviceType.Switch, PLUG).features).toEqual([])
   })
 })

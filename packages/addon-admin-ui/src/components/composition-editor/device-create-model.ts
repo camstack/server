@@ -6,35 +6,32 @@
  *   media player  the media-player commands, forwarded to the picked source
  *                 when it exposes them, else naked (a remote is attached in
  *                 Customize, D964)
- *   heater        the plug it switches: on/off forward to it
  *   anything else naked
  */
 import {
   type Composition,
   type CompositionCommandTarget,
   type CompositionFeature,
-  type CompositionFieldSource,
   DeviceType,
   type HelperMember,
   mediaPlayerExtensionCommands,
   type SourcePickRequest,
-  sourcePickForHeaterPlug,
 } from '@camstack/types'
 
 export const MEDIA_PLAYER_CAP = 'media-player'
 
 /** What a type asks for at creation, besides a name. */
-export type DeviceCreateNeed = 'none' | 'media-source' | 'control-source'
+export type DeviceCreateNeed = 'none' | 'media-source'
 
 export function createNeedOf(type: DeviceType): DeviceCreateNeed {
+  // D1033 — a plug-in heater is no longer built: it is the plug itself, a
+  // switch with the heater role, set in Customize.
   if (type === DeviceType.MediaPlayer) return 'media-source'
-  if (type === DeviceType.Heater) return 'control-source'
   return 'none'
 }
 
 /** The source picker's request for a type; `null` when the type picks nothing. */
 export function sourceRequestOf(type: DeviceType): SourcePickRequest | null {
-  if (type === DeviceType.Heater) return sourcePickForHeaterPlug()
   if (type !== DeviceType.MediaPlayer) return null
   return {
     fieldChoice: 'operator',
@@ -49,28 +46,7 @@ export function sourceRequestOf(type: DeviceType): SourcePickRequest | null {
   }
 }
 
-/** A heater cannot be created before its plug is named; every other type can. */
-export function canCreate(type: DeviceType, source: HelperMember | null): boolean {
-  return type !== DeviceType.Heater || (source !== null && source.cap === 'switch')
-}
-
-const CLOCK: CompositionFieldSource = { kind: 'expression', expr: 'now', bindings: {} }
-
-function heaterControl(plug: HelperMember): CompositionFeature {
-  return {
-    kind: 'fields',
-    cap: 'switch',
-    fields: {
-      on: { kind: 'from', source: plug.source, cap: plug.cap, fieldPath: plug.fieldPath },
-      lastChangedAt: CLOCK,
-    },
-    commands: {
-      setState: { kind: 'forward', source: plug.source, cap: 'switch', method: 'setState' },
-    },
-  }
-}
-
-/** Every method the cap serves, each one a forward to the source (the heater's mechanism). */
+/** Every method the cap serves, each one a forward to the source. */
 function mediaPlayerCommands(source: HelperMember | null): CompositionFeature[] {
   if (source === null || source.cap !== MEDIA_PLAYER_CAP) return []
   const commands: Record<string, CompositionCommandTarget> = Object.fromEntries(
@@ -83,20 +59,12 @@ function mediaPlayerCommands(source: HelperMember | null): CompositionFeature[] 
 }
 
 /**
- * The composition a new device starts from, or `null` while the type still
- * lacks what it needs. No power metric, running state or consumable is ever
- * attached here.
+ * The composition a new device starts from. Every type can be created with
+ * just a name (a media player's source is optional). No power metric, running
+ * state or consumable is ever attached here.
  */
-export function nakedComposition(
-  type: DeviceType,
-  source: HelperMember | null,
-): Composition | null {
-  if (!canCreate(type, source)) return null
+export function nakedComposition(type: DeviceType, source: HelperMember | null): Composition {
   const features: CompositionFeature[] =
-    type === DeviceType.Heater && source !== null
-      ? [heaterControl(source)]
-      : type === DeviceType.MediaPlayer
-        ? mediaPlayerCommands(source)
-        : []
+    type === DeviceType.MediaPlayer ? mediaPlayerCommands(source) : []
   return { target: { kind: 'new', type }, features }
 }

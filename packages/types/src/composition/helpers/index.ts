@@ -121,7 +121,6 @@ export {
   type SourcePickHistory,
   type SourcePickRequest,
   type MathSourceKind,
-  sourcePickForHeaterPlug,
   sourcePickForHistory,
   sourcePickForMath,
   sourcePickForTemplate,

@@ -19,7 +19,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 
 function heater(extra: Composition['features'] = []): Composition {
   return {
-    target: { kind: 'new', type: DeviceType.Heater },
+    target: { kind: 'new', type: DeviceType.Fan },
     features: [
       {
         kind: 'fields',

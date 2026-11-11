@@ -154,7 +154,7 @@ describe('feature merge', () => {
   })
   it('a composed device stays when its last feature goes: it is created naked (D1004)', () => {
     const composed: Composition = {
-      target: { kind: 'new', type: DeviceType.Heater },
+      target: { kind: 'new', type: DeviceType.Fan },
       features: [BATTERY],
     }
     expect(withoutFeature(composed, 'battery')).toEqual({

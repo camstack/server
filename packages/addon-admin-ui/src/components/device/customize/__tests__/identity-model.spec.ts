@@ -29,6 +29,22 @@ describe('roleOptions — filtered by device type', () => {
     expect(options).not.toContain(DeviceRole.Floodlight)
   })
 
+  // D1033 — same controls, different thing: the operator picks which one.
+  it('offers the heater and fan roles on a Switch, and the climate roles on Climate', () => {
+    expect(roleOptions(null, DeviceType.Switch)).toEqual(
+      expect.arrayContaining([DeviceRole.SwitchHeater, DeviceRole.SwitchFan]),
+    )
+    expect(roleOptions(null, DeviceType.Climate)).toEqual([
+      DeviceRole.ClimateThermostat,
+      DeviceRole.ClimateAc,
+      DeviceRole.ClimateFloor,
+      DeviceRole.ClimateRadiator,
+      DeviceRole.ClimateHeater,
+      DeviceRole.ClimateHeatPumpCircuit,
+    ])
+    expect(roleOptions(null, DeviceType.Climate)).not.toContain(DeviceRole.SwitchHeater)
+  })
+
   it('offers nothing on a Camera (role is an accessory fact)', () => {
     expect(rolesForDeviceType(DeviceType.Camera)).toEqual([])
   })

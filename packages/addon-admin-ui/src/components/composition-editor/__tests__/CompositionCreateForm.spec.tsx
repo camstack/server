@@ -2,7 +2,7 @@
  * The empty create form does not wear Incomplete. Save lands on the new
  * device's Customize tab when the persisted list already names it.
  */
-import { selectOption } from '@camstack/ui-library/testing'
+import { selectOptionValues } from '@camstack/ui-library/testing'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
@@ -83,18 +83,14 @@ describe('CompositionCreateForm', () => {
     })
   })
 
-  it('a heater needs its plug before it can be saved, then forwards on/off to it', async () => {
-    create.mockClear()
+  // D1033 — a plug-in heater is the plug itself (a switch with the heater
+  // role): no heater or thermostat type is offered for creation.
+  it('offers no heater or thermostat type', () => {
     render(<CompositionCreateForm mode="blank" onTitle={() => undefined} />)
-    selectOption(screen.getByRole('combobox', { name: /type/i }), 'heater')
-    expect((screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement).disabled).toBe(true)
-    fireEvent.click(screen.getByText('pick-plug'))
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(create).toHaveBeenCalledTimes(1))
-    const calls = create.mock.calls as unknown as ReadonlyArray<
-      readonly [{ block: { composition: { features: ReadonlyArray<{ cap: string }> } } }]
-    >
-    expect(calls[0]?.[0].block.composition.features.map((f) => f.cap)).toEqual(['switch'])
+    const values = selectOptionValues(screen.getByRole('combobox', { name: /type/i }))
+    expect(values).toContain('switch')
+    expect(values).not.toContain('heater')
+    expect(values).not.toContain('thermostat')
   })
 
   it('finds the new device when the persisted list has not refreshed yet', async () => {

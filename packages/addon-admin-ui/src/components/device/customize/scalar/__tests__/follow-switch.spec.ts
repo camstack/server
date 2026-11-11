@@ -11,7 +11,7 @@ const PLUG = { addonId: 'provider-mqtt-ha', stableId: 'plug-1' }
 
 function heater(extra: Composition['features'] = []): Composition {
   return {
-    target: { kind: 'new', type: DeviceType.Heater },
+    target: { kind: 'new', type: DeviceType.Fan },
     features: [
       {
         kind: 'fields',

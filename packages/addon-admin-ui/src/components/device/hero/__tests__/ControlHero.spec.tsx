@@ -17,14 +17,16 @@ interface StatusSlice {
 }
 
 const statusSlice = vi.hoisted(() => ({ current: undefined as StatusSlice | undefined }))
+const resolveCalls = vi.hoisted(() => ({ args: [] as unknown[][] }))
 
 vi.mock('@camstack/ui-library', () => ({
   useSystem: () => ({ trpcClient: {} }),
   useDeviceProxy: () => ({ state: { deviceStatus: {} } }),
   useDeviceStateSlice: () => statusSlice.current,
-  resolveDeviceControl: () => ({
-    HeroCard: (): ReactNode => <div data-testid="hero-card" />,
-  }),
+  resolveDeviceControl: (...args: unknown[]) => {
+    resolveCalls.args.push(args)
+    return { HeroCard: (): ReactNode => <div data-testid="hero-card" /> }
+  },
   DummyHeroCard: (): ReactNode => <div data-testid="dummy-card" />,
   OfflineBadge: ({ lastChangedAt }: { lastChangedAt?: number | null }): ReactNode => (
     <div data-testid="offline-badge" data-last-changed={String(lastChangedAt)} />
@@ -82,5 +84,15 @@ describe('ControlHero offline badge', () => {
     render(<ControlHero {...heroProps} />)
     const badge = screen.getByTestId('offline-badge')
     expect(badge.getAttribute('data-last-changed')).toBe('123456')
+  })
+})
+
+// D1033 — the role picks among same-control devices: a switch with the heater
+// role must resolve the heater card, so the hero asks with type AND role.
+describe('ControlHero resolves the card by type and role', () => {
+  it('passes the device role to the control registry', () => {
+    resolveCalls.args = []
+    render(<ControlHero {...heroProps} deviceRole="switch-heater" />)
+    expect(resolveCalls.args).toContainEqual(['switch', 'switch-heater'])
   })
 })

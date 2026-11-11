@@ -18,6 +18,8 @@ export interface HeroProps {
   readonly deviceId: number
   readonly deviceName: string
   readonly deviceType: string
+  /** With the type, which device this is (D1033): a switch with the heater role is drawn as a heater. */
+  readonly deviceRole?: string | null
   readonly provider: string
   readonly isOnline: boolean
   readonly features: readonly string[]
@@ -37,7 +39,7 @@ type HeroComponent = (props: HeroProps) => ReactElement
  * handles everything else. Adding a new device type means adding a
  * file here + an entry in this map; no DeviceDetail churn.
  *
- * Switch, Siren, Light, Lock, Fan, Thermostat, MediaPlayer, Control now
+ * Switch, Siren, Light, Lock, Fan, Climate, MediaPlayer, Control now
  * route to `ControlHero` — a generic registry-driven hero that looks up
  * the type's `HeroCard` from the ui-library control registry. This keeps
  * the registry DRY: adding a real HeroCard in `panel-controls.tsx` is
@@ -65,13 +67,11 @@ const HERO_REGISTRY: Readonly<Partial<Record<DeviceType, HeroComponent>>> = {
   // HumidifierHeroCard / WaterHeaterHeroCard (climate-family hero graphics).
   [DeviceType.Humidifier]: ControlHero,
   [DeviceType.WaterHeater]: ControlHero,
-  [DeviceType.Heater]: ControlHero,
   // Container renders AS its primary child (same hero + discreet picker);
   // other children remain as detail tabs. See ContainerHero.
   [DeviceType.Container]: ContainerHero,
   [DeviceType.Lock]: ControlHero,
   [DeviceType.Fan]: ControlHero,
-  [DeviceType.Thermostat]: ControlHero,
   // Air-conditioner: ControlHero renders the registry-backed device card
   // (climate scene: dial, mode, fan, swing, presets — each only when declared).
   [DeviceType.Climate]: ControlHero,
@@ -136,8 +136,8 @@ export function resolveHero(deviceType: DeviceType): HeroComponent {
 
 /**
  * Render the hero for a non-camera device. Falls back to
- * `GenericHero` when no registry entry matches (Hub / Thermostat /
- * Generic, or an unknown future type).
+ * `GenericHero` when no registry entry matches (Hub / Generic, a retired
+ * type such as a stored 'heater' row, or an unknown future type).
  */
 function DeviceHeroRunningLine({ deviceId }: { readonly deviceId: number }): ReactElement {
   const system = useSystem()

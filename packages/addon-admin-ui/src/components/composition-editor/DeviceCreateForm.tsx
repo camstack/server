@@ -20,7 +20,7 @@ import { useNavigate } from 'react-router-dom'
 import { customizePath } from '../../lib/customization-routes'
 import { SourceSelector } from '../device/customize/source-selector/SourceSelector'
 import { awaitDeviceIdForBlock } from './await-device-id'
-import { canCreate, createNeedOf, nakedComposition, sourceRequestOf } from './device-create-model'
+import { createNeedOf, nakedComposition, sourceRequestOf } from './device-create-model'
 
 export interface DeviceCreateFormProps {
   readonly onTitle: (title: string) => void
@@ -46,7 +46,6 @@ export function DeviceCreateForm({ onTitle }: DeviceCreateFormProps): ReactNode 
   }, [onTitle, t])
 
   const save = async (): Promise<void> => {
-    if (composition === null) return
     setError(null)
     try {
       const trimmed = name.trim()
@@ -116,7 +115,7 @@ export function DeviceCreateForm({ onTitle }: DeviceCreateFormProps): ReactNode 
           {error}
         </p>
       )}
-      <Button disabled={!canCreate(type, source) || create.isPending} onClick={() => void save()}>
+      <Button disabled={create.isPending} onClick={() => void save()}>
         {t('compositionEditor.save')}
       </Button>
     </div>

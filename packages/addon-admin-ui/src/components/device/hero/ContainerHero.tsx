@@ -36,6 +36,7 @@ export function ContainerHero({ deviceId }: HeroProps): ReactElement {
     id: c.id,
     stableId: c.stableId,
     type: c.type,
+    ...(typeof c.role === 'string' ? { role: c.role } : {}),
     name: c.name,
     features: c.features,
     ...(c.sourceInfo ? { sourceInfo: { id: c.sourceInfo.id } } : {}),
