@@ -165,12 +165,13 @@ export function authSettingsHandlers(withCors: boolean) {
 
   return {
     'nodes.topology': [hub],
-    // system-config serves its form through the bootstrap action pair; the passkey section
-    // still comes from the addon-level settings read (auth-webauthn).
+    // system-config serves its form through the bootstrap action pair. The passkey
+    // section is the `login-method` capability; System → Settings drops that cap.
     'mut:addons.custom': { sections: [section] },
+    'addons.listCapabilityProviders': () => [],
     'addonSettings.listScopedSettings': (input: { addonId?: string }) =>
       input.addonId === 'auth-webauthn'
-        ? [{ cap: 'auth-webauthn', scope: 'cluster', sectionIds: [WEBAUTHN_SECTION.id] }]
+        ? [{ cap: 'login-method', scope: 'cluster', sectionIds: [WEBAUTHN_SECTION.id] }]
         : null,
     'addonSettings.getScopedSettings': (input: { addonId?: string }) =>
       input.addonId === 'auth-webauthn' ? { tabs: null, sections: [WEBAUTHN_SECTION] } : null,

@@ -55,6 +55,12 @@ describe('BootstrapSettingsForm', () => {
     expect(screen.getByDisplayValue('2h')).toBeTruthy()
   })
 
+  it('the unscoped form is System → Settings: the sign-in policy stays off it', () => {
+    render(<BootstrapSettingsForm emptyMessage="none" />)
+    expect(screen.getByDisplayValue('Casa')).toBeTruthy()
+    expect(screen.queryByDisplayValue('2h')).toBeNull()
+  })
+
   it('leaves the omitted sections to the other surface', () => {
     render(<BootstrapSettingsForm omitSectionIds={['system-config-auth']} emptyMessage="none" />)
     expect(screen.getByDisplayValue('Casa')).toBeTruthy()

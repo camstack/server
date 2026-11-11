@@ -1,9 +1,6 @@
 {
   "_why": "Files that draw a second list or control of a collection next to its InstancesTable (planning#505). Each entry names the page work that deletes it. The list only shrinks.",
   "families": {
-    "settings": {
-      "packages/addon-admin-ui/src/pages/system/Settings.tsx": "#505 item 4, deferred: the global Settings panel lists every hub addon's settings, so removing omitSectionIds needs a derived rule (skip addons that provide an instance-table function cap) in NodeAddonsSettingsPanel/BootstrapSettingsForm plus the auth-policy-placement spec; not a page-local change"
-    },
     "terminal": {
       "packages/addon-admin-ui/src/pages/system/Terminal.tsx": "#505 item 5, deferred: the per-node presence card (ready / not installed / unknown) has no counterpart in InstancesTable yet and the legacy-cameras list carries a one-off Adopt BTM action; both need an InstancesTable empty-state/migration slot designed first"
     }

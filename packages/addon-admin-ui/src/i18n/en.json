@@ -5699,7 +5699,8 @@
       "saveFailed": "Save failed:",
       "nothingToConfigureHereFor": "Nothing to configure here for this node.",
       "noAddonsIn": "No addons in {{scope}} expose {{level}}-level settings on this node.",
-      "addonUnavailable": "{{name}} not available."
+      "addonUnavailable": "{{name}} not available.",
+      "providerPagesUnknown": "Could not check which settings already live on a connection page: {{reason}}"
     },
     "siteLocationCard": {
       "siteLocation": "Site location",

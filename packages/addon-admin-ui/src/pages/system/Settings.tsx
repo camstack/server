@@ -10,7 +10,9 @@
  * Everything below re-uses `NodeAddonsSettingsPanel` at `level: 'global'`
  * — same component the cluster's Settings sub-tab uses. Adding an addon
  * on the hub automatically surfaces its scoped forms (`listScopedSettings`) here
- * without touching this file.
+ * without touching this file. A section whose capability an InstancesTable
+ * already shows is that page's: the panel drops it. The sign-in policy is a
+ * bootstrap section, and the unscoped form leaves it on Identity → Authentication.
  *
  * The last group is per-user, not per-hub: Units (an account preference) and
  * a read-only list of the active keyboard shortcuts.
@@ -25,7 +27,6 @@
 import { useClusterNodes } from '@camstack/ui-library'
 import { Settings as SettingsIcon } from 'lucide-react'
 import { AdminPage } from '../../components/AdminPage'
-import { AUTH_POLICY_SECTION_ID, WEBAUTHN_SECTION_ID } from './Authentication'
 import { NodeAddonsSettingsPanel } from '../../components/settings/NodeAddonsSettingsPanel'
 import { BootstrapSettingsForm } from '../../components/system/BootstrapSettingsForm'
 import { HotkeysCard } from '../../components/settings/HotkeysCard'
@@ -68,7 +69,6 @@ export function SettingsPage() {
       ) : (
         <>
           <BootstrapSettingsForm
-            omitSectionIds={[AUTH_POLICY_SECTION_ID]}
             emptyMessage={t(
               'admin.system.settings.bootstrapUnavailable',
               'Not available — the addon that owns the server settings did not answer.',
@@ -82,12 +82,7 @@ export function SettingsPage() {
               )}
             </div>
           ) : (
-            <NodeAddonsSettingsPanel
-              nodeId={hub.id}
-              addonIds={addonIds}
-              level="global"
-              omitSectionIds={[AUTH_POLICY_SECTION_ID, WEBAUTHN_SECTION_ID]}
-            />
+            <NodeAddonsSettingsPanel nodeId={hub.id} addonIds={addonIds} level="global" />
           )}
         </>
       )}

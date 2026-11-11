@@ -72,6 +72,7 @@ import {
   type ScopedTarget,
 } from '../../lib/settings-scoped-source'
 import { shapeSections, shownTab, type SectionShape } from '../../lib/settings-section-shape'
+import { isAggregateSettingsSurface, useProviderPageCaps } from './provider-page-settings'
 
 import {
   useAddonSettingsUpdateDeviceSettings,
@@ -348,6 +349,20 @@ export function NodeAddonsSettingsPanel({
 
   const effectiveNodeId = nodeId ?? 'hub'
 
+  // System → Settings lists every hub addon and names no section. Sections whose
+  // capability an InstancesTable already shows are that page's, so they are not
+  // fetched here. A narrowed surface (a dialog, a node card) keeps them.
+  const aggregate = isAggregateSettingsSurface({
+    level,
+    ...(capability !== undefined ? { capability } : {}),
+    ...(sectionIds !== undefined ? { sectionIds } : {}),
+    ...(fieldScope !== undefined ? { fieldScope } : {}),
+    ...(fieldKeys !== undefined ? { fieldKeys } : {}),
+  })
+  const providerPages = useProviderPageCaps(aggregate)
+  const providerCapKey =
+    providerPages.phase === 'ready' ? [...providerPages.caps].sort().join('\n') : ''
+
   // ── Parallel fetches ─────────────────────────────────────────────
   // `useQueries` lets us issue one tRPC call per addonId without
   // violating hook rules (all at once, keys derived from addonIds).
@@ -366,8 +381,10 @@ export function NodeAddonsSettingsPanel({
           scope: fieldScope ?? null,
           // The selection is part of what was fetched.
           sections: [sectionIds ?? null, omitSectionIds ?? null],
+          providerCaps: providerCapKey,
         },
       ],
+      enabled: providerPages.phase !== 'loading',
       queryFn: async (): Promise<AddonSettingsAnswer> => {
         if (level === 'global') {
           // The addon's scoped schemas: what it serves, per (cap, scope). `null` is
@@ -377,8 +394,12 @@ export function NodeAddonsSettingsPanel({
             nodeId: effectiveNodeId,
           })
           if (declarations === null) return { addonId, result: null, keyTargets: {} }
+          const visible =
+            providerPages.phase === 'ready'
+              ? declarations.filter((declaration) => !providerPages.caps.has(declaration.cap))
+              : declarations
           const selected = selectDeclarations({
-            declarations,
+            declarations: visible,
             ...(fieldScope !== undefined ? { fieldScope } : {}),
             ...(capability !== undefined ? { capability } : {}),
             ...(sectionIds !== undefined ? { allowSectionIds: sectionIds } : {}),
@@ -426,7 +447,7 @@ export function NodeAddonsSettingsPanel({
     })),
   })
 
-  const isLoading = queries.some((q) => q.isLoading)
+  const isLoading = providerPages.phase === 'loading' || queries.some((q) => q.isLoading)
 
   // `useQueries` returns a brand-new array on every render, so a
   // `useMemo(..., [queries])` below would never hit the cache — its
@@ -989,6 +1010,19 @@ export function NodeAddonsSettingsPanel({
           onChange={selectTab}
           pendingByTab={pendingByTab}
         />
+      )}
+
+      {providerPages.error !== null && (
+        <div
+          role="alert"
+          className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger"
+        >
+          {t(
+            'settings.nodeAddonsSettingsPanel.providerPagesUnknown',
+            'Could not check which settings already live on a connection page: {{reason}}',
+            { reason: providerPages.error },
+          )}
+        </div>
       )}
 
       {saveMutation.isError && (

@@ -4,9 +4,10 @@
  * `saveBootstrapForm`.
  *
  * A surface picks the sections it draws (`sectionIds`) or the ones it leaves to
- * another surface (`omitSectionIds`): Identity -> Authentication draws the
- * sign-in policy, System -> Settings the rest. Edits are held until Save; a
- * refused save (a bad CIDR or origin) writes nothing and says why.
+ * another surface (`omitSectionIds`). With neither, this is System → Settings:
+ * the sign-in policy stays on Identity → Authentication, every other section
+ * stays here. Edits are held until Save; a refused save (a bad CIDR or origin)
+ * writes nothing and says why.
  */
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -17,6 +18,7 @@ import { useBootstrapForm, useSaveBootstrapForm } from '../../hooks/use-bootstra
 import { useFormSaveController } from '../../hooks/useFormSaveController'
 import { flatFormValues } from '../../lib/config-schema-values'
 import { shapeSections } from '../../lib/settings-section-shape'
+import { SIGN_IN_POLICY_SECTION_ID } from '../../lib/sign-in-policy-section'
 
 interface BootstrapSettingsFormProps {
   /** Draw only these sections. */
@@ -38,11 +40,13 @@ export function BootstrapSettingsForm({
   const form = useBootstrapForm()
   const shown = useMemo((): ConfigUISchemaWithValues | null => {
     if (form.data === undefined) return null
-    const sections = form.data.sections.filter(
-      (s) =>
-        (sectionIds === undefined || sectionIds.includes(s.id)) &&
-        !(omitSectionIds?.includes(s.id) ?? false),
-    )
+    const sections = form.data.sections.filter((s) => {
+      if (sectionIds !== undefined && !sectionIds.includes(s.id)) return false
+      if (omitSectionIds?.includes(s.id) === true) return false
+      // Unscoped: the sign-in policy's owner is the Authentication page.
+      if (sectionIds === undefined && s.id === SIGN_IN_POLICY_SECTION_ID) return false
+      return true
+    })
     return {
       ...form.data,
       sections: shapeSections(sections, {

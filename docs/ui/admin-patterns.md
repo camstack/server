@@ -644,7 +644,9 @@ Do not write a page-local list of connections or a raw `<table>` for one. Two gu
 beside the table, no `AddonIntegrationBody` / enable switch outside the owner dirs, no
 hand-written addon or package id, no per-provider card under the table, no `omitSectionIds` in a
 page). Its baseline (`scripts/no-stacked-provider-lists-baseline.json`) only shrinks; each entry
-names the page work that removes it.
+names the page work that removes it. System → Settings does not keep its own omit list: the
+aggregate panel drops a section whose capability is an InstancesTable function cap (`login-method`
+included), and the unscoped bootstrap form leaves the sign-in policy on Identity → Authentication.
 
 ## System is one page with tabs; a page with its own `?tab=` stays out
 

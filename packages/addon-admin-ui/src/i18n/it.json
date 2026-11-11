@@ -5774,7 +5774,8 @@
       "saveFailed": "Salvataggio fallito:",
       "nothingToConfigureHereFor": "Nulla da configurare qui per questo nodo.",
       "noAddonsIn": "Nessun addon in {{scope}} espone impostazioni di livello {{level}} su questo nodo.",
-      "addonUnavailable": "{{name}} non disponibile."
+      "addonUnavailable": "{{name}} non disponibile.",
+      "providerPagesUnknown": "Non è stato possibile verificare quali impostazioni sono già su una pagina di connessione: {{reason}}"
     },
     "siteLocationCard": {
       "siteLocation": "Posizione del sito",

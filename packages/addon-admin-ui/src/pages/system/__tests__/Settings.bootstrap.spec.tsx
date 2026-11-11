@@ -32,8 +32,6 @@ vi.mock('../../../components/settings/NodeAddonsSettingsPanel', () => ({
 vi.mock('../../../components/system/BootstrapSettingsForm', () => ({
   BootstrapSettingsForm: () => <div data-testid="bootstrap-form" />,
 }))
-vi.mock('../Authentication', () => ({ AUTH_POLICY_SECTION_ID: 'a', WEBAUTHN_SECTION_ID: 'w' }))
-
 import { SettingsPage } from '../Settings'
 
 afterEach(cleanup)

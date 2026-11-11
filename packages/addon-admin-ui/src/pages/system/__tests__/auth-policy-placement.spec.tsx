@@ -2,7 +2,10 @@
 /**
  * The system-config auth section (token lifetimes, trusted proxies, trusted
  * networks, allowed browser origins) renders in exactly one place: Identity ->
- * Authentication. System -> Settings omits it.
+ * Authentication, which asks the bootstrap form for that section. System ->
+ * Settings asks for no section and names no omit list: the form leaves the
+ * sign-in policy out, and the aggregate panel drops function-cap sections
+ * (passkeys included) on its own.
  */
 import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -86,26 +89,18 @@ describe('system-config auth section placement', () => {
     expect(screen.queryByTestId('panel')).toBeNull()
   })
 
-  it('System -> Settings draws the bootstrap form without the auth section, and no system-config pane', () => {
+  it('System -> Settings does not hand-pick sections, and draws no system-config pane', () => {
     render(
       <MemoryRouter>
         <SettingsPage />
       </MemoryRouter>,
     )
-    expect(screen.getByTestId('bootstrap-form').dataset.omit?.split(',')).toContain(
-      'system-config-auth',
-    )
-    expect(screen.getByTestId('panel').dataset.addons).not.toContain('system-config')
-  })
-
-  it('System -> Settings omits webauthn and shows Units and Hotkeys', () => {
-    render(
-      <MemoryRouter>
-        <SettingsPage />
-      </MemoryRouter>,
-    )
+    const form = screen.getByTestId('bootstrap-form')
+    expect(form.dataset.sections).toBe('')
+    expect(form.dataset.omit).toBe('')
     const panel = screen.getByTestId('panel')
-    expect(panel.dataset.omit?.split(',')).toContain('webauthn')
+    expect(panel.dataset.omit).toBe('')
+    expect(panel.dataset.addons).not.toContain('system-config')
     expect(screen.getByTestId('units')).toBeTruthy()
     expect(screen.getByTestId('hotkeys')).toBeTruthy()
   })
