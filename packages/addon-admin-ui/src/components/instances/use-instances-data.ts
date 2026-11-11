@@ -7,8 +7,9 @@
 import { useAddonsList, useAddonsListCapabilityProviders, useSystem } from '@camstack/ui-library'
 import { useQueries } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
-import { buildAddonDisplayNameMap } from '../../lib/addon-display-names'
 import {
+  addonDescriptions,
+  providerNamesByAddon,
   buildRows,
   deriveState,
   type FunctionProvider,
@@ -33,19 +34,6 @@ export interface InstancesData {
   readonly displayNames: ReadonlyMap<string, string>
   readonly descriptions: ReadonlyMap<string, string>
   readonly refetch: () => void
-}
-
-/** addonId → manifest description, so an addon describes itself. */
-function descriptionMap(addons: readonly unknown[]): ReadonlyMap<string, string> {
-  const map = new Map<string, string>()
-  for (const raw of addons) {
-    const manifest = (raw as { manifest?: { id?: unknown; description?: unknown } } | null)
-      ?.manifest
-    if (typeof manifest?.id === 'string' && typeof manifest.description === 'string') {
-      if (manifest.description.length > 0) map.set(manifest.id, manifest.description)
-    }
-  }
-  return map
 }
 
 export function useInstancesData(functionCap: string): InstancesData {
@@ -102,16 +90,23 @@ export function useInstancesData(functionCap: string): InstancesData {
     [holderQueries, functionCap],
   )
   const displayNames = useMemo(
-    () => buildAddonDisplayNameMap(addonsQuery.data ?? []),
+    () => providerNamesByAddon(addonsQuery.data ?? []),
     [addonsQuery.data],
   )
-  const descriptions = useMemo(() => descriptionMap(addonsQuery.data ?? []), [addonsQuery.data])
+  const descriptions = useMemo(() => addonDescriptions(addonsQuery.data ?? []), [addonsQuery.data])
 
   // Only an ANSWERED `addons.list` says an addon is down; while it is pending nothing is claimed.
   const notRunning = useMemo(() => notRunningAddons(addonsQuery.data ?? []), [addonsQuery.data])
 
   const rows = useMemo<readonly PanelRow[]>(
-    () => buildRows({ functionProviders, holders, displayNames, descriptions, notRunning }),
+    () =>
+      buildRows({
+        functionProviders,
+        holders,
+        displayNames,
+        descriptions,
+        notRunning,
+      }),
     [functionProviders, holders, displayNames, descriptions, notRunning],
   )
 

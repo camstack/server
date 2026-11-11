@@ -105,6 +105,17 @@ describe('check-no-stacked-provider-lists', () => {
     expect(stackedListBreaches(file('components/settings/P.tsx', 'omitSectionIds'))).toEqual([])
   })
 
+  it('flags a per-addon display-name map outside the instances table, lib included', () => {
+    const text = 'const names = providerNamesByAddon(addons)'
+    expect(stackedListBreaches(file('pages/system/Tunnels.tsx', text)).join()).toContain(
+      'providerNamesByAddon',
+    )
+    expect(stackedListBreaches(file('lib/names.ts', text)).join()).toContain('providerNamesByAddon')
+    expect(stackedListBreaches(file('components/instances/use-instances-data.ts', text))).toEqual(
+      [],
+    )
+  })
+
   it('leaves a clean page, a spec and files outside admin-ui alone', () => {
     expect(stackedListBreaches(CLEAN_PAGE)).toEqual([])
     expect(

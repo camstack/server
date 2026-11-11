@@ -4,6 +4,8 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
+  addonDescriptions,
+  providerNamesByAddon,
   formStartValues,
   effectiveInstanceValues,
   buildRows,
@@ -485,5 +487,51 @@ describe('formStartValues', () => {
         ],
       }),
     ).toEqual(body)
+  })
+})
+
+describe('addon labels read from addons.list', () => {
+  it('prefers the addon name over the package name: one package ships several addons', () => {
+    const names = providerNamesByAddon([
+      {
+        manifest: {
+          id: 'cloudflare-tunnel',
+          name: 'Cloudflare Tunnel',
+          packageDisplayName: 'Cloudflare',
+        },
+      },
+      {
+        manifest: {
+          id: 'cloudflare-turn',
+          name: 'Cloudflare TURN',
+          packageDisplayName: 'Cloudflare',
+        },
+      },
+    ])
+    expect(names.get('cloudflare-tunnel')).toBe('Cloudflare Tunnel')
+    expect(names.get('cloudflare-turn')).toBe('Cloudflare TURN')
+  })
+
+  it('falls back to the package name, then the id', () => {
+    const names = providerNamesByAddon([
+      { manifest: { id: 'a', packageDisplayName: 'Pkg A' } },
+      { manifest: { id: 'b' } },
+    ])
+    expect(names.get('a')).toBe('Pkg A')
+    expect(names.get('b')).toBe('b')
+  })
+
+  it('skips rows that are not an addon', () => {
+    expect(providerNamesByAddon([null, {}, { manifest: {} }, 42, 'nope']).size).toBe(0)
+    expect(addonDescriptions([null, {}, { manifest: { id: 'a' } }, 42]).size).toBe(0)
+  })
+
+  it('keeps a non-empty manifest description by addon id', () => {
+    const descriptions = addonDescriptions([
+      { manifest: { id: 'a', description: 'Sends mail' } },
+      { manifest: { id: 'b', description: '' } },
+    ])
+    expect(descriptions.get('a')).toBe('Sends mail')
+    expect(descriptions.has('b')).toBe(false)
   })
 })

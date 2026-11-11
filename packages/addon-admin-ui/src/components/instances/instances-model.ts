@@ -144,6 +144,40 @@ export function notRunningAddons(addons: readonly unknown[]): ReadonlyMap<string
   return out
 }
 
+/**
+ * addonId -> the name a provider row shows, read from what `addons.list` answered. The ADDON's own
+ * `name` wins over the package's `packageDisplayName`: one package ships several addons, and two
+ * rows of one table under the same package name could not be told apart.
+ */
+export function providerNamesByAddon(addons: readonly unknown[]): ReadonlyMap<string, string> {
+  const out = new Map<string, string>()
+  for (const addon of addons) {
+    const manifest = fieldOf(addon, 'manifest')
+    const id = fieldOf(manifest, 'id')
+    if (typeof id !== 'string' || id.length === 0) continue
+    const name = fieldOf(manifest, 'name')
+    const packageName = fieldOf(manifest, 'packageDisplayName')
+    out.set(
+      id,
+      typeof name === 'string' ? name : typeof packageName === 'string' ? packageName : id,
+    )
+  }
+  return out
+}
+
+/** addonId -> manifest description, so an addon describes itself. */
+export function addonDescriptions(addons: readonly unknown[]): ReadonlyMap<string, string> {
+  const out = new Map<string, string>()
+  for (const addon of addons) {
+    const manifest = fieldOf(addon, 'manifest')
+    const id = fieldOf(manifest, 'id')
+    const description = fieldOf(manifest, 'description')
+    if (typeof id !== 'string' || typeof description !== 'string') continue
+    if (description.length > 0) out.set(id, description)
+  }
+  return out
+}
+
 /** The kind a record names, among the kinds its provider declared. */
 export function findKind(
   description: IntegrationInstanceDescription,

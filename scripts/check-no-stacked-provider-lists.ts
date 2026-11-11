@@ -18,7 +18,7 @@
  * 5. A file that renders `InstancesTable` and a `SectionCard` whose body maps over providers, servers
  *    or nodes: a card re-drawing the table's rows.
  * 6. `omitSectionIds` written in a page: one surface hand-excluding what another one draws.
- * 7. `buildAddonDisplayNameMap` in a page or component outside the instances table: a per-addon name
+ * 7. `providerNamesByAddon` in a page or component outside the instances table: a per-addon name
  *    map for pill rows the table replaces.
  * 8. `<IntegrationHub>` in a page over a function cap that an `integration-instances` kind names
  *    (`functionCap:` anywhere in the scanned sources): the hub stacked on the same collection,
@@ -72,7 +72,7 @@ const SWITCH_RE =
 const SECTION_CARD_RE = /<SectionCard\b/
 const PROVIDER_MAP_RE = /\b\w*(?:[Pp]rovider|[Ss]erver|[Nn]ode|[Ss]ource)s?\w*\.map\(/
 const OMIT_RE = /\bomitSectionIds\b/
-const DISPLAY_NAME_MAP_RE = /\bbuildAddonDisplayNameMap\b/
+const DISPLAY_NAME_MAP_RE = /\bproviderNamesByAddon\b/
 /** An addon id or a package name as a literal in a comparison, a startsWith or a map key. */
 const ADDON_ID = String.raw`(?:@camstack/[a-z0-9-]+|(?:auth|addon|provider)-[a-z0-9-]+)`
 const ADDON_ID_RES: readonly RegExp[] = [
@@ -145,8 +145,8 @@ export function stackedListBreaches(
   if (file.path.startsWith(`${ADMIN_UI_SRC}pages/`) && OMIT_RE.test(text)) {
     out.push('a page excluding settings sections by hand (omitSectionIds)')
   }
-  if (!owner && !file.path.startsWith(`${ADMIN_UI_SRC}lib/`) && DISPLAY_NAME_MAP_RE.test(text)) {
-    out.push('a page-level per-addon display-name map (buildAddonDisplayNameMap) for pill rows')
+  if (!owner && DISPLAY_NAME_MAP_RE.test(text)) {
+    out.push('a page-level per-addon display-name map (providerNamesByAddon) for pill rows')
   }
   return out
 }
