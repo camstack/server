@@ -19,6 +19,7 @@ export function ConnectedClimateCard({
   canActuate = true,
   orientation,
   optimistic = true,
+  showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
   const client = useTrpcClient()
@@ -68,6 +69,7 @@ export function ConnectedClimateCard({
   return (
     <ClimateCard
       orientation={orientation}
+      showName={showName}
       model={{ common, ...scene }}
       actions={{
         ...actions,

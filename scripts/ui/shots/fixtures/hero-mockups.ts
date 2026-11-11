@@ -87,6 +87,35 @@ export default defineFixtures({
         access: { canActuate: i.canActuate !== false },
       })
     },
+    // The device row and its slices, so `DeviceDetailModule` picks the device
+    // card (plug, climate) where it would on a hub, not the hero fallback.
+    'deviceManager.getDevice': (i: { deviceId?: number }) => {
+      const spec = MOCKUP_SPECS[i.deviceId ?? 0]
+      if (spec === undefined) return null
+      return {
+        id: i.deviceId ?? 0,
+        stableId: `mockup.${i.deviceId ?? 0}`,
+        addonId: spec.provider,
+        type: spec.type,
+        name: spec.name,
+        location: null,
+        disabled: false,
+        parentDeviceId: null,
+        role: spec.role ?? null,
+        online: true,
+        probed: true,
+        features: spec.features ?? [],
+        isCamera: spec.type === 'camera',
+        config: {},
+        secretConfigPaths: [],
+        metadata: {},
+      }
+    },
+    'deviceState.getCapSlice': (i: { deviceId?: number; capName?: string }) =>
+      MOCKUP_SPECS[i.deviceId ?? 0]?.slices[i.capName ?? ''] ??
+      (i.capName === 'device-status' ? { online: true, lastChangedAt: NOW } : {}),
+    'preferences.get': { rows: [] },
+    'auth.deviceAccess': { view: true, command: true },
     'deviceManager.getBindings': (i: { deviceId: number }) => ({
       deviceId: i.deviceId,
       entries: (MOCKUP_SPECS[i.deviceId]?.caps ?? []).map((c) =>

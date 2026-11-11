@@ -2566,6 +2566,12 @@
           "type": "CardOrientation",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Draw the device name (default true); false when the host already names the device."
         }
       ]
     },
@@ -3168,6 +3174,12 @@
           "type": "boolean",
           "optional": true,
           "doc": "Show a command's effect before the device confirms it (default: true)."
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Draw the device name (default true); false when the host already names the device."
         }
       ]
     },
@@ -4406,6 +4418,12 @@
           "type": "string",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Draw the device name (default true); false when the host already names the device."
         }
       ]
     },
@@ -10715,6 +10733,12 @@
           "type": "CardOrientation",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Draw the device name (default true); false when the host already names the device."
         }
       ]
     },

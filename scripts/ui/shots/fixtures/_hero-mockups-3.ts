@@ -165,4 +165,31 @@ export const SPECS_TUTTI3: Readonly<Record<number, MockupSpec>> = {
       },
     },
   },
+  // Not in the mockups: the caps the viewer's old native detail drew on its
+  // own (motion trigger, the generic readings), so the device card is shot
+  // with every one of them.
+  1320: {
+    name: 'Camera with motion trigger',
+    integration: 'Reolink',
+    type: 'camera',
+    provider: 'Reolink',
+    caps: ['device-status', 'motion', 'motion-trigger'],
+    slices: {
+      motion: { detected: false, lastDetectedAt: NOW - 20 * 60_000, autoClearAfterMs: null },
+      'motion-trigger': { enabled: true, lastChangedAt: NOW - 3_600_000, lastFetchedAt: NOW },
+    },
+  },
+  1321: {
+    name: 'Garden sensor',
+    integration: 'Zigbee',
+    type: 'sensor',
+    provider: 'Zigbee',
+    caps: ['device-status', 'ambient-light-sensor', 'numeric-sensor', 'enum-sensor', 'battery'],
+    slices: {
+      'ambient-light-sensor': { illuminance: 320, lastFetchedAt: NOW },
+      'numeric-sensor': { value: 42, lastFetchedAt: NOW },
+      'enum-sensor': { value: 'dry', lastFetchedAt: NOW },
+      battery: battery(64),
+    },
+  },
 }

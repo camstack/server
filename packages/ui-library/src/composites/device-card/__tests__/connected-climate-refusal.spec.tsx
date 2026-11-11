@@ -79,3 +79,14 @@ describe('ConnectedClimateCard — a refused command says why on the card', () =
     await vi.waitFor(() => expect(screen.queryByTestId('dc-reason')).toBeNull())
   })
 })
+
+describe('ConnectedClimateCard — showName', () => {
+  it('draws the name by default and leaves it out when the host names the device', () => {
+    render(<ConnectedClimateCard deviceId={1} />)
+    expect(screen.queryByTestId('dc-name')).not.toBeNull()
+    cleanup()
+    render(<ConnectedClimateCard deviceId={1} showName={false} />)
+    expect(screen.queryByTestId('dc-name')).toBeNull()
+    expect(screen.queryByTestId('dc-top')).not.toBeNull()
+  })
+})

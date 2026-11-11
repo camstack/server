@@ -19,6 +19,8 @@ export interface PlugCardProps {
   readonly model: PlugCardModel
   readonly actions: PlugCardActions
   readonly orientation?: CardOrientation
+  /** Draw the device name (default true); false when the host already names the device. */
+  readonly showName?: boolean
 }
 
 interface TimerProps {
@@ -86,6 +88,7 @@ export function PlugCard({
   model,
   actions,
   orientation = 'vertical',
+  showName = true,
 }: PlugCardProps): ReactElement {
   const t = useUiText()
   const on = model.on === true
@@ -101,6 +104,7 @@ export function PlugCard({
       common={model.common}
       actions={actions}
       orientation={orientation}
+      showName={showName}
       activity={on ? 'on' : 'off'}
       state={{ label, since: model.since, tone: on ? 'primary' : 'muted' }}
       scene={{

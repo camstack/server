@@ -269,3 +269,19 @@ describe('shell behaviour shared by every scene', () => {
     expect(actions.onRemoteKey).toHaveBeenCalledWith('run30')
   })
 })
+
+describe('a host that names the device itself', () => {
+  it('drops the name from the plug and the climate card and keeps the rest of the shell', () => {
+    const plug = plugFixtures(NOW)[0]
+    const climate = CLIMATE_FIXTURES[0]
+    if (plug === undefined || climate === undefined) throw new Error('no fixtures')
+    render(<PlugCard model={plug.model} actions={plugActions()} showName={false} />)
+    expect(present('dc-name')).toBe(false)
+    expect(present('dc-top')).toBe(true)
+    expect(present('dc-scene')).toBe(true)
+    cleanup()
+    render(<ClimateCard model={climate.model} actions={climateActions()} showName={false} />)
+    expect(present('dc-name')).toBe(false)
+    expect(present('dc-scene')).toBe(true)
+  })
+})

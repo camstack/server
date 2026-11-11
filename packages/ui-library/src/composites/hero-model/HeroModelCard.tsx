@@ -182,11 +182,7 @@ type SliderModel = Extract<HeroControl, { kind: 'slider' }>
 function withoutSceneControls(row: HeroRow): HeroRow {
   if (row.placement !== 'scene') return row
   const rest = row.controls.filter((c) => !isSceneControl(c))
-  return {
-    ...row,
-    status: rest.length === 0 ? null : row.status,
-    controls: rest,
-  }
+  return { ...row, status: rest.length === 0 ? null : row.status, controls: rest }
 }
 
 /** A row without the slider the scene already draws in its centre. */

@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Automation editor: each WHEN block draws its rows on a coloured rail of its own, so sibling and nested blocks are told apart; move arrows at an edge stay disabled and say why; the Ungroup button is gone.
 - The shared device card follows the signed-in user's real device permission instead of assuming admin; inside the viewer it drops its duplicate name and is centred at a readable width on desktop
+- The shared device card asks the hub whether the signed-in user may command THIS device (instead of assuming admin) and disables its controls with the reason when not; inside the viewer it drops its duplicate name and is centred at a readable width on desktop
 
 ## [1.2.642] - 2026-11-11
 

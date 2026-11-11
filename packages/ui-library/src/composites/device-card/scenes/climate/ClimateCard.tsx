@@ -23,6 +23,8 @@ export interface ClimateCardProps {
   readonly model: ClimateCardModel
   readonly actions: ClimateCardActions
   readonly orientation?: CardOrientation
+  /** Draw the device name (default true); false when the host already names the device. */
+  readonly showName?: boolean
 }
 
 const TONE: Readonly<Record<ClimateActivity, CardTone>> = {
@@ -53,6 +55,7 @@ export function ClimateCard({
   model,
   actions,
   orientation = 'vertical',
+  showName = true,
 }: ClimateCardProps): ReactElement {
   const t = useUiText()
   const [draft, setDraft] = useState<number | null>(null)
@@ -330,6 +333,7 @@ export function ClimateCard({
       common={model.common}
       actions={actions}
       orientation={orientation}
+      showName={showName}
       activity={activity}
       state={{ label: words[activity], since: model.since, tone }}
       scene={{

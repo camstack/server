@@ -875,11 +875,13 @@ A plug and a climate device are drawn by ONE card,
 every other type).
 
 - **`shell/`** is what every type shares: the integration and reachability
-  line, the name, the corners (state, power, battery, remote), the scene grid
+  line, the name (left out with `showName={false}` when the host names the
+  device, as the viewer does), the corners (state, power, battery, remote), the scene grid
   (`left | image | right` over `bottom`), the reason line, the upstream-supply
   chip, the consumables button and its popover, the history and remote views,
   and the gating. An offline device or a viewer that may not actuate
-  (`canActuate={false}`) gets every commanding control disabled with the reason
+  (`canActuate={false}`; on `/embed/device` it is the hub's per-device
+  `auth.deviceAccess` answer) gets every commanding control disabled with the reason
   as its title; a scene does not gate on its own. Reachability that has not
   been reported is shown as unknown, never as online, and a command that fails
   puts its reason on the reason line (`CardCommon.notice`).

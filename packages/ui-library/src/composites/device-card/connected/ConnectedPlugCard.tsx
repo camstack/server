@@ -18,6 +18,8 @@ export interface ConnectedCardProps {
   readonly orientation?: CardOrientation
   /** Show a command's effect before the device confirms it (default: true). */
   readonly optimistic?: boolean
+  /** Draw the device name (default true); false when the host already names the device. */
+  readonly showName?: boolean
 }
 
 const DEVICE_TYPES: ReadonlySet<string> = new Set(Object.values(DeviceType))
@@ -29,6 +31,7 @@ export function ConnectedPlugCard({
   canActuate = true,
   orientation,
   optimistic = true,
+  showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
   const client = useTrpcClient()
@@ -54,6 +57,7 @@ export function ConnectedPlugCard({
   return (
     <PlugCard
       orientation={orientation}
+      showName={showName}
       model={{
         common,
         on: display.on,

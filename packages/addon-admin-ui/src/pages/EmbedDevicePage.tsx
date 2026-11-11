@@ -12,9 +12,12 @@
  * (default: the admin's language) and `?host=viewer` (the viewer's device
  * screen, whose header already names the device: the card drops its name).
  *
- * Whether the session may act is the signed-in user's own grant, from
- * `auth.me` — not the admin flag: a user can be allowed to command devices.
- * The hub enforces it per device on every call.
+ * Whether the session may act on THIS device is `auth.deviceAccess`: the hub's
+ * own scope matcher, over the scopes it enforces, asked about this device id
+ * (not the admin flag: a user can be allowed to command devices). A user who
+ * may not gets the controls disabled with the reason; the hub also refuses
+ * the command itself (`protectedProcedure`). A hub without that route answers
+ * an error, and the card falls back to the admin flag.
  */
 import { ErrorBox, heroLang, Skeleton, useSystem, useThemeMode } from '@camstack/ui-library'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -46,33 +49,18 @@ export function parseEmbedHost(raw: string | null): 'viewer' | null {
   return raw === 'viewer' ? raw : null
 }
 
-/** One reach of the session's resolved scope (`auth.me`): counts, never ids. */
-interface EmbedDeviceReach {
-  readonly all: boolean
-  readonly deviceCount: number
-}
-
-/** The part of `auth.me` the card's permission is read from. */
-export interface EmbedSession {
-  readonly isAdmin: boolean
-  readonly scope?: {
-    readonly isAdmin: boolean
-    readonly device: { readonly create: EmbedDeviceReach }
-  }
+/** `auth.deviceAccess`'s answer: what the caller may do on one device. */
+export interface EmbedDeviceAccess {
+  readonly view: boolean
+  readonly command: boolean
 }
 
 /**
- * May this session command devices? An admin may; anyone else may when their
- * resolved scope reaches at least one device with `create` (the grant that runs
- * device actions). The hub reports reach as counts, so this cannot say "this
- * device": a user with create on some devices keeps the controls and the hub
- * refuses the devices outside their grant.
+ * May the session command this device? The hub's answer when it gave one;
+ * otherwise (a hub that predates the route, a failed read) only an admin.
  */
-export function embedCanActuate(session: EmbedSession | null): boolean {
-  if (session === null) return false
-  if (session.isAdmin || session.scope?.isAdmin === true) return true
-  const create = session.scope?.device.create
-  return create !== undefined && (create.all || create.deviceCount > 0)
+export function embedCanActuate(access: EmbedDeviceAccess | null, isAdmin: boolean): boolean {
+  return access === null ? isAdmin : access.command
 }
 
 export function EmbedDevicePage(): ReactNode {
@@ -84,17 +72,19 @@ export function EmbedDevicePage(): ReactNode {
   const { user } = useAuth()
   const { resolvedMode, setMode } = useThemeMode()
   const queryClient = useQueryClient()
-  // `auth.me` is a CORE router method — no generated cap hook.
-  const me = useQuery<EmbedSession | null>({
-    queryKey: ['auth', 'me', 'embed-device'] as const,
-    queryFn: () => system.trpcClient.auth.me.query(),
+  const deviceId = parseEmbedDeviceId(params['deviceId'])
+  // `auth.deviceAccess` is a CORE router method — no generated cap hook.
+  const access = useQuery<EmbedDeviceAccess>({
+    queryKey: ['auth', 'deviceAccess', deviceId] as const,
+    queryFn: () => system.trpcClient.auth.deviceAccess.query({ deviceId: deviceId ?? 0 }),
+    enabled: deviceId !== null,
+    retry: false,
   })
   const requestedTheme = parseEmbedTheme(search.get('theme'))
   // The theme class lives on <html>: dialogs the card opens portal outside it.
   useEffect(() => {
     if (requestedTheme !== null) setMode(requestedTheme)
   }, [requestedTheme, setMode])
-  const deviceId = parseEmbedDeviceId(params['deviceId'])
   if (deviceId === null) {
     return (
       <div className="min-h-screen bg-background p-3">
@@ -107,14 +97,17 @@ export function EmbedDevicePage(): ReactNode {
   // Unanswered is not "may not": wait for the grant rather than draw a card
   // without controls and then grow them. A failed read falls back to the
   // session's admin flag; the hub still refuses what the user may not do.
-  if (me.status === 'pending') {
+  if (access.status === 'pending') {
     return (
       <main className={`${theme} min-h-screen bg-background p-3`}>
         <Skeleton className="mx-auto h-72 w-full max-w-2xl" />
       </main>
     )
   }
-  const canActuate = me.status === 'success' ? embedCanActuate(me.data) : user?.isAdmin === true
+  const canActuate = embedCanActuate(
+    access.status === 'success' ? access.data : null,
+    user?.isAdmin === true,
+  )
   return (
     <main className={`${theme} min-h-screen bg-background text-foreground`}>
       <div className="mx-auto w-full max-w-2xl">

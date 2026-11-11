@@ -31,20 +31,15 @@ describe('EmbedDevicePage host and permission', () => {
     expect(parseEmbedHost(null)).toBeNull()
   })
 
-  const scoped = (all: boolean, deviceCount: number) => ({
-    isAdmin: false,
-    scope: { isAdmin: false, device: { create: { all, deviceCount } } },
+  it("follows the hub's answer for THIS device, not the admin flag", () => {
+    expect(embedCanActuate({ view: true, command: true }, false)).toBe(true)
+    expect(embedCanActuate({ view: true, command: false }, false)).toBe(false)
+    // The hub's per-device answer wins over the admin flag in both directions.
+    expect(embedCanActuate({ view: true, command: false }, true)).toBe(false)
   })
 
-  it('reads the user grant, not the admin flag: a non-admin allowed to command may act', () => {
-    expect(embedCanActuate(scoped(false, 3))).toBe(true)
-    expect(embedCanActuate(scoped(true, 0))).toBe(true)
-    expect(embedCanActuate(scoped(false, 0))).toBe(false)
-  })
-
-  it('an admin may act; a session without a scope or without an answer may not', () => {
-    expect(embedCanActuate({ isAdmin: true })).toBe(true)
-    expect(embedCanActuate({ isAdmin: false })).toBe(false)
-    expect(embedCanActuate(null)).toBe(false)
+  it('without an answer only an admin may act', () => {
+    expect(embedCanActuate(null, true)).toBe(true)
+    expect(embedCanActuate(null, false)).toBe(false)
   })
 })

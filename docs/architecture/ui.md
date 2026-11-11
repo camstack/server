@@ -212,8 +212,9 @@ its own base and is unchanged.
 
 ### One device's card as a page (`/embed/device/<deviceId>`)
 
-`pages/EmbedDevicePage.tsx` draws the `DeviceDetailModule` (hero card, History,
-actions) for ONE device with no admin chrome — the page a viewer WebView loads.
+`pages/EmbedDevicePage.tsx` draws the `DeviceDetailModule` (the device card for
+a plug or climate device, the hero card for the rest, History, actions) for ONE
+device with no admin chrome — the page a viewer WebView loads.
 It sits in `App.tsx` inside `ProtectedRoute` but outside `AppLayout`, so it
 signs in through the admin's STORED session (`camstack_admin_token` in
 localStorage); the httpOnly cookie alone does not sign it in, and no token is
@@ -221,8 +222,26 @@ ever in the URL. The viewer's device detail (`camstack/src/device-embed/`) is
 this page: its WebView seeds that key with the viewer's access token before the
 page boots and clears the refresh pair (the viewer owns the refresh); its web
 build frames the page only when served by the hub (same origin, where an
-existing admin session is left alone) and otherwise opens it in a new tab.
-Query: `?theme=light|dark`, `?lang=en|it`; the session may act only when it is admin.
+existing admin session is left alone) and otherwise opens it in a new tab. On
+web the viewer remembers the token it seeded and its sign-out removes that key
+while it still holds that token (`camstack/src/device-embed/seeded-session.ts`).
+Query: `?theme=light|dark`, `?lang=en|it`, `?host=viewer` (the host names the
+device itself: the card leaves out its name; the page is centred at a readable
+width on desktop).
+
+Whether the card's controls are live is `auth.deviceAccess({ deviceId })`
+(`server/backend/src/api/trpc/device-access.ts`): the hub runs its own matcher
+(`authorizeProcedure` → `scope-access.ts`) over the scopes it ENFORCES for the
+caller (`enforcedScopesOf`: a non-admin person by its viewer row alone, D921; a
+token by its rows) against a probe of that device — `switch.getStatus` for
+`view`, `switch.setState` for `command`. A caller that may not command gets the
+controls disabled with the reason. The enforcement itself is
+`protectedProcedure` (`trpc.middleware.ts`): every cap command names its
+`deviceId`, and the same matcher refuses it `FORBIDDEN` for a device outside
+the grant. The answer is a display hint only; a token granted by
+`capability:<name>` is answered for `switch`, and the hub still decides each
+other capability's command on the real call. A hub without the route answers
+an error and the page falls back to the admin flag.
 The hero card itself is `HeroModelCard` / `ModelHero` in `ui-library`
 (`composites/hero-model`): every string the model does not carry comes from a
 `HeroLabels` the host supplies (admin-ui: `modules/device-detail/use-hero-labels.ts`).

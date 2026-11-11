@@ -31,10 +31,7 @@ import type { DeviceDetailModuleProps } from './types'
 /** One cache per mounted module when the host does not lend its own. */
 function useOwnQueryClient(lent: QueryClient | undefined): QueryClient {
   const [own] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: { queries: { retry: false, staleTime: 5_000 } },
-      }),
+    () => new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 5_000 } } }),
   )
   return lent ?? own
 }
@@ -48,7 +45,8 @@ function CardBody({
   kind,
   canActuate,
   onDrawn,
-}: Pick<DeviceDetailModuleProps, 'deviceId' | 'onDrawn'> & {
+  showName,
+}: Pick<DeviceDetailModuleProps, 'deviceId' | 'onDrawn' | 'showName'> & {
   readonly kind: 'plug' | 'climate'
   readonly canActuate: boolean
 }): ReactNode {
@@ -63,6 +61,7 @@ function CardBody({
         deviceId={deviceId}
         canActuate={canActuate}
         orientation={phone ? 'vertical' : 'horizontal'}
+        showName={showName !== false}
       />
     </div>
   )
@@ -71,7 +70,7 @@ function CardBody({
 function ModuleBody(
   props: Pick<
     DeviceDetailModuleProps,
-    'deviceId' | 'fallback' | 'onDrawn' | 'defaultHistoryOpen'
+    'deviceId' | 'fallback' | 'onDrawn' | 'defaultHistoryOpen' | 'showName'
   > & {
     readonly canActuate: boolean
   },
@@ -85,6 +84,7 @@ function ModuleBody(
         kind={kind}
         canActuate={props.canActuate}
         onDrawn={props.onDrawn}
+        showName={props.showName}
       />
     )
   }

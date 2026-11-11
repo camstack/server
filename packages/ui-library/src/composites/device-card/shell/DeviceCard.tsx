@@ -21,6 +21,8 @@ export interface DeviceCardProps {
   readonly activity?: string
   readonly scene: SceneZones
   readonly className?: string
+  /** Draw the device name (default true); false when the host already names the device. */
+  readonly showName?: boolean
 }
 
 type CardView = 'scene' | 'history' | 'remote'
@@ -90,6 +92,7 @@ export function DeviceCard({
   activity,
   scene,
   className,
+  showName = true,
 }: DeviceCardProps): ReactElement {
   const gating = useGating(common)
   const [view, setView] = useState<CardView>('scene')
@@ -117,9 +120,11 @@ export function DeviceCard({
       >
         <style>{DEVICE_CARD_CSS}</style>
         <CardTop common={common} />
-        <h3 className="text-xl font-semibold leading-tight" data-testid="dc-name">
-          {common.name}
-        </h3>
+        {showName ? (
+          <h3 className="text-xl font-semibold leading-tight" data-testid="dc-name">
+            {common.name}
+          </h3>
+        ) : null}
         {view === 'history' && history !== null ? (
           <HistoryView state={state} history={history} onBack={() => setView('scene')} />
         ) : view === 'remote' && common.remote !== null ? (
