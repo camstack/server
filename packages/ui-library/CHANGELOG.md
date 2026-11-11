@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.424] - 2026-11-11
+
 ### Changed
 
 - A discovered select can be a multi-select (discoverOptions.multiple): the found candidates are ticked, never typed.
