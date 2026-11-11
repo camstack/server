@@ -231,8 +231,22 @@ export interface BecomesSpec {
 
 export type BecomesRead = { readonly ok: true; readonly value: unknown } | { readonly ok: false }
 
+/** What a `device-becomes` trigger hands the run. */
+export interface BecomesVars {
+  readonly deviceId: number
+  /** The value before the change, `null` when it was not a scalar or not seen. */
+  readonly from: string | number | boolean | null
+  readonly to: string | number | boolean | null
+}
+
 export type BecomesEffect =
-  | { readonly kind: 'fire'; readonly value: unknown; readonly hold?: HoldTrace }
+  | {
+      readonly kind: 'fire'
+      readonly value: unknown
+      /** What the field held before it last changed; `undefined` when no change was seen. */
+      readonly from: unknown
+      readonly hold?: HoldTrace
+    }
   | { readonly kind: 'hold'; readonly hold: HoldTrace; readonly value: unknown }
 
 export type TimerHandle = ReturnType<typeof setTimeout>
@@ -264,6 +278,8 @@ function predicateOf(spec: BecomesSpec, value: unknown): boolean | undefined {
  */
 export class BecomesWatch {
   private previous: unknown = undefined
+  /** The value the field left at its last change — a re-report does not move it. */
+  private from: unknown = undefined
   private seeded = false
   private readonly core: HoldCore | undefined
   private handle: TimerHandle | undefined = undefined
@@ -314,6 +330,7 @@ export class BecomesWatch {
     const previous = this.previous
     const first = !this.seeded
     this.seeded = true
+    if (!first && value !== previous) this.from = previous
     this.previous = value
     const holds = predicateOf(this.spec, value)
     if (this.core === undefined) {
@@ -322,7 +339,7 @@ export class BecomesWatch {
         holds === undefined
           ? value !== previous
           : holds && predicateOf(this.spec, previous) !== true
-      if (fires) this.deps.emit({ kind: 'fire', value })
+      if (fires) this.deps.emit({ kind: 'fire', value, from: this.from })
       return
     }
     const reading = this.core.observe(holds ?? true, value, now)
@@ -369,7 +386,12 @@ export class BecomesWatch {
     }
     if (reading.phase !== 'met' || this.consumed) return
     this.consumed = true
-    this.deps.emit({ kind: 'fire', value: this.previous, hold: this.trace('fired', reading) })
+    this.deps.emit({
+      kind: 'fire',
+      value: this.previous,
+      from: this.from,
+      hold: this.trace('fired', reading),
+    })
   }
 }
 

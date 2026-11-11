@@ -31,6 +31,25 @@ describe('whenScopeVariables', () => {
     }
   })
 
+  it('a device-becomes row offers the device, the old value and the new one, each with its own hint', () => {
+    const becomes: AutomationWhen = {
+      kind: 'device-becomes',
+      deviceId: 5,
+      cap: 'switch',
+      fieldPath: 'on',
+      becomes: true,
+    }
+    const keyed: TFunction = ((key: string) => key) as TFunction
+    expect(whenScopeVariables(becomes, keyed)).toEqual([
+      { name: 'deviceId', hint: 'flow.scope.becomesDeviceId' },
+      { name: 'from', hint: 'flow.scope.from' },
+      { name: 'to', hint: 'flow.scope.to' },
+    ])
+    expect(whenScopeVariables({ kind: 'any', children: [becomes, detection] }, keyed)).toEqual([
+      { name: 'deviceId', hint: 'flow.scope.triggerDeviceId' },
+    ])
+  })
+
   it('the variables the old hard-coded lists dropped are offered', () => {
     expect(whenScopeVariables(detection, t).map((v) => v.name)).toContain('label')
     expect(whenScopeVariables(stationary, t).map((v) => v.name)).toContain('zones')

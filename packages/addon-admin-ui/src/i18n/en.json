@@ -11303,7 +11303,11 @@
       "score": "how sure the detector was",
       "trackId": "the track",
       "label": "the label it matched (a name, a plate), empty when none",
-      "zones": "the zones it is in"
+      "zones": "the zones it is in",
+      "becomesDeviceId": "the device that changed",
+      "triggerDeviceId": "the device that started the run",
+      "from": "the value before the change, empty when it is not known",
+      "to": "the value it changed to"
     },
     "class": {
       "animal": "Animal",

@@ -8,14 +8,17 @@
  * here does not compile.
  */
 import type { DetectionVars } from './detection-trigger.js'
+import type { BecomesVars } from './hold.js'
 import type { StationaryVars } from './stationary-trigger.js'
 import type { AutomationWhen } from './when.js'
 import { forEachLeaf, isEventLeaf } from './when.js'
 
 export interface TriggerVariable {
   readonly name: string
-  /** English hint; the editor translates it by `name`. */
+  /** English hint; the editor translates it by `hintKey`, else by `name`. */
   readonly description: string
+  /** Set when the same name means something else on another trigger kind. */
+  readonly hintKey?: string
 }
 
 const DETECTION_DESCRIPTIONS: Readonly<Record<keyof DetectionVars, string>> = {
@@ -34,6 +37,12 @@ const STATIONARY_DESCRIPTIONS: Readonly<Record<keyof StationaryVars, string>> = 
   entryId: 'the stopped object',
 }
 
+const BECOMES_DESCRIPTIONS: Readonly<Record<keyof BecomesVars, string>> = {
+  deviceId: 'the device that changed',
+  from: 'the value before the change, empty when it is not known',
+  to: 'the value it changed to',
+}
+
 function describe(descriptions: Readonly<Record<string, string>>): readonly TriggerVariable[] {
   return Object.entries(descriptions).map(([name, description]) => ({
     name,
@@ -43,11 +52,24 @@ function describe(descriptions: Readonly<Record<string, string>>): readonly Trig
 
 const DETECTION_VARIABLES = describe(DETECTION_DESCRIPTIONS)
 const STATIONARY_VARIABLES = describe(STATIONARY_DESCRIPTIONS)
+const BECOMES_VARIABLES: readonly TriggerVariable[] = describe(BECOMES_DESCRIPTIONS).map((v) =>
+  v.name === 'deviceId' ? { ...v, hintKey: 'becomesDeviceId' } : v,
+)
+
+/** A name two trigger kinds describe differently, said for both (a camera, or a device that changed). */
+const SHARED_VARIABLES: Readonly<Record<string, TriggerVariable>> = {
+  deviceId: {
+    name: 'deviceId',
+    description: 'the device that started the run',
+    hintKey: 'triggerDeviceId',
+  },
+}
 
 /** What one event row kind provides; kinds that provide none are absent. */
 export function triggerLeafVariables(kind: string): readonly TriggerVariable[] {
   if (kind === 'detection') return DETECTION_VARIABLES
   if (kind === 'stationary') return STATIONARY_VARIABLES
+  if (kind === 'device-becomes') return BECOMES_VARIABLES
   return []
 }
 
@@ -63,5 +85,12 @@ export function triggerVariablesOf(when: AutomationWhen): readonly TriggerVariab
   })
   const [first, ...rest] = perEvent
   if (first === undefined) return []
-  return first.filter((v) => rest.every((other) => other.some((o) => o.name === v.name)))
+  return first
+    .filter((v) => rest.every((other) => other.some((o) => o.name === v.name)))
+    .map((v) => {
+      const sameMeaning = rest.every((other) =>
+        other.some((o) => o.name === v.name && o.description === v.description),
+      )
+      return sameMeaning ? v : (SHARED_VARIABLES[v.name] ?? v)
+    })
 }

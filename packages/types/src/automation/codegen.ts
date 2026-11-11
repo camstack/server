@@ -193,6 +193,7 @@ function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
           cap: ${j(trigger.cap)},
           field: ${j(trigger.fieldPath)},
           to: toTraceScalar(effect.value),
+          ...(effect.kind === 'fire' ? { from: toTraceScalar(effect.from) } : {}),
           ...(effect.hold === undefined ? {} : { hold: effect.hold }),
         }
         if (effect.kind === 'fire') {

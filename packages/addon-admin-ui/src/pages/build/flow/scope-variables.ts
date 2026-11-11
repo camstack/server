@@ -29,6 +29,6 @@ export function actionScopeVariables(
 export function whenScopeVariables(when: AutomationWhen, t: TFunction): readonly ScopeVariable[] {
   return triggerVariablesOf(when).map((v) => ({
     name: v.name,
-    hint: t(`flow.scope.${v.name}`, v.description),
+    hint: t(`flow.scope.${v.hintKey ?? v.name}`, v.description),
   }))
 }

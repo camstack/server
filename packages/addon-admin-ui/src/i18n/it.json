@@ -11325,7 +11325,11 @@
       "score": "quanto era sicuro il rilevatore",
       "trackId": "la traccia",
       "label": "l'etichetta trovata (un nome, una targa), vuota se manca",
-      "zones": "le zone in cui si trova"
+      "zones": "le zone in cui si trova",
+      "becomesDeviceId": "il dispositivo che è cambiato",
+      "triggerDeviceId": "il dispositivo che ha avviato l'esecuzione",
+      "from": "il valore prima del cambiamento, vuoto se non è noto",
+      "to": "il valore a cui è passato"
     },
     "class": {
       "animal": "Animale",

@@ -907,6 +907,29 @@ describe('one when tree: an instant is an event, the rest is state', () => {
     expect(h.traces()[0]?.trigger.vars).toMatchObject({ deviceId: 5 })
   })
 
+  it('a device-becomes run substitutes the device, the old value and the new one (#499)', async () => {
+    const slices: Record<string, object> = { '5|switch': { on: false } }
+    const h = start(
+      await load({
+        when: lightOn,
+        actions: [
+          {
+            kind: 'action',
+            actionId: 'internal:night',
+            variables: { dev: '{{vars.deviceId}}', was: '{{vars.from}}', now: '{{vars.to}}' },
+          },
+        ],
+      }),
+      { slices },
+    )
+    await settle()
+    slices['5|switch'] = { on: true }
+    lightEvent(h)
+    await settle()
+    expect(h.actionRuns.map((r) => r.variables)).toEqual([{ dev: '5', was: 'false', now: 'true' }])
+    expect(h.traces()[0]?.trigger.vars).toMatchObject({ deviceId: 5, from: false, to: true })
+  })
+
   it('rule 1: the same event with the state false does not fire, and says which row failed', async () => {
     const slices: Record<string, object> = {
       '3|contact': { open: false },
