@@ -684,6 +684,21 @@ the kind it reports now (`source-kind-mismatch` at save, `null` at read).
 A fan preset is a desired fan-control state applied through these same methods,
 reporting each field `applied`, `failed`, `refused` or `not-run`.
 
+### A device's own on/off is its `switch` (power hint)
+
+A cap that turns its device on and off declares how in its `*.cap.ts`, as a
+`power` hint: a boolean field and its setter (humidifier, pet fountain), a state
+field read through `offValues` with `turnOn` / `turnOff` (media player), or a
+mode field whose `off` value is off and whose last non-off mode is restored
+(climate-control, water-heater). The owner addon calls
+`registerPowerSwitch(this, cap, provider)` after registering `cap`; the device
+then carries a `switch` whose `on` is read from the owner's slice (`null` when
+unknown) and whose `setState` routes to the hinted method. A mode device with no
+known last mode refuses `no-last-mode`. The `switch` slice is a projection the
+helper alone writes. The dishwasher has no hint, `fan-control` has no on/off
+member. Guard: `scripts/check-power-hint.ts`
+([D1042](../decisions/adr-1042-switch-is-the-one-on-off-control-built-from-the-cap-s-power-hint.md)).
+
 ### A device powered by a smart switch (`power-source`)
 
 A device that hangs (a gateway, a camera) can name the smart switch that powers
