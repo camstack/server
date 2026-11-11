@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Automation row types take their name and description from one catalogue; the type list shows the same wording everywhere.
 - Automation editor: Add row, a row's new Change type control and a step's Only if open a searchable condition picker; events are shown disabled, with the reason, where they cannot be used.
+- Automation editor lists the new 'Time is' condition (its window editor follows).
 
 ## [1.2.640] - 2026-11-11
 

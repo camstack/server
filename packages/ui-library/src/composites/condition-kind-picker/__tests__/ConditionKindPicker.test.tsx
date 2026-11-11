@@ -97,7 +97,7 @@ describe('ConditionKindPicker', () => {
     fireEvent.keyDown(search(), { key: 'Enter' })
     const first = onPick.mock.calls[0]?.[0]
     expect(first).toBeDefined()
-    expect(['device-is', 'stationary-present', 'expression']).toContain(first)
+    expect(['device-is', 'time-is', 'stationary-present', 'expression']).toContain(first)
   })
 
   it('offers suggested and recently used kinds only while the search is empty', () => {

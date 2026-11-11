@@ -156,6 +156,19 @@ export const AUTOMATION_LEAF_CATALOG: AutomationLeafCatalog = {
     needsDeviceValue: false,
     seed: () => ({ kind: 'stationary-present', deviceId: 0 }),
   },
+  'time-is': {
+    kind: 'time-is',
+    category: 'time',
+    role: 'state',
+    allowedIn: STATE_CONTEXTS,
+    i18nKey: 'automation.leafCatalog.time-is',
+    keywords: ['time', 'hour', 'window', 'between', 'night', 'day', 'weekday', 'sunset', 'sunrise'],
+    needsDeviceValue: false,
+    seed: () => ({
+      kind: 'time-is',
+      between: { from: { kind: 'clock', hh: 22, mm: 0 }, to: { kind: 'clock', hh: 6, mm: 0 } },
+    }),
+  },
   expression: {
     kind: 'expression',
     category: 'logic',
@@ -179,6 +192,7 @@ export const AUTOMATION_LEAF_KINDS: readonly AutomationLeafKind[] = [
   'manual',
   'device-is',
   'stationary-present',
+  'time-is',
   'expression',
 ]
 

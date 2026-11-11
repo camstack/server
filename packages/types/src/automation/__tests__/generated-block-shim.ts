@@ -8,6 +8,7 @@ export {
   collectWhenMirrorSources,
   ConditionMirror,
   evaluateWhenTree,
+  nextTimeBoundaryInMs,
   observeHoldLeaves,
   stableIdMapOf,
 } from '../condition-eval.js'
@@ -30,6 +31,7 @@ export {
 export { buildTriggerTrace, isSkippedTrace, mergeSkipTraces } from '../trace.js'
 export {
   nextOccurrence,
+  siteFor,
   validateTimeSpecForSite,
   zoneOnlySite,
 } from '../../time/time-spec.js'

@@ -215,6 +215,37 @@ const StationaryPresentLeafSchema = z.object({
 })
 
 /**
+ * True while the site-local clock is inside a daily window and/or on one of
+ * the named days. `days` names the local day a window STARTS on, so
+ * 22:00-06:00 on weekdays is still inside at 01:00 Saturday. A one-date spec
+ * (`kind: 'date'`) is refused: only a clock time or a sun event makes a window
+ * that repeats every day.
+ */
+const TimeIsLeafSchema = z
+  .object({
+    kind: z.literal('time-is'),
+    between: z.object({ from: TimeSpecSchema, to: TimeSpecSchema }).optional(),
+    days: z.array(WeekdayKeySchema).min(1).max(7).optional(),
+  })
+  .superRefine((leaf, ctx) => {
+    if (leaf.between === undefined && leaf.days === undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'a time-is leaf needs a between window, days, or both',
+      })
+    }
+    for (const end of ['from', 'to'] as const) {
+      if (leaf.between?.[end].kind === 'date') {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'a one-date time cannot bound a daily window: use a clock time or a sun event',
+          path: ['between', end],
+        })
+      }
+    }
+  })
+
+/**
  * The escape hatch: the bounded expression engine over named device bindings.
  * Declared as a plain object so a discriminated union can read `kind`; the
  * author-time validation is the SAME function `ExpressionSourceSchema` runs.
@@ -252,6 +283,7 @@ export type AutomationStateLeaf =
   | z.infer<typeof DeviceIsLeafSchema>
   | z.infer<typeof StationaryPresentLeafSchema>
   | z.infer<typeof ExpressionLeafSchema>
+  | z.infer<typeof TimeIsLeafSchema>
 
 export type AutomationLeaf = AutomationEventLeaf | AutomationStateLeaf
 
@@ -261,6 +293,7 @@ export type StationaryLeaf = Extract<AutomationEventLeaf, { kind: 'stationary' }
 export type DeviceIsLeaf = Extract<AutomationStateLeaf, { kind: 'device-is' }>
 export type StationaryPresentLeaf = Extract<AutomationStateLeaf, { kind: 'stationary-present' }>
 export type ExpressionLeaf = Extract<AutomationStateLeaf, { kind: 'expression' }>
+export type TimeIsLeaf = Extract<AutomationStateLeaf, { kind: 'time-is' }>
 
 export interface AutomationAll {
   readonly kind: 'all'
@@ -291,6 +324,7 @@ export const AutomationWhenSchema: z.ZodType<AutomationWhen> = z.lazy(() =>
     DeviceIsLeafSchema,
     StationaryPresentLeafSchema,
     ExpressionLeafSchema,
+    TimeIsLeafSchema,
   ]),
 )
 

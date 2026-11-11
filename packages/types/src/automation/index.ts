@@ -26,6 +26,8 @@ export {
   evaluateConditionTree,
   evaluateWhenTree,
   hasHoldLeaves,
+  hasTimeLeaves,
+  nextTimeBoundaryInMs,
   observeHoldLeaves,
 } from './condition-eval.js'
 export type {
@@ -148,6 +150,7 @@ export type {
   DeviceBecomesLeaf,
   DeviceIsLeaf,
   ExpressionLeaf,
+  TimeIsLeaf,
   StationaryLeaf,
   StationaryPresentLeaf,
 } from './when.js'

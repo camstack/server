@@ -5,6 +5,7 @@
  * read is UNKNOWN, and unknown runs neither side (D49: a failed read changes
  * nothing, and never decides a branch).
  */
+import type { TimeSite } from '../time/time-spec.js'
 import {
   collectWhenMirrorSources,
   ConditionMirror,
@@ -42,11 +43,14 @@ export async function evaluateStepCondition(
   fetchers: MirrorRefreshFetchers,
   now: () => number = Date.now,
   history?: StepConditionHistory,
+  /** The site a `time-is` leaf reads its clock on; absent, such a leaf is unknown. */
+  site?: TimeSite,
 ): Promise<StepConditionVerdict> {
   const mirror = history?.mirror ?? new ConditionMirror(collectWhenMirrorSources(when))
   await mirror.refresh(fetchers)
   const evaluation = evaluateWhenTree(when, mirror, now(), {
     ...(history === undefined ? {} : { holds: history.holds, rootPath: history.rootPath }),
+    ...(site === undefined ? {} : { site }),
   })
   const reasons = evaluation.nodes.filter((n) => n.outcome !== 'pass').map((n) => n.reason)
   const first = reasons[0]

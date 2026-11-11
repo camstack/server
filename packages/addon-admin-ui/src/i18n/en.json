@@ -6282,6 +6282,11 @@
         "label": "Expression",
         "description": "Arithmetic across device values, compared right now",
         "example": "solar minus load above 1 kW"
+      },
+      "time-is": {
+        "label": "Time is",
+        "description": "The clock is inside a daily window, or it is one of the chosen days",
+        "example": "only between 22:00 and 06:00, on weekdays"
       }
     },
     "leafPicker": {

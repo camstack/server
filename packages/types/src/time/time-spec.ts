@@ -55,6 +55,11 @@ export interface TimeSite {
   readonly lat: number
   readonly lon: number
   readonly timeZone: string
+  /**
+   * Set by {@link zoneOnlySite}: the coordinates are placeholders, so a sun
+   * event cannot be placed on this site and a caller must not read one.
+   */
+  readonly zoneOnly?: true
 }
 
 /**
@@ -297,5 +302,5 @@ export function siteFor(reading: SiteReading): TimeSite | null {
 
 /** A site that can place a clock or date spec but no sun event (coordinates are unused by those). */
 export function zoneOnlySite(timeZone: string): TimeSite {
-  return { lat: 0, lon: 0, timeZone }
+  return { lat: 0, lon: 0, timeZone, zoneOnly: true }
 }

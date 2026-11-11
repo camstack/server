@@ -6357,6 +6357,11 @@
         "label": "Espressione",
         "description": "Aritmetica fra valori di dispositivi, confrontata in questo momento",
         "example": "solare meno consumo sopra 1 kW"
+      },
+      "time-is": {
+        "label": "È l'ora",
+        "description": "L'ora è dentro una fascia giornaliera, oppure è uno dei giorni scelti",
+        "example": "solo tra le 22:00 e le 06:00, nei giorni feriali"
       }
     },
     "leafPicker": {

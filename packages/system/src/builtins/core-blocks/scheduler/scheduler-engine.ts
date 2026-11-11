@@ -273,7 +273,7 @@ export class SchedulerEngine {
 
   private truthAt(now: number): StateTruth {
     return (when: AutomationWhen | undefined) =>
-      when === undefined || evaluateWhenTree(when, this.mirror, now).pass
+      when === undefined || evaluateWhenTree(when, this.mirror, now, { site: this.site }).pass
   }
 
   // ── the mirror ─────────────────────────────────────────────────────────

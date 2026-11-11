@@ -13,6 +13,8 @@
  * the editor can paint each block.
  */
 
+import { judgeTimeWindow } from '../time/time-window.js'
+import type { TimeSite } from '../time/time-spec.js'
 import { isQuantityValue } from '../units/quantity-input.js'
 import { evaluateExpressionSource, toExpressionValue } from '../expression/expression-source.js'
 import { anySubjectMatches } from './detection-subject.js'
@@ -112,6 +114,9 @@ function collectInto(cond: AutomationWhen, out: MirrorSource[]): void {
         }
       }
       return
+    case 'time-is':
+      // a clock reads nothing off the mirror
+      return
     default:
       // an event leaf reads nothing off the mirror — it is not a state
       return
@@ -133,6 +138,43 @@ export function collectWhenMirrorSources(cond: AutomationWhen | undefined): Mirr
     seen.add(key)
     return true
   })
+}
+
+/** Does the tree hold a `time-is` leaf? */
+export function hasTimeLeaves(when: AutomationWhen): boolean {
+  let found = false
+  forEachLeaf(when, (leaf) => {
+    if (leaf.kind === 'time-is') found = true
+  })
+  return found
+}
+
+/**
+ * The soonest ANY `time-is` leaf changes sides (ms from `now`), over every
+ * leaf of the tree — a short-circuit that skipped a leaf in the last
+ * evaluation must not hide its boundary. Undefined: no time leaf, no site, or
+ * no boundary within reach.
+ */
+export function nextTimeBoundaryInMs(
+  when: AutomationWhen,
+  now: number,
+  site: TimeSite | undefined,
+  rootPath = 'when',
+): number | undefined {
+  if (site === undefined) return undefined
+  let due: number | undefined
+  forEachLeaf(
+    when,
+    (leaf) => {
+      if (leaf.kind !== 'time-is') return
+      const next = judgeTimeWindow(leaf, now, site).nextChangeAtMs
+      if (next === null) return
+      const ms = Math.max(0, next - now)
+      due = due === undefined ? ms : Math.min(due, ms)
+    },
+    rootPath,
+  )
+  return due
 }
 
 /** Legacy name, for blocks generated before the single tree: an old condition tree. */
@@ -300,6 +342,8 @@ export interface ConditionEvaluation {
   readonly nodes: readonly AutomationConditionTraceNode[]
   /** The soonest a pending `for` completes (ms from now); absent when none is pending. */
   readonly holdDueInMs?: number
+  /** The soonest a `time-is` leaf changes sides (ms from now); absent when the tree holds none or no site. */
+  readonly timeDueInMs?: number
 }
 
 function markSkipped(
@@ -419,6 +463,10 @@ interface EvalState {
   unknown: boolean
   /** The soonest a pending hold completes (ms from `now`), so the caller can arm a timer for it. */
   holdDueInMs: number | undefined
+  /** Where the site-local clock is read (`time-is`); absent, a time leaf is unknown. */
+  readonly site: TimeSite | undefined
+  /** The soonest a time leaf changes sides (ms from `now`). */
+  timeDueInMs: number | undefined
 }
 
 interface HoldVerdict {
@@ -613,6 +661,31 @@ function evalNode(
       })
       return ok
     }
+    case 'time-is': {
+      if (state.site === undefined) {
+        state.unknown = true
+        out.push({
+          path,
+          kind: cond.kind,
+          outcome: 'fail',
+          reason: 'the site clock is not known here → fail',
+        })
+        return false
+      }
+      const verdict = judgeTimeWindow(cond, now, state.site)
+      if (verdict.unknown) state.unknown = true
+      if (verdict.nextChangeAtMs !== null) {
+        const due = Math.max(0, verdict.nextChangeAtMs - now)
+        state.timeDueInMs = state.timeDueInMs === undefined ? due : Math.min(state.timeDueInMs, due)
+      }
+      out.push({
+        path,
+        kind: cond.kind,
+        outcome: verdict.inside ? 'pass' : 'fail',
+        reason: `${verdict.why} → ${verdict.inside ? 'pass' : 'fail'}`,
+      })
+      return verdict.inside
+    }
     case 'not': {
       const at = out.length
       out.push({ path, kind: 'not', outcome: 'not-evaluated', reason: '' })
@@ -664,6 +737,8 @@ export interface WhenEvaluationOptions {
   readonly holds?: HoldTracker
   /** The root path (default `when`; the legacy wrapper keeps `conditions`). */
   readonly rootPath?: string
+  /** The site the `time-is` leaves read their clock on; absent, such a leaf is unknown. */
+  readonly site?: TimeSite
 }
 
 /** Evaluate a `when` tree: the fired event leaf is true, every other event leaf false. */
@@ -679,6 +754,8 @@ export function evaluateWhenTree(
     holds: options.holds,
     unknown: false,
     holdDueInMs: undefined,
+    site: options.site,
+    timeDueInMs: undefined,
   }
   const pass = evalNode(when, options.rootPath ?? 'when', reader, now, nodes, state)
   return {
@@ -686,6 +763,7 @@ export function evaluateWhenTree(
     unknown: state.unknown,
     nodes,
     ...(state.holdDueInMs === undefined ? {} : { holdDueInMs: state.holdDueInMs }),
+    ...(state.timeDueInMs === undefined ? {} : { timeDueInMs: state.timeDueInMs }),
   }
 }
 
@@ -723,6 +801,8 @@ export function observeHoldLeaves(
         holds,
         unknown: false,
         holdDueInMs: undefined,
+        site: undefined,
+        timeDueInMs: undefined,
       }
       evalNode(leaf, path, reader, now, [], state)
       if (state.holdDueInMs !== undefined)

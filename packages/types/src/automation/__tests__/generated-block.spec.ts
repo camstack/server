@@ -1504,3 +1504,51 @@ describe('hold semantics: for / operator on device-becomes, device-is and guards
     })
   })
 })
+
+describe('a time-is state leaf wakes a state-only tree at its boundary', () => {
+  const night: AutomationRecipe = {
+    when: {
+      kind: 'time-is',
+      between: { from: { kind: 'clock', hh: 22, mm: 0 }, to: { kind: 'clock', hh: 6, mm: 0 } },
+    },
+    actions: [SIREN],
+  }
+
+  it('fires ONCE when the clock crosses `from`, with no device event, and not again at the reconcile', async () => {
+    vi.setSystemTime(new Date('2026-01-15T20:59:50Z')) // 21:59:50 in Rome
+    const h = start(await load(night))
+    await settle(9_000) // 21:59:59, before the first 15 s reconcile
+    expect(h.mutate).not.toHaveBeenCalled()
+    await settle(1_500) // 22:00:00.5 — only the boundary timer can have woken it
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    await settle(60_000)
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    h.stop()
+  })
+
+  it('does not fire at start-up when the clock is already inside the window', async () => {
+    vi.setSystemTime(new Date('2026-01-15T22:30:00Z')) // 23:30 in Rome
+    const h = start(await load(night))
+    await settle(120_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    h.stop()
+  })
+
+  it('a sun window on a site with no location never fires and never throws (unknown, not false)', async () => {
+    vi.setSystemTime(new Date('2026-01-15T14:00:00Z'))
+    const sun: AutomationRecipe = {
+      when: {
+        kind: 'time-is',
+        between: {
+          from: { kind: 'sun', event: 'sunset', offsetMin: 0 },
+          to: { kind: 'clock', hh: 6, mm: 0 },
+        },
+      },
+      actions: [SIREN],
+    }
+    const h = start(await load(sun), { site: { location: null, timeZone: 'Europe/Rome' } })
+    await settle(12 * 3_600_000)
+    expect(h.mutate).not.toHaveBeenCalled()
+    h.stop()
+  })
+})

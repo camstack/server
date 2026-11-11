@@ -72,6 +72,7 @@ export const AutomationConditionTraceNodeSchema = z.object({
     'device-is',
     'expression',
     'stationary-present',
+    'time-is',
     // event leaves
     'device-becomes',
     'device-event',

@@ -3,6 +3,7 @@ import {
   Activity,
   Bell,
   CalendarClock,
+  Clock,
   Car,
   Eye,
   Hand,
@@ -24,5 +25,6 @@ export const CONDITION_KIND_ICONS: Readonly<Record<AutomationLeafKind, LucideIco
   manual: Hand,
   'device-is': ToggleLeft,
   'stationary-present': Car,
+  'time-is': Clock,
   expression: Sigma,
 }

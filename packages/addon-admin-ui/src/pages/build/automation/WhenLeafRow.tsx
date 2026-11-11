@@ -153,5 +153,8 @@ function LeafFields({ leaf, devices, onChange }: LeafFieldsProps) {
       return <StationaryPresentFields leaf={leaf} devices={devices} onChange={onChange} />
     case 'expression':
       return <ExpressionLeafRow leaf={leaf} devices={devices} onChange={onChange} />
+    case 'time-is':
+      // the window editor is a separate task: the row shows its kind and nothing to edit yet
+      return null
   }
 }

@@ -27,7 +27,7 @@
 import type { AutomationAction, AutomationRecipe } from './recipe.js'
 import { DEFAULT_TRACE_KEEP, normalizeCapStep, validateRecipeBounds } from './recipe.js'
 import type { TimeSpec, WeekdayKey } from '../time/time-spec.js'
-import { hasHoldLeaves } from './condition-eval.js'
+import { hasHoldLeaves, hasTimeLeaves } from './condition-eval.js'
 import { holdOf } from './hold.js'
 import { triggerLeafVariables } from './trigger-variables.js'
 import { type AutomationEventLeaf, forEachLeaf, hasEventLeaves, isEventLeaf } from './when.js'
@@ -401,6 +401,12 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
       ? [{ path: `actions.${i}.if`, when: a.if }]
       : [],
   )
+  // A \`time-is\` leaf reads the site clock: the site is held in memory, refreshed off the event path (D49).
+  const hasTime =
+    hasTimeLeaves(recipe.when) ||
+    recipe.actions.some(
+      (a) => (a.kind === 'wait' || a.kind === 'cap') && a.if !== undefined && hasTimeLeaves(a.if),
+    )
   const eventLeaves: { leaf: AutomationEventLeaf; path: string }[] = []
   forEachLeaf(recipe.when, (leaf, path) => {
     if (isEventLeaf(leaf)) eventLeaves.push({ leaf, path })
@@ -416,6 +422,7 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   AutomationStepTrace,
   RunnableStep,
   StepScope,
+  TimeSite,
   TimeSpec,
   WeekdayKey,
 } from '@camstack/types'
@@ -437,6 +444,7 @@ import {
   isSkippedTrace,
   mergeSkipTraces,
   nextOccurrence,
+  nextTimeBoundaryInMs,
   observeHoldLeaves,
   stableIdMapOf,
   resolveStepArgs,
@@ -444,6 +452,7 @@ import {
   runForDevices,
   evaluateStepCondition,
   runSteps,
+  siteFor,
   validateTimeSpecForSite,
   zoneOnlySite,
 } from '@camstack/types'
@@ -484,6 +493,9 @@ const HAS_DOMAIN_TARGET = ${hasDomainTarget}
 
 /** A state leaf of the tree carries a \`for\`: its clock is fed on every mirror update, so it counts while nothing fires. */
 const HAS_HOLD = ${hasHoldLeaves(recipe.when)}
+
+/** A \`time-is\` leaf (in the tree or a guard) reads the site clock: the site is kept in memory and a timer wakes the tree at each boundary. */
+const HAS_TIME = ${hasTime}
 
 /** Guards (a step's \`if\`) with a \`for\`: they keep their own mirror and clocks, fed the same way. */
 const GUARD_HOLD_TREES: ReadonlyArray<{ path: string; when: AutomationWhen }> = ${j(guardHoldTrees)}
@@ -550,7 +562,13 @@ export default function block(ctx: AddonContext) {
   )
   const guardHolds = new HoldTracker()
   let holdTimer: ReturnType<typeof setTimeout> | undefined
-  const BLOCK_ID = coreBlockIdFromAddonId(ctx.id)
+${
+  hasTime
+    ? `  /** The site clock a \`time-is\` leaf reads: memory only at evaluation time (D49), refreshed at start and on the reconcile. */
+  let site: TimeSite | undefined
+`
+    : ''
+}  const BLOCK_ID = coreBlockIdFromAddonId(ctx.id)
   /** The cooldown stamp: memory is the authority at fire time (D49); the hub ledger is read once at start. */
   let lastRunStartedAt: number | null = null
   /** True when the stamp could not be read at start — the first run is let through and says so. */
@@ -647,7 +665,23 @@ export default function block(ctx: AddonContext) {
     void send({ trace })
   }
 
-  // ── the condition mirror (D49): memory only at fire time ──
+${
+  hasTime
+    ? `  /** Read the site into memory. A failed read keeps the previous value (D49). */
+  async function refreshSite(): Promise<void> {
+    try {
+      const reading = await ctx.api.system.getSiteLocation.query()
+      site = siteFor(reading) ?? zoneOnlySite(reading.timeZone)
+    } catch (error) {
+      ctx.logger.warn('site clock not refreshed — keeping the previous one', {
+        error: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }
+
+`
+    : ''
+}  // ── the condition mirror (D49): memory only at fire time ──
   async function refreshMirror(): Promise<void> {
     const report = await mirror.refresh({
       fetchSlice: (deviceId, cap) => ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap }),
@@ -686,7 +720,14 @@ export default function block(ctx: AddonContext) {
       const due = observeHoldLeaves(tree.when, guardMirror, now, guardHolds, tree.path)
       if (due !== undefined) dues.push(due)
     }
-    if (holdTimer !== undefined) clearTimeout(holdTimer)
+${
+  hasTime
+    ? `    // a time-is leaf changes sides at a boundary with no device event: wake the tree there
+    const timeDue = nextTimeBoundaryInMs(WHEN, now, site)
+    if (timeDue !== undefined) dues.push(timeDue)
+`
+    : ''
+}    if (holdTimer !== undefined) clearTimeout(holdTimer)
     holdTimer = undefined
     if (dues.length === 0) return
     holdTimer = setTimeout(() => {
@@ -863,7 +904,7 @@ export default function block(ctx: AddonContext) {
     const history = GUARD_HOLD_TREES.some((t) => t.path === path)
       ? { mirror: guardMirror, holds: guardHolds, rootPath: path }
       : undefined
-    return evaluateStepCondition(when, mirrorFetchers(), Date.now, history)
+    return evaluateStepCondition(when, mirrorFetchers(), Date.now, history${hasTime ? ', site' : ''})
   }
 
   /** The THEN half, through the ONE shared step runner: stops at the first
@@ -950,7 +991,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
     try {
       const firedLeaf = trigger['leaf']
       const evaluation = evaluateWhenTree(WHEN, mirror, Date.now(), {
-        holds,
+        holds,${hasTime ? '\n        ...(site === undefined ? {} : { site }),' : ''}
         ...(typeof firedLeaf === 'string' ? { firedPath: firedLeaf } : {}),
       })
       nodes = [...evaluation.nodes]
@@ -1064,7 +1105,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
 
   const ready: Promise<void> = (async () => {
     await loadState()
-    await refreshMirror()
+${hasTime ? '    await refreshSite()\n' : ''}    await refreshMirror()
     feedHolds()
     stateWatching = true
     evaluateStateTree()
@@ -1080,7 +1121,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
   let stateWatching = false
   function evaluateStateTree(): void {
     if (!STATE_ONLY || !stateWatching || stopped) return
-    const evaluation = evaluateWhenTree(WHEN, mirror, Date.now(), { holds })
+    const evaluation = evaluateWhenTree(WHEN, mirror, Date.now(), { holds${hasTime ? ', ...(site === undefined ? {} : { site })' : ''} })
     if (evaluation.unknown) return
     const was = treeWasTrue
     treeWasTrue = evaluation.pass
@@ -1089,7 +1130,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
     }
   }
 
-  if (MIRROR_SOURCES.length > 0 || GUARD_HOLD_TREES.length > 0) {
+  if (MIRROR_SOURCES.length > 0 || GUARD_HOLD_TREES.length > 0 || HAS_TIME) {
     disposers.push(
       ctx.eventBus.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
         const data = event.data
@@ -1104,7 +1145,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
       }),
     )
     const mirrorReconcile = setInterval(() => {
-      void refreshMirror().then(() => {
+      void ${hasTime ? 'Promise.all([refreshSite(), refreshMirror()])' : 'refreshMirror()'}.then(() => {
         feedHolds()
         evaluateStateTree()
       })

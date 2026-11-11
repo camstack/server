@@ -49,6 +49,11 @@ const TEXTS: Readonly<Record<AutomationLeafKind, KindTexts>> = {
     description: 'Parked right now',
     example: 'a car is in the yard',
   },
+  'time-is': {
+    label: 'Time is',
+    description: 'The clock is inside a window',
+    example: 'only between 22:00 and 06:00',
+  },
   expression: {
     label: 'Expression',
     description: 'Arithmetic across values',
