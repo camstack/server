@@ -5,7 +5,7 @@
  * source answered with something — a card never draws a zone the device does
  * not declare.
  */
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import {
@@ -32,6 +32,7 @@ import type {
   CardSupplyAction,
 } from '../shell/model'
 import { coarseDuration } from './coarse-duration'
+import { useCommandNotice } from './use-command-notice'
 
 export interface CardCommonInput {
   readonly deviceId: number
@@ -95,15 +96,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
   const reset = useConsumablesReset()
   const series = useDeviceSeriesList(deviceId)
 
-  const [notice, setNotice] = useState<string | null>(null)
-  const fail = useCallback(
-    (error: unknown): void => {
-      const reason = error instanceof Error ? error.message : String(error)
-      setNotice(t('uiLibrary.deviceCard.commandFailed', 'Command failed: {{reason}}', { reason }))
-    },
-    [t],
-  )
-  const succeed = useCallback((): void => setNotice(null), [])
+  const { notice, fail, succeed } = useCommandNotice()
 
   const online = reachabilityOf(status)
   const offlineSince = online === false ? (status?.lastChangedAt ?? null) : null

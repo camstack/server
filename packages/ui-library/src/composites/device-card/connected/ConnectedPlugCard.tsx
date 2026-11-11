@@ -9,6 +9,7 @@ import type { PlugTimer } from '../scenes/plug/model'
 import type { CardOrientation } from '../shell/model'
 import { coarseDuration } from './coarse-duration'
 import { useCardCommon } from './use-card-common'
+import { reportedCommand } from './use-command-notice'
 
 export interface ConnectedCardProps {
   readonly deviceId: number
@@ -64,7 +65,10 @@ export function ConnectedPlugCard({
       }}
       actions={{
         ...actions,
-        onPower: (on) => applyOptimisticAction({ on }, () => cap.setState({ on })),
+        onPower: (on) =>
+          reportedCommand(applyOptimisticAction, { fail, succeed })({ on }, () =>
+            cap.setState({ on }),
+          ),
         onTimerStart: (minutes) =>
           void timedRun?.runFor({ duration: minutes, unit: 'min' }).then(succeed, fail),
         onTimerStop: () => void timedRun?.cancel({}).then(succeed, fail),

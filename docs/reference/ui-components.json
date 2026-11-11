@@ -11460,6 +11460,13 @@
       "summary": "Split `a <0>b</0> c` into text and `components[0]` wrapped around `b`."
     },
     {
+      "name": "reportedCommand",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/use-command-notice.ts",
+      "summary": "An optimistic command whose outcome lands on the card: a refusal puts its reason on the reason line, the next success clears it."
+    },
+    {
       "name": "resetHubMountForTests",
       "kind": "function",
       "area": "lib",
@@ -15141,6 +15148,13 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-cluster-nodes.ts",
       "summary": "The whole cluster diagram: bootstrap query, then the pushed snapshot."
+    },
+    {
+      "name": "useCommandNotice",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/use-command-notice.ts",
+      "summary": "The card's one place for \"the last command failed, and why\"."
     },
     {
       "name": "useConfirm",

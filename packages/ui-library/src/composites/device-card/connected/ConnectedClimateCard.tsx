@@ -8,6 +8,7 @@ import { ClimateCard } from '../scenes/climate/ClimateCard'
 import { climateModelOf } from './climate-model'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { useCardCommon } from './use-card-common'
+import { reportedCommand } from './use-command-notice'
 
 /**
  * The climate card of a real device: its `climate-control` slice, its
@@ -22,7 +23,7 @@ export function ConnectedClimateCard({
   const t = useUiText()
   const client = useTrpcClient()
   const dev = useDeviceProxy(client, deviceId)
-  const { common, actions, deviceType } = useCardCommon({ deviceId, canActuate })
+  const { common, actions, deviceType, fail, succeed } = useCardCommon({ deviceId, canActuate })
   const slice = useDeviceStateSlice(
     dev?.climateControl === undefined ? undefined : dev.state.climateControl,
   )
@@ -32,6 +33,8 @@ export function ConnectedClimateCard({
   const { display, applyOptimisticAction } = useOptimisticSlice<ClimateControlStatus>(slice, {
     enabled: optimistic,
   })
+  // A refused command says why on the card, like the shared mutations.
+  const command = reportedCommand(applyOptimisticAction, { fail, succeed })
   if (dev === undefined || dev === null) return null
   const cap = dev.climateControl
   // A bound climate cap whose slice has not answered yet is not a valve-only device.
@@ -71,42 +74,39 @@ export function ConnectedClimateCard({
         onPower: (next) => {
           if (cap === undefined) return
           const mode: HvacMode = next ? (display?.lastActiveMode ?? modes[0] ?? 'auto') : 'off'
-          applyOptimisticAction({ mode }, () => cap.setMode({ mode }))
+          command({ mode }, () => cap.setMode({ mode }))
         },
         onTarget: (value) => {
           if (cap === undefined) return
-          applyOptimisticAction({ target: value }, () => cap.setTarget({ target: value }))
+          command({ target: value }, () => cap.setTarget({ target: value }))
         },
         onRange: (targetLow, targetHigh) => {
           const setRange = cap?.setTargetRange
           if (setRange === undefined) return
-          applyOptimisticAction({ targetLow, targetHigh }, () =>
-            setRange({ targetLow, targetHigh }),
-          )
+          command({ targetLow, targetHigh }, () => setRange({ targetLow, targetHigh }))
         },
         onMode: (id) => {
           const mode = modes.find((m) => m === id)
           if (cap !== undefined && mode !== undefined)
-            applyOptimisticAction({ mode }, () => cap.setMode({ mode }))
+            command({ mode }, () => cap.setMode({ mode }))
         },
         onFan: (fanMode) => {
           const setFan = cap?.setFanMode
-          if (setFan !== undefined) applyOptimisticAction({ fanMode }, () => setFan({ fanMode }))
+          if (setFan !== undefined) command({ fanMode }, () => setFan({ fanMode }))
         },
         onSwing: (swing) => {
           const setSwing = cap?.setSwingVertical
           if (setSwing !== undefined)
-            applyOptimisticAction({ swingVertical: swing }, () => setSwing({ on: swing }))
+            command({ swingVertical: swing }, () => setSwing({ on: swing }))
         },
         onSwingHorizontal: (swing) => {
           const setSwing = cap?.setSwingHorizontal
           if (setSwing !== undefined)
-            applyOptimisticAction({ swingHorizontal: swing }, () => setSwing({ on: swing }))
+            command({ swingHorizontal: swing }, () => setSwing({ on: swing }))
         },
         onPreset: (preset) => {
           const setPreset = cap?.setPreset
-          if (setPreset !== undefined)
-            applyOptimisticAction({ preset }, () => setPreset({ preset }))
+          if (setPreset !== undefined) command({ preset }, () => setPreset({ preset }))
         },
         onHeatCool: () => undefined,
       }}
