@@ -236,6 +236,65 @@ describe('select with discoverOptions', () => {
   })
 })
 
+const servicesField: ConfigField = {
+  ...serviceField,
+  discoverOptions: { kind: 'homeassistant', dependsOn: ['brokerId'], multiple: true },
+}
+
+function ManyForm({ initial = {} }: { readonly initial?: Record<string, unknown> }) {
+  const [values, setValues] = useState<Record<string, unknown>>(initial)
+  const change = (key: string, value: unknown): void =>
+    setValues((prev) => ({ ...prev, [key]: value }))
+  return (
+    <>
+      <FormField field={servicesField} values={values} onChange={change} />
+      <output data-testid="values">{JSON.stringify(values)}</output>
+    </>
+  )
+}
+
+describe('select with discoverOptions.multiple', () => {
+  beforeEach(() => {
+    asked.length = 0
+    failure = null
+    candidates = [
+      {
+        kind: 'homeassistant',
+        suggestedName: 'Pixel 7',
+        config: { service: 'mobile_app_pixel_7', brokerId: 'b1' },
+      },
+      {
+        kind: 'homeassistant',
+        suggestedName: 'Mail relay',
+        config: { service: 'smtp_relay', brokerId: 'b1' },
+      },
+    ]
+  })
+
+  it('ticks several candidates and stores them as a list, offering no free text', async () => {
+    render(<ManyForm initial={{ brokerId: 'b1' }} />)
+    const box = await screen.findByRole('combobox')
+    await waitFor(() => expect(box).not.toBeDisabled(), { timeout: 3000 })
+    expect(screen.queryByRole('textbox')).toBeNull()
+    fireEvent.focus(box)
+    fireEvent.click(await screen.findByTestId('config-select-service-option-mobile_app_pixel_7'))
+    fireEvent.click(await screen.findByTestId('config-select-service-option-smtp_relay'))
+    expect(screen.getByTestId('values').textContent).toContain(
+      '"service":["mobile_app_pixel_7","smtp_relay"]',
+    )
+  })
+
+  it('says nothing was found and keeps the picker disabled', async () => {
+    candidates = []
+    render(<ManyForm initial={{ brokerId: 'b1' }} />)
+    await waitFor(
+      () => expect(screen.getByTestId('config-select-service-status')).toHaveTextContent(/found/i),
+      { timeout: 3000 },
+    )
+    expect(screen.queryByRole('textbox')).toBeNull()
+  })
+})
+
 const relayField: ConfigField = {
   type: 'select',
   key: 'smtpInstanceId',

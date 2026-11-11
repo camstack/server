@@ -106,7 +106,7 @@ export function ConfigDiscoveredSelectControl({
   readonly field: ConfigSelectField
   readonly values: Readonly<Record<string, unknown>>
   readonly value: unknown
-  readonly onChange: (next: string) => void
+  readonly onChange: (next: string | string[]) => void
   readonly disabled?: boolean
   readonly controlId: string
 }): JSX.Element {
@@ -123,6 +123,35 @@ export function ConfigDiscoveredSelectControl({
     !query.isFetching &&
     !query.isError &&
     query.data !== undefined
+
+  // Several values at once (an instance created per ticked candidate): a picker only, never free
+  // text, with the status line until the list answered with something.
+  if (field.discoverOptions?.multiple === true) {
+    const picked = pickedValues(value)
+    return (
+      <div className="space-y-1">
+        <OptionSelect
+          mode="multi"
+          searchable
+          disabled={disabledNow || found.length === 0}
+          value={picked}
+          onChange={onChange}
+          placeholder={t('uiLibrary.configFormField.select', '— Select —')}
+          options={found}
+          testId={controlId}
+          optionTestIdPrefix={`${controlId}-option`}
+        />
+        {answered && found.length > 0 ? null : (
+          <p
+            data-testid={`${controlId}-status`}
+            className={`text-[11px] ${query.isError ? 'text-danger' : 'text-foreground-subtle'}`}
+          >
+            {discoveryStatus(t, ready, settled, query, false)}
+          </p>
+        )}
+      </div>
+    )
+  }
 
   // An optional picker (a relay: empty = the default) never turns into free
   // text. Its list is a fact only once the query ANSWERED: until then a stored
@@ -205,15 +234,40 @@ export function ConfigDiscoveredSelectControl({
   )
 }
 
+/** The values a multi picker holds: a stored single value reads as one pick. */
+export function pickedValues(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string')
+  return typeof value === 'string' && value.length > 0 ? [value] : []
+}
+
 type UiText = ReturnType<typeof useUiText>
 
-/** The one line that says why the list is not (yet) offered. */
+/** The one line that says why the list is not (yet) offered; `canType` when free text is the fallback. */
 function discoveryStatus(
   t: UiText,
   ready: boolean,
   settled: boolean,
   query: DiscoveredOptionsState['query'],
+  canType = true,
 ): string {
+  if (!canType) {
+    if (!ready)
+      return t(
+        'uiLibrary.configFormField.discoverNotReadyPick',
+        'Fill in the fields above to load the list.',
+      )
+    if (!settled || query.isLoading || query.isFetching)
+      return t('uiLibrary.configFormField.loadingOptions', 'Loading options…')
+    if (query.isError)
+      return t(
+        'uiLibrary.configFormField.discoverFailedPick',
+        'Could not load the list: {{message}}.',
+        {
+          message: query.error instanceof Error ? query.error.message : String(query.error),
+        },
+      )
+    return t('uiLibrary.configFormField.discoverEmptyPick', 'Nothing was found.')
+  }
   if (!ready) {
     return t(
       'uiLibrary.configFormField.discoverNotReady',

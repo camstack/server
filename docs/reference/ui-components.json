@@ -9411,6 +9411,13 @@
       "summary": "The device → value picker's model: selection, grouping, labels and states."
     },
     {
+      "name": "pickedValues",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/config-discovered-select-field.tsx",
+      "summary": "The values a multi picker holds: a stored single value reads as one pick."
+    },
+    {
       "name": "PICKER_CHIP_LIMIT",
       "kind": "constant",
       "area": "composites",

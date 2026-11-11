@@ -19,7 +19,7 @@ applies-to:
   - packages/addon-admin-ui/src/components/access/CredentialTable.tsx
 covers:
   - packages/addon-admin-ui/src/**
-last-verified: 2026-10-27
+last-verified: 2026-11-11
 ---
 
 # Admin UI page patterns
@@ -633,7 +633,13 @@ tunnel state and Start/Stop in the rows this way).
   Delete through `useConfirm`). A provider without records is a fixed row when nothing is selected.
 - **Add is always offered for a `multiple` provider, however many rows it holds**; a `single`
   provider only while it has none (`creatableProviders`). A selected pill adds to its own
-  provider; otherwise provider picker, then `InstanceEditorDialog` (form, Test, Save).
+  provider; otherwise the New Integration dialog itself (`IntegrationWizard` with `pickFrom`:
+  the same search, sections, cards and provider icons, listing only the creatable providers),
+  then `InstanceEditorDialog` (form, Test, Save). There is no target-only picker.
+- **Several records in one confirm.** A discovered select that sets
+  `discoverOptions.pickManyOnCreate` becomes a multi-select on create; ticking N candidates
+  creates N records, each holding one value and named after its candidate (Alexa: one target
+  per Echo). Editing a record keeps the single select.
 - **States (D315).** Pending is a spinner, never "empty"; failed is `ErrorBox` with retry; empty
   is `EmptyState`, shown only once every query answered with nothing.
 

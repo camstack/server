@@ -13,6 +13,22 @@ import { IntegrationCard, IntegrationCardGrid } from './integration-card'
 import { IntegrationSection } from './integration-section'
 import { shouldAutofocusSearch } from './search-autofocus'
 
+/**
+ * One provider an instance list can add to (a notification target, a broker, a storage place):
+ * the picker's other source. Its tile is the same card, with the provider's own icon.
+ */
+export interface PickableProvider {
+  readonly addonId: string
+  readonly name: string
+  readonly description: string
+}
+
+/** The picker over a caller's providers instead of the integration types. */
+export interface ProviderPickerInstanceSource {
+  readonly providers: readonly PickableProvider[]
+  readonly onPick: (addonId: string) => void
+}
+
 interface ProviderPickerProps {
   onSelect: (
     addonId: string,
@@ -28,32 +44,98 @@ interface ProviderPickerProps {
   onClose: () => void
   /** Provider currently being created. All buttons are disabled; this one shows a spinner. */
   pendingAddonId?: string | null
+  /**
+   * List these providers instead of the integration types (an instance list's Add): a pick hands
+   * the provider back through `onPick`, and `onSelect` is not called.
+   */
+  source?: ProviderPickerInstanceSource
 }
 
-export function ProviderPicker({ onSelect, onClose, pendingAddonId = null }: ProviderPickerProps) {
+/** One tile, whichever source it came from. */
+interface PickerEntry {
+  readonly addonId: string
+  readonly name: string
+  readonly description: string
+  readonly open: () => void
+  readonly footer: ReactElement | null
+}
+
+function matchesQuery(entry: Pick<PickerEntry, 'addonId' | 'name' | 'description'>, q: string) {
+  return `${entry.name} ${entry.description} ${entry.addonId}`.toLowerCase().includes(q)
+}
+
+export function ProviderPicker({
+  onSelect,
+  onClose,
+  pendingAddonId = null,
+  source,
+}: ProviderPickerProps) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
 
-  const { data: providerTypes, isLoading } = useIntegrationsGetAvailableTypes()
+  const typesQuery = useIntegrationsGetAvailableTypes(undefined, {
+    enabled: source === undefined,
+  })
+  const providerTypes = source === undefined ? typesQuery.data : undefined
+  const isLoading = source === undefined && typesQuery.isLoading
 
   useEffect(() => {
     if (isLoading || !shouldAutofocusSearch()) return
     searchRef.current?.focus()
   }, [isLoading])
 
-  const filtered = useMemo(() => {
-    const list = providerTypes ?? []
-    const q = query.trim().toLowerCase()
-    if (q.length === 0) return list
-    return list.filter((p) => {
-      const hay = `${p.name} ${p.description ?? ''} ${p.addonId}`.toLowerCase()
-      return hay.includes(q)
-    })
-  }, [providerTypes, query])
-
   const { data: installedAddons } = useAddonsList(undefined)
+  const isAnyPending = pendingAddonId !== null
+  const entries = useMemo((): readonly PickerEntry[] => {
+    if (source !== undefined) {
+      return source.providers.map((provider) => ({
+        ...provider,
+        open: () => source.onPick(provider.addonId),
+        footer: null,
+      }))
+    }
+    return (providerTypes ?? []).map((provider): PickerEntry => {
+      const isUniqueExisting =
+        provider.instanceMode === 'unique' && provider.existingInstances.length > 0
+      return {
+        addonId: provider.addonId,
+        name: provider.name,
+        description: provider.description ?? '',
+        open: () => {
+          const existing = provider.existingInstances[0]
+          if (isUniqueExisting && existing !== undefined) {
+            onClose()
+            navigate(integrationDetailUrl(provider.addonId, existing.id))
+          } else {
+            onSelect(
+              provider.addonId,
+              provider.instanceMode,
+              provider.discoveryMode,
+              provider.name,
+              provider.kind,
+              provider.brokerKind,
+              provider.mode,
+              provider.canTest,
+            )
+          }
+        },
+        footer: isUniqueExisting ? (
+          <span className="flex items-center gap-1 text-xs font-medium text-foreground-subtle">
+            <Settings className="h-3 w-3" />
+            {t('integrations.manage')}
+          </span>
+        ) : null,
+      }
+    })
+  }, [source, providerTypes, onClose, onSelect, navigate, t])
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return q.length === 0 ? entries : entries.filter((entry) => matchesQuery(entry, q))
+  }, [entries, query])
+
   const sections = useMemo(() => {
     const split = splitIntegrationSections(filtered, systemAddonIdsOf(installedAddons))
     return {
@@ -72,61 +154,34 @@ export function ProviderPicker({ onSelect, onClose, pendingAddonId = null }: Pro
     )
   }
 
-  const isAnyPending = pendingAddonId !== null
-
-  const renderCards = (list: readonly (typeof filtered)[number][]): ReactElement => (
+  const renderCards = (list: readonly PickerEntry[]): ReactElement => (
     <IntegrationCardGrid>
-      {list.map((provider) => {
-        const isUniqueExisting =
-          provider.instanceMode === 'unique' && provider.existingInstances.length > 0
-        const isThisPending = pendingAddonId === provider.addonId
-        return (
-          <IntegrationCard
-            key={provider.addonId}
-            testId={`provider-card-${provider.addonId}`}
-            buttonTestId={`provider-pick-${provider.addonId}`}
-            addonId={provider.addonId}
-            name={provider.name}
-            openLabel={provider.name}
-            disabled={isAnyPending}
-            onOpen={() => {
-              if (isUniqueExisting) {
-                const existingId = provider.existingInstances[0]!.id
-                onClose()
-                navigate(integrationDetailUrl(provider.addonId, existingId))
-              } else {
-                onSelect(
-                  provider.addonId,
-                  provider.instanceMode,
-                  provider.discoveryMode,
-                  provider.name,
-                  provider.kind,
-                  provider.brokerKind,
-                  provider.mode,
-                  provider.canTest,
-                )
-              }
-            }}
-            body={
-              provider.description ? (
-                <p className="line-clamp-2 text-xs text-foreground-muted">{provider.description}</p>
-              ) : (
-                <span />
-              )
-            }
-            footer={
-              isThisPending ? (
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              ) : isUniqueExisting ? (
-                <span className="flex items-center gap-1 text-xs font-medium text-foreground-subtle">
-                  <Settings className="h-3 w-3" />
-                  {t('integrations.manage')}
-                </span>
-              ) : null
-            }
-          />
-        )
-      })}
+      {list.map((entry) => (
+        <IntegrationCard
+          key={entry.addonId}
+          testId={`provider-card-${entry.addonId}`}
+          buttonTestId={`provider-pick-${entry.addonId}`}
+          addonId={entry.addonId}
+          name={entry.name}
+          openLabel={entry.name}
+          disabled={isAnyPending}
+          onOpen={entry.open}
+          body={
+            entry.description.length > 0 ? (
+              <p className="line-clamp-2 text-xs text-foreground-muted">{entry.description}</p>
+            ) : (
+              <span />
+            )
+          }
+          footer={
+            pendingAddonId === entry.addonId ? (
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            ) : (
+              entry.footer
+            )
+          }
+        />
+      ))}
     </IntegrationCardGrid>
   )
 
@@ -158,7 +213,7 @@ export function ProviderPicker({ onSelect, onClose, pendingAddonId = null }: Pro
 
       {filtered.length === 0 && (
         <div className="py-8 text-center text-xs text-foreground-subtle">
-          {(providerTypes ?? []).length === 0
+          {entries.length === 0
             ? t('integrations.noProviders')
             : t('integrations.noProvidersMatch', 'No integrations match your search.')}
         </div>

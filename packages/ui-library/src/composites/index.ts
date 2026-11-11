@@ -619,6 +619,7 @@ export * from './charts/index.js'
 export * from './device-history/index.js'
 
 export {
+  pickedValues,
   useDiscoveredOptions,
   type DiscoveredOption,
   type DiscoveredOptionsState,

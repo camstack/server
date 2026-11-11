@@ -8406,7 +8406,10 @@
       "discoverNotReady": "Compila i campi sopra per caricare l'elenco, oppure digita il valore.",
       "discoverFailed": "Impossibile caricare l'elenco: {{message}}. Digita il valore.",
       "discoverEmpty": "Non è stato trovato nulla. Digita il valore.",
-      "nodeLacksCapability": "{{name}} (non installato su questo nodo)"
+      "nodeLacksCapability": "{{name}} (non installato su questo nodo)",
+      "discoverNotReadyPick": "Compila i campi sopra per caricare l'elenco.",
+      "discoverFailedPick": "Impossibile caricare l'elenco: {{message}}.",
+      "discoverEmptyPick": "Non è stato trovato nulla."
     },
     "confirmActionButton": {
       "cancel": "Annulla",
@@ -11986,7 +11989,6 @@
     "enable": "Attiva {{name}}",
     "loadFailed": "Impossibile caricare l'elenco",
     "loading": "Caricamento…",
-    "pickProvider": "Scegli a quale provider appartiene il nuovo.",
     "saved": "Salvato",
     "createTitle": "Aggiungi {{provider}}",
     "editTitle": "Modifica {{name}}",
@@ -12019,7 +12021,10 @@
     "typedIdInvalid": "Lettere minuscole, cifre e trattini, a partire da una lettera o cifra (massimo 64).",
     "switchFailed": "Impossibile modificare {{name}}: {{message}}",
     "noForm": "Questo record non ha un modulo di configurazione oltre al nome.",
-    "addonNotRunning": "{{addon}} non è in esecuzione: avvialo prima"
+    "addonNotRunning": "{{addon}} non è in esecuzione: avvialo prima",
+    "createMany": "Crea {{count}}",
+    "createManyHint": "Ne viene creato uno per ogni scelta spuntata, con il suo nome.",
+    "createManyStopped": "{{done}} di {{total}} creati: {{message}}"
   },
   "instances": {
     "colStatus": "Stato",

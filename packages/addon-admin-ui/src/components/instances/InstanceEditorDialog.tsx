@@ -13,11 +13,18 @@
  * clear marker. A new record is created under its id first, then patched with the typed keys.
  */
 import {
+  type ConfigSelectField,
   hydrateSchema,
   type IntegrationInstance,
   type IntegrationInstanceDescription,
 } from '@camstack/types'
-import { Button, ConfigFormBuilder, ItemFormDialog, useSystem } from '@camstack/ui-library'
+import {
+  Button,
+  ConfigFormBuilder,
+  ItemFormDialog,
+  pickedValues,
+  useSystem,
+} from '@camstack/ui-library'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link2, Loader2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
@@ -33,6 +40,13 @@ import {
 } from '../integrations/connection-test-verdict'
 import { pushToast } from '../ui/toast-bus'
 import { kindWidget, withoutFields } from './kind-widgets'
+import {
+  candidateLabels,
+  discoveryConfigOf,
+  manyCreateItems,
+  pickManyField,
+  withMultiplePick,
+} from './pick-many'
 import { HOLDER_QUERY_KEY } from './use-instances-data'
 import {
   checkTypedId,
@@ -233,9 +247,21 @@ export function InstanceEditorDialog({
     () => formStartValues(values, schemaQuery.data),
     [values, schemaQuery.data],
   )
+  // A create form whose picker declares `pickManyOnCreate` ticks several values: one record each.
+  const manyField = instance === null ? pickManyField(schemaQuery.data) : null
+  const manyKey = manyField?.key
+  const formSchema = useMemo(
+    () =>
+      schemaQuery.data && manyKey !== undefined
+        ? withMultiplePick(schemaQuery.data, manyKey)
+        : schemaQuery.data,
+    [schemaQuery.data, manyKey],
+  )
+  const picked = manyField === null ? [] : pickedValues(values[manyField.key])
+  const many = picked.length > 1
   const hydrated = useMemo(
-    () => (schemaQuery.data ? hydrateSchema(schemaQuery.data, { ...stored }) : null),
-    [schemaQuery.data, stored],
+    () => (formSchema ? hydrateSchema(formSchema, { ...stored }) : null),
+    [formSchema, stored],
   )
   // The provider ANSWERED with no form for this record: say so (name and switch are still editable),
   // never a spinner that does not end.
@@ -252,10 +278,75 @@ export function InstanceEditorDialog({
       ? []
       : connectionWidgets.flatMap(({ widget }) => widget.ownedKeys(hydrated, values))
 
+  /** The names of the ticked candidates, asked once at save; a failed ask names them by value. */
+  const pickLabels = async (
+    field: ConfigSelectField,
+    formValues: Readonly<Record<string, unknown>>,
+  ): Promise<ReadonlyMap<string, string>> => {
+    const discover = field.discoverOptions
+    if (discover === undefined || pickedValues(formValues[field.key]).length < 2) return new Map()
+    try {
+      const candidates = await system.trpcClient.notificationOutput.discoverTargets.query({
+        kind: discover.kind,
+        config: discoveryConfigOf(formValues),
+      })
+      return candidateLabels(candidates, field.key)
+    } catch {
+      return new Map()
+    }
+  }
+
   const save = useMutation({
     mutationFn: async (): Promise<string> => {
       const client = system.trpcClient.integrationInstances
       const patch = diffInstanceValues(stored, edited)
+      if (instance === null && manyField !== null && picked.length > 0) {
+        const items = manyCreateItems({
+          key: manyField.key,
+          picked,
+          labels: await pickLabels(manyField, values),
+          typedName: name,
+          values: patch,
+        })
+        let lastId = ''
+        for (const [index, item] of items.entries()) {
+          try {
+            const created = await client.createInstance.mutate({
+              addonId,
+              name: item.name,
+              ...(description.mintsId === true
+                ? {}
+                : {
+                    id: mintInstanceId(description.instanceMode, addonId, randomHex8),
+                  }),
+              ...(kindId !== '' ? { kind: kindId } : {}),
+            })
+            await client.updateInstance.mutate({
+              addonId,
+              id: created.id,
+              values: item.values,
+            })
+            lastId = created.id
+          } catch (err) {
+            // The ones already created stay; say how far it got and why it stopped.
+            void queryClient.invalidateQueries({
+              queryKey: [HOLDER_QUERY_KEY],
+            })
+            throw new Error(
+              t(
+                'providerInstances.createManyStopped',
+                '{{done}} of {{total}} created: {{message}}',
+                {
+                  done: index,
+                  total: items.length,
+                  message: err instanceof Error ? err.message : String(err),
+                },
+              ),
+            )
+          }
+        }
+        return lastId
+      }
       if (instance === null) {
         // The old id wins; else the provider mints one when it can; else the UI mints an opaque id.
         const chosen =
@@ -293,7 +384,7 @@ export function InstanceEditorDialog({
       void queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] })
       pushToast({
         title: t('providerInstances.saved', 'Saved'),
-        message: name,
+        message: many ? String(picked.length) : name,
         severity: 'info',
       })
       onSaved?.(savedId)
@@ -353,7 +444,7 @@ export function InstanceEditorDialog({
             disabled={
               save.isPending ||
               (hydrated === null && !noForm) ||
-              name.length === 0 ||
+              (name.length === 0 && !many) ||
               restoreMissing ||
               typedState !== 'ok'
             }
@@ -363,16 +454,32 @@ export function InstanceEditorDialog({
             }}
           >
             {save.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-            {instance === null
-              ? t('providerInstances.create', 'Create')
-              : t('providerInstances.saveChanges', 'Save changes')}
+            {instance === null && many
+              ? t('providerInstances.createMany', 'Create {{count}}', {
+                  count: picked.length,
+                })
+              : instance === null
+                ? t('providerInstances.create', 'Create')
+                : t('providerInstances.saveChanges', 'Save changes')}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
         {instance !== null ? lead : null}
-        <FormBuilder schema={identitySchema} values={identity} onChange={setIdentity} />
+        <FormBuilder
+          schema={many ? withoutFields(identitySchema, [IDENTITY_NAME]) : identitySchema}
+          values={identity}
+          onChange={setIdentity}
+        />
+        {many && (
+          <p className="text-xs text-foreground-muted">
+            {t(
+              'providerInstances.createManyHint',
+              'One is created per ticked choice, each named after it.',
+            )}
+          </p>
+        )}
         {kind?.signIn !== undefined && (
           <BrokerSignInPanel
             basePath={kind.signIn.basePath}

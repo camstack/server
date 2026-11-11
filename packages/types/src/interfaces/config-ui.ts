@@ -569,6 +569,17 @@ export interface ConfigDiscoverOptions {
    * value is shown.
    */
   readonly missingLabel?: string
+  /**
+   * On CREATE the operator may tick several candidates at once: the instance editor creates one
+   * record per ticked value, each named after its candidate. A stored record still holds one
+   * value, so editing it keeps the single picker.
+   */
+  readonly pickManyOnCreate?: boolean
+  /**
+   * The control holds several values (`string[]`). Set by the instance editor on create for a
+   * field that declares {@link pickManyOnCreate}; a provider does not set it.
+   */
+  readonly multiple?: boolean
 }
 
 export interface ConfigMultiSelectField extends ConfigFieldBase {

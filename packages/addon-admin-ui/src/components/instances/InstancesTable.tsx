@@ -50,7 +50,7 @@ import { IntegrationActivity } from '../integration-hub/IntegrationActivity'
 import { FixedRowSettingsDialog } from './FixedRowSettingsDialog'
 import { InstanceEditorDialog } from './InstanceEditorDialog'
 import { InstanceProviderPills, type InstanceInstallLink } from './InstanceProviderPills'
-import { ProviderPickerDialog } from './ProviderPickerDialog'
+import { IntegrationWizard } from '../integrations/IntegrationWizard'
 import {
   creatableProviders,
   filterRows,
@@ -599,15 +599,18 @@ export function InstancesTable({
         </div>
       )}
       {data.state === 'ready' && form.state.mode === 'new' && (
-        <ProviderPickerDialog
-          title={addLabel}
-          providers={creatable.map((h) => ({
-            addonId: h.addonId,
-            name: nameOf(h.addonId),
-            description: data.descriptions.get(h.addonId) ?? '',
-          }))}
-          onPick={(addonId) => form.openEdit(formatEditRef(addonId, null))}
-          onCancel={form.close}
+        <IntegrationWizard
+          open
+          onClose={form.close}
+          pickFrom={{
+            title: addLabel,
+            providers: creatable.map((h) => ({
+              addonId: h.addonId,
+              name: nameOf(h.addonId),
+              description: data.descriptions.get(h.addonId) ?? '',
+            })),
+            onPick: (addonId) => form.openEdit(formatEditRef(addonId, null)),
+          }}
         />
       )}
       {data.state === 'ready' && form.state.mode === 'edit' && (

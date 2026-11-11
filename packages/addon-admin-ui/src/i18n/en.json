@@ -8384,7 +8384,10 @@
       "discoverNotReady": "Fill in the fields above to load the list, or type the value.",
       "discoverFailed": "Could not load the list: {{message}}. Type the value instead.",
       "discoverEmpty": "Nothing was found. Type the value instead.",
-      "nodeLacksCapability": "{{name}} (not installed on this node)"
+      "nodeLacksCapability": "{{name}} (not installed on this node)",
+      "discoverNotReadyPick": "Fill in the fields above to load the list.",
+      "discoverFailedPick": "Could not load the list: {{message}}.",
+      "discoverEmptyPick": "Nothing was found."
     },
     "confirmActionButton": {
       "cancel": "Cancel",
@@ -11964,7 +11967,6 @@
     "enable": "Enable {{name}}",
     "loadFailed": "Could not load the list",
     "loading": "Loading…",
-    "pickProvider": "Choose which provider the new one belongs to.",
     "saved": "Saved",
     "createTitle": "Add {{provider}}",
     "editTitle": "Edit {{name}}",
@@ -11997,7 +11999,10 @@
     "typedIdInvalid": "Lowercase letters, digits and dashes, starting with a letter or digit (up to 64).",
     "switchFailed": "Could not change {{name}}: {{message}}",
     "noForm": "This record has no configuration form beyond its name.",
-    "addonNotRunning": "{{addon}} is not running: start it first"
+    "addonNotRunning": "{{addon}} is not running: start it first",
+    "createMany": "Create {{count}}",
+    "createManyHint": "One is created per ticked choice, each named after it.",
+    "createManyStopped": "{{done}} of {{total}} created: {{message}}"
   },
   "instances": {
     "colStatus": "Status",

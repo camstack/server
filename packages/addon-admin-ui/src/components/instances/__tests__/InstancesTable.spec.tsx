@@ -96,6 +96,19 @@ vi.mock('@camstack/ui-library', async () => {
         },
       ],
     }),
+    // The Add picker is the New Integration wizard: its own queries stay idle on the picker step.
+    useIntegrationsGetAvailableTypes: () => ({ data: undefined, isLoading: false }),
+    useDeviceManagerDiscoveryProviders: () => ({ data: undefined }),
+    useIntegrationInstancesDescribe: () => ({ data: undefined }),
+    useIntegrationInstancesInstanceFormSchema: () => ({ data: undefined }),
+    useIntegrationInstancesCreateInstance: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+      error: null,
+      reset: vi.fn(),
+    }),
+    useDeviceManagerAdoptDevice: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useDeviceManagerDiscoverDevices: () => ({ mutate: vi.fn(), isPending: false }),
     useAddonsSetCapabilityProviderEnabled: () => ({
       mutate: h.setEnabled,
       isPending: false,
@@ -518,12 +531,13 @@ describe('InstancesTable', () => {
     it('add opens the picker, then the form, and creates then patches only the typed keys', async () => {
       renderPanel()
       fireEvent.click(await screen.findByRole('button', { name: /Add destination/ }))
-      // Loki has no record yet and SMTP takes several: two providers, so a picker.
-      fireEvent.click(
-        within(await screen.findByRole('dialog')).getByRole('button', {
-          name: /SMTP/,
-        }),
-      )
+      // Loki has no record yet and SMTP takes several: two providers, so a picker — the New
+      // Integration one (its search and its provider cards), titled with the list's Add label.
+      const dialog = await screen.findByRole('dialog')
+      expect(within(dialog).getByText('Add destination')).toBeTruthy()
+      expect(within(dialog).getByTestId('provider-picker-search')).toBeTruthy()
+      expect(within(dialog).getByTestId('provider-card-loki-logging')).toBeTruthy()
+      fireEvent.click(within(dialog).getByTestId('provider-pick-smtp-nodemailer'))
       // The form's labels are not bound to their inputs: the empty text input is Host.
       await screen.findByDisplayValue('SMTP')
       const host = await waitFor(() => {

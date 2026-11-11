@@ -31,7 +31,7 @@ import { BrokerStep } from './BrokerStep'
 import { DeviceDiscoveryStep } from './DeviceDiscoveryStep'
 import { ProviderConfigForm } from './ProviderConfigForm'
 import type { IntegrationFormSeed } from './integration-setup-seed'
-import { ProviderPicker } from './ProviderPicker'
+import { ProviderPicker, type ProviderPickerInstanceSource } from './ProviderPicker'
 import { ScanNetworkModal } from './ScanNetworkModal'
 
 /**
@@ -83,9 +83,24 @@ interface IntegrationWizardProps {
   onClose: () => void
   /** Skip the picker and open the config step with these values (a scan proposal). */
   seed?: IntegrationFormSeed | null
+  /**
+   * Add to an instance list instead of creating an integration: the picker lists these providers
+   * under this title, and a pick hands the provider back (the list opens its own create form).
+   */
+  pickFrom?: IntegrationWizardInstancePick
 }
 
-export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWizardProps) {
+/** What an instance list's Add hands the wizard: its title and its providers. */
+export interface IntegrationWizardInstancePick extends ProviderPickerInstanceSource {
+  readonly title: string
+}
+
+export function IntegrationWizard({
+  open,
+  onClose,
+  seed = null,
+  pickFrom,
+}: IntegrationWizardProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -180,7 +195,9 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
   const createInstanceMutation = useIntegrationInstancesCreateInstance({
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [['integrations']] })
-      void queryClient.invalidateQueries({ queryKey: [['integrationInstances']] })
+      void queryClient.invalidateQueries({
+        queryKey: [['integrationInstances']],
+      })
     },
   })
 
@@ -390,7 +407,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
   if (!open) return null
 
   const titles: Record<WizardStep, string> = {
-    picker: t('integrations.newIntegration'),
+    picker: pickFrom?.title ?? t('integrations.newIntegration'),
     config: t('integrations.configureIntegration'),
     discovery: t('integrations.importDevices'),
     broker: t('integrations.connectBroker', {
@@ -440,6 +457,7 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
                   onSelect={handlePickerSelect}
                   onClose={handleClose}
                   pendingAddonId={pendingAddonId}
+                  {...(pickFrom !== undefined ? { source: pickFrom } : {})}
                 />
               </>
             )}
@@ -519,7 +537,9 @@ export function IntegrationWizard({ open, onClose, seed = null }: IntegrationWiz
                     onClick={handleClose}
                     className="mt-1 rounded-md border border-border bg-surface px-3 py-1.5 text-[11px] font-medium text-foreground hover:bg-surface-hover transition-colors"
                   >
-                    {t('integrations.closeAndRefresh', { defaultValue: 'Close' })}
+                    {t('integrations.closeAndRefresh', {
+                      defaultValue: 'Close',
+                    })}
                   </Button>
                 </>
               )}
