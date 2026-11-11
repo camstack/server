@@ -4,18 +4,19 @@
 
 # Guards
 
-239 repository guards: 234 in `scripts/`,
+240 repository guards: 235 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (229)
+## Enforced by CI checks (230)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
 | Guard | Refuses |
 | --- | --- |
 | `scripts/check-absent-claim-is-answered.ts` | Absent-claim guard — an empty state may not be reached from a pending query. |
+| `scripts/check-action-block-importers.ts` | One action block, and a list of who mounts it (D983 enforcement). |
 | `scripts/check-actuation-not-admin.ts` | Actuation guard — using a device is not administering the system. |
 | `scripts/check-addon-calls-super.ts` | Every concrete addon class calls `super(...)` from its own constructor. |
 | `scripts/check-addon-dist-footprint.ts` | Addon-footprint guard on the BUILT output (D28) — the addon twin of `check-runner-dist-barrel-free.ts`. |

@@ -298,6 +298,7 @@ jobs:
             scripts/check-one-instances-list.ts \
             scripts/check-no-stacked-provider-lists.ts \
             scripts/check-one-instance-create-door.ts \
+            scripts/check-action-block-importers.ts \
             scripts/check-no-addon-level-settings.ts \
             scripts/check-no-integration-settings.ts \
             scripts/check-hub-settings-ready-before-forks.ts \

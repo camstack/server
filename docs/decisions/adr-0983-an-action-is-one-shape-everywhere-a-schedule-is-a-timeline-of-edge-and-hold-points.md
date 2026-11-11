@@ -1,7 +1,7 @@
 ---
 id: D983
 title: An action is one shape everywhere — a vocabulary action on a target — and a scheduler is a timeline of edge and hold points
-status: proposed
+status: accepted
 date: 2026-10-31
 supersedes:
 applies-to:
@@ -140,5 +140,9 @@ Every point outcome (`done`, `missed`, `inactive`, `condition-false`, `failed`, 
   spec over DST changes in the site timezone, catch-up under/over `maxLateMs`,
   hold re-apply bounded, manual override `respect` vs `reassert`, priority
   conflict, migration of a marked legacy step.
-- Nothing yet stops a page from hand-rolling an action picker: review only,
-  until a guard lists the shared block's importers.
+- `scripts/check-action-block-importers.ts` lists every file that mounts the
+  shared action block (`CommandStep`, `ActionList`) and refuses a UI file that
+  imports the fields under it or reads the vocabulary offers to build its own
+  picker.
+- Notification rules and buttons run existing Actions by id (D1028), so the
+  notification centre has no step shape of its own.
