@@ -851,7 +851,8 @@ export const deviceManagerCapability = {
                 .array(
                   z.object({
                     path: z.string(),
-                    kind: z.enum(['string', 'number', 'boolean', 'enum']),
+                    kind: z.enum(['string', 'number', 'boolean', 'enum', 'union']),
+                    unionMembers: z.array(z.enum(['string', 'number', 'boolean'])).optional(),
                     enumValues: z.array(z.string()).optional(),
                     item: z.boolean().optional(),
                     quantity: ReadingQuantitySchema.optional(),

@@ -47,6 +47,7 @@ import {
   type CompositionFieldSource,
   compositionSourceKey,
 } from './composition.js'
+import type { CompositionFieldKind } from './composition-report.js'
 import { expressionContainsBuiltinCall } from './expression-kinds.js'
 
 export interface SourceFreshReading {
@@ -111,6 +112,12 @@ export interface EvaluateCompositionFieldInput {
   readonly source: CompositionFieldSource
   readonly read: SourceReader
   readonly now: number
+  /**
+   * The kind of the field written (the plan's `kind`). A direct read whose
+   * value is of another kind (a union source such as `control.value` whose
+   * device changed kind) is UNAVAILABLE, never coerced (D1033, D393).
+   */
+  readonly targetKind?: CompositionFieldKind
   readonly stateful?: {
     readonly currentOutput: unknown
     readonly expressionMemory: StatefulExpressionMemory
@@ -130,7 +137,18 @@ function isConfirmed(reading: SourceUnavailableReading): boolean {
   return reading.fatal || reading.confirmed === true
 }
 
-function fromReading(reading: SourceReading, read: CompositionFieldRead): FieldOutcome {
+/** Whether a non-null value is of the kind a field of `kind` holds. */
+function valueFitsKind(value: ExpressionValue, kind: CompositionFieldKind): boolean {
+  if (value === null) return true
+  const accepted = kind === 'enum' ? 'string' : kind
+  return typeof value === accepted
+}
+
+function fromReading(
+  reading: SourceReading,
+  read: CompositionFieldRead,
+  targetKind: CompositionFieldKind | undefined,
+): FieldOutcome {
   if (reading.state === 'unavailable') {
     return {
       state: 'unavailable',
@@ -138,6 +156,15 @@ function fromReading(reading: SourceReading, read: CompositionFieldRead): FieldO
       reason: `${describeRead(read)}: ${reading.reason}`,
       fatal: reading.fatal,
       confirmed: isConfirmed(reading),
+    }
+  }
+  if (targetKind !== undefined && !valueFitsKind(reading.value, targetKind)) {
+    return {
+      state: 'unavailable',
+      value: null,
+      reason: `${describeRead(read)}: source-kind-mismatch, it reads a ${typeof reading.value} and the field takes a ${targetKind}`,
+      fatal: false,
+      confirmed: true,
     }
   }
   return {
@@ -299,7 +326,7 @@ export function evaluateCompositionField(input: EvaluateCompositionFieldInput): 
   const { source } = input
   switch (source.kind) {
     case 'from':
-      return fromReading(input.read(source), source)
+      return fromReading(input.read(source), source, input.targetKind)
     case 'expression':
       return expressionOutcome(source, input.read, input.now, input.stateful)
     case 'aggregate':

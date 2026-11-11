@@ -115,6 +115,24 @@ export function joinRuntimeBlob(
 }
 
 /**
+ * `record` with the value at a DOTTED claim path replaced, as a copy: a claim
+ * of `oscillationAxes.horizontal.angle` sets that leaf and keeps its siblings.
+ * A missing or `null` parent becomes `{}` — the cap schema's leaf defaults
+ * fill the rest (an axis the native reports absent, linked in Customize).
+ */
+function setPath(
+  record: Readonly<Record<string, unknown>>,
+  segments: readonly string[],
+  value: unknown,
+): Record<string, unknown> {
+  const [head, ...rest] = segments
+  if (head === undefined) return { ...record }
+  if (rest.length === 0) return { ...record, [head]: value }
+  const child = record[head]
+  return { ...record, [head]: setPath(isPlainRecord(child) ? child : {}, rest, value) }
+}
+
+/**
  * The one merge. Held when a claimed field has no value yet (S5: never
  * answered from the native), when a `replace` has no native slice to overlay
  * (a partial slice is never emitted), or when the merged slice fails the cap's
@@ -132,7 +150,10 @@ export function mergeOwned(
   if (owned.mode === 'replace' && native === null) {
     return { kind: 'held', reason: 'no native slice yet' }
   }
-  const merged: Record<string, unknown> = { ...native, ...owned.values }
+  const merged = Object.entries(owned.values).reduce<Record<string, unknown>>(
+    (acc, [path, value]) => setPath(acc, path.split('.'), value),
+    { ...native },
+  )
   if (schema === null) return { kind: 'slice', slice: merged }
   const parsed = schema.safeParse(merged)
   if (parsed.success) {

@@ -94,3 +94,55 @@ describe('field ownership (D663)', () => {
     expect(back.dropped).toEqual([])
   })
 })
+
+describe('a dotted claim merges into the nested native value', () => {
+  // The Dreo studio fan: native axes from the HA fan entity, the horizontal
+  // angle claimed by a Customize link to its sibling number control 3364.
+  const FAN_NATIVE = {
+    on: true,
+    speed: 40,
+    oscillating: false,
+    direction: null,
+    preset: '',
+    availablePresets: [],
+    lastFetchedAt: 1,
+    oscillationAxes: {
+      horizontal: {
+        oscillating: false,
+        angle: 10,
+        sweepFrom: 0,
+        sweepTo: 90,
+        min: 0,
+        max: 120,
+        step: 1,
+      },
+      vertical: null,
+    },
+  }
+  const claim = (values: Record<string, unknown>): OwnedCap => ({
+    owner: 'blk-fan',
+    mode: 'replace',
+    fields: Object.keys(values),
+    values,
+  })
+
+  it('sets the leaf and keeps its siblings — never a literal dotted key', () => {
+    const r = mergeOwned(FAN_NATIVE, claim({ 'oscillationAxes.horizontal.angle': 45 }), null)
+    expect(r.kind).toBe('slice')
+    if (r.kind !== 'slice') return
+    expect(r.slice['oscillationAxes.horizontal.angle']).toBeUndefined()
+    expect(r.slice['oscillationAxes']).toEqual({
+      horizontal: { ...FAN_NATIVE.oscillationAxes.horizontal, angle: 45 },
+      vertical: null,
+    })
+  })
+
+  it('builds an axis the native slice reports absent, and leaves the native value untouched', () => {
+    const r = mergeOwned(FAN_NATIVE, claim({ 'oscillationAxes.vertical.oscillating': true }), null)
+    expect(r.kind === 'slice' && r.slice['oscillationAxes']).toEqual({
+      horizontal: FAN_NATIVE.oscillationAxes.horizontal,
+      vertical: { oscillating: true },
+    })
+    expect(FAN_NATIVE.oscillationAxes.vertical).toBeNull()
+  })
+})

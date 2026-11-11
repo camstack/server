@@ -193,6 +193,7 @@ export function evaluateFields(
         source: record.plan.source,
         read,
         now,
+        targetKind: record.plan.kind,
         stateful: {
           currentOutput: currentOutput(record),
           expressionMemory: candidateMemory,

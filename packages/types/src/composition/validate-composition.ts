@@ -15,6 +15,7 @@ import { CAP_CUSTOMIZE_CATALOG } from '../generated/customize-catalog.js'
 import type { z } from 'zod'
 import type { DeviceType } from '../device/device-type.js'
 import type { ReadingQuantity } from '../units/quantity.js'
+import type { WireableScalarKind } from '../device/schema-fields.js'
 import {
   COMPOSED_DEVICE_STABLE_ID_PREFIX,
   COMPOSER_ADDON_ID,
@@ -39,6 +40,8 @@ import {
 } from './validate-forward.js'
 import {
   compatibility,
+  narrowUnionRead,
+  unionTargetProblem,
   enumLiteralProblem,
   roleOf,
   sourceKinds,
@@ -85,6 +88,13 @@ export interface CompositionSourceFound {
   readonly deviceType?: DeviceType
   /** Present when the device declares one. Mixed quantities are refused. */
   readonly quantity?: ReadingQuantity
+  /**
+   * The LIVE kind of each union field the composition reads from this device,
+   * keyed `<cap>.<fieldPath>` (D1033): a numeric control's `control.value` is a
+   * number, a select's a string. Absent when the slice was not known at save
+   * time; the read-time guard still applies.
+   */
+  readonly liveKinds?: ReadonlyMap<string, WireableScalarKind>
 }
 export interface CompositionSourceAbsent {
   readonly kind: 'absent'
@@ -317,6 +327,7 @@ function planTopLevelField(
     )
   if (tf === undefined)
     return refused(problem('unknown-field', fieldAt, `\`${def.name}\` has no field \`${path}\``))
+  if (tf.kind === 'union') return refused(unionTargetProblem(def.name, path, fieldAt))
   const kinds = sourceKinds(source, lookupCap)
   if (!kinds.ok) return refused(problem(kinds.code, fieldAt, kinds.message))
   const role = roleOf(source)
@@ -339,7 +350,7 @@ function planTopLevelField(
   const enumProblem = enumLiteralProblem(def.name, tf, source, fieldAt)
   return {
     problems: [
-      ...compatibility(def.name, tf, kinds.kinds, fieldAt),
+      ...compatibility(def.name, tf, narrowUnionRead(source, tf, kinds.kinds, lookupCap), fieldAt),
       ...(enumProblem === null ? [] : [enumProblem]),
     ],
     fields: [plan],
@@ -609,6 +620,28 @@ export function compositionSourceRefs(composition: Composition): readonly Compos
   ]
 }
 
+/**
+ * Every DIRECT read (`from`) of a union source field (D1033): the reads whose
+ * source's live kind a save looks up, so a numeric control is never linked to
+ * a string field. A read inside an expression is judged by the expression.
+ */
+export function compositionUnionReads(
+  composition: Composition,
+  lookupCap: CapabilityLookup,
+): readonly CompositionFieldRead[] {
+  return composition.features.flatMap((f) =>
+    compositionFeatureEnabled(f) && f.kind === 'fields'
+      ? featureSources(f).flatMap((source) => {
+          if (source.kind !== 'from') return []
+          const def = lookupCap(source.cap)
+          const schema = def?.runtimeState ?? def?.status?.schema
+          if (schema === undefined) return []
+          return describeStateField(schema, source.fieldPath)?.kind === 'union' ? [source] : []
+        })
+      : [],
+  )
+}
+
 /** The device the candidate writes, and what its own reads of that device mean. */
 interface CandidateSelf {
   readonly ref: CompositionSourceRef
@@ -683,6 +716,30 @@ function selfReadProblems(
   ]
 }
 
+/**
+ * A direct read of a union field is judged by the source's LIVE kind when the
+ * save knew it (D1033): a numeric control feeds only a number field, a select
+ * only a string or enum one.
+ */
+function liveKindProblems(
+  field: CompositionFieldPlan,
+  read: CompositionFieldRead,
+  desc: CompositionSourceFound,
+  at: string,
+): readonly CompositionProblem[] {
+  if (field.source.kind !== 'from') return []
+  const live = desc.liveKinds?.get(`${read.cap}.${read.fieldPath}`)
+  const accepted = field.kind === 'enum' ? 'string' : field.kind
+  if (live === undefined || live === accepted) return []
+  return [
+    problem(
+      'source-kind-mismatch',
+      at,
+      `\`${read.cap}.${read.fieldPath}\` of device ${desc.deviceId} reads a ${live} now; \`${field.cap}.${field.path}\` takes a ${accepted}`,
+    ),
+  ]
+}
+
 function sourceProblems(
   fields: readonly CompositionFieldPlan[],
   ctx: ValidateCompositionContext,
@@ -716,7 +773,7 @@ function sourceProblems(
           ),
         ]
       }
-      return []
+      return liveKindProblems(field, read, desc, at)
     }),
   )
 }

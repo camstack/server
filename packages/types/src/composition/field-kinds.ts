@@ -76,11 +76,51 @@ function readKinds(read: CompositionFieldRead, lookupCap: CapabilityLookup): Kin
       message: `\`${read.cap}\` has no field \`${read.fieldPath}\``,
     }
   }
-  const base: ExpressionValueKind = field.kind === 'enum' ? 'string' : field.kind
+  const bases: readonly ExpressionValueKind[] =
+    field.kind === 'union'
+      ? (field.unionMembers ?? [])
+      : [field.kind === 'enum' ? 'string' : field.kind]
   return {
     ok: true,
-    kinds: new Set<ExpressionValueKind>(field.nullable ? [base, 'null'] : [base]),
+    kinds: new Set<ExpressionValueKind>(field.nullable ? [...bases, 'null'] : bases),
   }
+}
+
+/** A union field is read as a source (D1033), never written: no single kind to check a source against. */
+export function unionTargetProblem(cap: string, path: string, at: string): CompositionProblem {
+  return problem(
+    'kind-mismatch',
+    at,
+    `\`${cap}.${path}\` is a union — it is read as a source, never written`,
+  )
+}
+
+/** The one value kind a target field accepts. */
+export function acceptedKind(target: StateFieldDescription): ExpressionValueKind | null {
+  if (target.kind === 'union') return null
+  return target.kind === 'enum' ? 'string' : target.kind
+}
+
+/**
+ * A direct read of a UNION source field (D1033) is judged by the member that
+ * fits the target: when one does, the read produces that kind only (a reading
+ * of another kind is UNAVAILABLE at read time, never a coerced value); when
+ * none does, the kinds stay as they are and `compatibility` names the mismatch.
+ */
+export function narrowUnionRead(
+  source: CompositionFieldSource,
+  target: StateFieldDescription,
+  kinds: ExpressionKindSet,
+  lookupCap: CapabilityLookup,
+): ExpressionKindSet {
+  if (source.kind !== 'from') return kinds
+  const def = lookupCap(source.cap)
+  const schema = def?.runtimeState ?? def?.status?.schema
+  if (schema === undefined) return kinds
+  const field = describeStateField(schema, source.fieldPath)
+  const accepted = acceptedKind(target)
+  if (field?.kind !== 'union' || accepted === null || !kinds.has(accepted)) return kinds
+  return new Set<ExpressionValueKind>(kinds.has('null') ? [accepted, 'null'] : [accepted])
 }
 
 export function sourceKinds(
@@ -119,7 +159,8 @@ export function compatibility(
   kinds: ExpressionKindSet,
   at: string,
 ): readonly CompositionProblem[] {
-  const allowed: ExpressionValueKind = target.kind === 'enum' ? 'string' : target.kind
+  const allowed = acceptedKind(target)
+  if (allowed === null) return [unionTargetProblem(cap, target.path, at)]
   const offending = [...kinds].filter((k) => k !== 'null' && k !== allowed)
   const problems: CompositionProblem[] = []
   if (offending.length > 0) {

@@ -4,6 +4,7 @@
  * The device list is the shared device → value picker; the right-hand side is the
  * proposals instead of a value list.
  */
+import { liveWireableCatalog } from '../source-picker-model'
 import type { DeviceInfo } from '@camstack/types'
 import {
   Button,
@@ -79,7 +80,10 @@ export function FillFromDeviceDialog(props: FillFromDeviceDialogProps): ReactNod
     deviceId === null || all.data === undefined
       ? null
       : (toPickerDevices(all.data).find((d) => d.id === deviceId) ?? null)
-  const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
+  const catalog: WireableCatalog = liveWireableCatalog(
+    wireable.status === 'success' ? wireable.data : { caps: [] },
+    snapshot.status === 'success' ? snapshot.data : null,
+  )
   const proposals =
     picked === null
       ? []

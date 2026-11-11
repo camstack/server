@@ -13,6 +13,8 @@ export interface StateFieldDescription {
   readonly required: boolean
   /** Present only when `kind === 'enum'` — the closed set of strings the field accepts. */
   readonly enumValues?: readonly string[]
+  /** Present only when `kind === 'union'` — the scalar kinds the field may carry (D1033). */
+  readonly unionMembers?: WireableField['unionMembers']
 }
 
 function fieldAt(schema: z.ZodType, path: string): z.ZodType | null {
@@ -38,6 +40,7 @@ export function describeStateField(schema: z.ZodType, path: string): StateFieldD
     nullable: field.safeParse(null).success,
     required: !field.safeParse(undefined).success,
     ...(leaf.enumValues === undefined ? {} : { enumValues: leaf.enumValues }),
+    ...(leaf.unionMembers === undefined ? {} : { unionMembers: leaf.unionMembers }),
   }
 }
 

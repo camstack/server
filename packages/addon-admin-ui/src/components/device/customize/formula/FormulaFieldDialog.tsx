@@ -1,6 +1,7 @@
 /**
  * Dialog to edit one composition field as a formula (expression + bindings).
  */
+import { liveWireableCatalog } from '../source-picker-model'
 import {
   compositionSourceKey,
   type CompositionExpressionSource,
@@ -103,7 +104,10 @@ export function FormulaFieldDialog({
     deviceId: pickDevice?.id ?? 0,
   })
   const snapshot = useDeviceStateGetSnapshot({ deviceId: pickDevice?.id ?? 0 })
-  const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
+  const catalog: WireableCatalog = liveWireableCatalog(
+    wireable.status === 'success' ? wireable.data : { caps: [] },
+    snapshot.status === 'success' ? snapshot.data : null,
+  )
   const problem = formulaProblem(draft.expr, draft.bindings)
   const bindingNames = Object.keys(draft.bindings)
 

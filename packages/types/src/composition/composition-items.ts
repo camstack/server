@@ -34,6 +34,8 @@ import { describeStateField, optionalAncestors } from './state-fields.js'
 import { type CompositionPlanResult, problem, refused } from './plan-result.js'
 import {
   compatibility,
+  narrowUnionRead,
+  unionTargetProblem,
   enumLiteralProblem,
   roleOf,
   sourceKinds,
@@ -125,6 +127,7 @@ function planItemField(ctx: ItemArrayContext, leaf: ItemLeaf): CompositionPlanRe
   if (tf === null) {
     return refused(problem('unknown-field', at, `a \`${capName}\` item has no field \`${path}\``))
   }
+  if (tf.kind === 'union') return refused(unionTargetProblem(capName, path, at))
   const kinds = sourceKinds(source, lookupCap)
   if (!kinds.ok) return refused(problem(kinds.code, at, kinds.message))
   const role = roleOf(source)
@@ -154,7 +157,7 @@ function planItemField(ctx: ItemArrayContext, leaf: ItemLeaf): CompositionPlanRe
   const enumProblem = enumLiteralProblem(capName, tf, source, at)
   return {
     problems: [
-      ...compatibility(capName, tf, kinds.kinds, at),
+      ...compatibility(capName, tf, narrowUnionRead(source, tf, kinds.kinds, lookupCap), at),
       ...(enumProblem === null ? [] : [enumProblem]),
     ],
     fields: [plan],

@@ -3,6 +3,7 @@
  * column is the ui-library `DevicePicker`; Build-your-self helpers (D944 §3)
  * import this component next — they must not grow a second device list.
  */
+import { liveWireableCatalog } from '../source-picker-model'
 import {
   type CameraSensorMode,
   type CustomizeEventEdge,
@@ -230,7 +231,10 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
   const snapshot = useDeviceStateGetSnapshot({
     deviceId: props.device === null ? 0 : deviceId,
   })
-  const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
+  const catalog: WireableCatalog = liveWireableCatalog(
+    wireable.status === 'success' ? wireable.data : { caps: [] },
+    snapshot.status === 'success' ? snapshot.data : null,
+  )
   const eventShape = props.kind === 'event' ? props.shape : null
   const fields = wireableFieldsForDestination(
     props.destination,

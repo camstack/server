@@ -3,6 +3,7 @@
  * Devices are the template's type and catalog caps. Values are direct
  * matches only — a group does not offer incompatible fields, and an incompatible device is not listed at all.
  */
+import { liveWireableCatalog } from '../source-picker-model'
 import type { HelperMember, SourcePickRequest } from '@camstack/types'
 import {
   type DeviceListState,
@@ -113,7 +114,10 @@ function MemberValueSection({
   const { t, i18n } = useTranslation()
   const wireable = useDeviceManagerGetWireableFields({ deviceId: device.id })
   const snapshot = useDeviceStateGetSnapshot({ deviceId: device.id })
-  const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
+  const catalog: WireableCatalog = liveWireableCatalog(
+    wireable.status === 'success' ? wireable.data : { caps: [] },
+    snapshot.status === 'success' ? snapshot.data : null,
+  )
   const direct = directAcceptFields(catalogFields(catalog), request)
   const withoutHistory = unhistorisedFields(catalogFields(catalog), request)
   const radioName = `helper-member-value-${device.id}`

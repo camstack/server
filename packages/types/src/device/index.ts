@@ -174,7 +174,7 @@ export {
   OPERATOR_WRITTEN_STALE_MS,
   RUNTIME_STATE_REFRESH_MISS_COOLDOWN_MS,
 } from './runtime-state-helpers.js'
-export type { WireableField } from './schema-fields.js'
+export type { WireableField, WireableScalarKind } from './schema-fields.js'
 export { enumerateItemArrayFields, enumerateSchemaFields, unwrapSchema } from './schema-fields.js'
 export type { DeviceConfigEntry } from './zod-to-config-ui.js'
 export { zodEntriesToConfigUI } from './zod-to-config-ui.js'

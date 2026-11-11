@@ -1,10 +1,20 @@
 import { z } from 'zod'
 import { isReadingQuantity, type ReadingQuantity } from '../units/quantity.js'
 
+/** A scalar member of a `union` field. */
+export type WireableScalarKind = 'string' | 'number' | 'boolean'
+
 export interface WireableField {
   readonly path: string
-  readonly kind: 'string' | 'number' | 'boolean' | 'enum'
+  /**
+   * `union` (D1033): a field whose members are all scalars (`control.value` is
+   * `number | string`). It is readable; which member a reading carries is the
+   * SOURCE's live kind, judged where it is linked and again on every read.
+   */
+  readonly kind: 'string' | 'number' | 'boolean' | 'enum' | 'union'
   readonly enumValues?: readonly string[]
+  /** Present only when `kind === 'union'`: the scalar kinds it may carry. */
+  readonly unionMembers?: readonly WireableScalarKind[]
   /** Quantity of a numeric reading, when the schema declares one. */
   readonly quantity?: ReadingQuantity
   /** True when `path` is relative to ONE item of an item-array cap (see
@@ -40,15 +50,41 @@ function quantityOfField(schema: z.ZodType): ReadingQuantity | undefined {
   return metaQuantity(schema) ?? metaQuantity(unwrapSchema(schema))
 }
 
-function leafKind(
-  schema: z.ZodType,
-): { kind: WireableField['kind']; enumValues?: readonly string[] } | null {
+interface LeafKind {
+  readonly kind: WireableField['kind']
+  readonly enumValues?: readonly string[]
+  readonly unionMembers?: readonly WireableScalarKind[]
+}
+
+function scalarKind(schema: z.ZodType): WireableScalarKind | null {
+  const s = unwrapSchema(schema)
+  if (s instanceof z.ZodNumber) return 'number'
+  if (s instanceof z.ZodString) return 'string'
+  if (s instanceof z.ZodBoolean) return 'boolean'
+  return null
+}
+
+/** A union is a leaf only when EVERY member is a scalar; one object or array member keeps it out. */
+function unionMembersOf(s: z.ZodUnion): readonly WireableScalarKind[] | null {
+  const members: WireableScalarKind[] = []
+  for (const option of s.options) {
+    if (!(option instanceof z.ZodType)) return null
+    const kind = scalarKind(option)
+    if (kind === null) return null
+    if (!members.includes(kind)) members.push(kind)
+  }
+  return members.length > 0 ? members : null
+}
+
+function leafKind(schema: z.ZodType): LeafKind | null {
   const s = unwrapSchema(schema)
   if (s instanceof z.ZodEnum) return { kind: 'enum', enumValues: s.options as readonly string[] }
-  if (s instanceof z.ZodNumber) return { kind: 'number' }
-  if (s instanceof z.ZodString) return { kind: 'string' }
-  if (s instanceof z.ZodBoolean) return { kind: 'boolean' }
-  return null
+  if (s instanceof z.ZodUnion) {
+    const members = unionMembersOf(s)
+    return members === null ? null : { kind: 'union', unionMembers: members }
+  }
+  const scalar = scalarKind(s)
+  return scalar === null ? null : { kind: scalar }
 }
 
 /** Walk a cap status schema into flat wireable leaf fields (dotted paths).
@@ -74,6 +110,7 @@ export function enumerateSchemaFields(schema: z.ZodType, prefix = ''): readonly 
         path,
         kind: leaf.kind,
         ...(leaf.enumValues ? { enumValues: leaf.enumValues } : {}),
+        ...(leaf.unionMembers ? { unionMembers: leaf.unionMembers } : {}),
         ...(quantity !== undefined ? { quantity } : {}),
       })
     }

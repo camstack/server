@@ -19,6 +19,7 @@ import {
   type CompositionBlockInput,
   type CompositionBlockPatch,
   type CompositionBlockState,
+  type CompositionFieldRead,
   type CompositionSourceDescription,
   type CompositionSourceRef,
   type CompositionStateRead,
@@ -28,6 +29,7 @@ import {
   composedDeviceRef,
   compositionSourceKey,
   compositionSourceRefs,
+  compositionUnionReads,
   helperMembers,
   coreBlockComposition,
   describeComposableCaps,
@@ -59,6 +61,7 @@ export interface CompositionApiDeps {
   readonly describe: (
     sources: readonly CompositionSourceRef[],
     targets: readonly CompositionSourceRef[],
+    unionReads?: readonly CompositionFieldRead[],
   ) => Promise<CompositionDescriptions>
   readonly lookupCap: CapabilityLookup
   readonly composerStates: (
@@ -185,10 +188,11 @@ async function validateAgainstStore(
     (r) => !ownKeys.has(compositionSourceKey(r)),
   )
   const blocks = deps.store.list()
-  const read = await deps.describe(refs, [
-    ...(target === null ? [] : [target]),
-    ...storedCustomizationTargets(blocks),
-  ])
+  const read = await deps.describe(
+    refs,
+    [...(target === null ? [] : [target]), ...storedCustomizationTargets(blocks)],
+    compositionUnionReads(composition, deps.lookupCap),
+  )
   const stored = storedPeers(blocks, read.targets, deps.lookupCap, blockId)
   const validation = validateComposition(composition, {
     lookupCap: deps.lookupCap,

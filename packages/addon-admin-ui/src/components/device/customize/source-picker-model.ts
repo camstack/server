@@ -10,6 +10,7 @@ import type {
   CompositionFieldSource,
   CompositionSourceRef,
   DeviceInfo,
+  WireableScalarKind,
 } from '@camstack/types'
 import { sourceFor } from './source-for'
 
@@ -40,6 +41,54 @@ export interface WireableCatalog {
 }
 
 export type DeviceSnapshot = Readonly<Record<string, Readonly<Record<string, unknown>>>>
+
+/** One field as `getWireableFields` reports it: a `union` names its scalar members (D1033). */
+export interface ReportedWireableField {
+  readonly path: string
+  readonly kind: CompositionFieldKind | 'union'
+  readonly enumValues?: readonly string[]
+  readonly unionMembers?: readonly WireableScalarKind[]
+  readonly item?: boolean
+}
+
+export interface ReportedWireableCatalog {
+  readonly caps: readonly {
+    readonly cap: string
+    readonly fields: readonly ReportedWireableField[]
+  }[]
+}
+
+function liveScalarKind(value: unknown): WireableScalarKind | null {
+  if (typeof value === 'number') return 'number'
+  if (typeof value === 'string') return 'string'
+  if (typeof value === 'boolean') return 'boolean'
+  return null
+}
+
+/**
+ * The catalog the pickers offer: a union field (`control.value`) is offered as
+ * the kind its device reads NOW — a numeric control as a number, a select as
+ * a string — and not offered while that is unknown (D1033, D315: an unread
+ * snapshot is not a kind).
+ */
+export function liveWireableCatalog(
+  reported: ReportedWireableCatalog,
+  snapshot: DeviceSnapshot | null,
+): WireableCatalog {
+  return {
+    caps: reported.caps.map((cap) => ({
+      cap: cap.cap,
+      fields: cap.fields.flatMap((field): readonly WireableCatalogField[] => {
+        const { unionMembers, ...rest } = field
+        if (rest.kind !== 'union') return [{ ...rest, kind: rest.kind }]
+        const live =
+          snapshot === null ? null : liveScalarKind(readPath(snapshot[cap.cap], field.path))
+        if (live === null || !(unionMembers ?? []).includes(live)) return []
+        return [{ path: field.path, kind: live, ...(field.item ? { item: true } : {}) }]
+      }),
+    })),
+  }
+}
 
 export interface PickerFieldRow {
   readonly cap: string

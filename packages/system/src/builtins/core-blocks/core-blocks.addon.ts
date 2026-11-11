@@ -964,7 +964,7 @@ export class CoreBlocksAddon extends BaseAddon {
     }
     return buildCompositionApi({
       store: this.requireStore(),
-      describe: (sources, targets) =>
+      describe: (sources, targets, unionReads) =>
         describeCompositionSources(
           {
             listByAddon: async (addonId) => {
@@ -983,9 +983,18 @@ export class CoreBlocksAddon extends BaseAddon {
             },
             bindings: async (deviceId) =>
               (await requireApi().deviceManager.getBindings.query({ deviceId })).entries,
+            // A union field is a top-level leaf (`control.value`); a dotted path reads as unknown.
+            readField: async (deviceId, cap, fieldPath) => {
+              const slice = await requireApi().deviceState.getCapSlice.query({
+                deviceId,
+                capName: cap,
+              })
+              return slice === null ? undefined : slice[fieldPath]
+            },
           },
           sources,
           targets,
+          unionReads,
         ),
       lookupCap: buildCapabilityLookup(ALL_CAPABILITY_DEFINITIONS),
       composerStates: async (blockIds) =>

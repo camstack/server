@@ -3,6 +3,7 @@
  * Current value, no override or the entry, then + Add override:
  * from a device, formula, and — on a numeric field with another unit — convert unit.
  */
+import { liveWireableCatalog } from '../source-picker-model'
 import {
   classifyFieldSource,
   compositionSourceKey,
@@ -354,7 +355,10 @@ function FromDevicePicker({
   const [field, setField] = useState<{ cap: string; path: string } | null>(null)
   const wireable = useDeviceManagerGetWireableFields({ deviceId: device?.id ?? 0 })
   const snapshot = useDeviceStateGetSnapshot({ deviceId: device?.id ?? 0 })
-  const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
+  const catalog: WireableCatalog = liveWireableCatalog(
+    wireable.status === 'success' ? wireable.data : { caps: [] },
+    snapshot.status === 'success' ? snapshot.data : null,
+  )
   return (
     <div className="flex flex-col gap-2">
       <SourceSelector

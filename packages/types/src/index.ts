@@ -1427,7 +1427,7 @@ export {
   OPERATOR_WRITTEN_STALE_MS,
   RUNTIME_STATE_REFRESH_MISS_COOLDOWN_MS,
 } from './device/runtime-state-helpers.js'
-export type { WireableField } from './device/schema-fields.js'
+export type { WireableField, WireableScalarKind } from './device/schema-fields.js'
 // Cap status schema → wireable leaf field enumerator (wiring UI field pickers)
 export {
   enumerateItemArrayFields,

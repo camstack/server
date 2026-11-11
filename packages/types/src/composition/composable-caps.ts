@@ -79,13 +79,20 @@ export function describeComposableCaps(
       const itemArray = def.status?.itemArray
       return {
         cap: def.name,
-        fields: fields.map((f) => ({
-          path: f.path,
-          kind: f.kind,
-          nullable: f.nullable,
-          required: f.required,
-          ...(f.enumValues === undefined ? {} : { enumValues: [...f.enumValues] }),
-        })),
+        // A union field is read as a source, never written (D1033).
+        fields: fields.flatMap((f) =>
+          f.kind === 'union'
+            ? []
+            : [
+                {
+                  path: f.path,
+                  kind: f.kind,
+                  nullable: f.nullable,
+                  required: f.required,
+                  ...(f.enumValues === undefined ? {} : { enumValues: [...f.enumValues] }),
+                },
+              ],
+        ),
         ...(itemArray === undefined
           ? {}
           : { itemArray: { path: itemArray.path, keyField: itemArray.keyField } }),

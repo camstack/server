@@ -1,6 +1,7 @@
 /**
  * Add or change one scalar override via the shared source selector (D944 §5).
  */
+import { liveWireableCatalog } from '../source-picker-model'
 import type { CompositionFieldsFeature, CompositionSourceRef, DeviceInfo } from '@camstack/types'
 import {
   Button,
@@ -90,7 +91,10 @@ function DialogForm(props: ScalarOverrideDialogProps & { readonly heading: strin
   }
   const wireable = useDeviceManagerGetWireableFields({ deviceId: device?.id ?? 0 })
   const snapshot = useDeviceStateGetSnapshot({ deviceId: device?.id ?? 0 })
-  const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
+  const catalog: WireableCatalog = liveWireableCatalog(
+    wireable.status === 'success' ? wireable.data : { caps: [] },
+    snapshot.status === 'success' ? snapshot.data : null,
+  )
   const offers = scalarFieldOffers(catalog, snapshot.status === 'success' ? snapshot.data : null)
   const [fieldKey, setFieldKey] = useState<string | null>(seedFieldKey(props.seed))
   const [transform, setTransform] = useState<ScalarTransformDraft>(

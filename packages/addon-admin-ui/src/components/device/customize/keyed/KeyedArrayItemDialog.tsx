@@ -2,6 +2,7 @@
  * Add or change one keyed-array item. Source device, field and transform are
  * the scalar dialog's steps; the item name, key and fixed traits come first.
  */
+import { liveWireableCatalog } from '../source-picker-model'
 import type { CompositionSourceRef, DeviceInfo, KeyedArrayLiteral } from '@camstack/types'
 import { evaluateExpressionSource } from '@camstack/types'
 import {
@@ -130,7 +131,10 @@ function ItemForm(props: KeyedArrayItemDialogProps & { readonly heading: string 
   }
   const wireable = useDeviceManagerGetWireableFields({ deviceId: device?.id ?? 0 })
   const snapshot = useDeviceStateGetSnapshot({ deviceId: device?.id ?? 0 })
-  const catalog: WireableCatalog = wireable.status === 'success' ? wireable.data : { caps: [] }
+  const catalog: WireableCatalog = liveWireableCatalog(
+    wireable.status === 'success' ? wireable.data : { caps: [] },
+    snapshot.status === 'success' ? snapshot.data : null,
+  )
   const offers = keyedFieldOffers(catalog, snapshot.status === 'success' ? snapshot.data : null)
   const [fieldKey, setFieldKey] = useState<string | null>(
     props.seed === null ? null : `${props.seed.source.cap}.${props.seed.source.fieldPath}`,

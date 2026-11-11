@@ -14,6 +14,7 @@
  * which is this node's allocation and not the composition's identity.
  */
 import {
+  type CompositionFieldRead,
   type CompositionSourceDescription,
   type CompositionSourceRef,
   type CompositionTargetDescription,
@@ -21,6 +22,7 @@ import {
   type DeviceType,
   errMsg,
   type ReadingQuantity,
+  type WireableScalarKind,
 } from '@camstack/types'
 
 export interface SourceRowView {
@@ -40,6 +42,13 @@ export interface BoundCapView {
 export interface CompositionSourcePorts {
   readonly listByAddon: (addonId: string) => Promise<readonly SourceRowView[]>
   readonly bindings: (deviceId: number) => Promise<readonly BoundCapView[]>
+  /**
+   * One field of a source's current slice — read only for a union field the
+   * save links (D1033), to judge the source's LIVE kind. A failed or missing
+   * read leaves the kind unknown: the save is judged without it and the
+   * read-time guard still applies.
+   */
+  readonly readField?: (deviceId: number, cap: string, fieldPath: string) => Promise<unknown>
 }
 
 /** Every device a save reads, described once. Both maps are keyed by `compositionSourceKey`. */
@@ -105,20 +114,54 @@ async function readBindings(
   return new Map(read)
 }
 
+function scalarKindOf(value: unknown): WireableScalarKind | null {
+  if (typeof value === 'number') return 'number'
+  if (typeof value === 'string') return 'string'
+  if (typeof value === 'boolean') return 'boolean'
+  return null
+}
+
+type LiveKinds = ReadonlyMap<string, WireableScalarKind>
+
+/** The live kind of each union field read from `deviceId`, keyed `<cap>.<fieldPath>`. */
+async function readLiveKinds(
+  ports: CompositionSourcePorts,
+  deviceId: number,
+  reads: readonly CompositionFieldRead[],
+): Promise<LiveKinds> {
+  const readField = ports.readField
+  if (readField === undefined || reads.length === 0) return new Map()
+  const kinds = await Promise.all(
+    reads.map(async (read): Promise<readonly [string, WireableScalarKind] | null> => {
+      try {
+        const kind = scalarKindOf(await readField(deviceId, read.cap, read.fieldPath))
+        return kind === null ? null : [`${read.cap}.${read.fieldPath}`, kind]
+      } catch {
+        // Unknown at save time is not a refusal: the read-time guard judges it.
+        return null
+      }
+    }),
+  )
+  return new Map(kinds.flatMap((entry) => (entry === null ? [] : [entry])))
+}
+
 function describeSource(
   lookup: RowLookup,
   bindings: ReadonlyMap<number, BindingsRead>,
+  liveKinds: ReadonlyMap<number, LiveKinds>,
 ): CompositionSourceDescription {
   if (lookup.kind !== 'row') return lookup
   const bound = bindings.get(lookup.row.id)
   if (bound === undefined) return { kind: 'unreadable', error: 'its bindings were not read' }
   if ('error' in bound) return { kind: 'unreadable', error: bound.error }
+  const live = liveKinds.get(lookup.row.id)
   return {
     kind: 'found',
     deviceId: lookup.row.id,
     caps: new Set(bound.map((b) => b.capName)),
     deviceType: lookup.row.type,
     ...(lookup.row.quantity === undefined ? {} : { quantity: lookup.row.quantity }),
+    ...(live === undefined || live.size === 0 ? {} : { liveKinds: live }),
   }
 }
 
@@ -148,6 +191,7 @@ export async function describeCompositionSources(
   ports: CompositionSourcePorts,
   sources: readonly CompositionSourceRef[],
   targets: readonly CompositionSourceRef[] = [],
+  unionReads: readonly CompositionFieldRead[] = [],
 ): Promise<CompositionDescriptions> {
   const owners = await listOwners(ports, [...sources, ...targets])
   const lookup = (ref: CompositionSourceRef): readonly [string, RowLookup] => [
@@ -160,8 +204,21 @@ export async function describeCompositionSources(
     ports,
     [...sourceRows, ...targetRows].flatMap(([, l]) => (l.kind === 'row' ? [l.row.id] : [])),
   )
+  const live = new Map(
+    await Promise.all(
+      sourceRows.flatMap(([key, l]) => {
+        if (l.kind !== 'row') return []
+        const reads = unionReads.filter((r) => compositionSourceKey(r.source) === key)
+        return reads.length === 0
+          ? []
+          : [readLiveKinds(ports, l.row.id, reads).then((kinds) => [l.row.id, kinds] as const)]
+      }),
+    ),
+  )
   return {
-    sources: new Map(sourceRows.map(([key, l]) => [key, describeSource(l, bindings)] as const)),
+    sources: new Map(
+      sourceRows.map(([key, l]) => [key, describeSource(l, bindings, live)] as const),
+    ),
     targets: new Map(targetRows.map(([key, l]) => [key, describeTarget(l, bindings)] as const)),
   }
 }

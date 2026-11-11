@@ -2,6 +2,7 @@
  * Wireable field list for assignment pickers (`sourceFor` fit). Extension
  * dialogs use {@link SourceSelector} instead (D944 §5).
  */
+import { liveWireableCatalog } from './source-picker-model'
 import type { CompositionFieldKind, CompositionSourceRef } from '@camstack/types'
 import {
   Button,
@@ -46,12 +47,8 @@ export function DeviceFields({
       <ErrorBox title={t('customize.picker.fieldsFailed')} message={catalog.error?.message ?? ''} />
     )
   }
-  const rows = pickerFieldRows(
-    device,
-    catalog.data,
-    snapshot.status === 'success' ? snapshot.data : null,
-    targetKind,
-  )
+  const live = snapshot.status === 'success' ? snapshot.data : null
+  const rows = pickerFieldRows(device, liveWireableCatalog(catalog.data, live), live, targetKind)
   const hidden = rows.filter((r) => r.source === null).length
   const ref: CompositionSourceRef = { addonId: device.addonId, stableId: device.stableId }
   return (
