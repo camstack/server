@@ -707,21 +707,6 @@ export const useDeviceCredentialsGetDeviceCaStatus: typeof trpc.deviceCredential
 /** Generated alias around `trpc.deviceCredentials.renameDeviceCredential.useMutation`. */
 export const useDeviceCredentialsRenameDeviceCredential: typeof trpc.deviceCredentials.renameDeviceCredential.useMutation = /*#__PURE__*/ alias(() => trpc.deviceCredentials.renameDeviceCredential.useMutation)
 
-/** Generated alias around `trpc.deviceDiscovery.listDiscovered.useQuery`. */
-export const useDeviceDiscoveryListDiscovered: typeof trpc.deviceDiscovery.listDiscovered.useQuery = /*#__PURE__*/ alias(() => trpc.deviceDiscovery.listDiscovered.useQuery)
-
-/** Generated alias around `trpc.deviceDiscovery.refreshDiscovery.useMutation`. */
-export const useDeviceDiscoveryRefreshDiscovery: typeof trpc.deviceDiscovery.refreshDiscovery.useMutation = /*#__PURE__*/ alias(() => trpc.deviceDiscovery.refreshDiscovery.useMutation)
-
-/** Generated alias around `trpc.deviceDiscovery.adoptDevice.useMutation`. */
-export const useDeviceDiscoveryAdoptDevice: typeof trpc.deviceDiscovery.adoptDevice.useMutation = /*#__PURE__*/ alias(() => trpc.deviceDiscovery.adoptDevice.useMutation)
-
-/** Generated alias around `trpc.deviceDiscovery.releaseDevice.useMutation`. */
-export const useDeviceDiscoveryReleaseDevice: typeof trpc.deviceDiscovery.releaseDevice.useMutation = /*#__PURE__*/ alias(() => trpc.deviceDiscovery.releaseDevice.useMutation)
-
-/** Generated alias around `trpc.deviceDiscovery.getStatus.useQuery`. */
-export const useDeviceDiscoveryGetStatus: typeof trpc.deviceDiscovery.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.deviceDiscovery.getStatus.useQuery)
-
 /** Generated alias around `trpc.deviceExport.getStatus.useQuery`. */
 export const useDeviceExportGetStatus: typeof trpc.deviceExport.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.deviceExport.getStatus.useQuery)
 

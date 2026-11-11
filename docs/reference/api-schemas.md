@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1060 shared schemas.**
+**1059 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1580,12 +1580,6 @@ Enum: `"info" \| "warning" \| "error"`
 - `store`: `string`
 - `deviceId`: `number`
 - `count`: `number`
-
-### `DeviceDiscoveryStatusSchema`
-
-- `discovered`: `({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "heater" \| "dryer" \| "gateway" \| "heat-pump"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; children?: self[]; parentStableId?: string })[]`
-- `lastDiscoveryAt`: `number \| null`
-- `lastError`: `string \| null`
 
 ### `DeviceExportExposeInputSchema`
 

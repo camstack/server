@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Home Assistant export catalog no longer lists the retired device-discovery capability as excluded.
+
 ## [1.2.678] - 2026-11-10
 
 ### Changed

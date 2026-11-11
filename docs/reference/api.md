@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**206 capabilities · 1487 methods.**
+**205 capabilities · 1482 methods.**
 
 ## Method index
 
@@ -277,11 +277,6 @@
 | `deviceCredentials.deleteDeviceCredential` | mutation | admin | device-credentials |
 | `deviceCredentials.getDeviceCaStatus` | query | admin | device-credentials |
 | `deviceCredentials.renameDeviceCredential` | mutation | admin | device-credentials |
-| `deviceDiscovery.getStatus` | query | protected | device-discovery (auto) |
-| `deviceDiscovery.listDiscovered` | query | protected | device-discovery |
-| `deviceDiscovery.refreshDiscovery` | mutation | admin | device-discovery |
-| `deviceDiscovery.adoptDevice` | mutation | admin | device-discovery |
-| `deviceDiscovery.releaseDevice` | mutation | admin | device-discovery |
 | `deviceExport.getStatus` | query | protected | device-export |
 | `deviceExport.getDeviceSettingsContribution` | query | protected | device-export (auto) |
 | `deviceExport.getDeviceLiveContribution` | query | protected | device-export (auto) |
@@ -2300,7 +2295,7 @@
 
 ### `device-adoption` → `deviceAdoption.*`
 
-- **Source:** `packages/types/src/capabilities/device-adoption.cap.ts:194`
+- **Source:** `packages/types/src/capabilities/device-adoption.cap.ts:291`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** status(poll)
 - **Provider interface:** `IDeviceAdoptionProvider`
@@ -2333,22 +2328,6 @@
 | deleteDeviceCredential | `deviceCredentials.deleteDeviceCredential` | mutation | admin | `{ id: string }` | `{ result: "deleted" \| "live" \| "unknown" }` |
 | getDeviceCaStatus | `deviceCredentials.getDeviceCaStatus` | query | admin | `{}` | `DeviceCaStatusSchema` |
 | renameDeviceCredential | `deviceCredentials.renameDeviceCredential` | mutation | admin | `{ id: string; deviceName: string }` | `{ renamed: boolean }` |
-
-### `device-discovery` → `deviceDiscovery.*`
-
-- **Source:** `packages/types/src/capabilities/device-discovery.cap.ts:143`
-- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `hub`
-- **Archetypes:** status(poll) · runtimeState
-- **Provider interface:** `IDeviceDiscoveryProvider`
-- **runtimeState:** `{ discovered: ({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "heater" \| "dryer" \| "gateway" \| "heat-pump"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; children?: self[]; parentStableId?: string })[]; lastDiscoveryAt: number \| null; lastError: string \| null; lastFetchedAt: number }`
-
-| Method | tRPC path | Kind | Auth | Input | Output |
-|---|---|---|---|---|---|
-| getStatus _(auto)_ | `deviceDiscovery.getStatus` | query | protected | `{ deviceId: number }` | `DeviceDiscoveryStatusSchema` |
-| listDiscovered | `deviceDiscovery.listDiscovered` | query | protected | `{ deviceId: number }` | `({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "heater" \| "dryer" \| "gateway" \| "heat-pump"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; children?: self[]; parentStableId?: string })[]` |
-| refreshDiscovery | `deviceDiscovery.refreshDiscovery` | mutation | admin | `{ deviceId: number }` | `({ childNativeId: string; name: string; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "thermostat" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "heater" \| "dryer" \| "gateway" \| "heat-pump"; status: DiscoveredChildStatusSchema; metadata?: { model?: string; serialNumber?: string; uid?: string; rtspChannel?: number; isBattery?: boolean; isDoorbell?: boolean; isMultifocal?: boolean; externalLocation?: string; manufacturer?: string; integration?: string } = {}; alreadyAdopted: boolean; adoptedDeviceId: number \| null; capabilities?: string[]; features?: string[]; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; children?: self[]; parentStableId?: string })[]` |
-| adoptDevice | `deviceDiscovery.adoptDevice` | mutation | admin | `{ deviceId: number; childNativeId: string; name?: string }` | `{ deviceId: number; stableId: string }` |
-| releaseDevice | `deviceDiscovery.releaseDevice` | mutation | admin | `{ deviceId: number; childDeviceId: number }` | `void` |
 
 ### `device-export` → `deviceExport.*`
 

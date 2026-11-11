@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 617 methods carry a device reference, of which
+ * Coverage: 612 methods carry a device reference, of which
  * 195 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -114,11 +114,6 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'deviceAdoption.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceAdoption.release': [{ name: "camDeviceId", form: "single", optional: false }] as const,
   'deviceAdoption.resync': [{ name: "camDeviceId", form: "single", optional: false }] as const,
-  'deviceDiscovery.adoptDevice': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'deviceDiscovery.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'deviceDiscovery.listDiscovered': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'deviceDiscovery.refreshDiscovery': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'deviceDiscovery.releaseDevice': [{ name: "childDeviceId", form: "single", optional: false }, { name: "deviceId", form: "single", optional: false }] as const,
   'deviceExport.applyDeviceSettingsPatch': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceExport.getDeviceLiveContribution': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceExport.getDeviceSettingsContribution': [{ name: "deviceId", form: "single", optional: false }] as const,

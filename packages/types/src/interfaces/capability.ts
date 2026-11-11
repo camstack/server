@@ -304,9 +304,6 @@ export interface CapabilityProviderMap {
     typeof import('../capabilities/consumables.cap.js').consumablesCapability
   >
   reboot: InferProvider<typeof import('../capabilities/reboot.cap.js').rebootCapability>
-  'device-discovery': InferProvider<
-    typeof import('../capabilities/device-discovery.cap.js').deviceDiscoveryCapability
-  >
   brightness: InferProvider<typeof import('../capabilities/brightness.cap.js').brightnessCapability>
   'motion-trigger': InferProvider<
     typeof import('../capabilities/motion-trigger.cap.js').motionTriggerCapability

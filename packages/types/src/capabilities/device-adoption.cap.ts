@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
-import { DiscoveredChildDeviceSchema } from './device-discovery.cap.js'
+import { DeviceType } from '../device/device-type.js'
+import { SourceInfoSchema } from '../device/source-info.js'
+import type { SourceInfo } from '../device/source-info.js'
 
 /**
  * `device-adoption` — generic discovery + adoption surface,
@@ -11,9 +13,9 @@ import { DiscoveredChildDeviceSchema } from './device-discovery.cap.js'
  * successor to `ha-discovery`:
  * keyed by `integrationId` (the addon resolves integrationId → broker
  * internally) rather than a connection-specific `brokerId`, and it
- * REUSES the shared `DiscoveredChildDevice` candidate type from
- * `device-discovery.cap.ts` so a single shared adoption panel renders
- * any integration's candidate tree.
+ * OWNS the shared `DiscoveredChildDevice` candidate type
+ * (declared below) so a single shared adoption modal renders any integration's
+ * candidate tree.
  *
  * UI flow (Integrations page → integration detail):
  *   1. `listCandidates({integrationId, page, pageSize, filter})` →
@@ -30,6 +32,101 @@ import { DiscoveredChildDeviceSchema } from './device-discovery.cap.js'
  *   4. User clicks "Release" → `release({integrationId, camDeviceId})`
  *      removes the parent + every child from the kernel registry.
  */
+
+/**
+ * Status enum for a discovered device. Generic enough for
+ * battery cams, awake cams, and unreachable cams alike.
+ */
+export const DiscoveredChildStatusSchema = z.enum(['online', 'sleeping', 'offline', 'unknown'])
+export type DiscoveredChildStatus = z.infer<typeof DiscoveredChildStatusSchema>
+
+/**
+ * Explicit type for the (now self-referential) discovered-child entry.
+ * A `z.lazy` schema cannot cleanly self-infer, so the shape is declared
+ * here and the schema below is annotated with it. The `children` /
+ * `sourceInfo` / `capabilities` / `features` fields are optional: Flat
+ * enumerations (an NVR listing camera channels) omit them entirely;
+ * integrations (Home Assistant previewing a device with entity-children)
+ * populate them so the shared adoption modal can render an accordion.
+ */
+export type DiscoveredChildDevice = {
+  childNativeId: string
+  name: string
+  type: DeviceType
+  status: DiscoveredChildStatus
+  metadata: {
+    model?: string
+    serialNumber?: string
+    uid?: string
+    rtspChannel?: number
+    isBattery?: boolean
+    isDoorbell?: boolean
+    isMultifocal?: boolean
+    externalLocation?: string
+    manufacturer?: string
+    integration?: string
+  }
+  alreadyAdopted: boolean
+  adoptedDeviceId: number | null
+  // ── Shared adoption fields (optional; flat enumerations omit, integrations populate) ──
+  capabilities?: readonly string[]
+  features?: readonly string[]
+  sourceInfo?: SourceInfo
+  children?: readonly DiscoveredChildDevice[]
+  /** `childNativeId` of the gateway candidate (in the same list) this device sits behind. */
+  parentStableId?: string
+}
+
+export const DiscoveredChildDeviceSchema: z.ZodType<DiscoveredChildDevice> = z.lazy(() =>
+  z.object({
+    /** Stable, integration-defined identifier. Must be unique per parent and persistent across reboots. */
+    childNativeId: z.string(),
+    /** Friendly name as reported by the source (Reolink camera name, ONVIF profile, ...). */
+    name: z.string(),
+    /** DeviceType the child should be created with on adopt. */
+    type: z.enum(DeviceType),
+    status: DiscoveredChildStatusSchema,
+    /** Free-form integration-specific metadata surfaced in the adoption modal. */
+    metadata: z
+      .object({
+        model: z.string().optional(),
+        serialNumber: z.string().optional(),
+        uid: z.string().optional(),
+        /** Reolink: 0-based channel index inside the parent NVR. */
+        rtspChannel: z.number().int().nonnegative().optional(),
+        isBattery: z.boolean().optional(),
+        isDoorbell: z.boolean().optional(),
+        isMultifocal: z.boolean().optional(),
+        externalLocation: z.string().optional(),
+        /** Vendor / manufacturer name as reported by the source (HA device
+         *  `manufacturer`, …). Surfaced in the adoption modal's fuzzy search. */
+        manufacturer: z.string().optional(),
+        /** Integration / platform domain the candidate belongs to (HA
+         *  `entity_registry.platform`, e.g. `dreame_vacuum`). Surfaced in the
+         *  adoption modal's fuzzy search. */
+        integration: z.string().optional(),
+      })
+      .default({}),
+    /**
+     * `true` when the framework already created a child device for this
+     * `childNativeId` under the current parent. The adoption modal uses it to
+     * gate the Add/Remove button and surface the existing `deviceId`.
+     */
+    alreadyAdopted: z.boolean(),
+    /** When `alreadyAdopted=true`, the framework-assigned child device id. */
+    adoptedDeviceId: z.number().int().nonnegative().nullable(),
+    /** Capability names the candidate advertises — integrations populate, flat enumerations omit. */
+    capabilities: z.array(z.string()).readonly().optional(),
+    /** Feature flags the candidate advertises — integrations populate, flat enumerations omit. */
+    features: z.array(z.string()).readonly().optional(),
+    /** Upstream-system identity + rendering hints for the candidate. */
+    sourceInfo: SourceInfoSchema.optional(),
+    /** Nested entity-children for accordion preview — integrations populate, flat enumerations omit. */
+    children: z.array(DiscoveredChildDeviceSchema).readonly().optional(),
+    /** `childNativeId` of the gateway candidate in the same list this device sits behind. */
+    parentStableId: z.string().optional(),
+  }),
+)
 
 /**
  * Provider-declared discovery *granularity* filter (the keystone of the

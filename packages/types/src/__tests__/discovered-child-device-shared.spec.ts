@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DiscoveredChildDeviceSchema } from '../capabilities/device-discovery.cap.js'
+import { DiscoveredChildDeviceSchema } from '../capabilities/device-adoption.cap.js'
 import { DeviceType } from '../device/device-type.js'
 
 describe('DiscoveredChildDevice — shared adoption candidate fields', () => {

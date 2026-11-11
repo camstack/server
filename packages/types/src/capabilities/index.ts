@@ -571,6 +571,10 @@ export {
   AdoptResultSchema as AdoptionAdoptResultSchema,
   CandidateQueryFilterSchema,
   deviceAdoptionCapability,
+  type DiscoveredChildDevice,
+  DiscoveredChildDeviceSchema,
+  type DiscoveredChildStatus,
+  DiscoveredChildStatusSchema,
   GetCandidateInputSchema as AdoptionGetCandidateInputSchema,
   type IDeviceAdoptionProvider,
   ListCandidatesInputSchema as AdoptionListCandidatesInputSchema,
@@ -2387,17 +2391,6 @@ export {
   type IDayNightProvider,
 } from './day-night.cap.js'
 export {
-  type DeviceDiscoveryStatus,
-  DeviceDiscoveryStatusSchema,
-  type DiscoveredChildDevice,
-  DiscoveredChildDeviceSchema,
-  type DiscoveredChildStatus,
-  DiscoveredChildStatusSchema,
-  deviceDiscoveryCapability,
-  type IDeviceDiscoveryNativeProvider,
-  type IDeviceDiscoveryProvider,
-} from './device-discovery.cap.js'
-export {
   deviceOpsCapability,
   type IDeviceOpsProvider,
   type RawStateResult,
@@ -3530,7 +3523,6 @@ import type { decoderCapability } from './decoder.cap.js'
 import type { detectionPipelineCapability } from './detection-pipeline.cap.js'
 import type { deviceAdminLinkCapability } from './device-admin-link.cap.js'
 import type { deviceAdoptionCapability } from './device-adoption.cap.js'
-import type { deviceDiscoveryCapability } from './device-discovery.cap.js'
 import type { deviceExportCapability } from './device-export.cap.js'
 import type { deviceExtensionCapability } from './device-extension.cap.js'
 import type { deviceManagerCapability } from './device-manager.cap.js'
@@ -3758,7 +3750,6 @@ type AnyCapability =
   | typeof consumablesCapability
   | typeof runningStateCapability
   | typeof rebootCapability
-  | typeof deviceDiscoveryCapability
   | typeof brightnessCapability
   | typeof colorCapability
   | typeof climateControlCapability

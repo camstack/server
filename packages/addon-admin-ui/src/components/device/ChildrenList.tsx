@@ -17,7 +17,7 @@
  *
  * The data source is `deviceManager.getChildren` which only returns
  * persisted devices — discovered-but-not-yet-adopted candidates live
- * in `deviceDiscovery.listDiscovered` and never leak into this list.
+ * in the `device-adoption` candidate list (`deviceAdoption.listCandidates`) and never leak into this list.
  *
  * `childLayout`: a CONTAINER parent may declare a `childLayout` that
  * assigns specific accessory children to named accordion SECTIONS. When

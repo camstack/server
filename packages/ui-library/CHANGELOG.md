@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - NodePicker and node-select fields can require a capability: a node the registry answered has no provider is listed disabled with the reason
+- Removed the unused DiscoveryPanel composite (adoption goes through the integration adoption modal).
 
 ## [1.2.420] - 2026-11-11
 

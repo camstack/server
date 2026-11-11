@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1487 method paths across 206 capabilities.
+ * Coverage: 1482 method paths across 205 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -286,11 +286,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceCredentials.revokeDeviceCredential': { capName: "device-credentials", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'deviceCredentials.setDeviceCertificateSettings': { capName: "device-credentials", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceCredentials.startEnrollment': { capName: "device-credentials", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'deviceDiscovery.adoptDevice': { capName: "device-discovery", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
-  'deviceDiscovery.getStatus': { capName: "device-discovery", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
-  'deviceDiscovery.listDiscovered': { capName: "device-discovery", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
-  'deviceDiscovery.refreshDiscovery': { capName: "device-discovery", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
-  'deviceDiscovery.releaseDevice': { capName: "device-discovery", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'deviceExport.applyDeviceSettingsPatch': { capName: "device-export", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceExport.exposeDevice': { capName: "device-export", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceExport.exposeEntity': { capName: "device-export", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1567,7 +1562,6 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "device-admin-link",
   "device-adoption",
   "device-credentials",
-  "device-discovery",
   "device-export",
   "device-extension",
   "device-history",
@@ -1749,7 +1743,6 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "day-night",
   "detection-pipeline",
   "device-admin-link",
-  "device-discovery",
   "device-extension",
   "device-ops",
   "device-runs",

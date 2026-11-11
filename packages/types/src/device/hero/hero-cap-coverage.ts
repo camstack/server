@@ -42,7 +42,6 @@ export const HERO_CAP_COVERAGE: Readonly<Record<string, HeroCapCoverage>> = {
   'day-night': { none: NOT_A_HERO_FACT },
   'detection-pipeline': { none: NOT_A_HERO_FACT },
   'device-admin-link': { none: NOT_A_HERO_FACT },
-  'device-discovery': { none: NOT_A_HERO_FACT },
   'device-extension': { none: NOT_A_HERO_FACT },
   'device-ops': { none: NOT_A_HERO_FACT },
   'device-runs': { none: NOT_A_HERO_FACT },

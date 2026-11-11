@@ -5084,33 +5084,6 @@
       ]
     },
     {
-      "name": "DiscoveryPanel",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/discovery-panel.tsx",
-      "summary": "",
-      "props": [
-        {
-          "name": "deviceId",
-          "type": "number",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "className",
-          "type": "string",
-          "optional": true,
-          "doc": ""
-        },
-        {
-          "name": "onOpenChild",
-          "type": "(childDeviceId: number) => void",
-          "optional": true,
-          "doc": "Optional navigation callback fired when the operator clicks the \"Open\" link on an adopted child row. ui-library deliberately stays free of `"
-        }
-      ]
-    },
-    {
       "name": "DisplayPaletteProvider",
       "kind": "component",
       "area": "composites",

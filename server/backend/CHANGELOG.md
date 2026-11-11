@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Switching an integration instance on or off while its addon is not running is refused with "<addon> is not running: start it first" instead of a generic provider error or a write routed elsewhere
+- Removed the retired device-discovery capability routes (deviceDiscovery.*) from the API.
 
 ## [1.2.832] - 2026-11-11
 

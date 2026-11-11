@@ -2559,10 +2559,6 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
     cap: 'device-ops',
     reason: 'The per-device operations envelope; its members surface individually (e.g. reboot).',
   },
-  {
-    cap: 'device-discovery',
-    reason: 'Adoption-time only — it describes candidates, never the state of an adopted device.',
-  },
 
   // ── Secrets. The strongest exclusions in this file ─────────────────────
   {

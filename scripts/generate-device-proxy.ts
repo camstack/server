@@ -332,7 +332,7 @@ ${localStateRegistry}
 
 /**
  * Cap-name keyed runtime-state map (kebab-case keys, e.g. \`'battery'\`,
- * \`'device-discovery'\`). Companion to \`DeviceLocalState\` (which uses
+ * \`'day-night'\`). Companion to \`DeviceLocalState\` (which uses
  * camelCase property keys). Consumed by the
  * \`IDeviceRuntimeState.getCapState\` overload so callers passing a
  * cap-name literal get the typed slice back without an explicit

@@ -36,10 +36,6 @@ const ALLOW: readonly { readonly suffix: string; readonly why: string }[] = [
     why: 'the stored name being edited, and the placeholder that falls back to it',
   },
   {
-    suffix: 'composites/discovery-panel.tsx',
-    why: 'adoption preview — candidates, not fleet devices',
-  },
-  {
     suffix: 'components/integrations/AdoptDevicesModal.tsx',
     why: 'adoption candidates, not fleet devices',
   },

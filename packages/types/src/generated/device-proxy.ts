@@ -34,7 +34,6 @@ import type { coverCapability } from '../capabilities/cover.cap.js'
 import type { dayNightCapability } from '../capabilities/day-night.cap.js'
 import type { detectionPipelineCapability } from '../capabilities/detection-pipeline.cap.js'
 import type { deviceAdminLinkCapability } from '../capabilities/device-admin-link.cap.js'
-import type { deviceDiscoveryCapability } from '../capabilities/device-discovery.cap.js'
 import type { deviceExtensionCapability } from '../capabilities/device-extension.cap.js'
 import type { deviceOpsCapability } from '../capabilities/device-ops.cap.js'
 import type { deviceRunsCapability } from '../capabilities/device-runs.cap.js'
@@ -158,7 +157,6 @@ export interface DeviceProxyState {
   readonly control: SliceHandle<InferRuntimeState<typeof controlCapability>>
   readonly cover: SliceHandle<InferRuntimeState<typeof coverCapability>>
   readonly dayNight: SliceHandle<InferRuntimeState<typeof dayNightCapability>>
-  readonly deviceDiscovery: SliceHandle<InferRuntimeState<typeof deviceDiscoveryCapability>>
   readonly deviceStatus: SliceHandle<InferRuntimeState<typeof deviceStatusCapability>>
   readonly dishwasher: SliceHandle<InferRuntimeState<typeof dishwasherCapability>>
   readonly doNotDisturb: SliceHandle<InferRuntimeState<typeof doNotDisturbCapability>>
@@ -268,7 +266,6 @@ export interface DeviceProxy {
   readonly dayNight?: InferDeviceProxyCap<typeof dayNightCapability>
   readonly detectionPipeline?: InferDeviceProxyCap<typeof detectionPipelineCapability>
   readonly deviceAdminLink?: InferDeviceProxyCap<typeof deviceAdminLinkCapability>
-  readonly deviceDiscovery?: InferDeviceProxyCap<typeof deviceDiscoveryCapability>
   readonly deviceExtension?: InferDeviceProxyCap<typeof deviceExtensionCapability>
   readonly deviceOps?: InferDeviceProxyCap<typeof deviceOpsCapability>
   readonly deviceRuns?: InferDeviceProxyCap<typeof deviceRunsCapability>
@@ -591,14 +588,6 @@ export function createDeviceProxy(
 
   const deviceAdminLinkInterface = {
     getAdminLink: (input?: unknown) => dispatch('device-admin-link', 'deviceAdminLink', 'getAdminLink', 'query', input),
-  }
-
-  const deviceDiscoveryInterface = {
-    listDiscovered: (input?: unknown) => dispatch('device-discovery', 'deviceDiscovery', 'listDiscovered', 'query', input),
-    refreshDiscovery: (input?: unknown) => dispatch('device-discovery', 'deviceDiscovery', 'refreshDiscovery', 'mutation', input),
-    adoptDevice: (input?: unknown) => dispatch('device-discovery', 'deviceDiscovery', 'adoptDevice', 'mutation', input),
-    releaseDevice: (input?: unknown) => dispatch('device-discovery', 'deviceDiscovery', 'releaseDevice', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('device-discovery', 'deviceDiscovery', 'getStatus', 'query', input),
   }
 
   const deviceExtensionInterface = {
@@ -1439,7 +1428,6 @@ export function createDeviceProxy(
       control: createSliceHandle<InferRuntimeState<typeof controlCapability>>(stateSource, binding.deviceId, 'control'),
       cover: createSliceHandle<InferRuntimeState<typeof coverCapability>>(stateSource, binding.deviceId, 'cover'),
       dayNight: createSliceHandle<InferRuntimeState<typeof dayNightCapability>>(stateSource, binding.deviceId, 'day-night'),
-      deviceDiscovery: createSliceHandle<InferRuntimeState<typeof deviceDiscoveryCapability>>(stateSource, binding.deviceId, 'device-discovery'),
       deviceStatus: createSliceHandle<InferRuntimeState<typeof deviceStatusCapability>>(stateSource, binding.deviceId, 'device-status'),
       dishwasher: createSliceHandle<InferRuntimeState<typeof dishwasherCapability>>(stateSource, binding.deviceId, 'dishwasher'),
       doNotDisturb: createSliceHandle<InferRuntimeState<typeof doNotDisturbCapability>>(stateSource, binding.deviceId, 'do-not-disturb'),
@@ -1530,7 +1518,6 @@ export function createDeviceProxy(
     ...(bound('day-night') ? { dayNight: dayNightInterface } : {}),
     ...(bound('detection-pipeline') ? { detectionPipeline: detectionPipelineInterface } : {}),
     ...(bound('device-admin-link') ? { deviceAdminLink: deviceAdminLinkInterface } : {}),
-    ...(bound('device-discovery') ? { deviceDiscovery: deviceDiscoveryInterface } : {}),
     ...(bound('device-extension') ? { deviceExtension: deviceExtensionInterface } : {}),
     ...(bound('device-ops') ? { deviceOps: deviceOpsInterface } : {}),
     ...(bound('device-runs') ? { deviceRuns: deviceRunsInterface } : {}),

@@ -404,7 +404,6 @@ export type {
   DeviceStepMatrixProps,
 } from './device-step-matrix'
 export { DeviceStepMatrix, nextGridPosition } from './device-step-matrix'
-export { DiscoveryPanel } from './discovery-panel'
 export type { DoorbellRecentPanelProps } from './doorbell-recent-panel'
 export { DoorbellRecentPanel } from './doorbell-recent-panel'
 export * from './empty-state'

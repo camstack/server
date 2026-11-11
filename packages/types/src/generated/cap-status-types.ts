@@ -23,7 +23,6 @@ import type { ControlStatusSchema } from '../capabilities/control.cap.js'
 import type { CoverStatusSchema } from '../capabilities/cover.cap.js'
 import type { DayNightStatusSchema } from '../capabilities/day-night.cap.js'
 import type { deviceAdoptionCapability } from '../capabilities/device-adoption.cap.js'
-import type { DeviceDiscoveryStatusSchema } from '../capabilities/device-discovery.cap.js'
 import type { DeviceExportStatusSchema } from '../capabilities/device-export.cap.js'
 import type { deviceStatusCapability } from '../capabilities/device-status.cap.js'
 import type { DishwasherStatusSchema } from '../capabilities/dishwasher.cap.js'
@@ -114,7 +113,6 @@ export type CapStatusTypeMap = {
   readonly 'cover': z.infer<typeof CoverStatusSchema>
   readonly 'day-night': z.infer<typeof DayNightStatusSchema>
   readonly 'device-adoption': z.infer<(typeof deviceAdoptionCapability)['status']['schema']>
-  readonly 'device-discovery': z.infer<typeof DeviceDiscoveryStatusSchema>
   readonly 'device-export': z.infer<typeof DeviceExportStatusSchema>
   readonly 'device-status': z.infer<(typeof deviceStatusCapability)['status']['schema']>
   readonly 'dishwasher': z.infer<typeof DishwasherStatusSchema>
@@ -209,7 +207,6 @@ export const CAP_NAMES_WITH_STATUS = [
   'cover',
   'day-night',
   'device-adoption',
-  'device-discovery',
   'device-export',
   'device-status',
   'dishwasher',

@@ -18,7 +18,6 @@ type CameraCap =
   | 'day-night'
   | 'detection-pipeline'
   | 'device-admin-link'
-  | 'device-discovery'
   | 'device-extension'
   | 'device-ops'
   | 'feature-probe'
@@ -175,10 +174,6 @@ export const CAMERA_CAP_VOCABULARY: CapVocabularySlice<CameraCap> = {
   'device-admin-link': {
     scope: 'device',
     noun: t('Admin link', 'Link di amministrazione'),
-  },
-  'device-discovery': {
-    scope: 'device',
-    noun: t('Discovery', 'Rilevamento dispositivi'),
   },
   'device-extension': {
     scope: 'device',

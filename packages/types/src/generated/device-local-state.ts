@@ -21,7 +21,6 @@ import { contactCapability } from '../capabilities/contact.cap.js'
 import { controlCapability } from '../capabilities/control.cap.js'
 import { coverCapability } from '../capabilities/cover.cap.js'
 import { dayNightCapability } from '../capabilities/day-night.cap.js'
-import { deviceDiscoveryCapability } from '../capabilities/device-discovery.cap.js'
 import { deviceStatusCapability } from '../capabilities/device-status.cap.js'
 import { dishwasherCapability } from '../capabilities/dishwasher.cap.js'
 import { doNotDisturbCapability } from '../capabilities/do-not-disturb.cap.js'
@@ -116,7 +115,6 @@ export interface DeviceLocalState {
   control: InferRuntimeState<typeof controlCapability>
   cover: InferRuntimeState<typeof coverCapability>
   dayNight: InferRuntimeState<typeof dayNightCapability>
-  deviceDiscovery: InferRuntimeState<typeof deviceDiscoveryCapability>
   deviceStatus: InferRuntimeState<typeof deviceStatusCapability>
   dishwasher: InferRuntimeState<typeof dishwasherCapability>
   doNotDisturb: InferRuntimeState<typeof doNotDisturbCapability>
@@ -207,7 +205,6 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   control: controlCapability,
   cover: coverCapability,
   dayNight: dayNightCapability,
-  deviceDiscovery: deviceDiscoveryCapability,
   deviceStatus: deviceStatusCapability,
   dishwasher: dishwasherCapability,
   doNotDisturb: doNotDisturbCapability,
@@ -275,7 +272,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
 
 /**
  * Cap-name keyed runtime-state map (kebab-case keys, e.g. `'battery'`,
- * `'device-discovery'`). Companion to `DeviceLocalState` (which uses
+ * `'day-night'`). Companion to `DeviceLocalState` (which uses
  * camelCase property keys). Consumed by the
  * `IDeviceRuntimeState.getCapState` overload so callers passing a
  * cap-name literal get the typed slice back without an explicit
@@ -305,7 +302,6 @@ export interface CapNameToRuntimeStateMap {
   'control': InferRuntimeState<typeof controlCapability>
   'cover': InferRuntimeState<typeof coverCapability>
   'day-night': InferRuntimeState<typeof dayNightCapability>
-  'device-discovery': InferRuntimeState<typeof deviceDiscoveryCapability>
   'device-status': InferRuntimeState<typeof deviceStatusCapability>
   'dishwasher': InferRuntimeState<typeof dishwasherCapability>
   'do-not-disturb': InferRuntimeState<typeof doNotDisturbCapability>

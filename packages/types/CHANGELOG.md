@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A node picker field can name a capability; nodes without it are listed disabled with the reason
+- Retired the unused device-discovery capability; the shared discovered-candidate schemas now live with device-adoption (same exported names).
 
 ### Removed
 
