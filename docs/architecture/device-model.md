@@ -851,6 +851,8 @@ cannot start one or restart the box); Homematic CCU (`device-admin-link` only, t
 its firmware call updates a radio device by address, never the box). All three are integrations with a connection
 test and a LAN scan that pre-fills the form; the old standalone path is removed, with no migration.
 
+The cloud-account integrations offer a Gateway the same way and register no action, because the account API has none to give: Bosch SHC and Bosch HomeCom (`gateway:0`, always the first pick). HomeCom's circuits, hot water and heat pump stay siblings.
+
 ## A hub is its own integration instance (D985)
 
 A provider's physical hub (an NVR, a console, a gateway whose channels are the products) is a standalone

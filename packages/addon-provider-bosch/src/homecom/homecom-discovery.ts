@@ -42,6 +42,8 @@ function shapeOf(kind: HomeComDiscoverableDevice['kind']): CandidateShape {
       return { type: DeviceType.Climate, caps: ['climate-control'] }
     case 'dhw':
       return { type: DeviceType.WaterHeater, caps: ['water-heater'] }
+    case 'gateway':
+      return { type: DeviceType.Gateway, caps: [] }
     case 'heat-pump':
       return { type: DeviceType.HeatPump, caps: ['heat-pump-status', 'heat-pump-control'] }
   }

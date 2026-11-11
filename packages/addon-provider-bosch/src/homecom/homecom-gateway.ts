@@ -4,7 +4,7 @@ import type { HomeComHeatingCircuit } from './homecom-domain-mapping.js'
 export interface HomeComDiscoverableDevice {
   readonly nativeId: string
   readonly name: string
-  readonly kind: 'heating-circuit' | 'dhw' | 'heat-pump'
+  readonly kind: 'heating-circuit' | 'dhw' | 'heat-pump' | 'gateway'
   readonly circuitId?: string
   /**
    * Set only on a heat-pump pick: one climate child per circuit and the hot
@@ -74,6 +74,14 @@ export class HomeComConnectionResolver {
   }
 }
 
+/** Native id of the gateway pick: a Gateway device, sibling of the circuits. */
+export const HOMECOM_GATEWAY_NATIVE_ID = 'gateway:0'
+
+function gatewayDiscoverable(snapshot: HomeComSystemSnapshot): HomeComDiscoverableDevice {
+  const name = snapshot.gateway.name.length > 0 ? snapshot.gateway.name : 'HomeCom gateway'
+  return { nativeId: HOMECOM_GATEWAY_NATIVE_ID, name, kind: 'gateway' }
+}
+
 const BOILER_DHW_NAME = 'Domestic hot water'
 
 function circuitDiscoverable(circuit: HomeComHeatingCircuit): HomeComDiscoverableDevice {
@@ -90,7 +98,7 @@ function dhwDiscoverable(name: string): HomeComDiscoverableDevice {
 }
 
 /**
- * A gateway with a heat pump is one pick. A boiler still offers each circuit
+ * The gateway itself is always the first pick. A gateway with a heat pump is one more pick. A boiler still offers each circuit
  * and the hot-water row on its own.
  */
 export function buildDiscoverables(snapshot: HomeComSystemSnapshot): HomeComDiscoverableDevice[] {
@@ -100,9 +108,16 @@ export function buildDiscoverables(snapshot: HomeComSystemSnapshot): HomeComDisc
       ...circuits,
       ...(snapshot.dhw === null ? [] : [dhwDiscoverable(HOMECOM_HOT_WATER_CHILD_NAME)]),
     ]
-    return [{ nativeId: 'hp:0', name: 'Heat pump', kind: 'heat-pump', children }]
+    return [
+      gatewayDiscoverable(snapshot),
+      { nativeId: 'hp:0', name: 'Heat pump', kind: 'heat-pump', children },
+    ]
   }
-  return [...circuits, ...(snapshot.dhw === null ? [] : [dhwDiscoverable(BOILER_DHW_NAME)])]
+  return [
+    gatewayDiscoverable(snapshot),
+    ...circuits,
+    ...(snapshot.dhw === null ? [] : [dhwDiscoverable(BOILER_DHW_NAME)]),
+  ]
 }
 
 export const homeComConnections = new HomeComConnectionResolver()

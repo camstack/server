@@ -27,7 +27,7 @@ export interface HomeComAdoptionProviderDeps {
     readonly integrationId: string
     readonly type: DeviceType
     readonly name: string
-    readonly kind: 'heating-circuit' | 'dhw' | 'heat-pump'
+    readonly kind: 'heating-circuit' | 'dhw' | 'heat-pump' | 'gateway'
     readonly circuitId?: string
     readonly parentDeviceId: number | null
   }) => Promise<{ readonly deviceId: number }>

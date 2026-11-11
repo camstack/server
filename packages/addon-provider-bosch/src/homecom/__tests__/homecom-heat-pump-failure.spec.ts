@@ -18,11 +18,22 @@ function envelope(value: string | number) {
 
 const REFS = (ids: readonly string[]) => ({ references: ids.map((id) => ({ id })) })
 
-/** A hydronic gateway whose heat-pump tree is wholly refused: 404 on some paths, 500 on the rest. */
-function gateway(answers: Readonly<Record<string, unknown>>): FetchFn {
+/**
+ * A hydronic gateway whose heat-pump tree is wholly refused: 404 on the heat-pump-only
+ * resources (so it is a boiler), 500 on the rest of the tree. `statuses` pins a path's status.
+ */
+function gateway(
+  answers: Readonly<Record<string, unknown>>,
+  statuses: Readonly<Record<string, number>> = {},
+): FetchFn {
   return async (url) => {
     const path = decodeURIComponent(url.split('/resource')[1] ?? '')
     if (path in answers) return { ok: true, status: 200, json: async () => answers[path] }
+    const pinned = statuses[path]
+    if (pinned !== undefined) return { ok: false, status: pinned, json: async () => ({}) }
+    if (path === '/heatSources/hs1/heatPumpType' || path === '/heatSources/hs1/heatPumpPower') {
+      return { ok: false, status: 404, json: async () => ({}) }
+    }
     if (path.startsWith('/heatSources') || path.startsWith('/recordings')) {
       return { ok: false, status: 500, json: async () => ({}) }
     }
@@ -57,7 +68,11 @@ describe('HomeCom heat pump reads never break the working devices', () => {
     expect(first.circuits.map((c) => c.id)).toEqual(['hc1'])
     expect(first.dhw?.circuitId).toBe('dhw1')
     expect(first.heatPump).toBeUndefined()
-    expect(buildDiscoverables(first).map((d) => d.kind)).toEqual(['heating-circuit', 'dhw'])
+    expect(buildDiscoverables(first).map((d) => d.kind)).toEqual([
+      'gateway',
+      'heating-circuit',
+      'dhw',
+    ])
     const failed = log.warn.mock.calls.map((c) => c[1]?.meta?.path)
     expect(failed.length).toBeGreaterThan(0)
     expect(new Set(failed).size).toBe(failed.length)
@@ -96,8 +111,11 @@ describe('HomeCom heat pump reads never break the working devices', () => {
     const heatPump = snapshot.heatPump
     if (heatPump === undefined) throw new Error('expected a heat pump')
     const picks = buildDiscoverables(snapshot)
-    expect(picks.map((d) => [d.nativeId, d.name])).toEqual([['hp:0', 'Heat pump']])
-    expect(picks[0]?.children?.map((d) => [d.nativeId, d.name])).toEqual([
+    expect(picks.map((d) => [d.nativeId, d.name])).toEqual([
+      ['gateway:0', 'g1'],
+      ['hp:0', 'Heat pump'],
+    ])
+    expect(picks[1]?.children?.map((d) => [d.nativeId, d.name])).toEqual([
       ['hc:hc1', 'Heating circuit 1'],
       ['hc:hc2', 'Heating circuit 2'],
       ['dhw:0', 'Hot water'],
@@ -150,5 +168,51 @@ describe('HomeCom heat pump reads never break the working devices', () => {
       logger: logger(),
     })
     expect((await client.fetchSystem()).heatPump?.thermalW).toBe(4200)
+  })
+
+  it('recognises the heat pump of a gateway that refuses its system tree, from heatCoolMode', async () => {
+    const client = createHomeComApiClient(CONFIG, 'g1', {
+      fetchFn: gateway({
+        ...BASE,
+        '/heatingCircuits/hc1/heatCoolMode': { ...envelope('heating'), allowedValues: ['heating'] },
+      }),
+      deviceType: 'k40',
+      logger: logger(),
+    })
+    const snapshot = await client.fetchSystem()
+    expect(snapshot.heatPump).toBeDefined()
+    expect(buildDiscoverables(snapshot).map((d) => d.nativeId)).toEqual(['gateway:0', 'hp:0'])
+  })
+
+  it('recognises the heat pump of a gateway whose heat source answers 403 and 500, never as 0', async () => {
+    const client = createHomeComApiClient(CONFIG, 'g1', {
+      fetchFn: gateway(BASE, {
+        '/heatSources/hs1/heatPumpPower': 403,
+        '/heatSources/hs1/heatPumpType': 500,
+      }),
+      deviceType: 'k40',
+      logger: logger(),
+    })
+    const snapshot = await client.fetchSystem()
+    const heatPump = snapshot.heatPump
+    if (heatPump === undefined) throw new Error('expected a heat pump')
+    expect(buildDiscoverables(snapshot).map((d) => d.nativeId)).toEqual(['gateway:0', 'hp:0'])
+    const status = heatPumpStatusFrom(heatPump, 1)
+    expect(status.power).toEqual({ thermalW: null, electricalW: null, compressorPct: null })
+    expect(status.system).toEqual({
+      silent: null,
+      away: null,
+      additionalHeater: null,
+      holiday: null,
+    })
+  })
+
+  it('keeps the boiler path when the heat-pump-only resources are 404', async () => {
+    const client = createHomeComApiClient(CONFIG, 'g1', {
+      fetchFn: gateway({ ...BASE, '/heatSources/hs1/supplyTemperature': envelope(55) }),
+      deviceType: 'k40',
+      logger: logger(),
+    })
+    expect((await client.fetchSystem()).heatPump).toBeUndefined()
   })
 })

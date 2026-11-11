@@ -188,6 +188,7 @@ describe('HomeCom heat pump discovery', () => {
     const withReading = { ...base, heatPump: await read(true) }
     const picks = buildDiscoverables(withReading)
     expect(picks).toEqual([
+      { nativeId: 'gateway:0', name: 'K40', kind: 'gateway' },
       { nativeId: 'hp:0', name: 'Heat pump', kind: 'heat-pump', children: [] },
     ])
   })
