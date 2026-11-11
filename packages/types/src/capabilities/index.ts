@@ -2468,6 +2468,7 @@ export {
   EventVocabularyKindSchema,
   type EventVocabularySource,
   EventVocabularySourceSchema,
+  conventionalEventVocabulary,
   eventTypesOfVocabulary,
   findVocabularyEntry,
   plainEventVocabulary,

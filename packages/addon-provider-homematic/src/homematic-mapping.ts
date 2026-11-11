@@ -104,8 +104,9 @@ export function mapHmChannel(channelType: string | undefined): HmChannelMapping 
     //    HmIP-RC8, HmIP-KRC4 key-ring, push-buttons) ─────────────────────
     // Each key channel is one button. The device's key channels collapse
     // to ONE `event-emitter` cap (singleton) whose vocabulary is the union
-    // of the channels' native `PRESS_*` datapoints (verbatim). The button
-    // index lives in the fired event's `data.channel`, not in the cap name.
+    // of the channels' native `PRESS_*` datapoints (verbatim), one source
+    // per button (`hm-key-vocabulary.ts`). The button index is the fired
+    // event's `sourceId`, not part of the cap name.
     //   - KEY_TRANSCEIVER : HmIP key/remote channels (PRESS_SHORT/LONG/…)
     //   - KEY_TRANSMITTER : HmIP-RC remote transmit-only key channels
     //   - VIRTUAL_KEY     : CCU virtual-key channels (e.g. doorbell remotes)

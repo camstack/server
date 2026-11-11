@@ -8,6 +8,8 @@ applies-to:
   - packages/types/src/capabilities/event-vocabulary.ts
   - packages/types/src/capabilities/event-emitter.cap.ts
   - scripts/check-event-emitter-vocabulary.ts
+  - packages/addon-provider-homematic/src/devices/hm-key-vocabulary.ts
+  - packages/addon-provider-homematic/src/devices/hm-event-emitter-device.ts
 ---
 
 ## Context
@@ -49,9 +51,22 @@ closed list and a hand-rolled topic is forbidden (D8).
   bus event type has no declared set; its vocabulary is empty and its file
   is named in `OPEN_VOCABULARY`.
 
-This record covers the contract. Each integration's own labels, sources
-and kinds are filled in after it: until then a provider declares the plain
-tokens (`plainEventVocabulary`), labelled with the token itself.
+- **A vocabulary is read from the live device, not from the child's
+  config.** A child's config is written once, at adoption, so a remote
+  adopted before this record would never get its buttons. Homematic reads
+  its key channels from the CCU's channel list each time it starts
+  (`hm-key-vocabulary.ts`): one source per key channel, the source id is
+  the channel index a press carries, and the label is the button's
+  position with the channel beside it ("Button 1 (channel 3)"). While the
+  CCU has not answered, the persisted tokens stand in, without buttons.
+- **A source that announces tokens only is read by convention**
+  (`conventionalEventVocabulary`: ESPHome, a Home Assistant event entity,
+  an MQTT discovery event). The label is the token made readable; the kind
+  is set only when the WHOLE token is one many integrations use for a
+  button (`long_press`, `double_click`, `release`…). An unknown token gets
+  no kind rather than a guessed one.
+- **A press outside the declared vocabulary is delivered**, and Homematic
+  says so in its log once per button and token, with the device tag.
 
 ## Consequences
 
@@ -61,9 +76,12 @@ tokens (`plainEventVocabulary`), labelled with the token itself.
   must keep reading what they wrote.
 - A consumer that shows or matches events (the device page, a rule, the
   notification picker) has one list to read, and one fallback.
-- A fire whose token is not in the vocabulary is still delivered. Saying
-  so in the log, once per token, belongs to the providers and is not built
-  by this record.
+- Only Homematic logs a fire outside its vocabulary. The other providers
+  deliver it without a line.
+- The CCU's own name for a channel is not shown: the library the addon
+  uses does not expose it.
+- The Home Connect events keep their native names as labels: they are not
+  button presses and the convention table does not describe them.
 
 ## Rejected alternatives
 
@@ -85,3 +103,6 @@ tokens (`plainEventVocabulary`), labelled with the token itself.
   literal `[]` unless it is listed as open. Textual: a vocabulary computed
   from a list that is empty at run time is not seen.
 - `packages/types/src/capabilities/__tests__/event-vocabulary.spec.ts`.
+- `packages/addon-provider-homematic/src/__tests__/hm-key-vocabulary.spec.ts`
+  and `hm-event-emitter-vocabulary.spec.ts` (a remote adopted with tokens
+  only still gets its buttons).

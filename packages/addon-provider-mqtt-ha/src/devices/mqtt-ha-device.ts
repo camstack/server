@@ -11,7 +11,7 @@ import {
   contactCapability,
   createEvent,
   eventEmitterCapability,
-  plainEventVocabulary,
+  conventionalEventVocabulary,
   floodCapability,
   humiditySensorCapability,
   ingestReading,
@@ -423,7 +423,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
     )
     this.setCapSlice(eventEmitterCapability, {
       eventTypes: [...entity.eventTypes],
-      vocabulary: plainEventVocabulary(entity.eventTypes),
+      vocabulary: conventionalEventVocabulary(entity.eventTypes),
       lastEvent: fire,
       eventCountSinceStart: ++this.eventCount,
     })
@@ -680,7 +680,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
     const entity = this.bound('event-emitter')
     const COLD: EventEmitterStatus = {
       eventTypes: entity === null ? [] : [...entity.eventTypes],
-      vocabulary: plainEventVocabulary(entity?.eventTypes ?? []),
+      vocabulary: conventionalEventVocabulary(entity?.eventTypes ?? []),
       lastEvent: null,
       eventCountSinceStart: 0,
     }

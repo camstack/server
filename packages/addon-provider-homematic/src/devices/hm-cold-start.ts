@@ -2,12 +2,13 @@ import type {
   ClimateControlStatus,
   CoverStatus,
   EventEmitterStatus,
+  EventVocabularyEntry,
   HvacMode,
   LockControlStatus,
   MotionStatus,
   SwitchStatus,
 } from '@camstack/types'
-import { plainEventVocabulary } from '@camstack/types'
+import { eventTypesOfVocabulary } from '@camstack/types'
 import type { HmChannel } from 'nodehomematic'
 
 /**
@@ -89,10 +90,10 @@ export const HM_KEY_PRESS_DATAPOINTS: readonly string[] = [
 export const HM_KEY_PRESS_SET: ReadonlySet<string> = new Set(HM_KEY_PRESS_DATAPOINTS)
 
 /** Cold-start event-emitter slice; vocabulary supplied per-device. */
-export function coldEventEmitter(eventTypes: readonly string[]): EventEmitterStatus {
+export function coldEventEmitter(vocabulary: readonly EventVocabularyEntry[]): EventEmitterStatus {
   return {
-    eventTypes: [...eventTypes],
-    vocabulary: plainEventVocabulary(eventTypes),
+    eventTypes: eventTypesOfVocabulary(vocabulary),
+    vocabulary: [...vocabulary],
     lastEvent: null,
     eventCountSinceStart: 0,
   }

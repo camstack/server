@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { EventEmitterStatusSchema, EventFireSchema } from '../event-emitter.cap.js'
 import {
+  conventionalEventVocabulary,
   eventTypesOfVocabulary,
   findVocabularyEntry,
   plainEventVocabulary,
@@ -97,5 +98,36 @@ describe('findVocabularyEntry', () => {
     expect(findVocabularyEntry(flat, 'tap')?.id).toBe('tap')
     expect(findVocabularyEntry(flat, 'tap', '3')).toBeUndefined()
     expect(findVocabularyEntry(REMOTE, 'PRESS_SHORT')).toBeUndefined()
+  })
+})
+
+describe('conventionalEventVocabulary', () => {
+  it('gives a well-known button token its shared kind and a readable label', () => {
+    expect(conventionalEventVocabulary(['long_press', 'double_press', 'release'])).toEqual([
+      { id: 'long_press', label: 'Long press', kind: 'long-press' },
+      { id: 'double_press', label: 'Double press', kind: 'double-press' },
+      { id: 'release', label: 'Release', kind: 'release' },
+    ])
+  })
+
+  it('reads the token whatever its case and separators, and keeps it verbatim', () => {
+    const [entry] = conventionalEventVocabulary(['Single-Click'])
+    expect(entry).toEqual({ id: 'Single-Click', label: 'Single click', kind: 'press' })
+  })
+
+  it('gives a token it does not know a readable label and NO kind', () => {
+    expect(conventionalEventVocabulary(['dishwasher_done', 'triple_press'])).toEqual([
+      { id: 'dishwasher_done', label: 'Dishwasher done' },
+      { id: 'triple_press', label: 'Triple press' },
+    ])
+  })
+
+  it('does not take a token that merely contains a known word', () => {
+    const [entry] = conventionalEventVocabulary(['press_release_timeout'])
+    expect(entry?.kind).toBeUndefined()
+  })
+
+  it('drops a repeated and an empty token', () => {
+    expect(conventionalEventVocabulary(['press', '', 'press']).map((e) => e.id)).toEqual(['press'])
   })
 })

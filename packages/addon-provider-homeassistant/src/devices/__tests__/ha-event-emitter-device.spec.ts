@@ -214,6 +214,14 @@ describe('HaEventEmitterDevice', () => {
     expect(slice).not.toBeNull()
     // Vocabulary is VERBATIM — exact tokens, exact order, NO normalization.
     expect(slice?.eventTypes).toEqual([...VOCAB])
+    // The declared vocabulary (D1044): the token verbatim as `id`, a readable
+    // label, and the kind every integration shares.
+    expect(slice?.vocabulary).toEqual([
+      { id: 'press_long_release', label: 'Press long release', kind: 'release' },
+      { id: 'press_short', label: 'Press short', kind: 'press' },
+      { id: 'press_long_start', label: 'Press long start', kind: 'long-press-start' },
+      { id: 'press_long', label: 'Press long', kind: 'long-press' },
+    ])
     expect(slice?.lastEvent).toBeNull()
     expect(slice?.eventCountSinceStart).toBe(0)
     // Replay must NOT emit a bus event.

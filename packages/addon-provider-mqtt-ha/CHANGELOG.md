@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - MQTT thermostats are now climate devices.
 - Event devices declare their event vocabulary; each event is listed under its native name for now
+- Event devices show readable event names, and common button events (press, long press, double press, release) are recognised as such
 
 ## [0.1.44] - 2026-11-10
 

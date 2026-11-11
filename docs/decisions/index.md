@@ -4,7 +4,7 @@
 
 # Decisions
 
-1007 architecture decision records. One file per decision, never
+1009 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1022,6 +1022,8 @@ that rots.
 | D1040 | [A parallel step starts its members together, awaits all of them, and holds no set or stop](adr-1040-a-parallel-step-starts-its-members-together-awaits-all-and-holds-no-set-or-stop.md) | ✅ accepted | 2026-11-11 |
 | D1041 | [A repeat is bounded at save, and a loop that reaches its bound is marked, not failed](adr-1041-a-repeat-is-bounded-at-save-and-a-loop-that-reaches-its-bound-is-marked-not-failed.md) | ✅ accepted | 2026-11-11 |
 | D1042 | [Switch is the one on/off control, built from the cap's power hint](adr-1042-switch-is-the-one-on-off-control-built-from-the-cap-s-power-hint.md) | ✅ accepted | 2026-11-11 |
+| D1043 | [Block steps nest two levels, and a third level is refused at save](adr-1043-block-steps-nest-two-levels-and-the-third-is-refused-at-save.md) | ✅ accepted | 2026-11-11 |
+| D1044 | [An event-emitter declares its events in a typed vocabulary, under one category](adr-1044-an-event-emitter-declares-its-events-in-a-typed-vocabulary-under-one-category.md) | ✅ accepted | 2026-11-11 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

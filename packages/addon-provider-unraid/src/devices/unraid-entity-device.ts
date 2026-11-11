@@ -13,8 +13,8 @@ import {
   errMsg,
   EventCategory,
   eventEmitterCapability,
-  plainEventVocabulary,
   type EventEmitterStatus,
+  type EventVocabularyEntry,
   type EventFire,
   type InferNativeProvider,
   numericSensorCapability,
@@ -63,9 +63,12 @@ const COLD_TEMPERATURE: TemperatureSensorStatus = { temperature: 0, lastFetchedA
 const COLD_ENUM: EnumSensorStatus = { value: '', lastFetchedAt: 0 }
 const COLD_BINARY: BinaryStatus = { on: false, lastChangedAt: 0 }
 const COLD_SWITCH: SwitchStatus = { on: false, lastChangedAt: 0 }
+const EVENT_VOCABULARY: readonly EventVocabularyEntry[] = [
+  { id: EVENT_TYPE_NOTIFICATION_CREATED, label: 'Notification created', kind: 'other' },
+]
 const COLD_EVENT: EventEmitterStatus = {
   eventTypes: [EVENT_TYPE_NOTIFICATION_CREATED],
-  vocabulary: plainEventVocabulary([EVENT_TYPE_NOTIFICATION_CREATED]),
+  vocabulary: [...EVENT_VOCABULARY],
   lastEvent: null,
   eventCountSinceStart: 0,
 }
@@ -254,7 +257,7 @@ export class UnraidEntityDevice extends BaseDevice<typeof unraidEntitySchema> {
     )
     const slice: EventEmitterStatus = {
       eventTypes: [EVENT_TYPE_NOTIFICATION_CREATED],
-      vocabulary: plainEventVocabulary([EVENT_TYPE_NOTIFICATION_CREATED]),
+      vocabulary: [...EVENT_VOCABULARY],
       lastEvent: fire,
       eventCountSinceStart: ++this.eventCount,
     }

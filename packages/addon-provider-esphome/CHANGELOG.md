@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Event devices declare their event vocabulary; each event is listed under its native name for now
+- Event devices show readable event names, and common button events (press, long press, double press, release) are recognised as such
 
 ## [0.1.18] - 2026-11-10
 

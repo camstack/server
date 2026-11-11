@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1066 shared schemas.**
+**1070 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1398,7 +1398,7 @@ Enum: `"numeric" \| "select" \| "text" \| "datetime"`
 ### `CoreBlockSourceSchema`
 
 - `{ kind: "code" }`
-- `{ kind: "recipe"; recipe: { when: { kind: "all"; children: self[] } \| { kind: "any"; children: self[] } \| { kind: "not"; child: self } \| { kind: "device-becomes"; id?: string; deviceId: number; cap: string; fieldPath: string; becomes?: string \| number \| boolean; operator?: "eq" \| "ne" \| "gt" \| "gte" \| "lt" \| "lte" \| "between" \| "outside"; value?: number \| string \| boolean \| number[]; for?: {…}; edge?: boolean; forMs?: number; debounceMs?: number } \| { kind: "device-event"; id?: string; category: string; deviceId?: number } \| { kind: "schedule"; id?: string; at?: {…} \| {…} \| {…}; days?: ("mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat" \| "sun")[]; cron?: string } \| { kind: "manual"; id?: string } \| { kind: "interval"; id?: string; minutes: number } \| { kind: "detection"; id?: string; subjects: ({…} \| {…} \| {…} \| {…} \| {…})[]; deviceIds: number[]; zones?: string[]; minScore?: number } \| { kind: "stationary"; id?: string; deviceIds: number[]; subjects?: ({…} \| {…} \| {…} \| {…} \| {…})[]; zones?: string[]; phase: "appeared" \| "departed" } \| { kind: "device-is"; deviceId: number; cap: string; fieldPath: string; operator: "eq" \| "ne" \| "gt" \| "gte" \| "lt" \| "lte" \| "contains" \| "in"; value: string \| number \| boolean \| (string \| number)[] \| {…}; unit?: string; for?: {…} } \| { kind: "stationary-present"; deviceId: number; subjects?: ({…} \| {…} \| {…} \| {…} \| {…})[]; zones?: string[]; minCount?: number } \| { kind: "expression"; expr: string; bindings: Record<string, {…} \| {…} \| {…}>; for?: {…} } \| { kind: "time-is"; between?: {…}; days?: ("mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat" \| "sun")[] } \| { kind: "triggered-by"; leafIds: string[] }; actions: ({ kind: "wait"; seconds: number; if?: {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…}; else?: ({…} \| {…})[] } \| { kind: "cap"; actionId?: string; target?: {…} \| {…} \| {…}; deviceId?: number \| number[] \| {…}; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string>; if?: {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…}; else?: ({…} \| {…})[]; continueOnError?: true } \| { kind: "stop"; reason: string; outcome: "ok" \| "failed"; if?: {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} } \| { kind: "set"; vars: Record<string, string \| number \| boolean>; if?: {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} } \| { kind: "choose"; branches: {…}[]; else?: ({…} \| {…} \| {…} \| {…} \| {…})[] } \| { kind: "wait-until"; when: {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…}; timeoutS: number; onTimeout: "continue" \| "stop" } \| { kind: "parallel"; steps: ({…} \| {…} \| {…} \| {…} \| {…})[] } \| { kind: "repeat"; loop: {…} \| {…} \| {…} \| {…}; steps: ({…} \| {…} \| {…} \| {…} \| {…})[] } \| { kind: "action"; actionId: string; variables?: Record<string, string \| number \| boolean>; continueOnError?: true } \| { kind: "code"; code: string })[]; runMode?: { mode: "single" } \| { mode: "restart" } \| { mode: "queued"; max: number } \| { mode: "parallel"; max: number } \| { mode: "cooldown"; minutes: number }; keepTraces?: number } \| pipe }`
+- `{ kind: "recipe"; recipe: { when: { kind: "all"; children: self[] } \| { kind: "any"; children: self[] } \| { kind: "not"; child: self } \| { kind: "device-becomes"; id?: string; deviceId: number; cap: string; fieldPath: string; becomes?: string \| number \| boolean; operator?: "eq" \| "ne" \| "gt" \| "gte" \| "lt" \| "lte" \| "between" \| "outside"; value?: number \| string \| boolean \| number[]; for?: {…}; edge?: boolean; forMs?: number; debounceMs?: number } \| { kind: "device-event"; id?: string; category: string; deviceId?: number } \| { kind: "schedule"; id?: string; at?: {…} \| {…} \| {…}; days?: ("mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat" \| "sun")[]; cron?: string } \| { kind: "manual"; id?: string } \| { kind: "interval"; id?: string; minutes: number } \| { kind: "detection"; id?: string; subjects: ({…} \| {…} \| {…} \| {…} \| {…})[]; deviceIds: number[]; zones?: string[]; minScore?: number } \| { kind: "stationary"; id?: string; deviceIds: number[]; subjects?: ({…} \| {…} \| {…} \| {…} \| {…})[]; zones?: string[]; phase: "appeared" \| "departed" } \| { kind: "device-is"; deviceId: number; cap: string; fieldPath: string; operator: "eq" \| "ne" \| "gt" \| "gte" \| "lt" \| "lte" \| "contains" \| "in"; value: string \| number \| boolean \| (string \| number)[] \| {…}; unit?: string; for?: {…} } \| { kind: "stationary-present"; deviceId: number; subjects?: ({…} \| {…} \| {…} \| {…} \| {…})[]; zones?: string[]; minCount?: number } \| { kind: "expression"; expr: string; bindings: Record<string, {…} \| {…} \| {…}>; for?: {…} } \| { kind: "time-is"; between?: {…}; days?: ("mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat" \| "sun")[] } \| { kind: "triggered-by"; leafIds: string[] }; actions: ({ kind: "wait"; seconds: number; if?: {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…}; else?: ({…} \| {…})[] } \| { kind: "cap"; actionId?: string; target?: {…} \| {…} \| {…}; deviceId?: number \| number[] \| {…}; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string>; if?: {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…}; else?: ({…} \| {…})[]; continueOnError?: true } \| { kind: "stop"; reason: string; outcome: "ok" \| "failed"; if?: {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} } \| { kind: "set"; vars: Record<string, string \| number \| boolean>; if?: {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} } \| { kind: "choose"; branches: {…}[]; else?: ({…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…})[] } \| { kind: "wait-until"; when: {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…}; timeoutS: number; onTimeout: "continue" \| "stop" } \| { kind: "parallel"; steps: ({…} \| {…} \| {…} \| {…} \| {…})[] } \| { kind: "repeat"; loop: {…} \| {…} \| {…} \| {…}; steps: ({…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…} \| {…})[] } \| { kind: "action"; actionId: string; variables?: Record<string, string \| number \| boolean>; continueOnError?: true } \| { kind: "code"; code: string })[]; runMode?: { mode: "single" } \| { mode: "restart" } \| { mode: "queued"; max: number } \| { mode: "parallel"; max: number } \| { mode: "cooldown"; minutes: number }; keepTraces?: number } \| pipe }`
 - `{ kind: "composition"; composition: { target: { kind: "new"; type: "camera" \| "hub" \| "light" \| "siren" \| "switch" \| "sensor" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "dryer" \| "gateway" \| "heat-pump"; role?: "siren" \| "floodlight" \| "spotlight" \| "pir-sensor" \| "chime" \| "autotrack" \| "nightvision" \| "privacy-mask" \| "doorbell" \| "cover-blind" \| "cover-shutter" \| "cover-awning" \| "cover-curtain" \| "cover-garage" \| "cover-gate" \| "cover-door" \| "cover-window" \| "binary-helper" \| "outlet" \| "switch-heater" \| "switch-fan" \| "climate-ac" \| "climate-thermostat" \| "climate-floor" \| "climate-radiator" \| "climate-heater" \| "climate-heat-pump-circuit" \| "motion-sensor" \| "contact-sensor" \| "leak-sensor" \| "smoke-sensor" \| "co-sensor" \| "gas-sensor" \| "tamper-sensor" \| "vibration-sensor" \| "connectivity-sensor" \| "sound-sensor" \| "binary-sensor" \| "temperature-sensor" \| "humidity-sensor" \| "ambient-light-sensor" \| "pressure-sensor" \| "wind-sensor" \| "rain-sensor" \| "uv-sensor" \| "solar-radiation-sensor" \| "soil-moisture-sensor" \| "power-sensor" \| "energy-sensor" \| "voltage-sensor" \| "current-sensor" \| "air-quality-sensor" \| "battery-sensor" \| "numeric-sensor" \| "enum-sensor" \| "datetime-sensor" \| "generic-sensor" \| "numeric-control" \| "select-control" \| "text-control" \| "datetime-control" \| "mobile-push-notifier" \| "messaging-notifier" \| "email-notifier" \| "generic-notifier" \| "ir-transmitter" } \| { kind: "existing"; device: {…} }; features: ({ kind: "fields"; cap: string; enabled?: boolean; fields: Record<string, {…} \| {…} \| {…} \| {…} \| {…}>; items?: Record<string, {…}>; commands?: Record<string, {…} \| {…} \| {…}> } \| { kind: "passthrough"; cap: string; enabled?: boolean; source: {…} })[]; helper?: { kind: "group"; templateId: "temperature" \| "humidity" \| "pressure" \| "illuminance" \| "power" \| "energy" \| "battery" \| "numeric" \| "motion" \| "contact" \| "leak" \| "smoke" \| "occupancy" \| "binary" \| "switch" \| "light" \| "fan" \| "cover" \| "valve" \| "lock" \| "media-player" \| "climate"; aggregate: "mean" \| "median" \| "min" \| "max" \| "sum" \| "any" \| "all"; members: {…}[]; active?: "at-least-one" \| "all" } \| { kind: "statistic"; stat: "min" \| "max" \| "mean" \| "sum" \| "count" \| "change"; window: {…} \| {…}; source: {…} } \| { kind: "integral"; reset: "never" \| "daily" \| "weekly" \| "monthly"; output: "energy" \| "meter"; source: {…} } \| { kind: "threshold"; source: {…}; high: number; low: number; onForMs: number; offForMs: number } \| { kind: "arithmetic"; op: "sum" \| "difference" \| "ratio"; inputs: {…}[] } \| { kind: "expression"; expr: string; inputs: {…}[]; output: "number" \| "boolean" } \| { kind: "derivative"; window: {…}; per: "second" \| "minute" \| "hour"; source: {…} } } }`
 
 ### `CoreBlockStatusSchema`
@@ -2137,6 +2137,7 @@ Enum: `"image" \| "text"`
 ### `EventEmitterStatusSchema`
 
 - `eventTypes`: `string[]`
+- `vocabulary?`: `EventVocabularyEntrySchema[] = []`
 - `lastEvent`: `EventFireSchema \| null`
 - `eventCountSinceStart`: `number`
 
@@ -2144,6 +2145,7 @@ Enum: `"image" \| "text"`
 
 - `deviceId`: `number`
 - `eventType`: `string`
+- `sourceId?`: `string`
 - `data`: `Record<string, unknown> \| null`
 - `timestamp`: `number`
 - `seq`: `number`
@@ -2204,6 +2206,31 @@ Enum: `"mp4" \| "gif"`
 - `coverage`: `EventMediaCoverageSchema`
 - `profile`: `CamProfileSchema`
 - `video`: `"copy" \| "encode"`
+
+### `EventVocabularyEntrySchema`
+
+- `id`: `string`
+- `source?`: `EventVocabularySourceSchema`
+- `label`: `string`
+- `description?`: `string`
+- `kind?`: `EventVocabularyKindSchema`
+- `payload?`: `EventVocabularyFieldSchema[]`
+
+### `EventVocabularyFieldSchema`
+
+- `path`: `string`
+- `kind`: `"string" \| "number" \| "boolean" \| "enum"`
+- `enumValues?`: `string[]`
+- `label?`: `string`
+
+### `EventVocabularyKindSchema`
+
+Enum: `"press" \| "long-press" \| "long-press-start" \| "release" \| "repeat" \| "double-press" \| "other"`
+
+### `EventVocabularySourceSchema`
+
+- `id`: `string`
+- `label`: `string`
 
 ### `ExportBytesSchema`
 

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Event devices declare their event vocabulary; each event is listed under its native name for now
+- The notification event is listed under a readable name
 
 ## [0.2.163] - 2026-11-10
 

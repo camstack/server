@@ -1,6 +1,6 @@
 import {
   eventEmitterCapability,
-  plainEventVocabulary,
+  conventionalEventVocabulary,
   createEvent,
   EventCategory,
   type DeviceContext,
@@ -75,7 +75,7 @@ export class HaEventEmitterDevice extends HaBaseChildDevice {
     this.registerEventEmitterCap()
     const seed: EventEmitterStatus = {
       eventTypes: [...this.eventTypes],
-      vocabulary: plainEventVocabulary(this.eventTypes),
+      vocabulary: conventionalEventVocabulary(this.eventTypes),
       lastEvent: null,
       eventCountSinceStart: 0,
     }
@@ -101,7 +101,7 @@ export class HaEventEmitterDevice extends HaBaseChildDevice {
       if (declared !== null) {
         const refreshed: EventEmitterStatus = {
           eventTypes: [...this.eventTypes],
-          vocabulary: plainEventVocabulary(this.eventTypes),
+          vocabulary: conventionalEventVocabulary(this.eventTypes),
           lastEvent: null,
           eventCountSinceStart: this.#count,
         }
@@ -149,7 +149,7 @@ export class HaEventEmitterDevice extends HaBaseChildDevice {
 
     const slice: EventEmitterStatus = {
       eventTypes: [...this.eventTypes],
-      vocabulary: plainEventVocabulary(this.eventTypes),
+      vocabulary: conventionalEventVocabulary(this.eventTypes),
       lastEvent: fire,
       eventCountSinceStart: ++this.#count,
     }
@@ -167,7 +167,7 @@ export class HaEventEmitterDevice extends HaBaseChildDevice {
     return (
       this.runtimeState.getCapState<EventEmitterStatus>('event-emitter') ?? {
         eventTypes: [...this.eventTypes],
-        vocabulary: plainEventVocabulary(this.eventTypes),
+        vocabulary: conventionalEventVocabulary(this.eventTypes),
         lastEvent: null,
         eventCountSinceStart: 0,
       }
