@@ -17769,6 +17769,13 @@
       ]
     },
     {
+      "name": "PickerSearchRow",
+      "kind": "component",
+      "area": "viewer",
+      "file": "camstack/src/components/ui/PickerSheet.tsx",
+      "summary": "The sheet's search row, on its own for a list that owns its search (the device → value picker draws it above its facet chips, in a sheet or inline)."
+    },
+    {
       "name": "PickerSheet",
       "kind": "component",
       "area": "viewer",
@@ -17798,6 +17805,12 @@
           "type": "React.ReactNode",
           "optional": false,
           "doc": "The header's buttons — close, save, done: the caller's to decide."
+        },
+        {
+          "name": "headerLeft",
+          "type": "React.ReactNode",
+          "optional": true,
+          "doc": "Before the title: a pushed page's Back."
         },
         {
           "name": "search",
