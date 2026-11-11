@@ -31,6 +31,8 @@ const MaybeSetting = SettingSchema.nullable()
 
 const HeatingCircuitSchema = z.object({
   id: z.string(),
+  /** The name the gateway gave the circuit in its reference listing, when it gave one. */
+  name: z.string().nullable().default(null),
   operationMode: MaybeSetting,
   heatCoolMode: MaybeSetting,
   currentSuWiMode: MaybeSetting,
@@ -59,6 +61,13 @@ const DhwCircuitSchema = z.object({
 })
 export type HomeComBridgeDhwCircuit = z.infer<typeof DhwCircuitSchema>
 
+/**
+ * One GET of a heat-pump-only heat-source resource: `refused` (403/500) still proves a heat
+ * pump the gateway will not let us read, `absent` (404) is a boiler, `transient` proves nothing.
+ */
+const ProbeOutcomeSchema = z.enum(['answered', 'refused', 'absent', 'transient'])
+export type HomeComBridgeProbeOutcome = z.infer<typeof ProbeOutcomeSchema>
+
 const ReadingSchema = z.object({
   heatSource: z.object({
     heatPumpType: z.string().nullable(),
@@ -79,6 +88,8 @@ const ReadingSchema = z.object({
   }),
   heatingCircuits: z.array(HeatingCircuitSchema),
   dhwCircuits: z.array(DhwCircuitSchema),
+  /** Asked only when the bulk read left the heat-pump type unknown; path → outcome. */
+  heatSourceProbe: z.record(z.string(), ProbeOutcomeSchema).default({}),
 })
 export type HomeComBridgeReading = z.infer<typeof ReadingSchema>
 

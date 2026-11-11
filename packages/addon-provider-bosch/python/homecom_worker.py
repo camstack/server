@@ -29,7 +29,7 @@ from typing import Any, Awaitable, Callable, Dict, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from homecom_normalize import normalize_reading  # noqa: E402
+from homecom_normalize import normalize_reading, probe_outcome  # noqa: E402
 
 DEVICE_TYPES = ("k40", "k30", "icom")
 
@@ -139,7 +139,38 @@ async def _optional(call: Awaitable[Any]) -> Any:
         return None
 
 
-async def _read(client: Any, gateway_id: str, device_type: str) -> Dict[str, Any]:
+HEAT_SOURCE_IDENTITY = ("/heatSources/hs1/heatPumpType", "/heatSources/hs1/heatPumpPower")
+PROBE_TIMEOUT_S = 15
+
+
+async def _probe_heat_source(session: Any, token: str, gateway_id: str) -> Dict[str, str]:
+    """GET each heat-pump-only resource and keep its outcome (see `probe_outcome`).
+
+    Only asked when the bulk read left the heat-pump type unknown: a gateway that refuses
+    its heat source still has a heat pump, and the library cannot tell that from a 404.
+    """
+    import aiohttp
+    from homecom_alt.const import BOSCHCOM_DOMAIN, BOSCHCOM_ENDPOINT_GATEWAYS
+
+    outcomes: Dict[str, str] = {}
+    for path in HEAT_SOURCE_IDENTITY:
+        url = f"{BOSCHCOM_DOMAIN}{BOSCHCOM_ENDPOINT_GATEWAYS}{gateway_id}/resource{path}"
+        try:
+            async with session.get(
+                url,
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=aiohttp.ClientTimeout(total=PROBE_TIMEOUT_S),
+            ) as resp:
+                outcomes[path] = probe_outcome(resp.status)
+        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+            print(f"[homecom_worker] probe failed: {type(err).__name__}", file=sys.stderr)
+            outcomes[path] = "transient"
+    return outcomes
+
+
+async def _read(
+    client: Any, session: Any, token: str, gateway_id: str, device_type: str
+) -> Dict[str, Any]:
     device = _as_dict(await client.async_update(gateway_id))
     extras: Dict[str, Any] = {
         "aggregateStarts": await _optional(client.async_get_hs_total_number_of_starts(gateway_id)),
@@ -157,6 +188,8 @@ async def _read(client: Any, gateway_id: str, device_type: str) -> Dict[str, Any
                     client.async_get_dhw_charge_duration(gateway_id, dhw_id)
                 )
         extras["chargeDuration"] = durations
+    if normalize_reading(device)["heatSource"]["heatPumpType"] is None:
+        extras["heatSourceProbe"] = await _probe_heat_source(session, token, gateway_id)
     return normalize_reading(device, extras)
 
 
@@ -179,7 +212,8 @@ async def run(request: Dict[str, Any]) -> Dict[str, Any]:
         async with aiohttp.ClientSession() as session:
             client = cls(session, options, gateway_id, False)
             if request["action"] == "read":
-                return {"ok": True, "reading": await _read(client, gateway_id, device_type)}
+                reading = await _read(client, session, request["token"], gateway_id, device_type)
+                return {"ok": True, "reading": reading}
             write = request["write"]
             await WRITES[write["op"]](client, gateway_id, write)
             return {"ok": True, "written": write["op"]}

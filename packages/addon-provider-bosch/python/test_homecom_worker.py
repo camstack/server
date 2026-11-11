@@ -12,7 +12,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from homecom_normalize import normalize_reading  # noqa: E402
+from homecom_normalize import normalize_reading, probe_outcome  # noqa: E402
 from homecom_worker import WorkerError, parse_request  # noqa: E402
 
 FORBIDDEN = {}  # the library turns a 403/404 into an empty dict
@@ -146,6 +146,24 @@ def test_circuits_keep_their_settings_with_limits_and_allowed_values():
     assert hc1["manualRoomSetpoint"]["min"] == 5 and hc1["manualRoomSetpoint"]["max"] == 30
     assert hc1["maxFlowTemp"]["value"] == 60
     assert reading["heatingCircuits"][1]["operationMode"] is None
+
+
+def test_a_heating_circuit_keeps_the_name_the_gateway_gave():
+    device = k40_device()
+    device["heating_circuits"][0]["name"] = "Living room"
+    circuits = normalize_reading(device, extras())["heatingCircuits"]
+    assert circuits[0]["name"] == "Living room"
+    assert circuits[1]["name"] is None
+
+
+def test_a_heat_source_probe_separates_refused_from_absent_and_transient():
+    assert [probe_outcome(s) for s in (200, 403, 500, 404, 429, 503, 502)] == [
+        "answered", "refused", "refused", "absent", "transient", "transient", "transient"
+    ]
+    probe = {"/heatSources/hs1/heatPumpType": "refused", "/x": "bogus", 3: "absent"}
+    reading = normalize_reading(k40_device(), {**extras(), "heatSourceProbe": probe})
+    assert reading["heatSourceProbe"] == {"/heatSources/hs1/heatPumpType": "refused"}
+    assert normalize_reading(k40_device(), extras())["heatSourceProbe"] == {}
 
 
 def test_setpoint_limits_come_only_from_the_gateway_answer():

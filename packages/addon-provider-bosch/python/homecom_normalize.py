@@ -9,12 +9,13 @@ Output shape (camelCase, every key always present):
   heatSource: { heatPumpType, supplyTemp, returnTemp, modulationPct, pressureBar, starts,
                 outdoorTemp, thermalKwh, electricalKwh }
   system:     { away, silent, additionalHeater, holiday }            # Setting | None
-  heatingCircuits: [ { id, operationMode, heatCoolMode, currentSuWiMode, suWiSwitchMode,
+  heatingCircuits: [ { id, name, operationMode, heatCoolMode, currentSuWiMode, suWiSwitchMode,
                        roomTemp, humidity, currentRoomSetpoint, manualRoomSetpoint,
                        coolingRoomSetpoint, comfortSetpoint, ecoSetpoint, maxFlowTemp } ]
   dhwCircuits:     [ { id, operationMode, actualTemp, currentTemperatureLevel, charge,
                        chargeDuration, singleChargeSetpoint, currentSetpoint,
                        temperatureLevels: { <level>: Setting } } ]
+  heatSourceProbe: { <path>: "answered" | "refused" | "absent" | "transient" }
 
 Setting = { value: str | number | None, min, max, allowed: [str], writeable: bool | None }
 """
@@ -182,12 +183,44 @@ def normalize_heat_source(
     }
 
 
+PROBE_OUTCOMES = ("answered", "refused", "absent", "transient")
+
+
+def probe_outcome(status: int) -> str:
+    """One GET of a heat-pump-only resource, by HTTP status.
+
+    The library reads a 403 and a 404 alike as an empty answer, so the identity resources
+    are probed on their own: 200 answers; 403 and 500 mean the resource exists but is
+    refused (a heat pump the gateway will not let us read); 404 means it is absent (a
+    boiler); anything else (429, 502, 503, 504 …) is transient and proves nothing.
+    """
+    if status == 200:
+        return "answered"
+    if status in (403, 500):
+        return "refused"
+    if status == 404:
+        return "absent"
+    return "transient"
+
+
+def _probe_map(raw: Any) -> Dict[str, str]:
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        path: outcome
+        for path, outcome in raw.items()
+        if isinstance(path, str) and outcome in PROBE_OUTCOMES
+    }
+
+
 def normalize_heating_circuit(ref: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     circuit_id = _ref_id(ref)
     if circuit_id is None:
         return None
+    name = ref.get("name")
     return {
         "id": circuit_id,
+        "name": name if isinstance(name, str) and name.strip() else None,
         "operationMode": setting_of(ref.get("operationMode")),
         "heatCoolMode": setting_of(ref.get("heatCoolMode")),
         "currentSuWiMode": setting_of(ref.get("currentSuWiMode")),
@@ -242,7 +275,7 @@ def normalize_reading(
     """`device` is the library's update dataclass as a dict; `extras` the separate reads.
 
     extras keys: `silentMode`, `additionalHeaterMode`, `aggregateStarts`,
-    `chargeDuration` ({ dhw id: payload }).
+    `chargeDuration` ({ dhw id: payload }), `heatSourceProbe` ({ path: probe outcome }).
     """
     more = extras or {}
     durations = more.get("chargeDuration") if isinstance(more.get("chargeDuration"), dict) else {}
@@ -263,4 +296,5 @@ def normalize_reading(
         },
         "heatingCircuits": [c for c in heating if c is not None],
         "dhwCircuits": [c for c in dhw if c is not None],
+        "heatSourceProbe": _probe_map(more.get("heatSourceProbe")),
     }

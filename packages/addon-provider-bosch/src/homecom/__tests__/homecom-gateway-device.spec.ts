@@ -137,6 +137,7 @@ describe('the HomeCom gateway as an adoption pick', () => {
       heatPump: {
         circuits: [],
         heatPumpType: 'air_water',
+        heatSourceRefused: false,
         silent: null,
         away: null,
         additionalHeater: null,

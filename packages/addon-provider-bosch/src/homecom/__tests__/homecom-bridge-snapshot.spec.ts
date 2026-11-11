@@ -9,7 +9,13 @@ import { k40Reading, setting } from './homecom-bridge-fixture.js'
  */
 
 function snapshotOf(reading: HomeComBridgeReading) {
-  return bridgeSnapshot({ gatewayId: 'g1', deviceType: 'k40', reading, logDrop: () => {} })
+  return bridgeSnapshot({
+    gatewayId: 'g1',
+    deviceType: 'k40',
+    reading,
+    logDrop: () => {},
+    logTransientProbe: () => {},
+  })
 }
 
 function withHc(patch: Partial<HomeComBridgeHeatingCircuit>): HomeComBridgeReading {

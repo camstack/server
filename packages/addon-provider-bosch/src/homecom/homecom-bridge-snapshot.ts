@@ -99,7 +99,7 @@ function climateCircuit(hc: HomeComBridgeHeatingCircuit): HomeComHeatingCircuit 
   const modes = hvacModesFromAllowed(hc.operationMode?.allowed ?? [])
   return {
     id: hc.id,
-    name: heatingCircuitName(hc.id, null),
+    name: heatingCircuitName(hc.id, hc.name),
     operationMode: textValue(hc.operationMode) ?? 'off',
     setpoint: cooling
       ? (numberValue(hc.coolingRoomSetpoint) ?? numberValue(hc.currentRoomSetpoint))
@@ -136,6 +136,8 @@ export interface BridgeSnapshotInput {
   readonly deviceType: HomeComBridgeDeviceType
   readonly reading: HomeComBridgeReading
   readonly logDrop: (reason: string) => void
+  /** A heat-source probe that failed transiently: it proves nothing, so it is named. */
+  readonly logTransientProbe: (path: string) => void
 }
 
 export function bridgeSnapshot(input: BridgeSnapshotInput): HomeComSystemSnapshot {
@@ -144,6 +146,9 @@ export function bridgeSnapshot(input: BridgeSnapshotInput): HomeComSystemSnapsho
   if (reading.dhwCircuits.length > 1) {
     const extra = reading.dhwCircuits.slice(1).map((c) => c.id)
     input.logDrop(`extra DHW circuits are on the heat pump only: ${extra.join(', ')}`)
+  }
+  for (const [path, outcome] of Object.entries(reading.heatSourceProbe)) {
+    if (outcome === 'transient') input.logTransientProbe(path)
   }
   const heatPump = heatPumpReadingFrom(reading)
   return {

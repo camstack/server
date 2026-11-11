@@ -9,7 +9,8 @@ import {
 } from '../homecom-bridge.js'
 import { buildDiscoverables } from '../homecom-gateway.js'
 import { HOMECOM_TOKEN_URL } from '../homecom-oauth.js'
-import { k40Reading } from './homecom-bridge-fixture.js'
+import { heatPumpStatusFrom } from '../homecom-heat-pump.js'
+import { k40Reading, setting } from './homecom-bridge-fixture.js'
 
 const CONFIG = {
   username: 'me@example.com',
@@ -139,19 +140,38 @@ describe('HomeCom reads a k40 through the bridge', () => {
     await expect(client(bridge).api.fetchSystem()).rejects.toBeInstanceOf(HomeComAuthError)
   })
 
-  it('falls back to the climate resources, named, when the bridge fails otherwise', async () => {
-    const bridge = fakeBridge([new HomeComBridgeError('timeout', 'no answer within 50s')])
+  it('falls back to the climate resources on a first poll that fails, and warns once', async () => {
+    const bridge = fakeBridge([
+      new HomeComBridgeError('timeout', 'no answer within 50s'),
+      new HomeComBridgeError('timeout', 'no answer within 50s'),
+    ])
     const { api, log } = client(bridge)
     const snapshot = await api.fetchSystem()
+    await api.fetchSystem()
     expect(snapshot.circuits.map((c) => c.id)).toEqual(['hc1'])
     expect(snapshot.heatPump).toBeUndefined()
     expect(snapshot.bridge).toBeUndefined()
-    expect(log.warn).toHaveBeenCalledWith(
-      expect.stringContaining('bridge read failed'),
-      expect.objectContaining({
-        tags: { gatewayId: 'g1' },
-        meta: expect.objectContaining({ kind: 'timeout' }),
-      }),
+    const failures = log.warn.mock.calls.filter(([m]) => String(m).includes('bridge read failed'))
+    expect(failures).toEqual([
+      [
+        expect.stringContaining('bridge read failed'),
+        expect.objectContaining({
+          tags: { gatewayId: 'g1' },
+          meta: expect.objectContaining({ kind: 'timeout' }),
+        }),
+      ],
+    ])
+  })
+
+  it('keeps the last heat-pump view when a later bridge read fails, so discovery keeps its shape', async () => {
+    const bridge = fakeBridge([k40Reading(), new HomeComBridgeError('unreachable', 'reset')])
+    const { api } = client(bridge)
+    const first = await api.fetchSystem()
+    const second = await api.fetchSystem()
+    expect(second.heatPump?.compressorPct).toBe(89)
+    expect(second.bridge).toBeDefined()
+    expect(buildDiscoverables(second).map((d) => d.nativeId)).toEqual(
+      buildDiscoverables(first).map((d) => d.nativeId),
     )
   })
 
@@ -199,5 +219,80 @@ describe('HomeCom writes a k40 through the bridge', () => {
         write: { op: 'awayMode', value: 'on' },
       },
     ])
+  })
+})
+
+/** A gateway whose bulk read gives no heat-pump evidence: no type, no silent mode, heat only. */
+function evidenceless(probe: HomeComBridgeReading['heatSourceProbe']): HomeComBridgeReading {
+  const r = k40Reading()
+  return {
+    ...r,
+    heatSource: { ...r.heatSource, heatPumpType: null, modulationPct: null },
+    system: { away: null, silent: null, additionalHeater: null, holiday: null },
+    heatingCircuits: r.heatingCircuits.map((c) => ({
+      ...c,
+      heatCoolMode: setting('heat', { allowed: ['heat'] }),
+    })),
+    heatSourceProbe: probe,
+  }
+}
+
+const TYPE = '/heatSources/hs1/heatPumpType'
+const POWER = '/heatSources/hs1/heatPumpPower'
+
+describe('HomeCom discovery from the bridge reading', () => {
+  it('recognises the heat pump of a gateway whose heat source answers 403, never as 0', async () => {
+    const bridge = fakeBridge([evidenceless({ [TYPE]: 'refused', [POWER]: 'refused' })])
+    const snapshot = await client(bridge).api.fetchSystem()
+    const heatPump = snapshot.heatPump
+    if (heatPump === undefined) throw new Error('expected a heat pump')
+    expect(buildDiscoverables(snapshot).map((d) => d.nativeId)).toEqual(['gateway:0', 'hp:0'])
+    const status = heatPumpStatusFrom(heatPump, 1)
+    expect(status.power).toEqual({ thermalW: null, electricalW: null, compressorPct: null })
+    expect(status.system).toEqual({
+      silent: null,
+      away: null,
+      additionalHeater: null,
+      holiday: null,
+    })
+  })
+
+  it('keeps a boiler a boiler when the probes only fail transiently (503, 429), named', async () => {
+    const bridge = fakeBridge([evidenceless({ [TYPE]: 'transient', [POWER]: 'transient' })])
+    const { api, log } = client(bridge)
+    expect((await api.fetchSystem()).heatPump).toBeUndefined()
+    expect(log.warn.mock.calls.map((c) => c[1]?.meta?.path)).toEqual(
+      expect.arrayContaining([TYPE, POWER]),
+    )
+  })
+
+  it('keeps the boiler path when the heat-pump-only resources are 404', async () => {
+    const bridge = fakeBridge([evidenceless({ [TYPE]: 'absent', [POWER]: 'absent' })])
+    const snapshot = await client(bridge).api.fetchSystem()
+    expect(snapshot.heatPump).toBeUndefined()
+    expect(buildDiscoverables(snapshot).some((d) => d.kind === 'heat-pump')).toBe(false)
+  })
+
+  it('keeps a heating-circuit name the gateway already gave', async () => {
+    const r = k40Reading()
+    const named: HomeComBridgeReading = {
+      ...r,
+      heatingCircuits: r.heatingCircuits.map((c) => ({ ...c, name: 'Living room' })),
+    }
+    const snapshot = await client(fakeBridge([named])).api.fetchSystem()
+    const picks = buildDiscoverables(snapshot).flatMap((d) => [d, ...(d.children ?? [])])
+    expect(picks.find((d) => d.nativeId === 'hc:hc1')?.name).toBe('Living room')
+  })
+
+  it('reads a k40 with no bridge as climate only, and names the drop once', async () => {
+    const { api, log } = client(undefined)
+    const snapshot = await api.fetchSystem()
+    await api.fetchSystem()
+    expect(snapshot.circuits.map((c) => c.id)).toEqual(['hc1'])
+    expect(snapshot.heatPump).toBeUndefined()
+    const drops = log.info.mock.calls.filter(([, ctx]) =>
+      String(ctx?.meta?.reason ?? '').includes('no Python'),
+    )
+    expect(drops).toHaveLength(1)
   })
 })

@@ -42,6 +42,7 @@ export function k40Reading(): HomeComBridgeReading {
     heatingCircuits: [
       {
         id: 'hc1',
+        name: null,
         operationMode: setting('manual', {
           allowed: ['off', 'manual', 'auto'],
           writeable: true,
@@ -86,5 +87,6 @@ export function k40Reading(): HomeComBridgeReading {
         },
       },
     ],
+    heatSourceProbe: {},
   }
 }

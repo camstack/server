@@ -45,6 +45,11 @@ export interface HomeComHeatPumpReading {
   readonly circuits: readonly HomeComHeatPumpCircuitReading[]
   /** `hs1/heatPumpType` (k40) or the heat source `type` (icom); null when not answered. */
   readonly heatPumpType: string | null
+  /**
+   * A heat-pump-only heat-source resource exists although its value is not readable: the
+   * gateway answered it, or refused it (403/500). A 404 or a transient failure is not this.
+   */
+  readonly heatSourceRefused: boolean
   readonly silent: HomeComHeatPumpSetting | null
   readonly away: HomeComHeatPumpSetting | null
   readonly additionalHeater: HomeComHeatPumpSetting | null
@@ -137,6 +142,9 @@ export function heatPumpReadingFrom(bridge: HomeComBridgeReading): HomeComHeatPu
   return {
     circuits: [...bridge.heatingCircuits.map(hcReading), ...bridge.dhwCircuits.map(dhwReading)],
     heatPumpType: hs.heatPumpType,
+    heatSourceRefused: Object.values(bridge.heatSourceProbe).some(
+      (outcome) => outcome === 'answered' || outcome === 'refused',
+    ),
     silent: bridge.system.silent,
     away: bridge.system.away,
     additionalHeater: bridge.system.additionalHeater,
@@ -156,12 +164,13 @@ export function heatPumpReadingFrom(bridge: HomeComBridgeReading): HomeComHeatPu
  * True when the gateway should be offered as a system device (`hp:0`).
  *
  * Only evidence a gas boiler on the same controller family cannot give counts: a heat-pump
- * type on the heat source, the silent mode or the additional heater (heat-pump-only
- * resources), or a heating circuit that can cool. Away, holiday, flow, return, modulation,
+ * type on the heat source, a heat-pump-only heat-source resource the gateway refuses (403/500,
+ * never a 404 or a transient failure), the silent mode or the additional heater
+ * (heat-pump-only resources), or a heating circuit that can cool. Away, holiday, flow, return, modulation,
  * pressure and starts are answered by a boiler too.
  */
 export function hasSystemDevice(reading: HomeComHeatPumpReading): boolean {
-  if (reading.heatPumpType !== null) return true
+  if (reading.heatPumpType !== null || reading.heatSourceRefused) return true
   if (reading.silent !== null || reading.additionalHeater !== null) return true
   return reading.circuits.some((c) => c.kind === 'hc' && offersCooling(c.heatCoolMode))
 }

@@ -12,6 +12,7 @@ import {
   isBridgeDeviceType,
   type HomeComBridge,
   type HomeComBridgeDeviceType,
+  type HomeComBridgeErrorKind,
   type HomeComBridgeReading,
   type HomeComBridgeTarget,
   type HomeComBridgeWrite,
@@ -212,6 +213,7 @@ export function createHomeComApiClient(
   let last: HomeComSystemSnapshot | null = null
   let refreshTail: Promise<void> = Promise.resolve()
   const dropped = new Set<string>()
+  const bridgeFailuresLogged = new Set<HomeComBridgeErrorKind>()
   const bridge = deps.bridge
   const base = homeComApiBase(config.region)
 
@@ -384,6 +386,7 @@ export function createHomeComApiClient(
             deviceType: type,
             reading,
             logDrop,
+            logTransientProbe,
           })
         }
       } else {
@@ -400,23 +403,44 @@ export function createHomeComApiClient(
   }
 
   /**
-   * A failed bridge read must not take the climate and water-heater devices down with it:
-   * anything but an authentication failure falls back to the plain resources, named.
+   * A failed bridge read must not take the climate and water-heater devices down, nor change
+   * the heat pump's shape: anything but an authentication failure keeps the last bridge
+   * reading (so an adopted heat pump keeps its values and discovery its devices), or — before
+   * any bridge read has succeeded — falls back to the plain climate resources. Named once per
+   * failure kind until a read succeeds again.
    */
   async function readThroughBridge(
     from: HomeComBridge,
     type: HomeComBridgeDeviceType,
   ): Promise<HomeComBridgeReading | null> {
     try {
-      return await bridgeCall((t) => from.read(bridgeTarget(t, type)))
+      const reading = await bridgeCall((t) => from.read(bridgeTarget(t, type)))
+      bridgeFailuresLogged.clear()
+      return reading
     } catch (error) {
       if (!(error instanceof HomeComBridgeError)) throw error
-      logger?.warn('HomeCom bridge read failed; this poll reads the climate resources only', {
-        tags: { gatewayId },
-        meta: { kind: error.kind, error: error.message },
-      })
-      return null
+      const kept = last?.bridge ?? null
+      if (!bridgeFailuresLogged.has(error.kind)) {
+        bridgeFailuresLogged.add(error.kind)
+        logger?.warn(
+          kept === null
+            ? 'HomeCom bridge read failed; the climate resources are read until it answers'
+            : 'HomeCom bridge read failed; the last bridge reading is kept until it answers',
+          { tags: { gatewayId }, meta: { kind: error.kind, error: error.message } },
+        )
+      }
+      return kept
     }
+  }
+
+  function logTransientProbe(path: string): void {
+    const key = `probe:${path}`
+    if (dropped.has(key)) return
+    dropped.add(key)
+    logger?.warn('HomeCom heat-source probe failed transiently; it does not count as evidence', {
+      tags: { gatewayId },
+      meta: { path },
+    })
   }
 
   function bridgeTarget(t: string, type: HomeComBridgeDeviceType): HomeComBridgeTarget {
