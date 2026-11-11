@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.831 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.832 | the update itself | — |
 
 ## Framework (4)
 
@@ -33,7 +33,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.637 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
+| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.638 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
 | `@camstack/addon-agent-ui` | `packages/addon-agent-ui` | 1.2.360 | addons dir (image-seeded) | Agent UI — lightweight status dashboard served by every agent node |
 | `@camstack/addon-ai` | `packages/addon-ai` | 0.4.182 | addons dir | AI addon for CamStack — the `llm` collection provider (cloud, LAN, and camstack-managed local llama.cpp profiles) plus the per-node `llm-runtime` managed executor. |
 | `@camstack/addon-auth` | `packages/addon-auth` | 1.2.182 | addons dir (image-seeded) | Authentication bundle — OIDC and WebAuthn/passkey. Multi-entry npm package shipping 2 addons under a single bundle; each addon keeps its own id, capabilities, and runner. |
@@ -48,7 +48,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-matter-broker` | `packages/addon-matter-broker` | 0.2.166 | addons dir | Matter broker addon for CamStack — owns a Matter fabric (commissioning + the long-lived controller) via the matter.js controller and brokers commissioned Matter nodes into CamStack |
 | `@camstack/addon-model-studio` | `packages/addon-model-studio` | 1.1.346 | addons dir | Custom detection model registry, conversion & distribution for CamStack |
 | `@camstack/addon-mqtt-broker` | `packages/addon-mqtt-broker` | 1.2.158 | addons dir | MQTT broker registry addon for CamStack — manages external broker entries + an optional embedded aedes broker. Consumers spin up their own `mqtt.js` clients via the `mqtt-broker` cap. |
-| `@camstack/addon-notifiers` | `packages/addon-notifiers` | 1.2.636 | addons dir (image-seeded) | System notifiers addon for CamStack — a `notification-output` collection provider hosting per-kind notifier adapters (ntfy, pushover, gotify, telegram, discord, webhook, zentik). |
+| `@camstack/addon-notifiers` | `packages/addon-notifiers` | 1.2.637 | addons dir (image-seeded) | System notifiers addon for CamStack — a `notification-output` collection provider hosting per-kind notifier adapters (ntfy, pushover, gotify, telegram, discord, webhook, zentik). |
 | `@camstack/addon-osd-manager` | `packages/addon-osd-manager` | 0.1.318 | addons dir | Binds camera on-screen-display slots to live state and recognitions |
 | `@camstack/addon-pipeline` | `packages/addon-pipeline` | 1.2.650 | addons dir (image-seeded) | Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entry npm package shipping pipeline addons under a single bundle. |
 | `@camstack/addon-pipeline-orchestrator` | `packages/addon-pipeline-orchestrator` | 1.2.679 | addons dir (image-seeded) | Hub-side camera-to-agent load balancer — tracks runner capacity and dispatches attachCamera calls to the optimal pipeline-runner instance |

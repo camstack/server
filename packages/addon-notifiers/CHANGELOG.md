@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.637] - 2026-11-11
+
 ### Changed
 
 - The old per-user notification target calls are gone; the viewer manages its targets as integration instances.

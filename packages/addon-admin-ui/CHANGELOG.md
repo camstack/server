@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.638] - 2026-11-11
+
 ### Changed
 
 - System → Settings no longer repeats sign-in and connection settings that already live on their own page.
