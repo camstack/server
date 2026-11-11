@@ -91,6 +91,8 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   private readonly model: MqttHaDeviceModel
   private eventSeq = 0
   private eventCount = 0
+  /** Events fired that the discovery record did not declare, in first-seen order. */
+  private undeclaredEventTypes: readonly string[] = []
 
   constructor(ctx: DeviceContext) {
     const persisted = mqttHaDeviceSchema.parse(ctx.persistedConfig ?? {})
@@ -421,12 +423,26 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
         fire,
       ),
     )
+    const eventTypes = this.eventTypesWith(entity, decoded.eventType)
     this.setCapSlice(eventEmitterCapability, {
-      eventTypes: [...entity.eventTypes],
-      vocabulary: conventionalEventVocabulary(entity.eventTypes),
+      eventTypes,
+      vocabulary: conventionalEventVocabulary(eventTypes),
       lastEvent: fire,
       eventCountSinceStart: ++this.eventCount,
     })
+  }
+
+  /**
+   * What the device is known to fire: what discovery declared, then anything
+   * it fired that discovery had not named. A bridge announces a button action
+   * only once it has occurred, so the list an adopted device was given can be
+   * short of what it does.
+   */
+  private eventTypesWith(entity: MqttHaEntity, fired: string): string[] {
+    if (!entity.eventTypes.includes(fired) && !this.undeclaredEventTypes.includes(fired)) {
+      this.undeclaredEventTypes = [...this.undeclaredEventTypes, fired]
+    }
+    return [...entity.eventTypes, ...this.undeclaredEventTypes]
   }
 
   // ── Outbound ───────────────────────────────────────────────────────────

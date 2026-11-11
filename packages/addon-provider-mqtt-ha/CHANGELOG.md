@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A remote whose buttons are announced as MQTT device triggers (the default of a Zigbee bridge) is now an event device: its actions are listed and fire like any other button event
+
 ## [0.1.45] - 2026-11-11
 
 ### Changed

@@ -1,8 +1,10 @@
 import { z } from 'zod'
 
 /**
- * HA MQTT discovery components this addon understands. Everything else a
- * bridge publishes (update, select, number, lock, cover, …) is ignored.
+ * HA MQTT discovery components this addon understands as entities. A device
+ * trigger (`device_automation`) is folded into an `event` entity
+ * (`mqtt-ha-device-trigger.ts`); everything else a bridge publishes (update,
+ * select, number, lock, cover, …) is ignored.
  */
 export const MQTT_HA_COMPONENTS = [
   'sensor',

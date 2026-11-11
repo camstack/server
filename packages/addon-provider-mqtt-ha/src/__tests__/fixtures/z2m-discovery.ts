@@ -422,3 +422,48 @@ export function remoteMessages(): readonly DiscoveryMessage[] {
     },
   ]
 }
+
+export const TRIGGER_REMOTE_IEEE = '0x00158d0007a8b9c0'
+export const TRIGGER_REMOTE_FRIENDLY = 'Hall remote'
+
+/** One device trigger, as a bridge publishes it the first time the action occurs. */
+export function triggerMessage(action: string): DiscoveryMessage {
+  return {
+    component: 'device_automation',
+    objectId: `action_${action}`,
+    payload: {
+      automation_type: 'trigger',
+      type: 'action',
+      subtype: action,
+      payload: action,
+      topic: `zigbee2mqtt/${TRIGGER_REMOTE_FRIENDLY}/action`,
+      device: device(TRIGGER_REMOTE_IEEE, TRIGGER_REMOTE_FRIENDLY, 'Acme', 'Wireless remote'),
+    },
+  }
+}
+
+/** A remote with no `event` entity: its buttons are device triggers, plus battery. */
+export function triggerRemoteMessages(): readonly DiscoveryMessage[] {
+  const ieee = TRIGGER_REMOTE_IEEE
+  const friendly = TRIGGER_REMOTE_FRIENDLY
+  return [
+    {
+      component: 'sensor',
+      objectId: `${ieee}_battery`,
+      payload: {
+        ...availability(friendly),
+        device: device(ieee, friendly, 'Acme', 'Wireless remote'),
+        name: 'Battery',
+        device_class: 'battery',
+        entity_category: 'diagnostic',
+        state_topic: `zigbee2mqtt/${friendly}`,
+        unit_of_measurement: '%',
+        value_template: '{{ value_json.battery }}',
+        unique_id: `${ieee}_battery_zigbee2mqtt`,
+      },
+    },
+    triggerMessage('single'),
+    triggerMessage('double'),
+    triggerMessage('hold'),
+  ]
+}

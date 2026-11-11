@@ -15,6 +15,7 @@ import {
   plugMessages,
   remoteMessages,
   contactMessages,
+  triggerMessage,
   type DiscoveryMessage,
 } from './fixtures/z2m-discovery.js'
 
@@ -240,6 +241,29 @@ describe('MqttHaDevice on a contact sensor and a remote', () => {
     )
     expect(fired).toHaveLength(1)
     expect(h.state().getCapState('event-emitter')).toMatchObject({ eventCountSinceStart: 1 })
+  })
+
+  it('fires the plain payload of a device trigger, and lists an event it had not been told about', async () => {
+    const entities = entitiesOf([triggerMessage('single')])
+    const h = build(DeviceType.EventEmitter, configOf([triggerMessage('single')]))
+    await h.device.onActivate()
+    const topic = entities[0]!.stateTopic
+    deliver(mqttHaStateGateway, entities, topic, 'single')
+    expect(h.state().getCapState('event-emitter')).toMatchObject({
+      eventTypes: ['single'],
+      lastEvent: { eventType: 'single' },
+    })
+    deliver(mqttHaStateGateway, entities, topic, 'double')
+    deliver(mqttHaStateGateway, entities, topic, 'double')
+    expect(h.state().getCapState('event-emitter')).toMatchObject({
+      eventTypes: ['single', 'double'],
+      vocabulary: [
+        { id: 'single', label: 'Single' },
+        { id: 'double', label: 'Double', kind: 'double-press' },
+      ],
+      lastEvent: { eventType: 'double' },
+      eventCountSinceStart: 3,
+    })
   })
 
   it('stamps contact-sensor when a restored contact has no role, and leaves a set role alone', async () => {

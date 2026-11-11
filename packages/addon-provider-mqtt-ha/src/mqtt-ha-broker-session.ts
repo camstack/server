@@ -8,6 +8,7 @@ import {
 import type { MqttHaStateGateway } from './mqtt-ha-state-gateway.js'
 import { entityTopics } from './mqtt-ha-entity-codec.js'
 import type { MqttHaDiscoveredEntity } from './mqtt-ha-discovery-types.js'
+import { MQTT_HA_TRIGGER_COMPONENT, MqttHaTriggerLedger } from './mqtt-ha-device-trigger.js'
 
 /** Both discovery forms: `<component>/<object_id>` and `<component>/<node_id>/<object_id>`. */
 const DISCOVERY_SUBSCRIBE: string[] = ['homeassistant/+/+/config', 'homeassistant/+/+/+/config']
@@ -70,6 +71,8 @@ export class MqttHaBrokerSession {
   private readonly entityTopicList = new Map<string, readonly string[]>()
   /** topic → the entities listening to it (a JSON state topic feeds many). */
   private readonly topicEntities = new Map<string, Set<string>>()
+  /** Which trigger config announced which event of a device's action entity. */
+  private readonly triggers = new MqttHaTriggerLedger()
   private running = false
   private connecting: Promise<void> | null = null
 
@@ -102,6 +105,7 @@ export class MqttHaBrokerSession {
     this.client = null
     this.entityTopicList.clear()
     this.topicEntities.clear()
+    this.triggers.clear()
     if (client !== null) {
       await new Promise<void>((resolve) => {
         client.end(false, {}, () => resolve())
@@ -203,6 +207,10 @@ export class MqttHaBrokerSession {
       objectId,
       payload,
     })
+    if (component === MQTT_HA_TRIGGER_COMPONENT) {
+      this.handleTriggerConfig(nodeId === undefined ? objectId : `${nodeId}/${objectId}`, parsed)
+      return
+    }
     if (parsed === 'remove') {
       const existing = this.deps.store.findByComponentObject(
         this.deps.brokerId,
@@ -220,6 +228,30 @@ export class MqttHaBrokerSession {
 
     this.deps.store.upsert(parsed)
     this.trackEntity(parsed)
+  }
+
+  /** One trigger config: its event joins, or leaves, the action entity of its device. */
+  private handleTriggerConfig(
+    sourceKey: string,
+    parsed: MqttHaDiscoveredEntity | null | 'remove',
+  ): void {
+    if (parsed === null) return
+    if (parsed !== 'remove') {
+      const entity = this.triggers.add(sourceKey, parsed)
+      this.deps.store.upsert(entity)
+      this.trackEntity(entity)
+      return
+    }
+    const removal = this.triggers.remove(sourceKey, (entityKey) =>
+      this.deps.store.get(this.deps.brokerId, entityKey),
+    )
+    if (removal === null) return
+    if (removal.entity !== null) {
+      this.deps.store.upsert(removal.entity)
+      return
+    }
+    this.untrackEntity(removal.entityKey)
+    this.deps.store.remove(this.deps.brokerId, removal.entityKey)
   }
 
   /** (Re)subscribe the topics of one entity; an unchanged set is left alone. */

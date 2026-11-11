@@ -10,6 +10,8 @@ import {
   type ParsedDiscoveryTopic,
 } from './mqtt-ha-discovery-types.js'
 
+import { MQTT_HA_TRIGGER_COMPONENT, triggerEntityKey } from './mqtt-ha-device-trigger.js'
+
 const DEFAULT_DISCOVERY_PREFIX = 'homeassistant'
 
 export function isSupportedMqttHaComponent(value: string): value is MqttHaComponent {
@@ -216,6 +218,50 @@ function readAvailabilityMode(raw: Record<string, unknown>): 'all' | 'any' | 'la
 }
 
 /**
+ * A device trigger read as the `event` entity of its device, carrying the one
+ * event it announces: the trigger's topic is the state topic and its payload
+ * is the event. Null when it is not a trigger or names no topic, device or
+ * payload.
+ */
+function parseDeviceTrigger(
+  input: ParseDiscoveryPayloadInput,
+  raw: Record<string, unknown>,
+): MqttHaDiscoveredEntity | null {
+  if (raw['automation_type'] !== 'trigger') return null
+  const topic = readStringField(raw, 'topic')
+  const device = readDevice(raw)
+  const eventType = readPayloadField(raw, 'payload') ?? readStringField(raw, 'subtype')
+  if (topic === null || device === null || eventType === null) return null
+  const triggerType = readStringField(raw, 'type') ?? 'action'
+  return {
+    brokerId: input.brokerId,
+    entityKey: triggerEntityKey(device.id, triggerType),
+    component: 'event',
+    ...(input.nodeId === undefined ? {} : { nodeId: input.nodeId }),
+    objectId: triggerType,
+    name: device.name ?? triggerType,
+    stateTopic: topic,
+    commandTopic: null,
+    unitOfMeasurement: null,
+    deviceClass: null,
+    entityCategory: null,
+    valueTemplate: readStringField(raw, 'value_template'),
+    payloadOn: 'ON',
+    payloadOff: 'OFF',
+    stateOn: null,
+    stateOff: null,
+    uniqueId: null,
+    availability: [],
+    availabilityMode: 'latest',
+    device,
+    light: null,
+    eventTypes: [eventType],
+    climate: null,
+    discoveredAt: input.now ?? Date.now(),
+  }
+}
+
+/**
  * Parse a discovery config JSON payload into a normalised entity record.
  * Empty payload means "remove this discovery entry". A component this addon
  * has no mapping for, or a payload missing what the component needs, is `null`.
@@ -227,7 +273,8 @@ export function parseDiscoveryConfigPayload(
   if (trimmed.length === 0) return 'remove'
 
   const component = input.component
-  if (!isSupportedMqttHaComponent(component)) return null
+  const isTrigger = component === MQTT_HA_TRIGGER_COMPONENT
+  if (!isTrigger && !isSupportedMqttHaComponent(component)) return null
 
   let raw: Record<string, unknown>
   try {
@@ -237,6 +284,7 @@ export function parseDiscoveryConfigPayload(
   } catch {
     return null
   }
+  if (!isSupportedMqttHaComponent(component)) return parseDeviceTrigger(input, raw)
 
   const climate = component === 'climate' ? readClimate(raw) : null
   const stateTopic = readStateTopic(component, raw, climate)

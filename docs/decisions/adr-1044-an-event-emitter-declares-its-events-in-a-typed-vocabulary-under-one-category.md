@@ -65,6 +65,13 @@ closed list and a hand-rolled topic is forbidden (D8).
   is set only when the WHOLE token is one many integrations use for a
   button (`long_press`, `double_click`, `release`…). An unknown token gets
   no kind rather than a guessed one.
+- **An MQTT device trigger is an event of its device.** A bridge that
+  announces a button action as a discovery device trigger
+  (`device_automation`, one config per action, published the first time the
+  action occurs) gets one `event` entity per device and trigger type
+  (`mqtt-ha-device-trigger.ts`); its vocabulary is the actions announced so
+  far. Because that list grows, an MQTT event device also lists an event it
+  fired that its discovery record had not named, until its next restart.
 - **A press outside the declared vocabulary is delivered**, and Homematic
   says so in its log once per button and token, with the device tag.
 
@@ -76,6 +83,11 @@ closed list and a hand-rolled topic is forbidden (D8).
   must keep reading what they wrote.
 - A consumer that shows or matches events (the device page, a rule, the
   notification picker) has one list to read, and one fallback.
+- An MQTT remote announced by device triggers is an event device only
+  once one of its buttons has been pressed; adopted before that, it is a
+  sensor (its battery) and must be adopted again. The record an adopted
+  device keeps is the one of its adoption: an action first seen later is
+  listed after it fires, and again after each restart.
 - Only Homematic logs a fire outside its vocabulary. The other providers
   deliver it without a line.
 - The CCU's own name for a channel is not shown: the library the addon
