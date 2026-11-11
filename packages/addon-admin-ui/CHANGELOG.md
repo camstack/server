@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.643] - 2026-11-11
+
 ### Changed
 
 - Automation editor: each WHEN block draws its rows on a coloured rail of its own, so sibling and nested blocks are told apart; move arrows at an edge stay disabled and say why; the Ungroup button is gone.
