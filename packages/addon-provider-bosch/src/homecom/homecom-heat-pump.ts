@@ -139,7 +139,7 @@ export async function readHeatPump(input: HeatPumpReadInput): Promise<HomeComHea
   ])
   const r = HEAT_PUMP_PATHS.readings
   const s = HEAT_PUMP_PATHS.system
-  const heatSourceAnswered = await anyAnswers(input.answers, [
+  const heatSourceAnswered = await anyAnswers(input.answers, input.onFailure, [
     HEAT_PUMP_PATHS.identity.heatPumpType,
     HEAT_PUMP_PATHS.identity.heatPumpPower,
   ])
@@ -185,10 +185,20 @@ export async function readHeatPump(input: HeatPumpReadInput): Promise<HomeComHea
 
 async function anyAnswers(
   answers: HeatPumpReadInput['answers'],
+  onFailure: HeatPumpReadInput['onFailure'],
   paths: readonly string[],
 ): Promise<boolean> {
   if (answers === undefined) return false
-  const found = await Promise.all(paths.map((path) => answers(path).catch(() => false)))
+  const found = await Promise.all(
+    paths.map(async (path) => {
+      try {
+        return await answers(path)
+      } catch (error) {
+        onFailure?.(path, error)
+        return false
+      }
+    }),
+  )
   return found.some(Boolean)
 }
 
@@ -214,7 +224,7 @@ const HEAT_PUMP_ONLY_READINGS = ['thermalW', 'electricalW', 'compressorPct'] as 
  * additional heater, or holiday. An empty string is an answer (holiday often
  * comes back empty); a path that did not answer is not. A heat-pump-only
  * reading counts too (thermal power, electrical power, compressor modulation).
- * So does a circuit that answers `heatCoolMode`, and a heat source that
+ * So does a circuit whose `heatCoolMode` can be cooling, and a heat source that
  * answers a heat-pump-only resource with any status but 404: some gateways
  * refuse (403) or fail (500) the whole system tree and still serve the
  * circuits. Supply, return, outdoor, pressure, starts and the energy meters do
@@ -225,7 +235,16 @@ export function hasSystemDevice(reading: HomeComHeatPumpReading): boolean {
   if (SYSTEM_MODE_KEYS.some((key) => reading[key] !== null)) return true
   if (HEAT_PUMP_ONLY_READINGS.some((key) => reading[key] !== null)) return true
   if (reading.heatSourceAnswered) return true
-  return reading.circuits.some((c) => c.kind === 'hc' && c.heatCoolMode !== null)
+  return reading.circuits.some((c) => c.kind === 'hc' && offersCooling(c.heatCoolMode))
+}
+
+/**
+ * A boiler circuit can carry a `heatCoolMode` that only ever says heating, so the mode alone
+ * is no proof. A circuit that can switch to (or already is in) cooling is a heat pump's.
+ */
+function offersCooling(setting: HomeComHeatPumpSetting | null): boolean {
+  if (setting === null) return false
+  return setting.value === 'cooling' || setting.allowed.includes('cooling')
 }
 
 interface PathPresence {

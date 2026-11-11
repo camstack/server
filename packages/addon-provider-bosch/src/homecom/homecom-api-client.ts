@@ -269,10 +269,16 @@ export function createHomeComApiClient(
     return res.body
   }
 
-  /** Any HTTP status but 404 means the resource exists, readable or not. */
+  /**
+   * Evidence that the resource exists: a 2xx, or the 403 the gateway gives a resource it
+   * serves but will not show. 404 is "absent". Anything else (429, 5xx) is a transient
+   * failure, so it is NOT evidence either way: it is logged and counts as unknown.
+   */
   async function resourceAnswers(path: string): Promise<boolean> {
     const res = await authed(homeComResourceUrl(gatewayId, path), { method: 'GET' })
-    return res.status !== 404
+    if (res.ok || res.status === 403) return true
+    if (res.status !== 404) logHeatPumpFailure(path, new Error(`HTTP ${res.status}`))
+    return false
   }
 
   async function putWrite(write: PointtWrite): Promise<void> {

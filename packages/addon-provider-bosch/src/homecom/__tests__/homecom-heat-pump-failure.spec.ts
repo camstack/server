@@ -174,7 +174,10 @@ describe('HomeCom heat pump reads never break the working devices', () => {
     const client = createHomeComApiClient(CONFIG, 'g1', {
       fetchFn: gateway({
         ...BASE,
-        '/heatingCircuits/hc1/heatCoolMode': { ...envelope('heating'), allowedValues: ['heating'] },
+        '/heatingCircuits/hc1/heatCoolMode': {
+          ...envelope('heating'),
+          allowedValues: ['heating', 'cooling'],
+        },
       }),
       deviceType: 'k40',
       logger: logger(),
@@ -184,11 +187,11 @@ describe('HomeCom heat pump reads never break the working devices', () => {
     expect(buildDiscoverables(snapshot).map((d) => d.nativeId)).toEqual(['gateway:0', 'hp:0'])
   })
 
-  it('recognises the heat pump of a gateway whose heat source answers 403 and 500, never as 0', async () => {
+  it('recognises the heat pump of a gateway whose heat source answers 403, never as 0', async () => {
     const client = createHomeComApiClient(CONFIG, 'g1', {
       fetchFn: gateway(BASE, {
         '/heatSources/hs1/heatPumpPower': 403,
-        '/heatSources/hs1/heatPumpType': 500,
+        '/heatSources/hs1/heatPumpType': 403,
       }),
       deviceType: 'k40',
       logger: logger(),
@@ -205,6 +208,53 @@ describe('HomeCom heat pump reads never break the working devices', () => {
       additionalHeater: null,
       holiday: null,
     })
+  })
+
+  it('keeps a boiler a boiler when the probes only fail transiently (503, 429)', async () => {
+    const log = logger()
+    const client = createHomeComApiClient(CONFIG, 'g1', {
+      fetchFn: gateway(
+        { ...BASE, '/heatSources/hs1/supplyTemperature': envelope(55) },
+        { '/heatSources/hs1/heatPumpPower': 503, '/heatSources/hs1/heatPumpType': 429 },
+      ),
+      deviceType: 'k40',
+      logger: log,
+    })
+    expect((await client.fetchSystem()).heatPump).toBeUndefined()
+    const logged = log.warn.mock.calls.map((c) => c[1]?.meta?.path)
+    expect(logged).toEqual(
+      expect.arrayContaining(['/heatSources/hs1/heatPumpPower', '/heatSources/hs1/heatPumpType']),
+    )
+  })
+
+  it('logs a probe that threw instead of dropping it, and does not count it', async () => {
+    const log = logger()
+    const inner = gateway({ ...BASE, '/heatSources/hs1/supplyTemperature': envelope(55) })
+    const client = createHomeComApiClient(CONFIG, 'g1', {
+      fetchFn: async (url, init) => {
+        if (url.includes('heatPumpType')) throw new Error('socket hang up')
+        return inner(url, init)
+      },
+      deviceType: 'k40',
+      logger: log,
+    })
+    expect((await client.fetchSystem()).heatPump).toBeUndefined()
+    expect(log.warn.mock.calls.map((c) => c[1]?.meta?.path)).toContain(
+      '/heatSources/hs1/heatPumpType',
+    )
+  })
+
+  it('does not take a boiler for a heat pump because a circuit answers heatCoolMode as heating only', async () => {
+    const client = createHomeComApiClient(CONFIG, 'g1', {
+      fetchFn: gateway({
+        ...BASE,
+        '/heatSources/hs1/supplyTemperature': envelope(55),
+        '/heatingCircuits/hc1/heatCoolMode': { ...envelope('heating'), allowedValues: ['heating'] },
+      }),
+      deviceType: 'k40',
+      logger: logger(),
+    })
+    expect((await client.fetchSystem()).heatPump).toBeUndefined()
   })
 
   it('keeps the boiler path when the heat-pump-only resources are 404', async () => {
