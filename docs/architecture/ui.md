@@ -1361,7 +1361,8 @@ in `packages/addon-admin-ui/src/pages/system/` and
   switch fit. The table-state model `alarm-sensor-table-model.ts` is kept
   byte-identical in the viewer; it drops the rows no rule of the mode covers
   (Q2, see `notifications.md`). The guard
-  (`scripts/check-device-selection-in-sync.ts`) holds 10 pairs.
+  (`scripts/check-device-selection-in-sync.ts`) holds 11 pairs, the last
+  the device → value picker's model (`device-value-picker-model.ts`, issue #496).
   `CAMSTACK_VIEWER_DIR=<viewer checkout>` points it at a checkout when the
   `camstack/` submodule is not present; with the variable SET, a missing viewer
   file is a failure, not a skip.

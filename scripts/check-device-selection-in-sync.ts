@@ -109,6 +109,17 @@ const PAIRS: readonly CopyPair[] = [
     admin: 'packages/addon-admin-ui/src/pages/system/__tests__/alarm-sensor-table-model.spec.ts',
     viewer: 'src/components/notifications/__tests__/alarm-sensor-table-model.spec.ts',
   },
+  // The device → value picker (issue #496): which row picks and which drills,
+  // the chips, what a picked value says (gone only from an ANSWERED resolve —
+  // D315), the facets, the sections and the four list states. The admin's
+  // spec is not paired: it imports a value from the bare `@camstack/types`
+  // entry and the admin's capability-label helper, neither of which the
+  // viewer may import; the viewer pins the same behaviour in its mount spec.
+  {
+    label: 'device value picker model',
+    admin: 'packages/ui-library/src/composites/device-value-picker/device-value-picker-model.ts',
+    viewer: 'src/components/device-value-picker/device-value-picker-model.ts',
+  },
 ]
 
 /**
