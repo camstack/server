@@ -2596,7 +2596,8 @@
         "running-state": "Running",
         "power-meter": "Power and energy",
         "power-source": "Power source",
-        "lock-control": "Door contact"
+        "lock-control": "Door contact",
+        "fan-control": "Fan"
       },
       "add": "+ Add",
       "change": "Change",
@@ -2691,6 +2692,19 @@
         "power-source": "The switch or plug this device is powered through",
         "running-state": "Whether the device is on, judged from a reading or a switch",
         "power-meter": "Power and energy read from another device"
+      },
+      "targets": {
+        "fan-control": {
+          "preset": "Preset",
+          "horizontal-oscillating": "Horizontal oscillation",
+          "horizontal-angle": "Horizontal angle (°)",
+          "horizontal-sweepFrom": "Horizontal sweep from (°)",
+          "horizontal-sweepTo": "Horizontal sweep to (°)",
+          "vertical-oscillating": "Vertical oscillation",
+          "vertical-angle": "Vertical angle (°)",
+          "vertical-sweepFrom": "Vertical sweep from (°)",
+          "vertical-sweepTo": "Vertical sweep to (°)"
+        }
       }
     },
     "keyed": {

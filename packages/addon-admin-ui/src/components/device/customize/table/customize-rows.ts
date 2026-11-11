@@ -20,7 +20,19 @@ import {
 
 const catalog: CustomizeCatalog = CAP_CUSTOMIZE_CATALOG
 
-export const CUSTOMIZE_SECTIONS = ['power', 'readings', 'events', 'lists', 'extensions'] as const
+/**
+ * The table's sections, in display order. A target that names its own section
+ * (`CustomizeCatalogTarget.section`, D1034) lands there; a section a target can
+ * name but this list lacks is a type error in `sectionOf`.
+ */
+export const CUSTOMIZE_SECTIONS = [
+  'power',
+  'readings',
+  'oscillation-axes',
+  'events',
+  'lists',
+  'extensions',
+] as const
 export type CustomizeSection = (typeof CUSTOMIZE_SECTIONS)[number]
 
 export type CustomizeRowKind = 'scalar' | 'keyed' | 'event' | 'config'
@@ -45,7 +57,12 @@ const ROW_KIND_OF_CARDINALITY: Readonly<Record<CustomizeCardinality, CustomizeRo
   config: 'config',
 }
 
-function sectionOf(cap: string, kind: CustomizeRowKind): CustomizeSection {
+function sectionOf(
+  cap: string,
+  kind: CustomizeRowKind,
+  target: CustomizeCatalogTarget,
+): CustomizeSection {
+  if (target.section !== undefined) return target.section
   if (POWER_CAPS.has(cap)) return 'power'
   switch (kind) {
     case 'scalar':
@@ -70,7 +87,7 @@ export function offeredRows(deviceType: string): readonly CustomizeRowSpec[] {
         key: `${cap}.${target.id}`,
         cap,
         kind,
-        section: sectionOf(cap, kind),
+        section: sectionOf(cap, kind, target),
         target,
       })
     }

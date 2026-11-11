@@ -2671,7 +2671,8 @@
         "running-state": "In esecuzione",
         "power-meter": "Potenza ed energia",
         "power-source": "Fonte di alimentazione",
-        "lock-control": "Contatto porta"
+        "lock-control": "Contatto porta",
+        "fan-control": "Ventilatore"
       },
       "add": "+ Aggiungi",
       "change": "Cambia",
@@ -2766,6 +2767,19 @@
         "power-source": "L’interruttore o la presa che alimenta questo dispositivo",
         "running-state": "Se il dispositivo è acceso, dedotto da una lettura o da un interruttore",
         "power-meter": "Potenza ed energia lette da un altro dispositivo"
+      },
+      "targets": {
+        "fan-control": {
+          "preset": "Preset",
+          "horizontal-oscillating": "Oscillazione orizzontale",
+          "horizontal-angle": "Angolo orizzontale (°)",
+          "horizontal-sweepFrom": "Oscillazione orizzontale da (°)",
+          "horizontal-sweepTo": "Oscillazione orizzontale fino a (°)",
+          "vertical-oscillating": "Oscillazione verticale",
+          "vertical-angle": "Angolo verticale (°)",
+          "vertical-sweepFrom": "Oscillazione verticale da (°)",
+          "vertical-sweepTo": "Oscillazione verticale fino a (°)"
+        }
       }
     },
     "keyed": {

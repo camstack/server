@@ -103,7 +103,13 @@ export function scalarRowTitle(
 ): string {
   const capTitle = t(`customize.scalar.caps.${cap}`)
   if (scalarTargetCount(cap) <= 1) return capTitle
-  return `${capTitle} · ${vocabularyFieldLabel(cap, target.path ?? target.id, language)}`
+  const path = target.path ?? target.id
+  const fieldLabel = vocabularyFieldLabel(cap, path, language)
+  if (fieldLabel !== path) return `${capTitle} · ${fieldLabel}`
+  // A field the vocabulary does not label (a fan axis, D1034) is named by its target.
+  const targetKey = `customize.scalar.targets.${cap}.${target.id}`
+  const targetLabel = t(targetKey)
+  return `${capTitle} · ${targetLabel === targetKey ? path : targetLabel}`
 }
 
 export function useScalarRow(

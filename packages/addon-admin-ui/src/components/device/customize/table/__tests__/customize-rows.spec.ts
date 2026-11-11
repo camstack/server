@@ -3,7 +3,14 @@ import { describe, expect, it } from 'vitest'
 import en from '../../../../../i18n/en.json'
 import it_ from '../../../../../i18n/it.json'
 import type { AssignmentFacts } from '../../assignment-availability'
-import { activeSections, offeredRows, planRows, splitRows } from '../customize-rows'
+import { scalarRowTitle } from '../../scalar/use-scalar-row'
+import {
+  activeSections,
+  CUSTOMIZE_SECTIONS,
+  offeredRows,
+  planRows,
+  splitRows,
+} from '../customize-rows'
 
 function lookup(tree: unknown, dotted: string): unknown {
   return dotted.split('.').reduce<unknown>((node, part) => {
@@ -94,5 +101,67 @@ describe('splitRows', () => {
     expect(
       adds.every((p) => p.availability.kind === 'present' && p.availability.mode === 'replace'),
     ).toBe(true)
+  })
+})
+
+describe('a target that names its section (D1034)', () => {
+  const fanRows = offeredRows(DeviceType.Fan)
+  it('lists the fan’s oscillation axes in their own section, after readings and before events', () => {
+    const axisKeys = fanRows
+      .filter((row) => row.section === 'oscillation-axes')
+      .map((row) => row.key)
+    expect(axisKeys).toEqual([
+      'fan-control.horizontal-oscillating',
+      'fan-control.horizontal-angle',
+      'fan-control.horizontal-sweepFrom',
+      'fan-control.horizontal-sweepTo',
+      'fan-control.vertical-oscillating',
+      'fan-control.vertical-angle',
+      'fan-control.vertical-sweepFrom',
+      'fan-control.vertical-sweepTo',
+    ])
+    expect(CUSTOMIZE_SECTIONS.indexOf('readings')).toBeLessThan(
+      CUSTOMIZE_SECTIONS.indexOf('oscillation-axes'),
+    )
+    expect(CUSTOMIZE_SECTIONS.indexOf('oscillation-axes')).toBeLessThan(
+      CUSTOMIZE_SECTIONS.indexOf('events'),
+    )
+  })
+  it('a target without a section keeps the one its cardinality implies', () => {
+    expect(fanRows.find((row) => row.key === 'fan-control.preset')?.section).toBe('readings')
+  })
+  it('every section has a title in English and Italian', () => {
+    expect(
+      missingKeys((section) => `customize.table.section.${section}`, [...CUSTOMIZE_SECTIONS]),
+    ).toEqual([])
+  })
+})
+
+describe('a scalar row title is never a raw state path', () => {
+  const fakeT = (key: string): string => {
+    const value = lookup(en, key)
+    return typeof value === 'string' ? value : key
+  }
+  const scalarTargets = Object.entries(CAP_CUSTOMIZE_CATALOG).flatMap(([cap, entry]) =>
+    entry.targets
+      .filter((target) => target.cardinality === 'scalar')
+      .map((target) => ({ cap, target })),
+  )
+  it('names every scalar target in words', () => {
+    const raw = scalarTargets
+      .map(({ cap, target }) => ({
+        key: `${cap}.${target.id}`,
+        title: scalarRowTitle(fakeT, 'en', cap, target),
+      }))
+      .filter(({ title }) => title.includes('customize.') || /[a-z]+\.[a-z]+\.[a-z]/i.test(title))
+    expect(raw).toEqual([])
+  })
+  it('the fan’s horizontal angle reads as words', () => {
+    const target = CAP_CUSTOMIZE_CATALOG['fan-control']?.targets.find(
+      (t) => t.id === 'horizontal-angle',
+    )
+    expect(target).toBeDefined()
+    if (target === undefined) return
+    expect(scalarRowTitle(fakeT, 'en', 'fan-control', target)).toBe('Fan · Horizontal angle (°)')
   })
 })
