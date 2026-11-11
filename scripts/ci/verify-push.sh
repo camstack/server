@@ -237,7 +237,7 @@ if [[ -n "$TC_DIRS" ]]; then
     FP_ARGS=()
     if [[ $FOOTPRINT_ALL -eq 0 ]]; then FP_ARGS=(--addons "$FOOTPRINT_ADDONS"); fi
     # The guard also needs the addon-runner dist; cached by nx when already built.
-    NODE_OPTIONS="--max-old-space-size=4096" npx nx run @camstack/server/system:build >/dev/null || true
+    NODE_OPTIONS="--max-old-space-size=4096" npx nx run @camstack/server-framework:build >/dev/null || true
     echo "verify:push: addon dist footprint (D28) — ${FOOTPRINT_ADDONS:-all addons}"
     stage_begin
     if NODE_OPTIONS="--max-old-space-size=2048" npx tsx scripts/check-addon-dist-footprint.ts ${FP_ARGS[@]+"${FP_ARGS[@]}"}; then

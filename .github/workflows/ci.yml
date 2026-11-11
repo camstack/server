@@ -277,27 +277,27 @@ jobs:
 
       # D28 barrel guards (source scan + built runner/addon-utils dist). The list
       # lives in scripts/ci/run-barrel-guards.sh, which verify:push calls too.
-      # The dist half reads packages/system/dist, which the build above produces
-      # only when it built everything (TC_DIRS=ALL: types or system moved, or no
-      # scope). A push that touches one leaf addon builds that addon alone, so
-      # the dist half has nothing to read and only the source scan runs — the
-      # same rule scripts/ci/verify-push.sh applies.
-      - name: Runner and addon barrel guards (D28)
+      # The dist half and the footprint guard below read packages/system/dist
+      # (the addon-runner). The build above produces it only when it built
+      # everything or a project that depends on the system package: a push that
+      # touches one leaf addon builds that addon alone, and both guards then
+      # failed on "addon-runner.js is missing" (runs 43010032191, 43015933887).
+      # So the lane builds the system dist itself when it is not there — from
+      # the Nx cache when nothing in it changed. verify:push does the same.
+      - name: Build the system dist the D28 guards read
         if: matrix.shard == 'guards'
         run: |
-          if [ -f "$RUNNER_TEMP/scope.env" ]; then
-            # shellcheck disable=SC1091
-            . "$RUNNER_TEMP/scope.env"
+          if [ -f packages/system/dist/addon-runner.js ]; then
+            echo "packages/system/dist is already built"
           else
-            TC_DIRS=ALL
+            scripts/ci/mem-step.sh build-system 12000 -- npx nx run @camstack/server-framework:build
           fi
-          if [ -z "$TC_DIRS" ]; then
-            echo "no project affected — no barrel guard to run"
-          elif [ "$TC_DIRS" = "ALL" ]; then
-            scripts/ci/run-barrel-guards.sh all
-          else
-            scripts/ci/run-barrel-guards.sh source
-          fi
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Runner and addon barrel guards (D28)
+        if: matrix.shard == 'guards'
+        run: scripts/ci/run-barrel-guards.sh all
 
       # D28: no BUILT addon may name ALL_CAPABILITY_DEFINITIONS or grow the
       # runner's heap by more than 60 MB (scripts/addon-dist-footprint-budgets.json
