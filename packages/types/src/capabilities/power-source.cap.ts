@@ -87,7 +87,6 @@ export type PowerSourceState = z.infer<typeof PowerSourceStateSchema>
 
 const POWER_SOURCE_DEVICE_TYPES = [
   DeviceType.Gateway,
-  DeviceType.Hub,
   DeviceType.Camera,
   DeviceType.Sensor,
   DeviceType.MediaPlayer,

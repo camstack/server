@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Retired Hub device type: no live capability accepts it any more; the value stays readable for the hub-to-integration migrations
+
 ## [1.2.543] - 2026-11-11
 
 ### Changed

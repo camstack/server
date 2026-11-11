@@ -62,7 +62,7 @@ import {
 } from '../../components/history/history-page-model'
 import { SeriesPicker } from '../../components/history/SeriesPicker'
 
-const NOT_RECORDED: ReadonlySet<string> = new Set([DeviceType.Hub, DeviceType.Container])
+const NOT_RECORDED: ReadonlySet<string> = new Set([DeviceType.Container])
 const LIST_STALE_MS = 5 * 60_000
 
 export function HistoryPage() {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Corrected a code comment that still described the retired Hub gateway device
+
 ## [0.2.162] - 2026-11-10
 
 ### Changed

@@ -54,9 +54,9 @@ describe('capture is driven by the generated catalog', () => {
 })
 
 describe('real devices only', () => {
-  it('does not record a hub or a container, and counts why', async () => {
+  it('does not record a container, and counts why', async () => {
     h = await makeHarness({
-      devices: { 1: DeviceType.Hub, 2: DeviceType.Container, 3: DeviceType.Sensor },
+      devices: { 1: DeviceType.Container, 2: DeviceType.Container, 3: DeviceType.Sensor },
     })
     for (const id of [1, 2, 3]) emitState(h, id, 'battery', { level: 50 })
     await h.settle()

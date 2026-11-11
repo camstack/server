@@ -65,7 +65,7 @@ describe('the queue is bounded while a flush hangs', () => {
 
 describe('one aggregated INFO per pass (D391)', () => {
   it('names the skips, refusals, deletes and flush failures since the last report, then goes quiet', async () => {
-    h = await makeHarness({ devices: { 1: DeviceType.Hub, 2: DeviceType.Camera } })
+    h = await makeHarness({ devices: { 1: DeviceType.Container, 2: DeviceType.Camera } })
     emitState(h, 1, 'battery', { level: 1 })
     emitState(h, 2, 'motion', { detected: true })
     await h.runtime.ingest.record('nobody', [

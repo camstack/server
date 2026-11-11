@@ -86,9 +86,9 @@ describe('accessories cap — hide-child extension (Phase E1)', () => {
   })
 
   describe('deviceTypes — broadened to HA-targeted parents', () => {
-    it('keeps the historical camera + hub registrability', () => {
+    it('keeps camera registrability and no longer accepts the retired hub type', () => {
       expect(accessoriesCapability.deviceTypes).toContain(DeviceType.Camera)
-      expect(accessoriesCapability.deviceTypes).toContain(DeviceType.Hub)
+      expect(accessoriesCapability.deviceTypes).not.toContain(DeviceType.Hub)
     })
 
     it('includes HA-targeted actuator types as valid parents', () => {

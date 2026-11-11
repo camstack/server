@@ -69,9 +69,9 @@ describe('reconcile', () => {
     expect(h.runtime.status().ready).toBe(true)
   })
 
-  it('skips a hub, an opted-out device and a camera motion field', async () => {
+  it('skips a container, an opted-out device and a camera motion field', async () => {
     h = await makeHarness({
-      devices: { 1: DeviceType.Hub, 2: DeviceType.Sensor, 3: DeviceType.Camera },
+      devices: { 1: DeviceType.Container, 2: DeviceType.Sensor, 3: DeviceType.Camera },
     })
     await h.runtime.setEnabled(2, false)
     h.setSnapshots({

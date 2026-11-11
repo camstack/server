@@ -3,10 +3,10 @@ import type { Ecowitt, Sensor } from '@apocaliss92/nodewitt'
 /**
  * Per-gateway registry that device classes use to reach the live {@link Ecowitt}
  * client (and its current sensor snapshot) for a given gateway. Keyed on the
- * gateway {@link import('@camstack/types').DeviceType.Hub} device's `stableId`
- * (standalone mode — the connection lives on the gateway device, not a broker).
+ * gateway key of the integration instance that owns the connection
+ * (`ecowitt-client-registry.ts`).
  *
- * Because the nodewitt client's `stop()` is TERMINAL, the gateway device
+ * Because the nodewitt client's `stop()` is TERMINAL, the integration manager
  * recreates the client on reconnect / settings change and re-publishes it here.
  * Container + sensor children always read through the resolver, so they
  * transparently pick up the new client. Mirrors the Homematic / Dreame in-process

@@ -4754,16 +4754,6 @@
     "genericHero": {
       "noLiveViewForThis": "Nessuna vista live per questo tipo di dispositivo. Usa la scheda Config o la riga di scorciatoie per interagire."
     },
-    "hubHero": {
-      "discovered": "Rilevati",
-      "adopted": "Adottati",
-      "available": "Disponibili",
-      "discover": "Rileva",
-      "online": "{{online}} online",
-      "sleeping": "{{sleeping}} in standby",
-      "offline": "{{offline}} offline",
-      "unknown": "{{unknown}} sconosciuti"
-    },
     "lightHero": {
       "awaitingState": "In attesa dello stato…",
       "turnOff": "Spegni {{deviceName}}",

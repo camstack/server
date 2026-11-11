@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Device history no longer special-cases the retired Hub device type
+
 ### Added
 
 - The device-template renderer understands now, the time filter, and the camera alias for a caller-supplied device, and reports which devices and whether the clock a text reads.
@@ -110,7 +114,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Selecting a remote source that is an infrared code sends it through its transmitter once and remembers it as the current source.
 - Renaming a composed device keeps the new name after a restart, whether the rename was made on the device page or in the composition editor.
 - The hub id is stored under tls next to the mesh CA, so a system backup keeps it; a file still at the data root is copied there once
-
 - Device manager stores a container's declared primary-child preference (setPrimaryChildPreference) and applies it when a room suggests a camera's linked devices
 
 ## [1.2.537] - 2026-11-01

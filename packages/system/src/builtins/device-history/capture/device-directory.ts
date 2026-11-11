@@ -1,6 +1,6 @@
 /**
  * Which devices exist and what type they are — the "real devices only" gate
- * (`hub` and `container` are not devices anyone charts) and the
+ * (a `container` is not a device anyone charts) and the
  * `excludeDeviceTypes` gate of a history field.
  *
  * Built from `deviceManager.listAll({ projection: 'slim' })` at boot and every
@@ -17,7 +17,7 @@ export interface DeviceTypeSource {
 }
 
 export function isRealDeviceType(type: DeviceType): boolean {
-  return type !== DeviceType.Hub && type !== DeviceType.Container
+  return type !== DeviceType.Container
 }
 
 export class DeviceDirectory {

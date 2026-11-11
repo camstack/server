@@ -8,7 +8,6 @@ import { DeviceHeroPowerLine } from './DeviceHeroPowerLine'
 import { DummyHero } from './DummyHero'
 import { EventEmitterHero } from './EventEmitterHero'
 import { GenericHero } from './GenericHero'
-import { HubHero } from './HubHero'
 
 /**
  * Common hero props. All heroes receive the same identity bundle so
@@ -58,7 +57,6 @@ const HERO_REGISTRY: Readonly<Partial<Record<DeviceType, HeroComponent>>> = {
   // ButtonHeroCard (press-actuator UI). The doorbell ButtonHero (ButtonHero.tsx)
   // is retained for doorbells but no longer mapped to DeviceType.Button here.
   [DeviceType.Button]: ControlHero,
-  [DeviceType.Hub]: HubHero,
   [DeviceType.Cover]: CoverHero,
   // Valve: ControlHero renders the registry-backed ValveHeroCard
   // (open/stop/close + position drag) — the DRY path (no dedicated ValveHero).

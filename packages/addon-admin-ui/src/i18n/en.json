@@ -4679,16 +4679,6 @@
     "genericHero": {
       "noLiveViewForThis": "No live view for this device type. Use the Config tab or the shortcut row to interact."
     },
-    "hubHero": {
-      "discovered": "Discovered",
-      "adopted": "Adopted",
-      "available": "Available",
-      "discover": "Discover",
-      "online": "{{online}} online",
-      "sleeping": "{{sleeping}} sleeping",
-      "offline": "{{offline}} offline",
-      "unknown": "{{unknown}} unknown"
-    },
     "lightHero": {
       "awaitingState": "Awaiting state…",
       "turnOff": "Turn off {{deviceName}}",

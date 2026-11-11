@@ -551,9 +551,8 @@ export function DeviceDetailPage() {
 
   // Drives the Children section visibility in the Overview tab (`childrenData`
   // is resolved once above, near the primary-child tab promotion). Used to be
-  // gated on `c.role` (accessory-only) — broadened to ANY child so hub-adopted
-  // cameras under an NVR also surface here as a navigation list (DiscoveryPanel
-  // covers the adopt/release lifecycle but operators want a clean nav list too).
+  // gated on `c.role` (accessory-only) — broadened to ANY child so adopted
+  // cameras under an NVR also surface here as a navigation list.
   const hasAnyChildren = (childrenData ?? []).length > 0
 
   // Filter the common-panels tabs by feature. The strip is the four panels

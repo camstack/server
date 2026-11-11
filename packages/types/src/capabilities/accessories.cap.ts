@@ -40,13 +40,12 @@ export const accessoriesCapability = {
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
-  // Cameras + Hubs are the historical consumers; the HA integration
-  // landed in Phase E adds Switch / Light / Sensor / Thermostat / Cover
-  // / Lock / Fan / MediaPlayer / AlarmPanel / Generic as parent types
-  // for adopted HA devices whose entity-children sit under accessories.
+  // Cameras are the historical consumers; the HA integration adds
+  // Switch / Light / Sensor / Thermostat / Cover / Lock / Fan /
+  // MediaPlayer / AlarmPanel / Generic as parent types for adopted HA
+  // devices whose entity-children sit under accessories.
   deviceTypes: [
     DeviceType.Camera,
-    DeviceType.Hub,
     DeviceType.Switch,
     DeviceType.Light,
     DeviceType.Sensor,

@@ -1,5 +1,6 @@
 export enum DeviceType {
   Camera = 'camera',
+  /** Legacy stored value, read only by the hub-to-integration migrations; no live device carries it. */
   Hub = 'hub',
   Light = 'light',
   Siren = 'siren',

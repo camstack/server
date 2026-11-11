@@ -187,8 +187,8 @@ describe('record', () => {
     expect(r.refused[0]?.reason).toBe('rate')
   })
 
-  it('refuses an opted-out device, a hub, a node-for-device mismatch and an out-of-range time', async () => {
-    h = await makeHarness({ devices: { 1: DeviceType.Sensor, 2: DeviceType.Hub } })
+  it('refuses an opted-out device, a container, a node-for-device mismatch and an out-of-range time', async () => {
+    h = await makeHarness({ devices: { 1: DeviceType.Sensor, 2: DeviceType.Container } })
     await h.runtime.ingest.declareSeries('alpha', POINTS)
     const key = 'addon:alpha/level'
     await h.runtime.setEnabled(1, false)
@@ -196,8 +196,8 @@ describe('record', () => {
       'opted-out',
     )
     await h.runtime.setEnabled(1, true)
-    const hub = { ...point(key, T0), subject: { kind: 'device', deviceId: 2 } as const }
-    expect((await h.runtime.ingest.record('alpha', [hub])).refused[0]?.reason).toBe(
+    const container = { ...point(key, T0), subject: { kind: 'device', deviceId: 2 } as const }
+    expect((await h.runtime.ingest.record('alpha', [container])).refused[0]?.reason).toBe(
       'not-a-real-device',
     )
     const node = { ...point(key, T0), subject: NODE }

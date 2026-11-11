@@ -1508,7 +1508,7 @@
 ### `accessories` → `accessories.*`
 
 - **Source:** `packages/types/src/capabilities/accessories.cap.ts:38`
-- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, hub, switch, light, sensor, thermostat, cover, lock, fan, media-player, alarm-panel, generic`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, switch, light, sensor, thermostat, cover, lock, fan, media-player, alarm-panel, generic`
 - **Archetypes:** status(command-driven)
 - **Provider interface:** `IAccessoriesProvider`
 - **Events:** `onAccessoriesChanged` → `{ deviceId: number; childDeviceIds: number[]; hiddenChildIds: number[] }` · `onChildVisibilityChanged` → `{ deviceId: number; childDeviceId: number; hidden: boolean }`
@@ -2624,7 +2624,7 @@
 
 ### `device-transitions` → `deviceTransitions.*`
 
-- **Source:** `packages/types/src/capabilities/device-transitions.cap.ts:59`
+- **Source:** `packages/types/src/capabilities/device-transitions.cap.ts:62`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `camera, light, siren, switch, sensor, thermostat, climate, button, event-emitter, update, generic, notifier, script, automation, lock, cover, valve, humidifier, water-heater, fan, media-player, alarm-panel, control, presence, weather, vacuum, lawn-mower, image, pet-feeder, pet-fountain, dishwasher, washer, heater, dryer, gateway, heat-pump`
 - **Archetypes:** wrapper(defaultActive)
 - **Provider interface:** `IDeviceTransitionsProvider`
@@ -4064,8 +4064,8 @@
 
 ### `power-source` → `powerSource.*`
 
-- **Source:** `packages/types/src/capabilities/power-source.cap.ts:135`
-- **Meta:** scope: `device` · mode: `singleton` · mount: `singleton` · deviceTypes: `gateway, hub, camera, sensor, media-player, vacuum, generic, washer, dryer, dishwasher, pet-fountain, fan, humidifier, climate, water-heater`
+- **Source:** `packages/types/src/capabilities/power-source.cap.ts:134`
+- **Meta:** scope: `device` · mode: `singleton` · mount: `singleton` · deviceTypes: `gateway, camera, sensor, media-player, vacuum, generic, washer, dryer, dishwasher, pet-fountain, fan, humidifier, climate, water-heater`
 - **Archetypes:** runtimeState
 - **Provider interface:** `IPowerSourceProvider`
 - **runtimeState:** `PowerSourceStateSchema`

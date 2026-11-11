@@ -91,7 +91,7 @@ const STRUCTURAL_TABS_ALL = [
 ] as const
 
 /** Device types device-history never records (D850): not a real device. */
-const NOT_RECORDED_TYPES: ReadonlySet<string> = new Set([DeviceType.Hub, DeviceType.Container])
+const NOT_RECORDED_TYPES: ReadonlySet<string> = new Set([DeviceType.Container])
 
 export function structuralTabsFor(
   deviceType: string | undefined,

@@ -6,11 +6,8 @@
  *     auto-spawned by the provider when the firmware advertises the
  *     capability. Operators can't release/adopt them; they live and
  *     die with the parent.
- *   - Hub-adopted children (`role` absent — cameras under an NVR/Hub).
- *     The `<DiscoveryPanel>` also surfaces them under "Already
- *     adopted" with adoption controls, but operators want a clean
- *     navigation list here too — DiscoveryPanel is wired around the
- *     "discover/adopt/release" lifecycle, not navigation.
+ *   - Adopted children (`role` absent — e.g. cameras under an NVR),
+ *     listed for navigation.
  *
  * Rendered through the global `<DeviceItem>` composite in `minimal`
  * variant — the panel sits in a narrow column so parent badges and

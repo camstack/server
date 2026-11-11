@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Removed the Hub device hero and the Hub discovery panel on the device Overview tab; Hub devices are retired
+
 ## [1.2.638] - 2026-11-11
 
 ### Changed

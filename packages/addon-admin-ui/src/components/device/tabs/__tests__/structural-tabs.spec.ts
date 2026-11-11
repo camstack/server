@@ -39,8 +39,7 @@ describe('structural tabs — History (D899)', () => {
     expect(structuralTabsFor('climate', false).map((t) => t.id)).toContain('history')
     expect(structuralTabsFor('dishwasher', true).map((t) => t.id)).toContain('history')
   })
-  it('a hub or a container has none — device-history records neither', () => {
-    expect(structuralTabsFor('hub', true).map((t) => t.id)).not.toContain('history')
+  it('a container has none — device-history does not record it', () => {
     expect(structuralTabsFor('container', true).map((t) => t.id)).not.toContain('history')
   })
 })

@@ -1,6 +1,5 @@
 import { DeviceFeature, DeviceType } from '@camstack/types'
 import {
-  DiscoveryPanel,
   useDeviceLabelById,
   DoorbellRecentPanel,
   useDoorbellEvents,
@@ -9,7 +8,6 @@ import {
 } from '@camstack/ui-library'
 import { Wifi } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 import { DeviceNotificationMute } from '../DeviceNotificationMute'
 import { HelperGroupStatus } from '../HelperGroupStatus'
 import { MigrateDeviceCard } from '../MigrateDeviceCard'
@@ -37,7 +35,6 @@ function formatBitrate(kbps: number): string {
 
 export function OverviewTab({ device }: OverviewTabProps) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   // v2 device surface:
   //   - `id` (number): system-wide progressive id, unique across
   //     integrations. The hub's boot-time storage sanitization guarantees
@@ -59,7 +56,6 @@ export function OverviewTab({ device }: OverviewTabProps) {
   // produces noisy `PRECONDITION_FAILED` errors and burns hub cycles
   // for nothing.
   const isCamera = type === DeviceType.Camera
-  const isHub = type === DeviceType.Hub
   // Capabilities surface the device class's `features` enum verbatim
   // (battery / PTZ / two-way audio / native snapshot / doorbell / …).
   // The cast documents the wire shape — `device` is loose-typed
@@ -104,18 +100,6 @@ export function OverviewTab({ device }: OverviewTabProps) {
       {/* The live stream is now the page-level Hero (left column on
           desktop / first row on mobile) — surfacing it again here
           would render the same WebRTC session twice on every load. */}
-
-      {/* ── Hub: discovered children panel ── */}
-      {/* Per the device-discovery cap surface — promotes/releases child
-          devices behind the hub. Lives in Overview (instead of a
-          dedicated "Devices" structural tab) so the operator lands
-          directly on the actionable affordance for hubs. */}
-      {isHub && numericId !== null && (
-        <DiscoveryPanel
-          deviceId={numericId}
-          onOpenChild={(childId) => navigate(`/devices/${childId}`)}
-        />
-      )}
 
       {/* ── On-demand re-sync — generic, gated on DeviceFeature.Resyncable. ── */}
       {canResync && numericId !== null && <ResyncButton deviceId={numericId} />}
