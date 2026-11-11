@@ -1,5 +1,7 @@
 export { TerminalAddon } from './addon.js'
 export { TerminalAddon as default } from './addon.js'
+// The custom-action catalog, by the entry-module convention (`customActions`).
+export { terminalActions as customActions } from './legacy-adoption.js'
 export {
   TerminalSessionManager,
   type ScreenBuffer,

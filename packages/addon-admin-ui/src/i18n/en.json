@@ -6736,9 +6736,6 @@
       "deleteTerminal": "Delete Terminal",
       "name": "Name",
       "saveAndRestart": "Save and restart",
-      "legacyAutomaticCameras": "Legacy automatic cameras",
-      "theseCamerasPredateExplicitTerminal": "These cameras predate explicit Terminal instances. They are intentionally untouched: confirm each migration before deleting one. Only BTM cameras can retain their legacy identity by being adopted below; create new instances for Top or Glances first.",
-      "adoptBtm": "Adopt BTM",
       "liveSessions": "Live sessions",
       "noSessionsRunningOpenOne": "No sessions running. Open one above to begin.",
       "attached": "Attached",
@@ -6933,7 +6930,6 @@
     "deleteMessage": "The terminal and its camera are removed. A running session on it is closed.",
     "deleteFailed": "Failed to delete the terminal.",
     "attachFailed": "Failed to open the session.",
-    "adoptFailed": "Failed to adopt the legacy BTM terminal.",
     "closeFailed": "Failed to close the session.",
     "colName": "Name",
     "colNode": "Node",
@@ -6953,11 +6949,6 @@
     "instancesUnknown": "Could not read the terminals.",
     "empty": "No terminals yet",
     "emptyHint": "Create one to run a program on a node and watch it as a camera.",
-    "nodes": "Nodes",
-    "installed": "Terminal ready",
-    "notInstalled": "Terminal not installed on this node",
-    "presenceUnknown": "Could not check this node",
-    "sessionsNode": "Node",
     "noSessions": "No sessions running on this node.",
     "nodeGone": "{{node}} (not in cluster)",
     "editTitle": "Edit terminal",
@@ -6972,7 +6963,9 @@
     "cwd": "Working directory",
     "args": "Arguments (one per line)",
     "env": "Environment NAME=value (one per line)",
-    "saveProfileSettings": "Save profile settings"
+    "saveProfileSettings": "Save profile settings",
+    "adoptLegacy": "Adopt legacy cameras ({{count}})",
+    "adoptLegacyFailed": "Failed to adopt the legacy cameras."
   },
   "deviceQuickDetail": {
     "discard": "Discard",
@@ -8321,7 +8314,8 @@
       "row": "Row {{n}}",
       "discoverNotReady": "Fill in the fields above to load the list, or type the value.",
       "discoverFailed": "Could not load the list: {{message}}. Type the value instead.",
-      "discoverEmpty": "Nothing was found. Type the value instead."
+      "discoverEmpty": "Nothing was found. Type the value instead.",
+      "nodeLacksCapability": "{{name}} (not installed on this node)"
     },
     "confirmActionButton": {
       "cancel": "Cancel",

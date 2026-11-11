@@ -4,8 +4,14 @@
  * ONE table of every Terminal instance across the cluster (name, node,
  * profile, enabled, camera, actions) and a "New terminal" dialog. An instance
  * and its camera are created in the same provider call, so a camera can never
- * exist before its terminal. A node without a terminal provider is reported as
- * such and never queried: a per-node `terminal-session` call against it fails.
+ * exist before its terminal. A node without a terminal provider is listed
+ * disabled, with the reason, in that dialog's node picker (the form's
+ * `requiresCapability`), and is never queried here: a per-node
+ * `terminal-session` call against it fails.
+ *
+ * Legacy automatic cameras have no list of their own: while the hub answers
+ * that some exist, the table header carries one action that adopts them all
+ * (`adoptLegacyCameras`, the one-off migration).
  *
  * Attach opens a live pty (xterm.js via `<TerminalPanel>`) for an instance's
  * profile on its node; "Live sessions" lists the ptys of one node so a session
@@ -21,13 +27,13 @@ import {
   Button,
   ErrorBox,
   type DataColumn,
-  Select,
+  NodePicker,
   SectionCard,
-  Skeleton,
+  useAddonsCustom,
+  useCapabilityNodePresence,
   useClusterNodes,
   useDeviceManagerListAll,
   useInstancesOfCap,
-  useTerminalSessionAdoptLegacyMonitor,
   useTerminalSessionClose,
   useTerminalSessionListLegacyCameras,
   useTerminalSessionListProfiles,
@@ -38,7 +44,6 @@ import {
   Cable,
   ChevronDown,
   ChevronRight,
-  Server,
   SlidersHorizontal,
   Terminal as TerminalIcon,
   X,
@@ -52,7 +57,12 @@ import { TerminalPanel } from '../../components/TerminalPanel'
 import { InstancesTable } from '../../components/instances/InstancesTable'
 import type { InstanceRow, PanelRow } from '../../components/instances/instances-model'
 import { TerminalProfileSettingsLead } from './terminal/TerminalProfileSettingsLead'
-import { useTerminalNodePresence } from './terminal/terminal-node-presence'
+
+/** The capability whose providers make a node a Terminal node. */
+const TERMINAL_CAPABILITY = 'terminal-session'
+
+/** The one-off migration of legacy automatic cameras (`addons.custom`). */
+const ADOPT_LEGACY_CAMERAS_ACTION = 'adoptLegacyCameras'
 
 // The terminal reflows to its actual pane size the moment `<TerminalPanel>`
 // mounts (its FitAddon issues a `resize`), so these are only the initial grid
@@ -61,16 +71,11 @@ const DEFAULT_COLS = 120
 const DEFAULT_ROWS = 32
 
 /**
- * The legacy automatic-camera list resolves to a full `deviceManager.listAll`
- * for the whole addon prefix, so it is polled slower than the in-memory
- * session / instance reads: it only changes when an operator adopts or deletes.
+ * The legacy automatic-camera read resolves to a `deviceManager.listAll` for
+ * the addon, so it is polled slower than the in-memory session / instance
+ * reads: it only changes when the legacy cameras are adopted or deleted.
  */
 const LEGACY_CAMERA_POLL_INTERVAL_MS = 60_000
-
-interface TerminalNodeOption {
-  readonly id: string
-  readonly label: string
-}
 
 /** What Attach needs of a Terminal: its record's body, read from the instance list. */
 interface AttachTarget {
@@ -119,7 +124,7 @@ function formatStartedAt(ms: number): string {
 export function TerminalPage() {
   const { t } = useTranslation()
   const { nodes: clusterNodes } = useClusterNodes()
-  const presence = useTerminalNodePresence()
+  const presence = useCapabilityNodePresence(TERMINAL_CAPABILITY)
 
   const instancesQuery = useInstancesOfCap({ functionCap: 'terminal-session' })
   // Only id + stableId are read, so the cheap projection is enough.
@@ -131,7 +136,7 @@ export function TerminalPage() {
     { nodeId: 'hub' },
     { refetchInterval: LEGACY_CAMERA_POLL_INTERVAL_MS },
   )
-  const adoptLegacyMonitor = useTerminalSessionAdoptLegacyMonitor()
+  const custom = useAddonsCustom()
   const openSession = useTerminalSessionOpenSession()
   const closeSession = useTerminalSessionClose()
 
@@ -141,23 +146,20 @@ export function TerminalPage() {
   const [sessionNodeId, setSessionNodeId] = useState('')
   const [configOpen, setConfigOpen] = useState(false)
 
-  const providerNodes: readonly TerminalNodeOption[] = useMemo(
-    () =>
-      clusterNodes
-        .filter((node) => presence.nodeState(node.id) === 'present')
-        .map((node) => ({ id: node.id, label: node.name })),
-    // `presence.nodeState` is a fresh closure per render; its inputs are the query below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [clusterNodes, presence.nodeState],
-  )
+  // The nodes the registry ANSWERED run a provider; any other is never queried here.
+  const providerNodeKey = clusterNodes
+    .filter((node) => presence.onNode(node.id) === 'present')
+    .map((node) => node.id)
+    .join('\n')
 
   // Live sessions and configuration look at ONE provider node; default to the
   // hub, or the first node that runs a provider.
   useEffect(() => {
-    if (providerNodes.some((node) => node.id === sessionNodeId)) return
-    const fallback = providerNodes.find((node) => node.id === 'hub') ?? providerNodes[0]
-    setSessionNodeId(fallback?.id ?? '')
-  }, [providerNodes, sessionNodeId])
+    const providerNodeIds = providerNodeKey === '' ? [] : providerNodeKey.split('\n')
+    if (providerNodeIds.includes(sessionNodeId)) return
+    const fallback = providerNodeIds.includes('hub') ? 'hub' : providerNodeIds[0]
+    setSessionNodeId(fallback ?? '')
+  }, [providerNodeKey, sessionNodeId])
 
   const hasSessionNode = sessionNodeId !== ''
   const profilesQuery = useTerminalSessionListProfiles(
@@ -202,10 +204,8 @@ export function TerminalPage() {
     () => new Map((devicesQuery.data ?? []).map((device) => [device.stableId, device.id] as const)),
     [devicesQuery.data],
   )
-  const nodeNameById = useMemo(
-    () => new Map(clusterNodes.map((node) => [node.id, node.name] as const)),
-    [clusterNodes],
-  )
+  const nodeNameOf = (nodeId: string): string | undefined =>
+    clusterNodes.find((node) => node.id === nodeId)?.name
 
   const refreshInstances = async () => {
     await Promise.all([legacyCamerasQuery.refetch(), devicesQuery.refetch()])
@@ -232,15 +232,35 @@ export function TerminalPage() {
     }
   }
 
-  const handleAdoptLegacyMonitor = async (stableId: string) => {
+  const handleAdoptLegacyCameras = async () => {
     setActionError(null)
     try {
-      await adoptLegacyMonitor.mutateAsync({ nodeId: 'hub', stableId })
+      await custom.mutateAsync({
+        addonId: TERMINAL_ADDON_ID,
+        action: ADOPT_LEGACY_CAMERAS_ACTION,
+        input: {},
+      })
       await refreshInstances()
     } catch {
-      setActionError(t('terminalPage.adoptFailed', 'Failed to adopt the legacy BTM terminal.'))
+      setActionError(t('terminalPage.adoptLegacyFailed', 'Failed to adopt the legacy cameras.'))
     }
   }
+  /** Shown only when the hub ANSWERED that legacy cameras exist. */
+  const legacyCount = legacyCameras?.length ?? 0
+  const adoptLegacyAction = () =>
+    legacyCount > 0 ? (
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={custom.isPending}
+        onClick={() => void handleAdoptLegacyCameras()}
+      >
+        <Cable className="h-3 w-3" aria-hidden />
+        {t('terminalPage.adoptLegacy', 'Adopt legacy cameras ({{count}})', {
+          count: legacyCount,
+        })}
+      </Button>
+    ) : null
 
   const handleCloseSession = async (nodeId: string, sessionId: string) => {
     setActionError(null)
@@ -287,7 +307,7 @@ export function TerminalPage() {
         const nodeId = valueOf(row, 'nodeId')
         return (
           <span className="font-mono text-foreground-muted">
-            {nodeNameById.get(nodeId) ?? (nodeId || '—')}
+            {nodeNameOf(nodeId) ?? (nodeId || '—')}
           </span>
         )
       },
@@ -370,77 +390,8 @@ export function TerminalPage() {
         extraColumns={extraColumns}
         lead={(row) => <TerminalProfileSettingsLead row={row} />}
         rowActions={rowActions}
+        pageActions={adoptLegacyAction}
       />
-
-      <SectionCard
-        headingId="terminal-nodes"
-        title={t('terminalPage.nodes', 'Nodes')}
-        icon={Server}
-      >
-        <ul className="divide-y divide-border">
-          {clusterNodes.map((node) => {
-            const state = presence.nodeState(node.id)
-            return (
-              <li
-                key={node.id}
-                className="flex items-center justify-between gap-2 px-3 py-2 text-xs"
-              >
-                <span className="font-medium text-foreground">{node.name}</span>
-                {state === 'pending' ? (
-                  <Skeleton className="h-4 w-32" />
-                ) : state === 'present' ? (
-                  <Badge variant="success">{t('terminalPage.installed', 'Terminal ready')}</Badge>
-                ) : state === 'absent' ? (
-                  <span className="text-foreground-subtle">
-                    {t('terminalPage.notInstalled', 'Terminal not installed on this node')}
-                  </span>
-                ) : (
-                  <span className="text-warning">
-                    {t('terminalPage.presenceUnknown', 'Could not check this node')}
-                  </span>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      </SectionCard>
-
-      {legacyCameras !== undefined && legacyCameras.length > 0 && (
-        <SectionCard
-          headingId="terminal-legacy"
-          title={t('systemPage.terminal.legacyAutomaticCameras', 'Legacy automatic cameras')}
-          icon={Cable}
-        >
-          <p className="px-3 pt-2 text-[11px] text-foreground-subtle">
-            {t(
-              'systemPage.terminal.theseCamerasPredateExplicitTerminal',
-              'These cameras predate explicit Terminal instances. They are intentionally untouched: confirm each migration before deleting one. Only BTM cameras can retain their legacy identity by being adopted below; create new instances for Top or Glances first.',
-            )}
-          </p>
-          <ul className="divide-y divide-border">
-            {legacyCameras.map((camera) => (
-              <li
-                key={camera.stableId}
-                className="flex items-center justify-between gap-2 px-3 py-1.5"
-              >
-                <span className="min-w-0 truncate text-[11px] text-foreground-subtle">
-                  {camera.name} · {camera.nodeId} · {camera.profileLabel}
-                </span>
-                {camera.adoptable && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={adoptLegacyMonitor.isPending}
-                    onClick={() => void handleAdoptLegacyMonitor(camera.stableId)}
-                  >
-                    {t('systemPage.terminal.adoptBtm', 'Adopt BTM')}
-                  </Button>
-                )}
-              </li>
-            ))}
-          </ul>
-        </SectionCard>
-      )}
 
       {attachedSessionInfo && attached && (
         <div className="space-y-2">
@@ -475,19 +426,13 @@ export function TerminalPage() {
           title={t('systemPage.terminal.liveSessions', 'Live sessions')}
           icon={TerminalIcon}
           actions={
-            providerNodes.length > 1 ? (
-              <div className="w-44">
-                <Select
-                  aria-label={t('terminalPage.sessionsNode', 'Node')}
-                  value={sessionNodeId}
-                  onChange={(event) => setSessionNodeId(event.target.value)}
-                  options={providerNodes.map((node) => ({
-                    value: node.id,
-                    label: node.label,
-                  }))}
-                />
-              </div>
-            ) : undefined
+            <NodePicker
+              selectedNodeId={sessionNodeId}
+              onSelect={setSessionNodeId}
+              label=""
+              hideIcon
+              requiresCapability={TERMINAL_CAPABILITY}
+            />
           }
         >
           {sessions.length === 0 ? (

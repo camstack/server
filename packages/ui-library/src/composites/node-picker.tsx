@@ -5,6 +5,9 @@
  * cache. Renders a `Server` icon + label + segmented pill bar with one
  * button per node (hub first), tinted from agent-settings palette colours.
  * Offline nodes stay listed; they are disabled unless `allowOffline`.
+ * With `requiresCapability`, a node the capability registry ANSWERED has no
+ * provider is listed disabled with the reason (D315: pending or unknown claims
+ * nothing), and the bar hides when it leaves at most one node to choose.
  *
  * Used by admin-ui Addons page, benchmark addon page, pipeline page, etc.
  */
@@ -12,6 +15,7 @@ import { useUiText } from '../contexts/ui-text'
 import { Server } from 'lucide-react'
 import { useMemo, type JSX } from 'react'
 import { usePipelineOrchestratorListAgentSettings } from '../generated/system-hooks'
+import { useCapabilityNodePresence } from '../hooks/use-capability-presence'
 import { useClusterNodes } from '../hooks/use-cluster-nodes'
 import { cn } from '../lib/cn'
 import { nodeSoftBgClass, nodeTextColorClass } from './node-color'
@@ -32,22 +36,55 @@ export interface NodePickerProps {
   readonly alwaysShow?: boolean
   /** When true, offline nodes stay enabled and selectable. Default false. */
   readonly allowOffline?: boolean
+  /** A capability the node must run a provider of; a node without one is disabled, with the reason. */
+  readonly requiresCapability?: string
 }
 
-export function NodePicker({
+export function NodePicker(props: NodePickerProps): JSX.Element | null {
+  const { requiresCapability, ...rest } = props
+  // The registry is asked only by a picker that requires a capability.
+  return requiresCapability ? (
+    <CapabilityNodePicker {...rest} requiresCapability={requiresCapability} />
+  ) : (
+    <NodePickerBar {...rest} lacksCapability={NEVER_LACKS} />
+  )
+}
+
+const NEVER_LACKS = (): boolean => false
+
+interface CapabilityNodePickerProps extends NodePickerProps {
+  readonly requiresCapability: string
+}
+
+function CapabilityNodePicker({
+  requiresCapability,
+  ...rest
+}: CapabilityNodePickerProps): JSX.Element | null {
+  const presence = useCapabilityNodePresence(requiresCapability)
+  // Only an ANSWERED "no provider here" disables a node (D315).
+  return <NodePickerBar {...rest} lacksCapability={(id) => presence.onNode(id) === 'absent'} />
+}
+
+interface NodePickerBarProps extends Omit<NodePickerProps, 'requiresCapability'> {
+  readonly lacksCapability: (nodeId: string) => boolean
+}
+
+function NodePickerBar({
   selectedNodeId,
   onSelect,
   label = 'Node',
   hideIcon = false,
   alwaysShow = false,
   allowOffline = false,
-}: NodePickerProps): JSX.Element | null {
+  lacksCapability,
+}: NodePickerBarProps): JSX.Element | null {
   const t = useUiText()
   const { nodes } = useClusterNodes()
   const settingsQuery = usePipelineOrchestratorListAgentSettings(undefined)
   const colorByNodeId = useMemo(() => buildColorByNodeId(settingsQuery.data), [settingsQuery.data])
+  const offered = nodes.filter((node) => !lacksCapability(node.id))
 
-  if (!alwaysShow && nodes.length <= 1) return null
+  if (!alwaysShow && offered.length <= 1) return null
 
   return (
     <div className="flex h-7 items-center gap-1.5">
@@ -60,7 +97,8 @@ export function NodePicker({
         {nodes.map((node, idx) => {
           const isSelected = selectedNodeId === node.id
           const colorId = colorIdForNode(colorByNodeId, node.id)
-          const disabled = !allowOffline && !node.isOnline
+          const lacks = lacksCapability(node.id)
+          const disabled = lacks || (!allowOffline && !node.isOnline)
           return (
             // ui-check-ok: segmented NodePicker pills share one border chrome; Button sizes fight the bar
             <button
@@ -69,9 +107,17 @@ export function NodePicker({
               onClick={() => onSelect(node.id)}
               disabled={disabled}
               title={
-                node.isOnline
-                  ? node.name
-                  : t('uiLibrary.nodePicker.offline', '{{name}} (offline)', { name: node.name })
+                lacks
+                  ? t(
+                      'uiLibrary.configFormField.nodeLacksCapability',
+                      '{{name}} (not installed on this node)',
+                      { name: node.name },
+                    )
+                  : node.isOnline
+                    ? node.name
+                    : t('uiLibrary.nodePicker.offline', '{{name}} (offline)', {
+                        name: node.name,
+                      })
               }
               className={cn(
                 'inline-flex h-7 items-center px-2.5 transition-colors',

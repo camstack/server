@@ -4,11 +4,11 @@
  *  1. `parseSseBuffer` — the hand-rolled SSE frame parser that feeds xterm:
  *     decodes `data:` frames, skips `: keepalive` comments, and keeps a partial
  *     tail for the next chunk.
- *  2. `terminalNodeState` — a node without a Terminal provider is `absent`,
- *     never an error; not-yet-known is `pending`, never `absent`.
- *  3. `TerminalPage` — one table of every instance across nodes, the New
- *     terminal dialog, delete through the library confirm, and the per-node
- *     presence rows (with `<TerminalPanel>` stubbed).
+ *  2. `TerminalPage` — ONE table of every instance across nodes and nothing
+ *     beside it: no per-node card, no legacy-camera list. Legacy cameras are
+ *     one header action, shown only when the hub answered that some exist
+ *     (with `<TerminalPanel>` stubbed). The node picker's "not installed"
+ *     reason is the library field's (`node-select-field-capability.spec`).
  */
 /// <reference types="@testing-library/jest-dom" />
 
@@ -24,7 +24,6 @@ expect.extend(jestDomMatchers)
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { parseSseBuffer } from '../../../lib/terminal-io'
-import { terminalNodeState } from '../terminal/terminal-node-presence'
 
 // ---------------------------------------------------------------------------
 // 1. SSE frame parser
@@ -59,41 +58,7 @@ describe('parseSseBuffer', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 2. Per-node presence (D315)
-// ---------------------------------------------------------------------------
-describe('terminalNodeState', () => {
-  const answer = (perNode: { nodeId: string; providers: string[] }[]) =>
-    ({
-      status: 'success',
-      data: { name: 'terminal-session', providers: ['terminal'], perNode },
-    }) as never
-
-  it('is pending while the registry has not answered — never absent', () => {
-    expect(terminalNodeState({ status: 'pending' }, 'hub')).toBe('pending')
-  })
-
-  it('is unknown when the query failed — never absent', () => {
-    expect(terminalNodeState({ status: 'error' }, 'hub')).toBe('unknown')
-  })
-
-  it('is absent for a node with no provider and present for one that has it', () => {
-    const data = answer([{ nodeId: 'hub', providers: ['terminal'] }])
-    expect(terminalNodeState(data, 'hub')).toBe('present')
-    expect(terminalNodeState(data, 'edge')).toBe('absent')
-  })
-
-  it('is absent when the capability has no provider anywhere', () => {
-    expect(
-      terminalNodeState(
-        { status: 'success', data: { name: 'terminal-session', providers: [] } as never },
-        'hub',
-      ),
-    ).toBe('absent')
-  })
-})
-
-// ---------------------------------------------------------------------------
-// 3. Page render
+// 2. Page render
 // ---------------------------------------------------------------------------
 vi.mock('../../../components/TerminalPanel', () => ({
   TerminalPanel: ({ sessionId }: { sessionId: string }) => (
@@ -110,6 +75,8 @@ vi.mock('../../../components/settings/NodeAddonsSettingsPanel', () => ({
 const mocks = vi.hoisted(() => ({
   openSession: vi.fn(async () => ({ sessionId: 's-1' })),
   profileCalls: [] as string[],
+  legacy: undefined as readonly { stableId: string }[] | undefined,
+  custom: vi.fn(async () => ({ adopted: 1, cameras: [] })),
   registry: {
     status: 'success' as 'pending' | 'success' | 'error',
     data: {
@@ -152,8 +119,10 @@ vi.mock('../../../components/instances/InstancesTable', () => ({
       render: (row: unknown) => unknown
     }[]
     rowActions: (row: unknown) => unknown
+    pageActions?: (rows: readonly unknown[]) => unknown
   }) => (
     <table>
+      <caption>{props.pageActions?.([]) as never}</caption>
       <tbody>
         {INSTANCES.map((instance) => {
           const row = {
@@ -185,17 +154,19 @@ vi.mock('@camstack/ui-library', async () => {
   return {
     ...actual,
     hubPath: (p: string) => p,
-    trpc: {
-      capabilities: {
-        getCapability: {
-          useQuery: () => ({
-            status: mocks.registry.status,
-            data: mocks.registry.data,
-            refetch: vi.fn(),
-          }),
-        },
-      },
+    useCapabilityNodePresence: () => {
+      const onNodeOf = actual['capabilityPresenceOnNode'] as (
+        answer: unknown,
+        nodeId: string,
+      ) => string
+      return {
+        onNode: (nodeId: string) =>
+          onNodeOf({ status: mocks.registry.status, data: mocks.registry.data }, nodeId),
+      }
     },
+    useAddonsCustom: () => ({ mutateAsync: mocks.custom, isPending: false }),
+    // The library picker asks the registry itself; its behaviour is its own spec's.
+    NodePicker: () => null,
     useClusterNodes: () => ({
       nodes: [
         { id: 'hub', name: 'Hub' },
@@ -204,7 +175,7 @@ vi.mock('@camstack/ui-library', async () => {
     }),
     useDeviceManagerListAll: () => query([{ id: 4101, stableId: 'cam-1' }]),
     useInstancesOfCap: () => query(INSTANCES),
-    useTerminalSessionListLegacyCameras: () => query([]),
+    useTerminalSessionListLegacyCameras: () => query(mocks.legacy),
     useTerminalSessionListProfiles: (input: { nodeId: string }) => {
       mocks.profileCalls.push(input.nodeId)
       return query([{ profileId: 'monitor', label: 'BTM', description: 'btm' }])
@@ -212,7 +183,6 @@ vi.mock('@camstack/ui-library', async () => {
     useTerminalSessionListSessions: () => query([]),
     useTerminalSessionOpenSession: () => ({ mutateAsync: mocks.openSession, isPending: false }),
     useTerminalSessionClose: () => ({ mutateAsync: vi.fn(), isPending: false }),
-    useTerminalSessionAdoptLegacyMonitor: () => ({ mutateAsync: vi.fn(), isPending: false }),
   }
 })
 
@@ -233,6 +203,8 @@ describe('TerminalPage', () => {
   beforeEach(() => {
     mocks.openSession.mockClear()
     mocks.profileCalls.length = 0
+    mocks.legacy = []
+    mocks.custom.mockClear()
     mocks.registry.status = 'success'
     mocks.registry.data = {
       name: 'terminal-session',
@@ -266,16 +238,35 @@ describe('TerminalPage', () => {
     })
   })
 
-  it('a node without a terminal provider reads "not installed" and is not queried', () => {
+  it('renders one table and no per-node card; a node without a provider is not queried', () => {
     renderPage()
-    expect(screen.getByText('Terminal not installed on this node')).toBeInTheDocument()
-    expect(screen.queryByTestId('error-box')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('table')).toHaveLength(1)
+    expect(screen.queryByText('Nodes')).not.toBeInTheDocument()
+    expect(screen.queryByText(/not installed/i)).not.toBeInTheDocument()
     expect(mocks.profileCalls).not.toContain('edge')
   })
 
-  it('does not call a pending registry answer "not installed"', () => {
-    mocks.registry.status = 'pending'
+  it('shows no legacy action while the legacy read has not answered, or answered none', () => {
+    mocks.legacy = undefined
+    const { unmount } = renderPage()
+    expect(screen.queryByRole('button', { name: /legacy/i })).not.toBeInTheDocument()
+    unmount()
+    mocks.legacy = []
     renderPage()
-    expect(screen.queryByText('Terminal not installed on this node')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /legacy/i })).not.toBeInTheDocument()
+  })
+
+  it('offers ONE action that adopts every legacy camera, with no list of them', async () => {
+    mocks.legacy = [{ stableId: 'terminal-camera-hub' }, { stableId: 'terminal-camera-edge-top' }]
+    renderPage()
+    expect(screen.queryByText('terminal-camera-hub')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Adopt legacy cameras (2)' }))
+    await waitFor(() => {
+      expect(mocks.custom).toHaveBeenCalledWith({
+        addonId: 'terminal',
+        action: 'adoptLegacyCameras',
+        input: {},
+      })
+    })
   })
 })

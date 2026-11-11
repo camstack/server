@@ -1954,6 +1954,13 @@
       "summary": "The instances an operator can link to, read from the ONE instance model (D1013 rule 5): every provider of `integration-instances` that also serves the function cap describes its kinds, and the instances of a kind whos…"
     },
     {
+      "name": "capabilityPresenceOnNode",
+      "kind": "function",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-capability-presence.ts",
+      "summary": "Classify ONE node from the registry's answer — the per-node form of `useCapabilityPresence`, for a picker that offers only the nodes running a provider."
+    },
+    {
       "name": "Card",
       "kind": "component",
       "area": "primitives",
@@ -8627,6 +8634,12 @@
           "type": "boolean",
           "optional": true,
           "doc": "When true, offline nodes stay enabled and selectable. Default false."
+        },
+        {
+          "name": "requiresCapability",
+          "type": "string",
+          "optional": true,
+          "doc": "A capability the node must run a provider of; a node without one is disabled, with the reason."
         }
       ]
     },
@@ -8635,7 +8648,39 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/config-form-field.tsx",
-      "summary": ""
+      "summary": "",
+      "props": [
+        {
+          "name": "field",
+          "type": "ConfigNodeSelectField",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "value",
+          "type": "unknown",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(v: unknown) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "translationFn",
+          "type": "TranslationFn",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "nodeSoftBgClass",
@@ -13844,6 +13889,13 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-broker-instances.ts",
       "summary": "The brokers an operator can pick, read from the ONE instance model (D1013): every provider of `integration-instances` that also serves the `broker` function describes its kinds, and the instances of a kind whose `func…"
+    },
+    {
+      "name": "useCapabilityNodePresence",
+      "kind": "hook",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-capability-presence.ts",
+      "summary": "Ask the registry once which nodes run a provider of `capabilityName`."
     },
     {
       "name": "useCapabilityPresence",

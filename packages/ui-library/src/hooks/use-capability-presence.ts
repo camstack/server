@@ -79,3 +79,49 @@ export function useCapabilityPresence(capabilityName: string): CapabilityPresenc
   if (query.status === 'error') return 'unknown'
   return classifyCapability(query.data)
 }
+
+/** A registry read as React Query reports it: its status and, once settled, its row. */
+export interface CapabilityRegistryAnswer {
+  readonly status: 'pending' | 'error' | 'success'
+  readonly data?: CapabilityInfo | null | undefined
+}
+
+/**
+ * Classify ONE node from the registry's answer — the per-node form of
+ * `useCapabilityPresence`, for a picker that offers only the nodes running a
+ * provider.
+ *
+ * `perNode` lists every node hosting at least one provider. A row that has
+ * providers but no `perNode` cannot say which node, so that node is `unknown`
+ * rather than a guess.
+ */
+export function capabilityPresenceOnNode(
+  answer: CapabilityRegistryAnswer,
+  nodeId: string,
+): CapabilityPresence {
+  if (answer.status === 'pending') return 'pending'
+  if (answer.status === 'error') return 'unknown'
+  const row = answer.data ?? null
+  if (row === null || classifyCapability(row) === 'absent') return 'absent'
+  if (row.perNode === undefined) return 'unknown'
+  return row.perNode.some((entry) => entry.nodeId === nodeId && entry.providers.length > 0)
+    ? 'present'
+    : 'absent'
+}
+
+/** Per-node presence of one capability, from one registry read. */
+export interface CapabilityNodePresence {
+  readonly onNode: (nodeId: string) => CapabilityPresence
+}
+
+/** Ask the registry once which nodes run a provider of `capabilityName`. */
+export function useCapabilityNodePresence(capabilityName: string): CapabilityNodePresence {
+  const query = trpc.capabilities.getCapability.useQuery({
+    name: capabilityName,
+  })
+  const answer: CapabilityRegistryAnswer = {
+    status: query.status,
+    data: query.data,
+  }
+  return { onNode: (nodeId) => capabilityPresenceOnNode(answer, nodeId) }
+}

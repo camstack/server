@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- New one-off adoptLegacyCameras action turns every legacy automatic Terminal camera into an instance, keeping its stable id; a rerun adopts nothing
+
 ## [0.1.163] - 2026-11-08
 
 ### Changed

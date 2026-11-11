@@ -14,8 +14,8 @@
 import { execFile } from 'node:child_process'
 import type {
   AddonDataPlaneHandle,
+  AddonInitResult,
   ConfigUISchema,
-  ProviderRegistration,
   TerminalInstanceInfo,
   TerminalLegacyCamera,
 } from '@camstack/types'
@@ -66,6 +66,13 @@ import {
   terminalInstancesKind,
 } from './terminal-record-kinds.js'
 import { createXtermScreen } from './xterm-screen.js'
+import {
+  adoptAllLegacyCameras,
+  type AdoptLegacyCamerasResult,
+  legacyAdoptionBody,
+  type TerminalActions,
+  terminalActions,
+} from './legacy-adoption.js'
 
 /**
  * Default argv for the Glances profile — deliberately EMPTY.
@@ -188,7 +195,7 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
     super({ ...DEFAULTS })
   }
 
-  protected async onInitialize(): Promise<ProviderRegistration[]> {
+  protected async onInitialize(): Promise<AddonInitResult<TerminalActions>> {
     await warmNodePty()
     this.glancesPythonPath = (await this.ctx.deps.ensurePython()) ?? ''
     const shimDir = cursesShimDir()
@@ -315,12 +322,23 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
       this.ctx.logger.warn('terminal: no data plane available — output/input transport is disabled')
     }
 
-    return [
-      { capability: terminalSessionCapability, provider: manager },
-      ...(this.instances === null
-        ? []
-        : [{ capability: integrationInstancesCapability, provider: this.instances.toProvider() }]),
-    ]
+    return {
+      providers: [
+        { capability: terminalSessionCapability, provider: manager },
+        ...(this.instances === null
+          ? []
+          : [
+              {
+                capability: integrationInstancesCapability,
+                provider: this.instances.toProvider(),
+              },
+            ]),
+      ],
+      customActions: terminalActions,
+      actionHandlers: {
+        adoptLegacyCameras: async () => this.adoptLegacyCameras(),
+      },
+    }
   }
 
   /**
@@ -742,7 +760,13 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
             'A Terminal runs one allowlisted profile on one node and is declared as a virtual camera. Empty executable, arguments, directory and environment take the profile defaults.',
           columns: 2,
           fields: [
-            { type: 'node-select', key: 'nodeId', label: 'Node', required: true },
+            {
+              type: 'node-select',
+              key: 'nodeId',
+              label: 'Node',
+              required: true,
+              requiresCapability: 'terminal-session',
+            },
             {
               type: 'select',
               key: 'profileId',
@@ -888,20 +912,43 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
       throw new Error('Only a legacy monitor camera with its original stable id can be adopted')
     }
     const id = crypto.randomUUID()
+    const instance = await this.putAdoptedInstance(id, legacyAdoptionBody(legacy, requestedName))
+    return this.instanceInfo(instance)
+  }
+
+  /**
+   * The one-off migration: every legacy automatic camera still listed becomes an
+   * instance keeping its stable id. A rerun with nothing left adopts nothing.
+   */
+  private async adoptLegacyCameras(): Promise<AdoptLegacyCamerasResult> {
+    const result = await this.instanceMutationQueue.run(() =>
+      adoptAllLegacyCameras({
+        listLegacy: () => this.listLegacyTerminalCameras(),
+        putInstance: async (id, body) => {
+          await this.putAdoptedInstance(id, body)
+        },
+        newId: () => crypto.randomUUID(),
+      }),
+    )
+    for (const camera of result.cameras) {
+      this.ctx.logger.info('legacy Terminal camera adopted as an instance', {
+        meta: { ...camera },
+      })
+    }
+    this.ctx.logger.info(`legacy Terminal cameras adopted: ${String(result.adopted)}`)
+    if (result.adopted > 0) await this.reconcileTerminalCameras()
+    return result
+  }
+
+  /** Write one adopted instance's record (never over an existing id) and list it at once. */
+  private async putAdoptedInstance(id: string, body: TerminalBody): Promise<TerminalInstance> {
     const handle = this.ctx.records?.kind(terminalInstancesKind)
     if (handle === undefined) throw new Error('Terminal instances are managed on the hub')
-    const body: TerminalBody = {
-      ...initialTerminalBody(requestedName?.trim() || legacy.name),
-      nodeId: legacy.nodeId,
-      profileId: 'monitor',
-      profileLabel: legacy.profileLabel,
-      cameraStableId: legacy.stableId,
-    }
     await handle.put({ id, data: body }, { ifRev: 0 })
     const instance = readTerminalInstances([rawInstanceOfRecord(id, body)])[0]
     if (instance === undefined) throw new Error('The adopted Terminal instance is not valid')
     this.instanceRows = [...this.instanceRows, instance]
-    return this.instanceInfo(instance)
+    return instance
   }
 
   protected override scopedSettingsCapabilities(): readonly string[] {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- NodePicker and node-select fields can require a capability: a node the registry answered has no provider is listed disabled with the reason
+
 ## [1.2.420] - 2026-11-11
 
 ### Changed

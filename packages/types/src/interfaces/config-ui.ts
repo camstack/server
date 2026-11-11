@@ -641,6 +641,12 @@ export interface ConfigNodeSelectField extends ConfigFieldBase {
   type: 'node-select'
   /** When true, include offline nodes (greyed out). Default: false. */
   showOffline?: boolean
+  /**
+   * A capability the chosen node must run a provider of. A node the capability
+   * registry ANSWERED has none is listed disabled, with the reason; a node not
+   * yet known, or not checkable, stays selectable.
+   */
+  requiresCapability?: string
 }
 
 /** Select multiple cluster nodes from the live topology. */

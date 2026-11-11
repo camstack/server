@@ -55,6 +55,7 @@ import type {
 } from '@camstack/types'
 import { isKeychainStoredField, isSecretClear, isSecretFieldView } from '@camstack/types'
 import { useClusterNodes as useClusterNodesHook } from '../hooks/use-cluster-nodes'
+import { useCapabilityNodePresence } from '../hooks/use-capability-presence'
 import { ConfigIconFieldControl } from './config-icon-field'
 import { sanitizeInfoHtml } from './sanitize-info-html.js'
 import { PasswordInput } from '../primitives/password-input'
@@ -969,23 +970,72 @@ function TagsField({
   )
 }
 
-export function NodeSelectField({
-  field,
-  value,
-  onChange,
-  disabled,
-  translationFn,
-}: {
+interface NodeSelectFieldProps {
   field: ConfigNodeSelectField
   value: unknown
   onChange: (v: unknown) => void
   disabled?: boolean
   translationFn?: TranslationFn
-}): JSX.Element | null {
+}
+
+export function NodeSelectField(props: NodeSelectFieldProps): JSX.Element | null {
+  const requires = props.field.requiresCapability
+  // The registry is asked only by a field that requires a capability.
+  return requires ? (
+    <CapabilityNodeSelect {...props} requiresCapability={requires} />
+  ) : (
+    <NodeSelectBody {...props} lacksCapability={NODE_NEVER_LACKS} />
+  )
+}
+
+const NODE_NEVER_LACKS = (): boolean => false
+
+interface CapabilityNodeSelectProps extends NodeSelectFieldProps {
+  readonly requiresCapability: string
+}
+
+interface NodeSelectBodyProps extends NodeSelectFieldProps {
+  readonly lacksCapability: (nodeId: string) => boolean
+}
+
+function CapabilityNodeSelect({
+  requiresCapability,
+  ...props
+}: CapabilityNodeSelectProps): JSX.Element | null {
+  const presence = useCapabilityNodePresence(requiresCapability)
+  // A node is refused only on an ANSWERED "no provider here" (D315).
+  return <NodeSelectBody {...props} lacksCapability={(id) => presence.onNode(id) === 'absent'} />
+}
+
+function NodeSelectBody({
+  field,
+  value,
+  onChange,
+  disabled,
+  translationFn,
+  lacksCapability,
+}: NodeSelectBodyProps): JSX.Element | null {
   const t = useUiText()
   const { nodes } = useClusterNodesHook()
   const current = typeof value === 'string' ? value : ''
   const filtered = field.showOffline ? nodes : nodes.filter((n) => n.isOnline)
+  const optionLabel = (n: (typeof filtered)[number]): string => {
+    if (!n.isOnline) {
+      return t('uiLibrary.configFormField.nodeOffline', '{{name}} (offline)', {
+        name: n.shortName,
+      })
+    }
+    if (lacksCapability(n.id)) {
+      return t(
+        'uiLibrary.configFormField.nodeLacksCapability',
+        '{{name}} (not installed on this node)',
+        {
+          name: n.shortName,
+        },
+      )
+    }
+    return n.shortName
+  }
   return (
     <FieldWrapper
       label={field.label}
@@ -1002,12 +1052,8 @@ export function NodeSelectField({
       >
         <option value="">{t('uiLibrary.configFormField.selectNode', 'Select node…')}</option>
         {filtered.map((n) => (
-          <option key={n.id} value={n.id} disabled={!n.isOnline}>
-            {n.isOnline
-              ? n.shortName
-              : t('uiLibrary.configFormField.nodeOffline', '{{name}} (offline)', {
-                  name: n.shortName,
-                })}
+          <option key={n.id} value={n.id} disabled={!n.isOnline || lacksCapability(n.id)}>
+            {optionLabel(n)}
           </option>
         ))}
       </Select>

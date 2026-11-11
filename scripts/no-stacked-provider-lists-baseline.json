@@ -1,8 +1,4 @@
 {
   "_why": "Files that draw a second list or control of a collection next to its InstancesTable (planning#505). Each entry names the page work that deletes it. The list only shrinks.",
-  "families": {
-    "terminal": {
-      "packages/addon-admin-ui/src/pages/system/Terminal.tsx": "#505 item 5, deferred: the per-node presence card (ready / not installed / unknown) has no counterpart in InstancesTable yet and the legacy-cameras list carries a one-off Adopt BTM action; both need an InstancesTable empty-state/migration slot designed first"
-    }
-  }
+  "families": {}
 }

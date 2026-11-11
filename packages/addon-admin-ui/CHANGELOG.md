@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- System → Terminal is one table: the Nodes card and the legacy-cameras list are gone; a node without Terminal is offered disabled, with the reason, and legacy cameras are adopted with one button
 - The On/Off switch of an instance whose addon is not running is disabled and says "<addon> is not running: start it first"
 
 ### Removed

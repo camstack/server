@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A node picker field can name a capability; nodes without it are listed disabled with the reason
+
 ### Removed
 
 - Retired Hub device type: no live capability accepts it any more; the value stays readable for the hub-to-integration migrations

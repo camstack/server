@@ -43,10 +43,6 @@ const ALLOW: readonly { readonly suffix: string; readonly why: string }[] = [
     suffix: 'components/integrations/AdoptDevicesModal.tsx',
     why: 'adoption candidates, not fleet devices',
   },
-  {
-    suffix: 'pages/system/Terminal.tsx',
-    why: 'legacy terminal profiles — a name, a node and a profile, not a fleet device',
-  },
 ]
 
 const DISPLAY: readonly RegExp[] = [

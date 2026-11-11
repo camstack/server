@@ -153,7 +153,16 @@ export default defineFixtures({
     ],
     'terminalSession.listProfiles': PROFILES,
     'terminalSession.listSessions': [],
-    'terminalSession.listLegacyCameras': [],
+    'terminalSession.listLegacyCameras': [
+      {
+        stableId: 'terminal-camera-garage-nuc',
+        nodeId: 'garage-nuc',
+        profileId: 'monitor',
+        profileLabel: 'BTM',
+        name: 'Garage NUC monitor',
+        adoptable: true,
+      },
+    ],
     'integrationInstances.describe': (i: { addonId: string }) =>
       i.addonId === 'terminal'
         ? {
