@@ -57,10 +57,13 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { NC_OCCUPANCY_DEFAULTS, type RuleCameraOption } from './notification-condition-fields'
+import { declaredEventCandidates } from './declared-event-options'
 import type { DeviceFleetView } from './device-fleet-view'
+import type { RuleDeviceOption } from './rule-device-filter'
 import { DevicePicker } from './DevicePicker'
 import {
   OptionListField,
+  useDeclaredEventOptions,
   useEventKindOptions,
   usePlateSuggestions,
   useZoneOptions,
@@ -405,27 +408,65 @@ export function ZoneListField({ deviceIds, cameras, value, onChange }: ZoneListF
 
 interface EventTokensFieldProps {
   readonly deviceIds: readonly number[]
+  readonly cameras: readonly RuleCameraOption[]
+  /** Every device of the fleet: where a selected device's name is read. */
+  readonly allDevices?: readonly RuleDeviceOption[]
   readonly value: readonly string[]
   readonly onChange: (next: string[]) => void
 }
 
-/** Event-kind picker from the per-device kind catalogue. */
-export function EventTokensField({ deviceIds, value, onChange }: EventTokensFieldProps) {
+/**
+ * Event picker. A selected event device (a button, a remote) offers what it
+ * declares it can fire, first; the per-device kind catalogue follows.
+ */
+export function EventTokensField({
+  deviceIds,
+  cameras,
+  allDevices,
+  value,
+  onChange,
+}: EventTokensFieldProps) {
   const { t } = useTranslation()
-  const { options, loading } = useEventKindOptions(deviceIds)
+  const { options: kindOptions, loading } = useEventKindOptions(deviceIds)
+  const eventCandidates = useMemo(
+    () => declaredEventCandidates(deviceIds, cameras, allDevices),
+    [deviceIds, cameras, allDevices],
+  )
+  const declared = useDeclaredEventOptions(eventCandidates)
+  const options = useMemo(() => {
+    const offered = new Set(declared.options.map((o) => o.value))
+    return [...declared.options, ...kindOptions.filter((o) => !offered.has(o.value))]
+  }, [declared.options, kindOptions])
   return (
-    <OptionListField
-      options={options}
-      value={value}
-      onChange={onChange}
-      loading={loading}
-      emptyHint={
-        deviceIds.length === 0
-          ? 'Select cameras above to pick their event kinds — or type a token.'
-          : 'No event kinds reported for the selected cameras — type a token.'
-      }
-      placeholder={t('system.notificationConditionWidgets.eventToken', 'Event token…')}
-    />
+    <>
+      <OptionListField
+        options={options}
+        value={value}
+        onChange={onChange}
+        loading={loading || declared.pending}
+        emptyHint={
+          deviceIds.length === 0
+            ? t(
+                'system.notificationConditionWidgets.eventTokensSelectDevices',
+                'Select a device above to pick one of its events — or type a token.',
+              )
+            : t(
+                'system.notificationConditionWidgets.eventTokensNone',
+                'The selected devices declare no events — type a token.',
+              )
+        }
+        placeholder={t('system.notificationConditionWidgets.eventToken', 'Event token…')}
+      />
+      {declared.unknownDevices.length > 0 && (
+        <p className="mt-1 text-[10px] text-foreground-subtle">
+          {t(
+            'system.notificationConditionWidgets.eventTokensUnknown',
+            'Could not read the events of: {{devices}}. They are unknown, not absent.',
+            { devices: declared.unknownDevices.join(', ') },
+          )}
+        </p>
+      )}
+    </>
   )
 }
 

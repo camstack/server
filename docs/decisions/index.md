@@ -4,7 +4,7 @@
 
 # Decisions
 
-1010 architecture decision records. One file per decision, never
+1011 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1025,6 +1025,7 @@ that rots.
 | D1043 | [Block steps nest two levels, and a third level is refused at save](adr-1043-block-steps-nest-two-levels-and-the-third-is-refused-at-save.md) | ✅ accepted | 2026-11-11 |
 | D1044 | [An event-emitter declares its events in a typed vocabulary, under one category](adr-1044-an-event-emitter-declares-its-events-in-a-typed-vocabulary-under-one-category.md) | ✅ accepted | 2026-11-11 |
 | D1046 | [An addon route is addressed per instance, and the path without an instance is the default one](adr-1046-an-addon-route-is-addressed-per-instance-and-the-path-without-an-instance-is-the-default-one.md) | ✅ accepted | 2026-11-11 |
+| D1047 | [An OAuth link names its instance, and no instance means the default one](adr-1047-an-oauth-link-names-its-instance-and-no-instance-means-the-default-one.md) | ✅ accepted | 2026-11-11 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

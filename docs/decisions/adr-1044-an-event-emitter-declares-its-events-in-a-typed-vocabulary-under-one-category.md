@@ -72,6 +72,15 @@ closed list and a hand-rolled topic is forbidden (D8).
   (`mqtt-ha-device-trigger.ts`); its vocabulary is the actions announced so
   far. Because that list grows, an MQTT event device also lists an event it
   fired that its discovery record had not named, until its next restart.
+- **A notification rule names an event device and one of its events.** The
+  source is the event device itself, picked on the rule's Devices tab; the
+  event field then offers what that device declares
+  (`declared-event-options.ts`, one `event-emitter` slice read per selected
+  device that is not a camera). No camera has to link the device and
+  devices are not grouped under their remote. The engine was already able
+  to evaluate it: the fire is a `device-event` on the device alone, matched
+  by `devices` and `eventTypeTokens`. It matches the token, not the part of
+  the device that fired it.
 - **A press outside the declared vocabulary is delivered**, and Homematic
   says so in its log once per button and token, with the device tag.
 

@@ -1139,7 +1139,10 @@
       "secondsDefault": "s (predefinito {{value}})",
       "dbfsHint": "I dBFS vanno verso il negativo: 0 è il fondo scala, {{min}} è il silenzio — quindi un numero PIÙ ALTO è un filtro più stretto. Misurato su questo hub, il pianto di un neonato è tra −55 e −26 dBFS, quindi una soglia sopra −55 ne esclude la maggior parte. La finestra deve essere PIENA prima di poter corrispondere.",
       "frames": "fotogrammi",
-      "within": "entro"
+      "within": "entro",
+      "eventTokensSelectDevices": "Seleziona un dispositivo qui sopra per scegliere uno dei suoi eventi, oppure scrivi un token.",
+      "eventTokensNone": "I dispositivi selezionati non dichiarano eventi: scrivi un token.",
+      "eventTokensUnknown": "Impossibile leggere gli eventi di: {{devices}}. Sono sconosciuti, non assenti."
     },
     "notificationDigestFields": {
       "thisRuleCouldNeverProduce": "Questa regola non potrebbe mai produrre nulla, quindi non può essere salvata:",

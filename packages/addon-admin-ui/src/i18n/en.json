@@ -1139,7 +1139,10 @@
       "secondsDefault": "s (default {{value}})",
       "dbfsHint": "dBFS is negative-going: 0 is full scale, {{min}} is silence — so a HIGHER number is a narrower filter. Measured on this hub, a baby crying reads −55 to −26 dBFS, so a floor above −55 excludes most of it. The window must be FULL before it can match.",
       "frames": "frames",
-      "within": "within"
+      "within": "within",
+      "eventTokensSelectDevices": "Select a device above to pick one of its events — or type a token.",
+      "eventTokensNone": "The selected devices declare no events — type a token.",
+      "eventTokensUnknown": "Could not read the events of: {{devices}}. They are unknown, not absent."
     },
     "notificationDigestFields": {
       "thisRuleCouldNeverProduce": "This rule could never produce anything, so it cannot be saved:",

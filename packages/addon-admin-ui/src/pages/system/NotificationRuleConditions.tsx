@@ -523,6 +523,8 @@ function ConditionWidget({
         return (
           <EventTokensField
             deviceIds={deviceIds}
+            cameras={cameras}
+            {...(allDevices !== undefined ? { allDevices } : {})}
             value={readStringList(conditions, key)}
             onChange={onChange}
           />

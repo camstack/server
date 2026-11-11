@@ -5,7 +5,9 @@
  *   zones / zonesExclude → the `zones` cap, names shown, IDS stored
  *   identities           → the face gallery, display names (the engine matches
  *                          the collapsed label, i.e. the identity name)
- *   eventTypeTokens      → `pipelineAnalytics.listEventKinds` per device
+ *   eventTypeTokens      → what each selected event device declares it can
+ *                          fire (`declared-event-options.ts`), then
+ *                          `pipelineAnalytics.listEventKinds` per device
  *   plates               → known plate texts as one-click suggestions
  *
  * Every picker keeps the free-text escape hatch: a value the catalogue does
@@ -31,6 +33,11 @@ import { useQueries } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
 import type { RuleCameraOption } from './notification-condition-fields'
+import {
+  EVENT_EMITTER_CAP,
+  declaredEventOptions,
+  type DeclaredEventOptions,
+} from './declared-event-options'
 import { useTranslation } from 'react-i18next'
 
 export interface PickOption {
@@ -113,6 +120,42 @@ export function useEventKindOptions(deviceIds: readonly number[]): {
     options.sort((a, b) => a.label.localeCompare(b.label))
     return { options, loading: results.some((r) => r.isLoading) }
   }, [results])
+}
+
+/** A selected device that may be an event device, with the name it is shown under. */
+export interface DeclaredEventDevice {
+  readonly deviceId: number
+  readonly deviceName: string
+}
+
+/**
+ * The events the rule's own devices declare: one `event-emitter` slice read
+ * per selected device. A device with no such slice is simply not an event
+ * device; one whose read has not answered, or failed, is reported as such.
+ */
+export function useDeclaredEventOptions(
+  devices: readonly DeclaredEventDevice[],
+): DeclaredEventOptions {
+  const trpcClient = useSystem().trpcClient
+  const results = useQueries({
+    queries: devices.map(({ deviceId }) => ({
+      queryKey: [['nc-pickers', 'declared-events'], { deviceId }],
+      staleTime: 30_000,
+      queryFn: async (): Promise<Record<string, unknown> | null> =>
+        trpcClient.deviceState.getCapSlice.query({ deviceId, capName: EVENT_EMITTER_CAP }),
+    })),
+  })
+  return useMemo(
+    () =>
+      declaredEventOptions(
+        devices.map((device, index) => ({
+          ...device,
+          status: results[index]?.status ?? 'pending',
+          data: results[index]?.data,
+        })),
+      ),
+    [devices, results],
+  )
 }
 
 /**
