@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Customize offers the heater and fan roles on a switch and the climate roles (thermostat, AC, floor, radiator, heater, heat pump circuit) on a climate device; a composed heater can no longer be created, a switch with the heater role replaces it.
 - Customize labels for the fan-control card and its oscillation-axes section.
 - The fan preset editor sets speed, preset mode, direction and each oscillation axis directly, and Customize lists a fan’s axis links under their own section with readable titles.
+- The page of an event device (a remote, a button) lists each button with its labelled presses, and the last event names its button
+
 ### Added
 
 - The automation editor offers "Stop the run", "Set variables" and "Continue if this step fails"; a failed step the run passed over is shown red in the run trace
@@ -28,10 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automation editor: a Repeat step (a count, while/until a condition under a maximum, or once for each device); the run shows how many rounds ran and why the loop ended
 - Automations: inside a repeat over devices, a command step can run on the device of each round and offers the commands all the listed devices share
 - Automations: block steps (choose, repeat, at the same time, wait until) can be placed inside a branch or a repeat, one level deep; the run view shows their steps
-
-### Changed
-
-- The page of an event device (a remote, a button) lists each button with its labelled presses, and the last event names its button
 
 ## [1.2.644] - 2026-11-11
 
