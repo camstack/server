@@ -7,13 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Automations and step conditions can gate on the time of day with a new 'time is' condition, read on the site clock.
+
 ## [1.2.838] - 2026-11-11
 
 ### Changed
 
 - Rebuilt against updated dependencies.
-### Added
-- Automations and step conditions can gate on the time of day with a new 'time is' condition, read on the site clock.
 
 ## [1.2.837] - 2026-11-11
 

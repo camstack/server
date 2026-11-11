@@ -7,16 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.643] - 2026-11-11
 ### Added
+
 - Automation editor: a 'Time is' condition with its window (clock time or sun event with an offset) and weekdays; a sun-based window is refused at save when the site has no location.
 - Automation editor: the "Started by" condition picks among the automation's own trigger rows, in the rules and in a step's condition
 - Automation editor: a step argument can insert the device, the old value and the new value of a "device becomes" trigger
 
 ### Changed
 
-- Automation editor: each WHEN block draws its rows on a coloured rail of its own, so sibling and nested blocks are told apart; move arrows at an edge stay disabled and say why; the Ungroup button is gone.
 - The "Started by" condition is offered only inside an automation, not in a standalone action list or a scheduler
+
+## [1.2.643] - 2026-11-11
+
+### Changed
+
+- Automation editor: each WHEN block draws its rows on a coloured rail of its own, so sibling and nested blocks are told apart; move arrows at an edge stay disabled and say why; the Ungroup button is gone.
 
 ## [1.2.642] - 2026-11-11
 
