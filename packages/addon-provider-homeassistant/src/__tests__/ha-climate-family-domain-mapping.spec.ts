@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@camstack/types'
 import { mapHaEntityToCamStack, inferParentDeviceType } from '../ha-domain-mapping.js'
 
 describe('ha-domain-mapping — humidifier', () => {
@@ -39,15 +39,15 @@ describe('ha-domain-mapping — climate-family parent-type priority', () => {
     expect(inferParentDeviceType([wh])).toBe(DeviceType.WaterHeater)
   })
 
-  it('a device with both thermostat + humidifier infers Thermostat (Thermostat precedes Humidifier)', () => {
+  it('a device with both climate + humidifier infers Climate (Climate precedes Humidifier)', () => {
     const climate = mapHaEntityToCamStack({ domain: 'climate', deviceClass: null, attributes: {} })
     const humidifier = mapHaEntityToCamStack({
       domain: 'humidifier',
       deviceClass: null,
       attributes: {},
     })
-    expect(inferParentDeviceType([humidifier, climate])).toBe(DeviceType.Thermostat)
-    expect(inferParentDeviceType([climate, humidifier])).toBe(DeviceType.Thermostat)
+    expect(inferParentDeviceType([humidifier, climate])).toBe(DeviceType.Climate)
+    expect(inferParentDeviceType([climate, humidifier])).toBe(DeviceType.Climate)
   })
 
   it('humidifier precedes water_heater when a device owns both', () => {
@@ -75,5 +75,32 @@ describe('ha-domain-mapping — climate-family parent-type priority', () => {
     })
     expect(inferParentDeviceType([sensor, humidifier])).toBe(DeviceType.Humidifier)
     expect(inferParentDeviceType([sensor, wh])).toBe(DeviceType.WaterHeater)
+  })
+})
+
+// D1033 — a climate entity is a Climate device; the role says which thing it is.
+describe('ha-domain-mapping — climate role', () => {
+  const climate = (attributes: Record<string, unknown>) =>
+    mapHaEntityToCamStack({ domain: 'climate', deviceClass: null, attributes })
+
+  it('a heating-only entity is a climate thermostat', () => {
+    const m = climate({ hvac_modes: ['off', 'heat', 'auto'] })
+    expect(m?.deviceType).toBe(DeviceType.Climate)
+    expect(m?.role).toBe(DeviceRole.ClimateThermostat)
+  })
+
+  it('an entity that can cool is an air conditioner', () => {
+    expect(climate({ hvac_modes: ['off', 'cool', 'heat'] })?.role).toBe(DeviceRole.ClimateAc)
+    expect(climate({ hvac_modes: ['off', 'heat_cool'] })?.role).toBe(DeviceRole.ClimateAc)
+  })
+
+  it('an entity with fan modes is an air conditioner', () => {
+    expect(climate({ hvac_modes: ['heat'], fan_modes: ['auto', 'low', 'high'] })?.role).toBe(
+      DeviceRole.ClimateAc,
+    )
+  })
+
+  it('an entity without attributes defaults to a thermostat', () => {
+    expect(climate({})?.role).toBe(DeviceRole.ClimateThermostat)
   })
 })

@@ -98,7 +98,7 @@ const TWO_ENTITY_CONFIG = {
   entities: [
     {
       entityId: 'climate.studio',
-      deviceType: DeviceType.Thermostat,
+      deviceType: DeviceType.Climate,
       capabilities: ['climate-control'],
     },
     {

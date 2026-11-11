@@ -7,6 +7,7 @@ import {
   type IDevice,
 } from '@camstack/types'
 import { shcClimateEntityName } from '../shc-discovery.js'
+import { SHC_ROOM_CLIMATE_SUFFIX, shcClimateRole } from '../shc-domain-mapping.js'
 import { shcStableIdSuffixFromDeviceId } from '../shc-stable-id-suffix.js'
 import { shcDeviceSchema } from './shc-device-base.js'
 import { ShcRoomClimateDevice } from './shc-room-climate-device.js'
@@ -55,9 +56,10 @@ export class ShcClimateRoomDevice extends BaseDevice<typeof shcClimateRoomSchema
           ...(this.integrationId !== undefined ? { integrationId: this.integrationId } : {}),
         }
         return {
-          stableIdSuffix: 'climate',
+          stableIdSuffix: SHC_ROOM_CLIMATE_SUFFIX,
           meta: {
             type: DeviceType.Climate,
+            role: shcClimateRole('room-climate'),
             name: shcClimateEntityName(containerName),
             linkDeviceId: this.id,
             ...(this.integrationId !== undefined ? { integrationId: this.integrationId } : {}),
@@ -76,7 +78,8 @@ export class ShcClimateRoomDevice extends BaseDevice<typeof shcClimateRoomSchema
       return {
         stableIdSuffix: `trv-${shcStableIdSuffixFromDeviceId(child.shcDeviceId)}`,
         meta: {
-          type: DeviceType.Thermostat,
+          type: DeviceType.Climate,
+          role: shcClimateRole('trv'),
           name: child.name,
           linkDeviceId: this.id,
           ...(this.integrationId !== undefined ? { integrationId: this.integrationId } : {}),

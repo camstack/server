@@ -385,7 +385,7 @@ describe('adopt', () => {
     expect(adoptDevice).toHaveBeenNthCalledWith(2, {
       hmAddress: 'ABC0002',
       integrationId: 'int_1',
-      type: 'thermostat',
+      type: 'climate',
       name: 'Hallway Thermostat',
     })
 

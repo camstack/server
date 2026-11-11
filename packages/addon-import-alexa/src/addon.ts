@@ -32,11 +32,7 @@ import {
   VendorLoginProxy,
   isInstanceEnabled,
 } from '@camstack/types'
-import {
-  settingsToAlexaConnection,
-  type AlexaAddonConfig,
-  type AlexaConnection,
-} from './config.js'
+import { settingsToAlexaConnection, type AlexaAddonConfig, type AlexaConnection } from './config.js'
 import { AlexaDeviceCodeManager } from './alexa-device-code-manager.js'
 import { AlexaProxyLoginManager } from './alexa-proxy-login-manager.js'
 import { buildAlexaLoginRoutes } from './alexa-login-routes.js'
@@ -93,7 +89,7 @@ const ALEXA_DEVICE_TYPES: readonly DeviceType[] = [
   DeviceType.Light,
   DeviceType.Lock,
   DeviceType.Cover,
-  DeviceType.Thermostat,
+  DeviceType.Climate,
   DeviceType.Sensor,
   DeviceType.Button,
   DeviceType.Control,

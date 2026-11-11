@@ -128,7 +128,8 @@ export function mapMatterEndpointToCamStack(
 function deviceTypeForCaps(caps: readonly MatterEndpointCap[]): DeviceType {
   if (caps.includes('lock-control')) return DeviceType.Lock
   if (caps.includes('cover')) return DeviceType.Cover
-  if (caps.includes('climate-control')) return DeviceType.Thermostat
+  // D1033: a thermostat is a `climate` device; its role is the operator's to set.
+  if (caps.includes('climate-control')) return DeviceType.Climate
   if (caps.includes('color') || caps.includes('brightness')) return DeviceType.Light
   if (caps.includes('switch')) return DeviceType.Switch
   if (caps.includes('button')) return DeviceType.Button
@@ -156,7 +157,7 @@ const ENDPOINT_TYPE_LABEL: Partial<Record<DeviceType, string>> = {
   [DeviceType.Switch]: 'Switch',
   [DeviceType.Lock]: 'Lock',
   [DeviceType.Cover]: 'Cover',
-  [DeviceType.Thermostat]: 'Thermostat',
+  [DeviceType.Climate]: 'Thermostat',
   [DeviceType.Sensor]: 'Sensor',
   [DeviceType.Button]: 'Button',
   [DeviceType.Generic]: 'Endpoint',

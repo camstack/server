@@ -13,7 +13,6 @@ export const SUPPORTED_DEVICE_KINDS: readonly string[] = [
   'siren',
   'switch',
   'sensor',
-  'thermostat',
   'climate',
   'button',
   'event-emitter',

@@ -18,9 +18,9 @@ describe('mapHmChannel', () => {
     expect(mapping?.capabilities).toEqual(['cover'])
   })
 
-  it('maps HEATING_CLIMATECONTROL_TRANSCEIVER to a Thermostat with climate + sensor caps', () => {
+  it('maps HEATING_CLIMATECONTROL_TRANSCEIVER to a Climate device with climate + sensor caps', () => {
     const mapping = mapHmChannel('HEATING_CLIMATECONTROL_TRANSCEIVER')
-    expect(mapping?.deviceType).toBe(DeviceType.Thermostat)
+    expect(mapping?.deviceType).toBe(DeviceType.Climate)
     expect(mapping?.capabilities).toEqual([
       'climate-control',
       'temperature-sensor',
@@ -118,14 +118,14 @@ describe('inferHmDeviceType', () => {
     expect(inferHmDeviceType(device)).toBe(DeviceType.Cover)
   })
 
-  it('returns a Thermostat for a climate device (wins over its sensor caps)', () => {
+  it('returns Climate for a climate device (wins over its sensor caps)', () => {
     const device = {
       channels: [
         { address: 'WTH:0', index: 0, type: 'MAINTENANCE', dataPoints: [] },
         { address: 'WTH:1', index: 1, type: 'HEATING_CLIMATECONTROL_TRANSCEIVER', dataPoints: [] },
       ],
     }
-    expect(inferHmDeviceType(device)).toBe(DeviceType.Thermostat)
+    expect(inferHmDeviceType(device)).toBe(DeviceType.Climate)
   })
 
   it('returns a Lock for an HmIP-DLD', () => {

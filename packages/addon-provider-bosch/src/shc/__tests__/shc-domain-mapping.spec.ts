@@ -164,9 +164,9 @@ describe('shcKindForModel', () => {
 })
 
 describe('deviceTypeForShcKind', () => {
-  it('maps room-climate to Container and trv to Thermostat', () => {
+  it('maps room-climate to Container and trv to Climate', () => {
     expect(deviceTypeForShcKind('room-climate')).toBe(DeviceType.Container)
-    expect(deviceTypeForShcKind('trv')).toBe(DeviceType.Thermostat)
+    expect(deviceTypeForShcKind('trv')).toBe(DeviceType.Climate)
   })
 })
 

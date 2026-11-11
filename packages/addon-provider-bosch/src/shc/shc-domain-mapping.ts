@@ -1,4 +1,4 @@
-import { DeviceType, type ClimateControlStatus, type HvacMode } from '@camstack/types'
+import { DeviceRole, DeviceType, type ClimateControlStatus, type HvacMode } from '@camstack/types'
 import type { ShcDeviceKind, ShcDeviceSummary, ShcRoomClimateState } from './shc-types.js'
 
 const ROOM_CLIMATE_MODEL = 'ROOM_CLIMATE_CONTROL'
@@ -41,10 +41,38 @@ export function deviceTypeForShcKind(kind: Exclude<ShcDeviceKind, 'unsupported'>
     case 'room-climate':
       return DeviceType.Container
     case 'trv':
-      return DeviceType.Thermostat
+      return DeviceType.Climate
     case 'switch':
       return DeviceType.Switch
   }
+}
+
+/** D1033 — which climate device an SHC kind is: a valve is a radiator, a room a thermostat. */
+export function shcClimateRole(kind: 'trv' | 'room-climate'): DeviceRole {
+  return kind === 'trv' ? DeviceRole.ClimateRadiator : DeviceRole.ClimateThermostat
+}
+
+/** The room-climate accessory's stable-id suffix (`ShcClimateRoomDevice`). */
+export const SHC_ROOM_CLIMATE_SUFFIX = 'climate'
+
+/** What `shcClimateRowKind` reads of a persisted `climate` row. */
+export interface ShcClimateRow {
+  readonly stableId: string
+  readonly config?: Record<string, unknown>
+}
+
+/**
+ * D1033 — a valve and a room climate share the `climate` type, so a persisted
+ * row is told apart by its model when the config carries one, else by the
+ * room-climate accessory's stable-id suffix.
+ */
+export function shcClimateRowKind(row: ShcClimateRow): 'trv' | 'room-climate' {
+  const model = row.config?.['deviceModel']
+  if (typeof model === 'string') {
+    const kind = shcKindForModel(model)
+    if (kind === 'trv' || kind === 'room-climate') return kind
+  }
+  return row.stableId.endsWith(`-${SHC_ROOM_CLIMATE_SUFFIX}`) ? 'room-climate' : 'trv'
 }
 
 export function capsForShcKind(kind: Exclude<ShcDeviceKind, 'unsupported'>): readonly string[] {

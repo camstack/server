@@ -97,7 +97,7 @@ describe('buildHmCandidates', () => {
       adopted: new Map(),
     })
     const [first] = cands
-    expect(first?.type).toBe(DeviceType.Thermostat)
+    expect(first?.type).toBe(DeviceType.Climate)
     expect(first?.capabilities).toEqual(
       expect.arrayContaining(['climate-control', 'temperature-sensor', 'humidity-sensor']),
     )

@@ -319,7 +319,6 @@ const ACCESSORY_CATEGORY_BY_TYPE: Partial<Record<DeviceType, Categories>> = {
   [DeviceType.Switch]: Categories.SWITCH,
   [DeviceType.Light]: Categories.LIGHTBULB,
   [DeviceType.Siren]: Categories.SWITCH,
-  [DeviceType.Heater]: Categories.SWITCH,
   [DeviceType.Lock]: Categories.DOOR_LOCK,
   [DeviceType.Sensor]: Categories.SENSOR,
   [DeviceType.Presence]: Categories.SENSOR,

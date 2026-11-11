@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Echo targets no longer have a Respect Do Not Disturb switch: high priority speaks over DND, normal follows it. A target that had the switch OFF used to speak every notification during DND; now its normal-priority notifications stay quiet then (send them as high priority to keep them). The update logs those targets by name and removes the stored setting.
+- An Alexa thermostat is imported as a climate device.
 
 ## [0.2.202] - 2026-11-10
 

@@ -100,7 +100,8 @@ export function mapAlexaCapabilitiesToCamStack(
 function deviceTypeForCaps(caps: readonly AlexaCap[]): DeviceType {
   if (caps.includes('lock-control')) return DeviceType.Lock
   if (caps.includes('cover')) return DeviceType.Cover
-  if (caps.includes('climate-control')) return DeviceType.Thermostat
+  // D1033: a thermostat is a `climate` device; its role is the operator's to set.
+  if (caps.includes('climate-control')) return DeviceType.Climate
   if (caps.includes('color') || caps.includes('brightness')) return DeviceType.Light
   if (caps.includes('switch')) return DeviceType.Switch
   if (caps.includes('button')) return DeviceType.Button

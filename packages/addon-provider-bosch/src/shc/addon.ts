@@ -4,6 +4,7 @@ import {
   type ConfigUISchema,
   type CreateDeviceSpec,
   integrationInstancesCapability,
+  type DeviceClassRow,
   type DeviceConstructor,
   type DeviceSummary,
   type DiscoveryCandidate,
@@ -21,6 +22,7 @@ import {
   rowsDepsOver,
 } from '@camstack/types'
 import { boschShcActions } from './custom-actions.js'
+import { shcClimateRowKind } from './shc-domain-mapping.js'
 import {
   buildShcInstances,
   SHC_MIGRATIONS,
@@ -63,9 +65,16 @@ export class BoschShcProviderAddon extends BaseDeviceProvider {
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
     [DeviceType.Gateway]: ShcGatewayDevice,
     [DeviceType.Container]: ShcClimateRoomDevice,
-    [DeviceType.Climate]: ShcRoomClimateDevice,
-    [DeviceType.Thermostat]: ShcTrvDevice,
+    [DeviceType.Climate]: ShcTrvDevice,
     [DeviceType.Switch]: ShcSwitchDevice,
+  }
+
+  /** D1033 — a valve and a room climate are both `climate`: rebuild each with its class. */
+  protected override deviceClassForRow(
+    row: DeviceClassRow,
+  ): DeviceConstructor<IDevice> | undefined {
+    if (row.type !== DeviceType.Climate) return super.deviceClassForRow(row)
+    return shcClimateRowKind(row) === 'room-climate' ? ShcRoomClimateDevice : ShcTrvDevice
   }
 
   private clients: ShcClientRegistry | null = null

@@ -32,7 +32,7 @@ describe('mapAlexaCapabilitiesToCamStack', () => {
       capabilities: ['lock-control'],
     })
     expect(mapAlexaCapabilitiesToCamStack(['Alexa.ThermostatController'])).toEqual({
-      deviceType: DeviceType.Thermostat,
+      deviceType: DeviceType.Climate,
       capabilities: ['climate-control'],
     })
     expect(mapAlexaCapabilitiesToCamStack(['Alexa.ContactSensor'])).toEqual({

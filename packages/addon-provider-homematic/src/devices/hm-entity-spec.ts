@@ -74,7 +74,7 @@ function actuatorInfo(
     case 'lock':
       return { kind: 'lock', capName: 'lock-control', type: DeviceType.Lock }
     case 'climate':
-      return { kind: 'climate', capName: 'climate-control', type: DeviceType.Thermostat }
+      return { kind: 'climate', capName: 'climate-control', type: DeviceType.Climate }
     default:
       return null
   }
@@ -85,14 +85,34 @@ function actuatorInfo(
  * tilt), a plain `cover` entity is the roller shutter (HmIP-BROLL). Exporters
  * read it; every other actuator has no role.
  */
-function actuatorRole(kind: HmCustomEntity['kind']): DeviceRole | null {
+function actuatorRole(kind: HmCustomEntity['kind'], model: string | undefined): DeviceRole | null {
   if (kind === 'blind') return DeviceRole.CoverBlind
   if (kind === 'cover') return DeviceRole.CoverShutter
+  if (kind === 'climate') return climateRoleOfModel(model)
   return null
 }
 
+/** Radiator valves: HmIP-eTRV-* and the classic HM-CC-RT-DN. */
+const RADIATOR_MODEL = /eTRV|HM-CC-RT-DN/i
+/** Floor-heating actuators: HmIP-FAL* / HmIP-FALMOT-*. */
+const FLOOR_MODEL = /FAL/i
+
+/**
+ * D1033 — which climate device a Homematic model is. A radiator valve and a
+ * floor-heating actuator are told apart by model; a wall thermostat, a
+ * heating group and an unknown model are thermostats.
+ */
+function climateRoleOfModel(model: string | undefined): DeviceRole {
+  if (model !== undefined && RADIATOR_MODEL.test(model)) return DeviceRole.ClimateRadiator
+  if (model !== undefined && FLOOR_MODEL.test(model)) return DeviceRole.ClimateFloor
+  return DeviceRole.ClimateThermostat
+}
+
 /** Actuator specs from the library's typed custom entities (correct channel). */
-function deriveActuatorSpecs(customEntities: readonly HmCustomEntity[]): HmEntitySpec[] {
+function deriveActuatorSpecs(
+  customEntities: readonly HmCustomEntity[],
+  model: string | undefined,
+): HmEntitySpec[] {
   const out: HmEntitySpec[] = []
   for (const entity of customEntities) {
     const info = actuatorInfo(entity.kind)
@@ -100,7 +120,7 @@ function deriveActuatorSpecs(customEntities: readonly HmCustomEntity[]): HmEntit
     out.push({
       key: `act-${entity.channel}`,
       deviceType: info.type,
-      role: actuatorRole(entity.kind),
+      role: actuatorRole(entity.kind, model),
       capabilities: [info.capName],
       name: `${entity.kind} ${entity.channel}`,
       config: { channel: entity.channel, kind: info.kind, capabilities: [info.capName] },
@@ -210,7 +230,8 @@ function deriveUpdateSpec(
 export type HmEntitySpecSource = Pick<
   HmDevice,
   'address' | 'channels' | 'firmware' | 'availableFirmware' | 'updatable' | 'firmwareUpdateState'
->
+> &
+  Partial<Pick<HmDevice, 'type'>>
 
 /**
  * Derive the full per-entity spec list for a single Homematic device. ONE pure
@@ -223,7 +244,7 @@ export function deriveHmEntitySpecs(
   customEntities: readonly HmCustomEntity[],
 ): readonly HmEntitySpec[] {
   return [
-    ...deriveActuatorSpecs(customEntities),
+    ...deriveActuatorSpecs(customEntities, device.type),
     ...deriveSensorAndEventSpecs(device),
     ...deriveDiagnosticSpecs(device, device.address),
     ...deriveUpdateSpec(device),

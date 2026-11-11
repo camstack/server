@@ -330,9 +330,7 @@ describe('customize declaration guard', () => {
       DeviceType.Humidifier,
       DeviceType.Fan,
       DeviceType.Climate,
-      DeviceType.Thermostat,
       DeviceType.PetFeeder,
-      DeviceType.Heater,
     ])
     expect(runningTypes).not.toContain(DeviceType.Camera)
   })

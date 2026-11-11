@@ -4,6 +4,7 @@ import {
   climateControlCapability,
   type ClimateControlStatus,
   type DeviceContext,
+  DeviceRole,
   type HvacMode,
   type InferNativeProvider,
 } from '@camstack/types'
@@ -46,7 +47,11 @@ export class HomeComClimateDevice extends BaseDevice<typeof homeComClimateSchema
 
   constructor(ctx: DeviceContext) {
     const persisted = homeComClimateSchema.parse(ctx.persistedConfig ?? {})
-    super(ctx, homeComClimateSchema, { type: ctx.deviceMeta.type })
+    // D1033 — a HomeCom circuit is a heat-pump circuit; the role fills a row that has none.
+    super(ctx, homeComClimateSchema, {
+      type: ctx.deviceMeta.type,
+      role: DeviceRole.ClimateHeatPumpCircuit,
+    })
     this.#brokerId = persisted.brokerId
     this.#circuitId = persisted.circuitId
     this.online = true

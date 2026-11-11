@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Gree air conditioners carry the air-conditioner role.
+
 ## [0.2.157] - 2026-11-10
 
 ### Changed

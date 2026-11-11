@@ -9,6 +9,7 @@ import {
   buildRoomClimateModeBodies,
   buildRoomClimatePutBody,
   mapRoomClimateStateToSlice,
+  shcClimateRole,
 } from '../shc-domain-mapping.js'
 import type { ShcRoomClimateState } from '../shc-types.js'
 import { applyPersistedClimateTempStep } from '../shc-climate-temp-step.js'
@@ -37,7 +38,7 @@ const COLD_START: ClimateControlStatus = {
 
 export class ShcRoomClimateDevice extends ShcBaseDevice {
   constructor(ctx: DeviceContext) {
-    super(ctx)
+    super(ctx, shcClimateRole('room-climate'))
   }
 
   protected override registerCaps(): void {

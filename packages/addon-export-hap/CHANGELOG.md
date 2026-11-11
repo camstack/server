@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- HomeKit no longer has a separate heater device type; a plug-in heater is a switch with the heater role and keeps the switch tile.
+
 ## [1.2.198] - 2026-11-08
 
 ### Changed

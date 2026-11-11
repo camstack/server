@@ -51,9 +51,9 @@ describe('mapMatterEndpointToCamStack', () => {
     expect(mapping.deviceType).toBe(DeviceType.Generic)
   })
 
-  it('maps Thermostat → climate-control (Thermostat device)', () => {
+  it('maps Thermostat → climate-control (a climate device, D1033)', () => {
     expect(mapMatterEndpointToCamStack([MatterClusterId.Thermostat])).toEqual({
-      deviceType: DeviceType.Thermostat,
+      deviceType: DeviceType.Climate,
       capabilities: ['climate-control'],
     })
   })

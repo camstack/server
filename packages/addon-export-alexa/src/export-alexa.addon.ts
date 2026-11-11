@@ -108,8 +108,7 @@ const SUPPORTED_KINDS: readonly string[] = [
   DeviceType.Sensor,
   DeviceType.Lock,
   DeviceType.Presence,
-  DeviceType.Thermostat,
-  // D874: an air conditioner (Gree) is a `climate` device, not a thermostat.
+  // D874 / D1033: every thermostat and air conditioner is a `climate` device.
   DeviceType.Climate,
   // D869: blinds, shutters, awnings, curtains (a garage door or gate is selectable
   // but withheld until the confirmation-gated phase).

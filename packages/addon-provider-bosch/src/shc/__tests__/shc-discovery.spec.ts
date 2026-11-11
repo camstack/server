@@ -56,7 +56,7 @@ describe('buildShcCandidates', () => {
     expect(climateChild?.type).toBe(DeviceType.Climate)
     expect(climateChild?.capabilities).toContain('climate-control')
     const trvChild = container?.children?.find((c) => c.childNativeId === trv.id)
-    expect(trvChild?.type).toBe(DeviceType.Thermostat)
+    expect(trvChild?.type).toBe(DeviceType.Climate)
     expect(trvChild?.capabilities).toEqual(
       expect.arrayContaining(['temperature-sensor', 'battery', 'heating-valve']),
     )
@@ -66,7 +66,7 @@ describe('buildShcCandidates', () => {
     expect(switchCand?.capabilities).toContain('switch')
   })
 
-  it('keeps standalone TRV as top-level Thermostat with sensor caps', () => {
+  it('keeps standalone TRV as top-level Climate with sensor caps', () => {
     const standalone: ShcDeviceSummary = {
       id: 'hdm1:trv2',
       deviceModel: 'TRV_GEN2_DUAL',
@@ -78,7 +78,7 @@ describe('buildShcCandidates', () => {
       adopted: new Map(),
     })
     expect(candidates).toHaveLength(1)
-    expect(candidates[0]?.type).toBe(DeviceType.Thermostat)
+    expect(candidates[0]?.type).toBe(DeviceType.Climate)
     expect(candidates[0]?.capabilities).toEqual(
       expect.arrayContaining(['temperature-sensor', 'battery', 'heating-valve']),
     )

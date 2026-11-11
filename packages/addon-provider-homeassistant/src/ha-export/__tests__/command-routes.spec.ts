@@ -1190,7 +1190,7 @@ describe('resolveCommand — the derived half', () => {
 
     const target: CommandTarget = {
       deviceId: 900,
-      type: 'thermostat',
+      type: 'climate',
       boundCaps: ['climate-control'],
     }
 
@@ -1262,7 +1262,7 @@ describe('resolveCommand — the derived half', () => {
     })
     const climate: CommandTarget = {
       deviceId: 901,
-      type: 'thermostat',
+      type: 'climate',
       boundCaps: ['climate-control'],
     }
     expect(resolveCommand(climate, 'climate_control', 'turbo')).toEqual({

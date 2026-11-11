@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Home Assistant climate entities are now climate devices: one with cooling or fan modes gets the air-conditioner role, any other the thermostat role. The Home Assistant export no longer offers a separate thermostat type.
+
 ## [1.2.679] - 2026-11-11
 
 ### Changed

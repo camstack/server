@@ -79,12 +79,13 @@ const GREE = slice({
   tempStep: 1,
 })
 
-function build(type: string, climate: unknown, features: readonly string[] = []) {
+function build(role: string | null, climate: unknown, features: readonly string[] = []) {
   return buildGenericDeviceEndpoint({
     deviceId: 7,
     stableId: 's7',
     name: 'Clima',
-    type,
+    type: 'climate',
+    role,
     capNames: ['climate-control'],
     features,
     slices: { 'climate-control': climate },
@@ -97,9 +98,9 @@ function plain(value: unknown): unknown {
 
 describe('climate discovery: golden endpoints', () => {
   const CASES: Record<string, ReturnType<typeof build>> = {
-    haHeatOnly: build('thermostat', HEAT_ONLY),
-    haHeatCoolRange: build('thermostat', HEAT_COOL),
-    greeAc: build('climate', GREE),
+    haHeatOnly: build('climate-thermostat', HEAT_ONLY),
+    haHeatCoolRange: build('climate-thermostat', HEAT_COOL),
+    greeAc: build('climate-ac', GREE),
   }
   for (const [name, endpoint] of Object.entries(CASES)) {
     it(`${name} equals the golden JSON and passes the Amazon validator`, () => {
@@ -111,6 +112,19 @@ describe('climate discovery: golden endpoints', () => {
   it('a thermostat is THERMOSTAT, an air conditioner AIR_CONDITIONER', () => {
     expect(CASES['haHeatOnly']?.displayCategories).toEqual(['THERMOSTAT'])
     expect(CASES['greeAc']?.displayCategories).toEqual(['AIR_CONDITIONER'])
+  })
+
+  // D1033: one `climate` type; the role says which thing it is. Only an AC is
+  // an AIR_CONDITIONER — a heat-pump circuit, a radiator, a floor loop and a
+  // climate with no role yet are all published as a THERMOSTAT.
+  it.each([
+    ['climate-heat-pump-circuit'],
+    ['climate-radiator'],
+    ['climate-floor'],
+    ['climate-heater'],
+    [null],
+  ])('a climate device with role %s is a THERMOSTAT', (role) => {
+    expect(build(role, HEAT_ONLY)?.displayCategories).toEqual(['THERMOSTAT'])
   })
 
   it('a heat-only thermostat declares only targetSetpoint and HEAT / OFF', () => {
@@ -189,7 +203,8 @@ describe('climate discovery: golden endpoints', () => {
       deviceId: 7,
       stableId: 's7',
       name: 'Clima',
-      type: 'thermostat',
+      type: 'climate',
+      role: 'climate-thermostat',
       capNames: ['climate-control'],
       features: ['climate-dual-setpoint'],
     })
@@ -203,7 +218,8 @@ describe('climate discovery: golden endpoints', () => {
       deviceId: 7,
       stableId: 's7',
       name: 'Clima',
-      type: 'thermostat',
+      type: 'climate',
+      role: 'climate-thermostat',
       capNames: ['climate-control', 'temperature-sensor'],
       slices: { 'climate-control': HEAT_ONLY },
     })
@@ -221,8 +237,20 @@ describe('climate discovery: golden endpoints', () => {
     const info = vi.fn()
     const ctx = fakeBuildContext(
       [
-        { id: 21, name: 'Salotto', type: 'thermostat', capNames: ['climate-control'] },
-        { id: 22, name: 'Camera', type: 'climate', capNames: ['climate-control'] },
+        {
+          id: 21,
+          name: 'Salotto',
+          type: 'climate',
+          role: 'climate-thermostat',
+          capNames: ['climate-control'],
+        },
+        {
+          id: 22,
+          name: 'Camera',
+          type: 'climate',
+          role: 'climate-ac',
+          capNames: ['climate-control'],
+        },
       ],
       { api: { deviceState: { getCapSlice: { query: async () => GREE } } } },
     )

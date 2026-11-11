@@ -52,7 +52,7 @@ const MQTT_HA_DEVICE_TYPES: readonly DeviceType[] = [
   DeviceType.Switch,
   DeviceType.Light,
   DeviceType.Sensor,
-  DeviceType.Thermostat,
+  DeviceType.Climate,
   DeviceType.EventEmitter,
   DeviceType.Container,
 ]

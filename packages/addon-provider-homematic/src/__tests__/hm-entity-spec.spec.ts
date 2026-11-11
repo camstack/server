@@ -113,7 +113,7 @@ describe('deriveHmEntitySpecs', () => {
 
     // Actuator (climate) from the custom entity.
     const act = byKey.get(`act-${ADDR}:1`)
-    expect(act?.deviceType).toBe(DeviceType.Thermostat)
+    expect(act?.deviceType).toBe(DeviceType.Climate)
     expect(act?.capabilities).toEqual(['climate-control'])
     expect(act?.config['channel']).toBe(`${ADDR}:1`)
     expect(act?.config['kind']).toBe('climate')
@@ -165,6 +165,23 @@ describe('deriveHmEntitySpecs', () => {
     expect(events[0]?.key).toBe('events')
     expect(events[0]?.capabilities).toEqual(['event-emitter'])
     expect(events[0]?.config['eventTypes']).toEqual(['PRESS_SHORT', 'PRESS_LONG'])
+  })
+
+  // D1033 — a Homematic climate actuator is a Climate device; the model says which.
+  it.each([
+    ['HmIP-eTRV-C', DeviceRole.ClimateRadiator],
+    ['HmIP-eTRV-2', DeviceRole.ClimateRadiator],
+    ['HM-CC-RT-DN', DeviceRole.ClimateRadiator],
+    ['HmIP-FALMOT-C12', DeviceRole.ClimateFloor],
+    ['HmIP-FAL230-C10', DeviceRole.ClimateFloor],
+    ['HmIP-WTH-2', DeviceRole.ClimateThermostat],
+    ['HmIP-BWTH', DeviceRole.ClimateThermostat],
+    ['HmIP-HEATING', DeviceRole.ClimateThermostat],
+  ])('a %s climate actuator has the role %s', (model, role) => {
+    const device = { ...makeBatteryThermostat(), type: model }
+    const act = deriveHmEntitySpecs(device, [climateEntity()]).find((s) => s.key.startsWith('act-'))
+    expect(act?.deviceType).toBe(DeviceType.Climate)
+    expect(act?.role).toBe(role)
   })
 
   it('derives NO actuator spec when no custom entities are passed (preview/facade-less)', () => {

@@ -1,6 +1,7 @@
 import {
   BaseDevice,
   DeviceFeature,
+  DeviceRole,
   DeviceType,
   errMsg,
   type AccessoryChildSpec,
@@ -231,6 +232,7 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {
     const meta: AccessoryChildSpec['meta'] = {
       type: DeviceType.Climate,
+      role: DeviceRole.ClimateAc,
       name: this.name,
       linkDeviceId: this.id,
       ...(this.integrationId !== undefined ? { integrationId: this.integrationId } : {}),

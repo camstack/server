@@ -145,6 +145,13 @@ export function toDeviceSummary(device: IDevice, addonId: string): DeviceSummary
 
 // ── Base class ──────────────────────────────────────────────────────
 
+/** What `deviceClassForRow` sees of a persisted row. */
+export interface DeviceClassRow {
+  readonly type: string
+  readonly stableId: string
+  readonly config?: Record<string, unknown>
+}
+
 /**
  * Base class for device-provider addons (rtsp, onvif).
  *
@@ -655,8 +662,7 @@ export abstract class BaseDeviceProvider<
         `${this.providerName}: no persisted meta for "${stableId}" (id ${id}) — cannot reload`,
       )
     }
-    const deviceType = Object.values(DeviceType).find((t) => t === meta.type)
-    const Class = deviceType !== undefined ? this.deviceClasses[deviceType] : undefined
+    const Class = this.deviceClassForRow({ type: meta.type, stableId })
     if (!Class) {
       throw new Error(
         `${this.providerName}: no device class for type "${meta.type}" — ` +
@@ -674,8 +680,7 @@ export abstract class BaseDeviceProvider<
     })
     for (const row of rows) {
       if (row.parentDeviceId !== id) continue
-      const childType = Object.values(DeviceType).find((t) => t === row.type)
-      const ChildClass = childType !== undefined ? this.deviceClasses[childType] : undefined
+      const ChildClass = this.deviceClassForRow(row)
       if (!ChildClass) continue
       try {
         await devices.create(row.stableId, ChildClass, {}, id)
@@ -713,6 +718,17 @@ export abstract class BaseDeviceProvider<
    * top-level type → class map only handles parent devices.
    */
   protected abstract readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>>
+
+  /**
+   * The class a PERSISTED row is rebuilt with. Default: by type, from
+   * `deviceClasses`. A provider whose distinct devices share one type (D1033:
+   * a radiator valve and a room climate are both `climate`) overrides this
+   * and tells them apart by the row's stable id or config.
+   */
+  protected deviceClassForRow(row: DeviceClassRow): DeviceConstructor<IDevice> | undefined {
+    const type = Object.values(DeviceType).find((t) => t === row.type)
+    return type !== undefined ? this.deviceClasses[type] : undefined
+  }
 
   /** Return the creation form schema for a given device type, or null if unsupported. */
   protected abstract onGetCreationSchema(
@@ -816,7 +832,7 @@ export abstract class BaseDeviceProvider<
         restored.add(saved.id)
         return
       }
-      const Class = this.deviceClasses[saved.type] as DeviceConstructor<IDevice> | undefined
+      const Class = this.deviceClassForRow(saved)
       if (!Class) {
         throw new Error(`no device class registered for type "${saved.type}"`)
       }
@@ -850,7 +866,7 @@ export abstract class BaseDeviceProvider<
     // and skipped — it must not reject the fan-out (D167).
     const topLevel = savedDevices.filter((saved) => saved.parentDeviceId === null)
     const restoreOne = async (saved: SavedDevice): Promise<void> => {
-      const Class = this.deviceClasses[saved.type] as DeviceConstructor<IDevice> | undefined
+      const Class = this.deviceClassForRow(saved)
       if (!Class) {
         this.ctx.logger.warn('No device class registered for restored type — skipping', {
           tags: { deviceId: saved.id, stableId: saved.stableId },
@@ -885,7 +901,7 @@ export abstract class BaseDeviceProvider<
     // declared `parentDeviceId` to handle nested hubs gracefully.
     const childRows = savedDevices.filter((s) => s.parentDeviceId !== null)
     for (const saved of childRows) {
-      const Class = this.deviceClasses[saved.type] as DeviceConstructor<IDevice> | undefined
+      const Class = this.deviceClassForRow(saved)
       if (!Class) continue // not a first-class type → accessory, skip
       if (saved.parentDeviceId === null) continue
       if (restored.has(saved.parentDeviceId)) {

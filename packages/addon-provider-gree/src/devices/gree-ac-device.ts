@@ -8,6 +8,7 @@ import {
   type ConfigUISchemaWithValues,
   type DeviceContext,
   DeviceFeature,
+  DeviceRole,
   errMsg,
   type FanControlStatus,
   fanControlCapability,
@@ -153,7 +154,7 @@ export class GreeAcDevice extends BaseDevice<typeof greeAcSchema> {
 
   constructor(ctx: DeviceContext) {
     const persisted = greeAcSchema.parse(ctx.persistedConfig ?? {})
-    super(ctx, greeAcSchema, { type: ctx.deviceMeta.type })
+    super(ctx, greeAcSchema, { type: ctx.deviceMeta.type, role: DeviceRole.ClimateAc })
     this.greeMac = persisted.greeMac
     this.connectionKey = persisted.connectionKey
     this.online = true

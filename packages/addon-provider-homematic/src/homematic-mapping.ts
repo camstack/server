@@ -68,7 +68,7 @@ export function mapHmChannel(channelType: string | undefined): HmChannelMapping 
     // wall thermostats also report HUMIDITY → humidity-sensor cap.
     case 'HEATING_CLIMATECONTROL_TRANSCEIVER':
       return {
-        deviceType: DeviceType.Thermostat,
+        deviceType: DeviceType.Climate,
         role: null,
         capabilities: ['climate-control', 'temperature-sensor', 'humidity-sensor'],
       }
@@ -130,12 +130,12 @@ export function mapHmChannel(channelType: string | undefined): HmChannelMapping 
  * from the union of its channel mappings. Actuators win over sensors so
  * a switch + energy-meter device (HmIP-BSM) reports as a Switch, not a
  * Sensor, and a thermostat with a humidity sensor reports as a
- * Thermostat. A remote/wall-switch is primarily an EventEmitter: it is
+ * Climate device (D1033). A remote/wall-switch is primarily an EventEmitter: it is
  * ranked above Sensor so its battery / maintenance sensor channels don't
  * win the parent type. Returns `DeviceType.Generic` when no channel maps.
  */
 const PARENT_TYPE_PRIORITY: readonly DeviceType[] = [
-  DeviceType.Thermostat,
+  DeviceType.Climate,
   DeviceType.Lock,
   DeviceType.Cover,
   DeviceType.Light,

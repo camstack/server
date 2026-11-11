@@ -433,11 +433,32 @@ function mapClimate(attributes: Record<string, unknown>): HaEntityMapping {
     if ((sf & 16) !== 0) features.push(DeviceFeature.ClimatePreset)
   }
   return {
-    deviceType: DeviceType.Thermostat,
-    role: null,
+    deviceType: DeviceType.Climate,
+    role: climateRoleFor(attributes),
     capabilities: ['climate-control'],
     features,
   }
+}
+
+/** HVAC modes that only an air conditioner offers. */
+const COOLING_HVAC_MODES: ReadonlySet<string> = new Set(['cool', 'heat_cool', 'dry'])
+
+/**
+ * D1033 — which climate device this is. An entity that can cool, or that
+ * has fan modes, is an air conditioner; anything else is a thermostat. The
+ * role lands only on a row that has none, so an operator's pick survives.
+ */
+function climateRoleFor(attributes: Record<string, unknown>): DeviceRole {
+  const hvacModes = readStringListAttr(attributes, 'hvac_modes')
+  if (hvacModes.some((mode) => COOLING_HVAC_MODES.has(mode))) return DeviceRole.ClimateAc
+  if (readStringListAttr(attributes, 'fan_modes').length > 0) return DeviceRole.ClimateAc
+  return DeviceRole.ClimateThermostat
+}
+
+function readStringListAttr(attributes: Record<string, unknown>, key: string): readonly string[] {
+  const value = attributes[key]
+  if (!Array.isArray(value)) return []
+  return value.filter((entry): entry is string => typeof entry === 'string')
 }
 
 // ── Media player mapping ────────────────────────────────────────────────
@@ -812,14 +833,13 @@ function readNumericAttr(attributes: Record<string, unknown>, key: string): numb
 const PARENT_TYPE_PRIORITY: readonly DeviceType[] = [
   DeviceType.MediaPlayer,
   DeviceType.AlarmPanel,
-  DeviceType.Thermostat,
-  // Air-conditioner shares the climate-control surface with Thermostat; same
-  // precedence tier so an AC child wins over a container's auxiliary switches
-  // (mirrors PRIORITY in ui-library primary-child.ts).
+  // Every climate entity (thermostat, AC, radiator …) is a Climate device
+  // (D1033); it wins over a container's auxiliary switches (mirrors PRIORITY
+  // in ui-library primary-child.ts).
   DeviceType.Climate,
   // Humidifier / water heater are climate-family actuators; placed just after
-  // Thermostat so a device owning both a thermostat and a humidifier prefers
-  // Thermostat, while a humidifier-only / water-heater-only device infers its
+  // Climate so a device owning both a climate and a humidifier prefers
+  // Climate, while a humidifier-only / water-heater-only device infers its
   // own type.
   DeviceType.Humidifier,
   DeviceType.WaterHeater,

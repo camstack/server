@@ -1,5 +1,11 @@
 import { z } from 'zod'
-import { BaseDevice, errMsg, type DeviceContext, type DeviceFeature } from '@camstack/types'
+import {
+  BaseDevice,
+  errMsg,
+  type DeviceContext,
+  type DeviceFeature,
+  type DeviceRole,
+} from '@camstack/types'
 import { shcConnections } from '../shc-gateway.js'
 import type { ShcClient } from '../shc-client.js'
 
@@ -23,9 +29,12 @@ export abstract class ShcBaseDevice extends BaseDevice<typeof shcDeviceSchema> {
 
   private stateUnsub: (() => void) | null = null
 
-  protected constructor(ctx: DeviceContext) {
+  protected constructor(ctx: DeviceContext, role?: DeviceRole) {
     const persisted = shcDeviceSchema.parse(ctx.persistedConfig ?? {})
-    super(ctx, shcDeviceSchema, { type: ctx.deviceMeta.type })
+    super(ctx, shcDeviceSchema, {
+      type: ctx.deviceMeta.type,
+      ...(role !== undefined ? { role } : {}),
+    })
     this.shcDeviceId = persisted.shcDeviceId
     this.brokerId = persisted.brokerId
     this.deviceModel = persisted.deviceModel

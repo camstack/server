@@ -199,7 +199,7 @@ describe('what the device says about itself', () => {
   it('carries the modes THIS thermostat accepts, from its slice', () => {
     const plan = buildDerivedPlan(
       device({
-        type: 'thermostat',
+        type: 'climate',
         boundCaps: ['climate-control'],
         slices: ['climate-control'],
         capSlices: {
@@ -381,7 +381,7 @@ describe('the two tables agree', () => {
 
     const plan = buildDerivedPlan(
       device({
-        type: 'thermostat',
+        type: 'climate',
         boundCaps: ['climate-control'],
         slices: ['climate-control'],
       }),

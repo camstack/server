@@ -128,9 +128,9 @@ describe('mapping by component + device_class', () => {
     ])
   })
 
-  it('radiator valve: Thermostat with climate-control and battery', () => {
+  it('radiator valve: Climate with climate-control and battery', () => {
     const { plan } = planOf(thermostatMessages())
-    expect(plan.deviceType).toBe(DeviceType.Thermostat)
+    expect(plan.deviceType).toBe(DeviceType.Climate)
     expect(plan.capabilities).toEqual(['climate-control', 'battery'])
   })
 

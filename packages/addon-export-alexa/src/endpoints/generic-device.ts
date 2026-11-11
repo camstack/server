@@ -33,18 +33,17 @@ import type { AlexaEndpoint } from './types.js'
 
 export const GENERIC_ENDPOINT_SUFFIX = 'dev'
 
-/** Device types this export may publish as a generic endpoint. `thermostat`
- *  (Home Assistant) and `climate` (an air conditioner, e.g. Gree) both carry
- *  the `climate-control` cap (D874). */
+/** Device types this export may publish as a generic endpoint. A `climate`
+ *  device carries the `climate-control` cap (D874); its role picks THERMOSTAT
+ *  or AIR_CONDITIONER (D1033). A plug-in heater is a `switch` (role
+ *  `switch-heater`). */
 export const GENERIC_DEVICE_TYPES: readonly string[] = [
   'light',
   'switch',
-  'heater',
   'siren',
   'sensor',
   'lock',
   'presence',
-  'thermostat',
   'climate',
   'cover',
   'fan',

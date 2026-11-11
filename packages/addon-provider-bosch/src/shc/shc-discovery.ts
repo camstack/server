@@ -51,7 +51,7 @@ function trvCandidate(device: ShcDeviceSummary): DiscoveredChildDevice {
   return {
     childNativeId: device.id,
     name: device.name.length > 0 ? device.name : device.id,
-    type: DeviceType.Thermostat,
+    type: DeviceType.Climate,
     status: 'online',
     metadata: {
       serialNumber: device.id,

@@ -2,7 +2,7 @@
   "haHeatOnly": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack thermostat",
+    "description": "CamStack climate",
     "friendlyName": "Clima",
     "displayCategories": ["THERMOSTAT"],
     "capabilities": [
@@ -82,7 +82,7 @@
   "haHeatCoolRange": {
     "endpointId": "7__dev",
     "manufacturerName": "camstack",
-    "description": "CamStack thermostat",
+    "description": "CamStack climate",
     "friendlyName": "Clima",
     "displayCategories": ["THERMOSTAT"],
     "capabilities": [

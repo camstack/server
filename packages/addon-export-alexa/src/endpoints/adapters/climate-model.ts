@@ -21,7 +21,7 @@
  * Temperatures are Celsius throughout (the cap's contract); Alexa converts for
  * the account.
  */
-import { ClimateControlStatusSchema, type HvacMode } from '@camstack/types'
+import { ClimateControlStatusSchema, DeviceRole, type HvacMode } from '@camstack/types'
 import type { z } from 'zod'
 import type { AlexaCapability, AlexaDisplayCategory, AlexaFriendlyName } from '../types.js'
 import type { AdapterDescription, AdapterDevice, GenericProperty } from './types.js'
@@ -342,9 +342,14 @@ function thermostatCapability(
   }
 }
 
-/** A thermostat is a THERMOSTAT, any other climate device an air conditioner. */
-export function climateCategoryFor(deviceType: string): AlexaDisplayCategory {
-  return deviceType === 'thermostat' ? 'THERMOSTAT' : 'AIR_CONDITIONER'
+/**
+ * D1033 — one `climate` type, and the role says which thing it is: an air
+ * conditioner is an AIR_CONDITIONER; a thermostat, a radiator, a floor loop, a
+ * heat-pump circuit, a climate heater and a climate with no role yet are all a
+ * THERMOSTAT.
+ */
+export function climateCategoryFor(role: string | null): AlexaDisplayCategory {
+  return role === DeviceRole.ClimateAc ? 'AIR_CONDITIONER' : 'THERMOSTAT'
 }
 
 export function describeClimate(device: AdapterDevice): AdapterDescription {
@@ -385,7 +390,7 @@ export function describeClimate(device: AdapterDevice): AdapterDescription {
         : []),
       ...extras,
     ],
-    category: climateCategoryFor(device.type),
+    category: climateCategoryFor(device.role),
   }
 }
 

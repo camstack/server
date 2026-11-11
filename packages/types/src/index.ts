@@ -1097,6 +1097,7 @@ export {
 export type {
   CreateDeviceOrigin,
   CreationSchemaContext,
+  DeviceClassRow,
   DeviceRestoreReport,
   DeviceSummary,
   DiscoveryCandidate,

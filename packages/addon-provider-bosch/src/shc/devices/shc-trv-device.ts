@@ -13,6 +13,7 @@ import type {
   ShcTemperatureLevelState,
   ShcValveTappetState,
 } from '../shc-types.js'
+import { shcClimateRole } from '../shc-domain-mapping.js'
 import { ShcBaseDevice } from './shc-device-base.js'
 
 const TEMP_CAP = 'temperature-sensor'
@@ -31,7 +32,7 @@ const VALVE_COLD: HeatingValveStatus = { position: null, lastFetchedAt: 0 }
 /** Radiator TRV — local temperature, valve position, battery (no room setpoint). */
 export class ShcTrvDevice extends ShcBaseDevice {
   constructor(ctx: DeviceContext) {
-    super(ctx)
+    super(ctx, shcClimateRole('trv'))
   }
 
   protected override registerCaps(): void {

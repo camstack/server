@@ -70,7 +70,7 @@ describe('deriveHmEntityPreviews', () => {
     const act = previews.find((p) => p.key === 'act-ABC0002:1')
     const sensor = previews.find((p) => p.key === 'sensor-ABC0002:1')
     expect(act?.capabilities).toEqual(['climate-control'])
-    expect(act?.type).toBe(DeviceType.Thermostat)
+    expect(act?.type).toBe(DeviceType.Climate)
     expect(sensor?.capabilities).toEqual(['temperature-sensor', 'humidity-sensor'])
     expect(sensor?.type).toBe(DeviceType.Sensor)
   })

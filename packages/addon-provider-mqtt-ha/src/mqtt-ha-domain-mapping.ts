@@ -134,7 +134,7 @@ export interface MqttHaDevicePlan {
 const COLOR_MODES: ReadonlySet<string> = new Set(['color_temp', 'xy', 'hs', 'rgb', 'rgbw', 'rgbww'])
 
 const ALLOWED_CAPS: Readonly<Record<string, ReadonlySet<MqttHaCap>>> = {
-  [DeviceType.Thermostat]: new Set<MqttHaCap>(['climate-control', 'battery', 'power-meter']),
+  [DeviceType.Climate]: new Set<MqttHaCap>(['climate-control', 'battery', 'power-meter']),
   [DeviceType.Light]: new Set<MqttHaCap>(['switch', 'brightness', 'color', 'power-meter']),
   [DeviceType.Switch]: new Set<MqttHaCap>(['switch', 'power-meter', 'battery']),
   [DeviceType.EventEmitter]: new Set<MqttHaCap>(['event-emitter', 'battery']),
@@ -180,7 +180,7 @@ interface RoleEntity {
 
 function primaryType(roles: readonly RoleEntity[]): DeviceType | null {
   const kinds = new Set(roles.map((r) => r.role.kind))
-  if (kinds.has('climate')) return DeviceType.Thermostat
+  if (kinds.has('climate')) return DeviceType.Climate
   if (kinds.has('light')) return DeviceType.Light
   if (kinds.has('switch')) return DeviceType.Switch
   if (kinds.has('event')) return DeviceType.EventEmitter
