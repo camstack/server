@@ -368,7 +368,7 @@ export function TerminalPage() {
       title={t('systemPage.terminal.terminal', 'Terminal')}
       subtitle={t(
         'terminalPage.subtitle',
-        'Every terminal in the cluster, each with its own camera.',
+        'Keep a terminal open on a node and export it as a live camera.',
       )}
     >
       {actionError && <ErrorBox message={actionError} />}
@@ -376,11 +376,6 @@ export function TerminalPage() {
       <InstancesTable
         functionCap="terminal-session"
         icon={TerminalIcon}
-        title={t('terminalPage.instances', 'Terminals')}
-        subtitle={t(
-          'terminalPage.subtitle',
-          'Every terminal in the cluster, each with its own camera.',
-        )}
         emptyTitle={t('terminalPage.empty', 'No terminals yet')}
         emptyDescription={t(
           'terminalPage.emptyHint',
