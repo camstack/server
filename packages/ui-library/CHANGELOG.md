@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A discovered select can be a multi-select (discoverOptions.multiple): the found candidates are ticked, never typed.
+
 ## [1.2.423] - 2026-11-11
 
 ### Changed
 
 - New ConditionKindPicker: a searchable modal that lists the automation row kinds by category, with icon, description, example and event/state badge.
-- A discovered select can be a multi-select (discoverOptions.multiple): the found candidates are ticked, never typed.
 
 ## [1.2.422] - 2026-11-11
 
