@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Retired the unused device-discovery capability; the shared discovered-candidate schemas now live with device-adoption (same exported names).
+- A pet feeder's history now records its feeds and when the pet eats, so the Meals button opens what it names
 
 ## [1.2.544] - 2026-11-11
 

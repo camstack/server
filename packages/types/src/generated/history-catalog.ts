@@ -10,7 +10,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 44 caps with series (87 series), 36 caps answered `'none'`.
+ * 44 caps with series (89 series), 36 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -127,6 +127,8 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'value': { kind: 'gauge', minIntervalMs: 30000 },
   },
   'pet-feeder': {
+    'feeding': { kind: 'boolean' },
+    'eating': { kind: 'boolean' },
     'foodLevel': { kind: 'gauge' },
     'bowlFood': { kind: 'gauge' },
     'food1': { kind: 'gauge' },

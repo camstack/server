@@ -236,10 +236,14 @@ export const petFeederCapability = {
    */
   durability: 'session',
   /**
-   * History (D850): recorded series.
+   * History (D850): recorded series. `feeding` / `eating` are the meals the
+   * device hero's "Meals" button names — change-only booleans, so a dispense
+   * or a pet at the bowl is one span on the history.
    */
   history: {
     fields: {
+      feeding: { kind: 'boolean' },
+      eating: { kind: 'boolean' },
       foodLevel: { kind: 'gauge' },
       bowlFood: { kind: 'gauge' },
       food1: { kind: 'gauge' },
