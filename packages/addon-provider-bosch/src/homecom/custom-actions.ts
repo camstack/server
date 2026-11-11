@@ -2,11 +2,12 @@ import { customAction, defineCustomActions } from '@camstack/types'
 import { z } from 'zod'
 import { HomeComBrandSchema, HomeComRegionSchema } from './config.js'
 import {
+  EXPLORER_MAX_DEADLINE_MS,
   EXPLORER_MAX_NODES_CAP,
-  EXPLORER_PATH,
   exploredResourceSchema,
   explorerStopReasonSchema,
   explorerSummarySchema,
+  isResourcePath,
 } from './homecom-resource-explorer.js'
 
 const gatewayChoice = z.object({
@@ -21,19 +22,25 @@ export const exploreResourcesInput = z.object({
   integrationId: z.string().min(1).optional(),
   root: z
     .string()
-    .regex(EXPLORER_PATH, 'an absolute resource path such as /heatSources')
+    .refine(isResourcePath, 'an absolute resource path such as /heatSources, no . or .. segment')
     .optional(),
   maxNodes: z.number().int().min(1).max(EXPLORER_MAX_NODES_CAP).optional(),
+  /** Wall-clock budget; the walk returns what it has, with `stoppedBy: 'deadline'`. */
+  deadlineMs: z.number().int().min(1000).max(EXPLORER_MAX_DEADLINE_MS).optional(),
 })
 
 export type ExploreResourcesInput = z.infer<typeof exploreResourcesInput>
 
 export const exploreResourcesOutput = z.object({
   integrationId: z.string(),
-  gatewayId: z.string(),
+  /** Null when the integration has no snapshot yet: unknown, not empty. */
+  gatewayId: z.string().nullable(),
   root: z.string(),
   stoppedBy: explorerStopReasonSchema,
   unvisited: z.number(),
+  unvisitedPaths: z.array(z.string()),
+  droppedReferences: z.number(),
+  droppedSamples: z.array(z.string()),
   summary: explorerSummarySchema,
   resources: z.array(exploredResourceSchema),
 })

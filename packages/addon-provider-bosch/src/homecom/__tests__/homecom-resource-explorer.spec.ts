@@ -1,7 +1,18 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createHomeComApiClient, type FetchFn } from '../homecom-api-client.js'
-import { runHomeComExplore } from '../homecom-explore-action.js'
-import { EXPLORER_SEED_ROOTS, exploreHomeComResources } from '../homecom-resource-explorer.js'
+import type { HomeComSystemSnapshot } from '../homecom-api-client.js'
+import {
+  createHomeComExploreAction,
+  type HomeComExploreDeps,
+  HomeComExploreRefusedError,
+  homeComExploreDeps,
+} from '../homecom-explore-action.js'
+import { exploreResourcesInput } from '../custom-actions.js'
+import {
+  EXPLORER_SEED_ROOTS,
+  exploreHomeComResources,
+  isResourcePath,
+} from '../homecom-resource-explorer.js'
 
 const CONFIG = {
   username: 'me@example.com',
@@ -205,27 +216,112 @@ describe('HomeCom resource explorer', () => {
     expect(calls.map((c) => c.path)).toEqual(['/', ...EXPLORER_SEED_ROOTS])
   })
 
+  it('stops at the deadline with a partial result and the paths left to resume from', async () => {
+    const { fetchFn, calls } = gateway(TREE, {})
+    const client = clientOver(fetchFn)
+    let clock = 0
+    const result = await exploreHomeComResources({
+      read: (path) => client.readResource(path),
+      deadlineMs: 1000,
+      now: () => clock,
+      sleep: async (ms) => {
+        clock += ms
+      },
+    })
+    // 0, 150, 300 … 900: seven calls fit; the eighth pause would end at 1050.
+    expect(calls).toHaveLength(7)
+    expect(result.stoppedBy).toBe('deadline')
+    expect(result.unvisited).toBeGreaterThan(0)
+    expect(result.unvisitedPaths).toHaveLength(result.unvisited)
+    expect(result.unvisitedPaths.every(isResourcePath)).toBe(true)
+  })
+
+  it('clamps the deadline at 50 s and defaults it to 45 s', async () => {
+    const wide: Record<string, unknown> = { '/': refs(['/system']) }
+    const leaves = Array.from({ length: 1400 }, (_, i) => `/system/r${i}`)
+    wide['/system'] = refs(leaves)
+    for (const leaf of leaves) wide[leaf] = { type: 'floatValue', value: 1 }
+    const run = async (deadlineMs: number | undefined): Promise<number> => {
+      const { fetchFn, calls } = gateway(wide, {})
+      const client = clientOver(fetchFn)
+      let clock = 0
+      await exploreHomeComResources({
+        read: (path) => client.readResource(path),
+        maxNodes: 1500,
+        ...(deadlineMs !== undefined ? { deadlineMs } : {}),
+        now: () => clock,
+        sleep: async (ms) => {
+          clock += ms
+        },
+      })
+      return calls.length
+    }
+    expect(await run(undefined)).toBe(300) // 45 000 / 150
+    expect(await run(600_000)).toBe(334) // ceil(50 000 / 150)
+    expect(exploreResourcesInput.safeParse({ deadlineMs: 50_001 }).success).toBe(false)
+  })
+
+  it('rejects . and .. segments in the root and in gateway references, and counts the dropped', async () => {
+    for (const bad of ['/a/../../x', '/..', '/.', '/heatSources/./hs1', '/a/..']) {
+      expect(isResourcePath(bad)).toBe(false)
+      expect(exploreResourcesInput.safeParse({ root: bad }).success).toBe(false)
+      await expect(
+        exploreHomeComResources({ read: async () => ({ status: 200, body: {} }), root: bad }),
+      ).rejects.toThrow(/Not a resource path/)
+    }
+    expect(isResourcePath('/heatSources/hs1.v2')).toBe(true)
+    const tree = {
+      '/': {
+        type: 'refEnum',
+        references: [
+          { id: '/a/../../x' },
+          { uri: `${URI}/heatSources/../../../gateways` },
+          { id: '/heatSources/./hs1' },
+          { id: '/ok' },
+        ],
+      },
+      '/ok': { type: 'floatValue', value: 1 },
+    }
+    const { fetchFn, calls } = gateway(tree, {})
+    const client = clientOver(fetchFn)
+    const result = await exploreHomeComResources({
+      read: (path) => client.readResource(path),
+      sleep: async () => undefined,
+    })
+    expect(calls.map((c) => c.path)).toEqual(['/', '/ok'])
+    expect(result.resources[0]).toMatchObject({ path: '/', childCount: 4, droppedReferences: 3 })
+    expect(result.droppedReferences).toBe(3)
+    expect(result.droppedSamples).toEqual([
+      '/ -> /a/../../x',
+      '/ -> /heatSources/../../../gateways',
+      '/ -> /heatSources/./hs1',
+    ])
+  })
+
+  function actionDeps(over: Partial<HomeComExploreDeps> = {}): HomeComExploreDeps {
+    const { fetchFn } = gateway()
+    const client = clientOver(fetchFn)
+    return {
+      listConnected: () => ['int-1'],
+      getClient: (id) => (id === 'int-1' ? client : null),
+      getGatewayId: () => 'g1',
+      logger: { info: vi.fn(), warn: vi.fn() },
+      sleep: async () => undefined,
+      ...over,
+    }
+  }
+
   it('the action picks the only connected integration and logs one tagged summary line', async () => {
     const { fetchFn, calls } = gateway()
     const client = clientOver(fetchFn)
     const info = vi.fn()
-    const out = await runHomeComExplore(
-      { root: '/heatSources' },
-      {
-        listConnected: () => ['int-1'],
-        getClient: (id) => (id === 'int-1' ? client : null),
-        getGatewayId: () => 'g1',
-        logger: { info },
-        sleep: async () => undefined,
-      },
+    const explore = createHomeComExploreAction(
+      actionDeps({ getClient: () => client, logger: { info, warn: vi.fn() } }),
     )
+    const out = await explore({ root: '/heatSources' })
     expect(calls[0]?.path).toBe('/heatSources')
     expect(calls.every((c) => c.method === 'GET')).toBe(true)
-    expect(out).toMatchObject({
-      integrationId: 'int-1',
-      gatewayId: 'g1',
-      stoppedBy: 'complete',
-    })
+    expect(out).toMatchObject({ integrationId: 'int-1', gatewayId: 'g1', stoppedBy: 'complete' })
     expect(info).toHaveBeenCalledTimes(1)
     expect(info.mock.calls[0]?.[1]).toMatchObject({
       tags: { integrationId: 'int-1' },
@@ -233,17 +329,84 @@ describe('HomeCom resource explorer', () => {
     })
   })
 
-  it('refuses to guess between several connected integrations', async () => {
-    await expect(
-      runHomeComExplore(
-        {},
-        {
-          listConnected: () => ['a', 'b'],
-          getClient: () => null,
-          getGatewayId: () => null,
-          logger: { info: vi.fn() },
+  it('logs dropped references with the integration tag', async () => {
+    const tree = { '/': { type: 'refEnum', references: [{ id: '/a/../b' }] } }
+    const { fetchFn } = gateway(tree, {})
+    const client = clientOver(fetchFn)
+    const warn = vi.fn()
+    const explore = createHomeComExploreAction(
+      actionDeps({ getClient: () => client, logger: { info: vi.fn(), warn } }),
+    )
+    const out = await explore({})
+    expect(out.droppedReferences).toBe(1)
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0]?.[1]).toMatchObject({
+      tags: { integrationId: 'int-1' },
+      meta: { droppedReferences: 1, samples: ['/ -> /a/../b'] },
+    })
+  })
+
+  it('reports an unknown gateway as null, not an empty string', async () => {
+    const explore = createHomeComExploreAction(actionDeps({ getGatewayId: () => null }))
+    const out = await explore({ root: '/heatSources' })
+    expect(out.gatewayId).toBeNull()
+  })
+
+  it('refuses a second walk on the same integration while one runs, and allows it after', async () => {
+    let release: () => void = () => undefined
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const { fetchFn } = gateway()
+    const client = clientOver(fetchFn)
+    const explore = createHomeComExploreAction(
+      actionDeps({
+        getClient: () => client,
+        sleep: async () => {
+          await gate
         },
-      ),
-    ).rejects.toThrow(/integrationId/)
+      }),
+    )
+    const first = explore({ root: '/heatSources' })
+    const second = explore({ root: '/heatSources' })
+    await expect(second).rejects.toBeInstanceOf(HomeComExploreRefusedError)
+    await expect(second).rejects.toMatchObject({ reason: 'already-running' })
+    release()
+    await expect(first).resolves.toMatchObject({ stoppedBy: 'complete' })
+    await expect(explore({ root: '/heatSources' })).resolves.toMatchObject({
+      stoppedBy: 'complete',
+    })
+  })
+
+  it('refuses to guess between several connected integrations', async () => {
+    const explore = createHomeComExploreAction(
+      actionDeps({ listConnected: () => ['a', 'b'], getClient: () => null }),
+    )
+    await expect(explore({})).rejects.toMatchObject({ reason: 'ambiguous' })
+  })
+})
+
+describe('HomeCom explore wiring', () => {
+  const snapshot = (gatewayId: string): HomeComSystemSnapshot => ({
+    gateway: { gatewayId, name: 'gw', model: 'k40' },
+    circuits: [],
+    dhw: null,
+  })
+
+  it('lists only registered integrations that hold a live client; the gateway comes from the snapshot', () => {
+    const { fetchFn } = gateway()
+    const client = clientOver(fetchFn)
+    const deps = homeComExploreDeps({
+      registry: { list: () => ['live', 'starting'] },
+      connections: {
+        getClient: (id) => (id === 'live' ? client : null),
+        getSnapshot: (id) => (id === 'live' ? snapshot('gw-42') : null),
+      },
+      logger: { info: vi.fn(), warn: vi.fn() },
+    })
+    expect(deps.listConnected()).toEqual(['live'])
+    expect(deps.getClient('live')).toBe(client)
+    expect(deps.getGatewayId('live')).toBe('gw-42')
+    expect(deps.getGatewayId('starting')).toBeNull()
   })
 })

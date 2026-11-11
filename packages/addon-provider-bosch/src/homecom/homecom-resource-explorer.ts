@@ -29,8 +29,25 @@ export const EXPLORER_SEED_ROOTS: readonly string[] = [
   '/ventilation',
 ]
 
-/** A resource path this walker will request: absolute, plain segments, no `..`. */
-export const EXPLORER_PATH = /^\/(?:[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)*)?$/
+export const EXPLORER_DEFAULT_DEADLINE_MS = 45_000
+/** Under the 60 s UDS request timeout a forked addon's action answers within. */
+export const EXPLORER_MAX_DEADLINE_MS = 50_000
+const DROPPED_SAMPLE_MAX = 20
+const UNVISITED_SAMPLE_MAX = 100
+
+const PATH_SHAPE = /^\/(?:[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)*)?$/
+
+/**
+ * A resource path this walker will request: absolute, plain segments, and no `.` or `..`
+ * segment — URL resolution would otherwise lift the request out of the gateway's tree.
+ */
+export function isResourcePath(path: string): boolean {
+  if (!PATH_SHAPE.test(path)) return false
+  return path
+    .split('/')
+    .slice(1)
+    .every((segment) => segment !== '.' && segment !== '..')
+}
 
 export interface HomeComResourceAnswer {
   readonly status: number
@@ -62,6 +79,8 @@ export const exploredResourceSchema = z.object({
   minValue: z.number().optional(),
   maxValue: z.number().optional(),
   childCount: z.number().optional(),
+  /** References of this container that were not a walkable path. */
+  droppedReferences: z.number().optional(),
   error: z.string().optional(),
 })
 export type ExploredResource = z.infer<typeof exploredResourceSchema>
@@ -75,7 +94,12 @@ export const explorerSummarySchema = z.object({
 })
 export type ExplorerSummary = z.infer<typeof explorerSummarySchema>
 
-export const explorerStopReasonSchema = z.enum(['complete', 'max-nodes', 'rate-limited'])
+export const explorerStopReasonSchema = z.enum([
+  'complete',
+  'max-nodes',
+  'rate-limited',
+  'deadline',
+])
 export type ExplorerStopReason = z.infer<typeof explorerStopReasonSchema>
 
 export interface ExplorerResult {
@@ -85,6 +109,12 @@ export interface ExplorerResult {
   readonly stoppedBy: ExplorerStopReason
   /** Paths found but not visited because the walk stopped first. */
   readonly unvisited: number
+  /** The first of them, in walk order: call again with one as `root` to resume. */
+  readonly unvisitedPaths: string[]
+  /** References the gateway returned that were not a walkable path. */
+  readonly droppedReferences: number
+  /** The first of them, as `<container> -> <reference>`. */
+  readonly droppedSamples: string[]
 }
 
 export interface ExplorerInput {
@@ -92,7 +122,9 @@ export interface ExplorerInput {
   readonly root?: string
   readonly maxNodes?: number
   readonly delayMs?: number
+  readonly deadlineMs?: number
   readonly sleep?: (ms: number) => Promise<void>
+  readonly now?: () => number
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -126,29 +158,42 @@ function outcomeOf(status: number): ExplorerOutcome {
   return 'error'
 }
 
-/** The resource path a reference names: its `id`, else the part of its `uri` after `/resource`. */
-export function referencePath(ref: unknown): string | null {
+/** What a reference names: its `id`, else the part of its `uri` after `/resource`. */
+function referenceText(ref: unknown): string | null {
   if (!isRecord(ref)) return null
   const id = text(ref['id'])
-  if (id !== undefined && id.startsWith('/')) return EXPLORER_PATH.test(id) ? id : null
+  if (id !== undefined && id.startsWith('/')) return id
   const uri = text(ref['uri'])
-  if (uri === undefined) return null
+  if (uri === undefined) return id ?? null
   const at = uri.indexOf('/resource/')
-  if (at < 0) return null
-  const path = uri.slice(at + '/resource'.length)
-  return EXPLORER_PATH.test(path) ? path : null
+  if (at < 0) return uri
+  return uri.slice(at + '/resource'.length)
 }
 
-function referencesOf(body: unknown): readonly string[] | null {
+/** The walkable resource path a reference names, or null. */
+export function referencePath(ref: unknown): string | null {
+  const path = referenceText(ref)
+  return path !== null && isResourcePath(path) ? path : null
+}
+
+interface ContainerReferences {
+  readonly total: number
+  readonly paths: readonly string[]
+  readonly dropped: readonly string[]
+}
+
+function referencesOf(body: unknown): ContainerReferences | null {
   if (!isRecord(body)) return null
   const refs = body['references']
   if (!Array.isArray(refs)) return null
-  const out: string[] = []
+  const paths: string[] = []
+  const dropped: string[] = []
   for (const ref of refs) {
     const path = referencePath(ref)
-    if (path !== null) out.push(path)
+    if (path !== null) paths.push(path)
+    else dropped.push(truncate(referenceText(ref) ?? JSON.stringify(ref) ?? 'undefined'))
   }
-  return out
+  return { total: refs.length, paths, dropped }
 }
 
 function describeLeaf(path: string, status: number, body: unknown): ExploredResource {
@@ -184,6 +229,11 @@ function emptySummary(): ExplorerSummary {
   return { ok: 0, forbidden: 0, 'not-found': 0, 'rate-limited': 0, error: 0 }
 }
 
+function clampDeadline(requested: number | undefined): number {
+  const ms = Math.floor(requested ?? EXPLORER_DEFAULT_DEADLINE_MS)
+  return Math.min(Math.max(ms, 1), EXPLORER_MAX_DEADLINE_MS)
+}
+
 function clampNodes(requested: number | undefined): number {
   const n = Math.floor(requested ?? EXPLORER_DEFAULT_MAX_NODES)
   return Math.min(Math.max(n, 1), EXPLORER_MAX_NODES_CAP)
@@ -196,10 +246,12 @@ const defaultSleep = (ms: number): Promise<void> =>
 
 export async function exploreHomeComResources(input: ExplorerInput): Promise<ExplorerResult> {
   const root = input.root ?? '/'
-  if (!EXPLORER_PATH.test(root)) throw new Error(`Not a resource path: ${root}`)
+  if (!isResourcePath(root)) throw new Error(`Not a resource path: ${root}`)
   const maxNodes = clampNodes(input.maxNodes)
   const delayMs = Math.max(input.delayMs ?? EXPLORER_MIN_DELAY_MS, EXPLORER_MIN_DELAY_MS)
   const sleep = input.sleep ?? defaultSleep
+  const now = input.now ?? Date.now
+  const deadlineAt = now() + clampDeadline(input.deadlineMs)
 
   const queue: string[] = [root]
   const queued = new Set<string>([root])
@@ -207,6 +259,8 @@ export async function exploreHomeComResources(input: ExplorerInput): Promise<Exp
   const summary = emptySummary()
   let calls = 0
   let stoppedBy: ExplorerStopReason = 'complete'
+  let droppedReferences = 0
+  const droppedSamples: string[] = []
 
   const enqueue = (paths: readonly string[]): void => {
     for (const path of paths) {
@@ -219,6 +273,11 @@ export async function exploreHomeComResources(input: ExplorerInput): Promise<Exp
   while (queue.length > 0) {
     if (calls >= maxNodes) {
       stoppedBy = 'max-nodes'
+      break
+    }
+    // The pause before the next call must still end inside the deadline.
+    if (now() + (calls > 0 ? delayMs : 0) >= deadlineAt) {
+      stoppedBy = 'deadline'
       break
     }
     const path = queue.shift()
@@ -255,14 +314,28 @@ export async function exploreHomeComResources(input: ExplorerInput): Promise<Exp
         httpStatus: answer.status,
         outcome,
         type: type ?? 'refEnum',
-        childCount: children.length,
+        childCount: children.total,
+        ...(children.dropped.length > 0 ? { droppedReferences: children.dropped.length } : {}),
       })
-      enqueue(children)
+      droppedReferences += children.dropped.length
+      for (const ref of children.dropped) {
+        if (droppedSamples.length < DROPPED_SAMPLE_MAX) droppedSamples.push(`${path} -> ${ref}`)
+      }
+      enqueue(children.paths)
       continue
     }
     resources.push(describeLeaf(path, answer.status, answer.body))
     if (path === '/' && root === '/') enqueue(EXPLORER_SEED_ROOTS)
   }
 
-  return { root, resources, summary, stoppedBy, unvisited: queue.length }
+  return {
+    root,
+    resources,
+    summary,
+    stoppedBy,
+    unvisited: queue.length,
+    unvisitedPaths: queue.slice(0, UNVISITED_SAMPLE_MAX),
+    droppedReferences,
+    droppedSamples,
+  }
 }
