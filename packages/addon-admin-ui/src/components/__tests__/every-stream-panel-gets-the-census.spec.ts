@@ -14,7 +14,7 @@
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 
 const SRC = join(import.meta.dirname, '../..')
 
@@ -29,11 +29,23 @@ function walk(dir: string): string[] {
   return out
 }
 
+/**
+ * The tree is walked and read ONCE, in `beforeAll`, not inside each test body:
+ * a synchronous scan of the whole admin-ui source takes seconds on a loaded
+ * machine and used to be charged to the 5 s test timeout. The hook budget
+ * (60 s) is a ceiling for a starved CI host, not an expected cost.
+ */
+const SCAN_BUDGET_MS = 60_000
+let sources: ReadonlyMap<string, string>
+
+beforeAll(() => {
+  sources = new Map(walk(SRC).map((file) => [file, readFileSync(file, 'utf8')]))
+}, SCAN_BUDGET_MS)
+
 describe('the census reaches every StreamPanel', () => {
   it('every host that passes `detections` also passes `stationaryObjects`', () => {
     const offenders: string[] = []
-    for (const file of walk(SRC)) {
-      const text = readFileSync(file, 'utf8')
+    for (const [file, text] of sources) {
       if (!text.includes('<StreamPanel')) continue
       if (!text.includes('detections={')) continue
       if (!text.includes('stationaryObjects')) offenders.push(file.slice(SRC.length + 1))
@@ -42,7 +54,7 @@ describe('the census reaches every StreamPanel', () => {
   })
 
   it('finds the hosts at all — a guard that matches nothing guards nothing', () => {
-    const hosts = walk(SRC).filter((f) => readFileSync(f, 'utf8').includes('<StreamPanel'))
+    const hosts = [...sources.values()].filter((text) => text.includes('<StreamPanel'))
     expect(hosts.length).toBeGreaterThan(1)
   })
 })

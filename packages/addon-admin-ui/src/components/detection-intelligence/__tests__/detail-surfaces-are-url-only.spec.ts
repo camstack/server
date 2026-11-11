@@ -22,7 +22,7 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 
 /**
  * `packages/addon-admin-ui/src`, found from wherever vitest was started.
@@ -76,18 +76,30 @@ function sourceFiles(dir: string): readonly string[] {
   return out
 }
 
+/**
+ * The tree is walked and read ONCE, in `beforeAll`: a synchronous scan of the
+ * whole admin-ui source takes seconds on a loaded machine and used to be
+ * charged to the 5 s test timeout. The hook budget (60 s) is a ceiling for a
+ * starved CI host, not an expected cost.
+ */
+const SCAN_BUDGET_MS = 60_000
+let sources: ReadonlyMap<string, string>
+
+beforeAll(() => {
+  sources = new Map(sourceFiles(SRC_ROOT).map((file) => [file, readFileSync(file, 'utf8')]))
+}, SCAN_BUDGET_MS)
+
 describe('admin UI media reads', () => {
   it('finds the source tree it is guarding', () => {
     // Without this, a bad SRC_ROOT makes every assertion below vacuously true.
-    const files = sourceFiles(SRC_ROOT)
+    const files = [...sources.keys()]
     expect(files.length).toBeGreaterThan(50)
     expect(files.some((f) => f.endsWith('EventDetailPanel.tsx'))).toBe(true)
   })
 
   it('never calls a byte-bearing media hook', () => {
     const offenders: string[] = []
-    for (const file of sourceFiles(SRC_ROOT)) {
-      const src = readFileSync(file, 'utf8')
+    for (const [file, src] of sources) {
       for (const hook of BYTE_BEARING_HOOKS) {
         if (src.includes(hook)) offenders.push(`${file.slice(SRC_ROOT.length)} → ${hook}`)
       }
