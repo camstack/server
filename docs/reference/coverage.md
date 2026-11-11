@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**244 units · 8436 source files · 237 units claimed by at least one document (8405 files).**
+**244 units · 8437 source files · 237 units claimed by at least one document (8406 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -132,6 +132,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline-orchestrator/src/camera-sensors` | 11 | `pipeline-orchestration` | `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0673-a-camera-sensor-has-a-mode-and-one-bridge-emits-the-cameras-effective-onboard-motion.md`, +2 more, 1 ADR | 2026-10-24 |
 | `packages/addon-pipeline-orchestrator/src/widgets` | 11 | `pipeline-orchestration` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0931-a-packages-rule-can-open-a-candidate-from-a-scene-difference-and-confirm-it-with-the-llm.md`, 1 ADR | — |
 | `packages/addon-export-hap/src/multi-tier` | 10 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` _(covers)_, +3 more, 1 ADR | 2026-09-29 |
+| `packages/addon-import-alexa/src/migrations` | 10 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/addon-pipeline/src/audio-analyzer` | 10 | `audio` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, +5 more | 2026-10-02 |
 | `packages/sdk` | 10 | `tooling` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0812-every-session-token-belongs-to-a-server-side-login-session-checked-on-every-verify.md` | 2026-10-21 |
 | `packages/types/src/deps` | 10 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ffmpeg.md`, `architecture/windows-agent.md`, +3 more | 2026-10-24 |
@@ -139,7 +140,6 @@ it never describes how the thing works, and it is never re-verified.
 | `e2e` | 9 | `tooling` | — | — |
 | `packages/addon-decoder-nodeav` | 9 | `audio`, `decode-and-data-planes` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0281-a-talk-frame-at-the-wrong-rate-is-converted-by-the-codec-cap-or-refused-loudly.md`, `decisions/adr-0763-the-decoder-cap-is-a-hwaccel-answer-and-shm-ring-and-decoder-ffmpeg-are-deleted.md` | — |
 | `packages/addon-import-alexa/src/amazon-auth` | 9 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-0955-vendor-sign-in-through-a-hub-login-proxy-the-vendor-page-opens-under-the-hub-and-the-addon-says-when-it-is-done.md`, `decisions/adr-1010-the-amazon-sign-in-and-renewal-are-in-house-the-alexa-addon-has-no-sign-in-library.md`, +2 more | — |
-| `packages/addon-import-alexa/src/migrations` | 9 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/addon-pipeline/src/shared` | 9 | `decode-and-data-planes` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0199-a-model-choice-has-a-scope-and-a-scope-change-has-a-workflow.md`, +3 more | — |
 | `packages/addon-provider-homeassistant/src/migrations` | 9 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, +1 more | 2026-11-08 |
 | `packages/addon-provider-onvif` | 9 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0522-home-is-a-stored-choice-not-a-vendor-convention.md`, +1 more | 2026-11-08 |

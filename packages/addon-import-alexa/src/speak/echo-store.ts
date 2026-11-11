@@ -15,6 +15,7 @@ import {
 } from '@camstack/types'
 import { type AlexaEchoTarget, alexaEchoTargetSchema, readEchoTargets } from '../config.js'
 import type { EchoRecordPorts, EchoSettingPorts } from '../migrations/echo-targets-to-records.js'
+import type { EchoDndRecordPorts } from '../migrations/strip-echo-target-respect-dnd.js'
 import type { PositionalRecordsDoor } from '../migrations/records-door.js'
 import { alexaTargetKind, type SpeakBrokerView, validateEchoTarget } from './provider.js'
 import { ALEXA_SPEAK_ADDON_ID } from './constants.js'
@@ -50,7 +51,6 @@ export function legacyEchoTargetsOver(
         config: {
           ...(row.brokerId.length > 0 ? { brokerId: row.brokerId } : {}),
           echoId: row.echoId,
-          respectDnd: row.respectDnd,
         },
       })),
     delete: async (id) => {
@@ -72,15 +72,17 @@ export function echoRowOf(target: Target): AlexaEchoTarget {
     enabled: target.enabled,
     brokerId: typeof target.config['brokerId'] === 'string' ? target.config['brokerId'] : '',
     echoId: typeof target.config['echoId'] === 'string' ? target.config['echoId'] : '',
-    respectDnd: target.config['respectDnd'] !== false,
   }
 }
 
-/** The migration's ports over the `notify-alexa-echo` record kind. */
+/** More Echo targets than any account holds: the migrations read them in one page. */
+const ECHO_RECORDS_MAX = 1000
+
+/** The migrations' ports over the `notify-alexa-echo` record kind. */
 export function echoRecordPortsOver(
   records: PositionalRecordsDoor,
   logger: Pick<IScopedLogger, 'warn'>,
-): EchoRecordPorts {
+): EchoRecordPorts & EchoDndRecordPorts {
   const [kind] = Object.values(alexaNotifyRecordKinds)
   if (kind === undefined)
     throw new Error('import-alexa: the Echo target record kind is not declared')
@@ -92,6 +94,10 @@ export function echoRecordPortsOver(
     },
     dropEchoRecord: async (id) => {
       await handle.delete(id)
+    },
+    listEchoRecords: async () => (await handle.query({ limit: ECHO_RECORDS_MAX })).records,
+    replaceEchoRecord: async (id, data) => {
+      await handle.put({ id, data: { ...data } })
     },
     echoSkipped: (row) => {
       logger.warn('Echo target left in the echoTargets setting; it keeps being served', {
@@ -122,9 +128,16 @@ export function echoTargetProbe(
   return async (input) => {
     const source = speak()
     if (source === null) {
-      return { ok: false, resolvedUrl: 'alexa://session', error: 'Echo speech is not running' }
+      return {
+        ok: false,
+        resolvedUrl: 'alexa://session',
+        error: 'Echo speech is not running',
+      }
     }
-    return source.provider.probeTargetConfig({ kind: input.kind, config: input.config })
+    return source.provider.probeTargetConfig({
+      kind: input.kind,
+      config: input.config,
+    })
   }
 }
 

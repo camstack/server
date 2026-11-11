@@ -45,8 +45,10 @@ not vendored. Tests mock it and must not contact Amazon.
 The rule template is rendered, then stripped to plain speech (no markup an
 Echo would read aloud) and cut at 450 characters. Per Echo, the same text
 inside 60 seconds is one utterance, and a different text inside 20 seconds is
-skipped. Neither is queued, and neither is retried. Do Not Disturb is skipped
-the same way. An offline Echo or a dead worker is a failure, so the outbox
+skipped. Neither is queued, and neither is retried. Do Not Disturb is decided
+by the priority alone: `high` speaks over it, `normal` is skipped the same way.
+There is no per-target switch (the stored `respectDnd` key is removed by the
+`import-alexa/2026-11-11-strip-echo-target-respect-dnd` migration). An offline Echo or a dead worker is a failure, so the outbox
 retries.
 
 Each delivery is recorded on the provider (`spoken`, `announced`, `collapsed`,
@@ -58,7 +60,9 @@ The Alexa kind (`alexa-echo`, brand mark served at
 `/addon/import-alexa/icons/alexa-echo`) builds its form from the accounts'
 own Echo lists: a broker select (the Amazon account) and an Echo select
 discovered from that broker, labelled name, room, family. Saving pins the
-account on the target.
+account on the target. On create the Echo select is a multi-select
+(`pickManyOnCreate`): ticking several Echoes of one account creates one
+target per Echo, each named after its Echo, in one confirm.
 
 A sign-in the broker has not made shows as a failed probe. The old standalone
 login (password, one-time code), its migration and the Speak on Echo page are

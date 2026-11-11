@@ -110,9 +110,12 @@ describe('echo-targets-to-records', () => {
       enabled: false,
       brokerId: 'alexa_001',
       echoId: 'echo-k',
-      respectDnd: false,
     })
-    expect(await w.echo.readEchoRecord('echo-hall')).toMatchObject({ enabled: true })
+    // The retired Do Not Disturb switch is not carried onto the record.
+    expect(row).not.toHaveProperty('respectDnd')
+    expect(await w.echo.readEchoRecord('echo-hall')).toMatchObject({
+      enabled: true,
+    })
     expect(w.setting.rows).toEqual([])
     expect(outcomes.get(ECHO_TARGETS_TO_RECORDS_ID)).toMatchObject({
       result: { outcome: 'done', summary: { converted: 2 } },
@@ -127,7 +130,6 @@ describe('echo-targets-to-records', () => {
       enabled: true,
       brokerId: 'alexa_001',
       echoId: 'echo-k',
-      respectDnd: false,
     })
     // The setting comes back (a restored backup): the record the operator edited wins.
     w.setting.rows = [OFF_ECHO]
@@ -179,6 +181,8 @@ describe('echo-targets-to-records', () => {
     })
     expect((await store.list()).map((t) => t.id).sort()).toEqual(['echo-hall', 'echo-kitchen'])
     // The good row moved.
-    expect(await w.echo.readEchoRecord('echo-hall')).toMatchObject({ enabled: true })
+    expect(await w.echo.readEchoRecord('echo-hall')).toMatchObject({
+      enabled: true,
+    })
   })
 })

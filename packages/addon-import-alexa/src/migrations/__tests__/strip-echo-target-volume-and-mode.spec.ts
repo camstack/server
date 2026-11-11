@@ -36,6 +36,8 @@ const NO_ROWS_PORTS = {
   writeEchoRecord: async () => undefined,
   dropEchoRecord: async () => undefined,
   echoSkipped: () => undefined,
+  listEchoRecords: async () => [],
+  replaceEchoRecord: async () => undefined,
 }
 const MARK = 'kitchen echo, kept as written'
 

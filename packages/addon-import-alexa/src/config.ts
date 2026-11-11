@@ -83,7 +83,6 @@ export const alexaEchoTargetSchema = z.object({
   /** The broker (Amazon account) the Echo belongs to; '' until one is chosen. */
   brokerId: linkField(ALEXA_ACCOUNT_LINK).default(''),
   echoId: z.string(),
-  respectDnd: z.boolean(),
 })
 export type AlexaEchoTarget = z.infer<typeof alexaEchoTargetSchema>
 

@@ -44,7 +44,7 @@ function target(config: Record<string, unknown> = {}): Target {
     kind: ALEXA_SPEAK_KIND,
     addonId: ALEXA_SPEAK_ADDON_ID,
     enabled: true,
-    config: { echoId: 'echo-1', respectDnd: true, ...config },
+    config: { echoId: 'echo-1', ...config },
   }
 }
 
@@ -115,7 +115,10 @@ describe('alexa notification provider', () => {
     expect(failed.error).toBe('session down')
     devices = [echo({ dnd: true })]
     now += SPEAK_MIN_GAP_MS
-    const quiet = await provider.send({ targetId: 't1', notification: note('after hours') })
+    const quiet = await provider.send({
+      targetId: 't1',
+      notification: note('after hours'),
+    })
     expect(quiet.success).toBe(true)
     expect(provider.deliveries.at(-1)?.outcome).toBe('dnd')
     expect(spoken.some((command) => command.text === 'after hours')).toBe(false)
@@ -198,7 +201,10 @@ describe('Alexa quiet vs announce is decided per notification', () => {
     config: Record<string, unknown>,
     warnings: { message: string; tags: unknown }[] = [],
     deviceOver: Partial<EchoDevice> = {},
-  ): { spoken: SpeakCommand[]; provider: ReturnType<typeof createAlexaNotificationProvider> } {
+  ): {
+    spoken: SpeakCommand[]
+    provider: ReturnType<typeof createAlexaNotificationProvider>
+  } {
     const spoken: SpeakCommand[] = []
     let now = 10_000
     const log = logger()
@@ -232,24 +238,50 @@ describe('Alexa quiet vs announce is decided per notification', () => {
 
   it('the lowest priority is quiet, any other announces', async () => {
     const { spoken, provider } = speakingProvider({})
-    await provider.send({ targetId: 't1', notification: { ...note('b'), priority: 1 } })
+    await provider.send({
+      targetId: 't1',
+      notification: { ...note('b'), priority: 1 },
+    })
     await provider.send({ targetId: 't1', notification: note('c') })
-    await provider.send({ targetId: 't1', notification: { ...note('d'), priority: 5 } })
+    await provider.send({
+      targetId: 't1',
+      notification: { ...note('d'), priority: 5 },
+    })
     expect(spoken.map((c) => c.mode)).toEqual(['speak', 'announce', 'announce'])
   })
 
   it('normal follows Do Not Disturb, high overrides it (#487)', async () => {
     const { spoken, provider } = speakingProvider({}, [], { dnd: true })
-    await provider.send({ targetId: 't1', notification: { ...note('normal one'), priority: 3 } })
+    await provider.send({
+      targetId: 't1',
+      notification: { ...note('normal one'), priority: 3 },
+    })
     expect(spoken).toHaveLength(0)
-    await provider.send({ targetId: 't1', notification: { ...note('high one'), priority: 5 } })
+    await provider.send({
+      targetId: 't1',
+      notification: { ...note('high one'), priority: 5 },
+    })
     expect(spoken.map((c) => c.text)).toEqual(['high one'])
   })
 
-  it('respectDnd off still lets a normal notification through', async () => {
-    const { spoken, provider } = speakingProvider({ respectDnd: false }, [], { dnd: true })
-    await provider.send({ targetId: 't1', notification: note('anyway') })
-    expect(spoken).toHaveLength(1)
+  it('a stored respectDnd off no longer lets a normal notification through: the priority decides', async () => {
+    const { spoken, provider } = speakingProvider({ respectDnd: false }, [], {
+      dnd: true,
+    })
+    await provider.send({ targetId: 't1', notification: note('quiet') })
+    expect(spoken).toHaveLength(0)
+    await provider.send({
+      targetId: 't1',
+      notification: { ...note('loud'), priority: 5 },
+    })
+    expect(spoken.map((c) => c.text)).toEqual(['loud'])
+  })
+
+  it('the form has no Do Not Disturb switch, and adding ticks several Echoes at once', () => {
+    const fields = alexaTargetKind().configSchema.sections.flatMap((section) => section.fields)
+    expect(fields.map((f) => f.key)).not.toContain('respectDnd')
+    const echo = fields.find((f) => f.key === 'echoId')
+    expect(echo?.type === 'select' ? echo.discoverOptions?.pickManyOnCreate : undefined).toBe(true)
   })
 
   it('never sets a volume: the Echo speaks at its current one, whatever the config or the rule says', async () => {
@@ -275,7 +307,11 @@ describe('the Alexa target kind', () => {
 
   it('picks the Amazon account with an instance-select over the alexa broker kind', () => {
     const account = fieldsOf().find((field) => 'key' in field && field.key === 'brokerId')
-    expect(account).toMatchObject({ type: 'instance-select', functionCap: 'broker', kind: 'alexa' })
+    expect(account).toMatchObject({
+      type: 'instance-select',
+      functionCap: 'broker',
+      kind: 'alexa',
+    })
   })
 
   it('loads the Echoes from the chosen account instead of a baked-in list', () => {
@@ -323,7 +359,10 @@ describe('the Alexa target kind', () => {
         return [{ targetId: command.targets[0] ?? '', ok: true }]
       },
     })
-    const sent = await provider.send({ targetId: 't1', notification: note('hello') })
+    const sent = await provider.send({
+      targetId: 't1',
+      notification: note('hello'),
+    })
     expect(sent.success).toBe(true)
     expect(spoken[0]?.brokerId).toBe('b2')
   })
@@ -334,7 +373,10 @@ describe('the Alexa target kind', () => {
       brokers: () => [broker('b1', 'Home', []), broker('b2', 'Office', [])],
       loadTargets: async () => [target({ echoId: 'unknown' })],
     })
-    const sent = await provider.send({ targetId: 't1', notification: note('hello') })
+    const sent = await provider.send({
+      targetId: 't1',
+      notification: note('hello'),
+    })
     expect(sent.success).toBe(false)
     expect(sent.error).toBe('target has no Amazon account')
   })

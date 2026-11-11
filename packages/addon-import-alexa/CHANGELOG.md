@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Echo targets no longer have a Respect Do Not Disturb switch: high priority speaks over DND, normal follows it; a migration removes the stored setting.
+
 ## [0.2.202] - 2026-11-10
 
 ### Changed

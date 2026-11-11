@@ -147,10 +147,6 @@ function modeFor(notification: Notification): SpeakMode {
   return notification.priority <= SILENT_PRIORITY ? 'speak' : 'announce'
 }
 
-function respectDnd(config: Record<string, unknown>): boolean {
-  return config['respectDnd'] !== false
-}
-
 /** "Kitchen · Living room · ECHO" — the name first, then what tells two Echoes apart. */
 export function echoOptionLabel(device: EchoDevice): string {
   const kind = device.kind === 'group' ? 'Group' : device.family
@@ -171,7 +167,9 @@ export function echoOptionLabel(device: EchoDevice): string {
 function configSchema(): ConfigUISchema {
   const accountFields: ConfigField[] = [
     {
-      ...linkFieldDescriptor('brokerId', ALEXA_ACCOUNT_LINK, { label: 'Amazon account' }),
+      ...linkFieldDescriptor('brokerId', ALEXA_ACCOUNT_LINK, {
+        label: 'Amazon account',
+      }),
       labelKey: 'import-alexa:echoTarget.s_echo.brokerId.label',
     },
     {
@@ -180,7 +178,12 @@ function configSchema(): ConfigUISchema {
       label: 'Echo',
       labelKey: 'import-alexa:echoTarget.s_echo.echoId.label',
       options: [],
-      discoverOptions: { kind: ALEXA_SPEAK_KIND, dependsOn: ['brokerId'] },
+      // Adding targets ticks several Echoes of the account at once: one target each.
+      discoverOptions: {
+        kind: ALEXA_SPEAK_KIND,
+        dependsOn: ['brokerId'],
+        pickManyOnCreate: true,
+      },
     },
   ]
   return {
@@ -189,16 +192,7 @@ function configSchema(): ConfigUISchema {
         id: 'echo',
         title: 'Echo',
         titleKey: 'import-alexa:echoTarget.s_echo.title',
-        fields: [
-          ...accountFields,
-          {
-            type: 'boolean',
-            key: 'respectDnd',
-            label: 'Respect Do Not Disturb',
-            labelKey: 'import-alexa:echoTarget.s_echo.respectDnd.label',
-            default: true,
-          },
-        ],
+        fields: accountFields,
       },
     ],
   }
@@ -229,7 +223,6 @@ function discoveredFrom(broker: SpeakBrokerView, device: EchoDevice): Discovered
     config: {
       brokerId: broker.id,
       echoId: device.id,
-      respectDnd: true,
       family: device.family,
       deviceKind: device.kind,
     },
@@ -265,7 +258,11 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
         ...tags,
         meta: { targetId: target.id },
       })
-      return { success: false, error: 'target has no echo id', renderedAs: speech.renderedAs }
+      return {
+        success: false,
+        error: 'target has no echo id',
+        renderedAs: speech.renderedAs,
+      }
     }
     if (speech.text.length === 0) {
       record({ targetId: target.id, outcome: 'empty', at: ports.now() })
@@ -278,7 +275,12 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
     const broker = brokerFor(target.config)
     if (broker === undefined) {
       const error = 'target has no Amazon account'
-      record({ targetId: target.id, outcome: 'failed', at: ports.now(), error })
+      record({
+        targetId: target.id,
+        outcome: 'failed',
+        at: ports.now(),
+        error,
+      })
       logger.warn('alexa speak dropped: target names no Amazon account', {
         ...tags,
         meta: { targetId: target.id, echoId },
@@ -286,10 +288,9 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       return { success: false, error, renderedAs: speech.renderedAs }
     }
     const device = broker.devices.find((row) => row.id === echoId)
-    // `high` overrides Do Not Disturb; `normal` follows it (and the target's own
-    // `respectDnd` switch stays the way to ignore it for every notification).
+    // The priority decides Do Not Disturb: `high` speaks over it, `normal` follows it.
     const overridesDnd = speech.levelId === ALEXA_LEVEL_HIGH
-    if (device !== undefined && respectDnd(target.config) && device.dnd) {
+    if (device !== undefined && device.dnd) {
       if (!overridesDnd) {
         record({ targetId: target.id, outcome: 'dnd', at: ports.now() })
         logger.info('alexa speak skipped: do not disturb', {
@@ -309,12 +310,20 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
         ...tags,
         meta: { targetId: target.id, echoId },
       })
-      return { success: false, error: 'echo offline', renderedAs: speech.renderedAs }
+      return {
+        success: false,
+        error: 'echo offline',
+        renderedAs: speech.renderedAs,
+      }
     }
     const admitted = admitSpeech(ledger, echoId, speech.text, ports.now())
     ledger = admitted.ledger
     if (admitted.decision !== 'admit') {
-      record({ targetId: target.id, outcome: admitted.decision, at: ports.now() })
+      record({
+        targetId: target.id,
+        outcome: admitted.decision,
+        at: ports.now(),
+      })
       logger.info('alexa speak skipped', {
         ...tags,
         meta: { targetId: target.id, echoId, outcome: admitted.decision },
@@ -332,8 +341,16 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       const one = outcomes.find((row) => row.targetId === echoId) ?? outcomes[0]
       if (one === undefined || !one.ok) {
         const error = one?.error ?? 'speak failed'
-        record({ targetId: target.id, outcome: 'failed', at: ports.now(), error })
-        logger.warn('alexa speak failed', { ...tags, meta: { targetId: target.id, echoId, error } })
+        record({
+          targetId: target.id,
+          outcome: 'failed',
+          at: ports.now(),
+          error,
+        })
+        logger.warn('alexa speak failed', {
+          ...tags,
+          meta: { targetId: target.id, echoId, error },
+        })
         return { success: false, error, renderedAs: speech.renderedAs }
       }
       const outcome: DeliveryOutcome = mode === 'announce' ? 'announced' : 'spoken'
@@ -345,8 +362,16 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
       return { success: true, renderedAs: speech.renderedAs }
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err)
-      record({ targetId: target.id, outcome: 'failed', at: ports.now(), error })
-      logger.warn('alexa speak failed', { ...tags, meta: { targetId: target.id, echoId, error } })
+      record({
+        targetId: target.id,
+        outcome: 'failed',
+        at: ports.now(),
+        error,
+      })
+      logger.warn('alexa speak failed', {
+        ...tags,
+        meta: { targetId: target.id, echoId, error },
+      })
       return { success: false, error, renderedAs: speech.renderedAs }
     }
   }

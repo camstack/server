@@ -83,7 +83,7 @@ function echoTarget(id: string, enabled: boolean): Target {
     kind: 'alexa-echo',
     addonId: 'import-alexa',
     enabled,
-    config: { brokerId: 'alexa_001', echoId: 'echo-of-alexa_001', respectDnd: false },
+    config: { brokerId: 'alexa_001', echoId: 'echo-of-alexa_001' },
   }
 }
 

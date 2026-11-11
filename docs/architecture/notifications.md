@@ -115,7 +115,7 @@ applies-to:
 covers:
   - packages/addon-post-analysis/src/notification-center/**
   - packages/addon-notifiers/src/**
-last-verified: 2026-10-07
+last-verified: 2026-11-11
 ---
 
 # Notifications
@@ -3609,7 +3609,8 @@ override the notifier does not support is accepted and not delivered. A
 notifier's declared `deliveryParams` reach its adapter as
 `PreparedNotification.delivery` (Telegram `threadId`, Home Assistant
 `group` and `channel`); Alexa declares `normal` (follows Do Not Disturb) and
-`high` (overrides it).
+`high` (overrides it). The priority is the only Do Not Disturb rule: an Echo
+target has no switch of its own.
 
 
 - **Texts.** The rule's texts are the defaults. A target's text replaces the

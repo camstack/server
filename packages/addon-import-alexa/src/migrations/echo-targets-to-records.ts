@@ -61,7 +61,6 @@ export async function moveEchoTargetsToRecords(
         config: {
           ...(target.brokerId.length > 0 ? { brokerId: target.brokerId } : {}),
           echoId: target.echoId,
-          respectDnd: target.respectDnd,
         },
       })
       await ports.writeEchoRecord(target.id, body)
@@ -71,7 +70,6 @@ export async function moveEchoTargetsToRecords(
         back['name'] === body['name'] &&
         back['enabled'] === body['enabled'] &&
         back['echoId'] === body['echoId'] &&
-        back['respectDnd'] === body['respectDnd'] &&
         back['brokerId'] === body['brokerId']
       if (!same) {
         await ports.dropEchoRecord(target.id)
@@ -91,6 +89,12 @@ export async function moveEchoTargetsToRecords(
   if (unparsed === 0) await ports.writeRows(left)
   return {
     outcome: converted > 0 || kept > 0 ? 'done' : 'already-done',
-    summary: { converted, kept, unparsed, skipped: left.length, kind: ALEXA_SPEAK_KIND },
+    summary: {
+      converted,
+      kept,
+      unparsed,
+      skipped: left.length,
+      kind: ALEXA_SPEAK_KIND,
+    },
   }
 }

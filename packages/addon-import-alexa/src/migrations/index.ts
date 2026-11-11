@@ -20,6 +20,11 @@ import {
 } from './strip-echo-target-volume-and-mode.js'
 
 import {
+  STRIP_ECHO_TARGET_RESPECT_DND_ID,
+  stripEchoTargetRespectDnd,
+  type EchoDndRecordPorts,
+} from './strip-echo-target-respect-dnd.js'
+import {
   ECHO_TARGETS_TO_RECORDS_ID,
   type EchoRecordPorts,
   moveEchoTargetsToRecords,
@@ -27,6 +32,11 @@ import {
 
 export { ECHO_TARGETS_TO_RECORDS_ID } from './echo-targets-to-records.js'
 export type { EchoRecordPorts } from './echo-targets-to-records.js'
+export { STRIP_ECHO_TARGET_RESPECT_DND_ID } from './strip-echo-target-respect-dnd.js'
+export type {
+  EchoDndRecordPorts,
+  StoredEchoRecord,
+} from './strip-echo-target-respect-dnd.js'
 export type { EchoTargetMigrationPorts } from './strip-echo-target-volume-and-mode.js'
 export { FLATTEN_BROKER_RECORDS_ID } from './flatten-broker-records.js'
 export { alexaBrokerLinkPorts, BROKER_LINKS_TO_CONNECTIONS_ID }
@@ -40,7 +50,8 @@ export type AlexaMigrationPorts = EchoTargetMigrationPorts &
   FlattenRowPorts &
   AlexaIntegrationRowsPorts &
   BrokerLinkPorts &
-  EchoRecordPorts
+  EchoRecordPorts &
+  EchoDndRecordPorts
 
 /** The `import-alexa` catalogue (D987): offered to the engine when the addon initialises. */
 export const ADDON_MIGRATIONS: readonly AddonMigration<AlexaMigrationPorts>[] = [
@@ -127,6 +138,23 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<AlexaMigrationPorts>[] = 
       fixtureMark: 'the switch (off) and the id of an Echo target',
     },
     procedure: moveEchoTargetsToRecords,
+  },
+  {
+    meta: {
+      id: STRIP_ECHO_TARGET_RESPECT_DND_ID,
+      owner: 'import-alexa',
+      level: 'addon-state',
+      seq: 6,
+      dependsOn: [ECHO_TARGETS_TO_RECORDS_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'Remove the retired respectDnd switch from every Echo target record and from any row still in the echoTargets setting; Do Not Disturb follows the notification priority',
+      fixtureMark: 'the name, the account and the switch (off) of an Echo target record',
+    },
+    procedure: stripEchoTargetRespectDnd,
   },
 ]
 
