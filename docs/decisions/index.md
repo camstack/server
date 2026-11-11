@@ -4,7 +4,7 @@
 
 # Decisions
 
-1002 architecture decision records. One file per decision, never
+1007 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1016,6 +1016,11 @@ that rots.
 | D1034 | [A fan's oscillation axes are part of fan-control, linked by hand in Customize, and a union field is judged by its source's live kind](adr-1034-a-fan-oscillation-axis-is-part-of-fan-control-linked-by-hand-and-judged-by-its-live-kind.md) | ✅ accepted | 2026-11-11 |
 | D1035 | [A time window is a state leaf — days bind to the day it starts, the site is held in memory, and a sun window without a location is unknown](adr-1035-a-time-window-is-a-state-leaf-days-bind-to-the-start-day-and-the-site-is-held-in-memory.md) | ✅ accepted | 2026-11-11 |
 | D1036 | [A trigger row carries a stable id, and "triggered by" reads which one started the run — unknown where the run is not told](adr-1036-a-trigger-row-carries-a-stable-id-and-triggered-by-reads-which-one-started-the-run.md) | ✅ accepted | 2026-11-11 |
+| D1037 | [Flow-control steps belong to the automation list, and a failure the run was told to pass over stays visible](adr-1037-flow-control-steps-belong-to-the-automation-list-and-a-failure-passed-over-stays-visible.md) | ✅ accepted | 2026-11-11 |
+| D1038 | [A choose runs the first true branch, and a branch that cannot be read runs nothing](adr-1038-a-choose-runs-the-first-true-branch-and-a-branch-that-cannot-be-read-runs-nothing.md) | ✅ accepted | 2026-11-11 |
+| D1039 | [A wait for a condition always has a timeout, and a condition that cannot be read keeps waiting](adr-1039-a-wait-for-a-condition-always-has-a-timeout-and-an-unreadable-condition-keeps-waiting.md) | ✅ accepted | 2026-11-11 |
+| D1040 | [A parallel step starts its members together, awaits all of them, and holds no set or stop](adr-1040-a-parallel-step-starts-its-members-together-awaits-all-and-holds-no-set-or-stop.md) | ✅ accepted | 2026-11-11 |
+| D1041 | [A repeat is bounded at save, and a loop that reaches its bound is marked, not failed](adr-1041-a-repeat-is-bounded-at-save-and-a-loop-that-reaches-its-bound-is-marked-not-failed.md) | ✅ accepted | 2026-11-11 |
 | D1042 | [Switch is the one on/off control, built from the cap's power hint](adr-1042-switch-is-the-one-on-off-control-built-from-the-cap-s-power-hint.md) | ✅ accepted | 2026-11-11 |
 
 Conventions, and why the numbering looks the way it does:

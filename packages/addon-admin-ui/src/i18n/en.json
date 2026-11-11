@@ -11339,7 +11339,11 @@
       "noCommands": "This device has no commands to offer.",
       "pickCommand": "Pick a command",
       "pickDevice": "Pick a device",
-      "pickDeviceFirst": "Pick a device first"
+      "pickDeviceFirst": "Pick a device first",
+      "roundDevice": "On the device of this round",
+      "roundHint": "Runs on each device of the loop in turn. Only the commands all of them have are offered.",
+      "pickLoopDevicesFirst": "Pick the devices of the loop first",
+      "noCommonCommands": "The devices of this loop share no command."
     },
     "runs": {
       "emptyDescription": "Each run appears here with what it decided.",

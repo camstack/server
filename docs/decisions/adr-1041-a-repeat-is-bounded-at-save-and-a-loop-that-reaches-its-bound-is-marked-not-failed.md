@@ -56,11 +56,15 @@ script block with a loop nothing bounded.
 
 - `forEach` takes a list of devices, not a room or a device type: a domain
   target is resolved through a vocabulary action, and the loop has none.
-- The editor's device command step picks one device and reads ITS commands,
-  so it cannot name "the device of this round". Inside a `forEach` the
-  editor offers `item` as a value for a step parameter and for the
-  variables of a "run an action" step; a command on `item` itself is saved
-  through the JSON form (`target: { kind: 'var', name: 'item' }`).
+- Inside a `forEach` the editor's device command step can be aimed at "the
+  device of this round": it is stored on the `item` variable and offers
+  only the commands EVERY device of the loop's list has
+  (`commonVocabActions`). A command whose argument is answered per device
+  (a `dynamic` offer, such as one device's presets) is left out, because no
+  single value fits the whole list. A stored step whose command is no
+  longer common to the list is shown through the generic row and kept as
+  it is. `item` is also offered as a value for a step parameter and for
+  the variables of a "run an action" step.
 - `item` keeps the last device's id after the loop.
 - A `time-is` or device condition of a `while` is read when the round
   starts, not while its steps run.
@@ -81,7 +85,10 @@ script block with a loop nothing bounded.
   (count, while, until, bound, unreadable, failure, stop, pause) and the
   schema bounds in words.
 - `packages/types/src/automation/__tests__/generated-block.spec.ts` — each
-  form in a generated block, `vars.item`, restart.
+  form in a generated block, `vars.item`, a step aimed at `item`, restart.
+- `packages/addon-admin-ui/src/pages/build/flow/__tests__/CommandStep.round.spec.tsx`
+  and `command-vocab.spec.ts` — the device of the round: offered only in a
+  loop over devices, only the common commands, written on the variable.
 - `packages/addon-admin-ui/src/pages/build/automation/__tests__/ActionList.flow.spec.tsx`
   and `repeat-model.spec.ts` — offered only in an automation list, a loop
   on a condition always carries its maximum, the bounds.

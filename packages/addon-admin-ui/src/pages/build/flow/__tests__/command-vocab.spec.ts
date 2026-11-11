@@ -4,9 +4,13 @@ import {
   buildCapStep,
   type CapStep,
   commandId,
+  commonVocabActions,
   defaultArgValues,
   firstArgIssue,
+  isRoundTarget,
+  matchRoundCommand,
   matchVocabCommand,
+  ROUND_DEVICE,
   splitPhrase,
   vocabLocale,
 } from '../command-vocab'
@@ -133,5 +137,48 @@ describe('command-vocab', () => {
   it('reads the locale from the UI language', () => {
     expect(vocabLocale('it-IT')).toBe('it')
     expect(vocabLocale('en')).toBe('en')
+  })
+})
+
+describe('the device of this round (#500)', () => {
+  const FEEDER_AND_SWITCH = vocabularyActionsForDevice(['pet-feeder', 'switch'])
+  const SWITCH_ONLY = vocabularyActionsForDevice(['switch'])
+
+  it('offers only the commands every device of the loop has', () => {
+    const common = commonVocabActions([FEEDER_AND_SWITCH, SWITCH_ONLY])
+    expect(common.map(commandId).toSorted()).toEqual(SWITCH_ONLY.map(commandId).toSorted())
+    expect(common.some((a) => a.cap === 'pet-feeder')).toBe(false)
+  })
+
+  it('offers nothing for an empty loop or when one device has no command', () => {
+    expect(commonVocabActions([])).toEqual([])
+    expect(commonVocabActions([SWITCH_ONLY, []])).toEqual([])
+  })
+
+  it('leaves out a command whose argument is answered per device', () => {
+    const heater = vocabularyActionsForDevice(['water-heater', 'switch'])
+    const dynamic = heater.filter((a) => a.openArgs.some((arg) => arg.offer.kind === 'dynamic'))
+    expect(dynamic.length).toBeGreaterThan(0)
+    const common = commonVocabActions([heater, heater])
+    expect(common.length).toBeGreaterThan(0)
+    for (const a of dynamic) expect(common.map(commandId)).not.toContain(commandId(a))
+  })
+
+  it('writes and reads back a step aimed at the device of the round', () => {
+    const on = SWITCH_ONLY[0]
+    if (on === undefined) throw new Error('no switch command')
+    const step = buildCapStep(on, ROUND_DEVICE, defaultArgValues(on))
+    expect(step.deviceId).toEqual({ $var: 'item' })
+    expect(isRoundTarget(step)).toBe(true)
+    expect(matchVocabCommand(SWITCH_ONLY, step)).toBeNull()
+    expect(matchRoundCommand(SWITCH_ONLY, step)?.action.id).toBe(on.id)
+  })
+
+  it('reads the stored target shape as the device of the round, and nothing else', () => {
+    const base = { kind: 'cap', cap: 'switch', method: 'on' } as const
+    expect(isRoundTarget({ ...base, target: { kind: 'var', name: 'item' } })).toBe(true)
+    expect(isRoundTarget({ ...base, target: { kind: 'var', name: 'deviceId' } })).toBe(false)
+    expect(isRoundTarget({ ...base, deviceId: 4 })).toBe(false)
+    expect(matchRoundCommand(SWITCH_ONLY, { ...base, deviceId: 4 })).toBeNull()
   })
 })

@@ -13,7 +13,14 @@ vi.mock('../FieldPicker', async () => {
   const actual = await vi.importActual<typeof import('../FieldPicker')>('../FieldPicker')
   return { ...actual, FieldPicker: () => null, useFieldDescriptor: () => undefined }
 })
-vi.mock('../../flow/CommandStep', () => ({ CommandStep: () => null }))
+vi.mock('../../flow/CommandStep', () => ({
+  CommandStep: (props: { readonly roundDevices?: readonly number[] }) => (
+    <span
+      data-testid="fake-command"
+      data-round={props.roundDevices === undefined ? 'none' : props.roundDevices.join(',')}
+    />
+  ),
+}))
 vi.mock('../RunActionFields', () => ({ RunActionFields: () => null }))
 vi.mock('../WhenTree', () => ({ WhenTree: () => null }))
 vi.mock('@camstack/ui-library', async () => {
@@ -286,6 +293,20 @@ describe('ActionList repeat (#500)', () => {
     expect(latest[0]).toMatchObject({
       loop: { by: 'forEach', target: { kind: 'devices', ids: [11, 12] } },
     })
+  })
+
+  it('a command inside a loop over devices is told the devices of the loop; no other command is', () => {
+    render(<Harness flow initial={[CAP, { ...REPEAT, steps: [CAP] }]} />)
+    const body = within(screen.getByTestId('repeat-steps-1'))
+    expect(body.getByTestId('fake-command').getAttribute('data-round')).toBe('none')
+    pick('repeat-by-1', 'Once for each device')
+    expect(body.getByTestId('fake-command').getAttribute('data-round')).toBe('')
+    fireEvent.click(screen.getByTestId('fake-device-picker'))
+    expect(body.getByTestId('fake-command').getAttribute('data-round')).toBe('11,12')
+    const outside = screen
+      .getAllByTestId('fake-command')
+      .filter((el) => !screen.getByTestId('repeat-steps-1').contains(el))
+    expect(outside.map((el) => el.getAttribute('data-round'))).toEqual(['none'])
   })
 
   it('its steps are plain steps, ten at most, with no block step inside', () => {

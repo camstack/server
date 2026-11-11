@@ -14,6 +14,7 @@
  * step is kept as it is.
  */
 
+import { REPEAT_ITEM_VAR } from '@camstack/types'
 import type {
   AutomationAction,
   LooseVocabOffer,
@@ -37,6 +38,42 @@ export function singleDeviceOf(step: CapStep): number | null {
     return step.target.ids[0] ?? null
   }
   return null
+}
+
+/** The target of a step aimed at "the device of this round" of a repeat over devices (#500). */
+export interface RoundDeviceRef {
+  readonly $var: string
+}
+export const ROUND_DEVICE: RoundDeviceRef = { $var: REPEAT_ITEM_VAR }
+
+/** A step a vocabulary command is written for: one device, or the device of the round. */
+export type CommandDevice = number | RoundDeviceRef
+
+/** Whether the step is aimed at the device of the round, in either stored shape. */
+export function isRoundTarget(step: CapStep): boolean {
+  if (step.deviceId !== undefined) {
+    return isVarRef(step.deviceId) && step.deviceId.$var === REPEAT_ITEM_VAR
+  }
+  return step.target?.kind === 'var' && step.target.name === REPEAT_ITEM_VAR
+}
+
+/**
+ * The commands EVERY device of a loop offers, so a step aimed at the device of
+ * the round can run on each of them. A command whose argument is answered per
+ * device (a `dynamic` offer: one device's presets are not another's) is left
+ * out: no single value could be picked for the whole list.
+ */
+export function commonVocabActions(
+  perDevice: readonly (readonly ResolvedVocabAction[])[],
+): readonly ResolvedVocabAction[] {
+  const [first, ...rest] = perDevice
+  if (first === undefined) return []
+  const others = rest.map((actions) => new Set(actions.map(commandId)))
+  return first.filter(
+    (action) =>
+      others.every((ids) => ids.has(commandId(action))) &&
+      action.openArgs.every((arg) => arg.offer.kind !== 'dynamic'),
+  )
 }
 
 /** The device picker's value for a step: the same reading, in the picker's own shape. */
@@ -173,6 +210,22 @@ export function matchVocabCommand(
   step: CapStep,
 ): VocabCommandMatch | null {
   if (singleDeviceOf(step) === null) return null
+  return matchCommand(actions, step)
+}
+
+/** The same reading for a step aimed at the device of the round; `actions` are the loop's common ones. */
+export function matchRoundCommand(
+  actions: readonly ResolvedVocabAction[],
+  step: CapStep,
+): VocabCommandMatch | null {
+  if (!isRoundTarget(step)) return null
+  return matchCommand(actions, step)
+}
+
+function matchCommand(
+  actions: readonly ResolvedVocabAction[],
+  step: CapStep,
+): VocabCommandMatch | null {
   const args = step.args ?? {}
   let best: ResolvedVocabAction | null = null
   let bestBaked = -1
@@ -203,7 +256,7 @@ function isBlank(value: StepArgValue): boolean {
 /** The stored step for a command: baked args first, then the operator's. */
 export function buildCapStep(
   action: ResolvedVocabAction,
-  deviceId: number,
+  device: CommandDevice,
   values: StepArgValues,
 ): CapStep {
   const open: Record<string, unknown> = {}
@@ -219,7 +272,7 @@ export function buildCapStep(
   const args = { ...action.args, ...open }
   return {
     kind: 'cap',
-    deviceId,
+    deviceId: typeof device === 'number' ? device : { $var: device.$var },
     cap: action.cap,
     method: action.method,
     ...(Object.keys(args).length === 0 ? {} : { args }),

@@ -205,6 +205,7 @@ export function RepeatFields({
           maxSteps={REPEAT_STEPS_MAX}
           {...(devicesState === undefined ? {} : { devicesState })}
           {...(bodyVariables === undefined ? {} : { variables: bodyVariables })}
+          {...(loop.by === 'forEach' ? { roundDevices: loop.target.ids } : {})}
           onChange={(next) => onChange({ ...step, steps: next.filter(isBranchStep) })}
         />
       </div>

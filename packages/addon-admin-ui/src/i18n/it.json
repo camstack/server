@@ -11361,7 +11361,11 @@
       "noCommands": "Questo dispositivo non offre comandi.",
       "pickCommand": "Scegli un comando",
       "pickDevice": "Scegli un dispositivo",
-      "pickDeviceFirst": "Scegli prima un dispositivo"
+      "pickDeviceFirst": "Scegli prima un dispositivo",
+      "roundDevice": "Sul dispositivo di questo giro",
+      "roundHint": "Viene eseguito a turno su ogni dispositivo del ciclo. Sono proposti solo i comandi che hanno tutti.",
+      "pickLoopDevicesFirst": "Scegli prima i dispositivi del ciclo",
+      "noCommonCommands": "I dispositivi di questo ciclo non hanno comandi in comune."
     },
     "runs": {
       "emptyDescription": "Ogni esecuzione compare qui con ciò che ha deciso.",

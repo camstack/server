@@ -93,6 +93,11 @@ export interface ActionListProps {
   readonly flowControl?: boolean
   /** The most steps the list takes; the add button is disabled there. Default: no bound here. */
   readonly maxSteps?: number
+  /**
+   * The list is the body of a repeat that runs once for each device: these are
+   * its devices, and a command step may be aimed at the device of the round.
+   */
+  readonly roundDevices?: readonly number[]
   readonly onChange: (next: readonly AutomationAction[]) => void
 }
 
@@ -107,6 +112,7 @@ export function ActionList({
   nested = false,
   flowControl = false,
   maxSteps,
+  roundDevices,
   onChange,
 }: ActionListProps) {
   const { t } = useTranslation()
@@ -338,6 +344,7 @@ export function ActionList({
               devices={devices}
               devicesState={devicesState}
               variables={variables}
+              {...(roundDevices === undefined ? {} : { roundDevices })}
               onChange={(next) =>
                 onChange(
                   replaceAt(actions, index, {

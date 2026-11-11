@@ -1939,6 +1939,25 @@ describe('repeat (#500): the same steps several times, always bounded', () => {
     expect(h.traces()[0]?.steps[0]).toMatchObject({ iterations: 2, outcome: 'ok' })
   })
 
+  it('a step aimed at the item variable runs on the device of each round', async () => {
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          {
+            kind: 'repeat',
+            loop: { by: 'forEach', target: { kind: 'devices', ids: [11, 12] } },
+            steps: [{ kind: 'cap', deviceId: { $var: 'item' }, cap: 'siren', method: 'on' }],
+          },
+        ],
+      }),
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(100)
+    expect(h.mutate.mock.calls.map(([a]) => a)).toEqual([{ deviceId: 11 }, { deviceId: 12 }])
+  })
+
   it('a restart cuts the pause of a loop short', async () => {
     const slices: Record<string, object> = { '3|contact': { open: true } }
     const h = start(
