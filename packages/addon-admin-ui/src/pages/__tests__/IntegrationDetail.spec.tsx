@@ -251,6 +251,54 @@ describe('IntegrationDetailPage - the switch', () => {
   })
 })
 
+describe('IntegrationDetailPage - the switch of an addon that is not running', () => {
+  const REASON = /is not running: start it first/
+
+  it('says why the switch is refused when the addon is known to be down', () => {
+    shown.integration = { ...BASE_INTEGRATION, switchUnknown: true, processState: 'failed' }
+    render(renderPage())
+
+    expect(screen.getByRole('switch', { name: 'Unknown' })).toBeDisabled()
+    expect(screen.getByText(REASON)).toBeInTheDocument()
+    shown.integration = null
+  })
+
+  it('refuses the switch of a stopped addon even when the row did not arrive marked unknown', () => {
+    shown.integration = { ...BASE_INTEGRATION, processState: 'stopped' }
+    switches.instance.mockReset()
+    render(renderPage())
+
+    const toggle = screen.getByRole('switch')
+    expect(toggle).toBeDisabled()
+    fireEvent.click(toggle)
+    expect(switches.instance).not.toHaveBeenCalled()
+    expect(screen.getByText(REASON)).toBeInTheDocument()
+    shown.integration = null
+  })
+
+  it('claims no stop while the process state is unknown or running (D315)', () => {
+    shown.integration = { ...BASE_INTEGRATION, switchUnknown: true, processState: 'unknown' }
+    const first = render(renderPage())
+    expect(screen.queryByText(REASON)).toBeNull()
+    first.unmount()
+
+    shown.integration = { ...BASE_INTEGRATION, processState: 'running' }
+    render(renderPage())
+    expect(screen.queryByText(REASON)).toBeNull()
+    expect(screen.getByRole('switch', { name: 'Disable integration' })).not.toBeDisabled()
+    shown.integration = null
+  })
+
+  it('gives no reason for a fixed builtin whose addon is down: the hub still switches it', () => {
+    shown.integration = { ...BASE_INTEGRATION, info: { fixed: true }, processState: 'failed' }
+    render(renderPage())
+
+    expect(screen.getByRole('switch', { name: 'Disable integration' })).not.toBeDisabled()
+    expect(screen.queryByText(REASON)).toBeNull()
+    shown.integration = null
+  })
+})
+
 describe('IntegrationDetailPage - delete', () => {
   const confirmDelete = async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }))

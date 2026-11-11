@@ -124,6 +124,14 @@ export function buildRows(input: BuildRowsInput): readonly PanelRow[] {
 /** A process state that says the addon CAN answer, or that nobody knows (D315): never a refusal. */
 const NOT_A_STOP = new Set(['running', 'unknown'])
 
+/**
+ * True when a process state says the addon is NOT running. Only an answered state counts: an
+ * absent one, or `unknown`, is not known to be stopped (D315).
+ */
+export function isStoppedProcessState(state: string | undefined): boolean {
+  return state !== undefined && !NOT_A_STOP.has(state)
+}
+
 function fieldOf(value: unknown, key: string): unknown {
   return typeof value === 'object' && value !== null ? Reflect.get(value, key) : undefined
 }
@@ -139,7 +147,7 @@ export function notRunningAddons(addons: readonly unknown[]): ReadonlyMap<string
     const id = fieldOf(fieldOf(addon, 'manifest'), 'id')
     const state = fieldOf(fieldOf(addon, 'process'), 'state')
     if (typeof id !== 'string' || typeof state !== 'string') continue
-    if (!NOT_A_STOP.has(state)) out.set(id, state)
+    if (isStoppedProcessState(state)) out.set(id, state)
   }
   return out
 }

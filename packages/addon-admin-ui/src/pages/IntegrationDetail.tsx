@@ -43,6 +43,7 @@ import {
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { isStoppedProcessState } from '../components/instances/instances-model'
 import { AddDeviceModal } from '../components/integrations/AddDeviceModal'
 import { useAdminDeviceRemoval } from '../hooks/useAdminDeviceRemoval'
 import { MatterPairingPanel } from '../components/integrations/MatterPairingPanel'
@@ -293,6 +294,10 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
         : instanceSwitch.mutate(vars),
   }
   const switchUnknown = integration?.switchUnknown === true
+  // A FIXED builtin whose addon is down still switches (the hub writes the flag, above). Any other
+  // row needs its addon to answer: a known stop refuses the switch, like the instances table does.
+  const addonStopped = isStoppedProcessState(integration?.processState)
+  const switchRefused = switchUnknown || (!isFixed && addonStopped)
 
   const afterDelete = {
     onSuccess: () => {
@@ -402,6 +407,13 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
 
   const addonTitle =
     (availableTypes ?? []).find((a) => a.addonId === addonId)?.name ?? integration?.name ?? addonId
+  // The same sentence the instances table writes under a switch it refuses for this reason.
+  const notRunningReason =
+    switchRefused && addonStopped
+      ? t('providerInstances.addonNotRunning', '{{addon}} is not running: start it first', {
+          addon: addonTitle,
+        })
+      : null
 
   if (!integration) {
     return (
@@ -479,47 +491,55 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
               {addDeviceLabel}
             </Button>
           )}
-          <div
-            className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 transition-colors ${
-              toggleMutation.isPending ? 'opacity-60' : ''
-            } ${
-              integration.enabled && !switchUnknown
-                ? 'border-success/30 bg-success/5'
-                : 'border-border bg-surface'
-            }`}
-            title={t('integrations.toggleHint', { defaultValue: 'Click to toggle' })}
-          >
-            <Switch
-              checked={integration.enabled && !switchUnknown}
-              onCheckedChange={(next) =>
-                toggleMutation.mutate({
-                  id: integrationId!,
-                  addonId: integration?.addonId,
-                  enabled: next,
-                })
+          <div className="flex flex-col items-end gap-1">
+            <div
+              className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 transition-colors ${
+                toggleMutation.isPending ? 'opacity-60' : ''
+              } ${
+                integration.enabled && !switchUnknown
+                  ? 'border-success/30 bg-success/5'
+                  : 'border-border bg-surface'
+              }`}
+              title={
+                notRunningReason ??
+                t('integrations.toggleHint', { defaultValue: 'Click to toggle' })
               }
-              disabled={toggleMutation.isPending || switchUnknown}
-              aria-label={
-                switchUnknown
+            >
+              <Switch
+                checked={integration.enabled && !switchUnknown}
+                onCheckedChange={(next) =>
+                  toggleMutation.mutate({
+                    id: integrationId!,
+                    addonId: integration?.addonId,
+                    enabled: next,
+                  })
+                }
+                disabled={toggleMutation.isPending || switchRefused}
+                aria-label={
+                  switchUnknown
+                    ? t('integrationDetail.switchUnknown', 'Unknown')
+                    : integration.enabled
+                      ? t('integrationDetail.disableIntegration', 'Disable integration')
+                      : t('integrationDetail.enableIntegration', 'Enable integration')
+                }
+              />
+              <span
+                className={`text-[11px] font-medium ${
+                  integration.enabled && !switchUnknown ? 'text-success' : 'text-foreground-subtle'
+                }`}
+              >
+                {switchUnknown
                   ? t('integrationDetail.switchUnknown', 'Unknown')
                   : integration.enabled
-                    ? t('integrationDetail.disableIntegration', 'Disable integration')
-                    : t('integrationDetail.enableIntegration', 'Enable integration')
-              }
-            />
-            <span
-              className={`text-[11px] font-medium ${
-                integration.enabled && !switchUnknown ? 'text-success' : 'text-foreground-subtle'
-              }`}
-            >
-              {switchUnknown
-                ? t('integrationDetail.switchUnknown', 'Unknown')
-                : integration.enabled
-                  ? t('integrationDetail.enabled', 'Enabled')
-                  : t('integrationDetail.disabled', 'Disabled')}
-            </span>
-            {toggleMutation.isPending && (
-              <Loader2 className="h-3 w-3 animate-spin text-foreground-subtle" />
+                    ? t('integrationDetail.enabled', 'Enabled')
+                    : t('integrationDetail.disabled', 'Disabled')}
+              </span>
+              {toggleMutation.isPending && (
+                <Loader2 className="h-3 w-3 animate-spin text-foreground-subtle" />
+              )}
+            </div>
+            {notRunningReason !== null && (
+              <span className="text-[11px] text-foreground-subtle">{notRunningReason}</span>
             )}
           </div>
           {/* Config/settings button — HIDDEN for `mode: standalone` (those

@@ -7,6 +7,7 @@ import {
   addonDescriptions,
   providerNamesByAddon,
   formStartValues,
+  isStoppedProcessState,
   effectiveInstanceValues,
   buildRows,
   creatableProviders,
@@ -533,5 +534,15 @@ describe('addon labels read from addons.list', () => {
     ])
     expect(descriptions.get('a')).toBe('Sends mail')
     expect(descriptions.has('b')).toBe(false)
+  })
+})
+
+describe('isStoppedProcessState', () => {
+  it('is true only for an answered state that is not running', () => {
+    expect(isStoppedProcessState('failed')).toBe(true)
+    expect(isStoppedProcessState('stopped')).toBe(true)
+    expect(isStoppedProcessState('running')).toBe(false)
+    expect(isStoppedProcessState('unknown')).toBe(false)
+    expect(isStoppedProcessState(undefined)).toBe(false)
   })
 })
