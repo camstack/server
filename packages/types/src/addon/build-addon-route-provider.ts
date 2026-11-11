@@ -17,6 +17,8 @@ export interface AddonRouteInvokeRequest {
   readonly query: Record<string, string>
   readonly body: unknown
   readonly headers: Record<string, string>
+  /** The instance the hub resolved for a `perInstance` route. */
+  readonly instanceId?: string
   readonly user?: {
     readonly id: string
     readonly username: string
@@ -92,6 +94,11 @@ export function buildAddonRouteProvider(
         query: input.query,
         body: input.body,
         headers: input.headers,
+        // Only a route that declared `perInstance` is told an instance: the
+        // hub resolved it, the child never derives one of its own.
+        ...(match.route.perInstance === true && input.instanceId !== undefined
+          ? { instanceId: input.instanceId }
+          : {}),
         ...(input.user ? { user: input.user } : {}),
         // The scopedToken shape is intentionally `unknown` on the wire
         // (it includes nested `TokenScope` discriminated unions that

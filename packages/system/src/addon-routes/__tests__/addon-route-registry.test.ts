@@ -120,3 +120,60 @@ describe('AddonRouteRegistry', () => {
     expect(registry.matchRoute('GET', '/addon/webhook/event')).toBeNull()
   })
 })
+
+describe('AddonRouteRegistry — per-instance routes (planning#415)', () => {
+  let registry: AddonRouteRegistry
+
+  beforeEach(() => {
+    registry = new AddonRouteRegistry()
+    registry.registerRoutes(
+      'export-x',
+      createMockProvider('export-x', [
+        createRoute({ method: 'POST', path: '/directive', perInstance: true }),
+        createRoute({ method: 'GET', path: '/items/:id', perInstance: true }),
+        createRoute({ method: 'GET', path: '/health' }),
+      ]),
+    )
+  })
+
+  it('names the instance of a path that carries the instance segment', () => {
+    const match = registry.matchRoute('POST', '/addon/export-x/instances/second/directive')
+    expect(match).not.toBeNull()
+    expect(match!.addonId).toBe('export-x')
+    expect(match!.instanceId).toBe('second')
+    expect(match!.params).toEqual({})
+  })
+
+  it('resolves the path without the segment to the default instance, whose id is the addon id', () => {
+    const match = registry.matchRoute('POST', '/addon/export-x/directive')
+    expect(match).not.toBeNull()
+    expect(match!.instanceId).toBe('export-x')
+  })
+
+  it('keeps the route params beside the instance', () => {
+    const match = registry.matchRoute('GET', '/addon/export-x/instances/second/items/42')
+    expect(match!.instanceId).toBe('second')
+    expect(match!.params).toEqual({ id: '42' })
+  })
+
+  it('does not serve a route that is not per-instance under an instance segment', () => {
+    expect(registry.matchRoute('GET', '/addon/export-x/instances/second/health')).toBeNull()
+    const plain = registry.matchRoute('GET', '/addon/export-x/health')
+    expect(plain).not.toBeNull()
+    expect(plain!.instanceId).toBeUndefined()
+  })
+
+  it('refuses an instance segment that is not a plain id', () => {
+    expect(registry.matchRoute('POST', '/addon/export-x/instances/a%2Fb/directive')).toBeNull()
+    expect(registry.matchRoute('POST', '/addon/export-x/instances//directive')).toBeNull()
+  })
+
+  it('does not read the instance segment of ANOTHER addon', () => {
+    expect(registry.matchRoute('POST', '/addon/other/instances/second/directive')).toBeNull()
+  })
+
+  it('lists a per-instance route as such', () => {
+    const listed = registry.listRoutes().find((r) => r.path === '/addon/export-x/directive')
+    expect(listed?.perInstance).toBe(true)
+  })
+})

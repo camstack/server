@@ -10,6 +10,12 @@ export interface AddonHttpRequest {
   readonly query: Record<string, string>
   readonly body: unknown
   readonly headers: Record<string, string>
+  /**
+   * The integration instance the request addresses, on a route declared
+   * `perInstance`. A path with no instance segment names the default instance,
+   * whose id is the addon id. Absent on every other route.
+   */
+  readonly instanceId?: string
   /** Populated for 'authenticated' and 'admin' routes */
   readonly user?: {
     readonly id: string
@@ -56,6 +62,13 @@ export interface IAddonHttpRoute {
   readonly access: RouteAccess
   readonly description?: string
   readonly rateLimit?: RouteRateLimit
+  /**
+   * The route exists once per integration instance of the addon. The hub then
+   * serves it at `/addon/<addonId>/instances/<instanceId>/<path>` as well as at
+   * `/addon/<addonId>/<path>` (the default instance), and the handler reads
+   * which one from `request.instanceId`.
+   */
+  readonly perInstance?: boolean
   readonly handler: (request: AddonHttpRequest, reply: AddonHttpReply) => Promise<void>
 }
 

@@ -29,6 +29,7 @@ describe('createChildAddonCallDispatch', () => {
           path: '/cb',
           access: 'authenticated',
           description: 'callback',
+          perInstance: true,
           handler: async () => {},
         },
       ],
@@ -45,7 +46,14 @@ describe('createChildAddonCallDispatch', () => {
     // the hub must see a route's rate limit to apply it before the handler.
     expect(result).toEqual([
       { method: 'GET', path: '/start', access: 'public', rateLimit: 'auth' },
-      { method: 'POST', path: '/cb', access: 'authenticated', description: 'callback' },
+      {
+        method: 'POST',
+        path: '/cb',
+        access: 'authenticated',
+        description: 'callback',
+        // Without it the hub would not serve the route under an instance segment.
+        perInstance: true,
+      },
     ])
   })
 

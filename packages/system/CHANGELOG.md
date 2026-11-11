@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device-template renderer understands now, the time filter, and the camera alias for a caller-supplied device, and reports which devices and whether the clock a text reads.
 - The hub announces a stable random hub id on the LAN and signs it into the pairing offer; a pairing without an address the agent can dial is refused with the reason
 - A step's 'only if' can use a time-of-day window, and a scheduler follows a time-of-day condition at the moment the window opens or closes.
+- An addon route can be declared per instance: the hub serves it at /addon/<addonId>/instances/<instanceId>/<path>, and the address without an instance stays the default one
 
 ### Changed
 

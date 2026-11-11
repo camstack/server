@@ -320,9 +320,10 @@ interface ParsedRouteDescriptor {
   readonly access: import('@camstack/types').RouteAccess
   readonly description?: string
   readonly rateLimit?: import('@camstack/types').RouteRateLimit
+  readonly perInstance?: true
 }
 
-function parseSerializableRouteDescriptors(raw: unknown): readonly ParsedRouteDescriptor[] {
+export function parseSerializableRouteDescriptors(raw: unknown): readonly ParsedRouteDescriptor[] {
   if (!Array.isArray(raw)) {
     throw new Error('addon-routes: child returned a non-array route descriptor set')
   }
@@ -345,6 +346,7 @@ function parseSerializableRouteDescriptors(raw: unknown): readonly ParsedRouteDe
       access: asRouteAccess(Reflect.get(entry, 'access')),
       ...(typeof description === 'string' ? { description } : {}),
       ...(rateLimit !== undefined ? { rateLimit } : {}),
+      ...(Reflect.get(entry, 'perInstance') === true ? { perInstance: true as const } : {}),
     }
   })
 }
@@ -3417,6 +3419,7 @@ export class AddonRegistryService {
       access: route.access,
       ...(route.description !== undefined ? { description: route.description } : {}),
       ...(route.rateLimit !== undefined ? { rateLimit: route.rateLimit } : {}),
+      ...(route.perInstance === true ? { perInstance: true } : {}),
       handler: async (req, reply) => {
         const envelope = await invoker.invoke({
           method: route.method,
@@ -3427,6 +3430,7 @@ export class AddonRegistryService {
           query: req.query,
           body: req.body,
           headers: req.headers,
+          ...(req.instanceId !== undefined ? { instanceId: req.instanceId } : {}),
           ...(req.user ? { user: req.user } : {}),
           ...(req.scopedToken !== undefined ? { scopedToken: req.scopedToken } : {}),
         })

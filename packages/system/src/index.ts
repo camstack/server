@@ -38,7 +38,12 @@ export type { DirectCallerOptions } from './addon/addon-api-factory.js'
 // Addon API Factory
 export { AddonApiFactory } from './addon/addon-api-factory.js'
 // Addon routes
-export { AddonRouteRegistry } from './addon-routes/addon-route-registry.js'
+export {
+  ADDON_INSTANCE_SEGMENT,
+  AddonRouteRegistry,
+  resolveAddonInstancePath,
+  type AddonInstancePath,
+} from './addon-routes/addon-route-registry.js'
 export type { AuthConfigReader, ReauthClaims, TokenPayload } from './auth/auth-manager.js'
 // Auth
 export { AuthManager } from './auth/auth-manager.js'

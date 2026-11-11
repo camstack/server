@@ -115,6 +115,7 @@ import { describeTrpcPrincipal } from './api/trpc/trpc-error-principal'
 import { attachWsCensusSession, identifyWsCensusSession } from './api/trpc/ws-request-census'
 import { WsSlowConsumerGuard, wsConnectionFacts } from './api/trpc/ws-slow-consumer-guard.js'
 import { addonRouteCaller, authorizeAddonBearer } from './auth/addon-route-auth.js'
+import { buildAddonRouteRequest } from './core/addon/addon-route-request.js'
 import { SHARE_DEVICES_HEADER, SHARE_KIND_HEADER } from './auth/addon-route-share-gate.js'
 import { createAuthNetworkPolicy } from './auth/auth-network-policy.js'
 import { createSessionTokenCheck, sessionBackingFrom } from './auth/hub-sessions.js'
@@ -1424,24 +1425,26 @@ async function bootstrap() {
         if (!auth.ok) return reply.status(auth.status).send({ error: auth.error })
         // NOTE: the handler call used to sit INSIDE the JWT try, so a throw
         // from an addon's own route handler was reported as `401 Invalid token`.
-        const addonRequest = {
+        const addonRequest = buildAddonRouteRequest({
           params: match.params,
           query,
           body: request.body,
           headers,
-          ...addonRouteCaller(auth.principal),
-        }
+          instanceId: match.instanceId,
+          caller: addonRouteCaller(auth.principal),
+        })
         const addonReply = buildAddonReply(reply)
         return match.route.handler(addonRequest, addonReply)
       }
 
       // Public route — no auth required
-      const addonRequest = {
+      const addonRequest = buildAddonRouteRequest({
         params: match.params,
         query,
         body: request.body,
         headers,
-      }
+        instanceId: match.instanceId,
+      })
       const addonReply = buildAddonReply(reply)
       return match.route.handler(addonRequest, addonReply)
     })

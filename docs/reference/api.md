@@ -1573,15 +1573,15 @@
 
 ### `addon-routes` → `addonRoutes.*`
 
-- **Source:** `packages/types/src/capabilities/addon-routes.cap.ts:51`
+- **Source:** `packages/types/src/capabilities/addon-routes.cap.ts:55`
 - **Meta:** scope: `system` · mode: `collection` · mount: `skip`
 - **Archetypes:** internal
 - **Provider interface:** `IAddonRoutesProvider`
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
-| getRoutes | `addonRoutes.getRoutes` | query | admin | `void` | `({ method: "GET" \| "POST" \| "PUT" \| "DELETE" \| "PATCH"; path: string; access?: "public" \| "authenticated" \| "admin"; description?: string; rateLimit?: "auth" })[]` |
-| invoke | `addonRoutes.invoke` | mutation | admin | `{ method: string; path: string; params: Record<string, string>; query: Record<string, string>; body: unknown; headers: Record<string, string>; user?: { id: string; username: string; isAdmin: boolean }; scopedToken?: unknown }` | `{ status: number; headers: Record<string, string>; redirectUrl: string \| null; body?: unknown; contentType?: string }` |
+| getRoutes | `addonRoutes.getRoutes` | query | admin | `void` | `({ method: "GET" \| "POST" \| "PUT" \| "DELETE" \| "PATCH"; path: string; access?: "public" \| "authenticated" \| "admin"; description?: string; rateLimit?: "auth"; perInstance?: boolean })[]` |
+| invoke | `addonRoutes.invoke` | mutation | admin | `{ method: string; path: string; params: Record<string, string>; query: Record<string, string>; body: unknown; headers: Record<string, string>; instanceId?: string; user?: { id: string; username: string; isAdmin: boolean }; scopedToken?: unknown }` | `{ status: number; headers: Record<string, string>; redirectUrl: string \| null; body?: unknown; contentType?: string }` |
 
 ### `addon-settings` → `addonSettings.*`
 

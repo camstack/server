@@ -8,6 +8,8 @@ const AddonHttpRouteSchema = z.object({
   description: z.string().optional(),
   /** The hub limits this route per client address before the handler runs. */
   rateLimit: z.enum(['auth']).optional(),
+  /** Served once per integration instance; the handler reads `instanceId`. */
+  perInstance: z.boolean().optional(),
 })
 
 /**
@@ -25,6 +27,8 @@ const InvokeRequestSchema = z.object({
   query: z.record(z.string(), z.string()),
   body: z.unknown(),
   headers: z.record(z.string(), z.string()),
+  /** The instance the hub resolved for a `perInstance` route. */
+  instanceId: z.string().optional(),
   user: z
     .object({
       id: z.string(),

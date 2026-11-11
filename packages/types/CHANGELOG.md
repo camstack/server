@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A schema device-select filter's clauses must all hold, and suggestLocation is gone (the picker suggests the host's room)
 
+### Added
+
+- Automations gain a stop step, a set-variables step and "continue if this step fails"; a wait may last up to one hour
+- Automations: a `choose` step runs the first branch whose condition is true (up to 6 branches, optional otherwise list); a branch that cannot be read runs nothing
+- Automations: a `wait-until` step pauses a run until a condition is true, under a mandatory timeout of at most six hours; on timeout the run goes on (step traced `timed-out`) or stops as a failure
+- Automations: a parallel step starts two to five device commands, actions or waits together and waits for all of them
+- Automations: a repeat step runs its steps a number of times, while or until a condition (with a mandatory maximum), or once per device
+- Automations: a choose or repeat step may hold one more level of choose, repeat, parallel and wait-until steps; a third level is refused at save
+- An event device declares its events as a vocabulary: a label, a shared kind (press, long press, release…) and, on a multi-button device, the button each event comes from
+- Event names that many integrations share for a button are recognised by convention
+- Automations: a 'device fired' trigger row runs on one button and one kind of press of a remote, once per press, and hands the button and the press to the steps
+- An addon route can be declared per instance: the hub serves it at /addon/<addonId>/instances/<instanceId>/<path>, and the address without an instance stays the default one
+
 ## [1.2.549] - 2026-11-11
 
 ### Changed
@@ -22,16 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A humidifier, media player, climate unit, water heater or pet fountain now declares how it powers on and off, and registerPowerSwitch gives such a device its on/off switch from that one declaration.
 - Fans gain per-axis oscillation (oscillationAxes, setOscillationAxis) and a Customize spec on fan-control whose axis fields and preset the operator can link to sibling devices.
 - Fan presets are a desired fan-control state (speed, preset, direction, oscillation axes) instead of a list of steps; a Customize source whose value can be a number or a string is linkable and judged by the kind it reports now.
-### Added
-
-- Automations gain a stop step, a set-variables step and "continue if this step fails"; a wait may last up to one hour
-- Automations: a `choose` step runs the first branch whose condition is true (up to 6 branches, optional otherwise list); a branch that cannot be read runs nothing
-- Automations: a `wait-until` step pauses a run until a condition is true, under a mandatory timeout of at most six hours; on timeout the run goes on (step traced `timed-out`) or stops as a failure
-- Automations: a parallel step starts two to five device commands, actions or waits together and waits for all of them
-- Automations: a repeat step runs its steps a number of times, while or until a condition (with a mandatory maximum), or once per device
-- Automations: a choose or repeat step may hold one more level of choose, repeat, parallel and wait-until steps; a third level is refused at save
-- An event device declares its events as a vocabulary: a label, a shared kind (press, long press, release…) and, on a multi-button device, the button each event comes from
-- Event names that many integrations share for a button are recognised by convention
 
 ## [1.2.548] - 2026-11-11
 

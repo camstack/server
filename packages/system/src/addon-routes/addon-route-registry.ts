@@ -4,6 +4,45 @@ interface RouteMatch {
   readonly route: IAddonHttpRoute
   readonly addonId: string
   readonly params: Record<string, string>
+  /**
+   * The instance a `perInstance` route was asked for: the path's instance
+   * segment, or the addon id (the default instance) when the path has none.
+   * Absent for a route that is not per-instance.
+   */
+  readonly instanceId?: string
+}
+
+/** The path segment that introduces an instance id: `/addon/<addonId>/instances/<instanceId>/…`. */
+export const ADDON_INSTANCE_SEGMENT = 'instances'
+
+/** An instance id as it may appear in a path: no separator, no escape, bounded. */
+const INSTANCE_ID_RE = /^[A-Za-z0-9._-]{1,64}$/
+
+/** A request path read as "this addon, this instance, this route path". */
+export interface AddonInstancePath {
+  readonly instanceId: string
+  /** The same path with the instance segment removed: `/addon/<addonId>/<rest>`. */
+  readonly routePath: string
+}
+
+/**
+ * The ONE reading of an instance in an addon path (planning#415).
+ * `/addon/<addonId>/instances/<instanceId>/<rest>` names that instance; any
+ * other path under the addon names the default instance, whose id is the
+ * addon id. The form without the segment is permanent: it is the address
+ * third parties hold for the default instance.
+ *
+ * `null` when the path is not under this addon, or carries an instance
+ * segment whose id is not a plain id.
+ */
+export function resolveAddonInstancePath(addonId: string, path: string): AddonInstancePath | null {
+  const parts = path.split('/')
+  // ['', 'addon', addonId, …]
+  if (parts[0] !== '' || parts[1] !== 'addon' || parts[2] !== addonId) return null
+  if (parts[3] !== ADDON_INSTANCE_SEGMENT) return { instanceId: addonId, routePath: path }
+  const instanceId = parts[4]
+  if (instanceId === undefined || !INSTANCE_ID_RE.test(instanceId)) return null
+  return { instanceId, routePath: ['', 'addon', addonId, ...parts.slice(5)].join('/') }
 }
 
 interface RegisteredRoute {
@@ -54,6 +93,19 @@ export class AddonRouteRegistry {
       for (const entry of registeredRoutes) {
         if (entry.route.method !== normalizedMethod) continue
 
+        if (entry.route.perInstance === true) {
+          const instancePath = resolveAddonInstancePath(entry.addonId, path)
+          if (instancePath === null) continue
+          const instanceParams = matchPath(entry.fullPath, instancePath.routePath)
+          if (instanceParams === null) continue
+          return {
+            route: entry.route,
+            addonId: entry.addonId,
+            params: instanceParams,
+            instanceId: instancePath.instanceId,
+          }
+        }
+
         const params = matchPath(entry.fullPath, path)
         if (params !== null) {
           return {
@@ -77,6 +129,7 @@ export class AddonRouteRegistry {
     path: string
     access: string
     description?: string
+    perInstance?: boolean
   }> {
     const result: Array<{
       addonId: string
@@ -84,6 +137,7 @@ export class AddonRouteRegistry {
       path: string
       access: string
       description?: string
+      perInstance?: boolean
     }> = []
     for (const registeredRoutes of this.routes.values()) {
       for (const entry of registeredRoutes) {
@@ -93,6 +147,7 @@ export class AddonRouteRegistry {
           path: entry.fullPath,
           access: entry.route.access,
           description: entry.route.description,
+          ...(entry.route.perInstance === true ? { perInstance: true } : {}),
         })
       }
     }
