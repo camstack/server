@@ -10,6 +10,7 @@ import type {
   Target,
   TargetKindCaps,
 } from '@camstack/types'
+import { selectOption, selectOptionValues, selectRows } from '@camstack/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { renderWithTemplateHub } from '../../../test-setup/device-template-hub'
@@ -111,7 +112,7 @@ describe('NotificationRuleTargetSettings', () => {
       echo: { template: { title: 'Gate' } },
     })
     expand('phone')
-    fireEvent.change(screen.getByTestId('rule-target-phone-priority'), { target: { value: '5' } })
+    selectOption(screen.getByTestId('rule-target-phone-priority'), '5')
     expect(onOverridesChange).toHaveBeenCalledWith({
       echo: { template: { title: 'Gate' } },
       phone: { priority: 5 },
@@ -122,7 +123,7 @@ describe('NotificationRuleTargetSettings', () => {
     const { onOverridesChange } = mount(['phone'], { phone: { priority: 5 } })
     // A target with its own settings opens expanded: no click.
 
-    fireEvent.change(screen.getByTestId('rule-target-phone-priority'), { target: { value: '' } })
+    selectOption(screen.getByTestId('rule-target-phone-priority'), '')
     expect(onOverridesChange).toHaveBeenCalledWith({})
   })
 
@@ -137,25 +138,18 @@ describe('attachment kind, buttons and declared levels (#487)', () => {
     mount(['phone'])
     expand('phone')
     const select = screen.getByTestId('rule-target-phone-priority')
-    expect(Array.from(select.querySelectorAll('option')).map((o) => o.value)).toEqual([
-      '',
-      '1',
-      '5',
-    ])
-    expect(select.textContent).toContain('Low')
-    expect(select.textContent).toContain('High')
+    expect(selectOptionValues(select)).toEqual(['', '1', '5'])
+    const labels = selectRows(select).map((r) => r.label)
+    expect(labels.some((l) => l.includes('Low'))).toBe(true)
+    expect(labels.some((l) => l.includes('High'))).toBe(true)
   })
 
   it('the phone offers a picture kind it can send, and writes the choice for it alone', () => {
     const { onOverridesChange } = mount(['phone', 'echo'])
     expand('phone')
     const select = screen.getByTestId('rule-target-phone-attachment')
-    expect(Array.from(select.querySelectorAll('option')).map((o) => o.value)).toEqual([
-      '',
-      'none',
-      'image',
-    ])
-    fireEvent.change(select, { target: { value: 'none' } })
+    expect(selectOptionValues(select)).toEqual(['', 'none', 'image'])
+    selectOption(select, 'none')
     expect(onOverridesChange).toHaveBeenCalledWith({ phone: { attachment: 'none' } })
   })
 

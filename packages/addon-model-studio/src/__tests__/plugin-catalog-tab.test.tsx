@@ -3,7 +3,8 @@
  * plugin catalog Sources — Catalog-style family cards + Import `{ manifestId }`.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
 import type { AddonPageProps } from '@camstack/ui-library'
 import type { ModelCatalogEntry } from '@camstack/types'
 import ModelStudioPage from '../page.js'
@@ -246,8 +247,11 @@ describe('PluginCatalogTab — cards and import', () => {
     expect(families.length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByRole('button', { name: /^import$/i }).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByTestId('source-pre-selectors')).toBeTruthy()
-    expect(screen.getByRole('option', { name: /Standard/i })).toBeTruthy()
-    expect(screen.getByRole('option', { name: /Test/i })).toBeTruthy()
+    const preLabels = within(screen.getByTestId('source-pre-selectors'))
+      .getAllByRole('combobox')
+      .flatMap((trigger) => selectOptionLabels(trigger))
+    expect(preLabels.some((l) => /Standard/i.test(l))).toBe(true)
+    expect(preLabels.some((l) => /Test/i.test(l))).toBe(true)
   })
 
   it('shows drift status instead of Import when the artifact is missing', async () => {
@@ -423,9 +427,7 @@ describe('PluginCatalogTab — cards and import', () => {
         <PluginCatalogTab trpc={fakeTrpc(harness)} />
       </OperationModalProvider>,
     )
-    fireEvent.change(await screen.findByLabelText(/Variant/i), {
-      target: { value: 'relu_test' },
-    })
+    selectOption(await screen.findByLabelText(/Variant/i), 'relu_test')
     await screen.findByTestId('source-family-card')
     expect(screen.getByText('ONNX')).toBeTruthy()
     expect(screen.getByText('OpenVINO')).toBeTruthy()

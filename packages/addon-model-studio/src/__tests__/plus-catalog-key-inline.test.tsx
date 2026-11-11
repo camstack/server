@@ -6,6 +6,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { selectOption, selectOptionValues } from '@camstack/ui-library/testing'
 import type { AddonPageProps } from '@camstack/ui-library'
 import fixture from './testdata/plus-catalog-model-list.json'
 import { toPlusModelSummaries } from '../plus-catalog/plus-catalog-api.js'
@@ -178,8 +179,8 @@ describe('PlusCatalogSection — plus catalog key inline in Catalog', () => {
       />,
     )
 
-    const release = (await screen.findByLabelText(/plus catalog release/i)) as HTMLSelectElement
-    expect([...release.options].every((o) => /^\d{4}\.\d+$/.test(o.value))).toBe(true)
+    const release = await screen.findByLabelText(/plus catalog release/i)
+    expect(selectOptionValues(release).every((v) => /^\d{4}\.\d+$/.test(v))).toBe(true)
 
     expect(screen.queryByLabelText(/Runtime/i)).toBeNull()
     expect(screen.queryByText(/Neural \(ONNX/i)).toBeNull()
@@ -205,10 +206,8 @@ describe('PlusCatalogSection — plus catalog key inline in Catalog', () => {
         onPrefillUpload={() => {}}
       />,
     )
-    fireEvent.change(await screen.findByLabelText(/Model group/i), { target: { value: 'base' } })
-    fireEvent.change(await screen.findByLabelText(/plus catalog release/i), {
-      target: { value: '2026.1' },
-    })
+    selectOption(await screen.findByLabelText(/Model group/i), 'base')
+    selectOption(await screen.findByLabelText(/plus catalog release/i), '2026.1')
     await waitFor(() => {
       const families = screen
         .getAllByTestId('source-family-card')
@@ -231,12 +230,8 @@ describe('PlusCatalogSection — plus catalog key inline in Catalog', () => {
         onPrefillUpload={() => {}}
       />,
     )
-    fireEvent.change(await screen.findByLabelText(/Model group/i), {
-      target: { value: 'base' },
-    })
-    fireEvent.change(await screen.findByLabelText(/plus catalog release/i), {
-      target: { value: '2026.1' },
-    })
+    selectOption(await screen.findByLabelText(/Model group/i), 'base')
+    selectOption(await screen.findByLabelText(/plus catalog release/i), '2026.1')
 
     const panelFor = async (combo: string) =>
       waitFor(() => {
@@ -285,12 +280,8 @@ describe('PlusCatalogSection — plus catalog key inline in Catalog', () => {
         onPrefillUpload={() => {}}
       />,
     )
-    fireEvent.change(await screen.findByLabelText(/Model group/i), {
-      target: { value: 'base' },
-    })
-    fireEvent.change(await screen.findByLabelText(/plus catalog release/i), {
-      target: { value: '2026.1' },
-    })
+    selectOption(await screen.findByLabelText(/Model group/i), 'base')
+    selectOption(await screen.findByLabelText(/plus catalog release/i), '2026.1')
     const mobiledet = await waitFor(() => {
       const card = screen
         .getAllByTestId('source-family-card')
@@ -317,12 +308,8 @@ describe('PlusCatalogSection — plus catalog key inline in Catalog', () => {
         onPrefillUpload={() => {}}
       />,
     )
-    fireEvent.change(await screen.findByLabelText(/Model group/i), {
-      target: { value: 'base' },
-    })
-    fireEvent.change(await screen.findByLabelText(/plus catalog release/i), {
-      target: { value: '2026.1' },
-    })
+    selectOption(await screen.findByLabelText(/Model group/i), 'base')
+    selectOption(await screen.findByLabelText(/plus catalog release/i), '2026.1')
     const mobiledet = await waitFor(() => {
       const card = screen
         .getAllByTestId('source-family-card')

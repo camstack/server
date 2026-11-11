@@ -11,6 +11,7 @@ import React from 'react'
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
+import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
 
 const mockSetSlotBinding = vi.fn().mockResolvedValue({
   slot: { slotId: 'text-1', kind: 'text', readOnly: false, cameraEnabled: true, binding: null },
@@ -413,8 +414,7 @@ describe('OsdManagerPage — Duplicate into… (table row)', () => {
     render(<OsdManagerPage {...pageProps} />)
     await waitFor(() => expect(within(camerasRoot()).getByText('Front Door')).toBeTruthy())
     openDuplicateFromRow('Front Door')
-    const select = screen.getByLabelText('Destination camera') as HTMLSelectElement
-    const optionLabels = [...select.options].map((o) => o.textContent)
+    const optionLabels = selectOptionLabels(screen.getByLabelText('Destination camera'))
     expect(optionLabels).toContain('Back Yard')
     expect(optionLabels).not.toContain('Front Door')
     expect(optionLabels).not.toContain('Side Camera') // not OSD-capable
@@ -424,7 +424,7 @@ describe('OsdManagerPage — Duplicate into… (table row)', () => {
     render(<OsdManagerPage {...pageProps} />)
     await waitFor(() => expect(within(camerasRoot()).getByText('Front Door')).toBeTruthy())
     openDuplicateFromRow('Front Door')
-    fireEvent.change(screen.getByLabelText('Destination camera'), { target: { value: '2' } })
+    selectOption(screen.getByLabelText('Destination camera'), '2')
     fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }))
 
     await waitFor(() =>
@@ -450,7 +450,7 @@ describe('OsdManagerPage — Duplicate into… (table row)', () => {
     render(<OsdManagerPage {...pageProps} />)
     await waitFor(() => expect(within(camerasRoot()).getByText('Front Door')).toBeTruthy())
     openDuplicateFromRow('Front Door')
-    fireEvent.change(screen.getByLabelText('Destination camera'), { target: { value: '2' } })
+    selectOption(screen.getByLabelText('Destination camera'), '2')
     fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }))
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy())

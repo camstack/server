@@ -1,3 +1,4 @@
+import { selectShowing } from '../../../testing/select-option'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { HeroModelCard } from '../HeroModelCard'
@@ -165,6 +166,6 @@ describe('HeroModelCard heat pump selectors', () => {
         host={{ ...host(), labels: { ...TEST_LABELS, noValue: 'NOT-SET' } }}
       />,
     )
-    expect(screen.getByRole('option', { name: 'NOT-SET' })).toBeTruthy()
+    expect(selectShowing('NOT-SET')).toBeTruthy()
   })
 })

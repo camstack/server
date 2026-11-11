@@ -7,6 +7,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
 import { ConfirmDialogProvider, type AddonPageProps } from '@camstack/ui-library'
 import { InstalledTab } from '../tabs/InstalledTab.js'
 import type { ReactElement } from 'react'
@@ -454,9 +455,7 @@ describe('InstalledTab', () => {
   it('filters by device: the rows whose format that device runs', async () => {
     renderInstalled(<InstalledTab trpc={hubTrpc().trpc} refreshKey={0} />)
     await fileRow('yolo26n', 'onnx')
-    fireEvent.change(screen.getByTestId('installed-device-filter'), {
-      target: { value: 'openvino:npu' },
-    })
+    selectOption(screen.getByTestId('installed-device-filter'), 'openvino:npu')
     expect(window.location.search).toMatch(/device=openvino%3Anpu|device=openvino:npu/)
     await waitFor(() =>
       expect(
@@ -467,8 +466,9 @@ describe('InstalledTab', () => {
         'object-detection::yolov9m-320-int8::openvino',
       ]),
     )
-    const option = screen.getByRole('option', { name: 'CPU · cpu (off)' })
-    expect(option).toBeTruthy()
+    expect(selectOptionLabels(screen.getByTestId('installed-device-filter'))).toContain(
+      'CPU · cpu (off)',
+    )
   })
 
   it('writes provider/type/node to the URL and keeps filters when the node changes', async () => {
@@ -476,9 +476,7 @@ describe('InstalledTab', () => {
     await screen.findByTestId('installed-filters')
     const providerGroup = screen.getByTestId('installed-provider-filter')
     fireEvent.click(within(providerGroup).getByRole('button', { name: 'Custom' }))
-    fireEvent.change(screen.getByTestId('installed-type-filter'), {
-      target: { value: 'object-detection' },
-    })
+    selectOption(screen.getByTestId('installed-type-filter'), 'object-detection')
     expect(window.location.search).toMatch(/provider=custom/)
     expect(window.location.search).toMatch(/type=object-detection/)
 
@@ -489,9 +487,7 @@ describe('InstalledTab', () => {
     expect(
       within(providerGroup).getByRole('button', { name: 'Custom' }).getAttribute('aria-pressed'),
     ).toBe('true')
-    expect((screen.getByTestId('installed-type-filter') as HTMLSelectElement).value).toBe(
-      'object-detection',
-    )
+    expect(screen.getByTestId('installed-type-filter').textContent).toContain('object-detection')
   })
 
   it('honors ?provider=&type=&node= deeplink', async () => {

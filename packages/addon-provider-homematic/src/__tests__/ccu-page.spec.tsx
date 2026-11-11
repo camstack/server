@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { selectOption } from '@camstack/ui-library/testing'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { ConfirmDialogProvider } from '@camstack/ui-library'
 import HomematicCcuPage from '../page.js'
@@ -350,7 +351,7 @@ describe('HomematicCcuPage pairing', () => {
     mountPairing({ setCcuInstallMode: setMode })
     const bidcos = await screen.findByTestId('hm-pairing-BidCos-RF')
     fireEvent.change(within(bidcos).getByRole('spinbutton'), { target: { value: '90' } })
-    fireEvent.change(within(bidcos).getByRole('combobox'), { target: { value: 'secure' } })
+    selectOption(within(bidcos).getByRole('combobox'), 'secure')
     fireEvent.click(within(bidcos).getByRole('button', { name: 'Start pairing' }))
     expect(setMode).not.toHaveBeenCalled()
     const confirm = await screen.findByRole('dialog', { name: /Open the BidCos-RF pairing window/ })

@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import './setup.js'
+import { selectOption } from '@camstack/ui-library/testing'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { FfmpegParamsCore as FfmpegParamsField } from '../FfmpegParamsField.js'
@@ -26,8 +27,7 @@ describe('FfmpegParamsField', () => {
         onSave={onSave}
       />,
     )
-    const codecSelect = screen.getByLabelText(/^codec$/i)
-    fireEvent.change(codecSelect, { target: { value: 'h265' } })
+    selectOption(screen.getByLabelText(/^codec$/i), 'h265')
     const lastCall = onSave.mock.calls[onSave.mock.calls.length - 1]
     expect(lastCall).toBeDefined()
     const savedProfile = lastCall?.[0]
