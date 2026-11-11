@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - The automation row picker offers a 'Time is' condition with its own icon.
+- Condition picker: the "Started by" condition has its icon
 
 ## [1.2.424] - 2026-11-11
 

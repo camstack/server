@@ -9,6 +9,7 @@ import {
   Hand,
   ParkingSquare,
   Sigma,
+  Split,
   Timer,
   ToggleLeft,
   type LucideIcon,
@@ -26,5 +27,6 @@ export const CONDITION_KIND_ICONS: Readonly<Record<AutomationLeafKind, LucideIco
   'device-is': ToggleLeft,
   'stationary-present': Car,
   'time-is': Clock,
+  'triggered-by': Split,
   expression: Sigma,
 }

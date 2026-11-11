@@ -332,7 +332,7 @@ function emitGuard(action: AutomationAction, index: number): string {
       return `{ meta: ${j(stepMetaOf(el))}, run: async (scope) => {\n${body ?? ''}\n } }`
     })
     .join(', ')
-  return `      guard: () => evaluateCondition(${j(action.if)}, ${j(`actions.${index}.if`)}),${
+  return `      guard: () => evaluateCondition(${j(action.if)}, ${j(`actions.${index}.if`)}, vars),${
     otherwise === '' ? '' : `\n      otherwise: [${otherwise}],`
   }
 `
@@ -441,6 +441,7 @@ import {
   describeHold,
   evaluateWhenTree,
   evaluateStationaryTrigger,
+  eventLeafIdAt,
   isSkippedTrace,
   mergeSkipTraces,
   nextOccurrence,
@@ -900,11 +901,14 @@ ${
   }
 
   /** A step's \`if\` (#472), read on a mirror filled for exactly its leaves, NOW (D49: unread = unknown). */
-  function evaluateCondition(when: AutomationWhen, path: string) {
+  function evaluateCondition(when: AutomationWhen, path: string, vars: Record<string, unknown>) {
+    // \`triggered-by\` reads the run: the id of the leaf that started it, by the path the trigger carries.
+    const firedLeaf = vars['leaf']
+    const trigger = { leafId: typeof firedLeaf === 'string' ? eventLeafIdAt(WHEN, firedLeaf) : null }
     const history = GUARD_HOLD_TREES.some((t) => t.path === path)
       ? { mirror: guardMirror, holds: guardHolds, rootPath: path }
       : undefined
-    return evaluateStepCondition(when, mirrorFetchers(), Date.now, history${hasTime ? ', site' : ''})
+    return evaluateStepCondition(when, mirrorFetchers(), Date.now, history, ${hasTime ? 'site' : 'undefined'}, trigger)
   }
 
   /** The THEN half, through the ONE shared step runner: stops at the first

@@ -30,6 +30,7 @@ import {
   StationaryPresentFields,
 } from './SceneFields'
 import { TimeIsFields } from './TimeIsFields'
+import { TriggeredByFields } from './TriggeredByFields'
 import { convertLeafKind } from './when-ops'
 
 export interface WhenLeafRowProps {
@@ -156,5 +157,7 @@ function LeafFields({ leaf, devices, onChange }: LeafFieldsProps) {
       return <ExpressionLeafRow leaf={leaf} devices={devices} onChange={onChange} />
     case 'time-is':
       return <TimeIsFields leaf={leaf} onChange={onChange} />
+    case 'triggered-by':
+      return <TriggeredByFields leaf={leaf} devices={devices} onChange={onChange} />
   }
 }

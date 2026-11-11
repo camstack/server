@@ -6287,6 +6287,11 @@
         "label": "Time is",
         "description": "The clock is inside a daily window, or it is one of the chosen days",
         "example": "only between 22:00 and 06:00, on weekdays"
+      },
+      "triggered-by": {
+        "label": "Started by",
+        "description": "This run was started by one of the chosen triggers of this automation",
+        "example": "the button was pressed, not the motion sensor"
       }
     },
     "leafPicker": {
@@ -6315,6 +6320,13 @@
       "to": "To",
       "wraps": "This window ends the next day. The days are the days it starts on.",
       "noDays": "Pick at least one day."
+    },
+    "triggeredBy": {
+      "triggers": "Started by",
+      "noRows": "This automation has no trigger row to choose. Add one to the rules first.",
+      "nonePicked": "Pick at least one trigger.",
+      "missing_one": "{{count}} chosen trigger no longer exists. Press a trigger to drop it.",
+      "missing_other": "{{count}} chosen triggers no longer exist. Press a trigger to drop them."
     }
   },
   "accessDenied": {

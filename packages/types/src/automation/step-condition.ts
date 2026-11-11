@@ -11,6 +11,7 @@ import {
   ConditionMirror,
   evaluateWhenTree,
   type MirrorRefreshFetchers,
+  type RunTrigger,
 } from './condition-eval.js'
 import type { HoldTracker } from './hold.js'
 import type { AutomationWhen } from './when.js'
@@ -45,12 +46,15 @@ export async function evaluateStepCondition(
   history?: StepConditionHistory,
   /** The site a `time-is` leaf reads its clock on; absent, such a leaf is unknown. */
   site?: TimeSite,
+  /** What started the run, for a `triggered-by` leaf; absent, such a leaf is unknown. */
+  trigger?: RunTrigger,
 ): Promise<StepConditionVerdict> {
   const mirror = history?.mirror ?? new ConditionMirror(collectWhenMirrorSources(when))
   await mirror.refresh(fetchers)
   const evaluation = evaluateWhenTree(when, mirror, now(), {
     ...(history === undefined ? {} : { holds: history.holds, rootPath: history.rootPath }),
     ...(site === undefined ? {} : { site }),
+    trigger: trigger ?? 'unknown',
   })
   const reasons = evaluation.nodes.filter((n) => n.outcome !== 'pass').map((n) => n.reason)
   const first = reasons[0]

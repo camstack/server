@@ -32,6 +32,10 @@ import {
   MAX_WHEN_DEPTH,
   MAX_WHEN_LEAVES,
   type AutomationWhen,
+  TRIGGERED_BY_NEEDS_AUTOMATION,
+  hasTriggeredByLeaves,
+  identifiedEventLeaves,
+  triggeredByIssue,
   validateWhenTree,
 } from './when.js'
 
@@ -196,10 +200,18 @@ const GuardedCapStepSchema = AutomationCapStepBaseSchema.extend(stepGuardShape)
   })
   .refine((step) => step.else === undefined || step.if !== undefined, elseNeedsIf)
 
-export const ActionStepSchema = z.discriminatedUnion('kind', [
-  GuardedWaitStepSchema,
-  GuardedCapStepSchema,
-])
+/**
+ * A step of a STANDALONE list (an action, a scheduler point, a preset): the
+ * same two step kinds an automation runs, minus a guard that reads the
+ * automation's trigger, which such a list does not have.
+ */
+export const ActionStepSchema = z
+  .discriminatedUnion('kind', [GuardedWaitStepSchema, GuardedCapStepSchema])
+  .superRefine((step, ctx) => {
+    if (step.if !== undefined && hasTriggeredByLeaves(step.if)) {
+      ctx.addIssue({ code: 'custom', message: TRIGGERED_BY_NEEDS_AUTOMATION, path: ['if'] })
+    }
+  })
 export type ActionStep = z.infer<typeof ActionStepSchema>
 
 export const AutomationActionSchema = z.discriminatedUnion('kind', [
@@ -301,7 +313,18 @@ export function validateRecipeBounds(recipe: AutomationRecipe): string | null {
   if (recipe.actions.length === 0) {
     return 'an automation needs at least one action — a rule that does nothing is not a rule'
   }
-  return validateWhenTree(recipe.when)
+  const tree = validateWhenTree(recipe.when)
+  if (tree !== null) return tree
+  // Judged here, not in the tree check: a guard is a tree of its own, and the ids it names live in `when`.
+  const ids = new Set(identifiedEventLeaves(recipe.when).map((entry) => entry.id))
+  const inRules = triggeredByIssue(recipe.when, ids, 'the rules')
+  if (inRules !== null) return inRules
+  for (const [index, action] of recipe.actions.entries()) {
+    if ((action.kind !== 'wait' && action.kind !== 'cap') || action.if === undefined) continue
+    const issue = triggeredByIssue(action.if, ids, `step ${index + 1}`)
+    if (issue !== null) return issue
+  }
+  return null
 }
 
 export type { AutomationWhen }

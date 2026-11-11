@@ -24,7 +24,9 @@ import { ActionStepSchema, normalizeCapStep } from './recipe.js'
 import {
   type AutomationWhen,
   AutomationWhenSchema,
+  TRIGGERED_BY_NEEDS_AUTOMATION,
   hasEventLeaves,
+  hasTriggeredByLeaves,
   validateWhenTree,
 } from './when.js'
 import { stepGuardSiteIssues, type WhenSiteIssue, whenSiteIssues } from './when-site.js'
@@ -38,6 +40,10 @@ export const SchedulerStateTreeSchema: z.ZodType<AutomationWhen> = AutomationWhe
         message:
           'a scheduler condition is a state — an event ("becomes", "detects", "at a time") is an instant and cannot be in force',
       })
+      return
+    }
+    if (hasTriggeredByLeaves(when)) {
+      ctx.addIssue({ code: 'custom', message: TRIGGERED_BY_NEEDS_AUTOMATION })
       return
     }
     const problem = validateWhenTree(when)

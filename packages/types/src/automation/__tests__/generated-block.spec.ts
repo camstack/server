@@ -1552,3 +1552,35 @@ describe('a time-is state leaf wakes a state-only tree at its boundary', () => {
     h.stop()
   })
 })
+
+describe('triggered-by: one automation, a different step per trigger (#499)', () => {
+  const motion = { ...MOTION, id: 'motion' } as const
+  const press = { kind: 'device-event', category: 'button.pressed', id: 'press' } as const
+  const step = (label: string, leafId: string): AutomationRecipe['actions'][number] => ({
+    kind: 'cap',
+    deviceId: 616,
+    cap: 'siren',
+    method: 'on',
+    args: { label },
+    if: { kind: 'triggered-by', leafIds: [leafId] },
+  })
+
+  it('runs the step of the leaf that fired, and only that one', async () => {
+    const h = start(
+      await load({
+        when: { kind: 'any', children: [motion, press] },
+        actions: [step('on-motion', 'motion'), step('on-press', 'press')],
+      }),
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle()
+    expect(h.mutate.mock.calls.map(([a]) => (a as { label: string }).label)).toEqual(['on-press'])
+    h.emit('motion.on-motion-changed', {}, 1)
+    await settle()
+    expect(h.mutate.mock.calls.map(([a]) => (a as { label: string }).label)).toEqual([
+      'on-press',
+      'on-motion',
+    ])
+  })
+})

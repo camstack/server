@@ -50,6 +50,8 @@ import { GeneratedCodePanel } from './GeneratedCodePanel'
 import { RunModeSelector, runModeOf, withRunMode } from './RunModeSelector'
 import { withActions } from './recipe-parts'
 import { recipeSiteError } from './time-is-model'
+import { TriggerRowsProvider } from './trigger-rows-context'
+import { ensureTriggerIds } from './triggered-by-model'
 import { prepareRecipeUnits } from './recipe-units'
 import { WhenTree } from './WhenTree'
 import { normalizeRecipe } from './when-ops'
@@ -88,7 +90,9 @@ export function AutomationEditor({
 }: AutomationEditorProps) {
   const { t } = useTranslation()
   const [name, setName] = useState(existing?.name ?? '')
-  const [recipe, setRecipe] = useState<AutomationRecipe>(() => normalizeRecipe(initialRecipe))
+  const [recipe, setRecipeState] = useState<AutomationRecipe>(() => normalizeRecipe(initialRecipe))
+  // A row that asks which trigger fired names trigger rows by id: every edit leaves them all named.
+  const setRecipe = (next: AutomationRecipe): void => setRecipeState(ensureTriggerIds(next))
   const [showLogs, setShowLogs] = useState(false)
   const [runId, setRunId] = useState<string | null>(null)
   const traces = useCoreBlocksGetTraces(
@@ -145,156 +149,158 @@ export function AutomationEditor({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]" data-testid="automation-editor">
-      <div className="space-y-4">
-        <label className="block max-w-md text-sm">
-          <span className="text-foreground-subtle">
-            {t('automation.automationEditor.name', 'Name')}
-          </span>
-          <Input
-            className="mt-1"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t(
-              'automation.automationEditor.whatThisAutomationDoes',
-              'What this automation does',
+      <TriggerRowsProvider when={recipe.when}>
+        <div className="space-y-4">
+          <label className="block max-w-md text-sm">
+            <span className="text-foreground-subtle">
+              {t('automation.automationEditor.name', 'Name')}
+            </span>
+            <Input
+              className="mt-1"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t(
+                'automation.automationEditor.whatThisAutomationDoes',
+                'What this automation does',
+              )}
+            />
+          </label>
+
+          <TraceBlock
+            step="when"
+            title={t('automation.automationEditor.when', 'When')}
+            trace={view === null ? null : view.when}
+          >
+            <WhenTree recipe={recipe} devices={devices} run={whenRun} onChange={setRecipe} />
+          </TraceBlock>
+
+          <TraceBlock
+            step="then"
+            title={t('automation.automationEditor.then', 'Then')}
+            trace={view === null ? null : view.thenBlock}
+            hint={t(
+              'automation.automationEditor.inThisOrderStoppingAt',
+              'In this order, stopping at the first failure.',
             )}
+          >
+            <ActionList
+              actions={recipe.actions}
+              devices={devices}
+              variables={scope}
+              stepTones={
+                view === null
+                  ? undefined
+                  : recipe.actions.map((_, index) => stepToneAt(view, index) ?? 'idle')
+              }
+              stepResults={
+                stepDetails === null
+                  ? undefined
+                  : recipe.actions.map((_, index) => stepDetails.find((s) => s.index === index))
+              }
+              onChange={(actions) => setRecipe(withActions(recipe, actions))}
+            />
+          </TraceBlock>
+
+          <TraceBlock
+            step="mode"
+            title={t('flow.runMode.title', 'Overlap')}
+            trace={null}
+            hint={t('flow.runMode.hint', 'What happens when a trigger arrives mid-run.')}
+          >
+            <RunModeSelector
+              value={runModeOf(recipe)}
+              onChange={(mode) => setRecipe(withRunMode(recipe, mode))}
+            />
+          </TraceBlock>
+
+          <GeneratedCodePanel
+            code={generated.code}
+            error={generated.error}
+            canEject={existing !== null}
+            ejecting={ejecting}
+            onEject={onEject}
           />
-        </label>
 
-        <TraceBlock
-          step="when"
-          title={t('automation.automationEditor.when', 'When')}
-          trace={view === null ? null : view.when}
-        >
-          <WhenTree recipe={recipe} devices={devices} run={whenRun} onChange={setRecipe} />
-        </TraceBlock>
-
-        <TraceBlock
-          step="then"
-          title={t('automation.automationEditor.then', 'Then')}
-          trace={view === null ? null : view.thenBlock}
-          hint={t(
-            'automation.automationEditor.inThisOrderStoppingAt',
-            'In this order, stopping at the first failure.',
-          )}
-        >
-          <ActionList
-            actions={recipe.actions}
-            devices={devices}
-            variables={scope}
-            stepTones={
-              view === null
-                ? undefined
-                : recipe.actions.map((_, index) => stepToneAt(view, index) ?? 'idle')
-            }
-            stepResults={
-              stepDetails === null
-                ? undefined
-                : recipe.actions.map((_, index) => stepDetails.find((s) => s.index === index))
-            }
-            onChange={(actions) => setRecipe(withActions(recipe, actions))}
-          />
-        </TraceBlock>
-
-        <TraceBlock
-          step="mode"
-          title={t('flow.runMode.title', 'Overlap')}
-          trace={null}
-          hint={t('flow.runMode.hint', 'What happens when a trigger arrives mid-run.')}
-        >
-          <RunModeSelector
-            value={runModeOf(recipe)}
-            onChange={(mode) => setRecipe(withRunMode(recipe, mode))}
-          />
-        </TraceBlock>
-
-        <GeneratedCodePanel
-          code={generated.code}
-          error={generated.error}
-          canEject={existing !== null}
-          ejecting={ejecting}
-          onEject={onEject}
-        />
-
-        {/* The refusals, in the order an operator can act on them: the bounds
+          {/* The refusals, in the order an operator can act on them: the bounds
             sentence first (it suggests the rewrite), then the schema's own
             complaint about the row that is still blank. */}
-        {boundsError !== null && (
-          <p className="rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
-            {boundsError}
-          </p>
-        )}
-        {boundsError === null && schemaError !== null && (
-          <p className="rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
-            {schemaError}
-          </p>
-        )}
-        {boundsError === null && siteError !== null && (
-          <p
-            className="rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning"
-            data-testid="automation-site-error"
-          >
-            {siteError}
-          </p>
-        )}
-        {saveError !== null && (
-          <p className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger">
-            {saveError}
-          </p>
-        )}
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={save} disabled={saving || blocked}>
-            {saving && <Loader2 className="h-4 w-4 animate-spin" />} {t('common.save')}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => setShowLogs(!showLogs)}
-            disabled={existing === null}
-            title={
-              existing === null
-                ? t(
-                    'automation.automationEditor.logsAppearOnceTheAutomation',
-                    'Logs appear once the automation has been saved and started',
-                  )
-                : t(
-                    'automation.automationEditor.showThisAutomationSProcess',
-                    "Show this automation's process logs",
-                  )
-            }
-            data-testid="automation-logs-toggle"
-            aria-expanded={showLogs}
-          >
-            <ScrollText className="h-4 w-4" /> {t('common.logs')}{' '}
-            <DisclosureChevron expanded={showLogs} />
-          </Button>
-          <Button variant="ghost" onClick={onCancel} disabled={saving}>
-            {t('common.close', 'Close')}
-          </Button>
-          {nameMissing && (
-            <Badge variant="warning">
-              {t('automation.automationEditor.nameRequired', 'Name required')}
-            </Badge>
+          {boundsError !== null && (
+            <p className="rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
+              {boundsError}
+            </p>
           )}
-        </div>
+          {boundsError === null && schemaError !== null && (
+            <p className="rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
+              {schemaError}
+            </p>
+          )}
+          {boundsError === null && siteError !== null && (
+            <p
+              className="rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning"
+              data-testid="automation-site-error"
+            >
+              {siteError}
+            </p>
+          )}
+          {saveError !== null && (
+            <p className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger">
+              {saveError}
+            </p>
+          )}
 
-        {showLogs && existing !== null && (
-          <div className="rounded border border-border" data-testid="automation-logs-panel">
-            <div className="border-b border-border px-3 py-1.5 text-xs text-foreground-subtle">
-              <Trans
-                i18nKey="common.logsOf"
-                values={{ id: coreBlockAddonId(existing.id) }}
-                components={{ code: <code /> }}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={save} disabled={saving || blocked}>
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />} {t('common.save')}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setShowLogs(!showLogs)}
+              disabled={existing === null}
+              title={
+                existing === null
+                  ? t(
+                      'automation.automationEditor.logsAppearOnceTheAutomation',
+                      'Logs appear once the automation has been saved and started',
+                    )
+                  : t(
+                      'automation.automationEditor.showThisAutomationSProcess',
+                      "Show this automation's process logs",
+                    )
+              }
+              data-testid="automation-logs-toggle"
+              aria-expanded={showLogs}
+            >
+              <ScrollText className="h-4 w-4" /> {t('common.logs')}{' '}
+              <DisclosureChevron expanded={showLogs} />
+            </Button>
+            <Button variant="ghost" onClick={onCancel} disabled={saving}>
+              {t('common.close', 'Close')}
+            </Button>
+            {nameMissing && (
+              <Badge variant="warning">
+                {t('automation.automationEditor.nameRequired', 'Name required')}
+              </Badge>
+            )}
+          </div>
+
+          {showLogs && existing !== null && (
+            <div className="rounded border border-border" data-testid="automation-logs-panel">
+              <div className="border-b border-border px-3 py-1.5 text-xs text-foreground-subtle">
+                <Trans
+                  i18nKey="common.logsOf"
+                  values={{ id: coreBlockAddonId(existing.id) }}
+                  components={{ code: <code /> }}
+                />
+              </div>
+              <LogStream
+                addonId={coreBlockAddonId(existing.id)}
+                maxHeight="max-h-64"
+                showFilters={false}
               />
             </div>
-            <LogStream
-              addonId={coreBlockAddonId(existing.id)}
-              maxHeight="max-h-64"
-              showFilters={false}
-            />
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </TriggerRowsProvider>
       <div className="order-first lg:order-last">
         <RunsPanel
           traces={existing === null ? [] : traces.data?.traces}

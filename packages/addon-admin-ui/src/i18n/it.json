@@ -6362,6 +6362,11 @@
         "label": "È l'ora",
         "description": "L'ora è dentro una fascia giornaliera, oppure è uno dei giorni scelti",
         "example": "solo tra le 22:00 e le 06:00, nei giorni feriali"
+      },
+      "triggered-by": {
+        "label": "Avviata da",
+        "description": "Questa esecuzione è stata avviata da uno dei trigger scelti di questa automazione",
+        "example": "è stato premuto il pulsante, non il sensore di movimento"
       }
     },
     "leafPicker": {
@@ -6390,6 +6395,13 @@
       "to": "A",
       "wraps": "Questa finestra termina il giorno dopo. I giorni sono quelli in cui inizia.",
       "noDays": "Scegli almeno un giorno."
+    },
+    "triggeredBy": {
+      "triggers": "Avviata da",
+      "noRows": "Questa automazione non ha righe trigger da scegliere. Aggiungine prima una alle regole.",
+      "nonePicked": "Scegli almeno un trigger.",
+      "missing_one": "{{count}} trigger scelto non esiste più. Premi un trigger per rimuoverlo.",
+      "missing_other": "{{count}} trigger scelti non esistono più. Premi un trigger per rimuoverli."
     }
   },
   "accessDenied": {

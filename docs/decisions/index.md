@@ -4,7 +4,7 @@
 
 # Decisions
 
-998 architecture decision records. One file per decision, never
+999 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1013,6 +1013,7 @@ that rots.
 | D1031 | [A paired agent adopts an announced hub address only after the pinned CA answers](adr-1031-a-paired-agent-adopts-an-announced-hub-address-only-after-the-pinned-ca-answers.md) | ✅ accepted | 2026-11-10 |
 | D1032 | [Per-target settings are the base rule of every delivery, and a notifier declares them](adr-1032-per-target-settings-are-the-base-rule-of-every-delivery-and-a-notifier-declares-them.md) | ✅ accepted | 2026-11-10 |
 | D1035 | [A time window is a state leaf — days bind to the day it starts, the site is held in memory, and a sun window without a location is unknown](adr-1035-a-time-window-is-a-state-leaf-days-bind-to-the-start-day-and-the-site-is-held-in-memory.md) | ✅ accepted | 2026-11-11 |
+| D1036 | [A trigger row carries a stable id, and "triggered by" reads which one started the run — unknown where the run is not told](adr-1036-a-trigger-row-carries-a-stable-id-and-triggered-by-reads-which-one-started-the-run.md) | ✅ accepted | 2026-11-11 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

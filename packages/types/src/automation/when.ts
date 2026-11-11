@@ -60,6 +60,14 @@ export type AutomationConditionOperator = z.infer<typeof AutomationConditionOper
 // ── event leaves ──────────────────────────────────────────────────────────
 
 /**
+ * The stable name of an event leaf. A path (`when.0.1`) moves when a row is
+ * reordered; the id does not, so a `triggered-by` leaf keeps pointing at the
+ * same row. Optional: a leaf nothing refers to needs none.
+ */
+export const EVENT_LEAF_ID_RE = /^[A-Za-z0-9_-]{1,40}$/
+const eventLeafId = { id: z.string().regex(EVENT_LEAF_ID_RE).optional() }
+
+/**
  * D8 compliance, and it is the reason a "becomes" leaf is not merely an event
  * subscription: it evaluates against the **state mirror**, which is reconciled,
  * and an event only WAKES the evaluation. A dropped event therefore DELAYS a
@@ -68,6 +76,7 @@ export type AutomationConditionOperator = z.infer<typeof AutomationConditionOper
 const DeviceBecomesLeafSchema = z
   .object({
     kind: z.literal('device-becomes'),
+    ...eventLeafId,
     deviceId: z.number().int().nonnegative(),
     cap: z.string().min(1),
     fieldPath: z.string().min(1),
@@ -119,6 +128,7 @@ const DeviceBecomesLeafSchema = z
 
 const DeviceEventLeafSchema = z.object({
   kind: z.literal('device-event'),
+  ...eventLeafId,
   /** An `EventCategory` value. */
   category: z.string().min(1),
   deviceId: z.number().int().nonnegative().optional(),
@@ -133,6 +143,7 @@ const DeviceEventLeafSchema = z.object({
 const ScheduleLeafSchema = z
   .object({
     kind: z.literal('schedule'),
+    ...eventLeafId,
     at: TimeSpecSchema.optional(),
     days: z.array(WeekdayKeySchema).min(1).max(7).optional(),
     /** @deprecated legacy cron — new schedules use `at`. */
@@ -145,15 +156,17 @@ const ScheduleLeafSchema = z
     message: '`days` goes with `at`; a cron expression carries its own days',
   })
 
-const ManualLeafSchema = z.object({ kind: z.literal('manual') })
+const ManualLeafSchema = z.object({ kind: z.literal('manual'), ...eventLeafId })
 
 const IntervalLeafSchema = z.object({
   kind: z.literal('interval'),
+  ...eventLeafId,
   minutes: z.number().int().min(1).max(1440),
 })
 
 const DetectionLeafSchema = z.object({
   kind: z.literal('detection'),
+  ...eventLeafId,
   /** One macro class each, optionally narrowed by a label; a track of any listed subject fires. */
   subjects: z.array(DetectionSubjectSchema).min(1),
   deviceIds: z.array(z.number().int().nonnegative()).min(1),
@@ -165,6 +178,7 @@ const DetectionLeafSchema = z.object({
 
 const StationaryLeafSchema = z.object({
   kind: z.literal('stationary'),
+  ...eventLeafId,
   deviceIds: z.array(z.number().int().nonnegative()).min(1),
   subjects: z.array(StationarySubjectSchema).min(1).optional(),
   zones: z.array(z.string().min(1)).min(1).optional(),
@@ -245,6 +259,20 @@ const TimeIsLeafSchema = z
     }
   })
 
+/** How many event leaves one `triggered-by` names. */
+export const TRIGGERED_BY_MAX_IDS = 20
+
+/**
+ * True for the run that one of the named event leaves started. It reads the
+ * run, not a device: in the tree it is judged against the leaf that fired, in
+ * a step guard against the trigger the run carries. A run no event leaf
+ * started (a state-only tree becoming true) is false.
+ */
+const TriggeredByLeafSchema = z.object({
+  kind: z.literal('triggered-by'),
+  leafIds: z.array(z.string().regex(EVENT_LEAF_ID_RE)).min(1).max(TRIGGERED_BY_MAX_IDS),
+})
+
 /**
  * The escape hatch: the bounded expression engine over named device bindings.
  * Declared as a plain object so a discriminated union can read `kind`; the
@@ -284,6 +312,7 @@ export type AutomationStateLeaf =
   | z.infer<typeof StationaryPresentLeafSchema>
   | z.infer<typeof ExpressionLeafSchema>
   | z.infer<typeof TimeIsLeafSchema>
+  | z.infer<typeof TriggeredByLeafSchema>
 
 export type AutomationLeaf = AutomationEventLeaf | AutomationStateLeaf
 
@@ -294,6 +323,7 @@ export type DeviceIsLeaf = Extract<AutomationStateLeaf, { kind: 'device-is' }>
 export type StationaryPresentLeaf = Extract<AutomationStateLeaf, { kind: 'stationary-present' }>
 export type ExpressionLeaf = Extract<AutomationStateLeaf, { kind: 'expression' }>
 export type TimeIsLeaf = Extract<AutomationStateLeaf, { kind: 'time-is' }>
+export type TriggeredByLeaf = Extract<AutomationStateLeaf, { kind: 'triggered-by' }>
 
 export interface AutomationAll {
   readonly kind: 'all'
@@ -325,6 +355,7 @@ export const AutomationWhenSchema: z.ZodType<AutomationWhen> = z.lazy(() =>
     StationaryPresentLeafSchema,
     ExpressionLeafSchema,
     TimeIsLeafSchema,
+    TriggeredByLeafSchema,
   ]),
 )
 
@@ -401,6 +432,61 @@ export function hasEventLeaves(node: AutomationWhen): boolean {
     if (isEventLeaf(leaf)) found = true
   })
   return found
+}
+
+/** One event leaf that carries an id, with where it sits. */
+export interface IdentifiedEventLeaf {
+  readonly id: string
+  readonly path: string
+  readonly leaf: AutomationEventLeaf
+}
+
+/** The event leaves of the tree that carry an id, in tree order. */
+export function identifiedEventLeaves(when: AutomationWhen): IdentifiedEventLeaf[] {
+  const found: IdentifiedEventLeaf[] = []
+  forEachLeaf(when, (leaf, path) => {
+    if (isEventLeaf(leaf) && leaf.id !== undefined) found.push({ id: leaf.id, path, leaf })
+  })
+  return found
+}
+
+/** The id of the event leaf at `path` (`when.0.1`); null when the leaf has none or the path names no event leaf. */
+export function eventLeafIdAt(when: AutomationWhen, path: string): string | null {
+  return identifiedEventLeaves(when).find((entry) => entry.path === path)?.id ?? null
+}
+
+/** Does the tree hold a `triggered-by` leaf? */
+export function hasTriggeredByLeaves(when: AutomationWhen): boolean {
+  let found = false
+  forEachLeaf(when, (leaf) => {
+    if (leaf.kind === 'triggered-by') found = true
+  })
+  return found
+}
+
+/** Why a `triggered-by` leaf is refused outside an automation: there is no trigger row to name. */
+export const TRIGGERED_BY_NEEDS_AUTOMATION =
+  '"triggered by" reads which trigger started an automation — an action or a scheduler has no trigger rows, so it could never be true here'
+
+/**
+ * What is wrong with the `triggered-by` leaves of `tree`, given the ids the
+ * automation's event leaves carry: an id nothing carries can never be true.
+ * `where` names the tree in the message (`the rules`, `step 2`).
+ */
+export function triggeredByIssue(
+  tree: AutomationWhen,
+  knownIds: ReadonlySet<string>,
+  where: string,
+): string | null {
+  let issue: string | null = null
+  forEachLeaf(tree, (leaf) => {
+    if (issue !== null || leaf.kind !== 'triggered-by') return
+    const missing = leaf.leafIds.find((id) => !knownIds.has(id))
+    if (missing !== undefined) {
+      issue = `${where}: "triggered by" names the trigger "${missing}", and no trigger row of this automation has that id — pick one of its trigger rows`
+    }
+  })
+  return issue
 }
 
 function hasEmptyContainer(node: AutomationWhen): boolean {
@@ -485,6 +571,13 @@ export function validateWhenTree(when: AutomationWhen): string | null {
   const leaves = countWhenLeaves(when)
   if (leaves > MAX_WHEN_LEAVES) {
     return `the rules use ${leaves} rows — the limit is ${MAX_WHEN_LEAVES}`
+  }
+  const seen = new Set<string>()
+  for (const entry of identifiedEventLeaves(when)) {
+    if (seen.has(entry.id)) {
+      return `two trigger rows share the id "${entry.id}" — an id names one row`
+    }
+    seen.add(entry.id)
   }
   const need = eventNeed(when, 'when', false)
   if ('error' in need) return need.error

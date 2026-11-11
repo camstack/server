@@ -54,6 +54,11 @@ const TEXTS: Readonly<Record<AutomationLeafKind, KindTexts>> = {
     description: 'The clock is inside a window',
     example: 'only between 22:00 and 06:00',
   },
+  'triggered-by': {
+    label: 'Started by',
+    description: 'One of the chosen triggers started the run',
+    example: 'the button, not the motion sensor',
+  },
   expression: {
     label: 'Expression',
     description: 'Arithmetic across values',
@@ -139,7 +144,8 @@ describe('buildKindPicker', () => {
       expect(item.disabled).toBe(item.role === 'event' ? 'event-in-guard' : null)
     }
     expect(view.firstEnabled).toBe('device-is')
-    expect(buildKindPicker(input({ context: 'guard', query: 'schedule' })).firstEnabled).toBeNull()
+    // 'cron' finds the schedule row alone (an event); 'schedule' is also the name of the time group, which holds a state
+    expect(buildKindPicker(input({ context: 'guard', query: 'cron' })).firstEnabled).toBeNull()
   })
 
   it('disables event kinds under NOT, and every kind when the tree is full', () => {

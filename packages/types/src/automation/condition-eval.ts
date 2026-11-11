@@ -31,6 +31,7 @@ import {
   type AutomationEventLeaf,
   type AutomationWhen,
   type StationaryPresentLeaf,
+  eventLeafIdAt,
   forEachLeaf,
   isEventLeaf,
 } from './when.js'
@@ -116,6 +117,9 @@ function collectInto(cond: AutomationWhen, out: MirrorSource[]): void {
       return
     case 'time-is':
       // a clock reads nothing off the mirror
+      return
+    case 'triggered-by':
+      // it reads the run, not a device
       return
     default:
       // an event leaf reads nothing off the mirror — it is not a state
@@ -467,6 +471,8 @@ interface EvalState {
   readonly site: TimeSite | undefined
   /** The soonest a time leaf changes sides (ms from `now`). */
   timeDueInMs: number | undefined
+  /** What started the run (`triggered-by`); `'unknown'` when the evaluator was not told. */
+  readonly trigger: RunTrigger | 'unknown'
 }
 
 interface HoldVerdict {
@@ -686,6 +692,28 @@ function evalNode(
       })
       return verdict.inside
     }
+    case 'triggered-by': {
+      const named = cond.leafIds.map((id) => `"${id}"`).join(', ')
+      if (state.trigger === 'unknown') {
+        state.unknown = true
+        out.push({
+          path,
+          kind: cond.kind,
+          outcome: 'fail',
+          reason: `what started this run is not known here, so "triggered by ${named}" cannot be judged → fail`,
+        })
+        return false
+      }
+      const fired = state.trigger.leafId
+      const ok = fired !== null && cond.leafIds.includes(fired)
+      out.push({
+        path,
+        kind: cond.kind,
+        outcome: ok ? 'pass' : 'fail',
+        reason: `${fired === null ? 'no named trigger started this run' : `started by "${fired}"`}, wanted ${named} → ${ok ? 'pass' : 'fail'}`,
+      })
+      return ok
+    }
     case 'not': {
       const at = out.length
       out.push({ path, kind: 'not', outcome: 'not-evaluated', reason: '' })
@@ -739,6 +767,17 @@ export interface WhenEvaluationOptions {
   readonly rootPath?: string
   /** The site the `time-is` leaves read their clock on; absent, such a leaf is unknown. */
   readonly site?: TimeSite
+  /**
+   * What started the run, for a `triggered-by` leaf. Absent, it is read off
+   * the tree itself: the id of the leaf at `firedPath`. A tree that is NOT the
+   * one the trigger sits in (a step guard) must be told, or say `'unknown'`.
+   */
+  readonly trigger?: RunTrigger | 'unknown'
+}
+
+/** What started a run: the id of the event leaf that fired, or null when none with an id did. */
+export interface RunTrigger {
+  readonly leafId: string | null
 }
 
 /** Evaluate a `when` tree: the fired event leaf is true, every other event leaf false. */
@@ -756,6 +795,9 @@ export function evaluateWhenTree(
     holdDueInMs: undefined,
     site: options.site,
     timeDueInMs: undefined,
+    trigger: options.trigger ?? {
+      leafId: options.firedPath === undefined ? null : eventLeafIdAt(when, options.firedPath),
+    },
   }
   const pass = evalNode(when, options.rootPath ?? 'when', reader, now, nodes, state)
   return {
@@ -803,6 +845,7 @@ export function observeHoldLeaves(
         holdDueInMs: undefined,
         site: undefined,
         timeDueInMs: undefined,
+        trigger: 'unknown',
       }
       evalNode(leaf, path, reader, now, [], state)
       if (state.holdDueInMs !== undefined)

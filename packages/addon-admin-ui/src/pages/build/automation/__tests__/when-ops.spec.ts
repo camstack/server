@@ -85,6 +85,12 @@ describe('when-ops', () => {
     expect(convertLeafKind(IS, 'device-becomes')).toEqual(BECOMES)
     expect(convertLeafKind(BECOMES, 'device-is')).toEqual(IS)
     expect(convertLeafKind(IS, 'manual')).toEqual({ kind: 'manual' })
+    // a trigger row keeps its id across a type change, so a row that names it still does
+    expect(convertLeafKind({ kind: 'manual', id: 't1' }, 'interval')).toMatchObject({
+      kind: 'interval',
+      id: 't1',
+    })
+    expect(convertLeafKind({ kind: 'manual', id: 't1' }, 'time-is')).not.toHaveProperty('id')
   })
 
   it('moves a row or block one place among its siblings, never past either end', () => {

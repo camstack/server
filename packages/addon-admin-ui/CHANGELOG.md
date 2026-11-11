@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.643] - 2026-11-11
 ### Added
 - Automation editor: a 'Time is' condition with its window (clock time or sun event with an offset) and weekdays; a sun-based window is refused at save when the site has no location.
+- Automation editor: the "Started by" condition picks among the automation's own trigger rows, in the rules and in a step's condition
 
 ### Changed
 

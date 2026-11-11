@@ -23,6 +23,7 @@ import {
   type AutomationRecipe,
   type AutomationWhen,
   countWhenLeaves,
+  isEventLeaf,
   isLeaf,
   MAX_WHEN_DEPTH,
   MAX_WHEN_LEAVES,
@@ -190,7 +191,11 @@ export function convertLeafKind(leaf: AutomationLeaf, kind: LeafKind): Automatio
       value: becomes ?? '',
     }
   }
-  return newLeaf(kind)
+  const blank = newLeaf(kind)
+  // A trigger row keeps its id across a type change: the rows that name it still mean this row.
+  return isEventLeaf(leaf) && leaf.id !== undefined && isEventLeaf(blank)
+    ? { ...blank, id: leaf.id }
+    : blank
 }
 
 /** Live counters for the editor header. */

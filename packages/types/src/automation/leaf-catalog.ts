@@ -169,6 +169,16 @@ export const AUTOMATION_LEAF_CATALOG: AutomationLeafCatalog = {
       between: { from: { kind: 'clock', hh: 22, mm: 0 }, to: { kind: 'clock', hh: 6, mm: 0 } },
     }),
   },
+  'triggered-by': {
+    kind: 'triggered-by',
+    category: 'logic',
+    role: 'state',
+    allowedIn: STATE_CONTEXTS,
+    i18nKey: 'automation.leafCatalog.triggered-by',
+    keywords: ['trigger', 'triggered', 'started', 'which', 'branch', 'fired'],
+    needsDeviceValue: false,
+    seed: () => ({ kind: 'triggered-by', leafIds: [] }),
+  },
   expression: {
     kind: 'expression',
     category: 'logic',
@@ -193,6 +203,7 @@ export const AUTOMATION_LEAF_KINDS: readonly AutomationLeafKind[] = [
   'device-is',
   'stationary-present',
   'time-is',
+  'triggered-by',
   'expression',
 ]
 
