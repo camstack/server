@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DeviceType } from '../../device-type.js'
+import { DeviceRole, DeviceType } from '../../device-type.js'
 import { HERO_LAYOUT_BY_TYPE, HERO_LAYOUT_DEFAULT, resolveHeroLayout } from '../hero-layout.js'
 import { HERO_ROW_IDS } from '../hero-model.js'
 
@@ -24,7 +24,7 @@ describe('fixed hero layouts', () => {
   })
 
   it('resolves by type, with the default for a type it does not know', () => {
-    expect(resolveHeroLayout(DeviceType.Heater).rows[0]).toBe('run-for')
+    expect(resolveHeroLayout(DeviceType.Switch, DeviceRole.SwitchHeater).rows[0]).toBe('run-for')
     expect(resolveHeroLayout(DeviceType.MediaPlayer).rows).toEqual([
       'now-playing',
       'playback',

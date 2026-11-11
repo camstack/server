@@ -582,8 +582,20 @@ describe('pure helpers', () => {
         type: DeviceType.Container,
         primaryChildPreference: ['pv', 'house'],
       },
-      { id: 11, stableId: 'sys-house', parentDeviceId: 10, location: 'garden', type: DeviceType.Sensor },
-      { id: 12, stableId: 'sys-pv', parentDeviceId: 10, location: 'garden', type: DeviceType.Sensor },
+      {
+        id: 11,
+        stableId: 'sys-house',
+        parentDeviceId: 10,
+        location: 'garden',
+        type: DeviceType.Sensor,
+      },
+      {
+        id: 12,
+        stableId: 'sys-pv',
+        parentDeviceId: 10,
+        location: 'garden',
+        type: DeviceType.Sensor,
+      },
     ]
     expect(legacyAutoLinkIds({ selfId: 1, selfLocation: 'garden', candidates })).toEqual([12])
   })
@@ -1200,7 +1212,7 @@ describe('legacyAutoLinkIds: location must not bypass the container rule', () =>
       stableId: 'clima',
       parentDeviceId: 4266,
       location: 'Hall',
-      type: DeviceType.Thermostat,
+      type: DeviceType.Climate,
     },
     {
       id: 4272,

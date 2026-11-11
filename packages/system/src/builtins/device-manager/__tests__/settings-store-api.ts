@@ -137,6 +137,7 @@ export interface SeedDeviceRow {
   readonly location?: string | null
   readonly parentDeviceId?: number | null
   readonly integrationId?: string | null
+  readonly role?: string | null
 }
 
 /**
@@ -167,6 +168,7 @@ export async function seedDeviceRow(store: FakeSettingsStore, row: SeedDeviceRow
       location: row.location ?? null,
       parentDeviceId: row.parentDeviceId ?? null,
       integrationId: row.integrationId ?? null,
+      role: row.role ?? null,
     },
   })
 }

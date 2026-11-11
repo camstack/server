@@ -174,8 +174,8 @@ describe('HA sensor cap family — phase B', () => {
     })
 
     it('temperature-sensor lives on Thermostat devices too', () => {
-      expect(temperatureSensorCapability.deviceTypes).toContain(DeviceType.Thermostat)
-      expect(humiditySensorCapability.deviceTypes).toContain(DeviceType.Thermostat)
+      expect(temperatureSensorCapability.deviceTypes).toContain(DeviceType.Climate)
+      expect(humiditySensorCapability.deviceTypes).toContain(DeviceType.Climate)
     })
   })
 

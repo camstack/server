@@ -41,7 +41,7 @@ export const accessoriesCapability = {
   deviceNative: true,
   mode: 'singleton',
   // Cameras are the historical consumers; the HA integration adds
-  // Switch / Light / Sensor / Thermostat / Cover / Lock / Fan /
+  // Switch / Light / Sensor / Climate / Cover / Lock / Fan /
   // MediaPlayer / AlarmPanel / Generic as parent types for adopted HA
   // devices whose entity-children sit under accessories.
   deviceTypes: [
@@ -49,7 +49,7 @@ export const accessoriesCapability = {
     DeviceType.Switch,
     DeviceType.Light,
     DeviceType.Sensor,
-    DeviceType.Thermostat,
+    DeviceType.Climate,
     DeviceType.Cover,
     DeviceType.Lock,
     DeviceType.Fan,

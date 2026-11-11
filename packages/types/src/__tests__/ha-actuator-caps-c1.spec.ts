@@ -110,10 +110,7 @@ describe('HA actuator caps — Phase C1', () => {
       expect(climateControlCapability.name).toBe('climate-control')
       expect(climateControlCapability.scope).toBe('device')
       expect(climateControlCapability.mode).toBe('singleton')
-      expect(climateControlCapability.deviceTypes).toEqual([
-        DeviceType.Thermostat,
-        DeviceType.Climate,
-      ])
+      expect(climateControlCapability.deviceTypes).toEqual([DeviceType.Climate])
       expect(climateControlCapability.status.kind).toBe('push')
     })
 

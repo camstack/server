@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { DeviceType } from '../device/device-type.js'
+import { DeviceRole, DeviceType } from '../device/device-type.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 
 /**
@@ -17,7 +17,7 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
  * retried in a loop - D49); a future one is re-armed.
  *
  * What a device may be run for, and for how long at most, is per device type
- * ({@link TIMED_RUN_LIMITS}): the maximum is a safety bound, not a preference,
+ * and role ({@link timedRunLimitOf}): the maximum is a safety bound, not a preference,
  * so a request above it is REFUSED with a typed reason, never clamped.
  */
 
@@ -38,29 +38,47 @@ export interface TimedRunLimit {
   readonly quickRunDefault: number
 }
 
-/** The longest run, per device type. Only these types are offered `timed-run`. */
-export const TIMED_RUN_LIMITS: Readonly<Partial<Record<DeviceType, TimedRunLimit>>> = {
-  [DeviceType.Heater]: {
-    actuator: 'switch',
-    maxSeconds: 180 * 60,
-    unit: 'min',
-    quickRunDefault: 30,
-  },
-  [DeviceType.PetFountain]: {
-    actuator: 'pet-fountain',
-    maxSeconds: 300,
-    unit: 's',
-    quickRunDefault: 60,
-  },
+const HEATER_LIMIT: TimedRunLimit = {
+  actuator: 'switch',
+  maxSeconds: 180 * 60,
+  unit: 'min',
+  quickRunDefault: 30,
 }
 
+const PET_FOUNTAIN_LIMIT: TimedRunLimit = {
+  actuator: 'pet-fountain',
+  maxSeconds: 300,
+  unit: 's',
+  quickRunDefault: 60,
+}
+
+/**
+ * The device types `timed-run` may be offered on. A `switch` is narrowed by
+ * role ({@link TIMED_RUN_DEVICE_ROLES}): only a plug-in heater runs on a timer.
+ */
 export const TIMED_RUN_DEVICE_TYPES: readonly DeviceType[] = [
-  DeviceType.Heater,
+  DeviceType.Switch,
   DeviceType.PetFountain,
 ]
 
-export function timedRunLimitOf(deviceType: DeviceType): TimedRunLimit | null {
-  return TIMED_RUN_LIMITS[deviceType] ?? null
+/** The roles that make a device of these types timed-run-able (D1033). */
+export const TIMED_RUN_DEVICE_ROLES: Readonly<Partial<Record<DeviceType, readonly DeviceRole[]>>> =
+  {
+    [DeviceType.Switch]: [DeviceRole.SwitchHeater],
+  }
+
+/**
+ * The longest run of a device, by its type AND role (D1033): a `switch` is a
+ * heater only with role `switch-heater`, a pet fountain always is what it is.
+ * `null` - the device is not offered `timed-run`.
+ */
+export function timedRunLimitOf(
+  deviceType: string,
+  role: string | null | undefined,
+): TimedRunLimit | null {
+  if (deviceType === DeviceType.PetFountain) return PET_FOUNTAIN_LIMIT
+  if (deviceType === DeviceType.Switch && role === DeviceRole.SwitchHeater) return HEATER_LIMIT
+  return null
 }
 
 const MS_PER_SECOND = 1000
@@ -164,6 +182,7 @@ export const timedRunCapability = {
   kind: 'wrapper',
   defaultActive: true,
   deviceTypes: TIMED_RUN_DEVICE_TYPES,
+  deviceRoles: TIMED_RUN_DEVICE_ROLES,
   deviceConfig: {
     ui: { kind: 'derived-form', builderId: 'timed-run', tab: 'general' },
   },

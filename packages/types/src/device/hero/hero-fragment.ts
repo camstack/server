@@ -73,6 +73,8 @@ export interface StateReading {
 export interface HeroContext {
   readonly deviceId: number
   readonly type: string
+  /** The device's role: with the type, which thing it is (D1033). */
+  readonly role: string | null
   readonly features: readonly string[]
   readonly now: number
   /** The `running-state` reading: `undefined` = not bound or not answered, `null` = unknown. */

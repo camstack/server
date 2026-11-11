@@ -17,7 +17,7 @@ export const heatingValveCapability = {
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
-  deviceTypes: [DeviceType.Thermostat],
+  deviceTypes: [DeviceType.Climate],
   methods: {},
   status: {
     schema: HeatingValveStatusSchema,

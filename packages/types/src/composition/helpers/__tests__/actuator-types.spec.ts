@@ -127,10 +127,7 @@ describe('the catalog row of each new type', () => {
   })
 
   it('a climate group takes thermostats and air conditioners, a lock group only locks', () => {
-    expect(groupTemplate('climate')?.memberDeviceTypes).toEqual([
-      DeviceType.Thermostat,
-      DeviceType.Climate,
-    ])
+    expect(groupTemplate('climate')?.memberDeviceTypes).toEqual([DeviceType.Climate])
     expect(groupTemplate('lock')?.memberDeviceTypes).toEqual([DeviceType.Lock])
   })
 })

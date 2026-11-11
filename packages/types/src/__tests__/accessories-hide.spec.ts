@@ -96,7 +96,7 @@ describe('accessories cap — hide-child extension (Phase E1)', () => {
         DeviceType.Switch,
         DeviceType.Light,
         DeviceType.Sensor,
-        DeviceType.Thermostat,
+        DeviceType.Climate,
         DeviceType.Cover,
         DeviceType.Lock,
         DeviceType.Fan,

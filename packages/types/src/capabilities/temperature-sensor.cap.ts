@@ -32,7 +32,7 @@ export const temperatureSensorCapability = {
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
-  deviceTypes: [DeviceType.Sensor, DeviceType.Thermostat],
+  deviceTypes: [DeviceType.Sensor, DeviceType.Climate],
   methods: {},
   status: {
     schema: TemperatureSensorStatusSchema,

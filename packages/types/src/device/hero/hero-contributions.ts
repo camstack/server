@@ -27,7 +27,7 @@ import {
   timedRunRemaining,
   type TimedRunUnit,
 } from '../../capabilities/timed-run.cap.js'
-import { DeviceFeature, DeviceType } from '../device-type.js'
+import { DeviceFeature } from '../device-type.js'
 import type { VocabIcon } from './cap-vocabulary-icon.js'
 import {
   action,
@@ -75,10 +75,6 @@ function durationText(seconds: number): HeroText {
   if (m < 60) return heroText(`${m} min`, `${m} min`)
   const text = `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`
   return heroText(text, text)
-}
-
-function deviceTypeOf(type: string): DeviceType | undefined {
-  return Object.values(DeviceType).find((t) => t === type)
 }
 
 // ── switch ─────────────────────────────────────────────────────────────────
@@ -365,9 +361,8 @@ function remainingWords(amount: number, unit: TimedRunUnit): HeroText {
 }
 
 const timedRunContribution = contribution('timed-run', TimedRunStatusSchema, (slice, ctx) => {
-  const type = deviceTypeOf(ctx.type)
-  const limit = type === undefined ? null : timedRunLimitOf(type)
-  // Offered only to the types that have a limit. A bound cap on any other type adds nothing.
+  const limit = timedRunLimitOf(ctx.type, ctx.role)
+  // Offered only to the kinds that have a limit. A bound cap on any other device adds nothing.
   if (limit === null) return {}
   const quickRun = slice?.quickRun ?? timedRunQuickRun(limit, null)
   const activeUntil =

@@ -172,4 +172,12 @@ describe('accessory child role — seeded like the name', () => {
     })
     expect([...applied.values()].map(hasRole)).toEqual([false])
   })
+
+  it('D1033: a respawn fills the role of a child that has none yet', async () => {
+    // Spawned before its role existed and renamed since: the provider's role lands.
+    const applied = await spawn([spec('circuit', { role: 'climate-heat-pump-circuit' })], {
+      name: 'Circuito 1',
+    })
+    expect([...applied.values()].map(roleOf)).toEqual(['climate-heat-pump-circuit'])
+  })
 })

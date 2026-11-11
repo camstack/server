@@ -939,7 +939,11 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       linkDeviceId,
       ...(isFirstSpawn && spec.meta.name !== undefined ? { name: spec.meta.name } : {}),
       ...(isFirstSpawn && spec.meta.location !== undefined ? { location: spec.meta.location } : {}),
-      ...(isFirstSpawn && spec.meta.role !== undefined ? { role: spec.meta.role } : {}),
+      // D1033 — a role is also filled on a later spawn when the row has none
+      // (a child spawned before its role existed); one already there stays.
+      ...((isFirstSpawn || existingMeta?.role == null) && spec.meta.role !== undefined
+        ? { role: spec.meta.role }
+        : {}),
       ...(spec.meta.type !== undefined ? { type: spec.meta.type } : {}),
       ...(integrationId !== undefined ? { integrationId } : {}),
     }
@@ -1364,6 +1368,9 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
           type: device.type,
           name: device.name,
           parentDeviceId: device.parentDeviceId,
+          // D1033 — the provider's role for this device. The hub writes it only
+          // onto a row that has no role yet; an existing role is never replaced.
+          ...(device.role !== undefined ? { role: device.role } : {}),
           features: [...device.features],
           config: {},
           // D783 — the paths this device's own schema declares secret, so
@@ -1413,6 +1420,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
             type: device.type,
             name: device.name,
             parentDeviceId: device.parentDeviceId,
+            ...(device.role !== undefined ? { role: device.role } : {}),
             features: [...device.features],
             config: {},
             // D783 — the paths this device's own schema declares secret, so

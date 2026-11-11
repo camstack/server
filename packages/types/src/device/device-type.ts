@@ -6,12 +6,12 @@ export enum DeviceType {
   Siren = 'siren',
   Switch = 'switch',
   Sensor = 'sensor',
-  Thermostat = 'thermostat',
-  /** Air-conditioner / heat-pump climate device (HVAC) — shares the
-   *  `climate-control` cap surface with `Thermostat` but renders a
-   *  dedicated AC-appropriate control UI (mode chips, fan speed,
-   *  independent vertical/horizontal swing). Sources: native Gree, and
-   *  reusable by other AC integrations. */
+  /** Every climate device: an air conditioner, a room thermostat, a radiator
+   *  valve, a floor-heating zone, a heat-pump circuit. They share one set of
+   *  controls (`climate-control`), so they are one type; WHICH kind of climate
+   *  device it is is its {@link DeviceRole} (`climate-*`), which the UI and the
+   *  exports branch on. The retired `thermostat` type is read as this one
+   *  (`canonicalStoredDeviceType`). */
   Climate = 'climate',
   Button = 'button',
   /** Generic stateless event emitter — carries a device's EXACT declared
@@ -104,10 +104,6 @@ export enum DeviceType {
   /** Washing machine. A plug-built one is running while its power stays
    *  above a threshold. No program cap — that surface is the dishwasher's. */
   Washer = 'washer',
-  /** A dumb plug-in stove or heater: a switch (and, with a meter, a power
-   *  reading) that only runs while the plug is on. Built from a smart plug;
-   *  the `timed-run` cap switches it off again after a chosen time. */
-  Heater = 'heater',
   /** Tumble dryer. Same plug-built running surface as {@link Washer}. */
   Dryer = 'dryer',
   /** The physical bridge box of a vendor ecosystem (Velux KLF-200, and later
@@ -383,6 +379,29 @@ export enum DeviceRole {
   /** A smart plug: a `switch` whose source says it is an outlet (HA
    *  `device_class: outlet`). The Alexa export shows it as a SMARTPLUG. */
   Outlet = 'outlet',
+  /** A dumb plug-in stove or heater behind a switch: it runs only while the
+   *  switch is on. Offered `timed-run`, which switches it off again after a
+   *  chosen time. */
+  SwitchHeater = 'switch-heater',
+  /** A plain fan behind a switch (a smart plug powering it): drawn as a fan,
+   *  with the switch's on/off only. Speed or oscillation appear only when the
+   *  device also has a fan cap (D1033). */
+  SwitchFan = 'switch-fan',
+
+  // ── Climate sub-roles (the KIND of a `climate` device) ───
+  /** Air conditioner / split unit: cooling, fan speed, louvres. */
+  ClimateAc = 'climate-ac',
+  /** Room thermostat: a setpoint and a room temperature. The default. */
+  ClimateThermostat = 'climate-thermostat',
+  /** Floor-heating zone actuator. */
+  ClimateFloor = 'climate-floor',
+  /** Radiator valve (thermostatic radiator head). */
+  ClimateRadiator = 'climate-radiator',
+  /** A heater with its own thermostat (stove, convector). */
+  ClimateHeater = 'climate-heater',
+  /** One heating/cooling circuit of a heat pump: a water loop with comfort /
+   *  eco setpoints and a heat/cool mode, no room sensor. */
+  ClimateHeatPumpCircuit = 'climate-heat-pump-circuit',
 
   // ── Sensor sub-roles — binary_sensor family ──────────────
   /** Generic motion / occupancy / moving event source. Distinct from

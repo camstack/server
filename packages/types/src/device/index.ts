@@ -104,6 +104,15 @@ export {
   DeviceType,
   featuresOfBoundCaps,
 } from './device-type.js'
+export {
+  capAppliesToDeviceKind,
+  canonicalStoredDeviceType,
+  CLIMATE_ROLES,
+  climateRoleOf,
+  isAirConditioner,
+  type ClimateRole,
+  type DeviceKindGate,
+} from './device-kind.js'
 export type {
   IBatteryOperated,
   IDoorbellButton,

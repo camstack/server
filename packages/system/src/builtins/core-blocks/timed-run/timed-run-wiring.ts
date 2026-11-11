@@ -97,13 +97,17 @@ export function buildTimedRunService(deps: TimedRunWiringDeps): TimedRunService 
   }
   return new TimedRunService({
     rows: rowsOver(deps.records),
-    deviceTypeOf: async (deviceId) => {
+    deviceKindOf: async (deviceId) => {
       const found = await need().deviceManager.getDevice.query({ deviceId })
-      return found === null || found === undefined ? null : found.type
+      return found === null || found === undefined
+        ? null
+        : { type: found.type, role: found.role ?? null }
     },
     timedRunDeviceIds: async () => {
       const devices = await need().deviceManager.listAll.query({ projection: 'slim' })
-      return devices.filter((d) => timedRunLimitOf(d.type) !== null).map((d) => d.id)
+      return devices
+        .filter((d) => timedRunLimitOf(d.type, d.role ?? null) !== null)
+        .map((d) => d.id)
     },
     actuation: actuationOver(deps.api),
     quickRuns: quickRunsOver(deps.settings),

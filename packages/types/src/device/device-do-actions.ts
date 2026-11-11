@@ -179,7 +179,6 @@ export const DEVICE_TYPE_DO_CAPS: Record<DeviceType, readonly string[]> = {
   [DeviceType.Siren]: ['switch', 'motion-trigger'],
   [DeviceType.Switch]: ['switch', 'motion-trigger'],
   [DeviceType.Sensor]: [],
-  [DeviceType.Thermostat]: ['climate-control'],
   [DeviceType.Climate]: ['climate-control'],
   [DeviceType.Button]: ['button'],
   [DeviceType.EventEmitter]: [],
@@ -209,7 +208,6 @@ export const DEVICE_TYPE_DO_CAPS: Record<DeviceType, readonly string[]> = {
   [DeviceType.Image]: [],
   [DeviceType.PetFeeder]: ['pet-feeder'],
   [DeviceType.PetFountain]: ['pet-fountain', 'timed-run'],
-  [DeviceType.Heater]: ['switch', 'timed-run'],
   [DeviceType.Dishwasher]: ['dishwasher'],
   // A plug-built washer or dryer has no command cap. Running is a reading.
   [DeviceType.Washer]: [],
@@ -238,7 +236,6 @@ export function isDoPickerDeviceType(type: string): boolean {
 export function deviceDoFamily(type: string): string {
   switch (type) {
     case DeviceType.Climate:
-    case DeviceType.Thermostat:
     case DeviceType.Humidifier:
     case DeviceType.WaterHeater:
     case DeviceType.HeatPump:

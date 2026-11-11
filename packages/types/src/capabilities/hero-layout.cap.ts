@@ -56,10 +56,15 @@ export const heroLayoutCapability = {
       auth: 'protected',
       role: 'viewer',
     }),
-    getLayout: method(z.object({ deviceType: z.string() }), HeroLayoutRowsSchema, {
-      auth: 'protected',
-      role: 'viewer',
-    }),
+    /** The fixed rows of a kind: the type, refined by the role (D1033 — a heater is a switch). */
+    getLayout: method(
+      z.object({ deviceType: z.string(), role: z.string().nullable().optional() }),
+      HeroLayoutRowsSchema,
+      {
+        auth: 'protected',
+        role: 'viewer',
+      },
+    ),
   },
 } as const satisfies CapabilityDefinition
 

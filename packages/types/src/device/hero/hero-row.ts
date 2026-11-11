@@ -105,7 +105,6 @@ function trailingOf(facts: readonly HeroFact[]): HeroFact | null {
  */
 export const ROW_PRIMARY_BY_TYPE: Readonly<Record<string, string>> = {
   [DeviceType.Climate]: 'climate.mode',
-  [DeviceType.Thermostat]: 'climate.mode',
 }
 
 function primaryOf(model: HeroModel): HeroControl | null {
@@ -144,7 +143,6 @@ export const ROW_EXTRAS_MAX = 2
  */
 export const ROW_EXTRAS_BY_TYPE: Readonly<Record<string, readonly string[]>> = {
   [DeviceType.Climate]: ['climate.target'],
-  [DeviceType.Thermostat]: ['climate.target'],
   [DeviceType.Vacuum]: ['vacuum.base'],
   [DeviceType.LawnMower]: ['mower.dock'],
   [DeviceType.MediaPlayer]: ['volume.level', REMOTE_OPEN_ACTION_ID],

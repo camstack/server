@@ -13,7 +13,7 @@
  */
 
 import { z } from 'zod'
-import { DeviceType } from '../device/device-type.js'
+import { type DeviceRole, DeviceType } from '../device/device-type.js'
 import type { ConfigUISchemaWithValues } from '../interfaces/config-ui.js'
 import type { ExtensionSlotDescriptor } from '../device-extension/slot-descriptor.js'
 import type { MethodRoleDecl } from '../auth/viewer-access.js'
@@ -850,6 +850,13 @@ export interface CapabilityDefinition<
   readonly deviceConfig?: DeviceConfigSpec
   /** For `scope: 'device'` caps — allowed device types. Omit → applies to every type. */
   readonly deviceTypes?: readonly DeviceType[]
+  /**
+   * Narrows `deviceTypes` by role (D1033): for a type named here, the cap is
+   * offered only on a device carrying one of these roles. A type absent from
+   * this map keeps every role. `timed-run` is offered on a `switch` only when
+   * it is a `switch-heater`.
+   */
+  readonly deviceRoles?: Readonly<Partial<Record<DeviceType, readonly DeviceRole[]>>>
   /**
    * Extension slots this capability OWNS (D648): the ways a device of this
    * kind can be extended by other devices, served by this cap's owner over

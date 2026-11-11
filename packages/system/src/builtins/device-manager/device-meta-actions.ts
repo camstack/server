@@ -458,6 +458,7 @@ export async function registerDevice(
     inheritedLocation,
     inheritedDescendantIds,
     inheritFailed,
+    filledRole,
   } = await pctx.metaStore.withMetaWriteLock(async () => {
     // Persist the full meta record. The kernel's `create()`
     // shortcut writes operator-supplied `name` + `location`
@@ -566,6 +567,12 @@ export async function registerDevice(
         ),
       })
     }
+    // D1033 — the role the provider names lands on a row that has none yet
+    // (a device registered before its role existed gets it now, no migration)
+    // and NEVER replaces one already there, which may be the operator's.
+    const providerRole = typeof input.role === 'string' && input.role.length > 0 ? input.role : null
+    const roleToFill = existingMeta?.role == null ? providerRole : null
+    if (roleToFill !== null) await pctx.metaStore.rows.patch(id, { role: roleToFill })
     // Out-of-order adoption registers children before their parents: this
     // device's own already-registered descendants missed the location it
     // just inherited. Pull it down onto their null `location` columns now,
@@ -591,8 +598,23 @@ export async function registerDevice(
       inheritedLocation: inherited,
       inheritedDescendantIds: descendantsFilled,
       inheritFailed: descendantsFailed,
+      filledRole: roleToFill,
     }
   })
+
+  if (filledRole !== null) {
+    pctx.host.ctx.eventBus.emit({
+      id: randomUUID(),
+      timestamp: new Date(),
+      source: { type: 'device', id },
+      category: EventCategory.DeviceMetaChanged,
+      data: { deviceId: id, field: 'role', value: filledRole },
+    })
+    pctx.host.ctx.logger.info('registerDevice: filled the missing role from the provider', {
+      tags: { deviceId: id },
+      meta: { role: filledRole },
+    })
+  }
 
   // Config is pre-persisted by the kernel's `create()` shortcut
   // via `persistConfig` BEFORE construction. We still accept a

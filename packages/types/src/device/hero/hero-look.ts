@@ -12,6 +12,7 @@
  * ONE animation per state — the card runs a single background animation plus
  * its icon, nothing else.
  */
+import { isAirConditioner } from '../device-kind.js'
 import { DeviceRole, DeviceType } from '../device-type.js'
 import type { VocabIcon } from './cap-vocabulary-icon.js'
 import type { HeroSceneMode } from './hero-scene.js'
@@ -432,7 +433,7 @@ export const HERO_MODE_LOOK: Readonly<Record<HeroSceneMode, StateLook | null>> =
   closed: null,
 }
 
-const MODE_LOOK_TYPES: readonly string[] = [DeviceType.Climate, DeviceType.Thermostat]
+const MODE_LOOK_TYPES: readonly string[] = [DeviceType.Climate]
 
 export const HERO_LOOK_BY_TYPE = {
   [DeviceType.Camera]: CAMERA_LOOK,
@@ -441,8 +442,7 @@ export const HERO_LOOK_BY_TYPE = {
   [DeviceType.Siren]: HERO_LOOK_DEFAULT,
   [DeviceType.Switch]: SWITCH_LOOK,
   [DeviceType.Sensor]: READING_SENSOR_LOOK,
-  [DeviceType.Thermostat]: THERMOSTAT_LOOK,
-  [DeviceType.Climate]: CLIMATE_LOOK,
+  [DeviceType.Climate]: THERMOSTAT_LOOK,
   [DeviceType.Button]: BUTTON_LOOK,
   [DeviceType.EventEmitter]: EVENT_EMITTER_LOOK,
   [DeviceType.Update]: UPDATE_LOOK,
@@ -470,7 +470,6 @@ export const HERO_LOOK_BY_TYPE = {
   [DeviceType.PetFountain]: FOUNTAIN_LOOK,
   [DeviceType.Dishwasher]: DISHWASHER_LOOK,
   [DeviceType.Washer]: WASHER_LOOK,
-  [DeviceType.Heater]: HEATER_LOOK,
   [DeviceType.Dryer]: DRYER_LOOK,
   [DeviceType.Gateway]: HERO_LOOK_DEFAULT,
 } as const satisfies Record<DeviceType, HeroLook>
@@ -496,6 +495,16 @@ export const HERO_LOOK_BY_ROLE = {
   [DeviceRole.CoverWindow]: 'inherit',
   [DeviceRole.BinaryHelper]: 'inherit',
   [DeviceRole.Outlet]: 'inherit',
+  [DeviceRole.SwitchHeater]: HEATER_LOOK,
+  [DeviceRole.SwitchFan]: FAN_LOOK,
+  // An air conditioner draws its MODE when on, so its look is picked after the
+  // mode (`resolveHeroLook`), not here where a role beats the mode.
+  [DeviceRole.ClimateAc]: 'inherit',
+  [DeviceRole.ClimateThermostat]: 'inherit',
+  [DeviceRole.ClimateFloor]: 'inherit',
+  [DeviceRole.ClimateRadiator]: 'inherit',
+  [DeviceRole.ClimateHeater]: 'inherit',
+  [DeviceRole.ClimateHeatPumpCircuit]: 'inherit',
   [DeviceRole.MotionSensor]: MOTION_LOOK,
   [DeviceRole.ContactSensor]: 'inherit',
   [DeviceRole.LeakSensor]: LEAK_LOOK,
@@ -561,6 +570,7 @@ export function resolveHeroLook(
     const byMode = HERO_MODE_LOOK[mode]
     if (byMode !== null) return byMode
   }
+  if (isAirConditioner(type, role)) return CLIMATE_LOOK[state]
   const byType = isDeviceType(type) ? HERO_LOOK_BY_TYPE[type] : undefined
   return (byType ?? HERO_LOOK_DEFAULT)[state]
 }

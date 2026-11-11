@@ -54,9 +54,9 @@ const ROW_MODELS_CONCURRENCY = 16
 export class HeroLayoutService implements IHeroLayoutProvider {
   constructor(private readonly deps: HeroLayoutServiceDeps) {}
 
-  readonly getLayout: IHeroLayoutProvider['getLayout'] = async ({ deviceType }) => ({
+  readonly getLayout: IHeroLayoutProvider['getLayout'] = async ({ deviceType, role }) => ({
     type: deviceType,
-    rows: [...resolveHeroLayout(deviceType).rows],
+    rows: [...resolveHeroLayout(deviceType, role ?? null).rows],
   })
 
   readonly getHeroModel: IHeroLayoutProvider['getHeroModel'] = async ({ deviceId, canActuate }) => {

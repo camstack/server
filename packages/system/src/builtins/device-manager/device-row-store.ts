@@ -51,6 +51,7 @@
  * either be nullable or carry a `defaultValue`.
  */
 
+import { canonicalStoredDeviceType } from '@camstack/types'
 import type {
   ChildLayout,
   CollectionColumn,
@@ -346,7 +347,11 @@ export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null
   const deviceId = readNumber(data['deviceId'])
   const addonId = readString(data['addonId'])
   const stableId = readString(data['stableId'])
-  const type = readString(data['type'])
+  // D1033 — a retired type (`thermostat`) reads as the type it was folded
+  // into. The next registration of the device persists the live type; this is
+  // a read alias, not a migration.
+  const storedType = readString(data['type'])
+  const type = storedType === undefined ? undefined : canonicalStoredDeviceType(storedType)
   const name = readString(data['name'])
   if (
     deviceId === undefined ||

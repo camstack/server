@@ -66,11 +66,7 @@ describe('a group takes climate devices through climate-control', () => {
       ['humidity', 'humidity-sensor', 'currentHumidity'],
     ] as const) {
       const template = groupTemplate(id)
-      expect(template?.memberDeviceTypes).toEqual([
-        DeviceType.Sensor,
-        DeviceType.Thermostat,
-        DeviceType.Climate,
-      ])
+      expect(template?.memberDeviceTypes).toEqual([DeviceType.Sensor, DeviceType.Climate])
       expect(template?.accept.map((a) => `${a.cap}.${a.fieldPath}`)).toEqual([
         `${cap}.${id}`,
         `climate-control.${field}`,

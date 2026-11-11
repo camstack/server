@@ -49,7 +49,6 @@ export const groupStatusCapability = {
     DeviceType.Valve,
     DeviceType.Lock,
     DeviceType.MediaPlayer,
-    DeviceType.Thermostat,
     DeviceType.Climate,
   ],
   methods: {},

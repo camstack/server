@@ -63,7 +63,6 @@ const POWER_METER_DEVICE_TYPES = [
   DeviceType.Light,
   DeviceType.Fan,
   DeviceType.Climate,
-  DeviceType.Thermostat,
   DeviceType.Humidifier,
   DeviceType.WaterHeater,
   DeviceType.MediaPlayer,
@@ -73,7 +72,6 @@ const POWER_METER_DEVICE_TYPES = [
   DeviceType.Vacuum,
   DeviceType.LawnMower,
   DeviceType.PetFeeder,
-  DeviceType.Heater,
 ] as const
 
 /** Everything but a bare `Sensor`: a sensor that takes its reading from another sensor adds nothing. */

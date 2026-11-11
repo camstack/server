@@ -30,7 +30,8 @@
  * a contradiction — the base kind is what the admin-ui renders, the accessory
  * pick is what a compact camera-accessory row renders.
  */
-import { DeviceType } from './device-type.js'
+import { isAirConditioner } from './device-kind.js'
+import { DeviceRole, DeviceType } from './device-type.js'
 
 // ── Base decision: DeviceType → control-kind ─────────────────────────────────
 
@@ -89,8 +90,9 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   [DeviceType.Light]: 'light',
   [DeviceType.Fan]: 'fan',
   [DeviceType.Sensor]: 'sensor',
-  [DeviceType.Thermostat]: 'thermostat',
-  [DeviceType.Climate]: 'climate',
+  // The base control of a climate device; an air conditioner refines it to
+  // `climate` by role (`resolveDeviceControlKind`).
+  [DeviceType.Climate]: 'thermostat',
   [DeviceType.Button]: 'button',
   [DeviceType.EventEmitter]: 'dummy',
   [DeviceType.Update]: 'update',
@@ -110,7 +112,6 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   [DeviceType.Image]: 'image',
   [DeviceType.PetFeeder]: 'pet-feeder',
   [DeviceType.PetFountain]: 'pet-fountain',
-  [DeviceType.Heater]: 'heater',
   [DeviceType.Dishwasher]: 'dishwasher',
   // No program surface: the card reads the running state and the power meter
   // (running / idle, live watts); the row shows the running badge.
@@ -129,8 +130,15 @@ const DEVICE_TYPE_VALUES = new Set<string>(Object.values(DeviceType))
  * narrows the string to a `DeviceType` before indexing (documented enum-string
  * boundary).
  */
-export function resolveDeviceControlKind(type: string): DeviceControlKind | null {
-  return DEVICE_TYPE_VALUES.has(type) ? DEVICE_TYPE_CONTROL_KIND[type as DeviceType] : null
+export function resolveDeviceControlKind(
+  type: string,
+  role?: string | null,
+): DeviceControlKind | null {
+  if (!DEVICE_TYPE_VALUES.has(type)) return null
+  // D1033 — same controls, different thing: the role picks the presentation.
+  if (isAirConditioner(type, role)) return 'climate'
+  if (type === DeviceType.Switch && role === DeviceRole.SwitchHeater) return 'heater'
+  return DEVICE_TYPE_CONTROL_KIND[type as DeviceType]
 }
 
 // ── Finer decision: accessory-row control pick (type + features) ─────────────

@@ -1322,6 +1322,15 @@ export {
   DeviceType,
   featuresOfBoundCaps,
 } from './device/device-type.js'
+export {
+  capAppliesToDeviceKind,
+  canonicalStoredDeviceType,
+  CLIMATE_ROLES,
+  climateRoleOf,
+  isAirConditioner,
+  type ClimateRole,
+  type DeviceKindGate,
+} from './device/device-kind.js'
 export type {
   CapBackedFeature,
   FeatureAuthority,

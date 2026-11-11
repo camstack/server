@@ -40,8 +40,8 @@ describe('hero look exhaustiveness', () => {
 
 describe('resolveHeroLook', () => {
   it('a heater heats while on and is still when off', () => {
-    const on = resolveHeroLook(null, DeviceType.Heater, 'on')
-    const off = resolveHeroLook(null, DeviceType.Heater, 'off')
+    const on = resolveHeroLook(DeviceRole.SwitchHeater, DeviceType.Switch, 'on')
+    const off = resolveHeroLook(DeviceRole.SwitchHeater, DeviceType.Switch, 'off')
     expect(on).toMatchObject({ icon: 'flame', background: 'heat-rise', animation: 'rise' })
     expect(off).toMatchObject({ background: 'plain', animation: 'none' })
   })
@@ -56,8 +56,8 @@ describe('resolveHeroLook', () => {
   })
 
   it('unknown has its own look, never the off look', () => {
-    const unknown = resolveHeroLook(null, DeviceType.Heater, 'unknown')
-    expect(unknown).not.toEqual(resolveHeroLook(null, DeviceType.Heater, 'off'))
+    const unknown = resolveHeroLook(DeviceRole.SwitchHeater, DeviceType.Switch, 'unknown')
+    expect(unknown).not.toEqual(resolveHeroLook(DeviceRole.SwitchHeater, DeviceType.Switch, 'off'))
   })
 
   it('a role refines the type: a leak sensor reads as water, a plain sensor does not', () => {

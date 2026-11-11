@@ -96,17 +96,15 @@ function runningRead(b: ComposerBlock) {
 
 describe('planNew - running follows the actuator switch', () => {
   it('plans running from the switch when nothing is authored, and the stored block is untouched', () => {
-    const heater = block(DeviceType.Heater, [SWITCH])
+    const heater = block(DeviceType.Fan, [SWITCH])
     const field = runningRead(heater)
     expect(field?.source).toEqual({ kind: 'from', source: PLUG, cap: 'switch', fieldPath: 'on' })
     expect(heater.composition.features).toHaveLength(1)
-    expect(plan(heater).declaration?.type).toBe(DeviceType.Heater)
+    expect(plan(heater).declaration?.type).toBe(DeviceType.Fan)
   })
 
   it('keeps the authored power dwell (5391/5392 keep their rule)', () => {
-    expect(runningRead(block(DeviceType.Heater, [SWITCH, AUTHORED]))?.source.kind).toBe(
-      'expression',
-    )
+    expect(runningRead(block(DeviceType.Fan, [SWITCH, AUTHORED]))?.source.kind).toBe('expression')
   })
 
   it('does not read a SUPPLY switch as running', () => {

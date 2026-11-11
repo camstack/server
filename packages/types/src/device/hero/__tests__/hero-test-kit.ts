@@ -1,7 +1,26 @@
+import { DeviceRole, DeviceType } from '../../device-type.js'
 import { buildHeroModel } from '../build-hero-model.js'
 import type { HeroAction, HeroControl, HeroModel, HeroRow } from '../hero-model.js'
 
 export const NOW = 1_700_000_000_000
+
+/**
+ * A plug-in heater as the fixtures name it: a `switch` with role
+ * `switch-heater` (D1033). `kindOf` turns it into the pair the model reads.
+ */
+export const PLUG_HEATER = 'switch+switch-heater'
+
+/** A device's type and role, the plug-in heater token unfolded. */
+export interface FixtureKind {
+  readonly type: string
+  readonly role: string | null
+}
+
+export function kindOf(type: string, role: string | null): FixtureKind {
+  return type === PLUG_HEATER
+    ? { type: DeviceType.Switch, role: DeviceRole.SwitchHeater }
+    : { type, role }
+}
 
 export function build(
   type: string,
@@ -11,7 +30,7 @@ export function build(
   online = true,
 ): HeroModel {
   return buildHeroModel({
-    device: { id: 7, type, role: null, name: 'Dev', online },
+    device: { id: 7, ...kindOf(type, null), name: 'Dev', online },
     caps,
     features,
     slices,

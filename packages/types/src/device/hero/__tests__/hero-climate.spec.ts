@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { ClimateControlStatus, HvacMode } from '../../../capabilities/climate-control.cap.js'
-import { DeviceFeature, DeviceType } from '../../device-type.js'
+import { DeviceFeature, DeviceRole, DeviceType } from '../../device-type.js'
 import { buildHeroModel } from '../build-hero-model.js'
 import type { HeroModel } from '../hero-model.js'
 import { projectDeviceRow } from '../hero-row.js'
+
+/** An air conditioner: a `climate` device with role `climate-ac` (D1033). */
+const AC = 'climate+climate-ac'
 
 function build(
   type: string,
@@ -12,7 +15,14 @@ function build(
   features: readonly string[] = [],
 ): HeroModel {
   return buildHeroModel({
-    device: { id: 3, type, role: null, name: 'Clima', online: true },
+    device: {
+      id: 3,
+      ...(type === AC
+        ? { type: DeviceType.Climate, role: DeviceRole.ClimateAc }
+        : { type, role: null }),
+      name: 'Clima',
+      online: true,
+    },
     caps,
     features,
     slices,
@@ -22,7 +32,7 @@ function build(
   })
 }
 
-const AC: ClimateControlStatus = {
+const AC_STATUS: ClimateControlStatus = {
   mode: 'heat',
   availableModes: ['off', 'heat', 'cool', 'auto', 'dry', 'fan_only'],
   fanMode: 'auto',
@@ -47,8 +57,8 @@ const text = (m: HeroModel): string[] => projectDeviceRow(m).statusLine.map((t) 
 
 describe('climate hero', () => {
   it('heat at 22 with 22.3 measured', () => {
-    const m = build(DeviceType.Climate, ['climate-control'], {
-      'climate-control': AC,
+    const m = build(AC, ['climate-control'], {
+      'climate-control': AC_STATUS,
     })
     expect(m.state).toBe('on')
     expect(m.scene).toEqual({ id: 'ac', mode: 'heat', level: (22 - 16) / 14 })
@@ -67,13 +77,13 @@ describe('climate hero', () => {
   })
 
   it('the scene caption names the mode and the fan; the title stays the mode', () => {
-    const m = build(DeviceType.Climate, ['climate-control'], { 'climate-control': AC })
+    const m = build(AC, ['climate-control'], { 'climate-control': AC_STATUS })
     expect(m.title.en).toBe('Heating')
     expect(m.caption).toEqual({ en: 'Heating · fan Auto', it: 'Riscalda · ventola Auto' })
   })
 
   it('mode and fan options carry readable labels', () => {
-    const m = build(DeviceType.Climate, ['climate-control'], { 'climate-control': AC })
+    const m = build(AC, ['climate-control'], { 'climate-control': AC_STATUS })
     const row = (id: string) => m.rows.find((r) => r.id === id)?.controls[0]
     const mode = row('climate-mode')
     const fan = row('climate-fan')
@@ -82,7 +92,7 @@ describe('climate hero', () => {
   })
 
   it('the mode picker carries Off as its last segment, so the card needs no power row', () => {
-    const m = build(DeviceType.Climate, ['climate-control'], { 'climate-control': AC })
+    const m = build(AC, ['climate-control'], { 'climate-control': AC_STATUS })
     const mode = m.rows.find((r) => r.id === 'climate-mode')?.controls[0]
     expect(mode?.kind === 'picker' ? mode.options.at(-1) : null).toBe('off')
     expect(mode?.kind === 'picker' ? mode.optionLabels?.['off']?.it : null).toBe('Spento')
@@ -93,28 +103,26 @@ describe('climate hero', () => {
       device: {
         id: 3,
         type: DeviceType.Climate,
-        role: null,
+        role: DeviceRole.ClimateAc,
         name: 'Clima',
         online: true,
         integration: 'Midea',
       },
       caps: ['climate-control'],
       features: [],
-      slices: { 'climate-control': AC },
+      slices: { 'climate-control': AC_STATUS },
       now: 1_700_000_000_000,
       remoteCommands: null,
       access: { canActuate: true },
     })
     expect(m.badges[0]).toMatchObject({ id: 'integration', label: { en: 'Midea', it: 'Midea' } })
-    expect(
-      build(DeviceType.Climate, ['climate-control'], { 'climate-control': AC }).badges,
-    ).toEqual([])
+    expect(build(AC, ['climate-control'], { 'climate-control': AC_STATUS }).badges).toEqual([])
   })
 
   it('off keeps the setpoint and measured value, and offers a way back on', () => {
-    const m = build(DeviceType.Climate, ['climate-control'], {
+    const m = build(AC, ['climate-control'], {
       'climate-control': {
-        ...AC,
+        ...AC_STATUS,
         mode: 'off',
         target: 20,
         currentTemp: 19,
@@ -131,9 +139,9 @@ describe('climate hero', () => {
   })
 
   it('a heat_cool range reads as a range', () => {
-    const m = build(DeviceType.Thermostat, ['climate-control'], {
+    const m = build(DeviceType.Climate, ['climate-control'], {
       'climate-control': {
-        ...AC,
+        ...AC_STATUS,
         mode: 'heat_cool',
         target: null,
         targetLow: 18,
@@ -146,7 +154,7 @@ describe('climate hero', () => {
   })
 
   it('unread is unknown, with no rows and no power', () => {
-    const m = build(DeviceType.Climate, ['climate-control'], {})
+    const m = build(AC, ['climate-control'], {})
     expect(m.state).toBe('unknown')
     expect(m.rows).toEqual([])
     expect(m.ownPower).toBeNull()
@@ -154,9 +162,9 @@ describe('climate hero', () => {
 
   it('swing toggles follow the feature', () => {
     const m = build(
-      DeviceType.Climate,
+      AC,
       ['climate-control'],
-      { 'climate-control': { ...AC, swingVertical: false } },
+      { 'climate-control': { ...AC_STATUS, swingVertical: false } },
       [DeviceFeature.ClimateSwingVertical],
     )
     const fan = m.rows.find((r) => r.id === 'climate-fan')
@@ -164,8 +172,8 @@ describe('climate hero', () => {
   })
 
   it('a heating valve sets the thermostat level', () => {
-    const m = build(DeviceType.Thermostat, ['climate-control', 'heating-valve'], {
-      'climate-control': AC,
+    const m = build(DeviceType.Climate, ['climate-control', 'heating-valve'], {
+      'climate-control': AC_STATUS,
       'heating-valve': { position: 38, lastFetchedAt: 1 },
     })
     expect(m.scene.level).toBe(0.38)
@@ -305,19 +313,19 @@ describe('sensor heroes', () => {
 })
 
 describe('power on restores the last mode', () => {
-  const off = { ...AC, mode: 'off' as const }
+  const off = { ...AC_STATUS, mode: 'off' as const }
   it('heat, then off: on sends heat', () => {
-    const m = build(DeviceType.Climate, ['climate-control'], {
+    const m = build(AC, ['climate-control'], {
       'climate-control': { ...off, lastActiveMode: 'heat' },
     })
     expect(m.ownPower?.turnOn.call.args).toEqual({ mode: 'heat' })
   })
   it('a device that never reported a mode falls back to the fixed order', () => {
-    const m = build(DeviceType.Climate, ['climate-control'], { 'climate-control': off })
+    const m = build(AC, ['climate-control'], { 'climate-control': off })
     expect(m.ownPower?.turnOn.call.args).toEqual({ mode: 'auto' })
   })
   it('a remembered mode the device no longer accepts falls back', () => {
-    const m = build(DeviceType.Climate, ['climate-control'], {
+    const m = build(AC, ['climate-control'], {
       'climate-control': { ...off, availableModes: ['off', 'cool'], lastActiveMode: 'heat' },
     })
     expect(m.ownPower?.turnOn.call.args).toEqual({ mode: 'cool' })
@@ -334,20 +342,18 @@ describe('climate looks by mode', () => {
   ]
   for (const [mode, icon, tone, title] of modes) {
     it(`${mode}: ${icon}, ${tone}, "${title}"`, () => {
-      const m = build(DeviceType.Climate, ['climate-control'], {
-        'climate-control': { ...AC, mode },
+      const m = build(AC, ['climate-control'], {
+        'climate-control': { ...AC_STATUS, mode },
       })
       expect(m.look).toMatchObject({ icon, tone })
       expect(m.title.en).toBe(title)
     })
   }
   it('a thermostat on heat uses the same mode picture', () => {
-    const m = build(DeviceType.Thermostat, ['climate-control'], { 'climate-control': AC })
+    const m = build(DeviceType.Climate, ['climate-control'], { 'climate-control': AC_STATUS })
     expect(m.look.icon).toBe('flame')
   })
   it('unread climate is the unknown look, not a mode', () => {
-    expect(build(DeviceType.Climate, ['climate-control'], {}).look.icon).toBe(
-      'circle-question-mark',
-    )
+    expect(build(AC, ['climate-control'], {}).look.icon).toBe('circle-question-mark')
   })
 })

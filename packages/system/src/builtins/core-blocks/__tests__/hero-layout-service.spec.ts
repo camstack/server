@@ -1,4 +1,4 @@
-import { DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@camstack/types'
 import type { IScopedLogger } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { HeroLayoutService, type HeroLayoutReader } from '../hero-layout-service.js'
@@ -29,8 +29,8 @@ function service(reader: Partial<HeroLayoutReader>, logs: Logged[] = []): HeroLa
     now: () => 1_700_000_000_000,
     reader: {
       device: async () => ({
-        type: DeviceType.Heater,
-        role: null,
+        type: DeviceType.Switch,
+        role: DeviceRole.SwitchHeater,
         name: 'Stove',
         online: true,
         features: [],
@@ -44,9 +44,14 @@ function service(reader: Partial<HeroLayoutReader>, logs: Logged[] = []): HeroLa
 }
 
 describe('hero-layout provider', () => {
-  it('serves the fixed rows of a type', async () => {
-    const { rows } = await service({}).getLayout({ deviceType: DeviceType.Heater })
-    expect(rows).toEqual(['run-for', 'cycle'])
+  it('serves the fixed rows of a type and role (D1033)', async () => {
+    const heater = await service({}).getLayout({
+      deviceType: DeviceType.Switch,
+      role: DeviceRole.SwitchHeater,
+    })
+    expect(heater.rows).toEqual(['run-for', 'cycle'])
+    const plain = await service({}).getLayout({ deviceType: DeviceType.Switch })
+    expect(plain.rows).not.toContain('run-for')
   })
 
   it('an unknown device answers null and says so on the record, tagged', async () => {
@@ -110,8 +115,8 @@ describe('hero-layout getRowModels', () => {
       id === 99
         ? null
         : {
-            type: DeviceType.Heater,
-            role: null,
+            type: DeviceType.Switch,
+            role: DeviceRole.SwitchHeater,
             name: `Dev ${id}`,
             online: true,
             features: [],
@@ -131,8 +136,8 @@ describe('hero-layout getRowModels', () => {
 
   it('keeps the order across chunks of 16 and reads a repeated id once', async () => {
     const device = vi.fn(async (id: number) => ({
-      type: DeviceType.Heater,
-      role: null,
+      type: DeviceType.Switch,
+      role: DeviceRole.SwitchHeater,
       name: `Dev ${id}`,
       online: true,
       features: [],
@@ -147,7 +152,13 @@ describe('hero-layout getRowModels', () => {
     const logs: Logged[] = []
     const device = async (id: number) => {
       if (id === 2) throw new Error('registry down')
-      return { type: DeviceType.Heater, role: null, name: 'D', online: true, features: [] }
+      return {
+        type: DeviceType.Switch,
+        role: DeviceRole.SwitchHeater,
+        name: 'D',
+        online: true,
+        features: [],
+      }
     }
     const rows = await service({ device }, logs).getRowModels({ deviceIds: [1, 2, 3] })
     expect(rows.map((r) => r?.deviceId ?? null)).toEqual([1, null, 3])

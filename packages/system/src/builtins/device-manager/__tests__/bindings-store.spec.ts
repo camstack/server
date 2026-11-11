@@ -10,6 +10,7 @@
 
 import { CapabilityRegistry, DeviceRegistry } from '@camstack/server/system'
 import {
+  DeviceRole,
   type AddonContext,
   DeviceType,
   EventCategory,
@@ -591,6 +592,43 @@ describe('device-manager bindings store', () => {
       const { entries } = await addon.getBindings({ deviceId: EMITTER })
       expect(entries.map((e) => e.capName)).toContain('button')
       expect(entries.map((e) => e.capName)).not.toContain('snapshot')
+    })
+
+    it('D1033: a cap gated by role binds to that role only, and follows a role change', async () => {
+      const registry = makeTypedRegistry()
+      registry.declareCapability({
+        name: 'timed-run',
+        scope: 'device',
+        mode: 'singleton',
+        kind: 'wrapper',
+        defaultActive: true,
+        deviceTypes: [DeviceType.Switch],
+        deviceRoles: { [DeviceType.Switch]: [DeviceRole.SwitchHeater] },
+        methods: {},
+      })
+      registry.registerWrapper('timed-run', 'core-blocks', { defaultActive: true })
+      ctx.kernel.capabilityRegistry = registry
+      await seedDeviceRow(store, { deviceId: 801, type: DeviceType.Switch })
+      await seedDeviceRow(store, {
+        deviceId: 802,
+        type: DeviceType.Switch,
+        role: DeviceRole.SwitchHeater,
+      })
+      const caps = async (deviceId: number) =>
+        (await addon.getBindings({ deviceId })).entries.map((e) => e.capName)
+
+      expect(await caps(801)).not.toContain('timed-run')
+      expect(await caps(802)).toContain('timed-run')
+
+      // No restart: the next read of the row decides.
+      await seedDeviceRow(store, {
+        deviceId: 801,
+        type: DeviceType.Switch,
+        role: DeviceRole.SwitchHeater,
+      })
+      await seedDeviceRow(store, { deviceId: 802, type: DeviceType.Switch, role: null })
+      expect(await caps(801)).toContain('timed-run')
+      expect(await caps(802)).not.toContain('timed-run')
     })
 
     it('an unknown device type never filters — a typeless row keeps every binding', async () => {

@@ -32,7 +32,6 @@ export const groupActiveCapability = {
     DeviceType.Lock,
     DeviceType.MediaPlayer,
     DeviceType.Climate,
-    DeviceType.Thermostat,
   ],
   methods: {},
   status: {

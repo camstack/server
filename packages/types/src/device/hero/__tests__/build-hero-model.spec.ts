@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { MediaPlayerStatus } from '../../../capabilities/media-player.cap.js'
 import { DeviceFeature, DeviceType } from '../../device-type.js'
 import { buildHeroModel, type HeroModelInput } from '../build-hero-model.js'
+import { kindOf, PLUG_HEATER } from './hero-test-kit.js'
 import type { HeroControl, HeroModel } from '../hero-model.js'
 import { ICON_KEYS } from '../../icon-catalog.generated.js'
 
@@ -17,7 +18,12 @@ function build(
   } = {},
 ): HeroModel {
   return buildHeroModel({
-    device: { id: 7, type, role: extra.role ?? null, name: 'Dev', online: extra.online ?? true },
+    device: {
+      id: 7,
+      ...kindOf(type, extra.role ?? null),
+      name: 'Dev',
+      online: extra.online ?? true,
+    },
     caps,
     features: extra.features ?? [],
     slices,
@@ -85,29 +91,29 @@ describe('state: unknown is never off', () => {
   const HEATER = ['switch', 'running-state', 'power-meter', 'timed-run']
 
   it('a heater whose switch has not reported renders unknown, with an unknown power', () => {
-    const model = build(DeviceType.Heater, HEATER)
+    const model = build(PLUG_HEATER, HEATER)
     expect(model.state).toBe('unknown')
     expect(model.ownPower?.on).toBeNull()
     expect(model.look.icon).toBe('circle-question-mark')
   })
 
   it('a slice that does not parse is not an answer', () => {
-    const model = build(DeviceType.Heater, HEATER, { switch: { on: 'yes' } })
+    const model = build(PLUG_HEATER, HEATER, { switch: { on: 'yes' } })
     expect(model.state).toBe('unknown')
     expect(model.ownPower?.on).toBeNull()
   })
 
   it('a switch that reported off is off, and on is on', () => {
-    expect(
-      build(DeviceType.Heater, ['switch'], { switch: { on: false, lastChangedAt: 1 } }).state,
-    ).toBe('off')
-    expect(
-      build(DeviceType.Heater, ['switch'], { switch: { on: true, lastChangedAt: 1 } }).state,
-    ).toBe('on')
+    expect(build(PLUG_HEATER, ['switch'], { switch: { on: false, lastChangedAt: 1 } }).state).toBe(
+      'off',
+    )
+    expect(build(PLUG_HEATER, ['switch'], { switch: { on: true, lastChangedAt: 1 } }).state).toBe(
+      'on',
+    )
   })
 
   it('a heater switched off with a quiet meter is off, not idle', () => {
-    const model = build(DeviceType.Heater, HEATER, {
+    const model = build(PLUG_HEATER, HEATER, {
       switch: { on: false, lastChangedAt: 1 },
       'running-state': {
         running: false,
@@ -121,7 +127,7 @@ describe('state: unknown is never off', () => {
   })
 
   it('a reading from running-state outranks a bare switch', () => {
-    const model = build(DeviceType.Heater, HEATER, {
+    const model = build(PLUG_HEATER, HEATER, {
       switch: { on: true, lastChangedAt: 1 },
       'running-state': { running: true, since: 1, source: 'native', phase: null, lastFetchedAt: 1 },
     })
@@ -131,7 +137,7 @@ describe('state: unknown is never off', () => {
 
   it('a device that cannot be reached is offline whatever its slices say', () => {
     const model = build(
-      DeviceType.Heater,
+      PLUG_HEATER,
       ['switch'],
       { switch: { on: true, lastChangedAt: 1 } },
       { online: false },
@@ -152,7 +158,7 @@ describe('the two power slots are never merged', () => {
   const RUNNING = { running: true, since: 1, source: 'native', phase: null, lastFetchedAt: 1 }
 
   it('a device with a switch and a power-source gets both, as distinct slots', () => {
-    const model = build(DeviceType.Heater, ['switch', 'power-source', 'running-state'], {
+    const model = build(PLUG_HEATER, ['switch', 'power-source', 'running-state'], {
       switch: { on: true, lastChangedAt: 1 },
       'power-source': { switchOn: true, offSeconds: 10, lastFetchedAt: 1 },
       'running-state': RUNNING,
@@ -178,7 +184,7 @@ describe('the two power slots are never merged', () => {
   it('a switch alone has no power supply, and the supply never offers a timer', () => {
     const model = build(DeviceType.Switch, ['switch'], { switch: { on: true, lastChangedAt: 1 } })
     expect(model.powerSupply).toBeNull()
-    const supply = build(DeviceType.Heater, ['power-source', 'timed-run'], {}).powerSupply
+    const supply = build(PLUG_HEATER, ['power-source', 'timed-run'], {}).powerSupply
     expect(Object.keys(supply ?? {})).not.toContain('timedRun')
   })
 
@@ -245,7 +251,7 @@ describe('timed run', () => {
   const HEATER = ['switch', 'timed-run']
 
   it('a heater offers the default run in row one, beside its power', () => {
-    const model = build(DeviceType.Heater, HEATER, { switch: { on: false, lastChangedAt: 1 } })
+    const model = build(PLUG_HEATER, HEATER, { switch: { on: false, lastChangedAt: 1 } })
     expect(model.rows[0]?.id).toBe('run-for')
     expect(actionIds(model, 'run-for')).toEqual(['timed-run.run'])
     expect(model.timedRun?.quickRun).toEqual({ duration: 30, unit: 'min' })
@@ -253,7 +259,7 @@ describe('timed run', () => {
   })
 
   it('once running, row one offers Stop and Restart', () => {
-    const model = build(DeviceType.Heater, HEATER, {
+    const model = build(PLUG_HEATER, HEATER, {
       switch: { on: true, lastChangedAt: 1 },
       'timed-run': {
         activeUntil: NOW + 5 * 60_000,
@@ -267,7 +273,7 @@ describe('timed run', () => {
   })
 
   it('a deadline already past is not a run in progress', () => {
-    const model = build(DeviceType.Heater, HEATER, {
+    const model = build(PLUG_HEATER, HEATER, {
       'timed-run': { activeUntil: NOW - 1, requestedBy: null, quickRun: null, lastFetchedAt: 1 },
     })
     expect(model.timedRun?.activeUntil).toBeNull()
@@ -388,12 +394,7 @@ describe('media player', () => {
 
 describe('corner slots', () => {
   it('the remote button is offered to ANY type that has the remote cap', () => {
-    for (const type of [
-      DeviceType.Washer,
-      DeviceType.Heater,
-      DeviceType.Switch,
-      DeviceType.Generic,
-    ]) {
+    for (const type of [DeviceType.Washer, PLUG_HEATER, DeviceType.Switch, DeviceType.Generic]) {
       expect(build(type, ['remote'], {}, { remoteCommands: 3 }).remote).toMatchObject({
         commands: 3,
         open: { id: 'remote.open' },
@@ -487,12 +488,12 @@ describe('access', () => {
   it('lists every part that acts on the device when the session may not, and none when it may', () => {
     const caps = ['switch', 'timed-run', 'power-source', 'remote']
     const slices = { switch: { on: true, lastChangedAt: 1 } }
-    const denied = build(DeviceType.Heater, caps, slices, {
+    const denied = build(PLUG_HEATER, caps, slices, {
       remoteCommands: 2,
       access: { canActuate: false },
     })
     expect(denied.gated).toEqual(['own-power', 'timed-run', 'power-supply', 'remote', 'run-for'])
-    expect(build(DeviceType.Heater, caps, slices, { remoteCommands: 2 }).gated).toEqual([])
+    expect(build(PLUG_HEATER, caps, slices, { remoteCommands: 2 }).gated).toEqual([])
   })
 
   it('a read-only fact is never gated', () => {

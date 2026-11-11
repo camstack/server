@@ -101,7 +101,7 @@ function numeric(input: {
   }
 }
 
-const CLIMATE_DEVICES: readonly DeviceType[] = [DeviceType.Thermostat, DeviceType.Climate]
+const CLIMATE_DEVICES: readonly DeviceType[] = [DeviceType.Climate]
 
 function binary(input: {
   readonly id: GroupTemplateId
@@ -385,8 +385,8 @@ export const GROUP_TEMPLATES: readonly GroupTemplate[] = [
     id: 'climate',
     summary:
       'Running when at least one thermostat or air conditioner is not off, or only when all of them are. Target temperature and fan are offered only when every device has them. A device that reports nothing is left out, never read as off.',
-    deviceType: DeviceType.Thermostat,
-    memberDeviceTypes: [DeviceType.Thermostat, DeviceType.Climate],
+    deviceType: DeviceType.Climate,
+    memberDeviceTypes: [DeviceType.Climate],
     outputCap: 'group-active',
     outputField: 'active',
     member: { cap: 'climate-control', fieldPath: 'mode' },

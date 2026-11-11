@@ -115,7 +115,7 @@ const BATTERY_DEVICE_TYPES = [
   DeviceType.Switch,
   DeviceType.PetFeeder,
   DeviceType.Container,
-  DeviceType.Thermostat,
+  DeviceType.Climate,
   // A battery remote / wireless button imported as an event emitter.
   DeviceType.EventEmitter,
 ] as const

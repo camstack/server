@@ -53,7 +53,7 @@ describe('power-meter is a feature of any electrical device', () => {
       DeviceType.Light,
       DeviceType.Fan,
       DeviceType.Climate,
-      DeviceType.Thermostat,
+      DeviceType.Climate,
       DeviceType.WaterHeater,
       DeviceType.MediaPlayer,
       DeviceType.Vacuum,

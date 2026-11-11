@@ -148,7 +148,6 @@ export function applyPrimaryChildRule(
 export const CONTAINER_CHILD_PRIORITY: readonly string[] = [
   'media-player',
   'alarm-panel',
-  'thermostat',
   'climate',
   'humidifier',
   'water-heater',

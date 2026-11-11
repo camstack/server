@@ -115,7 +115,7 @@ export const climateControlCapability = {
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
-  deviceTypes: [DeviceType.Thermostat, DeviceType.Climate],
+  deviceTypes: [DeviceType.Climate],
   methods: {
     setMode: method(
       z.object({

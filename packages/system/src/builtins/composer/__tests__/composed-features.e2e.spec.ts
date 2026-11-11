@@ -27,7 +27,7 @@ const BLOCK_ID = 'stove'
 const NOW = { kind: 'expression', expr: 'now', bindings: {} }
 
 const STOVE = CompositionSchema.parse({
-  target: { kind: 'new', type: DeviceType.Heater },
+  target: { kind: 'new', type: DeviceType.Fan },
   features: [
     {
       kind: 'fields',

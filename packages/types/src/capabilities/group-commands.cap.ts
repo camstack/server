@@ -47,7 +47,6 @@ export const groupCommandsCapability = {
     DeviceType.Valve,
     DeviceType.Lock,
     DeviceType.MediaPlayer,
-    DeviceType.Thermostat,
     DeviceType.Climate,
   ],
   methods: {},

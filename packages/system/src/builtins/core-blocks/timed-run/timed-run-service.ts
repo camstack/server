@@ -18,7 +18,6 @@
  * An explicit `cancel` (Stop) is the opposite: it switches the device off too.
  */
 import {
-  DeviceType,
   type IScopedLogger,
   type ITimedRunProvider,
   type TimedRunActuator,
@@ -52,9 +51,16 @@ export interface TimedRunQuickRuns {
   readonly write: (deviceId: number, duration: number | null) => Promise<void>
 }
 
+/** Which thing a device is: its controls (type) and, among same-control devices, its role. */
+export interface DeviceKind {
+  readonly type: string
+  readonly role: string | null
+}
+
 export interface TimedRunServiceDeps {
   readonly rows: TimedRunRows
-  readonly deviceTypeOf: (deviceId: number) => Promise<DeviceType | null>
+  /** The device's type and role, or null when it is gone: together they decide the limit (D1033). */
+  readonly deviceKindOf: (deviceId: number) => Promise<DeviceKind | null>
   /** Every device whose type offers a timed run: boot publishes each one's status. */
   readonly timedRunDeviceIds: () => Promise<readonly number[]>
   readonly actuation: TimedRunActuation
@@ -125,14 +131,13 @@ export class TimedRunService implements ITimedRunProvider {
   }
 
   private async limitOf(deviceId: number): Promise<ReturnType<typeof timedRunLimitOf>> {
-    const type = await this.deps.deviceTypeOf(deviceId)
-    return type === null ? null : timedRunLimitOf(type)
+    const kind = await this.deps.deviceKindOf(deviceId)
+    return kind === null ? null : timedRunLimitOf(kind.type, kind.role)
   }
 
   runFor: ITimedRunProvider['runFor'] = async (input) => {
     const { deviceId } = input
-    const type = await this.deps.deviceTypeOf(deviceId)
-    const limit = type === null ? null : timedRunLimitOf(type)
+    const limit = await this.limitOf(deviceId)
     if (limit === null) {
       this.deps.logger.warn('timed-run refused: device type has no timed run', {
         tags: { deviceId },

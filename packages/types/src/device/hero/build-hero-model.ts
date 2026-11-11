@@ -213,6 +213,7 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
   const ctx: HeroContext = {
     deviceId: device.id,
     type: device.type,
+    role: device.role,
     features: input.features,
     now: input.now,
     running: runningOf(input),
@@ -241,7 +242,7 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
         }
 
   const allRows = fragments.flatMap((f) => f.rows ?? [])
-  const rows: HeroRow[] = resolveHeroLayout(device.type).rows.flatMap((id) => {
+  const rows: HeroRow[] = resolveHeroLayout(device.type, device.role).rows.flatMap((id) => {
     // A kind may repeat (one row per circuit of a heat pump), in the order the cap listed them.
     return allRows
       .filter((r) => r.id === id)

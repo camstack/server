@@ -8,7 +8,7 @@
  * can hide one (Addendum 6): they appear whenever the device has the cap.
  * A row whose caps the device is not bound to is simply absent.
  */
-import { DeviceType } from '../device-type.js'
+import { DeviceRole, DeviceType } from '../device-type.js'
 import type { HeroRowId } from './hero-model.js'
 
 export interface HeroLayout {
@@ -59,7 +59,6 @@ export const HERO_LAYOUT_BY_TYPE = {
   [DeviceType.Siren]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Switch]: SWITCH_LAYOUT,
   [DeviceType.Sensor]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Thermostat]: CLIMATE_LAYOUT,
   [DeviceType.Climate]: CLIMATE_LAYOUT,
   [DeviceType.Button]: BUTTON_LAYOUT,
   [DeviceType.EventEmitter]: HERO_LAYOUT_DEFAULT,
@@ -88,7 +87,6 @@ export const HERO_LAYOUT_BY_TYPE = {
   [DeviceType.PetFountain]: FOUNTAIN_LAYOUT,
   [DeviceType.Dishwasher]: DISHWASHER_LAYOUT,
   [DeviceType.Washer]: APPLIANCE_LAYOUT,
-  [DeviceType.Heater]: HEATER_LAYOUT,
   [DeviceType.Dryer]: APPLIANCE_LAYOUT,
   [DeviceType.Gateway]: HERO_LAYOUT_DEFAULT,
 } as const satisfies Record<DeviceType, HeroLayout>
@@ -98,6 +96,8 @@ function isDeviceType(type: string): type is DeviceType {
 }
 
 /** The layout of a type; a type this build does not know gets the default. */
-export function resolveHeroLayout(type: string): HeroLayout {
+export function resolveHeroLayout(type: string, role: string | null = null): HeroLayout {
+  // D1033 — a plug-in heater is a switch by its controls and a heater by its role.
+  if (type === DeviceType.Switch && role === DeviceRole.SwitchHeater) return HEATER_LAYOUT
   return isDeviceType(type) ? HERO_LAYOUT_BY_TYPE[type] : HERO_LAYOUT_DEFAULT
 }

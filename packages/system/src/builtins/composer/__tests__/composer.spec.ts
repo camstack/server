@@ -187,7 +187,7 @@ describe('apply', () => {
   })
 
   it('a naked composition (no feature) declares its device and reports running (D1004)', async () => {
-    const naked: Composition = { target: { kind: 'new', type: DeviceType.Heater }, features: [] }
+    const naked: Composition = { target: { kind: 'new', type: DeviceType.Fan }, features: [] }
     const result = await composer.apply(
       input({
         blocks: [{ id: 'b1', name: 'Stove', enabled: true, updatedAt: 1, composition: naked }],

@@ -200,6 +200,9 @@ export interface DeviceMeta {
    *  → canonical unit. Applied at RENDER time only — storage stays in source
    *  units. */
   readonly display?: DeviceDisplayOverride
+  /** Semantic role string (`DeviceRole`): with the type, which thing the device
+   *  is (D1033). Absent / null ⇒ no role. */
+  readonly role?: string | null
 }
 
 /**

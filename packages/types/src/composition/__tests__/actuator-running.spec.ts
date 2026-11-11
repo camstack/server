@@ -67,9 +67,7 @@ function composition(type: DeviceType, features: readonly CompositionFieldsFeatu
 
 describe('actuatorSwitchDrivesRunning', () => {
   it('is true for a heater with a switch and no supply relation', () => {
-    expect(actuatorSwitchDrivesRunning(composition(DeviceType.Heater, [switchFeature()]))).toBe(
-      true,
-    )
+    expect(actuatorSwitchDrivesRunning(composition(DeviceType.Fan, [switchFeature()]))).toBe(true)
   })
 
   it('is false for an appliance whose switch only feeds power', () => {
@@ -78,10 +76,10 @@ describe('actuatorSwitchDrivesRunning', () => {
   })
 
   it('is false without an actuator switch, with a disabled one, or on an ineligible type', () => {
-    expect(actuatorSwitchDrivesRunning(composition(DeviceType.Heater, []))).toBe(false)
+    expect(actuatorSwitchDrivesRunning(composition(DeviceType.Fan, []))).toBe(false)
     expect(
       actuatorSwitchDrivesRunning(
-        composition(DeviceType.Heater, [{ ...switchFeature(), enabled: false }]),
+        composition(DeviceType.Fan, [{ ...switchFeature(), enabled: false }]),
       ),
     ).toBe(false)
     expect(actuatorSwitchDrivesRunning(composition(DeviceType.Switch, [switchFeature()]))).toBe(
@@ -92,7 +90,7 @@ describe('actuatorSwitchDrivesRunning', () => {
 
 describe('withDefaultRunning', () => {
   it('adds a running-state feature that reads the actuator switch, without touching the input', () => {
-    const stored = composition(DeviceType.Heater, [switchFeature()])
+    const stored = composition(DeviceType.Fan, [switchFeature()])
     const effective = withDefaultRunning(stored, BLOCK)
     expect(stored.features).toHaveLength(1)
     const running = effective.features.find((f) => f.cap === 'running-state')
@@ -113,7 +111,7 @@ describe('withDefaultRunning', () => {
   })
 
   it('keeps an AUTHORED running field untouched (the operator chose it)', () => {
-    const stored = composition(DeviceType.Heater, [switchFeature(), authoredDwell()])
+    const stored = composition(DeviceType.Fan, [switchFeature(), authoredDwell()])
     expect(withDefaultRunning(stored, BLOCK)).toBe(stored)
   })
 
@@ -125,17 +123,17 @@ describe('withDefaultRunning', () => {
 
 describe('runningFollowsSwitch', () => {
   it('reads true from the derived default, and false once a dwell is authored', () => {
-    expect(runningFollowsSwitch(composition(DeviceType.Heater, [switchFeature()]))).toBe(true)
+    expect(runningFollowsSwitch(composition(DeviceType.Fan, [switchFeature()]))).toBe(true)
     expect(
-      runningFollowsSwitch(composition(DeviceType.Heater, [switchFeature(), authoredDwell()])),
+      runningFollowsSwitch(composition(DeviceType.Fan, [switchFeature(), authoredDwell()])),
     ).toBe(false)
   })
 
   it('reads true for a stored follow link', () => {
-    const stored = composition(DeviceType.Heater, [switchFeature()])
+    const stored = composition(DeviceType.Fan, [switchFeature()])
     const follow = followSwitchRunningFeature(stored, composedDeviceRef(BLOCK))
     if (follow === null) throw new Error('no follow feature')
-    const withLink = composition(DeviceType.Heater, [switchFeature(), follow])
+    const withLink = composition(DeviceType.Fan, [switchFeature(), follow])
     expect(runningFollowsSwitch(withLink)).toBe(true)
   })
 
@@ -155,14 +153,14 @@ describe('runningFollowsSwitch', () => {
       sourceUnit: null,
     })
     if (!compiled.ok) throw new Error(compiled.reason)
-    const stored = composition(DeviceType.Heater, [switchFeature()])
+    const stored = composition(DeviceType.Fan, [switchFeature()])
     expect(followSwitchRunningFeature(stored, composedDeviceRef(BLOCK))).toEqual(compiled.value)
   })
 })
 
 describe('the opt-out', () => {
   it('a stored opt-out keeps the default out and reads as not following', () => {
-    const stored = composition(DeviceType.Heater, [switchFeature(), runningOptOutFeature()])
+    const stored = composition(DeviceType.Fan, [switchFeature(), runningOptOutFeature()])
     expect(withDefaultRunning(stored, BLOCK)).toBe(stored)
     expect(runningFollowsSwitch(stored)).toBe(false)
     expect(isRunningOptOut(runningOptOutFeature())).toBe(true)
@@ -170,7 +168,7 @@ describe('the opt-out', () => {
   })
 
   it('plans without a problem and plans no running field', () => {
-    const stored = composition(DeviceType.Heater, [switchFeature(), runningOptOutFeature()])
+    const stored = composition(DeviceType.Fan, [switchFeature(), runningOptOutFeature()])
     const plan = planComposition(stored, buildCapabilityLookup(ALL_CAPABILITY_DEFINITIONS))
     expect(plan.problems).toEqual([])
     expect(plan.fields.some((f) => f.cap === 'running-state')).toBe(false)

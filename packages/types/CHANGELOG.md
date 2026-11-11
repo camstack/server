@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - One catalogue of automation row kinds (category, event or state, where it may be used, texts, blank row); a new kind without an entry does not compile.
+- Devices are typed by their controls and told apart by role: a plug-in heater is a switch with role switch-heater (timed run included), a plug-powered fan a switch with role switch-fan, and the thermostat type is folded into climate with climate-* roles (AC, thermostat, radiator, floor, heater, heat-pump circuit).
 
 ## [1.2.545] - 2026-11-11
 

@@ -17,7 +17,12 @@ import type {
   DeviceBindingEntry,
   ICapabilityRegistry,
 } from '@camstack/types'
-import { COMPOSER_ADDON_ID, EventCategory, implementedMethodsOf } from '@camstack/types'
+import {
+  COMPOSER_ADDON_ID,
+  EventCategory,
+  capAppliesToDeviceKind,
+  implementedMethodsOf,
+} from '@camstack/types'
 import type { DeviceBindingsStore } from './device-meta-types.js'
 import type { DeviceRow, DeviceRowStore } from './device-row-store.js'
 import type { StaleWrapperActivations } from './stale-wrapper-activations.js'
@@ -344,11 +349,14 @@ function onceLedgerNonEmpty(deps: BindingsDeps): LedgerNonEmpty {
 }
 
 /**
- * Does a capability apply to a device of type `deviceType`?
+ * Does a capability apply to a device of type `deviceType` and role `role`?
  *
- * The cap's `deviceTypes` is the ONLY declaration consulted (D4: behavioural
- * cap metadata lives in the `*.cap.ts`, never in a manifest). Two deliberate
- * fail-open cases:
+ * The cap's `deviceTypes` and `deviceRoles` are the ONLY declarations
+ * consulted (D4: behavioural cap metadata lives in the `*.cap.ts`, never in a
+ * manifest). A type the cap's `deviceRoles` names binds only for those roles
+ * (D1033: a heater is a switch with role `switch-heater`); the role is read
+ * from the row on every pass, so a role change applies with no restart. Two
+ * deliberate fail-open cases:
  *
  *   - a cap that declares no `deviceTypes` (or an empty list) applies to every
  *     device — the pre-existing, back-compatible semantics;
@@ -358,11 +366,9 @@ function onceLedgerNonEmpty(deps: BindingsDeps): LedgerNonEmpty {
 export function capAppliesToDeviceType(
   def: CapabilityDefinition | undefined,
   deviceType: string | undefined,
+  role: string | null | undefined,
 ): boolean {
-  if (deviceType === undefined) return true
-  const declared = def?.deviceTypes
-  if (!declared || declared.length === 0) return true
-  return declared.some((t) => t === deviceType)
+  return capAppliesToDeviceKind(def, deviceType, role)
 }
 
 /**
@@ -392,6 +398,7 @@ function collectionBindings(
   deps: BindingsDeps,
   deviceId: number,
   deviceType: string | undefined,
+  role: string | null | undefined,
 ): readonly DeviceBindingEntry[] {
   const registry = deps.capabilityRegistry
   if (!registry) return []
@@ -399,7 +406,7 @@ function collectionBindings(
   for (const declared of registry.listCapabilities()) {
     if (declared.mode !== 'collection') continue
     const definition = registry.getDefinition(declared.name)
-    if (!capAppliesToDeviceType(definition, deviceType)) continue
+    if (!capAppliesToDeviceType(definition, deviceType, role)) continue
     const nativeAddonId = registry.getNativeAddonId(declared.name, deviceId)
     const seen = new Set<string>()
     for (const addonId of [...declared.providers, ...(nativeAddonId ? [nativeAddonId] : [])]) {
@@ -477,6 +484,7 @@ async function resolveBindingsForDevice(
   const storeKey = String(deviceId)
   const perDevice = pass.store.deviceBindings[storeKey] ?? {}
   const deviceType = resolveDeviceType(deps, row, deviceId)
+  const deviceRole = row?.meta.role ?? null
   // "Type unresolved" and "device gone" are different questions and step 2
   // must answer them differently. An unresolved TYPE keeps the fail-open
   // above (it protects a provider restart); an ABSENT device gets no
@@ -505,7 +513,7 @@ async function resolveBindingsForDevice(
   // What a provider does with a device it does not serve is the PROVIDER's
   // answer, not this one's: `addon-provider-reolink` lists no sources for a
   // Hikvision camera. The binding says who may be asked.
-  const collectionEntries = collectionBindings(deps, deviceId, deviceType)
+  const collectionEntries = collectionBindings(deps, deviceId, deviceType, deviceRole)
   for (const entry of collectionEntries) {
     entries.push(entry)
     seenCaps.add(entry.capName)
@@ -605,7 +613,13 @@ async function resolveBindingsForDevice(
     const skippedForType: string[] = []
     for (const capName of deps.capabilityRegistry.getCapsWithDefaultWrapper()) {
       if (seenCaps.has(capName)) continue
-      if (!capAppliesToDeviceType(deps.capabilityRegistry.getDefinition(capName), deviceType)) {
+      if (
+        !capAppliesToDeviceType(
+          deps.capabilityRegistry.getDefinition(capName),
+          deviceType,
+          deviceRole,
+        )
+      ) {
         skippedForType.push(capName)
         continue
       }

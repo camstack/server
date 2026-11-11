@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DeviceType } from '../../device-type.js'
-import { build, NOW } from './hero-test-kit.js'
+import { build, NOW, PLUG_HEATER } from './hero-test-kit.js'
 
 const FETCHED = { lastFetchedAt: NOW }
 
@@ -45,7 +45,7 @@ describe('the tiles that match the appliance mockups', () => {
   })
 
   it('a heater on a timer shows the run length beside its power', () => {
-    const m = build(DeviceType.Heater, ['timed-run', 'power-meter'], {
+    const m = build(PLUG_HEATER, ['timed-run', 'power-meter'], {
       'timed-run': {
         activeUntil: NOW + 25 * 60_000,
         requestedBy: null,
@@ -61,14 +61,14 @@ describe('the tiles that match the appliance mockups', () => {
   })
 
   it('a heater with nothing armed shows no timer tile', () => {
-    const m = build(DeviceType.Heater, ['timed-run'], {
+    const m = build(PLUG_HEATER, ['timed-run'], {
       'timed-run': { activeUntil: null, requestedBy: null, quickRun: null, ...FETCHED },
     })
     expect(m.sideTiles.right).toEqual([])
   })
 
   it('a thermostat keeps room and humidity in the tiles; the battery stays a chip', () => {
-    const m = build(DeviceType.Thermostat, ['climate-control', 'battery'], {
+    const m = build(DeviceType.Climate, ['climate-control', 'battery'], {
       'climate-control': {
         mode: 'heat',
         availableModes: ['auto', 'heat', 'off'],
@@ -95,12 +95,12 @@ describe('the tiles that match the appliance mockups', () => {
   })
 
   it('a heating valve captions the scene with its opening, and a shut one says nothing', () => {
-    const open = build(DeviceType.Thermostat, ['heating-valve'], {
+    const open = build(DeviceType.Climate, ['heating-valve'], {
       'heating-valve': { position: 38, ...FETCHED },
     })
     expect(open.caption?.en).toBe('Heating · valve 38%')
     expect(open.caption?.it).toBe('Riscalda · valvola 38%')
-    const shut = build(DeviceType.Thermostat, ['heating-valve'], {
+    const shut = build(DeviceType.Climate, ['heating-valve'], {
       'heating-valve': { position: 0, ...FETCHED },
     })
     expect(shut.caption).toBeUndefined()

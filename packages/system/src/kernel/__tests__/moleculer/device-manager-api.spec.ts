@@ -1057,6 +1057,9 @@ describe('createBrokerDeviceManagerApi (worker-side)', () => {
       type: 'sensor' as import('@camstack/types').DeviceType,
       name: 'My Custom Sensor', // operator renamed — different from childStableId
       location: 'Kitchen', // operator edited
+      // Operator-set role. D1033: a row with NO role gets the provider's on
+      // restore; one that has a role keeps it — that is what this proves.
+      role: 'binary-sensor',
       disabled: false,
       parentDeviceId: null,
       metadata: null,

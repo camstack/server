@@ -65,7 +65,6 @@ const GROUP_COMMAND_TYPES: ReadonlySet<DeviceType> = new Set([
   DeviceType.Valve,
   DeviceType.Lock,
   DeviceType.MediaPlayer,
-  DeviceType.Thermostat,
   DeviceType.Climate,
 ])
 

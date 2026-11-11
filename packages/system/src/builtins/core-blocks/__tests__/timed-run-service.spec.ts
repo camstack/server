@@ -1,15 +1,18 @@
-import { DeviceType, type TimedRunStatus } from '@camstack/types'
+import { DeviceRole, DeviceType, type TimedRunStatus } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import type { TimedRunRowBody } from '../record-kinds.js'
 import {
   TimedRunService,
   type TimedRunActuation,
   type TimedRunRows,
+  type DeviceKind,
 } from '../timed-run/timed-run-service.js'
 import { recordingLogger } from './fixtures.js'
 
 const HEATER = 5
 const FOUNTAIN = 6
+/** A plain switch: same controls as the heater, no heater role (D1033). */
+const PLAIN_SWITCH = 7
 const T0 = 1_000_000
 
 function fakeRows(seed: Record<number, TimedRunRowBody> = {}) {
@@ -38,10 +41,11 @@ function harness(
   const timers: { delayMs: number; fire: () => void; cancelled: boolean }[] = []
   const published: { deviceId: number; status: TimedRunStatus }[] = []
   const { logger, lines } = recordingLogger()
-  const types = new Map<number, DeviceType>([
-    [HEATER, DeviceType.Heater],
-    [FOUNTAIN, DeviceType.PetFountain],
-    [9, DeviceType.Camera],
+  const kinds = new Map<number, DeviceKind>([
+    [HEATER, { type: DeviceType.Switch, role: DeviceRole.SwitchHeater }],
+    [FOUNTAIN, { type: DeviceType.PetFountain, role: null }],
+    [PLAIN_SWITCH, { type: DeviceType.Switch, role: null }],
+    [9, { type: DeviceType.Camera, role: null }],
   ])
   const quickRuns = new Map<number, number>()
   const actuation: TimedRunActuation = {
@@ -52,7 +56,7 @@ function harness(
   }
   const service = new TimedRunService({
     rows: store.api,
-    deviceTypeOf: async (deviceId) => types.get(deviceId) ?? null,
+    deviceKindOf: async (deviceId) => kinds.get(deviceId) ?? null,
     timedRunDeviceIds: async () => [HEATER, FOUNTAIN],
     actuation,
     quickRuns: {
@@ -128,6 +132,17 @@ describe('TimedRunService', () => {
       maxSeconds: null,
     })
     expect(h.commands).toEqual([])
+  })
+
+  it('D1033: a switch without the heater role has no timed run, the heater-role switch does', async () => {
+    const h = harness()
+    expect(await h.service.runFor({ deviceId: PLAIN_SWITCH, duration: 1, unit: 'min' })).toEqual({
+      ok: false,
+      reason: 'unsupported-device',
+      maxSeconds: null,
+    })
+    expect(h.commands).toEqual([])
+    expect((await h.service.runFor({ deviceId: HEATER, duration: 1, unit: 'min' })).ok).toBe(true)
   })
 
   it('a failed on command leaves no row and no timer', async () => {

@@ -16,7 +16,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
       {
         id: 'level',
         cardinality: 'scalar',
-        deviceTypes: [DeviceType.Camera, DeviceType.Sensor, DeviceType.Button, DeviceType.Switch, DeviceType.PetFeeder, DeviceType.Container, DeviceType.Thermostat, DeviceType.EventEmitter],
+        deviceTypes: [DeviceType.Camera, DeviceType.Sensor, DeviceType.Button, DeviceType.Switch, DeviceType.PetFeeder, DeviceType.Container, DeviceType.Climate, DeviceType.EventEmitter],
         apply: 'add',
         vocabularyCap: 'battery',
         vocabularyStateField: 'level',
@@ -80,7 +80,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
       {
         id: 'items',
         cardinality: 'keyedArray',
-        deviceTypes: [DeviceType.Camera, DeviceType.Hub, DeviceType.Light, DeviceType.Siren, DeviceType.Switch, DeviceType.Sensor, DeviceType.Thermostat, DeviceType.Climate, DeviceType.Button, DeviceType.EventEmitter, DeviceType.Update, DeviceType.Generic, DeviceType.Notifier, DeviceType.Script, DeviceType.Automation, DeviceType.Lock, DeviceType.Cover, DeviceType.Valve, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.Fan, DeviceType.MediaPlayer, DeviceType.AlarmPanel, DeviceType.Control, DeviceType.Presence, DeviceType.Weather, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.Container, DeviceType.Image, DeviceType.PetFeeder, DeviceType.PetFountain, DeviceType.Dishwasher, DeviceType.Washer, DeviceType.Heater, DeviceType.Dryer, DeviceType.Gateway, DeviceType.HeatPump],
+        deviceTypes: [DeviceType.Camera, DeviceType.Hub, DeviceType.Light, DeviceType.Siren, DeviceType.Switch, DeviceType.Sensor, DeviceType.Climate, DeviceType.Button, DeviceType.EventEmitter, DeviceType.Update, DeviceType.Generic, DeviceType.Notifier, DeviceType.Script, DeviceType.Automation, DeviceType.Lock, DeviceType.Cover, DeviceType.Valve, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.Fan, DeviceType.MediaPlayer, DeviceType.AlarmPanel, DeviceType.Control, DeviceType.Presence, DeviceType.Weather, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.Container, DeviceType.Image, DeviceType.PetFeeder, DeviceType.PetFountain, DeviceType.Dishwasher, DeviceType.Washer, DeviceType.Dryer, DeviceType.Gateway, DeviceType.HeatPump],
         apply: 'add',
         vocabularyCap: 'consumables',
         sources: [],
@@ -381,7 +381,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
       {
         id: 'power',
         cardinality: 'scalar',
-        deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder, DeviceType.Heater],
+        deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder],
         apply: 'add',
         vocabularyCap: 'power-meter',
         vocabularyStateField: 'power',
@@ -417,7 +417,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
       {
         id: 'energy',
         cardinality: 'scalar',
-        deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder, DeviceType.Heater],
+        deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder],
         apply: 'add',
         vocabularyCap: 'power-meter',
         vocabularyStateField: 'energy',
@@ -453,7 +453,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
       {
         id: 'voltage',
         cardinality: 'scalar',
-        deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder, DeviceType.Heater],
+        deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder],
         apply: 'add',
         vocabularyCap: 'power-meter',
         vocabularyStateField: 'voltage',
@@ -489,7 +489,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
       {
         id: 'current',
         cardinality: 'scalar',
-        deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder, DeviceType.Heater],
+        deviceTypes: [DeviceType.Switch, DeviceType.Light, DeviceType.Fan, DeviceType.Climate, DeviceType.Humidifier, DeviceType.WaterHeater, DeviceType.MediaPlayer, DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.PetFeeder],
         apply: 'add',
         vocabularyCap: 'power-meter',
         vocabularyStateField: 'current',
@@ -598,7 +598,7 @@ export const CAP_CUSTOMIZE_CATALOG = {
       {
         id: 'running',
         cardinality: 'scalar',
-        deviceTypes: [DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.MediaPlayer, DeviceType.WaterHeater, DeviceType.Humidifier, DeviceType.Fan, DeviceType.Climate, DeviceType.Thermostat, DeviceType.PetFeeder, DeviceType.Heater],
+        deviceTypes: [DeviceType.Washer, DeviceType.Dryer, DeviceType.Dishwasher, DeviceType.Vacuum, DeviceType.LawnMower, DeviceType.MediaPlayer, DeviceType.WaterHeater, DeviceType.Humidifier, DeviceType.Fan, DeviceType.Climate, DeviceType.PetFeeder],
         apply: 'add',
         vocabularyCap: 'running-state',
         vocabularyStateField: 'running',

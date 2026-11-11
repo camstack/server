@@ -3,6 +3,7 @@ import type { MediaPlayerStatus } from '../../../capabilities/media-player.cap.j
 import { DeviceFeature, DeviceRole, DeviceType } from '../../device-type.js'
 import { HERO_ROW_MODELS_MAX, heroLayoutCapability } from '../../../capabilities/hero-layout.cap.js'
 import { buildHeroModel, type HeroModelInput } from '../build-hero-model.js'
+import { kindOf, PLUG_HEATER } from './hero-test-kit.js'
 import type { HeroModel } from '../hero-model.js'
 import { HeroRowModelSchema, projectDeviceRow, ROW_STATUS_FACTS_MAX } from '../hero-row.js'
 import {
@@ -20,7 +21,7 @@ function build(
   extra: { features?: readonly string[]; canActuate?: boolean; role?: string | null } = {},
 ): HeroModel {
   const input: HeroModelInput = {
-    device: { id: 7, type, role: extra.role ?? null, name: 'Dev', online: true },
+    device: { id: 7, ...kindOf(type, extra.role ?? null), name: 'Dev', online: true },
     caps,
     features: extra.features ?? [],
     slices,
@@ -103,7 +104,7 @@ describe('the hero model names its scene, facts and tiles', () => {
 
 describe('projectDeviceRow', () => {
   it('climate: the scene is the airflow, no control without a bound cap', () => {
-    const row = projectDeviceRow(build(DeviceType.Climate, []))
+    const row = projectDeviceRow(build(DeviceType.Climate, [], {}, { role: DeviceRole.ClimateAc }))
     expect(row.scene.id).toBe('ac')
     expect(row.primary).toBeNull()
     expect(row.trailing).toBeNull()
@@ -112,7 +113,7 @@ describe('projectDeviceRow', () => {
 
   it('heater: the switch is the inline control, the watts trail', () => {
     const row = projectDeviceRow(
-      build(DeviceType.Heater, ['switch', 'power-meter'], {
+      build(PLUG_HEATER, ['switch', 'power-meter'], {
         switch: SWITCH_ON,
         'power-meter': METER,
       }),
@@ -206,13 +207,13 @@ describe('projectDeviceRow', () => {
 
   it('a caller that may not act gets no inline control', () => {
     const row = projectDeviceRow(
-      build(DeviceType.Heater, ['switch'], { switch: SWITCH_ON }, { canActuate: false }),
+      build(PLUG_HEATER, ['switch'], { switch: SWITCH_ON }, { canActuate: false }),
     )
     expect(row.primary).toBeNull()
   })
 
   it('the row is a pure selection: it parses and carries only what the model holds', () => {
-    const model = build(DeviceType.Heater, ['switch', 'power-meter'], {
+    const model = build(PLUG_HEATER, ['switch', 'power-meter'], {
       switch: SWITCH_ON,
       'power-meter': METER,
     })
@@ -238,7 +239,7 @@ const FOUNTAIN_SLICE = {
 describe('timed run on the row', () => {
   it('an armed heater keeps the power toggle and adds Stop plus the minutes left', () => {
     const row = projectDeviceRow(
-      build(DeviceType.Heater, ['switch', 'timed-run'], {
+      build(PLUG_HEATER, ['switch', 'timed-run'], {
         switch: SWITCH_ON,
         'timed-run': {
           activeUntil: NOW + 23 * 60_000,
@@ -255,7 +256,7 @@ describe('timed run on the row', () => {
 
   it('an idle heater offers Run and does not invent a remaining time', () => {
     const row = projectDeviceRow(
-      build(DeviceType.Heater, ['switch', 'timed-run'], {
+      build(PLUG_HEATER, ['switch', 'timed-run'], {
         switch: SWITCH_ON,
         'timed-run': {
           activeUntil: null,
@@ -306,7 +307,7 @@ describe('getRowModels input', () => {
 
 describe('row selection rules', () => {
   it('the status line is bounded and keeps the head first', () => {
-    const model = build(DeviceType.Heater, ['switch'], { switch: SWITCH_ON })
+    const model = build(PLUG_HEATER, ['switch'], { switch: SWITCH_ON })
     const fact = model.facts[0] ?? {
       id: 'phase' as const,
       icon: null,
@@ -330,7 +331,6 @@ describe('row selection rules', () => {
   it('distinct pictures for the look-alike types', () => {
     const ids = [
       DeviceType.Climate,
-      DeviceType.Thermostat,
       DeviceType.Fan,
       DeviceType.Washer,
       DeviceType.Dryer,
@@ -339,6 +339,9 @@ describe('row selection rules', () => {
       DeviceType.MediaPlayer,
     ].map((t) => resolveHeroSceneId(null, t))
     expect(new Set(ids).size).toBe(ids.length)
+    // D1033 — an air conditioner is a climate device told apart by its role.
+    expect(resolveHeroSceneId(DeviceRole.ClimateAc, DeviceType.Climate)).toBe('ac')
+    expect(resolveHeroSceneId(null, DeviceType.Climate)).toBe('thermostat')
     expect(resolveHeroSceneId(DeviceRole.Chime, DeviceType.MediaPlayer)).toBe('speaker')
   })
 })
