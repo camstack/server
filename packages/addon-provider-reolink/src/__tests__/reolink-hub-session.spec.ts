@@ -10,6 +10,7 @@ import type { ReolinkHubConnection } from '../hub-connection.js'
 import {
   HUB_CHILD_SLEEP_RECONCILE_MS,
   HUB_MISSING_OFFLINE_MS,
+  SLEEPING_MISSING_OFFLINE_MS,
   HUB_RECONNECT_BASE_MS,
   HUB_RECONNECT_MAX_MS,
   type HubApiPort,
@@ -375,24 +376,46 @@ describe('ReolinkHubSession reconcile', () => {
     expect(a.onlineValue).toBe(false)
   })
 
-  it('a sleeping child missing from the list is never marked offline, and a wrongly offline one is restored', async () => {
+  it('a sleeping child missing from a non-empty list goes offline only after the long grace', async () => {
     let t = 5_000_000
-    const fake = fakeApi([{ channel: 7, uid: 'OTHER', online: true }])
+    const fake = fakeApi([{ channel: 0, uid: 'UID1', online: true }])
     const a = fakeChild(1, 0)
-    a.sleepingValue = true
-    const b = fakeChild(2, 1)
-    b.sleepingValue = true
-    b.onlineValue = false
-    const { session } = makeSession(
-      fake.api,
-      () => [a, b],
-      () => t,
-    )
+    const { session } = makeSession(fake.api, () => [a], () => t)
     await session.refresh()
+    a.sleepingValue = true
+    fake.api.getNvrChannelsSummary.mockResolvedValue({
+      devices: [{ channel: 7, uid: 'OTHER', online: true }],
+      channels: [],
+    })
     t += HUB_MISSING_OFFLINE_MS * 3
     await session.refresh()
     expect(a.onlineValue).toBe(true)
-    expect(b.onlineValue).toBe(true)
+    t += SLEEPING_MISSING_OFFLINE_MS
+    await session.refresh()
+    expect(a.onlineValue).toBe(false)
+  })
+
+  it('restores a sleeping child this session flagged offline, but not a firmware offline verdict', async () => {
+    let t = 5_000_000
+    const fake = fakeApi([{ channel: 0, uid: 'UID1', online: true }])
+    const a = fakeChild(1, 0)
+    const b = fakeChild(2, 1)
+    b.onlineValue = false
+    b.sleepingValue = true
+    const { session } = makeSession(fake.api, () => [a, b], () => t)
+    await session.refresh()
+    fake.api.getNvrChannelsSummary.mockResolvedValue({
+      devices: [{ channel: 7, uid: 'OTHER', online: true }],
+      channels: [],
+    })
+    t += HUB_MISSING_OFFLINE_MS
+    await session.refresh()
+    expect(a.onlineValue).toBe(false)
+    a.sleepingValue = true
+    t += 1000
+    await session.refresh()
+    expect(a.onlineValue).toBe(true)
+    expect(b.onlineValue).toBe(false)
   })
 
   it('repairs a child whose channel vanished, by its camera identity', async () => {

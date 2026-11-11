@@ -37,6 +37,14 @@ export const HUB_RECONNECT_MAX_MS = 30_000
  * false-flagging battery cams that take a few cycles to wake into the list.
  */
 export const HUB_MISSING_OFFLINE_MS = 10 * 60_000
+
+/**
+ * Longer grace for a child flagged asleep that drops off a non-empty hub list. A sleeping battery
+ * camera may vanish from the summary for hours, but `battery.sleeping` is a persisted slice: a
+ * camera that died or was unplugged while flagged asleep must still go offline eventually.
+ * Measured from the last time the hub actually LISTED the child.
+ */
+export const SLEEPING_MISSING_OFFLINE_MS = 6 * 60 * 60_000
 const UNROUTED_LOG_THROTTLE_MS = 60_000
 
 /** The slice of the Baichuan client a session subscribes to. */
@@ -183,6 +191,8 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
   readonly #childLastSeenAt = new Map<number, number>()
   /** The empty-list warning fired and the list has not been non-empty since. */
   #emptyListWarned = false
+  /** Children THIS session marked offline for being missing from the list (the only ones it may restore). */
+  readonly #offlineByMissing = new Set<number>()
   /** Channels the last good refresh listed but nobody adopted: their pushes are expected drops. */
   readonly #knownUnadoptedChannels = new Set<number>()
   readonly #unroutedLoggedAt = new Map<number, number>()
@@ -539,6 +549,7 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
       .filter((c) => c.channel !== undefined && c.type === DeviceType.Camera)
     // An EMPTY list from a hub that has adopted children is UNKNOWN, not "all gone": the summary
     // answered without error but listed nothing. Judging presence from it would flag every child.
+    // It stays unknown indefinitely: no timer turns a persistent empty list into offline verdicts.
     if (channels.length === 0 && cameras.length > 0) {
       if (!this.#emptyListWarned) {
         this.#emptyListWarned = true
@@ -559,22 +570,10 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
       if (ch === undefined) continue
       if (listed.has(ch)) {
         this.#childLastSeenAt.set(child.id, now)
+        this.#offlineByMissing.delete(child.id)
         if (!child.online) {
           child.markOnline(true)
           this.#logger.info('Reolink hub: adopted child back online', {
-            tags: { deviceId: child.id, deviceName: child.name },
-            meta: { channel: ch },
-          })
-        }
-        continue
-      }
-      // Sleeping is a battery state, not unreachability: never offline, and restore a child
-      // that was wrongly flagged.
-      if (child.sleeping) {
-        this.#childLastSeenAt.set(child.id, now)
-        if (!child.online) {
-          child.markOnline(true)
-          this.#logger.info('Reolink hub: sleeping child restored to online', {
             tags: { deviceId: child.id, deviceName: child.name },
             meta: { channel: ch },
           })
@@ -587,9 +586,29 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
         lastSeen = now
         this.#childLastSeenAt.set(child.id, now)
       }
+      // Sleeping is a battery state, not unreachability: a missing sleeping child gets the long
+      // grace, measured from its last real listing (lastSeen is NOT refreshed here). Restore it
+      // only if THIS session flagged it offline for being missing — never overturn a firmware
+      // offline verdict.
+      if (
+        child.sleeping &&
+        !child.online &&
+        this.#offlineByMissing.has(child.id) &&
+        now - lastSeen < SLEEPING_MISSING_OFFLINE_MS
+      ) {
+        this.#offlineByMissing.delete(child.id)
+        child.markOnline(true)
+        this.#logger.info('Reolink hub: sleeping child restored to online', {
+          tags: { deviceId: child.id, deviceName: child.name },
+          meta: { channel: ch },
+        })
+        continue
+      }
+      const graceMs = child.sleeping ? SLEEPING_MISSING_OFFLINE_MS : HUB_MISSING_OFFLINE_MS
       const missingMs = now - lastSeen
-      if (missingMs >= HUB_MISSING_OFFLINE_MS && child.online) {
+      if (missingMs >= graceMs && child.online) {
         child.markOnline(false)
+        this.#offlineByMissing.add(child.id)
         this.#logger.warn('Reolink hub: adopted child marked offline (missing from the hub list)', {
           tags: { deviceId: child.id, deviceName: child.name },
           meta: { channel: ch, missingMs },
