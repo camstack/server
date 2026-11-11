@@ -6,77 +6,24 @@ import type {
   HeatPumpStatus,
   HeatPumpSystem,
 } from '@camstack/types'
-import {
-  readEnvelope,
-  type PointtEnvelope,
-  type PointtWrite,
-  type ResourceGet,
-} from './homecom-pointt.js'
+import type {
+  HomeComBridgeDhwCircuit,
+  HomeComBridgeHeatingCircuit,
+  HomeComBridgeReading,
+  HomeComBridgeSetting,
+  HomeComBridgeWrite,
+  HomeComSystemOp,
+} from './homecom-bridge.js'
 
 /**
- * Heat-pump resources of a hydronic gateway (D1026).
+ * Heat-pump view of a hydronic gateway (D1026), read through the `homecom_alt` bridge.
  *
- * UNVERIFIED: the paths below come from the layout of the public HomeCom Easy
- * tree as the MIT `homecom_alt` library lists it, and were not checked against a
- * live heat pump. They live in this one table so a wrong path is a one-line
- * fix, and a resource the gateway does not answer reads as `null` (never 0),
- * which the hero then simply does not draw.
+ * The resources and their payload shapes are the library's (`HomeComK40.async_update`), read
+ * by the library's own device class. A resource the gateway did not answer, or
+ * refused, is `null` (never 0), and the hero simply does not draw it.
  */
-export const HEAT_PUMP_PATHS = {
-  system: {
-    silent: '/heatSources/hs1/silentMode',
-    away: '/system/awayMode',
-    additionalHeater: '/heatSources/hs1/additionalHeaterMode',
-    holiday: '/system/holidayMode',
-  },
-  readings: {
-    thermalW: '/heatSources/hs1/heatPumpPower',
-    electricalW: '/heatSources/hs1/electricalPower',
-    compressorPct: '/heatSources/hs1/compressorModulation',
-    supply: '/heatSources/hs1/supplyTemperature',
-    return: '/heatSources/hs1/returnTemperature',
-    outdoor: '/system/sensors/temperatures/outdoor_t1',
-    thermalKwh: '/recordings/heatSources/total/thermalEnergy',
-    electricalKwh: '/recordings/heatSources/total/electricalEnergy',
-    pressureBar: '/heatSources/hs1/waterPressure',
-    starts: '/heatSources/hs1/numberOfStarts',
-  },
-  /**
-   * Resources only a heat pump's heat source has. A gateway that answers one of them with
-   * anything but 404 (a 403 or a 500 included) has a heat pump it will not let us read.
-   */
-  identity: {
-    heatPumpType: '/heatSources/hs1/heatPumpType',
-    heatPumpPower: '/heatSources/hs1/heatPumpPower',
-  },
-  circuit: {
-    operationMode: 'operationMode',
-    heatCoolMode: 'heatCoolMode',
-    summerWinter: 'suWiSwitchMode',
-    comfort: 'temperatureLevels/comfort2',
-    eco: 'temperatureLevels/eco',
-    maxFlow: 'maxSupplyTemperature',
-    current: 'roomtemperature',
-    target: 'currentRoomSetpoint',
-  },
-  dhw: {
-    operationMode: 'operationMode',
-    level: 'currentTemperatureLevel',
-    chargeDuration: 'charge/duration',
-    charge: 'charge',
-    current: 'actualTemp',
-    target: 'currentSetpoint',
-  },
-} as const
 
-/** One setting as the gateway answered it, with the path a write goes to. */
-export interface HomeComHeatPumpSetting {
-  readonly path: string
-  readonly value: string | number | boolean | null
-  readonly min: number | null
-  readonly max: number | null
-  readonly allowed: readonly string[]
-}
+export type HomeComHeatPumpSetting = HomeComBridgeSetting
 
 export interface HomeComHeatPumpCircuitReading {
   readonly id: string
@@ -96,14 +43,12 @@ export interface HomeComHeatPumpCircuitReading {
 
 export interface HomeComHeatPumpReading {
   readonly circuits: readonly HomeComHeatPumpCircuitReading[]
-  /** The heat source answered a heat-pump-only resource with anything but 404, readable or not. */
-  readonly heatSourceAnswered: boolean
+  /** `hs1/heatPumpType` (k40) or the heat source `type` (icom); null when not answered. */
+  readonly heatPumpType: string | null
   readonly silent: HomeComHeatPumpSetting | null
   readonly away: HomeComHeatPumpSetting | null
   readonly additionalHeater: HomeComHeatPumpSetting | null
   readonly holiday: HomeComHeatPumpSetting | null
-  readonly thermalW: number | null
-  readonly electricalW: number | null
   readonly compressorPct: number | null
   readonly supply: number | null
   readonly return: number | null
@@ -122,298 +67,110 @@ export class HomeComHeatPumpRefusalError extends Error {
   readonly name = 'HomeComHeatPumpRefusalError'
 }
 
-export interface HeatPumpReadInput {
-  readonly get: ResourceGet
-  /** Told once per failed read; the read itself carries on with `null` (never throws). */
-  readonly onFailure?: (path: string, error: unknown) => void
-  /** True when the path answered with any HTTP status but 404. Absent: no gateway evidence. */
-  readonly answers?: (path: string) => Promise<boolean>
-  readonly circuitIds: { readonly hc: readonly string[]; readonly dhw: readonly string[] }
-}
+const COOLING_VALUES: readonly string[] = ['cool', 'cooling']
 
-export async function readHeatPump(input: HeatPumpReadInput): Promise<HomeComHeatPumpReading> {
-  const get = safeGet(input.get, input.onFailure)
-  const circuits = await Promise.all([
-    ...input.circuitIds.hc.map((id) => readHc(get, id)),
-    ...input.circuitIds.dhw.map((id) => readDhwCircuit(get, id)),
-  ])
-  const r = HEAT_PUMP_PATHS.readings
-  const s = HEAT_PUMP_PATHS.system
-  const heatSourceAnswered = await anyAnswers(input.answers, input.onFailure, [
-    HEAT_PUMP_PATHS.identity.heatPumpType,
-    HEAT_PUMP_PATHS.identity.heatPumpPower,
-  ])
-  const [silent, away, additionalHeater, holiday] = await Promise.all([
-    setting(get, s.silent),
-    setting(get, s.away),
-    setting(get, s.additionalHeater),
-    setting(get, s.holiday),
-  ])
-  const [thermalW, electricalW, compressorPct, supply, ret, outdoor] = await Promise.all([
-    num(get, r.thermalW),
-    num(get, r.electricalW),
-    num(get, r.compressorPct),
-    num(get, r.supply),
-    num(get, r.return),
-    num(get, r.outdoor),
-  ])
-  const [thermalKwh, electricalKwh, pressureBar, starts] = await Promise.all([
-    num(get, r.thermalKwh),
-    num(get, r.electricalKwh),
-    num(get, r.pressureBar),
-    num(get, r.starts),
-  ])
-  return {
-    circuits,
-    heatSourceAnswered,
-    silent,
-    away,
-    additionalHeater,
-    holiday,
-    thermalW,
-    electricalW,
-    compressorPct,
-    supply,
-    return: ret,
-    outdoor,
-    thermalKwh,
-    electricalKwh,
-    pressureBar,
-    starts,
+/** The current level's own temperature, or the gateway's current setpoint (icom). */
+export function dhwTargetSetting(dhw: HomeComBridgeDhwCircuit): HomeComHeatPumpSetting | null {
+  const level = dhw.currentTemperatureLevel?.value
+  if (typeof level === 'string' && level !== 'off') {
+    const own = dhw.temperatureLevels[level]
+    if (own !== undefined) return own
   }
+  return dhw.currentSetpoint
 }
 
-async function anyAnswers(
-  answers: HeatPumpReadInput['answers'],
-  onFailure: HeatPumpReadInput['onFailure'],
-  paths: readonly string[],
-): Promise<boolean> {
-  if (answers === undefined) return false
-  const found = await Promise.all(
-    paths.map(async (path) => {
-      try {
-        return await answers(path)
-      } catch (error) {
-        onFailure?.(path, error)
-        return false
-      }
-    }),
+/** True when the circuit is cooling now: heat/cool mode or the season says so. */
+export function circuitIsCooling(hc: HomeComBridgeHeatingCircuit): boolean {
+  const mode = hc.heatCoolMode?.value
+  const season = hc.currentSuWiMode?.value
+  return (
+    (typeof mode === 'string' && COOLING_VALUES.includes(mode)) ||
+    (typeof season === 'string' && COOLING_VALUES.includes(season))
   )
-  return found.some(Boolean)
 }
 
-/** Any failure of a heat-pump read (HTTP 4xx/5xx, a throw) is "not answered", never an error. */
-function safeGet(get: ResourceGet, onFailure: HeatPumpReadInput['onFailure']): ResourceGet {
-  return async (path) => {
-    try {
-      return await get(path)
-    } catch (error) {
-      onFailure?.(path, error)
-      return null
-    }
-  }
+function numberValue(s: HomeComHeatPumpSetting | null): number | null {
+  return s !== null && typeof s.value === 'number' ? s.value : null
 }
 
-const SYSTEM_MODE_KEYS = ['silent', 'away', 'additionalHeater', 'holiday'] as const
-const HEAT_PUMP_ONLY_READINGS = ['thermalW', 'electricalW', 'compressorPct'] as const
-
-/**
- * True when the gateway should be offered as a system device (`hp:0`).
- *
- * A system mode counts when the gateway answered it: silent, away, the
- * additional heater, or holiday. An empty string is an answer (holiday often
- * comes back empty); a path that did not answer is not. A heat-pump-only
- * reading counts too (thermal power, electrical power, compressor modulation).
- * So does a circuit whose `heatCoolMode` can be cooling, and a heat source that
- * answers a heat-pump-only resource with any status but 404: some gateways
- * refuse (403) or fail (500) the whole system tree and still serve the
- * circuits. Supply, return, outdoor, pressure, starts and the energy meters do
- * not count: a gas boiler's heat source answers flow, pressure and starts, and
- * that is not a heat pump.
- */
-export function hasSystemDevice(reading: HomeComHeatPumpReading): boolean {
-  if (SYSTEM_MODE_KEYS.some((key) => reading[key] !== null)) return true
-  if (HEAT_PUMP_ONLY_READINGS.some((key) => reading[key] !== null)) return true
-  if (reading.heatSourceAnswered) return true
-  return reading.circuits.some((c) => c.kind === 'hc' && offersCooling(c.heatCoolMode))
-}
-
-/**
- * A boiler circuit can carry a `heatCoolMode` that only ever says heating, so the mode alone
- * is no proof. A circuit that can switch to (or already is in) cooling is a heat pump's.
- */
-function offersCooling(setting: HomeComHeatPumpSetting | null): boolean {
-  if (setting === null) return false
-  return setting.value === 'cooling' || setting.allowed.includes('cooling')
-}
-
-interface PathPresence {
-  readonly path: string
-  readonly present: boolean
-}
-
-export interface HeatPumpPathCensus {
-  readonly answered: readonly string[]
-  readonly unanswered: readonly string[]
-}
-
-/** Which heat-pump paths this gateway answered. One log per gateway corrects the path table. */
-export function heatPumpPathCensus(reading: HomeComHeatPumpReading): HeatPumpPathCensus {
-  const rows = [
-    ...systemPathRows(reading),
-    ...readingPathRows(reading),
-    ...reading.circuits.flatMap(circuitPathRows),
-  ]
-  const answered: string[] = []
-  const unanswered: string[] = []
-  for (const row of rows) {
-    if (row.present) answered.push(row.path)
-    else unanswered.push(row.path)
-  }
-  return { answered, unanswered }
-}
-
-function systemPathRows(reading: HomeComHeatPumpReading): readonly PathPresence[] {
-  const s = HEAT_PUMP_PATHS.system
-  return [
-    { path: s.silent, present: reading.silent !== null },
-    { path: s.away, present: reading.away !== null },
-    { path: s.additionalHeater, present: reading.additionalHeater !== null },
-    { path: s.holiday, present: reading.holiday !== null },
-  ]
-}
-
-function readingPathRows(reading: HomeComHeatPumpReading): readonly PathPresence[] {
-  const r = HEAT_PUMP_PATHS.readings
-  return [
-    { path: r.thermalW, present: reading.thermalW !== null },
-    { path: r.electricalW, present: reading.electricalW !== null },
-    { path: r.compressorPct, present: reading.compressorPct !== null },
-    { path: r.supply, present: reading.supply !== null },
-    { path: r.return, present: reading.return !== null },
-    { path: r.outdoor, present: reading.outdoor !== null },
-    { path: r.thermalKwh, present: reading.thermalKwh !== null },
-    { path: r.electricalKwh, present: reading.electricalKwh !== null },
-    { path: r.pressureBar, present: reading.pressureBar !== null },
-    { path: r.starts, present: reading.starts !== null },
-  ]
-}
-
-function circuitPathRows(circuit: HomeComHeatPumpCircuitReading): readonly PathPresence[] {
-  if (circuit.kind === 'dhw') return dhwPathRows(circuit)
-  return hcPathRows(circuit)
-}
-
-function hcPathRows(circuit: HomeComHeatPumpCircuitReading): readonly PathPresence[] {
-  const base = `/heatingCircuits/${circuit.id}`
-  const p = HEAT_PUMP_PATHS.circuit
-  return [
-    { path: `${base}/${p.operationMode}`, present: circuit.operationMode !== null },
-    { path: `${base}/${p.heatCoolMode}`, present: circuit.heatCoolMode !== null },
-    { path: `${base}/${p.summerWinter}`, present: circuit.summerWinter !== null },
-    { path: `${base}/${p.comfort}`, present: circuit.comfort !== null },
-    { path: `${base}/${p.eco}`, present: circuit.eco !== null },
-    { path: `${base}/${p.maxFlow}`, present: circuit.maxFlow !== null },
-    { path: `${base}/${p.current}`, present: circuit.currentTemp !== null },
-    { path: `${base}/${p.target}`, present: circuit.targetTemp !== null },
-  ]
-}
-
-function dhwPathRows(circuit: HomeComHeatPumpCircuitReading): readonly PathPresence[] {
-  const base = `/dhwCircuits/${circuit.id}`
-  const p = HEAT_PUMP_PATHS.dhw
-  return [
-    { path: `${base}/${p.operationMode}`, present: circuit.operationMode !== null },
-    { path: `${base}/${p.level}`, present: circuit.level !== null },
-    { path: `${base}/${p.chargeDuration}`, present: circuit.chargeDuration !== null },
-    { path: `${base}/${p.charge}`, present: circuit.charge !== null },
-    { path: `${base}/${p.current}`, present: circuit.currentTemp !== null },
-    { path: `${base}/${p.target}`, present: circuit.targetTemp !== null },
-  ]
-}
-
-async function readHc(get: ResourceGet, id: string): Promise<HomeComHeatPumpCircuitReading> {
-  const base = `/heatingCircuits/${id}`
-  const p = HEAT_PUMP_PATHS.circuit
-  const [operationMode, heatCoolMode, summerWinter, comfort, eco, maxFlow, current, target] =
-    await Promise.all([
-      setting(get, `${base}/${p.operationMode}`),
-      setting(get, `${base}/${p.heatCoolMode}`),
-      setting(get, `${base}/${p.summerWinter}`),
-      setting(get, `${base}/${p.comfort}`),
-      setting(get, `${base}/${p.eco}`),
-      setting(get, `${base}/${p.maxFlow}`),
-      num(get, `${base}/${p.current}`),
-      num(get, `${base}/${p.target}`),
-    ])
+function hcReading(hc: HomeComBridgeHeatingCircuit): HomeComHeatPumpCircuitReading {
+  const target = circuitIsCooling(hc)
+    ? (numberValue(hc.coolingRoomSetpoint) ?? numberValue(hc.currentRoomSetpoint))
+    : (numberValue(hc.currentRoomSetpoint) ?? numberValue(hc.manualRoomSetpoint))
   return {
-    id,
+    id: hc.id,
     kind: 'hc',
-    currentTemp: current,
+    currentTemp: hc.roomTemp,
     targetTemp: target,
-    operationMode,
-    heatCoolMode,
-    summerWinter,
-    comfort,
-    eco,
-    maxFlow,
+    operationMode: hc.operationMode,
+    heatCoolMode: hc.heatCoolMode,
+    summerWinter: hc.suWiSwitchMode,
+    comfort: hc.comfortSetpoint,
+    eco: hc.ecoSetpoint,
+    maxFlow: hc.maxFlowTemp,
     level: null,
     chargeDuration: null,
     charge: null,
   }
 }
 
-async function readDhwCircuit(
-  get: ResourceGet,
-  id: string,
-): Promise<HomeComHeatPumpCircuitReading> {
-  const base = `/dhwCircuits/${id}`
-  const p = HEAT_PUMP_PATHS.dhw
-  const [operationMode, level, chargeDuration, charge, current, target] = await Promise.all([
-    setting(get, `${base}/${p.operationMode}`),
-    setting(get, `${base}/${p.level}`),
-    setting(get, `${base}/${p.chargeDuration}`),
-    setting(get, `${base}/${p.charge}`),
-    num(get, `${base}/${p.current}`),
-    num(get, `${base}/${p.target}`),
-  ])
+function dhwReading(dhw: HomeComBridgeDhwCircuit): HomeComHeatPumpCircuitReading {
   return {
-    id,
+    id: dhw.id,
     kind: 'dhw',
-    currentTemp: current,
-    targetTemp: target,
-    operationMode,
+    currentTemp: dhw.actualTemp,
+    targetTemp: numberValue(dhwTargetSetting(dhw)),
+    operationMode: dhw.operationMode,
     heatCoolMode: null,
     summerWinter: null,
     comfort: null,
     eco: null,
     maxFlow: null,
-    level,
-    chargeDuration,
-    charge,
+    level: dhw.currentTemperatureLevel,
+    chargeDuration: dhw.chargeDuration,
+    charge: dhw.charge,
   }
 }
 
-async function setting(get: ResourceGet, path: string): Promise<HomeComHeatPumpSetting | null> {
-  const envelope = readEnvelope(await get(path))
-  return envelope === null ? null : settingOf(path, envelope)
-}
-
-async function num(get: ResourceGet, path: string): Promise<number | null> {
-  const envelope = readEnvelope(await get(path))
-  return envelope !== null && typeof envelope.value === 'number' && Number.isFinite(envelope.value)
-    ? envelope.value
-    : null
-}
-
-function settingOf(path: string, envelope: PointtEnvelope): HomeComHeatPumpSetting {
+export function heatPumpReadingFrom(bridge: HomeComBridgeReading): HomeComHeatPumpReading {
+  const hs = bridge.heatSource
   return {
-    path,
-    value: envelope.value,
-    min: envelope.min,
-    max: envelope.max,
-    allowed: envelope.allowed,
+    circuits: [...bridge.heatingCircuits.map(hcReading), ...bridge.dhwCircuits.map(dhwReading)],
+    heatPumpType: hs.heatPumpType,
+    silent: bridge.system.silent,
+    away: bridge.system.away,
+    additionalHeater: bridge.system.additionalHeater,
+    holiday: bridge.system.holiday,
+    compressorPct: hs.modulationPct,
+    supply: hs.supplyTemp,
+    return: hs.returnTemp,
+    outdoor: hs.outdoorTemp,
+    thermalKwh: hs.thermalKwh,
+    electricalKwh: hs.electricalKwh,
+    pressureBar: hs.pressureBar,
+    starts: hs.starts,
   }
+}
+
+/**
+ * True when the gateway should be offered as a system device (`hp:0`).
+ *
+ * Only evidence a gas boiler on the same controller family cannot give counts: a heat-pump
+ * type on the heat source, the silent mode or the additional heater (heat-pump-only
+ * resources), or a heating circuit that can cool. Away, holiday, flow, return, modulation,
+ * pressure and starts are answered by a boiler too.
+ */
+export function hasSystemDevice(reading: HomeComHeatPumpReading): boolean {
+  if (reading.heatPumpType !== null) return true
+  if (reading.silent !== null || reading.additionalHeater !== null) return true
+  return reading.circuits.some((c) => c.kind === 'hc' && offersCooling(c.heatCoolMode))
+}
+
+function offersCooling(setting: HomeComHeatPumpSetting | null): boolean {
+  if (setting === null) return false
+  const value = setting.value
+  if (typeof value === 'string' && COOLING_VALUES.includes(value)) return true
+  return setting.allowed.some((allowed) => COOLING_VALUES.includes(allowed))
 }
 
 // ── mapping to the cap slice ────────────────────────────────────────────
@@ -427,13 +184,22 @@ export function heatPumpStatusFrom(reading: HomeComHeatPumpReading, now: number)
       additionalHeater: optionOf(reading.additionalHeater),
       holiday: optionOf(reading.holiday),
     },
+    // The HomeCom cloud publishes no instantaneous thermal or electrical power, so the
+    // instant COP stays unknown rather than being derived from energy totals.
     power: {
-      thermalW: reading.thermalW,
-      electricalW: reading.electricalW,
+      thermalW: null,
+      electricalW: null,
       compressorPct: reading.compressorPct,
     },
-    temperatures: { supply: reading.supply, return: reading.return, outdoor: reading.outdoor },
-    energy: { thermalKwh: reading.thermalKwh, electricalKwh: reading.electricalKwh },
+    temperatures: {
+      supply: reading.supply,
+      return: reading.return,
+      outdoor: reading.outdoor,
+    },
+    energy: {
+      thermalKwh: reading.thermalKwh,
+      electricalKwh: reading.electricalKwh,
+    },
     waterPressureBar: reading.pressureBar,
     starts: reading.starts,
     lastFetchedAt: now,
@@ -465,7 +231,8 @@ function circuitOf(c: HomeComHeatPumpCircuitReading): HeatPumpCircuit {
 
 function kindOf(c: HomeComHeatPumpCircuitReading): HeatPumpCircuitKind {
   if (c.kind === 'dhw') return 'dhw'
-  return textOf(c.heatCoolMode) === 'cooling' ? 'cooling' : 'heating'
+  const mode = textOf(c.heatCoolMode)
+  return mode !== null && COOLING_VALUES.includes(mode) ? 'cooling' : 'heating'
 }
 
 function labelOf(c: HomeComHeatPumpCircuitReading): string {
@@ -495,12 +262,7 @@ function optionOf(s: HomeComHeatPumpSetting | null): HeatPumpOptionSetting | nul
 
 function rangeOf(s: HomeComHeatPumpSetting | null): HeatPumpRangeSetting | null {
   if (s === null) return null
-  return {
-    value: typeof s.value === 'number' && Number.isFinite(s.value) ? s.value : null,
-    min: s.min,
-    max: s.max,
-    step: null,
-  }
+  return { value: numberValue(s), min: s.min, max: s.max, step: null }
 }
 
 // ── writes ──────────────────────────────────────────────────────────────
@@ -513,10 +275,16 @@ function requireCircuit(reading: HomeComHeatPumpReading, circuitId: string, want
   return found
 }
 
-function optionWrite(s: HomeComHeatPumpSetting | null, what: string, mode: string): PointtWrite {
-  if (s === null)
+/** The accepted value of an option setting, or a refusal naming why the gateway would refuse. */
+export function acceptedOption(
+  s: HomeComHeatPumpSetting | null,
+  what: string,
+  mode: string,
+): string {
+  if (s === null) {
     throw new HomeComHeatPumpRefusalError(`HomeCom heat pump: ${what} is not available`)
-  if (s.allowed.length === 0) {
+  }
+  if (s.writeable === false || s.allowed.length === 0) {
     throw new HomeComHeatPumpRefusalError(`HomeCom heat pump: ${what} is read-only on this gateway`)
   }
   if (!s.allowed.includes(mode)) {
@@ -524,12 +292,21 @@ function optionWrite(s: HomeComHeatPumpSetting | null, what: string, mode: strin
       `HomeCom heat pump: "${mode}" is not an accepted value of ${what} (${s.allowed.join(', ')})`,
     )
   }
-  return { path: s.path, value: mode }
+  return mode
 }
 
-function rangeWrite(s: HomeComHeatPumpSetting | null, what: string, value: number): PointtWrite {
-  if (s === null)
+/** The value of a range write, within the limits the gateway gave, or a refusal. */
+export function acceptedRange(
+  s: HomeComHeatPumpSetting | null,
+  what: string,
+  value: number,
+): number {
+  if (s === null) {
     throw new HomeComHeatPumpRefusalError(`HomeCom heat pump: ${what} is not available`)
+  }
+  if (s.writeable === false) {
+    throw new HomeComHeatPumpRefusalError(`HomeCom heat pump: ${what} is read-only on this gateway`)
+  }
   if (!Number.isFinite(value)) {
     throw new HomeComHeatPumpRefusalError(`HomeCom heat pump: ${what} needs a finite number`)
   }
@@ -543,62 +320,107 @@ function rangeWrite(s: HomeComHeatPumpSetting | null, what: string, value: numbe
       `HomeCom heat pump: ${value} is outside ${what} limits ${s.min}..${s.max}`,
     )
   }
-  return { path: s.path, value }
+  return value
+}
+
+const SYSTEM_OPS: Readonly<Record<HeatPumpSystemMode, HomeComSystemOp>> = {
+  silent: 'silentMode',
+  away: 'awayMode',
+  additionalHeater: 'additionalHeaterMode',
+  holiday: 'holidayMode',
 }
 
 export function systemModeWrite(
   reading: HomeComHeatPumpReading,
   which: HeatPumpSystemMode,
   mode: string,
-): PointtWrite {
-  return optionWrite(reading[which], `${which} mode`, mode)
+): HomeComBridgeWrite {
+  return {
+    op: SYSTEM_OPS[which],
+    value: acceptedOption(reading[which], `${which} mode`, mode),
+  }
 }
+
+const CIRCUIT_OPTION_OPS = {
+  operationMode: 'hcOperationMode',
+  heatCoolMode: 'hcHeatCoolMode',
+  summerWinter: 'hcSuWiSwitchMode',
+} as const
 
 export function circuitOptionWrite(
   reading: HomeComHeatPumpReading,
   circuitId: string,
   which: HeatPumpCircuitOption,
   mode: string,
-): PointtWrite {
+): HomeComBridgeWrite {
   const circuit = requireCircuit(reading, circuitId, 'hc')
-  return optionWrite(circuit[which], `${circuitId} ${which}`, mode)
+  return {
+    op: CIRCUIT_OPTION_OPS[which],
+    circuitId,
+    value: acceptedOption(circuit[which], `${circuitId} ${which}`, mode),
+  }
 }
+
+const DHW_OPTION_OPS = {
+  operationMode: 'dhwOperationMode',
+  level: 'dhwTemperatureLevel',
+} as const
 
 export function dhwOptionWrite(
   reading: HomeComHeatPumpReading,
   circuitId: string,
   which: 'operationMode' | 'level',
   mode: string,
-): PointtWrite {
+): HomeComBridgeWrite {
   const circuit = requireCircuit(reading, circuitId, 'dhw')
-  return optionWrite(circuit[which], `${circuitId} ${which}`, mode)
+  return {
+    op: DHW_OPTION_OPS[which],
+    circuitId,
+    value: acceptedOption(circuit[which], `${circuitId} ${which}`, mode),
+  }
 }
+
+const CIRCUIT_RANGE_OPS = {
+  comfort: 'hcComfortSetpoint',
+  eco: 'hcEcoSetpoint',
+  maxFlow: 'hcMaxFlowTemp',
+} as const
 
 export function circuitRangeWrite(
   reading: HomeComHeatPumpReading,
   circuitId: string,
   which: 'comfort' | 'eco' | 'maxFlow',
   value: number,
-): PointtWrite {
-  return rangeWrite(requireCircuit(reading, circuitId, 'hc')[which], `${circuitId} ${which}`, value)
+): HomeComBridgeWrite {
+  const circuit = requireCircuit(reading, circuitId, 'hc')
+  return {
+    op: CIRCUIT_RANGE_OPS[which],
+    circuitId,
+    value: acceptedRange(circuit[which], `${circuitId} ${which}`, value),
+  }
 }
 
 export function dhwChargeDurationWrite(
   reading: HomeComHeatPumpReading,
   circuitId: string,
   minutes: number,
-): PointtWrite {
-  return rangeWrite(
-    requireCircuit(reading, circuitId, 'dhw').chargeDuration,
-    `${circuitId} charge duration`,
-    minutes,
-  )
+): HomeComBridgeWrite {
+  const circuit = requireCircuit(reading, circuitId, 'dhw')
+  return {
+    op: 'dhwChargeDuration',
+    circuitId,
+    value: acceptedRange(circuit.chargeDuration, `${circuitId} charge duration`, minutes),
+  }
 }
 
 export function extraHotWaterWrite(
   reading: HomeComHeatPumpReading,
   circuitId: string,
-): PointtWrite {
+): HomeComBridgeWrite {
   const charge = requireCircuit(reading, circuitId, 'dhw').charge
-  return optionWrite(charge, `${circuitId} extra hot water`, 'start')
+  return {
+    op: 'dhwCharge',
+    circuitId,
+    value: acceptedOption(charge, `${circuitId} extra hot water`, 'start'),
+  }
 }

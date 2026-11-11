@@ -30,6 +30,8 @@ import {
 } from './homecom-token-persist.js'
 import { buildHomeComAdoptionProvider } from './homecom-adoption-provider.js'
 import { HomeComClientRegistry } from './homecom-client-registry.js'
+import { createHomeComBridge, type HomeComBridge } from './homecom-bridge.js'
+import { resolveHomeComWorker } from './homecom-python-paths.js'
 import { buildHomeComConnectionTestProvider } from './homecom-connection-test.js'
 import {
   buildHomeComInstances,
@@ -90,7 +92,9 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
     }
     const persistTokens = buildHomeComTokenPersister(persistDeps)
     const persistGateway = buildHomeComGatewayPersister(persistDeps)
+    const bridge = await this.createBridge()
     this.clients = new HomeComClientRegistry(this.ctx.logger, {
+      ...(bridge !== null ? { bridge } : {}),
       onTokensRotated: (integrationId, tokens) => persistTokens(integrationId, tokens),
       onGatewayChosen: (integrationId, gatewayId) => void persistGateway(integrationId, gatewayId),
     })
@@ -156,6 +160,26 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
     this.clients = null
     this.instances = null
     await super.onShutdown()
+  }
+
+  /** The `homecom_alt` bridge on the embedded Python; null leaves k40/k30/icom on plain reads. */
+  private async createBridge(): Promise<HomeComBridge | null> {
+    try {
+      const pythonPath = await this.ctx.deps.ensurePython()
+      if (pythonPath === null) {
+        this.ctx.logger.warn('HomeCom: embedded Python is unavailable, the heat pump is not read')
+        return null
+      }
+      return createHomeComBridge({
+        pythonPath,
+        scriptPath: resolveHomeComWorker(),
+      })
+    } catch (err) {
+      this.ctx.logger.warn('HomeCom: the Python bridge could not be prepared', {
+        meta: { error: errMsg(err) },
+      })
+      return null
+    }
   }
 
   private requireClients(): HomeComClientRegistry {

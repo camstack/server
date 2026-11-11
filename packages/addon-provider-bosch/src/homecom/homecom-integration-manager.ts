@@ -10,6 +10,7 @@ import {
 } from './homecom-api-client.js'
 import { buildDiscoverables, type HomeComConnectionSurface } from './homecom-gateway.js'
 import type { HomeComConnectionResolver } from './homecom-gateway.js'
+import type { HomeComBridge } from './homecom-bridge.js'
 
 export type HomeComBrokerStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
 
@@ -32,6 +33,8 @@ export interface HomeComIntegrationManagerOptions {
   readonly onDisconnected: (integrationId: string) => void
   readonly surfaceSink: Pick<HomeComConnectionResolver, 'set' | 'updateSnapshot'>
   readonly fetchFn?: FetchFn
+  /** The `homecom_alt` bridge for k40, k30 and icom gateways; absent when Python is not. */
+  readonly bridge?: HomeComBridge
   readonly makeClient?: (config: HomeComConfig, gatewayId: string) => HomeComApiClient
   /** Called with every rotated token pair so it can be stored; must not log values. */
   readonly onTokensRotated?: (tokens: HomeComTokens) => Promise<void>
@@ -69,6 +72,7 @@ export class HomeComIntegrationManager {
     this.#onDisconnected = options.onDisconnected
     this.#surfaceSink = options.surfaceSink
     const fetchFn = options.fetchFn
+    const bridge = options.bridge
     this.#onGatewayChosen = options.onGatewayChosen ?? (() => undefined)
     const onTokensRotated = async (tokens: HomeComTokens): Promise<void> => {
       // The live connection follows the rotation, so a later client never presents a spent token.
@@ -93,6 +97,7 @@ export class HomeComIntegrationManager {
           fetchFn,
           onTokensRotated,
           logger: this.#logger,
+          ...(bridge !== undefined ? { bridge } : {}),
           deviceType: this.#gateways.find((gateway) => gateway.gatewayId === gatewayId)?.deviceType,
         }))
     this.#pollIntervalMs = options.pollIntervalMs ?? 60_000

@@ -20,7 +20,12 @@ type Provider = Record<string, (input: Record<string, unknown>) => Promise<unkno
 function rig() {
   const providers: Record<string, Provider> = {}
   let runtime: IDeviceRuntimeState | null = null
-  const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+  const logger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }
   // A DeviceContext is the kernel's own object; the spec supplies only what the device reads.
   const ctx = {
     id: 9,
@@ -36,7 +41,11 @@ function rig() {
     },
     persistedConfig: { nativeId: 'hp:0', brokerId: 'int-1', system: 'homecom' },
     initialRuntimeState: {},
-    eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => {}), getRecent: vi.fn(() => []) },
+    eventBus: {
+      emit: vi.fn(),
+      subscribe: vi.fn(() => () => {}),
+      getRecent: vi.fn(() => []),
+    },
     persistConfig: vi.fn(async () => {}),
     bindRuntimeState: (rs: IDeviceRuntimeState) => {
       runtime = rs
@@ -59,22 +68,20 @@ function rig() {
 }
 
 const holiday = {
-  path: '/system/holidayMode',
   value: 'off',
   min: null,
   max: null,
   allowed: ['off', 'hm1'],
+  writeable: true,
 }
 const READING: HomeComHeatPumpReading = {
   circuits: [],
-  heatSourceAnswered: false,
+  heatPumpType: 'air_water',
   silent: null,
   away: null,
   additionalHeater: null,
   holiday,
-  thermalW: 1000,
-  electricalW: 300,
-  compressorPct: null,
+  compressorPct: 55,
   supply: null,
   return: null,
   outdoor: null,
@@ -158,13 +165,13 @@ describe('HomeComHeatPumpDevice', () => {
     await device.onActivate()
     const control = providers['heat-pump-control']
     await expect(control?.['setHolidayMode']?.({ mode: 'hm1' })).resolves.toBeUndefined()
-    expect(api.writeHeatPump).toHaveBeenCalledWith([{ path: '/system/holidayMode', value: 'hm1' }])
+    expect(api.writeHeatPump).toHaveBeenCalledWith([{ op: 'holidayMode', value: 'hm1' }])
     const refreshFailed = logger.warn.mock.calls.find((c) =>
       String(c[0]).includes('refresh failed'),
     )
     expect(refreshFailed?.[1]).toMatchObject({ tags: { deviceId: 9 } })
     const slice = device.runtimeState.getCapState<HeatPumpStatus>('heat-pump-status')
-    expect(slice?.power.thermalW).toBe(1000)
+    expect(slice?.power.compressorPct).toBe(55)
     homeComConnections.clear()
   })
 })

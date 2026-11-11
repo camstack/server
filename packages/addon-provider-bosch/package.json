@@ -112,6 +112,9 @@
         "execution": {
           "placement": "hub-only"
         },
+        "python": {
+          "requirements": "./python/requirements.txt"
+        },
         "capabilities": [
           {
             "name": "device-provider"
@@ -143,6 +146,7 @@
   },
   "files": [
     "dist",
+    "python",
     "i18n",
     "assets",
     "README.md",

@@ -1,0 +1,2 @@
+# HomeCom Easy cloud client (MIT). Pinned exactly: the worker reads its payload shapes.
+homecom-alt==1.9.2

@@ -6,12 +6,23 @@ import {
   HomeComUnknownDeviceTypeError,
   type HomeComResourceFamily,
 } from './homecom-device-type.js'
+import type { HomeComHeatPumpReading } from './homecom-heat-pump.js'
 import {
-  hasSystemDevice,
-  heatPumpPathCensus,
-  readHeatPump,
-  type HomeComHeatPumpReading,
-} from './homecom-heat-pump.js'
+  HomeComBridgeError,
+  isBridgeDeviceType,
+  type HomeComBridge,
+  type HomeComBridgeDeviceType,
+  type HomeComBridgeReading,
+  type HomeComBridgeTarget,
+  type HomeComBridgeWrite,
+} from './homecom-bridge.js'
+import {
+  bridgeDhwModeWrite,
+  bridgeDhwTargetWrite,
+  bridgeModeWrite,
+  bridgeSetpointWrite,
+  bridgeSnapshot,
+} from './homecom-bridge-snapshot.js'
 import { HOMECOM_CLIENT_ID, HOMECOM_TOKEN_URL } from './homecom-oauth.js'
 import {
   circuitModeWrites,
@@ -73,8 +84,10 @@ export interface HomeComSystemSnapshot {
   readonly dhw: HomeComDhw | null
   readonly deviceType?: string
   readonly family?: HomeComResourceFamily
-  /** Heat-pump resources, read for a hydronic gateway that is not a room controller (D1026). */
+  /** The heat-pump view, present when the gateway has a heat pump (D1026). */
   readonly heatPump?: HomeComHeatPumpReading
+  /** The bridge reading this snapshot was built from (k40, k30, icom); its writes use the bridge. */
+  readonly bridge?: HomeComBridgeReading
 }
 
 export interface HomeComProbeResult {
@@ -95,8 +108,8 @@ export interface HomeComApiClient {
   setFanMode(circuitId: string, fanMode: string): Promise<void>
   setSwingVertical(circuitId: string, on: boolean): Promise<void>
   setSwingHorizontal(circuitId: string, on: boolean): Promise<void>
-  /** Sends already validated heat-pump writes (D1026). */
-  writeHeatPump(writes: readonly PointtWrite[]): Promise<void>
+  /** Sends already validated heat-pump writes through the bridge (D1026). */
+  writeHeatPump(writes: readonly HomeComBridgeWrite[]): Promise<void>
   /** One raw GET of a resource path, status and body as the gateway answered (diagnostics). */
   readResource(path: string): Promise<HomeComResourceAnswer>
 }
@@ -115,6 +128,11 @@ export interface HomeComApiClientDeps {
   /** Device type from the gateway list, so a read does not list the account again. */
   readonly deviceType?: string
   readonly logger?: Pick<IScopedLogger, 'info' | 'warn'>
+  /**
+   * The `homecom_alt` bridge. k40, k30 and icom gateways are read and written through it;
+   * absent (no Python), they fall back to the plain climate resources with no heat pump.
+   */
+  readonly bridge?: HomeComBridge
 }
 
 interface AuthedResult {
@@ -194,7 +212,7 @@ export function createHomeComApiClient(
   let last: HomeComSystemSnapshot | null = null
   let refreshTail: Promise<void> = Promise.resolve()
   const dropped = new Set<string>()
-  let heatPumpPathsLogged = false
+  const bridge = deps.bridge
   const base = homeComApiBase(config.region)
 
   function authHeaders(): Record<string, string> {
@@ -217,7 +235,9 @@ export function createHomeComApiClient(
     const key = `missing:${path}`
     if (dropped.has(key)) return
     dropped.add(key)
-    logger?.info('HomeCom resource is absent', { meta: { gatewayId, path, status } })
+    logger?.info('HomeCom resource is absent', {
+      meta: { gatewayId, path, status },
+    })
   }
 
   async function refreshIfStale(used: string): Promise<void> {
@@ -263,25 +283,15 @@ export function createHomeComApiClient(
   }
 
   async function getResource(path: string): Promise<unknown | null> {
-    const res = await authed(homeComResourceUrl(gatewayId, path), { method: 'GET' })
+    const res = await authed(homeComResourceUrl(gatewayId, path), {
+      method: 'GET',
+    })
     if (res.status === 404 || res.status === 403) {
       logMissing(path, res.status)
       return null
     }
     if (!res.ok) throw new Error(`HomeCom API ${path} failed: HTTP ${res.status}`)
     return res.body
-  }
-
-  /**
-   * Evidence that the resource exists: a 2xx, or the 403 the gateway gives a resource it
-   * serves but will not show. 404 is "absent". Anything else (429, 5xx) is a transient
-   * failure, so it is NOT evidence either way: it is logged and counts as unknown.
-   */
-  async function resourceAnswers(path: string): Promise<boolean> {
-    const res = await authed(homeComResourceUrl(gatewayId, path), { method: 'GET' })
-    if (res.ok || res.status === 403) return true
-    if (res.status !== 404) logHeatPumpFailure(path, new Error(`HTTP ${res.status}`))
-    return false
   }
 
   async function putWrite(write: PointtWrite): Promise<void> {
@@ -311,7 +321,9 @@ export function createHomeComApiClient(
     const family = familyOf(deviceType)
     if (family === null || deviceType === undefined) {
       const label = deviceType ?? '(missing)'
-      logger?.warn('HomeCom device type is not served', { meta: { gatewayId, deviceType: label } })
+      logger?.warn('HomeCom device type is not served', {
+        meta: { gatewayId, deviceType: label },
+      })
       throw new HomeComUnknownDeviceTypeError(label)
     }
     return { deviceType, family }
@@ -345,59 +357,101 @@ export function createHomeComApiClient(
   }
 
   async function listGateways(): Promise<readonly HomeComGatewayListing[]> {
-    const res = await authed(`${base}${HOMECOM_GATEWAYS_PATH}`, { method: 'GET' })
+    const res = await authed(`${base}${HOMECOM_GATEWAYS_PATH}`, {
+      method: 'GET',
+    })
     if (!res.ok) throw new HomeComGatewayListError(res.status)
     return parseHomeComGatewayList(res.body)
   }
 
   async function fetchSystem(): Promise<HomeComSystemSnapshot> {
     const resolved = await resolveDeviceType()
-    const snapshot = await readPointtSnapshot({
-      deviceType: resolved.deviceType,
-      family: resolved.family,
+    const snapshot = await readSnapshot(resolved.deviceType, resolved.family)
+    last = snapshot
+    return snapshot
+  }
+
+  async function readSnapshot(
+    type: string,
+    family: HomeComResourceFamily,
+  ): Promise<HomeComSystemSnapshot> {
+    if (isBridgeDeviceType(type)) {
+      if (bridge !== undefined) {
+        const reading = await readThroughBridge(bridge, type)
+        if (reading !== null) {
+          return bridgeSnapshot({
+            gatewayId,
+            deviceType: type,
+            reading,
+            logDrop,
+          })
+        }
+      } else {
+        logDrop('the HomeCom bridge is not available (no Python): the heat pump is not read')
+      }
+    }
+    return readPointtSnapshot({
+      deviceType: type,
+      family,
       gatewayId,
       get: getResource,
       logDrop,
     })
-    const withHeatPump = await attachHeatPump(snapshot)
-    last = withHeatPump
-    return withHeatPump
   }
 
-  async function attachHeatPump(snapshot: HomeComSystemSnapshot): Promise<HomeComSystemSnapshot> {
-    if (snapshot.family !== 'hydronic' || snapshot.deviceType === 'rrc2') return snapshot
-    const dhwId = snapshot.dhw?.circuitId
-    const heatPump = await readHeatPump({
-      get: getResource,
-      onFailure: logHeatPumpFailure,
-      answers: resourceAnswers,
-      circuitIds: {
-        hc: snapshot.circuits.map((circuit) => circuit.id),
-        dhw: dhwId === undefined ? [] : [dhwId],
-      },
-    })
-    logHeatPumpPaths(heatPump)
-    return hasSystemDevice(heatPump) ? { ...snapshot, heatPump } : snapshot
+  /**
+   * A failed bridge read must not take the climate and water-heater devices down with it:
+   * anything but an authentication failure falls back to the plain resources, named.
+   */
+  async function readThroughBridge(
+    from: HomeComBridge,
+    type: HomeComBridgeDeviceType,
+  ): Promise<HomeComBridgeReading | null> {
+    try {
+      return await bridgeCall((t) => from.read(bridgeTarget(t, type)))
+    } catch (error) {
+      if (!(error instanceof HomeComBridgeError)) throw error
+      logger?.warn('HomeCom bridge read failed; this poll reads the climate resources only', {
+        tags: { gatewayId },
+        meta: { kind: error.kind, error: error.message },
+      })
+      return null
+    }
   }
 
-  function logHeatPumpPaths(reading: HomeComHeatPumpReading): void {
-    if (heatPumpPathsLogged) return
-    heatPumpPathsLogged = true
-    const census = heatPumpPathCensus(reading)
-    logger?.info('HomeCom heat-pump paths', {
-      tags: { gatewayId },
-      meta: { answered: census.answered, unanswered: census.unanswered },
-    })
+  function bridgeTarget(t: string, type: HomeComBridgeDeviceType): HomeComBridgeTarget {
+    return { token: t, gatewayId, deviceType: type }
   }
 
-  function logHeatPumpFailure(path: string, error: unknown): void {
-    const key = `heat-pump-read:${path}`
-    if (dropped.has(key)) return
-    dropped.add(key)
-    logger?.warn('HomeCom heat-pump resource could not be read; it is skipped', {
-      tags: { gatewayId },
-      meta: { path, error: error instanceof Error ? error.message : String(error) },
-    })
+  /** One bridge run; an `auth` answer refreshes the token once and runs it again. */
+  async function bridgeCall<T>(run: (token: string) => Promise<T>): Promise<T> {
+    const used = token
+    try {
+      return await run(used)
+    } catch (error) {
+      if (!(error instanceof HomeComBridgeError) || error.kind !== 'auth') throw error
+      if (!refreshOnUnauthorized) throw new HomeComAuthError('token expired')
+    }
+    await refreshIfStale(used)
+    try {
+      return await run(token)
+    } catch (error) {
+      if (error instanceof HomeComBridgeError && error.kind === 'auth') {
+        throw new HomeComAuthError('token expired after refresh')
+      }
+      throw error
+    }
+  }
+
+  async function bridgeWrite(
+    snapshot: HomeComSystemSnapshot,
+    write: HomeComBridgeWrite,
+  ): Promise<void> {
+    const type = snapshot.deviceType
+    if (bridge === undefined || !isBridgeDeviceType(type)) {
+      throw new Error('HomeCom heat-pump writes need the HomeCom bridge (embedded Python).')
+    }
+    await bridgeCall((t) => bridge.write(bridgeTarget(t, type), write))
   }
 
   async function probePath(path: string): Promise<string | null> {
@@ -424,18 +478,36 @@ export function createHomeComApiClient(
       )
     },
     async setCircuitSetpoint(circuitId, temp) {
-      await putWrite(circuitSetpointWrite(await requireSnapshot(), circuitId, temp))
+      const snapshot = await requireSnapshot()
+      if (snapshot.bridge !== undefined) {
+        await bridgeWrite(snapshot, bridgeSetpointWrite(snapshot.bridge, circuitId, temp))
+        return
+      }
+      await putWrite(circuitSetpointWrite(snapshot, circuitId, temp))
     },
     async setCircuitMode(circuitId, mode) {
-      for (const write of circuitModeWrites(await requireSnapshot(), circuitId, mode)) {
-        await putWrite(write)
+      const snapshot = await requireSnapshot()
+      if (snapshot.bridge !== undefined) {
+        await bridgeWrite(snapshot, bridgeModeWrite(snapshot.bridge, circuitId, mode))
+        return
       }
+      for (const write of circuitModeWrites(snapshot, circuitId, mode)) await putWrite(write)
     },
     async setDhwTarget(temp) {
-      await putWrite(dhwTargetWrite(await requireSnapshot(), temp))
+      const snapshot = await requireSnapshot()
+      if (snapshot.bridge !== undefined) {
+        await bridgeWrite(snapshot, bridgeDhwTargetWrite(snapshot.bridge, temp))
+        return
+      }
+      await putWrite(dhwTargetWrite(snapshot, temp))
     },
     async setDhwMode(mode) {
-      await putWrite(dhwModeWrite(await requireSnapshot(), mode))
+      const snapshot = await requireSnapshot()
+      if (snapshot.bridge !== undefined) {
+        await bridgeWrite(snapshot, bridgeDhwModeWrite(snapshot.bridge, mode))
+        return
+      }
+      await putWrite(dhwModeWrite(snapshot, mode))
     },
     async setFanMode(_circuitId, fanMode) {
       const snapshot = await requireSnapshot()
@@ -453,10 +525,13 @@ export function createHomeComApiClient(
       await putWrite(swingWrite(snapshot, 'horizontal', on))
     },
     async writeHeatPump(writes) {
-      for (const write of writes) await putWrite(write)
+      const snapshot = await requireSnapshot()
+      for (const write of writes) await bridgeWrite(snapshot, write)
     },
     async readResource(path) {
-      const res = await authed(homeComResourceUrl(gatewayId, path), { method: 'GET' })
+      const res = await authed(homeComResourceUrl(gatewayId, path), {
+        method: 'GET',
+      })
       return { status: res.status, body: res.body }
     },
   }
@@ -522,7 +597,10 @@ export function createInMemoryHomeComApiClient(input: {
     async setDhwMode(mode) {
       mutations.push({ path: 'dhw/mode', body: mode })
       if (snapshot.dhw) {
-        snapshot = { ...snapshot, dhw: { ...snapshot.dhw, operationMode: mode } }
+        snapshot = {
+          ...snapshot,
+          dhw: { ...snapshot.dhw, operationMode: mode },
+        }
       }
     },
     async setFanMode() {
@@ -535,7 +613,7 @@ export function createInMemoryHomeComApiClient(input: {
       throw new Error('HomeCom climate: swing not supported')
     },
     async writeHeatPump(writes) {
-      for (const write of writes) mutations.push({ path: write.path, body: write.value })
+      for (const write of writes) mutations.push({ path: write.op, body: write })
     },
     async readResource() {
       return { status: 404, body: null }

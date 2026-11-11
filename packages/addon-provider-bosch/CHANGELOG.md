@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- HomeCom heat pumps (k40, k30, icom) are now read and controlled through the homecom-alt library on the embedded Python: supply, return, modulation, pressure, starts and the hot-water level now fill, and a read-only setting is refused before it is sent. A heating circuit's temperature writes the manual room setpoint (in auto, the comfort or eco level it runs on) within the limits the gateway reports; hot water offers only the modes the gateway lists.
+
 ## [0.1.50] - 2026-11-11
 
 ### Added

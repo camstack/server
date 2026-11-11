@@ -3,6 +3,7 @@ import { type HomeComConfig, sameHomeComConnection } from './config.js'
 import { homeComConnections } from './homecom-gateway.js'
 import { HomeComIntegrationManager, type HomeComBrokerInfo } from './homecom-integration-manager.js'
 import type { FetchFn, HomeComApiClient, HomeComTokens } from './homecom-api-client.js'
+import type { HomeComBridge } from './homecom-bridge.js'
 
 export type ManagerLike = Pick<
   HomeComIntegrationManager,
@@ -29,6 +30,8 @@ export interface HomeComClientRegistryDeps {
   readonly onGatewayChosen?: (integrationId: string, gatewayId: string) => void
   readonly makeManager?: ManagerFactory
   readonly fetchFn?: FetchFn
+  /** The `homecom_alt` bridge, shared by every integration; absent when Python is not. */
+  readonly bridge?: HomeComBridge
   readonly makeClient?: (config: HomeComConfig, gatewayId: string) => HomeComApiClient
 }
 
@@ -55,6 +58,7 @@ export class HomeComClientRegistry {
     this.#onGatewayChosen = deps.onGatewayChosen ?? (() => undefined)
     const fetchFn = deps.fetchFn
     const makeClient = deps.makeClient
+    const bridge = deps.bridge
     this.#makeManager =
       deps.makeManager ??
       ((opts) =>
@@ -70,6 +74,7 @@ export class HomeComClientRegistry {
           surfaceSink: homeComConnections,
           fetchFn,
           makeClient,
+          ...(bridge !== undefined ? { bridge } : {}),
           pollIntervalMs: 60_000,
         }))
   }

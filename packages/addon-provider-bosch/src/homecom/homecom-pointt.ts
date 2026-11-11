@@ -27,7 +27,7 @@ const ZONE_DROPPED = 'rrc2 zones are not published on a cap'
 const UNSUPPORTED_CONTROLS =
   'fan mode, swing, presets and a humidity target are not on this device type'
 
-const HYDRONIC_MODES: readonly HvacMode[] = ['off', 'heat', 'auto']
+export const HYDRONIC_MODES: readonly HvacMode[] = ['off', 'heat', 'auto']
 const TOKEN = /^[A-Za-z0-9_-]+$/
 
 export type ResourceGet = (path: string) => Promise<unknown | null>
@@ -382,7 +382,7 @@ interface CircuitRef {
 }
 
 /** `hc1` → "Heating circuit 1", unless the gateway already named the circuit. */
-function heatingCircuitName(id: string, given: string | null): string {
+export function heatingCircuitName(id: string, given: string | null): string {
   if (given !== null && given.length > 0 && given !== id) return given
   const n = id.replace(/^hc/, '')
   return /^\d+$/.test(n) ? `Heating circuit ${n}` : 'Heating circuit'

@@ -18,7 +18,7 @@ import {
   systemModeWrite,
   type HomeComHeatPumpReading,
 } from '../homecom-heat-pump.js'
-import type { PointtWrite } from '../homecom-pointt.js'
+import type { HomeComBridgeWrite } from '../homecom-bridge.js'
 
 export const homeComHeatPumpSchema = z.object({
   nativeId: z.string().min(1),
@@ -81,7 +81,10 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
           tags: { deviceId: this.ctx.id },
         })
       }
-      this.runtimeState.setCapState(STATUS_CAP, { ...COLD_START, lastFetchedAt: Date.now() })
+      this.runtimeState.setCapState(STATUS_CAP, {
+        ...COLD_START,
+        lastFetchedAt: Date.now(),
+      })
       return
     }
     if (this.#noReading) {
@@ -109,13 +112,15 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
   }
 
   /** Validate against the reading, send, then re-read so the slice shows what the gateway holds. */
-  private async apply(build: (reading: HomeComHeatPumpReading) => PointtWrite): Promise<void> {
+  private async apply(
+    build: (reading: HomeComHeatPumpReading) => HomeComBridgeWrite,
+  ): Promise<void> {
     const write = build(this.requireReading())
     const client = this.requireClient()
     await client.writeHeatPump([write])
     this.ctx.logger.info('HomeCom heat pump: value written', {
       tags: { deviceId: this.ctx.id },
-      meta: { path: write.path },
+      meta: { op: write.op },
     })
     try {
       const snapshot = await client.fetchSystem()
@@ -124,7 +129,10 @@ export class HomeComHeatPumpDevice extends BaseDevice<typeof homeComHeatPumpSche
       // The write went out: say the refresh failed, never that the write did.
       this.ctx.logger.warn('HomeCom heat pump: value written, the refresh failed', {
         tags: { deviceId: this.ctx.id },
-        meta: { path: write.path, error: error instanceof Error ? error.message : String(error) },
+        meta: {
+          op: write.op,
+          error: error instanceof Error ? error.message : String(error),
+        },
       })
       return
     }

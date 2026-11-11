@@ -40,7 +40,11 @@ function rig(): { readonly ctx: DeviceContext; readonly registered: string[] } {
       integrationId: 'int-1',
     },
     initialRuntimeState: {},
-    eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => {}), getRecent: vi.fn(() => []) },
+    eventBus: {
+      emit: vi.fn(),
+      subscribe: vi.fn(() => () => {}),
+      getRecent: vi.fn(() => []),
+    },
     persistConfig: vi.fn(async () => {}),
     bindRuntimeState: (rs: IDeviceRuntimeState) => {
       runtime = rs
@@ -110,7 +114,10 @@ describe('the HomeCom gateway as an adoption pick', () => {
       [HOMECOM_GATEWAY_NATIVE_ID, 'gateway'],
       ['hc:hc1', 'heating-circuit'],
     ])
-    const candidates = buildHomeComCandidates({ devices: picks, adopted: new Map() })
+    const candidates = buildHomeComCandidates({
+      devices: picks,
+      adopted: new Map(),
+    })
     expect(candidates[0]).toMatchObject({
       childNativeId: HOMECOM_GATEWAY_NATIVE_ID,
       name: 'Casa',
@@ -129,13 +136,11 @@ describe('the HomeCom gateway as an adoption pick', () => {
       ...SNAPSHOT,
       heatPump: {
         circuits: [],
-        heatSourceAnswered: true,
+        heatPumpType: 'air_water',
         silent: null,
         away: null,
         additionalHeater: null,
         holiday: null,
-        thermalW: null,
-        electricalW: null,
         compressorPct: null,
         supply: null,
         return: null,
