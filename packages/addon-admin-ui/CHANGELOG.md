@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Customize: the role of a provider-spawned accessory device (e.g. a Home Assistant cover) is now editable, like its name.
+- Customize offers the heater and fan roles on a switch and the climate roles (thermostat, AC, floor, radiator, heater, heat pump circuit) on a climate device; a composed heater can no longer be created, a switch with the heater role replaces it.
+
 ## [1.2.644] - 2026-11-11
 
 ### Added
@@ -40,8 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Automation row types take their name and description from one catalogue; the type list shows the same wording everywhere.
 - Automation editor: Add row, a row's new Change type control and a step's Only if open a searchable condition picker; events are shown disabled, with the reason, where they cannot be used.
-- Customize: the role of a provider-spawned accessory device (e.g. a Home Assistant cover) is now editable, like its name.
-- Customize offers the heater and fan roles on a switch and the climate roles (thermostat, AC, floor, radiator, heater, heat pump circuit) on a climate device; a composed heater can no longer be created, a switch with the heater role replaces it.
 
 ## [1.2.640] - 2026-11-11
 

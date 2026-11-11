@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Device cards and rows read the role: a switch with the heater role gets the timed run and heater card, a switch with the fan role is drawn as a fan; the thermostat and heater types are gone (climate roles label each climate device).
 - The device card reads a climate device's kind and a heater from the device role, so a heater switch gets the plug card with its timed run and every climate role gets its own illustration.
 
 ## [1.2.425] - 2026-11-11
@@ -37,7 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - New ConditionKindPicker: a searchable modal that lists the automation row kinds by category, with icon, description, example and event/state badge.
-- Device cards and rows read the role: a switch with the heater role gets the timed run and heater card, a switch with the fan role is drawn as a fan; the thermostat and heater types are gone (climate roles label each climate device).
 
 ## [1.2.422] - 2026-11-11
 
@@ -87,7 +87,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pet feeder: while a feed runs, Cancel replaces Feed on the device row and in the feeder card.
 
 ### Added
-
 
 ## [1.2.416] - 2026-11-10
 
