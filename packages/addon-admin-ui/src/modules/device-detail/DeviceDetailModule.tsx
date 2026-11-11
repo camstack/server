@@ -1,5 +1,6 @@
 import {
   ConfirmDialogProvider,
+  ConnectedDeviceCard,
   Dialog,
   DialogBody,
   DialogContent,
@@ -10,11 +11,14 @@ import {
   DeviceHistoryView,
   heroLang,
   ModelHero,
+  Skeleton,
   trpc,
+  useConnectedCardKind,
   useDeviceSeriesList,
+  useIsPhone,
 } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { type ReactNode, useCallback, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import i18n from '../../i18n/index'
 import { bridgeUiText } from '../../i18n/ui-text-bridge'
@@ -32,7 +36,59 @@ function useOwnQueryClient(lent: QueryClient | undefined): QueryClient {
   return lent ?? own
 }
 
-function ModuleBody({
+/**
+ * The device card (plug, climate) of a device the card model already draws. It
+ * carries its own history and remote views, so the module adds nothing around it.
+ */
+function CardBody({
+  deviceId,
+  kind,
+  canActuate,
+  onDrawn,
+}: Pick<DeviceDetailModuleProps, 'deviceId' | 'onDrawn'> & {
+  readonly kind: 'plug' | 'climate'
+  readonly canActuate: boolean
+}): ReactNode {
+  const phone = useIsPhone()
+  useEffect(() => {
+    onDrawn?.(true)
+  }, [onDrawn])
+  return (
+    <div className="flex justify-center">
+      <ConnectedDeviceCard
+        kind={kind}
+        deviceId={deviceId}
+        canActuate={canActuate}
+        orientation={phone ? 'vertical' : 'horizontal'}
+      />
+    </div>
+  )
+}
+
+function ModuleBody(
+  props: Pick<
+    DeviceDetailModuleProps,
+    'deviceId' | 'fallback' | 'onDrawn' | 'defaultHistoryOpen'
+  > & {
+    readonly canActuate: boolean
+  },
+): ReactNode {
+  const kind = useConnectedCardKind(props.deviceId)
+  if (kind === 'pending') return <Skeleton className="h-72 w-full" />
+  if (kind !== null) {
+    return (
+      <CardBody
+        deviceId={props.deviceId}
+        kind={kind}
+        canActuate={props.canActuate}
+        onDrawn={props.onDrawn}
+      />
+    )
+  }
+  return <HeroBody {...props} />
+}
+
+function HeroBody({
   deviceId,
   canActuate,
   fallback,

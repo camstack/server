@@ -72,8 +72,8 @@ const HERO_REGISTRY: Readonly<Partial<Record<DeviceType, HeroComponent>>> = {
   [DeviceType.Lock]: ControlHero,
   [DeviceType.Fan]: ControlHero,
   [DeviceType.Thermostat]: ControlHero,
-  // Air-conditioner: ControlHero renders the registry-backed AcHeroCard
-  // (mode chips + fan speed + independent V/H swing toggles + presets).
+  // Air-conditioner: ControlHero renders the registry-backed device card
+  // (climate scene: dial, mode, fan, swing, presets — each only when declared).
   [DeviceType.Climate]: ControlHero,
   [DeviceType.MediaPlayer]: ControlHero,
   [DeviceType.Control]: ControlHero,
