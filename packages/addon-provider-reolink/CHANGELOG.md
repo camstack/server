@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A battery camera asleep or on its adapter no longer reports a 0% level from the hub, which raised low/normal battery notification pairs; the last real level is kept.
+
 ## [1.2.237] - 2026-11-11
 
 ### Changed

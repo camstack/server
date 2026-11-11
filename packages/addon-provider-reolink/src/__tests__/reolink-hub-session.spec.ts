@@ -347,7 +347,10 @@ describe('ReolinkHubSession reconcile', () => {
       log,
     )
     await session.refresh()
-    fake.api.getNvrChannelsSummary.mockResolvedValue({ devices: [], channels: [] })
+    fake.api.getNvrChannelsSummary.mockResolvedValue({
+      devices: [],
+      channels: [],
+    })
     for (let i = 0; i < 4; i++) {
       t += HUB_MISSING_OFFLINE_MS
       await session.refresh()
@@ -380,7 +383,11 @@ describe('ReolinkHubSession reconcile', () => {
     let t = 5_000_000
     const fake = fakeApi([{ channel: 0, uid: 'UID1', online: true }])
     const a = fakeChild(1, 0)
-    const { session } = makeSession(fake.api, () => [a], () => t)
+    const { session } = makeSession(
+      fake.api,
+      () => [a],
+      () => t,
+    )
     await session.refresh()
     a.sleepingValue = true
     fake.api.getNvrChannelsSummary.mockResolvedValue({
@@ -402,7 +409,11 @@ describe('ReolinkHubSession reconcile', () => {
     const b = fakeChild(2, 1)
     b.onlineValue = false
     b.sleepingValue = true
-    const { session } = makeSession(fake.api, () => [a, b], () => t)
+    const { session } = makeSession(
+      fake.api,
+      () => [a, b],
+      () => t,
+    )
     await session.refresh()
     fake.api.getNvrChannelsSummary.mockResolvedValue({
       devices: [{ channel: 7, uid: 'OTHER', online: true }],
@@ -466,5 +477,66 @@ describe('ReolinkHubSessions registry', () => {
     sessions.attach('int-a', rebuilt)
     sessions.detach('int-a', oldOne)
     expect(sessions.childrenOf('int-a')).toEqual([rebuilt])
+  })
+})
+
+/**
+ * D393: the hub's cached read of a sleeping or adapter-powered channel reports level 0. That is
+ * UNMEASURED — the child must never be handed a 0 for it (the NC raised low/normal pairs).
+ */
+describe('ReolinkHubSession battery level 0 is unmeasured', () => {
+  async function reconcile(
+    entry: {
+      batteryLevel: number
+      chargeStatus: number
+      adapterStatus: number
+    },
+    sleeping: boolean,
+  ) {
+    const fake = fakeApi([{ channel: 0, uid: 'UID1', online: true, isBattery: true }])
+    fake.api.getAllChannelsBatteryInfo.mockImplementation(async () => ({
+      batteryInfoData: {
+        0: {
+          batteryLevel: entry.batteryLevel,
+          entries: [
+            {
+              chargeStatus: entry.chargeStatus,
+              adapterStatus: entry.adapterStatus,
+            },
+          ],
+        },
+      },
+    }))
+    const child = fakeChild(1, 0)
+    child.sleepingValue = sleeping
+    const { session } = makeSession(fake.api, () => [child])
+    await session.refresh()
+    const calls = vi.mocked(child.applyHubBatteryInfo).mock.calls
+    expect(calls).toHaveLength(1)
+    return calls[0]?.[0]
+  }
+
+  it('a sleeping channel reading 0 publishes no level', async () => {
+    const apply = await reconcile({ batteryLevel: 0, chargeStatus: 0, adapterStatus: 0 }, true)
+    expect(apply).not.toHaveProperty('batteryPercent')
+  })
+
+  it('a 0 while charging on the adapter publishes no level', async () => {
+    const apply = await reconcile({ batteryLevel: 0, chargeStatus: 1, adapterStatus: 1 }, false)
+    expect(apply).not.toHaveProperty('batteryPercent')
+    expect(apply).toMatchObject({
+      chargeStatus: 'charging',
+      adapterStatus: 'dc',
+    })
+  })
+
+  it('a genuine 15% still passes', async () => {
+    const apply = await reconcile({ batteryLevel: 15, chargeStatus: 0, adapterStatus: 0 }, false)
+    expect(apply).toMatchObject({ batteryPercent: 15 })
+  })
+
+  it('a genuine 0 from an awake, unpowered channel passes', async () => {
+    const apply = await reconcile({ batteryLevel: 0, chargeStatus: 0, adapterStatus: 0 }, false)
+    expect(apply).toMatchObject({ batteryPercent: 0 })
   })
 })

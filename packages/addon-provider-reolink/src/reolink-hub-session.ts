@@ -16,7 +16,11 @@ import {
   userError,
 } from '@camstack/types'
 import { type ReolinkHubConnection, sameHubConnection } from './hub-connection.js'
-import { mapHubBatteryPower, UnmappedCodeLedger } from './hub-battery-fields.js'
+import {
+  isMeasuredHubBatteryLevel,
+  mapHubBatteryPower,
+  UnmappedCodeLedger,
+} from './hub-battery-fields.js'
 import { planChannelReconciliation } from './hub-channel-reconcile.js'
 import { createMotionSensorTracker, type ReolinkMotionSensor } from './motion-sensor-source.js'
 import { shouldTraceSimpleEventDispatch } from './simple-event-dispatch-trace.js'
@@ -670,8 +674,24 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
             meta: { channel: Number(chKey), field, value },
           })
         }
+        const measured = isMeasuredHubBatteryLevel(info.batteryLevel, {
+          sleeping: child.sleeping,
+          power: power.fields,
+        })
+        if (info.batteryLevel === 0) {
+          // Proof for the live hub: the raw entry behind every 0 the hub reports.
+          this.#logger.info('Reolink hub: battery entry reporting 0', {
+            tags: { deviceId: child.id },
+            meta: {
+              channel: Number(chKey),
+              sleeping: child.sleeping,
+              measured,
+              raw: info,
+            },
+          })
+        }
         child.applyHubBatteryInfo({
-          batteryPercent: info.batteryLevel,
+          ...(measured ? { batteryPercent: info.batteryLevel } : {}),
           ...power.fields,
         })
       }

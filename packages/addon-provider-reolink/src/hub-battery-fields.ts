@@ -90,3 +90,26 @@ export class UnmappedCodeLedger {
     return true
   }
 }
+
+/**
+ * Whether a hub per-channel battery level is a MEASUREMENT (D393). The hub's cached read of a
+ * channel that is asleep reports `0` — and so does a read taken while the cell is on an adapter
+ * (a powered camera at 0% is not a reading, it is a placeholder). Both are UNMEASURED: the caller
+ * keeps the last real level. A `0` from an awake, unpowered channel is a genuine empty cell and
+ * passes, as does every non-zero level.
+ */
+export function isMeasuredHubBatteryLevel(
+  level: number | undefined,
+  context: {
+    readonly sleeping: boolean
+    readonly power: HubBatteryPowerFields
+  },
+): boolean {
+  if (typeof level !== 'number') return false
+  if (level !== 0) return true
+  if (context.sleeping) return false
+  const { chargeStatus, adapterStatus } = context.power
+  const onAdapter = adapterStatus !== undefined && adapterStatus !== 'none'
+  const charging = chargeStatus === 'charging' || chargeStatus === 'chargeComplete'
+  return !(onAdapter || charging)
+}
