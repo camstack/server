@@ -414,6 +414,31 @@ describe('configure_automation_save', () => {
       expect(calls.some((c) => c.path === 'coreBlocks.create')).toBe(false)
     })
 
+    it('refuses a sun window inside a branch of a choose, naming the branch', async () => {
+      const { ctx } = fakeHub({
+        ...hubReads,
+        'system.getSiteLocation': { location: null, timeZone: 'Europe/Rome' },
+      })
+      const branched = {
+        when: sunset.when,
+        actions: [
+          {
+            kind: 'choose' as const,
+            branches: [
+              { if: sunset.actions[0].if, steps: [{ kind: 'wait' as const, seconds: 1 }] },
+            ],
+          },
+        ],
+      }
+      const out = await saveAutomation(
+        withWrites(ctx),
+        { name: 'Evening', recipe: branched, enabled: true },
+        undefined,
+      )
+      expect(out).not.toHaveProperty('confirm_token')
+      expect(JSON.stringify(out)).toMatch(/actions\.0\.branches\.0\.if\.between\.from/)
+    })
+
     it('offers the save once the site has a location', async () => {
       const { ctx } = fakeHub({
         ...hubReads,

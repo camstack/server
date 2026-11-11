@@ -75,7 +75,40 @@ describe('StepResult', () => {
       { deviceId: 1, tone: 'pass', message: null },
       { deviceId: 2, tone: 'fail', message: 'timeout' },
     ],
+    chose: null,
+    nested: [],
   }
+
+  it('a choose step names the branch that ran and lists its steps (#500)', () => {
+    render(
+      <StepResult
+        step={{
+          ...STEP,
+          kind: 'choose',
+          tone: 'pass',
+          message: null,
+          args: [],
+          devices: [],
+          chose: { kind: 'branch', index: 1 },
+          nested: [
+            { kind: 'wait', tone: 'pass', message: null },
+            { kind: 'cap', tone: 'fail', message: 'Lamp offline' },
+          ],
+        }}
+        deviceName={(id) => `#${String(id)}`}
+      />,
+    )
+    expect(screen.getByTestId('step-chose').textContent).toContain('2')
+    const nested = within(screen.getByTestId('step-nested'))
+    expect(nested.getByText('Lamp offline')).toBeTruthy()
+    expect(nested.getAllByRole('listitem')).toHaveLength(2)
+  })
+
+  it('a step that is not a choose shows no branch line', () => {
+    render(<StepResult step={STEP} deviceName={(id) => `#${String(id)}`} />)
+    expect(screen.queryByTestId('step-chose')).toBeNull()
+    expect(screen.queryByTestId('step-nested')).toBeNull()
+  })
 
   it('shows outcome, message, args and the per-device outcome inside the card', () => {
     render(<StepResult step={STEP} deviceName={(id) => (id === 1 ? 'Feeder' : `#${String(id)}`)} />)

@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automation editor: the "Started by" condition picks among the automation's own trigger rows, in the rules and in a step's condition
 - Automation editor: a step argument can insert the device, the old value and the new value of a "device becomes" trigger
 - The automation editor offers "Stop the run", "Set variables" and "Continue if this step fails"; a failed step the run passed over is shown red in the run trace
+- Automations: a Choose step in the action list, with branches read top to bottom and an optional Otherwise list; a run shows which branch ran and its steps
 
 ### Changed
 

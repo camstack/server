@@ -156,6 +156,19 @@ const StepTraceBaseSchema = z.object({
 /** A step trace; the `else` steps that ran are one level of the same shape (the nesting is bounded at one). */
 export const AutomationStepTraceSchema = StepTraceBaseSchema.extend({
   else: z.array(StepTraceBaseSchema).optional(),
+  /** A `choose` step (#500): the list that ran, `branches.<n>` or `else`. Absent when none did. */
+  branch: z.string().optional(),
+  /** A `choose` step: what each branch read, in order, up to the one that decided. */
+  branchChecks: z
+    .array(
+      z.object({
+        condition: z.enum(['true', 'false', 'unknown']),
+        conditionReason: z.string().optional(),
+      }),
+    )
+    .optional(),
+  /** A `choose` step: the steps of the list that ran. */
+  steps: z.array(StepTraceBaseSchema).optional(),
 })
 export type AutomationStepTrace = z.infer<typeof AutomationStepTraceSchema>
 

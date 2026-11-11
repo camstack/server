@@ -6110,7 +6110,8 @@
       "setAdd": "Aggiungi una variabile",
       "setHint": "I passi successivi possono usarla come {{slot}}.",
       "continueOnError": "Continua se questo passo fallisce",
-      "flowGuardHint": "Verificata quando si arriva a questo passo. Se è falsa, o uno stato non è leggibile, il passo non fa nulla."
+      "flowGuardHint": "Verificata quando si arriva a questo passo. Se è falsa, o uno stato non è leggibile, il passo non fa nulla.",
+      "kindChoose": "Scegli"
     },
     "automationEditor": {
       "name": "Nome",
@@ -6432,6 +6433,17 @@
       "nonePicked": "Scegli almeno un trigger.",
       "missing_one": "{{count}} trigger scelto non esiste più. Premi un trigger per rimuoverlo.",
       "missing_other": "{{count}} trigger scelti non esistono più. Premi un trigger per rimuoverli."
+    },
+    "choose": {
+      "hint": "Si legge dall'alto: viene eseguito il primo ramo la cui condizione è vera, e solo quello. Se una condizione non può essere letta, non viene eseguito nulla.",
+      "if": "Se",
+      "elseIf": "Altrimenti, se",
+      "removeBranch": "Rimuovi questo ramo",
+      "lastBranch": "Una scelta mantiene almeno un ramo",
+      "then": "Allora esegui",
+      "maxBranches": "Una scelta ha al massimo 6 rami",
+      "addBranch": "Aggiungi un ramo",
+      "else": "Altrimenti, esegui…"
     }
   },
   "accessDenied": {
@@ -11353,7 +11365,9 @@
       "schedulerSuspendedManual": "In pausa per modifica manuale",
       "stepsRan": "{{run}} passaggi su {{total}} eseguiti",
       "show": "Mostra le esecuzioni",
-      "hide": "Nascondi le esecuzioni"
+      "hide": "Nascondi le esecuzioni",
+      "choseElse": "Eseguita la lista \"altrimenti\"",
+      "choseBranch": "Eseguito il ramo {{n}}"
     },
     "scope": {
       "className": "cosa ha visto",

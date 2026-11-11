@@ -150,6 +150,8 @@ export function newAction(kind: ActionKind): AutomationAction {
       return { kind, reason: '', outcome: 'ok' }
     case 'set':
       return { kind, vars: {} }
+    case 'choose':
+      return { kind, branches: [{ if: { kind: 'all', children: [] }, steps: [] }] }
     default:
       return { kind: 'cap', deviceId: 0, cap: '', method: '' }
   }

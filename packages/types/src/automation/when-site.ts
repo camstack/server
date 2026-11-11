@@ -10,7 +10,7 @@ import {
   type TimeSpecRefusal,
   validateTimeSpecForSite,
 } from '../time/time-spec.js'
-import type { AutomationRecipe } from './recipe.js'
+import { type AutomationRecipe, stepConditionsOf } from './recipe.js'
 import { type AutomationWhen, forEachLeaf } from './when.js'
 
 export interface WhenSiteIssue {
@@ -70,6 +70,10 @@ export function stepGuardSiteIssues(
 export function recipeSiteIssues(recipe: AutomationRecipe, reading: SiteReading): WhenSiteIssue[] {
   return [
     ...whenSiteIssues(recipe.when, reading),
-    ...stepGuardSiteIssues(recipe.actions, reading, 'actions'),
+    ...recipe.actions.flatMap((action, i) =>
+      stepConditionsOf(action).flatMap((condition) =>
+        whenSiteIssues(condition.when, reading, `actions.${i}.${condition.path}`),
+      ),
+    ),
   ]
 }

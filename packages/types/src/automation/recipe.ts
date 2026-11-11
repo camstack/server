@@ -288,19 +288,72 @@ export const AutomationSetStepSchema = z.object({
 })
 export type AutomationSetStep = z.infer<typeof AutomationSetStepSchema>
 
+const AutomationRunActionStepSchema = z.object({
+  kind: z.literal('action'),
+  /** An entry of the `actions` surface (`internal:<uuid>` or `<addonId>:<localId>`). */
+  actionId: z.string().min(1),
+  /** Values for the action's declared variables; the others take their default. */
+  variables: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
+  ...continueOnErrorShape,
+})
+
+/** How many branches one `choose` holds. */
+export const CHOOSE_BRANCHES_MAX = 6
+
+/**
+ * A step INSIDE a branch of a `choose`: a flow step with no condition of its
+ * own (the branch is the condition) and no block inside it. Strict, so an `if`
+ * written on such a step is refused rather than dropped.
+ */
+const AutomationBranchStepSchema = z.discriminatedUnion('kind', [
+  AutomationWaitStepSchema.strict(),
+  AutomationCapStepBaseSchema.extend(continueOnErrorShape)
+    .strict()
+    .refine((step) => step.target !== undefined || step.deviceId !== undefined, {
+      message: 'a cap step needs a target',
+      path: ['target'],
+    })
+    .refine((step) => step.target?.kind !== 'domain' || step.actionId !== undefined, {
+      message: 'a domain target needs the vocabulary action it applies to (actionId)',
+      path: ['actionId'],
+    }),
+  AutomationStopStepSchema.omit({ if: true }).strict(),
+  AutomationSetStepSchema.omit({ if: true }).strict(),
+  AutomationRunActionStepSchema.strict(),
+])
+export type AutomationBranchStep = z.infer<typeof AutomationBranchStepSchema>
+
+const branchSteps = z.array(AutomationBranchStepSchema).max(STEP_ELSE_MAX)
+
+/**
+ * One step, several ways (#500): the branches are read in order and the FIRST
+ * whose condition is true runs; `else` runs when every branch is false. A
+ * branch that cannot be read ends the choice: nothing runs, not the branches
+ * after it and not the else (D49). The #472 `if` / `else` of a wait or cap
+ * step is the one-branch case and stays as it is stored.
+ */
+export const AutomationChooseStepSchema = z.object({
+  kind: z.literal('choose'),
+  branches: z
+    .array(
+      z.object({
+        if: AutomationWhenSchema,
+        steps: branchSteps.min(1, 'a branch needs at least one step'),
+      }),
+    )
+    .min(1, 'a choose needs at least one branch')
+    .max(CHOOSE_BRANCHES_MAX, `a choose takes at most ${CHOOSE_BRANCHES_MAX} branches`),
+  else: branchSteps.optional(),
+})
+export type AutomationChooseStep = z.infer<typeof AutomationChooseStepSchema>
+
 export const AutomationActionSchema = z.discriminatedUnion('kind', [
   GuardedWaitStepSchema,
   AutomationGuardedCapStepSchema,
   AutomationStopStepSchema,
   AutomationSetStepSchema,
-  z.object({
-    kind: z.literal('action'),
-    /** An entry of the `actions` surface (`internal:<uuid>` or `<addonId>:<localId>`). */
-    actionId: z.string().min(1),
-    /** Values for the action's declared variables; the others take their default. */
-    variables: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
-    ...continueOnErrorShape,
-  }),
+  AutomationChooseStepSchema,
+  AutomationRunActionStepSchema,
   z.object({
     kind: z.literal('code'),
     /** Compiled into the automation's OWN block by esbuild — not a third
@@ -377,9 +430,33 @@ export const AutomationRecipeSchema = z.union([
   LegacyAutomationRecipeSchema.transform(convertLegacyRecipe),
 ])
 
-/** The `if` of a step that can carry one (`action` and `code` steps cannot). */
+/** The `if` of a step that can carry one (`action`, `code` and `choose` steps cannot). */
 export function stepGuardOf(action: AutomationAction): AutomationWhen | undefined {
-  return action.kind === 'action' || action.kind === 'code' ? undefined : action.if
+  return action.kind === 'action' || action.kind === 'code' || action.kind === 'choose'
+    ? undefined
+    : action.if
+}
+
+/** A condition a step reads when it is reached, and where it is under the step. */
+export interface StepConditionRef {
+  /** `if`, or `branches.<n>.if` for a branch of a `choose`. */
+  readonly path: string
+  readonly when: AutomationWhen
+}
+
+/** Every condition of a step: its own `if`, or the `if` of each branch of a `choose`. */
+export function stepConditionsOf(action: AutomationAction): StepConditionRef[] {
+  if (action.kind === 'choose') {
+    return action.branches.map((branch, i) => ({ path: `branches.${i}.if`, when: branch.if }))
+  }
+  const when = stepGuardOf(action)
+  return when === undefined ? [] : [{ path: 'if', when }]
+}
+
+/** The steps a block step holds (the branches and the else of a `choose`); none for a plain step. */
+export function nestedStepsOf(action: AutomationAction): AutomationBranchStep[] {
+  if (action.kind !== 'choose') return []
+  return [...action.branches.flatMap((branch) => branch.steps), ...(action.else ?? [])]
 }
 
 /** Bounds, shared by `when` and the old names the guards still know. */
@@ -402,10 +479,10 @@ export function validateRecipeBounds(recipe: AutomationRecipe): string | null {
   const inRules = triggeredByIssue(recipe.when, ids, 'the rules')
   if (inRules !== null) return inRules
   for (const [index, action] of recipe.actions.entries()) {
-    const guard = stepGuardOf(action)
-    if (guard === undefined) continue
-    const issue = triggeredByIssue(guard, ids, `step ${index + 1}`)
-    if (issue !== null) return issue
+    for (const condition of stepConditionsOf(action)) {
+      const issue = triggeredByIssue(condition.when, ids, `step ${index + 1}`)
+      if (issue !== null) return issue
+    }
   }
   return null
 }

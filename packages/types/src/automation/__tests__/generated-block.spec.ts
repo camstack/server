@@ -1642,6 +1642,89 @@ describe('a time-is state leaf wakes a state-only tree at its boundary', () => {
   })
 })
 
+describe('choose (#500): one step, the first branch that is true', () => {
+  const motion = { ...MOTION, id: 'motion' } as const
+  const press = { kind: 'device-event', category: 'button.pressed', id: 'press' } as const
+  const siren = (label: string): Extract<AutomationRecipe['actions'][number], { kind: 'cap' }> => ({
+    kind: 'cap',
+    deviceId: 616,
+    cap: 'siren',
+    method: 'on',
+    args: { label },
+  })
+  const labels = (h: { mutate: { mock: { calls: unknown[][] } } }): string[] =>
+    h.mutate.mock.calls.map(([a]) => (a as { label: string }).label)
+
+  it('runs the branch of the trigger that fired, else the else list, and traces which', async () => {
+    const h = start(
+      await load({
+        when: { kind: 'any', children: [motion, press, { kind: 'manual' }] },
+        actions: [
+          {
+            kind: 'choose',
+            branches: [
+              {
+                if: { kind: 'triggered-by', leafIds: ['motion'] },
+                steps: [{ kind: 'set', vars: { why: 'motion' } }, siren('saw {{vars.why}}')],
+              },
+              { if: { kind: 'triggered-by', leafIds: ['press'] }, steps: [siren('pressed')] },
+            ],
+            else: [siren('neither')],
+          },
+          siren('after'),
+        ],
+      }),
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle()
+    expect(labels(h)).toEqual(['pressed', 'after'])
+    expect(h.traces()[0]).toMatchObject({
+      outcome: 'ran',
+      steps: [
+        {
+          kind: 'choose',
+          outcome: 'ok',
+          branch: 'branches.1',
+          steps: [{ kind: 'cap', path: 'actions.0.branches.1.steps.0', outcome: 'ok' }],
+        },
+        { kind: 'cap', outcome: 'ok' },
+      ],
+    })
+    h.emit('motion.on-motion-changed', {}, 1)
+    await settle()
+    expect(labels(h).slice(2)).toEqual(['saw motion', 'after'])
+  })
+
+  it('a stop inside a branch ends the run', async () => {
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          {
+            kind: 'choose',
+            branches: [
+              {
+                if: { kind: 'triggered-by', leafIds: ['press'] },
+                steps: [{ kind: 'stop', reason: 'pressed', outcome: 'ok' }],
+              },
+            ],
+          },
+          siren('after'),
+        ],
+      }),
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle()
+    expect(h.mutate).not.toHaveBeenCalled()
+    expect(h.traces()[0]).toMatchObject({
+      outcome: 'ran',
+      steps: [{ kind: 'choose', outcome: 'ok' }, { outcome: 'not-run' }],
+    })
+  })
+})
+
 describe('triggered-by: one automation, a different step per trigger (#499)', () => {
   const motion = { ...MOTION, id: 'motion' } as const
   const press = { kind: 'device-event', category: 'button.pressed', id: 'press' } as const

@@ -158,6 +158,27 @@ export function StepResult({ step, deviceName }: StepResultProps) {
           <span className="min-w-0 break-words text-foreground">{step.message}</span>
         )}
       </div>
+      {step.chose !== null && (
+        <div className="text-foreground-subtle" data-testid="step-chose">
+          {step.chose.kind === 'else'
+            ? t('flow.runs.choseElse', 'Ran the "otherwise" list')
+            : t('flow.runs.choseBranch', 'Ran branch {{n}}', { n: step.chose.index + 1 })}
+        </div>
+      )}
+      {step.nested.length > 0 && (
+        <ol className="space-y-0.5 text-[11px]" data-testid="step-nested">
+          {step.nested.map((inner, at) => (
+            <li key={String(at)} className="flex flex-wrap items-center gap-2">
+              <Badge variant={TONE_VARIANT[inner.tone]}>
+                {String(at + 1)} · {inner.kind}
+              </Badge>
+              {inner.message !== null && (
+                <span className="min-w-0 break-words text-foreground-subtle">{inner.message}</span>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
       <NamedValues testId="step-args" items={step.args} />
       {step.devices.length > 0 && (
         <ul className="space-y-0.5 text-[11px]" data-testid="step-devices">

@@ -5,7 +5,7 @@
  */
 import type { AutomationAction } from '@camstack/types'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -15,6 +15,7 @@ vi.mock('../FieldPicker', async () => {
 })
 vi.mock('../../flow/CommandStep', () => ({ CommandStep: () => null }))
 vi.mock('../RunActionFields', () => ({ RunActionFields: () => null }))
+vi.mock('../WhenTree', () => ({ WhenTree: () => null }))
 
 import { ActionList } from '../ActionList'
 
@@ -85,5 +86,73 @@ describe('ActionList flow control', () => {
     expect(kinds.length).toBeGreaterThan(1)
     expect(kinds).not.toContain('Stop the run')
     expect(kinds).not.toContain('Set variables')
+  })
+})
+
+describe('ActionList choose (#500)', () => {
+  const CHOOSE: AutomationAction = {
+    kind: 'choose',
+    branches: [{ if: { kind: 'all', children: [] }, steps: [] }],
+  }
+
+  it('an automation list offers the choose step, a branch list does not', () => {
+    render(<Harness flow initial={[CHOOSE]} />)
+    fireEvent.click(screen.getByTestId('step-kind-0'))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toContain('Choose')
+    fireEvent.click(screen.getByRole('option', { name: 'Choose' }))
+    const branch = within(screen.getByTestId('choose-branch-0-0'))
+    fireEvent.click(branch.getByRole('button', { name: 'Step' }))
+    fireEvent.click(branch.getByTestId('step-kind-0'))
+    const inner = screen.getAllByRole('option').map((o) => o.textContent)
+    expect(inner).toEqual(expect.arrayContaining(['Wait', 'Stop the run', 'Set variables']))
+    expect(inner).not.toContain('Choose')
+    expect(inner).not.toContain('Run code')
+  })
+
+  it('a list that is not an automation does not offer it', () => {
+    render(<Harness flow={false} initial={[CAP]} />)
+    fireEvent.click(screen.getByTestId('step-kind-0'))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).not.toContain('Choose')
+  })
+
+  it('adds branches up to six, removes one, and keeps the last', () => {
+    render(<Harness flow initial={[CHOOSE]} />)
+    expect(screen.getByTestId('choose-remove-0-0')).toHaveProperty('disabled', true)
+    for (let i = 0; i < 5; i++) fireEvent.click(screen.getByTestId('choose-add-0'))
+    expect(latest[0]).toMatchObject({ kind: 'choose' })
+    expect(screen.getAllByTestId(/^choose-branch-0-/)).toHaveLength(6)
+    expect(screen.getByTestId('choose-add-0')).toHaveProperty('disabled', true)
+    fireEvent.click(screen.getByTestId('choose-remove-0-5'))
+    expect(screen.getAllByTestId(/^choose-branch-0-/)).toHaveLength(5)
+  })
+
+  it('the otherwise list is written when switched on and removed when switched off', () => {
+    render(<Harness flow initial={[CHOOSE]} />)
+    fireEvent.click(screen.getByTestId('choose-else-0'))
+    expect(latest).toEqual([{ ...CHOOSE, else: [] }])
+    fireEvent.click(screen.getByTestId('choose-else-0'))
+    expect(latest).toEqual([CHOOSE])
+  })
+
+  it('a step inside a branch can be told to continue if it fails', () => {
+    render(
+      <Harness
+        flow
+        initial={[
+          { kind: 'choose', branches: [{ if: { kind: 'all', children: [] }, steps: [CAP] }] },
+        ]}
+      />,
+    )
+    fireEvent.click(
+      within(screen.getByTestId('choose-branch-0-0')).getByTestId('continue-on-error-0'),
+    )
+    expect(latest).toEqual([
+      {
+        kind: 'choose',
+        branches: [
+          { if: { kind: 'all', children: [] }, steps: [{ ...CAP, continueOnError: true }] },
+        ],
+      },
+    ])
   })
 })

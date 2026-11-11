@@ -77,6 +77,65 @@ export interface RunnableStep {
   readonly otherwise?: readonly RunnableStep[]
   /** A failure of THIS step is traced `failed-continued` and the sequence goes on (#500). */
   readonly continueOnError?: boolean
+  /** A `choose` step (#500): `run` is not called, the first branch that reads true is. */
+  readonly choose?: RunnableChoose
+}
+
+/** One branch of a `choose`: its condition and the steps it runs. */
+export interface RunnableBranch {
+  readonly guard: () => Promise<StepConditionVerdict>
+  readonly steps: readonly RunnableStep[]
+}
+
+export interface RunnableChoose {
+  readonly branches: readonly RunnableBranch[]
+  /** Run when every branch reads `false`; never when one reads `unknown`. */
+  readonly otherwise?: readonly RunnableStep[]
+}
+
+/** What one branch of a `choose` read. */
+interface BranchCheck {
+  readonly condition: StepConditionResult
+  readonly conditionReason: string
+}
+
+/** Which list of a `choose` runs, after reading its branches in order. */
+type ChooseDecision =
+  | { readonly kind: 'run'; readonly branch: string; readonly steps: readonly RunnableStep[] }
+  | { readonly kind: 'none' }
+  | { readonly kind: 'unknown'; readonly index: number; readonly reason: string }
+
+interface ChooseReading {
+  readonly checks: readonly BranchCheck[]
+  readonly decision: ChooseDecision
+}
+
+/**
+ * Read the branches in order and stop at the first that decides: `true` runs
+ * it, `unknown` ends the choice with nothing run (D49). All `false` runs the
+ * else list, when there is one.
+ */
+async function readChoose(choose: RunnableChoose): Promise<ChooseReading> {
+  const checks: BranchCheck[] = []
+  for (const [index, branch] of choose.branches.entries()) {
+    const verdict = await readGuard(branch.guard)
+    checks.push({ condition: verdict.result, conditionReason: verdict.reason })
+    if (verdict.result === 'true') {
+      return {
+        checks,
+        decision: { kind: 'run', branch: `branches.${index}`, steps: branch.steps },
+      }
+    }
+    if (verdict.result === 'unknown') {
+      return { checks, decision: { kind: 'unknown', index, reason: verdict.reason } }
+    }
+  }
+  const otherwise = choose.otherwise ?? []
+  return {
+    checks,
+    decision:
+      otherwise.length === 0 ? { kind: 'none' } : { kind: 'run', branch: 'else', steps: otherwise },
+  }
 }
 
 export interface StepFailure {
@@ -138,6 +197,14 @@ function withoutElse(trace: AutomationStepTrace): Omit<AutomationStepTrace, 'els
   return rest
 }
 
+/** A step of a branch is a plain step: its trace carries no list of its own. */
+function withoutNested(
+  trace: AutomationStepTrace,
+): Omit<AutomationStepTrace, 'else' | 'branch' | 'branchChecks' | 'steps'> {
+  const { else: _else, branch: _branch, branchChecks: _checks, steps: _steps, ...rest } = trace
+  return rest
+}
+
 export async function runSteps(
   steps: readonly RunnableStep[],
   options: RunStepsOptions,
@@ -168,6 +235,46 @@ export async function runSteps(
       continue
     }
     const startedAt = options.now()
+    if (step.choose !== undefined) {
+      const reading = await readChoose(step.choose)
+      const base = { ...step.meta, path, startedAt, branchChecks: [...reading.checks] }
+      const { decision } = reading
+      if (decision.kind !== 'run') {
+        if (decision.kind === 'unknown') {
+          options.onGuardUnknown?.({
+            index,
+            path: `${path}.branches.${decision.index}.if`,
+            reason: decision.reason,
+            deviceId: step.meta.deviceId,
+          })
+        }
+        traces.push({
+          ...base,
+          endedAt: options.now(),
+          outcome: 'skipped',
+          message:
+            decision.kind === 'unknown'
+              ? `not run: branch ${decision.index + 1} could not be read (${decision.reason})`
+              : 'not run: no branch is true',
+        })
+        continue
+      }
+      const listPath =
+        decision.branch === 'else' ? `${path}.else` : `${path}.${decision.branch}.steps`
+      const sub = await runSteps(decision.steps, { ...options, pathPrefix: listPath })
+      if (sub.failed) failed = true
+      else if (sub.aborted) aborted = true
+      if (sub.stopped !== undefined) stopped = sub.stopped
+      traces.push({
+        ...base,
+        endedAt: options.now(),
+        outcome: sub.failed ? 'error' : 'ok',
+        ...(sub.failed ? { message: 'a step of the branch failed' } : {}),
+        branch: decision.branch,
+        steps: sub.steps.map(withoutNested),
+      })
+      continue
+    }
     let guardTrace: { condition?: StepConditionResult; conditionReason?: string } = {}
     if (step.guard !== undefined) {
       const verdict = await readGuard(step.guard)

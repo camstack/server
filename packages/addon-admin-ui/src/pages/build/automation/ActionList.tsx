@@ -41,6 +41,7 @@ import { PickerLabel } from './FieldPicker'
 import { RunActionFields } from './RunActionFields'
 import { MoveButtons, type MoveTexts } from './MoveButtons'
 import { type ActionKind, moveItem, newAction, removeAt, replaceAt } from './recipe-parts'
+import { ChooseFields } from './ChooseFields'
 import { SetVarsFields } from './SetVarsFields'
 import { StepGuard, StepIf } from './StepGuard'
 import { Trans, useTranslation } from 'react-i18next'
@@ -51,11 +52,12 @@ const ACTION_KINDS: readonly { readonly value: ActionKind; readonly labelKey: st
   { value: 'wait', labelKey: 'automation.actionList.kindWait' },
   { value: 'set', labelKey: 'automation.actionList.kindSet' },
   { value: 'stop', labelKey: 'automation.actionList.kindStop' },
+  { value: 'choose', labelKey: 'automation.actionList.kindChoose' },
   { value: 'code', labelKey: 'automation.actionList.kindCode' },
 ]
 
 /** The steps that only an automation's own list runs (#500). */
-const FLOW_KINDS: readonly ActionKind[] = ['set', 'stop']
+const FLOW_KINDS: readonly ActionKind[] = ['set', 'stop', 'choose']
 
 export interface ActionListProps {
   readonly actions: readonly AutomationAction[]
@@ -69,7 +71,7 @@ export interface ActionListProps {
   readonly stepTones?: readonly BlockTone[]
   /** What the selected run recorded per step, by index; shown inside the card. */
   readonly stepResults?: readonly (StepDetailView | undefined)[]
-  /** An else list: its steps carry no `if` of their own (one level of else). */
+  /** An else list or a branch of a choose: its steps carry no `if` of their own. */
   readonly nested?: boolean
   /**
    * The list is an AUTOMATION's: it offers the stop and set steps and "continue
@@ -221,7 +223,18 @@ export function ActionList({
             />
           )}
 
-          {(action.kind === 'stop' || action.kind === 'set') && (
+          {action.kind === 'choose' && (
+            <ChooseFields
+              index={index}
+              step={action}
+              devices={devices}
+              devicesState={devicesState}
+              variables={variables}
+              onChange={(next) => onChange(replaceAt(actions, index, next))}
+            />
+          )}
+
+          {!nested && (action.kind === 'stop' || action.kind === 'set') && (
             <StepIf
               when={action.if}
               devices={devices}
@@ -285,7 +298,7 @@ export function ActionList({
             />
           )}
 
-          {flowControl && !nested && (action.kind === 'cap' || action.kind === 'action') && (
+          {flowControl && (action.kind === 'cap' || action.kind === 'action') && (
             <Switch
               data-testid={`continue-on-error-${String(index)}`}
               checked={action.continueOnError === true}

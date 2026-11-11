@@ -28,6 +28,8 @@ import type { AutomationAction, AutomationRecipe } from './recipe.js'
 import {
   DEFAULT_TRACE_KEEP,
   normalizeCapStep,
+  nestedStepsOf,
+  stepConditionsOf,
   stepGuardOf,
   validateRecipeBounds,
 } from './recipe.js'
@@ -68,6 +70,8 @@ function stepMetaOf(action: AutomationAction): StepMeta {
       return { kind: 'stop' }
     case 'set':
       return { kind: 'set' }
+    case 'choose':
+      return { kind: 'choose' }
     case 'cap': {
       const { target, actionId } = normalizeCapStep(action)
       return {
@@ -316,8 +320,8 @@ function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
   }
 }
 
-/** The body of a wait or cap step, shared by a top-level step and an else step. */
-function emitLeafBody(action: AutomationAction): string | null {
+/** What a plain step does when it runs: the body of its `run`, wherever the step sits. */
+function emitStepBody(action: Exclude<AutomationAction, { kind: 'choose' }>): string {
   switch (action.kind) {
     case 'wait':
       return `        await sleep(${j(action.seconds * 1000)})`
@@ -327,49 +331,8 @@ function emitLeafBody(action: AutomationAction): string | null {
         action.method,
       )}, ${j(action.args ?? {})}, vars)`
     }
-    default:
-      return null
-  }
-}
-
-/** A step's `if` (#472) and its else list, as the fields of a RunnableStep. */
-function emitGuard(action: AutomationAction, index: number): string {
-  const when = stepGuardOf(action)
-  if (when === undefined) return ''
-  const otherwise = (action.kind === 'wait' || action.kind === 'cap' ? (action.else ?? []) : [])
-    .map((el) => {
-      const body = emitLeafBody(el)
-      return `{ meta: ${j(stepMetaOf(el))}, run: async (scope) => {\n${body ?? ''}\n } }`
-    })
-    .join(', ')
-  return `      guard: () => evaluateCondition(${j(when)}, ${j(`actions.${index}.if`)}, vars),${
-    otherwise === '' ? '' : `\n      otherwise: [${otherwise}],`
-  }
-`
-}
-
-function emitAction(action: AutomationAction, index: number): string {
-  const continues =
-    (action.kind === 'cap' || action.kind === 'action') && action.continueOnError === true
-  const step = (body: string): string => `    {
-      meta: STEP_META[${index}]!,
-${emitGuard(action, index)}${continues ? '      continueOnError: true,\n' : ''}      run: async (scope) => {
-${body}
-      },
-    },`
-  switch (action.kind) {
-    case 'wait':
-      return step(`        await sleep(${j(action.seconds * 1000)})`)
-    case 'cap': {
-      const { target, actionId } = normalizeCapStep(action)
-      return step(
-        `        await actuateTarget(scope, ${j(target)}, ${j(actionId)}, ${j(action.cap)}, ${j(
-          action.method,
-        )}, ${j(action.args ?? {})}, vars)`,
-      )
-    }
     case 'action':
-      return step(`        // an Action run, awaited: the step takes THAT run's outcome
+      return `        // an Action run, awaited: the step takes THAT run's outcome
         const result = await ctx.api.actions.run.mutate({
           actionId: ${j(action.actionId)},
           variables: substituteVariables(${j(action.variables ?? {})}, vars),
@@ -378,26 +341,77 @@ ${body}
         })
         if (result.outcome !== 'ran') {
           throw new Error('action ' + ${j(action.actionId)} + ' ' + result.outcome + (result.message === undefined ? '' : ': ' + result.message))
-        }`)
+        }`
     case 'stop':
-      return step(
-        `        // end the run here, on purpose: the steps after it are not-run with this reason
-        scope.stop(String(substitute(${j(action.reason)}, vars)), ${j(action.outcome)})`,
-      )
+      return `        // end the run here, on purpose: the steps after it are not-run with this reason
+        scope.stop(String(substitute(${j(action.reason)}, vars)), ${j(action.outcome)})`
     case 'set':
-      return step(
-        `        // write the run's own bag, for the steps after this one — substitution only
-        Object.assign(vars, substituteVariables(${j(action.vars)}, vars))`,
-      )
+      return `        // write the run's own bag, for the steps after this one — substitution only
+        Object.assign(vars, substituteVariables(${j(action.vars)}, vars))`
     case 'code':
-      return step(`        // inline code action — a fragment of THIS block, bundled by esbuild
+      return `        // inline code action — a fragment of THIS block, bundled by esbuild
         await (async () => {
 ${action.code
   .split('\n')
   .map((line) => `          ${line}`)
   .join('\n')}
-        })()`)
+        })()`
   }
+}
+
+function continues(action: AutomationAction): boolean {
+  return (action.kind === 'cap' || action.kind === 'action') && action.continueOnError === true
+}
+
+/** A step of a branch (or of an else list), as a whole RunnableStep literal. */
+function emitNestedStep(step: Exclude<AutomationAction, { kind: 'choose' }>): string {
+  return `{ meta: ${j(stepMetaOf(step))},${continues(step) ? ' continueOnError: true,' : ''} run: async (scope) => {\n${emitStepBody(step)}\n } }`
+}
+
+/** A step's `if` (#472) and its else list, as the fields of a RunnableStep. */
+function emitGuard(action: AutomationAction, index: number): string {
+  const when = stepGuardOf(action)
+  if (when === undefined) return ''
+  const otherwise = (action.kind === 'wait' || action.kind === 'cap' ? (action.else ?? []) : [])
+    .map(emitNestedStep)
+    .join(', ')
+  return `      guard: () => evaluateCondition(${j(when)}, ${j(`actions.${index}.if`)}, vars),${
+    otherwise === '' ? '' : `\n      otherwise: [${otherwise}],`
+  }
+`
+}
+
+/** A `choose` step: its branches, each a condition and a list, and its else list. */
+function emitChoose(action: Extract<AutomationAction, { kind: 'choose' }>, index: number): string {
+  const branches = action.branches
+    .map(
+      (branch, b) => `          {
+            guard: () => evaluateCondition(${j(branch.if)}, ${j(`actions.${index}.branches.${b}.if`)}, vars),
+            steps: [${branch.steps.map(emitNestedStep).join(', ')}],
+          },`,
+    )
+    .join('\n')
+  const otherwise = (action.else ?? []).map(emitNestedStep).join(', ')
+  return `    {
+      meta: STEP_META[${index}]!,
+      // a choose step: the runner reads the branches in order and runs the first that is true
+      run: async () => {},
+      choose: {
+        branches: [
+${branches}
+        ],${otherwise === '' ? '' : `\n        otherwise: [${otherwise}],`}
+      },
+    },`
+}
+
+function emitAction(action: AutomationAction, index: number): string {
+  if (action.kind === 'choose') return emitChoose(action, index)
+  return `    {
+      meta: STEP_META[${index}]!,
+${emitGuard(action, index)}${continues(action) ? '      continueOnError: true,\n' : ''}      run: async (scope) => {
+${emitStepBody(action)}
+      },
+    },`
 }
 
 /**
@@ -415,20 +429,20 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   const { name, recipe } = input
   const runMode = recipe.runMode ?? { mode: 'single' }
   const stepMeta = recipe.actions.map(stepMetaOf)
-  const hasDomainTarget = recipe.actions.some(
-    (a) => a.kind === 'cap' && normalizeCapStep(a).target.kind === 'domain',
+  const elseSteps = (a: AutomationAction) =>
+    a.kind === 'wait' || a.kind === 'cap' ? (a.else ?? []) : []
+  const hasDomainTarget = recipe.actions
+    .flatMap((a) => [a, ...elseSteps(a), ...nestedStepsOf(a)])
+    .some((a) => a.kind === 'cap' && normalizeCapStep(a).target.kind === 'domain')
+  const guardHoldTrees = recipe.actions.flatMap((a, i) =>
+    stepConditionsOf(a).flatMap(({ path, when }) =>
+      hasHoldLeaves(when) ? [{ path: `actions.${i}.${path}`, when }] : [],
+    ),
   )
-  const guardHoldTrees = recipe.actions.flatMap((a, i) => {
-    const when = stepGuardOf(a)
-    return when !== undefined && hasHoldLeaves(when) ? [{ path: `actions.${i}.if`, when }] : []
-  })
   // A \`time-is\` leaf reads the site clock: the site is held in memory, refreshed off the event path (D49).
   const hasTime =
     hasTimeLeaves(recipe.when) ||
-    recipe.actions.some((a) => {
-      const when = stepGuardOf(a)
-      return when !== undefined && hasTimeLeaves(when)
-    })
+    recipe.actions.some((a) => stepConditionsOf(a).some(({ when }) => hasTimeLeaves(when)))
   const eventLeaves: { leaf: AutomationEventLeaf; path: string }[] = []
   forEachLeaf(recipe.when, (leaf, path) => {
     if (isEventLeaf(leaf)) eventLeaves.push({ leaf, path })

@@ -30,7 +30,7 @@ import {
   isReadingQuantity,
   prepareRecipeUnits,
   recipeSiteIssues,
-  stepGuardOf,
+  stepConditionsOf,
   unitsForQuantity,
   validateRecipeBounds,
   type ActionTarget,
@@ -857,9 +857,12 @@ const SiteReadingSchema = z.looseObject({
   timeZone: z.string().min(1),
 })
 
-/** A recipe asks about the site only through a time window, in its rules or in a step's condition. */
+/** A recipe asks about the site only through a time window: in its rules, a step's condition or a branch's. */
 function hasTimeWindow(recipe: AutomationRecipe): boolean {
-  const trees = [recipe.when, ...recipe.actions.flatMap((a) => stepGuardOf(a) ?? [])]
+  const trees = [
+    recipe.when,
+    ...recipe.actions.flatMap((a) => stepConditionsOf(a).map((c) => c.when)),
+  ]
   let found = false
   for (const tree of trees) {
     forEachLeaf(tree, (leaf) => {

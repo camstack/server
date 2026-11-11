@@ -38,6 +38,47 @@ describe('a step that failed and was passed over (#500)', () => {
   })
 })
 
+describe('a choose step (#500)', () => {
+  it('names the list that ran and carries its steps', () => {
+    const trace: AutomationRunTrace = {
+      ...BASE,
+      steps: [
+        {
+          path: 'actions.0',
+          kind: 'choose',
+          outcome: 'ok',
+          branch: 'branches.1',
+          steps: [
+            { path: 'actions.0.branches.1.steps.0', kind: 'wait', outcome: 'ok' },
+            {
+              path: 'actions.0.branches.1.steps.1',
+              kind: 'cap',
+              outcome: 'failed-continued',
+              message: 'lamp offline',
+            },
+          ],
+        },
+        { path: 'actions.1', kind: 'choose', outcome: 'ok', branch: 'else', steps: [] },
+        {
+          path: 'actions.2',
+          kind: 'choose',
+          outcome: 'skipped',
+          message: 'not run: no branch is true',
+        },
+      ],
+    }
+    const [first, second, third] = traceDetails(trace).steps
+    expect(first?.chose).toEqual({ kind: 'branch', index: 1 })
+    expect(first?.nested).toEqual([
+      { kind: 'wait', tone: 'pass', message: null },
+      { kind: 'cap', tone: 'fail', message: 'lamp offline' },
+    ])
+    expect(second?.chose).toEqual({ kind: 'else' })
+    expect(third?.chose).toBeNull()
+    expect(third?.nested).toEqual([])
+  })
+})
+
 describe('traceView', () => {
   it('paints a clean run green end to end', () => {
     const view = traceView({
@@ -169,6 +210,8 @@ describe('traceDetails', () => {
           { name: 'label', value: { kind: 'value', text: 'dog' } },
         ],
         devices: [],
+        chose: null,
+        nested: [],
       },
     ])
   })

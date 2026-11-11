@@ -6035,7 +6035,8 @@
       "setAdd": "Add a variable",
       "setHint": "The steps after this one can use it as {{slot}}.",
       "continueOnError": "Continue if this step fails",
-      "flowGuardHint": "Checked when this step is reached. If it is false, or a state cannot be read, the step does nothing."
+      "flowGuardHint": "Checked when this step is reached. If it is false, or a state cannot be read, the step does nothing.",
+      "kindChoose": "Choose"
     },
     "automationEditor": {
       "name": "Name",
@@ -6357,6 +6358,17 @@
       "nonePicked": "Pick at least one trigger.",
       "missing_one": "{{count}} chosen trigger no longer exists. Press a trigger to drop it.",
       "missing_other": "{{count}} chosen triggers no longer exist. Press a trigger to drop them."
+    },
+    "choose": {
+      "hint": "Read top to bottom: the first branch whose condition is true runs, and only that one. If a condition cannot be read, nothing runs.",
+      "if": "If",
+      "elseIf": "Otherwise, if",
+      "removeBranch": "Remove this branch",
+      "lastBranch": "A choose keeps at least one branch",
+      "then": "Then run",
+      "maxBranches": "A choose takes at most 6 branches",
+      "addBranch": "Add a branch",
+      "else": "Otherwise, run…"
     }
   },
   "accessDenied": {
@@ -11331,7 +11343,9 @@
       "schedulerSuspendedManual": "Paused by hand",
       "stepsRan": "{{run}} of {{total}} steps ran",
       "show": "Show runs",
-      "hide": "Hide runs"
+      "hide": "Hide runs",
+      "choseElse": "Ran the \"otherwise\" list",
+      "choseBranch": "Ran branch {{n}}"
     },
     "scope": {
       "className": "what it saw",

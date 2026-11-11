@@ -1,0 +1,68 @@
+/**
+ * The pure edits of a `choose` step: its branches (a condition and a list
+ * each), read in order, and its optional else list.
+ */
+import {
+  type AutomationAction,
+  type AutomationBranchStep,
+  type AutomationChooseStep,
+  type AutomationWhen,
+  CHOOSE_BRANCHES_MAX,
+} from '@camstack/types'
+import type { ActionKind } from './recipe-parts'
+
+export type ChooseBranch = AutomationChooseStep['branches'][number]
+
+/** The step kinds a branch may hold: plain flow steps, no block and no code. */
+export const BRANCH_KINDS: readonly ActionKind[] = ['cap', 'action', 'wait', 'set', 'stop']
+
+const EMPTY_TREE: AutomationWhen = { kind: 'all', children: [] }
+
+/** A step a branch can hold: one of its kinds, with no condition of its own. */
+export function isBranchStep(action: AutomationAction): action is AutomationBranchStep {
+  if (action.kind === 'choose' || action.kind === 'code') return false
+  return !('if' in action) && !('else' in action)
+}
+
+export function newBranch(): ChooseBranch {
+  return { if: EMPTY_TREE, steps: [] }
+}
+
+export function newChoose(): AutomationChooseStep {
+  return { kind: 'choose', branches: [newBranch()] }
+}
+
+export function canAddBranch(step: AutomationChooseStep): boolean {
+  return step.branches.length < CHOOSE_BRANCHES_MAX
+}
+
+export function addBranch(step: AutomationChooseStep): AutomationChooseStep {
+  return canAddBranch(step) ? { ...step, branches: [...step.branches, newBranch()] } : step
+}
+
+/** A choose keeps at least one branch: the last one cannot be removed. */
+export function canRemoveBranch(step: AutomationChooseStep): boolean {
+  return step.branches.length > 1
+}
+
+export function removeBranch(step: AutomationChooseStep, index: number): AutomationChooseStep {
+  if (!canRemoveBranch(step)) return step
+  return { ...step, branches: step.branches.filter((_, i) => i !== index) }
+}
+
+export function replaceBranch(
+  step: AutomationChooseStep,
+  index: number,
+  next: ChooseBranch,
+): AutomationChooseStep {
+  return { ...step, branches: step.branches.map((branch, i) => (i === index ? next : branch)) }
+}
+
+/** `undefined` removes the else list: the key is omitted, never stored empty-handed. */
+export function setElse(
+  step: AutomationChooseStep,
+  steps: readonly AutomationBranchStep[] | undefined,
+): AutomationChooseStep {
+  const { else: _else, ...rest } = step
+  return steps === undefined ? rest : { ...rest, else: [...steps] }
+}

@@ -162,6 +162,27 @@ export interface StepDetailView {
   readonly args: readonly StepArgView[]
   /** What happened per device, when the step drove several. */
   readonly devices: readonly StepDeviceView[]
+  /** A choose step: the list that ran (`branch`: its 0-based index, `else`), or null. */
+  readonly chose: ChoseView | null
+  /** A choose step: the steps of the list that ran, in order. */
+  readonly nested: readonly NestedStepView[]
+}
+
+export type ChoseView =
+  | { readonly kind: 'branch'; readonly index: number }
+  | { readonly kind: 'else' }
+
+export interface NestedStepView {
+  readonly kind: string
+  readonly tone: BlockTone
+  readonly message: string | null
+}
+
+function choseOf(branch: string | undefined): ChoseView | null {
+  if (branch === undefined) return null
+  if (branch === 'else') return { kind: 'else' }
+  const index = Number(branch.slice(branch.lastIndexOf('.') + 1))
+  return Number.isInteger(index) ? { kind: 'branch', index } : null
 }
 
 export interface TraceDetails {
@@ -210,6 +231,12 @@ export function traceDetails(trace: AutomationRunTrace): TraceDetails {
         deviceId: d.deviceId,
         tone: d.outcome === 'ok' ? 'pass' : 'fail',
         message: nonEmpty(d.message),
+      })),
+      chose: choseOf(step.branch),
+      nested: (step.steps ?? []).map((inner) => ({
+        kind: inner.kind,
+        tone: stepTone(inner.outcome),
+        message: nonEmpty(inner.message),
       })),
     })),
   }

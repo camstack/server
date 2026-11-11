@@ -3,7 +3,14 @@ import type { DeviceTemplateRender } from '../../expression/device-template.js'
 import { type ActionVariable, resolveActionVariables } from '../action.js'
 import { ActionTargetResolver } from '../action-target.js'
 import { evaluateStepCondition } from '../step-condition.js'
-import { type ActionStep, ActionStepSchema, CurrentAutomationRecipeSchema } from '../recipe.js'
+import {
+  type ActionStep,
+  ActionStepSchema,
+  CHOOSE_BRANCHES_MAX,
+  CurrentAutomationRecipeSchema,
+  stepConditionsOf,
+  validateRecipeBounds,
+} from '../recipe.js'
 import {
   buildActionSteps,
   type CapCall,
@@ -187,6 +194,214 @@ describe('runSteps — flow control (#500)', () => {
     expect(ran).toEqual(['b'])
     expect(second.stopped).toMatchObject({ reason: 'else said stop', path: 'steps.0.else.0' })
     expect(second.steps[1]).toMatchObject({ outcome: 'not-run' })
+  })
+})
+
+describe('runSteps — choose (#500)', () => {
+  const ok = (ran: string[], name: string): RunnableStep => ({
+    meta: { kind: 'cap' },
+    run: async () => void ran.push(name),
+  })
+  const verdict = (result: 'true' | 'false' | 'unknown', seen?: string[], name?: string) => () => {
+    if (seen !== undefined && name !== undefined) seen.push(name)
+    return Promise.resolve({ result, reason: `it is ${result}` })
+  }
+  const choose = (
+    branches: NonNullable<RunnableStep['choose']>['branches'],
+    otherwise?: readonly RunnableStep[],
+  ): RunnableStep => ({
+    meta: { kind: 'choose' },
+    run: async () => undefined,
+    choose: { branches, ...(otherwise === undefined ? {} : { otherwise }) },
+  })
+
+  it('runs the first branch that is true and reads no branch after it', async () => {
+    const ran: string[] = []
+    const seen: string[] = []
+    const result = await runSteps(
+      [
+        choose(
+          [
+            { guard: verdict('false', seen, 'b0'), steps: [ok(ran, 'zero')] },
+            { guard: verdict('true', seen, 'b1'), steps: [ok(ran, 'one'), ok(ran, 'one-b')] },
+            { guard: verdict('true', seen, 'b2'), steps: [ok(ran, 'two')] },
+          ],
+          [ok(ran, 'else')],
+        ),
+        ok(ran, 'after'),
+      ],
+      options(),
+    )
+    expect(ran).toEqual(['one', 'one-b', 'after'])
+    expect(seen).toEqual(['b0', 'b1'])
+    expect(result.steps[0]).toMatchObject({
+      kind: 'choose',
+      outcome: 'ok',
+      branch: 'branches.1',
+      branchChecks: [
+        { condition: 'false', conditionReason: 'it is false' },
+        { condition: 'true', conditionReason: 'it is true' },
+      ],
+      steps: [
+        { path: 'steps.0.branches.1.steps.0', outcome: 'ok' },
+        { path: 'steps.0.branches.1.steps.1', outcome: 'ok' },
+      ],
+    })
+  })
+
+  it('runs the else list when every branch is false, and is skipped with the reason when there is none', async () => {
+    const ran: string[] = []
+    const none = [{ guard: verdict('false'), steps: [ok(ran, 'zero')] }]
+    const result = await runSteps([choose(none, [ok(ran, 'else')]), choose(none)], options())
+    expect(ran).toEqual(['else'])
+    expect(result.steps[0]).toMatchObject({
+      outcome: 'ok',
+      branch: 'else',
+      steps: [{ path: 'steps.0.else.0', outcome: 'ok' }],
+    })
+    expect(result.steps[1]).toMatchObject({
+      outcome: 'skipped',
+      message: 'not run: no branch is true',
+    })
+    expect(result.steps[1]).not.toHaveProperty('branch')
+  })
+
+  it('a branch that cannot be read runs nothing: not the branches after it, not the else', async () => {
+    const ran: string[] = []
+    const unknowns: string[] = []
+    const result = await runSteps(
+      [
+        choose(
+          [
+            { guard: verdict('unknown'), steps: [ok(ran, 'zero')] },
+            { guard: verdict('true'), steps: [ok(ran, 'one')] },
+          ],
+          [ok(ran, 'else')],
+        ),
+        ok(ran, 'after'),
+      ],
+      options({ onGuardUnknown: (u) => void unknowns.push(`${u.path}:${u.reason}`) }),
+    )
+    expect(ran).toEqual(['after'])
+    expect(result.failed).toBe(false)
+    expect(result.steps[0]).toMatchObject({
+      outcome: 'skipped',
+      message: 'not run: branch 1 could not be read (it is unknown)',
+    })
+    expect(unknowns).toEqual(['steps.0.branches.0.if:it is unknown'])
+  })
+
+  it("a failure or a stop inside a branch is the run's", async () => {
+    const ran: string[] = []
+    const failures: string[] = []
+    const boom: RunnableStep = {
+      meta: { kind: 'cap' },
+      run: async () => {
+        throw new Error('boom')
+      },
+    }
+    const failed = await runSteps(
+      [choose([{ guard: verdict('true'), steps: [boom, ok(ran, 'x')] }]), ok(ran, 'after')],
+      options({ onFailure: (f) => void failures.push(f.path) }),
+    )
+    expect(failed.failed).toBe(true)
+    expect(failures).toEqual(['steps.0.branches.0.steps.0'])
+    expect(failed.steps[0]).toMatchObject({
+      outcome: 'error',
+      message: 'a step of the branch failed',
+    })
+    expect(failed.steps[1]).toMatchObject({ outcome: 'not-run' })
+
+    const stop: RunnableStep = {
+      meta: { kind: 'stop' },
+      run: async (scope) => scope.stop('enough', 'ok'),
+    }
+    const stopped = await runSteps(
+      [choose([{ guard: verdict('true'), steps: [stop] }]), ok(ran, 'after')],
+      options(),
+    )
+    expect(ran).toEqual([])
+    expect(stopped.failed).toBe(false)
+    expect(stopped.stopped).toMatchObject({ path: 'steps.0.branches.0.steps.0', reason: 'enough' })
+    expect(stopped.steps[1]).toMatchObject({
+      outcome: 'not-run',
+      message: 'stopped at steps.0.branches.0.steps.0: enough',
+    })
+  })
+})
+
+describe('choose schema (#500)', () => {
+  const recipe = (actions: unknown[]) =>
+    CurrentAutomationRecipeSchema.safeParse({ when: { kind: 'manual' }, actions })
+  const issue = (actions: unknown[]): string => {
+    const parsed = recipe(actions)
+    return parsed.success ? '' : (parsed.error.issues[0]?.message ?? '')
+  }
+  const IF = { kind: 'manual' }
+  const WAIT = { kind: 'wait', seconds: 1 }
+  const branch = { if: IF, steps: [WAIT] }
+
+  it('takes up to six branches of flow steps and an else list', () => {
+    expect(
+      recipe([
+        {
+          kind: 'choose',
+          branches: [
+            {
+              if: IF,
+              steps: [
+                WAIT,
+                { kind: 'set', vars: { a: 1 } },
+                { kind: 'stop', reason: 'x', outcome: 'ok' },
+                { kind: 'action', actionId: 'internal:x', continueOnError: true },
+              ],
+            },
+            ...Array.from({ length: CHOOSE_BRANCHES_MAX - 1 }, () => branch),
+          ],
+          else: [WAIT],
+        },
+      ]).success,
+    ).toBe(true)
+  })
+
+  it('refuses the bounds with a sentence an operator can read', () => {
+    expect(issue([{ kind: 'choose', branches: [] }])).toBe('a choose needs at least one branch')
+    expect(
+      issue([
+        { kind: 'choose', branches: Array.from({ length: CHOOSE_BRANCHES_MAX + 1 }, () => branch) },
+      ]),
+    ).toBe('a choose takes at most 6 branches')
+    expect(issue([{ kind: 'choose', branches: [{ if: IF, steps: [] }] }])).toBe(
+      'a branch needs at least one step',
+    )
+    expect(
+      recipe([
+        { kind: 'choose', branches: [{ if: IF, steps: [{ kind: 'choose', branches: [branch] }] }] },
+      ]).success,
+    ).toBe(false)
+    expect(
+      recipe([{ kind: 'choose', branches: [{ if: IF, steps: [{ kind: 'code', code: 'x' }] }] }])
+        .success,
+    ).toBe(false)
+    expect(
+      recipe([{ kind: 'choose', branches: [{ if: IF, steps: [{ ...WAIT, if: IF }] }] }]).success,
+    ).toBe(false)
+  })
+
+  it('a standalone list has no choose', () => {
+    expect(ActionStepSchema.safeParse({ kind: 'choose', branches: [branch] }).success).toBe(false)
+  })
+
+  it('a branch condition is checked like a step condition: a dangling "started by" is refused', () => {
+    const parsed = recipe([
+      {
+        kind: 'choose',
+        branches: [{ if: { kind: 'triggered-by', leafIds: ['gone'] }, steps: [WAIT] }],
+      },
+    ])
+    if (!parsed.success) throw new Error('expected the schema to take it')
+    expect(validateRecipeBounds(parsed.data)).toMatch(/step 1/)
+    expect(stepConditionsOf(parsed.data.actions[0]!)).toMatchObject([{ path: 'branches.0.if' }])
   })
 })
 
