@@ -44,7 +44,7 @@ export interface CompositionSourcePorts {
   readonly bindings: (deviceId: number) => Promise<readonly BoundCapView[]>
   /**
    * One field of a source's current slice — read only for a union field the
-   * save links (D1033), to judge the source's LIVE kind. A failed or missing
+   * save links (D1034), to judge the source's LIVE kind. A failed or missing
    * read leaves the kind unknown: the save is judged without it and the
    * read-time guard still applies.
    */

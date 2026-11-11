@@ -90,7 +90,7 @@ export interface CompositionSourceFound {
   readonly quantity?: ReadingQuantity
   /**
    * The LIVE kind of each union field the composition reads from this device,
-   * keyed `<cap>.<fieldPath>` (D1033): a numeric control's `control.value` is a
+   * keyed `<cap>.<fieldPath>` (D1034): a numeric control's `control.value` is a
    * number, a select's a string. Absent when the slice was not known at save
    * time; the read-time guard still applies.
    */
@@ -292,7 +292,7 @@ interface TopLevelField {
 }
 
 /**
- * A dotted leaf is planned only on a `replace` (D1033): the feature already
+ * A dotted leaf is planned only on a `replace` (D1034): the feature already
  * passed `overridesOnlyDeclared`, so the leaf is one the cap lists in its
  * `overridable`, and the hub sets it into the native object. Anywhere else a
  * nested field is still refused.
@@ -322,7 +322,7 @@ function planTopLevelField(
       problem(
         'nested-field',
         fieldAt,
-        `\`${path}\` is nested — a nested field is planned only on a declared replace (D1033)`,
+        `\`${path}\` is nested — a nested field is planned only on a declared replace (D1034)`,
       ),
     )
   if (tf === undefined)
@@ -621,7 +621,7 @@ export function compositionSourceRefs(composition: Composition): readonly Compos
 }
 
 /**
- * Every DIRECT read (`from`) of a union source field (D1033): the reads whose
+ * Every DIRECT read (`from`) of a union source field (D1034): the reads whose
  * source's live kind a save looks up, so a numeric control is never linked to
  * a string field. A read inside an expression is judged by the expression.
  */
@@ -718,7 +718,7 @@ function selfReadProblems(
 
 /**
  * A direct read of a union field is judged by the source's LIVE kind when the
- * save knew it (D1033): a numeric control feeds only a number field, a select
+ * save knew it (D1034): a numeric control feeds only a number field, a select
  * only a string or enum one.
  */
 function liveKindProblems(

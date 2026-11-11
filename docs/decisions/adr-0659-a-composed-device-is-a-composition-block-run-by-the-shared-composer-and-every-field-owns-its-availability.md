@@ -218,3 +218,5 @@ the first cap that breaks it).
   `core-blocks-composition-admin-only.router.spec.ts` (admin tiers through the
   live router).
 - The rollback hazard: nothing, review only — and this record.
+
+> **Amended by [D1034](adr-1034-a-fan-oscillation-axis-is-part-of-fan-control-linked-by-hand-and-judged-by-its-live-kind.md), 2026-11-11.** A field whose schema is a union of scalars is wireable: the source's live kind is checked at save (`source-kind-mismatch`), and a value of another kind reads `null` at evaluation.

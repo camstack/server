@@ -42,7 +42,7 @@ export interface WireableCatalog {
 
 export type DeviceSnapshot = Readonly<Record<string, Readonly<Record<string, unknown>>>>
 
-/** One field as `getWireableFields` reports it: a `union` names its scalar members (D1033). */
+/** One field as `getWireableFields` reports it: a `union` names its scalar members (D1034). */
 export interface ReportedWireableField {
   readonly path: string
   readonly kind: CompositionFieldKind | 'union'
@@ -68,7 +68,7 @@ function liveScalarKind(value: unknown): WireableScalarKind | null {
 /**
  * The catalog the pickers offer: a union field (`control.value`) is offered as
  * the kind its device reads NOW — a numeric control as a number, a select as
- * a string — and not offered while that is unknown (D1033, D315: an unread
+ * a string — and not offered while that is unknown (D1034, D315: an unread
  * snapshot is not a kind).
  */
 export function liveWireableCatalog(

@@ -13,7 +13,7 @@ export interface StateFieldDescription {
   readonly required: boolean
   /** Present only when `kind === 'enum'` — the closed set of strings the field accepts. */
   readonly enumValues?: readonly string[]
-  /** Present only when `kind === 'union'` — the scalar kinds the field may carry (D1033). */
+  /** Present only when `kind === 'union'` — the scalar kinds the field may carry (D1034). */
   readonly unionMembers?: WireableField['unionMembers']
 }
 

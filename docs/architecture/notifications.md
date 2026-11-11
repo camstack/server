@@ -1356,7 +1356,7 @@ sentence and logs why.
 | Timelapses editor, Delivery tab | caption on the preview frame | no: `timelapsePreviewText` is `{{var}}` substitution only |
 | Texts tab (shipped-sentence catalog) | one sentence per key | no: the catalog is `{{var}}` substitution only (`text-catalog.ts`), so the field is a plain box with the variable chips (`TemplateField` with `deviceValues={false}`) |
 | Summaries editor, "Your question" | the question given to the model | no: sent to the model as written |
-| Build → Actions, scheduler points, fan presets | free-text step arguments | yes: `resolveStepArgsWithTemplates` (see [device-model](device-model.md)) |
+| Build → Actions, scheduler points | free-text step arguments | yes: `resolveStepArgsWithTemplates` (see [device-model](device-model.md)) |
 
 The `camstack` MCP tool `configure_automation_save` vets every templated step argument
 with `deviceManager.checkDeviceTemplates` before offering the save and prints the

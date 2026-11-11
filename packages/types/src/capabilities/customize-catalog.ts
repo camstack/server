@@ -116,7 +116,7 @@ export interface CustomizeCatalogTarget {
   readonly companions?: readonly CustomizeCompanion[]
   readonly sourceReport: CustomizeSourceReport
   readonly advancedExpression: boolean
-  /** The Customize section the cap files this target under (D1033). */
+  /** The Customize section the cap files this target under (D1034). */
   readonly section?: CustomizeTargetSection
 }
 

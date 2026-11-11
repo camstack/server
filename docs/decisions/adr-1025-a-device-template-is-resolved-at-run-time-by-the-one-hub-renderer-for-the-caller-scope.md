@@ -56,3 +56,5 @@ Specs per consumer, each failing with the wiring removed: `step-runner.spec.ts`,
 `actions-service.spec.ts`, `scheduler-engine.spec.ts`, `fan-presets-service.spec.ts`,
 `generated-block.spec.ts`, `dispatcher-device-templates.spec.ts`,
 `template-host.spec.ts`.
+
+> **Amended by [D1034](adr-1034-a-fan-oscillation-axis-is-part-of-fan-control-linked-by-hand-and-judged-by-its-live-kind.md), 2026-11-11.** Fan presets no longer hold action steps: a preset is a desired fan-control state, so it has no step arguments, templates or step conditions.

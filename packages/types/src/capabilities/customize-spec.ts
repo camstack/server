@@ -28,7 +28,7 @@ export type CustomizeValueKind = 'boolean' | 'number' | 'string' | 'enum'
 
 /**
  * A named group a cap may file its targets under in the Customize table
- * (D1033). Admin-ui keys a section title off this list; a target without one
+ * (D1034). Admin-ui keys a section title off this list; a target without one
  * lands in the section its cardinality implies.
  */
 export const CUSTOMIZE_TARGET_SECTIONS = ['oscillation-axes'] as const
@@ -44,7 +44,7 @@ export type CustomizeApplyMode = 'add' | 'replace'
 export interface CustomizeOverridable {
   /**
    * State field of the cap's runtime slice: top-level, or a dotted leaf
-   * (`oscillationAxes.horizontal.angle`, D1033) — the claim then owns that
+   * (`oscillationAxes.horizontal.angle`, D1034) — the claim then owns that
    * leaf only and the hub sets it into the native object.
    */
   readonly path: string
@@ -88,7 +88,7 @@ export interface CustomizeTargetBase {
   readonly apply: CustomizeApplyMode
   readonly sourceReport: CustomizeSourceReport
   readonly advancedExpression?: boolean
-  /** The Customize section the target is listed under (D1033). */
+  /** The Customize section the target is listed under (D1034). */
   readonly section?: CustomizeTargetSection
 }
 
@@ -247,7 +247,7 @@ export interface CustomizeClockCompanion {
 
 /**
  * Another field of the SAME linked source, written beside the assigned value
- * (D1033): a fan axis takes its limits from the `min`/`max`/`step` of the
+ * (D1034): a fan axis takes its limits from the `min`/`max`/`step` of the
  * control linked to its angle. Rides with the field on an add and a replace.
  */
 export interface CustomizeSourceFieldCompanion {

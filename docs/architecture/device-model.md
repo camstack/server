@@ -667,6 +667,23 @@ composer's claim and merged at the hub. `lock()` is refused at dispatch while th
 door is open (the D963 redirect, composed with the media-player one in
 core-blocks); `unlock()` never is.
 
+### A fan's oscillation axes and preset, linked by hand (D1034)
+
+[D1034](../decisions/adr-1034-a-fan-oscillation-axis-is-part-of-fan-control-linked-by-hand-and-judged-by-its-live-kind.md).
+`fan-control` carries `oscillationAxes.{horizontal,vertical}` (`oscillating`,
+`angle`, `sweepFrom`, `sweepTo`, plus the `min`/`max`/`step` limits) and
+`setOscillationAxis`. A fan whose integration exposes each axis as a separate
+switch or control gets them through `replace` targets the operator links in
+Customize (section "Oscillation axes"); nothing is inferred from entity names.
+The angle link also reads the control's own range for the limits; `preset` links
+to a select's `value`. A `control.value` source is a union of scalars, judged by
+the kind it reports now (`source-kind-mismatch` at save, `null` at read).
+`setOscillationAxis` and `setPreset` on a linked fan are forwarded to the link
+(`fan-link-forward.ts`, the D963 redirect): range and options are checked first
+(`out-of-range`), a mixed linked/unlinked call is refused (`axis-not-linked`).
+A fan preset is a desired fan-control state applied through these same methods,
+reporting each field `applied`, `failed`, `refused` or `not-run`.
+
 ### A device powered by a smart switch (`power-source`)
 
 A device that hangs (a gateway, a camera) can name the smart switch that powers
@@ -892,8 +909,8 @@ Diagnostic children (battery, temperature, humidity, illuminance, signal, last-s
 
 ## Device templates in action args ([D1025](../decisions/adr-1025-a-device-template-is-resolved-at-run-time-by-the-one-hub-renderer-for-the-caller-scope.md))
 
-A string in an action step's `args` (an action, a scheduler point, a fan preset,
-a generated automation block) may carry a device template (D1021). The ONE place
+A string in an action step's `args` (an action, a scheduler point, a generated
+automation block) may carry a device template (D1021). The ONE place
 args are resolved, `resolveStepArgsWithTemplates` (`packages/types/src/automation/step-runner.ts`),
 sends such strings to `device-manager.renderDeviceTemplates` before variables are
 substituted; the trace of the step lists every value that printed `—` with its
@@ -909,7 +926,7 @@ is reached on a mirror filled for exactly its leaves: true runs the step, false 
 the else, unknown (a state that cannot be read, or a caller not allowed to see the
 device) runs neither and the trace says why (`condition`, `conditionReason`,
 outcome `skipped`). Each consumer passes `evaluateCondition` (`step-condition-door.ts`
-for actions, the scheduler and fan presets; the generated block reads through its own
+for actions and the scheduler; the generated block reads through its own
 mirror). The editor is the "Only if…" toggle of the shared action list
 (`StepGuard.tsx`).
 

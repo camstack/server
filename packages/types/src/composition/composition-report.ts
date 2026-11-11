@@ -23,7 +23,7 @@ export const CompositionProblemCodeSchema = z.enum([
   /**
    * A union source (`control.value`) whose LIVE kind at link time is not the
    * target's: a numeric control linked to a string field, a select to a
-   * number (D1033).
+   * number (D1034).
    */
   'source-kind-mismatch',
   'may-be-null',

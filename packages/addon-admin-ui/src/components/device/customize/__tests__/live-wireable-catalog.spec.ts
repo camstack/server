@@ -1,5 +1,5 @@
 /**
- * `control.value` is a union (D1033): the pickers offer it as the kind the
+ * `control.value` is a union (D1034): the pickers offer it as the kind the
  * picked device reads NOW — the Dreo angle control 3364 as a number, the 3D
  * preset select 3375 as a string — and not at all while that is unknown.
  */

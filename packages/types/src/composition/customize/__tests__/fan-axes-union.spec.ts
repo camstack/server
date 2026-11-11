@@ -1,5 +1,5 @@
 /**
- * The Dreo studio fan as production has it (D1033): the HA integration exposes
+ * The Dreo studio fan as production has it (D1034): the HA integration exposes
  * the axes as sibling devices — numeric `control`s 3364–3369 (angle, sweep
  * from/to per axis), a `control` select 3375 (the 3D preset) and the swing
  * `switch`es 3361/3362. `control.value` is a union of number and string: a

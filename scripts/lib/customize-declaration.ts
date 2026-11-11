@@ -204,7 +204,7 @@ function judgeScalar(
       ? judgeValueSources(view, target.id, resolved, target.sources)
       : judgeOverrideSources(view, target)),
     ...judgeCompanions(view, target.id, runtime, target.companions),
-    // A replace writes over the native slice, which keeps every other field (D984, D1033).
+    // A replace writes over the native slice, which keeps every other field (D984, D1034).
     ...(target.override === undefined && target.apply !== 'replace'
       ? judgeAddCoverage(view, target.id, runtime, target.path, target.companions)
       : []),
@@ -237,7 +237,7 @@ function judgeOverrideSources(
 /**
  * Only a `replace` target may carry an override rule (D984): the boolean source
  * combined with the native value. A replace without one writes its source's
- * value over the native field as it is (D1033). Every value the rule names is
+ * value over the native field as it is (D1034). Every value the rule names is
  * one the field can hold.
  */
 function judgeOverride(
@@ -458,7 +458,7 @@ function judgeCompanions(
             ),
           ]
     }
-    // A source field (D1033) is another reading of the linked source: any leaf it resolves to.
+    // A source field (D1034) is another reading of the linked source: any leaf it resolves to.
     if (companion.kind === 'source-field') return []
     if (resolved.hit.kind !== 'number') {
       return [fail(view, targetId, 'bad-companion', `${companion.path} is not a timestamp`)]

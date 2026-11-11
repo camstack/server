@@ -115,7 +115,7 @@ export interface EvaluateCompositionFieldInput {
   /**
    * The kind of the field written (the plan's `kind`). A direct read whose
    * value is of another kind (a union source such as `control.value` whose
-   * device changed kind) is UNAVAILABLE, never coerced (D1033, D393).
+   * device changed kind) is UNAVAILABLE, never coerced (D1034, D393).
    */
   readonly targetKind?: CompositionFieldKind
   readonly stateful?: {

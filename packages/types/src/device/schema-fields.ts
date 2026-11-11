@@ -7,7 +7,7 @@ export type WireableScalarKind = 'string' | 'number' | 'boolean'
 export interface WireableField {
   readonly path: string
   /**
-   * `union` (D1033): a field whose members are all scalars (`control.value` is
+   * `union` (D1034): a field whose members are all scalars (`control.value` is
    * `number | string`). It is readable; which member a reading carries is the
    * SOURCE's live kind, judged where it is linked and again on every read.
    */

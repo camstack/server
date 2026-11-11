@@ -60,7 +60,7 @@ describe('describeCompositionSources native ownership', () => {
   })
 })
 
-describe('describeCompositionSources live kinds of a union read (D1033)', () => {
+describe('describeCompositionSources live kinds of a union read (D1034)', () => {
   const ANGLE = { addonId: 'homeassistant', stableId: 'number.studio_h_angle' }
   const read = { source: ANGLE, cap: 'control', fieldPath: 'value' }
   const controlPorts = (

@@ -115,3 +115,5 @@ save time, covered by `forward-commands.spec.ts` in `@camstack/types`. The
 runtime is covered by `forward-commands.spec.ts`,
 `actuator-groups.spec.ts` and `forward-device.e2e.spec.ts` in
 `@camstack/system`.
+
+> **Amended by [D1034](adr-1034-a-fan-oscillation-axis-is-part-of-fan-control-linked-by-hand-and-judged-by-its-live-kind.md), 2026-11-11.** The forward refusal vocabulary (`source-gone`, `source-unknown`, `source-call-failed`) also names the source of a write that a Customize `replace` link forwards on an EXISTING device.

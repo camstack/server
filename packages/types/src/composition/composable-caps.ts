@@ -79,7 +79,7 @@ export function describeComposableCaps(
       const itemArray = def.status?.itemArray
       return {
         cap: def.name,
-        // A union field is read as a source, never written (D1033).
+        // A union field is read as a source, never written (D1034).
         fields: fields.flatMap((f) =>
           f.kind === 'union'
             ? []

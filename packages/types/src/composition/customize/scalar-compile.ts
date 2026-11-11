@@ -160,7 +160,7 @@ function targetValueKind(input: ScalarCompileInput): CustomizeCatalogTarget['val
 
 /**
  * A string reading feeds a NUMBER field through `number(x)`; a string field
- * (a fan `preset` linked to a select, D1033) takes the string as it is.
+ * (a fan `preset` linked to a select, D1034) takes the string as it is.
  */
 function identityValue(
   read: CompositionFromSource,

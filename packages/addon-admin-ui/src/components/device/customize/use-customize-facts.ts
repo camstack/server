@@ -23,7 +23,7 @@ export function useCustomizeFacts(
   const wireableQuery = useDeviceManagerGetWireableFields({ deviceId: device.id })
   const composable = knownOf(composableQuery, (d) => new Set(d.caps.map((c) => c.cap)))
   const nativeCaps = knownOf(bindingsQuery, (d) => nativeCapNames(d.entries))
-  // The device's own fields: a union is offered by its live kind, which this view does not read (D1033).
+  // The device's own fields: a union is offered by its live kind, which this view does not read (D1034).
   const wireable = knownOf(wireableQuery, (d) => liveWireableCatalog(d, null))
   return {
     deviceType: device.type,

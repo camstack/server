@@ -86,7 +86,7 @@ function readKinds(read: CompositionFieldRead, lookupCap: CapabilityLookup): Kin
   }
 }
 
-/** A union field is read as a source (D1033), never written: no single kind to check a source against. */
+/** A union field is read as a source (D1034), never written: no single kind to check a source against. */
 export function unionTargetProblem(cap: string, path: string, at: string): CompositionProblem {
   return problem(
     'kind-mismatch',
@@ -102,7 +102,7 @@ export function acceptedKind(target: StateFieldDescription): ExpressionValueKind
 }
 
 /**
- * A direct read of a UNION source field (D1033) is judged by the member that
+ * A direct read of a UNION source field (D1034) is judged by the member that
  * fits the target: when one does, the read produces that kind only (a reading
  * of another kind is UNAVAILABLE at read time, never a coerced value); when
  * none does, the kinds stay as they are and `compatibility` names the mismatch.

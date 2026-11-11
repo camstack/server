@@ -95,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A camera keeps its PTZ, reboot and two-way-audio features after a hub restart or while its agent is offline, until its own provider answers
 - A provider-spawned accessory device's role is set only when it is first created, like its name: a role the operator changes now survives restarts. A later role change by the integration does not reach an existing device (same as names).
 - A device saved with the retired thermostat type is read as climate, a provider's role fills a device that has none (never one already set), and capabilities such as timed run bind by type and role, following a role change at once.
+- A fan preset is applied through the fan’s own controls and reports each value as applied, failed, refused or not run; a write to a fan field linked in Customize is forwarded to the linked switch or control, checked against its range and options.
 
 ### Removed
 

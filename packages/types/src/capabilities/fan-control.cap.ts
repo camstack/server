@@ -26,7 +26,7 @@ import { readingMeta } from '../units/quantity.js'
  *   - `FanDirection` — direction toggle (ceiling fans)
  *   - `FanOscillating` — oscillation toggle
  *
- * Per-axis oscillation (`oscillationAxes`, `setOscillationAxis`, D1033): an air
+ * Per-axis oscillation (`oscillationAxes`, `setOscillationAxis`, D1034): an air
  * circulator sweeps horizontally and vertically, each axis with its own
  * switch, fixed angle, sweep bounds and limits. A provider may report them
  * natively; otherwise the OPERATOR links sibling devices to each field in
@@ -253,7 +253,7 @@ const PRESET_TARGET: ScalarCustomizeTarget = {
 const FAN_CONTROL_TARGETS: readonly ScalarCustomizeTarget[] = [...AXIS_TARGETS, PRESET_TARGET]
 
 /**
- * Customize (D1033): the fan already serves `fan-control` natively, so every
+ * Customize (D1034): the fan already serves `fan-control` natively, so every
  * target is a `replace` over a field listed in `overridable` — the axis leaves
  * and `preset`, nothing else. Nothing is pre-linked: the operator picks each
  * source (D356).
@@ -306,7 +306,7 @@ export const fanControlCapability = {
     /**
      * Sets one oscillation axis: its switch, fixed angle and/or sweep bounds.
      * Fields left out are untouched. A field linked in Customize is forwarded
-     * to its linked source (D1033); otherwise the native provider serves it;
+     * to its linked source (D1034); otherwise the native provider serves it;
      * neither → `axis-not-linked`. Ranges are checked against the axis limits
      * before anything is written; writes run in order and stop at the first
      * failure, which the result names.

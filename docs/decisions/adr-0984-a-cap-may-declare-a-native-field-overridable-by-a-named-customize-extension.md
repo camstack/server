@@ -67,3 +67,5 @@ locked. The gate does not know the door state of a lock until the first
 `overridable`, and an `overridable` entry with no replace target. Specs:
 `lock-door-contact.spec.ts` (plan, compile, decode), `lock-door-contact-runtime.spec.ts`
 (precedence at the hub write), `lock-door-gate.spec.ts` (the gate).
+
+> **Amended by [D1034](adr-1034-a-fan-oscillation-axis-is-part-of-fan-control-linked-by-hand-and-judged-by-its-live-kind.md), 2026-11-11.** `fan-control` lists its eight oscillation-axis fields and `preset` as `overridable`; a write to a linked field follows the link through the same device-call redirect.

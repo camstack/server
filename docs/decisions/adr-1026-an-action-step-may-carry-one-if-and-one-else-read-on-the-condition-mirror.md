@@ -46,3 +46,5 @@ was whether each grew its own branching or the shape did.
 - The notification center keeps its own twin step schema and is NOT covered here.
 - A cap-shape change ships through `@camstack/types`; a node needs the framework
   closure that carries it.
+
+> **Amended by [D1034](adr-1034-a-fan-oscillation-axis-is-part-of-fan-control-linked-by-hand-and-judged-by-its-live-kind.md), 2026-11-11.** Fan presets no longer hold action steps: a preset is a desired fan-control state, so it has no step arguments, templates or step conditions.

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Devices are typed by their controls and told apart by role: a plug-in heater is a switch with role switch-heater (timed run included), a plug-powered fan a switch with role switch-fan, and the thermostat type is folded into climate with climate-* roles (AC, thermostat, radiator, floor, heater, heat-pump circuit).
 - A device provider can now rebuild two device classes that share one type (BaseDeviceProvider.deviceClassForRow), so a radiator valve and a room climate can both be climate devices.
 - Fans gain per-axis oscillation (oscillationAxes, setOscillationAxis) and a Customize spec on fan-control whose axis fields and preset the operator can link to sibling devices.
+- Fan presets are a desired fan-control state (speed, preset, direction, oscillation axes) instead of a list of steps; a Customize source whose value can be a number or a string is linkable and judged by the kind it reports now.
 
 ## [1.2.548] - 2026-11-11
 

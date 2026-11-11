@@ -1,6 +1,6 @@
 /**
  * A fan's oscillation axes are linked by the OPERATOR, field by field, to
- * sibling devices (D1033): each axis leaf is a `replace` over a path the
+ * sibling devices (D1034): each axis leaf is a `replace` over a path the
  * fan-control cap lists in `overridable`. The angle link also carries the
  * axis limits from the linked control's own range; a select links to
  * `preset` and passes its string as it is.
