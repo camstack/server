@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.239] - 2026-11-11
+
 ### Fixed
 
 - A battery camera's own 0% read during a wake refresh, asleep, or on its adapter or panel no longer replaces the real level (no more false low-battery notifications)
