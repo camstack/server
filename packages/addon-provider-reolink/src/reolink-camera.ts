@@ -1084,6 +1084,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       get online() {
         return camera.online
       },
+      get sleeping() {
+        return camera.sleeping
+      },
       get debugGeneral() {
         return camera.config.get('debugGeneral') === true
       },

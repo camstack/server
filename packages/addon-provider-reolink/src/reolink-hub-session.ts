@@ -91,6 +91,8 @@ export interface HubChildHandle {
   /** The persisted channel — `undefined` when the blob lost it (repaired from the hub). */
   readonly channel: number | undefined
   readonly online: boolean
+  /** The child is a battery camera the hub (or its own push) last reported asleep. */
+  readonly sleeping: boolean
   readonly debugGeneral: boolean
   readonly debugSocketFlags: readonly string[]
   markOnline(online: boolean): void
@@ -179,6 +181,8 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
   #refreshInFlight: Promise<void> | null = null
   /** Wall-clock ms of the last refresh that listed each child (by device id). */
   readonly #childLastSeenAt = new Map<number, number>()
+  /** The empty-list warning fired and the list has not been non-empty since. */
+  #emptyListWarned = false
   /** Channels the last good refresh listed but nobody adopted: their pushes are expected drops. */
   readonly #knownUnadoptedChannels = new Set<number>()
   readonly #unroutedLoggedAt = new Map<number, number>()
@@ -530,13 +534,29 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
    */
   private reconcileChildOnline(channels: readonly HubChannel[]): void {
     const now = this.#now()
+    const cameras = this.#deps
+      .children()
+      .filter((c) => c.channel !== undefined && c.type === DeviceType.Camera)
+    // An EMPTY list from a hub that has adopted children is UNKNOWN, not "all gone": the summary
+    // answered without error but listed nothing. Judging presence from it would flag every child.
+    if (channels.length === 0 && cameras.length > 0) {
+      if (!this.#emptyListWarned) {
+        this.#emptyListWarned = true
+        this.#logger.warn(
+          'Reolink hub: channel list came back empty with adopted children — online state left unchanged',
+          {
+            tags: { integrationId: this.integrationId },
+            meta: { adopted: cameras.length },
+          },
+        )
+      }
+      return
+    }
+    if (channels.length > 0) this.#emptyListWarned = false
     const listed = new Set(channels.map((c) => c.channel))
-    for (const child of this.#deps.children()) {
+    for (const child of cameras) {
       const ch = child.channel
       if (ch === undefined) continue
-      // Accessory grand-children carry their own linkage and are out of scope: only the
-      // direct camera children are reconciled.
-      if (child.type !== DeviceType.Camera) continue
       if (listed.has(ch)) {
         this.#childLastSeenAt.set(child.id, now)
         if (!child.online) {
@@ -548,8 +568,26 @@ export class ReolinkHubSession<TApi extends HubApiPort = ReolinkBaichuanApi> {
         }
         continue
       }
-      const lastSeen = this.#childLastSeenAt.get(child.id) ?? 0
-      const missingMs = lastSeen > 0 ? now - lastSeen : Number.POSITIVE_INFINITY
+      // Sleeping is a battery state, not unreachability: never offline, and restore a child
+      // that was wrongly flagged.
+      if (child.sleeping) {
+        this.#childLastSeenAt.set(child.id, now)
+        if (!child.online) {
+          child.markOnline(true)
+          this.#logger.info('Reolink hub: sleeping child restored to online', {
+            tags: { deviceId: child.id, deviceName: child.name },
+            meta: { channel: ch },
+          })
+        }
+        continue
+      }
+      // First sight of a child (e.g. after a restart) starts its grace window now.
+      let lastSeen = this.#childLastSeenAt.get(child.id)
+      if (lastSeen === undefined) {
+        lastSeen = now
+        this.#childLastSeenAt.set(child.id, now)
+      }
+      const missingMs = now - lastSeen
       if (missingMs >= HUB_MISSING_OFFLINE_MS && child.online) {
         child.markOnline(false)
         this.#logger.warn('Reolink hub: adopted child marked offline (missing from the hub list)', {
