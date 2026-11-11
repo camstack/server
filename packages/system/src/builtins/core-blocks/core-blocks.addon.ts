@@ -81,6 +81,7 @@ import {
   type PowerSourceDevices,
   timeoutScheduler,
 } from './power-source-service.js'
+import { fanLinkForwardRedirect, type LinkedControlReading } from './fan-link-forward.js'
 import { remoteCallRedirect } from './remote-call-redirect.js'
 import {
   buildRemoteRuntime,
@@ -420,8 +421,49 @@ export class CoreBlocksAddon extends BaseAddon {
               }),
             ]),
         gate.redirect(),
+        fanLinkForwardRedirect(this.fanLinkPorts()),
       ]),
     )
+  }
+
+  /** The fan link forward's reach (D1034): the stored blocks and the linked devices, through `ctx.api`. */
+  private fanLinkPorts(): Parameters<typeof fanLinkForwardRedirect>[0] {
+    const requireApi = (): AddonApi => {
+      const api = this.ctx.api
+      if (!api)
+        throw new Error('core-blocks: no ctx.api on this node — a fan link cannot be reached')
+      return api
+    }
+    return {
+      blocks: () => this.requireStore().list(),
+      find: async (ref) => this.deviceNames(requireApi()).find(ref),
+      readControl: async (deviceId): Promise<LinkedControlReading | null> => {
+        const slice = await requireApi().deviceState.getCapSlice.query({
+          deviceId,
+          capName: 'control',
+        })
+        if (slice === null) return null
+        const kind = slice['kind']
+        const options = slice['options']
+        const min = slice['min']
+        const max = slice['max']
+        return {
+          kind: typeof kind === 'string' ? kind : 'unknown',
+          options: Array.isArray(options)
+            ? options.filter((o): o is string => typeof o === 'string')
+            : [],
+          ...(typeof min === 'number' ? { min } : {}),
+          ...(typeof max === 'number' ? { max } : {}),
+        }
+      },
+      setSwitch: async (deviceId, on) => {
+        await requireApi().switch.setState.mutate({ deviceId, on })
+      },
+      setControl: async (deviceId, control) => {
+        await requireApi().control.setValue.mutate({ deviceId, control })
+      },
+      logger: this.ctx.logger.child('fan-links'),
+    }
   }
 
   /**

@@ -26,8 +26,14 @@ export function redirectDeviceCalls<T extends object>(
   return new Proxy<T>(provider, {
     get(target, prop): unknown {
       const value: unknown = Reflect.get(target, prop, target)
-      if (typeof value !== 'function') return value
-      if (typeof prop !== 'string' || !view.covers(prop)) return value.bind(target)
+      const covered = typeof prop === 'string' && view.covers(prop)
+      // A covered method the provider does NOT implement still asks the
+      // redirect (D1034): a fan whose driver has no `setOscillationAxis` is
+      // answered by its Customize link.
+      if (typeof value !== 'function' && !(covered && value === undefined)) return value
+      if (typeof prop !== 'string' || !covered) {
+        return typeof value === 'function' ? value.bind(target) : value
+      }
       return async (...args: unknown[]): Promise<unknown> => {
         const answer = await view.attempt({
           capName,
@@ -36,6 +42,11 @@ export function redirectDeviceCalls<T extends object>(
           args: args[0],
         })
         if (answer.kind === 'redirected') return answer.result
+        if (typeof value !== 'function') {
+          throw new Error(
+            `${capName}.${prop}: the provider of device ${deviceId} does not implement it`,
+          )
+        }
         return await value.apply(target, args)
       }
     },

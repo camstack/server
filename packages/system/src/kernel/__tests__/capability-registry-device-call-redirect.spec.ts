@@ -140,3 +140,38 @@ describe('CapabilityRegistry — the device-call redirect (D963)', () => {
     })
   })
 })
+
+describe('a covered method the provider does not implement (D1034)', () => {
+  // A fan whose driver has no `setOscillationAxis`: the Customize link answers it.
+  interface Partial {
+    getStatus: (input?: unknown) => Promise<{ level: number }>
+    wakeForStream?: (input?: unknown) => Promise<{ awoke: boolean }>
+  }
+  const bare = (): Partial => ({ getStatus: async () => ({ level: 1 }) })
+
+  it('still asks the redirect, and answers its result', async () => {
+    const reg = newRegistry()
+    reg.registerNativeProvider('battery', DEVICE, 'x', bare())
+    const r = redirect(() => ({ kind: 'redirected', result: { awoke: true } }))
+    reg.setDeviceCallRedirect(r)
+    const p = reg.getProviderForDevice<Partial>('battery', DEVICE)
+    expect(await p?.wakeForStream?.({ deviceId: DEVICE })).toEqual({ awoke: true })
+    expect(r.seen).toHaveLength(1)
+  })
+
+  it('fails by name when the redirect does not take it either', async () => {
+    const reg = newRegistry()
+    reg.registerNativeProvider('battery', DEVICE, 'x', bare())
+    reg.setDeviceCallRedirect(redirect(() => ({ kind: 'not-redirected' })))
+    const p = reg.getProviderForDevice<Partial>('battery', DEVICE)
+    await expect(p?.wakeForStream?.({ deviceId: DEVICE })).rejects.toThrow(/battery\.wakeForStream/)
+  })
+
+  it('an uncovered missing method stays missing', () => {
+    const reg = newRegistry()
+    reg.registerNativeProvider('battery', DEVICE, 'x', bare())
+    reg.setDeviceCallRedirect(redirect(() => ({ kind: 'not-redirected' })))
+    const p = reg.getProviderForDevice<Partial & { other?: unknown }>('battery', DEVICE)
+    expect(p?.other).toBeUndefined()
+  })
+})
