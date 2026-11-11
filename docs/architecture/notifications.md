@@ -1260,10 +1260,10 @@ params (`rules`, `names`, `skippedNames`, `bypassedNames`, `devices`,
 
 **A finished appliance cycle** (sensor kind `appliance-cycle`, transition
 `cleared`) has its own default sentence in the text catalog:
-`appliance.finished.title` ("{{device}} ha terminato") and
+`appliance.finished.title` («{{device}} ha terminato» [has finished]) and
 `appliance.finished.body`, whose parts are separate keys —
-`appliance.finished.duration` (" dopo {{duration}}") and
-`appliance.finished.energy` (" e ha consumato {{energy}}"). The scalars
+`appliance.finished.duration` (« dopo {{duration}}» [after]) and
+`appliance.finished.energy` (« e ha consumato {{energy}}» [and used]). The scalars
 `{{duration}}` ("52 minuti", "1 h 12 min") and `{{energy}}` ("0,84 kWh") and the
 fragments `{{afterDuration}}` / `{{usedEnergy}}` are declared for `sensor`
 rules; a part whose fact is unknown (no recorded start, no power meter, a failed
