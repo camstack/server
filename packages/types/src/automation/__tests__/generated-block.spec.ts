@@ -1762,6 +1762,66 @@ describe('wait-until (#500): the run pauses until a condition is true, under a t
   })
 })
 
+describe('parallel (#500): several steps at once, all awaited', () => {
+  const siren = (label: string) =>
+    ({ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on', args: { label } }) as const
+  const press = { kind: 'device-event', category: 'button.pressed' } as const
+
+  it('runs its steps together and the next step only when all are done', async () => {
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          { kind: 'parallel', steps: [{ kind: 'wait', seconds: 5 }, siren('together')] },
+          siren('after'),
+        ],
+      }),
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(1_000)
+    expect(h.mutate.mock.calls.map(([a]) => (a as { label: string }).label)).toEqual(['together'])
+    await settle(5_000)
+    expect(h.mutate.mock.calls.map(([a]) => (a as { label: string }).label)).toEqual([
+      'together',
+      'after',
+    ])
+    expect(h.traces()[0]?.steps[0]).toMatchObject({
+      kind: 'parallel',
+      outcome: 'ok',
+      steps: [
+        { kind: 'wait', path: 'actions.0.steps.0', outcome: 'ok' },
+        { kind: 'cap', path: 'actions.0.steps.1', outcome: 'ok' },
+      ],
+    })
+  })
+
+  it('a restart cuts every wait of a parallel short, not only the last one armed', async () => {
+    const h = start(
+      await load({
+        when: press,
+        actions: [
+          {
+            kind: 'parallel',
+            steps: [
+              { kind: 'wait', seconds: 3000 },
+              { kind: 'wait', seconds: 10 },
+            ],
+          },
+          siren('after'),
+        ],
+        runMode: { mode: 'restart' },
+      }),
+    )
+    await settle()
+    h.emit('button.pressed', {}, 1)
+    await settle(1_000)
+    h.emit('button.pressed', {}, 1)
+    await settle(1_000)
+    expect(h.traces().some((t) => t.outcome === 'aborted')).toBe(true)
+  })
+})
+
 describe('choose (#500): one step, the first branch that is true', () => {
   const motion = { ...MOTION, id: 'motion' } as const
   const press = { kind: 'device-event', category: 'button.pressed', id: 'press' } as const

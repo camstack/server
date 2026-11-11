@@ -6037,7 +6037,8 @@
       "continueOnError": "Continue if this step fails",
       "flowGuardHint": "Checked when this step is reached. If it is false, or a state cannot be read, the step does nothing.",
       "kindChoose": "Choose",
-      "kindWaitUntil": "Wait until"
+      "kindWaitUntil": "Wait until",
+      "kindParallel": "At the same time"
     },
     "automationEditor": {
       "name": "Name",
@@ -6381,6 +6382,9 @@
       "onTimeout": "If it does not happen in time",
       "continue": "Go on with the next step",
       "stop": "Stop the run as a failure"
+    },
+    "parallel": {
+      "hint": "These start together and the run goes on when all are done. If one fails, the run fails once the others finished."
     }
   },
   "accessDenied": {

@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The automation editor offers "Stop the run", "Set variables" and "Continue if this step fails"; a failed step the run passed over is shown red in the run trace
 - Automations: a Choose step in the action list, with branches read top to bottom and an optional Otherwise list; a run shows which branch ran and its steps
 - Automations: a Wait until step in the action list (condition, timeout, what to do when it runs out); a "started by" row inside a stop condition, a Choose branch or a Wait until now gives the trigger rows their ids
+- Automation editor: an "At the same time" step runs up to five commands, actions or waits together; each one has its own row in the run trace
 
 ### Changed
 

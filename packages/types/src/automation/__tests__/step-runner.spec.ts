@@ -221,6 +221,154 @@ describe('runSteps — a step that timed out and went on (#500)', () => {
   })
 })
 
+describe('runSteps — parallel (#500)', () => {
+  const gate = () => {
+    let open: () => void = () => undefined
+    const wait = new Promise<void>((resolve) => {
+      open = resolve
+    })
+    return { wait, open }
+  }
+
+  it('starts every step before any finishes, and awaits them all', async () => {
+    const order: string[] = []
+    const a = gate()
+    const b = gate()
+    const step = (name: string, g: { wait: Promise<void> }): RunnableStep => ({
+      meta: { kind: 'cap' },
+      run: async () => {
+        order.push(`start ${name}`)
+        await g.wait
+        order.push(`end ${name}`)
+      },
+    })
+    const running = runSteps(
+      [
+        {
+          meta: { kind: 'parallel' },
+          run: async () => undefined,
+          parallel: [step('a', a), step('b', b)],
+        },
+        { meta: { kind: 'cap' }, run: async () => void order.push('after') },
+      ],
+      options(),
+    )
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(order).toEqual(['start a', 'start b'])
+    b.open()
+    a.open()
+    const result = await running
+    expect(order).toEqual(['start a', 'start b', 'end b', 'end a', 'after'])
+    expect(result.steps[0]).toMatchObject({
+      kind: 'parallel',
+      outcome: 'ok',
+      steps: [
+        { path: 'steps.0.steps.0', outcome: 'ok' },
+        { path: 'steps.0.steps.1', outcome: 'ok' },
+      ],
+    })
+  })
+
+  it('a failure fails the run after the others finished; the later steps are not run', async () => {
+    const ran: string[] = []
+    const failures: string[] = []
+    const result = await runSteps(
+      [
+        {
+          meta: { kind: 'parallel' },
+          run: async () => undefined,
+          parallel: [
+            {
+              meta: { kind: 'cap' },
+              run: async () => {
+                throw new Error('lamp offline')
+              },
+            },
+            { meta: { kind: 'cap' }, run: async () => void ran.push('other') },
+          ],
+        },
+        { meta: { kind: 'cap' }, run: async () => void ran.push('after') },
+      ],
+      options({ onFailure: (f) => failures.push(`${f.path}: ${f.message}`) }),
+    )
+    expect(ran).toEqual(['other'])
+    expect(result.failed).toBe(true)
+    expect(failures).toEqual(['steps.0.steps.0: lamp offline'])
+    expect(result.steps[0]).toMatchObject({
+      outcome: 'error',
+      message: 'a parallel step failed',
+      steps: [{ outcome: 'error', message: 'lamp offline' }, { outcome: 'ok' }],
+    })
+    expect(result.steps[1]).toMatchObject({ outcome: 'not-run' })
+  })
+
+  it('a step marked to continue does not fail the run', async () => {
+    const ran: string[] = []
+    const result = await runSteps(
+      [
+        {
+          meta: { kind: 'parallel' },
+          run: async () => undefined,
+          parallel: [
+            {
+              meta: { kind: 'cap' },
+              continueOnError: true,
+              run: async () => {
+                throw new Error('speaker offline')
+              },
+            },
+            { meta: { kind: 'cap' }, run: async () => undefined },
+          ],
+        },
+        { meta: { kind: 'cap' }, run: async () => void ran.push('after') },
+      ],
+      options(),
+    )
+    expect(ran).toEqual(['after'])
+    expect(result.failed).toBe(false)
+    expect(result.steps[0]).toMatchObject({
+      outcome: 'ok',
+      steps: [{ outcome: 'failed-continued' }, { outcome: 'ok' }],
+    })
+  })
+})
+
+describe('parallel schema (#500)', () => {
+  const cap = { kind: 'cap', target: { kind: 'devices', ids: [1] }, cap: 'switch', method: 'on' }
+  const recipe = (steps: unknown[]) => ({
+    when: { kind: 'manual' },
+    actions: [{ kind: 'parallel', steps }],
+  })
+
+  it('takes two to five capability, action or wait steps', () => {
+    expect(
+      CurrentAutomationRecipeSchema.safeParse(recipe([cap, { kind: 'wait', seconds: 1 }])).success,
+    ).toBe(true)
+    expect(
+      CurrentAutomationRecipeSchema.safeParse(
+        recipe([cap, { kind: 'action', actionId: 'internal:x' }]),
+      ).success,
+    ).toBe(true)
+  })
+
+  it('refuses one step, six steps, and a set or stop inside, in words', () => {
+    const one = CurrentAutomationRecipeSchema.safeParse(recipe([cap]))
+    expect(JSON.stringify(one.error?.issues)).toMatch(/a parallel needs at least two steps/)
+    const six = CurrentAutomationRecipeSchema.safeParse(recipe([cap, cap, cap, cap, cap, cap]))
+    expect(JSON.stringify(six.error?.issues)).toMatch(/a parallel takes at most 5 steps/)
+    expect(
+      CurrentAutomationRecipeSchema.safeParse(recipe([cap, { kind: 'set', vars: { a: 1 } }]))
+        .success,
+    ).toBe(false)
+    expect(
+      CurrentAutomationRecipeSchema.safeParse(
+        recipe([cap, { kind: 'stop', reason: 'x', outcome: 'ok' }]),
+      ).success,
+    ).toBe(false)
+  })
+})
+
 describe('runSteps — choose (#500)', () => {
   const ok = (ran: string[], name: string): RunnableStep => ({
     meta: { kind: 'cap' },

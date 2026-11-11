@@ -153,6 +153,8 @@ export function newAction(kind: ActionKind): AutomationAction {
       return { kind, vars: {} }
     case 'wait-until':
       return newWaitUntil()
+    case 'parallel':
+      return { kind, steps: [] }
     case 'choose':
       return { kind, branches: [{ if: { kind: 'all', children: [] }, steps: [] }] }
     default:

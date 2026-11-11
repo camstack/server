@@ -81,6 +81,8 @@ export interface RunnableStep {
   readonly continueOnError?: boolean
   /** A `choose` step (#500): `run` is not called, the first branch that reads true is. */
   readonly choose?: RunnableChoose
+  /** A `parallel` step (#500): `run` is not called, these are started together and all awaited. */
+  readonly parallel?: readonly RunnableStep[]
 }
 
 /** One branch of a `choose`: its condition and the steps it runs. */
@@ -168,6 +170,8 @@ export interface RunStepsOptions {
   readonly onGuardUnknown?: (skipped: StepGuardUnknown) => void
   /** Called for a step that failed and was passed over (`continueOnError`): work that was dropped says so. */
   readonly onContinuedFailure?: (failure: StepFailure) => void
+  /** The index the first step of this list is traced at (a member of a `parallel` runs as a list of one). */
+  readonly indexOffset?: number
 }
 
 export interface RunStepsResult {
@@ -215,7 +219,8 @@ export async function runSteps(
   let failed = false
   let aborted = false
   let stopped: StepStop | undefined
-  for (const [index, step] of steps.entries()) {
+  for (const [position, step] of steps.entries()) {
+    const index = position + (options.indexOffset ?? 0)
     const path = `${options.pathPrefix}.${index}`
     if (stopped !== undefined) {
       traces.push({
@@ -237,6 +242,26 @@ export async function runSteps(
       continue
     }
     const startedAt = options.now()
+    if (step.parallel !== undefined) {
+      const members = await Promise.all(
+        step.parallel.map((member, at) =>
+          runSteps([member], { ...options, pathPrefix: `${path}.steps`, indexOffset: at }),
+        ),
+      )
+      const anyFailed = members.some((m) => m.failed)
+      if (anyFailed) failed = true
+      else if (members.some((m) => m.aborted)) aborted = true
+      traces.push({
+        ...step.meta,
+        path,
+        startedAt,
+        endedAt: options.now(),
+        outcome: anyFailed ? 'error' : 'ok',
+        ...(anyFailed ? { message: 'a parallel step failed' } : {}),
+        steps: members.flatMap((m) => m.steps.map(withoutNested)),
+      })
+      continue
+    }
     if (step.choose !== undefined) {
       const reading = await readChoose(step.choose)
       const base = { ...step.meta, path, startedAt, branchChecks: [...reading.checks] }
@@ -263,7 +288,11 @@ export async function runSteps(
       }
       const listPath =
         decision.branch === 'else' ? `${path}.else` : `${path}.${decision.branch}.steps`
-      const sub = await runSteps(decision.steps, { ...options, pathPrefix: listPath })
+      const sub = await runSteps(decision.steps, {
+        ...options,
+        pathPrefix: listPath,
+        indexOffset: 0,
+      })
       if (sub.failed) failed = true
       else if (sub.aborted) aborted = true
       if (sub.stopped !== undefined) stopped = sub.stopped
@@ -306,7 +335,11 @@ export async function runSteps(
           })
           continue
         }
-        const sub = await runSteps(branch, { ...options, pathPrefix: `${path}.else` })
+        const sub = await runSteps(branch, {
+          ...options,
+          pathPrefix: `${path}.else`,
+          indexOffset: 0,
+        })
         if (sub.failed) failed = true
         else if (sub.aborted) aborted = true
         if (sub.stopped !== undefined) stopped = sub.stopped

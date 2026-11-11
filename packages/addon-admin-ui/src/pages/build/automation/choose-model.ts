@@ -6,6 +6,7 @@ import {
   type AutomationAction,
   type AutomationBranchStep,
   type AutomationChooseStep,
+  type AutomationParallelStep,
   type AutomationWhen,
   CHOOSE_BRANCHES_MAX,
 } from '@camstack/types'
@@ -15,6 +16,16 @@ export type ChooseBranch = AutomationChooseStep['branches'][number]
 
 /** The step kinds a branch may hold: plain flow steps, no block and no code. */
 export const BRANCH_KINDS: readonly ActionKind[] = ['cap', 'action', 'wait', 'set', 'stop']
+
+/** The step kinds a parallel may hold: nothing that writes a variable or ends the run. */
+export const PARALLEL_KINDS: readonly ActionKind[] = ['cap', 'action', 'wait']
+
+export type ParallelMember = AutomationParallelStep['steps'][number]
+
+/** A step a parallel can hold. */
+export function isParallelMember(action: AutomationAction): action is ParallelMember {
+  return isBranchStep(action) && PARALLEL_KINDS.includes(action.kind)
+}
 
 const EMPTY_TREE: AutomationWhen = { kind: 'all', children: [] }
 

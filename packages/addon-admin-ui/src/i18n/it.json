@@ -6112,7 +6112,8 @@
       "continueOnError": "Continua se questo passo fallisce",
       "flowGuardHint": "Verificata quando si arriva a questo passo. Se è falsa, o uno stato non è leggibile, il passo non fa nulla.",
       "kindChoose": "Scegli",
-      "kindWaitUntil": "Attendi finché"
+      "kindWaitUntil": "Attendi finché",
+      "kindParallel": "Contemporaneamente"
     },
     "automationEditor": {
       "name": "Nome",
@@ -6456,6 +6457,9 @@
       "onTimeout": "Se non accade in tempo",
       "continue": "Prosegui con il passaggio successivo",
       "stop": "Ferma l'esecuzione come errore"
+    },
+    "parallel": {
+      "hint": "Partono insieme e l'esecuzione prosegue quando tutti hanno finito. Se uno fallisce, l'esecuzione fallisce dopo che gli altri hanno finito."
     }
   },
   "accessDenied": {

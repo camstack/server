@@ -351,6 +351,31 @@ export type AutomationBranchStep = z.infer<typeof AutomationBranchStepSchema>
 
 const branchSteps = z.array(AutomationBranchStepSchema).max(STEP_ELSE_MAX)
 
+export const PARALLEL_STEPS_MIN = 2
+export const PARALLEL_STEPS_MAX = 5
+
+/** A step that can run beside others: it writes no variable and does not end the run. */
+const AutomationParallelMemberSchema = AutomationBranchStepSchema.refine(
+  (step) => step.kind === 'cap' || step.kind === 'action' || step.kind === 'wait',
+  'a parallel holds device commands, actions and waits only: a set or a stop beside other steps has no order',
+)
+
+/**
+ * Several steps at once (#500): all are started together and all are awaited.
+ * A failure fails the run once the others finished, as in a sequence; a member
+ * marked "continue if this fails" does not.
+ */
+export const AutomationParallelStepSchema = z
+  .object({
+    kind: z.literal('parallel'),
+    steps: z
+      .array(AutomationParallelMemberSchema)
+      .min(PARALLEL_STEPS_MIN, 'a parallel needs at least two steps')
+      .max(PARALLEL_STEPS_MAX, `a parallel takes at most ${PARALLEL_STEPS_MAX} steps`),
+  })
+  .strict()
+export type AutomationParallelStep = z.infer<typeof AutomationParallelStepSchema>
+
 /**
  * One step, several ways (#500): the branches are read in order and the FIRST
  * whose condition is true runs; `else` runs when every branch is false. A
@@ -380,6 +405,7 @@ export const AutomationActionSchema = z.discriminatedUnion('kind', [
   AutomationSetStepSchema,
   AutomationChooseStepSchema,
   AutomationWaitUntilStepSchema,
+  AutomationParallelStepSchema,
   AutomationRunActionStepSchema,
   z.object({
     kind: z.literal('code'),
@@ -464,6 +490,7 @@ export function stepGuardOf(action: AutomationAction): AutomationWhen | undefine
     case 'code':
     case 'choose':
     case 'wait-until':
+    case 'parallel':
       return undefined
     default:
       return action.if
@@ -487,8 +514,9 @@ export function stepConditionsOf(action: AutomationAction): StepConditionRef[] {
   return when === undefined ? [] : [{ path: 'if', when }]
 }
 
-/** The steps a block step holds (the branches and the else of a `choose`); none for a plain step. */
+/** The steps a block step holds (a `choose`'s branches and else, a `parallel`'s members); none for a plain step. */
 export function nestedStepsOf(action: AutomationAction): AutomationBranchStep[] {
+  if (action.kind === 'parallel') return [...action.steps]
   if (action.kind !== 'choose') return []
   return [...action.branches.flatMap((branch) => branch.steps), ...(action.else ?? [])]
 }

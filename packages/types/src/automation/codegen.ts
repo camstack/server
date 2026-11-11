@@ -77,6 +77,8 @@ function stepMetaOf(action: AutomationAction): StepMeta {
       return { kind: 'stop' }
     case 'wait-until':
       return { kind: 'wait-until' }
+    case 'parallel':
+      return { kind: 'parallel' }
     case 'set':
       return { kind: 'set' }
     case 'choose':
@@ -329,10 +331,11 @@ function emitLeaf(trigger: AutomationEventLeaf, path: string): string {
   }
 }
 
+/** The steps the runner handles itself, or that own more than a body. */
+type BlockStepKind = 'choose' | 'wait-until' | 'parallel'
+
 /** What a plain step does when it runs: the body of its `run`, wherever the step sits. */
-function emitStepBody(
-  action: Exclude<AutomationAction, { kind: 'choose' | 'wait-until' }>,
-): string {
+function emitStepBody(action: Exclude<AutomationAction, { kind: BlockStepKind }>): string {
   switch (action.kind) {
     case 'wait':
       return `        await sleep(${j(action.seconds * 1000)})`
@@ -375,9 +378,7 @@ function continues(action: AutomationAction): boolean {
 }
 
 /** A step of a branch (or of an else list), as a whole RunnableStep literal. */
-function emitNestedStep(
-  step: Exclude<AutomationAction, { kind: 'choose' | 'wait-until' }>,
-): string {
+function emitNestedStep(step: Exclude<AutomationAction, { kind: BlockStepKind }>): string {
   return `{ meta: ${j(stepMetaOf(step))},${continues(step) ? ' continueOnError: true,' : ''} run: async (scope) => {\n${emitStepBody(step)}\n } }`
 }
 
@@ -457,6 +458,14 @@ function emitWaitUntil(
 function emitAction(action: AutomationAction, index: number): string {
   if (action.kind === 'choose') return emitChoose(action, index)
   if (action.kind === 'wait-until') return emitWaitUntil(action, index)
+  if (action.kind === 'parallel') {
+    return `    {
+      meta: STEP_META[${index}]!,
+      // a parallel step: the runner starts these together and awaits them all
+      run: async () => {},
+      parallel: [${action.steps.map(emitNestedStep).join(', ')}],
+    },`
+  }
   return `    {
       meta: STEP_META[${index}]!,
 ${emitGuard(action, index)}${continues(action) ? '      continueOnError: true,\n' : ''}      run: async (scope) => {
@@ -674,7 +683,8 @@ ${
 
   interface RunToken {
     aborted: boolean
-    wake?: () => void
+    /** What cuts short whatever the run is paused on; several at once inside a \`parallel\`. */
+    readonly wakes: Set<() => void>
   }
   interface QueuedRun {
     readonly trigger: Record<string, unknown>
@@ -685,11 +695,13 @@ ${
   /** Sleep that a restart can cut short. */
   const abortableSleep = (ms: number, token: RunToken): Promise<void> =>
     new Promise((resolve) => {
-      const timer = setTimeout(resolve, ms)
-      token.wake = () => {
+      const done = (): void => {
         clearTimeout(timer)
+        token.wakes.delete(done)
         resolve()
       }
+      const timer = setTimeout(done, ms)
+      token.wakes.add(done)
     })
 
   /** The runs paused on a \`wait-until\`, each with the devices whose report wakes it (null = any). */
@@ -700,11 +712,12 @@ ${
       const done = (): void => {
         clearTimeout(timer)
         stateWaiters.delete(done)
+        token.wakes.delete(done)
         resolve()
       }
       const timer = setTimeout(done, Math.min(ms, RECONCILE_MS))
       stateWaiters.set(done, deviceIds)
-      token.wake = done
+      token.wakes.add(done)
     })
 
   // ── the hub's runs ledger: the stamp is read ONCE here, the ring is written through RPC ──
@@ -1096,7 +1109,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
     reason: string,
     admission: AutomationRunVerdict,
   ): Promise<void> {
-    const token: RunToken = { aborted: false }
+    const token: RunToken = { aborted: false, wakes: new Set() }
     runningTokens.add(token)
     const startedAt = Date.now()
     const runId = newRunId(startedAt)
@@ -1210,7 +1223,7 @@ ${recipe.actions.map((a, i) => emitAction(a, i)).join('\n')}
         ctx.logger.info('automation restarting — ' + admission.reason, deviceTags(trigger))
         for (const running of runningTokens) {
           running.aborted = true
-          running.wake?.()
+          for (const wake of [...running.wakes]) wake()
         }
         break
       case 'run':
@@ -1292,7 +1305,7 @@ ${eventLeaves.map(({ leaf, path }) => emitLeaf(leaf, path)).join('\n\n')}
     flushSkip()
     for (const running of runningTokens) {
       running.aborted = true
-      running.wake?.()
+      for (const wake of [...running.wakes]) wake()
     }
     for (const dispose of disposers) dispose()
   }

@@ -4,8 +4,10 @@ import { describe, expect, it } from 'vitest'
 import {
   addBranch,
   canAddBranch,
+  isParallelMember,
   isBranchStep,
   newChoose,
+  PARALLEL_KINDS,
   removeBranch,
   replaceBranch,
   setElse,
@@ -67,5 +69,15 @@ describe('choose-model (#500)', () => {
         if: { kind: 'all', children: [] },
       }),
     ).toBe(false)
+  })
+})
+
+describe('parallel members (#500)', () => {
+  it('takes a command, an action and a wait, and refuses a set, a stop and a block step', () => {
+    expect(isParallelMember({ kind: 'wait', seconds: 5 })).toBe(true)
+    expect(isParallelMember({ kind: 'set', vars: {} })).toBe(false)
+    expect(isParallelMember({ kind: 'stop', reason: '', outcome: 'ok' })).toBe(false)
+    expect(isParallelMember({ kind: 'parallel', steps: [] })).toBe(false)
+    expect(PARALLEL_KINDS).toEqual(['cap', 'action', 'wait'])
   })
 })

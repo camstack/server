@@ -191,3 +191,37 @@ describe('ActionList wait-until (#500)', () => {
     expect(latest).toEqual([{ ...WAIT_UNTIL, timeoutS: 21600, onTimeout: 'stop' }])
   })
 })
+
+describe('ActionList parallel (#500)', () => {
+  const PARALLEL: AutomationAction = { kind: 'parallel', steps: [] }
+
+  it('is offered in an automation list and nowhere else', () => {
+    render(<Harness flow initial={[CAP]} />)
+    fireEvent.click(screen.getByTestId('step-kind-0'))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toContain('At the same time')
+  })
+
+  it('is not offered where the list is not an automation', () => {
+    render(<Harness flow={false} initial={[CAP]} />)
+    fireEvent.click(screen.getByTestId('step-kind-0'))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).not.toContain(
+      'At the same time',
+    )
+  })
+
+  it('holds commands, actions and waits only, and stops adding at five', () => {
+    render(<Harness flow initial={[PARALLEL]} />)
+    const box = within(screen.getByTestId('parallel-steps-0'))
+    const add = box.getByRole('button', { name: 'Step' })
+    for (let i = 0; i < 5; i++) fireEvent.click(add)
+    expect(latest[0]).toMatchObject({ kind: 'parallel' })
+    expect(latest[0]?.kind === 'parallel' ? latest[0].steps.length : 0).toBe(5)
+    expect(box.getByRole('button', { name: 'Step' })).toHaveProperty('disabled', true)
+    fireEvent.click(box.getByTestId('step-kind-0'))
+    const inner = screen.getAllByRole('option').map((o) => o.textContent)
+    expect(inner).toEqual(expect.arrayContaining(['Wait', 'Run an action']))
+    expect(inner).not.toContain('Stop the run')
+    expect(inner).not.toContain('Set variables')
+    expect(inner).not.toContain('At the same time')
+  })
+})

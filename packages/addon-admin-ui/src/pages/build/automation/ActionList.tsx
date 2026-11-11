@@ -29,7 +29,7 @@ import {
   type DeviceListState,
   Textarea,
 } from '@camstack/ui-library'
-import { STOP_REASON_MAX, WAIT_MAX_SECONDS } from '@camstack/types'
+import { PARALLEL_STEPS_MAX, STOP_REASON_MAX, WAIT_MAX_SECONDS } from '@camstack/types'
 import { Plus, Trash2 } from 'lucide-react'
 import { CommandStep } from '../flow/CommandStep'
 import { toneBorderClass } from '../flow/RunsPanel'
@@ -42,6 +42,7 @@ import { RunActionFields } from './RunActionFields'
 import { MoveButtons, type MoveTexts } from './MoveButtons'
 import { type ActionKind, moveItem, newAction, removeAt, replaceAt } from './recipe-parts'
 import { ChooseFields } from './ChooseFields'
+import { isParallelMember, PARALLEL_KINDS } from './choose-model'
 import { SetVarsFields } from './SetVarsFields'
 import { StepGuard, StepIf } from './StepGuard'
 import { WaitUntilFields } from './WaitUntilFields'
@@ -55,11 +56,12 @@ const ACTION_KINDS: readonly { readonly value: ActionKind; readonly labelKey: st
   { value: 'set', labelKey: 'automation.actionList.kindSet' },
   { value: 'stop', labelKey: 'automation.actionList.kindStop' },
   { value: 'choose', labelKey: 'automation.actionList.kindChoose' },
+  { value: 'parallel', labelKey: 'automation.actionList.kindParallel' },
   { value: 'code', labelKey: 'automation.actionList.kindCode' },
 ]
 
 /** The steps that only an automation's own list runs (#500). */
-const FLOW_KINDS: readonly ActionKind[] = ['set', 'stop', 'choose', 'wait-until']
+const FLOW_KINDS: readonly ActionKind[] = ['set', 'stop', 'choose', 'wait-until', 'parallel']
 
 export interface ActionListProps {
   readonly actions: readonly AutomationAction[]
@@ -80,6 +82,8 @@ export interface ActionListProps {
    * if this fails". A standalone list (an action, a scheduler point) does not.
    */
   readonly flowControl?: boolean
+  /** The most steps the list takes; the add button is disabled there. Default: no bound here. */
+  readonly maxSteps?: number
   readonly onChange: (next: readonly AutomationAction[]) => void
 }
 
@@ -93,6 +97,7 @@ export function ActionList({
   stepResults,
   nested = false,
   flowControl = false,
+  maxSteps,
   onChange,
 }: ActionListProps) {
   const { t } = useTranslation()
@@ -234,6 +239,37 @@ export function ActionList({
             />
           )}
 
+          {action.kind === 'parallel' && (
+            <div className="space-y-2" data-testid={`parallel-steps-${String(index)}`}>
+              <p className="text-xs text-foreground-subtle">
+                {t(
+                  'automation.parallel.hint',
+                  'These start together and the run goes on when all are done. If one fails, the run fails once the others finished.',
+                )}
+              </p>
+              <div className="border-l-2 border-border-subtle pl-3">
+                <ActionList
+                  nested
+                  flowControl
+                  actions={action.steps}
+                  devices={devices}
+                  devicesState={devicesState}
+                  variables={variables}
+                  allowedKinds={PARALLEL_KINDS}
+                  maxSteps={PARALLEL_STEPS_MAX}
+                  onChange={(next) =>
+                    onChange(
+                      replaceAt(actions, index, {
+                        ...action,
+                        steps: next.filter(isParallelMember),
+                      }),
+                    )
+                  }
+                />
+              </div>
+            </div>
+          )}
+
           {action.kind === 'choose' && (
             <ChooseFields
               index={index}
@@ -344,6 +380,7 @@ export function ActionList({
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
+          disabled={maxSteps !== undefined && actions.length >= maxSteps}
           onClick={() => onChange([...actions, newAction(kinds[0]?.value ?? 'cap')])}
         >
           <Plus className="h-4 w-4" /> {t('automation.actionList.addStep')}
