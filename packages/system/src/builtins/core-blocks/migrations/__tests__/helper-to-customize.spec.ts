@@ -309,7 +309,8 @@ describe('core-blocks migration: appliance and heater helpers become plain Custo
     const block = await storedBlock('heater-1')
     const composition = compositionOf(block)
     expect(composition.helper).toBeUndefined()
-    expect(composition.target).toEqual({ kind: 'new', type: 'heater' })
+    // The stored row named the retired `heater` type; the rewrite states the role (D1033).
+    expect(composition.target).toEqual({ kind: 'new', type: 'switch', role: 'switch-heater' })
     expect(featureOf(composition, 'switch')).toEqual(featureOf(compiled(HEATER).plain, 'switch'))
     expect(featureOf(composition, 'switch').commands?.['setState']).toEqual({
       kind: 'forward',

@@ -18,7 +18,9 @@
  *    `setState` to it, is kept exactly as it is;
  *  - a heater with no meter runs while its plug is on (the plug as a `switch`
  *    source, identity): it never used the threshold, so none is stored;
- *  - the `helper` key leaves the composition.
+ *  - the `helper` key leaves the composition;
+ *  - a heater's retired `heater` target type becomes a `switch` with the
+ *    `switch-heater` role (D1033), the same device under the role model.
  *
  * The block id, and with it the composed device stableId and the deviceId
  * the device registry holds, never moves, so the history stays attached. Only
@@ -39,6 +41,8 @@ import {
   CompositionSchema,
   type CoreBlock,
   CoreBlockSchema,
+  DeviceRole,
+  DeviceType,
   type HelperMember,
   HelperMemberSchema,
   type MigrationProcedureResult,
@@ -284,13 +288,28 @@ interface LegacyHelperBlock {
   readonly withoutHelper: unknown
 }
 
+const RetiredHeaterTargetSchema = z.looseObject({
+  target: z.looseObject({ kind: z.literal('new'), type: z.literal('heater') }),
+})
+
+/** D1033 retired the `heater` type: a stored heater target is a switch with the heater role. */
+function retypeRetiredHeater(composition: Record<string, unknown>): Record<string, unknown> {
+  const retired = RetiredHeaterTargetSchema.safeParse(composition)
+  if (!retired.success) return composition
+  return {
+    ...composition,
+    target: { ...retired.data.target, type: DeviceType.Switch, role: DeviceRole.SwitchHeater },
+  }
+}
+
 /** `null` when the row holds no appliance or heater helper; throws when it holds one it cannot read. */
 function legacyHelperOf(row: StoredBlockRow): LegacyHelperBlock | null {
   if (!RawHelperBlockSchema.safeParse(row.data.block).success) return null
   const envelope = LegacyHelperBlockSchema.safeParse(row.data.block)
   if (!envelope.success)
     return refuse(row.id, `the stored helper spec does not parse: ${envelope.error.message}`)
-  const { helper, ...composition } = envelope.data.source.composition
+  const { helper, ...stored } = envelope.data.source.composition
+  const composition = retypeRetiredHeater(stored)
   return {
     helper,
     withoutHelper: { ...envelope.data, source: { ...envelope.data.source, composition } },

@@ -71,10 +71,11 @@ export interface LegacyHelperComposition {
 
 function parse(
   draft: { readonly helper: unknown } & Record<string, unknown>,
+  storedTarget?: Record<string, unknown>,
 ): LegacyHelperComposition {
   const { helper, ...rest } = draft
   const plain = CompositionSchema.parse(rest)
-  return { plain, stored: { ...plain, helper } }
+  return { plain, stored: { ...plain, ...(storedTarget ? { target: storedTarget } : {}), helper } }
 }
 
 export function legacyAppliance(spec: LegacyApplianceSpec): LegacyHelperComposition {
@@ -119,46 +120,51 @@ export function legacyHeater(spec: LegacyHeaterSpec): LegacyHelperComposition {
   const plug = readOf(spec.plug)
   const meter = spec.meter === undefined ? undefined : readOf(spec.meter)
   const d = dwell(spec)
-  return parse({
-    target: { kind: 'new', type: 'heater' },
-    helper: spec,
-    features: [
-      {
-        kind: 'fields',
-        cap: 'switch',
-        fields: { on: plug, lastChangedAt: CLOCK },
-        commands: {
-          setState: {
-            kind: 'forward',
-            source: spec.plug.source,
-            cap: 'switch',
-            method: 'setState',
+  // The row stored the retired `heater` type; the live shape is a switch with
+  // the heater role (D1033), which is what the migration must produce.
+  return parse(
+    {
+      target: { kind: 'new', type: 'switch', role: 'switch-heater' },
+      helper: spec,
+      features: [
+        {
+          kind: 'fields',
+          cap: 'switch',
+          fields: { on: plug, lastChangedAt: CLOCK },
+          commands: {
+            setState: {
+              kind: 'forward',
+              source: spec.plug.source,
+              cap: 'switch',
+              method: 'setState',
+            },
           },
         },
-      },
-      {
-        kind: 'fields',
-        cap: 'running-state',
-        fields: {
-          running: meter === undefined ? expr('x', { x: plug }) : expr(d, { x: meter }),
-          source: expr('"assigned"'),
-          phase: expr('null'),
-          lastFetchedAt: CLOCK,
-          since:
-            meter === undefined
-              ? expr('latchedAt(x)', { x: plug })
-              : expr(`latchedAt(${d})`, { x: meter }),
+        {
+          kind: 'fields',
+          cap: 'running-state',
+          fields: {
+            running: meter === undefined ? expr('x', { x: plug }) : expr(d, { x: meter }),
+            source: expr('"assigned"'),
+            phase: expr('null'),
+            lastFetchedAt: CLOCK,
+            since:
+              meter === undefined
+                ? expr('latchedAt(x)', { x: plug })
+                : expr(`latchedAt(${d})`, { x: meter }),
+          },
         },
-      },
-      ...(meter === undefined
-        ? []
-        : [
-            {
-              kind: 'fields' as const,
-              cap: 'power-meter',
-              fields: { power: meter, lastFetchedAt: CLOCK },
-            },
-          ]),
-    ],
-  })
+        ...(meter === undefined
+          ? []
+          : [
+              {
+                kind: 'fields' as const,
+                cap: 'power-meter',
+                fields: { power: meter, lastFetchedAt: CLOCK },
+              },
+            ]),
+      ],
+    },
+    { kind: 'new', type: 'heater' },
+  )
 }
