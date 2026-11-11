@@ -36,6 +36,8 @@ export interface ConditionKindPickerProps {
   /** Adding to a tree already at its row bound. False when changing a row's type. */
   readonly treeFull: boolean
   readonly suggested?: readonly AutomationLeafKind[]
+  /** Kinds with no meaning in this place: left out entirely, not disabled. */
+  readonly hidden?: readonly AutomationLeafKind[]
   /** Remembers the kinds picked here last time (per place). */
   readonly recentKey?: string
   readonly textsOf: (kind: AutomationLeafKind) => KindTexts
@@ -139,6 +141,7 @@ function PickerBody(props: ConditionKindPickerProps): JSX.Element {
         treeFull: props.treeFull,
         recent: recent.kinds,
         suggested: props.suggested ?? [],
+        ...(props.hidden === undefined ? {} : { hidden: props.hidden }),
       }),
     [props, query, recent.kinds],
   )

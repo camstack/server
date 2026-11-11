@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Automation editor: each WHEN block draws its rows on a coloured rail of its own, so sibling and nested blocks are told apart; move arrows at an edge stay disabled and say why; the Ungroup button is gone.
+- The "Started by" condition is offered only inside an automation, not in a standalone action list or a scheduler
 
 ## [1.2.642] - 2026-11-11
 

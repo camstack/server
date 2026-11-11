@@ -12,6 +12,10 @@ import type {
 import { ConditionKindPicker, type KindDisabledReason, type KindTexts } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { leafKindDescription, leafKindExample, leafKindLabel } from './recipe-parts'
+import { useInsideAutomation } from './trigger-rows-context'
+
+/** Kinds that read the run's trigger: meaningless where no trigger exists. */
+const NEEDS_A_TRIGGER: readonly AutomationLeafKind[] = ['triggered-by']
 
 export interface LeafKindPickerModalProps {
   readonly open: boolean
@@ -41,6 +45,7 @@ export function LeafKindPickerModal({
   onPick,
 }: LeafKindPickerModalProps) {
   const { t } = useTranslation()
+  const insideAutomation = useInsideAutomation()
   return (
     <ConditionKindPicker
       open={open}
@@ -53,6 +58,7 @@ export function LeafKindPickerModal({
       context={context}
       underNot={underNot}
       treeFull={treeFull}
+      {...(insideAutomation ? {} : { hidden: NEEDS_A_TRIGGER })}
       recentKey={`automation-${context}`}
       textsOf={textsOf}
       categoryLabelOf={(category: AutomationLeafCategory) =>

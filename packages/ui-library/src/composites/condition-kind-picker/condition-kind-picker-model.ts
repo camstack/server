@@ -55,6 +55,11 @@ export interface KindPickerInput {
   readonly recent: readonly AutomationLeafKind[]
   /** Kinds the surrounding page suggests (a camera page suggests detection). */
   readonly suggested: readonly AutomationLeafKind[]
+  /**
+   * Kinds that have no meaning in this place and are left out entirely — unlike
+   * a kind the place cannot take NOW, which stays, disabled with its reason.
+   */
+  readonly hidden?: readonly AutomationLeafKind[]
 }
 
 export interface KindPickerView {
@@ -131,7 +136,11 @@ export function buildKindPicker(input: KindPickerInput): KindPickerView {
   const searching = words.length > 0
   // Every kind is offered, the ones this place cannot take disabled with the
   // reason: a kind that silently vanishes reads as "it does not exist".
+  // The exception is a kind the caller hides because it means nothing here.
+  const hidden = input.hidden ?? []
+  const offered = (kind: AutomationLeafKind): boolean => !hidden.includes(kind)
   const scored = leafKindsFor('any')
+    .filter(offered)
     .map((kind) => {
       const item = itemOf(kind, input)
       const score = searching ? queryScore(words, item, input.categoryLabelOf(item.category)) : 1
@@ -149,10 +158,11 @@ export function buildKindPicker(input: KindPickerInput): KindPickerView {
     .sort((a, b) => b.score - a.score)
     .find((entry) => entry.item.disabled === null)
 
-  const suggestedKinds = searching ? [] : uniqueKinds(input.suggested)
+  const suggestedKinds = searching ? [] : uniqueKinds(input.suggested).filter(offered)
   const recentKinds = searching
     ? []
     : uniqueKinds(input.recent)
+        .filter(offered)
         .filter((kind) => !suggestedKinds.includes(kind))
         .slice(0, RECENT_KIND_LIMIT)
 

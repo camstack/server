@@ -8,7 +8,8 @@ import { createContext, type ReactNode, useContext, useMemo } from 'react'
 import { type TriggerRow, triggerRowsOf } from './triggered-by-model'
 
 const NO_ROWS: readonly TriggerRow[] = []
-const TriggerRowsContext = createContext<readonly TriggerRow[]>(NO_ROWS)
+/** `null` outside an automation: a standalone action list or a scheduler has no trigger rows. */
+const TriggerRowsContext = createContext<readonly TriggerRow[] | null>(null)
 
 export interface TriggerRowsProviderProps {
   /** The automation's `when` tree. */
@@ -23,5 +24,13 @@ export function TriggerRowsProvider({ when, children }: TriggerRowsProviderProps
 
 /** The named trigger rows of the automation being edited; empty outside one. */
 export function useTriggerRows(): readonly TriggerRow[] {
-  return useContext(TriggerRowsContext)
+  return useContext(TriggerRowsContext) ?? NO_ROWS
+}
+
+/**
+ * Whether the editor around is an automation's. Outside one nothing starts the
+ * run, so "started by" is not offered there (the save refuses it anyway).
+ */
+export function useInsideAutomation(): boolean {
+  return useContext(TriggerRowsContext) !== null
 }

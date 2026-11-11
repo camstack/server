@@ -56,8 +56,11 @@ row would silently repoint every guard that named it.
 A run started by a row with no id (a recipe written by hand) matches no
 `triggered-by`: the answer is a definite "no", with the reason on the trace.
 
-Not covered: the row picker still offers the kind in the standalone action and
-scheduler editors, where the save then refuses it with the reason.
+The row picker leaves the kind out where no automation surrounds it (a
+standalone action list, a scheduler): the picker takes a `hidden` list for a
+kind that has no meaning in a place, distinct from a kind the place cannot take
+now, which stays visible, disabled with its reason. The save refusal remains
+the backstop.
 
 ## Enforcement
 
@@ -65,4 +68,5 @@ scheduler editors, where the save then refuses it with the reason.
 evaluator, unknown without a trigger, a guard alone is not refused),
 `generated-block.spec.ts` ("one automation, a different step per trigger"),
 `triggered-by-model.spec.ts` and `TriggeredByFields.spec.tsx` (id assignment,
-the picker), `when-ops.spec.ts` (an id survives a kind change).
+the picker), `LeafKindPickerModal.spec.tsx` and `condition-kind-picker-model.spec.ts`
+(not offered outside an automation), `when-ops.spec.ts` (an id survives a kind change).

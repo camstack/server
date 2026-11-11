@@ -118,6 +118,27 @@ describe('buildKindPicker', () => {
     expect(view.firstEnabled).toBe('device-is')
   })
 
+  it('a hidden kind is not offered at all: not in a group, a search, the recents or the suggestions', () => {
+    const hidden = ['triggered-by'] as const
+    const view = buildKindPicker(
+      input({
+        context: 'guard',
+        hidden,
+        recent: ['triggered-by', 'device-is'],
+        suggested: ['triggered-by'],
+      }),
+    )
+    expect(kindsOf(view)).not.toContain('triggered-by')
+    expect(kindsOf(view)).toContain('device-is')
+    expect(view.recent.map((i) => i.kind)).toEqual(['device-is'])
+    expect(view.suggested).toEqual([])
+    expect(kindsOf(buildKindPicker(input({ context: 'guard', hidden, query: 'started' })))).toEqual(
+      [],
+    )
+    // not hidden: it is there
+    expect(kindsOf(buildKindPicker(input({ context: 'guard' })))).toContain('triggered-by')
+  })
+
   it('needs every word of the query, in any of label, description, example, keywords, category', () => {
     expect(kindsOf(buildKindPicker(input({ query: 'device becomes' })))).toEqual(['device-becomes'])
     expect(kindsOf(buildKindPicker(input({ query: 'cameras parked' }))).sort()).toEqual([

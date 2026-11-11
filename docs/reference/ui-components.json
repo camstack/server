@@ -2830,6 +2830,12 @@
           "doc": ""
         },
         {
+          "name": "hidden",
+          "type": "readonly AutomationLeafKind[]",
+          "optional": true,
+          "doc": "Kinds with no meaning in this place: left out entirely, not disabled."
+        },
+        {
           "name": "recentKey",
           "type": "string",
           "optional": true,
