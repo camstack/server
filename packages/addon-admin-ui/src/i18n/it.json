@@ -12075,38 +12075,47 @@
   "fanPresets": {
     "problem": {
       "name": "Dai un nome al preset.",
-      "noSteps": "Aggiungi almeno un passo, oppure usa i valori attuali.",
-      "duplicate": "Un altro preset ha già questo nome."
+      "duplicate": "Un altro preset ha già questo nome.",
+      "noFields": "Imposta almeno un valore, oppure usa i valori attuali."
     },
     "dialog": {
       "title": "Preset del ventilatore",
       "name": "Nome",
       "namePlaceholder": "Notte, Boost, Fuori casa…",
-      "stepsHint": "I passi vengono eseguiti in ordine, su questo ventilatore e sui dispositivi accanto.",
       "useCurrent": "Usa i valori attuali",
       "captureFailed": "Non è stato possibile leggere i valori attuali.",
-      "omitted": "Questi valori non sono stati letti, quindi sono stati esclusi:"
+      "omitted": "Questi valori non sono leggibili, quindi sono stati esclusi:",
+      "unchanged": "Invariato",
+      "stateHint": "Imposta solo ciò che questo preset deve cambiare. Un valore vuoto resta com’è."
     },
     "card": {
       "title": "Preset",
       "add": "Aggiungi preset",
       "unreadable": "Non è stato possibile leggere i preset.",
       "loading": "Caricamento dei preset…",
-      "none": "Nessun preset. Un preset imposta il ventilatore, e la luce o l'interruttore accanto, in un colpo solo.",
-      "steps": "Passi: {{count}}",
+      "none": "Nessun preset. Un preset imposta velocità, modalità, direzione e oscillazione del ventilatore in un colpo solo.",
       "edit": "Modifica {{name}}",
       "delete": "Elimina {{name}}",
       "deleteTitle": "Eliminare questo preset?",
-      "deleteMessage": "{{name}} verrà eliminato e Alexa, HomeKit e Home Assistant smetteranno di offrirlo."
+      "deleteMessage": "{{name}} verrà eliminato e Alexa, HomeKit e Home Assistant smetteranno di offrirlo.",
+      "fields": "Valori: {{count}}"
     },
-    "capture": {
-      "group": {
-        "fan": "Ventilatore",
-        "oscillation": "Oscillazione",
-        "angles": "Angoli"
-      },
-      "hint": "Seleziona cosa deve impostare questo preset. I valori non selezionati restano come sono.",
-      "apply": "Usa selezionati"
+    "axis": {
+      "horizontal": "Asse orizzontale",
+      "vertical": "Asse verticale",
+      "angle": "Angolo (°)",
+      "sweepFrom": "Oscillazione da (°)",
+      "sweepTo": "Oscillazione a (°)",
+      "oscillating": "Oscillazione",
+      "on": "Attiva",
+      "off": "Disattiva"
+    },
+    "field": {
+      "speed": "Velocità (%)",
+      "preset": "Modalità preset del ventilatore",
+      "direction": "Direzione",
+      "forward": "Avanti",
+      "reverse": "Indietro"
     }
   },
   "providerInstances": {

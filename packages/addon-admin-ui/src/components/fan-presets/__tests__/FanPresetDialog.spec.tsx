@@ -1,17 +1,11 @@
-import type { ActionStep, FanPreset } from '@camstack/types'
+import type { FanPreset, FanPresetCaptureResult } from '@camstack/types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
 
-const FAN = 5
-const CAPTURED: ActionStep = {
-  kind: 'cap',
-  target: { kind: 'devices', ids: [FAN] },
-  cap: 'fan-control',
-  method: 'setPercentage',
-  args: { speed: 60 },
-}
+/** The Dreo studio fan (3370): its horizontal axis linked to 3361/3364 in Customize. */
+const FAN = 3370
 
 const refetch = vi.fn()
 
@@ -28,16 +22,18 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
-// The step list has its own specs; here it only shows how many steps the draft holds.
-vi.mock('../../../pages/build/automation/ActionList', () => ({
-  ActionList: ({ actions }: { actions: readonly unknown[] }) => (
-    <p data-testid="step-count">{actions.length}</p>
-  ),
-}))
-
 import { FanPresetDialog } from '../FanPresetDialog'
 
-const DRAFT: FanPreset = { id: 'p1', name: 'Notte', steps: [] }
+const DRAFT: FanPreset = { id: 'p1', name: 'Notte', state: {} }
+
+const CAPTURED: FanPresetCaptureResult = {
+  state: {
+    speed: 40,
+    preset: 'Preset 2',
+    oscillationAxes: { horizontal: { oscillating: true, angle: 30 } },
+  },
+  omitted: [{ what: 'direction', reason: 'the fan reports no direction' }],
+}
 
 function renderDialog(onSave = vi.fn()): void {
   render(
@@ -46,7 +42,6 @@ function renderDialog(onSave = vi.fn()): void {
         fanId={FAN}
         draft={DRAFT}
         others={[]}
-        devices={[]}
         saving={false}
         error={null}
         onSave={onSave}
@@ -56,61 +51,49 @@ function renderDialog(onSave = vi.fn()): void {
   )
 }
 
-const SWITCH: ActionStep = {
-  kind: 'cap',
-  target: { kind: 'devices', ids: [7] },
-  cap: 'switch',
-  method: 'setState',
-  args: { on: true },
-}
-const ANGLE: ActionStep = {
-  kind: 'cap',
-  target: { kind: 'devices', ids: [8] },
-  cap: 'control',
-  method: 'setValue',
-  args: { control: { kind: 'numeric', value: 45 } },
-}
-const PROPOSAL = {
-  steps: [ANGLE, SWITCH, CAPTURED],
-  items: [
-    { group: 'angles', label: 'Angolo orizzontale' },
-    { group: 'oscillation', label: 'Oscillazione orizzontale' },
-    { group: 'fan', label: 'speed' },
-  ],
-  omitted: [{ what: 'oscillating', reason: 'the fan reports no oscillation' }],
-}
+const valueOf = (testId: string): string => (screen.getByTestId(testId) as HTMLInputElement).value
 
-describe('FanPresetDialog "Use current values"', () => {
+describe('FanPresetDialog', () => {
   beforeEach(() => refetch.mockReset())
 
-  it('proposes every sibling ticked, grouped fan / oscillation / angles, and names what it left out', async () => {
-    refetch.mockResolvedValue({ data: PROPOSAL })
+  it('"Use current values" fills the form from the fan-control state and names what it left out', async () => {
+    refetch.mockResolvedValue({ data: CAPTURED })
     renderDialog()
     fireEvent.click(screen.getByTestId('fan-preset-use-current'))
-    await waitFor(() => expect(screen.getByTestId('fan-preset-capture')).toBeTruthy())
-    const boxes = screen.getAllByRole('checkbox')
-    expect(boxes).toHaveLength(3)
-    expect(boxes.every((box) => (box as HTMLInputElement).checked)).toBe(true)
-    const text = screen.getByTestId('fan-preset-capture').textContent ?? ''
-    expect(text.indexOf('Fan')).toBeLessThan(text.indexOf('Oscillation'))
-    expect(text.indexOf('Oscillation')).toBeLessThan(text.indexOf('Angles'))
+    await waitFor(() => expect(valueOf('fan-preset-speed')).toBe('40'))
+    expect(valueOf('fan-preset-mode')).toBe('Preset 2')
+    expect(valueOf('fan-preset-axis-horizontal-angle')).toBe('30')
+    expect(valueOf('fan-preset-axis-vertical-angle')).toBe('')
     expect(screen.getByTestId('fan-preset-omitted').textContent).toContain(
-      'oscillating: the fan reports no oscillation',
+      'direction: the fan reports no direction',
     )
-    expect(screen.getByTestId('step-count').textContent).toBe('0')
   })
 
-  it('applies only the ticked steps, in the proposed order, and saves nothing until Save', async () => {
-    refetch.mockResolvedValue({ data: PROPOSAL })
+  it('saves the desired state, with an emptied field left out, only on Save', async () => {
+    refetch.mockResolvedValue({ data: CAPTURED })
     const onSave = vi.fn()
     renderDialog(onSave)
     fireEvent.click(screen.getByTestId('fan-preset-use-current'))
-    await waitFor(() => expect(screen.getByTestId('fan-preset-capture')).toBeTruthy())
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Oscillazione orizzontale' }))
-    fireEvent.click(screen.getByTestId('fan-preset-capture-apply'))
-    await waitFor(() => expect(screen.getByTestId('step-count').textContent).toBe('2'))
+    await waitFor(() => expect(valueOf('fan-preset-speed')).toBe('40'))
+    fireEvent.change(screen.getByTestId('fan-preset-speed'), { target: { value: '' } })
+    fireEvent.change(screen.getByTestId('fan-preset-axis-horizontal-angle'), {
+      target: { value: '45' },
+    })
     expect(onSave).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
-    expect(onSave).toHaveBeenCalledWith({ id: 'p1', name: 'Notte', steps: [ANGLE, CAPTURED] })
+    expect(onSave).toHaveBeenCalledWith({
+      id: 'p1',
+      name: 'Notte',
+      state: {
+        preset: 'Preset 2',
+        oscillationAxes: { horizontal: { oscillating: true, angle: 45 } },
+      },
+    })
+  })
+
+  it('a preset that sets nothing cannot be saved', () => {
+    renderDialog()
+    const save = screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement
+    expect(save.disabled).toBe(true)
   })
 })

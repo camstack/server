@@ -1,48 +1,42 @@
 /**
- * The `fan-presets` cap: named settings an operator composes for a fan — its
- * own fields (speed, oscillation, direction, native preset) and the devices
- * that sit in the same container (a light, a control). A preset is a short
- * sequence of action steps kept in the fan's settings store (D865, key
+ * The `fan-presets` cap: named DESIRED fan-control states an operator keeps
+ * for a fan (D1034) — speed, the fan's preset mode, direction and the
+ * oscillation axes — stored in the fan's settings store (D865, key
  * `fanPresets`).
  *
  * Decisions that shape this file:
- *  - **A step may only touch the fan or one of its siblings.** The sibling
- *    set is the children of the fan's parent device (the container), or the
- *    fan's own children when it has none. Checked at save AND again at apply,
- *    because the container changes after a preset was written.
- *  - **Apply runs the shared step runner** (`buildActionSteps` + `runSteps`),
- *    in order, stopping at the first failure; every step is reported and a
- *    failure names its step (D391). Nothing the operator did not write runs.
- *  - **Capture never stores a guess.** A reading that is unknown is left out
- *    and named, never written as 0 (D393).
+ *  - **A preset touches only the fan, through its own `fan-control` methods.**
+ *    An axis the operator linked in Customize reaches its sibling device
+ *    through the link's forward (`fan-link-forward.ts`), so a preset stores no
+ *    sibling and is never re-judged when the container changes.
+ *  - **Apply runs in a fixed order and stops at the first failure**: preset,
+ *    speed, direction, then each axis. Every field is reported — applied,
+ *    failed, not-run or refused — and a failure names its field (D391).
+ *  - **Capture never stores a guess.** It reads the fan's merged fan-control
+ *    state (a linked field reads its link); a reading that is unknown is left
+ *    out and named, never written as 0 (D393).
  */
 import {
-  type ActionStep,
-  type CapCall,
-  type ControlStatus,
+  DeviceType,
+  FAN_CAPTURE_FIELDS,
+  FAN_OSCILLATION_AXES,
+  FAN_OSCILLATION_AXIS_SETTABLE,
+  FAN_PRESETS_MAX,
   type FanCaptureField,
-  type FanCaptureItem,
   type FanCaptureOmission,
   type FanControlStatus,
-  FAN_CAPTURE_FIELDS,
-  FAN_PRESETS_MAX,
+  type FanOscillationAxis,
+  type FanOscillationAxisName,
+  type FanOscillationAxisResult,
   type FanPreset,
-  type FanPresetStepResult,
+  type FanPresetAxis,
+  type FanPresetFieldResult,
+  type FanPresetState,
+  fanAxisPath,
   type IFanPresetsProvider,
   type IScopedLogger,
-  type NormalizedCapStep,
-  type SwitchStatus,
-  buildActionSteps,
-  DeviceType,
-  normalizeCapStep,
-  runSteps,
+  type SetOscillationAxisInput,
 } from '@camstack/types'
-import { type DeviceTemplateDoor, stepRenderer } from './device-template-door.js'
-import {
-  conditionDeps,
-  type StepConditionDoor,
-  stepConditionEvaluator,
-} from './step-condition-door.js'
 
 /** The per-device store the presets live in. */
 export interface FanPresetsStore {
@@ -55,32 +49,31 @@ export interface FanPresetsStore {
 export interface FanPresetDeviceFacts {
   readonly name: string
   readonly type: DeviceType
-  readonly parentDeviceId: number | null
 }
 
 export interface FanPresetsDevices {
   describe(deviceId: number): Promise<FanPresetDeviceFacts | null>
-  childrenOf(parentDeviceId: number): Promise<readonly number[]>
 }
 
-/** Current values, each null when no source answers (D393). */
+/** The fan's merged fan-control state; null when no source answers (D393). */
 export interface FanPresetsReadings {
   fan(deviceId: number): Promise<FanControlStatus | null>
-  control(deviceId: number): Promise<ControlStatus | null>
-  switchState(deviceId: number): Promise<SwitchStatus | null>
+}
+
+/** The fan's own fan-control methods; each throws when the call fails. */
+export interface FanPresetsFanControl {
+  setPreset(deviceId: number, preset: string): Promise<void>
+  setPercentage(deviceId: number, speed: number): Promise<void>
+  setDirection(deviceId: number, direction: NonNullable<FanPresetState['direction']>): Promise<void>
+  setOscillationAxis(input: SetOscillationAxisInput): Promise<FanOscillationAxisResult>
 }
 
 export interface FanPresetsServiceDeps {
   readonly store: FanPresetsStore
   readonly devices: FanPresetsDevices
   readonly readings: FanPresetsReadings
-  /** Runs one device cap call; throws when it fails. */
-  invoke(call: CapCall): Promise<void>
+  readonly fanControl: FanPresetsFanControl
   readonly logger: IScopedLogger
-  readonly now?: () => number
-  /** The device template renderer (D1021); a templated step fails where there is none. */
-  readonly templates?: DeviceTemplateDoor
-  readonly conditions?: StepConditionDoor
 }
 
 type SetResult = Awaited<ReturnType<IFanPresetsProvider['setPresets']>>
@@ -88,59 +81,165 @@ type ApplyResult = Awaited<ReturnType<IFanPresetsProvider['applyPreset']>>
 type CaptureResult = Awaited<ReturnType<IFanPresetsProvider['capturePreset']>>
 type CaptureInput = Parameters<IFanPresetsProvider['capturePreset']>[0]
 
-/** A step's refusal against the sibling set; null when the step is fine. */
-interface StepRefusal {
-  readonly reason: 'not-sibling' | 'bad-target'
-  readonly message: string
-}
-
 function nameKey(name: string): string {
   return name.trim().toLowerCase()
 }
 
-function fanTarget(deviceId: number): NormalizedCapStep['target'] {
-  return { kind: 'devices', ids: [deviceId] }
+function axisFields(axis: FanPresetAxis | undefined): readonly string[] {
+  if (axis === undefined) return []
+  return FAN_OSCILLATION_AXIS_SETTABLE.filter((f) => axis[f] !== undefined)
 }
 
-function fanStep(deviceId: number, method: string, args: Record<string, unknown>): ActionStep {
-  return { kind: 'cap', target: fanTarget(deviceId), cap: 'fan-control', method, args }
+/** Every state path a preset sets, in apply order. */
+export function presetFields(state: FanPresetState): readonly string[] {
+  return [
+    ...(state.preset === undefined ? [] : ['preset']),
+    ...(state.speed === undefined ? [] : ['speed']),
+    ...(state.direction === undefined ? [] : ['direction']),
+    ...FAN_OSCILLATION_AXES.flatMap((axis) =>
+      axisFields(state.oscillationAxes?.[axis]).map((f) => `oscillationAxes.${axis}.${f}`),
+    ),
+  ]
 }
 
-/**
- * A proposed step and where it sorts. The order is the order a fan wants to be
- * driven in: the sweep limits first, so that turning oscillation on sweeps
- * inside them; then the oscillation switches; then fixed angles; then the
- * fan's own settings, speed last so the fan only spins up once it is aimed.
- */
-interface Proposal {
-  readonly step: ActionStep
-  readonly rank: number
-  readonly item: FanCaptureItem
+function errorText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
 }
 
-const RANK_BOUND = 0
-const RANK_SWITCH = 1
-const RANK_OSCILLATING = 1
-const RANK_ANGLE = 2
-const RANK_GIVEN = 3
-const FAN_FIELD_RANK: Readonly<Record<FanCaptureField, number>> = {
-  oscillating: RANK_OSCILLATING,
-  direction: 4,
-  preset: 5,
-  speed: 6,
+/** One unit of apply: a single call that sets one or more fields. */
+interface ApplyStep {
+  readonly fields: readonly string[]
+  run(): Promise<readonly FanPresetFieldResult[]>
 }
 
-/** A control that sets one end of the sweep (left/right, top/bottom), by its name. */
-const ANGLE_BOUND_NAME =
-  /oscillazione.*(sinistra|destra|alto|basso)|oscillation.*(left|right|top|bottom|upper|lower)/i
+function plainStep(field: string, call: () => Promise<void>): ApplyStep {
+  return {
+    fields: [field],
+    run: async () => {
+      try {
+        await call()
+        return [{ field, outcome: 'applied' }]
+      } catch (err: unknown) {
+        return [{ field, outcome: 'failed', message: errorText(err) }]
+      }
+    },
+  }
+}
 
-function orderProposals(
-  proposals: readonly Proposal[],
-  omitted: FanCaptureOmission[],
-): CaptureResult {
-  const sorted = [...proposals].sort((a, b) => a.rank - b.rank)
-  const items: FanCaptureItem[] = sorted.map((p) => p.item)
-  return { steps: sorted.map((p) => p.step), items, omitted }
+function axisStep(
+  fan: FanPresetsFanControl,
+  deviceId: number,
+  axis: FanOscillationAxisName,
+  want: FanPresetAxis,
+): ApplyStep {
+  const fields = axisFields(want)
+  const path = (f: string): string => `oscillationAxes.${axis}.${f}`
+  return {
+    fields: fields.map(path),
+    run: async () => {
+      let result: FanOscillationAxisResult
+      try {
+        result = await fan.setOscillationAxis({ deviceId, axis, ...want })
+      } catch (err: unknown) {
+        const message = errorText(err)
+        return fields.map((f) => ({ field: path(f), outcome: 'failed' as const, message }))
+      }
+      if (result.status === 'applied') {
+        return fields.map((f) => ({ field: path(f), outcome: 'applied' as const }))
+      }
+      return fields.map((f): FanPresetFieldResult => {
+        if (result.applied.some((a) => a === f)) return { field: path(f), outcome: 'applied' }
+        if (result.field === f || result.field === undefined) {
+          return {
+            field: path(f),
+            outcome: 'refused',
+            message: `${result.reason}: ${result.detail}`,
+          }
+        }
+        return { field: path(f), outcome: 'not-run', message: `${result.field} was refused first` }
+      })
+    },
+  }
+}
+
+function applySteps(
+  fan: FanPresetsFanControl,
+  deviceId: number,
+  state: FanPresetState,
+): readonly ApplyStep[] {
+  const { preset, speed, direction } = state
+  return [
+    ...(preset === undefined ? [] : [plainStep('preset', () => fan.setPreset(deviceId, preset))]),
+    ...(speed === undefined ? [] : [plainStep('speed', () => fan.setPercentage(deviceId, speed))]),
+    ...(direction === undefined
+      ? []
+      : [plainStep('direction', () => fan.setDirection(deviceId, direction))]),
+    ...FAN_OSCILLATION_AXES.flatMap((axis): readonly ApplyStep[] => {
+      const want = state.oscillationAxes?.[axis]
+      return want === undefined || axisFields(want).length === 0
+        ? []
+        : [axisStep(fan, deviceId, axis, want)]
+    }),
+  ]
+}
+
+interface Captured {
+  readonly state: FanPresetState
+  readonly omitted: readonly FanCaptureOmission[]
+}
+
+const UNKNOWN = 'the fan reports no value for it'
+
+function captureAxis(
+  axis: FanOscillationAxisName,
+  reading: FanOscillationAxis | null | undefined,
+): { readonly want: FanPresetAxis | null; readonly omitted: readonly FanCaptureOmission[] } {
+  if (reading === null || reading === undefined) {
+    return {
+      want: null,
+      omitted: [{ what: `oscillationAxes.${axis}`, reason: 'the fan has no such axis' }],
+    }
+  }
+  const omitted: FanCaptureOmission[] = []
+  const want: { -readonly [K in keyof FanPresetAxis]: FanPresetAxis[K] } = {}
+  if (reading.oscillating === null) {
+    omitted.push({ what: fanAxisPath(axis, 'oscillating'), reason: UNKNOWN })
+  } else {
+    want.oscillating = reading.oscillating
+  }
+  for (const field of ['angle', 'sweepFrom', 'sweepTo'] as const) {
+    const value = reading[field]
+    if (value === null) omitted.push({ what: fanAxisPath(axis, field), reason: UNKNOWN })
+    else want[field] = value
+  }
+  return { want: Object.keys(want).length === 0 ? null : want, omitted }
+}
+
+function captureState(status: FanControlStatus, fields: readonly FanCaptureField[]): Captured {
+  const omitted: FanCaptureOmission[] = []
+  const state: { -readonly [K in keyof FanPresetState]: FanPresetState[K] } = {}
+  if (fields.includes('speed')) {
+    if (status.speed === null) omitted.push({ what: 'speed', reason: UNKNOWN })
+    else state.speed = status.speed
+  }
+  if (fields.includes('direction')) {
+    if (status.direction === null) omitted.push({ what: 'direction', reason: UNKNOWN })
+    else state.direction = status.direction
+  }
+  if (fields.includes('preset')) {
+    if (status.preset === '') omitted.push({ what: 'preset', reason: 'no preset is active' })
+    else state.preset = status.preset
+  }
+  if (fields.includes('oscillationAxes')) {
+    const axes: { -readonly [K in FanOscillationAxisName]?: FanPresetAxis } = {}
+    for (const axis of FAN_OSCILLATION_AXES) {
+      const taken = captureAxis(axis, status.oscillationAxes?.[axis])
+      omitted.push(...taken.omitted)
+      if (taken.want !== null) axes[axis] = taken.want
+    }
+    if (Object.keys(axes).length > 0) state.oscillationAxes = axes
+  }
+  return { state, omitted }
 }
 
 export class FanPresetsService implements IFanPresetsProvider {
@@ -155,12 +254,12 @@ export class FanPresetsService implements IFanPresetsProvider {
     const refuse = (
       reason: Extract<SetResult, { status: 'refused' }>['reason'],
       detail: string,
-    ) => {
+    ): SetResult => {
       this.deps.logger.warn('fan presets save refused', {
         tags: { deviceId },
         meta: { reason, detail },
       })
-      return { status: 'refused' as const, reason, detail }
+      return { status: 'refused', reason, detail }
     }
     const facts = await this.deps.devices.describe(deviceId)
     if (facts === null || facts.type !== DeviceType.Fan) {
@@ -180,14 +279,8 @@ export class FanPresetsService implements IFanPresetsProvider {
         return refuse('duplicate-name', `two presets are called "${preset.name.trim()}"`)
       }
       names.add(key)
-    }
-    const siblings = await this.siblingsOf(deviceId, facts)
-    for (const preset of presets) {
-      for (const [index, step] of preset.steps.entries()) {
-        const refusal = this.judgeStep(step, siblings)
-        if (refusal !== null) {
-          return refuse(refusal.reason, `preset "${preset.name}" step ${index}: ${refusal.message}`)
-        }
+      if (presetFields(preset.state).length === 0) {
+        return refuse('empty-state', `preset "${preset.name.trim()}" sets nothing`)
       }
     }
     await this.deps.store.write(deviceId, presets)
@@ -200,299 +293,59 @@ export class FanPresetsService implements IFanPresetsProvider {
 
   async applyPreset(input: { deviceId: number; presetId: string }): Promise<ApplyResult> {
     const { deviceId, presetId } = input
-    const presets = await this.deps.store.read(deviceId)
-    const preset = presets.find((p) => p.id === presetId)
+    const preset = (await this.deps.store.read(deviceId)).find((p) => p.id === presetId)
     if (preset === undefined) {
       this.deps.logger.warn('fan preset apply refused — no such preset', {
         tags: { deviceId },
         meta: { presetId },
       })
-      return { status: 'refused', steps: [] }
+      return { status: 'refused', fields: [] }
     }
-    const facts = await this.deps.devices.describe(deviceId)
-    const siblings = await this.siblingsOf(deviceId, facts)
-    const refused = this.refusedSteps(preset, siblings)
-    if (refused !== null) {
-      this.deps.logger.warn('fan preset apply refused — a step left the fan container', {
-        tags: { deviceId },
-        meta: { presetId, name: preset.name },
-      })
-      return { status: 'refused', steps: refused }
+    const results: FanPresetFieldResult[] = []
+    let stopped: string | null = null
+    for (const step of applySteps(this.deps.fanControl, deviceId, preset.state)) {
+      if (stopped !== null) {
+        results.push(
+          ...step.fields.map((field) => ({
+            field,
+            outcome: 'not-run' as const,
+            message: `${stopped} did not apply`,
+          })),
+        )
+        continue
+      }
+      const outcome = await step.run()
+      results.push(...outcome)
+      const bad = outcome.find((r) => r.outcome !== 'applied')
+      if (bad !== undefined) stopped = bad.field
     }
-    const runnable = buildActionSteps(
-      preset.steps,
-      {},
-      {
-        invokeCap: (call) => this.deps.invoke(call),
-        sleep: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
-        resolveTarget: async (target) => ({
-          deviceIds: target.kind === 'devices' ? target.ids : [],
-        }),
-        owner: `fan-preset:${deviceId}/${presetId}`,
-        // Bound to the fan itself: the scope gate proved that device, nothing else.
-        renderTemplates: stepRenderer(this.deps.templates, [deviceId]),
-        ...conditionDeps(stepConditionEvaluator(this.deps.conditions, [deviceId])),
-        onMissingVar: () => undefined,
-      },
-    )
-    const result = await runSteps(runnable, {
-      pathPrefix: 'steps',
-      isAborted: () => false,
-      abortReason: 'the run was stopped',
-      now: this.deps.now ?? Date.now,
-      onFailure: (failure) => {
-        this.deps.logger.warn('fan preset step failed — stopping the sequence', {
-          tags: { deviceId: failure.deviceId ?? deviceId },
-          meta: { fanDeviceId: deviceId, presetId, step: failure.index, error: failure.message },
-        })
-      },
-      onGuardUnknown: (skipped) => {
-        this.deps.logger.warn('fan preset step skipped — its condition could not be read', {
-          tags: { deviceId: skipped.deviceId ?? deviceId },
-          meta: { fanDeviceId: deviceId, presetId, step: skipped.index, reason: skipped.reason },
-        })
-      },
-    })
-    const steps: FanPresetStepResult[] = result.steps.map((trace, index) => ({
-      index,
-      outcome:
-        trace.outcome === 'ok' ? 'applied' : trace.outcome === 'not-run' ? 'not-run' : 'failed',
-      ...(trace.deviceId === undefined ? {} : { deviceId: trace.deviceId }),
-      ...(trace.cap === undefined ? {} : { cap: trace.cap }),
-      ...(trace.method === undefined ? {} : { method: trace.method }),
-      ...(trace.message === undefined ? {} : { message: trace.message }),
-    }))
-    const failed = steps.some((s) => s.outcome === 'failed')
-    const appliedCap = result.steps.some((t) => t.kind === 'cap' && t.outcome === 'ok')
-    const status: ApplyResult['status'] = !failed ? 'applied' : appliedCap ? 'partial' : 'refused'
-    this.deps.logger.info('fan preset applied', {
+    const landed = results.filter((r) => r.outcome === 'applied').length
+    const status = stopped === null ? 'applied' : landed > 0 ? 'partial' : 'refused'
+    const log = status === 'applied' ? 'info' : 'warn'
+    this.deps.logger[log](`fan preset ${status}`, {
       tags: { deviceId },
-      meta: { presetId, status, steps: steps.length },
+      meta: {
+        presetId,
+        fields: results.map((r) => `${r.field}=${r.outcome}`),
+        ...(stopped === null ? {} : { stoppedAt: stopped }),
+      },
     })
-    return { status, steps }
+    return { status, fields: results }
   }
 
   async capturePreset(input: CaptureInput): Promise<CaptureResult> {
-    const { deviceId } = input
-    const fields: readonly FanCaptureField[] = input.fields ?? FAN_CAPTURE_FIELDS
-    const omitted: FanCaptureOmission[] = []
-    const omit = (what: string, reason: string): void => {
-      omitted.push({ what, reason })
-      this.deps.logger.info('fan preset capture left a value out', {
-        tags: { deviceId },
-        meta: { what, reason },
+    const fields = input.fields ?? FAN_CAPTURE_FIELDS
+    const status = await this.deps.readings.fan(input.deviceId)
+    if (status === null) {
+      this.deps.logger.warn('fan preset capture: the fan state could not be read', {
+        tags: { deviceId: input.deviceId },
       })
-    }
-
-    const fanSteps = await this.captureFanFields(deviceId, fields, omit)
-    const proposals =
-      input.steps.length === 0
-        ? await this.captureSiblings(deviceId, omit)
-        : await this.captureGiven(deviceId, input.steps, omit)
-    return orderProposals([...proposals, ...fanSteps], omitted)
-  }
-
-  private async captureFanFields(
-    deviceId: number,
-    fields: readonly FanCaptureField[],
-    omit: (what: string, reason: string) => void,
-  ): Promise<Proposal[]> {
-    const out: Proposal[] = []
-    const fan = await this.deps.readings.fan(deviceId)
-    for (const field of FAN_CAPTURE_FIELDS) {
-      if (!fields.includes(field)) continue
-      if (fan === null) {
-        omit(field, 'the fan reports no current state')
-        continue
-      }
-      const captured = this.fanFieldStep(deviceId, field, fan)
-      if (captured === null) omit(field, `${field} is unknown on this fan`)
-      else
-        out.push({
-          step: captured,
-          rank: FAN_FIELD_RANK[field],
-          item: { group: field === 'oscillating' ? 'oscillation' : 'fan', label: field },
-        })
-    }
-    return out
-  }
-
-  /** The steps the caller composed, each refreshed with its current value. */
-  private async captureGiven(
-    deviceId: number,
-    steps: readonly ActionStep[],
-    omit: (what: string, reason: string) => void,
-  ): Promise<Proposal[]> {
-    const out: Proposal[] = []
-    for (const [index, step] of steps.entries()) {
-      if (step.kind === 'wait') {
-        out.push({ step, rank: RANK_GIVEN, item: { group: 'fan', label: 'wait' } })
-        continue
-      }
-      const target = normalizeCapStep(step).target
-      if (target.kind !== 'devices' || target.ids.length !== 1) {
-        omit(`step ${index}`, 'its target is not one device, so there is no value to read')
-        continue
-      }
-      const [targetId] = target.ids
-      if (targetId === undefined || targetId === deviceId) continue
-      const captured = await this.siblingStep(step, targetId)
-      if (captured.step === null) omit(`step ${index}`, captured.reason)
-      else
-        out.push({
-          step: captured.step,
-          rank: RANK_GIVEN,
-          item: { group: step.cap === 'switch' ? 'oscillation' : 'angles', label: `step ${index}` },
-        })
-    }
-    return out
-  }
-
-  /** Every switch and control in the fan's container, read as they are now. */
-  private async captureSiblings(
-    deviceId: number,
-    omit: (what: string, reason: string) => void,
-  ): Promise<Proposal[]> {
-    const out: Proposal[] = []
-    const facts = await this.deps.devices.describe(deviceId)
-    const siblings = await this.siblingsOf(deviceId, facts)
-    for (const id of siblings) {
-      if (id === deviceId) continue
-      const sibling = await this.deps.devices.describe(id)
-      if (sibling === null) continue
-      if (sibling.type === DeviceType.Switch) {
-        const status = await this.deps.readings.switchState(id)
-        if (status === null) {
-          omit(sibling.name, `switch ${id} reports no state`)
-          continue
-        }
-        out.push({
-          step: {
-            kind: 'cap',
-            target: fanTarget(id),
-            cap: 'switch',
-            method: 'setState',
-            args: { on: status.on },
-          },
-          rank: RANK_SWITCH,
-          item: { group: 'oscillation', label: sibling.name },
-        })
-      } else if (sibling.type === DeviceType.Control) {
-        const status = await this.deps.readings.control(id)
-        if (status === null) {
-          omit(sibling.name, `control ${id} reports no value`)
-          continue
-        }
-        out.push({
-          step: {
-            kind: 'cap',
-            target: fanTarget(id),
-            cap: 'control',
-            method: 'setValue',
-            args: { control: { kind: status.kind, value: status.value } },
-          },
-          rank: ANGLE_BOUND_NAME.test(sibling.name) ? RANK_BOUND : RANK_ANGLE,
-          item: { group: 'angles', label: sibling.name },
-        })
-      }
-    }
-    return out
-  }
-
-  // ── internals ───────────────────────────────────────────────────────────
-
-  private fanFieldStep(
-    deviceId: number,
-    field: FanCaptureField,
-    fan: FanControlStatus,
-  ): ActionStep | null {
-    switch (field) {
-      case 'speed':
-        return fan.speed === null ? null : fanStep(deviceId, 'setPercentage', { speed: fan.speed })
-      case 'oscillating':
-        return fan.oscillating === null
-          ? null
-          : fanStep(deviceId, 'setOscillating', { oscillating: fan.oscillating })
-      case 'direction':
-        return fan.direction === null
-          ? null
-          : fanStep(deviceId, 'setDirection', { direction: fan.direction })
-      case 'preset':
-        return fan.preset === '' ? null : fanStep(deviceId, 'setPreset', { preset: fan.preset })
-    }
-  }
-
-  private async siblingStep(
-    step: Extract<ActionStep, { kind: 'cap' }>,
-    targetId: number,
-  ): Promise<{ step: ActionStep; reason?: undefined } | { step: null; reason: string }> {
-    if (step.cap === 'control' && step.method === 'setValue') {
-      const status = await this.deps.readings.control(targetId)
-      if (status === null) return { step: null, reason: `control ${targetId} reports no value` }
       return {
-        step: {
-          ...step,
-          args: { ...step.args, control: { kind: status.kind, value: status.value } },
-        },
+        state: {},
+        omitted: fields.map((what) => ({ what, reason: 'the fan state could not be read' })),
       }
     }
-    if (step.cap === 'switch' && step.method === 'setState') {
-      const status = await this.deps.readings.switchState(targetId)
-      if (status === null) return { step: null, reason: `switch ${targetId} reports no state` }
-      return { step: { ...step, args: { ...step.args, on: status.on } } }
-    }
-    return { step: null, reason: `${step.cap}.${step.method} has no current value to read` }
-  }
-
-  /** The fan and every device in its container. */
-  private async siblingsOf(
-    deviceId: number,
-    facts: FanPresetDeviceFacts | null,
-  ): Promise<ReadonlySet<number>> {
-    const parent = facts?.parentDeviceId ?? null
-    const children = await this.deps.devices.childrenOf(parent ?? deviceId)
-    return new Set([deviceId, ...children])
-  }
-
-  private judgeStep(step: ActionStep, siblings: ReadonlySet<number>): StepRefusal | null {
-    if (step.kind === 'wait') return null
-    const target = normalizeCapStep(step).target
-    if (target.kind !== 'devices') {
-      return {
-        reason: 'bad-target',
-        message: 'a preset step names devices, not a domain or variable',
-      }
-    }
-    const outside = target.ids.filter((id) => !siblings.has(id))
-    if (outside.length > 0) {
-      return {
-        reason: 'not-sibling',
-        message: `[not-sibling] device ${outside.join(', ')} is not in the fan's container`,
-      }
-    }
-    return null
-  }
-
-  /** Every step reported, the offending ones `refused`, nothing run; null when all pass. */
-  private refusedSteps(
-    preset: FanPreset,
-    siblings: ReadonlySet<number>,
-  ): FanPresetStepResult[] | null {
-    const verdicts = preset.steps.map((step) => this.judgeStep(step, siblings))
-    if (verdicts.every((v) => v === null)) return null
-    return preset.steps.map((step, index): FanPresetStepResult => {
-      const verdict = verdicts[index] ?? null
-      const where = step.kind === 'cap' ? { cap: step.cap, method: step.method } : {}
-      return verdict === null
-        ? { index, outcome: 'not-run', ...where, message: 'an earlier step was refused' }
-        : {
-            index,
-            outcome: 'refused',
-            ...where,
-            message: verdict.message.startsWith('[')
-              ? verdict.message
-              : `[${verdict.reason}] ${verdict.message}`,
-          }
-    })
+    const captured = captureState(status, fields)
+    return { state: captured.state, omitted: [...captured.omitted] }
   }
 }

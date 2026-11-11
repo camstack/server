@@ -1,6 +1,6 @@
 /**
  * The fan presets' card on a fan's Customize tab: the presets the operator
- * authored (a name and the steps it runs on the fan and its siblings), with add,
+ * authored (a name and the fan-control state it sets, D1034), with add,
  * edit and delete. They are listed as actions, so Alexa, HomeKit and Home
  * Assistant offer them without more setup. It claims "no presets" only from a
  * read that answered.
@@ -11,39 +11,19 @@ import {
   Button,
   IconButton,
   useConfirm,
-  useDeviceManagerListAll,
   useFanPresetsGetPresets,
   useFanPresetsSetPresets,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { Fan, Pencil, Plus, Trash2 } from 'lucide-react'
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { AutomationDevice } from '../../pages/build/automation/automation-data'
 import { CustomizeCard } from '../device/customize/CustomizeCard'
 import { FanPresetDialog } from './FanPresetDialog'
-import { newPresetId, removePreset, siblingIds, upsertPreset } from './fan-presets-model'
+import { newPresetId, presetFieldCount, removePreset, upsertPreset } from './fan-presets-model'
 
 export interface FanPresetsExtensionCardProps {
   readonly device: DeviceInfo
-}
-
-function useScopeDevices(device: DeviceInfo): readonly AutomationDevice[] {
-  const fleet = useDeviceManagerListAll({ projection: 'slim' })
-  return useMemo((): readonly AutomationDevice[] => {
-    const all = fleet.data ?? []
-    const ids = new Set(siblingIds(all, device))
-    return all
-      .filter((d) => ids.has(d.id))
-      .map((d) => ({
-        id: d.id,
-        name: d.name,
-        stableId: d.stableId,
-        type: String(d.type),
-        location: d.location ?? null,
-      }))
-      .toSorted((a, b) => a.name.localeCompare(b.name))
-  }, [fleet.data, device])
 }
 
 export function FanPresetsExtensionCard({ device }: FanPresetsExtensionCardProps): ReactNode {
@@ -51,7 +31,6 @@ export function FanPresetsExtensionCard({ device }: FanPresetsExtensionCardProps
   const confirm = useConfirm()
   const queryClient = useQueryClient()
   const presets = useFanPresetsGetPresets({ deviceId: device.id })
-  const scope = useScopeDevices(device)
   const [editing, setEditing] = useState<FanPreset | null>(null)
   const [refusal, setRefusal] = useState<string | null>(null)
   const save = useFanPresetsSetPresets({
@@ -82,7 +61,7 @@ export function FanPresetsExtensionCard({ device }: FanPresetsExtensionCardProps
           size="sm"
           variant="outline"
           disabled={stored === undefined}
-          onClick={() => setEditing({ id: newPresetId(stored ?? []), name: '', steps: [] })}
+          onClick={() => setEditing({ id: newPresetId(stored ?? []), name: '', state: {} })}
           data-testid="fan-presets-add"
         >
           <Plus className="h-4 w-4" /> {t('fanPresets.card.add', 'Add preset')}
@@ -102,7 +81,7 @@ export function FanPresetsExtensionCard({ device }: FanPresetsExtensionCardProps
         <p className="px-3 py-2 text-xs text-foreground-muted" data-testid="fan-presets-empty">
           {t(
             'fanPresets.card.none',
-            'No presets yet. A preset sets the fan, and the lamp or switch beside it, in one go.',
+            'No presets yet. A preset sets the fan’s speed, mode, direction and oscillation in one go.',
           )}
         </p>
       ) : (
@@ -111,8 +90,8 @@ export function FanPresetsExtensionCard({ device }: FanPresetsExtensionCardProps
             <li key={preset.id} className="flex items-center gap-2 px-3 py-2">
               <span className="min-w-0 flex-1 truncate text-sm text-foreground">{preset.name}</span>
               <Badge variant="info">
-                {t('fanPresets.card.steps', 'Steps: {{count}}', {
-                  count: preset.steps.length,
+                {t('fanPresets.card.fields', 'Values: {{count}}', {
+                  count: presetFieldCount(preset.state),
                 })}
               </Badge>
               <IconButton
@@ -153,7 +132,6 @@ export function FanPresetsExtensionCard({ device }: FanPresetsExtensionCardProps
           fanId={device.id}
           draft={editing}
           others={stored}
-          devices={scope}
           saving={save.isPending}
           error={refusal ?? save.error?.message ?? null}
           onSave={(preset) => saveList(upsertPreset(stored, preset))}

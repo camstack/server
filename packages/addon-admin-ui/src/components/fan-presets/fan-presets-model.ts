@@ -1,39 +1,16 @@
 /**
- * The pure half of the fan presets editor: which devices a preset step may
- * target, the list edits, and the same checks the hub applies on save (so a
- * refusal is rarely the first the operator hears of a problem).
+ * The pure half of the fan presets editor: a preset is a desired fan-control
+ * state (D1034) — the fields it sets, each optional. The list edits, the
+ * field rows the dialog shows, and the same checks the hub applies on save
+ * (so a refusal is rarely the first the operator hears of a problem).
  */
 import type {
-  ActionStep,
-  FanCaptureGroup,
-  FanCaptureItem,
   FanCaptureOmission,
+  FanOscillationAxisName,
   FanPreset,
-  FanPresetCaptureResult,
+  FanPresetAxis,
+  FanPresetState,
 } from '@camstack/types'
-
-export interface FleetRef {
-  readonly id: number
-  readonly parentDeviceId: number | null
-}
-
-export interface FanRef {
-  readonly id: number
-  readonly parentDeviceId: number | null
-}
-
-/**
- * The devices a preset step may name: the fan itself and its siblings — the
- * children of its container, or its own children when it has no container.
- * The hub refuses anything else, so the picker never offers it.
- */
-export function siblingIds(fleet: readonly FleetRef[], fan: FanRef): readonly number[] {
-  const container = fan.parentDeviceId ?? fan.id
-  const others = fleet
-    .filter((d) => d.parentDeviceId === container && d.id !== fan.id)
-    .map((d) => d.id)
-  return [fan.id, ...others]
-}
 
 export function upsertPreset(list: readonly FanPreset[], next: FanPreset): readonly FanPreset[] {
   return list.some((p) => p.id === next.id)
@@ -53,11 +30,58 @@ export function newPresetId(list: readonly FanPreset[]): string {
   return `p${String(n)}`
 }
 
+export const PRESET_AXES: readonly FanOscillationAxisName[] = ['horizontal', 'vertical']
+export const PRESET_AXIS_NUMBERS = ['angle', 'sweepFrom', 'sweepTo'] as const
+export type PresetAxisNumber = (typeof PRESET_AXIS_NUMBERS)[number]
+
+/** How many fields a state sets. */
+export function presetFieldCount(state: FanPresetState): number {
+  const own = [state.speed, state.preset, state.direction].filter((v) => v !== undefined).length
+  return PRESET_AXES.reduce((n, axis) => {
+    const want = state.oscillationAxes?.[axis]
+    if (want === undefined) return n
+    return (
+      n +
+      [want.oscillating, want.angle, want.sweepFrom, want.sweepTo].filter((v) => v !== undefined)
+        .length
+    )
+  }, own)
+}
+
+/** The state with one axis replaced; an axis that sets nothing is dropped. */
+export function withAxis(
+  state: FanPresetState,
+  axis: FanOscillationAxisName,
+  want: FanPresetAxis,
+): FanPresetState {
+  const kept: FanPresetAxis = {
+    ...(want.oscillating === undefined ? {} : { oscillating: want.oscillating }),
+    ...(want.angle === undefined ? {} : { angle: want.angle }),
+    ...(want.sweepFrom === undefined ? {} : { sweepFrom: want.sweepFrom }),
+    ...(want.sweepTo === undefined ? {} : { sweepTo: want.sweepTo }),
+  }
+  const pick = (name: FanOscillationAxisName): FanPresetAxis | undefined => {
+    const value = name === axis ? kept : state.oscillationAxes?.[name]
+    return value === undefined || Object.keys(value).length === 0 ? undefined : value
+  }
+  const horizontal = pick('horizontal')
+  const vertical = pick('vertical')
+  const { oscillationAxes: _dropped, ...rest } = state
+  if (horizontal === undefined && vertical === undefined) return rest
+  return {
+    ...rest,
+    oscillationAxes: {
+      ...(horizontal === undefined ? {} : { horizontal }),
+      ...(vertical === undefined ? {} : { vertical }),
+    },
+  }
+}
+
 export type PresetCheck =
   | { readonly ok: true }
   | {
       readonly ok: false
-      readonly reason: 'no-name' | 'no-steps' | 'duplicate-name'
+      readonly reason: 'no-name' | 'no-fields' | 'duplicate-name'
     }
 
 const sameName = (a: string, b: string): boolean =>
@@ -65,7 +89,7 @@ const sameName = (a: string, b: string): boolean =>
 
 export function checkPresetDraft(others: readonly FanPreset[], draft: FanPreset): PresetCheck {
   if (draft.name.trim() === '') return { ok: false, reason: 'no-name' }
-  if (draft.steps.length === 0) return { ok: false, reason: 'no-steps' }
+  if (presetFieldCount(draft.state) === 0) return { ok: false, reason: 'no-fields' }
   if (others.some((p) => p.id !== draft.id && sameName(p.name, draft.name))) {
     return { ok: false, reason: 'duplicate-name' }
   }
@@ -76,34 +100,9 @@ export function omissionText(omission: FanCaptureOmission): string {
   return `${omission.what}: ${omission.reason}`
 }
 
-/** The review list shows the groups in this order; an empty group is not shown. */
-export const CAPTURE_GROUP_ORDER: readonly FanCaptureGroup[] = ['fan', 'oscillation', 'angles']
-
-export interface CaptureRow {
-  /** Index into the result's `steps`, which is what is ticked. */
-  readonly index: number
-  readonly item: FanCaptureItem
-}
-
-export interface CaptureSection {
-  readonly group: FanCaptureGroup
-  readonly rows: readonly CaptureRow[]
-}
-
-/** The captured steps as review sections; rows keep the order the hub proposed. */
-export function captureSections(result: FanPresetCaptureResult): readonly CaptureSection[] {
-  return CAPTURE_GROUP_ORDER.map((group) => ({
-    group,
-    rows: result.items.flatMap((item, index): CaptureRow[] =>
-      item.group === group ? [{ index, item }] : [],
-    ),
-  })).filter((section) => section.rows.length > 0)
-}
-
-/** The ticked steps, in the order the hub proposed them (the order they must run in). */
-export function tickedSteps(
-  result: FanPresetCaptureResult,
-  ticked: ReadonlySet<number>,
-): readonly ActionStep[] {
-  return result.steps.filter((_step, index) => ticked.has(index))
+/** A number typed in a field: empty = not set; anything unparsable = not set. */
+export function parseOptionalNumber(text: string): number | undefined {
+  if (text.trim() === '') return undefined
+  const n = Number(text)
+  return Number.isFinite(n) ? n : undefined
 }

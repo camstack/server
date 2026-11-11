@@ -1,45 +1,19 @@
-import type { ActionStep, FanPreset } from '@camstack/types'
+import type { FanPreset, FanPresetState } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
-  captureSections,
   checkPresetDraft,
   newPresetId,
   omissionText,
+  parseOptionalNumber,
+  presetFieldCount,
   removePreset,
-  siblingIds,
-  tickedSteps,
   upsertPreset,
+  withAxis,
 } from '../fan-presets-model'
 
-const STEP: ActionStep = {
-  kind: 'cap',
-  target: { kind: 'devices', ids: [5] },
-  cap: 'fan-control',
-  method: 'setPercentage',
-  args: { speed: 40 },
+function preset(id: string, name: string, state: FanPresetState = { speed: 40 }): FanPreset {
+  return { id, name, state }
 }
-
-function preset(id: string, name: string): FanPreset {
-  return { id, name, steps: [STEP] }
-}
-
-describe('siblingIds', () => {
-  const fleet = [
-    { id: 5, parentDeviceId: 1 },
-    { id: 6, parentDeviceId: 1 },
-    { id: 7, parentDeviceId: 2 },
-    { id: 8, parentDeviceId: 5 },
-    { id: 1, parentDeviceId: null },
-  ]
-
-  it('is the fan and the children of its container', () => {
-    expect(siblingIds(fleet, { id: 5, parentDeviceId: 1 })).toEqual([5, 6])
-  })
-
-  it('is the fan and its own children when it has no container', () => {
-    expect(siblingIds(fleet, { id: 5, parentDeviceId: null })).toEqual([5, 8])
-  })
-})
 
 describe('preset list edits', () => {
   it('upserts by id and keeps the order', () => {
@@ -59,29 +33,60 @@ describe('preset list edits', () => {
   })
 })
 
-describe('checkPresetDraft', () => {
-  const others = [preset('p1', 'Notte')]
+describe('presetFieldCount', () => {
+  it('counts every field set, axis fields included', () => {
+    expect(
+      presetFieldCount({
+        speed: 25,
+        preset: 'Preset 1',
+        oscillationAxes: { horizontal: { oscillating: false, angle: 45 }, vertical: {} },
+      }),
+    ).toBe(4)
+    expect(presetFieldCount({})).toBe(0)
+  })
+})
 
-  it('needs a name and a step', () => {
-    expect(checkPresetDraft(others, { id: 'p2', name: ' ', steps: [STEP] })).toEqual({
-      ok: false,
-      reason: 'no-name',
-    })
-    expect(checkPresetDraft(others, { id: 'p2', name: 'Sera', steps: [] })).toEqual({
-      ok: false,
-      reason: 'no-steps',
+describe('withAxis', () => {
+  it('replaces one axis and keeps the other', () => {
+    const state: FanPresetState = {
+      speed: 25,
+      oscillationAxes: { vertical: { oscillating: true } },
+    }
+    expect(withAxis(state, 'horizontal', { angle: 30 })).toEqual({
+      speed: 25,
+      oscillationAxes: { horizontal: { angle: 30 }, vertical: { oscillating: true } },
     })
   })
 
+  it('drops an axis that sets nothing, and the axes object when none is left', () => {
+    const state: FanPresetState = { speed: 25, oscillationAxes: { horizontal: { angle: 30 } } }
+    expect(withAxis(state, 'horizontal', { angle: undefined })).toEqual({ speed: 25 })
+  })
+})
+
+describe('checkPresetDraft', () => {
+  const others = [preset('p1', 'Notte')]
+
+  it('needs a name and at least one field', () => {
+    expect(checkPresetDraft(others, preset('p2', ' '))).toEqual({ ok: false, reason: 'no-name' })
+    expect(checkPresetDraft(others, preset('p2', 'Sera', {}))).toEqual({
+      ok: false,
+      reason: 'no-fields',
+    })
+    expect(
+      checkPresetDraft(others, preset('p2', 'Sera', { oscillationAxes: { vertical: {} } })),
+    ).toEqual({ ok: false, reason: 'no-fields' })
+  })
+
   it('refuses a name another preset has, whatever its case', () => {
-    expect(checkPresetDraft(others, { id: 'p2', name: ' notte ', steps: [STEP] })).toEqual({
+    expect(checkPresetDraft(others, preset('p2', ' notte '))).toEqual({
       ok: false,
       reason: 'duplicate-name',
     })
   })
 
   it('lets a preset keep its own name', () => {
-    expect(checkPresetDraft(others, { id: 'p1', name: 'Notte', steps: [STEP] }).ok).toBe(true)
+    expect(checkPresetDraft(others, preset('p1', 'Notte')).ok).toBe(true)
   })
 })
 
@@ -93,26 +98,11 @@ describe('omissionText', () => {
   })
 })
 
-describe('capture review', () => {
-  const result = {
-    steps: [STEP, STEP, STEP],
-    items: [
-      { group: 'angles' as const, label: 'a' },
-      { group: 'fan' as const, label: 'b' },
-      { group: 'angles' as const, label: 'c' },
-    ],
-    omitted: [],
-  }
-
-  it('groups rows fan / oscillation / angles, keeping the proposed order inside a group', () => {
-    expect(captureSections(result).map((s) => [s.group, s.rows.map((r) => r.index)])).toEqual([
-      ['fan', [1]],
-      ['angles', [0, 2]],
-    ])
-  })
-
-  it('returns the ticked steps in proposed order', () => {
-    expect(tickedSteps(result, new Set([2, 0]))).toHaveLength(2)
-    expect(tickedSteps(result, new Set())).toEqual([])
+describe('parseOptionalNumber', () => {
+  it('empty or unparsable is not set; a number is kept, 0 included', () => {
+    expect(parseOptionalNumber('')).toBeUndefined()
+    expect(parseOptionalNumber('abc')).toBeUndefined()
+    expect(parseOptionalNumber('0')).toBe(0)
+    expect(parseOptionalNumber('45')).toBe(45)
   })
 })

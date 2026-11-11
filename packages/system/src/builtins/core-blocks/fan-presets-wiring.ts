@@ -1,8 +1,8 @@
 /**
  * Builds the `fan-presets` runtime out of what core-blocks owns: the
  * per-device settings store (D865: a fan's presets live under the key
- * `fanPresets`) and the cluster API (a device's type and container, the
- * current readings, the cap call a step makes).
+ * `fanPresets`) and the cluster API (a device's type, the fan's current
+ * fan-control state, the fan-control calls a preset makes).
  *
  * Kept out of `core-blocks.addon.ts` so the seams are read and specced
  * without booting the addon.
@@ -10,24 +10,20 @@
 import {
   type AddonApi,
   type AddonContext,
-  ControlStatusSchema,
   FanControlStatusSchema,
   type FanPreset,
   FanPresetSchema,
   type IScopedLogger,
-  SwitchStatusSchema,
 } from '@camstack/types'
 import { z } from 'zod'
 import { FanPresetActionSource } from './fan-presets-action-source.js'
 import {
   FanPresetsService,
   type FanPresetsDevices,
+  type FanPresetsFanControl,
   type FanPresetsReadings,
   type FanPresetsStore,
 } from './fan-presets-service.js'
-import { invokeCapOver } from './actions-wiring.js'
-import { templateDoorOver } from './device-template-door.js'
-import { conditionDoorOver } from './step-condition-door.js'
 
 /** The key of the device's settings store that holds a fan's presets. */
 export const FAN_PRESETS_STORE_KEY = 'fanPresets'
@@ -99,14 +95,30 @@ export function fanPresetsDevicesOver(api: () => AddonApi | undefined): FanPrese
   return {
     describe: async (deviceId) => {
       const found = await need().deviceManager.getDevice.query({ deviceId })
-      return found === null || found === undefined
-        ? null
-        : { name: found.name, type: found.type, parentDeviceId: found.parentDeviceId }
+      return found === null || found === undefined ? null : { name: found.name, type: found.type }
     },
-    childrenOf: async (parentDeviceId) => {
-      const rows = await need().deviceManager.getChildren.query({ parentDeviceId })
-      return rows.map((row) => row.id)
+  }
+}
+
+/** The fan's own fan-control methods, through `ctx.api` (a linked field is forwarded at dispatch). */
+export function fanPresetsFanControlOver(api: () => AddonApi | undefined): FanPresetsFanControl {
+  const need = (): AddonApi => {
+    const current = api()
+    if (current === undefined)
+      throw new Error('core-blocks: no ctx.api — the fan cannot be reached')
+    return current
+  }
+  return {
+    setPreset: async (deviceId, preset) => {
+      await need().fanControl.setPreset.mutate({ deviceId, preset })
     },
+    setPercentage: async (deviceId, speed) => {
+      await need().fanControl.setPercentage.mutate({ deviceId, speed })
+    },
+    setDirection: async (deviceId, direction) => {
+      await need().fanControl.setDirection.mutate({ deviceId, direction })
+    },
+    setOscillationAxis: async (input) => need().fanControl.setOscillationAxis.mutate(input),
   }
 }
 
@@ -142,15 +154,6 @@ export function fanPresetsReadingsOver(
         (a) => a.fanControl.getStatus.query({ deviceId }),
         FanControlStatusSchema,
       ),
-    control: (deviceId) =>
-      read(
-        deviceId,
-        'control',
-        (a) => a.control.getStatus.query({ deviceId }),
-        ControlStatusSchema,
-      ),
-    switchState: (deviceId) =>
-      read(deviceId, 'switch', (a) => a.switch.getStatus.query({ deviceId }), SwitchStatusSchema),
   }
 }
 
@@ -161,9 +164,7 @@ export function buildFanPresetsRuntime(deps: FanPresetsRuntimeDeps): FanPresetsR
     store,
     devices,
     readings: fanPresetsReadingsOver(deps.api, deps.logger.child('fan-presets')),
-    invoke: invokeCapOver(deps.api),
-    templates: templateDoorOver(deps.api),
-    conditions: conditionDoorOver(deps.api),
+    fanControl: fanPresetsFanControlOver(deps.api),
     logger: deps.logger.child('fan-presets'),
   })
   const actionSource = new FanPresetActionSource({

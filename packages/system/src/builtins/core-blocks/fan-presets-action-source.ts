@@ -49,15 +49,11 @@ export function parseFanPresetActionId(
   return { deviceId, presetId: rest.slice(slash + 1) }
 }
 
-/** The first step that did not apply, as "step 1 (switch.setState on 11): …". */
+/** The first field that did not apply, as "oscillationAxes.horizontal.angle: …". */
 function firstProblem(result: FanPresetApplyResult): string {
-  const bad = result.steps.find((s) => s.outcome === 'failed' || s.outcome === 'refused')
+  const bad = result.fields.find((f) => f.outcome === 'failed' || f.outcome === 'refused')
   if (bad === undefined) return result.status === 'refused' ? 'the preset was not applied' : ''
-  const what =
-    bad.cap === undefined
-      ? ''
-      : ` (${bad.cap}.${bad.method ?? '?'}${bad.deviceId === undefined ? '' : ` on ${bad.deviceId}`})`
-  return `step ${bad.index}${what}: ${bad.message ?? bad.outcome}`
+  return `${bad.field}: ${bad.message ?? bad.outcome}`
 }
 
 export class FanPresetActionSource implements IActionSourceProvider {
@@ -100,7 +96,7 @@ export class FanPresetActionSource implements IActionSourceProvider {
   }
 
   async stopAction(input: { actionId: string }): Promise<void> {
-    this.deps.logger.debug('fan preset stop ignored — a preset is a few quick steps', {
+    this.deps.logger.debug('fan preset stop ignored — a preset is a few quick fan-control calls', {
       meta: { actionId: input.actionId },
     })
   }

@@ -4,14 +4,9 @@
  * shows what is configured and where it comes from — or says the read is
  * unanswered or failed (D315, D393), never a bare "configured" badge.
  */
-import { type ActionStep, type DeviceInfo, normalizeCapStep, type FanPreset } from '@camstack/types'
-import {
-  useDeviceManagerListAll,
-  useFanPresetsGetPresets,
-  useRemoteGetConfig,
-  useTemplateList,
-} from '@camstack/ui-library'
-import { type ReactNode, useMemo } from 'react'
+import type { DeviceInfo } from '@camstack/types'
+import { useFanPresetsGetPresets, useRemoteGetConfig, useTemplateList } from '@camstack/ui-library'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CustomizeRowSpec } from './customize-rows'
 
@@ -108,35 +103,15 @@ function FanValue({ device }: DeviceProps): ReactNode {
   return <Text>{t('customize.table.presetsCount', { count: presets.data.length })}</Text>
 }
 
-/** The ids of the devices a preset's steps act on. */
-export function presetTargetIds(presets: readonly FanPreset[]): readonly number[] {
-  const ids = new Set<number>()
-  for (const preset of presets) {
-    for (const step of preset.steps) collectTargets(step, ids)
-  }
-  return [...ids]
-}
-
-function collectTargets(step: ActionStep, into: Set<number>): void {
-  if (step.kind !== 'cap') return
-  const { target } = normalizeCapStep(step)
-  if (target.kind === 'devices') for (const id of target.ids) into.add(id)
-}
-
-/** The devices the presets set: the fan and the lamp or switch beside it. */
+/**
+ * The device the presets set: the fan itself, through its own fan-control
+ * methods (D1034). A field linked in Customize is forwarded to its link there.
+ */
 function FanSource({ device }: DeviceProps): ReactNode {
   const { t } = useTranslation()
   const presets = useFanPresetsGetPresets({ deviceId: device.id })
-  const fleet = useDeviceManagerListAll({ projection: 'slim' })
-  const names = useMemo((): readonly string[] | null => {
-    if (presets.data === undefined || fleet.data === undefined) return null
-    const byId = new Map(fleet.data.map((row) => [row.id, row.name]))
-    return presetTargetIds(presets.data).map((id) => byId.get(id) ?? `#${id}`)
-  }, [presets.data, fleet.data])
   if (presets.status === 'error') return <Unread reason={presets.error?.message ?? null} />
   if (presets.data === undefined) return <Checking />
   if (presets.data.length === 0) return <Text muted>{t('customize.table.noSource')}</Text>
-  if (fleet.status === 'error') return <Unread reason={fleet.error?.message ?? null} />
-  if (names === null) return <Checking />
-  return <Text>{names.join(', ')}</Text>
+  return <Text>{device.name}</Text>
 }

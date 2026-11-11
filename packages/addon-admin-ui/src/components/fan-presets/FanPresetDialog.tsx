@@ -1,21 +1,19 @@
 /**
- * One fan preset: a name and the ordered steps that put the fan (and the lamp,
- * the dimmer, the switch beside it) where the operator wants. "Use current
- * values" asks the hub to read the live state and fill the steps — the result
- * is shown here for review, with every reading it could not take named. Nothing
- * is saved until Save.
+ * One fan preset: a name and the fan-control state it sets (D1034) — speed,
+ * the fan's preset mode, direction, and each oscillation axis. A field left
+ * empty is left as it is. "Use current values" asks the hub for the fan's
+ * current state (a field linked in Customize reads its link) and fills the
+ * form, naming every reading it could not take. Nothing is saved until Save.
  */
-import {
-  type ActionStep,
-  type AutomationAction,
-  type FanCaptureGroup,
-  type FanCaptureOmission,
-  type FanPreset,
-  type FanPresetCaptureResult,
+import type {
+  FanCaptureOmission,
+  FanOscillationAxisName,
+  FanPreset,
+  FanPresetAxis,
+  FanPresetState,
 } from '@camstack/types'
 import {
   Button,
-  Checkbox,
   Dialog,
   DialogBody,
   DialogContent,
@@ -30,14 +28,14 @@ import {
 import { Camera, Loader2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActionList } from '../../pages/build/automation/ActionList'
-import type { AutomationDevice } from '../../pages/build/automation/automation-data'
 import {
-  captureSections,
   checkPresetDraft,
   omissionText,
+  PRESET_AXES,
+  PRESET_AXIS_NUMBERS,
   type PresetCheck,
-  tickedSteps,
+  parseOptionalNumber,
+  withAxis,
 } from './fan-presets-model'
 
 export interface FanPresetDialogProps {
@@ -45,30 +43,10 @@ export interface FanPresetDialogProps {
   readonly draft: FanPreset
   /** The other presets, for the duplicate-name check. */
   readonly others: readonly FanPreset[]
-  /** The fan and its siblings — the only devices a step may name. */
-  readonly devices: readonly AutomationDevice[]
   readonly saving: boolean
   readonly error: string | null
   readonly onSave: (preset: FanPreset) => void
   readonly onClose: () => void
-}
-
-function isActionStep(action: AutomationAction): action is ActionStep {
-  return action.kind === 'cap' || action.kind === 'wait'
-}
-
-function useGroupText(): (group: FanCaptureGroup) => string {
-  const { t } = useTranslation()
-  return (group) => {
-    switch (group) {
-      case 'fan':
-        return t('fanPresets.capture.group.fan', 'Fan')
-      case 'oscillation':
-        return t('fanPresets.capture.group.oscillation', 'Oscillation')
-      case 'angles':
-        return t('fanPresets.capture.group.angles', 'Angles')
-    }
-  }
 }
 
 function useProblemText(): (check: PresetCheck) => string | null {
@@ -78,19 +56,122 @@ function useProblemText(): (check: PresetCheck) => string | null {
     switch (check.reason) {
       case 'no-name':
         return t('fanPresets.problem.name', 'Give the preset a name.')
-      case 'no-steps':
-        return t('fanPresets.problem.noSteps', 'Add at least one step, or use the current values.')
+      case 'no-fields':
+        return t(
+          'fanPresets.problem.noFields',
+          'Set at least one value, or use the current values.',
+        )
       case 'duplicate-name':
         return t('fanPresets.problem.duplicate', 'Another preset already has this name.')
     }
   }
 }
 
+interface ChoiceOption<T> {
+  readonly value: T | undefined
+  readonly label: string
+}
+
+interface ChoiceProps<T> {
+  readonly options: readonly ChoiceOption<T>[]
+  readonly value: T | undefined
+  readonly onChange: (value: T | undefined) => void
+  readonly testId: string
+}
+
+function Choice<T>({ options, value, onChange, testId }: ChoiceProps<T>): ReactNode {
+  return (
+    <div className="flex flex-wrap gap-1" data-testid={testId}>
+      {options.map((option) => (
+        <Button
+          key={option.label}
+          size="sm"
+          variant={option.value === value ? 'primary' : 'outline'}
+          onClick={() => onChange(option.value)}
+        >
+          {option.label}
+        </Button>
+      ))}
+    </div>
+  )
+}
+
+interface NumberFieldProps {
+  readonly label: string
+  readonly value: number | undefined
+  readonly onChange: (value: number | undefined) => void
+  readonly testId: string
+}
+
+function NumberField({ label, value, onChange, testId }: NumberFieldProps): ReactNode {
+  const { t } = useTranslation()
+  return (
+    <FormField label={label}>
+      <Input
+        type="number"
+        value={value === undefined ? '' : String(value)}
+        placeholder={t('fanPresets.dialog.unchanged', 'Unchanged')}
+        onChange={(e) => onChange(parseOptionalNumber(e.target.value))}
+        data-testid={testId}
+      />
+    </FormField>
+  )
+}
+
+interface AxisEditorProps {
+  readonly axis: FanOscillationAxisName
+  readonly want: FanPresetAxis
+  readonly onChange: (want: FanPresetAxis) => void
+}
+
+function AxisEditor({ axis, want, onChange }: AxisEditorProps): ReactNode {
+  const { t } = useTranslation()
+  const title =
+    axis === 'horizontal'
+      ? t('fanPresets.axis.horizontal', 'Horizontal axis')
+      : t('fanPresets.axis.vertical', 'Vertical axis')
+  const numberLabel = {
+    angle: t('fanPresets.axis.angle', 'Angle (°)'),
+    sweepFrom: t('fanPresets.axis.sweepFrom', 'Sweep from (°)'),
+    sweepTo: t('fanPresets.axis.sweepTo', 'Sweep to (°)'),
+  }
+  return (
+    <div
+      className="space-y-2 rounded border border-border p-3"
+      data-testid={`fan-preset-axis-${axis}`}
+    >
+      <p className="text-xs font-medium text-foreground">{title}</p>
+      <FormField label={t('fanPresets.axis.oscillating', 'Oscillation')}>
+        <Choice<boolean>
+          testId={`fan-preset-axis-${axis}-oscillating`}
+          value={want.oscillating}
+          onChange={(oscillating) => onChange({ ...want, oscillating })}
+          options={[
+            { value: undefined, label: t('fanPresets.dialog.unchanged', 'Unchanged') },
+            { value: true, label: t('fanPresets.axis.on', 'On') },
+            { value: false, label: t('fanPresets.axis.off', 'Off') },
+          ]}
+        />
+      </FormField>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        {PRESET_AXIS_NUMBERS.map((field) => (
+          <NumberField
+            key={field}
+            label={numberLabel[field]}
+            value={want[field]}
+            onChange={(value) => onChange({ ...want, [field]: value })}
+            testId={`fan-preset-axis-${axis}-${field}`}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function FanPresetDialog({
   fanId,
   draft: initial,
   others,
-  devices,
   saving,
   error,
   onSave,
@@ -99,40 +180,22 @@ export function FanPresetDialog({
   const { t } = useTranslation()
   const problemText = useProblemText()
   const [draft, setDraft] = useState<FanPreset>(initial)
-  const groupText = useGroupText()
   const [omitted, setOmitted] = useState<readonly FanCaptureOmission[]>([])
-  // The hub's proposal under review, and which of its steps are ticked.
-  const [proposal, setProposal] = useState<FanPresetCaptureResult | null>(null)
-  const [ticked, setTicked] = useState<ReadonlySet<number>>(new Set())
   const capture = useFanPresetsCapturePreset(
-    { deviceId: fanId, steps: [] },
+    { deviceId: fanId },
     { enabled: false, gcTime: 0, retry: false },
   )
   const check = checkPresetDraft(others, draft)
   const problem = problemText(check)
+  const setState = (state: FanPresetState): void => setDraft((d) => ({ ...d, state }))
+  const state = draft.state
 
   const useCurrent = (): void => {
     void capture.refetch().then((result) => {
       if (result.data === undefined) return
-      setProposal(result.data)
-      setTicked(new Set(result.data.steps.keys()))
+      setState(result.data.state)
       setOmitted(result.data.omitted)
     })
-  }
-
-  const toggle = (index: number, on: boolean): void => {
-    setTicked((current) => {
-      const next = new Set(current)
-      if (on) next.add(index)
-      else next.delete(index)
-      return next
-    })
-  }
-
-  const applyTicked = (): void => {
-    if (proposal === null) return
-    setDraft((d) => ({ ...d, steps: [...tickedSteps(proposal, ticked)] }))
-    setProposal(null)
   }
 
   return (
@@ -154,8 +217,8 @@ export function FanPresetDialog({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-foreground-muted">
                 {t(
-                  'fanPresets.dialog.stepsHint',
-                  'Steps run in order, on this fan and the devices beside it.',
+                  'fanPresets.dialog.stateHint',
+                  'Set only what this preset should change. An empty value is left as it is.',
                 )}
               </p>
               <Button
@@ -200,58 +263,52 @@ export function FanPresetDialog({
                 </ul>
               </div>
             )}
-            {proposal !== null && (
-              <div
-                className="space-y-2 rounded border border-border p-3"
-                data-testid="fan-preset-capture"
-              >
-                <p className="text-xs text-foreground-muted">
-                  {t(
-                    'fanPresets.capture.hint',
-                    'Tick what this preset should set. Unticked values are left as they are.',
-                  )}
-                </p>
-                {captureSections(proposal).map((section) => (
-                  <div key={section.group} className="space-y-1">
-                    <p className="text-xs font-medium text-foreground">
-                      {groupText(section.group)}
-                    </p>
-                    {section.rows.map((row) => (
-                      <label
-                        key={row.index}
-                        className="flex cursor-pointer items-center gap-2 text-sm"
-                      >
-                        <Checkbox
-                          checked={ticked.has(row.index)}
-                          aria-label={row.item.label}
-                          onChange={(event) => toggle(row.index, event.target.checked)}
-                        />
-                        <span>{row.item.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                ))}
-                <div className="flex justify-end gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => setProposal(null)}>
-                    {t('common.cancel', 'Cancel')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    disabled={ticked.size === 0}
-                    onClick={applyTicked}
-                    data-testid="fan-preset-capture-apply"
-                  >
-                    {t('fanPresets.capture.apply', 'Use selected')}
-                  </Button>
-                </div>
-              </div>
-            )}
-            <ActionList
-              actions={draft.steps}
-              devices={devices}
-              allowedKinds={['cap', 'wait']}
-              onChange={(steps) => setDraft({ ...draft, steps: steps.filter(isActionStep) })}
-            />
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <NumberField
+                label={t('fanPresets.field.speed', 'Speed (%)')}
+                value={state.speed}
+                onChange={(speed) => {
+                  const { speed: _old, ...rest } = state
+                  setState(speed === undefined ? rest : { ...rest, speed })
+                }}
+                testId="fan-preset-speed"
+              />
+              <FormField label={t('fanPresets.field.preset', 'Fan preset mode')}>
+                <Input
+                  value={state.preset ?? ''}
+                  placeholder={t('fanPresets.dialog.unchanged', 'Unchanged')}
+                  onChange={(e) => {
+                    const { preset: _old, ...rest } = state
+                    const preset = e.target.value
+                    setState(preset === '' ? rest : { ...rest, preset })
+                  }}
+                  data-testid="fan-preset-mode"
+                />
+              </FormField>
+            </div>
+            <FormField label={t('fanPresets.field.direction', 'Direction')}>
+              <Choice<'forward' | 'reverse'>
+                testId="fan-preset-direction"
+                value={state.direction}
+                onChange={(direction) => {
+                  const { direction: _old, ...rest } = state
+                  setState(direction === undefined ? rest : { ...rest, direction })
+                }}
+                options={[
+                  { value: undefined, label: t('fanPresets.dialog.unchanged', 'Unchanged') },
+                  { value: 'forward', label: t('fanPresets.field.forward', 'Forward') },
+                  { value: 'reverse', label: t('fanPresets.field.reverse', 'Reverse') },
+                ]}
+              />
+            </FormField>
+            {PRESET_AXES.map((axis) => (
+              <AxisEditor
+                key={axis}
+                axis={axis}
+                want={state.oscillationAxes?.[axis] ?? {}}
+                onChange={(want) => setState(withAxis(state, axis, want))}
+              />
+            ))}
             {problem !== null && draft.name !== '' && (
               <p className="text-xs text-warning">{problem}</p>
             )}

@@ -12053,38 +12053,47 @@
   "fanPresets": {
     "problem": {
       "name": "Give the preset a name.",
-      "noSteps": "Add at least one step, or use the current values.",
-      "duplicate": "Another preset already has this name."
+      "duplicate": "Another preset already has this name.",
+      "noFields": "Set at least one value, or use the current values."
     },
     "dialog": {
       "title": "Fan preset",
       "name": "Name",
       "namePlaceholder": "Night, Boost, Away…",
-      "stepsHint": "Steps run in order, on this fan and the devices beside it.",
       "useCurrent": "Use current values",
       "captureFailed": "The current values could not be read.",
-      "omitted": "These values could not be read, so they were left out:"
+      "omitted": "These values could not be read, so they were left out:",
+      "unchanged": "Unchanged",
+      "stateHint": "Set only what this preset should change. An empty value is left as it is."
     },
     "card": {
       "title": "Presets",
       "add": "Add preset",
       "unreadable": "The presets could not be read.",
       "loading": "Loading presets…",
-      "none": "No presets yet. A preset sets the fan, and the lamp or switch beside it, in one go.",
-      "steps": "Steps: {{count}}",
+      "none": "No presets yet. A preset sets the fan’s speed, mode, direction and oscillation in one go.",
       "edit": "Edit {{name}}",
       "delete": "Delete {{name}}",
       "deleteTitle": "Delete this preset?",
-      "deleteMessage": "{{name}} will be deleted, and Alexa, HomeKit and Home Assistant stop offering it."
+      "deleteMessage": "{{name}} will be deleted, and Alexa, HomeKit and Home Assistant stop offering it.",
+      "fields": "Values: {{count}}"
     },
-    "capture": {
-      "group": {
-        "fan": "Fan",
-        "oscillation": "Oscillation",
-        "angles": "Angles"
-      },
-      "hint": "Tick what this preset should set. Unticked values are left as they are.",
-      "apply": "Use selected"
+    "axis": {
+      "horizontal": "Horizontal axis",
+      "vertical": "Vertical axis",
+      "angle": "Angle (°)",
+      "sweepFrom": "Sweep from (°)",
+      "sweepTo": "Sweep to (°)",
+      "oscillating": "Oscillation",
+      "on": "On",
+      "off": "Off"
+    },
+    "field": {
+      "speed": "Speed (%)",
+      "preset": "Fan preset mode",
+      "direction": "Direction",
+      "forward": "Forward",
+      "reverse": "Reverse"
     }
   },
   "providerInstances": {
