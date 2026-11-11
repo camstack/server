@@ -57,7 +57,7 @@ export function SceneGrid({
       {has(right) ? (
         <div
           data-zone="right"
-          className="dc-right flex w-full min-w-0 max-w-28 flex-col items-stretch gap-2 [&>*]:min-w-0 [&>*>button]:w-full [&>*>button]:gap-0.5 [&>*>button]:px-1 [&>*>button]:text-xs [&>button]:px-2 [&>button]:text-xs"
+          className="dc-right flex min-w-0 flex-col items-stretch gap-2 [&>*]:min-w-0 [&>*>button]:w-full [&>*>button]:gap-0.5 [&>*>button]:px-1 [&>*>button]:text-xs [&>button]:px-2 [&>button]:text-xs"
         >
           {right}
         </div>

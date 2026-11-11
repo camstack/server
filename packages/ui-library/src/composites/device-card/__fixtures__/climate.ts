@@ -265,7 +265,7 @@ export const CLIMATE_EXTRA_FIXTURES: readonly ClimateFixture[] = [
   ...extra('climate-band', 'Banda caldo / freddo', 'vertical', {
     activity: 'idle',
     target: null,
-    range: { low: 19, high: 24, min: 5, max: 35, step: 0.5, editable: true },
+    range: { low: 19, high: 24, min: 16, max: 30, step: 0.5, editable: true },
     preset: null,
     swing: false,
     swingHorizontal: true,
@@ -273,7 +273,7 @@ export const CLIMATE_EXTRA_FIXTURES: readonly ClimateFixture[] = [
   ...extra('climate-band-horizontal', 'Banda, orizzontale', 'horizontal', {
     activity: 'idle',
     target: null,
-    range: { low: 19, high: 24, min: 5, max: 35, step: 0.5, editable: true },
+    range: { low: 19, high: 24, min: 16, max: 30, step: 0.5, editable: true },
   }),
   ...extra('climate-valve', 'Termostato con valvola', 'vertical', {
     role: 'radiator',

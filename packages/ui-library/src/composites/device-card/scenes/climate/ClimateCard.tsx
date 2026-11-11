@@ -36,6 +36,8 @@ const TEXT: Readonly<Record<CardTone, string>> = {
 }
 
 const degrees = (value: number, digits: number): string => `${value.toFixed(digits)}°`
+/** A setpoint in a band readout: no trailing zero, so the pair fits one line. */
+const bare = (value: number): string => String(Number(value.toFixed(1)))
 
 /**
  * Climate, every role: the dial sets the target, the left column steps it, the
@@ -56,6 +58,8 @@ export function ClimateCard({
   const valveOnly = valve !== null && target === null && range === null && model.current === null
   const tone = TONE[activity]
   const dialTone: DialTone = activity === 'off' ? 'off' : tone
+  /** A band is always drawn in a colour while the device is on: grey reads as no band. */
+  const bandTone: DialTone = dialTone === 'muted' ? 'primary' : dialTone
   const shown = draft ?? target?.value ?? null
   const words: Readonly<Record<ClimateActivity, string>> = {
     off: t('uiLibrary.deviceCard.off', 'Off'),
@@ -131,7 +135,7 @@ export function ClimateCard({
           min={range.min}
           max={range.max}
           step={range.step}
-          tone={dialTone}
+          tone={bandTone}
           enabled={model.on && range.editable}
           lowLabel={t('uiLibrary.deviceCard.climate.rangeLow', 'Heat below')}
           highLabel={t('uiLibrary.deviceCard.climate.rangeHigh', 'Cool above')}
@@ -174,11 +178,11 @@ export function ClimateCard({
       >
         <b
           className={cn(
-            'text-sm tabular-nums',
+            'whitespace-nowrap text-sm tabular-nums',
             model.on ? 'text-primary' : 'text-foreground-muted',
           )}
         >
-          {degrees(band.low, 1)} – {degrees(band.high, 1)}
+          {bare(band.low)}–{bare(band.high)}°
         </b>
         <small className="text-xs lowercase text-foreground-muted">
           {t('uiLibrary.deviceCard.climate.rangeShort', 'range')}
@@ -324,7 +328,10 @@ export function ClimateCard({
       activity={activity}
       state={{ label: words[activity], since: model.since, tone }}
       scene={{
-        fx: <ClimateFx role={model.role} activity={activity} swing={model.swing === true} />,
+        // A valve that only reports has no appliance drawn for an animation to rise from.
+        fx: valveOnly ? null : (
+          <ClimateFx role={model.role} activity={activity} swing={model.swing === true} />
+        ),
         left,
         image,
         right,

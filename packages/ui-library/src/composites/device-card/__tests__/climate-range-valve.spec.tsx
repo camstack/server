@@ -123,7 +123,7 @@ describe('a held band (heat_cool) — two setpoints on one dial', () => {
     expect(present('dc-dial')).toBe(false)
     expect(present('dc-climate-target')).toBe(false)
     expect(screen.queryByLabelText('Raise the target')).toBeNull()
-    expect(screen.getByTestId('dc-climate-range').textContent).toContain('19.0° – 24.0°')
+    expect(screen.getByTestId('dc-climate-range').textContent).toBe('19–24°range')
   })
 
   it('draws exactly one handle for a single setpoint', () => {
@@ -220,6 +220,8 @@ describe('a radiator valve — its opening is always shown', () => {
     expect(present('dc-climate-power')).toBe(false)
     expect(present('dc-dial')).toBe(false)
     expect(present('dc-climate-mode')).toBe(false)
+    // No appliance is drawn, so no animation floats around the number.
+    expect(document.querySelector('[data-fx]')).toBeNull()
   })
 
   it('a valve that has not reported shows a dash, not zero', () => {
