@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A discovered select can be a multi-select (discoverOptions.multiple): the found candidates are ticked, never typed.
+- Device card: one shared card (shell, parts, scenes) draws plugs and climate devices; the old switch and thermostat heroes are removed and the list tile is now DeviceSummaryCard
 
 ## [1.2.423] - 2026-11-11
 

@@ -192,10 +192,12 @@ describe('resolvePrimaryChild — edge cases', () => {
         name: 'Hot water',
       },
     ]
-    expect(resolvePrimaryChild(circuits, undefined, 'Heat pump', DeviceType.HeatPump, undefined)).toBeNull()
-    expect(resolvePrimaryChild(circuits, undefined, 'Box', DeviceType.Container, undefined)?.type).toBe(
-      'climate',
-    )
+    expect(
+      resolvePrimaryChild(circuits, undefined, 'Heat pump', DeviceType.HeatPump, undefined),
+    ).toBeNull()
+    expect(
+      resolvePrimaryChild(circuits, undefined, 'Box', DeviceType.Container, undefined)?.type,
+    ).toBe('climate')
   })
 
   // siren is a switch-family actuator and deliberately ranks BELOW switch

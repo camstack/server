@@ -1,7 +1,7 @@
 import { type ReactNode, type JSX } from 'react'
 import { cn } from '../lib/cn'
 
-export interface DeviceCardBadge {
+export interface DeviceSummaryCardBadge {
   /** Badge label text */
   label: string
   /** Optional icon rendered before the label */
@@ -10,7 +10,7 @@ export interface DeviceCardBadge {
   onClick?: () => void
 }
 
-export interface DeviceCardAction {
+export interface DeviceSummaryCardAction {
   /** Icon to render */
   icon: ReactNode
   /** Tooltip / aria-label */
@@ -19,7 +19,7 @@ export interface DeviceCardAction {
   onClick: () => void
 }
 
-export interface DeviceCardProps {
+export interface DeviceSummaryCardProps {
   /** Primary title (e.g., device name) */
   title: string
   /** Secondary text (e.g., model, IP) */
@@ -31,9 +31,9 @@ export interface DeviceCardProps {
   /** Click handler for the card body */
   onClick?: () => void
   /** Clickable badges (e.g., stream profiles) */
-  badges?: DeviceCardBadge[]
+  badges?: DeviceSummaryCardBadge[]
   /** Action icons shown at the bottom (e.g., PTZ, events) */
-  actions?: DeviceCardAction[]
+  actions?: DeviceSummaryCardAction[]
   /** Content rendered at the bottom when status is offline (e.g., Connect button) */
   offlineAction?: ReactNode
   /** Additional CSS classes */
@@ -47,7 +47,7 @@ const STATUS_COLORS = {
   unknown: 'bg-foreground-subtle',
 } as const
 
-export function DeviceCard({
+export function DeviceSummaryCard({
   title,
   subtitle,
   status,
@@ -57,7 +57,7 @@ export function DeviceCard({
   actions,
   offlineAction,
   className,
-}: DeviceCardProps): JSX.Element {
+}: DeviceSummaryCardProps): JSX.Element {
   const isOffline = status === 'offline'
 
   return (

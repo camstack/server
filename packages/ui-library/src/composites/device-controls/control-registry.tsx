@@ -35,7 +35,7 @@ import { DishwasherInlineControl, DishwasherHeroCard } from './dishwasher-contro
 import { ApplianceInlineControl, ApplianceHeroCard } from './appliance-control'
 import {
   SwitchInlineControl,
-  SwitchHeroCard,
+  PlugCardHero,
   LockInlineControl,
   LockHeroCard,
   LightInlineControl,
@@ -43,9 +43,8 @@ import {
   FanInlineControl,
   FanHeroCard,
   ThermostatInlineControl,
-  ThermostatHeroCard,
   AcInlineControl,
-  AcHeroCard,
+  ClimateCardHero,
   MediaPlayerInlineControl,
   MediaPlayerHeroCard,
   AlarmPanelInlineControl,
@@ -99,7 +98,7 @@ const UPDATE_CONTROL: DeviceTypeControl = {
 
 const SWITCH_CONTROL: DeviceTypeControl = {
   InlineControl: SwitchInlineControl,
-  HeroCard: SwitchHeroCard,
+  HeroCard: PlugCardHero,
 }
 
 const LOCK_CONTROL: DeviceTypeControl = {
@@ -119,12 +118,12 @@ const FAN_CONTROL: DeviceTypeControl = {
 
 const THERMOSTAT_CONTROL: DeviceTypeControl = {
   InlineControl: ThermostatInlineControl,
-  HeroCard: ThermostatHeroCard,
+  HeroCard: ClimateCardHero,
 }
 
 const CLIMATE_CONTROL: DeviceTypeControl = {
   InlineControl: AcInlineControl,
-  HeroCard: AcHeroCard,
+  HeroCard: ClimateCardHero,
 }
 
 const MEDIA_PLAYER_CONTROL: DeviceTypeControl = {

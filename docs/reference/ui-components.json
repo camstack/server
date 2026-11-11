@@ -1062,6 +1062,64 @@
       "summary": "Derive the `<th>` `aria-sort` for `columnKey` from the table's sort state."
     },
     {
+      "name": "ARMED_WINDOW_MS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/ArmedButton.tsx",
+      "summary": "How long an armed action waits for its confirmation."
+    },
+    {
+      "name": "ArmedButton",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/ArmedButton.tsx",
+      "summary": "The card's ONE two-step confirmation: the first press arms the action and shows a Cancel beside it; a second press within the window runs it, and the window closing (or Cancel) disarms. A scene never keeps its own con…",
+      "props": [
+        {
+          "name": "glyph",
+          "type": "CardGlyph",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "armedLabel",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "What the button says while armed (default: \"Confirm\")."
+        },
+        {
+          "name": "onConfirm",
+          "type": "() => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "windowMs",
+          "type": "number",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "AudioClassificationList",
       "kind": "component",
       "area": "composites",
@@ -1466,6 +1524,13 @@
       "summary": "Binary battery copy lives with the badge. A binary source has no real percentage: normal is the full stand-in, low is anything under the threshold."
     },
     {
+      "name": "BATTERY_LOW_PERCENT",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/model.ts",
+      "summary": "Battery levels under this are drawn as a warning."
+    },
+    {
       "name": "BatteryBadge",
       "kind": "component",
       "area": "composites",
@@ -1491,6 +1556,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "BatteryCorner",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/Corner.tsx",
+      "summary": "Bottom-left: the device's own battery."
     },
     {
       "name": "BINARY_BATTERY_LOW_BELOW",
@@ -1713,6 +1785,57 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/button-control.tsx",
       "summary": "ButtonControl (inline) — compact \"Press\" trigger for a device-list row."
+    },
+    {
+      "name": "ButtonGroup",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/ButtonGroup.tsx",
+      "summary": "A row of mutually exclusive chips (presets, heat / cool / auto).",
+      "props": [
+        {
+          "name": "options",
+          "type": "readonly ButtonGroupOption[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "value",
+          "type": "string | null",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(id: string) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "ariaLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "actuates",
+          "type": "boolean",
+          "optional": true,
+          "doc": "False for a choice that only changes what is SHOWN (a tab): gating leaves it alone."
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "ButtonHeroCard",
@@ -1975,6 +2098,97 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "CARD_GLYPHS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/icons.ts",
+      "summary": "The device card's ONE icon vocabulary: glyph name -> Lucide component. Shell, parts and scenes name a glyph; nothing under `device-card/` imports `lucide-react` (or draws an emoji) outside this file — the guard `scrip…"
+    },
+    {
+      "name": "CARD_ICONS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/icons.ts",
+      "summary": "The device card's ONE icon vocabulary: glyph name -> Lucide component. Shell, parts and scenes name a glyph; nothing under `device-card/` imports `lucide-react` (or draws an emoji) outside this file — the guard `scrip…"
+    },
+    {
+      "name": "CardButton",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/CardButton.tsx",
+      "summary": "The card's one button. A button that actuates obeys the shell's gating: when the card is blocked it is disabled and its title says why.",
+      "propsExtends": ["ButtonHTMLAttributes<HTMLButtonElement>"],
+      "props": [
+        {
+          "name": "tone",
+          "type": "CardButtonTone",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "glyph",
+          "type": "CardGlyph",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "actuates",
+          "type": "boolean",
+          "optional": true,
+          "doc": "False for a control that only READS (a popover opener): gating leaves it alone."
+        }
+      ]
+    },
+    {
+      "name": "cardButtonClass",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/CardButton.tsx",
+      "summary": "The card button's classes, for the one trigger that must be its own element (a menu)."
+    },
+    {
+      "name": "CardGatingProvider",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/gating.tsx",
+      "summary": "Why a card cannot be commanded, decided ONCE by the shell (offline, or the viewer has no permission) and read by every part that actuates. A scene never re-implements the rule: it draws parts, and the parts ask here."
+    },
+    {
+      "name": "CardIcon",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/CardIcon.tsx",
+      "summary": "One glyph of the card's icon map, sized to the text beside it.",
+      "props": [
+        {
+          "name": "glyph",
+          "type": "CardGlyph",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "cardToneClass",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/Corner.tsx",
+      "summary": ""
+    },
+    {
+      "name": "CardTop",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/DeviceCard.tsx",
+      "summary": "Integration on the left, reachability on the right."
     },
     {
       "name": "carriesDeviceTemplate",
@@ -2274,11 +2488,121 @@
       "summary": "Remove every device of the group; ids outside it are untouched."
     },
     {
+      "name": "CLIMATE_FIXTURES",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/__fixtures__/climate.ts",
+      "summary": "The climate page of the approved mockup: its nine role variants and the horizontal one."
+    },
+    {
+      "name": "CLIMATE_ROLES",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/ClimateRoleGlyph.tsx",
+      "summary": ""
+    },
+    {
+      "name": "ClimateCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/climate/ClimateCard.tsx",
+      "summary": "Climate, every role: the dial sets the target, the left column steps it, the right column holds power / mode / fan, the bottom row presets and swing. A block the device does not declare is not drawn.",
+      "props": [
+        {
+          "name": "model",
+          "type": "ClimateCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "ClimateCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "ClimateCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
+    },
+    {
+      "name": "ClimateFx",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/ClimateFx.tsx",
+      "summary": "The animation behind a climate scene: what the role is doing right now.",
+      "props": [
+        {
+          "name": "role",
+          "type": "ClimateRole",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "activity",
+          "type": "ClimateActivity",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "swing",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "climateFxKind",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/ClimateFx.tsx",
+      "summary": "Which animation a (role, activity) pair plays; null is a still scene."
+    },
+    {
       "name": "ClimatePanel",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/climate-panel.tsx",
       "summary": ""
+    },
+    {
+      "name": "ClimateRoleGlyph",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/ClimateRoleGlyph.tsx",
+      "summary": "The small drawing in the dial's gap that says WHAT heats or cools.",
+      "props": [
+        {
+          "name": "role",
+          "type": "ClimateRole",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "climateRoleOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedClimateCard.tsx",
+      "summary": "What draws the heat or the cold, from what the device IS and binds."
     },
     {
       "name": "clusterRootModelIds",
@@ -2293,6 +2617,13 @@
       "area": "lib",
       "file": "packages/ui-library/src/lib/cn.ts",
       "summary": ""
+    },
+    {
+      "name": "coarseDuration",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/coarse-duration.ts",
+      "summary": "\"6 min\", \"2 h\", \"3 d\": how long ago, in the one unit a card corner has room for."
     },
     {
       "name": "CodeBlock",
@@ -2751,6 +3082,63 @@
       "summary": "The ONE modal dialog of the product — confirm, alert and prompt."
     },
     {
+      "name": "connectedCardKindOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedDeviceCard.tsx",
+      "summary": "Which card draws a device, from what it IS and what it binds."
+    },
+    {
+      "name": "ConnectedClimateCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedClimateCard.tsx",
+      "summary": "The climate card of a real device, from its `climate-control` slice."
+    },
+    {
+      "name": "ConnectedDeviceCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedDeviceCard.tsx",
+      "summary": "The card of a real device, by scene.",
+      "propsExtends": ["ConnectedCardProps"],
+      "props": [
+        {
+          "name": "kind",
+          "type": "ConnectedCardKind",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "ConnectedPlugCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedPlugCard.tsx",
+      "summary": "The plug card of a real device: `switch`, and `timed-run` when the device binds it.",
+      "props": [
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "canActuate",
+          "type": "boolean",
+          "optional": true,
+          "doc": "False when the viewer may look but not command (default: true)."
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "CONSUMABLE_LOW_PERCENT",
       "kind": "constant",
       "area": "composites",
@@ -2823,6 +3211,27 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/consumable-level-badge.tsx",
       "summary": "The badge variant a level is drawn in."
+    },
+    {
+      "name": "ConsumablesButton",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/BottomLine.tsx",
+      "summary": "The consumables: one button that warns about the lowest, and the full list.",
+      "props": [
+        {
+          "name": "items",
+          "type": "readonly CardConsumable[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onReset",
+          "type": "(key: string) => void",
+          "optional": false,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "ConsumablesPanel",
@@ -2999,6 +3408,46 @@
           "doc": "Disable the button (e.g. nothing to copy)."
         }
       ]
+    },
+    {
+      "name": "Corner",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/Corner.tsx",
+      "summary": "One of the scene's four corners.",
+      "props": [
+        {
+          "name": "place",
+          "type": "CornerPlace",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "CORNER_CLASS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/Corner.tsx",
+      "summary": ""
     },
     {
       "name": "countableDevices",
@@ -3484,6 +3933,13 @@
       "summary": "English fallback with `{{var}}` interpolation; what renders without a host."
     },
     {
+      "name": "deriveClimateActivity",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/climate/model.ts",
+      "summary": "What the device is doing, when it does not say: read from mode, target and room."
+    },
+    {
       "name": "deriveDeviceKind",
       "kind": "function",
       "area": "composites",
@@ -3867,62 +4323,56 @@
       "name": "DeviceCard",
       "kind": "component",
       "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card.tsx",
-      "summary": "",
+      "file": "packages/ui-library/src/composites/device-card/shell/DeviceCard.tsx",
+      "summary": "The device card: ONE frame for every device type. It owns the top line, the four corners, the bottom line, the history and remote views and the gating; a scene only fills the zones.",
       "props": [
         {
-          "name": "title",
+          "name": "kind",
           "type": "string",
           "optional": false,
-          "doc": "Primary title (e.g., device name)"
+          "doc": "The device type the scene draws (`plug`, `climate`): a hook for specs and shots."
         },
         {
-          "name": "subtitle",
-          "type": "string",
-          "optional": true,
-          "doc": "Secondary text (e.g., model, IP)"
-        },
-        {
-          "name": "status",
-          "type": "'online' | 'offline' | 'warning' | 'unknown'",
-          "optional": true,
-          "doc": "Status: determines the color of the status dot"
-        },
-        {
-          "name": "selected",
-          "type": "boolean",
-          "optional": true,
-          "doc": "Whether this card is currently selected"
-        },
-        {
-          "name": "onClick",
-          "type": "() => void",
-          "optional": true,
-          "doc": "Click handler for the card body"
-        },
-        {
-          "name": "badges",
-          "type": "DeviceCardBadge[]",
-          "optional": true,
-          "doc": "Clickable badges (e.g., stream profiles)"
+          "name": "common",
+          "type": "CardCommon",
+          "optional": false,
+          "doc": ""
         },
         {
           "name": "actions",
-          "type": "DeviceCardAction[]",
+          "type": "CardCommonActions",
           "optional": true,
-          "doc": "Action icons shown at the bottom (e.g., PTZ, events)"
+          "doc": ""
         },
         {
-          "name": "offlineAction",
-          "type": "ReactNode",
+          "name": "orientation",
+          "type": "CardOrientation",
           "optional": true,
-          "doc": "Content rendered at the bottom when status is offline (e.g., Connect button)"
+          "doc": ""
+        },
+        {
+          "name": "state",
+          "type": "CardState",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "activity",
+          "type": "string",
+          "optional": true,
+          "doc": "What the device is doing, for the scene's colour and animation."
+        },
+        {
+          "name": "scene",
+          "type": "SceneZones",
+          "optional": false,
+          "doc": ""
         },
         {
           "name": "className",
           "type": "string",
           "optional": true,
-          "doc": "Additional CSS classes"
+          "doc": ""
         }
       ]
     },
@@ -4718,6 +5168,69 @@
       "summary": ""
     },
     {
+      "name": "DeviceSummaryCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-summary-card.tsx",
+      "summary": "",
+      "props": [
+        {
+          "name": "title",
+          "type": "string",
+          "optional": false,
+          "doc": "Primary title (e.g., device name)"
+        },
+        {
+          "name": "subtitle",
+          "type": "string",
+          "optional": true,
+          "doc": "Secondary text (e.g., model, IP)"
+        },
+        {
+          "name": "status",
+          "type": "'online' | 'offline' | 'warning' | 'unknown'",
+          "optional": true,
+          "doc": "Status: determines the color of the status dot"
+        },
+        {
+          "name": "selected",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Whether this card is currently selected"
+        },
+        {
+          "name": "onClick",
+          "type": "() => void",
+          "optional": true,
+          "doc": "Click handler for the card body"
+        },
+        {
+          "name": "badges",
+          "type": "DeviceSummaryCardBadge[]",
+          "optional": true,
+          "doc": "Clickable badges (e.g., stream profiles)"
+        },
+        {
+          "name": "actions",
+          "type": "DeviceSummaryCardAction[]",
+          "optional": true,
+          "doc": "Action icons shown at the bottom (e.g., PTZ, events)"
+        },
+        {
+          "name": "offlineAction",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Content rendered at the bottom when status is offline (e.g., Connect button)"
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": "Additional CSS classes"
+        }
+      ]
+    },
+    {
       "name": "DevicesWidenWarning",
       "kind": "component",
       "area": "composites",
@@ -5047,6 +5560,88 @@
       ]
     },
     {
+      "name": "Dial",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/Dial.tsx",
+      "summary": "The card's ONE round setpoint control: a 270 degree arc with a draggable thumb.",
+      "props": [
+        {
+          "name": "value",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "min",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "tone",
+          "type": "DialTone",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "ariaLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "enabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": "False when the device is off: no thumb, no drag."
+        },
+        {
+          "name": "onInput",
+          "type": "(value: number) => void",
+          "optional": true,
+          "doc": "Every value the thumb passes while dragged (the scene shows it live)."
+        },
+        {
+          "name": "onCommit",
+          "type": "(value: number) => void",
+          "optional": false,
+          "doc": "The value to send: on release, and on each arrow key."
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Centre content and the role glyph."
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "dialFractionAt",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/Dial.tsx",
+      "summary": "The value a pointer at (x, y) from the dial centre names, as a 0..1 fraction."
+    },
+    {
       "name": "Dialog",
       "kind": "component",
       "area": "primitives",
@@ -5141,6 +5736,13 @@
       "kind": "component",
       "area": "primitives",
       "file": "packages/ui-library/src/primitives/dialog.tsx",
+      "summary": ""
+    },
+    {
+      "name": "dialSnap",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/Dial.tsx",
       "summary": ""
     },
     {
@@ -5585,6 +6187,27 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/event-kind-visuals.tsx",
       "summary": "Translated label for an event kind — `t(labelKey)` when a translation exists, else the English `label` fallback. Robust to a missing key: an i18n backend that echoes the key unchanged (react-i18next default) is treate…"
+    },
+    {
+      "name": "EventList",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/EventList.tsx",
+      "summary": "Interactions of a device, grouped by day.",
+      "props": [
+        {
+          "name": "events",
+          "type": "readonly CardEvent[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "emptyLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "EventStream",
@@ -6865,6 +7488,33 @@
       "summary": "The History page path showing `refs` over `window`."
     },
     {
+      "name": "HistoryView",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/Overlays.tsx",
+      "summary": "Replaces the scene: the device's charts and who did what.",
+      "props": [
+        {
+          "name": "state",
+          "type": "CardState",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "history",
+          "type": "CardHistory",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onBack",
+          "type": "() => void",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "HistoryWindowBar",
       "kind": "component",
       "area": "composites",
@@ -6963,6 +7613,63 @@
           "type": "number",
           "optional": true,
           "doc": "The level index to apply to `hls.currentLevel`. `-1` = Auto/ABR (default). When this prop changes, the component sets `hls.currentLevel` imm"
+        }
+      ]
+    },
+    {
+      "name": "HorizontalSlider",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/sliders.tsx",
+      "summary": "A level in the scene's bottom zone.",
+      "props": [
+        {
+          "name": "value",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "min",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "ariaLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(value: number) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
         }
       ]
     },
@@ -7865,6 +8572,27 @@
       ]
     },
     {
+      "name": "KeyValue",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/KeyValue.tsx",
+      "summary": "One \"label … value\" line of a popover.",
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "KeyValueList",
       "kind": "component",
       "area": "composites",
@@ -7997,6 +8725,39 @@
         {
           "name": "disabled",
           "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "LevelBar",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/LevelBar.tsx",
+      "summary": "A thin horizontal level (a consumable, a tank, a battery).",
+      "props": [
+        {
+          "name": "percent",
+          "type": "number",
+          "optional": false,
+          "doc": "0..100."
+        },
+        {
+          "name": "low",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "ariaLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
           "optional": true,
           "doc": ""
         }
@@ -8376,6 +9137,51 @@
       "summary": ""
     },
     {
+      "name": "MenuButton",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/MenuButton.tsx",
+      "summary": "A button that names the current choice and opens the list of the others.",
+      "props": [
+        {
+          "name": "options",
+          "type": "readonly MenuOption[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "value",
+          "type": "string | null",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(id: string) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "ariaLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "mergeSecretForSubmit",
       "kind": "function",
       "area": "composites",
@@ -8448,6 +9254,20 @@
           "doc": "Width of the drawer panel. Default: 'w-64'"
         }
       ]
+    },
+    {
+      "name": "mockupCommon",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/__fixtures__/common.ts",
+      "summary": "The shell data the approved mockup draws on every card (its \"common to every type\" options, all on): power, upstream supply, battery, consumables, remote. Wording is the mockup's, in Italian, so the parity shots compa…"
+    },
+    {
+      "name": "mockupPower",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/__fixtures__/common.ts",
+      "summary": "The shell data the approved mockup draws on every card (its \"common to every type\" options, all on): power, upstream supply, battery, consumables, remote. Wording is the mockup's, in Italian, so the parity shots compa…"
     },
     {
       "name": "MODE_COLOR",
@@ -8582,6 +9402,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "nextChoice",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/climate/model.ts",
+      "summary": "The fan button walks its options in order and wraps."
     },
     {
       "name": "nextGridPosition",
@@ -8948,6 +9775,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-history/history-model.ts",
       "summary": "The pure half of a device's History view: which charts a device's series make, in which sections, and how a `query` answer becomes chart data."
+    },
+    {
+      "name": "offline",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/__fixtures__/common.ts",
+      "summary": "The mockup's \"Offline\" option."
     },
     {
       "name": "OfflineBadge",
@@ -9793,6 +10627,75 @@
       ]
     },
     {
+      "name": "PLUG_TIMER_MIN_MINUTES",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/plug/model.ts",
+      "summary": ""
+    },
+    {
+      "name": "PlugCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/plug/PlugCard.tsx",
+      "summary": "The plug: on / off, the switch's timed run, and what the shell shows for any device.",
+      "props": [
+        {
+          "name": "model",
+          "type": "PlugCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "PlugCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "PlugCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "The plug and climate heroes ARE the device card (`composites/device-card`): one frame for every device type, the scene filling its zones. The registry keeps handing a hero per control kind; these two adapt its props."
+    },
+    {
+      "name": "plugFixtures",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/__fixtures__/plug.ts",
+      "summary": "`now` anchors the running cycle, so a shot always shows the same countdown."
+    },
+    {
+      "name": "PlugIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/PlugIllustration.tsx",
+      "summary": "A wall socket: frame, two holes and a status led. Grey when off.",
+      "props": [
+        {
+          "name": "on",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "Popover",
       "kind": "component",
       "area": "primitives",
@@ -9880,6 +10783,13 @@
       "area": "primitives",
       "file": "packages/ui-library/src/primitives/popover.tsx",
       "summary": ""
+    },
+    {
+      "name": "PowerCorner",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/Corner.tsx",
+      "summary": "Top-right: the power drawn now; a press lists the other electrical readings."
     },
     {
       "name": "PowerMeterLine",
@@ -10278,6 +11188,13 @@
       "summary": "Identity of a read item: subject + key (+ scope when narrowed)."
     },
     {
+      "name": "readOnly",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/__fixtures__/common.ts",
+      "summary": "The mockup's \"Sola lettura (senza permesso)\" option."
+    },
+    {
       "name": "readStoredGroupBy",
       "kind": "function",
       "area": "composites",
@@ -10290,6 +11207,13 @@
       "area": "lib",
       "file": "packages/ui-library/src/lib/unit-preferences.ts",
       "summary": "A missing row or field is the default; a field of the wrong shape is unreadable."
+    },
+    {
+      "name": "ReasonLine",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/BottomLine.tsx",
+      "summary": "Why the card cannot be commanded; nothing when it can."
     },
     {
       "name": "RECONNECT_POLICY",
@@ -10378,6 +11302,40 @@
       "area": "icons",
       "file": "packages/ui-library/src/icons/remote-control.ts",
       "summary": "Handset remote control: body, a round top button and a 2x2 key pad."
+    },
+    {
+      "name": "RemoteCorner",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/Corner.tsx",
+      "summary": "Bottom-right: opens the device's remote."
+    },
+    {
+      "name": "RemoteView",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/Overlays.tsx",
+      "summary": "Replaces the scene: the keys the device's remote declares.",
+      "props": [
+        {
+          "name": "keys",
+          "type": "readonly CardRemoteKey[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onKey",
+          "type": "(id: string) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onBack",
+          "type": "() => void",
+          "optional": false,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "renderMarkup",
@@ -10954,6 +11912,34 @@
           "type": "boolean",
           "optional": true,
           "doc": "The scene draws its own illustration in the centre (`SCENES_WITH_ART`). A backdrop that draws a centred FIGURE (a drum, a ring, a ripple) wo"
+        }
+      ]
+    },
+    {
+      "name": "SceneGrid",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/SceneGrid.tsx",
+      "summary": "The scene: left column, drawing, right column, and a bottom row — the same four zones for every device type. A zone with nothing in it is not rendered.",
+      "propsExtends": ["SceneZones"],
+      "props": [
+        {
+          "name": "corners",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": "The four corners, placed by the shell."
+        },
+        {
+          "name": "bottomCorners",
+          "type": "boolean",
+          "optional": false,
+          "doc": "A bottom corner is drawn: leave room under the zones."
+        },
+        {
+          "name": "activity",
+          "type": "string",
+          "optional": true,
+          "doc": ""
         }
       ]
     },
@@ -12066,6 +13052,13 @@
       "summary": "Sidebar narrow lane in a SPLIT_PANEL_OUTER layout."
     },
     {
+      "name": "splitPlugDuration",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/plug/model.ts",
+      "summary": ""
+    },
+    {
       "name": "StableTabPanel",
       "kind": "component",
       "area": "composites",
@@ -12183,6 +13176,27 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/charts/chart-data.ts",
       "summary": "The state in force at `t`, or `null` when nothing was recorded there."
+    },
+    {
+      "name": "StateCorner",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/Corner.tsx",
+      "summary": "Top-left: what the device is doing, and since when.",
+      "props": [
+        {
+          "name": "state",
+          "type": "CardState",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onOpenHistory",
+          "type": "() => void",
+          "optional": true,
+          "doc": "Present when the device has history: the corner opens it."
+        }
+      ]
     },
     {
       "name": "stateRow",
@@ -12635,6 +13649,13 @@
       ]
     },
     {
+      "name": "stepPlugTimer",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/plug/model.ts",
+      "summary": "The next duration one press of + or - gives: 5 min steps up to an hour, then 15."
+    },
+    {
       "name": "StepTimings",
       "kind": "component",
       "area": "composites",
@@ -13074,6 +14095,33 @@
       "summary": "The hub's offered candidates: answer SDP plus trickle, deduplicated."
     },
     {
+      "name": "SupplyChip",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/BottomLine.tsx",
+      "summary": "The switch that feeds the device. It is ANOTHER device, so an offline card can still restart its supply; only a viewer without permission is refused.",
+      "props": [
+        {
+          "name": "supply",
+          "type": "CardSupply",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "readOnly",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onAction",
+          "type": "(action: CardSupplyAction) => void",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "swatchFillClass",
       "kind": "function",
       "area": "composites",
@@ -13114,13 +14162,6 @@
           "doc": ""
         }
       ]
-    },
-    {
-      "name": "SwitchHeroCard",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/switch-hero-card.tsx",
-      "summary": "SwitchHeroCard — large tap-toggle hero for Switch / Siren devices."
     },
     {
       "name": "SwitchInlineControl",
@@ -13376,13 +14417,6 @@
       "area": "theme",
       "file": "packages/ui-library/src/theme/theme-to-root-css.ts",
       "summary": "The theme as plain CSS custom properties on `:root`, with no Tailwind directive: light colours by default, dark inside `prefers-color-scheme`. Variable names are the ones emits (`--color-primary`, `--spacing-lg`, `--r…"
-    },
-    {
-      "name": "ThermostatHeroCard",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/thermostat-hero-card.tsx",
-      "summary": "ThermostatHeroCard — circular gauge hero for thermostat / HVAC devices."
     },
     {
       "name": "ThermostatInlineControl",
@@ -13966,6 +15000,20 @@
       "summary": "Ask the hub's capability registry whether `capabilityName` has a provider."
     },
     {
+      "name": "useCardCommon",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/use-card-common.tsx",
+      "summary": "The shell's data for a REAL device, read from the caps that already own each fact: `device-status` (reachable), `power-meter`, `battery`, `consumables`, `power-source` (the switch upstream) and `remote`. A block is nu…"
+    },
+    {
+      "name": "useCardGating",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/gating.tsx",
+      "summary": "Why a card cannot be commanded, decided ONCE by the shell (offline, or the viewer has no permission) and read by every part that actuates. A scene never re-implements the rule: it draws parts, and the parts ask here."
+    },
+    {
       "name": "useClassPainter",
       "kind": "hook",
       "area": "composites",
@@ -13992,6 +15040,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/confirm-dialog.tsx",
       "summary": "The ONE modal dialog of the product — confirm, alert and prompt."
+    },
+    {
+      "name": "useConnectedCardKind",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedDeviceCard.tsx",
+      "summary": "Resolves the card of a device; a failed read answers `null` so the caller falls back."
     },
     {
       "name": "useContainerChildren",
@@ -14631,6 +15686,39 @@
       "summary": "Validation helper. The wire schema (`TokenScopeSchema`) requires every scope to carry a usable target and `access.length >= 1`; a v3 device selector additionally requires a non-empty list for every kind except `all`. …"
     },
     {
+      "name": "ValueChip",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/ValueChip.tsx",
+      "summary": "A small read-only pill (integration name, an offline note, a reading).",
+      "props": [
+        {
+          "name": "glyph",
+          "type": "CardGlyph",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "tone",
+          "type": "'default' | 'danger'",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "ValueReadout",
       "kind": "component",
       "area": "composites",
@@ -14700,6 +15788,63 @@
         },
         {
           "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "VerticalSlider",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/sliders.tsx",
+      "summary": "A level in one of the scene's side columns.",
+      "props": [
+        {
+          "name": "value",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "min",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "ariaLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(value: number) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "testId",
           "type": "string",
           "optional": true,
           "doc": ""

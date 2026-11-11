@@ -9684,6 +9684,89 @@
       "state": "stato",
       "example": "es. {{example}}",
       "empty": "Nessun risultato per “{{query}}”"
+    },
+    "deviceCard": {
+      "back": "Torna allo stato attuale",
+      "cancel": "Annulla",
+      "confirm": "Conferma",
+      "on": "Acceso",
+      "off": "Spento",
+      "unknown": "Non noto",
+      "online": "Online",
+      "offline": "Offline",
+      "openHistory": "Apri lo storico",
+      "powerDetails": "Dettagli del consumo",
+      "remote": "Telecomando",
+      "remoteNote": "I tasti sono quelli che il dispositivo dichiara.",
+      "turnOn": "Accendi",
+      "turnOff": "Spegni",
+      "reason": {
+        "offline": "{{offline}}: comandi non disponibili",
+        "readOnly": "Solo lettura: non hai il permesso di comandarlo"
+      },
+      "supply": {
+        "title": "Alimentazione a monte",
+        "on": "accesa",
+        "off": "spenta",
+        "restarting": "riavvio in corso…",
+        "restart": "Riavvia"
+      },
+      "consumables": {
+        "ok": "Consumabili ok",
+        "title": "Consumabili",
+        "reset": "Azzera"
+      },
+      "history": {
+        "charts": "Storico",
+        "events": "Interazioni",
+        "noEvents": "Ancora nessuna interazione"
+      },
+      "plug": {
+        "on": "Accesa",
+        "off": "Spenta",
+        "minutes": "{{m}} min",
+        "hoursMinutes": "{{h}} h {{m}}′",
+        "less": "Meno",
+        "more": "Più",
+        "start": "Avvia {{duration}}",
+        "startAria": "Accendi per {{duration}}, poi spegni",
+        "stop": "Ferma",
+        "stopAria": "Ferma il ciclo a tempo e spegni"
+      },
+      "climate": {
+        "cooling": "Raffresca",
+        "heating": "Riscalda",
+        "idle": "In attesa",
+        "window": "Finestra aperta",
+        "resumes": "Riprende alla chiusura",
+        "flow": "mandata",
+        "target": "Temperatura obiettivo",
+        "targetShort": "obiettivo",
+        "raise": "Alza l’obiettivo",
+        "lower": "Abbassa l’obiettivo",
+        "mode": "Modalità",
+        "fan": "Ventola",
+        "swing": "Oscillazione",
+        "preset": "Preset",
+        "heatCool": "Caldo o freddo",
+        "modes": {
+          "auto": "Auto",
+          "cool": "Freddo",
+          "dry": "Deumidifica",
+          "fan": "Ventola",
+          "heat": "Caldo"
+        }
+      },
+      "days": "{{n}} g",
+      "hours": "{{n}} h",
+      "minutes": "{{n}} min",
+      "offlineFor": "Offline da {{duration}}",
+      "power": {
+        "current": "Corrente",
+        "energy": "Energia totale",
+        "factor": "Fattore di potenza",
+        "voltage": "Tensione"
+      }
     }
   },
   "helpers": {

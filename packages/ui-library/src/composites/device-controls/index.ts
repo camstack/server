@@ -98,7 +98,7 @@ export { SensorInlineControl } from './sensor-inline-control'
 export { SensorHeroCard } from './sensor-hero-card'
 export {
   SwitchInlineControl,
-  SwitchHeroCard,
+  PlugCardHero,
   LockInlineControl,
   LockHeroCard,
   LightInlineControl,
@@ -106,7 +106,7 @@ export {
   FanInlineControl,
   FanHeroCard,
   ThermostatInlineControl,
-  ThermostatHeroCard,
+  ClimateCardHero,
   MediaPlayerInlineControl,
   MediaPlayerHeroCard,
   AlarmPanelInlineControl,

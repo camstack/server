@@ -29,11 +29,11 @@ import { AcPanel } from './ac-panel'
 import { MediaPlayerPanel } from './media-player-panel'
 import { ControlPanel } from './control-panel'
 import type { DeviceControlProps } from './control-registry'
-export { ThermostatHeroCard } from './thermostat-hero-card'
+import { ConnectedClimateCard } from '../device-card/connected/ConnectedClimateCard'
+import { ConnectedPlugCard } from '../device-card/connected/ConnectedPlugCard'
 export { LockHeroCard } from './lock-hero-card'
 export { LightHeroCard } from './light-hero-card'
 export { FanHeroCard } from './fan-hero-card'
-export { SwitchHeroCard } from './switch-hero-card'
 export { MediaPlayerHeroCard } from './media-player-hero-card'
 // AlarmPanelInlineControl is the row-sized compact strip; AlarmHeroCard the
 // full glyph+label+segments surface. Both live in alarm-hero-card.tsx and
@@ -94,9 +94,6 @@ export function SwitchInlineControl({
     />
   )
 }
-
-// SwitchHeroCard lives in switch-hero-card.tsx (large TAP toggle, Spec §3) and
-// is re-exported above — it supersedes the panel-stack hero.
 
 // ── Lock ──────────────────────────────────────────────────────────────────────
 
@@ -277,23 +274,17 @@ export function AcInlineControl({
   )
 }
 
-export function AcHeroCard({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
-  const hasClimate = useClimateCapGuard(trpc, deviceId)
-  if (!hasClimate) return null
-  return (
-    <AcPanel
-      trpc={trpc}
-      deviceId={deviceId}
-      features={features}
-      layout="full"
-      optimistic={optimistic}
-    />
-  )
+/**
+ * The plug and climate heroes ARE the device card (`composites/device-card`):
+ * one frame for every device type, the scene filling its zones. The registry
+ * keeps handing a hero per control kind; these two adapt its props.
+ */
+export function PlugCardHero({ deviceId }: DeviceControlProps): ReactNode {
+  return <ConnectedPlugCard deviceId={deviceId} />
+}
+
+export function ClimateCardHero({ deviceId }: DeviceControlProps): ReactNode {
+  return <ConnectedClimateCard deviceId={deviceId} />
 }
 
 // ── MediaPlayer ───────────────────────────────────────────────────────────────

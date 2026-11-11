@@ -11,7 +11,7 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { useSystem } from '../../contexts/system-context.js'
+import { type SystemTrpcClient, useSystem } from '../../contexts/system-context.js'
 
 /** "Home Assistant (Casa)", or "Home Assistant" without an instance name. */
 export function formatProviderLabel(
@@ -69,7 +69,17 @@ const PROVIDER_LABELS_STALE_MS = 60_000
  * failed read draws no provider line — it is a hint, never a gate).
  */
 export function useDeviceProviderLabels(enabled: boolean): ReadonlyMap<number, string> {
-  const trpcClient = useSystem().trpcClient
+  return useDeviceProviderLabelsWith(useSystem().trpcClient, enabled)
+}
+
+/**
+ * The same labels through a client the caller holds — for a surface mounted
+ * with a lent client and no `System` (the device module in a webview).
+ */
+export function useDeviceProviderLabelsWith(
+  trpcClient: SystemTrpcClient,
+  enabled: boolean,
+): ReadonlyMap<number, string> {
   const query = useQuery({
     queryKey: ['ui-library', 'device-provider-labels'],
     enabled,

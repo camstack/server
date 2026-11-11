@@ -9662,6 +9662,89 @@
       "state": "state",
       "example": "e.g. {{example}}",
       "empty": "Nothing matches “{{query}}”"
+    },
+    "deviceCard": {
+      "back": "Back to the current state",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "on": "On",
+      "off": "Off",
+      "unknown": "Unknown",
+      "online": "Online",
+      "offline": "Offline",
+      "openHistory": "Open the history",
+      "powerDetails": "Power details",
+      "remote": "Remote",
+      "remoteNote": "The keys are the ones the device declares.",
+      "turnOn": "Turn on",
+      "turnOff": "Turn off",
+      "reason": {
+        "offline": "{{offline}}: commands unavailable",
+        "readOnly": "Read only: you do not have permission to command it"
+      },
+      "supply": {
+        "title": "Upstream supply",
+        "on": "on",
+        "off": "off",
+        "restarting": "restarting…",
+        "restart": "Restart"
+      },
+      "consumables": {
+        "ok": "Consumables ok",
+        "title": "Consumables",
+        "reset": "Reset"
+      },
+      "history": {
+        "charts": "History",
+        "events": "Interactions",
+        "noEvents": "No interactions yet"
+      },
+      "plug": {
+        "on": "On",
+        "off": "Off",
+        "minutes": "{{m}} min",
+        "hoursMinutes": "{{h}} h {{m}}′",
+        "less": "Shorter",
+        "more": "Longer",
+        "start": "Run {{duration}}",
+        "startAria": "Turn on for {{duration}}, then off",
+        "stop": "Stop",
+        "stopAria": "Stop the timed run and turn off"
+      },
+      "climate": {
+        "cooling": "Cooling",
+        "heating": "Heating",
+        "idle": "Idle",
+        "window": "Window open",
+        "resumes": "Resumes when it closes",
+        "flow": "flow",
+        "target": "Target temperature",
+        "targetShort": "target",
+        "raise": "Raise the target",
+        "lower": "Lower the target",
+        "mode": "Mode",
+        "fan": "Fan",
+        "swing": "Swing",
+        "preset": "Preset",
+        "heatCool": "Heating or cooling",
+        "modes": {
+          "auto": "Auto",
+          "cool": "Cool",
+          "dry": "Dry",
+          "fan": "Fan",
+          "heat": "Heat"
+        }
+      },
+      "days": "{{n}} d",
+      "hours": "{{n}} h",
+      "minutes": "{{n}} min",
+      "offlineFor": "Offline for {{duration}}",
+      "power": {
+        "current": "Current",
+        "energy": "Total energy",
+        "factor": "Power factor",
+        "voltage": "Voltage"
+      }
     }
   },
   "helpers": {

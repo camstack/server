@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 /**
  * Tests for the remaining per-type hero surfaces (Task 2.5):
- *  - SwitchHeroCard      — a large TAP toggle (NO slide; slide is lock-only).
  *  - MediaPlayerHeroCard — lucide transport (SkipBack/PlayPause/SkipForward)
  *                          + seek and volume rendered as GripTrack grip-thumbs.
  *  - AlarmHeroCard       — segmented Disarm / Home / Away controls calling the
@@ -69,7 +68,6 @@ vi.mock('../../../hooks/use-device-capability', () => ({
   },
 }))
 
-import { SwitchHeroCard } from '../switch-hero-card'
 import { MediaPlayerHeroCard } from '../media-player-hero-card'
 import { AlarmHeroCard, AlarmInlineControl } from '../alarm-hero-card'
 
@@ -78,19 +76,6 @@ const trpc = {} as never
 // ── Switch fixtures ─────────────────────────────────────────────────────────
 
 const switchCap = { setState: vi.fn() }
-
-function switchSlots(over?: Partial<Record<CapName, CapSlot>>): Record<CapName, CapSlot> {
-  return {
-    switch: {
-      cap: switchCap,
-      slice: { on: false, lastChangedAt: 0 },
-      available: true,
-    },
-    mediaPlayer: { cap: undefined, slice: undefined, available: false },
-    alarmPanel: { cap: undefined, slice: undefined, available: false },
-    ...over,
-  }
-}
 
 // ── Media fixtures ──────────────────────────────────────────────────────────
 
@@ -169,32 +154,6 @@ beforeEach(() => {
   Object.values(alarmCap).forEach((fn) => fn.mockReset())
   alarmCap.arm.mockResolvedValue(undefined)
   alarmCap.disarm.mockResolvedValue(undefined)
-})
-
-// ── SwitchHeroCard ──────────────────────────────────────────────────────────
-
-describe('SwitchHeroCard', () => {
-  it('returns null when the switch cap is absent (cap-gate)', () => {
-    slots = switchSlots({
-      switch: { cap: undefined, slice: undefined, available: false },
-    })
-    const { container } = render(<SwitchHeroCard trpc={trpc} deviceId={1} features={undefined} />)
-    expect(container.firstChild).toBeNull()
-  })
-
-  it('uses a TAP TOGGLE for on/off — no slide-thumb present', () => {
-    slots = switchSlots()
-    render(<SwitchHeroCard trpc={trpc} deviceId={1} features={undefined} />)
-    expect(screen.queryByTestId('slide-thumb')).toBeNull()
-    expect(screen.getByRole('button', { name: /turn/i })).toBeTruthy()
-  })
-
-  it('calls setState with the toggled value on tap', () => {
-    slots = switchSlots()
-    render(<SwitchHeroCard trpc={trpc} deviceId={1} features={undefined} />)
-    fireEvent.click(screen.getByRole('button', { name: /turn/i }))
-    expect(switchCap.setState).toHaveBeenCalledWith({ on: true })
-  })
 })
 
 // ── MediaPlayerHeroCard ─────────────────────────────────────────────────────

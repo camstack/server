@@ -24,7 +24,6 @@ vi.mock('../../../hooks/use-device-capability', () => ({
 
 import {
   SwitchInlineControl,
-  SwitchHeroCard,
   LockInlineControl,
   LockHeroCard,
   LightInlineControl,
@@ -32,7 +31,6 @@ import {
   FanInlineControl,
   FanHeroCard,
   ThermostatInlineControl,
-  ThermostatHeroCard,
   MediaPlayerInlineControl,
   MediaPlayerHeroCard,
   ControlInlineControl,
@@ -76,27 +74,6 @@ describe('SwitchInlineControl', () => {
     render(<SwitchInlineControl trpc={trpc} deviceId={1} features={undefined} />)
     const btn = screen.getByRole('button')
     expect(btn.className).toContain('bg-success')
-  })
-})
-
-describe('SwitchHeroCard', () => {
-  beforeEach(() => {
-    mockResult = {
-      cap: { setState: vi.fn() },
-      slice: { on: false, lastChangedAt: 0 },
-      available: true,
-    }
-  })
-
-  it('mounts without error when cap present', () => {
-    const { container } = render(<SwitchHeroCard trpc={trpc} deviceId={1} features={undefined} />)
-    expect(container.firstChild).not.toBeNull()
-  })
-
-  it('returns null when cap is undefined', () => {
-    mockResult = { cap: undefined, slice: undefined, available: false }
-    const { container } = render(<SwitchHeroCard trpc={trpc} deviceId={1} features={undefined} />)
-    expect(container.firstChild).toBeNull()
   })
 })
 
@@ -301,51 +278,6 @@ describe('ThermostatInlineControl', () => {
     mockResult = { cap: undefined, slice: undefined, available: false }
     const { container } = render(
       <ThermostatInlineControl trpc={trpc} deviceId={1} features={undefined} />,
-    )
-    expect(container.firstChild).toBeNull()
-  })
-})
-
-describe('ThermostatHeroCard', () => {
-  beforeEach(() => {
-    mockResult = {
-      cap: {
-        setTarget: vi.fn(),
-        setMode: vi.fn(),
-        setFanMode: vi.fn(),
-        setPreset: vi.fn(),
-        setTargetRange: vi.fn(),
-        setTargetHumidity: vi.fn(),
-      },
-      slice: {
-        mode: 'cool' as const,
-        availableModes: ['heat', 'cool'],
-        availableFanModes: [],
-        availablePresets: [],
-        currentTemp: 21,
-        target: 22,
-        targetLow: null,
-        targetHigh: null,
-        fanMode: '',
-        preset: '',
-        targetHumidity: null,
-        lastChangedAt: 0,
-      },
-      available: true,
-    }
-  })
-
-  it('mounts without error when cap present', () => {
-    const { container } = render(
-      <ThermostatHeroCard trpc={trpc} deviceId={1} features={undefined} />,
-    )
-    expect(container.firstChild).not.toBeNull()
-  })
-
-  it('returns null when climate cap is undefined', () => {
-    mockResult = { cap: undefined, slice: undefined, available: false }
-    const { container } = render(
-      <ThermostatHeroCard trpc={trpc} deviceId={1} features={undefined} />,
     )
     expect(container.firstChild).toBeNull()
   })

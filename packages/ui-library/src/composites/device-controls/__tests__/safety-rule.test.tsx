@@ -3,7 +3,6 @@
  * Enforces the LOCKED safety-gesture rule (Spec §3):
  *
  *   - LockHeroCard    MUST use SlideToggle  → `data-testid="slide-thumb"` is present.
- *   - SwitchHeroCard  MUST use TapToggle    → no `slide-thumb`; tap button present.
  *   - LightHeroCard   MUST use TapToggle    → no `slide-thumb`; tap button present.
  *   - FanHeroCard     MUST use TapToggle    → no `slide-thumb`; tap button present.
  *
@@ -75,7 +74,6 @@ vi.mock('../../../hooks/use-device-capability', () => ({
 }))
 
 import { LockHeroCard } from '../lock-hero-card'
-import { SwitchHeroCard } from '../switch-hero-card'
 import { LightHeroCard } from '../light-hero-card'
 import { FanHeroCard } from '../fan-hero-card'
 
@@ -95,15 +93,6 @@ const fanCap = {
   setPreset: vi.fn(),
   setDirection: vi.fn(),
   setOscillating: vi.fn(),
-}
-
-function switchSlots(): Record<CapName, CapSlot> {
-  return {
-    switch: { cap: switchCap, slice: { on: true, lastChangedAt: 0 }, available: true },
-    brightness: { cap: undefined, slice: undefined, available: false },
-    color: { cap: undefined, slice: undefined, available: false },
-    fanControl: { cap: undefined, slice: undefined, available: false },
-  }
 }
 
 function lightSlots(): Record<CapName, CapSlot> {
@@ -173,22 +162,6 @@ describe('LockHeroCard — safety-gesture rule', () => {
     render(<LockHeroCard trpc={trpc} deviceId={1} features={undefined} />)
     // The TapToggle button has title="Turn on" / "Turn off"; must be absent.
     expect(screen.queryByRole('button', { name: /turn/i })).toBeNull()
-  })
-})
-
-// ── SwitchHeroCard: MUST NOT use SlideToggle ─────────────────────────────────
-
-describe('SwitchHeroCard — safety-gesture rule', () => {
-  it('does NOT render a SlideToggle (slide-thumb) — on/off is plain tap', () => {
-    slots = switchSlots()
-    render(<SwitchHeroCard trpc={trpc} deviceId={1} features={undefined} />)
-    expect(screen.queryByTestId('slide-thumb')).toBeNull()
-  })
-
-  it('renders a tap toggle button for on/off', () => {
-    slots = switchSlots()
-    render(<SwitchHeroCard trpc={trpc} deviceId={1} features={undefined} />)
-    expect(screen.getByRole('button', { name: /turn/i })).toBeTruthy()
   })
 })
 
