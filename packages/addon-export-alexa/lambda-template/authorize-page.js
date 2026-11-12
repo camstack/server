@@ -265,6 +265,11 @@ async function handleAuthorizePage(event, deps) {
   }
   const query = new URLSearchParams(forwarded)
   query.set('integration', INTEGRATION_ID)
+  // A Lambda dedicated to one skill of a hub that runs several links the account to it (D1047).
+  const instanceId = deps.env && deps.env.HUB_INSTANCE_ID
+  if (typeof instanceId === 'string' && instanceId.length > 0 && !query.has('instance')) {
+    query.set('instance', instanceId)
+  }
   return {
     statusCode: 302,
     headers: {

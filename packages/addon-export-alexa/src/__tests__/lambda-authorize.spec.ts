@@ -53,7 +53,13 @@ const HEALTHY_HUB = reply(200, {
   complete: true,
 })
 
-function run(opts: { query?: string; hubUrl?: string; acceptLanguage?: string; fetch?: FetchFn }) {
+function run(opts: {
+  query?: string
+  hubUrl?: string
+  acceptLanguage?: string
+  fetch?: FetchFn
+  env?: Record<string, string>
+}) {
   const probes: string[] = []
   const fetch: FetchFn =
     opts.fetch ??
@@ -61,7 +67,7 @@ function run(opts: { query?: string; hubUrl?: string; acceptLanguage?: string; f
       probes.push(url)
       return HEALTHY_HUB
     })
-  const handler = lambda.createHandler({ env: {}, fetch })
+  const handler = lambda.createHandler({ env: opts.env ?? {}, fetch })
   const qs = [
     OAUTH_QS,
     opts.hubUrl === undefined ? '' : `hubUrl=${encodeURIComponent(opts.hubUrl)}`,
@@ -184,5 +190,14 @@ describe('/authorize — the hub address step', () => {
     expect(location.searchParams.get('client_id')).toBe('skill-id')
     expect(location.searchParams.get('state')).toBe('st<tag>')
     expect(location.searchParams.get('hubUrl')).toBeNull()
+    expect(location.searchParams.get('instance')).toBeNull()
+  })
+
+  it('a Lambda dedicated to one skill (HUB_INSTANCE_ID) links the account to that instance (D1047)', async () => {
+    const res = await run({ hubUrl: HUB, env: { HUB_INSTANCE_ID: 'alexa-skill-2' } }).result
+    expect(res.statusCode).toBe(302)
+    const location = new URL(res.headers.location ?? '')
+    expect(location.searchParams.get('instance')).toBe('alexa-skill-2')
+    expect(location.searchParams.get('integration')).toBe('export-alexa')
   })
 })

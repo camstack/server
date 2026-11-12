@@ -264,7 +264,7 @@ function makeHandler(over: Partial<HandlerDeps> & { fetch: FetchFn }) {
   return { handler, memory }
 }
 
-function acceptGrantEvent() {
+function acceptGrantEvent(granteeToken: string = GRANTEE) {
   return {
     directive: {
       header: {
@@ -275,7 +275,7 @@ function acceptGrantEvent() {
       },
       payload: {
         grant: { type: 'OAuth2.AuthorizationCode', code: 'GRANT-CODE' },
-        grantee: { type: 'BearerToken', token: GRANTEE },
+        grantee: { type: 'BearerToken', token: granteeToken },
       },
     },
   }
@@ -918,7 +918,10 @@ describe('logging', () => {
 })
 
 describe('HUB_INSTANCE_ID', () => {
-  async function brokerLinkPath(env: Record<string, string>): Promise<string> {
+  async function brokerLinkPath(
+    env: Record<string, string>,
+    granteeToken: string = GRANTEE,
+  ): Promise<string> {
     const paths: string[] = []
     const w = world({
       hub: (path) => {
@@ -927,7 +930,7 @@ describe('HUB_INSTANCE_ID', () => {
       },
     })
     const h = makeHandler({ fetch: w.fetch, env })
-    await h.handler(acceptGrantEvent())
+    await h.handler(acceptGrantEvent(granteeToken))
     const hit = paths.find((p) => p.includes('/oauth/broker-link'))
     if (hit === undefined) throw new Error('the hub was never called')
     return hit
@@ -941,5 +944,20 @@ describe('HUB_INSTANCE_ID', () => {
 
   it('keeps the pre-multi URL when unset', async () => {
     expect(await brokerLinkPath({})).toBe('/addon/export-alexa/oauth/broker-link')
+  })
+
+  it('a token that names its instance is routed to it, whatever the env says (D1046, D1047)', async () => {
+    const named = jwtWith({ hubUrl: HUB, sub: 'u1', instanceId: 'alexa-skill-3' })
+    expect(await brokerLinkPath({}, named)).toBe(
+      '/addon/export-alexa/instances/alexa-skill-3/oauth/broker-link',
+    )
+    expect(await brokerLinkPath({ HUB_INSTANCE_ID: 'alexa-skill-2' }, named)).toBe(
+      '/addon/export-alexa/instances/alexa-skill-3/oauth/broker-link',
+    )
+  })
+
+  it('an instance claim that is not a plain id is ignored', async () => {
+    const odd = jwtWith({ hubUrl: HUB, sub: 'u1', instanceId: '../admin' })
+    expect(await brokerLinkPath({}, odd)).toBe('/addon/export-alexa/oauth/broker-link')
   })
 })

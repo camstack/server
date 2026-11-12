@@ -65,6 +65,7 @@ import {
 import { heldEgressHandles } from './handlers/rtc-session.js'
 import type { DirectiveRouterDeps } from './directive-router.js'
 import type { RoutedSkill } from './http-server.js'
+import { judgeTokenInstance } from './token-instance.js'
 import { generateIngressToken } from './ingress-token.js'
 import { OauthSessionListSchema, selectAlexaSessionIdsToRevoke } from './link-status.js'
 import {
@@ -643,15 +644,21 @@ export class SkillRuntime {
 
   /** The routes' view of this skill: what a directive or a Lambda callback acts on. */
   routed(): RoutedSkill {
+    const hasLinkedUser = (userId: string): boolean =>
+      this.view.linkedAccounts.some((a) => a.userId === userId)
     return {
       id: this.instanceId,
       getSettings: () => this.effectiveSettings(),
       directiveDeps: this.directiveDeps(),
+      hasLinkedUser,
       lwaTokensCallbackDeps: {
         ctx: this.ctx,
         logger: this.ctx.logger,
         upsertToken: (input) => this.upsertToken(input),
         recordLinkedAccount: (input) => this.recordLinkedAccount(input),
+        instanceId: this.instanceId,
+        judgeInstance: (caller) =>
+          judgeTokenInstance(caller, { id: this.instanceId, hasLinkedUser }),
       },
       onBrokerAdvertised: (raw) => this.rememberAdvertisedBroker(raw),
     }

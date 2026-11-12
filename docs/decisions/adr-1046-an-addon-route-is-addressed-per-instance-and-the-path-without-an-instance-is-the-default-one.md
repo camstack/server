@@ -60,5 +60,8 @@ every account being linked again.
 - Auth scope and the per-route rate limit stay keyed by addon, not by
   instance.
 - The data-plane proxy (`ctx.dataPlane` prefixes) is not instance-aware.
-- Nothing declares `perInstance` yet; the exporters move in their own steps
-  of planning#415.
+- The Alexa export's three Lambda routes are the first to declare
+  `perInstance` (planning#415 T3). Its older `/<route>/:instanceId` addresses
+  stay, as a third-party alias like the path without a segment: Lambdas
+  built before this record call them. The other exporters move in their own
+  steps of planning#415.

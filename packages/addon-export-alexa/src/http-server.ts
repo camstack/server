@@ -4,12 +4,16 @@
  * we register via the `addon-routes` capability.
  *
  * Public URLs (assuming the hub is reachable as `https://<hub>`):
- *   POST /addon/export-alexa/directive[/:instanceId]
- *   POST /addon/export-alexa/oauth/broker-link[/:instanceId] (Lambda → hub, D753 broker link)
- *   POST /addon/export-alexa/oauth/lwa-tokens[/:instanceId] (Lambda → hub, legacy pre-D753)
+ *   POST /addon/export-alexa[/instances/:instanceId]/directive
+ *   POST /addon/export-alexa[/instances/:instanceId]/oauth/broker-link (Lambda → hub, D753)
+ *   POST /addon/export-alexa[/instances/:instanceId]/oauth/lwa-tokens (Lambda → hub, pre-D753)
  *
- * The path names the skill; without it the skill is found by its ingress token, then falls back
- * to the first skill (`instance-routing.ts`).
+ * The three are `perInstance` routes (D1046): the hub reads the instance segment. Without one
+ * the skill is found by its ingress token, then falls back to the default skill
+ * (`instance-routing.ts`). The same three with a trailing `/:instanceId` are the addresses a
+ * Lambda built with `HUB_INSTANCE_ID` before D1046 still calls (planning#422); they stay.
+ *
+ * A token linked to another instance is refused (`token-instance.ts`, D1047).
  *
  * OAuth account-linking is handled by the core `/oauth2/*` server
  * (integration=export-alexa). This addon registers an `oauth-integration`
@@ -39,6 +43,11 @@ import { handleSnapshotFetch, type SnapshotRouteDeps } from './snapshots/snapsho
 import type { AddonContext, IScopedLogger } from '@camstack/types'
 import type { AlexaSettings } from './alexa-settings.js'
 import type { SkillLookup } from './instance-routing.js'
+import {
+  ALEXA_ADDON_ID,
+  describeTokenInstanceRefusal,
+  judgeTokenInstance,
+} from './token-instance.js'
 
 // Schema for the verified result returned by oauthVerifyAccessToken.
 const OauthVerifiedResultSchema = z
@@ -46,6 +55,8 @@ const OauthVerifiedResultSchema = z
     userId: z.string(),
     username: z.string(),
     scopes: z.array(TokenScopeSchema),
+    /** The instance the link was made for; absent = the default instance (D1047). */
+    instanceId: z.string().optional(),
   })
   .nullable()
 
@@ -55,6 +66,8 @@ export interface RoutedSkill {
   readonly getSettings: () => AlexaSettings
   readonly directiveDeps: DirectiveRouterDeps
   readonly lwaTokensCallbackDeps: LwaTokensCallbackDeps
+  /** Whether this skill's link ledger already lists the user (a link made before D1047). */
+  readonly hasLinkedUser: (userId: string) => boolean
   /**
    * The skill Lambda advertised its token broker (`x-camstack-broker`) on a
    * directive whose bearer verified. Called with the raw header value; the
@@ -85,17 +98,20 @@ export function buildRoutes(deps: HttpRouteDeps): readonly IAddonHttpRoute[] {
   ): readonly IAddonHttpRoute[] => [
     {
       method: 'POST',
-      path: `${path}/:instanceId`,
-      access: 'public',
-      description: `${description} (one skill, named in the path)`,
-      handler: (req, reply) => routeToSkill(req, reply, deps, req.params['instanceId'], handler),
-    },
-    {
-      method: 'POST',
       path,
       access: 'public',
-      description: `${description} (the skill that presents its ingress token, else the first skill)`,
-      handler: (req, reply) => routeToSkill(req, reply, deps, undefined, handler),
+      perInstance: true,
+      description: `${description} (the skill named by the instance segment; without one, the skill that presents its ingress token, else the default skill)`,
+      handler: (req, reply) =>
+        routeToSkill(req, reply, deps, explicitInstance(req.instanceId), handler),
+    },
+    {
+      // A Lambda built with HUB_INSTANCE_ID before D1046 calls this address (planning#422).
+      method: 'POST',
+      path: `${path}/:instanceId`,
+      access: 'public',
+      description: `${description} (one skill, named after the path: the address older Lambdas call)`,
+      handler: (req, reply) => routeToSkill(req, reply, deps, req.params['instanceId'], handler),
     },
   ]
   return [
@@ -133,6 +149,15 @@ export function buildRoutes(deps: HttpRouteDeps): readonly IAddonHttpRoute[] {
       handler: (req, reply) => handleSnapshotFetch(req, reply, deps.snapshotRoute),
     },
   ]
+}
+
+/**
+ * The instance a per-instance request names for the resolver. The default instance (no segment,
+ * or the addon id) names none: its address is shared with a Lambda that finds its skill by the
+ * ingress header (planning#422), so the resolver keeps that lookup for it.
+ */
+function explicitInstance(instanceId: string | undefined): string | undefined {
+  return instanceId === undefined || instanceId === ALEXA_ADDON_ID ? undefined : instanceId
 }
 
 /** Resolve the request's skill, or answer that there is none. */
@@ -363,6 +388,27 @@ async function handleDirective(
           verdict.kind === 'stale'
             ? 'token was issued for another hub address; re-link the Alexa skill'
             : `hub has no public endpoint (${verdict.reason.code}); set it on the Network page`,
+        ),
+      )
+    return
+  }
+
+  const instanceVerdict = judgeTokenInstance(verified, skill)
+  if (instanceVerdict.kind === 'refused') {
+    deps.logger.warn(`alexa directive: refused — ${instanceVerdict.reason}`, {
+      ...(arrival.deviceId !== undefined ? { tags: { deviceId: arrival.deviceId } } : {}),
+      meta: {
+        instanceId: skill.id,
+        tokenInstanceId: verified.instanceId ?? null,
+        userId: verified.userId,
+      },
+    })
+    reply
+      .code(200)
+      .send(
+        preParseErrorEnvelope(
+          'INVALID_AUTHORIZATION_CREDENTIAL',
+          describeTokenInstanceRefusal(instanceVerdict.reason),
         ),
       )
     return

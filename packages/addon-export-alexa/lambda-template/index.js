@@ -36,9 +36,14 @@
  *   HUB_INGRESS_TOKEN    Optional defense-in-depth header for hub calls.
  *   HUB_INSTANCE_ID      Optional; the id of this skill's instance on the hub
  *                        (shown in its Export panel). Set when the hub runs
- *                        several skills: calls then go to `/directive/<id>`,
- *                        `/oauth/broker-link/<id>` and `/oauth/lwa-tokens/<id>`.
- *                        Unset = the hub's first skill, as before.
+ *                        several skills: /authorize then asks the hub to link
+ *                        the account to that instance (`instance=<id>`), and a
+ *                        token that does not name an instance is sent to
+ *                        `/directive/<id>`, `/oauth/broker-link/<id>` and
+ *                        `/oauth/lwa-tokens/<id>`. Unset = the hub's default
+ *                        skill, as before. A token that names its instance (the
+ *                        `instanceId` claim, hubs from D1047 on) is always sent
+ *                        to `/addon/export-alexa/instances/<id>/…` instead.
  *   DEBUG_DIRECTIVES     "1" = log one `directive_trace` line per directive
  *                        (debug-trace.js; never the bearer). Default off.
  * Legacy (read only when the *_PARAM is unset): LWA_CLIENT_ID,
@@ -296,7 +301,7 @@ async function handleAcceptGrant(event, deps) {
   const hubUrl = normaliseHubUrl(claims.hubUrl)
 
   if (brokerAvailable(deps)) {
-    const outcome = await linkViaBroker(deps, { hubUrl, granteeToken, tokens })
+    const outcome = await linkViaBroker(deps, { hubUrl, granteeToken, tokens, claims })
     if (outcome.kind === 'linked') return acceptGrantResponse(header)
     if (outcome.kind !== 'hub-without-broker' || deps.env.LEGACY_HUB_FALLBACK === '0') {
       return acceptGrantErrorEnvelope(header, outcome.message)
@@ -305,13 +310,31 @@ async function handleAcceptGrant(event, deps) {
       'accept_grant: hub has no broker route; falling back to the legacy token hand-off',
     )
   }
-  return deliverTokensToLegacyHub(deps, header, { hubUrl, granteeToken, tokens })
+  return deliverTokensToLegacyHub(deps, header, { hubUrl, granteeToken, tokens, claims })
 }
 
 /** The path suffix that names this skill on a hub that runs several (`HUB_INSTANCE_ID`). */
 function hubInstanceSuffix(deps) {
   const id = deps.env.HUB_INSTANCE_ID
   return typeof id === 'string' && id.length > 0 ? `/${encodeURIComponent(id)}` : ''
+}
+
+/** An instance id as the hub accepts it in a path (D1046). */
+const INSTANCE_ID_RE = /^[A-Za-z0-9._-]{1,64}$/
+
+/**
+ * The hub path of one of the addon's Lambda routes (`/directive`, `/oauth/broker-link`, …) for
+ * the account the token was linked for. A token that names its instance (the `instanceId`
+ * claim, D1047) is routed to that instance (`/instances/<id>/…`, D1046) — this is how one
+ * Lambda serves accounts linked to different skills of a hub. A token without the claim keeps
+ * the address it had: `HUB_INSTANCE_ID`'s suffix, or the default skill.
+ */
+function hubRoutePath(deps, claims, route) {
+  const claimed = claims && typeof claims.instanceId === 'string' ? claims.instanceId : ''
+  if (INSTANCE_ID_RE.test(claimed)) {
+    return `/addon/export-alexa/instances/${claimed}${route}`
+  }
+  return `/addon/export-alexa${route}${hubInstanceSuffix(deps)}`
 }
 
 /**
@@ -329,7 +352,7 @@ async function linkViaBroker(deps, input) {
   let resp
   try {
     resp = await deps.fetch(
-      `${input.hubUrl}/addon/export-alexa/oauth/broker-link${hubInstanceSuffix(deps)}`,
+      `${input.hubUrl}${hubRoutePath(deps, input.claims, '/oauth/broker-link')}`,
       {
         method: 'POST',
         headers: hubHeaders(deps, input.granteeToken),
@@ -359,7 +382,7 @@ async function linkViaBroker(deps, input) {
 /** Pre-D753 hand-off: the hub receives the refresh token itself. */
 async function deliverTokensToLegacyHub(deps, header, input) {
   const callbackResp = await deps.fetch(
-    `${input.hubUrl}/addon/export-alexa/oauth/lwa-tokens${hubInstanceSuffix(deps)}`,
+    `${input.hubUrl}${hubRoutePath(deps, input.claims, '/oauth/lwa-tokens')}`,
     {
       method: 'POST',
       headers: hubHeaders(deps, input.granteeToken),
@@ -407,7 +430,7 @@ async function forwardDirective(event, deps) {
       endpoint,
     )
   }
-  const target = `${normaliseHubUrl(claims.hubUrl)}/addon/export-alexa/directive${hubInstanceSuffix(deps)}`
+  const target = `${normaliseHubUrl(claims.hubUrl)}${hubRoutePath(deps, claims, '/directive')}`
   let resp
   try {
     resp = await deps.fetch(target, {

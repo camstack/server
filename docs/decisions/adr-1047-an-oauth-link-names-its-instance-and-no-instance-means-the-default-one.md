@@ -58,8 +58,11 @@ token that was made for another one (planning#415).
 - The consent page does not offer a choice of instance yet: the caller names
   it. The picker for a link started without one belongs to the exporter
   steps of planning#415.
-- Nothing calls `oauthLinkServesInstance` yet; the exporters adopt it when
-  their routes become per-instance. Until then a link to an instance is
-  accepted wherever a link to the default one is.
+- The Alexa export is the first route to call `oauthLinkServesInstance`
+  (planning#415 T3, `packages/addon-export-alexa/src/token-instance.ts`). A
+  link that names no instance there is also accepted by a second skill whose
+  own ledger already lists the user: before this record every link named
+  none, also those a second skill made. Other exporters still accept a link
+  to an instance wherever a link to the default one is.
 - The linked-sessions list returns `instanceId` but the admin page does not
   show it yet.

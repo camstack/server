@@ -8,6 +8,7 @@ import {
   handleLwaTokensCallback,
   type LwaTokensCallbackDeps,
 } from '../handlers/lwa-tokens-callback.js'
+import { judgeTokenInstance } from '../token-instance.js'
 import type { AddonContext, AddonHttpReply, AddonHttpRequest } from '@camstack/types'
 
 // ── Minimal mock helpers ──────────────────────────────────────────────
@@ -64,6 +65,9 @@ function makeDeps(oauthResult: unknown): LwaTokensCallbackDeps {
     } as unknown as LwaTokensCallbackDeps['logger'],
     upsertToken: vi.fn().mockResolvedValue(undefined),
     recordLinkedAccount: vi.fn().mockResolvedValue(undefined),
+    instanceId: 'export-alexa',
+    judgeInstance: (caller) =>
+      judgeTokenInstance(caller, { id: 'export-alexa', hasLinkedUser: () => false }),
   }
 }
 

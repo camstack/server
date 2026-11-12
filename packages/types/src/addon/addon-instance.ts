@@ -6,8 +6,7 @@
  * path with no instance segment and a link with no instance both mean it, and
  * its id is the addon id. {@link oauthLinkServesInstance} is the one
  * comparison a per-instance route is meant to call, so nobody compares
- * `undefined` with an id. Nothing calls it yet: no route declares
- * `perInstance` (the Alexa per-instance route, T3, is the first consumer).
+ * `undefined` with an id. The Alexa export's routes are its first caller.
  */
 
 /** An instance id as it may appear in a path or a query: no separator, no escape, bounded. */

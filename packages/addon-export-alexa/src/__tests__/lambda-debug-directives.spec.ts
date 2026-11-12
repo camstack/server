@@ -134,3 +134,42 @@ describe('DEBUG_DIRECTIVES trace', () => {
     expect(lines.filter((l) => l.msg === 'directive_trace')).toHaveLength(0)
   })
 })
+
+describe('directive forwarding names the instance the token was linked to (D1046, D1047)', () => {
+  async function forwardedPath(claims: Record<string, unknown>): Promise<string> {
+    const urls: string[] = []
+    const reply = hubReplying({ event: { header: {}, payload: {} } })
+    const handler = lambda.createHandler({
+      env: {},
+      fetch: async (url: string) => {
+        urls.push(url)
+        return reply()
+      },
+      store: null,
+      secrets: { lwa: async () => null, skill: async () => null, invalidate: () => {} },
+      now: () => 1_800_000_000_000,
+      log: { info: () => {}, warn: () => {}, error: () => {} },
+    })
+    const token = `${b64({ alg: 'none' })}.${b64({ hubUrl: HUB, ...claims })}.sig`
+    await handler({
+      directive: {
+        header: { namespace: 'Alexa', name: 'ReportState', messageId: 'm1', payloadVersion: '3' },
+        endpoint: { endpointId: '1', scope: { type: 'BearerToken', token } },
+        payload: {},
+      },
+    })
+    const hit = urls.find((u) => u.includes('/directive'))
+    if (hit === undefined) throw new Error('the hub was never called')
+    return hit.slice(HUB.length)
+  }
+
+  it('a token with an instanceId claim goes to /instances/<id>/directive', async () => {
+    expect(await forwardedPath({ sub: 'u1', instanceId: 'alexa-skill-2' })).toBe(
+      '/addon/export-alexa/instances/alexa-skill-2/directive',
+    )
+  })
+
+  it('a token without one keeps the default address', async () => {
+    expect(await forwardedPath({ sub: 'u1' })).toBe('/addon/export-alexa/directive')
+  })
+})

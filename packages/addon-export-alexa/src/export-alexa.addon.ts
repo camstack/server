@@ -66,7 +66,7 @@ import { buildRoutes } from './http-server.js'
 import { generateIngressToken } from './ingress-token.js'
 import { pickSkill } from './instance-routing.js'
 import { ADDON_MIGRATIONS, type AlexaCataloguePorts } from './migrations/index.js'
-import { buildAlexaOauthIntegration } from './oauth-integration.js'
+import { type AlexaLinkableInstance, buildAlexaOauthIntegration } from './oauth-integration.js'
 import { createPublicEndpointReader, type PublicEndpointReader } from './public-endpoint.js'
 import { buildAlexaInstanceSections } from './settings-schema.js'
 import {
@@ -430,7 +430,10 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
             `export-alexa: linking without a routing claim — ${endpoint.reason.code}: ${endpoint.reason.message}`,
           )
         }
-        return buildAlexaOauthIntegration(endpoint.ok ? endpoint.origin : undefined)
+        return buildAlexaOauthIntegration(
+          endpoint.ok ? endpoint.origin : undefined,
+          this.linkableInstances(),
+        )
       },
     }
 
@@ -491,6 +494,13 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
   // ── Skills ──────────────────────────────────────────────────────
 
   /** Build and start the runtime of one skill. */
+  /** The running skills an account may be linked to with `instance=` (all but the default). */
+  private linkableInstances(): readonly AlexaLinkableInstance[] {
+    return [...this.runtimes.values()]
+      .filter((r) => !r.isDefault)
+      .map((r) => ({ id: r.instanceId, displayName: r.skillName }))
+  }
+
   private async startRuntime(instanceId: string): Promise<void> {
     const runtime = new SkillRuntime(instanceId, this.host())
     await runtime.start()

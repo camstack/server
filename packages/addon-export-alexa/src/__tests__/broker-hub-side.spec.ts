@@ -16,6 +16,7 @@ import {
 } from '../broker-client.js'
 import { handleBrokerLinkCallback } from '../handlers/broker-link-callback.js'
 import type { LwaTokensCallbackDeps } from '../handlers/lwa-tokens-callback.js'
+import { judgeTokenInstance } from '../token-instance.js'
 import { BROKER_HEADER, buildRoutes, type HttpRouteDeps, type RoutedSkill } from '../http-server.js'
 import { LwaEventGateway, type LwaEventGatewayDeps } from '../lwa-event-gateway.js'
 import type { LwaTokenEntry, UpsertLwaTokenInput } from '../types.js'
@@ -320,6 +321,9 @@ function callbackDeps(verified: unknown) {
     logger: noopLogger,
     upsertToken: async (i) => void upserts.push(i),
     recordLinkedAccount: async (i) => void linked.push(i.userId),
+    instanceId: 'export-alexa',
+    judgeInstance: (caller) =>
+      judgeTokenInstance(caller, { id: 'export-alexa', hasLinkedUser: () => false }),
   }
   return { deps, upserts, linked }
 }
@@ -406,6 +410,7 @@ describe('broker advertisement', () => {
             expectedAudience: 'skill',
           }) as never,
         directiveDeps: {} as RoutedSkill['directiveDeps'],
+        hasLinkedUser: () => false,
         lwaTokensCallbackDeps: c.deps,
         onBrokerAdvertised,
       }),

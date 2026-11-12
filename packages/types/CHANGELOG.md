@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Comment only: the per-instance OAuth comparison now has its first caller (the Alexa export)
+
 ## [1.2.550] - 2026-11-12
 
 ### Added

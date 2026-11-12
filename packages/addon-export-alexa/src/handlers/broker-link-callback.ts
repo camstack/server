@@ -22,7 +22,12 @@ import { z } from 'zod'
 import type { AddonHttpReply, AddonHttpRequest } from '@camstack/types'
 
 import { normaliseBrokerUrl } from '../broker-client.js'
-import { type LwaTokensCallbackDeps, pickHeader, resolveCaller } from './lwa-tokens-callback.js'
+import {
+  type LwaTokensCallbackDeps,
+  pickHeader,
+  refusedForInstance,
+  resolveCaller,
+} from './lwa-tokens-callback.js'
 
 const BrokerLinkBodySchema = z.object({
   brokerUrl: z.string().min(1).max(512),
@@ -61,6 +66,7 @@ export async function handleBrokerLinkCallback(
     })
     return
   }
+  if (refusedForInstance(caller, reply, deps, 'alexa broker-link')) return
 
   await deps.upsertToken({
     userId: caller.userId,

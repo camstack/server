@@ -135,11 +135,22 @@ The addon is multi-instance: each skill is an integration instance (a `skills` r
 (`skill-runtime.ts`). `export-alexa.addon.ts` is only the shell: the runtimes map, the instances and
 `device-export` providers, the routes, the OAuth client, the snapshot store and the access gate.
 
-- **Routing** (`instance-routing.ts`): `/directive/:instanceId`, `/oauth/broker-link/:instanceId`,
-  `/oauth/lwa-tokens/:instanceId`. Without an id: the `X-CamStack-Ingress` header picks the skill that
-  owns the token, else the legacy URL answers `export-alexa` (its own ingress check still applies). A
-  path naming an unknown or disabled skill never falls through to another one. `/snapshot/:file` and
-  `snapshotSigningKey` are global: the signed URL names no skill.
+- **Routing** (`instance-routing.ts`): `/directive`, `/oauth/broker-link` and `/oauth/lwa-tokens` are
+  `perInstance` routes (D1046), so `/addon/export-alexa/instances/<id>/directive` names the skill.
+  The pre-D1046 addresses `/directive/:instanceId` (and the two callbacks) stay: a Lambda built with
+  `HUB_INSTANCE_ID` calls them. Without an id (or with the addon id): the `X-CamStack-Ingress` header
+  picks the skill that owns the token, else the canonical URL answers `export-alexa` (its own
+  ingress check still applies). A path naming an unknown or disabled skill never falls through to
+  another one. `/snapshot/:file` and `snapshotSigningKey` are global: the signed URL names no skill.
+- **A token is served only by the skill it was linked to** (`token-instance.ts`, D1047). A token
+  naming another instance is refused (`token-instance-mismatch`: the Alexa error envelope on a
+  directive, 403 on a callback, a warn line with `instanceId`, `tokenInstanceId`, `userId`). A
+  token naming none (every link made before D1047) is the default skill's, and is also served by a
+  skill whose ledger already lists the user, so those links need no re-link; a NEW user of a second
+  skill needs a token that names it (`token-instance-unstated` otherwise). The OAuth descriptor
+  lists the running skills other than the default one, so `instance=<id>` is accepted; the Lambda
+  sends it from `/authorize` when `HUB_INSTANCE_ID` is set, and routes a token carrying the
+  `instanceId` claim to `/instances/<id>/…`.
 - **The first skill keeps its history**: id `export-alexa`, the legacy ledger keys until the
   migrations have moved them, public mode never enforcing the token. A skill added later enforces its
   ingress token from creation (public mode too) and its Lambda sets `HUB_INSTANCE_ID`.

@@ -64,6 +64,7 @@ async function post(token: string, endpoint: PublicEndpointResult) {
           expectedAudience: 'skill',
         }) as never,
       directiveDeps: {} as RoutedSkill['directiveDeps'],
+      hasLinkedUser: () => false,
       lwaTokensCallbackDeps: {} as never,
       onBrokerAdvertised: (url: string) => advertised.push(url),
     }),

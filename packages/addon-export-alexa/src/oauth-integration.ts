@@ -20,6 +20,12 @@ import type { OauthIntegrationDescriptor } from '@camstack/types'
  * @see docs/decisions/adr-0092.md — why `client_secret` is never checked here.
  */
 
+/** A skill instance an account can be linked to, beside the default one. */
+export interface AlexaLinkableInstance {
+  readonly id: string
+  readonly displayName: string
+}
+
 /**
  * Where Alexa lands after consent — Amazon's three regional account-linking
  * origins, fixed and public. Contrast Home Assistant, whose callback is on the
@@ -65,6 +71,9 @@ export function buildAlexaOauthIntegration(
    *  the cause of "linking fails after consent". Home Assistant sets no
    *  `hubUrl`: it redirects to itself on the LAN. */
   publicOrigin: string | undefined,
+  /** The running skills other than the default one: an account may be linked to each with
+   *  `instance=<id>` (D1047). Empty = a single-instance integration, the field is omitted. */
+  instances: readonly AlexaLinkableInstance[] = [],
 ): OauthIntegrationDescriptor {
   return {
     integrationId: 'export-alexa',
@@ -99,5 +108,6 @@ export function buildAlexaOauthIntegration(
      */
     refreshTokenTtlSec: 'never',
     ...(publicOrigin ? { hubUrl: publicOrigin } : {}),
+    ...(instances.length > 0 ? { instances: [...instances] } : {}),
   }
 }

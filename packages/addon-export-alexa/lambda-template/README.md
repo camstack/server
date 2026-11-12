@@ -186,6 +186,7 @@ your skill's locale: NA → `us-east-1`, EU/IN → `eu-west-1`, FE/AU → `us-we
 | `DEBUG_DIRECTIVES` | `1` = one `directive_trace` log line per Smart Home directive: namespace / name / endpointId / payloadVersion / payload keys asked, and the answered event (ErrorResponse type and message, StateReport property names and value shapes). Never the bearer token or SDP bodies. Diagnostic; default off. |
 | `ALLOW_MIGRATION` | `0` = refuse `/broker/migrate`. Default on until every hub has migrated. |
 | `HUB_INGRESS_TOKEN` | Optional defense-in-depth header (`X-CamStack-Ingress`), copied from the addon's **Ingress token** setting. |
+| `HUB_INSTANCE_ID` | Optional; the hub skill instance this Lambda serves (its Export panel shows the id). `/authorize` then links the account to it (`instance=<id>`), and a token without an `instanceId` claim is sent to `/<route>/<id>`. A token WITH the claim (hubs from D1047) always goes to `/addon/export-alexa/instances/<id>/<route>`, so one Lambda can serve accounts linked to different instances. Unset = the default skill. |
 
 Legacy, read only when the matching `*_PARAM` is unset: `LWA_CLIENT_ID`,
 `LWA_CLIENT_SECRET`, `SKILL_CLIENT_ID`, `SKILL_CLIENT_SECRET`. Remove them once

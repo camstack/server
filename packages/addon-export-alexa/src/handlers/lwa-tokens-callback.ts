@@ -21,6 +21,11 @@ import { z } from 'zod'
 import type { AddonContext, AddonHttpReply, AddonHttpRequest, IScopedLogger } from '@camstack/types'
 import { TokenScopeSchema } from '@camstack/types'
 
+import {
+  describeTokenInstanceRefusal,
+  type TokenInstanceClaim,
+  type TokenInstanceVerdict,
+} from '../token-instance.js'
 import type { UpsertLwaTokenInput } from '../types.js'
 
 // Schema for the verified result returned by oauthVerifyAccessToken.
@@ -29,6 +34,8 @@ const OauthVerifiedResultSchema = z
     userId: z.string(),
     username: z.string(),
     scopes: z.array(TokenScopeSchema),
+    /** The instance the link was made for; absent = the default instance (D1047). */
+    instanceId: z.string().optional(),
   })
   .nullable()
 
@@ -47,6 +54,43 @@ export interface LwaTokensCallbackDeps {
    *  (never reaching the hub-side handler), so this callback is where the link
    *  gets recorded — drives getStatus 'linked' + the Event Gateway's audience. */
   readonly recordLinkedAccount: (input: { userId: string; username: string }) => Promise<void>
+  /** The skill instance these callbacks deliver to. */
+  readonly instanceId: string
+  /** Whether this skill serves a token linked to the instance it names (`token-instance.ts`). */
+  readonly judgeInstance: (caller: TokenInstanceClaim) => TokenInstanceVerdict
+}
+
+/** The verified caller of a Lambda callback. */
+export interface VerifiedCaller {
+  readonly userId: string
+  readonly username: string
+  /** Absent = the default instance. */
+  readonly instanceId?: string | undefined
+}
+
+/**
+ * Refuse (403, logged with the reason) a caller whose token was linked to another instance.
+ * True when the reply was sent; the caller must return.
+ */
+export function refusedForInstance(
+  caller: VerifiedCaller,
+  reply: AddonHttpReply,
+  deps: LwaTokensCallbackDeps,
+  label: string,
+): boolean {
+  const verdict = deps.judgeInstance(caller)
+  if (verdict.kind === 'serves') return false
+  deps.logger.warn(`${label}: refused — ${verdict.reason}`, {
+    meta: {
+      instanceId: deps.instanceId,
+      tokenInstanceId: caller.instanceId ?? null,
+      userId: caller.userId,
+    },
+  })
+  reply
+    .code(403)
+    .send({ error: verdict.reason, message: describeTokenInstanceRefusal(verdict.reason) })
+  return true
 }
 
 export async function handleLwaTokensCallback(
@@ -74,6 +118,7 @@ export async function handleLwaTokensCallback(
     })
     return
   }
+  if (refusedForInstance(caller, reply, deps, 'alexa lwa-tokens-callback')) return
   const { userId, username } = caller
 
   await deps.upsertToken({
@@ -102,7 +147,7 @@ export async function handleLwaTokensCallback(
 export async function resolveCaller(
   request: AddonHttpRequest,
   deps: LwaTokensCallbackDeps,
-): Promise<{ userId: string; username: string } | null> {
+): Promise<VerifiedCaller | null> {
   const bearer = extractBearer(request.headers)
   if (!bearer) return null
   const rawVerified: unknown = await deps.ctx.api.userManagement.oauthVerifyAccessToken.query({
@@ -110,7 +155,8 @@ export async function resolveCaller(
   })
   const verifiedParse = OauthVerifiedResultSchema.safeParse(rawVerified)
   if (verifiedParse.success && verifiedParse.data) {
-    return { userId: verifiedParse.data.userId, username: verifiedParse.data.username }
+    const { userId, username, instanceId } = verifiedParse.data
+    return { userId, username, ...(instanceId !== undefined ? { instanceId } : {}) }
   }
   deps.logger.debug('alexa lwa-tokens-callback: bearer present but did not verify')
   return null
