@@ -467,3 +467,64 @@ export function triggerRemoteMessages(): readonly DiscoveryMessage[] {
     triggerMessage('hold'),
   ]
 }
+
+export const IR_IEEE = '0xa4c138000000abcd'
+export const IR_FRIENDLY = 'Living room IR'
+export const IR_TOPIC = `zigbee2mqtt/${IR_FRIENDLY}`
+export const IR_ORIGIN = {
+  name: 'Zigbee2MQTT',
+  sw: '2.1.0',
+  url: 'https://www.zigbee2mqtt.io',
+}
+
+/**
+ * A Tuya IR blaster (zosung family) as zigbee2mqtt publishes it: a SET-only
+ * text for the code to send, a SET-only select that starts learning, and a
+ * sensor whose string state is the last learned code. Each carries `origin`.
+ */
+export function irBlasterMessages(): readonly DiscoveryMessage[] {
+  const base = {
+    ...availability(IR_FRIENDLY),
+    device: device(IR_IEEE, IR_FRIENDLY, 'Acme', 'IR remote blaster'),
+    origin: IR_ORIGIN,
+  }
+  return [
+    {
+      component: 'text',
+      objectId: `${IR_IEEE}_ir_code_to_send`,
+      payload: {
+        ...base,
+        name: 'IR code to send',
+        unique_id: `${IR_IEEE}_ir_code_to_send_zigbee2mqtt`,
+        command_topic: `${IR_TOPIC}/set/ir_code_to_send`,
+        entity_category: 'config',
+      },
+    },
+    {
+      component: 'select',
+      objectId: `${IR_IEEE}_learn_ir_code`,
+      payload: {
+        ...base,
+        name: 'Learn IR code',
+        unique_id: `${IR_IEEE}_learn_ir_code_zigbee2mqtt`,
+        command_topic: `${IR_TOPIC}/set/learn_ir_code`,
+        state_topic: IR_TOPIC,
+        value_template: '{{ value_json.learn_ir_code }}',
+        options: ['ON', 'OFF'],
+        entity_category: 'config',
+      },
+    },
+    {
+      component: 'sensor',
+      objectId: `${IR_IEEE}_learned_ir_code`,
+      payload: {
+        ...base,
+        name: 'Learned IR code',
+        unique_id: `${IR_IEEE}_learned_ir_code_zigbee2mqtt`,
+        state_topic: IR_TOPIC,
+        value_template: '{{ value_json.learned_ir_code }}',
+        entity_category: 'diagnostic',
+      },
+    },
+  ]
+}

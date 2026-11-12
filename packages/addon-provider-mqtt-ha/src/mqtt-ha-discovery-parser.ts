@@ -14,6 +14,9 @@ import { MQTT_HA_TRIGGER_COMPONENT, triggerEntityKey } from './mqtt-ha-device-tr
 
 const DEFAULT_DISCOVERY_PREFIX = 'homeassistant'
 
+/** Components that may have no state topic: they are commands a device profile drives. */
+const COMMAND_ONLY_COMPONENTS: ReadonlySet<MqttHaComponent> = new Set(['text', 'select', 'button'])
+
 export function isSupportedMqttHaComponent(value: string): value is MqttHaComponent {
   return MQTT_HA_COMPONENTS.some((c) => c === value)
 }
@@ -151,6 +154,11 @@ function readDevice(raw: Record<string, unknown>): MqttHaDeviceInfo | null {
   }
 }
 
+function readOrigin(raw: Record<string, unknown>): string | null {
+  const block = raw['origin']
+  return isRecord(block) ? readStringField(block, 'name') : null
+}
+
 function readLight(raw: Record<string, unknown>): MqttHaLightSpec {
   return {
     json: raw['schema'] === 'json',
@@ -254,6 +262,7 @@ function parseDeviceTrigger(
     availability: [],
     availabilityMode: 'latest',
     device,
+    origin: readOrigin(raw),
     light: null,
     eventTypes: [eventType],
     climate: null,
@@ -288,9 +297,9 @@ export function parseDiscoveryConfigPayload(
 
   const climate = component === 'climate' ? readClimate(raw) : null
   const stateTopic = readStateTopic(component, raw, climate)
-  if (stateTopic === null) return null
-
   const commandTopic = readStringField(raw, 'command_topic')
+  if (stateTopic === null && !COMMAND_ONLY_COMPONENTS.has(component)) return null
+  if (COMMAND_ONLY_COMPONENTS.has(component) && commandTopic === null) return null
   if ((component === 'switch' || component === 'light') && commandTopic === null) return null
 
   const device = readDevice(raw)
@@ -327,6 +336,7 @@ export function parseDiscoveryConfigPayload(
     availability: readAvailability(raw),
     availabilityMode: readAvailabilityMode(raw),
     device,
+    origin: readOrigin(raw),
     light: component === 'light' ? readLight(raw) : null,
     eventTypes: component === 'event' ? readStringList(raw, 'event_types') : [],
     climate,

@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**244 units · 8560 source files · 237 units claimed by at least one document (8529 files).**
+**244 units · 8562 source files · 237 units claimed by at least one document (8531 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -82,12 +82,12 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/types` | 24 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0496-occupancy-history-is-durable-and-the-census-is-a-layer.md`, `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, +7 more, 1 ADR | 2026-10-01 |
 | `packages/addon-export-google` | 23 | `ecosystem-exports` | `addons/addon-export-google.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-google-home-camera-streaming.md` _(covers)_, +4 more | 2026-08-28 |
 | `packages/addon-provider-ecowitt` | 23 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
+| `packages/addon-provider-mqtt-ha` | 23 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-dreo` | 22 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-11-08 |
 | `packages/addon-terminal` | 22 | `device-surfaces` | `architecture/terminal.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-07-26-terminal-session-design.md`, +1 more, 2 ADRs | 2026-10-03 |
 | `packages/types/src/utils` | 22 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0646-a-benchmark-names-a-pool-and-never-swaps-an-engine-a-replay-runs-the-cameras-root-step-pinned.md`, +2 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-google-services` | 21 | — | `addons/addon-google-services.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0885-a-critical-alert-is-a-severity-on-the-alert-centre.md` | — |
 | `packages/addon-model-studio/src/components` | 21 | `tooling` | `decisions/adr-1013-one-instance-model.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_ | — |
-| `packages/addon-provider-mqtt-ha` | 21 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-unifi` | 21 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-unraid` | 21 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/ui-library/src/lib` | 21 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +5 more, 2 ADRs | 2026-11-02 |

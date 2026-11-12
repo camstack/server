@@ -23,7 +23,7 @@ function readNumber(value: unknown): number | null {
 
 /** Every topic an entity needs to hear: its state, per-field climate topics, availability. */
 export function entityTopics(entity: MqttHaEntity): readonly string[] {
-  const topics = new Set<string>([entity.stateTopic])
+  const topics = new Set<string>(entity.stateTopic === null ? [] : [entity.stateTopic])
   const climate = entity.climate
   if (climate !== null) {
     for (const read of [climate.currentTemperature, climate.targetTemperature, climate.mode]) {

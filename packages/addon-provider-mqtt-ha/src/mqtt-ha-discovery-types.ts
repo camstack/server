@@ -4,7 +4,8 @@ import { z } from 'zod'
  * HA MQTT discovery components this addon understands as entities. A device
  * trigger (`device_automation`) is folded into an `event` entity
  * (`mqtt-ha-device-trigger.ts`); everything else a bridge publishes (update,
- * select, number, lock, cover, …) is ignored.
+ * number, lock, cover, …) is ignored. `text`, `select` and `button` carry
+ * commands only a device profile consumes (`mqtt-ha-ir-profiles.ts`).
  */
 export const MQTT_HA_COMPONENTS = [
   'sensor',
@@ -13,6 +14,9 @@ export const MQTT_HA_COMPONENTS = [
   'light',
   'event',
   'climate',
+  'text',
+  'select',
+  'button',
 ] as const
 
 export type MqttHaComponent = (typeof MQTT_HA_COMPONENTS)[number]
@@ -80,7 +84,8 @@ export const mqttHaEntitySchema = z.object({
   nodeId: z.string().optional(),
   objectId: z.string(),
   name: z.string(),
-  stateTopic: z.string().min(1),
+  /** Null for a command-only entity (a SET-only text, select or button). */
+  stateTopic: z.string().min(1).nullable(),
   commandTopic: z.string().nullable(),
   unitOfMeasurement: z.string().nullable(),
   deviceClass: z.string().nullable(),
@@ -96,6 +101,8 @@ export const mqttHaEntitySchema = z.object({
   availability: z.array(availabilitySchema),
   availabilityMode: z.enum(['all', 'any', 'latest']),
   device: deviceInfoSchema.nullable(),
+  /** The discovery `origin.name`: which bridge published the entity. */
+  origin: z.string().nullable().default(null),
   light: lightSchema.nullable(),
   eventTypes: z.array(z.string()),
   climate: climateSchema.nullable(),

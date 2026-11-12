@@ -34,6 +34,7 @@ export function deviceRoleForPrimaryCap(cap: MqttHaCap | undefined): DeviceRole 
     case 'power-meter':
     case 'climate-control':
     case 'event-emitter':
+    case 'ir-transmitter':
     case undefined:
       return null
   }

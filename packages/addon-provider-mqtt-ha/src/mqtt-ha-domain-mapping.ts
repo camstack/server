@@ -1,5 +1,6 @@
 import { DeviceType } from '@camstack/types'
 import type { MqttHaEntity } from './mqtt-ha-discovery-types.js'
+import { matchIrProfile } from './mqtt-ha-ir-profiles.js'
 
 /**
  * Discovery component + `device_class` + unit → CamStack caps. Generic by
@@ -30,6 +31,7 @@ export type MqttHaCap =
   | 'numeric-sensor'
   | 'climate-control'
   | 'event-emitter'
+  | 'ir-transmitter'
 
 export type MqttHaBinaryCap = 'contact' | 'motion' | 'flood' | 'vibration' | 'tamper'
 
@@ -71,6 +73,7 @@ export type MqttHaRole =
   | { readonly kind: 'humidity' }
   | { readonly kind: 'illuminance' }
   | { readonly kind: 'numeric' }
+  | { readonly kind: 'ir' }
 
 function classifySensor(entity: MqttHaEntity): MqttHaRole | null {
   const deviceClass = entity.deviceClass
@@ -106,6 +109,11 @@ export function classifyMqttHaEntity(entity: MqttHaEntity): MqttHaRole | null {
     }
     case 'sensor':
       return classifySensor(entity)
+    case 'text':
+    case 'select':
+    case 'button':
+      // Commands a device profile consumes; alone they are not exposed.
+      return null
   }
 }
 
@@ -138,6 +146,7 @@ const ALLOWED_CAPS: Readonly<Record<string, ReadonlySet<MqttHaCap>>> = {
   [DeviceType.Light]: new Set<MqttHaCap>(['switch', 'brightness', 'color', 'power-meter']),
   [DeviceType.Switch]: new Set<MqttHaCap>(['switch', 'power-meter', 'battery']),
   [DeviceType.EventEmitter]: new Set<MqttHaCap>(['event-emitter', 'battery']),
+  [DeviceType.Generic]: new Set<MqttHaCap>(['ir-transmitter', 'battery']),
   [DeviceType.Sensor]: new Set<MqttHaCap>([
     'contact',
     'motion',
@@ -171,6 +180,7 @@ const CAP_ORDER: readonly MqttHaCap[] = [
   'numeric-sensor',
   'power-meter',
   'battery',
+  'ir-transmitter',
 ]
 
 interface RoleEntity {
@@ -180,6 +190,7 @@ interface RoleEntity {
 
 function primaryType(roles: readonly RoleEntity[]): DeviceType | null {
   const kinds = new Set(roles.map((r) => r.role.kind))
+  if (kinds.has('ir')) return DeviceType.Generic
   if (kinds.has('climate')) return DeviceType.Climate
   if (kinds.has('light')) return DeviceType.Light
   if (kinds.has('switch')) return DeviceType.Switch
@@ -221,6 +232,8 @@ function capsFor(item: RoleEntity): readonly MqttHaCap[] {
       return ['ambient-light-sensor']
     case 'numeric':
       return ['numeric-sensor']
+    case 'ir':
+      return ['ir-transmitter']
   }
 }
 
@@ -245,7 +258,16 @@ export function planMqttHaDevice(input: {
   readonly entities: readonly MqttHaEntity[]
 }): MqttHaDevicePlan | null {
   const roles: RoleEntity[] = []
+  // An IR blaster's three entities are one transmitter, not a text, a select and a sensor.
+  const ir = matchIrProfile(input.entities)
+  const irKeys = new Set(
+    ir === null ? [] : [ir.send.entityKey, ir.learn.entityKey, ir.learned.entityKey],
+  )
   for (const entity of input.entities) {
+    if (ir !== null && irKeys.has(entity.entityKey)) {
+      if (entity.entityKey === ir.send.entityKey) roles.push({ entity, role: { kind: 'ir' } })
+      continue
+    }
     const role = classifyMqttHaEntity(entity)
     if (role !== null) roles.push({ entity, role })
   }
@@ -283,6 +305,7 @@ export function planMqttHaDevice(input: {
   if (capabilities.length === 0) return null
 
   const feeding = new Set<string>(Object.values(bindings))
+  for (const entityKey of irKeys) feeding.add(entityKey)
   for (const entityKey of Object.values(meter)) feeding.add(entityKey)
   const members = input.entities.filter((e) => feeding.has(e.entityKey))
   const skipped = input.entities.filter((e) => !feeding.has(e.entityKey)).map((e) => e.entityKey)

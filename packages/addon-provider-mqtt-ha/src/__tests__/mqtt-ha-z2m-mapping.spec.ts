@@ -9,6 +9,7 @@ import { adoptableMqttHaDevices, buildMqttHaDeviceCandidate } from '../mqtt-ha-d
 import {
   bulbMessages,
   contactMessages,
+  irBlasterMessages,
   motionMessages,
   plugMessages,
   remoteMessages,
@@ -234,5 +235,48 @@ describe('a device with several actuators is one Container with a child per gang
     expect(candidate.type).toBe(DeviceType.Container)
     expect(candidate.children?.map((c) => c.type)).toEqual([DeviceType.Switch, DeviceType.Switch])
     expect(candidate.children?.[0]?.capabilities).toEqual(['switch', 'power-meter', 'battery'])
+  })
+})
+
+describe('IR blaster profile', () => {
+  const without = (property: string) =>
+    irBlasterMessages().filter((m) => !m.objectId.endsWith(property))
+  const noOrigin = () =>
+    irBlasterMessages().map((m) => {
+      const { origin: _origin, ...rest } = m.payload
+      return { ...m, payload: rest }
+    })
+
+  it('parses origin and keeps command-only text and select entities', () => {
+    const entities = parseAll(irBlasterMessages())
+    expect(entities).toHaveLength(3)
+    expect(entities.every((e) => e.origin === 'Zigbee2MQTT')).toBe(true)
+    expect(entities.find((e) => e.component === 'text')).toMatchObject({
+      stateTopic: null,
+      commandTopic: expect.stringContaining('/set/ir_code_to_send'),
+    })
+  })
+
+  it('a matching origin and entity set becomes one ir-transmitter, not sensors', () => {
+    const { plan } = planOf(irBlasterMessages())
+    expect(plan.deviceType).toBe(DeviceType.Generic)
+    expect(plan.capabilities).toEqual(['ir-transmitter'])
+    expect(plan.members).toHaveLength(3)
+  })
+
+  it('without origin the device is not an ir-transmitter', () => {
+    const groups = groupEntitiesByDevice(parseAll(noOrigin()))
+    const plan = planMqttHaDevice(groups[0]!)
+    expect(plan?.capabilities ?? []).not.toContain('ir-transmitter')
+  })
+
+  it.each([
+    'ir_code_to_send',
+    'learn_ir_code',
+    'learned_ir_code',
+  ])('without %s the device is not an ir-transmitter', (missing) => {
+    const groups = groupEntitiesByDevice(parseAll(without(missing)))
+    const plan = planMqttHaDevice(groups[0]!)
+    expect(plan?.capabilities ?? []).not.toContain('ir-transmitter')
   })
 })

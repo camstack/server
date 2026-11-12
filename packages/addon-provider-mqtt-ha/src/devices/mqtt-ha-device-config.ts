@@ -57,6 +57,7 @@ const CAP_NAMES: readonly MqttHaCap[] = [
   'numeric-sensor',
   'climate-control',
   'event-emitter',
+  'ir-transmitter',
 ]
 
 export function isMqttHaCap(value: string): value is MqttHaCap {
@@ -84,6 +85,7 @@ function legacyEntity(config: MqttHaDeviceConfig): MqttHaEntity | null {
     availability: [],
     availabilityMode: 'latest',
     device: null,
+    origin: null,
     light: null,
     eventTypes: [],
     climate: null,

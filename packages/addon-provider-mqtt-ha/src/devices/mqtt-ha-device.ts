@@ -15,6 +15,7 @@ import {
   floodCapability,
   humiditySensorCapability,
   ingestReading,
+  irTransmitterCapability,
   motionCapability,
   numericSensorCapability,
   powerMeterCapability,
@@ -47,6 +48,8 @@ import type { MqttHaEntity } from '../mqtt-ha-discovery-types.js'
 import type { MqttHaCap, MqttHaMeterField } from '../mqtt-ha-domain-mapping.js'
 import { deviceRoleForPrimaryCap, persistedDeviceRole } from '../mqtt-ha-device-role.js'
 import { mqttHaStateGateway } from '../mqtt-ha-state-gateway.js'
+import { matchIrProfile } from '../mqtt-ha-ir-profiles.js'
+import { MqttHaIrBridge } from './mqtt-ha-ir-bridge.js'
 import {
   mqttHaDeviceSchema,
   resolveDeviceModel,
@@ -90,6 +93,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   private readonly brokerId: string
   private readonly model: MqttHaDeviceModel
   private eventSeq = 0
+  private irBridge: MqttHaIrBridge | null = null
   private eventCount = 0
   /** Events fired that the discovery record did not declare, in first-seen order. */
   private undeclaredEventTypes: readonly string[] = []
@@ -147,7 +151,12 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
 
   private onMessage(entity: MqttHaEntity, _topic: string, payload: string): void {
     if (entity.component === 'event') this.fireEvent(entity, payload)
+    if (entity.entityKey === this.irLearnedKey()) this.irBridge?.onLearnedMessage(payload)
     this.refresh()
+  }
+
+  private irLearnedKey(): string | null {
+    return matchIrProfile([...this.model.entities.values()])?.learned.entityKey ?? null
   }
 
   private reader() {
@@ -155,7 +164,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   }
 
   private payloadOf(entity: MqttHaEntity): string | undefined {
-    return this.reader()(entity.stateTopic)
+    return entity.stateTopic === null ? undefined : this.reader()(entity.stateTopic)
   }
 
   private bound(cap: MqttHaCap): MqttHaEntity | null {
@@ -307,6 +316,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
         this.refreshClimate(now)
         return
       case 'event-emitter':
+      case 'ir-transmitter':
         return
     }
   }
@@ -564,6 +574,8 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
         return this.registerClimate()
       case 'event-emitter':
         return this.registerEventEmitter()
+      case 'ir-transmitter':
+        return this.registerIrTransmitter()
     }
   }
 
@@ -690,6 +702,23 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
       },
     }
     this.registerStatusOnly(climateControlCapability, provider, COLD)
+  }
+
+  private registerIrTransmitter(): void {
+    const match = matchIrProfile([...this.model.entities.values()])
+    if (match === null) return
+    const bridge = new MqttHaIrBridge({
+      match,
+      deviceName: this.name,
+      publish: (topic, payload) => mqttHaStateGateway.publish(this.brokerId, topic, payload),
+    })
+    this.irBridge = bridge
+    const provider: InferNativeProvider<typeof irTransmitterCapability> = {
+      send: async (input) => bridge.send(input),
+      learn: async ({ timeoutMs }) => bridge.learn(timeoutMs),
+      getInfo: async () => bridge.describe(),
+    }
+    this.ctx.registerNativeCap(irTransmitterCapability, provider)
   }
 
   private registerEventEmitter(): void {

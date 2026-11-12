@@ -15,6 +15,8 @@ import {
   plugMessages,
   remoteMessages,
   contactMessages,
+  irBlasterMessages,
+  IR_TOPIC,
   triggerMessage,
   type DiscoveryMessage,
 } from './fixtures/z2m-discovery.js'
@@ -55,6 +57,8 @@ interface Harness {
   readonly emitted: unknown[]
   readonly setSwitch: (on: boolean) => Promise<void>
   readonly state: () => IDeviceRuntimeState
+  /** Every native cap provider the device registered, by cap name. */
+  readonly providers: Map<string, unknown>
   readonly setRole: ReturnType<typeof vi.fn>
   readonly info: ReturnType<typeof vi.fn>
 }
@@ -71,6 +75,7 @@ function build(
 ): Harness {
   let runtime: IDeviceRuntimeState | null = null
   const emitted: unknown[] = []
+  const providers = new Map<string, unknown>()
   let switchProvider: { setState: (input: { on: boolean }) => Promise<void> } | null = null
   const setRole = vi.fn(async () => {})
   const info = vi.fn()
@@ -101,6 +106,7 @@ function build(
       runtime = rs
     },
     registerNativeCap: vi.fn((cap: { name: string; runtimeState?: unknown }, provider: unknown) => {
+      providers.set(cap.name, provider)
       if (cap.name === 'switch') {
         switchProvider = provider as { setState: (input: { on: boolean }) => Promise<void> }
       }
@@ -131,6 +137,7 @@ function build(
   return {
     device,
     emitted,
+    providers,
     setRole,
     info,
     setSwitch: async (on) => {
@@ -229,7 +236,7 @@ describe('MqttHaDevice on a contact sensor and a remote', () => {
     deliver(
       mqttHaStateGateway,
       entities,
-      event.stateTopic,
+      event.stateTopic!,
       JSON.stringify({ event_type: 'single' }),
     )
     const fired = h.emitted.filter(
@@ -247,7 +254,7 @@ describe('MqttHaDevice on a contact sensor and a remote', () => {
     const entities = entitiesOf([triggerMessage('single')])
     const h = build(DeviceType.EventEmitter, configOf([triggerMessage('single')]))
     await h.device.onActivate()
-    const topic = entities[0]!.stateTopic
+    const topic = entities[0]!.stateTopic!
     deliver(mqttHaStateGateway, entities, topic, 'single')
     expect(h.state().getCapState('event-emitter')).toMatchObject({
       eventTypes: ['single'],
@@ -278,5 +285,91 @@ describe('MqttHaDevice on a contact sensor and a remote', () => {
     const kept = build(DeviceType.Sensor, configOf(contactMessages()), {}, 'motion-sensor')
     await kept.device.onActivate()
     expect(kept.setRole).not.toHaveBeenCalled()
+  })
+})
+
+interface IrProvider {
+  send(input: {
+    timings?: number[]
+    native?: { format: 'tuya'; code: string }
+  }): Promise<{ ok: true; ignoredSettings: string[] }>
+  learn(input: { timeoutMs: number }): Promise<{
+    native: { format: string; code: string } | null
+    timings: number[]
+    carrierHz: number | null
+  }>
+  getInfo(): Promise<{ learn: boolean; formats: string[]; media: string[] }>
+}
+
+describe('MqttHaDevice on a zigbee2mqtt IR blaster', () => {
+  const entities = entitiesOf(irBlasterMessages())
+
+  async function activate(): Promise<{ provider: IrProvider; published: [string, string][] }> {
+    const published: [string, string][] = []
+    mqttHaStateGateway.setPublisher(async ({ topic, payload }) => {
+      published.push([topic, payload])
+    })
+    const group = groupEntitiesByDevice(entities)[0]!
+    const plan = planMqttHaDevice(group)!
+    expect(plan.deviceType).toBe(DeviceType.Generic)
+    const h = build(plan.deviceType, configOf(irBlasterMessages()))
+    await h.device.onActivate()
+    const provider = h.providers.get('ir-transmitter') as IrProvider
+    expect(provider).toBeDefined()
+    return { provider, published }
+  }
+
+  it('is an ir-transmitter that learns and replays tuya codes', async () => {
+    const { provider } = await activate()
+    expect(await provider.getInfo()).toMatchObject({
+      learn: true,
+      formats: ['tuya'],
+      media: ['ir'],
+    })
+  })
+
+  it('publishes a native code on the code entity command topic, verbatim', async () => {
+    const { provider, published } = await activate()
+    await provider.send({ native: { format: 'tuya', code: 'AxAAIABAAw==' } })
+    expect(published).toEqual([[`${IR_TOPIC}/set/ir_code_to_send`, 'AxAAIABAAw==']])
+  })
+
+  it('encodes a pulse train before publishing it', async () => {
+    const { provider, published } = await activate()
+    await provider.send({ timings: [16, -32, 16, -32] })
+    expect(published).toHaveLength(1)
+    expect(published[0]?.[0]).toBe(`${IR_TOPIC}/set/ir_code_to_send`)
+    expect(published[0]?.[1]).toBe('AxAAIABAAw==')
+  })
+
+  it('learn resolves on the NEXT learned state, not on the one already held', async () => {
+    mqttHaStateGateway.recordMessage(BROKER, IR_TOPIC, JSON.stringify({ learned_ir_code: 'AAAA' }))
+    const { provider, published } = await activate()
+    const pending = provider.learn({ timeoutMs: 5000 })
+    await vi.waitFor(() => expect(published).toEqual([[`${IR_TOPIC}/set/learn_ir_code`, 'ON']]))
+    deliver(
+      mqttHaStateGateway,
+      entities,
+      IR_TOPIC,
+      JSON.stringify({ learned_ir_code: 'AxAAIABAAw==' }),
+    )
+    const learned = await pending
+    expect(learned.native).toEqual({ format: 'tuya', code: 'AxAAIABAAw==' })
+    expect(learned.timings).toEqual([16, -32, 16, -32])
+  })
+
+  it('learn times out with a typed error when nothing arrives', async () => {
+    const { provider } = await activate()
+    await expect(provider.learn({ timeoutMs: 20 })).rejects.toMatchObject({
+      i18nCode: 'ir-transmitter.learn-timeout',
+    })
+  })
+
+  it('learn refuses an undecodable code with a typed error', async () => {
+    const { provider, published } = await activate()
+    const pending = provider.learn({ timeoutMs: 5000 })
+    await vi.waitFor(() => expect(published).toHaveLength(1))
+    deliver(mqttHaStateGateway, entities, IR_TOPIC, JSON.stringify({ learned_ir_code: '!!!' }))
+    await expect(pending).rejects.toMatchObject({ i18nCode: 'ir-transmitter.learn-undecodable' })
   })
 })
