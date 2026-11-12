@@ -891,11 +891,17 @@ export class CapabilityRegistry {
    * `status ⊆ runtimeState`, so the merged runtime slice parses and a
    * runtime-only key such as `lastFetchedAt` is stripped. A slice that does not
    * parse is `null`, logged once per `(cap, device)` transition with the device
-   * tag; a held claim is `null` without a parse. A cap with no `status` block
-   * passes its merged slice through as is.
+   * tag; a held claim is `null` without a parse.
+   *
+   * A cap with no `status` block is never overlaid: its `getStatus`, if it has
+   * one, is the cap's OWN method over its own output shape (`power-source`
+   * answers `PowerSourceInfo`, not its runtime slice), so the merged slice is
+   * the wrong answer for it.
    */
   async resolveClaimedStatus(capName: string, deviceId: number): Promise<StatusOverlayAnswer> {
     if (this.statusOverlay === null) return UNCLAIMED
+    const def = this.getDefinition(capName)
+    if (def !== undefined && def.status === undefined) return UNCLAIMED
     return this.parseClaimed(capName, deviceId, await this.statusOverlay.resolve(capName, deviceId))
   }
 

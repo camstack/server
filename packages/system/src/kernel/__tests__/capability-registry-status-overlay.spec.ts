@@ -352,25 +352,33 @@ describe('CapabilityRegistry.resolveClaimedStatus — parsed with the cap status
     expect(logger.warn).not.toHaveBeenCalled()
   })
 
-  it('a claimed cap with no `status` block declared passes the merged slice through unparsed', async () => {
-    const noStatusCap = {
-      name: 'no-status',
+  it('a claimed cap with no `status` block keeps its OWN getStatus: the slice is never its answer (power-source)', async () => {
+    const OWN_INFO = { linked: true, switchOn: true, offSeconds: 30 }
+    const ownStatusCap = {
+      name: 'own-status',
       scope: 'device',
       mode: 'singleton',
-      methods: { ping: method(z.object({ deviceId: z.number() }), z.literal('pong')) },
+      methods: {
+        getStatus: method(z.object({ deviceId: z.number() }), z.object({ linked: z.boolean() })),
+      },
     } as const satisfies CapabilityDefinition
     const { reg } = newRegistry()
-    reg.declareCapability(noStatusCap)
+    reg.declareCapability(ownStatusCap)
     reg.setStatusOverlay(
       knownOverlay((cap, id) =>
-        cap === 'no-status' && id === DEVICE
-          ? { kind: 'claimed', slice: { anything: 1 } }
+        cap === 'own-status' && id === DEVICE
+          ? { kind: 'claimed', slice: { switchOn: true, offSeconds: 30, lastFetchedAt: 1 } }
           : UNCLAIMED,
       ),
     )
-    expect(await reg.resolveClaimedStatus('no-status', DEVICE)).toEqual({
-      kind: 'claimed',
-      slice: { anything: 1 },
+    expect(await reg.resolveClaimedStatus('own-status', DEVICE)).toEqual(UNCLAIMED)
+    reg.registerNativeProvider('own-status', DEVICE, 'provider-velux', {
+      getStatus: async () => OWN_INFO,
     })
+    const provider = reg.getProviderForDevice<{ getStatus: (i: unknown) => Promise<unknown> }>(
+      'own-status',
+      DEVICE,
+    )
+    expect(await provider?.getStatus({ deviceId: DEVICE })).toEqual(OWN_INFO)
   })
 })
