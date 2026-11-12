@@ -1433,13 +1433,12 @@ export function incomingFromSystemEvent(
     }
     case 'device.command-settled': {
       // A vocabulary command the transition audit settled (D1022). The action id is
-      // the whole identity; its translated label comes from the same index the
-      // automation action blocks read (D983).
+      // the whole identity; the dispatcher resolves its label from the same index the
+      // automation action blocks read (D983), in the language it renders in.
       const parsed = DeviceCommandSettledEventSchema.safeParse(data)
       if (!parsed.success) return null
       const { deviceId, action, outcome, actor } = parsed.data
-      const vocab = findVocabAction(action)
-      if (vocab === undefined) return null
+      if (findVocabAction(action) === undefined) return null
       const identity = lookup(deviceId)
       return systemSubject({
         facts,
@@ -1451,7 +1450,7 @@ export function incomingFromSystemEvent(
         bodyKey: `system.device-command.body.${outcome}`,
         textParams: {
           ...deviceTextParams(deviceId, identity),
-          actionLabel: vocab.action.label.en,
+          actionId: action,
           actorLabel: commandActorLabel(actor),
         },
         deviceId,

@@ -32,6 +32,7 @@ import {
   type DeliveryParam,
   type DeliveryParamValue,
   eventKindLabel,
+  findVocabAction,
   type IScopedLogger,
   type MediaFileBytes,
   NC_CLIP_POST_ROLL_DEFAULT_SEC,
@@ -3802,12 +3803,12 @@ function classCounts(
  * params go last because they are the row's own truth about a system event and
  * outrank the live vocabulary for exactly those names.
  */
-/** Intake-only keys for body variant selection — not operator template vars (D934). */
+/** Intake-only keys (body variant selection, the frozen command action id) — not operator template vars (D934). */
 function systemEventParamsForTemplate(
   params: Readonly<Record<string, string>> | undefined,
 ): Record<string, string> {
   if (params === undefined) return {}
-  const { form: _form, attention: _attention, ...rest } = params
+  const { form: _form, attention: _attention, actionId: _actionId, ...rest } = params
   return rest
 }
 
@@ -3971,7 +3972,22 @@ export function buildTemplateVars(
       ? { changes: alarmChangesText(texts, systemEvent.alarmSource, systemEvent.alarmFollowers) }
       : {}),
     ...systemEventParamsForTemplate(systemEvent?.textParams),
+    ...commandActionLabel(texts, systemEvent?.textParams?.['actionId']),
   }
+}
+
+/**
+ * `{{actionLabel}}` of a `device-command` row (D1022): the vocabulary action's
+ * label in the language this row is rendered in. Intake froze only the action
+ * id, so the words follow the catalog language, not the intake's.
+ */
+function commandActionLabel(
+  texts: NcTextCatalog,
+  actionId: string | undefined,
+): Record<string, string> {
+  if (actionId === undefined) return {}
+  const vocab = findVocabAction(actionId)
+  return vocab === undefined ? {} : { actionLabel: vocab.action.label[texts.language] }
 }
 
 /**

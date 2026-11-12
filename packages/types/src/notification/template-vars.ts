@@ -551,7 +551,7 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     systemEventKinds: [...DEVICE_EVENTS],
   },
   {
-    // D1022: the vocabulary action's translated label, as the automation action blocks show it.
+    // D1022: the vocabulary action's label in the notification language (resolved at render from the frozen action id), as the automation action blocks show it.
     name: 'actionLabel',
     label: 'Command',
     example: 'Force restart',

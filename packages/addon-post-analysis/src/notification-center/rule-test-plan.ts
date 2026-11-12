@@ -279,6 +279,10 @@ function systemEventKeys(kind: NcSystemEventKind): {
       bodyKey: 'system.device-consumable-low.body.tank',
     }
   }
+  // A settled command's body is per OUTCOME (D1022); `confirmed` is the usual one.
+  if (kind === 'device-command') {
+    return { titleKey: `system.${kind}.title`, bodyKey: 'system.device-command.body.confirmed' }
+  }
   // A broken rule's body is per REASON (D905); a deleted device stands in.
   if (kind === 'rule-broken') {
     return { titleKey: `system.${kind}.title`, bodyKey: `system.${kind}.body.device-deleted` }
@@ -549,6 +553,9 @@ export function planRuleTest(input: NcRuleTestPlanInput): NcRuleTestPlan {
             textParams: {
               deviceId: String(systemScope.deviceId ?? deviceId),
               deviceName: `camera ${String(systemScope.deviceId ?? deviceId)}`,
+              // `device-command` (D1022): the dispatcher words the action id.
+              actionId: 'powerSource.forceRestart',
+              actorLabel: 'admin',
               nodeId: systemScope.nodeId ?? 'hub',
               nodeName: systemScope.nodeId ?? 'hub',
               packageName: systemScope.packageName ?? '@camstack/server',

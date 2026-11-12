@@ -7,6 +7,7 @@
 import {
   DeviceType,
   EventCategory,
+  findVocabAction,
   NcRuleInputSchema,
   NcRuleSchema,
   systemEventFamilyProblems,
@@ -16,6 +17,9 @@ import {
 import { describe, expect, it } from 'vitest'
 import type { NcDeviceLookup } from '../device-directory.js'
 import { incomingFromSystemEvent } from '../event-intake.js'
+import { buildTemplateVars } from '../dispatcher.js'
+import type { NcOutboxEntry } from '../outbox.js'
+import { NcTextCatalog } from '../text-catalog.js'
 import { evaluateRule, type NcRuleSubject } from '../rule-engine.js'
 
 const VELUX: NcDeviceLookup = (deviceId: number) => ({
@@ -68,7 +72,7 @@ describe('D1022 - device-command', () => {
       bodyKey: 'system.device-command.body.confirmed',
       textParams: expect.objectContaining({
         deviceName: 'Velux gateway',
-        actionLabel: 'Force restart',
+        actionId: 'powerSource.forceRestart',
         actorLabel: 'provider-velux',
       }),
     })
@@ -104,5 +108,43 @@ describe('D1022 - device-command', () => {
     expect(systemEventFamilyProblems(rule('powerSource.nope'))).toEqual([
       { code: 'unknown-command-action', action: 'powerSource.nope' },
     ])
+  })
+
+  it('renders the action label in the catalog language, from the frozen action id', () => {
+    const systemEvent = subjectOf(settled()).systemEvent
+    if (systemEvent === undefined) throw new Error('no system event')
+    const entry: NcOutboxEntry = {
+      id: 'r:t',
+      ruleId: 'r',
+      targetId: 't',
+      deviceId: 5383,
+      recordKind: 'system-event',
+      recordId: 'ev-1',
+      trackId: 'x',
+      status: 'pending',
+      attempts: 0,
+      nextAttemptAt: 0,
+      createdAt: 1,
+      updatedAt: 1,
+      payload: {
+        ruleName: 'Restarts',
+        delivery: 'system-event',
+        priority: 3,
+        media: 'none',
+        subject: {
+          deviceId: 5383,
+          className: 'system',
+          zones: [],
+          timestamp: 1_000,
+          systemEvent,
+        },
+      },
+    }
+    const en = buildTemplateVars(new NcTextCatalog({ language: 'en' }), entry, 'Velux', [], 'UTC')
+    const it_ = buildTemplateVars(new NcTextCatalog({ language: 'it' }), entry, 'Velux', [], 'UTC')
+    const italianLabel = findVocabAction('powerSource.forceRestart')?.action.label.it
+    expect(en['actionLabel']).toBe('Force restart')
+    expect(italianLabel).not.toBe('Force restart')
+    expect(it_['actionLabel']).toBe(italianLabel)
   })
 })

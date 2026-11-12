@@ -107,6 +107,8 @@ describe('the system-event subscription topology', () => {
         // The RUN, not `BackupCompleted` which fires once per destination — an
         // operator with three destinations must be told once.
         EventCategory.BackupRunCompleted,
+        // A settled vocabulary command (D1022) - the device-command kind.
+        EventCategory.DeviceCommandSettled,
         EventCategory.DeviceDisabled,
         EventCategory.DeviceEnabled,
         EventCategory.DeviceOffline,

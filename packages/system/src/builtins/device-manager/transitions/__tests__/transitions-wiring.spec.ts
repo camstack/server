@@ -5,6 +5,7 @@ import type {
   DeviceTransition,
   IScopedLogger,
 } from '@camstack/types'
+import { COMMAND_MATCH_WINDOW_MS } from '../transition-correlator.js'
 import {
   __resetCommandObserverRegistryForTests,
   getCommandObserverRegistry,
@@ -26,6 +27,7 @@ function manualTicker() {
 }
 
 function setup(record?: (batch: readonly DeviceTransition[]) => Promise<void>) {
+  const clock = { now: 1000 }
   const h = harness()
   const t = manualTicker()
   const recorded: DeviceTransition[][] = []
@@ -44,10 +46,10 @@ function setup(record?: (batch: readonly DeviceTransition[]) => Promise<void>) {
     onCommandSettled: (e) => void settled.push(e),
     logger,
     record: record ?? (async (batch) => void recorded.push([...batch])),
-    now: () => 1000,
+    now: () => clock.now,
     ticker: t.ticker,
   })
-  return { h, t, recorded, errors, handle, settled }
+  return { h, t, recorded, errors, handle, settled, clock }
 }
 
 const command = (over: Partial<DeviceCommandObservation> = {}): DeviceCommandObservation => ({
@@ -107,6 +109,42 @@ describe('device transitions wiring (D1022)', () => {
         at: 1000,
       },
     ])
+    await w.handle.stop()
+  })
+
+  it('announces a command whose target already held, with outcome already', async () => {
+    const w = setup()
+    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
+    getCommandObserverRegistry().observe(command())
+    w.t.tick()
+    expect(w.settled).toEqual([
+      expect.objectContaining({ action: 'switch.on', outcome: 'already' }),
+    ])
+    await w.handle.stop()
+  })
+
+  it('announces a command that caused nothing inside its window, with outcome unconfirmed', async () => {
+    const w = setup()
+    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
+    getCommandObserverRegistry().observe(command())
+    w.t.tick()
+    expect(w.settled).toEqual([])
+    w.clock.now += COMMAND_MATCH_WINDOW_MS
+    w.t.tick()
+    expect(w.settled).toEqual([
+      expect.objectContaining({ action: 'switch.on', outcome: 'unconfirmed' }),
+    ])
+    await w.handle.stop()
+  })
+
+  it('announces a command whose call threw, with outcome failed', async () => {
+    const w = setup()
+    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
+    const failure = Promise.reject(new Error('device unreachable'))
+    getCommandObserverRegistry().observe(command({ outcome: failure }))
+    await failure.catch(() => undefined)
+    await Promise.resolve()
+    expect(w.settled).toEqual([expect.objectContaining({ action: 'switch.on', outcome: 'failed' })])
     await w.handle.stop()
   })
 

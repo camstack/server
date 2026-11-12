@@ -669,6 +669,17 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
       }),
   },
   {
+    name: 'device.command-settled',
+    build: () =>
+      fromBus('device.command-settled', {
+        deviceId: 102,
+        action: 'powerSource.forceRestart',
+        outcome: 'confirmed',
+        actor: { kind: 'addon', addonId: 'provider-velux' },
+        at: SYS_AT,
+      }),
+  },
+  {
     name: 'storage.location.low',
     build: () =>
       fromBus('storage.location.low', {
