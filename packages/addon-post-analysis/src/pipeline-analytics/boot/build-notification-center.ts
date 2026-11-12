@@ -27,6 +27,7 @@ import type {
   NcUnreadableHolder,
 } from '../../notification-center/dispatcher.js'
 import { NotificationCenter } from '../../notification-center/index.js'
+import { deviceNamesWithParents } from '../../notification-center/device-directory.js'
 import { type NcKindBudgets, readNcTargets } from './nc-target-instances.js'
 import { buildRecordedGifPorts, deriveRecordedGif } from '../../notification-center/recorded-gif.js'
 import {
@@ -69,7 +70,7 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
     let deviceFactsAt = 0
     // The target holders the last catalog read could not read: that catalog is partial.
     let unreadableHolders: readonly NcUnreadableHolder[] = []
-    let deviceNames = new Map<number, string>()
+    let deviceNames: ReadonlyMap<number, string> = new Map()
     // Only cameras the operator gave a location — absent entry means "none".
     let deviceLocations = new Map<number, string>()
     const refreshDeviceFacts = async (): Promise<void> => {
@@ -77,7 +78,8 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
       const all = await api.deviceManager.listAll.query({
         projection: 'slim',
       })
-      deviceNames = new Map(all.map((d) => [d.id, d.name]))
+      // A child is named with its parent (#523), through the directory's one helper.
+      deviceNames = deviceNamesWithParents(all)
       deviceLocations = new Map(
         all.flatMap((d) => (d.location !== null ? [[d.id, d.location] as const] : [])),
       )

@@ -145,6 +145,33 @@ export function nameWithParent(name: string, parentName: string | undefined): st
   return `${name} (${parent})`
 }
 
+/** A device row that names a device and, when it hangs off one, its parent. */
+export interface NcNamedDeviceRow {
+  readonly id: number
+  readonly name: string
+  readonly parentDeviceId?: number | null
+}
+
+/**
+ * id → the name a notification reads, through {@link nameWithParent}: the map
+ * behind the dispatcher's `getDeviceName`, so a detection's `{{device}}`, the
+ * timelapse and the digest name a child with its parent exactly as the
+ * directory does (#523). An empty name stays empty.
+ */
+export function deviceNamesWithParents(
+  rows: readonly NcNamedDeviceRow[],
+): ReadonlyMap<number, string> {
+  const nameById = new Map(rows.map((row) => [row.id, row.name.trim()]))
+  return new Map(
+    rows.map((row) => {
+      const name = row.name.trim()
+      const parentId = row.parentDeviceId
+      const parentName = typeof parentId === 'number' ? nameById.get(parentId) : undefined
+      return [row.id, name.length > 0 ? nameWithParent(name, parentName) : row.name] as const
+    }),
+  )
+}
+
 /** The identities of one answer, each child carrying its parent's name. */
 function withParentNames(
   devices: readonly NcDeviceIdentity[],

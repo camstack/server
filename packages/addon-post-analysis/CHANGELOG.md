@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The snooze exemption for alarm rules reads the vocabulary action of an Action's command steps.
 - Notifications about a device that hangs off another one name it with its parent, e.g. 'Battery (System)': battery, offline/online, commands, consumables, alarm sensors and the state summary
 - A device's label in a notification is one parenthesis: 'Battery (System · Sensor)', never 'Battery (System) (Sensor)'.
+- A detection, timelapse or digest notification names a child device with its parent too: 'Battery (System)'.
 
 ## [1.2.698] - 2026-11-12
 

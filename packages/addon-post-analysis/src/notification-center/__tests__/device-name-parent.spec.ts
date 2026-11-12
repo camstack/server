@@ -11,6 +11,7 @@ import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helper
 import {
   deviceDisplayLabel,
   deviceDisplayName,
+  deviceNamesWithParents,
   frozenDeviceLabel,
   NcDeviceDirectory,
   type NcDeviceIdentity,
@@ -174,6 +175,25 @@ describe('#523 — the parent in a device name', () => {
     )
     // A name already ending with the type is left alone.
     expect(frozenDeviceLabel(5693, DeviceType.Sensor, 'Battery (System · Sensor)', 'en')).toBe(
+      'Battery (System · Sensor)',
+    )
+  })
+
+  it('a detection {{device}} names the parent too: getDeviceName reads the same helper', async () => {
+    // The slim listAll rows the dispatcher's getDeviceName is built from.
+    const names = deviceNamesWithParents(
+      ROWS.map((row) => ({ id: row.deviceId, name: row.name, parentDeviceId: row.parentDeviceId })),
+    )
+    expect(names.get(5693)).toBe('Battery (System)')
+    expect(names.get(10)).toBe('Sensore porta')
+    expect(names.get(11)).toBe('Termometro')
+    expect(names.get(4385)).toBe('Robot piano terra')
+    // The dispatcher dresses the fetched name with the identity's type; the
+    // parent the fetched name already carries is not added a second time.
+    const directory = await warmDirectory()
+    const identity = directory.get(5693)
+    if (identity === undefined) throw new Error('no identity')
+    expect(deviceDisplayLabel({ ...identity, name: names.get(5693) ?? '' }, 5693, 'en')).toBe(
       'Battery (System · Sensor)',
     )
   })
