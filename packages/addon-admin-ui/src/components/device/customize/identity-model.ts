@@ -51,6 +51,16 @@ const ROLES_BY_TYPE: Readonly<Partial<Record<DeviceType, readonly DeviceRole[]>>
   [DeviceType.Light]: [DeviceRole.Floodlight, DeviceRole.Spotlight, DeviceRole.Nightvision],
   [DeviceType.Siren]: [DeviceRole.Siren],
   [DeviceType.Button]: [DeviceRole.Doorbell],
+  [DeviceType.Cover]: [
+    DeviceRole.CoverBlind,
+    DeviceRole.CoverShutter,
+    DeviceRole.CoverAwning,
+    DeviceRole.CoverCurtain,
+    DeviceRole.CoverGarage,
+    DeviceRole.CoverGate,
+    DeviceRole.CoverDoor,
+    DeviceRole.CoverWindow,
+  ],
   [DeviceType.Sensor]: [
     DeviceRole.MotionSensor,
     DeviceRole.ContactSensor,

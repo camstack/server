@@ -17,6 +17,12 @@ describe('displayWithHidden — one override object', () => {
 })
 
 describe('roleOptions — filtered by device type', () => {
+  it('offers the cover kinds on a Cover, and nothing else', () => {
+    const options = roleOptions(null, DeviceType.Cover)
+    expect(options).toContain(DeviceRole.CoverShutter)
+    expect(options).toContain(DeviceRole.CoverWindow)
+    expect(options).not.toContain(DeviceRole.Siren)
+  })
   it('offers switch accessory roles on a Switch, not sensor roles', () => {
     const options = roleOptions(null, DeviceType.Switch)
     expect(options).toContain(DeviceRole.Floodlight)
