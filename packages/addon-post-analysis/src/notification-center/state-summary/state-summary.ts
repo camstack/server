@@ -189,12 +189,21 @@ function lineOf(input: NcStateSummaryTextInput, item: NcStateItem): string {
     item.since !== undefined ? sinceText(input.texts, item.since, input.nowMs, input.timeZone) : ''
   const deviceId = item.subject.deviceId
   const name = item.params['deviceName']
+  const parentName = item.params['deviceParentName']
   const type = item.subject.deviceType
   const deviceLabel =
     deviceId === undefined || name === undefined
       ? undefined
       : deviceDisplayLabel(
-          type === undefined ? undefined : { deviceId, type, name, isCamera: false },
+          type === undefined
+            ? undefined
+            : {
+                deviceId,
+                type,
+                name,
+                isCamera: false,
+                ...(parentName !== undefined ? { parentName } : {}),
+              },
           deviceId,
           input.texts.language,
         )

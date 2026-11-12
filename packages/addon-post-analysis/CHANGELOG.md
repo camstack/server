@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A device's label in a notification is one parenthesis: 'Battery (System · Sensor)', never 'Battery (System) (Sensor)'.
 - A detection, timelapse or digest notification names a child device with its parent too: 'Battery (System)'.
 - A low-battery alert on a device that no longer has a battery (the Enpal storage battery) closes by itself, silently, after two refreshes agree.
+- A child sensor's notification title names its parent too, and a device's own parenthesis is no longer mistaken for its parent.
 
 ## [1.2.698] - 2026-11-12
 

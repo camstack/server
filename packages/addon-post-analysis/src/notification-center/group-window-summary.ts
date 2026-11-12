@@ -176,6 +176,7 @@ function itemsOf(input: GroupWindowSummaryInput): {
                 system.deviceType,
                 params['deviceName'],
                 input.texts.language,
+                params['deviceParentName'],
               ),
             }
       orphans.push(`• ${input.texts.text({ key: lineKey, vars: { ...params, ...label } })}`)

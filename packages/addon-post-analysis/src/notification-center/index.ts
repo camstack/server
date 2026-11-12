@@ -3021,7 +3021,7 @@ export class NotificationCenter implements NcEventConsumer {
       reportSceneSuppression: (rule, subject) => self.reportSceneSuppression(rule, subject),
       reportSystemFilterExclusion: (rule, subject, filter) =>
         self.reportSystemFilterExclusion(rule, subject, filter),
-      sensorName: (deviceId) => self.deviceDirectory.get(deviceId)?.name,
+      sensorName: (deviceId) => self.deviceDirectory.displayName(deviceId),
       get ruleAi() {
         return self.ruleAi
       },

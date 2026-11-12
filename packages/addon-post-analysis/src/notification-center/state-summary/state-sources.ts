@@ -18,6 +18,7 @@
  */
 import {
   deviceDisplayName,
+  deviceTextParams,
   isAccessoryIdentity,
   type NcDeviceIdentity,
 } from '../device-directory.js'
@@ -83,16 +84,6 @@ const NODE_SECTIONS: readonly NcStateSectionId[] = ['nodes', 'addons', 'addon-up
  * as two lists. The lines under a heading no longer name the node.
  */
 const PER_NODE_SECTIONS: readonly NcStateSectionId[] = ['addon-updates', 'updates']
-
-function deviceParams(
-  deviceId: number,
-  identity: NcDeviceIdentity | undefined,
-): Readonly<Record<string, string>> {
-  return {
-    deviceId: String(deviceId),
-    deviceName: deviceDisplayName(identity, deviceId),
-  }
-}
 
 function consumableSummaryLineKey(
   params: Readonly<Record<string, string>>,
@@ -170,7 +161,7 @@ function livenessItem(
   }
   if (row.deviceId === undefined) return null
   const identity = lookup(row.deviceId)
-  const params = deviceParams(row.deviceId, identity)
+  const params = deviceTextParams(row.deviceId, identity)
   const subject: NcSystemEventSubject = {
     kind: 'device-offline',
     subject: row.subject,
@@ -247,7 +238,7 @@ function stateItem(
   // reported under the name the reader knows today.
   const params =
     row.deviceId !== undefined
-      ? { ...row.params, ...deviceParams(row.deviceId, identity) }
+      ? { ...row.params, ...deviceTextParams(row.deviceId, identity) }
       : row.params
   const deviceType = identity?.type ?? row.deviceType
   const subject: NcSystemEventSubject = {

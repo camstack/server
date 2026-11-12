@@ -115,9 +115,7 @@ export function fireRefFor(
 function sensorNameOf(host: RuleActionDispatchHost, subject: NcRuleSubject): string | undefined {
   if (subject.source !== 'sensor') return undefined
   const deviceId = subject.sourceDeviceId ?? subject.deviceId
-  const identity = host.deviceDirectory.get(deviceId)
-  if (identity === undefined || identity.name.trim().length === 0) return undefined
-  return deviceDisplayName(identity, deviceId)
+  return host.deviceDirectory.displayName(deviceId)
 }
 
 export interface RuleActionDispatchHost {
@@ -170,7 +168,7 @@ export function runRuleActions(
   if (actionIds === undefined || actionIds.length === 0) return phase
   const className = subject.classNames[0]
   const sensorName = sensorNameOf(host, subject)
-  const deviceName = sensorName ?? host.deviceDirectory.get(subject.deviceId)?.name
+  const deviceName = sensorName ?? host.deviceDirectory.displayName(subject.deviceId)
   void host.actionRunner.runHook({
     ruleId: rule.id,
     ruleName: rule.name,

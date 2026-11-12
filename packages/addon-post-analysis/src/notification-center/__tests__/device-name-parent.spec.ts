@@ -13,9 +13,11 @@ import {
   deviceDisplayName,
   deviceNamesWithParents,
   frozenDeviceLabel,
+  nameWithParent,
   NcDeviceDirectory,
   type NcDeviceIdentity,
 } from '../device-directory.js'
+import { sensorOf } from '../appliance-cycle.js'
 import { incomingFromBatteryBand, type NcSystemEventFacts } from '../event-intake.js'
 import { NcTextCatalog } from '../text-catalog.js'
 import { stateSources } from '../state-summary/state-sources.js'
@@ -170,13 +172,13 @@ describe('#523 — the parent in a device name', () => {
     // A root keeps the plain form.
     expect(deviceDisplayLabel(directory.get(10), 10, 'en')).toBe('Sensore porta (Sensor)')
     // A row frozen at intake carries 'Battery (System)': same single form.
-    expect(frozenDeviceLabel(5693, DeviceType.Sensor, 'Battery (System)', 'en')).toBe(
+    expect(frozenDeviceLabel(5693, DeviceType.Sensor, 'Battery (System)', 'en', 'System')).toBe(
       'Battery (System · Sensor)',
     )
     // A name already ending with the type is left alone.
-    expect(frozenDeviceLabel(5693, DeviceType.Sensor, 'Battery (System · Sensor)', 'en')).toBe(
-      'Battery (System · Sensor)',
-    )
+    expect(
+      frozenDeviceLabel(5693, DeviceType.Sensor, 'Battery (System · Sensor)', 'en', 'System'),
+    ).toBe('Battery (System · Sensor)')
   })
 
   it('a detection {{device}} names the parent too: getDeviceName reads the same helper', async () => {
@@ -196,5 +198,56 @@ describe('#523 — the parent in a device name', () => {
     expect(deviceDisplayLabel({ ...identity, name: names.get(5693) ?? '' }, 5693, 'en')).toBe(
       'Battery (System · Sensor)',
     )
+  })
+
+  it("a parenthesis that is NOT the parent's stays the device's own: 'Cam (old) (Camera)'", () => {
+    const own: NcDeviceIdentity = {
+      deviceId: 7,
+      type: DeviceType.Camera,
+      name: 'Cam (old)',
+      isCamera: true,
+      parentDeviceId: null,
+    }
+    expect(deviceDisplayLabel(own, 7, 'en')).toBe('Cam (old) (Camera)')
+    // A frozen row with no parent is the same device.
+    expect(frozenDeviceLabel(7, DeviceType.Camera, 'Cam (old)', 'en')).toBe('Cam (old) (Camera)')
+  })
+
+  it('the parent is already in the name only as a whole word, never as part of one', () => {
+    expect(nameWithParent('Luxury lamp', 'Lux')).toBe('Luxury lamp (Lux)')
+    expect(nameWithParent('Lux kitchen', 'Lux')).toBe('Lux kitchen')
+    expect(nameWithParent('Robot piano terra', 'Robot piano terra')).toBe('Robot piano terra')
+    expect(nameWithParent('Pompa - Caldaia', 'caldaia')).toBe('Pompa - Caldaia')
+  })
+
+  it('a battery-low row freezes the parent, so its label is one parenthesis in any language', async () => {
+    const directory = await warmDirectory()
+    const event = incomingFromBatteryBand({
+      facts: FACTS,
+      deviceId: 5693,
+      band: 'low',
+      reading: { percentage: 19, lastUpdated: NOW },
+      identity: directory.get(5693),
+    }).subject.systemEvent
+    const params = event?.textParams ?? {}
+    expect(params['deviceParentName']).toBe('System')
+    expect(
+      frozenDeviceLabel(
+        5693,
+        event?.deviceType,
+        params['deviceName'],
+        'it',
+        params['deviceParentName'],
+      ),
+    ).toBe('Battery (System · Sensore)')
+  })
+
+  it("a child sensor's notification title names its parent", async () => {
+    const directory = await warmDirectory()
+    expect(
+      sensorOf({ deviceId: 5693, source: 'sensor' }, (id) => directory.displayName(id)),
+    ).toEqual({ sensor: { deviceId: 5693, name: 'Battery (System)' } })
+    // A nameless device still freezes nothing.
+    expect(directory.displayName(424242)).toBeUndefined()
   })
 })

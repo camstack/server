@@ -54,7 +54,7 @@ import {
 } from './alarm/alarm-push-policy.js'
 import type { AudioWindowHit } from './audio-rule-matcher.js'
 import {
-  deviceDisplayName,
+  deviceTextParams,
   isAccessoryIdentity,
   type NcDeviceIdentity,
   type NcDeviceLookup,
@@ -837,22 +837,6 @@ function systemSubject(input: {
         subject: input.subject,
       },
     }),
-  }
-}
-
-/**
- * The facts a device sentence needs: `{{deviceId}}` and `{{deviceName}}`, the
- * bare name. `{{deviceLabel}}` (the name with its translated type) is NOT
- * frozen here: the renderer builds it in its own language from the name and the
- * row's `deviceType`.
- */
-function deviceTextParams(
-  deviceId: number,
-  identity: NcDeviceIdentity | undefined,
-): Readonly<Record<string, string>> {
-  return {
-    deviceId: String(deviceId),
-    deviceName: deviceDisplayName(identity, deviceId),
   }
 }
 

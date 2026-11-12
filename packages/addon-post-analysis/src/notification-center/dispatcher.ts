@@ -4053,6 +4053,7 @@ function deviceLabelParam(
       systemEvent?.deviceType,
       systemEvent?.textParams?.['deviceName'],
       language,
+      systemEvent?.textParams?.['deviceParentName'],
     ),
   }
 }

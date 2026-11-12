@@ -141,8 +141,41 @@ export function deviceDisplayName(
 export function nameWithParent(name: string, parentName: string | undefined): string {
   const parent = parentName?.trim() ?? ''
   if (parent.length === 0) return name
-  if (name.toLocaleLowerCase().includes(parent.toLocaleLowerCase())) return name
+  if (containsWholeWords(name, parent)) return name
   return `${name} (${parent})`
+}
+
+/** A letter or digit: what makes "Lux" part of "Luxury" rather than a word of its own. */
+const WORD_CHAR = /[\p{L}\p{N}]/u
+
+/** `needle` occurs in `text` with no letter or digit glued to either side. */
+function containsWholeWords(text: string, needle: string): boolean {
+  const haystack = text.toLocaleLowerCase()
+  const word = needle.toLocaleLowerCase()
+  for (let at = haystack.indexOf(word); at >= 0; at = haystack.indexOf(word, at + 1)) {
+    const before = at > 0 ? haystack.charAt(at - 1) : ''
+    const after = haystack.charAt(at + word.length)
+    if (!WORD_CHAR.test(before) && !WORD_CHAR.test(after)) return true
+  }
+  return false
+}
+
+/**
+ * The facts a device sentence freezes at intake: `{{deviceId}}`,
+ * `{{deviceName}}` (with the parent, #523) and `deviceParentName`, which the
+ * renderer needs to word `{{deviceLabel}}` as ONE parenthesis in the language
+ * it renders in. `{{deviceLabel}}` itself is never frozen.
+ */
+export function deviceTextParams(
+  deviceId: number,
+  identity: NcDeviceIdentity | undefined,
+): Readonly<Record<string, string>> {
+  const parent = identity?.parentName?.trim() ?? ''
+  return {
+    deviceId: String(deviceId),
+    deviceName: deviceDisplayName(identity, deviceId),
+    ...(parent.length > 0 ? { deviceParentName: parent } : {}),
+  }
 }
 
 /** A device row that names a device and, when it hangs off one, its parent. */
@@ -202,9 +235,10 @@ const DEVICE_LABEL_OMITTED_TYPES: ReadonlySet<string> = new Set([
  * the numeric id, the type is unknown / generic / a container, or the name
  * already ends with that label.
  *
- * ONE parenthesis, always: a name that already ends with one — the parent a
- * child carries (#523), `Battery (System)` — takes the type inside it,
- * `Battery (System · Sensor)`, never `Battery (System) (Sensor)`.
+ * ONE parenthesis for a child: a name that ends with its PARENT's — the one
+ * {@link nameWithParent} added (#523), `Battery (System)` — takes the type
+ * inside it, `Battery (System · Sensor)`, never `Battery (System) (Sensor)`.
+ * Any other parenthesis is the device's own name: `Cam (old) (Camera)`.
  */
 export function deviceDisplayLabel(
   identity: NcDeviceIdentity | undefined,
@@ -217,34 +251,42 @@ export function deviceDisplayLabel(
   if (DEVICE_LABEL_OMITTED_TYPES.has(type)) return name
   const phrase = deviceTypePhrase(type, language)
   if (phrase === null || nameEndsWithLabel(name, phrase, language)) return name
-  return withTypeSuffix(name, phrase)
+  return withTypeSuffix(name, phrase, identity.parentName)
 }
 
 /** The separator between the parent and the type inside the one parenthesis. */
 const LABEL_SUFFIX_SEPARATOR = ' · '
 
-function withTypeSuffix(name: string, phrase: string): string {
-  const open = name.lastIndexOf(' (')
-  if (!name.endsWith(')') || open <= 0) return `${name} (${phrase})`
+function withTypeSuffix(name: string, phrase: string, parentName: string | undefined): string {
+  const parent = parentName?.trim() ?? ''
+  if (parent.length === 0 || !name.endsWith(` (${parent})`)) return `${name} (${phrase})`
   return `${name.slice(0, -1)}${LABEL_SUFFIX_SEPARATOR}${phrase})`
 }
 
 /**
  * `{{deviceLabel}}` for a row whose words were frozen at intake: the frozen
- * bare name plus the type, worded in the language the row is RENDERED in. The
+ * name plus the type, worded in the language the row is RENDERED in. The
  * intake never freezes the label itself - a frozen label would keep the
- * language of the moment it was built.
+ * language of the moment it was built. `frozenParentName` is the row's
+ * `deviceParentName` ({@link deviceTextParams}).
  */
 export function frozenDeviceLabel(
   deviceId: number,
   deviceType: string | undefined,
   frozenName: string | undefined,
   language: DeviceLabelLanguage,
+  frozenParentName?: string,
 ): string {
   const name = frozenName !== undefined && frozenName.length > 0 ? frozenName : String(deviceId)
   if (deviceType === undefined) return name
   return deviceDisplayLabel(
-    { deviceId, type: deviceType, name, isCamera: false },
+    {
+      deviceId,
+      type: deviceType,
+      name,
+      isCamera: false,
+      ...(frozenParentName !== undefined ? { parentName: frozenParentName } : {}),
+    },
     deviceId,
     language,
   )
@@ -296,6 +338,17 @@ export class NcDeviceDirectory {
   /** Hot-path read. No I/O, no await — called per system event. */
   get(deviceId: number): NcDeviceIdentity | undefined {
     return this.devices.get(deviceId)
+  }
+
+  /**
+   * The name a notification reads for this device ({@link deviceDisplayName},
+   * the parent included), or `undefined` when the directory has no name for it
+   * — a nameless device never invents a title.
+   */
+  displayName(deviceId: number): string | undefined {
+    const identity = this.get(deviceId)
+    if (identity === undefined || identity.name.trim().length === 0) return undefined
+    return deviceDisplayName(identity, deviceId)
   }
 
   /** A bound {@link NcDeviceLookup} that always sees the CURRENT snapshot. */
