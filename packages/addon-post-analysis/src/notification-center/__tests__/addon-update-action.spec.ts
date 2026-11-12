@@ -150,6 +150,8 @@ async function makeHarness(options: HarnessOptions = {}): Promise<Harness> {
       },
       targets: [{ targetId: 'target-1' }],
       media: { attach: 'none' },
+      // The button is what this file tests. The system-event hold is not.
+      groupWithinSec: 0,
       throttle: { cooldownSec: 0, scope: 'rule' },
       // No snooze buttons: this suite asserts the update button and only it.
       snoozeOptions: [],

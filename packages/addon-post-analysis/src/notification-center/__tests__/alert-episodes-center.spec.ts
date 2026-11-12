@@ -127,6 +127,8 @@ describe('alert episodes reach the operator only through a system-event rule', (
           },
           systemEventDelivery: { mode: 'instant' },
           targets: [{ targetId: 'target-1' }],
+          // Episodes, not the few-second hold. Immediacy is the old contract.
+          groupWithinSec: 0,
           throttle: { cooldownSec: 0, scope: 'rule-device' },
         }),
       })
@@ -195,6 +197,7 @@ describe('alert episodes reach the operator only through a system-event rule', (
         conditions: { systemEvent: { kinds: ['alert-critical', 'alert-critical-resolved'] } },
         systemEventDelivery: { mode: 'instant' },
         targets: [{ targetId: 'target-1' }],
+        groupWithinSec: 0,
         throttle: { cooldownSec: 0, scope: 'rule-device' },
       }),
     })

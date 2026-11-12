@@ -54,6 +54,7 @@ describe('a node-updating that drains after its landing is not sent', () => {
       rule: NcRuleInputSchema.parse({
         name: 'Updates',
         delivery: 'system-event',
+        groupWithinSec: 0,
         conditions: { systemEvent: { kinds: ['node-updating', 'node-restarting'] } },
         targets: [{ targetId: 'target-1' }],
         media: { attach: 'none' },

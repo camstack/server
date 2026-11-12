@@ -1,9 +1,5 @@
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 import { vitestWorkers } from '../../vitest.workers'
-
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
 /**
  * Vitest config for `@camstack/addon-post-analysis`.
@@ -21,14 +17,6 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
  * the root-hoisted 4.x is avoided).
  */
 export default defineConfig({
-  resolve: {
-    alias: [
-      {
-        find: /^@camstack\/types$/,
-        replacement: path.join(repoRoot, 'packages/types/dist/index.mjs'),
-      },
-    ],
-  },
   test: {
     ...vitestWorkers(),
     globals: true,

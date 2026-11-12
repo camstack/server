@@ -70,6 +70,7 @@ async function startCenter(world: InMemoryRecords, withRule = true): Promise<Not
     rule: NcRuleInputSchema.parse({
       name: 'Nodi — offline e ritorno online',
       delivery: 'system-event',
+      groupWithinSec: 0,
       conditions: { systemEvent: { kinds: ['node-offline', 'node-online'] } },
       systemEventDelivery: { mode: 'instant' },
       targets: [{ targetId: 'target-1' }],

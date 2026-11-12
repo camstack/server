@@ -69,13 +69,32 @@ export function groupWindowSubject(input: GroupWindowSummaryInput): NcRuleSubjec
         groupWindow: true,
         windowStartMs: input.openedAt,
         windowEndMs: input.nowMs,
+        [GROUP_WINDOW_MEMBER_IDS]: input.entries.map((entry) => entry.id).toSorted(),
       },
     },
   }
 }
 
+/** Payload key listing the held outbox ids a summary already folded. */
+export const GROUP_WINDOW_MEMBER_IDS = 'groupedMemberIds'
+
 export function groupWindowRecordId(ruleId: string, targetId: string, openedAt: number): string {
   return `group-window:${ruleId}:${targetId}:${String(openedAt)}`
+}
+
+/** Held row ids frozen on a summary, or `null` when this row is not one. */
+export function groupWindowMemberIds(
+  data: Readonly<Record<string, unknown>> | undefined,
+): readonly string[] | null {
+  if (data === undefined) return null
+  const raw = data[GROUP_WINDOW_MEMBER_IDS]
+  if (!Array.isArray(raw)) return null
+  const ids: string[] = []
+  for (const item of raw) {
+    if (typeof item !== 'string') return null
+    ids.push(item)
+  }
+  return ids.length === 0 ? null : ids
 }
 
 interface BurstText {

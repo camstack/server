@@ -34,8 +34,10 @@ more become one state-summary notification, and each held row is marked sent
 and points at that one notification.
 
 The rows are written to the outbox immediately with `payload.groupHold`. The
-drain skips a row that still carries it. A restart reads those pending rows
-back and finishes the original window. A stop flushes what is still open.
+drain skips a row that still carries it. The summary and the fold of the held
+rows are one write. A restart that finds that summary already written settles
+the held rows into it and does not write a second one; otherwise it finishes
+the original window. A stop flushes what is still open.
 Both windows — this fixed one and the addon-update sliding one — are the same
 `WindowCoalescer`.
 

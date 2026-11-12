@@ -227,6 +227,7 @@ async function makeHarness(policy: Policy = {}): Promise<Harness> {
     rule: NcRuleInputSchema.parse({
       name: 'Allarme',
       delivery: 'system-event',
+      groupWithinSec: 0,
       conditions: {
         systemEvent: {
           kinds: [

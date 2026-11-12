@@ -880,6 +880,54 @@ export class NcOutbox {
     return this.pending.get(id)
   }
 
+  /**
+   * Whether this id is already in the dedup horizon (pending, sent or dead).
+   * A group-window restart uses it to see a summary that already left `pending`.
+   */
+  hasEntry(id: string): boolean {
+    return this.knownIds.has(id)
+  }
+
+  /**
+   * Write a group-window summary and mark the held rows folded into it, in one
+   * `putMany`. A crash before the write leaves both unwritten; a second call
+   * finds the summary already known and only finishes the rows still held.
+   * Returns the summary id, or `null` when there is nothing to commit.
+   */
+  async commitGrouped(
+    summaries: readonly NcOutboxEnqueueInput[],
+    heldIds: readonly string[],
+  ): Promise<string | null> {
+    const first = summaries[0]
+    if (first === undefined) return null
+    const summaryId = outboxEntryId(first)
+    const now = this.now()
+    const toInsert: NcOutboxEntry[] = []
+    for (const input of summaries) {
+      const id = outboxEntryId(input)
+      if (this.knownIds.has(id)) continue
+      if (!this.horizonLoaded && (await this.alreadyStored(id, input))) {
+        this.knownIds.add(id)
+        continue
+      }
+      toInsert.push(pendingFrom(input, now))
+    }
+    const settled: NcOutboxEntry[] = []
+    for (const id of heldIds) {
+      const entry = this.pending.get(id)
+      if (entry === undefined) continue
+      settled.push(foldedInto(entry, summaryId, now))
+    }
+    const writes = [...toInsert, ...settled]
+    if (writes.length > 0) await this.rows.putMany(writes.map((entry) => outboxPut(entry)))
+    for (const entry of toInsert) {
+      this.knownIds.add(entry.id)
+      this.pending.set(entry.id, entry)
+    }
+    for (const entry of settled) this.pending.delete(entry.id)
+    return summaryId
+  }
+
   /** The window ended with one delivery: send this row unchanged. */
   async releaseGroupHold(id: string): Promise<void> {
     const entry = this.pending.get(id)
@@ -902,28 +950,7 @@ export class NcOutbox {
   async settleGrouped(id: string, summaryId: string): Promise<void> {
     const entry = this.pending.get(id)
     if (entry === undefined) return
-    const { groupHold: _held, ...payload } = entry.payload
-    const systemEvent = payload.subject.systemEvent
-    const sent: NcOutboxEntry = {
-      ...entry,
-      status: 'sent',
-      updatedAt: this.now(),
-      payload: {
-        ...payload,
-        groupedInto: summaryId,
-        subject: {
-          ...payload.subject,
-          ...(systemEvent !== undefined
-            ? {
-                systemEvent: {
-                  ...systemEvent,
-                  data: { ...systemEvent.data, groupedInto: summaryId },
-                },
-              }
-            : {}),
-        },
-      },
-    }
+    const sent = foldedInto(entry, summaryId, this.now())
     this.pending.delete(id)
     await this.mutate(sent)
   }
@@ -966,21 +993,7 @@ export class NcOutbox {
         })
         continue
       }
-      const entry: NcOutboxEntry = {
-        id,
-        ruleId: input.ruleId,
-        targetId: input.targetId,
-        deviceId: input.deviceId,
-        recordKind: input.recordKind,
-        recordId: input.recordId,
-        ...(input.trackId !== undefined ? { trackId: input.trackId } : {}),
-        status: 'pending',
-        attempts: 0,
-        nextAttemptAt: now,
-        createdAt: now,
-        updatedAt: now,
-        payload: input.payload,
-      }
+      const entry = pendingFrom(input, now)
       try {
         await this.persist(entry)
         this.knownIds.add(id)
@@ -1466,6 +1479,50 @@ export class NcOutbox {
         meta: { id: entry.id, error: String(err) },
       })
     }
+  }
+}
+
+function pendingFrom(input: NcOutboxEnqueueInput, now: number): NcOutboxEntry {
+  return {
+    id: outboxEntryId(input),
+    ruleId: input.ruleId,
+    targetId: input.targetId,
+    deviceId: input.deviceId,
+    recordKind: input.recordKind,
+    recordId: input.recordId,
+    ...(input.trackId !== undefined ? { trackId: input.trackId } : {}),
+    status: 'pending',
+    attempts: 0,
+    nextAttemptAt: now,
+    createdAt: now,
+    updatedAt: now,
+    payload: input.payload,
+  }
+}
+
+/** A held row marked sent, pointing at the summary. The hold is gone. */
+function foldedInto(entry: NcOutboxEntry, summaryId: string, now: number): NcOutboxEntry {
+  const { groupHold: _held, ...payload } = entry.payload
+  const systemEvent = payload.subject.systemEvent
+  return {
+    ...entry,
+    status: 'sent',
+    updatedAt: now,
+    payload: {
+      ...payload,
+      groupedInto: summaryId,
+      subject: {
+        ...payload.subject,
+        ...(systemEvent !== undefined
+          ? {
+              systemEvent: {
+                ...systemEvent,
+                data: { ...systemEvent.data, groupedInto: summaryId },
+              },
+            }
+          : {}),
+      },
+    },
   }
 }
 

@@ -17,10 +17,14 @@
 
 import { groupWithinSecOf, type NcRule } from '@camstack/types'
 import type { IScopedLogger } from '@camstack/types'
-import { groupWindowSubject } from './group-window-summary.js'
+import {
+  groupWindowMemberIds,
+  groupWindowRecordId,
+  groupWindowSubject,
+} from './group-window-summary.js'
 import type { NcOutbox, NcOutboxEnqueueInput, NcOutboxEntry } from './outbox.js'
 import { outboxEntryId } from './outbox-key.js'
-import type { NcRuleSubject } from './rule-engine.js'
+import { NC_SYSTEM_DEVICE_ID, type NcRuleSubject } from './rule-engine.js'
 import type { NcRuleStore } from './rule-store.js'
 import type { NcTextCatalog } from './text-catalog.js'
 import { WindowCoalescer } from './window-coalescer.js'
@@ -38,8 +42,8 @@ export interface NcDeliveryGroupWindowDeps {
   readonly rules: NcRuleStore
   readonly texts: NcTextCatalog
   readonly isMuted: (deviceId: number) => boolean
-  /** Write the one summary row and return the inputs, so the id can be named. */
-  readonly enqueueSummary: (
+  /** The summary rows to commit. Does not write them — {@link NcOutbox.commitGrouped} does. */
+  readonly summaryEntries: (
     rule: NcRule,
     subject: NcRuleSubject,
     targetId: string,
@@ -79,9 +83,34 @@ export class NcDeliveryGroupWindow {
    * flush here; the rest wait out the remainder of their original deadline.
    */
   async recover(entries: readonly NcOutboxEntry[]): Promise<void> {
-    for (const entry of entries) {
+    const pending = entries.filter((entry) => entry.status === 'pending')
+    const claimed = new Set<string>()
+    for (const summary of pending) {
+      if (summary.payload.groupHold !== undefined) continue
+      const members = groupWindowMemberIds(summary.payload.subject.systemEvent?.data)
+      if (members === null) continue
+      const memberSet = new Set(members)
+      const held = pending.filter(
+        (entry) =>
+          entry.payload.groupHold !== undefined &&
+          memberSet.has(entry.id) &&
+          entry.ruleId === summary.ruleId &&
+          entry.targetId === summary.targetId,
+      )
+      if (held.length === 0) continue
+      await this.settleExisting(summary.id, held)
+      for (const entry of held) claimed.add(entry.id)
+    }
+    for (const entry of pending) {
+      if (claimed.has(entry.id)) continue
       const hold = entry.payload.groupHold
-      if (hold === undefined || entry.status !== 'pending') continue
+      if (hold === undefined) continue
+      const summaryId = groupWindowSummaryId(entry.ruleId, entry.targetId, hold.openedAt)
+      if (this.deps.outbox.hasEntry(summaryId)) {
+        await this.settleExisting(summaryId, [entry])
+        claimed.add(entry.id)
+        continue
+      }
       this.coalescer.adopt(hold.key, entry.id, hold.openedAt, hold.releaseAt)
     }
     await this.flushDue()
@@ -206,13 +235,15 @@ export class NcDeliveryGroupWindow {
       for (const entry of entries) await this.releaseOne(entry, key)
       return
     }
-    const inputs = await this.deps.enqueueSummary(rule, subject, first.targetId)
-    const summary = inputs[0]
-    if (summary === undefined) {
+    const inputs = await this.deps.summaryEntries(rule, subject, first.targetId)
+    const summaryId = await this.deps.outbox.commitGrouped(
+      inputs,
+      entries.map((entry) => entry.id),
+    )
+    if (summaryId === null) {
       for (const entry of entries) await this.releaseOne(entry, key)
       return
     }
-    const summaryId = outboxEntryId(summary)
     for (const entry of entries) {
       this.deps.logger.info('group window folded a delivery into one summary', {
         tags: { deviceId: entry.deviceId },
@@ -224,7 +255,36 @@ export class NcDeliveryGroupWindow {
           key,
         },
       })
+    }
+  }
+
+  /** The summary row is already durable. Finish the held rows; do not write another. */
+  private async settleExisting(summaryId: string, held: readonly NcOutboxEntry[]): Promise<void> {
+    for (const entry of held) {
+      this.deps.logger.info(
+        'group window settled a held delivery into the summary already written',
+        {
+          tags: { deviceId: entry.deviceId },
+          meta: {
+            ruleId: entry.ruleId,
+            targetId: entry.targetId,
+            recordId: entry.recordId,
+            summaryId,
+          },
+        },
+      )
       await this.deps.outbox.settleGrouped(entry.id, summaryId)
     }
   }
+}
+
+function groupWindowSummaryId(ruleId: string, targetId: string, openedAt: number): string {
+  return outboxEntryId({
+    ruleId,
+    targetId,
+    deviceId: NC_SYSTEM_DEVICE_ID,
+    recordKind: 'system-event',
+    recordId: groupWindowRecordId(ruleId, targetId, openedAt),
+    payload: { subject: { timestamp: openedAt } },
+  })
 }

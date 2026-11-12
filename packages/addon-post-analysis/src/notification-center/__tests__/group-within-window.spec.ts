@@ -19,7 +19,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcDeviceIdentity } from '../device-directory.js'
 import type { NcTargetRef } from '../dispatcher.js'
+import { GROUP_WINDOW_MEMBER_IDS } from '../group-window-summary.js'
 import { NotificationCenter } from '../index.js'
+import { NcOutbox } from '../outbox.js'
+import { NC_SYSTEM_DEVICE_ID } from '../rule-engine.js'
+import {
+  NC_STATE_SUMMARY_BODY_KEY,
+  NC_STATE_SUMMARY_TITLE_KEY,
+} from '../state-summary/state-summary-delivery.js'
 import { makeFakeDeviceSettings } from './fake-device-settings.js'
 import { boot, event, makeHarness, rule } from './grouped-harness.js'
 import { makeNcRecords, ncPruneWindowsPort, ncTable } from './support/nc-test-deps.js'
@@ -295,6 +302,88 @@ describe('a system rule groups deliveries that arrive within a few seconds', () 
     await next.runDrainTickForTest()
     expect(box.sent).toHaveLength(1)
     expect(box.sent[0]?.title).toBe('Dispositivi: 2')
+    const held = outbox(box.world).filter(
+      (row) => row['deviceId'] === 3395 || row['deviceId'] === 3502,
+    )
+    expect(held.every((row) => row['status'] === 'sent')).toBe(true)
+  })
+
+  it('a summary already written is not written again when the held rows are still pending', async () => {
+    const box = await start()
+    await systemRule(box.center)
+    await seedOnline(box)
+    box.clock.now = BASE
+    box.center.onSystemEvent(liveness(3395, false))
+    box.center.onSystemEvent(liveness(3502, false))
+    await untilDevices(box.world, [3395, 3502])
+    const table = ncTable(box.world, 'outbox')
+    const members: string[] = []
+    let ruleId: string | null = null
+    let targetId: string | null = null
+    for (const [id, data] of table) {
+      const payload = data['payload']
+      if (typeof payload !== 'object' || payload === null || !('groupHold' in payload)) continue
+      members.push(id)
+      if (typeof data['ruleId'] === 'string') ruleId = data['ruleId']
+      if (typeof data['targetId'] === 'string') targetId = data['targetId']
+    }
+    expect(members).toHaveLength(2)
+    if (ruleId === null || targetId === null) throw new Error('held row has no rule')
+    box.center.discardGroupWindowForTest()
+    const residue = new NcOutbox({
+      records: box.world.records,
+      logger: makeSilentLogger(),
+      deliver: async () => ({ ok: true }),
+      now: () => box.clock.now,
+    })
+    await residue.enqueue([
+      {
+        ruleId,
+        targetId,
+        deviceId: NC_SYSTEM_DEVICE_ID,
+        recordKind: 'system-event',
+        recordId: 'crash-residue',
+        payload: {
+          ruleName: 'Dispositivi',
+          delivery: 'system-event',
+          priority: 3,
+          media: 'none',
+          subject: {
+            deviceId: NC_SYSTEM_DEVICE_ID,
+            className: 'system',
+            zones: [],
+            timestamp: BASE,
+            systemEvent: {
+              kind: 'device-offline',
+              subject: 'group-window:residue',
+              titleKey: NC_STATE_SUMMARY_TITLE_KEY,
+              bodyKey: NC_STATE_SUMMARY_BODY_KEY,
+              textParams: {
+                summaryText: 'RESIDUE-MARKER',
+                summaryCount: '2',
+                summarySection: '',
+              },
+              textCount: 2,
+              data: {
+                stateSummary: true,
+                groupWindow: true,
+                windowStartMs: BASE,
+                windowEndMs: BASE,
+                [GROUP_WINDOW_MEMBER_IDS]: [...members].sort(),
+              },
+            },
+          },
+        },
+      },
+    ])
+    await box.center.stop()
+    const next = open(box.world, box.clock, box.sent, PHONE)
+    await next.start({ evaluation: true })
+    await next.whenHydrated()
+    box.clock.now = BASE + 5_000
+    await next.runDrainTickForTest()
+    expect(box.sent).toHaveLength(1)
+    expect(box.sent[0]?.body).toContain('RESIDUE-MARKER')
     const held = outbox(box.world).filter(
       (row) => row['deviceId'] === 3395 || row['deviceId'] === 3502,
     )

@@ -250,6 +250,7 @@ async function makeAlarmRule(
     rule: NcRuleInputSchema.parse({
       name: 'Allarme',
       delivery: 'system-event',
+      groupWithinSec: 0,
       conditions: { systemEvent: { kinds: [...kinds] } },
       targets: targetIds.map((targetId) => ({ targetId })),
       throttle: { cooldownSec: 0, scope: 'rule' },

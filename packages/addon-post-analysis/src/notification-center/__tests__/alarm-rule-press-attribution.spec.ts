@@ -189,6 +189,7 @@ async function makeHarness(): Promise<Harness> {
     rule: NcRuleInputSchema.parse({
       name: 'Allarme',
       delivery: 'system-event',
+      groupWithinSec: 0,
       conditions: {
         systemEvent: { kinds: ['alarm-pending', 'alarm-triggered', 'alarm-sensor-bypass'] },
       },

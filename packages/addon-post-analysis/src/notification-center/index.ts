@@ -1257,8 +1257,7 @@ export class NotificationCenter implements NcEventConsumer {
       rules: this.rules,
       texts: this.texts,
       isMuted: (deviceId) => this.deviceMutes.isMuted(deviceId),
-      enqueueSummary: (rule, subject, targetId) =>
-        this.enqueueGroupSummary(rule, subject, targetId),
+      summaryEntries: (rule, subject, targetId) => this.summaryEntries(rule, subject, targetId),
       deliverReady: () => this.deliverGroupWindow(),
     })
     this.timelapseRules = TimelapseStore.of(deps.records, this.logger.child('timelapse'), deps.now)
@@ -3582,7 +3581,7 @@ export class NotificationCenter implements NcEventConsumer {
    * The one summary for a window, addressed to the target the held rows already
    * named. It does not go back through evaluation — that would hold it again.
    */
-  private async enqueueGroupSummary(
+  private summaryEntries(
     rule: NcRule,
     subject: NcRuleSubject,
     targetId: string,
@@ -3594,9 +3593,7 @@ export class NotificationCenter implements NcEventConsumer {
       targetUsers: [],
     }
     const worded = withSummaryBody(narrowed) ?? narrowed
-    const entries = this.buildEntries(worded, subject, 'system-event', undefined)
-    await this.outbox.enqueue(entries)
-    return entries
+    return Promise.resolve(this.buildEntries(worded, subject, 'system-event', undefined))
   }
 
   // ── Snooze ──────────────────────────────────────────────────────────
