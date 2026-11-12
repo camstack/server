@@ -33,7 +33,7 @@ import { mowerActivityOf, vacuumActivityOf } from '../connected/robot-model'
 import { ApplianceCard } from '../scenes/appliance/ApplianceCard'
 import { type ApplianceCardActions, formatCycleMinutes } from '../scenes/appliance/model'
 import { MediaPlayerCard } from '../scenes/media/MediaPlayerCard'
-import type { MediaCardActions } from '../scenes/media/model'
+import { DEFAULT_VOLUME_BOUNDS, type MediaCardActions } from '../scenes/media/model'
 import { RobotCard } from '../scenes/robot/RobotCard'
 import type { RobotCardActions } from '../scenes/robot/model'
 import { remoteKeyOf, remotePadRows } from '../shell/remote-keys'
@@ -56,6 +56,7 @@ function mediaActions(): MediaCardActions {
     onPower: vi.fn(),
     onVolumeUp: vi.fn(),
     onVolumeDown: vi.fn(),
+    onVolume: vi.fn(),
     onMute: vi.fn(),
     onSource: vi.fn(),
     onSeek: vi.fn(),
@@ -217,13 +218,39 @@ describe('the media scene', () => {
     expect(actions.onRepeat).toHaveBeenCalledWith('one')
   })
 
-  it('a muted speaker says so on its volume and on the mute key', () => {
+  it('a known volume is a slider that commits the level on release', () => {
+    const actions = mediaActions()
     const speaker = fixture(mediaFixtures(), 'media-speaker')
-    const model = {
-      ...speaker.model,
-      volume: { level: 30, muted: true, mutable: true },
-    }
-    render(<MediaPlayerCard model={model} actions={mediaActions()} />)
+    render(
+      <MediaPlayerCard
+        model={{
+          ...speaker.model,
+          volume: { level: 32, muted: false, mutable: false, bounds: { min: 0, max: 40, step: 2 } },
+        }}
+        actions={actions}
+      />,
+    )
+    const slider = screen.getByTestId('dc-media-volume')
+    expect(slider.getAttribute('max')).toBe('40')
+    expect(slider.getAttribute('step')).toBe('2')
+    expect(screen.queryByTestId('dc-media-volume-up')).toBeNull()
+    fireEvent.change(slider, { target: { value: '20' } })
+    expect(actions.onVolume).not.toHaveBeenCalled()
+    fireEvent.pointerUp(slider)
+    expect(actions.onVolume).toHaveBeenCalledWith(20)
+  })
+
+  it('a muted speaker says so on the mute key, and on the step column when the level is unknown', () => {
+    const speaker = fixture(mediaFixtures(), 'media-speaker')
+    render(
+      <MediaPlayerCard
+        model={{
+          ...speaker.model,
+          volume: { level: null, muted: true, mutable: true, bounds: null },
+        }}
+        actions={mediaActions()}
+      />,
+    )
     expect(screen.getByTestId('dc-media-volume').textContent).toContain('muted')
     expect(screen.getByTestId('dc-media-mute').getAttribute('aria-pressed')).toBe('true')
   })
@@ -416,9 +443,26 @@ describe('media model', () => {
     expect(mediaPhaseOf({ ...MEDIA_BASE, state: 'buffering' })).toBe('playing')
   })
 
-  it('volume only when declared', () => {
+  it('volume only when declared; a known level with setVolume uses the declared scale', () => {
     expect(mediaVolumeOf(MEDIA_BASE, [])).toBeNull()
-    expect(mediaVolumeOf(MEDIA_BASE, [DeviceFeature.MediaPlayerVolume])?.level).toBe(40)
+    const reported = mediaVolumeOf(MEDIA_BASE, [DeviceFeature.MediaPlayerVolume])
+    expect(reported?.level).toBe(40)
+    expect(reported?.bounds).toBeNull()
+    expect(
+      mediaVolumeOf(MEDIA_BASE, [DeviceFeature.MediaPlayerVolume], { absolute: true })?.bounds,
+    ).toEqual(DEFAULT_VOLUME_BOUNDS)
+    const declared = { min: 0, max: 10, step: 2 }
+    expect(
+      mediaVolumeOf(MEDIA_BASE, [DeviceFeature.MediaPlayerVolume], {
+        absolute: true,
+        bounds: declared,
+      })?.bounds,
+    ).toEqual(declared)
+    expect(
+      mediaVolumeOf({ ...MEDIA_BASE, volumeLevel: null }, [DeviceFeature.MediaPlayerVolume], {
+        absolute: true,
+      })?.bounds,
+    ).toBeNull()
     expect(mediaVolumeOf(MEDIA_BASE, [DeviceFeature.MediaPlayerVolumeStep])?.level).toBeNull()
   })
 

@@ -4,7 +4,7 @@ import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { MediaArtwork } from '../../illustrations/MediaArtwork'
 import { CardButton } from '../../parts/CardButton'
 import { MenuButton } from '../../parts/MenuButton'
-import { HorizontalSlider } from '../../parts/sliders'
+import { HorizontalSlider, VerticalSlider } from '../../parts/sliders'
 import { StepColumn } from '../../parts/StepColumn'
 import { DeviceCard, type DeviceCardView } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
@@ -14,6 +14,7 @@ import {
   type MediaCardModel,
   type MediaPhase,
   type MediaPlayback,
+  type MediaVolume,
   nextMediaRepeat,
 } from './model'
 
@@ -46,29 +47,56 @@ export function mediaPhaseLabel(phase: MediaPhase, t: UiTextFn): string {
   }
 }
 
+function volumeLevel(
+  v: MediaVolume,
+  off: boolean,
+  actions: MediaCardActions,
+  t: UiTextFn,
+): ReactNode {
+  const bounds = v.bounds
+  if (bounds !== null && v.level !== null) {
+    return (
+      <VerticalSlider
+        value={v.level}
+        min={bounds.min}
+        max={bounds.max}
+        step={bounds.step}
+        ariaLabel={t('uiLibrary.deviceCard.media.volume', 'Volume')}
+        disabled={off}
+        valueLabel={(n) => String(n)}
+        onCommit={actions.onVolume}
+        testId="dc-media-volume"
+      />
+    )
+  }
+  return (
+    <StepColumn
+      testId="dc-media-volume"
+      value={v.muted ? t('uiLibrary.deviceCard.media.muted', 'muted') : v.level}
+      notes={v.muted || v.level === null ? [] : [t('uiLibrary.deviceCard.media.vol', 'vol')]}
+      up={{
+        glyph: 'plus',
+        label: t('uiLibrary.deviceCard.media.volumeUp', 'Volume up'),
+        disabled: off,
+        onPress: actions.onVolumeUp,
+      }}
+      down={{
+        glyph: 'minus',
+        label: t('uiLibrary.deviceCard.media.volumeDown', 'Volume down'),
+        disabled: off,
+        onPress: actions.onVolumeDown,
+      }}
+    />
+  )
+}
+
 function volumeColumn(model: MediaCardModel, actions: MediaCardActions, t: UiTextFn): ReactNode {
   const v = model.volume
   if (v === null) return null
   const off = model.phase === 'off'
   return (
     <>
-      <StepColumn
-        testId="dc-media-volume"
-        value={v.muted ? t('uiLibrary.deviceCard.media.muted', 'muted') : v.level}
-        notes={v.muted || v.level === null ? [] : [t('uiLibrary.deviceCard.media.vol', 'vol')]}
-        up={{
-          glyph: 'plus',
-          label: t('uiLibrary.deviceCard.media.volumeUp', 'Volume up'),
-          disabled: off,
-          onPress: actions.onVolumeUp,
-        }}
-        down={{
-          glyph: 'minus',
-          label: t('uiLibrary.deviceCard.media.volumeDown', 'Volume down'),
-          disabled: off,
-          onPress: actions.onVolumeDown,
-        }}
-      />
+      {volumeLevel(v, off, actions, t)}
       {v.mutable ? (
         <CardButton
           glyph="mute"

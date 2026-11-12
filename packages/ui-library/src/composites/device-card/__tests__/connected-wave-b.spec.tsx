@@ -387,17 +387,50 @@ describe('a media player draws what it declares', () => {
     await vi.waitFor(() => expect(hub.media.pause).toHaveBeenCalledWith({}))
   })
 
-  it('a volume level steps through setVolume, volume keys through volumeUp', async () => {
+  it('a known volume with setVolume is a slider that sets the level on release', async () => {
     hub.mediaSlice = MEDIA
     hub.features = [DeviceFeature.MediaPlayerVolume]
     render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    const slider = screen.getByTestId('dc-media-volume')
+    expect(slider).toHaveProperty('value', '40')
+    expect(slider.getAttribute('min')).toBe('0')
+    expect(slider.getAttribute('max')).toBe('100')
+    expect(slider.getAttribute('step')).toBe('1')
+    expect(screen.queryByTestId('dc-media-volume-up')).toBeNull()
+    fireEvent.change(slider, { target: { value: '55' } })
+    expect(hub.media.setVolume).not.toHaveBeenCalled()
+    fireEvent.pointerUp(slider)
+    await vi.waitFor(() => expect(hub.media.setVolume).toHaveBeenCalledWith({ volumeLevel: 55 }))
+    expect(hub.media.volumeUp).not.toHaveBeenCalled()
+  })
+
+  it('an unknown volume, or only volume keys, keeps the step buttons', async () => {
+    hub.mediaSlice = { ...MEDIA, volumeLevel: null }
+    hub.features = [DeviceFeature.MediaPlayerVolume, DeviceFeature.MediaPlayerVolumeStep]
+    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    expect(screen.queryByRole('slider')).toBeNull()
     fireEvent.click(screen.getByTestId('dc-media-volume-up'))
-    await vi.waitFor(() => expect(hub.media.setVolume).toHaveBeenCalledWith({ volumeLevel: 45 }))
+    await vi.waitFor(() => expect(hub.media.volumeUp).toHaveBeenCalledWith({ steps: 1 }))
+    expect(hub.media.setVolume).not.toHaveBeenCalled()
     cleanup()
+    hub.media.volumeUp.mockClear()
     hub.features = [DeviceFeature.MediaPlayerVolumeStep]
+    hub.mediaSlice = MEDIA
     render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
     fireEvent.click(screen.getByTestId('dc-media-volume-up'))
     await vi.waitFor(() => expect(hub.media.volumeUp).toHaveBeenCalledWith({ steps: 1 }))
+    expect(hub.media.setVolume).not.toHaveBeenCalled()
+  })
+
+  it('a known level without setVolume still uses the step buttons', async () => {
+    hub.mediaSlice = MEDIA
+    hub.features = [DeviceFeature.MediaPlayerVolume, DeviceFeature.MediaPlayerVolumeStep]
+    hub.methods = { 'media-player': ['volumeUp', 'volumeDown'] }
+    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    expect(screen.queryByRole('slider')).toBeNull()
+    fireEvent.click(screen.getByTestId('dc-media-volume-up'))
+    await vi.waitFor(() => expect(hub.media.volumeUp).toHaveBeenCalledWith({ steps: 1 }))
+    expect(hub.media.setVolume).not.toHaveBeenCalled()
   })
 
   it('mutes through setMute when mute is declared', async () => {

@@ -90,6 +90,7 @@ const MEDIA_ACTIONS: MediaCardActions = {
   onPower: noop,
   onVolumeUp: noop,
   onVolumeDown: noop,
+  onVolume: noop,
   onMute: noop,
   onSource: noop,
   onSeek: noop,

@@ -1,7 +1,14 @@
 /** Pure mapping from a `media-player` slice and the device's features to the media scene. */
 import { DeviceFeature, type MediaPlayerStatus } from '@camstack/types'
 import type { MediaArtworkKind } from '../illustrations/MediaArtwork'
-import type { MediaPhase, MediaSeek, MediaTransport, MediaVolume } from '../scenes/media/model'
+import {
+  DEFAULT_VOLUME_BOUNDS,
+  type MediaPhase,
+  type MediaSeek,
+  type MediaTransport,
+  type MediaVolume,
+  type MediaVolumeBounds,
+} from '../scenes/media/model'
 
 const PHASE: Readonly<Record<MediaPlayerStatus['state'], MediaPhase>> = {
   off: 'off',
@@ -45,17 +52,30 @@ export function mediaSubtitleOf(status: MediaPlayerStatus): string | null {
 
 const has = (features: readonly string[], f: DeviceFeature): boolean => features.includes(f)
 
+export interface MediaVolumeOptions {
+  /** The binding implements `setVolume`. */
+  readonly absolute: boolean
+  /** The device's declared range. Absent: 0..100 step 1. */
+  readonly bounds?: MediaVolumeBounds | null
+}
+
 /** The volume block: shown when the player declares a volume level or volume keys. */
 export function mediaVolumeOf(
   status: MediaPlayerStatus,
   features: readonly string[],
+  options: MediaVolumeOptions = { absolute: false },
 ): MediaVolume | null {
-  const level = has(features, DeviceFeature.MediaPlayerVolume) ? status.volumeLevel : null
-  if (level === null && !has(features, DeviceFeature.MediaPlayerVolumeStep)) return null
+  const reports = has(features, DeviceFeature.MediaPlayerVolume)
+  const steps = has(features, DeviceFeature.MediaPlayerVolumeStep)
+  if (!reports && !steps) return null
+  const reported = reports && typeof status.volumeLevel === 'number' ? status.volumeLevel : null
+  const bounds =
+    reported !== null && options.absolute ? (options.bounds ?? DEFAULT_VOLUME_BOUNDS) : null
   return {
-    level,
+    level: reported,
     muted: status.isMuted === true,
     mutable: has(features, DeviceFeature.MediaPlayerMute),
+    bounds,
   }
 }
 
@@ -88,6 +108,3 @@ export function mediaTransportOf(
     blind: status.stateSource === 'assumed' || status.assumedFields.includes('state'),
   }
 }
-
-/** One volume press: a key when the player has volume keys, else a set 5 points away. */
-export const VOLUME_STEP = 5

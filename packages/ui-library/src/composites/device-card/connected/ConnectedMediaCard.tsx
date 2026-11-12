@@ -14,12 +14,9 @@ import {
   mediaSubtitleOf,
   mediaTransportOf,
   mediaVolumeOf,
-  VOLUME_STEP,
 } from './media-model'
 import { useCardCommon } from './use-card-common'
 import { presentCommand, reportedCall, reportedCommand } from './use-command-notice'
-
-const clampVolume = (v: number): number => Math.min(100, Math.max(0, v))
 
 /**
  * The media card of a real `media-player`: every control is drawn only when
@@ -51,25 +48,18 @@ export function ConnectedMediaCard({
   const features = card.features
   const declares = (f: DeviceFeature): boolean => features.includes(f)
   const phase = mediaPhaseOf(display)
-  const volume = mediaVolumeOf(display, features)
-  const level = display.volumeLevel
-  const stepKeys = declares(DeviceFeature.MediaPlayerVolumeStep)
+  const volume = mediaVolumeOf(display, features, {
+    absolute: card.implements('media-player', 'setVolume'),
+  })
   const command = <I, R>(
     fn: ((input: I) => PromiseLike<R>) | undefined,
     method: string,
   ): ((input: I) => Promise<R>) => presentCommand(fn, 'media-player', method)
-  const volumeBy = (delta: number): void => {
-    if (stepKeys || level === null) {
-      void call(() =>
-        delta > 0
-          ? command(cap.volumeUp, 'volumeUp')({ steps: 1 })
-          : command(cap.volumeDown, 'volumeDown')({ steps: 1 }),
-      )
-      return
-    }
-    const next = clampVolume(level + delta)
-    send({ volumeLevel: next, isMuted: false }, () =>
-      command(cap.setVolume, 'setVolume')({ volumeLevel: next }),
+  const stepVolume = (up: boolean): void => {
+    void call(() =>
+      up
+        ? command(cap.volumeUp, 'volumeUp')({ steps: 1 })
+        : command(cap.volumeDown, 'volumeDown')({ steps: 1 }),
     )
   }
   const shuffleOn = declares(DeviceFeature.MediaPlayerShuffle) ? display.shuffle : null
@@ -108,8 +98,12 @@ export function ConnectedMediaCard({
           send({ state: next ? 'on' : 'off' }, () =>
             next ? command(cap.turnOn, 'turnOn')({}) : command(cap.turnOff, 'turnOff')({}),
           ),
-        onVolumeUp: () => volumeBy(VOLUME_STEP),
-        onVolumeDown: () => volumeBy(-VOLUME_STEP),
+        onVolumeUp: () => stepVolume(true),
+        onVolumeDown: () => stepVolume(false),
+        onVolume: (volumeLevel) =>
+          send({ volumeLevel, isMuted: false }, () =>
+            command(cap.setVolume, 'setVolume')({ volumeLevel }),
+          ),
         onMute: (muted) =>
           send({ isMuted: muted }, () => command(cap.setMute, 'setMute')({ muted })),
         onSource: (source) =>

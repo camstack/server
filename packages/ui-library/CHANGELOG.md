@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Washer, dryer, dishwasher, media player, robot vacuum and lawn mower now use the new device card, with only the controls each device declares
 - A dishwasher keeps its power control, a vacuum its stop, and a media player its shuffle and repeat, each only when the device declares it
+- A media player card with a known volume and an absolute set shows a slider; an unknown level, or volume up and down only, keeps the minus and plus buttons
 
 ### Fixed
 

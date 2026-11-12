@@ -4234,6 +4234,13 @@
       "summary": "The signed-in user's unit preferences (account preference, namespace `admin.units`). Stored numbers stay in each quantity's base unit (D944); a preference only picks the label and the conversion at display time."
     },
     {
+      "name": "DEFAULT_VOLUME_BOUNDS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/media/model.ts",
+      "summary": "Used when the device reports a level and declares no tighter range."
+    },
+    {
       "name": "defaultAxisSpec",
       "kind": "function",
       "area": "composites",
@@ -17287,13 +17294,6 @@
       "area": "contexts",
       "file": "packages/ui-library/src/contexts/vod-playback.tsx",
       "summary": "VodPlayback — shared context coordinating recorded (VOD) playback between a widget/section (the Recording panel) and the hero StreamPanel."
-    },
-    {
-      "name": "VOLUME_STEP",
-      "kind": "constant",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/connected/media-model.ts",
-      "summary": "One volume press: a key when the player has volume keys, else a set 5 points away."
     },
     {
       "name": "WaterHeaterHeroCard",

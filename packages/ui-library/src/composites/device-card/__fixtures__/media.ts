@@ -1,6 +1,6 @@
 /** The media player page of the approved mockup: five players, and the first one horizontal. */
 import { remoteKeyOf } from '../shell/remote-keys'
-import type { MediaCardModel } from '../scenes/media/model'
+import { DEFAULT_VOLUME_BOUNDS, type MediaCardModel, type MediaVolume } from '../scenes/media/model'
 import type { CardOrientation, CardRemoteKey } from '../shell/model'
 import { mockupCommon } from './common'
 
@@ -38,6 +38,13 @@ export const MEDIA_REMOTE: readonly CardRemoteKey[] = Object.entries(IT_KEYS).ma
   remoteKeyOf(role, label, (key) => key),
 )
 
+const volume = (level: number | null, muted = false): MediaVolume => ({
+  level,
+  muted,
+  mutable: true,
+  bounds: level === null ? null : DEFAULT_VOLUME_BOUNDS,
+})
+
 const common = (name: string, integration: string, watts: number): MediaCardModel['common'] => ({
   ...mockupCommon({
     name,
@@ -65,7 +72,7 @@ const soggiorno = (orientation: CardOrientation): MediaFixture => ({
     title: 'Blue in Green',
     subtitle: 'Miles Davis · Kind of Blue',
     power: { on: true },
-    volume: { level: 32, muted: false, mutable: true },
+    volume: volume(32),
     source: 'Spotify',
     sources: ['Spotify', 'Radio', 'Line-in', 'TV'],
     seek: { positionSec: 72, durationSec: 337 },
@@ -91,7 +98,7 @@ export function mediaFixtures(): readonly MediaFixture[] {
         title: 'Apple TV',
         subtitle: 'Sorgente HDMI 1',
         power: { on: true },
-        volume: { level: 18, muted: false, mutable: true },
+        volume: volume(18),
         source: 'HDMI 1 · Apple TV',
         sources: ['HDMI 1 · Apple TV', 'HDMI 2 · PlayStation', 'TV', 'Netflix'],
         seek: null,
@@ -113,7 +120,7 @@ export function mediaFixtures(): readonly MediaFixture[] {
         title: null,
         subtitle: null,
         power: { on: true },
-        volume: { level: null, muted: false, mutable: true },
+        volume: volume(null),
         source: 'Ottico',
         sources: ['Ottico', 'Bluetooth', 'Phono'],
         seek: null,
@@ -135,7 +142,7 @@ export function mediaFixtures(): readonly MediaFixture[] {
         title: null,
         subtitle: null,
         power: { on: true },
-        volume: { level: 12, muted: false, mutable: true },
+        volume: volume(12),
         source: null,
         sources: ['HDMI 1', 'HDMI 2', 'TV'],
         seek: null,
@@ -157,7 +164,7 @@ export function mediaFixtures(): readonly MediaFixture[] {
         title: 'Spento',
         subtitle: 'Ultima: Radio Deejay',
         power: { on: false },
-        volume: { level: 20, muted: false, mutable: true },
+        volume: volume(20),
         source: 'Radio',
         sources: ['Spotify', 'Radio', 'Line-in'],
         seek: null,

@@ -5,12 +5,28 @@ import type { CardCommon, CardCommonActions } from '../../shell/model'
 /** What the player is doing, as the card words it. */
 export type MediaPhase = 'off' | 'on' | 'playing' | 'paused'
 
+/** The discrete scale of an absolute volume. The cap default is 0..100, step 1. */
+export interface MediaVolumeBounds {
+  readonly min: number
+  readonly max: number
+  readonly step: number
+}
+
+/** Used when the device reports a level and declares no tighter range. */
+export const DEFAULT_VOLUME_BOUNDS: MediaVolumeBounds = { min: 0, max: 100, step: 1 }
+
 export interface MediaVolume {
-  /** 0..100, or null when the player does not report it (an IR amplifier). */
+  /** The reported level, or null when the player does not report it (an IR amplifier). */
   readonly level: number | null
   readonly muted: boolean
   /** The device binds a mute command. */
   readonly mutable: boolean
+  /**
+   * The slider's scale when the player reports a level and implements an
+   * absolute set. Null: the − / + keys (the level is unknown, or only
+   * volume up/down exist).
+   */
+  readonly bounds: MediaVolumeBounds | null
 }
 
 export interface MediaSeek {
@@ -64,6 +80,8 @@ export interface MediaCardActions extends CardCommonActions {
   readonly onPower: (on: boolean) => void
   readonly onVolumeUp: () => void
   readonly onVolumeDown: () => void
+  /** Absolute level, sent once when the slider is released. */
+  readonly onVolume: (level: number) => void
   readonly onMute: (muted: boolean) => void
   readonly onSource: (source: string) => void
   readonly onSeek: (positionSec: number) => void
