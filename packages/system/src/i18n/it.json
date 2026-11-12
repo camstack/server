@@ -258,12 +258,10 @@
   "section.s_timed-run.title": "Avvio rapido",
   "section.s_timed-run.description": "Per quanto tempo il pulsante Avvia accende questo dispositivo. L'hub lo spegne allo scadere del tempo.",
   "integration-instances.addon-not-running": "\"{{addon}}\" non è in esecuzione: avvialo prima",
-  "ir-transmitter": {
-    "learn-unsupported": "Il trasmettitore {name} non può apprendere un codice",
-    "learn-timeout": "Il trasmettitore {name} non ha appreso nulla entro il tempo limite. Punta il telecomando verso di esso e riprova.",
-    "learn-undecodable": "Il codice appreso da {name} non può essere letto",
-    "learn-busy": "Il trasmettitore {name} sta già apprendendo un codice",
-    "native-unsupported": "Il trasmettitore {name} non può inviare questo tipo di codice",
-    "no-code": "Niente da inviare: indica un treno di impulsi o un codice nativo"
-  }
+  "ir-transmitter.learn-unsupported": "Il trasmettitore {{name}} non può apprendere un codice",
+  "ir-transmitter.learn-timeout": "Il trasmettitore {{name}} non ha appreso nulla entro il tempo limite. Punta il telecomando verso di esso e riprova.",
+  "ir-transmitter.learn-undecodable": "Il codice appreso da {{name}} non può essere letto",
+  "ir-transmitter.learn-busy": "Il trasmettitore {{name}} sta già apprendendo un codice",
+  "ir-transmitter.native-unsupported": "Il trasmettitore {{name}} non può inviare questo tipo di codice",
+  "ir-transmitter.no-code": "Niente da inviare: indica un treno di impulsi o un codice nativo"
 }

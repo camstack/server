@@ -258,12 +258,10 @@
   "section.s_timed-run.title": "One-tap run",
   "section.s_timed-run.description": "How long the Run button starts this device for. The hub switches it off when the time is up.",
   "integration-instances.addon-not-running": "\"{{addon}}\" is not running: start it first",
-  "ir-transmitter": {
-    "learn-unsupported": "The transmitter {name} cannot learn a code",
-    "learn-timeout": "The transmitter {name} learned nothing within the time limit. Point the remote at it and try again.",
-    "learn-undecodable": "The code learned by {name} could not be read",
-    "learn-busy": "The transmitter {name} is already learning a code",
-    "native-unsupported": "The transmitter {name} cannot send this kind of code",
-    "no-code": "Nothing to send: give a pulse train or a native code"
-  }
+  "ir-transmitter.learn-unsupported": "The transmitter {{name}} cannot learn a code",
+  "ir-transmitter.learn-timeout": "The transmitter {{name}} learned nothing within the time limit. Point the remote at it and try again.",
+  "ir-transmitter.learn-undecodable": "The code learned by {{name}} could not be read",
+  "ir-transmitter.learn-busy": "The transmitter {{name}} is already learning a code",
+  "ir-transmitter.native-unsupported": "The transmitter {{name}} cannot send this kind of code",
+  "ir-transmitter.no-code": "Nothing to send: give a pulse train or a native code"
 }
