@@ -22,7 +22,10 @@ import { DeviceManagerAddon } from '../device-manager.addon.js'
 import { makeSettingsStoreApi } from './settings-store-api.js'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 
-afterEach(() => __resetCommandObserverRegistryForTests())
+afterEach(() => {
+  vi.useRealTimers()
+  __resetCommandObserverRegistryForTests()
+})
 
 function makeLogger(): IScopedLogger {
   const l: IScopedLogger = {
@@ -99,6 +102,11 @@ async function setup(): Promise<{ events: SystemEvent[]; addon: DeviceManagerAdd
 
 describe('a settled command reaches the event bus', () => {
   it('a failed vocabulary command is emitted as device.command-settled at its device, with no arguments', async () => {
+    // `at` is when the audit settled the command (the row's own stamp), read from the wall clock the
+    // addon runs on: pin only Date, BEFORE the addon starts (it binds Date.now then), so the settle
+    // time is a known value distinct from the request's `at`.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(5000)
     const { events, addon } = await setup()
     const failure = Promise.reject(new Error('device unreachable'))
     getCommandObserverRegistry().observe({
@@ -122,7 +130,7 @@ describe('a settled command reaches the event bus', () => {
       action: 'switch.on',
       outcome: 'failed',
       actor: { kind: 'user', userId: 'u', username: 'ada', credential: 'session' },
-      at: 1000,
+      at: 5000,
     })
     await addon.shutdown()
   })
