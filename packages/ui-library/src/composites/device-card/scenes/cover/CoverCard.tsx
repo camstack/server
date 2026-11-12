@@ -205,11 +205,46 @@ function GatedCoverIllustration(props: Omit<CoverIllustrationProps, 'interactive
   return <CoverIllustration {...props} interactive={!gating.blocked} />
 }
 
+/** A position the operator set, held until the device reports a different one. */
+interface PositionDraft {
+  readonly value: number
+  /** The reported value the draft was made over; a new report replaces the draft. */
+  readonly over: number
+}
+
+/**
+ * The value under the operator's hand: shown while it travels, then held after
+ * the command is sent — no snap back to the old report — until the device
+ * reports a new position or the command fails.
+ */
+function usePositionDraft(reported: number): {
+  readonly shown: number
+  readonly move: (value: number) => void
+  readonly hold: (value: number, sent: void | PromiseLike<boolean>) => void
+} {
+  const [draft, setDraft] = useState<PositionDraft | null>(null)
+  const live = draft !== null && draft.over === reported ? draft : null
+  return {
+    shown: live?.value ?? reported,
+    move: (value) => setDraft({ value, over: reported }),
+    hold: (value, sent) => {
+      const held: PositionDraft = { value, over: reported }
+      setDraft(held)
+      if (sent === undefined) return
+      void Promise.resolve(sent).then((ok) => {
+        if (!ok) setDraft((current) => (current === held ? null : current))
+      })
+    },
+  }
+}
+
 /**
  * The cover: drawn as its role (a shutter, an awning, a gate …) at its
  * position. One that takes a position moves with the arrows, the slider or by
- * dragging the drawing; one that does not opens and closes, and a gate, a
- * garage or a door asks for a second press.
+ * dragging the drawing; a gate, a garage or a door never does — it opens and
+ * closes with a second press to confirm, its position (if reported) only in
+ * the state word. Slats, when the cover has them, have their own buttons and
+ * slider whether or not it takes a position.
  */
 export function CoverCard({
   model,
@@ -218,18 +253,30 @@ export function CoverCard({
   showName = true,
 }: CoverCardProps): ReactElement {
   const t = useUiText()
-  const [draft, setDraft] = useState<number | null>(null)
   const { spec } = model
-  const reported = drawnValueOf(model)
-  const drawn = draft ?? reported
+  const draft = usePositionDraft(drawnValueOf(model))
+  const drawn = draft.shown
   const word = coverStateWord(t, spec, drawn, model.state)
   const moving = model.state === 'opening' || model.state === 'closing'
   const fullyShut = spec.kind === 'closure' ? drawn >= 100 : drawn <= 0
   const tone: CardTone = moving ? 'primary' : fullyShut ? 'muted' : 'primary'
+  const positionable = model.positionable && !spec.secure
   const commit = (value: number): void => {
-    setDraft(null)
-    actions.onPosition(positionOf(spec.kind, value))
+    draft.hold(value, actions.onPosition(positionOf(spec.kind, value)))
   }
+  const tiltSlider =
+    model.tilt === null ? null : (
+      <HorizontalSlider
+        label={t('uiLibrary.deviceCard.cover.slats', 'Slats')}
+        value={model.tilt}
+        min={0}
+        max={100}
+        ariaLabel={t('uiLibrary.deviceCard.cover.slats', 'Slats')}
+        valueLabel={(v) => `${v}%`}
+        onCommit={actions.onTilt}
+        testId="dc-cover-tilt"
+      />
+    )
   return (
     <DeviceCard
       kind="cover"
@@ -241,23 +288,21 @@ export function CoverCard({
       state={{ label: word, since: model.since, tone }}
       scene={{
         left:
-          model.positionable && model.tilt !== null ? (
-            <TiltButtons tilt={model.tilt} onTilt={actions.onTilt} />
-          ) : null,
+          model.tilt === null ? null : <TiltButtons tilt={model.tilt} onTilt={actions.onTilt} />,
         image: (
           <GatedCoverIllustration
             drawing={spec.drawing}
             value={drawn}
-            drag={model.positionable ? spec.drag : 'none'}
+            drag={positionable ? spec.drag : 'none'}
             ariaLabel={word}
             gripLabel={t('uiLibrary.deviceCard.cover.drag', 'Drag')}
-            onDrag={setDraft}
+            onDrag={draft.move}
             onDragEnd={commit}
             className="h-44 w-30"
           />
         ),
-        right: model.positionable ? <MoveButtons model={model} actions={actions} /> : null,
-        bottom: model.positionable ? (
+        right: positionable ? <MoveButtons model={model} actions={actions} /> : null,
+        bottom: positionable ? (
           <>
             <HorizontalSlider
               label={sliderLabel(t, spec)}
@@ -266,25 +311,17 @@ export function CoverCard({
               max={100}
               ariaLabel={sliderLabel(t, spec)}
               valueLabel={(v) => `${v}%`}
-              onChange={setDraft}
+              onChange={draft.move}
               onCommit={commit}
               testId="dc-cover-position"
             />
-            {model.tilt === null ? null : (
-              <HorizontalSlider
-                label={t('uiLibrary.deviceCard.cover.slats', 'Slats')}
-                value={model.tilt}
-                min={0}
-                max={100}
-                ariaLabel={t('uiLibrary.deviceCard.cover.slats', 'Slats')}
-                valueLabel={(v) => `${v}%`}
-                onCommit={actions.onTilt}
-                testId="dc-cover-tilt"
-              />
-            )}
+            {tiltSlider}
           </>
         ) : (
-          <MainButtons model={model} actions={actions} drawn={drawn} />
+          <>
+            <MainButtons model={model} actions={actions} drawn={drawn} />
+            {tiltSlider}
+          </>
         ),
       }}
     />

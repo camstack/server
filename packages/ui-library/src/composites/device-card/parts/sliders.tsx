@@ -69,6 +69,7 @@ function GatedSlider({
       data-testid={testId}
       onChange={(e) => draft.move(Number(e.currentTarget.value))}
       onPointerUp={draft.commit}
+      onPointerCancel={draft.commit}
       onKeyUp={draft.commit}
       onBlur={draft.commit}
       className={cn(

@@ -116,7 +116,11 @@ export interface CoverCardActions extends CardCommonActions {
   readonly onClose: () => void
   readonly onStop: () => void
   /** In the cap's sense: 100 = open. */
-  readonly onPosition: (position: number) => void
+  /**
+   * Moves to a position. A promise that settles `false` says the command
+   * failed: the card then lets go of the position it was showing.
+   */
+  readonly onPosition: (position: number) => void | PromiseLike<boolean>
   readonly onTilt: (tilt: number) => void
 }
 

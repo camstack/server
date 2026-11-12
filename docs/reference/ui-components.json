@@ -3553,7 +3553,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/cover/CoverCard.tsx",
-      "summary": "The cover: drawn as its role (a shutter, an awning, a gate …) at its position. One that takes a position moves with the arrows, the slider or by dragging the drawing; one that does not opens and closes, and a gate, a …",
+      "summary": "The cover: drawn as its role (a shutter, an awning, a gate …) at its position. One that takes a position moves with the arrows, the slider or by dragging the drawing; a gate, a garage or a door never does — it opens a…",
       "props": [
         {
           "name": "model",
@@ -9750,6 +9750,12 @@
           "type": "string",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "layout",
+          "type": "'inline' | 'stacked'",
+          "optional": true,
+          "doc": "`stacked`: the glyph over the whole label, the chevron under it — for a scene's narrow side column, where an inline label would be cut. Defa"
         }
       ]
     },
@@ -12092,7 +12098,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/use-command-notice.ts",
-      "summary": "A plain command whose outcome lands on the card, for a field the card shows as reported (no optimistic patch): a refusal names its reason, a success clears it."
+      "summary": "A plain command whose outcome lands on the card, for a field the card shows as reported (no optimistic patch): a refusal names its reason, a success clears it. The promise tells the caller whether it went through (tru…"
     },
     {
       "name": "reportedCommand",

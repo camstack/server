@@ -45,6 +45,11 @@ export interface FanCardModel {
     readonly vertical: FanAxisModel | null
   } | null
   readonly timer: SwitchTimerModel | null
+  /**
+   * The fan-control slice has not answered yet: the declared controls are
+   * drawn but hold no value and take no command. Absent means answered.
+   */
+  readonly pending?: boolean
 }
 
 export interface FanCardActions extends CardCommonActions, SwitchTimerActions {

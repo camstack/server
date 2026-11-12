@@ -52,6 +52,7 @@ export function ConnectedFanCard({
       oscillating: cap?.setOscillating !== undefined,
       axis: cap?.setOscillationAxis !== undefined,
     },
+    features: card.features,
   })
   return (
     <FanCard

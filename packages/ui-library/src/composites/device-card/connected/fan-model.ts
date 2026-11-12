@@ -3,11 +3,12 @@
  * (speed, presets, direction, oscillation or its axes) and the saved presets
  * of `fan-presets`, in one menu.
  */
-import type {
-  FanControlStatus,
-  FanOscillationAxis,
-  FanPreset,
-  FanPresetApplyResult,
+import {
+  DeviceFeature,
+  type FanControlStatus,
+  type FanOscillationAxis,
+  type FanPreset,
+  type FanPresetApplyResult,
 } from '@camstack/types'
 import type { MenuOption } from '../parts/MenuButton'
 import type { FanAxisModel, FanCardModel } from '../scenes/fan/model'
@@ -58,42 +59,68 @@ export interface FanSliceInput {
     readonly oscillating: boolean
     readonly axis: boolean
   }
+  /**
+   * What the device declares (`DeviceFeature`). Before the fan-control slice
+   * answers, a declared speed or direction is drawn as a pending control —
+   * present, value unknown — rather than missing.
+   */
+  readonly features?: readonly string[]
 }
 
 export type FanSliceModel = Pick<
   FanCardModel,
-  'speed' | 'speedStep' | 'presets' | 'preset' | 'direction' | 'oscillating' | 'axes'
+  'speed' | 'speedStep' | 'presets' | 'preset' | 'direction' | 'oscillating' | 'axes' | 'pending'
 >
 
 /** What the fan card draws from the slices; a field the device cannot command is not drawn. */
-export function fanSliceModel({ fan, saved, commands }: FanSliceInput): FanSliceModel {
-  const devicePresets: readonly MenuOption[] =
-    fan === null || fan === undefined || !commands.preset
-      ? []
-      : fan.availablePresets.map((p) => ({
-          id: `${DEVICE_PRESET}${p}`,
-          label: p,
-          glyph: 'fanOnly',
-        }))
-  const savedPresets: readonly MenuOption[] = saved.map((p) => ({
-    id: `${SAVED_PRESET}${p.id}`,
-    label: p.name,
-    glyph: 'fanOnly',
-  }))
-  const horizontal = commands.axis ? fanAxisOf(fan?.oscillationAxes?.horizontal) : null
-  const vertical = commands.axis ? fanAxisOf(fan?.oscillationAxes?.vertical) : null
+export function fanSliceModel({
+  fan,
+  saved,
+  commands,
+  features = [],
+}: FanSliceInput): FanSliceModel {
+  if (fan === null || fan === undefined) return pendingFanModel(saved, commands, features)
+  const devicePresets: readonly MenuOption[] = commands.preset
+    ? fan.availablePresets.map((p) => ({ id: `${DEVICE_PRESET}${p}`, label: p, glyph: 'fanOnly' }))
+    : []
+  const horizontal = commands.axis ? fanAxisOf(fan.oscillationAxes?.horizontal) : null
+  const vertical = commands.axis ? fanAxisOf(fan.oscillationAxes?.vertical) : null
   const axes = horizontal === null && vertical === null ? null : { horizontal, vertical }
   return {
-    speed: commands.speed ? (fan?.speed ?? null) : null,
-    speedStep: fan?.percentageStep ?? 1,
-    presets: [...devicePresets, ...savedPresets],
-    preset:
-      fan === null || fan === undefined || fan.preset === ''
-        ? null
-        : `${DEVICE_PRESET}${fan.preset}`,
-    direction: commands.direction ? (fan?.direction ?? null) : null,
-    oscillating: commands.oscillating && axes === null ? (fan?.oscillating ?? null) : null,
+    speed: commands.speed ? fan.speed : null,
+    speedStep: fan.percentageStep ?? 1,
+    presets: [...devicePresets, ...savedOptions(saved)],
+    preset: fan.preset === '' ? null : `${DEVICE_PRESET}${fan.preset}`,
+    direction: commands.direction ? fan.direction : null,
+    oscillating: commands.oscillating && axes === null ? fan.oscillating : null,
     axes,
+    pending: false,
+  }
+}
+
+const savedOptions = (saved: readonly FanPreset[]): readonly MenuOption[] =>
+  saved.map((p) => ({ id: `${SAVED_PRESET}${p.id}`, label: p.name, glyph: 'fanOnly' }))
+
+/**
+ * The fan before its fan-control slice answers: the controls the device
+ * declares are drawn, their values unknown (`pending`), never a made-up reading.
+ */
+function pendingFanModel(
+  saved: readonly FanPreset[],
+  commands: FanSliceInput['commands'],
+  features: readonly string[],
+): FanSliceModel {
+  const speed = commands.speed && features.includes(DeviceFeature.FanSpeed)
+  const direction = commands.direction && features.includes(DeviceFeature.FanDirection)
+  return {
+    speed: speed ? 0 : null,
+    speedStep: 1,
+    presets: savedOptions(saved),
+    preset: null,
+    direction: direction ? 'forward' : null,
+    oscillating: null,
+    axes: null,
+    pending: true,
   }
 }
 

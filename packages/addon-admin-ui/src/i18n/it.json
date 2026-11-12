@@ -9942,7 +9942,8 @@
         "still": "fisso",
         "presetIncomplete": "preset applicato solo in parte: {{fields}}",
         "oscillateHorizontal": "Oscillazione orizzontale",
-        "oscillateVertical": "Oscillazione verticale"
+        "oscillateVertical": "Oscillazione verticale",
+        "direction": "Direzione"
       },
       "heater": {
         "heating": "Riscalda",

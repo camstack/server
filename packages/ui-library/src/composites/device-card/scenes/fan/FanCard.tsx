@@ -137,6 +137,7 @@ export function FanCard({
   const since = useTimerSince(model.timer, on ? running || null : model.since)
   const reverse = model.direction === 'reverse'
   const axes = model.axes
+  const pending = model.pending === true
   const hasBottom = model.oscillating !== null || axes !== null || model.timer !== null
   return (
     <DeviceCard
@@ -159,8 +160,8 @@ export function FanCard({
               max={100}
               step={model.speedStep}
               ariaLabel={t('uiLibrary.deviceCard.fan.speed', 'Speed')}
-              disabled={!on}
-              valueLabel={(v) => (on ? `${v}%` : null)}
+              disabled={!on || pending}
+              valueLabel={(v) => (on && !pending ? `${v}%` : null)}
               onCommit={actions.onSpeed}
               testId="dc-fan-speed"
             />
@@ -202,18 +203,21 @@ export function FanCard({
                 ariaLabel={t('uiLibrary.deviceCard.fan.preset', 'Preset')}
                 disabled={!on}
                 testId="dc-fan-preset"
+                layout="stacked"
               />
             )}
             {model.direction === null ? null : (
               <CardButton
                 glyph={reverse ? 'directionReverse' : 'directionForward'}
-                disabled={!on}
+                disabled={!on || pending}
                 data-testid="dc-fan-direction"
                 onClick={() => actions.onDirection(reverse ? 'forward' : 'reverse')}
               >
-                {reverse
-                  ? t('uiLibrary.deviceCard.fan.winter', 'Winter')
-                  : t('uiLibrary.deviceCard.fan.summer', 'Summer')}
+                {pending
+                  ? t('uiLibrary.deviceCard.fan.direction', 'Direction')
+                  : reverse
+                    ? t('uiLibrary.deviceCard.fan.winter', 'Winter')
+                    : t('uiLibrary.deviceCard.fan.summer', 'Summer')}
               </CardButton>
             )}
           </>

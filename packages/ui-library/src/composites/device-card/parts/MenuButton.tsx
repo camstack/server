@@ -23,6 +23,12 @@ export interface MenuButtonProps {
   readonly ariaLabel: string
   readonly disabled?: boolean
   readonly testId?: string
+  /**
+   * `stacked`: the glyph over the whole label, the chevron under it — for a
+   * scene's narrow side column, where an inline label would be cut. Default
+   * `inline`.
+   */
+  readonly layout?: 'inline' | 'stacked'
 }
 
 /** A button that names the current choice and opens the list of the others. */
@@ -33,6 +39,7 @@ export function MenuButton({
   ariaLabel,
   disabled,
   testId,
+  layout = 'inline',
 }: MenuButtonProps): ReactElement {
   const gating = useCardGating()
   const current = options.find((o) => o.id === value) ?? null
@@ -43,10 +50,17 @@ export function MenuButton({
         disabled={disabled === true || gating.blocked}
         title={gating.blocked ? (gating.reason ?? undefined) : undefined}
         data-testid={testId}
-        className={cardButtonClass('default', gating.blocked)}
+        data-layout={layout}
+        className={cardButtonClass(
+          'default',
+          gating.blocked,
+          layout === 'stacked' ? 'flex-col gap-0.5 whitespace-normal leading-tight' : undefined,
+        )}
       >
         {current?.glyph === undefined ? null : <CardIcon glyph={current.glyph} />}
-        <span className="min-w-0 truncate">{current?.label ?? value ?? ariaLabel}</span>
+        <span className={layout === 'stacked' ? 'text-center' : 'min-w-0 truncate'}>
+          {current?.label ?? value ?? ariaLabel}
+        </span>
         <CardIcon glyph="menu" className="h-3 w-3" />
       </DropdownTrigger>
       <DropdownContent>

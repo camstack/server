@@ -53,14 +53,23 @@ export function reportedCommand<T>(
 /**
  * A plain command whose outcome lands on the card, for a field the card shows
  * as reported (no optimistic patch): a refusal names its reason, a success
- * clears it.
+ * clears it. The promise tells the caller whether it went through (true) or
+ * failed (false); it never rejects.
  */
 export function reportedCall(
   report: Pick<CommandNotice, 'fail' | 'succeed'>,
-): (run: () => PromiseLike<unknown> | undefined) => void {
-  return (run) => {
-    void Promise.resolve()
+): (run: () => PromiseLike<unknown> | undefined) => Promise<boolean> {
+  return (run) =>
+    Promise.resolve()
       .then(run)
-      .then(() => report.succeed(), report.fail)
-  }
+      .then(
+        () => {
+          report.succeed()
+          return true
+        },
+        (error: unknown) => {
+          report.fail(error)
+          return false
+        },
+      )
 }

@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import {
+  DeviceFeature,
   DeviceRole,
   FanControlStatusSchema,
   FanOscillationAxisSchema,
@@ -12,6 +13,7 @@ import { coverFixtures } from '../__fixtures__/cover'
 import { fanFixtures } from '../__fixtures__/fan'
 import { heaterFixtures } from '../__fixtures__/heater'
 import { lightFixtures } from '../__fixtures__/light'
+import { plugFixtures } from '../__fixtures__/plug'
 import { fanAxisOf, fanPresetChoice, fanPresetFailure, fanSliceModel } from '../connected/fan-model'
 import { lightColorOf } from '../connected/ConnectedLightCard'
 import { ambientLayers } from '../illustrations/AmbientFx'
@@ -29,6 +31,7 @@ import { HeaterCard } from '../scenes/heater/HeaterCard'
 import type { HeaterCardActions } from '../scenes/heater/model'
 import { LightCard } from '../scenes/light/LightCard'
 import type { LightCardActions } from '../scenes/light/model'
+import { PlugCard } from '../scenes/plug/PlugCard'
 
 afterEach(cleanup)
 
@@ -121,6 +124,93 @@ describe('cover card', () => {
     const model = cover('shutter')
     render(<CoverCard model={{ ...model, common: offline(model.common) }} actions={actions} />)
     expect(screen.getByTestId('dc-cover-position')).toHaveProperty('disabled', true)
+  })
+
+  it('never offers a position on a secure role, even one that reports and takes it', () => {
+    const actions = coverActions()
+    const garage: CoverCardModel = { ...cover('garage'), positionable: true, position: 40 }
+    render(<CoverCard model={garage} actions={actions} />)
+    expect(screen.queryByTestId('dc-cover-position')).toBeNull()
+    expect(screen.queryByTestId('dc-cover-open')).toBeNull()
+    expect(screen.queryByRole('slider', { name: 'Drag' })).toBeNull()
+    expect(screen.getAllByText('Closed 60%').length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByTestId('dc-cover-main'))
+    expect(actions.onOpen).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByTestId('dc-cover-main'))
+    expect(actions.onOpen).toHaveBeenCalledTimes(1)
+  })
+
+  it('holds a sent position until the device reports a new one', () => {
+    const actions = { ...coverActions(), onPosition: () => new Promise<boolean>(() => undefined) }
+    const model = cover('shutter')
+    const view = render(<CoverCard model={model} actions={actions} />)
+    const slider = screen.getByTestId('dc-cover-position')
+    fireEvent.change(slider, { target: { value: '70' } })
+    fireEvent.pointerUp(slider)
+    expect(screen.getAllByText('Closed 70%').length).toBeGreaterThan(0)
+    view.rerender(<CoverCard model={{ ...model }} actions={actions} />)
+    expect(screen.getAllByText('Closed 70%').length).toBeGreaterThan(0)
+    view.rerender(<CoverCard model={{ ...model, position: 20 }} actions={actions} />)
+    expect(screen.getAllByText('Closed 80%').length).toBeGreaterThan(0)
+  })
+
+  it('lets go of a sent position when the command fails', async () => {
+    const actions = { ...coverActions(), onPosition: () => Promise.resolve(false) }
+    render(<CoverCard model={cover('shutter')} actions={actions} />)
+    const slider = screen.getByTestId('dc-cover-position')
+    fireEvent.change(slider, { target: { value: '70' } })
+    fireEvent.pointerUp(slider)
+    await vi.waitFor(() => expect(screen.getAllByText('Closed 40%').length).toBeGreaterThan(0))
+  })
+
+  it('keeps the slat buttons and slider on a cover that tilts but takes no position', () => {
+    const actions = coverActions()
+    const blind: CoverCardModel = {
+      ...cover('blind'),
+      positionable: false,
+      position: null,
+      tilt: 30,
+    }
+    render(<CoverCard model={blind} actions={actions} />)
+    expect(screen.queryByTestId('dc-cover-position')).toBeNull()
+    expect(screen.queryByTestId('dc-cover-tilt')).not.toBeNull()
+    fireEvent.click(screen.getByTestId('dc-cover-slats-close'))
+    expect(actions.onTilt).toHaveBeenCalledWith(15)
+  })
+})
+
+describe('shared parts', () => {
+  it('names a whole-hour run "1 h" on the plug timer', () => {
+    const plug = plugFixtures(NOW).find((f) => f.model.timer !== null)
+    if (plug === undefined || plug.model.timer === null) throw new Error('no plug with a timer')
+    const model = {
+      ...plug.model,
+      timer: { ...plug.model.timer, defaultMinutes: 60, endsAt: null },
+    }
+    render(
+      <PlugCard
+        model={model}
+        actions={{ onPower: vi.fn(), onTimerStart: vi.fn(), onTimerStop: vi.fn() }}
+      />,
+    )
+    expect(screen.getByTestId('dc-plug-timer-start').textContent).toContain('1 h')
+    expect(screen.getByTestId('dc-plug-timer-start').textContent).not.toContain('0′')
+  })
+
+  it('sends a slider value when the pointer is cancelled mid-drag', () => {
+    const actions = coverActions()
+    render(<CoverCard model={cover('shutter')} actions={actions} />)
+    const slider = screen.getByTestId('dc-cover-position')
+    fireEvent.change(slider, { target: { value: '70' } })
+    fireEvent.pointerCancel(slider)
+    expect(actions.onPosition).toHaveBeenCalledWith(30)
+  })
+
+  it('stacks the preset menu label under its glyph in the fan card', () => {
+    const tower = fanFixtures(NOW).find((f) => f.id === 'fan-tower')
+    if (tower === undefined) throw new Error('fan-tower')
+    render(<FanCard model={tower.model} actions={fanActions()} />)
+    expect(screen.getByTestId('dc-fan-preset').getAttribute('data-layout')).toBe('stacked')
   })
 })
 
@@ -267,6 +357,28 @@ describe('fan model', () => {
       'oscillationAxes.vertical.angle: axis-not-linked, preset (not-run)',
     )
     expect(fanPresetFailure({ status: 'applied', fields: [] })).toBeNull()
+  })
+
+  it('draws a declared speed and direction before the slice answers, as pending', () => {
+    const model = fanSliceModel({
+      fan: undefined,
+      saved: [],
+      commands: all,
+      features: [DeviceFeature.FanSpeed, DeviceFeature.FanDirection],
+    })
+    expect(model.pending).toBe(true)
+    expect(model.speed).not.toBeNull()
+    expect(model.direction).not.toBeNull()
+    expect(fanSliceModel({ fan: undefined, saved: [], commands: all }).speed).toBeNull()
+    expect(fanSliceModel({ fan: status, saved: [], commands: all }).pending).toBe(false)
+  })
+
+  it('holds a pending speed slider still and shows no value', () => {
+    const tower = fanFixtures(NOW).find((f) => f.id === 'fan-ceiling')
+    if (tower === undefined) throw new Error('fan-ceiling')
+    render(<FanCard model={{ ...tower.model, pending: true }} actions={fanActions()} />)
+    expect(screen.getByTestId('dc-fan-speed')).toHaveProperty('disabled', true)
+    expect(screen.getByTestId('dc-fan-direction')).toHaveProperty('disabled', true)
   })
 
   it('splits a menu id into the list it came from', () => {

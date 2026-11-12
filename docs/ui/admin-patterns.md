@@ -891,7 +891,8 @@ D1042), never a per-capability setter.
   been reported is shown as unknown, never as online, and a command that fails
   puts its reason on the reason line (`CardCommon.notice`).
 - **`parts/`** are the controls a scene composes: `CardButton`, `ArmedButton`
-  (the one two-step confirmation: 5 s to confirm, with Cancel), `MenuButton`,
+  (the one two-step confirmation: 5 s to confirm, with Cancel), `MenuButton`
+  (`layout="stacked"` puts the glyph over the whole label in a narrow side column),
   `ButtonGroup`, `Dial`, `RangeDial` (two setpoints on one arc), `LevelBar`,
   `PopoverButton` (a button that opens a small anchored panel: a light's
   palette, a fan axis' sweep), `SwitchTimer` (the one timed run of a switch —

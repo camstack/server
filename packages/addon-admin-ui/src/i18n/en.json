@@ -9920,7 +9920,8 @@
         "still": "fixed",
         "presetIncomplete": "preset not fully applied: {{fields}}",
         "oscillateHorizontal": "Oscillate horizontally",
-        "oscillateVertical": "Oscillate vertically"
+        "oscillateVertical": "Oscillate vertically",
+        "direction": "Direction"
       },
       "heater": {
         "heating": "Heating",
