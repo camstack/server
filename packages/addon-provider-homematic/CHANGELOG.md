@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A Homematic thermostat turns on and off through its switch, like every other device
+
 ## [1.2.190] - 2026-11-11
 
 ### Changed

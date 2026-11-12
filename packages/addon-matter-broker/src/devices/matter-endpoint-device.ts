@@ -6,6 +6,7 @@ import {
   colorCapability,
   lockControlCapability,
   coverCapability,
+  registerPowerSwitch,
   climateControlCapability,
   powerMeterCapability,
   contactCapability,
@@ -465,6 +466,7 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
       },
     }
     this.ctx.registerNativeCap(climateControlCapability, provider)
+    registerPowerSwitch(this, climateControlCapability, provider)
     this.runtimeState.setCapState('climate-control', COLD_CLIMATE)
   }
 

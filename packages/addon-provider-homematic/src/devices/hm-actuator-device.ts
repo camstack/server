@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import {
+  registerPowerSwitch,
   climateControlCapability,
   DeviceFeature,
   coverCapability,
@@ -168,6 +169,7 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
       setSwingHorizontal: async () => this.unsupported('climate horizontal swing'),
     }
     this.ctx.registerNativeCap(climateControlCapability, provider)
+    registerPowerSwitch(this, climateControlCapability, provider)
     this.runtimeState.setCapState('climate-control', COLD_CLIMATE)
     this.registeredCap = 'climate-control'
   }

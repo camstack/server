@@ -46,14 +46,6 @@ export const PENDING_POWER_SWITCH: ReadonlyMap<string, string> = new Map([
     'packages/addon-import-alexa/src/devices/alexa-echo-device.ts',
     'not a follow-up: an Echo has no power control (turnOn / turnOff refuse unsupported)',
   ],
-  [
-    'packages/addon-matter-broker/src/devices/matter-endpoint-device.ts',
-    'follow-up: Matter thermostat endpoint',
-  ],
-  [
-    'packages/addon-provider-homematic/src/devices/hm-actuator-device.ts',
-    'follow-up: Homematic thermostat actuator',
-  ],
 ])
 
 function sliceKeys(cap: CapabilityDefinition): ReadonlySet<string> {

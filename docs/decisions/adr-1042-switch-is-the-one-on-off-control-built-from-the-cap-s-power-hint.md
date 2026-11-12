@@ -26,7 +26,7 @@ The OWNER addon registers the device's `switch` through the one helper `register
 
 - `switch.deviceTypes` is not widened: a native registration is not gated by it.
 - The `switch` slice of a hinted device is derived, never written by anyone else; a provider must not also register its own `switch` on that device.
-- A provider not yet moved is listed by path, with the reason, in `PENDING_POWER_SWITCH` (composer, Matter, Homematic; the Echo permanently, it has no power control). The list can only shrink.
+- A provider not yet moved is listed by path, with the reason, in `PENDING_POWER_SWITCH` (composer; the Echo permanently, it has no power control). Matter and Homematic thermostats register their switch. The list can only shrink.
 - `fan-control` has no on/off member, so it has no hint; fans keep their native `switch`.
 - The timed run moving into `switch` (P1b) builds on the type + role limits of D1033 and is not part of this record.
 
