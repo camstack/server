@@ -7,6 +7,7 @@ export type IrCodecErrorCode =
   | 'smartir-malformed'
   | 'samsung-invalid'
   | 'flipper-malformed'
+  | 'tuya-malformed'
 
 export class IrCodecError extends Error {
   readonly code: IrCodecErrorCode

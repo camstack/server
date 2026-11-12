@@ -2251,6 +2251,10 @@ export {
   type IrMedium,
   type IrSendResult,
   type IrTransmitterInfo,
+  IrLearnResultSchema,
+  type IrLearnResult,
+  IR_LEARN_TIMEOUT_DEFAULT_MS,
+  IR_LEARN_TIMEOUT_MAX_MS,
 } from './ir-transmitter.cap.js'
 export type {
   CalendarEvent,

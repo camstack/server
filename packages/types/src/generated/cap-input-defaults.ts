@@ -11,7 +11,7 @@
  * Plain data, zero Zod: a forked runner must not import the schema barrel
  * (~144MB RSS per runner — D28).
  *
- * Coverage: 33 caps, 84 methods with defaults.
+ * Coverage: 34 caps, 85 methods with defaults.
  */
 export const CAP_INPUT_DEFAULTS: Readonly<
   Record<string, Readonly<Record<string, Readonly<Record<string, unknown>>>>>
@@ -50,6 +50,9 @@ export const CAP_INPUT_DEFAULTS: Readonly<
   "device-transitions": {
     "listRecentTransitions": {"limit":50},
     "listTransitions": {"limit":50},
+  },
+  "ir-transmitter": {
+    "learn": {"timeoutMs":20000},
   },
   "llm-runtime": {
     "complete": {"runtime":{"__nested__":{"contextSize":4096,"gpuLayers":0,"parallel":1,"flashAttention":false,"mlock":false,"noMmap":false,"extraArgs":[],"autoStart":false,"idleStopMinutes":30}}},

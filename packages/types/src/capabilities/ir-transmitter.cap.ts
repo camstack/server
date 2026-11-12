@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { IrTimingsSchema, TransmitSettingsSchema } from '../ir/ir-timings.js'
+import { IrNativeCodeSchema, IrNativeFormatSchema } from '../ir/native.js'
 
 /** The setting keys a transmitter may declare as settable (`getInfo.settable`). */
 export const TransmitSettingKeySchema = z.enum([
@@ -26,8 +27,23 @@ export const IrTransmitterInfoSchema = z.object({
   media: z.array(IrMediumSchema),
   settable: z.array(TransmitSettingKeySchema),
   maxTimings: z.number().int().positive(),
+  /** The transmitter can learn a code (`learn`). */
+  learn: z.boolean().default(false),
+  /** Native code formats the transmitter replays verbatim (`send.native`). */
+  formats: z.array(IrNativeFormatSchema).default([]),
 })
 export type IrTransmitterInfo = z.infer<typeof IrTransmitterInfoSchema>
+
+export const IR_LEARN_TIMEOUT_DEFAULT_MS = 20_000
+export const IR_LEARN_TIMEOUT_MAX_MS = 60_000
+
+export const IrLearnResultSchema = z.object({
+  /** The code in the device's own format, when it reports one. */
+  native: IrNativeCodeSchema.nullable(),
+  timings: IrTimingsSchema,
+  carrierHz: z.number().int().positive().nullable(),
+})
+export type IrLearnResult = z.infer<typeof IrLearnResultSchema>
 
 /**
  * ir-transmitter — emit a pulse train (infrared or RF) with settings. One cap
@@ -38,7 +54,12 @@ export type IrTransmitterInfo = z.infer<typeof IrTransmitterInfoSchema>
  * transmitter cannot be reached) and `ir-transmitter.too-long` (more pulses
  * than the transmitter's `maxTimings`). A setting the transmitter cannot apply
  * is NOT a refusal: the train is sent and the key comes back in
- * `ignoredSettings`.
+ * `ignoredSettings`. `send` takes exactly one of `timings` or `native` (a code
+ * in a format listed in `getInfo.formats`).
+ *
+ * `learn` waits for the user to point a remote at the transmitter and refuses
+ * with `ir-transmitter.learn-unsupported`, `ir-transmitter.learn-timeout` or
+ * `ir-transmitter.learn-undecodable`.
  */
 export const irTransmitterCapability = {
   name: 'ir-transmitter',
@@ -48,12 +69,30 @@ export const irTransmitterCapability = {
   deviceTypes: [DeviceType.Generic],
   methods: {
     send: method(
+      z
+        .object({
+          deviceId: z.number().int().nonnegative(),
+          timings: IrTimingsSchema.optional(),
+          native: IrNativeCodeSchema.optional(),
+          settings: TransmitSettingsSchema.optional(),
+        })
+        .refine((input) => (input.timings === undefined) !== (input.native === undefined), {
+          message: 'send takes exactly one of timings or native',
+        }),
+      IrSendResultSchema,
+      { kind: 'mutation', auth: 'protected' },
+    ),
+    learn: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
-        timings: IrTimingsSchema,
-        settings: TransmitSettingsSchema.optional(),
+        timeoutMs: z
+          .number()
+          .int()
+          .positive()
+          .max(IR_LEARN_TIMEOUT_MAX_MS)
+          .default(IR_LEARN_TIMEOUT_DEFAULT_MS),
       }),
-      IrSendResultSchema,
+      IrLearnResultSchema,
       { kind: 'mutation', auth: 'protected' },
     ),
     getInfo: method(

@@ -7,8 +7,9 @@ import {
   type TransmitSettings,
 } from './ir-timings.js'
 import { decodePronto } from './pronto.js'
+import { IR_NATIVE_CODECS, IrNativeFormatSchema } from './native.js'
 
-/** What a remote command stores: a raw pulse train, or a learned Pronto code. */
+/** What a remote command stores: a raw pulse train, a learned Pronto code, or a device-native code. */
 export const IrPayloadSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('raw'),
@@ -16,6 +17,7 @@ export const IrPayloadSchema = z.discriminatedUnion('kind', [
     settings: TransmitSettingsSchema.optional(),
   }),
   z.object({ kind: z.literal('pronto'), code: z.string() }),
+  z.object({ kind: z.literal('native'), format: IrNativeFormatSchema, code: z.string() }),
 ])
 export type IrPayload = z.infer<typeof IrPayloadSchema>
 
@@ -29,6 +31,9 @@ export function toTimings(payload: IrPayload): ResolvedTransmission {
   if (payload.kind === 'pronto') {
     const decoded = decodePronto(payload.code)
     return { timings: decoded.timings, settings: { carrierHz: decoded.carrierHz } }
+  }
+  if (payload.kind === 'native') {
+    return { timings: IR_NATIVE_CODECS[payload.format].decode(payload.code), settings: {} }
   }
   const checked = IrTimingsSchema.safeParse(payload.timings)
   if (!checked.success) {

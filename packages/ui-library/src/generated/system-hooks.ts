@@ -1541,6 +1541,9 @@ export const useIntercomGetStatus: typeof trpc.intercom.getStatus.useQuery = /*#
 /** Generated alias around `trpc.irTransmitter.send.useMutation`. */
 export const useIrTransmitterSend: typeof trpc.irTransmitter.send.useMutation = /*#__PURE__*/ alias(() => trpc.irTransmitter.send.useMutation)
 
+/** Generated alias around `trpc.irTransmitter.learn.useMutation`. */
+export const useIrTransmitterLearn: typeof trpc.irTransmitter.learn.useMutation = /*#__PURE__*/ alias(() => trpc.irTransmitter.learn.useMutation)
+
 /** Generated alias around `trpc.irTransmitter.getInfo.useQuery`. */
 export const useIrTransmitterGetInfo: typeof trpc.irTransmitter.getInfo.useQuery = /*#__PURE__*/ alias(() => trpc.irTransmitter.getInfo.useQuery)
 

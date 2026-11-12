@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**244 units · 8557 source files · 237 units claimed by at least one document (8526 files).**
+**244 units · 8560 source files · 237 units claimed by at least one document (8529 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -131,6 +131,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/ffmpeg` | 12 | `decode-and-data-planes` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ffmpeg.md`, `decisions/adr-0527-a-composites-tile-skew-is-a-probe-budget-not-a-clock.md`, +5 more, 3 ADRs | 2026-10-13 |
 | `packages/addon-pipeline-orchestrator/src/camera-sensors` | 11 | `pipeline-orchestration` | `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0673-a-camera-sensor-has-a-mode-and-one-bridge-emits-the-cameras-effective-onboard-motion.md`, +2 more, 1 ADR | 2026-10-24 |
 | `packages/addon-pipeline-orchestrator/src/widgets` | 11 | `pipeline-orchestration` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0931-a-packages-rule-can-open-a-candidate-from-a-scene-difference-and-confirm-it-with-the-llm.md`, 1 ADR | — |
+| `packages/types/src/ir` | 11 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0963-infrared-control-is-two-caps-a-transport-on-the-board-and-a-remote-on-the-appliance-and-its-state-is-assumed-never-reported.md` | — |
 | `packages/addon-export-hap/src/multi-tier` | 10 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` _(covers)_, +3 more, 1 ADR | 2026-09-29 |
 | `packages/addon-import-alexa/src/migrations` | 10 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/addon-pipeline/src/audio-analyzer` | 10 | `audio` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, +5 more | 2026-10-02 |
@@ -149,7 +150,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/units` | 9 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md` | — |
 | `packages/ui-library/src/theme` | 9 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md`, +2 more | 2026-11-02 |
 | `packages/types/src/auth` | 8 | `auth` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0801-a-native-account-link-returns-to-the-app-and-is-claimed-with-the-apps-own-session.md`, `decisions/adr-0810-an-sso-login-bridge-is-single-use-and-bound-to-the-browser-that-started-the-sign-in.md`, +5 more, 1 ADR | — |
-| `packages/types/src/ir` | 8 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0963-infrared-control-is-two-caps-a-transport-on-the-board-and-a-remote-on-the-appliance-and-its-state-is-assumed-never-reported.md` | — |
 | `packages/addon-export-hap/src/migrations` | 7 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` _(covers)_, +2 more, 1 ADR | 2026-09-29 |
 | `packages/addon-model-studio/src/plugin-catalog` | 7 | `tooling` | `decisions/adr-1013-one-instance-model.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_ | — |
 | `packages/addon-model-studio/src/plus-catalog` | 7 | `tooling` | `decisions/adr-1013-one-instance-model.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, +2 more | — |

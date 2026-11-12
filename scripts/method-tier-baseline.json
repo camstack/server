@@ -497,6 +497,7 @@
   "intercom.startTalkSession": "protected",
   "intercom.stopSession": "protected",
   "irTransmitter.getInfo": "protected",
+  "irTransmitter.learn": "protected",
   "irTransmitter.send": "protected",
   "keychain.delete": "admin",
   "keychain.deleteDeviceScope": "admin",

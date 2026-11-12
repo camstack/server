@@ -8841,6 +8841,20 @@ export function createCapRouter_irTransmitter(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.send(methodInput as any)
       }),
+    learn: protectedProcedure
+      .input(irTransmitterCapability.methods.learn.input.loose())
+      .output(irTransmitterCapability.methods.learn.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'ir-transmitter',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.learn(methodInput as any)
+      }),
     getInfo: protectedProcedure
       .input(irTransmitterCapability.methods.getInfo.input.loose())
       .output(irTransmitterCapability.methods.getInfo.output)

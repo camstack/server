@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1070 shared schemas.**
+**1071 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -3090,6 +3090,12 @@ Enum: `"devices" \| "services"`
 - `lastSessionAt`: `number \| null`
 - `ability`: `IntercomAbilitySchema \| null`
 
+### `IrLearnResultSchema`
+
+- `native`: `{ format: "tuya"; code: string } \| null`
+- `timings`: `number[]`
+- `carrierHz`: `number \| null`
+
 ### `IrMediumSchema`
 
 Enum: `"ir" \| "rf"`
@@ -3104,6 +3110,8 @@ Enum: `"ir" \| "rf"`
 - `media`: `IrMediumSchema[]`
 - `settable`: `TransmitSettingKeySchema[]`
 - `maxTimings`: `number`
+- `learn?`: `boolean = false`
+- `formats?`: `"tuya"[] = []`
 
 ### `KeychainAdminSecretSchema`
 
@@ -5798,7 +5806,7 @@ Enum: `"continuous" \| "motion" \| "person" \| "vehicle" \| "animal" \| "lineCro
 
 - `layoutTemplateId`: `string \| null`
 - `commands`: `RemoteBoundCommandSchema[]`
-- `sources`: `({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] } \| { id: string; name: string; kind: "ir"; transmitterId?: number; payload: { kind: "raw"; timings: number[]; settings?: { carrierHz?: number; dutyCyclePercent?: number; repeat?: number; repeatDelayMs?: number } } \| { kind: "pronto"; code: string } })[]`
+- `sources`: `({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] } \| { id: string; name: string; kind: "ir"; transmitterId?: number; payload: { kind: "raw"; timings: number[]; settings?: { carrierHz?: number; dutyCyclePercent?: number; repeat?: number; repeatDelayMs?: number } } \| { kind: "pronto"; code: string } \| { kind: "native"; format: "tuya"; code: string } })[]`
 
 ### `RemoteMediaCommandResultSchema`
 

@@ -751,6 +751,7 @@ export function createDeviceProxy(
 
   const irTransmitterInterface = {
     send: (input?: unknown) => dispatch('ir-transmitter', 'irTransmitter', 'send', 'mutation', input),
+    learn: (input?: unknown) => dispatch('ir-transmitter', 'irTransmitter', 'learn', 'mutation', input),
     getInfo: (input?: unknown) => dispatch('ir-transmitter', 'irTransmitter', 'getInfo', 'query', input),
   }
 

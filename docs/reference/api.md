@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**205 capabilities · 1483 methods.**
+**205 capabilities · 1484 methods.**
 
 ## Method index
 
@@ -565,6 +565,7 @@
 | `intercom.pushTalkAudio` | mutation | protected | intercom |
 | `intercom.endTalkSession` | mutation | protected | intercom |
 | `irTransmitter.send` | mutation | protected | ir-transmitter |
+| `irTransmitter.learn` | mutation | protected | ir-transmitter |
 | `irTransmitter.getInfo` | query | protected | ir-transmitter |
 | `keychain.put` | mutation | admin | keychain |
 | `keychain.resolve` | query | admin | keychain |
@@ -3045,14 +3046,15 @@
 
 ### `ir-transmitter` → `irTransmitter.*`
 
-- **Source:** `packages/types/src/capabilities/ir-transmitter.cap.ts:43`
+- **Source:** `packages/types/src/capabilities/ir-transmitter.cap.ts:64`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `generic`
 - **Archetypes:** —
 - **Provider interface:** `IIrTransmitterProvider`
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
-| send | `irTransmitter.send` | mutation | protected | `{ deviceId: number; timings: number[]; settings?: { carrierHz?: number; dutyCyclePercent?: number; repeat?: number; repeatDelayMs?: number } }` | `IrSendResultSchema` |
+| send | `irTransmitter.send` | mutation | protected | `{ deviceId: number; timings?: number[]; native?: { format: "tuya"; code: string }; settings?: { carrierHz?: number; dutyCyclePercent?: number; repeat?: number; repeatDelayMs?: number } }` | `IrSendResultSchema` |
+| learn | `irTransmitter.learn` | mutation | protected | `{ deviceId: number; timeoutMs?: number = 20000 }` | `IrLearnResultSchema` |
 | getInfo | `irTransmitter.getInfo` | query | protected | `{ deviceId: number }` | `IrTransmitterInfoSchema` |
 
 ### `keychain` → `keychain.*`
@@ -4318,8 +4320,8 @@
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
-| getConfig | `remote.getConfig` | query | admin | `{ deviceId: number }` | `{ layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> } }>; customButtons: ({ key: string; name: string })[]; sources?: ({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] } \| { id: string; name: string; kind: "ir"; transmitterId?: number; payload: { kind: "raw"; timings: number[]; settings?: { carrierHz?: number; dutyCyclePercent?: number; repeat?: number; repeatDelayMs?: number } } \| { kind: "pronto"; code: string } })[] = []; stepDelayMs?: number = 500; refusedSources?: ({ index: number; id: string \| null; name: string \| null; reason: string })[] }` |
-| setConfig | `remote.setConfig` | mutation | admin | `{ deviceId: number; config: { layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> } }>; customButtons: ({ key: string; name: string })[]; sources?: ({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] } \| { id: string; name: string; kind: "ir"; transmitterId?: number; payload: { kind: "raw"; timings: number[]; settings?: {…} } \| { kind: "pronto"; code: string } })[] = []; stepDelayMs?: number = 500; refusedSources?: ({ index: number; id: string \| null; name: string \| null; reason: string })[] } }` | `RemoteSetConfigResultSchema` |
+| getConfig | `remote.getConfig` | query | admin | `{ deviceId: number }` | `{ layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> } }>; customButtons: ({ key: string; name: string })[]; sources?: ({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] } \| { id: string; name: string; kind: "ir"; transmitterId?: number; payload: { kind: "raw"; timings: number[]; settings?: { carrierHz?: number; dutyCyclePercent?: number; repeat?: number; repeatDelayMs?: number } } \| { kind: "pronto"; code: string } \| { kind: "native"; format: "tuya"; code: string } })[] = []; stepDelayMs?: number = 500; refusedSources?: ({ index: number; id: string \| null; name: string \| null; reason: string })[] }` |
+| setConfig | `remote.setConfig` | mutation | admin | `{ deviceId: number; config: { layoutTemplateId: string \| null; defaultTransmitterId?: number \| null = null; bindings: Record<string, { action: { kind: "cap"; deviceId: number; cap: string; method: string; args?: Record<string, unknown>; argUnits?: Record<string, string> } }>; customButtons: ({ key: string; name: string })[]; sources?: ({ id: string; name: string; kind: "digits"; number: string } \| { id: string; name: string; kind: "sequence"; steps: string[] } \| { id: string; name: string; kind: "ir"; transmitterId?: number; payload: { kind: "raw"; timings: number[]; settings?: {…} } \| { kind: "pronto"; code: string } \| { kind: "native"; format: "tuya"; code: string } })[] = []; stepDelayMs?: number = 500; refusedSources?: ({ index: number; id: string \| null; name: string \| null; reason: string })[] } }` | `RemoteSetConfigResultSchema` |
 | listCommands | `remote.listCommands` | query | protected | `{ deviceId: number }` | `RemoteCommandListSchema` |
 | sendCommand | `remote.sendCommand` | mutation | protected | `{ deviceId: number; role: string; repeat?: number = 1 }` | `RemoteSendResultSchema` |
 | getAssumedStatus | `remote.getAssumedStatus` | query | protected | `{ deviceId: number }` | `MediaPlayerStatusSchema \| null` |

@@ -99,3 +99,31 @@ describe('irTransmitterCapability shape', () => {
     expect(out.media).toEqual(['ir'])
   })
 })
+
+describe('ir-transmitter native codes and learning', () => {
+  const send = irTransmitterCapability.methods.send.input
+  const learn = irTransmitterCapability.methods.learn.input
+
+  it('send takes exactly one of timings or native', () => {
+    const native = { format: 'tuya', code: 'AxAAIABAAw==' }
+    expect(send.safeParse({ deviceId: 1, timings: [500, -500] }).success).toBe(true)
+    expect(send.safeParse({ deviceId: 1, native }).success).toBe(true)
+    expect(send.safeParse({ deviceId: 1 }).success).toBe(false)
+    expect(send.safeParse({ deviceId: 1, timings: [500, -500], native }).success).toBe(false)
+  })
+
+  it('learn defaults to 20 s and is bounded at 60 s', () => {
+    expect(learn.parse({ deviceId: 1 }).timeoutMs).toBe(20_000)
+    expect(learn.safeParse({ deviceId: 1, timeoutMs: 60_000 }).success).toBe(true)
+    expect(learn.safeParse({ deviceId: 1, timeoutMs: 60_001 }).success).toBe(false)
+  })
+
+  it('getInfo defaults learn to false and formats to none for an older provider', () => {
+    const info = irTransmitterCapability.methods.getInfo.output.parse({
+      media: ['ir'],
+      settable: [],
+      maxTimings: 100,
+    })
+    expect(info).toMatchObject({ learn: false, formats: [] })
+  })
+})

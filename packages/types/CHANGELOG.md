@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A notification rule can group the deliveries that arrive within a few seconds.
+- IR transmitters can learn a code and replay device-native (Tuya) codes: ir-transmitter gains learn, send takes a native code, and a remote command can store one
 
 ## [1.2.553] - 2026-11-12
 

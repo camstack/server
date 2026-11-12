@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A media player card with a known volume and an absolute set shows a slider; an unknown level, or volume up and down only, keeps the minus and plus buttons
 - The device card of a container (and any card in a narrow column) stacks its controls under the drawing instead of cutting them off
+- System hooks include the ir-transmitter learn method
 
 ## [1.2.429] - 2026-11-12
 
