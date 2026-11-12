@@ -8,7 +8,7 @@ import { loadBootstrapConfig } from '../boot-config'
 /**
  * #342: there is ONE bootstrap loader (the kernel's). The hub's `main.ts` and
  * `ConfigManager` come through it, so an env override applies in both.
- * A leftover config.yaml is read only by the one-release transition module (D1018).
+ * A leftover config.yaml is not read (D1018; the one-release transition reader is gone).
  */
 describe('one bootstrap loader', () => {
   let dir: string
@@ -26,7 +26,7 @@ describe('one bootstrap loader', () => {
     vi.restoreAllMocks()
   })
 
-  it('a leftover yaml carrying every dead key boots with them ignored, in both views', () => {
+  it('a leftover config.yaml is not read: the port stays the built-in default', () => {
     fs.writeFileSync(
       configPath,
       [
@@ -46,24 +46,18 @@ describe('one bootstrap loader', () => {
     const warn = vi.spyOn(console, 'warn')
     const config = loadBootstrapConfig()
 
-    const installSourceWarns = warn.mock.calls.filter((c) =>
-      String(c[0]).includes('bootstrap.installSource'),
-    )
-    expect(installSourceWarns).toHaveLength(1)
-    const requiredAddonsWarns = warn.mock.calls.filter((c) =>
-      String(c[0]).includes('bootstrap.requiredAddons'),
-    )
-    expect(requiredAddonsWarns).toHaveLength(1)
+    const warned = warn.mock.calls.map((c) => String(c[0])).join('\n')
+    expect(warned).not.toMatch(/installSource|requiredAddons|config\.yaml/)
     const manager = new ConfigManager()
     expect('requiredAddons' in config.bootstrap).toBe(false)
     expect('installSource' in config.bootstrap).toBe(false)
     expect(Object.keys(config).sort()).toEqual(['bootstrap', 'server'])
-    expect(config.server.port).toBe(5151)
+    expect(config.server.port).toBe(4443)
     expect(config.bootstrap).toEqual({})
     for (const dead of ['mode', 'hub.url', 'agent.name', 'tls.enabled', 'auth.jwtSecret']) {
       expect(manager.getBootstrap(dead)).toBeUndefined()
     }
-    expect(manager.getBootstrap<number>('server.port')).toBe(5151)
+    expect(manager.getBootstrap<number>('server.port')).toBe(4443)
   })
 
   it('the retired secret and CORS env variables are not named at boot any more', () => {

@@ -23,6 +23,7 @@ import type Database from 'better-sqlite3'
 import { afterEach, describe, expect, it } from 'vitest'
 import { type HubSeedMarks, seedHubCatalogue } from '../../../migrations/hub/__fixtures__/seed.js'
 import { HUB_MIGRATIONS } from '../../../migrations/hub/index.js'
+import { databaseOfStore } from '../migrations/migration-types.js'
 import { type MigrationWorld, makeMigrationWorld } from './support/migration-world.js'
 
 const worlds: MigrationWorld[] = []
@@ -61,7 +62,9 @@ describe('hub catalogue replay', () => {
     if (marks === undefined) throw new Error('the seed did not run')
 
     const first = ledgerOf(world.db)
+    // This world is the settings file. An events-store step is applied on events.db, not here.
     for (const migration of HUB_MIGRATIONS) {
+      if (databaseOfStore(migration.meta.store) !== 'settings') continue
       expect(first.find((r) => r.id === migration.meta.id)).toMatchObject({
         status: 'applied',
         error: null,

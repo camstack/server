@@ -2706,14 +2706,14 @@ where they were typed:
   `use-notification-targets.ts`). The cap's target CRUD methods are gone: it keeps `send`, `testTarget`,
   `discoverTargets` and `probeTargetConfig`, plus `listTargetKinds`, which stays only as a baseline
   note (follow-up: fold the kind descriptors, `destinationKeys` included, into the instance kinds).
-  The notifiers addon and Home Assistant providers still carry an INTERNAL `listTargets` /
-  `upsertTarget` on the provider object, not on the cap: the `nc.*` custom actions use it for the
-  viewer bridge. A save-time rule that a kind needs (the Echo kind refuses a blank or ambiguous
-  Echo/account and pins the account) rides on the instance write, through `validateWrite`. The targets live in one record kind per adapter
+  The notifiers addon keeps `nc.listTargetKinds` (`nc-target-actions.ts`) for the viewer's add
+  form: a viewer session may not call `notification-output`. A user's own targets are
+  `integration-instances` of `notifiers`, caller-scoped (D1013). The five `nc.*MyTarget*` delegates
+  were removed on 2026-11-12 (viewer 1.0.698 uses that door). A save-time rule that a kind needs
+  (the Echo kind refuses a blank or ambiguous Echo/account and pins the account) rides on the
+  instance write, through `validateWrite`. The targets live in one record kind per adapter
   (`notify-<kind>`), written by the facade `NotificationTargetStore`, and every `settingsStore`
-  method is admin-only too. A non-admin manages ITS OWN targets through the owner-checked `nc.*`
-  bridge (`nc-target-actions.ts`), which keeps the D634 secret-merge guard
-  (`createNotifierTargetAdmin`). The notification centre and every other addon are unaffected:
+  method is admin-only too. The notification centre and every other addon are unaffected:
   an addon's `ctx.api` cap call is resolved to the provider directly and never enters the tRPC
   router, so the tier gates sessions and tokens, never addons. An addon that needs the targets
   reads them with `listNotificationTargets(api)`, whose `unreadable` holders it must treat as

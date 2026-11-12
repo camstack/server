@@ -42,8 +42,7 @@ function errorText(err: unknown): string {
 
 export class ConfigManager {
   // NOTE: the `console.*` calls in `bootstrap-config.ts` (`applyEnvOverrides`)
-  // and `legacy-config-yaml.ts` are deliberate, documented
-  // residuals. `ConfigManager` is a pure bootstrap component constructed at
+  // are deliberate, documented residuals. `ConfigManager` is a pure bootstrap component constructed at
   // the very start of hub boot (NestJS DI, before `LogManager` and the
   // Moleculer broker exist), so there is no `IScopedLogger` or `$hub.log`
   // transport to route through. Wiring one in would mean threading a logger

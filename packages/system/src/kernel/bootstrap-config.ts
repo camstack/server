@@ -5,7 +5,6 @@
  * residuals described on `ConfigManager` (no logger exists yet at boot).
  */
 import { type BootstrapConfig, bootstrapSchema } from './config-schema.js'
-import { logLegacyNotes, reconcileLegacyConfigYaml } from './legacy-config-yaml.js'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -28,18 +27,12 @@ const ENV_VAR_MAP: Record<string, string> = {
 /**
  * Built-in defaults with the environment applied — THE bootstrap loader: the
  * hub's `main.ts` and `ConfigManager` come through here, so a key is read in one
- * place. There is no config.yaml (D1018); the one release of transition for a
- * node that still has one lives in `legacy-config-yaml.ts`.
+ * place. There is no config.yaml (D1018); a leftover file is not read.
  */
 export function loadBootstrapConfig(
   env: Readonly<Record<string, string | undefined>> = process.env,
 ): BootstrapConfig {
-  const fromEnv = applyEnvOverrides({}, env)
-  const envServer = isRecord(fromEnv['server']) ? fromEnv['server'] : {}
-  const legacy = reconcileLegacyConfigYaml(env, bootstrapSchema.parse(fromEnv).server)
-  logLegacyNotes(legacy.notes)
-  // The overrides are only for keys whose env var is unset, so the order is moot.
-  return bootstrapSchema.parse({ server: { ...envServer, ...legacy.overrides } })
+  return bootstrapSchema.parse(applyEnvOverrides({}, env))
 }
 
 /**

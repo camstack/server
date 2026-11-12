@@ -282,7 +282,12 @@ that did not answer throws; it never resolves to the schema default.
   operator hubs (D871; the script left with D900). Read plan proved in
   `lts-composite-key-over-real-sqlite.spec.ts`.
 - **`vec_object_clip`** (MobileCLIP) was declared and read by nothing; it was dropped by hand
-  on the operator hubs (D871).
+  on the operator hubs (D871). An empty copy still on a hub, with its shadows and its
+  `vec_indexes` row, is dropped at boot by `hub/2026-11-12-drop-retired-vec-object-clip`
+  (`events.db`). The three empty `pipeline-analytics:package-background`, `phantom-cells` and
+  `stationary-evidence` shells (the kinds live in `records`) are dropped by
+  `hub/2026-11-12-drop-retired-settings-shells` (`camstack.db`). A non-empty table is left and
+  named. `vec_object_clip_siglip2_*` is the live index and is not in either step.
 - **`device-manager:tombstones`** is declared at device-manager init, not by the first
   delete.
 - **`cluster-node-history`, `oauth_sessions`, `backup_schedules`,

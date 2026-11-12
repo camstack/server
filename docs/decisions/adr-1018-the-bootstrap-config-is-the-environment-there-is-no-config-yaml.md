@@ -6,7 +6,6 @@ date: 2026-11-07
 supersedes:
 applies-to:
   - packages/system/src/kernel/bootstrap-config.ts
-  - packages/system/src/kernel/legacy-config-yaml.ts
   - packages/system/src/kernel/config-schema.ts
   - server/backend/src/main.ts
   - Dockerfile
@@ -33,15 +32,15 @@ by `CAMSTACK_PORT`, `CAMSTACK_HOST` and `CAMSTACK_DATA`. Backups no longer
 archive `config.yaml`, and a restore skips that entry when an older archive
 carries it.
 
-For ONE release, `legacy-config-yaml.ts` still looks for a leftover file
-(`CONFIG_PATH`, the former image path `/config/config.yaml`, then
-`<CAMSTACK_DATA>/config.yaml`), parses it only to compare, and, for each of the
-three keys whose legacy value differs from the effective value and whose
-environment variable is not set, still applies it so an update never moves a
-node silently. Each such key logs a WARN naming the variable to set. A file that
-matches the defaults earns one INFO line saying it can be deleted; an unparsable
-file is ignored with a WARN. That module, its spec and the `js-yaml` dependency
-are deleted one release later.
+A leftover `config.yaml` is not read. The one-release reader
+(`legacy-config-yaml.ts`) applied a differing port, host or data path when the
+environment variable was unset, so an update would not move a node silently.
+Transition reader removed 2026-11-12: that module, its spec and the `js-yaml`
+dependency of `@camstack/server/system` are gone. A node that still kept a
+non-default value only in the file must set `CAMSTACK_PORT`, `CAMSTACK_HOST` or
+`CAMSTACK_DATA`. A restore of an older archive still skips the `config.yaml`
+entry (`RETIRED_CONFIG_FILE` in `pending-restore.ts`), so the file is not
+written back.
 
 ## Consequences
 
@@ -58,7 +57,7 @@ leftover file keeps working for one release, then must have set the variable.
 
 ## Enforcement
 
-`legacy-config-yaml.spec.ts` (no file, defaults-equal file, differing port with
-and without the variable, unparsable file), `boot-config-one-loader.spec.ts`
-(one loader), `pending-restore-sqlite.spec.ts` (an old archive's `config.yaml`
-is not restored) and `mcp-setup.spec.ts` (no `/config` in generated compose).
+`boot-config-one-loader.spec.ts` (one loader; a leftover `config.yaml` does not
+change the port), `pending-restore-sqlite.spec.ts` (an old archive's
+`config.yaml` is not restored) and `mcp-setup.spec.ts` (no `/config` in
+generated compose).
