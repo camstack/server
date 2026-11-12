@@ -441,3 +441,20 @@ describe('remote-config-model: Flipper-IRDB import', () => {
     expect(importFlipperIr('nope', 7)).toEqual({ status: 'refused', reason: 'not-flipper' })
   })
 })
+
+describe('a native infrared code', () => {
+  it('round-trips through the draft and is summarised from its decoded pulses', async () => {
+    const { encodeTuya } = await import('@camstack/types')
+    const code = encodeTuya([9000, -4500, 560, -560])
+    const source = {
+      id: 'tv',
+      kind: 'ir' as const,
+      name: 'TV',
+      transmitterId: 5,
+      payload: { kind: 'native' as const, format: 'tuya' as const, code },
+    }
+    const draft = draftOfSource(source)
+    expect(draft).toMatchObject({ encoding: 'native', nativeFormat: 'tuya', code })
+    expect(irSourceSummary(source)).toEqual({ encoding: 'native', pulses: 4, carrierKhz: null })
+  })
+})

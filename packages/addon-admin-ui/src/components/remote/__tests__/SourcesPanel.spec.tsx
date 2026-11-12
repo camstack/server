@@ -2,9 +2,18 @@ import { selectOption, selectOptionValues } from '@camstack/ui-library/testing'
 import { EMPTY_REMOTE_CONFIG, type RemoteConfig } from '@camstack/types'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
 import { SourcesPanel } from '../SourcesPanel'
+
+vi.mock('@camstack/ui-library', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@camstack/ui-library')>()
+  return {
+    ...actual,
+    useIrTransmitterGetInfo: () => ({ data: { learn: false } }),
+    useIrTransmitterLearn: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  }
+})
 
 const action = { kind: 'cap' as const, deviceId: 12, cap: 'switch', method: 'turnOn' }
 const BOUND: RemoteConfig = {

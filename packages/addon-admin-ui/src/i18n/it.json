@@ -11955,7 +11955,8 @@
         "codeHint": "Impulsi e pause in microsecondi, separati da virgole o spazi (una pausa è negativa), oppure l’array incollato da un file SmartIR.",
         "prontoHint": "La forma appresa 0000, come la fornisce il ricevitore o una libreria di codici.",
         "carrier": "Portante (kHz)",
-        "carrierHint": "Vuoto: decide il trasmettitore; la maggior parte dei televisori usa 38."
+        "carrierHint": "Vuoto: decide il trasmettitore; la maggior parte dei televisori usa 38.",
+        "nativeHint": "Un codice appreso dal trasmettitore, nel suo formato. Viene inviato così com'è se il trasmettitore riproduce quel formato."
       },
       "stepDelay": "Pausa tra i passi (ms)",
       "stepDelayHint": "Quanto tempo serve al televisore tra due pressioni di una sorgente.",
@@ -11982,13 +11983,20 @@
       },
       "encoding": {
         "raw": "Tempi grezzi (µs)",
-        "pronto": "Pronto hex"
+        "pronto": "Pronto hex",
+        "native": "Codice nativo del dispositivo"
       },
       "irDetail": "Infrarosso · {{pulses}} impulsi",
       "irDetailCarrier": "Infrarosso · {{pulses}} impulsi · {{khz}} kHz",
       "irDetailBroken": "Infrarosso · il codice non può essere inviato",
       "refusedTitle": "Queste sorgenti salvate non si possono leggere e sono escluse. Ricreale per riaverle.",
-      "refusedRow": "{{name}}: {{reason}}"
+      "refusedRow": "{{name}}: {{reason}}",
+      "learn": {
+        "button": "Impara dal telecomando",
+        "pending": "In attesa della pressione di un tasto…",
+        "hint": "Punta il telecomando originale verso il trasmettitore e premi un tasto.",
+        "failed": "Apprendimento non riuscito."
+      }
     },
     "sourceSelect": {
       "label": "Sorgenti",

@@ -11933,7 +11933,8 @@
         "codeHint": "Marks and spaces in microseconds, separated by commas or spaces (a space is negative), or the array pasted from a SmartIR file.",
         "prontoHint": "The 0000 learned form, as the receiver or a code library gives it.",
         "carrier": "Carrier (kHz)",
-        "carrierHint": "Empty leaves it to the transmitter; most televisions use 38."
+        "carrierHint": "Empty leaves it to the transmitter; most televisions use 38.",
+        "nativeHint": "A code learned from the transmitter, in its own format. It is sent as is when the transmitter replays that format."
       },
       "stepDelay": "Pause between steps (ms)",
       "stepDelayHint": "How long the television needs between two presses of a source.",
@@ -11960,13 +11961,20 @@
       },
       "encoding": {
         "raw": "Raw timings (µs)",
-        "pronto": "Pronto hex"
+        "pronto": "Pronto hex",
+        "native": "Device-native code"
       },
       "irDetail": "Infrared · {{pulses}} pulses",
       "irDetailCarrier": "Infrared · {{pulses}} pulses · {{khz}} kHz",
       "irDetailBroken": "Infrared · the code cannot be sent",
       "refusedTitle": "These stored sources could not be read and are left out. Re-create them to bring them back.",
-      "refusedRow": "{{name}}: {{reason}}"
+      "refusedRow": "{{name}}: {{reason}}",
+      "learn": {
+        "button": "Learn from remote",
+        "pending": "Waiting for a key press…",
+        "hint": "Point the original remote at the transmitter and press one key.",
+        "failed": "Learning failed."
+      }
     },
     "sourceSelect": {
       "label": "Sources",

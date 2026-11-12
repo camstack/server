@@ -11,6 +11,7 @@ import {
   customRole,
   flipperIrDraft,
   IrCodecError,
+  type IrNativeFormat,
   type IrPayload,
   isRemoteWidgetRole,
   parseFlipperIr,
@@ -225,8 +226,8 @@ export function applyDraft(config: RemoteConfig, draft: SmartIrDraft): RemoteCon
 // schema's own issues next to the field they name.
 // ---------------------------------------------------------------------------
 
-/** How an infrared code is typed: signed microseconds, or Pronto hex words. */
-export type IrCodeEncoding = 'raw' | 'pronto'
+/** How an infrared code is held: signed microseconds, Pronto hex words, or a device-native code. */
+export type IrCodeEncoding = 'raw' | 'pronto' | 'native'
 
 /** What the add / edit dialog holds: every field of every kind, so a kind switch loses nothing. */
 export interface SourceDraft {
@@ -240,7 +241,9 @@ export interface SourceDraft {
   readonly transmitterId: number | null
   /** How `code` is written (`ir`). */
   readonly encoding: IrCodeEncoding
-  /** The code as typed (`ir`): marks and spaces in µs, or Pronto hex words. */
+  /** The format of a device-native code (`ir`, native). */
+  readonly nativeFormat: IrNativeFormat
+  /** The code as typed (`ir`): marks and spaces in µs, Pronto hex words, or a native code. */
   readonly code: string
   /** The carrier in kHz as typed (`ir`, raw); empty leaves it to the transmitter. */
   readonly carrierKhz: string
@@ -253,6 +256,7 @@ export const BLANK_SOURCE_DRAFT: SourceDraft = {
   steps: [],
   transmitterId: null,
   encoding: 'raw',
+  nativeFormat: 'tuya',
   code: '',
   carrierKhz: '',
 }
@@ -271,14 +275,16 @@ export function draftOfSource(source: RemoteSource): SourceDraft {
         transmitterId: source.transmitterId ?? null,
         ...(source.payload.kind === 'pronto'
           ? { encoding: 'pronto', code: source.payload.code }
-          : {
-              encoding: 'raw',
-              code: source.payload.timings.join(', '),
-              carrierKhz:
-                source.payload.settings?.carrierHz === undefined
-                  ? ''
-                  : String(source.payload.settings.carrierHz / 1000),
-            }),
+          : source.payload.kind === 'native'
+            ? { encoding: 'native', nativeFormat: source.payload.format, code: source.payload.code }
+            : {
+                encoding: 'raw',
+                code: source.payload.timings.join(', '),
+                carrierKhz:
+                  source.payload.settings?.carrierHz === undefined
+                    ? ''
+                    : String(source.payload.settings.carrierHz / 1000),
+              }),
       }
   }
 }
@@ -290,6 +296,9 @@ export function draftOfSource(source: RemoteSource): SourceDraft {
  */
 function irPayloadOf(draft: SourceDraft): IrPayload {
   if (draft.encoding === 'pronto') return { kind: 'pronto', code: draft.code.trim() }
+  if (draft.encoding === 'native') {
+    return { kind: 'native', format: draft.nativeFormat, code: draft.code.trim() }
+  }
   const timings = draft.code
     .replace(/[[\]]/g, ' ')
     .split(/[\s,]+/)

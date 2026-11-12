@@ -18,11 +18,13 @@ import {
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { LearnButton } from './LearnButton'
 import {
   BLANK_SOURCE_DRAFT,
   boundStepRoles,
   draftIssues,
   draftOfSource,
+  type IrCodeEncoding,
   type SourceDraft,
   upsertSource,
 } from './remote-config-model'
@@ -261,6 +263,13 @@ interface IrFieldsProps {
 }
 
 /** The transmitter, the format and the code of an `ir` source; the carrier only for a raw train. */
+/** The encoding a Select value names; `native` is never picked, only learned. */
+function encodingOf(value: string, current: IrCodeEncoding): IrCodeEncoding {
+  if (value === 'pronto') return 'pronto'
+  if (value === 'native' && current === 'native') return 'native'
+  return 'raw'
+}
+
 function IrFields({
   draft,
   transmitters,
@@ -270,6 +279,7 @@ function IrFields({
 }: IrFieldsProps): ReactNode {
   const { t } = useTranslation()
   const defaultLabel = transmitters.find((d) => d.id === defaultTransmitterId)?.label
+  const learnTransmitterId = draft.transmitterId ?? defaultTransmitterId ?? null
   return (
     <>
       <FormField label={t('remote.sources.dialog.transmitter')}>
@@ -292,14 +302,20 @@ function IrFields({
         />
       </FormField>
       <Errors lines={lines('transmitterId')} />
+      {learnTransmitterId !== null && (
+        <LearnButton transmitterId={learnTransmitterId} onLearned={patch} />
+      )}
       <FormField label={t('remote.sources.dialog.encoding')}>
         <Select
           value={draft.encoding}
           options={[
             { value: 'raw', label: t('remote.sources.encoding.raw') },
             { value: 'pronto', label: t('remote.sources.encoding.pronto') },
+            ...(draft.encoding === 'native'
+              ? [{ value: 'native', label: t('remote.sources.encoding.native') }]
+              : []),
           ]}
-          onChange={(e) => patch({ encoding: e.target.value === 'pronto' ? 'pronto' : 'raw' })}
+          onChange={(e) => patch({ encoding: encodingOf(e.target.value, draft.encoding) })}
           data-testid="source-encoding"
         />
       </FormField>
@@ -308,7 +324,9 @@ function IrFields({
         description={
           draft.encoding === 'pronto'
             ? t('remote.sources.dialog.prontoHint')
-            : t('remote.sources.dialog.codeHint')
+            : draft.encoding === 'native'
+              ? t('remote.sources.dialog.nativeHint')
+              : t('remote.sources.dialog.codeHint')
         }
       >
         <Textarea
