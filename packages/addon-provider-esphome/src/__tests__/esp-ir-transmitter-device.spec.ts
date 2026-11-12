@@ -117,11 +117,15 @@ describe('EspIrTransmitterDevice', () => {
       media: ['ir'],
       settable: [],
       maxTimings: ESP_IR_MAX_TIMINGS,
+      learn: false,
+      formats: [],
     })
     expect(setup({ carrierArg: 'carrier_frequency', media: ['rf'] }).device.describe()).toEqual({
       media: ['rf'],
       settable: ['carrierHz'],
       maxTimings: ESP_IR_MAX_TIMINGS,
+      learn: false,
+      formats: [],
     })
   })
 })

@@ -58,7 +58,23 @@ export class EspIrTransmitterDevice extends BaseDevice<typeof espIrTransmitterSc
       logger: ctx.logger,
     })
     const provider: InferNativeProvider<typeof irTransmitterCapability> = {
-      send: async ({ timings, settings }) => this.transmit(timings, settings),
+      send: async ({ timings, native, settings }) => {
+        if (timings === undefined || native !== undefined) {
+          throw userError(
+            'ir-transmitter.native-unsupported',
+            { name: this.name },
+            `The transmitter ${this.name} only sends pulse trains`,
+          )
+        }
+        return this.transmit(timings, settings)
+      },
+      learn: async () => {
+        throw userError(
+          'ir-transmitter.learn-unsupported',
+          { name: this.name },
+          `The transmitter ${this.name} cannot learn a code`,
+        )
+      },
       getInfo: async () => this.describe(),
     }
     ctx.registerNativeCap(irTransmitterCapability, provider)
@@ -70,6 +86,8 @@ export class EspIrTransmitterDevice extends BaseDevice<typeof espIrTransmitterSc
       media: [...this.settings.media],
       settable: this.settableKeys(),
       maxTimings: ESP_IR_MAX_TIMINGS,
+      learn: false,
+      formats: [],
     }
   }
 
