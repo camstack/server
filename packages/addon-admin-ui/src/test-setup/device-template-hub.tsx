@@ -11,6 +11,7 @@ import type { TRPCLink } from '@trpc/client'
 import type { AnyRouter } from '@trpc/server'
 import { observable } from '@trpc/server/observable'
 import type { ReactElement, ReactNode } from 'react'
+import { SEARCH_HUB_FLEET, searchAnswer } from './device-search-hub'
 
 export const STUFA = {
   id: 1,
@@ -29,7 +30,7 @@ export interface TemplateHubAnswers {
   readonly check?: unknown
 }
 
-function answerFor(path: string, answers: TemplateHubAnswers): unknown {
+function answerFor(path: string, input: unknown, answers: TemplateHubAnswers): unknown {
   switch (path) {
     case 'deviceManager.listAll':
       return [STUFA]
@@ -37,6 +38,10 @@ function answerFor(path: string, answers: TemplateHubAnswers): unknown {
       return { results: [answers.check ?? { ok: true, aliases: [] }] }
     case 'deviceManager.renderDeviceTemplates':
       return { results: [{ ok: true, text: '', trace: [] }] }
+    // The device-value picker's search: a proper page, never `null` (an editor
+    // that holds a picker reads `nextCursor` off every answer).
+    case 'deviceManager.search':
+      return searchAnswer(SEARCH_HUB_FLEET, input)
     case 'deviceManager.listSiteZones':
       return []
     case 'deviceManager.getWireableFields':
@@ -69,7 +74,7 @@ export function TemplateHubTrpc({
     ({ op }) =>
       observable((observer) => {
         if (op.type === 'subscription') return () => undefined
-        observer.next({ result: { type: 'data', data: answerFor(op.path, answers) } })
+        observer.next({ result: { type: 'data', data: answerFor(op.path, op.input, answers) } })
         observer.complete()
         return () => undefined
       })
