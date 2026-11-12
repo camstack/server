@@ -268,6 +268,33 @@ describe('a supply-fed washer', () => {
     expect(screen.getByText('Unknown')).toBeTruthy()
     expect(screen.queryByText('Stopped')).toBeNull()
   })
+
+  it('a seeded cycle start and a future one show no duration', () => {
+    hub.running = {
+      running: true,
+      since: 1,
+      source: 'assigned',
+      phase: null,
+      lastFetchedAt: null,
+    }
+    const seeded = render(<ConnectedApplianceCard deviceId={1} />)
+    const seededText = screen.getByTestId('dc-state').textContent ?? ''
+    expect(seededText).toMatch(/Washing/)
+    expect(seededText).not.toMatch(/\d+ d/)
+    seeded.unmount()
+
+    hub.running = {
+      running: true,
+      since: Date.now() + 120_000,
+      source: 'assigned',
+      phase: null,
+      lastFetchedAt: null,
+    }
+    render(<ConnectedApplianceCard deviceId={1} />)
+    const futureText = screen.getByTestId('dc-state').textContent ?? ''
+    expect(futureText).toMatch(/Washing/)
+    expect(futureText).not.toMatch(/\d+ min/)
+  })
 })
 
 describe('a dishwasher that speaks for itself', () => {

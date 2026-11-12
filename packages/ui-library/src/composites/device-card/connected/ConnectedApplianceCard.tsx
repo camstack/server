@@ -4,7 +4,7 @@ import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
 import { ApplianceCard } from '../scenes/appliance/ApplianceCard'
 import { applianceKindOf, plugAppliancePhase } from './appliance-model'
-import { coarseDuration } from './coarse-duration'
+import { sinceText } from './since-text'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { useCardCommon } from './use-card-common'
 import { useSwitchPower } from './use-switch-power'
@@ -49,9 +49,7 @@ export function ConnectedApplianceCard({
         phase,
         phaseLabel: phase === 'run' ? (running?.phase ?? null) : null,
         since:
-          phase === 'off' || runningSince === null
-            ? power.since
-            : coarseDuration(Date.now() - runningSince, t),
+          phase === 'off' ? power.since : (sinceText(runningSince, Date.now(), t) ?? power.since),
         power: power.bound && typeof power.on === 'boolean' ? { on: power.on } : null,
         program: null,
         controls: null,

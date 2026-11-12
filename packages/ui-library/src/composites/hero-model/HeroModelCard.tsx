@@ -109,6 +109,16 @@ function shownStep(scale: NumericControlDisplay, step: number): number {
   return scale.toShown(step) - scale.toShown(0)
 }
 
+/**
+ * The value the device stores, on the cap's own grid. A °F thumb can land
+ * between two °C steps (70 °F is 21.11 °C); the release snaps to the nearest
+ * step and stays inside the cap's range.
+ */
+function snapToGrid(value: number, min: number, max: number, step: number): number {
+  const onGrid = step > 0 ? min + Math.round((value - min) / step) * step : value
+  return Math.min(max, Math.max(min, onGrid))
+}
+
 function SliderControl({
   control,
   host,
@@ -123,10 +133,11 @@ function SliderControl({
   const unit = scale.unit ?? control.unit
   const commit = (): void => {
     if (draft === null) return
+    const snapped = snapToGrid(scale.toBase(draft), control.min, control.max, control.step)
     host.run(
       {
         ...control.call,
-        args: heroArgsWithValue(control.call.args, control.valueArg, scale.toBase(draft)),
+        args: heroArgsWithValue(control.call.args, control.valueArg, snapped),
       },
       null,
     )

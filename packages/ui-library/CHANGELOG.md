@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An energy system has its own device card: solar, grid, battery, home and heat pump as branches of one bus, dots running in or out at the speed of each power, and today's totals. Drawn from fixtures only until a provider exposes one energy-system device (#513).
 - A switch with the role switch-light gets the light card (bulb and glow, no slider) and a bulb icon
 - A device card no longer shows a duration since 1970 when the change time is only a seed, and a slider shows the operator's display unit.
+- A device card no longer shows a duration since 1970 when the change time is only a seed — including the offline line and a running cycle — and a temperature slider follows the display unit, storing the nearest step of the device's own unit.
 
 ## [1.2.433] - 2026-11-12
 

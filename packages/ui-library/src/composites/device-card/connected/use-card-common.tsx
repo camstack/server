@@ -33,7 +33,7 @@ import type {
   CardSupplyAction,
 } from '../shell/model'
 import { remoteKeyOf } from '../shell/remote-keys'
-import { coarseDuration } from './coarse-duration'
+import { sinceText } from './since-text'
 import { useCommandNotice } from './use-command-notice'
 
 export interface CardCommonInput {
@@ -191,15 +191,16 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
     series.presence === 'present' &&
     series.list.status === 'ok' &&
     (series.list.data?.length ?? 0) > 0
+  const offlineDuration = sinceText(offlineSince, Date.now(), t)
   const common: CardCommon = {
     name: device.data?.name ?? '',
     integration: labels.get(deviceId) ?? null,
     online,
     offlineLabel:
-      offlineSince === null
+      offlineDuration === undefined
         ? null
         : t('uiLibrary.deviceCard.offlineFor', 'Offline for {{duration}}', {
-            duration: coarseDuration(Date.now() - offlineSince, t),
+            duration: offlineDuration,
           }),
     readOnly: !canActuate,
     notice,
