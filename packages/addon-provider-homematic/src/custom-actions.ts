@@ -15,6 +15,7 @@ import {
   IntegrationRefSchema,
   OkResultSchema,
   PairingStatusSchema,
+  SetButtonEventsInputSchema,
   SetChannelConfigInputSchema,
   SetInstallModeInputSchema,
   ServiceMessagesResultSchema,
@@ -89,6 +90,10 @@ export const homematicActions = defineCustomActions({
     auth: 'admin',
   }),
   acknowledgeServiceMessage: customAction(AcknowledgeInputSchema, OkResultSchema, {
+    kind: 'mutation',
+    auth: 'admin',
+  }),
+  setButtonEvents: customAction(SetButtonEventsInputSchema, OkResultSchema, {
     kind: 'mutation',
     auth: 'admin',
   }),

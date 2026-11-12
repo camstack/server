@@ -262,6 +262,41 @@ describe('HmContainerDevice.getAccessoryChildren', () => {
     expect(children.some((c) => c.stableIdSuffix.startsWith('maint-'))).toBe(false)
   })
 
+  it('names each relay from the CCU channel name, else container plus channel index', () => {
+    const relays = {
+      address: ADDR,
+      type: 'HmIP-BS2',
+      channels: [
+        {
+          address: `${ADDR}:4`,
+          index: 4,
+          type: 'SWITCH_VIRTUAL_RECEIVER',
+          dataPoints: [],
+          name: 'Luce',
+        },
+        { address: `${ADDR}:8`, index: 8, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+      ],
+    } as unknown as HmDevice
+    homematicFacades.set(
+      'hm_001',
+      makeFacade(
+        [relays],
+        [
+          { kind: 'switch', device: ADDR, channel: `${ADDR}:4` } as unknown as HmCustomEntity,
+          { kind: 'switch', device: ADDR, channel: `${ADDR}:8` } as unknown as HmCustomEntity,
+        ],
+      ),
+    )
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
+    const children = dev.getAccessoryChildren()
+    expect(children.find((child) => child.stableIdSuffix === `act-${ADDR}:4`)?.meta.name).toBe(
+      'Luce',
+    )
+    expect(children.find((child) => child.stableIdSuffix === `act-${ADDR}:8`)?.meta.name).toBe(
+      'Test Container ch8',
+    )
+  })
+
   it('wall switch with key channels → exactly ONE event-emitter child', () => {
     homematicFacades.set('hm_001', makeFacade([makeWallSwitch()], []))
     const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))

@@ -5,6 +5,7 @@ import {
   formatEventAge,
   formatEventHeadline,
   groupVocabulary,
+  sharedVocabularyNotice,
 } from '../event-emitter-format'
 
 describe('channelIndexOf', () => {
@@ -115,5 +116,27 @@ describe('the declared vocabulary', () => {
       label: 'Tilted',
     })
     expect(describeFire(null, VOCABULARY)).toBeNull()
+  })
+})
+
+describe('sharedVocabularyNotice', () => {
+  it('returns the description every entry agrees on', () => {
+    const notice = 'The CCU does not send these presses — enable button events on the CCU page'
+    expect(
+      sharedVocabularyNotice([
+        { id: 'PRESS_SHORT', label: 'Short press', description: notice },
+        { id: 'PRESS_LONG', label: 'Long press', description: notice },
+      ]),
+    ).toBe(notice)
+  })
+
+  it('returns null when the entries disagree or say nothing', () => {
+    expect(sharedVocabularyNotice([{ id: 'PRESS_SHORT', label: 'Short press' }])).toBeNull()
+    expect(
+      sharedVocabularyNotice([
+        { id: 'PRESS_SHORT', label: 'Short', description: 'one' },
+        { id: 'PRESS_LONG', label: 'Long', description: 'two' },
+      ]),
+    ).toBeNull()
   })
 })

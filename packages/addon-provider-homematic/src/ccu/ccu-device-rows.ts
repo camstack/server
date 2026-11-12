@@ -56,5 +56,6 @@ export function toCcuDeviceRow(device: HmDevice): CcuDeviceRow {
     unreach: asBool(readParam(maintenance, ['UNREACH', 'STICKY_UNREACH'])),
     configPending: asBool(readParam(maintenance, ['CONFIG_PENDING'])),
     sabotage: asBool(readParam(maintenance, ['SABOTAGE', 'ERROR_SABOTAGE'])),
+    keyChannels: [],
   }
 }

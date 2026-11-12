@@ -3,14 +3,19 @@ import {
   BaseDevice,
   DeviceFeature,
   DeviceType,
+  errMsg,
   type AccessoryChildSpec,
   type DeviceContext,
 } from '@camstack/types'
 import type { Homematic, HmDevice, ValueChangedEvent } from 'nodehomematic'
 import { homematicFacades } from '../homematic-facade-resolver.js'
+import { readHmName } from '../ccu/hm-channel-links.js'
 import { mapMaintenanceChannel, readReachability } from '../homematic-diagnostics-mapping.js'
 import { deriveHmEntitySpecs, type HmEntitySpec } from './hm-entity-spec.js'
 import { hmChildFactoryForSpec } from './hm-child-class-factory.js'
+import { channelIndexFromAddress } from './hm-cold-start.js'
+import { actuatorNameWrite, legacyActuatorName, multiActuatorChildName } from './hm-child-name.js'
+import { hmPrimaryChildKeys, preferenceToStamp } from './hm-primary-child.js'
 
 /**
  * Persisted config for a Homematic Container (the parent of one physical CCU
@@ -52,6 +57,8 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
 
   /** Unsubscribe for the facade `valueChanged` reachability listener. */
   private valueChangedUnsub: (() => void) | null = null
+  /** Unsubscribe for the session fan-out that re-stamps names once the CCU answers. */
+  private reconcileUnsub: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = hmContainerSchema.parse(ctx.persistedConfig ?? {})
@@ -117,7 +124,17 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
     })
   }
 
+  override async onActivate(): Promise<void> {
+    await super.onActivate()
+    await this.reconcileDerived()
+    this.reconcileUnsub = homematicFacades.onSnapshot(this.integrationId, () => {
+      void this.reconcileDerived()
+    })
+  }
+
   override async removeDevice(): Promise<void> {
+    this.reconcileUnsub?.()
+    this.reconcileUnsub = null
     if (this.valueChangedUnsub) {
       try {
         this.valueChangedUnsub()
@@ -170,10 +187,98 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
     const actuatorKeys = specs.filter((s) => s.key.startsWith('act-')).map((s) => s.key)
     const multipleActuators = actuatorKeys.length > 1
     return specs.map((spec) => {
-      if (!spec.key.startsWith('act-')) return this.childSpec(spec)
-      const suffix = multipleActuators ? ` ${spec.key.slice('act-'.length)}` : ''
-      return this.childSpec(spec, `${this.name}${suffix}`)
+      if (!spec.key.startsWith('act-') || !multipleActuators) {
+        return this.childSpec(spec, spec.key.startsWith('act-') ? this.name : undefined)
+      }
+      return this.childSpec(spec, this.actuatorName(hmDevice, spec))
     })
+  }
+
+  /** CCU channel name, else `"<container> ch<index>"`. Never the raw address. */
+  private actuatorName(hmDevice: HmDevice, spec: HmEntitySpec): string {
+    const channelAddress = spec.key.slice('act-'.length)
+    const channel = hmDevice.channels.find((candidate) => candidate.address === channelAddress)
+    const index =
+      channel !== undefined ? String(channel.index) : channelIndexFromAddress(channelAddress)
+    return multiActuatorChildName({
+      containerName: this.name,
+      channelName: channel === undefined ? null : readHmName(channel),
+      channelIndex: index,
+    })
+  }
+
+  private async reconcileDerived(): Promise<void> {
+    const hmDevice = this.resolveHmDevice()
+    if (hmDevice === null) return
+    try {
+      await this.stampPrimaryPreference(hmDevice)
+      await this.refreshActuatorNames(hmDevice)
+    } catch (err: unknown) {
+      this.ctx.logger.warn('HmContainerDevice: could not refresh derived child meta', {
+        tags: { deviceId: this.id },
+        meta: { address: this.address, error: errMsg(err) },
+      })
+    }
+  }
+
+  private async stampPrimaryPreference(hmDevice: HmDevice): Promise<void> {
+    const manager = this.ctx.api?.deviceManager
+    if (manager === undefined) return
+    const custom =
+      this.facade?.customEntities()?.filter((entity) => entity.device === this.address) ?? []
+    const declared = hmPrimaryChildKeys(deriveHmEntitySpecs(hmDevice, custom))
+    const keys = preferenceToStamp(this.ctx.deviceMeta.primaryChildPreference, declared)
+    if (keys === null) return
+    await manager.setPrimaryChildPreference.mutate({
+      deviceId: this.id,
+      primaryChildPreference: keys,
+    })
+    this.ctx.logger.info('Homematic container stamped its primary child', {
+      tags: { deviceId: this.id },
+      meta: { address: this.address, primaryChildPreference: keys },
+    })
+  }
+
+  private async refreshActuatorNames(hmDevice: HmDevice): Promise<void> {
+    const manager = this.ctx.api?.deviceManager
+    if (manager === undefined) return
+    const custom =
+      this.facade?.customEntities()?.filter((entity) => entity.device === this.address) ?? []
+    const specs = deriveHmEntitySpecs(hmDevice, custom).filter((spec) =>
+      spec.key.startsWith('act-'),
+    )
+    if (specs.length < 2) return
+    const children = await manager.getChildren.query({ parentDeviceId: this.id })
+    for (const spec of specs) {
+      const child = children.find((candidate) => candidate.stableId.endsWith(`-${spec.key}`))
+      if (child === undefined) continue
+      const meta = await manager.loadMeta.query({ deviceId: child.id })
+      if (meta === null) continue
+      const channelAddress = spec.key.slice('act-'.length)
+      const desired = this.actuatorName(hmDevice, spec)
+      const decision = actuatorNameWrite({
+        currentName: meta.name,
+        userNamed: meta.userNamed,
+        desiredName: desired,
+        legacyAutoName: legacyActuatorName(this.name, channelAddress),
+        fallbackAutoName: multiActuatorChildName({
+          containerName: this.name,
+          channelName: null,
+          channelIndex: channelIndexFromAddress(channelAddress),
+        }),
+        stableId: child.stableId,
+      })
+      if (decision.kind === 'keep') continue
+      await manager.setName.mutate({
+        deviceId: child.id,
+        name: decision.name,
+        ...(decision.stampUserNamed ? {} : { stampUserNamed: false }),
+      })
+      this.ctx.logger.info('Homematic actuator child took its channel name', {
+        tags: { deviceId: child.id },
+        meta: { address: this.address, channel: channelAddress, name: decision.name },
+      })
+    }
   }
 
   // ── spec assembly ───────────────────────────────────────────────────────

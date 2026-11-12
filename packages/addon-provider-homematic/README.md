@@ -58,3 +58,11 @@ See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
 Two CCUs on one hub share the default callback port (2128): give the second one another **callback port**.
 An older broker-based CCU is not migrated: remove it and add the integration.
+
+**BidCos-RF** stays off unless you turn it on. Homematic IP devices use HmIP-RF. An HM-RCV-50, an RPI-RF-MOD, or a classic BidCos device is listed only when **Enable Homematic (BidCos-RF)** is on.
+
+## Button events need a central link
+
+A wall switch or remote (HmIP-BS2, HmIP-WRC*, HmIP-RC*) only delivers a press to CamStack when that key channel has a **central link** on the CCU. Direct links to other devices stay as they are. On the Homematic CCU page, an adopted device with key channels shows **button events: on / off** for each channel, and **Enable button events** / **Disable** creates or removes the central link.
+
+Until that link exists the Buttons child says that the CCU is not sending those presses. The first press a channel delivers after CamStack starts is logged once at info; every press is logged at debug.

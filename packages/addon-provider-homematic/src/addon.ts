@@ -30,6 +30,8 @@ import {
 import { z } from 'zod'
 import { HomematicReconciler, type IntegrationLifecycleKind } from './homematic-reconciler.js'
 import type { CcuActionDeps } from './ccu/ccu-facade.js'
+import { buildButtonEventHandlers } from './ccu/ccu-button-events.js'
+import { channelLinkPort } from './ccu/hm-channel-links.js'
 import { buildCcuDevicesHandlers } from './ccu/ccu-devices-actions.js'
 import { buildCcuConfigHandlers } from './ccu/ccu-config-actions.js'
 import { buildCcuHeatingHandlers } from './ccu/ccu-heating-actions.js'
@@ -46,6 +48,8 @@ import {
   readCcuConnection,
 } from './homematic-instances.js'
 import { HOMEMATIC_ROWS_TO_RECORD_MIGRATION } from './migrations/index.js'
+import { deriveHmEntitySpecs } from './devices/hm-entity-spec.js'
+import { hmPrimaryChildKeys } from './devices/hm-primary-child.js'
 import { HmContainerDevice } from './devices/hm-container-device.js'
 import { hmChildDeviceClass } from './devices/hm-child-class-factory.js'
 import { isStandaloneEntitySaved } from './devices/hm-standalone-entity.js'
@@ -174,6 +178,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
         ...buildCcuHeatingHandlers(this.ccuActionDeps()),
         ...buildCcuPairingHandlers(this.ccuActionDeps()),
         ...buildCcuConfigHandlers(this.ccuActionDeps()),
+        ...buildButtonEventHandlers(this.ccuActionDeps()),
         discoverCcu: async () => {
           const { candidates } = await this.ctx.api.deviceManager.discoverProvider.mutate({
             addonId: this.ctx.id,
@@ -197,15 +202,45 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
     return { id: this.addonId, listPages: () => HOMEMATIC_PAGES }
   }
 
+  /** The child a new container stands for, from the live CCU descriptor. */
+  private primaryChildPreference(integrationId: string, address: string): readonly string[] {
+    const facade = homematicFacades.get(integrationId)
+    if (facade === null) return []
+    const device = facade.devices().find((candidate) => candidate.address === address)
+    if (device === undefined) return []
+    const custom = facade.customEntities().filter((entity) => entity.device === address)
+    return hmPrimaryChildKeys(deriveHmEntitySpecs(device, custom))
+  }
+
+  /** A connected session's facade, or null while the integration is down. */
+  private connectedFacade(integrationId: string): ReturnType<CcuActionDeps['facade']> {
+    const connected = this.clients
+      ?.sessions()
+      .some((session) => session.id === integrationId && session.status === 'connected')
+    return connected === true ? homematicFacades.get(integrationId) : null
+  }
+
+  /** CCU addresses adopted as containers from one integration. */
+  private async adoptedCcuAddresses(integrationId: string): Promise<ReadonlySet<string>> {
+    const reg = this.ctx.kernel.deviceRegistry
+    const devices = this.ctx.kernel.devices
+    const addresses = new Set<string>()
+    if (!reg || !devices) return addresses
+    for (const device of reg.getAllForAddon(this.addonId)) {
+      if (device.parentDeviceId !== null) continue
+      const config = await devices.loadConfig(device.id).catch((): Record<string, unknown> => ({}))
+      if (config['integrationId'] !== integrationId) continue
+      if (typeof config['hmEntityKey'] === 'string') continue
+      const address = config['hmAddress']
+      if (typeof address === 'string' && address.length > 0) addresses.add(address)
+    }
+    return addresses
+  }
+
   /** What the CCU management actions reach: connected sessions only, never a half-started facade. */
   private ccuActionDeps(): CcuActionDeps {
     return {
-      facade: (integrationId) => {
-        const connected = this.clients
-          ?.sessions()
-          .some((session) => session.id === integrationId && session.status === 'connected')
-        return connected === true ? homematicFacades.get(integrationId) : null
-      },
+      facade: (integrationId) => this.connectedFacade(integrationId),
       integrations: () => {
         const clients = this.clients
         if (clients === null) return []
@@ -222,6 +257,11 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
         }))
       },
       logger: this.ctx.logger,
+      adoptedAddresses: (integrationId) => this.adoptedCcuAddresses(integrationId),
+      channelLinks: (integrationId) => {
+        const facade = this.connectedFacade(integrationId)
+        return facade === null ? null : channelLinkPort(facade)
+      },
     }
   }
 
@@ -525,10 +565,12 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
           name,
         }
         const stableId = this.generateStableId(DeviceType.Container, config)
+        const primaryChildPreference = this.primaryChildPreference(integrationId, hmAddress)
         const device = await devices.create(stableId, HmContainerDevice, config, null, {
           type: DeviceType.Container,
           name,
           integrationId,
+          ...(primaryChildPreference.length > 0 ? { primaryChildPreference } : {}),
         })
         const children = await devices.getChildren(device.id)
         return {

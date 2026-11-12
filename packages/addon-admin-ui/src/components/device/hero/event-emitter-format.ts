@@ -80,6 +80,24 @@ export function formatEventAge(timestampMs: number | null | undefined, now: numb
   return i18n.t('helpers.relativeTime.daysAgo', { count: Math.floor(delta / DAY_MS) })
 }
 
+/**
+ * One notice every described entry agrees on. Entries with no description are
+ * ignored. Disagreeing descriptions return null so the hero does not pick one.
+ */
+export function sharedVocabularyNotice(vocabulary: readonly EventVocabularyEntry[]): string | null {
+  let notice: string | null = null
+  for (const entry of vocabulary) {
+    const description = entry.description
+    if (description === undefined || description.length === 0) continue
+    if (notice === null) {
+      notice = description
+      continue
+    }
+    if (notice !== description) return null
+  }
+  return notice
+}
+
 /** The events one part of the device fires; `source: null` holds the ones that name no part. */
 export interface VocabularyGroup {
   readonly source: EventVocabularySource | null

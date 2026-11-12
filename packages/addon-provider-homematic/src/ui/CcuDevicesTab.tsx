@@ -9,12 +9,13 @@ import {
   type DataColumn,
   type DataTableFilterConfig,
 } from '@camstack/ui-library'
-import { SlidersHorizontal, Trash2 } from 'lucide-react'
+import { MousePointerClick, SlidersHorizontal, Trash2 } from 'lucide-react'
 import { CcuDevicesResultSchema, OkResultSchema, type CcuDeviceRow } from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
 import { percentOrDash, textOrDash } from './format.js'
 import { ChannelConfigDialog } from './ChannelConfigDialog.js'
+import { ButtonEventsDialog } from './ButtonEventsDialog.js'
 import { DeleteDeviceDialog, type DeleteDraft } from './DeleteDeviceDialog.js'
 import { useCcuData } from './use-ccu-data.js'
 import { useCcuWrite } from './use-ccu-write.js'
@@ -53,6 +54,7 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
   const write = useCcuWrite(trpc)
   const [deleting, setDeleting] = useState<CcuDeviceRow | null>(null)
   const [configuring, setConfiguring] = useState<CcuDeviceRow | null>(null)
+  const [buttons, setButtons] = useState<CcuDeviceRow | null>(null)
 
   const removeDevice = async (device: CcuDeviceRow, draft: DeleteDraft): Promise<void> => {
     const done = await write({
@@ -148,6 +150,24 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
               <Badge variant="info">{t('devices.configPending')}</Badge>
             )}
             {deviceIssue(row) === 'ok' && <Badge variant="success">{t('devices.ok')}</Badge>}
+            {row.keyChannels.map((channel) => (
+              <Badge
+                key={channel.address}
+                variant={channel.central === 'on' ? 'success' : 'warning'}
+              >
+                {t('devices.buttonEventsBadge', {
+                  index: channel.index,
+                  state:
+                    channel.central === 'on'
+                      ? t('devices.buttonEventsOn')
+                      : channel.central === 'off'
+                        ? t('devices.buttonEventsOff')
+                        : channel.central === 'unsupported'
+                          ? t('devices.buttonEventsUnsupported')
+                          : t('devices.buttonEventsUnknown'),
+                })}
+              </Badge>
+            ))}
           </span>
         ),
       },
@@ -159,6 +179,16 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
         render: (row) => (
           <KebabMenu
             items={[
+              ...(row.keyChannels.length > 0
+                ? [
+                    {
+                      id: 'button-events',
+                      label: t('devices.buttonEventsAction'),
+                      icon: MousePointerClick,
+                      onClick: () => setButtons(row),
+                    },
+                  ]
+                : []),
               {
                 id: 'configure',
                 label: t('devices.configureAction'),
@@ -240,6 +270,18 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
           integrationId={integrationId}
           device={configuring}
           onClose={() => setConfiguring(null)}
+        />
+      )}
+      {buttons !== null && (
+        <ButtonEventsDialog
+          trpc={trpc}
+          integrationId={integrationId}
+          device={buttons}
+          onClose={() => setButtons(null)}
+          onChanged={() => {
+            setButtons(null)
+            devices.reload()
+          }}
         />
       )}
       {deleting !== null && (

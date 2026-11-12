@@ -2,7 +2,12 @@ import { findVocabularyEntry, readEventVocabulary } from '@camstack/types'
 import { useDeviceProxy, useDeviceStateSlice, useSystem } from '@camstack/ui-library'
 import { Hand, MousePointerClick } from 'lucide-react'
 import { type ReactElement, useEffect, useRef, useState } from 'react'
-import { describeFire, formatEventAge, groupVocabulary } from './event-emitter-format'
+import {
+  describeFire,
+  formatEventAge,
+  groupVocabulary,
+  sharedVocabularyNotice,
+} from './event-emitter-format'
 import type { HeroProps } from './HeroRegistry'
 import { useTranslation } from 'react-i18next'
 
@@ -91,6 +96,7 @@ export function EventEmitterHero({ deviceId }: HeroProps): ReactElement {
 
   const vocabulary = slice === undefined ? [] : readEventVocabulary(slice)
   const groups = groupVocabulary(vocabulary)
+  const notice = sharedVocabularyNotice(vocabulary)
   const described = describeFire(lastEvent, vocabulary)
   const headline =
     described === null
@@ -145,6 +151,15 @@ export function EventEmitterHero({ deviceId }: HeroProps): ReactElement {
             : t('hero.eventEmitterHero.waitingForTheFirstEvent', 'Waiting for the first event')}
         </div>
       </div>
+
+      {notice !== null && (
+        <p
+          data-testid="event-emitter-notice"
+          className="max-w-full text-center text-xs text-foreground-subtle"
+        >
+          {notice}
+        </p>
+      )}
 
       {groups.length > 0 && (
         <div className="flex max-w-full flex-col items-center gap-1">

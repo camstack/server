@@ -92,7 +92,23 @@ export const AcknowledgeInputSchema = IntegrationRefSchema.extend({
 
 export const OkResultSchema = z.object({ ok: z.literal(true) })
 
+export const SetButtonEventsInputSchema = IntegrationRefSchema.extend({
+  /** Key-channel address, e.g. `00315F298E5093:1`. */
+  address: z.string().min(1),
+  enabled: z.boolean(),
+  confirmed: ConfirmedSchema,
+})
+
 // ── Devices ────────────────────────────────────────────────────────────────
+
+/** One key channel's central-link state. `unknown` is a read that failed. */
+export const KeyChannelLinkSchema = z.object({
+  address: z.string(),
+  index: z.string(),
+  name: z.string().nullable(),
+  central: z.enum(['on', 'off', 'unsupported', 'unknown']),
+})
+export type KeyChannelLink = z.infer<typeof KeyChannelLinkSchema>
 
 export const CcuDeviceRowSchema = z.object({
   address: z.string(),
@@ -115,6 +131,11 @@ export const CcuDeviceRowSchema = z.object({
   unreach: z.boolean().nullable(),
   configPending: z.boolean().nullable(),
   sabotage: z.boolean().nullable(),
+  /**
+   * Key channels of an ADOPTED device, and whether the CCU sends their presses
+   * (a central link). Empty for a device that is not adopted or has no keys.
+   */
+  keyChannels: z.array(KeyChannelLinkSchema),
 })
 export type CcuDeviceRow = z.infer<typeof CcuDeviceRowSchema>
 

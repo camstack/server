@@ -1,5 +1,6 @@
 import type { IScopedLogger } from '@camstack/types'
 import type { Homematic } from 'nodehomematic'
+import type { HmChannelLinkPort } from './hm-channel-links.js'
 import type { CcuListItem } from './ccu-schemas.js'
 
 /**
@@ -32,6 +33,14 @@ export interface CcuActionDeps {
   readonly facade: (integrationId: string) => CcuFacade | null
   readonly integrations: () => readonly CcuListItem[]
   readonly logger: IScopedLogger
+  /** CCU device addresses already adopted from this integration. */
+  readonly adoptedAddresses: (integrationId: string) => Promise<ReadonlySet<string>>
+  /**
+   * Central-link port for a connected integration. Null when there is no
+   * session. A session whose library lacks the methods still returns a port;
+   * that port answers `unsupported`.
+   */
+  readonly channelLinks: (integrationId: string) => HmChannelLinkPort | null
 }
 
 export function errorText(err: unknown): string {

@@ -6,6 +6,7 @@ import {
   eventTypesOfVocabulary,
   findVocabularyEntry,
   plainEventVocabulary,
+  type ConfigUISchemaWithValues,
   type DeviceContext,
   type EventEmitterStatus,
   type EventFire,
@@ -13,6 +14,7 @@ import {
   type InferNativeProvider,
 } from '@camstack/types'
 import type { ValueChangedEvent } from 'nodehomematic'
+import { channelLinkPort } from '../ccu/hm-channel-links.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'
 import {
@@ -21,7 +23,11 @@ import {
   channelIndexFromAddress,
   coldEventEmitter,
 } from './hm-cold-start.js'
-import { hmKeyVocabulary } from './hm-key-vocabulary.js'
+import { hmKeyChannels, hmKeyVocabulary } from './hm-key-vocabulary.js'
+
+/** Shown on the Buttons child when none of its key channels has a central link. */
+export const BUTTON_EVENTS_HINT =
+  'The CCU does not send these presses — enable button events on the CCU page'
 
 /**
  * Event-emitter child config: the persisted native press vocabulary for the
@@ -49,6 +55,10 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
   #declared: readonly EventVocabularyEntry[] | null = null
   /** Fires already reported as outside the vocabulary, as `source:token`. */
   readonly #undeclaredLogged = new Set<string>()
+  /** Key channels that have delivered a press since this process started. */
+  readonly #pressSeen = new Set<string>()
+  /** True once we know every key channel lacks a central link. */
+  #centralLinkMissing = false
   #eventSeq = 0
   #eventCount = 0
   /** Unsubscribe for the integration's state-change fan-out. */
@@ -66,9 +76,35 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
     // connected) on this fan-out, so the buttons land the moment the CCU
     // answers, not at the first press.
     if (this.integrationId !== undefined) {
-      this.#snapshotUnsub = homematicFacades.onSnapshot(this.integrationId, () =>
-        this.refreshDeclaredVocabulary(),
-      )
+      this.#snapshotUnsub = homematicFacades.onSnapshot(this.integrationId, () => {
+        this.refreshDeclaredVocabulary()
+        void this.refreshCentralLinks()
+      })
+    }
+    void this.refreshCentralLinks()
+  }
+
+  override getSettingsUISchema(): ConfigUISchemaWithValues {
+    if (!this.#centralLinkMissing) return { sections: [] }
+    return {
+      sections: [
+        {
+          id: 'button-events',
+          title: 'Button events',
+          titleKey: 'provider-homematic:device.buttonEvents.title',
+          columns: 1,
+          fields: [
+            {
+              type: 'info',
+              key: 'buttonEventsHint',
+              label: 'Button events',
+              labelKey: 'provider-homematic:device.buttonEvents.hint.label',
+              content: BUTTON_EVENTS_HINT,
+              variant: 'warning',
+            },
+          ],
+        },
+      ],
     }
   }
 
@@ -78,12 +114,58 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
    */
   private refreshDeclaredVocabulary(): void {
     if (this.#declared !== null) return
-    const vocabulary = this.vocabulary()
+    this.vocabulary()
     if (this.#declared === null) return
+    const published = this.publishedVocabulary()
     const current = this.runtimeState.getCapState<EventEmitterStatus>('event-emitter')
     this.runtimeState.setCapState('event-emitter', {
-      eventTypes: eventTypesOfVocabulary(vocabulary),
-      vocabulary: [...vocabulary],
+      eventTypes: eventTypesOfVocabulary(published),
+      vocabulary: [...published],
+      lastEvent: current?.lastEvent ?? null,
+      eventCountSinceStart: current?.eventCountSinceStart ?? 0,
+    })
+  }
+
+  /** The live vocabulary, plus the central-link hint when the CCU sends nothing. */
+  private publishedVocabulary(): readonly EventVocabularyEntry[] {
+    const vocabulary = this.vocabulary()
+    if (!this.#centralLinkMissing) return vocabulary
+    return vocabulary.map((entry) => ({ ...entry, description: BUTTON_EVENTS_HINT }))
+  }
+
+  /**
+   * Ask the facade whether each key channel has a central link. A library
+   * that cannot answer (`unsupported`) leaves the hint off: absence of the
+   * method is not evidence the CCU is silent.
+   */
+  private async refreshCentralLinks(): Promise<void> {
+    const facade =
+      this.integrationId === undefined ? null : homematicFacades.get(this.integrationId)
+    const device = this.resolveHmDevice()
+    if (facade === null || device === null) return
+    const keys = hmKeyChannels(device)
+    if (keys.length === 0) return
+    const port = channelLinkPort(facade)
+    let missing = false
+    for (const channel of keys) {
+      const read = await port.getChannelLinkState(channel.address)
+      if (read.kind === 'unsupported') return
+      if (read.kind === 'error') {
+        this.ctx.logger.warn('Homematic key channel link state could not be read', {
+          tags: { deviceId: this.ctx.id },
+          meta: { address: this.address, channel: channel.address, error: read.message },
+        })
+        return
+      }
+      if (!read.state.central) missing = true
+    }
+    if (missing === this.#centralLinkMissing) return
+    this.#centralLinkMissing = missing
+    const current = this.runtimeState.getCapState<EventEmitterStatus>('event-emitter')
+    const published = this.publishedVocabulary()
+    this.runtimeState.setCapState('event-emitter', {
+      eventTypes: eventTypesOfVocabulary(published),
+      vocabulary: [...published],
       lastEvent: current?.lastEvent ?? null,
       eventCountSinceStart: current?.eventCountSinceStart ?? 0,
     })
@@ -102,7 +184,7 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
         coldEventEmitter(this.vocabulary()),
     }
     this.ctx.registerNativeCap(eventEmitterCapability, provider)
-    this.runtimeState.setCapState('event-emitter', coldEventEmitter(this.vocabulary()))
+    this.runtimeState.setCapState('event-emitter', coldEventEmitter(this.publishedVocabulary()))
   }
 
   /**
@@ -139,6 +221,12 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
     })
   }
 
+  private keyChannelAddresses(): ReadonlySet<string> {
+    const device = this.resolveHmDevice()
+    if (device === null) return new Set()
+    return new Set(hmKeyChannels(device).map((channel) => channel.address))
+  }
+
   /**
    * Translate a key-channel `PRESS_*` datapoint into an `EventFire`: emit
    * `EventCategory.EventEmitted` on the bus and write the `event-emitter`
@@ -150,10 +238,31 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
   private decodeKeyPress(event: ValueChangedEvent): void {
     const now = event.ts || Date.now()
     const { parameter, value, channel } = event
-    if (!HM_KEY_PRESS_SET.has(parameter)) return
+    const isPress = HM_KEY_PRESS_SET.has(parameter)
+    const isKey = isPress || this.keyChannelAddresses().has(channel)
+    if (!isKey) return
     // A press is the datapoint asserting; the matching reset (value false) is
-    // not a new press. ACTION-style key datapoints carry boolean true on press.
-    if (typeof value === 'boolean' && value === false) return
+    // not a new press. One debug line per received PRESS_*. A key-channel
+    // value that decodes to nothing is logged too (D391).
+    const accepted = isPress && !(typeof value === 'boolean' && value === false)
+    if (!accepted) {
+      this.ctx.logger.debug('Homematic key channel value changed but decoded to no press', {
+        tags: { deviceId: this.ctx.id },
+        meta: { channel, parameter, ...(isPress ? { press: parameter } : {}) },
+      })
+      return
+    }
+    this.ctx.logger.debug('Homematic key press received', {
+      tags: { deviceId: this.ctx.id },
+      meta: { channel, press: parameter },
+    })
+    if (!this.#pressSeen.has(channel)) {
+      this.#pressSeen.add(channel)
+      this.ctx.logger.info('Homematic key channel delivered its first press since start', {
+        tags: { deviceId: this.ctx.id },
+        meta: { channel, press: parameter },
+      })
+    }
 
     const channelIndex = channelIndexFromAddress(channel)
     const fire: EventFire = {
@@ -178,7 +287,7 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
       ),
     )
 
-    const vocabulary = this.vocabulary()
+    const vocabulary = this.publishedVocabulary()
     this.noteUndeclared(vocabulary, parameter, channelIndex)
     const slice: EventEmitterStatus = {
       eventTypes: eventTypesOfVocabulary(vocabulary),

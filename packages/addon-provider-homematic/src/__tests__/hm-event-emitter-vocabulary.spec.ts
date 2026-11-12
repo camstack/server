@@ -37,18 +37,24 @@ interface Harness {
   readonly ctx: DeviceContext
   readonly status: () => EventEmitterStatus | undefined
   readonly warnings: readonly LogRecord[]
+  readonly logs: readonly LogRecord[]
   readonly emitted: readonly Emitted[]
 }
 
 function makeCtx(): Harness {
   let runtimeStateRef: IDeviceRuntimeState | null = null
   const warnings: LogRecord[] = []
+  const logs: LogRecord[] = []
   const emitted: Emitted[] = []
+  const record = (message: string, extras?: unknown): void => {
+    logs.push({ message, extras })
+  }
   const logger = {
-    debug: () => undefined,
-    info: () => undefined,
+    debug: record,
+    info: record,
     warn: (message: string, extras?: unknown) => {
       warnings.push({ message, extras })
+      record(message, extras)
     },
     error: () => undefined,
     child: () => logger,
@@ -107,6 +113,7 @@ function makeCtx(): Harness {
     ctx,
     status: () => runtimeStateRef?.getCapState<EventEmitterStatus>('event-emitter'),
     warnings,
+    logs,
     emitted,
   }
 }
@@ -114,6 +121,7 @@ function makeCtx(): Harness {
 interface FacadeHandle {
   readonly facade: Homematic
   readonly press: (channelIndex: number, parameter: string) => void
+  readonly emit: (event: ValueChangedEvent) => void
 }
 
 /** A two-button wall switch as the library reports it: keys on :1 and :2. */
@@ -164,6 +172,9 @@ function makeFacade(): FacadeHandle {
         prevValue: null,
         ts: 1_790_000_000_000,
       }
+      for (const handler of handlers.get('valueChanged') ?? []) handler(event)
+    },
+    emit: (event: ValueChangedEvent) => {
       for (const handler of handlers.get('valueChanged') ?? []) handler(event)
     },
   }
@@ -258,5 +269,63 @@ describe('HmEventEmitterDevice, the declared vocabulary', () => {
       { id: 'PRESS_SHORT', label: 'PRESS_SHORT' },
       { id: 'PRESS_LONG', label: 'PRESS_LONG' },
     ])
+  })
+
+  it('logs each received press, and the first one on a channel at info', () => {
+    const f = makeFacade()
+    homematicFacades.set(INTEGRATION_ID, f.facade)
+    const h = makeCtx()
+    new HmEventEmitterDevice(h.ctx)
+    f.press(1, 'PRESS_SHORT')
+    f.press(1, 'PRESS_LONG')
+    const received = h.logs.filter((line) => line.message === 'Homematic key press received')
+    expect(received).toHaveLength(2)
+    expect(received[0]?.extras).toMatchObject({
+      tags: { deviceId: DEVICE_ID },
+      meta: { channel: `${ADDRESS}:1`, press: 'PRESS_SHORT' },
+    })
+    const first = h.logs.filter(
+      (line) => line.message === 'Homematic key channel delivered its first press since start',
+    )
+    expect(first).toHaveLength(1)
+    expect(first[0]?.extras).toMatchObject({
+      tags: { deviceId: DEVICE_ID },
+      meta: { channel: `${ADDRESS}:1`, press: 'PRESS_SHORT' },
+    })
+  })
+
+  it('logs a key-channel value that decodes to no press', () => {
+    const f = makeFacade()
+    homematicFacades.set(INTEGRATION_ID, f.facade)
+    const h = makeCtx()
+    new HmEventEmitterDevice(h.ctx)
+    f.emit({
+      dpId: `${INTEGRATION_ID}:${ADDRESS}:1:VALUES:PRESS_SHORT`,
+      device: ADDRESS,
+      channel: `${ADDRESS}:1`,
+      parameter: 'PRESS_SHORT',
+      value: false,
+      prevValue: true,
+      ts: 1_790_000_000_000,
+    })
+    f.emit({
+      dpId: `${INTEGRATION_ID}:${ADDRESS}:1:VALUES:STATE`,
+      device: ADDRESS,
+      channel: `${ADDRESS}:1`,
+      parameter: 'STATE',
+      value: true,
+      prevValue: null,
+      ts: 1_790_000_000_000,
+    })
+    const dropped = h.logs.filter(
+      (line) => line.message === 'Homematic key channel value changed but decoded to no press',
+    )
+    expect(dropped).toHaveLength(2)
+    expect(dropped[0]?.extras).toMatchObject({ tags: { deviceId: DEVICE_ID } })
+    expect(dropped[1]?.extras).toMatchObject({
+      tags: { deviceId: DEVICE_ID },
+      meta: { parameter: 'STATE' },
+    })
+    expect(h.emitted).toHaveLength(0)
   })
 })

@@ -19,5 +19,8 @@
   "connection.s_credentials.username.label": "Nome utente",
   "connection.s_credentials.password.label": "Password",
   "connection.s_advanced.title": "Avanzate",
-  "connection.s_advanced.tls.label": "Usa TLS"
+  "connection.s_advanced.tls.label": "Usa TLS",
+  "connection.s_interfaces.enableBidcosRf.description": "I dispositivi BidCos classici (HM-RCV-50, RPI-RF-MOD) compaiono solo con questa opzione attiva.",
+  "device.buttonEvents.title": "Eventi pulsante",
+  "device.buttonEvents.hint.label": "Eventi pulsante"
 }

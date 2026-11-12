@@ -26,6 +26,7 @@ interface VocabularyEntry {
   readonly id: string
   readonly source?: { readonly id: string; readonly label: string }
   readonly label: string
+  readonly description?: string
   readonly kind?: string
 }
 interface EmitterSlice {
@@ -116,6 +117,18 @@ describe('EventEmitterHero', () => {
       'PRESS_LONG',
       'PRESS_LONG_START',
     ])
+  })
+
+  it('shows a notice the vocabulary agrees on', () => {
+    const notice = 'The CCU does not send these presses — enable button events on the CCU page'
+    slice.current = {
+      eventTypes: ['PRESS_SHORT'],
+      vocabulary: [{ id: 'PRESS_SHORT', label: 'Short press', description: notice }],
+      lastEvent: null,
+      eventCountSinceStart: 0,
+    }
+    render(<EventEmitterHero {...heroProps} />)
+    expect(screen.getByTestId('event-emitter-notice').textContent).toBe(notice)
   })
 
   it('a declared vocabulary shows one row per button with labelled presses, and names the last press by them', () => {

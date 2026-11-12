@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Homematic multi-relay children use the CCU channel name, button presses are logged, and adopted key channels can gain a central link from the CCU page.
+
 ## [1.2.192] - 2026-11-12
 
 ### Changed

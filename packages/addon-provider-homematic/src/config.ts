@@ -22,7 +22,12 @@ import { inferCallbackHost } from './callback-host.js'
 export const homematicConfigSchema = z.object({
   host: z.string().min(1).describe('CCU3 / RaspberryMatic host name or IP address'),
   enableHmipRf: z.boolean().default(true).describe('Enable Homematic IP (HmIP-RF)'),
-  enableBidcosRf: z.boolean().default(false).describe('Enable Homematic (BidCos-RF)'),
+  enableBidcosRf: z
+    .boolean()
+    .default(false)
+    .describe(
+      'Enable Homematic (BidCos-RF). HM-RCV-50, RPI-RF-MOD and classic BidCos devices appear only with this on',
+    ),
   enableGroups: z
     .boolean()
     .default(true)
@@ -224,6 +229,9 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             key: 'enableBidcosRf',
             label: 'Enable Homematic (BidCos-RF)',
             labelKey: 'provider-homematic:connection.s_interfaces.enableBidcosRf.label',
+            description:
+              'HM-RCV-50, RPI-RF-MOD and classic BidCos devices appear only with this on.',
+            descriptionKey: 'provider-homematic:connection.s_interfaces.enableBidcosRf.description',
             default: false,
           },
           {

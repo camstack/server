@@ -25,6 +25,7 @@ function device(
     unreach: false,
     configPending: false,
     sabotage: false,
+    keyChannels: [],
     ...extra,
   }
 }
@@ -35,7 +36,14 @@ const DEVICES = [
     availableFirmware: '1.0.8',
     updatable: true,
   }),
-  device('0001D3C99C5678', 'HmIP-BSM', 'Hall lamp', { rooms: ['Hall'], functions: ['Light'] }),
+  device('0001D3C99C5678', 'HmIP-BS2', 'Hall buttons', {
+    rooms: ['Hall'],
+    functions: ['Light'],
+    keyChannels: [
+      { address: '0001D3C99C5678:1', index: '1', name: 'Left', central: 'off' },
+      { address: '0001D3C99C5678:2', index: '2', name: null, central: 'on' },
+    ],
+  }),
   device('NEQ1234567', 'HM-CC-RT-DN', 'Study radiator', { unreach: true, rssi: null }),
 ]
 

@@ -86,7 +86,21 @@
     "deleteMessage": "{{name}} sarà rimosso dalla CCU. Programmi e collegamenti sulla CCU andranno persi.",
     "deleteMessageReset": "{{name}} sarà ripristinato di fabbrica e rimosso dalla CCU. Programmi e collegamenti sulla CCU andranno persi.",
     "deleteConfirm": "Elimina dispositivo",
-    "configureAction": "Configura"
+    "configureAction": "Configura",
+    "buttonEventsOn": "attivo",
+    "buttonEventsOff": "disattivo",
+    "buttonEventsUnsupported": "non disponibile",
+    "buttonEventsUnknown": "sconosciuto",
+    "buttonEventsAction": "Eventi pulsante",
+    "buttonEventsTitle": "Eventi pulsante — {{name}}",
+    "buttonEventsHint": "La CCU invia una pressione solo se il canale tasto ha un collegamento centrale. I collegamenti diretti restano.",
+    "buttonEventsStatus": "eventi pulsante: {{state}}",
+    "buttonEventsBadge": "ch{{index}} {{state}}",
+    "buttonChannel": "Canale {{index}}",
+    "enableButtonEvents": "Abilita eventi pulsante",
+    "disableButtonEvents": "Disabilita eventi pulsante",
+    "enableButtonEventsMessage": "Crea un collegamento centrale per {{name}}. I collegamenti diretti restano.",
+    "disableButtonEventsMessage": "Rimuove il collegamento centrale di {{name}}. I collegamenti diretti restano."
   },
   "heating": {
     "loadFailed": "Impossibile leggere il riscaldamento",

@@ -86,7 +86,21 @@
     "deleteMessage": "{{name}} will be removed from the CCU. Its programs and links on the CCU are lost.",
     "deleteMessageReset": "{{name}} will be factory-reset and removed from the CCU. Its programs and links on the CCU are lost.",
     "deleteConfirm": "Delete device",
-    "configureAction": "Configure"
+    "configureAction": "Configure",
+    "buttonEventsOn": "on",
+    "buttonEventsOff": "off",
+    "buttonEventsUnsupported": "unavailable",
+    "buttonEventsUnknown": "unknown",
+    "buttonEventsAction": "Button events",
+    "buttonEventsTitle": "Button events — {{name}}",
+    "buttonEventsHint": "The CCU sends a press only when the key channel has a central link. Direct links stay.",
+    "buttonEventsStatus": "button events: {{state}}",
+    "buttonEventsBadge": "ch{{index}} {{state}}",
+    "buttonChannel": "Channel {{index}}",
+    "enableButtonEvents": "Enable button events",
+    "disableButtonEvents": "Disable button events",
+    "enableButtonEventsMessage": "Create a central link for {{name}}. Direct links stay.",
+    "disableButtonEventsMessage": "Remove the central link for {{name}}. Direct links stay."
   },
   "heating": {
     "loadFailed": "Could not read the heating setup",
