@@ -7,20 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- A remote or wall switch lists each button with its presses (short, long, held, released), and a press says which button it came from
-
 ### Changed
 
 - A Homematic thermostat turns on and off through its switch, like every other device
+- Event devices declare their event vocabulary; each event is listed under its native name for now
+
+### Added
+
+- A remote or wall switch lists each button with its presses (short, long, held, released), and a press says which button it came from
 
 ## [1.2.190] - 2026-11-11
 
 ### Changed
 
 - Homematic thermostats are now climate devices: a radiator valve gets the radiator role, a floor-heating actuator the floor role, any other thermostat the thermostat role.
-- Event devices declare their event vocabulary; each event is listed under its native name for now
 
 ## [1.2.189] - 2026-11-11
 
