@@ -174,6 +174,10 @@ const DEVICE_LABEL_OMITTED_TYPES: ReadonlySet<string> = new Set([
  * The type is the same label the admin UI shows. Omitted when the name is only
  * the numeric id, the type is unknown / generic / a container, or the name
  * already ends with that label.
+ *
+ * ONE parenthesis, always: a name that already ends with one — the parent a
+ * child carries (#523), `Battery (System)` — takes the type inside it,
+ * `Battery (System · Sensor)`, never `Battery (System) (Sensor)`.
  */
 export function deviceDisplayLabel(
   identity: NcDeviceIdentity | undefined,
@@ -186,7 +190,16 @@ export function deviceDisplayLabel(
   if (DEVICE_LABEL_OMITTED_TYPES.has(type)) return name
   const phrase = deviceTypePhrase(type, language)
   if (phrase === null || nameEndsWithLabel(name, phrase, language)) return name
-  return `${name} (${phrase})`
+  return withTypeSuffix(name, phrase)
+}
+
+/** The separator between the parent and the type inside the one parenthesis. */
+const LABEL_SUFFIX_SEPARATOR = ' · '
+
+function withTypeSuffix(name: string, phrase: string): string {
+  const open = name.lastIndexOf(' (')
+  if (!name.endsWith(')') || open <= 0) return `${name} (${phrase})`
+  return `${name.slice(0, -1)}${LABEL_SUFFIX_SEPARATOR}${phrase})`
 }
 
 /**
@@ -216,6 +229,7 @@ function nameEndsWithLabel(name: string, phrase: string, language: DeviceLabelLa
   const foldedPhrase = phrase.trim().toLocaleLowerCase(language)
   if (foldedPhrase.length === 0 || foldedName.length < foldedPhrase.length) return false
   if (foldedName.endsWith(`(${foldedPhrase})`)) return true
+  if (foldedName.endsWith(`${LABEL_SUFFIX_SEPARATOR}${foldedPhrase})`)) return true
   if (!foldedName.endsWith(foldedPhrase)) return false
   if (foldedName.length === foldedPhrase.length) return true
   const before = foldedName.charAt(foldedName.length - foldedPhrase.length - 1)

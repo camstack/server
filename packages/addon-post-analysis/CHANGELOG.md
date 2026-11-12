@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Notifications about a device that hangs off another one name it with its parent, e.g. 'Battery (System)': battery, offline/online, commands, consumables, alarm sensors and the state summary
 - The snooze exemption for alarm rules reads the vocabulary action of an Action's command steps.
+- Notifications about a device that hangs off another one name it with its parent, e.g. 'Battery (System)': battery, offline/online, commands, consumables, alarm sensors and the state summary
+- A device's label in a notification is one parenthesis: 'Battery (System · Sensor)', never 'Battery (System) (Sensor)'.
 
 ## [1.2.698] - 2026-11-12
 
@@ -65,7 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A summary or timelapse notification no longer evaluates braces that sit inside a camera name or the AI sentence: only the text you wrote is rendered as a device template
-
 
 ## [1.2.690] - 2026-11-10
 

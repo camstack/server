@@ -8,7 +8,13 @@
 import { DeviceType, NcRuleInputSchema, type NcRuleInput } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
-import { deviceDisplayName, NcDeviceDirectory, type NcDeviceIdentity } from '../device-directory.js'
+import {
+  deviceDisplayLabel,
+  deviceDisplayName,
+  frozenDeviceLabel,
+  NcDeviceDirectory,
+  type NcDeviceIdentity,
+} from '../device-directory.js'
 import { incomingFromBatteryBand, type NcSystemEventFacts } from '../event-intake.js'
 import { NcTextCatalog } from '../text-catalog.js'
 import { stateSources } from '../state-summary/state-sources.js'
@@ -153,6 +159,22 @@ describe('#523 — the parent in a device name', () => {
       nowMs: NOW,
       timeZone: 'UTC',
     })
-    expect(text.text).toContain('Battery (System)')
+    expect(text.text).toContain('Battery (System · Sensor) is down to 19%')
+  })
+
+  it('{{deviceLabel}} is ONE parenthesis: the type joins the parent, never a second suffix', async () => {
+    const directory = await warmDirectory()
+    expect(deviceDisplayLabel(directory.get(5693), 5693, 'en')).toBe('Battery (System · Sensor)')
+    expect(deviceDisplayLabel(directory.get(5693), 5693, 'it')).toBe('Battery (System · Sensore)')
+    // A root keeps the plain form.
+    expect(deviceDisplayLabel(directory.get(10), 10, 'en')).toBe('Sensore porta (Sensor)')
+    // A row frozen at intake carries 'Battery (System)': same single form.
+    expect(frozenDeviceLabel(5693, DeviceType.Sensor, 'Battery (System)', 'en')).toBe(
+      'Battery (System · Sensor)',
+    )
+    // A name already ending with the type is left alone.
+    expect(frozenDeviceLabel(5693, DeviceType.Sensor, 'Battery (System · Sensor)', 'en')).toBe(
+      'Battery (System · Sensor)',
+    )
   })
 })
