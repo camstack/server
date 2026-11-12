@@ -52,7 +52,9 @@ describe('triggers', () => {
       name: 'x',
       recipe: {
         when: { kind: 'device-event', category: 'doorbell.on-pressed', deviceId: 101 },
-        actions: [{ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on' }],
+        actions: [
+          { kind: 'command', target: { kind: 'devices', ids: [616] }, actionId: 'button.press' },
+        ],
       },
     })
     expect(g).toContain('ctx.eventBus.subscribe')
@@ -71,7 +73,9 @@ describe('triggers', () => {
           becomes: 'armed-away',
           edge: true,
         },
-        actions: [{ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on' }],
+        actions: [
+          { kind: 'command', target: { kind: 'devices', ids: [616] }, actionId: 'button.press' },
+        ],
       },
     })
     expect(g).toContain('deviceState.getCapSlice')
@@ -115,9 +119,9 @@ describe('actions', () => {
     // of the file also contains these strings, in the same order, so an
     // unscoped search would pass without the switch being generated at all.
     const body = GEN.slice(GEN.indexOf('async function runActions'))
-    const close = body.indexOf('"close"')
+    const close = body.indexOf('"cover.close"')
     const wait = body.indexOf('await sleep(20000)')
-    const arm = body.indexOf('"arm"')
+    const arm = body.indexOf('"alarm.arm.night"')
     expect(close).toBeGreaterThan(-1)
     expect(wait).toBeGreaterThan(close)
     expect(arm).toBeGreaterThan(wait)
@@ -141,7 +145,9 @@ describe('actions', () => {
       name: 'x',
       recipe: {
         when: { kind: 'device-event', category: 'motion.on-motion-changed' },
-        actions: [{ kind: 'cap', deviceId: { $var: 'deviceId' }, cap: 'siren', method: 'on' }],
+        actions: [
+          { kind: 'command', target: { kind: 'var', name: 'deviceId' }, actionId: 'button.press' },
+        ],
       },
     })
     expect(g).toContain('actuateTarget(scope, {"kind":"var","name":"deviceId"}')
@@ -154,18 +160,35 @@ describe('actions', () => {
         when: { kind: 'manual' },
         actions: [
           {
-            kind: 'cap',
-            deviceId: [101, 102],
-            cap: 'lock-control',
-            method: 'lock',
+            kind: 'command',
+            target: { kind: 'devices', ids: [101, 102] },
+            actionId: 'lock.lock',
             args: {},
           },
         ],
       },
     })
     expect(g).toContain(
-      'actuateTarget(scope, {"kind":"devices","ids":[101,102]}, "lock.lock", "lock-control", "lock"',
+      'actuateTarget(scope, {"kind":"devices","ids":[101,102]}, "lock.lock", {}, vars)',
     )
+  })
+
+  it('turns the action id into its cap method at dispatch, through vocabCall — no cap or method is baked in', () => {
+    const g = generateAutomationBlock({
+      name: 'x',
+      recipe: {
+        when: { kind: 'manual' },
+        actions: [
+          { kind: 'command', target: { kind: 'devices', ids: [101] }, actionId: 'lock.lock' },
+        ],
+      },
+    })
+    const body = g.slice(g.indexOf('async function actuateTarget'))
+    expect(g).toMatch(/import \{[^}]*\bvocabCall\b[^}]*\} from '@camstack\/types'/)
+    expect(body).toContain('vocabCall(actionId, args)')
+    const steps = g.slice(g.indexOf('async function runActions'))
+    expect(steps).not.toContain('"lock-control"')
+    expect(steps).not.toMatch(/"method"|"lock"\s*,/)
   })
 })
 

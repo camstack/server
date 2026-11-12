@@ -227,7 +227,7 @@ function start(block: BlockFn, options: Options = {}): Harness {
             },
         },
       },
-      siren: { on: { mutate } },
+      button: { press: { mutate } },
       cover: { open: { mutate } },
     },
   }
@@ -254,7 +254,12 @@ const settle = async (ms = 0): Promise<void> => {
   await vi.advanceTimersByTimeAsync(ms)
 }
 
-const SIREN = { kind: 'cap', deviceId: 616, cap: 'siren', method: 'on' } as const
+type CommandStep = Extract<AutomationRecipe['actions'][number], { kind: 'command' }>
+const SIREN: CommandStep = {
+  kind: 'command',
+  target: { kind: 'devices', ids: [616] },
+  actionId: 'button.press',
+}
 const MOTION = { kind: 'device-event', category: 'motion.on-motion-changed' } as const
 const WAIT_THEN_SIREN: AutomationRecipe['actions'] = [{ kind: 'wait', seconds: 10 }, SIREN]
 
@@ -274,7 +279,9 @@ describe('detection trigger', () => {
   it('fires ONE run per track over start + update + update, and traces the rest as one repeat', async () => {
     const block = await load({
       triggers: [{ kind: 'detection', classes: ['animal'], deviceIds: [7] }],
-      actions: [{ kind: 'cap', deviceId: { $var: 'deviceId' }, cap: 'siren', method: 'on' }],
+      actions: [
+        { kind: 'command', target: { kind: 'var', name: 'deviceId' }, actionId: 'button.press' },
+      ],
     })
     const h = start(block)
     await settle()
@@ -381,10 +388,9 @@ describe('a schedule time spec (D983)', () => {
 describe('device value templates in action args (D1021)', () => {
   const NOTIFY: AutomationRecipe['actions'] = [
     {
-      kind: 'cap',
-      deviceId: 616,
-      cap: 'siren',
-      method: 'on',
+      kind: 'command',
+      target: { kind: 'devices', ids: [616] },
+      actionId: 'button.press',
       args: { message: "Temp {{ states('sensor.x') }}" },
     },
   ]
@@ -412,13 +418,7 @@ describe('device value templates in action args (D1021)', () => {
 
 describe('a domain target (D983)', () => {
   const openIn = (roomId: string): AutomationRecipe['actions'] => [
-    {
-      kind: 'cap',
-      actionId: 'cover.open',
-      target: { kind: 'domain', roomId },
-      cap: 'cover',
-      method: 'open',
-    },
+    { kind: 'command', target: { kind: 'domain', roomId }, actionId: 'cover.open' },
   ]
   const covers = () =>
     fakeRegistry([
@@ -682,7 +682,10 @@ describe('action steps', () => {
   it('an error stops the sequence: the failing step carries the message, the rest are not-run', async () => {
     const block = await load({
       triggers: [MOTION],
-      actions: [{ kind: 'cap', deviceId: 616, cap: 'nope', method: 'on' }, SIREN],
+      actions: [
+        { kind: 'command', target: { kind: 'devices', ids: [616] }, actionId: 'cover.close' },
+        SIREN,
+      ],
     })
     const h = start(block)
     await settle()
@@ -695,7 +698,7 @@ describe('action steps', () => {
       {
         path: 'actions.0',
         outcome: 'error',
-        message: 'no such device method: nope.on',
+        message: 'no such device method: cover.close',
         deviceId: 616,
       },
       { path: 'actions.1', outcome: 'not-run' },
@@ -709,10 +712,9 @@ describe('step args in the trace', () => {
       triggers: [MOTION],
       actions: [
         {
-          kind: 'cap',
-          deviceId: 616,
-          cap: 'siren',
-          method: 'on',
+          kind: 'command',
+          target: { kind: 'devices', ids: [616] },
+          actionId: 'button.press',
           args: { level: 3, mode: 'night', password: 'hunter2' },
         },
       ],
@@ -755,7 +757,7 @@ describe('flow control (#500): stop, set, continueOnError', () => {
         { kind: 'set', outcome: 'ok' },
         { kind: 'action', outcome: 'ok' },
         { kind: 'stop', outcome: 'ok', message: 'stopped: done for cam 616' },
-        { kind: 'cap', outcome: 'not-run', message: 'stopped at actions.2: done for cam 616' },
+        { kind: 'command', outcome: 'not-run', message: 'stopped at actions.2: done for cam 616' },
       ],
     })
   })
@@ -857,7 +859,9 @@ describe('stationary trigger and condition', () => {
   it('fires on an appeared event and hands deviceId, className, zones, phase, entryId to the steps', async () => {
     const block = await load({
       triggers: [{ kind: 'stationary', deviceIds: [7], classes: ['vehicle'], phase: 'appeared' }],
-      actions: [{ kind: 'cap', deviceId: { $var: 'deviceId' }, cap: 'siren', method: 'on' }],
+      actions: [
+        { kind: 'command', target: { kind: 'var', name: 'deviceId' }, actionId: 'button.press' },
+      ],
     })
     const h = start(block)
     await settle()
@@ -1132,13 +1136,19 @@ describe('a conditional step (#472)', () => {
   } as const
   const GUARDED: AutomationRecipe['actions'] = [
     {
-      kind: 'cap',
-      deviceId: 616,
-      cap: 'siren',
-      method: 'on',
+      kind: 'command',
+      target: { kind: 'devices', ids: [616] },
+      actionId: 'button.press',
       args: { label: 'then' },
       if: IF_ON,
-      else: [{ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on', args: { label: 'else' } }],
+      else: [
+        {
+          kind: 'command',
+          target: { kind: 'devices', ids: [616] },
+          actionId: 'button.press',
+          args: { label: 'else' },
+        },
+      ],
     },
   ]
   const fire = async (slices: Record<string, object> | undefined) => {
@@ -1673,7 +1683,7 @@ describe('wait-until (#500): the run pauses until a condition is true, under a t
       outcome: 'ran',
       steps: [
         { kind: 'wait-until', outcome: 'ok' },
-        { kind: 'cap', outcome: 'ok' },
+        { kind: 'command', outcome: 'ok' },
       ],
     })
   })
@@ -1725,7 +1735,7 @@ describe('wait-until (#500): the run pauses until a condition is true, under a t
       outcome: 'failed',
       steps: [
         { kind: 'wait-until', outcome: 'error' },
-        { kind: 'cap', outcome: 'not-run' },
+        { kind: 'command', outcome: 'not-run' },
       ],
     })
     expect(h.traces()[0]?.steps[0]?.message).toMatch(/timed out after 120 s/)
@@ -1764,7 +1774,12 @@ describe('wait-until (#500): the run pauses until a condition is true, under a t
 
 describe('parallel (#500): several steps at once, all awaited', () => {
   const siren = (label: string) =>
-    ({ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on', args: { label } }) as const
+    ({
+      kind: 'command',
+      target: { kind: 'devices', ids: [616] },
+      actionId: 'button.press',
+      args: { label },
+    }) satisfies CommandStep
   const press = { kind: 'device-event', category: 'button.pressed' } as const
 
   it('runs its steps together and the next step only when all are done', async () => {
@@ -1791,7 +1806,7 @@ describe('parallel (#500): several steps at once, all awaited', () => {
       outcome: 'ok',
       steps: [
         { kind: 'wait', path: 'actions.0.steps.0', outcome: 'ok' },
-        { kind: 'cap', path: 'actions.0.steps.1', outcome: 'ok' },
+        { kind: 'command', path: 'actions.0.steps.1', outcome: 'ok' },
       ],
     })
   })
@@ -1824,7 +1839,12 @@ describe('parallel (#500): several steps at once, all awaited', () => {
 
 describe('repeat (#500): the same steps several times, always bounded', () => {
   const siren = (label: string) =>
-    ({ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on', args: { label } }) as const
+    ({
+      kind: 'command',
+      target: { kind: 'devices', ids: [616] },
+      actionId: 'button.press',
+      args: { label },
+    }) satisfies CommandStep
   const press = { kind: 'device-event', category: 'button.pressed' } as const
   const doorOpen = {
     kind: 'device-is',
@@ -1855,7 +1875,7 @@ describe('repeat (#500): the same steps several times, always bounded', () => {
       kind: 'repeat',
       outcome: 'ok',
       iterations: 3,
-      steps: [{ kind: 'cap', path: 'actions.0.steps.0', outcome: 'ok' }],
+      steps: [{ kind: 'command', path: 'actions.0.steps.0', outcome: 'ok' }],
     })
   })
 
@@ -1947,7 +1967,9 @@ describe('repeat (#500): the same steps several times, always bounded', () => {
           {
             kind: 'repeat',
             loop: { by: 'forEach', target: { kind: 'devices', ids: [11, 12] } },
-            steps: [{ kind: 'cap', deviceId: { $var: 'item' }, cap: 'siren', method: 'on' }],
+            steps: [
+              { kind: 'command', target: { kind: 'var', name: 'item' }, actionId: 'button.press' },
+            ],
           },
         ],
       }),
@@ -1987,11 +2009,10 @@ describe('repeat (#500): the same steps several times, always bounded', () => {
 describe('choose (#500): one step, the first branch that is true', () => {
   const motion = { ...MOTION, id: 'motion' } as const
   const press = { kind: 'device-event', category: 'button.pressed', id: 'press' } as const
-  const siren = (label: string): Extract<AutomationRecipe['actions'][number], { kind: 'cap' }> => ({
-    kind: 'cap',
-    deviceId: 616,
-    cap: 'siren',
-    method: 'on',
+  const siren = (label: string): CommandStep => ({
+    kind: 'command',
+    target: { kind: 'devices', ids: [616] },
+    actionId: 'button.press',
     args: { label },
   })
   const labels = (h: { mutate: { mock: { calls: unknown[][] } } }): string[] =>
@@ -2028,9 +2049,9 @@ describe('choose (#500): one step, the first branch that is true', () => {
           kind: 'choose',
           outcome: 'ok',
           branch: 'branches.1',
-          steps: [{ kind: 'cap', path: 'actions.0.branches.1.steps.0', outcome: 'ok' }],
+          steps: [{ kind: 'command', path: 'actions.0.branches.1.steps.0', outcome: 'ok' }],
         },
-        { kind: 'cap', outcome: 'ok' },
+        { kind: 'command', outcome: 'ok' },
       ],
     })
     h.emit('motion.on-motion-changed', {}, 1)
@@ -2071,10 +2092,9 @@ describe('triggered-by: one automation, a different step per trigger (#499)', ()
   const motion = { ...MOTION, id: 'motion' } as const
   const press = { kind: 'device-event', category: 'button.pressed', id: 'press' } as const
   const step = (label: string, leafId: string): AutomationRecipe['actions'][number] => ({
-    kind: 'cap',
-    deviceId: 616,
-    cap: 'siren',
-    method: 'on',
+    kind: 'command',
+    target: { kind: 'devices', ids: [616] },
+    actionId: 'button.press',
     args: { label },
     if: { kind: 'triggered-by', leafIds: [leafId] },
   })
@@ -2101,7 +2121,12 @@ describe('triggered-by: one automation, a different step per trigger (#499)', ()
 
 describe('two levels of block steps (#500)', () => {
   const siren = (label: string) =>
-    ({ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on', args: { label } }) as const
+    ({
+      kind: 'command',
+      target: { kind: 'devices', ids: [616] },
+      actionId: 'button.press',
+      args: { label },
+    }) satisfies CommandStep
   const press = { kind: 'device-event', category: 'button.pressed' } as const
   const doorIs = (open: boolean) =>
     ({
@@ -2143,7 +2168,9 @@ describe('two levels of block steps (#500)', () => {
     expect(h.traces()[0]?.steps[0]).toMatchObject({
       kind: 'repeat',
       iterations: 2,
-      steps: [{ kind: 'choose', branch: 'branches.0', steps: [{ kind: 'cap', outcome: 'ok' }] }],
+      steps: [
+        { kind: 'choose', branch: 'branches.0', steps: [{ kind: 'command', outcome: 'ok' }] },
+      ],
     })
   })
 

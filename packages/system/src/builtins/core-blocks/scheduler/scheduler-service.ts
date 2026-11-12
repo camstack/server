@@ -9,13 +9,15 @@
  */
 import {
   actionEffect,
+  assertStepsOffered,
   type ActionTargetResolver,
+  type DeviceDirectory,
   type AutomationRunTrace,
   type ISchedulersProvider,
   type IScopedLogger,
   normalizeActionUnits,
-  normalizeCapStep,
   QuantityUnitError,
+  VocabActionError,
   type Scheduler,
   type SchedulerConflict,
   SchedulerError,
@@ -48,6 +50,8 @@ export interface SchedulersServiceDeps {
   readonly ledger: RunsLedger
   readonly host: Pick<SchedulerHost, 'readSite'>
   readonly targets: ActionTargetResolver
+  /** The per-binding walk the save check asks which devices offer an action's cap. */
+  readonly directory: Pick<DeviceDirectory, 'listDeviceIdsByCaps'>
   readonly units: UnitResolver
   readonly logger: IScopedLogger
   readonly now?: () => number
@@ -121,7 +125,25 @@ export class SchedulersService implements ISchedulersProvider {
       })
       throw new SchedulerError('invalid-scheduler', message)
     }
+    await this.requireOffered(prepared)
     return prepared
+  }
+
+  /** A step naming a device that does not offer its vocabulary action is refused at save (D12 per-binding walk). */
+  private async requireOffered(scheduler: SchedulerInput): Promise<void> {
+    const steps = scheduler.profiles.flatMap((p) => p.points.flatMap((point) => point.steps))
+    try {
+      await assertStepsOffered(steps, this.deps.directory)
+    } catch (err: unknown) {
+      if (err instanceof VocabActionError) {
+        this.deps.logger.warn('scheduler save refused — a device does not offer the action', {
+          ...(err.deviceId === undefined ? {} : { tags: { deviceId: err.deviceId } }),
+          meta: { scheduler: scheduler.name, actionId: err.actionId, reason: err.reason },
+        })
+        throw new SchedulerError('invalid-scheduler', err.message)
+      }
+      throw err
+    }
   }
 
   async create(input: { scheduler: SchedulerInput }): Promise<{ scheduler: Scheduler }> {
@@ -316,9 +338,8 @@ export class SchedulersService implements ISchedulersProvider {
         if (point.mode !== 'hold') continue
         const effects: HeldEffect[] = []
         for (const step of point.steps) {
-          if (step.kind !== 'cap') continue
-          const normalized = normalizeCapStep(step)
-          if (normalized.actionId === undefined) continue
+          if (step.kind !== 'command') continue
+          const normalized = step
           const resolved = resolveStepArgs(step.args ?? {}, {}, () => undefined)
           const effect = actionEffect(normalized.actionId, isPlainRecord(resolved) ? resolved : {})
           if (effect === null) continue

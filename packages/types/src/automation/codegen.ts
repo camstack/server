@@ -27,13 +27,13 @@
 import type { AutomationAction, AutomationRecipe, AutomationRepeatLoop } from './recipe.js'
 import {
   DEFAULT_TRACE_KEEP,
-  normalizeCapStep,
   nestedStepsOf,
   REPEAT_ITEM_VAR,
   stepConditionsOf,
   stepGuardOf,
   validateRecipeBounds,
 } from './recipe.js'
+import { vocabCall } from '../device/cap-vocabulary/action-index.js'
 import type { TimeSpec, WeekdayKey } from '../time/time-spec.js'
 import { hasHoldLeaves, hasTimeLeaves } from './condition-eval.js'
 import { collectWhenMirrorSources } from './condition-eval.js'
@@ -86,13 +86,14 @@ function stepMetaOf(action: AutomationAction): StepMeta {
       return { kind: 'set' }
     case 'choose':
       return { kind: 'choose' }
-    case 'cap': {
-      const { target, actionId } = normalizeCapStep(action)
+    case 'command': {
+      const { target, actionId } = action
+      const { cap, method } = vocabCall(actionId, undefined)
       return {
-        kind: 'cap',
-        cap: action.cap,
-        method: action.method,
-        ...(actionId === undefined ? {} : { actionId }),
+        kind: 'command',
+        cap,
+        method,
+        actionId,
         ...(target.kind === 'devices' && target.ids.length === 1
           ? { deviceId: target.ids[0] }
           : {}),
@@ -389,12 +390,10 @@ function emitStepBody(action: Exclude<AutomationAction, { kind: BlockStepKind }>
   switch (action.kind) {
     case 'wait':
       return `        await sleep(${j(action.seconds * 1000)})`
-    case 'cap': {
-      const { target, actionId } = normalizeCapStep(action)
-      return `        await actuateTarget(scope, ${j(target)}, ${j(actionId)}, ${j(action.cap)}, ${j(
-        action.method,
-      )}, ${j(action.args ?? {})}, vars)`
-    }
+    case 'command':
+      return `        await actuateTarget(scope, ${j(action.target)}, ${j(action.actionId)}, ${j(
+        action.args ?? {},
+      )}, vars)`
     case 'action':
       return `        // an Action run, awaited: the step takes THAT run's outcome
         const result = await ctx.api.actions.run.mutate({
@@ -424,7 +423,7 @@ ${action.code
 }
 
 function continues(action: AutomationAction): boolean {
-  return (action.kind === 'cap' || action.kind === 'action') && action.continueOnError === true
+  return (action.kind === 'command' || action.kind === 'action') && action.continueOnError === true
 }
 
 /** Where a step sits: the expression of its trace meta, and its path in the recipe. */
@@ -450,7 +449,7 @@ function emitGuard(action: AutomationAction, site: StepSite): string {
   const when = stepGuardOf(action)
   if (when === undefined) return ''
   const otherwise = emitList(
-    action.kind === 'wait' || action.kind === 'cap' ? (action.else ?? []) : [],
+    action.kind === 'wait' || action.kind === 'command' ? (action.else ?? []) : [],
     `${site.path}.else`,
   )
   return `      guard: () => evaluateCondition(${j(when)}, ${j(`${site.path}.if`)}, vars),${
@@ -611,10 +610,10 @@ export function generateAutomationBlock(input: GenerateAutomationBlockInput): st
   const runMode = recipe.runMode ?? { mode: 'single' }
   const stepMeta = recipe.actions.map(stepMetaOf)
   const elseSteps = (a: AutomationAction) =>
-    a.kind === 'wait' || a.kind === 'cap' ? (a.else ?? []) : []
+    a.kind === 'wait' || a.kind === 'command' ? (a.else ?? []) : []
   const hasDomainTarget = recipe.actions
     .flatMap((a) => [a, ...elseSteps(a), ...nestedStepsOf(a)])
-    .some((a) => a.kind === 'cap' && normalizeCapStep(a).target.kind === 'domain')
+    .some((a) => a.kind === 'command' && a.target.kind === 'domain')
   const guardHoldTrees = recipe.actions.flatMap((a, i) =>
     stepConditionsOf(a).flatMap(({ path, when }) =>
       hasHoldLeaves(when) ? [{ path: `actions.${i}.${path}`, when }] : [],
@@ -672,6 +671,7 @@ import {
   resolveStepArgs,
   resolveStepArgsWithTemplates,
   runForDevices,
+  vocabCall,
   evaluateStepCondition,
   runSteps,
   repeatCheck,
@@ -1074,12 +1074,12 @@ ${
   async function actuateTarget(
     scope: StepScope,
     target: ActionTarget,
-    actionId: string | undefined,
-    cap: string,
-    method: string,
+    actionId: string,
     args: Record<string, unknown>,
     vars: Record<string, unknown>,
   ): Promise<void> {
+    // the action id becomes its cap method here, at dispatch, through the vocabulary index
+    const { cap, method, args: callArgs } = vocabCall(actionId, args)
     const resolved = await targets.resolve(target, actionId, vars, {
       actionId,
       owner: BLOCK_ID ?? undefined,
@@ -1091,10 +1091,10 @@ ${
     const [only] = resolved.deviceIds
     if (resolved.deviceIds.length === 1 && only !== undefined) {
       scope.setDeviceId(only)
-      await actuate(scope, only, cap, method, args, vars)
+      await actuate(scope, only, cap, method, callArgs, vars)
       return
     }
-    await runForDevices(resolved.deviceIds, scope, (deviceId) => actuate(scope, deviceId, cap, method, args, vars))
+    await runForDevices(resolved.deviceIds, scope, (deviceId) => actuate(scope, deviceId, cap, method, callArgs, vars))
   }
 
   function warnMissingVar(name: string): void {

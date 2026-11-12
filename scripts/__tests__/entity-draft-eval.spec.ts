@@ -59,7 +59,7 @@ describe('entity-draft eval runner', () => {
     const good = JSON.stringify(target.entity)
     const broken = JSON.stringify({
       name: 'x',
-      steps: [{ kind: 'cap', actionId: 'switch.on', target: { kind: 'devices', ids: [999] } }],
+      steps: [{ kind: 'command', actionId: 'switch.on', target: { kind: 'devices', ids: [999] } }],
     })
     const backend = scripted([broken, good])
     const report = await runEval(backend, site, [target], { repairs: 2 })
@@ -90,7 +90,7 @@ describe('entity-draft eval runner', () => {
     if (target === undefined) throw new Error('no case')
     const other = JSON.stringify({
       name: 'Other',
-      steps: [{ kind: 'cap', actionId: 'switch.off', target: { kind: 'devices', ids: [26] } }],
+      steps: [{ kind: 'command', actionId: 'switch.off', target: { kind: 'devices', ids: [26] } }],
     })
     const report = await runEval(scripted([other]), site, [target], { repairs: 2 })
     expect(report.results[0]).toMatchObject({ validFirstTry: true, matched: false })

@@ -222,7 +222,6 @@ export class CoreBlocksAddon extends BaseAddon {
       isDisposed: () => this.disposed,
     })
     void this.sweepRunsLedger()
-    void this.migrateActionTargets()
     this.remoteRuntime = this.buildRemote(records)
     this.fanPresets = this.buildFanPresets()
     this.installDeviceCallRedirect()
@@ -741,19 +740,6 @@ export class CoreBlocksAddon extends BaseAddon {
       this.ctx.logger.warn('runs ledger sweep failed — orphan rows stay until the next start', {
         meta: { error: err instanceof Error ? err.message : String(err) },
       })
-    }
-  }
-
-  private async migrateActionTargets(): Promise<void> {
-    try {
-      await this.actions?.service.migrateTargets()
-    } catch (err: unknown) {
-      this.ctx.logger.warn(
-        'internal actions could not be rewritten to the target shape — they are still read as it',
-        {
-          meta: { error: err instanceof Error ? err.message : String(err) },
-        },
-      )
     }
   }
 

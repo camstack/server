@@ -9,10 +9,9 @@ import {
 } from '../alarm-membership.js'
 
 const TRIGGER_STEP: ActionStep = {
-  kind: 'cap',
-  cap: 'alarm-panel',
-  method: 'trigger',
+  kind: 'command',
   target: { kind: 'devices', ids: [900] },
+  actionId: 'alarm.trigger',
 }
 const ARMED = { deviceState: { deviceId: 900, states: ['Armed_Away'] } }
 
@@ -49,7 +48,11 @@ describe('ruleAutoTriggersAlarm', () => {
   it('is true only for an armed_* gate — not for an explicit trigger binding alone', () => {
     expect(ruleAutoTriggersAlarm({ conditions: ARMED })).toBe(true)
     expect(
-      ruleAutoTriggersAlarm({ conditions: {}, actions: onTriggerAction, actionStepsOf: ACTIONS_OF }),
+      ruleAutoTriggersAlarm({
+        conditions: {},
+        actions: onTriggerAction,
+        actionStepsOf: ACTIONS_OF,
+      }),
     ).toBe(false)
   })
 })

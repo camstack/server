@@ -61,7 +61,7 @@ export interface ActionEditorProps {
 }
 
 function isActionStep(action: AutomationAction): action is ActionStep {
-  return action.kind === 'cap' || action.kind === 'wait'
+  return action.kind === 'command' || action.kind === 'wait'
 }
 
 function errorMessage(error: unknown): string {
@@ -199,7 +199,7 @@ export function ActionEditor({ entry, onClose, onSaved, preset = null }: ActionE
               <ActionList
                 actions={draft.steps}
                 devices={devices}
-                allowedKinds={['cap', 'wait']}
+                allowedKinds={['command', 'wait']}
                 stepTones={
                   view === null
                     ? undefined

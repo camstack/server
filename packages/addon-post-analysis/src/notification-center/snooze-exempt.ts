@@ -15,7 +15,7 @@
  *  - it is ABOUT the panel — `conditions.systemEvent.kinds` names one of the
  *    panel's three transitions ({@link NC_ALARM_SYSTEM_EVENT_KINDS});
  *  - or it ACTUATES the panel — an Action it runs (on a hook edge or behind a
- *    button) has a step that calls the `alarm-panel` cap (arm, disarm,
+ *    button) has a command step whose vocabulary action belongs to the `alarm-panel` cap (arm, disarm,
  *    trigger). That rule is what makes the alarm go off, and silencing its
  *    notification silences the escalation itself. Button-bound Actions count
  *    too — a tap arming the panel is exactly the case this protects.
@@ -35,7 +35,7 @@
  */
 
 import type { ActionStep, NcRule } from '@camstack/types'
-import { NC_ALARM_SYSTEM_EVENT_KINDS } from '@camstack/types'
+import { NC_ALARM_SYSTEM_EVENT_KINDS, findVocabAction } from '@camstack/types'
 
 /** The cap whose presence in an Action makes the rule the alarm's trigger. */
 const ALARM_PANEL_CAP = 'alarm-panel'
@@ -50,7 +50,7 @@ export type SnoozeExemptRule = Pick<NcRule, 'conditions' | 'actions'>
 export type ActionStepsOf = (actionId: string) => readonly ActionStep[] | undefined
 
 function stepActuatesAlarm(step: ActionStep): boolean {
-  return step.kind === 'cap' && step.cap === ALARM_PANEL_CAP
+  return step.kind === 'command' && findVocabAction(step.actionId)?.cap === ALARM_PANEL_CAP
 }
 
 function actionActuatesAlarm(actionId: string, actionStepsOf: ActionStepsOf | undefined): boolean {

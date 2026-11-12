@@ -111,9 +111,7 @@ async function makeActuatingRule(h: Harness): Promise<string> {
       conditions: { classes: ['person'] },
       throttle: { cooldownSec: 0, scope: 'rule-device' },
       actions: {
-        onTrigger: [
-          capAction(42, 'switch', 'turnOn'),
-        ],
+        onTrigger: [capAction(42, 'switch.on')],
       },
     }),
     caller: ADMIN,
@@ -138,7 +136,7 @@ describe('a snooze suppresses the notification and nothing else', () => {
 
     // The gate physically moved…
     await vi.waitFor(() => {
-      expect(h.actuations).toEqual([{ deviceId: 42, cap: 'switch', method: 'turnOn' }])
+      expect(h.actuations).toEqual([{ deviceId: 42, cap: 'switch', method: 'setState' }])
     })
     // …and nothing was delivered. Both halves matter: an assertion on the
     // actuation alone would pass with the snooze doing nothing at all.
@@ -159,6 +157,6 @@ describe('a snooze suppresses the notification and nothing else', () => {
       },
       { timeout: 8_000 },
     )
-    expect(h.actuations).toEqual([{ deviceId: 42, cap: 'switch', method: 'turnOn' }])
+    expect(h.actuations).toEqual([{ deviceId: 42, cap: 'switch', method: 'setState' }])
   })
 })

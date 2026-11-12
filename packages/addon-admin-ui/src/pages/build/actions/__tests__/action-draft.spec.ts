@@ -17,10 +17,9 @@ const ENTRY: ActionEntry = {
   readOnly: false,
   steps: [
     {
-      kind: 'cap',
-      deviceId: 201,
-      cap: 'pet-feeder',
-      method: 'feed',
+      kind: 'command',
+      target: { kind: 'devices', ids: [201] },
+      actionId: 'petFeeder.feed',
       args: { grams: { $var: 'grams' } },
     },
     { kind: 'wait', seconds: 5 },
@@ -30,18 +29,12 @@ const ENTRY: ActionEntry = {
 }
 
 describe('action draft', () => {
-  it('prefills a trigger-the-alarm Action as one alarm-panel.trigger step', () => {
+  it('prefills a trigger-the-alarm Action as one alarm.trigger command step', () => {
     const check = checkDraft(triggerAlarmDraft(1023, 'Trigger the alarm'))
     expect(check.ok).toBe(true)
     if (!check.ok) return
     expect(check.input.steps).toEqual([
-      {
-        kind: 'cap',
-        target: { kind: 'devices', ids: [1023] },
-        cap: 'alarm-panel',
-        method: 'trigger',
-        args: {},
-      },
+      { kind: 'command', target: { kind: 'devices', ids: [1023] }, actionId: 'alarm.trigger' },
     ])
   })
 
@@ -92,10 +85,9 @@ describe('action draft', () => {
       name: 'Sound it',
       steps: [
         {
-          kind: 'cap' as const,
-          deviceId: { $var: 'siren' },
-          cap: 'siren',
-          method: 'turnOn',
+          kind: 'command' as const,
+          target: { kind: 'var' as const, name: 'siren' },
+          actionId: 'switch.on',
         },
       ],
       variables: [{ name: 'siren', type: 'number' as const }],

@@ -716,7 +716,7 @@ export type {
   AutomationAction,
   AutomationAll,
   AutomationAny,
-  AutomationCapStep,
+  AutomationCommandStep,
   AutomationConditionOperator,
   AutomationConditionTraceNode,
   AutomationEventLeaf,
@@ -757,7 +757,6 @@ export type {
   AutomationSetStep,
   StepConditionRef,
   AutomationStopStep,
-  NormalizedCapStep,
   StepDeviceTrace,
   LegacyCondition,
   LegacyTrigger,
@@ -802,7 +801,8 @@ export type {
 export {
   ActionStepSchema,
   AutomationActionSchema,
-  AutomationCapStepSchema,
+  AutomationCommandStepBaseSchema,
+  AutomationCommandStepSchema,
   AutomationWaitStepSchema,
   AutomationChooseStepSchema,
   AutomationWaitUntilStepSchema,
@@ -846,8 +846,6 @@ export {
   MAX_STEP_DEVICE_OUTCOMES,
   MAX_TRACE_ARGS,
   MAX_WHEN_DEPTH,
-  normalizeCapStep,
-  normalizeStepTargets,
   StepDeviceTraceSchema,
   MAX_WHEN_LEAVES,
   REDACTED_ARG,
@@ -929,6 +927,7 @@ export {
 } from './automation/index.js'
 export {
   UnitWarningSchema,
+  assertStepsOffered,
   capUnitResolver,
   normalizeActionUnits,
   normalizeConditionUnits,
@@ -1253,25 +1252,9 @@ export {
 
 // The device hero model (D1023): one pure builder for every hero, on every client.
 export * from './device/hero/index.js'
-export type { DeviceDoAction, DeviceDoOpenArg } from './device/device-do-actions.js'
-export {
-  actionsForBoundCaps,
-  actionsForDevice,
-  actionsForDevices,
-  actionsForDeviceType,
-  allDoActions,
-  DEVICE_DO_ACTIONS,
-  DEVICE_TYPE_DO_CAPS,
-  deviceDoFamily,
-  doActionSelectValue,
-  isDoActionActuatable,
-  isDoPickerDeviceType,
-  matchDoAction,
-  sameDoFamily,
-} from './device/device-do-actions.js'
+export { isDoPickerDeviceType } from './device/device-do-actions.js'
 // The cap vocabulary (D920): every cap's actions and triggers, phrased. The
-// resolver is re-exported under `vocabulary…` names — `actionsForDevice` above
-// is the older Do-picker helper with a different signature.
+// resolver is re-exported under `vocabulary…` names.
 export type {
   CapVocabularyEntry,
   CapVocabularyMap,
@@ -1279,6 +1262,8 @@ export type {
   ActionEffect,
   CommandEffect,
   IndexedVocabAction,
+  VocabActionRefusal,
+  VocabCall,
   LooseCapVocabularyEntry,
   LooseVocabEffect,
   LooseVocabOffer,
@@ -1309,6 +1294,9 @@ export {
   triggersForDevice as vocabularyTriggersForDevice,
   VOCAB_TEMPLATES,
   vocabActionIdFor,
+  vocabCall,
+  VocabActionError,
+  assertDeviceOffers,
 } from './device/cap-vocabulary/index.js'
 // Device-link value transform
 // Device management

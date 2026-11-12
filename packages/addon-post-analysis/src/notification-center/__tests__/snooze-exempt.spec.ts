@@ -34,16 +34,14 @@ describe('a rule ABOUT the panel is exempt', () => {
 })
 
 const PANEL_STEP: ActionStep = {
-  kind: 'cap',
+  kind: 'command',
   target: { kind: 'devices', ids: [900] },
-  cap: 'alarm-panel',
-  method: 'trigger',
+  actionId: 'alarm.trigger',
 }
 const SWITCH_STEP: ActionStep = {
-  kind: 'cap',
+  kind: 'command',
   target: { kind: 'devices', ids: [12] },
-  cap: 'switch',
-  method: 'turnOn',
+  actionId: 'switch.on',
 }
 
 /** The centre's mirror of the Actions list, as the gate reads it. */
@@ -52,9 +50,9 @@ const STEPS_OF: ActionStepsOf = (id) =>
 
 describe('a rule that RUNS an Action actuating the panel is exempt', () => {
   it('exempts a hook that runs an Action calling alarm-panel', () => {
-    expect(
-      isSnoozeExempt(rule({ actions: { onTrigger: ['internal:panel'] } }), STEPS_OF),
-    ).toBe(true)
+    expect(isSnoozeExempt(rule({ actions: { onTrigger: ['internal:panel'] } }), STEPS_OF)).toBe(
+      true,
+    )
   })
 
   it('exempts a BUTTON-ONLY Action via the resolver', () => {
@@ -67,9 +65,9 @@ describe('a rule that RUNS an Action actuating the panel is exempt', () => {
   })
 
   it('does NOT exempt a rule whose Action actuates something else', () => {
-    expect(
-      isSnoozeExempt(rule({ actions: { onTrigger: ['internal:switch'] } }), STEPS_OF),
-    ).toBe(false)
+    expect(isSnoozeExempt(rule({ actions: { onTrigger: ['internal:switch'] } }), STEPS_OF)).toBe(
+      false,
+    )
   })
 
   it('an Action the mirror has never seen cannot prove the exemption', () => {

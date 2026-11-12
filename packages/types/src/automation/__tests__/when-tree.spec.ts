@@ -21,7 +21,11 @@ import {
   type AutomationWhen,
 } from '../index.js'
 
-const SIREN = { kind: 'cap', deviceId: 1, cap: 'siren', method: 'on' } as const
+const SIREN: Extract<AutomationRecipe['actions'][number], { kind: 'command' }> = {
+  kind: 'command',
+  target: { kind: 'devices', ids: [1] },
+  actionId: 'button.press',
+}
 const light = {
   kind: 'device-becomes',
   deviceId: 5,

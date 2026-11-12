@@ -20,13 +20,13 @@ import type { AutomationDevice } from './automation-data'
 import { WhenTree } from './WhenTree'
 
 /** A step that can carry an `if`: a wait or a cap step. */
-export type GuardableStep = Extract<AutomationAction, { kind: 'wait' | 'cap' }>
+export type GuardableStep = Extract<AutomationAction, { kind: 'wait' | 'command' }>
 type ElseStep = NonNullable<GuardableStep['else']>[number]
 
 const EMPTY_TREE: AutomationWhen = { kind: 'all', children: [] }
 
 function isElseStep(action: AutomationAction): action is ElseStep {
-  return action.kind === 'wait' || action.kind === 'cap'
+  return action.kind === 'wait' || action.kind === 'command'
 }
 
 export interface StepGuardProps {
@@ -128,7 +128,7 @@ export function StepGuard({ step, devices, devicesState, variables, onChange }: 
             devices={devices}
             {...(devicesState === undefined ? {} : { devicesState })}
             {...(variables === undefined ? {} : { variables })}
-            allowedKinds={['cap', 'wait']}
+            allowedKinds={['command', 'wait']}
             onChange={(next) => onChange({ ...step, else: next.filter(isElseStep) })}
           />
         </div>

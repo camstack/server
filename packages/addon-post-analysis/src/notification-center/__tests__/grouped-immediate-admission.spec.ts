@@ -144,9 +144,7 @@ describe('grouped admission (D692 Task 8)', () => {
       rule({
         conditions: { classes: ['person'], identities: ['id-a'] },
         actions: {
-          onTrigger: [
-            capAction(42, 'switch', 'turnOn'),
-          ],
+          onTrigger: [capAction(42, 'switch.on')],
         },
       }),
     )
@@ -169,7 +167,7 @@ describe('grouped admission (D692 Task 8)', () => {
     expect(promoted[0]?.meta['to']).toBe('Person A')
     expect(promoted[0]?.tags['deviceId']).toBe(DEVICE)
     await vi.waitFor(() => {
-      expect(h.actuations).toEqual([{ deviceId: 42, method: 'turnOn' }])
+      expect(h.actuations).toEqual([{ deviceId: 42, method: 'setState' }])
     })
     // Another event of the now-matched member runs nothing more: it is an update.
     h.center.onObjectEventPersisted(

@@ -94,11 +94,8 @@ describe('point editor input', () => {
 
 describe('save payload', () => {
   const holdStep: ActionStep = {
-    kind: 'cap',
+    kind: 'command',
     actionId: 'switch.on',
-    cap: 'switch',
-    method: 'setState',
-    args: { on: true },
     target: { kind: 'devices', ids: [3] },
   }
 

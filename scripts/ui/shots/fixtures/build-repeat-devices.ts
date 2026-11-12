@@ -51,11 +51,9 @@ const RECIPE = {
       loop: { by: 'forEach' as const, target: { kind: 'devices' as const, ids: [301, 302] } },
       steps: [
         {
-          kind: 'cap' as const,
-          deviceId: { $var: 'item' },
-          cap: 'switch',
-          method: 'setState',
-          args: { on: false },
+          kind: 'command' as const,
+          target: { kind: 'var' as const, name: 'item' },
+          actionId: 'switch.off',
         },
         { kind: 'wait' as const, seconds: 2 },
       ],

@@ -172,9 +172,9 @@ function steps(ids: Ids, slice: VocabularySlice, max: number): JsonSchema {
       'kind',
     ]),
   ])
-  const capStep = obj(
+  const commandStep = obj(
     {
-      kind: lit('cap'),
+      kind: lit('command'),
       actionId: enumOf(ids.actionIds),
       target,
       args: { type: 'object' },
@@ -197,7 +197,7 @@ function steps(ids: Ids, slice: VocabularySlice, max: number): JsonSchema {
     type: 'array',
     minItems: 1,
     maxItems: max,
-    items: anyOf([capStep, wait, ...(slice.internalActions.length > 0 ? [called] : [])]),
+    items: anyOf([commandStep, wait, ...(slice.internalActions.length > 0 ? [called] : [])]),
   }
 }
 

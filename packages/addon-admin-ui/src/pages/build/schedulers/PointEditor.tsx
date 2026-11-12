@@ -42,7 +42,7 @@ const SUN_EVENTS: readonly SunEvent[] = ['sunrise', 'sunset', 'dawn', 'dusk']
 const GRACE_STEP_MS = 60_000
 
 function isActionStep(action: AutomationAction): action is ActionStep {
-  return action.kind === 'cap' || action.kind === 'wait'
+  return action.kind === 'command' || action.kind === 'wait'
 }
 
 /** The point after a mode switch: what the new mode cannot carry is dropped. */
@@ -195,7 +195,7 @@ export function PointEditor({
         <ActionList
           actions={point.steps}
           devices={devices}
-          allowedKinds={['cap', 'wait']}
+          allowedKinds={['command', 'wait']}
           onChange={(steps) => onChange({ ...point, steps: steps.filter(isActionStep) })}
         />
       )}

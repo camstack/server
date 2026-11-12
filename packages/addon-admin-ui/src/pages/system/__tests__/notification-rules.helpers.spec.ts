@@ -228,7 +228,9 @@ describe('which rules a snooze can never silence', () => {
 
   it('exempts a rule that ACTUATES the panel (including button-only steps)', () => {
     expect(
-      isRuleSnoozeExempt({}, [{ kind: 'cap', deviceId: 900, cap: 'alarm-panel', method: 'arm' }]),
+      isRuleSnoozeExempt({}, [
+        { kind: 'command', target: { kind: 'devices', ids: [900] }, actionId: 'alarm.arm.away' },
+      ]),
     ).toBe(true)
   })
 
@@ -236,7 +238,9 @@ describe('which rules a snooze can never silence', () => {
     expect(isRuleSnoozeExempt({ classes: ['person'] }, [])).toBe(false)
     expect(isRuleSnoozeExempt({ systemEvent: { kinds: ['device-offline'] } }, [])).toBe(false)
     expect(
-      isRuleSnoozeExempt({}, [{ kind: 'cap', deviceId: 12, cap: 'switch', method: 'turnOn' }]),
+      isRuleSnoozeExempt({}, [
+        { kind: 'command', target: { kind: 'devices', ids: [12] }, actionId: 'switch.on' },
+      ]),
     ).toBe(false)
   })
 })

@@ -24,6 +24,8 @@
  */
 import { randomUUID } from 'node:crypto'
 import {
+  assertStepsOffered,
+  VocabActionError,
   type ActionEntry,
   ActionError,
   type ActionLinks,
@@ -168,6 +170,7 @@ export class ActionsService implements IActionsProvider {
   /** Last run START per action — the throttle's memory. */
   private readonly lastStartedAt = new Map<string, number>()
   private readonly maxRunMs: number
+  private readonly directory: DeviceDirectory
   private readonly stopGraceMs: number
 
   constructor(deps: ActionsServiceDeps) {
@@ -182,20 +185,10 @@ export class ActionsService implements IActionsProvider {
     this.maxRunMs = deps.maxRunMs ?? ACTION_RUN_MAX_MS
     this.stopGraceMs = deps.stopGraceMs ?? STOP_GRACE_MS
     this.units = deps.units ?? capUnitResolver(ALL_CAPABILITY_DEFINITIONS)
+    this.directory = deps.directory
     this.targets = new ActionTargetResolver(deps.directory, deps.logger)
     this.templates = deps.templates
     this.conditions = deps.conditions
-  }
-
-  /** One-shot at boot: stored steps written before D983 are rewritten to the target shape. */
-  async migrateTargets(): Promise<number> {
-    const moved = await this.store.migrateLegacyTargets()
-    if (moved > 0) {
-      this.logger.info('internal actions rewritten to the target shape', {
-        meta: { moved },
-      })
-    }
-    return moved
   }
 
   /** A device was added, removed, moved or re-bound: forget the cached domains. */
@@ -666,6 +659,7 @@ export class ActionsService implements IActionsProvider {
     warnings?: UnitWarning[]
   }> {
     this.requireWithinCeiling(input.action.steps, input.action.name)
+    await this.requireOffered(input.action.steps, input.action.name)
     const { steps, warnings } = this.normalizeSteps(input.action.steps, input.action.name)
     const action = await this.store.create({ ...input.action, steps })
     this.logger.info('internal action created', {
@@ -685,6 +679,8 @@ export class ActionsService implements IActionsProvider {
     // Only a save that WRITES steps is held to the ceiling; renaming an action stored over it must still work.
     if (patch.steps !== undefined)
       this.requireWithinCeiling(patch.steps, patch.name ?? existing.name)
+    if (patch.steps !== undefined)
+      await this.requireOffered(patch.steps, patch.name ?? existing.name)
     const { steps, warnings } = this.normalizeSteps(
       patch.steps ?? existing.steps ?? [],
       patch.name ?? existing.name,
@@ -703,6 +699,22 @@ export class ActionsService implements IActionsProvider {
       meta: { actionId: action.id },
     })
     return { action, ...(warnings.length > 0 ? { warnings } : {}) }
+  }
+
+  /** A step naming a device that does not offer its vocabulary action is refused at save (D12 per-binding walk). */
+  private async requireOffered(steps: ActionInput['steps'], actionName: string): Promise<void> {
+    try {
+      await assertStepsOffered(steps, this.directory)
+    } catch (err: unknown) {
+      if (err instanceof VocabActionError) {
+        this.logger.warn('action save refused — a device does not offer the action', {
+          ...(err.deviceId === undefined ? {} : { tags: { deviceId: err.deviceId } }),
+          meta: { action: actionName, actionId: err.actionId, reason: err.reason },
+        })
+        throw new ActionError('invalid-steps', err.message)
+      }
+      throw err
+    }
   }
 
   /** An action whose waits alone exceed the run ceiling could never finish: refuse the save. */

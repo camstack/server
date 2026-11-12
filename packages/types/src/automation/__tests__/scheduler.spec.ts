@@ -31,20 +31,12 @@ function input(
 }
 
 const SWITCH_ON = {
-  kind: 'cap',
-  actionId: 'switch.on',
+  kind: 'command',
   target: { kind: 'devices', ids: [1] },
-  cap: 'switch',
-  method: 'setState',
+  actionId: 'switch.on',
   args: { on: true },
 }
-const TOGGLE = {
-  kind: 'cap',
-  target: { kind: 'devices', ids: [1] },
-  cap: 'switch',
-  method: 'toggle',
-  args: {},
-}
+const TOGGLE = { kind: 'command', target: { kind: 'devices', ids: [1] }, actionId: 'cover.stop' }
 
 describe('validateSchedulerInput', () => {
   it('accepts a hold whose action leads to a state', () => {
@@ -54,7 +46,7 @@ describe('validateSchedulerInput', () => {
   it('refuses a hold whose step has no effect, with a reason', () => {
     const result = validateSchedulerInput(input('hold', TOGGLE), WITH_LOCATION)
     expect(result.ok).toBe(false)
-    if (!result.ok) expect(result.issues[0]?.message).toMatch(/raw call|does not lead to a state/)
+    if (!result.ok) expect(result.issues[0]?.message).toMatch(/does not lead to a state/)
   })
 
   it('allows the same step as an edge', () => {

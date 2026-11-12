@@ -47,7 +47,7 @@ function deps() {
     deps: {
       invokeCap: async (call: CapCall) => {
         calls.push(call)
-        if (call.cap === 'broken') throw new Error('device refused')
+        if (call.cap === 'alarm-panel') throw new Error('device refused')
       },
       sleep: async (ms: number) => {
         slept.push(ms)
@@ -339,7 +339,7 @@ describe('runSteps — parallel (#500)', () => {
 })
 
 describe('parallel schema (#500)', () => {
-  const cap = { kind: 'cap', target: { kind: 'devices', ids: [1] }, cap: 'switch', method: 'on' }
+  const cap = { kind: 'command', target: { kind: 'devices', ids: [1] }, actionId: 'switch.on' }
   const recipe = (steps: unknown[]) => ({
     when: { kind: 'manual' },
     actions: [{ kind: 'parallel', steps }],
@@ -633,13 +633,60 @@ describe('flow-control schema (#500)', () => {
   })
 })
 
+describe('buildActionSteps — the action id becomes a cap call through the vocabulary', () => {
+  it('sends the cap and method the vocabulary names, with the baked args over the step args', async () => {
+    const d = deps()
+    const runnable = buildActionSteps(
+      [
+        {
+          kind: 'command',
+          target: { kind: 'devices', ids: [5] },
+          actionId: 'switch.on',
+          // an open arg of the step, and a stale `on` the action's baked value must win over
+          args: { note: 'kept', on: false },
+        },
+      ],
+      {},
+      d.deps,
+    )
+    const result = await runSteps(runnable, options())
+    expect(result.failed).toBe(false)
+    expect(d.calls).toEqual([
+      { deviceId: 5, cap: 'switch', method: 'setState', args: { note: 'kept', on: true } },
+    ])
+    expect(result.steps[0]).toMatchObject({
+      kind: 'command',
+      cap: 'switch',
+      method: 'setState',
+      actionId: 'switch.on',
+    })
+  })
+
+  it('an open arg travels through unchanged', async () => {
+    const d = deps()
+    const runnable = buildActionSteps(
+      [
+        {
+          kind: 'command',
+          target: { kind: 'devices', ids: [5] },
+          actionId: 'cover.position',
+          args: { position: 40 },
+        },
+      ],
+      {},
+      d.deps,
+    )
+    await runSteps(runnable, options())
+    expect(d.calls[0]).toMatchObject({ cap: 'cover', args: { position: 40 } })
+  })
+})
+
 describe('buildActionSteps — variables', () => {
   const steps: ActionStep[] = [
     {
-      kind: 'cap',
-      deviceId: { $var: 'siren' },
-      cap: 'siren',
-      method: 'on',
+      kind: 'command',
+      target: { kind: 'var', name: 'siren' },
+      actionId: 'button.press',
       args: { volume: { $var: 'volume' }, label: 'alarm {{vars.zone}}' },
     },
   ]
@@ -650,7 +697,7 @@ describe('buildActionSteps — variables', () => {
     const result = await runSteps(runnable, options())
     expect(result.failed).toBe(false)
     expect(d.calls).toEqual([
-      { deviceId: 616, cap: 'siren', method: 'on', args: { volume: 80, label: 'alarm porch' } },
+      { deviceId: 616, cap: 'button', method: 'press', args: { volume: 80, label: 'alarm porch' } },
     ])
   })
 
@@ -670,7 +717,7 @@ describe('buildActionSteps — variables', () => {
     const runnable = buildActionSteps(
       [
         { kind: 'wait', seconds: 2 },
-        { kind: 'cap', deviceId: [1, 2], cap: 'lock-control', method: 'lock' },
+        { kind: 'command', target: { kind: 'devices', ids: [1, 2] }, actionId: 'lock.lock' },
       ],
       {},
       d.deps,
@@ -719,10 +766,9 @@ describe('resolveActionVariables', () => {
 describe('buildActionSteps — device templates (D1021 run-time contract)', () => {
   const templated: ActionStep[] = [
     {
-      kind: 'cap',
-      deviceId: 616,
-      cap: 'display',
-      method: 'show',
+      kind: 'command',
+      target: { kind: 'devices', ids: [616] },
+      actionId: 'button.press',
       args: {
         text: 'Stufa {{ stufa.temperature | round(1) }} in {{vars.zone}}',
         level: 3,
@@ -850,7 +896,14 @@ describe('buildActionSteps — device templates (D1021 run-time contract)', () =
     const d = deps()
     const r = rendering(() => ({ ok: true, text: 'x', trace: [] }))
     const runnable = buildActionSteps(
-      [{ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on', args: { volume: 80 } }],
+      [
+        {
+          kind: 'command',
+          target: { kind: 'devices', ids: [616] },
+          actionId: 'button.press',
+          args: { volume: 80 },
+        },
+      ],
       {},
       { ...d.deps, renderTemplates: r.render },
     )
@@ -870,12 +923,11 @@ describe('a conditional step (#472): if / else on the ONE when tree', () => {
     value: true,
   } as const
   const closeStep: ActionStep = {
-    kind: 'cap',
-    deviceId: 616,
-    cap: 'cover',
-    method: 'close',
+    kind: 'command',
+    target: { kind: 'devices', ids: [616] },
+    actionId: 'cover.close',
     if: IS_ON,
-    else: [{ kind: 'cap', deviceId: 617, cap: 'cover', method: 'open' }],
+    else: [{ kind: 'command', target: { kind: 'devices', ids: [617] }, actionId: 'cover.open' }],
   }
 
   function run(slice: unknown, extra: Partial<RunStepsOptions> = {}) {
@@ -918,7 +970,7 @@ describe('a conditional step (#472): if / else on the ONE when tree', () => {
 
   it('false with no else: the step is skipped, not silently ok', async () => {
     const d = deps()
-    const { else: _drop, ...bare } = closeStep as Extract<ActionStep, { kind: 'cap' }>
+    const { else: _drop, ...bare } = closeStep as Extract<ActionStep, { kind: 'command' }>
     const steps = buildActionSteps(
       [bare],
       {},
@@ -947,8 +999,8 @@ describe('a conditional step (#472): if / else on the ONE when tree', () => {
   it('a failing else step fails the run and the later steps are not run', async () => {
     const d = deps()
     const failing: ActionStep = {
-      ...(closeStep as Extract<ActionStep, { kind: 'cap' }>),
-      else: [{ kind: 'cap', deviceId: 1, cap: 'broken', method: 'x' }],
+      ...(closeStep as Extract<ActionStep, { kind: 'command' }>),
+      else: [{ kind: 'command', target: { kind: 'devices', ids: [1] }, actionId: 'alarm.trigger' }],
     }
     const steps = buildActionSteps(
       [failing, { kind: 'wait', seconds: 1 }],
@@ -1209,7 +1261,7 @@ describe('repeatCheck (#500)', () => {
 })
 
 describe('repeat schema (#500)', () => {
-  const cap = { kind: 'cap', target: { kind: 'devices', ids: [1] }, cap: 'switch', method: 'on' }
+  const cap = { kind: 'command', target: { kind: 'devices', ids: [1] }, actionId: 'switch.on' }
   const when = { kind: 'all', children: [] }
   const parse = (loop: unknown, steps: unknown[] = [cap]) =>
     CurrentAutomationRecipeSchema.safeParse({
@@ -1270,7 +1322,7 @@ describe('repeat schema (#500)', () => {
 })
 
 describe('two levels of block steps (#500)', () => {
-  const cap = { kind: 'cap', target: { kind: 'devices', ids: [1] }, cap: 'switch', method: 'on' }
+  const cap = { kind: 'command', target: { kind: 'devices', ids: [1] }, actionId: 'switch.on' }
   const when = { kind: 'all', children: [] }
   const count = (steps: unknown[]) => ({ kind: 'repeat', loop: { by: 'count', count: 2 }, steps })
   const choose = (steps: unknown[]) => ({ kind: 'choose', branches: [{ if: when, steps }] })
@@ -1326,11 +1378,11 @@ describe('two levels of block steps (#500)', () => {
       'steps.0.branches.0.if',
       'steps.1.when',
     ])
-    expect(nestedStepsOf(step).map((s) => s.kind)).toEqual(['choose', 'cap', 'wait-until'])
+    expect(nestedStepsOf(step).map((s) => s.kind)).toEqual(['choose', 'command', 'wait-until'])
   })
 
   it('a nested block keeps its own rows in the trace, one level down', async () => {
-    const leaf: RunnableStep = { meta: { kind: 'cap' }, run: async () => undefined }
+    const leaf: RunnableStep = { meta: { kind: 'command' }, run: async () => undefined }
     const result = await runSteps(
       [
         {
@@ -1363,7 +1415,7 @@ describe('two levels of block steps (#500)', () => {
           kind: 'choose',
           path: 'steps.0.steps.0',
           branch: 'branches.0',
-          steps: [{ kind: 'cap', path: 'steps.0.steps.0.branches.0.steps.0', outcome: 'ok' }],
+          steps: [{ kind: 'command', path: 'steps.0.steps.0.branches.0.steps.0', outcome: 'ok' }],
         },
       ],
     })

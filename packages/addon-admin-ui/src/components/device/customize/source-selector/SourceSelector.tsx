@@ -38,6 +38,7 @@ type DeviceSnapshot = Readonly<Record<string, Readonly<Record<string, unknown>>>
 
 import { ModeLine } from '../event/event-mode-line'
 import { vocabularyCapTitle, vocabularyFieldLabel } from '../vocabulary-field-label'
+import { SourceSelectorAction, type SourceSelectorActionProps } from './SourceSelectorAction'
 import { SourceSelectorMembers, type SourceSelectorMembersProps } from './SourceSelectorMembers'
 import {
   type EventPickedRow,
@@ -100,6 +101,12 @@ export interface SourceSelectorKeyedProps {
 
 export interface SourceSelectorFormulaProps {
   readonly kind: 'formula'
+  /**
+   * `'value'`: the host is a dialog opened to PICK a device value (an
+   * automation field), so the selector is always the two columns, never the
+   * compact card of an already chosen source. Absent = today's behaviour.
+   */
+  readonly intent?: 'value'
   readonly destination: SourceDestination
   readonly hostId: number
   readonly enabled: boolean
@@ -138,13 +145,17 @@ export interface SourceSelectorEventProps {
 }
 
 export type SourceSelectorProps =
+  | SourceSelectorActionProps
   | SourceSelectorScalarProps
   | SourceSelectorKeyedProps
   | SourceSelectorFormulaProps
   | SourceSelectorEventProps
   | SourceSelectorMembersProps
 
-type SingleSelectorProps = Exclude<SourceSelectorProps, SourceSelectorMembersProps>
+type SingleSelectorProps = Exclude<
+  SourceSelectorProps,
+  SourceSelectorMembersProps | SourceSelectorActionProps
+>
 
 function toCandidates(
   fleet: readonly PickerDevice[],
@@ -183,6 +194,7 @@ function conversionKey(name: 'threshold' | 'scale' | 'invert' | 'enum-map'): str
 
 export function SourceSelector(props: SourceSelectorProps): ReactNode {
   if (props.kind === 'members') return <SourceSelectorMembers {...props} />
+  if (props.kind === 'action') return <SourceSelectorAction {...props} />
   return <SourceSelectorSingle {...props} />
 }
 
@@ -378,6 +390,7 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       testId="source-selector"
       deviceListTestId={devicePickerTestId}
       fillHeight={fillHeight}
+      pickerOnly={props.kind === 'formula' && props.intent === 'value'}
       heading={t('customize.sourceSelector.pickDevice', { title: props.destination.title })}
       {...(search.kind === 'requires' ? { requires: search.requires } : {})}
       contextDeviceId={props.hostId}

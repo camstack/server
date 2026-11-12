@@ -2984,6 +2984,12 @@
           "doc": ""
         },
         {
+          "name": "current",
+          "type": "AutomationLeafKind",
+          "optional": true,
+          "doc": "The kind of the row being changed: highlighted when the search is empty. Absent (adding a row) = nothing is highlighted until the operator t"
+        },
+        {
           "name": "onPick",
           "type": "(kind: AutomationLeafKind) => void",
           "optional": false,
@@ -5901,6 +5907,51 @@
           "type": "boolean",
           "optional": true,
           "doc": "The host gives a definite height: the columns scroll on their own."
+        },
+        {
+          "name": "pickerOnly",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The host IS the picker (a dialog opened to choose): always the two columns, never the compact card with its Change button."
+        }
+      ]
+    },
+    {
+      "name": "DeviceValueGroupList",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-field/device-value-field.tsx",
+      "summary": "The values column of : one titled section per capability, one radio row per value. Exported so a picker that offers something other than a device's values (the commands a device can be told to do) lists them the same …",
+      "props": [
+        {
+          "name": "groups",
+          "type": "readonly DeviceValueGroup[]",
+          "optional": false,
+          "doc": "Empty groups are not drawn."
+        },
+        {
+          "name": "value",
+          "type": "DeviceValuePick | null",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onPick",
+          "type": "(pick: DeviceValuePick) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": true,
+          "doc": "The radio group's name; one per list on a screen."
+        },
+        {
+          "name": "rowTestId",
+          "type": "(row: DeviceValueRow) => string",
+          "optional": true,
+          "doc": ""
         }
       ]
     },

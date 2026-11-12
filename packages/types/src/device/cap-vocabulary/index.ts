@@ -18,12 +18,20 @@ export {
   renderVocabPhrase,
   triggersForDevice,
 } from './resolve.js'
-export type { ActionEffect, IndexedVocabAction } from './action-index.js'
+export type {
+  ActionEffect,
+  IndexedVocabAction,
+  VocabActionRefusal,
+  VocabCall,
+} from './action-index.js'
 export {
   actionEffect,
   allVocabActions,
+  assertDeviceOffers,
   findVocabAction,
+  VocabActionError,
   vocabActionIdFor,
+  vocabCall,
 } from './action-index.js'
 export type { CommandEffect } from './command-catalog.js'
 export { auditedFields, commandEffect, isCommand } from './command-catalog.js'

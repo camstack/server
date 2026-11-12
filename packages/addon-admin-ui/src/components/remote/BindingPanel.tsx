@@ -19,6 +19,7 @@ import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AutomationDevice } from '../../pages/build/automation/automation-data'
 import { CommandStep } from '../../pages/build/flow/CommandStep'
+import { bindingOfCommand, commandOfBinding } from './remote-command'
 import {
   type BindingCode,
   type BindingDescription,
@@ -198,12 +199,13 @@ export function BindingPanel({
       {pickCommand && binding !== undefined && (
         <FormField label={t('commands.change')}>
           <CommandStep
-            step={binding.action}
+            step={commandOfBinding(binding.action)}
             devices={devices}
             variables={[]}
+            singleTarget
             onChange={(next) => {
-              if (typeof next.deviceId !== 'number') return
-              onBind({ ...next, deviceId: next.deviceId })
+              const action = bindingOfCommand(next)
+              if (action !== null) onBind(action)
             }}
           />
         </FormField>

@@ -122,10 +122,9 @@ export const ACTIONS = [
     readOnly: false,
     steps: [
       {
-        kind: 'cap',
-        deviceId: 201,
-        cap: 'pet-feeder',
-        method: 'feed',
+        kind: 'command',
+        target: { kind: 'devices', ids: [201] },
+        actionId: 'petFeeder.feed',
         args: { grams: { $var: 'grams' } },
       },
       { kind: 'wait', seconds: 5 },

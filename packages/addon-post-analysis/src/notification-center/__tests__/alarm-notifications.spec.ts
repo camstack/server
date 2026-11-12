@@ -229,7 +229,10 @@ async function makeIntrusionRule(
     rule: NcRuleInputSchema.parse({
       name: 'Intrusione',
       delivery: 'immediate',
-      conditions: { classes: ['person'], deviceState: { deviceId: PANEL_ID, states: ['armed_away'] } },
+      conditions: {
+        classes: ['person'],
+        deviceState: { deviceId: PANEL_ID, states: ['armed_away'] },
+      },
       targets: targetIds.map((targetId) => ({ targetId })),
       media: { attach: 'best', gif: true },
       throttle: { cooldownSec: 0, scope: 'rule-device' },
@@ -924,9 +927,7 @@ describe('a cooling rule still ACTUATES', () => {
         // A minute of silence per camera — and nothing at all about the alarm.
         throttle: { cooldownSec: 60, scope: 'rule-device' },
         actions: {
-          onTrigger: [
-            capAction(PANEL_ID, 'alarm-panel', 'trigger'),
-          ],
+          onTrigger: [capAction(PANEL_ID, 'alarm.trigger')],
         },
       }),
     })

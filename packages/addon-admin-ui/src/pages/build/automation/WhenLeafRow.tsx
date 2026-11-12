@@ -91,6 +91,7 @@ export function WhenLeafRow({
             context={context}
             underNot={underNot}
             treeFull={false}
+            current={leaf.kind}
             onPick={(kind) => {
               if (kind !== leaf.kind) onChange(convertLeafKind(leaf, kind))
             }}

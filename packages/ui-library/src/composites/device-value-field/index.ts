@@ -1,6 +1,8 @@
 export {
   DeviceValueField,
   type DeviceValueFieldProps,
+  DeviceValueGroupList,
+  type DeviceValueGroupListProps,
   type DeviceValueGroup,
   type DeviceValuePick,
   type DeviceValueRow,

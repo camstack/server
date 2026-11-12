@@ -2,13 +2,14 @@
  * A stand-in for the `actions` cap in a centre spec (planning#473).
  *
  * A rule names an Action by id; the Action's steps belong to the Actions
- * surface. `capAction(deviceId, cap, method)` registers a one-step Action and
- * answers its id, so a spec writes `onTrigger: [capAction(PANEL, 'alarm-panel', 'trigger')]`.
- * The fake's `run` records each cap step as an actuation. It does not carry a
+ * surface. `capAction(deviceId, actionId)` registers a one-step Action running a
+ * vocabulary action and answers its id, so a spec writes
+ * `onTrigger: [capAction(PANEL, 'alarm.trigger')]`. The fake's `run` records
+ * each command step as the cap method the vocabulary names (`findVocabAction`). It does not carry a
  * command origin: the specs that use it are about the auto-trigger path, which
  * reaches the panel without an Action run.
  */
-import type { ActionEntry, ActionStep } from '@camstack/types'
+import { findVocabAction, type ActionEntry, type ActionStep } from '@camstack/types'
 import type { NcActionsPort } from '../rule-actions.js'
 
 export interface FakeActuation {
@@ -19,14 +20,13 @@ export interface FakeActuation {
 
 const registry = new Map<string, ActionEntry>()
 
-export function capAction(deviceId: number, cap: string, method: string): string {
-  const id = `internal:cap-${deviceId}-${cap}-${method}`
+export function capAction(deviceId: number, actionId: string): string {
+  const id = `internal:cap-${deviceId}-${actionId}`
   if (!registry.has(id)) {
     const step: ActionStep = {
-      kind: 'cap',
+      kind: 'command',
       target: { kind: 'devices', ids: [deviceId] },
-      cap,
-      method,
+      actionId,
       args: {},
     }
     registry.set(id, {
@@ -47,9 +47,11 @@ export function makeFakeActions(onActuate: (actuation: FakeActuation) => unknown
     list: async () => [...registry.values()],
     run: async ({ actionId }) => {
       for (const step of registry.get(actionId)?.steps ?? []) {
-        if (step.kind === 'cap' && step.target?.kind === 'devices') {
+        if (step.kind === 'command' && step.target.kind === 'devices') {
+          const found = findVocabAction(step.actionId)
+          if (found === undefined) continue
           for (const deviceId of step.target.ids) {
-            await onActuate({ deviceId, cap: step.cap, method: step.method })
+            await onActuate({ deviceId, cap: found.cap, method: found.action.method })
           }
         }
       }

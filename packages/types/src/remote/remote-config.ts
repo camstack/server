@@ -3,14 +3,13 @@
  * the layout payload of the `remote` template kind. Pure data: no runtime, no
  * node dependency, so the admin UI imports the same schemas the server checks.
  *
- * A binding is the SAME shape an Action step has (`AutomationCapStepBaseSchema`: a
- * cap method called on a device with arguments), narrowed to ONE device: an IR
+ * A binding is a raw cap call (a cap method called on ONE device with
+ * arguments), not a vocabulary step: an IR
  * code is `ir-transmitter.send` on the transmitter, a smart TV is a `switch` or a
  * vendor cap — the remote does not know which. How many times a command is sent
  * is the CALLER's (`sendCommand({ repeat })`), never stored here.
  */
 import { z } from 'zod'
-import { AutomationCapStepBaseSchema } from '../automation/recipe.js'
 import {
   customKeyOfRole,
   isRemoteCustomKey,
@@ -29,11 +28,14 @@ import {
   remoteSourceSteps,
 } from './remote-sources.js'
 
-export const RemoteBindingActionSchema = AutomationCapStepBaseSchema.omit({
-  target: true,
-  actionId: true,
-}).extend({
+export const RemoteBindingActionSchema = z.object({
+  kind: z.literal('cap'),
   deviceId: z.number().int().nonnegative(),
+  cap: z.string().min(1),
+  method: z.string().min(1),
+  args: z.record(z.string(), z.unknown()).optional(),
+  /** The unit the person picked per arg (display only); `args` always hold the cap's own unit. */
+  argUnits: z.record(z.string(), z.string().min(1)).optional(),
 })
 export type RemoteBindingAction = z.infer<typeof RemoteBindingActionSchema>
 

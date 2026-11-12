@@ -78,6 +78,6 @@ describe('parallel members (#500)', () => {
     expect(isParallelMember({ kind: 'set', vars: {} })).toBe(false)
     expect(isParallelMember({ kind: 'stop', reason: '', outcome: 'ok' })).toBe(false)
     expect(isParallelMember({ kind: 'parallel', steps: [] })).toBe(false)
-    expect(PARALLEL_KINDS).toEqual(['cap', 'action', 'wait'])
+    expect(PARALLEL_KINDS).toEqual(['command', 'action', 'wait'])
   })
 })

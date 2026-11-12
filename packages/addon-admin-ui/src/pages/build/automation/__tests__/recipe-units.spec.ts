@@ -18,10 +18,9 @@ const leaf = (extra: object) => ({
 })
 
 const feed = (extra: object) => ({
-  kind: 'cap' as const,
-  deviceId: 201,
-  cap: 'pet-feeder',
-  method: 'feed',
+  kind: 'command' as const,
+  target: { kind: 'devices' as const, ids: [201] },
+  actionId: 'petFeeder.feed',
   args: { grams: 30 },
   ...extra,
 })

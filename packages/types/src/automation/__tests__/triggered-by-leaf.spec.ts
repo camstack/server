@@ -36,12 +36,11 @@ const fetchers = {
   fetchSlice: async () => ({}),
   fetchStableIds: async () => new Map<string, number>(),
 }
-const SIREN = {
-  kind: 'cap',
-  deviceId: 616,
-  cap: 'siren',
-  method: 'on',
-} as const
+const SIREN: Extract<AutomationRecipe['actions'][number], { kind: 'command' }> = {
+  kind: 'command',
+  target: { kind: 'devices', ids: [616] },
+  actionId: 'button.press',
+}
 
 describe('event-leaf ids', () => {
   it('every event leaf takes an optional id, and a malformed one is refused', () => {

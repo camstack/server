@@ -30,8 +30,12 @@ import { makeNcWorld } from './support/nc-records-world.js'
 const MARK_RULE = 'garage door rule, kept as written'
 const MARK_LABEL = 'Open the gate, kept as written'
 
-const CAP_STEP = { kind: 'cap', cap: 'switch', method: 'turnOn', deviceId: 7 }
-const CAP_STEP_OFF = { kind: 'cap', cap: 'switch', method: 'turnOff', deviceId: 7 }
+const CAP_STEP = { kind: 'command', target: { kind: 'devices', ids: [7] }, actionId: 'switch.on' }
+const CAP_STEP_OFF = {
+  kind: 'command',
+  target: { kind: 'devices', ids: [7] },
+  actionId: 'switch.off',
+}
 const WAIT_STEP = { kind: 'wait', seconds: 5 }
 
 function ledgerHost(): { host: AddonMigrationHost; applied: Map<string, MigrationOwnerResult> } {

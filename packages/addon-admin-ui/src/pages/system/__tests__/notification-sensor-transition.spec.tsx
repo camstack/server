@@ -215,9 +215,8 @@ describe('RuleConditionsEditor â€” an alarm rule that asks for the clear (D640 Ã
         id === 'internal:panel'
           ? [
               {
-                kind: 'cap',
-                cap: 'alarm-panel',
-                method: 'trigger',
+                kind: 'command',
+                actionId: 'alarm.trigger',
                 target: { kind: 'devices', ids: [900] },
               },
             ]

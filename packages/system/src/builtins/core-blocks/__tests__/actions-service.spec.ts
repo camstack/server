@@ -37,13 +37,11 @@ function addonEntry(id: string, overrides: Partial<ActionEntry> = {}): ActionEnt
   }
 }
 
-/** A registry that was never asked: a legacy `devices` step does not read it. */
-const NO_REGISTRY: DeviceDirectory = {
-  listDeviceIdsByCaps: async () => {
-    throw new Error('the registry must not be read by a devices target')
-  },
+/** A registry where every device id the specs use offers every cap, so the save check passes. */
+const OFFERS_ALL: DeviceDirectory = {
+  listDeviceIdsByCaps: async () => Array.from({ length: 2000 }, (_, id) => id),
   listDevices: async () => {
-    throw new Error('the registry must not be read by a devices target')
+    throw new Error('the registry must not be listed by a devices target')
   },
 }
 
@@ -104,7 +102,7 @@ async function world(options?: {
     store,
     ledger,
     sources,
-    directory: options?.directory ?? NO_REGISTRY,
+    directory: options?.directory ?? OFFERS_ALL,
     invokeCap: async (call) => {
       calls.push(call)
       await options?.invoke?.(call)
@@ -133,7 +131,11 @@ async function world(options?: {
   }
 }
 
-const STEP = (deviceId: number) => ({ kind: 'cap', deviceId, cap: 'siren', method: 'on' }) as const
+const STEP = (deviceId: number): ActionStep => ({
+  kind: 'command',
+  target: { kind: 'devices', ids: [deviceId] },
+  actionId: 'button.press',
+})
 
 describe('actions — internal actions', () => {
   it('runs the steps, substitutes variables, and writes a steps.N trace to the ledger', async () => {
@@ -144,11 +146,10 @@ describe('actions — internal actions', () => {
         variables: [{ name: 'vol', type: 'number', default: 5 }],
         steps: [
           {
-            kind: 'cap',
-            deviceId: 616,
-            cap: 'siren',
-            method: 'on',
-            args: { volume: { $var: 'vol' } },
+            kind: 'command',
+            target: { kind: 'devices', ids: [616] },
+            actionId: 'cover.position',
+            args: { position: { $var: 'vol' } },
           },
         ],
       },
@@ -164,9 +165,9 @@ describe('actions — internal actions', () => {
     expect(w.calls).toEqual([
       {
         deviceId: 616,
-        cap: 'siren',
-        method: 'on',
-        args: { volume: 9 },
+        cap: 'cover',
+        method: 'setPosition',
+        args: { position: 9 },
         origin: { kind: 'action', actionId: action.id, runId: result.runId },
       },
     ])
@@ -182,8 +183,18 @@ describe('actions — internal actions', () => {
       action: {
         name: 'Alarm',
         steps: [
-          { kind: 'cap', deviceId: 1023, cap: 'alarm-panel', method: 'trigger', args: {} },
-          { kind: 'cap', deviceId: 44, cap: 'switch', method: 'setState', args: { on: true } },
+          {
+            kind: 'command',
+            target: { kind: 'devices', ids: [1023] },
+            actionId: 'alarm.trigger',
+            args: {},
+          },
+          {
+            kind: 'command',
+            target: { kind: 'devices', ids: [44] },
+            actionId: 'switch.on',
+            args: {},
+          },
         ],
       },
     })
@@ -325,10 +336,9 @@ describe('actions — internal actions', () => {
 })
 
 const FEED = (args: Record<string, unknown>, deviceId = 41): ActionStep => ({
-  kind: 'cap',
+  kind: 'command',
   target: { kind: 'devices', ids: [deviceId] },
-  cap: 'pet-feeder',
-  method: 'feed',
+  actionId: 'petFeeder.feed',
   args,
 })
 
@@ -626,11 +636,9 @@ describe('runs ledger', () => {
 
 describe('actions — D983 targets', () => {
   const DOMAIN_STEP = {
-    kind: 'cap',
-    actionId: 'cover.open',
+    kind: 'command',
     target: { kind: 'domain', roomId: 'Kitchen' },
-    cap: 'cover',
-    method: 'open',
+    actionId: 'cover.open',
   } as const
 
   function coverRegistry(seed: ReadonlyArray<{ id: number; location: string | null }>): {
@@ -691,43 +699,6 @@ describe('actions — D983 targets', () => {
     })
     const { traces } = await w.service.getTraces({ actionId: action.id })
     expect(traces[0]?.steps[0]?.outcome).toBe('empty')
-  })
-
-  it('a stored legacy row is READ as the new shape and rewritten once by the migration', async () => {
-    const w = await world()
-    const kind = w.records.kind(coreBlocksRecordKinds.actions)
-    await kind.put({
-      id: 'legacy-1',
-      data: {
-        name: 'Legacy',
-        steps: [
-          {
-            kind: 'cap',
-            deviceId: [7, 9],
-            cap: 'siren',
-            method: 'on',
-            args: { code: 'MARK-42' },
-          },
-        ],
-        createdAt: 1,
-        updatedAt: 1,
-      },
-    })
-    const read = await w.store.get('internal:legacy-1')
-    expect(read?.steps?.[0]).toMatchObject({
-      target: { kind: 'devices', ids: [7, 9] },
-      args: { code: 'MARK-42' },
-    })
-    expect(read?.steps?.[0]).not.toHaveProperty('deviceId')
-
-    expect(await w.service.migrateTargets()).toBe(1)
-    const stored = await kind.get('legacy-1')
-    expect(stored?.data.steps[0]).toMatchObject({
-      target: { kind: 'devices', ids: [7, 9] },
-      args: { code: 'MARK-42' },
-    })
-    expect(stored?.data.steps[0]).not.toHaveProperty('deviceId')
-    expect(await w.service.migrateTargets()).toBe(0)
   })
 })
 
@@ -878,7 +849,14 @@ describe('actions — device templates in step args (D1021)', () => {
     const { action } = await w.service.create({
       action: {
         name: 'Say',
-        steps: [{ kind: 'cap', deviceId: 616, cap: 'display', method: 'show', args: { text } }],
+        steps: [
+          {
+            kind: 'command',
+            target: { kind: 'devices', ids: [616] },
+            actionId: 'cover.position',
+            args: { position: text },
+          },
+        ],
       },
     })
     await w.service.setLinks({ deviceId: 616, actionIds: [action.id] })
@@ -890,7 +868,7 @@ describe('actions — device templates in step args (D1021)', () => {
     const { w, action } = await templated(d.fake, 'now {{ garage.temp }}')
     const result = await w.service.run({ actionId: action.id, wait: true, caller: ADMIN })
     expect(result.outcome).toBe('ran')
-    expect(w.calls[0]?.args).toEqual({ text: 'now 9C' })
+    expect(w.calls[0]?.args).toEqual({ position: 'now 9C' })
     expect(d.renders[0]?.allowed).toBeUndefined()
   })
 
@@ -948,12 +926,11 @@ describe('actions — a conditional step (#472)', () => {
     value: true,
   } as const
   const GUARDED: ActionStep = {
-    kind: 'cap',
-    deviceId: 616,
-    cap: 'siren',
-    method: 'on',
+    kind: 'command',
+    target: { kind: 'devices', ids: [616] },
+    actionId: 'button.press',
     if: IF,
-    else: [{ kind: 'cap', deviceId: 616, cap: 'siren', method: 'off' }],
+    else: [{ kind: 'command', target: { kind: 'devices', ids: [616] }, actionId: 'cover.stop' }],
   }
 
   /** A door whose verdict is fixed; it records the readable set it was built for. */
@@ -975,8 +952,8 @@ describe('actions — a conditional step (#472)', () => {
 
   it('true runs the step, false runs the else, unknown runs neither — and the trace says which', async () => {
     for (const [result, methods, outcome] of [
-      ['true', ['on'], 'ok'],
-      ['false', ['off'], 'ok'],
+      ['true', ['press'], 'ok'],
+      ['false', ['stop'], 'ok'],
       ['unknown', [], 'skipped'],
     ] as const) {
       const { w, action } = await guarded(door(result).fake)
@@ -1003,5 +980,43 @@ describe('actions — a conditional step (#472)', () => {
     const { w, action } = await guarded(d.fake)
     await w.service.run({ actionId: action.id, deviceId: 616, wait: true, caller: VIEWER })
     expect(d.built).toEqual([[616]])
+  })
+})
+
+describe('actions — a device must offer the action it is told to run', () => {
+  const NO_COVER: DeviceDirectory = {
+    listDeviceIdsByCaps: async (caps) => (caps.includes('cover') ? [] : [616]),
+    listDevices: OFFERS_ALL.listDevices,
+  }
+  const OPEN: ActionStep = {
+    kind: 'command',
+    target: { kind: 'devices', ids: [616] },
+    actionId: 'cover.open',
+  }
+
+  it('refuses a create naming a device not bound to the action cap, stores nothing and logs the device', async () => {
+    const w = await world({ directory: NO_COVER })
+    await expect(w.service.create({ action: { name: 'Open', steps: [OPEN] } })).rejects.toThrow(
+      /\[invalid-steps\]/,
+    )
+    expect(await w.store.list()).toEqual([])
+    expect(w.log.lines.some((l) => l.extras?.tags?.['deviceId'] === 616)).toBe(true)
+  })
+
+  it('refuses an update that brings the step in, and keeps the stored steps', async () => {
+    const w = await world({ directory: NO_COVER })
+    const { action } = await w.service.create({ action: { name: 'Ring', steps: [STEP(616)] } })
+    await expect(
+      w.service.update({ actionId: action.id, action: { steps: [OPEN] } }),
+    ).rejects.toThrow(/\[invalid-steps\]/)
+    const kept = await w.service.get({ actionId: action.id })
+    expect(kept.action?.steps).toEqual([STEP(616)])
+  })
+
+  it('accepts the same step once the device offers the action', async () => {
+    const w = await world()
+    await expect(
+      w.service.create({ action: { name: 'Open', steps: [OPEN] } }),
+    ).resolves.toBeDefined()
   })
 })

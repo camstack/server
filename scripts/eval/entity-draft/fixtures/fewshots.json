@@ -12,7 +12,7 @@
    },
    "actions": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.on",
      "target": {
       "kind": "devices",
@@ -45,7 +45,7 @@
    },
    "actions": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "cover.open",
      "target": {
       "kind": "devices",
@@ -77,7 +77,7 @@
    },
    "actions": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.on",
      "target": {
       "kind": "devices",
@@ -91,7 +91,7 @@
      "seconds": 120
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.off",
      "target": {
       "kind": "devices",
@@ -110,7 +110,7 @@
    "name": "Leggere",
    "steps": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "brightness.set",
      "target": {
       "kind": "devices",
@@ -123,7 +123,7 @@
      }
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "cover.close",
      "target": {
       "kind": "devices",
@@ -142,7 +142,7 @@
    "name": "Kitchen off",
    "steps": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.off",
      "target": {
       "kind": "devices",
@@ -156,7 +156,7 @@
      "seconds": 10
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.off",
      "target": {
       "kind": "devices",
@@ -175,7 +175,7 @@
    "name": "Apri tapparelle",
    "steps": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "cover.open",
      "target": {
       "kind": "devices",
@@ -218,7 +218,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "cover.open",
          "target": {
           "kind": "devices",
@@ -262,7 +262,7 @@
        "mode": "hold",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "switch.on",
          "target": {
           "kind": "devices",
@@ -293,7 +293,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "switch.off",
          "target": {
           "kind": "devices",
@@ -334,7 +334,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "climate.heat",
          "target": {
           "kind": "devices",
@@ -355,7 +355,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "climate.heat",
          "target": {
           "kind": "devices",

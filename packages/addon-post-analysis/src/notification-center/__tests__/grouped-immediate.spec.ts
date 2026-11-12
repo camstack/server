@@ -518,9 +518,7 @@ describe('grouped close pass (D692 Task 9a)', () => {
         h,
         rule({
           actions: {
-            onTrigger: [
-              capAction(7, 'alarm-panel', 'trigger'),
-            ],
+            onTrigger: [capAction(7, 'alarm.trigger')],
           },
         }),
       )

@@ -31,7 +31,6 @@ import {
   type MirrorSource,
   nextOccurrence,
   nextTimeBoundaryInMs,
-  normalizeCapStep,
   type Scheduler,
   type SchedulerOutcome,
   type SchedulerPoint,
@@ -322,9 +321,8 @@ export class SchedulerEngine {
   private async holdSources(s: Scheduler, point: SchedulerPoint): Promise<MirrorSource[]> {
     const out: MirrorSource[] = []
     for (const step of point.steps) {
-      if (step.kind !== 'cap') continue
-      const normalized = normalizeCapStep(step)
-      if (normalized.actionId === undefined) continue
+      if (step.kind !== 'command') continue
+      const normalized = step
       const effect = actionEffect(normalized.actionId, step.args)
       if (effect === null) continue
       try {

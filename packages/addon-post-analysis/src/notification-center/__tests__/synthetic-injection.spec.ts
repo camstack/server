@@ -463,9 +463,7 @@ describe('the side gates behave as the operator asked', () => {
     await h.center.buildProvider().createRule({
       rule: makeRuleInput({
         actions: {
-          onTrigger: [
-            capAction(104, 'cover', 'open'),
-          ],
+          onTrigger: [capAction(104, 'cover.open')],
         },
       }),
       caller: CALLER,

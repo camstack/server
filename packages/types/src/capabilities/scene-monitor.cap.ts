@@ -399,7 +399,7 @@ export const sceneMonitorCapability = {
      * instead of failing silently weeks later.
      *
      * Reachable from three surfaces on this one mutation: the scene card, a
-     * notification button (an `onTrigger` sequence with a `kind:'cap'` step —
+     * notification button (an `onTrigger` sequence with a `kind:'command'` step —
      * no new Notification-Center code at all), and tRPC for scripts.
      */
     resetScene: method(

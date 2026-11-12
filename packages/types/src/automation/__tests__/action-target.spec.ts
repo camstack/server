@@ -1,98 +1,89 @@
 import { describe, expect, it } from 'vitest'
 import { DeviceType } from '../../device/device-type.js'
 import { ActionTargetResolver } from '../action-target.js'
-import { AutomationCapStepSchema, type AutomationCapStep, normalizeCapStep } from '../recipe.js'
+import {
+  AutomationCommandStepSchema,
+  CurrentAutomationRecipeSchema,
+  type AutomationCommandStep,
+} from '../recipe.js'
 import { buildActionSteps, runSteps, type CapCall, type RunStepsOptions } from '../step-runner.js'
 import { fakeRegistry, recordingLogger } from './target-fixtures.js'
 
 const ORIGIN = { actionId: 'internal:a1', owner: 'automation-7' } as const
 
-describe('normalizeCapStep — a legacy step is READ as the new shape', () => {
-  it('keeps the marked arg and maps deviceId [7, 9] to a devices target', () => {
-    const legacy: AutomationCapStep = {
-      kind: 'cap',
-      deviceId: [7, 9],
-      cap: 'lock-control',
-      method: 'lock',
-      args: { code: 'MARK-42' },
+describe('a command step names a vocabulary action and a target', () => {
+  it('round-trips a recipe unchanged: the open args stay, nothing is baked in', () => {
+    const recipe = {
+      when: { kind: 'manual' },
+      actions: [
+        {
+          kind: 'command',
+          target: { kind: 'devices', ids: [7] },
+          actionId: 'cover.position',
+          args: { position: 40 },
+        },
+      ],
     }
-    const parsed = AutomationCapStepSchema.parse(legacy)
-    const step = normalizeCapStep(parsed)
-    expect(step.target).toEqual({ kind: 'devices', ids: [7, 9] })
-    expect(step.args).toEqual({ code: 'MARK-42' })
-    expect(step.actionId).toBe('lock.lock')
-    expect('deviceId' in step).toBe(false)
+    const parsed = CurrentAutomationRecipeSchema.parse(recipe)
+    expect(parsed.actions).toEqual(recipe.actions)
   })
 
-  it('maps a single id and a $var, and fills the action only when exactly one matches', () => {
+  it('keeps a domain and a var target as written', () => {
+    const domain = AutomationCommandStepSchema.parse({
+      kind: 'command',
+      actionId: 'cover.open',
+      target: { kind: 'domain', roomId: 'Living room' },
+    })
+    expect(domain.target).toEqual({ kind: 'domain', roomId: 'Living room' })
+    const byVar = AutomationCommandStepSchema.parse({
+      kind: 'command',
+      actionId: 'switch.on',
+      target: { kind: 'var', name: 'deviceId' },
+    })
+    expect(byVar.target).toEqual({ kind: 'var', name: 'deviceId' })
+  })
+
+  it('refuses the old cap step: there is no read path for it', () => {
+    const old = {
+      when: { kind: 'manual' },
+      actions: [
+        { kind: 'cap', cap: 'switch', method: 'setOn', target: { kind: 'devices', ids: [1] } },
+      ],
+    }
+    expect(CurrentAutomationRecipeSchema.safeParse(old).success).toBe(false)
     expect(
-      normalizeCapStep({
+      AutomationCommandStepSchema.safeParse({
         kind: 'cap',
         deviceId: 3,
         cap: 'switch',
-        method: 'setState',
-        args: { on: false },
-      }),
-    ).toMatchObject({
-      target: { kind: 'devices', ids: [3] },
-      actionId: 'switch.off',
-    })
-    expect(
-      normalizeCapStep({
-        kind: 'cap',
-        deviceId: { $var: 'deviceId' },
-        cap: 'switch',
-        method: 'setState',
-        args: { on: true },
-      }),
-    ).toMatchObject({
-      target: { kind: 'var', name: 'deviceId' },
-      actionId: 'switch.on',
-    })
-    // setState with an arg no vocabulary action bakes in: ambiguous → no action id invented.
-    const odd = normalizeCapStep({
-      kind: 'cap',
-      deviceId: 3,
-      cap: 'switch',
-      method: 'setState',
-      args: {},
-    })
-    expect(odd.actionId).toBeUndefined()
-    // a cap with no vocabulary action for the method at all
-    expect(
-      normalizeCapStep({ kind: 'cap', deviceId: 3, cap: 'nope', method: 'x' }).actionId,
-    ).toBeUndefined()
-  })
-
-  it('passes a new-shape step through untouched', () => {
-    const step = normalizeCapStep(
-      AutomationCapStepSchema.parse({
-        kind: 'cap',
-        actionId: 'cover.open',
-        target: { kind: 'domain', roomId: 'Living room' },
-        cap: 'cover',
-        method: 'open',
-      }),
-    )
-    expect(step.target).toEqual({ kind: 'domain', roomId: 'Living room' })
-    expect(step.actionId).toBe('cover.open')
-  })
-
-  it('refuses a step with no target, and a domain target without its vocabulary action', () => {
-    expect(
-      AutomationCapStepSchema.safeParse({
-        kind: 'cap',
-        cap: 'cover',
-        method: 'open',
+        method: 'setOn',
       }).success,
     ).toBe(false)
-    const noAction = AutomationCapStepSchema.safeParse({
-      kind: 'cap',
-      target: { kind: 'domain' },
-      cap: 'cover',
-      method: 'open',
+  })
+
+  it('refuses an unknown action id, naming the actionId path', () => {
+    const result = AutomationCommandStepSchema.safeParse({
+      kind: 'command',
+      actionId: 'cover.teleport',
+      target: { kind: 'devices', ids: [1] },
     })
-    expect(noAction.success).toBe(false)
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.path).toEqual(['actionId'])
+      expect(result.error.issues[0]?.message).toMatch(/cover\.teleport/)
+    }
+  })
+
+  it('refuses a step with no target or no action', () => {
+    expect(
+      AutomationCommandStepSchema.safeParse({ kind: 'command', actionId: 'cover.open' }).success,
+    ).toBe(false)
+    expect(
+      AutomationCommandStepSchema.safeParse({
+        kind: 'command',
+        target: { kind: 'devices', ids: [1] },
+      }).success,
+    ).toBe(false)
   })
 })
 
@@ -226,12 +217,10 @@ describe('a multi-device step in the runner', () => {
     now: () => 1,
     onFailure: () => undefined,
   }
-  const domainStep: AutomationCapStep = {
-    kind: 'cap',
+  const domainStep: AutomationCommandStep = {
+    kind: 'command',
     actionId: 'cover.open',
     target: { kind: 'domain', roomId: 'Living room' },
-    cap: 'cover',
-    method: 'open',
   }
 
   function run(

@@ -30,7 +30,7 @@
        "mode": "hold",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "switch.on",
          "target": {
           "kind": "devices",
@@ -51,7 +51,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "switch.off",
          "target": {
           "kind": "devices",
@@ -100,7 +100,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "cover.open",
          "target": {
           "kind": "devices",
@@ -131,7 +131,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "cover.open",
          "target": {
           "kind": "devices",
@@ -182,7 +182,7 @@
        "mode": "hold",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "climate.target",
          "target": {
           "kind": "devices",
@@ -206,7 +206,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "climate.off",
          "target": {
           "kind": "devices",
@@ -257,7 +257,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "cover.close",
          "target": {
           "kind": "domain",
@@ -265,7 +265,7 @@
          }
         },
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "switch.off",
          "target": {
           "kind": "domain",
@@ -310,7 +310,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "brightness.set",
          "target": {
           "kind": "devices",
@@ -364,7 +364,7 @@
        "mode": "hold",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "cover.close",
          "target": {
           "kind": "devices",
@@ -425,7 +425,7 @@
        "mode": "hold",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "switch.on",
          "target": {
           "kind": "devices",
@@ -484,7 +484,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "switch.on",
          "target": {
           "kind": "devices",
@@ -505,7 +505,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "switch.off",
          "target": {
           "kind": "devices",
@@ -555,7 +555,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "cover.close",
          "target": {
           "kind": "devices",
@@ -612,7 +612,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "switch.on",
          "target": {
           "kind": "devices",
@@ -633,7 +633,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "switch.off",
          "target": {
           "kind": "devices",
@@ -667,7 +667,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "switch.on",
          "target": {
           "kind": "devices",
@@ -688,7 +688,7 @@
        "mode": "edge",
        "steps": [
         {
-         "kind": "cap",
+         "kind": "command",
          "actionId": "switch.off",
          "target": {
           "kind": "devices",

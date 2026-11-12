@@ -12,11 +12,9 @@ import type { StepConditionDoor } from '../step-condition-door.js'
 
 function turn(on: boolean, target: number | 'domain'): ActionStep {
   return {
-    kind: 'cap',
-    actionId: on ? 'switch.on' : 'switch.off',
+    kind: 'command',
     target: target === 'domain' ? { kind: 'domain' } : { kind: 'devices', ids: [target] },
-    cap: 'switch',
-    method: 'setState',
+    actionId: on ? 'switch.on' : 'switch.off',
     args: { on },
   }
 }
@@ -83,16 +81,15 @@ describe('scheduler engine — device templates (D1021)', () => {
       },
     })
     const step: ActionStep = {
-      kind: 'cap',
+      kind: 'command',
       target: { kind: 'devices', ids: [1] },
-      cap: 'display',
-      method: 'show',
-      args: { text: '{{ stufa.temperature }}' },
+      actionId: 'cover.position',
+      args: { position: '{{ stufa.temperature }}' },
     }
     const id = await w.create(scheduler([profile([point('a', 8, 0, 'edge', [step])])]))
     await w.engine.start()
     await w.advanceTo(h(9))
-    expect(w.calls.map((c) => c.args)).toEqual([{ text: 'Warm 21.5' }])
+    expect(w.calls.map((c) => c.args)).toEqual([{ position: 'Warm 21.5' }])
     expect(seen).toEqual([undefined])
     expect(w.outcomes(id)).toEqual(['done'])
   })
@@ -111,11 +108,10 @@ describe('scheduler engine — a conditional step (#472)', () => {
       conditions,
     })
     const step: ActionStep = {
-      kind: 'cap',
+      kind: 'command',
       target: { kind: 'devices', ids: [1] },
-      cap: 'display',
-      method: 'show',
-      args: { text: 'then' },
+      actionId: 'cover.position',
+      args: { position: 'then' },
       if: {
         kind: 'device-is',
         deviceId: 1,
@@ -126,18 +122,17 @@ describe('scheduler engine — a conditional step (#472)', () => {
       },
       else: [
         {
-          kind: 'cap',
+          kind: 'command',
           target: { kind: 'devices', ids: [1] },
-          cap: 'display',
-          method: 'show',
-          args: { text: 'else' },
+          actionId: 'cover.position',
+          args: { position: 'else' },
         },
       ],
     }
     const id = await w.create(scheduler([profile([point('a', 8, 0, 'edge', [step])])]))
     await w.engine.start()
     await w.advanceTo(h(9))
-    expect(w.calls.map((c) => c.args)).toEqual([{ text: 'else' }])
+    expect(w.calls.map((c) => c.args)).toEqual([{ position: 'else' }])
     expect(built).toEqual([undefined])
     expect(w.outcomes(id)).toEqual(['done'])
   })
@@ -155,11 +150,10 @@ describe('scheduler engine — an unreadable step condition (#472)', () => {
       conditions,
     })
     const step: ActionStep = {
-      kind: 'cap',
+      kind: 'command',
       target: { kind: 'devices', ids: [1] },
-      cap: 'display',
-      method: 'show',
-      args: { text: 'then' },
+      actionId: 'cover.position',
+      args: { position: 'then' },
       if: {
         kind: 'device-is',
         deviceId: 1,
@@ -170,11 +164,10 @@ describe('scheduler engine — an unreadable step condition (#472)', () => {
       },
       else: [
         {
-          kind: 'cap',
+          kind: 'command',
           target: { kind: 'devices', ids: [1] },
-          cap: 'display',
-          method: 'show',
-          args: { text: 'else' },
+          actionId: 'cover.position',
+          args: { position: 'else' },
         },
       ],
     }

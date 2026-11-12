@@ -7,13 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Notifications about a device that hangs off another one name it with its parent, e.g. 'Battery (System)': battery, offline/online, commands, consumables, alarm sensors and the state summary
+- The snooze exemption for alarm rules reads the vocabulary action of an Action's command steps.
+
 ## [1.2.698] - 2026-11-12
 
 ### Changed
 
 - Notification rules can match a settled device command (device-command), with English and Italian texts.
 - A notification about a device shows the device type beside its name.
-- Notifications about a device that hangs off another one name it with its parent, e.g. 'Battery (System)': battery, offline/online, commands, consumables, alarm sensors and the state summary
 
 ## [1.2.697] - 2026-11-12
 

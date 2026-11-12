@@ -17,7 +17,8 @@
 import type { CommandOriginClaim } from '../audit/device-transition.js'
 import type { DeviceTemplateRender } from '../expression/device-template.js'
 import type { ActionTarget, ResolvedTarget, ResolveOrigin } from './action-target.js'
-import { type ActionStep, normalizeCapStep } from './recipe.js'
+import { vocabCall } from '../device/cap-vocabulary/action-index.js'
+import { type ActionStep } from './recipe.js'
 import type {
   EvaluateStepCondition,
   StepConditionResult,
@@ -885,12 +886,13 @@ export interface ActionStepDeps {
 
 function stepMetaOfAction(step: ActionStep): StepMeta {
   if (step.kind === 'wait') return { kind: 'wait' }
-  const { target, actionId } = normalizeCapStep(step)
+  const { target, actionId } = step
+  const { cap, method } = vocabCall(actionId, undefined)
   return {
-    kind: 'cap',
-    cap: step.cap,
-    method: step.method,
-    ...(actionId === undefined ? {} : { actionId }),
+    kind: 'command',
+    cap,
+    method,
+    actionId,
     ...(target.kind === 'devices' && target.ids.length === 1 ? { deviceId: target.ids[0] } : {}),
   }
 }
@@ -976,7 +978,6 @@ export function buildActionSteps(
     if (step.kind === 'wait') {
       return { meta, ...guarded, run: () => deps.sleep(step.seconds * 1000) }
     }
-    const normalized = normalizeCapStep(step)
     return {
       meta,
       ...guarded,
@@ -989,23 +990,30 @@ export function buildActionSteps(
         )
         if (templated.notes.length > 0) scope.setTemplateNotes(templated.notes)
         const args = isPlainRecord(templated.value) ? templated.value : {}
-        const target = await deps.resolveTarget(normalized.target, normalized.actionId, vars, {
-          actionId: normalized.actionId,
+        const target = await deps.resolveTarget(step.target, step.actionId, vars, {
+          actionId: step.actionId,
           owner: deps.owner,
         })
         if (target.deviceIds.length === 0) {
           scope.markEmpty(target.emptyReason ?? 'the target matched no device')
           return
         }
+        // the one place the action id becomes a cap method (baked args win)
+        const call = vocabCall(step.actionId, args)
         scope.setArgs(args)
         const [only] = target.deviceIds
         if (target.deviceIds.length === 1 && only !== undefined) {
           scope.setDeviceId(only)
-          await deps.invokeCap({ deviceId: only, cap: step.cap, method: step.method, args })
+          await deps.invokeCap({
+            deviceId: only,
+            cap: call.cap,
+            method: call.method,
+            args: call.args,
+          })
           return
         }
         await runForDevices(target.deviceIds, scope, (deviceId) =>
-          deps.invokeCap({ deviceId, cap: step.cap, method: step.method, args }),
+          deps.invokeCap({ deviceId, cap: call.cap, method: call.method, args: call.args }),
         )
       },
     }

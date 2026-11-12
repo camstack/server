@@ -16,10 +16,10 @@ import type { ActionKind } from './recipe-parts'
 export type ChooseBranch = AutomationChooseStep['branches'][number]
 
 /** The step kinds a branch may hold: plain flow steps, no block and no code. */
-export const BRANCH_KINDS: readonly ActionKind[] = ['cap', 'action', 'wait', 'set', 'stop']
+export const BRANCH_KINDS: readonly ActionKind[] = ['command', 'action', 'wait', 'set', 'stop']
 
 /** The step kinds a parallel may hold: nothing that writes a variable or ends the run. */
-export const PARALLEL_KINDS: readonly ActionKind[] = ['cap', 'action', 'wait']
+export const PARALLEL_KINDS: readonly ActionKind[] = ['command', 'action', 'wait']
 
 export type ParallelMember = AutomationParallelStep['steps'][number]
 

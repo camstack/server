@@ -1,4 +1,9 @@
-import { type ActionStep, type SchedulerInput, SchedulerError } from '@camstack/types'
+import {
+  type ActionStep,
+  type DeviceDirectory,
+  type SchedulerInput,
+  SchedulerError,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { RunsLedger } from '../runs-ledger.js'
 import { SchedulersService } from '../scheduler/scheduler-service.js'
@@ -11,11 +16,9 @@ const MIDNIGHT = at('2026-03-09T23:00:00Z')
 
 function turn(on: boolean, id: number): ActionStep {
   return {
-    kind: 'cap',
-    actionId: on ? 'switch.on' : 'switch.off',
+    kind: 'command',
     target: { kind: 'devices', ids: [id] },
-    cap: 'switch',
-    method: 'setState',
+    actionId: on ? 'switch.on' : 'switch.off',
     args: { on },
   }
 }
@@ -51,7 +54,7 @@ function holdScheduler(on: boolean, priority: number): SchedulerInput {
   }
 }
 
-async function service() {
+async function service(directory?: Pick<DeviceDirectory, 'listDeviceIdsByCaps'>) {
   const w = await harness({ start: MIDNIGHT, devices: [{ id: 1 }] })
   const world = makeRecordsWorld()
   await world.provider.init()
@@ -72,6 +75,7 @@ async function service() {
     ledger,
     host: { readSite: async () => ROME },
     targets: w.targets,
+    directory: directory ?? { listDeviceIdsByCaps: async () => [1, 2, 3, 4, 5] },
     units: capUnitResolver(ALL_CAPABILITY_DEFINITIONS),
     logger: w.logs.logger,
     now: () => w.clock.now(),
@@ -83,10 +87,9 @@ describe('schedulers service', () => {
   it('refuses a hold without an effect with a typed reason, and stores nothing', async () => {
     const { w, svc } = await service()
     const step: ActionStep = {
-      kind: 'cap',
+      kind: 'command',
       target: { kind: 'devices', ids: [1] },
-      cap: 'switch',
-      method: 'toggle',
+      actionId: 'button.press',
       args: {},
     }
     const input: SchedulerInput = {
@@ -110,6 +113,15 @@ describe('schedulers service', () => {
     }
     await expect(svc.create({ scheduler: input })).rejects.toBeInstanceOf(SchedulerError)
     expect(await w.store.list()).toHaveLength(0)
+  })
+
+  it('refuses a step naming a device that does not offer the action, with the device tagged, and stores nothing', async () => {
+    const { w, svc } = await service({ listDeviceIdsByCaps: async () => [] })
+    await expect(svc.create({ scheduler: holdScheduler(true, 0) })).rejects.toBeInstanceOf(
+      SchedulerError,
+    )
+    expect(await w.store.list()).toHaveLength(0)
+    expect(w.logs.lines.some((l) => l.extras?.tags?.['deviceId'] === 1)).toBe(true)
   })
 
   it('previews the resolved day timeline', async () => {

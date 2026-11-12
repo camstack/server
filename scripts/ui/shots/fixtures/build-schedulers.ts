@@ -9,12 +9,9 @@ import build from './build'
 import { MINUTE, NOW } from './_time'
 
 const LIGHT_ON = {
-  kind: 'cap',
+  kind: 'command',
   actionId: 'switch.on',
   target: { kind: 'devices', ids: [201] },
-  cap: 'switch',
-  method: 'setState',
-  args: { on: true },
 }
 const LIGHT_OFF = { ...LIGHT_ON, actionId: 'switch.off', args: { on: false } }
 

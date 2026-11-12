@@ -7,7 +7,7 @@
    "name": "Buonanotte",
    "steps": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.off",
      "target": {
       "kind": "devices",
@@ -18,7 +18,7 @@
      }
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "cover.close",
      "target": {
       "kind": "devices",
@@ -41,7 +41,7 @@
    "name": "Movie mode",
    "steps": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "brightness.set",
      "target": {
       "kind": "devices",
@@ -54,7 +54,7 @@
      }
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "cover.close",
      "target": {
       "kind": "devices",
@@ -64,7 +64,7 @@
      }
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "media.play",
      "target": {
       "kind": "devices",
@@ -88,7 +88,7 @@
    "name": "Esco di casa",
    "steps": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.off",
      "target": {
       "kind": "domain",
@@ -96,7 +96,7 @@
      }
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "cover.close",
      "target": {
       "kind": "domain",
@@ -117,7 +117,7 @@
    "name": "Garage cycle",
    "steps": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "cover.open",
      "target": {
       "kind": "devices",
@@ -131,7 +131,7 @@
      "seconds": 90
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "cover.close",
      "target": {
       "kind": "devices",
@@ -154,7 +154,7 @@
    "name": "Sveglia",
    "steps": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "cover.position",
      "target": {
       "kind": "devices",
@@ -167,7 +167,7 @@
      }
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "brightness.full",
      "target": {
       "kind": "devices",
@@ -191,7 +191,7 @@
    "name": "Bathroom exhaust",
    "steps": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.on",
      "target": {
       "kind": "devices",
@@ -205,7 +205,7 @@
      "seconds": 300
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.off",
      "target": {
       "kind": "devices",
@@ -228,7 +228,7 @@
    "name": "Cena",
    "steps": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "brightness.set",
      "target": {
       "kind": "devices",
@@ -241,7 +241,7 @@
      }
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "brightness.set",
      "target": {
       "kind": "devices",
@@ -268,7 +268,7 @@
    "name": "Panic",
    "steps": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.on",
      "target": {
       "kind": "devices",
@@ -278,7 +278,7 @@
      }
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.on",
      "target": {
       "kind": "domain",
@@ -299,7 +299,7 @@
    "name": "Riscalda il salone",
    "steps": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "climate.heat",
      "target": {
       "kind": "devices",
@@ -309,7 +309,7 @@
      }
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "climate.target",
      "target": {
       "kind": "devices",
@@ -336,7 +336,7 @@
    "name": "Close veranda",
    "steps": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "cover.close",
      "target": {
       "kind": "devices",
@@ -346,7 +346,7 @@
      }
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.off",
      "target": {
       "kind": "devices",

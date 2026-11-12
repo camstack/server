@@ -161,7 +161,7 @@ export function newAction(kind: ActionKind): AutomationAction {
     case 'choose':
       return { kind, branches: [{ if: { kind: 'all', children: [] }, steps: [] }] }
     default:
-      return { kind: 'cap', deviceId: 0, cap: '', method: '' }
+      return { kind: 'command', target: { kind: 'devices', ids: [] }, actionId: '' }
   }
 }
 

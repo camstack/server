@@ -16,8 +16,8 @@
  * Under `packages/addon-post-analysis/src/notification-center` (tests included):
  *  - the retired modules (`sequence-store`) and identifiers (`NcRuleActionSchema`,
  *    `NcSharedSequence`, `sequenceActionsOf`, `listSequences`...) do not reappear;
- *  - nothing imports a STEP vocabulary (`ActionStepSchema`, `AutomationCapStepSchema`,
- *    `normalizeCapStep`, `ActionTargetSchema`) — the centre may read the steps of an
+ *  - nothing imports a STEP vocabulary (`ActionStepSchema`, `AutomationCommandStepSchema`,
+ *    `vocabCall`, `ActionTargetSchema`) — the centre may read the steps of an
  *    Action to ask whether it presses the alarm panel (a TYPE import), never to run them.
  * The two files that read the OLD stored shape to carry it forward are listed below.
  */
@@ -28,7 +28,11 @@ const ROOT = path.resolve(import.meta.dirname, '..')
 const NC_DIR = path.join(ROOT, 'packages/addon-post-analysis/src/notification-center')
 
 /** Files that read the pre-#473 stored shape on purpose. */
-const LEGACY_READERS = new Set(['record-kinds.ts', 'rule-legacy-actions.ts', 'device-prune-ledger.ts'])
+const LEGACY_READERS = new Set([
+  'record-kinds.ts',
+  'rule-legacy-actions.ts',
+  'device-prune-ledger.ts',
+])
 
 const RETIRED_IDENTIFIERS = [
   'NcRuleActionSchema',
@@ -46,9 +50,9 @@ const RETIRED_IDENTIFIERS = [
 
 const STEP_VOCABULARY = [
   'ActionStepSchema',
-  'AutomationCapStepSchema',
+  'AutomationCommandStepSchema',
   'AutomationWaitStepSchema',
-  'normalizeCapStep',
+  'vocabCall',
   'ActionTargetSchema',
 ]
 
@@ -71,7 +75,9 @@ for (const file of sources(NC_DIR)) {
   const text = readFileSync(file, 'utf8')
   for (const id of [...RETIRED_IDENTIFIERS, ...STEP_VOCABULARY]) {
     if (new RegExp(`\\b${id}\\b`).test(text)) {
-      failures.push(`${rel}: names ${id} — the centre runs Actions by id, it has no step vocabulary`)
+      failures.push(
+        `${rel}: names ${id} — the centre runs Actions by id, it has no step vocabulary`,
+      )
     }
   }
 }

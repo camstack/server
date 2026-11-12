@@ -43,6 +43,11 @@ export interface ConditionKindPickerProps {
   readonly textsOf: (kind: AutomationLeafKind) => KindTexts
   readonly categoryLabelOf: (category: AutomationLeafCategory) => string
   readonly reasonOf: (reason: KindDisabledReason) => string
+  /**
+   * The kind of the row being changed: highlighted when the search is empty.
+   * Absent (adding a row) = nothing is highlighted until the operator types.
+   */
+  readonly current?: AutomationLeafKind
   readonly onPick: (kind: AutomationLeafKind) => void
 }
 
@@ -183,7 +188,11 @@ function PickerBody(props: ConditionKindPickerProps): JSX.Element {
     view.firstEnabled === null
       ? null
       : (flat.find((r) => r.item.kind === view.firstEnabled && r.item.disabled === null) ?? null)
-  const highlighted = flat.find((r) => r.id === activeId) ?? best
+  // An empty search highlights the row being changed (or nothing when adding);
+  // a typed search highlights its best enabled match.
+  const current =
+    props.current === undefined ? null : (flat.find((r) => r.item.kind === props.current) ?? null)
+  const highlighted = flat.find((r) => r.id === activeId) ?? (query.trim() === '' ? current : best)
 
   const pick = (kind: AutomationLeafKind): void => {
     recent.push(kind)

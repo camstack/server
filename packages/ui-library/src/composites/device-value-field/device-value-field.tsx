@@ -75,6 +75,11 @@ export interface DeviceValueFieldProps {
   readonly testId?: string
   /** The host gives a definite height: the columns scroll on their own. */
   readonly fillHeight?: boolean
+  /**
+   * The host IS the picker (a dialog opened to choose): always the two
+   * columns, never the compact card with its Change button.
+   */
+  readonly pickerOnly?: boolean
 }
 
 /**
@@ -96,7 +101,10 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
     .flatMap((group) => group.rows)
     .find((row) => row.cap === props.value?.cap && row.path === props.value.path)
   const cardMode =
-    props.deviceId !== null && props.value !== null && props.valuesOverride === undefined
+    props.pickerOnly !== true &&
+    props.deviceId !== null &&
+    props.value !== null &&
+    props.valuesOverride === undefined
   const recents = useRecentDevices(props.deviceListTestId ?? testId)
   const pickDevice = (id: number): void => {
     recents.push(id)
@@ -249,8 +257,41 @@ function ValuesBody(
     return <p className="text-[11px] text-foreground-subtle">{props.noValuesText}</p>
   }
   return (
+    <DeviceValueGroupList
+      groups={props.groups}
+      value={props.value}
+      onPick={props.onPick}
+      {...(props.rowTestId === undefined ? {} : { rowTestId: props.rowTestId })}
+    />
+  )
+}
+
+export interface DeviceValueGroupListProps {
+  /** Empty groups are not drawn. */
+  readonly groups: readonly DeviceValueGroup[]
+  readonly value: DeviceValuePick | null
+  readonly onPick: (pick: DeviceValuePick) => void
+  /** The radio group's name; one per list on a screen. */
+  readonly name?: string
+  readonly rowTestId?: (row: DeviceValueRow) => string
+}
+
+/**
+ * The values column of {@link DeviceValueField}: one titled section per
+ * capability, one radio row per value. Exported so a picker that offers
+ * something other than a device's values (the commands a device can be told
+ * to do) lists them the same way.
+ */
+export function DeviceValueGroupList({
+  groups,
+  value,
+  onPick,
+  name = 'device-value',
+  rowTestId,
+}: DeviceValueGroupListProps): ReactNode {
+  return (
     <div className="flex flex-col gap-3">
-      {props.groups
+      {groups
         .filter((g) => g.rows.length > 0)
         .map((group) => (
           <section key={group.cap} aria-label={group.title}>
@@ -259,17 +300,15 @@ function ValuesBody(
             </h4>
             <ul className="mt-1 flex flex-col gap-1">
               {group.rows.map((row) => {
-                const selected = props.value?.cap === row.cap && props.value.path === row.path
+                const selected = value?.cap === row.cap && value.path === row.path
                 return (
                   <li key={`${row.cap}.${row.path}`}>
                     <label className="flex flex-wrap items-center gap-2 text-[11px] text-foreground">
                       <Radio
-                        name="device-value"
+                        name={name}
                         checked={selected}
-                        data-testid={
-                          props.rowTestId?.(row) ?? `device-value-${row.cap}.${row.path}`
-                        }
-                        onChange={() => props.onPick({ cap: row.cap, path: row.path })}
+                        data-testid={rowTestId?.(row) ?? `device-value-${row.cap}.${row.path}`}
+                        onChange={() => onPick({ cap: row.cap, path: row.path })}
                       />
                       <span>{row.label}</span>
                       <span className="text-foreground-muted">{row.valueText}</span>

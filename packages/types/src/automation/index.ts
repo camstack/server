@@ -122,7 +122,7 @@ export {
 export type {
   ActionStep,
   AutomationAction,
-  AutomationCapStep,
+  AutomationCommandStep,
   AutomationRecipe,
   AutomationRunMode,
   LegacyAutomationRecipe,
@@ -137,12 +137,12 @@ export type {
   AutomationSetStep,
   StepConditionRef,
   AutomationStopStep,
-  NormalizedCapStep,
 } from './recipe.js'
 export {
   ActionStepSchema,
   AutomationActionSchema,
-  AutomationCapStepSchema,
+  AutomationCommandStepBaseSchema,
+  AutomationCommandStepSchema,
   AutomationWaitStepSchema,
   AutomationChooseStepSchema,
   AutomationWaitUntilStepSchema,
@@ -179,8 +179,6 @@ export {
   MAX_TRACE_KEEP,
   MAX_CONDITION_DEPTH,
   MAX_CONDITION_LEAVES,
-  normalizeCapStep,
-  normalizeStepTargets,
   validateRecipeBounds,
 } from './recipe.js'
 export type {
@@ -255,6 +253,7 @@ export {
 } from './detection-subject.js'
 export * from './action.js'
 export * from './action-target.js'
+export { assertStepsOffered } from './offered.js'
 export * from './step-condition.js'
 export * from './step-runner.js'
 export * from './wait-until.js'

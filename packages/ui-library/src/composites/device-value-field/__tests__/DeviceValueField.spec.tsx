@@ -153,6 +153,14 @@ describe.each([
     expect(screen.queryByTestId('device-value-field-change')).toBeNull()
   })
 
+  it('pickerOnly keeps the two columns with the chosen value selected, never the card', () => {
+    renderField(<DeviceValueField {...props({ deviceId: 1, value: PICK, pickerOnly: true })} />)
+    expect(mode()).toBe('picker')
+    expect(screen.queryByTestId('device-value-field-change')).toBeNull()
+    const row = screen.getByTestId('device-value-power-meter.power')
+    expect(row instanceof HTMLInputElement && row.checked).toBe(true)
+  })
+
   it('a chosen source is one compact card with the transform, proposal and preview, no back button', () => {
     renderField(
       <DeviceValueField

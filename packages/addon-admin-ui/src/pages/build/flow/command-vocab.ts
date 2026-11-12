@@ -1,21 +1,19 @@
 /**
  * The cap vocabulary (D920) as an editing model for one "device command" step.
  *
- * A step is stored as `{ kind: 'cap', deviceId, cap, method, args }`. The
- * operator does not see that: they pick a device, pick one of the phrased
- * commands the device's bound caps offer ("Turn on {device}", "Feed {device}
- * {grams} g"), and fill the open args inline. This file is the pure mapping
- * between the two, so the screen holds no cap-specific knowledge and the
- * round trip (step → command + values → step) is testable.
- *
- * A step the vocabulary cannot represent — a `{ $var }` or multi-device target,
- * or a cap/method the device no longer offers — returns `null` from
- * {@link matchVocabCommand}; the caller falls back to the generic row and the
- * step is kept as it is.
+ * A step is stored as `{ kind: 'command', target, actionId, args }`: the
+ * vocabulary action it performs (`cover.position`), who it acts on, and the
+ * values of the action's OPEN args. The step runner turns the action id into
+ * a cap method when the step runs (`vocabCall`); nothing here names a method.
+ * The operator picks a target and one of the phrased commands it offers ("Open
+ * {device} to {position} %") and fills the open args; this file is the pure
+ * mapping between the two, so the screen holds no cap-specific knowledge and
+ * the round trip (step -> command + values -> step) is testable.
  */
 
 import { REPEAT_ITEM_VAR } from '@camstack/types'
 import type {
+  ActionTarget,
   AutomationAction,
   LooseVocabOffer,
   LooseVocabOpenArg,
@@ -23,43 +21,33 @@ import type {
   ResolvedVocabAction,
   VocabLocale,
 } from '@camstack/types'
-import type { CapDeviceTarget } from '../../../components/device-do-action/DeviceDoActionFields'
 
-export type CapStep = Extract<AutomationAction, { kind: 'cap' }>
+export type CommandStep = Extract<AutomationAction, { kind: 'command' }>
 
-/**
- * The single device a step names, or null (several, a `$var`, a domain, none).
- * A stored step names it as `target` (D983); a draft the picker has just
- * written may still carry the legacy `deviceId`.
- */
-export function singleDeviceOf(step: CapStep): number | null {
-  if (typeof step.deviceId === 'number') return step.deviceId
-  if (step.target?.kind === 'devices' && step.target.ids.length === 1) {
-    return step.target.ids[0] ?? null
-  }
+/** The variable a run binds to the device that triggered it. */
+export const TRIGGER_DEVICE_VAR = 'deviceId'
+
+/** The single device a step names, or null (several, a variable, a domain). */
+export function singleDeviceOf(step: Pick<CommandStep, 'target'>): number | null {
+  const target = step.target
+  if (target.kind === 'devices' && target.ids.length === 1) return target.ids[0] ?? null
   return null
 }
 
-/** The target of a step aimed at "the device of this round" of a repeat over devices (#500). */
-export interface RoundDeviceRef {
-  readonly $var: string
-}
-export const ROUND_DEVICE: RoundDeviceRef = { $var: REPEAT_ITEM_VAR }
+/** The target "the device of this round" of a repeat over devices (#500). */
+export const ROUND_TARGET: ActionTarget = { kind: 'var', name: REPEAT_ITEM_VAR }
 
-/** A step a vocabulary command is written for: one device, or the device of the round. */
-export type CommandDevice = number | RoundDeviceRef
+/** The target "the device that triggered this run". */
+export const TRIGGER_TARGET: ActionTarget = { kind: 'var', name: TRIGGER_DEVICE_VAR }
 
-/** Whether the step is aimed at the device of the round, in either stored shape. */
-export function isRoundTarget(step: CapStep): boolean {
-  if (step.deviceId !== undefined) {
-    return isVarRef(step.deviceId) && step.deviceId.$var === REPEAT_ITEM_VAR
-  }
-  return step.target?.kind === 'var' && step.target.name === REPEAT_ITEM_VAR
+/** Whether the step is aimed at the device of the round. */
+export function isRoundTarget(step: Pick<CommandStep, 'target'>): boolean {
+  return step.target.kind === 'var' && step.target.name === REPEAT_ITEM_VAR
 }
 
 /**
- * The commands EVERY device of a loop offers, so a step aimed at the device of
- * the round can run on each of them. A command whose argument is answered per
+ * The commands EVERY device of a list offers, so one step can run on each of
+ * them. With more than one device, a command whose argument is answered per
  * device (a `dynamic` offer: one device's presets are not another's) is left
  * out: no single value could be picked for the whole list.
  */
@@ -68,22 +56,12 @@ export function commonVocabActions(
 ): readonly ResolvedVocabAction[] {
   const [first, ...rest] = perDevice
   if (first === undefined) return []
-  const others = rest.map((actions) => new Set(actions.map(commandId)))
+  const others = rest.map((actions) => new Set(actions.map((a) => a.id)))
   return first.filter(
     (action) =>
-      others.every((ids) => ids.has(commandId(action))) &&
-      action.openArgs.every((arg) => arg.offer.kind !== 'dynamic'),
+      others.every((ids) => ids.has(action.id)) &&
+      (rest.length === 0 || action.openArgs.every((arg) => arg.offer.kind !== 'dynamic')),
   )
-}
-
-/** The device picker's value for a step: the same reading, in the picker's own shape. */
-export function pickerTargetOf(step: CapStep): CapDeviceTarget {
-  if (step.deviceId !== undefined) return step.deviceId
-  const target = step.target
-  if (target?.kind === 'devices')
-    return target.ids.length === 1 ? (target.ids[0] ?? []) : target.ids
-  if (target?.kind === 'var') return { $var: target.name }
-  return []
 }
 
 /** One argument as the operator holds it: a typed value or a variable. */
@@ -111,11 +89,6 @@ const SLOT_RE = /(\{[A-Za-z0-9_]+\})/
 
 export function vocabLocale(language: string): VocabLocale {
   return language.toLowerCase().startsWith('it') ? 'it' : 'en'
-}
-
-/** The command's own id: unique across caps (two caps may share a local id). */
-export function commandId(action: Pick<ResolvedVocabAction, 'cap' | 'id'>): string {
-  return `${action.cap}:${action.id}`
 }
 
 export function isVarRef(value: unknown): value is { readonly $var: string } {
@@ -159,7 +132,7 @@ export function defaultArgValue(arg: LooseVocabOpenArg): StepArgValue {
   }
 }
 
-export function defaultArgValues(action: ResolvedVocabAction): StepArgValues {
+export function defaultArgValues(action: Pick<ResolvedVocabAction, 'openArgs'>): StepArgValues {
   return Object.fromEntries(action.openArgs.map((a) => [a.key, defaultArgValue(a)]))
 }
 
@@ -196,53 +169,22 @@ export function quantityOffer(arg: LooseVocabOpenArg): QuantityArgOffer | undefi
   return { quantity: offer.quantity, unit: offer.unit, min: offer.min, max: offer.max }
 }
 
-function sameValue(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a) === JSON.stringify(b)
-}
-
 /**
- * The vocabulary command a stored step is, with its open args read back.
- * Several commands may share a method (an "on" and an "off" that bake
- * different args); the one with the most baked args that all match wins.
+ * The vocabulary command a stored step is, among `actions` (what its target
+ * offers), with its open args read back; null when the target does not offer
+ * the step's action.
  */
-export function matchVocabCommand(
+export function matchCommand(
   actions: readonly ResolvedVocabAction[],
-  step: CapStep,
+  step: Pick<CommandStep, 'actionId' | 'args' | 'argUnits'>,
 ): VocabCommandMatch | null {
-  if (singleDeviceOf(step) === null) return null
-  return matchCommand(actions, step)
-}
-
-/** The same reading for a step aimed at the device of the round; `actions` are the loop's common ones. */
-export function matchRoundCommand(
-  actions: readonly ResolvedVocabAction[],
-  step: CapStep,
-): VocabCommandMatch | null {
-  if (!isRoundTarget(step)) return null
-  return matchCommand(actions, step)
-}
-
-function matchCommand(
-  actions: readonly ResolvedVocabAction[],
-  step: CapStep,
-): VocabCommandMatch | null {
+  const action = actions.find((a) => a.id === step.actionId)
+  if (action === undefined) return null
   const args = step.args ?? {}
-  let best: ResolvedVocabAction | null = null
-  let bestBaked = -1
-  for (const action of actions) {
-    if (action.cap !== step.cap || action.method !== step.method) continue
-    const baked = Object.entries(action.args)
-    if (!baked.every(([key, value]) => sameValue(args[key], value))) continue
-    if (baked.length > bestBaked) {
-      best = action
-      bestBaked = baked.length
-    }
-  }
-  if (best === null) return null
   const values = Object.fromEntries(
-    best.openArgs.map((a) => [a.key, readArgValue(args[a.key], a, step.argUnits?.[a.key])]),
+    action.openArgs.map((a) => [a.key, readArgValue(args[a.key], a, step.argUnits?.[a.key])]),
   )
-  return { action: best, values }
+  return { action, values }
 }
 
 function rawOf(value: StepArgValue): string | number | boolean | { readonly $var: string } {
@@ -253,28 +195,26 @@ function isBlank(value: StepArgValue): boolean {
   return value.kind === 'fixed' && value.value === ''
 }
 
-/** The stored step for a command: baked args first, then the operator's. */
-export function buildCapStep(
-  action: ResolvedVocabAction,
-  device: CommandDevice,
+/** The stored step for a command: its id, its target and the OPEN args (baked ones are added at run). */
+export function buildCommandStep(
+  action: Pick<ResolvedVocabAction, 'id' | 'openArgs'>,
+  target: ActionTarget,
   values: StepArgValues,
-): CapStep {
-  const open: Record<string, unknown> = {}
+): CommandStep {
+  const args: Record<string, unknown> = {}
   const argUnits: Record<string, string> = {}
   for (const arg of action.openArgs) {
     const value = values[arg.key] ?? defaultArgValue(arg)
     if (arg.optional === true && isBlank(value)) continue
-    open[arg.key] = rawOf(value)
+    args[arg.key] = rawOf(value)
     if (value.kind === 'fixed' && value.unit !== undefined && quantityOffer(arg) !== undefined) {
       argUnits[arg.key] = value.unit
     }
   }
-  const args = { ...action.args, ...open }
   return {
-    kind: 'cap',
-    deviceId: typeof device === 'number' ? device : { $var: device.$var },
-    cap: action.cap,
-    method: action.method,
+    kind: 'command',
+    target,
+    actionId: action.id,
     ...(Object.keys(args).length === 0 ? {} : { args }),
     ...(Object.keys(argUnits).length === 0 ? {} : { argUnits }),
   }
@@ -300,7 +240,7 @@ export function argIssue(arg: LooseVocabOpenArg, value: StepArgValue): ArgIssue 
 
 /** The first open arg that cannot be saved as it stands, or null. */
 export function firstArgIssue(
-  action: ResolvedVocabAction,
+  action: Pick<ResolvedVocabAction, 'openArgs'>,
   values: StepArgValues,
 ): { readonly key: string; readonly issue: ArgIssue } | null {
   for (const arg of action.openArgs) {

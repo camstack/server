@@ -46,10 +46,9 @@ function ask(className: string, ownerUserId: string | undefined, rule: SnoozeExe
         id === 'internal:panel'
           ? [
               {
-                kind: 'cap',
+                kind: 'command',
                 target: { kind: 'devices', ids: [7] },
-                cap: 'alarm-panel',
-                method: 'trigger',
+                actionId: 'alarm.trigger',
               },
             ]
           : undefined,

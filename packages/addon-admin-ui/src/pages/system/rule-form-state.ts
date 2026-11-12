@@ -46,6 +46,7 @@ import {
   systemEventSummarySplitOf,
   templateCarriesSummary,
   systemRuleKindOf,
+  findVocabAction,
 } from '@camstack/types'
 import { NEW_SYSTEM_EVENT_DELIVERY } from './notification-system-event-delivery'
 import { seedSystemEventForFamily } from './notification-system-events'
@@ -300,7 +301,9 @@ export function isRuleSnoozeExempt(
     if (NC_ALARM_KINDS.has(kind)) return true
   }
   for (const step of steps) {
-    if (step.kind === 'cap' && step.cap === NC_ALARM_PANEL_CAP) return true
+    if (step.kind === 'command' && findVocabAction(step.actionId)?.cap === NC_ALARM_PANEL_CAP) {
+      return true
+    }
   }
   return false
 }

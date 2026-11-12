@@ -89,7 +89,7 @@ describe('runs api — a block writes only its own row', () => {
     const w = await world()
     const failed: AutomationRunTrace = {
       ...trace('f', 'failed'),
-      steps: [{ path: 'actions.0', kind: 'cap', outcome: 'error', message: 'siren offline' }],
+      steps: [{ path: 'actions.0', kind: 'command', outcome: 'error', message: 'siren offline' }],
     }
     await w.api.reportAutomationRun({ blockId: 'b1', trace: failed, ...asBlock('b1') })
     expect((await w.api.getTraces({ blockId: 'b1' })).lastError).toBe('siren offline')

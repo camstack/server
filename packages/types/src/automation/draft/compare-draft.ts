@@ -2,8 +2,7 @@
  * `compareDraft` — how close is what the model wrote to what was meant, 0..1.
  *
  * Deterministic and structural, because "the same automation" has many
- * spellings: both sides are expanded and parsed (so compact and full cap steps,
- * schema defaults and `{ value, unit }` quantities all land on one shape), then
+ * spellings: both sides are parsed (so schema defaults and `{ value, unit }` quantities all land on one shape), then
  * compared as trees:
  *
  *  - names, ids and display-only keys are ignored;
@@ -23,7 +22,7 @@ import { capUnitResolver } from '../normalize-units.js'
 import { prepareRecipeUnits } from '../prepare-units.js'
 import { CurrentAutomationRecipeSchema } from '../recipe.js'
 import { SchedulerInputSchema } from '../scheduler.js'
-import { expandDraft, isRecord } from './draft-json.js'
+import { isRecord } from './draft-json.js'
 import type { DraftKind } from './draft-types.js'
 
 const IGNORED_KEYS: ReadonlySet<string> = new Set([
@@ -66,25 +65,24 @@ const MISS_FACTOR = 0.9
 const DECIMALS = 1000
 
 function normalise(kind: DraftKind, json: unknown): unknown {
-  const expanded = expandDraft(json)
   switch (kind) {
     case 'automation': {
-      const parsed = CurrentAutomationRecipeSchema.safeParse(expanded)
-      if (!parsed.success) return expanded
+      const parsed = CurrentAutomationRecipeSchema.safeParse(json)
+      if (!parsed.success) return json
       const prepared = prepareRecipeUnits(parsed.data, capUnitResolver(ALL_CAPABILITY_DEFINITIONS))
       return prepared.ok ? prepared.recipe : parsed.data
     }
     case 'action': {
-      const parsed = ActionInputSchema.safeParse(expanded)
-      return parsed.success ? parsed.data : expanded
+      const parsed = ActionInputSchema.safeParse(json)
+      return parsed.success ? parsed.data : json
     }
     case 'scheduler': {
-      const parsed = SchedulerInputSchema.safeParse(expanded)
-      return parsed.success ? parsed.data : expanded
+      const parsed = SchedulerInputSchema.safeParse(json)
+      return parsed.success ? parsed.data : json
     }
     case 'composition': {
-      const parsed = CompositionSchema.safeParse(expanded)
-      return parsed.success ? parsed.data : expanded
+      const parsed = CompositionSchema.safeParse(json)
+      return parsed.success ? parsed.data : json
     }
   }
 }

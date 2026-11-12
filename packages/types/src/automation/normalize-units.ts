@@ -26,6 +26,7 @@ import {
   enumerateSchemaFields,
   unwrapSchema,
 } from '../device/schema-fields.js'
+import { vocabCall } from '../device/cap-vocabulary/action-index.js'
 import { normalizeUnit } from '../device/source-info.js'
 import {
   type ParamMeta,
@@ -39,9 +40,8 @@ import { baseUnitForQuantity, unitsForQuantity } from '../units/quantity-units.j
 import { z } from 'zod'
 import {
   type AutomationAction,
-  type AutomationCapStep,
+  type AutomationCommandStep,
   type AutomationRecipe,
-  normalizeCapStep,
 } from './recipe.js'
 import type { AutomationWhen, DeviceIsLeaf } from './when.js'
 
@@ -206,32 +206,29 @@ export function normalizeConditionUnits(
   }
 }
 
-function normalizeCapStepUnits(
-  step: AutomationCapStep,
+function normalizeCommandStepUnits(
+  step: AutomationCommandStep,
   resolver: UnitResolver,
   path: string,
-): UnitsNormalized<AutomationCapStep> {
+): UnitsNormalized<AutomationCommandStep> {
   const deviceId =
-    typeof step.deviceId === 'number'
-      ? step.deviceId
-      : step.target?.kind === 'devices' && step.target.ids.length === 1
-        ? step.target.ids[0]
-        : undefined
+    step.target.kind === 'devices' && step.target.ids.length === 1 ? step.target.ids[0] : undefined
+  const { cap, method } = vocabCall(step.actionId, undefined)
   const args: Record<string, unknown> = { ...step.args }
   const argUnits: Record<string, string> = { ...step.argUnits }
   const warnings: UnitWarning[] = []
   for (const [arg, picked] of Object.entries(step.argUnits ?? {})) {
-    const meta = resolver.paramMeta(step.cap, step.method, arg)
+    const meta = resolver.paramMeta(cap, method, arg)
     if (meta === undefined) {
       throw new QuantityUnitError(
         'no-quantity',
-        `${step.cap}.${step.method}(${arg}) is not a quantity — it takes no unit`,
+        `${cap}.${method}(${arg}) is not a quantity — it takes no unit`,
       )
     }
     checkPickedUnit(picked, meta.unit)
   }
   for (const [arg, given] of Object.entries(step.args ?? {})) {
-    const meta = resolver.paramMeta(step.cap, step.method, arg)
+    const meta = resolver.paramMeta(cap, method, arg)
     if (meta === undefined) continue
     if (isQuantityValue(given)) {
       args[arg] = convertQuantityInput({ value: given.value, unit: given.unit, target: meta.unit })
@@ -264,23 +261,23 @@ function normalizeCapStepUnits(
 }
 
 /**
- * Normalise the cap steps of an action list (an internal Action's steps, or a
+ * Normalise the command steps of an action list (an internal Action's steps, or a
  * recipe's actions). Other step kinds pass through. Throws {@link QuantityUnitError}.
  */
 export function normalizeActionUnits<A extends AutomationAction>(
   actions: readonly A[],
   resolver: UnitResolver,
   path = 'steps',
-): UnitsNormalized<(A | AutomationCapStep)[]> {
-  const out: (A | AutomationCapStep)[] = []
+): UnitsNormalized<(A | AutomationCommandStep)[]> {
+  const out: (A | AutomationCommandStep)[] = []
   const warnings: UnitWarning[] = []
   actions.forEach((action, i) => {
-    if (action.kind !== 'cap') {
+    if (action.kind !== 'command') {
       out.push(action)
       return
     }
-    const normalized = normalizeCapStepUnits(action, resolver, `${path}.${i}`)
-    out.push(normalizeCapStep(normalized.value))
+    const normalized = normalizeCommandStepUnits(action, resolver, `${path}.${i}`)
+    out.push(normalized.value)
     warnings.push(...normalized.warnings)
   })
   return { value: out, warnings }

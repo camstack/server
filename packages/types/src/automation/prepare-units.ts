@@ -14,6 +14,7 @@
  *    server runs, so a unit that cannot belong to its field is refused here with
  *    the same message instead of at the hub.
  */
+import { vocabCall } from '../device/cap-vocabulary/action-index.js'
 import { QuantityUnitError } from '../units/quantity-input.js'
 import { baseUnitForQuantity, unitsForQuantity } from '../units/quantity-units.js'
 import { type UnitResolver, normalizeRecipeUnits } from './normalize-units.js'
@@ -47,11 +48,12 @@ function stampCondition(condition: AutomationWhen, resolver: UnitResolver): Auto
 }
 
 function stampAction(action: AutomationAction, resolver: UnitResolver): AutomationAction {
-  if (action.kind !== 'cap' || action.args === undefined) return action
+  if (action.kind !== 'command' || action.args === undefined) return action
+  const { cap, method } = vocabCall(action.actionId, undefined)
   const argUnits: Record<string, string> = { ...action.argUnits }
   for (const [arg, value] of Object.entries(action.args)) {
     if (typeof value !== 'number' || argUnits[arg] !== undefined) continue
-    const meta = resolver.paramMeta(action.cap, action.method, arg)
+    const meta = resolver.paramMeta(cap, method, arg)
     if (meta !== undefined && unitsForQuantity(meta.quantity).length > 1) argUnits[arg] = meta.unit
   }
   return Object.keys(argUnits).length === 0 ? action : { ...action, argUnits }

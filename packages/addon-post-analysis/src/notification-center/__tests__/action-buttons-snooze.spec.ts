@@ -82,10 +82,9 @@ describe('the two refusals', () => {
           id === 'internal:panel'
             ? [
                 {
-                  kind: 'cap',
+                  kind: 'command',
                   target: { kind: 'devices', ids: [900] },
-                  cap: 'alarm-panel',
-                  method: 'trigger',
+                  actionId: 'alarm.trigger',
                 },
               ]
             : undefined,

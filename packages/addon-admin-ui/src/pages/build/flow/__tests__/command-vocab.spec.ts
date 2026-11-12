@@ -1,16 +1,19 @@
-import { vocabularyActionsForDevice } from '@camstack/types'
+import {
+  type ActionTarget,
+  AutomationCommandStepSchema,
+  vocabularyActionsForDevice,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
-  buildCapStep,
-  type CapStep,
-  commandId,
+  buildCommandStep,
+  type CommandStep,
   commonVocabActions,
   defaultArgValues,
   firstArgIssue,
   isRoundTarget,
-  matchRoundCommand,
-  matchVocabCommand,
-  ROUND_DEVICE,
+  matchCommand,
+  ROUND_TARGET,
+  singleDeviceOf,
   splitPhrase,
   vocabLocale,
 } from '../command-vocab'
@@ -23,6 +26,8 @@ function action(id: string) {
   return found
 }
 
+const FEEDER: ActionTarget = { kind: 'devices', ids: [201] }
+
 describe('command-vocab', () => {
   it('splits a phrase into text and slots', () => {
     expect(splitPhrase('Dispense {grams} from {device}')).toEqual([
@@ -33,38 +38,52 @@ describe('command-vocab', () => {
     ])
   })
 
-  it('round-trips a step with an open arg: step -> command + values -> step', () => {
-    const step: CapStep = {
-      kind: 'cap',
-      deviceId: 201,
-      cap: 'pet-feeder',
-      method: 'feed',
+  it('round-trips a step by action id: step -> command + values -> step', () => {
+    const step: CommandStep = {
+      kind: 'command',
+      target: { kind: 'devices', ids: [201] },
+      actionId: 'petFeeder.feed',
       args: { grams: 45 },
+      argUnits: { grams: 'g' },
     }
-    const match = matchVocabCommand(ACTIONS, step)
+    const match = matchCommand(ACTIONS, step)
     expect(match?.action.id).toBe('petFeeder.feed')
-    // A saved bare number reads in the unit the method stores it in, and saves saying so.
     expect(match?.values).toEqual({ grams: { kind: 'fixed', value: 45, unit: 'g' } })
     if (match === null) return
-    expect(buildCapStep(match.action, 201, match.values)).toEqual({
-      ...step,
-      argUnits: { grams: 'g' },
+    const rebuilt = buildCommandStep(match.action, step.target, match.values)
+    expect(rebuilt).toEqual(step)
+    // The stored step names no cap and no method, and passes the schema.
+    expect(Object.keys(rebuilt).toSorted()).toEqual([
+      'actionId',
+      'argUnits',
+      'args',
+      'kind',
+      'target',
+    ])
+    expect(AutomationCommandStepSchema.safeParse(rebuilt).success).toBe(true)
+  })
+
+  it('stores only the OPEN args: a baked arg is the action, not the step', () => {
+    const on = buildCommandStep(action('switch.on'), { kind: 'devices', ids: [5] }, {})
+    expect(on).toEqual({
+      kind: 'command',
+      target: { kind: 'devices', ids: [5] },
+      actionId: 'switch.on',
     })
   })
 
   it('keeps the unit the person picked for a quantity arg through the round trip', () => {
-    const step: CapStep = {
-      kind: 'cap',
-      deviceId: 201,
-      cap: 'pet-feeder',
-      method: 'feed',
+    const step: CommandStep = {
+      kind: 'command',
+      target: { kind: 'devices', ids: [201] },
+      actionId: 'petFeeder.feed',
       args: { grams: 56.699 },
       argUnits: { grams: 'oz' },
     }
-    const match = matchVocabCommand(ACTIONS, step)
+    const match = matchCommand(ACTIONS, step)
     expect(match?.values).toEqual({ grams: { kind: 'fixed', value: 56.699, unit: 'oz' } })
     if (match === null) return
-    expect(buildCapStep(match.action, 201, match.values)).toEqual(step)
+    expect(buildCommandStep(match.action, FEEDER, match.values)).toEqual(step)
   })
 
   it('a fresh quantity arg starts in the unit the method stores, never bare', () => {
@@ -72,51 +91,31 @@ describe('command-vocab', () => {
   })
 
   it('keeps a variable reference through the round trip', () => {
-    const step: CapStep = {
-      kind: 'cap',
-      deviceId: 201,
-      cap: 'pet-feeder',
-      method: 'feed',
+    const step: CommandStep = {
+      kind: 'command',
+      target: { kind: 'devices', ids: [201] },
+      actionId: 'petFeeder.feed',
       args: { grams: { $var: 'grams' } },
     }
-    const match = matchVocabCommand(ACTIONS, step)
+    const match = matchCommand(ACTIONS, step)
     expect(match?.values['grams']).toEqual({ kind: 'var', name: 'grams' })
     if (match === null) return
-    expect(buildCapStep(match.action, 201, match.values)).toEqual(step)
+    expect(buildCommandStep(match.action, FEEDER, match.values)).toEqual(step)
   })
 
-  it('tells commands that share a method apart by their baked args', () => {
-    const on = matchVocabCommand(ACTIONS, {
-      kind: 'cap',
-      deviceId: 5,
-      cap: 'switch',
-      method: 'setState',
-      args: { on: true },
-    })
-    const off = matchVocabCommand(ACTIONS, {
-      kind: 'cap',
-      deviceId: 5,
-      cap: 'switch',
-      method: 'setState',
-      args: { on: false },
-    })
-    expect(on?.action.id).toBe('switch.on')
-    expect(off?.action.id).toBe('switch.off')
-  })
-
-  it('does not claim a step it cannot represent', () => {
-    const variableTarget: CapStep = {
-      kind: 'cap',
-      deviceId: { $var: 'deviceId' },
-      cap: 'switch',
-      method: 'setState',
-      args: { on: true },
+  it('does not claim an action the target does not offer', () => {
+    const step: CommandStep = {
+      kind: 'command',
+      target: { kind: 'devices', ids: [5] },
+      actionId: 'cover.open',
     }
-    const several: CapStep = { ...variableTarget, deviceId: [1, 2] }
-    const unknown: CapStep = { kind: 'cap', deviceId: 5, cap: 'switch', method: 'gone' }
-    expect(matchVocabCommand(ACTIONS, variableTarget)).toBeNull()
-    expect(matchVocabCommand(ACTIONS, several)).toBeNull()
-    expect(matchVocabCommand(ACTIONS, unknown)).toBeNull()
+    expect(matchCommand(ACTIONS, step)).toBeNull()
+  })
+
+  it('names the single device of a target, and nothing for several or a variable', () => {
+    expect(singleDeviceOf({ target: { kind: 'devices', ids: [3] } })).toBe(3)
+    expect(singleDeviceOf({ target: { kind: 'devices', ids: [3, 4] } })).toBeNull()
+    expect(singleDeviceOf({ target: { kind: 'var', name: 'deviceId' } })).toBeNull()
   })
 
   it('starts a number arg at its minimum and names an out-of-range value', () => {
@@ -130,10 +129,6 @@ describe('command-vocab', () => {
     expect(firstArgIssue(feed, { grams: { kind: 'var', name: 'grams' } })).toBeNull()
   })
 
-  it('ids a command by cap and local id', () => {
-    expect(commandId(action('switch.on'))).toBe('switch:switch.on')
-  })
-
   it('reads the locale from the UI language', () => {
     expect(vocabLocale('it-IT')).toBe('it')
     expect(vocabLocale('en')).toBe('en')
@@ -143,10 +138,11 @@ describe('command-vocab', () => {
 describe('the device of this round (#500)', () => {
   const FEEDER_AND_SWITCH = vocabularyActionsForDevice(['pet-feeder', 'switch'])
   const SWITCH_ONLY = vocabularyActionsForDevice(['switch'])
+  const ids = (list: readonly { readonly id: string }[]) => list.map((a) => a.id).toSorted()
 
   it('offers only the commands every device of the loop has', () => {
     const common = commonVocabActions([FEEDER_AND_SWITCH, SWITCH_ONLY])
-    expect(common.map(commandId).toSorted()).toEqual(SWITCH_ONLY.map(commandId).toSorted())
+    expect(ids(common)).toEqual(ids(SWITCH_ONLY))
     expect(common.some((a) => a.cap === 'pet-feeder')).toBe(false)
   })
 
@@ -161,24 +157,16 @@ describe('the device of this round (#500)', () => {
     expect(dynamic.length).toBeGreaterThan(0)
     const common = commonVocabActions([heater, heater])
     expect(common.length).toBeGreaterThan(0)
-    for (const a of dynamic) expect(common.map(commandId)).not.toContain(commandId(a))
+    for (const a of dynamic) expect(ids(common)).not.toContain(a.id)
   })
 
   it('writes and reads back a step aimed at the device of the round', () => {
     const on = SWITCH_ONLY[0]
     if (on === undefined) throw new Error('no switch command')
-    const step = buildCapStep(on, ROUND_DEVICE, defaultArgValues(on))
-    expect(step.deviceId).toEqual({ $var: 'item' })
+    const step = buildCommandStep(on, ROUND_TARGET, defaultArgValues(on))
+    expect(step.target).toEqual({ kind: 'var', name: 'item' })
     expect(isRoundTarget(step)).toBe(true)
-    expect(matchVocabCommand(SWITCH_ONLY, step)).toBeNull()
-    expect(matchRoundCommand(SWITCH_ONLY, step)?.action.id).toBe(on.id)
-  })
-
-  it('reads the stored target shape as the device of the round, and nothing else', () => {
-    const base = { kind: 'cap', cap: 'switch', method: 'on' } as const
-    expect(isRoundTarget({ ...base, target: { kind: 'var', name: 'item' } })).toBe(true)
-    expect(isRoundTarget({ ...base, target: { kind: 'var', name: 'deviceId' } })).toBe(false)
-    expect(isRoundTarget({ ...base, deviceId: 4 })).toBe(false)
-    expect(matchRoundCommand(SWITCH_ONLY, { ...base, deviceId: 4 })).toBeNull()
+    expect(matchCommand(SWITCH_ONLY, step)?.action.id).toBe(on.id)
+    expect(isRoundTarget({ target: { kind: 'var', name: 'deviceId' } })).toBe(false)
   })
 })

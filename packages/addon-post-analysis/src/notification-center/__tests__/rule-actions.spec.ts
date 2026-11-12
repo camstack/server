@@ -213,10 +213,9 @@ describe('NcActionCatalog', () => {
 
   it('exposes the steps of an Action for the alarm-exemption lookup', async () => {
     const step = {
-      kind: 'cap' as const,
+      kind: 'command' as const,
       target: { kind: 'devices' as const, ids: [1] },
-      cap: 'alarm-panel',
-      method: 'arm',
+      actionId: 'alarm.arm.night',
     }
     const catalog = new NcActionCatalog(
       { list: async () => [entry({ id: 'internal:arm', steps: [step] })] },

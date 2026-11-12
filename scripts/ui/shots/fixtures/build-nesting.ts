@@ -64,11 +64,9 @@ const RECIPE = {
               },
               steps: [
                 {
-                  kind: 'cap' as const,
-                  deviceId: { $var: 'item' },
-                  cap: 'switch',
-                  method: 'setState',
-                  args: { on: false },
+                  kind: 'command' as const,
+                  target: { kind: 'var' as const, name: 'item' },
+                  actionId: 'switch.off',
                 },
               ],
             },
@@ -103,7 +101,9 @@ const TRACES = [
             kind: 'choose',
             outcome: 'ok',
             branch: 'branches.0',
-            steps: [{ path: 'actions.0.steps.0.branches.0.steps.0', kind: 'cap', outcome: 'ok' }],
+            steps: [
+              { path: 'actions.0.steps.0.branches.0.steps.0', kind: 'command', outcome: 'ok' },
+            ],
           },
           { path: 'actions.0.steps.1', kind: 'wait', outcome: 'ok' },
         ],

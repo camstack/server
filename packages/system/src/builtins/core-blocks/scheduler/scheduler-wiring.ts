@@ -99,6 +99,7 @@ export function buildSchedulersRuntime(deps: SchedulersRuntimeDeps): SchedulersR
     ledger: deps.ledger,
     host,
     targets,
+    directory: deps.directory ?? directoryOver(deps.api),
     units: capUnitResolver(ALL_CAPABILITY_DEFINITIONS),
     logger: deps.logger.child('schedulers'),
   })

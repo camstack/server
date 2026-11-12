@@ -6,7 +6,7 @@ import {
   normalizeActionUnits,
   normalizeConditionUnits,
 } from '../normalize-units.js'
-import type { AutomationCapStep, AutomationWhen, DeviceIsLeaf } from '../index.js'
+import type { AutomationCommandStep, AutomationWhen, DeviceIsLeaf } from '../index.js'
 
 const resolver = capUnitResolver(ALL_CAPABILITY_DEFINITIONS)
 
@@ -25,12 +25,11 @@ function bowlLeaf(value: DeviceIsLeaf['value'], unit?: string): AutomationWhen {
 function feedStep(
   args: Record<string, unknown>,
   argUnits?: Record<string, string>,
-): AutomationCapStep {
+): AutomationCommandStep {
   return {
-    kind: 'cap',
+    kind: 'command',
     target: { kind: 'devices', ids: [7] },
-    cap: 'pet-feeder',
-    method: 'feed',
+    actionId: 'petFeeder.feed',
     args,
     ...(argUnits === undefined ? {} : { argUnits }),
   }
@@ -178,7 +177,7 @@ describe('normalizeActionUnits', () => {
   })
 
   it('leaves an object arg on a param that is not a quantity alone', () => {
-    const step: AutomationCapStep = {
+    const step: AutomationCommandStep = {
       ...feedStep({}),
       args: { deviceId: 7, note: { value: 1, unit: 'x' } },
     }
@@ -192,20 +191,18 @@ describe('normalizeActionUnits', () => {
   })
 })
 
-describe('normalizeActionUnits — the save boundary writes only the new target shape', () => {
-  it('turns a legacy multi-device step into target.devices and keeps the marked arg', () => {
-    const legacy: AutomationCapStep = {
-      kind: 'cap',
-      deviceId: [7, 9],
-      cap: 'pet-feeder',
-      method: 'feed',
+describe('normalizeActionUnits — a command step keeps its target and its marked arg', () => {
+  it('keeps a multi-device target and an arg that is not a quantity untouched', () => {
+    const step: AutomationCommandStep = {
+      kind: 'command',
+      target: { kind: 'devices', ids: [7, 9] },
+      actionId: 'petFeeder.feed',
       args: { portion: 'MARK-42' },
     }
-    const { value } = normalizeActionUnits([legacy], resolver)
-    const step = value[0]
-    if (step === undefined || step.kind !== 'cap') throw new Error('expected a cap step')
-    expect(step.target).toEqual({ kind: 'devices', ids: [7, 9] })
-    expect(step.deviceId).toBeUndefined()
-    expect(step.args).toEqual({ portion: 'MARK-42' })
+    const { value } = normalizeActionUnits([step], resolver)
+    const out = value[0]
+    if (out === undefined || out.kind !== 'command') throw new Error('expected a command step')
+    expect(out.target).toEqual({ kind: 'devices', ids: [7, 9] })
+    expect(out.args).toEqual({ portion: 'MARK-42' })
   })
 })

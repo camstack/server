@@ -40,9 +40,7 @@ function triggering(onMatch: boolean) {
     conditions: { devices: [WINDOW] },
     actions: onMatch
       ? {
-          onTrigger: [
-            capAction(PANEL, 'alarm-panel', 'trigger'),
-          ],
+          onTrigger: [capAction(PANEL, 'alarm.trigger')],
         }
       : {
           // Button-only — no onTrigger binding ⇒ not an alarm rule.
@@ -112,8 +110,12 @@ describe('an alarm rule fires on the opening edge only', () => {
       id === PANEL ? ['triggered', 'armed_away'] : undefined
     const closing = subjectFromSensorEvent(event('contact', { entryOpen: false }))
     const opening = subjectFromSensorEvent(event('contact', { entryOpen: true }))
-    expect(evaluateRule(gatedOnAway, closing, incident, undefined, undefined, STEPS).failedCondition).toBe('sensorEdge')
-    expect(evaluateRule(gatedOnAway, opening, incident, undefined, undefined, STEPS).matched).toBe(true)
+    expect(
+      evaluateRule(gatedOnAway, closing, incident, undefined, undefined, STEPS).failedCondition,
+    ).toBe('sensorEdge')
+    expect(evaluateRule(gatedOnAway, opening, incident, undefined, undefined, STEPS).matched).toBe(
+      true,
+    )
   })
 
   it('every camera row of one change gets the same answer, and so does an unlinked sensor', () => {
@@ -121,10 +123,16 @@ describe('an alarm rule fires on the opening edge only', () => {
     const unlinked = subjectFromUnownedSensorEvent(event('contact', { entryOpen: false }), [])
     expect(onCamera.sensorEdge).toBe('closing')
     expect(unlinked.sensorEdge).toBe('closing')
-    expect(evaluateRule(gatedOnAway, onCamera, lookup, undefined, undefined, STEPS).failedCondition).toBe('sensorEdge')
-    expect(evaluateRule(gatedOnAway, unlinked, lookup, undefined, undefined, STEPS).failedCondition).toBe('sensorEdge')
+    expect(
+      evaluateRule(gatedOnAway, onCamera, lookup, undefined, undefined, STEPS).failedCondition,
+    ).toBe('sensorEdge')
+    expect(
+      evaluateRule(gatedOnAway, unlinked, lookup, undefined, undefined, STEPS).failedCondition,
+    ).toBe('sensorEdge')
     const opening = subjectFromUnownedSensorEvent(event('contact', { entryOpen: true }), [])
-    expect(evaluateRule(gatedOnAway, opening, lookup, undefined, undefined, STEPS).matched).toBe(true)
+    expect(evaluateRule(gatedOnAway, opening, lookup, undefined, undefined, STEPS).matched).toBe(
+      true,
+    )
   })
 
   // Task 7b review: the edge gate ran BEFORE `deviceState`, so a closing on a

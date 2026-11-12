@@ -18,6 +18,7 @@ import {
   ALL_CAPABILITY_DEFINITIONS,
   ActionTargetSchema,
   AutomationRecipeSchema,
+  findVocabAction,
   AutomationSetStepSchema,
   AutomationWaitUntilStepSchema,
   AutomationStopStepSchema,
@@ -102,7 +103,7 @@ export type ConditionAnswer = z.infer<typeof ConditionAnswerSchema>
 /**
  * The steps an answer may name are the automation list's own (`AutomationActionSchema`):
  * wait, wait-until, stop and set are the shared schemas, so their bounds and refusals are
- * the editor's. Only the cap step differs, by its `deviceId` shorthand.
+ * the editor's. Only the command step differs, by its `deviceId` shorthand.
  */
 export const ActionAnswerSchema = z.discriminatedUnion('kind', [
   AutomationWaitStepSchema,
@@ -111,34 +112,28 @@ export const ActionAnswerSchema = z.discriminatedUnion('kind', [
   AutomationWaitUntilStepSchema,
   z
     .object({
-      kind: z.literal('cap'),
+      kind: z.literal('command'),
       /** WHO the step acts on: named devices, or every device offering `actionId` (optionally in a room / of a type). */
       target: ActionTargetSchema.optional(),
-      /** The vocabulary action (`cover.open`); required for a `domain` target. */
-      actionId: z.string().min(1).optional(),
+      /** The vocabulary action (`cover.open`, `switch.on`): what the step does. */
+      actionId: z.string().min(1),
       /** Shorthand for `target: { kind: 'devices', ids }`. */
       deviceId: z
         .union([z.number().int().nonnegative(), z.array(z.number().int().nonnegative()).min(1)])
         .optional(),
-      cap: z.string().min(1),
-      method: z.string().min(1),
       /** A quantity argument is `{ value, unit }`; a bare number is stamped with the declared unit. */
       args: z.record(z.string(), z.unknown()).optional(),
       /** The run goes on when this step fails; the trace marks it `failed-continued`. */
       continueOnError: z.literal(true).optional(),
     })
     .refine((a) => a.target !== undefined || a.deviceId !== undefined, {
-      message: 'a cap step needs a target (or a deviceId)',
+      message: 'a command step needs a target (or a deviceId)',
       path: ['target'],
-    })
-    .refine((a) => a.target?.kind !== 'domain' || a.actionId !== undefined, {
-      message: 'a domain target needs the vocabulary action it applies to (actionId)',
-      path: ['actionId'],
     }),
 ])
 
 /** The target an answered step means: `target`, else the `deviceId` shorthand. */
-function targetOfAnswer(a: Extract<ActionAnswer, { kind: 'cap' }>): ActionTarget {
+function targetOfAnswer(a: Extract<ActionAnswer, { kind: 'command' }>): ActionTarget {
   if (a.target !== undefined) return a.target
   const ids = Array.isArray(a.deviceId)
     ? [...a.deviceId]
@@ -263,7 +258,7 @@ const CONDITIONS_QUESTION: Question = {
 
 const ACTIONS_QUESTION: Question = {
   field: 'actions',
-  ask: 'What should it do? A list of steps, in order: { kind: "cap", target, actionId?, cap, method, args? } or { kind: "wait", seconds }. target is { kind: "devices", ids: [...] } to name devices, or { kind: "domain", roomId?, deviceType? } with the vocabulary actionId (for example "cover.open") to act on every device that offers it — resolved when the step runs, so a device added later is included. deviceId (a number or a list) is still accepted as shorthand for named devices.',
+  ask: 'What should it do? A list of steps, in order: { kind: "command", target, actionId, args? } or { kind: "wait", seconds }. actionId is a vocabulary action (for example "cover.open" or "switch.on"). target is { kind: "devices", ids: [...] } to name devices, or { kind: "domain", roomId?, deviceType? } to act on every device that offers the action — resolved when the step runs, so a device added later is included. deviceId (a number or a list) is still accepted as shorthand for named devices.',
 }
 
 function fieldChoices(fields: readonly WireableField[]): readonly Choice[] {
@@ -625,7 +620,15 @@ async function checkActions(
   const problems: Problem[] = []
   const cache = new Map<number, readonly string[]>()
   for (const [idx, action] of actions.entries()) {
-    if (action.kind !== 'cap') continue
+    if (action.kind !== 'command') continue
+    const offered = findVocabAction(action.actionId)
+    if (offered === undefined) {
+      problems.push({
+        field: 'actions',
+        problem: `actions[${idx}]: "${action.actionId}" is not a vocabulary action`,
+      })
+      continue
+    }
     const target = targetOfAnswer(action)
     // A domain / var target is resolved when the step runs; only named devices can be checked now.
     const ids = target.kind === 'devices' ? target.ids : []
@@ -637,10 +640,10 @@ async function checkActions(
         caps = read.value
         cache.set(id, caps)
       }
-      if (!caps.includes(action.cap)) {
+      if (!caps.includes(offered.cap)) {
         problems.push({
           field: 'actions',
-          problem: `actions[${idx}]: device ${id} has no capability "${action.cap}" bound (it has: ${caps.join(', ') || 'none'})`,
+          problem: `actions[${idx}]: device ${id} does not offer "${action.actionId}" (capability "${offered.cap}" is not bound; it has: ${caps.join(', ') || 'none'})`,
         })
       }
     }
@@ -665,13 +668,11 @@ function toCondition(leaves: readonly ConditionAnswer[]): LegacyCondition | unde
 
 function toActions(actions: readonly ActionAnswer[]): AutomationAction[] {
   return actions.map((a): AutomationAction => {
-    if (a.kind !== 'cap') return a
+    if (a.kind !== 'command') return a
     return {
-      kind: 'cap',
+      kind: 'command',
       target: targetOfAnswer(a),
-      ...(a.actionId !== undefined ? { actionId: a.actionId } : {}),
-      cap: a.cap,
-      method: a.method,
+      actionId: a.actionId,
       ...(a.args !== undefined ? { args: a.args } : {}),
       ...(a.continueOnError === true ? { continueOnError: true } : {}),
     }
@@ -693,12 +694,12 @@ function quantityNotes(recipe: AutomationRecipe): QuantityNote[] {
   }
   walk(recipe.when, 'condition')
   recipe.actions.forEach((a, i) => {
-    if (a.kind !== 'cap' || a.args === undefined || a.argUnits === undefined) return
+    if (a.kind !== 'command' || a.args === undefined || a.argUnits === undefined) return
     for (const [arg, unit] of Object.entries(a.argUnits)) {
       const value = a.args[arg]
       if (typeof value === 'number')
         notes.push({
-          where: `action ${i + 1} ${a.cap}.${a.method}.${arg}`,
+          where: `action ${i + 1} ${a.actionId}.${arg}`,
           value,
           unit,
         })
@@ -740,9 +741,9 @@ function summarize(
           ? `device ${t.ids.join(', ')}`
           : t.kind === 'var'
             ? `device $${t.name}`
-            : `every device that can ${a.actionId ?? a.method}${t.roomId === undefined ? '' : ` in ${t.roomId}`}${t.deviceType === undefined ? '' : ` of type ${t.deviceType}`}`
+            : `every device that can ${a.actionId}${t.roomId === undefined ? '' : ` in ${t.roomId}`}${t.deviceType === undefined ? '' : ` of type ${t.deviceType}`}`
       lines.push(
-        `  then ${a.cap}.${a.method} on ${who}${a.args ? ` with ${JSON.stringify(a.args)}` : ''}${a.continueOnError === true ? ' (continue if it fails)' : ''}`,
+        `  then ${a.actionId} on ${who}${a.args ? ` with ${JSON.stringify(a.args)}` : ''}${a.continueOnError === true ? ' (continue if it fails)' : ''}`,
       )
     }
   }
@@ -949,7 +950,7 @@ export function saveAutomationSpec(client: HubClient): GatedToolSpec<SaveAutomat
       const vetted = await vetDeviceTemplates(
         client,
         finished.recipe.actions.flatMap((action) =>
-          action.kind === 'cap' ? templateTexts(action.args) : [],
+          action.kind === 'command' ? templateTexts(action.args) : [],
         ),
       )
       if (!vetted.ok) {

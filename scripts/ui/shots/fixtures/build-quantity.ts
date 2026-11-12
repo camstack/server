@@ -27,10 +27,9 @@ const RECIPE = {
   },
   actions: [
     {
-      kind: 'cap' as const,
-      deviceId: 201,
-      cap: 'pet-feeder',
-      method: 'feed',
+      kind: 'command' as const,
+      target: { kind: 'devices' as const, ids: [201] },
+      actionId: 'petFeeder.feed',
       args: { grams: 56.699 },
       argUnits: { grams: 'oz' },
     },

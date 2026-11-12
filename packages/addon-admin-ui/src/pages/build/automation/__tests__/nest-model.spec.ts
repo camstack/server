@@ -11,7 +11,7 @@ const repeat = (steps: AutomationAction[]): AutomationAction =>
 describe('nest-model (#500)', () => {
   it('a list one level down offers block steps, a list two levels down plain steps only', () => {
     expect(bodyKindsAt(1)).toEqual(
-      expect.arrayContaining(['cap', 'wait', 'choose', 'repeat', 'parallel', 'wait-until']),
+      expect.arrayContaining(['command', 'wait', 'choose', 'repeat', 'parallel', 'wait-until']),
     )
     expect(bodyKindsAt(1)).not.toContain('code')
     for (const block of ['choose', 'repeat', 'parallel', 'wait-until', 'code']) {

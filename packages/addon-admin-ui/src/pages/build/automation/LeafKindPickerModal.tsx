@@ -24,6 +24,8 @@ export interface LeafKindPickerModalProps {
   readonly context: AutomationLeafContext
   readonly underNot: boolean
   readonly treeFull: boolean
+  /** The kind of the row being changed (`change` mode): highlighted when the modal opens. */
+  readonly current?: AutomationLeafKind
   readonly onPick: (kind: AutomationLeafKind) => void
 }
 
@@ -42,6 +44,7 @@ export function LeafKindPickerModal({
   context,
   underNot,
   treeFull,
+  current,
   onPick,
 }: LeafKindPickerModalProps) {
   const { t } = useTranslation()
@@ -58,6 +61,7 @@ export function LeafKindPickerModal({
       context={context}
       underNot={underNot}
       treeFull={treeFull}
+      {...(mode === 'change' && current !== undefined ? { current } : {})}
       {...(insideAutomation ? {} : { hidden: NEEDS_A_TRIGGER })}
       recentKey={`automation-${context}`}
       textsOf={textsOf}

@@ -63,10 +63,9 @@ function Harness(props: { readonly initial: readonly AutomationAction[]; readonl
 }
 
 const CAP: AutomationAction = {
-  kind: 'cap',
+  kind: 'command',
   target: { kind: 'devices', ids: [1] },
-  cap: 'switch',
-  method: 'on',
+  actionId: 'switch.on',
 }
 
 describe('ActionList flow control', () => {
@@ -354,7 +353,7 @@ describe('ActionList, two levels of block steps (#500)', () => {
     fireEvent.click(branch.getByRole('button', { name: 'Step' }))
     expect(latest[0]).toMatchObject({
       kind: 'repeat',
-      steps: [{ kind: 'choose', branches: [{ steps: [{ kind: 'cap' }] }] }],
+      steps: [{ kind: 'choose', branches: [{ steps: [{ kind: 'command' }] }] }],
     })
   })
 

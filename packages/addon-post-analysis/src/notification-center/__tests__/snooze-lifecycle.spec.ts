@@ -302,9 +302,7 @@ describe('a window never silences an ALARM rule', () => {
     await makeRule(h, {
       name: 'intruder — arm',
       actions: {
-        onTrigger: [
-          capAction(900, 'alarm-panel', 'trigger'),
-        ],
+        onTrigger: [capAction(900, 'alarm.trigger')],
       },
     })
     await h.center.createSnooze({ scope: 'all', durationMinutes: 60 }, BOB)

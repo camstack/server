@@ -1,65 +1,41 @@
 /**
- * A "Device command" step: pick a device, pick one of the commands its bound
- * caps offer (the cap vocabulary, D920), fill the open args inline.
+ * A "Device command" step, read as one sentence — "Open Kitchen blind to 40 %" —
+ * with a Change button. Change opens the one device modal (`SourceSelector`,
+ * `intent: 'action'`): pick the target and the command, fill its open args,
+ * Confirm. The step is stored by vocabulary action id (D983):
+ * `{ kind: 'command', target, actionId, args }`.
  *
- * The step reads as the vocabulary phrase — "Dispense [30] g from FRESHELEMENT 3"
- * — with each open arg an inline field. A step the vocabulary cannot represent
- * (a `{ $var }` or several devices as the target, or a command the device no
- * longer offers) is shown through the generic Device → Action row instead and
- * kept exactly as stored; the "Advanced" switch offers that row for any step.
- *
- * Inside a repeat over devices (#500) the step can be aimed at "the device of
- * this round" instead: it is stored on the `item` variable and offers the
- * commands EVERY device of the loop has (`commonVocabActions`).
+ * Inside a repeat over devices (#500) the modal also offers "the device of this
+ * round", with the commands EVERY device of the loop has.
  */
 
-import { vocabularyActionsForDevice } from '@camstack/types'
-import type { ResolvedVocabAction } from '@camstack/types'
-import {
-  Badge,
-  Button,
-  type DeviceListState,
-  DeviceValuePicker,
-  OptionSelect,
-  type OptionSelectOption,
-  Switch,
-} from '@camstack/ui-library'
-import { type ReactNode, useMemo, useState } from 'react'
+import type { ActionTarget, ResolvedVocabAction } from '@camstack/types'
+import { Button, ItemFormDialog } from '@camstack/ui-library'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  type CapDeviceTarget,
-  DeviceDoActionFields,
-} from '../../../components/device-do-action/DeviceDoActionFields'
-import {
-  useDeviceBoundCaps,
-  useDevicesBoundCaps,
-} from '../../../components/device-do-action/use-device-bound-caps'
+  type ActionPickDraft,
+  SourceSelectorAction,
+} from '../../../components/device/customize/source-selector/SourceSelectorAction'
 import type { AutomationDevice } from '../automation/automation-data'
-import type { ScopeVariable } from './ArgField'
+import { ArgField, type ScopeVariable } from './ArgField'
 import { BUILD_EXCLUDED_TYPES } from './build-device-filters'
-import { DynamicArgField } from './DynamicArgField'
+import { describeCommandStep, resolvedActionById, type TargetWords } from './command-phrase'
 import {
-  buildCapStep,
-  type CapStep,
-  type CommandDevice,
-  commandId,
-  commonVocabActions,
+  buildCommandStep,
+  type CommandStep as CommandStepValue,
   defaultArgValues,
-  isRoundTarget,
-  matchRoundCommand,
-  matchVocabCommand,
-  ROUND_DEVICE,
-  pickerTargetOf,
+  firstArgIssue,
+  matchCommand,
   singleDeviceOf,
-  splitPhrase,
-  type StepArgValue,
+  type StepArgValues,
   vocabLocale,
 } from './command-vocab'
+import { DynamicArgField } from './DynamicArgField'
 
 export interface CommandStepProps {
-  readonly step: CapStep
+  readonly step: CommandStepValue
   readonly devices: readonly AutomationDevice[]
-  readonly devicesState?: DeviceListState
   readonly variables: readonly ScopeVariable[]
   /**
    * The devices of the repeat this step sits in, when that repeat runs once
@@ -67,283 +43,222 @@ export interface CommandStepProps {
    * device of the round; absent = it is not in such a loop.
    */
   readonly roundDevices?: readonly number[]
-  readonly onChange: (next: CapStep) => void
+  /** Exactly one device, never a variable (a remote button binding). */
+  readonly singleTarget?: boolean
+  readonly onChange: (next: CommandStepValue) => void
 }
 
-const NO_DEVICES: readonly number[] = []
-
-/** Recipe schema wants a mutable `number[]`; the picker may hand a readonly one. */
-function mutableTarget(deviceId: CapDeviceTarget): number | number[] | { $var: string } {
-  if (typeof deviceId === 'number') return deviceId
-  if (typeof deviceId === 'object' && deviceId !== null && '$var' in deviceId) {
-    return { $var: deviceId.$var }
+function useTargetWords(devices: readonly AutomationDevice[]): TargetWords {
+  const { t } = useTranslation()
+  return {
+    deviceName: (id) => devices.find((d) => d.id === id)?.name ?? `#${String(id)}`,
+    triggerDevice: t('flow.command.triggerDevice'),
+    roundDevice: t('automation.repeat.itemHint', 'the device of this round'),
+    someDevices: t('flow.command.domainDevices'),
   }
-  return [...deviceId]
-}
-
-function commandOptions(
-  actions: readonly ResolvedVocabAction[],
-  locale: 'en' | 'it',
-  deviceName: string,
-): readonly OptionSelectOption[] {
-  return actions.map((a) => ({
-    value: commandId(a),
-    label: a.label[locale],
-    description: a.phrase[locale].replace('{device}', deviceName),
-  }))
 }
 
 export function CommandStep({
   step,
   devices,
-  devicesState = 'answered',
   variables,
   roundDevices,
+  singleTarget = false,
   onChange,
 }: CommandStepProps) {
   const { t, i18n } = useTranslation()
   const locale = vocabLocale(i18n.language)
-  const [advanced, setAdvanced] = useState(false)
-  const single = singleDeviceOf(step)
-  const plainTarget = single !== null
-  const deviceId = single ?? 0
-  const device = devices.find((d) => d.id === deviceId)
-  const caps = useDeviceBoundCaps(plainTarget ? deviceId : 0)
-  const round = roundDevices !== undefined && isRoundTarget(step)
-  const loopIds = round ? roundDevices : NO_DEVICES
-  const loopCaps = useDevicesBoundCaps(loopIds)
-  const actions = useMemo(() => {
-    if (round) {
-      const bound = loopCaps.data
-      if (bound === undefined) return []
-      return commonVocabActions(
-        loopIds.map((id) =>
-          vocabularyActionsForDevice(bound.get(id) ?? [], devices.find((d) => d.id === id)?.type),
-        ),
-      )
-    }
-    return caps.data === undefined ? [] : vocabularyActionsForDevice(caps.data, device?.type)
-  }, [round, loopCaps.data, loopIds, devices, caps.data, device?.type])
-  const match = useMemo(
-    () => (round ? matchRoundCommand(actions, step) : matchVocabCommand(actions, step)),
-    [round, actions, step],
-  )
-  const fresh = step.cap === ''
-  const loading = round
-    ? loopIds.length > 0 && loopCaps.data === undefined && !loopCaps.isError
-    : plainTarget && deviceId > 0 && caps.data === undefined && !caps.isError
-  const vocabMode = (plainTarget || round) && !advanced && (fresh || match !== null || loading)
-  const commandDevice: CommandDevice = round ? ROUND_DEVICE : deviceId
-  const roundName = t('automation.repeat.itemHint', 'the device of this round')
-  const targetName = round ? roundName : (device?.name ?? '')
-  const noTarget = round ? loopIds.length === 0 : deviceId === 0
-
-  if (!vocabMode) {
-    return (
-      <GenericRow
-        step={step}
-        devices={devices}
-        devicesState={devicesState}
-        onChange={onChange}
-        onBack={
-          (plainTarget || round) && !fresh && match !== null ? () => setAdvanced(false) : null
-        }
-      />
-    )
-  }
-
+  const words = useTargetWords(devices)
+  const [open, setOpen] = useState(step.actionId === '')
+  const sentence = describeCommandStep(step, locale, words, deviceTypeOf(step.target, devices))
   return (
-    <div className="space-y-2" data-testid="command-step">
-      <div className="flex flex-wrap items-center gap-2">
-        {!round && device?.type !== undefined && <Badge variant="neutral">{device.type}</Badge>}
-        {roundDevices !== undefined && (
-          <Switch
-            data-testid="command-step-round"
-            checked={round}
-            label={t('flow.command.roundDevice', 'On the device of this round')}
-            aria-label={t('flow.command.roundDevice', 'On the device of this round')}
-            onCheckedChange={(on) =>
-              onChange({
-                kind: 'cap',
-                deviceId: on ? { $var: ROUND_DEVICE.$var } : 0,
-                cap: '',
-                method: '',
-              })
-            }
-          />
+    <div className="flex flex-wrap items-center gap-2" data-testid="command-step">
+      <p className="min-w-0 flex-1 text-sm text-foreground" data-testid="command-step-phrase">
+        {sentence ?? (
+          <span className="text-foreground-subtle">{t('flow.command.pickCommand')}</span>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="ml-auto"
-          onClick={() => setAdvanced(true)}
-          data-testid="command-step-advanced"
-        >
-          {t('flow.command.advanced', 'Advanced')}
-        </Button>
-      </div>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {round ? (
-          <p
-            className="self-center text-xs text-foreground-subtle"
-            data-testid="command-step-round-hint"
-          >
-            {t(
-              'flow.command.roundHint',
-              'Runs on each device of the loop in turn. Only the commands all of them have are offered.',
-            )}
-          </p>
-        ) : (
-          <DeviceValuePicker
-            pick="device"
-            excludeTypes={BUILD_EXCLUDED_TYPES}
-            recentKey="build-targets"
-            value={deviceId > 0 ? { deviceId } : null}
-            testId="command-step-device"
-            onChange={(picked) => {
-              const id = picked?.deviceId ?? 0
-              if (id !== deviceId) onChange({ kind: 'cap', deviceId: id, cap: '', method: '' })
-            }}
-          />
-        )}
-        <OptionSelect
-          mode="single"
-          singleDisplay="field"
-          options={commandOptions(actions, locale, targetName)}
-          value={match === null ? '' : commandId(match.action)}
-          placeholder={
-            noTarget
-              ? round
-                ? t('flow.command.pickLoopDevicesFirst', 'Pick the devices of the loop first')
-                : t('flow.command.pickDeviceFirst', 'Pick a device first')
-              : t('flow.command.pickCommand', 'Pick a command')
-          }
-          disabled={noTarget || loading}
-          searchable={actions.length >= 8}
-          emptyMessage={
-            round
-              ? t('flow.command.noCommonCommands', 'The devices of this loop share no command.')
-              : t('flow.command.noCommands', 'This device has no commands to offer.')
-          }
-          onChange={(id) => {
-            const next = actions.find((a) => commandId(a) === id)
-            if (next !== undefined) {
-              onChange(buildCapStep(next, commandDevice, defaultArgValues(next)))
-            }
-          }}
-        />
-      </div>
-      {round && loopIds.length === 0 && (
-        <p className="text-xs text-foreground-subtle" data-testid="command-step-round-empty">
-          {t('flow.command.pickLoopDevicesFirst', 'Pick the devices of the loop first')}
-        </p>
-      )}
-      {round && !loading && loopIds.length > 0 && actions.length === 0 && (
-        <p className="text-xs text-foreground-subtle" data-testid="command-step-round-none">
-          {t('flow.command.noCommonCommands', 'The devices of this loop share no command.')}
-        </p>
-      )}
-      {match !== null && (
-        <Sentence
-          action={match.action}
-          deviceId={deviceId}
-          values={match.values}
-          deviceName={targetName}
-          locale={locale}
+      </p>
+      <Button
+        variant="outline"
+        size="sm"
+        data-testid="command-step-change"
+        onClick={() => setOpen(true)}
+      >
+        {step.actionId === '' ? t('flow.command.choose') : t('flow.command.change')}
+      </Button>
+      {open && (
+        <CommandPickerDialog
+          step={step}
+          devices={devices}
           variables={variables}
-          onChange={(values) => onChange(buildCapStep(match.action, commandDevice, values))}
+          singleTarget={singleTarget}
+          {...(roundDevices === undefined ? {} : { roundDevices })}
+          onCancel={() => setOpen(false)}
+          onConfirm={(next) => {
+            setOpen(false)
+            onChange(next)
+          }}
         />
       )}
     </div>
   )
 }
 
-interface SentenceProps {
-  readonly action: ResolvedVocabAction
-  readonly deviceId: number
-  readonly values: Readonly<Record<string, StepArgValue>>
-  readonly deviceName: string
-  readonly locale: 'en' | 'it'
-  readonly variables: readonly ScopeVariable[]
-  readonly onChange: (values: Readonly<Record<string, StepArgValue>>) => void
+function deviceTypeOf(
+  target: ActionTarget | null,
+  devices: readonly AutomationDevice[],
+): string | undefined {
+  if (target?.kind !== 'devices') return undefined
+  const first = target.ids[0]
+  return devices.find((d) => d.id === first)?.type
 }
 
-/** The command phrase, each open arg an inline field. */
-function Sentence({
-  action,
-  deviceId,
-  values,
-  deviceName,
-  locale,
-  variables,
-  onChange,
-}: SentenceProps) {
-  const parts: ReactNode[] = []
-  splitPhrase(action.phrase[locale]).forEach((token, i) => {
-    if (token.kind === 'text') {
-      parts.push(<span key={`t${String(i)}`}>{token.text}</span>)
-      return
-    }
-    if (token.key === 'device') {
-      parts.push(
-        <span key="device" className="font-medium">
-          {deviceName}
-        </span>,
-      )
-      return
-    }
-    const arg = action.openArgs.find((a) => a.key === token.key)
-    const current = values[token.key]
-    if (arg === undefined || current === undefined) return
-    parts.push(
-      <DynamicArgField
-        key={token.key}
-        deviceId={deviceId}
-        cap={action.cap}
-        arg={arg}
-        locale={locale}
-        variables={variables}
-        value={current}
-        onChange={(next) => onChange({ ...values, [token.key]: next })}
-      />,
-    )
-  })
-  return <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-sm">{parts}</div>
-}
-
-interface GenericRowProps {
-  readonly step: CapStep
+interface CommandPickerDialogProps {
+  readonly step: CommandStepValue
   readonly devices: readonly AutomationDevice[]
-  readonly devicesState: DeviceListState
-  readonly onChange: (next: CapStep) => void
-  readonly onBack: (() => void) | null
+  readonly variables: readonly ScopeVariable[]
+  readonly roundDevices?: readonly number[]
+  readonly singleTarget: boolean
+  readonly onCancel: () => void
+  readonly onConfirm: (next: CommandStepValue) => void
 }
 
-function GenericRow({ step, devices, devicesState, onChange, onBack }: GenericRowProps) {
-  const { t } = useTranslation()
+function initialDraft(step: CommandStepValue): ActionPickDraft {
+  const emptyDevices = step.target.kind === 'devices' && step.target.ids.length === 0
+  return {
+    target: emptyDevices ? null : step.target,
+    actionId: step.actionId === '' ? null : step.actionId,
+  }
+}
+
+/** The device modal in action mode, with the command's open args as step 3. */
+export function CommandPickerDialog({
+  step,
+  devices,
+  variables,
+  roundDevices,
+  singleTarget,
+  onCancel,
+  onConfirm,
+}: CommandPickerDialogProps) {
+  const { t, i18n } = useTranslation()
+  const locale = vocabLocale(i18n.language)
+  const [draft, setDraft] = useState<ActionPickDraft>(() => initialDraft(step))
+  const action =
+    draft.actionId === null
+      ? undefined
+      : resolvedActionById(draft.actionId, deviceTypeOf(draft.target, devices))
+  const [values, setValues] = useState<StepArgValues>(() =>
+    action === undefined ? {} : (matchCommand([action], step)?.values ?? defaultArgValues(action)),
+  )
+  const issue = action === undefined ? null : firstArgIssue(action, values)
+  const ready = draft.target !== null && action !== undefined && issue === null
+  const change = (next: ActionPickDraft): void => {
+    if (next.actionId !== draft.actionId) {
+      const picked =
+        next.actionId === null
+          ? undefined
+          : resolvedActionById(next.actionId, deviceTypeOf(next.target, devices))
+      setValues(picked === undefined ? {} : defaultArgValues(picked))
+    }
+    setDraft(next)
+  }
   return (
-    <div className="space-y-2" data-testid="command-step-generic">
-      {onBack !== null && (
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          {t('flow.command.backToSentence', 'Back to the sentence')}
-        </Button>
-      )}
-      <DeviceDoActionFields
-        value={{ ...step, deviceId: pickerTargetOf(step) }}
-        allowTriggerDevice
-        allowMultiSameFamily
-        devices={devices}
-        listState={devicesState}
-        onChange={(next) =>
-          onChange({
-            kind: 'cap',
-            deviceId: mutableTarget(next.deviceId),
-            cap: next.cap,
-            method: next.method,
-            ...(next.args !== undefined ? { args: { ...next.args } } : {}),
-          })
+    <ItemFormDialog
+      open
+      onClose={onCancel}
+      title={t('flow.command.dialogTitle')}
+      width="xl"
+      fill
+      testId="command-picker-dialog"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onCancel}>
+            {t('common.cancel', 'Cancel')}
+          </Button>
+          <Button
+            disabled={!ready}
+            data-testid="command-picker-confirm"
+            onClick={() => {
+              if (draft.target === null || action === undefined || issue !== null) return
+              onConfirm(buildCommandStep(action, draft.target, values))
+            }}
+          >
+            {t('flow.command.use')}
+          </Button>
+        </>
+      }
+    >
+      <SourceSelectorAction
+        kind="action"
+        intent="action"
+        value={draft}
+        onChange={change}
+        allowTriggerDevice={!singleTarget}
+        multiple={!singleTarget}
+        excludeTypes={BUILD_EXCLUDED_TYPES}
+        fillHeight
+        {...(roundDevices === undefined ? {} : { roundDevices })}
+        args={
+          action !== undefined && action.openArgs.length > 0 ? (
+            <CommandArgs
+              action={action}
+              deviceId={draft.target === null ? null : singleDeviceOf({ target: draft.target })}
+              values={values}
+              locale={locale}
+              variables={variables}
+              onChange={setValues}
+            />
+          ) : null
         }
       />
+    </ItemFormDialog>
+  )
+}
+
+interface CommandArgsProps {
+  readonly action: ResolvedVocabAction
+  /** The one device the command goes to, when it is one: a `dynamic` list is read from it. */
+  readonly deviceId: number | null
+  readonly values: StepArgValues
+  readonly locale: 'en' | 'it'
+  readonly variables: readonly ScopeVariable[]
+  readonly onChange: (values: StepArgValues) => void
+}
+
+/** Step 3: one labelled field per open arg. */
+function CommandArgs({ action, deviceId, values, locale, variables, onChange }: CommandArgsProps) {
+  return (
+    <div className="flex flex-wrap items-start gap-3" data-testid="command-args">
+      {action.openArgs.map((arg) => {
+        const value = values[arg.key]
+        if (value === undefined) return null
+        const set = (next: typeof value): void => onChange({ ...values, [arg.key]: next })
+        return (
+          <label key={arg.key} className="flex flex-col gap-1 text-[11px] text-foreground">
+            {arg.label[locale]}
+            {deviceId === null ? (
+              <ArgField
+                arg={arg}
+                locale={locale}
+                variables={variables}
+                value={value}
+                onChange={set}
+              />
+            ) : (
+              <DynamicArgField
+                deviceId={deviceId}
+                cap={action.cap}
+                arg={arg}
+                locale={locale}
+                variables={variables}
+                value={value}
+                onChange={set}
+              />
+            )}
+          </label>
+        )
+      })}
     </div>
   )
 }

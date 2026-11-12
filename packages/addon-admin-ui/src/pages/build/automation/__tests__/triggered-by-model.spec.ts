@@ -3,13 +3,17 @@
  * refers to triggers, the ids never collide with ones already there, and the
  * row's choices are the automation's own trigger rows.
  */
-import type { AutomationRecipe, TriggeredByLeaf } from '@camstack/types'
+import type { AutomationAction, AutomationRecipe, TriggeredByLeaf } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { ensureTriggerIds, toggleTrigger, triggerRowsOf } from '../triggered-by-model'
 
 const MOTION = { kind: 'device-event', category: 'motion.on-motion-changed' } as const
 const PRESS = { kind: 'device-event', category: 'button.pressed', deviceId: 7 } as const
-const SIREN = { kind: 'cap', deviceId: 616, cap: 'siren', method: 'on' } as const
+const SIREN: AutomationAction = {
+  kind: 'command',
+  target: { kind: 'devices', ids: [616] },
+  actionId: 'switch.on',
+}
 const ASK: TriggeredByLeaf = { kind: 'triggered-by', leafIds: [] }
 
 describe('ensureTriggerIds', () => {

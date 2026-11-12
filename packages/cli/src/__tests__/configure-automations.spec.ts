@@ -116,10 +116,9 @@ describe('configure_automation_questionnaire', () => {
       ],
       actions: [
         {
-          kind: 'cap',
+          kind: 'command',
           deviceId: 201,
-          cap: 'pet-feeder',
-          method: 'feed',
+          actionId: 'petFeeder.feed',
           args: { grams: 30 },
         },
       ],
@@ -139,13 +138,11 @@ describe('configure_automation_questionnaire', () => {
       trigger: { kind: 'schedule', time: '07:30' },
       conditions: [],
       actions: [
-        { kind: 'cap', deviceId: [7, 9], cap: 'pet-feeder', method: 'feed', args: { grams: 30 } },
+        { kind: 'command', deviceId: [7, 9], actionId: 'petFeeder.feed', args: { grams: 30 } },
         {
-          kind: 'cap',
+          kind: 'command',
           target: { kind: 'domain', roomId: 'Kitchen' },
-          actionId: 'cover.open',
-          cap: 'pet-feeder',
-          method: 'feed',
+          actionId: 'petFeeder.feed',
         },
       ],
     })
@@ -154,8 +151,21 @@ describe('configure_automation_questionnaire', () => {
     expect(ready.recipe.actions[0]).not.toHaveProperty('deviceId')
     expect(ready.recipe.actions[1]).toMatchObject({
       target: { kind: 'domain', roomId: 'Kitchen' },
-      actionId: 'cover.open',
+      actionId: 'petFeeder.feed',
     })
+  })
+
+  it('refuses a step whose device does not offer the vocabulary action, naming it', async () => {
+    const { ctx } = fakeHub(hubReads)
+    const out = await automationQuestionnaire(ctx, {
+      name: 'Open it',
+      trigger: { kind: 'schedule', time: '07:30' },
+      conditions: [],
+      actions: [{ kind: 'command', deviceId: 7, actionId: 'cover.open' }],
+    })
+    expect(out.status).toBe('need-answers')
+    if (out.status !== 'need-answers') return
+    expect(out.problems[0]?.problem).toMatch(/device 7 does not offer "cover\.open"/)
   })
 
   it('refuses a unit of another dimension with the reason', async () => {
@@ -186,7 +196,7 @@ describe('configure_automation_questionnaire', () => {
       conditions: [],
       actions: [
         { kind: 'set', vars: { grams: 30 } },
-        { kind: 'cap', deviceId: 7, cap: 'pet-feeder', method: 'feed', continueOnError: true },
+        { kind: 'command', deviceId: 7, actionId: 'petFeeder.feed', continueOnError: true },
         { kind: 'wait', seconds: 3600 },
         { kind: 'stop', reason: 'fed', outcome: 'ok' },
       ],
@@ -195,10 +205,9 @@ describe('configure_automation_questionnaire', () => {
     expect(ready.recipe.actions).toEqual([
       { kind: 'set', vars: { grams: 30 } },
       {
-        kind: 'cap',
+        kind: 'command',
         target: { kind: 'devices', ids: [7] },
-        cap: 'pet-feeder',
-        method: 'feed',
+        actionId: 'petFeeder.feed',
         continueOnError: true,
       },
       { kind: 'wait', seconds: 3600 },
@@ -290,10 +299,9 @@ describe('configure_automation_save', () => {
       when: { kind: 'schedule' as const, cron: '30 7 * * *' },
       actions: [
         {
-          kind: 'cap' as const,
+          kind: 'command' as const,
           target: { kind: 'devices' as const, ids: [7] },
-          cap: 'notifier',
-          method: 'send',
+          actionId: 'petFeeder.feed',
           args: { message },
         },
       ],
@@ -391,10 +399,9 @@ describe('configure_automation_save', () => {
       const many = {
         when: { kind: 'schedule' as const, cron: '30 7 * * *' },
         actions: Array.from({ length: 70 }, (_, i) => ({
-          kind: 'cap' as const,
+          kind: 'command' as const,
           target: { kind: 'devices' as const, ids: [7] },
-          cap: 'notifier',
-          method: 'send',
+          actionId: 'petFeeder.feed',
           args: { message: `{{ door${i}.state }}` },
         })),
       }

@@ -92,9 +92,9 @@ const RICH: AutomationRecipe = {
     ],
   },
   actions: [
-    { kind: 'cap', deviceId: 101, cap: 'alarm-panel', method: 'arm', args: { mode: 'away' } },
+    { kind: 'command', target: { kind: 'devices', ids: [101] }, actionId: 'alarm.arm.away' },
     { kind: 'wait', seconds: 2 },
-    { kind: 'cap', deviceId: { $var: 'deviceId' }, cap: 'siren', method: 'on' },
+    { kind: 'command', target: { kind: 'var', name: 'deviceId' }, actionId: 'switch.on' },
     { kind: 'code', code: 'ctx.logger.info("hello")\nawait sleep(1)' },
   ],
 }
@@ -133,10 +133,9 @@ describe('parseRecipeFromCode', () => {
       },
       actions: [
         {
-          kind: 'cap',
-          deviceId: 7,
-          cap: 'pet-feeder',
-          method: 'feed',
+          kind: 'command',
+          target: { kind: 'devices', ids: [7] },
+          actionId: 'petFeeder.feed',
           args: { grams: 100 },
           argUnits: { grams: 'kg' },
         },
@@ -162,11 +161,10 @@ describe('parseRecipeFromCode', () => {
       when: { kind: 'manual' },
       actions: [
         {
-          kind: 'cap',
-          deviceId: 1,
-          cap: 'notifier',
-          method: 'send',
-          args: { text: '}}}}}} "quoted" \\ backslash' },
+          kind: 'command',
+          target: { kind: 'devices', ids: [1] },
+          actionId: 'notifier.send',
+          args: { body: '}}}}}} "quoted" \\ backslash' },
         },
       ],
     }

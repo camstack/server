@@ -100,6 +100,22 @@ describe('ConditionKindPicker', () => {
     expect(['device-is', 'time-is', 'stationary-present', 'expression']).toContain(first)
   })
 
+  it('highlights the kind of the row being changed, not the first row', () => {
+    setup({ current: 'device-is' })
+    const selected = screen.getAllByRole('option').filter((o) => o.ariaSelected === 'true')
+    expect(selected.map((o) => o.textContent)).toEqual([expect.stringContaining('Device value is')])
+  })
+
+  it('highlights nothing when adding a row, until the operator types', () => {
+    setup()
+    const selected = () => screen.getAllByRole('option').filter((o) => o.ariaSelected === 'true')
+    expect(selected()).toHaveLength(0)
+    fireEvent.change(search(), { target: { value: 'stable' } })
+    expect(selected().map((o) => o.textContent)).toEqual([
+      expect.stringContaining('Device value is'),
+    ])
+  })
+
   it('offers suggested and recently used kinds only while the search is empty', () => {
     setup({ suggested: ['detection'] })
     expect(screen.getByTestId('kind-section-suggested')).toBeTruthy()

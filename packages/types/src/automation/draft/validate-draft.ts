@@ -2,7 +2,7 @@
  * `validateDraft` — is what the model wrote a real, savable entity on THIS site?
  *
  * Three layers, all deterministic and offline:
- *   1. the real Zod schema of the kind (after {@link expandDraft});
+ *   1. the real Zod schema of the kind;
  *   2. the kind's own author-time validator (`validateRecipeBounds`,
  *      `prepareRecipeUnits`, `validateSchedulerInput`, `validateComposition`);
  *   3. site facts a schema cannot know: the device exists, serves the cap, the
@@ -32,7 +32,7 @@ import { ActionInputSchema } from '../action.js'
 import { SchedulerInputSchema, validateSchedulerInput } from '../scheduler.js'
 import type { SiteReading } from '../../time/time-spec.js'
 import { recipeSiteIssues, stepGuardSiteIssues } from '../when-site.js'
-import { expandDraft, isRecord } from './draft-json.js'
+import { isRecord } from './draft-json.js'
 import { sliceCapOf } from './vocabulary-slice.js'
 import type { DraftKind, DraftSite, DraftSiteDevice, DraftValidation } from './draft-types.js'
 
@@ -129,7 +129,6 @@ function leafIssues(site: DraftSite, when: AutomationWhen, root: string): readon
 interface StepLike {
   readonly kind: string
   readonly actionId?: string | undefined
-  readonly cap?: string | undefined
   readonly args?: Readonly<Record<string, unknown>> | undefined
   readonly target?:
     | {
@@ -146,16 +145,12 @@ function stepIssues(site: DraftSite, step: StepLike, at: string): readonly strin
     const ok = site.actions.some((a) => a.id === step.actionId)
     return ok ? [] : [`${at}: no existing action "${step.actionId ?? ''}"`]
   }
-  if (step.kind !== 'cap') return []
+  if (step.kind !== 'command') return []
   const issues: string[] = []
   const found = step.actionId === undefined ? undefined : findVocabAction(step.actionId)
   if (step.actionId === undefined || found === undefined) {
     return [`${at}: "${step.actionId ?? ''}" is not a vocabulary action id`]
   }
-  if (step.cap !== found.cap)
-    issues.push(
-      `${at}: action ${step.actionId} belongs to cap "${found.cap}", not "${step.cap ?? ''}"`,
-    )
   const target = step.target
   if (target?.kind === 'devices') {
     for (const id of target.ids ?? []) {
@@ -319,17 +314,16 @@ function validateCompositionDraft(site: DraftSite, json: unknown): DraftValidati
 
 export function validateDraft(kind: DraftKind, json: unknown, site: DraftSite): DraftValidation {
   if (!isRecord(json)) return { ok: false, issues: ['(root): the draft must be one JSON object'] }
-  const expanded = expandDraft(json)
   const verdict = ((): DraftValidation => {
     switch (kind) {
       case 'automation':
-        return validateAutomation(site, expanded)
+        return validateAutomation(site, json)
       case 'action':
-        return validateAction(site, expanded)
+        return validateAction(site, json)
       case 'scheduler':
-        return validateScheduler(site, expanded)
+        return validateScheduler(site, json)
       case 'composition':
-        return validateCompositionDraft(site, expanded)
+        return validateCompositionDraft(site, json)
     }
   })()
   return verdict.ok ? verdict : { ok: false, issues: verdict.issues.slice(0, MAX_ISSUES) }

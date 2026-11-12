@@ -17,6 +17,7 @@
  * opening-edge refusal: better a closing notification than a silent open).
  */
 import type { ActionStep } from '../automation/recipe.js'
+import { findVocabAction } from '../device/cap-vocabulary/action-index.js'
 import type { NcConditions, NcRuleActions } from '../capabilities/notification-rules.cap.js'
 
 const ARMED_WORD_PREFIX = 'armed_'
@@ -60,12 +61,15 @@ function actionPullsAlarmTrigger(
 ): boolean {
   const steps = actionStepsOf?.(actionId)
   if (steps === undefined) return false
-  return steps.some(
-    (step) =>
-      step.kind === 'cap' &&
-      step.cap === ALARM_PANEL_CAP &&
-      step.method === ALARM_PANEL_TRIGGER_METHOD,
-  )
+  return steps.some((step) => {
+    if (step.kind !== 'command') return false
+    const found = findVocabAction(step.actionId)
+    return (
+      found !== undefined &&
+      found.cap === ALARM_PANEL_CAP &&
+      found.action.method === ALARM_PANEL_TRIGGER_METHOD
+    )
+  })
 }
 
 /** True when the rule's deviceState gate names any `armed_*` word. */

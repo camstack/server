@@ -20,7 +20,7 @@ import {
   validateTimeSpecForSite,
   WeekdayKeySchema,
 } from '../time/time-spec.js'
-import { ActionStepSchema, normalizeCapStep } from './recipe.js'
+import { ActionStepSchema } from './recipe.js'
 import {
   type AutomationWhen,
   AutomationWhenSchema,
@@ -177,18 +177,14 @@ const VAR_TARGET_REFUSAL =
   'a scheduler has no run scope, so a $var target cannot be resolved — pick devices or a domain'
 
 function isVarTarget(step: SchedulerPoint['steps'][number]): boolean {
-  return step.kind === 'cap' && normalizeCapStep(step).target.kind === 'var'
+  return step.kind === 'command' && step.target.kind === 'var'
 }
 
 /** Why `step` cannot be HELD, or `null` when it can (it leads to a state). */
 export function holdRefusalOf(step: SchedulerPoint['steps'][number]): string | null {
   if (step.kind === 'wait') return 'a wait is not an action and cannot be held'
-  const normalized = normalizeCapStep(step)
-  if (normalized.actionId === undefined) {
-    return `${step.cap}.${step.method} is a raw call, not a vocabulary action — only an action that leads to a state can be held`
-  }
-  if (actionEffect(normalized.actionId, step.args) === null) {
-    return `"${normalized.actionId}" does not lead to a state (or its value is not set), so there is nothing to keep true — use an edge point`
+  if (actionEffect(step.actionId, step.args) === null) {
+    return `"${step.actionId}" does not lead to a state (or its value is not set), so there is nothing to keep true — use an edge point`
   }
   return null
 }

@@ -24,6 +24,7 @@ import {
   toPickerDevices,
 } from '../../../components/device/customize/source-picker-model'
 import { SourceSelector } from '../../../components/device/customize/source-selector/SourceSelector'
+import { vocabularyFieldLabel } from '../../../components/device/customize/vocabulary-field-label'
 import { BUILD_EXCLUDED_TYPES } from '../flow/build-device-filters'
 import { type AutomationDevice, fieldsOfCap, useWireableFields } from './automation-data'
 import type { WireableField } from './recipe-parts'
@@ -60,14 +61,16 @@ export function useFieldDescriptor(selection: FieldSelection): WireableField | u
 }
 
 export function FieldPicker({ value, devices, onChange }: FieldPickerProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [open, setOpen] = useState(false)
   const device = devices.find((d) => d.id === value.deviceId)
   const summary =
     value.deviceId === 0
       ? t('automation.fieldPicker.pickAValue', 'Pick a device value…')
       : `${device?.name ?? `#${String(value.deviceId)}`}${
-          value.cap === '' ? '' : ` · ${value.cap}.${value.fieldPath}`
+          value.cap === ''
+            ? ''
+            : ` · ${vocabularyFieldLabel(value.cap, value.fieldPath, i18n.language)}`
         }`
 
   return (
@@ -148,6 +151,7 @@ function FieldPickerDialog({ value, onCancel, onConfirm }: FieldPickerDialogProp
     >
       <SourceSelector
         kind="formula"
+        intent="value"
         enabled
         fillHeight
         hostId={-1}

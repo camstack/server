@@ -101,3 +101,76 @@ export function actionEffect(
   }
   return null
 }
+
+/** Why a step's vocabulary action cannot be performed. */
+export type VocabActionRefusal = 'unknown-action' | 'not-offered'
+
+/**
+ * A command step names an action that does not exist, or a device that does
+ * not offer it. Typed so a save boundary names the reason, not a string.
+ */
+export class VocabActionError extends Error {
+  constructor(
+    readonly reason: VocabActionRefusal,
+    readonly actionId: string,
+    message: string,
+    readonly deviceId?: number,
+  ) {
+    super(message)
+    this.name = 'VocabActionError'
+  }
+}
+
+/** The cap method call a vocabulary action makes. */
+export interface VocabCall {
+  readonly cap: string
+  readonly method: string
+  /** The step's args with the args the action bakes in (those win). */
+  readonly args: Readonly<Record<string, unknown>>
+}
+
+/**
+ * The cap + method + args `actionId` calls with the step's (open) `args`.
+ * THE one place a command step's action id becomes a cap method: the step
+ * runner and a generated automation block call it when the step runs.
+ * Throws {@link VocabActionError} (`unknown-action`).
+ */
+export function vocabCall(
+  actionId: string,
+  args: Readonly<Record<string, unknown>> | undefined,
+): VocabCall {
+  const found = findVocabAction(actionId)
+  if (found === undefined) {
+    throw new VocabActionError(
+      'unknown-action',
+      actionId,
+      `"${actionId}" is not a vocabulary action id`,
+    )
+  }
+  return {
+    cap: found.cap,
+    method: found.action.method,
+    args: { ...args, ...found.action.args },
+  }
+}
+
+/**
+ * Refuse a device that does not offer `actionId`: its bound caps (the
+ * per-binding walk, D12) do not include the action's cap. Throws
+ * {@link VocabActionError} (`unknown-action` or `not-offered`).
+ */
+export function assertDeviceOffers(
+  actionId: string,
+  deviceId: number,
+  deviceCaps: readonly string[],
+): void {
+  const { cap } = vocabCall(actionId, undefined)
+  if (!deviceCaps.includes(cap)) {
+    throw new VocabActionError(
+      'not-offered',
+      actionId,
+      `device ${deviceId} does not offer ${actionId} (needs cap "${cap}")`,
+      deviceId,
+    )
+  }
+}

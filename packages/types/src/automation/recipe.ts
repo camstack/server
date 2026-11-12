@@ -15,7 +15,7 @@
  *    (instants) and state leaves (durations). It replaces the flat trigger list
  *    plus the separate condition tree; the firing rule is in that file and in
  *    ADR "one tree".
- *  - **Actions** — the `wait` and `cap` steps, plus the `{kind:'code'}`
+ *  - **Actions** — the `wait` and device `command` steps, plus the `{kind:'code'}`
  *    fragment of §3.2.2. See {@link AutomationActionSchema}.
  *
  * A recipe stored in the old shape (`triggers` + `conditions`) still LOADS:
@@ -24,7 +24,7 @@
 
 import { z } from 'zod'
 import { type QuantityValue } from '../units/quantity-input.js'
-import { vocabActionIdFor } from '../device/cap-vocabulary/action-index.js'
+import { findVocabAction } from '../device/cap-vocabulary/action-index.js'
 import { ActionTargetSchema, type ActionTarget } from './action-target.js'
 import { LegacyConditionSchema, LegacyTriggerSchema, convertLegacyWhen } from './legacy-recipe.js'
 import {
@@ -43,14 +43,16 @@ export type { QuantityValue }
 export type { ActionTarget }
 
 /**
- * One action step: `wait`, or a `cap` call.
+ * One action step: `wait`, or a device `command`.
  *
- * A cap step's target is who it acts on (D983: `devices`, a `domain`, or a
- * `{ $var }` resolved from the run's variables); the legacy `deviceId` is still
- * READ, never written. The step runner (`runSteps`) owns the device-scope
- * check, the stop-at-first-failure and the variable substitution, once, for
- * every caller — automations, Actions, and the notification centre, which runs
- * only Actions (planning#473).
+ * A command step names a VOCABULARY action (`cover.open`) and who it acts on
+ * (D983: `devices`, a `domain`, or a `{ $var }` resolved from the run's
+ * variables). It never names a cap method: the step runner turns the action
+ * id into its cap + method through the vocabulary index when the step runs
+ * (`vocabCall`), the one place that mapping happens. The step runner
+ * (`runSteps`) owns the device-scope check, the stop-at-first-failure and the
+ * variable substitution, once, for every caller — automations, Actions, and
+ * the notification centre, which runs only Actions (planning#473).
  */
 /** The longest one `wait` step lasts. It is cut by a restart of the run and does not survive a hub restart. */
 export const WAIT_MAX_SECONDS = 3600
@@ -61,40 +63,22 @@ export const AutomationWaitStepSchema = z.object({
   seconds: z.number().min(0).max(WAIT_MAX_SECONDS, WAIT_TOO_LONG),
 })
 
-/** The legacy `deviceId` of a cap step: still READ, never written (D983). */
-const LegacyStepDeviceSchema = z.union([
-  z.number().int(),
-  z.array(z.number().int()).min(1),
-  z.object({ $var: z.string().min(1) }),
-])
-
 /**
- * The fields of a cap step, before the target rules are applied. Exported for
- * a shape that is "a cap call, narrowed" (a remote-control binding is one
- * device); a step is {@link AutomationCapStepSchema}.
+ * The fields of a command step, before the vocabulary check. A step is
+ * {@link AutomationCommandStepSchema}.
  */
-export const AutomationCapStepBaseSchema = z.object({
-  kind: z.literal('cap'),
+export const AutomationCommandStepBaseSchema = z.object({
+  kind: z.literal('command'),
+  /** WHO the step acts on. */
+  target: ActionTargetSchema,
+  /** The vocabulary action this step performs (`cover.open`). */
+  actionId: z.string().min(1),
   /**
-   * The vocabulary action this step performs (`cover.open`). Required when
-   * `target` is a `domain` (the domain is "every device offering this
-   * action"); filled by {@link normalizeCapStep} for a legacy step whose
-   * cap + method match exactly one vocabulary action.
+   * The values of the action's OPEN args (`position`, `presetId`); the args
+   * the vocabulary bakes into the action are added when the step runs. Values
+   * may carry `{{vars.x}}` slots, or be exactly `{ $var: 'name' }`, which
+   * SUBSTITUTE and do not evaluate (§3.2.3).
    */
-  actionId: z.string().min(1).optional(),
-  /** WHO the step acts on. The only shape that is written. */
-  target: ActionTargetSchema.optional(),
-  /**
-   * @deprecated The pre-D983 target: one device, several, or `{ $var }`.
-   * Still READ — {@link normalizeCapStep} maps it to `target` — and never
-   * written.
-   */
-  deviceId: LegacyStepDeviceSchema.optional(),
-  cap: z.string().min(1),
-  method: z.string().min(1),
-  /** Values may carry `{{vars.x}}` slots, or be exactly `{ $var: 'name' }`, which
-   *  SUBSTITUTE and do not evaluate (§3.2.3). Anything beyond substitution is
-   *  the expression leaf. */
   args: z.record(z.string(), z.unknown()).optional(),
   /**
    * The unit the person picked per arg (display only). `args` always hold the
@@ -104,62 +88,20 @@ export const AutomationCapStepBaseSchema = z.object({
   argUnits: z.record(z.string(), z.string().min(1)).optional(),
 })
 
-export const AutomationCapStepSchema = AutomationCapStepBaseSchema.refine(
-  (step) => step.target !== undefined || step.deviceId !== undefined,
-  {
-    message: 'a cap step needs a target',
-    path: ['target'],
-  },
-).refine((step) => step.target?.kind !== 'domain' || step.actionId !== undefined, {
-  message: 'a domain target needs the vocabulary action it applies to (actionId)',
-  path: ['actionId'],
-})
-export type AutomationCapStep = z.infer<typeof AutomationCapStepSchema>
-
-/** A cap step after {@link normalizeCapStep}: `target` always set, no legacy `deviceId`. */
-export type NormalizedCapStep = Omit<AutomationCapStep, 'deviceId' | 'target'> & {
-  readonly target: ActionTarget
-}
-
-function legacyTarget(deviceId: NonNullable<AutomationCapStep['deviceId']>): ActionTarget {
-  if (typeof deviceId === 'number') return { kind: 'devices', ids: [deviceId] }
-  if (Array.isArray(deviceId)) return { kind: 'devices', ids: deviceId }
-  return { kind: 'var', name: deviceId.$var }
-}
-
-/**
- * The ONE reader of a stored cap step. A step written before D983 carries
- * `deviceId`; it becomes a `target`, and `actionId` is filled when its cap +
- * method (+ the args it sends) match exactly one vocabulary action. A step in
- * the new shape passes through (its `deviceId`, if any, is dropped). Nothing
- * else in the repo reads `deviceId`.
- */
-export function normalizeCapStep(step: AutomationCapStep): NormalizedCapStep {
-  const { deviceId, target, ...rest } = step
-  const resolvedTarget = target ?? (deviceId === undefined ? undefined : legacyTarget(deviceId))
-  if (resolvedTarget === undefined) {
-    throw new Error(`cap step ${step.cap}.${step.method} has no target`)
-  }
-  const actionId =
-    rest.actionId ??
-    (deviceId === undefined ? undefined : vocabActionIdFor(step.cap, step.method, step.args))
-  return {
-    ...rest,
-    ...(actionId === undefined ? {} : { actionId }),
-    target: resolvedTarget,
+/** The vocabulary check every command step passes: the action exists. */
+function refineKnownAction(step: { readonly actionId: string }, ctx: z.RefinementCtx): void {
+  if (findVocabAction(step.actionId) === undefined) {
+    ctx.addIssue({
+      code: 'custom',
+      message: `"${step.actionId}" is not a vocabulary action id`,
+      path: ['actionId'],
+    })
   }
 }
 
-/**
- * {@link normalizeCapStep} over a step list: cap steps are rewritten to the
- * new target shape, every other step passes through. The one function a store
- * reads through and a save boundary writes through.
- */
-export function normalizeStepTargets<A extends AutomationAction>(
-  steps: readonly A[],
-): (A | NormalizedCapStep)[] {
-  return steps.map((step) => (step.kind === 'cap' ? normalizeCapStep(step) : step))
-}
+export const AutomationCommandStepSchema =
+  AutomationCommandStepBaseSchema.superRefine(refineKnownAction)
+export type AutomationCommandStep = z.infer<typeof AutomationCommandStepSchema>
 
 /**
  * The steps an internal Action may contain: cap and wait, and nothing that can
@@ -168,7 +110,7 @@ export function normalizeStepTargets<A extends AutomationAction>(
  */
 export const LeafActionStepSchema = z.discriminatedUnion('kind', [
   AutomationWaitStepSchema,
-  AutomationCapStepSchema,
+  AutomationCommandStepSchema,
 ])
 
 /** How many steps one `else` list holds. */
@@ -193,15 +135,8 @@ const GuardedWaitStepSchema = AutomationWaitStepSchema.extend(stepGuardShape).re
   (step) => step.else === undefined || step.if !== undefined,
   elseNeedsIf,
 )
-const GuardedCapStepSchema = AutomationCapStepBaseSchema.extend(stepGuardShape)
-  .refine((step) => step.target !== undefined || step.deviceId !== undefined, {
-    message: 'a cap step needs a target',
-    path: ['target'],
-  })
-  .refine((step) => step.target?.kind !== 'domain' || step.actionId !== undefined, {
-    message: 'a domain target needs the vocabulary action it applies to (actionId)',
-    path: ['actionId'],
-  })
+const GuardedCommandStepSchema = AutomationCommandStepBaseSchema.extend(stepGuardShape)
+  .superRefine(refineKnownAction)
   .refine((step) => step.else === undefined || step.if !== undefined, elseNeedsIf)
 
 /**
@@ -210,7 +145,7 @@ const GuardedCapStepSchema = AutomationCapStepBaseSchema.extend(stepGuardShape)
  * automation's trigger, which such a list does not have.
  */
 export const ActionStepSchema = z
-  .discriminatedUnion('kind', [GuardedWaitStepSchema, GuardedCapStepSchema])
+  .discriminatedUnion('kind', [GuardedWaitStepSchema, GuardedCommandStepSchema])
   .superRefine((step, ctx) => {
     if (step.if !== undefined && hasTriggeredByLeaves(step.if)) {
       ctx.addIssue({ code: 'custom', message: TRIGGERED_BY_NEEDS_AUTOMATION, path: ['if'] })
@@ -228,19 +163,12 @@ const continueOnErrorShape = {
   continueOnError: z.literal(true).optional(),
 }
 
-/** An automation's cap step: the shared guarded cap step, plus `continueOnError`. */
-const AutomationGuardedCapStepSchema = AutomationCapStepBaseSchema.extend({
+/** An automation's command step: the shared guarded command step, plus `continueOnError`. */
+const AutomationGuardedCommandStepSchema = AutomationCommandStepBaseSchema.extend({
   ...stepGuardShape,
   ...continueOnErrorShape,
 })
-  .refine((step) => step.target !== undefined || step.deviceId !== undefined, {
-    message: 'a cap step needs a target',
-    path: ['target'],
-  })
-  .refine((step) => step.target?.kind !== 'domain' || step.actionId !== undefined, {
-    message: 'a domain target needs the vocabulary action it applies to (actionId)',
-    path: ['actionId'],
-  })
+  .superRefine(refineKnownAction)
   .refine((step) => step.else === undefined || step.if !== undefined, elseNeedsIf)
 
 export const STOP_REASON_MAX = 200
@@ -348,16 +276,9 @@ function nestTooDeep(issue: { readonly input?: unknown }): string | undefined {
 
 const plainStepSchemas = [
   AutomationWaitStepSchema.strict(),
-  AutomationCapStepBaseSchema.extend(continueOnErrorShape)
+  AutomationCommandStepBaseSchema.extend(continueOnErrorShape)
     .strict()
-    .refine((step) => step.target !== undefined || step.deviceId !== undefined, {
-      message: 'a cap step needs a target',
-      path: ['target'],
-    })
-    .refine((step) => step.target?.kind !== 'domain' || step.actionId !== undefined, {
-      message: 'a domain target needs the vocabulary action it applies to (actionId)',
-      path: ['actionId'],
-    }),
+    .superRefine(refineKnownAction),
   AutomationStopStepSchema.omit({ if: true }).strict(),
   AutomationSetStepSchema.omit({ if: true }).strict(),
   AutomationRunActionStepSchema.strict(),
@@ -377,7 +298,7 @@ export const PARALLEL_STEPS_MAX = 5
 
 /** A step that can run beside others: it writes no variable and does not end the run. */
 const AutomationParallelMemberSchema = AutomationBranchStepSchema.refine(
-  (step) => step.kind === 'cap' || step.kind === 'action' || step.kind === 'wait',
+  (step) => step.kind === 'command' || step.kind === 'action' || step.kind === 'wait',
   'a parallel holds device commands, actions and waits only: a set or a stop beside other steps has no order',
 )
 
@@ -526,7 +447,7 @@ export type AutomationChooseStep = z.infer<typeof AutomationChooseStepSchema>
 
 export const AutomationActionSchema = z.discriminatedUnion('kind', [
   GuardedWaitStepSchema,
-  AutomationGuardedCapStepSchema,
+  AutomationGuardedCommandStepSchema,
   AutomationStopStepSchema,
   AutomationSetStepSchema,
   AutomationChooseStepSchema,

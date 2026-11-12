@@ -50,7 +50,7 @@ import { WaitUntilFields } from './WaitUntilFields'
 import { Trans, useTranslation } from 'react-i18next'
 
 const ACTION_KINDS: readonly { readonly value: ActionKind; readonly labelKey: string }[] = [
-  { value: 'cap', labelKey: 'automation.actionList.kindCap' },
+  { value: 'command', labelKey: 'automation.actionList.kindCap' },
   { value: 'action', labelKey: 'automation.actionList.kindAction' },
   { value: 'wait', labelKey: 'automation.actionList.kindWait' },
   { value: 'wait-until', labelKey: 'automation.actionList.kindWaitUntil' },
@@ -347,11 +347,10 @@ export function ActionList({
             </label>
           )}
 
-          {action.kind === 'cap' && (
+          {action.kind === 'command' && (
             <CommandStep
               step={action}
               devices={devices}
-              devicesState={devicesState}
               variables={variables}
               {...(roundDevices === undefined ? {} : { roundDevices })}
               onChange={(next) =>
@@ -381,7 +380,7 @@ export function ActionList({
             />
           )}
 
-          {flowControl && (action.kind === 'cap' || action.kind === 'action') && (
+          {flowControl && (action.kind === 'command' || action.kind === 'action') && (
             <Switch
               data-testid={`continue-on-error-${String(index)}`}
               checked={action.continueOnError === true}
@@ -394,7 +393,7 @@ export function ActionList({
             />
           )}
 
-          {!nested && (action.kind === 'wait' || action.kind === 'cap') && (
+          {!nested && (action.kind === 'wait' || action.kind === 'command') && (
             <StepGuard
               step={action}
               devices={devices}
@@ -417,7 +416,7 @@ export function ActionList({
         <Button
           variant="outline"
           disabled={maxSteps !== undefined && actions.length >= maxSteps}
-          onClick={() => onChange([...actions, newAction(kinds[0]?.value ?? 'cap')])}
+          onClick={() => onChange([...actions, newAction(kinds[0]?.value ?? 'command')])}
         >
           <Plus className="h-4 w-4" /> {t('automation.actionList.addStep')}
         </Button>
@@ -436,5 +435,5 @@ export function ActionList({
 
 function asKind(value: string): ActionKind {
   const hit = ACTION_KINDS.find((k) => k.value === value)
-  return hit?.value ?? 'cap'
+  return hit?.value ?? 'command'
 }

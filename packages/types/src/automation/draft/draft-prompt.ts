@@ -13,8 +13,8 @@ export const FEW_SHOT_COUNT = 3
 
 const COMMON: readonly string[] = [
   'Reply with ONE JSON object and nothing else. Use ONLY the ids listed under "Site".',
-  'A cap step names a vocabulary action: {"kind":"cap","actionId":"switch.on","target":{"kind":"devices","ids":[1]}}.',
-  'cap, method and fixed args come from the action; add "args" only for the open args the action lists, e.g. brightness.set(level 0-100) -> "args":{"level":40}.',
+  'A command step names a vocabulary action: {"kind":"command","actionId":"switch.on","target":{"kind":"devices","ids":[1]}}.',
+  'The cap, method and fixed args come from the action; add "args" only for the open args the action lists, e.g. brightness.set(level 0-100) -> "args":{"level":40}.',
   'A target is {"kind":"devices","ids":[..]} or {"kind":"domain","deviceType":"light","roomId":"Salone"} (every such device in the room).',
   'Wait step: {"kind":"wait","seconds":30}. Never invent a device, cap, field, zone or action id.',
 ]

@@ -80,9 +80,9 @@ const NIGHT_CLOSE_AND_ARM: AutomationRecipe = {
     ],
   },
   actions: [
-    { kind: 'cap', deviceId: 1453, cap: 'cover', method: 'close' },
+    { kind: 'command', target: { kind: 'devices', ids: [1453] }, actionId: 'cover.close' },
     { kind: 'wait', seconds: 20 },
-    { kind: 'cap', deviceId: 1023, cap: 'alarm-panel', method: 'arm', args: { mode: 'night' } },
+    { kind: 'command', target: { kind: 'devices', ids: [1023] }, actionId: 'alarm.arm.night' },
   ],
 }
 
@@ -235,10 +235,9 @@ describe('the picked unit survives the recipe schema', () => {
       },
       actions: [
         {
-          kind: 'cap',
-          deviceId: 7,
-          cap: 'pet-feeder',
-          method: 'feed',
+          kind: 'command',
+          target: { kind: 'devices', ids: [7] },
+          actionId: 'petFeeder.feed',
           args: { grams: 100 },
           argUnits: { grams: 'kg' },
         },

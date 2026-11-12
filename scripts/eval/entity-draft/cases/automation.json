@@ -11,7 +11,7 @@
    },
    "actions": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.on",
      "target": {
       "kind": "devices",
@@ -41,7 +41,7 @@
    },
    "actions": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.on",
      "target": {
       "kind": "devices",
@@ -51,7 +51,7 @@
      }
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.on",
      "target": {
       "kind": "devices",
@@ -82,7 +82,7 @@
    },
    "actions": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "cover.close",
      "target": {
       "kind": "domain",
@@ -117,7 +117,7 @@
    },
    "actions": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.on",
      "target": {
       "kind": "devices",
@@ -160,7 +160,7 @@
    },
    "actions": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "climate.off",
      "target": {
       "kind": "devices",
@@ -191,7 +191,7 @@
    },
    "actions": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "brightness.set",
      "target": {
       "kind": "devices",
@@ -225,7 +225,7 @@
    },
    "actions": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.on",
      "target": {
       "kind": "devices",
@@ -259,7 +259,7 @@
    },
    "actions": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "cover.open",
      "target": {
       "kind": "devices",
@@ -273,7 +273,7 @@
      "seconds": 60
     },
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "cover.close",
      "target": {
       "kind": "devices",
@@ -316,7 +316,7 @@
    },
    "actions": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.off",
      "target": {
       "kind": "devices",
@@ -346,7 +346,7 @@
    },
    "actions": [
     {
-     "kind": "cap",
+     "kind": "command",
      "actionId": "switch.on",
      "target": {
       "kind": "domain",

@@ -2872,7 +2872,23 @@
       "pickedCount_one": "{{count}} selezionato",
       "pickedCount_other": "{{count}} selezionati",
       "sourceReads": "Legge {{value}} adesso",
-      "nothingFeeds": "Nessun dispositivo può alimentare {{title}}."
+      "nothingFeeds": "Nessun dispositivo può alimentare {{title}}.",
+      "action": {
+        "triggerDevice": "Il dispositivo che ha avviato questa esecuzione",
+        "roundDevice": "Il dispositivo di questo giro",
+        "devicesHeading": "Dispositivi",
+        "pickActionFirst": "Scegli prima un comando",
+        "actionsHeading": "Comandi",
+        "search": "Cerca comandi",
+        "pickDeviceFirst": "Scegli prima un dispositivo",
+        "loading": "Caricamento comandi…",
+        "noMatch": "Nessun comando corrisponde a “{{query}}”",
+        "noCommon": "Questi dispositivi non hanno comandi in comune",
+        "none": "Questo dispositivo non ha comandi",
+        "mode": "Scegli per",
+        "byDevice": "Per dispositivo",
+        "byAction": "Per azione"
+      }
     },
     "linkedActions": {
       "title": "Azioni collegate",
@@ -11550,7 +11566,13 @@
       "roundDevice": "Sul dispositivo di questo giro",
       "roundHint": "Viene eseguito a turno su ogni dispositivo del ciclo. Sono proposti solo i comandi che hanno tutti; un comando le cui scelte appartengono a un solo dispositivo (i suoi preset, per esempio) non lo è.",
       "pickLoopDevicesFirst": "Scegli prima i dispositivi del ciclo",
-      "noCommonCommands": "I dispositivi di questo ciclo non hanno comandi in comune."
+      "noCommonCommands": "I dispositivi di questo ciclo non hanno comandi in comune.",
+      "triggerDevice": "il dispositivo che ha avviato questa esecuzione",
+      "domainDevices": "i dispositivi corrispondenti",
+      "choose": "Scegli",
+      "change": "Cambia",
+      "dialogTitle": "Comando dispositivo",
+      "use": "Usa questo comando"
     },
     "runs": {
       "emptyDescription": "Ogni esecuzione compare qui con ciò che ha deciso.",

@@ -91,7 +91,9 @@ vi.mock('../../../pages/build/flow/CommandStep', () => ({
     <button
       type="button"
       data-testid="pick-command"
-      onClick={() => onChange({ kind: 'cap', deviceId: TV, cap: 'switch', method: 'turnOn' })}
+      onClick={() =>
+        onChange({ kind: 'command', target: { kind: 'devices', ids: [TV] }, actionId: 'switch.on' })
+      }
     >
       pick
     </button>
@@ -158,7 +160,8 @@ describe('RemoteConfigDialog', () => {
       kind: 'cap',
       deviceId: TV,
       cap: 'switch',
-      method: 'turnOn',
+      method: 'setState',
+      args: { on: true },
     })
   })
 

@@ -4670,11 +4670,12 @@ state-word transition.
   matching the viewer's family list. URL restore keeps `?tab` / `?section` /
   `?rule` / `?editTab` (and Build Automations `?block=`, OSD `?tab` /
   `?device` / `?slot`) so back/forward and a shared link open the same editor.
-- **Shared sequences + Device→Action (the sequences were retired by D1028; steps are Actions now).** Curated `DEVICE_DO_ACTIONS` /
-  `actionsForBoundCaps` drive a single `DeviceDoActionFields` picker (device,
-  then friendly action from bound caps) in NC Sequences / rule Do and in Build
-  Automations (`$trigger` device option). Sequences are reusable across rules
-  rather than rewritten per rule.
+- **Shared sequences + Device→Action (the sequences were retired by D1028; steps are Actions now).** A device step is stored by
+  vocabulary action id — `{ kind: 'command', target, actionId, args }` — and
+  picked in the one device modal (`SourceSelector` `intent: 'action'`, by
+  device or by action, the trigger device as a target of its own). The runner
+  resolves `actionId` through the action index (`vocabCall`); a save that names
+  a device not offering the action is refused (`assertStepsOffered`).
 - **Calendar-events rules.** HA `calendar-source` plus a hub aggregator feed
   scheduled windows into NC (`calendar-events/*`); a rule can fire on calendar
   membership the same way a digest fires on a closed window — separate from

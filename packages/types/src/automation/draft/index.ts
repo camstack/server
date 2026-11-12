@@ -5,7 +5,6 @@
 export * from './draft-types.js'
 export { compareDraft } from './compare-draft.js'
 export { COMPOSITION_TARGET_CAP_NAMES, compositionTargetCaps } from './composition-caps.js'
-export { expandDraft } from './draft-json.js'
 export {
   buildDraftPrompt,
   buildRepairPrompt,

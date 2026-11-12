@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Addon migrations run in phases: a step whose predecessor belongs to a later phase of the same addon is deferred, never blocks the addon
 - A cap with no status block keeps its own getStatus: a device whose power source is grafted by customize answers its power source status again, and a settled device command is announced on the event bus.
+- Actions and schedulers store command steps (vocabulary action plus target) and refuse, at save, a device that does not offer the action; the old raw cap-call step and its migration are gone.
 
 ## [1.2.848] - 2026-11-12
 

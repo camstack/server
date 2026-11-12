@@ -93,7 +93,9 @@ describe('triggerVariablesOf', () => {
         name: 'x',
         recipe: {
           when,
-          actions: [{ kind: 'cap', deviceId: 616, cap: 'siren', method: 'on' }],
+          actions: [
+            { kind: 'command', target: { kind: 'devices', ids: [616] }, actionId: 'button.press' },
+          ],
         },
       })
       for (const v of triggerVariablesOf(when)) {

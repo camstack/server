@@ -49,11 +49,9 @@ export function triggerAlarmDraft(panelDeviceId: number, name: string): ActionDr
     variables: [],
     steps: [
       {
-        kind: 'cap',
+        kind: 'command',
         target: { kind: 'devices', ids: [panelDeviceId] },
-        cap: 'alarm-panel',
-        method: 'trigger',
-        args: {},
+        actionId: 'alarm.trigger',
       },
     ],
   }
@@ -83,9 +81,8 @@ export function variablesUsedBy(steps: readonly ActionStep[]): readonly string[]
     else if (typeof value === 'object' && value !== null) Object.values(value).forEach(walk)
   }
   for (const step of steps) {
-    if (step.kind !== 'cap') continue
-    walk(step.deviceId)
-    if (step.target?.kind === 'var') note(step.target.name)
+    if (step.kind !== 'command') continue
+    if (step.target.kind === 'var') note(step.target.name)
     walk(step.args)
   }
   return seen
@@ -133,11 +130,9 @@ function renameInValue(value: unknown, from: string, to: string): unknown {
 }
 
 function renameInStep(step: ActionStep, from: string, to: string): ActionStep {
-  if (step.kind !== 'cap') return step
-  const deviceId =
-    isVarRef(step.deviceId) && step.deviceId.$var === from ? { $var: to } : step.deviceId
+  if (step.kind !== 'command') return step
   const target =
-    step.target?.kind === 'var' && step.target.name === from
+    step.target.kind === 'var' && step.target.name === from
       ? { kind: 'var' as const, name: to }
       : step.target
   const args =
@@ -148,8 +143,7 @@ function renameInStep(step: ActionStep, from: string, to: string): ActionStep {
         )
   return {
     ...step,
-    ...(deviceId === undefined ? {} : { deviceId }),
-    ...(target === undefined ? {} : { target }),
+    target,
     ...(args === undefined ? {} : { args }),
   }
 }

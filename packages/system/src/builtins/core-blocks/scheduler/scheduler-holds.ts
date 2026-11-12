@@ -23,6 +23,7 @@
 import { randomUUID } from 'node:crypto'
 import {
   actionEffect,
+  vocabCall,
   type ActionTargetResolver,
   type AutomationRunTrace,
   type AutomationStepTrace,
@@ -32,7 +33,6 @@ import {
   type HoldOverride,
   type HoldTargetStatus,
   type IScopedLogger,
-  normalizeCapStep,
   resolveStepArgs,
   type Scheduler,
   type SchedulerOutcome,
@@ -293,13 +293,13 @@ export class HoldManager {
   ): Promise<void> {
     const wanted = new Map<string, HoldTarget>()
     for (const step of point.steps) {
-      if (step.kind !== 'cap') continue
-      const normalized = normalizeCapStep(step)
-      if (normalized.actionId === undefined) continue
+      if (step.kind !== 'command') continue
+      const normalized = step
       const resolved = resolveStepArgs(step.args ?? {}, {}, () => undefined)
       const args = isPlainRecord(resolved) ? resolved : {}
       const effect = actionEffect(normalized.actionId, args)
       if (effect === null) continue
+      const call = vocabCall(normalized.actionId, args)
       let deviceIds: readonly number[]
       try {
         deviceIds = (
@@ -333,9 +333,9 @@ export class HoldManager {
             : {
                 key,
                 deviceId,
-                cap: step.cap,
-                method: step.method,
-                args,
+                cap: call.cap,
+                method: call.method,
+                args: call.args,
                 field: effect.field,
                 value: effect.value,
                 status: 'pending',
