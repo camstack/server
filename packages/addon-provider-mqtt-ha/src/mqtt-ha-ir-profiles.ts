@@ -58,13 +58,28 @@ function find(
   )
 }
 
-/** The first profile every one of whose entities is present, else null. */
-export function matchIrProfile(entities: readonly MqttHaEntity[]): MqttHaIrMatch | null {
+/**
+ * The first profile every one of whose entities is present, else null. A
+ * profile publishes a bare payload on the discovered command topic, so an entity
+ * whose discovery carries a `command_template` refuses the match, and the reason
+ * goes to `onRefused`.
+ */
+export function matchIrProfile(
+  entities: readonly MqttHaEntity[],
+  onRefused?: (reason: string) => void,
+): MqttHaIrMatch | null {
   for (const profile of MQTT_HA_IR_PROFILES) {
     const send = find(entities, profile, 'text', profile.entities.send)
     const learn = find(entities, profile, 'select', profile.entities.learn)
     const learned = find(entities, profile, 'sensor', profile.entities.learned)
     if (send?.commandTopic && learn?.commandTopic && learned?.stateTopic) {
+      const templated = [send, learn].find((e) => e.commandTemplate !== null)
+      if (templated !== undefined) {
+        onRefused?.(
+          `ir profile ${profile.id} refused: ${templated.objectId} has a command_template this provider does not render`,
+        )
+        continue
+      }
       return { profile, send, learn, learned }
     }
   }

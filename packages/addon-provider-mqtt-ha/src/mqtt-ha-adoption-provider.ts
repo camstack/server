@@ -69,7 +69,9 @@ export function buildMqttHaAdoptionProvider(
 
   async function candidatesForBroker(brokerId: string) {
     const out = []
-    for (const adoptable of adoptableMqttHaDevices(store.listForBroker(brokerId))) {
+    for (const adoptable of adoptableMqttHaDevices(store.listForBroker(brokerId), (reason) =>
+      logger.warn(`mqtt-ha adoption: ${reason}`, { meta: { brokerId } }),
+    )) {
       const adoptedDeviceId = await adoptedDeviceIdFor(brokerId, adoptable, listAdoptedMqttHa)
       out.push(buildMqttHaDeviceCandidate({ adoptable, adoptedDeviceId }))
     }

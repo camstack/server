@@ -86,6 +86,7 @@ function legacyEntity(config: MqttHaDeviceConfig): MqttHaEntity | null {
     availabilityMode: 'latest',
     device: null,
     origin: null,
+    commandTemplate: null,
     light: null,
     eventTypes: [],
     climate: null,

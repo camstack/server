@@ -23,6 +23,7 @@ export type MqttHaAdoptable =
 /** Group a broker's entities into devices and keep those that map onto a cap. */
 export function adoptableMqttHaDevices(
   entities: readonly MqttHaDiscoveredEntity[],
+  onIrRefused?: (reason: string) => void,
 ): MqttHaAdoptable[] {
   const out: MqttHaAdoptable[] = []
   for (const device of groupEntitiesByDevice(entities)) {
@@ -31,7 +32,10 @@ export function adoptableMqttHaDevices(
       out.push({ kind: 'container', device, container })
       continue
     }
-    const plan = planMqttHaDevice(device)
+    const plan = planMqttHaDevice({
+      entities: device.entities,
+      ...(onIrRefused ? { onIrRefused } : {}),
+    })
     if (plan !== null) out.push({ kind: 'single', device, plan })
   }
   return out

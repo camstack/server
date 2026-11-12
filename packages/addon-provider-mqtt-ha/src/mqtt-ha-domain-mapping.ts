@@ -146,7 +146,21 @@ const ALLOWED_CAPS: Readonly<Record<string, ReadonlySet<MqttHaCap>>> = {
   [DeviceType.Light]: new Set<MqttHaCap>(['switch', 'brightness', 'color', 'power-meter']),
   [DeviceType.Switch]: new Set<MqttHaCap>(['switch', 'power-meter', 'battery']),
   [DeviceType.EventEmitter]: new Set<MqttHaCap>(['event-emitter', 'battery']),
-  [DeviceType.Generic]: new Set<MqttHaCap>(['ir-transmitter', 'battery']),
+  // An IR blaster keeps its other readings (battery, a temperature, a counter).
+  [DeviceType.Generic]: new Set<MqttHaCap>([
+    'ir-transmitter',
+    'contact',
+    'motion',
+    'flood',
+    'vibration',
+    'tamper',
+    'temperature-sensor',
+    'humidity-sensor',
+    'ambient-light-sensor',
+    'numeric-sensor',
+    'power-meter',
+    'battery',
+  ]),
   [DeviceType.Sensor]: new Set<MqttHaCap>([
     'contact',
     'motion',
@@ -256,10 +270,12 @@ const SPECIFIC_READINGS: ReadonlySet<MqttHaCap> = new Set([
  */
 export function planMqttHaDevice(input: {
   readonly entities: readonly MqttHaEntity[]
+  /** Told why an IR profile that otherwise matched was refused. */
+  readonly onIrRefused?: (reason: string) => void
 }): MqttHaDevicePlan | null {
   const roles: RoleEntity[] = []
   // An IR blaster's three entities are one transmitter, not a text, a select and a sensor.
-  const ir = matchIrProfile(input.entities)
+  const ir = matchIrProfile(input.entities, input.onIrRefused)
   const irKeys = new Set(
     ir === null ? [] : [ir.send.entityKey, ir.learn.entityKey, ir.learned.entityKey],
   )

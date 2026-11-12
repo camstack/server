@@ -279,4 +279,27 @@ describe('IR blaster profile', () => {
     const plan = planMqttHaDevice(groups[0]!)
     expect(plan?.capabilities ?? []).not.toContain('ir-transmitter')
   })
+
+  it('keeps the other entities of the device mapped (readings and battery)', () => {
+    const { plan } = planOf(irBlasterMessages({ withReadings: true }))
+    expect(plan.deviceType).toBe(DeviceType.Generic)
+    expect(plan.capabilities).toEqual(
+      expect.arrayContaining(['ir-transmitter', 'temperature-sensor', 'battery']),
+    )
+    expect(plan.members).toHaveLength(5)
+  })
+
+  it('refuses the profile, and says why, when the code entity has a command_template', () => {
+    const reasons: string[] = []
+    const groups = groupEntitiesByDevice(
+      parseAll(irBlasterMessages({ sendTemplate: '{"ir_code_to_send": "{{ value }}"}' })),
+    )
+    const plan = planMqttHaDevice({
+      entities: groups[0]!.entities,
+      onIrRefused: (r) => reasons.push(r),
+    })
+    expect(plan?.capabilities ?? []).not.toContain('ir-transmitter')
+    expect(reasons).toHaveLength(1)
+    expect(reasons[0]).toContain('command_template')
+  })
 })

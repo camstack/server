@@ -87,6 +87,8 @@ export const mqttHaEntitySchema = z.object({
   /** Null for a command-only entity (a SET-only text, select or button). */
   stateTopic: z.string().min(1).nullable(),
   commandTopic: z.string().nullable(),
+  /** The discovery `command_template`; a profile that publishes a bare payload refuses an entity that has one. */
+  commandTemplate: z.string().nullable().default(null),
   unitOfMeasurement: z.string().nullable(),
   deviceClass: z.string().nullable(),
   entityCategory: z.enum(['diagnostic', 'config']).nullable(),

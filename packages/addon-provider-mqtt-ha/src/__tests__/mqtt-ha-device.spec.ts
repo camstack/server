@@ -334,6 +334,29 @@ describe('MqttHaDevice on a zigbee2mqtt IR blaster', () => {
     expect(published).toEqual([[`${IR_TOPIC}/set/ir_code_to_send`, 'AxAAIABAAw==']])
   })
 
+  it('publishes on the DISCOVERED command topics, whatever their shape', async () => {
+    const odd = irBlasterMessages({
+      sendTopic: 'blaster/livingroom/tx',
+      learnTopic: 'blaster/livingroom/learn',
+    })
+    const published: [string, string][] = []
+    mqttHaStateGateway.setPublisher(async ({ topic, payload }) => {
+      published.push([topic, payload])
+    })
+    const plan = planMqttHaDevice(groupEntitiesByDevice(entitiesOf(odd))[0]!)!
+    const h = build(plan.deviceType, configOf(odd))
+    await h.device.onActivate()
+    const provider = h.providers.get('ir-transmitter') as IrProvider
+    await provider.send({ native: { format: 'tuya', code: 'AxAAIABAAw==' } })
+    const learning = provider.learn({ timeoutMs: 50 })
+    learning.catch(() => undefined)
+    await vi.waitFor(() => expect(published).toHaveLength(2))
+    expect(published).toEqual([
+      ['blaster/livingroom/tx', 'AxAAIABAAw=='],
+      ['blaster/livingroom/learn', 'ON'],
+    ])
+  })
+
   it('encodes a pulse train before publishing it', async () => {
     const { provider, published } = await activate()
     await provider.send({ timings: [16, -32, 16, -32] })

@@ -324,6 +324,7 @@ export function parseDiscoveryConfigPayload(
     name,
     stateTopic,
     commandTopic,
+    commandTemplate: readStringField(raw, 'command_template'),
     unitOfMeasurement: readStringField(raw, 'unit_of_measurement'),
     deviceClass: readStringField(raw, 'device_class'),
     entityCategory: readEntityCategory(raw),

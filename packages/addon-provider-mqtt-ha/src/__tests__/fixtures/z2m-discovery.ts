@@ -482,7 +482,17 @@ export const IR_ORIGIN = {
  * text for the code to send, a SET-only select that starts learning, and a
  * sensor whose string state is the last learned code. Each carries `origin`.
  */
-export function irBlasterMessages(): readonly DiscoveryMessage[] {
+export interface IrBlasterOptions {
+  /** Command topics as the discovery payloads announce them (default `<base>/set/<property>`). */
+  readonly sendTopic?: string
+  readonly learnTopic?: string
+  /** A `command_template` on the code entity. */
+  readonly sendTemplate?: string
+  /** An extra temperature sensor and battery on the same physical device. */
+  readonly withReadings?: boolean
+}
+
+export function irBlasterMessages(options: IrBlasterOptions = {}): readonly DiscoveryMessage[] {
   const base = {
     ...availability(IR_FRIENDLY),
     device: device(IR_IEEE, IR_FRIENDLY, 'Acme', 'IR remote blaster'),
@@ -496,7 +506,8 @@ export function irBlasterMessages(): readonly DiscoveryMessage[] {
         ...base,
         name: 'IR code to send',
         unique_id: `${IR_IEEE}_ir_code_to_send_zigbee2mqtt`,
-        command_topic: `${IR_TOPIC}/set/ir_code_to_send`,
+        command_topic: options.sendTopic ?? `${IR_TOPIC}/set/ir_code_to_send`,
+        ...(options.sendTemplate === undefined ? {} : { command_template: options.sendTemplate }),
         entity_category: 'config',
       },
     },
@@ -507,7 +518,7 @@ export function irBlasterMessages(): readonly DiscoveryMessage[] {
         ...base,
         name: 'Learn IR code',
         unique_id: `${IR_IEEE}_learn_ir_code_zigbee2mqtt`,
-        command_topic: `${IR_TOPIC}/set/learn_ir_code`,
+        command_topic: options.learnTopic ?? `${IR_TOPIC}/set/learn_ir_code`,
         state_topic: IR_TOPIC,
         value_template: '{{ value_json.learn_ir_code }}',
         options: ['ON', 'OFF'],
@@ -526,5 +537,35 @@ export function irBlasterMessages(): readonly DiscoveryMessage[] {
         entity_category: 'diagnostic',
       },
     },
+    ...(options.withReadings === true
+      ? [
+          {
+            component: 'sensor' as const,
+            objectId: `${IR_IEEE}_temperature`,
+            payload: {
+              ...base,
+              name: 'Temperature',
+              device_class: 'temperature',
+              unit_of_measurement: '°C',
+              state_topic: IR_TOPIC,
+              value_template: '{{ value_json.temperature }}',
+              unique_id: `${IR_IEEE}_temperature_zigbee2mqtt`,
+            },
+          },
+          {
+            component: 'sensor' as const,
+            objectId: `${IR_IEEE}_battery`,
+            payload: {
+              ...base,
+              name: 'Battery',
+              device_class: 'battery',
+              unit_of_measurement: '%',
+              state_topic: IR_TOPIC,
+              value_template: '{{ value_json.battery }}',
+              unique_id: `${IR_IEEE}_battery_zigbee2mqtt`,
+            },
+          },
+        ]
+      : []),
   ]
 }
