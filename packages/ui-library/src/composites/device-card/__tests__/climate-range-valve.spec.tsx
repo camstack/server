@@ -317,6 +317,29 @@ describe('reachability and failed commands', () => {
     expect(present('dc-reach-online')).toBe(false)
   })
 
+  it('a reachable device says nothing about it — the admin never prints "Online"', () => {
+    const model = modelOf(status({}))
+    render(
+      <ClimateCard
+        model={{ ...model, common: { ...model.common, online: true } }}
+        actions={actions()}
+      />,
+    )
+    expect(present('dc-reach-online')).toBe(false)
+    expect(screen.queryByText('Online')).toBeNull()
+  })
+
+  it('an offline device still says so', () => {
+    const model = modelOf(status({}))
+    render(
+      <ClimateCard
+        model={{ ...model, common: { ...model.common, online: false } }}
+        actions={actions()}
+      />,
+    )
+    expect(screen.getByText('Offline')).toBeTruthy()
+  })
+
   it('a failed command puts its reason on the reason line', () => {
     const model = modelOf(status({}))
     render(

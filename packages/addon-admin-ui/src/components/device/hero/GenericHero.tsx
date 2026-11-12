@@ -7,8 +7,8 @@ import { useTranslation } from 'react-i18next'
 /**
  * Fallback hero for device types with no specialised view (Hub /
  * Thermostat / Generic). Mirrors the previous in-page placeholder: an
- * identity card with provider icon, status, and the device's
- * capability badges. Heroes registered for known types in
+ * identity card with provider icon, an offline badge when it is offline
+ * (never an "Online" one), and the device's capability badges. Heroes registered for known types in
  * `HeroRegistry` short-circuit before reaching this component.
  */
 export function GenericHero({ deviceName, deviceType, provider, isOnline, features }: HeroProps) {
@@ -23,7 +23,7 @@ export function GenericHero({ deviceName, deviceType, provider, isOnline, featur
         </div>
       </div>
       <div className="flex items-center gap-2 flex-wrap justify-center">
-        <StatusBadge status={isOnline ? 'online' : 'offline'} />
+        {!isOnline && <StatusBadge status="offline" />}
         {features.length > 0 && <CapabilityBadges capabilities={features} />}
       </div>
       <div className="text-[10px] text-foreground-subtle italic max-w-xs mt-1">

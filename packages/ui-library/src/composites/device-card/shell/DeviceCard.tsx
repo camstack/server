@@ -64,9 +64,14 @@ export function DeviceCardFrameProvider({
   return <DeviceCardFrameContext.Provider value={frame}>{children}</DeviceCardFrameContext.Provider>
 }
 
-/** Integration on the left, reachability on the right. */
-export function CardTop({ common }: { readonly common: CardCommon }): ReactElement {
+/**
+ * Integration on the left, reachability on the right. Reachable is the normal
+ * state and says nothing (operator rule: the admin never prints "Online");
+ * only offline, and a status not yet known, take the corner.
+ */
+export function CardTop({ common }: { readonly common: CardCommon }): ReactElement | null {
   const t = useUiText()
+  if (common.integration === null && common.online === true) return null
   return (
     <div className="flex items-center justify-between gap-2" data-testid="dc-top">
       {common.integration === null ? <span /> : <ValueChip>{common.integration}</ValueChip>}
@@ -74,15 +79,7 @@ export function CardTop({ common }: { readonly common: CardCommon }): ReactEleme
         <span className="text-xs text-foreground-subtle" data-testid="dc-reach-unknown">
           {t('uiLibrary.deviceCard.reachUnknown', 'Status unknown')}
         </span>
-      ) : common.online ? (
-        <span
-          className="inline-flex items-center gap-1.5 text-xs text-foreground-muted"
-          data-testid="dc-reach-online"
-        >
-          <span className="h-2 w-2 rounded-full bg-foreground-muted" />
-          {t('uiLibrary.deviceCard.online', 'Online')}
-        </span>
-      ) : (
+      ) : common.online ? null : (
         <ValueChip tone="danger">
           {common.offlineLabel ?? t('uiLibrary.deviceCard.offline', 'Offline')}
         </ValueChip>
