@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A new integration is prefilled "<provider> - Home" (editable), including one found on the network.
 - Testing a new instance of a provider with several kinds (an Alexa Echo) tests the kind being created; the many-choice hint line is gone
 - On the device page, a media player with a known volume sets it with a slider; an unknown level, or volume up and down only, keeps the minus and plus buttons
+- A notification rule shows how many seconds to group its notifications.
 
 ## [1.2.648] - 2026-11-12
 
@@ -24,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rebuilt against updated dependencies.
 ### Added
 
-- A notification rule shows how many seconds to group its notifications.
 
 ## [1.2.647] - 2026-11-12
 
