@@ -61,7 +61,7 @@ covers:
   - packages/addon-post-analysis/src/pipeline-analytics/tracking-bench/**
   - packages/addon-post-analysis/src/pipeline-analytics/pipeline/frame-processor-config.ts
   - packages/addon-post-analysis/src/pipeline-analytics/pipeline/frame-observation.ts
-last-verified: 2026-10-04
+last-verified: 2026-11-12
 ---
 
 # Post-analysis — tracking, the confirmation gate, media capture, and the knobs
@@ -925,8 +925,13 @@ fraction: a detection at or above `OVERSIZE_AREA_FRAC` is not a swallow of a
 smaller entry. On 617 (2026-11-12) a parked car at 0.34 of the frame contained
 the centroid of an already-registered small car outside the zone and covered
 0.54 of that small box; the swallow called them one spot, the sweep deleted
-the large row, and the later reads were held against the small entry. A merged
-mover below the fraction still swallows (102's Golf, 0.27 of its frame). The
+the large row, and the later reads were held against the small entry. The
+same predicate removes that detection from the small entry's candidates in
+the entry-driven pass: the entry misses the frame (nothing confirmed, no
+departure strike, no wake). A truck covering a small parked car — IoU above
+the wake bar, the car's own box absent that frame — used to be chosen as the
+entry's best box and read as the car departing. A merged mover below the
+fraction still swallows (102's Golf, 0.27 of its frame). The
 registry keeps no list of who may absorb whom — the same predicate that stops
 an oversize entry holding a fragment, and that stops a smaller entry capturing
 an oversize box, is the one that decides the spot.

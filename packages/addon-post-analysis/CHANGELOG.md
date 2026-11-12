@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A large parked car stays parked when its box covers the centre of a smaller parked car.
 
+### Fixed
+
+- A large vehicle passing in front of a small parked car no longer marks that car as departed.
+
 ## [1.2.694] - 2026-11-12
 
 ### Changed

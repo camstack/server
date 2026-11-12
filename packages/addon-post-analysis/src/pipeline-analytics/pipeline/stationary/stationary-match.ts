@@ -439,8 +439,11 @@ export function thumbnailWouldShowParkedNotSubject(input: {
  *  - a same-class detection that SWALLOWS the parked box (much larger, covers
  *    it) → SUPPRESS and confirm, unless the detection itself is OVERSIZE
  *    (≥ `OVERSIZE_AREA_FRAC`). A merged mover+parked box below that fraction
- *    is not a departure (102's Golf). An oversize box that merely contains a
- *    smaller entry's centroid is a different parked object (617, 2026-11-12).
+ *    is not a departure (102's Golf). An oversize box that
+ *    {@link oversizeDetectionKeptApart} flags is not a candidate for this
+ *    entry's best box at all: the entry MISSES (no confirm, no strike, no
+ *    wake). Choosing it anyway read a truck covering a small parked car as
+ *    that car departing (IoU above `wakeAssocIou`, the car's own box absent).
  *  - `wakeAssocIou` ≤ best IoU < `suppressIou`, centroid still INSIDE the parked
  *    box, and the entry is NOT scene-sized → SUPPRESS (detector box jitter).
  *  - a scene-sized entry (area ≳ 55% of the frame) holds ONLY on strong IoU:
@@ -581,7 +584,12 @@ export function partitionDetectionsAgainstRegistry(input: {
     let bestIdx = -1
     for (let di = 0; di < detections.length; di++) {
       if (detClasses[di] !== entryClass) continue
-      const o = iou(entry.bbox, detections[di]!.bbox)
+      const detBbox = detections[di]!.bbox
+      // A kept-apart oversize box is a different object. It must not be this
+      // entry's best read: that overlap is not a hold and not a departure.
+      // Skipping it leaves a plain miss (no confirm, no strike, no wake).
+      if (oversizeDetectionKeptApart(entry, detBbox, config)) continue
+      const o = iou(entry.bbox, detBbox)
       if (o > bestIou) {
         bestIou = o
         bestIdx = di

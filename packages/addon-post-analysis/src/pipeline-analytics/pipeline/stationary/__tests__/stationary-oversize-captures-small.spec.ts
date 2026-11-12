@@ -35,6 +35,7 @@ import {
   DEFAULT_DEPARTURE_CONFIG,
   DEFAULT_MATCH_CONFIG,
   WAKE_ASSOC_IOU,
+  type DepartureStrike,
   type StationaryBbox,
   type StationaryEntry,
 } from '../stationary-types.js'
@@ -305,5 +306,84 @@ describe('617 registry: both parked cars survive and the large one stays counted
       ),
     ).toEqual([])
     expect(lines.some((l) => l.message.includes('kept apart') && l.deviceId === DEVICE)).toBe(true)
+  })
+})
+
+/**
+ * Reviewer probe — a truck covering a small parked car, the small car's own
+ * box missing that frame. The truck is 0.36 of the frame and contains the
+ * parked box (0.05); their IoU is above {@link WAKE_ASSOC_IOU}, so pass 1
+ * used to treat the truck as the entry's best read and wake it as departed
+ * ~3 s later. The truck is a different object: the entry misses.
+ */
+const PROBE_SMALL: StationaryBbox = { x: 1500, y: 800, w: 700, h: 600 }
+const PROBE_TRUCK: StationaryBbox = { x: 1000, y: 300, w: 2000, h: 1500 }
+/** The probe's sample times: arm, hold, contradicting-read, and one more. */
+const PROBE_READS_MS = [0, 1_000, 3_500, 6_000] as const
+
+function frameFraction(box: StationaryBbox): number {
+  return (box.w * box.h) / (FRAME_W * FRAME_H)
+}
+
+interface ProbeRead {
+  readonly now: number
+  readonly woken: number
+  readonly reasons: readonly string[]
+  readonly confirmed: number
+  readonly suppressed: number
+}
+
+function boxContains(outer: StationaryBbox, inner: StationaryBbox): boolean {
+  return (
+    inner.x >= outer.x &&
+    inner.y >= outer.y &&
+    inner.x + inner.w <= outer.x + outer.w &&
+    inner.y + inner.h <= outer.y + outer.h
+  )
+}
+
+describe('a truck covering a small parked car is a miss, not a departure', () => {
+  it('the probe boxes sit above the wake bar', () => {
+    expect(frameFraction(PROBE_SMALL)).toBeCloseTo(0.05, 2)
+    expect(frameFraction(PROBE_TRUCK)).toBeGreaterThanOrEqual(0.3)
+    expect(isOversizeBox(PROBE_TRUCK, FRAME_W, FRAME_H)).toBe(true)
+    expect(isOversizeBox(PROBE_SMALL, FRAME_W, FRAME_H)).toBe(false)
+    expect(boxContains(PROBE_TRUCK, PROBE_SMALL)).toBe(true)
+    expect(iou(PROBE_SMALL, PROBE_TRUCK)).toBeGreaterThanOrEqual(WAKE_ASSOC_IOU)
+  })
+
+  it('does not arm a strike or wake the small entry over several seconds', () => {
+    const parked = entry({ id: 'small-parked', bbox: PROBE_SMALL, becameStationaryAt: 0 })
+    let strikes = new Map<string, DepartureStrike>()
+    const reads: ProbeRead[] = []
+    for (const now of PROBE_READS_MS) {
+      const res = partitionDetectionsAgainstRegistry({
+        entries: [parked],
+        detections: [{ bbox: PROBE_TRUCK, className: 'vehicle' }],
+        config: DEFAULT_MATCH_CONFIG,
+        now,
+        departure: DEFAULT_DEPARTURE_CONFIG,
+        strikes,
+      })
+      reads.push({
+        now,
+        woken: res.woken.length,
+        reasons: res.strikeChanges.map((c) => c.reason),
+        confirmed: res.confirmed.length,
+        suppressed: res.suppressedIndices.size,
+      })
+      const next = new Map(strikes)
+      for (const change of res.strikeChanges) {
+        if (change.strike === null) next.delete(change.entryId)
+        else next.set(change.entryId, change.strike)
+      }
+      strikes = next
+    }
+    expect(reads).toEqual([
+      { now: 0, woken: 0, reasons: [], confirmed: 0, suppressed: 0 },
+      { now: 1_000, woken: 0, reasons: [], confirmed: 0, suppressed: 0 },
+      { now: 3_500, woken: 0, reasons: [], confirmed: 0, suppressed: 0 },
+      { now: 6_000, woken: 0, reasons: [], confirmed: 0, suppressed: 0 },
+    ])
   })
 })
