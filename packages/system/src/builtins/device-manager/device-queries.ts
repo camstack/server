@@ -1226,7 +1226,11 @@ export async function adoptionAdopt(
 ): ReturnType<IDeviceManagerProvider['adoptionAdopt']> {
   const { addonId, ...rest } = input
   const adoptionProvider = await pctx.host.requireDeviceAdoptionProvider(addonId)
-  return adoptionProvider.adopt(rest)
+  // Same operator-action bypass as `adoptDevice` (D376). The provider calls
+  // `allocateDeviceId` itself, and that is the call the fence refuses. The
+  // lookup stays outside the window so a missing provider does not suspend
+  // the fence for the wait.
+  return pctx.removalFence.runUnfenced(() => adoptionProvider.adopt(rest))
 }
 
 export async function adoptionRelease(

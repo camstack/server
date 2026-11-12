@@ -23,7 +23,7 @@ export const DESKTOP_APP_STATE_FILE = 'desktop-app-state.json'
 export const DESKTOP_INSTALL_REQUEST_FILE = 'desktop-install-request.json'
 
 /** A state file older than this no longer describes the app (read as `stale`). */
-export const DESKTOP_APP_STATE_STALE_MS = 15 * 60_000
+export const DESKTOP_APP_STATE_STALE_MS: number = 15 * 60_000
 
 /** A request older than this is dropped unanswered by the app. */
 export const DESKTOP_INSTALL_REQUEST_MAX_AGE_MS = 60_000

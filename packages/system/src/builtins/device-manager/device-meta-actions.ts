@@ -124,7 +124,7 @@ export async function allocateDeviceId(
     // The device was just REMOVED. Minting a fresh row here is how a deleted
     // camera came back as a shell (D376): the removal cleared the config, and
     // nothing this path writes can put it back. An operator re-adding the same
-    // hardware goes through `createDevice`/`adoptDevice`, which lift the fence
+    // hardware goes through `createDevice`/`adoptDevice`/`adoptionAdopt`, which lift the fence
     // first — so this refusal only ever hits a write that was already in
     // flight when the operator pressed delete.
     const fenced = pctx.removalFence.isPairFenced(addonId, stableId)

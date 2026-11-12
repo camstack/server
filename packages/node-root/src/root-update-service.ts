@@ -19,11 +19,9 @@
  *
  * Spec: docs/superpowers/specs/2026-07-18-single-framework-copy-collapse-design.md
  */
-import { execFile } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { randomUUID } from 'node:crypto'
-import { promisify } from 'node:util'
 import type {
   DesktopAppStatus,
   InstallDesktopUpdateResult,
@@ -75,8 +73,19 @@ import {
   ELECTRON_APP_VERSION_ENV,
   type WrapperProbeReadings,
 } from './wrapper-identity.js'
+import { seedStagingFromCurrent } from './closure-stage-seed.js'
+import {
+  NPM_INSTALL_CEILING_MS,
+  NPM_INSTALL_KILL_GRACE_MS,
+  NPM_INSTALL_POLL_MS,
+  NPM_INSTALL_STALL_MS,
+  NpmInstallError,
+  runWatchedCommand,
+} from './npm-install-watch.js'
 
-const execFileAsync = promisify(execFile)
+function isJsonObject(value: unknown): value is { readonly [key: string]: unknown } {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
 
 /** npm registry override args — mirrors addon-package.service (module-local there). */
 function buildNpmRegistryArgs(registry: string | undefined): readonly string[] {
@@ -84,6 +93,12 @@ function buildNpmRegistryArgs(registry: string | undefined): readonly string[] {
   return ['--registry', registry, `--@camstack:registry=${registry}`]
 }
 
+/**
+ * `timeoutMs` is the hard ceiling ({@link NPM_INSTALL_CEILING_MS} in
+ * production). The default runner cuts earlier only when the staging
+ * directory stops growing ({@link NPM_INSTALL_STALL_MS}); a slow download
+ * that keeps writing is allowed to finish. Injected stubs may ignore both.
+ */
 export type NpmExecFn = (
   args: readonly string[],
   opts: { readonly cwd?: string; readonly timeoutMs: number },
@@ -271,7 +286,6 @@ interface CheckCache {
 }
 
 const NPM_VIEW_TIMEOUT_MS = 20_000
-const NPM_INSTALL_TIMEOUT_MS = 15 * 60_000
 
 /**
  * How many times the staging install is attempted, and the pause before each
@@ -283,8 +297,8 @@ const NPM_INSTALL_TIMEOUT_MS = 15 * 60_000
  * fails in seconds, and "Update all nodes" walks the fleet once — a single
  * reset left one node behind with nothing to do but ask again by hand
  * (2026-09-19 21:04Z on the hub). Why bounded: a registry that is DOWN must
- * surface as a failure in under a minute, not hold the caller against the
- * 16-minute forward timeout. Three attempts, ~20 s of waiting in total.
+ * surface as a failure in under a minute, not hold the caller for another
+ * full install. Three attempts, ~20 s of waiting in total.
  */
 export const STAGING_ATTEMPTS = 3
 export const STAGING_RETRY_DELAYS_MS: readonly number[] = [5_000, 15_000]
@@ -428,11 +442,26 @@ export class RootUpdateService {
     this.execNpm =
       options.execNpm ??
       (async (args, opts) => {
-        const { stdout } = await execFileAsync('npm', [...args], {
-          cwd: opts.cwd,
-          timeout: opts.timeoutMs,
+        const cwd = opts.cwd ?? process.cwd()
+        return runWatchedCommand({
+          command: process.platform === 'win32' ? 'npm.cmd' : 'npm',
+          args,
+          cwd,
+          stallMs: NPM_INSTALL_STALL_MS,
+          ceilingMs: opts.timeoutMs,
+          pollMs: NPM_INSTALL_POLL_MS,
+          graceMs: NPM_INSTALL_KILL_GRACE_MS,
+          now: () => this.now(),
+          sleep: (ms) => this.sleep(ms),
+          log: {
+            info: (message, context) =>
+              this.logger.info(message, { tags: this.logTags, ...context }),
+            warn: (message, context) =>
+              this.logger.warn(message, { tags: this.logTags, ...context }),
+            error: (message, context) =>
+              this.logger.error(message, { tags: this.logTags, ...context }),
+          },
         })
-        return { stdout }
       })
     this.ensureNativePrebuildsFn = options.ensureNativePrebuilds ?? (async () => undefined)
     this.applyClosurePatchesFn = options.applyClosurePatches ?? (async () => undefined)
@@ -878,13 +907,16 @@ export class RootUpdateService {
       stagingPath = await this.stageClosureWithRetry(target)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
+      const timedOut =
+        err instanceof NpmInstallError &&
+        (err.kind === 'timeout-stall' || err.kind === 'timeout-ceiling')
       return {
         accepted: false,
         targetVersion: target,
         restarting: false,
         message: `Staging failed: ${message}`,
         outcome: 'failed',
-        reason: STAGING_FAILED_REASON,
+        reason: timedOut ? err.kind : STAGING_FAILED_REASON,
         error: message,
       }
     } finally {
@@ -996,8 +1028,67 @@ export class RootUpdateService {
    * path for the pending-root-swap marker; the STARTER swaps it into `current`
    * on the next boot. Throws (cleaning up the staging dir) on any failure so
    * `applyServerUpdate` reports a staging error and never arms a bad swap.
+   *
+   * A registry install is seeded from the running `current/` copy so npm only
+   * replaces packages whose version changed. The dev-upload channel is not
+   * seeded: those tarballs are pinned by version string, and a copied
+   * `node_modules` would let npm skip a tarball whose bytes changed under the
+   * same version. A seeded attempt that fails install or validation is
+   * retried once from an empty directory. A stall or the hard ceiling is not
+   * retried — the empty install would wait on the same download.
    */
   private async stageClosure(target: string): Promise<string> {
+    const devDir = devUploadVersionDir(this.rootDir(), target)
+    const seed = !fs.existsSync(devDir) && this.currentIsSeedable()
+    if (!seed) {
+      const stagingDir = await this.installClosure(target, 'clean')
+      this.logClosureSource(target, stagingDir, 'clean')
+      return stagingDir
+    }
+    try {
+      const stagingDir = await this.installClosure(target, 'seeded')
+      this.logClosureSource(target, stagingDir, 'seeded')
+      return stagingDir
+    } catch (err) {
+      if (
+        err instanceof NpmInstallError &&
+        (err.kind === 'timeout-stall' || err.kind === 'timeout-ceiling')
+      ) {
+        throw err
+      }
+      const message = err instanceof Error ? err.message : String(err)
+      this.logger.warn('seeded closure staging failed — retrying from an empty directory', {
+        tags: this.logTags,
+        meta: { targetVersion: target, error: message },
+      })
+      const stagingDir = await this.installClosure(target, 'clean')
+      this.logClosureSource(target, stagingDir, 'clean')
+      return stagingDir
+    }
+  }
+
+  /** The running closure has the files a seed copy needs. */
+  private currentIsSeedable(): boolean {
+    const current = currentDir(this.rootDir())
+    return (
+      fs.existsSync(path.join(current, 'package.json')) &&
+      fs.existsSync(path.join(current, 'node_modules'))
+    )
+  }
+
+  private logClosureSource(target: string, stagingDir: string, source: 'seeded' | 'clean'): void {
+    this.logger.info('root package closure produced', {
+      tags: this.logTags,
+      meta: { targetVersion: target, stagingDir, source },
+    })
+  }
+
+  /**
+   * One install attempt. `seeded` copies `current/` in first; `clean` is an
+   * empty directory. The dev-upload branch ignores `source` — it always
+   * writes its own manifest.
+   */
+  private async installClosure(target: string, source: 'seeded' | 'clean'): Promise<string> {
     const rootDir = this.rootDir()
     fs.mkdirSync(rootDir, { recursive: true })
     const stagingDir = stagingDirPath(rootDir, target, process.pid, this.now())
@@ -1019,8 +1110,15 @@ export class RootUpdateService {
         )
         await this.execNpm([...installArgs, ...buildNpmRegistryArgs(registry)], {
           cwd: stagingDir,
-          timeoutMs: NPM_INSTALL_TIMEOUT_MS,
+          timeoutMs: NPM_INSTALL_CEILING_MS,
         })
+      } else if (source === 'seeded') {
+        await seedStagingFromCurrent(currentDir(rootDir), stagingDir)
+        this.stampClosureManifest(stagingDir)
+        await this.execNpm(
+          [...installArgs, `${this.spec.packageName}@${target}`, ...buildNpmRegistryArgs(registry)],
+          { cwd: stagingDir, timeoutMs: NPM_INSTALL_CEILING_MS },
+        )
       } else {
         fs.writeFileSync(
           path.join(stagingDir, 'package.json'),
@@ -1033,7 +1131,7 @@ export class RootUpdateService {
         )
         await this.execNpm(
           [...installArgs, `${this.spec.packageName}@${target}`, ...buildNpmRegistryArgs(registry)],
-          { cwd: stagingDir, timeoutMs: NPM_INSTALL_TIMEOUT_MS },
+          { cwd: stagingDir, timeoutMs: NPM_INSTALL_CEILING_MS },
         )
       }
 
@@ -1096,6 +1194,26 @@ export class RootUpdateService {
       await fs.promises.rm(stagingDir, { recursive: true, force: true }).catch(() => undefined)
       throw err
     }
+  }
+
+  /**
+   * Keep the seeded manifest and force the install-script allow-list. npm 12
+   * will not run a dependency's lifecycle without it; the seed's own list may
+   * be older than this starter.
+   */
+  private stampClosureManifest(stagingDir: string): void {
+    const manifestPath = path.join(stagingDir, 'package.json')
+    const raw: unknown = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
+    if (!isJsonObject(raw)) {
+      throw new Error(`seeded package.json at ${manifestPath} is not an object`)
+    }
+    const next = {
+      ...raw,
+      name: 'camstack-node-root',
+      private: true,
+      allowScripts: CLOSURE_ALLOW_SCRIPTS,
+    }
+    fs.writeFileSync(manifestPath, JSON.stringify(next, null, 2), 'utf-8')
   }
 
   /**
