@@ -385,11 +385,11 @@ describe('the 14:10 incident replayed under the D706 policy', () => {
     const h = await makeHarness()
     const pushes = await replayIncident(h)
     expect(brief(pushes)).toEqual([
-      [0, ENTRY, 'Started by Porta front door aperta on Porta front door'],
+      [0, ENTRY, 'Started by Porta front door aperta on Porta front door (Sensor)'],
       [30, ALARM.title, ALARM.body],
-      [33, 'Intrusion — Hall', 'Person on cam hall'],
+      [33, 'Intrusion — Hall', 'Person on cam hall (camera)'],
       [40, REARMED, 'Armed again after the alarm had triggered'],
-      [54, ENTRY, 'Started by Persone in casa on Cam hallway'],
+      [54, ENTRY, 'Started by Persone in casa on Cam hallway (Camera)'],
     ])
   })
 
@@ -397,14 +397,14 @@ describe('the 14:10 incident replayed under the D706 policy', () => {
     const h = await makeHarness({ notifyDuringEntryDelay: true })
     const pushes = await replayIncident(h)
     expect(brief(pushes)).toEqual([
-      [0, ENTRY, 'Started by Porta front door aperta on Porta front door'],
-      [6, 'Intrusion — Hallway piano terra', 'Person on cam hallway'],
-      [12, 'Intrusion — Hallway piano terra', 'Person on cam hallway'],
-      [19, 'Intrusion — Hall', 'Person on cam hall'],
+      [0, ENTRY, 'Started by Porta front door aperta on Porta front door (Sensor)'],
+      [6, 'Intrusion — Hallway piano terra', 'Person on cam hallway (camera)'],
+      [12, 'Intrusion — Hallway piano terra', 'Person on cam hallway (camera)'],
+      [19, 'Intrusion — Hall', 'Person on cam hall (camera)'],
       [30, ALARM.title, ALARM.body],
-      [33, 'Intrusion — Hall', 'Person on cam hall'],
+      [33, 'Intrusion — Hall', 'Person on cam hall (camera)'],
       [40, REARMED, 'Armed again after the alarm had triggered'],
-      [54, ENTRY, 'Started by Persone in casa on Cam hallway'],
+      [54, ENTRY, 'Started by Persone in casa on Cam hallway (Camera)'],
     ])
   })
 
@@ -412,16 +412,16 @@ describe('the 14:10 incident replayed under the D706 policy', () => {
     const h = await makeHarness({ notifyDuringEntryDelay: true, groupingSec: 15 })
     const pushes = await replayIncident(h)
     expect(brief(pushes)).toEqual([
-      [0, ENTRY, 'Started by Porta front door aperta on Porta front door'],
+      [0, ENTRY, 'Started by Porta front door aperta on Porta front door (Sensor)'],
       // trk-a + trk-b (hall) and trk-c (living room): during the entry delay the alarm
       // rule's window is the RULE's (D706), so the three share one push, both locations
       // in arrival order.
-      [21, 'Intrusion — Hallway piano terra, Hall', '3 people on cam hallway'],
+      [21, 'Intrusion — Hallway piano terra, Hall', '3 people on cam hallway (camera)'],
       [30, ALARM.title, ALARM.body],
       [40, REARMED, 'Armed again after the alarm had triggered'],
       // trk-d matched while TRIGGERED: its window outlives the re-arm and still speaks.
-      [48, 'Intrusion — Hall', 'Person on cam hall'],
-      [54, ENTRY, 'Started by Persone in casa on Cam hallway'],
+      [48, 'Intrusion — Hall', 'Person on cam hall (camera)'],
+      [54, ENTRY, 'Started by Persone in casa on Cam hallway (Camera)'],
     ])
     // trk-e STARTED the second entry delay: its window (armed ⇒ per camera, D692) closed
     // at 69 s and sent nothing — the entry-delay notification speaks for it.
@@ -446,11 +446,11 @@ describe('the 14:10 incident replayed under the D706 policy', () => {
     const h = await makeHarness({ groupingSec: 15 })
     const pushes = await replayIncident(h)
     expect(brief(pushes)).toEqual([
-      [0, ENTRY, 'Started by Porta front door aperta on Porta front door'],
+      [0, ENTRY, 'Started by Porta front door aperta on Porta front door (Sensor)'],
       [30, ALARM.title, ALARM.body],
       [40, REARMED, 'Armed again after the alarm had triggered'],
-      [48, 'Intrusion — Hall', 'Person on cam hall'],
-      [54, ENTRY, 'Started by Persone in casa on Cam hallway'],
+      [48, 'Intrusion — Hall', 'Person on cam hall (camera)'],
+      [54, ENTRY, 'Started by Persone in casa on Cam hallway (Camera)'],
     ])
   })
 

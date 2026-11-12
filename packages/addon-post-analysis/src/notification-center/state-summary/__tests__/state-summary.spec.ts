@@ -168,8 +168,8 @@ describe('state summary — content', () => {
       ports({ alerts: () => [battery(10, 8)], liveness: () => [offline] }),
     )
     expect(text.count).toBe(2)
-    expect(text.text).toContain('Low batteries:\n• Sensore porta is down to 8% battery')
-    expect(text.text).toContain('Offline or off:\n• Front door — offline (since 07:00 AM)')
+    expect(text.text).toContain('Low batteries:\n• Sensore porta (Sensor) is down to 8% battery')
+    expect(text.text).toContain('Offline or off:\n• Front door (Camera) — offline (since 07:00 AM)')
     expect(text.sectionVars['summaryBattery']).toContain('Sensore porta')
     expect(text.sectionVars['summaryDevices']).toContain('Front door')
   })

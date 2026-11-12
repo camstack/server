@@ -58,6 +58,23 @@ export const NC_DEPRECATED_TEMPLATE_VARS: Readonly<Record<string, string>> = {
   camera: 'device',
 }
 
+/**
+ * `{{deviceLabel}}` is the name plus its type. A producer that only stored the
+ * bare name (or a template rendered before the label was computed) still names
+ * the device: the label falls back to `{{deviceName}}`. A computed label is
+ * present in the map and wins.
+ */
+function templateVar(name: string, vars: Readonly<Record<string, string>>): string {
+  const current = vars[name]
+  if (current !== undefined) return current
+  if (name === 'deviceLabel') {
+    const bare = vars['deviceName']
+    if (bare !== undefined) return bare
+  }
+  const renamed = NC_DEPRECATED_TEMPLATE_VARS[name]
+  return (renamed !== undefined ? vars[renamed] : undefined) ?? ''
+}
+
 /** The deprecated names a template still uses, in order of first appearance. */
 export function deprecatedPlaceholders(template: string | undefined): readonly string[] {
   if (template === undefined) return []
@@ -95,12 +112,9 @@ export function renderTemplate(
   options?: RenderTemplateOptions,
 ): string | null {
   if (template === undefined || template.trim().length === 0) return null
-  const substituted = template.replace(PLACEHOLDER_PATTERN, (_m, name: string) => {
-    const current = vars[name]
-    if (current !== undefined) return current
-    const renamed = NC_DEPRECATED_TEMPLATE_VARS[name]
-    return (renamed !== undefined ? vars[renamed] : undefined) ?? ''
-  })
+  const substituted = template.replace(PLACEHOLDER_PATTERN, (_m, name: string) =>
+    templateVar(name, vars),
+  )
   return options?.keepLiteralHeld === true ? substituted : restoreLiteralMarkup(substituted)
 }
 

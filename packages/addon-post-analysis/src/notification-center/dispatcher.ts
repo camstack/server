@@ -114,7 +114,13 @@ import {
   NcNotificationImageStage,
   primaryImageCamera,
 } from './notification-image.js'
-import { cleanSourcePreference, isAnnotatedSceneKind, type NcRuleFireRef } from './rule-engine.js'
+import {
+  cleanSourcePreference,
+  isAnnotatedSceneKind,
+  type NcRuleFireRef,
+  type NcSystemEventSubject,
+} from './rule-engine.js'
+import { deviceDisplayLabel, type NcDeviceIdentity } from './device-directory.js'
 import {
   type MosaicRenderRequest,
   type MosaicRenderResult,
@@ -127,7 +133,7 @@ import {
   type NcApplianceCycleFacts,
   type NcResolveApplianceCycleFacts,
 } from './appliance-cycle.js'
-import { NcTextCatalog } from './text-catalog.js'
+import { NcTextCatalog, type NcLanguage } from './text-catalog.js'
 import {
   ncDetectionSummary,
   ncInZonesText,
@@ -706,6 +712,11 @@ export interface NcDispatcherDeps {
   readonly resolveApplianceCycleFacts?: NcResolveApplianceCycleFacts
   /** Device display name for templating; null when unknown. */
   readonly getDeviceName: (deviceId: number) => Promise<string | null>
+  /**
+   * Type and name from the in-process directory, so a rendered device name can
+   * carry its type. Absent in tests that only stub `getDeviceName`.
+   */
+  readonly deviceIdentity?: (deviceId: number) => NcDeviceIdentity | undefined
   /**
    * The camera's operator-authored location label (`DeviceInfo.location`),
    * read only for the AI narration pass (`NcRuleAiInput.location`) — WHERE
@@ -1899,7 +1910,12 @@ export class NcDispatcher {
     const out = new Map<number, string>()
     for (const id of new Set(deviceIds)) {
       const name = await this.deps.getDeviceName(id).catch(() => null)
-      if (name !== null) out.set(id, name)
+      if (name !== null) {
+        out.set(
+          id,
+          presentedDeviceName(name, id, this.deps.deviceIdentity?.(id), this.texts.language),
+        )
+      }
     }
     return out
   }
@@ -2220,7 +2236,14 @@ export class NcDispatcher {
     const entry = await this.withDeviceTemplates(authored)
     const subject = entry.payload.subject
     const systemEvent = subject.systemEvent
-    const deviceName = await notificationDeviceName(entry, this.deps.getDeviceName)
+    const fetchedName = await notificationDeviceName(entry, this.deps.getDeviceName)
+    const displayDeviceId = systemEvent?.deviceId ?? subject.deviceId
+    const deviceName = presentedDeviceName(
+      fetchedName,
+      displayDeviceId,
+      this.deps.deviceIdentity?.(displayDeviceId),
+      this.texts.language,
+    )
     // Zone IDs are what the conditions match on; names are what a human reads.
     // A system event has no zones of its own — except the COMBINED alarm row,
     // whose body IS the triggering rule's detection line and therefore ends in
@@ -3776,6 +3799,27 @@ export async function notificationDeviceName(
   return (await getDeviceName(displayDeviceId).catch(() => null)) ?? `camera ${displayDeviceId}`
 }
 
+/**
+ * The name a person reads. `fetched` is the directory-less lookup; the identity
+ * adds the type. A numeric id or the `camera <id>` fallback stays bare.
+ */
+function presentedDeviceName(
+  fetched: string,
+  deviceId: number,
+  identity: NcDeviceIdentity | undefined,
+  language: NcLanguage,
+): string {
+  if (identity === undefined) return fetched
+  const named = identity.name.trim()
+  const name = isBareDeviceFallback(fetched, deviceId) && named.length > 0 ? named : fetched
+  if (isBareDeviceFallback(name, deviceId)) return name
+  return deviceDisplayLabel({ ...identity, name }, deviceId, language)
+}
+
+function isBareDeviceFallback(name: string, deviceId: number): boolean {
+  return name === String(deviceId) || name === `camera ${deviceId}` || name === `Camera ${deviceId}`
+}
+
 /** The distinct member classes of a v2 grouped row, in member order; empty for any other. */
 function groupMemberClasses(entry: NcOutboxEntry): readonly string[] {
   const view = readOutboxGroup(entry.payload.group)
@@ -3973,6 +4017,32 @@ export function buildTemplateVars(
       : {}),
     ...systemEventParamsForTemplate(systemEvent?.textParams),
     ...commandActionLabel(texts, systemEvent?.textParams?.['actionId']),
+    // After the frozen params: the type word follows the language the catalog
+    // is rendering in, while `deviceName` stays the bare name frozen at intake.
+    ...deviceLabelParam(systemEvent, texts.language),
+  }
+}
+
+/**
+ * `{{deviceLabel}}` for a system row. A row with no device contributes nothing.
+ * A row whose type is unknown, generic or a container keeps the bare name, so
+ * a template that asks for the label never renders a hole.
+ */
+function deviceLabelParam(
+  systemEvent: NcSystemEventSubject | undefined,
+  language: NcLanguage,
+): Readonly<Record<string, string>> {
+  const deviceId = systemEvent?.deviceId
+  if (deviceId === undefined) return {}
+  const frozen = systemEvent?.textParams?.['deviceName']
+  const name = frozen !== undefined && frozen.length > 0 ? frozen : String(deviceId)
+  if (systemEvent?.deviceType === undefined) return { deviceLabel: name }
+  return {
+    deviceLabel: deviceDisplayLabel(
+      { deviceId, type: systemEvent.deviceType, name, isCamera: false },
+      deviceId,
+      language,
+    ),
   }
 }
 

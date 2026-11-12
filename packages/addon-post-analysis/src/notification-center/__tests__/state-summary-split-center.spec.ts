@@ -167,7 +167,7 @@ describe('a state summary split per section, through the centre (D698)', () => {
     await center.drainNow()
     expect(sent.map((n) => n.title).toSorted()).toEqual(['Low batteries: 1', 'Streams offline: 1'])
     expect(sent.find((n) => n.title === 'Low batteries: 1')?.body).toBe(
-      '• Termometro is down to 4% battery',
+      '• Termometro (Sensor) is down to 4% battery',
     )
 
     // A RESTART over the same store, inside the late grace: no section twice.

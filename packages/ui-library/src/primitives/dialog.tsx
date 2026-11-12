@@ -20,6 +20,7 @@ import { X } from 'lucide-react'
 import { cn } from '../lib/cn'
 import { IconButton } from './icon-button'
 import { HotkeyScope } from '../hotkeys/hotkey-provider'
+import { focusDialogSearch } from './dialog-search-focus'
 
 interface DialogContextValue {
   open: boolean
@@ -264,7 +265,10 @@ export const DialogContent: ForwardRefExoticComponent<
     useEffect(() => {
       const el = dialogRef.current
       if (!el) return
-      if (open && !el.open) el.showModal()
+      if (open && !el.open) {
+        el.showModal()
+        focusDialogSearch(el)
+      }
       if (!open && el.open) el.close()
     }, [open, dialogRef])
 

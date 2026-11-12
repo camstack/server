@@ -159,7 +159,9 @@ describe('a scheduled state summary, through the centre', () => {
     await center.drainNow()
     // The shipped title is `system.state-summary.title`: "{{rule}}: {{summaryCount}}".
     const delivered = sent.find((n) => n.title === 'Stato batterie: 1')
-    expect(delivered?.body).toMatch(/^1 — Low batteries:\n• Termometro is down to 4% battery$/)
+    expect(delivered?.body).toMatch(
+      /^1 — Low batteries:\n• Termometro \(Sensor\) is down to 4% battery$/,
+    )
 
     // More ticks: still one. Then a RESTART over the same store: still one.
     await new Promise<void>((resolve) => setTimeout(resolve, 150))

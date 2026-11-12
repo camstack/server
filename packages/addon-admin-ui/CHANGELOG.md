@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Creating an integration whose kind brings devices leaves the id to the hub, so it is no longer refused
 - The remote editor gets a Learn button for IR transmitters that can learn a code
 - A cover's Customize role selector offers the cover kinds (blind, shutter, awning, curtain, garage, gate, door, window)
+### Changed
+
+- The Kind column of an instances table shows the provider icon when the addon declares one.
 
 ## [1.2.650] - 2026-11-12
 

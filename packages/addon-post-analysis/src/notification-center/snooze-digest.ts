@@ -30,7 +30,7 @@ function clock(ms: number): string {
 
 /**
  * What the window covered, in the words the operator chose it with — the rule's
- * NAME, the camera's name. "a rule was snoozed" tells the reader nothing they
+ * NAME, the camera's display label (its name and type). "a rule was snoozed" tells the reader nothing they
  * could act on.
  */
 function scopeLabel(

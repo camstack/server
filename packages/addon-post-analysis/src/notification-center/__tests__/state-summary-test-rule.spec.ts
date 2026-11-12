@@ -169,7 +169,7 @@ describe('TEST on a state-summary rule (D698)', () => {
     await center.drainNow()
     const body = sent.find((n) => n.title === 'Stato batterie: 1')?.body
     expect(body?.startsWith('[TEST] ')).toBe(true)
-    expect(body).toContain('Termometro is down to 4% battery')
+    expect(body).toContain('Termometro (Sensor) is down to 4% battery')
     // A test touches no stamp: the next real window is still owed (review L7).
     expect(
       ncTable(world, 'state-summary-stamps')?.get(created.rule.id)?.['lastWindowEnd'] ?? 0,

@@ -241,13 +241,13 @@ describe('the intake', () => {
 describe('the combined delivery', () => {
   it('titles with the camera and bodies with the intrusion locations (D706)', async () => {
     const sent = await deliver(rowFor(fireRef()))
-    expect(sent.notification.title).toBe('Alarm: Front door')
+    expect(sent.notification.title).toBe('Alarm: Front door (Camera)')
     expect(sent.notification.body).toBe('Intrusion: Front door')
   })
 
   it('says the same thing in Italian', async () => {
     const sent = await deliver(rowFor(fireRef()), 'it')
-    expect(sent.notification.title).toBe('Allarme: Front door')
+    expect(sent.notification.title).toBe('Allarme: Front door (Telecamera)')
     expect(sent.notification.body).toBe('Intrusione: Front door')
   })
 

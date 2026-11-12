@@ -1174,6 +1174,7 @@ export class NotificationCenter implements NcEventConsumer {
       ...deps.dispatcher,
       logger: this.logger.child('dispatch'),
       texts: this.texts,
+      deviceIdentity: (deviceId) => this.deviceDirectory.get(deviceId),
       // The ONE place a synthetic event differs from a real one downstream —
       // and it is a LOOKUP, not a branch in the dispatcher. A synthetic record
       // has no row in the media store, so its live snapshot is served from RAM
@@ -1352,6 +1353,7 @@ export class NotificationCenter implements NcEventConsumer {
         // constraint, and the reason there is no summary send path.
         enqueue: (rows) => this.outbox.enqueue(rows),
         getDeviceName: (deviceId) => deps.dispatcher.getDeviceName(deviceId),
+        deviceLookup: (deviceId) => this.deviceDirectory.get(deviceId),
         // WHERE each camera is — the AI roster's location label. The SAME dep
         // the dispatcher's narration pass reads, so the digest and an ordinary
         // rule can never disagree about where a camera is. Optional all the

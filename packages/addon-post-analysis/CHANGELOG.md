@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Notification rules can match a settled device command (device-command), with English and Italian texts.
+- A notification about a device shows the device type beside its name.
 
 ## [1.2.697] - 2026-11-12
 

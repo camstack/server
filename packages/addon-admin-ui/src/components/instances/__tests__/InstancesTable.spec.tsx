@@ -157,6 +157,7 @@ vi.mock('../use-set-instance-enabled', () => ({
 }))
 
 import { ConfirmDialogProvider, PageShell } from '@camstack/ui-library'
+import { StaticAddonIconsProvider } from '../../../contexts/addon-icons-context'
 import { InstancesTable, type InstancesTableProps } from '../InstancesTable'
 
 function renderPanel(
@@ -173,28 +174,36 @@ function renderPanel(
       | 'typedId'
     >
   > = {},
+  icons?: ReadonlyMap<string, string>,
 ) {
   // The open dialog lives in the real URL (`useUrlQueryParam` reads `window.location`).
   window.history.replaceState(null, '', `/${search}`)
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
+  const table = (
+    <MemoryRouter>
+      <ConfirmDialogProvider>
+        <InstancesTable
+          functionCap="log-destination"
+          icon={Mail}
+          title="Destinations"
+          subtitle="Every destination."
+          emptyTitle="Nothing configured"
+          emptyDescription="Add one."
+          addLabel="Add destination"
+          {...extra}
+        />
+      </ConfirmDialogProvider>
+    </MemoryRouter>
+  )
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
-        <ConfirmDialogProvider>
-          <InstancesTable
-            functionCap="log-destination"
-            icon={Mail}
-            title="Destinations"
-            subtitle="Every destination."
-            emptyTitle="Nothing configured"
-            emptyDescription="Add one."
-            addLabel="Add destination"
-            {...extra}
-          />
-        </ConfirmDialogProvider>
-      </MemoryRouter>
+      {icons === undefined ? (
+        table
+      ) : (
+        <StaticAddonIconsProvider icons={icons}>{table}</StaticAddonIconsProvider>
+      )}
     </QueryClientProvider>,
   )
 }
@@ -256,9 +265,18 @@ describe('InstancesTable', () => {
       renderPanel()
       expect(await screen.findByText('Relay A')).toBeTruthy()
       expect(screen.getByText('Kind two')).toBeTruthy()
+      expect(document.querySelector('img')).toBeNull()
       expect(screen.getByText('Signed in')).toBeTruthy()
       expect(screen.queryByText('ok')).toBeNull()
       expect(screen.getByRole('button', { name: 'Connect Relay A' })).toBeTruthy()
+    })
+
+    it('draws the provider icon beside the kind when the addon declares one', async () => {
+      renderPanel('', {}, new Map([['smtp-nodemailer', 'assets/icon.svg']]))
+      expect(await screen.findByText('Kind two')).toBeTruthy()
+      expect(document.querySelector('img')?.getAttribute('src')).toBe(
+        '/api/addon-assets/smtp-nodemailer/assets/icon.svg',
+      )
     })
 
     it('Add asks the kind and offers restore; the provider mints the id so none is sent', async () => {

@@ -32,6 +32,7 @@
  */
 
 import { DeviceType, type IScopedLogger } from '@camstack/types'
+import { deviceTypePhrase, type DeviceLabelLanguage } from './device-type-label.js'
 
 /** One device, as the notification path needs to know it. */
 export interface NcDeviceIdentity {
@@ -121,6 +122,45 @@ export function deviceDisplayName(
 ): string {
   const name = identity?.name.trim() ?? ''
   return name.length > 0 ? name : String(deviceId)
+}
+
+/** Types that add nothing a reader can use next to the name. */
+const DEVICE_LABEL_OMITTED_TYPES: ReadonlySet<string> = new Set([
+  DeviceType.Generic,
+  DeviceType.Container,
+])
+
+/**
+ * `name (Type)` for a device-specific sentence.
+ *
+ * The type is the same label the admin UI shows. Omitted when the name is only
+ * the numeric id, the type is unknown / generic / a container, or the name
+ * already ends with that label.
+ */
+export function deviceDisplayLabel(
+  identity: NcDeviceIdentity | undefined,
+  deviceId: number,
+  language: DeviceLabelLanguage,
+): string {
+  const name = deviceDisplayName(identity, deviceId)
+  if (identity === undefined || name === String(deviceId)) return name
+  const type = identity.type
+  if (DEVICE_LABEL_OMITTED_TYPES.has(type)) return name
+  const phrase = deviceTypePhrase(type, language)
+  if (phrase === null || nameEndsWithLabel(name, phrase, language)) return name
+  return `${name} (${phrase})`
+}
+
+/** A letter before the label means it is part of a longer word ("clock" / "lock"). */
+function nameEndsWithLabel(name: string, phrase: string, language: DeviceLabelLanguage): boolean {
+  const foldedName = name.trim().toLocaleLowerCase(language)
+  const foldedPhrase = phrase.trim().toLocaleLowerCase(language)
+  if (foldedPhrase.length === 0 || foldedName.length < foldedPhrase.length) return false
+  if (foldedName.endsWith(`(${foldedPhrase})`)) return true
+  if (!foldedName.endsWith(foldedPhrase)) return false
+  if (foldedName.length === foldedPhrase.length) return true
+  const before = foldedName.charAt(foldedName.length - foldedPhrase.length - 1)
+  return !/\p{L}/u.test(before)
 }
 
 export interface NcDeviceDirectoryDeps {

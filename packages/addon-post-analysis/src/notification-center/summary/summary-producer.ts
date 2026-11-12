@@ -35,6 +35,7 @@
  */
 
 import type { IScopedLogger, NcRuleTarget } from '@camstack/types'
+import { deviceDisplayLabel, type NcDeviceIdentity } from '../device-directory.js'
 import type { NcArtifactPublishMeta } from '../artifact-index.js'
 import type { NcArtifactPublication } from '../artifact-plane.js'
 import type { NcOutboxEnqueueInput } from '../outbox.js'
@@ -184,6 +185,8 @@ export interface NcSummaryPorts {
     readonly jpeg: Buffer
   }) => Promise<number | null>
   readonly getDeviceName?: (deviceId: number) => Promise<string | null>
+  /** Type for the mosaic and AI roster labels. Absent leaves the fetched name bare. */
+  readonly deviceLookup?: (deviceId: number) => NcDeviceIdentity | undefined
   /**
    * The camera's operator-authored location label (`DeviceInfo.location`) —
    * WHERE a still was taken, for the AI roster line (`SummaryAiFrame.location`).
@@ -1040,8 +1043,9 @@ export class NcSummaryProducer {
     for (const deviceId of deviceIds) {
       if (names.has(deviceId)) continue
       const get = this.deps.getDeviceName
-      const name = get === undefined ? null : await get(deviceId).catch(() => null)
-      names.set(deviceId, name ?? `camera ${String(deviceId)}`)
+      const fetched = get === undefined ? null : await get(deviceId).catch(() => null)
+      const identity = this.deps.deviceLookup?.(deviceId)
+      names.set(deviceId, summaryDeviceLabel(deviceId, fetched, identity, this.texts.language))
     }
     return names
   }
@@ -1252,6 +1256,22 @@ export class NcSummaryProducer {
       aiImages: outcome.images,
     }
   }
+}
+
+/** Mosaic and roster label: the fetched name, with the device type when known. */
+function summaryDeviceLabel(
+  deviceId: number,
+  fetched: string | null,
+  identity: NcDeviceIdentity | undefined,
+  language: 'en' | 'it',
+): string {
+  const fallback = `camera ${String(deviceId)}`
+  const bare =
+    fetched ??
+    (identity !== undefined && identity.name.trim().length > 0 ? identity.name.trim() : null)
+  if (bare === null || bare === String(deviceId) || bare === fallback) return bare ?? fallback
+  if (identity === undefined) return bare
+  return deviceDisplayLabel({ ...identity, name: bare }, deviceId, language)
 }
 
 /** `HH:MM` in the host timezone — the two numbers a tile label needs. */

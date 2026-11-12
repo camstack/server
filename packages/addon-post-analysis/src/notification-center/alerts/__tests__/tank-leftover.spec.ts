@@ -164,7 +164,7 @@ describe('leftover tank rows are not batteries', () => {
     expect(batteries[0]?.subject.bodyKey).toBe('system.device-battery-low.body')
     expect(batteries[0]?.subject.textParams?.['percentage']).toBe('0')
     const text = summaryText(open)
-    expect(text).toContain('Termometro sala server is down to 0% battery')
+    expect(text).toContain('Termometro sala server (Sensor) is down to 0% battery')
     expect(text).not.toContain('Dishwasher')
     expect(h.warns.map((line) => line.subject).toSorted()).toEqual([
       `tank:${DISHWASHER}:rinseAid`,

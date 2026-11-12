@@ -573,6 +573,18 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     systemEventKinds: ['device-command'],
   },
   {
+    name: 'deviceLabel',
+    label: 'Device with type',
+    description:
+      'The device name with its type in parentheses. {{deviceName}} stays the bare name.',
+    example: 'Front door (Camera)',
+    group: 'system',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['system'],
+    systemEventKinds: [...DEVICE_EVENTS],
+  },
+  {
     // D706: where an alarm a rule set off went — the location (else name) of the device
     // that started it and of every match during its entry delay, in arrival order.
     name: 'locations',

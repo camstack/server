@@ -16,6 +16,7 @@
  */
 import type { NcRule, NcRuleInput } from '@camstack/types'
 import { ncClockText } from '../clock-text.js'
+import { deviceDisplayLabel } from '../device-directory.js'
 import { evaluateRule, NC_SYSTEM_DEVICE_ID, type NcRuleSubject } from '../rule-engine.js'
 import type { NcTextCatalog } from '../text-catalog.js'
 import {
@@ -186,7 +187,25 @@ function sinceText(
 function lineOf(input: NcStateSummaryTextInput, item: NcStateItem): string {
   const since =
     item.since !== undefined ? sinceText(input.texts, item.since, input.nowMs, input.timeZone) : ''
-  return input.texts.text({ key: item.lineKey, vars: { ...item.params, since } })
+  const deviceId = item.subject.deviceId
+  const name = item.params['deviceName']
+  const type = item.subject.deviceType
+  const deviceLabel =
+    deviceId === undefined || name === undefined
+      ? undefined
+      : deviceDisplayLabel(
+          type === undefined ? undefined : { deviceId, type, name, isCamera: false },
+          deviceId,
+          input.texts.language,
+        )
+  return input.texts.text({
+    key: item.lineKey,
+    vars: {
+      ...item.params,
+      since,
+      ...(deviceLabel !== undefined ? { deviceLabel } : {}),
+    },
+  })
 }
 
 function sectionTitle(input: NcStateSummaryTextInput, section: NcStateSectionResult): string {

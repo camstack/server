@@ -38,6 +38,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useTranslation } from 'react-i18next'
+import { KindCell } from './kind-cell'
 import { fillBrokerConnectPath, startServerNavigation } from '../../lib/broker-oauth-popup'
 import {
   TestVerdictBanner,
@@ -368,11 +369,14 @@ export function InstancesTable({
               key: 'kind',
               header: t('providerInstances.colKind', 'Kind'),
               sortValue: (row: PanelRow) => (row.kind === 'instance' ? (row.kindLabel ?? '') : ''),
-              render: (row: PanelRow) => (
-                <span className="text-foreground-muted">
-                  {row.kind === 'instance' ? (row.kindLabel ?? '') : ''}
-                </span>
-              ),
+              render: (row: PanelRow) =>
+                row.kind === 'instance' &&
+                row.kindLabel !== undefined &&
+                row.kindLabel.length > 0 ? (
+                  <KindCell addonId={row.addonId} label={row.kindLabel} />
+                ) : (
+                  <span className="text-foreground-muted" />
+                ),
             },
           ]
         : []),

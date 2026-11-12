@@ -54,11 +54,13 @@ import {
 } from './alarm/alarm-push-policy.js'
 import type { AudioWindowHit } from './audio-rule-matcher.js'
 import {
+  deviceDisplayLabel,
   deviceDisplayName,
   isAccessoryIdentity,
   type NcDeviceIdentity,
   type NcDeviceLookup,
 } from './device-directory.js'
+import type { NcLanguage } from './text-catalog.js'
 import type { OccupancyEdge } from './occupancy-watcher.js'
 import {
   NC_SYSTEM_DEVICE_ID,
@@ -841,16 +843,20 @@ function systemSubject(input: {
 }
 
 /**
- * The two facts a device sentence needs: `{{deviceId}}` (kept, so an operator's
- * older text override still renders) and `{{deviceName}}` — the one the reader
- * actually recognises. "Il dispositivo 2018 è offline" is a row id read out
- * loud; the operator has never seen 2018.
+ * The facts a device sentence needs: `{{deviceId}}` and `{{deviceName}}` stay
+ * the bare name (an operator override may still say `{{deviceName}}`), and
+ * `{{deviceLabel}}` is that name with the translated type beside it.
  */
 function deviceTextParams(
   deviceId: number,
   identity: NcDeviceIdentity | undefined,
+  language: NcLanguage = 'en',
 ): Readonly<Record<string, string>> {
-  return { deviceId: String(deviceId), deviceName: deviceDisplayName(identity, deviceId) }
+  return {
+    deviceId: String(deviceId),
+    deviceName: deviceDisplayName(identity, deviceId),
+    deviceLabel: deviceDisplayLabel(identity, deviceId, language),
+  }
 }
 
 /** Who gave a command, as one short name: the user, the addon, the automation, the schedule. */

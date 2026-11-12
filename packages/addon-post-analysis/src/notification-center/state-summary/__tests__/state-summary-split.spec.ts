@@ -125,7 +125,9 @@ describe('state summary split (D698)', () => {
     const devices = rows[0]?.systemEvent
     expect(devices?.textParams?.['summarySection']).toBe('Offline or off')
     // The body is the LINES: the row's title already names the section (review L3).
-    expect(devices?.textParams?.['summaryText']).toBe('• Front door — offline (since 07:00 AM)')
+    expect(devices?.textParams?.['summaryText']).toBe(
+      '• Front door (Camera) — offline (since 07:00 AM)',
+    )
     expect(devices?.textParams?.['summaryCount']).toBe('1')
     expect(devices?.textParams?.['summaryDevices']).toContain('Front door')
     expect(devices?.textParams?.['summaryStreams']).toBe('')

@@ -106,7 +106,11 @@ describe('the system-event intake reports a device, not a camera', () => {
     expect(system?.kind).toBe('device-offline')
     // The id, so the sentence is never a hole; and NO type, so every
     // type-narrowed rule fails closed on it.
-    expect(system?.textParams).toEqual({ deviceId: '2018', deviceName: '2018' })
+    expect(system?.textParams).toEqual({
+      deviceId: '2018',
+      deviceName: '2018',
+      deviceLabel: '2018',
+    })
     expect(system?.deviceType).toBeUndefined()
   })
 
@@ -115,7 +119,7 @@ describe('the system-event intake reports a device, not a camera', () => {
     expect(
       incomingFromSystemEvent(livenessEvent('device.offline', 101), lookup)?.subject.systemEvent
         ?.textParams,
-    ).toEqual({ deviceId: '101', deviceName: '101' })
+    ).toEqual({ deviceId: '101', deviceName: '101', deviceLabel: '101' })
   })
 
   it('carries the type through the runtime-state route as well', () => {
@@ -174,6 +178,7 @@ describe('the system-event intake reports a device, not a camera', () => {
     expect(incomingFromSystemEvent(stream, lookup)?.subject.systemEvent?.textParams).toEqual({
       deviceId: '101',
       deviceName: 'Vialetto',
+      deviceLabel: 'Vialetto (Camera)',
       profile: 'high',
     })
   })

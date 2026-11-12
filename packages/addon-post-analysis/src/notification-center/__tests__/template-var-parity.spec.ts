@@ -1240,6 +1240,7 @@ async function systemZoneLabels(entry: NcOutboxEntry): Promise<readonly string[]
 function offeredOnSystemRow(kind: NcSystemEventKind, name: string, value: string): boolean {
   if (name === 'subject') return false
   if (name === 'deviceName' && kind === 'export-completed') return false
+  if (name === 'deviceLabel' && kind === 'export-completed') return false
   if (name === 'device' && value === NC_DEVICELESS_CAMERA_NAME) return false
   return true
 }
