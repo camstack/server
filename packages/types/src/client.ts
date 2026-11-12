@@ -119,6 +119,8 @@ export {
   searchIcons,
   sensorTransitionNeverFires,
   sensorTransitionOffered,
+  stepActuatesAlarmPanel,
+  stepPullsAlarmTrigger,
   stateLabel,
   summarizeReview,
   systemEventClassesFor,

@@ -45,6 +45,11 @@ export interface CommandStepProps {
   readonly roundDevices?: readonly number[]
   /** Exactly one device, never a variable (a remote button binding). */
   readonly singleTarget?: boolean
+  /**
+   * Open the modal on mount when no command is picked yet (a step just added).
+   * False = an empty "Choose" row that opens only on click (a selected remote button).
+   */
+  readonly autoOpen?: boolean
   readonly onChange: (next: CommandStepValue) => void
 }
 
@@ -64,12 +69,13 @@ export function CommandStep({
   variables,
   roundDevices,
   singleTarget = false,
+  autoOpen = true,
   onChange,
 }: CommandStepProps) {
   const { t, i18n } = useTranslation()
   const locale = vocabLocale(i18n.language)
   const words = useTargetWords(devices)
-  const [open, setOpen] = useState(step.actionId === '')
+  const [open, setOpen] = useState(autoOpen && step.actionId === '')
   const sentence = describeCommandStep(step, locale, words, deviceTypeOf(step.target, devices))
   return (
     <div className="flex flex-wrap items-center gap-2" data-testid="command-step">

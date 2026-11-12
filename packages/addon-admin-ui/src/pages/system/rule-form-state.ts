@@ -46,7 +46,7 @@ import {
   systemEventSummarySplitOf,
   templateCarriesSummary,
   systemRuleKindOf,
-  findVocabAction,
+  stepActuatesAlarmPanel,
 } from '@camstack/types'
 import { NEW_SYSTEM_EVENT_DELIVERY } from './notification-system-event-delivery'
 import { seedSystemEventForFamily } from './notification-system-events'
@@ -283,7 +283,6 @@ const NC_ALARM_KINDS: ReadonlySet<string> = new Set([
   'alarm-sensor-bypass',
   'alarm-disarmed',
 ])
-const NC_ALARM_PANEL_CAP = 'alarm-panel'
 
 /**
  * Is this rule one a snooze can never silence?
@@ -301,9 +300,7 @@ export function isRuleSnoozeExempt(
     if (NC_ALARM_KINDS.has(kind)) return true
   }
   for (const step of steps) {
-    if (step.kind === 'command' && findVocabAction(step.actionId)?.cap === NC_ALARM_PANEL_CAP) {
-      return true
-    }
+    if (stepActuatesAlarmPanel(step)) return true
   }
   return false
 }

@@ -1,4 +1,6 @@
 import {
+  ALL_CAPABILITY_DEFINITIONS,
+  type BoundCapsReader,
   type ActionEntry,
   type ActionStep,
   type ActionRunChanged,
@@ -45,6 +47,12 @@ const OFFERS_ALL: DeviceDirectory = {
   },
 }
 
+/** Each device's own binding map: every device the specs name is bound to every cap. */
+const BOUND_TO_ALL: BoundCapsReader = {
+  boundCapsOf: async (ids) =>
+    new Map(ids.map((id) => [id, ALL_CAPABILITY_DEFINITIONS.map((def) => def.name)])),
+}
+
 async function world(options?: {
   readonly addonActions?: readonly ActionEntry[]
   readonly invoke?: (call: {
@@ -55,6 +63,7 @@ async function world(options?: {
   }) => Promise<void>
   readonly sourceRun?: () => Promise<void>
   readonly directory?: DeviceDirectory
+  readonly boundCaps?: BoundCapsReader
   readonly maxRunMs?: number
   readonly stopGraceMs?: number
   readonly templates?: DeviceTemplateDoor
@@ -103,6 +112,7 @@ async function world(options?: {
     ledger,
     sources,
     directory: options?.directory ?? OFFERS_ALL,
+    boundCaps: options?.boundCaps ?? BOUND_TO_ALL,
     invokeCap: async (call) => {
       calls.push(call)
       await options?.invoke?.(call)
@@ -984,9 +994,10 @@ describe('actions — a conditional step (#472)', () => {
 })
 
 describe('actions — a device must offer the action it is told to run', () => {
-  const NO_COVER: DeviceDirectory = {
-    listDeviceIdsByCaps: async (caps) => (caps.includes('cover') ? [] : [616]),
-    listDevices: OFFERS_ALL.listDevices,
+  /** Device 616's own bindings carry a button and a switch, never a cover. */
+  const NO_COVER: BoundCapsReader = {
+    boundCapsOf: async (ids) =>
+      new Map(ids.map((id) => [id, id === 616 ? ['button', 'switch'] : []])),
   }
   const OPEN: ActionStep = {
     kind: 'command',
@@ -995,7 +1006,7 @@ describe('actions — a device must offer the action it is told to run', () => {
   }
 
   it('refuses a create naming a device not bound to the action cap, stores nothing and logs the device', async () => {
-    const w = await world({ directory: NO_COVER })
+    const w = await world({ boundCaps: NO_COVER })
     await expect(w.service.create({ action: { name: 'Open', steps: [OPEN] } })).rejects.toThrow(
       /\[invalid-steps\]/,
     )
@@ -1004,12 +1015,12 @@ describe('actions — a device must offer the action it is told to run', () => {
   })
 
   it('refuses an update that brings the step in, and keeps the stored steps', async () => {
-    const w = await world({ directory: NO_COVER })
+    const w = await world({ boundCaps: NO_COVER })
     const { action } = await w.service.create({ action: { name: 'Ring', steps: [STEP(616)] } })
     await expect(
       w.service.update({ actionId: action.id, action: { steps: [OPEN] } }),
     ).rejects.toThrow(/\[invalid-steps\]/)
-    const kept = await w.service.get({ actionId: action.id })
+    const kept = await w.service.get({ actionId: action.id, caller: ADMIN })
     expect(kept.action?.steps).toEqual([STEP(616)])
   })
 

@@ -148,7 +148,14 @@ export function BindingPanel({
   const irTransmitter = binding === undefined ? null : transmitterOf(binding)
   const description = describeBinding(binding?.action, devices)
   const code = binding === undefined ? null : bindingCode(binding.action)
-  const pickCommand = binding !== undefined && irTransmitter === null && (editing || !complete)
+  // A stored call the vocabulary cannot name stays read-only (the rows above) until Change.
+  const unrepresentable =
+    binding !== undefined &&
+    irTransmitter === null &&
+    binding.action.cap !== '' &&
+    commandOfBinding(binding.action).actionId === ''
+  const pickCommand =
+    binding !== undefined && irTransmitter === null && (editing || (!complete && !unrepresentable))
   return (
     <aside
       className="min-w-0 space-y-3 rounded border border-border bg-surface p-3"
@@ -203,6 +210,9 @@ export function BindingPanel({
             devices={devices}
             variables={[]}
             singleTarget
+            // a selected button never pops the modal: Choose opens it; Change on a
+            // read-only call already was the click
+            autoOpen={unrepresentable}
             onChange={(next) => {
               const action = bindingOfCommand(next)
               if (action !== null) onBind(action)
@@ -225,7 +235,7 @@ export function BindingPanel({
           </Button>
         ) : (
           <>
-            {irTransmitter === null && complete && !editing && (
+            {irTransmitter === null && (complete || unrepresentable) && !editing && (
               <Button
                 size="sm"
                 variant="outline"

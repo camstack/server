@@ -17,7 +17,7 @@
 import type { CommandOriginClaim } from '../audit/device-transition.js'
 import type { DeviceTemplateRender } from '../expression/device-template.js'
 import type { ActionTarget, ResolvedTarget, ResolveOrigin } from './action-target.js'
-import { vocabCall } from '../device/cap-vocabulary/action-index.js'
+import { findVocabAction, vocabCall } from '../device/cap-vocabulary/action-index.js'
 import { type ActionStep } from './recipe.js'
 import type {
   EvaluateStepCondition,
@@ -884,17 +884,25 @@ export interface ActionStepDeps {
   readonly owner?: string
 }
 
-function stepMetaOfAction(step: ActionStep): StepMeta {
-  if (step.kind === 'wait') return { kind: 'wait' }
-  const { target, actionId } = step
-  const { cap, method } = vocabCall(actionId, undefined)
+/**
+ * What a command step's trace shows before it runs. It never throws: an action
+ * id the vocabulary no longer knows (renamed, removed) leaves the cap and method
+ * out, and the step fails when it RUNS, traced and logged with its device —
+ * building the run must not take the steps around it down with it.
+ */
+export function commandStepMeta(target: ActionTarget, actionId: string): StepMeta {
+  const found = findVocabAction(actionId)
   return {
     kind: 'command',
-    cap,
-    method,
+    ...(found === undefined ? {} : { cap: found.cap, method: found.action.method }),
     actionId,
     ...(target.kind === 'devices' && target.ids.length === 1 ? { deviceId: target.ids[0] } : {}),
   }
+}
+
+function stepMetaOfAction(step: ActionStep): StepMeta {
+  if (step.kind === 'wait') return { kind: 'wait' }
+  return commandStepMeta(step.target, step.actionId)
 }
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
@@ -982,6 +990,8 @@ export function buildActionSteps(
       meta,
       ...guarded,
       run: async (scope) => {
+        // an unknown action id fails HERE, at run, before its target is resolved
+        vocabCall(step.actionId, undefined)
         const templated = await resolveStepArgsWithTemplates(
           step.args ?? {},
           vars,

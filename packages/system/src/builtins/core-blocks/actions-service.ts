@@ -40,6 +40,7 @@ import {
   type AutomationRunTrace,
   type AutomationStepTrace,
   ActionTargetResolver,
+  type BoundCapsReader,
   buildActionSteps,
   collectDeviceTemplates,
   type DeviceDirectory,
@@ -89,6 +90,8 @@ export interface ActionsServiceDeps {
   readonly sources: ActionSources
   /** The device registry, for `domain` targets (resolved when a step runs). */
   readonly directory: DeviceDirectory
+  /** Each named device's own binding map, for the save check (D12). */
+  readonly boundCaps: BoundCapsReader
   invokeCap(call: CapCall): Promise<void>
   emit(event: ActionRunChanged): void
   readonly logger: IScopedLogger
@@ -170,7 +173,7 @@ export class ActionsService implements IActionsProvider {
   /** Last run START per action — the throttle's memory. */
   private readonly lastStartedAt = new Map<string, number>()
   private readonly maxRunMs: number
-  private readonly directory: DeviceDirectory
+  private readonly boundCaps: BoundCapsReader
   private readonly stopGraceMs: number
 
   constructor(deps: ActionsServiceDeps) {
@@ -185,7 +188,7 @@ export class ActionsService implements IActionsProvider {
     this.maxRunMs = deps.maxRunMs ?? ACTION_RUN_MAX_MS
     this.stopGraceMs = deps.stopGraceMs ?? STOP_GRACE_MS
     this.units = deps.units ?? capUnitResolver(ALL_CAPABILITY_DEFINITIONS)
-    this.directory = deps.directory
+    this.boundCaps = deps.boundCaps
     this.targets = new ActionTargetResolver(deps.directory, deps.logger)
     this.templates = deps.templates
     this.conditions = deps.conditions
@@ -701,10 +704,10 @@ export class ActionsService implements IActionsProvider {
     return { action, ...(warnings.length > 0 ? { warnings } : {}) }
   }
 
-  /** A step naming a device that does not offer its vocabulary action is refused at save (D12 per-binding walk). */
+  /** A step naming a device whose own bindings lack its action's cap is refused at save (D12). */
   private async requireOffered(steps: ActionInput['steps'], actionName: string): Promise<void> {
     try {
-      await assertStepsOffered(steps, this.directory)
+      await assertStepsOffered(steps, this.boundCaps)
     } catch (err: unknown) {
       if (err instanceof VocabActionError) {
         this.logger.warn('action save refused — a device does not offer the action', {

@@ -21,6 +21,7 @@ import {
   resolveStepArgs,
   type RunStepsOptions,
   runSteps,
+  type StepFailure,
 } from '../step-runner.js'
 import { fakeRegistry, recordingLogger } from './target-fixtures.js'
 
@@ -678,6 +679,38 @@ describe('buildActionSteps — the action id becomes a cap call through the voca
     )
     await runSteps(runnable, options())
     expect(d.calls[0]).toMatchObject({ cap: 'cover', args: { position: 40 } })
+  })
+
+  it('an action id the vocabulary no longer knows fails THAT step at run, traced and reported with its device', async () => {
+    const d = deps()
+    const failures: StepFailure[] = []
+    // building the run must not throw: the step before it still runs
+    const runnable = buildActionSteps(
+      [
+        { kind: 'command', target: { kind: 'devices', ids: [5] }, actionId: 'switch.on' },
+        { kind: 'command', target: { kind: 'devices', ids: [7] }, actionId: 'cover.renamed' },
+      ],
+      {},
+      d.deps,
+    )
+    const result = await runSteps(
+      runnable,
+      options({ onFailure: (failure) => void failures.push(failure) }),
+    )
+    expect(d.calls).toEqual([
+      { deviceId: 5, cap: 'switch', method: 'setState', args: { on: true } },
+    ])
+    expect(result.steps[0]).toMatchObject({ outcome: 'ok' })
+    expect(result.steps[1]).toMatchObject({
+      kind: 'command',
+      actionId: 'cover.renamed',
+      deviceId: 7,
+      outcome: 'error',
+    })
+    expect(result.steps[1]).not.toHaveProperty('cap')
+    expect(failures).toEqual([
+      expect.objectContaining({ deviceId: 7, message: expect.stringContaining('cover.renamed') }),
+    ])
   })
 })
 

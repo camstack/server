@@ -9,6 +9,7 @@ import {
   ALL_CAPABILITY_DEFINITIONS,
   type AddonApi,
   capUnitResolver,
+  type BoundCapsReader,
   type DeviceDirectory,
   EventCategory,
   type IEventBus,
@@ -17,7 +18,7 @@ import {
   type SiteReading,
   stableIdMapOf,
 } from '@camstack/types'
-import { directoryOver, invokeCapOver } from '../actions-wiring.js'
+import { boundCapsOver, directoryOver, invokeCapOver } from '../actions-wiring.js'
 import { coreBlocksRecordKinds } from '../record-kinds.js'
 import { type RunsLedger, schedulerOwner } from '../runs-ledger.js'
 import { templateDoorOver } from '../device-template-door.js'
@@ -42,6 +43,7 @@ export interface SchedulersRuntimeDeps {
   readonly logger: IScopedLogger
   readonly ledger: RunsLedger
   readonly directory?: DeviceDirectory
+  readonly boundCaps?: BoundCapsReader
   /** A spec swaps these. */
   readonly host?: SchedulerHost
   readonly clock?: SchedulerClock
@@ -99,7 +101,7 @@ export function buildSchedulersRuntime(deps: SchedulersRuntimeDeps): SchedulersR
     ledger: deps.ledger,
     host,
     targets,
-    directory: deps.directory ?? directoryOver(deps.api),
+    boundCaps: deps.boundCaps ?? boundCapsOver(deps.api),
     units: capUnitResolver(ALL_CAPABILITY_DEFINITIONS),
     logger: deps.logger.child('schedulers'),
   })

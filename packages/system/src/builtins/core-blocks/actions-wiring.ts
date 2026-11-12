@@ -14,6 +14,7 @@ import {
   type ActionEntry,
   type ActionRunChanged,
   type AddonApi,
+  type BoundCapsReader,
   type CapCall,
   type DeviceDirectory,
   EventCategory,
@@ -46,6 +47,8 @@ export interface ActionsRuntimeDeps {
   readonly logger: IScopedLogger
   /** The device registry; `ctx.api` by default. A spec swaps it. */
   readonly directory?: DeviceDirectory
+  /** The named devices' binding maps; `ctx.api` by default. A spec swaps it. */
+  readonly boundCaps?: BoundCapsReader
 }
 
 const ACTION_SOURCE_CAP = 'action-source'
@@ -110,8 +113,25 @@ export function invokeCapOver(api: () => AddonApi | undefined): (call: CapCall) 
 }
 
 /**
- * The device registry as the target resolver reads it: the per-binding walk
- * (`listDeviceIdsByCaps`, D12/D13) and the slim listing for type and room.
+ * What each named device offers, from its OWN binding map (`getBindingsBatch`,
+ * D12): one batched read of just the devices a step names, by cap name (D13).
+ */
+export function boundCapsOver(api: () => AddonApi | undefined): BoundCapsReader {
+  return {
+    boundCapsOf: async (deviceIds) => {
+      const current = api()
+      if (current === undefined) {
+        throw new Error('core-blocks: no ctx.api on this node — device bindings cannot be read')
+      }
+      const rows = await current.deviceManager.getBindingsBatch.query({ deviceIds: [...deviceIds] })
+      return new Map(rows.map((row) => [row.deviceId, row.entries.map((entry) => entry.capName)]))
+    },
+  }
+}
+
+/**
+ * The device registry as the target resolver reads it: the devices bound to a
+ * cap (`listDeviceIdsByCaps`, D13) and the slim listing for type and room.
  */
 export function directoryOver(api: () => AddonApi | undefined): DeviceDirectory {
   const need = (): AddonApi => {
@@ -153,6 +173,7 @@ export function buildActionsRuntime(deps: ActionsRuntimeDeps): ActionsRuntime {
     ledger,
     sources: sourcesOver(deps.api),
     directory: deps.directory ?? directoryOver(deps.api),
+    boundCaps: deps.boundCaps ?? boundCapsOver(deps.api),
     invokeCap: invokeCapOver(deps.api),
     templates: templateDoorOver(deps.api),
     conditions: conditionDoorOver(deps.api),

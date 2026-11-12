@@ -253,7 +253,7 @@ export {
 } from './detection-subject.js'
 export * from './action.js'
 export * from './action-target.js'
-export { assertStepsOffered } from './offered.js'
+export { assertStepsOffered, type BoundCapsReader } from './offered.js'
 export * from './step-condition.js'
 export * from './step-runner.js'
 export * from './wait-until.js'

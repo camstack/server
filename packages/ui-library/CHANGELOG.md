@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A dialog that contains a search field focuses it when it opens.
 - Device list rows show a sensor reading published only on numeric-sensor, including whole numbers.
 - The device value picker can open straight on its two columns, and its grouped value list is available on its own
+- The condition kind picker picks the first row again when Enter is pressed on an empty search while adding a row
 
 ## [1.2.431] - 2026-11-12
 

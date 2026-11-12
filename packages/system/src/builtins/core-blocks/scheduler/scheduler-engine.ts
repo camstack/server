@@ -322,16 +322,15 @@ export class SchedulerEngine {
     const out: MirrorSource[] = []
     for (const step of point.steps) {
       if (step.kind !== 'command') continue
-      const normalized = step
-      const effect = actionEffect(normalized.actionId, step.args)
+      const effect = actionEffect(step.actionId, step.args)
       if (effect === null) continue
       try {
         const resolved = await this.deps.targets.resolve(
-          normalized.target,
-          normalized.actionId,
+          step.target,
+          step.actionId,
           {},
           {
-            actionId: normalized.actionId,
+            actionId: step.actionId,
             owner: `scheduler:${s.id}`,
           },
         )

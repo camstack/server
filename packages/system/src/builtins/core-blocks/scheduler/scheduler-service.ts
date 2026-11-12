@@ -11,8 +11,8 @@ import {
   actionEffect,
   assertStepsOffered,
   type ActionTargetResolver,
-  type DeviceDirectory,
   type AutomationRunTrace,
+  type BoundCapsReader,
   type ISchedulersProvider,
   type IScopedLogger,
   normalizeActionUnits,
@@ -50,8 +50,8 @@ export interface SchedulersServiceDeps {
   readonly ledger: RunsLedger
   readonly host: Pick<SchedulerHost, 'readSite'>
   readonly targets: ActionTargetResolver
-  /** The per-binding walk the save check asks which devices offer an action's cap. */
-  readonly directory: Pick<DeviceDirectory, 'listDeviceIdsByCaps'>
+  /** Each named device's own binding map, for the save check (D12). */
+  readonly boundCaps: BoundCapsReader
   readonly units: UnitResolver
   readonly logger: IScopedLogger
   readonly now?: () => number
@@ -129,11 +129,11 @@ export class SchedulersService implements ISchedulersProvider {
     return prepared
   }
 
-  /** A step naming a device that does not offer its vocabulary action is refused at save (D12 per-binding walk). */
+  /** A step naming a device whose own bindings lack its action's cap is refused at save (D12). */
   private async requireOffered(scheduler: SchedulerInput): Promise<void> {
     const steps = scheduler.profiles.flatMap((p) => p.points.flatMap((point) => point.steps))
     try {
-      await assertStepsOffered(steps, this.deps.directory)
+      await assertStepsOffered(steps, this.deps.boundCaps)
     } catch (err: unknown) {
       if (err instanceof VocabActionError) {
         this.deps.logger.warn('scheduler save refused — a device does not offer the action', {
@@ -339,17 +339,16 @@ export class SchedulersService implements ISchedulersProvider {
         const effects: HeldEffect[] = []
         for (const step of point.steps) {
           if (step.kind !== 'command') continue
-          const normalized = step
           const resolved = resolveStepArgs(step.args ?? {}, {}, () => undefined)
-          const effect = actionEffect(normalized.actionId, isPlainRecord(resolved) ? resolved : {})
+          const effect = actionEffect(step.actionId, isPlainRecord(resolved) ? resolved : {})
           if (effect === null) continue
           try {
             const { deviceIds } = await this.deps.targets.resolve(
-              normalized.target,
-              normalized.actionId,
+              step.target,
+              step.actionId,
               {},
               {
-                actionId: normalized.actionId,
+                actionId: step.actionId,
                 owner: 'scheduler-conflicts',
               },
             )

@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notification templates can say {{deviceLabel}} for the device name with its type; {{deviceName}} stays the bare name.
 - A sensor reading that repeats the device title also trails the compact row.
 - An automation, Action or scheduler step that calls a device is now a command step naming a vocabulary action; a step naming a device that does not offer the action is refused when it is saved.
+- An automation or Action step whose action id the vocabulary no longer knows fails at that step, traced and logged with its device, instead of failing the whole run before any step runs; the alarm-step rule is on the client entry
 
 ## [1.2.555] - 2026-11-12
 

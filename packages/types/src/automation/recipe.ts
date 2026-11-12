@@ -104,7 +104,7 @@ export const AutomationCommandStepSchema =
 export type AutomationCommandStep = z.infer<typeof AutomationCommandStepSchema>
 
 /**
- * The steps an internal Action may contain: cap and wait, and nothing that can
+ * The steps an internal Action may contain: command and wait, and nothing that can
  * call back into an Action — so an Action can never reach itself (no cycles).
  * This is the LEAF shape: no condition of its own.
  */

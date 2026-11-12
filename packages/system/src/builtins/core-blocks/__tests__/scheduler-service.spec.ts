@@ -1,6 +1,6 @@
 import {
   type ActionStep,
-  type DeviceDirectory,
+  type BoundCapsReader,
   type SchedulerInput,
   SchedulerError,
 } from '@camstack/types'
@@ -54,7 +54,8 @@ function holdScheduler(on: boolean, priority: number): SchedulerInput {
   }
 }
 
-async function service(directory?: Pick<DeviceDirectory, 'listDeviceIdsByCaps'>) {
+/** Each device's own binding map; by default every device is bound to every cap. */
+async function service(boundCaps?: BoundCapsReader) {
   const w = await harness({ start: MIDNIGHT, devices: [{ id: 1 }] })
   const world = makeRecordsWorld()
   await world.provider.init()
@@ -75,7 +76,10 @@ async function service(directory?: Pick<DeviceDirectory, 'listDeviceIdsByCaps'>)
     ledger,
     host: { readSite: async () => ROME },
     targets: w.targets,
-    directory: directory ?? { listDeviceIdsByCaps: async () => [1, 2, 3, 4, 5] },
+    boundCaps: boundCaps ?? {
+      boundCapsOf: async (ids) =>
+        new Map(ids.map((id) => [id, ALL_CAPABILITY_DEFINITIONS.map((def) => def.name)])),
+    },
     units: capUnitResolver(ALL_CAPABILITY_DEFINITIONS),
     logger: w.logs.logger,
     now: () => w.clock.now(),
@@ -116,7 +120,9 @@ describe('schedulers service', () => {
   })
 
   it('refuses a step naming a device that does not offer the action, with the device tagged, and stores nothing', async () => {
-    const { w, svc } = await service({ listDeviceIdsByCaps: async () => [] })
+    const { w, svc } = await service({
+      boundCapsOf: async (ids) => new Map(ids.map((id) => [id, []])),
+    })
     await expect(svc.create({ scheduler: holdScheduler(true, 0) })).rejects.toBeInstanceOf(
       SchedulerError,
     )

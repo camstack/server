@@ -106,6 +106,18 @@ describe('ConditionKindPicker', () => {
     expect(selected.map((o) => o.textContent)).toEqual([expect.stringContaining('Device value is')])
   })
 
+  it('picks the first row with Enter on an empty search when adding, though nothing is highlighted', () => {
+    const { onPick } = setup()
+    fireEvent.keyDown(search(), { key: 'Enter' })
+    expect(onPick).toHaveBeenCalledExactlyOnceWith('detection')
+  })
+
+  it('picks the row being changed with Enter on an empty search', () => {
+    const { onPick } = setup({ current: 'device-is' })
+    fireEvent.keyDown(search(), { key: 'Enter' })
+    expect(onPick).toHaveBeenCalledExactlyOnceWith('device-is')
+  })
+
   it('highlights nothing when adding a row, until the operator types', () => {
     setup()
     const selected = () => screen.getAllByRole('option').filter((o) => o.ariaSelected === 'true')

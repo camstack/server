@@ -33,7 +33,7 @@ import {
   stepGuardOf,
   validateRecipeBounds,
 } from './recipe.js'
-import { vocabCall } from '../device/cap-vocabulary/action-index.js'
+import { commandStepMeta, type StepMeta } from './step-runner.js'
 import type { TimeSpec, WeekdayKey } from '../time/time-spec.js'
 import { hasHoldLeaves, hasTimeLeaves } from './condition-eval.js'
 import { collectWhenMirrorSources } from './condition-eval.js'
@@ -57,14 +57,6 @@ export interface GenerateAutomationBlockInput {
  *  (D8: an event WAKES the evaluation, the reconcile guarantees it). */
 const RECONCILE_MS = 15_000
 
-interface StepMeta {
-  readonly kind: string
-  readonly cap?: string
-  readonly method?: string
-  readonly actionId?: string
-  readonly deviceId?: number
-}
-
 /** What a step trace shows before the step runs. */
 function stepMetaOf(action: AutomationAction): StepMeta {
   switch (action.kind) {
@@ -86,19 +78,9 @@ function stepMetaOf(action: AutomationAction): StepMeta {
       return { kind: 'set' }
     case 'choose':
       return { kind: 'choose' }
-    case 'command': {
-      const { target, actionId } = action
-      const { cap, method } = vocabCall(actionId, undefined)
-      return {
-        kind: 'command',
-        cap,
-        method,
-        actionId,
-        ...(target.kind === 'devices' && target.ids.length === 1
-          ? { deviceId: target.ids[0] }
-          : {}),
-      }
-    }
+    case 'command':
+      // never throws: an unknown action id fails when the step runs (actuateTarget)
+      return commandStepMeta(action.target, action.actionId)
   }
 }
 

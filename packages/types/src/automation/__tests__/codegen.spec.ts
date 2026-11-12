@@ -153,6 +153,22 @@ describe('actions', () => {
     expect(g).toContain('actuateTarget(scope, {"kind":"var","name":"deviceId"}')
   })
 
+  it('generates a step whose action id the vocabulary no longer knows; it fails when it runs', () => {
+    const g = generateAutomationBlock({
+      name: 'x',
+      recipe: {
+        when: { kind: 'manual' },
+        actions: [
+          { kind: 'command', target: { kind: 'devices', ids: [7] }, actionId: 'cover.renamed' },
+        ],
+      },
+    })
+    expect(g).toContain('{"kind":"command","actionId":"cover.renamed","deviceId":7}')
+    expect(g).toContain(
+      'actuateTarget(scope, {"kind":"devices","ids":[7]}, "cover.renamed", {}, vars)',
+    )
+  })
+
   it('fans out a same-family multi-device cap action across each id', () => {
     const g = generateAutomationBlock({
       name: 'x',

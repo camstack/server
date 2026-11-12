@@ -928,6 +928,7 @@ export {
 export {
   UnitWarningSchema,
   assertStepsOffered,
+  type BoundCapsReader,
   capUnitResolver,
   normalizeActionUnits,
   normalizeConditionUnits,
@@ -2015,6 +2016,12 @@ export {
   ruleGatedOnArmedState,
   sensorTransitionNeverFires,
 } from './notification/alarm-membership.js'
+export {
+  NC_ALARM_PANEL_ACTION_IDS,
+  NC_ALARM_TRIGGER_ACTION_ID,
+  stepActuatesAlarmPanel,
+  stepPullsAlarmTrigger,
+} from './notification/alarm-steps.js'
 export {
   alarmDeviceBlocksArming,
   alarmDeviceSecureOnArm,

@@ -294,21 +294,20 @@ export class HoldManager {
     const wanted = new Map<string, HoldTarget>()
     for (const step of point.steps) {
       if (step.kind !== 'command') continue
-      const normalized = step
       const resolved = resolveStepArgs(step.args ?? {}, {}, () => undefined)
       const args = isPlainRecord(resolved) ? resolved : {}
-      const effect = actionEffect(normalized.actionId, args)
+      const effect = actionEffect(step.actionId, args)
       if (effect === null) continue
-      const call = vocabCall(normalized.actionId, args)
+      const call = vocabCall(step.actionId, args)
       let deviceIds: readonly number[]
       try {
         deviceIds = (
           await this.deps.targets.resolve(
-            normalized.target,
-            normalized.actionId,
+            step.target,
+            step.actionId,
             {},
             {
-              actionId: normalized.actionId,
+              actionId: step.actionId,
               owner: `scheduler:${scheduler.id}`,
             },
           )

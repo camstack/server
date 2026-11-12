@@ -202,7 +202,9 @@ function PickerBody(props: ConditionKindPickerProps): JSX.Element {
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
     if (event.key === 'Enter') {
       event.preventDefault()
-      if (highlighted !== null && highlighted.item.disabled === null) pick(highlighted.item.kind)
+      // Adding a row highlights nothing, yet Enter on an empty search still picks the first row.
+      const chosen = highlighted ?? best
+      if (chosen !== null && chosen.item.disabled === null) pick(chosen.item.kind)
       return
     }
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
