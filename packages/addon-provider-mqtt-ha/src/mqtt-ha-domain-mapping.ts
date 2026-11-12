@@ -274,7 +274,7 @@ export function planMqttHaDevice(input: {
   readonly onIrRefused?: (reason: string) => void
 }): MqttHaDevicePlan | null {
   const roles: RoleEntity[] = []
-  // An IR blaster's three entities are one transmitter, not a text, a select and a sensor.
+  // An IR blaster's send, learn and learned entities are one transmitter.
   const ir = matchIrProfile(input.entities, input.onIrRefused)
   const irKeys = new Set(
     ir === null ? [] : [ir.send.entityKey, ir.learn.entityKey, ir.learned.entityKey],

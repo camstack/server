@@ -460,9 +460,12 @@ reports `learn`, and stores the result as `native` when present, else `raw`.
 The MQTT provider (`addon-provider-mqtt-ha`) turns a Zigbee2MQTT zosung blaster
 into an `ir-transmitter` through the profile table `mqtt-ha-ir-profiles.ts`,
 matched on the discovery `origin` plus the entity object ids (`ir_code_to_send`,
-`learn_ir_code`, `learned_ir_code`), never on manufacturer or model. Learn
-publishes `ON` on the learn topic and resolves on the next `learned_ir_code`
-message, ignoring any value held before. The ESPHome provider reports
+`learned_ir_code`, and a learn entity), never on manufacturer or model. Learning
+is a select `learn_ir_code` (the press publishes `ON`) or, on a newer bridge, a
+button `switch_learn_ir_code` (the press publishes that button's `payload_press`,
+or `payload_on` when discovery omitted `payload_press`). The HA `infrared`
+entities a newer bridge also announces are ignored. Learn resolves on the next
+`learned_ir_code` message, ignoring any value held before. The ESPHome provider reports
 `learn: false` and refuses `learn`.
 
 **Sources are declared, never inferred** (planning#460). A remote offers a

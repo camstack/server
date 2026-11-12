@@ -16,8 +16,6 @@ import type { MqttHaIrMatch } from '../mqtt-ha-ir-profiles.js'
 /** Longest train one MQTT code is asked to carry. */
 export const MQTT_HA_IR_MAX_TIMINGS = 512
 
-const LEARN_START_PAYLOAD = 'ON'
-
 export interface MqttHaIrBridgeDeps {
   readonly match: MqttHaIrMatch
   readonly publish: (topic: string, payload: string) => Promise<void>
@@ -136,7 +134,7 @@ export class MqttHaIrBridge {
       }
     })
     try {
-      await this.deps.publish(this.deps.match.learnTopic, LEARN_START_PAYLOAD)
+      await this.deps.publish(this.deps.match.learnTopic, this.deps.match.learnPayload)
     } catch (err: unknown) {
       this.waiter = null
       throw err

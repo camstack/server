@@ -8,7 +8,8 @@ component + `device_class` + unit, never by model (`mqtt-ha-domain-mapping.ts`);
 power / energy / voltage / current fold into `power-meter` (D951); battery is the
 `battery` cap. State is decoded per entity with its `value_template`
 (`mqtt-ha-template.ts`), so zigbee2mqtt's JSON topics and plain topics share a path.
-Not exposed: link quality, `update`/`select`/`number`/`lock`/`cover`, diagnostic and config entities.
+Not exposed: link quality, `update`/`select`/`number`/`lock`/`cover`, the HA
+`infrared` component, diagnostic and config entities.
 
 Integration settings must carry `mqttBrokerId` (id from Connectivity → MQTT brokers).
 

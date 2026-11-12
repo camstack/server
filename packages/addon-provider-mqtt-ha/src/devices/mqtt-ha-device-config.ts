@@ -79,6 +79,7 @@ function legacyEntity(config: MqttHaDeviceConfig): MqttHaEntity | null {
     valueTemplate: null,
     payloadOn: config.payloadOn,
     payloadOff: config.payloadOff,
+    payloadPress: null,
     stateOn: null,
     stateOff: null,
     uniqueId: null,

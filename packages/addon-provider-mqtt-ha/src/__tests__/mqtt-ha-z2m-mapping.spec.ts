@@ -7,8 +7,10 @@ import { planMqttHaDevice } from '../mqtt-ha-domain-mapping.js'
 import { planMqttHaContainer } from '../mqtt-ha-container-plan.js'
 import { adoptableMqttHaDevices, buildMqttHaDeviceCandidate } from '../mqtt-ha-discovery.js'
 import {
+  IR_TOPIC,
   bulbMessages,
   contactMessages,
+  irBlasterButtonMessages,
   irBlasterMessages,
   motionMessages,
   plugMessages,
@@ -287,6 +289,20 @@ describe('IR blaster profile', () => {
       expect.arrayContaining(['ir-transmitter', 'temperature-sensor', 'battery']),
     )
     expect(plan.members).toHaveLength(5)
+  })
+
+  it('a newer announcement (button learn, infrared components) is one ir-transmitter', () => {
+    const entities = parseAll(irBlasterButtonMessages())
+    expect(entities.map((e) => e.component)).not.toContain('infrared')
+    const button = entities.find((e) => e.component === 'button')
+    expect(button).toMatchObject({
+      commandTopic: `${IR_TOPIC}/set/learn_ir_code`,
+      payloadPress: 'PRESS',
+    })
+    const { plan } = planOf(irBlasterButtonMessages())
+    expect(plan.deviceType).toBe(DeviceType.Generic)
+    expect(plan.capabilities).toEqual(['ir-transmitter'])
+    expect(plan.members.map((e) => e.component).sort()).toEqual(['button', 'sensor', 'text'])
   })
 
   it('refuses the profile, and says why, when the code entity has a command_template', () => {

@@ -4,8 +4,9 @@ import { z } from 'zod'
  * HA MQTT discovery components this addon understands as entities. A device
  * trigger (`device_automation`) is folded into an `event` entity
  * (`mqtt-ha-device-trigger.ts`); everything else a bridge publishes (update,
- * number, lock, cover, …) is ignored. `text`, `select` and `button` carry
- * commands only a device profile consumes (`mqtt-ha-ir-profiles.ts`).
+ * number, lock, cover, the HA `infrared` component, …) is ignored. `text`,
+ * `select` and `button` carry commands only a device profile consumes
+ * (`mqtt-ha-ir-profiles.ts`).
  */
 export const MQTT_HA_COMPONENTS = [
   'sensor',
@@ -96,6 +97,8 @@ export const mqttHaEntitySchema = z.object({
   /** Payload sent to turn the entity on (command side). */
   payloadOn: z.string(),
   payloadOff: z.string(),
+  /** Button `payload_press`. Null when discovery did not set one. */
+  payloadPress: z.string().nullable().default(null),
   /** State payload that reads as on; falls back to `payloadOn`. */
   stateOn: z.string().nullable(),
   stateOff: z.string().nullable(),

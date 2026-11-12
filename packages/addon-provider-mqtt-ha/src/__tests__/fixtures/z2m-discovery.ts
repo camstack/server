@@ -569,3 +569,108 @@ export function irBlasterMessages(options: IrBlasterOptions = {}): readonly Disc
       : []),
   ]
 }
+
+/**
+ * The same blaster as a newer Zigbee2MQTT announces it. Learning is a button
+ * (`switch_learn_ir_code`, the binary expose renamed and retyped), and the
+ * pulse train is two `infrared` entities this provider does not drive.
+ * `payloadPress` defaults to a value other than the select's `ON`, so a test
+ * can see that the press published the button's payload.
+ */
+export function irBlasterButtonMessages(options?: {
+  readonly payloadPress?: string
+}): readonly DiscoveryMessage[] {
+  const payloadPress = options?.payloadPress ?? 'PRESS'
+  const base = {
+    ...availability(IR_FRIENDLY),
+    device: device(IR_IEEE, IR_FRIENDLY, 'Acme', 'IR remote blaster'),
+    origin: IR_ORIGIN,
+  }
+  return [
+    {
+      component: 'text',
+      objectId: `${IR_IEEE}_ir_code_to_send`,
+      payload: {
+        ...base,
+        name: 'IR code to send',
+        unique_id: `${IR_IEEE}_ir_code_to_send_zigbee2mqtt`,
+        command_topic: `${IR_TOPIC}/set/ir_code_to_send`,
+        entity_category: 'config',
+      },
+    },
+    {
+      component: 'button',
+      objectId: `${IR_IEEE}_switch_learn_ir_code`,
+      payload: {
+        ...base,
+        name: 'Learn IR code',
+        unique_id: `${IR_IEEE}_switch_learn_ir_code_zigbee2mqtt`,
+        command_topic: `${IR_TOPIC}/set/learn_ir_code`,
+        payload_press: payloadPress,
+        payload_on: 'ON',
+        payload_off: 'OFF',
+        entity_category: 'config',
+      },
+    },
+    {
+      component: 'sensor',
+      objectId: `${IR_IEEE}_learned_ir_code`,
+      payload: {
+        ...base,
+        name: 'Learned IR code',
+        unique_id: `${IR_IEEE}_learned_ir_code_zigbee2mqtt`,
+        state_topic: IR_TOPIC,
+        value_template: '{{ value_json.learned_ir_code }}',
+      },
+    },
+    {
+      component: 'infrared',
+      objectId: `${IR_IEEE}_learned_ir_timings`,
+      payload: {
+        ...base,
+        name: 'Learned IR timings',
+        unique_id: `${IR_IEEE}_learned_ir_timings_zigbee2mqtt`,
+        schema: 'receiver',
+        state_topic: IR_TOPIC,
+        value_template: '{{ value_json.learned_ir_timings | default(None) | tojson }}',
+      },
+    },
+    {
+      component: 'infrared',
+      objectId: `${IR_IEEE}_ir_emitter`,
+      payload: {
+        ...base,
+        name: 'IR emitter',
+        unique_id: `${IR_IEEE}_ir_emitter_zigbee2mqtt`,
+        schema: 'emitter',
+        command_topic: `${IR_TOPIC}/set/ir_emitter`,
+      },
+    },
+    {
+      component: 'sensor',
+      objectId: `${IR_IEEE}_linkquality`,
+      payload: {
+        ...base,
+        name: 'Linkquality',
+        unique_id: `${IR_IEEE}_linkquality_zigbee2mqtt`,
+        state_topic: IR_TOPIC,
+        unit_of_measurement: 'lqi',
+        value_template: '{{ value_json.linkquality }}',
+        entity_category: 'diagnostic',
+      },
+    },
+    {
+      component: 'sensor',
+      objectId: `${IR_IEEE}_last_seen`,
+      payload: {
+        ...base,
+        name: 'Last seen',
+        unique_id: `${IR_IEEE}_last_seen_zigbee2mqtt`,
+        state_topic: IR_TOPIC,
+        value_template: '{{ value_json.last_seen }}',
+        device_class: 'timestamp',
+        entity_category: 'diagnostic',
+      },
+    },
+  ]
+}

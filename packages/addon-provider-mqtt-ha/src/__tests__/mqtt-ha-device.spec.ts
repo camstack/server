@@ -15,6 +15,7 @@ import {
   plugMessages,
   remoteMessages,
   contactMessages,
+  irBlasterButtonMessages,
   irBlasterMessages,
   IR_TOPIC,
   triggerMessage,
@@ -413,6 +414,39 @@ describe('MqttHaDevice on a zigbee2mqtt IR blaster', () => {
     await expect(provider.learn({ timeoutMs: 20 })).rejects.toMatchObject({
       i18nCode: 'ir-transmitter.learn-timeout',
     })
+  })
+
+  it('learn on the button announcement publishes that button payload_press', async () => {
+    const messages = irBlasterButtonMessages({ payloadPress: 'PRESS' })
+    const published: [string, string][] = []
+    mqttHaStateGateway.setPublisher(async ({ topic, payload }) => {
+      published.push([topic, payload])
+    })
+    const plan = planMqttHaDevice(groupEntitiesByDevice(entitiesOf(messages))[0]!)!
+    expect(plan.capabilities).toEqual(['ir-transmitter'])
+    const h = build(plan.deviceType, configOf(messages))
+    await h.device.onActivate()
+    const provider = h.providers.get('ir-transmitter') as IrProvider
+    const pending = provider.learn({ timeoutMs: 30 })
+    pending.catch(() => undefined)
+    await vi.waitFor(() => expect(published).toHaveLength(1))
+    expect(published).toEqual([[`${IR_TOPIC}/set/learn_ir_code`, 'PRESS']])
+  })
+
+  it('a button that omits payload_press publishes payload_on', async () => {
+    const messages = irBlasterButtonMessages({ payloadPress: '' })
+    const published: [string, string][] = []
+    mqttHaStateGateway.setPublisher(async ({ topic, payload }) => {
+      published.push([topic, payload])
+    })
+    const plan = planMqttHaDevice(groupEntitiesByDevice(entitiesOf(messages))[0]!)!
+    const h = build(plan.deviceType, configOf(messages))
+    await h.device.onActivate()
+    const provider = h.providers.get('ir-transmitter') as IrProvider
+    const pending = provider.learn({ timeoutMs: 30 })
+    pending.catch(() => undefined)
+    await vi.waitFor(() => expect(published).toHaveLength(1))
+    expect(published).toEqual([[`${IR_TOPIC}/set/learn_ir_code`, 'ON']])
   })
 
   it('learn refuses an undecodable code with a typed error', async () => {

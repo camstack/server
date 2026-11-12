@@ -142,6 +142,56 @@ describe('parseDiscoveryConfigPayload', () => {
     ).toBe('remove')
   })
 
+  it('ignores an infrared component instead of reading it as a sensor', () => {
+    expect(
+      parseDiscoveryConfigPayload({
+        brokerId: 'mqtt_001',
+        component: 'infrared',
+        objectId: '0xf84477fffe3deca0_ir_emitter',
+        payload: JSON.stringify({
+          schema: 'emitter',
+          name: 'IR emitter',
+          command_topic: 'zigbee2mqtt/blaster/set/ir_emitter',
+          unique_id: '0xf84477fffe3deca0_ir_emitter_zigbee2mqtt',
+        }),
+      }),
+    ).toBeNull()
+    expect(
+      parseDiscoveryConfigPayload({
+        brokerId: 'mqtt_001',
+        component: 'infrared',
+        objectId: '0xf84477fffe3deca0_learned_ir_timings',
+        payload: JSON.stringify({
+          schema: 'receiver',
+          name: 'Learned IR timings',
+          state_topic: 'zigbee2mqtt/blaster',
+          value_template: '{{ value_json.learned_ir_timings }}',
+          unique_id: '0xf84477fffe3deca0_learned_ir_timings_zigbee2mqtt',
+        }),
+      }),
+    ).toBeNull()
+  })
+
+  it('reads a button command topic and payload_press', () => {
+    const entity = parseDiscoveryConfigPayload({
+      brokerId: 'mqtt_001',
+      component: 'button',
+      objectId: '0xf84477fffe3deca0_switch_learn_ir_code',
+      payload: JSON.stringify({
+        name: 'Learn IR code',
+        command_topic: 'zigbee2mqtt/blaster/set/learn_ir_code',
+        payload_press: 'PRESS',
+        unique_id: '0xf84477fffe3deca0_switch_learn_ir_code_zigbee2mqtt',
+      }),
+    })
+    expect(entity).toMatchObject({
+      component: 'button',
+      commandTopic: 'zigbee2mqtt/blaster/set/learn_ir_code',
+      payloadPress: 'PRESS',
+      stateTopic: null,
+    })
+  })
+
   it('skips unsupported components', () => {
     expect(
       parseDiscoveryConfigPayload({
