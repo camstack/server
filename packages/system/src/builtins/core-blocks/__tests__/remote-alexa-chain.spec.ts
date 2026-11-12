@@ -54,6 +54,7 @@ function chain() {
     reportedStatus: async () => null,
     runningState: async () => null,
     plugOn: async () => null,
+    nativeFormats: async () => [],
     slice: { devices: async () => [], publish: async () => undefined },
     hasNative: () => false,
     plugDeviceOf: async () => null,

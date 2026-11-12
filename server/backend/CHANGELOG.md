@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A kind that declares its own role (an Alexa Echo target) is no longer treated as bringing devices because the addon's manifest says so; creating Echo targets works again
+- A remote sends a stored native IR code verbatim to a transmitter that replays its format
 
 ## [1.2.847] - 2026-11-12
 

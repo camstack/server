@@ -10,6 +10,7 @@
  * addon.
  */
 import {
+  type IrNativeFormat,
   type AddonApi,
   type AddonContext,
   DeviceType,
@@ -176,6 +177,27 @@ export function plugOnOver(
   }
 }
 
+/** The native code formats a transmitter replays; empty when it does not answer. */
+export function nativeFormatsOver(
+  api: () => AddonApi | undefined,
+  logger: IScopedLogger,
+): (transmitterId: number) => Promise<readonly IrNativeFormat[]> {
+  return async (transmitterId) => {
+    const current = api()
+    if (current === undefined) return []
+    try {
+      const info = await current.irTransmitter.getInfo.query({ deviceId: transmitterId })
+      return info.formats
+    } catch (err: unknown) {
+      logger.debug('remote: the transmitter did not report its formats, sending a pulse train', {
+        tags: { deviceId: transmitterId },
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+      return []
+    }
+  }
+}
+
 /** The devices whose remote configuration points at a template. */
 export function templateUsageOver(
   settings: Pick<DeviceSettings, 'listDeviceStoreIds' | 'readDeviceStoreBatch'>,
@@ -325,6 +347,7 @@ export function buildRemoteRuntime(deps: RemoteRuntimeDeps): RemoteRuntime {
     },
     reportedStatus: reportedStatusOver(deps.api, deps.logger.child('remote')),
     runningState: runningStateOver(deps.api, deps.logger.child('remote')),
+    nativeFormats: nativeFormatsOver(deps.api, deps.logger.child('remote')),
     plugOn: plugOnOver(deps.api, deps.logger.child('remote')),
     assumptions: remoteAssumptionStoreOver(deps.settings, deps.logger.child('remote')),
     slice: remoteSliceWriterOver(deps.settings, deps.api),

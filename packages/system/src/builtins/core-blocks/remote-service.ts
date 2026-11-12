@@ -51,6 +51,8 @@ import {
   remoteSourceSteps,
   resolveRemoteSource,
   toTimings,
+  type IrNativeFormat,
+  type IrPayload,
 } from '@camstack/types'
 
 /** The cap and method an infrared source's code goes out through. */
@@ -94,6 +96,8 @@ export interface RemoteServiceDeps {
   plugDeviceOf(deviceId: number): Promise<number | null>
   /** Runs the action a role is bound to. Throws when the call fails. */
   invoke(call: CapCall): Promise<void>
+  /** The native code formats the transmitter replays verbatim; empty when unknown or unreachable. */
+  nativeFormats(transmitterId: number): Promise<readonly IrNativeFormat[]>
   templateExists(templateId: string): Promise<boolean>
   isMediaPlayer(deviceId: number): Promise<boolean>
   /** The native media-player slice, or null when no running source answers. */
@@ -690,13 +694,13 @@ export class RemoteService implements IRemoteProvider {
       }
     }
     return this.withLock(deviceId, async () => {
-      const { timings, settings } = toTimings(source.payload)
+      const args = await this.irSendArgs(transmitterId, source.payload)
       try {
         await this.deps.invoke({
           deviceId: transmitterId,
           cap: IR_TRANSMITTER_CAP,
           method: IR_SEND_METHOD,
-          args: { timings, settings },
+          args,
         })
       } catch (err: unknown) {
         this.deps.logger.warn('remote: the infrared source failed to send, nothing was assumed', {
@@ -713,6 +717,21 @@ export class RemoteService implements IRemoteProvider {
       await this.refreshSlice(deviceId)
       return { status: 'sent', sends: 1 }
     })
+  }
+
+  /** A native code goes verbatim to a transmitter that replays its format; anything else as a pulse train. */
+  private async irSendArgs(
+    transmitterId: number,
+    payload: IrPayload,
+  ): Promise<Record<string, unknown>> {
+    if (payload.kind === 'native') {
+      const formats = await this.deps.nativeFormats(transmitterId)
+      if (formats.includes(payload.format)) {
+        return { native: { format: payload.format, code: payload.code } }
+      }
+    }
+    const { timings, settings } = toTimings(payload)
+    return { timings, settings }
   }
 
   private async forgetSource(deviceId: number): Promise<void> {

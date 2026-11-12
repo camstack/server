@@ -57,6 +57,8 @@ function world(
     /** Holds the nth send (1-based) until released: a press in flight. */
     readonly hold?: { readonly at: number; readonly until: Promise<void> }
     readonly lockTimeoutMs?: number
+    /** Native formats the transmitter reports in getInfo. */
+    readonly formats?: readonly 'tuya'[]
     readonly reported?: MediaPlayerStatus | null
     readonly templates?: readonly string[]
     readonly mediaPlayer?: boolean
@@ -99,6 +101,7 @@ function world(
         throw new Error('board is off')
       }
     },
+    nativeFormats: async () => options.formats ?? [],
     templateExists: async (id) => (options.templates ?? ['tpl']).includes(id),
     isMediaPlayer: async () => {
       if (options.reads) options.reads.count += 1
@@ -922,6 +925,33 @@ describe('declared sources (planning#460)', () => {
         { name: 'HDMI 2', kind: 'ir' },
       ],
     })
+  })
+
+  const NATIVE: RemoteSource = {
+    kind: 'ir',
+    id: 'tv',
+    name: 'Native TV',
+    transmitterId: 7,
+    payload: { kind: 'native', format: 'tuya', code: 'AxAAIABAAw==' },
+  }
+
+  it('a native source goes verbatim to a transmitter that replays its format', async () => {
+    const w = world(declared({ sources: [RAI1, NATIVE] }), { formats: ['tuya'] })
+    expect(await select(w, 'Native TV')).toEqual({ status: 'sent', sends: 1 })
+    expect(w.calls).toEqual([
+      {
+        deviceId: 7,
+        cap: 'ir-transmitter',
+        method: 'send',
+        args: { native: { format: 'tuya', code: 'AxAAIABAAw==' } },
+      },
+    ])
+  })
+
+  it('a native source falls back to timings on a transmitter that does not replay its format', async () => {
+    const w = world(declared({ sources: [RAI1, NATIVE] }), { formats: [] })
+    expect(await select(w, 'Native TV')).toEqual({ status: 'sent', sends: 1 })
+    expect(w.calls[0]?.args).toEqual({ timings: [16, -32, 16, -32], settings: {} })
   })
 
   it('an infrared source with no emitter goes through the remote default transmitter', async () => {
