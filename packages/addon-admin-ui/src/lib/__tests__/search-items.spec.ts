@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DeviceType, type DeviceInfo } from '@camstack/types'
+import { DeviceRole, DeviceType, type DeviceInfo } from '@camstack/types'
 import { deviceTypeMeta } from '@camstack/ui-library'
 import { Camera, GitBranch } from 'lucide-react'
 import type { AddonPageInfo } from '../../layouts/AddonPageLoader'
@@ -139,7 +139,7 @@ describe('buildDeviceSearchItems', () => {
     expect(item?.keywords).not.toContain('102')
   })
 
-  it('carries the type icon from the single ui-library DEVICE_TYPE_META source — not a second map', () => {
+  it('carries the shared type + role icon — not a second map', () => {
     const [camera] = buildDeviceSearchItems([device({ id: 1, type: DeviceType.Camera })])
     const [lock] = buildDeviceSearchItems([device({ id: 2, type: DeviceType.Lock })])
     const [siren] = buildDeviceSearchItems([device({ id: 3, type: DeviceType.Siren })])
@@ -156,6 +156,15 @@ describe('buildDeviceSearchItems', () => {
     // device's OWN type rather than a single hardcoded fallback.
     expect(lock?.icon).not.toBe(siren?.icon)
     expect(camera?.icon).not.toBe(lock?.icon)
+  })
+
+  it('refines the icon by role: a switch with the light role carries the light icon', () => {
+    const [plain] = buildDeviceSearchItems([device({ id: 4, type: DeviceType.Switch })])
+    const [light] = buildDeviceSearchItems([
+      device({ id: 5, type: DeviceType.Switch, role: DeviceRole.SwitchLight }),
+    ])
+    expect(light?.icon).toBe(deviceTypeMeta(DeviceType.Light).icon)
+    expect(plain?.icon).toBe(deviceTypeMeta(DeviceType.Switch).icon)
   })
 
   it('folds stableId, addonId and a non-null location into keywords, dropping blanks', () => {

@@ -13,7 +13,7 @@ import {
   resolveDeviceLabel,
   resolveParentNames,
   deviceIntegrationResolver,
-  deviceTypeMeta,
+  deviceLeadIcon,
 } from '@camstack/ui-library'
 import type { AddonPageInfo } from '../layouts/AddonPageLoader'
 import { integrationDetailUrl } from './integration-instance-selection'
@@ -130,11 +130,9 @@ export function buildDeviceSearchItems(
         integrationName,
       ].filter((v): v is string => v.length > 0),
       path: `/devices/${idText}`,
-      // Same type→icon single source of truth the Devices page filter and
-      // device cards already render from (`DEVICE_TYPE_META` in
-      // `@camstack/ui-library`) — reused here rather than a second map that
-      // would drift the day a `DeviceType` is added or re-iconed.
-      icon: deviceTypeMeta(device.type).icon,
+      // The same lead icon the device's row and card draw: the operator's
+      // override, else the shared type + role resolver — never a second map.
+      icon: deviceLeadIcon(device),
     }
   })
 }

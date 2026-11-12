@@ -162,7 +162,7 @@ export function UnassignedTable({
         const ghost = unregisteredLocationOf(device, locations)
         return (
           <span className="flex items-center gap-1.5">
-            <DeviceTypeIcon type={device.type} />
+            <DeviceTypeIcon type={device.type} role={device.role} />
             <Link
               to={`/devices/${String(device.id)}`}
               className="truncate text-xs text-foreground hover:underline"

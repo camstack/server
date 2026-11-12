@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import { useDeviceLabel } from '@camstack/ui-library'
+import { deviceIconGlyph, useDeviceLabel } from '@camstack/ui-library'
 import i18n from '../../i18n/index'
 import { siteDeviceFields, type SiteDevice } from './site-locations'
 /**
@@ -9,87 +9,16 @@ import { siteDeviceFields, type SiteDevice } from './site-locations'
  * on both surfaces — an operator moving a row from the table into a card must
  * recognise it there, and two icon vocabularies would break that.
  */
-import {
-  Activity,
-  AirVent,
-  AlarmSmoke,
-  ArrowUpCircle,
-  BellRing,
-  Blinds,
-  Bot,
-  Boxes,
-  Camera,
-  CircleDot,
-  CloudSun,
-  Droplet,
-  Droplets,
-  Fan,
-  Flame,
-  Image,
-  Lightbulb,
-  Lock,
-  type LucideIcon,
-  Router,
-  ScrollText,
-  ShieldAlert,
-  Siren,
-  SlidersHorizontal,
-  Speaker,
-  Thermometer,
-  ToggleRight,
-  Tractor,
-  UserRound,
-  Workflow,
-  Zap,
-} from 'lucide-react'
-
-/**
- * `DeviceType` → icon. Keyed by the WIRE value (the enum's string), not by the
- * enum member, because the page reads `String(device.type)` off a slim
- * projection and a provider is free to stamp a type this map has never seen.
- * An unknown type falls back rather than rendering nothing — a row with no
- * icon reads as a broken row.
- */
-const DEVICE_TYPE_ICONS: Readonly<Record<string, LucideIcon>> = {
-  camera: Camera,
-  hub: Router,
-  container: Boxes,
-  light: Lightbulb,
-  siren: Siren,
-  switch: ToggleRight,
-  sensor: Activity,
-  thermostat: Thermometer,
-  climate: AirVent,
-  button: CircleDot,
-  'event-emitter': Zap,
-  update: ArrowUpCircle,
-  notifier: BellRing,
-  script: ScrollText,
-  automation: Workflow,
-  lock: Lock,
-  cover: Blinds,
-  valve: Droplet,
-  humidifier: Droplets,
-  'water-heater': Flame,
-  fan: Fan,
-  'media-player': Speaker,
-  'alarm-panel': ShieldAlert,
-  control: SlidersHorizontal,
-  presence: UserRound,
-  weather: CloudSun,
-  vacuum: Bot,
-  'lawn-mower': Tractor,
-  image: Image,
-  smoke: AlarmSmoke,
-}
-
 export interface DeviceTypeIconProps {
   readonly type: string
+  /** The device's role, when it has one — it refines the type's icon (`deviceIconKey`). */
+  readonly role?: string | null
   readonly className?: string
 }
 
-export function DeviceTypeIcon({ type, className }: DeviceTypeIconProps) {
-  const Icon = DEVICE_TYPE_ICONS[type] ?? CircleDot
+/** The device's icon from the shared type + role resolver — the same one cards, rows and the viewer use. */
+export function DeviceTypeIcon({ type, role, className }: DeviceTypeIconProps) {
+  const Icon = deviceIconGlyph(type, role)
   return (
     <Icon
       aria-hidden="true"

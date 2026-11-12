@@ -16,7 +16,7 @@ import {
   DeviceHistoryView,
   type DeviceNameFields,
   DishwasherOptionsPanel,
-  deviceTypeMetaOf,
+  deviceLeadIcon,
   getPhaseVisual,
   heroLang,
   KebabMenu,
@@ -27,6 +27,7 @@ import {
   RunningBadge,
   resolveContainerPrimary,
   resolveDeviceIntegration,
+  useRoleDisplayDefaults,
   SNAPSHOT_MEDIA_PATH,
   StatusBadge,
   useAddonsRestartAddon,
@@ -184,7 +185,6 @@ const COMMON_SHORTCUTS: readonly CommonShortcutConfig[] = [
 export function DeviceDetailPage() {
   const { t, i18n } = useTranslation()
   const { resolvedMode } = useThemeMode()
-  const uiText = useUiText()
   const params = useParams<{ deviceId: string }>()
   const deviceId = Number(params.deviceId)
   const isValidDeviceId = Number.isFinite(deviceId)
@@ -337,7 +337,9 @@ export function DeviceDetailPage() {
   const device = deviceData
   const storedName = String(device?.name ?? params.deviceId ?? 'Device')
   const isOnline = device?.online === true
-  const status = isOnline ? 'online' : 'offline'
+  // Only an ANSWERED offline is said: reachable is the normal state and the
+  // admin never prints "Online", and a device still loading is not offline (D315).
+  const isOffline = device?.online === false
   const provider = String(device?.addonId ?? 'rtsp')
   const capabilities = device?.features ?? []
   const dishwasherBindings = useDeviceManagerGetBindings({ deviceId })
@@ -693,7 +695,13 @@ export function DeviceDetailPage() {
   )
   const runningBadge =
     runningSlice === undefined || runningSlice.running === null ? null : runningSlice.running
-  const TypeIcon = deviceTypeMetaOf(deviceTypeStr ?? 'unknown', uiText).icon
+  const roleDisplayDefaults = useRoleDisplayDefaults()
+  // The header draws the same lead icon as the device's row and card: the
+  // operator's override, then the per-role default, then type + role.
+  const TypeIcon = deviceLeadIcon(
+    { type: deviceTypeStr ?? 'unknown', role: device?.role ?? null, display: device?.display },
+    roleDisplayDefaults,
+  )
 
   /**
    * Manual snapshot helper — fetched on demand from the kebab menu.
@@ -1013,7 +1021,7 @@ export function DeviceDetailPage() {
               <h1 className="text-sm sm:text-base font-semibold text-foreground truncate">
                 {name}
               </h1>
-              <StatusBadge status={status} />
+              {isOffline && <StatusBadge status="offline" />}
               {isBatteryOperated && <BatteryBadge status={batteryStatus} variant="full" />}
               <NetworkLinkBadge status={networkLink} />
             </div>

@@ -353,7 +353,7 @@ function MemberCell({ row, onToggle }: MemberCellProps) {
         // Keeps the name column aligned whether or not a device has companions.
         <span aria-hidden="true" className="w-[1.35rem] shrink-0" />
       )}
-      <DeviceTypeIcon type={device.type} />
+      <DeviceTypeIcon type={device.type} role={device.role} />
       <Link
         to={`/devices/${String(device.id)}`}
         className="min-w-0 truncate text-xs text-foreground hover:underline"
@@ -375,7 +375,11 @@ function AccessoryCell({ row }: AccessoryCellProps) {
       <span aria-hidden="true" className="text-[10px] text-foreground-subtle">
         └
       </span>
-      <DeviceTypeIcon type={device.type} className="h-3 w-3 shrink-0 text-foreground-subtle" />
+      <DeviceTypeIcon
+        type={device.type}
+        role={device.role}
+        className="h-3 w-3 shrink-0 text-foreground-subtle"
+      />
       <Link
         to={`/devices/${String(device.id)}`}
         className="min-w-0 truncate text-xs text-foreground-muted hover:underline"

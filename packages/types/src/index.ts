@@ -1423,6 +1423,15 @@ export type {
 // The ONE icon catalog (D854): every lucide icon both surfaces can draw. Icons
 // are picked and stored by catalog key everywhere — a device's display override,
 // a location, a site zone, a viewer accessory, an `icon` settings field.
+// THE icon of a device, from its type refined by its role — one table for admin and viewer.
+export {
+  DEVICE_ROLE_ICON,
+  DEVICE_TYPE_ICON,
+  deviceIconKey,
+  deviceRoleIconKey,
+  deviceTypeIconKey,
+} from './device/device-icon.js'
+export type { DeviceIconKey } from './device/device-icon.js'
 export type {
   IconCategoryId,
   IconEntry,

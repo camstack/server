@@ -126,6 +126,14 @@ export type {
   IRebootable,
   ITwoWayAudio,
 } from './features.js'
+export {
+  DEVICE_ROLE_ICON,
+  DEVICE_TYPE_ICON,
+  deviceIconKey,
+  deviceRoleIconKey,
+  deviceTypeIconKey,
+} from './device-icon.js'
+export type { DeviceIconKey } from './device-icon.js'
 export type {
   IconCategoryId,
   IconEntry,

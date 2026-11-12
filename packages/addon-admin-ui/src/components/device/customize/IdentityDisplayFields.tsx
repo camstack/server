@@ -8,6 +8,7 @@ import { DeviceType, baseUnitOf, unitDimension } from '@camstack/types'
 import {
   Button,
   ROLE_DESCRIPTOR,
+  deviceIconGlyph,
   deviceRoleMetaOf,
   deviceTypeMetaOf,
   resolveDisplayIcon,
@@ -93,7 +94,7 @@ export function IdentityDisplayFields({
   const builtIn =
     role !== null ? deviceRoleMetaOf(role, uiText) : deviceTypeMetaOf(device.type, uiText)
   const inherited = {
-    icon: roleDefaultIcon ?? builtIn.icon,
+    icon: roleDefaultIcon ?? deviceIconGlyph(device.type, role),
     label: roleDefaultIcon !== undefined ? String(roleDefaultIconKey) : builtIn.label,
   }
   const inheritedLabel =

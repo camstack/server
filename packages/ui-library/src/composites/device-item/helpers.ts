@@ -42,7 +42,7 @@ import type { DeviceNameForm } from '../device-name'
 import { stripDeviceParentPrefix } from '../device-name/format-device-name'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { resolveContainerPrimary } from '../device-controls/container-primary'
-import { deviceRoleMetaOf, deviceTypeMetaOf } from '../device-meta'
+import { deviceIconGlyph, deviceRoleMetaOf, deviceTypeMetaOf } from '../device-meta'
 import { defaultUiText, type UiTextFn } from '../../contexts/ui-text'
 import { resolveDisplayIcon } from '../icon-glyphs'
 
@@ -347,8 +347,8 @@ export function resolveFlags(props: DeviceItemProps): VariantDefaults {
  * for a year and read by nothing: this function went straight from the device
  * override to `DEVICE_ROLE_META`.
  */
-export function deviceLeadIcon(
-  device: DeviceItemDevice,
+export function deviceLeadIcon<D extends DeviceLeadIconSource>(
+  device: D,
   roleDefaults?: Readonly<Record<string, RoleDisplayDefault>>,
 ): LucideIcon {
   if (device.display?.icon) {
@@ -361,10 +361,12 @@ export function deviceLeadIcon(
       const fromRoleDefault = resolveDisplayIcon(roleDefaultKey)
       if (fromRoleDefault) return fromRoleDefault
     }
-    return deviceRoleMetaOf(device.role).icon
   }
-  return deviceTypeMetaOf(device.type).icon
+  return deviceIconGlyph(device.type, device.role)
 }
+
+/** What the lead icon reads off a device: its type, its role and the operator's override. */
+export type DeviceLeadIconSource = Pick<DeviceItemDevice, 'type' | 'role' | 'display'>
 
 /**
  * Role label for a device row, honouring an operator's per-device `display.label`

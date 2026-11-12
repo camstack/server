@@ -80,6 +80,8 @@ export {
   alarmDeviceSecureOnArm,
   alarmPatchLanded,
   canonicalIconKey,
+  deviceIconKey,
+  deviceTypeIconKey,
   buildDeviceEnrollmentLink,
   buildDeviceSignatureMessage,
   deviceRefusalFromMessage,
@@ -156,3 +158,4 @@ export {
 export type { ContainerPrimaryChildPreference } from './index.js'
 export type { PaletteReady, PaletteResult, PaletteEntryId, PalettePresetId } from './index.js'
 export type { RemoteRoleVocabEntry, VocabLocale } from './index.js'
+export type { DeviceIconKey } from './index.js'

@@ -147,7 +147,7 @@ function CameraLinksBlock({ camera, byId }: CameraLinksBlockProps) {
         const name = row.name ?? device?.name ?? `#${String(row.deviceId)}`
         return (
           <span className="flex items-center gap-1.5">
-            {device !== undefined && <DeviceTypeIcon type={device.type} />}
+            {device !== undefined && <DeviceTypeIcon type={device.type} role={device.role} />}
             <Link
               to={`/devices/${String(row.deviceId)}`}
               className="min-w-0 truncate text-xs text-foreground hover:underline"
@@ -201,7 +201,7 @@ function CameraLinksBlock({ camera, byId }: CameraLinksBlockProps) {
       data-testid={`camera-links-${String(camera.id)}`}
     >
       <header className={`${SECTION_HEADER} flex min-h-9 items-center gap-1.5`}>
-        <DeviceTypeIcon type={camera.type} />
+        <DeviceTypeIcon type={camera.type} role={camera.role} />
         <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
           <DeviceName device={siteDeviceFields(camera)} form="full" />
         </h2>

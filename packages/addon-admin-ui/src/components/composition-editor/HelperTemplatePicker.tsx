@@ -8,7 +8,7 @@ import {
   type GroupTemplateId,
   groupTemplate,
 } from '@camstack/types'
-import { deviceRoleMeta, deviceTypeMeta, GroupedTilePicker } from '@camstack/ui-library'
+import { deviceIconGlyph, GroupedTilePicker } from '@camstack/ui-library'
 import type { TFunction } from 'i18next'
 import { BarChart3, Blocks, Divide, Gauge, Minus, Plus, Sigma, TrendingUp, Zap } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -242,10 +242,7 @@ function tileOf(id: HelperPickerId, t: TFunction): PickerTile | null {
   const template = groupTemplate(id)
   if (template === null) return null
   const label = t(`helper.template.${id}`)
-  const Icon =
-    template.role === undefined
-      ? deviceTypeMeta(template.deviceType).icon
-      : deviceRoleMeta(template.role).icon
+  const Icon = deviceIconGlyph(template.deviceType, template.role)
   return {
     key: id,
     label,

@@ -60,7 +60,8 @@ export type {
   DeviceItemVariant,
   DeviceItemView,
 } from './helpers'
-export { childListName, deriveDeviceKind, stripParentNamePrefix } from './helpers'
+export type { DeviceLeadIconSource } from './helpers'
+export { childListName, deriveDeviceKind, deviceLeadIcon, stripParentNamePrefix } from './helpers'
 
 export function DeviceItem(props: DeviceItemProps): ReactNode {
   const t = useUiText()
