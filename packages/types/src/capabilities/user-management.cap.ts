@@ -269,8 +269,10 @@ export const userManagementCapability = {
           username: z.string(),
           scopes: z.array(TokenScopeSchema),
           /** The instance the link was made for, read from the SESSION.
-           *  Absent = the default instance. A route served per instance
-           *  compares it with the instance of its path (`oauthLinkServesInstance`). */
+           *  Absent = the default instance. `oauthLinkServesInstance` is the
+           *  helper a per-instance route calls to compare it with the instance
+           *  of its path; no route declares `perInstance` yet (the Alexa
+           *  per-instance route, T3, is the first consumer). */
           instanceId: z.string().optional(),
         })
         .nullable(),

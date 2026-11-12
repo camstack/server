@@ -4,8 +4,10 @@
  *
  * The DEFAULT instance has two spellings on the wire and one in the code: a
  * path with no instance segment and a link with no instance both mean it, and
- * its id is the addon id. Everything that compares instances goes through
- * {@link oauthLinkServesInstance}, so nobody compares `undefined` with an id.
+ * its id is the addon id. {@link oauthLinkServesInstance} is the one
+ * comparison a per-instance route is meant to call, so nobody compares
+ * `undefined` with an id. Nothing calls it yet: no route declares
+ * `perInstance` (the Alexa per-instance route, T3, is the first consumer).
  */
 
 /** An instance id as it may appear in a path or a query: no separator, no escape, bounded. */
