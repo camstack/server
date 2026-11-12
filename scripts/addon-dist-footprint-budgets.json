@@ -1,7 +1,7 @@
 {
   "addon-post-analysis:pipeline-analytics": {
-    "maxGrowthMb": 84,
-    "reason": "Measured +67 MB over the bare runner after ALL_CAPABILITY_DEFINITIONS left the bundle; it crept to +79.8-80.0 MB by 2026-11-06 (the notification-target instance reads add ~0.1 MB on top), and to +82.2 MB on 2026-11-09 when the heat-pump caps joined the inlined types schemas. The shared clip-model-registry chunk still evaluates ~44 MB of inlined types schemas through other barrel value imports; shrinking it is the follow-up, this budget stops it growing further.",
+    "maxGrowthMb": 85,
+    "reason": "Measured +67 MB over the bare runner after ALL_CAPABILITY_DEFINITIONS left the bundle; it crept to +79.8-80.0 MB by 2026-11-06 (the notification-target instance reads add ~0.1 MB on top), and to +82.2 MB on 2026-11-09 when the heat-pump caps joined the inlined types schemas. The shared clip-model-registry chunk still evaluates ~44 MB of inlined types schemas through other barrel value imports; shrinking it is the follow-up, this budget stops it growing further. 2026-11-12: 83.6 -> 84.1 MB (+0.5) when the device-command batch (D1022) added the settled-command intake, the device directory with type labels and their 80-line label table to the notification center; moving the vocabulary lookup and the settled-event schema to '@camstack/types/addon' was measured and changed nothing, so the growth is the addon's own code and data, not a barrel.",
     "expires": "2026-12-28"
   }
 }
