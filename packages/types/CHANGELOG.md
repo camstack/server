@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- An on-demand stream that stops because nobody is watching is not a stream outage.
+
 ## [1.2.551] - 2026-11-12
 
 ### Changed

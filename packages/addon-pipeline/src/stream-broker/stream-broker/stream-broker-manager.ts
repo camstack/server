@@ -686,7 +686,9 @@ export function resolveBrokerTier(
  *
  * Nothing emits a notifiable `stream.offline` faster. The rfc4571 clean-FIN
  * failure edge (`onTeardown`) sets `_status='error'` and reconnects; it does
- * not emit. Idle suspend emits `suspended` (discarded by NC).
+ * not emit. An idle teardown of a lazy source emits nothing either: the stop
+ * is the design, and the rebuild is not a recovery. The reason `suspended`
+ * is remembered only so the next packet is not announced as `recovered`.
  */
 const STREAM_STALE_TIMEOUT_MS = 120_000
 const STREAM_HEALTH_POLL_MS = 15_000
@@ -986,12 +988,10 @@ export class StreamBrokerManager {
    */
   private readonly streamHealthByBroker = new Map<string, boolean>()
   /**
-   * Why each broker last went UNhealthy. Read when it comes back so the
-   * recovery names the same kind of transition its outage did: a broker that
-   * went quiet because the last consumer left comes back `resumed`, not
-   * `recovered`. Without this, an intentional suspend/resume cycle emitted the
-   * same pair a two-minute outage does, and every consumer downstream had to
-   * guess which one it was looking at.
+   * Why each broker last went UNhealthy. Read when it comes back so a real
+   * outage recovers as `recovered`. An idle teardown is stored as `suspended`
+   * and emits nothing — neither the stop nor the rebuild — so a consumer
+   * never has to guess that the pair was intentional.
    */
   private readonly streamOfflineReasonByBroker = new Map<string, StreamHealthReason>()
   /**
@@ -5068,10 +5068,10 @@ export class StreamBrokerManager {
       // waiting on its source (motion wakes it before `native:slot-*` is
       // published) used to emit `stale-timeout` on the first sweep — NC
       // accepted it, then accepted the later `recovered` when packets
-      // arrived. Idle suspend still announces (`suspended`, discarded by
-      // NC) so a later resume is labelled `resumed` rather than
-      // `recovered`. Seed the map without emitting and without an offline
-      // reason; the first real packet then lands as `first-packet`.
+      // arrived. An idle suspend records `suspended` without emitting, so a
+      // later resume is not labelled `recovered`. Seed the map without
+      // emitting and without an offline reason; the first real packet of a
+      // stream that was never idle then lands as `first-packet`.
       if (wasHealthy === undefined && !isHealthy && !broker.suspended) {
         this.streamHealthByBroker.set(brokerId, false)
         continue
@@ -5100,16 +5100,19 @@ export class StreamBrokerManager {
       }
 
       if (!isHealthy) {
-        // Idle suspend — deliberate, per-broker lazy-dial telemetry.
+        // Idle teardown of an on-demand source. The session ended because
+        // nobody is watching — not an outage, so no `stream.offline`, and the
+        // reason is kept only so the rebuild is not announced as `recovered`.
         this.demandSince.delete(brokerId)
         this.streamOfflineReasonByBroker.set(brokerId, 'suspended')
-        this.emitStreamHealth(false, { ...context, reason: 'suspended' })
+        this.noteIdleTeardown(context)
         continue
       }
 
       // The broker is delivering again. Absence of a stored offline reason
       // means we never announced an outage for it (the never-online seed above),
-      // so the first healthy flip is `first-packet`.
+      // so the first healthy flip is `first-packet`. A stored `suspended` is
+      // an idle teardown: the rebuild emits nothing.
       this.streamOfflineReasonByBroker.delete(brokerId)
       this.demandSince.delete(brokerId)
       if (wasSleepSuppressed) {
@@ -5126,11 +5129,13 @@ export class StreamBrokerManager {
         void this.writeCameraStreamsSlice(deviceId, this.snapshotProfileSlots(deviceId))
         continue
       }
+      if (previousReason === 'suspended') {
+        this.noteIdleRebuild(context)
+        continue
+      }
       const reason: StreamHealthReason = isStreamOutageReason(previousReason)
         ? 'recovered'
-        : previousReason === 'suspended'
-          ? 'resumed'
-          : 'first-packet'
+        : 'first-packet'
       this.emitStreamHealth(true, { ...context, reason })
     }
     for (const [deviceId, context] of outageOpenedOn) this.announceDeviceOutage(deviceId, context)
@@ -5172,6 +5177,30 @@ export class StreamBrokerManager {
         meta: { camStreamId: context.camStreamId, presence, lastPacketAt },
       },
     )
+    void this.writeCameraStreamsSlice(context.deviceId, this.snapshotProfileSlots(context.deviceId))
+  }
+
+  /**
+   * The lazy source stopped because its session went idle. Say so and refresh
+   * the slice; do not emit `stream.offline`.
+   */
+  private noteIdleTeardown(context: StreamHealthEmitContext): void {
+    this.logger.info('lazy stream idled out — not an outage, no stream-offline', {
+      tags: { deviceId: context.deviceId },
+      meta: { camStreamId: context.camStreamId, sourceType: context.sourceType },
+    })
+    void this.writeCameraStreamsSlice(context.deviceId, this.snapshotProfileSlots(context.deviceId))
+  }
+
+  /**
+   * The lazy source dialled again after an idle teardown. Say so and refresh
+   * the slice; do not emit `stream.online`.
+   */
+  private noteIdleRebuild(context: StreamHealthEmitContext): void {
+    this.logger.info('lazy stream rebuilt after idle — not a recovery, no stream-online', {
+      tags: { deviceId: context.deviceId },
+      meta: { camStreamId: context.camStreamId, sourceType: context.sourceType },
+    })
     void this.writeCameraStreamsSlice(context.deviceId, this.snapshotProfileSlots(context.deviceId))
   }
 
@@ -5235,9 +5264,10 @@ export class StreamBrokerManager {
     }
     this.refreshBatteryFactsIfDue(deviceId, now)
     const probe = this.batteryProbe.get(deviceId)
-    // Only a battery camera whose slice was read is re-judged here. A resumed
-    // MAINS stream is quiet because it was idle, and its first packet is
-    // `resumed` — judging it now would invent the outage the suspend avoids.
+    // Only a battery camera whose slice was read is re-judged here. A mains
+    // stream that left idle is quiet because it was idle; its first packet
+    // emits nothing. Judging it now would invent the outage the idle skip
+    // avoids.
     if (probe?.state !== 'done' || probe.isBattery !== true || probe.facts === null) return
     const verdict = judgeStaleStream({
       battery: { facts: probe.facts },

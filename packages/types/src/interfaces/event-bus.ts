@@ -849,22 +849,25 @@ export interface TopologyNode {
  * Why a broker's stream health flipped — the discriminator that separates an
  * OUTAGE from an intentional state change.
  *
- * A `stream.offline` on its own says nothing about whether anything is wrong:
- * the same event is fired when a camera stops sending video AND when the last
- * consumer left and the broker suspended its dial on purpose. A consumer that
- * reads only the category cannot tell them apart, and the Notification Center
- * shipped exactly that bug — an operator notified that a stream went down
- * every time nobody was watching it.
+ * A `stream.offline` on its own says nothing about whether anything is wrong,
+ * so the reason is part of the payload. The broker emits an outage only for
+ * the reasons a consumer may notify on. An on-demand stream that stops
+ * because its session went idle is not offline: the broker emits no
+ * `stream.offline` and no matching `stream.online`. It remembers `suspended`
+ * only so the rebuild is not announced as `recovered`. `suspended` on a
+ * `stream.online` is still how an announced outage is closed when the last
+ * consumer leaves.
  *
  *  - `stale-timeout`    — no video packet for the broker's stale window
- *    (120 s). The ONLY outage. This is what a notification may act on.
- *  - `recovered`        — packets resumed after a `stale-timeout`. The
- *    matching end of an outage.
- *  - `first-packet`     — a broker's first ever packet. A stream coming up, not
- *    a recovery: there was no outage before it.
- *  - `suspended`        — the lazy-dial idle suspend (no demand). Deliberate.
- *  - `resumed`          — demand returned and the dial came back. The matching
- *    end of a `suspended`, and equally deliberate.
+ *    (120 s) while the stream was demanded. An outage.
+ *  - `recovered`        — packets resumed after an outage. The matching end.
+ *  - `first-packet`     — a broker's first ever packet, and it was never idle.
+ *    A stream coming up, not a recovery: there was no outage before it.
+ *  - `suspended`        — remembered for an idle teardown (not emitted as
+ *    offline). Also the reason on the `stream.online` that closes an outage
+ *    whose last consumer left.
+ *  - `resumed`          — the matching end of a `suspended`. The broker no
+ *    longer emits it; a rebuild after idle is silence.
  *  - `broker-destroyed` — the stream was unpublished/released. Deliberate.
  *
  * A BATTERY camera sleeping is none of these: a sleep or a plain wake emits no

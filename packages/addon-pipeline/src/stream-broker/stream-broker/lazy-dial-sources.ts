@@ -68,10 +68,9 @@ export function isLazyDialSource(sourceType: string): boolean {
  * consumed (`attachDerivedFeeder` / `DerivedFeederController`).
  *
  * Without this, `start()` latched `status:'streaming'` with `lastPacketAt=0`
- * and the health sweep labelled the idle derived `stale-timeout` — NC then
- * notified stream-offline/online on every restart for the camera's low
- * profile. Lazy-dial pulls already avoid that via `_suspended`; derived must
- * take the same path so the reason is `suspended` / `resumed` (discarded).
+ * and the health sweep labelled the idle derived `stale-timeout`. An idle
+ * derived takes the same path as a lazy pull: the sweep records the teardown
+ * and emits no `stream.offline`.
  */
 export function isDerivedOnDemandSource(source: {
   readonly type: string

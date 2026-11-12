@@ -2,11 +2,12 @@
  * A derived LOW must not notify stream-offline/online on restart.
  *
  * Two paths:
- *  1. Idle (no demand): `start()` registers `_suspended` so the health sweep
- *     labels `suspended` (discarded by NC), not `stale-timeout`.
+ *  1. Idle (no demand): `start()` registers `_suspended`. The health sweep
+ *     records the idle teardown and emits nothing — an idle derived is not
+ *     an outage.
  *  2. Demanded before first packet (motion wakes derived while its source
  *     is still unpublished): the sweep seeds unhealthy without emitting;
- *     the first packet is `first-packet` (discarded), never a
+ *     the first packet is `first-packet` (discarded by NC), never a
  *     `stale-timeout`/`recovered` pair.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -85,7 +86,11 @@ describe('derived idle health — no false stream-offline', () => {
     await broker.start(derivedPushSource())
     manager.runStreamHealthSweepForTest('102/derived:low', broker)
 
-    expect(events).toEqual([{ category: 'stream.offline', reason: 'suspended' }])
+    expect(events).toEqual([])
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining('idled out'),
+      expect.objectContaining({ tags: { deviceId: 102 } }),
+    )
     // Phantom redial must not fire on an intentionally idle derived.
     const redial = vi.spyOn(broker, 'redial')
     manager.runStreamHealthSweepForTest('102/derived:low', broker)
