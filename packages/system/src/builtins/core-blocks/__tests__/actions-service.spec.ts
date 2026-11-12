@@ -83,6 +83,7 @@ async function world(options?: {
   const store = new ActionsStore({
     actions: records.kind(coreBlocksRecordKinds.actions),
     links: records.kind(coreBlocksRecordKinds['action-links']),
+    logger: log.logger,
     now: () => clock,
     newId: () => `a${(ids += 1)}`,
   })
@@ -135,6 +136,12 @@ async function world(options?: {
     events,
     log,
     records,
+    /** Writes a row straight to the engine, past the kind's schema: what an older version stored. */
+    putRaw: async (id: string, data: Record<string, unknown>): Promise<void> => {
+      await w
+        .transportFor('core-blocks')
+        .put({ kind: coreBlocksRecordKinds.actions.name, record: { id, data } })
+    },
     advance: (ms: number): void => {
       clock += ms
     },
@@ -1029,5 +1036,64 @@ describe('actions — a device must offer the action it is told to run', () => {
     await expect(
       w.service.create({ action: { name: 'Open', steps: [OPEN] } }),
     ).resolves.toBeDefined()
+  })
+})
+
+describe('actions — a row stored with a step shape this version no longer reads', () => {
+  /** What an older version stored: a `cap` step, from before steps were stored by action id. */
+  const LEGACY_BODY = {
+    name: 'Feed the cat',
+    steps: [
+      {
+        kind: 'cap',
+        target: { kind: 'devices', ids: [616] },
+        cap: 'pet-feeder',
+        method: 'feed',
+        args: {},
+      },
+    ],
+    createdAt: 500,
+    updatedAt: 500,
+  }
+
+  it('lists the other actions, skips the old row and logs its id and the reason', async () => {
+    const w = await world()
+    const { action: good } = await w.service.create({ action: { name: 'Porch', steps: [STEP(7)] } })
+    await w.putRaw('legacy', LEGACY_BODY)
+
+    const listed = await w.service.list()
+    expect(listed.map((e) => e.id)).toEqual([good.id])
+    expect((await w.service.get({ actionId: 'internal:legacy', caller: ADMIN })).action).toBeNull()
+
+    const skipped = w.log.lines.filter((l) => l.message.startsWith('internal action skipped'))
+    expect(skipped.length).toBeGreaterThan(0)
+    expect(skipped[0]?.extras?.meta?.['actionId']).toBe('internal:legacy')
+    expect(String(skipped[0]?.extras?.meta?.['reason'])).toContain('steps.0')
+  })
+
+  it('is overwritten by a save with a name and command steps, under the same id', async () => {
+    const w = await world()
+    await w.putRaw('legacy', LEGACY_BODY)
+
+    const { action } = await w.service.update({
+      actionId: 'internal:legacy',
+      action: { name: 'Feed the cat', steps: [STEP(616)] },
+    })
+
+    expect(action.id).toBe('internal:legacy')
+    const listed = await w.service.list()
+    expect(listed.map((e) => [e.id, e.steps])).toEqual([['internal:legacy', [STEP(616)]]])
+  })
+
+  it('refuses a partial patch of the old row, and a missing id is still not found', async () => {
+    const w = await world()
+    await w.putRaw('legacy', LEGACY_BODY)
+
+    await expect(
+      w.service.update({ actionId: 'internal:legacy', action: { name: 'Renamed' } }),
+    ).rejects.toThrow(/invalid-steps/)
+    await expect(
+      w.service.update({ actionId: 'internal:nope', action: { name: 'x', steps: [STEP(1)] } }),
+    ).rejects.toThrow(/not-found/)
   })
 })

@@ -167,6 +167,7 @@ export function buildActionsRuntime(deps: ActionsRuntimeDeps): ActionsRuntime {
   const store = new ActionsStore({
     actions: deps.records.kind(coreBlocksRecordKinds.actions),
     links: deps.records.kind(coreBlocksRecordKinds['action-links']),
+    logger: deps.logger.child('actions-store'),
   })
   const service = new ActionsService({
     store,

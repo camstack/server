@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A cap with no status block keeps its own getStatus: a device whose power source is grafted by customize answers its power source status again, and a settled device command is announced on the event bus.
 - Actions and schedulers store command steps (vocabulary action plus target) and refuse, at save, a device that does not offer the action; the old raw cap-call step and its migration are gone.
 - Saving an Action or a scheduler checks each named device against its own capability bindings before accepting a device command step
+- A stored Action whose steps are still raw capability calls is no longer read: it is left out of the list and logged with its id and the reason, and it is converted by saving its name and new command steps under the same id (`actions.update`), or by building it again in the editor.
 
 ## [1.2.848] - 2026-11-12
 

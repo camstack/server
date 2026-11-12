@@ -19,13 +19,15 @@ import {
   internalActionId,
   isInternalActionId,
   INTERNAL_ACTION_PREFIX,
+  type IScopedLogger,
   type RecordKindHandle,
 } from '@camstack/types'
-import type { ActionLinksRowBody, ActionRowBody } from './record-kinds.js'
+import { type ActionLinksRowBody, type ActionRowBody, ActionRowBodySchema } from './record-kinds.js'
 
 export interface ActionsStoreOptions {
   readonly actions: RecordKindHandle<ActionRowBody>
   readonly links: RecordKindHandle<ActionLinksRowBody>
+  readonly logger?: IScopedLogger
   readonly now?: () => number
   readonly newId?: () => string
 }
@@ -37,12 +39,14 @@ function uuidOf(actionId: string): string {
 export class ActionsStore {
   private readonly actions: RecordKindHandle<ActionRowBody>
   private readonly links: RecordKindHandle<ActionLinksRowBody>
+  private readonly logger: IScopedLogger | undefined
   private readonly now: () => number
   private readonly newId: () => string
 
   constructor(options: ActionsStoreOptions) {
     this.actions = options.actions
     this.links = options.links
+    this.logger = options.logger
     this.now = options.now ?? Date.now
     this.newId = options.newId ?? randomUUID
   }
@@ -63,12 +67,37 @@ export class ActionsStore {
     }
   }
 
+  /**
+   * A stored row is served only while it still parses. A row written under an
+   * older step shape (a `cap` step, from before steps were stored by action id)
+   * is skipped and logged, so it cannot break the list or reach a run; it stays
+   * on disk until the operator saves the action again from the editor, which
+   * overwrites it without reading its steps (`update`).
+   */
+  private readable(id: string, data: unknown): ActionEntry | null {
+    const parsed = ActionRowBodySchema.safeParse(data)
+    if (parsed.success) return ActionsStore.entryOf(id, parsed.data)
+    this.logger?.warn('internal action skipped — its stored body no longer parses; save it again', {
+      meta: {
+        actionId: internalActionId(id),
+        reason: parsed.error.issues
+          .slice(0, 3)
+          .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+          .join('; '),
+      },
+    })
+    return null
+  }
+
   async list(): Promise<ActionEntry[]> {
     const out: ActionEntry[] = []
     let cursor: string | undefined
     do {
       const page = await this.actions.query({ ...(cursor === undefined ? {} : { cursor }) })
-      for (const row of page.records) out.push(ActionsStore.entryOf(row.id, row.data))
+      for (const row of page.records) {
+        const entry = this.readable(row.id, row.data)
+        if (entry !== null) out.push(entry)
+      }
       cursor = page.nextCursor ?? undefined
     } while (cursor !== undefined)
     return out
@@ -77,7 +106,13 @@ export class ActionsStore {
   async get(actionId: string): Promise<ActionEntry | null> {
     if (!isInternalActionId(actionId)) return null
     const row = await this.actions.get(uuidOf(actionId))
-    return row === null ? null : ActionsStore.entryOf(row.id, row.data)
+    return row === null ? null : this.readable(row.id, row.data)
+  }
+
+  /** Whether a row is stored under this id, readable or not. */
+  async exists(actionId: string): Promise<boolean> {
+    if (!isInternalActionId(actionId)) return false
+    return (await this.actions.get(uuidOf(actionId))) !== null
   }
 
   async create(input: ActionInput): Promise<ActionEntry> {

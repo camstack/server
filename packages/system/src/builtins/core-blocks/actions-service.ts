@@ -28,6 +28,8 @@ import {
   VocabActionError,
   type ActionEntry,
   ActionError,
+  CORE_BLOCKS_ADDON_ID,
+  IDLE_ACTION_STATUS,
   type ActionLinks,
   type ActionRunChanged,
   ACTION_RUN_MAX_MS,
@@ -676,9 +678,8 @@ export class ActionsService implements IActionsProvider {
     warnings?: UnitWarning[]
   }> {
     await this.requireInternal(input.actionId)
-    const existing = await this.store.get(input.actionId)
-    if (existing === null) throw new ActionError('not-found', `no action "${input.actionId}"`)
     const patch = input.action
+    const existing = await this.existingForUpdate(input.actionId, patch)
     // Only a save that WRITES steps is held to the ceiling; renaming an action stored over it must still work.
     if (patch.steps !== undefined)
       this.requireWithinCeiling(patch.steps, patch.name ?? existing.name)
@@ -702,6 +703,39 @@ export class ActionsService implements IActionsProvider {
       meta: { actionId: action.id },
     })
     return { action, ...(warnings.length > 0 ? { warnings } : {}) }
+  }
+
+  /**
+   * The action an update patches. A stored row that no longer parses (steps
+   * from an older shape) is not read: a save carrying a whole new body — name
+   * and steps — overwrites it under the same id, which is how the operator
+   * converts it from the editor. A partial patch of such a row is refused.
+   */
+  private async existingForUpdate(
+    actionId: string,
+    patch: Parameters<IActionsProvider['update']>[0]['action'],
+  ): Promise<ActionEntry> {
+    const existing = await this.store.get(actionId)
+    if (existing !== null) return existing
+    if (!(await this.store.exists(actionId)))
+      throw new ActionError('not-found', `no action "${actionId}"`)
+    if (patch.name === undefined || patch.steps === undefined)
+      throw new ActionError(
+        'invalid-steps',
+        `"${actionId}" is stored in a shape this version no longer reads — save it with a name and its steps`,
+      )
+    this.logger.info('internal action rewritten over a stored body that no longer parses', {
+      meta: { actionId },
+    })
+    return {
+      id: actionId,
+      name: patch.name,
+      addonId: CORE_BLOCKS_ADDON_ID,
+      source: 'internal',
+      readOnly: false,
+      steps: patch.steps,
+      status: IDLE_ACTION_STATUS,
+    }
   }
 
   /** A step naming a device whose own bindings lack its action's cap is refused at save (D12). */
