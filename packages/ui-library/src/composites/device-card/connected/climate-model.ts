@@ -12,6 +12,7 @@ import {
   type HeatingValveStatus,
   type HvacMode,
 } from '@camstack/types'
+import { climateOffersCooling } from '../../device-controls/climate-offers-cooling'
 import type { CardGlyph } from '../icons'
 import type { ClimateRole } from '../illustrations/ClimateRoleGlyph'
 import {
@@ -139,9 +140,13 @@ export function climateModelOf(input: ClimateModelInput): ClimateSceneModel | nu
   const range = climateRangeOf(climate, commands.targetRange)
   const target = range === null ? climate.target : null
   const current = climate.currentTemp
+  // A room above its target is cooled only by a device that CAN cool: a
+  // heat-only thermostat in auto just stops heating (idle). The cap reports no
+  // running action, so this derivation is the only source.
   const cooling =
     climate.mode === 'cool' ||
     ((climate.mode === 'auto' || climate.mode === 'heat_cool') &&
+      climateOffersCooling(climate.availableModes) &&
       target !== null &&
       current !== null &&
       target < current)

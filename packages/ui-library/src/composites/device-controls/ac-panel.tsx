@@ -6,15 +6,10 @@ import { useDeviceCapability } from '../../hooks/use-device-capability.js'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
 import { cn } from '../../lib/cn.js'
 import type { ControlPanelProps } from './types.js'
+import { climateOffersCooling } from './climate-offers-cooling.js'
 import { MODE_TEXT_COLOR, nextClimateTarget, resolveClimateTempStep } from './climate-panel.js'
 
-/** Modes that mean the device can cool, dry, or move air — an air conditioner. */
-const COOLING_MODES: ReadonlySet<HvacMode> = new Set(['cool', 'heat_cool', 'dry', 'fan_only'])
-
-/** A heater offers heat (and maybe auto/off) and none of the cooling modes. */
-export function climateOffersCooling(modes: readonly HvacMode[]): boolean {
-  return modes.some((mode) => COOLING_MODES.has(mode))
-}
+export { climateOffersCooling }
 
 /** Setpoint track bounds. Absent when the integration did not report both ends. */
 export function climateSetpointBounds(

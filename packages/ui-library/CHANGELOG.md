@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A switch with the role switch-light gets the light card (bulb and glow, no slider) and a bulb icon
 - A device card no longer shows a duration since 1970 when the change time is only a seed — including the offline line and a running cycle — and a temperature slider follows the display unit, storing the nearest step of the device's own unit.
+- A heat-only thermostat in auto above its target shows idle on the device card, never COOLING; cooling is derived only for a device that offers a cooling mode
 
 ## [1.2.434] - 2026-11-12
 
