@@ -389,6 +389,11 @@ export const DEVICE_ROLE_META: Record<DeviceRole, DeviceMetaEntry> = {
     labelKey: 'uiLibrary.deviceMeta.role.switchFan',
     labelFallback: 'Fan',
   },
+  [DeviceRole.SwitchLight]: {
+    icon: Lightbulb,
+    labelKey: 'uiLibrary.deviceMeta.role.switchLight',
+    labelFallback: 'On/off light',
+  },
   [DeviceRole.ClimateAc]: {
     icon: AirVent,
     labelKey: 'uiLibrary.deviceMeta.role.climateAc',

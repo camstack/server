@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The device card page opened by the viewer draws the card bare on a transparent page, so the viewer's sheet frames it
 - The heat-pump and water-heater device pages show the new device card.
+- Customize offers the switch role On/off light (switch-light) for a relay that drives a lamp
 
 ## [1.2.653] - 2026-11-12
 

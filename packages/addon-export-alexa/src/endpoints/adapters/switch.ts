@@ -1,4 +1,9 @@
-import { BrightnessStatusSchema, DeviceRole, SwitchStatusSchema } from '@camstack/types'
+import {
+  BrightnessStatusSchema,
+  DeviceRole,
+  isSwitchLight,
+  SwitchStatusSchema,
+} from '@camstack/types'
 import { handleSetBrightness } from '../../handlers/brightness-controller.js'
 import { handlePower } from '../../handlers/power-controller.js'
 import { iface, plainNumber } from './shared.js'
@@ -25,8 +30,10 @@ const BRIGHTNESS_DIRECTIVE: AdapterDirective = {
 }
 
 /** An outlet (D875: its source says so, e.g. HA `device_class: outlet`) is a
- *  smart plug; every other switch is a SWITCH. */
+ *  smart plug; a relay driving a lamp (`switch-light`) is a LIGHT with power
+ *  only; every other switch is a SWITCH. */
 function switchCategory(device: AdapterDevice): AlexaDisplayCategory {
+  if (isSwitchLight(device.type, device.role)) return 'LIGHT'
   return device.role === DeviceRole.Outlet ? 'SMARTPLUG' : 'SWITCH'
 }
 

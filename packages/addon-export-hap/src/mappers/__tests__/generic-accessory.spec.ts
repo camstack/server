@@ -20,7 +20,7 @@
  */
 
 import type { AddonContext, DeviceProxy } from '@camstack/types'
-import { applianceExport, DeviceType } from '@camstack/types'
+import { applianceExport, DeviceRole, DeviceType } from '@camstack/types'
 import type { CharacteristicWarning } from '@homebridge/hap-nodejs'
 import { Categories, Characteristic, Service } from '@homebridge/hap-nodejs'
 import { describe, expect, it } from 'vitest'
@@ -69,12 +69,13 @@ function makeProxy(
   caps: readonly string[],
   deviceType: DeviceType,
   caphandles: FakeProxy,
+  role: DeviceRole | null = null,
 ): FakeProxy {
   return {
     deviceId: DEVICE_ID,
     binding: { entries: caps.map((capName) => ({ capName })) },
     deviceManager: {
-      getDevice: async () => ({ id: DEVICE_ID, name: 'Presa kitchen', type: deviceType }),
+      getDevice: async () => ({ id: DEVICE_ID, name: 'Presa kitchen', type: deviceType, role }),
     },
     state: {},
     ...caphandles,
@@ -203,6 +204,48 @@ describe('the generic accessory', () => {
     expect(service?.getCharacteristic(Characteristic.Brightness).value).toBe(42)
     expect(serviceOfType(mapper.accessory, Service.Switch)).toBeUndefined()
     expect(mapper.accessory.category).toBe(Categories.LIGHTBULB)
+    await mapper.dispose()
+  })
+
+  it('publishes an on/off Lightbulb for a switch with the switch-light role', async () => {
+    const written: boolean[] = []
+    const proxy = makeProxy(
+      ['switch'],
+      DeviceType.Switch,
+      {
+        switch: {
+          getStatus: async () => ({ on: true }),
+          setState: async (input: { on: boolean }) => {
+            written.push(input.on)
+          },
+        },
+      },
+      DeviceRole.SwitchLight,
+    )
+    const mapper = await build(proxy)
+
+    const service = serviceOfType(mapper.accessory, Service.Lightbulb)
+    expect(service).toBeDefined()
+    expect(service?.getCharacteristic(Characteristic.On).value).toBe(true)
+    expect(service?.testCharacteristic(Characteristic.Brightness)).toBe(false)
+    expect(serviceOfType(mapper.accessory, Service.Switch)).toBeUndefined()
+    expect(mapper.accessory.category).toBe(Categories.LIGHTBULB)
+    await service?.getCharacteristic(Characteristic.On).handleSetRequest(false)
+    expect(written).toEqual([false])
+    await mapper.dispose()
+  })
+
+  it('keeps a switch with another role a Switch (an outlet is not a lamp)', async () => {
+    const proxy = makeProxy(
+      ['switch'],
+      DeviceType.Switch,
+      { switch: { getStatus: async () => ({ on: true }), setState: async () => undefined } },
+      DeviceRole.Outlet,
+    )
+    const mapper = await build(proxy)
+    expect(serviceOfType(mapper.accessory, Service.Switch)).toBeDefined()
+    expect(serviceOfType(mapper.accessory, Service.Lightbulb)).toBeUndefined()
+    expect(mapper.accessory.category).toBe(Categories.SWITCH)
     await mapper.dispose()
   })
 

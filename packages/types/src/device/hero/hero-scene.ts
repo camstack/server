@@ -137,6 +137,7 @@ export const HERO_SCENE_BY_ROLE = {
   [DeviceRole.Outlet]: 'plug',
   [DeviceRole.SwitchHeater]: 'heater',
   [DeviceRole.SwitchFan]: 'fan',
+  [DeviceRole.SwitchLight]: 'light',
   [DeviceRole.ClimateAc]: 'ac',
   [DeviceRole.ClimateThermostat]: 'inherit',
   [DeviceRole.ClimateFloor]: 'inherit',

@@ -35,6 +35,12 @@ describe('connectedCardKindOf — a card only for what the device IS (type + rol
     expect(connectedCardKindOf(DeviceType.Climate, null, ['switch'])).toBeNull()
   })
 
+  it('draws a switch-light as the light card, on/off only (no brightness bound)', () => {
+    expect(connectedCardKindOf(DeviceType.Switch, DeviceRole.SwitchLight, ['switch'])).toBe('light')
+    expect(connectedCardKindOf(DeviceType.Switch, DeviceRole.SwitchLight, [])).toBeNull()
+    expect(connectedCardKindOf(DeviceType.Switch, DeviceRole.Outlet, ['switch'])).toBe('plug')
+  })
+
   it('draws a switch-fan, and a fan whose power is a switch, as the fan card', () => {
     expect(connectedCardKindOf(DeviceType.Switch, DeviceRole.SwitchFan, ['switch'])).toBe('fan')
     expect(connectedCardKindOf(DeviceType.Fan, null, ['switch', 'fan-control'])).toBe('fan')

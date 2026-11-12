@@ -192,6 +192,15 @@ export const DEVICE_ROLE_NOUNS: readonly DeviceNounSpec[] = [
     aliases: [],
   },
   {
+    id: 'switch-light',
+    key: 'uiLibrary.deviceMeta.noun.role.switchLight',
+    en: 'On/off light',
+    it: 'Luce on/off',
+    shortEn: 'Light',
+    shortIt: 'Luce',
+    aliases: [],
+  },
+  {
     id: 'motion-sensor',
     key: 'uiLibrary.deviceMeta.noun.role.motionSensor',
     en: 'Motion sensor',

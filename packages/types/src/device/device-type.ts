@@ -387,6 +387,11 @@ export enum DeviceRole {
    *  with the switch's on/off only. Speed or oscillation appear only when the
    *  device also has a fan cap (D1033). */
   SwitchFan = 'switch-fan',
+  /** A relay driving an on/off-only lamp: drawn as a light (bulb and glow, no
+   *  slider), presented to the exports as a light with power only. Not a
+   *  `light` type: the provider owns the type, and a light implies brightness
+   *  or colour this relay lacks. */
+  SwitchLight = 'switch-light',
 
   // ── Climate sub-roles (the KIND of a `climate` device) ───
   /** Air conditioner / split unit: cooling, fan speed, louvres. */

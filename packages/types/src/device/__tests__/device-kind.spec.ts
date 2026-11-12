@@ -5,6 +5,7 @@ import {
   capAppliesToDeviceKind,
   climateRoleOf,
   isAirConditioner,
+  isSwitchLight,
 } from '../device-kind.js'
 import { DeviceRole, DeviceType } from '../device-type.js'
 import { resolveDeviceControlKind } from '../device-control-resolution.js'
@@ -72,6 +73,38 @@ describe('device kind (D1033)', () => {
         resolveDeviceControlKind(DeviceType.Switch, null),
       )
       expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchFan)).toBeNull()
+    })
+  })
+
+  describe('a switch with the light role (switch-light)', () => {
+    it('is drawn as a light: the bulb scene and the light look, on and off', () => {
+      expect(resolveHeroSceneId(DeviceRole.SwitchLight, DeviceType.Switch)).toBe('light')
+      for (const state of ['on', 'off'] as const) {
+        expect(resolveHeroLook(DeviceRole.SwitchLight, DeviceType.Switch, state)).toEqual(
+          resolveHeroLook(null, DeviceType.Light, state),
+        )
+      }
+    })
+
+    it("keeps the switch's on/off only: no brightness or colour row, the switch control", () => {
+      expect(resolveHeroLayout(DeviceType.Switch, DeviceRole.SwitchLight)).toEqual(
+        resolveHeroLayout(DeviceType.Switch, null),
+      )
+      expect(resolveHeroLayout(DeviceType.Switch, DeviceRole.SwitchLight).rows).not.toContain(
+        'brightness',
+      )
+      expect(resolveDeviceControlKind(DeviceType.Switch, DeviceRole.SwitchLight)).toBe(
+        resolveDeviceControlKind(DeviceType.Switch, null),
+      )
+      expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchLight)).toBeNull()
+    })
+
+    it('is told apart by one accessor: a switch with the role, nothing else', () => {
+      expect(isSwitchLight(DeviceType.Switch, DeviceRole.SwitchLight)).toBe(true)
+      expect(isSwitchLight(DeviceType.Switch, DeviceRole.Outlet)).toBe(false)
+      expect(isSwitchLight(DeviceType.Switch, null)).toBe(false)
+      expect(isSwitchLight(DeviceType.Light, null)).toBe(false)
+      expect(isSwitchLight(DeviceType.Light, DeviceRole.SwitchLight)).toBe(false)
     })
   })
 

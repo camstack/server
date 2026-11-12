@@ -30,7 +30,7 @@
  * IR LED, etc.) return a no-op handle.
  */
 
-import { DeviceType } from '@camstack/types'
+import { DeviceType, isSwitchLight } from '@camstack/types'
 import { Characteristic, Service } from '@homebridge/hap-nodejs'
 
 import type { BuilderContext, BuilderHandle } from '../types.js'
@@ -48,6 +48,7 @@ export async function buildChildSwitch(
   bctx: BuilderContext,
   subtype: string,
   deviceType: DeviceType,
+  role: string | null = null,
 ): Promise<BuilderHandle> {
   const { ctx, accessory, proxy, numericDeviceId, displayName } = bctx
   const log = ctx.logger.withTags({ deviceId: numericDeviceId })
@@ -69,7 +70,10 @@ export async function buildChildSwitch(
   // it as a light — wrong icon, wrong scenes, wrong Siri intents. Gate
   // on the child's DeviceType instead of the brightness cap alone.
   const isLightingDevice = deviceType === DeviceType.Light || deviceType === DeviceType.Generic
-  const useLightbulb = hasBrightness && isLightingDevice
+  const dimmable = hasBrightness && isLightingDevice
+  // A relay driving a lamp (`switch-light`) is a light by its role: an on/off
+  // Lightbulb, with no Brightness characteristic to offer a level it lacks.
+  const useLightbulb = dimmable || isSwitchLight(deviceType, role)
   // `displayName` is already resolved by `child-accessory.ts` through
   // `childServiceName`, so it is HAP-valid and device-derived. It is published
   // on BOTH `Name` and `ConfiguredName` — see `service-label.ts`.
@@ -91,7 +95,7 @@ export async function buildChildSwitch(
   }
 
   // Hydrate brightness
-  if (useLightbulb) {
+  if (dimmable) {
     try {
       const status = (await proxy.brightness?.getStatus({})) as BrightnessStatus | null
       if (status && typeof status.level === 'number') {
@@ -119,7 +123,7 @@ export async function buildChildSwitch(
   }
 
   // Wire setBrightness
-  if (useLightbulb) {
+  if (dimmable) {
     service.getCharacteristic(Characteristic.Brightness).onSet(async (value) => {
       const percentage = typeof value === 'number' ? value : Number(value)
       if (!Number.isFinite(percentage)) return
@@ -144,7 +148,7 @@ export async function buildChildSwitch(
     })
     unsubscribes.push(unsubSwitch)
   }
-  if (useLightbulb && proxy.state.brightness) {
+  if (dimmable && proxy.state.brightness) {
     const unsubBrightness = proxy.state.brightness.subscribe((value) => {
       if (value && typeof value.level === 'number') {
         service.updateCharacteristic(Characteristic.Brightness, value.level)

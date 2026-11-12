@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- New switch role switch-light: a relay driving an on/off-only lamp, drawn and exported as a light with power only
+
 ## [1.2.557] - 2026-11-12
 
 ### Changed

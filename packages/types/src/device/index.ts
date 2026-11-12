@@ -110,6 +110,7 @@ export {
   CLIMATE_ROLES,
   climateRoleOf,
   isAirConditioner,
+  isSwitchLight,
   type ClimateRole,
   type DeviceKindGate,
 } from './device-kind.js'

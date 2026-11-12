@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A heat pump is drawn as the shared device card: outdoor, flow and return temperatures, compressor, thermal/electrical power and COP, a picker per circuit, and every system mode it declares (silent, away, additional heater, holiday).
 - A water heater's hero is now the shared device card: the target stepped within the device's range, the tank filled to the water temperature, power through its off mode, mode and away.
 - An energy system has its own device card: solar, grid, battery, home and heat pump as branches of one bus, dots running in or out at the speed of each power, and today's totals. Drawn from fixtures only until a provider exposes one energy-system device (#513).
+- A switch with the role switch-light gets the light card (bulb and glow, no slider) and a bulb icon
 
 ## [1.2.433] - 2026-11-12
 

@@ -9354,7 +9354,8 @@
         "climateFloor": "Floor heating",
         "climateRadiator": "Radiator",
         "climateHeater": "Heater",
-        "climateHeatPumpCircuit": "Heat pump circuit"
+        "climateHeatPumpCircuit": "Heat pump circuit",
+        "switchLight": "On/off light"
       },
       "noun": {
         "role": {
@@ -9414,7 +9415,8 @@
           "mobilePushNotifier": "Push",
           "messagingNotifier": "Messaging",
           "emailNotifier": "Email",
-          "genericNotifier": "Notifier"
+          "genericNotifier": "Notifier",
+          "switchLight": "On/off light"
         },
         "type": {
           "camera": "Camera",

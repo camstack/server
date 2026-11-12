@@ -77,7 +77,9 @@ export async function buildChildServicesFor(input: ChildServicesInput): Promise<
       options,
     }
     const subtype = `child-${child.id}`
-    handles.push(await buildChildSwitch(childCtx, subtype, asDeviceType(child.type)))
+    handles.push(
+      await buildChildSwitch(childCtx, subtype, asDeviceType(child.type), child.role ?? null),
+    )
   }
 
   return {

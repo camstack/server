@@ -47,6 +47,18 @@ describe('switch display category (D875)', () => {
     })
     expect(e?.displayCategories).toEqual(['LIGHT'])
   })
+
+  it('a switch-light (a relay driving a lamp) is a LIGHT, on/off only', () => {
+    const e = buildGenericDeviceEndpoint({
+      ...BASE,
+      type: 'switch',
+      capNames: ['switch'],
+      role: DeviceRole.SwitchLight,
+    })
+    expect(e?.displayCategories).toEqual(['LIGHT'])
+    expect(e?.capabilities.map((c) => c.interface)).toContain('Alexa.PowerController')
+    expect(e?.capabilities.map((c) => c.interface)).not.toContain('Alexa.BrightnessController')
+  })
 })
 
 describe('Alexa name override (D875)', () => {

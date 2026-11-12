@@ -165,6 +165,13 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
           },
           state: { on: { icon: 'lightbulb' } },
         },
+        [DeviceRole.SwitchLight]: {
+          actions: {
+            'switch.on': { icon: 'lightbulb' },
+            'switch.off': { icon: 'lightbulb-off' },
+          },
+          state: { on: { icon: 'lightbulb' } },
+        },
         [DeviceRole.Chime]: {
           actions: {
             'switch.on': {

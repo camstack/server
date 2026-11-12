@@ -54,12 +54,12 @@ export async function buildGenericAccessory(input: GenericAccessoryInput): Promi
     )
   }
 
-  const deviceType = await resolveDeviceType(proxy)
+  const { type: deviceType, role } = await resolveDeviceKind(proxy)
   const accessory = new Accessory(
     displayName,
     accessoryUuidFor('generic', numericId, options.instanceId),
   )
-  accessory.category = accessoryCategoryFor(deviceType)
+  accessory.category = accessoryCategoryFor(deviceType, role)
 
   await populateAccessoryInfo(accessory, proxy, displayName, 'Accessory')
 
@@ -75,12 +75,13 @@ export async function buildGenericAccessory(input: GenericAccessoryInput): Promi
   const handles: BuilderHandle[] = []
   for (const row of rows) {
     const name = rows.length === 1 ? displayName : row.label
-    handles.push(await row.build({ bctx, name, deviceType }))
+    handles.push(await row.build({ bctx, name, deviceType, role }))
   }
 
   log.info('export-hap: built generic accessory', {
     meta: {
       deviceType,
+      role,
       services: rows.map((row) => row.caps[0]).join(','),
     },
   })
@@ -103,21 +104,30 @@ export async function buildGenericAccessory(input: GenericAccessoryInput): Promi
 }
 
 /**
- * The device's own type, or `Generic`.
+ * The device's own type, or `Generic`, and its role (null when unread).
  *
  * Used ONLY where one capability has two HomeKit shapes — a siren's
- * `brightness` is alarm volume, not luminosity — and for the accessory's icon.
+ * `brightness` is alarm volume, not luminosity; a `switch-light` relay is a
+ * Lightbulb, not a Switch — and for the accessory's icon.
  * `Generic` is the safe reading: it is the shape `child-switch.ts` already
  * treats as "a lamp if it dims, a switch otherwise".
  */
-async function resolveDeviceType(proxy: DeviceProxy): Promise<DeviceType> {
+async function resolveDeviceKind(proxy: DeviceProxy): Promise<ResolvedDeviceKind> {
   try {
     const device = await proxy.deviceManager?.getDevice({})
     const raw = typeof device?.type === 'string' ? device.type.toLowerCase() : ''
-    return Object.values(DeviceType).find((value) => value === raw) ?? DeviceType.Generic
+    return {
+      type: Object.values(DeviceType).find((value) => value === raw) ?? DeviceType.Generic,
+      role: typeof device?.role === 'string' ? device.role : null,
+    }
   } catch {
-    return DeviceType.Generic
+    return { type: DeviceType.Generic, role: null }
   }
+}
+
+interface ResolvedDeviceKind {
+  readonly type: DeviceType
+  readonly role: string | null
 }
 
 function errMsg(err: unknown): string {

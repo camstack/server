@@ -64,6 +64,15 @@ export function isAirConditioner(type: string, role: string | null | undefined):
   return type === DeviceType.Climate && climateRoleOf(role) === DeviceRole.ClimateAc
 }
 
+/**
+ * A relay driving an on/off-only lamp (a `switch` with role `switch-light`):
+ * drawn and exported as a light, with the switch's power only. The one place
+ * that reads the role for it — a consumer asks this, never the role string.
+ */
+export function isSwitchLight(type: string, role: string | null | undefined): boolean {
+  return type === DeviceType.Switch && role === DeviceRole.SwitchLight
+}
+
 /** The part of a capability definition that says which devices it is offered on. */
 export interface DeviceKindGate {
   readonly deviceTypes?: readonly DeviceType[]

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A switch with the role switch-light is discovered by Alexa as a LIGHT with power only
+
 ## [1.2.196] - 2026-11-12
 
 ### Changed

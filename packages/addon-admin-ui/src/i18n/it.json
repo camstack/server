@@ -9376,7 +9376,8 @@
         "climateFloor": "Riscaldamento a pavimento",
         "climateRadiator": "Termosifone",
         "climateHeater": "Stufa",
-        "climateHeatPumpCircuit": "Circuito pompa di calore"
+        "climateHeatPumpCircuit": "Circuito pompa di calore",
+        "switchLight": "Luce on/off"
       },
       "noun": {
         "role": {
@@ -9436,7 +9437,8 @@
           "mobilePushNotifier": "Push",
           "messagingNotifier": "Messaggistica",
           "emailNotifier": "Email",
-          "genericNotifier": "Notificatore"
+          "genericNotifier": "Notificatore",
+          "switchLight": "Luce on/off"
         },
         "type": {
           "camera": "Telecamera",

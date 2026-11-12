@@ -40,6 +40,9 @@ describe('roleOptions — filtered by device type', () => {
     expect(roleOptions(null, DeviceType.Switch)).toEqual(
       expect.arrayContaining([DeviceRole.SwitchHeater, DeviceRole.SwitchFan]),
     )
+    // #509 — a relay driving an on/off lamp is picked the same way.
+    expect(roleOptions(null, DeviceType.Switch)).toContain(DeviceRole.SwitchLight)
+    expect(roleOptions(null, DeviceType.Light)).not.toContain(DeviceRole.SwitchLight)
     expect(roleOptions(null, DeviceType.Climate)).toEqual([
       DeviceRole.ClimateThermostat,
       DeviceRole.ClimateAc,

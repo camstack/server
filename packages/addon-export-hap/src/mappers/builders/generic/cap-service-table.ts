@@ -45,6 +45,7 @@ import {
   DeviceType,
   FloodStatusSchema,
   HumiditySensorStatusSchema,
+  isSwitchLight,
   MotionStatusSchema,
   PresenceStatusSchema,
   SmokeStatusSchema,
@@ -79,6 +80,9 @@ export interface GenericServiceInput {
   /** The device's own type. Used ONLY to choose between two HomeKit shapes for
    *  one capability (a siren's `brightness` is volume, not luminosity). */
   readonly deviceType: DeviceType
+  /** The device's `DeviceRole`, or null. Read the same way as the type: a
+   *  relay driving a lamp (`switch-light`) is a Lightbulb, not a Switch. */
+  readonly role: string | null
 }
 
 /** One row of the table. */
@@ -268,8 +272,8 @@ export const HAP_CAP_SERVICES: readonly HapCapServiceRow[] = [
     // give iOS the wrong icon, the wrong scenes and the wrong Siri intents.
     caps: ['switch', 'brightness'],
     label: 'Power',
-    build: ({ bctx, name, deviceType }) =>
-      buildChildSwitch({ ...bctx, displayName: name }, 'switch', deviceType),
+    build: ({ bctx, name, deviceType, role }) =>
+      buildChildSwitch({ ...bctx, displayName: name }, 'switch', deviceType, role),
   },
   {
     caps: ['lock-control'],
@@ -325,6 +329,7 @@ const ACCESSORY_CATEGORY_BY_TYPE: Partial<Record<DeviceType, Categories>> = {
   [DeviceType.AlarmPanel]: Categories.SECURITY_SYSTEM,
 }
 
-export function accessoryCategoryFor(deviceType: DeviceType): Categories {
+export function accessoryCategoryFor(deviceType: DeviceType, role: string | null): Categories {
+  if (isSwitchLight(deviceType, role)) return Categories.LIGHTBULB
   return ACCESSORY_CATEGORY_BY_TYPE[deviceType] ?? Categories.OTHER
 }

@@ -3277,7 +3277,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedDeviceCard.tsx",
-      "summary": "Which card draws a device, from what it IS (type + role, D1033) and what it binds. Power is always the `switch` cap (D1042): a switch is a plug, or a heater / a fan by its role; a light and a fan need it too. A cover …"
+      "summary": "Which card draws a device, from what it IS (type + role, D1033) and what it binds. Power is always the `switch` cap (D1042): a switch is a plug, or a heater / a fan / an on/off light by its role; a light and a fan nee…"
     },
     {
       "name": "ConnectedClimateCard",

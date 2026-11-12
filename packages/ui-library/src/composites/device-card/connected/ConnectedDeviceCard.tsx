@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType, resolveDeviceControlKind } from '@camstack/types'
+import { DeviceRole, DeviceType, isSwitchLight, resolveDeviceControlKind } from '@camstack/types'
 import type { ReactElement } from 'react'
 import {
   useDeviceManagerGetBindings,
@@ -42,7 +42,7 @@ const CLIMATE_CAPS: readonly string[] = ['climate-control', 'heating-valve']
 /**
  * Which card draws a device, from what it IS (type + role, D1033) and what it
  * binds. Power is always the `switch` cap (D1042): a switch is a plug, or a
- * heater / a fan by its role; a light and a fan need it too. A cover needs
+ * heater / a fan / an on/off light by its role; a light and a fan need it too. A cover needs
  * `cover`. A washer / dryer / dishwasher known only by its supply is the
  * appliance card (`running-state` or `switch`); a dishwasher that speaks for
  * itself (`dishwasher`), a media player, a vacuum and a mower need their cap;
@@ -62,6 +62,7 @@ export function connectedCardKindOf(
     if (!hasSwitch) return null
     if (control === 'heater') return 'heater'
     if (role === DeviceRole.SwitchFan) return 'fan'
+    if (isSwitchLight(deviceType, role)) return 'light'
     return control === 'switch' ? 'plug' : null
   }
   if (control === 'light') return hasSwitch ? 'light' : null

@@ -39,6 +39,7 @@ const ROLES_BY_TYPE: Readonly<Partial<Record<DeviceType, readonly DeviceRole[]>>
     DeviceRole.BinaryHelper,
     DeviceRole.SwitchHeater,
     DeviceRole.SwitchFan,
+    DeviceRole.SwitchLight,
   ],
   [DeviceType.Climate]: [
     DeviceRole.ClimateThermostat,
