@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.429] - 2026-11-12
+
 ### Changed
 
 - Washer, dryer, dishwasher, media player, robot vacuum and lawn mower now use the new device card, with only the controls each device declares

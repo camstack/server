@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.165] - 2026-11-12
+
 ### Changed
 
 - A new Unraid gateway is named "Unraid" plus the server hostname when it was read.

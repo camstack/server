@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-unifi",
-  "version": "0.2.162",
+  "version": "0.2.163",
   "description": "UniFi Network controller device-provider addon for CamStack — local-controller infra switches/APs (as containers) + network-client presence. No cameras.",
   "keywords": [
     "camstack",
@@ -63,7 +63,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.827"
+      "server": ">=1.2.846"
     }
   },
   "files": [

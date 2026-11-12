@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.845",
+  "version": "1.2.846",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,9 +66,20 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.648",
-        "@camstack/addon-pipeline": ">=1.2.651",
-        "@camstack/addon-post-analysis": ">=1.2.696"
+        "@camstack/addon-admin-ui": ">=1.2.649",
+        "@camstack/addon-agent-ui": ">=1.2.369",
+        "@camstack/addon-import-alexa": ">=0.2.205",
+        "@camstack/addon-mqtt-broker": ">=1.2.159",
+        "@camstack/addon-provider-bosch": ">=0.1.54",
+        "@camstack/addon-provider-ecowitt": ">=0.2.164",
+        "@camstack/addon-provider-enpal": ">=0.1.17",
+        "@camstack/addon-provider-homematic": ">=1.2.192",
+        "@camstack/addon-provider-rademacher": ">=0.2.166",
+        "@camstack/addon-provider-reolink": ">=1.2.240",
+        "@camstack/addon-provider-unifi": ">=0.2.163",
+        "@camstack/addon-provider-unraid": ">=0.2.165",
+        "@camstack/addon-provider-velux": ">=0.2.168",
+        "@camstack/addon-provider-vesync": ">=0.2.157"
       },
       "wrapper": {
         "desktop": ">=0.0.1",
