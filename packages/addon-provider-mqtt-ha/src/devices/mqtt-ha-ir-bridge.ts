@@ -1,5 +1,6 @@
 import {
   IR_NATIVE_CODECS,
+  type IScopedLogger,
   IrCodecError,
   userError,
   type IrLearnResult,
@@ -21,6 +22,10 @@ export interface MqttHaIrBridgeDeps {
   readonly match: MqttHaIrMatch
   readonly publish: (topic: string, payload: string) => Promise<void>
   readonly deviceName: string
+  readonly deviceId: number
+  /** The raw state payload the learned entity's topic holds now, if any. */
+  readonly readHeldState: () => string | undefined
+  readonly logger: IScopedLogger
 }
 
 interface LearnWaiter {
@@ -34,6 +39,8 @@ interface LearnWaiter {
  */
 export class MqttHaIrBridge {
   private waiter: LearnWaiter | null = null
+  /** The learned value the entity held when the pending learn started. */
+  private baseline: string | null = null
 
   constructor(private readonly deps: MqttHaIrBridgeDeps) {}
 
@@ -54,9 +61,7 @@ export class MqttHaIrBridge {
   }): Promise<IrSendResult> {
     const { format } = this.deps.match.profile
     const code = this.codeToSend(input, format)
-    const topic = this.deps.match.send.commandTopic
-    if (topic === null) throw new Error('mqtt-ha: the code entity has no command topic')
-    await this.deps.publish(topic, code)
+    await this.deps.publish(this.deps.match.sendTopic, code)
     const ignoredSettings = Object.entries(input.settings ?? {})
       .filter(([, value]) => value !== undefined)
       .map(([key]) => key)
@@ -90,19 +95,22 @@ export class MqttHaIrBridge {
     return IR_NATIVE_CODECS[format].encode(input.timings)
   }
 
-  /** Feed a message of the `learned` entity; resolves a pending learn with it. */
+  /**
+   * Feed a message of the `learned` entity. The device publishes ONE state for
+   * all its properties, so any message (a link quality or battery update)
+   * carries the previous code again: a pending learn resolves only on a value
+   * different from the one held when it started.
+   */
   onLearnedMessage(payload: string): void {
-    const waiter = this.waiter
-    if (waiter === null) return
     const code = renderTemplate(this.deps.match.learned.valueTemplate, payload)
     if (code === null || code.length === 0) return
+    const waiter = this.waiter
+    if (waiter === null || code === this.baseline) return
     this.waiter = null
     waiter.resolve(code)
   }
 
   async learn(timeoutMs: number): Promise<IrLearnResult> {
-    const topic = this.deps.match.learn.commandTopic
-    if (topic === null) throw new Error('mqtt-ha: the learn entity has no command topic')
     if (this.waiter !== null) {
       throw userError(
         'ir-transmitter.learn-busy',
@@ -110,6 +118,9 @@ export class MqttHaIrBridge {
         `The transmitter ${this.deps.deviceName} is already learning`,
       )
     }
+    const held = this.deps.readHeldState()
+    this.baseline =
+      held === undefined ? null : renderTemplate(this.deps.match.learned.valueTemplate, held)
     // Armed BEFORE the command, so a fast answer is not missed; whatever the
     // entity held earlier (retained or previous) never reaches the waiter.
     const next = new Promise<string | null>((resolve) => {
@@ -125,13 +136,19 @@ export class MqttHaIrBridge {
       }
     })
     try {
-      await this.deps.publish(topic, LEARN_START_PAYLOAD)
+      await this.deps.publish(this.deps.match.learnTopic, LEARN_START_PAYLOAD)
     } catch (err: unknown) {
       this.waiter = null
       throw err
     }
     const code = await next
     if (code === null) {
+      // Pressing the same button again publishes the identical code, which is
+      // indistinguishable from the held one, so it times out too.
+      this.deps.logger.warn(
+        'mqtt-ha: ir learn timed out (an identical re-learned code is not detected)',
+        { tags: { deviceId: this.deps.deviceId }, meta: { timeoutMs } },
+      )
       throw userError(
         'ir-transmitter.learn-timeout',
         { name: this.deps.deviceName, timeoutMs },

@@ -381,6 +381,33 @@ describe('MqttHaDevice on a zigbee2mqtt IR blaster', () => {
     expect(learned.timings).toEqual([16, -32, 16, -32])
   })
 
+  it('learn ignores an unchanged learned code republished with other fields', async () => {
+    mqttHaStateGateway.recordMessage(BROKER, IR_TOPIC, JSON.stringify({ learned_ir_code: 'AAAA' }))
+    const { provider, published } = await activate()
+    const pending = provider.learn({ timeoutMs: 5000 })
+    await vi.waitFor(() => expect(published).toHaveLength(1))
+    let settled = false
+    pending.then(
+      () => (settled = true),
+      () => (settled = true),
+    )
+    deliver(
+      mqttHaStateGateway,
+      entities,
+      IR_TOPIC,
+      JSON.stringify({ learned_ir_code: 'AAAA', linkquality: 87 }),
+    )
+    await new Promise((r) => setTimeout(r, 20))
+    expect(settled).toBe(false)
+    deliver(
+      mqttHaStateGateway,
+      entities,
+      IR_TOPIC,
+      JSON.stringify({ learned_ir_code: 'AxAAIABAAw==', linkquality: 87 }),
+    )
+    expect((await pending).native).toEqual({ format: 'tuya', code: 'AxAAIABAAw==' })
+  })
+
   it('learn times out with a typed error when nothing arrives', async () => {
     const { provider } = await activate()
     await expect(provider.learn({ timeoutMs: 20 })).rejects.toMatchObject({

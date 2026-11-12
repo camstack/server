@@ -94,6 +94,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   private readonly model: MqttHaDeviceModel
   private eventSeq = 0
   private irBridge: MqttHaIrBridge | null = null
+  private irLearnedKey: string | null = null
   private eventCount = 0
   /** Events fired that the discovery record did not declare, in first-seen order. */
   private undeclaredEventTypes: readonly string[] = []
@@ -151,12 +152,9 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
 
   private onMessage(entity: MqttHaEntity, _topic: string, payload: string): void {
     if (entity.component === 'event') this.fireEvent(entity, payload)
-    if (entity.entityKey === this.irLearnedKey()) this.irBridge?.onLearnedMessage(payload)
+    if (this.irLearnedKey !== null && entity.entityKey === this.irLearnedKey)
+      this.irBridge?.onLearnedMessage(payload)
     this.refresh()
-  }
-
-  private irLearnedKey(): string | null {
-    return matchIrProfile([...this.model.entities.values()])?.learned.entityKey ?? null
   }
 
   private reader() {
@@ -710,9 +708,13 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
     const bridge = new MqttHaIrBridge({
       match,
       deviceName: this.name,
+      deviceId: this.id,
+      readHeldState: () => mqttHaStateGateway.readPayload(this.brokerId, match.learnedTopic),
+      logger: this.ctx.logger,
       publish: (topic, payload) => mqttHaStateGateway.publish(this.brokerId, topic, payload),
     })
     this.irBridge = bridge
+    this.irLearnedKey = match.learned.entityKey
     const provider: InferNativeProvider<typeof irTransmitterCapability> = {
       send: async (input) => bridge.send(input),
       learn: async ({ timeoutMs }) => bridge.learn(timeoutMs),

@@ -250,6 +250,7 @@ function parseDeviceTrigger(
     name: device.name ?? triggerType,
     stateTopic: topic,
     commandTopic: null,
+    commandTemplate: null,
     unitOfMeasurement: null,
     deviceClass: null,
     entityCategory: null,

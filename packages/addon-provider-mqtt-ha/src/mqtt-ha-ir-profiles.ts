@@ -37,6 +37,10 @@ export interface MqttHaIrMatch {
   readonly send: MqttHaEntity
   readonly learn: MqttHaEntity
   readonly learned: MqttHaEntity
+  /** Command topics, non-null by construction: a profile without them never matches. */
+  readonly sendTopic: string
+  readonly learnTopic: string
+  readonly learnedTopic: string
 }
 
 /** Z2M unique ids end with the bridge id (`<ieee>_<property>_zigbee2mqtt`). */
@@ -72,7 +76,10 @@ export function matchIrProfile(
     const send = find(entities, profile, 'text', profile.entities.send)
     const learn = find(entities, profile, 'select', profile.entities.learn)
     const learned = find(entities, profile, 'sensor', profile.entities.learned)
-    if (send?.commandTopic && learn?.commandTopic && learned?.stateTopic) {
+    const sendTopic = send?.commandTopic
+    const learnTopic = learn?.commandTopic
+    const learnedTopic = learned?.stateTopic
+    if (send && learn && learned && sendTopic && learnTopic && learnedTopic) {
       const templated = [send, learn].find((e) => e.commandTemplate !== null)
       if (templated !== undefined) {
         onRefused?.(
@@ -80,7 +87,7 @@ export function matchIrProfile(
         )
         continue
       }
-      return { profile, send, learn, learned }
+      return { profile, send, learn, learned, sendTopic, learnTopic, learnedTopic }
     }
   }
   return null
