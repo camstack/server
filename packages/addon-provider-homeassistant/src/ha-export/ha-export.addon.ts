@@ -51,6 +51,7 @@ import {
   ExportInstanceUnknownError,
   type ExposedNameStore,
   exposedNameStoreOf,
+  pruneExposedNames,
   saveExposedName,
   type IDeviceExportProvider,
   isReadingQuantity,
@@ -121,7 +122,8 @@ import { summariseLinkGaps } from './link-gaps.js'
 import { postToHomeAssistant, PUSH_PATH } from './push-failure.js'
 import { ReachabilityReconciler } from './reachability-reconcile.js'
 import { shouldSkipAnnounce, structureFingerprint } from './reconcile-fingerprint.js'
-import { devBlockFor, haNameValidator, namesByBroker } from './exposed-name.js'
+import { announceToBrokers } from './announce.js'
+import { HA_NAME_RULE, haNameValidator, namesByBroker } from './exposed-name.js'
 import {
   ReadMirror,
   cameraFunctionReadsFailed,
@@ -493,6 +495,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
             name: this.book().name(id),
             enabled: this.book().isEnabled(id),
             kind: HA_TARGET_KIND,
+            nameRule: HA_NAME_RULE,
           })),
       listSupportedDeviceKinds: async ({ instanceId }) => {
         this.targetScope(instanceId)
@@ -514,8 +517,8 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
         if (exposedName !== undefined) await this.saveExposedName(instanceId, deviceId, exposedName)
         return this.setTargetMembership(instanceId, deviceId, true)
       },
-      setExposedName: async ({ instanceId, deviceId, name }) => {
-        if (await this.saveExposedName(instanceId, deviceId, name)) {
+      setExposedName: async ({ instanceId, deviceId, name, dryRun }) => {
+        if (await this.saveExposedName(instanceId, deviceId, name, dryRun === true)) {
           await this.reconcile('exposed-name-changed')
         }
       },
@@ -605,10 +608,23 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
    */
   private async onTargetChanged(id: string, change: TargetChange): Promise<void> {
     await this.book().reload()
+    if (change === 'deleted') await this.pruneTargetNames(id)
     this.ctx.logger.info('ha-export: an export target changed', {
       meta: { targetId: id, change },
     })
     await this.onConfigChanged()
+  }
+
+  /** A deleted connection's device names go too, so one that reuses the id inherits none (D1049). */
+  private async pruneTargetNames(id: string): Promise<void> {
+    const settings = this.ctx.settings
+    if (settings === undefined) return
+    const pruned = await pruneExposedNames(settings, id)
+    if (pruned.length > 0) {
+      this.ctx.logger.info('ha-export: deleted connection names removed', {
+        meta: { targetId: id, devices: pruned.length },
+      })
+    }
   }
 
   private requireInstances(): RecordIntegrationInstances<HaExportTargetBody> {
@@ -1811,29 +1827,12 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
     exported: ReadonlyMap<string, ExportedDevice>,
     full: boolean,
   ): Promise<boolean> {
-    let allDelivered = true
-    for (const entry of exported.values()) {
-      for (const brokerId of entry.brokerIds) {
-        const link = this.links.get(brokerId)
-        if (link === undefined) continue
-        try {
-          const ok = await link.client.publishEntityChange(
-            entry.plan.deviceKey,
-            entry.plan.cmps,
-            devBlockFor(entry.plan.dev, entry.exposedNames, brokerId),
-            full,
-          )
-          if (!ok) allDelivered = false
-        } catch (err) {
-          allDelivered = false
-          this.ctx.logger.warn('ha-export: could not announce a device, skipping it', {
-            tags: { deviceId: entry.deviceId },
-            meta: { brokerId, error: errMsg(err) },
-          })
-        }
-      }
-    }
-    return allDelivered
+    return announceToBrokers(
+      exported.values(),
+      (brokerId) => this.links.get(brokerId)?.client,
+      full,
+      this.ctx.logger,
+    )
   }
 
   private async pushFullState(
@@ -3229,6 +3228,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
     instanceId: string,
     deviceIdStr: string,
     raw: string | null,
+    dryRun = false,
   ): Promise<boolean> {
     this.targetScope(instanceId)
     const deviceId = Number.parseInt(deviceIdStr, 10)
@@ -3241,6 +3241,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
       instanceId,
       raw,
       validate: haNameValidator,
+      ...(dryRun ? { dryRun: true } : {}),
     })
     if (saved.changed) {
       this.ctx.logger.info('ha-export: Home Assistant name saved', {

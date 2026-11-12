@@ -249,6 +249,7 @@ async function boot(options: Options = {}) {
     readRawStored: async () => storedValues(),
     listDeviceIds: async () => [],
     readDeviceField: async () => new Map(),
+    listSkillIds: async () => [],
     warn: (message) => {
       warnings.push(message)
     },

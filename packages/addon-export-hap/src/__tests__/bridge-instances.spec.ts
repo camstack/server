@@ -54,6 +54,8 @@ function bridge(id: string, name: string, deviceIds: readonly string[] = []): Br
 
 class TestAddon extends ExportHapAddon {
   readonly deleted: string[] = []
+  /** The addon's per-device store (D865), where the bridges' device names live (D1049). */
+  readonly deviceStore = new Map<number, Record<string, unknown>>()
 
   override get ctx() {
     const logger = {
@@ -63,7 +65,17 @@ class TestAddon extends ExportHapAddon {
       error: () => {},
       withTags: () => logger,
     }
-    return { logger } as unknown as ExportHapAddon['ctx']
+    const store = this.deviceStore
+    const settings = {
+      listDeviceStoreIds: async () => [...store.keys()],
+      readDeviceStoreBatch: async (ids: readonly number[]) =>
+        new Map(ids.map((id): [number, Record<string, unknown>] => [id, store.get(id) ?? {}])),
+      readDeviceStore: async (id: number) => store.get(id) ?? {},
+      writeDeviceStore: async (id: number, patch: Record<string, unknown>) => {
+        store.set(id, { ...store.get(id), ...patch })
+      },
+    }
+    return { logger, settings } as unknown as ExportHapAddon['ctx']
   }
 
   add(inst: BridgeInstance): void {
@@ -187,5 +199,18 @@ describe('bridge names and deletion', () => {
     expect(addon.has('hap-b2')).toBe(false)
     expect(addon.has(HAP_DEFAULT_INSTANCE_ID)).toBe(true)
     expect(addon.deleted).toEqual(['hap-b2'])
+  })
+
+  it('a deleted bridge takes its device names with it; the other bridge keeps its own (D1049)', async () => {
+    const addon = withBridges()
+    addon.deviceStore.set(2, {
+      exposedNames: { 'hap-b2': 'Guest plug', [HAP_DEFAULT_INSTANCE_ID]: 'Plug' },
+      other: 1,
+    })
+    await addon.remove('hap-b2')
+    expect(addon.deviceStore.get(2)).toEqual({
+      exposedNames: { [HAP_DEFAULT_INSTANCE_ID]: 'Plug' },
+      other: 1,
+    })
   })
 })

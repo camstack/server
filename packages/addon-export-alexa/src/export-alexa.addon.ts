@@ -49,6 +49,7 @@ import {
   RecordIntegrationInstances,
   RevConflictError,
   isInstanceEnabled,
+  pruneExposedNames,
 } from '@camstack/types'
 
 import { createHubAccessGate } from './access/hub-access-source.js'
@@ -65,6 +66,7 @@ import { forgetEgressHandle, heldEgressHandles } from './handlers/rtc-session.js
 import { buildRoutes } from './http-server.js'
 import { generateIngressToken } from './ingress-token.js'
 import { pickSkill } from './instance-routing.js'
+import { ALEXA_NAME_RULE } from './endpoints/alexa-name.js'
 import { ADDON_MIGRATIONS, type AlexaCataloguePorts } from './migrations/index.js'
 import { type AlexaLinkableInstance, buildAlexaOauthIntegration } from './oauth-integration.js'
 import { createPublicEndpointReader, type PublicEndpointReader } from './public-endpoint.js'
@@ -337,6 +339,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
           name: row.body.name,
           enabled: row.enabled,
           kind: 'alexa-skill',
+          nameRule: ALEXA_NAME_RULE,
         }))
       },
       listSupportedDeviceKinds: async ({ instanceId }) => {
@@ -361,8 +364,8 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         if (exposedName !== undefined) await runtime.setExposedName(deviceId, exposedName)
         return runtime.exposeDevice(deviceId)
       },
-      setExposedName: async ({ instanceId, deviceId, name }) =>
-        ownInstance(instanceId).setExposedName(deviceId, name),
+      setExposedName: async ({ instanceId, deviceId, name, dryRun }) =>
+        ownInstance(instanceId).setExposedName(deviceId, name, dryRun === true),
       unexposeDevice: async ({ instanceId, deviceId }) =>
         ownInstance(instanceId).unexposeDevice(deviceId),
       listSupportedEntityKinds: async () => ['device', 'action'],
@@ -536,6 +539,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     if (change === 'deleted') {
       await this.stopRuntime(id)
       await this.deleteSkillRows(id)
+      await this.pruneSkillNames(id)
       return
     }
     const row = await this.requireInstances().readResolved(id)
@@ -550,6 +554,18 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
     }
     await running.refreshRecords()
     await running.applyShapeSwitches()
+  }
+
+  /** A deleted skill's device names go too, so a skill that reuses the id inherits none (D1049). */
+  private async pruneSkillNames(id: string): Promise<void> {
+    const settings = this.ctx.settings
+    if (settings === undefined) return
+    const pruned = await pruneExposedNames(settings, id)
+    if (pruned.length > 0) {
+      this.ctx.logger.info('export-alexa: deleted skill names removed', {
+        meta: { instanceId: id, devices: pruned.length },
+      })
+    }
   }
 
   /** What a deleted skill leaves behind: its links, its exposure and its hidden state. */
@@ -637,6 +653,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       clearIngressTokenSecret: async () => {
         await this.clearSecrets(['ingressToken'])
       },
+      listSkillIds: async () => (await this.requireInstances().listResolved()).map((r) => r.id),
       listDeviceIds: async () => {
         const settings = this.ctx.settings
         if (settings === undefined)

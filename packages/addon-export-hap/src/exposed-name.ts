@@ -9,6 +9,9 @@ import type { ExposedNameValidator } from '@camstack/types'
 import { HAP_NAME_MAX_LENGTH, isHapServiceName } from './mappers/builders/service-names.js'
 
 /** Apple's rule: at most 64 characters, begins and ends with a letter or digit, HAP punctuation only. */
+/** HomeKit's rule, as the derived "Name on <bridge>" field states it (D1049). */
+export const HAP_NAME_RULE = `HomeKit takes up to ${HAP_NAME_MAX_LENGTH} characters, starting and ending with a letter or digit; inside, only letters, digits, spaces and ' & ! . _ : ; ( ) / , -.`
+
 export const hapNameValidator: ExposedNameValidator = (name) => {
   if (name.length > HAP_NAME_MAX_LENGTH) {
     return {

@@ -212,13 +212,14 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<AlexaCataloguePorts>[] = 
       owner: 'export-alexa',
       level: 'addon-state',
       seq: 9,
+      // After seq 2 (the default skill record): the name is written under every skill id.
       dependsOn: [],
       store: 'settings',
       scope: 'cluster',
       onFailure: 'tolerate',
       bodyKind: 'plan',
       description:
-        'Move every device`s Alexa name into the generic exposed name of the default Alexa instance and delete the alexaName key',
+        'Copy every device`s Alexa name to the exposed name of every Alexa skill and delete the alexaName key',
       fixtureMark: FIXTURE_MARK,
     },
     plan: planAlexaNameToExposedName,

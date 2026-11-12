@@ -259,8 +259,10 @@ interface; battery is not exported.
   rename is pushed with `pushDevice` (the shape signature ignores names).
   Validation: `endpoints/alexa-name.ts` (Amazon's rule: up to 256 letters, digits
   and spaces; no punctuation). The retired `alexaName` key (one per device, shared
-  by every skill) was moved to the default skill by the migration
-  `export-alexa/2026-11-12-alexa-name-to-exposed-name`.
+  by every skill) was copied to every skill by the migration
+  `export-alexa/2026-11-12-alexa-name-to-exposed-name`. A deleted skill's names
+  are pruned. A rename reads the store strictly: `vision.readPrefs` answers `{}`
+  on a failed read, and a save through it would erase the other skills' names.
 - The Export table selects in bulk by Role / Provider / Type / search
   ("Select N shown"); nothing is hidden by default.
 

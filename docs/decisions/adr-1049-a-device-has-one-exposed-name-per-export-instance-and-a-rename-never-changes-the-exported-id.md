@@ -39,11 +39,16 @@ would refuse is never written, and a stored one it now refuses reads as no name.
 label only: the Alexa endpoint id, the HomeKit accessory UUID, the Google SYNC id and the Home
 Assistant device key are derived from the device id, so a rename updates the same device and
 never re-pairs it. The UI field is derived: `device-manager` adds one "Name on <instance>" text
-field per instance that exposes the device to the exporter's own Export panel and routes its key
-(`export-name:<addonId>:<instanceId>`) to `setExposedName`. No exporter writes a name field by hand.
+field per ENABLED instance, exposed or not, to that instance's own section of the exporter's
+Export panel, so the name can be set in the same save that turns Expose on. Its description states
+the platform's rule (`ExportInstance.nameRule`). Its key (`export-name:<addonId>:<instanceId>`) is
+routed to `setExposedName` before the exporter's own patch, all or none: every name of the save
+is first checked with `dryRun`, and one refusal writes none. A non-text value is refused by name,
+never read as "clear". No exporter writes a name field by hand. Deleting an instance (skill,
+bridge, home, connection) deletes its names, so an instance that reuses the id inherits none.
 The Alexa-only name is retired by the phased migration
-`export-alexa/2026-11-12-alexa-name-to-exposed-name`, which moves each stored `alexaName`,
-unchanged, to the default Alexa instance and deletes the old key.
+`export-alexa/2026-11-12-alexa-name-to-exposed-name`, which copies each stored `alexaName`,
+unchanged, to EVERY Alexa skill instance and deletes the old key.
 
 ## Consequences
 
@@ -52,16 +57,22 @@ unchanged, to the default Alexa instance and deletes the old key.
 - HomeKit renames by re-exposing the accessory in place (same UUID, pairing kept). Google learns
   a name on its next SYNC, which the hub cannot request (no HomeGraph key). Home Assistant gets
   it on the reconcile the save triggers; the name is part of the reconcile fingerprint.
-- The old Alexa name was shared by every skill; the migration gives it to the default instance
-  only. A second skill starts from the device name.
+- The old Alexa name served every skill (planning#422), so the migration copies it to every skill
+  instance that exists; each skill can then be renamed on its own. A name already saved on a
+  skill is kept. When no skill exists the name is dropped with a warning: nothing is written under
+  an id nobody reads.
 - Deleting the device clears the names with the rest of the per-device store (D865); no removal
-  hook is needed.
+  hook is needed. Deleting an export instance prunes its entry from every device
+  (`pruneExposedNames`).
 
 ## Enforcement
 
-- `packages/types/src/__tests__/export-name.spec.ts`: save, clear, refusal before writing.
-- `packages/system/src/builtins/device-manager/__tests__/device-aggregate.spec.ts`: the derived
-  field and its routing to `setExposedName`, the refusal reported by name.
+- `packages/types/src/__tests__/export-name.spec.ts`: save, clear, refusal before writing, dry
+  run, pruning a deleted instance.
+- `packages/system/src/builtins/device-manager/__tests__/device-aggregate.spec.ts` and
+  `export-name-fields.spec.ts`: the derived field per enabled instance in its own section, its
+  routing to `setExposedName` before the exporter patch, all-or-none, the refusal reported by name.
 - Each exporter's spec pins its rule and that the exported id does not see the name;
-  `alexa-name-to-exposed-name.sqlite.spec.ts` pins the migration with a marked value.
+  `alexa-name-to-exposed-name.sqlite.spec.ts` pins the migration with a marked value and two
+  skills; each exporter's instance-deletion spec pins the prune.
 - `check-method-tiers` pins `setExposedName` to `admin`.

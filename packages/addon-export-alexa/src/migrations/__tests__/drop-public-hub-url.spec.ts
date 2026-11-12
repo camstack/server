@@ -118,6 +118,7 @@ function fixture(initial: Record<string, unknown>) {
           warn: () => undefined,
           listDeviceIds: async () => [],
           readDeviceField: async () => new Map(),
+          listSkillIds: async () => [],
           putSkill: async () => 'exists',
           putLinks: async () => 'exists',
           replaceLinks: async () => undefined,

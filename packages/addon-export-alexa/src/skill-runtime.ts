@@ -20,7 +20,7 @@ import {
   type RecordKindHandle,
   RecordSecretUnavailableError,
   readExposedName,
-  saveExposedName,
+  exposedNameStoreOf,
 } from '@camstack/types'
 import type { z } from 'zod'
 
@@ -47,6 +47,7 @@ import {
   sensorSelectionKey,
 } from './detection-sensors/sensor-selection.js'
 import { AlexaEgressPrewarm } from './egress/alexa-egress-prewarm.js'
+import { renameOnSkill } from './exposed-name-rename.js'
 import { alexaNameValidator } from './endpoints/alexa-name.js'
 import type { AlexaEndpoint } from './endpoints/types.js'
 import { GENERIC_DEVICE_TYPES } from './endpoints/generic-device.js'
@@ -1599,40 +1600,26 @@ export class SkillRuntime {
   }
 
   /**
-   * D1049: save this skill's name for a device (`device-export.setExposedName`). A name Amazon
-   * would refuse throws `ExportNameRefusedError` before anything is written. An exposed device
-   * is pushed again: same endpoint id, so AddOrUpdateReport renames it in Alexa (the shape
-   * signature ignores names, so the reconcile would never send it).
+   * D1049: save this skill's name for a device (`device-export.setExposedName`); an exposed
+   * device is pushed again under the same endpoint id. `renameOnSkill` holds the rule.
    */
-  async setExposedName(deviceIdRaw: string, raw: unknown): Promise<void> {
-    const deviceId = Number.parseInt(deviceIdRaw, 10)
-    if (!Number.isFinite(deviceId)) {
-      throw new Error(`export-alexa: deviceId must be numeric — got "${deviceIdRaw}"`)
-    }
-    const saved = await saveExposedName({
-      store: {
-        read: (id) => this.vision.readPrefs(id),
-        write: (id, patch) => this.vision.writePrefs(id, patch),
+  async setExposedName(deviceIdRaw: string, raw: unknown, dryRun = false): Promise<void> {
+    await renameOnSkill(
+      {
+        instanceId: this.instanceId,
+        // A strict read (it throws): a read that answered {} would erase the other skills' names.
+        store: {
+          read: (id) => exposedNameStoreOf(this.ctx.settings, 'export-alexa').read(id),
+          write: (id, patch) => this.vision.writePrefs(id, patch),
+        },
+        logger: this.ctx.logger,
+        isExposed: (id) => this.findEntry(id) !== null,
+        push: (id) => this.requireSyncEngine().pushDevice(id),
       },
-      deviceId,
-      instanceId: this.instanceId,
+      deviceIdRaw,
       raw,
-      validate: alexaNameValidator,
-    })
-    if (!saved.changed) return
-    this.ctx.logger.info('export-alexa: Alexa name saved', {
-      tags: { deviceId },
-      meta: { instanceId: this.instanceId, name: saved.name },
-    })
-    if (this.findEntry(deviceId) === null) return
-    void this.requireSyncEngine()
-      .pushDevice(deviceId)
-      .catch((err: unknown) => {
-        this.ctx.logger.warn('export-alexa: push after an Alexa name change failed', {
-          tags: { deviceId },
-          meta: { error: errMsg(err) },
-        })
-      })
+      { dryRun },
+    )
   }
 
   /**

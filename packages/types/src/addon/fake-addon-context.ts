@@ -18,6 +18,9 @@ export interface FakeSettings {
   readonly readAddonStore?: SettingsView['readAddonStore']
   readonly writeAddonStore?: SettingsView['writeAddonStore']
   readonly listDeviceStoreIds?: SettingsView['listDeviceStoreIds']
+  readonly readDeviceStore?: SettingsView['readDeviceStore']
+  readonly writeDeviceStore?: SettingsView['writeDeviceStore']
+  readonly readDeviceStoreBatch?: SettingsView['readDeviceStoreBatch']
   readonly readAddonStoreResult?: NonNullable<SettingsView['readAddonStoreResult']>
 }
 
@@ -80,10 +83,10 @@ function fakeSettings(overrides: FakeSettings): SettingsView {
     // `readStoredGlobalKey` reads as `three-way-read-unavailable`.
     ...(readAddonStoreResult !== undefined ? { readAddonStoreResult } : {}),
     writeAddonStore: overrides.writeAddonStore ?? unused('settings.writeAddonStore'),
-    readDeviceStoreBatch: unused('settings.readDeviceStoreBatch'),
+    readDeviceStoreBatch: overrides.readDeviceStoreBatch ?? unused('settings.readDeviceStoreBatch'),
     listDeviceStoreIds: overrides.listDeviceStoreIds ?? unused('settings.listDeviceStoreIds'),
-    readDeviceStore: unused('settings.readDeviceStore'),
-    writeDeviceStore: unused('settings.writeDeviceStore'),
+    readDeviceStore: overrides.readDeviceStore ?? unused('settings.readDeviceStore'),
+    writeDeviceStore: overrides.writeDeviceStore ?? unused('settings.writeDeviceStore'),
     clearDeviceStore: unused('settings.clearDeviceStore'),
     getSection: unused('settings.getSection'),
     setSection: unused('settings.setSection'),

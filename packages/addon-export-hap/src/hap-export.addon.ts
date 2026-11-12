@@ -56,6 +56,7 @@ import {
   EventCategory,
   type ExposedNameStore,
   exposedNameStoreOf,
+  pruneExposedNames,
   ExportSetupSchema,
   type IDeviceExportProvider,
   integrationInstancesCapability,
@@ -87,7 +88,7 @@ import { BridgeInstance } from './bridge-instance.js'
 import { shouldBridge } from './bridge-policy.js'
 import { type ExportHapActions, exportHapActions } from './custom-actions.js'
 import { carryForward } from './exposed-entry.js'
-import { hapNameValidator } from './exposed-name.js'
+import { HAP_NAME_RULE, hapNameValidator } from './exposed-name.js'
 import {
   type ExportDeviceSettings,
   type ExposedConfigEntry,
@@ -824,9 +825,22 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     for (const uuid of uuids) clearPairingFiles(uuid, this.ctx.logger)
     await this.exposureHandle().delete(id)
     if (id === HAP_DEFAULT_INSTANCE_ID) await this.exportSyncState.set({})
+    await this.pruneBridgeNames(id)
     this.ctx.logger.info('export-hap: bridge removed', {
       meta: { instanceId: id },
     })
+  }
+
+  /** A removed bridge's device names go too, so a bridge that reuses the id inherits none (D1049). */
+  private async pruneBridgeNames(id: string): Promise<void> {
+    const settings = this.ctx.settings
+    if (settings === undefined) return
+    const pruned = await pruneExposedNames(settings, id)
+    if (pruned.length > 0) {
+      this.ctx.logger.info('export-hap: removed bridge names deleted', {
+        meta: { instanceId: id, devices: pruned.length },
+      })
+    }
   }
 
   /**
@@ -978,6 +992,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
           name: row.body.name,
           enabled: row.enabled,
           kind: 'hap-bridge',
+          nameRule: HAP_NAME_RULE,
         })),
       listSupportedDeviceKinds: async ({ instanceId }) => {
         this.bridgesOf(instanceId)
@@ -1004,8 +1019,8 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         if (exposedName !== undefined) await this.saveExposedName(inst, deviceId, exposedName)
         return this.exposeDevice(inst, deviceId, capabilities)
       },
-      setExposedName: async ({ instanceId, deviceId, name }) =>
-        this.setExposedName(this.requireBridge(instanceId), deviceId, name),
+      setExposedName: async ({ instanceId, deviceId, name, dryRun }) =>
+        this.setExposedName(this.requireBridge(instanceId), deviceId, name, dryRun === true),
       unexposeDevice: async ({ instanceId, deviceId }) =>
         this.unexposeDevice(this.requireBridge(instanceId), deviceId),
       // ── Entities beside devices (D968): actions only, as momentary switches.
@@ -1265,6 +1280,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     inst: BridgeInstance,
     deviceIdStr: string,
     raw: string | null,
+    dryRun = false,
   ): Promise<boolean> {
     const deviceId = Number.parseInt(deviceIdStr, 10)
     if (!Number.isFinite(deviceId))
@@ -1275,6 +1291,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       instanceId: inst.id,
       raw,
       validate: hapNameValidator,
+      ...(dryRun ? { dryRun: true } : {}),
     })
     if (saved.changed) {
       this.ctx.logger.info('export-hap: HomeKit name saved', {
@@ -1288,14 +1305,15 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   /**
    * Rename on HomeKit (D1049). An exposed device is re-exposed in place — the same accessory
    * UUID, the pairing untouched (no unexpose, which would wipe it) — so Home shows the new name
-   * on the same tile.
+   * on the same tile. A dry run only validates.
    */
   private async setExposedName(
     inst: BridgeInstance,
     deviceIdStr: string,
     raw: string | null,
+    dryRun = false,
   ): Promise<void> {
-    const changed = await this.saveExposedName(inst, deviceIdStr, raw)
+    const changed = await this.saveExposedName(inst, deviceIdStr, raw, dryRun)
     if (changed && inst.exposed.has(deviceIdStr)) await this.exposeDevice(inst, deviceIdStr)
   }
 
@@ -1340,7 +1358,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
 
   // ── Mapper management ───────────────────────────────────────────
 
-  private async attachMapper(
+  protected async attachMapper(
     inst: BridgeInstance,
     entry: ExposedConfigEntry,
   ): Promise<{ childAccessoryUuids: readonly string[] }> {
@@ -1402,7 +1420,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     return { childAccessoryUuids: [] as readonly string[] }
   }
 
-  private async detachMapper(inst: BridgeInstance, deviceId: string): Promise<void> {
+  protected async detachMapper(inst: BridgeInstance, deviceId: string): Promise<void> {
     // Cancel any pending reconcile timer first — even when the mapper instance
     // is absent (boot reattach failed) — so a debounced reconcile can't fire
     // and republish a device we've just torn down. (Belt-and-suspenders:
@@ -1737,7 +1755,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
    * and every caller treats it as "keep doing what was already being done"
    * rather than re-shaping an exposed accessory on incomplete information.
    */
-  private async fetchDeviceSummary(deviceId: number): Promise<DeviceSummary | null> {
+  protected async fetchDeviceSummary(deviceId: number): Promise<DeviceSummary | null> {
     if (!Number.isFinite(deviceId)) return null
     try {
       const api: DeviceManagerApi = this.ctx.api
@@ -2399,7 +2417,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     inst.exposure = next
   }
 
-  private setExposedDevices(
+  protected setExposedDevices(
     inst: BridgeInstance,
     devices: readonly ExposedConfigEntry[],
   ): Promise<void> {

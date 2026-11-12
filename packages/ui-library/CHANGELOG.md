@@ -9,10 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Generated hooks include deviceExport.setExposedName.
 - A simple sensor's card shows its reading once, big, over a scene that says what it means; sensor and control rows draw the same model, follow your display units (°F, kW, precision), send a typed value in the device's own unit, and a device list reads its row values in one request
 - The device value picker can open straight on its two columns, and its grouped value list is available on its own
 - The condition kind picker picks the first row again when Enter is pressed on an empty search while adding a row
-- Generated hooks include deviceExport.setExposedName.
 
 ## [1.2.432] - 2026-11-12
 

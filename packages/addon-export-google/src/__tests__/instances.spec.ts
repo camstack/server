@@ -58,6 +58,8 @@ async function boot(options: { readonly seedHome?: boolean } = {}) {
     )
   }
   const logger = new RecordingLogger()
+  /** The addon's per-device store (D865), where each home's device names live (D1049). */
+  const deviceStore = new Map<number, Record<string, unknown>>()
   const ctx = {
     id: 'export-google',
     logger,
@@ -66,6 +68,15 @@ async function boot(options: { readonly seedHome?: boolean } = {}) {
       readAddonStore: vi.fn(async () => ({})),
       readAddonStoreResult: vi.fn(async () => ({ kind: 'value' as const, value: {} })),
       writeAddonStore: vi.fn(async () => undefined),
+      readDeviceStore: async (id: number) => deviceStore.get(id) ?? {},
+      writeDeviceStore: async (id: number, patch: Record<string, unknown>) => {
+        deviceStore.set(id, { ...deviceStore.get(id), ...patch })
+      },
+      listDeviceStoreIds: async () => [...deviceStore.keys()],
+      readDeviceStoreBatch: async (ids: readonly number[]) =>
+        new Map(
+          ids.map((id): [number, Record<string, unknown>] => [id, deviceStore.get(id) ?? {}]),
+        ),
     },
     eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => undefined) },
     kernel: { localNodeId: 'hub' },
@@ -123,7 +134,18 @@ async function boot(options: { readonly seedHome?: boolean } = {}) {
       headers: { authorization: `Bearer ${token}` },
       body: { requestId: 'r', inputs: [{ intent }] },
     })
-  return { addon, world, homes, exportsHandle, links, logger, deviceExport, instances, post }
+  return {
+    addon,
+    world,
+    homes,
+    exportsHandle,
+    links,
+    logger,
+    deviceExport,
+    instances,
+    post,
+    deviceStore,
+  }
 }
 
 describe('export-google multi-instance', () => {
@@ -218,6 +240,38 @@ describe('export-google multi-instance', () => {
     expect(await w.links.get(GOOGLE_INSTANCE_ID)).not.toBeNull()
     const after = await w.post(`/fulfillment/${created.id}`, 'user-b', 'action.devices.SYNC')
     expect(after.status).toBe(404)
+  })
+
+  it('deleting a home deletes its device names; the other home keeps its own (D1049)', async () => {
+    const w = await boot()
+    addons.push(w.addon)
+    const created = await w.instances.createInstance({ name: 'Temp' })
+    await w.deviceExport.setExposedName({
+      instanceId: created.id,
+      deviceId: '101',
+      name: 'Den lamp',
+    })
+    await w.deviceExport.setExposedName({
+      instanceId: GOOGLE_INSTANCE_ID,
+      deviceId: '101',
+      name: 'Lamp',
+    })
+
+    await w.instances.deleteInstance({ id: created.id })
+
+    expect(w.deviceStore.get(101)?.['exposedNames']).toEqual({ [GOOGLE_INSTANCE_ID]: 'Lamp' })
+  })
+
+  it('a dry-run name is checked and never written (D1049)', async () => {
+    const w = await boot()
+    addons.push(w.addon)
+    await w.deviceExport.setExposedName({
+      instanceId: GOOGLE_INSTANCE_ID,
+      deviceId: '101',
+      name: 'Den lamp',
+      dryRun: true,
+    })
+    expect(w.deviceStore.get(101)).toBeUndefined()
   })
 
   it('the per-device toggles are keyed per instance and drive only their own instance', async () => {

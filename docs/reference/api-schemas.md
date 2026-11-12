@@ -1598,6 +1598,7 @@ Enum: `"info" \| "warning" \| "error"`
 - `instanceId`: `string`
 - `deviceId`: `string`
 - `name`: `string \| null`
+- `dryRun?`: `boolean`
 
 ### `DeviceExportStatusSchema`
 
@@ -2298,6 +2299,7 @@ Enum: `"device" \| "action" \| "notifier"`
 - `name`: `string`
 - `enabled`: `boolean`
 - `kind?`: `string`
+- `nameRule?`: `string`
 
 ### `ExportOptionsSchema`
 

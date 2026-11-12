@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Saving an Action or a scheduler checks each named device against its own capability bindings before accepting a device command step
 - A stored Action whose steps are still raw capability calls is no longer read: it is left out of the list and logged with its id and the reason, and it is converted by saving its name and new command steps under the same id (`actions.update`), or by building it again in the editor.
 - Each export (Alexa, HomeKit, Google Home, Home Assistant) can give a device its own name: one 'Name on <instance>' field per export in the device's Export tab; renaming keeps the same device on the platform.
+- The export name can be set in the same save that turns Expose on; several names in one save are all written or none; an old Alexa name is kept on every Alexa skill; deleting a skill, bridge, home or connection deletes its names.
 
 ## [1.2.849] - 2026-11-12
 

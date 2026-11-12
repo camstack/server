@@ -319,31 +319,56 @@ async function initDeviceManager(
   return providers[0]!.provider as IDeviceManagerProvider
 }
 
+function isFieldRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
 // device-export provider fake — a system COLLECTION cap that gates its
 // per-device contribution by the set of devices it has "exposed".
 function makeExportProvider(exposed: Set<number>) {
+  /** Saved names by `<instanceId>:<deviceId>`; every real (non-dry-run) write is logged. */
   const names = new Map<string, string>()
+  const writes: string[] = []
   return {
     names,
+    writes,
     exposeDevice: vi.fn(),
     unexposeDevice: vi.fn(),
     listInstances: vi.fn(async () => [
-      { instanceId: 'hap-1', name: 'Home bridge', enabled: true },
+      {
+        instanceId: 'hap-1',
+        name: 'Home bridge',
+        enabled: true,
+        nameRule: 'Letters and digits only.',
+      },
+      { instanceId: 'hap-2', name: 'Guest bridge', enabled: true },
       { instanceId: 'hap-off', name: 'Old bridge', enabled: false },
     ]),
+    // The device is exposed on hap-1 only; hap-2 does not expose it (yet).
     listExposedDevices: vi.fn(async ({ instanceId }: { instanceId?: string }) =>
       instanceId === 'hap-1'
-        ? [...exposed].map((id) => ({
-            deviceId: String(id),
-            ...(names.has(String(id)) ? { exposedName: names.get(String(id)) } : {}),
-          }))
+        ? [...exposed].map((id) => {
+            const name = names.get(`hap-1:${id}`)
+            return {
+              deviceId: String(id),
+              ...(name !== undefined ? { exposedName: name } : {}),
+            }
+          })
         : [],
     ),
     setExposedName: vi.fn(
-      async (input: { instanceId: string; deviceId: string; name: string | null }) => {
+      async (input: {
+        instanceId: string
+        deviceId: string
+        name: string | null
+        dryRun?: boolean
+      }) => {
         if (input.name === 'Bad!') throw new Error('export-name-refused: no punctuation')
-        if (input.name === null) names.delete(input.deviceId)
-        else names.set(input.deviceId, input.name)
+        if (input.dryRun === true) return
+        writes.push(`${input.instanceId}=${input.name}`)
+        const key = `${input.instanceId}:${input.deviceId}`
+        if (input.name === null) names.delete(key)
+        else names.set(key, input.name)
       },
     ),
     getStatus: vi.fn(async () => ({})),
@@ -841,7 +866,7 @@ describe('DeviceManagerAddon — device-settings aggregator', () => {
     expect(aggregate).not.toBeNull()
     expect(aggregate!.sections.map((s) => s.id)).toContain('device-export-hap')
   })
-  it('derives ONE "Name on <platform>" field per exposing instance and routes it to setExposedName (D1049)', async () => {
+  it('derives ONE "Name on <instance>" field per enabled instance and saves names all-or-none, before the exporter patch (D1049)', async () => {
     const deviceRegistry = new DeviceRegistry()
     const capabilityRegistry = new CapabilityRegistry(makeLogger())
     const exposed = new Set<number>()
@@ -864,22 +889,30 @@ describe('DeviceManagerAddon — device-settings aggregator', () => {
       config: {},
     })
     exposed.add(deviceId)
-    exportProvider.names.set(String(deviceId), 'Cancello')
+    exportProvider.names.set(`hap-1:${deviceId}`, 'Cancello')
 
     const aggregate = await provider.getDeviceSettingsAggregate({ deviceId })
-    const fields = aggregate!.sections.find((s) => s.id === 'device-export-hap')!.fields as Record<
-      string,
-      unknown
-    >[]
-    const nameFields = fields.filter((f) => String(f['key']).startsWith('export-name:'))
-    expect(nameFields).toHaveLength(1)
-    expect(nameFields[0]).toMatchObject({
-      key: 'export-name:export-hap:hap-1',
+    const section = aggregate?.sections.find((s) => s.id === 'device-export-hap')
+    const nameFields = (section?.fields ?? [])
+      .filter(isFieldRecord)
+      .filter((f) => String(f['key']).startsWith('export-name:'))
+    const byKey = (key: string) => nameFields.find((f) => f['key'] === key)
+    // hap-2 does not expose the device yet: its field is there anyway, so the name can be set
+    // in the save that turns Expose on. The disabled bridge gets none.
+    expect(nameFields.map((f) => String(f['key'])).toSorted()).toEqual([
+      'export-name:export-hap:hap-1',
+      'export-name:export-hap:hap-2',
+    ])
+    expect(byKey('export-name:export-hap:hap-1')).toMatchObject({
       label: 'Name on Home bridge',
       value: 'Cancello',
       writerCapName: 'device-export',
       writerAddonId: 'export-hap',
     })
+    expect(String(byKey('export-name:export-hap:hap-1')?.['description'])).toContain(
+      'Letters and digits only.',
+    )
+    expect(byKey('export-name:export-hap:hap-2')?.['value']).toBe('')
 
     const change = (key: string, value: unknown) => ({
       writerCapName: 'device-export',
@@ -887,13 +920,14 @@ describe('DeviceManagerAddon — device-settings aggregator', () => {
       key,
       value,
     })
+    // The name and Expose in ONE save: the name is written first, then the exporter's patch.
     const saved = await provider.updateDeviceFieldsBatch({
       deviceId,
-      changes: [change('export-name:export-hap:hap-1', 'Porta'), change('export:hap', true)],
+      changes: [change('export-name:export-hap:hap-2', 'Porta'), change('export:hap', true)],
     })
     expect(saved.failures).toEqual([])
     expect(exportProvider.setExposedName).toHaveBeenCalledWith({
-      instanceId: 'hap-1',
+      instanceId: 'hap-2',
       deviceId: String(deviceId),
       name: 'Porta',
     })
@@ -901,20 +935,40 @@ describe('DeviceManagerAddon — device-settings aggregator', () => {
       deviceId,
       patch: { 'export:hap': true },
     })
+    const lastName = Math.max(...exportProvider.setExposedName.mock.invocationCallOrder)
+    const patchCall = exportProvider.applyDeviceSettingsPatch.mock.invocationCallOrder[0] ?? 0
+    expect(lastName).toBeLessThan(patchCall)
 
-    // A blank clears; a refusal is reported by name and the exporter's own patch is not called.
+    // Two names, the second refused: NEITHER is written, the exporter patch is not called.
     exportProvider.applyDeviceSettingsPatch.mockClear()
+    exportProvider.writes.length = 0
     const refused = await provider.updateDeviceFieldsBatch({
       deviceId,
-      changes: [change('export-name:export-hap:hap-1', 'Bad!')],
+      changes: [
+        change('export-name:export-hap:hap-1', 'Nuovo'),
+        change('export-name:export-hap:hap-2', 'Bad!'),
+        change('export:hap', true),
+      ],
     })
     expect(refused.failures[0]?.error).toMatch(/^export-name-refused: /)
+    expect(exportProvider.writes).toEqual([])
+    expect(exportProvider.names.get(`hap-1:${deviceId}`)).toBe('Cancello')
     expect(exportProvider.applyDeviceSettingsPatch).not.toHaveBeenCalled()
+
+    // A non-string is refused by name, never read as "clear".
+    const notText = await provider.updateDeviceFieldsBatch({
+      deviceId,
+      changes: [change('export-name:export-hap:hap-1', 42)],
+    })
+    expect(notText.failures[0]?.error).toMatch(/^export-name-refused: /)
+    expect(exportProvider.names.get(`hap-1:${deviceId}`)).toBe('Cancello')
+
+    // A blank clears.
     await provider.updateDeviceFieldsBatch({
       deviceId,
       changes: [change('export-name:export-hap:hap-1', '  ')],
     })
-    expect(exportProvider.names.has(String(deviceId))).toBe(false)
+    expect(exportProvider.names.has(`hap-1:${deviceId}`)).toBe(false)
   })
 })
 

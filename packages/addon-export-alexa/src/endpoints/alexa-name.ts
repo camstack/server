@@ -24,6 +24,9 @@ export const LEGACY_ALEXA_NAME_KEY = 'alexaName'
 
 export const ALEXA_NAME_MAX_LENGTH = 256
 
+/** Amazon's rule, as the derived "Name on <skill>" field states it (D1049). */
+export const ALEXA_NAME_RULE = `Amazon accepts letters, digits and spaces only (no punctuation), up to ${ALEXA_NAME_MAX_LENGTH} characters.`
+
 /** Letters (any script, with their combining marks), digits and spaces. */
 const ALLOWED_PATTERN = /^[\p{L}\p{M}\p{N} ]+$/u
 

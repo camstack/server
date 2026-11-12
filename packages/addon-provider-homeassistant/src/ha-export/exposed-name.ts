@@ -13,6 +13,8 @@ import type { HaDeviceBlock } from './types.js'
 /** Home Assistant takes free text for a device name; it is kept to a length its UI shows. */
 export const HA_NAME_MAX_LENGTH = 100
 export const haNameValidator = freeTextNameValidator('Home Assistant', HA_NAME_MAX_LENGTH)
+/** Home Assistant's rule, as the derived "Name on <connection>" field states it. */
+export const HA_NAME_RULE = `Home Assistant takes any text up to ${HA_NAME_MAX_LENGTH} characters, without control characters.`
 
 /** The saved name of the device on each of `brokerIds` that has one. */
 export async function namesByBroker(

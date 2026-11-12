@@ -56,6 +56,7 @@ import {
   exposedNameStoreOf,
   freeTextNameValidator,
   readExposedName,
+  pruneExposedNames,
   saveExposedName,
   type IAddonRouteProvider,
   type IDeviceExportProvider,
@@ -98,6 +99,8 @@ const ADDON_ID = 'export-google'
  */
 const GOOGLE_NAME_MAX_LENGTH = 60
 const GOOGLE_NAME_VALIDATOR = freeTextNameValidator('Google Home', GOOGLE_NAME_MAX_LENGTH)
+/** Google's rule, as the derived "Name on <home>" field states it (D1049). */
+const GOOGLE_NAME_RULE = `Google Home takes up to ${GOOGLE_NAME_MAX_LENGTH} characters and shows a new name after its next sync.`
 
 /** The per-device toggle key: `google:<instanceId>:<deviceId>:enabled`. */
 const DEVICE_KEY = /^google:([^:]+):(\d+):enabled$/
@@ -292,9 +295,23 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
     change: 'created' | 'updated' | 'enabled' | 'deleted',
   ): Promise<void> {
     const registry = this.requireRegistry()
-    if (change === 'deleted') await registry.remove(id)
-    else if (change === 'created') await registry.get(id)
+    if (change === 'deleted') {
+      await registry.remove(id)
+      await this.pruneHomeNames(id)
+    } else if (change === 'created') await registry.get(id)
     else await registry.refreshHome(id)
+  }
+
+  /** A deleted home's device names go too, so a home that reuses the id inherits none (D1049). */
+  private async pruneHomeNames(id: string): Promise<void> {
+    const settings = this.ctx.settings
+    if (settings === undefined) return
+    const pruned = await pruneExposedNames(settings, id)
+    if (pruned.length > 0) {
+      this.ctx.logger.info('export-google: deleted home names removed', {
+        meta: { instanceId: id, devices: pruned.length },
+      })
+    }
   }
 
   private homeForm(id: string | null): ConfigUISchema {
@@ -397,6 +414,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
           name: row.body.name,
           enabled: isInstanceEnabled(row.body),
           kind: 'google-home',
+          nameRule: GOOGLE_NAME_RULE,
         })),
       listSupportedDeviceKinds: async ({ instanceId }) => {
         await this.requireInstance(instanceId ?? GOOGLE_INSTANCE_ID)
@@ -419,8 +437,13 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
         if (exposedName !== undefined) await this.setExposedName(instance, deviceId, exposedName)
         return this.exposeDevice(instance, deviceId)
       },
-      setExposedName: async ({ instanceId, deviceId, name }) =>
-        this.setExposedName(await this.requireInstance(instanceId), deviceId, name),
+      setExposedName: async ({ instanceId, deviceId, name, dryRun }) =>
+        this.setExposedName(
+          await this.requireInstance(instanceId),
+          deviceId,
+          name,
+          dryRun === true,
+        ),
       unexposeDevice: async ({ instanceId, deviceId }) =>
         this.unexposeDevice(await this.requireInstance(instanceId ?? GOOGLE_INSTANCE_ID), deviceId),
       listSupportedEntityKinds: async () => ['device', 'action'],
@@ -477,6 +500,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
     instance: GoogleInstance,
     deviceIdRaw: string,
     raw: string | null,
+    dryRun = false,
   ): Promise<void> {
     const deviceId = Number.parseInt(deviceIdRaw, 10)
     if (!Number.isFinite(deviceId)) {
@@ -488,6 +512,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
       instanceId: instance.id,
       raw,
       validate: GOOGLE_NAME_VALIDATOR,
+      ...(dryRun ? { dryRun: true } : {}),
     })
     if (saved.changed) {
       this.ctx.logger.info(

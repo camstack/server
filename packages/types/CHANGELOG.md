@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An automation, Action or scheduler step that calls a device is now a command step naming a vocabulary action; a step naming a device that does not offer the action is refused when it is saved.
 - An automation or Action step whose action id the vocabulary no longer knows fails at that step, traced and logged with its device, instead of failing the whole run before any step runs; the alarm-step rule is on the client entry
 - device-export gains setExposedName and an exposedName on exposeDevice / listExposedDevices: a per-instance device name that never changes the exported id.
+- setExposedName takes dryRun (check only) and an export instance states its naming rule (nameRule).
 
 ## [1.2.556] - 2026-11-12
 

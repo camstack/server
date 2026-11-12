@@ -39,6 +39,12 @@ const ExportInstanceSchema = z.object({
   name: z.string(),
   enabled: z.boolean(),
   kind: z.string().optional(),
+  /**
+   * What this instance's platform accepts as a device name, in one operator-facing sentence
+   * (D1049). The derived "Name on <instance>" field shows it; absent = the field says nothing
+   * about the rule.
+   */
+  nameRule: z.string().optional(),
 })
 
 export const EXPORT_INSTANCE_UNKNOWN = 'export-instance-unknown'
@@ -154,6 +160,11 @@ const SetExposedNameInputSchema = z.object({
   deviceId: z.string(),
   /** Blank or null = the device's own name. */
   name: z.string().nullable(),
+  /**
+   * Validate only: refuse exactly as a real call would, write nothing. A caller saving several
+   * names at once checks every one first, so one refusal writes none (D1049).
+   */
+  dryRun: z.boolean().optional(),
 })
 
 export const EXPORT_NAME_REFUSED = 'export-name-refused'

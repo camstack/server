@@ -37,6 +37,8 @@ export interface SaveExposedNameInput {
   readonly instanceId: string
   readonly raw: unknown
   readonly validate: ExposedNameValidator
+  /** Validate only: refuse as a real save would, read and write nothing. */
+  readonly dryRun?: boolean
 }
 
 export interface SaveExposedNameResult {
@@ -97,6 +99,7 @@ export function exposedNamePatch(
 export async function saveExposedName(input: SaveExposedNameInput): Promise<SaveExposedNameResult> {
   const check = checkExposedName(input.raw, input.validate)
   if (!check.ok) throw new ExportNameRefusedError(input.instanceId, check.reason)
+  if (input.dryRun === true) return { changed: false, name: check.name }
   const store = await input.store.read(input.deviceId)
   const before = readExposedNames(store)[input.instanceId] ?? null
   if (before === check.name) return { changed: false, name: check.name }
@@ -123,6 +126,34 @@ export function exposedNameStoreOf(
     read: (deviceId) => access().readDeviceStore(deviceId),
     write: (deviceId, patch) => access().writeDeviceStore(deviceId, patch),
   }
+}
+
+/** The per-device store an exporter can walk to prune a deleted instance's names. */
+export interface PrunableDeviceStore extends DeviceStoreAccess {
+  listDeviceStoreIds(): Promise<readonly number[]>
+  readDeviceStoreBatch(
+    deviceIds: readonly number[],
+  ): Promise<ReadonlyMap<number, Record<string, unknown>>>
+}
+
+/**
+ * Remove every name saved for `instanceId` (the instance was deleted), so a later instance that
+ * reuses the id does not inherit them. Returns the device ids that lost a name. A store that
+ * cannot be read throws; nothing is written for the devices not reached.
+ */
+export async function pruneExposedNames(
+  settings: PrunableDeviceStore,
+  instanceId: string,
+): Promise<readonly number[]> {
+  const ids = await settings.listDeviceStoreIds()
+  if (ids.length === 0) return []
+  const pruned: number[] = []
+  for (const [deviceId, store] of await settings.readDeviceStoreBatch(ids)) {
+    if (readExposedNames(store)[instanceId] === undefined) continue
+    await settings.writeDeviceStore(deviceId, exposedNamePatch(store, instanceId, null))
+    pruned.push(deviceId)
+  }
+  return pruned
 }
 
 /** No control characters, at most `max` characters: the rule of a platform that takes free text. */
