@@ -493,7 +493,6 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
 
   // ── Skills ──────────────────────────────────────────────────────
 
-  /** Build and start the runtime of one skill. */
   /** The running skills an account may be linked to with `instance=` (all but the default). */
   private linkableInstances(): readonly AlexaLinkableInstance[] {
     return [...this.runtimes.values()]
@@ -501,6 +500,7 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       .map((r) => ({ id: r.instanceId, displayName: r.skillName }))
   }
 
+  /** Build and start the runtime of one skill. */
   private async startRuntime(instanceId: string): Promise<void> {
     const runtime = new SkillRuntime(instanceId, this.host())
     await runtime.start()
