@@ -10,6 +10,8 @@ import {
   makeInMemoryRecords,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
+import { EnpalError } from '../enpal-client.js'
+import { createSnapshot } from '../enpal-snapshot.js'
 import {
   buildEnpalInstances,
   enpalConnectionOf,
@@ -98,6 +100,41 @@ describe('enpal integration instances', () => {
     expect(w.cleared).toEqual(['int_0001'])
     expect(w.rows.get('int_0001')).toEqual({})
     expect(await w.migration.execute()).toMatchObject({ result: { outcome: 'already-done' } })
+  })
+
+  it('tests a connection from the host alone; the token stays optional', async () => {
+    const mem = makeInMemoryRecords(ADDON)
+    await mem.records.declare(enpalRecordKinds)
+    const probed: string[] = []
+    const instances = buildEnpalInstances(mem.records, {
+      onChanged: async () => undefined,
+      probe: async (connection) => {
+        probed.push(connection.host)
+        if (connection.token !== '') throw new Error('token must stay empty')
+        return createSnapshot('device-page', [], 1)
+      },
+    })
+    expect((await instances.describe()).canTest).toBe(true)
+
+    const missing = await instances.testInstance({ id: null, values: { token: 'secret' } })
+    expect(missing).toMatchObject({ success: false, status: 'rejected' })
+    expect(probed).toEqual([])
+
+    const ok = await instances.testInstance({ id: null, values: { host: '192.0.2.10' } })
+    expect(ok).toMatchObject({ success: true, status: 'validated' })
+    expect(probed).toEqual(['192.0.2.10'])
+
+    const refused = buildEnpalInstances(mem.records, {
+      onChanged: async () => undefined,
+      probe: async () => {
+        throw new EnpalError('unauthorized', 'influxdb', 'Enpal box refused the token')
+      },
+    })
+    const rejected = await refused.testInstance({
+      id: null,
+      values: { host: '192.0.2.10', token: 'nope' },
+    })
+    expect(rejected).toMatchObject({ success: false, status: 'rejected' })
   })
 
   it('reads no connection from a record without a host', async () => {

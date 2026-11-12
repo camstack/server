@@ -7,6 +7,7 @@
 import {
   defineEntryKind,
   entryBody,
+  type IntegrationTestConnectionResult,
   type RecordsAccess,
   RecordIntegrationInstances,
 } from '@camstack/types'
@@ -14,9 +15,14 @@ import { z } from 'zod'
 import {
   buildConnectionFormSchema,
   connectionFromSettings,
+  type EnpalConnection,
+  enpalConnectionSchema,
   ENPAL_SOURCES,
   type EnpalConnectionRead,
 } from './config.js'
+import { EnpalError, readEnpalSnapshot } from './enpal-client.js'
+import type { BlazorReader } from './enpal-blazor.js'
+import type { EnpalErrorKind, EnpalSnapshot } from './enpal-snapshot.js'
 
 export const enpalConnectionsEntryKind = defineEntryKind('connections', {
   title: 'Enpal integrations',
@@ -38,25 +44,88 @@ export type EnpalConnectionBody = z.infer<typeof enpalConnectionsEntryKind.schem
 /** Every kind this addon declares, keyed by its name. */
 export const enpalRecordKinds = { connections: enpalConnectionsEntryKind } as const
 
+export interface EnpalInstancesDeps {
+  readonly onChanged: () => Promise<void>
+  /** The box's Blazor bridge, read when a test runs (it may not exist at construction). */
+  readonly blazor?: () => BlazorReader | undefined
+  /** Replaces the live box read. Specs pass this so a test never dials the network. */
+  readonly probe?: (connection: EnpalConnection) => Promise<EnpalSnapshot>
+}
+
+const REJECTED_KINDS: ReadonlySet<EnpalErrorKind> = new Set([
+  'unauthorized',
+  'token-missing',
+  'empty',
+])
+
+function connectionForTest(values: Readonly<Record<string, unknown>>): EnpalConnection | null {
+  const host = values['host']
+  if (typeof host !== 'string' || host.trim().length === 0) return null
+  const parsed = enpalConnectionSchema.safeParse({ ...values })
+  return parsed.success ? parsed.data : null
+}
+
+function testFailure(error: unknown): IntegrationTestConnectionResult {
+  if (error instanceof EnpalError) {
+    return {
+      success: false,
+      status: REJECTED_KINDS.has(error.kind) ? 'rejected' : 'inconclusive',
+      error: error.message,
+    }
+  }
+  return { success: false, status: 'inconclusive', error: 'The Enpal box did not answer' }
+}
+
+function liveProbe(
+  blazor: (() => BlazorReader | undefined) | undefined,
+): (connection: EnpalConnection) => Promise<EnpalSnapshot> {
+  return (connection) =>
+    readEnpalSnapshot({
+      connection,
+      fetch: globalThis.fetch,
+      now: () => Date.now(),
+      blazor: blazor?.(),
+    })
+}
+
 export function buildEnpalInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
-  deps: { readonly onChanged: () => Promise<void> },
+  deps: EnpalInstancesDeps,
 ): RecordIntegrationInstances<EnpalConnectionBody> {
+  const probe = deps.probe ?? liveProbe(deps.blazor)
   return new RecordIntegrationInstances<EnpalConnectionBody>(records, enpalConnectionsEntryKind, {
     description: {
       role: 'devices',
       discovery: { mode: 'account', scopedToInstance: true },
       instanceMode: 'multiple',
       kind: 'server',
-      canTest: false,
+      canTest: true,
       kinds: [
-        { id: 'connection', label: 'Enpal', functionCap: 'device-provider', role: 'devices' },
+        {
+          id: 'connection',
+          label: 'Enpal',
+          functionCap: 'device-provider',
+          role: 'devices',
+          canTest: true,
+        },
       ],
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): EnpalConnectionBody => ({ name }),
     configured: (body) => (body.host ?? '').length > 0,
     onChanged: () => deps.onChanged(),
+    test: async ({ values }): Promise<IntegrationTestConnectionResult> => {
+      const connection = connectionForTest(values)
+      if (connection === null) {
+        return { success: false, status: 'rejected', error: 'Host is required' }
+      }
+      try {
+        await probe(connection)
+        return { success: true, status: 'validated' }
+      } catch (error) {
+        return testFailure(error)
+      }
+    },
   })
 }
 

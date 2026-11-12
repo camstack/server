@@ -209,7 +209,7 @@ describe('sensor heroes', () => {
     expect(m.scene.id).toBe('sensor-sparkline')
     expect(m.state).toBe('on')
     expect(m.title.en).toBe('21.4°')
-    expect(m.facts.map((f) => f.text.en)).toEqual(['54%'])
+    expect(m.facts.map((f) => f.text.en)).toEqual(['21.4°', '54%'])
     expect(m.look.icon).toBe('gauge')
   })
 

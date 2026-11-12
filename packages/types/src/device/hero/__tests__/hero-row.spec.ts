@@ -125,6 +125,21 @@ describe('projectDeviceRow', () => {
     expect(row.timedRun).toBeNull()
   })
 
+  it('a numeric-sensor reading trails the row for a fraction and for whole numbers', () => {
+    for (const value of [6.9, 48, 1221]) {
+      const row = projectDeviceRow(
+        build(
+          DeviceType.Sensor,
+          ['numeric-sensor'],
+          { 'numeric-sensor': { value, lastFetchedAt: 1 } },
+          { role: DeviceRole.TemperatureSensor },
+        ),
+      )
+      expect(row.trailing?.text.en).toBe(String(value))
+      expect(row.statusLine.map((t) => t.en)).toEqual([String(value)])
+    }
+  })
+
   it('washer: the phase is in the status line, the drum is the scene', () => {
     const row = projectDeviceRow(
       build(DeviceType.Washer, ['running-state'], {

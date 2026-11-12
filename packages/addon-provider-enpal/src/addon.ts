@@ -98,6 +98,7 @@ export class EnpalProviderAddon extends BaseDeviceProvider {
     )
     this.instances = buildEnpalInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
+      blazor: () => this.blazorReader ?? undefined,
     })
     this.blazorReader = await this.createBlazorBridge()
     this.clients = new EnpalClientRegistry(this.ctx.logger, {

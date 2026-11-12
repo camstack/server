@@ -65,6 +65,30 @@ describe('SensorValueAtom', () => {
       expect(badge.textContent).toContain('°C')
     })
 
+    it('renders a fractional role reading (6.9 °C) from the role field', () => {
+      mockSlice = { temperature: 6.9, lastFetchedAt: 1700000000000 }
+      const device: DeviceItemDevice = {
+        ...baseDevice,
+        role: 'temperature-sensor',
+      }
+      const { container } = render(<SensorValueAtom trpc={trpc} device={device} />)
+      const badge = container.firstChild as HTMLElement
+      expect(badge.textContent).toContain('6.9')
+      expect(badge.textContent).toContain('°C')
+    })
+
+    it('renders a whole-number reading published only as numeric-sensor.value', () => {
+      mockSlice = { value: 48, lastFetchedAt: 1700000000000 }
+      const device: DeviceItemDevice = {
+        ...baseDevice,
+        role: 'temperature-sensor',
+      }
+      const { container } = render(<SensorValueAtom trpc={trpc} device={device} />)
+      const badge = container.firstChild as HTMLElement
+      expect(badge.textContent).toContain('48')
+      expect(badge.textContent).toContain('°C')
+    })
+
     it('renders nothing when slice has not landed', () => {
       mockSlice = undefined
       const device: DeviceItemDevice = {
@@ -195,12 +219,19 @@ describe('SensorValueAtom', () => {
       expect(badge.textContent).toContain('W')
     })
 
-    it('renders nothing when watts field is absent (numericSensor slice shape)', () => {
-      // A numericSensor slice has { value: 1200 } — watts would be absent,
-      // so if the descriptor wrongly pointed to numericSensor the render would
-      // see undefined and return null. With the correct fix pointing to
-      // powerMeter, { power: undefined } also renders null — but the key test
-      // is that when the correct powerMeter slice is present it DOES render.
+    it('renders an integer power reading published only as numeric-sensor.value', () => {
+      mockSlice = { value: 1221, lastFetchedAt: 1700000000000 }
+      const device: DeviceItemDevice = {
+        ...baseDevice,
+        role: 'power-sensor',
+      }
+      const { container } = render(<SensorValueAtom trpc={trpc} device={device} />)
+      const badge = container.firstChild as HTMLElement
+      expect(badge.textContent).toContain('1221')
+      expect(badge.textContent).toContain('W')
+    })
+
+    it('renders nothing when the power field and numeric-sensor value are both absent', () => {
       mockSlice = { power: undefined, lastFetchedAt: 0 }
       const device: DeviceItemDevice = {
         ...baseDevice,

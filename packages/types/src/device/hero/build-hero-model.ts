@@ -27,6 +27,7 @@ import type {
   HeroSideTiles,
 } from './hero-model.js'
 import { HERO_SCENE_ROW_IDS, HERO_SIDE_TILES_MAX } from './hero-model.js'
+import { ROW_READING_FACT_IDS } from './hero-row.js'
 import type { HeroState } from './hero-state.js'
 import { heroText, type HeroText } from './hero-text.js'
 import { resolveOwnPower } from './own-power.js'
@@ -275,10 +276,12 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
     state === 'offline' || state === 'unknown'
       ? undefined
       : fragments.find((f) => f.title !== undefined)?.title
-  // A fact that repeats the headline would read twice in the status line.
+  // A fact that repeats the headline would read twice in the status line, unless it
+  // IS the measurement: the row trails that fact (a client that paints only trailing).
+  const readingIds = new Set<HeroFact['id']>(ROW_READING_FACT_IDS)
   const facts: HeroFact[] = fragments
     .flatMap((f) => f.facts ?? [])
-    .filter((f) => headline === undefined || f.text.en !== headline.en)
+    .filter((f) => headline === undefined || f.text.en !== headline.en || readingIds.has(f.id))
   const sideTiles: HeroSideTiles = {
     left: tilesOf(fragments, 'left'),
     right: tilesOf(fragments, 'right'),

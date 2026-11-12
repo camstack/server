@@ -88,15 +88,31 @@ export type HeroRowModel = z.infer<typeof HeroRowModelSchema>
 /** The most facts a row's status line carries after its head: the line never wraps. */
 export const ROW_STATUS_FACTS_MAX = 3
 
-/** The trailing fact, in order of preference. */
+/**
+ * A measurement that IS the headline. The row trails it so a client that paints only
+ * `trailing` still shows the reading. Power, battery and consumables stay ahead of these.
+ */
+export const ROW_READING_FACT_IDS: readonly HeroFact['id'][] = [
+  'temperature',
+  'humidity',
+  'pressure',
+  'illuminance',
+  'reading',
+  'air-quality',
+  'valve',
+]
+
+/** The trailing fact, in order of preference. A reading joins only when it repeats the headline. */
 const TRAILING_ORDER: readonly HeroFact['id'][] = ['power', 'battery', 'consumables']
 
-function trailingOf(facts: readonly HeroFact[]): HeroFact | null {
+const READING_FACT_IDS = new Set<HeroFact['id']>(ROW_READING_FACT_IDS)
+
+function trailingOf(model: HeroModel): HeroFact | null {
   for (const id of TRAILING_ORDER) {
-    const found = facts.find((f) => f.id === id)
+    const found = model.facts.find((f) => f.id === id)
     if (found !== undefined) return found
   }
-  return null
+  return model.facts.find((f) => READING_FACT_IDS.has(f.id) && f.text.en === model.title.en) ?? null
 }
 
 /**
@@ -205,7 +221,7 @@ function timedRunOf(model: HeroModel): HeroRowTimedRun | null {
 }
 
 export function projectDeviceRow(model: HeroModel): HeroRowModel {
-  const trailing = trailingOf(model.facts)
+  const trailing = trailingOf(model)
   const primary = primaryOf(model)
   return {
     deviceId: model.deviceId,

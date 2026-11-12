@@ -141,6 +141,36 @@ export function isBatterySensorRole(role: string | null | undefined): boolean {
  * at the descriptor field — a cold-start slice (`{ value: 0, lastFetchedAt: 0 }`)
  * or a binary slice (no numeric field) does NOT, so the binary fallback wins.
  */
+function sliceRecord(slice: unknown): Record<string, unknown> | undefined {
+  if (typeof slice !== 'object' || slice === null || Array.isArray(slice)) return undefined
+  return Object.fromEntries(Object.entries(slice))
+}
+
+function numberAt(slice: unknown, field: string): number | undefined {
+  const record = sliceRecord(slice)
+  if (record === undefined) return undefined
+  const raw = record[field]
+  return typeof raw === 'number' && Number.isFinite(raw) ? raw : undefined
+}
+
+/**
+ * The role field when it is a number; otherwise the same numbers copied onto that
+ * field from `numeric-sensor.value`. Enpal (and any provider that types the role
+ * but publishes only `numeric-sensor`) keeps the quantity of the role. The input
+ * slices are not mutated.
+ */
+export function sliceForRoleReading(
+  field: string,
+  primary: unknown,
+  numericFallback: unknown,
+): unknown {
+  if (numberAt(primary, field) !== undefined) return primary
+  const value = numberAt(numericFallback, 'value')
+  const record = sliceRecord(numericFallback)
+  if (value === undefined || record === undefined) return primary
+  return { ...record, [field]: value }
+}
+
 export function hasBatteryNumericValue(slice: unknown, field: string): boolean {
   if (!isNumericSliceValue(slice)) return false
   const rawValue = (slice as Record<string, unknown>)[field]
@@ -443,6 +473,12 @@ export function SensorValueAtom({ trpc, device }: SensorValueAtomProps): ReactNo
     dev !== null && isBattery ? dev.state.binary : undefined
   const binaryBatterySlice = useDeviceStateSlice(binaryBatteryHandle)
 
+  // After the enum fallback (call 2 in tests). A typed role whose cap never
+  // published still reads `numeric-sensor.value`.
+  const numericFallbackHandle: SliceHandle<unknown> | undefined =
+    dev !== null ? dev.state.numericSensor : undefined
+  const numericFallbackSlice = useDeviceStateSlice(numericFallbackHandle)
+
   // Effective descriptor + slice. For a battery sensor, prefer the numeric
   // percentage when a real numeric value landed; otherwise fall back to the
   // binary Normal/Low rendering. All other roles use the single role path.
@@ -454,7 +490,11 @@ export function SensorValueAtom({ trpc, device }: SensorValueAtomProps): ReactNo
   const descriptor: SensorDescriptor | undefined = useBinaryBattery
     ? BINARY_BATTERY_DESCRIPTOR
     : roleDescriptor
-  const slice: unknown = useBinaryBattery ? binaryBatterySlice : numericSlice
+  const roleSlice: unknown = useBinaryBattery ? binaryBatterySlice : numericSlice
+  const slice: unknown =
+    descriptor?.kind === 'numeric' && !useBinaryBattery
+      ? sliceForRoleReading(descriptor.field, roleSlice, numericFallbackSlice)
+      : roleSlice
 
   if (descriptor === undefined || slice === undefined) return null
 

@@ -32,6 +32,7 @@ import {
   BINARY_BATTERY_DESCRIPTOR,
   isBatterySensorRole,
   hasBatteryNumericValue,
+  sliceForRoleReading,
   readSliceDateTimeFormat,
   isStringSliceValue,
   type SensorDescriptor,
@@ -178,6 +179,10 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
     dev !== null && !isBattery ? (dev.state as DeviceProxy['state']).binary : undefined
   const occupancySlice = useDeviceStateSlice(occupancyHandle)
 
+  const numericFallbackHandle: SliceHandle<unknown> | undefined =
+    dev !== null ? (dev.state as DeviceProxy['state']).numericSensor : undefined
+  const numericFallbackSlice = useDeviceStateSlice(numericFallbackHandle)
+
   // For a battery sensor, prefer the numeric percentage when a real numeric
   // value landed; otherwise fall back to the binary Normal/Low rendering. The
   // selection mirrors SensorValueAtom so the hero and the row never diverge.
@@ -189,7 +194,11 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
   const descriptor: SensorDescriptor | undefined = useBinaryBattery
     ? BINARY_BATTERY_DESCRIPTOR
     : roleDescriptor
-  const liveSlice: unknown = useBinaryBattery ? binaryBatterySlice : numericSlice
+  const roleSlice: unknown = useBinaryBattery ? binaryBatterySlice : numericSlice
+  const liveSlice: unknown =
+    descriptor?.kind === 'numeric' && !useBinaryBattery
+      ? sliceForRoleReading(descriptor.field, roleSlice, numericFallbackSlice)
+      : roleSlice
   const snapshot = useDeviceStateGetSnapshot({ deviceId: device.id }, { staleTime: 5_000 })
   const capName = useBinaryBattery
     ? 'binary'
