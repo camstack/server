@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.843",
+  "version": "1.2.844",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,9 +66,7 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.647",
-        "@camstack/addon-agent-ui": ">=1.2.368",
-        "@camstack/addon-export-alexa": ">=1.2.195"
+        "@camstack/addon-post-analysis": ">=1.2.695"
       },
       "wrapper": {
         "desktop": ">=0.0.1",
