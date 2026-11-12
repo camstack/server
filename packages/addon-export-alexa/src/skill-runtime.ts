@@ -19,6 +19,8 @@ import {
   type ExportSetupSchema,
   type RecordKindHandle,
   RecordSecretUnavailableError,
+  readExposedName,
+  saveExposedName,
 } from '@camstack/types'
 import type { z } from 'zod'
 
@@ -45,13 +47,7 @@ import {
   sensorSelectionKey,
 } from './detection-sensors/sensor-selection.js'
 import { AlexaEgressPrewarm } from './egress/alexa-egress-prewarm.js'
-import {
-  ALEXA_NAME_KEY,
-  ALEXA_NAME_MAX_LENGTH,
-  alexaNameKey,
-  readAlexaName,
-  validateAlexaName,
-} from './endpoints/alexa-name.js'
+import { alexaNameValidator } from './endpoints/alexa-name.js'
 import type { AlexaEndpoint } from './endpoints/types.js'
 import { GENERIC_DEVICE_TYPES } from './endpoints/generic-device.js'
 import { type AlexaSettings, effectiveAlexaSettings } from './alexa-settings.js'
@@ -182,7 +178,6 @@ export type ExportKind = 'camera' | 'generic'
 /** What the shared per-device preferences did in one patch (applied once, whatever the skills). */
 export interface SharedPrefsOutcome {
   readonly prefsChanged: boolean
-  readonly nameChanged: boolean
 }
 
 export class SkillRuntime {
@@ -867,8 +862,9 @@ export class SkillRuntime {
               ),
           }
         : {}),
-      // D875: the operator's Alexa name, same endpoint id.
-      alexaName: async (id: number) => readAlexaName(await vision.readPrefs(id)),
+      // D1049: this skill's exposed name for the device, same endpoint id.
+      alexaName: async (id: number) =>
+        readExposedName(await vision.readPrefs(id), this.instanceId, alexaNameValidator),
       // D779: the camera's object detection + history.
       ...(this.view.objectDetection
         ? {
@@ -1467,28 +1463,11 @@ export class SkillRuntime {
           // the Alexa Event Gateway) must not wait for a manual save.
           immediate: true,
         },
-        ...(opts.shared ? [await this.alexaNameField(deviceId, enabledKey)] : []),
         ...(kind === 'camera' ? this.cameraOnlyExportFields(deviceId, settings, enabledKey) : []),
         ...(kind === 'camera' && opts.shared
           ? await this.cameraDetectionFields(deviceId, enabledKey)
           : []),
       ],
-    }
-  }
-
-  /** D875: the "Alexa name" field, with the validation error of the saved value. */
-  private async alexaNameField(
-    deviceId: number,
-    enabledKey: string,
-  ): Promise<ConfigSectionWithValues['fields'][number]> {
-    const saved = readAlexaName(await this.vision.readPrefs(deviceId))
-    return {
-      type: 'text' as const,
-      key: alexaNameKey(deviceId),
-      label: 'Alexa name',
-      description: `What Alexa calls this device. Leave empty to use the device name. Letters, digits and spaces only (no punctuation), up to ${ALEXA_NAME_MAX_LENGTH} characters. Renaming updates the same Alexa device; it does not create a duplicate.`,
-      value: saved ?? '',
-      showWhen: { field: enabledKey, equals: true },
     }
   }
 
@@ -1521,31 +1500,6 @@ export class SkillRuntime {
         integrationOn: this.view.objectDetection,
       }),
     ]
-  }
-
-  /**
-   * D875: save the Alexa name from a device-settings patch. A name Amazon would
-   * refuse throws BEFORE anything is written, so the form shows the reason and
-   * the old name stays. True when the saved name changed.
-   */
-  private async applyAlexaNamePatch(
-    deviceId: number,
-    patch: Record<string, unknown>,
-  ): Promise<boolean> {
-    const key = alexaNameKey(deviceId)
-    if (!(key in patch)) return false
-    const check = validateAlexaName(patch[key])
-    if (!check.ok) throw new Error(`export-alexa: ${check.error}`)
-    const before = readAlexaName(await this.vision.readPrefs(deviceId))
-    if (before === check.name) return false
-    await this.vision.writePrefs(deviceId, {
-      [ALEXA_NAME_KEY]: check.name ?? undefined,
-    })
-    this.ctx.logger.info('export-alexa: Alexa name saved', {
-      tags: { deviceId },
-      meta: { name: check.name },
-    })
-    return true
   }
 
   /**
@@ -1623,17 +1577,62 @@ export class SkillRuntime {
   }
 
   /**
-   * The device's own preferences in a patch (Alexa name, detection classes, object detection):
-   * shared by every skill, so they are saved ONCE, before any skill applies its own part (an
-   * expose in the same patch then builds with them).
+   * The device's own preferences in a patch (detection classes, object detection): shared by
+   * every skill, so they are saved ONCE, before any skill applies its own part (an expose in
+   * the same patch then builds with them).
    */
   async applySharedPrefs(
     deviceId: number,
     patch: Record<string, unknown>,
   ): Promise<SharedPrefsOutcome> {
     const prefsChanged = await this.applyDetectionPrefsPatch(deviceId, patch)
-    const nameChanged = await this.applyAlexaNamePatch(deviceId, patch)
-    return { prefsChanged, nameChanged }
+    return { prefsChanged }
+  }
+
+  /** D1049: this skill's exposed name for a device, or null (the device's own name). */
+  async exposedNameOf(deviceId: number): Promise<string | null> {
+    return readExposedName(
+      await this.vision.readPrefs(deviceId),
+      this.instanceId,
+      alexaNameValidator,
+    )
+  }
+
+  /**
+   * D1049: save this skill's name for a device (`device-export.setExposedName`). A name Amazon
+   * would refuse throws `ExportNameRefusedError` before anything is written. An exposed device
+   * is pushed again: same endpoint id, so AddOrUpdateReport renames it in Alexa (the shape
+   * signature ignores names, so the reconcile would never send it).
+   */
+  async setExposedName(deviceIdRaw: string, raw: unknown): Promise<void> {
+    const deviceId = Number.parseInt(deviceIdRaw, 10)
+    if (!Number.isFinite(deviceId)) {
+      throw new Error(`export-alexa: deviceId must be numeric — got "${deviceIdRaw}"`)
+    }
+    const saved = await saveExposedName({
+      store: {
+        read: (id) => this.vision.readPrefs(id),
+        write: (id, patch) => this.vision.writePrefs(id, patch),
+      },
+      deviceId,
+      instanceId: this.instanceId,
+      raw,
+      validate: alexaNameValidator,
+    })
+    if (!saved.changed) return
+    this.ctx.logger.info('export-alexa: Alexa name saved', {
+      tags: { deviceId },
+      meta: { instanceId: this.instanceId, name: saved.name },
+    })
+    if (this.findEntry(deviceId) === null) return
+    void this.requireSyncEngine()
+      .pushDevice(deviceId)
+      .catch((err: unknown) => {
+        this.ctx.logger.warn('export-alexa: push after an Alexa name change failed', {
+          tags: { deviceId },
+          meta: { error: errMsg(err) },
+        })
+      })
   }
 
   /**
@@ -1651,7 +1650,7 @@ export class SkillRuntime {
     patch: Record<string, unknown>,
     shared: SharedPrefsOutcome,
   ): Promise<{ success: true }> {
-    const { prefsChanged, nameChanged } = shared
+    const { prefsChanged } = shared
     const idStr = String(deviceId)
     const current = this.findEntry(deviceId)
     const wasEnabled = current !== null
@@ -1705,18 +1704,6 @@ export class SkillRuntime {
     const currentAllow = current?.settings?.allowTranscode !== false
     await this.patchEntrySettings(deviceId, nextSettings)
     const sourceChanged = currentPref !== streamPreference || currentAllow !== allowTranscode
-    if (nameChanged && !sourceChanged) {
-      // Same endpoint id: AddOrUpdateReport renames the device in Alexa. The
-      // shape signature ignores names, so the reconcile would never send it.
-      void this.requireSyncEngine()
-        .pushDevice(deviceId)
-        .catch((err: unknown) => {
-          this.ctx.logger.warn('export-alexa: push after an Alexa name change failed', {
-            tags: { deviceId },
-            meta: { error: errMsg(err) },
-          })
-        })
-    }
     if (prefsChanged && !sourceChanged) {
       // A class removed retires its sensor (DeleteReport, `mayRetire`); the
       // object-detection toggle re-sends the camera with or without it.

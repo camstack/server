@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1071 shared schemas.**
+**1072 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1587,10 +1587,17 @@ Enum: `"info" \| "warning" \| "error"`
 - `instanceId`: `string`
 - `deviceId`: `string`
 - `capabilities?`: `string[]`
+- `exposedName?`: `string \| null`
 
 ### `DeviceExportInstancePinSchema`
 
 - `instanceId?`: `string`
+
+### `DeviceExportSetExposedNameInputSchema`
+
+- `instanceId`: `string`
+- `deviceId`: `string`
+- `name`: `string \| null`
 
 ### `DeviceExportStatusSchema`
 
@@ -2352,6 +2359,7 @@ Enum: `"queued" \| "rendering" \| "ready" \| "failed" \| "expired" \| "deleted"`
 
 - `deviceId`: `string`
 - `exposedAs?`: `string`
+- `exposedName?`: `string`
 - `capabilities?`: `string[]`
 
 ### `ExposedEntitySchema`

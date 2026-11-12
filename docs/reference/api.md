@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**205 capabilities · 1484 methods.**
+**205 capabilities · 1485 methods.**
 
 ## Method index
 
@@ -286,6 +286,7 @@
 | `deviceExport.listExposedDevices` | query | protected | device-export |
 | `deviceExport.exposeDevice` | mutation | admin | device-export |
 | `deviceExport.unexposeDevice` | mutation | admin | device-export |
+| `deviceExport.setExposedName` | mutation | admin | device-export |
 | `deviceExport.listSupportedEntityKinds` | query | protected | device-export |
 | `deviceExport.listExposedEntities` | query | protected | device-export |
 | `deviceExport.exposeEntity` | mutation | admin | device-export |
@@ -2333,7 +2334,7 @@
 
 ### `device-export` → `deviceExport.*`
 
-- **Source:** `packages/types/src/capabilities/device-export.cap.ts:169`
+- **Source:** `packages/types/src/capabilities/device-export.cap.ts:207`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `device-export`
 - **Archetypes:** status(poll) · exposesDeviceSettings
 - **Provider interface:** `IDeviceExportProvider`
@@ -2349,6 +2350,7 @@
 | listExposedDevices | `deviceExport.listExposedDevices` | query | protected | `DeviceExportInstancePinSchema` | `ExposedDeviceSchema[]` |
 | exposeDevice | `deviceExport.exposeDevice` | mutation | admin | `DeviceExportExposeInputSchema` | `void` |
 | unexposeDevice | `deviceExport.unexposeDevice` | mutation | admin | `DeviceExportUnexposeInputSchema` | `void` |
+| setExposedName | `deviceExport.setExposedName` | mutation | admin | `DeviceExportSetExposedNameInputSchema` | `void` |
 | listSupportedEntityKinds | `deviceExport.listSupportedEntityKinds` | query | protected | `void` | `ExportEntityKindSchema[]` |
 | listExposedEntities | `deviceExport.listExposedEntities` | query | protected | `DeviceExportInstancePinSchema` | `ExposedEntitySchema[]` |
 | exposeEntity | `deviceExport.exposeEntity` | mutation | admin | `ExposeEntityInputSchema` | `void` |

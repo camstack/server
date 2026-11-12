@@ -116,6 +116,8 @@ function fixture(initial: Record<string, unknown>) {
           // This fixture runs the URL migration only; the others are covered by their own spec.
           readRawStored: async () => read(),
           warn: () => undefined,
+          listDeviceIds: async () => [],
+          readDeviceField: async () => new Map(),
           putSkill: async () => 'exists',
           putLinks: async () => 'exists',
           replaceLinks: async () => undefined,

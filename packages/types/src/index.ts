@@ -949,6 +949,7 @@ export * from './automation/step-condition.js'
 export * from './automation/step-runner.js'
 export * from './automation/wait-until.js'
 export * from './automation/export-entities.js'
+export * from './device/export-name.js'
 export * from './automation/draft/index.js'
 // Per-call node pinning for ctx.api capability calls
 export * from './cap-call-context.js'

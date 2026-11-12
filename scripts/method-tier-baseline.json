@@ -240,6 +240,7 @@
   "deviceExport.listInstances": "protected",
   "deviceExport.listSupportedDeviceKinds": "protected",
   "deviceExport.listSupportedEntityKinds": "protected",
+  "deviceExport.setExposedName": "admin",
   "deviceExport.unexposeDevice": "admin",
   "deviceExport.unexposeEntity": "admin",
   "deviceExtension.listCandidates": "protected",

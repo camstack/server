@@ -1,4 +1,8 @@
 import type { AddonMigration } from '@camstack/types'
+import {
+  type AlexaNameMovePorts,
+  planAlexaNameToExposedName,
+} from './alexa-name-to-exposed-name.js'
 import { type DropPublicHubUrlPorts, planDropPublicHubUrl } from './drop-public-hub-url.js'
 import {
   type DropMovedExposurePorts,
@@ -21,6 +25,7 @@ import {
   planDropMovedSettings,
 } from './settings-to-records.js'
 
+export type { AlexaNameMovePorts } from './alexa-name-to-exposed-name.js'
 export type { DropPublicHubUrlPorts } from './drop-public-hub-url.js'
 export type {
   DropMovedExposurePorts,
@@ -43,7 +48,8 @@ export type AlexaCataloguePorts = DropPublicHubUrlPorts &
   MoveExposurePorts &
   DropMovedExposurePorts &
   MoveStatePorts &
-  DropMovedStatePorts
+  DropMovedStatePorts &
+  AlexaNameMovePorts
 
 export const DROP_PUBLIC_HUB_URL_ID = 'export-alexa/2026-11-02-drop-public-hub-url'
 export const SETTINGS_TO_INTEGRATION_ID = 'export-alexa/2026-11-03-settings-to-integration'
@@ -55,6 +61,8 @@ export const DROP_MOVED_EXPOSURE_ID = 'export-alexa/2026-11-04-drop-moved-exposu
 
 export const STATE_TO_INSTANCE_ID = 'export-alexa/2026-11-04-state-to-instance'
 export const DROP_MOVED_STATE_ID = 'export-alexa/2026-11-04-drop-moved-state'
+
+export const ALEXA_NAME_TO_EXPOSED_NAME_ID = 'export-alexa/2026-11-12-alexa-name-to-exposed-name'
 
 const FIXTURE_MARK = 'the endpoint sync state the migration does not know'
 
@@ -197,5 +205,22 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<AlexaCataloguePorts>[] = 
       fixtureMark: FIXTURE_MARK,
     },
     plan: planDropMovedState,
+  },
+  {
+    meta: {
+      id: ALEXA_NAME_TO_EXPOSED_NAME_ID,
+      owner: 'export-alexa',
+      level: 'addon-state',
+      seq: 9,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'plan',
+      description:
+        'Move every device`s Alexa name into the generic exposed name of the default Alexa instance and delete the alexaName key',
+      fixtureMark: FIXTURE_MARK,
+    },
+    plan: planAlexaNameToExposedName,
   },
 ]

@@ -38,6 +38,9 @@ describe('public addon-author surface', () => {
       unexposeDevice: async () => {
         return
       },
+      setExposedName: async () => {
+        return
+      },
     }
     expect(exporter.getDeviceSettingsContribution).toBeUndefined()
     expect(exporter.getDeviceLiveContribution).toBeUndefined()

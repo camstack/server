@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The device model carries the one reading of a simple sensor (value, unit, band, level, state word, since, history), with its number and quantity so every surface converts it through the display preferences; a control device offers an unbounded number field and an editable text field
+- An automation, Action or scheduler step that calls a device is now a command step naming a vocabulary action; a step naming a device that does not offer the action is refused when it is saved.
+- An automation or Action step whose action id the vocabulary no longer knows fails at that step, traced and logged with its device, instead of failing the whole run before any step runs; the alarm-step rule is on the client entry
+- device-export gains setExposedName and an exposedName on exposeDevice / listExposedDevices: a per-instance device name that never changes the exported id.
 
 ## [1.2.556] - 2026-11-12
 
@@ -18,8 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Notification Center has a device-command event kind: a rule can notify when a command such as a power restart is given to a device, filtered by command, outcome and who asked.
 - Notification templates can say {{deviceLabel}} for the device name with its type; {{deviceName}} stays the bare name.
 - A sensor reading that repeats the device title also trails the compact row.
-- An automation, Action or scheduler step that calls a device is now a command step naming a vocabulary action; a step naming a device that does not offer the action is refused when it is saved.
-- An automation or Action step whose action id the vocabulary no longer knows fails at that step, traced and logged with its device, instead of failing the whole run before any step runs; the alarm-step rule is on the client entry
 
 ## [1.2.555] - 2026-11-12
 
@@ -29,7 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Changed
-
 
 ## [1.2.554] - 2026-11-12
 

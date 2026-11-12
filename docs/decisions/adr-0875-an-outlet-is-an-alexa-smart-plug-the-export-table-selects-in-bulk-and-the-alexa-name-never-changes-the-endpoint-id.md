@@ -39,7 +39,9 @@ keeps selections outside the filter. Nothing is hidden by default (D869 operator
 decision); an empty filter is no filter. The pure rules live in
 `export-bulk-selection.ts`.
 
-**Alexa name.** A per-device `alexaName` in the standard per-device store (D870),
+**Alexa name** (amended by D1049: the name is now the generic `device-export`
+exposed name, one per skill instance, edited in a derived field; Amazon's rule and
+the unchanged endpoint id below still hold). A per-device `alexaName` in the standard per-device store (D870),
 edited in the device's Export tab, is the endpoint `friendlyName` (generic
 devices, cameras and the camera's detection sensors' prefix). It defaults to the
 device name, blank clears it, and it is validated per Amazon's friendlyName

@@ -71,6 +71,10 @@ REFUSED rather than resolved: they need the current value.
 
 ## Traps
 
+- **A Google name is a label, read on Google's next SYNC** (D1049). `setExposedName` stores
+  it per instance (`exposedNames` in the per-device store, up to 60 characters, no control
+  characters) and SYNC answers it as `name.name`; the device `id` stays the device id, so a
+  rename never adds a second device. The hub cannot request a SYNC (no HomeGraph key).
 - **`ctx.api` never appears in an intent handler.** They take a `DeviceGateway`
   (`src/device-gateway.ts`). `AddonApi` is a generated tRPC router type wide
   enough that a test fake for it is only constructible with a cast, and this

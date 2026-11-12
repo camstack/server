@@ -593,11 +593,15 @@ export type {
   ExportInstance,
   ExposedEntity,
   IDeviceExportProvider,
+  SetExposedNameInput,
 } from './device-export.cap.js'
 export {
   assertOwnExportInstance,
   DeviceExportStatusSchema,
   EXPORT_INSTANCE_UNKNOWN,
+  EXPORT_NAME_REFUSED,
+  ExportNameRefusedError,
+  SetExposedNameInputSchema as DeviceExportSetExposedNameInputSchema,
   ExportInstanceSchema,
   ExportInstanceUnknownError,
   statusInstanceOf,

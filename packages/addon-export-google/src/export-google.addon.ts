@@ -53,6 +53,10 @@ import {
   deviceExportStatusInstanceOf,
   errMsg,
   ExportInstanceUnknownError,
+  exposedNameStoreOf,
+  freeTextNameValidator,
+  readExposedName,
+  saveExposedName,
   type IAddonRouteProvider,
   type IDeviceExportProvider,
   type IOauthIntegrationProvider,
@@ -88,6 +92,12 @@ import { buildConsoleSetupFromRole } from './public-endpoint.js'
 import { DEFAULT_SETTINGS, type ExportSetup, type GoogleExportSettings } from './types.js'
 
 const ADDON_ID = 'export-google'
+/**
+ * Google Home's naming rule for a device name (D1049). Google publishes no character set for
+ * `name.name`; it refuses control characters and very long names, so free text up to 60.
+ */
+const GOOGLE_NAME_MAX_LENGTH = 60
+const GOOGLE_NAME_VALIDATOR = freeTextNameValidator('Google Home', GOOGLE_NAME_MAX_LENGTH)
 
 /** The per-device toggle key: `google:<instanceId>:<deviceId>:enabled`. */
 const DEVICE_KEY = /^google:([^:]+):(\d+):enabled$/
@@ -337,6 +347,7 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
         // An in-process read of this instance's OWN record — no cap-router round-trip for a
         // value we already hold.
         listExposed: () => instance.devices.map((entry) => entry.deviceId),
+        exposedName: (deviceId) => this.exposedNameOf(instance.id, deviceId),
         actions: instance.scenes,
       },
       query: {
@@ -393,10 +404,23 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
       },
       listExposedDevices: async ({ instanceId }) => {
         const instance = await this.requireInstance(instanceId ?? GOOGLE_INSTANCE_ID)
-        return instance.devices.map((entry) => ({ deviceId: String(entry.deviceId) }))
+        const out = []
+        for (const entry of instance.devices) {
+          const exposedName = await this.exposedNameOf(instance.id, entry.deviceId)
+          out.push({
+            deviceId: String(entry.deviceId),
+            ...(exposedName !== null ? { exposedName } : {}),
+          })
+        }
+        return out
       },
-      exposeDevice: async ({ instanceId, deviceId }) =>
-        this.exposeDevice(await this.requireInstance(instanceId ?? GOOGLE_INSTANCE_ID), deviceId),
+      exposeDevice: async ({ instanceId, deviceId, exposedName }) => {
+        const instance = await this.requireInstance(instanceId ?? GOOGLE_INSTANCE_ID)
+        if (exposedName !== undefined) await this.setExposedName(instance, deviceId, exposedName)
+        return this.exposeDevice(instance, deviceId)
+      },
+      setExposedName: async ({ instanceId, deviceId, name }) =>
+        this.setExposedName(await this.requireInstance(instanceId), deviceId, name),
       unexposeDevice: async ({ instanceId, deviceId }) =>
         this.unexposeDevice(await this.requireInstance(instanceId ?? GOOGLE_INSTANCE_ID), deviceId),
       listSupportedEntityKinds: async () => ['device', 'action'],
@@ -428,6 +452,51 @@ export class ExportGoogleAddon extends BaseAddon<GoogleExportSettings> {
       getDeviceLiveContribution: async () => null,
       applyDeviceSettingsPatch: (input) =>
         this.applyDeviceSettingsPatch(Number(input.deviceId), input.patch),
+    }
+  }
+
+  private async exposedNameOf(instanceId: string, deviceId: number): Promise<string | null> {
+    try {
+      const store = exposedNameStoreOf(this.ctx.settings, ADDON_ID)
+      return readExposedName(await store.read(deviceId), instanceId, GOOGLE_NAME_VALIDATOR)
+    } catch (err) {
+      // A failed read names nothing: the listing and SYNC answer the device name.
+      this.ctx.logger.warn('export-google: Google name unreadable', {
+        tags: { deviceId },
+        meta: { instanceId, error: errMsg(err) },
+      })
+      return null
+    }
+  }
+
+  /**
+   * The Google Home name of a device on this instance (D1049). Saved only: Google reads names
+   * on its next SYNC (the hub cannot request one, see `exposeDevice`), under the same device id.
+   */
+  private async setExposedName(
+    instance: GoogleInstance,
+    deviceIdRaw: string,
+    raw: string | null,
+  ): Promise<void> {
+    const deviceId = Number.parseInt(deviceIdRaw, 10)
+    if (!Number.isFinite(deviceId)) {
+      throw new Error(`export-google: deviceId must be numeric — got "${deviceIdRaw}"`)
+    }
+    const saved = await saveExposedName({
+      store: exposedNameStoreOf(this.ctx.settings, ADDON_ID),
+      deviceId,
+      instanceId: instance.id,
+      raw,
+      validate: GOOGLE_NAME_VALIDATOR,
+    })
+    if (saved.changed) {
+      this.ctx.logger.info(
+        'export-google: Google name saved — Google shows it after its next SYNC',
+        {
+          tags: { deviceId },
+          meta: { instanceId: instance.id, name: saved.name },
+        },
+      )
     }
   }
 

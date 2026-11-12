@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1484 method paths across 205 capabilities.
+ * Coverage: 1485 method paths across 205 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -297,6 +297,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceExport.listInstances': { capName: "device-export", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceExport.listSupportedDeviceKinds': { capName: "device-export", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceExport.listSupportedEntityKinds': { capName: "device-export", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'deviceExport.setExposedName': { capName: "device-export", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceExport.unexposeDevice': { capName: "device-export", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceExport.unexposeEntity': { capName: "device-export", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceExtension.listCandidates': { capName: "device-extension", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,

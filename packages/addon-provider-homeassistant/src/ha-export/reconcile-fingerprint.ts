@@ -14,13 +14,16 @@
 interface FingerprintableEntry {
   readonly brokerIds: readonly string[]
   readonly plan: unknown
+  /** The per-broker Home Assistant names (D1049): a rename is a change of the announced shape. */
+  readonly exposedNames?: ReadonlyMap<string, string>
 }
 
 export function structureFingerprint(exported: ReadonlyMap<string, FingerprintableEntry>): string {
   return JSON.stringify(
     [...exported.keys()].sort().map((key) => {
       const entry = exported.get(key)
-      return [key, entry?.brokerIds, entry?.plan]
+      const names = entry?.exposedNames
+      return [key, entry?.brokerIds, entry?.plan, names === undefined ? [] : [...names].sort()]
     }),
   )
 }

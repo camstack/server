@@ -60,6 +60,12 @@ import {
   parseDerivedFormSettingsPatch,
 } from './device-config-contribution.js'
 import type { ContributionShape, DriverConfigSchemaResult } from './device-meta-types.js'
+import {
+  applyExportNames,
+  type ExportNameProvider,
+  splitExportNamePatch,
+  withExportNameFields,
+} from './export-name-fields.js'
 import { LINKED_DEVICES_RESERVED_KEYS } from './device-linked-devices.js'
 import { isTransientMoleculerError, resolveDeviceById } from './device-projection.js'
 
@@ -273,6 +279,9 @@ export async function getDeviceAggregate(
  * `seenCaps` skips any system cap that already contributed via a binding so
  * its section is never duplicated.
  */
+/** The system collection cap whose per-device panel carries the derived exported-name fields. */
+const DEVICE_EXPORT_CAP = 'device-export'
+
 export async function collectSystemDeviceContributions(
   deps: AggregationDeps,
   deviceId: number,
@@ -313,7 +322,25 @@ export async function collectSystemDeviceContributions(
             addonId,
             call: async () => {
               const contribution = await read({ deviceId })
-              return contribution ? toWireShape(contribution) : null
+              const shape = contribution ? toWireShape(contribution) : null
+              if (info.name !== DEVICE_EXPORT_CAP || kind !== 'settings') return shape
+              // D1049: the exported name is a cap field, so its UI is derived here, once, for
+              // every exporter — never a hand-written field per addon.
+              const exporter = registry.getProviderByAddon<ExportNameProvider>(info.name, addonId)
+              if (!exporter) return shape
+              try {
+                return await withExportNameFields(shape, exporter, addonId, deviceId)
+              } catch (err) {
+                // The exporter's own panel still renders; only the name fields are missing.
+                deps.ctx.logger.warn('device-manager: exported-name fields unavailable', {
+                  tags: { deviceId },
+                  meta: {
+                    addonId,
+                    error: err instanceof Error ? err.message : String(err),
+                  },
+                })
+                return shape
+              }
             },
           })
         })(),
@@ -1035,7 +1062,11 @@ export async function updateDeviceFieldsBatch(
   // applyDeviceSettingsPatch per contributing provider.
   const groups = new Map<
     string,
-    { writerCapName: string; writerAddonId: string; patch: Record<string, unknown> }
+    {
+      writerCapName: string
+      writerAddonId: string
+      patch: Record<string, unknown>
+    }
   >()
   for (const change of input.changes) {
     const key = `${change.writerCapName}::${change.writerAddonId}`
@@ -1051,7 +1082,11 @@ export async function updateDeviceFieldsBatch(
     }
   }
 
-  const failures: { writerCapName: string; writerAddonId: string; error: string }[] = []
+  const failures: {
+    writerCapName: string
+    writerAddonId: string
+    error: string
+  }[] = []
   for (const group of groups.values()) {
     try {
       await applyGroupPatch(deps, input.deviceId, group)
@@ -1078,7 +1113,11 @@ export async function updateDeviceFieldsBatch(
 export async function applyGroupPatch(
   deps: AggregationDeps,
   deviceId: number,
-  group: { writerCapName: string; writerAddonId: string; patch: Record<string, unknown> },
+  group: {
+    writerCapName: string
+    writerAddonId: string
+    patch: Record<string, unknown>
+  },
 ): Promise<void> {
   try {
     await applyGroupPatchUnmarked(deps, deviceId, group)
@@ -1094,7 +1133,11 @@ export async function applyGroupPatch(
 async function applyGroupPatchUnmarked(
   deps: AggregationDeps,
   deviceId: number,
-  group: { writerCapName: string; writerAddonId: string; patch: Record<string, unknown> },
+  group: {
+    writerCapName: string
+    writerAddonId: string
+    patch: Record<string, unknown>
+  },
 ): Promise<void> {
   if (group.writerCapName === 'device-manager') {
     // The device-manager writer carries the DRIVER's own fields (the base
@@ -1193,7 +1236,25 @@ async function applyGroupPatchUnmarked(
     group.writerAddonId,
     deviceId,
   )
-  await provider.applyDeviceSettingsPatch({ deviceId, patch: group.patch })
+  let patch = group.patch
+  if (group.writerCapName === DEVICE_EXPORT_CAP) {
+    // D1049: the derived "Name on <platform>" keys go through `setExposedName`, which validates
+    // per platform and refuses by name (`export-name-refused: …`); the rest is the exporter's own.
+    const split = splitExportNamePatch(group.writerAddonId, patch)
+    if (split.names.length > 0) {
+      const exporter = registry.getProviderByAddon<ExportNameProvider>(
+        DEVICE_EXPORT_CAP,
+        group.writerAddonId,
+      )
+      if (!exporter) {
+        throw new Error(`[device-manager] exporter "${group.writerAddonId}" is not available`)
+      }
+      await applyExportNames(exporter, deviceId, split.names)
+      patch = split.rest
+    }
+  }
+  if (Object.keys(patch).length === 0) return
+  await provider.applyDeviceSettingsPatch({ deviceId, patch })
 }
 
 export async function listWrappersForCap(

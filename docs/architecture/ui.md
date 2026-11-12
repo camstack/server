@@ -143,14 +143,14 @@ which page pattern, what not to do — are in [`docs/ui/`](../ui/README.md), and
 the workflow that applies them is the `camstack-ui` skill
 (`.claude/skills/camstack-ui/SKILL.md`).
 
-| You need | Read |
-| --- | --- |
-| The rules every UI change follows (library first, viewports, overflow, safe area, copy) | [conventions.md](../ui/conventions.md) |
-| What exists: components, tokens, the web ↔ viewer token map | [common-components.md](../ui/common-components.md) |
-| Admin-ui / addon-page patterns: addon-page CSS, tables, integration pages, System tabs, tall dialogs | [admin-patterns.md](../ui/admin-patterns.md) |
-| The viewer (React Native) kit and its rules | [viewer.md](../ui/viewer.md) |
-| "I need X" → the component that does it | [need-x-use-y.md](../ui/need-x-use-y.md) |
-| Drift that exists today, and what replaces it | [anti-patterns.md](../ui/anti-patterns.md) |
+| You need                                                                                             | Read                                               |
+| ---------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| The rules every UI change follows (library first, viewports, overflow, safe area, copy)              | [conventions.md](../ui/conventions.md)             |
+| What exists: components, tokens, the web ↔ viewer token map                                          | [common-components.md](../ui/common-components.md) |
+| Admin-ui / addon-page patterns: addon-page CSS, tables, integration pages, System tabs, tall dialogs | [admin-patterns.md](../ui/admin-patterns.md)       |
+| The viewer (React Native) kit and its rules                                                          | [viewer.md](../ui/viewer.md)                       |
+| "I need X" → the component that does it                                                              | [need-x-use-y.md](../ui/need-x-use-y.md)           |
+| Drift that exists today, and what replaces it                                                        | [anti-patterns.md](../ui/anti-patterns.md)         |
 
 ## The admin UI under a path prefix
 
@@ -161,12 +161,12 @@ certificate. The relay forwards the path WITHOUT the prefix and names it in
 `X-Forwarded-Prefix`; the hub answers a shell that says where it is mounted
 ([D373](../decisions/adr-0373.md)):
 
-| Layer | Where | What it does |
-| --- | --- | --- |
-| relay → hub | `X-Forwarded-Prefix: /api/camstack/p/<grant>` on every request | no header = today's behaviour |
-| hub | `server/backend/src/api/static/spa-mount.ts` | injects `<base href="<prefix>/">` + `<meta name="camstack-mount">` first in `<head>`; validates the prefix (`/[A-Za-z0-9_\-./]*`, no `..`, no `//`) and ignores anything else; `no-store` + `Vary: X-Forwarded-Prefix` |
-| page | `packages/ui-library/src/lib/hub-mount.ts`, re-exported as `packages/addon-admin-ui/src/lib/mount.ts` | the ONE reader: `hubPath()`, `hubOrigin()`, `hubUrl()`, `hubWsUrl()`, `routerBasename()` |
-| build | `vite base: './'`, relative `href`s in `index.html` and the manifest | assets resolve through `<base>`; chunks through `import.meta.url` |
+| Layer       | Where                                                                                                 | What it does                                                                                                                                                                                                           |
+| ----------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| relay → hub | `X-Forwarded-Prefix: /api/camstack/p/<grant>` on every request                                        | no header = today's behaviour                                                                                                                                                                                          |
+| hub         | `server/backend/src/api/static/spa-mount.ts`                                                          | injects `<base href="<prefix>/">` + `<meta name="camstack-mount">` first in `<head>`; validates the prefix (`/[A-Za-z0-9_\-./]*`, no `..`, no `//`) and ignores anything else; `no-store` + `Vary: X-Forwarded-Prefix` |
+| page        | `packages/ui-library/src/lib/hub-mount.ts`, re-exported as `packages/addon-admin-ui/src/lib/mount.ts` | the ONE reader: `hubPath()`, `hubOrigin()`, `hubUrl()`, `hubWsUrl()`, `routerBasename()`                                                                                                                               |
+| build       | `vite base: './'`, relative `href`s in `index.html` and the manifest                                  | assets resolve through `<base>`; chunks through `import.meta.url`                                                                                                                                                      |
 
 Rules that follow, each of which a root-mounted dev session cannot see broken:
 
@@ -255,12 +255,12 @@ frame-ancestors 'self'` (`server/backend/src/api/static/frame-policy.ts`, one
 Same-origin is the only shape the hub is framed in, and it is enough for every
 real embed, because a foreign host relays the hub under its own origin:
 
-| Who frames what | Origin the browser sees | Why it is allowed |
-| --- | --- | --- |
-| admin UI → viewer, at `/live` | the hub's | same document origin |
-| HA sidebar panel → admin UI | Home Assistant's, via `/api/camstack/p/<grant>/` | the relay forwards the header; `'self'` is evaluated against the relay's origin |
-| HA grid / events card → the viewer's embed | Home Assistant's, same relay | same |
-| desktop shell, native WebView, share link | top-level | no ancestor, policy does not apply |
+| Who frames what                            | Origin the browser sees                          | Why it is allowed                                                               |
+| ------------------------------------------ | ------------------------------------------------ | ------------------------------------------------------------------------------- |
+| admin UI → viewer, at `/live`              | the hub's                                        | same document origin                                                            |
+| HA sidebar panel → admin UI                | Home Assistant's, via `/api/camstack/p/<grant>/` | the relay forwards the header; `'self'` is evaluated against the relay's origin |
+| HA grid / events card → the viewer's embed | Home Assistant's, same relay                     | same                                                                            |
+| desktop shell, native WebView, share link  | top-level                                        | no ancestor, policy does not apply                                              |
 
 A direct cross-origin frame — the hub's URL pasted into a Home Assistant
 "Webpage" dashboard — is refused by that policy. It never worked: the session
@@ -285,11 +285,11 @@ branch to flip.
 
 **Home Assistant, concretely (component 0.5.12+, HACS):**
 
-1. *Admin UI* — the integration's sidebar panel, on by default (Settings →
+1. _Admin UI_ — the integration's sidebar panel, on by default (Settings →
    Devices & services → CamStack → Configure → "Show sidebar panel"). It is
    relayed; there is nothing to paste. A dashboard link to it is a `button`
    card with `tap_action: {action: navigate, navigation_path: /camstack}`.
-2. *Viewer* — the hub's own address, opened in a NEW TAB (top-level, so the
+2. _Viewer_ — the hub's own address, opened in a NEW TAB (top-level, so the
    cookie jar and the certificate exception behave as in the desktop shell):
    a `button` card with
    `tap_action: {action: url, url_path: https://<hub>:4443/viewer/camstack/}`.
@@ -328,7 +328,7 @@ client bundle.
 A panel gated on a component being installed has THREE things to say and a
 `boolean` holds two. `(query.data ?? []).some(…)` drops the third: the
 unanswered query becomes the empty answer and the surface states, in words, that
-something is *not installed* while it is installed and running. That shipped, and
+something is _not installed_ while it is installed and running. That shipped, and
 an operator spent ten seconds being told a healthy addon was missing
 ([D315](../decisions/adr-0315-not-yet-known-never-looks-like-not-installed-and-a-presence-gate-asks-the-registry.md)).
 
@@ -361,11 +361,11 @@ have the same shape — **bootstrap once, then live off the pushed
 200 ms, on every agent/addon lifecycle edge. A subscriber that mounts mid-stream
 gets its first value from the bootstrap query; that is what the query is for.
 
-| you need | hook |
-| --- | --- |
-| per-node processes, per-addon health, the balancer graph | `useClusterTopology` |
-| a node list, a node's name, whether a node is up, a node's addon caps | `useClusterNodes` |
-| ONE node's addons with versions | `nodes.getNodeAddons` — one node, no fan-out, 34 ms |
+| you need                                                              | hook                                                |
+| --------------------------------------------------------------------- | --------------------------------------------------- |
+| per-node processes, per-addon health, the balancer graph              | `useClusterTopology`                                |
+| a node list, a node's name, whether a node is up, a node's addon caps | `useClusterNodes`                                   |
+| ONE node's addons with versions                                       | `nodes.getNodeAddons` — one node, no fan-out, 34 ms |
 
 `scripts/check-topology-is-a-diagram-not-a-lookup.ts` keeps every other call
 site out of it, refuses `refetchOnMount` / `staleTime` at a call site, and
@@ -383,11 +383,11 @@ addon's name, its category, or what its fields happen to contain.
 
 ### The three levels
 
-| Level | Who asks | What the addon implements | Where it lands |
-| --- | --- | --- | --- |
-| Addon settings page | `addonSettings.listScopedSettings({addonId})` + `getScopedSettings({addonId, cap, scope})` | `clusterSettingsSchema(cap)` / `nodeSettingsSchema(cap)` on `BaseAddon` | the addon's own card under Integrations / Addons — and any page that mounts `NodeAddonsSettingsPanel` for it (Terminal, Cluster → Settings, Local access, an integration's page). The host re-declares nothing; the schema still comes from the addon. |
-| Device **Settings** panel | `deviceManager.getDeviceSettingsAggregate({deviceId})` | `getDeviceSettingsContribution(deviceId)`, or a derived `deviceConfig` cap | the device page's **Config** tab, in the sub-tab named by `section.tab` |
-| Device **top-level tab** | the same aggregate | the same contribution, plus `location: 'top-tab'` | its own tab in the device header strip, sibling of Overview / Config |
+| Level                     | Who asks                                                                                   | What the addon implements                                                  | Where it lands                                                                                                                                                                                                                                         |
+| ------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Addon settings page       | `addonSettings.listScopedSettings({addonId})` + `getScopedSettings({addonId, cap, scope})` | `clusterSettingsSchema(cap)` / `nodeSettingsSchema(cap)` on `BaseAddon`    | the addon's own card under Integrations / Addons — and any page that mounts `NodeAddonsSettingsPanel` for it (Terminal, Cluster → Settings, Local access, an integration's page). The host re-declares nothing; the schema still comes from the addon. |
+| Device **Settings** panel | `deviceManager.getDeviceSettingsAggregate({deviceId})`                                     | `getDeviceSettingsContribution(deviceId)`, or a derived `deviceConfig` cap | the device page's **Config** tab, in the sub-tab named by `section.tab`                                                                                                                                                                                |
+| Device **top-level tab**  | the same aggregate                                                                         | the same contribution, plus `location: 'top-tab'`                          | its own tab in the device header strip, sibling of Overview / Config                                                                                                                                                                                   |
 
 The addon-settings page and the device page do NOT share a schema. An addon can
 contribute to both; they are two separate methods with two separate payloads.
@@ -551,6 +551,13 @@ that have each cost a bug:
    `alexa:<deviceId>:enabled`, `haExport:<deviceId>:<brokerId>`. This is
    restated in `packages/addon-provider-homeassistant/AGENTS.md` because that is
    where it was learned.
+3. **The exported name is a derived field, never an exporter's own.** `device-manager`
+   adds one "Name on <instance>" text field per export instance that exposes the device
+   (`packages/system/src/builtins/device-manager/export-name-fields.ts`), keyed
+   `export-name:<addonId>:<instanceId>`, read from `listExposedDevices().exposedName` and
+   saved through `setExposedName`; a platform's refusal comes back as
+   `export-name-refused: <reason>` on the save
+   ([D1049](../decisions/adr-1049-a-device-has-one-exposed-name-per-export-instance-and-a-rename-never-changes-the-exported-id.md)).
 
 **A slow contributor costs the page its budget ONCE, and the panel says what it
 is showing.** The fan-out is bounded per provider
@@ -615,7 +622,7 @@ One addon at a time:
 1. `npx tsx scripts/i18n/census-server-i18n.ts` - pick the package; note its
    numbers.
 2. Schema labels: `npx tsx scripts/i18n/add-label-keys.ts --ns <package short
-   name> --pkg packages/<package> <files relative to the package...>`. It adds
+name> --pkg packages/<package> <files relative to the package...>`. It adds
    the `*Key` properties next to every literal `label` / `description` / `title`
    and writes the English texts to `<pkg>/i18n/en.json`. Dynamic texts
    (template with `${}`) are reported and stay English.
@@ -641,11 +648,11 @@ mode when it is half done is silent — the device renders "Controls coming
 soon" over work that already exists. `DeviceType.AlarmPanel` sat like that for
 weeks; `Script` and `Automation` sat like that from the day their caps shipped.
 
-| Layer | File | What it decides |
-| --- | --- | --- |
-| decision | `packages/types/src/device/device-control-resolution.ts` | `DeviceType` → `DeviceControlKind`. **Single source.** |
-| binding | `packages/ui-library/src/composites/device-controls/control-registry.tsx` | kind → `{ InlineControl, HeroCard }`. Exhaustive — a missing kind is a build error. |
-| routing | `packages/addon-admin-ui/src/components/device/hero/HeroRegistry.tsx` | `DeviceType` → hero component. `ControlHero` resolves the card from the kind. |
+| Layer    | File                                                                      | What it decides                                                                     |
+| -------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| decision | `packages/types/src/device/device-control-resolution.ts`                  | `DeviceType` → `DeviceControlKind`. **Single source.**                              |
+| binding  | `packages/ui-library/src/composites/device-controls/control-registry.tsx` | kind → `{ InlineControl, HeroCard }`. Exhaustive — a missing kind is a build error. |
+| routing  | `packages/addon-admin-ui/src/components/device/hero/HeroRegistry.tsx`     | `DeviceType` → hero component. `ControlHero` resolves the card from the kind.       |
 
 Only the middle one is enforced by the compiler. The other two are enforced by
 tests, and both fire the moment a kind stops being `dummy`:
@@ -655,7 +662,7 @@ tests, and both fire the moment a kind stops being `dummy`:
   `stranded: ['<kind>']`;
 - `packages/ui-library/src/composites/device-item/__tests__/action-registry.test.tsx`
   — it lives with the registry, in the LIBRARY, not in the admin UI — asserts the
-  *placeholder* list, so a promotion to a real inline control has to be
+  _placeholder_ list, so a promotion to a real inline control has to be
   acknowledged.
 
 A test failing here after a kind change is the guard working, not a regression.
@@ -900,12 +907,12 @@ and `alwaysShow` so a single-node cluster still gets the strip as a layout
 anchor. The page mounts `NodeCard` under the picker — the picker itself renders
 nothing below the pills.
 
-| | Default (`NodePicker`) | Nodes (`Cluster.tsx`) |
-| --- | --- | --- |
-| an OFFLINE node | disabled | `allowOffline` — selectable |
-| what a pill shows | short name (+ offline title) | same |
-| what sits below | nothing (caller decides) | the node's `NodeCard` |
-| single-node cluster | hidden | `alwaysShow` |
+|                     | Default (`NodePicker`)       | Nodes (`Cluster.tsx`)       |
+| ------------------- | ---------------------------- | --------------------------- |
+| an OFFLINE node     | disabled                     | `allowOffline` — selectable |
+| what a pill shows   | short name (+ offline title) | same                        |
+| what sits below     | nothing (caller decides)     | the node's `NodeCard`       |
+| single-node cluster | hidden                       | `alwaysShow`                |
 
 Where the selection lives is shared:
 `lib/node-url-selection.ts` — the `?node=` spelling, the hub-first /
@@ -968,7 +975,7 @@ STRUCTURAL subject.** `EventCard` and `EventDetailPanel` were typed on
 `KeyEventRow` — the events feed's own row — so only the feed could open them.
 Events → Debug therefore grew a parallel text-only list of the same subjects,
 and the two screens diverged into "the one with pictures" and "the one with
-grey lines"; an operator asking *why is this track wrong* had to go and find the
+grey lines"; an operator asking _why is this track wrong_ had to go and find the
 same track on the other screen to look at it. Both components now take
 `TrackSubject`
 (`packages/addon-admin-ui/src/components/detection-intelligence/track-subject.ts`)
@@ -991,7 +998,7 @@ The vocabulary is one module —
 — holding two rules that are silent when broken:
 
 - **`native` and "we were never told" render NOTHING.** A row written before the
-  provenance column ranks `native` *because* it cannot be classified, so a badge
+  provenance column ranks `native` _because_ it cannot be classified, so a badge
   there turns "we cannot tell" into an accusation across the entire pre-column
   history. `provenanceBadge` returns `null` for both.
 - **The raw token line is kept beside the sentence.** `previewMissReason` is the
@@ -1075,14 +1082,14 @@ The per-function pages D113's phase 3 built are NOT removed: the group is where
 a function is flipped, those pages are where it is configured. Each function's
 authority is unchanged, and it is the authority a write goes to:
 
-| Function | Authority written | Where it is configured |
-| --- | --- | --- |
-| `stream-broker` | `deviceManager.setDisabled` | the device list's own disable |
-| `object-detection` · `audio-analysis` | `deviceManager.setWrapperActive` | the device's detection / audio settings |
-| `recording` | `recordingArchive.setDeviceConfig` (`enabled` only — bands remain the SoT, below) | `RecordingSettings` |
-| `notifications` | `notificationRules.setDeviceMuted` | `DeviceNotificationMute`, device Overview |
-| `privacy-mask` · `device-audio` | `privacyMask.setMask` / `setAudioEnabled` | `PrivacyMaskSettings` (ui-library, Image tab) — and the Reolink driver form's `privacyMaskEnabled`, a SECOND writer of the same mask, is deleted |
-| `broker-audio` | `streamBroker.setDeviceAudioMute`, node-routed | `StreamBrokerPanel` (addon-pipeline widget) |
+| Function                              | Authority written                                                                 | Where it is configured                                                                                                                           |
+| ------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `stream-broker`                       | `deviceManager.setDisabled`                                                       | the device list's own disable                                                                                                                    |
+| `object-detection` · `audio-analysis` | `deviceManager.setWrapperActive`                                                  | the device's detection / audio settings                                                                                                          |
+| `recording`                           | `recordingArchive.setDeviceConfig` (`enabled` only — bands remain the SoT, below) | `RecordingSettings`                                                                                                                              |
+| `notifications`                       | `notificationRules.setDeviceMuted`                                                | `DeviceNotificationMute`, device Overview                                                                                                        |
+| `privacy-mask` · `device-audio`       | `privacyMask.setMask` / `setAudioEnabled`                                         | `PrivacyMaskSettings` (ui-library, Image tab) — and the Reolink driver form's `privacyMaskEnabled`, a SECOND writer of the same mask, is deleted |
+| `broker-audio`                        | `streamBroker.setDeviceAudioMute`, node-routed                                    | `StreamBrokerPanel` (addon-pipeline widget)                                                                                                      |
 
 Rules for any surface that grows one of these:
 
@@ -1169,9 +1176,9 @@ The Mode chip in `RecordingSettings`
 (`packages/ui-library/src/composites/cap-settings/RecordingSettings.tsx`) is a
 shortcut, not a second store:
 
-| Chip | What it writes |
-| --- | --- |
-| Off | `bands = []` (`enabled` follows) |
+| Chip                | What it writes                                                           |
+| ------------------- | ------------------------------------------------------------------------ |
+| Off                 | `bands = []` (`enabled` follows)                                         |
 | Events / Continuous | replace with one all-week `00:00–23:59` band of that mode (`alwaysBand`) |
 
 **A band also says whether its footage carries SOUND.** `band.audio`
@@ -1184,7 +1191,7 @@ overnight), it is offered for both modes, and `bandAudioAt` is a decision of its
 own — `shouldRecordAt` still owns whether to record at all.
 
 `activeBandAt` (`packages/addon-pipeline/src/recorder/band-engine.ts`) is the
-first band whose weekday+span covers *now*. No covering band = nothing is
+first band whose weekday+span covers _now_. No covering band = nothing is
 recorded then. Overlapping bands are legal in the schema; only the first match
 wins, silently. A mix of continuous and events is valid only as **non-overlapping
 windows** (day vs night). Do not encode the mix as two overlapping rows and
@@ -1241,13 +1248,13 @@ is the only place an operator sets a person's role. It asks one question,
 **Admin or Viewer**, and for a Viewer one device list in one mode plus the
 named features:
 
-| Piece | Lives in | Why there |
-| --- | --- | --- |
-| what Save writes (`draftFromUser`, `withMode`, `saveRequestOf`) | `components/users/user-role-model.ts` | pure, so every write decision is pinned by `user-role-model.spec.ts` |
-| the device list | the shared `DevicePicker` (`pages/system/DevicePicker.tsx`), parents only | the picker used everywhere else (D636); a camera's children follow it |
-| the mode | `SegmentedChoice`: "All devices except…" or "Only these devices…" | one list, never an allow list beside a block list |
-| the feature list | `VIEWER_FEATURES` in `@camstack/types`, labels translated under `users.viewerFeatures.<id>` | the catalogue grows one entry at a time with the methods it unlocks |
-| the device count (`auth.previewScope`) | `server/backend/src/api/core/auth.router.ts`, shown by `components/users/RolePreview.tsx` | see below |
+| Piece                                                           | Lives in                                                                                    | Why there                                                             |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| what Save writes (`draftFromUser`, `withMode`, `saveRequestOf`) | `components/users/user-role-model.ts`                                                       | pure, so every write decision is pinned by `user-role-model.spec.ts`  |
+| the device list                                                 | the shared `DevicePicker` (`pages/system/DevicePicker.tsx`), parents only                   | the picker used everywhere else (D636); a camera's children follow it |
+| the mode                                                        | `SegmentedChoice`: "All devices except…" or "Only these devices…"                           | one list, never an allow list beside a block list                     |
+| the feature list                                                | `VIEWER_FEATURES` in `@camstack/types`, labels translated under `users.viewerFeatures.<id>` | the catalogue grows one entry at a time with the methods it unlocks   |
+| the device count (`auth.previewScope`)                          | `server/backend/src/api/core/auth.router.ts`, shown by `components/users/RolePreview.tsx`   | see below                                                             |
 
 Rules that each cost something to learn:
 
@@ -1282,13 +1289,13 @@ The phone (`camstack/`) edits notification rules on its own routes, not inside
 the Rules / Targets / Snooze segment — switching segment used to throw an
 unsaved rule away.
 
-| route | screen |
-| --- | --- |
-| `app/(app)/rule/new.tsx` | kind picker, or the summary of a new rule when `?kind=` is known (the static `new` beats `[id]`) |
-| `app/(app)/rule/[id]/index.tsx` | the rule's summary: one row per section, Save / Cancel, the back guard |
-| `app/(app)/rule/[id]/[section].tsx` | one section's sub-screen |
-| `app/(app)/timelapse-rule/[id].tsx` | the timelapse editor (`id` = `new` to create) |
-| `app/(app)/summary-rule/[id].tsx` | the digest editor (`id` = `new` to create) |
+| route                               | screen                                                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `app/(app)/rule/new.tsx`            | kind picker, or the summary of a new rule when `?kind=` is known (the static `new` beats `[id]`) |
+| `app/(app)/rule/[id]/index.tsx`     | the rule's summary: one row per section, Save / Cancel, the back guard                           |
+| `app/(app)/rule/[id]/[section].tsx` | one section's sub-screen                                                                         |
+| `app/(app)/timelapse-rule/[id].tsx` | the timelapse editor (`id` = `new` to create)                                                    |
+| `app/(app)/summary-rule/[id].tsx`   | the digest editor (`id` = `new` to create)                                                       |
 
 The hrefs come only from `camstack/src/navigation/rule-routes.ts`, typed as
 expo-router `Href`.
@@ -1559,7 +1566,6 @@ WebRTC / TURN tab, which is gone.
   stacks; the endpoint table becomes cards). The native app's WebView is not
   wired yet — see the roadmap.
 
-
 ## A detection step is edited from the step matrix ([D757](../decisions/adr-0757-a-detection-step-is-edited-from-the-step-matrix-in-a-panel-docked-to-the-scroll-container.md))
 
 Pipeline → node → Pipeline (`NodeStepInspector`) is the steps × accelerators
@@ -1682,7 +1688,6 @@ population only (`fieldScope="perNode"`, D765): a value every node reads from
 one cluster key (runner tuning, the audio backend) is on Cluster → Settings →
 Runner defaults. The decoder's section is shown on the engine tab
 (`tabAliases`, `?ntab=decoder` lands there). The scroller pads `p-4 sm:p-6`.
-
 
 ### A device hero is ONE model (D1023)
 

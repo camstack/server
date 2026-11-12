@@ -59,26 +59,26 @@ Every entity below is fed by a subscription in `ha-export.addon.ts`; anything
 not in this table is fed by the reconcile only, and that is stated rather than
 implied.
 
-| Entity | Source | Kind |
-| --- | --- | --- |
-| `online` | `device.online` / `device.offline`, plus the `device-status` slice on `device.state-changed` | event |
-| `triggered` | `motion.on-motion-changed` and `pipeline-analytics.track-lifecycle` | event |
-| `motion_detected`, `motion_last_detection` | `motion.on-motion-changed` (+ the `motion` slice) | event |
-| `<macro>_detected` / `_last_detection` / `_last_image` | `pipeline-analytics.track-lifecycle` | event |
-| `<macro>_last_label` | same event — `label` for person/animal, `plateText` for vehicle | event |
-| `last_detection`, `last_image` | same event | event |
-| `<zone>_<macro>_detected` / `_last_detection` / `_last_image` | same event, via `zonesVisited` | event |
-| `<zone>_<macro>_objects` | `zone-analytics.occupancy-changed` | event |
-| `battery`, `charger`, `sleeping` | the `battery` slice on `device.state-changed` | event |
-| `objects`, `<macro>_objects` | `zone-analytics.occupancy-changed` — the FRAME scope | event |
-| `<zone>_objects` | same event — the zone's own `totalObjects` | event |
-| `audio_last_sound`, `audio_volume` | `pipeline.audio-inference-result` | event |
-| `doorbell_pressed`, `doorbell_last_pressed`, `doorbell_press_count` | the `doorbell` slice on `device.state-changed` | event |
+| Entity                                                                                  | Source                                                                                                       | Kind                                                                                                                                |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `online`                                                                                | `device.online` / `device.offline`, plus the `device-status` slice on `device.state-changed`                 | event                                                                                                                               |
+| `triggered`                                                                             | `motion.on-motion-changed` and `pipeline-analytics.track-lifecycle`                                          | event                                                                                                                               |
+| `motion_detected`, `motion_last_detection`                                              | `motion.on-motion-changed` (+ the `motion` slice)                                                            | event                                                                                                                               |
+| `<macro>_detected` / `_last_detection` / `_last_image`                                  | `pipeline-analytics.track-lifecycle`                                                                         | event                                                                                                                               |
+| `<macro>_last_label`                                                                    | same event — `label` for person/animal, `plateText` for vehicle                                              | event                                                                                                                               |
+| `last_detection`, `last_image`                                                          | same event                                                                                                   | event                                                                                                                               |
+| `<zone>_<macro>_detected` / `_last_detection` / `_last_image`                           | same event, via `zonesVisited`                                                                               | event                                                                                                                               |
+| `<zone>_<macro>_objects`                                                                | `zone-analytics.occupancy-changed`                                                                           | event                                                                                                                               |
+| `battery`, `charger`, `sleeping`                                                        | the `battery` slice on `device.state-changed`                                                                | event                                                                                                                               |
+| `objects`, `<macro>_objects`                                                            | `zone-analytics.occupancy-changed` — the FRAME scope                                                         | event                                                                                                                               |
+| `<zone>_objects`                                                                        | same event — the zone's own `totalObjects`                                                                   | event                                                                                                                               |
+| `audio_last_sound`, `audio_volume`                                                      | `pipeline.audio-inference-result`                                                                            | event                                                                                                                               |
+| `doorbell_pressed`, `doorbell_last_pressed`, `doorbell_press_count`                     | the `doorbell` slice on `device.state-changed`                                                               | event                                                                                                                               |
 | `consumable_<key>_level` / `_status` / `_remaining` (one set per item, any device type) | the `consumables` slice on `device.state-changed`; minted per item by `ITEM_ENTITY_MAP` (`item-entities.ts`) | event — an item set that moved re-announces the device (debounced 2s); a removed item leaves HA only after two agreeing reads (D49) |
-| the control switches | `pipelineOrchestrator.getCameraSwitches` | **reconcile only** |
-| every synthetic-device entity | `notificationRules.*`, `nodes.topology`, `addons.list`, `serverManagement.getServerPackageStatus` | **reconcile only** — polled numbers, no event exists |
-| `reboot`, `ptz_*` buttons | no state — command only | — |
-| `consumable_<key>_reset` buttons (resettable items only) | no state — `consumables.reset({ key })` with the provider's raw key | — |
+| the control switches                                                                    | `pipelineOrchestrator.getCameraSwitches`                                                                     | **reconcile only**                                                                                                                  |
+| every synthetic-device entity                                                           | `notificationRules.*`, `nodes.topology`, `addons.list`, `serverManagement.getServerPackageStatus`            | **reconcile only** — polled numbers, no event exists                                                                                |
+| `reboot`, `ptz_*` buttons                                                               | no state — command only                                                                                      | —                                                                                                                                   |
+| `consumable_<key>_reset` buttons (resettable items only)                                | no state — `consumables.reset({ key })` with the provider's raw key                                          | —                                                                                                                                   |
 
 Structure (`entity_change`) is re-derived on `device.registered`,
 `device.unregistered`, `device.bindings-changed`, `device.meta-changed` and
@@ -173,19 +173,20 @@ Named here rather than shipped looking implemented:
      pin works" was taken from the hub surface, never from the addon's.
 
      Consequence, until it was fixed: `ha-export: broker returned no
-     configuration, not exporting to it {brokerId=ha_001}` on every reconcile,
+configuration, not exporting to it {brokerId=ha_001}` on every reconcile,
      and no operator setting could change it. Fixed in the kernel, not here
      ([D105](../../docs/decisions/adr-0105.md)) — and note the shape, because
      the first attempt fixed only `onUnownedCall` and changed nothing:
      `LocalChildRegistry`'s sibling short-circuit runs FIRST and was answering
      the call from `provider-homematic` before the router was ever consulted.
      Do not "work around" any of this by importing the provider half.
+
   2. **Nothing else pins.** Not the enumeration, not the provider half.
 
   **Never pin an enumeration.** `list`'s contract is already a fan-out UNION, so
   a pin converts this provider's absence from "returns fewer rows" into
   `BAD_REQUEST: Capability "broker" has no provider with addonId
-  "provider-homeassistant"`. That took the operator from "one instance, switched
+"provider-homeassistant"`. That took the operator from "one instance, switched
   off" to "no instance at all".
 
   **Never pin a cap this addon PROVIDES.** This is the one that actually broke
@@ -209,13 +210,14 @@ Named here rather than shipped looking implemented:
   will be right everywhere once the kernel honours it — but until then it is
   enforcing an intent, not a behaviour, and no code should read it as proof that
   a forked addon reaches the provider it named.
+
 - **This addon runs ALONE — no `execution.group`.** It was given
   `group: 'notifiers'` on 2026-07-15 as "purely a process-count optimization"
   (9b895fb5f), which is precisely what D29 forbids for a device provider. On
   2026-08-09 a sibling in that group (`advanced-notifier`) was quarantined by
   renaming its directory while its entry stayed in `/data/addons/manifest.json`;
   the shared runner then died on `Failed to load "advanced-notifier": No
-  package.json at …`, five times, and the crash circuit-breaker stopped
+package.json at …`, five times, and the crash circuit-breaker stopped
   respawning it. The Home Assistant provider went with it: the broker instance list lost
   `ha_001` for ~2h50m, `notification-output` lost ALL THREE providers, and three
   `restartAddon` calls answered `{success:true}` without ever spawning a process.
@@ -223,10 +225,10 @@ Named here rather than shipped looking implemented:
 - **An export target is an integration instance, and several may share one
   Home Assistant connection.** Each target is an `ha-export-targets` record under a
   minted id (`hae_001`, ...): `{ name, connectionId, mediaRole, reconcileIntervalSec,
-  devices, enabled }`, served through `integration-instances` (role `services`,
+devices, enabled }`, served through `integration-instances` (role `services`,
   kind `ha-target`, `target-instances.ts`). `connectionId` is a reference to the
   Home Assistant broker; a target whose connection does not exist is
-  *unconfigured*, never unexposed (devices are kept, the boot reconcile starts only
+  _unconfigured_, never unexposed (devices are kept, the boot reconcile starts only
   after the targets are loaded, and an empty broker instance list prunes nothing). The
   records are loaded once at boot after the migrations, and a failed read stops the
   boot: an empty membership would unexport every device. The old
@@ -253,6 +255,12 @@ The device-details form flattens fields by `key` across every contributing
 section, so a bare `enabled` collides with the Alexa and HomeKit exporters'
 identically-named fields — last writer wins, and the operator sees another
 exporter's value in this one's toggle.
+
+A device's Home Assistant name is per target (D1049): `setExposedName` stores it under
+`exposedNames` in the per-device store and reconciles. The plan is built once for every
+broker, so the name is applied to `dev.name` per broker at announce
+(`ha-export/exposed-name.ts`) and is part of the reconcile fingerprint; the device key
+(`dev.ids[0]`) never sees it.
 
 ## Retired
 

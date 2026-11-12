@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A simple sensor's card shows its reading once, big, over a scene that says what it means; sensor and control rows draw the same model, follow your display units (°F, kW, precision), send a typed value in the device's own unit, and a device list reads its row values in one request
+- The device value picker can open straight on its two columns, and its grouped value list is available on its own
+- The condition kind picker picks the first row again when Enter is pressed on an empty search while adding a row
+- Generated hooks include deviceExport.setExposedName.
 
 ## [1.2.432] - 2026-11-12
 
@@ -18,8 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An offline device card says Offline once, in its top line, instead of repeating it under the controls
 - A dialog that contains a search field focuses it when it opens.
 - Device list rows show a sensor reading published only on numeric-sensor, including whole numbers.
-- The device value picker can open straight on its two columns, and its grouped value list is available on its own
-- The condition kind picker picks the first row again when Enter is pressed on an empty search while adding a row
 
 ## [1.2.431] - 2026-11-12
 
@@ -28,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device card of a container (and any card in a narrow column) stacks its controls under the drawing instead of cutting them off
 - System hooks include the ir-transmitter learn method
 ### Changed
-
 
 ## [1.2.430] - 2026-11-12
 

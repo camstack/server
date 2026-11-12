@@ -322,9 +322,30 @@ async function initDeviceManager(
 // device-export provider fake — a system COLLECTION cap that gates its
 // per-device contribution by the set of devices it has "exposed".
 function makeExportProvider(exposed: Set<number>) {
+  const names = new Map<string, string>()
   return {
+    names,
     exposeDevice: vi.fn(),
     unexposeDevice: vi.fn(),
+    listInstances: vi.fn(async () => [
+      { instanceId: 'hap-1', name: 'Home bridge', enabled: true },
+      { instanceId: 'hap-off', name: 'Old bridge', enabled: false },
+    ]),
+    listExposedDevices: vi.fn(async ({ instanceId }: { instanceId?: string }) =>
+      instanceId === 'hap-1'
+        ? [...exposed].map((id) => ({
+            deviceId: String(id),
+            ...(names.has(String(id)) ? { exposedName: names.get(String(id)) } : {}),
+          }))
+        : [],
+    ),
+    setExposedName: vi.fn(
+      async (input: { instanceId: string; deviceId: string; name: string | null }) => {
+        if (input.name === 'Bad!') throw new Error('export-name-refused: no punctuation')
+        if (input.name === null) names.delete(input.deviceId)
+        else names.set(input.deviceId, input.name)
+      },
+    ),
     getStatus: vi.fn(async () => ({})),
     getDeviceSettingsContribution: vi.fn(
       async ({ deviceId }: { deviceId: number }): Promise<ConfigUISchemaWithValues | null> => {
@@ -819,6 +840,81 @@ describe('DeviceManagerAddon — device-settings aggregator', () => {
     const aggregate = await provider.getDeviceSettingsAggregate({ deviceId })
     expect(aggregate).not.toBeNull()
     expect(aggregate!.sections.map((s) => s.id)).toContain('device-export-hap')
+  })
+  it('derives ONE "Name on <platform>" field per exposing instance and routes it to setExposedName (D1049)', async () => {
+    const deviceRegistry = new DeviceRegistry()
+    const capabilityRegistry = new CapabilityRegistry(makeLogger())
+    const exposed = new Set<number>()
+    const exportProvider = makeExportProvider(exposed)
+    capabilityRegistry.declareCapability(deviceExportCapability)
+    capabilityRegistry.registerProvider(deviceExportCapability.name, 'export-hap', exportProvider)
+    capabilityRegistry.ready()
+    const provider = await initDeviceManager(capabilityRegistry, deviceRegistry)
+    const { id: deviceId } = await provider.allocateDeviceId({
+      addonId: 'reolink',
+      stableId: 'cam-2',
+    })
+    await provider.registerDevice({
+      addonId: 'reolink',
+      stableId: 'cam-2',
+      id: deviceId,
+      type: 'camera',
+      name: 'cam-2',
+      parentDeviceId: null,
+      config: {},
+    })
+    exposed.add(deviceId)
+    exportProvider.names.set(String(deviceId), 'Cancello')
+
+    const aggregate = await provider.getDeviceSettingsAggregate({ deviceId })
+    const fields = aggregate!.sections.find((s) => s.id === 'device-export-hap')!.fields as Record<
+      string,
+      unknown
+    >[]
+    const nameFields = fields.filter((f) => String(f['key']).startsWith('export-name:'))
+    expect(nameFields).toHaveLength(1)
+    expect(nameFields[0]).toMatchObject({
+      key: 'export-name:export-hap:hap-1',
+      label: 'Name on Home bridge',
+      value: 'Cancello',
+      writerCapName: 'device-export',
+      writerAddonId: 'export-hap',
+    })
+
+    const change = (key: string, value: unknown) => ({
+      writerCapName: 'device-export',
+      writerAddonId: 'export-hap',
+      key,
+      value,
+    })
+    const saved = await provider.updateDeviceFieldsBatch({
+      deviceId,
+      changes: [change('export-name:export-hap:hap-1', 'Porta'), change('export:hap', true)],
+    })
+    expect(saved.failures).toEqual([])
+    expect(exportProvider.setExposedName).toHaveBeenCalledWith({
+      instanceId: 'hap-1',
+      deviceId: String(deviceId),
+      name: 'Porta',
+    })
+    expect(exportProvider.applyDeviceSettingsPatch).toHaveBeenCalledWith({
+      deviceId,
+      patch: { 'export:hap': true },
+    })
+
+    // A blank clears; a refusal is reported by name and the exporter's own patch is not called.
+    exportProvider.applyDeviceSettingsPatch.mockClear()
+    const refused = await provider.updateDeviceFieldsBatch({
+      deviceId,
+      changes: [change('export-name:export-hap:hap-1', 'Bad!')],
+    })
+    expect(refused.failures[0]?.error).toMatch(/^export-name-refused: /)
+    expect(exportProvider.applyDeviceSettingsPatch).not.toHaveBeenCalled()
+    await provider.updateDeviceFieldsBatch({
+      deviceId,
+      changes: [change('export-name:export-hap:hap-1', '  ')],
+    })
+    expect(exportProvider.names.has(String(deviceId))).toBe(false)
   })
 })
 

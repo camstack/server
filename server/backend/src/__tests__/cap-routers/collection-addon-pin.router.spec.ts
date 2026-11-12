@@ -78,6 +78,7 @@ function makeExportProvider(addonId: string, exposed: number): MethodBag {
     listExposedDevices: async () => devices,
     exposeDevice: async () => undefined,
     unexposeDevice: async () => undefined,
+    setExposedName: async () => undefined,
     getDeviceSettingsContribution: async () => null,
     getDeviceLiveContribution: async () => null,
     applyDeviceSettingsPatch: async () => undefined,

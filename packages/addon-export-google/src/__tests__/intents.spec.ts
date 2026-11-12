@@ -36,6 +36,19 @@ describe('handleSync', () => {
     expect(payload.devices.map((d) => d.id)).toEqual(['101', '616'])
   })
 
+  it('answers the Google name the operator saved (D1049), under the same device id', async () => {
+    const payload = await handleSync('user-1', {
+      gateway: createFakeGateway({ devices: { 101: LAMP, 616: LOCK } }),
+      logger: new RecordingLogger(),
+      listExposed: () => [101, 616],
+      exposedName: async (deviceId) => (deviceId === 101 ? 'Luce cucina' : null),
+    })
+    expect(payload.devices.map((d) => [d.id, d.name.name])).toEqual([
+      ['101', 'Luce cucina'],
+      ['616', 'Front door'],
+    ])
+  })
+
   it('drops an exposed device that left the registry, and says so per device', async () => {
     const logger = new RecordingLogger()
     const payload = await handleSync('user-1', {

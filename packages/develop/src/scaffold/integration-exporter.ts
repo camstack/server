@@ -129,10 +129,13 @@ import {
   deviceExportCapability,
   deviceExportStatusInstanceOf,
   ExportInstanceUnknownError,
+  exposedNameStoreOf,
+  freeTextNameValidator,
   type IDeviceExportProvider,
   type IntegrationTestConnectionResult,
   integrationInstancesCapability,
   type RecordKindHandle,
+  saveExposedName,
 } from '@camstack/types'
 import { z } from 'zod'
 import {
@@ -250,6 +253,18 @@ export class <%= className %>Addon extends BaseAddon<Readonly<Record<string, nev
         this.setMembership(instanceId, deviceId, true),
       unexposeDevice: async ({ instanceId, deviceId }) =>
         this.setMembership(instanceId, deviceId, false),
+      // The device's name on this target (D1049): stored per instance in this addon's per-device
+      // store, never part of the exported id. Replace the validator with the platform's rule.
+      setExposedName: async ({ instanceId, deviceId, name }) => {
+        this.target(instanceId)
+        await saveExposedName({
+          store: exposedNameStoreOf(this.ctx.settings, this.ctx.id),
+          deviceId: Number(deviceId),
+          instanceId,
+          raw: name,
+          validate: freeTextNameValidator('<%= displayName %>', 100),
+        })
+      },
     }
   }
 

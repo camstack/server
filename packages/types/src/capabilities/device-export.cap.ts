@@ -125,9 +125,19 @@ const DeviceExportStatusSchema = z.object({
 
 const DeviceKindSchema = z.string() // camstack device kind (e.g. 'camera', 'switch')
 
+/**
+ * EXPOSED NAME. What one instance calls a device on its platform, when it should not be the
+ * device's own name. The exporter owns it: it is stored per instance in the exporter's per-device
+ * store (D865), validated by the exporter against its platform's naming rules, and never reaches
+ * the exported id — a rename updates the SAME device on the platform, never a second one.
+ * Blank or `null` = the device's own name. A name the platform would refuse is refused with
+ * `ExportNameRefusedError` (`export-name-refused`), whose message says why.
+ */
 const ExposedDeviceSchema = z.object({
   deviceId: z.string(),
   exposedAs: z.string().optional(),
+  /** The operator's name for this device on this instance; absent = the device's own name. */
+  exposedName: z.string().optional(),
   capabilities: z.array(z.string()).optional(),
 })
 
@@ -135,9 +145,37 @@ const ExposeInputSchema = z.object({
   instanceId: InstanceIdSchema,
   deviceId: z.string(),
   capabilities: z.array(z.string()).optional(),
+  /** Set the exposed name in the same call; absent = leave it as it is, blank/null = clear it. */
+  exposedName: z.string().nullable().optional(),
 })
 
-const UnexposeInputSchema = z.object({ instanceId: InstanceIdSchema, deviceId: z.string() })
+const SetExposedNameInputSchema = z.object({
+  instanceId: InstanceIdSchema,
+  deviceId: z.string(),
+  /** Blank or null = the device's own name. */
+  name: z.string().nullable(),
+})
+
+export const EXPORT_NAME_REFUSED = 'export-name-refused'
+
+/** A name the instance's platform would refuse. The message starts with the code, then the reason. */
+export class ExportNameRefusedError extends Error {
+  readonly code = EXPORT_NAME_REFUSED
+  readonly instanceId: string
+  readonly reason: string
+
+  constructor(instanceId: string, reason: string) {
+    super(`${EXPORT_NAME_REFUSED}: ${reason}`)
+    this.name = 'ExportNameRefusedError'
+    this.instanceId = instanceId
+    this.reason = reason
+  }
+}
+
+const UnexposeInputSchema = z.object({
+  instanceId: InstanceIdSchema,
+  deviceId: z.string(),
+})
 
 /**
  * What an exporter may expose besides devices (D968). An action and a
@@ -197,6 +235,11 @@ export const deviceExportCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    // Renaming what another ecosystem's users see is the same administrator's act as exposing.
+    setExposedName: method(SetExposedNameInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
     // Entities beyond devices (D968). A provider that implements none of these
     // exports devices only; the UI treats an unanswered `listSupportedEntityKinds`
     // as "unknown", never as "devices only" (D315).
@@ -232,6 +275,7 @@ export {
   ExposedDeviceSchema,
   ExposeInputSchema,
   UnexposeInputSchema,
+  SetExposedNameInputSchema,
   ExportEntityKindSchema,
   ExportEntityRefSchema,
   ExposedEntitySchema,
@@ -239,6 +283,7 @@ export {
   UnexposeEntityInputSchema,
 }
 export type ExportInstance = z.infer<typeof ExportInstanceSchema>
+export type SetExposedNameInput = z.infer<typeof SetExposedNameInputSchema>
 export type ExportEntityKind = z.infer<typeof ExportEntityKindSchema>
 export type ExportEntityRef = z.infer<typeof ExportEntityRefSchema>
 export type ExposedEntity = z.infer<typeof ExposedEntitySchema>

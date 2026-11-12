@@ -4292,6 +4292,23 @@ export function createCapRouter_deviceExport(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.unexposeDevice(methodInput as any)
       }),
+    setExposedName: adminProcedure
+      .input(deviceExportCapability.methods.setExposedName.input.loose())
+      .output(deviceExportCapability.methods.setExposedName.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, addonId, ...methodInput } = input as {
+          nodeId?: string
+          addonId?: string
+        } & Record<string, unknown>
+        const p = resolveProvider(
+          'device-export',
+          nodeId,
+          () => getProvider(ctx, addonId),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setExposedName(methodInput as any)
+      }),
     listSupportedEntityKinds: protectedProcedure
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(deviceExportCapability.methods.listSupportedEntityKinds.output)

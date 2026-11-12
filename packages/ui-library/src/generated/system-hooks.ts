@@ -725,6 +725,9 @@ export const useDeviceExportExposeDevice: typeof trpc.deviceExport.exposeDevice.
 /** Generated alias around `trpc.deviceExport.unexposeDevice.useMutation`. */
 export const useDeviceExportUnexposeDevice: typeof trpc.deviceExport.unexposeDevice.useMutation = /*#__PURE__*/ alias(() => trpc.deviceExport.unexposeDevice.useMutation)
 
+/** Generated alias around `trpc.deviceExport.setExposedName.useMutation`. */
+export const useDeviceExportSetExposedName: typeof trpc.deviceExport.setExposedName.useMutation = /*#__PURE__*/ alias(() => trpc.deviceExport.setExposedName.useMutation)
+
 /** Generated alias around `trpc.deviceExport.listSupportedEntityKinds.useQuery`. */
 export const useDeviceExportListSupportedEntityKinds: typeof trpc.deviceExport.listSupportedEntityKinds.useQuery = /*#__PURE__*/ alias(() => trpc.deviceExport.listSupportedEntityKinds.useQuery)
 

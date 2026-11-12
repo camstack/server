@@ -49,6 +49,9 @@ import {
   type IAddonHttpRoute,
   deviceExportStatusInstanceOf,
   ExportInstanceUnknownError,
+  type ExposedNameStore,
+  exposedNameStoreOf,
+  saveExposedName,
   type IDeviceExportProvider,
   isReadingQuantity,
   type IOauthIntegrationProvider,
@@ -118,6 +121,7 @@ import { summariseLinkGaps } from './link-gaps.js'
 import { postToHomeAssistant, PUSH_PATH } from './push-failure.js'
 import { ReachabilityReconciler } from './reachability-reconcile.js'
 import { shouldSkipAnnounce, structureFingerprint } from './reconcile-fingerprint.js'
+import { devBlockFor, haNameValidator, namesByBroker } from './exposed-name.js'
 import {
   ReadMirror,
   cameraFunctionReadsFailed,
@@ -236,6 +240,8 @@ interface ExportedDevice {
   readonly target: CommandTarget
   /** Brokers this device reaches. Empty means it is exported nowhere. */
   readonly brokerIds: readonly string[]
+  /** The operator's Home Assistant name per broker (D1049), applied to `dev.name` at announce. */
+  readonly exposedNames?: ReadonlyMap<string, string>
   /**
    * The streams the plan's `camera` entities were built from.
    *
@@ -492,10 +498,27 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
         this.targetScope(instanceId)
         return [...SUPPORTED_DEVICE_KINDS]
       },
-      listExposedDevices: async ({ instanceId }) =>
-        this.exposedDeviceRows(this.targetScope(instanceId)),
-      exposeDevice: async ({ instanceId, deviceId }) =>
-        this.setTargetMembership(instanceId, deviceId, true),
+      listExposedDevices: async ({ instanceId }) => {
+        const rows = this.exposedDeviceRows(this.targetScope(instanceId))
+        // A name belongs to ONE connection: it is answered only when one was asked about.
+        if (instanceId === undefined) return rows
+        const out = []
+        for (const row of rows) {
+          const names = await this.exposedNamesFor(Number(row.deviceId), [instanceId])
+          const exposedName = names.get(instanceId)
+          out.push(exposedName === undefined ? row : { ...row, exposedName })
+        }
+        return out
+      },
+      exposeDevice: async ({ instanceId, deviceId, exposedName }) => {
+        if (exposedName !== undefined) await this.saveExposedName(instanceId, deviceId, exposedName)
+        return this.setTargetMembership(instanceId, deviceId, true)
+      },
+      setExposedName: async ({ instanceId, deviceId, name }) => {
+        if (await this.saveExposedName(instanceId, deviceId, name)) {
+          await this.reconcile('exposed-name-changed')
+        }
+      },
       unexposeDevice: async ({ instanceId, deviceId }) =>
         this.setTargetMembership(instanceId, deviceId, false),
       listSupportedEntityKinds: async () => ['device', 'action', 'notifier'],
@@ -1318,6 +1341,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
             itemEntities: Object.values(catalogDevice.itemEntities ?? {}).flat(),
           },
           brokerIds,
+          exposedNames: await this.exposedNamesFor(numericId, brokerIds),
           streams: catalogDevice.streams ?? [],
           cameraFunctions,
         })
@@ -1796,7 +1820,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
           const ok = await link.client.publishEntityChange(
             entry.plan.deviceKey,
             entry.plan.cmps,
-            entry.plan.dev,
+            devBlockFor(entry.plan.dev, entry.exposedNames, brokerId),
             full,
           )
           if (!ok) allDelivered = false
@@ -3172,6 +3196,59 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
       throw new ExportInstanceUnknownError('provider-homeassistant', instanceId)
     }
     return [instanceId]
+  }
+
+  private nameStore(): ExposedNameStore {
+    return exposedNameStoreOf(this.ctx.settings, 'homeassistant-export')
+  }
+
+  /** The saved Home Assistant names of a device on the brokers it reaches. A failed read names none. */
+  private async exposedNamesFor(
+    deviceId: number,
+    brokerIds: readonly string[],
+  ): Promise<ReadonlyMap<string, string>> {
+    try {
+      return await namesByBroker(this.nameStore(), deviceId, brokerIds)
+    } catch (err) {
+      this.ctx.logger.warn(
+        'ha-export: Home Assistant names unreadable — announcing the device name',
+        {
+          tags: { deviceId },
+          meta: { error: errMsg(err) },
+        },
+      )
+      return new Map()
+    }
+  }
+
+  /**
+   * Validate and store the Home Assistant name of a device on one connection (D1049). A refusal
+   * throws before anything is written. `true` when the stored name changed.
+   */
+  private async saveExposedName(
+    instanceId: string,
+    deviceIdStr: string,
+    raw: string | null,
+  ): Promise<boolean> {
+    this.targetScope(instanceId)
+    const deviceId = Number.parseInt(deviceIdStr, 10)
+    if (!Number.isFinite(deviceId)) {
+      throw new Error(`ha-export: deviceId must be numeric — got "${deviceIdStr}"`)
+    }
+    const saved = await saveExposedName({
+      store: this.nameStore(),
+      deviceId,
+      instanceId,
+      raw,
+      validate: haNameValidator,
+    })
+    if (saved.changed) {
+      this.ctx.logger.info('ha-export: Home Assistant name saved', {
+        tags: { deviceId },
+        meta: { targetId: instanceId, name: saved.name },
+      })
+    }
+    return saved.changed
   }
 
   private exposedDeviceRows(scope: readonly string[]): { deviceId: string; exposedAs: string }[] {

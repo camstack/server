@@ -14,14 +14,14 @@ the intro and the skill pointers and links here; edit the notes HERE.
 
 Almost every confusing thing about this addon comes from not separating them.
 
-| | **Hub-side session** | **Amazon push grant** |
-| --- | --- | --- |
-| What it is | the token Amazon presents to US | the LWA token WE present to Amazon |
-| Stored in | `oauth_sessions` (hub, `local-auth`) | refresh token: the skill Lambda's DynamoDB table. Hub: `AlexaSettings.tokens` = broker URL + per-link credential + 1h access token |
-| Created by | `oauthExchangeCode` at consent | AcceptGrant **in the Lambda** → `POST /oauth/broker-link` (legacy Lambda: `/oauth/lwa-tokens`) |
-| Used for | `/directive` — live view, voice control, discovery | `LwaEventGateway` — motion, doorbell, battery, Add/DeleteReport |
-| Expiry | **none.** `refreshTokenTtlSec: 'never'` | access token 1h, renewed **through the broker** on a 60s scan |
-| How it breaks | only by revocation | renewal fails and nothing visibly breaks |
+|               | **Hub-side session**                               | **Amazon push grant**                                                                                                              |
+| ------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| What it is    | the token Amazon presents to US                    | the LWA token WE present to Amazon                                                                                                 |
+| Stored in     | `oauth_sessions` (hub, `local-auth`)               | refresh token: the skill Lambda's DynamoDB table. Hub: `AlexaSettings.tokens` = broker URL + per-link credential + 1h access token |
+| Created by    | `oauthExchangeCode` at consent                     | AcceptGrant **in the Lambda** → `POST /oauth/broker-link` (legacy Lambda: `/oauth/lwa-tokens`)                                     |
+| Used for      | `/directive` — live view, voice control, discovery | `LwaEventGateway` — motion, doorbell, battery, Add/DeleteReport                                                                    |
+| Expiry        | **none.** `refreshTokenTtlSec: 'never'`            | access token 1h, renewed **through the broker** on a 60s scan                                                                      |
+| How it breaks | only by revocation                                 | renewal fails and nothing visibly breaks                                                                                           |
 
 ## The hub holds NO Amazon client secret (D753)
 
@@ -47,7 +47,7 @@ against a per-link credential (`lambda-template/broker.js`,
 Consequences worth stating out loud:
 
 - **Revocation is the ONLY severance for half 1.** Nothing times out. And it bites
-  immediately, not in an hour: `oauthRefresh` *and* `oauthVerifyAccessToken` both
+  immediately, not in an hour: `oauthRefresh` _and_ `oauthVerifyAccessToken` both
   re-read the session row, and both of Alexa's hub-side entry points call the
   latter before doing any work.
 - **Revoking the session does not touch half 2.** The LWA grant is Amazon's and
@@ -55,7 +55,7 @@ Consequences worth stating out loud:
   doorbell events at the unlinked account until Amazon happens to answer 403.
   That is why "Unlink Amazon account" does both — it also deletes the link at the
   broker (`/broker/revoke`) so the refresh token dies there — and why revoking
-  from Admin → System → Identity → Linked Sessions alone is *not* an unlink.
+  from Admin → System → Identity → Linked Sessions alone is _not_ an unlink.
 - **Nothing here knows which AMAZON account is linked.** Alexa hands our own
   token back; we never call `api.amazon.com/user/profile`. `LinkedAccount.userId`
   and the `oauth_sessions` row both carry the CAMSTACK user who consented. Two
@@ -83,18 +83,18 @@ and, for a custom skill only, **Custom-skill security** (collapsed: the ingress
 token). Every button is an `addon-action-button`, so its result or its error
 shows under it; an action with nothing to do throws a sentence saying why.
 
-| I want to… | Where | What it does / breaks |
-| --- | --- | --- |
-| See who is linked and whether push works | Account link → **Status** | Derived on every read from `linkedAccounts` + `tokens`. Shows the grant's remaining life and last renewal. Breaks nothing. |
-| Change the Amazon account, or force a fresh link | Account link → **Unlink now** (`unlinkAlexaAccounts`), then re-link from the Alexa app | Revokes every active `export-alexa` session **and** discards the stored push grant. Live view, voice and proactive events stop immediately. Needs an Amazon-side re-link to restore. Also the way a widened scope set takes effect. |
-| Apply new permissions to an existing link | same as above | Nothing else works — scopes are frozen at consent. |
-| Inspect the raw session rows | Admin → System → Identity → **Linked Sessions** | Read-only view of `integrationId`, user, scopes, created / last used / revoked. `lastUsedAt` advances only on refresh (hourly at best), so a *stale* stamp is not evidence of a dead link. Revoking here severs half 1 but leaves half 2 — prefer the addon button. |
-| Rotate the ingress token (custom skill) | Custom-skill security → **Regenerate token** | New shared secret. **Breaks the Lambda** until `HUB_INGRESS_TOKEN` is updated there — but only when "Require ingress token" is on. Does not touch the account link. Not offered, and never enforced, in public mode: the shared public Lambda sends one `HUB_INGRESS_TOKEN` for every hub (`effectiveAlexaSettings`). |
-| Refresh the Amazon push grant | nothing to press | Automatic: 60s scan asks the skill broker 5 min before expiry, plus a one-shot retry on any 401. A grant reported EXPIRED means renewal has been failing; LEGACY means it is waiting to migrate to the broker. A broker 401/410 drops the link (re-link needed). |
-| Replace the broker credential (e.g. a settings backup leaked) | Troubleshooting → **Rotate credential** (`rotateBrokerCredential`) | New per-link credential at the broker; the old one dies immediately. Re-linking also issues a fresh one. |
-| Re-send the device list, and clear devices you stopped exposing | Troubleshooting → **Re-sync now** (`resyncDiscovery` → `SyncEngine.resync`) | Forced `AddOrUpdateReport` of every exposed device per linked account, then a `DeleteReport` for every device still in `exportedEndpoints` but no longer in `exposed` (an unexpose whose delete failed — `removeDevice` keeps those ids). An id is forgotten only when every account accepted the delete. Nothing an exposed device fails to build is deleted (D49/D767). Needs a linked account with a push grant. Safe to repeat. |
-| Remove a ghost device this hub no longer tracks | Troubleshooting → **Remove ids…** (`removeAlexaEndpoints`) | Asks for the ids in a dialog (`prompt` on the button; never a saved field), sends a `DeleteReport` per linked account and fails unless every account accepted it; only then are the ids dropped from `exportedEndpoints`. Destructive: Alexa routines using those endpoints lose them. |
-| Re-point the hub's public URL | Network page → **Public endpoint** role | There is no setting here: every use reads the `publicEndpoint` role of `local-network`. A role that resolves to nothing is reported as `no-public-endpoint` (setup block, snapshots, directive refusals). The Lambda routes on the `hubUrl` claim baked into each token; a directive whose token claim no longer equals the role is refused and logged as `routing-claim-stale`, and there is no transition — a moved hub needs ONE re-link. The retired `publicHubUrl` setting is deleted by the `drop-public-hub-url` migration. |
+| I want to…                                                      | Where                                                                                  | What it does / breaks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| See who is linked and whether push works                        | Account link → **Status**                                                              | Derived on every read from `linkedAccounts` + `tokens`. Shows the grant's remaining life and last renewal. Breaks nothing.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Change the Amazon account, or force a fresh link                | Account link → **Unlink now** (`unlinkAlexaAccounts`), then re-link from the Alexa app | Revokes every active `export-alexa` session **and** discards the stored push grant. Live view, voice and proactive events stop immediately. Needs an Amazon-side re-link to restore. Also the way a widened scope set takes effect.                                                                                                                                                                                                                                                                                                |
+| Apply new permissions to an existing link                       | same as above                                                                          | Nothing else works — scopes are frozen at consent.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Inspect the raw session rows                                    | Admin → System → Identity → **Linked Sessions**                                        | Read-only view of `integrationId`, user, scopes, created / last used / revoked. `lastUsedAt` advances only on refresh (hourly at best), so a _stale_ stamp is not evidence of a dead link. Revoking here severs half 1 but leaves half 2 — prefer the addon button.                                                                                                                                                                                                                                                                |
+| Rotate the ingress token (custom skill)                         | Custom-skill security → **Regenerate token**                                           | New shared secret. **Breaks the Lambda** until `HUB_INGRESS_TOKEN` is updated there — but only when "Require ingress token" is on. Does not touch the account link. Not offered, and never enforced, in public mode: the shared public Lambda sends one `HUB_INGRESS_TOKEN` for every hub (`effectiveAlexaSettings`).                                                                                                                                                                                                              |
+| Refresh the Amazon push grant                                   | nothing to press                                                                       | Automatic: 60s scan asks the skill broker 5 min before expiry, plus a one-shot retry on any 401. A grant reported EXPIRED means renewal has been failing; LEGACY means it is waiting to migrate to the broker. A broker 401/410 drops the link (re-link needed).                                                                                                                                                                                                                                                                   |
+| Replace the broker credential (e.g. a settings backup leaked)   | Troubleshooting → **Rotate credential** (`rotateBrokerCredential`)                     | New per-link credential at the broker; the old one dies immediately. Re-linking also issues a fresh one.                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Re-send the device list, and clear devices you stopped exposing | Troubleshooting → **Re-sync now** (`resyncDiscovery` → `SyncEngine.resync`)            | Forced `AddOrUpdateReport` of every exposed device per linked account, then a `DeleteReport` for every device still in `exportedEndpoints` but no longer in `exposed` (an unexpose whose delete failed — `removeDevice` keeps those ids). An id is forgotten only when every account accepted the delete. Nothing an exposed device fails to build is deleted (D49/D767). Needs a linked account with a push grant. Safe to repeat.                                                                                                |
+| Remove a ghost device this hub no longer tracks                 | Troubleshooting → **Remove ids…** (`removeAlexaEndpoints`)                             | Asks for the ids in a dialog (`prompt` on the button; never a saved field), sends a `DeleteReport` per linked account and fails unless every account accepted it; only then are the ids dropped from `exportedEndpoints`. Destructive: Alexa routines using those endpoints lose them.                                                                                                                                                                                                                                             |
+| Re-point the hub's public URL                                   | Network page → **Public endpoint** role                                                | There is no setting here: every use reads the `publicEndpoint` role of `local-network`. A role that resolves to nothing is reported as `no-public-endpoint` (setup block, snapshots, directive refusals). The Lambda routes on the `hubUrl` claim baked into each token; a directive whose token claim no longer equals the role is refused and logged as `routing-claim-stale`, and there is no transition — a moved hub needs ONE re-link. The retired `publicHubUrl` setting is deleted by the `drop-public-hub-url` migration. |
 
 **Not on the Lambda.** The Lambda is skill-side code that receives directives; it
 cannot unlink itself or initiate a re-link. Account linking belongs to Amazon's
@@ -159,8 +159,8 @@ The addon is multi-instance: each skill is an integration instance (a `skills` r
   (`selectAlexaSessionIdsToRevoke(sessions, keep)`). A user linked to two skills is therefore signed
   out of neither by unlinking one; unlink both to end the session.
 - **Device keys carry the skill**: `alexa:<instanceId>:<deviceId>:<field>` (`device-keys.ts`), because
-  the device form flattens keys across exporters. The Alexa name and detection classes are the
-  DEVICE's, drawn once (by the first skill) and saved once.
+  the device form flattens keys across exporters. The detection classes are the DEVICE's, drawn
+  once (by the first skill) and saved once; the Alexa name is per skill (D1049).
 - **Deleting a skill** stops its runtime and deletes its links, exposure and state rows
   (`skill-cleanup.ts`). The addon has no settings page of its own: the skills ARE the page.
 - `ingressToken` stays in `secretStatePaths` only so migration seq 7 can resolve a legacy keychain
@@ -192,13 +192,13 @@ interface; battery is not exported.
 
 ## What each endpoint carries
 
-| Endpoint | Interfaces | Fed by |
-| --- | --- | --- |
-| `<cam>` | RTC (full duplex only with intercom AND `create`), CameraStream, EndpointHealth 3.1, MotionSensor (firmware motion), DoorbellEventSource, PTZ Mode/Toggle, SnapshotProvider (switch), SmartVision.ObjectDetectionSensor + DataController `Camera.SmartVisionData` (switch + per-camera toggle, D779) | gateway: motion, doorbell, connectivity; `vision/` ObjectDetection events (track lifecycle) |
-| `<cam>__det_<class>` | MotionSensor + EndpointHealth — only the classes the camera's selection names (D778) | `detection-sensors/` (track lifecycle + active-track reconcile) |
-| `<cam>__privacy`, `__autotrack`, `<cam>__<child>` | Power(+Brightness), proactive | `state-reports/` (DeviceStateChanged) |
-| `<id>__alarm` | SecurityPanelController, proactive | `state-reports/` |
-| `<id>__dev` | lock / contact / motion / temperature / humidity / switch / light + EndpointHealth | `state-reports/` + `handlers/generic-state.ts` |
+| Endpoint                                          | Interfaces                                                                                                                                                                                                                                                                                           | Fed by                                                                                      |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `<cam>`                                           | RTC (full duplex only with intercom AND `create`), CameraStream, EndpointHealth 3.1, MotionSensor (firmware motion), DoorbellEventSource, PTZ Mode/Toggle, SnapshotProvider (switch), SmartVision.ObjectDetectionSensor + DataController `Camera.SmartVisionData` (switch + per-camera toggle, D779) | gateway: motion, doorbell, connectivity; `vision/` ObjectDetection events (track lifecycle) |
+| `<cam>__det_<class>`                              | MotionSensor + EndpointHealth — only the classes the camera's selection names (D778)                                                                                                                                                                                                                 | `detection-sensors/` (track lifecycle + active-track reconcile)                             |
+| `<cam>__privacy`, `__autotrack`, `<cam>__<child>` | Power(+Brightness), proactive                                                                                                                                                                                                                                                                        | `state-reports/` (DeviceStateChanged)                                                       |
+| `<id>__alarm`                                     | SecurityPanelController, proactive                                                                                                                                                                                                                                                                   | `state-reports/`                                                                            |
+| `<id>__dev`                                       | lock / contact / motion / temperature / humidity / switch / light + EndpointHealth                                                                                                                                                                                                                   | `state-reports/` + `handlers/generic-state.ts`                                              |
 
 - **EndpointHealth (D770)** must always have a value in Alexa's hands: ReportState
   answers it (OK when the status read fails) and an initial connectivity report
@@ -252,11 +252,15 @@ interface; battery is not exported.
 
 - A `switch` with the `outlet` role (HA `device_class: outlet`) is SMARTPLUG; a
   dimmable one is still LIGHT; any other switch is SWITCH.
-- `alexaName` (per-device store key, form field `alexa:<id>:alexaName`) is the
-  endpoint `friendlyName`; the endpoint id stays `<deviceId>__dev`. A rename is
-  pushed with `pushDevice` (the shape signature ignores names). Validation:
-  `endpoints/alexa-name.ts` (Amazon's rule: up to 256 letters, digits and
-  spaces; no punctuation).
+- The Alexa name is the `device-export` exposed name of the skill instance (D1049,
+  amending D875): per-device store key `exposedNames` = `{ <instanceId>: name }`,
+  saved through `setExposedName`, edited in the derived "Name on <skill>" field.
+  It is the endpoint `friendlyName`; the endpoint id stays `<deviceId>__dev`. A
+  rename is pushed with `pushDevice` (the shape signature ignores names).
+  Validation: `endpoints/alexa-name.ts` (Amazon's rule: up to 256 letters, digits
+  and spaces; no punctuation). The retired `alexaName` key (one per device, shared
+  by every skill) was moved to the default skill by the migration
+  `export-alexa/2026-11-12-alexa-name-to-exposed-name`.
 - The Export table selects in bulk by Role / Provider / Type / search
   ("Select N shown"); nothing is hidden by default.
 

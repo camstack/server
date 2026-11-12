@@ -54,12 +54,16 @@ import {
   deviceExportCapability,
   type DeviceType,
   EventCategory,
+  type ExposedNameStore,
+  exposedNameStoreOf,
   ExportSetupSchema,
   type IDeviceExportProvider,
   integrationInstancesCapability,
   memoizePinnedFfmpeg,
   RecordIntegrationInstances,
+  readExposedName,
   RevConflictError,
+  saveExposedName,
   SECRET_CLEAR,
   videoclipsCapability,
 } from '@camstack/types'
@@ -83,6 +87,7 @@ import { BridgeInstance } from './bridge-instance.js'
 import { shouldBridge } from './bridge-policy.js'
 import { type ExportHapActions, exportHapActions } from './custom-actions.js'
 import { carryForward } from './exposed-entry.js'
+import { hapNameValidator } from './exposed-name.js'
 import {
   type ExportDeviceSettings,
   type ExposedConfigEntry,
@@ -978,19 +983,29 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         this.bridgesOf(instanceId)
         return [...HAP_EXPORTABLE_DEVICE_TYPES]
       },
-      listExposedDevices: async ({ instanceId }) =>
-        this.bridgesOf(instanceId).flatMap((inst) =>
-          Array.from(inst.exposed.entries()).map(([deviceId, m]) => {
+      listExposedDevices: async ({ instanceId }) => {
+        const out = []
+        for (const inst of this.bridgesOf(instanceId)) {
+          for (const [deviceId, m] of inst.exposed.entries()) {
             const entry = inst.exposure.devices.find((e) => e.deviceId === deviceId)
-            return {
+            const exposedName = await this.exposedNameOf(inst.id, deviceId)
+            out.push({
               deviceId,
               exposedAs: m.accessory.displayName,
+              ...(exposedName !== null ? { exposedName } : {}),
               ...(entry?.capabilities ? { capabilities: [...entry.capabilities] } : {}),
-            }
-          }),
-        ),
-      exposeDevice: async ({ instanceId, deviceId, capabilities }) =>
-        this.exposeDevice(this.requireBridge(instanceId), deviceId, capabilities),
+            })
+          }
+        }
+        return out
+      },
+      exposeDevice: async ({ instanceId, deviceId, capabilities, exposedName }) => {
+        const inst = this.requireBridge(instanceId)
+        if (exposedName !== undefined) await this.saveExposedName(inst, deviceId, exposedName)
+        return this.exposeDevice(inst, deviceId, capabilities)
+      },
+      setExposedName: async ({ instanceId, deviceId, name }) =>
+        this.setExposedName(this.requireBridge(instanceId), deviceId, name),
       unexposeDevice: async ({ instanceId, deviceId }) =>
         this.unexposeDevice(this.requireBridge(instanceId), deviceId),
       // ── Entities beside devices (D968): actions only, as momentary switches.
@@ -1178,7 +1193,10 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       )
     }
 
-    const displayName = summary?.name ?? `Device ${deviceId}`
+    // The operator's HomeKit name for this bridge (D1049), else the device's own name. A label
+    // only: the accessory UUID is derived from the device id, so a rename keeps the pairing.
+    const displayName =
+      (await this.exposedNameOf(inst.id, deviceId)) ?? summary?.name ?? `Device ${deviceId}`
     // A re-expose rebuilds this object and then REPLACES the stored one, so
     // anything not mentioned here is destroyed. The per-camera settings were
     // never mentioned: the operator's `streamPreference` pin was written, then
@@ -1218,6 +1236,67 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         childCount: attached.childAccessoryUuids.length,
       },
     })
+  }
+
+  private nameStore(): ExposedNameStore {
+    return exposedNameStoreOf(this.ctx.settings, 'export-hap')
+  }
+
+  private async exposedNameOf(instanceId: string, deviceId: string): Promise<string | null> {
+    const numericId = Number.parseInt(deviceId, 10)
+    if (!Number.isFinite(numericId)) return null
+    try {
+      return readExposedName(await this.nameStore().read(numericId), instanceId, hapNameValidator)
+    } catch (err) {
+      // A failed read names nothing; the listing and the accessory keep the device name.
+      this.ctx.logger.warn('export-hap: HomeKit name unreadable', {
+        tags: { deviceId: numericId },
+        meta: {
+          instanceId,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      })
+      return null
+    }
+  }
+
+  /** Validate and store the HomeKit name; a refusal throws before anything is written. */
+  private async saveExposedName(
+    inst: BridgeInstance,
+    deviceIdStr: string,
+    raw: string | null,
+  ): Promise<boolean> {
+    const deviceId = Number.parseInt(deviceIdStr, 10)
+    if (!Number.isFinite(deviceId))
+      throw new Error(`export-hap: invalid device id '${deviceIdStr}'`)
+    const saved = await saveExposedName({
+      store: this.nameStore(),
+      deviceId,
+      instanceId: inst.id,
+      raw,
+      validate: hapNameValidator,
+    })
+    if (saved.changed) {
+      this.ctx.logger.info('export-hap: HomeKit name saved', {
+        tags: { deviceId },
+        meta: { instanceId: inst.id, name: saved.name },
+      })
+    }
+    return saved.changed
+  }
+
+  /**
+   * Rename on HomeKit (D1049). An exposed device is re-exposed in place — the same accessory
+   * UUID, the pairing untouched (no unexpose, which would wipe it) — so Home shows the new name
+   * on the same tile.
+   */
+  private async setExposedName(
+    inst: BridgeInstance,
+    deviceIdStr: string,
+    raw: string | null,
+  ): Promise<void> {
+    const changed = await this.saveExposedName(inst, deviceIdStr, raw)
+    if (changed && inst.exposed.has(deviceIdStr)) await this.exposeDevice(inst, deviceIdStr)
   }
 
   private async unexposeDevice(

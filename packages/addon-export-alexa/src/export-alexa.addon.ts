@@ -343,12 +343,26 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
         ownInstance(instanceId)
         return [...SUPPORTED_KINDS]
       },
-      listExposedDevices: async ({ instanceId }) =>
-        ownInstance(instanceId).exposedDevices.map((e) => ({
-          deviceId: String(e.deviceId),
-        })),
-      exposeDevice: async ({ instanceId, deviceId }) =>
-        ownInstance(instanceId).exposeDevice(deviceId),
+      listExposedDevices: async ({ instanceId }) => {
+        const runtime = ownInstance(instanceId)
+        return Promise.all(
+          runtime.exposedDevices.map(async (e) => {
+            const exposedName = await runtime.exposedNameOf(e.deviceId)
+            return {
+              deviceId: String(e.deviceId),
+              ...(exposedName !== null ? { exposedName } : {}),
+            }
+          }),
+        )
+      },
+      exposeDevice: async ({ instanceId, deviceId, exposedName }) => {
+        const runtime = ownInstance(instanceId)
+        // The name first: the expose then discovers the device under it.
+        if (exposedName !== undefined) await runtime.setExposedName(deviceId, exposedName)
+        return runtime.exposeDevice(deviceId)
+      },
+      setExposedName: async ({ instanceId, deviceId, name }) =>
+        ownInstance(instanceId).setExposedName(deviceId, name),
       unexposeDevice: async ({ instanceId, deviceId }) =>
         ownInstance(instanceId).unexposeDevice(deviceId),
       listSupportedEntityKinds: async () => ['device', 'action'],
@@ -622,6 +636,22 @@ export class ExportAlexaAddon extends BaseAddon<AlexaSettings> {
       readState: async () => (await stateHandle.getResolved(ALEXA_INSTANCE_ID))?.data ?? null,
       clearIngressTokenSecret: async () => {
         await this.clearSecrets(['ingressToken'])
+      },
+      listDeviceIds: async () => {
+        const settings = this.ctx.settings
+        if (settings === undefined)
+          throw new Error('export-alexa: the settings store is unavailable')
+        return settings.listDeviceStoreIds()
+      },
+      readDeviceField: async (deviceIds, field) => {
+        const settings = this.ctx.settings
+        if (settings === undefined)
+          throw new Error('export-alexa: the settings store is unavailable')
+        const found = new Map<number, unknown>()
+        for (const [deviceId, blob] of await settings.readDeviceStoreBatch(deviceIds)) {
+          if (field in blob) found.set(deviceId, blob[field])
+        }
+        return found
       },
     }
   }

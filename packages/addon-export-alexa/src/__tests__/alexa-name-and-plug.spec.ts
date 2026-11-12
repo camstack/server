@@ -8,7 +8,7 @@
  */
 import { DeviceRole } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { ALEXA_NAME_MAX_LENGTH, readAlexaName, validateAlexaName } from '../endpoints/alexa-name.js'
+import { ALEXA_NAME_MAX_LENGTH, validateAlexaName } from '../endpoints/alexa-name.js'
 import { buildGenericDeviceEndpoint } from '../endpoints/generic-device.js'
 import { validateAlexaEndpoint } from '../endpoints/validate-endpoint.js'
 import { buildEndpointsForExposedDevice } from '../handlers/discovery.js'
@@ -112,17 +112,6 @@ describe('validateAlexaName (Amazon friendlyName rules)', () => {
     expect(validateAlexaName('a'.repeat(ALEXA_NAME_MAX_LENGTH)).ok).toBe(true)
     expect(validateAlexaName('a'.repeat(ALEXA_NAME_MAX_LENGTH + 1)).ok).toBe(false)
     expect(validateAlexaName(42).ok).toBe(false)
-  })
-})
-
-describe('readAlexaName', () => {
-  it('reads a valid saved name', () => {
-    expect(readAlexaName({ alexaName: 'Coffee machine' })).toBe('Coffee machine')
-  })
-  it('an absent, non-string or no-longer-valid value is null (device name used)', () => {
-    expect(readAlexaName({})).toBeNull()
-    expect(readAlexaName({ alexaName: 5 })).toBeNull()
-    expect(readAlexaName({ alexaName: 'Alexa!' })).toBeNull()
   })
 })
 

@@ -274,6 +274,7 @@
   "deviceExport.listInstances": "admin",
   "deviceExport.listSupportedDeviceKinds": "admin",
   "deviceExport.listSupportedEntityKinds": "admin",
+  "deviceExport.setExposedName": "admin",
   "deviceExport.unexposeDevice": "admin",
   "deviceExport.unexposeEntity": "admin",
   "deviceExtension.listCandidates": "viewer",

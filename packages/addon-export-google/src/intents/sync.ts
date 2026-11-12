@@ -28,6 +28,11 @@ export interface SyncDeps {
   readonly logger: IScopedLogger
   /** Operator-curated exposed device ids, read from the addon's own store. */
   readonly listExposed: () => readonly number[]
+  /**
+   * The operator's Google name of a device on this instance (D1049), or null for the device's own
+   * name. A label only: the SYNC id stays the device id, so a rename updates the same device.
+   */
+  readonly exposedName?: (deviceId: number) => Promise<string | null>
   /** Exported actions, answered as scenes (D968). Absent = none exported. */
   readonly actions?: ActionSceneExports
 }
@@ -52,7 +57,16 @@ export async function handleSync(
       })
       return null
     }
-    const device = buildSyncDevice(facts)
+    const savedName = await (deps.exposedName?.(deviceId) ?? Promise.resolve(null)).catch(
+      (err: unknown) => {
+        deps.logger.warn('google sync: Google name unreadable — answering the device name', {
+          tags: { deviceId },
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        })
+        return null
+      },
+    )
+    const device = buildSyncDevice(savedName === null ? facts : { ...facts, name: savedName })
     if (device === null) {
       deps.logger.warn('google sync: skipping device — no exported capability', {
         tags: { deviceId },
