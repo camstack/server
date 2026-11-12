@@ -28,7 +28,12 @@ import {
   type HeroContribution,
 } from './hero-contribution-kit.js'
 import type { HeroFragment } from './hero-fragment.js'
-import { humidityMeasurement, temperatureMeasurement, textMeasurement } from './hero-measurement.js'
+import {
+  emptyMeasurement,
+  humidityMeasurement,
+  temperatureMeasurement,
+  textMeasurement,
+} from './hero-measurement.js'
 import type { HeroControl, HeroFact, HeroRow, HeroSideTile } from './hero-model.js'
 import type { HeroSceneMode } from './hero-scene.js'
 import { heroText, type HeroText } from './hero-text.js'
@@ -453,7 +458,7 @@ const temperatureContribution = contribution(
         formatDegrees(slice?.temperature ?? 0),
       ),
       slice?.temperature == null
-        ? undefined
+        ? emptyMeasurement('temperature')
         : temperatureMeasurement(slice.temperature, slice.lastFetchedAt),
     ),
 )
@@ -468,7 +473,9 @@ const humidityContribution = contribution('humidity-sensor', HumiditySensorStatu
       'Umidità',
       `${Math.round(slice?.humidity ?? 0)}%`,
     ),
-    slice?.humidity == null ? undefined : humidityMeasurement(slice.humidity, slice.lastFetchedAt),
+    slice?.humidity == null
+      ? emptyMeasurement('humidity')
+      : humidityMeasurement(slice.humidity, slice.lastFetchedAt),
   ),
 )
 
@@ -510,7 +517,9 @@ const numericContribution = contribution('numeric-sensor', NumericSensorStatusSc
 
 const enumContribution = contribution('enum-sensor', EnumSensorStatusSchema, (slice) => {
   // A timestamp is not a state: it would read as an opaque string.
-  if (slice === undefined || slice.value === '') return { reading: reading('sensor', 'unknown') }
+  if (slice === undefined || slice.value === '') {
+    return measured({ reading: reading('sensor', 'unknown') }, emptyMeasurement('text'))
+  }
   if (slice.timestamp === true) return { reading: reading('sensor', 'on') }
   return measured(
     sensorFragment(slice.value, 'reading', 'gauge', 'State', 'Stato', slice.value),

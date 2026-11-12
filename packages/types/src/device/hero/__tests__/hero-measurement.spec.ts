@@ -78,7 +78,7 @@ describe('a simple sensor is drawn as its ONE measurement', () => {
     expect(t.measurement).toMatchObject({ quantity: 'text', icon: null, value: { en: 'Eco' } })
   })
 
-  it('two measuring caps, an offline sensor, a non-sensor or a missing value keep the old card', () => {
+  it('two measuring caps, an offline sensor or a non-sensor keep the old card', () => {
     const slices = {
       'temperature-sensor': { temperature: 21, lastFetchedAt: NOW },
       'humidity-sensor': { humidity: 40, lastFetchedAt: NOW },
@@ -94,11 +94,23 @@ describe('a simple sensor is drawn as its ONE measurement', () => {
         'power-meter': { power: 40, lastFetchedAt: NOW },
       }).measurement,
     ).toBeUndefined()
-    expect(
-      build(DeviceType.Sensor, ['temperature-sensor'], {
-        'temperature-sensor': { temperature: null, lastFetchedAt: NOW },
-      }).measurement,
-    ).toBeUndefined()
+  })
+
+  it('a sensor that has not reported draws its normal card with an empty "—" and its unit (D393)', () => {
+    const empty = build(DeviceType.Sensor, ['temperature-sensor'], {
+      'temperature-sensor': { temperature: null, lastFetchedAt: NOW },
+    }).measurement
+    expect(empty).toMatchObject({
+      quantity: 'temperature',
+      reading: null,
+      value: { en: '—' },
+      unit: '°C',
+      level: null,
+      since: null,
+    })
+    expect(build(DeviceType.Sensor, ['temperature-sensor'], {}).measurement?.value.en).toBe('—')
+    expect(build(DeviceType.Sensor, ['humidity-sensor'], {}).measurement?.unit).toBe('%')
+    expect(build(DeviceType.Sensor, ['contact'], {}).measurement?.unit).toBeNull()
   })
 
   it('an energy, voltage or current sensor never shows the watts its slice also carries', () => {

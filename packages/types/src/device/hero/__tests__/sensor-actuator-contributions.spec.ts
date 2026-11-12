@@ -50,7 +50,7 @@ describe('alarm sensors read Clear vs alert, never a power word', () => {
       expect(c.look.icon).not.toBe('power')
       const u = build(DeviceType.Sensor, [cap], {})
       expect(u.state).toBe('unknown')
-      expect(u.title.en).toBe('Unknown')
+      expect(u.title.en).toBe('—')
     })
   }
   it('a tripped alarm wins over a calmer reading of the same device', () => {

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switch sub-role accessors (isOutlet, isSwitchFan, isSwitchHeater) and a light group accepts a switch-light relay as an on/off member.
 - A device type retired since a record was written (thermostat) is read as its live type in stored grants, automation targets and composition targets instead of failing the parse
 - The device-type wire schemas stay strict; stores rewrite the retired thermostat type where they read rows back, and the hero layout of a retired type is the climate one
+- Devices draw one icon from their type and role everywhere (a light switch is a light); a sensor that has not reported shows its normal card with an empty — and its unit instead of Unknown
 
 ## [1.2.557] - 2026-11-12
 

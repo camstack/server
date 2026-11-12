@@ -353,7 +353,10 @@ describe('climate looks by mode', () => {
     const m = build(DeviceType.Climate, ['climate-control'], { 'climate-control': AC_STATUS })
     expect(m.look.icon).toBe('flame')
   })
-  it('unread climate is the unknown look, not a mode', () => {
-    expect(build(AC, ['climate-control'], {}).look.icon).toBe('circle-question-mark')
+  it('unread climate keeps its own icon, quiet — not a mode, not a question mark', () => {
+    const m = build(AC, ['climate-control'], {})
+    expect(m.state).toBe('unknown')
+    expect(m.look).toMatchObject({ icon: 'snowflake', tone: 'muted', animation: 'none' })
+    expect(m.title.en).toBe('—')
   })
 })

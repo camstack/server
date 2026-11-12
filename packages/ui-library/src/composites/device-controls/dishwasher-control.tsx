@@ -16,7 +16,7 @@
 import { useUiText, defaultUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
 import { DoorOpen, Pause, Play, Timer } from 'lucide-react'
-import type { DishwasherOperationState, DishwasherStatus } from '@camstack/types'
+import { type DishwasherOperationState, type DishwasherStatus, NOT_REPORTED } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { cn } from '../../lib/cn'
 import type { DeviceControlProps } from './control-registry'
@@ -94,7 +94,7 @@ export function dishwasherOperationMeta(
       }
     case null:
       return {
-        label: t('uiLibrary.dishwasher.unknown', 'Unknown'),
+        label: NOT_REPORTED.en,
         tone: 'text-foreground-subtle',
       }
   }

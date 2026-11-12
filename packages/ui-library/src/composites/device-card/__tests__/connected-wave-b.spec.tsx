@@ -256,7 +256,7 @@ describe('a supply-fed washer', () => {
     expect(container.textContent).toBe('')
   })
 
-  it('an unknown reading is Unknown, never Stopped', () => {
+  it('a running state that has not reported is an empty —, never Stopped', () => {
     hub.running = {
       running: null,
       since: null,
@@ -265,7 +265,7 @@ describe('a supply-fed washer', () => {
       lastFetchedAt: null,
     }
     render(<ConnectedApplianceCard deviceId={1} />)
-    expect(screen.getByText('Unknown')).toBeTruthy()
+    expect(screen.getByText('—')).toBeTruthy()
     expect(screen.queryByText('Stopped')).toBeNull()
   })
 

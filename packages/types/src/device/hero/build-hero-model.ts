@@ -29,7 +29,7 @@ import type {
 import { HERO_SCENE_ROW_IDS, HERO_SIDE_TILES_MAX } from './hero-model.js'
 import { ROW_READING_FACT_IDS } from './hero-row.js'
 import type { HeroState } from './hero-state.js'
-import { heroText, type HeroText } from './hero-text.js'
+import { NOT_REPORTED, heroText, type HeroText } from './hero-text.js'
 import { measurementFitsRole, type HeroMeasurement } from './hero-measurement.js'
 import { resolveOwnPower } from './own-power.js'
 
@@ -104,7 +104,7 @@ const STATE_TEXT: Readonly<Record<HeroState, HeroText>> = {
   standby: heroText('Standby', 'In standby'),
   alert: heroText('Alert', 'Allarme'),
   offline: heroText('Offline', 'Non raggiungibile'),
-  unknown: heroText('Unknown', 'Sconosciuto'),
+  unknown: NOT_REPORTED,
 }
 
 function pickReading(readings: readonly StateReading[]): StateReading | null {

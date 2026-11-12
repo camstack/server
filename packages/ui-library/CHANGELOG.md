@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A heat-only thermostat in auto above its target shows idle on the device card, never COOLING; cooling is derived only for a device that offers a cooling mode
 - A sensor with no reading shows its normal card with an empty value (—) and its unit instead of Awaiting state…
 - A climate device that reports no modes keeps showing cooling in auto above its target; only a device whose reported modes cannot cool reads idle
+- Device cards and controls show an empty — for a value not yet reported, drop the Online chip (offline still shows), and lists in a select or dropdown scroll without the panel jumping back
 
 ## [1.2.434] - 2026-11-12
 

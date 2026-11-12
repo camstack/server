@@ -11,7 +11,7 @@ import { z } from 'zod'
 import { IconKeySchema, type IconKey } from '../icon-catalog.js'
 import { ReadingQuantitySchema, type ReadingQuantity } from '../../units/quantity.js'
 import { HERO_TONES, type HeroTone } from './hero-state.js'
-import { HeroTextSchema, heroText, type HeroText } from './hero-text.js'
+import { HeroTextSchema, NOT_REPORTED, heroText, type HeroText } from './hero-text.js'
 
 export const HERO_MEASUREMENT_QUANTITIES = [
   'temperature',
@@ -208,6 +208,59 @@ export function textMeasurement(text: string, since: number | null): HeroMeasure
     since,
     sinceKind: 'updated',
     historyKey: null,
+  }
+}
+
+/** What each quantity draws beside its value, reported or not. */
+const QUANTITY_FACE: Readonly<
+  Record<
+    HeroMeasurementQuantity,
+    {
+      readonly icon: IconKey | null
+      readonly unit: string | null
+      readonly sinceKind: HeroMeasurementSinceKind
+      readonly historyKey: string | null
+    }
+  >
+> = {
+  temperature: {
+    icon: 'thermometer',
+    unit: '°C',
+    sinceKind: 'updated',
+    historyKey: 'cap:temperature-sensor.temperature',
+  },
+  humidity: {
+    icon: 'droplets',
+    unit: '%',
+    sinceKind: 'updated',
+    historyKey: 'cap:humidity-sensor.humidity',
+  },
+  power: { icon: 'zap', unit: 'W', sinceKind: 'updated', historyKey: 'cap:power-meter.power' },
+  contact: { icon: null, unit: null, sinceKind: 'changed', historyKey: null },
+  text: { icon: null, unit: null, sinceKind: 'updated', historyKey: null },
+}
+
+/**
+ * The measurement of a sensor that has not reported yet: its normal card with
+ * an empty "—" value and its unit — never a placeholder, never a 0 (D393). The
+ * reading is `null` (nothing to format), the scene does not move, and nothing
+ * claims a moment.
+ */
+export function emptyMeasurement(quantity: HeroMeasurementQuantity): HeroMeasurement {
+  const face = QUANTITY_FACE[quantity]
+  return {
+    quantity,
+    reading: null,
+    icon: face.icon,
+    value: NOT_REPORTED,
+    unit: face.unit,
+    band: null,
+    level: null,
+    word: NOT_REPORTED,
+    tone: 'muted',
+    since: null,
+    sinceKind: face.sinceKind,
+    historyKey: face.historyKey,
   }
 }
 

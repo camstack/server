@@ -91,6 +91,7 @@ export {
   HeroMeasurementReadingSchema,
   HeroMeasurementSchema,
   contactMeasurement,
+  emptyMeasurement,
   measurementFitsRole,
   humidityMeasurement,
   powerMeasurement,
@@ -103,6 +104,6 @@ export {
   type HeroMeasurementReading,
   type HeroMeasurementSinceKind,
 } from './hero-measurement.js'
-export { heroText, type HeroText } from './hero-text.js'
+export { NOT_REPORTED, heroText, isNotReported, type HeroText } from './hero-text.js'
 export * from './media-player-view.js'
 export { resolveOwnPower } from './own-power.js'

@@ -52,7 +52,7 @@ describe('lock-control', () => {
   it('unread is unknown, never locked or unlocked, and nothing is guessed', () => {
     const m = build(DeviceType.Lock, caps, {})
     expect(m.state).toBe('unknown')
-    expect(m.title.en).toBe('Unknown')
+    expect(m.title.en).toBe('—')
     expect(m.scene.mode).toBeNull()
     expect(primaryOf(m, 'lock')).toBeUndefined()
     expect(methods(m, 'lock')).toEqual(['lock', 'unlock'])
@@ -107,7 +107,7 @@ describe('alarm-panel', () => {
   it('unread is unknown, never disarmed', () => {
     const m = build(DeviceType.AlarmPanel, caps, {})
     expect(m.state).toBe('unknown')
-    expect(m.title.en).toBe('Unknown')
+    expect(m.title.en).toBe('—')
     expect(primaryOf(m, 'alarm')).toBeUndefined()
   })
 })
@@ -195,7 +195,7 @@ describe('do-not-disturb', () => {
   })
   it('unread: the toggle is unknown, not off', () => {
     const m = build(DeviceType.MediaPlayer, caps, {})
-    expect(rowOf(m, 'do-not-disturb').status?.en).toBe('Unknown')
+    expect(rowOf(m, 'do-not-disturb').status?.en).toBe('—')
     expect(rowOf(m, 'do-not-disturb').controls[0]).toMatchObject({ on: null })
   })
 })

@@ -36,10 +36,10 @@ import {
 import type { HeroContext } from './hero-fragment.js'
 import type { HeroArgs, HeroControl, HeroFact, HeroRow } from './hero-model.js'
 import type { HeroState } from './hero-state.js'
-import { heroText, type HeroText } from './hero-text.js'
+import { NOT_REPORTED, heroText, type HeroText } from './hero-text.js'
 
 const has = (ctx: HeroContext, f: DeviceFeature): boolean => ctx.features.includes(f)
-const unknownText = heroText('Unknown', 'Sconosciuto')
+const unknownText = NOT_REPORTED
 const pct = (n: number): HeroText => heroText(`${Math.round(n)}%`, `${Math.round(n)}%`)
 const unit = (n: number): number => Math.min(1, Math.max(0, n / 100))
 

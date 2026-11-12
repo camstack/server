@@ -34,9 +34,8 @@ function look(
   return { icon, tone, background, animation }
 }
 
-/** A state a device is in whatever it is: unreachable, or silent. Identical for every look. */
+/** Unreachable: identical for every look. */
 const OFFLINE = look('wifi-off', 'muted', 'plain', 'none')
-const UNKNOWN = look('circle-question-mark', 'muted', 'plain', 'none')
 const ALERT = look('triangle-alert', 'danger', 'alert-wash', 'pulse')
 
 /** What a look chooses per type: the icon, and how the five operating states read. */
@@ -61,7 +60,9 @@ function lookOf(spec: LookSpec): HeroLook {
     standby: at(spec.standby),
     alert: spec.alert ?? ALERT,
     offline: OFFLINE,
-    unknown: UNKNOWN,
+    // Not reported yet: the device's own icon, quiet — its normal card with an
+    // empty value, never a question mark standing in for it (D393).
+    unknown: look(spec.icon, 'muted', 'plain', 'none'),
   }
 }
 

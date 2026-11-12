@@ -16,7 +16,7 @@ import {
 import { contribution, fact, reading, type HeroContribution } from './hero-contribution-kit.js'
 import type { HeroFragment } from './hero-fragment.js'
 import type { HeroControl, HeroFact, HeroPill, HeroRow, HeroSideTile } from './hero-model.js'
-import { heroText, type HeroText } from './hero-text.js'
+import { NOT_REPORTED, heroText, type HeroText } from './hero-text.js'
 import { formatDegrees, thermalStatusText } from './climate-view.js'
 
 const CAP = 'heat-pump-control'
@@ -102,7 +102,7 @@ function circuitControl(circuit: HeatPumpCircuit): HeroControl | null {
 }
 
 /** A circuit with no reading is still a row: it shows that nothing is known, not nothing. */
-const UNKNOWN_STATUS = same('—')
+const UNKNOWN_STATUS = NOT_REPORTED
 
 function circuitRow(circuit: HeatPumpCircuit): HeroRow {
   const control = circuitControl(circuit)

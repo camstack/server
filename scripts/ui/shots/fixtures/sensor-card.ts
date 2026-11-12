@@ -6,7 +6,9 @@
  * ("Eco"), `/devices/1506` a humidity reading; 1507-1509 are control devices
  * (a number without bounds, a choice, a text); 1510 is a temperature sensor
  * with no reading yet; 1511 is a container drawn as its child 1512, a
- * temperature sensor with no reading (the registry sensor hero). Load alone
+ * temperature sensor with no reading (the registry sensor hero); 1513 a
+ * temperature sensor that has never reported, with no slice at all (an
+ * empty "—" with its unit, D393). Load alone
  * (`--fixtures sensor-card`). Every hero model and row is built with the shared
  * pure builder, so the fixture draws exactly what the hub would serve.
  */
@@ -28,6 +30,8 @@ interface Spec {
   /** The operator's display override (`DeviceInfo.display`). */
   readonly display?: Readonly<Record<string, unknown>>
   readonly slices: Readonly<Record<string, unknown>>
+  /** Bound caps when they differ from the slice keys (a cap that has not reported). */
+  readonly caps?: readonly string[]
 }
 
 const SPECS: Readonly<Record<number, Spec>> = {
@@ -118,6 +122,13 @@ const SPECS: Readonly<Record<number, Spec>> = {
     // The container's primary child, never reported (the registry hero).
     slices: { 'temperature-sensor': { lastFetchedAt: NOW - 2 * MINUTE } },
   },
+  1513: {
+    name: 'Pantry temperature',
+    type: 'sensor',
+    role: 'temperature-sensor',
+    caps: ['temperature-sensor'],
+    slices: {},
+  },
 }
 
 const IDS = Object.keys(SPECS).map(Number)
@@ -159,7 +170,7 @@ function modelOf(id: number, canActuate: boolean): HeroModel | null {
       online: true,
       integration: 'Enpal',
     },
-    caps: [...Object.keys(spec.slices), 'device-status'],
+    caps: [...(spec.caps ?? Object.keys(spec.slices)), 'device-status'],
     features: [],
     slices: spec.slices,
     now: NOW,
@@ -189,7 +200,7 @@ export default defineFixtures({
       const spec = specOf(i.deviceId)
       return {
         deviceId: i.deviceId ?? 0,
-        entries: Object.keys(spec?.slices ?? {}).map((capName) => ({
+        entries: (spec?.caps ?? Object.keys(spec?.slices ?? {})).map((capName) => ({
           capName,
           kind: 'native' as const,
           providerAddonId: ADDON,

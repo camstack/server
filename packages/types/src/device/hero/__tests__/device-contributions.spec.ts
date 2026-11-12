@@ -262,7 +262,7 @@ describe('pump-cycle', () => {
   })
   it('unread: unknown, never "continuous"', () => {
     const m = build(DeviceType.PetFountain, caps, cycle({ enabled: null }))
-    expect(rowOf(m, 'pump-cycle').status?.en).toBe('Unknown')
+    expect(rowOf(m, 'pump-cycle').status?.en).toBe('—')
     expect(rowOf(m, 'pump-cycle').controls[0]).toMatchObject({ on: null })
   })
 })

@@ -1,3 +1,4 @@
+import { NOT_REPORTED } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { AmbientFx } from '../../illustrations/AmbientFx'
@@ -29,7 +30,7 @@ export function HeaterCard({
   const on = model.on === true
   const label =
     model.on === null
-      ? t('uiLibrary.deviceCard.unknown', 'Unknown')
+      ? NOT_REPORTED.en
       : on
         ? t('uiLibrary.deviceCard.heater.heating', 'Heating')
         : t('uiLibrary.deviceCard.heater.off', 'Off')

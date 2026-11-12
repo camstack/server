@@ -1,3 +1,4 @@
+import { NOT_REPORTED } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { Checkbox } from '../../../../primitives/checkbox'
 import { useUiText } from '../../../../contexts/ui-text'
@@ -127,7 +128,7 @@ export function FanCard({
   const on = model.on === true
   const label =
     model.on === null
-      ? t('uiLibrary.deviceCard.unknown', 'Unknown')
+      ? NOT_REPORTED.en
       : on
         ? t('uiLibrary.deviceCard.fan.on', 'On')
         : t('uiLibrary.deviceCard.fan.off', 'Off')

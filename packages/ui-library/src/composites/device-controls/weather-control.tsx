@@ -31,7 +31,12 @@ import {
   Gauge,
   Navigation,
 } from 'lucide-react'
-import { formatReading, type ReadingQuantity, type WeatherStatus } from '@camstack/types'
+import {
+  NOT_REPORTED,
+  formatReading,
+  type ReadingQuantity,
+  type WeatherStatus,
+} from '@camstack/types'
 import { useUnitPreferences } from '../../contexts/unit-preferences'
 import { preferenceForQuantity, type UnitPreferences } from '../../lib/unit-preferences'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
@@ -117,7 +122,7 @@ export function weatherConditionMeta(
     case 'exceptional':
       return { label: t('uiLibrary.weatherControl.exceptional', 'Exceptional'), glyph: 'cloudy' }
     case null:
-      return { label: t('uiLibrary.weatherControl.unknown', 'Unknown'), glyph: 'cloudy' }
+      return { label: NOT_REPORTED.en, glyph: 'cloudy' }
     default:
       return { label: condition, glyph: 'cloudy' }
   }

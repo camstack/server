@@ -1,3 +1,4 @@
+import { NOT_REPORTED } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { LightIllustration, rgbCss } from '../../illustrations/LightIllustration'
@@ -53,7 +54,7 @@ export function LightCard({
   const on = model.on === true
   const label =
     model.on === null
-      ? t('uiLibrary.deviceCard.unknown', 'Unknown')
+      ? NOT_REPORTED.en
       : on
         ? t('uiLibrary.deviceCard.light.on', 'On')
         : t('uiLibrary.deviceCard.light.off', 'Off')

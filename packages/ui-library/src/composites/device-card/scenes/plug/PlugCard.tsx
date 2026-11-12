@@ -1,3 +1,4 @@
+import { NOT_REPORTED } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { PlugIllustration } from '../../illustrations/PlugIllustration'
@@ -26,7 +27,7 @@ export function PlugCard({
   const on = model.on === true
   const label =
     model.on === null
-      ? t('uiLibrary.deviceCard.unknown', 'Unknown')
+      ? NOT_REPORTED.en
       : on
         ? t('uiLibrary.deviceCard.plug.on', 'On')
         : t('uiLibrary.deviceCard.plug.off', 'Off')

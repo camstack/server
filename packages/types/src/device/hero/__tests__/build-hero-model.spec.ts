@@ -94,7 +94,9 @@ describe('state: unknown is never off', () => {
     const model = build(PLUG_HEATER, HEATER)
     expect(model.state).toBe('unknown')
     expect(model.ownPower?.on).toBeNull()
-    expect(model.look.icon).toBe('circle-question-mark')
+    // Its own icon, quiet, with an empty value — never a question mark, never "Off".
+    expect(model.look.icon).toBe('flame')
+    expect(model.title.en).toBe('—')
   })
 
   it('a slice that does not parse is not an answer', () => {
@@ -475,7 +477,7 @@ describe('layout selects rows, never slots', () => {
       contact: { entryOpen: true, lastChangedAt: 1 },
     })
     expect(open.rows[0]?.status?.en).toBe('Open')
-    expect(build(DeviceType.Sensor, ['contact']).rows[0]?.status?.en).toBe('Unknown')
+    expect(build(DeviceType.Sensor, ['contact']).rows[0]?.status?.en).toBe('—')
   })
 
   it('a bound cap shows in provenance', () => {

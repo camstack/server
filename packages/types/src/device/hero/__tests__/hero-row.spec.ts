@@ -108,7 +108,7 @@ describe('projectDeviceRow', () => {
     expect(row.scene.id).toBe('ac')
     expect(row.primary).toBeNull()
     expect(row.trailing).toBeNull()
-    expect(row.statusLine.map((t) => t.en)).toEqual(['Unknown'])
+    expect(row.statusLine.map((t) => t.en)).toEqual(['—'])
   })
 
   it('heater: the switch is the inline control, the watts trail', () => {

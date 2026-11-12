@@ -1,3 +1,4 @@
+import { NOT_REPORTED } from '@camstack/types'
 import type { ReactElement, ReactNode } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { ApplianceIllustration } from '../../illustrations/ApplianceIllustration'
@@ -52,7 +53,7 @@ export function appliancePhaseLabel(model: ApplianceCardModel, t: UiTextFn): str
     case 'error':
       return model.errorLabel ?? t('uiLibrary.deviceCard.appliance.error', 'Error')
     case 'unknown':
-      return t('uiLibrary.deviceCard.unknown', 'Unknown')
+      return NOT_REPORTED.en
   }
 }
 

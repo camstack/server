@@ -18,7 +18,7 @@ import { Slider } from '../../primitives/slider'
 import { useUiText, defaultUiText, type UiTextFn } from '../../contexts/ui-text'
 import { useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { ChevronUp, ChevronDown, Square } from 'lucide-react'
-import { type ValveStatus, type ValveState, DeviceFeature } from '@camstack/types'
+import { type ValveStatus, type ValveState, DeviceFeature, NOT_REPORTED } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
 import { cn } from '../../lib/cn'
@@ -64,7 +64,7 @@ export function valveStateMeta(
       return { label: t('uiLibrary.valveControl.stopped', 'Stopped'), tone: 'text-warning' }
     case undefined:
       return {
-        label: t('uiLibrary.valveControl.unknown', 'Unknown'),
+        label: NOT_REPORTED.en,
         tone: 'text-foreground-subtle',
       }
   }

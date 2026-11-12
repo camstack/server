@@ -3,11 +3,18 @@
  * unit (`reading`); the row and the card both turn it into text through the ONE
  * display resolution every reading uses (`resolveSensorDisplay`: the user's unit
  * preferences, the device's display override, the role default, precision). A
- * measurement with no number (a contact, a text) is drawn as the model words it.
+ * measurement with no number (a contact, a text) is drawn as the model words it;
+ * one that has not reported keeps its value empty ("—") but its unit is still the
+ * operator's (°F stays °F before the first reading).
  */
-import type { DeviceDisplayOverride, HeroMeasurement } from '@camstack/types'
+import {
+  type DeviceDisplayOverride,
+  type HeroMeasurement,
+  type ReadingQuantity,
+  ReadingQuantitySchema,
+} from '@camstack/types'
 import { useUnitPreferences } from '../../contexts/unit-preferences'
-import { resolveSensorDisplay } from '../../lib/resolve-sensor-display'
+import { type ResolvedSensorDisplay, resolveSensorDisplay } from '../../lib/resolve-sensor-display'
 import type { UnitPreferences } from '../../lib/unit-preferences'
 import {
   type RoleDisplayDefaults,
@@ -36,21 +43,29 @@ export interface MeasurementTextInput {
   readonly roleDefaults: RoleDisplayDefaults
 }
 
-export function measurementText(input: MeasurementTextInput): MeasurementText {
-  const { measurement, lang, subject } = input
-  if (measurement.reading === null) {
-    return { value: pickText(measurement.value, lang), unit: measurement.unit }
-  }
+function displayOf(input: MeasurementTextInput, quantity: ReadingQuantity): ResolvedSensorDisplay {
+  const { subject } = input
   const role = subject?.role ?? null
-  const resolved = resolveSensorDisplay({
+  return resolveSensorDisplay({
     ...(subject?.display === undefined ? {} : { display: subject.display }),
     ...(role === null || input.roleDefaults[role] === undefined
       ? {}
       : { roleDefault: input.roleDefaults[role] }),
-    quantity: measurement.reading.quantity,
+    quantity,
     unitPreferences: input.unitPreferences,
   })
-  const rendered = resolved.format(measurement.reading.value)
+}
+
+export function measurementText(input: MeasurementTextInput): MeasurementText {
+  const { measurement, lang } = input
+  if (measurement.reading === null) {
+    const value = pickText(measurement.value, lang)
+    const quantity = ReadingQuantitySchema.safeParse(measurement.quantity)
+    if (measurement.unit === null || !quantity.success) return { value, unit: measurement.unit }
+    const unit = displayOf(input, quantity.data).unit
+    return { value, unit: unit === '' ? null : unit }
+  }
+  const rendered = displayOf(input, measurement.reading.quantity).format(measurement.reading.value)
   return { value: rendered.text, unit: rendered.unit === '' ? null : rendered.unit }
 }
 

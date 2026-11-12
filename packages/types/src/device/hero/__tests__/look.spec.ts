@@ -55,9 +55,17 @@ describe('resolveHeroLook', () => {
     expect(resolveHeroLook(null, DeviceType.MediaPlayer, 'running').animation).toBe('equalizer')
   })
 
-  it('unknown has its own look, never the off look', () => {
+  it('unknown is the device itself, quiet — its own icon, never a question mark', () => {
+    // Not reported is told by the state and the empty "—" value (D393), not by a
+    // placeholder picture: the card stays the device's normal card.
     const unknown = resolveHeroLook(DeviceRole.SwitchHeater, DeviceType.Switch, 'unknown')
-    expect(unknown).not.toEqual(resolveHeroLook(DeviceRole.SwitchHeater, DeviceType.Switch, 'off'))
+    expect(unknown).toEqual({
+      icon: 'flame',
+      tone: 'muted',
+      background: 'plain',
+      animation: 'none',
+    })
+    expect(resolveHeroLook(null, DeviceType.Lock, 'unknown').icon).toBe('lock')
   })
 
   it('a role refines the type: a leak sensor reads as water, a plain sensor does not', () => {

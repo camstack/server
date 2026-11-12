@@ -39,7 +39,7 @@ import {
   reading,
   type HeroContribution,
 } from './hero-contribution-kit.js'
-import { contactMeasurement, powerMeasurement } from './hero-measurement.js'
+import { contactMeasurement, emptyMeasurement, powerMeasurement } from './hero-measurement.js'
 import type { HeroContext, StateReading } from './hero-fragment.js'
 import { REMOTE_OPEN_ACTION_ID } from './hero-model.js'
 import type {
@@ -52,7 +52,7 @@ import type {
   HeroSideTile,
 } from './hero-model.js'
 import type { HeroState } from './hero-state.js'
-import { heroText, type HeroText } from './hero-text.js'
+import { NOT_REPORTED, heroText, type HeroText } from './hero-text.js'
 import { ACCESS_FAMILY_CONTRIBUTIONS } from './hero-contributions-access.js'
 import { DEVICES_FAMILY_CONTRIBUTIONS } from './hero-contributions-devices.js'
 import { ACTUATORS_FAMILY_CONTRIBUTIONS } from './hero-contributions-actuators.js'
@@ -177,7 +177,7 @@ const runningStateContribution = contribution(
 // ── power-meter ────────────────────────────────────────────────────────────
 
 const powerMeterContribution = contribution('power-meter', PowerMeterStatusSchema, (slice) => {
-  if (slice?.power === undefined) return {}
+  if (slice?.power === undefined) return { measurement: emptyMeasurement('power') }
   const detail: HeroDetail[] = []
   if (slice.energy !== undefined) {
     detail.push({
@@ -294,7 +294,7 @@ const contactContribution = contribution('contact', ContactStatusSchema, (slice)
     icon: slice?.entryOpen === true ? 'door-open' : 'door-closed',
     status:
       slice === undefined
-        ? heroText('Unknown', 'Sconosciuto')
+        ? NOT_REPORTED
         : slice.entryOpen
           ? heroText('Open', 'Aperto')
           : heroText('Closed', 'Chiuso'),
@@ -307,7 +307,7 @@ const contactContribution = contribution('contact', ContactStatusSchema, (slice)
       ...(slice === undefined ? {} : { scene: { mode: slice.entryOpen ? 'open' : 'closed' } }),
     },
     slice === undefined
-      ? undefined
+      ? emptyMeasurement('contact')
       : // 0 = the transition was never observed.
         contactMeasurement(slice.entryOpen, slice.lastChangedAt > 0 ? slice.lastChangedAt : null),
   )
@@ -347,7 +347,7 @@ const motionTriggerContribution = contribution(
           icon: 'activity',
           status:
             on === null
-              ? heroText('Unknown', 'Sconosciuto')
+              ? NOT_REPORTED
               : on
                 ? heroText('Follows motion', 'Segue il movimento')
                 : heroText('Ignores motion', 'Ignora il movimento'),

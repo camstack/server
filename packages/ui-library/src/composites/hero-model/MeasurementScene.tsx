@@ -7,7 +7,7 @@
  * sits under the value when the history has the series. Under
  * `prefers-reduced-motion` the backdrop stands still (HERO_SCENE_CSS).
  */
-import type { HeroMeasurement, HeroMeasurementReading } from '@camstack/types'
+import { type HeroMeasurement, type HeroMeasurementReading, isNotReported } from '@camstack/types'
 import { ChevronRight } from 'lucide-react'
 import { type ReactNode, useMemo } from 'react'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
@@ -97,6 +97,8 @@ interface StateCornerProps {
 function StateCorner({ measurement, lang, onOpenHistory }: StateCornerProps): ReactNode {
   const t = useUiText()
   const since = measurementSinceText(measurement, t)
+  // Not reported yet: the value already reads "—"; the corner adds nothing.
+  if (since === null && isNotReported(measurement.word)) return null
   const text = (
     <>
       <span className="font-semibold uppercase tracking-wide">

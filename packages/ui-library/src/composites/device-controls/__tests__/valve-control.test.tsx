@@ -50,7 +50,7 @@ describe('valveStateMeta', () => {
     expect(valveStateMeta('closing').label).toBe('Closing')
     expect(valveStateMeta('closed').label).toBe('Closed')
     expect(valveStateMeta('stopped').label).toBe('Stopped')
-    expect(valveStateMeta(undefined).label).toBe('Unknown')
+    expect(valveStateMeta(undefined).label).toBe('—')
   })
 })
 

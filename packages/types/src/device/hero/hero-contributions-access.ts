@@ -29,7 +29,7 @@ import {
 } from './hero-contribution-kit.js'
 import type { HeroAction, HeroControl } from './hero-model.js'
 import type { HeroState } from './hero-state.js'
-import { heroText, type HeroText } from './hero-text.js'
+import { NOT_REPORTED, heroText, type HeroText } from './hero-text.js'
 
 // ── lock-control ───────────────────────────────────────────────────────────
 
@@ -103,7 +103,7 @@ const lockContribution = contribution('lock-control', LockControlStatusSchema, (
   const state = slice?.state ?? null
   const words = state === null ? null : LOCK_WORDS[state]
   const since = slice === undefined ? null : elapsedText(slice.lastChangedAt, ctx.now)
-  const title = words?.title ?? heroText('Unknown', 'Sconosciuto')
+  const title = words?.title ?? NOT_REPORTED
   return {
     reading: reading('lock-control', words?.state ?? 'unknown', false, words?.title),
     rows: [
@@ -226,7 +226,7 @@ const alarmContribution = contribution('alarm-panel', AlarmPanelStatusSchema, (s
           : state === 'disarmed'
             ? 'shield-off'
             : 'shield-check',
-        joinText([words?.title ?? heroText('Unknown', 'Sconosciuto'), since]),
+        joinText([words?.title ?? NOT_REPORTED, since]),
         alarmControls(state, modes, slice?.requiresCode ?? false),
       ),
     ],
@@ -310,7 +310,7 @@ const automationContribution = contribution(
           'automation',
           'workflow',
           joinText([
-            title ?? heroText('Unknown', 'Sconosciuto'),
+            title ?? NOT_REPORTED,
             last === null ? null : heroText(`Ran ${last.en}`, `Eseguita ${last.it}`),
             slice?.lastError == null ? null : heroText(slice.lastError, slice.lastError),
           ]),
@@ -366,7 +366,7 @@ const scriptContribution = contribution('script-runner', ScriptRunnerStatusSchem
         'script',
         'scroll-text',
         joinText([
-          title ?? heroText('Unknown', 'Sconosciuto'),
+          title ?? NOT_REPORTED,
           last === null ? null : heroText(`Ran ${last.en}`, `Eseguito ${last.it}`),
           slice?.lastError == null ? null : heroText(slice.lastError, slice.lastError),
         ]),
@@ -392,7 +392,7 @@ const doNotDisturbContribution = contribution(
           'do-not-disturb',
           'bell-off',
           on === null
-            ? heroText('Unknown', 'Sconosciuto')
+            ? NOT_REPORTED
             : on
               ? heroText('Do not disturb on', 'Non disturbare attivo')
               : heroText('Do not disturb off', 'Non disturbare spento'),
