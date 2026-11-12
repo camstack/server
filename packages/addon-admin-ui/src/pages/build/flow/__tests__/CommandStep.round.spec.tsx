@@ -23,14 +23,12 @@ vi.mock('../../../../components/device-do-action/use-device-bound-caps', () => (
 vi.mock('../../../../components/device-do-action/DeviceDoActionFields', () => ({
   DeviceDoActionFields: () => <span data-testid="generic-fields" />,
 }))
-vi.mock('../BuildDevicePicker', () => ({
-  BuildDevicePicker: () => <span data-testid="single-device-picker" />,
-}))
 vi.mock('@camstack/ui-library', async () => {
   const actual =
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...actual,
+    DeviceValuePicker: () => <span data-testid="single-device-picker" />,
     OptionSelect: (props: {
       readonly options: readonly { readonly value: string; readonly label: string }[]
       readonly onChange: (value: string) => void
