@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notification templates can say {{deviceLabel}} for the device name with its type; {{deviceName}} stays the bare name.
 - A sensor reading that repeats the device title also trails the compact row.
 - The device model now carries the one reading of a simple sensor (value, unit, band, level, state word, since, history series), and a control device offers a number field without bounds and an editable text field
+- A card measurement carries its number and quantity, so every surface converts it through the display preferences
 
 ## [1.2.555] - 2026-11-12
 

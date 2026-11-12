@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DeviceType } from '../../device-type.js'
+import { buildHeroModel } from '../build-hero-model.js'
 import { projectDeviceRow } from '../hero-row.js'
 import { build, NOW, rowOf } from './hero-test-kit.js'
 
@@ -12,6 +13,7 @@ describe('a simple sensor is drawn as its ONE measurement', () => {
     })
     expect(m.measurement).toMatchObject({
       quantity: 'temperature',
+      reading: { value: 48, quantity: 'temperature' },
       icon: 'thermometer',
       value: { en: '48' },
       unit: '°C',
@@ -97,6 +99,32 @@ describe('a simple sensor is drawn as its ONE measurement', () => {
         'temperature-sensor': { temperature: null, lastFetchedAt: NOW },
       }).measurement,
     ).toBeUndefined()
+  })
+
+  it('an energy, voltage or current sensor never shows the watts its slice also carries', () => {
+    const withRole = (role: string) =>
+      buildHeroModel({
+        device: { id: 7, type: DeviceType.Sensor, role, name: 'Meter', online: true },
+        caps: ['power-meter'],
+        features: [],
+        slices: {
+          'power-meter': { power: 1221, energy: 42, voltage: 230, current: 5, lastFetchedAt: NOW },
+        },
+        now: NOW,
+        remoteCommands: null,
+        access: { canActuate: true },
+      }).measurement
+    expect(withRole('energy-sensor')).toBeUndefined()
+    expect(withRole('voltage-sensor')).toBeUndefined()
+    expect(withRole('current-sensor')).toBeUndefined()
+    expect(withRole('power-sensor')).toMatchObject({ reading: { value: 1221, quantity: 'power' } })
+  })
+
+  it('a contact or a text carries no number to convert', () => {
+    expect(
+      build(DeviceType.Sensor, ['contact'], { contact: { entryOpen: true, lastChangedAt: NOW } })
+        .measurement?.reading,
+    ).toBeNull()
   })
 
   it('the row carries the same measurement', () => {

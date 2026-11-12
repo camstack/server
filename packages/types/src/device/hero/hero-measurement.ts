@@ -9,6 +9,7 @@
  */
 import { z } from 'zod'
 import { IconKeySchema, type IconKey } from '../icon-catalog.js'
+import { ReadingQuantitySchema, type ReadingQuantity } from '../../units/quantity.js'
 import { HERO_TONES, type HeroTone } from './hero-state.js'
 import { HeroTextSchema, heroText, type HeroText } from './hero-text.js'
 
@@ -29,8 +30,26 @@ export type HeroMeasurementBand = (typeof HERO_MEASUREMENT_BANDS)[number]
 export const HERO_MEASUREMENT_SINCE_KINDS = ['updated', 'changed'] as const
 export type HeroMeasurementSinceKind = (typeof HERO_MEASUREMENT_SINCE_KINDS)[number]
 
+/**
+ * The number behind a measurement, in its quantity's BASE unit (°C, %, W). A client
+ * draws it through the operator's display resolution (unit preference, per-device
+ * and per-role overrides, precision) — `value` / `unit` are the base rendering for a
+ * client that has none.
+ */
+export interface HeroMeasurementReading {
+  readonly value: number
+  readonly quantity: ReadingQuantity
+}
+
+export const HeroMeasurementReadingSchema: z.ZodType<HeroMeasurementReading> = z.object({
+  value: z.number(),
+  quantity: ReadingQuantitySchema,
+})
+
 export interface HeroMeasurement {
   readonly quantity: HeroMeasurementQuantity
+  /** The base-unit number to format for display; `null` = not a number (a contact, a text). */
+  readonly reading: HeroMeasurementReading | null
   /** The quantity's icon beside the value; `null` = a text state, no icon. */
   readonly icon: IconKey | null
   /** The value, without its unit: "48", "1221", "Open", "Eco". */
@@ -56,6 +75,7 @@ export interface HeroMeasurement {
 
 export const HeroMeasurementSchema: z.ZodType<HeroMeasurement> = z.object({
   quantity: z.enum(HERO_MEASUREMENT_QUANTITIES),
+  reading: HeroMeasurementReadingSchema.nullable(),
   icon: IconKeySchema.nullable(),
   value: HeroTextSchema,
   unit: z.string().nullable(),
@@ -102,6 +122,7 @@ export function temperatureMeasurement(celsius: number, since: number | null): H
   const band = temperatureBand(celsius)
   return {
     quantity: 'temperature',
+    reading: { value: celsius, quantity: 'temperature' },
     icon: 'thermometer',
     value: same(trimmed(celsius, 1)),
     unit: '°C',
@@ -120,6 +141,7 @@ export function humidityMeasurement(percent: number, since: number | null): Hero
   const humid = percent > HUMID_ABOVE_PCT
   return {
     quantity: 'humidity',
+    reading: { value: percent, quantity: 'humidity' },
     icon: 'droplets',
     value: same(String(Math.round(percent))),
     unit: '%',
@@ -141,6 +163,7 @@ export function powerMeasurement(watts: number, since: number | null): HeroMeasu
   const active = watts > 0
   return {
     quantity: 'power',
+    reading: { value: watts, quantity: 'power' },
     icon: 'zap',
     value: same(String(Math.round(watts))),
     unit: 'W',
@@ -157,6 +180,7 @@ export function powerMeasurement(watts: number, since: number | null): HeroMeasu
 export function contactMeasurement(open: boolean, since: number | null): HeroMeasurement {
   return {
     quantity: 'contact',
+    reading: null,
     icon: open ? 'door-open' : 'door-closed',
     value: open ? heroText('Open', 'Aperto') : heroText('Closed', 'Chiuso'),
     unit: null,
@@ -173,6 +197,7 @@ export function contactMeasurement(open: boolean, since: number | null): HeroMea
 export function textMeasurement(text: string, since: number | null): HeroMeasurement {
   return {
     quantity: 'text',
+    reading: null,
     icon: null,
     value: same(text),
     unit: null,
@@ -184,4 +209,21 @@ export function textMeasurement(text: string, since: number | null): HeroMeasure
     sinceKind: 'updated',
     historyKey: null,
   }
+}
+
+/**
+ * Roles whose reading is ANOTHER field of the slice a measurement comes from: an
+ * energy, voltage or current sensor rides the `power-meter` slice, which also carries
+ * `power`. The power measurement is not its reading, so it keeps the old card.
+ */
+const ROLES_READING_ANOTHER_FIELD: Readonly<
+  Partial<Record<HeroMeasurementQuantity, ReadonlySet<string>>>
+> = {
+  power: new Set(['energy-sensor', 'voltage-sensor', 'current-sensor']),
+}
+
+/** Whether `m` is the reading a device of `role` shows. */
+export function measurementFitsRole(m: HeroMeasurement, role: string | null): boolean {
+  if (role === null) return true
+  return !(ROLES_READING_ANOTHER_FIELD[m.quantity]?.has(role) ?? false)
 }

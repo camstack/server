@@ -8,6 +8,7 @@ import {
 } from '../../generated/system-hooks'
 import { useAlertIfAvailable, useConfirm } from '../confirm-dialog'
 import { callHeroAction } from './call-hero-action'
+import { CardDisplaySubjectProvider } from './card-display-subject'
 import type { HeroLabels } from './hero-labels'
 import { HeroModelCard } from './HeroModelCard'
 import { type HeroLang, heroModelCovers } from './hero-model-view'
@@ -121,18 +122,20 @@ export function ModelHero({
   }
   return (
     <div className="p-3 sm:p-4">
-      <HeroModelCard
-        model={built}
-        host={{
-          lang,
-          labels,
-          busy,
-          run,
-          ...(onOpenHistory === undefined ? {} : { openHistory: onOpenHistory }),
-        }}
-        remote={renderRemote?.(built.name)}
-        showName={showName}
-      />
+      <CardDisplaySubjectProvider deviceId={deviceId}>
+        <HeroModelCard
+          model={built}
+          host={{
+            lang,
+            labels,
+            busy,
+            run,
+            ...(onOpenHistory === undefined ? {} : { openHistory: onOpenHistory }),
+          }}
+          remote={renderRemote?.(built.name)}
+          showName={showName}
+        />
+      </CardDisplaySubjectProvider>
     </div>
   )
 }

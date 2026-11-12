@@ -14,6 +14,8 @@ import type { RowOperationState } from '../../hooks/use-row-operations'
 import type { DeviceItemDevice, DeviceItemParent } from '../device-item/helpers'
 import { effectiveType } from '../device-item/helpers'
 import { ContainerChildrenProvider } from '../device-item'
+import { RowModelsProvider } from '../device-item/row-models-context'
+import { rowModelDeviceIds } from './row-model-ids'
 import { groupTopLevelAndAccessories, countableDevices } from './group'
 import { fuzzyMatch } from './fuzzy-match'
 import { Pagination } from './pagination'
@@ -360,6 +362,10 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
   const safePage = Math.min(url.state.page, totalPages)
   const startIdx = (safePage - 1) * currentPageSize
   const pageRows = sortedTopLevel.slice(startIdx, startIdx + currentPageSize)
+  const rowModelIds = useMemo(
+    () => rowModelDeviceIds(pageRows, grouped.accessoriesByParent),
+    [pageRows, grouped.accessoriesByParent],
+  )
 
   // Same intent as the search effect above — only fire on safePage
   // changes; depending on url.state.page or url.setPage would create
@@ -462,33 +468,35 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
         />
       ) : (
         <ContainerChildrenProvider value={grouped.accessoriesByParent}>
-          <TableLayout
-            rows={pageRows}
-            accessoriesByParent={grouped.accessoriesByParent}
-            expandedParents={openParents}
-            onToggleExpand={toggleParent}
-            visibleColumns={visibleColumns}
-            sort={sort}
-            onSort={onSort}
-            // Pass the FILTERED list, not the unfiltered `devices` prop:
-            // the indent computation looks up parent.type to flag adopted
-            // rows. If the parent is filtered out (e.g. user picks
-            // type='camera' and the Home hub disappears), we don't want
-            // the orphaned child to keep its indent — the visual cue is
-            // meaningful only when the parent is also visible.
-            devices={filtered}
-            trpc={trpc}
-            resolveIntegrationIcon={rowIntegrationIcon}
-            resolveParent={resolveParent ?? null}
-            onNavigate={onNavigate ?? null}
-            renderRowAction={renderRowAction ?? null}
-            onDeleteDevice={onDeleteDevice ?? null}
-            rowOperation={rowOperation ?? null}
-            selectable={showCheckboxes}
-            rowClickSelects={rowClickSelects}
-            activeSelected={activeSelected}
-            onToggleSelection={toggleSelection}
-          />
+          <RowModelsProvider deviceIds={rowModelIds}>
+            <TableLayout
+              rows={pageRows}
+              accessoriesByParent={grouped.accessoriesByParent}
+              expandedParents={openParents}
+              onToggleExpand={toggleParent}
+              visibleColumns={visibleColumns}
+              sort={sort}
+              onSort={onSort}
+              // Pass the FILTERED list, not the unfiltered `devices` prop:
+              // the indent computation looks up parent.type to flag adopted
+              // rows. If the parent is filtered out (e.g. user picks
+              // type='camera' and the Home hub disappears), we don't want
+              // the orphaned child to keep its indent — the visual cue is
+              // meaningful only when the parent is also visible.
+              devices={filtered}
+              trpc={trpc}
+              resolveIntegrationIcon={rowIntegrationIcon}
+              resolveParent={resolveParent ?? null}
+              onNavigate={onNavigate ?? null}
+              renderRowAction={renderRowAction ?? null}
+              onDeleteDevice={onDeleteDevice ?? null}
+              rowOperation={rowOperation ?? null}
+              selectable={showCheckboxes}
+              rowClickSelects={rowClickSelects}
+              activeSelected={activeSelected}
+              onToggleSelection={toggleSelection}
+            />
+          </RowModelsProvider>
         </ContainerChildrenProvider>
       )}
 

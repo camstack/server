@@ -181,32 +181,29 @@ export function DeviceItemActions({
 // Today's atoms stay the fallback: a sensor with two readings, a presence device, a
 // date control, or a server without a row model for the device.
 
-function SensorRowValue({
-  trpc,
-  device,
-}: {
+interface SensorRowValueProps {
   readonly trpc: UseDeviceProxyTrpc
   readonly device: DeviceItemDevice
-}): ReactNode {
+}
+
+function SensorRowValue({ trpc, device }: SensorRowValueProps): ReactNode {
   const atom = <SensorValueAtom trpc={trpc} device={device} />
   if (device.type !== DeviceType.Sensor) return atom
-  return <ModelRowReading deviceId={device.id} fallback={atom} />
+  return <ModelRowReading device={device} fallback={atom} />
 }
 
 type InlineControlComponent = NonNullable<ReturnType<typeof resolveDeviceControl>>['InlineControl']
 
-function TypeInlineControl({
-  trpc,
-  device,
-  InlineControl,
-}: {
+interface TypeInlineControlProps {
   readonly trpc: UseDeviceProxyTrpc
   readonly device: DeviceItemDevice
   readonly InlineControl: InlineControlComponent
-}): ReactNode {
+}
+
+function TypeInlineControl({ trpc, device, InlineControl }: TypeInlineControlProps): ReactNode {
   const own = <InlineControl trpc={trpc} deviceId={device.id} features={device.features} />
   if (device.type !== DeviceType.Control) return own
-  return <ModelRowControl deviceId={device.id} fallback={own} />
+  return <ModelRowControl device={device} fallback={own} />
 }
 
 // ── ContainerPrimaryInline ──────────────────────────────────────────

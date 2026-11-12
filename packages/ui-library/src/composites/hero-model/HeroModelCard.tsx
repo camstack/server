@@ -17,7 +17,13 @@ import { Select } from '../../primitives/select'
 import { Slider } from '../../primitives/slider'
 import { Switch } from '../../primitives/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../primitives/tooltip'
-import { NumericControl, TextControl } from '../device-controls/control-panel'
+import { useUnitPreferences } from '../../contexts/unit-preferences'
+import {
+  controlQuantityOf,
+  numericControlDisplay,
+  NumericControl,
+  TextControl,
+} from '../device-controls/control-panel'
 import { useDisplayIconResolver } from '../icon-glyphs'
 import {
   HeroCardA,
@@ -33,6 +39,7 @@ import {
 import { badgeVariantOf, type HeroLang, pickText, sceneOf, tilesOf } from './hero-model-view'
 import type { HeroLabels } from './hero-labels'
 import { useHeroUtilities } from './hero-utilities'
+import { useCardDisplaySubject } from './card-display-subject'
 import { MeasurementScene } from './MeasurementScene'
 
 /** What the card asks its host to do: run the cap method an action or a control names. */
@@ -179,25 +186,37 @@ function PickerControl({
 }
 
 /** A number the device takes without bounds: typed in, with − / + steps. */
-function NumberControl({
-  control,
-  host,
-}: {
+interface NumberControlProps {
   readonly control: Extract<HeroControl, { kind: 'number' }>
   readonly host: HeroCardHost
-}): ReactNode {
+}
+
+/** A number without bounds, shown and typed in the display unit, sent in the base unit. */
+function NumberControl({ control, host }: NumberControlProps): ReactNode {
+  const subject = useCardDisplaySubject()
+  const unitPreferences = useUnitPreferences()
   if (control.value === null) {
     return <span className="text-xs text-foreground-muted">{host.labels.noValue}</span>
   }
+  const shown = numericControlDisplay({
+    quantity: controlQuantityOf(subject?.sourceInfo?.quantity),
+    display: subject?.display,
+    unitPreferences,
+  })
+  const unit = shown.unit ?? (control.unit === '' ? undefined : control.unit)
   return (
     <NumericControl
-      value={control.value}
+      value={shown.toShown(control.value)}
       busy={host.busy}
-      {...(control.step === null ? {} : { step: control.step })}
-      {...(control.unit === '' ? {} : { unit: control.unit })}
+      {...(control.step === null ? {} : { step: shown.toShown(control.step) })}
+      {...(unit === undefined ? {} : { unit })}
+      {...(shown.precision === undefined ? {} : { precision: shown.precision })}
       onCommit={(value) =>
         host.run(
-          { ...control.call, args: heroArgsWithValue(control.call.args, control.valueArg, value) },
+          {
+            ...control.call,
+            args: heroArgsWithValue(control.call.args, control.valueArg, shown.toBase(value)),
+          },
           null,
         )
       }
@@ -205,13 +224,12 @@ function NumberControl({
   )
 }
 
-function TextFieldControl({
-  control,
-  host,
-}: {
+interface TextFieldControlProps {
   readonly control: Extract<HeroControl, { kind: 'text' }>
   readonly host: HeroCardHost
-}): ReactNode {
+}
+
+function TextFieldControl({ control, host }: TextFieldControlProps): ReactNode {
   return (
     <TextControl
       value={control.value ?? ''}

@@ -30,7 +30,7 @@ import { HERO_SCENE_ROW_IDS, HERO_SIDE_TILES_MAX } from './hero-model.js'
 import { ROW_READING_FACT_IDS } from './hero-row.js'
 import type { HeroState } from './hero-state.js'
 import { heroText, type HeroText } from './hero-text.js'
-import type { HeroMeasurement } from './hero-measurement.js'
+import { measurementFitsRole, type HeroMeasurement } from './hero-measurement.js'
 import { resolveOwnPower } from './own-power.js'
 
 export interface HeroModelInput {
@@ -212,7 +212,8 @@ function measurementOf(
 ): HeroMeasurement | undefined {
   if (input.device.type !== DeviceType.Sensor || !input.device.online) return undefined
   const measured = fragments.flatMap((f) => (f.measurement === undefined ? [] : [f.measurement]))
-  return measured.length === 1 ? measured[0] : undefined
+  const only = measured.length === 1 ? measured[0] : undefined
+  return only !== undefined && measurementFitsRole(only, input.device.role) ? only : undefined
 }
 
 function sceneOf(role: string | null, type: string, fragments: readonly HeroFragment[]): HeroScene {

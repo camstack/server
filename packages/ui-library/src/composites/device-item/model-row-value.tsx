@@ -3,57 +3,45 @@
  * (`heroLayout.getRowModels`, D1023) — the same model the device page draws, so the
  * row and the card never disagree.
  *
- *   - a simple sensor: its measurement's value, the unit small and muted;
+ *   - a simple sensor: its measurement, through the operator's display resolution
+ *     (unit preference, device override, role default, precision);
  *   - a control device: its primary control (a number field, with or without bounds,
- *     a choice, a text field).
+ *     a choice, a text field). A number is shown and typed in the display unit and
+ *     sent in the base unit, exactly as the control panel does.
  *
  * While the row model is unanswered nothing is drawn (not-yet-known never looks like
  * "no value", D315). When the server has no row model for the device, or the model
- * carries nothing for the row (a sensor with two readings, a date control), the
- * caller's `fallback` — today's atom — draws instead.
+ * carries nothing the row edits inline (a sensor with two readings, a date control,
+ * an action or a toggle), the caller's `fallback` — today's control — draws instead.
  */
 import {
   heroArgsWithValue,
   type HeroCall,
   type HeroControl,
   type HeroMeasurement,
-  type HeroRowModel,
 } from '@camstack/types'
 import { type ReactNode, useCallback, useState } from 'react'
 import { useTrpcClient } from '../../contexts/system-context'
 import { useUiText } from '../../contexts/ui-text'
-import {
-  useDeviceManagerGetBindings,
-  useHeroLayoutGetRowModels,
-} from '../../generated/system-hooks'
+import { useUnitPreferences } from '../../contexts/unit-preferences'
 import { cn } from '../../lib/cn'
 import { Select } from '../../primitives/select'
-import { NumericControl, TextControl } from '../device-controls/control-panel'
+import {
+  controlQuantityOf,
+  numericControlDisplay,
+  NumericControl,
+  TextControl,
+} from '../device-controls/control-panel'
 import { useAlertIfAvailable } from '../confirm-dialog'
 import { callHeroAction } from '../hero-model/call-hero-action'
-import { heroLang, type HeroLang, pickText } from '../hero-model/hero-model-view'
+import { heroLang, type HeroLang } from '../hero-model/hero-model-view'
+import { type ReadingDisplaySubject, useMeasurementText } from '../hero-model/measurement-display'
 import { TONE_CLASS } from '../hero-scene/scene-map'
-import { useHeroLiveRefresh } from '../hero-model/use-hero-live-refresh'
+import type { DeviceItemDevice } from './helpers'
+import { useRowModel } from './row-models-context'
 
-type RowStage =
-  | { readonly status: 'pending' }
-  | { readonly status: 'absent' }
-  | { readonly status: 'ok'; readonly row: HeroRowModel }
-
-/** The device's row model, re-read when any of its slices pushes. */
-function useRowModel(deviceId: number): {
-  readonly stage: RowStage
-  readonly refetch: () => unknown
-} {
-  const q = useHeroLayoutGetRowModels({ deviceIds: [deviceId], canActuate: true })
-  useHeroLiveRefresh(deviceId, q.refetch)
-  if (q.status === 'pending') return { stage: { status: 'pending' }, refetch: q.refetch }
-  const row = q.status === 'success' ? q.data[0] : null
-  return {
-    stage: row === null || row === undefined ? { status: 'absent' } : { status: 'ok', row },
-    refetch: q.refetch,
-  }
-}
+/** What of a row's device the row value reads. */
+export type RowValueDevice = Pick<DeviceItemDevice, 'id' | 'role' | 'display' | 'sourceInfo'>
 
 /**
  * The host's language as the model's `{ en, it }` texts are picked in. A row has no
@@ -64,86 +52,133 @@ function useRowLang(): HeroLang {
   return heroLang(t('uiLibrary.language', 'en'))
 }
 
-/** A measurement as the row reads it: the value, then the unit small and muted. */
-export function RowMeasurement({
-  measurement,
-  lang,
-}: {
+export interface RowMeasurementProps {
   readonly measurement: HeroMeasurement
   readonly lang: HeroLang
-}): ReactNode {
+  readonly subject: ReadingDisplaySubject | null
+}
+
+/** A measurement as the row reads it: the value in its tone, then the unit small and muted. */
+export function RowMeasurement({ measurement, lang, subject }: RowMeasurementProps): ReactNode {
+  const text = useMeasurementText(measurement, lang, subject)
   return (
     <span
       data-testid="row-measurement"
       className="inline-flex min-w-0 items-baseline gap-0.5 whitespace-nowrap text-sm font-semibold tabular-nums"
     >
-      <span className={cn('min-w-0 truncate', TONE_CLASS[measurement.tone])}>
-        {pickText(measurement.value, lang)}
-      </span>
-      {measurement.unit === null ? null : (
-        <span className="text-xs font-normal text-foreground-muted">{measurement.unit}</span>
+      <span className={cn('min-w-0 truncate', TONE_CLASS[measurement.tone])}>{text.value}</span>
+      {text.unit === null ? null : (
+        <span className="text-xs font-normal text-foreground-muted">{text.unit}</span>
       )}
     </span>
   )
 }
 
 export interface ModelRowReadingProps {
-  readonly deviceId: number
+  readonly device: RowValueDevice
   /** Drawn when the row model carries no measurement for the device. */
   readonly fallback: ReactNode
 }
 
 /** A Sensor row's value, from the row model's measurement. */
-export function ModelRowReading({ deviceId, fallback }: ModelRowReadingProps): ReactNode {
-  const { stage } = useRowModel(deviceId)
+export function ModelRowReading({ device, fallback }: ModelRowReadingProps): ReactNode {
+  const { stage } = useRowModel(device.id)
   const lang = useRowLang()
   if (stage.status === 'pending') return null
   const measurement = stage.status === 'ok' ? stage.row.measurement : undefined
   if (measurement === undefined) return <>{fallback}</>
-  return <RowMeasurement measurement={measurement} lang={lang} />
+  return <RowMeasurement measurement={measurement} lang={lang} subject={device} />
 }
 
-/** The row's inline control for one model control; `null` for a kind a row does not edit inline. */
-function RowControl({
-  control,
-  busy,
-  run,
-}: {
-  readonly control: HeroControl
-  readonly busy: boolean
-  readonly run: (call: HeroCall) => void
-}): ReactNode {
+/** A value written but not yet read back: drawn in place of the model's until it lands. */
+interface PendingValue {
+  readonly controlId: string
+  readonly value: number | string
+}
+
+/** One write a row control asks for: the call, and the value to show meanwhile. */
+interface RowWrite {
+  readonly call: HeroCall
+  readonly controlId: string
+  readonly value: number | string
+}
+
+/** The kinds of control a row edits inline. */
+type InlineControl = Extract<HeroControl, { kind: 'number' | 'slider' | 'picker' | 'text' }>
+
+function isInlineControl(control: HeroControl): control is InlineControl {
+  return (
+    control.kind === 'number' ||
+    control.kind === 'slider' ||
+    control.kind === 'picker' ||
+    control.kind === 'text'
+  )
+}
+
+interface RowControlProps {
+  readonly control: InlineControl
+  readonly device: RowValueDevice
+  readonly pending: PendingValue | null
+  readonly write: (w: RowWrite) => void
+}
+
+function withValue(call: HeroCall, valueArg: string, value: number | string): HeroCall {
+  return { ...call, args: heroArgsWithValue(call.args, valueArg, value) }
+}
+
+/** The row's inline control for one model control. */
+function RowControl({ control, device, pending, write }: RowControlProps): ReactNode {
   const t = useUiText()
-  const withValue = (call: HeroCall, valueArg: string, value: number | string): HeroCall => ({
-    ...call,
-    args: heroArgsWithValue(call.args, valueArg, value),
-  })
+  const unitPreferences = useUnitPreferences()
+  const optimistic = pending?.controlId === control.id ? pending.value : undefined
   switch (control.kind) {
     case 'number':
-    case 'slider':
-      return control.value === null ? (
-        <span className="text-xs text-foreground-subtle">—</span>
-      ) : (
+    case 'slider': {
+      const base = typeof optimistic === 'number' ? optimistic : control.value
+      if (base === null) return <span className="text-xs text-foreground-subtle">—</span>
+      const shown = numericControlDisplay({
+        quantity: controlQuantityOf(device.sourceInfo?.quantity),
+        display: device.display,
+        unitPreferences,
+      })
+      const unit = shown.unit ?? (control.unit === '' ? undefined : control.unit)
+      const step = control.step === null ? undefined : shown.toShown(control.step)
+      return (
         <NumericControl
-          value={control.value}
-          busy={busy}
-          {...(control.step === null ? {} : { step: control.step })}
-          {...(control.kind === 'slider' ? { min: control.min, max: control.max } : {})}
-          {...(control.unit === '' ? {} : { unit: control.unit })}
-          onCommit={(v) => run(withValue(control.call, control.valueArg, v))}
+          value={shown.toShown(base)}
+          busy={false}
+          {...(step === undefined ? {} : { step })}
+          {...(control.kind === 'slider'
+            ? { min: shown.toShown(control.min), max: shown.toShown(control.max) }
+            : {})}
+          {...(unit === undefined ? {} : { unit })}
+          {...(shown.precision === undefined ? {} : { precision: shown.precision })}
+          onCommit={(v) => {
+            const value = shown.toBase(v)
+            write({
+              call: withValue(control.call, control.valueArg, value),
+              controlId: control.id,
+              value,
+            })
+          }}
         />
       )
+    }
     case 'picker':
       return (
         <Select
           aria-label={t('uiLibrary.controlPanel.value', 'Control value')}
           bare
           wrapperClassName="w-full"
-          disabled={busy}
-          value={control.current ?? ''}
+          value={typeof optimistic === 'string' ? optimistic : (control.current ?? '')}
           onChange={(e) => {
             e.stopPropagation()
-            run(withValue(control.call, control.valueArg, e.target.value))
+            const value = e.target.value
+            write({
+              call: withValue(control.call, control.valueArg, value),
+              controlId: control.id,
+              value,
+            })
           }}
           className="w-full max-w-full min-w-0 truncate rounded bg-transparent px-0.5 py-0.5 text-xs"
         >
@@ -158,37 +193,44 @@ function RowControl({
       return (
         <TextControl
           value={control.value ?? ''}
-          busy={busy}
-          onCommit={(v) => run(withValue(control.call, control.valueArg, v))}
+          busy={false}
+          onCommit={(value) =>
+            write({
+              call: withValue(control.call, control.valueArg, value),
+              controlId: control.id,
+              value,
+            })
+          }
         />
       )
-    case 'action':
-    case 'toggle':
-      return null
   }
 }
 
 export interface ModelRowControlProps {
-  readonly deviceId: number
-  /** Drawn when the row model offers no inline control (a date control is read-only). */
+  readonly device: RowValueDevice
+  /** Drawn when the row model offers no inline control (a date, an action, a toggle). */
   readonly fallback: ReactNode
 }
 
-/** A Control row's inline control, from the row model's primary control. */
-export function ModelRowControl({ deviceId, fallback }: ModelRowControlProps): ReactNode {
+/**
+ * A Control row's inline control, from the row model's primary control. A write shows
+ * its value at once and keeps the control live (no lock while it travels), as the
+ * control panel does; a refused write is reported and the read-back value returns.
+ */
+export function ModelRowControl({ device, fallback }: ModelRowControlProps): ReactNode {
   const t = useUiText()
   const client = useTrpcClient()
   const alert = useAlertIfAvailable()
-  const bindings = useDeviceManagerGetBindings({ deviceId })
-  const { stage, refetch } = useRowModel(deviceId)
-  const [busy, setBusy] = useState(false)
-  const run = useCallback(
-    (call: HeroCall): void => {
+  const { stage, refetch } = useRowModel(device.id)
+  const [pending, setPending] = useState<PendingValue | null>(null)
+  const write = useCallback(
+    (w: RowWrite): void => {
+      setPending({ controlId: w.controlId, value: w.value })
       void (async () => {
-        const nodeId = bindings.data?.entries.find((e) => e.capName === call.cap)?.providerNodeId
-        setBusy(true)
         try {
-          await callHeroAction(client, call, deviceId, nodeId)
+          const bindings = await client.deviceManager.getBindings.query({ deviceId: device.id })
+          const nodeId = bindings.entries.find((e) => e.capName === w.call.cap)?.providerNodeId
+          await callHeroAction(client, w.call, device.id, nodeId)
           await refetch()
         } catch (err) {
           await alert?.({
@@ -197,14 +239,14 @@ export function ModelRowControl({ deviceId, fallback }: ModelRowControlProps): R
             variant: 'danger',
           })
         } finally {
-          setBusy(false)
+          setPending((p) => (p?.controlId === w.controlId && p.value === w.value ? null : p))
         }
       })()
     },
-    [alert, bindings.data, client, deviceId, refetch, t],
+    [alert, client, device.id, refetch, t],
   )
   if (stage.status === 'pending') return null
   const primary = stage.status === 'ok' ? stage.row.primary : null
-  if (primary === null) return <>{fallback}</>
-  return <RowControl control={primary} busy={busy} run={run} />
+  if (primary === null || !isInlineControl(primary)) return <>{fallback}</>
+  return <RowControl control={primary} device={device} pending={pending} write={write} />
 }

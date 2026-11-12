@@ -8,6 +8,7 @@ import { cn } from '../../lib/cn.js'
 import { formatNumeric } from '../../lib/format-numeric.js'
 import { useUnitPreferences } from '../../contexts/unit-preferences.js'
 import { resolveSensorDisplay } from '../../lib/resolve-sensor-display.js'
+import type { UnitPreferences } from '../../lib/unit-preferences.js'
 import {
   formatControlDateTime,
   type ControlDateTimeFormat,
@@ -205,6 +206,51 @@ export function TextControl({ value, busy, onCommit }: TextControlProps): ReactN
   )
 }
 
+// ── Numeric display ───────────────────────────────────────────────────────────
+
+export interface NumericControlDisplayInput {
+  /** The control's quantity (`SourceInfo.quantity`); `undefined` = a bare number. */
+  readonly quantity: ReadingQuantity | undefined
+  readonly display: DeviceDisplayOverride | undefined
+  readonly unitPreferences: UnitPreferences
+}
+
+/** How a numeric control is shown: the stored base value converted to the display unit and back. */
+export interface NumericControlDisplay {
+  readonly toShown: (base: number) => number
+  readonly toBase: (shown: number) => number
+  readonly unit: string | undefined
+  readonly precision: number | undefined
+}
+
+/**
+ * The display of a numeric control: the same resolution a reading uses, so a °F
+ * operator sees and types °F while the device is sent its base unit. Shared by the
+ * control panel and the model-drawn row.
+ */
+export function numericControlDisplay(input: NumericControlDisplayInput): NumericControlDisplay {
+  const resolved =
+    input.quantity === undefined
+      ? undefined
+      : resolveSensorDisplay({
+          quantity: input.quantity,
+          display: input.display,
+          capName: 'control',
+          unitPreferences: input.unitPreferences,
+        })
+  return {
+    toShown: resolved?.toDisplayValue ?? ((raw: number): number => raw),
+    toBase: resolved?.fromDisplayValue ?? ((shown: number): number => shown),
+    unit: resolved !== undefined && resolved.unit.length > 0 ? resolved.unit : undefined,
+    precision: resolved?.precision,
+  }
+}
+
+/** A device's chosen quantity as a numeric control reads it; `undefined` for none. */
+export function controlQuantityOf(chosen: unknown): ReadingQuantity | undefined {
+  return isReadingQuantity(chosen) && chosen !== 'device' && chosen !== 'none' ? chosen : undefined
+}
+
 // ── ControlPanel ──────────────────────────────────────────────────────────────
 
 /** Callback type accepted by the `control` cap's `setValue` method (device-id
@@ -253,30 +299,19 @@ function ControlWidget({
   switch (kind) {
     case 'numeric': {
       const numericValue = typeof slice.value === 'number' ? slice.value : Number(slice.value)
-      const resolved =
-        quantity === undefined
-          ? undefined
-          : resolveSensorDisplay({
-              quantity,
-              display,
-              capName: 'control',
-              unitPreferences,
-            })
-      const toShown = resolved?.toDisplayValue ?? ((raw: number): number => raw)
-      const toBase = resolved?.fromDisplayValue ?? ((shown: number): number => shown)
-      const unit = resolved !== undefined && resolved.unit.length > 0 ? resolved.unit : undefined
+      const shown = numericControlDisplay({ quantity, display, unitPreferences })
       return (
         <NumericControl
-          value={toShown(numericValue)}
+          value={shown.toShown(numericValue)}
           busy={busy}
           onCommit={(v) => {
-            setValueFn({ control: { kind: 'numeric', value: toBase(v) } })
+            setValueFn({ control: { kind: 'numeric', value: shown.toBase(v) } })
           }}
-          unit={unit}
-          min={slice.min === undefined ? undefined : toShown(slice.min)}
-          max={slice.max === undefined ? undefined : toShown(slice.max)}
-          step={slice.step === undefined ? undefined : toShown(slice.step)}
-          precision={resolved?.precision}
+          unit={shown.unit}
+          min={slice.min === undefined ? undefined : shown.toShown(slice.min)}
+          max={slice.max === undefined ? undefined : shown.toShown(slice.max)}
+          step={slice.step === undefined ? undefined : shown.toShown(slice.step)}
+          precision={shown.precision}
         />
       )
     }
@@ -415,9 +450,7 @@ export function ControlPanel({
   if (display === undefined) return null
 
   const busy = !available
-  const chosen = info?.sourceInfo?.quantity
-  const quantity =
-    isReadingQuantity(chosen) && chosen !== 'device' && chosen !== 'none' ? chosen : undefined
+  const quantity = controlQuantityOf(info?.sourceInfo?.quantity)
 
   const setValueFn: SetValueFn = (input) => {
     if (!busy && cap) {

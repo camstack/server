@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A dialog that contains a search field focuses it when it opens.
 - Device list rows show a sensor reading published only on numeric-sensor, including whole numbers.
 - A simple sensor's card shows its reading once, big, over a scene that says what it means (heat, cold, flowing power wire, open-contact ring, drops); sensor and control rows draw the same model, with number and text controls editable inline
+- Sensor and Control rows follow your display units (°F, kW, precision) and a typed value is sent in the device's own unit; a device list reads its row values in one request
 
 ## [1.2.431] - 2026-11-12
 

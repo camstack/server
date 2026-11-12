@@ -5,17 +5,10 @@ import {
   textMeasurement,
 } from '@camstack/types'
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
-
-const rowModels = vi.hoisted(() => ({ value: { status: 'pending' } as Record<string, unknown> }))
-vi.mock('../../../generated/system-hooks', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../../generated/system-hooks')>()),
-  useHeroLayoutGetRowModels: () => ({ ...rowModels.value, refetch: () => undefined }),
-}))
-vi.mock('../use-hero-live-refresh', () => ({ useHeroLiveRefresh: () => undefined }))
-
-import { measurementVisual } from '../MeasurementScene'
-import { ModelRowReading } from '../../device-item/model-row-value'
+import { describe, expect, it } from 'vitest'
+import { UnitPreferencesProvider } from '../../../contexts/unit-preferences'
+import { measurementText } from '../measurement-display'
+import { MeasurementScene, measurementVisual } from '../MeasurementScene'
 
 describe('the scene a measurement moves with', () => {
   it('heat when hot, flakes when cold, still when mild', () => {
@@ -44,27 +37,47 @@ describe('the scene a measurement moves with', () => {
   })
 })
 
-describe('a Sensor row reads the row model', () => {
-  const fallback = <span>atom</span>
-
-  it('draws nothing while the row model is unanswered', () => {
-    rowModels.value = { status: 'pending' }
-    const { container } = render(<ModelRowReading deviceId={1} fallback={fallback} />)
-    expect(container.textContent).toBe('')
+describe('the card draws the reading as the operator displays it', () => {
+  it('a Fahrenheit preference shows °F in the scene', () => {
+    render(
+      <UnitPreferencesProvider value={{ system: 'metric', temperature: 'fahrenheit' }}>
+        <MeasurementScene measurement={temperatureMeasurement(48, null)} lang="en" deviceId={1} />
+      </UnitPreferencesProvider>,
+    )
+    expect(
+      Number.parseFloat(screen.getByTestId('measurement-value').textContent ?? ''),
+    ).toBeCloseTo(118.4, 0)
+    expect(screen.getByText('°F')).toBeTruthy()
   })
 
-  it('draws the measurement value and its unit', () => {
-    rowModels.value = {
-      status: 'success',
-      data: [{ measurement: temperatureMeasurement(48, null), primary: null }],
-    }
-    render(<ModelRowReading deviceId={1} fallback={fallback} />)
-    expect(screen.getByTestId('row-measurement').textContent).toBe('48°C')
-  })
-
-  it('draws the fallback when the model has no row or no measurement', () => {
-    rowModels.value = { status: 'success', data: [] }
-    render(<ModelRowReading deviceId={1} fallback={fallback} />)
-    expect(screen.getByText('atom')).toBeTruthy()
+  it('a device kW override and a role default apply; a contact keeps its words', () => {
+    const base = {
+      lang: 'en',
+      unitPreferences: { system: 'metric', temperature: 'celsius' },
+    } as const
+    expect(
+      measurementText({
+        ...base,
+        measurement: powerMeasurement(1221, null),
+        subject: { role: null, display: { unit: 'kW' } },
+        roleDefaults: {},
+      }).unit,
+    ).toBe('kW')
+    expect(
+      measurementText({
+        ...base,
+        measurement: powerMeasurement(1221, null),
+        subject: { role: 'power-sensor' },
+        roleDefaults: { 'power-sensor': { unit: 'kW' } },
+      }).unit,
+    ).toBe('kW')
+    expect(
+      measurementText({
+        ...base,
+        measurement: contactMeasurement(true, null),
+        subject: null,
+        roleDefaults: {},
+      }),
+    ).toEqual({ value: 'Open', unit: null })
   })
 })

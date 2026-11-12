@@ -22,6 +22,8 @@ interface Spec {
   readonly type: 'sensor' | 'control'
   readonly role: string
   readonly quantity?: string
+  /** The operator's display override (`DeviceInfo.display`). */
+  readonly display?: Readonly<Record<string, unknown>>
   readonly slices: Readonly<Record<string, unknown>>
 }
 
@@ -42,6 +44,7 @@ const SPECS: Readonly<Record<number, Spec>> = {
     name: 'Generator minimum power',
     type: 'sensor',
     role: 'power-sensor',
+    display: { unit: 'kW' },
     slices: { 'power-meter': { power: 1221, lastFetchedAt: NOW } },
   },
   1504: {
@@ -115,6 +118,7 @@ function deviceOf(id: number, spec: Spec): Record<string, unknown> {
     config: {},
     secretConfigPaths: [],
     metadata: {},
+    ...(spec.display === undefined ? {} : { display: spec.display }),
   }
 }
 

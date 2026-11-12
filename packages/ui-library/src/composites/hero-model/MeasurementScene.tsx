@@ -7,12 +7,14 @@
  * sits under the value when the history has the series. Under
  * `prefers-reduced-motion` the backdrop stands still (HERO_SCENE_CSS).
  */
-import type { HeroMeasurement } from '@camstack/types'
+import type { HeroMeasurement, HeroMeasurementReading } from '@camstack/types'
 import { ChevronRight } from 'lucide-react'
 import { type ReactNode, useMemo } from 'react'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
+import { useUnitPreferences } from '../../contexts/unit-preferences'
 import { cn } from '../../lib/cn'
 import { formatLastSeen, MIN_PLAUSIBLE_TIMESTAMP_MS } from '../../lib/format-last-seen'
+import { preferenceForQuantity } from '../../lib/unit-preferences'
 import { Button } from '../../primitives/button'
 import { Sparkline, type SparklinePoint } from '../charts/Sparkline'
 import { useHistoryReads } from '../device-history/use-device-history'
@@ -22,7 +24,9 @@ import { SceneBackdrop } from '../hero-scene/backdrops'
 import { HERO_SCENE_CSS } from '../hero-scene/hero-scene-css'
 import { TONE_CLASS } from '../hero-scene/scene-map'
 import type { SceneSpeed, SceneVisual } from '../hero-scene/types'
+import { useCardDisplaySubject } from './card-display-subject'
 import { type HeroLang, pickText } from './hero-model-view'
+import { useMeasurementText } from './measurement-display'
 
 const MINUTE_MS = 60_000
 const HOUR_MS = 60 * MINUTE_MS
@@ -84,15 +88,13 @@ export function measurementSinceText(m: HeroMeasurement, t: UiTextFn): string | 
   return m.sinceKind === 'changed' ? heldForText(m.since, t) : formatLastSeen(m.since, t)
 }
 
-function StateCorner({
-  measurement,
-  lang,
-  onOpenHistory,
-}: {
+interface StateCornerProps {
   readonly measurement: HeroMeasurement
   readonly lang: HeroLang
   readonly onOpenHistory: (() => void) | undefined
-}): ReactNode {
+}
+
+function StateCorner({ measurement, lang, onOpenHistory }: StateCornerProps): ReactNode {
   const t = useUiText()
   const since = measurementSinceText(measurement, t)
   const text = (
@@ -125,18 +127,17 @@ function StateCorner({
   )
 }
 
-/** The last day of the measurement's series; nothing until the read answers with a line. */
-function Trend({
-  deviceId,
-  historyKey,
-  label,
-  unit,
-}: {
+interface TrendProps {
   readonly deviceId: number
   readonly historyKey: string
   readonly label: string
-  readonly unit: string | null
-}): ReactNode {
+  /** The series is in this reading's base unit; the tooltip converts it like the value. */
+  readonly reading: HeroMeasurementReading
+}
+
+/** The last day of the measurement's series; nothing until the read answers with a line. */
+function Trend({ deviceId, historyKey, label, reading }: TrendProps): ReactNode {
+  const unitPreferences = useUnitPreferences()
   const window = useMemo(() => {
     const to = Math.ceil(Date.now() / MINUTE_MS) * MINUTE_MS
     return { from: to - HISTORY_WINDOW_MS['24h'], to }
@@ -157,7 +158,8 @@ function Trend({
         points={points}
         ariaLabel={label}
         token="primary"
-        unit={unit}
+        quantity={reading.quantity}
+        displayPreference={preferenceForQuantity(unitPreferences, reading.quantity)}
         zeroBased={false}
         height={36}
         widthClassName="w-48 @lg:w-64"
@@ -166,7 +168,11 @@ function Trend({
   )
 }
 
-function QuantityIcon({ icon }: { readonly icon: string }): ReactNode {
+interface QuantityIconProps {
+  readonly icon: string
+}
+
+function QuantityIcon({ icon }: QuantityIconProps): ReactNode {
   const resolve = useDisplayIconResolver()
   const Glyph = resolve(icon)
   return Glyph === undefined ? null : <Glyph className="size-10 shrink-0" aria-hidden />
@@ -191,7 +197,8 @@ export function MeasurementScene({
   onOpenHistory,
 }: MeasurementSceneProps): ReactNode {
   const visual = measurementVisual(measurement)
-  const value = pickText(measurement.value, lang)
+  const text = useMeasurementText(measurement, lang, useCardDisplaySubject())
+  const value = text.value
   return (
     <div
       data-testid="measurement-scene"
@@ -218,19 +225,19 @@ export function MeasurementScene({
             >
               {value}
             </span>
-            {measurement.unit === null ? null : (
-              <span className="text-xl font-semibold text-foreground-muted">
-                {measurement.unit}
-              </span>
+            {text.unit === null ? null : (
+              <span className="text-xl font-semibold text-foreground-muted">{text.unit}</span>
             )}
           </div>
         </div>
-        {measurement.historyKey === null || onOpenHistory === undefined ? null : (
+        {measurement.historyKey === null ||
+        measurement.reading === null ||
+        onOpenHistory === undefined ? null : (
           <Trend
             deviceId={deviceId}
             historyKey={measurement.historyKey}
             label={value}
-            unit={measurement.unit}
+            reading={measurement.reading}
           />
         )}
       </div>

@@ -88,8 +88,10 @@ export {
   HERO_MEASUREMENT_BANDS,
   HERO_MEASUREMENT_QUANTITIES,
   HERO_MEASUREMENT_SINCE_KINDS,
+  HeroMeasurementReadingSchema,
   HeroMeasurementSchema,
   contactMeasurement,
+  measurementFitsRole,
   humidityMeasurement,
   powerMeasurement,
   temperatureBand,
@@ -98,6 +100,7 @@ export {
   type HeroMeasurement,
   type HeroMeasurementBand,
   type HeroMeasurementQuantity,
+  type HeroMeasurementReading,
   type HeroMeasurementSinceKind,
 } from './hero-measurement.js'
 export { heroText, type HeroText } from './hero-text.js'
