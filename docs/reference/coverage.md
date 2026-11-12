@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**244 units · 8489 source files · 237 units claimed by at least one document (8458 files).**
+**244 units · 8490 source files · 237 units claimed by at least one document (8459 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -189,6 +189,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/ui-library/src/hotkeys` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/ui-library/src/icons` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/addon-admin-ui/src/i18n` | 3 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-11 |
+| `packages/addon-admin-ui/src/test-setup` | 3 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-11 |
 | `packages/addon-export-alexa/src/snapshots` | 3 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0773-alexa-snapshots-are-signed-ten-minute-token-checked-urls-behind-an-integration-switch.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +3 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-pipeline-orchestrator/src/migrations` | 3 | — | `decisions/adr-1013-one-instance-model.md`, 1 ADR | — |
 | `packages/addon-pipeline/src/durable` | 3 | `storage` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0185-a-forked-addons-settings-row-holds-config-not-a-workload.md`, `design/2026-08-29-recorder-heap-what-is-retained.md` _(covers)_, +1 more | 2026-08-30 |
@@ -206,7 +207,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/ui-library/src/i18n` | 3 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/addon-admin-ui/src/contexts` | 2 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +3 more | 2026-11-11 |
 | `packages/addon-admin-ui/src/server` | 2 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-11 |
-| `packages/addon-admin-ui/src/test-setup` | 2 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-11 |
 | `packages/addon-import-alexa/src/devices` | 2 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/addon-model-studio/src/bundle` | 2 | `cloud-training`, `tooling` | `architecture/cloud-training.md`, `decisions/adr-0806-a-model-that-arrives-as-files-is-imported-as-one-verified-bundle-over-peer-bytes.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-10-14 |
 | `packages/addon-pipeline-orchestrator/src/auto-tune` | 2 | `pipeline-orchestration` | `architecture/inference-devices.md`, `decisions/adr-0745-best-settings-picks-one-detector-family-from-static-hardware-and-applies-only-the-confirmed-plan.md`, `decisions/adr-0755-shares-and-auto-tune-are-sized-by-capacity-never-by-load.md`, +2 more, 1 ADR | 2026-10-23 |

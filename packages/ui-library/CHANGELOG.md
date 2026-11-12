@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The recording band sensors, the Customize source column and every schema device field pick through the device search: compatible devices only, the host's room suggested, a failed search says so
+- The recording band sensors, the Customize source column and every schema device field pick through the device search: compatible devices only, the host's room suggested, a failed search says so. A recording band now offers only sensors carrying a cap the recorder listens to (contact, motion…): a bare sensor-typed device without one is no longer listed, since it could never start a recording
+
 ## [1.2.426] - 2026-11-11
 
 ### Changed
@@ -35,8 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device card: one shared card (shell, parts, scenes) draws plugs and climate devices; the old switch and thermostat heroes are removed and the list tile is now DeviceSummaryCard
 - Climate card: a heat/cool band is set with two handles on the dial, a radiator valve shows its opening (also when the device only reports a valve), side swing has its own toggle, unknown reachability is no longer shown as online, and a failed command says why on the card
 - Every climate card role has its ambient scene: a warm or cool wash, the floor serpentine, the radiator and the heater drawn at the bottom, slower motion in standby
-- The recording band sensors, the Customize source column and every schema device field pick through the device search: compatible devices only, the host's room suggested, a failed search says so
-- The recording band sensors, the Customize source column and every schema device field pick through the device search: compatible devices only, the host's room suggested, a failed search says so. A recording band now offers only sensors carrying a cap the recorder listens to (contact, motion…): a bare sensor-typed device without one is no longer listed, since it could never start a recording
 
 ## [1.2.423] - 2026-11-11
 
