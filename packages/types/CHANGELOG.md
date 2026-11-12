@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- IR transmitters can learn a code and replay device-native (Tuya) codes: ir-transmitter gains learn, send takes a native code, and a remote command can store one
+
 ## [1.2.554] - 2026-11-12
 
 ### Changed
 
 - A notification rule can group the deliveries that arrive within a few seconds.
-- IR transmitters can learn a code and replay device-native (Tuya) codes: ir-transmitter gains learn, send takes a native code, and a remote command can store one
 
 ## [1.2.553] - 2026-11-12
 
@@ -146,10 +149,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - holdVarSlots: the one helper that sets aside the {{ vars.x }} slots of a step text
-
-### Added
-
-### Changed
 
 ## [1.2.538] - 2026-11-10
 
