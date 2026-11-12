@@ -4747,6 +4747,33 @@
           "type": "DeviceCardView",
           "optional": true,
           "doc": "Opens on this view. The shot harness uses `remote` so the sheet is on screen."
+        },
+        {
+          "name": "frame",
+          "type": "DeviceCardFrame",
+          "optional": true,
+          "doc": "`card` (default): the card's own frame — border, surface, padding, max width and the top line. `bare`: only the scene and what hangs under i"
+        }
+      ]
+    },
+    {
+      "name": "DeviceCardFrameProvider",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/DeviceCard.tsx",
+      "summary": "Frames every device card below it — a host page that draws the frame itself.",
+      "props": [
+        {
+          "name": "frame",
+          "type": "DeviceCardFrame",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": ""
         }
       ]
     },
@@ -19565,6 +19592,12 @@
           "type": "React.ReactNode",
           "optional": true,
           "doc": "Icon actions before the close button."
+        },
+        {
+          "name": "meta",
+          "type": "React.ReactNode",
+          "optional": true,
+          "doc": "A line of chips beside the title (a device's integration and status); wraps under it when narrow."
         },
         {
           "name": "onClose",

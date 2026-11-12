@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   embedCanActuate,
+  embedMainClass,
   parseEmbedDeviceId,
   parseEmbedHost,
   parseEmbedLocale,
@@ -41,5 +42,15 @@ describe('EmbedDevicePage host and permission', () => {
   it('without an answer only an admin may act', () => {
     expect(embedCanActuate(null, true)).toBe(true)
     expect(embedCanActuate(null, false)).toBe(false)
+  })
+})
+
+describe('EmbedDevicePage page frame', () => {
+  it('paints its own canvas for a browser, none for the viewer sheet', () => {
+    expect(embedMainClass('dark', false)).toContain('bg-background')
+    const viewer = embedMainClass('dark', true)
+    expect(viewer).toContain('bg-transparent')
+    expect(viewer).not.toContain('bg-background')
+    expect(viewer.startsWith('dark ')).toBe(true)
   })
 })

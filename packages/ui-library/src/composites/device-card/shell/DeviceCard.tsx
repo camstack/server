@@ -1,4 +1,11 @@
-import { type ReactElement, type ReactNode, useMemo, useState } from 'react'
+import {
+  createContext,
+  type ReactElement,
+  type ReactNode,
+  useContext,
+  useMemo,
+  useState,
+} from 'react'
 import { cn } from '../../../lib/cn'
 import { useUiText } from '../../../contexts/ui-text'
 import { DEVICE_CARD_CSS } from '../card-css'
@@ -27,9 +34,35 @@ export interface DeviceCardProps {
   readonly remoteExtra?: ReactNode
   /** Opens on this view. The shot harness uses `remote` so the sheet is on screen. */
   readonly initialView?: DeviceCardView
+  /**
+   * `card` (default): the card's own frame — border, surface, padding, max width
+   * and the top line. `bare`: only the scene and what hangs under it, full width
+   * on the host's background; the host draws integration and reachability in
+   * its own header (the viewer's device sheet). Defaults to the nearest
+   * {@link DeviceCardFrameProvider}, so a host frames every card it mounts.
+   */
+  readonly frame?: DeviceCardFrame
 }
 
 export type DeviceCardView = 'scene' | 'history' | 'remote'
+
+/** How a card is framed: its own card, or bare inside a host that frames it. */
+export type DeviceCardFrame = 'card' | 'bare'
+
+const DeviceCardFrameContext = createContext<DeviceCardFrame>('card')
+
+export interface DeviceCardFrameProviderProps {
+  readonly frame: DeviceCardFrame
+  readonly children: ReactNode
+}
+
+/** Frames every device card below it — a host page that draws the frame itself. */
+export function DeviceCardFrameProvider({
+  frame,
+  children,
+}: DeviceCardFrameProviderProps): ReactElement {
+  return <DeviceCardFrameContext.Provider value={frame}>{children}</DeviceCardFrameContext.Provider>
+}
 
 /** Integration on the left, reachability on the right. */
 export function CardTop({ common }: { readonly common: CardCommon }): ReactElement {
@@ -96,7 +129,10 @@ export function DeviceCard({
   showName = true,
   remoteExtra = null,
   initialView = 'scene',
+  frame,
 }: DeviceCardProps): ReactElement {
+  const hostFrame = useContext(DeviceCardFrameContext)
+  const bare = (frame ?? hostFrame) === 'bare'
   const gating = useGating(common)
   const [view, setView] = useState<DeviceCardView>(initialView)
   const history = common.history
@@ -115,15 +151,17 @@ export function DeviceCard({
         data-card-kind={kind}
         data-orientation={orientation}
         data-view={view}
+        data-frame={bare ? 'bare' : 'card'}
         className={cn(
-          'dc-card flex w-full flex-col gap-2.5 rounded-3xl border border-border bg-surface p-3.5 text-foreground',
-          orientation === 'vertical' ? 'max-w-85' : 'max-w-180',
+          'dc-card flex w-full flex-col gap-2.5 text-foreground',
+          !bare && 'rounded-3xl border border-border bg-surface p-3.5',
+          !bare && (orientation === 'vertical' ? 'max-w-85' : 'max-w-180'),
           gating.blocked && 'dc-blocked',
           className,
         )}
       >
         <style>{DEVICE_CARD_CSS}</style>
-        <CardTop common={common} />
+        {bare ? null : <CardTop common={common} />}
         {showName ? (
           <h3 className="text-xl font-semibold leading-tight" data-testid="dc-name">
             {common.name}

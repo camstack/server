@@ -10,7 +10,9 @@
  *
  * Query: `?theme=light|dark` (default: the admin's theme), `?lang=en|it`
  * (default: the admin's language) and `?host=viewer` (the viewer's device
- * screen, whose header already names the device: the card drops its name).
+ * sheet, whose header already names the device and carries its integration
+ * and reachability: the card drops its name and its own frame — `bare` — and
+ * the page is transparent, so the sheet's background shows through).
  *
  * Whether the session may act on THIS device is `auth.deviceAccess`: the hub's
  * own scope matcher, over the scopes it enforces, asked about this device id
@@ -19,7 +21,14 @@
  * the command itself (`protectedProcedure`). A hub without that route answers
  * an error, and the card falls back to the admin flag.
  */
-import { ErrorBox, heroLang, Skeleton, useSystem, useThemeMode } from '@camstack/ui-library'
+import {
+  DeviceCardFrameProvider,
+  ErrorBox,
+  heroLang,
+  Skeleton,
+  useSystem,
+  useThemeMode,
+} from '@camstack/ui-library'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -47,6 +56,16 @@ export function parseEmbedLocale(raw: string | null): DeviceModuleLocale | null 
 /** `?host=viewer`: the card is shown under the viewer's own device header. */
 export function parseEmbedHost(raw: string | null): 'viewer' | null {
   return raw === 'viewer' ? raw : null
+}
+
+/** `<html>` class that lets the viewer's sheet show through the page (`index.css`). */
+export const EMBED_TRANSPARENT_CLASS = 'embed-transparent'
+
+/** The page's own classes: the viewer host gets no background and no gutter of its own. */
+export function embedMainClass(theme: EmbedTheme, inViewer: boolean): string {
+  return inViewer
+    ? `${theme} min-h-screen bg-transparent text-foreground`
+    : `${theme} min-h-screen bg-background text-foreground`
 }
 
 /** `auth.deviceAccess`'s answer: what the caller may do on one device. */
@@ -85,6 +104,15 @@ export function EmbedDevicePage(): ReactNode {
   useEffect(() => {
     if (requestedTheme !== null) setMode(requestedTheme)
   }, [requestedTheme, setMode])
+  const inViewer = parseEmbedHost(search.get('host')) === 'viewer'
+  // The canvas is painted on <html> (`index.css`); the viewer's sheet is the
+  // background here, so the page drops it while it is hosted there.
+  useEffect(() => {
+    if (!inViewer) return
+    const root = document.documentElement
+    root.classList.add(EMBED_TRANSPARENT_CLASS)
+    return () => root.classList.remove(EMBED_TRANSPARENT_CLASS)
+  }, [inViewer])
   if (deviceId === null) {
     return (
       <div className="min-h-screen bg-background p-3">
@@ -93,14 +121,15 @@ export function EmbedDevicePage(): ReactNode {
     )
   }
   const theme = requestedTheme ?? resolvedMode
-  const inViewer = parseEmbedHost(search.get('host')) === 'viewer'
   // Unanswered is not "may not": wait for the grant rather than draw a card
   // without controls and then grow them. A failed read falls back to the
   // session's admin flag; the hub still refuses what the user may not do.
   if (access.status === 'pending') {
     return (
-      <main className={`${theme} min-h-screen bg-background p-3`}>
-        <Skeleton className="mx-auto h-72 w-full max-w-2xl" />
+      <main
+        className={inViewer ? embedMainClass(theme, true) : `${embedMainClass(theme, false)} p-3`}
+      >
+        <Skeleton className={inViewer ? 'h-72 w-full' : 'mx-auto h-72 w-full max-w-2xl'} />
       </main>
     )
   }
@@ -109,18 +138,20 @@ export function EmbedDevicePage(): ReactNode {
     user?.isAdmin === true,
   )
   return (
-    <main className={`${theme} min-h-screen bg-background text-foreground`}>
-      <div className="mx-auto w-full max-w-2xl">
-        <DeviceDetailModule
-          deviceId={deviceId}
-          trpcClient={system.trpcClient}
-          queryClient={queryClient}
-          theme={theme}
-          locale={parseEmbedLocale(search.get('lang')) ?? heroLang(i18n.language)}
-          canActuate={canActuate}
-          showName={!inViewer}
-          onOpenDevice={(id) => navigate(`/embed/device/${String(id)}?${search.toString()}`)}
-        />
+    <main className={embedMainClass(theme, inViewer)}>
+      <div className={inViewer ? 'w-full' : 'mx-auto w-full max-w-2xl'}>
+        <DeviceCardFrameProvider frame={inViewer ? 'bare' : 'card'}>
+          <DeviceDetailModule
+            deviceId={deviceId}
+            trpcClient={system.trpcClient}
+            queryClient={queryClient}
+            theme={theme}
+            locale={parseEmbedLocale(search.get('lang')) ?? heroLang(i18n.language)}
+            canActuate={canActuate}
+            showName={!inViewer}
+            onOpenDevice={(id) => navigate(`/embed/device/${String(id)}?${search.toString()}`)}
+          />
+        </DeviceCardFrameProvider>
       </div>
     </main>
   )

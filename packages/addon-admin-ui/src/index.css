@@ -47,6 +47,12 @@ html {
   background-color: var(--color-background);
 }
 
+/* The device card hosted in the viewer's sheet (`EmbedDevicePage`, `?host=viewer`):
+   the sheet is the background, so the page paints none of its own. */
+html.embed-transparent {
+  background-color: transparent;
+}
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
