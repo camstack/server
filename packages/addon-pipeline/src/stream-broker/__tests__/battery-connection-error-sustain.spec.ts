@@ -54,6 +54,7 @@ interface Harness {
   readonly seen: Seen[]
   readonly sweep: (id: string, broker: StreamBroker) => void
   readonly awake: (deviceId: number) => void
+  readonly sleep: (deviceId: number) => void
 }
 
 function harness(): Harness {
@@ -82,16 +83,23 @@ function harness(): Harness {
     seen,
     sweep: (id, broker) => manager.runStreamHealthSweepForTest(id, broker),
     awake: (deviceId) => {
-      for (const h of handlers.filter((x) => x.category === 'battery.onStatusChanged')) {
-        h.fn({
-          id: 'battery',
-          timestamp: new Date(),
-          category: 'battery.onStatusChanged',
-          source: { type: 'test', id: 'test' },
-          data: { deviceId, status: { sleeping: false, lastContactAt: Date.now() } },
-        })
-      }
+      postBattery(deviceId, false)
     },
+    sleep: (deviceId) => {
+      postBattery(deviceId, true)
+    },
+  }
+
+  function postBattery(deviceId: number, sleeping: boolean): void {
+    for (const h of handlers.filter((x) => x.category === 'battery.onStatusChanged')) {
+      h.fn({
+        id: 'battery',
+        timestamp: new Date(),
+        category: 'battery.onStatusChanged',
+        source: { type: 'test', id: 'test' },
+        data: { deviceId, status: { sleeping, lastContactAt: Date.now() } },
+      })
+    }
   }
 }
 
@@ -242,5 +250,35 @@ describe('battery connection-error is a sustained whole-camera outage', () => {
         camStreamId: 'rtsp:sub',
       }),
     ])
+  })
+
+  it('a wake error then sleep during the hold notifies nothing at 120 s or after', async () => {
+    h.awake(640)
+    advance(WAKE_DEMAND_BOUND_MS + 1)
+    const main = await broker('640/native:main', 'rfc4571')
+    vi.spyOn(main, 'getLastPacketAt').mockReturnValue(0)
+    h.sweep('640/native:main', main)
+    expect(h.seen).toEqual([])
+
+    vi.spyOn(main, 'suspended', 'get').mockReturnValue(false)
+    h.sweep('640/native:main', main)
+    expect(h.seen).toEqual([])
+    expect(h.logger.info).toHaveBeenCalledWith(
+      expect.stringContaining('held — not an outage until it lasts the sustained window'),
+      expect.objectContaining({ tags: { deviceId: 640 } }),
+    )
+
+    h.sleep(640)
+    advance(STREAM_STALE_TIMEOUT_MS)
+    h.sweep('640/native:main', main)
+    expect(h.seen).toEqual([])
+
+    advance(STREAM_STALE_TIMEOUT_MS)
+    h.sweep('640/native:main', main)
+    expect(h.seen).toEqual([])
+    expect(h.logger.info).toHaveBeenCalledWith(
+      expect.stringContaining('went back to sleep'),
+      expect.objectContaining({ tags: { deviceId: 640 } }),
+    )
   })
 })

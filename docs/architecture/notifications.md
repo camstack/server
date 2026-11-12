@@ -2294,7 +2294,7 @@ plain wake never reach it, because the broker does not emit them. A `connection-
 is held in memory for the same 120 s window before it is emitted
 ([DNNN](../decisions/adr-DNNN-a-battery-connection-error-is-a-sustained-whole-camera-outage.md)):
 a recovery inside the window cancels it, and no online is sent for an offline that was
-never sent. A source failing while another source of the same camera delivers is not
+never sent. A hold whose camera has gone back to sleep is dropped instead of emitted. A source failing while another source of the same camera delivers is not
 the camera's outage. The system-event
 subject is `stream:<deviceId>`; a multi-stream event renders the unprofiled sentence.
 

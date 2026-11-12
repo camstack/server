@@ -9,7 +9,12 @@
  * it covers, and whether the offline event for it has been sent yet.
  */
 
-import type { StreamOutageReason } from './stream-health-policy.js'
+import type { BatteryPresence } from '@camstack/types'
+import {
+  STREAM_STALE_TIMEOUT_MS,
+  type StaleStreamVerdict,
+  type StreamOutageReason,
+} from './stream-health-policy.js'
 
 export interface DeviceOutage {
   readonly reason: StreamOutageReason
@@ -114,4 +119,42 @@ export class DeviceStreamOutages {
   clear(): void {
     this.byDevice.clear()
   }
+}
+
+/**
+ * What the sweep does with a `connection-error` that has not been announced.
+ *
+ * A delivering camera cancels it. Inside the sustained window it stays held.
+ * Once that window has elapsed, a battery re-judge of `suppressed` (asleep, or
+ * still inside the wake bound) drops the hold; any other verdict, including
+ * facts that were never read, is announced.
+ */
+export type ConnectionErrorHoldDecision =
+  | { readonly kind: 'cancel' }
+  | { readonly kind: 'hold' }
+  | { readonly kind: 'announce' }
+  | { readonly kind: 'drop-asleep'; readonly presence: BatteryPresence }
+
+export interface ConnectionErrorHoldInput {
+  readonly outage: DeviceOutage
+  readonly now: number
+  readonly delivering: boolean
+  /**
+   * Battery re-judge once the hold has lasted the sustained window.
+   * `null` before that, or when the sleep mirror was never read.
+   */
+  readonly promotionVerdict: StaleStreamVerdict | null
+}
+
+export function decideConnectionErrorHold(
+  input: ConnectionErrorHoldInput,
+): ConnectionErrorHoldDecision {
+  if (input.delivering) return { kind: 'cancel' }
+  if (input.outage.held && input.now - input.outage.since < STREAM_STALE_TIMEOUT_MS) {
+    return { kind: 'hold' }
+  }
+  if (input.outage.held && input.promotionVerdict?.kind === 'suppressed') {
+    return { kind: 'drop-asleep', presence: input.promotionVerdict.presence }
+  }
+  return { kind: 'announce' }
 }

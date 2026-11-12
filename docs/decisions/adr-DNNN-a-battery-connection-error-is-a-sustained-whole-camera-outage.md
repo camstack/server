@@ -39,7 +39,10 @@ packets is not the camera's outage; a source that never delivered a packet
 and is replaced by a working fallback is the same fact. Both are logged with
 `tags: { deviceId }` and emit nothing. A camera with no source delivering
 past the window is still notified once, with `connection-error`, and its
-recovery once, with `recovered`.
+recovery once, with `recovered`. A hold that has aged out is judged again
+with the same battery policy: asleep, or still inside the wake bound, drops
+the hold with no event. Age alone never announces a camera that went back
+to sleep.
 
 A live session that has already been quiet for the stale window is already
 sustained: that transition emits on the pass that judges it. The hold is the
@@ -58,5 +61,6 @@ accepting `connection-error`; it does not re-time it.
 ## Enforcement
 
 `battery-connection-error-sustain.spec.ts` (the three hub sequences, plus a
-sibling that already had packets) and the sustained arm of
-`battery-stream-health.spec.ts`. Nothing else checks the hold.
+sibling that already had packets, plus a wake that errors and then sleeps)
+and the sustained arm of `battery-stream-health.spec.ts`. Nothing else checks
+the hold.

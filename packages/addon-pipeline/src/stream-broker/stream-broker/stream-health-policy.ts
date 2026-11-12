@@ -61,8 +61,10 @@ export const WAKE_DEMAND_BOUND_MS = 45_000
  * that gap is the operator's promise: a reboot that comes back inside it
  * produces no notification. A battery `connection-error` that has not already
  * waited this long (a dial that just failed, a source that has never delivered)
- * is held for the same window before it is announced. One number, so the two
- * paths cannot drift.
+ * is held for the same window before it is announced. At the end of that
+ * window the hold is judged again: a camera that has gone back to sleep (or
+ * is still inside its wake bound) drops the hold instead of notifying. One
+ * number, so the two paths cannot drift.
  */
 export const STREAM_STALE_TIMEOUT_MS: number = 120_000
 

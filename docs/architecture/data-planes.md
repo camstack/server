@@ -162,8 +162,8 @@ an outage on a battery camera** ([D883](../decisions/adr-0883-a-sleeping-battery
 the health sweep reads the battery sleep mirror (`stream-health-policy.ts`), so a sleep
 emits no `stream.offline` (an info log says why) and a plain wake no `stream.online`; a
 demanded wake that delivered nothing (`wake-timeout`), a stream lost while awake
-(`connection-error`, held for the same 120 s and only when no other source of the
-camera is delivering) and silence past the battery window (`battery-unreachable`) are the
+(`connection-error`, held for the same 120 s, only when no other source of the
+camera is delivering, and dropped if the camera has gone back to sleep) and silence past the battery window (`battery-unreachable`) are the
 only battery outages. An outage is ONE event per device, not per profile
 (`device-stream-outages.ts`). The `sourceProvider` closure re-derives URLs per
 dial, which is what makes Reolink rfc4571 republishes work. An owning provider can

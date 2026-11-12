@@ -31,6 +31,7 @@ import type {
   PushAudioInfo,
   RtpSource,
   StreamFormat,
+  BatteryPresence,
   StreamHealthReason,
   StreamSource,
   SubscribeAudioChunksInput,
@@ -75,7 +76,11 @@ import {
   type BatterySleepFacts,
   type StaleStreamVerdict,
 } from './stream-health-policy.js'
-import { DeviceStreamOutages, type DeviceOutage } from './device-stream-outages.js'
+import {
+  decideConnectionErrorHold,
+  DeviceStreamOutages,
+  type DeviceOutage,
+} from './device-stream-outages.js'
 import { sentryEligible } from './sentry-eligibility.js'
 import { nextEnabledSignals } from './sentry-signal-selection.js'
 import { DEFAULT_WAKE_HOLD_MS } from './wake-hold.js'
@@ -5105,6 +5110,7 @@ export class StreamBrokerManager {
       // stream that was never idle then lands as `first-packet`.
       if (wasHealthy === undefined && !isHealthy && !broker.suspended) {
         this.streamHealthByBroker.set(brokerId, false)
+        this.silencedConnectionErrors.delete(brokerId)
         continue
       }
       // What a quiet, demanded-or-not stream means is decided BEFORE the flip
@@ -5185,6 +5191,7 @@ export class StreamBrokerManager {
     for (const [deviceId, context] of outageOpenedOn) this.announceDeviceOutage(deviceId, context)
     for (const [deviceId, context] of cameBackOn) this.settleDeviceOutage(deviceId, context)
     this.promoteHeldConnectionErrors(now)
+    this.pruneSilencedConnectionErrors()
     this.expireWakeOnlyOutages(now)
   }
 
@@ -5529,23 +5536,97 @@ export class StreamBrokerManager {
   /**
    * A battery `connection-error` is not announced yet.
    *
-   * Returns true when the caller must not emit: either some source of the
-   * camera is delivering (the failure is a source fact, logged and dropped)
-   * or the verdict has not lasted the sustained window. The hold is this
-   * in-memory record — the decision never waits on a read (D49).
+   * Returns true when the caller must not emit. The decision is
+   * {@link decideConnectionErrorHold}: a delivering camera cancels it, the
+   * sustained window holds it, and a hold that has aged out is announced only
+   * when the battery facts still say the camera is awake and down. Asleep, or
+   * still inside the wake bound, drops the hold. The facts are the in-memory
+   * mirror — the decision never waits on a read (D49).
    */
   private holdConnectionError(deviceId: number, outage: DeviceOutage): boolean {
     const now = Date.now()
     const delivering = this.deliveringCameraSource(deviceId, now)
-    if (delivering !== null) {
+    const due = outage.held && now - outage.since >= STREAM_STALE_TIMEOUT_MS
+    const decision = decideConnectionErrorHold({
+      outage,
+      now,
+      delivering: delivering !== null,
+      promotionVerdict:
+        due && delivering === null ? this.heldConnectionErrorVerdict(deviceId, outage, now) : null,
+    })
+    if (decision.kind === 'cancel') {
+      if (delivering === null) {
+        this.logger.warn('connection-error hold cancel had no delivering source', {
+          tags: { deviceId },
+        })
+        return true
+      }
       this.cancelUnannouncedConnectionError(deviceId, outage, delivering)
       return true
     }
-    if (outage.held && now - outage.since < STREAM_STALE_TIMEOUT_MS) {
+    if (decision.kind === 'hold') {
       this.noteConnectionErrorHeld(deviceId, outage)
       return true
     }
+    if (decision.kind === 'drop-asleep') {
+      this.dropHeldConnectionError(deviceId, outage, decision.presence)
+      return true
+    }
     return false
+  }
+
+  /**
+   * The battery re-judge of a hold that has lasted the sustained window.
+   * `null` when this device was never read as a battery camera: unknown
+   * excludes nothing, so the caller announces.
+   */
+  private heldConnectionErrorVerdict(
+    deviceId: number,
+    outage: DeviceOutage,
+    now: number,
+  ): StaleStreamVerdict | null {
+    const probe = this.batteryProbe.get(deviceId)
+    if (probe?.state !== 'done' || probe.isBattery !== true || probe.facts === null) return null
+    return judgeStaleStream({
+      battery: { facts: probe.facts },
+      demanded: this.outageDemandHeldPastBound(deviceId, outage, now),
+      nowMs: now,
+    })
+  }
+
+  private outageDemandHeldPastBound(deviceId: number, outage: DeviceOutage, now: number): boolean {
+    for (const camStreamId of outage.camStreamIds) {
+      const brokerId = brokerIdFor(deviceId, camStreamId)
+      const broker = this.brokers.get(brokerId)
+      if (broker !== undefined && this.demandHeldPastBound(brokerId, broker, now)) return true
+    }
+    return false
+  }
+
+  /** The camera went back to sleep (or is still waking) before the hold was announced. */
+  private dropHeldConnectionError(
+    deviceId: number,
+    outage: DeviceOutage,
+    presence: BatteryPresence,
+  ): void {
+    const camStreamIds = [...outage.camStreamIds]
+    this.deviceOutages.close(deviceId)
+    for (const camStreamId of camStreamIds) {
+      const brokerId = brokerIdFor(deviceId, camStreamId)
+      this.streamOfflineReasonByBroker.delete(brokerId)
+      this.sleepSuppressedBrokers.add(brokerId)
+      this.silencedConnectionErrors.delete(brokerId)
+    }
+    this.logger.info(
+      presence === 'awake'
+        ? 'held battery connection-error dropped — wake window still open, judged again when it ends'
+        : 'held battery connection-error dropped — the camera went back to sleep',
+      {
+        tags: { deviceId },
+        meta: { camStreamIds, presence },
+      },
+    )
+    void this.writeCameraStreamsSlice(deviceId, this.snapshotProfileSlots(deviceId))
   }
 
   /** Held connection-errors are re-checked every sweep, including ones no broker re-opened. */
@@ -5596,7 +5677,7 @@ export class StreamBrokerManager {
       if (camStreamId === delivering.camStreamId) continue
       const brokerId = brokerIdFor(deviceId, camStreamId)
       this.streamOfflineReasonByBroker.delete(brokerId)
-      this.silencedConnectionErrors.add(brokerId)
+      this.silenceOrForgetConnectionError(brokerId)
     }
     this.deviceOutages.close(deviceId)
   }
@@ -5626,6 +5707,30 @@ export class StreamBrokerManager {
       sourceType: broker?.getActiveSourceType() ?? 'unknown',
       lastPacketAt: broker?.getLastPacketAt() ?? 0,
     }
+  }
+
+  /**
+   * A failed source is silenced so its next packet is not a second online.
+   * A source that was replaced (broker gone, or the session suspended) or that
+   * never delivered a packet has nothing to silence — the entry is cleared.
+   */
+  private silenceOrForgetConnectionError(brokerId: string): void {
+    if (this.connectionErrorSilenceStale(brokerId)) {
+      this.silencedConnectionErrors.delete(brokerId)
+      return
+    }
+    this.silencedConnectionErrors.add(brokerId)
+  }
+
+  private pruneSilencedConnectionErrors(): void {
+    for (const brokerId of [...this.silencedConnectionErrors]) {
+      if (this.connectionErrorSilenceStale(brokerId)) this.silencedConnectionErrors.delete(brokerId)
+    }
+  }
+
+  private connectionErrorSilenceStale(brokerId: string): boolean {
+    const broker = this.brokers.get(brokerId)
+    return broker === undefined || broker.suspended || broker.getLastPacketAt() === 0
   }
 
   private noteSilencedConnectionError(context: StreamHealthEmitContext): void {
@@ -5693,7 +5798,7 @@ export class StreamBrokerManager {
       if (camStreamId === delivering.camStreamId) continue
       const brokerId = brokerIdFor(deviceId, camStreamId)
       this.streamOfflineReasonByBroker.delete(brokerId)
-      this.silencedConnectionErrors.add(brokerId)
+      this.silenceOrForgetConnectionError(brokerId)
     }
     this.deviceOutages.close(deviceId)
     this.logger.info('stream outage over — device delivers again', {
