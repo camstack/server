@@ -1,7 +1,7 @@
 /**
  * D826: hub transporter is TLS-only — no clear TCP listener, peer transport telemetry.
  */
-import { createServer as createNetServer, connect as netConnect } from 'node:net'
+import { connect as netConnect } from 'node:net'
 import * as tls from 'node:tls'
 import { ServiceBroker } from 'moleculer'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -9,20 +9,15 @@ import { generateMeshCa, issueMeshLeafForNode } from '../mesh-ca.js'
 import { MeshCrl } from '../mesh-crl.js'
 import { TlsTcpTransporter } from '../tls-tcp-transporter.js'
 
-async function freePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const s = createNetServer()
-    s.once('error', reject)
-    s.listen(0, '127.0.0.1', () => {
-      const addr = s.address()
-      if (addr === null || typeof addr === 'string') {
-        s.close(() => reject(new Error('no port')))
-        return
-      }
-      const { port } = addr
-      s.close(() => resolve(port))
-    })
-  })
+/**
+ * Both listeners bind port 0 and the spec reads back what the OS gave them. A port
+ * pre-picked by "listen on 0, close, reuse the number" can be taken in the gap by
+ * any other socket on a loaded machine; the transporter's listen then fails and
+ * Moleculer retries the connect every 5 s, so `broker.start()` never resolves.
+ */
+function boundPort(port: number | null | undefined, what: string): number {
+  if (typeof port !== 'number' || port === 0) throw new Error(`${what} is not bound`)
+  return port
 }
 
 /** `true` when something accepts a TCP connection on `port`. */
@@ -52,11 +47,9 @@ async function startTlsOnlyHub(): Promise<{
   const ca = await generateMeshCa()
   const hubLeaf = await issueMeshLeafForNode(ca, 'hub')
   const agentLeaf = await issueMeshLeafForNode(ca, 'agent-a')
-  const legacyClearPort = await freePort()
-  const tlsPort = await freePort()
   const tx = new TlsTcpTransporter({
-    port: legacyClearPort,
-    tlsPort,
+    port: 0,
+    tlsPort: 0,
     hubTlsOnly: true,
     udpDiscovery: false,
     crl: new MeshCrl(),
@@ -71,7 +64,13 @@ async function startTlsOnlyHub(): Promise<{
   })
   brokers.push(broker)
   await broker.start()
-  return { tx, legacyClearPort, tlsPort, agentLeaf, caCertPem: ca.certPem }
+  return {
+    tx,
+    legacyClearPort: boundPort(tx.opts.port, 'legacy clear port'),
+    tlsPort: boundPort(tx.tlsListeningPort(), 'mesh TLS port'),
+    agentLeaf,
+    caCertPem: ca.certPem,
+  }
 }
 
 function dialTls(

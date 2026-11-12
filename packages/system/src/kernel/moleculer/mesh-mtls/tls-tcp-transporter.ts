@@ -563,6 +563,15 @@ export class TlsTcpTransporter extends TcpTransporterBase {
     return this.tlsServer !== null
   }
 
+  /**
+   * The port the mutual-TLS listener is bound to, or `null` before it listens.
+   * With `tlsPort: 0` the OS picks it — read it here rather than pre-picking one.
+   */
+  tlsListeningPort(): number | null {
+    const address = this.tlsServer?.address()
+    return address !== null && typeof address === 'object' ? address.port : null
+  }
+
   isClearTransportEnabled(): boolean {
     return !this.clearDisabled
   }
@@ -771,6 +780,8 @@ export class TlsTcpTransporter extends TcpTransporterBase {
         const address = server.address()
         const port = address !== null && typeof address === 'object' ? address.port : tlsPort
         this.logger.info(`Mesh TLS server is listening on port ${port}`)
+        // Like the clear reader with `port: 0`: advertise the port actually bound.
+        this.opts.tlsPort = port
         // Kept only once it listens (a listen error leaves `tlsServer` null, see above).
         this.tlsServer = server
         resolve()
