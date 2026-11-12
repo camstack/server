@@ -108,11 +108,25 @@ describe('SensorHeroCard', () => {
       expect(screen.getByText('Living Room Temp')).toBeTruthy()
     })
 
-    it('renders awaiting state label while slice has not landed', () => {
+    it('draws the normal card with an empty value while no reading has landed', () => {
       mockSlice = undefined
-      mockDeviceData = makeDevice({ role: 'temperature-sensor' })
+      mockDeviceData = makeDevice({ role: 'temperature-sensor', name: 'Cellar' })
       render(<SensorHeroCard trpc={trpc} deviceId={1} features={[]} />)
-      expect(screen.getByText(/Awaiting state/)).toBeTruthy()
+      expect(screen.queryByText(/Awaiting state/)).toBeNull()
+      expect(screen.getByTestId('sensor-hero-value').textContent).toBe('—')
+      expect(screen.getByText('°C')).toBeTruthy()
+      expect(screen.getByText('Cellar')).toBeTruthy()
+      // A missing reading is absent, never 0 (D393).
+      expect(screen.queryByText('0')).toBeNull()
+    })
+
+    it('a binary sensor with no reading draws an empty value, not Clear', () => {
+      mockSlice = undefined
+      mockDeviceData = makeDevice({ role: 'motion-sensor' })
+      render(<SensorHeroCard trpc={trpc} deviceId={1} features={[]} />)
+      expect(screen.queryByText(/Awaiting state/)).toBeNull()
+      expect(screen.queryByText('Clear')).toBeNull()
+      expect(screen.getByTestId('sensor-hero-value').textContent).toBe('—')
     })
 
     it('draws a composed device from the snapshot when the live slice has not landed', () => {
@@ -304,11 +318,12 @@ describe('SensorHeroCard', () => {
       expect(screen.getByText('not-a-date')).toBeTruthy()
     })
 
-    it('renders awaiting state while the slice is at cold-start (empty string)', () => {
+    it('draws an empty value while the slice is at cold-start (empty string)', () => {
       mockSlice = { value: '', lastFetchedAt: 0 }
       mockDeviceData = makeDevice({ role: 'datetime-sensor' })
       render(<SensorHeroCard trpc={trpc} deviceId={1} features={[]} />)
-      expect(screen.getByText(/Awaiting state/)).toBeTruthy()
+      expect(screen.queryByText(/Awaiting state/)).toBeNull()
+      expect(screen.getByTestId('sensor-hero-value').textContent).toBe('—')
     })
 
     it("slice format 'date' renders the date-only hero (slice-driven, no time component)", () => {

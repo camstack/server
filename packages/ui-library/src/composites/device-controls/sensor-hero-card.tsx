@@ -140,6 +140,36 @@ interface SensorDeviceRow {
 
 // ── Inner display component (needs the device row resolved) ──────────────────
 
+/** The value a card shows for a reading that is absent — the card model's "—". */
+const NO_READING = '—'
+
+interface NoReadingHeroProps {
+  readonly device: SensorDeviceRow
+  /** The display unit the reading would carry; `''` when it has none. */
+  readonly unit: string
+}
+
+/**
+ * A sensor with no reading is the NORMAL card with an empty value — never a
+ * waiting placeholder, and never 0 (an absent measurement is null, D393).
+ */
+function NoReadingHero({ device, unit }: NoReadingHeroProps): ReactNode {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-surface p-4">
+      <div className="flex items-baseline gap-1">
+        <span
+          className="text-3xl font-semibold tabular-nums text-foreground-subtle"
+          data-testid="sensor-hero-value"
+        >
+          {NO_READING}
+        </span>
+        {unit && <span className="text-base text-foreground-subtle">{unit}</span>}
+      </div>
+      <DeviceName device={device} form="full" className="text-sm text-foreground-subtle" />
+    </div>
+  )
+}
+
 interface SensorHeroInnerProps {
   readonly trpc: DeviceControlProps['trpc']
   readonly device: SensorDeviceRow
@@ -230,38 +260,35 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
 
   const slice: unknown = resolution.kind === 'value' ? resolution.slice : undefined
 
+  // Unit + precision + render-time conversion via the shared resolver — same
+  // precedence as SensorValueAtom so the hero and the row never diverge
+  // (device override → role default → live slice → canonical unit). Storage
+  // stays in source units; precision applies AFTER conversion.
+  const deviceQuantity = device.sourceInfo?.quantity
+  const resolved =
+    descriptor?.kind === 'numeric'
+      ? resolveSensorDisplay({
+          display: device.display,
+          capName: device.role === 'numeric-sensor' ? 'numeric-sensor' : undefined,
+          roleDefault:
+            device.role != null
+              ? roleDefaultsData?.defaults?.[device.role]
+              : roleDefaultsData?.defaults?.['temperature-sensor'],
+          quantity: descriptor.quantity ?? 'device',
+          deviceQuantity: deviceQuantity === 'device' ? undefined : deviceQuantity,
+          unitPreferences,
+        })
+      : null
+
   if (descriptor === undefined || slice === undefined) {
-    // Nothing resolved yet — show a waiting state.
-    return (
-      <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-surface p-4 min-h-[96px]">
-        <DeviceName device={device} form="full" className="text-sm text-foreground-subtle" />
-        <span className="text-xs text-foreground-subtle italic">
-          {t('uiLibrary.sensorHeroCard.awaiting', 'Awaiting state…')}
-        </span>
-      </div>
-    )
+    // No reading resolved: the normal card with an empty value.
+    return <NoReadingHero device={device} unit={resolved?.unit ?? ''} />
   }
 
-  if (descriptor.kind === 'numeric') {
+  if (descriptor.kind === 'numeric' && resolved !== null) {
     if (!isNumericSliceValue(slice)) return null
     const rawValue = (slice as Record<string, unknown>)[descriptor.field]
     if (typeof rawValue !== 'number') return null
-    // Unit + precision + render-time conversion via the shared resolver — same
-    // precedence as SensorValueAtom so the hero and the row never diverge
-    // (device override → role default → live slice → canonical unit). Storage
-    // stays in source units; precision applies AFTER conversion.
-    const deviceQuantity = device.sourceInfo?.quantity
-    const resolved = resolveSensorDisplay({
-      display: device.display,
-      capName: device.role === 'numeric-sensor' ? 'numeric-sensor' : undefined,
-      roleDefault:
-        device.role != null
-          ? roleDefaultsData?.defaults?.[device.role]
-          : roleDefaultsData?.defaults?.['temperature-sensor'],
-      quantity: descriptor.quantity ?? 'device',
-      deviceQuantity: deviceQuantity === 'device' ? undefined : deviceQuantity,
-      unitPreferences,
-    })
     const rendered = resolved.format(rawValue)
     const unit = rendered.unit
     const formatted = rendered.text
@@ -324,16 +351,7 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
   if (descriptor.kind === 'datetime') {
     if (!isStringSliceValue(slice)) return null
     // Cold-start sentinel (empty string) — sensor hasn't pushed a value yet.
-    if (slice.value === '') {
-      return (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-surface p-4 min-h-[96px]">
-          <DeviceName device={device} form="full" className="text-sm text-foreground-subtle" />
-          <span className="text-xs text-foreground-subtle italic">
-            {t('uiLibrary.sensorHeroCard.awaiting', 'Awaiting state…')}
-          </span>
-        </div>
-      )
-    }
+    if (slice.value === '') return <NoReadingHero device={device} unit="" />
     // Prefer the per-sensor format the provider seeded into the slice (date /
     // time / datetime); fall back to the descriptor default for older adoptions.
     const format =
@@ -350,7 +368,7 @@ function SensorHeroInner({ trpc, device }: SensorHeroInnerProps): ReactNode {
 
   if (descriptor.kind === 'string') {
     if (!isStringSliceValue(slice)) return null
-    if (slice.value === '') return null
+    if (slice.value === '') return <NoReadingHero device={device} unit="" />
     return (
       <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-surface p-4">
         <span className="text-xl font-semibold text-foreground">{slice.value}</span>

@@ -4,7 +4,9 @@
  * `/devices/1502` a cold outside temperature, `/devices/1503` a power reading
  * (1221 W), `/devices/1504` an open window contact, `/devices/1505` a text state
  * ("Eco"), `/devices/1506` a humidity reading; 1507-1509 are control devices
- * (a number without bounds, a choice, a text). Load alone
+ * (a number without bounds, a choice, a text); 1510 is a temperature sensor
+ * with no reading yet; 1511 is a container drawn as its child 1512, a
+ * temperature sensor with no reading (the registry sensor hero). Load alone
  * (`--fixtures sensor-card`). Every hero model and row is built with the shared
  * pure builder, so the fixture draws exactly what the hub would serve.
  */
@@ -19,7 +21,8 @@ const ADDON = 'provider-homeassistant'
 
 interface Spec {
   readonly name: string
-  readonly type: 'sensor' | 'control'
+  readonly type: 'sensor' | 'control' | 'container'
+  readonly parentDeviceId?: number
   readonly role: string
   readonly quantity?: string
   /** The operator's display override (`DeviceInfo.display`). */
@@ -94,6 +97,27 @@ const SPECS: Readonly<Record<number, Spec>> = {
       control: { kind: 'text', value: 'Back on Monday', options: [], lastChangedAt: NOW },
     },
   },
+  1510: {
+    name: 'Cellar temperature',
+    type: 'sensor',
+    role: 'temperature-sensor',
+    // Adopted, never reported: the slice exists but holds no reading.
+    slices: { 'temperature-sensor': { lastFetchedAt: NOW - 2 * MINUTE } },
+  },
+  1511: {
+    name: 'Cellar climate',
+    type: 'container',
+    role: '',
+    slices: {},
+  },
+  1512: {
+    name: 'Cellar climate temperature',
+    type: 'sensor',
+    role: 'temperature-sensor',
+    parentDeviceId: 1511,
+    // The container's primary child, never reported (the registry hero).
+    slices: { 'temperature-sensor': { lastFetchedAt: NOW - 2 * MINUTE } },
+  },
 }
 
 const IDS = Object.keys(SPECS).map(Number)
@@ -109,7 +133,7 @@ function deviceOf(id: number, spec: Spec): Record<string, unknown> {
     name: spec.name,
     location: 'Utility room',
     disabled: false,
-    parentDeviceId: null,
+    parentDeviceId: spec.parentDeviceId ?? null,
     role: spec.role,
     online: true,
     probed: true,
@@ -124,7 +148,8 @@ function deviceOf(id: number, spec: Spec): Record<string, unknown> {
 
 function modelOf(id: number, canActuate: boolean): HeroModel | null {
   const spec = SPECS[id]
-  if (spec === undefined) return null
+  // A container has no model of its own: it draws as its primary child.
+  if (spec === undefined || spec.type === 'container') return null
   return buildHeroModel({
     device: {
       id,
@@ -173,7 +198,10 @@ export default defineFixtures({
         })),
       }
     },
-    'deviceManager.getChildren': [],
+    'deviceManager.getChildren': (i: { parentDeviceId?: number }) =>
+      IDS.filter((id) => SPECS[id]?.parentDeviceId === i.parentDeviceId).map((id) =>
+        deviceOf(id, SPECS[id] as Spec),
+      ),
     'deviceManager.listLocations': [],
     'deviceManager.getRoleDisplayDefaults': { defaults: {} },
     'deviceManager.getDeviceAggregate': (i: { deviceId?: number }) => ({
