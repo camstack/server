@@ -1,5 +1,5 @@
 ---
-id: DNNN
+id: D1048
 title: A battery connection error is a sustained whole-camera outage
 status: accepted
 date: 2026-11-12

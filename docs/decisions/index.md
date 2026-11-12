@@ -1027,7 +1027,7 @@ that rots.
 | D1045 | [An automation row fires on a device event, and recovers the latest one from the slice](adr-1045-an-automation-row-fires-on-a-device-event-and-recovers-the-latest-one-from-the-slice.md) | ✅ accepted | 2026-11-11 |
 | D1046 | [An addon route is addressed per instance, and the path without an instance is the default one](adr-1046-an-addon-route-is-addressed-per-instance-and-the-path-without-an-instance-is-the-default-one.md) | ✅ accepted | 2026-11-11 |
 | D1047 | [An OAuth link names its instance, and no instance means the default one](adr-1047-an-oauth-link-names-its-instance-and-no-instance-means-the-default-one.md) | ✅ accepted | 2026-11-11 |
-| DNNN | [A battery connection error is a sustained whole-camera outage](adr-DNNN-a-battery-connection-error-is-a-sustained-whole-camera-outage.md) | ✅ accepted | 2026-11-12 |
+| D1048 | [A battery connection error is a sustained whole-camera outage](adr-1048-a-battery-connection-error-is-a-sustained-whole-camera-outage.md) | ✅ accepted | 2026-11-12 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

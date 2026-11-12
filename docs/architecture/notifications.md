@@ -2292,7 +2292,7 @@ that: it opened at 25 and has nothing left to raise.
 `battery-unreachable` as outages and `recovered` as the end; a battery camera's sleep and
 plain wake never reach it, because the broker does not emit them. A `connection-error`
 is held in memory for the same 120 s window before it is emitted
-([DNNN](../decisions/adr-DNNN-a-battery-connection-error-is-a-sustained-whole-camera-outage.md)):
+([D1048](../decisions/adr-1048-a-battery-connection-error-is-a-sustained-whole-camera-outage.md)):
 a recovery inside the window cancels it, and no online is sent for an offline that was
 never sent. A hold whose camera has gone back to sleep is dropped instead of emitted. A source failing while another source of the same camera delivers is not
 the camera's outage. The system-event
