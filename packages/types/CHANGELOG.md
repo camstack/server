@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device model carries the one reading of a simple sensor (value, unit, band, level, state word, since, history), with its number and quantity so every surface converts it through the display preferences; a control device offers an unbounded number field and an editable text field
+
 ## [1.2.556] - 2026-11-12
 
 ### Changed
@@ -14,8 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Notification Center has a device-command event kind: a rule can notify when a command such as a power restart is given to a device, filtered by command, outcome and who asked.
 - Notification templates can say {{deviceLabel}} for the device name with its type; {{deviceName}} stays the bare name.
 - A sensor reading that repeats the device title also trails the compact row.
-- The device model now carries the one reading of a simple sensor (value, unit, band, level, state word, since, history series), and a control device offers a number field without bounds and an editable text field
-- A card measurement carries its number and quantity, so every surface converts it through the display preferences
 
 ## [1.2.555] - 2026-11-12
 

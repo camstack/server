@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Strings for the sensor card's state corner and for a control that could not be set (English and Italian)
+
 ## [1.2.652] - 2026-11-12
 
 ### Changed
 
 - A cover's Customize role selector offers the cover kinds (blind, shutter, awning, curtain, garage, gate, door, window)
 - The Kind column of an instances table shows the provider icon when the addon declares one.
-- Strings for the sensor card's state corner and for a control that could not be set (English and Italian)
 
 ## [1.2.651] - 2026-11-12
 
