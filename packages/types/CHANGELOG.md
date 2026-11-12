@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An addon route can be declared per instance: the hub serves it at /addon/<addonId>/instances/<instanceId>/<path>, and the address without an instance stays the default one
 - An account can be linked to one instance of an integration: /api/oauth2/authorize takes instance= beside integration=, and the link, its tokens and oauthVerifyAccessToken name the instance
 
+### Changed
+
+- A template with a dotted name in saved step text, such as {{vars.a.b}}, now resolves to the variable of that name (or to nothing when it is not set) instead of staying as literal text
+
 ## [1.2.549] - 2026-11-11
 
 ### Changed
