@@ -1,5 +1,4 @@
 import {
-  heroArgsWithValue,
   HERO_ROW_LABELS,
   type HeroAction,
   type HeroCall,
@@ -7,9 +6,12 @@ import {
   type HeroModel,
   type HeroRow,
   type HeroTimedRunSlot,
+  heroArgsWithValue,
 } from '@camstack/types'
 import { Minus, Plus } from 'lucide-react'
 import { Fragment, type ReactNode, useEffect, useState } from 'react'
+import { useUnitPreferences } from '../../contexts/unit-preferences'
+import { formatNumeric } from '../../lib/format-numeric'
 import { Badge } from '../../primitives/badge'
 import { Button } from '../../primitives/button'
 import { IconButton } from '../../primitives/icon-button'
@@ -17,14 +19,13 @@ import { Select } from '../../primitives/select'
 import { Slider } from '../../primitives/slider'
 import { Switch } from '../../primitives/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../primitives/tooltip'
-import { useUnitPreferences } from '../../contexts/unit-preferences'
 import {
   controlQuantityOf,
-  numericControlDisplay,
   NumericControl,
+  type NumericControlDisplay,
+  numericControlDisplay,
   TextControl,
 } from '../device-controls/control-panel'
-import { useDisplayIconResolver } from '../icon-glyphs'
 import {
   HeroCardA,
   HeroProgressBar,
@@ -36,10 +37,11 @@ import {
   resolveSceneVisual,
   SCENES_WITH_ART,
 } from '../hero-scene'
-import { badgeVariantOf, type HeroLang, pickText, sceneOf, tilesOf } from './hero-model-view'
-import type { HeroLabels } from './hero-labels'
-import { useHeroUtilities } from './hero-utilities'
+import { useDisplayIconResolver } from '../icon-glyphs'
 import { useCardDisplaySubject } from './card-display-subject'
+import type { HeroLabels } from './hero-labels'
+import { badgeVariantOf, type HeroLang, pickText, sceneOf, tilesOf } from './hero-model-view'
+import { useHeroUtilities } from './hero-utilities'
 import { MeasurementScene } from './MeasurementScene'
 
 /** What the card asks its host to do: run the cap method an action or a control names. */
@@ -91,6 +93,22 @@ function ActionButton({
   )
 }
 
+/** The same display resolution a numeric row uses: base in, display unit out. */
+function useSliderScale(): NumericControlDisplay {
+  const subject = useCardDisplaySubject()
+  const unitPreferences = useUnitPreferences()
+  return numericControlDisplay({
+    quantity: controlQuantityOf(subject?.sourceInfo?.quantity),
+    display: subject?.display,
+    unitPreferences,
+  })
+}
+
+/** A step is a difference: °F's offset must not turn 1 °C into 33.8 °F. */
+function shownStep(scale: NumericControlDisplay, step: number): number {
+  return scale.toShown(step) - scale.toShown(0)
+}
+
 function SliderControl({
   control,
   host,
@@ -98,14 +116,17 @@ function SliderControl({
   readonly control: Extract<HeroControl, { kind: 'slider' }>
   readonly host: HeroCardHost
 }): ReactNode {
+  const scale = useSliderScale()
   const [draft, setDraft] = useState<number | null>(null)
-  const shown = draft ?? control.value ?? control.min
+  const base = control.value
+  const shown = draft ?? scale.toShown(base ?? control.min)
+  const unit = scale.unit ?? control.unit
   const commit = (): void => {
     if (draft === null) return
     host.run(
       {
         ...control.call,
-        args: heroArgsWithValue(control.call.args, control.valueArg, draft),
+        args: heroArgsWithValue(control.call.args, control.valueArg, scale.toBase(draft)),
       },
       null,
     )
@@ -116,18 +137,20 @@ function SliderControl({
       <Slider
         aria-label={pickText(control.label, host.lang)}
         className="min-w-0 flex-1"
-        min={control.min}
-        max={control.max}
-        step={control.step}
+        min={scale.toShown(control.min)}
+        max={scale.toShown(control.max)}
+        step={shownStep(scale, control.step)}
         value={shown}
-        disabled={host.busy || control.value === null}
+        disabled={host.busy || base === null}
         onChange={(e) => setDraft(Number(e.target.value))}
         onPointerUp={commit}
         onKeyUp={commit}
         onBlur={commit}
       />
       <span className="w-12 text-right text-xs tabular-nums text-foreground-muted">
-        {control.value === null ? '–' : `${String(shown)}${control.unit}`}
+        {base === null
+          ? '–'
+          : `${formatNumeric(draft ?? scale.toShown(base), scale.precision)}${unit}`}
       </span>
     </div>
   )

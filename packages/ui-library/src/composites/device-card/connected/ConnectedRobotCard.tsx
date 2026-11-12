@@ -4,11 +4,11 @@ import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
 import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
-import type { CardCommon } from '../shell/model'
 import { RobotCard } from '../scenes/robot/RobotCard'
-import { coarseDuration } from './coarse-duration'
+import type { CardCommon } from '../shell/model'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { mowerActivityOf, vacuumActivityOf } from './robot-model'
+import { sinceText } from './since-text'
 import { useCardCommon } from './use-card-common'
 import { reportedCall, reportedCommand } from './use-command-notice'
 
@@ -54,7 +54,7 @@ export function ConnectedVacuumCard({
         mower: false,
         activity: vacuumActivityOf(display),
         errorLabel: display.state === 'error' ? display.errorLabel : null,
-        since: coarseDuration(Date.now() - display.lastChangedAt, t),
+        since: sinceText(display.lastChangedAt, Date.now(), t) ?? null,
         suction: speeds.length > 0 ? { options: speeds, value: display.fanSpeed } : null,
         progress: display.progress,
         controls: {
@@ -113,7 +113,7 @@ export function ConnectedMowerCard({
         mower: true,
         activity: mowerActivityOf(display),
         errorLabel: display.activity === 'error' ? code : null,
-        since: code ?? coarseDuration(Date.now() - display.lastChangedAt, t),
+        since: code ?? sinceText(display.lastChangedAt, Date.now(), t) ?? null,
         suction: null,
         progress: display.progress,
         // The mower cap has no stop and no locate: those two are never drawn.

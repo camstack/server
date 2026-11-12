@@ -5,8 +5,8 @@ import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
 import { CoverCard } from '../scenes/cover/CoverCard'
 import { coverRoleSpec } from '../scenes/cover/model'
-import { coarseDuration } from './coarse-duration'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
+import { sinceText } from './since-text'
 import { useCardCommon } from './use-card-common'
 import { reportedCall } from './use-command-notice'
 
@@ -48,10 +48,7 @@ export function ConnectedCoverCard({
           setPosition !== undefined && (has(DeviceFeature.CoverPositionable) || position !== null),
         stoppable: stop !== undefined,
         tilt: setTilt !== undefined && has(DeviceFeature.CoverTilt) ? (tilt ?? 0) : null,
-        since:
-          typeof slice?.lastChangedAt === 'number'
-            ? coarseDuration(Date.now() - slice.lastChangedAt, t)
-            : null,
+        since: sinceText(slice.lastChangedAt, Date.now(), t) ?? null,
       }}
       actions={{
         ...card.actions,

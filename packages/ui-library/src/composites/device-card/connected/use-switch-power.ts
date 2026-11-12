@@ -10,7 +10,7 @@ import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
 import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
 import type { SwitchTimerActions, SwitchTimerModel } from '../parts/switch-timer-model'
-import { coarseDuration } from './coarse-duration'
+import { sinceText } from './since-text'
 import type { CardCommonResult } from './use-card-common'
 import { reportedCommand } from './use-command-notice'
 
@@ -61,10 +61,7 @@ export function useSwitchPower({ deviceId, optimistic, card }: SwitchPowerInput)
   return {
     bound: cap !== undefined,
     on: display === undefined ? undefined : display.on,
-    since:
-      typeof display?.lastChangedAt === 'number'
-        ? coarseDuration(Date.now() - display.lastChangedAt, t)
-        : null,
+    since: sinceText(display?.lastChangedAt, Date.now(), t) ?? null,
     timer,
     onPower: (on) =>
       reportedCommand(applyOptimisticAction, report)({ on }, () => cap?.setState({ on })),

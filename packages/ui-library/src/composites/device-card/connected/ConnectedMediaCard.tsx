@@ -5,7 +5,6 @@ import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
 import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
 import { MediaPlayerCard } from '../scenes/media/MediaPlayerCard'
-import { coarseDuration } from './coarse-duration'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import {
   mediaArtworkOf,
@@ -15,6 +14,7 @@ import {
   mediaTransportOf,
   mediaVolumeOf,
 } from './media-model'
+import { sinceText } from './since-text'
 import { useCardCommon } from './use-card-common'
 import { presentCommand, reportedCall, reportedCommand } from './use-command-notice'
 
@@ -77,7 +77,7 @@ export function ConnectedMediaCard({
           ? display.source.length > 0
             ? (display.source.split(' · ')[0] ?? null)
             : null
-          : coarseDuration(Date.now() - display.lastChangedAt, t),
+          : (sinceText(display.lastChangedAt, Date.now(), t) ?? null),
         artwork: mediaArtworkOf(display),
         imageUrl: media?.imageUrl ?? null,
         artCaption: display.source.length > 0 ? (display.source.split(' · ')[0] ?? null) : null,
