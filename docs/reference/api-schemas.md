@@ -4671,6 +4671,9 @@ Enum: `"rule" \| "section"`
 - `excludeDeviceIds?`: `number[]`
 - `nodeIds?`: `string[]`
 - `packageNames?`: `string[]`
+- `commandActions?`: `string[]`
+- `commandOutcomes?`: `("confirmed" \| "already" \| "unconfirmed" \| "failed")[]`
+- `commandActorKinds?`: `("user" \| "addon" \| "action" \| "scheduler" \| "composition" \| "node")[]`
 - `consumableLowPercent?`: `number`
 
 ### `NcSystemEventDeliveryModeSchema`
@@ -4685,7 +4688,7 @@ Enum: `"instant" \| "summary"`
 
 ### `NcSystemEventKindSchema`
 
-Enum: `"device-online" \| "device-offline" \| "device-disabled" \| "device-enabled" \| "device-battery-low" \| "device-battery-normal" \| "device-consumable-low" \| "device-consumable-normal" \| "stream-online" \| "stream-offline" \| "node-online" \| "node-offline" \| "node-restarting" \| "node-updating" \| "node-inference-unavailable" \| "detection-blind" \| "motion-noisy" \| "motion-calm" \| "package-llm-silent" \| "package-llm-answered" \| "recording-stalled" \| "recording-healthy" \| "recording-degraded" \| "device-attention-required" \| "device-attention-resolved" \| "storage-location-low" \| "storage-location-critical" \| "storage-location-ok" \| "addon-crash-loop" \| "addon-update-available" \| "server-update-available" \| "wrapper-update-available" \| "alarm-triggered" \| "alarm-armed" \| "alarm-disarmed" \| "alarm-arming" \| "alarm-arm-refused" \| "alarm-pending" \| "alarm-rearmed" \| "alarm-sensor-bypass" \| "alarm-check-failed" \| "addon-updated" \| "server-updated" \| "export-completed" \| "backup-completed" \| "alert-critical" \| "alert-error" \| "alert-critical-resolved" \| "rule-broken" \| "rule-repaired" \| "camera-online" \| "camera-offline" \| "camera-disabled" \| "camera-enabled"`
+Enum: `"device-online" \| "device-offline" \| "device-disabled" \| "device-enabled" \| "device-battery-low" \| "device-battery-normal" \| "device-consumable-low" \| "device-consumable-normal" \| "stream-online" \| "stream-offline" \| "node-online" \| "node-offline" \| "node-restarting" \| "node-updating" \| "node-inference-unavailable" \| "detection-blind" \| "motion-noisy" \| "motion-calm" \| "package-llm-silent" \| "package-llm-answered" \| "recording-stalled" \| "recording-healthy" \| "recording-degraded" \| "device-attention-required" \| "device-attention-resolved" \| "device-command" \| "storage-location-low" \| "storage-location-critical" \| "storage-location-ok" \| "addon-crash-loop" \| "addon-update-available" \| "server-update-available" \| "wrapper-update-available" \| "alarm-triggered" \| "alarm-armed" \| "alarm-disarmed" \| "alarm-arming" \| "alarm-arm-refused" \| "alarm-pending" \| "alarm-rearmed" \| "alarm-sensor-bypass" \| "alarm-check-failed" \| "addon-updated" \| "server-updated" \| "export-completed" \| "backup-completed" \| "alert-critical" \| "alert-error" \| "alert-critical-resolved" \| "rule-broken" \| "rule-repaired" \| "camera-online" \| "camera-offline" \| "camera-disabled" \| "camera-enabled"`
 
 ### `NcTargetAttachmentSchema`
 

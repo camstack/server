@@ -18,6 +18,7 @@ import {
   type NcSystemEventCondition,
   type NcSystemEventKind,
 } from '../capabilities/notification-rules.cap.js'
+import { findVocabAction } from '../device/cap-vocabulary/action-index.js'
 import { NC_SYSTEM_EVENT_FILTER_KEYS, type NcSystemEventFilterKey } from './system-event-filters.js'
 
 export const NC_SYSTEM_EVENT_FAMILIES = ['device-events', 'system', 'alarm'] as const
@@ -51,6 +52,7 @@ export const NC_SYSTEM_EVENT_FAMILY: Readonly<
   'recording-degraded': 'device-events',
   'device-attention-required': 'device-events',
   'device-attention-resolved': 'device-events',
+  'device-command': 'device-events',
   'node-online': 'system',
   'node-offline': 'system',
   'node-restarting': 'system',
@@ -109,7 +111,15 @@ export const NC_SYSTEM_EVENT_CONDITION_FILTER_KEYS: readonly NcSystemEventCondit
 export const NC_SYSTEM_EVENT_FAMILY_FILTERS: Readonly<
   Record<NcSystemEventFamily, readonly NcSystemEventConditionFilterKey[]>
 > = {
-  'device-events': ['deviceIds', 'excludeDeviceIds', 'deviceTypes', 'consumableLowPercent'],
+  'device-events': [
+    'deviceIds',
+    'excludeDeviceIds',
+    'deviceTypes',
+    'consumableLowPercent',
+    'commandActions',
+    'commandOutcomes',
+    'commandActorKinds',
+  ],
   system: ['nodeIds', 'packageNames'],
   alarm: ['deviceIds'],
 }
@@ -176,6 +186,12 @@ export const NC_SYSTEM_EVENT_KIND_GROUP_SPECS: readonly NcSystemEventKindGroupSp
     family: 'device-events',
     label: 'Needs attention',
     kinds: ['device-attention-required', 'device-attention-resolved'],
+  },
+  {
+    id: 'device-command',
+    family: 'device-events',
+    label: 'Commands given to devices',
+    kinds: ['device-command'],
   },
   {
     id: 'nodes',
@@ -290,6 +306,8 @@ export type NcSystemEventFamilyProblem =
       readonly filter: NcSystemEventConditionFilterKey
       readonly family: NcSystemEventFamily
     }
+  /** A `commandActions` entry the vocabulary action index (D983) does not know. */
+  | { readonly code: 'unknown-command-action'; readonly action: string }
 
 /**
  * Why the hub refuses this condition on a new or updated rule. Empty = accepted.
@@ -310,6 +328,10 @@ export function systemEventFamilyProblems(
   }
   const families = NC_SYSTEM_EVENT_FAMILIES.filter((f) => present.has(f))
   if (families.length > 1) problems.push({ code: 'mixed-families', families })
+  for (const action of condition.commandActions ?? []) {
+    if (findVocabAction(action) === undefined)
+      problems.push({ code: 'unknown-command-action', action })
+  }
   const [family] = families
   if (families.length !== 1 || family === undefined) return problems
   const allowed = NC_SYSTEM_EVENT_FAMILY_FILTERS[family]
@@ -331,5 +353,7 @@ export function describeSystemEventFamilyProblem(problem: NcSystemEventFamilyPro
       return `event kinds span ${problem.families.join(' + ')} — one rule per family`
     case 'filter-outside-family':
       return `filter '${problem.filter}' is not allowed on a ${problem.family} rule`
+    case 'unknown-command-action':
+      return `'${problem.action}' is not a vocabulary action id`
   }
 }

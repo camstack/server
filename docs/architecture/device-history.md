@@ -410,6 +410,14 @@ Blind spots, recorded as `device`: agent-originated calls through
 `$hub-cap-fwd`, co-located providers in a grouped runner, hub-main builtins on
 the shared broker client, composition-owned fields.
 
+A settled command is also announced on the event bus as
+`device.command-settled` (`DeviceCommandSettledEvent`: `deviceId`, vocabulary
+`action` id, `outcome`, `actor`, `at`; no args) by the device manager, once per
+settled command and never for a device-own change. The Notification Center maps
+it to the `device-command` kind (see `notifications.md`). The Velux gateway
+self-recovery (D997) calls `power-source.forceRestart`, so its restarts arrive
+as actor `addon` `provider-velux`.
+
 ## Traps
 
 - A system-scope method that names a device must keep the id TOP-LEVEL or the

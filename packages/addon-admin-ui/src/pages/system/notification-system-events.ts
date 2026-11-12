@@ -149,6 +149,10 @@ export interface NcSystemEventFilterVisibility {
   readonly packages: boolean
   /** The rule's consumable threshold (D642) — only with a consumable kind. */
   readonly consumableThreshold: boolean
+  /** The `device-command` filters (D1022): vocabulary action ids, outcome, actor kind. */
+  readonly commandActions: boolean
+  readonly commandOutcomes: boolean
+  readonly commandActorKinds: boolean
 }
 
 /**
@@ -174,6 +178,9 @@ export function systemEventFilterVisibility(
     nodes: systemEventFilterAppliesToAnyKind(kinds, 'nodeIds'),
     packages: systemEventFilterAppliesToAnyKind(kinds, 'packageNames'),
     consumableThreshold: systemEventFilterAppliesToAnyKind(kinds, 'consumableLowPercent'),
+    commandActions: systemEventFilterAppliesToAnyKind(kinds, 'commandActions'),
+    commandOutcomes: systemEventFilterAppliesToAnyKind(kinds, 'commandOutcomes'),
+    commandActorKinds: systemEventFilterAppliesToAnyKind(kinds, 'commandActorKinds'),
   }
 }
 
@@ -204,6 +211,9 @@ export function systemEventFilterVisibilityFor(
     nodes: allowed.includes('nodeIds') && byKind.nodes,
     packages: allowed.includes('packageNames') && byKind.packages,
     consumableThreshold: allowed.includes('consumableLowPercent') && byKind.consumableThreshold,
+    commandActions: allowed.includes('commandActions') && byKind.commandActions,
+    commandOutcomes: allowed.includes('commandOutcomes') && byKind.commandOutcomes,
+    commandActorKinds: allowed.includes('commandActorKinds') && byKind.commandActorKinds,
   }
 }
 

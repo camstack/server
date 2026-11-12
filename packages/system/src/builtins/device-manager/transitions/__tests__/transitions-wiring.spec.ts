@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import type { DeviceCommandObservation, DeviceTransition, IScopedLogger } from '@camstack/types'
+import type {
+  DeviceCommandObservation,
+  DeviceCommandSettledEvent,
+  DeviceTransition,
+  IScopedLogger,
+} from '@camstack/types'
 import {
   __resetCommandObserverRegistryForTests,
   getCommandObserverRegistry,
@@ -33,14 +38,16 @@ function setup(record?: (batch: readonly DeviceTransition[]) => Promise<void>) {
     child: () => logger,
     withTags: () => logger,
   }
+  const settled: DeviceCommandSettledEvent[] = []
   const handle = startDeviceTransitions({
     mirror: h.mirror,
+    onCommandSettled: (e) => void settled.push(e),
     logger,
     record: record ?? (async (batch) => void recorded.push([...batch])),
     now: () => 1000,
     ticker: t.ticker,
   })
-  return { h, t, recorded, errors, handle }
+  return { h, t, recorded, errors, handle, settled }
 }
 
 const command = (over: Partial<DeviceCommandObservation> = {}): DeviceCommandObservation => ({
@@ -82,6 +89,36 @@ describe('device transitions wiring (D1022)', () => {
     await Promise.resolve()
     await Promise.resolve()
     expect(w.recorded[0]?.[0]).toMatchObject({ outcome: 'device' })
+    await w.handle.stop()
+  })
+
+  it('a command the device confirms is announced ONCE by its vocabulary action id, with actor and outcome, no args', async () => {
+    const w = setup()
+    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
+    getCommandObserverRegistry().observe(command())
+    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
+    w.t.tick()
+    expect(w.settled).toEqual([
+      {
+        deviceId: 7,
+        action: 'switch.on',
+        outcome: 'confirmed',
+        actor: { kind: 'user', userId: 'u', username: 'ada', credential: 'session' },
+        at: 1000,
+      },
+    ])
+    await w.handle.stop()
+  })
+
+  it("a change nobody asked for (the device's own) announces nothing", async () => {
+    const w = setup()
+    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: false })
+    w.h.mirror.applySingleCapUpdate(7, 'switch', { on: true })
+    w.t.tick()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(w.recorded.flat()).toHaveLength(1)
+    expect(w.settled).toEqual([])
     await w.handle.stop()
   })
 

@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - IR transmitters can learn a code and replay device-native (Tuya) codes: ir-transmitter gains learn, send takes a native code, and a remote command can store one
+### Changed
+
+- The Notification Center has a device-command event kind: a rule can notify when a command such as a power restart is given to a device, filtered by command, outcome and who asked.
 
 ## [1.2.554] - 2026-11-12
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The gateway self-recovery restarts the power source again: the power source status it reads is now the real one.
+
 ## [0.2.168] - 2026-11-12
 
 ### Changed

@@ -104,6 +104,7 @@ const DEVICE_EVENTS: readonly NcSystemEventKind[] = [
   'recording-healthy',
   'recording-degraded',
   ...DEVICE_ATTENTION,
+  'device-command',
   ...ALARM,
 ]
 
@@ -548,6 +549,28 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     fields: [...RULE_TEXT],
     kinds: ['system'],
     systemEventKinds: [...DEVICE_EVENTS],
+  },
+  {
+    // D1022: the vocabulary action's translated label, as the automation action blocks show it.
+    name: 'actionLabel',
+    label: 'Command',
+    example: 'Force restart',
+    group: 'system',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['system'],
+    systemEventKinds: ['device-command'],
+  },
+  {
+    // D1022: who gave the command - the user, the addon, the automation or the schedule.
+    name: 'actorLabel',
+    label: 'Who asked',
+    example: 'velux',
+    group: 'system',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['system'],
+    systemEventKinds: ['device-command'],
   },
   {
     // D706: where an alarm a rule set off went — the location (else name) of the device
@@ -1279,6 +1302,8 @@ export const NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS: readonly NcSystemEventKin
   // would fail the catalog parse on them. `message` carries the last latency.
   'package-llm-silent',
   'package-llm-answered',
+  // D1022: the device-command kind and its `{{actionLabel}}` / `{{actorLabel}}`.
+  'device-command',
 ]
 
 /**

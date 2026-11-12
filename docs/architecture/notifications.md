@@ -1066,6 +1066,18 @@ an owner that never existed — text-only, contradicting the ruling — and its
 stored gif/clip held ring history nobody would cut. The admin no longer hides
 the Linked-cameras picker on such a rule.
 
+### A command given to a device is a system event (`device-command`, D1022)
+
+When the hub settles a vocabulary command (`device.command-settled`), the
+`device-command` kind (family `device-events`) lets a rule speak about it. The
+command is identified ONLY by its vocabulary action id (D983). Filters:
+`commandActions` (action ids; the hub refuses an id the action index does not
+know with `unknown-command-action`), `commandOutcomes`
+(`confirmed|already|unconfirmed|failed`) and `commandActorKinds`
+(`user|addon|action|scheduler|composition|node`). Template variables
+`actionLabel`, `actorLabel`, `outcomeLabel`. The kind is held back from an old
+viewer (`NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS`).
+
 ### A system-event filter is scoped to its kind family
 
 `conditions.systemEvent` carries four optional narrowing lists beside its

@@ -94,6 +94,22 @@ export const DeviceTransitionSchema = z.object({
 })
 export type DeviceTransition = z.infer<typeof DeviceTransitionSchema>
 
+/**
+ * The payload of `EventCategory.DeviceCommandSettled`: a command the audit
+ * settled, without its arguments (they stay redacted in the row). A command is
+ * named ONLY by its vocabulary action id (`powerSource.forceRestart`, D983) -
+ * the one dictionary the automation action blocks use; the cap is derived from
+ * the action index, never carried.
+ */
+export const DeviceCommandSettledEventSchema = z.object({
+  deviceId: z.number().int(),
+  action: z.string(),
+  outcome: TransitionOutcomeSchema,
+  actor: TransitionActorSchema,
+  at: z.number(),
+})
+export type DeviceCommandSettledEvent = z.infer<typeof DeviceCommandSettledEventSchema>
+
 // Its own module so the runner closure can parse a claim without the transition schemas (D28).
 export {
   CommandOriginClaimSchema,

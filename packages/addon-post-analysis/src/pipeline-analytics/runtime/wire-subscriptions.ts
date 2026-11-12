@@ -23,10 +23,7 @@ import type {
   SystemEvent,
   Unsubscribe,
 } from '@camstack/types'
-import {
-  EVENT_KIND_BY_CAP,
-  EventCategory,
-} from '@camstack/types'
+import { EVENT_KIND_BY_CAP, EventCategory } from '@camstack/types'
 import { parseTopologySnapshotNodes, type NodeLivenessNode } from './node-liveness.js'
 
 /** `DeviceBindingsChanged` payload as consumed by the analytics addon.
@@ -98,6 +95,9 @@ export const NC_SYSTEM_EVENT_CATEGORIES: readonly EventCategory[] = [
   EventCategory.RecordingHealthStalled,
   EventCategory.RecordingHealthOk,
   EventCategory.RecordingHealthDegraded,
+  // A vocabulary command the hub's transition audit settled (D1022): operator,
+  // addon, automation or schedule asked a device to do something.
+  EventCategory.DeviceCommandSettled,
   // Storage location capacity bands — emitted by storage-orchestrator.
   EventCategory.StorageLocationLow,
   EventCategory.StorageLocationCritical,

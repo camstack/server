@@ -201,6 +201,15 @@ export const NcSystemEventKindSchema = z.enum([
   // `device-attention-resolved` is the recovery.
   'device-attention-required',
   'device-attention-resolved',
+  // ── A COMMAND SOMEBODY GAVE A DEVICE (D1022) ──────────────────────────
+  //
+  // The hub's transition audit settled a vocabulary action (D983) - an
+  // operator, an addon, an automation or a schedule asked, and the device
+  // confirmed it, already held it, did not answer, or the call failed. A
+  // device's OWN change is never this kind. It is narrowed by vocabulary
+  // action ids (`commandActions`), outcome and actor kind; the cap an action
+  // belongs to is derived from the action index.
+  'device-command',
   // ── STORAGE LOCATIONS RUNNING OUT (OR UNREADABLE) ─────────────────────
   //
   // Per location, not per camera: free space on the class subtree (D327).
@@ -424,6 +433,18 @@ export const NC_CONSUMABLE_LOW_PERCENT_MAX = 95
  * gate; the remaining lists are optional narrowing filters relevant to the
  * selected kinds.
  */
+/** How a settled command can be filtered (D1022): a device's own change is not a command. */
+export const NC_COMMAND_OUTCOMES = ['confirmed', 'already', 'unconfirmed', 'failed'] as const
+/** Who gave a command, as the transition audit names the actor (D1022). */
+export const NC_COMMAND_ACTOR_KINDS = [
+  'user',
+  'addon',
+  'action',
+  'scheduler',
+  'composition',
+  'node',
+] as const
+
 export const NcSystemEventConditionSchema = z.object({
   kinds: z.array(NcSystemEventKindSchema).min(1),
   deviceIds: z.array(z.number().int()).min(1).optional(),
@@ -454,6 +475,16 @@ export const NcSystemEventConditionSchema = z.object({
   excludeDeviceIds: z.array(z.number().int()).min(1).optional(),
   nodeIds: z.array(z.string().min(1)).min(1).optional(),
   packageNames: z.array(z.string().min(1)).min(1).optional(),
+  /**
+   * `device-command` only: the vocabulary ACTION IDS (D983, `powerSource.forceRestart`)
+   * this rule speaks about - the same dictionary the automation action blocks
+   * pick from. The hub refuses an id the action index does not know.
+   */
+  commandActions: z.array(z.string().min(1)).min(1).optional(),
+  /** `device-command` only: how the command settled. A device's own change is not a command. */
+  commandOutcomes: z.array(z.enum(NC_COMMAND_OUTCOMES)).min(1).optional(),
+  /** `device-command` only: who asked (`user`, `addon`, `action`, `scheduler`, `composition`, `node`). */
+  commandActorKinds: z.array(z.enum(NC_COMMAND_ACTOR_KINDS)).min(1).optional(),
   /**
    * At or below this remaining-life %, a consumable is LOW for THIS rule
    * (D642). Absent = {@link NC_CONSUMABLE_LOW_PERCENT_DEFAULT}; at most
@@ -2074,6 +2105,7 @@ export const NC_CONDITION_CATALOG: readonly NcConditionDescriptor[] = [
       { value: 'recording-degraded', label: 'Recording degraded (restart storm)' },
       { value: 'device-attention-required', label: 'Device needs attention' },
       { value: 'device-attention-resolved', label: 'Device attention resolved' },
+      { value: 'device-command', label: 'Command given to a device' },
       { value: 'storage-location-low', label: 'Storage location low' },
       { value: 'storage-location-critical', label: 'Storage location critical' },
       { value: 'storage-location-ok', label: 'Storage location ok again' },

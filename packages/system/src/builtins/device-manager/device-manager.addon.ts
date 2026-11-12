@@ -24,6 +24,7 @@
  *   - live operations previously served by `device-management.router.ts`
  */
 
+import { randomUUID } from 'node:crypto'
 import type {
   DeviceBindingEntry,
   ICapabilityRegistry,
@@ -38,6 +39,7 @@ import {
   deviceExtensionCapability,
   deviceStateCapability,
   errMsg,
+  EventCategory,
   ProviderRegistration,
   SECRET_CLEAR,
 } from '@camstack/types'
@@ -753,6 +755,14 @@ export class DeviceManagerAddon extends BaseAddon {
         if (api === undefined) throw new Error('ctx.api not ready')
         await api.deviceTransitions.record.mutate({ transitions: [...transitions] })
       },
+      onCommandSettled: (event) =>
+        this.ctx.eventBus.emit({
+          id: randomUUID(),
+          timestamp: new Date(),
+          source: { type: 'device', id: event.deviceId },
+          category: EventCategory.DeviceCommandSettled,
+          data: { ...event },
+        }),
     })
     // The claims index, BEFORE any provider method can seed a device (S6): a
     // loaded index lets an unclaimed device's status read and native write

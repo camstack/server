@@ -466,6 +466,15 @@ export enum EventCategory {
    */
   DeviceStateChanged = 'device.state-changed',
   /**
+   * A device COMMAND (a vocabulary action, D920/D983) settled in the hub's
+   * transition audit (D1022): confirmed, already in place, unconfirmed or
+   * failed. Never a device's own change. Payload: `DeviceCommandSettledEvent`
+   * (`{deviceId, capName, action, outcome, actor, at}`, no arguments). It feeds
+   * the Notification Center `device-command` kind. Telemetry (D8): losing one
+   * costs a notification, never state; the audit row is the record.
+   */
+  DeviceCommandSettled = 'device.command-settled',
+  /**
    * The NATIVE shadow of a cap a composition has claimed fields of moved
    * (D663). Payload: `{ deviceId, capName, native }` — what the provider
    * wrote, BEFORE the owned fields are overlaid. Owner-only (D224): it is for

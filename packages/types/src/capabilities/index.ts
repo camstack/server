@@ -1269,6 +1269,8 @@ export {
   NcSystemEventDeliverySchema,
   type NcSystemEventKind,
   NcSystemEventKindSchema,
+  NC_COMMAND_ACTOR_KINDS,
+  NC_COMMAND_OUTCOMES,
   type NcTemplateDefault,
   NcTemplateDefaultSchema,
   type NcTemplateFamily,

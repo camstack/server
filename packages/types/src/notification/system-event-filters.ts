@@ -54,6 +54,9 @@ export type NcSystemEventFilterKey =
   | 'nodeIds'
   | 'packageNames'
   | 'consumableLowPercent'
+  | 'commandActions'
+  | 'commandOutcomes'
+  | 'commandActorKinds'
 
 /**
  * Every filter, for the callers that must cover all of them (guards, tests).
@@ -70,6 +73,9 @@ export const NC_SYSTEM_EVENT_FILTER_KEYS: readonly NcSystemEventFilterKey[] = [
   'nodeIds',
   'packageNames',
   'consumableLowPercent',
+  'commandActions',
+  'commandOutcomes',
+  'commandActorKinds',
 ]
 
 /**
@@ -154,6 +160,11 @@ export function systemEventFilterApplies(
     // verdict, and liveness no level at all.
     case 'consumableLowPercent':
       return NC_CONSUMABLE_SYSTEM_EVENT_KINDS.includes(kind)
+    // The command filters speak only about the command kind (D1022).
+    case 'commandActions':
+    case 'commandOutcomes':
+    case 'commandActorKinds':
+      return kind === 'device-command'
   }
 }
 

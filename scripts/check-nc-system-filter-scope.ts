@@ -149,6 +149,9 @@ const VISIBILITY_KEY: Readonly<
   nodeIds: 'nodes',
   packageNames: 'packages',
   consumableLowPercent: 'consumableThreshold',
+  commandActions: 'commandActions',
+  commandOutcomes: 'commandOutcomes',
+  commandActorKinds: 'commandActorKinds',
 }
 
 /** A filter's value in a probe rule: a list, or the threshold number. */
@@ -166,6 +169,9 @@ const UNSATISFIABLE: Readonly<Record<NcSystemEventFilterKey, ProbeFilterValue>> 
   packageNames: ['@camstack/never-installed'],
   // Any threshold but the one the probe subject was judged at (the default).
   consumableLowPercent: NC_CONSUMABLE_LOW_PERCENT_DEFAULT + 1,
+  commandActions: ['a.command-no-device-gave'],
+  commandOutcomes: ['failed'],
+  commandActorKinds: ['node'],
 }
 
 const BASE_RULE: NcRule = {
@@ -231,6 +237,12 @@ function probeCondition(
       return { kinds: [kind], packageNames: ['@camstack/server'] }
     case 'consumableLowPercent':
       return { kinds: [kind], consumableLowPercent: 25 }
+    case 'commandActions':
+      return { kinds: [kind], commandActions: ['powerSource.forceRestart'] }
+    case 'commandOutcomes':
+      return { kinds: [kind], commandOutcomes: ['confirmed'] }
+    case 'commandActorKinds':
+      return { kinds: [kind], commandActorKinds: ['user'] }
   }
 }
 
@@ -242,6 +254,9 @@ const FAMILY_BOXES = [
   'nodes',
   'packages',
   'consumableThreshold',
+  'commandActions',
+  'commandOutcomes',
+  'commandActorKinds',
 ] as const satisfies readonly (keyof NcSystemEventFamilyFilterVisibility)[]
 
 const FAMILY_BOX_FILTER: Readonly<
@@ -253,6 +268,9 @@ const FAMILY_BOX_FILTER: Readonly<
   nodes: 'nodeIds',
   packages: 'packageNames',
   consumableThreshold: 'consumableLowPercent',
+  commandActions: 'commandActions',
+  commandOutcomes: 'commandOutcomes',
+  commandActorKinds: 'commandActorKinds',
 }
 
 /** The viewer family editor's boxes, and the condition field each one writes. */

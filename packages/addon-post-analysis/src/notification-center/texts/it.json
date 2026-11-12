@@ -425,5 +425,10 @@
   "system.rule-broken.body.device-deleted": "La regola \"{{ruleName}}\" usa ancora un dispositivo eliminato ({{offendingIds}}) ed è stata disattivata. Scegli di nuovo il dispositivo.",
   "system.rule-broken.body.target-deleted": "La regola \"{{ruleName}}\" invia ancora a una destinazione eliminata ({{offendingIds}}) ed è stata disattivata. Scegli di nuovo una destinazione.",
   "system.rule-repaired.title": "Regola di notifica di nuovo funzionante — {{ruleName}}",
-  "system.rule-repaired.body": "La regola \"{{ruleName}}\" si carica e non usa più nulla di eliminato."
+  "system.rule-repaired.body": "La regola \"{{ruleName}}\" si carica e non usa più nulla di eliminato.",
+  "system.device-command.title": "{{deviceName}}: {{actionLabel}}",
+  "system.device-command.body.confirmed": "{{deviceName}}: {{actionLabel}} ({{actorLabel}}, eseguito)",
+  "system.device-command.body.already": "{{deviceName}}: {{actionLabel}} ({{actorLabel}}, già in corso)",
+  "system.device-command.body.unconfirmed": "{{deviceName}}: {{actionLabel}} ({{actorLabel}}, non confermato)",
+  "system.device-command.body.failed": "{{deviceName}}: {{actionLabel}} ({{actorLabel}}, fallito)"
 }

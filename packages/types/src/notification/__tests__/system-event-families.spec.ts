@@ -58,6 +58,7 @@ describe('every kind has exactly one family', () => {
       'recording-degraded',
       'device-attention-required',
       'device-attention-resolved',
+      'device-command',
     ])
     expect(systemEventKindsOfFamily('system')).toEqual([
       'node-offline',

@@ -31,7 +31,10 @@ import {
   alertEpisodeKind,
   parseAlertEpisodePayload,
   deviceAttentionKind,
+  DeviceCommandSettledEventSchema,
+  findVocabAction,
   type AlertEpisodePayload,
+  type TransitionActor,
   type AudioEvent,
   type ConsumableForm,
   type NcDelivery,
@@ -774,6 +777,12 @@ function systemSubject(input: {
   readonly alarmFollowers?: readonly NcRuleFireRef[]
   /** Set only on a consumable band: the threshold it was judged at (D642). */
   readonly consumableLowPercent?: number
+  /** Set only on `device-command` (D1022). */
+  readonly command?: {
+    readonly action: string
+    readonly outcome: string
+    readonly actorKind: string
+  }
 }): NcIncomingEvent {
   const data = { ...input.facts.data, category: input.facts.category }
   const deviceId = input.deviceId ?? NC_SYSTEM_DEVICE_ID
@@ -809,6 +818,13 @@ function systemSubject(input: {
         ...(input.consumableLowPercent !== undefined
           ? { consumableLowPercent: input.consumableLowPercent }
           : {}),
+        ...(input.command !== undefined
+          ? {
+              commandAction: input.command.action,
+              commandOutcome: input.command.outcome,
+              commandActorKind: input.command.actorKind,
+            }
+          : {}),
         data,
       },
     },
@@ -835,6 +851,26 @@ function deviceTextParams(
   identity: NcDeviceIdentity | undefined,
 ): Readonly<Record<string, string>> {
   return { deviceId: String(deviceId), deviceName: deviceDisplayName(identity, deviceId) }
+}
+
+/** Who gave a command, as one short name: the user, the addon, the automation, the schedule. */
+function commandActorLabel(actor: TransitionActor): string {
+  switch (actor.kind) {
+    case 'user':
+      return actor.username
+    case 'addon':
+      return actor.addonId
+    case 'action':
+      return actor.actionId
+    case 'scheduler':
+      return actor.schedulerId
+    case 'composition':
+      return actor.owner
+    case 'node':
+      return actor.nodeId
+    case 'device':
+      return 'device'
+  }
 }
 
 /**
@@ -1393,6 +1429,34 @@ export function incomingFromSystemEvent(
         textParams: deviceTextParams(deviceId, identity),
         deviceId,
         ...(identity !== undefined ? { deviceType: identity.type } : {}),
+      })
+    }
+    case 'device.command-settled': {
+      // A vocabulary command the transition audit settled (D1022). The action id is
+      // the whole identity; its translated label comes from the same index the
+      // automation action blocks read (D983).
+      const parsed = DeviceCommandSettledEventSchema.safeParse(data)
+      if (!parsed.success) return null
+      const { deviceId, action, outcome, actor } = parsed.data
+      const vocab = findVocabAction(action)
+      if (vocab === undefined) return null
+      const identity = lookup(deviceId)
+      return systemSubject({
+        facts,
+        kind: 'device-command',
+        subject: `device-command:${deviceId}:${action}:${facts.eventId}`,
+        titleKey: 'system.device-command.title',
+        // The outcome is a catalog KEY (translated there); the params carry
+        // only language-neutral values.
+        bodyKey: `system.device-command.body.${outcome}`,
+        textParams: {
+          ...deviceTextParams(deviceId, identity),
+          actionLabel: vocab.action.label.en,
+          actorLabel: commandActorLabel(actor),
+        },
+        deviceId,
+        ...(identity !== undefined ? { deviceType: identity.type } : {}),
+        command: { action, outcome, actorKind: actor.kind },
       })
     }
     case 'recording.health.degraded': {

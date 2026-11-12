@@ -425,5 +425,10 @@
   "system.rule-broken.body.device-deleted": "The rule \"{{ruleName}}\" still names a deleted device ({{offendingIds}}) and was switched off. Pick the device again.",
   "system.rule-broken.body.target-deleted": "The rule \"{{ruleName}}\" still sends to a deleted destination ({{offendingIds}}) and was switched off. Pick a destination again.",
   "system.rule-repaired.title": "Notification rule works again — {{ruleName}}",
-  "system.rule-repaired.body": "The rule \"{{ruleName}}\" loads and names nothing deleted any more."
+  "system.rule-repaired.body": "The rule \"{{ruleName}}\" loads and names nothing deleted any more.",
+  "system.device-command.title": "{{deviceName}}: {{actionLabel}}",
+  "system.device-command.body.confirmed": "{{deviceName}}: {{actionLabel}} ({{actorLabel}}, done)",
+  "system.device-command.body.already": "{{deviceName}}: {{actionLabel}} ({{actorLabel}}, already in place)",
+  "system.device-command.body.unconfirmed": "{{deviceName}}: {{actionLabel}} ({{actorLabel}}, not confirmed)",
+  "system.device-command.body.failed": "{{deviceName}}: {{actionLabel}} ({{actorLabel}}, failed)"
 }

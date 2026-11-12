@@ -105,6 +105,14 @@ Tried first and rejected:
   logged once per streak and its batch is kept.
 - Every device-scope mutation with a required `deviceId` must be a vocabulary
   action or excused, so the catalog is complete by construction.
+- A command the correlator settles (any outcome but `device`) is announced
+  ONCE on the event bus as `EventCategory.DeviceCommandSettled`
+  (`{deviceId, action, outcome, actor, at}`, no args). The command is named only
+  by its vocabulary action id (D983), so a command that is not a vocabulary
+  action is not announced. It is telemetry (D8): the audit row stays the record.
+  The Notification Center turns it into the `device-command` system-event kind,
+  filtered by `commandActions` (action ids, validated against the action index
+  by the hub), `commandOutcomes` and `commandActorKinds`.
 
 ## Enforcement
 

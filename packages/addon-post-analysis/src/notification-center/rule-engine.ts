@@ -268,6 +268,14 @@ export interface NcSystemEventSubject {
    * (the tester's synthetic event), which no threshold then refuses.
    */
   readonly consumableLowPercent?: number
+  /**
+   * `device-command` only (D1022): the vocabulary action id, how the command
+   * settled and the kind of who asked. A `commandActions` / `commandOutcomes` /
+   * `commandActorKinds` filter fails CLOSED on a subject that lacks the fact.
+   */
+  readonly commandAction?: string
+  readonly commandOutcome?: string
+  readonly commandActorKind?: string
   readonly data: Readonly<Record<string, unknown>>
 }
 
@@ -1354,10 +1362,7 @@ export function ruleHasRecognitionScope(rule: NcEvaluableRule): boolean {
  * Derived, never a stored flag: both rule editors prune condition keys to the
  * catalog on save, so a new key would be dropped by the first edit.
  */
-export function ruleBelongsToAlarm(
-  rule: NcEvaluableRule,
-  actionStepsOf?: ActionStepsOf,
-): boolean {
+export function ruleBelongsToAlarm(rule: NcEvaluableRule, actionStepsOf?: ActionStepsOf): boolean {
   // The predicate itself lives in `@camstack/types` (`alarm-membership.ts`) so
   // the editors' D640 warning asks the very same question.
   return sharedRuleBelongsToAlarm({
@@ -1521,6 +1526,22 @@ function systemEventExclusion(
   if (wantedPackages !== undefined && applies('packageNames')) {
     const packages = subjectPackages(subject)
     if (!packages.some((name) => wantedPackages.includes(name))) return 'packageNames'
+  }
+  const wantedActions = condition.commandActions
+  if (wantedActions !== undefined && applies('commandActions')) {
+    if (subject.commandAction === undefined || !wantedActions.includes(subject.commandAction)) {
+      return 'commandActions'
+    }
+  }
+  const wantedOutcomes = condition.commandOutcomes
+  if (wantedOutcomes !== undefined && applies('commandOutcomes')) {
+    const outcome = wantedOutcomes.find((o) => o === subject.commandOutcome)
+    if (outcome === undefined) return 'commandOutcomes'
+  }
+  const wantedActorKinds = condition.commandActorKinds
+  if (wantedActorKinds !== undefined && applies('commandActorKinds')) {
+    const kind = wantedActorKinds.find((k) => k === subject.commandActorKind)
+    if (kind === undefined) return 'commandActorKinds'
   }
   // THE RULE'S CONSUMABLE THRESHOLD (D642). Unlike the lists above it is in
   // force even when the rule does not state it (the default, 15): a consumable
