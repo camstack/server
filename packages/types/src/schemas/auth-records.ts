@@ -11,7 +11,8 @@
  */
 import { ViewerTokenScopeSchema } from '../auth/viewer-access.js'
 import { z } from 'zod'
-import { StoredDeviceTypeSchema } from '../device/device-kind.js'
+import { DeviceType } from '../device/device-type.js'
+import { canonicalStoredDeviceType } from '../device/device-kind.js'
 
 // ── Auth ────────────────────────────────────────────────────────────
 
@@ -85,7 +86,7 @@ export type CapScope = z.infer<typeof CapScopeSchema>
 export const DeviceSelectorSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('all') }),
   z.object({ kind: z.literal('ids'), ids: z.array(z.number().int()).min(1) }),
-  z.object({ kind: z.literal('types'), types: z.array(StoredDeviceTypeSchema).min(1) }),
+  z.object({ kind: z.literal('types'), types: z.array(z.enum(DeviceType)).min(1) }),
   z.object({ kind: z.literal('locations'), locations: z.array(z.string().min(1)).min(1) }),
 ])
 export type DeviceSelector = z.infer<typeof DeviceSelectorSchema>
@@ -123,13 +124,29 @@ const DeviceTokenScopeSchema = z.object({
 function migrateLegacyTokenScope(raw: unknown): unknown {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return raw
   if (Reflect.get(raw, 'type') !== 'device') return raw
-  if (Reflect.get(raw, 'selector') !== undefined) return raw
+  if (Reflect.get(raw, 'selector') !== undefined) return canonicalSelectorTypes(raw)
   const targets = Reflect.get(raw, 'targets')
   if (!Array.isArray(targets)) return raw
   const ids = targets
     .map((t) => (typeof t === 'string' ? Number(t) : t))
     .filter((n): n is number => typeof n === 'number' && Number.isInteger(n))
   return { type: 'device', selector: { kind: 'ids', ids }, access: Reflect.get(raw, 'access') }
+}
+
+/**
+ * A stored `types` selector may name a type D1033 retired (`thermostat`). The
+ * grant is read back through this same preprocess, so the retired name is
+ * rewritten to its canonical type here and {@link DeviceSelectorSchema} itself
+ * stays a strict enum on the wire.
+ */
+function canonicalSelectorTypes(raw: object): unknown {
+  const selector = Reflect.get(raw, 'selector')
+  if (selector === null || typeof selector !== 'object') return raw
+  if (Reflect.get(selector, 'kind') !== 'types') return raw
+  const types = Reflect.get(selector, 'types')
+  if (!Array.isArray(types)) return raw
+  const canonical = types.map((t) => (typeof t === 'string' ? canonicalStoredDeviceType(t) : t))
+  return { ...raw, selector: { ...selector, types: canonical } }
 }
 
 export const TokenScopeSchema = z.preprocess(

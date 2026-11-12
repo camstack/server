@@ -35,4 +35,8 @@ describe('fixed hero layouts', () => {
     ])
     expect(resolveHeroLayout('future-type')).toBe(HERO_LAYOUT_DEFAULT)
   })
+
+  it('reads a type D1033 retired as its live type, not as unknown', () => {
+    expect(resolveHeroLayout('thermostat')).toBe(HERO_LAYOUT_BY_TYPE[DeviceType.Climate])
+  })
 })

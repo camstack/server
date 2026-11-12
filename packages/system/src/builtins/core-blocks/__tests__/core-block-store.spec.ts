@@ -5,6 +5,8 @@
  */
 
 import {
+  coreBlockComposition,
+  DeviceType,
   ROOM_EXAMPLE_MOTION_SOURCES,
   ROOM_EXAMPLE_TEMPERATURE_SOURCES,
   ROOM_OCCUPANCY_WINDOW_MS,
@@ -321,5 +323,28 @@ describe('unreadable rows', () => {
     await kind.put({ id: 'c3', data: row({ id: 'c3', source: 'garbled' }, 'Garbled') })
     await s.load()
     expect(s.unreadableCompositions().map((u) => u.id)).toEqual(['c3'])
+  })
+
+  it('a composition stored with a device type D1033 retired loads, as climate', async () => {
+    const { store: s, records } = await coreBlockRecordsHarness(logger, {
+      now: () => 1_000,
+      newId: () => 'b1',
+    })
+    const kind = records.kind(coreBlocksRecordKinds.blocks)
+    const stored = {
+      ...valid,
+      id: 'c4',
+      source: {
+        kind: 'composition',
+        composition: { ...ROOM, target: { kind: 'new', type: 'thermostat' } },
+      },
+    }
+    await kind.put({ id: 'c4', data: row(stored, 'Thermostat') })
+    await s.load()
+    expect(s.unreadableCompositions()).toEqual([])
+    expect(coreBlockComposition(s.get('c4') ?? {})?.target).toEqual({
+      kind: 'new',
+      type: DeviceType.Climate,
+    })
   })
 })

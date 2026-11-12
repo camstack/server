@@ -197,3 +197,23 @@ describe('system-event rule matching', () => {
     expect(cooldownKey(updateRule, hub)).not.toBe(cooldownKey(updateRule, agent))
   })
 })
+
+describe('a rule stored with a device type D1033 retired', () => {
+  // `thermostat` was retired into `climate`. A rule saved before that still
+  // names it, and must keep matching the device it was written for.
+  it('a deviceTypes ["thermostat"] rule matches a climate device', () => {
+    const result = evaluateRule(
+      rule({ kinds: ['device-offline'], deviceTypes: ['thermostat'] }),
+      subject({ kind: 'device-offline', deviceId: 104, deviceType: 'climate' }),
+    )
+    expect(result.matched).toBe(true)
+  })
+
+  it('still fails closed on a type the rule does not name', () => {
+    const result = evaluateRule(
+      rule({ kinds: ['device-offline'], deviceTypes: ['thermostat'] }),
+      subject({ kind: 'device-offline', deviceId: 104, deviceType: 'camera' }),
+    )
+    expect(result.matched).toBe(false)
+  })
+})

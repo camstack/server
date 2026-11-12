@@ -29,11 +29,15 @@ export function canonicalStoredDeviceType(stored: string): string {
 
 /**
  * The schema for a device type read back from STORAGE — a device config, a
- * container's `entities[]`, a persisted identity, a stored grant or recipe. A
- * retired type is read as its live type before the enum check, so a type
- * retired after the record was written never fails the parse and never drops
- * the device (D1033). Every persisted `deviceType` field uses this, never a
- * bare `z.enum(DeviceType)`.
+ * container's `entities[]`, a persisted identity. A retired type is read as its
+ * live type before the enum check, so a type retired after the record was
+ * written never fails the parse and never drops the device (D1033).
+ *
+ * Never on a schema that is also a WIRE input: a preprocess makes its input
+ * type `unknown`, which loosens the generated client. A store whose row schema
+ * is a wire schema (a grant, an action, a composition, a notification rule)
+ * keeps it strict and rewrites the row with {@link canonicalStoredDeviceType}
+ * where it reads the row back.
  */
 export const StoredDeviceTypeSchema = z.preprocess(
   (value) => (typeof value === 'string' ? canonicalStoredDeviceType(value) : value),

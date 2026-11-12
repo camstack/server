@@ -18,8 +18,8 @@
  *   source `code` → slice 4. Target `existing` (customize a device) is slice 2 (D663).
  */
 import { z } from 'zod'
-import { StoredDeviceTypeSchema } from '../device/device-kind.js'
-import { DeviceRole } from '../device/device-type.js'
+import { canonicalStoredDeviceType } from '../device/device-kind.js'
+import { DeviceRole, DeviceType } from '../device/device-type.js'
 import { validateExpressionSource } from '../expression/expression-source.js'
 import { EXPRESSION_IDENTIFIER_RE, MAX_EXPRESSION_SOURCE_LENGTH } from '../expression/limits.js'
 import { HelperSpecSchema, MAX_HELPER_MEMBERS } from './helpers/spec.js'
@@ -288,10 +288,35 @@ export function compositionFeatureEnabled(feature: CompositionFeature): boolean 
  */
 export const CompositionNewTargetSchema = z.object({
   kind: z.literal('new'),
-  type: StoredDeviceTypeSchema,
+  type: z.enum(DeviceType),
   role: z.enum(DeviceRole).optional(),
 })
 export type CompositionNewTarget = z.infer<typeof CompositionNewTargetSchema>
+
+/**
+ * A STORED block, read back: the `new` target of its composition may name a
+ * device type D1033 retired (`thermostat`). {@link CompositionNewTargetSchema}
+ * stays a strict enum on the wire, so the store rewrites the retired name to
+ * its canonical type (`source.composition.target.type`) before it parses the
+ * row. Anything else is returned untouched, for the schema to judge.
+ */
+export function canonicalStoredBlockTarget(block: unknown): unknown {
+  if (!isPlainObject(block)) return block
+  const source = Reflect.get(block, 'source')
+  if (!isPlainObject(source)) return block
+  const composition = Reflect.get(source, 'composition')
+  if (!isPlainObject(composition)) return block
+  const target = Reflect.get(composition, 'target')
+  if (!isPlainObject(target)) return block
+  const type = Reflect.get(target, 'type')
+  if (typeof type !== 'string') return block
+  const canonical = { ...target, type: canonicalStoredDeviceType(type) }
+  return { ...block, source: { ...source, composition: { ...composition, target: canonical } } }
+}
+
+function isPlainObject(value: unknown): value is object {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
 
 /** Customize an EXISTING device: each feature adds a capability or replaces fields of a native one (D663). */
 export const CompositionExistingTargetSchema = z.object({

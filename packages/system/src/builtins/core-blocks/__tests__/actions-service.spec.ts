@@ -6,6 +6,7 @@ import {
   type ActionRunChanged,
   type CapCall,
   type CapCaller,
+  canonicalStoredStepTargets,
   commandOrigin,
   type DeviceDirectory,
   DeviceType,
@@ -1095,5 +1096,38 @@ describe('actions — a row stored with a step shape this version no longer read
     await expect(
       w.service.update({ actionId: 'internal:nope', action: { name: 'x', steps: [STEP(1)] } }),
     ).rejects.toThrow(/not-found/)
+  })
+})
+
+describe('actions — a row stored with a device type D1033 retired', () => {
+  // `thermostat` was retired into `climate`. The step schema stays strict on the
+  // wire; the store reads the old row back with the canonical type instead of
+  // dropping the operator's action.
+  const domainStep = (deviceType: string): Record<string, unknown> => ({
+    kind: 'command',
+    target: { kind: 'domain', deviceType },
+    actionId: 'climate.heat',
+  })
+
+  it('lists the action with its domain target read as climate', async () => {
+    const w = await world()
+    await w.putRaw('warm', {
+      name: 'Warm up',
+      steps: [domainStep('thermostat')],
+      createdAt: 500,
+      updatedAt: 500,
+    })
+
+    const listed = await w.service.list()
+    expect(listed.map((e) => [e.id, e.steps])).toEqual([
+      ['internal:warm', [domainStep(DeviceType.Climate)]],
+    ])
+  })
+
+  it('reads the retired type inside an else list too', () => {
+    const steps = [{ ...domainStep('thermostat'), else: [domainStep('thermostat')] }]
+    expect(canonicalStoredStepTargets(steps)).toEqual([
+      { ...domainStep(DeviceType.Climate), else: [domainStep(DeviceType.Climate)] },
+    ])
   })
 })

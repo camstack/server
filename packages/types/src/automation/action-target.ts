@@ -20,7 +20,7 @@
  */
 import { z } from 'zod'
 import { findVocabAction } from '../device/cap-vocabulary/action-index.js'
-import { StoredDeviceTypeSchema } from '../device/device-kind.js'
+import { canonicalStoredDeviceType } from '../device/device-kind.js'
 import { DeviceType } from '../device/device-type.js'
 import { locationIconKey } from '../device/location-icon.js'
 import { EventCategory } from '../enums/event-category.js'
@@ -34,7 +34,7 @@ export const ActionTargetSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('domain'),
     /** Narrow to one kind of device. */
-    deviceType: StoredDeviceTypeSchema.optional(),
+    deviceType: z.enum(DeviceType).optional(),
     /** Narrow to one room: the `location` label devices carry. */
     roomId: z.string().min(1).optional(),
   }),
@@ -44,6 +44,36 @@ export const ActionTargetSchema = z.discriminatedUnion('kind', [
   }),
 ])
 export type ActionTarget = z.infer<typeof ActionTargetSchema>
+
+/**
+ * A STORED list of steps, read back: a `domain` target may name a device type
+ * D1033 retired (`thermostat`). The step schema stays a strict enum on the
+ * wire, so the store rewrites the retired name to its canonical type before
+ * it parses the row — on the step and on each step of its `else` list. Any
+ * other value is returned untouched, for the schema to judge.
+ */
+export function canonicalStoredStepTargets(steps: unknown): unknown {
+  if (!Array.isArray(steps)) return steps
+  return steps.map(canonicalStoredStep)
+}
+
+function canonicalStoredStep(step: unknown): unknown {
+  if (step === null || typeof step !== 'object' || Array.isArray(step)) return step
+  const target = Reflect.get(step, 'target')
+  const elseSteps = Reflect.get(step, 'else')
+  return {
+    ...step,
+    ...(target === undefined ? {} : { target: canonicalStoredTarget(target) }),
+    ...(elseSteps === undefined ? {} : { else: canonicalStoredStepTargets(elseSteps) }),
+  }
+}
+
+function canonicalStoredTarget(target: unknown): unknown {
+  if (target === null || typeof target !== 'object' || Array.isArray(target)) return target
+  const deviceType = Reflect.get(target, 'deviceType')
+  if (typeof deviceType !== 'string') return target
+  return { ...target, deviceType: canonicalStoredDeviceType(deviceType) }
+}
 
 /** What a resolver needs to know about one device. */
 export interface DirectoryDevice {

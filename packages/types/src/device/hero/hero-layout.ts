@@ -8,6 +8,7 @@
  * can hide one (Addendum 6): they appear whenever the device has the cap.
  * A row whose caps the device is not bound to is simply absent.
  */
+import { canonicalStoredDeviceType } from '../device-kind.js'
 import { DeviceRole, DeviceType } from '../device-type.js'
 import type { HeroRowId } from './hero-model.js'
 
@@ -99,5 +100,7 @@ function isDeviceType(type: string): type is DeviceType {
 export function resolveHeroLayout(type: string, role: string | null = null): HeroLayout {
   // D1033 — a plug-in heater is a switch by its controls and a heater by its role.
   if (type === DeviceType.Switch && role === DeviceRole.SwitchHeater) return HEATER_LAYOUT
-  return isDeviceType(type) ? HERO_LAYOUT_BY_TYPE[type] : HERO_LAYOUT_DEFAULT
+  // A caller holding a type D1033 retired (`thermostat`) gets the live type's layout.
+  const live = canonicalStoredDeviceType(type)
+  return isDeviceType(live) ? HERO_LAYOUT_BY_TYPE[live] : HERO_LAYOUT_DEFAULT
 }

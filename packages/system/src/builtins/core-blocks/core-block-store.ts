@@ -24,6 +24,7 @@ import type {
   RecordsAccess,
 } from '@camstack/types'
 import {
+  canonicalStoredBlockTarget,
   CoreBlockSchema,
   coreBlockSourceKind,
   normalizeCoreBlockWrite,
@@ -179,7 +180,7 @@ export class CoreBlockStore {
       const unreadable: ComposerUnreadableBlock[] = []
       for (const row of rows) {
         const raw = row.data.block
-        const parsed = CoreBlockSchema.safeParse(raw)
+        const parsed = CoreBlockSchema.safeParse(canonicalStoredBlockTarget(raw))
         if (!parsed.success) {
           skipped += 1
           if (mayBeComposition(raw)) {

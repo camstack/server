@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A notification rule saved with the retired thermostat device type matches climate devices again
+
 ## [1.2.699] - 2026-11-12
 
 ### Changed

@@ -1,5 +1,11 @@
-import { DeviceType, type IDeviceRuntimeState } from '@camstack/types'
-import { describe, expect, it, vi } from 'vitest'
+import {
+  type CapabilityDefinition,
+  type DeviceContext,
+  DeviceType,
+  type IDeviceRuntimeState,
+} from '@camstack/types'
+import { fakeAddonContext } from '@camstack/types/testing'
+import { describe, expect, it } from 'vitest'
 import { HaContainerDevice } from '../devices/ha-container-device.js'
 import { parseContainerEntities } from '../ha-container-reconcile.js'
 
@@ -22,46 +28,45 @@ const STORED_ENTITIES = [
   },
 ]
 
-function makeCtx(config: Record<string, unknown>): import('@camstack/types').DeviceContext {
-  const logger = {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    child: vi.fn(),
-    withTags: vi.fn(),
-  }
+const DEVICE_ID = 300
+const STABLE_ID = 'ha:test:300'
+
+/** A typed device context: the addon-context fake supplies the logger, bus, api and devices. */
+function makeCtx(config: Record<string, unknown>): DeviceContext {
+  const base = fakeAddonContext({ id: 'provider-homeassistant' })
   let runtimeState: IDeviceRuntimeState | null = null
   return {
-    id: 300,
-    stableId: 'ha:test:300',
+    id: DEVICE_ID,
+    stableId: STABLE_ID,
     parentDeviceId: null,
+    logger: base.logger,
+    api: base.api,
+    eventBus: base.eventBus,
+    devices: base.kernel.devices,
     deviceMeta: {
+      id: DEVICE_ID,
+      stableId: STABLE_ID,
+      addonId: 'provider-homeassistant',
       type: DeviceType.Container,
       name: 'Thermostat',
       location: null,
       disabled: false,
-      addonId: 'homeassistant',
-      metadata: {},
+      parentDeviceId: null,
+      metadata: null,
     },
     persistedConfig: config,
     initialRuntimeState: {},
-    eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => {}), getRecent: vi.fn(() => []) },
-    persistConfig: vi.fn(async () => {}),
-    bindRuntimeState: (rs: IDeviceRuntimeState) => {
+    persistConfig: async () => {},
+    fetchDevice: () => Promise.reject(new Error('fetchDevice is not part of this test')),
+    bindRuntimeState: (rs) => {
       runtimeState = rs
     },
-    registerNativeCap: (cap: { name: string; runtimeState?: unknown }) => {
-      if (cap.runtimeState && runtimeState) {
-        runtimeState.installCapSchema(
-          cap.name,
-          cap.runtimeState as Parameters<IDeviceRuntimeState['installCapSchema']>[1],
-        )
+    registerNativeCap(cap: CapabilityDefinition): void {
+      if (cap.runtimeState !== undefined && runtimeState !== null) {
+        runtimeState.installCapSchema(cap.name, cap.runtimeState)
       }
     },
-    api: {},
-    logger,
-  } as unknown as import('@camstack/types').DeviceContext
+  }
 }
 
 describe('HA Container with a retired stored device type (D1033)', () => {

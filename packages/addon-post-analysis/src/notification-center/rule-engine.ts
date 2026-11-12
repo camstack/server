@@ -34,6 +34,7 @@ import type {
 } from '@camstack/types'
 import type { ActionStepsOf } from './snooze-exempt.js'
 import {
+  canonicalStoredDeviceType,
   consumableLowPercentOf,
   isScheduleActive,
   resolveNcMediaImage,
@@ -1511,9 +1512,11 @@ function systemEventExclusion(
   // WHICH DEVICES COUNT AS WORTH HEARING ABOUT — the rule's answer, not the
   // intake's. Liveness is emitted for every device type; a household that only
   // wants cameras says so here. Fails closed on an unknown type: a device the
-  // mirror cannot name is not evidence of a camera.
+  // mirror cannot name is not evidence of a camera. A stored rule may name a
+  // type D1033 retired (`thermostat`): it is read as its live type (`climate`).
   if (condition.deviceTypes !== undefined && applies('deviceTypes')) {
-    if (subject.deviceType === undefined || !condition.deviceTypes.includes(subject.deviceType)) {
+    const wanted = condition.deviceTypes.map(canonicalStoredDeviceType)
+    if (subject.deviceType === undefined || !wanted.includes(subject.deviceType)) {
       return 'deviceTypes'
     }
   }

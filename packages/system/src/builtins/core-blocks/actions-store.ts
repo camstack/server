@@ -14,6 +14,7 @@ import {
   type ActionEntry,
   type ActionInput,
   ActionError,
+  canonicalStoredStepTargets,
   CORE_BLOCKS_ADDON_ID,
   IDLE_ACTION_STATUS,
   internalActionId,
@@ -75,7 +76,7 @@ export class ActionsStore {
    * overwrites it without reading its steps (`update`).
    */
   private readable(id: string, data: unknown): ActionEntry | null {
-    const parsed = ActionRowBodySchema.safeParse(data)
+    const parsed = ActionRowBodySchema.safeParse(withCanonicalStepTargets(data))
     if (parsed.success) return ActionsStore.entryOf(id, parsed.data)
     this.logger?.warn('internal action skipped — its stored body no longer parses; save it again', {
       meta: {
@@ -192,4 +193,11 @@ export class ActionsStore {
     await this.links.put({ id: String(deviceId), deviceId, data: { actionIds: unique } })
     return unique
   }
+}
+
+/** A stored row with any retired device type (D1033) in its step targets rewritten to its canonical one. */
+function withCanonicalStepTargets(data: unknown): unknown {
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) return data
+  const steps = Reflect.get(data, 'steps')
+  return steps === undefined ? data : { ...data, steps: canonicalStoredStepTargets(steps) }
 }
