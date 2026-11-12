@@ -9841,7 +9841,6 @@
       "turnOn": "Accendi",
       "turnOff": "Spegni",
       "reason": {
-        "offline": "{{offline}}: comandi non disponibili",
         "readOnly": "Solo lettura: non hai il permesso di comandarlo"
       },
       "supply": {

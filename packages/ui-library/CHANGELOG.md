@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The device card of a container (and any card in a narrow column) stacks its controls under the drawing instead of cutting them off
 - System hooks include the ir-transmitter learn method
+- An offline device card says Offline once, in its top line, instead of repeating it under the controls
 
 ## [1.2.430] - 2026-11-12
 

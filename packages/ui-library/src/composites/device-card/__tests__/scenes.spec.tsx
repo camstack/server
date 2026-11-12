@@ -216,11 +216,12 @@ describe('shell behaviour shared by every scene', () => {
   const fixture = plugFixtures(NOW)[0]
   if (fixture === undefined) throw new Error('no plug fixture')
 
-  it('an offline device says why and commands nothing', () => {
+  it('an offline device says it once, in the top line, and commands nothing', () => {
     const actions = plugActions()
     const common = offline(fixture.model.common)
     render(<PlugCard model={{ ...fixture.model, common }} actions={actions} />)
-    expect(screen.getByTestId('dc-reason').textContent).toContain(common.offlineLabel ?? '')
+    expect(screen.getAllByText(common.offlineLabel ?? 'Offline')).toHaveLength(1)
+    expect(screen.queryByTestId('dc-reason')).toBeNull()
     const power = screen.getByTestId('dc-plug-power')
     expect(power).toHaveProperty('disabled', true)
     fireEvent.click(power)

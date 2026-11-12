@@ -163,7 +163,7 @@ describe('the appliance scene', () => {
     expect(screen.getByTestId('dc-appliance-pause')).toBeTruthy()
   })
 
-  it('offline disables every control and writes the reason', () => {
+  it('offline disables every control without a reason line', () => {
     const idle = fixture(applianceFixtures('dish'), 'dish-idle')
     render(
       <ApplianceCard
@@ -172,7 +172,7 @@ describe('the appliance scene', () => {
       />,
     )
     expect(screen.getByTestId('dc-appliance-start')).toHaveProperty('disabled', true)
-    expect(screen.getByTestId('dc-reason').textContent).not.toBe('')
+    expect(screen.queryByTestId('dc-reason')).toBeNull()
   })
 
   it('formats a cycle in hours and minutes', () => {

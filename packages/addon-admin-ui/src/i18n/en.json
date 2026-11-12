@@ -9819,7 +9819,6 @@
       "turnOn": "Turn on",
       "turnOff": "Turn off",
       "reason": {
-        "offline": "{{offline}}: commands unavailable",
         "readOnly": "Read only: you do not have permission to command it"
       },
       "supply": {

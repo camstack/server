@@ -62,12 +62,9 @@ function useGating(common: CardCommon): CardGating {
   const t = useUiText()
   return useMemo(() => {
     if (common.online === false) {
-      return {
-        blocked: true,
-        reason: t('uiLibrary.deviceCard.reason.offline', '{{offline}}: commands unavailable', {
-          offline: common.offlineLabel ?? t('uiLibrary.deviceCard.offline', 'Offline'),
-        }),
-      }
+      // The top line already says "Offline for …": the controls are disabled
+      // without repeating it underneath.
+      return { blocked: true, reason: null }
     }
     if (common.readOnly) {
       return {
@@ -79,7 +76,7 @@ function useGating(common: CardCommon): CardGating {
       }
     }
     return { blocked: false, reason: null }
-  }, [common.online, common.offlineLabel, common.readOnly, t])
+  }, [common.online, common.readOnly, t])
 }
 
 /**
