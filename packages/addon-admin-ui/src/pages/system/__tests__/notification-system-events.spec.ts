@@ -61,6 +61,7 @@ describe('D637 — the field authors ONE family', () => {
       'package-llm',
       'recording',
       'device-attention',
+      'device-command',
     ])
   })
 
@@ -81,6 +82,9 @@ describe('D637 — the field authors ONE family', () => {
       nodes: true,
       packages: true,
       consumableThreshold: false,
+      commandActions: false,
+      commandOutcomes: false,
+      commandActorKinds: false,
     })
     expect(systemEventFilterVisibilityFor('device-events', ['device-offline']).nodes).toBe(false)
     expect(systemEventFilterVisibilityFor('device-events', ['device-offline'])).toEqual({
@@ -90,6 +94,9 @@ describe('D637 — the field authors ONE family', () => {
       nodes: false,
       packages: false,
       consumableThreshold: false,
+      commandActions: false,
+      commandOutcomes: false,
+      commandActorKinds: false,
     })
   })
 
@@ -212,6 +219,16 @@ describe('systemEventFilterVisibility', () => {
       nodes: false,
       packages: false,
       consumableThreshold: false,
+      commandActions: false,
+      commandOutcomes: false,
+      commandActorKinds: false,
+    })
+    // Only the command kind can be narrowed by what was commanded, how it settled and who asked.
+    expect(systemEventFilterVisibility(['device-command'])).toMatchObject({
+      devices: true,
+      commandActions: true,
+      commandOutcomes: true,
+      commandActorKinds: true,
     })
     // A stream belongs to a camera by construction — no type to narrow.
     expect(systemEventFilterVisibility(['stream-offline'])).toEqual({
@@ -220,6 +237,9 @@ describe('systemEventFilterVisibility', () => {
       nodes: false,
       packages: false,
       consumableThreshold: false,
+      commandActions: false,
+      commandOutcomes: false,
+      commandActorKinds: false,
     })
     expect(systemEventFilterVisibility(['node-offline'])).toEqual({
       devices: false,
@@ -227,6 +247,9 @@ describe('systemEventFilterVisibility', () => {
       nodes: true,
       packages: false,
       consumableThreshold: false,
+      commandActions: false,
+      commandOutcomes: false,
+      commandActorKinds: false,
     })
     // An addon update is reported per node AND per package.
     expect(systemEventFilterVisibility(['addon-update-available'])).toEqual({
@@ -235,6 +258,9 @@ describe('systemEventFilterVisibility', () => {
       nodes: true,
       packages: true,
       consumableThreshold: false,
+      commandActions: false,
+      commandOutcomes: false,
+      commandActorKinds: false,
     })
     expect(systemEventFilterVisibility(['server-update-available'])).toEqual({
       devices: false,
@@ -242,6 +268,9 @@ describe('systemEventFilterVisibility', () => {
       nodes: true,
       packages: true,
       consumableThreshold: false,
+      commandActions: false,
+      commandOutcomes: false,
+      commandActorKinds: false,
     })
     expect(systemEventFilterVisibility(['export-completed'])).toEqual({
       devices: false,
@@ -249,6 +278,9 @@ describe('systemEventFilterVisibility', () => {
       nodes: false,
       packages: false,
       consumableThreshold: false,
+      commandActions: false,
+      commandOutcomes: false,
+      commandActorKinds: false,
     })
     expect(systemEventFilterVisibility(['addon-updated'])).toEqual({
       devices: false,
@@ -256,6 +288,9 @@ describe('systemEventFilterVisibility', () => {
       nodes: true,
       packages: true,
       consumableThreshold: false,
+      commandActions: false,
+      commandOutcomes: false,
+      commandActorKinds: false,
     })
   })
 
@@ -266,6 +301,9 @@ describe('systemEventFilterVisibility', () => {
       nodes: true,
       packages: true,
       consumableThreshold: false,
+      commandActions: false,
+      commandOutcomes: false,
+      commandActorKinds: false,
     })
   })
 })
