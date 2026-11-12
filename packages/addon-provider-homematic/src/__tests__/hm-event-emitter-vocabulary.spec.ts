@@ -230,6 +230,27 @@ describe('HmEventEmitterDevice, the declared vocabulary', () => {
     })
   })
 
+  it('gains its buttons when the CCU answers after the child was built', () => {
+    // A hub reboot with a slow CCU: the child is restored before the session
+    // has enumerated the devices, so it starts on the persisted tokens.
+    const h = makeCtx()
+    new HmEventEmitterDevice(h.ctx)
+    expect(h.status()?.vocabulary.some((entry) => entry.source !== undefined)).toBe(false)
+    // The session publishes the facade, then reports its state change.
+    const f = makeFacade()
+    homematicFacades.set(INTEGRATION_ID, f.facade)
+    homematicFacades.emitSnapshot(INTEGRATION_ID)
+    expect(h.status()?.vocabulary.map((entry) => `${entry.source?.label}: ${entry.label}`)).toEqual(
+      [
+        'Button 1 (channel 1): Short press',
+        'Button 1 (channel 1): Long press',
+        'Button 2 (channel 2): Short press',
+        'Button 2 (channel 2): Long press',
+      ],
+    )
+    expect(h.status()?.lastEvent).toBeNull()
+  })
+
   it('declares the plain tokens when the CCU is not reachable', () => {
     const h = makeCtx()
     new HmEventEmitterDevice(h.ctx)

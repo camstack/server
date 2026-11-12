@@ -13,6 +13,7 @@ import {
   type InferNativeProvider,
 } from '@camstack/types'
 import type { ValueChangedEvent } from 'nodehomematic'
+import { homematicFacades } from '../homematic-facade-resolver.js'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'
 import {
   HM_KEY_PRESS_DATAPOINTS,
@@ -50,6 +51,8 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
   readonly #undeclaredLogged = new Set<string>()
   #eventSeq = 0
   #eventCount = 0
+  /** Unsubscribe for the integration's state-change fan-out. */
+  #snapshotUnsub: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
     super(ctx, hmEventEmitterSchema)
@@ -58,6 +61,38 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
       persisted && persisted.length > 0 ? persisted : HM_KEY_PRESS_DATAPOINTS
     this.registerEventEmitterCap()
     this.attachValueChangedListener((event) => this.decodeKeyPress(event))
+    // A child restored before its CCU enumerated the devices starts on the
+    // persisted tokens. The session reports every state change (started,
+    // connected) on this fan-out, so the buttons land the moment the CCU
+    // answers, not at the first press.
+    if (this.integrationId !== undefined) {
+      this.#snapshotUnsub = homematicFacades.onSnapshot(this.integrationId, () =>
+        this.refreshDeclaredVocabulary(),
+      )
+    }
+  }
+
+  /**
+   * Rewrite the slice with the buttons once the CCU's channel list carries
+   * them. A no-op while it does not, and after the buttons were declared.
+   */
+  private refreshDeclaredVocabulary(): void {
+    if (this.#declared !== null) return
+    const vocabulary = this.vocabulary()
+    if (this.#declared === null) return
+    const current = this.runtimeState.getCapState<EventEmitterStatus>('event-emitter')
+    this.runtimeState.setCapState('event-emitter', {
+      eventTypes: eventTypesOfVocabulary(vocabulary),
+      vocabulary: [...vocabulary],
+      lastEvent: current?.lastEvent ?? null,
+      eventCountSinceStart: current?.eventCountSinceStart ?? 0,
+    })
+  }
+
+  override async removeDevice(): Promise<void> {
+    this.#snapshotUnsub?.()
+    this.#snapshotUnsub = null
+    await super.removeDevice()
   }
 
   private registerEventEmitterCap(): void {
