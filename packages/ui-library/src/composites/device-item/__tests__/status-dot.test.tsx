@@ -14,9 +14,10 @@ function title(scope: { querySelector: (s: string) => Element | null }): string 
 }
 
 describe('StatusDot', () => {
-  it('shows "Online" / "Disabled" titles', () => {
+  it('a reachable device carries no "Online" tooltip; Disabled names itself', () => {
     const { container: a } = render(<StatusDot status="online" />)
-    expect(title(a)).toBe('Online')
+    expect(title(a)).toBeNull()
+    expect(a.querySelector('[data-status]')?.getAttribute('data-status')).toBe('online')
     const { container: b } = render(<StatusDot status="disabled" />)
     expect(title(b)).toBe('Disabled')
   })
@@ -49,7 +50,7 @@ describe('StatusDot', () => {
   it('ignores lastChangedAt for non-offline statuses', () => {
     vi.useFakeTimers().setSystemTime(NOW)
     const { container } = render(<StatusDot status="online" lastChangedAt={NOW - 5 * 60_000} />)
-    expect(title(container)).toBe('Online')
+    expect(title(container)).toBeNull()
   })
 
   it('falls back to plain "Offline" when lastChangedAt is non-positive', () => {

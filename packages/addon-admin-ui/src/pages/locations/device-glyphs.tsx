@@ -27,41 +27,38 @@ export function DeviceTypeIcon({ type, role, className }: DeviceTypeIconProps) {
   )
 }
 
-export interface StatusDotProps {
-  readonly online: boolean
-  /** Name of the device the dot belongs to — the dot's only accessible text. */
-  readonly deviceName: string
-}
-
-/**
- * Online/offline as a dot, with the state ALSO in text for a reader that
- * cannot see colour. A colour-only status is a status half the operators do
- * not get.
- */
-interface LabeledStatusDotProps {
+export interface DeviceReachCellProps {
   readonly device: SiteDevice
 }
 
-/** Status dot named with the same label the row paints. */
-export function LabeledStatusDot({ device }: LabeledStatusDotProps): ReactElement {
+/**
+ * A device row's reachability. A reachable device shows a quiet green dot and
+ * no word — the absence of Offline already says it. An offline device names
+ * itself in text too (a colour-only status is a status half the operators do
+ * not get), and the dot carries the device's name for a screen reader.
+ */
+export function DeviceReachCell({ device }: DeviceReachCellProps): ReactElement {
   const label = useDeviceLabel(siteDeviceFields(device), 'compact')
-  return <StatusDot online={device.online} deviceName={label} />
-}
-
-export function StatusDot({ online, deviceName }: StatusDotProps) {
+  if (device.online) {
+    return (
+      <span
+        aria-hidden="true"
+        className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-success"
+        data-status="online"
+      />
+    )
+  }
+  const offline = i18n.t('common.offline')
   return (
-    <span
-      className={
-        online
-          ? 'inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-success'
-          : 'inline-block h-1.5 w-1.5 shrink-0 rounded-full border border-foreground-subtle'
-      }
-      role="img"
-      aria-label={i18n.t('locations.deviceGlyphs.aria', {
-        name: deviceName,
-        state: online ? i18n.t('common.online') : i18n.t('common.offline'),
-      })}
-      title={online ? i18n.t('common.online') : i18n.t('common.offline')}
-    />
+    <span className="flex items-center gap-1.5">
+      <span
+        className="inline-block h-1.5 w-1.5 shrink-0 rounded-full border border-foreground-subtle"
+        data-status="offline"
+        role="img"
+        aria-label={i18n.t('locations.deviceGlyphs.aria', { name: label, state: offline })}
+        title={offline}
+      />
+      <span className="text-xs text-foreground-muted">{offline}</span>
+    </span>
   )
 }

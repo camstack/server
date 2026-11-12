@@ -149,7 +149,7 @@ describe('device table — the NAME is never cut', () => {
     // It is the rightmost thing on the row, so it is what the operator reaches
     // at the end of the sideways scroll; it must not be a hidden column.
     expect(last?.className).not.toContain('hidden')
-    expect(last?.querySelector('[title="Online"]')).not.toBeNull()
+    expect(last?.querySelector('[data-status="online"]')).not.toBeNull()
   })
 
   it('the secondary lines in the cell follow the same policy as the name', () => {

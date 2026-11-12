@@ -46,7 +46,7 @@ import { ChevronDown, ChevronRight, Pencil, RefreshCw, Trash2, X } from 'lucide-
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { DeviceTypeIcon, LabeledStatusDot } from './device-glyphs'
+import { DeviceReachCell, DeviceTypeIcon } from './device-glyphs'
 import { LocationDescriptionField } from './LocationDescriptionField'
 import { LocationZoneField } from './LocationZoneField'
 import { LocationIconPicker } from './LocationIconPicker'
@@ -162,14 +162,7 @@ export function LocationCard({
       key: 'status',
       header: t('locations.columns.status'),
       notSortableReason: t('locations.columns.noSort'),
-      render: (row) => (
-        <span className="flex items-center gap-1.5">
-          <LabeledStatusDot device={row.device} />
-          <span className="text-xs text-foreground-muted">
-            {row.device.online ? t('common.online') : t('common.offline')}
-          </span>
-        </span>
-      ),
+      render: (row) => <DeviceReachCell device={row.device} />,
     },
   ]
 

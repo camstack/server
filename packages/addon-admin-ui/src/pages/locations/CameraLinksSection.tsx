@@ -34,7 +34,7 @@ import {
   withLinked,
 } from '../../components/device/customize/kinds/linked-devices-model'
 import { customizePath } from '../../lib/customization-routes'
-import { DeviceTypeIcon, LabeledStatusDot } from './device-glyphs'
+import { DeviceReachCell, DeviceTypeIcon } from './device-glyphs'
 import { QuickAddDevicesDialog } from './QuickAddDevicesDialog'
 import { siteDeviceFields, type SiteDevice } from './site-locations'
 
@@ -184,12 +184,7 @@ function CameraLinksBlock({ camera, byId }: CameraLinksBlockProps) {
         return device === undefined ? (
           <span className="text-xs text-foreground-subtle">—</span>
         ) : (
-          <span className="flex items-center gap-1.5">
-            <LabeledStatusDot device={device} />
-            <span className="text-xs text-foreground-muted">
-              {device.online ? t('common.online') : t('common.offline')}
-            </span>
-          </span>
+          <DeviceReachCell device={device} />
         )
       },
     },

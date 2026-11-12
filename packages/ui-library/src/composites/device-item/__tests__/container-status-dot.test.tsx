@@ -5,7 +5,7 @@
  * Resolution reuses `resolveContainerPrimary(children, linkDeviceId)`, the
  * same helper the row control binds to, so the dot and the control agree.
  *
- * The StatusDot atom carries a `title` of Online / Offline / Disabled, which
+ * The StatusDot atom carries a `data-status` of online / offline / disabled, which
  * we assert against. Covered in BOTH card and table views.
  */
 import { render } from '@testing-library/react'
@@ -80,13 +80,16 @@ function container(extra: Partial<DeviceItemDevice> = {}): DeviceItemDevice {
   }
 }
 
+const DOT_STATE: Readonly<Record<string, string>> = {
+  online: 'Online',
+  offline: 'Offline',
+  disabled: 'Disabled',
+}
+
 // lock > switch in PRIORITY → lock is the priority-default primary child.
 function dotTitle(scope: { querySelector: (s: string) => Element | null }): string | null {
-  return (
-    scope
-      .querySelector('[title="Online"], [title="Offline"], [title="Disabled"]')
-      ?.getAttribute('title') ?? null
-  )
+  const status = scope.querySelector('[data-status]')?.getAttribute('data-status')
+  return status === undefined || status === null ? null : (DOT_STATE[status] ?? null)
 }
 
 describe('DeviceItem — container status dot follows primary child reachability', () => {

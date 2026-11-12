@@ -12,6 +12,9 @@
  *
  * The "alive" states (online + recording) pulse; offline + disabled are static.
  *
+ * The online dot carries no tooltip — a reachable device is not labelled
+ * "Online" anywhere; only the other states name themselves.
+ *
  * When `status === 'offline'` and a `lastChangedAt` (ms epoch of the last
  * online→offline transition) is supplied, the hover tooltip is enriched to
  * "Offline · last seen Xm ago".
@@ -44,12 +47,13 @@ function resolveTitle(
   status: StatusDotStatus,
   lastChangedAt: number | null | undefined,
   t: UiTextFn,
-): string {
+): string | undefined {
   switch (status) {
     case 'disabled':
       return t('uiLibrary.statusDot.disabled', 'Disabled')
     case 'online':
-      return t('uiLibrary.statusDot.online', 'Online')
+      // A reachable device says nothing: the absence of Offline already says it.
+      return undefined
     case 'recording-continuous':
       return t('uiLibrary.statusDot.recordingAlways', 'Recording · always')
     case 'recording-events':
@@ -88,6 +92,7 @@ export function StatusDot({ status, lastChangedAt }: StatusDotProps): ReactNode 
         colorClass(status),
         isAlive(status) && 'animate-pulse',
       )}
+      data-status={status}
       title={resolveTitle(status, lastChangedAt, t)}
     />
   )

@@ -39,7 +39,7 @@ import {
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { DeviceTypeIcon, LabeledStatusDot } from './device-glyphs'
+import { DeviceReachCell, DeviceTypeIcon } from './device-glyphs'
 import {
   cascadeFollowerCount,
   siteDeviceFields,
@@ -190,14 +190,7 @@ export function UnassignedTable({
       key: 'status',
       header: t('locations.unassignedTable.status', 'Status'),
       sortValue: (device) => (device.online ? 1 : 0),
-      render: (device) => (
-        <span className="flex items-center gap-1.5">
-          <LabeledStatusDot device={device} />
-          <span className="text-xs text-foreground-muted">
-            {device.online ? t('common.online') : t('common.offline')}
-          </span>
-        </span>
-      ),
+      render: (device) => <DeviceReachCell device={device} />,
     },
     {
       key: 'followers',

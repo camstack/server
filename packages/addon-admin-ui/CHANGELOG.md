@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Customize offers the switch role On/off light (switch-light) for a relay that drives a lamp
 - The light group's member picker offers relays whose role is switch-light.
 - Device page, search, locations and helper templates use the device's role icon; the device header no longer says Online, only Offline
+- Device page, search, locations and helper templates use the device's role icon, and the Locations tables now draw the shared type icons too (a hub is a network glyph, a climate device a thermometer); the device header and the Locations rows no longer say Online, only Offline
 
 ## [1.2.654] - 2026-11-12
 
