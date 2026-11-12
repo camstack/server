@@ -84,6 +84,22 @@ export {
   projectDeviceRow,
   type HeroRowModel,
 } from './hero-row.js'
+export {
+  HERO_MEASUREMENT_BANDS,
+  HERO_MEASUREMENT_QUANTITIES,
+  HERO_MEASUREMENT_SINCE_KINDS,
+  HeroMeasurementSchema,
+  contactMeasurement,
+  humidityMeasurement,
+  powerMeasurement,
+  temperatureBand,
+  temperatureMeasurement,
+  textMeasurement,
+  type HeroMeasurement,
+  type HeroMeasurementBand,
+  type HeroMeasurementQuantity,
+  type HeroMeasurementSinceKind,
+} from './hero-measurement.js'
 export { heroText, type HeroText } from './hero-text.js'
 export * from './media-player-view.js'
 export { resolveOwnPower } from './own-power.js'

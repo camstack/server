@@ -30,6 +30,7 @@ import { HERO_SCENE_ROW_IDS, HERO_SIDE_TILES_MAX } from './hero-model.js'
 import { ROW_READING_FACT_IDS } from './hero-row.js'
 import type { HeroState } from './hero-state.js'
 import { heroText, type HeroText } from './hero-text.js'
+import type { HeroMeasurement } from './hero-measurement.js'
 import { resolveOwnPower } from './own-power.js'
 
 export interface HeroModelInput {
@@ -200,6 +201,20 @@ function historyLabelOf(type: string): HeroText {
   }
 }
 
+/**
+ * A sensor that measures exactly ONE thing is drawn as that reading. Two measuring
+ * caps (a temperature and a humidity on one device) keep today's card, and so does
+ * an offline device: its reading is no longer current.
+ */
+function measurementOf(
+  input: HeroModelInput,
+  fragments: readonly HeroFragment[],
+): HeroMeasurement | undefined {
+  if (input.device.type !== DeviceType.Sensor || !input.device.online) return undefined
+  const measured = fragments.flatMap((f) => (f.measurement === undefined ? [] : [f.measurement]))
+  return measured.length === 1 ? measured[0] : undefined
+}
+
 function sceneOf(role: string | null, type: string, fragments: readonly HeroFragment[]): HeroScene {
   const parts = fragments.flatMap((f) => (f.scene === undefined ? [] : [f.scene]))
   return {
@@ -228,6 +243,7 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
   const fragments = contributed.map((c) => c.fragment)
 
   const readings = fragments.flatMap((f) => (f.reading === undefined ? [] : [f.reading]))
+  const measurement = measurementOf(input, fragments)
   const { state, assumed, title } = stateOf(input, readings)
   const scene = sceneOf(device.role, device.type, fragments)
   const look = resolveHeroLook(device.role, device.type, state, scene.mode)
@@ -324,6 +340,7 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
     timedRun,
     powerSupply,
     rows,
+    ...(measurement === undefined ? {} : { measurement }),
     gated,
     provenance: contributed.flatMap((c) => provenanceOf(c.cap, c.fragment)),
   }

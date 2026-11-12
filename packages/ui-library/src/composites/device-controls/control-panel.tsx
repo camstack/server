@@ -64,7 +64,7 @@ export function toDateTimeInput(value: string): string {
 
 // ── Numeric sub-widget ────────────────────────────────────────────────────────
 
-interface NumericControlProps {
+export interface NumericControlProps {
   readonly value: number
   readonly busy: boolean
   readonly onCommit: (v: number) => void
@@ -78,7 +78,8 @@ interface NumericControlProps {
   readonly precision?: number
 }
 
-function NumericControl({
+/** A number typed in, with − / + steps; shared by the control panel and the hero row. */
+export function NumericControl({
   value,
   busy,
   onCommit,
@@ -174,13 +175,14 @@ function NumericControl({
 
 // ── Text sub-widget ───────────────────────────────────────────────────────────
 
-interface TextControlProps {
+export interface TextControlProps {
   readonly value: string
   readonly busy: boolean
   readonly onCommit: (v: string) => void
 }
 
-function TextControl({ value, busy, onCommit }: TextControlProps): ReactNode {
+/** Free text, committed on blur or Enter; shared by the control panel and the hero row. */
+export function TextControl({ value, busy, onCommit }: TextControlProps): ReactNode {
   const [draft, setDraft] = useState(value)
 
   return (

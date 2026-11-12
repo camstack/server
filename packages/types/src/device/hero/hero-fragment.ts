@@ -14,6 +14,7 @@ import type {
   HeroSideTile,
   HeroTimedRunSlot,
 } from './hero-model.js'
+import type { HeroMeasurement } from './hero-measurement.js'
 import type { HeroSceneMode } from './hero-scene.js'
 import type { HeroState } from './hero-state.js'
 import type { HeroText } from './hero-text.js'
@@ -116,4 +117,6 @@ export interface HeroFragment {
   /** The scene's top line when it says more than the title ("Cooling · fan Auto"); the first fragment that names one wins. */
   readonly caption?: HeroText
   readonly scene?: { readonly mode?: HeroSceneMode; readonly level?: number }
+  /** This cap's single reading, when a sensor that measures only it is drawn as that reading. */
+  readonly measurement?: HeroMeasurement
 }

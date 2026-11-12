@@ -29,6 +29,7 @@ import {
   StateLookSchema,
   type HeroTone,
 } from './hero-state.js'
+import { HeroMeasurementSchema } from './hero-measurement.js'
 import { HeroSceneSchema } from './hero-scene.js'
 import { HeroTextSchema, heroText, type HeroText } from './hero-text.js'
 
@@ -217,6 +218,27 @@ export const HeroControlSchema = z.discriminatedUnion('kind', [
     options: z.array(z.string()),
     /** A readable label per option value; an option without one is drawn as its raw value. */
     optionLabels: z.record(z.string(), HeroTextSchema).optional(),
+    call: HeroCallSchema,
+    valueArg: z.string(),
+  }),
+  /** A number the device takes without known bounds: typed in, never slid. */
+  z.object({
+    kind: z.literal('number'),
+    id: z.string(),
+    label: HeroTextSchema,
+    value: z.number().nullable(),
+    /** `null` = any number; the device rounds what it does not accept. */
+    step: z.number().nullable(),
+    unit: z.string(),
+    call: HeroCallSchema,
+    valueArg: z.string(),
+  }),
+  /** Free text the device takes. */
+  z.object({
+    kind: z.literal('text'),
+    id: z.string(),
+    label: HeroTextSchema,
+    value: z.string().nullable(),
     call: HeroCallSchema,
     valueArg: z.string(),
   }),
@@ -481,6 +503,11 @@ export const HeroModelSchema = z.object({
   timedRun: HeroTimedRunSlotSchema.nullable(),
   powerSupply: HeroPowerSupplySlotSchema.nullable(),
   rows: z.array(HeroRowSchema),
+  /**
+   * The ONE measurement of a simple sensor, drawn once inside the scene in place of
+   * the caption, tiles and value chips. Absent = the card draws as before.
+   */
+  measurement: HeroMeasurementSchema.optional(),
   /** Ids of parts that actuate the device, hidden from a session that may not act on it. */
   gated: z.array(z.string()),
   provenance: z.array(HeroProvenanceSchema),

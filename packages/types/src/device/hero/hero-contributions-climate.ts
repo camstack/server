@@ -23,10 +23,12 @@ import {
   action,
   contribution,
   fact,
+  measured,
   reading,
   type HeroContribution,
 } from './hero-contribution-kit.js'
 import type { HeroFragment } from './hero-fragment.js'
+import { humidityMeasurement, temperatureMeasurement, textMeasurement } from './hero-measurement.js'
 import type { HeroControl, HeroFact, HeroRow, HeroSideTile } from './hero-model.js'
 import type { HeroSceneMode } from './hero-scene.js'
 import { heroText, type HeroText } from './hero-text.js'
@@ -441,24 +443,32 @@ const temperatureContribution = contribution(
   'temperature-sensor',
   TemperatureSensorStatusSchema,
   (slice) =>
-    sensorFragment(
-      slice?.temperature ?? null,
-      'temperature',
-      'thermometer',
-      'Temperature',
-      'Temperatura',
-      formatDegrees(slice?.temperature ?? 0),
+    measured(
+      sensorFragment(
+        slice?.temperature ?? null,
+        'temperature',
+        'thermometer',
+        'Temperature',
+        'Temperatura',
+        formatDegrees(slice?.temperature ?? 0),
+      ),
+      slice?.temperature == null
+        ? undefined
+        : temperatureMeasurement(slice.temperature, slice.lastFetchedAt),
     ),
 )
 
 const humidityContribution = contribution('humidity-sensor', HumiditySensorStatusSchema, (slice) =>
-  sensorFragment(
-    slice?.humidity ?? null,
-    'humidity',
-    'droplets',
-    'Humidity',
-    'Umidità',
-    `${Math.round(slice?.humidity ?? 0)}%`,
+  measured(
+    sensorFragment(
+      slice?.humidity ?? null,
+      'humidity',
+      'droplets',
+      'Humidity',
+      'Umidità',
+      `${Math.round(slice?.humidity ?? 0)}%`,
+    ),
+    slice?.humidity == null ? undefined : humidityMeasurement(slice.humidity, slice.lastFetchedAt),
   ),
 )
 
@@ -502,7 +512,10 @@ const enumContribution = contribution('enum-sensor', EnumSensorStatusSchema, (sl
   // A timestamp is not a state: it would read as an opaque string.
   if (slice === undefined || slice.value === '') return { reading: reading('sensor', 'unknown') }
   if (slice.timestamp === true) return { reading: reading('sensor', 'on') }
-  return sensorFragment(slice.value, 'reading', 'gauge', 'State', 'Stato', slice.value)
+  return measured(
+    sensorFragment(slice.value, 'reading', 'gauge', 'State', 'Stato', slice.value),
+    textMeasurement(slice.value, slice.lastFetchedAt),
+  )
 })
 
 interface AirPart {

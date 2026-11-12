@@ -1,0 +1,200 @@
+/**
+ * The simple sensor card and the model-drawn rows of sensor and control devices.
+ * `/devices` lists them; `/devices/1501` is a hot water temperature (48 °C, hot),
+ * `/devices/1502` a cold outside temperature, `/devices/1503` a power reading
+ * (1221 W), `/devices/1504` an open window contact, `/devices/1505` a text state
+ * ("Eco"), `/devices/1506` a humidity reading; 1507-1509 are control devices
+ * (a number without bounds, a choice, a text). Load alone
+ * (`--fixtures sensor-card`). Every hero model and row is built with the shared
+ * pure builder, so the fixture draws exactly what the hub would serve.
+ */
+import { buildHeroModel } from '../../../../packages/types/src/device/hero/build-hero-model.ts'
+import { projectDeviceRow } from '../../../../packages/types/src/device/hero/hero-row.ts'
+import type { HeroModel } from '../../../../packages/types/src/device/hero/hero-model.ts'
+import { defineFixtures } from './_define'
+import historyArea from './history'
+import { MINUTE, NOW } from './_time'
+
+const ADDON = 'provider-homeassistant'
+
+interface Spec {
+  readonly name: string
+  readonly type: 'sensor' | 'control'
+  readonly role: string
+  readonly quantity?: string
+  readonly slices: Readonly<Record<string, unknown>>
+}
+
+const SPECS: Readonly<Record<number, Spec>> = {
+  1501: {
+    name: 'Hot water temperature',
+    type: 'sensor',
+    role: 'temperature-sensor',
+    slices: { 'temperature-sensor': { temperature: 48, lastFetchedAt: NOW - 2 * MINUTE } },
+  },
+  1502: {
+    name: 'Outside temperature',
+    type: 'sensor',
+    role: 'temperature-sensor',
+    slices: { 'temperature-sensor': { temperature: 6.9, lastFetchedAt: NOW - 2 * MINUTE } },
+  },
+  1503: {
+    name: 'Generator minimum power',
+    type: 'sensor',
+    role: 'power-sensor',
+    slices: { 'power-meter': { power: 1221, lastFetchedAt: NOW } },
+  },
+  1504: {
+    name: 'Kitchen window',
+    type: 'sensor',
+    role: 'contact-sensor',
+    slices: { contact: { entryOpen: true, lastChangedAt: NOW - 12 * MINUTE } },
+  },
+  1505: {
+    name: 'Hot water mode',
+    type: 'sensor',
+    role: 'enum-sensor',
+    slices: { 'enum-sensor': { value: 'Eco', lastFetchedAt: NOW - 11 * 60 * MINUTE } },
+  },
+  1506: {
+    name: 'Bathroom humidity',
+    type: 'sensor',
+    role: 'humidity-sensor',
+    slices: { 'humidity-sensor': { humidity: 58, lastFetchedAt: NOW - 5 * MINUTE } },
+  },
+  1507: {
+    name: 'Heating curve offset',
+    type: 'control',
+    role: 'numeric-control',
+    slices: {
+      control: { kind: 'numeric', value: 2.5, options: [], lastChangedAt: NOW - 30 * MINUTE },
+    },
+  },
+  1508: {
+    name: 'Hot water boost',
+    type: 'control',
+    role: 'select-control',
+    slices: {
+      control: {
+        kind: 'select',
+        value: 'Comfort',
+        options: ['Eco', 'Comfort', 'Boost'],
+        lastChangedAt: NOW - 30 * MINUTE,
+      },
+    },
+  },
+  1509: {
+    name: 'Holiday note',
+    type: 'control',
+    role: 'text-control',
+    slices: {
+      control: { kind: 'text', value: 'Back on Monday', options: [], lastChangedAt: NOW },
+    },
+  },
+}
+
+const IDS = Object.keys(SPECS).map(Number)
+const specOf = (id: number | undefined): Spec | undefined =>
+  id === undefined ? undefined : SPECS[id]
+
+function deviceOf(id: number, spec: Spec): Record<string, unknown> {
+  return {
+    id,
+    stableId: `sensor.card_${id}`,
+    addonId: ADDON,
+    type: spec.type,
+    name: spec.name,
+    location: 'Utility room',
+    disabled: false,
+    parentDeviceId: null,
+    role: spec.role,
+    online: true,
+    probed: true,
+    features: [],
+    isCamera: false,
+    config: {},
+    secretConfigPaths: [],
+    metadata: {},
+  }
+}
+
+function modelOf(id: number, canActuate: boolean): HeroModel | null {
+  const spec = SPECS[id]
+  if (spec === undefined) return null
+  return buildHeroModel({
+    device: {
+      id,
+      type: spec.type,
+      role: spec.role,
+      name: spec.name,
+      online: true,
+      integration: 'Enpal',
+    },
+    caps: [...Object.keys(spec.slices), 'device-status'],
+    features: [],
+    slices: spec.slices,
+    now: NOW,
+    remoteCommands: null,
+    access: { canActuate },
+  })
+}
+
+const history = historyArea.handlers
+const viaHistory = (path: string): ((i: unknown) => unknown) => {
+  const h = history[path]
+  return typeof h === 'function'
+    ? (i: unknown) => Reflect.apply(h, undefined, [{ ...(i as object), deviceId: 202 }])
+    : () => h ?? null
+}
+
+export default defineFixtures({
+  area: 'sensor-card',
+  description: 'Simple sensor cards (temperature, power, contact, text) and sensor/control rows',
+  handlers: {
+    'deviceManager.listAll': IDS.map((id) => deviceOf(id, SPECS[id] as Spec)),
+    'deviceManager.getDevice': (i: { deviceId?: number }) => {
+      const spec = specOf(i.deviceId)
+      return spec === undefined ? null : deviceOf(i.deviceId ?? 0, spec)
+    },
+    'deviceManager.getBindings': (i: { deviceId?: number }) => {
+      const spec = specOf(i.deviceId)
+      return {
+        deviceId: i.deviceId ?? 0,
+        entries: Object.keys(spec?.slices ?? {}).map((capName) => ({
+          capName,
+          kind: 'native' as const,
+          providerAddonId: ADDON,
+          providerNodeId: 'hub',
+          nativeAddonId: ADDON,
+        })),
+      }
+    },
+    'deviceManager.getChildren': [],
+    'deviceManager.listLocations': [],
+    'deviceManager.getRoleDisplayDefaults': { defaults: {} },
+    'deviceManager.getDeviceAggregate': (i: { deviceId?: number }) => ({
+      settings: { tabs: [], sections: [] },
+      live: { sections: [] },
+      tabs: undefined,
+      deviceId: i.deviceId ?? 0,
+    }),
+    'coreBlocks.getCustomization': { state: 'loaded', view: null },
+    'powerSource.getStatus': { linked: false },
+    'preferences.get': { rows: [] },
+    'alerts.list': [],
+    'deviceState.getSnapshot': (i: { deviceId?: number }) => specOf(i.deviceId)?.slices ?? {},
+    'deviceState.getCapSlice': (i: { deviceId?: number; capName?: string }) =>
+      specOf(i.deviceId)?.slices[i.capName ?? ''] ?? {},
+    'heroLayout.getHeroModel': (i: { deviceId?: number; canActuate?: boolean }) =>
+      modelOf(i.deviceId ?? 0, i.canActuate !== false),
+    'heroLayout.getRowModels': (i: { deviceIds?: readonly number[]; canActuate?: boolean }) =>
+      (i.deviceIds ?? []).map((id) => {
+        const model = modelOf(id, i.canActuate !== false)
+        return model === null ? null : projectDeviceRow(model)
+      }),
+    'deviceHistory.listSeries': viaHistory('deviceHistory.listSeries'),
+    'deviceHistory.query': viaHistory('deviceHistory.query'),
+    'deviceHistory.queryMany': history['deviceHistory.queryMany'] ?? null,
+    'deviceHistory.getDeviceEnabled': { enabled: true },
+  },
+})

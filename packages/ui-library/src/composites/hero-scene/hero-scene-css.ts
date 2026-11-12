@@ -65,6 +65,7 @@ export const HERO_SCENE_CSS = `
 .art-bubble:nth-child(4){animation-delay:1.2s} .art-bubble:nth-child(5){animation-delay:1.6s}
 .art-wave { animation:hs-wave 2.6s linear infinite; }
 .art-stream { stroke-dasharray:6 6; animation:hs-stream .5s linear infinite; }
+.hs-wire { stroke-dasharray:6 6; animation:hs-stream calc(var(--hs-t) * .4) linear infinite; }
 .art-kibble { animation:hs-drop 1.1s ease-in infinite; }
 .art-kibble:nth-child(2){animation-delay:.35s} .art-kibble:nth-child(3){animation-delay:.7s}
 .art-sweep { animation:hs-travel 5s ease-in-out infinite; }

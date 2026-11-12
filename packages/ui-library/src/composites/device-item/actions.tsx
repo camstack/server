@@ -45,6 +45,7 @@ import { hasMotionTriggerFeature } from './helpers'
 import { AdminLinkQuickAction } from './admin-link-quick-action'
 import { RebootQuickAction } from './reboot-quick-action'
 import { useContainerChildren } from './container-children-context'
+import { ModelRowControl, ModelRowReading } from './model-row-value'
 
 /** DeviceTypes whose row display is the live sensor value, not a control. */
 const SENSOR_VALUE_TYPES: ReadonlySet<string> = new Set<string>([
@@ -131,7 +132,7 @@ export function DeviceItemActions({
           {showOnMotion && (
             <OnMotionToggle trpc={trpc} deviceId={device.id} features={device.features} />
           )}
-          <SensorValueAtom trpc={trpc} device={device} />
+          <SensorRowValue trpc={trpc} device={device} />
         </ControlColumn>
       )}
       {InlineControl !== null && (
@@ -144,7 +145,7 @@ export function DeviceItemActions({
           {showOnMotion && (
             <OnMotionToggle trpc={trpc} deviceId={device.id} features={device.features} />
           )}
-          <InlineControl trpc={trpc} deviceId={device.id} features={device.features} />
+          <TypeInlineControl trpc={trpc} device={device} InlineControl={InlineControl} />
           <TimedRunRowControl
             trpc={trpc}
             deviceId={device.id}
@@ -171,6 +172,41 @@ export function DeviceItemActions({
       <AdminLinkQuickAction trpc={trpc} deviceId={device.id} />
     </>
   )
+}
+
+// ── Row value from the row model ────────────────────────────────────
+//
+// A Sensor row draws its measurement and a Control row its primary control from the
+// projected row model (`heroLayout.getRowModels`), the model the device page draws.
+// Today's atoms stay the fallback: a sensor with two readings, a presence device, a
+// date control, or a server without a row model for the device.
+
+function SensorRowValue({
+  trpc,
+  device,
+}: {
+  readonly trpc: UseDeviceProxyTrpc
+  readonly device: DeviceItemDevice
+}): ReactNode {
+  const atom = <SensorValueAtom trpc={trpc} device={device} />
+  if (device.type !== DeviceType.Sensor) return atom
+  return <ModelRowReading deviceId={device.id} fallback={atom} />
+}
+
+type InlineControlComponent = NonNullable<ReturnType<typeof resolveDeviceControl>>['InlineControl']
+
+function TypeInlineControl({
+  trpc,
+  device,
+  InlineControl,
+}: {
+  readonly trpc: UseDeviceProxyTrpc
+  readonly device: DeviceItemDevice
+  readonly InlineControl: InlineControlComponent
+}): ReactNode {
+  const own = <InlineControl trpc={trpc} deviceId={device.id} features={device.features} />
+  if (device.type !== DeviceType.Control) return own
+  return <ModelRowControl deviceId={device.id} fallback={own} />
 }
 
 // ── ContainerPrimaryInline ──────────────────────────────────────────
@@ -202,7 +238,7 @@ function ContainerPrimaryInline({
     // (role + sourceInfo) to resolve its descriptor + live slice.
     return (
       <ControlColumn align={resolveControlAlign(child.type, placement)}>
-        <SensorValueAtom trpc={trpc} device={child} />
+        <SensorRowValue trpc={trpc} device={child} />
       </ControlColumn>
     )
   }
@@ -212,7 +248,7 @@ function ContainerPrimaryInline({
   const columnAlign = resolveControlAlign(child.type, placement)
   return (
     <ControlColumn align={columnAlign} onClick={(e) => e.stopPropagation()}>
-      <InlineControl trpc={trpc} deviceId={child.id} features={child.features} />
+      <TypeInlineControl trpc={trpc} device={child} InlineControl={InlineControl} />
       <TimedRunRowControl
         trpc={trpc}
         deviceId={child.id}

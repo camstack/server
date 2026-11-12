@@ -44,6 +44,15 @@ import { DeviceType } from '@camstack/types'
 vi.mock('../../../generated/system-hooks', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../generated/system-hooks')>()),
   useDeviceManagerGetRoleDisplayDefaults: () => ({ data: undefined }),
+  // The row model answered with no row for the device, so the row draws today's
+  // atom (its `fallback`) — the wrapper is what these specs inspect.
+  useHeroLayoutGetRowModels: () => ({ status: 'success', data: [], refetch: () => undefined }),
+  useDeviceManagerGetBindings: () => ({ data: undefined }),
+}))
+vi.mock('../../hero-model/use-hero-live-refresh', () => ({ useHeroLiveRefresh: () => undefined }))
+vi.mock('../../../contexts/system-context', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../contexts/system-context')>()),
+  useTrpcClient: () => null,
 }))
 
 import { DeviceItemActions } from '../actions'

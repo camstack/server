@@ -7635,7 +7635,8 @@
       "decrement": "Decrement",
       "numeric": "Numeric value",
       "increment": "Increment",
-      "value": "Control value"
+      "value": "Control value",
+      "setFailed": "Could not set the value"
     },
     "inferenceConfig": {
       "agent": "Agent",
@@ -10041,6 +10042,13 @@
         "stuck": "Stuck",
         "suction": "suction"
       }
+    },
+    "language": "en",
+    "measurement": {
+      "forMinutes": "for {{count}} min",
+      "forHours": "for {{count}} h",
+      "forDays": "for {{count}} d",
+      "openHistory": "Open history"
     }
   },
   "helpers": {

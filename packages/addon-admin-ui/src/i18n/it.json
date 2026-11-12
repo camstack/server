@@ -7657,7 +7657,8 @@
       "decrement": "Diminuisci",
       "numeric": "Valore numerico",
       "increment": "Aumenta",
-      "value": "Valore del controllo"
+      "value": "Valore del controllo",
+      "setFailed": "Impossibile impostare il valore"
     },
     "inferenceConfig": {
       "agent": "Agent",
@@ -10063,6 +10064,13 @@
         "stuck": "Bloccato",
         "suction": "potenza"
       }
+    },
+    "language": "it",
+    "measurement": {
+      "forMinutes": "da {{count}} min",
+      "forHours": "da {{count}} h",
+      "forDays": "da {{count}} g",
+      "openHistory": "Apri lo storico"
     }
   },
   "helpers": {

@@ -42,6 +42,7 @@ import {
   type HeroFact,
   type HeroModel,
 } from './hero-model.js'
+import { HeroMeasurementSchema } from './hero-measurement.js'
 import { HeroSceneSchema } from './hero-scene.js'
 import { StateLookSchema, HeroStateSchema } from './hero-state.js'
 import { HeroTextSchema, type HeroText } from './hero-text.js'
@@ -82,6 +83,12 @@ export const HeroRowModelSchema = z.object({
    */
   extras: z.array(HeroControlSchema).max(2).optional(),
   trailing: HeroFactSchema.nullable(),
+  /**
+   * The simple sensor's one reading (the hero's `measurement`): the row draws its value
+   * at the right, the unit small, the quantity's icon in the mini-scene. Absent = an
+   * older server or a device that is not a simple sensor: draw `trailing`.
+   */
+  measurement: HeroMeasurementSchema.optional(),
 })
 export type HeroRowModel = z.infer<typeof HeroRowModelSchema>
 
@@ -236,5 +243,6 @@ export function projectDeviceRow(model: HeroModel): HeroRowModel {
     timedRun: timedRunOf(model),
     extras: extrasOf(model, primary),
     trailing,
+    ...(model.measurement === undefined ? {} : { measurement: model.measurement }),
   }
 }

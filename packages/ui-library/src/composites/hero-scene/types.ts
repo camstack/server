@@ -61,6 +61,10 @@ export type BackdropKind =
   | 'spark'
   | 'stream'
   | 'orbit'
+  /** A hot reading: a warm glow with heat rising through it. */
+  | 'heat'
+  /** A power reading: a wire whose current flows at `speed`; `dim` = 0 W, the wire stands still. */
+  | 'wire'
 
 export interface SceneVisual {
   readonly kind: BackdropKind

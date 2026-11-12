@@ -194,6 +194,43 @@ function Orbit(): ReactNode {
   )
 }
 
+function Heat(): ReactNode {
+  return (
+    <>
+      <Glow />
+      <Particles direction="rise" />
+    </>
+  )
+}
+
+function Wire({ flowing }: { flowing: boolean }): ReactNode {
+  return (
+    <svg
+      viewBox="0 0 100 40"
+      preserveAspectRatio="none"
+      className="absolute inset-x-0 bottom-6 h-10 w-full"
+    >
+      <path
+        d="M0 30 C 20 30, 25 12, 50 12 S 80 30, 100 30"
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity={0.25}
+        strokeWidth={3}
+        vectorEffect="non-scaling-stroke"
+      />
+      <path
+        className={flowing ? 'hs-wire' : undefined}
+        d="M0 30 C 20 30, 25 12, 50 12 S 80 30, 100 30"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeDasharray={flowing ? undefined : '2 6'}
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  )
+}
+
 function DimGrid(): ReactNode {
   return (
     <div className="absolute inset-0 flex items-end justify-center gap-2 pb-4 opacity-30">
@@ -275,6 +312,10 @@ function BackdropBody({ visual, level, points }: BackdropProps): ReactNode {
       return <Stream />
     case 'orbit':
       return <Orbit />
+    case 'heat':
+      return <Heat />
+    case 'wire':
+      return <Wire flowing={!visual.dim} />
     case 'none':
       return <DimGrid />
   }

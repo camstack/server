@@ -438,10 +438,28 @@ const controlContribution = contribution('control', ControlStatusSchema, (slice,
 
 const CONTROL_LABEL = heroText('Value', 'Valore')
 
-/** A number with known bounds is a slider, a choice a picker; text and dates stay read-only. */
+/**
+ * A number with known bounds is a slider, one without a number field, a choice a picker,
+ * free text a text field; a date stays read-only.
+ */
 function controlRows(slice: ControlStatus): HeroRow[] {
   if (slice.kind === 'numeric' && typeof slice.value === 'number') {
-    if (slice.min === undefined || slice.max === undefined) return []
+    if (slice.min === undefined || slice.max === undefined) {
+      return [
+        row('control', 'sliders-horizontal', null, [
+          {
+            kind: 'number',
+            id: 'control.value',
+            label: CONTROL_LABEL,
+            value: slice.value,
+            step: slice.step ?? null,
+            unit: '',
+            call: { cap: 'control', method: 'setValue', args: { control: { kind: 'numeric' } } },
+            valueArg: 'control.value',
+          },
+        ]),
+      ]
+    }
     return [
       row('control', 'sliders-horizontal', null, [
         {
@@ -469,6 +487,20 @@ function controlRows(slice: ControlStatus): HeroRow[] {
           current: slice.value,
           options: slice.options,
           call: { cap: 'control', method: 'setValue', args: { control: { kind: 'select' } } },
+          valueArg: 'control.value',
+        },
+      ]),
+    ]
+  }
+  if (slice.kind === 'text') {
+    return [
+      row('control', 'sliders-horizontal', null, [
+        {
+          kind: 'text',
+          id: 'control.value',
+          label: CONTROL_LABEL,
+          value: typeof slice.value === 'string' ? slice.value : null,
+          call: { cap: 'control', method: 'setValue', args: { control: { kind: 'text' } } },
           valueArg: 'control.value',
         },
       ]),

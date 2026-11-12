@@ -17,6 +17,7 @@ import { Select } from '../../primitives/select'
 import { Slider } from '../../primitives/slider'
 import { Switch } from '../../primitives/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../primitives/tooltip'
+import { NumericControl, TextControl } from '../device-controls/control-panel'
 import { useDisplayIconResolver } from '../icon-glyphs'
 import {
   HeroCardA,
@@ -32,6 +33,7 @@ import {
 import { badgeVariantOf, type HeroLang, pickText, sceneOf, tilesOf } from './hero-model-view'
 import type { HeroLabels } from './hero-labels'
 import { useHeroUtilities } from './hero-utilities'
+import { MeasurementScene } from './MeasurementScene'
 
 /** What the card asks its host to do: run the cap method an action or a control names. */
 export interface HeroCardHost {
@@ -172,6 +174,54 @@ function PickerControl({
         ...control.options.map((o) => ({ value: o, label: optionLabel(o) })),
       ]}
       onChange={(e) => choose(e.target.value)}
+    />
+  )
+}
+
+/** A number the device takes without bounds: typed in, with − / + steps. */
+function NumberControl({
+  control,
+  host,
+}: {
+  readonly control: Extract<HeroControl, { kind: 'number' }>
+  readonly host: HeroCardHost
+}): ReactNode {
+  if (control.value === null) {
+    return <span className="text-xs text-foreground-muted">{host.labels.noValue}</span>
+  }
+  return (
+    <NumericControl
+      value={control.value}
+      busy={host.busy}
+      {...(control.step === null ? {} : { step: control.step })}
+      {...(control.unit === '' ? {} : { unit: control.unit })}
+      onCommit={(value) =>
+        host.run(
+          { ...control.call, args: heroArgsWithValue(control.call.args, control.valueArg, value) },
+          null,
+        )
+      }
+    />
+  )
+}
+
+function TextFieldControl({
+  control,
+  host,
+}: {
+  readonly control: Extract<HeroControl, { kind: 'text' }>
+  readonly host: HeroCardHost
+}): ReactNode {
+  return (
+    <TextControl
+      value={control.value ?? ''}
+      busy={host.busy}
+      onCommit={(value) =>
+        host.run(
+          { ...control.call, args: heroArgsWithValue(control.call.args, control.valueArg, value) },
+          null,
+        )
+      }
     />
   )
 }
@@ -385,7 +435,10 @@ function ToggleControl({
 
 /** Sliders and pickers read as the row's value; buttons and switches sit at its right. */
 const isValueControl = (control: HeroControl): boolean =>
-  control.kind === 'slider' || control.kind === 'picker'
+  control.kind === 'slider' ||
+  control.kind === 'picker' ||
+  control.kind === 'number' ||
+  control.kind === 'text'
 
 function ControlView({
   control,
@@ -405,6 +458,10 @@ function ControlView({
       return <SliderControl control={control} host={host} />
     case 'picker':
       return <PickerControl control={control} host={host} tone={tone} />
+    case 'number':
+      return <NumberControl control={control} host={host} />
+    case 'text':
+      return <TextFieldControl control={control} host={host} />
   }
 }
 
@@ -579,7 +636,16 @@ function powerOf(model: HeroModel, host: HeroCardHost): HeroScenePower | undefin
   }
 }
 
-function Chips({ model, lang }: { readonly model: HeroModel; readonly lang: HeroLang }): ReactNode {
+function Chips({
+  model,
+  lang,
+  omitFact,
+}: {
+  readonly model: HeroModel
+  readonly lang: HeroLang
+  /** A fact the scene already reads (a power sensor's watts): never repeated as a chip. */
+  readonly omitFact?: string
+}): ReactNode {
   const factIds = new Set(model.facts.map((f) => f.id))
   return (
     <>
@@ -595,7 +661,7 @@ function Chips({ model, lang }: { readonly model: HeroModel; readonly lang: Hero
           </Badge>
         ))}
       {model.facts
-        .filter((fact) => CHIP_FACT_IDS.has(fact.id))
+        .filter((fact) => fact.id !== omitFact && CHIP_FACT_IDS.has(fact.id))
         .map((fact) => (
           <Badge key={fact.id} variant={badgeVariantOf(fact.tone)} size="sm">
             {pickText(fact.text, lang)}
@@ -621,6 +687,53 @@ export function HeroModelCard({
   remote,
   showName = true,
 }: HeroModelCardProps): ReactNode {
+  if (model.measurement !== undefined) {
+    return <MeasurementCard model={model} host={host} remote={remote} showName={showName} />
+  }
+  return <SceneCard model={model} host={host} remote={remote} showName={showName} />
+}
+
+/**
+ * A simple sensor: its one reading drawn once, inside the scene. No caption, tiles or
+ * value chips repeat it; the state corner opens the history, so the foot does not.
+ */
+function MeasurementCard({ model, host, remote, showName = true }: HeroModelCardProps): ReactNode {
+  const { measurement } = model
+  const utilities = useHeroUtilities(model, host).filter((u) => u.id !== 'history')
+  if (measurement === undefined) return null
+  const gated = new Set(model.gated)
+  const showRemote = model.remote !== null && !gated.has('remote')
+  const tone = resolveSceneVisual(sceneOf(model)).tone
+  const rows = model.rows.filter((row) => !gated.has(row.id) && row.controls.length > 0)
+  return (
+    <HeroCardA
+      title={model.name}
+      showTitle={showName}
+      chips={<Chips model={model} lang={host.lang} omitFact={measurement.quantity} />}
+      scene={
+        <MeasurementScene
+          measurement={measurement}
+          lang={host.lang}
+          deviceId={model.deviceId}
+          {...(host.openHistory === undefined ? {} : { onOpenHistory: host.openHistory })}
+        />
+      }
+      rows={
+        rows.length === 0 ? undefined : (
+          <>
+            {rows.map((row, i) => (
+              <ModelRow key={`${row.id}-${i}`} row={row} host={host} tone={tone} />
+            ))}
+          </>
+        )
+      }
+      footAction={showRemote && remote !== undefined ? remote : undefined}
+      utility={utilities.length > 0 ? <HeroUtilityGrid items={utilities} /> : undefined}
+    />
+  )
+}
+
+function SceneCard({ model, host, remote, showName = true }: HeroModelCardProps): ReactNode {
   const { lang } = host
   const scene = sceneOf(model)
   const gated = new Set(model.gated)

@@ -7,6 +7,7 @@
 import type { z } from 'zod'
 import type { VocabIcon } from './cap-vocabulary-icon.js'
 import type { HeroContext, HeroFragment, StateReading } from './hero-fragment.js'
+import type { HeroMeasurement } from './hero-measurement.js'
 import type {
   HeroAction,
   HeroArgs,
@@ -36,6 +37,14 @@ export function contribution<S>(
       return build(parsed.success ? parsed.data : undefined, ctx)
     },
   }
+}
+
+/** The fragment, carrying the cap's single measurement when it has one. */
+export function measured(
+  fragment: HeroFragment,
+  measurement: HeroMeasurement | undefined,
+): HeroFragment {
+  return measurement === undefined ? fragment : { ...fragment, measurement }
 }
 
 export function action(

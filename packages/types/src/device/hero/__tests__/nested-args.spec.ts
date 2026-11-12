@@ -116,10 +116,14 @@ describe('control hero', () => {
     ).toBe(true)
   })
 
-  it('a text control stays read-only', () => {
+  it('a text control is a text field; a date control stays read-only', () => {
     const m = build(DeviceType.Control, ['control'], {
       control: { kind: 'text', value: 'hi', options: [], lastChangedAt: 1 },
     })
-    expect(m.rows.some((r) => r.id === 'control')).toBe(false)
+    expect(m.rows.find((r) => r.id === 'control')?.controls[0]?.kind).toBe('text')
+    const d = build(DeviceType.Control, ['control'], {
+      control: { kind: 'datetime', value: '2026-01-01T00:00:00Z', options: [], lastChangedAt: 1 },
+    })
+    expect(d.rows.some((r) => r.id === 'control')).toBe(false)
   })
 })

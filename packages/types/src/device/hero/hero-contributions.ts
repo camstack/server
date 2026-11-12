@@ -35,9 +35,11 @@ import {
   contribution,
   elapsedText,
   fact,
+  measured,
   reading,
   type HeroContribution,
 } from './hero-contribution-kit.js'
+import { contactMeasurement, powerMeasurement } from './hero-measurement.js'
 import type { HeroContext, StateReading } from './hero-fragment.js'
 import { REMOTE_OPEN_ACTION_ID } from './hero-model.js'
 import type {
@@ -200,27 +202,30 @@ const powerMeterContribution = contribution('power-meter', PowerMeterStatusSchem
   }
   const watts = Math.round(slice.power)
   const text = heroText(`${watts} W`, `${watts} W`)
-  return {
-    consumption: {
-      priority: 2,
-      slot: { kind: 'power', watts: slice.power, detail },
+  return measured(
+    {
+      consumption: {
+        priority: 2,
+        slot: { kind: 'power', watts: slice.power, detail },
+      },
+      facts: [fact('power', 'zap', text, watts > 0 ? 'primary' : 'muted')],
+      tilesFallback: true,
+      tiles: {
+        right: [{ label: heroText('Power', 'Potenza'), value: text }],
+        ...(slice.energy === undefined
+          ? {}
+          : {
+              left: [
+                {
+                  label: heroText('Energy', 'Energia'),
+                  value: heroText(`${slice.energy} kWh`, `${slice.energy} kWh`),
+                },
+              ],
+            }),
+      },
     },
-    facts: [fact('power', 'zap', text, watts > 0 ? 'primary' : 'muted')],
-    tilesFallback: true,
-    tiles: {
-      right: [{ label: heroText('Power', 'Potenza'), value: text }],
-      ...(slice.energy === undefined
-        ? {}
-        : {
-            left: [
-              {
-                label: heroText('Energy', 'Energia'),
-                value: heroText(`${slice.energy} kWh`, `${slice.energy} kWh`),
-              },
-            ],
-          }),
-    },
-  }
+    powerMeasurement(slice.power, slice.lastFetchedAt),
+  )
 })
 
 // ── battery / network-link ─────────────────────────────────────────────────
@@ -295,11 +300,17 @@ const contactContribution = contribution('contact', ContactStatusSchema, (slice)
           : heroText('Closed', 'Chiuso'),
     controls: [],
   }
-  return {
-    reading: reading('contact', slice === undefined ? 'unknown' : slice.entryOpen ? 'on' : 'off'),
-    rows: [row],
-    ...(slice === undefined ? {} : { scene: { mode: slice.entryOpen ? 'open' : 'closed' } }),
-  }
+  return measured(
+    {
+      reading: reading('contact', slice === undefined ? 'unknown' : slice.entryOpen ? 'on' : 'off'),
+      rows: [row],
+      ...(slice === undefined ? {} : { scene: { mode: slice.entryOpen ? 'open' : 'closed' } }),
+    },
+    slice === undefined
+      ? undefined
+      : // 0 = the transition was never observed.
+        contactMeasurement(slice.entryOpen, slice.lastChangedAt > 0 ? slice.lastChangedAt : null),
+  )
 })
 
 const motionTriggerContribution = contribution(
