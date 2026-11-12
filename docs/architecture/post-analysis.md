@@ -920,9 +920,16 @@ is answered: at or above `OVERSIZE_AREA_FRAC` (0.30 — formerly
 way) an entry holds a detection on a STRONG read only, no jitter hold and no
 fragment hold, and a weak overlap on it is a miss and never a departing read.
 Measured on 102 before the number moved (03:26–06:50, the 0.353 car as the
-only entry): 1 717 reads absorbed, `continuable: 0`. The registry keeps no
-list of who may absorb whom — the same predicate that stops an oversize entry
-holding a fragment stops it absorbing one.
+only entry): 1 717 reads absorbed, `continuable: 0`. The mirror is the same
+fraction: a detection at or above `OVERSIZE_AREA_FRAC` is not a swallow of a
+smaller entry. On 617 (2026-11-12) a parked car at 0.34 of the frame contained
+the centroid of an already-registered small car outside the zone and covered
+0.54 of that small box; the swallow called them one spot, the sweep deleted
+the large row, and the later reads were held against the small entry. A merged
+mover below the fraction still swallows (102's Golf, 0.27 of its frame). The
+registry keeps no list of who may absorb whom — the same predicate that stops
+an oversize entry holding a fragment, and that stops a smaller entry capturing
+an oversize box, is the one that decides the spot.
 
 **The occasion is named by the runner, and the recheck runs while watching.**
 Until 2026-09-16 the runner stamped every LIVE session frame `'burst'` and only

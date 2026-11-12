@@ -223,7 +223,10 @@ function centroidInside(b: StationaryBbox, p: { x: number; y: number }): boolean
  * as a "fragment" of itself (D495, D497). D497 answered that by refusing the
  * BIRTH on area, which cannot separate the car from the ghost (0.360 against
  * 0.361, twelve refusals of the car in twelve hours). This answers it where
- * the damage is: an oversize entry may be born, and may not REACH.
+ * the damage is: an oversize entry may be born, and may not REACH. The mirror
+ * is the same fraction: an oversize DETECTION may not be captured by a smaller
+ * entry whose centroid it happens to contain (617, 2026-11-12, father's car at
+ * 0.34 of the frame over entry bb6a1033).
  *
  * The cost was measured before the number moved. 102, 2026-09-16, 03:26 to
  * 06:50, with the 0.353 car as the camera's only entry: 1 717 detections
@@ -296,27 +299,67 @@ export function entrySwallowsDetection(parked: StationaryBbox, det: StationaryBb
   return intersectionArea(parked, det) / detArea >= FRAGMENT_MIN_CONTAINMENT
 }
 
-function parkedEntryHoldsDetection(
-  entry: Pick<StationaryEntry, 'bbox' | 'frameWidth' | 'frameHeight'>,
+type ParkedHoldEntry = Pick<StationaryEntry, 'bbox' | 'frameWidth' | 'frameHeight'>
+
+/**
+ * The weak holds (swallow, fragment, centroid-inside jitter). Strong IoU is
+ * decided by the caller. An oversize ENTRY is excluded here, exactly as
+ * before: it holds on a strong read only.
+ */
+function weakParkedHold(
+  entry: ParkedHoldEntry,
   detBbox: StationaryBbox,
-  config: { readonly suppressIou: number; readonly wakeAssocIou: number },
-): { strong: boolean; holds: boolean } {
-  const overlap = iou(entry.bbox, detBbox)
-  const strong = overlap >= config.suppressIou
-  if (strong) return { strong: true, holds: true }
-  if (detectionSwallowsEntry(detBbox, entry.bbox)) return { strong: false, holds: true }
-  if (isOversizeBox(entry.bbox, entry.frameWidth, entry.frameHeight)) {
-    return { strong: false, holds: false }
-  }
+  config: StationaryMatchConfig,
+  overlap: number,
+): boolean {
+  if (detectionSwallowsEntry(detBbox, entry.bbox)) return true
+  if (isOversizeBox(entry.bbox, entry.frameWidth, entry.frameHeight)) return false
   // A fragment of the parked object — held WEAKLY, like jitter: it may not open
   // a track of its own, and the tracker may still use it to continue one. The
   // scene-sized guard above comes first on purpose, or an entry covering the
   // view would swallow every small box in the frame.
-  if (entrySwallowsDetection(entry.bbox, detBbox)) return { strong: false, holds: true }
-  return {
-    strong: false,
-    holds: overlap >= config.wakeAssocIou && centroidInside(entry.bbox, centroid(detBbox)),
+  if (entrySwallowsDetection(entry.bbox, detBbox)) return true
+  return overlap >= config.wakeAssocIou && centroidInside(entry.bbox, centroid(detBbox))
+}
+
+/**
+ * True when `detBbox` is oversize and a smaller entry would have held it on a
+ * weak read — swallow, fragment or centroid — and we keep them apart instead.
+ *
+ * The mirror of the oversize-entry reach limit. A strong IoU is still one
+ * object; a merged mover below {@link OVERSIZE_AREA_FRAC} still swallows
+ * (102's Golf). What this refuses is 617 on 2026-11-12: a 0.34-frame parked
+ * car whose box contained entry bb6a1033's centroid, so the registry deleted
+ * the large row and held the later reads against the small one.
+ */
+export function oversizeDetectionKeptApart(
+  entry: ParkedHoldEntry,
+  detBbox: StationaryBbox,
+  config: StationaryMatchConfig,
+): boolean {
+  const overlap = iou(entry.bbox, detBbox)
+  if (overlap >= config.suppressIou) return false
+  if (!isOversizeBox(detBbox, entry.frameWidth, entry.frameHeight)) return false
+  return weakParkedHold(entry, detBbox, config, overlap)
+}
+
+function parkedEntryHoldsDetection(
+  entry: ParkedHoldEntry,
+  detBbox: StationaryBbox,
+  config: StationaryMatchConfig,
+): { strong: boolean; holds: boolean } {
+  const overlap = iou(entry.bbox, detBbox)
+  const strong = overlap >= config.suppressIou
+  if (strong) return { strong: true, holds: true }
+  if (!weakParkedHold(entry, detBbox, config, overlap)) return { strong: false, holds: false }
+  // An oversize detection is its own object. A smaller entry must not capture
+  // it by centroid (the swallow) or by any other weak hold. Only the strong
+  // read above attributes it, and a box this much larger cannot score that
+  // against a small entry.
+  if (isOversizeBox(detBbox, entry.frameWidth, entry.frameHeight)) {
+    return { strong: false, holds: false }
   }
+  return { strong: false, holds: true }
 }
 
 /** Close-time / best-shot: does this box read as a live parked entry? */
@@ -394,7 +437,10 @@ export function thumbnailWouldShowParkedNotSubject(input: {
  *  - best IoU ≥ `suppressIou` → SUPPRESS (the parked object, near-identical box)
  *    and mark the entry confirmed.
  *  - a same-class detection that SWALLOWS the parked box (much larger, covers
- *    it) → SUPPRESS and confirm. A merged mover+parked box is not a departure.
+ *    it) → SUPPRESS and confirm, unless the detection itself is OVERSIZE
+ *    (≥ `OVERSIZE_AREA_FRAC`). A merged mover+parked box below that fraction
+ *    is not a departure (102's Golf). An oversize box that merely contains a
+ *    smaller entry's centroid is a different parked object (617, 2026-11-12).
  *  - `wakeAssocIou` ≤ best IoU < `suppressIou`, centroid still INSIDE the parked
  *    box, and the entry is NOT scene-sized → SUPPRESS (detector box jitter).
  *  - a scene-sized entry (area ≳ 55% of the frame) holds ONLY on strong IoU:

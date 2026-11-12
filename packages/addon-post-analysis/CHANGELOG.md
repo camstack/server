@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A large parked car stays parked when its box covers the centre of a smaller parked car.
+
 ## [1.2.694] - 2026-11-12
 
 ### Changed

@@ -51,6 +51,7 @@ import {
   type DepartureStrikeChange,
   findParkedOccupant,
   normaliseStationaryClass,
+  oversizeDetectionKeptApart,
   partitionDetectionsAgainstRegistry,
   type StationaryConfirmation,
   type StationaryDetectionLike,
@@ -66,6 +67,7 @@ import {
   GATE_WARMUP_MS,
   type DepartureStrike,
   type StationaryDepartureConfig,
+  type StationaryBbox,
   type StationaryEntry,
   type StationaryMatchConfig,
   type StationaryObjectView,
@@ -278,6 +280,9 @@ const STATIONARY_SPEC: DurableLedgerSpec<StationaryEntry> = {
   deviceIdOf: (entry) => entry.deviceId,
 }
 
+/** Where an oversize box was kept apart from a smaller parked entry. */
+type OversizeKeptApartWhere = 'promote' | 'collapse' | 'filter'
+
 export class StationaryObjectRegistry {
   /** Entry ids per device — an INDEX over the ledger's mirror, not a second
    *  copy of it. The entries themselves live in exactly one place. */
@@ -389,6 +394,9 @@ export class StationaryObjectRegistry {
   private readonly continuableSinceSweep = new Map<number, number>()
   /** Of those, the ones the tracker reports actually continued a track. */
   private readonly continuedSinceSweep = new Map<number, number>()
+  /** Devices already logged this sweep for an oversize box kept apart from a
+   *  smaller entry. The decision fires on every frame; the line must not. */
+  private readonly oversizeKeptApartLogged = new Set<number>()
 
   constructor(deps: StationaryRegistryDeps) {
     this.logger = deps.logger
@@ -535,12 +543,16 @@ export class StationaryObjectRegistry {
       }
     }
     const strikes = this.departureStrikes.get(deviceId)
+    const matchConfig = config ?? this.matchConfig
+    for (const det of input.detections) {
+      this.noteOversizeKeptApart(deviceId, entries, det.className, det.bbox, matchConfig, 'filter')
+    }
     const result = partitionDetectionsAgainstRegistry({
       entries,
       detections: input.detections,
       // Per-device match config (#31 suppress/wake IoU sliders) overrides the
       // registry-wide default when supplied.
-      config: config ?? this.matchConfig,
+      config: matchConfig,
       now: timestamp,
       departure: this.departureConfig,
       warmUp,
@@ -762,12 +774,13 @@ export class StationaryObjectRegistry {
     // `OVERSIZE_AREA_FRAC`) holds a candidate on a strong read only and can
     // never absorb a neighbour as a "fragment" — the D495 motorcycle loss —
     // without a second list of who may absorb (D508).
+    const matchConfig = config ?? this.matchConfig
     const occupant = findParkedOccupant(
       this.list(entry.deviceId),
       entry.className,
       entry.bbox,
-      (config ?? this.matchConfig).suppressIou,
-      (config ?? this.matchConfig).wakeAssocIou,
+      matchConfig.suppressIou,
+      matchConfig.wakeAssocIou,
     )
     if (occupant !== undefined) {
       const merged = this.absorbInto(occupant, entry)
@@ -788,6 +801,15 @@ export class StationaryObjectRegistry {
       })
       return { outcome: 'merged', entry: merged }
     }
+    this.noteOversizeKeptApart(
+      entry.deviceId,
+      this.list(entry.deviceId),
+      entry.className,
+      entry.bbox,
+      matchConfig,
+      'promote',
+      entry.id,
+    )
     this.indexEntry(entry.deviceId, entry.id)
     this.dirty.delete(entry.id)
     // `put` on a write-behind ledger mirrors first and swallows the store
@@ -985,6 +1007,7 @@ export class StationaryObjectRegistry {
       })
     }
     this.absorbedSinceSweep.clear()
+    this.oversizeKeptApartLogged.clear()
     this.suppressedSinceSweep.clear()
     this.reachSuppressedSinceSweep.clear()
     this.continuableSinceSweep.clear()
@@ -1060,6 +1083,7 @@ export class StationaryObjectRegistry {
     this.sessionOpenedAtByDevice.delete(deviceId)
     this.strikeCountersByDevice.delete(deviceId)
     this.absorbedSinceSweep.delete(deviceId)
+    this.oversizeKeptApartLogged.delete(deviceId)
     this.suppressedSinceSweep.delete(deviceId)
     this.reachSuppressedSinceSweep.delete(deviceId)
     const ids = this.idsByDevice.get(deviceId)
@@ -1081,6 +1105,7 @@ export class StationaryObjectRegistry {
     this.sessionOpenedAtByDevice.delete(deviceId)
     this.strikeCountersByDevice.delete(deviceId)
     this.absorbedSinceSweep.delete(deviceId)
+    this.oversizeKeptApartLogged.delete(deviceId)
     this.suppressedSinceSweep.delete(deviceId)
     this.reachSuppressedSinceSweep.delete(deviceId)
     const ids = this.idsByDevice.get(deviceId)
@@ -1249,6 +1274,15 @@ export class StationaryObjectRegistry {
         this.matchConfig.wakeAssocIou,
       )
       if (occupant === undefined) {
+        this.noteOversizeKeptApart(
+          deviceId,
+          survivors,
+          candidate.className,
+          candidate.bbox,
+          this.matchConfig,
+          'collapse',
+          candidate.id,
+        )
         survivors.push(candidate)
         continue
       }
@@ -1266,6 +1300,40 @@ export class StationaryObjectRegistry {
           droppedSinceMs: candidate.becameStationaryAt,
         },
       })
+    }
+  }
+
+  /**
+   * An oversize box that a smaller entry would have held on centroid alone is
+   * a different object. Logged once per decision: per promotion, per collapse,
+   * and once per device per sweep on the frame path (that one fires every frame).
+   */
+  private noteOversizeKeptApart(
+    deviceId: number,
+    others: readonly StationaryEntry[],
+    className: string,
+    bbox: StationaryBbox,
+    config: StationaryMatchConfig,
+    where: OversizeKeptApartWhere,
+    keptEntryId?: string,
+  ): void {
+    if (where === 'filter' && this.oversizeKeptApartLogged.has(deviceId)) return
+    const cls = normaliseStationaryClass(className)
+    for (const other of others) {
+      if (keptEntryId !== undefined && other.id === keptEntryId) continue
+      if (normaliseStationaryClass(other.className) !== cls) continue
+      if (!oversizeDetectionKeptApart(other, bbox, config)) continue
+      if (where === 'filter') this.oversizeKeptApartLogged.add(deviceId)
+      this.logger.info('stationary oversize kept apart from a smaller parked entry', {
+        tags: { deviceId },
+        meta: {
+          deviceId,
+          where,
+          smallerEntryId: other.id,
+          ...(keptEntryId !== undefined ? { keptEntryId } : {}),
+        },
+      })
+      return
     }
   }
 
