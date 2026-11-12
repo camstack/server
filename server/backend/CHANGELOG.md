@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.848] - 2026-11-12
+
 ### Changed
 
 - A kind that declares its own role (an Alexa Echo target) is no longer treated as bringing devices because the addon's manifest says so; creating Echo targets works again

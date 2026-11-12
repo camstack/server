@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.847",
+  "version": "1.2.848",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,9 +66,10 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.650",
-        "@camstack/addon-agent-ui": ">=1.2.370",
-        "@camstack/addon-post-analysis": ">=1.2.697"
+        "@camstack/addon-admin-ui": ">=1.2.651",
+        "@camstack/addon-agent-ui": ">=1.2.371",
+        "@camstack/addon-provider-esphome": ">=0.1.20",
+        "@camstack/addon-provider-mqtt-ha": ">=0.1.47"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

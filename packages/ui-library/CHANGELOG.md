@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.431] - 2026-11-12
+
 ### Changed
 
 - The device card of a container (and any card in a narrow column) stacks its controls under the drawing instead of cutting them off

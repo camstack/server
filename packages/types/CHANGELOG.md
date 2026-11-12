@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.555] - 2026-11-12
+
 ### Changed
 
 - IR transmitters can learn a code and replay device-native (Tuya) codes: ir-transmitter gains learn, send takes a native code, and a remote command can store one

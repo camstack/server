@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.47] - 2026-11-12
+
 ### Changed
 
 - Zigbee2MQTT IR blasters (Tuya zosung) now appear as IR transmitters that can send and learn codes instead of a numeric sensor
