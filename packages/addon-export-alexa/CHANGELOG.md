@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.195] - 2026-11-12
+
 ### Changed
 
 - Each Alexa skill on a hub only accepts accounts linked to it: the Lambda routes reach a skill at /addon/export-alexa/instances/<id>/, a link token for another skill is refused with a logged reason, and existing links keep working without re-linking
