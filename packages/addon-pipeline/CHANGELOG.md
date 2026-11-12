@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.651] - 2026-11-12
+
 ### Fixed
 
 - An on-demand camera stream that stops because nobody is watching no longer raises stream offline or stream online.

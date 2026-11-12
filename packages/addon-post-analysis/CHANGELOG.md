@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.696] - 2026-11-12
+
 ### Changed
 
 - The stream-health intake comment now states that a battery connection error is emitted only after the broker has held it for the sustained window, for the whole camera.

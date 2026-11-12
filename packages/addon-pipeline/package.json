@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-pipeline",
-  "version": "1.2.650",
+  "version": "1.2.651",
   "description": "Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entry npm package shipping pipeline addons under a single bundle.",
   "keywords": [
     "camstack",
@@ -296,7 +296,7 @@
       "werift"
     ],
     "requires": {
-      "server": ">=1.2.831"
+      "server": ">=1.2.845"
     }
   },
   "scripts": {
