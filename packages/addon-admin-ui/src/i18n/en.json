@@ -10121,6 +10121,27 @@
         "raise": "Raise target",
         "ready": "At temperature",
         "target": "target"
+      },
+      "energy": {
+        "grid": "Grid",
+        "import": "Import",
+        "export": "Export",
+        "batteryIdle": "Idle",
+        "discharging": "Discharging",
+        "charging": "Charging",
+        "solar": "Solar",
+        "house": "Home",
+        "heatPump": "Heat pump",
+        "fromBattery": "from the battery",
+        "fromGrid": "from the grid",
+        "produced": "Produced",
+        "selfConsumption": "Self-use",
+        "imported": "Imported",
+        "exported": "Exported",
+        "heatPumpToday": "Heat pump",
+        "producing": "Producing",
+        "notProducing": "Not producing",
+        "flows": "Energy flows"
       }
     },
     "language": "en",

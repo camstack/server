@@ -10143,6 +10143,27 @@
         "raise": "Alza obiettivo",
         "ready": "In temperatura",
         "target": "obiettivo"
+      },
+      "energy": {
+        "grid": "Rete",
+        "import": "Prelievo",
+        "export": "Cessione",
+        "batteryIdle": "Ferma",
+        "discharging": "Scarica",
+        "charging": "Carica",
+        "solar": "Solare",
+        "house": "Casa",
+        "heatPump": "Pompa di calore",
+        "fromBattery": "dalla batteria",
+        "fromGrid": "dalla rete",
+        "produced": "Prodotti",
+        "selfConsumption": "Autoconsumo",
+        "imported": "Prelevati",
+        "exported": "Ceduti",
+        "heatPumpToday": "Pompa",
+        "producing": "Produce",
+        "notProducing": "Non produce",
+        "flows": "Flussi di energia"
       }
     },
     "language": "it",

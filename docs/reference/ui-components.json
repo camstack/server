@@ -6688,11 +6688,106 @@
       ]
     },
     {
+      "name": "ENERGY_STILL_BELOW_W",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/energy/model.ts",
+      "summary": "Below this a node is drawn still (no running dots, no arrow)."
+    },
+    {
+      "name": "energyActivityOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/energy/model.ts",
+      "summary": ""
+    },
+    {
       "name": "energyBuckets",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-history/history-model.ts",
       "summary": "Energy bars: one bucket per point, the kWh used in it (`delta`)."
+    },
+    {
+      "name": "EnergyCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/energy/EnergyCard.tsx",
+      "summary": "An energy system: solar, grid, battery, house and heat pump as branches of one bus, each running dots in or out at the speed of its power, and today's totals below. Every node is drawn only when the system reports it.",
+      "props": [
+        {
+          "name": "model",
+          "type": "EnergyCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "EnergyCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "EnergyFlowIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/EnergyFlowIllustration.tsx",
+      "summary": "The energy system as a bus: solar on top, the grid and the battery on the sides, the house and the heat pump below. Each branch runs dots INTO the bus or OUT of it at the speed of its power, with one arrowhead mid-bra…",
+      "props": [
+        {
+          "name": "nodes",
+          "type": "readonly EnergyNodeView[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "ariaLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "energyIsStill",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/energy/model.ts",
+      "summary": ""
+    },
+    {
+      "name": "energyNodes",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/energy/EnergyCard.tsx",
+      "summary": "The nodes the system has, in drawing order; a null power draws no node."
+    },
+    {
+      "name": "energySince",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/energy/EnergyCard.tsx",
+      "summary": "\"· 4.2 kW\" while producing; otherwise where the house draws from."
     },
     {
       "name": "ensureMfHostInit",
@@ -7494,6 +7589,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-value-field/device-value-token.ts",
       "summary": "The template token a device value is written as: `{{dev:<stableId>/<cap>.<fieldPath>}}`. The token chip adapter of the device → value picker writes it; reading it back is what the chip needs to show its label. Renderi…"
+    },
+    {
+      "name": "formatKw",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/energy/model.ts",
+      "summary": "\"4.2 kW\" — the magnitude only; the arrow says the direction."
     },
     {
       "name": "formatLastSeen",

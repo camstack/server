@@ -13,6 +13,7 @@ import {
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defaultUiText } from '../../../contexts/ui-text'
+import { energyFixtures } from '../__fixtures__/energy'
 import { heatPumpFixtures } from '../__fixtures__/heat-pump'
 import { waterHeaterFixtures } from '../__fixtures__/water-heater'
 import { connectedCardKindOf } from '../connected/ConnectedDeviceCard'
@@ -23,6 +24,8 @@ import {
   heatPumpSystemModes,
 } from '../connected/heat-pump-model'
 import { waterHeaterActivityOf, waterHeaterOnMode } from '../connected/water-heater-model'
+import { EnergyCard, energyNodes, energySince } from '../scenes/energy/EnergyCard'
+import type { EnergyFlows } from '../scenes/energy/model'
 import { HeatPumpCard } from '../scenes/heat-pump/HeatPumpCard'
 import type { HeatPumpCardActions } from '../scenes/heat-pump/model'
 import { WaterHeaterCard, waterHeaterFill } from '../scenes/water-heater/WaterHeaterCard'
@@ -196,5 +199,62 @@ describe('fixtures', () => {
     render(<WaterHeaterCard model={f.model} actions={whActions()} />)
     expect(screen.getByRole('button', { name: 'Raise target' }).hasAttribute('disabled')).toBe(true)
     expect(screen.queryByTestId('dc-wh-away')).toBeNull()
+  })
+})
+
+describe('energy system', () => {
+  const FLOWS: EnergyFlows = {
+    solarW: 4200,
+    gridW: -500,
+    batteryW: -2600,
+    batteryPct: 78,
+    houseW: 600,
+    heatPumpW: 500,
+  }
+
+  it('draws a node per reported power, signed against the bus', () => {
+    const nodes = energyNodes(FLOWS, t)
+    expect(nodes.map((n) => n.id)).toEqual(['solar', 'grid', 'battery', 'house', 'heatPump'])
+    expect(nodes.find((n) => n.id === 'grid')?.label).toBe('Export')
+    expect(nodes.find((n) => n.id === 'battery')?.label).toBe('Charging · 78%')
+    expect(nodes.find((n) => n.id === 'house')?.watts).toBe(-600)
+    const plain = energyNodes({ ...FLOWS, batteryW: null, heatPumpW: null }, t)
+    expect(plain.map((n) => n.id)).toEqual(['solar', 'grid', 'house'])
+  })
+
+  it('holds a node below the still threshold', () => {
+    const grid = energyNodes({ ...FLOWS, gridW: 20 }, t).find((n) => n.id === 'grid')
+    expect(grid?.still).toBe(true)
+    expect(grid?.label).toBe('Grid')
+  })
+
+  it('says where the house draws from when the sun does not produce', () => {
+    expect(energySince(FLOWS, t)).toBe('4.2 kW')
+    expect(energySince({ ...FLOWS, solarW: 0, batteryW: 1500 }, t)).toBe('from the battery')
+    expect(energySince({ ...FLOWS, solarW: 0, batteryW: -2000, gridW: 2500 }, t)).toBe(
+      'from the grid',
+    )
+  })
+
+  it.each(energyFixtures().map((f) => [f.id, f] as const))('%s renders', (_, f) => {
+    render(<EnergyCard model={f.model} actions={{}} orientation={f.orientation} />)
+    expect(screen.getByTestId('device-card').getAttribute('data-card-kind')).toBe('energy')
+    expect(screen.getByTestId('dc-energy-node-solar')).toBeTruthy()
+  })
+
+  it('runs the grid into the bus at night and draws no battery without one', () => {
+    const night = energyFixtures().find((f) => f.id === 'energy-night')
+    const plain = energyFixtures().find((f) => f.id === 'energy-plain')
+    if (night === undefined || plain === undefined) throw new Error('missing fixture')
+    render(<EnergyCard model={night.model} actions={{}} />)
+    const direction = (id: string): string | null =>
+      screen.getByTestId(`dc-energy-branch-${id}`).getAttribute('data-direction')
+    expect(direction('grid')).toBe('in')
+    expect(direction('battery')).toBe('out')
+    expect(direction('solar')).toBe('still')
+    cleanup()
+    render(<EnergyCard model={plain.model} actions={{}} />)
+    expect(screen.queryByTestId('dc-energy-node-battery')).toBeNull()
+    expect(screen.queryByTestId('dc-energy-node-heatPump')).toBeNull()
   })
 })

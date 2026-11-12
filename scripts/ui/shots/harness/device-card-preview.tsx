@@ -32,6 +32,8 @@ import {
   UiTextProvider,
   WaterHeaterCard,
   type WaterHeaterCardActions,
+  EnergyCard,
+  type EnergyCardActions,
 } from '@camstack/ui-library'
 import { applianceFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/appliance'
 import {
@@ -39,6 +41,7 @@ import {
   CLIMATE_FIXTURES,
 } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/climate'
 import { coverFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/cover'
+import { energyFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/energy'
 import { fanFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/fan'
 import { heaterFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/heater'
 import { heatPumpFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/heat-pump'
@@ -123,6 +126,7 @@ const WATER_HEATER_ACTIONS: WaterHeaterCardActions = {
   onMode: noop,
   onAway: noop,
 }
+const ENERGY_ACTIONS: EnergyCardActions = {}
 const APPLIANCE_KIND = { washer: 'washer', dryer: 'dryer', dish: 'dish' } as const
 
 interface WaveBSceneProps {
@@ -211,12 +215,22 @@ function WaveCScene({ type }: { readonly type: string }): ReactElement | null {
           ))}
         </>
       )
+    case 'energy':
+      return (
+        <>
+          {energyFixtures().map((f) => (
+            <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
+              <EnergyCard model={f.model} actions={ENERGY_ACTIONS} orientation={f.orientation} />
+            </Cell>
+          ))}
+        </>
+      )
     default:
       return null
   }
 }
 
-const WAVE_C_TYPES: ReadonlySet<string> = new Set(['heatpump', 'water'])
+const WAVE_C_TYPES: ReadonlySet<string> = new Set(['heatpump', 'water', 'energy'])
 
 /** One scene per `?type=`: the fixtures of that mockup page, each in its cell. */
 function WaveAScene({ type }: { readonly type: string }): ReactElement | null {
