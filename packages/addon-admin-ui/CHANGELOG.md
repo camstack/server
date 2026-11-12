@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A device command step reads as one sentence with a Change button; the device modal picks it by device or by action, lists only the commands every picked device offers, and asks the command's settings before Confirm
+- A selected remote button no longer pops the command picker: an unfinished binding shows a Choose row, and a call the vocabulary cannot name stays read-only until Change
 - Strings for the sensor card's state corner and for a control that could not be set (English and Italian)
 
 ## [1.2.652] - 2026-11-12
@@ -17,8 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A cover's Customize role selector offers the cover kinds (blind, shutter, awning, curtain, garage, gate, door, window)
 - The Kind column of an instances table shows the provider icon when the addon declares one.
-- A device command step reads as one sentence with a Change button; the device modal picks it by device or by action, lists only the commands every picked device offers, and asks the command's settings before Confirm
-- A selected remote button no longer pops the command picker: an unfinished binding shows a Choose row, and a call the vocabulary cannot name stays read-only until Change
 
 ## [1.2.651] - 2026-11-12
 
