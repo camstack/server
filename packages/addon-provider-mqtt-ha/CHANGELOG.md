@@ -11,13 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A remote whose buttons are announced as MQTT device triggers (the default of a Zigbee bridge) is now an event device: its actions are listed and fire like any other button event
 
+### Changed
+
+- Event devices declare their event vocabulary; each event is listed under its native name for now
+- Event devices show readable event names, and common button events (press, long press, double press, release) are recognised as such
+
 ## [0.1.45] - 2026-11-11
 
 ### Changed
 
 - MQTT thermostats are now climate devices.
-- Event devices declare their event vocabulary; each event is listed under its native name for now
-- Event devices show readable event names, and common button events (press, long press, double press, release) are recognised as such
 
 ## [0.1.44] - 2026-11-10
 
