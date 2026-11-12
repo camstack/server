@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.231] - 2026-11-12
+
 ### Added
 
 - configure-automations: answers may carry a wait-until step, with the editor's six-hour ceiling

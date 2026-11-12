@@ -7,14 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- A Homematic thermostat turns on and off through its switch, like every other device
-- Event devices declare their event vocabulary; each event is listed under its native name for now
+## [1.2.191] - 2026-11-12
 
 ### Added
 
 - A remote or wall switch lists each button with its presses (short, long, held, released), and a press says which button it came from
+
+### Changed
+
+- A Homematic thermostat turns on and off through its switch, like every other device
+- Event devices declare their event vocabulary; each event is listed under its native name for now
 
 ## [1.2.190] - 2026-11-11
 

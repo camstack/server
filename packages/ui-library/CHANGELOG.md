@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.427] - 2026-11-12
+
 ### Changed
 
 - The recording band sensors, the Customize source column and every schema device field pick through the device search: compatible devices only, the host's room suggested, a failed search says so

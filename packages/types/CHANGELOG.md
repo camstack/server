@@ -7,10 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- A schema device-select filter's clauses must all hold, and suggestLocation is gone (the picker suggests the host's room)
-- A template with a dotted name in saved step text, such as {{vars.a.b}}, now resolves to the variable of that name (or to nothing when it is not set) instead of staying as literal text
+## [1.2.550] - 2026-11-12
 
 ### Added
 
@@ -25,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automations: a 'device fired' trigger row runs on one button and one kind of press of a remote, once per press, and hands the button and the press to the steps
 - An addon route can be declared per instance: the hub serves it at /addon/<addonId>/instances/<instanceId>/<path>, and the address without an instance stays the default one
 - An account can be linked to one instance of an integration: /api/oauth2/authorize takes instance= beside integration=, and the link, its tokens and oauthVerifyAccessToken name the instance
+
+### Changed
+
+- A schema device-select filter's clauses must all hold, and suggestLocation is gone (the picker suggests the host's room)
+- A template with a dotted name in saved step text, such as {{vars.a.b}}, now resolves to the variable of that name (or to nothing when it is not set) instead of staying as literal text
 
 ## [1.2.549] - 2026-11-11
 

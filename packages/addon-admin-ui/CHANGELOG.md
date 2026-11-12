@@ -7,11 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Token view links, Log watch and the automation device fields (event source, command target, scene cameras) use the device search picker
-- The page of an event device (a remote, a button) lists each button with its labelled presses, and the last event names its button
-- The device page and the device embed show the new cover, light, fan and heater cards
+## [1.2.646] - 2026-11-12
 
 ### Added
 
@@ -24,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automations: block steps (choose, repeat, at the same time, wait until) can be placed inside a branch or a repeat, one level deep; the run view shows their steps
 - Automation editor: a 'A button or device fires' row picks the device, then the button and the event it declares
 - A notification rule on a button or remote offers the events that device declares, under their readable names
+
+### Changed
+
+- Token view links, Log watch and the automation device fields (event source, command target, scene cameras) use the device search picker
+- The page of an event device (a remote, a button) lists each button with its labelled presses, and the last event names its button
+- The device page and the device embed show the new cover, light, fan and heater cards
 
 ## [1.2.645] - 2026-11-11
 
