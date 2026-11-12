@@ -235,18 +235,57 @@ describe('the generic accessory', () => {
     await mapper.dispose()
   })
 
-  it('keeps a switch with another role a Switch (an outlet is not a lamp)', async () => {
+  // Operator decision 2026-11-12: every switch sub-role is exported as its
+  // own service and category — on/off only, nothing it does not have.
+  it.each([
+    [DeviceRole.Outlet, Service.Outlet, Categories.OUTLET],
+    [DeviceRole.SwitchFan, Service.Fan, Categories.FAN],
+    // No HomeKit service is a heater with power only (HeaterCooler needs a
+    // temperature and a target state): a Switch, under the heater category.
+    [DeviceRole.SwitchHeater, Service.Switch, Categories.AIR_HEATER],
+    // A helper boolean is not a physical thing: a plain Switch.
+    [DeviceRole.BinaryHelper, Service.Switch, Categories.SWITCH],
+    [null, Service.Switch, Categories.SWITCH],
+  ] as const)('a switch with role %s is published as its own service', async (role, service, category) => {
+    const written: boolean[] = []
     const proxy = makeProxy(
       ['switch'],
       DeviceType.Switch,
-      { switch: { getStatus: async () => ({ on: true }), setState: async () => undefined } },
-      DeviceRole.Outlet,
+      {
+        switch: {
+          getStatus: async () => ({ on: true }),
+          setState: async (input: { on: boolean }) => {
+            written.push(input.on)
+          },
+        },
+      },
+      role,
     )
     const mapper = await build(proxy)
-    expect(serviceOfType(mapper.accessory, Service.Switch)).toBeDefined()
-    expect(serviceOfType(mapper.accessory, Service.Lightbulb)).toBeUndefined()
-    expect(mapper.accessory.category).toBe(Categories.SWITCH)
+    const published = serviceOfType(mapper.accessory, service)
+    expect(published).toBeDefined()
+    const others = [Service.Switch, Service.Outlet, Service.Fan, Service.Lightbulb].filter(
+      (other) => other.UUID !== service.UUID,
+    )
+    for (const other of others) expect(serviceOfType(mapper.accessory, other)).toBeUndefined()
+    expect(published?.getCharacteristic(Characteristic.On).value).toBe(true)
+    expect(published?.testCharacteristic(Characteristic.Brightness)).toBe(false)
+    expect(published?.testCharacteristic(Characteristic.RotationSpeed)).toBe(false)
+    expect(mapper.accessory.category).toBe(category)
+    await published?.getCharacteristic(Characteristic.On).handleSetRequest(false)
+    expect(written).toEqual([false])
     await mapper.dispose()
+  })
+
+  it('keeps the accessory id when only the role differs (no re-pair)', async () => {
+    const handles = {
+      switch: { getStatus: async () => ({ on: false }), setState: async () => undefined },
+    }
+    const plain = await build(makeProxy(['switch'], DeviceType.Switch, handles, null))
+    const fan = await build(makeProxy(['switch'], DeviceType.Switch, handles, DeviceRole.SwitchFan))
+    expect(fan.accessory.UUID).toBe(plain.accessory.UUID)
+    await plain.dispose()
+    await fan.dispose()
   })
 
   it('publishes a ContactSensor and follows the slice', async () => {

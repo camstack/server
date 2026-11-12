@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@camstack/types'
 import {
   describeCompositionSources,
   normalizedNativeOwner,
@@ -94,5 +94,30 @@ describe('describeCompositionSources live kinds of a union read (D1034)', () => 
     const src = d.sources.get('homeassistant/number.studio_h_angle')
     expect(src?.kind).toBe('found')
     if (src?.kind === 'found') expect(src.liveKinds).toBeUndefined()
+  })
+})
+
+describe('describeCompositionSources carries the role (#509)', () => {
+  const RELAY = { addonId: 'homeassistant', stableId: 'switch.porch_lamp' }
+
+  it('a switch-light relay is described with its role, so a light group can take it', async () => {
+    const d = await describeCompositionSources(
+      {
+        listByAddon: async () => [
+          {
+            id: 77,
+            stableId: RELAY.stableId,
+            type: DeviceType.Switch,
+            role: DeviceRole.SwitchLight,
+          },
+        ],
+        bindings: async () => [{ capName: 'switch', nativeAddonId: 'homeassistant' }],
+      },
+      [RELAY],
+      [],
+    )
+    const source = d.sources.get('homeassistant/switch.porch_lamp')
+    expect(source?.kind).toBe('found')
+    if (source?.kind === 'found') expect(source.role).toBe(DeviceRole.SwitchLight)
   })
 })

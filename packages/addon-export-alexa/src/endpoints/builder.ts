@@ -21,7 +21,7 @@
  *     lives on the camera's own cap, so the Alexa endpoint id encodes
  *     the routing.
  */
-import type { AlarmArmMode } from '@camstack/types'
+import { isOutlet, isSwitchFan, isSwitchLight, type AlarmArmMode } from '@camstack/types'
 
 import { type DetectionSensorClass, detectionSensorEndpointId } from '../handlers/endpoint-id.js'
 import { supportedArmStatesFor } from '../handlers/security-panel-arm-state.js'
@@ -460,7 +460,31 @@ export function buildParentCameraEndpoint(input: BuildParentEndpointInput): Alex
 
 // ── Child accessory endpoint ────────────────────────────────────────
 
-export type ChildAccessoryKind = 'light' | 'switch' | 'siren'
+export type ChildAccessoryKind = 'light' | 'switch' | 'siren' | 'outlet' | 'fan'
+
+/**
+ * Which endpoint a child switch becomes, from its type and role. A switch
+ * sub-role is read only through the `@camstack/types` accessors; a heater
+ * (`switch-heater`) and a helper boolean stay a plain switch for the reasons
+ * written on `switchCategory` (`adapters/switch.ts`).
+ */
+export function classifyChildKind(deviceType: string, role: string | null): ChildAccessoryKind {
+  if (role === 'floodlight' || role === 'spotlight' || role === 'nightvision') return 'light'
+  if (role === 'siren') return 'siren'
+  if (deviceType === 'light' || isSwitchLight(deviceType, role)) return 'light'
+  if (deviceType === 'siren') return 'siren'
+  if (isOutlet(deviceType, role)) return 'outlet'
+  if (isSwitchFan(deviceType, role)) return 'fan'
+  return 'switch'
+}
+
+const CHILD_CATEGORY: Readonly<Record<ChildAccessoryKind, AlexaDisplayCategory>> = {
+  light: 'LIGHT',
+  switch: 'SWITCH',
+  siren: 'SWITCH',
+  outlet: 'SMARTPLUG',
+  fan: 'FAN',
+}
 
 export interface BuildChildEndpointInput {
   readonly parentDeviceId: number
@@ -500,8 +524,7 @@ function composeChildFriendlyName(
 }
 
 export function buildChildAccessoryEndpoint(input: BuildChildEndpointInput): AlexaEndpoint {
-  const displayCategories: readonly AlexaDisplayCategory[] =
-    input.kind === 'light' ? ['LIGHT'] : ['SWITCH']
+  const displayCategories: readonly AlexaDisplayCategory[] = [CHILD_CATEGORY[input.kind]]
   const capabilities: AlexaCapability[] = [ALEXA_BASE_CAPABILITY, POWER_CONTROLLER]
   if (input.hasBrightness) capabilities.push(BRIGHTNESS_CONTROLLER)
 

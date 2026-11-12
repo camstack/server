@@ -52,6 +52,7 @@ export function createApiDeviceGateway(deps: ApiDeviceGatewayDeps): DeviceGatewa
         deviceId: device.id,
         name: device.name,
         deviceType: device.type,
+        role: device.role ?? null,
         features: device.features,
         capNames: entries.map((entry) => entry.capName),
       }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@camstack/types'
 import {
   buildSyncDevice,
   resolveGoogleDeviceType,
@@ -74,6 +74,24 @@ describe('buildSyncDevice', () => {
     ).toBeNull()
   })
 
+  // Operator decision 2026-11-12: every switch sub-role is exported as its own
+  // device type, with the OnOff trait only.
+  it.each([
+    [DeviceRole.Outlet, 'action.devices.types.OUTLET'],
+    [DeviceRole.SwitchLight, 'action.devices.types.LIGHT'],
+    [DeviceRole.SwitchFan, 'action.devices.types.FAN'],
+    // Google's HEATER requires no trait: OnOff alone is an honest heater.
+    [DeviceRole.SwitchHeater, 'action.devices.types.HEATER'],
+    // A helper boolean is not a physical thing: a plain switch.
+    [DeviceRole.BinaryHelper, 'action.devices.types.SWITCH'],
+    [null, 'action.devices.types.SWITCH'],
+  ] as const)('projects a switch with role %s as %s, OnOff only', (role, type) => {
+    const device = buildSyncDevice(facts({ deviceId: 42, deviceType: 'switch', role }))
+    expect(device?.type).toBe(type)
+    expect(device?.traits).toEqual(['action.devices.traits.OnOff'])
+    expect(device?.id).toBe('42')
+  })
+
   it('returns null for a device with no capabilities at all', () => {
     expect(buildSyncDevice(facts({ capNames: [] }))).toBeNull()
   })
@@ -87,7 +105,9 @@ describe('SUPPORTED_DEVICE_KINDS', () => {
   })
 
   it('does not turn a washer into a switch just because power could look like OnOff', () => {
-    expect(resolveGoogleDeviceType(DeviceType.Washer, ['action.devices.traits.OnOff'])).toBeNull()
+    expect(
+      resolveGoogleDeviceType(DeviceType.Washer, ['action.devices.traits.OnOff'], null),
+    ).toBeNull()
     expect(SUPPORTED_DEVICE_KINDS).not.toContain(DeviceType.Washer)
     expect(SUPPORTED_DEVICE_KINDS).not.toContain(DeviceType.Dryer)
     expect(SUPPORTED_DEVICE_KINDS).not.toContain(DeviceType.Dishwasher)

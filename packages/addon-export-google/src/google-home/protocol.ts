@@ -83,6 +83,9 @@ export type ExecuteInput = z.infer<typeof ExecuteInputSchema>
 export type GoogleDeviceType =
   | 'action.devices.types.LIGHT'
   | 'action.devices.types.SWITCH'
+  | 'action.devices.types.OUTLET'
+  | 'action.devices.types.FAN'
+  | 'action.devices.types.HEATER'
   | 'action.devices.types.LOCK'
   | 'action.devices.types.SHUTTER'
   | 'action.devices.types.SCENE'

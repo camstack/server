@@ -45,6 +45,9 @@ import {
   DeviceType,
   FloodStatusSchema,
   HumiditySensorStatusSchema,
+  isOutlet,
+  isSwitchFan,
+  isSwitchHeater,
   isSwitchLight,
   MotionStatusSchema,
   PresenceStatusSchema,
@@ -329,7 +332,16 @@ const ACCESSORY_CATEGORY_BY_TYPE: Partial<Record<DeviceType, Categories>> = {
   [DeviceType.AlarmPanel]: Categories.SECURITY_SYSTEM,
 }
 
+/**
+ * The category, by type and then by the switch's sub-role (read only through
+ * the `@camstack/types` accessors). A heater keeps a Switch service (see
+ * `onOffServiceKind`) and takes HomeKit's heater category, which is an icon
+ * and promises no characteristic. A helper boolean stays a SWITCH.
+ */
 export function accessoryCategoryFor(deviceType: DeviceType, role: string | null): Categories {
   if (isSwitchLight(deviceType, role)) return Categories.LIGHTBULB
+  if (isOutlet(deviceType, role)) return Categories.OUTLET
+  if (isSwitchFan(deviceType, role)) return Categories.FAN
+  if (isSwitchHeater(deviceType, role)) return Categories.AIR_HEATER
   return ACCESSORY_CATEGORY_BY_TYPE[deviceType] ?? Categories.OTHER
 }

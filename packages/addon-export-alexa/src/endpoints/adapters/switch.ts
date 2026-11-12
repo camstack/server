@@ -1,6 +1,7 @@
 import {
   BrightnessStatusSchema,
-  DeviceRole,
+  isOutlet,
+  isSwitchFan,
   isSwitchLight,
   SwitchStatusSchema,
 } from '@camstack/types'
@@ -29,12 +30,24 @@ const BRIGHTNESS_DIRECTIVE: AdapterDirective = {
     handleSetBrightness(c.header, c.endpoint, c.payload, c.deps.brightnessController, c.identity),
 }
 
-/** An outlet (D875: its source says so, e.g. HA `device_class: outlet`) is a
- *  smart plug; a relay driving a lamp (`switch-light`) is a LIGHT with power
- *  only; every other switch is a SWITCH. */
+/**
+ * A switch's category comes from its sub-role, read only through the
+ * `@camstack/types` accessors (operator decision 2026-11-12: every switch
+ * sub-role is exported as its own category):
+ *  - an outlet (D875, e.g. HA `device_class: outlet`) is a SMARTPLUG;
+ *  - a relay driving a lamp (`switch-light`) is a LIGHT with power only;
+ *  - a plain fan behind a switch (`switch-fan`) is a FAN with power only;
+ *  - a plug-in heater (`switch-heater`) stays a SWITCH: Alexa has no heater
+ *    category with power only, and THERMOSTAT would promise a setpoint and a
+ *    temperature the device does not have;
+ *  - a helper boolean (`binary-helper`) and a role-less switch stay a SWITCH:
+ *    a helper is not a physical thing, SWITCH is exactly what it is.
+ */
 function switchCategory(device: AdapterDevice): AlexaDisplayCategory {
   if (isSwitchLight(device.type, device.role)) return 'LIGHT'
-  return device.role === DeviceRole.Outlet ? 'SMARTPLUG' : 'SWITCH'
+  if (isOutlet(device.type, device.role)) return 'SMARTPLUG'
+  if (isSwitchFan(device.type, device.role)) return 'FAN'
+  return 'SWITCH'
 }
 
 /**

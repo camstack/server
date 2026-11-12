@@ -12,11 +12,13 @@ function device(
   type: string,
   caps: readonly string[],
   name = `Device ${id}`,
+  role: string | null = null,
 ): MemberDevice {
   return {
     id,
     name,
     type,
+    role,
     location: 'Porch',
     parentDeviceId: null,
     addonId: 'provider-homeassistant',
@@ -25,13 +27,28 @@ function device(
   }
 }
 
-function requestFor(id: 'temperature' | 'occupancy') {
+function requestFor(id: 'temperature' | 'occupancy' | 'light') {
   const template = groupTemplate(id)
   if (template === null) throw new Error(`missing ${id}`)
   return sourcePickForTemplate(template)
 }
 
 describe('partitionMemberDevices', () => {
+  it('offers a switch-light relay to a light group, and no other switch (#509)', () => {
+    const request = requestFor('light')
+    const { compatible, incompatible } = partitionMemberDevices(
+      [
+        device(1, 'light', ['switch', 'brightness'], 'Ceiling'),
+        device(2, 'switch', ['switch'], 'Porch lamp relay', 'switch-light'),
+        device(3, 'switch', ['switch'], 'Kettle plug', 'outlet'),
+        device(4, 'switch', ['switch'], 'Plain relay'),
+      ],
+      request,
+    )
+    expect(compatible.map((row) => row.id)).toEqual([1, 2])
+    expect(incompatible.map((row) => row.id)).toEqual([3, 4])
+  })
+
   it('keeps sensors that bind the template cap and drops other types', () => {
     const request = requestFor('temperature')
     const { compatible, incompatible } = partitionMemberDevices(

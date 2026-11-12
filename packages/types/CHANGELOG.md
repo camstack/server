@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - New switch role switch-light: a relay driving an on/off-only lamp, drawn and exported as a light with power only
+- Switch sub-role accessors (isOutlet, isSwitchFan, isSwitchHeater) and a light group accepts a switch-light relay as an on/off member.
 
 ## [1.2.557] - 2026-11-12
 

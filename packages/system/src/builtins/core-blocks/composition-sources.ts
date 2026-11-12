@@ -29,6 +29,8 @@ export interface SourceRowView {
   readonly id: number
   readonly stableId: string
   readonly type: DeviceType
+  /** The device's role, when it has one: a `switch-light` relay joins a light group. */
+  readonly role?: string | null
   /** The device's stored quantity, when it declares one (D944 §4). */
   readonly quantity?: ReadingQuantity
 }
@@ -160,6 +162,7 @@ function describeSource(
     deviceId: lookup.row.id,
     caps: new Set(bound.map((b) => b.capName)),
     deviceType: lookup.row.type,
+    ...(lookup.row.role === undefined ? {} : { role: lookup.row.role }),
     ...(lookup.row.quantity === undefined ? {} : { quantity: lookup.row.quantity }),
     ...(live === undefined || live.size === 0 ? {} : { liveKinds: live }),
   }

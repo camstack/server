@@ -8,12 +8,15 @@ import { compositionSourceKey, type Composition } from '../composition.js'
 import type { CompositionProblem } from '../composition-report.js'
 import { problem } from '../plan-result.js'
 import { groupTemplate } from './catalog.js'
+import { memberKindAccepted } from './source-pick.js'
 import { compileHelper, sameHelperBody } from './compile.js'
 import type { ArithmeticHelperSpec, GroupHelperSpec } from './spec.js'
 
 /** What a save learned about one member device. Absent keys were not read. */
 export interface HelperMemberFact {
   readonly deviceType?: DeviceType
+  /** The member's role, when read: a `switch-light` relay is a light member. */
+  readonly role?: string | null
   readonly quantity?: ReadingQuantity
 }
 
@@ -60,8 +63,10 @@ function deviceTypeProblems(
   const template = groupTemplate(spec.templateId)
   if (template === null) return []
   return spec.members.flatMap((member, index) => {
-    const deviceType = facts.get(compositionSourceKey(member.source))?.deviceType
-    if (deviceType === undefined || template.memberDeviceTypes.includes(deviceType)) return []
+    const fact = facts.get(compositionSourceKey(member.source))
+    const deviceType = fact?.deviceType
+    if (deviceType === undefined) return []
+    if (memberKindAccepted(template.memberDeviceTypes, deviceType, fact?.role)) return []
     return [
       problem(
         'member-constraint',

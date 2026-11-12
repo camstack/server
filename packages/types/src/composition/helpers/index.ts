@@ -123,6 +123,7 @@ export {
   type MathSourceKind,
   sourcePickForHistory,
   sourcePickForMath,
+  sourcePickAcceptsDevice,
   sourcePickForTemplate,
 } from './source-pick.js'
 export {

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A switch with the role switch-light is published to HomeKit as an on/off Lightbulb
+- An outlet becomes a HomeKit Outlet, a switch-fan a Fan (on/off), and a switch-heater keeps a Switch under the heater category, on the device and as a child. The accessory stays paired, but the Home app shows the new tile as a new service: re-attach any scene or automation that used the old switch.
 
 ## [1.2.200] - 2026-11-12
 

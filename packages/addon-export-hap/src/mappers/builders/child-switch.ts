@@ -7,7 +7,8 @@
  * hands this builder the PARENT accessory + the CHILD's proxy + a
  * unique subtype so each service round-trips deterministically through
  * HAP serialisation. The builder:
- *  - Maps `switch` cap → `Service.Switch`.
+ *  - Maps `switch` cap → `Service.Switch`, or the service the device's switch
+ *    sub-role names (`onOffServiceKind`).
  *  - Maps `switch` + `brightness` cap → `Service.Lightbulb` with
  *    Brightness characteristic (lighting devices only — see below).
  *  - Hydrates initial state from `getStatus({})`.
@@ -30,11 +31,56 @@
  * IR LED, etc.) return a no-op handle.
  */
 
-import { DeviceType, isSwitchLight } from '@camstack/types'
+import { DeviceType, isOutlet, isSwitchFan, isSwitchLight } from '@camstack/types'
 import { Characteristic, Service } from '@homebridge/hap-nodejs'
 
 import type { BuilderContext, BuilderHandle } from '../types.js'
 import { applyServiceLabel } from './service-label.js'
+
+/**
+ * The HomeKit service an on/off device becomes. A switch's sub-role is read
+ * only through the `@camstack/types` accessors (operator decision 2026-11-12:
+ * every switch sub-role is exported as its own service, on/off only):
+ *  - a dimmable light (brightness on a Light / Generic) → Lightbulb + Brightness;
+ *  - a relay driving a lamp (`switch-light`) → Lightbulb, no Brightness;
+ *  - an outlet → Outlet (`OutletInUse` mirrors power: the plug reports no load);
+ *  - a fan behind a switch (`switch-fan`) → Fan, `On` only, no RotationSpeed;
+ *  - a plug-in heater (`switch-heater`) → Switch: HomeKit's only heater
+ *    service (HeaterCooler) requires a current temperature and a target state
+ *    the device does not have, and a fake thermostat would lie;
+ *  - a helper boolean (`binary-helper`), a siren, any other switch → Switch.
+ */
+export type OnOffServiceKind = 'dimmable-lightbulb' | 'lightbulb' | 'outlet' | 'fan' | 'switch'
+
+export function onOffServiceKind(
+  deviceType: DeviceType,
+  role: string | null,
+  hasBrightness: boolean,
+): OnOffServiceKind {
+  // Only true lighting devices map onto a dimmable Lightbulb. A siren also
+  // exposes `brightness` (alarm volume), and iOS Home would render it as a
+  // light — wrong icon, wrong scenes, wrong Siri intents.
+  const isLightingDevice = deviceType === DeviceType.Light || deviceType === DeviceType.Generic
+  if (hasBrightness && isLightingDevice) return 'dimmable-lightbulb'
+  if (isSwitchLight(deviceType, role)) return 'lightbulb'
+  if (isOutlet(deviceType, role)) return 'outlet'
+  if (isSwitchFan(deviceType, role)) return 'fan'
+  return 'switch'
+}
+
+function addOnOffService(
+  accessory: BuilderContext['accessory'],
+  kind: OnOffServiceKind,
+  displayName: string,
+  subtype: string,
+): Service {
+  if (kind === 'dimmable-lightbulb' || kind === 'lightbulb') {
+    return accessory.addService(Service.Lightbulb, displayName, subtype)
+  }
+  if (kind === 'outlet') return accessory.addService(Service.Outlet, displayName, subtype)
+  if (kind === 'fan') return accessory.addService(Service.Fan, displayName, subtype)
+  return accessory.addService(Service.Switch, displayName, subtype)
+}
 
 interface SwitchStatus {
   readonly on?: boolean
@@ -65,28 +111,23 @@ export async function buildChildSwitch(
     }
   }
 
-  // Only true lighting devices map onto `Service.Lightbulb`. A siren
-  // also exposes `brightness` (alarm volume) but iOS Home would render
-  // it as a light — wrong icon, wrong scenes, wrong Siri intents. Gate
-  // on the child's DeviceType instead of the brightness cap alone.
-  const isLightingDevice = deviceType === DeviceType.Light || deviceType === DeviceType.Generic
-  const dimmable = hasBrightness && isLightingDevice
-  // A relay driving a lamp (`switch-light`) is a light by its role: an on/off
-  // Lightbulb, with no Brightness characteristic to offer a level it lacks.
-  const useLightbulb = dimmable || isSwitchLight(deviceType, role)
+  const kind = onOffServiceKind(deviceType, role, hasBrightness)
+  const dimmable = kind === 'dimmable-lightbulb'
   // `displayName` is already resolved by `child-accessory.ts` through
   // `childServiceName`, so it is HAP-valid and device-derived. It is published
   // on BOTH `Name` and `ConfiguredName` — see `service-label.ts`.
-  const service = useLightbulb
-    ? accessory.addService(Service.Lightbulb, displayName, subtype)
-    : accessory.addService(Service.Switch, displayName, subtype)
+  const service = addOnOffService(accessory, kind, displayName, subtype)
   applyServiceLabel(service, displayName)
+  const setOn = (on: boolean): void => {
+    service.updateCharacteristic(Characteristic.On, on)
+    if (kind === 'outlet') service.updateCharacteristic(Characteristic.OutletInUse, on)
+  }
 
   // Hydrate on-state
   try {
     const switchStatus = (await proxy.switch?.getStatus({})) as SwitchStatus | null
     if (switchStatus && typeof switchStatus.on === 'boolean') {
-      service.updateCharacteristic(Characteristic.On, switchStatus.on)
+      setOn(switchStatus.on)
     }
   } catch (err) {
     log.debug('export-hap: child switch.getStatus failed (non-fatal)', {
@@ -143,7 +184,7 @@ export async function buildChildSwitch(
   if (proxy.state.switch) {
     const unsubSwitch = proxy.state.switch.subscribe((value) => {
       if (value && typeof value.on === 'boolean') {
-        service.updateCharacteristic(Characteristic.On, value.on)
+        setOn(value.on)
       }
     })
     unsubscribes.push(unsubSwitch)

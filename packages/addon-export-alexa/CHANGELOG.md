@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A switch with the role switch-light is discovered by Alexa as a LIGHT with power only
+- A switch-fan is exported as a FAN and an outlet or fan child as SMARTPLUG / FAN; a heater or helper switch stays a SWITCH.
 
 ## [1.2.196] - 2026-11-12
 

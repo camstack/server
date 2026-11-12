@@ -5,6 +5,9 @@ import {
   capAppliesToDeviceKind,
   climateRoleOf,
   isAirConditioner,
+  isOutlet,
+  isSwitchFan,
+  isSwitchHeater,
   isSwitchLight,
 } from '../device-kind.js'
 import { DeviceRole, DeviceType } from '../device-type.js'
@@ -105,6 +108,37 @@ describe('device kind (D1033)', () => {
       expect(isSwitchLight(DeviceType.Switch, null)).toBe(false)
       expect(isSwitchLight(DeviceType.Light, null)).toBe(false)
       expect(isSwitchLight(DeviceType.Light, DeviceRole.SwitchLight)).toBe(false)
+    })
+  })
+
+  describe('every switch sub-role has one accessor (exports read only these)', () => {
+    it.each([
+      ['outlet', isOutlet, DeviceRole.Outlet],
+      ['switch-fan', isSwitchFan, DeviceRole.SwitchFan],
+      ['switch-heater', isSwitchHeater, DeviceRole.SwitchHeater],
+      ['switch-light', isSwitchLight, DeviceRole.SwitchLight],
+    ] as const)('%s: a switch with that role, nothing else', (_name, accessor, role) => {
+      expect(accessor(DeviceType.Switch, role)).toBe(true)
+      expect(accessor(DeviceType.Switch, null)).toBe(false)
+      expect(accessor(DeviceType.Switch, undefined)).toBe(false)
+      expect(accessor(DeviceType.Switch, DeviceRole.BinaryHelper)).toBe(false)
+      expect(accessor(DeviceType.Light, role)).toBe(false)
+      expect(accessor(DeviceType.Fan, role)).toBe(false)
+    })
+
+    it('the four accessors never overlap', () => {
+      const roles = [
+        DeviceRole.Outlet,
+        DeviceRole.SwitchFan,
+        DeviceRole.SwitchHeater,
+        DeviceRole.SwitchLight,
+      ]
+      for (const role of roles) {
+        const hits = [isOutlet, isSwitchFan, isSwitchHeater, isSwitchLight].filter((accessor) =>
+          accessor(DeviceType.Switch, role),
+        )
+        expect(hits).toHaveLength(1)
+      }
     })
   })
 

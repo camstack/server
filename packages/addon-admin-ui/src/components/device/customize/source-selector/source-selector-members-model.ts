@@ -5,7 +5,7 @@
  */
 import {
   historyFieldsFor,
-  type DeviceType,
+  sourcePickAcceptsDevice,
   type HelperMember,
   type SourcePickRequest,
 } from '@camstack/types'
@@ -14,6 +14,8 @@ export interface MemberDevice {
   readonly id: number
   readonly name: string
   readonly type: string
+  /** The device's role: a `switch-light` relay is a light member. */
+  readonly role: string | null
   readonly location: string | null
   readonly parentDeviceId: number | null
   readonly addonId: string
@@ -50,7 +52,10 @@ export function partitionMemberDevices(
   const incompatible: MemberDevice[] = []
   for (const device of devices) {
     if (hidden.has(`${device.addonId}/${device.stableId}`)) continue
-    if (typeAllowed(device.type, request.deviceTypes) && device.caps.some((cap) => caps.has(cap))) {
+    if (
+      sourcePickAcceptsDevice(request, device.type, device.role) &&
+      device.caps.some((cap) => caps.has(cap))
+    ) {
       compatible.push(device)
     } else {
       incompatible.push(device)
@@ -175,11 +180,6 @@ function accepted(
   return request.accept.some(
     (accept) => accept.cap === field.cap && accept.fieldPath === field.fieldPath,
   )
-}
-
-function typeAllowed(deviceType: string, allowed: readonly DeviceType[]): boolean {
-  if (allowed.length === 0) return true
-  return allowed.some((type) => type === deviceType)
 }
 
 function memberOf(device: MemberDevice, cap: string, fieldPath: string): HelperMember {

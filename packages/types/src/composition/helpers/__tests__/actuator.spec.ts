@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest'
 import { groupStatusCapability } from '../../../capabilities/group-status.cap.js'
 import { switchCapability } from '../../../capabilities/switch.cap.js'
-import { DeviceFeature, DeviceType } from '../../../device/device-type.js'
+import { DeviceFeature, DeviceRole, DeviceType } from '../../../device/device-type.js'
 import {
   type Composition,
   CompositionSchema,
@@ -27,7 +27,9 @@ import {
   sharedColorModes,
   sharedLightCaps,
 } from '../actuator.js'
+import { groupTemplate } from '../catalog.js'
 import { compileHelper } from '../compile.js'
+import { sourcePickAcceptsDevice, sourcePickForTemplate } from '../source-pick.js'
 import { type GroupHelperSpec, helperMembers, type HelperMember } from '../spec.js'
 
 const lookupCap = buildCapabilityLookup([switchCapability, groupStatusCapability])
@@ -280,5 +282,119 @@ describe('actuator template round-trip', () => {
       { lookupCap, sources: new Map(), self: null, blockId: null, target: null, peers: [] },
     )
     expect(judged.problems.map((item) => item.code)).toContain('has-commands')
+  })
+})
+
+interface MemberKind {
+  readonly type: DeviceType
+  readonly role: DeviceRole | null
+  readonly caps: readonly string[]
+}
+
+// A relay driving a lamp (`switch-light`) is a light member: on/off only.
+describe('a switch-light joins a light group (#509)', () => {
+  const kinds: readonly MemberKind[] = [
+    { type: DeviceType.Light, role: null, caps: ['switch', 'brightness'] },
+    { type: DeviceType.Light, role: null, caps: ['switch', 'brightness'] },
+    { type: DeviceType.Light, role: null, caps: ['switch', 'brightness'] },
+    { type: DeviceType.Switch, role: DeviceRole.SwitchLight, caps: ['switch'] },
+  ]
+  const firstLight: MemberKind = {
+    type: DeviceType.Light,
+    role: null,
+    caps: ['switch', 'brightness'],
+  }
+
+  function mixedContext(
+    composition: Composition,
+    fleet: readonly MemberKind[],
+  ): ValidateCompositionContext {
+    const sources = new Map<string, CompositionSourceDescription>()
+    const members = composition.helper === undefined ? [] : helperMembers(composition.helper)
+    for (const [index, item] of members.entries()) {
+      const kind = fleet[index]
+      if (kind === undefined) continue
+      sources.set(compositionSourceKey(item.source), {
+        kind: 'found',
+        deviceId: 5000 + index,
+        caps: new Set(kind.caps),
+        deviceType: kind.type,
+        role: kind.role,
+      })
+    }
+    return { lookupCap, sources, self: null, blockId: null, target: null, peers: [] }
+  }
+
+  function lightGroup(count: number): Composition {
+    const members = Array.from({ length: count }, (_, n) => member(n + 1))
+    const compiled = compileHelper(actuator('light', 'at-least-one', members))
+    if (!compiled.ok) throw new Error('light group did not compile')
+    return CompositionSchema.parse(compiled.composition)
+  }
+
+  it('saves a light group with a switch-light member', () => {
+    const stored = lightGroup(4)
+    expect(validateComposition(stored, mixedContext(stored, kinds)).problems).toEqual([])
+  })
+
+  it('still refuses a plain switch, and a switch whose role is another one', () => {
+    const stored = lightGroup(2)
+    for (const role of [null, DeviceRole.Outlet, DeviceRole.SwitchFan]) {
+      const fleet: readonly MemberKind[] = [
+        firstLight,
+        { type: DeviceType.Switch, role, caps: ['switch'] },
+      ]
+      const problems = validateComposition(stored, mixedContext(stored, fleet)).problems
+      expect(problems.map((item) => item.code)).toEqual(['member-constraint'])
+      expect(problems[0]?.path).toBe('helper.members[1]')
+    }
+  })
+
+  it('the member picker offers it to a light group, and a switch group keeps it', () => {
+    const light = groupTemplate('light')
+    const plain = groupTemplate('switch')
+    if (light === null || plain === null) throw new Error('templates missing')
+    const lightAsk = sourcePickForTemplate(light)
+    expect(sourcePickAcceptsDevice(lightAsk, DeviceType.Switch, DeviceRole.SwitchLight)).toBe(true)
+    expect(sourcePickAcceptsDevice(lightAsk, DeviceType.Light, null)).toBe(true)
+    expect(sourcePickAcceptsDevice(lightAsk, DeviceType.Switch, null)).toBe(false)
+    expect(sourcePickAcceptsDevice(lightAsk, DeviceType.Switch, DeviceRole.Outlet)).toBe(false)
+    const switchAsk = sourcePickForTemplate(plain)
+    expect(sourcePickAcceptsDevice(switchAsk, DeviceType.Switch, DeviceRole.SwitchLight)).toBe(true)
+    expect(sourcePickAcceptsDevice(switchAsk, DeviceType.Light, null)).toBe(false)
+  })
+
+  it('counts it: 3 of 4 on, the relay among them', () => {
+    const outcome = evaluateAggregate({
+      reducer: reducerForActive('at-least-one'),
+      publish: 'value',
+      empty: 'offline',
+      members: [
+        { state: 'fresh', value: true },
+        { state: 'fresh', value: false },
+        { state: 'fresh', value: true },
+        // the switch-light relay
+        { state: 'fresh', value: true },
+      ],
+    })
+    expect(outcome).toEqual({
+      kind: 'value',
+      value: true,
+      counts: { included: 4, excluded: 0, total: 4 },
+    })
+  })
+
+  it('a brightness command skips it; on/off reaches it', () => {
+    const fleet = kinds.map((kind, index) => ({
+      deviceId: index + 1,
+      caps: kind.caps,
+      online: true,
+    }))
+    const dim = fanOutTargets(fleet, 'brightness', 'setBrightness', { level: 40 })
+    expect(dim.map((call) => call.deviceId)).toEqual([1, 2, 3])
+    const power = fanOutTargets(fleet, 'switch', 'setState', { on: true })
+    expect(power.map((call) => call.deviceId)).toEqual([1, 2, 3, 4])
+    // Like a non-dimmable light member: brightness is offered only when every member has it.
+    expect(sharedLightCaps(kinds.map((kind) => kind.caps))).toEqual(['switch'])
   })
 })

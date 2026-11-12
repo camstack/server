@@ -14,7 +14,14 @@
  * withheld even when some other trait would match: Google's laundry types
  * require RunCycle, and this export does not publish that trait.
  */
-import { applianceExport, DeviceType } from '@camstack/types'
+import {
+  applianceExport,
+  DeviceType,
+  isOutlet,
+  isSwitchFan,
+  isSwitchHeater,
+  isSwitchLight,
+} from '@camstack/types'
 
 import type { GoogleDeviceType, GoogleTraitName, SyncDevice } from './protocol.js'
 import { traitsForCaps } from './trait-catalog.js'
@@ -25,6 +32,8 @@ export interface ExportableDeviceFacts {
   readonly name: string
   /** `DeviceInfo.type` — a `DeviceType` value, but string-typed on the wire. */
   readonly deviceType: string
+  /** `DeviceInfo.role` — a switch's sub-role picks its Google type; null when none. */
+  readonly role: string | null
   /** `DeviceInfo.features` — `DeviceFeature` values. */
   readonly features: readonly string[]
   /** Capability names from `deviceManager.getBindings`. */
@@ -38,8 +47,14 @@ const MANUFACTURER = 'CamStack'
  *
  * - a lock is a LOCK and a cover is a SHUTTER regardless of anything else —
  *   the trait fully determines the affordance Google renders;
- * - otherwise the device is an on/off actuator, and only then does
- *   `DeviceType` choose between LIGHT and SWITCH.
+ * - otherwise the device is an on/off actuator, and only then do
+ *   `DeviceType` and the switch's sub-role choose its type (operator decision
+ *   2026-11-12: every switch sub-role is exported as its own type, OnOff only).
+ *   The role is read only through the `@camstack/types` accessors:
+ *   an outlet is an OUTLET, a `switch-light` relay a LIGHT, a `switch-fan` a
+ *   FAN, a `switch-heater` a HEATER (Google requires no trait of a heater, so
+ *   OnOff alone is honest — no TemperatureSetting is declared). A helper
+ *   boolean (`binary-helper`) stays a SWITCH: it is not a physical thing.
  *
  * `Siren` deliberately lands on SWITCH: Google has no siren type, and SWITCH
  * is the only type whose single trait (OnOff) the device actually implements.
@@ -48,6 +63,7 @@ const MANUFACTURER = 'CamStack'
 export function resolveGoogleDeviceType(
   deviceType: string,
   traits: readonly GoogleTraitName[],
+  role: string | null,
 ): GoogleDeviceType | null {
   const withheld = applianceExport('google', deviceType)
   if (withheld !== null && !withheld.exported) return null
@@ -60,6 +76,14 @@ export function resolveGoogleDeviceType(
     return null
   }
   if (deviceType === DeviceType.Light) return 'action.devices.types.LIGHT'
+  return switchSubRoleType(deviceType, role)
+}
+
+function switchSubRoleType(deviceType: string, role: string | null): GoogleDeviceType {
+  if (isSwitchLight(deviceType, role)) return 'action.devices.types.LIGHT'
+  if (isOutlet(deviceType, role)) return 'action.devices.types.OUTLET'
+  if (isSwitchFan(deviceType, role)) return 'action.devices.types.FAN'
+  if (isSwitchHeater(deviceType, role)) return 'action.devices.types.HEATER'
   return 'action.devices.types.SWITCH'
 }
 
@@ -78,7 +102,7 @@ export function buildSyncDevice(facts: ExportableDeviceFacts): SyncDevice | null
   if (descriptors.length === 0) return null
 
   const traits: readonly GoogleTraitName[] = descriptors.map((d) => d.trait)
-  const type = resolveGoogleDeviceType(facts.deviceType, traits)
+  const type = resolveGoogleDeviceType(facts.deviceType, traits, facts.role)
   if (type === null) return null
 
   const attributes: Record<string, unknown> = {}

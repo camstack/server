@@ -73,6 +73,31 @@ export function isSwitchLight(type: string, role: string | null | undefined): bo
   return type === DeviceType.Switch && role === DeviceRole.SwitchLight
 }
 
+/**
+ * A smart plug (a `switch` with role `outlet`, D875): exported as a plug /
+ * outlet. Exports ask this, never the role string.
+ */
+export function isOutlet(type: string, role: string | null | undefined): boolean {
+  return type === DeviceType.Switch && role === DeviceRole.Outlet
+}
+
+/**
+ * A plain fan behind a switch (a `switch` with role `switch-fan`): exported as
+ * a fan with the switch's on/off only — no speed it does not have.
+ */
+export function isSwitchFan(type: string, role: string | null | undefined): boolean {
+  return type === DeviceType.Switch && role === DeviceRole.SwitchFan
+}
+
+/**
+ * A plug-in heater behind a switch (a `switch` with role `switch-heater`): it
+ * has power only, no setpoint and no room temperature, so an export never
+ * presents it as a thermostat.
+ */
+export function isSwitchHeater(type: string, role: string | null | undefined): boolean {
+  return type === DeviceType.Switch && role === DeviceRole.SwitchHeater
+}
+
 /** The part of a capability definition that says which devices it is offered on. */
 export interface DeviceKindGate {
   readonly deviceTypes?: readonly DeviceType[]

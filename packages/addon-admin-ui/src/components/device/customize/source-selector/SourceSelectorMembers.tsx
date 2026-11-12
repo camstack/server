@@ -74,6 +74,7 @@ function toMemberDevices(
     id: row.id,
     name: row.name,
     type: row.type,
+    role: row.role ?? null,
     location: row.location,
     parentDeviceId: row.parentDeviceId,
     addonId: row.addonId,

@@ -13,7 +13,7 @@
  */
 
 import type { AddonApi, AddonContext, IScopedLogger } from '@camstack/types'
-import { AlarmPanelStatusSchema, isSwitchLight } from '@camstack/types'
+import { AlarmPanelStatusSchema } from '@camstack/types'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import {
   buildAlarmPanelEndpoint,
@@ -22,6 +22,7 @@ import {
   buildChildAccessoryEndpoint,
   buildParentCameraEndpoint,
   buildPrivacyEndpoint,
+  classifyChildKind,
   type ChildAccessoryKind,
   type SmartVisionClass,
 } from '../endpoints/builder.js'
@@ -543,14 +544,6 @@ async function fetchPtzPresetNames(deviceId: number, api: AddonApi): Promise<rea
     .filter(isAlexaRecallablePreset)
     .map((p) => p.name)
     .filter((n: string) => n.length > 0)
-}
-
-function classifyChildKind(deviceType: string, role: string | null): ChildAccessoryKind {
-  if (role === 'floodlight' || role === 'spotlight' || role === 'nightvision') return 'light'
-  if (role === 'siren') return 'siren'
-  if (deviceType === 'light' || isSwitchLight(deviceType, role)) return 'light'
-  if (deviceType === 'siren') return 'siren'
-  return 'switch'
 }
 
 // ── Response helpers ────────────────────────────────────────────────

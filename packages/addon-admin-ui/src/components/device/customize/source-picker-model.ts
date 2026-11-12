@@ -21,6 +21,8 @@ export interface PickerDevice {
   readonly stableId: string
   readonly location: string | null
   readonly type: string
+  /** The device's role, when it has one (a `switch-light` relay joins a light group). */
+  readonly role?: string | null
   readonly parentDeviceId: number | null
 }
 
@@ -109,6 +111,7 @@ export function toPickerDevices(devices: readonly DeviceInfo[]): readonly Picker
     stableId: d.stableId,
     location: d.location,
     type: d.type,
+    role: d.role ?? null,
     parentDeviceId: d.parentDeviceId,
   }))
 }

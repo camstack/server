@@ -3,6 +3,7 @@
  * The selector's layout is not specified here. Groups ask for one device type
  * and the catalog field; they do not opt into incompatible fields.
  */
+import { isSwitchLight } from '../../device/device-kind.js'
 import { DeviceType } from '../../device/device-type.js'
 import { HISTORY_CATALOG, historyFieldsFor } from '../../generated/history-catalog.js'
 import type { CompositionSourceRef } from '../source-ref.js'
@@ -49,6 +50,33 @@ export interface SourcePick {
   readonly current: number | boolean | string | null
   readonly compatibility: 'direct' | 'convert' | 'incompatible'
   readonly history: 'recorded' | 'absent' | 'unknown'
+}
+
+/**
+ * Does a device of this type and role answer the request's device types?
+ *
+ * The one gate both the member picker and the save use. No types = any device.
+ * A relay driving a lamp (`switch-light`) is a switch AND a light member: it
+ * joins a light group with its on/off only, and a command it cannot do
+ * (brightness, colour) skips it like any member that lacks the cap.
+ */
+export function sourcePickAcceptsDevice(
+  request: Pick<SourcePickRequest, 'deviceTypes'>,
+  deviceType: string,
+  role: string | null | undefined,
+): boolean {
+  return memberKindAccepted(request.deviceTypes, deviceType, role)
+}
+
+/** `sourcePickAcceptsDevice` over a bare list of member types. */
+export function memberKindAccepted(
+  allowed: readonly DeviceType[],
+  deviceType: string,
+  role: string | null | undefined,
+): boolean {
+  if (allowed.length === 0) return true
+  if (allowed.some((type) => type === deviceType)) return true
+  return isSwitchLight(deviceType, role) && allowed.includes(DeviceType.Light)
 }
 
 /** What the member step asks the selector for this template. */

@@ -101,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Power on, power off and forced restart refuse a stored power-source link that names the device's own actuator switch, with the reason switch-is-actuator.
 - A leftover config.yaml is no longer read, and empty retired storage tables (the three pipeline-analytics shells and vec_object_clip) are dropped at boot when they hold no rows.
 - The device Export tab shows a derived 'Name on <instance>' field for every export that exposes the device, saved through setExposedName.
+- A light group's source picker and save check now see each member's switch sub-role, so a switch-light relay can join a light group.
 
 ### Removed
 

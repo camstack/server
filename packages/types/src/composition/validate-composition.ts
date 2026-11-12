@@ -87,6 +87,8 @@ export interface CompositionSourceFound {
   readonly caps: ReadonlySet<string>
   /** Present when the row was read. A helper group requires this one type. */
   readonly deviceType?: DeviceType
+  /** The row's role, when read: a `switch-light` relay joins a light group. */
+  readonly role?: string | null
   /** Present when the device declares one. Mixed quantities are refused. */
   readonly quantity?: ReadingQuantity
   /**
@@ -902,7 +904,12 @@ export function validateComposition(
   const facts: ReadonlyMap<string, HelperMemberFact> = new Map(
     [...ctx.sources].flatMap(([key, source]) =>
       source.kind === 'found'
-        ? [[key, { deviceType: source.deviceType, quantity: source.quantity }] as const]
+        ? [
+            [
+              key,
+              { deviceType: source.deviceType, role: source.role, quantity: source.quantity },
+            ] as const,
+          ]
         : [],
     ),
   )

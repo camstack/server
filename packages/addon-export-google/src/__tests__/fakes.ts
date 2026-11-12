@@ -90,6 +90,7 @@ export function facts(overrides: Partial<ExportableDeviceFacts> = {}): Exportabl
     deviceId: 1,
     name: 'Device',
     deviceType: 'switch',
+    role: null,
     features: [],
     capNames: ['switch'],
     ...overrides,

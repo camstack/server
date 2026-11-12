@@ -1004,6 +1004,7 @@ export class CoreBlocksAddon extends BaseAddon {
                 id: row.id,
                 stableId: row.stableId,
                 type: row.type,
+                ...(row.role === undefined ? {} : { role: row.role }),
                 ...(row.sourceInfo?.quantity === undefined
                   ? {}
                   : { quantity: row.sourceInfo.quantity }),
