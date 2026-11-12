@@ -13,7 +13,7 @@ import * as fs from 'node:fs'
 import * as fsp from 'node:fs/promises'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { Readable } from 'node:stream'
+import { Readable, Transform, Writable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
@@ -21,6 +21,7 @@ import {
   BackupDecryptError,
   BackupKeyFormatError,
   BackupKeyMismatchError,
+  DEFAULT_BACKUP_CHUNK_BYTES,
   createBackupDecryptStream,
   createBackupEncryptStream,
   decryptBackupFile,
@@ -62,6 +63,97 @@ function feed(data: Buffer, piece = 7_919): Readable {
   const pieces: Buffer[] = []
   for (let i = 0; i < data.length; i += piece) pieces.push(data.subarray(i, i + piece))
   return Readable.from(pieces)
+}
+
+/** AES-256-GCM tag appended to every ciphertext chunk, including the empty final one. */
+const AEAD_TAG_BYTES = 16
+
+interface EncryptBufferMeasurement {
+  /** Plaintext bytes accepted by the encrypt stream and not yet sealed. */
+  readonly maxPlaintextHeld: number
+  readonly plaintextSealed: number
+  readonly ciphertextBytes: number
+}
+
+interface CiphertextTally {
+  sealedPlain: number
+  ciphertextBytes: number
+  pendingHeader: number
+}
+
+function asBuffer(chunk: unknown): Buffer {
+  if (Buffer.isBuffer(chunk)) return chunk
+  if (chunk instanceof Uint8Array)
+    return Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength)
+  throw new TypeError('expected a byte chunk')
+}
+
+/** Count plaintext recovered from ciphertext frames. A short piece means a frame was split. */
+function countSealedPlaintext(tally: CiphertextTally): Transform {
+  return new Transform({
+    transform(chunk: unknown, _enc, cb) {
+      const buf = asBuffer(chunk)
+      tally.ciphertextBytes += buf.length
+      let rest = buf
+      if (tally.pendingHeader > 0) {
+        const skip = Math.min(tally.pendingHeader, rest.length)
+        tally.pendingHeader -= skip
+        rest = rest.subarray(skip)
+      }
+      if (rest.length > 0 && rest.length < AEAD_TAG_BYTES) {
+        cb(new Error(`ciphertext piece is shorter than an AEAD tag (${rest.length})`))
+        return
+      }
+      if (rest.length >= AEAD_TAG_BYTES) tally.sealedPlain += rest.length - AEAD_TAG_BYTES
+      cb(null, buf)
+    },
+  })
+}
+
+/**
+ * Plaintext the encrypt stream has accepted but not sealed, sampled after
+ * each write returns. Streaming holds at most one chunk; buffering the
+ * archive until flush holds the whole input.
+ */
+async function measureEncryptBuffer(
+  plaintext: Buffer,
+  publicKey: string,
+  chunkBytes: number,
+  pieceBytes: number,
+): Promise<EncryptBufferMeasurement> {
+  const tally: CiphertextTally = {
+    sealedPlain: 0,
+    ciphertextBytes: 0,
+    pendingHeader: BACKUP_ENCRYPTION_HEADER_BYTES,
+  }
+  let consumed = 0
+  let maxHeld = 0
+  const incoming = new Transform({
+    transform(chunk: unknown, _enc, cb) {
+      const buf = asBuffer(chunk)
+      consumed += buf.length
+      cb(null, buf)
+      const held = consumed - tally.sealedPlain
+      if (held > maxHeld) maxHeld = held
+    },
+  })
+  const sink = new Writable({
+    write(_chunk, _enc, cb) {
+      cb()
+    },
+  })
+  await pipeline(
+    feed(plaintext, pieceBytes),
+    incoming,
+    createBackupEncryptStream(publicKey, { chunkBytes }),
+    countSealedPlaintext(tally),
+    sink,
+  )
+  return {
+    maxPlaintextHeld: maxHeld,
+    plaintextSealed: tally.sealedPlain,
+    ciphertextBytes: tally.ciphertextBytes,
+  }
 }
 
 async function roundTrip(data: Buffer, chunkBytes: number): Promise<Buffer> {
@@ -233,26 +325,23 @@ describe('files', () => {
 
   it('streams: memory stays bounded by the chunk, not the archive', async () => {
     const keys = generateBackupKeyPair()
-    const src = path.join(dir, 'big.bin')
-    const sealed = path.join(dir, 'big.csbk')
-    const sizeMb = 24
-    const block = pattern(1024 * 1024)
-    const out = fs.createWriteStream(src)
-    for (let i = 0; i < sizeMb; i++) out.write(block)
-    await new Promise<void>((r) => out.end(r))
-    const before = process.memoryUsage().arrayBuffers
-    await pipeline(
-      fs.createReadStream(src),
-      createBackupEncryptStream(keys.publicKey),
-      fs.createWriteStream(sealed),
+    const chunkBytes = DEFAULT_BACKUP_CHUNK_BYTES
+    // Several chunks, and not a multiple of the chunk, so the final frame is short.
+    const archiveBytes = chunkBytes * 8 + 100
+    const pieceBytes = 8 * 1024
+    const measured = await measureEncryptBuffer(
+      pattern(archiveBytes),
+      keys.publicKey,
+      chunkBytes,
+      pieceBytes,
     )
-    const grown = process.memoryUsage().arrayBuffers - before
-    // Bound is "not the whole archive in RAM", not a tight V8 accounting of
-    // every ArrayBuffer that happens to be live after encrypt. Under parallel
-    // nx on a busy CI host (run 38144796440) growth was ~33 MB for a 24 MB
-    // file — still far below loading the archive whole. Allow one extra MB of
-    // AEAD/chunk overhead per MB of payload.
-    expect(grown).toBeLessThan(sizeMb * 1024 * 1024 * 2)
-    expect((await fsp.stat(sealed)).size).toBeGreaterThan(sizeMb * 1024 * 1024)
+    // After each write returns, plaintext accepted but not yet sealed is one
+    // chunk. Heap and RSS are host- and GC-dependent (CI measured 51.7 MB
+    // against a 48 MB bound on an unchanged test). Buffering the archive
+    // until flush leaves `archiveBytes` held here.
+    expect(measured.maxPlaintextHeld).toBeLessThanOrEqual(chunkBytes)
+    expect(measured.maxPlaintextHeld).toBeLessThan(archiveBytes)
+    expect(measured.plaintextSealed).toBe(archiveBytes)
+    expect(measured.ciphertextBytes).toBeGreaterThan(archiveBytes)
   })
 })
