@@ -1,6 +1,7 @@
 /**
  * Layout and motion the device card cannot spell as utilities: the scene's
- * three-column grid areas and the role animations behind a scene. Colours are
+ * three-column grid areas (one stacked column once the card is under 18rem, so a
+ * narrow column never cuts a scene) and the role animations behind a scene. Colours are
  * theme tokens only, taken through `currentColor` (the element carries a
  * `text-<token>` class). Injected once per card with `<style>`.
  */
@@ -11,6 +12,8 @@ export const DEVICE_CARD_CSS = `
 .dc-right{grid-area:right;justify-self:start;width:100%;max-width:min(100%,7rem)}
 .dc-img{grid-area:img}
 .dc-bottom{grid-area:bottom;justify-self:stretch;min-width:0;max-width:100%;overflow-x:clip}
+.dc-card{container-type:inline-size}
+@container (max-width:18rem){.dc-scene,.dc-scene[data-bottom="false"]{grid-template-columns:minmax(0,1fr);grid-template-areas:"img" "left" "right" "bottom"}.dc-right{justify-self:stretch;max-width:100%}}
 .dc-blocked .dc-gated{opacity:.45;pointer-events:none}
 .dc-dial{touch-action:none;cursor:grab}
 .dc-dial[aria-disabled="true"]{cursor:default}

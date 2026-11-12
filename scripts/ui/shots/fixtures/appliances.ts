@@ -57,6 +57,12 @@ const DEVICES: Readonly<Record<number, ReturnType<typeof appliance>>> = {
   // Washer: running with a live power reading; dryer: nothing reported yet.
   505: appliance(505, 'Washing machine', 'washer', 'provider-homeassistant'),
   506: appliance(506, 'Tumble dryer', 'dryer', 'provider-homeassistant'),
+  // A CONTAINER (`/devices/507`) whose hero is its primary child's card (508, a vacuum).
+  507: appliance(507, 'Robot dock', 'container', 'provider-dreame'),
+  508: {
+    ...appliance(508, 'Robot dock - vacuum', 'vacuum', 'provider-dreame'),
+    parentDeviceId: 507,
+  },
   521: {
     ...appliance(521, 'Living room AC', 'climate', 'provider-homeassistant'),
     location: 'Living room',
@@ -114,6 +120,8 @@ const BINDINGS: Readonly<Record<number, readonly ReturnType<typeof entry>[]>> = 
     entry('vacuum-control', 'provider-dreame'),
     entry('consumables', 'provider-dreame'),
   ],
+  507: [],
+  508: [entry('device-status', 'provider-dreame'), entry('vacuum-control', 'provider-dreame')],
   502: [
     entry('device-status', 'provider-dreame'),
     entry('vacuum-control', 'provider-dreame'),
@@ -438,6 +446,8 @@ const SLICES: Readonly<Record<string, unknown>> = {
   '504/device-status': { online: true, lastChangedAt: NOW },
   '504/vacuum-control': VACUUM,
   '504/consumables': TANK_CONSUMABLES,
+  '508/device-status': { online: true, lastChangedAt: NOW },
+  '508/vacuum-control': VACUUM,
   '502/device-status': { online: true, lastChangedAt: NOW },
   '502/vacuum-control': VACUUM,
   '502/consumables': CONSUMABLES,

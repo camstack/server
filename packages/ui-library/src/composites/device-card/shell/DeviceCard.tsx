@@ -119,7 +119,7 @@ export function DeviceCard({
         data-orientation={orientation}
         data-view={view}
         className={cn(
-          'flex w-full flex-col gap-2.5 rounded-3xl border border-border bg-surface p-3.5 text-foreground',
+          'dc-card flex w-full flex-col gap-2.5 rounded-3xl border border-border bg-surface p-3.5 text-foreground',
           orientation === 'vertical' ? 'max-w-85' : 'max-w-180',
           gating.blocked && 'dc-blocked',
           className,
