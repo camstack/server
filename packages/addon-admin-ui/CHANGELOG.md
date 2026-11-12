@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.650] - 2026-11-12
+
 ### Changed
 
 - On the device page, a media player with a known volume sets it with a slider; an unknown level, or volume up and down only, keeps the minus and plus buttons
