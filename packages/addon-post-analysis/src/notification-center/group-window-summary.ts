@@ -9,6 +9,7 @@
  */
 
 import { NC_SYSTEM_EVENT_CLASS_SPECS, type NcRule, type NcSystemEventKind } from '@camstack/types'
+import { frozenDeviceLabel } from './device-directory.js'
 import type { NcOutboxEntry } from './outbox.js'
 import {
   NC_SYSTEM_DEVICE_ID,
@@ -166,7 +167,18 @@ function itemsOf(input: GroupWindowSummaryInput): {
     const params = system.textParams ?? {}
     const lineKey = lineKeyOf(system.kind, params, system.bodyKey)
     if (section === undefined) {
-      orphans.push(`• ${input.texts.text({ key: lineKey, vars: { ...params } })}`)
+      const label: Readonly<Record<string, string>> =
+        system.deviceId === undefined
+          ? {}
+          : {
+              deviceLabel: frozenDeviceLabel(
+                system.deviceId,
+                system.deviceType,
+                params['deviceName'],
+                input.texts.language,
+              ),
+            }
+      orphans.push(`• ${input.texts.text({ key: lineKey, vars: { ...params, ...label } })}`)
       continue
     }
     items.push({

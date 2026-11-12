@@ -715,13 +715,13 @@ describe('every frozen key resolves, in every language', () => {
         key: withProfile?.bodyKey ?? '',
         vars: withProfile?.textParams ?? {},
       }),
-    ).toBe('Lo stream high della camera Vialetto (Camera) è di nuovo online')
+    ).toBe('Lo stream high della camera Vialetto è di nuovo online')
     expect(
       texts.text({
         key: without?.bodyKey ?? '',
         vars: without?.textParams ?? {},
       }),
-    ).toBe('Lo stream della camera Vialetto (Camera) è offline')
+    ).toBe('Lo stream della camera Vialetto è offline')
   })
 
   it('the node keys are the agent`s, in both directions (a runner is no node, R1-H1)', () => {

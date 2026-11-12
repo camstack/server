@@ -222,6 +222,7 @@ function PickerBody(props: ConditionKindPickerProps): JSX.Element {
           placeholder={t('uiLibrary.conditionKindPicker.search', 'Search conditions…')}
           aria-label={t('uiLibrary.conditionKindPicker.search', 'Search conditions…')}
           aria-controls="condition-kind-list"
+          data-dialog-autofocus
           aria-activedescendant={highlighted?.id}
           onChange={(e) => {
             setQuery(e.target.value)

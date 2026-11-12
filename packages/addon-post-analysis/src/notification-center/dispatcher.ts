@@ -120,7 +120,7 @@ import {
   type NcRuleFireRef,
   type NcSystemEventSubject,
 } from './rule-engine.js'
-import { deviceDisplayLabel, type NcDeviceIdentity } from './device-directory.js'
+import { deviceDisplayLabel, frozenDeviceLabel, type NcDeviceIdentity } from './device-directory.js'
 import {
   type MosaicRenderRequest,
   type MosaicRenderResult,
@@ -2236,10 +2236,12 @@ export class NcDispatcher {
     const entry = await this.withDeviceTemplates(authored)
     const subject = entry.payload.subject
     const systemEvent = subject.systemEvent
-    const fetchedName = await notificationDeviceName(entry, this.deps.getDeviceName)
+    // `{{device}}`, `{{deviceName}}`, the built notification and the AI input all
+    // carry the BARE name; only `{{deviceLabel}}` adds the translated type.
+    const deviceName = await notificationDeviceName(entry, this.deps.getDeviceName)
     const displayDeviceId = systemEvent?.deviceId ?? subject.deviceId
-    const deviceName = presentedDeviceName(
-      fetchedName,
+    const deviceLabel = presentedDeviceName(
+      deviceName,
       displayDeviceId,
       this.deps.deviceIdentity?.(displayDeviceId),
       this.texts.language,
@@ -2255,7 +2257,15 @@ export class NcDispatcher {
         : alarmSource?.zones !== undefined && alarmSource.zones.length > 0
           ? await resolveZoneLabels(this.deps.getZoneNames, alarmSource.deviceId, alarmSource.zones)
           : []
-    const vars = buildTemplateVars(this.texts, entry, deviceName, zoneLabels, undefined, cycleFacts)
+    const vars = buildTemplateVars(
+      this.texts,
+      entry,
+      deviceName,
+      zoneLabels,
+      undefined,
+      cycleFacts,
+      deviceLabel,
+    )
     this.warnDeprecatedVars(entry)
     this.warnCycleSummaryDropped(entry)
     // The count a system sentence pluralises on, frozen at intake — "3 cameras
@@ -3863,6 +3873,8 @@ export function buildTemplateVars(
   zoneLabels: readonly string[],
   timeZone?: string,
   cycle?: NcApplianceCycleFacts,
+  /** The name with its translated type; absent leaves `{{deviceLabel}}` on the bare name. */
+  deviceLabel?: string,
 ): Readonly<Record<string, string>> {
   const subject = entry.payload.subject
   const occupancy = subject.occupancy
@@ -4017,6 +4029,7 @@ export function buildTemplateVars(
       : {}),
     ...systemEventParamsForTemplate(systemEvent?.textParams),
     ...commandActionLabel(texts, systemEvent?.textParams?.['actionId']),
+    ...(deviceLabel !== undefined ? { deviceLabel } : {}),
     // After the frozen params: the type word follows the language the catalog
     // is rendering in, while `deviceName` stays the bare name frozen at intake.
     ...deviceLabelParam(systemEvent, texts.language),
@@ -4034,13 +4047,11 @@ function deviceLabelParam(
 ): Readonly<Record<string, string>> {
   const deviceId = systemEvent?.deviceId
   if (deviceId === undefined) return {}
-  const frozen = systemEvent?.textParams?.['deviceName']
-  const name = frozen !== undefined && frozen.length > 0 ? frozen : String(deviceId)
-  if (systemEvent?.deviceType === undefined) return { deviceLabel: name }
   return {
-    deviceLabel: deviceDisplayLabel(
-      { deviceId, type: systemEvent.deviceType, name, isCamera: false },
+    deviceLabel: frozenDeviceLabel(
       deviceId,
+      systemEvent?.deviceType,
+      systemEvent?.textParams?.['deviceName'],
       language,
     ),
   }

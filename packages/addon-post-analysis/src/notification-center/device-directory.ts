@@ -151,6 +151,27 @@ export function deviceDisplayLabel(
   return `${name} (${phrase})`
 }
 
+/**
+ * `{{deviceLabel}}` for a row whose words were frozen at intake: the frozen
+ * bare name plus the type, worded in the language the row is RENDERED in. The
+ * intake never freezes the label itself - a frozen label would keep the
+ * language of the moment it was built.
+ */
+export function frozenDeviceLabel(
+  deviceId: number,
+  deviceType: string | undefined,
+  frozenName: string | undefined,
+  language: DeviceLabelLanguage,
+): string {
+  const name = frozenName !== undefined && frozenName.length > 0 ? frozenName : String(deviceId)
+  if (deviceType === undefined) return name
+  return deviceDisplayLabel(
+    { deviceId, type: deviceType, name, isCamera: false },
+    deviceId,
+    language,
+  )
+}
+
 /** A letter before the label means it is part of a longer word ("clock" / "lock"). */
 function nameEndsWithLabel(name: string, phrase: string, language: DeviceLabelLanguage): boolean {
   const foldedName = name.trim().toLocaleLowerCase(language)

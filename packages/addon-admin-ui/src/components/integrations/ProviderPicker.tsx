@@ -200,6 +200,7 @@ export function ProviderPicker({
           placeholder={t('integrations.searchProviders', 'Search integrations…')}
           className="pl-8"
           data-testid="provider-picker-search"
+          data-dialog-autofocus
           aria-label={t('integrations.searchProviders', 'Search integrations…')}
         />
       </div>

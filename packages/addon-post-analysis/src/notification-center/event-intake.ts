@@ -54,13 +54,11 @@ import {
 } from './alarm/alarm-push-policy.js'
 import type { AudioWindowHit } from './audio-rule-matcher.js'
 import {
-  deviceDisplayLabel,
   deviceDisplayName,
   isAccessoryIdentity,
   type NcDeviceIdentity,
   type NcDeviceLookup,
 } from './device-directory.js'
-import type { NcLanguage } from './text-catalog.js'
 import type { OccupancyEdge } from './occupancy-watcher.js'
 import {
   NC_SYSTEM_DEVICE_ID,
@@ -843,19 +841,18 @@ function systemSubject(input: {
 }
 
 /**
- * The facts a device sentence needs: `{{deviceId}}` and `{{deviceName}}` stay
- * the bare name (an operator override may still say `{{deviceName}}`), and
- * `{{deviceLabel}}` is that name with the translated type beside it.
+ * The facts a device sentence needs: `{{deviceId}}` and `{{deviceName}}`, the
+ * bare name. `{{deviceLabel}}` (the name with its translated type) is NOT
+ * frozen here: the renderer builds it in its own language from the name and the
+ * row's `deviceType`.
  */
 function deviceTextParams(
   deviceId: number,
   identity: NcDeviceIdentity | undefined,
-  language: NcLanguage = 'en',
 ): Readonly<Record<string, string>> {
   return {
     deviceId: String(deviceId),
     deviceName: deviceDisplayName(identity, deviceId),
-    deviceLabel: deviceDisplayLabel(identity, deviceId, language),
   }
 }
 
