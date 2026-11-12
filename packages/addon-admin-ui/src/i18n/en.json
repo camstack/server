@@ -9996,7 +9996,8 @@
         "source": "Source",
         "vol": "vol",
         "volumeDown": "Volume down",
-        "volumeUp": "Volume up"
+        "volumeUp": "Volume up",
+        "volume": "Volume"
       },
       "pause": "Pause",
       "resume": "Resume",

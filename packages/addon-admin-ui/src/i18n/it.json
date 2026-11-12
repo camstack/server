@@ -10018,7 +10018,8 @@
         "source": "Sorgente",
         "vol": "vol",
         "volumeDown": "Abbassa volume",
-        "volumeUp": "Alza volume"
+        "volumeUp": "Alza volume",
+        "volume": "Volume"
       },
       "pause": "Pausa",
       "resume": "Riprendi",
