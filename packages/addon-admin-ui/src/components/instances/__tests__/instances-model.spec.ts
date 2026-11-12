@@ -3,6 +3,7 @@
  * out. An unanswered query is never an empty list (D315), and an edit sends only what changed.
  */
 import { describe, expect, it } from 'vitest'
+import type { IntegrationInstanceDescription, IntegrationInstanceKind } from '@camstack/types'
 import {
   addonDescriptions,
   providerNamesByAddon,
@@ -17,6 +18,7 @@ import {
   formatEditRef,
   findKind,
   mintInstanceId,
+  uiProposesInstanceId,
   needsKindPicker,
   statusText,
   parseEditRef,
@@ -544,5 +546,36 @@ describe('isStoppedProcessState', () => {
     expect(isStoppedProcessState('running')).toBe(false)
     expect(isStoppedProcessState('unknown')).toBe(false)
     expect(isStoppedProcessState(undefined)).toBe(false)
+  })
+})
+
+describe('uiProposesInstanceId', () => {
+  const services: IntegrationInstanceKind = {
+    id: 'account',
+    label: 'Account',
+    functionCap: 'broker',
+    role: 'services',
+  }
+  const devices: IntegrationInstanceKind = {
+    id: 'integration',
+    label: 'Integration',
+    functionCap: 'device-provider',
+  }
+  const base: IntegrationInstanceDescription = {
+    role: 'devices',
+    instanceMode: 'multiple',
+    kind: 'account',
+    canTest: false,
+    kinds: [services, devices],
+  }
+  it('proposes an id for a services kind of a devices provider', () => {
+    expect(uiProposesInstanceId(base, services)).toBe(true)
+  })
+  it("leaves the id to the hub for a kind that brings devices (its own role or the provider's)", () => {
+    expect(uiProposesInstanceId(base, devices)).toBe(false)
+    expect(uiProposesInstanceId(base, undefined)).toBe(false)
+  })
+  it('leaves the id to a provider that mints its own', () => {
+    expect(uiProposesInstanceId({ ...base, mintsId: true }, services)).toBe(false)
   })
 })

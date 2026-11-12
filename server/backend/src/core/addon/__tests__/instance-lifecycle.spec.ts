@@ -74,6 +74,7 @@ function description(mode: 'single' | 'multiple'): IntegrationInstanceDescriptio
 async function makeKit(
   mode: 'single' | 'multiple' = 'multiple',
   override: Partial<IntegrationInstanceDescription> = {},
+  manifestRole: InstanceLifecycleDeps['manifestRole'] = () => undefined,
 ): Promise<Kit> {
   const world = makeRecordsWorld()
   await world.provider.init()
@@ -142,7 +143,7 @@ async function makeKit(
     eventBus: { emit },
     providerFor: () => provider,
     holders: () => holders,
-    manifestRole: () => undefined,
+    manifestRole,
   }
   const wrapped = withInstanceLifecycle(ADDON, provider, deps)
   return {
@@ -233,6 +234,26 @@ describe('createInstance of a kind that brings devices', () => {
     expect(created.id).toBe('minted-by-provider')
     expect(await kit.registry.listIntegrations()).toHaveLength(0)
     expect(kit.testInstance).not.toHaveBeenCalled()
+  })
+})
+
+describe('a kind that declares its own role', () => {
+  it('is not overridden by an addon-wide devices manifest: a services kind keeps its own id', async () => {
+    const kit = await makeKit('multiple', {}, () => 'devices')
+    const created = await kit.wrapped.createInstance({ id: 'inst-cafe', name: 'Out', kind: 'dest' })
+    expect(created.id).toBe('inst-cafe')
+    expect(await kit.registry.listIntegrations()).toHaveLength(0)
+  })
+
+  it('a kind without a role still follows the manifest', async () => {
+    const kit = await makeKit('multiple', {}, () => 'services')
+    const created = await kit.wrapped.createInstance({
+      id: 'inst-cafe',
+      name: 'Home',
+      kind: 'connection',
+    })
+    expect(created.id).toBe('inst-cafe')
+    expect(await kit.registry.listIntegrations()).toHaveLength(0)
   })
 })
 

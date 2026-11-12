@@ -59,6 +59,7 @@ import {
   findKind,
   formStartValues,
   mintInstanceId,
+  uiProposesInstanceId,
   needsKindPicker,
   randomHex8,
   type TypedIdRuleFor,
@@ -310,11 +311,9 @@ export function InstanceEditorDialog({
             const created = await client.createInstance.mutate({
               addonId,
               name: item.name,
-              ...(description.mintsId === true
-                ? {}
-                : {
-                    id: mintInstanceId(description.instanceMode, addonId, randomHex8),
-                  }),
+              ...(uiProposesInstanceId(description, kind)
+                ? { id: mintInstanceId(description.instanceMode, addonId, randomHex8) }
+                : {}),
               ...(kindId !== '' ? { kind: kindId } : {}),
             })
             await client.updateInstance.mutate({
@@ -350,9 +349,9 @@ export function InstanceEditorDialog({
             ? restoreId
             : idRule !== undefined
               ? typed
-              : description.mintsId === true
-                ? undefined
-                : mintInstanceId(description.instanceMode, addonId, randomHex8)
+              : uiProposesInstanceId(description, kind)
+                ? mintInstanceId(description.instanceMode, addonId, randomHex8)
+                : undefined
         const created = await client.createInstance.mutate({
           addonId,
           name,

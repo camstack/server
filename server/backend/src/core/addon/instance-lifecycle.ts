@@ -430,8 +430,10 @@ export async function deleteRegisteredInstance(
 }
 
 /**
- * Whether instances of `kind` of `provider` bring devices (a kind without a role takes the provider's;
- * no `kind` means the default kind, then the addon-wide rule).
+ * Whether instances of `kind` of `provider` bring devices. A kind that declares its own role
+ * decides; otherwise the manifest's `integrationRole`, then the provider's role. No `kind` means
+ * the default kind, then the addon-wide rule. (An addon-wide manifest role once made a services
+ * kind — the Alexa account — demand a hub-minted id.)
  */
 async function bringsDevicesOf(
   deps: InstanceLifecycleDeps,
@@ -439,13 +441,14 @@ async function bringsDevicesOf(
   provider: IIntegrationInstancesProvider,
   kind: string | undefined,
 ): Promise<boolean> {
-  const declared = deps.manifestRole(addonId)
-  if (declared !== undefined) return bringsDevices(declared)
   const described = await provider.describe()
   // A call without `kind` is the provider's default kind (`described.kind`) when that names a declared kind.
   const wanted = kind ?? described.kind
   const own = (described.kinds ?? []).find((k) => k.id === wanted)
-  if (own !== undefined) return bringsDevices(own.role ?? described.role)
+  if (own?.role !== undefined) return bringsDevices(own.role)
+  const declared = deps.manifestRole(addonId)
+  if (declared !== undefined) return bringsDevices(declared)
+  if (own !== undefined) return bringsDevices(described.role)
   return bringsDevices(describedRoleOf(described) ?? described.role)
 }
 

@@ -429,6 +429,19 @@ export function effectiveInstanceValues(
   return effective
 }
 
+/**
+ * Whether the UI proposes the id of a new instance. Not when the provider mints its own
+ * (`mintsId`), and not for a kind that brings devices: the hub mints that id with the integration
+ * row and refuses any other (`instance-lifecycle.ts`). A kind without a role takes the provider's.
+ */
+export function uiProposesInstanceId(
+  description: IntegrationInstanceDescription,
+  kind: IntegrationInstanceKind | undefined,
+): boolean {
+  if (description.mintsId === true) return false
+  return (kind?.role ?? description.role) !== 'devices'
+}
+
 /** A single-instance addon names its record after itself; a multi one gets an opaque id. */
 export function mintInstanceId(
   mode: IntegrationInstanceMode,
