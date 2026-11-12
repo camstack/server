@@ -130,7 +130,7 @@ describe('Enpal discovery: containers per equipment', () => {
     const impianto = out.find((c) => c.childNativeId === 'impianto')
     const child = (id: string) => impianto?.children?.find((c) => c.childNativeId === id)
     expect(child('impianto#battery')?.type).toBe(DeviceType.Sensor)
-    expect(child('impianto#battery')?.capabilities).toEqual(['battery', 'power-meter'])
+    expect(child('impianto#battery')?.capabilities).toEqual(['numeric-sensor', 'power-meter'])
     expect(child('impianto#inverter-state')?.capabilities).toEqual(['enum-sensor'])
   })
 })

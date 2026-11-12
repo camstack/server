@@ -3,8 +3,10 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { parseFluxCsv } from '../enpal-flux-csv.js'
 import { createSnapshot, type EnpalSnapshot } from '../enpal-snapshot.js'
+import { DeviceRole } from '@camstack/types'
 import {
   availableSpecs,
+  capsOfSpec,
   computeSlices,
   findSpec,
   type EnpalSliceOptions,
@@ -80,11 +82,11 @@ describe('unit conversion to base units', () => {
       ['Energy.Battery.Charge.Level', 5, 'kWh'],
       ['Energy.Battery.Capacity', 10_000, 'Wh'],
     ])
-    expect(computeSlices(spec('battery'), snap, OPTIONS, NOW).battery?.level).toBeCloseTo(50, 6)
+    expect(computeSlices(spec('battery'), snap, OPTIONS, NOW).numeric?.value).toBeCloseTo(50, 6)
   })
 
   it('reads the state of charge directly when the box reports a percentage', () => {
-    expect(computeSlices(spec('battery'), snapshot, OPTIONS, NOW).battery?.level).toBe(62.5)
+    expect(computeSlices(spec('battery'), snapshot, OPTIONS, NOW).numeric?.value).toBe(62.5)
   })
 
   it('refuses a unit of another dimension: null, not a wrong number', () => {
@@ -96,10 +98,23 @@ describe('unit conversion to base units', () => {
 })
 
 describe('battery', () => {
+  // #522: the home storage is a SENSOR whose reading is the state of charge,
+  // with the battery role; never the `battery` cap, which says "this device
+  // runs on a battery" and raised device-battery-low for a 19 % storage.
+  it('is a battery-role sensor reading on numeric-sensor, never the battery cap', () => {
+    const battery = spec('battery')
+    expect(battery.role).toBe(DeviceRole.BatterySensor)
+    expect(capsOfSpec(battery)).toEqual(['numeric-sensor', 'power-meter'])
+    expect(capsOfSpec(battery)).not.toContain('battery')
+    const slices = computeSlices(battery, snapshot, OPTIONS, NOW)
+    expect(slices.numeric?.value).toBe(62.5)
+    expect(Object.keys(slices)).not.toContain('battery')
+  })
+
   it('publishes signed power, voltage and current next to the percentage', () => {
     const slices = computeSlices(spec('battery'), snapshot, OPTIONS, NOW)
     expect(slices.powerMeter).toMatchObject({ power: -1500, voltage: 51.2, current: -29.3 })
-    expect(slices.battery?.charging).toBe('unknown')
+    expect(slices.numeric).toEqual({ value: 62.5, lastFetchedAt: NOW })
   })
 
   it('flips the sign when the operator inverts the convention', () => {
@@ -110,12 +125,12 @@ describe('battery', () => {
 
   it('reports an unknown charge level as null, never 0 %', () => {
     const snap = snapshotOf([['Power.Battery.Charge.Discharge', 100, 'W']])
-    expect(computeSlices(spec('battery'), snap, OPTIONS, NOW).battery?.level).toBeNull()
+    expect(computeSlices(spec('battery'), snap, OPTIONS, NOW).numeric?.value).toBeNull()
   })
 
   it('clamps a charge level outside 0..100', () => {
     const snap = snapshotOf([['Energy.Battery.Charge.Level', 101.2, '%']])
-    expect(computeSlices(spec('battery'), snap, OPTIONS, NOW).battery?.level).toBe(100)
+    expect(computeSlices(spec('battery'), snap, OPTIONS, NOW).numeric?.value).toBe(100)
   })
 })
 

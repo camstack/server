@@ -1,7 +1,6 @@
 import {
   BaseDevice,
   batteryCapability,
-  type BatteryStatus,
   type DeviceContext,
   type DeviceFeature,
   enumSensorCapability,
@@ -28,12 +27,6 @@ const NUMERIC_CAP = numericSensorCapability.name
 const ENUM_CAP = enumSensorCapability.name
 
 const POWER_COLD: PowerMeterStatus = { lastFetchedAt: 0 }
-const BATTERY_COLD: BatteryStatus = {
-  level: null,
-  charging: 'unknown',
-  sleeping: false,
-  lastUpdated: 0,
-}
 const VALUE_COLD: NumericSensorStatus = { value: null, lastFetchedAt: 0 }
 /** A text has no null: until the box sends one the slice is empty and never read as a state. */
 const TEXT_COLD: EnumSensorStatus = { value: '', lastFetchedAt: 0 }
@@ -79,6 +72,7 @@ export class EnpalSensorDevice extends BaseDevice<typeof enpalSensorSchema> {
       id: `${this.integrationId}:${spec.id}`,
       system: ENPAL_SYSTEM,
       ...(spec.kind === 'meter' || spec.kind === 'numeric' ? { quantity: spec.quantity } : {}),
+      ...(spec.kind === 'battery' ? { quantity: spec.level.quantity } : {}),
       ...(spec.kind === 'text' && spec.timestamp === true
         ? { dateTimeShape: 'date' as const }
         : {}),
@@ -141,7 +135,6 @@ export class EnpalSensorDevice extends BaseDevice<typeof enpalSensorSchema> {
           : { ...slices.powerMeter, energy: this.energyGuard.accept(kwh) },
       )
     }
-    if (slices.battery !== undefined) this.runtimeState.setCapState(BATTERY_CAP, slices.battery)
     if (slices.meter !== undefined) {
       const raw = slices.meter.value
       this.runtimeState.setCapState(METER_CAP, {
@@ -159,7 +152,8 @@ export class EnpalSensorDevice extends BaseDevice<typeof enpalSensorSchema> {
         this.registerPowerMeter()
         return
       case 'battery':
-        this.registerBattery()
+        this.retractBatteryCap()
+        this.registerNumeric()
         this.registerPowerMeter()
         return
       case 'meter': {
@@ -180,15 +174,9 @@ export class EnpalSensorDevice extends BaseDevice<typeof enpalSensorSchema> {
         this.runtimeState.setCapState(ENUM_CAP, TEXT_COLD)
         return
       }
-      case 'numeric': {
-        const provider: InferNativeProvider<typeof numericSensorCapability> = {
-          getStatus: async () =>
-            this.runtimeState.getCapState<NumericSensorStatus>(NUMERIC_CAP) ?? VALUE_COLD,
-        }
-        this.ctx.registerNativeCap(numericSensorCapability, provider)
-        this.runtimeState.setCapState(NUMERIC_CAP, VALUE_COLD)
+      case 'numeric':
+        this.registerNumeric()
         return
-      }
     }
   }
 
@@ -201,14 +189,22 @@ export class EnpalSensorDevice extends BaseDevice<typeof enpalSensorSchema> {
     this.runtimeState.setCapState(POWER_CAP, POWER_COLD)
   }
 
-  private registerBattery(): void {
-    const provider: InferNativeProvider<typeof batteryCapability> = {
+  private registerNumeric(): void {
+    const provider: InferNativeProvider<typeof numericSensorCapability> = {
       getStatus: async () =>
-        this.runtimeState.getCapState<BatteryStatus>(BATTERY_CAP) ?? BATTERY_COLD,
-      // The box battery has no wake path.
-      wakeForStream: async () => ({ awoke: false, durationMs: 0 }),
+        this.runtimeState.getCapState<NumericSensorStatus>(NUMERIC_CAP) ?? VALUE_COLD,
     }
-    this.ctx.registerNativeCap(batteryCapability, provider)
-    this.runtimeState.setCapState(BATTERY_CAP, BATTERY_COLD)
+    this.ctx.registerNativeCap(numericSensorCapability, provider)
+    this.runtimeState.setCapState(NUMERIC_CAP, VALUE_COLD)
+  }
+
+  /**
+   * The storage battery once registered the `battery` cap (#522). This process never
+   * registers it, so the call retracts the binding a previous incarnation left on the hub
+   * (`unregisterNativeCap`'s stale-retract path): a restored device stops answering
+   * `battery` and no `battery` slice is written again.
+   */
+  private retractBatteryCap(): void {
+    this.ctx.unregisterNativeCap?.(BATTERY_CAP)
   }
 }

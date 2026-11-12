@@ -1,6 +1,5 @@
 import {
   DeviceRole,
-  type BatteryStatus,
   type EnumSensorStatus,
   type MeterStatus,
   type NumericSensorStatus,
@@ -42,7 +41,12 @@ export interface PowerMeterSpec extends SpecBase {
   readonly kwh?: Point
 }
 
-/** State of charge (`battery`) with the signed charge/discharge power on `power-meter`. */
+/**
+ * The home storage: its state of charge is the sensor's READING (`numeric-sensor`, a percentage,
+ * role {@link DeviceRole.BatterySensor}), with the signed charge/discharge power on `power-meter`.
+ * Never the `battery` cap: that cap says the device RUNS on a battery, and a storage at 19 % is
+ * not a device about to go flat (#522).
+ */
 export interface BatterySpec extends SpecBase {
   readonly kind: 'battery'
   readonly level: Point
@@ -518,7 +522,7 @@ export function capsOfSpec(spec: EnpalSpec): readonly string[] {
     case 'power-meter':
       return ['power-meter']
     case 'battery':
-      return ['battery', 'power-meter']
+      return ['numeric-sensor', 'power-meter']
     case 'meter':
       return ['meter']
     case 'numeric':
@@ -599,7 +603,6 @@ export interface EnpalSliceOptions {
  */
 export interface SpecSlices {
   readonly powerMeter?: PowerMeterStatus
-  readonly battery?: BatteryStatus
   readonly meter?: MeterStatus
   readonly numeric?: NumericSensorStatus
   readonly text?: EnumSensorStatus
@@ -682,12 +685,7 @@ export function computeSlices(
       const v = numberOf(voltage)
       const a = numberOf(current)
       return {
-        battery: {
-          level: nullableOf(soc),
-          charging: 'unknown',
-          sleeping: false,
-          lastUpdated: now,
-        },
+        numeric: { value: nullableOf(soc), lastFetchedAt: now },
         ...(w !== undefined || v !== undefined || a !== undefined
           ? {
               powerMeter: {

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Test connection works with only the box address, and the addon icon is the Enpal mark.
+- The storage battery is a battery sensor whose reading is the state of charge, no longer a battery-powered device: no more 'battery low' notifications or battery section in the summary for it; a restored device drops the old battery capability
 
 ## [0.1.17] - 2026-11-12
 
