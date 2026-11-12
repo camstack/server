@@ -46,6 +46,8 @@ export interface CardCommonResult {
   /** The device's type, once the registry answered. */
   readonly deviceType: string | null
   readonly role: string | null
+  /** What the device declares it can do (`DeviceFeature` values); empty until it answered. */
+  readonly features: readonly string[]
   /** Puts a failed command's reason on the card's reason line. */
   readonly fail: (error: unknown) => void
   /** Clears it: the next command went through. */
@@ -78,6 +80,8 @@ const reading = (
         },
       ]
     : []
+
+const NO_FEATURES: readonly string[] = []
 
 export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCommonResult {
   const t = useUiText()
@@ -230,6 +234,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
     actions,
     deviceType: device.data?.type ?? null,
     role: device.data?.role ?? null,
+    features: device.data?.features ?? NO_FEATURES,
     fail,
     succeed,
   }

@@ -1,13 +1,15 @@
 import { type ReactElement, type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useUiText } from '../../../contexts/ui-text'
 import type { CardGlyph } from '../icons'
-import { CardButton } from './CardButton'
+import { CardButton, type CardButtonTone } from './CardButton'
 
 /** How long an armed action waits for its confirmation. */
 export const ARMED_WINDOW_MS = 5_000
 
 export interface ArmedButtonProps {
   readonly glyph?: CardGlyph
+  /** The tone while NOT armed (default: default); armed is always danger. */
+  readonly tone?: CardButtonTone
   readonly children: ReactNode
   /** What the button says while armed (default: "Confirm"). */
   readonly armedLabel?: ReactNode
@@ -24,6 +26,7 @@ export interface ArmedButtonProps {
  */
 export function ArmedButton({
   glyph,
+  tone = 'default',
   children,
   armedLabel,
   onConfirm,
@@ -49,7 +52,7 @@ export function ArmedButton({
   return (
     <span className="inline-flex items-center gap-2" data-armed={armed}>
       <CardButton
-        tone={armed ? 'danger' : 'default'}
+        tone={armed ? 'danger' : tone}
         glyph={glyph}
         onClick={press}
         disabled={disabled}

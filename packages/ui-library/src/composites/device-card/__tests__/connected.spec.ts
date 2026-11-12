@@ -17,10 +17,13 @@ describe('connectedCardKindOf — a card only for what the device IS (type + rol
     expect(connectedCardKindOf(DeviceType.Switch, null, ['power-meter'])).toBeNull()
   })
 
-  it('draws a heater (switch + switch-heater) as a plug, with its timed run', () => {
+  it('draws a heater (switch + switch-heater) as the heater card, with its timed run', () => {
     expect(
       connectedCardKindOf(DeviceType.Switch, DeviceRole.SwitchHeater, ['switch', 'timed-run']),
-    ).toBe('plug')
+    ).toBe('heater')
+    expect(
+      connectedCardKindOf(DeviceType.Switch, DeviceRole.SwitchHeater, ['timed-run']),
+    ).toBeNull()
     expect(timedRunLimitOf(DeviceType.Switch, DeviceRole.SwitchHeater)).toBe(TIMED_RUN_HEATER_LIMIT)
     expect(timedRunLimitOf(DeviceType.Switch, null)).toBeNull()
   })
@@ -32,9 +35,22 @@ describe('connectedCardKindOf — a card only for what the device IS (type + rol
     expect(connectedCardKindOf(DeviceType.Climate, null, ['switch'])).toBeNull()
   })
 
+  it('draws a switch-fan, and a fan whose power is a switch, as the fan card', () => {
+    expect(connectedCardKindOf(DeviceType.Switch, DeviceRole.SwitchFan, ['switch'])).toBe('fan')
+    expect(connectedCardKindOf(DeviceType.Fan, null, ['switch', 'fan-control'])).toBe('fan')
+    expect(connectedCardKindOf(DeviceType.Fan, null, ['fan-control'])).toBeNull()
+  })
+
+  it('draws a light through its switch, and a cover through cover', () => {
+    expect(connectedCardKindOf(DeviceType.Light, null, ['switch', 'brightness'])).toBe('light')
+    expect(connectedCardKindOf(DeviceType.Light, null, ['brightness'])).toBeNull()
+    expect(connectedCardKindOf(DeviceType.Cover, DeviceRole.CoverGate, ['cover'])).toBe('cover')
+    expect(connectedCardKindOf(DeviceType.Cover, null, ['switch'])).toBeNull()
+  })
+
   it('leaves every other type to the hero it already has', () => {
     expect(connectedCardKindOf(DeviceType.Siren, null, ['switch'])).toBeNull()
-    expect(connectedCardKindOf(DeviceType.Light, null, ['switch'])).toBeNull()
+    expect(connectedCardKindOf(DeviceType.Lock, null, ['switch'])).toBeNull()
     expect(connectedCardKindOf(null, null, ['switch', 'climate-control'])).toBeNull()
   })
 })

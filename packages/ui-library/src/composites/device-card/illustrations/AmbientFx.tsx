@@ -7,12 +7,16 @@ import type { ClimateRole } from './ClimateRoleGlyph'
  * and colour. One table maps (role, activity) to a stack of layers; a new
  * environmental card adds its role to the table and reuses the layers.
  */
-export type AmbientRole = ClimateRole
-export type AmbientActivity = 'off' | 'cool' | 'heat' | 'idle' | 'window' | 'unknown'
+export type AmbientRole = ClimateRole | 'fan' | 'switch-heater'
+/** What a climate-like device is doing. */
+export type ClimateAmbientActivity = 'off' | 'cool' | 'heat' | 'idle' | 'window' | 'unknown'
+/** Climate's activities plus a moving appliance's `run` (a fan). */
+export type AmbientActivity = ClimateAmbientActivity | 'run'
 
 export const AMBIENT_LAYERS = [
   'wash-up',
   'wash-down',
+  'glow-low',
   'breathe',
   'particles-rise',
   'particles-fall',
@@ -24,6 +28,7 @@ export const AMBIENT_LAYERS = [
   'heater',
   'pipe',
   'draft',
+  'breeze',
 ] as const
 export type AmbientLayer = (typeof AMBIENT_LAYERS)[number]
 export type AmbientPace = 'live' | 'slow'
@@ -33,21 +38,25 @@ export interface AmbientFxProps {
   readonly activity: AmbientActivity
   /** The air stream sways from side to side. */
   readonly swing: boolean
+  /** How fast the air moves, 0..100 (a fan's speed); absent is the default pace. */
+  readonly speed?: number
 }
 
 type AmbientStack = readonly AmbientLayer[]
-type LiveActivity = 'heat' | 'cool'
+type LiveActivity = 'heat' | 'cool' | 'run'
 
 const COLD_AIR: AmbientStack = ['wash-down', 'particles-fall']
 
 /** What a role shows while it is heating or cooling. */
-const LIVE: Readonly<Record<AmbientRole, Readonly<Record<LiveActivity, AmbientStack>>>> = {
+const LIVE: Readonly<Record<AmbientRole, Readonly<Partial<Record<LiveActivity, AmbientStack>>>>> = {
   ac: { heat: ['wash-down', 'air'], cool: ['wash-down', 'air'] },
   thermostat: { heat: ['wash-up', 'particles-rise'], cool: COLD_AIR },
   floor: { heat: ['wash-up', 'serpentine', 'wisps-floor'], cool: ['wash-down', 'serpentine'] },
   radiator: { heat: ['wash-up', 'radiator', 'wisps-unit'], cool: COLD_AIR },
   heater: { heat: ['wash-up', 'heater', 'wisps-unit'], cool: COLD_AIR },
   hpcircuit: { heat: ['wash-up', 'pipe'], cool: ['wash-down', 'pipe'] },
+  fan: { run: ['breeze'] },
+  'switch-heater': { heat: ['glow-low', 'wisps-unit'] },
 }
 
 /** What a role keeps in standby: the appliance at rest, air and water moving slowly. */
@@ -58,6 +67,8 @@ const STANDBY: Readonly<Record<AmbientRole, AmbientStack>> = {
   radiator: ['radiator'],
   heater: ['heater'],
   hpcircuit: ['pipe'],
+  fan: [],
+  'switch-heater': [],
 }
 
 const TONE: Readonly<Record<AmbientActivity, string>> = {
@@ -66,6 +77,7 @@ const TONE: Readonly<Record<AmbientActivity, string>> = {
   unknown: 'text-foreground-muted',
   cool: 'text-info',
   heat: 'text-primary',
+  run: 'text-info',
   window: 'text-info',
 }
 
@@ -74,7 +86,7 @@ export function ambientLayers(role: AmbientRole, activity: AmbientActivity): Amb
   if (activity === 'off' || activity === 'unknown') return []
   if (activity === 'window') return ['draft']
   if (activity === 'idle') return ['breathe', ...STANDBY[role]]
-  return LIVE[role][activity]
+  return LIVE[role][activity] ?? []
 }
 
 /** How fast the stack moves: in standby the air and the water slow down, the rest holds still. */
@@ -121,6 +133,8 @@ function drawLayer(layer: AmbientLayer, swing: boolean): ReactElement {
       return <div className="dc-fx-wash" data-from="bottom" />
     case 'wash-down':
       return <div className="dc-fx-wash" data-from="top" />
+    case 'glow-low':
+      return <div className="dc-fx-wash" data-from="bottom" data-low />
     case 'breathe':
       return <div className="dc-fx-breathe" />
     case 'particles-rise':
@@ -163,11 +177,27 @@ function drawLayer(layer: AmbientLayer, swing: boolean): ReactElement {
       return flowing('dc-fx-pipe', '0 0 340 120', LOOP_PATH)
     case 'draft':
       return <div className="dc-fx-draft">{streaks(4)}</div>
+    case 'breeze':
+      return <div className="dc-fx-breeze">{streaks(4)}</div>
   }
 }
 
+/**
+ * A speed 0..100 as one of five paces (`data-speed`), so the stylesheet sets
+ * how fast blades and air move without an inline style. Zero is still.
+ */
+export type SpeedBand = 0 | 1 | 2 | 3 | 4 | 5
+export function speedBand(speed: number): SpeedBand {
+  if (speed <= 0) return 0
+  if (speed <= 20) return 1
+  if (speed <= 40) return 2
+  if (speed <= 60) return 3
+  if (speed <= 80) return 4
+  return 5
+}
+
 /** The ambient layer of a scene; renders nothing when the scene is still. */
-export function AmbientFx({ role, activity, swing }: AmbientFxProps): ReactElement | null {
+export function AmbientFx({ role, activity, swing, speed }: AmbientFxProps): ReactElement | null {
   const layers = ambientLayers(role, activity)
   if (layers.length === 0) return null
   return (
@@ -175,6 +205,7 @@ export function AmbientFx({ role, activity, swing }: AmbientFxProps): ReactEleme
       aria-hidden
       data-fx={layers.join(' ')}
       data-pace={ambientPace(activity)}
+      data-speed={speed === undefined ? undefined : speedBand(speed)}
       className={cn('dc-fx', TONE[activity])}
     >
       {layers.map((layer) => (

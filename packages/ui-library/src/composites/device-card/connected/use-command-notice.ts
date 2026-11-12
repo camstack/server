@@ -49,3 +49,18 @@ export function reportedCommand<T>(
       report.fail,
     )
 }
+
+/**
+ * A plain command whose outcome lands on the card, for a field the card shows
+ * as reported (no optimistic patch): a refusal names its reason, a success
+ * clears it.
+ */
+export function reportedCall(
+  report: Pick<CommandNotice, 'fail' | 'succeed'>,
+): (run: () => PromiseLike<unknown> | undefined) => void {
+  return (run) => {
+    void Promise.resolve()
+      .then(run)
+      .then(() => report.succeed(), report.fail)
+  }
+}

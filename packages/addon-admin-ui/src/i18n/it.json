@@ -9846,7 +9846,8 @@
         "start": "Avvia {{duration}}",
         "startAria": "Accendi per {{duration}}, poi spegni",
         "stop": "Ferma",
-        "stopAria": "Ferma il ciclo a tempo e spegni"
+        "stopAria": "Ferma il ciclo a tempo e spegni",
+        "hours": "{{h}} h"
       },
       "climate": {
         "cooling": "Raffresca",
@@ -9888,7 +9889,75 @@
         "voltage": "Tensione"
       },
       "reachUnknown": "Stato sconosciuto",
-      "commandFailed": "Comando non riuscito: {{reason}}"
+      "commandFailed": "Comando non riuscito: {{reason}}",
+      "offIn": "si spegne tra {{time}}",
+      "cover": {
+        "close": "Chiudi",
+        "open": "Apri",
+        "stop": "Ferma",
+        "opening": "In apertura",
+        "closing": "In chiusura",
+        "closure": "Chiusura",
+        "extension": "Estensione",
+        "openingLevel": "Apertura",
+        "confirm": "Tocca ancora per confermare",
+        "drag": "Trascina",
+        "extend": "Estendi",
+        "retract": "Ritrai",
+        "extended": "Estesa",
+        "retracted": "Ritratta",
+        "extendedBy": "Estesa al {{pct}}%",
+        "slats": "Lamelle",
+        "slatsOpen": "Apri lamelle",
+        "slatsClose": "Chiudi lamelle",
+        "f": {
+          "open": "Aperta",
+          "closed": "Chiusa",
+          "openBy": "Aperta al {{pct}}%",
+          "closedBy": "Chiusa al {{pct}}%"
+        },
+        "m": {
+          "open": "Aperto",
+          "closed": "Chiuso",
+          "openBy": "Aperto al {{pct}}%",
+          "closedBy": "Chiuso al {{pct}}%"
+        }
+      },
+      "fan": {
+        "on": "Acceso",
+        "off": "Spento",
+        "speed": "Velocità",
+        "preset": "Preset",
+        "summer": "Estate",
+        "winter": "Inverno",
+        "oscillation": "Oscillazione",
+        "horizontal": "Orizzontale",
+        "vertical": "Verticale",
+        "fixedAt": "fisso {{angle}}",
+        "from": "Da",
+        "to": "A",
+        "fixed": "Fisso",
+        "oscillates": "oscilla",
+        "oscillates3d": "oscilla 3D",
+        "still": "fisso",
+        "presetIncomplete": "preset applicato solo in parte: {{fields}}",
+        "oscillateHorizontal": "Oscillazione orizzontale",
+        "oscillateVertical": "Oscillazione verticale"
+      },
+      "heater": {
+        "heating": "Riscalda",
+        "off": "Spenta"
+      },
+      "light": {
+        "on": "Accesa",
+        "off": "Spenta",
+        "brightness": "Luminosità",
+        "colour": "Colore",
+        "white": "Bianco",
+        "warm": "Caldo",
+        "cold": "Freddo",
+        "whiteTemperature": "Temperatura del bianco"
+      }
     }
   },
   "helpers": {

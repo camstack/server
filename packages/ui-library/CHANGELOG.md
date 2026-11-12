@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The recording band sensors, the Customize source column and every schema device field pick through the device search: compatible devices only, the host's room suggested, a failed search says so
 - The recording band sensors, the Customize source column and every schema device field pick through the device search: compatible devices only, the host's room suggested, a failed search says so. A recording band now offers only sensors carrying a cap the recorder listens to (contact, motion…): a bare sensor-typed device without one is no longer listed, since it could never start a recording
+- The device card now draws covers (per role), lights, fans (with oscillation axes and presets) and switch heaters, all powered through switch
 
 ## [1.2.426] - 2026-11-11
 

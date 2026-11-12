@@ -7,17 +7,25 @@ import {
   AmbientFx,
   ambientLayers,
   ambientPace,
+  speedBand,
   type AmbientActivity,
-  type AmbientRole,
+  type ClimateAmbientActivity,
 } from '../illustrations/AmbientFx'
-import { CLIMATE_ROLES } from '../illustrations/ClimateRoleGlyph'
+import { CLIMATE_ROLES, type ClimateRole } from '../illustrations/ClimateRoleGlyph'
 
 afterEach(cleanup)
 
-const ACTIVITIES: readonly AmbientActivity[] = ['off', 'unknown', 'idle', 'heat', 'cool', 'window']
+const ACTIVITIES: readonly ClimateAmbientActivity[] = [
+  'off',
+  'unknown',
+  'idle',
+  'heat',
+  'cool',
+  'window',
+]
 
 /** The scene each role draws, per activity: the approved Clima page. */
-const EXPECTED: Readonly<Record<AmbientRole, Readonly<Record<AmbientActivity, string>>>> = {
+const EXPECTED: Readonly<Record<ClimateRole, Readonly<Record<ClimateAmbientActivity, string>>>> = {
   ac: {
     off: '',
     unknown: '',
@@ -92,6 +100,25 @@ describe('ambient layer — one stack per (role, activity)', () => {
     }
   }
 
+  it('a running fan blows a breeze at its speed; a still fan draws nothing', () => {
+    expect(ambientLayers('fan', 'run')).toEqual(['breeze'])
+    expect(ambientLayers('fan', 'off')).toEqual([])
+    const { container } = render(<AmbientFx role="fan" activity="run" swing={false} speed={90} />)
+    const root = container.querySelector('[data-fx]')
+    expect(root?.getAttribute('data-speed')).toBe('5')
+    expect(root?.className).toContain('text-info')
+    expect(container.querySelectorAll('.dc-fx-breeze i')).toHaveLength(4)
+    expect([0, 10, 30, 50, 70, 100].map(speedBand)).toEqual([0, 1, 2, 3, 4, 5])
+  })
+
+  it('a heating switch-heater glows low from the floor, with wisps over the unit', () => {
+    expect(ambientLayers('switch-heater', 'heat')).toEqual(['glow-low', 'wisps-unit'])
+    expect(ambientLayers('switch-heater', 'off')).toEqual([])
+    const { container } = render(<AmbientFx role="switch-heater" activity="heat" swing={false} />)
+    expect(container.querySelector('.dc-fx-wash[data-low]')).not.toBeNull()
+    expect(container.querySelectorAll('.dc-fx-wisps[data-at="unit"] i')).toHaveLength(3)
+  })
+
   it('every live role has a background, and heat never looks like cool', () => {
     for (const role of CLIMATE_ROLES) {
       expect(ambientLayers(role, 'heat').length, role).toBeGreaterThan(1)
@@ -143,6 +170,8 @@ describe('ambient layer — one stack per (role, activity)', () => {
       heater: '.dc-fx-coil{',
       pipe: '.dc-fx-pipe{',
       draft: '.dc-fx-draft i{',
+      'glow-low': '.dc-fx-wash[data-low]{height:30%}',
+      breeze: '.dc-fx-breeze i{',
     }
     for (const layer of AMBIENT_LAYERS) expect(DEVICE_CARD_CSS, layer).toContain(hooks[layer])
     expect(DEVICE_CARD_CSS).toContain(

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Token view links, Log watch and the automation device fields (event source, command target, scene cameras) use the device search picker
 - The page of an event device (a remote, a button) lists each button with its labelled presses, and the last event names its button
+- The device page and the device embed show the new cover, light, fan and heater cards
 
 ### Added
 

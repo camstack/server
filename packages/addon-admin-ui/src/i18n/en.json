@@ -9824,7 +9824,8 @@
         "start": "Run {{duration}}",
         "startAria": "Turn on for {{duration}}, then off",
         "stop": "Stop",
-        "stopAria": "Stop the timed run and turn off"
+        "stopAria": "Stop the timed run and turn off",
+        "hours": "{{h}} h"
       },
       "climate": {
         "cooling": "Cooling",
@@ -9866,7 +9867,75 @@
         "voltage": "Voltage"
       },
       "reachUnknown": "Status unknown",
-      "commandFailed": "Command failed: {{reason}}"
+      "commandFailed": "Command failed: {{reason}}",
+      "offIn": "off in {{time}}",
+      "cover": {
+        "close": "Close",
+        "open": "Open",
+        "stop": "Stop",
+        "opening": "Opening",
+        "closing": "Closing",
+        "closure": "Closure",
+        "extension": "Extension",
+        "openingLevel": "Opening",
+        "confirm": "Tap again to confirm",
+        "drag": "Drag",
+        "extend": "Extend",
+        "retract": "Retract",
+        "extended": "Extended",
+        "retracted": "Retracted",
+        "extendedBy": "Extended {{pct}}%",
+        "slats": "Slats",
+        "slatsOpen": "Open slats",
+        "slatsClose": "Close slats",
+        "f": {
+          "open": "Open",
+          "closed": "Closed",
+          "openBy": "Open {{pct}}%",
+          "closedBy": "Closed {{pct}}%"
+        },
+        "m": {
+          "open": "Open",
+          "closed": "Closed",
+          "openBy": "Open {{pct}}%",
+          "closedBy": "Closed {{pct}}%"
+        }
+      },
+      "fan": {
+        "on": "On",
+        "off": "Off",
+        "speed": "Speed",
+        "preset": "Preset",
+        "summer": "Summer",
+        "winter": "Winter",
+        "oscillation": "Oscillation",
+        "horizontal": "Horizontal",
+        "vertical": "Vertical",
+        "fixedAt": "fixed {{angle}}",
+        "from": "From",
+        "to": "To",
+        "fixed": "Fixed",
+        "oscillates": "oscillates",
+        "oscillates3d": "oscillates 3D",
+        "still": "fixed",
+        "presetIncomplete": "preset not fully applied: {{fields}}",
+        "oscillateHorizontal": "Oscillate horizontally",
+        "oscillateVertical": "Oscillate vertically"
+      },
+      "heater": {
+        "heating": "Heating",
+        "off": "Off"
+      },
+      "light": {
+        "on": "On",
+        "off": "Off",
+        "brightness": "Brightness",
+        "colour": "Colour",
+        "white": "White",
+        "warm": "Warm",
+        "cold": "Cold",
+        "whiteTemperature": "White temperature"
+      }
     }
   },
   "helpers": {

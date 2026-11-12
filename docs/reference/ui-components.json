@@ -979,6 +979,12 @@
           "type": "boolean",
           "optional": false,
           "doc": "The air stream sways from side to side."
+        },
+        {
+          "name": "speed",
+          "type": "number",
+          "optional": true,
+          "doc": "How fast the air moves, 0..100 (a fan's speed); absent is the default pace."
         }
       ]
     },
@@ -1128,6 +1134,12 @@
           "type": "CardGlyph",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "tone",
+          "type": "CardButtonTone",
+          "optional": true,
+          "doc": "The tone while NOT armed (default: default); armed is always danger."
         },
         {
           "name": "children",
@@ -3119,7 +3131,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedDeviceCard.tsx",
-      "summary": "Which card draws a device, from what it IS (type + role, D1033) and what it binds. A `switch` with the role `switch-heater` is the plug scene with its timed run, like the hero."
+      "summary": "Which card draws a device, from what it IS (type + role, D1033) and what it binds. Power is always the `switch` cap (D1042): a switch is a plug, or a heater / a fan by its role; a light and a fan need it too. A cover …"
     },
     {
       "name": "ConnectedClimateCard",
@@ -3127,6 +3139,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedClimateCard.tsx",
       "summary": "The climate card of a real device: its `climate-control` slice, its `heating-valve` slice, or both. A valve that only reports still draws."
+    },
+    {
+      "name": "ConnectedCoverCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedCoverCard.tsx",
+      "summary": "The cover card of a real device, drawn as its role (D1033). It takes a position when the device declares one and binds `setPosition`; the slats when it declares a tilt and binds `setTiltPosition`."
     },
     {
       "name": "ConnectedDeviceCard",
@@ -3143,6 +3162,27 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "ConnectedFanCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedFanCard.tsx",
+      "summary": "The fan card of a real device: power through `switch` (D1042), the rest through `fan-control` (speed, presets, direction, oscillation and its axes, D1034) and the saved presets of `fan-presets`. A `switch` with the ro…"
+    },
+    {
+      "name": "ConnectedHeaterCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedHeaterCard.tsx",
+      "summary": "The heater card of a real `switch` with the role `switch-heater`: power and its timed run."
+    },
+    {
+      "name": "ConnectedLightCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedLightCard.tsx",
+      "summary": "The light card of a real device: power through `switch` (D1042), the level through `brightness`, colour and white through `color` — each popover only when the device declares that colour feature."
     },
     {
       "name": "ConnectedPlugCard",
@@ -3509,6 +3549,39 @@
       "summary": "\"Daylight ✓ · Night (IR) ✗ — optional; checks in night (ir) are skipped.\""
     },
     {
+      "name": "CoverCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/cover/CoverCard.tsx",
+      "summary": "The cover: drawn as its role (a shutter, an awning, a gate …) at its position. One that takes a position moves with the arrows, the slider or by dragging the drawing; one that does not opens and closes, and a gate, a …",
+      "props": [
+        {
+          "name": "model",
+          "type": "CoverCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "CoverCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "CoverHeroCard",
       "kind": "component",
       "area": "composites",
@@ -3523,6 +3596,69 @@
       "summary": "Pure helper — maps a live CoverState (or undefined when no slice yet) to per-button highlight variants."
     },
     {
+      "name": "CoverIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/CoverIllustration.tsx",
+      "summary": "A cover drawn as what it is (a shutter, an awning, a gate …) at its current position. The drawings that have a grip can be dragged, or moved with the arrow keys once the grip has focus.",
+      "props": [
+        {
+          "name": "drawing",
+          "type": "CoverDrawing",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "value",
+          "type": "number",
+          "optional": false,
+          "doc": "How far the drawing is drawn, 0..100, in the DRAWING's sense: covered for a shutter / blind / curtain / garage / gate / door, extended for a"
+        },
+        {
+          "name": "drag",
+          "type": "CoverDrag",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "ariaLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "gripLabel",
+          "type": "string",
+          "optional": true,
+          "doc": "The grip's accessible name (\"Drag\")."
+        },
+        {
+          "name": "interactive",
+          "type": "boolean",
+          "optional": true,
+          "doc": "False while the card is gated: the grip is drawn but does not move."
+        },
+        {
+          "name": "onDrag",
+          "type": "(value: number) => void",
+          "optional": true,
+          "doc": "Every move of the grip."
+        },
+        {
+          "name": "onDragEnd",
+          "type": "(value: number) => void",
+          "optional": true,
+          "doc": "Once, where the grip was let go."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "CoverInlineControl",
       "kind": "component",
       "area": "composites",
@@ -3535,6 +3671,20 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/cover-panel.tsx",
       "summary": ""
+    },
+    {
+      "name": "coverRoleSpec",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/cover/model.ts",
+      "summary": "A cover with no role, or one this card does not know, is drawn as a shutter."
+    },
+    {
+      "name": "coverStateWord",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/cover/CoverCard.tsx",
+      "summary": "The state word, in the role's own sense and gender (\"Closed 40%\", \"Extended\", \"Opening\")."
     },
     {
       "name": "createAddonI18n",
@@ -5992,6 +6142,20 @@
       "summary": "Trimmed non-empty draft from the search box, or null when absent."
     },
     {
+      "name": "drawnOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/cover/model.ts",
+      "summary": "The cap's position (100 = open) in the role's own sense (closed / extended / open)."
+    },
+    {
+      "name": "drawnValueOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/cover/model.ts",
+      "summary": "The role's value the drawing shows: the position, else what the state implies."
+    },
+    {
       "name": "Dropdown",
       "kind": "component",
       "area": "primitives",
@@ -6540,11 +6704,103 @@
       "summary": "Asked last, after the page: a global handler that yields to whatever the page registers."
     },
     {
+      "name": "FAN_MIN_SWEEP",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/fan/model.ts",
+      "summary": "The narrowest sweep the card lets an operator set, in degrees."
+    },
+    {
+      "name": "fanAxisOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/fan-model.ts",
+      "summary": "An axis the fan reports; null when it reports nothing on it."
+    },
+    {
+      "name": "FanCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/fan/FanCard.tsx",
+      "summary": "The fan: on / off, its speed beside it, the presets, the blade direction, and the oscillation — one switch, or one popover per axis for a fan that reports its axes — then the switch's timed run.",
+      "props": [
+        {
+          "name": "model",
+          "type": "FanCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "FanCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "FanHeroCard",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/fan-hero-card.tsx",
       "summary": "FanHeroCard — radial speed-dial hero for Fan devices."
+    },
+    {
+      "name": "FanIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/FanIllustration.tsx",
+      "summary": "A fan seen from the front: the blades spin with the speed and turn the other way in reverse; the head sways while it oscillates, per axis when the fan reports them. Still when off.",
+      "props": [
+        {
+          "name": "on",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "speed",
+          "type": "number | null",
+          "optional": false,
+          "doc": "0..100; null for a fan without a speed (it spins at a middle pace)."
+        },
+        {
+          "name": "reverse",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "sway",
+          "type": "boolean",
+          "optional": false,
+          "doc": "The whole head sways (a fan with one oscillation switch)."
+        },
+        {
+          "name": "axes",
+          "type": "{ readonly horizontal: FanAxisDrawing; readonly vertical: FanAxisDrawing } | null",
+          "optional": false,
+          "doc": "Per-axis oscillation, for a fan that reports its axes; null when it does not."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "FanInlineControl",
@@ -6559,6 +6815,27 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/fan-panel.tsx",
       "summary": ""
+    },
+    {
+      "name": "fanPresetChoice",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/fan-model.ts",
+      "summary": "A real fan's slices as the fan card draws them: the `fan-control` slice (speed, presets, direction, oscillation or its axes) and the saved presets of `fan-presets`, in one menu."
+    },
+    {
+      "name": "fanPresetFailure",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/fan-model.ts",
+      "summary": "Why a saved preset did not fully apply, naming each field that did not (D1034); null when everything applied."
+    },
+    {
+      "name": "fanSliceModel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/fan-model.ts",
+      "summary": "What the fan card draws from the slices; a field the device cannot command is not drawn."
     },
     {
       "name": "FAST_ICON_GLYPHS",
@@ -7201,6 +7478,60 @@
       "summary": ""
     },
     {
+      "name": "HeaterCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/heater/HeaterCard.tsx",
+      "summary": "The heater on a switch: the plug's controls (power, the timed run) drawn as a heater, the floor warming behind it while it heats.",
+      "props": [
+        {
+          "name": "model",
+          "type": "HeaterCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "HeaterCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "HeaterIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/HeaterIllustration.tsx",
+      "summary": "A free-standing heater: body, three coils and feet. The coils glow and pulse while it heats.",
+      "props": [
+        {
+          "name": "on",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "HERO_SCENE_ICON",
       "kind": "constant",
       "area": "composites",
@@ -7790,57 +8121,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/parts/sliders.tsx",
-      "summary": "A level in the scene's bottom zone.",
-      "props": [
-        {
-          "name": "value",
-          "type": "number",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "min",
-          "type": "number",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "max",
-          "type": "number",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "step",
-          "type": "number",
-          "optional": true,
-          "doc": ""
-        },
-        {
-          "name": "ariaLabel",
-          "type": "string",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "disabled",
-          "type": "boolean",
-          "optional": true,
-          "doc": ""
-        },
-        {
-          "name": "onChange",
-          "type": "(value: number) => void",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "testId",
-          "type": "string",
-          "optional": true,
-          "doc": ""
-        }
-      ]
+      "summary": "A level in the scene's bottom zone: its name, the track, the value."
     },
     {
       "name": "HOST_WIDGETS",
@@ -7953,6 +8234,13 @@
           "doc": "Enlarged-preview height in px (drives the flip-on-collision math)."
         }
       ]
+    },
+    {
+      "name": "hsvRgb",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/light/model.ts",
+      "summary": "Hue 0..360, saturation and value 0..100, to 0..255 channels."
     },
     {
       "name": "HUB_SESSION_RUN_MS",
@@ -8741,6 +9029,20 @@
       ]
     },
     {
+      "name": "kelvinRgb",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/light/model.ts",
+      "summary": "A white temperature drawn as a colour, warm to cold, as in the approved drawing."
+    },
+    {
+      "name": "kelvinToMired",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/light/model.ts",
+      "summary": ""
+    },
+    {
       "name": "KeyValue",
       "kind": "component",
       "area": "composites",
@@ -8933,6 +9235,74 @@
       ]
     },
     {
+      "name": "LIGHT_PALETTE",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/light/model.ts",
+      "summary": "The palette of the Colour popover: colours SENT to the device (data, not theme colours)."
+    },
+    {
+      "name": "LIGHT_WHITE_MAX_K",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/light/model.ts",
+      "summary": ""
+    },
+    {
+      "name": "LIGHT_WHITE_MIN_K",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/light/model.ts",
+      "summary": "The white range the Bianco popover offers, in kelvin."
+    },
+    {
+      "name": "LIGHT_WHITE_STEP_K",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/light/model.ts",
+      "summary": ""
+    },
+    {
+      "name": "LightCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/light/LightCard.tsx",
+      "summary": "The light: on / off, its level beside the bulb, and the colour and white popovers when it takes them. The bulb shines in the light's own colour.",
+      "props": [
+        {
+          "name": "model",
+          "type": "LightCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "LightCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "lightColorOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedLightCard.tsx",
+      "summary": "The colour a `color` slice shines with, whatever its mode; null when it reports none."
+    },
+    {
       "name": "lightColors",
       "kind": "constant",
       "area": "theme",
@@ -8945,6 +9315,39 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/light-hero-card.tsx",
       "summary": "LightHeroCard — radial dimmer hero for Light devices."
+    },
+    {
+      "name": "LightIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/LightIllustration.tsx",
+      "summary": "A bulb lit in the light's colour, its halo as strong as the brightness. Grey when off.",
+      "props": [
+        {
+          "name": "on",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "color",
+          "type": "LightRgb | null",
+          "optional": false,
+          "doc": "The light's own colour; null draws the theme's lit colour."
+        },
+        {
+          "name": "brightness",
+          "type": "number | null",
+          "optional": false,
+          "doc": "0..100, or null for a light without a level."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "LightInlineControl",
@@ -9384,6 +9787,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/timeline-slider.tsx",
       "summary": "TimelineSlider — one 24 h day as a track with draggable markers."
+    },
+    {
+      "name": "miredToKelvin",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/light/model.ts",
+      "summary": "Mireds (the cap's unit) to kelvin, and back."
     },
     {
       "name": "MobileDrawer",
@@ -10802,13 +11212,6 @@
       ]
     },
     {
-      "name": "PLUG_TIMER_MIN_MINUTES",
-      "kind": "constant",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/scenes/plug/model.ts",
-      "summary": ""
-    },
-    {
       "name": "PlugCard",
       "kind": "component",
       "area": "composites",
@@ -10903,6 +11306,63 @@
       ]
     },
     {
+      "name": "PopoverButton",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/PopoverButton.tsx",
+      "summary": "A card button that opens a small panel anchored under it (a colour palette, an axis' sweep). One outside press or Escape closes it. The trigger obeys the shell's gating like any card button.",
+      "props": [
+        {
+          "name": "glyph",
+          "type": "CardGlyph",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "label",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "ariaLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "tone",
+          "type": "CardButtonTone",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "align",
+          "type": "'start' | 'end'",
+          "optional": true,
+          "doc": "Which edge of the button the panel lines up with (default: start)."
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "PopoverContent",
       "kind": "component",
       "area": "primitives",
@@ -10957,6 +11417,13 @@
       "area": "primitives",
       "file": "packages/ui-library/src/primitives/popover.tsx",
       "summary": ""
+    },
+    {
+      "name": "positionOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/cover/model.ts",
+      "summary": "The role's value back to the cap's position."
     },
     {
       "name": "PowerCorner",
@@ -11621,6 +12088,13 @@
       "summary": "Split `a <0>b</0> c` into text and `components[0]` wrapped around `b`."
     },
     {
+      "name": "reportedCall",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/use-command-notice.ts",
+      "summary": "A plain command whose outcome lands on the card, for a field the card shows as reported (no optimistic patch): a refusal names its reason, a success clears it."
+    },
+    {
       "name": "reportedCommand",
       "kind": "function",
       "area": "composites",
@@ -11828,6 +12302,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/training/retrain-review-badge.tsx",
       "summary": "The badge look for a verdict. Pure."
+    },
+    {
+      "name": "rgbCss",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/LightIllustration.tsx",
+      "summary": ""
     },
     {
       "name": "RIGHT",
@@ -13093,6 +13574,13 @@
       ]
     },
     {
+      "name": "signedDegrees",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/fan/model.ts",
+      "summary": "\"+45°\", \"-30°\", \"0°\"."
+    },
+    {
       "name": "Skeleton",
       "kind": "component",
       "area": "primitives",
@@ -13100,6 +13588,13 @@
       "summary": "",
       "propsExtends": ["HTMLAttributes<HTMLDivElement>"],
       "props": []
+    },
+    {
+      "name": "SlatGlyph",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/CoverIllustration.tsx",
+      "summary": "Three slats at an angle, for the tilt buttons."
     },
     {
       "name": "Slider",
@@ -13314,6 +13809,13 @@
       "summary": "Normalised polyline `d` in a 100×40 viewBox."
     },
     {
+      "name": "speedBand",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/AmbientFx.tsx",
+      "summary": ""
+    },
+    {
       "name": "SPLIT_PANEL_OUTER",
       "kind": "constant",
       "area": "lib",
@@ -13328,11 +13830,11 @@
       "summary": "Sidebar narrow lane in a SPLIT_PANEL_OUTER layout."
     },
     {
-      "name": "splitPlugDuration",
+      "name": "splitSwitchTimerDuration",
       "kind": "function",
       "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/scenes/plug/model.ts",
-      "summary": ""
+      "file": "packages/ui-library/src/composites/device-card/parts/switch-timer-model.ts",
+      "summary": "The switch's timed run, as every card whose power is a `switch` offers it (plug, heater, fan): one model, one stepping rule, one control (`SwitchTimer`)."
     },
     {
       "name": "StableTabPanel",
@@ -13925,10 +14427,10 @@
       ]
     },
     {
-      "name": "stepPlugTimer",
+      "name": "stepSwitchTimer",
       "kind": "function",
       "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/scenes/plug/model.ts",
+      "file": "packages/ui-library/src/composites/device-card/parts/switch-timer-model.ts",
       "summary": "The next duration one press of + or - gives: 5 min steps up to an hour, then 15."
     },
     {
@@ -14440,6 +14942,13 @@
       ]
     },
     {
+      "name": "SWITCH_TIMER_MIN_MINUTES",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/switch-timer-model.ts",
+      "summary": "The switch's timed run, as every card whose power is a `switch` offers it (plug, heater, fan): one model, one stepping rule, one control (`SwitchTimer`)."
+    },
+    {
       "name": "SwitchInlineControl",
       "kind": "component",
       "area": "composites",
@@ -14452,6 +14961,27 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/switch-panel.tsx",
       "summary": ""
+    },
+    {
+      "name": "SwitchTimer",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/SwitchTimer.tsx",
+      "summary": "The switch's timed run — ONE control for every card whose power is a switch: \"- Run 25 min +\" until it runs, then \"Stop · mm:ss\".",
+      "props": [
+        {
+          "name": "timer",
+          "type": "SwitchTimerModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "SwitchTimerActions",
+          "optional": false,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "SystemProvider",
@@ -15850,6 +16380,13 @@
       "summary": "The admin side of the device picker's \"Group by\" (Zone | Location | None): the remembered choice, and the site-zone read. What each mode DRAWS is `device-picker-model.ts` (shared with the viewer); this only supplies w…"
     },
     {
+      "name": "useSwitchPower",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/use-switch-power.ts",
+      "summary": "A real device's power, the way every card reads it: `switch` is the one on/off control (D1042) — a light, a fan, a heater and a plug all turn on and off through it — and `timed-run`, when the device binds it and its t…"
+    },
+    {
       "name": "useSystem",
       "kind": "hook",
       "area": "contexts",
@@ -15876,6 +16413,13 @@
       "area": "theme",
       "file": "packages/ui-library/src/theme/use-theme-mode.ts",
       "summary": ""
+    },
+    {
+      "name": "useTimerSince",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/SwitchTimer.tsx",
+      "summary": "The state corner's \"since\" while a timed run is counting down (\"off in 24:59\"); otherwise the given one. The fan and the heater say when they stop."
     },
     {
       "name": "useTrpcClient",
@@ -16082,7 +16626,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/parts/sliders.tsx",
-      "summary": "A level in one of the scene's side columns.",
+      "summary": "A level in one of the scene's side columns, its value riding on the thumb.",
       "props": [
         {
           "name": "value",
@@ -16123,8 +16667,20 @@
         {
           "name": "onChange",
           "type": "(value: number) => void",
-          "optional": false,
-          "doc": ""
+          "optional": true,
+          "doc": "Every move, while the thumb travels."
+        },
+        {
+          "name": "onCommit",
+          "type": "(value: number) => void",
+          "optional": true,
+          "doc": "Once, where the thumb was let go: the value a command is sent with."
+        },
+        {
+          "name": "valueLabel",
+          "type": "(value: number) => string | null",
+          "optional": true,
+          "doc": "The value written on the thumb (vertical) or beside the track (horizontal); null hides it."
         },
         {
           "name": "testId",

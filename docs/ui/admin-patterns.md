@@ -868,12 +868,16 @@ guessing at a blur or dimming that does not reproduce in Chromium.
 
 ## The device card: one block, assembled from shared parts
 
-A plug and a climate device are drawn by ONE card,
+Plugs, climate devices, covers, lights, fans and switch heaters are drawn by ONE card,
 `packages/ui-library/src/composites/device-card/`, on the admin device page, in
 `/embed/device/<id>` and in the viewer's webview (all three mount
 `DeviceDetailModule`, which hands the device to `ConnectedDeviceCard` when
-`useConnectedCardKind` answers `plug` or `climate`, and keeps `ModelHero` for
-every other type).
+`useConnectedCardKind` answers `plug`, `climate`, `cover`, `light`, `fan` or
+`heater`, and keeps `ModelHero` for every other type). The kind is decided by
+type AND role (`connectedCardKindOf`): a switch with role `switch-heater` is a
+heater, a switch with role `switch-fan` is a fan, any other switch a plug.
+Power on every one of these cards goes through `switch` (`useSwitchPower`,
+D1042), never a per-capability setter.
 
 - **`shell/`** is what every type shares: the integration and reachability
   line, the name (left out with `showName={false}` when the host names the
@@ -888,12 +892,18 @@ every other type).
   puts its reason on the reason line (`CardCommon.notice`).
 - **`parts/`** are the controls a scene composes: `CardButton`, `ArmedButton`
   (the one two-step confirmation: 5 s to confirm, with Cancel), `MenuButton`,
-  `ButtonGroup`, `Dial`, `RangeDial` (two setpoints on one arc), `LevelBar`, the sliders, `useCountdown`.
+  `ButtonGroup`, `Dial`, `RangeDial` (two setpoints on one arc), `LevelBar`,
+  `PopoverButton` (a button that opens a small anchored panel: a light's
+  palette, a fan axis' sweep), `SwitchTimer` (the one timed run of a switch —
+  plug, heater and fan draw the same control, and `useTimerSince` gives the
+  "off in" state word), the sliders (`HorizontalSlider` / `VerticalSlider`:
+  the value moves with the thumb and is sent ONCE, on release), `useCountdown`.
 - **`illustrations/`** hold the drawings; **`icons.ts`** is the only file that
   imports `lucide-react` (`CardGlyph`).
   `AmbientFx` is the one animated background of a scene: `ambientLayers(role,
   activity)` returns the stack to draw (wash, particles, air, serpentine,
-  appliance, pipe, draught, standby glow), coloured by the activity through a
+  appliance, pipe, draught, standby glow, low heat glow, breeze — the
+  breeze's pace follows the fan speed through `speedBand`), coloured by the activity through a
   theme token and stopped under `prefers-reduced-motion`. A new environmental
   card adds its role to that table — it never draws its own background.
 - **`scenes/<type>/`** is a model (`model.ts`, plain data and callbacks) and the
@@ -903,7 +913,7 @@ every other type).
   the model; nothing else in the tree touches tRPC.
 - **`__fixtures__/`** carry the approved mockup's data and are not exported
   from the package. The harness route
-  `/device-card-preview?type=plug|climate|climate-extra` renders them
+  `/device-card-preview?type=plug|climate|climate-extra|cover|light|fan|heater` renders them
   (`climate-extra`: a held band, a radiator valve, a valve that only reports,
   unknown reachability — variants the mockup page does not draw), and
   `node scripts/ui/card-parity.mjs --mockup <card mockup html>` shoots mockup and
@@ -911,7 +921,7 @@ every other type).
   `scratchpad/ui-shots/card-parity/`.
 
 A new type is a new `scenes/<type>/` plus its fixtures and a row in the
-structural spec (`__tests__/scenes.spec.tsx`), never a page-local look-alike.
+structural spec (`__tests__/scenes.spec.tsx`, `__tests__/wave-a-scenes.spec.tsx`), never a page-local look-alike.
 `scripts/check-device-card-parts.ts` refuses, under that directory: an emoji, a
 `lucide-react` import outside `icons.ts`, an inline `<svg>` outside
 `illustrations/` and `parts/`, and a timer inside `scenes/`.

@@ -64,5 +64,28 @@ export const DEVICE_CARD_CSS = `
 @keyframes dc-flow{to{stroke-dashoffset:-48}}
 .dc-flash{animation:dc-flash .25s ease-out}
 @keyframes dc-flash{0%{opacity:.4}100%{opacity:1}}
-@media (prefers-reduced-motion:reduce){.dc-fx *,.dc-fx{animation:none!important}.dc-fx-p,.dc-fx-air,.dc-fx-wisps,.dc-fx-draft{display:none}}
+.dc-fx-wash[data-low]{height:30%}
+[data-speed="1"]{--dc-spin:1.8s}[data-speed="2"]{--dc-spin:1.45s}[data-speed="3"]{--dc-spin:1.05s}[data-speed="4"]{--dc-spin:.7s}[data-speed="5"]{--dc-spin:.4s}
+.dc-fx-breeze i{position:absolute;left:-30%;height:2px;width:30%;border-radius:2px;background:currentColor;opacity:0;animation:dc-breeze var(--dc-spin,1.6s) linear infinite}
+.dc-fx-breeze i:nth-child(1){top:22%}.dc-fx-breeze i:nth-child(2){top:40%;animation-delay:.4s}.dc-fx-breeze i:nth-child(3){top:58%;animation-delay:.9s}.dc-fx-breeze i:nth-child(4){top:76%;animation-delay:.2s}
+@keyframes dc-breeze{0%{left:-30%;opacity:0}20%{opacity:.5}100%{left:110%;opacity:0}}
+.dc-fan{perspective:320px}
+.dc-fan svg{overflow:visible}
+.dc-fan .dc-fan-blades{transform-box:view-box;transform-origin:60px 60px}
+.dc-fan[data-spin="true"] .dc-fan-blades{animation:dc-spin var(--dc-spin,1.6s) linear infinite}
+.dc-fan[data-reverse="true"] .dc-fan-blades{animation-direction:reverse}
+.dc-fan[data-sway="true"] svg{animation:dc-fan-sway 3.5s ease-in-out infinite alternate}
+.dc-fan-h,.dc-fan-v{transform-style:preserve-3d}
+.dc-fan-h{transform:rotateY(var(--dc-af,0deg))}.dc-fan-v{transform:rotateX(var(--dc-af,0deg))}
+.dc-fan-h[data-osc="true"]{animation:dc-axh 4.2s ease-in-out infinite alternate}
+.dc-fan-v[data-osc="true"]{animation:dc-axv 2.8s ease-in-out infinite alternate}
+@keyframes dc-spin{to{transform:rotate(360deg)}}
+@keyframes dc-fan-sway{from{transform:rotateY(-38deg)}to{transform:rotateY(38deg)}}
+@keyframes dc-axh{from{transform:rotateY(var(--dc-a0))}to{transform:rotateY(var(--dc-a1))}}
+@keyframes dc-axv{from{transform:rotateX(var(--dc-a0))}to{transform:rotateX(var(--dc-a1))}}
+.dc-heater[data-on="true"] .dc-heater-coil{animation:dc-pulse 2.4s ease-in-out infinite}
+@keyframes dc-pulse{50%{opacity:.55}}
+.dc-cover .dc-grip{cursor:grab;touch-action:none;outline:none}
+.dc-cover .dc-grip:focus-visible .dc-pill{stroke:currentColor;stroke-width:2}
+@media (prefers-reduced-motion:reduce){.dc-fx *,.dc-fx{animation:none!important}.dc-fx-p,.dc-fx-air,.dc-fx-wisps,.dc-fx-draft,.dc-fx-breeze{display:none}.dc-fan *,.dc-fan,.dc-heater *{animation:none!important}}
 `

@@ -4,7 +4,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ARMED_WINDOW_MS, ArmedButton } from '../parts/ArmedButton'
 import { CardButton } from '../parts/CardButton'
 import { dialFractionAt, dialSnap } from '../parts/Dial'
-import { stepPlugTimer, splitPlugDuration, PLUG_TIMER_MIN_MINUTES } from '../scenes/plug/model'
+import {
+  splitSwitchTimerDuration,
+  stepSwitchTimer,
+  SWITCH_TIMER_MIN_MINUTES,
+} from '../parts/switch-timer-model'
 import { deriveClimateActivity, nextChoice } from '../scenes/climate/model'
 import { CardGatingProvider } from '../shell/gating'
 
@@ -115,16 +119,16 @@ describe('Dial maths', () => {
 
 describe('plug timer steps', () => {
   it('steps 5 minutes up to an hour, then 15', () => {
-    expect(stepPlugTimer(25, 1, 240)).toBe(30)
-    expect(stepPlugTimer(60, 1, 240)).toBe(75)
-    expect(stepPlugTimer(75, -1, 240)).toBe(60)
-    expect(stepPlugTimer(60, -1, 240)).toBe(55)
+    expect(stepSwitchTimer(25, 1, 240)).toBe(30)
+    expect(stepSwitchTimer(60, 1, 240)).toBe(75)
+    expect(stepSwitchTimer(75, -1, 240)).toBe(60)
+    expect(stepSwitchTimer(60, -1, 240)).toBe(55)
   })
 
   it('never leaves the declared range', () => {
-    expect(stepPlugTimer(PLUG_TIMER_MIN_MINUTES, -1, 240)).toBe(PLUG_TIMER_MIN_MINUTES)
-    expect(stepPlugTimer(235, 1, 240)).toBe(240)
-    expect(splitPlugDuration(95)).toEqual({ hours: 1, minutes: 35 })
+    expect(stepSwitchTimer(SWITCH_TIMER_MIN_MINUTES, -1, 240)).toBe(SWITCH_TIMER_MIN_MINUTES)
+    expect(stepSwitchTimer(235, 1, 240)).toBe(240)
+    expect(splitSwitchTimerDuration(95)).toEqual({ hours: 1, minutes: 35 })
   })
 })
 

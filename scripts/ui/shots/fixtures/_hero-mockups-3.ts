@@ -192,4 +192,16 @@ export const SPECS_TUTTI3: Readonly<Record<number, MockupSpec>> = {
       battery: battery(64),
     },
   },
+  1322: {
+    name: 'Ventilatore camera',
+    integration: 'Shelly',
+    type: 'switch',
+    role: 'switch-fan',
+    provider: 'Shelly',
+    caps: ['device-status', 'switch', 'power-meter'],
+    slices: {
+      switch: { on: true, lastChangedAt: NOW - 40 * 60_000 },
+      'power-meter': { power: 25, lastFetchedAt: NOW },
+    },
+  },
 }

@@ -77,7 +77,8 @@ export const SPECS_TUTTI1: Readonly<Record<number, MockupSpec>> = {
   1103: {
     name: 'Stufa veranda',
     integration: 'Shelly',
-    type: 'heater',
+    type: 'switch',
+    role: 'switch-heater',
     provider: 'Shelly',
     caps: ['device-status', 'switch', 'timed-run', 'power-meter'],
     slices: {

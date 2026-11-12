@@ -1,14 +1,18 @@
-import { DeviceType, resolveDeviceControlKind } from '@camstack/types'
+import { DeviceRole, DeviceType, resolveDeviceControlKind } from '@camstack/types'
 import type { ReactElement } from 'react'
 import {
   useDeviceManagerGetBindings,
   useDeviceManagerGetDevice,
 } from '../../../generated/system-hooks'
 import { ConnectedClimateCard } from './ConnectedClimateCard'
+import { ConnectedCoverCard } from './ConnectedCoverCard'
+import { ConnectedFanCard } from './ConnectedFanCard'
+import { ConnectedHeaterCard } from './ConnectedHeaterCard'
+import { ConnectedLightCard } from './ConnectedLightCard'
 import { type ConnectedCardProps, ConnectedPlugCard } from './ConnectedPlugCard'
 
 /** The scenes a real device can be drawn with today. */
-export type ConnectedCardKind = 'plug' | 'climate'
+export type ConnectedCardKind = 'plug' | 'climate' | 'cover' | 'light' | 'fan' | 'heater'
 
 /** `pending` until both the device and its bindings answered; `null` = no card for it. */
 export type ConnectedCardResolution = ConnectedCardKind | 'pending' | null
@@ -18,8 +22,9 @@ const CLIMATE_CAPS: readonly string[] = ['climate-control', 'heating-valve']
 
 /**
  * Which card draws a device, from what it IS (type + role, D1033) and what it
- * binds. A `switch` with the role `switch-heater` is the plug scene with its
- * timed run, like the hero.
+ * binds. Power is always the `switch` cap (D1042): a switch is a plug, or a
+ * heater / a fan by its role; a light and a fan need it too. A cover needs
+ * `cover`.
  */
 export function connectedCardKindOf(
   deviceType: string | null,
@@ -28,8 +33,16 @@ export function connectedCardKindOf(
 ): ConnectedCardKind | null {
   if (deviceType === null) return null
   const control = resolveDeviceControlKind(deviceType, role)
-  if ((control === 'switch' || control === 'heater') && deviceType === DeviceType.Switch)
-    return capNames.includes('switch') ? 'plug' : null
+  const hasSwitch = capNames.includes('switch')
+  if (deviceType === DeviceType.Switch) {
+    if (!hasSwitch) return null
+    if (control === 'heater') return 'heater'
+    if (role === DeviceRole.SwitchFan) return 'fan'
+    return control === 'switch' ? 'plug' : null
+  }
+  if (control === 'light') return hasSwitch ? 'light' : null
+  if (control === 'fan') return hasSwitch ? 'fan' : null
+  if (control === 'cover') return capNames.includes('cover') ? 'cover' : null
   if (
     (control === 'thermostat' || control === 'climate') &&
     CLIMATE_CAPS.some((cap) => capNames.includes(cap))
@@ -60,5 +73,18 @@ export function ConnectedDeviceCard({
   kind,
   ...props
 }: ConnectedDeviceCardProps): ReactElement | null {
-  return kind === 'plug' ? <ConnectedPlugCard {...props} /> : <ConnectedClimateCard {...props} />
+  switch (kind) {
+    case 'plug':
+      return <ConnectedPlugCard {...props} />
+    case 'climate':
+      return <ConnectedClimateCard {...props} />
+    case 'cover':
+      return <ConnectedCoverCard {...props} />
+    case 'light':
+      return <ConnectedLightCard {...props} />
+    case 'fan':
+      return <ConnectedFanCard {...props} />
+    case 'heater':
+      return <ConnectedHeaterCard {...props} />
+  }
 }
