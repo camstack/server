@@ -10,6 +10,8 @@
  * problem — this class never sees them.
  */
 
+import { WindowCoalescer } from './window-coalescer.js'
+
 export const ADDON_UPDATE_COALESCE_MS = 30_000
 
 export interface AddonUpdateComplete {
@@ -36,36 +38,29 @@ export interface AddonUpdateCoalescerOptions {
 }
 
 export class AddonUpdateCoalescer {
-  private readonly pending = new Map<string, AddonUpdateComplete>()
-  private timer: ReturnType<typeof setTimeout> | null = null
-  private readonly delayMs: number
-  private readonly schedule: (fn: () => void, ms: number) => ReturnType<typeof setTimeout>
-  private readonly cancel: (id: ReturnType<typeof setTimeout>) => void
+  private readonly window: WindowCoalescer<AddonUpdateComplete>
 
   constructor(
-    private readonly flush: (updates: readonly AddonUpdateComplete[]) => void,
+    flush: (updates: readonly AddonUpdateComplete[]) => void,
     options: AddonUpdateCoalescerOptions = {},
   ) {
-    this.delayMs = options.delayMs ?? ADDON_UPDATE_COALESCE_MS
-    this.schedule = options.schedule ?? setTimeout
-    this.cancel = options.cancel ?? clearTimeout
+    this.window = new WindowCoalescer<AddonUpdateComplete>({
+      mode: 'sliding',
+      delayMs: options.delayMs ?? ADDON_UPDATE_COALESCE_MS,
+      identityOf: (update) => update.packageName,
+      onFlush: (_key, updates) => {
+        flush(updates)
+      },
+      ...(options.schedule !== undefined ? { schedule: options.schedule } : {}),
+      ...(options.cancel !== undefined ? { cancel: options.cancel } : {}),
+    })
   }
 
   observe(update: AddonUpdateComplete): void {
-    this.pending.set(update.packageName, update)
-    if (this.timer !== null) this.cancel(this.timer)
-    this.timer = this.schedule(() => {
-      this.timer = null
-      const batch = [...this.pending.values()]
-      this.pending.clear()
-      if (batch.length > 0) this.flush(batch)
-    }, this.delayMs)
+    this.window.observe('addon-updates', update)
   }
 
   dispose(): void {
-    if (this.timer === null) return
-    this.cancel(this.timer)
-    this.timer = null
-    this.pending.clear()
+    this.window.dispose()
   }
 }

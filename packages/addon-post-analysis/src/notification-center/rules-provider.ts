@@ -155,6 +155,7 @@ export function outboxEntryToHistory(texts: NcTextCatalog, entry: NcOutboxEntry)
     ...(entry.payload.artifactIds !== undefined && entry.payload.artifactIds.length > 0
       ? { artifactIds: [...entry.payload.artifactIds] }
       : {}),
+    ...(entry.payload.groupedInto !== undefined ? { groupedInto: entry.payload.groupedInto } : {}),
   }
 }
 /**

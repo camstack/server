@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A new integration is prefilled "<provider> - Home", and a new gateway is named "<brand> <model>".
 
 ## [1.2.552] - 2026-11-12
+### Added
+
+- A notification rule can group the deliveries that arrive within a few seconds.
 
 ### Fixed
 

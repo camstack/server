@@ -3178,6 +3178,10 @@
     },
     "schedule": {
       "hint": "Only fire inside these weekly windows. Leave it empty to fire at any time."
+    },
+    "groupWithin": {
+      "seconds": "Group notifications within (s)",
+      "hint": "0 sends each notification immediately. Two or more in the window become one summary."
     }
   },
   "ruleScope": {

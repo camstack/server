@@ -53,6 +53,8 @@ export interface BootLifecycleHost {
   evaluationActive: boolean
   readonly groupStore: NcGroupStore
   readonly grouped: NcGroupedDelivery
+  recoverGroupWindows(): Promise<void>
+  flushGroupWindows(): Promise<void>
   hydrateAlertEpisodes(): Promise<void>
   hydrateLiveness(): Promise<void>
   hydrateNotifiedTracks(rows: readonly NcOutboxEntry[] | null): Promise<void>
@@ -346,6 +348,7 @@ export async function runBootBackfill(host: BootLifecycleHost): Promise<void> {
     !(await phase('outbox', async () => {
       try {
         await host.outbox.load()
+        await host.recoverGroupWindows()
       } finally {
         recentRows = await host.readBootRecentRows()
         await host.hydrateNotifiedTracks(recentRows)
@@ -398,6 +401,7 @@ export async function stop(host: BootLifecycleHost): Promise<void> {
   host.timelapseScheduler?.stop()
   host.summaryProducer?.stop()
   await host.closeGroupedWindowsOnStop()
+  await host.flushGroupWindows()
   // The photographs are RAM and only RAM. A respawn loses whatever had not
   // been attached yet, which costs the picture on rows still in the queue and
   // nothing else — the same trade the group buffer makes.

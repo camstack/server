@@ -395,6 +395,7 @@
   "summary.section.unavailable": "{{section}}: non disponibile — lo stato non è leggibile",
   "summary.node.heading": "{{node}}:",
   "summary.line.device-offline": "{{deviceName}} — offline (da {{since}})",
+  "summary.line.device-online": "{{deviceName}} — di nuovo online (da {{since}})",
   "summary.line.device-disabled": "{{deviceName}} — spento (da {{since}})",
   "summary.line.stream-offline": "{{deviceName}} — stream offline (da {{since}})",
   "summary.line.stream-offline.profiled": "{{deviceName}} — stream {{profile}} offline (da {{since}})",

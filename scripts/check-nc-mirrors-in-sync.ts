@@ -241,6 +241,7 @@ const SCHEMA_KEYS: readonly SchemaKeysPair[] = [
       path: 'camstack/src/data/notification-center.ts',
       marker: 'export const NcRuleInputSchema = z.object(',
     },
+    aheadOfViewer: ['groupWithinSec'],
   },
 ]
 

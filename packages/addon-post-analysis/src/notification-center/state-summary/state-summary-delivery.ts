@@ -32,7 +32,7 @@ import {
 import type { NcStateSectionText, NcStateSummary, NcStateSummaryText } from './state-summary.js'
 
 export const NC_STATE_SUMMARY_TITLE_KEY = 'system.state-summary.title'
-const NC_STATE_SUMMARY_BODY_KEY = 'system.state-summary.body'
+export const NC_STATE_SUMMARY_BODY_KEY = 'system.state-summary.body'
 
 /** A per-section row's title and body (D698): the rule's name and the section's. */
 export const NC_STATE_SUMMARY_SECTION_TITLE_KEY = 'system.state-summary.section.title'

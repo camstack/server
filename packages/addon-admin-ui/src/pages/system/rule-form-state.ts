@@ -27,9 +27,11 @@ import {
   conditionVisibleForKind,
   isScheduleOnlySystemRule,
   isSystemDelivery,
+  groupWithinSecOf,
   NC_GROUPING_DEFAULT_SEC,
   NC_GROUPING_MAX_SEC,
   NC_GROUPING_MIN_SEC,
+  NC_GROUP_WITHIN_MAX_SEC,
   resolveNcMediaImage,
   ruleGroupingApplies,
   ruleKindOf,
@@ -161,6 +163,15 @@ export interface NcRuleFormState {
    * blocks the save.
    */
   readonly groupingSec: number | undefined
+  /**
+   * How long deliveries of this rule to one target wait to be said together.
+   *
+   * Always a number: absence on a stored rule means the kind's default
+   * (`groupWithinSecOf`), and the box shows that number. `0` sends each
+   * delivery as it arrives. Held even when out of range, so it can be typed
+   * through; {@link ruleFormProblems} blocks the save.
+   */
+  readonly groupWithinSec: number
   /**
    * The snooze durations this rule's notification offers as buttons, in
    * minutes.
@@ -408,6 +419,7 @@ export function emptyRuleForm(
     snoozeAllowGlobal: false,
     // Plain Immediate: grouping is a deliberate choice on the trigger.
     groupingSec: undefined,
+    groupWithinSec: groupWithinSecOf({ delivery }),
     // Absent, not `[]`: a new rule has not said anything about its snooze
     // buttons, and the hub's defaults are the right answer for one.
     snoozeOptions: undefined,
@@ -454,6 +466,7 @@ export function ruleToForm(rule: NcRule): NcRuleFormState {
     systemEventDelivery: rule.systemEventDelivery,
     snoozeAllowGlobal: rule.snoozeAllowGlobal === true,
     groupingSec: rule.groupingSec,
+    groupWithinSec: groupWithinSecOf(rule),
     // Carried verbatim, INCLUDING an empty list: `[]` is the operator saying
     // "no snooze buttons", and reading it back as absent would silently
     // restore the defaults on the next save.
@@ -486,6 +499,12 @@ export function ruleFormProblems(
   // ONE. `confirm` is not authored here (it rides in `preserved`), so the
   // operator is told which way out there is instead of meeting the refusal as
   // a failed save.
+  const within = form.groupWithinSec
+  if (!Number.isInteger(within) || within < 0 || within > NC_GROUP_WITHIN_MAX_SEC) {
+    problems.push(
+      `Group notifications within is a whole number of seconds between 0 and ${String(NC_GROUP_WITHIN_MAX_SEC)}.`,
+    )
+  }
   if (groupingIsSent(form)) {
     const seconds = form.groupingSec
     if (
@@ -693,12 +712,24 @@ export function applyDeliveryChoice(
   choice: NcDeliveryChoice,
 ): NcRuleFormState {
   if (choice === 'immediate-grouped') {
-    return {
+    return keepGroupWithin(prev, {
       ...changeRuleDelivery(prev, 'immediate'),
       groupingSec: prev.groupingSec ?? NC_GROUPING_DEFAULT_SEC,
-    }
+    })
   }
-  return { ...changeRuleDelivery(prev, choice), groupingSec: undefined }
+  return keepGroupWithin(prev, { ...changeRuleDelivery(prev, choice), groupingSec: undefined })
+}
+
+/**
+ * A trigger change keeps a window the operator typed. A window that was only
+ * the previous kind's default moves to the new kind's default, so a detection
+ * rule stays immediate and a system rule waits five seconds.
+ */
+function keepGroupWithin(prev: NcRuleFormState, next: NcRuleFormState): NcRuleFormState {
+  const previousDefault = groupWithinSecOf({ delivery: prev.delivery })
+  const nextDefault = groupWithinSecOf({ delivery: next.delivery })
+  const custom = prev.groupWithinSec !== previousDefault
+  return { ...next, groupWithinSec: custom ? prev.groupWithinSec : nextDefault }
 }
 
 /**

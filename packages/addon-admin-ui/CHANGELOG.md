@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
+### Added
+
+- A notification rule shows how many seconds to group its notifications.
 
 ## [1.2.647] - 2026-11-12
 

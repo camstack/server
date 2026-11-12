@@ -385,6 +385,9 @@ export function buildRuleInput(
     // value left on the form by a trigger the operator moved away from never
     // reaches the hub's save guard. `buildRuleClears` removes a stored one.
     ...(groupingIsSent(form) ? { groupingSec: form.groupingSec } : {}),
+    // Always a number. Absence would mean "the kind's default", and a later
+    // change of that default would rewrite a rule the operator already saved.
+    groupWithinSec: form.groupWithinSec,
     // EMITTED when the operator chose a list, INCLUDING an empty one — `[]` is
     // "no snooze buttons on this rule" and omitting it would hand the rule
     // back the hub's defaults on every save. Absent stays absent.

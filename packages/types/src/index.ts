@@ -1983,6 +1983,7 @@ export {
   systemFamilyOfKind,
   systemRuleKindOf,
 } from './notification/rule-kinds.js'
+export { groupWithinSecOf } from './notification/group-within.js'
 export {
   imageModesForKind,
   legacyImageMode,

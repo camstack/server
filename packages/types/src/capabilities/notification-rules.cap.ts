@@ -1465,6 +1465,17 @@ export const NC_GROUPING_MIN_SEC = 5
 export const NC_GROUPING_DEFAULT_SEC = 20
 export const NC_GROUPING_MAX_SEC = 60
 
+/**
+ * GROUP WITHIN (operator, 2026-11-12). How long deliveries of one rule to one
+ * target wait to be said together. The meaning of ABSENCE is by delivery kind
+ * (`groupWithinSecOf`), so this is `.optional()` and never `.default()`: a Zod
+ * default does not run on the addon cap path, and one default cannot be both
+ * 5 (system events) and 0 (a detection). `0` is "send each one now".
+ */
+export const NC_GROUP_WITHIN_SYSTEM_DEFAULT_SEC = 5
+export const NC_GROUP_WITHIN_OTHER_DEFAULT_SEC = 0
+export const NC_GROUP_WITHIN_MAX_SEC = 300
+
 /** Client-supplied rule fields (server stamps id/createdBy/createdAt/updatedAt). */
 export const NcRuleInputSchema = z.object({
   name: z.string().min(1).max(200),
@@ -1585,6 +1596,13 @@ export const NcRuleInputSchema = z.object({
    * path does not run Zod defaults.
    */
   groupingSec: z.number().int().min(NC_GROUPING_MIN_SEC).max(NC_GROUPING_MAX_SEC).optional(),
+  /**
+   * Hold deliveries of this rule to one target and, when two or more arrive
+   * before the window ends, send them as one summary. Absent = the kind's
+   * default (`groupWithinSecOf`): 5 s for a system-event rule, 0 for every
+   * other kind. `0` sends each delivery as it does today.
+   */
+  groupWithinSec: z.number().int().min(0).max(NC_GROUP_WITHIN_MAX_SEC).optional(),
   /**
    * ASK ME TO CONFIRM DETECTIONS (#243): a DETECTION notification of this rule
    * carries "Correct" / "Wrong" buttons (and, where the channel has room, a
@@ -2530,6 +2548,11 @@ export const NcHistoryEntrySchema = z.object({
    * broken link.
    */
   artifactIds: z.array(z.string().min(1)).optional(),
+  /**
+   * When this row was folded into a group-window summary, the outbox id of
+   * that one notification. Absent on a row that was sent as itself.
+   */
+  groupedInto: z.string().min(1).optional(),
 })
 export type NcHistoryEntry = z.infer<typeof NcHistoryEntrySchema>
 

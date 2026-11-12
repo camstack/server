@@ -291,6 +291,19 @@ export interface NcOutboxAlarmIntrusion {
   readonly locations: readonly string[]
 }
 
+/**
+ * A delivery sitting in a group window (operator, 2026-11-12).
+ *
+ * The row is already durable. The drain skips it while this is set. The flush
+ * either removes the mark and sends the row as itself, or marks it sent and
+ * points {@link NcOutboxPayload.groupedInto} at the one summary.
+ */
+export interface NcGroupHold {
+  readonly key: string
+  readonly openedAt: number
+  readonly releaseAt: number
+}
+
 export interface NcOutboxPayload {
   readonly ruleName: string
   readonly delivery:
@@ -399,6 +412,17 @@ export interface NcOutboxPayload {
    * (`grouped/grouped-payload.ts`); the push carries no `tag`.
    */
   readonly group?: NcOutboxGroup
+  /**
+   * This row is waiting out a group window. Absent on every row that should
+   * drain on its own. The drain skips a row that still carries it.
+   */
+  readonly groupHold?: NcGroupHold
+  /**
+   * The summary row this delivery was folded into. Set when the row is marked
+   * sent without itself being handed to a notifier. History reads it so each
+   * item still points at the one notification the operator received.
+   */
+  readonly groupedInto?: string
   /**
    * D706: this alarm rule's push went out while the alarm was in its entry delay or had
    * triggered. Its TITLE is the intrusion line naming these locations (`alarm.intrusion.title`)
@@ -847,6 +871,81 @@ export class NcOutbox {
     return this.pending.size
   }
 
+  /** Pending rows the group window reloads after a restart. The in-memory map, not a fresh read. */
+  pendingEntries(): readonly NcOutboxEntry[] {
+    return [...this.pending.values()]
+  }
+
+  getPending(id: string): NcOutboxEntry | undefined {
+    return this.pending.get(id)
+  }
+
+  /** The window ended with one delivery: send this row unchanged. */
+  async releaseGroupHold(id: string): Promise<void> {
+    const entry = this.pending.get(id)
+    if (entry === undefined || entry.payload.groupHold === undefined) return
+    const { groupHold: _held, ...payload } = entry.payload
+    const released: NcOutboxEntry = {
+      ...entry,
+      payload,
+      nextAttemptAt: this.now(),
+      updatedAt: this.now(),
+    }
+    this.pending.set(id, released)
+    await this.mutate(released)
+  }
+
+  /**
+   * The window folded this row into `summaryId`. It is history (sent) and it
+   * was not handed to a notifier. The summary row is the notification.
+   */
+  async settleGrouped(id: string, summaryId: string): Promise<void> {
+    const entry = this.pending.get(id)
+    if (entry === undefined) return
+    const { groupHold: _held, ...payload } = entry.payload
+    const systemEvent = payload.subject.systemEvent
+    const sent: NcOutboxEntry = {
+      ...entry,
+      status: 'sent',
+      updatedAt: this.now(),
+      payload: {
+        ...payload,
+        groupedInto: summaryId,
+        subject: {
+          ...payload.subject,
+          ...(systemEvent !== undefined
+            ? {
+                systemEvent: {
+                  ...systemEvent,
+                  data: { ...systemEvent.data, groupedInto: summaryId },
+                },
+              }
+            : {}),
+        },
+      },
+    }
+    this.pending.delete(id)
+    await this.mutate(sent)
+  }
+
+  /** A muted device is not in the summary. The row is finished and was not sent. */
+  async dropHeld(id: string, reason: string): Promise<void> {
+    const entry = this.pending.get(id)
+    if (entry === undefined) return
+    const dead: NcOutboxEntry = {
+      ...entry,
+      status: 'dead',
+      updatedAt: this.now(),
+      lastError: reason,
+    }
+    this.pending.delete(id)
+    await this.mutate(dead)
+    this.logger.info('group window dropped a held delivery', {
+      tags: { deviceId: entry.deviceId },
+      meta: { id, ruleId: entry.ruleId, targetId: entry.targetId, reason },
+    })
+  }
+
   /**
    * Durably enqueue a batch of delivery intents. Returns the number of
    * rows actually inserted (dedup-key hits are silent no-ops). Called in
@@ -911,7 +1010,7 @@ export class NcOutbox {
     try {
       const now = this.now()
       const due = [...this.pending.values()]
-        .filter((e) => e.nextAttemptAt <= now)
+        .filter((e) => e.nextAttemptAt <= now && e.payload.groupHold === undefined)
         .sort((a, b) => a.createdAt - b.createdAt)
         .slice(0, this.drainBatchSize)
       for (const entry of due) {

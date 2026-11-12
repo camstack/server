@@ -3253,6 +3253,10 @@
     },
     "schedule": {
       "hint": "Invia solo in queste finestre settimanali. Lascia vuoto per inviare sempre."
+    },
+    "groupWithin": {
+      "seconds": "Raggruppa notifiche entro (s)",
+      "hint": "0 invia ogni notifica subito. Due o più nella finestra diventano un riepilogo."
     }
   },
   "ruleScope": {

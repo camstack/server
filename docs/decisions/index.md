@@ -4,7 +4,7 @@
 
 # Decisions
 
-1013 architecture decision records. One file per decision, never
+1014 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1028,6 +1028,7 @@ that rots.
 | D1046 | [An addon route is addressed per instance, and the path without an instance is the default one](adr-1046-an-addon-route-is-addressed-per-instance-and-the-path-without-an-instance-is-the-default-one.md) | ✅ accepted | 2026-11-11 |
 | D1047 | [An OAuth link names its instance, and no instance means the default one](adr-1047-an-oauth-link-names-its-instance-and-no-instance-means-the-default-one.md) | ✅ accepted | 2026-11-11 |
 | D1048 | [A battery connection error is a sustained whole-camera outage](adr-1048-a-battery-connection-error-is-a-sustained-whole-camera-outage.md) | ✅ accepted | 2026-11-12 |
+| DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- System-event rules send one summary when several devices change within a few seconds.
+
 ## [1.2.696] - 2026-11-12
 
 ### Changed

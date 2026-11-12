@@ -16,6 +16,7 @@ import type {
   NcRuleOutcome,
 } from './event-intake.js'
 import { deliveryForKind } from './event-intake.js'
+import type { NcDeliveryGroupWindow } from './group-window.js'
 import type { NcGroupedAdmissionOutcome } from './grouped/grouped-delivery.js'
 import { NcGroupedDelivery } from './grouped/grouped-delivery.js'
 import type { NcOutboxGroupV2 } from './grouped/grouped-payload.js'
@@ -109,6 +110,7 @@ export interface EvaluateAndEnqueueHost {
     outcomes: NcRuleOutcome[],
   ): Promise<void>
   readonly grouped: NcGroupedDelivery
+  readonly groupWindow: NcDeliveryGroupWindow
   intrusionLocationsOf(deviceIds: readonly number[]): readonly string[]
   readonly lastFiredAt: Map<string, number>
   readonly linkedStills: NcLinkedStillShelf | null
@@ -557,7 +559,7 @@ export async function evaluateAndEnqueue(
       })
     }
     const userTargets = await host.resolveUserTargets(rule, subject.deviceId)
-    const entries = host.buildEntries(
+    const built = host.buildEntries(
       rule,
       subject,
       kind,
@@ -569,6 +571,7 @@ export async function evaluateAndEnqueue(
       { key, at: now },
       alarmIntrusion !== undefined ? { alarmIntrusion } : undefined,
     )
+    const entries = host.groupWindow.hold(rule, built)
     const inserted = await host.outbox.enqueue(entries)
     // One fire = one cooldown tick, shared across the rule's targets;
     // a full dedup hit (maxPerTrack already satisfied) is NOT a fire.

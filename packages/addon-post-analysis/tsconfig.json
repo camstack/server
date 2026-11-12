@@ -10,7 +10,13 @@
       "ES2023",
       "DOM"
     ],
-    "noEmit": true
+    "noEmit": true,
+    // This checkout's built types, not the main checkout a worktree's
+    // node_modules points at (the same reason admin-ui paths @camstack/types).
+    "paths": {
+      "@camstack/types": ["../types/dist/index.d.ts"],
+      "@camstack/types/*": ["../types/dist/*"]
+    }
   },
   "include": [
     "src/**/*"

@@ -187,12 +187,14 @@ import {
 } from './timelapse/timelapse-scheduler.js'
 import { TimelapseStore } from './timelapse/timelapse-store.js'
 import { type ClosedWindow } from './timelapse/window-bounds.js'
+import { NcDeliveryGroupWindow } from './group-window.js'
 import { AddonUpdateCoalescer } from './update-complete-coalescer.js'
 import {
   type NcStateSummaryEnqueued,
   type NcStateSummaryOrigin,
   NcStateSummaryService,
 } from './state-summary/state-summary-service.js'
+import { withSummaryBody } from './state-summary/state-summary-delivery.js'
 import type { NcStateSummaryTest } from './state-summary/state-summary-test.js'
 import { NcZoneOwnershipCache } from './zone-owner-cache.js'
 import type { NcZoneOwnerLookup } from './zone-ownership.js'
@@ -738,6 +740,8 @@ export class NotificationCenter implements NcEventConsumer {
   private alertReconcileTimer: ReturnType<typeof setInterval> | null = null
   /** Batches `addon.updated` (version-bearing) into one notification per 30 s. */
   private readonly addonUpdates: AddonUpdateCoalescer
+  /** Holds a rule's deliveries for a few seconds and sends one summary. */
+  private readonly groupWindow: NcDeliveryGroupWindow
   /** Trailing 5 min hold-off for camera liveness flaps (plugin restart). */
   private readonly livenessHoldoff: DeviceLivenessHoldoff
   /** Trailing 60 s hold-off for node liveness (reconnect storms). */
@@ -1246,6 +1250,17 @@ export class NotificationCenter implements NcEventConsumer {
       deliver: (entry) => this.deliverUnlessSuperseded(entry),
       ...(deps.now !== undefined ? { now: deps.now } : {}),
     })
+    this.groupWindow = new NcDeliveryGroupWindow({
+      now: this.now,
+      logger: this.logger.child('group-window'),
+      outbox: this.outbox,
+      rules: this.rules,
+      texts: this.texts,
+      isMuted: (deviceId) => this.deviceMutes.isMuted(deviceId),
+      enqueueSummary: (rule, subject, targetId) =>
+        this.enqueueGroupSummary(rule, subject, targetId),
+      deliverReady: () => this.deliverGroupWindow(),
+    })
     this.timelapseRules = TimelapseStore.of(deps.records, this.logger.child('timelapse'), deps.now)
     const timelapsePorts = deps.timelapse
     if (timelapsePorts !== undefined) {
@@ -1510,6 +1525,8 @@ export class NotificationCenter implements NcEventConsumer {
       get grouped() {
         return self.grouped
       },
+      recoverGroupWindows: () => self.groupWindow.recover(self.outbox.pendingEntries()),
+      flushGroupWindows: () => self.groupWindow.flushAll(),
       hydrateAlertEpisodes: () => self.hydrateAlertEpisodes(),
       hydrateLiveness: () => self.hydrateLiveness(),
       hydrateNotifiedTracks: (rows) => self.hydrateNotifiedTracks(rows),
@@ -1643,6 +1660,14 @@ export class NotificationCenter implements NcEventConsumer {
   async runDrainTickForTest(): Promise<void> {
     await this.drainTick()
     await this.evalChain
+  }
+
+  /**
+   * FOR SPECS: a crash. The timers and the in-memory buckets go; the held rows
+   * stay in the outbox for the next process to recover.
+   */
+  discardGroupWindowForTest(): void {
+    this.groupWindow.abandon()
   }
 
   private armBootBackfill(): void {
@@ -3065,6 +3090,9 @@ export class NotificationCenter implements NcEventConsumer {
       get grouped() {
         return self.grouped
       },
+      get groupWindow() {
+        return self.groupWindow
+      },
       intrusionLocationsOf: (deviceIds) => self.intrusionLocationsOf(deviceIds),
       get lastFiredAt() {
         return self.lastFiredAt
@@ -3541,7 +3569,34 @@ export class NotificationCenter implements NcEventConsumer {
     return Math.min(now, this.grouped.watermarkCeiling() ?? now)
   }
   private drainTick(): Promise<void> {
-    return runDrainTick(this.drainSnoozeHost())
+    return this.groupWindow.flushDue().then(() => runDrainTick(this.drainSnoozeHost()))
+  }
+
+  /** A timer flushed a window between drain ticks: snoozes, then the rows that are ready. */
+  private async deliverGroupWindow(): Promise<void> {
+    await this.snoozes.load()
+    await this.outbox.drainOnce()
+  }
+
+  /**
+   * The one summary for a window, addressed to the target the held rows already
+   * named. It does not go back through evaluation — that would hold it again.
+   */
+  private async enqueueGroupSummary(
+    rule: NcRule,
+    subject: NcRuleSubject,
+    targetId: string,
+  ): Promise<readonly NcOutboxEnqueueInput[]> {
+    const existing = rule.targets.find((target) => target.targetId === targetId)
+    const narrowed: NcRule = {
+      ...rule,
+      targets: [existing ?? { targetId }],
+      targetUsers: [],
+    }
+    const worded = withSummaryBody(narrowed) ?? narrowed
+    const entries = this.buildEntries(worded, subject, 'system-event', undefined)
+    await this.outbox.enqueue(entries)
+    return entries
   }
 
   // ── Snooze ──────────────────────────────────────────────────────────

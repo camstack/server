@@ -4372,6 +4372,7 @@ Enum: `"immediate" \| "track-end" \| "device-event" \| "package-event" \| "syste
 - `error?`: `string`
 - `subject`: `NcHistorySubjectSchema`
 - `artifactIds?`: `string[]`
+- `groupedInto?`: `string`
 
 ### `NcHistoryFilterSchema`
 
@@ -4478,6 +4479,7 @@ Enum: `"template" \| "schedule" \| "targetUsers" \| "snoozeOptions" \| "snoozeAl
 - `actions?`: `NcRuleActionsSchema`
 - `confirm?`: `NcConfirmSchema`
 - `groupingSec?`: `number`
+- `groupWithinSec?`: `number`
 - `askVerdict?`: `boolean`
 
 ### `NcRuleKindSchema`
@@ -4525,6 +4527,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `actions?`: `NcRuleActionsSchema`
 - `confirm?`: `NcConfirmSchema`
 - `groupingSec?`: `number`
+- `groupWithinSec?`: `number`
 - `askVerdict?`: `boolean`
 - `disabledTargetIds?`: `string[]`
 
@@ -4549,6 +4552,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `actions?`: `NcRuleActionsSchema`
 - `confirm?`: `NcConfirmSchema`
 - `groupingSec?`: `number`
+- `groupWithinSec?`: `number`
 - `askVerdict?`: `boolean`
 - `id`: `string`
 - `createdBy`: `string`

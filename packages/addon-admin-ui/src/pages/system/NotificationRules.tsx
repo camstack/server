@@ -39,6 +39,7 @@ import {
   NC_GROUPING_DEFAULT_SEC,
   NC_GROUPING_MAX_SEC,
   NC_GROUPING_MIN_SEC,
+  NC_GROUP_WITHIN_MAX_SEC,
   ruleDeviceCompatCapQueries,
   ruleKindOf,
   ruleKindSpec,
@@ -1265,6 +1266,29 @@ function RuleFormDialog({
                 )}
               </div>
             )}
+            <div className="mt-2">
+              <label className="block text-[11px] font-medium text-foreground mb-1">
+                {t('notificationRules.groupWithin.seconds', 'Group notifications within (s)')}
+              </label>
+              <Input
+                type="number"
+                min={0}
+                max={NC_GROUP_WITHIN_MAX_SEC}
+                step={1}
+                value={String(form.groupWithinSec)}
+                data-testid="rule-group-within-sec"
+                onChange={(e) => {
+                  const next = parseGroupingSec(e.target.value)
+                  if (next !== undefined) patch({ groupWithinSec: next })
+                }}
+              />
+              <p className="text-[10px] text-foreground-subtle mt-1">
+                {t(
+                  'notificationRules.groupWithin.hint',
+                  '0 sends each notification immediately. Two or more in the window become one summary.',
+                )}
+              </p>
+            </div>
             {/* Plain Immediate with a name scope fires only on an event written
                     after recognition (D692 §3.7): said here, not discovered. */}
             {deliveryChoice === 'immediate' && ruleAwaitsRecognition && (
