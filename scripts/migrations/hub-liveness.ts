@@ -103,6 +103,11 @@ export const systemProcessProbe: ProcessProbe = (files) => {
 }
 
 function recentWrites(files: readonly string[], opts: LivenessOptions): readonly string[] {
+  // A window of 0 asks for no idle requirement. Comparing against `now` would
+  // still refuse a file written in the same millisecond (mtimeMs is fractional,
+  // Date.now() is whole), so a migration that had just written the files
+  // refused its own second run.
+  if (opts.minIdleSeconds <= 0) return []
   const horizon = opts.now() - opts.minIdleSeconds * 1000
   return files.flatMap((file) => {
     const mtime = fs.statSync(file).mtimeMs

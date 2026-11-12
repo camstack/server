@@ -866,6 +866,13 @@ describe('quantity-field migration', () => {
     expect(fs.existsSync(path.join(dir, 'backup'))).toBe(false)
   })
 
+  it('a zero idle window never refuses, even for a file written in the current millisecond', () => {
+    const now = Date.now()
+    fs.utimesSync(settingsDb, (now + 0.9) / 1000, (now + 0.9) / 1000)
+    const result = run({ minIdleSeconds: 0, liveness: { ...NO_OPENERS, now: () => now } })
+    expect(result.exitCode).toBe(EXIT_OK)
+  })
+
   it('refuses when a file was written a moment ago', () => {
     fs.utimesSync(settingsDb, new Date(), new Date())
     const result = run({ minIdleSeconds: 30 })
