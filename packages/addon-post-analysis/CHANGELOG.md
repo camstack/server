@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notifications about a device that hangs off another one name it with its parent, e.g. 'Battery (System)': battery, offline/online, commands, consumables, alarm sensors and the state summary
 - A device's label in a notification is one parenthesis: 'Battery (System · Sensor)', never 'Battery (System) (Sensor)'.
 - A detection, timelapse or digest notification names a child device with its parent too: 'Battery (System)'.
+- A low-battery alert on a device that no longer has a battery (the Enpal storage battery) closes by itself, silently, after two refreshes agree.
 
 ## [1.2.698] - 2026-11-12
 

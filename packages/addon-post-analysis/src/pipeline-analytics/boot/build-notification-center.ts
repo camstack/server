@@ -6,6 +6,7 @@
 
 import type { CameraOccupancySnapshot, IScopedLogger } from '@camstack/types'
 import {
+  batteryCapability,
   commandOrigin,
   errMsg,
   instanceSourceOverApi,
@@ -232,6 +233,17 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
         renotifyMinutes: this.deviceAlertSettingsMirror.alertRenotifyMinutes,
         notifyRecovery: this.deviceAlertSettingsMirror.alertNotifyRecovery,
       }),
+      // #522: a battery-low episode closes once its device lost the cap. One
+      // per-device bindings read (21 ms) for each device with a battery row,
+      // on the reload tick; a failed read answers null and changes nothing.
+      hasBatteryCap: async (deviceId: number): Promise<boolean | null> => {
+        try {
+          const res = await api.deviceManager.getBindings.query({ deviceId })
+          return res.entries.some((entry) => entry.capName === batteryCapability.name)
+        } catch {
+          return null
+        }
+      },
       listDeviceIdentities: async () => {
         const all = await api.deviceManager.listAll.query({
           projection: 'slim',

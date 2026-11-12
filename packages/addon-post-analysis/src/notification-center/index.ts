@@ -1123,6 +1123,7 @@ export class NotificationCenter implements NcEventConsumer {
       lookup: (deviceId) => this.deviceDirectory.get(deviceId),
       rows: this.alertStore.port(),
       logger: this.logger.child('device-alerts'),
+      ...(deps.hasBatteryCap !== undefined ? { hasBatteryCap: deps.hasBatteryCap } : {}),
       ...(deps.now !== undefined ? { now: deps.now } : {}),
     })
     this.stateSummary = new NcStateSummaryService({

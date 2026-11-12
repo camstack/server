@@ -249,6 +249,12 @@ export interface NotificationCenterDeps {
    */
   readonly listDeviceIdentities?: () => Promise<readonly NcDeviceIdentity[]>
   /**
+   * Does this device still carry the `battery` cap (its bindings, read on the
+   * directory refresh tick)? `null` = the read failed. Absent ⇒ no battery
+   * episode is ever closed for a lost cap (#522, D49).
+   */
+  readonly hasBatteryCap?: (deviceId: number) => Promise<boolean | null>
+  /**
    * The deleted-device prune's SECOND read: true only when
    * `deviceManager.getDevice` answers `null` — the persisted row is gone, which
    * is the one durable fact that means "deleted" (a respawn keeps the row).

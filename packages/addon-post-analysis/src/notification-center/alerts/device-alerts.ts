@@ -152,6 +152,12 @@ export interface NcDeviceAlertsDeps {
   readonly rows: NcAlertRowPort
   readonly now?: () => number
   readonly logger?: IScopedLogger
+  /**
+   * Does this device still carry the `battery` cap? `null` = the read failed,
+   * which changes nothing. Absent = never asked, so no battery episode is ever
+   * closed for a lost cap: an unwired read must never read as agreement (D49).
+   */
+  readonly hasBatteryCap?: (deviceId: number) => Promise<boolean | null>
 }
 
 /** What a still-open episode needs to be re-said. */
@@ -242,6 +248,12 @@ export class NcDeviceAlerts {
    * agree). RAM only: a restart costs one more tick of patience.
    */
   private absentThresholds: ReadonlySet<number> = new Set()
+  /**
+   * Devices whose battery row the LAST cap census found without the `battery`
+   * cap. The row is closed only when the next census agrees (D49). RAM only:
+   * a restart costs one more refresh of patience.
+   */
+  private batteryCapAbsent: ReadonlySet<number> = new Set()
   /**
    * Subject → WHEN its PENDING raise was last offered, and to which
    * {@link NcDeviceAlertsDeps.rulesVersion}. RAM only, on purpose: after a
@@ -554,6 +566,48 @@ export class NcDeviceAlerts {
       if (alertSubjectDeviceId(subject) === deviceId) this.lastProvider.delete(subject)
     }
     return subjects.length
+  }
+
+  /**
+   * Close the battery episode of a device that no longer HAS the `battery` cap
+   * (#522: the Enpal storage battery became a battery-role sensor and kept an
+   * open "Battery è al 19%" with nothing left to close it). Rides the device
+   * directory refresh, off the event path.
+   *
+   * Closing is destructive, so it needs two consecutive reads that agree
+   * (D49). A failed read keeps what the last census said. A device the
+   * directory does not see online is not judged: a restarting provider holds
+   * no bindings for a moment, and closing then would re-raise the episode as
+   * soon as the cap came back. The close is silent — nothing recovered, the
+   * device simply stopped being a battery — and logged with its deviceId.
+   */
+  async reconcileBatteryCaps(): Promise<void> {
+    const hasBatteryCap = this.deps.hasBatteryCap
+    if (hasBatteryCap === undefined) return
+    const absent = new Set<number>()
+    for (const row of this.deps.rows.all()) {
+      if (!isBatterySubject(row.subject)) continue
+      const deviceId = alertSubjectDeviceId(row.subject)
+      if (deviceId === undefined) continue
+      const wasAbsent = this.batteryCapAbsent.has(deviceId)
+      if (this.deps.lookup(deviceId)?.online !== true) {
+        if (wasAbsent) absent.add(deviceId)
+        continue
+      }
+      const present = await hasBatteryCap(deviceId).catch(() => null)
+      if (present === true) continue
+      if (present === null) {
+        if (wasAbsent) absent.add(deviceId)
+        continue
+      }
+      if (!wasAbsent) {
+        absent.add(deviceId)
+        continue
+      }
+      this.lastReading.delete(row.subject)
+      this.dropRow(row.subject, 'closed — the device no longer has the battery cap (#522)')
+    }
+    this.batteryCapAbsent = absent
   }
 
   /**

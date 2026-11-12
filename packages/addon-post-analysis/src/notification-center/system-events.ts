@@ -480,6 +480,10 @@ export async function reloadRules(host: SystemEventsHost): Promise<void> {
   // offline, and one that was renamed must say its new name. Bounded
   // staleness, never wrongness (D8 reconcile-over-events).
   await host.deviceDirectory.refresh()
+  // …and, on the directory it just re-read, the battery episodes of devices
+  // that no longer carry the `battery` cap (#522): two reads that agree close
+  // one, silently (D49).
+  await host.deviceAlerts.reconcileBatteryCaps()
   // …and the zone ownership the `zones` conditions scope themselves with. Same
   // tick, same reasoning: a polygon drawn since the last refresh must start
   // scoping its own camera, and a camera whose catalogue cannot be read keeps
