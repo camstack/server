@@ -1529,6 +1529,8 @@ export const ACTUATOR_CAP_VOCABULARY: CapVocabularySlice<ActuatorCap> = {
     noun: t('IR / RF transmitter', 'Trasmettitore IR / RF'),
     notOperatorFacing: {
       send: 'a raw pulse train is not something an operator composes in an automation; the remote that owns the command table sends it',
+      learn:
+        'an interactive capture the operator starts from the source dialog and answers by pressing a physical remote; no automation can supply the signal',
     },
   },
 
