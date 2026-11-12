@@ -587,6 +587,25 @@ describe('device-manager bindings store', () => {
       expect(camera.entries.map((e) => e.capName)).toContain('untyped')
     })
 
+    it('does not auto-bind a system-scoped default wrapper', async () => {
+      // registerWrapper keys on kind, not scope, so a system cap with
+      // defaultActive and no deviceTypes would otherwise bind everywhere.
+      const registry = makeTypedRegistry()
+      registry.declareCapability({
+        name: 'broker',
+        scope: 'system',
+        mode: 'singleton',
+        kind: 'wrapper',
+        defaultActive: true,
+        methods: {},
+      })
+      registry.registerWrapper('broker', 'mqtt-broker', { defaultActive: true })
+      ctx.kernel.capabilityRegistry = registry
+      const { entries } = await addon.getBindings({ deviceId: CAMERA })
+      expect(entries.map((entry) => entry.capName)).not.toContain('broker')
+      expect(entries.map((entry) => entry.capName)).toContain('untyped')
+    })
+
     it('auto-binds the wrapper whose deviceTypes DO match this device', async () => {
       await seedDeviceMeta({ [EMITTER]: 'button' })
       const { entries } = await addon.getBindings({ deviceId: EMITTER })
@@ -850,6 +869,34 @@ describe('a collection capability binds to a SET of addons, derived', () => {
       deviceTypes: [DeviceType.Light],
     })
     expect(entries).toEqual([])
+  })
+
+  it('does not list a system-scoped collection cap on a device', async () => {
+    // A system collection (broker, adoption, auth) declares no deviceTypes,
+    // so the deviceTypes gate alone binds it onto every camera. Scope is
+    // read from the definition (D4); the device cap still binds.
+    const { addon, ctx, store: rowStore } = await setupAddon()
+    await seedDeviceRow(rowStore, { deviceId: CAM, type: 'camera' })
+    const registry = new CapabilityRegistry(makeLogger())
+    registry.declareCapability({
+      name: 'broker',
+      mode: 'collection',
+      scope: 'system',
+      methods: {},
+    })
+    registry.declareCapability({
+      name: COLLECTION_CAP,
+      kind: 'wrapper',
+      mode: 'collection',
+      scope: 'device',
+      methods: {},
+    })
+    registry.registerProvider('broker', 'mqtt-broker', {})
+    registry.registerProvider(COLLECTION_CAP, 'pipeline-analytics', {})
+    registry.ready()
+    ctx.kernel.capabilityRegistry = registry
+    const { entries } = await addon.getBindings({ deviceId: CAM })
+    expect(entries.map((entry) => entry.capName)).toEqual([COLLECTION_CAP])
   })
 
   it('REFUSES setWrapperActive for a collection cap, by name', async () => {

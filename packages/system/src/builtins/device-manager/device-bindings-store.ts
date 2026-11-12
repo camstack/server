@@ -372,6 +372,16 @@ export function capAppliesToDeviceType(
 }
 
 /**
+ * A `scope: 'system'` cap is cluster-wide (broker, adoption, auth). It is
+ * never a device binding, even when it declares no `deviceTypes` — that
+ * omission means "every device" only for a device-scoped cap (D4, D12).
+ * An unknown definition is not system-scoped: a missing read changes nothing.
+ */
+function isSystemScopedCap(def: CapabilityDefinition | undefined): boolean {
+  return def?.scope === 'system'
+}
+
+/**
  * An addon's identity, with the node it happens to run on stripped.
  *
  * A capability registered on an agent arrives under `<addonId>@<nodeId>` —
@@ -392,7 +402,9 @@ export function addonIdentityOf(addonId: string): string {
  * Deduped by {@link addonIdentityOf}, so the hub-local registration, the
  * agent's `<addon>@<node>` one and the device's native registration of the same
  * addon are ONE provider — the defect this exists to make unrepresentable.
- * Gated only by the cap's declared `deviceTypes` (D4), like step 2's auto-bind.
+ * Gated by the cap's declared scope and `deviceTypes` (D4), like step 2's
+ * auto-bind. A system-scoped collection is skipped: with no `deviceTypes`
+ * it would otherwise bind onto every device (D12).
  */
 function collectionBindings(
   deps: BindingsDeps,
@@ -406,6 +418,7 @@ function collectionBindings(
   for (const declared of registry.listCapabilities()) {
     if (declared.mode !== 'collection') continue
     const definition = registry.getDefinition(declared.name)
+    if (isSystemScopedCap(definition)) continue
     if (!capAppliesToDeviceType(definition, deviceType, role)) continue
     const nativeAddonId = registry.getNativeAddonId(declared.name, deviceId)
     const seen = new Set<string>()
@@ -611,15 +624,18 @@ async function resolveBindingsForDevice(
     })
   } else if (deps.capabilityRegistry) {
     const skippedForType: string[] = []
+    const skippedSystem: string[] = []
     for (const capName of deps.capabilityRegistry.getCapsWithDefaultWrapper()) {
       if (seenCaps.has(capName)) continue
-      if (
-        !capAppliesToDeviceType(
-          deps.capabilityRegistry.getDefinition(capName),
-          deviceType,
-          deviceRole,
-        )
-      ) {
+      // `registerWrapper` keys only on `kind: 'wrapper'`, so a system-scoped
+      // cap with `defaultActive` reaches this loop. It is not a per-device
+      // binding (D12); say so, the same way a deviceTypes miss is said.
+      const definition = deps.capabilityRegistry.getDefinition(capName)
+      if (isSystemScopedCap(definition)) {
+        skippedSystem.push(capName)
+        continue
+      }
+      if (!capAppliesToDeviceType(definition, deviceType, deviceRole)) {
         skippedForType.push(capName)
         continue
       }
@@ -643,6 +659,12 @@ async function resolveBindingsForDevice(
       deps.ctx.logger.debug('getBindings: default wrappers skipped — deviceTypes mismatch', {
         tags: { deviceId },
         meta: { deviceType, skipped: skippedForType },
+      })
+    }
+    if (skippedSystem.length > 0) {
+      deps.ctx.logger.debug('getBindings: default wrappers skipped — system scope', {
+        tags: { deviceId },
+        meta: { skipped: skippedSystem },
       })
     }
   }
