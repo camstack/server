@@ -25,6 +25,14 @@ export interface DeviceOutage {
   wakeOnly: boolean
   /** The last time something confirmed this outage (a failed wake, a quiet sweep). */
   lastSignalAt: number
+  /**
+   * A `connection-error` the stale window has not already covered. It is
+   * announced only once it has lasted that window, and cancelled with no
+   * event if any source of the camera delivers before then.
+   */
+  held: boolean
+  /** The hold has been logged. One line, not one per sweep. */
+  holdNoted: boolean
 }
 
 export class DeviceStreamOutages {
@@ -40,12 +48,16 @@ export class DeviceStreamOutages {
     camStreamId: string,
     reason: StreamOutageReason,
     now: number,
+    held: boolean,
   ): DeviceOutage {
     const existing = this.byDevice.get(deviceId)
     if (existing) {
       existing.camStreamIds.add(camStreamId)
       existing.wakeOnly = false
       existing.lastSignalAt = now
+      // A stream that has already sat out the stale window joins a hold and
+      // ends it: the camera has been down long enough.
+      if (!held) existing.held = false
       return existing
     }
     const created: DeviceOutage = {
@@ -55,6 +67,8 @@ export class DeviceStreamOutages {
       announced: false,
       wakeOnly: false,
       lastSignalAt: now,
+      held,
+      holdNoted: false,
     }
     this.byDevice.set(deviceId, created)
     return created
@@ -82,6 +96,8 @@ export class DeviceStreamOutages {
       announced: false,
       wakeOnly: true,
       lastSignalAt: now,
+      held: false,
+      holdNoted: false,
     }
     this.byDevice.set(deviceId, created)
     return created

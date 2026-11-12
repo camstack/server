@@ -876,8 +876,11 @@ export interface TopologyNode {
  *
  *  - `wake-timeout`       — a wake was DEMANDED (live viewer, recording,
  *    explicit force) and no stream arrived inside its bound.
- *  - `connection-error`   — the camera is reported awake and its stream is
- *    gone.
+ *  - `connection-error`   — the camera is reported awake and no source of it
+ *    is delivering. The broker holds this until the sustained window (the
+ *    same 120 s as `stale-timeout`) has elapsed with the whole camera still
+ *    down. A dial that recovers inside the window, or a source that fails
+ *    while another source of the camera delivers, emits nothing.
  *  - `battery-unreachable` — nothing heard from the camera past its battery
  *    refresh window (`BATTERY_UNREACHABLE_AFTER_MS`, D847).
  *

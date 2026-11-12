@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - An on-demand stream that stops because nobody is watching is not a stream outage.
+- A battery connection error means the whole camera stayed down for the sustained outage window. A short dial failure is not stream offline.
 
 ## [1.2.551] - 2026-11-12
 

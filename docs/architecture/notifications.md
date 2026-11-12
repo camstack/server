@@ -111,11 +111,14 @@ applies-to:
   - packages/addon-admin-ui/src/pages/system/rule-condition-scopes.ts
   - packages/addon-post-analysis/src/notification-center/alarm/alarm-mode-delays.ts
   - packages/addon-post-analysis/src/notification-center/alarm/alarm-sensors.ts
+  - packages/addon-pipeline/src/stream-broker/stream-broker/stream-health-policy.ts
+  - packages/addon-pipeline/src/stream-broker/stream-broker/device-stream-outages.ts
+  - packages/addon-pipeline/src/stream-broker/stream-broker/stream-broker-manager.ts
   - packages/types/src/notification/alarm-settings.ts
 covers:
   - packages/addon-post-analysis/src/notification-center/**
   - packages/addon-notifiers/src/**
-last-verified: 2026-11-11
+last-verified: 2026-11-12
 ---
 
 # Notifications
@@ -2287,7 +2290,12 @@ that: it opened at 25 and has nothing left to raise.
 (payload `camStreamIds` lists the profiles). The intake gate accepts `stale-timeout`
 (mains) plus the battery failures `wake-timeout`, `connection-error` and
 `battery-unreachable` as outages and `recovered` as the end; a battery camera's sleep and
-plain wake never reach it, because the broker does not emit them. The system-event
+plain wake never reach it, because the broker does not emit them. A `connection-error`
+is held in memory for the same 120 s window before it is emitted
+([DNNN](../decisions/adr-DNNN-a-battery-connection-error-is-a-sustained-whole-camera-outage.md)):
+a recovery inside the window cancels it, and no online is sent for an offline that was
+never sent. A source failing while another source of the same camera delivers is not
+the camera's outage. The system-event
 subject is `stream:<deviceId>`; a multi-stream event renders the unprofiled sentence.
 
 ## An alert reaches a phone only through a rule ([D890](../decisions/adr-0890-the-alert-centre-notifies-nothing-an-alert-reaches-a-phone-only-through-a-system-event-rule.md), 2026-10-21)

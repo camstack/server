@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - An on-demand camera stream that stops because nobody is watching no longer raises stream offline or stream online.
+- A battery camera notifies a connection error only when the whole camera stays down for the sustained outage window. A dial that recovers inside that window, or a source that fails while another source of the camera delivers, does not.
 
 ## [1.2.650] - 2026-11-11
 

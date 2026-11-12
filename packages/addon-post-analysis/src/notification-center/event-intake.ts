@@ -518,8 +518,10 @@ const NC_STREAM_OFFLINE_REASON = 'stale-timeout'
  * outage and the broker no longer emits one; what it does emit is a failure it
  * has already named — a demanded wake that delivered nothing, a connection
  * error while the camera is awake, silence past the battery refresh window.
- * The 120 s window above is the stale window those share; the extra reasons
- * are only the broker saying WHICH failure, so they pass the same gate.
+ * The 120 s window above is the stale window those share. `connection-error`
+ * is not emitted until the broker has held it for that window with no source
+ * of the camera delivering; the extra reasons are only the broker saying
+ * WHICH failure, so they pass the same gate.
  */
 const NC_STREAM_BATTERY_OFFLINE_REASONS: readonly string[] = [
   'wake-timeout',

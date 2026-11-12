@@ -16,7 +16,9 @@
  *  - reported awake, the stream is gone, and the camera has been awake longer
  *    than a wake needs (`WAKE_DEMAND_BOUND_MS`) — `connection-error`; inside
  *    that window it is the normal wake (sleeping flipped, first keyframe not
- *    yet here) and is suppressed, then re-judged;
+ *    yet here) and is suppressed, then re-judged. The emitter holds that
+ *    verdict for `STREAM_STALE_TIMEOUT_MS` unless the session has already been
+ *    quiet that long, and drops it when any source of the camera delivers;
  *  - silent past the battery refresh window — `battery-unreachable`.
  *
  * A sleep verdict needs a sleep state that was actually READ. A mirror that
@@ -51,6 +53,18 @@ const OUTAGE_REASONS: readonly StreamHealthReason[] = [
  * wake-on-play (8 s + 20 s), with margin for the sweep cadence.
  */
 export const WAKE_DEMAND_BOUND_MS = 45_000
+
+/**
+ * How long a stream must stay down before it is an outage, in ms.
+ *
+ * The health sweep calls a broker stale after this long without a packet, and
+ * that gap is the operator's promise: a reboot that comes back inside it
+ * produces no notification. A battery `connection-error` that has not already
+ * waited this long (a dial that just failed, a source that has never delivered)
+ * is held for the same window before it is announced. One number, so the two
+ * paths cannot drift.
+ */
+export const STREAM_STALE_TIMEOUT_MS: number = 120_000
 
 export function isStreamOutageReason(
   reason: StreamHealthReason | undefined,

@@ -12,7 +12,10 @@ import { BATTERY_UNREACHABLE_AFTER_MS } from '@camstack/types'
 import type { AddonApi, EventFilter, IEventBus, IScopedLogger, SystemEvent } from '@camstack/types'
 import { StreamBroker } from '../stream-broker/stream-broker.js'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
-import { WAKE_DEMAND_BOUND_MS } from '../stream-broker/stream-health-policy.js'
+import {
+  STREAM_STALE_TIMEOUT_MS,
+  WAKE_DEMAND_BOUND_MS,
+} from '../stream-broker/stream-health-policy.js'
 
 interface Seen {
   readonly category: string
@@ -207,7 +210,7 @@ describe('stream health — battery sleep is not an outage, a failure is one dev
     expect(h.seen.map((e) => [e.category, e.reason])).toEqual([['stream.online', 'recovered']])
   })
 
-  it('a camera that just woke is not reported offline; the outage is raised after the wake bound if no stream came', async () => {
+  it('a camera that just woke is not reported offline; the outage is raised only after the sustained window if no stream came', async () => {
     h.batteryStatus({ sleeping: false, lastContactAt: clock.now })
     const { main } = await twoProfiles(106)
     advance(500)
@@ -219,7 +222,11 @@ describe('stream health — battery sleep is not an outage, a failure is one dev
     )
 
     advance(WAKE_DEMAND_BOUND_MS)
-    h.sweep('106/native:main', main) // rejudged: still nothing after the bound
+    h.sweep('106/native:main', main) // rejudged: still nothing, held for the sustained window
+    expect(h.seen).toEqual([])
+
+    advance(STREAM_STALE_TIMEOUT_MS)
+    h.sweep('106/native:main', main)
     expect(h.seen.map((e) => [e.category, e.reason])).toEqual([
       ['stream.offline', 'connection-error'],
     ])

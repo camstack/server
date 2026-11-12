@@ -70,6 +70,7 @@ import { healthEventIsOperatorFacing } from './stream-health-scope.js'
 import {
   isStreamOutageReason,
   judgeStaleStream,
+  STREAM_STALE_TIMEOUT_MS,
   WAKE_DEMAND_BOUND_MS,
   type BatterySleepFacts,
   type StaleStreamVerdict,
@@ -689,8 +690,14 @@ export function resolveBrokerTier(
  * not emit. An idle teardown of a lazy source emits nothing either: the stop
  * is the design, and the rebuild is not a recovery. The reason `suspended`
  * is remembered only so the next packet is not announced as `recovered`.
+ *
+ * A battery `connection-error` is the exception that used to emit faster: a
+ * dial that fails the moment it leaves idle, or a source that has never
+ * delivered, is judged on the sweep it is seen. That verdict is HELD for
+ * {@link STREAM_STALE_TIMEOUT_MS} unless the transition is a live session that
+ * has already been quiet for the window. A recovery inside the hold, or any
+ * other source of the same camera still delivering, cancels it with no event.
  */
-const STREAM_STALE_TIMEOUT_MS = 120_000
 const STREAM_HEALTH_POLL_MS = 15_000
 
 /** A device-level health event's context: a failed wake may name no published stream. */
@@ -747,6 +754,23 @@ interface StreamHealthEmitContext {
   readonly brokerId: string
   readonly sourceType: string
   readonly lastPacketAt: number
+}
+
+/** A source of a camera that has a packet inside the stale window. */
+interface DeliveringCameraSource {
+  readonly camStreamId: string
+  readonly lastPacketAt: number
+}
+
+/** Why a not-yet-announced battery connection-error was dropped. */
+function connectionErrorDropMessage(sameSource: boolean, neverDelivered: boolean): string {
+  if (sameSource) {
+    return 'battery connection-error cancelled — the camera recovered inside the sustained window'
+  }
+  if (neverDelivered) {
+    return 'battery source never delivered a packet and a fallback is delivering — not an outage'
+  }
+  return 'battery source failed while another source of the camera delivers — not a camera outage'
 }
 
 /** Compose a SOURCE broker id from a `(deviceId, camStreamId)` tuple. Thin
@@ -1013,6 +1037,12 @@ export class StreamBrokerManager {
   private readonly demandSince = new Map<string, number>()
   /** The stream outage a DEVICE is in (one entry per device, however many profiles). */
   private readonly deviceOutages = new DeviceStreamOutages()
+  /**
+   * Brokers whose `connection-error` was cancelled before it was announced.
+   * Their next packet is not a `recovered` and not a `first-packet`: no offline
+   * was sent, so no online is sent either.
+   */
+  private readonly silencedConnectionErrors = new Set<string>()
   private streamHealthTimer: ReturnType<typeof setInterval> | undefined
   /**
    * Routes an audio-chunk `subscriptionId` (Phase 5 / D9) back to its owning
@@ -4983,6 +5013,7 @@ export class StreamBrokerManager {
     this.batteryProbe.clear()
     this.demandSince.clear()
     this.deviceOutages.clear()
+    this.silencedConnectionErrors.clear()
     this.audioSubscriptionBroker.clear()
     await this.rtspServer.stop()
   }
@@ -5095,7 +5126,16 @@ export class StreamBrokerManager {
           this.markSleepSuppressed(brokerId, context, verdict.presence, lastPacketAt)
           continue
         }
-        this.openStreamOutage(brokerId, context, verdict.reason, now, outageOpenedOn)
+        const alreadySustained =
+          context.lastPacketAt > 0 && now - context.lastPacketAt >= STREAM_STALE_TIMEOUT_MS
+        this.openStreamOutage(
+          brokerId,
+          context,
+          verdict.reason,
+          now,
+          outageOpenedOn,
+          verdict.reason === 'connection-error' && !alreadySustained,
+        )
         continue
       }
 
@@ -5133,6 +5173,10 @@ export class StreamBrokerManager {
         this.noteIdleRebuild(context)
         continue
       }
+      if (this.silencedConnectionErrors.delete(brokerId)) {
+        this.noteSilencedConnectionError(context)
+        continue
+      }
       const reason: StreamHealthReason = isStreamOutageReason(previousReason)
         ? 'recovered'
         : 'first-packet'
@@ -5140,6 +5184,7 @@ export class StreamBrokerManager {
     }
     for (const [deviceId, context] of outageOpenedOn) this.announceDeviceOutage(deviceId, context)
     for (const [deviceId, context] of cameBackOn) this.settleDeviceOutage(deviceId, context)
+    this.promoteHeldConnectionErrors(now)
     this.expireWakeOnlyOutages(now)
   }
 
@@ -5153,10 +5198,11 @@ export class StreamBrokerManager {
     >,
     now: number,
     outageOpenedOn: Map<number, StreamHealthEmitContext>,
+    held: boolean,
   ): void {
     this.sleepSuppressedBrokers.delete(brokerId)
     this.streamOfflineReasonByBroker.set(brokerId, reason)
-    this.deviceOutages.open(context.deviceId, context.camStreamId, reason, now)
+    this.deviceOutages.open(context.deviceId, context.camStreamId, reason, now, held)
     if (!outageOpenedOn.has(context.deviceId)) outageOpenedOn.set(context.deviceId, context)
   }
 
@@ -5275,11 +5321,14 @@ export class StreamBrokerManager {
       nowMs: now,
     })
     if (verdict.kind === 'suppressed') return
-    this.logger.warn('quiet battery stream is now an outage', {
-      tags: { deviceId },
-      meta: { camStreamId: context.camStreamId, reason: verdict.reason },
-    })
-    this.openStreamOutage(brokerId, context, verdict.reason, now, outageOpenedOn)
+    const held = verdict.reason === 'connection-error'
+    if (!held) {
+      this.logger.warn('quiet battery stream is now an outage', {
+        tags: { deviceId },
+        meta: { camStreamId: context.camStreamId, reason: verdict.reason },
+      })
+    }
+    this.openStreamOutage(brokerId, context, verdict.reason, now, outageOpenedOn, held)
   }
 
   /**
@@ -5468,12 +5517,125 @@ export class StreamBrokerManager {
       })
       return
     }
+    if (outage.reason === 'connection-error' && this.holdConnectionError(deviceId, outage)) return
     outage.announced = true
     this.logger.warn('stream outage', {
       tags: { deviceId },
       meta: { reason: outage.reason, camStreamIds: [...outage.camStreamIds] },
     })
     this.emitDeviceStreamHealth(false, deviceId, outage.reason, outage.camStreamIds, context)
+  }
+
+  /**
+   * A battery `connection-error` is not announced yet.
+   *
+   * Returns true when the caller must not emit: either some source of the
+   * camera is delivering (the failure is a source fact, logged and dropped)
+   * or the verdict has not lasted the sustained window. The hold is this
+   * in-memory record — the decision never waits on a read (D49).
+   */
+  private holdConnectionError(deviceId: number, outage: DeviceOutage): boolean {
+    const now = Date.now()
+    const delivering = this.deliveringCameraSource(deviceId, now)
+    if (delivering !== null) {
+      this.cancelUnannouncedConnectionError(deviceId, outage, delivering)
+      return true
+    }
+    if (outage.held && now - outage.since < STREAM_STALE_TIMEOUT_MS) {
+      this.noteConnectionErrorHeld(deviceId, outage)
+      return true
+    }
+    return false
+  }
+
+  /** Held connection-errors are re-checked every sweep, including ones no broker re-opened. */
+  private promoteHeldConnectionErrors(now: number): void {
+    for (const [deviceId, outage] of [...this.deviceOutages.entries()]) {
+      if (outage.announced || outage.reason !== 'connection-error' || !outage.held) continue
+      if (now - outage.since < STREAM_STALE_TIMEOUT_MS) continue
+      this.announceDeviceOutage(deviceId, this.contextForOutage(deviceId, outage))
+    }
+  }
+
+  private noteConnectionErrorHeld(deviceId: number, outage: DeviceOutage): void {
+    if (outage.holdNoted) return
+    outage.holdNoted = true
+    this.logger.info(
+      'battery connection-error held — not an outage until it lasts the sustained window',
+      {
+        tags: { deviceId },
+        meta: {
+          camStreamIds: [...outage.camStreamIds],
+          sustainMs: STREAM_STALE_TIMEOUT_MS,
+        },
+      },
+    )
+  }
+
+  private cancelUnannouncedConnectionError(
+    deviceId: number,
+    outage: DeviceOutage,
+    delivering: DeliveringCameraSource,
+  ): void {
+    const failed = [...outage.camStreamIds]
+    const sameSource = failed.includes(delivering.camStreamId)
+    const neverDelivered = failed.every((camStreamId) => {
+      const broker = this.brokers.get(brokerIdFor(deviceId, camStreamId))
+      return (broker?.getLastPacketAt() ?? 0) === 0
+    })
+    const message = connectionErrorDropMessage(sameSource, neverDelivered)
+    this.logger.info(message, {
+      tags: { deviceId },
+      meta: {
+        camStreamIds: failed,
+        delivering: delivering.camStreamId,
+        lastPacketAt: delivering.lastPacketAt,
+      },
+    })
+    for (const camStreamId of failed) {
+      if (camStreamId === delivering.camStreamId) continue
+      const brokerId = brokerIdFor(deviceId, camStreamId)
+      this.streamOfflineReasonByBroker.delete(brokerId)
+      this.silencedConnectionErrors.add(brokerId)
+    }
+    this.deviceOutages.close(deviceId)
+  }
+
+  private deliveringCameraSource(deviceId: number, now: number): DeliveringCameraSource | null {
+    for (const [brokerId, broker] of this.brokers) {
+      const parsed = this.parseBrokerId(brokerId)
+      if (parsed === null || parsed.deviceId !== deviceId) continue
+      if (!healthEventIsOperatorFacing(parsed.camStreamId)) continue
+      const lastPacketAt = broker.getLastPacketAt()
+      if (lastPacketAt > 0 && now - lastPacketAt <= STREAM_STALE_TIMEOUT_MS) {
+        return { camStreamId: parsed.camStreamId, lastPacketAt }
+      }
+    }
+    return null
+  }
+
+  private contextForOutage(deviceId: number, outage: DeviceOutage): DeviceHealthContext {
+    const camStreamId = [...outage.camStreamIds][0]
+    const brokerId =
+      camStreamId !== undefined ? brokerIdFor(deviceId, camStreamId) : String(deviceId)
+    const broker = camStreamId !== undefined ? this.brokers.get(brokerId) : undefined
+    return {
+      deviceId,
+      ...(camStreamId !== undefined ? { camStreamId } : {}),
+      brokerId,
+      sourceType: broker?.getActiveSourceType() ?? 'unknown',
+      lastPacketAt: broker?.getLastPacketAt() ?? 0,
+    }
+  }
+
+  private noteSilencedConnectionError(context: StreamHealthEmitContext): void {
+    this.logger.info(
+      'battery source delivers after a connection-error that was not announced — no stream-online',
+      {
+        tags: { deviceId: context.deviceId },
+        meta: { camStreamId: context.camStreamId },
+      },
+    )
   }
 
   /**
@@ -5484,6 +5646,17 @@ export class StreamBrokerManager {
   private settleDeviceOutage(deviceId: number, context: DeviceHealthContext): void {
     const outage = this.deviceOutages.get(deviceId)
     if (!outage) return
+    if (outage.reason === 'connection-error') {
+      const delivering = this.deliveringCameraSource(deviceId, Date.now())
+      if (delivering !== null && !outage.announced) {
+        this.cancelUnannouncedConnectionError(deviceId, outage, delivering)
+        return
+      }
+      if (delivering !== null) {
+        this.closeAnnouncedConnectionError(deviceId, outage, delivering, context)
+        return
+      }
+    }
     for (const camStreamId of [...outage.camStreamIds]) {
       const brokerId = brokerIdFor(deviceId, camStreamId)
       const stillDown = isStreamOutageReason(this.streamOfflineReasonByBroker.get(brokerId))
@@ -5501,6 +5674,37 @@ export class StreamBrokerManager {
       deviceId,
       'recovered',
       new Set(context.camStreamId !== undefined ? [context.camStreamId] : []),
+      context,
+    )
+  }
+
+  /**
+   * An announced connection-error ends when any source of the camera delivers,
+   * even if another of its sources is still down. Those stay silenced so a
+   * later packet is not a second recovery.
+   */
+  private closeAnnouncedConnectionError(
+    deviceId: number,
+    outage: DeviceOutage,
+    delivering: DeliveringCameraSource,
+    context: DeviceHealthContext,
+  ): void {
+    for (const camStreamId of outage.camStreamIds) {
+      if (camStreamId === delivering.camStreamId) continue
+      const brokerId = brokerIdFor(deviceId, camStreamId)
+      this.streamOfflineReasonByBroker.delete(brokerId)
+      this.silencedConnectionErrors.add(brokerId)
+    }
+    this.deviceOutages.close(deviceId)
+    this.logger.info('stream outage over — device delivers again', {
+      tags: { deviceId },
+      meta: { reason: outage.reason, outageMs: Date.now() - outage.since },
+    })
+    this.emitDeviceStreamHealth(
+      true,
+      deviceId,
+      'recovered',
+      new Set([delivering.camStreamId]),
       context,
     )
   }
@@ -8127,6 +8331,7 @@ export class StreamBrokerManager {
     this.streamHealthByBroker.delete(brokerId)
     this.streamOfflineReasonByBroker.delete(brokerId)
     this.sleepSuppressedBrokers.delete(brokerId)
+    this.silencedConnectionErrors.delete(brokerId)
     this.forgetReleasedStreamOutage({
       deviceId,
       camStreamId,
