@@ -85,6 +85,7 @@ import {
 } from './alert-episode.js'
 import { deriveBatteryBand, type NcBatteryBand, type NcBatteryReading } from './battery-band.js'
 import { tankSubject } from './tank-subject.js'
+import type { NcBatteryCapCensus, NcBatteryCapCensusPort } from './battery-cap-census.js'
 
 /**
  * The THREE cluster settings, and no fourth (the operator's D-2 and D-4).
@@ -153,11 +154,12 @@ export interface NcDeviceAlertsDeps {
   readonly now?: () => number
   readonly logger?: IScopedLogger
   /**
-   * Does this device still carry the `battery` cap? `null` = the read failed,
-   * which changes nothing. Absent = never asked, so no battery episode is ever
-   * closed for a lost cap: an unwired read must never read as agreement (D49).
+   * The device's `battery` cap and how many native bindings its provider
+   * holds (battery-cap-census.ts). `null` = the read failed, which changes
+   * nothing. Absent = never asked, so no battery episode is ever closed for a
+   * lost cap: an unwired read must never read as agreement (D49).
    */
-  readonly hasBatteryCap?: (deviceId: number) => Promise<boolean | null>
+  readonly batteryCapCensus?: NcBatteryCapCensusPort
 }
 
 /** What a still-open episode needs to be re-said. */
@@ -575,28 +577,32 @@ export class NcDeviceAlerts {
    * directory refresh, off the event path.
    *
    * Closing is destructive, so it needs two consecutive reads that agree
-   * (D49). A failed read keeps what the last census said. A device the
-   * directory does not see online is not judged: a restarting provider holds
-   * no bindings for a moment, and closing then would re-raise the episode as
-   * soon as the cap came back. The close is silent — nothing recovered, the
-   * device simply stopped being a battery — and logged with its deviceId.
+   * (D49), and each must come from a provider that is UP: the device still
+   * holds native bindings and simply no longer declares `battery`. A device
+   * with no native binding at all (its runner crashed or is restarting — a
+   * child reads online all the same) is no answer: the episode is kept and the
+   * skip logged. A failed read keeps what the last census said. The close is
+   * silent — nothing recovered, the device stopped being a battery — and
+   * logged with its deviceId.
    */
   async reconcileBatteryCaps(): Promise<void> {
-    const hasBatteryCap = this.deps.hasBatteryCap
-    if (hasBatteryCap === undefined) return
+    const census = this.deps.batteryCapCensus
+    if (census === undefined) return
     const absent = new Set<number>()
     for (const row of this.deps.rows.all()) {
       if (!isBatterySubject(row.subject)) continue
       const deviceId = alertSubjectDeviceId(row.subject)
       if (deviceId === undefined) continue
       const wasAbsent = this.batteryCapAbsent.has(deviceId)
-      if (this.deps.lookup(deviceId)?.online !== true) {
-        if (wasAbsent) absent.add(deviceId)
-        continue
-      }
-      const present = await hasBatteryCap(deviceId).catch(() => null)
-      if (present === true) continue
-      if (present === null) {
+      const verdict = batteryCapVerdict(await census(deviceId).catch(() => null))
+      if (verdict === 'present') continue
+      if (verdict !== 'gone') {
+        if (verdict === 'unbound') {
+          this.logger()?.debug('battery episode kept — the device holds no native binding', {
+            ...tagsOf(row.subject),
+            meta: { subject: row.subject },
+          })
+        }
         if (wasAbsent) absent.add(deviceId)
         continue
       }
@@ -888,6 +894,15 @@ function isPending(row: NcAlertRow): boolean {
 /** The `tags` half of an alert log line — `{ deviceId }` when the subject names one. */
 interface NcAlertLogTags {
   readonly tags?: { readonly deviceId: number }
+}
+
+/** What one census says: `gone` is the only verdict that counts toward a close. */
+type NcBatteryCapVerdict = 'present' | 'gone' | 'unbound' | 'unread'
+
+function batteryCapVerdict(census: NcBatteryCapCensus | null): NcBatteryCapVerdict {
+  if (census === null) return 'unread'
+  if (census.battery) return 'present'
+  return census.nativeBindings > 0 ? 'gone' : 'unbound'
 }
 
 function tagsOf(subject: string): NcAlertLogTags {

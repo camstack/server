@@ -5,22 +5,52 @@
  *
  * The gate is D49: the cap census is read off the event path, a failed read
  * changes nothing, and closing — destructive — needs a SECOND consecutive read
- * that agrees. A device the directory does not see online is not judged: a
- * provider that is restarting holds no bindings for a moment, and closing then
- * would re-raise the episode the moment the cap came back. The close is silent
- * (nothing recovered) and logged with `tags.deviceId`.
+ * that agrees. Each read must come from a provider that is UP: a device with
+ * no native binding at all (its runner crashed or is restarting) is no answer,
+ * and its episode is kept. The close is silent (nothing recovered) and logged
+ * with `tags.deviceId`.
+ *
+ * The census is the production `batteryCapCensusOver`, fed the `getBindings`
+ * entries a real answer carries.
  */
 import type { IScopedLogger } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../../pipeline-analytics/__tests__/test-helpers.js'
-import type { NcDeviceIdentity } from '../../device-directory.js'
 import type { NcAlertRow } from '../alert-episode.js'
+import {
+  batteryCapCensusOver,
+  type NcBindingEntryFacts,
+  type NcDeviceBindingsFacts,
+} from '../battery-cap-census.js'
 import { type NcDeviceAlertSettings, NcDeviceAlerts } from '../device-alerts.js'
 
 const STORAGE = 5693
 const NOW = Date.UTC(2026, 10, 12, 20, 0)
 
-interface InfoLine {
+/** What the bindings read answers for the storage battery on one tick. */
+type Answer = 'battery' | 'no-battery' | 'no-bindings' | 'fails'
+
+const NATIVE_BASE: readonly NcBindingEntryFacts[] = [
+  { capName: 'device-status', kind: 'native' },
+  { capName: 'numeric-sensor', kind: 'native' },
+]
+
+function bindingsFor(answer: Answer): NcDeviceBindingsFacts {
+  switch (answer) {
+    case 'battery':
+      return { entries: [...NATIVE_BASE, { capName: 'battery', kind: 'native' }] }
+    case 'no-battery':
+      return { entries: NATIVE_BASE }
+    case 'no-bindings':
+      // The owning runner is down: only a wrapper another addon holds is left.
+      return { entries: [{ capName: 'detection-pipeline', kind: 'wrapped' }] }
+    case 'fails':
+      throw new Error('getBindings timed out')
+  }
+}
+
+interface LogLine {
+  readonly level: 'info' | 'debug'
   readonly message: string
   readonly deviceId: number | undefined
 }
@@ -28,22 +58,23 @@ interface InfoLine {
 interface Harness {
   readonly alerts: NcDeviceAlerts
   readonly rows: Map<string, NcAlertRow>
-  readonly infos: InfoLine[]
+  readonly lines: LogLine[]
   readonly emitted: string[]
-  /** What the cap read answers for the storage battery (one value per reconcile). */
-  readonly answers: (boolean | null)[]
-  online: boolean
+  answer: Answer
 }
 
-function capturingLogger(infos: InfoLine[]): IScopedLogger {
+function capturingLogger(lines: LogLine[]): IScopedLogger {
   const base = makeSilentLogger()
   return {
     ...base,
     info: (message, extras) => {
-      infos.push({ message, deviceId: extras?.tags?.deviceId })
+      lines.push({ level: 'info', message, deviceId: extras?.tags?.deviceId })
     },
-    child: () => capturingLogger(infos),
-    withTags: () => capturingLogger(infos),
+    debug: (message, extras) => {
+      lines.push({ level: 'debug', message, deviceId: extras?.tags?.deviceId })
+    },
+    child: () => capturingLogger(lines),
+    withTags: () => capturingLogger(lines),
   }
 }
 
@@ -58,23 +89,18 @@ function openRow(subject: string): NcAlertRow {
 }
 
 function harness(options: { readonly wired: boolean }): Harness {
-  const rows = new Map<string, NcAlertRow>([[`battery:${STORAGE}`, openRow(`battery:${STORAGE}`)]])
-  const infos: InfoLine[] = []
+  const subject = `battery:${STORAGE}`
+  const rows = new Map<string, NcAlertRow>([[subject, openRow(subject)]])
+  const lines: LogLine[] = []
   const emitted: string[] = []
-  const answers: (boolean | null)[] = []
-  const identity = (): NcDeviceIdentity => ({
-    deviceId: STORAGE,
-    type: 'sensor',
-    name: 'Battery',
-    isCamera: false,
-    online: h.online,
-  })
+  const census = batteryCapCensusOver(async (deviceId) =>
+    deviceId === STORAGE ? bindingsFor(h.answer) : bindingsFor('battery'),
+  )
   const h: Harness = {
     rows,
-    infos,
+    lines,
     emitted,
-    answers,
-    online: true,
+    answer: 'battery',
     alerts: new NcDeviceAlerts({
       emit: async (event) => {
         emitted.push(event.subject.systemEvent?.kind ?? 'unknown')
@@ -86,78 +112,79 @@ function harness(options: { readonly wired: boolean }): Harness {
         notifyRecovery: true,
       }),
       consumableThresholds: () => [],
-      lookup: (id) => (id === STORAGE ? identity() : undefined),
+      lookup: (id) =>
+        id === STORAGE
+          ? { deviceId: STORAGE, type: 'sensor', name: 'Battery', isCamera: false, online: true }
+          : undefined,
       rulesVersion: () => 'v1',
       rows: {
-        get: (subject) => rows.get(subject),
+        get: (key) => rows.get(key),
         put: (next) => {
           rows.set(next.subject, next)
         },
         all: () => [...rows.values()],
-        remove: async (subject) => {
-          rows.delete(subject)
+        remove: async (key) => {
+          rows.delete(key)
         },
       },
       now: () => NOW,
-      logger: capturingLogger(infos),
-      ...(options.wired
-        ? {
-            hasBatteryCap: async (deviceId: number): Promise<boolean | null> => {
-              if (deviceId !== STORAGE) return true
-              const [next] = answers
-              return next === undefined ? true : next
-            },
-          }
-        : {}),
+      logger: capturingLogger(lines),
+      ...(options.wired ? { batteryCapCensus: census } : {}),
     }),
   }
   return h
 }
 
-async function reconcile(h: Harness, ...answers: (boolean | null)[]): Promise<void> {
+async function reconcile(h: Harness, ...answers: Answer[]): Promise<void> {
   for (const answer of answers) {
-    h.answers.splice(0, h.answers.length, answer)
+    h.answer = answer
     await h.alerts.reconcileBatteryCaps()
   }
 }
 
+const OPEN = `battery:${STORAGE}`
+
 describe('#522 — a battery episode whose device lost the battery cap', () => {
   it('is closed on the SECOND consecutive read that finds no cap — silently, logged per device', async () => {
     const h = harness({ wired: true })
-    await reconcile(h, false)
-    expect(h.rows.has(`battery:${STORAGE}`)).toBe(true)
-    await reconcile(h, false)
-    expect(h.rows.has(`battery:${STORAGE}`)).toBe(false)
+    await reconcile(h, 'no-battery')
+    expect(h.rows.has(OPEN)).toBe(true)
+    await reconcile(h, 'no-battery')
+    expect(h.rows.has(OPEN)).toBe(false)
     expect(h.emitted).toEqual([])
-    const close = h.infos.find((line) => line.message.includes('no longer has the battery cap'))
+    const close = h.lines.find((line) => line.message.includes('no longer has the battery cap'))
+    expect(close?.level).toBe('info')
     expect(close?.deviceId).toBe(STORAGE)
   })
 
   it('a read that finds the cap again resets the count', async () => {
     const h = harness({ wired: true })
-    await reconcile(h, false, true, false)
-    expect(h.rows.has(`battery:${STORAGE}`)).toBe(true)
+    await reconcile(h, 'no-battery', 'battery', 'no-battery')
+    expect(h.rows.has(OPEN)).toBe(true)
   })
 
   it('a failed read changes nothing — it neither closes nor resets', async () => {
     const h = harness({ wired: true })
-    await reconcile(h, false, null)
-    expect(h.rows.has(`battery:${STORAGE}`)).toBe(true)
-    await reconcile(h, false)
-    expect(h.rows.has(`battery:${STORAGE}`)).toBe(false)
+    await reconcile(h, 'no-battery', 'fails')
+    expect(h.rows.has(OPEN)).toBe(true)
+    await reconcile(h, 'no-battery')
+    expect(h.rows.has(OPEN)).toBe(false)
   })
 
-  it('a device that is not online is not judged: a restarting provider holds no bindings', async () => {
+  it('a device with NO native binding (its provider is down) keeps the episode, and says so', async () => {
     const h = harness({ wired: true })
-    h.online = false
-    await reconcile(h, false, false, false)
-    expect(h.rows.has(`battery:${STORAGE}`)).toBe(true)
+    await reconcile(h, 'no-bindings', 'no-bindings', 'no-bindings')
+    expect(h.rows.has(OPEN)).toBe(true)
+    const skip = h.lines.find((line) => line.message.includes('holds no native binding'))
+    expect(skip?.deviceId).toBe(STORAGE)
+    // An outage between two "no cap" reads does not count as either.
+    await reconcile(h, 'no-battery', 'no-bindings')
+    expect(h.rows.has(OPEN)).toBe(true)
   })
 
   it('an unwired read never reads as agreement', async () => {
     const h = harness({ wired: false })
-    await h.alerts.reconcileBatteryCaps()
-    await h.alerts.reconcileBatteryCaps()
-    expect(h.rows.has(`battery:${STORAGE}`)).toBe(true)
+    await reconcile(h, 'no-battery', 'no-battery')
+    expect(h.rows.has(OPEN)).toBe(true)
   })
 })

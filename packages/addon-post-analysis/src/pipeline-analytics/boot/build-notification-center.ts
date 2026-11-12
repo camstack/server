@@ -6,7 +6,6 @@
 
 import type { CameraOccupancySnapshot, IScopedLogger } from '@camstack/types'
 import {
-  batteryCapability,
   commandOrigin,
   errMsg,
   instanceSourceOverApi,
@@ -29,6 +28,7 @@ import type {
 } from '../../notification-center/dispatcher.js'
 import { NotificationCenter } from '../../notification-center/index.js'
 import { deviceNamesWithParents } from '../../notification-center/device-directory.js'
+import { batteryCapCensusOver } from '../../notification-center/alerts/battery-cap-census.js'
 import { type NcKindBudgets, readNcTargets } from './nc-target-instances.js'
 import { buildRecordedGifPorts, deriveRecordedGif } from '../../notification-center/recorded-gif.js'
 import {
@@ -236,14 +236,9 @@ export class BuildNotificationCenter extends BuildNotificationCenterBase {
       // #522: a battery-low episode closes once its device lost the cap. One
       // per-device bindings read (21 ms) for each device with a battery row,
       // on the reload tick; a failed read answers null and changes nothing.
-      hasBatteryCap: async (deviceId: number): Promise<boolean | null> => {
-        try {
-          const res = await api.deviceManager.getBindings.query({ deviceId })
-          return res.entries.some((entry) => entry.capName === batteryCapability.name)
-        } catch {
-          return null
-        }
-      },
+      batteryCapCensus: batteryCapCensusOver((deviceId) =>
+        api.deviceManager.getBindings.query({ deviceId }),
+      ),
       listDeviceIdentities: async () => {
         const all = await api.deviceManager.listAll.query({
           projection: 'slim',

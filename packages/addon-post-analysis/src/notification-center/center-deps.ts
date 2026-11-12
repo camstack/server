@@ -33,6 +33,7 @@ import type { NcRuleFireRef } from './rule-engine.js'
 import type { NcSceneObservation } from './scene-state-cache.js'
 import type { NcRunnerStateReads } from './state-summary/runner-recovery.js'
 import type { NcNodeDirectoryAnswer } from './state-summary/state-summary-service.js'
+import type { NcBatteryCapCensusPort } from './alerts/battery-cap-census.js'
 import type { NcSummaryPorts } from './summary/summary-producer.js'
 import type { TimelapseRenderPorts } from './timelapse/timelapse-renderer.js'
 import type {
@@ -249,11 +250,11 @@ export interface NotificationCenterDeps {
    */
   readonly listDeviceIdentities?: () => Promise<readonly NcDeviceIdentity[]>
   /**
-   * Does this device still carry the `battery` cap (its bindings, read on the
-   * directory refresh tick)? `null` = the read failed. Absent ⇒ no battery
-   * episode is ever closed for a lost cap (#522, D49).
+   * The device's `battery` cap and native-binding count, read on the
+   * directory refresh tick (`batteryCapCensusOver`). `null` = the read failed.
+   * Absent ⇒ no battery episode is ever closed for a lost cap (#522, D49).
    */
-  readonly hasBatteryCap?: (deviceId: number) => Promise<boolean | null>
+  readonly batteryCapCensus?: NcBatteryCapCensusPort
   /**
    * The deleted-device prune's SECOND read: true only when
    * `deviceManager.getDevice` answers `null` — the persisted row is gone, which
