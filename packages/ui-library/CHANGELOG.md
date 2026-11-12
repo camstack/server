@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.434] - 2026-11-12
+
 ### Changed
 
 - Device card: a bare frame (no border, surface or top line) for hosts that draw their own header, such as the viewer's device sheet

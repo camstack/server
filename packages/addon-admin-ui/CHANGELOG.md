@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.654] - 2026-11-12
+
 ### Changed
 
 - The device card page opened by the viewer draws the card bare on a transparent page, so the viewer's sheet frames it
