@@ -13,6 +13,7 @@ import {
   type CompositionFieldKind,
   type CustomizeCatalogSource,
   type CustomizeCatalogTarget,
+  type DeviceSearchRequires,
 } from '@camstack/types'
 import { sourceFor } from '../source-for'
 import { vocabularyCapTitle, vocabularyFieldLabel } from '../vocabulary-field-label'
@@ -364,12 +365,24 @@ export function indexCapsForDestination(destination: SourceDestination): readonl
   return [...caps]
 }
 
-/** What the device search must require for this destination; none when every device qualifies. */
-export function sourceSearchRequires(
-  destination: SourceDestination,
-): { readonly caps: readonly string[]; readonly mode: 'any' } | undefined {
+/**
+ * What the device search is asked for this destination:
+ * - `all` — every device qualifies (a picker target, or any field is accepted);
+ * - `requires` — only devices carrying one of these caps;
+ * - `none` — the destination declares no source, so nothing can feed it. The search
+ *   is not run: an empty `requires` would make every device compatible.
+ */
+export type SourceSearch =
+  | { readonly kind: 'all' }
+  | { readonly kind: 'requires'; readonly requires: DeviceSearchRequires }
+  | { readonly kind: 'none' }
+
+export function sourceSearchRequires(destination: SourceDestination): SourceSearch {
   if (destination.pickerTargetKind !== undefined || destination.acceptAnyField === true) {
-    return undefined
+    return { kind: 'all' }
   }
-  return { caps: indexCapsForDestination(destination), mode: 'any' }
+  const caps = indexCapsForDestination(destination)
+  return caps.length === 0
+    ? { kind: 'none' }
+    : { kind: 'requires', requires: { caps, mode: 'any' } }
 }

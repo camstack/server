@@ -318,11 +318,10 @@ function toMs(raw: string): number | undefined {
 
 interface DeviceEventFieldsProps {
   readonly leaf: DeviceEventLeaf
-  readonly devices: readonly AutomationDevice[]
   readonly onChange: (next: DeviceEventLeaf) => void
 }
 
-export function DeviceEventFields({ leaf: trigger, devices, onChange }: DeviceEventFieldsProps) {
+export function DeviceEventFields({ leaf: trigger, onChange }: DeviceEventFieldsProps) {
   const { t } = useTranslation()
   return (
     <>

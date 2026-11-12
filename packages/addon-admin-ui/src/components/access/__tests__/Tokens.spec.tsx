@@ -62,13 +62,19 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
   DeviceValuePicker: ({
     onChange,
     fixedTypes,
+    multiple,
+    maxItems,
   }: {
     onChange: (v: readonly { deviceId: number }[]) => void
     fixedTypes?: readonly string[]
+    multiple?: boolean
+    maxItems?: number
   }) => (
     <button
       type="button"
       data-types={fixedTypes?.join(',')}
+      data-multiple={String(multiple === true)}
+      data-max={maxItems}
       onClick={() => onChange([{ deviceId: 11 }, { deviceId: 12 }])}
     >
       pick cameras
@@ -276,10 +282,11 @@ describe('TokensSection — one list of tokens, shown by their scopes', () => {
     expect(selectOptionValues(lifetime())).not.toContain('never')
     fireEvent.click(screen.getByTestId('token-reach-view-link'))
     // A view link reaches cameras only: the picker is asked for that type.
-    expect(screen.getByRole('button', { name: 'pick cameras' })).toHaveAttribute(
-      'data-types',
-      'camera',
-    )
+    const cameras = screen.getByRole('button', { name: 'pick cameras' })
+    expect(cameras).toHaveAttribute('data-types', 'camera')
+    // Several cameras, bounded by what one view link may carry.
+    expect(cameras).toHaveAttribute('data-multiple', 'true')
+    expect(cameras).toHaveAttribute('data-max', '64')
     fireEvent.click(screen.getByRole('button', { name: 'pick cameras' }))
     fireEvent.click(screen.getByTestId('token-view-talk'))
     selectOption(lifetime(), 'never')

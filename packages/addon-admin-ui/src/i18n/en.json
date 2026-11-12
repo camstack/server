@@ -2793,7 +2793,8 @@
       "done": "Done",
       "pickedCount_one": "{{count}} selected",
       "pickedCount_other": "{{count}} selected",
-      "sourceReads": "Reads {{value}} now"
+      "sourceReads": "Reads {{value}} now",
+      "nothingFeeds": "No device can feed {{title}}."
     },
     "linkedActions": {
       "title": "Linked actions",

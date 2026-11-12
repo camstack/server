@@ -2868,7 +2868,8 @@
       "done": "Fatto",
       "pickedCount_one": "{{count}} selezionato",
       "pickedCount_other": "{{count}} selezionati",
-      "sourceReads": "Legge {{value}} adesso"
+      "sourceReads": "Legge {{value}} adesso",
+      "nothingFeeds": "Nessun dispositivo può alimentare {{title}}."
     },
     "linkedActions": {
       "title": "Azioni collegate",

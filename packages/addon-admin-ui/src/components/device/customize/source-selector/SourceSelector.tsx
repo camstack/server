@@ -13,6 +13,7 @@ import {
   Button,
   DeviceName,
   DeviceValueField,
+  EmptyState,
   Input,
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
@@ -192,7 +193,7 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
     () => (devices.status === 'success' ? toPickerDevices(devices.data) : []),
     [devices.status, devices.data],
   )
-  const requires = useMemo(() => sourceSearchRequires(props.destination), [props.destination])
+  const search = useMemo(() => sourceSearchRequires(props.destination), [props.destination])
   const indexCaps = useMemo(() => indexCapsForDestination(props.destination), [props.destination])
   const capIndex = useCapIndex(indexCaps, props.enabled)
   // The host's siblings in its own container that already fit (D951); the
@@ -364,13 +365,21 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
         {t('customize.sourceSelector.sourceReads', { value: chosenRow.currentText })}
       </p>
     )
+  if (search.kind === 'none') {
+    return (
+      <EmptyState
+        className="py-6"
+        title={t('customize.sourceSelector.nothingFeeds', { title: props.destination.title })}
+      />
+    )
+  }
   return (
     <DeviceValueField
       testId="source-selector"
       deviceListTestId={devicePickerTestId}
       fillHeight={fillHeight}
       heading={t('customize.sourceSelector.pickDevice', { title: props.destination.title })}
-      {...(requires === undefined ? {} : { requires })}
+      {...(search.kind === 'requires' ? { requires: search.requires } : {})}
       contextDeviceId={props.hostId}
       suggestions={
         devices.status !== 'error' && siblings !== null ? (

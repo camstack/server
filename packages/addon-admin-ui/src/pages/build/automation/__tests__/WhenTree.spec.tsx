@@ -52,7 +52,7 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
-import { DeviceSearchTrpc, SEARCH_HUB_CAMERAS } from '../../../../test-setup/device-search-hub'
+import { DeviceSearchTrpc, SEARCH_HUB_FLEET } from '../../../../test-setup/device-search-hub'
 import type { AutomationDevice } from '../automation-data'
 import { EMPTY_RECIPE } from '../recipe-parts'
 import type { AutomationRunTrace } from '@camstack/types'
@@ -64,7 +64,7 @@ function render(ui: ReactElement) {
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <DeviceSearchTrpc fleet={SEARCH_HUB_CAMERAS}>{ui}</DeviceSearchTrpc>
+      <DeviceSearchTrpc fleet={SEARCH_HUB_FLEET}>{ui}</DeviceSearchTrpc>
     </QueryClientProvider>,
   )
 }

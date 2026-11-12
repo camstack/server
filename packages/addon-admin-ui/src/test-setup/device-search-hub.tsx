@@ -122,8 +122,13 @@ export function withDeviceSearchHub(
   )
 }
 
-/** Two cameras, the fleet most automation specs pick from. */
-export const SEARCH_HUB_CAMERAS: readonly SearchHubDevice[] = [
+/**
+ * The fleet most automation specs pick from: two cameras, a light and a container,
+ * so a spec can prove a camera-only or container-free picker leaves the others out.
+ */
+export const SEARCH_HUB_FLEET: readonly SearchHubDevice[] = [
   { id: 101, name: 'Kitchen', type: DeviceType.Camera },
   { id: 102, name: 'Garage', type: DeviceType.Camera },
+  { id: 103, name: 'Porch light', type: DeviceType.Light },
+  { id: 104, name: 'Hall hub', type: DeviceType.Container },
 ]

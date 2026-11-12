@@ -39,7 +39,7 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
-import { DeviceSearchTrpc, SEARCH_HUB_CAMERAS } from '../../../../test-setup/device-search-hub'
+import { DeviceSearchTrpc, SEARCH_HUB_FLEET } from '../../../../test-setup/device-search-hub'
 import type { AutomationDevice } from '../automation-data'
 import { defaultRunMode, runModeOf, withRunMode } from '../RunModeSelector'
 import { parseRecipeFromCode } from '../recipe-from-code'
@@ -101,7 +101,7 @@ describe('scene rows build recipe parts the schema accepts', () => {
       <QueryClientProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
       >
-        <DeviceSearchTrpc fleet={SEARCH_HUB_CAMERAS}>
+        <DeviceSearchTrpc fleet={SEARCH_HUB_FLEET}>
           <DetectionHarness onLeaf={(l) => (last = l)} />
         </DeviceSearchTrpc>
       </QueryClientProvider>,
@@ -111,7 +111,11 @@ describe('scene rows build recipe parts the schema accepts', () => {
     fireEvent.click(
       within(screen.getByTestId('scene-cameras')).getByRole('button', { name: /add/i }),
     )
-    fireEvent.click(await screen.findByRole('checkbox', { name: /Kitchen/ }))
+    const kitchen = await screen.findByRole('checkbox', { name: /Kitchen/ })
+    // The camera picker asks for cameras only: the light and the container are not offered.
+    expect(screen.queryByRole('checkbox', { name: /Porch light/ })).toBeNull()
+    expect(screen.queryByRole('checkbox', { name: /Hall hub/ })).toBeNull()
+    fireEvent.click(kitchen)
     fireEvent.click(screen.getByRole('button', { name: 'Bowl' }))
 
     expect(last).toEqual({
@@ -139,7 +143,7 @@ describe('scene rows build recipe parts the schema accepts', () => {
       <QueryClientProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
       >
-        <DeviceSearchTrpc fleet={SEARCH_HUB_CAMERAS}>
+        <DeviceSearchTrpc fleet={SEARCH_HUB_FLEET}>
           <StationaryFields leaf={seed} devices={DEVICES} onChange={onChange} />
         </DeviceSearchTrpc>
       </QueryClientProvider>,

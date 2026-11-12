@@ -138,7 +138,7 @@ function LeafFields({ leaf, devices, onChange }: LeafFieldsProps) {
     case 'device-becomes':
       return <DeviceBecomesFields leaf={leaf} devices={devices} onChange={onChange} />
     case 'device-event':
-      return <DeviceEventFields leaf={leaf} devices={devices} onChange={onChange} />
+      return <DeviceEventFields leaf={leaf} onChange={onChange} />
     case 'schedule':
       return <ScheduleFields leaf={leaf} onChange={onChange} />
     case 'interval':

@@ -156,7 +156,7 @@ const ELEMENT_RULES: readonly ElementRule[] = [
     rule: 'raw-select',
     pattern: /<select\b/g,
     message:
-      'raw <select> → `Select` (options prop), a schema `select` field via `ConfigFormBuilder`, or `NodePicker` / `DeviceSelectField` for nodes and devices',
+      'raw <select> → `Select` (options prop), a schema `select` field via `ConfigFormBuilder`, or `NodePicker` / `DeviceValuePicker` for nodes and devices',
   },
   {
     rule: 'raw-dialog',

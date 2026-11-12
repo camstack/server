@@ -13,11 +13,12 @@ import {
   Badge,
   Button,
   DeviceRow,
-  DeviceSelectField,
+  DeviceValuePicker,
   HeroCardA,
   HeroRowLine,
   HeroScene,
   HeroSegmented,
+  type PickedValue,
   PrimaryChildPicker,
   SectionCard,
   Select,
@@ -433,7 +434,7 @@ export function EnergyHero({
 
 /** The Customize section of the energy-system device: the heat pump link, picked by the operator. */
 function CustomizeCard({ linked }: { readonly linked: boolean }): ReactNode {
-  const [value, setValue] = useState(linked ? '2301' : '')
+  const [value, setValue] = useState<PickedValue | null>(linked ? { deviceId: 2301 } : null)
   return (
     <SectionCard
       headingId={`customize-${linked ? 'on' : 'off'}`}
@@ -442,18 +443,12 @@ function CustomizeCard({ linked }: { readonly linked: boolean }): ReactNode {
     >
       <div className="flex flex-col gap-1 p-3">
         <SettingRow label="Pompa di calore">
-          <DeviceSelectField
-            field={{
-              type: 'device-select',
-              key: 'heatPump',
-              label: '',
-              deviceFilter: {
-                caps: ['heat-pump'],
-                excludeTypes: ['container'],
-              },
-            }}
+          <DeviceValuePicker
+            pick="device"
+            requires={{ caps: ['heat-pump'] }}
+            excludeTypes={['container']}
             value={value}
-            onChange={(v) => setValue(String(v))}
+            onChange={setValue}
           />
         </SettingRow>
         <p className="px-1 text-xs text-foreground-muted">
