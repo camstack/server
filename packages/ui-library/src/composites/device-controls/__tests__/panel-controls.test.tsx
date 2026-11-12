@@ -32,7 +32,6 @@ import {
   FanHeroCard,
   ThermostatInlineControl,
   MediaPlayerInlineControl,
-  MediaPlayerHeroCard,
   ControlInlineControl,
   ControlHeroCard,
 } from '../panel-controls'
@@ -324,50 +323,6 @@ describe('MediaPlayerInlineControl', () => {
     mockResult = { cap: undefined, slice: undefined, available: false }
     const { container } = render(
       <MediaPlayerInlineControl trpc={trpc} deviceId={1} features={undefined} />,
-    )
-    expect(container.firstChild).toBeNull()
-  })
-})
-
-describe('MediaPlayerHeroCard', () => {
-  beforeEach(() => {
-    mockResult = {
-      cap: {
-        play: vi.fn(),
-        pause: vi.fn(),
-        next: vi.fn(),
-        previous: vi.fn(),
-        setVolume: vi.fn(),
-        setMute: vi.fn(),
-        selectSource: vi.fn(),
-        setShuffle: vi.fn(),
-        setRepeat: vi.fn(),
-      },
-      slice: {
-        state: 'paused' as const,
-        volumeLevel: null,
-        isMuted: null,
-        source: '',
-        availableSources: [],
-        shuffle: null,
-        repeat: null,
-        lastChangedAt: 0,
-      },
-      available: true,
-    }
-  })
-
-  it('mounts without error when cap present', () => {
-    const { container } = render(
-      <MediaPlayerHeroCard trpc={trpc} deviceId={1} features={undefined} />,
-    )
-    expect(container.firstChild).not.toBeNull()
-  })
-
-  it('returns null when media player cap is undefined', () => {
-    mockResult = { cap: undefined, slice: undefined, available: false }
-    const { container } = render(
-      <MediaPlayerHeroCard trpc={trpc} deviceId={1} features={undefined} />,
     )
     expect(container.firstChild).toBeNull()
   })

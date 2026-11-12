@@ -1010,6 +1010,105 @@
       "summary": "The instant a window ends at, rounded so the query key is stable between renders and the view refreshes at a pace its width justifies."
     },
     {
+      "name": "ApplianceCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/appliance/ApplianceCard.tsx",
+      "summary": "A washer, a dryer or a dishwasher. Built on a plug it only knows whether a cycle runs (from the draw) and powers the plug, arming before it cuts a running cycle. Connected, it steps through the machine's programs, sho…",
+      "props": [
+        {
+          "name": "model",
+          "type": "ApplianceCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "ApplianceCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "ApplianceCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
+    },
+    {
+      "name": "ApplianceIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/ApplianceIllustration.tsx",
+      "summary": "A washer, a dryer or a dishwasher seen from the front: the drum (the racks) behind the door, the cycle's progress as a ring (a bar on the dishwasher's panel). The drum turns while it runs; reduced motion keeps it still.",
+      "props": [
+        {
+          "name": "kind",
+          "type": "ApplianceKind",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "running",
+          "type": "boolean",
+          "optional": false,
+          "doc": "The cycle runs: the drum turns (the dishwasher's spray arm sweeps)."
+        },
+        {
+          "name": "lit",
+          "type": "boolean",
+          "optional": false,
+          "doc": "The machine is in a cycle (running or paused): the door is lit."
+        },
+        {
+          "name": "progress",
+          "type": "number | null",
+          "optional": false,
+          "doc": "0..100 of the cycle done, drawn as the ring; null draws no ring."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "applianceKindOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/appliance-model.ts",
+      "summary": "Pure mapping from the caps a washer, a dryer or a dishwasher binds to the appliance scene's model — kept out of the components so each rule is tested on its own."
+    },
+    {
+      "name": "appliancePhaseLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/appliance/ApplianceCard.tsx",
+      "summary": ""
+    },
+    {
       "name": "applyFleetQueryDefaults",
       "kind": "function",
       "area": "lib",
@@ -3127,6 +3226,13 @@
       "summary": "The ONE modal dialog of the product — confirm, alert and prompt."
     },
     {
+      "name": "ConnectedApplianceCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedApplianceCard.tsx",
+      "summary": "A washer, a dryer or a dishwasher known only through what feeds it: whether a cycle runs (`running-state`, from the draw or the device) and the `switch` that powers it. No programs, no start: the card says what it kno…"
+    },
+    {
       "name": "connectedCardKindOf",
       "kind": "function",
       "area": "composites",
@@ -3164,6 +3270,13 @@
       ]
     },
     {
+      "name": "ConnectedDishwasherCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedDishwasherCard.tsx",
+      "summary": "A dishwasher that speaks for itself (the `dishwasher` cap): its programs, the time left, start / pause / resume / stop — the start refused, with the machine's reason, while the door is open or remote start is off."
+    },
+    {
       "name": "ConnectedFanCard",
       "kind": "component",
       "area": "composites",
@@ -3183,6 +3296,20 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedLightCard.tsx",
       "summary": "The light card of a real device: power through `switch` (D1042), the level through `brightness`, colour and white through `color` — each popover only when the device declares that colour feature."
+    },
+    {
+      "name": "ConnectedMediaCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedMediaCard.tsx",
+      "summary": "The media card of a real `media-player`: every control is drawn only when the device declares it (its `DeviceFeature` flags); the remote overlay is the device's own `remote` keys."
+    },
+    {
+      "name": "ConnectedMowerCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedRobotCard.tsx",
+      "summary": "A robot mower (`lawn-mower-control`): mow, pause, dock; its code as the status line."
     },
     {
       "name": "ConnectedPlugCard",
@@ -3222,6 +3349,13 @@
           "doc": "Draw the device name (default true); false when the host already names the device."
         }
       ]
+    },
+    {
+      "name": "ConnectedVacuumCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedRobotCard.tsx",
+      "summary": "A robot vacuum (`vacuum-control`): clean, pause, dock, locate, suction."
     },
     {
       "name": "CONSUMABLE_LOW_PERCENT",
@@ -3741,6 +3875,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "cycleEndsAt",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/appliance-model.ts",
+      "summary": "The wall-clock end of a cycle with `remainingSec` to go (\"11:58\")."
     },
     {
       "name": "darkColors",
@@ -6074,6 +6215,34 @@
       ]
     },
     {
+      "name": "DishwasherCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
+    },
+    {
+      "name": "dishwasherPhase",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/appliance-model.ts",
+      "summary": "Pure mapping from the caps a washer, a dryer or a dishwasher binds to the appliance scene's model — kept out of the components so each rule is tested on its own."
+    },
+    {
+      "name": "dishwasherPrograms",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/appliance-model.ts",
+      "summary": "Pure mapping from the caps a washer, a dryer or a dishwasher binds to the appliance scene's model — kept out of the components so each rule is tested on its own."
+    },
+    {
+      "name": "dishwasherStartBlocked",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/appliance-model.ts",
+      "summary": "Why the machine refuses a remote start, or null when it may start."
+    },
+    {
       "name": "DisplayPaletteProvider",
       "kind": "component",
       "area": "composites",
@@ -7145,6 +7314,13 @@
       "summary": "Format an HA-native datetime control value in the user's locale."
     },
     {
+      "name": "formatCycleMinutes",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/appliance/model.ts",
+      "summary": "\"2 h 35\" / \"38 min\"."
+    },
+    {
       "name": "formatDeviceName",
       "kind": "function",
       "area": "composites",
@@ -7192,6 +7368,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/charts/chart-data.ts",
       "summary": "A wall-clock label at the precision the window's length justifies: seconds under ten minutes, `HH:MM` within two days, the date past that, month + year past ~4 months."
+    },
+    {
+      "name": "formatTrackTime",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/media/model.ts",
+      "summary": "\"1:12\"."
     },
     {
       "name": "FormField",
@@ -9094,20 +9277,6 @@
       "props": []
     },
     {
-      "name": "lawnMowerActivityMeta",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/lawn-mower-control.tsx",
-      "summary": "Pure helper — maps a LawnMowerActivity (or undefined when no slice yet) to a human label + colour tone. Exhaustive switch: a new enum member fails the build."
-    },
-    {
-      "name": "LawnMowerHeroCard",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/lawn-mower-control.tsx",
-      "summary": "LawnMowerHeroCard — full control surface for the device-detail hero area. Activity label + action buttons + battery readout."
-    },
-    {
       "name": "LawnMowerInlineControl",
       "kind": "component",
       "area": "composites",
@@ -9598,6 +9767,46 @@
       "summary": "Auto-fill media tiles (events, frames, crops) — ~4 across at lg."
     },
     {
+      "name": "MediaArtwork",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/MediaArtwork.tsx",
+      "summary": "What is playing: the cover the player reports, else a tile — a note on the accent for music, the input's name on a dark screen for a TV, nothing when the content is not known. Quiet while the player is off.",
+      "props": [
+        {
+          "name": "kind",
+          "type": "MediaArtworkKind",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "on",
+          "type": "boolean",
+          "optional": false,
+          "doc": "Off: the tile goes quiet."
+        },
+        {
+          "name": "imageUrl",
+          "type": "string | null",
+          "optional": true,
+          "doc": "The cover the player reports; drawn in place of the tile."
+        },
+        {
+          "name": "caption",
+          "type": "string | null",
+          "optional": true,
+          "doc": "What a TV tile names (the input)."
+        }
+      ]
+    },
+    {
+      "name": "mediaArtworkOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/media-model.ts",
+      "summary": "Pure mapping from a `media-player` slice and the device's features to the media scene."
+    },
+    {
       "name": "MediaCard",
       "kind": "component",
       "area": "composites",
@@ -9641,6 +9850,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "MediaCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
     },
     {
       "name": "MediaGrid",
@@ -9688,11 +9904,51 @@
       ]
     },
     {
-      "name": "MediaPlayerHeroCard",
+      "name": "mediaPhaseLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/media/MediaPlayerCard.tsx",
+      "summary": ""
+    },
+    {
+      "name": "mediaPhaseOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/media-model.ts",
+      "summary": "Pure mapping from a `media-player` slice and the device's features to the media scene."
+    },
+    {
+      "name": "MediaPlayerCard",
       "kind": "component",
       "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/media-player-hero-card.tsx",
-      "summary": "MediaPlayerHeroCard — the state of a MediaPlayer device and every control it exposes, drawn from `deriveMediaPlayerView` (the state → view mapping and its spec live in `@camstack/types` (`media-player-view.ts`))."
+      "file": "packages/ui-library/src/composites/device-card/scenes/media/MediaPlayerCard.tsx",
+      "summary": "A media player: the volume on the left, what is playing in the middle (its cover, a TV's input, or nothing when the content is not known), power and the source on the right, the track position and the transport below.…",
+      "props": [
+        {
+          "name": "model",
+          "type": "MediaCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "MediaCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "MediaPlayerInlineControl",
@@ -9707,6 +9963,34 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/media-player-panel.tsx",
       "summary": ""
+    },
+    {
+      "name": "mediaSeekOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/media-model.ts",
+      "summary": "The position, read from where the player reported it and how long it has played since."
+    },
+    {
+      "name": "mediaSubtitleOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/media-model.ts",
+      "summary": "Pure mapping from a `media-player` slice and the device's features to the media scene."
+    },
+    {
+      "name": "mediaTransportOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/media-model.ts",
+      "summary": "Pure mapping from a `media-player` slice and the device's features to the media scene."
+    },
+    {
+      "name": "mediaVolumeOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/media-model.ts",
+      "summary": "The volume block: shown when the player declares a volume level or volume keys."
     },
     {
       "name": "MenuButton",
@@ -9756,6 +10040,12 @@
           "type": "'inline' | 'stacked'",
           "optional": true,
           "doc": "`stacked`: the glyph over the whole label, the chevron under it — for a scene's narrow side column, where an inline label would be cut. Defa"
+        },
+        {
+          "name": "triggerLabel",
+          "type": "string",
+          "optional": true,
+          "doc": "A fixed word on the trigger (\"Source\") in place of the current choice."
         }
       ]
     },
@@ -9944,6 +10234,20 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/parts/RangeDial.tsx",
       "summary": "Moves one handle; the low one never passes the high one, nor the reverse."
+    },
+    {
+      "name": "mowerActivityOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/robot-model.ts",
+      "summary": "Pure mapping from `vacuum-control` / `lawn-mower-control` to the robot scene."
+    },
+    {
+      "name": "MowerCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
     },
     {
       "name": "NatResultCard",
@@ -11218,6 +11522,13 @@
       ]
     },
     {
+      "name": "plugAppliancePhase",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/appliance-model.ts",
+      "summary": "A plug-built appliance: `running-state` says whether a cycle runs, the `switch` whether the machine is powered at all. Unknown is never idle."
+    },
+    {
       "name": "PlugCard",
       "kind": "component",
       "area": "composites",
@@ -12053,11 +12364,32 @@
       "summary": "Bottom-right: opens the device's remote."
     },
     {
+      "name": "remoteKeyIconOnly",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/remote-keys.ts",
+      "summary": "The key is drawn as its glyph alone (its label is the accessible name)."
+    },
+    {
+      "name": "remoteKeyOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/remote-keys.ts",
+      "summary": "The key the card draws for a declared role (its label wins over the default word)."
+    },
+    {
+      "name": "remotePadRows",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/remote-keys.ts",
+      "summary": "The pad layout of a remote that declares a direction pad (a TV, a media box): power and source on top, the pad, back / menu / info, volume and channel in pairs, the transport; whatever is left closes it. A remote with…"
+    },
+    {
       "name": "RemoteView",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/Overlays.tsx",
-      "summary": "Replaces the scene: the keys the device's remote declares.",
+      "summary": "Replaces the scene: the keys the device's remote declares, as a pad when it has one.",
       "props": [
         {
           "name": "keys",
@@ -12321,6 +12653,79 @@
       "kind": "constant",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/atoms.tsx",
+      "summary": ""
+    },
+    {
+      "name": "RobotCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/robot/RobotCard.tsx",
+      "summary": "A robot vacuum or a robot mower, drawn on its floor: suction (a vacuum) or how much of the lawn is cut (a mower) on the left, start / pause, back to base and find on the right, the map toggle below when the device has…",
+      "props": [
+        {
+          "name": "model",
+          "type": "RobotCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "RobotCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "RobotIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/RobotIllustration.tsx",
+      "summary": "The robot seen from above on its floor (a vacuum on dashed lanes, a mower on a striped lawn whose cut stripes darken with the progress). Cleaning: it travels the lanes, the turret spins, a ring pings. Returning: it he…",
+      "props": [
+        {
+          "name": "mower",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "activity",
+          "type": "RobotActivity",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "progress",
+          "type": "number | null",
+          "optional": true,
+          "doc": "0..100 of the lawn cut (mower only); null draws no cut stripes."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "robotStateLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/robot/RobotCard.tsx",
       "summary": ""
     },
     {
@@ -14169,6 +14574,45 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/step-inspector/step-detail-dock.tsx",
       "summary": "Width of the desktop dock — what the matrix keeps clear of it."
+    },
+    {
+      "name": "StepColumn",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/StepColumn.tsx",
+      "summary": "A side column that steps through values: a button above, the value with its notes, a button below — a program, a suction level, a volume. A step the device does not offer is not drawn.",
+      "props": [
+        {
+          "name": "up",
+          "type": "StepButton",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "down",
+          "type": "StepButton",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "value",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": "The current value, bold; null draws no value (not known)."
+        },
+        {
+          "name": "notes",
+          "type": "readonly ReactNode[]",
+          "optional": true,
+          "doc": "The lines under the value (\"vol\", \"2 h 35\", \"fine 11:58\")."
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "StepDetailDock",
@@ -16491,11 +16935,18 @@
       "summary": "Read + drive the zone-editing state. Returns `null` outside a provider so callers that mount in pages without zones (e.g. a shared hero on a non-camera device) can no-op gracefully."
     },
     {
-      "name": "VacuumHeroCard",
+      "name": "vacuumActivityOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/robot-model.ts",
+      "summary": "Pure mapping from `vacuum-control` / `lawn-mower-control` to the robot scene."
+    },
+    {
+      "name": "VacuumCardHero",
       "kind": "component",
       "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/vacuum-control.tsx",
-      "summary": "VacuumHeroCard — full control surface for the device-detail hero area. State label + action buttons + fan-speed selector + battery readout."
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
     },
     {
       "name": "VacuumInlineControl",
@@ -16503,13 +16954,6 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/vacuum-control.tsx",
       "summary": "VacuumInlineControl — compact, state-aware vacuum controls for a device-list row. Start / Pause / Return-to-base + battery badge."
-    },
-    {
-      "name": "vacuumStateMeta",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/vacuum-control.tsx",
-      "summary": "Pure helper — maps a VacuumState (or undefined when no slice yet) to a human label + colour tone. Exhaustive switch: a new enum member fails the build."
     },
     {
       "name": "validateScopes",
@@ -16747,6 +17191,13 @@
       "area": "contexts",
       "file": "packages/ui-library/src/contexts/vod-playback.tsx",
       "summary": "VodPlayback — shared context coordinating recorded (VOD) playback between a widget/section (the Recording panel) and the hero StreamPanel."
+    },
+    {
+      "name": "VOLUME_STEP",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/media-model.ts",
+      "summary": "One volume press: a key when the player has volume keys, else a set 5 points away."
     },
     {
       "name": "WaterHeaterHeroCard",

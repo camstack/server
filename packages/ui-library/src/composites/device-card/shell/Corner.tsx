@@ -43,6 +43,8 @@ const TONE_TEXT: Readonly<Record<CardTone, string>> = {
   primary: 'text-primary',
   info: 'text-info',
   warning: 'text-warning',
+  success: 'text-success',
+  danger: 'text-danger',
   muted: 'text-foreground-muted',
 }
 

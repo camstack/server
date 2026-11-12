@@ -46,18 +46,8 @@ export {
   type CoverButtonHighlight,
 } from './cover-inline'
 export { CoverHeroCard } from './cover-hero-card'
-export {
-  VacuumInlineControl,
-  VacuumHeroCard,
-  vacuumStateMeta,
-  type VacuumStateMeta,
-} from './vacuum-control'
-export {
-  LawnMowerInlineControl,
-  LawnMowerHeroCard,
-  lawnMowerActivityMeta,
-  type LawnMowerActivityMeta,
-} from './lawn-mower-control'
+export { VacuumInlineControl } from './vacuum-control'
+export { LawnMowerInlineControl } from './lawn-mower-control'
 export {
   ValveInlineControl,
   ValveHeroCard,
@@ -108,7 +98,11 @@ export {
   ThermostatInlineControl,
   ClimateCardHero,
   MediaPlayerInlineControl,
-  MediaPlayerHeroCard,
+  ApplianceCardHero,
+  DishwasherCardHero,
+  MediaCardHero,
+  VacuumCardHero,
+  MowerCardHero,
   AlarmPanelInlineControl,
   AlarmHeroCard,
   ScriptInlineControl,

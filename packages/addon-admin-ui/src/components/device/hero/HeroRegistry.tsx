@@ -102,7 +102,7 @@ const HERO_REGISTRY: Readonly<Partial<Record<DeviceType, HeroComponent>>> = {
   // (version transition + Install action).
   [DeviceType.Update]: ControlHero,
   // Robot vacuum / lawn mower: ControlHero renders the registry-backed
-  // VacuumHeroCard / LawnMowerHeroCard (lifecycle actions + battery).
+  // device card (VacuumCardHero / MowerCardHero).
   [DeviceType.Vacuum]: ControlHero,
   [DeviceType.LawnMower]: ControlHero,
   // Weather / image: ControlHero renders the registry-backed
@@ -113,11 +113,11 @@ const HERO_REGISTRY: Readonly<Partial<Record<DeviceType, HeroComponent>>> = {
   // Pet fountain: ControlHero renders the registry-backed PetFountainHeroCard
   // (tank level, water drunk, pump controls).
   [DeviceType.PetFountain]: ControlHero,
-  // Dishwasher: ControlHero renders the registry-backed DishwasherHeroCard
-  // (program state + start/stop/pause).
+  // Dishwasher: ControlHero renders the registry-backed device card
+  // (DishwasherCardHero: programs + start/pause/stop, or the supply-fed card).
   [DeviceType.Dishwasher]: ControlHero,
-  // Washer / dryer: ControlHero renders the registry-backed ApplianceHeroCard
-  // (running state, dwell, live power; the drum turns only while running).
+  // Washer / dryer: ControlHero renders the registry-backed device card
+  // (ApplianceCardHero: running state, since, the supply switch).
   [DeviceType.Washer]: ControlHero,
   [DeviceType.Dryer]: ControlHero,
 }

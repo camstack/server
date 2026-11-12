@@ -30,9 +30,10 @@ const PLUG = {
   'deviceManager.getDevice': { id: 7, name: 'Heater plug', type: DeviceType.Switch },
   'deviceManager.getBindings': { entries: [{ capName: 'switch' }] },
 }
-const WASHER = {
-  'deviceManager.getDevice': { id: 7, name: 'Washer', type: 'washer' },
-  'deviceManager.getBindings': { entries: [{ capName: 'running-state' }] },
+// A lock has no device card yet, so the module still draws its hero.
+const LOCK = {
+  'deviceManager.getDevice': { id: 7, name: 'Front door', type: 'lock' },
+  'deviceManager.getBindings': { entries: [{ capName: 'lock' }] },
 }
 
 describe('DeviceDetailModule — showName reaches whichever card draws the device', () => {
@@ -65,7 +66,7 @@ describe('DeviceDetailModule — showName reaches whichever card draws the devic
     render(
       <DeviceDetailModule
         deviceId={7}
-        trpcClient={clientAnswering(WASHER)}
+        trpcClient={clientAnswering(LOCK)}
         theme="light"
         locale="en"
         showName={false}

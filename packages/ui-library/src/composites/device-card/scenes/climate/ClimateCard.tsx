@@ -11,6 +11,7 @@ import { MenuButton } from '../../parts/MenuButton'
 import { type DialRange, RangeDial } from '../../parts/RangeDial'
 import { ValueChip } from '../../parts/ValueChip'
 import { DeviceCard } from '../../shell/DeviceCard'
+import { cardToneClass } from '../../shell/Corner'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import {
   type ClimateActivity,
@@ -27,19 +28,13 @@ export interface ClimateCardProps {
   readonly showName?: boolean
 }
 
-const TONE: Readonly<Record<ClimateActivity, CardTone>> = {
+const TONE: Readonly<Record<ClimateActivity, Exclude<CardTone, 'success' | 'danger'>>> = {
   off: 'muted',
   idle: 'muted',
   unknown: 'muted',
   cool: 'info',
   heat: 'primary',
   window: 'warning',
-}
-const TEXT: Readonly<Record<CardTone, string>> = {
-  muted: 'text-foreground-muted',
-  info: 'text-info',
-  primary: 'text-primary',
-  warning: 'text-warning',
 }
 
 const degrees = (value: number, digits: number): string => `${value.toFixed(digits)}°`
@@ -131,7 +126,10 @@ export function ClimateCard({
           </span>
         )}
       </div>
-      <ClimateRoleGlyph role={model.role} className={cn('absolute bottom-1', TEXT[tone])} />
+      <ClimateRoleGlyph
+        role={model.role}
+        className={cn('absolute bottom-1', cardToneClass(tone))}
+      />
     </>
   )
   const image = (

@@ -1,10 +1,12 @@
 import { type ReactElement, type ReactNode, useState } from 'react'
+import { cn } from '../../../lib/cn'
 import { useUiText } from '../../../contexts/ui-text'
 import { ButtonGroup } from '../parts/ButtonGroup'
 import { CardButton } from '../parts/CardButton'
 import { EventList } from '../parts/EventList'
 import type { CardHistory, CardRemoteKey, CardState } from './model'
 import { cardToneClass } from './Corner'
+import { remoteKeyIconOnly, remotePadRows } from './remote-keys'
 
 interface BarProps {
   readonly onBack: () => void
@@ -95,33 +97,83 @@ export interface RemoteViewProps {
   readonly onBack: () => void
 }
 
-/** Replaces the scene: the keys the device's remote declares. */
+interface RemoteKeyButtonProps {
+  readonly k: CardRemoteKey
+  readonly flashed: boolean
+  readonly onPress: (id: string) => void
+  readonly onFlashEnd: () => void
+  readonly pos?: string
+}
+
+function RemoteKeyButton({
+  k,
+  flashed,
+  onPress,
+  onFlashEnd,
+  pos,
+}: RemoteKeyButtonProps): ReactElement {
+  const iconOnly = remoteKeyIconOnly(k)
+  return (
+    <CardButton
+      glyph={k.glyph}
+      tone={flashed ? 'on' : 'default'}
+      className={cn(flashed && 'dc-flash', pos !== undefined && 'min-h-0')}
+      data-pos={pos}
+      data-testid={`dc-remote-key-${k.id}`}
+      {...(iconOnly ? { 'aria-label': k.label, title: k.label } : {})}
+      onClick={() => onPress(k.id)}
+      onAnimationEnd={onFlashEnd}
+    >
+      {iconOnly ? null : k.label}
+    </CardButton>
+  )
+}
+
+/** Replaces the scene: the keys the device's remote declares, as a pad when it has one. */
 export function RemoteView({ keys, onKey, onBack }: RemoteViewProps): ReactElement {
   const t = useUiText()
   const [flashed, setFlashed] = useState<string | null>(null)
+  const rows = remotePadRows(keys)
+  const button = (k: CardRemoteKey, pos?: string): ReactElement => (
+    <RemoteKeyButton
+      key={k.id}
+      k={k}
+      pos={pos}
+      flashed={flashed === k.id}
+      onPress={(id) => {
+        setFlashed(id)
+        onKey(id)
+      }}
+      onFlashEnd={() => setFlashed(null)}
+    />
+  )
   return (
     <div
       data-testid="dc-remote-view"
       className="flex flex-col gap-3 rounded-2xl border border-border bg-background-elevated p-3"
     >
       <OverlayBar onBack={onBack}>{t('uiLibrary.deviceCard.remote', 'Remote')}</OverlayBar>
-      <div className="flex flex-wrap justify-center gap-2">
-        {keys.map((k) => (
-          <CardButton
-            key={k.id}
-            glyph={k.glyph}
-            tone={flashed === k.id ? 'on' : 'default'}
-            className={flashed === k.id ? 'dc-flash' : undefined}
-            onClick={() => {
-              setFlashed(k.id)
-              onKey(k.id)
-            }}
-            onAnimationEnd={() => setFlashed(null)}
-          >
-            {k.label}
-          </CardButton>
-        ))}
-      </div>
+      {rows === null ? (
+        <div className="flex flex-wrap justify-center gap-2">{keys.map((k) => button(k))}</div>
+      ) : (
+        <div className="grid justify-items-center gap-2.5" data-testid="dc-remote-pad">
+          {rows.map((row) =>
+            row.kind === 'dpad' ? (
+              <div key="dpad" className="dc-remote-dpad">
+                {row.keys.map((k) => button(k, k.id))}
+              </div>
+            ) : row.kind === 'pairs' ? (
+              <div key="pairs" className="grid grid-cols-2 gap-x-7 gap-y-2">
+                {row.keys.map((k) => button(k))}
+              </div>
+            ) : (
+              <div key={row.keys[0]?.id ?? 'row'} className="flex flex-wrap justify-center gap-2">
+                {row.keys.map((k) => button(k))}
+              </div>
+            ),
+          )}
+        </div>
+      )}
       <p className="text-center text-xs text-foreground-muted">
         {t('uiLibrary.deviceCard.remoteNote', 'The keys are the ones the device declares.')}
       </p>

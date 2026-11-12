@@ -1,11 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import {
-  LawnMowerInlineControl,
-  LawnMowerHeroCard,
-  lawnMowerActivityMeta,
-} from '../lawn-mower-control'
+import { LawnMowerInlineControl } from '../lawn-mower-control'
 
 const startMowing = vi.fn()
 const pause = vi.fn()
@@ -38,14 +34,6 @@ beforeEach(() => {
   }
 })
 
-describe('lawnMowerActivityMeta', () => {
-  it('maps activities to labels', () => {
-    expect(lawnMowerActivityMeta('mowing').label).toBe('Mowing')
-    expect(lawnMowerActivityMeta('docked').label).toBe('Docked')
-    expect(lawnMowerActivityMeta(undefined).label).toBe('Unknown')
-  })
-})
-
 describe('LawnMowerInlineControl', () => {
   it('renders mow/pause/dock buttons + battery', () => {
     render(<LawnMowerInlineControl trpc={trpc} deviceId={1} features={[]} />)
@@ -75,20 +63,5 @@ describe('LawnMowerInlineControl', () => {
     mockResult = { ...mockResult, available: false }
     render(<LawnMowerInlineControl trpc={trpc} deviceId={1} features={[]} />)
     expect((screen.getByLabelText('Mow') as HTMLButtonElement).disabled).toBe(true)
-  })
-})
-
-describe('LawnMowerHeroCard', () => {
-  it('renders activity label + actions', () => {
-    render(<LawnMowerHeroCard trpc={trpc} deviceId={1} features={[]} />)
-    expect(screen.getByText('Mowing')).toBeTruthy()
-    expect(screen.getByLabelText('Start mowing')).toBeTruthy()
-    expect(screen.getByLabelText('Dock')).toBeTruthy()
-  })
-
-  it('renders nothing when cap is undefined', () => {
-    mockResult = { cap: undefined, slice: undefined, available: false }
-    const { container } = render(<LawnMowerHeroCard trpc={trpc} deviceId={1} features={[]} />)
-    expect(container.firstChild).toBeNull()
   })
 })

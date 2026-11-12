@@ -29,6 +29,8 @@ export interface MenuButtonProps {
    * `inline`.
    */
   readonly layout?: 'inline' | 'stacked'
+  /** A fixed word on the trigger ("Source") in place of the current choice. */
+  readonly triggerLabel?: string
 }
 
 /** A button that names the current choice and opens the list of the others. */
@@ -40,6 +42,7 @@ export function MenuButton({
   disabled,
   testId,
   layout = 'inline',
+  triggerLabel,
 }: MenuButtonProps): ReactElement {
   const gating = useCardGating()
   const current = options.find((o) => o.id === value) ?? null
@@ -57,9 +60,19 @@ export function MenuButton({
           layout === 'stacked' ? 'flex-col gap-0.5 whitespace-normal leading-tight' : undefined,
         )}
       >
-        {current?.glyph === undefined ? null : <CardIcon glyph={current.glyph} />}
-        <span className={layout === 'stacked' ? 'text-center' : 'min-w-0 truncate'}>
-          {current?.label ?? value ?? ariaLabel}
+        {triggerLabel !== undefined || current?.glyph === undefined ? null : (
+          <CardIcon glyph={current.glyph} />
+        )}
+        <span
+          className={
+            layout === 'stacked'
+              ? 'text-center'
+              : triggerLabel === undefined
+                ? 'min-w-0 truncate'
+                : 'whitespace-nowrap'
+          }
+        >
+          {triggerLabel ?? current?.label ?? value ?? ariaLabel}
         </span>
         <CardIcon glyph="menu" className="h-3 w-3" />
       </DropdownTrigger>

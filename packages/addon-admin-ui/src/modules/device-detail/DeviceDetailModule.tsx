@@ -38,7 +38,8 @@ function useOwnQueryClient(lent: QueryClient | undefined): QueryClient {
 }
 
 /**
- * The device card (plug, climate, cover, light, fan, heater) of a device the card model already draws. It
+ * The device card (plug, climate, cover, light, fan, heater, washer, dryer,
+ * dishwasher, media player, vacuum, mower) of a device the card model already draws. It
  * carries its own history and remote views, so the module adds nothing around it.
  */
 function CardBody({

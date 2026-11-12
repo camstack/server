@@ -7,7 +7,7 @@ import type { CardGlyph } from '../icons'
 import type { CardEvent } from '../parts/EventList'
 
 export type CardOrientation = 'vertical' | 'horizontal'
-export type CardTone = 'primary' | 'info' | 'warning' | 'muted'
+export type CardTone = 'primary' | 'info' | 'warning' | 'success' | 'danger' | 'muted'
 
 export interface CardPowerDetail {
   readonly id: string

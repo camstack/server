@@ -31,10 +31,14 @@ import { ControlPanel } from './control-panel'
 import type { DeviceControlProps } from './control-registry'
 import { ConnectedClimateCard } from '../device-card/connected/ConnectedClimateCard'
 import { ConnectedPlugCard } from '../device-card/connected/ConnectedPlugCard'
+import {
+  ConnectedDeviceCard,
+  type ConnectedCardKind,
+  useConnectedCardKind,
+} from '../device-card/connected/ConnectedDeviceCard'
 export { LockHeroCard } from './lock-hero-card'
 export { LightHeroCard } from './light-hero-card'
 export { FanHeroCard } from './fan-hero-card'
-export { MediaPlayerHeroCard } from './media-player-hero-card'
 // AlarmPanelInlineControl is the row-sized compact strip; AlarmHeroCard the
 // full glyph+label+segments surface. Both live in alarm-hero-card.tsx and
 // subscribe to the cap once (no double useDeviceCapability).
@@ -287,6 +291,47 @@ export function ClimateCardHero({ deviceId, optimistic }: DeviceControlProps): R
   return <ConnectedClimateCard deviceId={deviceId} optimistic={optimistic} />
 }
 
+/**
+ * The card of a device whose scene depends on what it binds (a dishwasher
+ * that speaks for itself, or one known only by its supply): drawn only when
+ * the bindings name one of `kinds`, nothing while they are still unknown.
+ */
+function ResolvedCardHero({
+  deviceId,
+  optimistic,
+  kinds,
+}: DeviceControlProps & { readonly kinds: readonly ConnectedCardKind[] }): ReactNode {
+  const kind = useConnectedCardKind(deviceId)
+  if (kind === null || kind === 'pending' || !kinds.includes(kind)) return null
+  return <ConnectedDeviceCard kind={kind} deviceId={deviceId} optimistic={optimistic} />
+}
+
+const APPLIANCE_KINDS: readonly ConnectedCardKind[] = ['appliance']
+const DISHWASHER_KINDS: readonly ConnectedCardKind[] = ['dishwasher', 'appliance']
+const MEDIA_KINDS: readonly ConnectedCardKind[] = ['media']
+const VACUUM_KINDS: readonly ConnectedCardKind[] = ['vacuum']
+const MOWER_KINDS: readonly ConnectedCardKind[] = ['mower']
+
+export function ApplianceCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={APPLIANCE_KINDS} />
+}
+
+export function DishwasherCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={DISHWASHER_KINDS} />
+}
+
+export function MediaCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={MEDIA_KINDS} />
+}
+
+export function VacuumCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={VACUUM_KINDS} />
+}
+
+export function MowerCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={MOWER_KINDS} />
+}
+
 // ── MediaPlayer ───────────────────────────────────────────────────────────────
 
 function useMediaPlayerCapGuard(trpc: DeviceControlProps['trpc'], deviceId: number): boolean {
@@ -318,9 +363,7 @@ export function MediaPlayerInlineControl({
   )
 }
 
-// MediaPlayerHeroCard lives in media-player-hero-card.tsx (now-playing +
-// lucide transport + seek/volume GripTracks, Spec §3) and is re-exported
-// above — it supersedes the panel-stack hero.
+// The media player's hero is the device card (`MediaCardHero` above).
 
 // ── AlarmPanel ──────────────────────────────────────────────────────────────
 // AlarmInlineControl (row-sized segment strip) and AlarmHeroCard (full

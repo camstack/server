@@ -1,8 +1,9 @@
 /**
  * Dishwasher controls for a `DeviceType.Dishwasher` device.
  *
- * Reads the `dishwasher` cap status slice and renders inline + hero surfaces
- * mirroring vacuum-control / pet-feeder patterns.
+ * Reads the `dishwasher` cap status slice and renders the device-list row
+ * (`DishwasherInlineControl`). The device-detail hero is the device card
+ * (`composites/device-card`, `ConnectedDishwasherCard`).
  *
  * Salt and rinse aid are not here: they are items of the device's `consumables`
  * cap, shown by the page's Consumables section like every device's (D915).
@@ -12,11 +13,9 @@
  * box or a zero. It also does not echo a command before the appliance confirms it: the
  * slice moves when the appliance says so.
  */
-import { Checkbox } from '../../primitives/checkbox'
-import { Select } from '../../primitives/select'
 import { useUiText, defaultUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
-import { AlertTriangle, DoorOpen, Pause, Play, Power, Square, Timer, Waves } from 'lucide-react'
+import { DoorOpen, Pause, Play, Timer } from 'lucide-react'
 import type { DishwasherOperationState, DishwasherStatus } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { cn } from '../../lib/cn'
@@ -127,21 +126,6 @@ export function featureLabel(key: string): string {
   const short = key.split('.').pop() ?? key
   return short.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
 }
-
-/**
- * Salt and rinse aid are consumable items (D915). Their events must not
- * reappear on the hero — the Consumables section is the only surface.
- */
-export function isConsumableDishwasherEvent(event: string): boolean {
-  const short = (event.split('.').pop() ?? event).toLowerCase()
-  return short.includes('salt') || short.includes('rinse')
-}
-
-/** Raised events the hero may name. Consumable events are dropped. */
-export function visibleDishwasherEvents(events: readonly string[]): readonly string[] {
-  return events.filter((event) => !isConsumableDishwasherEvent(event))
-}
-
 /** Whole seconds as a short duration: `1 h 24 min`, `42 min`, `30 s`. */
 export function formatDuration(seconds: number, t: UiTextFn = defaultUiText): string {
   if (seconds < 60) return t('uiLibrary.dishwasher.durationSeconds', '{{n}} s', { n: seconds })
@@ -205,39 +189,7 @@ function DishwasherIconButton({
   )
 }
 
-function DishwasherGraphic({
-  running,
-  progressPercent,
-}: {
-  readonly running: boolean
-  readonly progressPercent: number | null
-}): ReactNode {
-  const pct =
-    progressPercent != null ? Math.max(0, Math.min(100, progressPercent)) : running ? 40 : 0
-  return (
-    <div
-      aria-hidden="true"
-      className="relative w-28 h-36 rounded border-2 border-border bg-gradient-to-b from-surface-hover to-surface overflow-hidden flex-shrink-0"
-    >
-      <div
-        className={cn(
-          'absolute inset-x-0 bottom-0 bg-primary/25 transition-[height] duration-500',
-          running && 'animate-pulse',
-        )}
-        style={{ height: `${pct}%` }}
-      />
-      <div className="absolute inset-0 flex items-center justify-center text-foreground-subtle">
-        <Waves className="h-10 w-10 opacity-70" />
-      </div>
-    </div>
-  )
-}
-
-function DishwasherPanel({
-  trpc,
-  deviceId,
-  layout,
-}: DeviceControlProps & { readonly layout: 'compact' | 'full' }): ReactNode {
+function DishwasherPanel({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDishwasher(trpc, deviceId)
 
@@ -248,7 +200,6 @@ function DishwasherPanel({
   const link = display.availability === 'available'
   // Nothing is actionable while the appliance is unreachable or undecodable.
   const busy = !available || !link
-  const optionTogglesLocked = display.childLock === true
   const meta = dishwasherHeadline(display, t)
   const running = display.operationState === 'Run'
   const paused = display.operationState === 'Pause'
@@ -259,304 +210,58 @@ function DishwasherPanel({
     void fn()
   }
 
-  if (layout === 'compact') {
-    return (
-      <div className="inline-flex items-center gap-1.5 max-w-full">
-        {display.doorOpen === true && (
-          <span
-            className="inline-flex text-warning shrink-0"
-            title={t('uiLibrary.dishwasher.doorOpen', 'Door open')}
-            aria-label={t('uiLibrary.dishwasher.doorOpen', 'Door open')}
-          >
-            <DoorOpen className="h-3.5 w-3.5" />
-          </span>
-        )}
-        <span className={cn('text-xs font-medium tabular-nums shrink-0', meta.tone)}>
-          {meta.label}
-        </span>
-        {display.program != null && (
-          <span
-            className="text-xs text-foreground-subtle truncate max-w-[7rem]"
-            title={display.program}
-          >
-            {featureLabel(display.program)}
-          </span>
-        )}
-        {display.remaining != null && (
-          <span className="inline-flex items-center gap-0.5 text-xs text-foreground-subtle tabular-nums shrink-0">
-            <Timer className="h-3 w-3" />
-            {formatDuration(display.remaining, t)}
-          </span>
-        )}
-        <DishwasherIconButton
-          label={t('uiLibrary.dishwasher.start', 'Start')}
-          busy={busy || !startable}
-          active={running}
-          onClick={() => press(() => cap.start({}))}
-        >
-          <Play className="h-3 w-3" />
-        </DishwasherIconButton>
-        <DishwasherIconButton
-          label={
-            paused
-              ? t('uiLibrary.dishwasher.resume', 'Resume')
-              : t('uiLibrary.dishwasher.pause', 'Pause')
-          }
-          busy={busy || !(running || paused)}
-          active={paused}
-          onClick={() => press(() => (paused ? cap.resume({}) : cap.pause({})))}
-        >
-          <Pause className="h-3 w-3" />
-        </DishwasherIconButton>
-      </div>
-    )
-  }
-
-  const programs = display.availablePrograms
-
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4">
-      <div className="flex items-start gap-4">
-        <DishwasherGraphic running={running} progressPercent={display.progress} />
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={cn('text-3xl font-semibold', meta.tone)}>{meta.label}</span>
-            {display.powerOn === false && (
-              <span className="text-xs font-medium text-foreground-subtle">
-                {t('uiLibrary.dishwasher.powerOff', 'Power off')}
-              </span>
-            )}
-          </div>
-          {display.program != null && (
-            <span className="text-sm text-foreground-subtle" title={display.program}>
-              {featureLabel(display.program)}
-            </span>
-          )}
-          {display.remaining != null && (
-            <span className="inline-flex items-center gap-1 text-sm text-foreground-subtle tabular-nums">
-              <Timer className="h-3.5 w-3.5" />
-              {t('uiLibrary.dishwasher.remaining', '{{time}} left', {
-                time: formatDuration(display.remaining, t),
-              })}
-            </span>
-          )}
-          {display.delayedStart != null && display.delayedStart > 0 && (
-            <span className="text-xs text-foreground-subtle tabular-nums">
-              {t('uiLibrary.dishwasher.startsIn', 'Starts in {{time}}', {
-                time: formatDuration(display.delayedStart, t),
-              })}
-            </span>
-          )}
-          {display.progress != null && (
-            <div className="flex items-center gap-2">
-              <div className="h-1.5 flex-1 rounded bg-surface-hover overflow-hidden">
-                <div
-                  className="h-full bg-primary transition-[width] duration-500"
-                  style={{
-                    width: `${Math.max(0, Math.min(100, display.progress))}%`,
-                  }}
-                />
-              </div>
-              <span className="tabular-nums text-xs text-foreground-subtle">
-                {Math.round(display.progress)}%
-              </span>
-            </div>
-          )}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            {display.doorOpen === true && (
-              <span className="inline-flex items-center gap-1 text-xs text-warning">
-                <DoorOpen className="h-3.5 w-3.5" />
-                {t('uiLibrary.dishwasher.doorOpen', 'Door open')}
-              </span>
-            )}
-            {visibleDishwasherEvents(display.activeEvents).map((event) => (
-              <span key={event} className="text-xs text-warning" title={event}>
-                {featureLabel(event)}
-              </span>
-            ))}
-          </div>
-          {display.operationState === 'Error' && (
-            <div className="inline-flex items-center gap-1 text-xs text-danger">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              <span>
-                {display.errorLabel != null
-                  ? featureLabel(display.errorLabel)
-                  : display.errorCode != null
-                    ? t('uiLibrary.dishwasher.errorCode', 'Error {{code}}', {
-                        code: display.errorCode,
-                      })
-                    : t('uiLibrary.dishwasher.op.error', 'Error')}
-              </span>
-            </div>
-          )}
-          <div className="flex flex-wrap items-center gap-2">
-            <DishwasherIconButton
-              label={t('uiLibrary.dishwasher.start', 'Start')}
-              busy={busy || !startable}
-              active={running}
-              onClick={() => press(() => cap.start({}))}
-            >
-              <Play className="h-4 w-4" />
-            </DishwasherIconButton>
-            <DishwasherIconButton
-              label={
-                paused
-                  ? t('uiLibrary.dishwasher.resume', 'Resume')
-                  : t('uiLibrary.dishwasher.pause', 'Pause')
-              }
-              busy={busy || !(running || paused)}
-              active={paused}
-              onClick={() => press(() => (paused ? cap.resume({}) : cap.pause({})))}
-            >
-              <Pause className="h-4 w-4" />
-            </DishwasherIconButton>
-            <DishwasherIconButton
-              label={t('uiLibrary.dishwasher.stop', 'Stop')}
-              busy={busy || !(running || paused)}
-              active={false}
-              onClick={() => press(() => cap.stop({}))}
-            >
-              <Square className="h-3.5 w-3.5" />
-            </DishwasherIconButton>
-            <DishwasherIconButton
-              label={t('uiLibrary.dishwasher.power', 'Power')}
-              busy={busy || display.powerOn === null}
-              active={display.powerOn === true}
-              onClick={() => {
-                const next = display.powerOn !== true
-                press(() => cap.setPower({ on: next }))
-              }}
-            >
-              <Power className="h-4 w-4" />
-            </DishwasherIconButton>
-          </div>
-        </div>
-      </div>
-
-      {programs.length > 0 && (
-        <label className="flex items-center gap-2 text-xs text-foreground-subtle">
-          <span className="w-16 shrink-0">{t('uiLibrary.dishwasher.program', 'Program')}</span>
-          <Select
-            aria-label={t('uiLibrary.dishwasher.program', 'Program')}
-            value={display.selectedProgram ?? ''}
-            disabled={busy}
-            onChange={(e) => {
-              const program = e.target.value
-              if (!program) return
-              void cap.setProgram({ program })
-            }}
-            onClick={(e) => {
-              e.stopPropagation()
-            }}
-            className="flex-1 rounded border border-border bg-surface px-2 py-1 text-foreground disabled:opacity-50"
-          >
-            {display.selectedProgram == null && <option value="">—</option>}
-            {programs.map((p) => (
-              <option key={p} value={p}>
-                {featureLabel(p)}
-              </option>
-            ))}
-          </Select>
-        </label>
+    <div className="inline-flex items-center gap-1.5 max-w-full">
+      {display.doorOpen === true && (
+        <span
+          className="inline-flex text-warning shrink-0"
+          title={t('uiLibrary.dishwasher.doorOpen', 'Door open')}
+          aria-label={t('uiLibrary.dishwasher.doorOpen', 'Door open')}
+        >
+          <DoorOpen className="h-3.5 w-3.5" />
+        </span>
       )}
-
-      <div className="flex flex-wrap gap-4 text-xs">
-        <ToggleRow
-          label={t('uiLibrary.dishwasher.halfLoad', 'Half load')}
-          checked={display.halfLoad}
-          shown={link}
-          busy={busy || optionTogglesLocked}
-          onChange={(on) => void cap.setHalfLoad({ on })}
-        />
-        <ToggleRow
-          label={t('uiLibrary.dishwasher.hygienePlus', 'Hygiene plus')}
-          checked={display.hygienePlus}
-          shown={link}
-          busy={busy || optionTogglesLocked}
-          onChange={(on) => void cap.setHygienePlus({ on })}
-        />
-        <ToggleRow
-          label={t('uiLibrary.dishwasher.extraDry', 'Extra dry')}
-          checked={display.extraDry}
-          shown={link}
-          busy={busy || optionTogglesLocked}
-          onChange={(on) => void cap.setExtraDry({ on })}
-        />
-        <ToggleRow
-          label={t('uiLibrary.dishwasher.intensiveZone', 'Intensive zone')}
-          checked={display.intensiveZone}
-          shown={link}
-          busy={busy || optionTogglesLocked}
-          onChange={(on) => void cap.setIntensiveZone({ on })}
-        />
-        <ToggleRow
-          label={t('uiLibrary.dishwasher.varioSpeedPlus', 'VarioSpeed+')}
-          checked={display.varioSpeedPlus}
-          shown={link}
-          busy={busy || optionTogglesLocked}
-          onChange={(on) => void cap.setVarioSpeedPlus({ on })}
-        />
-        <ToggleRow
-          label={t('uiLibrary.dishwasher.childLock', 'Child lock')}
-          checked={display.childLock}
-          shown={link}
-          busy={busy}
-          onChange={(on) => void cap.setChildLock({ on })}
-        />
-      </div>
+      <span className={cn('text-xs font-medium tabular-nums shrink-0', meta.tone)}>
+        {meta.label}
+      </span>
+      {display.program != null && (
+        <span
+          className="text-xs text-foreground-subtle truncate max-w-[7rem]"
+          title={display.program}
+        >
+          {featureLabel(display.program)}
+        </span>
+      )}
+      {display.remaining != null && (
+        <span className="inline-flex items-center gap-0.5 text-xs text-foreground-subtle tabular-nums shrink-0">
+          <Timer className="h-3 w-3" />
+          {formatDuration(display.remaining, t)}
+        </span>
+      )}
+      <DishwasherIconButton
+        label={t('uiLibrary.dishwasher.start', 'Start')}
+        busy={busy || !startable}
+        active={running}
+        onClick={() => press(() => cap.start({}))}
+      >
+        <Play className="h-3 w-3" />
+      </DishwasherIconButton>
+      <DishwasherIconButton
+        label={
+          paused
+            ? t('uiLibrary.dishwasher.resume', 'Resume')
+            : t('uiLibrary.dishwasher.pause', 'Pause')
+        }
+        busy={busy || !(running || paused)}
+        active={paused}
+        onClick={() => press(() => (paused ? cap.resume({}) : cap.pause({})))}
+      >
+        <Pause className="h-3 w-3" />
+      </DishwasherIconButton>
     </div>
   )
 }
 
-/**
- * One boolean setting. `checked === null` is "the appliance has not said": on a reachable
- * appliance that means it does not offer the setting (hidden); on an unreachable one the
- * setting is shown but disabled and marked unknown — never as an unchecked box.
- */
-function ToggleRow({
-  label,
-  checked,
-  shown,
-  busy,
-  onChange,
-}: {
-  readonly label: string
-  readonly checked: boolean | null
-  /** True while the link is up and the appliance is decodable. */
-  readonly shown: boolean
-  readonly busy: boolean
-  readonly onChange: (on: boolean) => void
-}): ReactNode {
-  const t = useUiText()
-  if (checked === null && shown) return null
-  return (
-    <label className="inline-flex items-center gap-2 cursor-pointer">
-      <Checkbox
-        checked={checked === true}
-        aria-checked={checked === null ? 'mixed' : checked}
-        disabled={busy || checked === null}
-        onChange={(e) => {
-          onChange(e.target.checked)
-        }}
-        onClick={(e) => {
-          e.stopPropagation()
-        }}
-        className="rounded border-border"
-      />
-      <span>{label}</span>
-      {checked === null && (
-        <span className="text-foreground-subtle">
-          {t('uiLibrary.dishwasher.unknownValue', '—')}
-        </span>
-      )}
-    </label>
-  )
-}
-
 export function DishwasherInlineControl(props: DeviceControlProps): ReactNode {
-  return <DishwasherPanel {...props} layout="compact" />
-}
-
-export function DishwasherHeroCard(props: DeviceControlProps): ReactNode {
-  return <DishwasherPanel {...props} layout="full" />
+  return <DishwasherPanel {...props} />
 }

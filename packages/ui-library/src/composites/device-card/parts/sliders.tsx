@@ -83,20 +83,36 @@ function GatedSlider({
 const fraction = (value: number, min: number, max: number): number =>
   max === min ? 0 : Math.min(1, Math.max(0, (value - min) / (max - min)))
 
+/** What a bottom-zone track may add around itself. */
+export interface HorizontalSliderExtras {
+  /** Drawn before the track (its name, or the elapsed time). */
+  readonly label?: ReactNode
+  /** Drawn after the track in the muted tone: a bound, not the value (a track's duration). */
+  readonly trailing?: ReactNode
+  /** The track spans the whole zone instead of stopping at a comfortable width. */
+  readonly fill?: boolean
+}
+
 /** A level in the scene's bottom zone: its name, the track, the value. */
-export function HorizontalSlider(
-  props: CardSliderProps & { readonly label?: ReactNode },
-): ReactElement {
+export function HorizontalSlider(props: CardSliderProps & HorizontalSliderExtras): ReactElement {
   const draft = useDraft(props)
   const shownLabel = props.valueLabel?.(draft.shown) ?? null
   return (
-    <label className="flex w-full max-w-72 items-center gap-2 text-xs text-foreground-muted">
+    <label
+      className={cn(
+        'flex w-full items-center gap-2 text-xs text-foreground-muted',
+        props.fill === true ? null : 'max-w-72',
+      )}
+    >
       {props.label === undefined ? null : <span className="shrink-0">{props.label}</span>}
       <GatedSlider vertical={false} props={props} draft={draft} />
       {shownLabel === null ? null : (
         <output className="w-10 shrink-0 text-right font-semibold tabular-nums text-primary">
           {shownLabel}
         </output>
+      )}
+      {props.trailing === undefined ? null : (
+        <span className="shrink-0 tabular-nums">{props.trailing}</span>
       )}
     </label>
   )

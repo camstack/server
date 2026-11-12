@@ -17,7 +17,7 @@ describe('DEVICE_TYPE_CONTROL', () => {
     const dummy = DEVICE_TYPE_CONTROL[DeviceType.Camera]
     for (const t of [DeviceType.Washer, DeviceType.Dryer]) {
       expect(DEVICE_TYPE_CONTROL[t].HeroCard).not.toBe(dummy.HeroCard)
-      expect(DEVICE_TYPE_CONTROL[t].HeroCard.name).toBe('ApplianceHeroCard')
+      expect(DEVICE_TYPE_CONTROL[t].HeroCard.name).toBe('ApplianceCardHero')
     }
   })
 

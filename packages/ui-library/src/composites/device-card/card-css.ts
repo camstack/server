@@ -10,7 +10,7 @@ export const DEVICE_CARD_CSS = `
 .dc-left{grid-area:left;justify-self:end}
 .dc-right{grid-area:right;justify-self:start;width:100%;max-width:min(100%,7rem)}
 .dc-img{grid-area:img}
-.dc-bottom{grid-area:bottom}
+.dc-bottom{grid-area:bottom;justify-self:stretch}
 .dc-blocked .dc-gated{opacity:.45;pointer-events:none}
 .dc-dial{touch-action:none;cursor:grab}
 .dc-dial[aria-disabled="true"]{cursor:default}
@@ -87,5 +87,42 @@ export const DEVICE_CARD_CSS = `
 @keyframes dc-pulse{50%{opacity:.55}}
 .dc-cover .dc-grip{cursor:grab;touch-action:none;outline:none}
 .dc-cover .dc-grip:focus-visible .dc-pill{stroke:currentColor;stroke-width:2}
-@media (prefers-reduced-motion:reduce){.dc-fx *,.dc-fx{animation:none!important}.dc-fx-p,.dc-fx-air,.dc-fx-wisps,.dc-fx-draft,.dc-fx-breeze{display:none}.dc-fan *,.dc-fan,.dc-heater *{animation:none!important}}
+.dc-appl .dc-drum{transform-box:view-box;transform-origin:60px 74px}
+.dc-appl[data-kind="dish"] .dc-drum{transform-origin:60px 106px}
+.dc-appl .dc-ring{transition:stroke-dasharray .4s}
+.dc-appl[data-run="true"] .dc-drum{animation:dc-spin 2.4s linear infinite}
+.dc-appl[data-kind="dish"][data-run="true"] .dc-drum{animation:dc-sweep 1.2s ease-in-out infinite}
+@keyframes dc-sweep{50%{transform:scaleX(.25)}}
+.dc-robot .dc-r-mover{transform:translate(52px,64px)}
+.dc-robot .dc-r-turret,.dc-robot .dc-r-bot,.dc-robot .dc-r-ping,.dc-robot .dc-r-bolt{transform-box:fill-box;transform-origin:center}
+.dc-robot .dc-r-ping{opacity:0}
+.dc-robot .dc-r-zzz,.dc-robot .dc-r-bolt{display:none}
+.dc-robot[data-vst="clean"] .dc-r-mover{animation:dc-r-lanes 9s ease-in-out infinite}
+.dc-robot[data-vst="clean"] .dc-r-turret,.dc-robot[data-vst="ret"] .dc-r-turret{animation:dc-spin 3s linear infinite}
+.dc-robot[data-mow="true"][data-vst="clean"] .dc-r-turret{animation-duration:.5s}
+.dc-robot[data-vst="clean"] .dc-r-ping{animation:dc-r-ping 1.6s ease-out infinite}
+.dc-robot[data-vst="ret"] .dc-r-mover{animation:dc-r-home 3.2s ease-in-out forwards}
+.dc-robot[data-vst="pause"] .dc-r-mover{transform:translate(110px,64px)}
+.dc-robot[data-vst="sleep"] .dc-r-mover,.dc-robot[data-vst="charge"] .dc-r-mover{transform:translate(172px,65px)}
+.dc-robot[data-vst="sleep"] .dc-r-bot{animation:dc-r-breathe 3.4s ease-in-out infinite}
+.dc-robot[data-vst="sleep"] .dc-r-zzz{display:block}
+.dc-robot[data-vst="sleep"] .dc-r-zzz text{animation:dc-r-zzz 3.4s ease-in-out infinite}
+.dc-robot[data-vst="sleep"] .dc-r-zzz text:nth-child(2){animation-delay:.7s}.dc-robot[data-vst="sleep"] .dc-r-zzz text:nth-child(3){animation-delay:1.4s}
+.dc-robot[data-vst="charge"] .dc-r-bolt{display:block;animation:dc-r-spark 1s ease-in-out infinite}
+.dc-robot[data-vst="charge"] .dc-r-dock{animation:dc-r-pulse 1.2s ease-in-out infinite}
+.dc-robot[data-vst="err"] .dc-r-mover{transform:translate(100px,94px)}
+.dc-robot[data-vst="err"] .dc-r-bot{animation:dc-r-blink 1s steps(1) infinite}
+@keyframes dc-r-lanes{0%{transform:translate(40px,34px)}22%{transform:translate(165px,34px)}30%{transform:translate(165px,64px)}52%{transform:translate(40px,64px)}60%{transform:translate(40px,94px)}82%{transform:translate(165px,94px)}100%{transform:translate(40px,34px)}}
+@keyframes dc-r-ping{0%{transform:scale(.6);opacity:.5}100%{transform:scale(1.5);opacity:0}}
+@keyframes dc-r-home{0%{transform:translate(90px,64px)}100%{transform:translate(172px,65px)}}
+@keyframes dc-r-breathe{0%,100%{opacity:.78;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+@keyframes dc-r-zzz{0%{opacity:0;transform:translateY(3px)}30%{opacity:.85}100%{opacity:0;transform:translateY(-9px)}}
+@keyframes dc-r-spark{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.1)}}
+@keyframes dc-r-pulse{0%,100%{opacity:.35}50%{opacity:.85}}
+@keyframes dc-r-blink{0%,49%{opacity:1}50%,100%{opacity:.3}}
+.dc-remote-dpad{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,44px);gap:6px}
+.dc-remote-dpad>*{min-width:0;padding:0}
+.dc-remote-dpad [data-pos="up"]{grid-area:1/2}.dc-remote-dpad [data-pos="left"]{grid-area:2/1}.dc-remote-dpad [data-pos="ok"]{grid-area:2/2;border-radius:9999px}
+.dc-remote-dpad [data-pos="right"]{grid-area:2/3}.dc-remote-dpad [data-pos="down"]{grid-area:3/2}
+@media (prefers-reduced-motion:reduce){.dc-fx *,.dc-fx{animation:none!important}.dc-fx-p,.dc-fx-air,.dc-fx-wisps,.dc-fx-draft,.dc-fx-breeze{display:none}.dc-fan *,.dc-fan,.dc-heater *,.dc-appl *,.dc-robot *{animation:none!important}}
 `

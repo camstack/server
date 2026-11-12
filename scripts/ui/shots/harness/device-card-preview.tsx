@@ -1,6 +1,6 @@
 /**
  * Fixture page for the device card. Not an admin route: `ui:shots` mounts it for
- * the path `/device-card-preview`; `?type=plug|climate|climate-extra|cover|light|fan|heater` picks the scene (`climate-extra`: the
+ * the path `/device-card-preview`; `?type=plug|climate|climate-extra|cover|light|fan|heater|washer|dryer|dish|media|vacuum` picks the scene (`climate-extra`: the
  * variants real devices have and the mockup does not draw). Every
  * fixture carries the data of one variant of the approved mockup, so
  * `scripts/ui/card-parity.mjs` can shoot the two side by side. Strings are the
@@ -9,6 +9,8 @@
 import i18n from '@admin/i18n'
 import { bridgeUiText } from '@admin/i18n/ui-text-bridge'
 import {
+  ApplianceCard,
+  type ApplianceCardActions,
   ClimateCard,
   type ClimateCardActions,
   CoverCard,
@@ -19,10 +21,15 @@ import {
   type HeaterCardActions,
   LightCard,
   type LightCardActions,
+  type MediaCardActions,
+  MediaPlayerCard,
   PlugCard,
   type PlugCardActions,
+  RobotCard,
+  type RobotCardActions,
   UiTextProvider,
 } from '@camstack/ui-library'
+import { applianceFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/appliance'
 import {
   CLIMATE_EXTRA_FIXTURES,
   CLIMATE_FIXTURES,
@@ -31,7 +38,9 @@ import { coverFixtures } from '../../../../packages/ui-library/src/composites/de
 import { fanFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/fan'
 import { heaterFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/heater'
 import { lightFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/light'
+import { mediaFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/media'
 import { plugFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/plug'
+import { robotFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/robot'
 import { type ReactElement, type ReactNode, useMemo } from 'react'
 
 const noop = (): void => undefined
@@ -69,6 +78,79 @@ const FAN_ACTIONS: FanCardActions = {
   onAxis: noop,
 }
 const HEATER_ACTIONS: HeaterCardActions = PLUG_ACTIONS
+const APPLIANCE_ACTIONS: ApplianceCardActions = {
+  onPower: noop,
+  onProgram: noop,
+  onStart: noop,
+  onPause: noop,
+  onResume: noop,
+  onStop: noop,
+}
+const MEDIA_ACTIONS: MediaCardActions = {
+  onPower: noop,
+  onVolumeUp: noop,
+  onVolumeDown: noop,
+  onMute: noop,
+  onSource: noop,
+  onSeek: noop,
+  onPlay: noop,
+  onPause: noop,
+  onStop: noop,
+  onNext: noop,
+  onPrevious: noop,
+}
+const ROBOT_ACTIONS: RobotCardActions = {
+  onStart: noop,
+  onPause: noop,
+  onDock: noop,
+  onLocate: noop,
+  onSuction: noop,
+}
+const APPLIANCE_KIND = { washer: 'washer', dryer: 'dryer', dish: 'dish' } as const
+
+/** Wave B: appliances (washer, dryer, dishwasher), media, robots (vacuum + mower). */
+function WaveBScene({ type }: { readonly type: string }): ReactElement | null {
+  if (type === 'washer' || type === 'dryer' || type === 'dish') {
+    return (
+      <>
+        {applianceFixtures(APPLIANCE_KIND[type]).map((f) => (
+          <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
+            <ApplianceCard
+              model={f.model}
+              actions={APPLIANCE_ACTIONS}
+              orientation={f.orientation}
+            />
+          </Cell>
+        ))}
+      </>
+    )
+  }
+  if (type === 'media') {
+    return (
+      <>
+        {mediaFixtures().map((f) => (
+          <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
+            <MediaPlayerCard model={f.model} actions={MEDIA_ACTIONS} orientation={f.orientation} />
+          </Cell>
+        ))}
+      </>
+    )
+  }
+  if (type === 'vacuum') {
+    return (
+      <>
+        {robotFixtures().map((f) => (
+          <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
+            <RobotCard model={f.model} actions={ROBOT_ACTIONS} orientation={f.orientation} />
+          </Cell>
+        ))}
+      </>
+    )
+  }
+  return null
+}
+
+const WAVE_B_TYPES: ReadonlySet<string> = new Set(['washer', 'dryer', 'dish', 'media', 'vacuum'])
 
 /** One scene per `?type=`: the fixtures of that mockup page, each in its cell. */
 function WaveAScene({ type }: { readonly type: string }): ReactElement | null {
@@ -159,6 +241,8 @@ export function DeviceCardPreview(): ReactElement {
       >
         {WAVE_A_TYPES.has(type) ? (
           <WaveAScene type={type} />
+        ) : WAVE_B_TYPES.has(type) ? (
+          <WaveBScene type={type} />
         ) : type === 'climate' || type === 'climate-extra' ? (
           (type === 'climate' ? CLIMATE_FIXTURES : CLIMATE_EXTRA_FIXTURES).map((f) => (
             <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>

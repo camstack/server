@@ -31,6 +31,7 @@ import type {
   CardPowerDetail,
   CardSupplyAction,
 } from '../shell/model'
+import { remoteKeyOf } from '../shell/remote-keys'
 import { coarseDuration } from './coarse-duration'
 import { useCommandNotice } from './use-command-notice'
 
@@ -196,10 +197,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
     remote:
       remote.data === undefined || remote.data === null || remote.data.commands.length === 0
         ? null
-        : remote.data.commands.map((c) => ({
-            id: c.role,
-            label: c.label ?? c.role,
-          })),
+        : remote.data.commands.map((c) => remoteKeyOf(c.role, c.label, t)),
     history: hasHistory
       ? { charts: <DeviceHistoryView deviceId={deviceId} />, events: null }
       : null,

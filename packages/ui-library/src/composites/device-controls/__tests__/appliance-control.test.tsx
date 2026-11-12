@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import type { RunningStateStatus } from '@camstack/types'
-import { ApplianceHeroCard, ApplianceInlineControl } from '../appliance-control'
+import { ApplianceInlineControl } from '../appliance-control'
 
 let running: RunningStateStatus | undefined
 
@@ -28,39 +28,6 @@ function runningSlice(overrides: Partial<RunningStateStatus>): RunningStateStatu
 
 beforeEach(() => {
   running = undefined
-})
-
-describe('ApplianceHeroCard', () => {
-  it('tumbles the drum only while running, and shows state and phase', () => {
-    running = runningSlice({})
-    render(<ApplianceHeroCard {...props} />)
-    expect(screen.getByTestId('appliance-state').textContent).toBe('Running')
-    expect(screen.getByTestId('appliance-drum-ring').className).toContain('apl-drum-run')
-    expect(screen.getByText('Rinse')).toBeTruthy()
-    expect(screen.getByText('for 35 min')).toBeTruthy()
-    expect(screen.queryByTestId('appliance-power')).toBeNull()
-  })
-
-  it('keeps the drum still when idle', () => {
-    running = runningSlice({ running: false, since: null, phase: null })
-    render(<ApplianceHeroCard {...props} />)
-    expect(screen.getByTestId('appliance-state').textContent).toBe('Idle')
-    expect(screen.getByTestId('appliance-drum-ring').className).not.toContain('apl-drum-run')
-  })
-
-  it('draws an unknown reading as Unknown, never as Idle or off', () => {
-    running = runningSlice({ running: null, since: null, phase: 'Rinse' })
-    render(<ApplianceHeroCard {...props} />)
-    expect(screen.getByTestId('appliance-state').textContent).toBe('Unknown')
-    expect(screen.getByTestId('appliance-drum-ring').className).not.toContain('apl-drum-run')
-    expect(screen.getByTestId('appliance-drum').getAttribute('data-running')).toBe('unknown')
-    expect(screen.queryByText('Rinse')).toBeNull()
-  })
-
-  it('shows Unknown while no slice has landed', () => {
-    render(<ApplianceHeroCard {...props} />)
-    expect(screen.getByTestId('appliance-state').textContent).toBe('Unknown')
-  })
 })
 
 describe('ApplianceInlineControl', () => {

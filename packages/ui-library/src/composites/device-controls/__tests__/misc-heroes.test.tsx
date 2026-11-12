@@ -1,8 +1,6 @@
 // @vitest-environment jsdom
 /**
  * Tests for the remaining per-type hero surfaces (Task 2.5):
- *  - MediaPlayerHeroCard — lucide transport (SkipBack/PlayPause/SkipForward)
- *                          + seek and volume rendered as GripTrack grip-thumbs.
  *  - AlarmHeroCard       — segmented Disarm / Home / Away controls calling the
  *                          right arm/disarm methods.
  *  - SensorHeroCard      — readout heroes (numeric value+unit, battery bar,
@@ -18,7 +16,6 @@
 import { selectOption } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { DeviceFeature } from '@camstack/types'
 
 // ── Cap dispatch harness ────────────────────────────────────────────────────
 
@@ -68,7 +65,6 @@ vi.mock('../../../hooks/use-device-capability', () => ({
   },
 }))
 
-import { MediaPlayerHeroCard } from '../media-player-hero-card'
 import { AlarmHeroCard, AlarmInlineControl } from '../alarm-hero-card'
 
 const trpc = {} as never
@@ -76,52 +72,6 @@ const trpc = {} as never
 // ── Switch fixtures ─────────────────────────────────────────────────────────
 
 const switchCap = { setState: vi.fn() }
-
-// ── Media fixtures ──────────────────────────────────────────────────────────
-
-const mediaCap = {
-  play: vi.fn(),
-  pause: vi.fn(),
-  stop: vi.fn(),
-  next: vi.fn(),
-  previous: vi.fn(),
-  seek: vi.fn(),
-  setVolume: vi.fn(),
-  setMute: vi.fn(),
-}
-
-function mediaSlice(over?: Record<string, unknown>): Record<string, unknown> {
-  return {
-    state: 'playing',
-    volumeLevel: 40,
-    isMuted: false,
-    source: '',
-    availableSources: [],
-    currentMedia: { type: 'music', title: 'Test Track', artist: 'Tester' },
-    position: 30_000,
-    duration: 120_000,
-    shuffle: null,
-    repeat: null,
-    lastChangedAt: 0,
-    ...over,
-  }
-}
-
-function mediaSlots(over?: Partial<Record<CapName, CapSlot>>): Record<CapName, CapSlot> {
-  return {
-    switch: { cap: undefined, slice: undefined, available: false },
-    mediaPlayer: { cap: mediaCap, slice: mediaSlice(), available: true },
-    alarmPanel: { cap: undefined, slice: undefined, available: false },
-    ...over,
-  }
-}
-
-const ALL_MEDIA_FEATURES = [
-  DeviceFeature.MediaPlayerSeek,
-  DeviceFeature.MediaPlayerVolume,
-  DeviceFeature.MediaPlayerNext,
-  DeviceFeature.MediaPlayerPrevious,
-]
 
 // ── Alarm fixtures ──────────────────────────────────────────────────────────
 
@@ -150,110 +100,9 @@ function alarmSlots(over?: Partial<Record<CapName, CapSlot>>): Record<CapName, C
 
 beforeEach(() => {
   Object.values(switchCap).forEach((fn) => fn.mockReset())
-  Object.values(mediaCap).forEach((fn) => fn.mockReset())
   Object.values(alarmCap).forEach((fn) => fn.mockReset())
   alarmCap.arm.mockResolvedValue(undefined)
   alarmCap.disarm.mockResolvedValue(undefined)
-})
-
-// ── MediaPlayerHeroCard ─────────────────────────────────────────────────────
-
-describe('MediaPlayerHeroCard', () => {
-  it('returns null when the media-player cap is absent (cap-gate)', () => {
-    slots = mediaSlots({
-      mediaPlayer: { cap: undefined, slice: undefined, available: false },
-    })
-    const { container } = render(
-      <MediaPlayerHeroCard trpc={trpc} deviceId={1} features={undefined} />,
-    )
-    expect(container.firstChild).toBeNull()
-  })
-
-  it('renders the three transport controls (skip-back / play-pause / skip-forward)', () => {
-    slots = mediaSlots()
-    render(<MediaPlayerHeroCard trpc={trpc} deviceId={1} features={ALL_MEDIA_FEATURES} />)
-    expect(screen.getByRole('button', { name: /previous/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /pause|play/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /next/i })).toBeTruthy()
-  })
-
-  it('renders seek and volume GripTracks', () => {
-    slots = mediaSlots()
-    render(<MediaPlayerHeroCard trpc={trpc} deviceId={1} features={ALL_MEDIA_FEATURES} />)
-    expect(screen.getByTestId('media-seek')).toBeTruthy()
-    expect(screen.getByTestId('media-volume')).toBeTruthy()
-  })
-
-  it('calls pause when playing and the play/pause button is clicked', () => {
-    slots = mediaSlots()
-    render(<MediaPlayerHeroCard trpc={trpc} deviceId={1} features={ALL_MEDIA_FEATURES} />)
-    fireEvent.click(screen.getByRole('button', { name: /pause/i }))
-    expect(mediaCap.pause).toHaveBeenCalledWith({})
-  })
-
-  it('calls next / previous transport methods', () => {
-    slots = mediaSlots()
-    render(<MediaPlayerHeroCard trpc={trpc} deviceId={1} features={ALL_MEDIA_FEATURES} />)
-    fireEvent.click(screen.getByRole('button', { name: /next/i }))
-    fireEvent.click(screen.getByRole('button', { name: /previous/i }))
-    expect(mediaCap.next).toHaveBeenCalledWith({})
-    expect(mediaCap.previous).toHaveBeenCalledWith({})
-  })
-
-  it('does not render the volume GripTrack when no volume is declared and no level is read', () => {
-    slots = mediaSlots({
-      mediaPlayer: {
-        cap: mediaCap,
-        slice: mediaSlice({ volumeLevel: null }),
-        available: true,
-      },
-    })
-    render(
-      <MediaPlayerHeroCard
-        trpc={trpc}
-        deviceId={1}
-        features={ALL_MEDIA_FEATURES.filter((f) => f !== DeviceFeature.MediaPlayerVolume)}
-      />,
-    )
-    expect(screen.queryByTestId('media-volume')).toBeNull()
-  })
-
-  it('does not render the seek track when MediaPlayerSeek feature is absent', () => {
-    slots = mediaSlots()
-    const featuresNoSeek = ALL_MEDIA_FEATURES.filter((f) => f !== DeviceFeature.MediaPlayerSeek)
-    render(<MediaPlayerHeroCard trpc={trpc} deviceId={1} features={featuresNoSeek} />)
-    expect(screen.queryByTestId('media-seek')).toBeNull()
-  })
-
-  it('does not render the seek track when duration is null (feature present)', () => {
-    slots = mediaSlots({
-      mediaPlayer: {
-        cap: mediaCap,
-        slice: mediaSlice({ duration: null }),
-        available: true,
-      },
-    })
-    render(<MediaPlayerHeroCard trpc={trpc} deviceId={1} features={ALL_MEDIA_FEATURES} />)
-    expect(screen.queryByTestId('media-seek')).toBeNull()
-  })
-
-  it('does not render the seek track when duration is zero (degenerate)', () => {
-    slots = mediaSlots({
-      mediaPlayer: {
-        cap: mediaCap,
-        slice: mediaSlice({ duration: 0 }),
-        available: true,
-      },
-    })
-    render(<MediaPlayerHeroCard trpc={trpc} deviceId={1} features={ALL_MEDIA_FEATURES} />)
-    expect(screen.queryByTestId('media-seek')).toBeNull()
-  })
-
-  it('shows now-playing title', () => {
-    slots = mediaSlots()
-    render(<MediaPlayerHeroCard trpc={trpc} deviceId={1} features={ALL_MEDIA_FEATURES} />)
-    expect(screen.getByText('Test Track')).toBeTruthy()
-  })
 })
 
 // ── AlarmHeroCard ───────────────────────────────────────────────────────────

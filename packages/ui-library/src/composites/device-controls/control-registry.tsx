@@ -21,8 +21,8 @@ import { DummyInline, DummyHeroCard } from './dummy-hero-card'
 import { SensorInlineControl } from './sensor-inline-control'
 import { SensorHeroCard } from './sensor-hero-card'
 import { UpdateInlineControl, UpdateHeroCard } from './update-control'
-import { VacuumInlineControl, VacuumHeroCard } from './vacuum-control'
-import { LawnMowerInlineControl, LawnMowerHeroCard } from './lawn-mower-control'
+import { VacuumInlineControl } from './vacuum-control'
+import { LawnMowerInlineControl } from './lawn-mower-control'
 import { ValveInlineControl, ValveHeroCard } from './valve-control'
 import { HumidifierInlineControl, HumidifierHeroCard } from './humidifier-control'
 import { WaterHeaterInlineControl, WaterHeaterHeroCard } from './water-heater-control'
@@ -31,8 +31,8 @@ import { ImageInlineControl, ImageHeroCard } from './image-control'
 import { PetFeederInlineControl, PetFeederHeroCard } from './pet-feeder-panel'
 import { PetFountainInlineControl, PetFountainHeroCard } from './pet-fountain-panel'
 import { HeaterInlineControl, HeaterHeroCard } from './heater-control'
-import { DishwasherInlineControl, DishwasherHeroCard } from './dishwasher-control'
-import { ApplianceInlineControl, ApplianceHeroCard } from './appliance-control'
+import { DishwasherInlineControl } from './dishwasher-control'
+import { ApplianceInlineControl } from './appliance-control'
 import {
   SwitchInlineControl,
   PlugCardHero,
@@ -46,7 +46,11 @@ import {
   AcInlineControl,
   ClimateCardHero,
   MediaPlayerInlineControl,
-  MediaPlayerHeroCard,
+  MediaCardHero,
+  ApplianceCardHero,
+  DishwasherCardHero,
+  VacuumCardHero,
+  MowerCardHero,
   AlarmPanelInlineControl,
   AlarmHeroCard,
   ScriptInlineControl,
@@ -128,7 +132,7 @@ const CLIMATE_CONTROL: DeviceTypeControl = {
 
 const MEDIA_PLAYER_CONTROL: DeviceTypeControl = {
   InlineControl: MediaPlayerInlineControl,
-  HeroCard: MediaPlayerHeroCard,
+  HeroCard: MediaCardHero,
 }
 
 const ALARM_PANEL_CONTROL: DeviceTypeControl = {
@@ -153,12 +157,12 @@ const CONTROL_CONTROL: DeviceTypeControl = {
 
 const VACUUM_CONTROL: DeviceTypeControl = {
   InlineControl: VacuumInlineControl,
-  HeroCard: VacuumHeroCard,
+  HeroCard: VacuumCardHero,
 }
 
 const LAWN_MOWER_CONTROL: DeviceTypeControl = {
   InlineControl: LawnMowerInlineControl,
-  HeroCard: LawnMowerHeroCard,
+  HeroCard: MowerCardHero,
 }
 
 const VALVE_CONTROL: DeviceTypeControl = {
@@ -203,12 +207,12 @@ const HEATER_CONTROL: DeviceTypeControl = {
 
 const DISHWASHER_CONTROL: DeviceTypeControl = {
   InlineControl: DishwasherInlineControl,
-  HeroCard: DishwasherHeroCard,
+  HeroCard: DishwasherCardHero,
 }
 
 const APPLIANCE_CONTROL: DeviceTypeControl = {
   InlineControl: ApplianceInlineControl,
-  HeroCard: ApplianceHeroCard,
+  HeroCard: ApplianceCardHero,
 }
 
 const BUTTON_CONTROL: DeviceTypeControl = {
