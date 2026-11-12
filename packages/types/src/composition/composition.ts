@@ -18,7 +18,8 @@
  *   source `code` → slice 4. Target `existing` (customize a device) is slice 2 (D663).
  */
 import { z } from 'zod'
-import { DeviceRole, DeviceType } from '../device/device-type.js'
+import { StoredDeviceTypeSchema } from '../device/device-kind.js'
+import { DeviceRole } from '../device/device-type.js'
 import { validateExpressionSource } from '../expression/expression-source.js'
 import { EXPRESSION_IDENTIFIER_RE, MAX_EXPRESSION_SOURCE_LENGTH } from '../expression/limits.js'
 import { HelperSpecSchema, MAX_HELPER_MEMBERS } from './helpers/spec.js'
@@ -287,7 +288,7 @@ export function compositionFeatureEnabled(feature: CompositionFeature): boolean 
  */
 export const CompositionNewTargetSchema = z.object({
   kind: z.literal('new'),
-  type: z.enum(DeviceType),
+  type: StoredDeviceTypeSchema,
   role: z.enum(DeviceRole).optional(),
 })
 export type CompositionNewTarget = z.infer<typeof CompositionNewTargetSchema>

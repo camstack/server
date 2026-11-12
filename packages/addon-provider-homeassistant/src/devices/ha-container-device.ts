@@ -13,6 +13,7 @@ import {
   type IDevice,
   type InferNativeProvider,
   type RawStateResult,
+  StoredDeviceTypeSchema,
 } from '@camstack/types'
 import { z } from 'zod'
 import { pickHaChildClass, tryPickHaChildClass } from '../ha-child-class-factory.js'
@@ -21,7 +22,7 @@ import { type HaEntityState, HaEntityStateSchema } from '../ha-types.js'
 
 const haEntitySchema = z.object({
   entityId: z.string(),
-  deviceType: z.enum(DeviceType),
+  deviceType: StoredDeviceTypeSchema,
   capabilities: z.array(z.string()),
   role: z.string().optional(),
   unitOfMeasurement: z.string().optional(),

@@ -11,7 +11,7 @@
  */
 import { ViewerTokenScopeSchema } from '../auth/viewer-access.js'
 import { z } from 'zod'
-import { DeviceType } from '../device/device-type.js'
+import { StoredDeviceTypeSchema } from '../device/device-kind.js'
 
 // ── Auth ────────────────────────────────────────────────────────────
 
@@ -85,7 +85,7 @@ export type CapScope = z.infer<typeof CapScopeSchema>
 export const DeviceSelectorSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('all') }),
   z.object({ kind: z.literal('ids'), ids: z.array(z.number().int()).min(1) }),
-  z.object({ kind: z.literal('types'), types: z.array(z.enum(DeviceType)).min(1) }),
+  z.object({ kind: z.literal('types'), types: z.array(StoredDeviceTypeSchema).min(1) }),
   z.object({ kind: z.literal('locations'), locations: z.array(z.string().min(1)).min(1) }),
 ])
 export type DeviceSelector = z.infer<typeof DeviceSelectorSchema>

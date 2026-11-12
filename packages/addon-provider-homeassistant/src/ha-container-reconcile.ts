@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import {
   DeviceType,
+  StoredDeviceTypeSchema,
   EnumSensorDateTimeFormatSchema,
   type ChildLayout,
   type ChildLayoutEntry,
@@ -71,7 +72,7 @@ export interface ContainerReconcilePlan {
  *  in ha-container-device.ts). Returns `[]` on absent/invalid input. */
 const containerEntitySchema = z.object({
   entityId: z.string(),
-  deviceType: z.enum(DeviceType),
+  deviceType: StoredDeviceTypeSchema,
   capabilities: z.array(z.string()),
   role: z.string().optional(),
   unitOfMeasurement: z.string().optional(),

@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { DeviceRole, DeviceType, type ReadingQuantity } from '@camstack/types'
+import {
+  DeviceRole,
+  DeviceType,
+  type ReadingQuantity,
+  StoredDeviceTypeSchema,
+} from '@camstack/types'
 import type {
   UnraidArrayDiskInfo,
   UnraidContainerInfo,
@@ -55,7 +60,7 @@ export const UnraidEntityIdentitySchema = z.object({
   /** The CamStack capability the child registers for this kind. */
   capName: z.string().min(1),
   /** The DeviceType the child is created as. */
-  deviceType: z.enum(DeviceType),
+  deviceType: StoredDeviceTypeSchema,
   /** Operator-facing name. */
   name: z.string().min(1),
   /** Semantic role (icon hint), when one clarifies the entity. */

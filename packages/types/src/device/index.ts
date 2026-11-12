@@ -108,6 +108,7 @@ export {
   capAppliesToDeviceKind,
   canonicalStoredDeviceType,
   CLIMATE_ROLES,
+  StoredDeviceTypeSchema,
   climateRoleOf,
   isAirConditioner,
   isOutlet,

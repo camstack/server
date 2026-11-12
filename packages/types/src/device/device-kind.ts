@@ -5,6 +5,7 @@
  * `switch-heater`; an air conditioner and a radiator valve are both `climate`,
  * told apart by their `climate-*` role.
  */
+import { z } from 'zod'
 import { DeviceRole, DeviceType } from './device-type.js'
 
 /**
@@ -25,6 +26,19 @@ const RETIRED_DEVICE_TYPES: Readonly<Record<string, DeviceType>> = {
 export function canonicalStoredDeviceType(stored: string): string {
   return RETIRED_DEVICE_TYPES[stored] ?? stored
 }
+
+/**
+ * The schema for a device type read back from STORAGE — a device config, a
+ * container's `entities[]`, a persisted identity, a stored grant or recipe. A
+ * retired type is read as its live type before the enum check, so a type
+ * retired after the record was written never fails the parse and never drops
+ * the device (D1033). Every persisted `deviceType` field uses this, never a
+ * bare `z.enum(DeviceType)`.
+ */
+export const StoredDeviceTypeSchema = z.preprocess(
+  (value) => (typeof value === 'string' ? canonicalStoredDeviceType(value) : value),
+  z.enum(DeviceType),
+)
 
 /** The `climate-*` roles, in the order the role picker lists them. */
 export const CLIMATE_ROLES: readonly DeviceRole[] = [

@@ -20,6 +20,7 @@
  */
 import { z } from 'zod'
 import { findVocabAction } from '../device/cap-vocabulary/action-index.js'
+import { StoredDeviceTypeSchema } from '../device/device-kind.js'
 import { DeviceType } from '../device/device-type.js'
 import { locationIconKey } from '../device/location-icon.js'
 import { EventCategory } from '../enums/event-category.js'
@@ -33,7 +34,7 @@ export const ActionTargetSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('domain'),
     /** Narrow to one kind of device. */
-    deviceType: z.enum(DeviceType).optional(),
+    deviceType: StoredDeviceTypeSchema.optional(),
     /** Narrow to one room: the `location` label devices carry. */
     roomId: z.string().min(1).optional(),
   }),

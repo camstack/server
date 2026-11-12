@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A stored entity whose device type was retired no longer fails to restore
+
 ## [0.2.165] - 2026-11-12
 
 ### Changed

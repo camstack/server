@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Thermostat and climate devices adopted before the thermostat type was retired restore again, with all their children, instead of failing with invalid_value on entities[].deviceType
+
 ## [1.2.682] - 2026-11-12
 
 ### Changed
