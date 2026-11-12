@@ -1,4 +1,5 @@
 import { IrCodecError } from './ir-error.js'
+import { IR_TIMINGS_MAX } from './ir-timings.js'
 
 /**
  * FastLZ level 1: a byte-oriented LZ77 stream. A control byte below 32 starts a
@@ -11,9 +12,19 @@ const MAX_LITERAL_RUN = 32
 const MIN_MATCH = 3
 const MAX_MATCH = 264
 
+/**
+ * Most bytes a decoded IR code may hold: two bytes per timing. A level-1 stream
+ * can expand ~130x, so the decoder checks this bound before every write.
+ */
+export const IR_DECOMPRESSED_MAX = IR_TIMINGS_MAX * 2
+
 export function fastlzDecompress(input: Uint8Array): Uint8Array {
   const out: number[] = []
   let ip = 0
+  const room = (count: number): void => {
+    if (out.length + count > IR_DECOMPRESSED_MAX)
+      throw new IrCodecError('tuya-malformed', 'decompressed code is larger than any IR train')
+  }
   const next = (): number => {
     const byte = input[ip++]
     if (byte === undefined)
@@ -23,6 +34,7 @@ export function fastlzDecompress(input: Uint8Array): Uint8Array {
   while (ip < input.length) {
     const ctrl = next()
     if (ctrl < 32) {
+      room(ctrl + 1)
       for (let i = 0; i <= ctrl; i++) out.push(next())
       continue
     }
@@ -32,6 +44,7 @@ export function fastlzDecompress(input: Uint8Array): Uint8Array {
     const start = out.length - distance
     if (start < 0)
       throw new IrCodecError('tuya-malformed', 'back-reference points before the stream')
+    room(len + 3)
     for (let i = 0; i < len + 3; i++) {
       const byte = out[start + i]
       if (byte === undefined) throw new IrCodecError('tuya-malformed', 'back-reference is invalid')

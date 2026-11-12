@@ -3,6 +3,7 @@ import { decodeTuya, encodeTuya } from '../tuya.js'
 import { fastlzCompress, fastlzDecompress } from '../fastlz.js'
 import { IrCodecError } from '../ir-error.js'
 import { IrPayloadSchema, toTimings } from '../ir-payload.js'
+import { IrNativeCodeSchema } from '../native.js'
 
 // NOTE: no published device capture with known timings was reachable offline;
 // the vector below is a hand-built level-1 stream (literal run + back-reference)
@@ -75,5 +76,31 @@ describe('native payload', () => {
     expect(IrPayloadSchema.safeParse({ kind: 'native', format: 'nec', code: 'x' }).success).toBe(
       false,
     )
+  })
+})
+
+describe('tuya decoder output bound', () => {
+  const toB64b = (b: Uint8Array): string => Buffer.from(b).toString('base64')
+
+  it('refuses a stream that expands past the longest IR train', () => {
+    // one literal byte, then back-references of length 264 (ctrl 0xE0, ext 0xFF, dist 1)
+    const parts = [0, 0x10]
+    for (let i = 0; i < 20; i++) parts.push(0xe0, 0xff, 0x00)
+    const bomb = Uint8Array.from(parts)
+    expect(() => fastlzDecompress(bomb)).toThrow(IrCodecError)
+    expect(() => decodeTuya(toB64b(bomb))).toThrow(IrCodecError)
+  })
+
+  it('refuses an oversized literal run', () => {
+    const parts: number[] = []
+    for (let i = 0; i < 70; i++) parts.push(31, ...new Array(32).fill(1))
+    expect(() => fastlzDecompress(Uint8Array.from(parts))).toThrow(IrCodecError)
+  })
+
+  it('native schema rejects a code longer than the worst-case compressed size', () => {
+    expect(
+      IrNativeCodeSchema.safeParse({ format: 'tuya', code: 'A'.repeat(100_000) }).success,
+    ).toBe(false)
+    expect(IrNativeCodeSchema.safeParse({ format: 'tuya', code: 'BwEQAA==' }).success).toBe(true)
   })
 })
