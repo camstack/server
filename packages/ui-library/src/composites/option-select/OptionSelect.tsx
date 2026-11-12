@@ -14,7 +14,11 @@ import {
 import { Check, ChevronDown, Plus, Search } from 'lucide-react'
 import { Badge } from '../../primitives/badge'
 import { TopLayerPortal } from '../../primitives/top-layer-portal'
-import { computeListboxCoords, type ListboxCoords } from '../../lib/listbox-position'
+import {
+  computeListboxCoords,
+  isScrollInside,
+  type ListboxCoords,
+} from '../../lib/listbox-position'
 import { EventKindGlyph } from '../event-kind-visuals'
 import { INPUT_SHELL, SelectedChip } from '../device-picker/SelectedChip'
 import type { OptionSelectOption } from './option-select-model'
@@ -173,10 +177,13 @@ export function OptionSelect(props: OptionSelectProps): JSX.Element | null {
     }
     update()
     window.addEventListener('resize', update)
-    window.addEventListener('scroll', update, true)
+    const onScroll = (event: Event): void => {
+      if (!isScrollInside(event, listboxRef.current)) update()
+    }
+    window.addEventListener('scroll', onScroll, true)
     return () => {
       window.removeEventListener('resize', update)
-      window.removeEventListener('scroll', update, true)
+      window.removeEventListener('scroll', onScroll, true)
     }
   }, [open, isDisabled, selectedValues.length, query, dropdownRows.length])
 

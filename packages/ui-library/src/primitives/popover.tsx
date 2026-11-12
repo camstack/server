@@ -18,6 +18,7 @@ import { cn } from '../lib/cn'
 import { useIsMobile } from '../hooks/use-is-mobile'
 import { BottomSheet } from './bottom-sheet'
 import { TopLayerPortal } from './top-layer-portal'
+import { isScrollInside } from '../lib/listbox-position'
 
 interface PopoverContextValue {
   open: boolean
@@ -174,10 +175,13 @@ export function PopoverContent({
     }
     compute()
     window.addEventListener('resize', compute)
-    window.addEventListener('scroll', compute, true)
+    const onScroll = (event: Event): void => {
+      if (!isScrollInside(event, ref.current)) compute()
+    }
+    window.addEventListener('scroll', onScroll, true)
     return () => {
       window.removeEventListener('resize', compute)
-      window.removeEventListener('scroll', compute, true)
+      window.removeEventListener('scroll', onScroll, true)
     }
   }, [open, isMobile, align, offset, triggerRef])
 

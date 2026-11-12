@@ -2381,7 +2381,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/DeviceCard.tsx",
-      "summary": "Integration on the left, reachability on the right."
+      "summary": "Integration on the left, reachability on the right. Reachable is the normal state and says nothing (operator rule: the admin never prints \"Online\"); only offline, and a status not yet known, take the corner."
     },
     {
       "name": "carriesDeviceTemplate",
@@ -4589,7 +4589,7 @@
       "kind": "constant",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-meta.ts",
-      "summary": ""
+      "summary": "The role table — the icon comes from the shared resolver, the label from here."
     },
     {
       "name": "DEVICE_ROLE_NOUNS",
@@ -4617,7 +4617,7 @@
       "kind": "constant",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-meta.ts",
-      "summary": ""
+      "summary": "The type table — the icon comes from the shared resolver, the label from here."
     },
     {
       "name": "DEVICE_TYPE_NOUNS",
@@ -5084,6 +5084,13 @@
       ]
     },
     {
+      "name": "deviceIconGlyph",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-meta.ts",
+      "summary": "The glyph of a device: its role's icon when the role is known, else its type's (`deviceIconKey`)."
+    },
+    {
       "name": "deviceIdsOf",
       "kind": "function",
       "area": "composites",
@@ -5110,6 +5117,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-item/index.tsx",
       "summary": "<DeviceItem> — orchestrator that composes Header / Preview / Features / Actions / StatusDot in a flex row (`view='card'`) or a `<tr>` with one `<td>` per logical column (`view='table'`)."
+    },
+    {
+      "name": "deviceLeadIcon",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-item/helpers.ts",
+      "summary": "The row's lead icon — the ONE resolution order, the same one `resolveSensorDisplay` applies to unit and precision:"
     },
     {
       "name": "DeviceList",
@@ -7267,7 +7281,7 @@
       "kind": "constant",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-meta.ts",
-      "summary": "The glyphs the admin draws on FIRST PAINT, synchronously — the ones the device-type and role meta tables above already import. Everything else in the icon catalog is drawn from the lazily loaded full table (`icon-glyp…"
+      "summary": "The glyphs the admin draws on FIRST PAINT, synchronously — every icon the shared device resolver (`DEVICE_TYPE_ICON` / `DEVICE_ROLE_ICON` in `@camstack/types`) can return, which the type makes exhaustive. Everything e…"
     },
     {
       "name": "fieldAccepts",

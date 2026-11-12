@@ -179,3 +179,26 @@ describe('Select renders our list, not the native popup', () => {
     expect(screen.getByRole('combobox').textContent).toBe('Alpha')
   })
 })
+
+describe('Select list scrolls freely', () => {
+  it('scrolling the list (or the page) never snaps it back to the highlighted row', () => {
+    const scrollIntoView = vi.fn()
+    const original = Element.prototype.scrollIntoView
+    Element.prototype.scrollIntoView = scrollIntoView
+    try {
+      const many = Array.from({ length: 40 }, (_, i) => ({ value: `v${i}`, label: `Row ${i}` }))
+      render(<Select value="v0" onChange={() => {}} options={many} />)
+      fireEvent.click(screen.getByRole('combobox'))
+      const opened = scrollIntoView.mock.calls.length
+      expect(opened).toBeGreaterThan(0)
+      // The operator wheels the list: its own scroll must not re-anchor it.
+      fireEvent.scroll(screen.getByRole('listbox'))
+      fireEvent.scroll(screen.getByRole('listbox'))
+      // An ancestor scroll re-anchors the list but leaves its scroll position alone.
+      fireEvent.scroll(document)
+      expect(scrollIntoView.mock.calls.length).toBe(opened)
+    } finally {
+      Element.prototype.scrollIntoView = original
+    }
+  })
+})

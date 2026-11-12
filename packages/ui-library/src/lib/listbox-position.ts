@@ -51,3 +51,15 @@ export function computeListboxCoords(
     placement: 'above',
   }
 }
+
+/**
+ * True when a scroll happened INSIDE the floating surface (the list scrolling
+ * its own rows). A floating surface re-anchors on capture-phase scrolls so it
+ * follows its trigger when an ancestor scrolls; its own scroll moves nothing,
+ * and re-anchoring on it re-rendered the list and snapped it back to the
+ * highlighted row — the list could not be scrolled at all.
+ */
+export function isScrollInside(event: Event, surface: Element | null): boolean {
+  const target = event.target
+  return surface !== null && target instanceof Node && surface.contains(target)
+}

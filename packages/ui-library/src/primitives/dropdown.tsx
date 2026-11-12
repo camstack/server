@@ -15,6 +15,7 @@ import {
 import { type LucideIcon } from 'lucide-react'
 import { cn } from '../lib/cn'
 import { TopLayerPortal } from './top-layer-portal'
+import { isScrollInside } from '../lib/listbox-position'
 
 interface DropdownContextValue {
   open: boolean
@@ -139,10 +140,13 @@ export function DropdownContent({
     }
     compute()
     window.addEventListener('resize', compute)
-    window.addEventListener('scroll', compute, true)
+    const onScroll = (event: Event): void => {
+      if (!isScrollInside(event, ref.current)) compute()
+    }
+    window.addEventListener('scroll', onScroll, true)
     return () => {
       window.removeEventListener('resize', compute)
-      window.removeEventListener('scroll', compute, true)
+      window.removeEventListener('scroll', onScroll, true)
     }
   }, [open, align, offset, triggerRef])
 

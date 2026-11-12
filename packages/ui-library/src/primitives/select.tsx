@@ -15,7 +15,7 @@ import {
 } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import { cn } from '../lib/cn'
-import { computeListboxCoords, type ListboxCoords } from '../lib/listbox-position'
+import { computeListboxCoords, isScrollInside, type ListboxCoords } from '../lib/listbox-position'
 import { findByPrefix, nextEnabled, parseSelectEntries, type SelectEntry } from './select-model'
 import { TopLayerPortal } from './top-layer-portal'
 
@@ -184,10 +184,13 @@ export const Select: ForwardRefExoticComponent<SelectProps & RefAttributes<HTMLB
         }
         update()
         window.addEventListener('resize', update)
-        window.addEventListener('scroll', update, true)
+        const onScroll = (event: Event): void => {
+          if (!isScrollInside(event, listRef.current)) update()
+        }
+        window.addEventListener('scroll', onScroll, true)
         return () => {
           window.removeEventListener('resize', update)
-          window.removeEventListener('scroll', update, true)
+          window.removeEventListener('scroll', onScroll, true)
         }
       }, [open])
 
@@ -207,12 +210,16 @@ export const Select: ForwardRefExoticComponent<SelectProps & RefAttributes<HTMLB
       useEffect(() => {
         if (isDisabled) setOpen(false)
       }, [isDisabled])
+      // Keyed on whether the list is PLACED, not on its coordinates: a
+      // re-anchor (an ancestor scrolled) must not drag the operator's own
+      // scroll position back to the highlighted row.
+      const placed = coords !== null
       useEffect(() => {
-        if (!open || highlight < 0) return
+        if (!open || !placed || highlight < 0) return
         listRef.current?.querySelector(`[data-index="${highlight}"]`)?.scrollIntoView?.({
           block: 'nearest',
         })
-      }, [open, highlight, coords])
+      }, [open, highlight, placed])
 
       const typeAhead = (key: string): void => {
         const now = Date.now()
