@@ -10,9 +10,12 @@ const NONE: ClimateCommands = {
   swingHorizontal: false,
 }
 
-function autoAboveTarget(availableModes: HvacMode[]): ClimateControlStatus {
+function autoAboveTarget(
+  availableModes: HvacMode[],
+  mode: HvacMode = 'auto',
+): ClimateControlStatus {
   return {
-    mode: 'auto',
+    mode,
     availableModes,
     fanMode: '',
     availableFanModes: [],
@@ -50,5 +53,17 @@ describe('climate activity — cooling only on a device that can cool', () => {
 
   it('an air conditioner that offers cool still reads cooling in auto over its target', () => {
     expect(activityOf(autoAboveTarget(['off', 'heat', 'cool', 'auto']))).toBe('cool')
+  })
+
+  it('a device that reports no modes is unknown, not heat-only: it keeps reading cooling', () => {
+    expect(activityOf(autoAboveTarget([]))).toBe('cool')
+  })
+
+  it('heat_cool over its target reads cooling on a device that offers heat_cool', () => {
+    expect(activityOf(autoAboveTarget(['off', 'heat', 'heat_cool'], 'heat_cool'))).toBe('cool')
+  })
+
+  it('heat_cool over its target is idle on a device whose reported modes cannot cool', () => {
+    expect(activityOf(autoAboveTarget(['off', 'heat'], 'heat_cool'))).toBe('idle')
   })
 })
