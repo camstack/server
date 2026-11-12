@@ -1738,6 +1738,13 @@
       "summary": "Binary battery copy lives with the badge. A binary source has no real percentage: normal is the full stand-in, low is anything under the threshold."
     },
     {
+      "name": "bindingImplements",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/use-card-common.tsx",
+      "summary": "The binding answered for `cap`, and its provider has `method` (an absent list means every method)."
+    },
+    {
       "name": "bindsToModel",
       "kind": "function",
       "area": "composites",
@@ -3274,7 +3281,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedDishwasherCard.tsx",
-      "summary": "A dishwasher that speaks for itself (the `dishwasher` cap): its programs, the time left, start / pause / resume / stop — the start refused, with the machine's reason, while the door is open or remote start is off."
+      "summary": "A dishwasher that speaks for itself (the `dishwasher` cap): its programs, the time left, power, start / pause / resume / stop — each drawn only when the binding implements it, the start refused, with the machine's rea…"
     },
     {
       "name": "ConnectedFanCard",
@@ -3355,7 +3362,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedRobotCard.tsx",
-      "summary": "A robot vacuum (`vacuum-control`): clean, pause, dock, locate, suction."
+      "summary": "A robot vacuum (`vacuum-control`): clean, pause, stop, dock, locate, suction — each only when its binding implements it."
     },
     {
       "name": "CONSUMABLE_LOW_PERCENT",
@@ -4715,6 +4722,18 @@
           "type": "boolean",
           "optional": true,
           "doc": "Draw the device name (default true); false when the host already names the device."
+        },
+        {
+          "name": "remoteExtra",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Controls the remote sheet draws under the keys (a media player's shuffle and repeat)."
+        },
+        {
+          "name": "initialView",
+          "type": "DeviceCardView",
+          "optional": true,
+          "doc": "Opens on this view. The shot harness uses `remote` so the sheet is on screen."
         }
       ]
     },
@@ -6220,6 +6239,22 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
       "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
+    },
+    {
+      "name": "DishwasherOptionsPanel",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/dishwasher-options.tsx",
+      "summary": "The dishwasher's options and reminders, as a page section. Draws nothing when the device has no `dishwasher` cap, or nothing of this to show.",
+      "propsExtends": ["DeviceControlProps"],
+      "props": [
+        {
+          "name": "entries",
+          "type": "readonly BindingMethods[] | undefined",
+          "optional": false,
+          "doc": "The device's bindings. Absent until they answered: a toggle is drawn only once its method is declared (an entry with no method list declares"
+        }
+      ]
     },
     {
       "name": "dishwasherPhase",
@@ -9013,6 +9048,13 @@
       "summary": "Is this unit a byte count (binary axis and formatter)?"
     },
     {
+      "name": "isConsumableDishwasherEvent",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/dishwasher-options.tsx",
+      "summary": "Salt and rinse aid are consumable items (D915). Their events must not reappear here — the Consumables section is the only surface."
+    },
+    {
       "name": "isConsumableLevelField",
       "kind": "function",
       "area": "composites",
@@ -9947,6 +9989,12 @@
           "type": "boolean",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "initialView",
+          "type": "DeviceCardView",
+          "optional": true,
+          "doc": "Opens the remote sheet. The shot harness uses it; a card starts on the scene."
         }
       ]
     },
@@ -10090,6 +10138,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/light/model.ts",
       "summary": "Mireds (the cap's unit) to kelvin, and back."
+    },
+    {
+      "name": "MissingCommandError",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/use-command-notice.ts",
+      "summary": "The binding does not offer this method. A call that skipped it used to resolve as a success (`fn?.()` is `undefined`, and a resolved `undefined` is not a refusal). Callers report this instead."
     },
     {
       "name": "MobileDrawer",
@@ -10311,6 +10366,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-step-matrix.tsx",
       "summary": "Where a key press moves the roving focus in a `rows × cols` grid."
+    },
+    {
+      "name": "nextMediaRepeat",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/media/model.ts",
+      "summary": "The next repeat mode, in the order the old control cycled them."
     },
     {
       "name": "nextReconnectAction",
@@ -11764,6 +11826,13 @@
       "summary": "The display preference to hand `formatReading` for one quantity."
     },
     {
+      "name": "presentCommand",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/use-command-notice.ts",
+      "summary": "The method when the device implements it; a rejection naming the cap and the method when it does not. Never a resolved `undefined`."
+    },
+    {
       "name": "previousWindow",
       "kind": "function",
       "area": "composites",
@@ -12408,6 +12477,12 @@
           "type": "() => void",
           "optional": false,
           "doc": ""
+        },
+        {
+          "name": "extra",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Drawn under the keys: what the scene does not (shuffle, repeat)."
         }
       ]
     },
@@ -17184,6 +17259,13 @@
           "doc": "Prefix for `data-testid` on the group (`${testId}`) and each option (`${testId}-${id}`)."
         }
       ]
+    },
+    {
+      "name": "visibleDishwasherEvents",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/dishwasher-options.tsx",
+      "summary": "Raised events the page may name. Consumable events are dropped."
     },
     {
       "name": "VodPlaybackProvider",

@@ -8019,7 +8019,11 @@
         "finished": "Completato",
         "error": "Errore",
         "aborting": "Arresto in corso"
-      }
+      },
+      "options": "Opzioni",
+      "filterDue": "Pulizia del filtro in scadenza",
+      "machineCareDue": "Manutenzione in scadenza",
+      "machineCareIn": "Manutenzione tra {{count}} cicli"
     },
     "humidifier": {
       "turnOff": "Spegni",

@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo, useState } from 'react'
+import { type ReactElement, type ReactNode, useMemo, useState } from 'react'
 import { cn } from '../../../lib/cn'
 import { useUiText } from '../../../contexts/ui-text'
 import { DEVICE_CARD_CSS } from '../card-css'
@@ -23,9 +23,13 @@ export interface DeviceCardProps {
   readonly className?: string
   /** Draw the device name (default true); false when the host already names the device. */
   readonly showName?: boolean
+  /** Controls the remote sheet draws under the keys (a media player's shuffle and repeat). */
+  readonly remoteExtra?: ReactNode
+  /** Opens on this view. The shot harness uses `remote` so the sheet is on screen. */
+  readonly initialView?: DeviceCardView
 }
 
-type CardView = 'scene' | 'history' | 'remote'
+export type DeviceCardView = 'scene' | 'history' | 'remote'
 
 /** Integration on the left, reachability on the right. */
 export function CardTop({ common }: { readonly common: CardCommon }): ReactElement {
@@ -93,12 +97,15 @@ export function DeviceCard({
   scene,
   className,
   showName = true,
+  remoteExtra = null,
+  initialView = 'scene',
 }: DeviceCardProps): ReactElement {
   const gating = useGating(common)
-  const [view, setView] = useState<CardView>('scene')
+  const [view, setView] = useState<DeviceCardView>(initialView)
   const history = common.history
   const hasHistory = history !== null && (history.charts !== null || history.events !== null)
-  const hasRemote = common.remote !== null && common.remote.length > 0
+  const remoteKeys = common.remote ?? []
+  const hasRemote = remoteKeys.length > 0 || remoteExtra != null
   const hasBottomLine =
     gating.reason !== null ||
     common.notice !== null ||
@@ -127,9 +134,10 @@ export function DeviceCard({
         ) : null}
         {view === 'history' && history !== null ? (
           <HistoryView state={state} history={history} onBack={() => setView('scene')} />
-        ) : view === 'remote' && common.remote !== null ? (
+        ) : view === 'remote' && hasRemote ? (
           <RemoteView
-            keys={common.remote}
+            keys={remoteKeys}
+            extra={remoteExtra}
             onKey={(id) => actions?.onRemoteKey?.(id)}
             onBack={() => setView('scene')}
           />

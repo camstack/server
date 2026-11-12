@@ -1,3 +1,4 @@
+import type { MediaPlayerRepeat } from '@camstack/types'
 import type { MediaArtworkKind } from '../../illustrations/MediaArtwork'
 import type { CardCommon, CardCommonActions } from '../../shell/model'
 
@@ -15,6 +16,15 @@ export interface MediaVolume {
 export interface MediaSeek {
   readonly positionSec: number
   readonly durationSec: number
+}
+
+/**
+ * Shuffle and repeat. A side is null when that feature is not declared or
+ * the player has not reported a value.
+ */
+export interface MediaPlayback {
+  readonly shuffle: boolean | null
+  readonly repeat: MediaPlayerRepeat | null
 }
 
 export interface MediaTransport {
@@ -46,6 +56,8 @@ export interface MediaCardModel {
   readonly sources: readonly string[]
   readonly seek: MediaSeek | null
   readonly transport: MediaTransport | null
+  /** Null when the device declares neither: they sit in the remote sheet, not on the scene. */
+  readonly playback: MediaPlayback | null
 }
 
 export interface MediaCardActions extends CardCommonActions {
@@ -60,6 +72,19 @@ export interface MediaCardActions extends CardCommonActions {
   readonly onStop: () => void
   readonly onNext: () => void
   readonly onPrevious: () => void
+  readonly onShuffle: (on: boolean) => void
+  readonly onRepeat: (repeat: MediaPlayerRepeat) => void
+}
+
+const NEXT_REPEAT: Readonly<Record<MediaPlayerRepeat, MediaPlayerRepeat>> = {
+  off: 'all',
+  all: 'one',
+  one: 'off',
+}
+
+/** The next repeat mode, in the order the old control cycled them. */
+export function nextMediaRepeat(repeat: MediaPlayerRepeat): MediaPlayerRepeat {
+  return NEXT_REPEAT[repeat]
 }
 
 /** "1:12". */

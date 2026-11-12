@@ -62,6 +62,8 @@ function mediaActions(): MediaCardActions {
     onStop: vi.fn(),
     onNext: vi.fn(),
     onPrevious: vi.fn(),
+    onShuffle: vi.fn(),
+    onRepeat: vi.fn(),
   }
 }
 
@@ -70,6 +72,7 @@ function robotActions(): RobotCardActions {
     onStart: vi.fn(),
     onPause: vi.fn(),
     onDock: vi.fn(),
+    onStop: vi.fn(),
     onLocate: vi.fn(),
     onSuction: vi.fn(),
   }
@@ -169,6 +172,27 @@ describe('the media scene', () => {
     expect(actions.onPause).toHaveBeenCalled()
   })
 
+  it('shuffle and repeat are in the remote sheet, not on the scene', () => {
+    const actions = mediaActions()
+    const speaker = fixture(mediaFixtures(), 'media-speaker')
+    render(<MediaPlayerCard model={speaker.model} actions={actions} />)
+    fireEvent.click(screen.getByTestId('dc-remote'))
+    expect(screen.queryByTestId('dc-media-shuffle')).toBeNull()
+    cleanup()
+    render(
+      <MediaPlayerCard
+        model={{ ...speaker.model, playback: { shuffle: false, repeat: 'all' } }}
+        actions={actions}
+      />,
+    )
+    expect(screen.queryByTestId('dc-media-shuffle')).toBeNull()
+    fireEvent.click(screen.getByTestId('dc-remote'))
+    fireEvent.click(screen.getByTestId('dc-media-shuffle'))
+    expect(actions.onShuffle).toHaveBeenCalledWith(true)
+    fireEvent.click(screen.getByTestId('dc-media-repeat'))
+    expect(actions.onRepeat).toHaveBeenCalledWith('one')
+  })
+
   it('a muted speaker says so on its volume and on the mute key', () => {
     const speaker = fixture(mediaFixtures(), 'media-speaker')
     const model = {
@@ -182,6 +206,22 @@ describe('the media scene', () => {
 })
 
 describe('the robot scene', () => {
+  it('a cleaning vacuum arms Stop before it ends the task', () => {
+    const actions = robotActions()
+    const clean = fixture(robotFixtures(), 'vacuum-clean')
+    render(
+      <RobotCard
+        model={{ ...clean.model, controls: { ...clean.model.controls, stop: true } }}
+        actions={actions}
+      />,
+    )
+    const stop = screen.getByTestId('dc-robot-stop')
+    fireEvent.click(stop)
+    expect(actions.onStop).not.toHaveBeenCalled()
+    fireEvent.click(stop)
+    expect(actions.onStop).toHaveBeenCalledOnce()
+  })
+
   it('a cleaning vacuum offers Pause; a docked one disables Base', () => {
     const actions = robotActions()
     const clean = fixture(robotFixtures(), 'vacuum-clean')

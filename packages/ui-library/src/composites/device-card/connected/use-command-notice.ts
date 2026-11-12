@@ -51,6 +51,38 @@ export function reportedCommand<T>(
 }
 
 /**
+ * The binding does not offer this method. A call that skipped it used to
+ * resolve as a success (`fn?.()` is `undefined`, and a resolved `undefined`
+ * is not a refusal). Callers report this instead.
+ */
+export class MissingCommandError extends Error {
+  readonly cap: string
+  readonly method: string
+
+  constructor(cap: string, method: string) {
+    super(`${cap} does not implement ${method}`)
+    this.name = 'MissingCommandError'
+    this.cap = cap
+    this.method = method
+  }
+}
+
+/**
+ * The method when the device implements it; a rejection naming the cap and
+ * the method when it does not. Never a resolved `undefined`.
+ */
+export function presentCommand<I, R>(
+  fn: ((input: I) => PromiseLike<R>) | undefined,
+  cap: string,
+  method: string,
+): (input: I) => Promise<R> {
+  return (input) => {
+    if (fn === undefined) return Promise.reject(new MissingCommandError(cap, method))
+    return Promise.resolve(fn(input))
+  }
+}
+
+/**
  * A plain command whose outcome lands on the card, for a field the card shows
  * as reported (no optimistic patch): a refusal names its reason, a success
  * clears it. The promise tells the caller whether it went through (true) or

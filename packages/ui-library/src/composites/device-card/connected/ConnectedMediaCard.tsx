@@ -17,7 +17,7 @@ import {
   VOLUME_STEP,
 } from './media-model'
 import { useCardCommon } from './use-card-common'
-import { reportedCall, reportedCommand } from './use-command-notice'
+import { presentCommand, reportedCall, reportedCommand } from './use-command-notice'
 
 const clampVolume = (v: number): number => Math.min(100, Math.max(0, v))
 
@@ -54,14 +54,26 @@ export function ConnectedMediaCard({
   const volume = mediaVolumeOf(display, features)
   const level = display.volumeLevel
   const stepKeys = declares(DeviceFeature.MediaPlayerVolumeStep)
+  const command = <I, R>(
+    fn: ((input: I) => PromiseLike<R>) | undefined,
+    method: string,
+  ): ((input: I) => Promise<R>) => presentCommand(fn, 'media-player', method)
   const volumeBy = (delta: number): void => {
     if (stepKeys || level === null) {
-      void call(() => (delta > 0 ? cap.volumeUp?.({ steps: 1 }) : cap.volumeDown?.({ steps: 1 })))
+      void call(() =>
+        delta > 0
+          ? command(cap.volumeUp, 'volumeUp')({ steps: 1 })
+          : command(cap.volumeDown, 'volumeDown')({ steps: 1 }),
+      )
       return
     }
     const next = clampVolume(level + delta)
-    send({ volumeLevel: next, isMuted: false }, () => cap.setVolume?.({ volumeLevel: next }))
+    send({ volumeLevel: next, isMuted: false }, () =>
+      command(cap.setVolume, 'setVolume')({ volumeLevel: next }),
+    )
   }
+  const shuffleOn = declares(DeviceFeature.MediaPlayerShuffle) ? display.shuffle : null
+  const repeatOn = declares(DeviceFeature.MediaPlayerRepeat) ? display.repeat : null
   const media = display.currentMedia
   const on = phase !== 'off'
   return (
@@ -87,24 +99,36 @@ export function ConnectedMediaCard({
         sources: declares(DeviceFeature.MediaPlayerSelectSource) ? display.availableSources : [],
         seek: mediaSeekOf(display, features),
         transport: mediaTransportOf(display, features),
+        playback:
+          shuffleOn === null && repeatOn === null ? null : { shuffle: shuffleOn, repeat: repeatOn },
       }}
       actions={{
         ...card.actions,
         onPower: (next) =>
-          send({ state: next ? 'on' : 'off' }, () => (next ? cap.turnOn?.({}) : cap.turnOff?.({}))),
+          send({ state: next ? 'on' : 'off' }, () =>
+            next ? command(cap.turnOn, 'turnOn')({}) : command(cap.turnOff, 'turnOff')({}),
+          ),
         onVolumeUp: () => volumeBy(VOLUME_STEP),
         onVolumeDown: () => volumeBy(-VOLUME_STEP),
-        onMute: (muted) => send({ isMuted: muted }, () => cap.setMute?.({ muted })),
-        onSource: (source) => send({ source }, () => cap.selectSource?.({ source })),
+        onMute: (muted) =>
+          send({ isMuted: muted }, () => command(cap.setMute, 'setMute')({ muted })),
+        onSource: (source) =>
+          send({ source }, () => command(cap.selectSource, 'selectSource')({ source })),
         onSeek: (sec) => {
           const position = Math.round(sec * 1000)
-          send({ position, positionUpdatedAt: Date.now() }, () => cap.seek?.({ position }))
+          send({ position, positionUpdatedAt: Date.now() }, () =>
+            command(cap.seek, 'seek')({ position }),
+          )
         },
         onPlay: () => send({ state: 'playing' }, () => cap.play({})),
         onPause: () => send({ state: 'paused' }, () => cap.pause({})),
-        onStop: () => void call(() => cap.stop?.({})),
-        onNext: () => void call(() => cap.next?.({})),
-        onPrevious: () => void call(() => cap.previous?.({})),
+        onStop: () => void call(() => command(cap.stop, 'stop')({})),
+        onNext: () => void call(() => command(cap.next, 'next')({})),
+        onPrevious: () => void call(() => command(cap.previous, 'previous')({})),
+        onShuffle: (on) =>
+          send({ shuffle: on }, () => command(cap.setShuffle, 'setShuffle')({ shuffle: on })),
+        onRepeat: (repeat) =>
+          send({ repeat }, () => command(cap.setRepeat, 'setRepeat')({ repeat })),
       }}
     />
   )

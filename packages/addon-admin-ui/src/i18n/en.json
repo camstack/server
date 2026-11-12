@@ -7997,7 +7997,11 @@
         "finished": "Finished",
         "error": "Error",
         "aborting": "Stopping"
-      }
+      },
+      "options": "Options",
+      "filterDue": "Filter cleaning due",
+      "machineCareDue": "Machine care due",
+      "machineCareIn": "Machine care in {{count}} runs"
     },
     "humidifier": {
       "turnOff": "Turn off",

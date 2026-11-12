@@ -11,6 +11,8 @@ export interface RobotControls {
   readonly start: boolean
   readonly pause: boolean
   readonly dock: boolean
+  /** Ends the task (a vacuum's stop); armed, offered while it cleans or is paused. */
+  readonly stop: boolean
   /** Vacuum only: it beeps where it is. */
   readonly locate: boolean
 }
@@ -36,6 +38,7 @@ export interface RobotCardActions extends CardCommonActions {
   readonly onStart: () => void
   readonly onPause: () => void
   readonly onDock: () => void
+  readonly onStop: () => void
   readonly onLocate: () => void
   readonly onSuction: (level: string) => void
 }

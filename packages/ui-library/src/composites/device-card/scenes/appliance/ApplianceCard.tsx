@@ -122,7 +122,8 @@ function powerButton({ model, actions }: ApplianceCardProps, t: UiTextFn): React
     )
   }
   const label = t('uiLibrary.deviceCard.turnOff', 'Turn off')
-  if (model.phase === 'run') {
+  // Cutting the power ends a cycle, running or paused: it asks first.
+  if (model.phase === 'run' || model.phase === 'pause') {
     return (
       <ArmedButton
         glyph="power"

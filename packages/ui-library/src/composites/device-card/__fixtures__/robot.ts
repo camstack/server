@@ -64,7 +64,7 @@ function robot(input: RobotInput): RobotFixture {
           ? null
           : { options: SUCTION, value: input.suction },
       progress: input.progress ?? null,
-      controls: { start: true, pause: true, dock: true, locate: !input.mower },
+      controls: { start: true, pause: true, dock: true, stop: false, locate: !input.mower },
       mapUrl: null,
     },
   }

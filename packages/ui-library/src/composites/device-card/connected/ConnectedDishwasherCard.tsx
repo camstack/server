@@ -17,8 +17,10 @@ import { reportedCommand } from './use-command-notice'
 
 /**
  * A dishwasher that speaks for itself (the `dishwasher` cap): its programs,
- * the time left, start / pause / resume / stop — the start refused, with the
- * machine's reason, while the door is open or remote start is off.
+ * the time left, power, start / pause / resume / stop — each drawn only when
+ * the binding implements it, the start refused, with the machine's reason,
+ * while the door is open or remote start is off. Its options and reminders are
+ * not on the card: the device page shows them (`DishwasherOptionsPanel`).
  */
 export function ConnectedDishwasherCard({
   deviceId,
@@ -43,6 +45,7 @@ export function ConnectedDishwasherCard({
   const phase = dishwasherPhase(display)
   const remaining = display.remaining
   const cycle = phase === 'run' || phase === 'pause'
+  const has = (method: string): boolean => card.implements('dishwasher', method)
   return (
     <ApplianceCard
       orientation={orientation}
@@ -53,9 +56,14 @@ export function ConnectedDishwasherCard({
         phase,
         phaseLabel: null,
         since: null,
-        power: null,
+        power: display.powerOn === null || !has('setPower') ? null : { on: display.powerOn },
         program: dishwasherPrograms(display, true),
-        controls: { start: true, pause: true, resume: true, stop: true },
+        controls: {
+          start: has('start'),
+          pause: has('pause'),
+          resume: has('resume'),
+          stop: has('stop'),
+        },
         remainingMinutes: cycle && remaining !== null ? remaining / 60 : null,
         endsAt: phase === 'run' && remaining !== null ? cycleEndsAt(remaining) : null,
         progress: display.progress,

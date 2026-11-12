@@ -98,18 +98,27 @@ const MEDIA_ACTIONS: MediaCardActions = {
   onStop: noop,
   onNext: noop,
   onPrevious: noop,
+  onShuffle: noop,
+  onRepeat: noop,
 }
 const ROBOT_ACTIONS: RobotCardActions = {
   onStart: noop,
   onPause: noop,
   onDock: noop,
+  onStop: noop,
   onLocate: noop,
   onSuction: noop,
 }
 const APPLIANCE_KIND = { washer: 'washer', dryer: 'dryer', dish: 'dish' } as const
 
+interface WaveBSceneProps {
+  readonly type: string
+  /** Opens every media card on its remote sheet, with shuffle and repeat declared. */
+  readonly remote: boolean
+}
+
 /** Wave B: appliances (washer, dryer, dishwasher), media, robots (vacuum + mower). */
-function WaveBScene({ type }: { readonly type: string }): ReactElement | null {
+function WaveBScene({ type, remote }: WaveBSceneProps): ReactElement | null {
   if (type === 'washer' || type === 'dryer' || type === 'dish') {
     return (
       <>
@@ -130,7 +139,12 @@ function WaveBScene({ type }: { readonly type: string }): ReactElement | null {
       <>
         {mediaFixtures().map((f) => (
           <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
-            <MediaPlayerCard model={f.model} actions={MEDIA_ACTIONS} orientation={f.orientation} />
+            <MediaPlayerCard
+              model={remote ? { ...f.model, playback: { shuffle: true, repeat: 'all' } } : f.model}
+              actions={MEDIA_ACTIONS}
+              orientation={f.orientation}
+              initialView={remote ? 'remote' : 'scene'}
+            />
           </Cell>
         ))}
       </>
@@ -227,7 +241,9 @@ function Cell({
 }
 
 export function DeviceCardPreview(): ReactElement {
-  const type = new URLSearchParams(window.location.search).get('type') ?? 'plug'
+  const params = new URLSearchParams(window.location.search)
+  const type = params.get('type') ?? 'plug'
+  const remote = params.get('view') === 'remote'
   const theme = sessionStorage.getItem('ui-shots:theme') === 'dark' ? 'dark' : 'light'
   const t = useMemo(() => {
     const it = i18n.cloneInstance({ lng: 'it' })
@@ -242,7 +258,7 @@ export function DeviceCardPreview(): ReactElement {
         {WAVE_A_TYPES.has(type) ? (
           <WaveAScene type={type} />
         ) : WAVE_B_TYPES.has(type) ? (
-          <WaveBScene type={type} />
+          <WaveBScene type={type} remote={remote} />
         ) : type === 'climate' || type === 'climate-extra' ? (
           (type === 'climate' ? CLIMATE_FIXTURES : CLIMATE_EXTRA_FIXTURES).map((f) => (
             <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The device page shows the new card for washers, dryers, dishwashers, media players, robot vacuums and lawn mowers
+- The device page keeps a dishwasher's options, delayed start and care reminders under the card
 
 ## [1.2.648] - 2026-11-12
 

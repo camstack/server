@@ -117,6 +117,8 @@ const hub = vi.hoisted(() => ({
     stop: vi.fn(),
     next: vi.fn(),
     previous: vi.fn(),
+    setShuffle: vi.fn(),
+    setRepeat: vi.fn(),
   },
   vacuum: {
     start: vi.fn(),
@@ -135,6 +137,9 @@ const hub = vi.hoisted(() => ({
   mediaSlice: null as MediaPlayerStatus | null,
   vacuumSlice: null as VacuumControlStatus | null,
   mowerSlice: null as LawnMowerControlStatus | null,
+  /** Null: the binding lists no methods, so every method of the cap is offered. */
+  methods: null as Readonly<Record<string, readonly string[]>> | null,
+  volumeUpMissing: false,
 }))
 
 vi.mock('../../../contexts/system-context', () => ({
@@ -146,7 +151,13 @@ vi.mock('../../../hooks/use-device-proxy', () => ({
     timedRun: undefined,
     runningState: hub.running === null ? undefined : {},
     dishwasher: hub.dishSlice === null ? undefined : hub.dish,
-    mediaPlayer: hub.mediaSlice === null ? undefined : hub.media,
+    mediaPlayer:
+      hub.mediaSlice === null
+        ? undefined
+        : {
+            ...hub.media,
+            volumeUp: hub.volumeUpMissing ? undefined : hub.media.volumeUp,
+          },
     vacuumControl: hub.vacuumSlice === null ? undefined : hub.vacuum,
     lawnMowerControl: hub.mowerSlice === null ? undefined : hub.mower,
     state: {
@@ -175,6 +186,11 @@ vi.mock('../connected/use-card-common', async () => {
         deviceType: hub.deviceType,
         role: null,
         features: hub.features,
+        implements: (cap: string, method: string): boolean => {
+          if (hub.methods === null) return true
+          const listed = hub.methods[cap]
+          return listed !== undefined && listed.includes(method)
+        },
         fail,
         succeed,
       }
@@ -203,6 +219,8 @@ beforeEach(() => {
   hub.mediaSlice = null
   hub.vacuumSlice = null
   hub.mowerSlice = null
+  hub.methods = null
+  hub.volumeUpMissing = false
 })
 afterEach(cleanup)
 
@@ -289,6 +307,32 @@ describe('a dishwasher that speaks for itself', () => {
     await vi.waitFor(() => expect(hub.dish.stop).toHaveBeenCalledWith({}))
     expect(screen.getByTestId('dc-appliance-program').textContent).toContain('38 min left')
   })
+
+  it('powers off through setPower, and asks first while a cycle runs or is paused', async () => {
+    hub.dishSlice = { ...DISH, state: 'running', powerOn: true }
+    render(<ConnectedDishwasherCard deviceId={1} optimistic={false} />)
+    const power = screen.getByTestId('dc-appliance-power')
+    fireEvent.click(power)
+    expect(hub.dish.setPower).not.toHaveBeenCalled()
+    fireEvent.click(power)
+    await vi.waitFor(() => expect(hub.dish.setPower).toHaveBeenCalledWith({ on: false }))
+    cleanup()
+    hub.dish.setPower.mockClear()
+    hub.dishSlice = { ...DISH, state: 'paused', powerOn: true }
+    render(<ConnectedDishwasherCard deviceId={1} optimistic={false} />)
+    const paused = screen.getByTestId('dc-appliance-power')
+    fireEvent.click(paused)
+    expect(hub.dish.setPower).not.toHaveBeenCalled()
+    fireEvent.click(paused)
+    await vi.waitFor(() => expect(hub.dish.setPower).toHaveBeenCalledWith({ on: false }))
+  })
+
+  it('draws no power control when the binding does not implement setPower', () => {
+    hub.methods = { dishwasher: ['start', 'pause', 'resume', 'stop', 'setProgram'] }
+    hub.dishSlice = DISH
+    render(<ConnectedDishwasherCard deviceId={1} />)
+    expect(screen.queryByTestId('dc-appliance-power')).toBeNull()
+  })
 })
 
 describe('a media player draws what it declares', () => {
@@ -342,6 +386,43 @@ describe('a media player draws what it declares', () => {
     fireEvent.click(screen.getByTestId('dc-media-power'))
     await vi.waitFor(() => expect(hub.media.turnOff).toHaveBeenCalledWith({}))
   })
+
+  it('a refused mute names the failure', async () => {
+    hub.mediaSlice = MEDIA
+    hub.features = [DeviceFeature.MediaPlayerVolume, DeviceFeature.MediaPlayerMute]
+    hub.media.setMute.mockRejectedValueOnce(new Error('busy'))
+    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    fireEvent.click(screen.getByTestId('dc-media-mute'))
+    const reason = await screen.findByTestId('dc-reason')
+    expect(reason.textContent).toBe('Command failed: busy')
+  })
+
+  it('a missing volumeUp is a failure, never a success', async () => {
+    hub.mediaSlice = MEDIA
+    hub.features = [DeviceFeature.MediaPlayerVolumeStep]
+    hub.volumeUpMissing = true
+    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    fireEvent.click(screen.getByTestId('dc-media-volume-up'))
+    const reason = await screen.findByTestId('dc-reason')
+    expect(reason.textContent).toBe('Command failed: media-player does not implement volumeUp')
+    expect(hub.media.volumeUp).not.toHaveBeenCalled()
+  })
+
+  it('shuffle and repeat sit in the remote sheet, only when declared', async () => {
+    hub.mediaSlice = { ...MEDIA, shuffle: false, repeat: 'off' }
+    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    expect(screen.queryByTestId('dc-remote')).toBeNull()
+    expect(screen.queryByTestId('dc-media-shuffle')).toBeNull()
+    cleanup()
+    hub.features = [DeviceFeature.MediaPlayerShuffle, DeviceFeature.MediaPlayerRepeat]
+    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    expect(screen.queryByTestId('dc-media-shuffle')).toBeNull()
+    fireEvent.click(screen.getByTestId('dc-remote'))
+    fireEvent.click(screen.getByTestId('dc-media-shuffle'))
+    await vi.waitFor(() => expect(hub.media.setShuffle).toHaveBeenCalledWith({ shuffle: true }))
+    fireEvent.click(screen.getByTestId('dc-media-repeat'))
+    await vi.waitFor(() => expect(hub.media.setRepeat).toHaveBeenCalledWith({ repeat: 'all' }))
+  })
 })
 
 describe('a robot vacuum', () => {
@@ -364,6 +445,33 @@ describe('a robot vacuum', () => {
     render(<ConnectedVacuumCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-robot-locate'))
     await vi.waitFor(() => expect(hub.vacuum.locate).toHaveBeenCalledWith({}))
+  })
+
+  it('arms Stop while cleaning, and hides it when stop is not implemented', async () => {
+    hub.vacuumSlice = { ...VACUUM, state: 'cleaning' }
+    render(<ConnectedVacuumCard deviceId={1} optimistic={false} />)
+    const stop = screen.getByTestId('dc-robot-stop')
+    fireEvent.click(stop)
+    expect(hub.vacuum.stop).not.toHaveBeenCalled()
+    fireEvent.click(stop)
+    await vi.waitFor(() => expect(hub.vacuum.stop).toHaveBeenCalledWith({}))
+    cleanup()
+    hub.methods = {
+      'vacuum-control': ['start', 'pause', 'returnToBase', 'locate', 'setFanSpeed'],
+    }
+    hub.vacuumSlice = { ...VACUUM, state: 'cleaning' }
+    render(<ConnectedVacuumCard deviceId={1} />)
+    expect(screen.queryByTestId('dc-robot-stop')).toBeNull()
+  })
+
+  it('hides locate when the vacuum does not implement it', () => {
+    hub.methods = {
+      'vacuum-control': ['start', 'pause', 'stop', 'returnToBase', 'setFanSpeed'],
+    }
+    hub.vacuumSlice = VACUUM
+    render(<ConnectedVacuumCard deviceId={1} />)
+    expect(screen.queryByTestId('dc-robot-locate')).toBeNull()
+    expect(screen.getByTestId('dc-robot-dock')).toBeTruthy()
   })
 
   it('a refused clean lands on the reason line', async () => {
@@ -390,6 +498,16 @@ describe('a robot mower', () => {
     fireEvent.click(screen.getByTestId('dc-robot-dock'))
     await vi.waitFor(() => expect(hub.mower.dock).toHaveBeenCalledWith({}))
     expect(screen.queryByTestId('dc-robot-locate')).toBeNull()
+  })
+
+  it('hides a control the mower does not implement, and never a stop or a locate', () => {
+    hub.methods = { 'lawn-mower-control': ['pause', 'dock'] }
+    hub.mowerSlice = { ...MOWER, activity: 'docked' }
+    render(<ConnectedMowerCard deviceId={1} />)
+    expect(screen.queryByTestId('dc-robot-go')).toBeNull()
+    expect(screen.queryByTestId('dc-robot-stop')).toBeNull()
+    expect(screen.queryByTestId('dc-robot-locate')).toBeNull()
+    expect(screen.getByTestId('dc-robot-dock')).toBeTruthy()
   })
 
   it('starts mowing through startMowing when docked', async () => {

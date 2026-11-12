@@ -112,6 +112,11 @@ export {
   ControlInlineControl,
   ControlHeroCard,
 } from './panel-controls'
+export {
+  DishwasherOptionsPanel,
+  isConsumableDishwasherEvent,
+  visibleDishwasherEvents,
+} from './dishwasher-options'
 export { resolvePrimaryChild, PRIORITY, type ChildRef } from './primary-child'
 export {
   resolveContainerPrimary,

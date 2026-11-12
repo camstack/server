@@ -2,6 +2,7 @@ import { type ReactElement, type ReactNode, useState } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import type { RobotActivity } from '../../illustrations/RobotIllustration'
 import { RobotIllustration } from '../../illustrations/RobotIllustration'
+import { ArmedButton } from '../../parts/ArmedButton'
 import { CardButton } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
 import { StepColumn } from '../../parts/StepColumn'
@@ -113,6 +114,16 @@ function rightColumn(model: RobotCardModel, actions: RobotCardActions, t: UiText
             : t('uiLibrary.deviceCard.robot.clean', 'Clean')}
         </CardButton>
       ) : null}
+      {c.stop && (model.activity === 'clean' || model.activity === 'pause') ? (
+        <ArmedButton
+          glyph="stop"
+          testId="dc-robot-stop"
+          armedLabel={t('uiLibrary.deviceCard.appliance.confirmStop', 'Confirm: stop')}
+          onConfirm={actions.onStop}
+        >
+          {t('uiLibrary.deviceCard.stop', 'Stop')}
+        </ArmedButton>
+      ) : null}
       {c.dock ? (
         <CardButton
           glyph="home"
@@ -149,7 +160,7 @@ export function RobotCard({
   const label = robotStateLabel(model, t)
   const mapShown = showMap && model.mapUrl !== null
   const c = model.controls
-  const hasRight = c.start || c.pause || c.dock || (!model.mower && c.locate)
+  const hasRight = c.start || c.pause || c.dock || c.stop || (!model.mower && c.locate)
   return (
     <DeviceCard
       kind={model.mower ? 'mower' : 'vacuum'}

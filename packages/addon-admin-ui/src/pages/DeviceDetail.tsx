@@ -3,41 +3,47 @@ import {
   DeviceFeature,
   DeviceType,
   type PowerSourceActionResult,
+  primaryChildPreferenceOf,
   WELL_KNOWN_TAB_MAP,
   type WellKnownTab,
-  primaryChildPreferenceOf,
 } from '@camstack/types'
 import {
   BatteryBadge,
   Breadcrumb,
-  heroLang,
-  DeviceHistoryView,
+  Button,
   type ContainerChild,
   DeviceContextProvider,
+  DeviceHistoryView,
+  type DeviceNameFields,
+  DishwasherOptionsPanel,
+  deviceTypeMetaOf,
   getPhaseVisual,
+  heroLang,
   KebabMenu,
   type KebabMenuItem,
   NetworkLinkBadge,
   PlayerOverlaysProvider,
   RecordedPlaybackProvider,
+  RunningBadge,
   resolveContainerPrimary,
   resolveDeviceIntegration,
   SNAPSHOT_MEDIA_PATH,
   StatusBadge,
-  deviceTypeMetaOf,
-  RunningBadge,
   useAddonsRestartAddon,
-  useDeviceState,
-  useAudioMetricsGetCurrentSnapshot,
   useAlert,
+  useAudioMetricsGetCurrentSnapshot,
   useConfirm,
   useDeviceBattery,
-  useDeviceNetworkLink,
+  useDeviceLabel,
   useDeviceManagerDisable,
   useDeviceManagerEnable,
+  useDeviceManagerGetBindings,
   useDeviceManagerGetDevice,
   useDeviceManagerGetDeviceAggregate,
   useDeviceManagerRemove,
+  useDeviceNetworkLink,
+  useDeviceSeriesList,
+  useDeviceState,
   useIntegrationsList,
   useIsMobile,
   usePipelineOrchestratorGetPipelineAssignment,
@@ -49,13 +55,9 @@ import {
   useRebootReboot,
   useSystem,
   useThemeMode,
+  useUiText,
   VodPlaybackProvider,
   ZoneEditingProvider,
-  useDeviceLabel,
-  useUiText,
-  useDeviceSeriesList,
-  type DeviceNameFields,
-  Button,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -74,17 +76,17 @@ import {
   Volume2,
 } from 'lucide-react'
 import { useCallback, useMemo, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { integrationDetailUrl } from '../lib/integration-instance-selection'
-import { STEP_INSPECTOR_PARAMS } from '../lib/step-url-selection'
 import { CameraFunctionSwitches } from '../components/device/CameraFunctionSwitches'
-import { DeviceAdminLinkButton } from '../components/device/DeviceAdminLinkButton'
 import { ChildrenList } from '../components/device/ChildrenList'
-import { DeviceHero } from '../components/device/hero/HeroRegistry'
-import { DeviceDetailModule } from '../modules/device-detail'
-import { heroDrawnWidgets } from '../components/device/hero/hero-drawn-widgets'
+import { CustomizeTab } from '../components/device/customize/CustomizeTab'
+import { DeviceAdminLinkButton } from '../components/device/DeviceAdminLinkButton'
 import { DeviceHeroWidgets } from '../components/device/hero/DeviceHeroWidgets'
+import { DeviceHero } from '../components/device/hero/HeroRegistry'
+import { heroDrawnWidgets } from '../components/device/hero/hero-drawn-widgets'
 import { heroWidgets } from '../components/device/hero/hero-widgets'
+import { historyTabVisible } from '../components/device/history-tab'
 import {
   EventsPanelContent,
   LogsPanelContent,
@@ -92,13 +94,12 @@ import {
   StatePanelContent,
   StreamPanelContent,
 } from '../components/device/PanelContent'
-import { CustomizeTab } from '../components/device/customize/CustomizeTab'
 import { resolveActiveDeviceTab } from '../components/device/tabs/active-device-tab'
 import { BindingsTab } from '../components/device/tabs/BindingsTab'
 import { ConfigTab } from '../components/device/tabs/ConfigTab'
+import { hasConfigTabContent } from '../components/device/tabs/config-tab-sections'
 import { DetectionPipelineTab } from '../components/device/tabs/DetectionPipelineTab'
 import { DeviceAggregateSection } from '../components/device/tabs/DeviceAggregateSection'
-import { hasConfigTabContent } from '../components/device/tabs/config-tab-sections'
 import {
   DEVICE_EXPORT_TAB_ID,
   DEVICE_EXPORT_TAB_LABEL,
@@ -106,14 +107,15 @@ import {
 } from '../components/device/tabs/device-export-tab'
 import { OverviewTab } from '../components/device/tabs/OverviewTab'
 import { HISTORY_TAB_ID, structuralTabsFor } from '../components/device/tabs/structural-tabs'
-import { historyTabVisible } from '../components/device/history-tab'
 import { CapabilityBadges } from '../components/shared/CapabilityBadges'
 import { IntegrationLogoLink } from '../components/shared/IntegrationLogoLink'
 import { useAuth } from '../contexts/auth-context'
 import { useDeviceChildren } from '../hooks/useDevice'
 import { authedDownload } from '../lib/authed-media.js'
 import { CUSTOMIZE_TAB_ID } from '../lib/customization-routes'
-import { Trans, useTranslation } from 'react-i18next'
+import { integrationDetailUrl } from '../lib/integration-instance-selection'
+import { STEP_INSPECTOR_PARAMS } from '../lib/step-url-selection'
+import { DeviceDetailModule } from '../modules/device-detail'
 
 // ---------------------------------------------------------------------------
 // Tab definitions
@@ -338,6 +340,7 @@ export function DeviceDetailPage() {
   const status = isOnline ? 'online' : 'offline'
   const provider = String(device?.addonId ?? 'rtsp')
   const capabilities = device?.features ?? []
+  const dishwasherBindings = useDeviceManagerGetBindings({ deviceId })
   const deviceTypeStr = device?.type
   const isCamera = deviceTypeStr === DeviceType.Camera
 
@@ -1397,6 +1400,15 @@ export function DeviceDetailPage() {
                                 features={capabilities}
                               />
                             }
+                          />
+                          {/* What the dishwasher card does not draw (its options,
+                              delayed start, events, care reminders) sits under it.
+                              Draws nothing for any other device. */}
+                          <DishwasherOptionsPanel
+                            trpc={system.trpcClient}
+                            deviceId={deviceId}
+                            features={capabilities}
+                            entries={dishwasherBindings.data?.entries}
                           />
                           {/* The hero block's own sections (D915): consumables
                               sit right under the hero card, in the same slot, so

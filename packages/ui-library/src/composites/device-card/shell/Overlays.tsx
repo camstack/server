@@ -95,6 +95,8 @@ export interface RemoteViewProps {
   readonly keys: readonly CardRemoteKey[]
   readonly onKey: (id: string) => void
   readonly onBack: () => void
+  /** Drawn under the keys: what the scene does not (shuffle, repeat). */
+  readonly extra?: ReactNode
 }
 
 interface RemoteKeyButtonProps {
@@ -130,7 +132,7 @@ function RemoteKeyButton({
 }
 
 /** Replaces the scene: the keys the device's remote declares, as a pad when it has one. */
-export function RemoteView({ keys, onKey, onBack }: RemoteViewProps): ReactElement {
+export function RemoteView({ keys, onKey, onBack, extra = null }: RemoteViewProps): ReactElement {
   const t = useUiText()
   const [flashed, setFlashed] = useState<string | null>(null)
   const rows = remotePadRows(keys)
@@ -153,7 +155,7 @@ export function RemoteView({ keys, onKey, onBack }: RemoteViewProps): ReactEleme
       className="flex flex-col gap-3 rounded-2xl border border-border bg-background-elevated p-3"
     >
       <OverlayBar onBack={onBack}>{t('uiLibrary.deviceCard.remote', 'Remote')}</OverlayBar>
-      {rows === null ? (
+      {keys.length === 0 ? null : rows === null ? (
         <div className="flex flex-wrap justify-center gap-2">{keys.map((k) => button(k))}</div>
       ) : (
         <div className="grid justify-items-center gap-2.5" data-testid="dc-remote-pad">
@@ -174,9 +176,12 @@ export function RemoteView({ keys, onKey, onBack }: RemoteViewProps): ReactEleme
           )}
         </div>
       )}
-      <p className="text-center text-xs text-foreground-muted">
-        {t('uiLibrary.deviceCard.remoteNote', 'The keys are the ones the device declares.')}
-      </p>
+      {extra}
+      {keys.length === 0 ? null : (
+        <p className="text-center text-xs text-foreground-muted">
+          {t('uiLibrary.deviceCard.remoteNote', 'The keys are the ones the device declares.')}
+        </p>
+      )}
     </div>
   )
 }

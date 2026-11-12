@@ -10,6 +10,7 @@ import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import {
   useConsumablesReset,
+  useDeviceManagerGetBindings,
   useDeviceManagerGetDevice,
   usePowerSourceForceRestart,
   usePowerSourceGetStatus,
@@ -49,10 +50,32 @@ export interface CardCommonResult {
   readonly role: string | null
   /** What the device declares it can do (`DeviceFeature` values); empty until it answered. */
   readonly features: readonly string[]
+  /**
+   * Whether the device's binding of `cap` implements `method`. False until the
+   * bindings answered: a control is drawn only once the device has said it has it.
+   */
+  readonly implements: (cap: string, method: string) => boolean
   /** Puts a failed command's reason on the card's reason line. */
   readonly fail: (error: unknown) => void
   /** Clears it: the next command went through. */
   readonly succeed: () => void
+}
+
+/** The binding answered for `cap`, and its provider has `method` (an absent list means every method). */
+export function bindingImplements(
+  entries: readonly BindingMethods[] | undefined,
+  cap: string,
+  method: string,
+): boolean {
+  const entry = entries?.find((e) => e.capName === cap)
+  if (entry === undefined) return false
+  return entry.implementedMethods === undefined || entry.implementedMethods.includes(method)
+}
+
+/** What a binding entry says about its methods. */
+export interface BindingMethods {
+  readonly capName: string
+  readonly implementedMethods?: readonly string[] | undefined
 }
 
 /**
@@ -89,6 +112,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
   const client = useTrpcClient()
   const dev = useDeviceProxy(client, deviceId)
   const device = useDeviceManagerGetDevice({ deviceId })
+  const bindings = useDeviceManagerGetBindings({ deviceId })
   const labels = useDeviceProviderLabelsWith(client, true)
   const status = useDeviceStateSlice(dev?.state.deviceStatus)
   const meter = useDeviceStateSlice(
@@ -233,6 +257,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
     deviceType: device.data?.type ?? null,
     role: device.data?.role ?? null,
     features: device.data?.features ?? NO_FEATURES,
+    implements: (cap, method) => bindingImplements(bindings.data?.entries, cap, method),
     fail,
     succeed,
   }

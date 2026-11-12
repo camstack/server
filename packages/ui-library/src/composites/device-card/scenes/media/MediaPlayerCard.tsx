@@ -1,3 +1,4 @@
+import type { MediaPlayerRepeat } from '@camstack/types'
 import type { ReactElement, ReactNode } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { MediaArtwork } from '../../illustrations/MediaArtwork'
@@ -5,13 +6,15 @@ import { CardButton } from '../../parts/CardButton'
 import { MenuButton } from '../../parts/MenuButton'
 import { HorizontalSlider } from '../../parts/sliders'
 import { StepColumn } from '../../parts/StepColumn'
-import { DeviceCard } from '../../shell/DeviceCard'
+import { DeviceCard, type DeviceCardView } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import {
   formatTrackTime,
   type MediaCardActions,
   type MediaCardModel,
   type MediaPhase,
+  type MediaPlayback,
+  nextMediaRepeat,
 } from './model'
 
 export interface MediaPlayerCardProps {
@@ -19,6 +22,8 @@ export interface MediaPlayerCardProps {
   readonly actions: MediaCardActions
   readonly orientation?: CardOrientation
   readonly showName?: boolean
+  /** Opens the remote sheet. The shot harness uses it; a card starts on the scene. */
+  readonly initialView?: DeviceCardView
 }
 
 const TONE: Readonly<Record<MediaPhase, CardTone>> = {
@@ -147,6 +152,54 @@ function transportRow(model: MediaCardModel, actions: MediaCardActions, t: UiTex
   )
 }
 
+function repeatWord(repeat: MediaPlayerRepeat, t: UiTextFn): string {
+  switch (repeat) {
+    case 'off':
+      return t('uiLibrary.mediaPlayerPanel.repeatOff', 'Off')
+    case 'all':
+      return t('uiLibrary.mediaPlayerPanel.repeatAll', 'All')
+    case 'one':
+      return t('uiLibrary.mediaPlayerPanel.repeatOne', 'One')
+  }
+}
+
+/** Shuffle and repeat, for the remote sheet. Null when the device declares neither. */
+function playbackExtra(
+  playback: MediaPlayback | null,
+  off: boolean,
+  actions: MediaCardActions,
+  t: UiTextFn,
+): ReactNode {
+  if (playback === null) return null
+  if (playback.shuffle === null && playback.repeat === null) return null
+  const repeat = playback.repeat
+  return (
+    <div className="flex flex-wrap justify-center gap-2" data-testid="dc-media-playback">
+      {playback.shuffle === null ? null : (
+        <CardButton
+          tone={playback.shuffle ? 'on' : 'default'}
+          aria-pressed={playback.shuffle}
+          disabled={off}
+          data-testid="dc-media-shuffle"
+          onClick={() => actions.onShuffle(!playback.shuffle)}
+        >
+          {t('uiLibrary.mediaPlayerPanel.shuffle', 'Shuffle')}
+        </CardButton>
+      )}
+      {repeat === null ? null : (
+        <CardButton
+          tone={repeat === 'off' ? 'default' : 'on'}
+          disabled={off}
+          data-testid="dc-media-repeat"
+          onClick={() => actions.onRepeat(nextMediaRepeat(repeat))}
+        >
+          {t('uiLibrary.mediaPlayerPanel.repeat', 'Repeat')}: {repeatWord(repeat, t)}
+        </CardButton>
+      )}
+    </div>
+  )
+}
+
 function bottomZone(model: MediaCardModel, actions: MediaCardActions, t: UiTextFn): ReactNode {
   const seek = model.seek
   const transport = transportRow(model, actions, t)
@@ -183,6 +236,7 @@ export function MediaPlayerCard({
   actions,
   orientation = 'vertical',
   showName = true,
+  initialView = 'scene',
 }: MediaPlayerCardProps): ReactElement {
   const t = useUiText()
   const on = model.phase !== 'off'
@@ -196,6 +250,8 @@ export function MediaPlayerCard({
       actions={actions}
       orientation={orientation}
       showName={showName}
+      initialView={initialView}
+      remoteExtra={playbackExtra(model.playback, !on, actions, t)}
       activity={model.phase}
       state={{ label, since: model.since, tone: TONE[model.phase] }}
       scene={{

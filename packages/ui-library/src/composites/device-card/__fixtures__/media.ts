@@ -70,6 +70,7 @@ const soggiorno = (orientation: CardOrientation): MediaFixture => ({
     sources: ['Spotify', 'Radio', 'Line-in', 'TV'],
     seek: { positionSec: 72, durationSec: 337 },
     transport: { previous: true, next: true, stop: false, blind: false },
+    playback: null,
   },
 })
 
@@ -95,6 +96,7 @@ export function mediaFixtures(): readonly MediaFixture[] {
         sources: ['HDMI 1 · Apple TV', 'HDMI 2 · PlayStation', 'TV', 'Netflix'],
         seek: null,
         transport: { previous: false, next: false, stop: false, blind: false },
+        playback: null,
       },
     },
     {
@@ -116,6 +118,7 @@ export function mediaFixtures(): readonly MediaFixture[] {
         sources: ['Ottico', 'Bluetooth', 'Phono'],
         seek: null,
         transport: { previous: false, next: false, stop: true, blind: true },
+        playback: null,
       },
     },
     {
@@ -137,6 +140,7 @@ export function mediaFixtures(): readonly MediaFixture[] {
         sources: ['HDMI 1', 'HDMI 2', 'TV'],
         seek: null,
         transport: { previous: false, next: false, stop: true, blind: true },
+        playback: null,
       },
     },
     {
@@ -158,6 +162,7 @@ export function mediaFixtures(): readonly MediaFixture[] {
         sources: ['Spotify', 'Radio', 'Line-in'],
         seek: null,
         transport: { previous: true, next: true, stop: false, blind: false },
+        playback: null,
       },
     },
     soggiorno('horizontal'),

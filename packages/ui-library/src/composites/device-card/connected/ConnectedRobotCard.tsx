@@ -20,7 +20,7 @@ function withBattery(common: CardCommon, level: number | null): CardCommon {
   return { ...common, battery: { level } }
 }
 
-/** A robot vacuum (`vacuum-control`): clean, pause, dock, locate, suction. */
+/** A robot vacuum (`vacuum-control`): clean, pause, stop, dock, locate, suction — each only when its binding implements it. */
 export function ConnectedVacuumCard({
   deviceId,
   canActuate = true,
@@ -44,6 +44,7 @@ export function ConnectedVacuumCard({
   const send = reportedCommand(applyOptimisticAction, report)
   const call = reportedCall(report)
   const speeds = display.availableFanSpeeds
+  const has = (method: string): boolean => card.implements('vacuum-control', method)
   return (
     <RobotCard
       orientation={orientation}
@@ -56,7 +57,13 @@ export function ConnectedVacuumCard({
         since: coarseDuration(Date.now() - display.lastChangedAt, t),
         suction: speeds.length > 0 ? { options: speeds, value: display.fanSpeed } : null,
         progress: display.progress,
-        controls: { start: true, pause: true, dock: true, locate: true },
+        controls: {
+          start: has('start'),
+          pause: has('pause'),
+          dock: has('returnToBase'),
+          stop: has('stop'),
+          locate: has('locate'),
+        },
         mapUrl: null,
       }}
       actions={{
@@ -64,6 +71,7 @@ export function ConnectedVacuumCard({
         onStart: () => send({ state: 'cleaning' }, () => cap.start({})),
         onPause: () => send({ state: 'paused' }, () => cap.pause({})),
         onDock: () => send({ state: 'returning' }, () => cap.returnToBase({})),
+        onStop: () => send({ state: 'idle' }, () => cap.stop({})),
         onLocate: () => void call(() => cap.locate({})),
         onSuction: (speed) => send({ fanSpeed: speed }, () => cap.setFanSpeed({ speed })),
       }}
@@ -95,6 +103,7 @@ export function ConnectedMowerCard({
   const send = reportedCommand(applyOptimisticAction, report)
   const call = reportedCall(report)
   const code = display.currentCodeLabel
+  const has = (method: string): boolean => card.implements('lawn-mower-control', method)
   return (
     <RobotCard
       orientation={orientation}
@@ -107,7 +116,14 @@ export function ConnectedMowerCard({
         since: code ?? coarseDuration(Date.now() - display.lastChangedAt, t),
         suction: null,
         progress: display.progress,
-        controls: { start: true, pause: true, dock: true, locate: false },
+        // The mower cap has no stop and no locate: those two are never drawn.
+        controls: {
+          start: has('startMowing'),
+          pause: has('pause'),
+          dock: has('dock'),
+          stop: false,
+          locate: false,
+        },
         mapUrl: null,
       }}
       actions={{
@@ -116,6 +132,7 @@ export function ConnectedMowerCard({
         onPause: () => send({ activity: 'paused' }, () => cap.pause({})),
         // No `returning` activity in the cap: the mower reports docked only once it is.
         onDock: () => void call(() => cap.dock({})),
+        onStop: noop,
         onLocate: noop,
         onSuction: noop,
       }}

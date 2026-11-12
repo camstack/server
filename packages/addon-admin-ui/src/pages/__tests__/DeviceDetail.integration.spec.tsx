@@ -8,8 +8,8 @@
  * "composer" and linked nowhere.
  */
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -55,6 +55,7 @@ vi.mock('@camstack/ui-library', async () => {
       refetch: vi.fn(),
     }),
     useDeviceManagerGetDeviceAggregate: emptyQuery,
+    useDeviceManagerGetBindings: emptyQuery,
     useIntegrationsList: () => ({
       data: integrationState.answered ? [BLOCKS] : undefined,
       isLoading: !integrationState.answered,
