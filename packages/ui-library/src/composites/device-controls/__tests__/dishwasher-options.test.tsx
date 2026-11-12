@@ -108,6 +108,7 @@ describe('DishwasherOptionsPanel', () => {
     expect(screen.getByRole('checkbox', { name: 'Half load' })).toBeTruthy()
     expect(screen.queryByRole('checkbox', { name: 'Child lock' })).toBeNull()
     expect(screen.getByText('Filter cleaning due')).toBeTruthy()
+    expect(screen.getByTestId('dishwasher-options-body').className).toContain('px-4')
     expect(screen.queryByText('Salt Nearly Empty')).toBeNull()
     expect(screen.getByText('Program Finished')).toBeTruthy()
     fireEvent.click(screen.getByRole('checkbox', { name: 'Half load' }))

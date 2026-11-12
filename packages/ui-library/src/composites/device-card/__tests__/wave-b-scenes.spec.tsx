@@ -18,6 +18,8 @@ import {
   dishwasherPrograms,
   dishwasherStartBlocked,
   plugAppliancePhase,
+  programDisplayLabel,
+  programNamesFromOptions,
 } from '../connected/appliance-model'
 import { connectedCardKindOf } from '../connected/ConnectedDeviceCard'
 import {
@@ -109,6 +111,28 @@ describe('the appliance scene', () => {
     render(<ApplianceCard model={done.model} actions={later} />)
     fireEvent.click(screen.getByTestId('dc-appliance-power'))
     expect(later.onPower).toHaveBeenCalledWith(false)
+  })
+
+  it('a long program label stays inside the program column', () => {
+    const idle = fixture(applianceFixtures('dish'), 'dish-idle')
+    const long = 'Dishcare.Dishwasher.Program.SuperExtraIntensiveSanitiseWithPrewash'
+    render(
+      <ApplianceCard
+        model={{
+          ...idle.model,
+          program: {
+            options: [{ id: long, label: long, minutes: null }],
+            selected: long,
+            selectable: false,
+          },
+        }}
+        actions={applianceActions()}
+      />,
+    )
+    const value = screen.getByTestId('dc-appliance-program-value')
+    expect(value.className).toContain('break-words')
+    expect(value.closest('[data-zone="left"]')?.className).toContain('overflow-x-clip')
+    expect(screen.getByTestId('dc-appliance-start').className).toContain('break-words')
   })
 
   it('an idle connected dishwasher steps programs and names the program it starts', () => {
@@ -342,6 +366,30 @@ describe('appliance model', () => {
     expect(
       dishwasherPrograms({ ...DISH_BASE, availablePrograms: [] }, true)?.options.map((p) => p.id),
     ).toEqual(['Eco'])
+  })
+
+  it('shows the cap display label, and a short name when the cap gives none', () => {
+    const key = 'Dishcare.Dishwasher.Program.Eco50'
+    const quick = 'Dishcare.Dishwasher.Program.Quick65'
+    expect(programDisplayLabel(key, 'Eco 50°')).toBe('Eco 50°')
+    expect(programDisplayLabel(key, 'Eco50')).toBe('Eco 50°')
+    expect(programDisplayLabel(key, null)).toBe('Eco 50°')
+    expect(programDisplayLabel('MachineCare')).toBe('Machine Care')
+    expect(programDisplayLabel('Auto2')).toBe('Auto 2')
+    expect(programDisplayLabel('Eco 50')).toBe('Eco 50')
+    const named = dishwasherPrograms(
+      { ...DISH_BASE, selectedProgram: key, availablePrograms: [key, quick] },
+      true,
+      [{ key, name: 'Economy wash' }],
+    )
+    expect(named?.options.map((p) => [p.id, p.label])).toEqual([
+      [key, 'Economy wash'],
+      [quick, 'Quick 65°'],
+    ])
+    expect(programNamesFromOptions({ programs: [{ key, name: 'Eco 50°' }, { key: 1 }] })).toEqual([
+      { key, name: 'Eco 50°' },
+    ])
+    expect(programNamesFromOptions(null)).toEqual([])
   })
 })
 

@@ -11893,6 +11893,20 @@
       "summary": "Lazy-wrapped `PrivacyMaskSettings` — code-split off the main bundle."
     },
     {
+      "name": "programDisplayLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/appliance-model.ts",
+      "summary": "The word on the card. The cap's display label wins (`getOptions` `name`, when it is more than the key or its last segment). Otherwise the last segment is spaced out and a trailing temperature gains a degree: `Dishcare…"
+    },
+    {
+      "name": "programNamesFromOptions",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/appliance-model.ts",
+      "summary": "Programs from a `getOptions` answer. Anything else is an empty catalogue."
+    },
+    {
       "name": "ProviderBadge",
       "kind": "component",
       "area": "composites",
@@ -14655,7 +14669,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/parts/StepColumn.tsx",
-      "summary": "A side column that steps through values: a button above, the value with its notes, a button below — a program, a suction level, a volume. A step the device does not offer is not drawn.",
+      "summary": "",
       "props": [
         {
           "name": "up",

@@ -139,6 +139,7 @@ const hub = vi.hoisted(() => ({
   mowerSlice: null as LawnMowerControlStatus | null,
   /** Null: the binding lists no methods, so every method of the cap is offered. */
   methods: null as Readonly<Record<string, readonly string[]>> | null,
+  getOptions: null as null | ((input?: unknown) => Promise<unknown>),
   volumeUpMissing: false,
 }))
 
@@ -150,7 +151,13 @@ vi.mock('../../../hooks/use-device-proxy', () => ({
     switch: hub.switchOn === null ? undefined : { setState: hub.setState },
     timedRun: undefined,
     runningState: hub.running === null ? undefined : {},
-    dishwasher: hub.dishSlice === null ? undefined : hub.dish,
+    dishwasher:
+      hub.dishSlice === null
+        ? undefined
+        : {
+            ...hub.dish,
+            ...(hub.getOptions === null ? {} : { getOptions: hub.getOptions }),
+          },
     mediaPlayer:
       hub.mediaSlice === null
         ? undefined
@@ -221,6 +228,7 @@ beforeEach(() => {
   hub.mowerSlice = null
   hub.methods = null
   hub.volumeUpMissing = false
+  hub.getOptions = null
 })
 afterEach(cleanup)
 
@@ -266,6 +274,27 @@ describe('a dishwasher that speaks for itself', () => {
   beforeEach(() => {
     hub.deviceType = DeviceType.Dishwasher
     hub.switchOn = null
+  })
+
+  it('names the program from the cap, and shortens a raw key when the cap has no label', async () => {
+    const key = 'Dishcare.Dishwasher.Program.Eco50'
+    hub.dishSlice = {
+      ...DISH,
+      selectedProgram: key,
+      availablePrograms: [key, 'Dishcare.Dishwasher.Program.Quick65'],
+    }
+    render(<ConnectedDishwasherCard deviceId={1} optimistic={false} />)
+    expect(screen.getByTestId('dc-appliance-program-value').textContent).toBe('Eco 50°')
+    expect(screen.getByTestId('dc-appliance-start').textContent).toBe('Start Eco 50°')
+    cleanup()
+    hub.getOptions = vi.fn().mockResolvedValue({
+      programs: [{ key, name: 'Economy wash' }],
+    })
+    render(<ConnectedDishwasherCard deviceId={1} optimistic={false} />)
+    await vi.waitFor(() =>
+      expect(screen.getByTestId('dc-appliance-program-value').textContent).toBe('Economy wash'),
+    )
+    expect(screen.getByTestId('dc-appliance-start').textContent).toBe('Start Economy wash')
   })
 
   it('starts the selected program through dishwasher.start', async () => {

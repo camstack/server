@@ -47,7 +47,10 @@ export function SceneGrid({
       {fx}
       {corners}
       {has(left) ? (
-        <div data-zone="left" className="dc-left flex flex-col items-center gap-2">
+        <div
+          data-zone="left"
+          className="dc-left flex w-full min-w-0 max-w-full flex-col items-center gap-2 overflow-x-clip"
+        >
           {left}
         </div>
       ) : null}
@@ -63,7 +66,10 @@ export function SceneGrid({
         </div>
       ) : null}
       {has(bottom) ? (
-        <div data-zone="bottom" className="dc-bottom flex flex-col items-center gap-2.5">
+        <div
+          data-zone="bottom"
+          className="dc-bottom flex w-full min-w-0 max-w-full flex-col items-center gap-2.5 overflow-x-clip"
+        >
           {bottom}
         </div>
       ) : null}

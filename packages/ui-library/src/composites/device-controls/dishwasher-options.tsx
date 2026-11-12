@@ -137,7 +137,7 @@ export function DishwasherOptionsPanel({
       title={t('uiLibrary.dishwasher.options', 'Options')}
       testId="dishwasher-options"
     >
-      <div className="flex flex-col gap-3 text-xs">
+      <div className="flex flex-col gap-3 px-4 py-3 text-xs" data-testid="dishwasher-options-body">
         {delayed || events.length > 0 || reminders || runsLeft !== null ? (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             {delayed ? (

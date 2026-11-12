@@ -7,10 +7,10 @@
 export const DEVICE_CARD_CSS = `
 .dc-scene{isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-areas:"left img right" "bottom bottom bottom";align-items:center;justify-items:center}
 .dc-scene[data-bottom="false"]{grid-template-areas:"left img right"}
-.dc-left{grid-area:left;justify-self:end}
+.dc-left{grid-area:left;justify-self:stretch;width:100%;min-width:0;max-width:100%;overflow-x:clip}
 .dc-right{grid-area:right;justify-self:start;width:100%;max-width:min(100%,7rem)}
 .dc-img{grid-area:img}
-.dc-bottom{grid-area:bottom;justify-self:stretch}
+.dc-bottom{grid-area:bottom;justify-self:stretch;min-width:0;max-width:100%;overflow-x:clip}
 .dc-blocked .dc-gated{opacity:.45;pointer-events:none}
 .dc-dial{touch-action:none;cursor:grab}
 .dc-dial[aria-disabled="true"]{cursor:default}

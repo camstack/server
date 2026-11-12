@@ -42,9 +42,62 @@ export function dishwasherPhase(status: DishwasherStatus): AppliancePhase {
   return DISH_PHASE[status.state]
 }
 
+/** One program the cap's `getOptions` names: `key` is what `setProgram` takes, `name` is its display label. */
+export interface DishwasherProgramName {
+  readonly key: string
+  readonly name: string
+}
+
+const DEGREE = '\u00b0'
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+/** Programs from a `getOptions` answer. Anything else is an empty catalogue. */
+export function programNamesFromOptions(value: unknown): readonly DishwasherProgramName[] {
+  if (!isRecord(value) || !Array.isArray(value['programs'])) return []
+  const names: DishwasherProgramName[] = []
+  for (const row of value['programs']) {
+    if (!isRecord(row)) continue
+    const key = row['key']
+    const name = row['name']
+    if (typeof key !== 'string' || typeof name !== 'string' || key === '') continue
+    names.push({ key, name })
+  }
+  return names
+}
+
+/**
+ * The word on the card. The cap's display label wins (`getOptions` `name`,
+ * when it is more than the key or its last segment). Otherwise the last
+ * segment is spaced out and a trailing temperature gains a degree:
+ * `Dishcare.Dishwasher.Program.Eco50` → `Eco 50°`. A label that is already
+ * words (`Eco 50`) is kept.
+ */
+export function programDisplayLabel(key: string, provided?: string | null): string {
+  const last = key.split('.').pop() ?? key
+  if (
+    provided !== undefined &&
+    provided !== null &&
+    provided !== '' &&
+    provided !== key &&
+    provided !== last
+  ) {
+    return provided
+  }
+  if (last.includes(' ') || last.includes(DEGREE)) return last
+  const spaced = last.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/([A-Za-z])(\d+)/g, '$1 $2')
+  return spaced.replace(/(\d{2,3})$/, (digits) => {
+    const n = Number(digits)
+    return n >= 30 && n <= 99 ? `${digits}${DEGREE}` : digits
+  })
+}
+
 export function dishwasherPrograms(
   status: DishwasherStatus,
   selectable: boolean,
+  catalog: readonly DishwasherProgramName[] = [],
 ): ApplianceProgramModel | null {
   const selected = status.selectedProgram ?? status.program
   const names =
@@ -54,8 +107,13 @@ export function dishwasherPrograms(
         ? []
         : [selected]
   if (names.length === 0) return null
+  const byKey = new Map(catalog.map((program) => [program.key, program.name]))
   return {
-    options: names.map((name) => ({ id: name, label: name, minutes: null })),
+    options: names.map((name) => ({
+      id: name,
+      label: programDisplayLabel(name, byKey.get(name) ?? null),
+      minutes: null,
+    })),
     selected,
     selectable: selectable && status.availablePrograms.length > 1,
   }

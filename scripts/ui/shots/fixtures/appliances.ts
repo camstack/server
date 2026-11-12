@@ -167,7 +167,11 @@ const DISHWASHER = {
   operationState: 'Ready',
   program: null,
   selectedProgram: 'Dishcare.Dishwasher.Program.Eco50',
-  availablePrograms: ['Dishcare.Dishwasher.Program.Eco50', 'Dishcare.Dishwasher.Program.Quick65'],
+  availablePrograms: [
+    'Dishcare.Dishwasher.Program.Eco50',
+    'Dishcare.Dishwasher.Program.Quick65',
+    'Dishcare.Dishwasher.Program.SuperExtraIntensiveSanitiseWithPrewash',
+  ],
   remaining: 12_600,
   delayedStart: 0,
   progress: 0,
@@ -649,6 +653,40 @@ export default defineFixtures({
     'deviceManager.listSiteZones': [],
     'deviceState.getCapSlice': (i: { deviceId: number; capName: string }) =>
       SLICES[`${i.deviceId}/${i.capName}`] ?? null,
+    // Display labels for the raw program keys on 501 / 503. The long key has
+    // no display name, so the card derives one and must keep it inside the column.
+    'dishwasher.getOptions': (i: { deviceId?: number }) =>
+      i.deviceId === 501 || i.deviceId === 503
+        ? {
+            availability: 'available',
+            supportsStart: true,
+            supportsPause: true,
+            supportsResume: true,
+            supportsStop: true,
+            supportsPower: true,
+            programs: [
+              {
+                key: 'Dishcare.Dishwasher.Program.Eco50',
+                name: 'Eco 50°',
+                available: true,
+                options: [],
+              },
+              {
+                key: 'Dishcare.Dishwasher.Program.Quick65',
+                name: 'Quick 65°',
+                available: true,
+                options: [],
+              },
+              {
+                key: 'Dishcare.Dishwasher.Program.SuperExtraIntensiveSanitiseWithPrewash',
+                name: 'SuperExtraIntensiveSanitiseWithPrewash',
+                available: true,
+                options: [],
+              },
+            ],
+            options: [],
+          }
+        : null,
     'coreBlocks.getCustomization': (input: { stableId?: string }) =>
       input.stableId === 'appliance-501'
         ? { state: 'loaded', view: FILTER_VIEW }

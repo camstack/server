@@ -186,6 +186,7 @@ function startBox({ model, actions }: ApplianceCardProps, t: UiTextFn): ReactNod
         data-testid="dc-appliance-start"
         disabled={model.startBlocked !== null}
         onClick={resuming ? actions.onResume : actions.onStart}
+        className="max-w-full whitespace-normal break-words text-center"
       >
         {resuming
           ? t('uiLibrary.deviceCard.resume', 'Resume')

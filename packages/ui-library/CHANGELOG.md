@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Washer, dryer, dishwasher, media player, robot vacuum and lawn mower now use the new device card, with only the controls each device declares
 - A dishwasher keeps its power control, a vacuum its stop, and a media player its shuffle and repeat, each only when the device declares it
 
+### Fixed
+
+- A dishwasher card shows the program's name, and keeps a long name inside the card
+
 ## [1.2.428] - 2026-11-12
 
 ### Changed

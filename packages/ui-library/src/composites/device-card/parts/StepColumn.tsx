@@ -47,16 +47,24 @@ function Step({
  * its notes, a button below — a program, a suction level, a volume. A step
  * the device does not offer is not drawn.
  */
+function valueTitle(value: ReactNode): string | undefined {
+  return typeof value === 'string' ? value : undefined
+}
+
 export function StepColumn({ up, down, value, notes = [], testId }: StepColumnProps): ReactElement {
   return (
-    <div className="flex flex-col items-center gap-2" data-testid={testId}>
+    <div
+      className="flex w-full min-w-0 max-w-full flex-col items-center gap-2"
+      data-testid={testId}
+    >
       <Step step={up} testId={testId === undefined ? undefined : `${testId}-up`} />
       {value === null && notes.length === 0 ? null : (
-        <div className="grid min-w-23 gap-0.5 text-center">
+        <div className="grid w-full min-w-0 max-w-full gap-0.5 text-center">
           {value === null ? null : (
             <b
-              className="text-sm font-semibold leading-tight"
+              className="block w-full max-w-full break-words text-sm font-semibold leading-tight"
               data-testid={testId === undefined ? undefined : `${testId}-value`}
+              title={valueTitle(value)}
             >
               {value}
             </b>
