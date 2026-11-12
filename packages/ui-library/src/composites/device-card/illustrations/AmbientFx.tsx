@@ -7,7 +7,7 @@ import type { ClimateRole } from './ClimateRoleGlyph'
  * and colour. One table maps (role, activity) to a stack of layers; a new
  * environmental card adds its role to the table and reuses the layers.
  */
-export type AmbientRole = ClimateRole | 'fan' | 'switch-heater'
+export type AmbientRole = ClimateRole | 'fan' | 'switch-heater' | 'heat-pump' | 'water-heater'
 /** What a climate-like device is doing. */
 export type ClimateAmbientActivity = 'off' | 'cool' | 'heat' | 'idle' | 'window' | 'unknown'
 /** Climate's activities plus a moving appliance's `run` (a fan). */
@@ -57,6 +57,8 @@ const LIVE: Readonly<Record<AmbientRole, Readonly<Partial<Record<LiveActivity, A
   hpcircuit: { heat: ['wash-up', 'pipe'], cool: ['wash-down', 'pipe'] },
   fan: { run: ['breeze'] },
   'switch-heater': { heat: ['glow-low', 'wisps-unit'] },
+  'heat-pump': { heat: ['wash-up', 'breathe'], cool: ['wash-down', 'breathe'] },
+  'water-heater': { heat: ['wash-up', 'glow-low'] },
 }
 
 /** What a role keeps in standby: the appliance at rest, air and water moving slowly. */
@@ -69,6 +71,8 @@ const STANDBY: Readonly<Record<AmbientRole, AmbientStack>> = {
   hpcircuit: ['pipe'],
   fan: [],
   'switch-heater': [],
+  'heat-pump': [],
+  'water-heater': [],
 }
 
 const TONE: Readonly<Record<AmbientActivity, string>> = {

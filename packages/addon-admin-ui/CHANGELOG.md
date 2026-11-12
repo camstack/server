@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The device card page opened by the viewer draws the card bare on a transparent page, so the viewer's sheet frames it
+- The heat-pump and water-heater device pages show the new device card.
 
 ## [1.2.653] - 2026-11-12
 

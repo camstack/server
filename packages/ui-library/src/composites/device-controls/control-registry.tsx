@@ -25,7 +25,7 @@ import { VacuumInlineControl } from './vacuum-control'
 import { LawnMowerInlineControl } from './lawn-mower-control'
 import { ValveInlineControl, ValveHeroCard } from './valve-control'
 import { HumidifierInlineControl, HumidifierHeroCard } from './humidifier-control'
-import { WaterHeaterInlineControl, WaterHeaterHeroCard } from './water-heater-control'
+import { WaterHeaterInlineControl } from './water-heater-control'
 import { WeatherInlineControl, WeatherHeroCard } from './weather-control'
 import { ImageInlineControl, ImageHeroCard } from './image-control'
 import { PetFeederInlineControl, PetFeederHeroCard } from './pet-feeder-panel'
@@ -51,6 +51,7 @@ import {
   DishwasherCardHero,
   VacuumCardHero,
   MowerCardHero,
+  WaterHeaterCardHero,
   AlarmPanelInlineControl,
   AlarmHeroCard,
   ScriptInlineControl,
@@ -177,7 +178,7 @@ const HUMIDIFIER_CONTROL: DeviceTypeControl = {
 
 const WATER_HEATER_CONTROL: DeviceTypeControl = {
   InlineControl: WaterHeaterInlineControl,
-  HeroCard: WaterHeaterHeroCard,
+  HeroCard: WaterHeaterCardHero,
 }
 
 const WEATHER_CONTROL: DeviceTypeControl = {

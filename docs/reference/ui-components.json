@@ -2343,6 +2343,33 @@
       ]
     },
     {
+      "name": "CardReadings",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/Readings.tsx",
+      "summary": "A side column of read-only values: the label small, the value under it.",
+      "props": [
+        {
+          "name": "items",
+          "type": "readonly CardReading[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "align",
+          "type": "'start' | 'end'",
+          "optional": true,
+          "doc": "`end` for the scene's left column (it leans on the drawing), `start` for the right."
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "cardToneClass",
       "kind": "function",
       "area": "composites",
@@ -3304,6 +3331,13 @@
       "summary": "The heater card of a real `switch` with the role `switch-heater`: power and its timed run."
     },
     {
+      "name": "ConnectedHeatPumpCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedHeatPumpCard.tsx",
+      "summary": "A heat pump (`heat-pump-status`): what it reports, and through `heat-pump-control` each circuit's mode / hot-water level and the four system modes — each only when the gateway declares it and the binding implements th…"
+    },
+    {
       "name": "ConnectedLightCard",
       "kind": "component",
       "area": "composites",
@@ -3369,6 +3403,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedRobotCard.tsx",
       "summary": "A robot vacuum (`vacuum-control`): clean, pause, stop, dock, locate, suction — each only when its binding implements it."
+    },
+    {
+      "name": "ConnectedWaterHeaterCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedWaterHeaterCard.tsx",
+      "summary": "A water heater (`water-heater`): target within its range, operation mode, away, and power through the `off` mode (back on in the last mode it ran) — each only when the device declares it and the binding implements the…"
     },
     {
       "name": "CONSUMABLE_LOW_PERCENT",
@@ -7781,6 +7822,13 @@
       "summary": ""
     },
     {
+      "name": "HEAT_PUMP_SYSTEM_MODES",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/heat-pump/model.ts",
+      "summary": ""
+    },
+    {
       "name": "HeaterCard",
       "kind": "component",
       "area": "composites",
@@ -7833,6 +7881,108 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "heatPumpActivityOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/heat-pump-model.ts",
+      "summary": "What the pump is doing: idle when the compressor (else the electrical draw) says it is not running; otherwise the kind of the active circuit. The cap reports no defrost, so the card never invents one."
+    },
+    {
+      "name": "HeatPumpCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/heat-pump/HeatPumpCard.tsx",
+      "summary": "A heat pump: the outdoor unit whose fan turns with the compressor, the loop temperatures on the left, thermal and electrical power with the COP on the right, and below one button per circuit (it opens that circuit's m…",
+      "props": [
+        {
+          "name": "model",
+          "type": "HeatPumpCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "HeatPumpCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "heatPumpCircuitPicker",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/heat-pump-model.ts",
+      "summary": "Hot water with a temperature level picks the level; otherwise the operation mode."
+    },
+    {
+      "name": "heatPumpCircuitView",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/heat-pump-model.ts",
+      "summary": "`heat-pump-status` → the heat-pump card. Pure: the connected card reads the slice, these turn it into words and selectors. Every selector exists only where the gateway named values to choose from, so a write never lea…"
+    },
+    {
+      "name": "HeatPumpIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/HeatPumpIllustration.tsx",
+      "summary": "The outdoor unit: a casing, the fan grille and its three blades, two vents. The fan turns with the compressor — faster as it works harder — and stands still when the compressor is off or unreported.",
+      "props": [
+        {
+          "name": "compressorPct",
+          "type": "number | null",
+          "optional": false,
+          "doc": "0..100; null when the gateway does not report it (the fan stands still)."
+        },
+        {
+          "name": "cold",
+          "type": "boolean",
+          "optional": false,
+          "doc": "The fan's colour: heat (primary) or cold (info: cooling, defrost)."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "heatPumpStateLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/heat-pump/HeatPumpCard.tsx",
+      "summary": ""
+    },
+    {
+      "name": "heatPumpSystemModes",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/heat-pump-model.ts",
+      "summary": "Only the modes the gateway declares, in the fixed order silent, away, additional heater, holiday."
+    },
+    {
+      "name": "heatPumpValueLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/heat-pump-model.ts",
+      "summary": "The words of a value the gateway names; one not listed is drawn as the gateway wrote it."
     },
     {
       "name": "HERO_SCENE_ICON",
@@ -15716,6 +15866,39 @@
       ]
     },
     {
+      "name": "TankIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/TankIllustration.tsx",
+      "summary": "A hot-water tank: the shell and two feet, filled to the water's temperature with a cold-to-hot gradient, bubbles rising while it heats.",
+      "props": [
+        {
+          "name": "fill",
+          "type": "number",
+          "optional": false,
+          "doc": "0..1: how much of the tank the water's temperature fills."
+        },
+        {
+          "name": "heating",
+          "type": "boolean",
+          "optional": false,
+          "doc": "Bubbles rise while it heats."
+        },
+        {
+          "name": "off",
+          "type": "boolean",
+          "optional": false,
+          "doc": "Off: the water is drawn grey."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "TapToggle",
       "kind": "component",
       "area": "composites",
@@ -17374,11 +17557,65 @@
       "summary": "VodPlayback — shared context coordinating recorded (VOD) playback between a widget/section (the Recording panel) and the hero StreamPanel."
     },
     {
-      "name": "WaterHeaterHeroCard",
+      "name": "WATER_HEATER_OFF_MODE",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/water-heater-model.ts",
+      "summary": "The mode that switches the heater off (the cap's power convention)."
+    },
+    {
+      "name": "waterHeaterActivityOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/water-heater-model.ts",
+      "summary": "Off when its mode is off (or unknown), away when away is on, heating while the water is under the target, otherwise at temperature."
+    },
+    {
+      "name": "WaterHeaterCard",
       "kind": "component",
       "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/water-heater-control.tsx",
-      "summary": "WaterHeaterHeroCard — full control surface for the device-detail hero."
+      "file": "packages/ui-library/src/composites/device-card/scenes/water-heater/WaterHeaterCard.tsx",
+      "summary": "A water heater: the target on the left (within the device's range), the tank filled to the water's temperature in the middle, power, mode and away on the right — each only when the device declares it. Off greys the ta…",
+      "props": [
+        {
+          "name": "model",
+          "type": "WaterHeaterCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "WaterHeaterCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "WaterHeaterCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
+    },
+    {
+      "name": "waterHeaterFill",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/water-heater/WaterHeaterCard.tsx",
+      "summary": "How much of the tank the current temperature fills, never empty."
     },
     {
       "name": "WaterHeaterInlineControl",
@@ -17388,18 +17625,32 @@
       "summary": "WaterHeaterInlineControl — compact current→target readout + mode hint for a device-list row. Must NOT blow out the row width."
     },
     {
-      "name": "waterHeaterPhase",
+      "name": "waterHeaterModeLabel",
       "kind": "function",
       "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/water-heater-control.tsx",
-      "summary": "Heuristic heating phase: off when the operation mode is 'off' (or null); heating when current < target (actively warming); otherwise idle."
+      "file": "packages/ui-library/src/composites/device-card/connected/water-heater-model.ts",
+      "summary": "The words of a mode the device names; one not listed is drawn as the device wrote it."
     },
     {
-      "name": "waterHeaterTint",
+      "name": "waterHeaterModeOptions",
       "kind": "function",
       "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/water-heater-control.tsx",
-      "summary": "Pure helper — maps a phase to a tint. Exhaustive over WaterHeaterPhase (a new member fails the build)."
+      "file": "packages/ui-library/src/composites/device-card/connected/water-heater-model.ts",
+      "summary": "`water-heater` → the water-heater card. Pure."
+    },
+    {
+      "name": "waterHeaterOnMode",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/water-heater-model.ts",
+      "summary": "The mode \"turn on\" writes: the last mode it ran in, else the first mode that is not off. Null when the device cannot be switched off through its modes."
+    },
+    {
+      "name": "waterHeaterStateLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/water-heater/WaterHeaterCard.tsx",
+      "summary": ""
     },
     {
       "name": "weatherConditionMeta",

@@ -64,7 +64,7 @@ const HERO_REGISTRY: Readonly<Partial<Record<DeviceType, HeroComponent>>> = {
   // (open/stop/close + position drag) — the DRY path (no dedicated ValveHero).
   [DeviceType.Valve]: ControlHero,
   // Humidifier / water heater: ControlHero renders the registry-backed
-  // HumidifierHeroCard / WaterHeaterHeroCard (climate-family hero graphics).
+  // HumidifierHeroCard / WaterHeaterCardHero (the water heater is the device card).
   [DeviceType.Humidifier]: ControlHero,
   [DeviceType.WaterHeater]: ControlHero,
   // Container renders AS its primary child (same hero + discreet picker);

@@ -61,14 +61,7 @@ export {
   type HumidifierTint,
   type HumidifierAction,
 } from './humidifier-control'
-export {
-  WaterHeaterInlineControl,
-  WaterHeaterHeroCard,
-  waterHeaterTint,
-  waterHeaterPhase,
-  type WaterHeaterTint,
-  type WaterHeaterPhase,
-} from './water-heater-control'
+export { WaterHeaterInlineControl } from './water-heater-control'
 export {
   WeatherInlineControl,
   WeatherHeroCard,
@@ -103,6 +96,7 @@ export {
   MediaCardHero,
   VacuumCardHero,
   MowerCardHero,
+  WaterHeaterCardHero,
   AlarmPanelInlineControl,
   AlarmHeroCard,
   ScriptInlineControl,

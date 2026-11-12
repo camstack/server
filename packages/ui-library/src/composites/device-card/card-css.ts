@@ -123,9 +123,19 @@ export const DEVICE_CARD_CSS = `
 @keyframes dc-r-spark{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.1)}}
 @keyframes dc-r-pulse{0%,100%{opacity:.35}50%{opacity:.85}}
 @keyframes dc-r-blink{0%,49%{opacity:1}50%,100%{opacity:.3}}
+.dc-hp-fan{transform-box:view-box;transform-origin:44px 44px}
+.dc-hp[data-spin="true"] .dc-hp-fan{animation:dc-spin var(--dc-spin,1.6s) linear infinite}
+.dc-tank-bubble{opacity:0}
+.dc-tank[data-heat="true"] .dc-tank-bubble{animation:dc-bubble 2.6s ease-in infinite}
+.dc-tank[data-heat="true"] .dc-tank-bubble:nth-of-type(2){animation-delay:.9s}
+.dc-tank[data-heat="true"] .dc-tank-bubble:nth-of-type(3){animation-delay:1.7s}
+@keyframes dc-bubble{0%{transform:translateY(0);opacity:0}20%{opacity:.8}100%{transform:translateY(-46px);opacity:0}}
+.dc-energy-flow{stroke-dasharray:2 10;stroke-linecap:round}
+.dc-energy[data-still="false"] .dc-energy-flow[data-live="true"]{animation:dc-energy-flow var(--dc-spin,1.6s) linear infinite}
+@keyframes dc-energy-flow{to{stroke-dashoffset:-24}}
 .dc-remote-dpad{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,44px);gap:6px}
 .dc-remote-dpad>*{min-width:0;padding:0}
 .dc-remote-dpad [data-pos="up"]{grid-area:1/2}.dc-remote-dpad [data-pos="left"]{grid-area:2/1}.dc-remote-dpad [data-pos="ok"]{grid-area:2/2;border-radius:9999px}
 .dc-remote-dpad [data-pos="right"]{grid-area:2/3}.dc-remote-dpad [data-pos="down"]{grid-area:3/2}
-@media (prefers-reduced-motion:reduce){.dc-fx *,.dc-fx{animation:none!important}.dc-fx-p,.dc-fx-air,.dc-fx-wisps,.dc-fx-draft,.dc-fx-breeze{display:none}.dc-fan *,.dc-fan,.dc-heater *,.dc-appl *,.dc-robot *{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.dc-fx *,.dc-fx{animation:none!important}.dc-fx-p,.dc-fx-air,.dc-fx-wisps,.dc-fx-draft,.dc-fx-breeze{display:none}.dc-fan *,.dc-fan,.dc-heater *,.dc-appl *,.dc-robot *,.dc-hp *,.dc-tank *,.dc-energy *{animation:none!important}}
 `

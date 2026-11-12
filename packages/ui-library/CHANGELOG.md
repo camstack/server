@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Device card: a bare frame (no border, surface or top line) for hosts that draw their own header, such as the viewer's device sheet
+- A heat pump is drawn as the shared device card: outdoor, flow and return temperatures, compressor, thermal/electrical power and COP, a picker per circuit, and every system mode it declares (silent, away, additional heater, holiday).
+- A water heater's hero is now the shared device card: the target stepped within the device's range, the tank filled to the water temperature, power through its off mode, mode and away.
 
 ## [1.2.433] - 2026-11-12
 

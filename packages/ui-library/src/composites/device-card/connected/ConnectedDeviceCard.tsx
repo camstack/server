@@ -10,10 +10,12 @@ import { ConnectedCoverCard } from './ConnectedCoverCard'
 import { ConnectedDishwasherCard } from './ConnectedDishwasherCard'
 import { ConnectedFanCard } from './ConnectedFanCard'
 import { ConnectedHeaterCard } from './ConnectedHeaterCard'
+import { ConnectedHeatPumpCard } from './ConnectedHeatPumpCard'
 import { ConnectedLightCard } from './ConnectedLightCard'
 import { ConnectedMediaCard } from './ConnectedMediaCard'
 import { type ConnectedCardProps, ConnectedPlugCard } from './ConnectedPlugCard'
 import { ConnectedMowerCard, ConnectedVacuumCard } from './ConnectedRobotCard'
+import { ConnectedWaterHeaterCard } from './ConnectedWaterHeaterCard'
 
 /** The scenes a real device can be drawn with today. */
 export type ConnectedCardKind =
@@ -28,6 +30,8 @@ export type ConnectedCardKind =
   | 'media'
   | 'vacuum'
   | 'mower'
+  | 'heat-pump'
+  | 'water-heater'
 
 /** `pending` until both the device and its bindings answered; `null` = no card for it. */
 export type ConnectedCardResolution = ConnectedCardKind | 'pending' | null
@@ -41,7 +45,8 @@ const CLIMATE_CAPS: readonly string[] = ['climate-control', 'heating-valve']
  * heater / a fan by its role; a light and a fan need it too. A cover needs
  * `cover`. A washer / dryer / dishwasher known only by its supply is the
  * appliance card (`running-state` or `switch`); a dishwasher that speaks for
- * itself (`dishwasher`), a media player, a vacuum and a mower need their cap.
+ * itself (`dishwasher`), a media player, a vacuum and a mower need their cap;
+ * a heat pump needs `heat-pump-status`, a water heater `water-heater`.
  */
 export function connectedCardKindOf(
   deviceType: string | null,
@@ -49,6 +54,8 @@ export function connectedCardKindOf(
   capNames: readonly string[],
 ): ConnectedCardKind | null {
   if (deviceType === null) return null
+  if (deviceType === DeviceType.HeatPump)
+    return capNames.includes('heat-pump-status') ? 'heat-pump' : null
   const control = resolveDeviceControlKind(deviceType, role)
   const hasSwitch = capNames.includes('switch')
   if (deviceType === DeviceType.Switch) {
@@ -68,6 +75,7 @@ export function connectedCardKindOf(
   if (control === 'appliance') return fedBySupply ? 'appliance' : null
   if (control === 'media-player') return capNames.includes('media-player') ? 'media' : null
   if (control === 'vacuum') return capNames.includes('vacuum-control') ? 'vacuum' : null
+  if (control === 'water-heater') return capNames.includes('water-heater') ? 'water-heater' : null
   if (control === 'lawn-mower') return capNames.includes('lawn-mower-control') ? 'mower' : null
   if (
     (control === 'thermostat' || control === 'climate') &&
@@ -122,5 +130,9 @@ export function ConnectedDeviceCard({
       return <ConnectedVacuumCard {...props} />
     case 'mower':
       return <ConnectedMowerCard {...props} />
+    case 'heat-pump':
+      return <ConnectedHeatPumpCard {...props} />
+    case 'water-heater':
+      return <ConnectedWaterHeaterCard {...props} />
   }
 }

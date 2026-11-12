@@ -1,6 +1,6 @@
 /**
  * Fixture page for the device card. Not an admin route: `ui:shots` mounts it for
- * the path `/device-card-preview`; `?type=plug|climate|climate-extra|cover|light|fan|heater|washer|dryer|dish|media|vacuum` picks the scene (`climate-extra`: the
+ * the path `/device-card-preview`; `?type=plug|climate|climate-extra|cover|light|fan|heater|washer|dryer|dish|media|vacuum|heatpump|water|energy|camera|sensor` picks the scene (`climate-extra`: the
  * variants real devices have and the mockup does not draw). Every
  * fixture carries the data of one variant of the approved mockup, so
  * `scripts/ui/card-parity.mjs` can shoot the two side by side. Strings are the
@@ -19,6 +19,8 @@ import {
   type FanCardActions,
   HeaterCard,
   type HeaterCardActions,
+  HeatPumpCard,
+  type HeatPumpCardActions,
   LightCard,
   type LightCardActions,
   type MediaCardActions,
@@ -28,6 +30,8 @@ import {
   RobotCard,
   type RobotCardActions,
   UiTextProvider,
+  WaterHeaterCard,
+  type WaterHeaterCardActions,
 } from '@camstack/ui-library'
 import { applianceFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/appliance'
 import {
@@ -37,10 +41,12 @@ import {
 import { coverFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/cover'
 import { fanFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/fan'
 import { heaterFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/heater'
+import { heatPumpFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/heat-pump'
 import { lightFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/light'
 import { mediaFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/media'
 import { plugFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/plug'
 import { robotFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/robot'
+import { waterHeaterFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/water-heater'
 import { type ReactElement, type ReactNode, useMemo } from 'react'
 
 const noop = (): void => undefined
@@ -110,6 +116,13 @@ const ROBOT_ACTIONS: RobotCardActions = {
   onLocate: noop,
   onSuction: noop,
 }
+const HEAT_PUMP_ACTIONS: HeatPumpCardActions = { onCircuit: noop, onSystemMode: noop }
+const WATER_HEATER_ACTIONS: WaterHeaterCardActions = {
+  onPower: noop,
+  onTarget: noop,
+  onMode: noop,
+  onAway: noop,
+}
 const APPLIANCE_KIND = { washer: 'washer', dryer: 'dryer', dish: 'dish' } as const
 
 interface WaveBSceneProps {
@@ -166,6 +179,44 @@ function WaveBScene({ type, remote }: WaveBSceneProps): ReactElement | null {
 }
 
 const WAVE_B_TYPES: ReadonlySet<string> = new Set(['washer', 'dryer', 'dish', 'media', 'vacuum'])
+
+/** Wave C: heat pump, water heater, energy system, camera, presence sensor. */
+function WaveCScene({ type }: { readonly type: string }): ReactElement | null {
+  switch (type) {
+    case 'heatpump':
+      return (
+        <>
+          {heatPumpFixtures().map((f) => (
+            <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
+              <HeatPumpCard
+                model={f.model}
+                actions={HEAT_PUMP_ACTIONS}
+                orientation={f.orientation}
+              />
+            </Cell>
+          ))}
+        </>
+      )
+    case 'water':
+      return (
+        <>
+          {waterHeaterFixtures().map((f) => (
+            <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
+              <WaterHeaterCard
+                model={f.model}
+                actions={WATER_HEATER_ACTIONS}
+                orientation={f.orientation}
+              />
+            </Cell>
+          ))}
+        </>
+      )
+    default:
+      return null
+  }
+}
+
+const WAVE_C_TYPES: ReadonlySet<string> = new Set(['heatpump', 'water'])
 
 /** One scene per `?type=`: the fixtures of that mockup page, each in its cell. */
 function WaveAScene({ type }: { readonly type: string }): ReactElement | null {
@@ -260,6 +311,8 @@ export function DeviceCardPreview(): ReactElement {
           <WaveAScene type={type} />
         ) : WAVE_B_TYPES.has(type) ? (
           <WaveBScene type={type} remote={remote} />
+        ) : WAVE_C_TYPES.has(type) ? (
+          <WaveCScene type={type} />
         ) : type === 'climate' || type === 'climate-extra' ? (
           (type === 'climate' ? CLIMATE_FIXTURES : CLIMATE_EXTRA_FIXTURES).map((f) => (
             <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
