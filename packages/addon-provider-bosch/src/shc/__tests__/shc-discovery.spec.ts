@@ -138,7 +138,7 @@ describe('the controller as a Gateway candidate', () => {
     const [first] = buildAllShcCandidates(input)
     expect(first?.childNativeId).toBe(shcGatewayNativeId('int-1'))
     expect(first?.type).toBe(DeviceType.Gateway)
-    expect(first?.name).toBe('Bosch SHC [lab]')
+    expect(first?.name).toBe('Bosch SHC')
     expect(first?.capabilities).toEqual([])
   })
 

@@ -134,6 +134,8 @@ export interface UnraidSnapshot {
   readonly disks: readonly UnraidArrayDiskInfo[]
   readonly dockers: readonly UnraidContainerInfo[]
   readonly notifications: UnraidNotificationsInfo
+  /** Hostname from `system.info()`, when the client reported one. */
+  readonly hostname?: string | null
 }
 
 /** Array read + control domain — mirrors the real `ArrayDomain` subset. */
@@ -163,6 +165,8 @@ export interface UnraidDockerDomainLike {
 export interface UnraidSystemDomainLike {
   /** The live host CPU reading (percent + optional temperature + power). */
   cpu(): Promise<UnraidCpuInfo>
+  /** Hostname from the server, when the client can read it. */
+  info?(): Promise<{ readonly hostname: string | null }>
 }
 
 /** Notifications domain — mirrors the real `NotificationsDomain` subset. */

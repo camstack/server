@@ -62,6 +62,12 @@ const IntegrationLiteSchema = z.object({
 const AvailableIntegrationTypeSchema = z.object({
   addonId: z.string(),
   name: z.string(),
+  /**
+   * Product name a new integration is prefilled from (`<label> - Home`).
+   * Absent: the client uses `name`. Set when the catalog title is not the
+   * product (Bosch SHC, MQTT).
+   */
+  providerLabel: z.string().optional(),
   description: z.string(),
   iconUrl: z.string().nullable(),
   color: z.string(),

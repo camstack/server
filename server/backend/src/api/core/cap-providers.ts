@@ -1339,9 +1339,11 @@ export function buildIntegrationsProvider(
                 ? 'account'
                 : 'standalone')
 
+          const providerLabel = d?.providerLabel ?? m.providerLabel ?? m.name ?? m.id
           return {
             addonId: m.id,
             name: m.name ?? m.id,
+            ...(providerLabel.length > 0 ? { providerLabel } : {}),
             description: m.description ?? '',
             iconUrl: icon ? `/api/addon-assets/${m.id}/${icon}` : null,
             color,

@@ -140,7 +140,7 @@ describe('Enpal discovery: the box as a Gateway', () => {
     const [box] = buildAllEnpalCandidates({ box: BOX, snapshot: FULL, adopted: new Map() })
     expect(box).toMatchObject({
       childNativeId: ENPAL_BOX_ID,
-      name: 'Enpal box',
+      name: 'Enpal Box',
       type: DeviceType.Gateway,
       status: 'online',
       alreadyAdopted: false,

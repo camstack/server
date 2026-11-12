@@ -113,7 +113,7 @@ export function ProviderPicker({
               provider.addonId,
               provider.instanceMode,
               provider.discoveryMode,
-              provider.name,
+              provider.providerLabel ?? provider.name,
               provider.kind,
               provider.brokerKind,
               provider.mode,

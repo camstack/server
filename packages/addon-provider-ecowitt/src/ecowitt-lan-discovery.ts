@@ -1,5 +1,6 @@
 import {
   DeviceType,
+  defaultIntegrationName,
   type DiscoveryCandidate,
   type DiscoveryHit,
   type DiscoveryMode,
@@ -95,13 +96,16 @@ export function ecowittCandidates(
   return gateways.flatMap((g): DiscoveryCandidate[] => {
     const stableId = ecowittScanKey(g.ip)
     if (known.has(stableId)) return []
-    const displayName = g.model ?? g.name
     return [
       {
         stableId,
         type: DeviceType.Gateway,
-        suggestedName: displayName,
-        prefilledConfig: { transport: 'local', host: g.ip },
+        suggestedName: defaultIntegrationName('Ecowitt'),
+        prefilledConfig: {
+          transport: 'local',
+          host: g.ip,
+          ...(g.model !== undefined && g.model.length > 0 ? { model: g.model } : {}),
+        },
         setupIntegration: true,
       },
     ]

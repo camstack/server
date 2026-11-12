@@ -38,6 +38,8 @@ export const reolinkHubConnectionSchema = z.object({
   transport: z.enum(['tcp', 'udp']).default('tcp'),
   /** UID of a hub that was paired by it; unused for a plain TCP login. */
   uid: z.string().optional(),
+  /** Model reported when the hub was discovered. Absent on a hand-typed connection. */
+  model: z.string().optional(),
   debugGeneral: z.boolean().default(false),
   debugSocketLogs: z.array(ReolinkSocketDebugFlagSchema).default([]),
 })

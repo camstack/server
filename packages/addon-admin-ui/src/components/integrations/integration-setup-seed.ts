@@ -1,3 +1,5 @@
+import { defaultIntegrationName } from '@camstack/types'
+
 /**
  * A discovery candidate that must be finished in the integration form
  * (pairing, credentials) instead of one-click device adoption.
@@ -34,15 +36,17 @@ export function needsIntegrationSetup(candidate: DiscoveryProposal): boolean {
 export function seedFromCandidate(
   addonId: string,
   candidate: DiscoveryProposal,
+  providerLabel?: string,
 ): IntegrationFormSeed {
   const config: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(candidate.prefilledConfig)) {
     if (key === SETUP_INTEGRATION_KEY) continue
     config[key] = typeof value === 'string' && key === 'host' ? value.trim() : value
   }
+  const label = providerLabel?.trim() ?? ''
   return {
     addonId,
-    name: candidate.suggestedName,
+    name: label.length > 0 ? defaultIntegrationName(label) : candidate.suggestedName,
     config,
     ...(candidate.stableId !== undefined ? { originStableId: candidate.stableId } : {}),
   }
@@ -51,8 +55,11 @@ export function seedFromCandidate(
 export function integrationSetupSeed(
   addonId: string,
   candidate: DiscoveryProposal,
+  providerLabel?: string,
 ): IntegrationFormSeed | null {
-  return needsIntegrationSetup(candidate) ? seedFromCandidate(addonId, candidate) : null
+  return needsIntegrationSetup(candidate)
+    ? seedFromCandidate(addonId, candidate, providerLabel)
+    : null
 }
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {

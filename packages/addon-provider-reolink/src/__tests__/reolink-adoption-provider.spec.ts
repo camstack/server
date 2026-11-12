@@ -183,7 +183,7 @@ describe('reolink adoption provider', () => {
       expect(candidates[0]).toMatchObject({
         childNativeId: GATEWAY_ID,
         type: DeviceType.Gateway,
-        name: 'Home Hub',
+        name: 'Reolink Home Hub',
         status: 'online',
         alreadyAdopted: false,
       })
@@ -216,10 +216,22 @@ describe('reolink adoption provider', () => {
 
       const { provider, adoptGateway, adoptCamera } = setup()
       const out = await provider.adopt({ integrationId: 'int-1', childNativeIds: [GATEWAY_ID] })
-      expect(adoptGateway).toHaveBeenCalledWith({ integrationId: 'int-1', name: 'Home Hub' })
+      expect(adoptGateway).toHaveBeenCalledWith({
+        integrationId: 'int-1',
+        name: 'Reolink Home Hub',
+      })
       expect(adoptCamera).not.toHaveBeenCalled()
       expect(out.adopted).toEqual([
         { childNativeId: GATEWAY_ID, parentDeviceId: 55, accessoryDeviceIds: [] },
+      ])
+    })
+
+    it('leaves an already adopted gateway on its stored device', async () => {
+      const { provider, adoptGateway } = setup([], [31])
+      const out = await provider.adopt({ integrationId: 'int-1', childNativeIds: [GATEWAY_ID] })
+      expect(adoptGateway).not.toHaveBeenCalled()
+      expect(out.adopted).toEqual([
+        { childNativeId: GATEWAY_ID, parentDeviceId: 31, accessoryDeviceIds: [] },
       ])
     })
   })

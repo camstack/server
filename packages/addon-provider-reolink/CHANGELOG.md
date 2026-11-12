@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A new Reolink hub is named "Reolink" plus its model (Home Hub when none was read).
+
 ## [1.2.239] - 2026-11-11
 
 ### Fixed

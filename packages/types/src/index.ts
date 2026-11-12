@@ -2506,6 +2506,13 @@ export { BOOT_RECOVERY_BACKOFF_MS } from './util/boot-recovery-backoff.js'
 export { bestLocationMatch, locationSimilarity } from './util/location-match.js'
 export { bareAddonId, isSameAddonId } from './utils/addon-id.js'
 export {
+  defaultIntegrationName,
+  gatewayDeviceName,
+  mqttBrokerIntegrationName,
+  prefilledIntegrationName,
+} from './utils/integration-names.js'
+export type { PrefilledIntegrationNameInput } from './utils/integration-names.js'
+export {
   BackgroundRunRegistry,
   type BackgroundRunContext,
   type BackgroundRunRegistryOptions,

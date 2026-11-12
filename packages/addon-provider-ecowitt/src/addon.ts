@@ -479,6 +479,12 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
         const all = await this.ctx.api.integrations.list.query()
         return all.find((i) => i.id === integrationId)?.name ?? null
       },
+      gatewayModel: (integrationId) => {
+        const connection = ecowittConnections.get(integrationId)
+        if (connection === null || connection.transport !== 'local') return null
+        const model = connection.model?.trim() ?? ''
+        return model.length > 0 ? model : null
+      },
       isOnline: (integrationId) => this.requireClients().isOnline(integrationId),
       hasAdminLink: (integrationId) => ecowittConnections.get(integrationId)?.transport === 'local',
       listAdopted: async () => {

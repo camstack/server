@@ -110,7 +110,7 @@ describe('buildVeluxCandidates', () => {
 
   it('describes the gateway by the actions it really supports', () => {
     const gateway = candidates[0]
-    expect(gateway?.name).toBe('Casa KLF')
+    expect(gateway?.name).toBe('Velux KLF200')
     expect(gateway?.status).toBe('online')
     expect(gateway?.capabilities).toEqual(['reboot', 'device-admin-link'])
     expect(gateway?.metadata.model).toBe('KLF-200')

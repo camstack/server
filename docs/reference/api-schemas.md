@@ -436,6 +436,7 @@ Enum: `"f32le" \| "pcmu" \| "pcma"`
 
 - `addonId`: `string`
 - `name`: `string`
+- `providerLabel?`: `string`
 - `description`: `string`
 - `iconUrl`: `string \| null`
 - `color`: `string`

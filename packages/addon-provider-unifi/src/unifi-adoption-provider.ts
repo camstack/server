@@ -3,6 +3,7 @@ import {
   type AdoptionFilter,
   type AdoptionStatus,
   type DiscoveredChildDevice,
+  gatewayDeviceName,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
 } from '@camstack/types'
@@ -13,6 +14,7 @@ import {
   infraNativeId,
   parseNativeId,
   UNIFI_GATEWAY_ID,
+  unifiConsoleModel,
 } from './unifi-discovery.js'
 import type { UnifiAdoptInput } from './unifi-device-adopter.js'
 import { unifiControllers } from './unifi-node-resolver.js'
@@ -169,7 +171,12 @@ export function buildUnifiAdoptionProvider(
           if (parsed?.kind === 'gateway') {
             const { deviceId } = await deps.adoptGateway({
               integrationId,
-              name: name ?? controllerName(integrationId),
+              name:
+                name ??
+                gatewayDeviceName(
+                  'UniFi',
+                  unifiConsoleModel(unifiControllers.getInfraList(integrationId)),
+                ),
             })
             adopted.push({
               childNativeId: nativeId,

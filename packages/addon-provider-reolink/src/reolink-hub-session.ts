@@ -11,6 +11,7 @@ import {
   DeviceType,
   deviceAdminLinkCapability,
   errMsg,
+  gatewayDeviceName,
   type IScopedLogger,
   rebootCapability,
   userError,
@@ -830,16 +831,21 @@ export function hubGatewayNativeId(integrationId: string): string {
  */
 export function toDiscoveredGateway(input: {
   readonly integrationId: string
-  readonly name: string
+  /** Hub model the session already read. Absent: the Home Hub fallback. */
+  readonly model?: string | null
   readonly online: boolean
   readonly adoptedDeviceId: number | null
 }): DiscoveredChildDevice {
+  const model = input.model?.trim() ?? ''
   return {
     childNativeId: hubGatewayNativeId(input.integrationId),
-    name: input.name,
+    name: gatewayDeviceName('Reolink', model.length > 0 ? model : 'Home Hub'),
     type: DeviceType.Gateway,
     status: input.online ? 'online' : 'offline',
-    metadata: { manufacturer: 'Reolink' },
+    metadata: {
+      manufacturer: 'Reolink',
+      ...(model.length > 0 ? { model } : { model: 'Home Hub' }),
+    },
     alreadyAdopted: input.adoptedDeviceId !== null,
     adoptedDeviceId: input.adoptedDeviceId,
     capabilities: [rebootCapability.name, deviceAdminLinkCapability.name],

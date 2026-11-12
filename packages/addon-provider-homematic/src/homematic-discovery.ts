@@ -1,5 +1,10 @@
 import type { HmDevice } from 'nodehomematic'
-import { DeviceType, type DiscoveredChildDevice, deviceAdminLinkCapability } from '@camstack/types'
+import {
+  DeviceType,
+  type DiscoveredChildDevice,
+  deviceAdminLinkCapability,
+  gatewayDeviceName,
+} from '@camstack/types'
 import { inferHmDeviceType, mapHmDeviceChannels } from './homematic-mapping.js'
 import { deriveHmEntityPreviews } from './homematic-entity-derive.js'
 
@@ -73,7 +78,7 @@ export function buildCcuGatewayCandidate(
   const adoptedId = input.adopted.get(nativeId) ?? null
   return {
     childNativeId: nativeId,
-    name: input.integrationName,
+    name: gatewayDeviceName('Homematic', 'CCU3'),
     type: DeviceType.Gateway,
     status: input.online ? 'online' : 'offline',
     metadata: { manufacturer: 'eQ-3', model: 'CCU3 / RaspberryMatic' },

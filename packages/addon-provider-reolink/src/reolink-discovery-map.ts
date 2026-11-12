@@ -1,4 +1,4 @@
-import { DeviceType, type DiscoveryCandidate } from '@camstack/types'
+import { DeviceType, defaultIntegrationName, type DiscoveryCandidate } from '@camstack/types'
 
 /**
  * Flatten a host (IP / hostname) into a flat row-key slug — shared by `generateStableId` and the
@@ -142,11 +142,12 @@ export function mapReolinkDiscoveryToCandidates(
         {
           stableId: reolinkHubStableId(d),
           type: DeviceType.Gateway,
-          suggestedName: displayName,
+          suggestedName: defaultIntegrationName('Reolink'),
           prefilledConfig: {
             host: d.host,
             port: HUB_BAICHUAN_PORT,
             ...(d.uid ? { uid: d.uid } : {}),
+            ...(d.model ? { model: d.model } : {}),
             ...(username ? { username } : {}),
           },
           setupIntegration: true,

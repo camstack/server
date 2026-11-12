@@ -53,6 +53,8 @@ export const ecowittLocalConfigSchema = z.object({
     )
     .describe('Sensor-map refresh interval (ms)'),
   ...baseFields,
+  /** Model the LAN scan announced. Not a form field; kept so the gateway is named from it. */
+  model: z.string().optional(),
 })
 
 export const ecowittListenerConfigSchema = z.object({

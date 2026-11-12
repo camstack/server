@@ -2,6 +2,24 @@ import { describe, expect, it } from 'vitest'
 import { integrationSetupSeed, readIntegrationSeed } from '../integration-setup-seed'
 
 describe('integrationSetupSeed', () => {
+  it('names the integration after the product, not the discovered id', () => {
+    expect(
+      integrationSetupSeed(
+        'provider-velux',
+        {
+          suggestedName: 'VELUX_KLF_1A2B',
+          setupIntegration: true,
+          prefilledConfig: { host: '192.0.2.8' },
+        },
+        'Velux',
+      ),
+    ).toEqual({
+      addonId: 'provider-velux',
+      name: 'Velux - Home',
+      config: { host: '192.0.2.8' },
+    })
+  })
+
   it('carries the whole prefilled config, minus the legacy marker', () => {
     expect(
       integrationSetupSeed('bosch-shc', {

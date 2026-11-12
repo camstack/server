@@ -59,6 +59,7 @@ export interface UnraidApiSource {
   readonly system: {
     versions(): Promise<unknown>
     cpu$(): AsyncIterable<CpuMetrics>
+    info?(): Promise<{ readonly os?: { readonly hostname?: string | null } | null }>
   }
   readonly notifications: {
     warningsAndAlerts(): Promise<Notification[]>
@@ -232,6 +233,16 @@ export function createLiveUnraidClient(api: UnraidApiSource): UnraidClientLike {
           // The API exposes no CPU temperature or power draw.
           return { percent: sample?.percentTotal ?? null, tempC: null, powerW: null }
         }),
+      ...(api.system.info !== undefined
+        ? {
+            info: () =>
+              guard(async () => {
+                const info = await api.system.info?.()
+                const hostname = info?.os?.hostname?.trim() ?? ''
+                return { hostname: hostname.length > 0 ? hostname : null }
+              }),
+          }
+        : {}),
     },
     notifications: {
       active: () =>

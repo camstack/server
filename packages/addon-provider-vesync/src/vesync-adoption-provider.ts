@@ -3,6 +3,7 @@ import {
   type AdoptionFilter,
   type AdoptionStatus,
   type DiscoveredChildDevice,
+  gatewayDeviceName,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
 } from '@camstack/types'
@@ -150,7 +151,7 @@ export function buildVeSyncAdoptionProvider(
           if (nativeId === VESYNC_GATEWAY_NATIVE_ID) {
             const { deviceId } = await deps.adoptGateway({
               integrationId,
-              name: perCandidate?.[nativeId]?.name ?? accountName(integrationId),
+              name: perCandidate?.[nativeId]?.name ?? gatewayDeviceName('VeSync'),
             })
             adopted.push({
               childNativeId: nativeId,

@@ -120,7 +120,7 @@ describe('the HomeCom gateway as an adoption pick', () => {
     })
     expect(candidates[0]).toMatchObject({
       childNativeId: HOMECOM_GATEWAY_NATIVE_ID,
-      name: 'Casa',
+      name: 'Bosch HomeCom k40',
       type: DeviceType.Gateway,
       capabilities: [],
     })

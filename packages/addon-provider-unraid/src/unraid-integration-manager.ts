@@ -201,11 +201,12 @@ export class UnraidIntegrationManager {
 
 /** Aggregate one snapshot from the client's domain namespaces. */
 async function fetchSnapshot(client: UnraidClientLike): Promise<UnraidSnapshot> {
-  const [array, cpu, dockers, notifications] = await Promise.all([
+  const [array, cpu, dockers, notifications, hostname] = await Promise.all([
     client.array.get(),
     client.system.cpu(),
     client.docker.list(),
     client.notifications.active(),
+    readHostname(client),
   ])
   return {
     array,
@@ -213,5 +214,17 @@ async function fetchSnapshot(client: UnraidClientLike): Promise<UnraidSnapshot> 
     disks: array.disks,
     dockers,
     notifications,
+    ...(hostname !== null ? { hostname } : {}),
+  }
+}
+
+/** A missing or failed hostname read leaves the gateway named "Unraid". */
+async function readHostname(client: UnraidClientLike): Promise<string | null> {
+  if (client.system.info === undefined) return null
+  try {
+    const hostname = (await client.system.info()).hostname?.trim() ?? ''
+    return hostname.length > 0 ? hostname : null
+  } catch {
+    return null
   }
 }

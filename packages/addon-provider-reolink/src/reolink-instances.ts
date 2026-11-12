@@ -30,6 +30,7 @@ export const ReolinkConnectionBodySchema = entryBody({
   password: z.string().optional().meta({ secret: true }),
   transport: z.enum(['tcp', 'udp']).nullish(),
   uid: z.string().nullish(),
+  model: z.string().nullish(),
   debugGeneral: z.boolean().nullish(),
   debugSocketLogs: z.array(ReolinkSocketDebugFlagSchema).nullish(),
   // The camera mailbox this integration's standalone cameras mail (a link, D1013). The bridge

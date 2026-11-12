@@ -1,5 +1,10 @@
 import type { Sensor } from '@apocaliss92/nodewitt'
-import { DeviceType, deviceAdminLinkCapability, type DiscoveredChildDevice } from '@camstack/types'
+import {
+  DeviceType,
+  deviceAdminLinkCapability,
+  type DiscoveredChildDevice,
+  gatewayDeviceName,
+} from '@camstack/types'
 import {
   capForQuantity,
   deviceGroupForSensor,
@@ -44,8 +49,10 @@ export interface BuildEcowittCandidateInput {
     readonly hasAdminLink: boolean
     readonly adoptedDeviceId: number | null
   }
-  /** Operator-overridable / derived gateway label. */
+  /** Operator-overridable label for the sensor groups (the integration name). */
   readonly gatewayName: string
+  /** Model the gateway announced (for example `GW1100A`). Absent: brand only. */
+  readonly gatewayModel?: string | null
   /** Current sensors on the gateway. */
   readonly sensors: readonly EcowittDiscoverableSensor[]
   /**
@@ -100,7 +107,7 @@ export function buildEcowittGatewayCandidates(
 
   const gatewayCandidate: DiscoveredChildDevice = {
     childNativeId: gatewayDeviceNativeId(input.gatewayId),
-    name: input.gatewayName,
+    name: gatewayDeviceName('Ecowitt', input.gatewayModel),
     type: DeviceType.Gateway,
     status: input.gateway.online ? 'online' : 'offline',
     metadata: { serialNumber: input.gatewayId },

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A new UniFi gateway is named "UniFi" plus the console model when the controller reports one.
+
 ## [0.2.162] - 2026-11-10
 
 ### Changed

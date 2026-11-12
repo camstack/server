@@ -2,6 +2,7 @@ import {
   DeviceType,
   type DiscoveredChildDevice,
   fanControlCapability,
+  gatewayDeviceName,
   switchCapability,
 } from '@camstack/types'
 import type { VeSyncPurifierSnapshot } from './vesync-client-contract.js'
@@ -98,7 +99,7 @@ export function buildVeSyncCandidates(
 ): readonly DiscoveredChildDevice[] {
   const gateway: DiscoveredChildDevice = {
     childNativeId: VESYNC_GATEWAY_NATIVE_ID,
-    name: input.accountName,
+    name: gatewayDeviceName('VeSync'),
     type: DeviceType.Gateway,
     status: input.online ? 'online' : 'offline',
     metadata: { manufacturer: 'VeSync', integration: 'vesync' },

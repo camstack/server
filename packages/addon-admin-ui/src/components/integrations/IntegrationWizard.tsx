@@ -4,6 +4,7 @@ import type {
   ConfigUISchema,
   ConfigUISchemaWithValues,
 } from '@camstack/types'
+import { prefilledIntegrationName } from '@camstack/types'
 import {
   Dialog,
   DialogBody,
@@ -210,6 +211,16 @@ export function IntegrationWizard({
     if (!match) return
     setCanTest(match.canTest)
     setDiscoveryMode(match.discoveryMode)
+    const label = match.providerLabel ?? match.name
+    if (typeof label === 'string' && label.length > 0) {
+      setPendingName(
+        prefilledIntegrationName({
+          providerLabel: label,
+          mode: match.mode,
+          brokerKind: match.brokerKind,
+        }),
+      )
+    }
   }, [open, seed, availableTypes.data])
 
   useEffect(() => {
@@ -234,10 +245,15 @@ export function IntegrationWizard({
   ) {
     if (createInstanceMutation.isPending) return
 
+    const instanceName = prefilledIntegrationName({
+      providerLabel: displayName,
+      mode,
+      brokerKind: providerBrokerKind,
+    })
     setSelectedAddonId(addonId)
     setCanTest(providerCanTest)
     setDiscoveryMode(providerDiscoveryMode)
-    setPendingName(displayName)
+    setPendingName(instanceName)
     setPickerError(null)
     createInstanceMutation.reset()
 
@@ -279,7 +295,7 @@ export function IntegrationWizard({
 
     // standalone — create with empty settings, then navigate to the detail
     // page with `?add=1` so it auto-opens the add-device flow.
-    void handleStandaloneCreate(addonId, displayName)
+    void handleStandaloneCreate(addonId, instanceName)
   }
 
   async function handleStandaloneCreate(addonId: string, displayName: string) {
@@ -463,16 +479,12 @@ export function IntegrationWizard({
             )}
             {step === 'config' && selectedAddonId && (
               <ProviderConfigForm
-                key={`${seedIdentity.length > 0 ? seedIdentity : selectedAddonId}:${scanFills}`}
+                key={`${seedIdentity.length > 0 ? seedIdentity : selectedAddonId}:${pendingName}:${scanFills}`}
                 addonId={selectedAddonId}
                 configSchema={(configSchema ?? null) as ConfigUISchema | null}
                 canTest={canTest}
                 {...(instanceKind !== undefined ? { instanceKind } : {})}
-                initialName={
-                  pendingName.length > 0 && Object.keys(formSeed).length > 0
-                    ? pendingName
-                    : undefined
-                }
+                initialName={pendingName.length > 0 ? pendingName : undefined}
                 initialConfig={{ ...formSeed }}
                 onScan={
                   canScan

@@ -36,6 +36,7 @@
         "id": "mqtt-broker",
         "category": "messaging",
         "name": "MQTT Broker",
+        "providerLabel": "MQTT",
         "description": "Registry of MQTT brokers (external + optionally an embedded aedes broker). Exposes connection details via the `mqtt-broker` cap — consumer addons connect with their own `mqtt.js` clients.",
         "entry": "./dist/mqtt-broker.addon.js",
         "execution": {

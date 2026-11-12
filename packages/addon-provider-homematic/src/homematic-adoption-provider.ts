@@ -6,7 +6,7 @@ import type {
   DeviceRole,
 } from '@camstack/types'
 import type { DiscoveredChildDevice } from '@camstack/types'
-import { DeviceType } from '@camstack/types'
+import { DeviceType, gatewayDeviceName } from '@camstack/types'
 import type { HmCustomEntity } from 'nodehomematic'
 import type { HmDiscoverable } from './homematic-discovery.js'
 import {
@@ -387,8 +387,7 @@ export function buildHmAdoptionProvider(deps: HmAdoptionProviderDeps): IDeviceAd
           }
 
           if (parsed.kind === 'gateway') {
-            const name =
-              perCandidate?.[nativeId]?.name ?? registry.getName(integrationId) ?? 'Homematic CCU'
+            const name = perCandidate?.[nativeId]?.name ?? gatewayDeviceName('Homematic', 'CCU3')
             const { deviceId } = await adoptGateway({ integrationId, nativeId, name })
             adopted.push({
               childNativeId: nativeId,

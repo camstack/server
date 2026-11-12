@@ -1,5 +1,6 @@
 import {
   DeviceType,
+  defaultIntegrationName,
   type DiscoveryCandidate,
   type DiscoveryHit,
   type DiscoveryMode,
@@ -119,7 +120,7 @@ export function homematicDiscoveryCandidates(
   return proposals.map((found) => ({
     stableId: `homematic:${found.id}`,
     type: DeviceType.Gateway,
-    suggestedName: found.name,
+    suggestedName: defaultIntegrationName('Homematic'),
     prefilledConfig: { host: found.host },
     setupIntegration: true,
   }))

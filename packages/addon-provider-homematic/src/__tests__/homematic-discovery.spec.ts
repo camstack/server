@@ -337,7 +337,7 @@ describe('buildCcuGatewayCandidate', () => {
     })
     expect(c.childNativeId).toBe('int-a:gateway')
     expect(c.type).toBe(DeviceType.Gateway)
-    expect(c.name).toBe('Casa CCU')
+    expect(c.name).toBe('Homematic CCU3')
     expect(c.status).toBe('online')
     expect(c.capabilities).toEqual(['device-admin-link'])
     expect(c.capabilities).not.toContain('reboot')

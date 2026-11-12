@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A new Bosch SHC gateway is named "Bosch SHC", and a new HomeCom gateway "Bosch HomeCom" plus its device type.
+
 ## [0.1.53] - 2026-11-12
 
 ### Changed

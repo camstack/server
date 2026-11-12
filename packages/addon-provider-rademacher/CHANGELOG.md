@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A new Rademacher gateway is named "Rademacher" plus the hub model (HomePilot).
+
 ## [0.2.165] - 2026-11-10
 
 ### Changed

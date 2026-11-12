@@ -3,6 +3,7 @@ import {
   type AdoptionFilter,
   type AdoptionStatus,
   type DiscoveredChildDevice,
+  gatewayDeviceName,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
 } from '@camstack/types'
@@ -75,6 +76,7 @@ export function buildUnraidAdoptionProvider(
       server: {
         name: serverName(integrationId),
         online: getSnapshot(integrationId) !== null,
+        hostname: getSnapshot(integrationId)?.hostname ?? null,
       },
       adopted: await adoptedMap(integrationId),
     })
@@ -138,7 +140,12 @@ export function buildUnraidAdoptionProvider(
       let failures = 0
       for (const nativeId of childNativeIds) {
         try {
-          const name = perCandidate?.[nativeId]?.name ?? serverName(integrationId)
+          const snapshot = getSnapshot(integrationId)
+          const name =
+            perCandidate?.[nativeId]?.name ??
+            (nativeId === UNRAID_GATEWAY_ID
+              ? gatewayDeviceName('Unraid', snapshot?.hostname)
+              : serverName(integrationId))
           const existingId = already.get(nativeId)
           if (existingId !== undefined) {
             // A retried adopt (the first reply was lost) is a no-op, never a duplicate.

@@ -4,6 +4,7 @@ import {
   type DiscoveredChildDevice,
   deviceAdminLinkCapability,
   floodCapability,
+  gatewayDeviceName,
   rebootCapability,
 } from '@camstack/types'
 import type { VeluxNode } from './velux-client-contract.js'
@@ -151,7 +152,7 @@ export function buildVeluxCandidates(
   const out: DiscoveredChildDevice[] = [
     {
       childNativeId: gatewayId,
-      name: input.integrationName,
+      name: gatewayDeviceName('Velux', 'KLF-200'),
       type: DeviceType.Gateway,
       status: input.online ? 'online' : 'offline',
       metadata: { manufacturer: 'Velux', model: 'KLF-200' },

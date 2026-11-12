@@ -75,7 +75,7 @@ describe('proposals', () => {
       {
         stableId: 'velux:velux_klf_1a2b',
         type: DeviceType.Gateway,
-        suggestedName: 'VELUX_KLF_1A2B',
+        suggestedName: 'Velux - Home',
         prefilledConfig: { host: '192.0.2.8' },
         setupIntegration: true,
       },

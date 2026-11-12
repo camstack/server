@@ -1,4 +1,9 @@
-import { DeviceType, type DiscoveredChildDevice, deviceAdminLinkCapability } from '@camstack/types'
+import {
+  DeviceType,
+  type DiscoveredChildDevice,
+  deviceAdminLinkCapability,
+  gatewayDeviceName,
+} from '@camstack/types'
 import { availableSpecs, capsOfSpec } from './enpal-catalog.js'
 import {
   ENPAL_BOX_ID,
@@ -64,7 +69,7 @@ export function buildEnpalCandidates(
   const out: DiscoveredChildDevice[] = [
     {
       childNativeId: ENPAL_BOX_ID,
-      name: input.box.name,
+      name: gatewayDeviceName('Enpal', 'Box'),
       type: DeviceType.Gateway,
       status: input.box.online ? 'online' : 'offline',
       metadata: METADATA,

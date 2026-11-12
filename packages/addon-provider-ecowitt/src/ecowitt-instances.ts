@@ -25,6 +25,7 @@ export const EcowittConnectionBodySchema = entryBody({
   listenPort: z.number().int().min(1).max(65535).nullish(),
   listenHost: z.string().nullish(),
   stationId: z.string().nullish(),
+  model: z.string().nullish(),
 })
 export type EcowittConnectionBody = z.infer<typeof EcowittConnectionBodySchema>
 

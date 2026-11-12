@@ -1,4 +1,4 @@
-import { DeviceType, type DiscoveredChildDevice } from '@camstack/types'
+import { DeviceType, type DiscoveredChildDevice, gatewayDeviceName } from '@camstack/types'
 import { capsForShcKind, classifyShcDevice, deviceTypeForShcKind } from './shc-domain-mapping.js'
 import type { ShcDeviceKind, ShcDeviceSummary } from './shc-types.js'
 
@@ -137,7 +137,7 @@ export function buildShcCandidates(input: BuildShcCandidatesInput): DiscoveredCh
   const out: DiscoveredChildDevice[] = [
     {
       childNativeId: gatewayId,
-      name: input.integrationName,
+      name: gatewayDeviceName('Bosch', 'SHC'),
       type: DeviceType.Gateway,
       status: 'online',
       metadata: { manufacturer: 'Bosch', model: 'Smart Home Controller' },

@@ -3,6 +3,7 @@ import {
   type AdoptionStatus,
   type DiscoveredChildDevice,
   errMsg,
+  gatewayDeviceName,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
 } from '@camstack/types'
@@ -103,7 +104,7 @@ export function buildReolinkAdoptionProvider(
     const gateways = await deps.listAdoptedGateways()
     const gateway = toDiscoveredGateway({
       integrationId,
-      name: session.name,
+      model: session.connection.model,
       online: session.isOnline,
       adoptedDeviceId: gateways.find((g) => g.integrationId === integrationId)?.id ?? null,
     })
@@ -200,7 +201,9 @@ export function buildReolinkAdoptionProvider(
                 ? { deviceId: known.id }
                 : await deps.adoptGateway({
                     integrationId,
-                    name: perCandidate?.[childNativeId]?.name ?? session.name,
+                    name:
+                      perCandidate?.[childNativeId]?.name ??
+                      gatewayDeviceName('Reolink', session.connection.model?.trim() || 'Home Hub'),
                   })
             adopted.push({ childNativeId, parentDeviceId: deviceId, accessoryDeviceIds: [] })
             continue

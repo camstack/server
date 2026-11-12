@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A new integration is prefilled "<provider> - Home", and a new gateway is named "<brand> <model>".
+
 ## [1.2.552] - 2026-11-12
 
 ### Fixed

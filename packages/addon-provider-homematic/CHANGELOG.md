@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A new Homematic gateway is named "Homematic CCU3".
+
 ## [1.2.191] - 2026-11-12
 
 ### Added

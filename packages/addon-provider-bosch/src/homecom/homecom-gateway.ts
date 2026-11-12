@@ -1,5 +1,6 @@
 import type { HomeComApiClient, HomeComSystemSnapshot } from './homecom-api-client.js'
 import type { HomeComHeatingCircuit } from './homecom-domain-mapping.js'
+import { gatewayDeviceName } from '@camstack/types'
 
 export interface HomeComDiscoverableDevice {
   readonly nativeId: string
@@ -78,8 +79,11 @@ export class HomeComConnectionResolver {
 export const HOMECOM_GATEWAY_NATIVE_ID = 'gateway:0'
 
 function gatewayDiscoverable(snapshot: HomeComSystemSnapshot): HomeComDiscoverableDevice {
-  const name = snapshot.gateway.name.length > 0 ? snapshot.gateway.name : 'HomeCom gateway'
-  return { nativeId: HOMECOM_GATEWAY_NATIVE_ID, name, kind: 'gateway' }
+  return {
+    nativeId: HOMECOM_GATEWAY_NATIVE_ID,
+    name: gatewayDeviceName('Bosch HomeCom', snapshot.deviceType),
+    kind: 'gateway',
+  }
 }
 
 const BOILER_DHW_NAME = 'Domestic hot water'

@@ -4,6 +4,7 @@ import {
   type AdoptionStatus,
   type ChildLayout,
   type DiscoveredChildDevice,
+  gatewayDeviceName,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
 } from '@camstack/types'
@@ -175,11 +176,15 @@ export function buildEnpalAdoptionProvider(
             const specIds = reportedSpecIds(equipment, candidate)
             const { deviceId, accessoryDeviceIds } = await deps.adoptGateway({
               integrationId,
-              name: perCandidate?.[equipmentId]?.name ?? boxName(integrationId),
+              name: perCandidate?.[equipmentId]?.name ?? gatewayDeviceName('Enpal', 'Box'),
               specIds,
               childLayout: childLayoutOf(equipment, specIds),
             })
-            adopted.push({ childNativeId: equipmentId, parentDeviceId: deviceId, accessoryDeviceIds })
+            adopted.push({
+              childNativeId: equipmentId,
+              parentDeviceId: deviceId,
+              accessoryDeviceIds,
+            })
             continue
           }
           if (candidate === undefined || equipment === undefined) {

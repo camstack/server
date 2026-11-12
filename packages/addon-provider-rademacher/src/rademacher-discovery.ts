@@ -3,6 +3,7 @@ import {
   DeviceType,
   type DiscoveredChildDevice,
   deviceAdminLinkCapability,
+  gatewayDeviceName,
 } from '@camstack/types'
 
 const GATEWAY_SUFFIX = ':gateway'
@@ -79,7 +80,7 @@ export function buildRademacherCandidates(
   const out: DiscoveredChildDevice[] = [
     {
       childNativeId: gatewayId,
-      name: input.integrationName,
+      name: gatewayDeviceName('Rademacher', input.hubModel ?? 'HomePilot'),
       type: DeviceType.Gateway,
       status: input.online ? 'online' : 'offline',
       metadata: { manufacturer: 'Rademacher', model: input.hubModel ?? 'HomePilot' },

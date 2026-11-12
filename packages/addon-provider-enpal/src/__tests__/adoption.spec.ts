@@ -157,7 +157,7 @@ describe('Enpal adoption', () => {
     expect(h.gatewayCalls).toEqual([
       {
         integrationId: 'int-1',
-        name: 'Roof box',
+        name: 'Enpal Box',
         specIds: ['box-cpu-load', 'lte-quality'],
         layout: [
           ['box-cpu-load', 'Box'],

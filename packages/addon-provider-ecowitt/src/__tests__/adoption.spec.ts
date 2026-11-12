@@ -76,13 +76,13 @@ describe('Ecowitt adoption of a new setup', () => {
     expect(candidates).toHaveLength(4)
   })
 
-  it('adopting the Gateway creates it top-level, named after the integration', async () => {
+  it('adopting the Gateway creates it top-level, named from the brand and model', async () => {
     const { provider, calls } = rig()
     const result = await provider.adopt({
       integrationId: INT,
       childNativeIds: [gatewayDeviceNativeId(KEY), groupNativeId(KEY, 'weather-station')],
     })
-    expect(calls).toEqual([`gateway:${KEY}:Garden station`, 'container:weather-station'])
+    expect(calls).toEqual([`gateway:${KEY}:Ecowitt`, 'container:weather-station'])
     expect(result.adopted.map((a) => a.parentDeviceId)).toEqual([50, 60])
   })
 

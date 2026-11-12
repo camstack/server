@@ -1,4 +1,9 @@
-import { DeviceType, type DiscoveredChildDevice, deviceAdminLinkCapability } from '@camstack/types'
+import {
+  DeviceType,
+  type DiscoveredChildDevice,
+  deviceAdminLinkCapability,
+  gatewayDeviceName,
+} from '@camstack/types'
 
 /** The `childNativeId` of the server itself (the Gateway), one per integration. */
 export const UNRAID_GATEWAY_ID = 'gateway'
@@ -18,7 +23,12 @@ export function unraidStableId(integrationId: string, nativeId: string): string 
 /** Inputs for {@link buildUnraidCandidates}. */
 export interface BuildUnraidCandidatesInput {
   /** The server behind the integration: its name, and whether its last poll succeeded. */
-  readonly server: { readonly name: string; readonly online: boolean }
+  readonly server: {
+    readonly name: string
+    readonly online: boolean
+    /** Hostname the server reported. Absent: the gateway is named "Unraid". */
+    readonly hostname?: string | null
+  }
   /** Adopted device id per native id (`gateway`, `instance`). */
   readonly adopted: ReadonlyMap<string, number>
 }
@@ -41,7 +51,7 @@ export function buildUnraidCandidates(
   return [
     {
       childNativeId: UNRAID_GATEWAY_ID,
-      name: input.server.name,
+      name: gatewayDeviceName('Unraid', input.server.hostname),
       type: DeviceType.Gateway,
       status,
       metadata: METADATA,

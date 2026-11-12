@@ -114,7 +114,7 @@ describe('proposal and candidate shape', () => {
     expect(candidate).toEqual({
       stableId: 'homematic:192-168-1-40',
       type: DeviceType.Gateway,
-      suggestedName: 'Homematic CCU (192.168.1.40)',
+      suggestedName: 'Homematic - Home',
       prefilledConfig: { host: '192.168.1.40' },
       setupIntegration: true,
     })

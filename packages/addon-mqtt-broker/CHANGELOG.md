@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The MQTT broker is offered as "MQTT" so a new broker is prefilled "MQTT - Home".
+
 ## [1.2.158] - 2026-11-09
 
 ### Changed

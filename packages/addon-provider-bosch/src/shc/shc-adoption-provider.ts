@@ -5,6 +5,7 @@ import {
   type AdoptionFilter,
   type AdoptionStatus,
   type DiscoveredChildDevice,
+  gatewayDeviceName,
   type IDeviceAdoptionProvider,
 } from '@camstack/types'
 import { buildShcCandidates, shcGatewayNativeId } from './shc-discovery.js'
@@ -169,8 +170,7 @@ export function buildShcAdoptionProvider(deps: ShcAdoptionProviderDeps): IDevice
       for (const shcDeviceId of childNativeIds) {
         try {
           if (shcDeviceId === shcGatewayNativeId(integrationId)) {
-            const name =
-              perCandidate?.[shcDeviceId]?.name ?? integrationName(integrationId) ?? 'Bosch SHC'
+            const name = perCandidate?.[shcDeviceId]?.name ?? gatewayDeviceName('Bosch', 'SHC')
             const { deviceId } = await adoptDevice({
               shcDeviceId,
               integrationId,

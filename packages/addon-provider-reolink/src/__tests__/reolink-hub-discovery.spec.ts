@@ -45,7 +45,7 @@ describe('hub candidates', () => {
     expect(candidate?.setupIntegration).toBe(true)
     expect(candidate?.type).toBe(DeviceType.Gateway)
     expect(candidate?.stableId).toBe(reolinkHubStableId({ uid: 'UID9', host: '10.0.0.5' }))
-    expect(candidate?.suggestedName).toBe('Hub')
+    expect(candidate?.suggestedName).toBe('Reolink - Home')
     expect(candidate?.prefilledConfig).toMatchObject({
       host: '10.0.0.5',
       port: 9000,

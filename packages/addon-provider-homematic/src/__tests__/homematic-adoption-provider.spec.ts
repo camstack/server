@@ -936,7 +936,7 @@ describe('the CCU box as a Gateway', () => {
     expect(first).toMatchObject({
       childNativeId: 'int_1:gateway',
       type: 'gateway',
-      name: 'Casa CCU',
+      name: 'Homematic CCU3',
       status: 'online',
       capabilities: ['device-admin-link'],
     })
@@ -985,7 +985,7 @@ describe('the CCU box as a Gateway', () => {
     expect(adoptGateway).toHaveBeenCalledWith({
       integrationId: 'int_1',
       nativeId: 'int_1:gateway',
-      name: 'Casa CCU',
+      name: 'Homematic CCU3',
     })
     expect(adoptDevice).not.toHaveBeenCalled()
     expect(result.adopted).toEqual([

@@ -3,6 +3,7 @@ import {
   type AdoptionFilter,
   type AdoptionStatus,
   type DiscoveredChildDevice,
+  gatewayDeviceName,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
 } from '@camstack/types'
@@ -25,6 +26,8 @@ export interface EcowittAdoptionProviderDeps {
   readonly listIntegrations: () => readonly string[]
   /** The integration's display name, or null when it is unknown. */
   readonly integrationName: (integrationId: string) => Promise<string | null>
+  /** Model stored on the connection when discovery announced one. */
+  readonly gatewayModel?: (integrationId: string) => string | null
   readonly isOnline: (integrationId: string) => boolean
   readonly hasAdminLink: (integrationId: string) => boolean
   /** Top-level devices of this addon with their persisted blob. */
@@ -161,6 +164,7 @@ export function buildEcowittAdoptionProvider(
         throw new Error(`ecowitt adopt: integration ${integrationId} has no running client`)
       }
       const baseName = (await deps.integrationName(integrationId)) ?? 'Ecowitt'
+      const gatewayModel = deps.gatewayModel?.(integrationId) ?? null
       const have = await adopted(integrationId)
       const result: Array<{
         readonly childNativeId: string
@@ -183,7 +187,7 @@ export function buildEcowittAdoptionProvider(
             const { deviceId } = await deps.adoptGateway({
               integrationId,
               gatewayKey,
-              name: chosenName ?? baseName,
+              name: chosenName ?? gatewayDeviceName('Ecowitt', gatewayModel),
             })
             result.push({
               childNativeId: nativeId,

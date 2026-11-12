@@ -3,6 +3,7 @@ import {
   type DiscoveryHit,
   type DiscoveryMode,
   DeviceType,
+  defaultIntegrationName,
 } from '@camstack/types'
 
 export interface VeluxDiscoveredGateway {
@@ -91,7 +92,7 @@ export function veluxDiscoveryCandidates(
   return proposals.map((found) => ({
     stableId: `velux:${found.id}`,
     type: DeviceType.Gateway,
-    suggestedName: found.name,
+    suggestedName: defaultIntegrationName('Velux'),
     prefilledConfig: { host: found.host },
     setupIntegration: true,
   }))

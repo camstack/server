@@ -71,7 +71,7 @@ describe('shcDiscoveryCandidates', () => {
       { host: '192.0.2.20', name: 'Bosch SHC [lab]', id: 'shc0123' },
     ])
     expect(candidate?.stableId).toBe('bosch-shc:shc0123')
-    expect(candidate?.suggestedName).toBe('Bosch SHC [lab]')
+    expect(candidate?.suggestedName).toBe('Bosch SHC - Home')
     expect(candidate?.prefilledConfig).toEqual({ host: '192.0.2.20' })
     expect(candidate?.setupIntegration).toBe(true)
     expect(candidate?.type).toBe(DeviceType.Gateway)

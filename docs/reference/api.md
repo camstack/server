@@ -3010,7 +3010,7 @@
 
 ### `integrations` → `integrations.*`
 
-- **Source:** `packages/types/src/capabilities/integrations.cap.ts:160`
+- **Source:** `packages/types/src/capabilities/integrations.cap.ts:166`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationsProvider`

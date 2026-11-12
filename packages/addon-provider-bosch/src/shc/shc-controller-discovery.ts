@@ -1,5 +1,6 @@
 import {
   DeviceType,
+  defaultIntegrationName,
   type DiscoveryCandidate,
   type DiscoveryHit,
   type DiscoveryMode,
@@ -89,7 +90,7 @@ export function shcDiscoveryCandidates(
   return proposals.map((found) => ({
     stableId: `bosch-shc:${found.id}`,
     type: DeviceType.Gateway,
-    suggestedName: found.name,
+    suggestedName: defaultIntegrationName('Bosch SHC'),
     prefilledConfig: { host: found.host },
     setupIntegration: true,
   }))

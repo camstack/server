@@ -2,6 +2,7 @@ import {
   deviceAdminLinkCapability,
   DeviceType,
   type DiscoveredChildDevice,
+  gatewayDeviceName,
   presenceCapability,
 } from '@camstack/types'
 import type { UnifiClientSnapshot, UnifiInfraSnapshot } from './unifi-client-contract.js'
@@ -43,7 +44,14 @@ export function parseNativeId(childNativeId: string): ParsedNativeId {
   return null
 }
 
-/** Inputs for {@link buildDiscoveryCandidates}. */
+/** A console (UDM, UXG, Cloud Key, …). Switches and access points are not the gateway. */
+const CONSOLE_MODEL = /^(UDM|UXG|UCG|UCK|USG|UDR|UDW)/
+
+/** The console model in an infra list, or null when the controller reported none. */
+export function unifiConsoleModel(infra: readonly UnifiInfraSnapshot[]): string | null {
+  const match = infra.find((device) => CONSOLE_MODEL.test(device.model))
+  return match === undefined ? null : match.model
+}
 export interface BuildDiscoveryCandidatesInput {
   readonly controllerName: string
   /** Whether the controller answered its last poll. */
@@ -65,12 +73,17 @@ export function buildDiscoveryCandidates(
   const adoptedOf = (nativeId: string): number | null => input.adopted.get(nativeId) ?? null
 
   const gatewayAdopted = adoptedOf(UNIFI_GATEWAY_ID)
+  const consoleModel = unifiConsoleModel(input.infra)
   const gateway: DiscoveredChildDevice = {
     childNativeId: UNIFI_GATEWAY_ID,
-    name: input.controllerName,
+    name: gatewayDeviceName('UniFi', consoleModel),
     type: DeviceType.Gateway,
     status: input.controllerOnline ? 'online' : 'offline',
-    metadata: { manufacturer: 'Ubiquiti', integration: 'unifi' },
+    metadata: {
+      manufacturer: 'Ubiquiti',
+      integration: 'unifi',
+      ...(consoleModel !== null ? { model: consoleModel } : {}),
+    },
     alreadyAdopted: gatewayAdopted !== null,
     adoptedDeviceId: gatewayAdopted,
     capabilities: [deviceAdminLinkCapability.name],

@@ -1193,6 +1193,13 @@ export interface AddonDeclaration {
    * information inside a CamStack install and eats list width.
    */
   readonly name?: string
+  /**
+   * Short product name used to prefill a new integration ("<label> - Home")
+   * when `name` is a longer catalog title. Absent: `name` is the label
+   * ("Bosch HomeCom", "Reolink"). Set it when the catalog title is not the
+   * product ("Bosch Smart Home" → "Bosch SHC", "MQTT Broker" → "MQTT").
+   */
+  readonly providerLabel?: string
   /** Semver version */
   readonly version?: string
   /** Short description */
