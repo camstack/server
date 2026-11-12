@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.432] - 2026-11-12
+
 ### Changed
 
 - An offline device card says Offline once, in its top line, instead of repeating it under the controls

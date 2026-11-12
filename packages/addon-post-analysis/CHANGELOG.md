@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.698] - 2026-11-12
+
 ### Changed
 
 - Notification rules can match a settled device command (device-command), with English and Italian texts.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.158] - 2026-11-12
+
 ### Changed
 
 - A fresh install no longer refuses to start: a migration that waits for the device-restore phase is deferred instead of blocking the addon

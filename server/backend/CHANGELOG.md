@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.849] - 2026-11-12
+
 ### Changed
 
 - Addon migrations run in phases: a step whose predecessor belongs to a later phase of the same addon is deferred, never blocks the addon
