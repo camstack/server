@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.200] - 2026-11-12
+
 ### Changed
 
 - A device can have its own HomeKit name per bridge; renaming updates the same accessory without re-pairing.

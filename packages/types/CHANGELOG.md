@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.557] - 2026-11-12
+
 ### Changed
 
 - The device model carries the one reading of a simple sensor (value, unit, band, level, state word, since, history), with its number and quantity so every surface converts it through the display preferences; a control device offers an unbounded number field and an editable text field

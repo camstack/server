@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.699] - 2026-11-12
+
 ### Changed
 
 - The snooze exemption for alarm rules reads the vocabulary action of an Action's command steps.

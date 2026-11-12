@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.850] - 2026-11-12
+
 ### Changed
 
 - Actions and schedulers store command steps (vocabulary action plus target) and refuse, at save, a device that does not offer the action; the old raw cap-call step and its migration are gone.

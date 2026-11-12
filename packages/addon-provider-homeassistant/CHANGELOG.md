@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.682] - 2026-11-12
+
 ### Changed
 
 - A device can have its own name in each Home Assistant it is exported to; renaming keeps the same Home Assistant device.

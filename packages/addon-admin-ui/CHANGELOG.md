@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.653] - 2026-11-12
+
 ### Changed
 
 - A device command step reads as one sentence with a Change button; the device modal picks it by device or by action, lists only the commands every picked device offers, and asks the command's settings before Confirm
