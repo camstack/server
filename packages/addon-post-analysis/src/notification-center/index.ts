@@ -75,7 +75,7 @@ import { type AudioSample, AudioWatcher } from './audio-rule-matcher.js'
 import { type NcAlarmActionDeps } from './nc-actions.js'
 import { clipRetentionSecFor, deriveClipRetentionAsks } from './clip-retention-ask.js'
 import { downscaleJpeg, NcConfirmGate } from './confirm-gate.js'
-import { NcDeviceDirectory, type NcDeviceIdentity } from './device-directory.js'
+import { deviceDisplayName, NcDeviceDirectory, type NcDeviceIdentity } from './device-directory.js'
 import { listNcDeviceData } from './device-data-removal.js'
 import { NcDeviceMuteStore } from './device-mute-store.js'
 import type { DurableKindDeps } from '../durable/durable-wiring.js'
@@ -2794,7 +2794,9 @@ export class NotificationCenter implements NcEventConsumer {
   private deviceNameFromDirectory(): NcDeviceNameLookup {
     return (id: number) => {
       const identity = this.deviceDirectory.get(id)
-      if (identity !== undefined && identity.name.trim().length > 0) return identity.name.trim()
+      if (identity !== undefined && identity.name.trim().length > 0) {
+        return deviceDisplayName(identity, id)
+      }
       // A TRANSLATED placeholder, not a hard-coded `Device 102`: this sentence
       // is delivered in Italian on this hub, and one English fragment in the
       // middle of a list is how an operator concludes the list is machine

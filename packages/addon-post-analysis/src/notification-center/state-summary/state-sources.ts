@@ -16,7 +16,11 @@
  * path would not have announced it yet either, and a summary must not report a
  * blip the rule itself would have stayed silent about.
  */
-import { isAccessoryIdentity, type NcDeviceIdentity } from '../device-directory.js'
+import {
+  deviceDisplayName,
+  isAccessoryIdentity,
+  type NcDeviceIdentity,
+} from '../device-directory.js'
 import type { NcLivenessRow } from '../liveness-ledger.js'
 import type { NcSystemEventSubject } from '../rule-engine.js'
 import type { NcOpenAlert } from '../alerts/open-alert.js'
@@ -84,10 +88,9 @@ function deviceParams(
   deviceId: number,
   identity: NcDeviceIdentity | undefined,
 ): Readonly<Record<string, string>> {
-  const name = identity?.name ?? ''
   return {
     deviceId: String(deviceId),
-    deviceName: name.length > 0 ? name : String(deviceId),
+    deviceName: deviceDisplayName(identity, deviceId),
   }
 }
 
@@ -126,11 +129,7 @@ function alertItem(
   const identity = deviceId !== undefined ? lookup(deviceId) : undefined
   const deviceName =
     params['deviceName'] ??
-    (identity !== undefined && identity.name.length > 0
-      ? identity.name
-      : deviceId !== undefined
-        ? String(deviceId)
-        : undefined)
+    (deviceId !== undefined ? deviceDisplayName(identity, deviceId) : undefined)
   return {
     section,
     subject: open.subject,

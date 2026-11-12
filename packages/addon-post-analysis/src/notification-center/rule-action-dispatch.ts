@@ -11,7 +11,7 @@ import type {
 } from './alarm/alarm-push-policy.js'
 import { alarmPushDecision, intrusionLocations } from './alarm/alarm-push-policy.js'
 import { notificationZones } from './build-entries.js'
-import { NcDeviceDirectory } from './device-directory.js'
+import { deviceDisplayName, NcDeviceDirectory } from './device-directory.js'
 import { NcDeviceStateCache } from './device-state-cache.js'
 import type { NcIntakeControls } from './event-intake.js'
 import type { NcGroupedTrackLedger } from './grouped/grouped-delivery.js'
@@ -114,8 +114,10 @@ export function fireRefFor(
 /** The directory name of the sensor a match was about; absent for a camera subject. */
 function sensorNameOf(host: RuleActionDispatchHost, subject: NcRuleSubject): string | undefined {
   if (subject.source !== 'sensor') return undefined
-  const name = host.deviceDirectory.get(subject.sourceDeviceId ?? subject.deviceId)?.name.trim()
-  return name !== undefined && name.length > 0 ? name : undefined
+  const deviceId = subject.sourceDeviceId ?? subject.deviceId
+  const identity = host.deviceDirectory.get(deviceId)
+  if (identity === undefined || identity.name.trim().length === 0) return undefined
+  return deviceDisplayName(identity, deviceId)
 }
 
 export interface RuleActionDispatchHost {
@@ -283,7 +285,12 @@ export function intrusionLocationsOf(
     const identity = host.deviceDirectory.get(id)
     return {
       ...(identity?.location !== undefined ? { location: identity.location } : {}),
-      ...(identity !== undefined ? { name: identity.name } : {}),
+      // An empty name stays empty, never replaced by the id (deviceDisplayName's fallback).
+      ...(identity !== undefined
+        ? {
+            name: identity.name.trim().length > 0 ? deviceDisplayName(identity, id) : identity.name,
+          }
+        : {}),
     }
   })
 }

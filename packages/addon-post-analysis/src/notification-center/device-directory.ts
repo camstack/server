@@ -69,6 +69,13 @@ export interface NcDeviceIdentity {
    */
   readonly parentDeviceId?: number | null
   /**
+   * The display name of the device in {@link parentDeviceId}, filled by
+   * {@link NcDeviceDirectory.refresh} from the same answer. Absent for a
+   * first-level device and for a parent the answer did not carry: a child is
+   * then named by its bare name, never by its parent's id (#523).
+   */
+  readonly parentName?: string
+  /**
    * The operator's LOCATION label (room / area), `null` when unset, `undefined` when this hub
    * did not supply it. Read by the alarm's intrusion title (D706), which falls back to the
    * device name — never to an empty word.
@@ -121,7 +128,38 @@ export function deviceDisplayName(
   deviceId: number,
 ): string {
   const name = identity?.name.trim() ?? ''
-  return name.length > 0 ? name : String(deviceId)
+  return name.length > 0 ? nameWithParent(name, identity?.parentName) : String(deviceId)
+}
+
+/**
+ * `<name> (<parent name>)`: THE way a notification names a device that hangs
+ * off another one (#523). Every device sentence reaches it through
+ * {@link deviceDisplayName}. The bare name when there is no parent name, and
+ * when the name already carries the parent's ("Robot piano terra" under
+ * "Robot piano terra"), so applying it twice changes nothing.
+ */
+export function nameWithParent(name: string, parentName: string | undefined): string {
+  const parent = parentName?.trim() ?? ''
+  if (parent.length === 0) return name
+  if (name.toLocaleLowerCase().includes(parent.toLocaleLowerCase())) return name
+  return `${name} (${parent})`
+}
+
+/** The identities of one answer, each child carrying its parent's name. */
+function withParentNames(
+  devices: readonly NcDeviceIdentity[],
+): ReadonlyMap<number, NcDeviceIdentity> {
+  const byId = new Map(devices.map((device) => [device.deviceId, device]))
+  const out = new Map<number, NcDeviceIdentity>()
+  for (const device of devices) {
+    const parentId = device.parentDeviceId
+    const parentName = typeof parentId === 'number' ? byId.get(parentId)?.name.trim() : undefined
+    out.set(
+      device.deviceId,
+      parentName !== undefined && parentName.length > 0 ? { ...device, parentName } : device,
+    )
+  }
+  return out
 }
 
 /** Types that add nothing a reader can use next to the name. */
@@ -272,8 +310,7 @@ export class NcDeviceDirectory {
   async refresh(): Promise<NcDirectoryRefreshOutcome> {
     try {
       const devices = await this.deps.listDevices()
-      const next = new Map<number, NcDeviceIdentity>()
-      for (const device of devices) next.set(device.deviceId, device)
+      const next = withParentNames(devices)
       this.devices = next
       if (next.size > 0) {
         this.answered += 1
