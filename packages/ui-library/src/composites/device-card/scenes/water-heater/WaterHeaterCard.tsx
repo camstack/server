@@ -51,7 +51,7 @@ export function waterHeaterStateLabel(activity: WaterHeaterActivity, t: UiTextFn
 function targetColumn(
   model: WaterHeaterCardModel,
   actions: WaterHeaterCardActions,
-  off: boolean,
+  held: boolean,
   t: UiTextFn,
 ): ReactNode {
   const target = model.targetTemp
@@ -71,14 +71,14 @@ function targetColumn(
         glyph: 'plus',
         label: t('uiLibrary.deviceCard.waterHeater.raise', 'Raise target'),
         disabled:
-          off || !model.targetSettable || (model.maxTemp !== null && target >= model.maxTemp),
+          held || !model.targetSettable || (model.maxTemp !== null && target >= model.maxTemp),
         onPress: step(1),
       }}
       down={{
         glyph: 'minus',
         label: t('uiLibrary.deviceCard.waterHeater.lower', 'Lower target'),
         disabled:
-          off || !model.targetSettable || (model.minTemp !== null && target <= model.minTemp),
+          held || !model.targetSettable || (model.minTemp !== null && target <= model.minTemp),
         onPress: step(-1),
       }}
     />
@@ -88,7 +88,7 @@ function targetColumn(
 function rightColumn(
   model: WaterHeaterCardModel,
   actions: WaterHeaterCardActions,
-  off: boolean,
+  held: boolean,
   t: UiTextFn,
 ): ReactNode {
   const on = model.power === true
@@ -113,7 +113,7 @@ function rightColumn(
           ariaLabel={t('uiLibrary.deviceCard.waterHeater.modeMenu', 'Mode')}
           options={model.modes}
           value={model.mode}
-          disabled={off}
+          disabled={held}
           onChange={actions.onMode}
         />
       )}
@@ -122,7 +122,7 @@ function rightColumn(
           glyph="away"
           tone={model.away ? 'on' : 'default'}
           aria-pressed={model.away}
-          disabled={off}
+          disabled={held}
           data-testid="dc-wh-away"
           onClick={() => actions.onAway(model.away !== true)}
         >
@@ -147,6 +147,9 @@ export function WaterHeaterCard({
 }: WaterHeaterCardProps): ReactElement {
   const t = useUiText()
   const off = model.activity === 'off'
+  // Off holds the controls only when the power button can bring it back; a
+  // device with no off mode and no reported mode must still be able to pick one.
+  const held = off && model.power !== null
   const heating = model.activity === 'heat'
   return (
     <DeviceCard
@@ -163,7 +166,7 @@ export function WaterHeaterCard({
       }}
       scene={{
         fx: heating ? <AmbientFx role="water-heater" activity="heat" swing={false} /> : null,
-        left: targetColumn(model, actions, off, t),
+        left: targetColumn(model, actions, held, t),
         image: (
           <div className="relative grid w-25 justify-items-center">
             <TankIllustration
@@ -185,7 +188,7 @@ export function WaterHeaterCard({
             </div>
           </div>
         ),
-        right: rightColumn(model, actions, off, t),
+        right: rightColumn(model, actions, held, t),
       }}
     />
   )

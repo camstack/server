@@ -217,6 +217,16 @@ describe('a heat pump', () => {
     )
   })
 
+  it('offers no circuit picker whose method the binding does not implement', () => {
+    hub.hpSlice = HEAT_PUMP
+    hub.methods = { 'heat-pump-control': ['setSilentMode'] }
+    render(<ConnectedHeatPumpCard deviceId={1} optimistic={false} />)
+    fireEvent.click(screen.getByTestId('dc-hp-circuit-hc1'))
+    expect(screen.queryByRole('radio', { name: 'Manual' })).toBeNull()
+    fireEvent.click(screen.getByTestId('dc-hp-circuit-dhw1'))
+    expect(screen.queryByRole('radio', { name: 'High' })).toBeNull()
+  })
+
   it('draws nothing until the status has answered', () => {
     const { container } = render(<ConnectedHeatPumpCard deviceId={1} />)
     expect(container.textContent).toBe('')
@@ -264,5 +274,12 @@ describe('a water heater', () => {
     hub.whSlice = { ...WATER, availableModes: ['eco', 'performance'] }
     render(<ConnectedWaterHeaterCard deviceId={1} optimistic={false} />)
     expect(screen.queryByTestId('dc-wh-power')).toBeNull()
+  })
+
+  it('keeps the mode menu open when no mode is reported and nothing can switch it off', () => {
+    hub.whSlice = { ...WATER, availableModes: ['eco', 'performance'], operationMode: null }
+    render(<ConnectedWaterHeaterCard deviceId={1} optimistic={false} />)
+    expect(screen.queryByTestId('dc-wh-power')).toBeNull()
+    expect(screen.getByTestId('dc-wh-mode').hasAttribute('disabled')).toBe(false)
   })
 })
