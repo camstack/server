@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A device's capability list no longer includes cluster-wide capabilities (broker, adoption, auth); exports such as Alexa see only the device's own.
+
 ## [1.2.843] - 2026-11-12
 
 ### Changed
