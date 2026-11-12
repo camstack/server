@@ -115,3 +115,15 @@ describe('validateSchedulerInput', () => {
     expect(() => input('edge', SWITCH_ON, date)).toThrow()
   })
 })
+
+describe('a scheduler point wait', () => {
+  // A point's steps run inside the scheduler's one serial queue, with no run
+  // ceiling: a wait stalls every other scheduler for as long as it lasts.
+  it('accepts a wait of five minutes', () => {
+    expect(() => input('edge', { kind: 'wait', seconds: 300 })).not.toThrow()
+  })
+
+  it('refuses a wait longer than five minutes, though an action may wait an hour', () => {
+    expect(() => input('edge', { kind: 'wait', seconds: 301 })).toThrow(/at most five minutes/)
+  })
+})

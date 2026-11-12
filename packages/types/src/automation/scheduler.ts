@@ -82,12 +82,28 @@ export const MAX_HOLD_ATTEMPTS_LIMIT = 20
 /** A missed edge up to this late still runs. */
 export const DEFAULT_MAX_LATE_MS = 10 * 60_000
 
+/**
+ * The longest one `wait` of a scheduler point lasts. A point's steps run in
+ * the scheduler's one serial queue, with no run ceiling: a wait holds every
+ * other scheduler's points for as long as it lasts. An action (one hour) has
+ * its own run and ceiling; a point keeps the five minutes it always had.
+ */
+export const SCHEDULER_WAIT_MAX_SECONDS = 300
+
+const SchedulerStepSchema = ActionStepSchema.refine(
+  (step) => step.kind !== 'wait' || step.seconds <= SCHEDULER_WAIT_MAX_SECONDS,
+  {
+    message: `a scheduler point waits at most five minutes (${SCHEDULER_WAIT_MAX_SECONDS} s); put a longer wait in an action`,
+    path: ['seconds'],
+  },
+)
+
 export const SchedulerPointSchema = z.object({
   id: z.string().min(1).max(64),
   at: SchedulerTimeSpecSchema,
   mode: SchedulerPointModeSchema,
   /** The actions of an `edge` or `hold`; a `release` has none. */
-  steps: z.array(ActionStepSchema).max(20).default([]),
+  steps: z.array(SchedulerStepSchema).max(20).default([]),
   /** Checked when the point runs (an edge) or is applied (a hold). */
   conditions: SchedulerStateTreeSchema.optional(),
   /** Hold only; absent means `respect`. */
