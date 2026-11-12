@@ -12419,7 +12419,6 @@
     "noForm": "Questo record non ha un modulo di configurazione oltre al nome.",
     "addonNotRunning": "{{addon}} non è in esecuzione: avvialo prima",
     "createMany": "Crea {{count}}",
-    "createManyHint": "Ne viene creato uno per ogni scelta spuntata, con il suo nome.",
     "createManyStopped": "{{done}} di {{total}} creati: {{message}}",
     "createManyLabelsFailed": "Non è stato possibile leggere i nomi delle scelte ({{message}}); ognuna prende il nome dal suo valore."
   },

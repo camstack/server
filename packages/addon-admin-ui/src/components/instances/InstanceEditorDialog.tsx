@@ -395,6 +395,8 @@ export function InstanceEditorDialog({
         addonId,
         id: instanceId,
         values: diffInstanceValues(stored, edited),
+        // A draft of a provider with several kinds names the kind being created.
+        ...(instanceId === null && kind !== undefined ? { kind: kind.id } : {}),
       }),
     onSuccess: (result) => setVerdict(toTestVerdict(result)),
     // A transport failure of the CALL is not a verdict on the credentials.
@@ -478,14 +480,6 @@ export function InstanceEditorDialog({
         />
         {manyField !== null && many && (
           <ManyPickLabels field={manyField} values={values} onLabels={onPickLabels} />
-        )}
-        {many && (
-          <p className="text-xs text-foreground-muted">
-            {t(
-              'providerInstances.createManyHint',
-              'One is created per ticked choice, each named after it.',
-            )}
-          </p>
         )}
         {kind?.signIn !== undefined && (
           <BrokerSignInPanel

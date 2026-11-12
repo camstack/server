@@ -147,15 +147,6 @@ function modeFor(notification: Notification): SpeakMode {
   return notification.priority <= SILENT_PRIORITY ? 'speak' : 'announce'
 }
 
-/** "Kitchen · Living room · ECHO" — the name first, then what tells two Echoes apart. */
-export function echoOptionLabel(device: EchoDevice): string {
-  const kind = device.kind === 'group' ? 'Group' : device.family
-  const parts = [device.name.length > 0 ? device.name : device.id]
-  if (device.room !== undefined && device.room.length > 0) parts.push(device.room)
-  if (kind.length > 0) parts.push(kind)
-  return parts.join(' · ')
-}
-
 /**
  * The two pickers are not `required`: a required select shows its first option
  * while the form still holds no value, so a save would drop the choice. Left
@@ -394,14 +385,13 @@ export function createAlexaNotificationProvider(ports: AlexaSpeakPorts): AlexaNo
           )
         }
       }
-      // The form names an account: every Echo of it, labelled to tell two apart.
+      // The form names an account: every Echo of it, under its own name.
       const named = readString(input.config ?? {}, 'brokerId')
       if (named.length > 0) {
         const owner = ports.brokers().find((broker) => broker.id === named)
-        return (owner?.devices ?? []).map((device) => ({
-          ...discoveredFrom(owner ?? { id: named, name: named, ready: false, devices: [] }, device),
-          suggestedName: echoOptionLabel(device),
-        }))
+        return (owner?.devices ?? []).map((device) =>
+          discoveredFrom(owner ?? { id: named, name: named, ready: false, devices: [] }, device),
+        )
       }
       // Otherwise one proposal per Echo that no saved target already speaks on.
       const taken = new Set(

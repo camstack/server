@@ -340,8 +340,8 @@ describe('the Alexa target kind', () => {
       config: { brokerId: 'b1' },
     })
     expect(found.map((row) => [row.config['echoId'], row.suggestedName])).toEqual([
-      ['echo-1', 'Kitchen · Living room · ECHO'],
-      ['grp', 'Downstairs · Group'],
+      ['echo-1', 'Kitchen'],
+      ['grp', 'Downstairs'],
     ])
   })
 
