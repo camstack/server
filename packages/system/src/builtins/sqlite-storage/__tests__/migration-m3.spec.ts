@@ -480,6 +480,61 @@ describe('addon-owned catalogue', () => {
     expect(h.lines.some((l) => l.message.includes('skipped-newer'))).toBe(false)
     await file.stop()
   }, 90_000)
+
+  it('a phase that runs BEFORE its predecessor defers, never blocks the owner (the later phase still runs)', async () => {
+    const { file, provider, engine } = await boot()
+    const whole = [
+      planEntry('hub', 1, { edits: [] }),
+      planEntry('rows', 2, { edits: [] }),
+      planEntry('switch', 3, { edits: [] }),
+    ]
+    const HUB = `${OWNER}/2026-11-01-hub`
+    const ROWS = `${OWNER}/2026-11-01-rows`
+    const SWITCH = `${OWNER}/2026-11-01-switch`
+    const phase = (only: readonly string[]) =>
+      runAddonMigrations(
+        hostOf(provider),
+        defineAddonMigrations(whole, {}),
+        recordingLogger(h.lines, 'Addon'),
+        { only },
+      )
+    // Boot 1, init phase: rows + switch, while the hub step waits for the restore phase.
+    const init = await phase([ROWS, SWITCH])
+    expect(init.blockOwner).toEqual([])
+    expect(init.skipped).toEqual([ROWS, SWITCH])
+    // Boot 1, restore phase: the hub step applies; the switch waits for rows again.
+    const restore = await phase([HUB, SWITCH])
+    expect(restore.applied).toEqual([HUB])
+    expect(restore.blockOwner).toEqual([])
+    // Boot 2, init phase: the rest applies in order.
+    const next = await phase([ROWS, SWITCH])
+    expect(next.applied).toEqual([ROWS, SWITCH])
+    const ledger = await engine.listLedger()
+    expect(ledger.map((e) => [e.id, e.status])).toEqual([
+      [HUB, 'applied'],
+      [ROWS, 'applied'],
+      [SWITCH, 'applied'],
+    ])
+    await file.stop()
+  }, 90_000)
+
+  it('a predecessor IN the same phase that is not applied still blocks the owner', async () => {
+    const { file, provider } = await boot()
+    const whole = [
+      planEntry('first', 1, {
+        edits: [{ op: 'deleteRow', table: 'no_such_table', key: { id: 1 } }],
+      }),
+      planEntry('second', 2, { edits: [] }),
+    ]
+    const report = await runAddonMigrations(
+      hostOf(provider),
+      defineAddonMigrations(whole, {}),
+      recordingLogger(h.lines, 'Addon'),
+      { only: [`${OWNER}/2026-11-01-first`, `${OWNER}/2026-11-01-second`] },
+    )
+    expect(report.blockOwner).toContain(`${OWNER}/2026-11-01-second`)
+    await file.stop()
+  }, 90_000)
 })
 
 describe('procedure body', () => {

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A kind that declares its own role (an Alexa Echo target) is no longer treated as bringing devices because the addon's manifest says so; creating Echo targets works again
 - A remote sends a stored native IR code verbatim to a transmitter that replays its format
+- Addon migrations run in phases: a step whose predecessor belongs to a later phase of the same addon is deferred, never blocks the addon
 
 ## [1.2.847] - 2026-11-12
 

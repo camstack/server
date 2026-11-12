@@ -195,6 +195,19 @@ export async function runAddonMigrations(
     else skipped.push(id)
   }
   const selected = options.only === undefined ? null : new Set(options.only)
+  // A phased owner (`only`) runs part of its catalogue now and the rest in a later phase of
+  // the same boot (e.g. a hub migration that needs the restored devices). A step whose unmet
+  // predecessor belongs to another phase — or was itself deferred here — is DEFERRED, not
+  // blocked: the predecessor's own phase carries the verdict. Blocking here deadlocked the
+  // owner, because the later phase never runs once the addon is refused.
+  const deferred = new Set<string>()
+  const deferredBy = (reason: string | null): string | null => {
+    if (selected === null || reason === null) return null
+    const match = /^dependency-(?:pending|blocked):(.+)$/.exec(reason)
+    const dep = match?.[1]
+    if (dep === undefined || !byId.has(dep)) return null
+    return !selected.has(dep) || deferred.has(dep) ? dep : null
+  }
   for (const step of declaration.steps) {
     if (selected !== null && !selected.has(step.id)) continue
     const bound = byId.get(step.id)
@@ -206,6 +219,16 @@ export async function runAddonMigrations(
     try {
       const gate = await host.startMigration({ id: step.id })
       if (!gate.proceed) {
+        const waitsFor = deferredBy(gate.reason)
+        if (waitsFor !== null) {
+          log.info('migration deferred: its predecessor runs in another phase of this owner', {
+            tags,
+            meta: { waitsFor, reason: gate.reason },
+          })
+          deferred.add(step.id)
+          skipped.push(step.id)
+          continue
+        }
         log.warn('migration not run', { tags, meta: { state: gate.state, reason: gate.reason } })
         settle(step.id, gate.state === 'pending' ? 'blocked' : gate.state)
         continue
