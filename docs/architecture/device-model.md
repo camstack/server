@@ -443,6 +443,28 @@ unbound) falls through to the native cap; a failing binding fails the call.
 provider exists. `scripts/check-claimed-get-status.ts` fails an entry that skips
 the hook. Repeat counts are per call, never stored. See D964.
 
+### IR transmitters: native codes and learning
+
+`ir-transmitter.getInfo` reports `learn` (the device can capture a code) and
+`formats` (native code formats it replays verbatim; today `tuya`). A source
+payload may be `{ kind: 'native', format, code }`: `remote-service` reads the
+target's `getInfo.formats` once per send and sends the native code unchanged
+when the format is listed, otherwise decodes it to timings (`toTimings`, through
+`IR_NATIVE_CODECS`). `send` takes exactly one of `timings` or `native`.
+`ir-transmitter.learn` waits for the next code the device captures (default 20 s,
+max 60 s) and returns `{ native, timings, carrierHz }`; the typed errors are
+`ir-transmitter.learn-unsupported`, `learn-timeout` and `learn-undecodable`. The
+remote source dialog shows a Learn button only when the chosen transmitter
+reports `learn`, and stores the result as `native` when present, else `raw`.
+
+The MQTT provider (`addon-provider-mqtt-ha`) turns a Zigbee2MQTT zosung blaster
+into an `ir-transmitter` through the profile table `mqtt-ha-ir-profiles.ts`,
+matched on the discovery `origin` plus the entity object ids (`ir_code_to_send`,
+`learn_ir_code`, `learned_ir_code`), never on manufacturer or model. Learn
+publishes `ON` on the learn topic and resolves on the next `learned_ir_code`
+message, ignoring any value held before. The ESPHome provider reports
+`learn: false` and refuses `learn`.
+
 **Sources are declared, never inferred** (planning#460). A remote offers a
 source only when the operator declared it in `config.sources`; a custom button
 is a button and nothing else, and a remote with no sources has no source list.
