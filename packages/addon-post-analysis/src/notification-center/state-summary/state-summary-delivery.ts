@@ -98,6 +98,10 @@ export function stateSummarySubject(input: NcStateSummarySubjectInput): NcRuleSu
         summaryCount: String(input.text.count),
         // Every section the row reports, named (D698) — one on a per-section row.
         summarySection: input.text.sections.map((section) => section.title).join(', '),
+        // A grouped burst overwrites these with the edges it counted. A
+        // scheduled summary is not that burst, so the counts stay zero.
+        offlineCount: '0',
+        onlineCount: '0',
         ...input.text.sectionVars,
       },
       textCount: input.text.count,
@@ -182,6 +186,8 @@ function sectionSubject(
         summaryText: section.body,
         summaryCount: String(section.count),
         summarySection: section.title,
+        offlineCount: '0',
+        onlineCount: '0',
         ...sectionVars,
       },
       textCount: section.count,

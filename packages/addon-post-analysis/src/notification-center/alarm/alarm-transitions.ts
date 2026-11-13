@@ -129,6 +129,11 @@ export interface NcAlarmTransition {
    * `disableAfter` window (not a human disarm during the siren).
    */
   readonly autoCleared?: boolean
+  /**
+   * Set on a human `alarm-disarmed` when the bridge knows who pressed it.
+   * Absent for an automatic settle and for a disarm with no actor.
+   */
+  readonly actorLabel?: string
 }
 
 /**
@@ -255,6 +260,8 @@ export interface NcAlarmTransitionInput {
   readonly pending?: AlarmEntryDelay
   /** True when this disarmed settle came from `disableAfter`, not a human disarm. */
   readonly autoCleared?: boolean
+  /** Who pressed disarm, when the bridge knows. Ignored on an automatic settle. */
+  readonly actorLabel?: string
 }
 
 /**
@@ -304,12 +311,14 @@ export function alarmTransition(input: NcAlarmTransitionInput): NcAlarmTransitio
     return { kind: 'alarm-armed', state: next, previous, mode, at }
   }
   if (next === 'disarmed') {
+    const actor = input.actorLabel?.trim() ?? ''
     return {
       kind: 'alarm-disarmed',
       state: next,
       previous,
       at,
       ...(input.autoCleared === true ? { autoCleared: true } : {}),
+      ...(input.autoCleared !== true && actor.length > 0 ? { actorLabel: actor } : {}),
     }
   }
   return null

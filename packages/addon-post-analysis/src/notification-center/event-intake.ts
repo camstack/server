@@ -841,12 +841,23 @@ function systemSubject(input: {
 }
 
 /** Who gave a command, as one short name: the user, the addon, the automation, the schedule. */
+/** `provider-velux` → `Velux`. An empty id is nothing, not a hole in the sentence. */
+function humanProviderLabel(addonId: string): string {
+  const bare = addonId.replace(/^provider-/, '').trim()
+  if (bare.length === 0) return ''
+  return bare
+    .split('-')
+    .filter((part) => part.length > 0)
+    .map((part) => part.charAt(0).toLocaleUpperCase('en') + part.slice(1))
+    .join(' ')
+}
+
 function commandActorLabel(actor: TransitionActor): string {
   switch (actor.kind) {
     case 'user':
       return actor.username
     case 'addon':
-      return actor.addonId
+      return humanProviderLabel(actor.addonId)
     case 'action':
       return actor.actionId
     case 'scheduler':
@@ -1027,6 +1038,7 @@ export function incomingFromConsumableBand(input: NcConsumableBandSubjectInput):
     textParams: {
       ...deviceTextParams(input.deviceId, input.identity),
       item: input.item.label,
+      itemKey: input.item.key,
       form: 'part',
       ...(percentage !== null ? { percentage: String(percentage) } : {}),
     },
@@ -1069,6 +1081,21 @@ export function consumableLowBodyKey(
   return 'system.device-consumable-low.body.bin'
 }
 
+/** Title key matching {@link consumableLowBodyKey}: the device and the item, per form. */
+export function consumableLowTitleKey(
+  form: ConsumableForm,
+  attention: NcProviderConsumableAttention,
+): string {
+  if (form === 'part') return 'system.device-consumable-low.title'
+  if (form === 'tank') {
+    return attention === 'full'
+      ? 'system.device-consumable-low.title.tank-full'
+      : 'system.device-consumable-low.title.tank'
+  }
+  if (form === 'product') return 'system.device-consumable-low.title.product'
+  return 'system.device-consumable-low.title.bin'
+}
+
 /**
  * A supply / waste item judged on the provider's verdict (D934).
  *
@@ -1084,15 +1111,20 @@ export function incomingFromProviderConsumableBand(
     input.band === 'low'
       ? consumableLowBodyKey(input.item.form, input.attention, measured)
       : 'system.device-consumable-normal.body.unmeasured'
+  const titleKey =
+    input.band === 'low'
+      ? consumableLowTitleKey(input.item.form, input.attention)
+      : `system.${kind}.title`
   return systemSubject({
     facts: input.facts,
     kind,
     subject: legacyConsumableSubject(input.deviceId, input.item.key),
-    titleKey: `system.${kind}.title`,
+    titleKey,
     bodyKey,
     textParams: {
       ...deviceTextParams(input.deviceId, input.identity),
       item: input.item.label,
+      itemKey: input.item.key,
       form: input.item.form,
       attention: input.attention,
     },
@@ -1427,18 +1459,23 @@ export function incomingFromSystemEvent(
       const { deviceId, action, outcome, actor } = parsed.data
       if (findVocabAction(action) === undefined) return null
       const identity = lookup(deviceId)
+      const actorLabel = commandActorLabel(actor)
       return systemSubject({
         facts,
         kind: 'device-command',
         subject: `device-command:${deviceId}:${action}:${facts.eventId}`,
         titleKey: 'system.device-command.title',
         // The outcome is a catalog KEY (translated there); the params carry
-        // only language-neutral values.
-        bodyKey: `system.device-command.body.${outcome}`,
+        // only language-neutral values. An actor the intake cannot name is a
+        // sentence with no parenthetical, not "(, done)".
+        bodyKey:
+          actorLabel.length > 0
+            ? `system.device-command.body.${outcome}`
+            : `system.device-command.body.${outcome}.anon`,
         textParams: {
           ...deviceTextParams(deviceId, identity),
           actionId: action,
-          actorLabel: commandActorLabel(actor),
+          ...(actorLabel.length > 0 ? { actorLabel } : {}),
         },
         deviceId,
         ...(identity !== undefined ? { deviceType: identity.type } : {}),
@@ -2157,8 +2194,13 @@ function alarmTextKeys(
     transition.mode !== undefined
       ? `system.${kind}.title.${transition.mode}`
       : `system.${kind}.title`
-  const titleKey =
-    body?.titleKeySuffix !== undefined ? `${baseTitle}.${body.titleKeySuffix}` : baseTitle
+  const titled =
+    kind === 'alarm-disarmed' && (transition.actorLabel ?? '').length > 0
+      ? 'system.alarm-disarmed.title.by'
+      : body?.titleKeySuffix !== undefined
+        ? `${baseTitle}.${body.titleKeySuffix}`
+        : baseTitle
+  const titleKey = titled
   if (body !== undefined) return { titleKey, bodyKey: body.bodyKey }
   if (kind === 'alarm-sensor-bypass' && transition.sensor !== undefined) {
     return { titleKey, bodyKey: `system.${kind}.body.${transition.sensor.event}` }
@@ -2308,6 +2350,9 @@ export function incomingFromAlarmTransition(input: {
       ...(sensor?.name !== undefined && identity === undefined ? { deviceName: sensor.name } : {}),
       ...(transition.mode !== undefined ? { mode: transition.mode } : {}),
       ...(source !== undefined ? { rule: source.ruleName } : {}),
+      ...(transition.actorLabel !== undefined && transition.actorLabel.length > 0
+        ? { actorLabel: transition.actorLabel }
+        : {}),
       // The countdown the ARMING and PENDING TITLES render. Frozen here rather
       // than only in the coverage body, because a transition whose coverage
       // could not be derived composes no body at all — and the title would

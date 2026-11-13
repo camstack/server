@@ -73,7 +73,7 @@ describe('D1022 - device-command', () => {
       textParams: expect.objectContaining({
         deviceName: 'Velux gateway',
         actionId: 'powerSource.forceRestart',
-        actorLabel: 'provider-velux',
+        actorLabel: 'Velux',
       }),
     })
   })

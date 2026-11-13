@@ -3865,7 +3865,13 @@ function systemEventParamsForTemplate(
   params: Readonly<Record<string, string>> | undefined,
 ): Record<string, string> {
   if (params === undefined) return {}
-  const { form: _form, attention: _attention, actionId: _actionId, ...rest } = params
+  const {
+    form: _form,
+    attention: _attention,
+    actionId: _actionId,
+    itemKey: _itemKey,
+    ...rest
+  } = params
   return rest
 }
 
@@ -4053,6 +4059,7 @@ export function buildTemplateVars(
       ? { changes: alarmChangesText(texts, systemEvent.alarmSource, systemEvent.alarmFollowers) }
       : {}),
     ...systemEventParamsForTemplate(systemEvent?.textParams),
+    ...localizedConsumableItem(texts, systemEvent?.textParams),
     ...commandActionLabel(texts, systemEvent?.textParams?.['actionId']),
     ...(deviceLabel !== undefined ? { deviceLabel } : {}),
     // After the frozen params: the type word follows the language the catalog
@@ -4088,6 +4095,19 @@ function deviceLabelParam(
  * label in the language this row is rendered in. Intake froze only the action
  * id, so the words follow the catalog language, not the intake's.
  */
+/** The item's noun in the notification language. An unknown key keeps the frozen label. */
+function localizedConsumableItem(
+  texts: NcTextCatalog,
+  params: Readonly<Record<string, string>> | undefined,
+): Record<string, string> {
+  const key = params?.['itemKey']
+  if (key === undefined || key.length === 0) return {}
+  const catalogKey = `consumable.item.${key}`
+  if (!texts.has(catalogKey)) return {}
+  const label = texts.text({ key: catalogKey })
+  return label.length === 0 ? {} : { item: label }
+}
+
 function commandActionLabel(
   texts: NcTextCatalog,
   actionId: string | undefined,

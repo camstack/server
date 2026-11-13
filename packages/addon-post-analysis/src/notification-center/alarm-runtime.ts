@@ -156,7 +156,7 @@ export function alarmActions(host: AlarmRuntimeHost): NcAlarmActionDeps {
     },
     disarm: async (userId) => {
       const panel = requirePanel()
-      await panel.disarm()
+      await panel.disarm(userId)
       host.logger.info('alarm disarm requested through the bridge', {
         tags: { deviceId: panel.deviceId },
         meta: { userId },

@@ -131,7 +131,8 @@ describe('buildTimelapseOutboxInputs', () => {
   it('freezes a complete body that names the camera and the window', () => {
     const [row] = buildTimelapseOutboxInputs(makeInput())
     expect(row?.payload.template?.title).toContain('Camera retro')
-    expect(row?.payload.template?.body).toContain('Notte retro')
+    expect(row?.payload.template?.body).toContain('Sequenza')
+    expect(row?.payload.template?.body).not.toContain('Notte retro')
   })
 
   /**
@@ -204,13 +205,12 @@ describe('buildTimelapseOutboxInputs', () => {
 
   it('APPENDS the detection summary to the derived body, when there was something', () => {
     // The operator's ask: the card should say what the night held. Appended and
-    // not prefixed, so the line an operator already knows how to read (rule —
-    // from→to) still leads.
+    // not prefixed, so the window line still leads.
     const [row] = buildTimelapseOutboxInputs(
       makeInput({ detections: countDetections({ tracks: NIGHT }) }),
     )
     expect(row?.payload.template?.body).toContain('3 persone, 2 veicoli e 1 animale')
-    expect(row?.payload.template?.body?.startsWith('Notte retro — ')).toBe(true)
+    expect(row?.payload.template?.body?.startsWith('Sequenza ')).toBe(true)
   })
 
   it('says NOTHING about detections on a night that held none', () => {
@@ -219,7 +219,7 @@ describe('buildTimelapseOutboxInputs', () => {
     const [row] = buildTimelapseOutboxInputs(
       makeInput({ denseRanges: 0, detections: countDetections({ tracks: [] }) }),
     )
-    expect(row?.payload.template?.body).toBe(`Notte retro — ${WINDOW_FROM}→${WINDOW_TO}`)
+    expect(row?.payload.template?.body).toBe(`Sequenza ${WINDOW_FROM}→${WINDOW_TO}`)
   })
 
   it('appends NOTHING when the operator wrote his own body — he owns the text', () => {
@@ -348,10 +348,10 @@ describe('the derived body, per language', () => {
   it('the whole body — window, dense ranges and counts, and NOTHING about coverage', () => {
     const over = { coverage: PARTIAL, detections: countDetections({ tracks: NIGHT }) }
     expect(bodyOf(over)).toBe(
-      `Notte retro — ${WINDOW_FROM}→${WINDOW_TO} · 3 intervalli ripresi a cadenza fitta · 3 persone, 2 veicoli e 1 animale`,
+      `Sequenza ${WINDOW_FROM}→${WINDOW_TO} · 3 intervalli ripresi a cadenza fitta · 3 persone, 2 veicoli e 1 animale`,
     )
     expect(bodyOf({ ...over, texts: new NcTextCatalog() })).toBe(
-      `Notte retro — ${WINDOW_FROM}→${WINDOW_TO} · 3 stretches filmed at a dense cadence · 3 people, 2 vehicles, and 1 animal`,
+      `Sequence ${WINDOW_FROM}→${WINDOW_TO} · 3 stretches filmed at a dense cadence · 3 people, 2 vehicles, and 1 animal`,
     )
   })
 

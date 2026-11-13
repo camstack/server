@@ -641,6 +641,8 @@ export interface NcAlarmPanelPort {
   armWith(mode: AlarmArmMode): Promise<NcAlarmArmOutcome>
   /** The Arm anyway bound to ONE refusal — the only path that excludes a blocker (D630). */
   armAnyway(refusalId: string): Promise<NcAlarmArmOutcome>
-  /** Disarm — the cap's own path, clearing the exclusions with the arm. */
-  disarm(): Promise<void>
+  /** Disarm — the cap's own path, clearing the exclusions with the arm.
+   *  `userId` is who pressed it, when the bridge knows; absent for the cap and
+   *  for an automatic settle. */
+  disarm(userId?: string): Promise<void>
 }

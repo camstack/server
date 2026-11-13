@@ -1048,7 +1048,13 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
   {
     name: 'alarm disarmed',
     build: () =>
-      alarm({ kind: 'alarm-disarmed', state: 'disarmed', previous: 'armed_away', at: SYS_AT }),
+      alarm({
+        kind: 'alarm-disarmed',
+        state: 'disarmed',
+        previous: 'armed_away',
+        at: SYS_AT,
+        actorLabel: 'Gianluca',
+      }),
   },
   {
     name: 'alarm disarmed (defused a siren)',

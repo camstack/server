@@ -89,7 +89,7 @@ describe('appliance finish text', () => {
   it('names the duration and the energy, capitalised, in Italian', async () => {
     const out = await render(it_(), facts({ durationMs: 52 * 60_000, energyKwh: 0.84 }))
     expect(out.title).toBe('Lavatrice ha finito')
-    expect(out.body).toBe('Lavatrice ha terminato dopo 52 minuti e ha consumato 0,84 kWh')
+    expect(out.body).toBe('Ha terminato dopo 52 minuti e ha consumato 0,84 kWh')
   })
 
   it('English variant', async () => {
@@ -98,36 +98,36 @@ describe('appliance finish text', () => {
       facts({ durationMs: 52 * 60_000, energyKwh: 0.84 }),
     )
     expect(out.title).toBe('Lavatrice finished')
-    expect(out.body).toBe('Lavatrice finished after 52 minutes and used 0.84 kWh')
+    expect(out.body).toBe('Finished after 52 minutes and used 0.84 kWh')
   })
 
   it('a device without a meter drops the energy part, no dangling conjunction', async () => {
     const out = await render(it_(), facts({ durationMs: 52 * 60_000, energyKwh: null }))
-    expect(out.body).toBe('Lavatrice ha terminato dopo 52 minuti')
+    expect(out.body).toBe('Ha terminato dopo 52 minuti')
   })
 
   it('an unknown start drops the duration part only', async () => {
     const out = await render(it_(), facts({ durationMs: null, energyKwh: 0.84 }))
-    expect(out.body).toBe('Lavatrice ha terminato e ha consumato 0,84 kWh')
+    expect(out.body).toBe('Ha terminato e ha consumato 0,84 kWh')
   })
 
   it('a failing lookup still sends the bare sentence', async () => {
     const out = await render(it_(), async () => {
       throw new Error('boom')
     })
-    expect(out.body).toBe('Lavatrice ha terminato')
+    expect(out.body).toBe('Ha terminato')
   })
 
   it('no port wired still sends the bare sentence', async () => {
-    expect((await render(it_(), undefined)).body).toBe('Lavatrice ha terminato')
+    expect((await render(it_(), undefined)).body).toBe('Ha terminato')
   })
 
   it('renders hours from 60 minutes and never "0 minutes"', async () => {
     expect((await render(it_(), facts({ durationMs: 72 * 60_000, energyKwh: null }))).body).toBe(
-      'Lavatrice ha terminato dopo 1 h 12 min',
+      'Ha terminato dopo 1 h 12 min',
     )
     expect((await render(it_(), facts({ durationMs: 10_000, energyKwh: null }))).body).toBe(
-      'Lavatrice ha terminato',
+      'Ha terminato',
     )
   })
 
@@ -137,7 +137,7 @@ describe('appliance finish text', () => {
       overrides: { it: { 'appliance.finished.energy': ' ({{energy}})' } },
     })
     const out = await render(texts, facts({ durationMs: 52 * 60_000, energyKwh: 0.84 }))
-    expect(out.body).toBe('Lavatrice ha terminato dopo 52 minuti (0,84 kWh)')
+    expect(out.body).toBe('Ha terminato dopo 52 minuti (0,84 kWh)')
   })
 
   it('a rule template still wins and can place {{duration}} and {{energy}}', async () => {

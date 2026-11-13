@@ -716,6 +716,8 @@ export class NcAlarmPanelDevice extends BaseDevice<typeof ncAlarmPanelSchema> {
    * announce "Away armed" on every deploy.
    */
   private lastPublished: AlarmState | null = null
+  /** Who pressed disarm, consumed by the publish that settles it. */
+  private disarmActor: string | null = null
   /** WHO the current countdown belongs to — see {@link NcAlarmAttribution}. */
   private readonly attribution = new NcAlarmAttribution()
   /** Sensors this arm is ignoring — see {@link NcAlarmExclusions}. */
@@ -1507,7 +1509,9 @@ export class NcAlarmPanelDevice extends BaseDevice<typeof ncAlarmPanelSchema> {
    * carry an open window's exemption into tonight's arm, which nobody
    * confirmed.
    */
-  async disarm(): Promise<void> {
+  async disarm(userId?: string): Promise<void> {
+    const actor = userId?.trim() ?? ''
+    this.disarmActor = actor.length > 0 ? actor : null
     this.machine = disarm(Date.now())
     this.attribution.clear()
     this.exclusions.clear()
@@ -2114,6 +2118,8 @@ export class NcAlarmPanelDevice extends BaseDevice<typeof ncAlarmPanelSchema> {
     // …and the entry delay, for the same reason: "20s to disarm" and the mode
     // it belongs to come from the reading the state came from.
     const pending = pendingAt(this.machine, now)
+    const actor = autoCleared ? null : this.disarmActor
+    this.disarmActor = null
     const transition = alarmTransition({
       previous,
       next: state,
@@ -2124,6 +2130,7 @@ export class NcAlarmPanelDevice extends BaseDevice<typeof ncAlarmPanelSchema> {
       ...(arming !== undefined ? { arming } : {}),
       ...(pending !== undefined ? { pending } : {}),
       ...(autoCleared ? { autoCleared: true } : {}),
+      ...(actor !== null ? { actorLabel: actor } : {}),
     })
     // Consumed once. The next `triggered` must not re-use this rule's subject,
     // and a bounded siren that re-arms and fires again is a NEW incident.

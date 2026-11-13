@@ -595,7 +595,7 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     systemEventKinds: ['device-command'],
   },
   {
-    // D1022: who gave the command - the user, the addon, the automation or the schedule.
+    // D1022: who gave a command, or who disarmed the alarm. An addon is its name, not its id.
     name: 'actorLabel',
     label: 'Who asked',
     example: 'velux',
@@ -603,7 +603,7 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     families: ['rule'],
     fields: [...RULE_TEXT],
     kinds: ['system'],
-    systemEventKinds: ['device-command'],
+    systemEventKinds: ['device-command', 'alarm-disarmed'],
   },
   {
     name: 'deviceLabel',

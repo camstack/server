@@ -34,7 +34,7 @@ export function ncAlarmPanelPort(panel: NcAlarmPanelDevice): NcAlarmPanelPort {
     currentTarget: () => panel.currentTarget(),
     armWith: (mode) => panel.armWith(mode),
     armAnyway: (refusalId) => panel.armAnyway(refusalId),
-    disarm: () => panel.disarm(),
+    disarm: (userId) => panel.disarm(userId),
     observeOpening: (deviceId, reading, now, options) =>
       panel.observeOpening(deviceId, reading, now, options),
   }
