@@ -25,10 +25,12 @@ const SOURCE = readFileSync(
   'utf8',
 )
 
-/** `const <name>Key = \`hap:${deviceId}:<setting>\`` — the declaration form. */
+/** `const <name>Key = \`hap:${inst.id}:${deviceId}:<setting>\`` — the declaration form. */
 function keyDeclarations(source: string): ReadonlyMap<string, string> {
   const found = new Map<string, string>()
-  for (const match of source.matchAll(/const (\w+Key) = `hap:\$\{deviceId\}:(\w+)`/g)) {
+  for (const match of source.matchAll(
+    /const (\w+Key) = `hap:\$\{inst\.id\}:\$\{deviceId\}:(\w+)`/g,
+  )) {
     const variable = match[1]
     const setting = match[2]
     if (variable !== undefined && setting !== undefined) {

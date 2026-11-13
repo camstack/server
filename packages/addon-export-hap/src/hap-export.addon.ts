@@ -42,30 +42,30 @@ import { spawn } from 'node:child_process'
 import { randomBytes, randomUUID } from 'node:crypto'
 import * as path from 'node:path'
 import {
-  BaseAddon,
   type AddonInitResult,
+  BaseAddon,
   type ConfigOption,
   type ConfigSectionWithValues,
   type ConfigUISchema,
   type ConfigUISchemaWithValues,
-  deviceExportStatusInstanceOf,
-  ExportInstanceUnknownError,
+  type DeviceType,
   defineAddonMigrations,
   deviceExportCapability,
-  type DeviceType,
+  deviceExportStatusInstanceOf,
   EventCategory,
+  ExportInstanceUnknownError,
+  ExportSetupSchema,
   type ExposedNameStore,
   exposedNameStoreOf,
-  pruneExposedNames,
-  ExportSetupSchema,
   type IDeviceExportProvider,
   integrationInstancesCapability,
   memoizePinnedFfmpeg,
+  pruneExposedNames,
   RecordIntegrationInstances,
-  readExposedName,
   RevConflictError,
-  saveExposedName,
+  readExposedName,
   SECRET_CLEAR,
+  saveExposedName,
   videoclipsCapability,
 } from '@camstack/types'
 import {
@@ -100,19 +100,10 @@ import { resolveDefaultBridge } from './hap-identity.js'
 import {
   HAP_DEFAULT_INSTANCE_ID,
   type HapBridgeBody,
-  identityOfBody,
   hapBridgesKind,
   hapPersistDirOf,
+  identityOfBody,
 } from './hap-instance-kinds.js'
-import {
-  ADDON_MIGRATIONS,
-  EXPORT_HAP_ID,
-  type ExposureToRecordPorts,
-  type HapCataloguePorts,
-  type IdentityToInstancePorts,
-  legacyIdentityOf,
-} from './migrations/index.js'
-import { readRawKeys } from './migrations/hub-node-fields.js'
 import { firstExposedAccessorySetupUri } from './hap-setup-uri.js'
 import type { HksvBuildOutcome } from './hksv/build-outcome.js'
 import { HksvBuildOutcomes } from './hksv/build-outcome.js'
@@ -121,8 +112,8 @@ import { createClipLocationPorts, HksvClipLocation } from './hksv/clip-location.
 import { CLIP_REMUX_TIMEOUT_MS, createClipRemuxer } from './hksv/clip-remux.js'
 import { HksvClipStore } from './hksv/clip-store.js'
 import { CLIP_THUMBNAIL_TIMEOUT_MS, createClipThumbnailMinter } from './hksv/clip-thumbnail.js'
-import { describeHomekitRecording, readHomekitRecordingActive } from './hksv/recording-active.js'
 import { recordabilityTokenFor, withRecordabilityToken } from './hksv/recordability-token.js'
+import { describeHomekitRecording, readHomekitRecordingActive } from './hksv/recording-active.js'
 import {
   createHksvClipPlanes,
   HKSV_CLIP_MEDIA_PREFIX,
@@ -143,6 +134,15 @@ import {
   pickMapperKind,
   SUPPORTED_MAPPER_KINDS,
 } from './mappers/index.js'
+import { readRawKeys } from './migrations/hub-node-fields.js'
+import {
+  ADDON_MIGRATIONS,
+  EXPORT_HAP_ID,
+  type ExposureToRecordPorts,
+  type HapCataloguePorts,
+  type IdentityToInstancePorts,
+  legacyIdentityOf,
+} from './migrations/index.js'
 import { syncStateFromJson, syncStateToJson } from './reconcile/sync-state.js'
 
 /**
@@ -1053,8 +1053,8 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         throw new Error('export-hap: a notification target cannot be exported to HomeKit')
       },
       // ── DeviceSettingsContribution surface ─────────────────────────
-      // The per-device methods carry no instance id (an SDK limit): the panel speaks for the
-      // bridge that already exposes the device, else the default one.
+      // The per-device methods carry no instance id (an SDK limit), so every key names its
+      // bridge (`hap:<instanceId>:<deviceId>:<setting>`): one section and one switch per bridge.
       getDeviceSettingsContribution: (input) =>
         this.buildDeviceSettingsContribution(input.deviceId),
       getDeviceLiveContribution: async () => null,
@@ -1903,8 +1903,29 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   ): Promise<ConfigUISchemaWithValues | null> {
     const kind = await this.resolveExportKind(deviceId)
     if (kind === null) return null
-    const inst = this.instanceForDevice(deviceId)
-    if (inst === null) return null
+    // One section per running (= enabled) bridge, the default first: a device can be on several
+    // bridges at once, each a different HomeKit accessory, and each switch speaks for one.
+    const bridges = [...this.bridges.values()].toSorted(
+      (x, y) => Number(y.id === HAP_DEFAULT_INSTANCE_ID) - Number(x.id === HAP_DEFAULT_INSTANCE_ID),
+    )
+    if (bridges.length === 0) return null
+    const named = bridges.length > 1
+    return {
+      tabs: [{ id: 'export', label: 'Export', icon: 'share-2', order: 80 }],
+      sections: bridges.map((inst, index) =>
+        this.buildBridgeDeviceSection(inst, deviceId, kind, named, index),
+      ),
+    }
+  }
+
+  /** The Export section of one bridge for one device. Every key names the bridge. */
+  private buildBridgeDeviceSection(
+    inst: BridgeInstance,
+    deviceId: number,
+    kind: MapperKind,
+    named: boolean,
+    index: number,
+  ): ConfigSectionWithValues {
     const entry = inst.findEntry(deviceId)
     const settings = entry?.settings ?? DEFAULT_DEVICE_SETTINGS
     const enabled = entry !== null
@@ -1913,14 +1934,15 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     // / `'streamPreference'` would collide with Alexa's same-named fields.
     // Last-writer-wins meant the HomeKit switch rendered Alexa's value
     // (and HomeKit toggles routed to Alexa's writer). Namespacing keeps
-    // each exporter's form state isolated.
-    const enabledKey = `hap:${deviceId}:enabled`
-    const streamPreferenceKey = `hap:${deviceId}:streamPreference`
-    const multiTierKey = `hap:${deviceId}:multiTierService`
-    const useBridgeKey = `hap:${deviceId}:useBridge`
-    const allowTranscodeKey = `hap:${deviceId}:allowTranscode`
-    const keepClipsKey = `hap:${deviceId}:keepClips`
-    const clipRetentionKey = `hap:${deviceId}:clipRetentionDays`
+    // each exporter's form state isolated. The bridge is in the key too, so two
+    // bridges' sections never drive each other.
+    const enabledKey = `hap:${inst.id}:${deviceId}:enabled`
+    const streamPreferenceKey = `hap:${inst.id}:${deviceId}:streamPreference`
+    const multiTierKey = `hap:${inst.id}:${deviceId}:multiTierService`
+    const useBridgeKey = `hap:${inst.id}:${deviceId}:useBridge`
+    const allowTranscodeKey = `hap:${inst.id}:${deviceId}:allowTranscode`
+    const keepClipsKey = `hap:${inst.id}:${deviceId}:keepClips`
+    const clipRetentionKey = `hap:${inst.id}:${deviceId}:clipRetentionDays`
     const mapper = inst.exposed.get(String(deviceId)) ?? null
     const paired = mapper ? accessoryPaired(mapper.accessory) : false
     const bridged = mapper !== null && inst.bridgeHost.holds(mapper.accessory)
@@ -2031,7 +2053,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
               // operator's to understand: a camera recording here runs a
               // PERMANENT ffmpeg (0.7% of a core on the copy branch).
               type: 'info' as const,
-              key: `hap:${deviceId}:hksvRecordingStatus`,
+              key: `hap:${inst.id}:${deviceId}:hksvRecordingStatus`,
               label: 'HomeKit recording (Secure Video)',
               content: describeHomekitRecording(
                 readHomekitRecordingActive(inst.exposed.get(String(deviceId))?.accessories ?? []),
@@ -2103,27 +2125,28 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
             },
           ]
 
-    const hapExportSection: ConfigSectionWithValues = {
-      id: 'export-hap',
-      title: 'HomeKit Export',
+    return {
+      // `<addonId>:<instanceId>`: the derived "Name on <bridge>" field finds its section by it.
+      id: `${EXPORT_HAP_ADDON_ID}:${inst.id}`,
+      title: named ? `HomeKit Export — ${inst.name}` : 'HomeKit Export',
       description:
         kind === 'camera'
           ? 'Publish this camera as its own HomeKit accessory so iOS Home can pair with it.'
           : 'Publish this device as its own HomeKit accessory. Its capabilities decide which controls iOS Home shows.',
       tab: 'export',
       columns: 1,
-      order: 10,
+      order: 10 + index,
       fields: [
         {
           type: 'info' as const,
-          key: '__hap-status',
+          key: `__hap-status:${inst.id}`,
           label: 'Status',
           content: statusLabel,
           variant: 'info' as const,
         },
         {
           type: 'qr-code' as const,
-          key: '__hap-pair-qr',
+          key: `__hap-pair-qr:${inst.id}`,
           label: paired ? 'Pairing QR (already paired)' : 'Pairing QR',
           caption: paired
             ? `Already paired with at least one device. Scan from another iPhone / iPad to add it there too. Setup code: ${inst.pincode}.`
@@ -2150,10 +2173,6 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         ...cameraFields,
       ],
     }
-    return {
-      tabs: [{ id: 'export', label: 'Export', icon: 'share-2', order: 80 }],
-      sections: [hapExportSection],
-    }
   }
 
   /**
@@ -2172,12 +2191,31 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     deviceId: number,
     patch: Record<string, unknown>,
   ): Promise<{ success: true }> {
+    // Driven by the PATCH KEYS: each names its bridge, and only that bridge is written. A key
+    // for a bridge this addon does not run is refused by name, never applied to another one.
+    const instanceIds = bridgeIdsInPatch(deviceId, patch)
+    if (instanceIds.length === 0) {
+      this.ctx.logger.warn('export-hap: a device patch carried no HomeKit key — nothing applied', {
+        tags: { deviceId },
+        meta: { keys: Object.keys(patch) },
+      })
+      return { success: true as const }
+    }
+    for (const instanceId of instanceIds) this.requireBridge(instanceId)
+    for (const instanceId of instanceIds) {
+      await this.applyBridgeDevicePatch(this.requireBridge(instanceId), deviceId, patch)
+    }
+    return { success: true as const }
+  }
+
+  /** Apply the keys of ONE bridge (`hap:<inst.id>:<deviceId>:…`) to that bridge. */
+  private async applyBridgeDevicePatch(
+    inst: BridgeInstance,
+    deviceId: number,
+    patch: Record<string, unknown>,
+  ): Promise<{ success: true }> {
     const deviceIdStr = String(deviceId)
     const log = this.ctx.logger.withTags({ deviceId })
-    const inst = this.instanceForDevice(deviceId)
-    if (inst === null) {
-      throw new Error('export-hap: no HomeKit bridge is running — add or enable one first')
-    }
     const current = inst.findEntry(deviceId)
     // Runtime truth — `inst.exposed` is populated by `attachMapper`
     // after a successful publish. A persisted entry that never made it
@@ -2188,13 +2226,13 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
 
     // ── Standard keys (enabled / streamPreference) ─────────────────
     // Both keys are namespaced per-exporter — see buildDeviceSettingsContribution.
-    const enabledKey = `hap:${deviceId}:enabled`
-    const streamPreferenceKey = `hap:${deviceId}:streamPreference`
-    const useBridgeKey = `hap:${deviceId}:useBridge`
-    const allowTranscodeKey = `hap:${deviceId}:allowTranscode`
-    const multiTierKey = `hap:${deviceId}:multiTierService`
-    const keepClipsKey = `hap:${deviceId}:keepClips`
-    const clipRetentionKey = `hap:${deviceId}:clipRetentionDays`
+    const enabledKey = `hap:${inst.id}:${deviceId}:enabled`
+    const streamPreferenceKey = `hap:${inst.id}:${deviceId}:streamPreference`
+    const useBridgeKey = `hap:${inst.id}:${deviceId}:useBridge`
+    const allowTranscodeKey = `hap:${inst.id}:${deviceId}:allowTranscode`
+    const multiTierKey = `hap:${inst.id}:${deviceId}:multiTierService`
+    const keepClipsKey = `hap:${inst.id}:${deviceId}:keepClips`
+    const clipRetentionKey = `hap:${inst.id}:${deviceId}:clipRetentionDays`
     const enabledValue = enabledKey in patch ? Boolean(patch[enabledKey]) : wasEnabled
     const streamPreferenceRaw =
       streamPreferenceKey in patch
@@ -2460,6 +2498,26 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     await this.setExposedDevices(inst, next)
   }
 }
+
+/**
+ * The bridges a device patch addresses, read from its keys (`hap:<instanceId>:<deviceId>:<setting>`),
+ * in first-seen order. Keys of another device or another exporter are not this patch's.
+ */
+function bridgeIdsInPatch(
+  deviceId: number,
+  patch: Readonly<Record<string, unknown>>,
+): readonly string[] {
+  const ids = new Set<string>()
+  for (const key of Object.keys(patch)) {
+    const match = HAP_DEVICE_KEY.exec(key)
+    if (match === null || match[2] !== String(deviceId)) continue
+    const instanceId = match[1]
+    if (instanceId !== undefined) ids.add(instanceId)
+  }
+  return [...ids]
+}
+
+const HAP_DEVICE_KEY = /^hap:([^:]+):(\d+):\w+$/
 
 function errMsg(err: unknown): string {
   return err instanceof Error ? err.message : String(err)

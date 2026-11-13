@@ -547,10 +547,12 @@ that have each cost a bug:
    device form is one controller over the merged payload, so a bare `enabled`
    from three different exporters is ONE field and the last writer wins — the
    operator sees another exporter's value in this one's toggle. Namespace every
-   key with its owner and its subject: `hap:<deviceId>:enabled`,
+   key with its owner and its subject: `hap:<instanceId>:<deviceId>:enabled`,
    `alexa:<deviceId>:enabled`, `haExport:<deviceId>:<brokerId>`. This is
    restated in `packages/addon-provider-homeassistant/AGENTS.md` because that is
-   where it was learned.
+   where it was learned. An exporter with several instances draws **one section
+   and one Expose switch per enabled instance** (id `<addonId>:<instanceId>`),
+   and its patch writes only the instance the key names (D1009, planning#407).
 3. **The exported name is a derived field, never an exporter's own.** `device-manager`
    adds one "Name on <instance>" text field per export instance that exposes the device
    (`packages/system/src/builtins/device-manager/export-name-fields.ts`), keyed

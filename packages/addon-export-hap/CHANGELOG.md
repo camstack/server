@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device Export tab shows one HomeKit section and Expose switch per bridge; a change applies only to the bridge it names.
+
 ## [1.2.201] - 2026-11-13
 
 ### Changed
