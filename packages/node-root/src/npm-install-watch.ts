@@ -12,7 +12,13 @@
  * extracts it to `<package>/binary/ffmpeg` (next to `dist/ffmpeg/install.js`).
  * Once the package sits under the staging `node_modules`, that directory is
  * the staging tree. npm's own tarball fetch writes the cache outside it, and
- * the postinstall prints progress on stdout. Any of those is progress.
+ * the postinstall prints progress on stdout. Any of those is progress, including
+ * a file that shrinks when a postinstall deletes its zip.
+ *
+ * Only `npm install` into an explicit staging directory is walked. `npm view`,
+ * `npm ls`, and a cwd of `process.cwd()` (a Finder-launched app's `/`) get the
+ * hard ceiling only. The walk itself is bounded: a poll that cannot finish is
+ * progress unknown, not a stall.
  *
  * The child is spawned `detached` so it is a process-group leader. A stall
  * or the hard ceiling signals the GROUP (`SIGTERM`, then `SIGKILL`), which
@@ -23,6 +29,12 @@
 import { type ChildProcess, execFile, spawn } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import {
+  type ProgressMark,
+  type ProgressSample,
+  type ProgressUnknown,
+  measureInstallProgress,
+} from './npm-install-progress.js'
 
 /** No growth in the staging directory for this long cuts the install. */
 export const NPM_INSTALL_STALL_MS: number = 5 * 60_000
@@ -35,10 +47,11 @@ export const NPM_INSTALL_STALL_MS: number = 5 * 60_000
 export const NPM_INSTALL_CEILING_MS: number = 3 * 60 * 60_000
 
 /**
- * How often progress is measured. The walk sums file bytes under the staging
- * tree; polling less often keeps the slow box from thrashing disk.
+ * How often progress is measured. Each poll reads a few directory inodes and,
+ * only when those are unchanged, a byte walk that stops after a fixed entry
+ * and time budget. Polling less often keeps the slow box from thrashing disk.
  */
-export const NPM_INSTALL_POLL_MS = 60_000
+export const NPM_INSTALL_POLL_MS: number = 60_000
 
 /** After SIGTERM, how long the group has to exit before SIGKILL. */
 export const NPM_INSTALL_KILL_GRACE_MS = 5_000
@@ -52,8 +65,6 @@ export const NPM_INSTALL_EXIT_WAIT_MS = 10_000
 
 /** `npm config get cache` is a lookup, not an install. */
 const NPM_CONFIG_CACHE_TIMEOUT_MS = 10_000
-
-const NPM_CACHE_INDEX = path.join('_cacache', 'index-v5')
 
 const OUTPUT_CAP_CHARS = 64 * 1024
 
@@ -81,6 +92,7 @@ export class NpmInstallError extends Error {
 }
 
 export interface NpmInstallLogger {
+  debug?(message: string, context?: { readonly meta?: Record<string, unknown> }): void
   info(message: string, context?: { readonly meta?: Record<string, unknown> }): void
   warn(message: string, context?: { readonly meta?: Record<string, unknown> }): void
   error(message: string, context?: { readonly meta?: Record<string, unknown> }): void
@@ -125,6 +137,12 @@ export interface RunWatchedCommandOptions {
   readonly now: () => number
   readonly sleep: (ms: number) => Promise<void>
   readonly log: NpmInstallLogger
+  /**
+   * Walk the staging tree and cut a stall. Set only for `npm install` into
+   * an explicit directory. Omitted: npm subcommands other than `install` are
+   * ceiling-only, and `process.cwd()` is never walked.
+   */
+  readonly watchProgress?: boolean
   /** Directories outside `cwd` whose growth is also progress (npm cache). */
   readonly progressDirs?: readonly string[]
   readonly platform?: NodeJS.Platform
@@ -245,71 +263,45 @@ export function npmProcessLaunch(
   return { command: 'npm', args: [...npmArgs], shell: false }
 }
 
-/**
- * Bytes on disk that represent install progress. The staging tree is summed
- * recursively so a postinstall that only grows a deep zip still resets the
- * stall clock. Tarball fetches outside staging contribute through
- * `<cache>/_cacache/index-v5` only. Symlinks are not followed. A path that
- * disappears mid-walk is skipped.
- */
-async function sumPathFileBytes(root: string): Promise<number> {
-  let st: fs.Stats
-  try {
-    st = await fs.promises.lstat(root)
-  } catch {
-    return 0
-  }
-  if (st.isFile()) return st.size
-  if (!st.isDirectory()) return 0
-  return sumTreeFileBytes(root)
+/** Stall detection applies only to `npm install` in a directory the caller named. */
+export function npmCommandWatchesProgress(
+  args: readonly string[],
+  cwd: string | undefined,
+): boolean {
+  return args[0] === 'install' && cwd !== undefined
 }
 
-async function sumTreeFileBytes(root: string): Promise<number> {
-  let total = 0
-  const pending: string[] = [root]
-  while (pending.length > 0) {
-    const dir = pending.pop()
-    if (dir === undefined) continue
-    let handle: fs.Dir
-    try {
-      handle = await fs.promises.opendir(dir)
-    } catch {
-      continue
-    }
-    let entry: fs.Dirent | null
-    try {
-      while ((entry = await handle.read()) !== null) {
-        const full = path.join(dir, entry.name)
-        if (entry.isSymbolicLink()) continue
-        if (entry.isFile()) {
-          try {
-            total += (await fs.promises.stat(full)).size
-          } catch {
-            // Vanished between readdir and stat — the install is still moving.
-          }
-          continue
-        }
-        if (entry.isDirectory()) pending.push(full)
-      }
-    } finally {
-      await handle.close()
-    }
-  }
-  return total
+/** Log and error text name the npm subcommand (`npm view`, `npm ls`, `npm install`). */
+export function watchedCommandLabel(command: string, args: readonly string[]): string {
+  if (command !== 'npm' && command !== 'npm.cmd') return 'npm install'
+  const sub = args[0]
+  if (sub === undefined || sub.length === 0) return 'npm'
+  return `npm ${sub}`
 }
 
-async function treeProgress(dirs: readonly string[]): Promise<number> {
-  let total = 0
-  for (let index = 0; index < dirs.length; index += 1) {
-    const dir = dirs[index]
-    if (dir === undefined) continue
-    if (index === 0) {
-      total += await sumTreeFileBytes(dir)
-      continue
-    }
-    total += await sumPathFileBytes(path.join(dir, NPM_CACHE_INDEX))
+function shouldWatchProgress(options: RunWatchedCommandOptions): boolean {
+  if (path.resolve(options.cwd) === path.resolve(process.cwd())) return false
+  if (options.watchProgress === false) return false
+  if (options.watchProgress === true) return true
+  if (options.command === 'npm' || options.command === 'npm.cmd') {
+    return options.args[0] === 'install'
   }
-  return total
+  return true
+}
+
+function cutMessage(
+  label: string,
+  cut: CutKind,
+  options: RunWatchedCommandOptions,
+  cwd: string,
+): string {
+  if (cut === 'timeout-stall') {
+    return `${label} stalled: no progress for ${options.stallMs}ms in ${cwd}`
+  }
+  if (label === 'npm install') {
+    return `${label} hit the hard ceiling (${options.ceilingMs}ms) in ${cwd}`
+  }
+  return `${label} timed out after ${options.ceilingMs}ms in ${cwd}`
 }
 
 function tail(text: string): string {
@@ -443,51 +435,140 @@ function attachOutput(
 /**
  * Spawn `command` detached (its own process group) and resolve when it
  * exits. Rejects with {@link NpmInstallError} on a non-zero exit, a stall,
- * or the hard ceiling. The staging directory is `cwd`.
+ * or the hard ceiling. The staging directory is `cwd`. A non-zero exit also
+ * signals the group, so a grandchild does not outlive npm.
  */
 export async function runWatchedCommand(
   options: RunWatchedCommandOptions,
 ): Promise<{ stdout: string }> {
-  const { cwd, log } = options
-  const env = options.env ?? process.env
-  const platform = options.platform ?? process.platform
-  const spawnProcess = options.spawnProcess ?? defaultSpawn
-  const launch = resolveLaunch(options)
-  const startedAt = options.now()
-  let lastGrowthAt = startedAt
-  const watchedDirs = [cwd, ...(options.progressDirs ?? [])]
-  let lastSize = await treeProgress(watchedDirs)
-  let lastOutput = 0
-  let outputBytes = 0
-  let stdout = ''
-  let stderr = ''
+  const opened = await openWatchedChild(options)
+  const cut = await pollUntilCut(options, opened.exitPromise, opened.readExit, opened.watch)
+  if (cut !== null) return failCut(options, opened, cut)
+  const exit = opened.readExit()
+  if (exitFailed(exit)) await killOpenedGroup(options, opened)
+  return finishExit(exit, options.cwd, opened.stdout(), opened.stderr(), options.log, opened.label)
+}
 
-  const child = spawnProcess(launch.command, launch.args, {
-    cwd,
-    detached: true,
-    windowsHide: true,
-    stdio: PIPED_STDIO,
-    env,
-    shell: launch.shell,
-  })
-  const pid = child.pid
-  if (pid === undefined) {
-    throw new NpmInstallError(
-      'nonzero-exit',
-      cwd,
-      null,
-      `failed to spawn ${launch.command}: no pid`,
-    )
+interface DiskBaseline {
+  readonly cheap: string | null
+  readonly bytes: number | null
+}
+
+interface PollWatch {
+  readonly enabled: boolean
+  readonly startedAt: number
+  baseline: DiskBaseline
+  lastOutput: number
+  lastGrowthAt: number
+  readOutput(): number
+  measure(): Promise<ProgressSample>
+  noteUnknown(sample: ProgressUnknown): void
+}
+
+interface OpenedCommand {
+  readonly pid: number
+  readonly platform: NodeJS.Platform
+  readonly env: NodeJS.ProcessEnv
+  readonly spawnProcess: WatchedSpawner
+  readonly label: string
+  readonly exitPromise: Promise<void>
+  readonly watch: PollWatch
+  readExit(): CommandExit | null
+  stdout(): string
+  stderr(): string
+}
+
+function exitFailed(exit: CommandExit | null): boolean {
+  return exit !== null && (exit.error !== null || exit.code !== 0)
+}
+
+function progressReader(
+  options: RunWatchedCommandOptions,
+  previousCheap: () => string | null,
+  aborted: () => boolean,
+): () => Promise<ProgressSample> {
+  return () =>
+    measureInstallProgress({
+      stagingDir: options.cwd,
+      progressDirs: options.progressDirs ?? [],
+      env: options.env ?? {},
+      previousCheap: previousCheap(),
+      aborted,
+    })
+}
+
+async function seedBaseline(watch: PollWatch): Promise<void> {
+  if (!watch.enabled) return
+  const initial = await watch.measure()
+  if (initial.kind === 'unknown') watch.noteUnknown(initial)
+  if (initial.kind === 'mark') {
+    watch.baseline = { cheap: initial.cheap, bytes: initial.bytes }
   }
+}
 
-  attachOutput(child, (chunk, sink) => {
-    outputBytes += chunk.length
-    if (sink === 'out') stdout = tail(stdout + chunk)
-    else stderr = tail(stderr + chunk)
-  })
+function budgetLogger(options: RunWatchedCommandOptions): (sample: ProgressUnknown) => void {
+  let logged = false
+  return (sample) => {
+    if (logged) return
+    logged = true
+    options.log.debug?.('install progress walk hit its budget', {
+      meta: { stagingDir: options.cwd, entries: sample.entries, elapsedMs: sample.elapsedMs },
+    })
+  }
+}
 
+interface CapturedOutput {
+  bytes: number
+  stdout: string
+  stderr: string
+}
+
+async function prepareWatch(
+  options: RunWatchedCommandOptions,
+  readOutput: () => number,
+): Promise<PollWatch> {
+  const startedAt = options.now()
+  const watch: PollWatch = {
+    enabled: shouldWatchProgress(options),
+    startedAt,
+    baseline: { cheap: null, bytes: null },
+    lastOutput: 0,
+    lastGrowthAt: startedAt,
+    readOutput,
+    measure: () => Promise.resolve({ kind: 'aborted', entries: 0 }),
+    noteUnknown: budgetLogger(options),
+  }
+  watch.measure = progressReader(
+    options,
+    () => watch.baseline.cheap,
+    () => false,
+  )
+  await seedBaseline(watch)
+  return watch
+}
+
+function bindAbortableMeasure(
+  options: RunWatchedCommandOptions,
+  watch: PollWatch,
+  aborted: () => boolean,
+): void {
+  watch.measure = progressReader(options, () => watch.baseline.cheap, aborted)
+}
+
+function noteChildOutput(output: CapturedOutput, chunk: string, sink: 'out' | 'err'): void {
+  output.bytes += chunk.length
+  if (sink === 'out') output.stdout = tail(output.stdout + chunk)
+  else output.stderr = tail(output.stderr + chunk)
+}
+
+interface ChildExit {
+  readonly promise: Promise<void>
+  read(): CommandExit | null
+}
+
+function listenForExit(child: WatchedChild): ChildExit {
   let exit: CommandExit | null = null
-  const exitPromise = new Promise<void>((resolve) => {
+  const promise = new Promise<void>((resolve) => {
     child.onError((error) => {
       exit = { code: null, signal: null, error }
       resolve()
@@ -497,68 +578,117 @@ export async function runWatchedCommand(
       resolve()
     })
   })
-
-  const cut = await pollUntilCut(options, exitPromise, () => exit, {
-    watchedDirs,
-    readOutput: () => outputBytes,
-    startedAt,
-    lastGrowthAt: () => lastGrowthAt,
-    lastSize: () => lastSize,
-    lastOutput: () => lastOutput,
-    mark(size, output, at) {
-      lastSize = size
-      lastOutput = output
-      lastGrowthAt = at
-    },
-  })
-
-  if (cut !== null) {
-    await killProcessGroup(pid, platform, options.graceMs, options.sleep, spawnProcess, env)
-    const exited = await waitForExit(exitPromise, options.sleep, NPM_INSTALL_EXIT_WAIT_MS)
-    const message =
-      cut === 'timeout-stall'
-        ? `npm install stalled: no progress for ${options.stallMs}ms in ${cwd}`
-        : `npm install hit the hard ceiling (${options.ceilingMs}ms) in ${cwd}`
-    if (!exited) {
-      log.error('npm install did not exit after the cut', {
-        meta: { stagingDir: cwd, kind: cut, pid, error: message },
-      })
-    }
-    log.error('npm install cut', {
-      meta: { stagingDir: cwd, kind: cut, pid, error: message },
-    })
-    throw new NpmInstallError(cut, cwd, null, message)
-  }
-
-  return finishExit(exit, cwd, stdout, stderr, log)
+  return { promise, read: () => exit }
 }
 
-interface ProgressCursor {
-  readonly watchedDirs: readonly string[]
-  readOutput(): number
-  readonly startedAt: number
-  lastGrowthAt(): number
-  lastSize(): number
-  lastOutput(): number
-  mark(size: number, output: number, at: number): void
+function requirePid(child: WatchedChild, cwd: string, command: string): number {
+  const pid = child.pid
+  if (pid !== undefined) return pid
+  throw new NpmInstallError('nonzero-exit', cwd, null, `failed to spawn ${command}: no pid`)
+}
+
+async function openWatchedChild(options: RunWatchedCommandOptions): Promise<OpenedCommand> {
+  const env = options.env ?? process.env
+  const platform = options.platform ?? process.platform
+  const spawnProcess = options.spawnProcess ?? defaultSpawn
+  const launch = resolveLaunch(options)
+  const output: CapturedOutput = { bytes: 0, stdout: '', stderr: '' }
+  const watch = await prepareWatch(options, () => output.bytes)
+  const child = spawnProcess(launch.command, launch.args, {
+    cwd: options.cwd,
+    detached: true,
+    windowsHide: true,
+    stdio: PIPED_STDIO,
+    env,
+    shell: launch.shell,
+  })
+  const pid = requirePid(child, options.cwd, launch.command)
+  attachOutput(child, (chunk, sink) => noteChildOutput(output, chunk, sink))
+  const exit = listenForExit(child)
+  bindAbortableMeasure(options, watch, () => exit.read() !== null)
+  return {
+    pid,
+    platform,
+    env,
+    spawnProcess,
+    label: watchedCommandLabel(options.command, options.args),
+    exitPromise: exit.promise,
+    watch,
+    readExit: exit.read,
+    stdout: () => output.stdout,
+    stderr: () => output.stderr,
+  }
+}
+
+async function killOpenedGroup(
+  options: RunWatchedCommandOptions,
+  opened: OpenedCommand,
+): Promise<void> {
+  await killProcessGroup(
+    opened.pid,
+    opened.platform,
+    options.graceMs,
+    options.sleep,
+    opened.spawnProcess,
+    opened.env,
+  )
+}
+
+async function failCut(
+  options: RunWatchedCommandOptions,
+  opened: OpenedCommand,
+  cut: CutKind,
+): Promise<never> {
+  await killOpenedGroup(options, opened)
+  const exited = await waitForExit(opened.exitPromise, options.sleep, NPM_INSTALL_EXIT_WAIT_MS)
+  const message = cutMessage(opened.label, cut, options, options.cwd)
+  if (!exited) {
+    options.log.error(`${opened.label} did not exit after the cut`, {
+      meta: { stagingDir: options.cwd, kind: cut, pid: opened.pid, error: message },
+    })
+  }
+  options.log.error(`${opened.label} cut`, {
+    meta: { stagingDir: options.cwd, kind: cut, pid: opened.pid, error: message },
+  })
+  throw new NpmInstallError(cut, options.cwd, null, message)
+}
+
+function noteSample(watch: PollWatch, sample: ProgressMark, output: number, now: number): void {
+  const first = watch.baseline.cheap === null && watch.baseline.bytes === null
+  const cheapChanged = !first && sample.cheap !== watch.baseline.cheap
+  const bytesChanged =
+    sample.bytes !== null && watch.baseline.bytes !== null && sample.bytes !== watch.baseline.bytes
+  const changed = cheapChanged || bytesChanged || output !== watch.lastOutput
+  watch.baseline = {
+    cheap: sample.cheap,
+    bytes: sample.bytes === null ? watch.baseline.bytes : sample.bytes,
+  }
+  watch.lastOutput = output
+  if (changed || first) watch.lastGrowthAt = now
 }
 
 async function pollUntilCut(
   options: RunWatchedCommandOptions,
   exitPromise: Promise<void>,
   readExit: () => CommandExit | null,
-  cursor: ProgressCursor,
+  watch: PollWatch,
 ): Promise<CutKind | null> {
   while (readExit() === null) {
     await Promise.race([options.sleep(options.pollMs), exitPromise])
     if (readExit() !== null) return null
-    const size = await treeProgress(cursor.watchedDirs)
-    const output = cursor.readOutput()
     const now = options.now()
-    const grew = size > cursor.lastSize() || output > cursor.lastOutput()
-    if (grew) cursor.mark(size, output, now)
-    if (now - cursor.lastGrowthAt() >= options.stallMs) return 'timeout-stall'
-    if (now - cursor.startedAt >= options.ceilingMs) return 'timeout-ceiling'
+    if (watch.enabled) {
+      const sample = await watch.measure()
+      // The child can exit while the walk is in progress. The walk stops on
+      // abort; the exit is the result, not a stall and not the ceiling.
+      if (readExit() !== null || sample.kind === 'aborted') return null
+      if (sample.kind === 'unknown') watch.noteUnknown(sample)
+      else {
+        noteSample(watch, sample, watch.readOutput(), now)
+        if (now - watch.lastGrowthAt >= options.stallMs) return 'timeout-stall'
+      }
+    }
+    if (now - watch.startedAt >= options.ceilingMs) return 'timeout-ceiling'
   }
   return null
 }
@@ -582,12 +712,13 @@ function finishExit(
   stdout: string,
   stderr: string,
   log: NpmInstallLogger,
+  label: string,
 ): { stdout: string } {
   const finished: CommandExit = exit ?? { code: null, signal: null, error: null }
   const code = finished.code
   const spawnError = finished.error
   const detail = spawnError === null ? stderr.trim() : spawnError.message
-  log.info('npm install exited', {
+  log.info(`${label} exited`, {
     meta: {
       stagingDir: cwd,
       kind: 'exit',
@@ -601,7 +732,7 @@ function finishExit(
       'nonzero-exit',
       cwd,
       code,
-      detail.length > 0 ? detail : `npm install exited ${code ?? 'null'} in ${cwd}`,
+      detail.length > 0 ? detail : `${label} exited ${code ?? 'null'} in ${cwd}`,
     )
   }
   return { stdout }

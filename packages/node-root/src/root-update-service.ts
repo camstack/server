@@ -81,6 +81,7 @@ import {
   NPM_INSTALL_POLL_MS,
   NPM_INSTALL_STALL_MS,
   NpmInstallError,
+  npmCommandWatchesProgress,
   npmInstallProgressDirs,
   runWatchedCommand,
 } from './npm-install-watch.js'
@@ -471,11 +472,11 @@ export class RootUpdateService {
     this.execNpm =
       options.execNpm ??
       (async (args, opts) => {
-        const cwd = opts.cwd ?? process.cwd()
+        const watchProgress = npmCommandWatchesProgress(args, opts.cwd)
         return runWatchedCommand({
           command: 'npm',
           args,
-          cwd,
+          cwd: opts.cwd ?? process.cwd(),
           stallMs: NPM_INSTALL_STALL_MS,
           ceilingMs: opts.timeoutMs,
           pollMs: NPM_INSTALL_POLL_MS,
@@ -483,8 +484,11 @@ export class RootUpdateService {
           now: () => this.now(),
           sleep: (ms) => this.sleep(ms),
           env: this.env,
-          progressDirs: await this.installProgressDirs(),
+          watchProgress,
+          progressDirs: watchProgress ? await this.installProgressDirs() : undefined,
           log: {
+            debug: (message, context) =>
+              this.logger.debug(message, { tags: this.logTags, ...context }),
             info: (message, context) =>
               this.logger.info(message, { tags: this.logTags, ...context }),
             warn: (message, context) =>

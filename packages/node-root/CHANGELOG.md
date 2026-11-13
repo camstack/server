@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A root update walks disk only while npm install runs in its staging directory, and a walk that cannot finish is not treated as a stall
 - A root update stops when the staging directory stops growing and kills the whole npm process group, and it copies the running closure so an unchanged package does not run its install script again
 
 ## [1.0.0] - 2026-10-27
