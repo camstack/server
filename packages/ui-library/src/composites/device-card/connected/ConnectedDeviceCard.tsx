@@ -15,6 +15,7 @@ import { ConnectedLightCard } from './ConnectedLightCard'
 import { ConnectedMediaCard } from './ConnectedMediaCard'
 import { type ConnectedCardProps, ConnectedPlugCard } from './ConnectedPlugCard'
 import { ConnectedMowerCard, ConnectedVacuumCard } from './ConnectedRobotCard'
+import { ConnectedIrTransmitterCard } from './ConnectedIrTransmitterCard'
 import { ConnectedWaterHeaterCard } from './ConnectedWaterHeaterCard'
 
 /** The scenes a real device can be drawn with today. */
@@ -32,6 +33,7 @@ export type ConnectedCardKind =
   | 'mower'
   | 'heat-pump'
   | 'water-heater'
+  | 'ir-transmitter'
 
 /** `pending` until both the device and its bindings answered; `null` = no card for it. */
 export type ConnectedCardResolution = ConnectedCardKind | 'pending' | null
@@ -83,6 +85,7 @@ export function connectedCardKindOf(
     CLIMATE_CAPS.some((cap) => capNames.includes(cap))
   )
     return 'climate'
+  if (capNames.includes('ir-transmitter')) return 'ir-transmitter'
   return null
 }
 
@@ -135,5 +138,7 @@ export function ConnectedDeviceCard({
       return <ConnectedHeatPumpCard {...props} />
     case 'water-heater':
       return <ConnectedWaterHeaterCard {...props} />
+    case 'ir-transmitter':
+      return <ConnectedIrTransmitterCard {...props} />
   }
 }

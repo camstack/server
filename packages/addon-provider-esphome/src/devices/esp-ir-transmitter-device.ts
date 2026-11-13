@@ -3,12 +3,16 @@ import {
   BaseDevice,
   IrMediumSchema,
   irTransmitterCapability,
+  irTransmitterErrorCode,
+  irTransmitterStateAfter,
   userError,
   type DeviceContext,
   type DeviceFeature,
   type InferNativeProvider,
+  type IrMedium,
   type IrSendResult,
   type IrTransmitterInfo,
+  type IrTransmitterStateUpdate,
   type TransmitSettingKey,
   type TransmitSettings,
 } from '@camstack/types'
@@ -58,26 +62,62 @@ export class EspIrTransmitterDevice extends BaseDevice<typeof espIrTransmitterSc
       logger: ctx.logger,
     })
     const provider: InferNativeProvider<typeof irTransmitterCapability> = {
-      send: async ({ timings, native, settings }) => {
-        if (timings === undefined || native !== undefined) {
+      send: async ({ timings, native, settings }) =>
+        this.attempt('send', async () => {
+          if (timings === undefined || native !== undefined) {
+            throw userError(
+              'ir-transmitter.native-unsupported',
+              { name: this.name },
+              `The transmitter ${this.name} only sends pulse trains`,
+            )
+          }
+          return this.transmit(timings, settings)
+        }),
+      learn: async () =>
+        this.attempt('learn', async () => {
           throw userError(
-            'ir-transmitter.native-unsupported',
+            'ir-transmitter.learn-unsupported',
             { name: this.name },
-            `The transmitter ${this.name} only sends pulse trains`,
+            `The transmitter ${this.name} cannot learn a code`,
           )
-        }
-        return this.transmit(timings, settings)
-      },
-      learn: async () => {
-        throw userError(
-          'ir-transmitter.learn-unsupported',
-          { name: this.name },
-          `The transmitter ${this.name} cannot learn a code`,
-        )
-      },
+        }),
       getInfo: async () => this.describe(),
     }
     ctx.registerNativeCap(irTransmitterCapability, provider)
+  }
+
+  /**
+   * Run a send or a learn and record it, success and refusal alike. The record
+   * is the cap's runtime state — this device keeps no second copy.
+   */
+  private async attempt<T>(
+    kind: IrTransmitterStateUpdate['kind'],
+    run: () => Promise<T>,
+  ): Promise<T> {
+    try {
+      const result = await run()
+      this.remember(kind, true, null)
+      return result
+    } catch (err: unknown) {
+      this.remember(kind, false, irTransmitterErrorCode(err))
+      throw err
+    }
+  }
+
+  private remember(
+    kind: IrTransmitterStateUpdate['kind'],
+    ok: boolean,
+    error: string | null,
+  ): void {
+    const medium = this.declaredMedium()
+    const update: IrTransmitterStateUpdate =
+      kind === 'send' ? { kind, ok, error, medium } : { kind, ok, error }
+    const previous = this.getCapSlice(irTransmitterCapability)
+    this.setCapSlice(irTransmitterCapability, irTransmitterStateAfter(previous, update, Date.now()))
+  }
+
+  private declaredMedium(): IrMedium {
+    return this.describe().media[0] ?? 'ir'
   }
 
   /** What this transmitter declares: medium, the settings it can apply, its bound. */

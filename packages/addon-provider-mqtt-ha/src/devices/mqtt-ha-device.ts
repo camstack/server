@@ -16,6 +16,8 @@ import {
   humiditySensorCapability,
   ingestReading,
   irTransmitterCapability,
+  irTransmitterErrorCode,
+  irTransmitterStateAfter,
   motionCapability,
   numericSensorCapability,
   powerMeterCapability,
@@ -30,6 +32,8 @@ import {
   type EventFire,
   type HvacMode,
   type InferNativeProvider,
+  type IrMedium,
+  type IrTransmitterStateUpdate,
   type InferRuntimeState,
   type PowerMeterStatus,
   type ReadingQuantity,
@@ -721,11 +725,42 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
     this.irBridge = bridge
     this.irLearnedKey = match.learned.entityKey
     const provider: InferNativeProvider<typeof irTransmitterCapability> = {
-      send: async (input) => bridge.send(input),
-      learn: async ({ timeoutMs }) => bridge.learn(timeoutMs),
+      send: async (input) =>
+        this.attemptIr('send', bridge.describe().media, () => bridge.send(input)),
+      learn: async ({ timeoutMs }) =>
+        this.attemptIr('learn', bridge.describe().media, () => bridge.learn(timeoutMs)),
       getInfo: async () => bridge.describe(),
     }
     this.ctx.registerNativeCap(irTransmitterCapability, provider)
+  }
+
+  /** Record every send and learn on the cap slice, including a typed refusal. */
+  private async attemptIr<T>(
+    kind: IrTransmitterStateUpdate['kind'],
+    media: readonly IrMedium[],
+    run: () => Promise<T>,
+  ): Promise<T> {
+    const medium = media[0] ?? 'ir'
+    try {
+      const result = await run()
+      this.rememberIr(kind, true, null, medium)
+      return result
+    } catch (err: unknown) {
+      this.rememberIr(kind, false, irTransmitterErrorCode(err), medium)
+      throw err
+    }
+  }
+
+  private rememberIr(
+    kind: IrTransmitterStateUpdate['kind'],
+    ok: boolean,
+    error: string | null,
+    medium: IrMedium,
+  ): void {
+    const update: IrTransmitterStateUpdate =
+      kind === 'send' ? { kind, ok, error, medium } : { kind, ok, error }
+    const previous = this.getCapSlice(irTransmitterCapability)
+    this.setCapSlice(irTransmitterCapability, irTransmitterStateAfter(previous, update, Date.now()))
   }
 
   private registerEventEmitter(): void {

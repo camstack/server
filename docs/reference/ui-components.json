@@ -3338,6 +3338,13 @@
       "summary": "A heat pump (`heat-pump-status`): what it reports, and through `heat-pump-control` each circuit's mode / hot-water level and the four system modes — each only when the gateway declares it and the binding implements th…"
     },
     {
+      "name": "ConnectedIrTransmitterCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedIrTransmitterCard.tsx",
+      "summary": "An IR or RF transmitter. Info says which media it speaks and whether it can learn; the runtime slice says how the last send and the last learn ended. The learn button shows the code it read and saves nothing."
+    },
+    {
       "name": "ConnectedLightCard",
       "kind": "component",
       "area": "composites",
@@ -9383,6 +9390,74 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-instances-of-cap.ts",
       "summary": "The instances of one holder whose kind is configured for `functionCap`, optionally of one kind. A holder without `kinds` declares none, so it holds none."
+    },
+    {
+      "name": "IR_PROBE_IDLE",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ir-transmitter-model.ts",
+      "summary": "Pure mapping from an IR transmitter's info, its runtime slice and the in-progress learn onto the scene. A fact that was not read is \"—\"; \"Never\" is only for a slice that answered with nothing."
+    },
+    {
+      "name": "IR_UNKNOWN",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ir-transmitter-model.ts",
+      "summary": "Shown when a query or a slice has not answered. Never the word \"never\"."
+    },
+    {
+      "name": "irClientErrorCode",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ir-transmitter-model.ts",
+      "summary": "The typed code on a provider error or on a tRPC error that carried `data.i18n`."
+    },
+    {
+      "name": "irRefusalLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ir-transmitter-model.ts",
+      "summary": "A typed refusal, in the operator's language. An unknown code stays visible."
+    },
+    {
+      "name": "IrTransmitterCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/ir/IrTransmitterCard.tsx",
+      "summary": "A transmitter: which media it speaks, whether it can learn, and the last two attempts.",
+      "props": [
+        {
+          "name": "model",
+          "type": "IrTransmitterCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "IrTransmitterCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "irTransmitterScene",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ir-transmitter-model.ts",
+      "summary": "What the scene draws from one read of info, state and the learn probe."
     },
     {
       "name": "isAbsentProvider",

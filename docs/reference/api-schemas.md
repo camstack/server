@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1072 shared schemas.**
+**1075 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -3115,6 +3115,12 @@ Enum: `"ir" \| "rf"`
 - `ok`: `true`
 - `ignoredSettings`: `string[]`
 
+### `IrTransmitterAttemptSchema`
+
+- `at`: `number`
+- `ok`: `boolean`
+- `error`: `string \| null`
+
 ### `IrTransmitterInfoSchema`
 
 - `media`: `IrMediumSchema[]`
@@ -3122,6 +3128,19 @@ Enum: `"ir" \| "rf"`
 - `maxTimings`: `number`
 - `learn?`: `boolean = false`
 - `formats?`: `"tuya"[] = []`
+
+### `IrTransmitterRuntimeStateSchema`
+
+- `lastSend`: `IrTransmitterSendRecordSchema \| null`
+- `lastLearn`: `IrTransmitterAttemptSchema \| null`
+- `lastFetchedAt`: `number`
+
+### `IrTransmitterSendRecordSchema`
+
+- `at`: `number`
+- `ok`: `boolean`
+- `error`: `string \| null`
+- `medium`: `IrMediumSchema`
 
 ### `KeychainAdminSecretSchema`
 

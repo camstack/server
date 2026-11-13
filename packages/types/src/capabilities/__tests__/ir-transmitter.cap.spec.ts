@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { irTransmitterCapability } from '../ir-transmitter.cap.js'
+import { userError } from '../../i18n/camstack-error.js'
+import {
+  irTransmitterCapability,
+  irTransmitterErrorCode,
+  irTransmitterStateAfter,
+} from '../ir-transmitter.cap.js'
 import { IrTimingsSchema, TransmitSettingsSchema, IR_TIMINGS_MAX } from '../../ir/ir-timings.js'
 import { DeviceRole, DeviceType } from '../../device/device-type.js'
 
@@ -125,5 +130,36 @@ describe('ir-transmitter native codes and learning', () => {
       maxTimings: 100,
     })
     expect(info).toMatchObject({ learn: false, formats: [] })
+  })
+})
+
+const NOW = 1_700_000_000_000
+
+describe('ir-transmitter runtime state', () => {
+  it('records a refused send as not ok with the error code, and keeps the previous learn', () => {
+    const previous = irTransmitterStateAfter(
+      null,
+      { kind: 'learn', ok: false, error: 'ir-transmitter.learn-timeout' },
+      NOW,
+    )
+    const next = irTransmitterStateAfter(
+      previous,
+      { kind: 'send', ok: false, error: 'ir-transmitter.too-long', medium: 'rf' },
+      NOW + 5,
+    )
+    expect(next.lastSend).toEqual({
+      at: NOW + 5,
+      ok: false,
+      error: 'ir-transmitter.too-long',
+      medium: 'rf',
+    })
+    expect(next.lastLearn).toEqual(previous.lastLearn)
+    expect(irTransmitterCapability.runtimeState.safeParse(next).success).toBe(true)
+  })
+
+  it('reads the typed code off a refusal', () => {
+    const err = userError('ir-transmitter.offline', { name: 'Board' }, 'offline')
+    expect(irTransmitterErrorCode(err)).toBe('ir-transmitter.offline')
+    expect(irTransmitterErrorCode(new Error('plain'))).toBeNull()
   })
 })

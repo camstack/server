@@ -177,6 +177,7 @@ export interface DeviceProxyState {
   readonly image: SliceHandle<InferRuntimeState<typeof imageCapability>>
   readonly imageSettings: SliceHandle<InferRuntimeState<typeof imageSettingsCapability>>
   readonly intercom: SliceHandle<InferRuntimeState<typeof intercomCapability>>
+  readonly irTransmitter: SliceHandle<InferRuntimeState<typeof irTransmitterCapability>>
   readonly lawnMowerControl: SliceHandle<InferRuntimeState<typeof lawnMowerControlCapability>>
   readonly lockControl: SliceHandle<InferRuntimeState<typeof lockControlCapability>>
   readonly mediaPlayer: SliceHandle<InferRuntimeState<typeof mediaPlayerCapability>>
@@ -1450,6 +1451,7 @@ export function createDeviceProxy(
       image: createSliceHandle<InferRuntimeState<typeof imageCapability>>(stateSource, binding.deviceId, 'image'),
       imageSettings: createSliceHandle<InferRuntimeState<typeof imageSettingsCapability>>(stateSource, binding.deviceId, 'image-settings'),
       intercom: createSliceHandle<InferRuntimeState<typeof intercomCapability>>(stateSource, binding.deviceId, 'intercom'),
+      irTransmitter: createSliceHandle<InferRuntimeState<typeof irTransmitterCapability>>(stateSource, binding.deviceId, 'ir-transmitter'),
       lawnMowerControl: createSliceHandle<InferRuntimeState<typeof lawnMowerControlCapability>>(stateSource, binding.deviceId, 'lawn-mower-control'),
       lockControl: createSliceHandle<InferRuntimeState<typeof lockControlCapability>>(stateSource, binding.deviceId, 'lock-control'),
       mediaPlayer: createSliceHandle<InferRuntimeState<typeof mediaPlayerCapability>>(stateSource, binding.deviceId, 'media-player'),

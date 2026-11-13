@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The unused integration pill-row page base (IntegrationHub / AddonIntegrationBody) is removed; every integration page is the instances table.
+- Italian and English labels for the IR transmitter device card.
 
 ## [1.2.658] - 2026-11-13
 

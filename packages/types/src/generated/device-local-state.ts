@@ -41,6 +41,7 @@ import { humiditySensorCapability } from '../capabilities/humidity-sensor.cap.js
 import { imageCapability } from '../capabilities/image.cap.js'
 import { imageSettingsCapability } from '../capabilities/image-settings.cap.js'
 import { intercomCapability } from '../capabilities/intercom.cap.js'
+import { irTransmitterCapability } from '../capabilities/ir-transmitter.cap.js'
 import { lawnMowerControlCapability } from '../capabilities/lawn-mower-control.cap.js'
 import { lockControlCapability } from '../capabilities/lock-control.cap.js'
 import { mediaPlayerCapability } from '../capabilities/media-player.cap.js'
@@ -135,6 +136,7 @@ export interface DeviceLocalState {
   image: InferRuntimeState<typeof imageCapability>
   imageSettings: InferRuntimeState<typeof imageSettingsCapability>
   intercom: InferRuntimeState<typeof intercomCapability>
+  irTransmitter: InferRuntimeState<typeof irTransmitterCapability>
   lawnMowerControl: InferRuntimeState<typeof lawnMowerControlCapability>
   lockControl: InferRuntimeState<typeof lockControlCapability>
   mediaPlayer: InferRuntimeState<typeof mediaPlayerCapability>
@@ -225,6 +227,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   image: imageCapability,
   imageSettings: imageSettingsCapability,
   intercom: intercomCapability,
+  irTransmitter: irTransmitterCapability,
   lawnMowerControl: lawnMowerControlCapability,
   lockControl: lockControlCapability,
   mediaPlayer: mediaPlayerCapability,
@@ -322,6 +325,7 @@ export interface CapNameToRuntimeStateMap {
   'image': InferRuntimeState<typeof imageCapability>
   'image-settings': InferRuntimeState<typeof imageSettingsCapability>
   'intercom': InferRuntimeState<typeof intercomCapability>
+  'ir-transmitter': InferRuntimeState<typeof irTransmitterCapability>
   'lawn-mower-control': InferRuntimeState<typeof lawnMowerControlCapability>
   'lock-control': InferRuntimeState<typeof lockControlCapability>
   'media-player': InferRuntimeState<typeof mediaPlayerCapability>

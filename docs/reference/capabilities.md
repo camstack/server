@@ -74,7 +74,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `image` | 1 | ✓ | ✓ | none | — | `provider-homeassistant` |
 | `image-settings` | 3 | ✓ | ✓ | none | — | `provider-amcrest` `provider-hikvision` |
 | `intercom` | 7 | ✓ | ✓ | none | — | — |
-| `ir-transmitter` | 3 | — | — | — | — | — |
+| `ir-transmitter` | 3 | — | ✓ | none | — | — |
 | `lawn-mower-control` | 4 | ✓ | ✓ | 1 series | — | `provider-homeassistant` |
 | `lock-control` | 4 | ✓ | ✓ | 1 series | — | — |
 | `media-player` | 19 | ✓ | ✓ | 2 series | — | — |

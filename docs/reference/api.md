@@ -3048,10 +3048,11 @@
 
 ### `ir-transmitter` → `irTransmitter.*`
 
-- **Source:** `packages/types/src/capabilities/ir-transmitter.cap.ts:64`
+- **Source:** `packages/types/src/capabilities/ir-transmitter.cap.ts:131`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `generic`
-- **Archetypes:** —
+- **Archetypes:** runtimeState
 - **Provider interface:** `IIrTransmitterProvider`
+- **runtimeState:** `IrTransmitterRuntimeStateSchema`
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|

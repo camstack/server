@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device card for an IR or RF transmitter shows its media, whether it can learn, and the last send and learn.
+
 ## [1.2.436] - 2026-11-13
 
 ### Changed

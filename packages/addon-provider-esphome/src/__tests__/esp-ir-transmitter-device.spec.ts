@@ -112,6 +112,21 @@ describe('EspIrTransmitterDevice', () => {
     expect(link.serviceCalls).toEqual([])
   })
 
+  it('records a refused send as not ok with the error code', async () => {
+    const { device, providers } = setup()
+    const provider = providers.get('ir-transmitter') as {
+      send: (input: { native: { format: 'tuya'; code: string } }) => Promise<unknown>
+    }
+    await expect(provider.send({ native: { format: 'tuya', code: 'AA' } })).rejects.toMatchObject({
+      i18nCode: 'ir-transmitter.native-unsupported',
+    })
+    expect(
+      device.runtimeState.getCapState<{
+        lastSend?: { ok: boolean; error: string | null; medium: string }
+      }>('ir-transmitter')?.lastSend,
+    ).toMatchObject({ ok: false, error: 'ir-transmitter.native-unsupported', medium: 'ir' })
+  })
+
   it('declares its medium, settable keys and bound', () => {
     expect(setup().device.describe()).toEqual({
       media: ['ir'],

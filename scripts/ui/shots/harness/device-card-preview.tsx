@@ -34,6 +34,8 @@ import {
   type WaterHeaterCardActions,
   EnergyCard,
   type EnergyCardActions,
+  IrTransmitterCard,
+  type IrTransmitterCardActions,
 } from '@camstack/ui-library'
 import { applianceFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/appliance'
 import {
@@ -50,6 +52,7 @@ import { mediaFixtures } from '../../../../packages/ui-library/src/composites/de
 import { plugFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/plug'
 import { robotFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/robot'
 import { waterHeaterFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/water-heater'
+import { irFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/ir'
 import { type ReactElement, type ReactNode, useMemo } from 'react'
 
 const noop = (): void => undefined
@@ -127,6 +130,7 @@ const WATER_HEATER_ACTIONS: WaterHeaterCardActions = {
   onAway: noop,
 }
 const ENERGY_ACTIONS: EnergyCardActions = {}
+const IR_ACTIONS: IrTransmitterCardActions = { onLearn: noop }
 const APPLIANCE_KIND = { washer: 'washer', dryer: 'dryer', dish: 'dish' } as const
 
 interface WaveBSceneProps {
@@ -327,6 +331,12 @@ export function DeviceCardPreview(): ReactElement {
           <WaveBScene type={type} remote={remote} />
         ) : WAVE_C_TYPES.has(type) ? (
           <WaveCScene type={type} />
+        ) : type === 'ir' ? (
+          irFixtures().map((f) => (
+            <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
+              <IrTransmitterCard model={f.model} actions={IR_ACTIONS} orientation={f.orientation} />
+            </Cell>
+          ))
         ) : type === 'climate' || type === 'climate-extra' ? (
           (type === 'climate' ? CLIMATE_FIXTURES : CLIMATE_EXTRA_FIXTURES).map((f) => (
             <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>

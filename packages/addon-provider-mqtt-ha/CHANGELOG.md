@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A Zigbee IR blaster records each send and learn, including a refusal.
+
 ## [0.1.49] - 2026-11-13
 
 ### Changed

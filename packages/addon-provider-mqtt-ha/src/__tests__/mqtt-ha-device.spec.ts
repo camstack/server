@@ -449,6 +449,21 @@ describe('MqttHaDevice on a zigbee2mqtt IR blaster', () => {
     expect(published).toEqual([[`${IR_TOPIC}/set/learn_ir_code`, 'ON']])
   })
 
+  it('records a refused send as not ok with the error code', async () => {
+    const h = build(DeviceType.Generic, configOf(irBlasterMessages()))
+    await h.device.onActivate()
+    const provider = h.providers.get('ir-transmitter') as IrProvider
+    const long = Array.from({ length: 514 }, (_, i) => (i % 2 === 0 ? 16 : -32))
+    await expect(provider.send({ timings: long })).rejects.toMatchObject({
+      i18nCode: 'ir-transmitter.too-long',
+    })
+    expect(
+      h.state().getCapState<{
+        lastSend?: { ok: boolean; error: string | null; medium: string }
+      }>('ir-transmitter')?.lastSend,
+    ).toMatchObject({ ok: false, error: 'ir-transmitter.too-long', medium: 'ir' })
+  })
+
   it('learn refuses an undecodable code with a typed error', async () => {
     const { provider, published } = await activate()
     const pending = provider.learn({ timeoutMs: 5000 })

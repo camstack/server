@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 82 caps with 387 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 83 caps with 394 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -272,6 +272,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "image": [{"path":"url","valueType":"string"}, {"path":"lastUpdated","valueType":"number"}],
   "image-settings": [{"path":"brightness","valueType":"number"}, {"path":"contrast","valueType":"number"}, {"path":"saturation","valueType":"number"}, {"path":"sharpness","valueType":"number"}, {"path":"mirror","valueType":"boolean"}, {"path":"flip","valueType":"boolean"}, {"path":"rotate","valueType":"enum","enumValues":["0","90","180","270"]}, {"path":"whiteBalance","valueType":"enum","enumValues":["auto","manual"]}, {"path":"warmth","valueType":"number"}, {"path":"exposureMode","valueType":"enum","enumValues":["auto","manual"]}, {"path":"backlightMode","valueType":"enum","enumValues":["off","blc","wdr","hlc"]}],
   "intercom": [{"path":"talking","valueType":"boolean"}, {"path":"lastSessionAt","valueType":"number"}, {"path":"ability.sampleRate","valueType":"number"}, {"path":"ability.duplex","valueType":"enum","enumValues":["half","full"]}, {"path":"ability.maxBacklogMs","valueType":"number"}],
+  "ir-transmitter": [{"path":"lastSend.at","valueType":"number"}, {"path":"lastSend.ok","valueType":"boolean"}, {"path":"lastSend.error","valueType":"string"}, {"path":"lastSend.medium","valueType":"enum","enumValues":["ir","rf"]}, {"path":"lastLearn.at","valueType":"number"}, {"path":"lastLearn.ok","valueType":"boolean"}, {"path":"lastLearn.error","valueType":"string"}],
   "lawn-mower-control": [{"path":"activity","valueType":"enum","enumValues":["idle","mowing","paused","docked","error"]}, {"path":"batteryLevel","valueType":"number"}, {"path":"progress","valueType":"number"}, {"path":"currentCode","valueType":"number"}, {"path":"currentCodeLabel","valueType":"string"}, {"path":"severity","valueType":"enum","enumValues":["info","warning","error"]}],
   "lock-control": [{"path":"state","valueType":"enum","enumValues":["locked","unlocked","locking","unlocking","jammed","door-open"]}],
   "media-player": [{"path":"state","valueType":"enum","enumValues":["off","on","idle","playing","paused","buffering","standby"]}, {"path":"stateSource","valueType":"enum","enumValues":["reported","assumed"]}, {"path":"volumeLevel","valueType":"number"}, {"path":"isMuted","valueType":"boolean"}, {"path":"source","valueType":"string"}, {"path":"currentMedia.type","valueType":"string"}, {"path":"currentMedia.title","valueType":"string"}, {"path":"currentMedia.artist","valueType":"string"}, {"path":"currentMedia.album","valueType":"string"}, {"path":"currentMedia.imageUrl","valueType":"string"}, {"path":"position","valueType":"number"}, {"path":"duration","valueType":"number"}, {"path":"shuffle","valueType":"boolean"}, {"path":"repeat","valueType":"enum","enumValues":["off","all","one"]}, {"path":"positionUpdatedAt","valueType":"number"}],
