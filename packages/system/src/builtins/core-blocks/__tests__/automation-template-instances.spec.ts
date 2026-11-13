@@ -1,5 +1,6 @@
 import {
   AutomationTemplatePayloadSchema,
+  builtinAutomationTemplate,
   createRecordsAccess,
   generateAutomationBlock,
   instantiateAutomationTemplate,
@@ -50,8 +51,13 @@ function block(id: string, name: string, code: string): CoreBlock {
   }
 }
 
-function instanceBlock(id: string, templateId: string, values: Record<string, number | number[]>) {
-  const made = instantiateAutomationTemplate(templateId, MOTION, values)
+function instanceBlock(
+  id: string,
+  templateId: string,
+  values: Record<string, number | number[]>,
+  payload: AutomationTemplatePayload = MOTION,
+) {
+  const made = instantiateAutomationTemplate(templateId, payload, values)
   if (!made.ok) throw new Error('setup: the instance does not expand')
   const name = `Automation ${id}`
   return block(id, name, generateAutomationBlock({ name, recipe: made.recipe }))
@@ -110,7 +116,8 @@ describe('automation template instances', () => {
     const recipe = savedRecipe(saved.get('a'))
     expect(recipe.runMode).toEqual({ mode: 'restart' })
     expect(recipe.when).toMatchObject({ deviceId: 7 })
-    expect(recipe.template).toEqual({ templateId: 't1', values: { sensor: 7, lights: [3] } })
+    expect(recipe.template).toMatchObject({ templateId: 't1', values: { sensor: 7, lights: [3] } })
+    expect(recipe.template?.problems).toBeUndefined()
   })
 
   it('a rename alone does not touch the instances', async () => {
@@ -148,6 +155,63 @@ describe('automation template instances', () => {
       automations: [{ blockId: 'a', name: 'Automation a' }],
     })
     expect(await service.get({ id: 't1' })).not.toBeNull()
+  })
+})
+
+describe('an instance edited by hand', () => {
+  it('is flagged in its literal and its hand-written code is kept, not regenerated', async () => {
+    const generated = instanceBlock('a', 't1', { sensor: 7, lights: [3] })
+    const handEdited = {
+      ...generated,
+      code: `${generated.code}\n// tuned by hand\nconst EXTRA_DELAY_MS = 250\n`,
+    }
+    const { service, saved } = await world([handEdited])
+    await service.create({ kind: 'automation', name: 'Motion', payload: MOTION })
+    const changed = { ...MOTION, body: { ...MOTION.body, runMode: { mode: 'restart' } } }
+    await service.update({ id: 't1', payload: changed })
+
+    const code = saved.get('a') ?? ''
+    expect(code).toContain('const EXTRA_DELAY_MS = 250')
+    const recipe = savedRecipe(code)
+    expect(recipe.runMode).toBeUndefined()
+    expect(recipe.template?.problems?.map((p) => p.code)).toEqual(['edited-by-hand'])
+  })
+
+  it('a flagged hand-edited instance is not written again', async () => {
+    const generated = instanceBlock('a', 't1', { sensor: 7, lights: [3] })
+    const first = await world([{ ...generated, code: `${generated.code}\n// mine\n` }])
+    await first.service.create({ kind: 'automation', name: 'Motion', payload: MOTION })
+    await first.service.update({ id: 't1', payload: MOTION })
+    const flaggedCode = first.saved.get('a') ?? ''
+    const again = await world([{ ...generated, code: flaggedCode }])
+    await again.service.create({ kind: 'automation', name: 'Motion', payload: MOTION })
+    await again.service.update({ id: 't1', payload: MOTION })
+    expect(again.saved.size).toBe(0)
+  })
+})
+
+describe('built-in instances at boot', () => {
+  const builtin = builtinAutomationTemplate('builtin:motion-light')
+  if (builtin === undefined) throw new Error('setup: no motion-light built-in')
+  const values = { sensor: 7, lights: [3] }
+
+  it('an instance made from an older built-in is rewritten with the shipped body', async () => {
+    const older = AutomationTemplatePayloadSchema.parse({
+      ...builtin.payload,
+      body: { ...builtin.payload.body, runMode: { mode: 'single' } },
+    })
+    const { service, saved } = await world([instanceBlock('a', builtin.id, values, older)])
+    await service.reexpandBuiltinInstances()
+    expect([...saved.keys()]).toEqual(['a'])
+    expect(savedRecipe(saved.get('a')).runMode).toEqual(builtin.payload.body['runMode'])
+  })
+
+  it('an instance already made from the shipped built-in saves nothing', async () => {
+    const { service, saved } = await world([
+      instanceBlock('a', builtin.id, values, builtin.payload),
+    ])
+    await service.reexpandBuiltinInstances()
+    expect(saved.size).toBe(0)
   })
 })
 

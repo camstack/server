@@ -69,6 +69,8 @@ export const TEMPLATE_INSTANCE_PROBLEM_CODES = [
   'invalid-recipe',
   /** The template the instance points at is gone. */
   'missing-template',
+  /** The code was changed outside the generator: it is no longer re-expanded. */
+  'edited-by-hand',
 ] as const
 export const TemplateInstanceProblemSchema = z.object({
   code: z.enum(TEMPLATE_INSTANCE_PROBLEM_CODES),
@@ -81,6 +83,12 @@ export type TemplateInstanceProblem = z.infer<typeof TemplateInstanceProblemSche
 export const AutomationTemplateLinkSchema = z.object({
   templateId: z.string().min(1),
   values: TemplateInputValuesSchema,
+  /**
+   * Fingerprint of the generated code with this literal blanked
+   * (`instanceCodeHash`), stamped by `generateAutomationBlock`. Code that no
+   * longer matches it was edited by hand, and is never regenerated over.
+   */
+  codeHash: z.string().optional(),
   /**
    * Present when the last re-expansion refused these values. The automation
    * keeps running the body of its last good expansion; nothing is dropped.

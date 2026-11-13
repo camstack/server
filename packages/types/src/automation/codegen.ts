@@ -38,6 +38,7 @@ import type { TimeSpec, WeekdayKey } from '../time/time-spec.js'
 import { hasHoldLeaves, hasTimeLeaves } from './condition-eval.js'
 import { collectWhenMirrorSources } from './condition-eval.js'
 import { holdOf } from './hold.js'
+import { instanceCodeHash } from './recipe-literal.js'
 import { triggerLeafVariables } from './trigger-variables.js'
 import {
   type AutomationEventLeaf,
@@ -583,7 +584,33 @@ function emitAction(action: AutomationAction, index: number): string {
  * discover that, but it is the last place it can still be caught before code
  * that the operator did not author starts running.
  */
+/**
+ * An instance of an automation template (#527) also carries the fingerprint of
+ * the code it was generated as (`template.codeHash`), so the hub can tell a
+ * block edited by hand from one it may regenerate. The fingerprint blanks the
+ * literal, so stamping it does not change it.
+ */
 export function generateAutomationBlock(input: GenerateAutomationBlockInput): string {
+  const link = input.recipe.template
+  if (link === undefined) return renderAutomationBlock(input)
+  const unstamped = {
+    templateId: link.templateId,
+    values: link.values,
+    ...(link.problems === undefined ? {} : { problems: link.problems }),
+  }
+  const first = renderAutomationBlock({
+    ...input,
+    recipe: { ...input.recipe, template: unstamped },
+  })
+  const codeHash = instanceCodeHash(first)
+  if (codeHash === null) return first
+  return renderAutomationBlock({
+    ...input,
+    recipe: { ...input.recipe, template: { ...unstamped, codeHash } },
+  })
+}
+
+function renderAutomationBlock(input: GenerateAutomationBlockInput): string {
   const boundsError = validateRecipeBounds(input.recipe)
   if (boundsError !== null) {
     throw new Error(`cannot generate an automation from an invalid recipe: ${boundsError}`)

@@ -497,6 +497,29 @@ built-in `core:*` entries, an addon adds `<addonId>:<name>` as pure data, and
 the reader dedupes by id with built-ins first. `insertComponent` / `moveGroup`
 / `removeGroup` / `ungroup` (`@camstack/types`) are the one set of edits.
 
+### Automation templates: the same store, kind `automation` (#527)
+
+The `template` collection also holds automation templates. The payload
+(`packages/types/src/template/automation-template.ts`) is an automation body
+plus typed **inputs** (device, event, action, number, duration, text, select,
+boolean, and a repeatable group) and **bindings**, the JSON paths in the body
+each input is written to. Creating an automation from a template asks only for
+the inputs; the expansion is one pure function, used by the editor and the hub.
+
+- **An instance is an ordinary automation.** Its recipe literal carries
+  `template: { templateId, values, codeHash }`; there is no second list of
+  instances. Deleting a template an automation is made from is refused
+  (`in-use`, the automations named).
+- **Saving a template re-expands every instance** in the core-block store
+  (`automation-template-instances.ts`). An instance whose values no longer fit
+  keeps its last good body and is flagged (`template.problems`), never dropped.
+  A block whose code no longer matches `codeHash` was edited by hand: only its
+  literal is rewritten, to flag it `edited-by-hand`, and its code is kept.
+- **Built-in templates are code** (`builtin-automation-templates.ts`, ids
+  `builtin:*`), listed beside the operator's and read-only. Their instances are
+  re-expanded once per start; one whose code comes out the same is not saved.
+- **Convert to a free automation** drops the link; the body stays.
+
 ## Composed devices: a device built from other devices' fields
 
 [D659](../decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md).

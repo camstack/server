@@ -196,7 +196,8 @@ describe('instances', () => {
     const read = readRecipeLiteral(code)
     expect(read.status).toBe('recipe')
     if (read.status !== 'recipe') return
-    expect(read.recipe.template).toEqual({ templateId: 't1', values })
+    expect(read.recipe.template).toMatchObject({ templateId: 't1', values })
+    expect(read.recipe.template?.codeHash).toMatch(/^[0-9a-f]{8}$/)
   })
 
   it('re-expands an instance when the template body changes', () => {

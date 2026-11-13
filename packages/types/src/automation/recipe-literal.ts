@@ -66,3 +66,38 @@ export function readRecipeLiteral(code: string): RecipeLiteralRead {
     detail: first === undefined ? 'not a recipe' : `${first.path.join('.')}: ${first.message}`,
   }
 }
+
+/** Where the literal's JSON sits in the code, or null when there is none. */
+function literalSpan(code: string): { readonly start: number; readonly end: number } | null {
+  const json = findRecipeLiteralJson(code)
+  if (json === null) return null
+  const start = code.indexOf(json, code.indexOf(AUTOMATION_RECIPE_DECLARATION))
+  return { start, end: start + json.length }
+}
+
+/** FNV-1a, 32 bit, hex: a fingerprint, not a security boundary. */
+function fnv1a(text: string): string {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193) >>> 0
+  }
+  return hash.toString(16).padStart(8, '0')
+}
+
+/**
+ * The fingerprint of a block's code with its recipe literal blanked, so the
+ * hash a literal carries does not change the hash. Null when there is no literal.
+ */
+export function instanceCodeHash(code: string): string | null {
+  const span = literalSpan(code)
+  if (span === null) return null
+  return fnv1a(`${code.slice(0, span.start)}{}${code.slice(span.end)}`)
+}
+
+/** The same code with only its recipe literal replaced; everything else is kept byte for byte. */
+export function replaceRecipeLiteral(code: string, recipe: AutomationRecipe): string | null {
+  const span = literalSpan(code)
+  if (span === null) return null
+  return `${code.slice(0, span.start)}${JSON.stringify(recipe, null, 2)}${code.slice(span.end)}`
+}

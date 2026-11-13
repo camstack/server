@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A step's 'only if' can use a time-of-day window, and a scheduler follows a time-of-day condition at the moment the window opens or closes.
 - An addon route can be declared per instance: the hub serves it at /addon/<addonId>/instances/<instanceId>/<path>, and the address without an instance stays the default one
 - An account can be linked to one instance of an integration: /api/oauth2/authorize takes instance= beside integration=, and the link, its tokens and oauthVerifyAccessToken name the instance
+- Saving an automation template re-expands every automation made from it; an automation that no longer fits is flagged and keeps its last body; a template in use by an automation cannot be deleted
 
 ### Changed
 
@@ -103,7 +104,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device Export tab shows a derived 'Name on <instance>' field for every export that exposes the device, saved through setExposedName.
 - A light group's source picker and save check now see each member's switch sub-role, so a switch-light relay can join a light group.
 - A stored token grant, internal action or composed device that names the retired thermostat type loads again, read as climate
-- Saving an automation template re-expands every automation made from it; an automation that no longer fits is flagged and keeps its last body; a template in use by an automation cannot be deleted
 
 ### Removed
 

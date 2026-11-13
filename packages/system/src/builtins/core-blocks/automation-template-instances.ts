@@ -9,14 +9,21 @@
  * regenerated and saved through the ordinary block update (compile gate,
  * converge). An instance whose values no longer fit keeps its last good body
  * and is flagged on its link; it is never dropped and never left silent.
+ *
+ * A block whose code was edited outside the generator (its fingerprint no
+ * longer matches `template.codeHash`) is never regenerated over: only its
+ * literal is rewritten, to flag it `edited-by-hand`.
  */
 import {
   ALL_CAPABILITY_DEFINITIONS,
   capUnitResolver,
   generateAutomationBlock,
+  instanceCodeHash,
   prepareRecipeUnits,
   readRecipeLiteral,
   reexpandAutomationInstance,
+  replaceRecipeLiteral,
+  type AutomationRecipe,
   type AutomationTemplatePayload,
   type CoreBlock,
   type IScopedLogger,
@@ -47,6 +54,26 @@ export interface AutomationTemplateInstancesDeps {
   readonly units?: UnitResolver
 }
 
+const EDITED_BY_HAND_DETAIL =
+  'the code was edited by hand, so the template no longer updates it; convert it to a free automation or create it again from the template'
+
+/** True when the block's code is still exactly what the generator wrote. */
+function isGeneratedCode(code: string, recipe: AutomationRecipe): boolean {
+  const stamped = recipe.template?.codeHash
+  return stamped !== undefined && instanceCodeHash(code) === stamped
+}
+
+/** The hand-edited block, flagged in its literal and otherwise byte for byte; null when already flagged. */
+function flaggedAsEdited(code: string, recipe: AutomationRecipe): string | null {
+  const link = recipe.template
+  if (link === undefined) return null
+  if (link.problems?.some((p) => p.code === 'edited-by-hand') === true) return null
+  return replaceRecipeLiteral(code, {
+    ...recipe,
+    template: { ...link, problems: [{ code: 'edited-by-hand', detail: EDITED_BY_HAND_DETAIL }] },
+  })
+}
+
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
@@ -71,6 +98,25 @@ export function automationTemplateInstancesOver(
       let flagged = 0
       let failed = 0
       for (const { block, recipe } of instancesOf(templateId)) {
+        if (!isGeneratedCode(block.code, recipe)) {
+          const flaggedCode = flaggedAsEdited(block.code, recipe)
+          if (flaggedCode === null) continue
+          try {
+            await deps.saveCode(block.id, flaggedCode)
+          } catch (error: unknown) {
+            failed += 1
+            deps.logger.warn('automation template: a hand-edited instance could not be flagged', {
+              meta: { templateId, blockId: block.id, error: errorText(error) },
+            })
+            continue
+          }
+          flagged += 1
+          deps.logger.warn(
+            'automation template: an instance was edited by hand, it is flagged and not regenerated',
+            { meta: { templateId, blockId: block.id } },
+          )
+          continue
+        }
         const next = reexpandAutomationInstance(payload, recipe)
         const prepared = prepareRecipeUnits(next.recipe, units)
         if (!prepared.ok) {
