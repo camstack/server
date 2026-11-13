@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A template action that names its devices is one Command field: the dialog picks the command and the devices together.
+
 ## [1.2.663] - 2026-11-13
 
 ### Changed
 
 - Translations for the update card's install steps
 - The device page draws a simple sensor in the shared device card, like every other card.
-- A template action that names its devices is one Command field: the dialog picks the command and the devices together.
 
 ## [1.2.662] - 2026-11-13
 
