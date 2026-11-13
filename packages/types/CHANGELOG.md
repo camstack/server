@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.560] - 2026-11-13
+
 ### Changed
 
 - Settings info fields can carry a translated content key (contentKey), so a hint shows in the operator's language

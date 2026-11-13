@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.657] - 2026-11-13
+
 ### Changed
 
 - A button's card shows the notice its events share, such as a hint that the controller does not send these presses yet

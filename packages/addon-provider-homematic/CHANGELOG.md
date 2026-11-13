@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.193] - 2026-11-13
+
 ### Changed
 
 - Multi-actuator Homematic children that still use the old “container + channel address” name are renamed to the CCU channel name, or “container chN” when the CCU has no name. Stable IDs stay the same; an operator-chosen name is kept. Anything matched by display name (a HomeKit or Alexa tile name) shows the new name.
