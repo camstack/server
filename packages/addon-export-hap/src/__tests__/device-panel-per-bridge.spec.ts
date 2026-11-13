@@ -146,4 +146,12 @@ describe('the device Export tab, one switch per bridge', () => {
         .applyDeviceSettingsPatch?.({ deviceId: 2, patch: { 'hap:ghost:2:enabled': true } }),
     ).rejects.toThrow(/ghost/)
   })
+
+  it('refuses a pre-bridge key instead of reporting a no-op as saved', async () => {
+    await expect(
+      withBridges()
+        .provider()
+        .applyDeviceSettingsPatch?.({ deviceId: 2, patch: { 'hap:2:enabled': true } }),
+    ).rejects.toThrow(/names no HomeKit bridge/)
+  })
 })

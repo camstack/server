@@ -2195,6 +2195,14 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     // for a bridge this addon does not run is refused by name, never applied to another one.
     const instanceIds = bridgeIdsInPatch(deviceId, patch)
     if (instanceIds.length === 0) {
+      // A key of the pre-bridge form (`hap:<deviceId>:<setting>`, from a tab opened before the
+      // per-bridge sections) names no bridge: refuse it, never report "saved" for a no-op.
+      const stale = Object.keys(patch).filter((k) => k.startsWith('hap:'))
+      if (stale.length > 0) {
+        throw new Error(
+          `export-hap: device ${deviceId} patch names no HomeKit bridge (${stale.join(', ')}) — reload the Export tab`,
+        )
+      }
       this.ctx.logger.warn('export-hap: a device patch carried no HomeKit key — nothing applied', {
         tags: { deviceId },
         meta: { keys: Object.keys(patch) },
