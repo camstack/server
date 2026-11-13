@@ -6234,6 +6234,12 @@
           "type": "boolean",
           "optional": true,
           "doc": "Focus the search on mount (default true: the panel opened from a click)."
+        },
+        {
+          "name": "fill",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Stretch to a flex parent and scroll the rows inside it (a full-height dialog)."
         }
       ]
     },
@@ -9805,7 +9811,7 @@
         },
         {
           "name": "width",
-          "type": "DialogContentProps['width']",
+          "type": "DialogContentProps[\"width\"]",
           "optional": true,
           "doc": ""
         },
@@ -9837,7 +9843,7 @@
           "name": "fill",
           "type": "boolean",
           "optional": true,
-          "doc": "The body is a flex column, so a child with `min-h-0 flex-1` takes the dialog's remaining height and scrolls inside it (a long picker). Off b"
+          "doc": "The body is a flex column, so a child with `min-h-0 flex-1` takes the dialog's remaining height and scrolls inside it (a long picker); the d"
         }
       ]
     },
@@ -17827,6 +17833,13 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-ptz.ts",
       "summary": "usePTZ — PTZ control hook for device-scoped pan / tilt / zoom."
+    },
+    {
+      "name": "useRecentDevices",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/use-recent-devices.ts",
+      "summary": ""
     },
     {
       "name": "useRecordedPlayback",
