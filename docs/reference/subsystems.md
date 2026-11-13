@@ -53,7 +53,7 @@ commits. A generated page may not.
 | Admin UI and the shared component library | 1634 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +169 more, 15 ADRs | 2026-11-12 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 115 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1013-one-instance-model.md`, +20 more, 7 ADRs | 2026-11-10 | ⚠️ |
 | Cloud training | 161 | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +17 more, 2 ADRs | 2026-10-14 | ✅ |
-| Benchmarks, model studio and developer tooling | 849 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +183 more, 14 ADRs | 2026-11-12 | ⚠️ |
+| Benchmarks, model studio and developer tooling | 850 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +183 more, 14 ADRs | 2026-11-12 | ⚠️ |
 
 ## What each subsystem is, and what is uncovered inside it
 
@@ -333,8 +333,8 @@ Everything that measures or builds CamStack rather than running it — the bench
 
 - **Owner doc**: `docs/reference/guards.md`
 - **Code**: `packages/addon-benchmark/**`, `packages/addon-model-studio/**`, `packages/cli/**`, `packages/sdk/**`, `packages/desktop/**`, `packages/nx-plugin/**`, `scripts/**`, `e2e/**`, `packages/addon-pipeline/scripts/**`
-- **Files**: 849 (442 claimed by some document)
-- **Uncovered**: `scripts` (183), `scripts/ui/shots/fixtures` (122), `scripts/lib` (20), `packages/cli/src/commands` (14), `scripts/ui/shots/harness` (11), `e2e/fixtures` (9), +18 more directories
+- **Files**: 850 (442 claimed by some document)
+- **Uncovered**: `scripts` (184), `scripts/ui/shots/fixtures` (122), `scripts/lib` (20), `packages/cli/src/commands` (14), `scripts/ui/shots/harness` (11), `e2e/fixtures` (9), +18 more directories
 
 ## Claimed by no subsystem
 

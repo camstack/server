@@ -60,4 +60,6 @@ leftover file keeps working for one release, then must have set the variable.
 `boot-config-one-loader.spec.ts` (one loader; a leftover `config.yaml` does not
 change the port), `pending-restore-sqlite.spec.ts` (an old archive's
 `config.yaml` is not restored) and `mcp-setup.spec.ts` (no `/config` in
-generated compose).
+generated compose). `scripts/check-no-config-yaml.ts` refuses any runtime file
+that names `config.yaml`, `config.yml` or `CONFIG_PATH`; the only exception is
+`pending-restore.ts`, which skips the entry in an older archive.

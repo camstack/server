@@ -4,12 +4,12 @@
 
 # Guards
 
-243 repository guards: 238 in `scripts/`,
+244 repository guards: 239 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (233)
+## Enforced by CI checks (234)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -135,6 +135,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-camera-model-layer.ts` | A model is chosen by the accelerator that runs it; a camera only turns steps on or off (D927). |
 | `scripts/check-no-client-secrets.ts` | No OAuth client secret may live in a publishable package. |
 | `scripts/check-no-commit-sha-references.ts` | No document points at a commit SHA. |
+| `scripts/check-no-config-yaml.ts` | No runtime code reads `config.yaml` (D1018, planning #342). |
 | `scripts/check-no-conflict-markers.ts` | Conflict-marker guard — fail the build if a tracked file contains an unresolved git merge marker. |
 | `scripts/check-no-credential-urls-in-fixtures.ts` | Credential-URL fixture guard — a RECORDED cap-output fixture must never carry a live camera credential. |
 | `scripts/check-no-detached-child-spawn.ts` | Guard (D668): no addon or server code spawns a child that LEAVES its runner's process group. |
