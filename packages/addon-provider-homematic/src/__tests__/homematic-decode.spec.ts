@@ -49,18 +49,21 @@ describe('toHmClimateMode', () => {
 })
 
 describe('fromHmSetPointMode', () => {
-  it('maps the SET_POINT_MODE wire index (fallback, unresolved value list) to HvacMode', () => {
+  it('maps the SET_POINT_MODE integer the CCU sends (0 auto, 1 manual, 2 party, 3 unknown)', () => {
     expect(fromHmSetPointMode(0)).toBe('auto')
     expect(fromHmSetPointMode(1)).toBe('heat')
-    expect(fromHmSetPointMode(2)).toBe('heat')
+    expect(fromHmSetPointMode(2)).toBe('auto')
+    expect(fromHmSetPointMode(3)).toBeNull()
     expect(fromHmSetPointMode(99)).toBeNull()
   })
 
-  it('maps the CONVERTED SET_POINT_MODE string the library delivers', () => {
+  it('maps a SET_POINT_MODE name only when a string arrives', () => {
     expect(fromHmSetPointMode('AUTO')).toBe('auto')
     expect(fromHmSetPointMode('auto')).toBe('auto')
+    expect(fromHmSetPointMode('AUTO-MODE')).toBe('auto')
     expect(fromHmSetPointMode('MANU')).toBe('heat')
-    expect(fromHmSetPointMode('PARTY')).toBe('heat')
+    expect(fromHmSetPointMode('MANU-MODE')).toBe('heat')
+    expect(fromHmSetPointMode('PARTY')).toBe('auto')
     expect(fromHmSetPointMode('nope')).toBeNull()
   })
 })
@@ -224,21 +227,40 @@ describe('decodeClimate', () => {
     expect(decodeClimate(CLIMATE, 'SET_POINT_TEMPERATURE', 21.5, 7)?.target).toBe(21.5)
   })
 
-  it('HmIP OFF setpoint yields mode off regardless of prior mode', () => {
-    const off = decodeClimate(
+  it('a manual setpoint at 4.5 °C is off; an auto schedule at 4.5 °C stays auto', () => {
+    const manual = decodeClimate(
       { ...CLIMATE, mode: 'heat', target: 21, lastActiveMode: 'heat' },
       'SET_POINT_TEMPERATURE',
       4.5,
       7,
     )
-    expect(off?.target).toBe(4.5)
-    expect(off?.mode).toBe('off')
+    expect(manual?.target).toBe(4.5)
+    expect(manual?.mode).toBe('off')
+
+    const frost = decodeClimate(
+      { ...CLIMATE, mode: 'auto', target: 21 },
+      'SET_POINT_TEMPERATURE',
+      4.5,
+      7,
+    )
+    expect(frost?.target).toBe(4.5)
+    expect(frost?.mode).toBe('auto')
   })
 
-  it('SET_POINT_MODE MANU at OFF temperature stays mode off', () => {
+  it('SET_POINT_MODE at 4.5 °C is off only for MANU; AUTO stays auto', () => {
     const atOff = { ...CLIMATE, mode: 'off' as const, target: 4.5 }
     expect(decodeClimate(atOff, 'SET_POINT_MODE', 'MANU', 7)?.mode).toBe('off')
+    expect(decodeClimate(atOff, 'SET_POINT_MODE', 'MANU-MODE', 7)?.mode).toBe('off')
     expect(decodeClimate(atOff, 'SET_POINT_MODE', 1, 7)?.mode).toBe('off')
+    expect(decodeClimate(atOff, 'SET_POINT_MODE', 'AUTO', 7)?.mode).toBe('auto')
+    expect(decodeClimate(atOff, 'SET_POINT_MODE', 'AUTO-MODE', 7)?.mode).toBe('auto')
+    expect(decodeClimate(atOff, 'SET_POINT_MODE', 0, 7)?.mode).toBe('auto')
+    expect(decodeClimate(atOff, 'SET_POINT_MODE', 2, 7)?.mode).toBe('auto')
+  })
+
+  it('SET_POINT_MODE 3 is unknown and leaves the previous mode', () => {
+    const heat = { ...CLIMATE, mode: 'heat' as const, target: 21 }
+    expect(decodeClimate(heat, 'SET_POINT_MODE', 3, 7)).toBeNull()
   })
 
   it('decodes ACTUAL_TEMPERATURE into currentTemp', () => {
@@ -253,6 +275,7 @@ describe('decodeClimate', () => {
     expect(decodeClimate(CLIMATE, 'CONTROL_MODE', 0, 7)).toBeNull()
     expect(decodeClimate(CLIMATE, 'SET_POINT_MODE', 1, 7)?.mode).toBe('heat')
     expect(decodeClimate(CLIMATE, 'SET_POINT_MODE', 0, 7)?.mode).toBe('auto')
+    expect(decodeClimate(CLIMATE, 'SET_POINT_MODE', 2, 7)?.mode).toBe('auto')
     expect(decodeClimate(CLIMATE, 'SET_POINT_MODE', 'MANU', 7)?.mode).toBe('heat')
     expect(decodeClimate(CLIMATE, 'SET_POINT_MODE', 'AUTO', 7)?.mode).toBe('auto')
   })

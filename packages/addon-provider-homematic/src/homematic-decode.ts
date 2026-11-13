@@ -30,26 +30,35 @@ export function isHmOffSetpoint(target: number | null): boolean {
   return target !== null && target <= HM_OFF_SETPOINT_C
 }
 
-/** HmIP `SET_POINT_MODE` ENUM index → library climate mode. Numeric-arm
- *  fallback only (see {@link fromHmSetPointMode}) — the wire index, used
- *  when the value list did not resolve. `CONTROL_MODE` is write-only on
- *  HmIP heating groups and always reads `0`; mode is read from here. */
+/**
+ * HmIP `SET_POINT_MODE` index → library climate mode.
+ *
+ * Observed 2026-11-13 via `getParamsetDescription` on `INT0000001:1`: the
+ * datapoint is `TYPE INTEGER`, `MIN 0`, `MAX 3`, with no value list. The
+ * live CCU therefore delivers the index, not a name.
+ * 0 auto, 1 manual heat, 2 party (a timed override — still auto).
+ * 3 is absent: unknown, so {@link fromHmSetPointMode} returns null and the
+ * caller keeps the previous mode.
+ * `CONTROL_MODE` is write-only on HmIP heating groups and always reads `0`;
+ * mode is read from here.
+ */
 const HM_SET_POINT_MODE_BY_INDEX: Readonly<Record<number, HmClimateMode>> = {
   0: 'auto',
-  1: 'heat', // MANU
-  2: 'heat', // PARTY — treated as a manual setpoint
+  1: 'heat',
+  2: 'auto',
 }
 
 /**
- * HmIP `SET_POINT_MODE` ENUM member (the CONVERTED value the library hands
- * over — `nodehomematic` resolves the value list, same as `LOCK_STATE` /
- * `ACTIVITY_STATE`, see {@link readLockState} / {@link readTravel}) →
- * library climate mode. Matched BY NAME, case-insensitively.
+ * Name form, accepted only when a string arrives (a value list that did
+ * resolve). Matched case-insensitively. `PARTY` is the timed override and
+ * stays auto, matching index 2.
  */
 const HM_SET_POINT_MODE_BY_NAME: Readonly<Record<string, HmClimateMode>> = {
   AUTO: 'auto',
+  'AUTO-MODE': 'auto',
   MANU: 'heat',
-  PARTY: 'heat',
+  'MANU-MODE': 'heat',
+  PARTY: 'auto',
 }
 
 /** Map a CamStack `HvacMode` to the library's narrower climate mode. */
@@ -69,11 +78,9 @@ export function toHmClimateMode(mode: HvacMode): HmClimateMode {
 /**
  * Map a Homematic `SET_POINT_MODE` value to the CamStack `HvacMode`.
  *
- * Like {@link readLockState} / {@link readTravel}, the library delivers a
- * CONVERTED ENUM string on the live CCU (`'AUTO'` / `'MANU'` / `'PARTY'`) —
- * testing `typeof value === 'number'` alone meant a resolved mode never
- * decoded at all. The numeric arm survives for a datapoint whose value
- * list did not resolve.
+ * The live CCU sends the integer index (see {@link HM_SET_POINT_MODE_BY_INDEX}).
+ * A string is accepted only when one arrives (`AUTO` / `AUTO-MODE`,
+ * `MANU` / `MANU-MODE`). Index 3 and any other unknown value return null.
  */
 export function fromHmSetPointMode(value: HmValue): HvacMode | null {
   if (typeof value === 'string') {
@@ -266,7 +273,9 @@ export function decodeLock(
  * BOOST_MODE (bool). `CONTROL_MODE` is write-only on HmIP and ignored here.
  */
 function modeWithHmOffTarget(previous: ClimateControlStatus, target: number): HvacMode {
-  if (isHmOffSetpoint(target)) return 'off'
+  // 4.5 °C is OFF only in MANU. An AUTO schedule uses the same temperature
+  // as a frost slot and must stay auto.
+  if (isHmOffSetpoint(target)) return previous.mode === 'auto' ? 'auto' : 'off'
   if (previous.mode === 'off') return previous.lastActiveMode ?? 'heat'
   return previous.mode
 }
@@ -292,12 +301,14 @@ export function decodeClimate(
     return { ...previous, currentHumidity: value, lastFetchedAt: now }
   }
   if (parameter === 'SET_POINT_MODE') {
-    if (isHmOffSetpoint(previous.target)) {
-      return { ...previous, mode: 'off', lastFetchedAt: now }
-    }
     const mode = fromHmSetPointMode(value)
+    // Unknown index (3 on the live CCU): write nothing so the previous mode
+    // stays. The caller logs the drop.
     if (mode === null) return null
-    return { ...previous, mode, lastFetchedAt: now }
+    // MANU at the off temperature is off. AUTO (including a frost slot and
+    // party) keeps the mode the index named.
+    const resolved = mode === 'heat' && isHmOffSetpoint(previous.target) ? 'off' : mode
+    return { ...previous, mode: resolved, lastFetchedAt: now }
   }
   if (parameter === 'BOOST_MODE' && typeof value === 'boolean') {
     return { ...previous, preset: value ? 'boost' : '', lastFetchedAt: now }

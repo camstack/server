@@ -170,7 +170,9 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
           this.climateRestoreTargetC = prev.target
         }
         await facade.climateSetMode(this.address, channel, hmMode)
-        if (hmMode !== 'off' && (prev.mode === 'off' || isHmOffSetpoint(prev.target))) {
+        // A setpoint write while the CCU is in AUTO becomes a manual
+        // override and drops the schedule. Only heat restores the target.
+        if (mode === 'heat' && (prev.mode === 'off' || isHmOffSetpoint(prev.target))) {
           const restore = this.climateRestoreTargetC ?? HM_DEFAULT_RESTORE_TARGET_C
           await facade.climateSetTemperature(this.address, channel, restore)
         }
@@ -216,6 +218,12 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
       const prev =
         this.runtimeState.getCapState<ClimateControlStatus>('climate-control') ?? COLD_CLIMATE
       const next = decodeClimate(prev, parameter, value, now)
+      if (next === null && parameter === 'SET_POINT_MODE') {
+        this.ctx.logger.debug('Homematic climate: SET_POINT_MODE unknown — mode unchanged', {
+          tags: { deviceId: this.id },
+          meta: { value, valueType: typeof value },
+        })
+      }
       if (next) {
         if (next.target !== null && next.target > HM_OFF_SETPOINT_C) {
           this.climateRestoreTargetC = next.target

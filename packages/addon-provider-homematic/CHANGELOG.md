@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Homematic thermostats show the CCU's real mode (manual vs auto) instead of always auto
-- Homematic climate OFF sticks: decode 4.5°C as off; restore setpoint when heating again
+- Homematic climate OFF is a manual setpoint at 4.5°C. An auto schedule at 4.5°C stays auto, and only heat restores the remembered target
 
 ## [1.2.193] - 2026-11-13
 
