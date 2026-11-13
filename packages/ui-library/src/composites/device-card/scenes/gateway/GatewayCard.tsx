@@ -118,10 +118,12 @@ export function GatewayCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 data-testid="dc-gateway-admin"
+                title={model.adminLink.label}
+                aria-label={model.adminLink.label}
                 className={cardButtonClass('default', false)}
               >
                 <CardIcon glyph="open" />
-                {model.adminLink.label}
+                {t('uiLibrary.deviceCard.gateway.open', 'Open')}
               </a>
             )}
           </>

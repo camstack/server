@@ -10427,7 +10427,8 @@
         "model": "Model",
         "reboot": "Restart",
         "unknown": "State unknown",
-        "unreachable": "Unreachable"
+        "unreachable": "Unreachable",
+        "open": "Open"
       },
       "image": {
         "shown": "Image",

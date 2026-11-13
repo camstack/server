@@ -10449,7 +10449,8 @@
         "model": "Modello",
         "reboot": "Riavvia",
         "unknown": "Stato sconosciuto",
-        "unreachable": "Non raggiungibile"
+        "unreachable": "Non raggiungibile",
+        "open": "Apri"
       },
       "image": {
         "shown": "Immagine",
