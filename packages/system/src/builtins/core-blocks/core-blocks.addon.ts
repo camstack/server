@@ -247,6 +247,12 @@ export class CoreBlocksAddon extends BaseAddon {
     // esbuild is imported lazily and ONCE: it is a real dependency, and a
     // failure to load it must degrade the compile gate rather than the node.
     this.transpiler = await loadTranspiler(this.ctx.logger)
+    // After the compile gate exists: a release may have changed a shipped template.
+    void this.remoteRuntime?.templates.reexpandBuiltinInstances().catch((error: unknown) =>
+      this.ctx.logger.warn('automation templates: built-in instances were not re-expanded', {
+        meta: { error: error instanceof Error ? error.message : String(error) },
+      }),
+    )
 
     // The integration blocks' devices hang from — owned HERE, because a block
     // cannot own one (see `blocks-integration.ts`). ARMED, never awaited: it

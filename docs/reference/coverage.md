@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**249 units · 8633 source files · 242 units claimed by at least one document (8602 files).**
+**249 units · 8634 source files · 242 units claimed by at least one document (8603 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -205,6 +205,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/device-extension` | 3 | `device-model` | `architecture/device-model.md`, `decisions/adr-0648-a-device-extension-is-a-slot-declared-by-the-cap-that-owns-the-function-and-served-over-its-existing-store.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | 2026-11-08 |
 | `packages/types/src/enums` | 3 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0387-a-new-disk-is-noticed-planned-onto-and-said-out-loud.md` | — |
 | `packages/types/src/storage` | 3 | `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0389-one-type-one-physical-root-refused-at-the-door.md` | — |
+| `packages/types/src/template` | 3 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/util` | 3 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/windows-agent.md`, `design/boot-to-usable-camera.md` _(covers)_ | 2026-10-13 |
 | `packages/ui-library` | 3 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/ui-library/src/i18n` | 3 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
@@ -229,7 +230,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/lifecycle` | 2 | `kernel` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/metrics` | 2 | `alerts-and-health` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/load-ledger.md` _(covers)_, `decisions/adr-0260-the-load-series-is-durable-on-a-fixed-cadence-with-a-row-cap-behind-the-retention-knob.md`, +1 more | — |
 | `packages/types/src/readiness` | 2 | `kernel` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
-| `packages/types/src/template` | 2 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/training` | 2 | `cloud-training` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/cloud-training.md`, `decisions/adr-0805-cloud-training-is-one-orchestrator-over-a-provider-collection-and-never-registers-on-its-own.md` | 2026-10-14 |
 | `packages/werift-turn-fix` | 2 | `stream-broker` | — | — |
 | `packages/addon-admin-ui/src/services` | 1 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-11 |

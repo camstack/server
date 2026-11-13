@@ -31,6 +31,7 @@ export interface AutomationTemplateInstances {
   reexpand(templateId: string, payload: AutomationTemplatePayload): Promise<ReexpandReport>
 }
 
+/** An instance whose code came out unchanged is counted nowhere: nothing was saved. */
 export interface ReexpandReport {
   readonly updated: number
   readonly flagged: number
@@ -82,11 +83,10 @@ export function automationTemplateInstancesOver(
           )
           continue
         }
+        const code = generateAutomationBlock({ name: block.name, recipe: prepared.recipe })
+        if (code === block.code) continue
         try {
-          await deps.saveCode(
-            block.id,
-            generateAutomationBlock({ name: block.name, recipe: prepared.recipe }),
-          )
+          await deps.saveCode(block.id, code)
         } catch (error: unknown) {
           failed += 1
           deps.logger.warn('automation template: an instance could not be saved, left as it was', {

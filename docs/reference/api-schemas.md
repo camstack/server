@@ -7085,6 +7085,7 @@ Enum: `"jwt-signing-key"`
 
 - `{ status: "deleted" }`
 - `{ status: "not-found" }`
+- `{ status: "read-only" }`
 - `{ status: "in-use"; devices: TemplateUserSchema[]; automations: TemplateAutomationUserSchema[] }`
 
 ### `TemplateRecordSchema`
@@ -7095,6 +7096,7 @@ Enum: `"jwt-signing-key"`
 - `payload`: `unknown`
 - `createdAt`: `number`
 - `updatedAt`: `number`
+- `builtIn?`: `true`
 
 ### `TemplateUserSchema`
 
@@ -7104,7 +7106,7 @@ Enum: `"jwt-signing-key"`
 ### `TemplateWriteResultSchema`
 
 - `{ status: "saved"; template: TemplateRecordSchema }`
-- `{ status: "refused"; reason: "invalid-payload" \| "not-found"; detail: string }`
+- `{ status: "refused"; reason: "invalid-payload" \| "not-found" \| "read-only"; detail: string }`
 
 ### `TerminalInstanceInfoSchema`
 

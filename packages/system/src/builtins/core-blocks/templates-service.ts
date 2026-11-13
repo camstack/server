@@ -15,7 +15,11 @@
 import { randomUUID } from 'node:crypto'
 import {
   AutomationTemplatePayloadSchema,
+  BUILTIN_AUTOMATION_TEMPLATES,
+  builtinAutomationTemplate,
   checkTemplatePayload,
+  isBuiltinTemplateId,
+  type BuiltinAutomationTemplate,
   type IScopedLogger,
   type ITemplateProvider,
   type RecordKindHandle,
@@ -51,6 +55,19 @@ function recordOf(id: string, body: TemplateRowBody): TemplateRecord {
   }
 }
 
+/** A shipped template as a record: read-only, timeless. */
+function builtinRecordOf(template: BuiltinAutomationTemplate): TemplateRecord {
+  return {
+    id: template.id,
+    kind: 'automation',
+    name: template.name,
+    payload: template.payload,
+    createdAt: 0,
+    updatedAt: 0,
+    builtIn: true,
+  }
+}
+
 export class TemplatesService implements ITemplateProvider {
   private readonly now: () => number
   private readonly newId: () => string
@@ -71,10 +88,15 @@ export class TemplatesService implements ITemplateProvider {
       for (const row of page.records) out.push(recordOf(row.id, row.data))
       cursor = page.nextCursor ?? undefined
     } while (cursor !== undefined)
+    if (kind === undefined || kind === 'automation') {
+      out.push(...BUILTIN_AUTOMATION_TEMPLATES.map(builtinRecordOf))
+    }
     return out
   }
 
   readonly get: ITemplateProvider['get'] = async ({ id }) => {
+    const builtin = builtinAutomationTemplate(id)
+    if (builtin !== undefined) return builtinRecordOf(builtin)
     const row = await this.deps.templates.get(id)
     return row === null ? null : recordOf(row.id, row.data)
   }
@@ -101,6 +123,9 @@ export class TemplatesService implements ITemplateProvider {
   }
 
   readonly update: ITemplateProvider['update'] = async ({ id, name, payload }) => {
+    if (isBuiltinTemplateId(id)) {
+      return { status: 'refused', reason: 'read-only', detail: `"${id}" ships with CamStack` }
+    }
     const existing = await this.deps.templates.get(id)
     if (existing === null) {
       return { status: 'refused', reason: 'not-found', detail: `no template "${id}"` }
@@ -128,6 +153,18 @@ export class TemplatesService implements ITemplateProvider {
     return { status: 'saved', template: recordOf(id, body) }
   }
 
+  /**
+   * The shipped templates change only with a release: their instances are
+   * re-expanded once per start, and an instance whose code comes out the same
+   * is not saved (no restart).
+   */
+  async reexpandBuiltinInstances(): Promise<void> {
+    if (this.deps.automations === undefined) return
+    for (const template of BUILTIN_AUTOMATION_TEMPLATES) {
+      await this.deps.automations.reexpand(template.id, template.payload)
+    }
+  }
+
   /** A changed automation template reaches every automation made from it. */
   private async reexpandInstances(id: string, body: TemplateRowBody): Promise<void> {
     if (body.kind !== 'automation' || this.deps.automations === undefined) return
@@ -137,6 +174,7 @@ export class TemplatesService implements ITemplateProvider {
   }
 
   readonly delete: ITemplateProvider['delete'] = async ({ id }) => {
+    if (isBuiltinTemplateId(id)) return { status: 'read-only' }
     const existing = await this.deps.templates.get(id)
     if (existing === null) return { status: 'not-found' }
     const devices = await this.deps.usage.devicesUsing(id)

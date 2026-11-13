@@ -24,10 +24,12 @@ export const TemplateRecordSchema = z.object({
   payload: z.unknown(),
   createdAt: z.number(),
   updatedAt: z.number(),
+  /** Shipped with CamStack (`builtin:` ids): listed beside the operator's, never updated or deleted. */
+  builtIn: z.literal(true).optional(),
 })
 export type TemplateRecord = z.infer<typeof TemplateRecordSchema>
 
-export const TEMPLATE_WRITE_REFUSALS = ['invalid-payload', 'not-found'] as const
+export const TEMPLATE_WRITE_REFUSALS = ['invalid-payload', 'not-found', 'read-only'] as const
 export const TemplateWriteResultSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('saved'), template: TemplateRecordSchema }),
   z.object({
@@ -55,6 +57,8 @@ export type TemplateAutomationUser = z.infer<typeof TemplateAutomationUserSchema
 export const TemplateDeleteResultSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('deleted') }),
   z.object({ status: z.literal('not-found') }),
+  /** A built-in template: shipped with CamStack, never deleted. */
+  z.object({ status: z.literal('read-only') }),
   /** At least one of the two lists is non-empty. */
   z.object({
     status: z.literal('in-use'),

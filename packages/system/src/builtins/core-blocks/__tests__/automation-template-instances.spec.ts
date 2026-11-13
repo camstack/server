@@ -53,7 +53,8 @@ function block(id: string, name: string, code: string): CoreBlock {
 function instanceBlock(id: string, templateId: string, values: Record<string, number | number[]>) {
   const made = instantiateAutomationTemplate(templateId, MOTION, values)
   if (!made.ok) throw new Error('setup: the instance does not expand')
-  return block(id, `Automation ${id}`, generateAutomationBlock({ name: id, recipe: made.recipe }))
+  const name = `Automation ${id}`
+  return block(id, name, generateAutomationBlock({ name, recipe: made.recipe }))
 }
 
 async function world(blocks: CoreBlock[]) {
@@ -147,5 +148,29 @@ describe('automation template instances', () => {
       automations: [{ blockId: 'a', name: 'Automation a' }],
     })
     expect(await service.get({ id: 't1' })).not.toBeNull()
+  })
+})
+
+describe('built-in automation templates in the store', () => {
+  it('are listed beside the operator templates, read-only', async () => {
+    const { service } = await world([])
+    const listed = await service.list({ kind: 'automation' })
+    expect(listed.some((t) => t.id === 'builtin:buttons-to-devices' && t.builtIn === true)).toBe(
+      true,
+    )
+    expect(await service.list({ kind: 'remote' })).toEqual([])
+    expect(await service.get({ id: 'builtin:motion-light' })).toMatchObject({ builtIn: true })
+    expect(await service.update({ id: 'builtin:motion-light', name: 'x' })).toMatchObject({
+      status: 'refused',
+      reason: 'read-only',
+    })
+    expect(await service.delete({ id: 'builtin:motion-light' })).toEqual({ status: 'read-only' })
+  })
+
+  it('an instance whose code comes out the same is not saved again', async () => {
+    const { service, saved } = await world([instanceBlock('a', 't1', { sensor: 7, lights: [3] })])
+    await service.create({ kind: 'automation', name: 'Motion', payload: MOTION })
+    await service.update({ id: 't1', payload: MOTION })
+    expect(saved.size).toBe(0)
   })
 })

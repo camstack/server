@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Automation templates: a template kind with typed inputs and bindings, an expansion that fills them in, and instance flagging when a template changes
+- Built-in automation templates ship with CamStack: Buttons → devices, and Motion → light with an off delay
 
 ## [1.2.561] - 2026-11-13
 
