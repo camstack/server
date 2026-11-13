@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Devices draw one icon from their type and role everywhere (a light switch is a light); a sensor that has not reported shows its normal card with an empty — and its unit instead of Unknown
+- Settings info fields can carry a translated content key (contentKey), so a hint shows in the operator's language
 
 ## [1.2.558] - 2026-11-13
 
