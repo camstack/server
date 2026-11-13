@@ -26,7 +26,7 @@ clients' tokens correspond.
 | `packages/ui-library/src/composites/` | everything built from those: `DataTable`, `DeviceList`, `SettingRow`, `SectionCard`, `ConfigFormBuilder`, `NodePicker`, `DeviceValuePicker`, `ConfirmActionButton`, `EmptyState`, `ErrorBox`, `StatusBadge`, `KebabMenu`, `CameraStreamPlayer`, … | `@camstack/ui-library` |
 | `packages/ui-library/src/hooks/` | data hooks: `useClusterNodes`, `useClusterTopology`, `useCapabilityPresence`, `useDeviceWebrtc`, `usePersistedPageSize`, … | `@camstack/ui-library` |
 | `packages/ui-library/src/lib/` | `cn`, `hubPath` and the mount readers, the responsive tokens (`SECTION_CARD`, `SECTION_BODY`, `STACK_GAP`, `LIST_ROW`, …) | `@camstack/ui-library` |
-| `packages/addon-admin-ui/src/components/` | admin-ui-LOCAL: `AdminPage`, `AdminTabs`, `StableTabPanel`, `integration-hub/IntegrationHub.tsx`, `IntercomPanel`, `TabbedSettingsForm` | relative import, admin-ui only |
+| `packages/addon-admin-ui/src/components/` | admin-ui-LOCAL: `AdminPage`, `AdminTabs`, `StableTabPanel`, `instances/InstancesTable.tsx`, `IntercomPanel`, `TabbedSettingsForm` | relative import, admin-ui only |
 | `camstack/src/components/ui/` (viewer repo) | the React Native kit: `Section`, `Row`, `ToggleRow`, `SelectRow`, `StepperRow`, `SegmentedControl`, `SheetModal`, `PickerSheet`, `AnchoredMenu`, `AnchoredDropdown`, `confirm.tsx` | relative import, viewer only |
 
 An addon page can import only the library: admin-ui-local components are not

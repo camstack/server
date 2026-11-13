@@ -20,7 +20,7 @@ these pages are what the procedure reads.
 | [conventions.md](conventions.md) | The rules every change follows: library first, narrow viewports, overflow, the safe area, frozen-string tests, confirmation copy |
 | [common-components.md](common-components.md) | What exists in `@camstack/ui-library` and the viewer kit, and the colour tokens of both clients side by side |
 | [need-x-use-y.md](need-x-use-y.md) | "I need X" → the component, in each client. `npm run ui:find` searches this table |
-| [admin-patterns.md](admin-patterns.md) | Admin-ui and addon pages: Module Federation and addon-page CSS, `AdminPage`, `AdminTabs`, `IntegrationHub`, tables, tall dialogs, System tabs, destructive changes |
+| [admin-patterns.md](admin-patterns.md) | Admin-ui and addon pages: Module Federation and addon-page CSS, `AdminPage`, `AdminTabs`, `InstancesTable`, tables, tall dialogs, System tabs, destructive changes |
 | [viewer.md](viewer.md) | The viewer (React Native) kit, `tokens.ts`, sheets, the embed player, i18n, and the co-design rule |
 | [anti-patterns.md](anti-patterns.md) | The drift that exists today, measured, and what replaces each shape |
 

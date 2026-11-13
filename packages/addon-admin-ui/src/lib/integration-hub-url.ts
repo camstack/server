@@ -2,9 +2,9 @@
  * integration-hub-url — the address of an integration page, and the ONE
  * builder for a link into one.
  *
- * Every page built on `<IntegrationHub>` (Connectivity, Network → Remote
- * Access / Mesh Networks / TURN Servers, Identity → Authentication and Tokens &
- * sessions, Logs → Destinations) shows one integration at a time, chosen from a row of pills.
+ * An integration page (Connectivity, Network → Remote Access / Mesh Networks /
+ * TURN Servers, Identity → Authentication and Tokens & sessions, Logs →
+ * Destinations) shows one integration at a time, chosen from a row of pills.
  * The choice lives in the URL so it survives a reload, walks with back/forward
  * and can be targeted from anywhere — a notification, the docs, another page:
  *

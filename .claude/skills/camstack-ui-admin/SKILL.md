@@ -1,6 +1,6 @@
 ---
 name: camstack-ui-admin
-description: CamStack admin UI, ui-library and addon pages (Module Federation remotes — Model Studio, Benchmark, OSD manager, Training — and widgets). Use with camstack-ui when adding or changing an admin page, a /system tab, a table, a dialog, a settings form, a secret field, an integration page, an addon page or a ui-library component; or when an addon page renders with missing styles. Covers AdminPage, AdminTabs, IntegrationHub, DataTable, Dialog, the secret field, pickers and the @source / D747 addon-page CSS rule.
+description: CamStack admin UI, ui-library and addon pages (Module Federation remotes — Model Studio, Benchmark, OSD manager, Training — and widgets). Use with camstack-ui when adding or changing an admin page, a /system tab, a table, a dialog, a settings form, a secret field, an integration page, an addon page or a ui-library component; or when an addon page renders with missing styles. Covers AdminPage, AdminTabs, InstancesTable, DataTable, Dialog, the secret field, pickers and the @source / D747 addon-page CSS rule.
 ---
 
 # CamStack UI — admin UI, ui-library, addon pages
@@ -44,10 +44,11 @@ right on its own dev server and broken in the hub.
   `content`, `ownedParams`; `?tab=` in the URL). One `?tab=` strip per page —
   a page that owns `?tab=` is never nested inside another. Inside a card or
   dialog: `Tabs` / `TabsList` / `TabsTrigger` / `TabsContent`.
-- **Integrations of one kind:** `IntegrationHub` (`groups`, `isLoading`,
-  `emptyTitle`, `emptyDescription`) with `AddonIntegrationBody` per entry. The
-  header pills are the context switcher; selection in `?integration=`, links
-  only through `lib/integration-hub-url.ts`. Smallest example:
+- **Integrations of one kind:** one `InstancesTable` over the kind's function
+  cap (`components/instances/`): its provider pills filter the rows, Add sits in
+  the page header. The `IntegrationHub` pill row is deleted and refused by
+  `check-no-stacked-provider-lists`. Links into a page go only through
+  `lib/integration-hub-url.ts`. Smallest example:
   `pages/system/Authentication.tsx`; over non-addon kinds:
   `pages/system/Access.tsx` (Identity → Tokens & sessions).
 - **Sections and settings:** `SectionCard` + `SettingRow`; a schema-driven

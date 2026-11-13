@@ -1,7 +1,6 @@
 /**
- * The Alexa export's REAL settings schema, through the REAL integration-page
- * tree (`AddonIntegrationBody` → `NodeAddonsSettingsPanel` → `FormBuilder`),
- * beside the Addons page's mount of the same panel.
+ * The Alexa export's REAL settings schema, through the REAL settings tree
+ * (`NodeAddonsSettingsPanel` → `FormBuilder`) as the Addons page mounts it.
  *
  * Operator report (Connectivity → Device export → Alexa): no Re-sync button,
  * and an EMPTY section right before Activity. Both were one bug: a panel with
@@ -79,16 +78,13 @@ vi.mock('@camstack/ui-library', async () => {
     useAddonSettingsUpdateDeviceSettings: noopMutation,
     useDecoderReprobeHwaccel: noopMutation,
     useAudioAnalyzerReprobeAudioEngine: noopMutation,
-    useAddonsRestartAddon: noopMutation,
-    useAddonsSetCapabilityProviderEnabled: noopMutation,
     LogStream: () => <div>logs</div>,
     EventStream: () => <div>events</div>,
   }
 })
 
 import { ConfirmDialogProvider } from '@camstack/ui-library'
-import { NodeAddonsSettingsPanel } from '../../settings/NodeAddonsSettingsPanel'
-import { AddonIntegrationBody } from '../AddonIntegrationBody'
+import { NodeAddonsSettingsPanel } from '../NodeAddonsSettingsPanel'
 
 function renderTree(node: ReactNode) {
   const client = new QueryClient({
@@ -103,50 +99,33 @@ function renderTree(node: ReactNode) {
   )
 }
 
-const SURFACES: ReadonlyArray<{
-  readonly name: string
-  readonly node: () => ReactNode
-}> = [
-  {
-    name: 'Connectivity → Device export → Alexa',
-    node: () => (
-      <AddonIntegrationBody
-        addonId="export-alexa"
-        displayName="Alexa"
-        capName="device-export"
-        isActive
-      />
-    ),
-  },
-  {
-    // The Addons page's mount (AddonCard): unchanged behaviour.
-    name: 'Addons page',
-    node: () => (
-      <NodeAddonsSettingsPanel
-        nodeId={null}
-        addonIds={['export-alexa']}
-        level="global"
-        fieldScope="cluster"
-      />
-    ),
-  },
-]
+/** The Addons page's mount (AddonCard): cluster-scoped, no tab scope. */
+function alexaPanel(): ReactNode {
+  return (
+    <NodeAddonsSettingsPanel
+      nodeId={null}
+      addonIds={['export-alexa']}
+      level="global"
+      fieldScope="cluster"
+    />
+  )
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
   served = alexaForm({})
 })
 
-describe.each(SURFACES)('the Alexa settings on $name', ({ node }) => {
+describe('the Alexa settings panel', () => {
   it('draws every section with its heading', async () => {
-    renderTree(node())
+    renderTree(alexaPanel())
     for (const title of ['Account link', 'Troubleshooting']) {
       expect(await screen.findByText(title)).toBeTruthy()
     }
   })
 
   it('opens Troubleshooting and the Re-sync button invokes resyncDiscovery', async () => {
-    renderTree(node())
+    renderTree(alexaPanel())
     expect(screen.queryByRole('button', { name: 'Re-sync now' })).toBeNull()
     fireEvent.click(await screen.findByText('Troubleshooting'))
     fireEvent.click(await screen.findByRole('button', { name: 'Re-sync now' }))
@@ -161,7 +140,7 @@ describe.each(SURFACES)('the Alexa settings on $name', ({ node }) => {
   })
 
   it('draws no empty section frame: public mode has no Custom-skill ingress token at all', async () => {
-    const { container } = renderTree(node())
+    const { container } = renderTree(alexaPanel())
     await screen.findByText('Account link')
     expect(screen.queryByText('Ingress token')).toBeNull()
     expect(
@@ -174,7 +153,7 @@ describe.each(SURFACES)('the Alexa settings on $name', ({ node }) => {
 
   it('a hub already in custom mode shows the section on load', async () => {
     served = alexaForm({ skillMode: 'custom' })
-    renderTree(node())
+    renderTree(alexaPanel())
     expect(await screen.findByText('Ingress token')).toBeTruthy()
   })
 })

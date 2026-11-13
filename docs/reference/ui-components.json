@@ -346,10 +346,10 @@
       "notes": ""
     },
     {
-      "need": "The integrations of one kind, one on screen",
-      "admin": "`IntegrationHub` + `AddonIntegrationBody` (admin-ui `components/integration-hub/`)",
+      "need": "The integrations of one kind",
+      "admin": "`InstancesTable` over the kind's function cap (admin-ui `components/instances/`)",
       "viewer": "—",
-      "notes": "Pills are the context switcher; selection in `?integration=`"
+      "notes": "Its provider pills filter the rows; links into a page go through `lib/integration-hub-url.ts`"
     },
     {
       "need": "Credential entries of one provider collection (multi-entry)",

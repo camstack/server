@@ -1,83 +1,26 @@
 /**
- * The controls every addon-backed integration carries, identical on every
- * integration page: the Enabled/Disabled badge, the Enable/Disable toggle and
- * the Restart action.
+ * The Restart action an addon-backed row carries (the instances table) and the
+ * status-pill size the integration chrome shares.
  */
-import { Loader2, Play, RefreshCw, Square } from 'lucide-react'
+import { Loader2, RefreshCw } from 'lucide-react'
 import type { ReactElement } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  Badge,
-  Button,
   ConfirmActionButton,
   IconButton,
   useConfirm,
   useAddonsRestartAddon,
-  useAddonsSetCapabilityProviderEnabled,
 } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 
 /**
- * The two lists an integration page derives `isActive` from — the provider
- * registry (most pages) and the addon list (Connectivity reads process state).
- * Both are refreshed after a change so neither page shows the old state.
+ * The two lists a row derives its state from — the provider registry and the
+ * addon list (process state). Both are refreshed after a restart.
  */
 const STATE_QUERY_KEYS = [[['addons', 'listCapabilityProviders']], [['addons', 'list']]] as const
 
 /** A status pill at the size the integration chrome uses. */
 export const STATUS_BADGE_CLASS = 'text-[10px]' as const
-
-export function EnabledBadge({ isActive }: { readonly isActive: boolean }): ReactElement {
-  const { t } = useTranslation()
-  return (
-    <Badge variant={isActive ? 'success' : 'default'} className={STATUS_BADGE_CLASS}>
-      {isActive
-        ? t('integrationHub.addonControls.enabled', 'Enabled')
-        : t('integrationHub.addonControls.disabled', 'Disabled')}
-    </Badge>
-  )
-}
-
-/**
- * Flips the registry-level collection disabled-set via
- * `addons.setCapabilityProviderEnabled`; on success the provider list is
- * refetched so the page reflects the new `isActive`.
- */
-export function EnableToggleButton({
-  capName,
-  addonId,
-  isActive,
-}: {
-  readonly capName: string
-  readonly addonId: string
-  readonly isActive: boolean
-}): ReactElement {
-  const { t } = useTranslation()
-  const queryClient = useQueryClient()
-  const setEnabled = useAddonsSetCapabilityProviderEnabled({
-    onSuccess: () => {
-      for (const queryKey of STATE_QUERY_KEYS) void queryClient.invalidateQueries({ queryKey })
-    },
-  })
-  const isBusy = setEnabled.isPending
-  return (
-    <Button
-      size="sm"
-      variant={isActive ? 'secondary' : 'primary'}
-      disabled={isBusy}
-      onClick={() => setEnabled.mutate({ capName, addonId, enabled: !isActive })}
-    >
-      {isBusy ? (
-        <Loader2 className="h-3 w-3 animate-spin" />
-      ) : isActive ? (
-        <Square className="h-3 w-3" />
-      ) : (
-        <Play className="h-3 w-3" />
-      )}
-      {isActive ? t('common.disable', 'Disable') : t('common.enable', 'Enable')}
-    </Button>
-  )
-}
 
 function useRestartAddon(): ReturnType<typeof useAddonsRestartAddon> {
   const queryClient = useQueryClient()

@@ -24,7 +24,7 @@ library's barrel; check a viewer name in the viewer repo's own catalogue.
 | A single number with a label (page KPI strip) | `StatCard` + `GRID_QUICK_STATS` | — | Widget panels: `WidgetMetricCard` (same geometry) |
 | Tabs on a page, deep-linkable | `AdminTabs` (admin-ui, `?tab=`) | `SegmentedControl` / `SegmentBlock` | Never a second `?tab=` strip inside an `AdminTabs` page |
 | Tabs inside a card or dialog | `Tabs` + `TabsList` + `TabsTrigger` + `TabsContent` | `SegmentedControl` | |
-| The integrations of one kind, one on screen | `IntegrationHub` + `AddonIntegrationBody` (admin-ui `components/integration-hub/`) | — | Pills are the context switcher; selection in `?integration=` |
+| The integrations of one kind | `InstancesTable` over the kind's function cap (admin-ui `components/instances/`) | — | Its provider pills filter the rows; links into a page go through `lib/integration-hub-url.ts` |
 | Credential entries of one provider collection (multi-entry) | `ProviderEntryPills` + `AddProviderEntryDialog` | — | Pills are **entries** only; Add lists **types** from the host; selection is a callback (host owns `?entry=`) |
 | Multi-select trainable base models for a training job | `TrainingBaseModelPicker` (+ `mapRootDetectorPlacements`) | — | Rows list every `node · device` placement; Select-all-roots = cluster root detectors only |
 | A list of manageable items (rules, tokens, sessions, targets) | `DataTable` with `maxBodyHeight={TABLE_SCROLL_MAX_H}` | `Section` + `Row` list | Never a Card stack or `div` stack: the questions are per column. Pair with `ItemFormDialog` for create/edit |

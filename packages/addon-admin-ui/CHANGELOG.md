@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Device page uses the standard side gutter and no longer repeats the device name and integration in a box around the card.
+- The unused integration pill-row page base (IntegrationHub / AddonIntegrationBody) is removed; every integration page is the instances table.
 
 ## [1.2.657] - 2026-11-13
 

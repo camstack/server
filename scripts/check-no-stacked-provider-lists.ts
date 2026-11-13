@@ -8,11 +8,13 @@
  * the table (a pill row of addons, a "tunnel control" card, a legend with its own switch). This guard
  * does, textually, over `packages/addon-admin-ui/src/{pages,components}`:
  *
- * 1. `IntegrationHub` and `InstancesTable` in one file: a pill row over a table.
+ * 1. `IntegrationHub` or `AddonIntegrationBody` in code anywhere (a tag, an import, a declaration),
+ *    their old folder included: the pill row of addons stacked over a collection was deleted once
+ *    every page moved to the table, and it does not come back. A comment that names it is fine.
  * 2. `InstancesTable` and `useAddonsListCapabilityProviders` in one file: the providers listed twice.
  * 3. The addon-level enable switch (`AddonIntegrationBody`, `EnableToggleButton`,
  *    `useAddonsSetCapabilityProviderEnabled`) or the record switch (`InstanceSwitchCell`) outside
- *    `components/instances/` and `components/integration-hub/`: a second switch.
+ *    `components/instances/`: a second switch.
  * 4. An addon id or package name hand-written as a comparison, a `startsWith`, a map key or a
  *    list line in a page or component: per-addon knowledge the manifest owns.
  * 5. A file that renders `InstancesTable` and a `SectionCard` whose body maps over providers, servers
@@ -20,9 +22,6 @@
  * 6. `omitSectionIds` written in a page: one surface hand-excluding what another one draws.
  * 7. `providerNamesByAddon` in a page or component outside the instances table: a per-addon name
  *    map for pill rows the table replaces.
- * 8. `<IntegrationHub>` in a page over a function cap that an `integration-instances` kind names
- *    (`functionCap:` anywhere in the scanned sources): the hub stacked on the same collection,
- *    even when the file no longer also renders `InstancesTable` (#504).
  *
  * Every file that matches today is in `scripts/no-stacked-provider-lists-baseline.json`, with the
  * reason and the page work that deletes it. The baseline only shrinks; a listed file that no longer
@@ -53,19 +52,17 @@ const SCANNED_DIRS: readonly string[] = [
   `${ADMIN_UI_SRC}components/`,
   `${ADMIN_UI_SRC}lib/`,
 ]
-/** The two directories that own the switch and the provider list. */
 /** The one declared list of framework packages every surface reads. */
 const DECLARATION_FILES: readonly string[] = [`${ADMIN_UI_SRC}lib/framework-packages.ts`]
-const OWNER_DIRS: readonly string[] = [
-  `${ADMIN_UI_SRC}components/instances/`,
-  `${ADMIN_UI_SRC}components/integration-hub/`,
-]
+/** The directory that owns the switch and the provider list. */
+const OWNER_DIRS: readonly string[] = [`${ADMIN_UI_SRC}components/instances/`]
 
-const HUB_RE = /\bIntegrationHub\b/
-/** A rendered hub, not a comment that names the component. */
-const HUB_TAG_RE = /<IntegrationHub\b/
+/** The deleted pill row, as code: rendered, imported, or declared. */
+const HUB_CODE_RE =
+  /<(?:IntegrationHub|AddonIntegrationBody)\b|\bimport\b[^;]*\b(?:IntegrationHub|AddonIntegrationBody)\b|\b(?:function|const|class|interface|type)\s+(?:IntegrationHub|AddonIntegrationBody)\b/
+/** A line that only comments: a JSDoc body, a `//` or a `/*` opener. */
+const COMMENT_LINE_RE = /^\s*(?:\*|\/\/|\/\*)/
 const TABLE_RE = /\bInstancesTable\b/
-const FUNCTION_CAP_RE = /functionCap:\s*['"]([^'"]+)['"]/g
 const PROVIDER_LIST_RE = /\buseAddonsListCapabilityProviders\b/
 const SWITCH_RE =
   /\b(?:AddonIntegrationBody|EnableToggleButton|useAddonsSetCapabilityProviderEnabled|InstanceSwitchCell)\b/
@@ -93,42 +90,22 @@ function inOwnerDir(file: SourceFile): boolean {
   return OWNER_DIRS.some((dir) => file.path.startsWith(dir))
 }
 
-/** Function caps an `integration-instances` kind names (`functionCap: '…'`). */
-export function instanceFunctionCaps(sources: readonly SourceFile[]): ReadonlySet<string> {
-  const caps = new Set<string>()
-  for (const file of sources) {
-    for (const match of file.text.matchAll(FUNCTION_CAP_RE)) {
-      const cap = match[1]
-      if (cap !== undefined && cap.length > 0) caps.add(cap)
-    }
-  }
-  return caps
-}
-
-function quotesCap(text: string, cap: string): boolean {
-  return text.includes(`'${cap}'`) || text.includes(`"${cap}"`)
+function codeOnly(text: string): string {
+  return text
+    .split('\n')
+    .filter((line) => !COMMENT_LINE_RE.test(line))
+    .join('\n')
 }
 
 /** The rules a file breaks, as short sentences. Empty when it is clean. */
-export function stackedListBreaches(
-  file: SourceFile,
-  instanceCaps: ReadonlySet<string> = new Set(),
-): string[] {
+export function stackedListBreaches(file: SourceFile): string[] {
   if (!inScope(file)) return []
   const owner = inOwnerDir(file) || DECLARATION_FILES.includes(file.path)
   const text = file.text
   const hasTable = TABLE_RE.test(text)
   const out: string[] = []
-  if (!owner && HUB_RE.test(text) && hasTable) {
-    out.push('an IntegrationHub pill row and an InstancesTable in one file')
-  }
-  if (!owner && HUB_TAG_RE.test(text)) {
-    const named = [...instanceCaps].filter((cap) => quotesCap(text, cap)).sort()
-    if (named.length > 0) {
-      out.push(
-        `an IntegrationHub over a function cap with integration-instances providers (${named.join(', ')})`,
-      )
-    }
+  if (HUB_CODE_RE.test(codeOnly(text))) {
+    out.push('the deleted IntegrationHub / AddonIntegrationBody pill row')
   }
   if (!owner && hasTable && PROVIDER_LIST_RE.test(text)) {
     out.push('an InstancesTable and a second list of providers (useAddonsListCapabilityProviders)')
@@ -154,11 +131,10 @@ export function stackedListBreaches(
 export function findViolations(
   sources: readonly SourceFile[],
   baseline: FamilyBaseline,
-  instanceCaps: ReadonlySet<string> = instanceFunctionCaps(sources),
 ): Violation[] {
   const findings: Finding[] = []
   for (const file of sources) {
-    const breaches = stackedListBreaches(file, instanceCaps)
+    const breaches = stackedListBreaches(file)
     if (breaches.length === 0) continue
     findings.push({
       key: file.path,

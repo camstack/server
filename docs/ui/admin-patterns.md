@@ -1,7 +1,6 @@
 ---
 title: Admin UI page patterns
 applies-to:
-  - packages/addon-admin-ui/src/components/integration-hub/IntegrationHub.tsx
   - packages/addon-admin-ui/src/lib/integration-hub-url.ts
   - packages/addon-admin-ui/src/lib/system-page-url.ts
   - packages/addon-admin-ui/src/pages/system/System.tsx
@@ -77,12 +76,11 @@ to appear is in
 Schema drives **settings and modal form fields only** — it does not generate
 collection list shells.
 
-**A page about the integrations of one kind** is an `IntegrationHub`: the
-header's pills are the context switcher (one integration on screen, its id in
-`?integration=`), and the body is usually `AddonIntegrationBody`. Identity →
-Tokens & sessions (`pages/system/Access.tsx`) uses that address over things
-that are not addons — credential kinds — as pill tabs, not the hub component.
-A collection of connections is one `InstancesTable` instead: Identity →
+**A page about the integrations of one kind** is one `InstancesTable` over
+the kind's function cap (the `IntegrationHub` pill row was deleted, #505).
+Identity → Tokens & sessions (`pages/system/Access.tsx`) keeps the
+`?integration=` address over things that are not addons — credential kinds —
+as pill tabs. Identity →
 Authentication (`pages/system/Authentication.tsx`) is that table over
 `login-method`, the same component as Connectivity → Brokers, with the sign-in
 policy card under it. See "A collection of connections is one `InstancesTable`".
@@ -465,41 +463,27 @@ instead of clipping or wrapping them. `<TabsList>` / `<TabsTrigger>` and
 past ~4 tabs on a phone it wraps the labels inside their own fixed-height box
 and puts the last tabs somewhere unreachable.
 
-## Integration pages: the usual header, icon + name pills, one integration on screen ([D774](../decisions/adr-0774-an-integration-page-shows-one-integration-chosen-from-icon-pills-and-its-address-is-in-the-url.md))
+## Integration pages: one table per kind, the address in the URL ([D774](../decisions/adr-0774-an-integration-page-shows-one-integration-chosen-from-icon-pills-and-its-address-is-in-the-url.md))
 
-`components/integration-hub/IntegrationHub.tsx` is the ONE base for a page that
-lists the integrations of a kind. Connectivity (`/system/integrations`) is an
-`AdminSectionedPage` with one section per provider kind (Exporters, Email,
-Brokers, Calendars); each section embeds a single-group `IntegrationHub`.
-Other hubs: Network → Remote Access / Mesh Networks / TURN Servers, Identity →
-Tokens & sessions (credential kinds, not addons) and Logs → Destinations.
-Identity → Authentication is not one of them: it is the `login-method`
-`InstancesTable` plus the sign-in policy card.
+Every page about the integrations of a kind is ONE `InstancesTable` over the
+kind's function cap (see "A collection of connections is one
+`InstancesTable`"). Connectivity (`/system/integrations`) is an
+`AdminSectionedPage` with one section per kind (Exporters, Email, Brokers,
+Calendars), each declared in `KINDS` (`pages/system/Integrations.tsx`); Network
+→ Remote Access / Mesh Networks / TURN Servers and Logs → Destinations are the
+same table. The `IntegrationHub` pill row and its `AddonIntegrationBody` were
+deleted once no page used them (#505), and
+`scripts/check-no-stacked-provider-lists.ts` refuses them as code anywhere in
+admin-ui. What D774 still owns is the address: `lib/integration-hub-url.ts`
+builds every link into an integration page (`?integration=`, `?section=`), and
+Identity → Tokens & sessions keeps that address as pill tabs over credential
+kinds.
 
-- **Header.** `AdminPage`'s usual title + subtitle, and its `nav` slot carries
-  the pills: one per integration, the addon's own `assets/icon.svg` next to its
-  name, a status dot, and the state in WORDS whenever it is not healthy
-  (`disabled`, `crashed`). Several groups (Connectivity's kinds) get a label
-  column from `sm` up; every group ends with a dashed "+ Add …" pill linking the
-  Addons catalog filtered to the capability. Pills wrap at every width — the
-  Cluster chips' rule — so a phone never scrolls sideways.
-- **Body.** Only the selected integration renders, keyed by its id.
-  `AddonIntegrationBody` is the same for every addon-backed one: a slim status
-  strip (Enabled badge, page badges, addon id; primary action, Enable/Disable,
-  Restart), an optional unheaded `lead` block, the page's own panels
-  (Connectivity → Connections, Mesh → Status, TURN → Discovered ICE servers),
-  **Settings**, **Activity**, and last the panels a
-  page marks `placement: 'end'`. Settings and Activity stay on one scroll on
-  purpose — the operator edits a setting while watching what the addon logs
-  about it.
-- **An exporter's devices table is the last element** (operator, 2026-10-08).
-  Connectivity → Device export puts `DeviceExportPanel` at `placement: 'end'`
-  with `showSetup={false}`, and renders the exporter's error and Setup block
-  (HomeKit's pairing QR, Alexa's directive endpoint) as the `lead` through
-  `DeviceExportSetup` — a long device list must not push the settings and
-  activity off screen, and a pairing code must not sink under the logs.
-  `?section=devices` still scrolls to the table; only its position changed.
-  The addon card keeps the whole panel (`showSetup` defaults to true).
+- **An exporter's Setup comes first.** Connectivity → Device export renders
+  the exporter's error and Setup block (HomeKit's pairing QR, Alexa's directive
+  endpoint) through `ExportSetupLead`, and the exported-devices count is a
+  table column (`components/integrations/exported-devices.tsx`). The addon card
+  keeps the whole `DeviceExportPanel`.
 - **Settings are always the form builder.** `NodeAddonsSettingsPanel` for the
   addon's scoped schema (`clusterSettingsSchema(cap)`), scoped to the page's capability. A page
   contributes panels, never a settings form. An addon whose cap-scoped schema
@@ -528,7 +512,7 @@ Identity → Authentication is not one of them: it is the `login-method`
 
 `pages/system/Access.tsx` (`?tab=access`) merged the old Tokens tab (scoped
 tokens, share links, admin tokens, the audit and legacy keys stacked on one
-page) and the Linked Sessions tab into one `IntegrationHub`. A pill per kind,
+page) and the Linked Sessions tab into one page. A pill per kind,
 grouped: **Sessions** (Login sessions, Linked apps), **Tokens** (Scoped tokens,
 Admin tokens, Share links) and
 **Identity** (Sign-in links, Audit). The pills carry no health dot
@@ -628,7 +612,7 @@ tunnel state and Start/Stop in the rows this way).
   for the worst status), no "All" pill. A pill FILTERS the table; nothing selected lists every
   provider, and clicking the active pill deselects it. The install link ends the row. Not
   rendered for a single provider with no install link. Never stack it under another pill row
-  (an `IntegrationHub` over the same cap): a kind that is a list of connections declares
+  over the same cap: a kind that is a list of connections declares
   `instances` in `pages/system/Integrations.tsx` instead.
 - **Add lives in the page header.** The table puts its Add button in the enclosing `PageShell`
   actions through `PageHeaderActions` (ui-library); standalone it falls back to an inline row.
@@ -649,9 +633,8 @@ tunnel state and Start/Stop in the rows this way).
 
 Do not write a page-local list of connections or a raw `<table>` for one. Two guards keep this:
 `scripts/check-one-instances-list.ts` (no hub over the same cap) and
-`scripts/check-no-stacked-provider-lists.ts` (no hub and table in one file, no
-`<IntegrationHub>` over a function cap that has `integration-instances` providers, no provider fetch
-beside the table, no `AddonIntegrationBody` / enable switch outside the owner dirs, no
+`scripts/check-no-stacked-provider-lists.ts` (no `IntegrationHub` / `AddonIntegrationBody` as code
+anywhere, no provider fetch beside the table, no enable switch outside `components/instances/`, no
 hand-written addon or package id, no per-provider card under the table, no `omitSectionIds` in a
 page). Its baseline (`scripts/no-stacked-provider-lists-baseline.json`) only shrinks; each entry
 names the page work that removes it. System → Settings does not keep its own omit list: the

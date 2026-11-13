@@ -1,9 +1,9 @@
 /**
- * Shared pill chrome for page-header selectors (IntegrationHub providers,
- * Build-your-self sections). Links, not `role="tab"`: choosing one changes
+ * Shared pill chrome for page-header selectors (the instances table's
+ * provider pills, Build-your-self sections). Links, not `role="tab"`: choosing one changes
  * the address; `nav` + `aria-current="page"` is the honest pattern.
  *
- * Pills WRAP — same rule as the Nodes fleet strip and IntegrationPills.
+ * Pills WRAP — same rule as the Nodes fleet strip.
  */
 import type { ReactElement, ReactNode } from 'react'
 import { Link } from 'react-router-dom'

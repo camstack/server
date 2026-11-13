@@ -64,6 +64,15 @@ panel, the addon omits that section for that cap.
 spells `integration=` / `section=` outside the builder, every page in
 `INTEGRATION_HUB_PAGES` is a route `App.tsx` declares, and every hosting tab
 takes its id from the registry and declares the owned params.
-`integration-hub.spec.tsx` pins the header, the pills, URL selection, deep-link
-restore, back/forward, the stale notice and the settings being the form
-builder; `integration-hub-url.spec.ts` pins the resolver and the builder.
+`integration-hub-url.spec.ts` pins the resolver and the builder.
+
+## Amendment — the pill row is deleted, the address stays (2026-11-13, #505)
+
+Every integration page moved to one `InstancesTable` per kind (D996, D1013), so
+`<IntegrationHub>`, `IntegrationPills` and `<AddonIntegrationBody>` had no
+caller and were deleted with their spec. The table's own provider pills replace
+the header pills. What this record still decides is the address:
+`?integration=` / `?section=` are spelled only by `lib/integration-hub-url.ts`,
+and Identity → Tokens & sessions keeps them as pill tabs over credential kinds.
+`scripts/check-no-stacked-provider-lists.ts` refuses `IntegrationHub` and
+`AddonIntegrationBody` as code anywhere in admin-ui.

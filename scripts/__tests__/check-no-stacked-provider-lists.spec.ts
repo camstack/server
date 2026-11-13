@@ -43,21 +43,33 @@ describe('check-no-stacked-provider-lists', () => {
     expect(stackedListBreaches(HUB_OVER_TABLE).join()).toContain('IntegrationHub')
   })
 
-  it('flags an IntegrationHub over a function cap that keeps integration-instances, without a table', () => {
-    const caps = new Set(['login-method'])
-    const hub = file(
-      'pages/system/Authentication.tsx',
-      '<IntegrationHub groups={g} capName="login-method" />',
+  it('flags the deleted IntegrationHub pill row and AddonIntegrationBody anywhere, their own folder included', () => {
+    const hubPage = file('pages/system/Authentication.tsx', '<IntegrationHub groups={g} />')
+    expect(stackedListBreaches(hubPage).join()).toContain('IntegrationHub')
+    const declared = file(
+      'components/integration-hub/IntegrationHub.tsx',
+      'export function IntegrationHub({ groups }: Props) {}',
     )
-    expect(stackedListBreaches(hub, caps).join()).toContain('login-method')
-    expect(stackedListBreaches(hub, new Set(['smtp-provider']))).toEqual([])
+    expect(stackedListBreaches(declared).join()).toContain('IntegrationHub')
+    const imported = file(
+      'pages/system/Tunnels.tsx',
+      "import { AddonIntegrationBody } from '../../components/integration-hub/AddonIntegrationBody'",
+    )
+    expect(stackedListBreaches(imported).join()).toContain('AddonIntegrationBody')
+    expect(
+      stackedListBreaches(
+        file('components/integration-hub/X.tsx', 'export const AddonIntegrationBody = () => null'),
+      ).join(),
+    ).toContain('AddonIntegrationBody')
+  })
+
+  it('leaves a comment that names the deleted hub alone', () => {
     expect(
       stackedListBreaches(
         file(
-          'components/integration-hub/IntegrationHub.tsx',
-          '<IntegrationHub cap="login-method" />',
+          'pages/system/Access.tsx',
+          '/**\n * not the `<IntegrationHub>` pill row\n */\n// IntegrationHub',
         ),
-        caps,
       ),
     ).toEqual([])
   })
@@ -68,14 +80,19 @@ describe('check-no-stacked-provider-lists', () => {
     )
   })
 
-  it('flags a second switch outside the instances and hub components', () => {
+  it('flags a second switch outside the instances table', () => {
     expect(stackedListBreaches(SECOND_SWITCH)).toHaveLength(1)
     expect(
       stackedListBreaches(file('components/instances/InstancesTable.tsx', SECOND_SWITCH.text)),
     ).toEqual([])
     expect(
-      stackedListBreaches(file('components/integration-hub/X.tsx', 'AddonIntegrationBody')),
-    ).toEqual([])
+      stackedListBreaches(
+        file(
+          'components/integration-hub/addon-controls.tsx',
+          'export function EnableToggleButton() {}',
+        ),
+      ),
+    ).toHaveLength(1)
   })
 
   it('flags a hand-written addon id comparison, map key and package list line', () => {
