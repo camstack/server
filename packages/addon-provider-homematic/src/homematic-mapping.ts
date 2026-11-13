@@ -64,7 +64,8 @@ export function mapHmChannel(channelType: string | undefined): HmChannelMapping 
     // ── Climate / heating (HmIP-eTRV-C / BWTH / STHD / WTH-2 /
     //    HEATING / FALMOT-C12) ──────────────────────────────────────────
     // Writable SET_POINT_TEMPERATURE / CONTROL_MODE / BOOST_MODE;
-    // readable ACTUAL_TEMPERATURE / HUMIDITY / VALVE_STATE. WTH/BWTH
+    // readable ACTUAL_TEMPERATURE / HUMIDITY / SET_POINT_MODE / VALVE_STATE.
+    // WTH/BWTH
     // wall thermostats also report HUMIDITY → humidity-sensor cap.
     case 'HEATING_CLIMATECONTROL_TRANSCEIVER':
       return {

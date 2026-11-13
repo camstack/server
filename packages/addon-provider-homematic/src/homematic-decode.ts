@@ -20,27 +20,26 @@ import type { HmValue } from 'nodehomematic'
 /** Local mirror of the library's non-exported `ClimateMode` union. */
 export type HmClimateMode = 'auto' | 'heat' | 'off'
 
-/** HmIP `CONTROL_MODE` ENUM index → library climate mode. Numeric-arm
- *  fallback only (see {@link fromHmControlMode}) — the wire index, used
- *  when the value list did not resolve. */
-const HM_CONTROL_MODE_BY_INDEX: Readonly<Record<number, HmClimateMode>> = {
+/** HmIP `SET_POINT_MODE` ENUM index → library climate mode. Numeric-arm
+ *  fallback only (see {@link fromHmSetPointMode}) — the wire index, used
+ *  when the value list did not resolve. `CONTROL_MODE` is write-only on
+ *  HmIP heating groups and always reads `0`; mode is read from here. */
+const HM_SET_POINT_MODE_BY_INDEX: Readonly<Record<number, HmClimateMode>> = {
   0: 'auto',
   1: 'heat', // MANU
-  2: 'heat', // PARTY / holiday — treated as a manual setpoint
-  3: 'heat', // BOOST — slice boost is tracked separately via BOOST_MODE
+  2: 'heat', // PARTY — treated as a manual setpoint
 }
 
 /**
- * HmIP `CONTROL_MODE` ENUM member (the CONVERTED value the library hands
+ * HmIP `SET_POINT_MODE` ENUM member (the CONVERTED value the library hands
  * over — `nodehomematic` resolves the value list, same as `LOCK_STATE` /
  * `ACTIVITY_STATE`, see {@link readLockState} / {@link readTravel}) →
  * library climate mode. Matched BY NAME, case-insensitively.
  */
-const HM_CONTROL_MODE_BY_NAME: Readonly<Record<string, HmClimateMode>> = {
-  'AUTO-MODE': 'auto',
-  'MANU-MODE': 'heat',
-  'PARTY-MODE': 'heat', // holiday — treated as a manual setpoint
-  'BOOST-MODE': 'heat', // slice boost is tracked separately via BOOST_MODE
+const HM_SET_POINT_MODE_BY_NAME: Readonly<Record<string, HmClimateMode>> = {
+  AUTO: 'auto',
+  MANU: 'heat',
+  PARTY: 'heat',
 }
 
 /** Map a CamStack `HvacMode` to the library's narrower climate mode. */
@@ -58,22 +57,22 @@ export function toHmClimateMode(mode: HvacMode): HmClimateMode {
 }
 
 /**
- * Map a library climate mode back to the CamStack `HvacMode`.
+ * Map a Homematic `SET_POINT_MODE` value to the CamStack `HvacMode`.
  *
  * Like {@link readLockState} / {@link readTravel}, the library delivers a
- * CONVERTED ENUM string on the live CCU (`'AUTO-MODE'` etc) — testing
- * `typeof value === 'number'` alone meant a resolved `CONTROL_MODE` never
+ * CONVERTED ENUM string on the live CCU (`'AUTO'` / `'MANU'` / `'PARTY'`) —
+ * testing `typeof value === 'number'` alone meant a resolved mode never
  * decoded at all. The numeric arm survives for a datapoint whose value
  * list did not resolve.
  */
-export function fromHmControlMode(value: HmValue): HvacMode | null {
+export function fromHmSetPointMode(value: HmValue): HvacMode | null {
   if (typeof value === 'string') {
-    const mode = HM_CONTROL_MODE_BY_NAME[value.toUpperCase()]
+    const mode = HM_SET_POINT_MODE_BY_NAME[value.toUpperCase()]
     if (mode === undefined) return null
     return mode === 'auto' ? 'auto' : 'heat'
   }
   if (typeof value !== 'number') return null
-  const mode = HM_CONTROL_MODE_BY_INDEX[value]
+  const mode = HM_SET_POINT_MODE_BY_INDEX[value]
   if (mode === undefined) return null
   return mode === 'auto' ? 'auto' : 'heat'
 }
@@ -253,7 +252,8 @@ export function decodeLock(
 /**
  * Decode a climate datapoint into a ClimateControlStatus patch.
  * Parameters: SET_POINT_TEMPERATURE (target °C), ACTUAL_TEMPERATURE
- * (current °C), HUMIDITY (%), CONTROL_MODE (ENUM), BOOST_MODE (bool).
+ * (current °C), HUMIDITY (%), SET_POINT_MODE (ENUM, readable mode),
+ * BOOST_MODE (bool). `CONTROL_MODE` is write-only on HmIP and ignored here.
  */
 export function decodeClimate(
   previous: ClimateControlStatus,
@@ -270,10 +270,9 @@ export function decodeClimate(
   if (parameter === 'HUMIDITY' && typeof value === 'number') {
     return { ...previous, currentHumidity: value, lastFetchedAt: now }
   }
-  if (parameter === 'CONTROL_MODE') {
-    const mode = fromHmControlMode(value)
+  if (parameter === 'SET_POINT_MODE') {
+    const mode = fromHmSetPointMode(value)
     if (mode === null) return null
-    // BOOST is reflected on the preset, not the base mode.
     return { ...previous, mode, lastFetchedAt: now }
   }
   if (parameter === 'BOOST_MODE' && typeof value === 'boolean') {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Homematic thermostats show the CCU's real mode (manual vs auto) instead of always auto
+
 ## [1.2.193] - 2026-11-13
 
 ### Changed

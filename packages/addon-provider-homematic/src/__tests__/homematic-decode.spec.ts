@@ -4,7 +4,7 @@ import {
   decodeClimate,
   decodeCover,
   decodeLock,
-  fromHmControlMode,
+  fromHmSetPointMode,
   levelToPercent,
   toHmClimateMode,
 } from '../homematic-decode.js'
@@ -48,24 +48,20 @@ describe('toHmClimateMode', () => {
   })
 })
 
-describe('fromHmControlMode', () => {
-  it('maps the CONTROL_MODE wire index (fallback, unresolved value list) to HvacMode', () => {
-    expect(fromHmControlMode(0)).toBe('auto')
-    expect(fromHmControlMode(1)).toBe('heat')
-    expect(fromHmControlMode(2)).toBe('heat')
-    expect(fromHmControlMode(99)).toBeNull()
+describe('fromHmSetPointMode', () => {
+  it('maps the SET_POINT_MODE wire index (fallback, unresolved value list) to HvacMode', () => {
+    expect(fromHmSetPointMode(0)).toBe('auto')
+    expect(fromHmSetPointMode(1)).toBe('heat')
+    expect(fromHmSetPointMode(2)).toBe('heat')
+    expect(fromHmSetPointMode(99)).toBeNull()
   })
 
-  // nodehomematic converts CONTROL_MODE's ENUM to the resolved value-list
-  // member (`'AUTO-MODE'` etc), same as LOCK_STATE / ACTIVITY_STATE — a
-  // decoder that only accepted the numeric index never decoded it at all.
-  it('maps the CONVERTED CONTROL_MODE string the library actually delivers', () => {
-    expect(fromHmControlMode('AUTO-MODE')).toBe('auto')
-    expect(fromHmControlMode('auto-mode')).toBe('auto')
-    expect(fromHmControlMode('MANU-MODE')).toBe('heat')
-    expect(fromHmControlMode('PARTY-MODE')).toBe('heat')
-    expect(fromHmControlMode('BOOST-MODE')).toBe('heat')
-    expect(fromHmControlMode('nope')).toBeNull()
+  it('maps the CONVERTED SET_POINT_MODE string the library delivers', () => {
+    expect(fromHmSetPointMode('AUTO')).toBe('auto')
+    expect(fromHmSetPointMode('auto')).toBe('auto')
+    expect(fromHmSetPointMode('MANU')).toBe('heat')
+    expect(fromHmSetPointMode('PARTY')).toBe('heat')
+    expect(fromHmSetPointMode('nope')).toBeNull()
   })
 })
 
@@ -236,9 +232,12 @@ describe('decodeClimate', () => {
     expect(decodeClimate(CLIMATE, 'HUMIDITY', 48, 7)?.currentHumidity).toBe(48)
   })
 
-  it('decodes CONTROL_MODE into mode', () => {
-    expect(decodeClimate(CLIMATE, 'CONTROL_MODE', 1, 7)?.mode).toBe('heat')
-    expect(decodeClimate(CLIMATE, 'CONTROL_MODE', 0, 7)?.mode).toBe('auto')
+  it('derives mode from SET_POINT_MODE, not CONTROL_MODE (HmIP CONTROL_MODE always reads 0)', () => {
+    expect(decodeClimate(CLIMATE, 'CONTROL_MODE', 0, 7)).toBeNull()
+    expect(decodeClimate(CLIMATE, 'SET_POINT_MODE', 1, 7)?.mode).toBe('heat')
+    expect(decodeClimate(CLIMATE, 'SET_POINT_MODE', 0, 7)?.mode).toBe('auto')
+    expect(decodeClimate(CLIMATE, 'SET_POINT_MODE', 'MANU', 7)?.mode).toBe('heat')
+    expect(decodeClimate(CLIMATE, 'SET_POINT_MODE', 'AUTO', 7)?.mode).toBe('auto')
   })
 
   it('decodes BOOST_MODE into the preset', () => {
