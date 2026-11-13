@@ -289,6 +289,11 @@ describe('MqttHaDevice on a contact sensor and a remote', () => {
   })
 })
 
+type IrSlice = {
+  lastSend?: { ok: boolean; error: string | null; medium: string } | null
+  lastLearn?: { ok: boolean; error: string | null } | null
+}
+
 interface IrProvider {
   send(input: {
     timings?: number[]
@@ -305,7 +310,11 @@ interface IrProvider {
 describe('MqttHaDevice on a zigbee2mqtt IR blaster', () => {
   const entities = entitiesOf(irBlasterMessages())
 
-  async function activate(): Promise<{ provider: IrProvider; published: [string, string][] }> {
+  async function activate(): Promise<{
+    provider: IrProvider
+    published: [string, string][]
+    state: () => IDeviceRuntimeState
+  }> {
     const published: [string, string][] = []
     mqttHaStateGateway.setPublisher(async ({ topic, payload }) => {
       published.push([topic, payload])
@@ -317,7 +326,7 @@ describe('MqttHaDevice on a zigbee2mqtt IR blaster', () => {
     await h.device.onActivate()
     const provider = h.providers.get('ir-transmitter') as IrProvider
     expect(provider).toBeDefined()
-    return { provider, published }
+    return { provider, published, state: h.state }
   }
 
   it('is an ir-transmitter that learns and replays tuya codes', async () => {
@@ -447,6 +456,43 @@ describe('MqttHaDevice on a zigbee2mqtt IR blaster', () => {
     pending.catch(() => undefined)
     await vi.waitFor(() => expect(published).toHaveLength(1))
     expect(published).toEqual([[`${IR_TOPIC}/set/learn_ir_code`, 'ON']])
+  })
+
+  it('records a successful send as ok', async () => {
+    const { provider, state } = await activate()
+    await provider.send({ native: { format: 'tuya', code: 'AxAAIABAAw==' } })
+    expect(state().getCapState<IrSlice>('ir-transmitter')?.lastSend).toMatchObject({
+      ok: true,
+      error: null,
+      medium: 'ir',
+    })
+  })
+
+  it('records a successful learn and a timeout', async () => {
+    mqttHaStateGateway.recordMessage(BROKER, IR_TOPIC, JSON.stringify({ learned_ir_code: 'AAAA' }))
+    const learned = await activate()
+    const pending = learned.provider.learn({ timeoutMs: 5000 })
+    await vi.waitFor(() => expect(learned.published).toHaveLength(1))
+    deliver(
+      mqttHaStateGateway,
+      entities,
+      IR_TOPIC,
+      JSON.stringify({ learned_ir_code: 'AxAAIABAAw==' }),
+    )
+    await pending
+    expect(learned.state().getCapState<IrSlice>('ir-transmitter')?.lastLearn).toMatchObject({
+      ok: true,
+      error: null,
+    })
+
+    const timed = await activate()
+    await expect(timed.provider.learn({ timeoutMs: 20 })).rejects.toMatchObject({
+      i18nCode: 'ir-transmitter.learn-timeout',
+    })
+    expect(timed.state().getCapState<IrSlice>('ir-transmitter')?.lastLearn).toMatchObject({
+      ok: false,
+      error: 'ir-transmitter.learn-timeout',
+    })
   })
 
   it('records a refused send as not ok with the error code', async () => {

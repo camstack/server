@@ -93,7 +93,7 @@ export function irTransmitterScene(input: IrTransmitterSceneInput): IrTransmitte
     ],
     learned: learnedLine(probe, t),
     learnLabel: t('uiLibrary.deviceCard.ir.learn', 'Learn a code'),
-    learnEnabled: info !== null && !probe.pending && !input.readOnly,
+    learnEnabled: info !== null && info.learn && !probe.pending && !input.readOnly,
   }
 }
 

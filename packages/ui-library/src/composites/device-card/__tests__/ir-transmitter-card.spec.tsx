@@ -61,6 +61,19 @@ describe('ir transmitter scene', () => {
     expect(view.learnEnabled).toBe(true)
   })
 
+  it('does not offer learn when the transmitter cannot, even if the card is writable', () => {
+    const view = scene({
+      info: { media: ['ir'], learn: false },
+      slice: { lastSend: null, lastLearn: null },
+      probe: IDLE,
+      readOnly: false,
+      now: NOW,
+      t: defaultUiText,
+    })
+    expect(view.readings.find((row) => row.id === 'canLearn')?.value).toBe('No')
+    expect(view.learnEnabled).toBe(false)
+  })
+
   it('names a refused send and a learned native code', () => {
     const sent = scene({
       info: { media: ['ir'], learn: true },

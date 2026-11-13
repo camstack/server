@@ -4,6 +4,7 @@ import {
   IrMediumSchema,
   irTransmitterCapability,
   irTransmitterErrorCode,
+  irTransmitterRecordsUpdate,
   irTransmitterStateAfter,
   userError,
   type DeviceContext,
@@ -87,7 +88,8 @@ export class EspIrTransmitterDevice extends BaseDevice<typeof espIrTransmitterSc
   }
 
   /**
-   * Run a send or a learn and record it, success and refusal alike. The record
+   * Run a send or a learn and record it, success and refusal alike. A learn
+   * the board cannot do is not an attempt, so it is not recorded. The record
    * is the cap's runtime state — this device keeps no second copy.
    */
   private async attempt<T>(
@@ -112,6 +114,7 @@ export class EspIrTransmitterDevice extends BaseDevice<typeof espIrTransmitterSc
     const medium = this.declaredMedium()
     const update: IrTransmitterStateUpdate =
       kind === 'send' ? { kind, ok, error, medium } : { kind, ok, error }
+    if (!irTransmitterRecordsUpdate(update)) return
     const previous = this.getCapSlice(irTransmitterCapability)
     this.setCapSlice(irTransmitterCapability, irTransmitterStateAfter(previous, update, Date.now()))
   }

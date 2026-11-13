@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- An IR transmitter remembers its last send and its last learn, including a refusal.
+- An IR transmitter remembers its last send and its last learn, including a refusal. A learn the transmitter cannot do is not recorded.
 
 ## [1.2.560] - 2026-11-13
 

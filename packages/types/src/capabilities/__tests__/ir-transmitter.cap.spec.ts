@@ -3,6 +3,7 @@ import { userError } from '../../i18n/camstack-error.js'
 import {
   irTransmitterCapability,
   irTransmitterErrorCode,
+  irTransmitterRecordsUpdate,
   irTransmitterStateAfter,
 } from '../ir-transmitter.cap.js'
 import { IrTimingsSchema, TransmitSettingsSchema, IR_TIMINGS_MAX } from '../../ir/ir-timings.js'
@@ -155,6 +156,24 @@ describe('ir-transmitter runtime state', () => {
     })
     expect(next.lastLearn).toEqual(previous.lastLearn)
     expect(irTransmitterCapability.runtimeState.safeParse(next).success).toBe(true)
+  })
+
+  it('does not fold learn-unsupported into lastLearn', () => {
+    const previous = irTransmitterStateAfter(
+      null,
+      { kind: 'send', ok: true, error: null, medium: 'ir' },
+      NOW,
+    )
+    const update = {
+      kind: 'learn' as const,
+      ok: false,
+      error: 'ir-transmitter.learn-unsupported',
+    }
+    expect(irTransmitterRecordsUpdate(update)).toBe(false)
+    const next = irTransmitterStateAfter(previous, update, NOW + 5)
+    expect(next.lastLearn).toBeNull()
+    expect(next.lastSend).toEqual(previous.lastSend)
+    expect(next.lastFetchedAt).toBe(previous.lastFetchedAt)
   })
 
   it('reads the typed code off a refusal', () => {

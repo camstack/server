@@ -2267,6 +2267,7 @@ export {
   type IrTransmitterRuntimeState,
   type IrTransmitterStateUpdate,
   irTransmitterStateAfter,
+  irTransmitterRecordsUpdate,
   irTransmitterErrorCode,
   IR_LEARN_TIMEOUT_DEFAULT_MS,
   IR_LEARN_TIMEOUT_MAX_MS,

@@ -84,7 +84,7 @@ export function irFixtures(): readonly IrFixture[] {
         readings: readings('No', 'Mai', 'Mai'),
         learned: 'tuya: AxAAIABAAw==',
         learnLabel: 'Apprendi un codice',
-        learnEnabled: true,
+        learnEnabled: false,
       },
     },
   ]

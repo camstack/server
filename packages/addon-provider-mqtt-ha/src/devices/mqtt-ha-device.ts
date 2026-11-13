@@ -17,6 +17,7 @@ import {
   ingestReading,
   irTransmitterCapability,
   irTransmitterErrorCode,
+  irTransmitterRecordsUpdate,
   irTransmitterStateAfter,
   motionCapability,
   numericSensorCapability,
@@ -734,7 +735,10 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
     this.ctx.registerNativeCap(irTransmitterCapability, provider)
   }
 
-  /** Record every send and learn on the cap slice, including a typed refusal. */
+  /**
+   * Record every send and learn on the cap slice, including a typed refusal.
+   * A learn the transmitter cannot do is not an attempt and is not recorded.
+   */
   private async attemptIr<T>(
     kind: IrTransmitterStateUpdate['kind'],
     media: readonly IrMedium[],
@@ -759,6 +763,7 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
   ): void {
     const update: IrTransmitterStateUpdate =
       kind === 'send' ? { kind, ok, error, medium } : { kind, ok, error }
+    if (!irTransmitterRecordsUpdate(update)) return
     const previous = this.getCapSlice(irTransmitterCapability)
     this.setCapSlice(irTransmitterCapability, irTransmitterStateAfter(previous, update, Date.now()))
   }

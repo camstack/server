@@ -86,6 +86,14 @@ export type IrTransmitterStateUpdate =
       readonly error: string | null
     }
 
+/**
+ * A learn the transmitter cannot do is not an attempt. Recording it would show
+ * a failed learn for a device that never started one.
+ */
+export function irTransmitterRecordsUpdate(update: IrTransmitterStateUpdate): boolean {
+  return !(update.kind === 'learn' && update.error === 'ir-transmitter.learn-unsupported')
+}
+
 /** The next slice after one send or learn. The other record is left as it was. */
 export function irTransmitterStateAfter(
   previous: IrTransmitterRuntimeState | null,
@@ -93,6 +101,7 @@ export function irTransmitterStateAfter(
   now: number,
 ): IrTransmitterRuntimeState {
   const prior = previous ?? { lastSend: null, lastLearn: null, lastFetchedAt: now }
+  if (!irTransmitterRecordsUpdate(update)) return prior
   if (update.kind === 'send') {
     return {
       lastSend: { at: now, ok: update.ok, error: update.error, medium: update.medium },
@@ -170,7 +179,8 @@ export const irTransmitterCapability = {
   },
   /**
    * Last send and last learn, for the device card. Written by the provider
-   * on every attempt, including a typed refusal.
+   * on every attempt, including a typed refusal. A `learn-unsupported`
+   * refusal is not an attempt and is not written.
    */
   runtimeState: IrTransmitterRuntimeStateSchema,
   /**

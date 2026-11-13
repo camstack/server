@@ -3048,7 +3048,7 @@
 
 ### `ir-transmitter` → `irTransmitter.*`
 
-- **Source:** `packages/types/src/capabilities/ir-transmitter.cap.ts:131`
+- **Source:** `packages/types/src/capabilities/ir-transmitter.cap.ts:140`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `generic`
 - **Archetypes:** runtimeState
 - **Provider interface:** `IIrTransmitterProvider`

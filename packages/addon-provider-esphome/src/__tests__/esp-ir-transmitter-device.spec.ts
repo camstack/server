@@ -112,6 +112,31 @@ describe('EspIrTransmitterDevice', () => {
     expect(link.serviceCalls).toEqual([])
   })
 
+  it('records a successful send as ok', async () => {
+    const { device, providers, link } = setup()
+    const provider = providers.get('ir-transmitter') as {
+      send: (input: { timings: number[] }) => Promise<unknown>
+    }
+    await provider.send({ timings: TRAIN })
+    expect(link.serviceCalls).toHaveLength(1)
+    expect(
+      device.runtimeState.getCapState<{
+        lastSend?: { ok: boolean; error: string | null; medium: string }
+      }>('ir-transmitter')?.lastSend,
+    ).toMatchObject({ ok: true, error: null, medium: 'ir' })
+  })
+
+  it('does not record learn-unsupported as a failed learn', async () => {
+    const { device, providers } = setup()
+    const provider = providers.get('ir-transmitter') as {
+      learn: () => Promise<unknown>
+    }
+    await expect(provider.learn()).rejects.toMatchObject({
+      i18nCode: 'ir-transmitter.learn-unsupported',
+    })
+    expect(device.runtimeState.getCapState('ir-transmitter')).toBeUndefined()
+  })
+
   it('records a refused send as not ok with the error code', async () => {
     const { device, providers } = setup()
     const provider = providers.get('ir-transmitter') as {
