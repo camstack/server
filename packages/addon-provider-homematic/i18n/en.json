@@ -23,11 +23,5 @@
   "connection.s_interfaces.enableBidcosRf.description": "HM-RCV-50, RPI-RF-MOD and classic BidCos devices appear only with this on.",
   "device.buttonEvents.title": "Button events",
   "device.buttonEvents.hint.label": "Button events",
-  "device": {
-    "buttonEvents": {
-      "hint": {
-        "content": "The CCU does not send these presses — enable button events on the CCU page"
-      }
-    }
-  }
+  "device.buttonEvents.hint.content": "The CCU does not send these presses — enable button events on the CCU page"
 }
