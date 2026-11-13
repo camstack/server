@@ -173,6 +173,7 @@ function renderPanel(
       | 'rowFilter'
       | 'typedId'
       | 'testLabel'
+      | 'testHint'
     >
   > = {},
   icons?: ReadonlyMap<string, string>,
@@ -317,8 +318,12 @@ describe('InstancesTable', () => {
           ],
         },
       }
-      renderPanel('?instance=smtp-nodemailer:a', { testLabel: 'Send test' })
-      expect(await screen.findByRole('button', { name: 'Send test' })).toBeTruthy()
+      renderPanel('?instance=smtp-nodemailer:a', {
+        testLabel: 'Send test message',
+        testHint: 'It delivers a real message.',
+      })
+      expect(await screen.findByRole('button', { name: 'Send test message' })).toBeTruthy()
+      expect(screen.getByText('It delivers a real message.')).toBeTruthy()
     })
 
     it('a kind that cannot be tested shows no test, whatever its provider says', async () => {

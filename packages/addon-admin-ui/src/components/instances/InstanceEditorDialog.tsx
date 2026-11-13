@@ -89,6 +89,8 @@ export interface InstanceEditorDialogProps {
   readonly typedId?: TypedIdRuleFor
   /** The words of the test button, already translated (a notifier's "Send test"); absent: "Test connection". */
   readonly testLabel?: string
+  /** One sentence under the form saying what the test does (a real message to the typed destination). */
+  readonly testHint?: string
 }
 
 const NO_VALUES: Readonly<Record<string, unknown>> = {}
@@ -103,6 +105,7 @@ export function InstanceEditorDialog({
   lead,
   typedId,
   testLabel,
+  testHint,
 }: InstanceEditorDialogProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
@@ -544,6 +547,9 @@ export function InstanceEditorDialog({
               <Component key={id} schema={hydrated} values={values} onValuesChange={setValues} />
             ))}
           </>
+        )}
+        {testHint !== undefined && (kind?.canTest ?? description.canTest) && (
+          <p className="text-xs text-foreground-subtle">{testHint}</p>
         )}
         {verdict !== null && <TestVerdictBanner verdict={verdict} />}
       </div>

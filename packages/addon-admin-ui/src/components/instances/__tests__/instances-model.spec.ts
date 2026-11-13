@@ -30,6 +30,7 @@ import {
   type InstanceRow,
   providersOf,
   targetsPinning,
+  linkedInstanceOf,
   type HolderData,
 } from '../instances-model'
 
@@ -93,6 +94,61 @@ const names = new Map([
 const descriptions = new Map([['winston-logging', 'Rotated files']])
 
 describe('buildRows', () => {
+  it('names on each row the instances its declared links point at, from the row values', () => {
+    const notifiers: HolderData = {
+      addonId: 'notifiers',
+      description: {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'target',
+        canTest: true,
+        kinds: [{ id: 'email', label: 'Email', functionCap: 'notification-output' }],
+        links: [{ kind: 'notify-email', field: 'sendWith', to: { cap: 'smtp-provider' } }],
+      },
+      instances: [
+        {
+          id: 't-1',
+          name: 'Ops mail',
+          configured: true,
+          enabled: true,
+          formValues: { sendWith: 'acct-1' },
+          kind: 'email',
+        },
+        {
+          id: 't-2',
+          name: 'Not linked yet',
+          configured: true,
+          enabled: true,
+          formValues: { sendWith: '' },
+          kind: 'email',
+        },
+      ],
+    }
+    const rows = buildRows({
+      functionProviders: [{ addonId: 'notifiers', isActive: true }],
+      holders: [notifiers],
+      displayNames: names,
+      descriptions,
+    })
+    expect(rows[0]).toMatchObject({
+      links: [{ field: 'sendWith', cap: 'smtp-provider', instanceId: 'acct-1' }],
+    })
+    expect(rows[1]).not.toHaveProperty('links')
+  })
+
+  it('resolves a link only to an instance of the kind it names', () => {
+    const candidate = { id: 'acct-1', kind: 'google-account' }
+    expect(linkedInstanceOf([candidate], { field: 'f', cap: 'c', instanceId: 'acct-1' })).toBe(
+      candidate,
+    )
+    expect(
+      linkedInstanceOf([candidate], { field: 'f', cap: 'c', kind: 'mqtt', instanceId: 'acct-1' }),
+    ).toBeUndefined()
+    expect(
+      linkedInstanceOf([candidate], { field: 'f', cap: 'c', instanceId: 'other' }),
+    ).toBeUndefined()
+  })
+
   it('merges instance rows of instance-holding providers with fixed rows of the others', () => {
     const rows = buildRows({
       functionProviders: [
@@ -247,6 +303,13 @@ describe('targetsPinning', () => {
       { name: 'Mail other', formValues: { sendWith: 'relay-default' } },
     ]
     expect(targetsPinning(targets, 'inst-aaaaaaaa')).toEqual(['Mail ops'])
+  })
+  it('honours the relay a target named before the migration linked it', () => {
+    const targets = [
+      { name: 'Mail legacy', formValues: { smtpAddonId: 'smtp', smtpInstanceId: 'relay-7' } },
+      { name: 'Mail linked', formValues: { sendWith: 'relay-7' } },
+    ]
+    expect(targetsPinning(targets, 'relay-7')).toEqual(['Mail legacy', 'Mail linked'])
   })
 })
 

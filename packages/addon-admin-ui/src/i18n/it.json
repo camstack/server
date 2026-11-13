@@ -834,7 +834,8 @@
       "emptyDescription": "Aggiungi un target per inviare le notifiche a ntfy, Pushover, Telegram, Home Assistant e altro.",
       "testTarget": "Invia un test a {{name}}",
       "unknownUser": "utente sconosciuto",
-      "sendTest": "Invia prova"
+      "sendTest": "Invia messaggio di prova",
+      "sendTestHint": "Invia messaggio di prova recapita una notifica vera alla destinazione indicata sopra, prima di salvare."
     },
     "notificationTestPanel": {
       "level": "Livello",

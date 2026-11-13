@@ -1,5 +1,7 @@
+import { Tooltip, TooltipContent, TooltipTrigger, useInstancesOfCap } from '@camstack/ui-library'
 import { type ReactElement, useState } from 'react'
 import { useAddonIconUrl } from '../../contexts/addon-icons-context'
+import { linkedInstanceOf, type RowLink } from './instances-model'
 
 /** What a Kind cell shows: the providing addon, the kind's label and, when it declares one, its icon. */
 export interface KindCellProps {
@@ -7,6 +9,8 @@ export interface KindCellProps {
   readonly label: string
   /** The kind's own icon (`IntegrationInstanceKind.iconUrl`); absent → the addon's icon. */
   readonly iconUrl?: string
+  /** The instances the row's record links to; each shows as a small badge, named on hover. */
+  readonly links?: readonly RowLink[]
 }
 
 /**
@@ -15,22 +19,52 @@ export interface KindCellProps {
  * falls back to the next one, and with none the label stands alone — no
  * placeholder tile.
  */
-export function KindCell({ addonId, label, iconUrl }: KindCellProps): ReactElement {
+export function KindCell({ addonId, label, iconUrl, links }: KindCellProps): ReactElement {
   return (
     <span className="inline-flex items-center gap-1.5 text-foreground-muted">
       <KindIcon addonId={addonId} {...(iconUrl !== undefined ? { iconUrl } : {})} />
+      {(links ?? []).map((link) => (
+        <LinkedInstanceBadge key={`${link.field}:${link.instanceId}`} link={link} />
+      ))}
       {label}
     </span>
+  )
+}
+
+/**
+ * The badge of one linked instance: its kind's icon (else its addon's), its name on hover. A link
+ * the target cap does not list (yet, or any more) shows nothing: the row's own status says more.
+ */
+function LinkedInstanceBadge({ link }: { readonly link: RowLink }): ReactElement | null {
+  const query = useInstancesOfCap({
+    functionCap: link.cap,
+    ...(link.kind !== undefined ? { kind: link.kind } : {}),
+  })
+  const linked = linkedInstanceOf(query.data ?? [], link)
+  if (linked === undefined) return null
+  return (
+    <Tooltip>
+      <TooltipTrigger aria-label={linked.name} data-testid="linked-instance-badge">
+        <KindIcon
+          addonId={linked.addonId}
+          {...(linked.iconUrl !== undefined ? { iconUrl: linked.iconUrl } : {})}
+          small
+        />
+      </TooltipTrigger>
+      <TooltipContent>{linked.name}</TooltipContent>
+    </Tooltip>
   )
 }
 
 interface KindIconProps {
   readonly addonId: string
   readonly iconUrl?: string
+  /** The badge size, for a linked instance beside the kind's own icon. */
+  readonly small?: boolean
 }
 
 /** The first icon of (kind, addon) that loads; null when neither does. */
-export function KindIcon({ addonId, iconUrl }: KindIconProps): ReactElement | null {
+export function KindIcon({ addonId, iconUrl, small }: KindIconProps): ReactElement | null {
   const addonIcon = useAddonIconUrl(addonId)
   const [broken, setBroken] = useState<ReadonlySet<string>>(new Set())
   const src = [iconUrl, addonIcon].find(
@@ -42,7 +76,7 @@ export function KindIcon({ addonId, iconUrl }: KindIconProps): ReactElement | nu
     <img
       src={src}
       alt=""
-      className="h-4 w-4 shrink-0 rounded"
+      className={small === true ? 'h-3 w-3 shrink-0 rounded-sm' : 'h-4 w-4 shrink-0 rounded'}
       onError={() => setBroken((prev) => new Set([...prev, src]))}
     />
   )

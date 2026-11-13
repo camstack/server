@@ -120,6 +120,8 @@ export interface InstancesTableProps {
   readonly rowFilter?: (row: PanelRow) => boolean
   /** The words of the editor's test button, already translated (a notifier's "Send test"). */
   readonly testLabel?: string
+  /** What that test does, one sentence under the form, already translated. */
+  readonly testHint?: string
 }
 
 /** The badge tooltip: the provider's detail and, when known, when the remote was last probed. */
@@ -214,6 +216,7 @@ export function InstancesTable({
   typedId,
   rowFilter,
   testLabel,
+  testHint,
 }: InstancesTableProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
@@ -383,6 +386,7 @@ export function InstancesTable({
                     addonId={row.addonId}
                     label={row.kindLabel}
                     {...(row.kindIconUrl !== undefined ? { iconUrl: row.kindIconUrl } : {})}
+                    {...(row.links !== undefined ? { links: row.links } : {})}
                   />
                 ) : (
                   <span className="text-foreground-muted" />
@@ -645,6 +649,7 @@ export function InstancesTable({
           {...(lead !== undefined ? { lead } : {})}
           {...(typedId !== undefined ? { typedId } : {})}
           {...(testLabel !== undefined ? { testLabel } : {})}
+          {...(testHint !== undefined ? { testHint } : {})}
         />
       )}
     </>
@@ -723,11 +728,13 @@ function EditDialog({
   typedId,
   functionCap,
   testLabel,
+  testHint,
 }: {
   readonly refValue: string
   readonly data: InstancesData
   readonly functionCap: string
   readonly testLabel?: string
+  readonly testHint?: string
   readonly nameOf: (addonId: string) => string
   readonly onClose: () => void
   /** Opens a record's editor; a create hands over to it so the record's lead (setup, pairing) shows. */
@@ -771,6 +778,7 @@ function EditDialog({
       onOpen={onOpen}
       {...(typedId !== undefined ? { typedId } : {})}
       {...(testLabel !== undefined ? { testLabel } : {})}
+      {...(testHint !== undefined ? { testHint } : {})}
     />
   )
 }

@@ -56,6 +56,54 @@ export interface InstanceRow {
    * disabled with the reason. Absent when running or not known.
    */
   readonly notRunning?: string
+  /** The instances of other function caps this row's record links to ({@link rowLinks}). */
+  readonly links?: readonly RowLink[]
+}
+
+/** One link of a row: the field holding the id, the cap (and kind) of the instance it names. */
+export interface RowLink {
+  readonly field: string
+  readonly cap: string
+  readonly kind?: string
+  readonly instanceId: string
+}
+
+/**
+ * The links a record carries: every link its provider declares (`describe().links`) whose field
+ * holds an instance id in the record's values, as a string or in a string list. Like the hub's own
+ * link index, the link is matched by its field; the id is resolved against the target cap's
+ * instances, so a field another kind uses for something else names nothing there.
+ */
+export function rowLinks(
+  description: IntegrationInstanceDescription,
+  formValues: Readonly<Record<string, unknown>>,
+): readonly RowLink[] {
+  const out: RowLink[] = []
+  for (const link of description.links ?? []) {
+    const value = formValues[link.field]
+    const ids = Array.isArray(value) ? value : [value]
+    for (const id of ids) {
+      if (typeof id !== 'string' || id === '') continue
+      if (out.some((l) => l.field === link.field && l.instanceId === id)) continue
+      out.push({
+        field: link.field,
+        cap: link.to.cap,
+        ...(link.to.kind !== undefined ? { kind: link.to.kind } : {}),
+        instanceId: id,
+      })
+    }
+  }
+  return out
+}
+
+/** The instance a link names among the instances of its cap; it must be of the kind the link names. */
+export function linkedInstanceOf<T extends { readonly id: string; readonly kind: string }>(
+  candidates: readonly T[],
+  link: RowLink,
+): T | undefined {
+  return candidates.find(
+    (c) => c.id === link.instanceId && (link.kind === undefined || c.kind === link.kind),
+  )
 }
 
 export interface FixedRow {
@@ -101,6 +149,7 @@ export function buildRows(input: BuildRowsInput): readonly PanelRow[] {
     const notRunning = input.notRunning?.get(provider.addonId)
     for (const instance of holder.instances) {
       const kind = findKind(holder.description, instance.kind)
+      const links = rowLinks(holder.description, instance.formValues)
       rows.push({
         kind: 'instance',
         key: `${provider.addonId}:${instance.id}`,
@@ -119,6 +168,7 @@ export function buildRows(input: BuildRowsInput): readonly PanelRow[] {
         ...(kind?.connectPath !== undefined ? { connectPath: kind.connectPath } : {}),
         ...(kind?.disconnectPath !== undefined ? { disconnectPath: kind.disconnectPath } : {}),
         ...(notRunning !== undefined ? { notRunning } : {}),
+        ...(links.length > 0 ? { links } : {}),
       })
     }
   }
@@ -534,13 +584,21 @@ export interface PinningTarget {
 
 /** The email target field that links the instance sending its mail (`notifiers` `sendWith`). */
 const SENDER_LINK_KEY = 'sendWith'
+/** The relay a target named before the email-send-with migration linked it; honoured until then. */
+const LEGACY_SENDER_KEY = 'smtpInstanceId'
 
 /** Names of the notification targets that send with one instance: the delete warning and the row hint. */
 export function targetsPinning(
   targets: readonly PinningTarget[],
   instanceId: string,
 ): readonly string[] {
-  return targets.filter((t) => t.formValues[SENDER_LINK_KEY] === instanceId).map((t) => t.name)
+  return targets
+    .filter(
+      (t) =>
+        t.formValues[SENDER_LINK_KEY] === instanceId ||
+        t.formValues[LEGACY_SENDER_KEY] === instanceId,
+    )
+    .map((t) => t.name)
 }
 
 /**
