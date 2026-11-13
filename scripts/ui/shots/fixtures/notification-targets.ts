@@ -8,7 +8,6 @@
 import { alexaTargetKind } from '../../../../packages/addon-import-alexa/src/speak/provider'
 import { ALEXA_ICON_SVG } from '../../../../packages/addon-import-alexa/src/speak/icon-routes'
 import { buildEmailDescriptor } from '../../../../packages/addon-notifiers/src/adapters/email'
-import { NOTIFIER_ICONS } from '../../../../packages/addon-notifiers/src/icons-data'
 import { defineFixtures } from './_define'
 
 /** Invented Echo devices. Not a real account. */
@@ -74,10 +73,14 @@ const webhookKind = {
   caps: alexaKind.caps,
 }
 
+/** An envelope glyph; the addon's icon module needs Node's Buffer, which the harness lacks. */
+const EMAIL_ICON_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#e5484d" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>'
+
 /** The Email kind as the hub serves it: ONE "Send with" link, and its brand icon (inline here). */
 const emailKind = {
   ...buildEmailDescriptor(),
-  iconUrl: `data:image/svg+xml,${encodeURIComponent(String(NOTIFIER_ICONS.email.body))}`,
+  iconUrl: `data:image/svg+xml,${encodeURIComponent(EMAIL_ICON_SVG)}`,
 }
 
 /** The targets as instances of `notification-output`, per provider addon (D1013). */
