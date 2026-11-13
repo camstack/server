@@ -82,6 +82,7 @@ describe('TemplatesService', () => {
     expect(await service.delete({ id: 't1' })).toEqual({
       status: 'in-use',
       devices: [{ deviceId: 7, name: 'Salotto TV' }],
+      automations: [],
     })
     expect(asked).toEqual(['t1'])
     expect(await service.get({ id: 't1' })).not.toBeNull()

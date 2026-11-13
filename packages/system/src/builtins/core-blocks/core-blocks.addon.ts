@@ -29,6 +29,7 @@ import {
   type CoreBlockInput,
   coreBlockComposition,
   coreBlocksCapability,
+  resolveCoreBlockEntry,
   defineAddonMigrations,
   integrationInstancesCapability,
   seedInstanceOnce,
@@ -89,6 +90,7 @@ import {
   type RemoteRuntime,
   seedRemoteSlices,
 } from './remote-wiring.js'
+import { automationTemplateInstancesOver } from './automation-template-instances.js'
 import { buildFanPresetsRuntime, type FanPresetsRuntime } from './fan-presets-wiring.js'
 import { BlockSettingsStore } from './block-settings-store.js'
 import { type BlockTypeLib, loadBlockTypeDefs } from './block-type-defs.js'
@@ -380,7 +382,34 @@ export class CoreBlocksAddon extends BaseAddon {
       api: () => this.ctx.api,
       logger: this.ctx.logger,
       hasNative: (deviceId) => this.hasNativeMediaPlayer(deviceId),
+      automationInstances: automationTemplateInstancesOver({
+        blocks: () => this.requireStore().list(),
+        saveCode: (blockId, code) => this.saveGeneratedCode(blockId, code),
+        logger: this.ctx.logger.child('automation-templates'),
+      }),
     })
+  }
+
+  /**
+   * A regenerated automation (a template instance re-expanded, #527) saved the
+   * way an operator's edit is: through the compile gate, then the store, then a
+   * converge that restarts its runner.
+   */
+  private async saveGeneratedCode(blockId: string, code: string): Promise<void> {
+    const existing = this.requireStore().get(blockId)
+    if (existing === null) throw new Error(`core-blocks: no block "${blockId}"`)
+    // A multi-file block reads its entry file, so the new code goes THERE.
+    const write: Pick<CoreBlockInput, 'code' | 'files' | 'entry'> =
+      existing.files === undefined
+        ? { code }
+        : {
+            code,
+            files: { ...existing.files, [resolveCoreBlockEntry(existing.entry)]: code },
+            entry: resolveCoreBlockEntry(existing.entry),
+          }
+    await this.gate(write)
+    await this.requireStore().update(blockId, write)
+    this.convergeSoon()
   }
 
   /** A driver's native media-player cap reads the device; the composer's own native holds no reading. */

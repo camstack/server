@@ -103,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device Export tab shows a derived 'Name on <instance>' field for every export that exposes the device, saved through setExposedName.
 - A light group's source picker and save check now see each member's switch sub-role, so a switch-light relay can join a light group.
 - A stored token grant, internal action or composed device that names the retired thermostat type loads again, read as climate
+- Saving an automation template re-expands every automation made from it; an automation that no longer fits is flagged and keeps its last body; a template in use by an automation cannot be deleted
 
 ### Removed
 

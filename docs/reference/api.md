@@ -4776,7 +4776,7 @@
 
 ### `template` → `template.*`
 
-- **Source:** `packages/types/src/capabilities/template.cap.ts:56`
+- **Source:** `packages/types/src/capabilities/template.cap.ts:67`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `ITemplateProvider`

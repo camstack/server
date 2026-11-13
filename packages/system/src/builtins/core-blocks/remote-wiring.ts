@@ -36,6 +36,7 @@ import {
   type RemoteSliceWriter,
 } from './remote-service.js'
 import { TemplatesService, type TemplateUsage } from './templates-service.js'
+import type { AutomationTemplateInstances } from './automation-template-instances.js'
 
 /** The key of the device's settings store that holds its remote configuration. */
 export const REMOTE_STORE_KEY = 'remote'
@@ -55,6 +56,8 @@ export interface RemoteRuntimeDeps {
   readonly logger: IScopedLogger
   /** Whether a driver's native media-player cap reads the device (the redirect's predicate). */
   readonly hasNative: (deviceId: number) => boolean
+  /** The automations made from a template (#527); absent where no block store runs. */
+  readonly automationInstances?: AutomationTemplateInstances
   /** The wait between two sends of a repeat; a spec drives it. */
   readonly sleep?: (ms: number) => Promise<void>
   readonly now?: () => number
@@ -335,6 +338,7 @@ export function buildRemoteRuntime(deps: RemoteRuntimeDeps): RemoteRuntime {
   const templates = new TemplatesService({
     templates: templateRows,
     usage: templateUsageOver(deps.settings, deps.api),
+    ...(deps.automationInstances === undefined ? {} : { automations: deps.automationInstances }),
     logger: deps.logger.child('templates'),
   })
   const remote = new RemoteService({

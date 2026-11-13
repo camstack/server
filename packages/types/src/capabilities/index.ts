@@ -2230,6 +2230,8 @@ export {
 export {
   type ITemplateProvider,
   TEMPLATE_WRITE_REFUSALS,
+  type TemplateAutomationUser,
+  TemplateAutomationUserSchema,
   type TemplateDeleteResult,
   TemplateDeleteResultSchema,
   type TemplateRecord,

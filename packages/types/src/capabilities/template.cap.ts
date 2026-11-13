@@ -8,7 +8,9 @@ import { TemplateKindSchema } from '../template/template-kinds.js'
  * button grid of a remote) and the schema each payload must satisfy are
  * declared by the system in `template-kinds.ts`. Nothing here is specific to a
  * kind: the engine validates a payload against its kind's schema and, on a
- * delete, asks the kind's owner whether anything still points at the record.
+ * delete, asks the kind's owner whether anything still points at the record
+ * (a device's remote, an automation made from the template). Saving an
+ * `automation` template re-expands every automation made from it (#527).
  *
  * Every refusal is a typed result — a UI says "unknown kind" or names the
  * devices that still use a template, without parsing text.
@@ -43,12 +45,21 @@ export const TemplateUserSchema = z.object({
 })
 export type TemplateUser = z.infer<typeof TemplateUserSchema>
 
+/** An automation made from a template (#527): a core block whose recipe links to it. */
+export const TemplateAutomationUserSchema = z.object({
+  blockId: z.string().min(1),
+  name: z.string(),
+})
+export type TemplateAutomationUser = z.infer<typeof TemplateAutomationUserSchema>
+
 export const TemplateDeleteResultSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('deleted') }),
   z.object({ status: z.literal('not-found') }),
+  /** At least one of the two lists is non-empty. */
   z.object({
     status: z.literal('in-use'),
-    devices: z.array(TemplateUserSchema).min(1),
+    devices: z.array(TemplateUserSchema),
+    automations: z.array(TemplateAutomationUserSchema),
   }),
 ])
 export type TemplateDeleteResult = z.infer<typeof TemplateDeleteResultSchema>

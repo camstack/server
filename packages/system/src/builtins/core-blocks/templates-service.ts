@@ -5,11 +5,16 @@
  * it does not know what a remote is.
  *
  * A delete asks the {@link TemplateUsage} port who still points at the record
- * and refuses with the devices named (typed `in-use`), so a button grid cannot
- * vanish under a device that draws from it.
+ * and refuses with the devices and automations named (typed `in-use`), so a
+ * button grid cannot vanish under a device that draws from it, nor an automation
+ * template under the automations made from it.
+ *
+ * Saving an `automation` template re-expands every automation made from it
+ * (#527) through the {@link AutomationTemplateInstances} port.
  */
 import { randomUUID } from 'node:crypto'
 import {
+  AutomationTemplatePayloadSchema,
   checkTemplatePayload,
   type IScopedLogger,
   type ITemplateProvider,
@@ -17,6 +22,7 @@ import {
   type TemplateRecord,
   type TemplateUser,
 } from '@camstack/types'
+import type { AutomationTemplateInstances } from './automation-template-instances.js'
 import type { TemplateRowBody } from './record-kinds.js'
 
 /** Who still uses a template — answered by whoever owns the pointers. */
@@ -27,6 +33,8 @@ export interface TemplateUsage {
 export interface TemplatesServiceDeps {
   readonly templates: RecordKindHandle<TemplateRowBody>
   readonly usage: TemplateUsage
+  /** The automations made from a template; absent where no block store runs. */
+  readonly automations?: AutomationTemplateInstances
   readonly logger: IScopedLogger
   readonly now?: () => number
   readonly newId?: () => string
@@ -116,18 +124,28 @@ export class TemplatesService implements ITemplateProvider {
       updatedAt: this.now(),
     }
     await this.deps.templates.put({ id, data: body })
+    if (payload !== undefined) await this.reexpandInstances(id, body)
     return { status: 'saved', template: recordOf(id, body) }
+  }
+
+  /** A changed automation template reaches every automation made from it. */
+  private async reexpandInstances(id: string, body: TemplateRowBody): Promise<void> {
+    if (body.kind !== 'automation' || this.deps.automations === undefined) return
+    const parsed = AutomationTemplatePayloadSchema.safeParse(body.payload)
+    if (!parsed.success) return
+    await this.deps.automations.reexpand(id, parsed.data)
   }
 
   readonly delete: ITemplateProvider['delete'] = async ({ id }) => {
     const existing = await this.deps.templates.get(id)
     if (existing === null) return { status: 'not-found' }
-    const [first, ...rest] = await this.deps.usage.devicesUsing(id)
-    if (first !== undefined) {
-      this.deps.logger.info('template: delete refused, devices still use it', {
-        meta: { id, devices: rest.length + 1 },
+    const devices = await this.deps.usage.devicesUsing(id)
+    const automations = (await this.deps.automations?.using(id)) ?? []
+    if (devices.length > 0 || automations.length > 0) {
+      this.deps.logger.info('template: delete refused, something still uses it', {
+        meta: { id, devices: devices.length, automations: automations.length },
       })
-      return { status: 'in-use', devices: [first, ...rest] }
+      return { status: 'in-use', devices: [...devices], automations: [...automations] }
     }
     await this.deps.templates.delete(id)
     return { status: 'deleted' }
