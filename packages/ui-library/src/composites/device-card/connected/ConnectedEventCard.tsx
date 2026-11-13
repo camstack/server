@@ -1,4 +1,9 @@
-import type { EventEmitterStatus } from '@camstack/types'
+import {
+  type EventEmitterStatus,
+  type EventVocabularyCarrier,
+  findVocabularyEntry,
+  readEventVocabulary,
+} from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { type UiTextFn, useUiText } from '../../../contexts/ui-text'
@@ -10,26 +15,39 @@ import { sinceText } from './since-text'
 import { useCardCommon } from './use-card-common'
 
 /**
- * The vocabulary as the card lists it: the labelled vocabulary, or the bare
- * event types of a status written before it existed.
+ * A slice as a card may meet it. `vocabulary` is absent on a status written
+ * before the field existed; `readEventVocabulary` then answers with the tokens.
  */
-export function eventEntriesOf(status: EventEmitterStatus): readonly EventCardEntry[] {
-  if (status.vocabulary.length > 0)
-    return status.vocabulary.map((entry) => ({ id: entry.id, label: entry.label }))
-  return status.eventTypes.map((id) => ({ id, label: id }))
+export interface EventCardStatus extends EventVocabularyCarrier {
+  readonly lastEvent: EventEmitterStatus['lastEvent']
+}
+
+/**
+ * The vocabulary as the card lists it: each declared event, including the
+ * part of the device it comes from. A token alone is not an identity.
+ */
+export function eventEntriesOf(status: EventCardStatus): readonly EventCardEntry[] {
+  return readEventVocabulary(status).map((entry) => ({
+    id: entry.id,
+    label: entry.label,
+    ...(entry.source === undefined
+      ? {}
+      : { source: { id: entry.source.id, label: entry.source.label } }),
+  }))
 }
 
 export function eventLastOf(
-  status: EventEmitterStatus,
+  status: EventCardStatus,
   now: number,
   t: UiTextFn,
 ): EventCardModel['last'] {
   const fired = status.lastEvent
   if (fired === null) return null
-  const label = eventEntriesOf(status).find((e) => e.id === fired.eventType)?.label
+  const entry = findVocabularyEntry(readEventVocabulary(status), fired.eventType, fired.sourceId)
   return {
     id: fired.eventType,
-    label: label ?? fired.eventType,
+    ...(fired.sourceId === undefined ? {} : { sourceId: fired.sourceId }),
+    label: entry?.label ?? fired.eventType,
     since: sinceText(fired.timestamp, now, t) ?? null,
   }
 }

@@ -214,6 +214,16 @@ export function eventFixtures(): readonly WaveEFixture<EventCardModel>[] {
       last: null,
       entries: [{ id: 'ring', label: 'Squillo' }],
     }),
+    v('event-sources', 'Eventi · un token per ogni tasto', {
+      common: deviceCommon({ name: 'Telecomando soggiorno', integration: 'Homematic' }),
+      last: { id: 'PRESS_SHORT', sourceId: '1', label: 'Pressione breve', since: '4 s' },
+      entries: [
+        { id: 'PRESS_SHORT', source: { id: '1', label: 'Tasto 1' }, label: 'Pressione breve' },
+        { id: 'PRESS_LONG', source: { id: '1', label: 'Tasto 1' }, label: 'Pressione lunga' },
+        { id: 'PRESS_SHORT', source: { id: '2', label: 'Tasto 2' }, label: 'Pressione breve' },
+        { id: 'PRESS_LONG', source: { id: '2', label: 'Tasto 2' }, label: 'Pressione lunga' },
+      ],
+    }),
   ]
 }
 

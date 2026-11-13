@@ -10441,7 +10441,8 @@
         "value": "Valore"
       },
       "event": {
-        "none": "Ancora nessun evento"
+        "none": "Ancora nessun evento",
+        "sourced": "{{source}} · {{event}}"
       },
       "gateway": {
         "address": "Indirizzo",

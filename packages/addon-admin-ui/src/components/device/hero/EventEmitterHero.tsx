@@ -176,7 +176,7 @@ export function EventEmitterHero({ deviceId }: HeroProps): ReactElement {
               )}
               {group.entries.map((entry) => (
                 <span
-                  key={entry.id}
+                  key={`${group.source?.id ?? ''}:${entry.id}`}
                   data-testid="event-emitter-chip"
                   title={entry.description ?? entry.id}
                   className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${

@@ -170,6 +170,43 @@ describe('the pure models', () => {
     const raw = { ...status, vocabulary: [] }
     expect(eventEntriesOf(raw).map((e) => e.label)).toEqual(['single', 'double'])
     expect(eventLastOf({ ...status, lastEvent: null }, Date.now(), defaultUiText)).toBeNull()
+    const omitted = {
+      eventTypes: ['single', 'double'] as const,
+      lastEvent: null,
+    }
+    expect(eventEntriesOf(omitted).map((e) => e.label)).toEqual(['single', 'double'])
+  })
+
+  it('two sources that share PRESS_SHORT stay distinct, and the last fire names its source', () => {
+    const status: EventEmitterStatus = {
+      eventTypes: ['PRESS_SHORT', 'PRESS_LONG'],
+      vocabulary: [
+        { id: 'PRESS_SHORT', source: { id: '1', label: 'Tasto 1' }, label: 'Pressione breve' },
+        { id: 'PRESS_LONG', source: { id: '1', label: 'Tasto 1' }, label: 'Pressione lunga' },
+        { id: 'PRESS_SHORT', source: { id: '2', label: 'Tasto 2' }, label: 'Pressione breve' },
+        { id: 'PRESS_LONG', source: { id: '2', label: 'Tasto 2' }, label: 'Pressione lunga' },
+      ],
+      lastEvent: {
+        deviceId: 1,
+        eventType: 'PRESS_SHORT',
+        sourceId: '2',
+        data: null,
+        timestamp: Date.now() - 4_000,
+        seq: 3,
+      },
+      eventCountSinceStart: 3,
+    }
+    expect(eventEntriesOf(status).map((e) => `${e.source?.id ?? ''}:${e.id}`)).toEqual([
+      '1:PRESS_SHORT',
+      '1:PRESS_LONG',
+      '2:PRESS_SHORT',
+      '2:PRESS_LONG',
+    ])
+    expect(eventLastOf(status, Date.now(), defaultUiText)).toMatchObject({
+      id: 'PRESS_SHORT',
+      sourceId: '2',
+      label: 'Pressione breve',
+    })
   })
 
   it('a gateway draws only the facts it wrote', () => {
@@ -309,6 +346,27 @@ describe('the scenes', () => {
   it('an event marks the one that fired last', () => {
     render(<EventCard model={fixture(eventFixtures(), 'event-vocabulary').model} />)
     expect(screen.getByTestId('dc-event-last').textContent).toContain('Doppio clic')
+  })
+
+  it('lists each source that shares PRESS_SHORT, and marks only the one that fired', () => {
+    render(<EventCard model={fixture(eventFixtures(), 'event-sources').model} />)
+    expect(screen.getByTestId('dc-state').textContent).toContain('Tasto 1 · Pressione breve')
+    const groups = screen.getAllByTestId('dc-event-group')
+    expect(groups.map((group) => group.querySelector('p')?.textContent)).toEqual([
+      'Tasto 1',
+      'Tasto 2',
+    ])
+    const rows = screen.getAllByTestId('dc-event-row')
+    expect(rows.map((row) => row.getAttribute('data-event-key'))).toEqual([
+      '1:PRESS_SHORT',
+      '1:PRESS_LONG',
+      '2:PRESS_SHORT',
+      '2:PRESS_LONG',
+    ])
+    const last = screen.getAllByTestId('dc-event-last')
+    expect(last).toHaveLength(1)
+    expect(groups[0]?.contains(last[0] ?? null)).toBe(true)
+    expect(screen.getAllByText('Pressione breve')).toHaveLength(2)
   })
 
   it('an image opens full size, and a missing one is a placeholder', () => {
