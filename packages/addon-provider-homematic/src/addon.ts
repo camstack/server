@@ -31,7 +31,6 @@ import { z } from 'zod'
 import { HomematicReconciler, type IntegrationLifecycleKind } from './homematic-reconciler.js'
 import type { CcuActionDeps } from './ccu/ccu-facade.js'
 import { buildButtonEventHandlers } from './ccu/ccu-button-events.js'
-import { channelLinkPort } from './ccu/hm-channel-links.js'
 import { buildCcuDevicesHandlers } from './ccu/ccu-devices-actions.js'
 import { buildCcuConfigHandlers } from './ccu/ccu-config-actions.js'
 import { buildCcuHeatingHandlers } from './ccu/ccu-heating-actions.js'
@@ -258,10 +257,6 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
       },
       logger: this.ctx.logger,
       adoptedAddresses: (integrationId) => this.adoptedCcuAddresses(integrationId),
-      channelLinks: (integrationId) => {
-        const facade = this.connectedFacade(integrationId)
-        return facade === null ? null : channelLinkPort(facade)
-      },
     }
   }
 

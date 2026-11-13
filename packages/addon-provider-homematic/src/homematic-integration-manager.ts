@@ -36,7 +36,7 @@ export interface HmSessionInfo {
 export interface HmFacadeLike {
   start(): Promise<void>
   stop(): Promise<void>
-  devices(): readonly { address: string; name?: string }[]
+  devices(): readonly { address: string; name: string | null }[]
   on(event: string, cb: (arg: unknown) => void): () => void
 }
 
@@ -86,7 +86,7 @@ class HomematicFacadeAdapter implements HmFacadeLike {
     return this.#homematic.stop()
   }
 
-  devices(): readonly { address: string; name?: string }[] {
+  devices(): readonly { address: string; name: string | null }[] {
     return this.#homematic.devices()
   }
 
@@ -187,7 +187,7 @@ export class HmIntegrationManager {
    * array when the facade is not yet started. Used by the registry and
    * Phase 2 device-wiring code to avoid reaching through `manager.facade`.
    */
-  devices(): readonly { address: string; name?: string }[] {
+  devices(): readonly { address: string; name: string | null }[] {
     return this.#facade?.devices() ?? []
   }
 

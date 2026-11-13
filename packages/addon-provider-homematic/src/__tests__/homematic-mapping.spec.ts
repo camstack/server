@@ -83,9 +83,9 @@ describe('mapHmDeviceChannels', () => {
   it('keeps only the channels with a supported mapping', () => {
     const device = {
       channels: [
-        { address: 'ABC:0', index: 0, type: 'MAINTENANCE', dataPoints: [] },
-        { address: 'ABC:3', index: 3, type: 'SWITCH_TRANSMITTER', dataPoints: [] },
-        { address: 'ABC:4', index: 4, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+        { address: 'ABC:0', index: 0, name: null, type: 'MAINTENANCE', dataPoints: [] },
+        { address: 'ABC:3', index: 3, name: null, type: 'SWITCH_TRANSMITTER', dataPoints: [] },
+        { address: 'ABC:4', index: 4, name: null, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
       ],
     }
     const mapped = mapHmDeviceChannels(device)
@@ -99,9 +99,15 @@ describe('inferHmDeviceType', () => {
   it('prefers the switch actuator over the energy-meter sensor (HmIP-BSM)', () => {
     const device = {
       channels: [
-        { address: 'BSM:0', index: 0, type: 'MAINTENANCE', dataPoints: [] },
-        { address: 'BSM:4', index: 4, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
-        { address: 'BSM:6', index: 6, type: 'ENERGIE_METER_TRANSMITTER', dataPoints: [] },
+        { address: 'BSM:0', index: 0, name: null, type: 'MAINTENANCE', dataPoints: [] },
+        { address: 'BSM:4', index: 4, name: null, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+        {
+          address: 'BSM:6',
+          index: 6,
+          name: null,
+          type: 'ENERGIE_METER_TRANSMITTER',
+          dataPoints: [],
+        },
       ],
     }
     expect(inferHmDeviceType(device)).toBe(DeviceType.Switch)
@@ -110,9 +116,15 @@ describe('inferHmDeviceType', () => {
   it('returns a Cover for an HmIP-BROLL roller shutter', () => {
     const device = {
       channels: [
-        { address: 'BROLL:0', index: 0, type: 'MAINTENANCE', dataPoints: [] },
-        { address: 'BROLL:3', index: 3, type: 'SHUTTER_TRANSMITTER', dataPoints: [] },
-        { address: 'BROLL:4', index: 4, type: 'SHUTTER_VIRTUAL_RECEIVER', dataPoints: [] },
+        { address: 'BROLL:0', index: 0, name: null, type: 'MAINTENANCE', dataPoints: [] },
+        { address: 'BROLL:3', index: 3, name: null, type: 'SHUTTER_TRANSMITTER', dataPoints: [] },
+        {
+          address: 'BROLL:4',
+          index: 4,
+          name: null,
+          type: 'SHUTTER_VIRTUAL_RECEIVER',
+          dataPoints: [],
+        },
       ],
     }
     expect(inferHmDeviceType(device)).toBe(DeviceType.Cover)
@@ -121,8 +133,14 @@ describe('inferHmDeviceType', () => {
   it('returns Climate for a climate device (wins over its sensor caps)', () => {
     const device = {
       channels: [
-        { address: 'WTH:0', index: 0, type: 'MAINTENANCE', dataPoints: [] },
-        { address: 'WTH:1', index: 1, type: 'HEATING_CLIMATECONTROL_TRANSCEIVER', dataPoints: [] },
+        { address: 'WTH:0', index: 0, name: null, type: 'MAINTENANCE', dataPoints: [] },
+        {
+          address: 'WTH:1',
+          index: 1,
+          name: null,
+          type: 'HEATING_CLIMATECONTROL_TRANSCEIVER',
+          dataPoints: [],
+        },
       ],
     }
     expect(inferHmDeviceType(device)).toBe(DeviceType.Climate)
@@ -131,8 +149,14 @@ describe('inferHmDeviceType', () => {
   it('returns a Lock for an HmIP-DLD', () => {
     const device = {
       channels: [
-        { address: 'DLD:0', index: 0, type: 'MAINTENANCE', dataPoints: [] },
-        { address: 'DLD:1', index: 1, type: 'DOOR_LOCK_STATE_TRANSMITTER', dataPoints: [] },
+        { address: 'DLD:0', index: 0, name: null, type: 'MAINTENANCE', dataPoints: [] },
+        {
+          address: 'DLD:1',
+          index: 1,
+          name: null,
+          type: 'DOOR_LOCK_STATE_TRANSMITTER',
+          dataPoints: [],
+        },
       ],
     }
     expect(inferHmDeviceType(device)).toBe(DeviceType.Lock)
@@ -141,8 +165,14 @@ describe('inferHmDeviceType', () => {
   it('returns a Sensor for a standalone HmIP-SMI motion detector', () => {
     const device = {
       channels: [
-        { address: 'SMI:0', index: 0, type: 'MAINTENANCE', dataPoints: [] },
-        { address: 'SMI:3', index: 3, type: 'MOTIONDETECTOR_TRANSCEIVER', dataPoints: [] },
+        { address: 'SMI:0', index: 0, name: null, type: 'MAINTENANCE', dataPoints: [] },
+        {
+          address: 'SMI:3',
+          index: 3,
+          name: null,
+          type: 'MOTIONDETECTOR_TRANSCEIVER',
+          dataPoints: [],
+        },
       ],
     }
     expect(inferHmDeviceType(device)).toBe(DeviceType.Sensor)
@@ -151,9 +181,9 @@ describe('inferHmDeviceType', () => {
   it('returns EventEmitter for a key-only remote (key channel wins over maintenance)', () => {
     const device = {
       channels: [
-        { address: 'WRC2:0', index: 0, type: 'MAINTENANCE', dataPoints: [] },
-        { address: 'WRC2:1', index: 1, type: 'KEY_TRANSCEIVER', dataPoints: [] },
-        { address: 'WRC2:2', index: 2, type: 'KEY_TRANSCEIVER', dataPoints: [] },
+        { address: 'WRC2:0', index: 0, name: null, type: 'MAINTENANCE', dataPoints: [] },
+        { address: 'WRC2:1', index: 1, name: null, type: 'KEY_TRANSCEIVER', dataPoints: [] },
+        { address: 'WRC2:2', index: 2, name: null, type: 'KEY_TRANSCEIVER', dataPoints: [] },
       ],
     }
     expect(inferHmDeviceType(device)).toBe(DeviceType.EventEmitter)
@@ -164,9 +194,15 @@ describe('inferHmDeviceType', () => {
     // report as an EventEmitter (the remote is primarily an event source).
     const device = {
       channels: [
-        { address: 'RC:0', index: 0, type: 'MAINTENANCE', dataPoints: [] },
-        { address: 'RC:1', index: 1, type: 'KEY_TRANSCEIVER', dataPoints: [] },
-        { address: 'RC:6', index: 6, type: 'ENERGIE_METER_TRANSMITTER', dataPoints: [] },
+        { address: 'RC:0', index: 0, name: null, type: 'MAINTENANCE', dataPoints: [] },
+        { address: 'RC:1', index: 1, name: null, type: 'KEY_TRANSCEIVER', dataPoints: [] },
+        {
+          address: 'RC:6',
+          index: 6,
+          name: null,
+          type: 'ENERGIE_METER_TRANSMITTER',
+          dataPoints: [],
+        },
       ],
     }
     expect(inferHmDeviceType(device)).toBe(DeviceType.EventEmitter)
@@ -175,8 +211,8 @@ describe('inferHmDeviceType', () => {
   it('returns Generic when no channel maps (purely virtual device)', () => {
     const device = {
       channels: [
-        { address: 'RCV:0', index: 0, type: 'MAINTENANCE', dataPoints: [] },
-        { address: 'RCV:1', index: 1, type: 'SWITCH_TRANSMITTER', dataPoints: [] },
+        { address: 'RCV:0', index: 0, name: null, type: 'MAINTENANCE', dataPoints: [] },
+        { address: 'RCV:1', index: 1, name: null, type: 'SWITCH_TRANSMITTER', dataPoints: [] },
       ],
     }
     expect(inferHmDeviceType(device)).toBe(DeviceType.Generic)

@@ -9,7 +9,7 @@ import {
 } from '@camstack/types'
 import type { Homematic, HmDevice, ValueChangedEvent } from 'nodehomematic'
 import { homematicFacades } from '../homematic-facade-resolver.js'
-import { readHmName } from '../ccu/hm-channel-links.js'
+import { hmName } from './hm-name.js'
 import { mapMaintenanceChannel, readReachability } from '../homematic-diagnostics-mapping.js'
 import { deriveHmEntitySpecs, type HmEntitySpec } from './hm-entity-spec.js'
 import { hmChildFactoryForSpec } from './hm-child-class-factory.js'
@@ -202,7 +202,7 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
       channel !== undefined ? String(channel.index) : channelIndexFromAddress(channelAddress)
     return multiActuatorChildName({
       containerName: this.name,
-      channelName: channel === undefined ? null : readHmName(channel),
+      channelName: channel === undefined ? null : hmName(channel.name),
       channelIndex: index,
     })
   }

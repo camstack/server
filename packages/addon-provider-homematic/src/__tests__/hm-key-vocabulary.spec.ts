@@ -19,6 +19,7 @@ function device(channels: readonly ChannelSpec[]): Pick<HmDevice, 'channels'> {
     channels: channels.map((channel) => ({
       address: `${ADDRESS}:${channel.index}`,
       index: channel.index,
+      name: null,
       type: channel.type,
       dataPoints: channel.parameters.map((parameter) => ({
         id: `${ADDRESS}:${channel.index}:${parameter}`,

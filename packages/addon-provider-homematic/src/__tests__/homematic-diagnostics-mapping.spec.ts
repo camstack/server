@@ -44,11 +44,12 @@ interface DeviceSeed {
 
 function hmDevice(seed: DeviceSeed): HmDevice {
   const channels = seed.withoutMaintenanceChannel
-    ? [{ address: 'DEV:1', index: 1, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] }]
+    ? [{ address: 'DEV:1', index: 1, name: null, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] }]
     : [
         {
           address: 'DEV:0',
           index: 0,
+          name: null,
           type: 'MAINTENANCE',
           dataPoints: (seed.maintenance ?? []).map(dataPoint),
         },

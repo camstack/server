@@ -7,9 +7,16 @@ import { fakeDeps } from './ccu-fake.js'
 const DEVICE: HmDevice = {
   address: 'TRV1',
   type: 'HmIP-eTRV-2',
+  name: null,
   channels: [
-    { address: 'TRV1:0', index: 0, type: 'MAINTENANCE', dataPoints: [] },
-    { address: 'TRV1:1', index: 1, type: 'HEATING_CLIMATECONTROL_TRANSCEIVER', dataPoints: [] },
+    { address: 'TRV1:0', index: 0, name: null, type: 'MAINTENANCE', dataPoints: [] },
+    {
+      address: 'TRV1:1',
+      index: 1,
+      name: null,
+      type: 'HEATING_CLIMATECONTROL_TRANSCEIVER',
+      dataPoints: [],
+    },
   ],
 }
 const PARAMS: Record<string, HmConfigParam[]> = {

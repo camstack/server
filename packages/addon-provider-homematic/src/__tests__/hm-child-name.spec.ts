@@ -15,11 +15,24 @@ function bs2(): HmDevice {
   return {
     address: ADDR,
     type: 'HmIP-BS2',
+    name: null,
     channels: [
-      { address: `${ADDR}:1`, index: 1, type: 'KEY_TRANSCEIVER', dataPoints: [] },
-      { address: `${ADDR}:2`, index: 2, type: 'KEY_TRANSCEIVER', dataPoints: [] },
-      { address: `${ADDR}:4`, index: 4, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
-      { address: `${ADDR}:8`, index: 8, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+      { address: `${ADDR}:1`, index: 1, name: null, type: 'KEY_TRANSCEIVER', dataPoints: [] },
+      { address: `${ADDR}:2`, index: 2, name: null, type: 'KEY_TRANSCEIVER', dataPoints: [] },
+      {
+        address: `${ADDR}:4`,
+        index: 4,
+        name: null,
+        type: 'SWITCH_VIRTUAL_RECEIVER',
+        dataPoints: [],
+      },
+      {
+        address: `${ADDR}:8`,
+        index: 8,
+        name: null,
+        type: 'SWITCH_VIRTUAL_RECEIVER',
+        dataPoints: [],
+      },
     ],
   }
 }
@@ -147,9 +160,10 @@ describe('hmPrimaryChildKeys', () => {
     const device: HmDevice = {
       address: ADDR,
       type: 'HmIP-WRC2',
+      name: null,
       channels: [
-        { address: `${ADDR}:1`, index: 1, type: 'KEY_TRANSCEIVER', dataPoints: [] },
-        { address: `${ADDR}:2`, index: 2, type: 'KEY_TRANSCEIVER', dataPoints: [] },
+        { address: `${ADDR}:1`, index: 1, name: null, type: 'KEY_TRANSCEIVER', dataPoints: [] },
+        { address: `${ADDR}:2`, index: 2, name: null, type: 'KEY_TRANSCEIVER', dataPoints: [] },
       ],
     }
     expect(hmPrimaryChildKeys(deriveHmEntitySpecs(device, []))).toEqual(['events'])

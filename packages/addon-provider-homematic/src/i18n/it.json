@@ -89,7 +89,6 @@
     "configureAction": "Configura",
     "buttonEventsOn": "attivo",
     "buttonEventsOff": "disattivo",
-    "buttonEventsUnsupported": "non disponibile",
     "buttonEventsUnknown": "sconosciuto",
     "buttonEventsAction": "Eventi pulsante",
     "buttonEventsTitle": "Eventi pulsante — {{name}}",

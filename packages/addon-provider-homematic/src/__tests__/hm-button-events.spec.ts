@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import type { HmChannel } from 'nodehomematic'
+import type { HmChannelLinkState } from 'nodehomematic'
 import { buildCcuDevicesHandlers } from '../ccu/ccu-devices-actions.js'
 import { buildButtonEventHandlers } from '../ccu/ccu-button-events.js'
-import { channelLinkPort, readHmName, type HmChannelLinkPort } from '../ccu/hm-channel-links.js'
+import { hmName } from '../devices/hm-name.js'
 import { fakeDeps } from './ccu-fake.js'
 import { hmDevice } from './hm-test-fixtures.js'
 
@@ -14,111 +14,78 @@ function keyDevice() {
     type: 'HmIP-BS2',
     name: 'Pulsante bagno camerette',
     channels: [
-      {
-        address: `${ADDRESS}:1`,
-        index: 1,
-        type: 'KEY_TRANSCEIVER',
-        dataPoints: [],
-        name: 'Sinistra',
-      },
-      { address: `${ADDRESS}:4`, index: 4, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+      { address: `${ADDRESS}:1`, index: 1, type: 'KEY_TRANSCEIVER', name: 'Sinistra' },
+      { address: `${ADDRESS}:4`, index: 4, type: 'SWITCH_VIRTUAL_RECEIVER', name: 'Luce' },
     ],
   })
 }
 
-function port(central: boolean): HmChannelLinkPort {
-  return {
-    getChannelLinkState: async () => ({
-      kind: 'ok',
-      state: { central, links: [{ sender: `${ADDRESS}:1`, receiver: 'CENTRAL', name: 'central' }] },
-    }),
-    createCentralLink: async () => ({ kind: 'ok' }),
-    removeCentralLink: async () => ({ kind: 'ok' }),
-  }
+function linkState(central: boolean): () => Promise<HmChannelLinkState> {
+  return async () => ({
+    central,
+    links: [{ sender: `${ADDRESS}:1`, receiver: `${ADDRESS}:4`, name: '' }],
+  })
 }
 
-describe('channelLinkPort', () => {
-  it('reports unsupported when the installed library has no link methods', async () => {
-    const links = channelLinkPort({})
-    expect(await links.getChannelLinkState(`${ADDRESS}:1`)).toEqual({ kind: 'unsupported' })
-    expect(await links.createCentralLink(`${ADDRESS}:1`)).toEqual({ kind: 'unsupported' })
-    expect(await links.removeCentralLink(`${ADDRESS}:1`)).toEqual({ kind: 'unsupported' })
-  })
-
-  it('reads a central link and surfaces a thrown remove as an error', async () => {
-    const links = channelLinkPort({
-      getChannelLinkState: async () => ({ central: false, links: [] }),
-      createCentralLink: async () => undefined,
-      removeCentralLink: async () => {
-        throw new Error('CCU refused the link')
-      },
-    })
-    expect(await links.getChannelLinkState(`${ADDRESS}:1`)).toEqual({
-      kind: 'ok',
-      state: { central: false, links: [] },
-    })
-    expect(await links.createCentralLink(`${ADDRESS}:1`)).toEqual({ kind: 'ok' })
-    expect(await links.removeCentralLink(`${ADDRESS}:1`)).toEqual({
-      kind: 'error',
-      message: 'CCU refused the link',
-    })
-  })
-
-  it('reads a channel name only when the facade carries one', () => {
-    const named = keyDevice().channels[0]
-    if (named === undefined) throw new Error('fixture')
-    expect(readHmName(named)).toBe('Sinistra')
-    const bare: HmChannel = {
-      address: `${ADDRESS}:2`,
-      index: 2,
-      type: 'KEY_TRANSCEIVER',
-      dataPoints: [],
-    }
-    expect(readHmName(bare)).toBeNull()
-    expect(readHmName({ name: '  ' })).toBeNull()
+describe('hmName', () => {
+  it('keeps a CCU name and treats blank as none', () => {
+    expect(hmName('Sinistra')).toBe('Sinistra')
+    expect(hmName('  ')).toBeNull()
+    expect(hmName(null)).toBeNull()
   })
 })
 
 describe('button events on the device list', () => {
-  it('reports central-link state only for an adopted device with key channels', async () => {
-    const { deps } = fakeDeps({ devices: () => [keyDevice()] })
+  it('reports central-link state for an adopted device with key channels', async () => {
+    const { deps } = fakeDeps({
+      devices: () => [keyDevice()],
+      getChannelLinkState: linkState(false),
+    })
     const handlers = buildCcuDevicesHandlers({
       ...deps,
       adoptedAddresses: async () => new Set([ADDRESS]),
-      channelLinks: () => port(false),
     })
     const out = await handlers.listCcuDevices({ integrationId: 'hm_1' })
     expect(out.devices[0]?.keyChannels).toEqual([
-      { address: `${ADDRESS}:1`, index: '1', name: 'Sinistra', central: 'off' },
+      {
+        address: `${ADDRESS}:1`,
+        index: '1',
+        name: 'Sinistra',
+        central: 'off',
+      },
     ])
   })
 
-  it('omits key channels for a device that is not adopted', async () => {
-    const { deps } = fakeDeps({ devices: () => [keyDevice()] })
+  it('reports a failed read as unknown, never as off', async () => {
+    const { deps } = fakeDeps({
+      devices: () => [keyDevice()],
+      getChannelLinkState: async () => {
+        throw new Error('XML-RPC fault')
+      },
+    })
     const handlers = buildCcuDevicesHandlers({
       ...deps,
-      channelLinks: () => port(true),
+      adoptedAddresses: async () => new Set([ADDRESS]),
     })
     const out = await handlers.listCcuDevices({ integrationId: 'hm_1' })
-    expect(out.devices[0]?.keyChannels).toEqual([])
+    expect(out.devices[0]?.keyChannels[0]?.central).toBe('unknown')
   })
 
-  it('refuses a central-link write the library cannot do, and keeps the confirmation gate', async () => {
-    const { deps } = fakeDeps({ devices: () => [] })
-    const handlers = buildButtonEventHandlers({
-      ...deps,
-      channelLinks: () => channelLinkPort({}),
+  it('omits key channels for a device that is not adopted', async () => {
+    const { deps } = fakeDeps({
+      devices: () => [keyDevice()],
+      getChannelLinkState: linkState(true),
     })
+    const out = await buildCcuDevicesHandlers(deps).listCcuDevices({ integrationId: 'hm_1' })
+    expect(out.devices[0]?.keyChannels).toEqual([])
+  })
+})
+
+describe('setButtonEvents', () => {
+  it('keeps the confirmation gate', async () => {
+    const { deps } = fakeDeps({ devices: () => [] })
     await expect(
-      handlers.setButtonEvents({
-        integrationId: 'hm_1',
-        address: `${ADDRESS}:1`,
-        enabled: true,
-        confirmed: true,
-      }),
-    ).rejects.toThrow(/cannot read or change central links/)
-    await expect(
-      handlers.setButtonEvents({
+      buildButtonEventHandlers(deps).setButtonEvents({
         integrationId: 'hm_1',
         address: `${ADDRESS}:1`,
         enabled: false,
@@ -127,26 +94,43 @@ describe('button events on the device list', () => {
     ).rejects.toThrow(/confirmed/)
   })
 
-  it('creates the central link and does not ask the port to drop direct links', async () => {
+  it('creates the central link on the facade and never touches direct links', async () => {
     const created: string[] = []
-    const { deps } = fakeDeps({ devices: () => [] })
-    const handlers = buildButtonEventHandlers({
-      ...deps,
-      channelLinks: () => ({
-        getChannelLinkState: async () => ({ kind: 'ok', state: { central: false, links: [] } }),
-        createCentralLink: async (address) => {
-          created.push(address)
-          return { kind: 'ok' }
-        },
-        removeCentralLink: async () => ({ kind: 'ok' }),
-      }),
+    const removedLinks: string[] = []
+    const { deps } = fakeDeps({
+      devices: () => [],
+      createCentralLink: async (address) => {
+        created.push(address)
+      },
+      removeLink: async (sender) => {
+        removedLinks.push(sender)
+      },
     })
-    await handlers.setButtonEvents({
+    await buildButtonEventHandlers(deps).setButtonEvents({
       integrationId: 'hm_1',
       address: `${ADDRESS}:1`,
       enabled: true,
       confirmed: true,
     })
     expect(created).toEqual([`${ADDRESS}:1`])
+    expect(removedLinks).toEqual([])
+  })
+
+  it('removes the central link and surfaces a CCU refusal with the device address logged', async () => {
+    const { deps, logger } = fakeDeps({
+      devices: () => [],
+      removeCentralLink: async () => {
+        throw new Error('reportValueUsage refused')
+      },
+    })
+    await expect(
+      buildButtonEventHandlers(deps).setButtonEvents({
+        integrationId: 'hm_1',
+        address: `${ADDRESS}:1`,
+        enabled: false,
+        confirmed: true,
+      }),
+    ).rejects.toThrow(/reportValueUsage refused/)
+    expect(logger.lines.some((e) => e.level === 'warn')).toBe(true)
   })
 })

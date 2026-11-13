@@ -25,7 +25,7 @@ export interface HmChannelSeed {
   readonly index: number
   readonly type: string
   readonly dataPoints?: readonly HmDataPoint[]
-  /** Facade-only name field (nodehomematic 0.6); omitted from the exported channel type. */
+  /** CCU channel name; absent in a seed means the CCU has none (`null`). */
   readonly name?: string
 }
 
@@ -34,10 +34,10 @@ export function hmChannel(seed: HmChannelSeed): HmChannel {
     address: seed.address,
     index: seed.index,
     type: seed.type,
+    name: seed.name ?? null,
     dataPoints: seed.dataPoints ? [...seed.dataPoints] : [],
   }
-  if (seed.name === undefined) return channel
-  return Object.assign(channel, { name: seed.name })
+  return channel
 }
 
 export interface HmDeviceSeed {
@@ -56,7 +56,7 @@ export function hmDevice(seed: HmDeviceSeed): HmDevice {
   return {
     address: seed.address,
     type: seed.type,
-    name: seed.name,
+    name: seed.name ?? null,
     firmware: seed.firmware,
     availableFirmware: seed.availableFirmware,
     updatable: seed.updatable,

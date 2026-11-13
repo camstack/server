@@ -157,6 +157,8 @@ function makeFacade(): FacadeHandle {
     },
     devices: () => [device],
     customEntities: () => [],
+    // The CCU already sends these keys' presses (central link present).
+    getChannelLinkState: async () => ({ central: true, links: [] }),
   }
   return {
     // Exactly what `HmChildDevice` calls on a `Homematic` facade. Widened at

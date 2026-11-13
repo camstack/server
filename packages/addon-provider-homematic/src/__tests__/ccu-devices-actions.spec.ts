@@ -19,6 +19,7 @@ function maintenance(params: Record<string, HmValue>): HmChannel {
   return {
     address: 'ABC:0',
     index: 0,
+    name: null,
     type: 'MAINTENANCE',
     dataPoints: Object.entries(params).map(([k, v]) => dp(k, v)),
   }
@@ -29,6 +30,7 @@ function device(overrides: Partial<HmDevice>, params: Record<string, HmValue>): 
     type: 'HmIP-eTRV-2',
     channels: [maintenance(params)],
     ...overrides,
+    name: overrides.name ?? null,
   }
 }
 

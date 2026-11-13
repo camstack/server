@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Homematic: needs nodehomematic 0.6; the button-press (central link) switch now always reads and writes the CCU, and a failed read shows as unknown instead of unavailable
+
 ## [1.2.194] - 2026-11-13
 
 ### Changed

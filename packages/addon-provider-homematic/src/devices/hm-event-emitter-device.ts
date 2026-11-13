@@ -14,7 +14,6 @@ import {
   type InferNativeProvider,
 } from '@camstack/types'
 import type { ValueChangedEvent } from 'nodehomematic'
-import { channelLinkPort } from '../ccu/hm-channel-links.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'
 import {
@@ -135,9 +134,9 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
   }
 
   /**
-   * Ask the facade whether each key channel has a central link. A library
-   * that cannot answer (`unsupported`) leaves the hint off: absence of the
-   * method is not evidence the CCU is silent.
+   * Ask the facade whether each key channel has a central link. A read that
+   * fails leaves the hint as it was: a failed read is not evidence the CCU is
+   * silent.
    */
   private async refreshCentralLinks(): Promise<void> {
     const facade =
@@ -146,19 +145,22 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
     if (facade === null || device === null) return
     const keys = hmKeyChannels(device)
     if (keys.length === 0) return
-    const port = channelLinkPort(facade)
     let missing = false
     for (const channel of keys) {
-      const read = await port.getChannelLinkState(channel.address)
-      if (read.kind === 'unsupported') return
-      if (read.kind === 'error') {
+      try {
+        const state = await facade.getChannelLinkState(channel.address)
+        if (!state.central) missing = true
+      } catch (err: unknown) {
         this.ctx.logger.warn('Homematic key channel link state could not be read', {
           tags: { deviceId: this.ctx.id },
-          meta: { address: this.address, channel: channel.address, error: read.message },
+          meta: {
+            address: this.address,
+            channel: channel.address,
+            error: err instanceof Error ? err.message : String(err),
+          },
         })
         return
       }
-      if (!read.state.central) missing = true
     }
     if (missing === this.#centralLinkMissing) return
     this.#centralLinkMissing = missing

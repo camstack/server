@@ -36,7 +36,9 @@ const switchDev = {
   address: 'ABC0001',
   type: 'HmIP-BSM',
   name: 'Lampada hall',
-  channels: [{ address: 'ABC0001:3', index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] }],
+  channels: [
+    { address: 'ABC0001:3', index: 3, name: null, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+  ],
 }
 
 const thermoDev = {
@@ -47,6 +49,7 @@ const thermoDev = {
     {
       address: 'ABC0002:1',
       index: 1,
+      name: null,
       type: 'HEATING_CLIMATECONTROL_TRANSCEIVER',
       dataPoints: [],
     },
@@ -59,8 +62,8 @@ const remoteDev = {
   type: 'HmIP-RC8',
   name: 'Telecomando',
   channels: [
-    { address: 'ABC0003:1', index: 1, type: 'KEY_TRANSCEIVER', dataPoints: [] },
-    { address: 'ABC0003:2', index: 2, type: 'KEY_TRANSCEIVER', dataPoints: [] },
+    { address: 'ABC0003:1', index: 1, name: null, type: 'KEY_TRANSCEIVER', dataPoints: [] },
+    { address: 'ABC0003:2', index: 2, name: null, type: 'KEY_TRANSCEIVER', dataPoints: [] },
   ],
 }
 
@@ -69,7 +72,9 @@ const genericDev = {
   address: 'ABC0099',
   type: 'HmIP-XYZ',
   name: 'Sconosciuto',
-  channels: [{ address: 'ABC0099:1', index: 1, type: 'SWITCH_TRANSMITTER', dataPoints: [] }],
+  channels: [
+    { address: 'ABC0099:1', index: 1, name: null, type: 'SWITCH_TRANSMITTER', dataPoints: [] },
+  ],
 }
 
 describe('buildHmCandidates', () => {
@@ -141,8 +146,15 @@ describe('buildHmCandidates', () => {
     const noName = {
       address: 'ABC0004',
       type: 'HmIP-BSM',
+      name: null,
       channels: [
-        { address: 'ABC0004:3', index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+        {
+          address: 'ABC0004:3',
+          index: 3,
+          name: null,
+          type: 'SWITCH_VIRTUAL_RECEIVER',
+          dataPoints: [],
+        },
       ],
     }
     const cands = buildHmCandidates({
@@ -161,7 +173,13 @@ describe('buildHmCandidates', () => {
       name: 'Lampada hall',
       rooms: ['Hall'],
       channels: [
-        { address: 'ABC0005:3', index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+        {
+          address: 'ABC0005:3',
+          index: 3,
+          name: null,
+          type: 'SWITCH_VIRTUAL_RECEIVER',
+          dataPoints: [],
+        },
       ],
     }
     const cands = buildHmCandidates({
@@ -198,11 +216,24 @@ describe('buildHmCandidates — per-entity children preview', () => {
     firmware: '1.2.0',
     updatable: true,
     channels: [
-      { address: 'ABC0200:3', index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
-      { address: 'ABC0200:6', index: 6, type: 'ENERGIE_METER_TRANSMITTER', dataPoints: [] },
+      {
+        address: 'ABC0200:3',
+        index: 3,
+        name: null,
+        type: 'SWITCH_VIRTUAL_RECEIVER',
+        dataPoints: [],
+      },
+      {
+        address: 'ABC0200:6',
+        index: 6,
+        name: null,
+        type: 'ENERGIE_METER_TRANSMITTER',
+        dataPoints: [],
+      },
       {
         address: 'ABC0200:0',
         index: 0,
+        name: null,
         type: 'MAINTENANCE',
         dataPoints: [
           dp('LOW_BAT', 'BOOL'),

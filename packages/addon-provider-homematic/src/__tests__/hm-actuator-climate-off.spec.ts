@@ -180,10 +180,12 @@ describe('HmActuatorDevice climate OFF', () => {
     const seeded: HmDevice = {
       address: ADDRESS,
       type: 'HMIP-WTH',
+      name: null,
       channels: [
         {
           address: CHANNEL,
           index: 1,
+          name: null,
           dataPoints: [
             {
               id: `${INTEGRATION_ID}:${CHANNEL}:VALUES:SET_POINT_MODE`,

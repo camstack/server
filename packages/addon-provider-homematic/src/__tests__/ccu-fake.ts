@@ -22,7 +22,6 @@ export function fakeDeps(
       integrations: () => options.integrations ?? [],
       logger,
       adoptedAddresses: async () => new Set<string>(),
-      channelLinks: () => null,
     },
     logger,
   }

@@ -1,32 +1,34 @@
 import type { HmChannel } from 'nodehomematic'
 import { hmKeyChannels } from '../devices/hm-key-vocabulary.js'
 import { channelIndexFromAddress } from '../devices/hm-cold-start.js'
-import type { CcuActionDeps } from './ccu-facade.js'
-import { requireConfirmed, requireFacade } from './ccu-facade.js'
-import { readHmName, type HmChannelLinkPort } from './hm-channel-links.js'
+import { hmName } from '../devices/hm-name.js'
+import type { CcuActionDeps, CcuFacade } from './ccu-facade.js'
+import { errorText, requireConfirmed, requireFacade } from './ccu-facade.js'
 import type { CcuDeviceRow, KeyChannelLink } from './ccu-schemas.js'
 
-const UNSUPPORTED = 'This CCU library cannot read or change central links yet'
-
-function centralOf(
-  read: Awaited<ReturnType<HmChannelLinkPort['getChannelLinkState']>>,
-): KeyChannelLink['central'] {
-  if (read.kind === 'unsupported') return 'unsupported'
-  if (read.kind === 'error') return 'unknown'
-  return read.state.central ? 'on' : 'off'
-}
-
-async function keyChannelRow(port: HmChannelLinkPort, channel: HmChannel): Promise<KeyChannelLink> {
-  const read = await port.getChannelLinkState(channel.address)
-  return {
+async function keyChannelRow(
+  deps: CcuActionDeps,
+  integrationId: string,
+  facade: CcuFacade,
+  channel: HmChannel,
+): Promise<KeyChannelLink> {
+  const row = {
     address: channel.address,
     index: channelIndexFromAddress(channel.address) ?? String(channel.index),
-    name: readHmName(channel),
-    central: centralOf(read),
+    name: hmName(channel.name),
+  }
+  try {
+    const state = await facade.getChannelLinkState(channel.address)
+    return { ...row, central: state.central ? 'on' : 'off' }
+  } catch (err: unknown) {
+    deps.logger.warn('Homematic key channel link state could not be read', {
+      meta: { integrationId, address: channel.address, error: errorText(err) },
+    })
+    return { ...row, central: 'unknown' }
   }
 }
 
-/** Key-channel central-link rows for adopted devices. Direct links are not touched. */
+/** Key-channel central-link rows for adopted devices. */
 export async function keyChannelsForDevice(
   deps: CcuActionDeps,
   integrationId: string,
@@ -36,9 +38,9 @@ export async function keyChannelsForDevice(
   if (!adopted.has(device.address)) return []
   const keys = hmKeyChannels(device)
   if (keys.length === 0) return []
-  const port = deps.channelLinks(integrationId)
-  if (port === null) return []
-  return Promise.all(keys.map((channel) => keyChannelRow(port, channel)))
+  const facade = deps.facade(integrationId)
+  if (facade === null) return []
+  return Promise.all(keys.map((channel) => keyChannelRow(deps, integrationId, facade, channel)))
 }
 
 export function withKeyChannels(
@@ -48,7 +50,7 @@ export function withKeyChannels(
   return { ...row, keyChannels: [...keyChannels] }
 }
 
-/** Enable or disable the central link of one key channel. Other links stay. */
+/** Enable or disable the central link of one key channel. Direct links stay. */
 export function buildButtonEventHandlers(deps: CcuActionDeps) {
   return {
     setButtonEvents: async (input: {
@@ -58,22 +60,20 @@ export function buildButtonEventHandlers(deps: CcuActionDeps) {
       readonly confirmed: boolean
     }): Promise<{ readonly ok: true }> => {
       requireConfirmed(input.confirmed)
-      requireFacade(deps, input.integrationId)
-      const port = deps.channelLinks(input.integrationId)
-      if (port === null) throw new Error(UNSUPPORTED)
-      const result = input.enabled
-        ? await port.createCentralLink(input.address)
-        : await port.removeCentralLink(input.address)
-      if (result.kind === 'unsupported') throw new Error(UNSUPPORTED)
-      if (result.kind === 'error') {
+      const facade = requireFacade(deps, input.integrationId)
+      try {
+        if (input.enabled) await facade.createCentralLink(input.address)
+        else await facade.removeCentralLink(input.address)
+      } catch (err: unknown) {
         deps.logger.warn('Homematic central link change failed', {
           meta: {
             integrationId: input.integrationId,
             address: input.address,
-            error: result.message,
+            enabled: input.enabled,
+            error: errorText(err),
           },
         })
-        throw new Error(result.message)
+        throw err
       }
       return { ok: true }
     },

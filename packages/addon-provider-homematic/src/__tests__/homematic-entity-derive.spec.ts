@@ -29,7 +29,13 @@ describe('deriveHmEntityPreviews', () => {
   it('derives one actuator preview for a switch device', () => {
     const dev: HmEntitySource = {
       channels: [
-        { address: 'ABC0001:3', index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+        {
+          address: 'ABC0001:3',
+          index: 3,
+          name: null,
+          type: 'SWITCH_VIRTUAL_RECEIVER',
+          dataPoints: [],
+        },
       ],
     }
     const previews = deriveHmEntityPreviews(dev)
@@ -45,7 +51,13 @@ describe('deriveHmEntityPreviews', () => {
   it('derives a sensor preview for a power-meter channel', () => {
     const dev: HmEntitySource = {
       channels: [
-        { address: 'ABC0001:6', index: 6, type: 'ENERGIE_METER_TRANSMITTER', dataPoints: [] },
+        {
+          address: 'ABC0001:6',
+          index: 6,
+          name: null,
+          type: 'ENERGIE_METER_TRANSMITTER',
+          dataPoints: [],
+        },
       ],
     }
     const previews = deriveHmEntityPreviews(dev)
@@ -61,6 +73,7 @@ describe('deriveHmEntityPreviews', () => {
         {
           address: 'ABC0002:1',
           index: 1,
+          name: null,
           type: 'HEATING_CLIMATECONTROL_TRANSCEIVER',
           dataPoints: [],
         },
@@ -78,8 +91,8 @@ describe('deriveHmEntityPreviews', () => {
   it('collapses multiple key channels into one events preview', () => {
     const dev: HmEntitySource = {
       channels: [
-        { address: 'ABC0003:1', index: 1, type: 'KEY_TRANSCEIVER', dataPoints: [] },
-        { address: 'ABC0003:2', index: 2, type: 'KEY_TRANSCEIVER', dataPoints: [] },
+        { address: 'ABC0003:1', index: 1, name: null, type: 'KEY_TRANSCEIVER', dataPoints: [] },
+        { address: 'ABC0003:2', index: 2, name: null, type: 'KEY_TRANSCEIVER', dataPoints: [] },
       ],
     }
     const previews = deriveHmEntityPreviews(dev)
@@ -92,10 +105,17 @@ describe('deriveHmEntityPreviews', () => {
   it('derives diagnostic previews from the MAINTENANCE channel', () => {
     const dev: HmEntitySource = {
       channels: [
-        { address: 'ABC0004:3', index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+        {
+          address: 'ABC0004:3',
+          index: 3,
+          name: null,
+          type: 'SWITCH_VIRTUAL_RECEIVER',
+          dataPoints: [],
+        },
         {
           address: 'ABC0004:0',
           index: 0,
+          name: null,
           type: 'MAINTENANCE',
           dataPoints: [
             dp('LOW_BAT', 'BOOL'),
@@ -115,7 +135,13 @@ describe('deriveHmEntityPreviews', () => {
   it('derives a firmware update preview when a firmware descriptor is present', () => {
     const dev: HmEntitySource = {
       channels: [
-        { address: 'ABC0005:3', index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+        {
+          address: 'ABC0005:3',
+          index: 3,
+          name: null,
+          type: 'SWITCH_VIRTUAL_RECEIVER',
+          dataPoints: [],
+        },
       ],
       firmware: '1.0.0',
       updatable: true,
@@ -129,7 +155,13 @@ describe('deriveHmEntityPreviews', () => {
   it('returns no update preview when there is no firmware descriptor', () => {
     const dev: HmEntitySource = {
       channels: [
-        { address: 'ABC0006:3', index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+        {
+          address: 'ABC0006:3',
+          index: 3,
+          name: null,
+          type: 'SWITCH_VIRTUAL_RECEIVER',
+          dataPoints: [],
+        },
       ],
     }
     const previews = deriveHmEntityPreviews(dev)
@@ -138,7 +170,9 @@ describe('deriveHmEntityPreviews', () => {
 
   it('returns an empty list for a device with no supported channels', () => {
     const dev: HmEntitySource = {
-      channels: [{ address: 'ABC0099:1', index: 1, type: 'SWITCH_TRANSMITTER', dataPoints: [] }],
+      channels: [
+        { address: 'ABC0099:1', index: 1, name: null, type: 'SWITCH_TRANSMITTER', dataPoints: [] },
+      ],
     }
     expect(deriveHmEntityPreviews(dev)).toEqual([])
   })

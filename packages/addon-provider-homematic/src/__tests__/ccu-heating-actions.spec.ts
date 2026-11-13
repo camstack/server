@@ -10,14 +10,23 @@ const DEVICES: HmDevice[] = [
     type: 'HmIP-eTRV-2',
     name: 'Bedroom radiator',
     channels: [
-      { address: 'TRV1:0', index: 0, type: 'MAINTENANCE', dataPoints: [] },
-      { address: 'TRV1:1', index: 1, type: 'HEATING_CLIMATECONTROL_TRANSCEIVER', dataPoints: [] },
+      { address: 'TRV1:0', index: 0, name: null, type: 'MAINTENANCE', dataPoints: [] },
+      {
+        address: 'TRV1:1',
+        index: 1,
+        name: null,
+        type: 'HEATING_CLIMATECONTROL_TRANSCEIVER',
+        dataPoints: [],
+      },
     ],
   },
   {
     address: 'LAMP',
     type: 'HmIP-BSM',
-    channels: [{ address: 'LAMP:3', index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] }],
+    name: null,
+    channels: [
+      { address: 'LAMP:3', index: 3, name: null, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+    ],
   },
 ]
 const GROUP: HmGroup = {

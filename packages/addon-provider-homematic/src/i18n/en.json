@@ -89,7 +89,6 @@
     "configureAction": "Configure",
     "buttonEventsOn": "on",
     "buttonEventsOff": "off",
-    "buttonEventsUnsupported": "unavailable",
     "buttonEventsUnknown": "unknown",
     "buttonEventsAction": "Button events",
     "buttonEventsTitle": "Button events — {{name}}",

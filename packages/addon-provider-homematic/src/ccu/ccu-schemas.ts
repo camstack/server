@@ -101,12 +101,12 @@ export const SetButtonEventsInputSchema = IntegrationRefSchema.extend({
 
 // ── Devices ────────────────────────────────────────────────────────────────
 
-/** One key channel's central-link state. `unknown` is a read that failed. */
+/** One key channel's central-link state. `unknown` is a read that failed, never `off`. */
 export const KeyChannelLinkSchema = z.object({
   address: z.string(),
   index: z.string(),
   name: z.string().nullable(),
-  central: z.enum(['on', 'off', 'unsupported', 'unknown']),
+  central: z.enum(['on', 'off', 'unknown']),
 })
 export type KeyChannelLink = z.infer<typeof KeyChannelLinkSchema>
 

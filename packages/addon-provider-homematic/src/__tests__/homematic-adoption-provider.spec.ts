@@ -15,7 +15,9 @@ const switchDev = {
   address: 'ABC0001',
   type: 'HmIP-BSM',
   name: 'Living Room Switch',
-  channels: [{ address: 'ABC0001:3', index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] }],
+  channels: [
+    { address: 'ABC0001:3', index: 3, name: null, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+  ],
 } as const
 
 const thermoDev = {
@@ -26,6 +28,7 @@ const thermoDev = {
     {
       address: 'ABC0002:1',
       index: 1,
+      name: null,
       type: 'HEATING_CLIMATECONTROL_TRANSCEIVER',
       dataPoints: [],
     },
@@ -37,7 +40,9 @@ const remoteDev = {
   address: 'ABC0003',
   type: 'HmIP-RC8',
   name: 'Remote',
-  channels: [{ address: 'ABC0003:1', index: 1, type: 'KEY_TRANSCEIVER', dataPoints: [] }],
+  channels: [
+    { address: 'ABC0003:1', index: 1, name: null, type: 'KEY_TRANSCEIVER', dataPoints: [] },
+  ],
 } as const
 
 /** Generic device (no supported channel — omitted by buildHmCandidates). */
@@ -45,7 +50,9 @@ const genericDev = {
   address: 'ABC0098',
   type: 'HmIP-XYZ',
   name: 'Unknown',
-  channels: [{ address: 'ABC0098:1', index: 1, type: 'SWITCH_TRANSMITTER', dataPoints: [] }],
+  channels: [
+    { address: 'ABC0098:1', index: 1, name: null, type: 'SWITCH_TRANSMITTER', dataPoints: [] },
+  ],
 } as const
 
 /** Switch device carrying a CCU room (drives the location-import path). */
@@ -54,7 +61,9 @@ const roomedDev = {
   type: 'HmIP-BSM',
   name: 'Hall Lamp',
   rooms: ['Hall'],
-  channels: [{ address: 'ABC0010:3', index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] }],
+  channels: [
+    { address: 'ABC0010:3', index: 3, name: null, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+  ],
 } as const
 
 type FakeDevice =
@@ -667,10 +676,17 @@ const entityRichDevice = {
   firmware: '1.0.0',
   updatable: true,
   channels: [
-    { address: `${ENTITY_ADDR}:3`, index: 3, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
+    {
+      address: `${ENTITY_ADDR}:3`,
+      index: 3,
+      name: null,
+      type: 'SWITCH_VIRTUAL_RECEIVER',
+      dataPoints: [],
+    },
     {
       address: `${ENTITY_ADDR}:0`,
       index: 0,
+      name: null,
       type: 'MAINTENANCE',
       dataPoints: [
         {
