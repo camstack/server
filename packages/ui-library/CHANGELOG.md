@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device cards for locks, alarm panels, humidifiers, valves, sirens, pet feeders and fountains, and weather stations: two-step unlock and siren, alarm codes typed on a pad and sent only with the command, a lock that refuses to close beside an open door.
 - Device cards for buttons, updates, scripts, automations, controls (number, choice, text, date), event sources, images, notifiers and gateways, drawn from what each device declares
 
+### Fixed
+
+- A device card restores a fountain's pump cycle and water volume, a feeder's own battery, a valve position only when the device is positionable, weather in the chosen units, Open door on an unlocked lock, and an unknown pump or siren that is not drawn as off.
+
 ## [1.2.438] - 2026-11-13
 
 ### Changed
@@ -39,10 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Device hooks regenerated for the capability vocabulary now declared on each capability (no behaviour change)
-
-### Fixed
-
-- A device card restores a fountain's pump cycle and water volume, a feeder's own battery, a valve position only when the device is positionable, weather in the chosen units, Open door on an unlocked lock, and an unknown pump or siren that is not drawn as off.
 
 ## [1.2.436] - 2026-11-13
 
