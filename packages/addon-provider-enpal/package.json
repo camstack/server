@@ -42,7 +42,7 @@
         "version": "0.1.0",
         "description": "Add an Enpal solar box as an integration (its own web-page channel, InfluxDB or the device page) and adopt its equipment: photovoltaic, battery, grid, house and heat pump",
         "entry": "./dist/addon.js",
-        "icon": "assets/icon.svg",
+        "icon": "assets/icon.png",
         "color": "#f5a623",
         "instanceMode": "multiple",
         "mode": "account",

@@ -10,3 +10,9 @@ The Home Assistant layer is not included. The connection sequence in
 `python/enpal_worker.py` follows that component's `websocket_client.py`.
 
 See `python/enpal_blazor/LICENSE` for the full license text.
+
+## Enpal brand icon
+
+`assets/icon.png` is the Enpal mark as published for the `enpal_webparser` integration in
+the Home Assistant brands repository (brands.home-assistant.io). Enpal is a trademark of its
+owner; the mark is used only to identify the integration.
