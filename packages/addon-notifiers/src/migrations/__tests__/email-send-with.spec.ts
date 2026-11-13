@@ -7,6 +7,8 @@
 import {
   type AddonMigrationHost,
   defineAddonMigrations,
+  type IntegrationInstance,
+  type InstanceSource,
   type IScopedLogger,
   makeInMemoryRecords,
   type MigrationOwnerResult,
@@ -27,6 +29,7 @@ import {
   ADDON_MIGRATIONS,
   EMAIL_SEND_WITH_ID,
   type EmailSendWithPorts,
+  legacySendersOver,
   OLD_TARGETS_KIND,
   oldTargetKinds,
 } from '../index.js'
@@ -74,10 +77,44 @@ function ledgerHost(): {
   return { host, outcomes }
 }
 
-/** Senders per provider; a provider listed in `unreadable` rejects. */
+/**
+ * The mail providers as the instance source answers: the instances each holds (an account signed in
+ * reports `ok`), `unreadable` ones fail `describe`, and only `registered` ones are holders at all
+ * (default: every provider named in `senders`).
+ */
 interface SenderWorld {
-  readonly senders: Readonly<Record<string, readonly string[]>>
+  readonly senders: Readonly<Record<string, readonly IntegrationInstance[]>>
   readonly unreadable?: readonly string[]
+  readonly registered?: readonly string[]
+}
+
+function account(id: string, signedIn: boolean, accountEmail = ''): IntegrationInstance {
+  return {
+    id,
+    name: id,
+    kind: 'account',
+    configured: true,
+    enabled: true,
+    formValues: { accountEmail },
+    status: signedIn ? { state: 'ok' } : { state: 'unknown', label: 'Not signed in' },
+  }
+}
+
+function sourceOf(world: SenderWorld): InstanceSource {
+  return {
+    holders: async () => world.registered ?? Object.keys(world.senders),
+    describe: async (addonId) => {
+      if (world.unreadable?.includes(addonId) === true) throw new Error(`${addonId} unreadable`)
+      return {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'account',
+        canTest: false,
+        kinds: [{ id: 'account', label: 'Account', functionCap: 'smtp-provider' }],
+      }
+    },
+    listInstances: async (addonId) => world.senders[addonId] ?? [],
+  }
 }
 
 async function world(senders: SenderWorld) {
@@ -98,10 +135,7 @@ async function world(senders: SenderWorld) {
     replace: async (row) => {
       await emailRows.put({ id: row.id, data: { ...row.data } }, { ifRev: row.rev })
     },
-    firstSenderOf: async (addonId) => {
-      if (senders.unreadable?.includes(addonId) === true) throw new Error(`${addonId} unreadable`)
-      return senders.senders[addonId]?.[0] ?? null
-    },
+    sendersOf: legacySendersOver(sourceOf(senders), 'smtp-provider'),
   }
   const run = (host: AddonMigrationHost) =>
     runAddonMigrations(
@@ -140,7 +174,7 @@ describe('notifiers email-send-with', () => {
 
   it("links a target that named only its provider to that provider's first sender", async () => {
     const w = await world({
-      senders: { 'google-services': ['acct-1', 'acct-2'] },
+      senders: { 'google-services': [account('acct-1', true), account('acct-2', true)] },
     })
     await w.seed(LEGACY_EMAIL_PROVIDER_TARGET)
     expect((await w.run(ledgerHost().host)).failed).toEqual([])
@@ -149,8 +183,43 @@ describe('notifiers email-send-with', () => {
     expect(target?.config['smtpAddonId']).toBeUndefined()
   })
 
-  it('leaves a target whose provider holds no sender as it was, named in the summary', async () => {
-    const w = await world({ senders: {} })
+  it('never pins a signed-out account: the first CONNECTED one is linked', async () => {
+    const w = await world({
+      senders: { 'google-services': [account('acct-out', false), account('acct-in', true)] },
+    })
+    await w.seed(LEGACY_EMAIL_PROVIDER_TARGET)
+    expect((await w.run(ledgerHost().host)).failed).toEqual([])
+    expect((await w.store.getById('mail-google'))?.config['sendWith']).toBe('acct-in')
+  })
+
+  it("links the account the target's From named, as the old send path picked it", async () => {
+    const w = await world({
+      senders: {
+        'google-services': [
+          account('acct-home', true, 'home@example.com'),
+          account('acct-shop', true, 'shop@example.com'),
+        ],
+      },
+    })
+    await w.seed({
+      ...LEGACY_EMAIL_PROVIDER_TARGET,
+      data: { ...LEGACY_EMAIL_PROVIDER_TARGET.data, from: 'Shop <SHOP@example.com>' },
+    })
+    expect((await w.run(ledgerHost().host)).failed).toEqual([])
+    expect((await w.store.getById('mail-google'))?.config['sendWith']).toBe('acct-shop')
+  })
+
+  it('a provider not registered yet (it boots later) fails the step and changes nothing', async () => {
+    const w = await world({ senders: {}, registered: [] })
+    await w.seed(LEGACY_EMAIL_PROVIDER_TARGET)
+    const first = ledgerHost()
+    expect((await w.run(first.host)).failed).toEqual([EMAIL_SEND_WITH_ID])
+    expect(first.outcomes.has(EMAIL_SEND_WITH_ID)).toBe(false)
+    expect((await w.emailRows.get('mail-google'))?.data['smtpAddonId']).toBe('google-services')
+  })
+
+  it('leaves a target whose provider holds no usable sender as it was, named in the summary', async () => {
+    const w = await world({ senders: { 'google-services': [account('acct-out', false)] } })
     await w.seed(LEGACY_EMAIL_PROVIDER_TARGET)
     const { host, outcomes } = ledgerHost()
     expect((await w.run(host)).failed).toEqual([])
@@ -165,7 +234,7 @@ describe('notifiers email-send-with', () => {
 
   it('a provider that cannot be read fails the step (retried next boot) and changes nothing', async () => {
     const senders = {
-      senders: { 'google-services': ['acct-1'] },
+      senders: { 'google-services': [account('acct-1', true)] },
       unreadable: ['google-services'],
     }
     const w = await world(senders)

@@ -204,9 +204,16 @@ interface EmailSendRoute {
   readonly instanceId?: string
 }
 
-/** The save-time rule: an email target names the sender it sends with. */
+/**
+ * The save-time rule: an email target names the sender it sends with. A row the email-send-with
+ * migration has not converted yet still names its provider (`smtpAddonId` / `smtpInstanceId`) and
+ * sends through it, so a switch or a rename of it is not refused.
+ */
 export function validateEmailConfig(config: TargetConfig): void {
-  if (trimmed(config, EMAIL_SENDER_KEY) === undefined) {
+  const legacy =
+    trimmed(config, LEGACY_SMTP_ADDON_KEY) !== undefined ||
+    trimmed(config, LEGACY_SMTP_INSTANCE_KEY) !== undefined
+  if (!legacy && trimmed(config, EMAIL_SENDER_KEY) === undefined) {
     throw userError(
       'notifiers.email-sender-required',
       undefined,

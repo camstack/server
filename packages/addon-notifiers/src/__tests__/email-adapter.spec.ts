@@ -72,6 +72,15 @@ describe('email save rule', () => {
   it('accepts a target that links a sender', () => {
     expect(() => validateEmailConfig({ to: 'ops@example.com', sendWith: 'acct-1' })).not.toThrow()
   })
+
+  it('does not refuse a row the migration has not converted yet (a switch, a rename)', () => {
+    expect(() =>
+      validateEmailConfig({ to: 'ops@example.com', smtpAddonId: 'google-services' }),
+    ).not.toThrow()
+    expect(() =>
+      validateEmailConfig({ to: 'ops@example.com', smtpInstanceId: 'relay-7' }),
+    ).not.toThrow()
+  })
 })
 
 describe('email send path', () => {

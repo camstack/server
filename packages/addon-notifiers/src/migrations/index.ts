@@ -12,7 +12,16 @@ export {
   TARGETS_TO_BODY_ID,
 } from './targets-to-body.js'
 export { EMAIL_SEND_WITH_ID } from './email-send-with.js'
-export type { EmailSendWithPorts, EmailTargetRow } from './email-send-with.js'
+export type {
+  EmailSendWithPorts,
+  EmailTargetRow,
+  LegacySenderCandidate,
+} from './email-send-with.js'
+export {
+  legacySenderCandidate,
+  legacySendersOver,
+  pickLegacySender,
+} from './email-send-with.js'
 export type {
   NotifiersMigrationPorts,
   OldTargetsHandle,

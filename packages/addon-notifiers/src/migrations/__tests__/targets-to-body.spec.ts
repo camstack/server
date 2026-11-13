@@ -97,7 +97,7 @@ async function world() {
         emailSenders: {
           list: async () => [],
           replace: async () => undefined,
-          firstSenderOf: async () => null,
+          sendersOf: async () => [],
         },
       }),
       silentLogger,

@@ -29,7 +29,13 @@ import {
 import { EMAIL_KIND, EMAIL_SENDER_CAP, type EmailSmtpClient } from './adapters/email.js'
 import { buildNotifierAdapters } from './adapters/registry.js'
 import { iconMediaTypeFor, iconRoutes, iconUrlFor } from './icon-routes.js'
-import { ADDON_MIGRATIONS, OLD_TARGETS_KIND, oldTargetKinds } from './migrations/index.js'
+import {
+  ADDON_MIGRATIONS,
+  type LegacySenderCandidate,
+  legacySendersOver,
+  OLD_TARGETS_KIND,
+  oldTargetKinds,
+} from './migrations/index.js'
 import { makeNcTargetHandlers, type NcTargetActions, ncTargetActions } from './nc-target-actions.js'
 import { createNotificationOutputRuntime, NOTIFIERS_ADDON_ID } from './provider.js'
 import { notifierInstancesSpec } from './notifier-instances.js'
@@ -67,14 +73,10 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
     })
     const emailRows = store.handlesByKind().get(EMAIL_KIND)
     if (emailRows === undefined) throw new Error('notifiers: the email record kind is not declared')
-    // The first instance of `addonId` serving `smtp-provider`; a provider that cannot be read rejects.
-    const firstSenderOf = async (addonId: string): Promise<string | null> => {
+    // The senders `addonId` holds for `smtp-provider`; unregistered or unreadable rejects (retried).
+    const sendersOf = async (addonId: string): Promise<readonly LegacySenderCandidate[]> => {
       if (api === undefined) throw new Error('notifiers: no api to read the mail senders')
-      const listed = await instancesOfCap(instanceSourceOverApi(api), EMAIL_SENDER_CAP)
-      const failed = listed.unreadable.find((entry) => entry.addonId === addonId)
-      if (failed !== undefined)
-        throw new Error(`notifiers: ${addonId} could not be read: ${failed.error}`)
-      return listed.instances.find((entry) => entry.addonId === addonId)?.instance.id ?? null
+      return legacySendersOver(instanceSourceOverApi(api), EMAIL_SENDER_CAP)(addonId)
     }
     // The old single kind is flattened into the per-kind records BEFORE anything reads a target.
     await this.runMigrations(
@@ -89,7 +91,7 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
           replace: async (row) => {
             await emailRows.put({ id: row.id, data: { ...row.data } }, { ifRev: row.rev })
           },
-          firstSenderOf,
+          sendersOf,
         },
       }),
     )

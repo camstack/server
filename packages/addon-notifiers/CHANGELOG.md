@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Email targets pick the Google account or SMTP relay that sends them under Send with; existing targets are linked automatically, and every target kind can send a test from the editor before it is saved.
+- Email targets written before Send with move to the sender the old path really used (the account matching From, else the first signed-in one, never a signed-out one); the move retries on the next start when the mail provider is not up yet, and an unmoved target can still be switched or renamed
 
 ## [1.2.637] - 2026-11-11
 
