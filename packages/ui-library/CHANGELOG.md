@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.437] - 2026-11-13
+
 ### Added
 
 - A device card's History view opens on the recorded values, and a section switch shows who changed them when the device can record actuations
+
 ### Changed
 
 - Device hooks regenerated for the capability vocabulary now declared on each capability (no behaviour change)

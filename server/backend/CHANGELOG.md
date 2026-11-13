@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.857] - 2026-11-13
+
 ### Changed
+
 - Capability routers regenerated for the capability vocabulary now declared on each capability (no behaviour change)
 
 ## [1.2.856] - 2026-11-13

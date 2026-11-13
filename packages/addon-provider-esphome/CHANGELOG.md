@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.21] - 2026-11-13
+
 ### Changed
 
 - An ESPHome IR transmitter records each send and each learn it attempts. Refusing because the board cannot learn is not stored as a failed learn.
