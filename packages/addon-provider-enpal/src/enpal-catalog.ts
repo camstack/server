@@ -21,11 +21,6 @@ export interface PointSource {
 export interface Point {
   readonly quantity: ReadingQuantity
   readonly sources: readonly PointSource[]
-  /**
-   * Take the number as it is and ignore the unit the box wrote. For a reading whose unit no
-   * stored quantity has (a grid frequency in Hz): shown without a unit, never converted.
-   */
-  readonly ignoreUnit?: boolean
 }
 
 interface SpecBase {
@@ -411,8 +406,8 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
     id: 'grid-frequency',
     name: 'Frequency',
     role: DeviceRole.NumericSensor,
-    quantity: 'index',
-    value: { ...point('index', 'Frequency.Grid'), ignoreUnit: true },
+    quantity: 'frequency',
+    value: point('frequency', 'Frequency.Grid'),
   },
   numeric(
     'grid-feed-max',
@@ -490,9 +485,9 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   text('lte-connection-type', 'Connection type', 'LTE.Connection.Type'),
   numeric('lte-quality', 'LTE quality', 'percentage', 'LTE.Quality'),
   numeric('lte-rsrp', 'RSRP', 'signal-level', 'LTE.RSRP'),
-  numeric('lte-rsrq', 'RSRQ', 'index', 'LTE.RSRQ'),
+  numeric('lte-rsrq', 'RSRQ', 'signal-ratio', 'LTE.RSRQ'),
   numeric('lte-rssi', 'RSSI', 'signal-level', 'LTE.RSSI'),
-  numeric('lte-snr', 'SNR', 'index', 'LTE.SNR'),
+  numeric('lte-snr', 'SNR', 'signal-ratio', 'LTE.SNR'),
   text('lte-failover', 'Failover result', 'LTE.Failover.Result'),
   text('lte-signal-check', 'Signal check', 'LTE.Cronny.Result'),
   text('wifi-state', 'Wi-Fi state', 'WiFi.State'),
@@ -564,11 +559,7 @@ function resolve(target: Point, snapshot: EnpalSnapshot): Resolved {
   for (const source of target.sources) {
     const reading = snapshot.readings.get(source.key)
     if (reading === undefined) continue
-    const converted = toBase(
-      reading.value,
-      target.ignoreUnit === true ? undefined : reading.unit,
-      target.quantity,
-    )
+    const converted = toBase(reading.value, reading.unit, target.quantity)
     if (!converted.ok) {
       refusal = `${source.key}: ${converted.reason} (unit ${reading.unit ?? 'none'})`
       continue

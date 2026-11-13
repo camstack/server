@@ -552,3 +552,41 @@ function spec(id: string): EnpalSpec {
   if (found === undefined) throw new Error(`no spec ${id}`)
   return found
 }
+
+describe('the unit a numeric reading shows', () => {
+  const quantityOf = (id: string): string | undefined => {
+    const found = spec(id)
+    return found.kind === 'numeric' ? found.quantity : undefined
+  }
+
+  it.each([
+    ['box-cpu-load', 'percentage'],
+    ['box-memory-usage', 'percentage'],
+    ['lte-quality', 'percentage'],
+    ['battery-health', 'percentage'],
+    ['battery-level-max', 'percentage'],
+    ['battery-level-min', 'percentage'],
+    ['grid-frequency', 'frequency'],
+    ['lte-rsrp', 'signal-level'],
+    ['lte-rsrq', 'signal-ratio'],
+    ['lte-snr', 'signal-ratio'],
+  ])('%s is stored as %s, so the row writes its unit', (id, quantity) => {
+    expect(quantityOf(id)).toBe(quantity)
+  })
+
+  it('reads the grid frequency in hertz without refusing it', () => {
+    const found = spec('grid-frequency')
+    const out = computeSlices(
+      found,
+      createSnapshot(
+        'influxdb',
+        [{ key: 'Frequency.Grid', value: 49.9, unit: 'Hz', measurement: undefined }],
+        1,
+      ),
+      { invertBatteryPower: false },
+      1,
+    )
+    expect(out.numeric?.value).toBe(49.9)
+    expect(out.refusals).toEqual([])
+  })
+})

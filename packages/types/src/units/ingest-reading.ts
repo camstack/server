@@ -44,6 +44,8 @@ const DIMENSION_QUANTITY: Readonly<Record<UnitDimension, ReadingQuantity>> = {
   angle: 'angle',
   'sound-level': 'sound-level',
   'signal-level': 'signal-level',
+  'signal-ratio': 'signal-ratio',
+  frequency: 'frequency',
   'colour-temperature': 'colour-temperature',
   bitrate: 'bitrate',
   rate: 'rate',

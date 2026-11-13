@@ -122,3 +122,32 @@ describe('QUANTITY_BASE', () => {
     expect(historyUnitFor('device')).toBeUndefined()
   })
 })
+
+describe('frequency and signal ratio', () => {
+  it('stores a frequency in hertz and shows the unit', () => {
+    expect(QUANTITY_BASE.frequency).toBe('Hz')
+    expect(ingestReading({ value: 50.02, rawUnit: 'Hz', quantity: 'frequency' })).toEqual({
+      ok: true,
+      value: 50.02,
+    })
+    expect(ingestReading({ value: 0.05, rawUnit: 'kHz', quantity: 'frequency' })).toEqual({
+      ok: true,
+      value: 50,
+    })
+    expect(quantityFromUnit('Hz')).toBe('frequency')
+    expect(formatReading({ value: 50.02, quantity: 'frequency', preference: 'metric' }).unit).toBe(
+      'Hz',
+    )
+  })
+
+  it('stores a signal ratio in decibels and shows the unit', () => {
+    expect(QUANTITY_BASE['signal-ratio']).toBe('dB')
+    expect(ingestReading({ value: -11, rawUnit: 'dB', quantity: 'signal-ratio' })).toEqual({
+      ok: true,
+      value: -11,
+    })
+    expect(formatReading({ value: 12, quantity: 'signal-ratio', preference: 'metric' }).unit).toBe(
+      'dB',
+    )
+  })
+})

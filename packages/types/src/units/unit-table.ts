@@ -48,6 +48,8 @@ export type UnitDimension =
   | 'angle'
   | 'sound-level'
   | 'signal-level'
+  | 'signal-ratio'
+  | 'frequency'
   | 'colour-temperature'
   | 'bitrate'
   | 'rate'
@@ -177,6 +179,9 @@ export const UNIT_TABLE: Readonly<Record<string, UnitSpec>> = {
   // ── single-unit families (identity only — dB is not a linear scale) ──
   dBFS: { dimension: 'sound-level', factor: 1, offset: 0 },
   dBm: { dimension: 'signal-level', factor: 1, offset: 0 },
+  dB: { dimension: 'signal-ratio', factor: 1, offset: 0 },
+  Hz: { dimension: 'frequency', factor: 1, offset: 0 },
+  kHz: { dimension: 'frequency', factor: 1000, offset: 0 },
   mired: { dimension: 'colour-temperature', factor: 1, offset: 0 },
   kbps: { dimension: 'bitrate', factor: 1, offset: 0 },
   Mbps: { dimension: 'bitrate', factor: 1000, offset: 0 },
