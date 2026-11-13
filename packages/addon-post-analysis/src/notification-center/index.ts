@@ -164,6 +164,11 @@ import { NcDeviceCompatWarnSampler } from './device-compat-guard.js'
 import { type NcRuleStatus } from './rule-status.js'
 import { NcRuleStore } from './rule-store.js'
 import { type NcSceneObservation, NcSceneStateCache } from './scene-state-cache.js'
+import {
+  NcPlannedUpdateReturn,
+  plannedUpdateNodeSubject,
+  unreturnedUpdateIncoming,
+} from './planned-update-return.js'
 import { NcPlannedUpdateWindow } from './planned-update-window.js'
 import { NcUpdateLandings } from './restart-supersede.js'
 import { NcSnoozeStore } from './snooze-store.js'
@@ -729,6 +734,8 @@ export class NotificationCenter implements NcEventConsumer {
    * seeds, only a real flip notifies.
    */
   private readonly liveness: NcLivenessLedger
+  /** Deadline for a node that went offline to apply an update. */
+  private readonly plannedUpdateReturns: NcPlannedUpdateReturn
   /**
    * Which alert episodes were already notified (`alert-episode-ledger.ts`): the
    * alert centre sends nothing of its own, so this is what makes its bus
@@ -1047,6 +1054,19 @@ export class NotificationCenter implements NcEventConsumer {
         delayMs: deps.nodeLivenessHoldoffMs ?? (process.env.VITEST ? 0 : NODE_LIVENESS_HOLDOFF_MS),
       },
     )
+    this.plannedUpdateReturns = new NcPlannedUpdateReturn({
+      now: () => this.now(),
+      logger: this.logger,
+      rowForNode: (nodeId) => this.liveness.acceptedOf(plannedUpdateNodeSubject(nodeId)),
+      markUnreturned: (row) => {
+        this.liveness.markUpdateUnreturned(row)
+      },
+      deliver: (nodeId, offlineAt) => {
+        this.consumeNodeLiveness(unreturnedUpdateIncoming(nodeId, offlineAt, this.now()), {
+          since: offlineAt,
+        })
+      },
+    })
     this.actionCatalog = new NcActionCatalog(
       deps.actions ?? NO_ACTIONS,
       this.logger.child('actions'),
@@ -1556,6 +1576,9 @@ export class NotificationCenter implements NcEventConsumer {
       },
       get nodeLivenessHoldoff() {
         return self.nodeLivenessHoldoff
+      },
+      get plannedUpdateReturns() {
+        return self.plannedUpdateReturns
       },
       noteInertGroupedRules: () => self.noteInertGroupedRules(),
       get now() {
@@ -2282,6 +2305,9 @@ export class NotificationCenter implements NcEventConsumer {
       get nodeLivenessHoldoff() {
         return self.nodeLivenessHoldoff
       },
+      get plannedUpdateReturns() {
+        return self.plannedUpdateReturns
+      },
       noteInertGroupedRules: () => self.noteInertGroupedRules(),
       get now() {
         return self.now
@@ -2596,6 +2622,9 @@ export class NotificationCenter implements NcEventConsumer {
       kindDeps: () => self.kindDeps(),
       get liveness() {
         return self.liveness
+      },
+      get plannedUpdateReturns() {
+        return self.plannedUpdateReturns
       },
       get logger() {
         return self.logger

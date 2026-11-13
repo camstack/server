@@ -135,8 +135,10 @@ const NC_LIVENESS_COLUMNS = [
    *  per-device. */
   { name: 'deviceId', type: 'INTEGER' as const },
   { name: 'updatedAt', type: 'INTEGER' as const, notNull: true },
-  /** Set on an offline that was a planned update restart. The matching online
-   *  reads it and stays quiet; a later row clears it. */
+  /** `update` on an offline that was a planned update restart. The matching
+   *  online reads it and stays quiet. `update-unreturned` once the return
+   *  deadline passed and the one notification was sent, so a later boot does
+   *  not send it again. A later row (the online) clears it. */
   { name: 'cause', type: 'TEXT' as const },
 ] as const
 
@@ -147,8 +149,14 @@ const NC_LIVENESS_INDEXES = [
 /** The two states a ledgered subject can be in. */
 export type NcLivenessState = 'online' | 'offline'
 
-/** Why an offline was accepted. Only a planned update restart is named. */
-export type NcLivenessCause = 'update'
+/**
+ * Why an offline was accepted.
+ *
+ * `update` — a planned update restart, still expected back.
+ * `update-unreturned` — that restart missed its deadline and the one
+ * notification has been handed off.
+ */
+export type NcLivenessCause = 'update' | 'update-unreturned'
 
 /**
  * What one observation was worth.
@@ -415,6 +423,18 @@ export class NcLivenessLedger {
   }
 
   /**
+   * The planned-update return was notified. The mirror advances before this
+   * returns, so a second pass in this process already sees `update-unreturned`
+   * (D49). The write is the ledger's write-behind; a failed persist can cost
+   * one repeat on the next boot and is logged by the ledger.
+   */
+  markUpdateUnreturned(row: NcLivenessRow): void {
+    const held = this.ledger.get(row.subject)
+    if (held === undefined || held.state !== 'offline' || held.cause !== 'update') return
+    void this.ledger.put({ ...held, cause: 'update-unreturned' })
+  }
+
+  /**
    * Judge ONE observation and advance the ledger.
    *
    * Synchronous on purpose: the verdict is a function of the in-RAM mirror
@@ -467,6 +487,11 @@ function rowToValue(row: NcLivenessRow): Record<string, unknown> {
  * (silent) rather than hydrating a state nothing can ever equal, which would
  * make every future event a phantom flip.
  */
+function livenessCause(value: unknown): NcLivenessCause | undefined {
+  if (value === 'update' || value === 'update-unreturned') return value
+  return undefined
+}
+
 function recordToRow(subject: string, data: Record<string, unknown>): NcLivenessRow | null {
   if (subject.length === 0) return null
   const state = data['state']
@@ -478,7 +503,7 @@ function recordToRow(subject: string, data: Record<string, unknown>): NcLiveness
   const rawDeviceId = data['deviceId']
   const deviceId =
     typeof rawDeviceId === 'number' && Number.isFinite(rawDeviceId) ? rawDeviceId : undefined
-  const cause = data['cause'] === 'update' ? 'update' : undefined
+  const cause = livenessCause(data['cause'])
   return {
     subject,
     state,

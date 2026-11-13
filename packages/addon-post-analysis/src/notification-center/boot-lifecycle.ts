@@ -12,6 +12,7 @@ import { NC_GROUPED_SHUTDOWN_CLOSE_MS, NcGroupedDelivery } from './grouped/group
 import { NcGroupStore } from './grouped/nc-group-store.js'
 import { NcLinkedStillShelf } from './linked-stills.js'
 import { DeviceLivenessHoldoff } from './liveness-holdoff.js'
+import type { NcPlannedUpdateReturn } from './planned-update-return.js'
 import type { NcOutboxEntry } from './outbox.js'
 import { NcOutbox } from './outbox.js'
 import { NcRuleAiStore } from './rule-ai-store.js'
@@ -65,6 +66,7 @@ export interface BootLifecycleHost {
   readonly livenessHoldoff: DeviceLivenessHoldoff
   readonly logger: IScopedLogger
   readonly nodeLivenessHoldoff: DeviceLivenessHoldoff
+  readonly plannedUpdateReturns: NcPlannedUpdateReturn
   noteInertGroupedRules(): void
   readonly now: () => number
   onChain(name: string, run: () => Promise<void>, deviceId: number): Promise<void>
@@ -410,6 +412,7 @@ export async function stop(host: BootLifecycleHost): Promise<void> {
   host.addonUpdates.dispose()
   host.livenessHoldoff.dispose()
   host.nodeLivenessHoldoff.dispose()
+  host.plannedUpdateReturns.dispose()
   // Clearing this is also what STOPS the boot back-fill: it checks the flag
   // between phases, so a shutdown that lands mid-hydration abandons the rest
   // instead of writing mirrors nobody will read (the `alarmPanelConvergence`

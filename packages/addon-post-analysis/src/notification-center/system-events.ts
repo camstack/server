@@ -28,6 +28,7 @@ import {
 } from './liveness-holdoff.js'
 import { NcLivenessLedger, ledgeredLiveness, type NcLivenessRow } from './liveness-ledger.js'
 import { OccupancyStore } from './occupancy-store.js'
+import { NcPlannedUpdateReturn, plannedUpdateNodeSubject } from './planned-update-return.js'
 import { NcPlannedUpdateWindow } from './planned-update-window.js'
 import { NcUpdateLandings } from './restart-supersede.js'
 import { NcRuleAiStore } from './rule-ai-store.js'
@@ -113,6 +114,7 @@ export interface SystemEventsHost {
   readonly occupancyStore: OccupancyStore
   pruneAlarmInputBypasses(): void
   readonly plannedUpdates: NcPlannedUpdateWindow
+  readonly plannedUpdateReturns: NcPlannedUpdateReturn
   readonly pruneLedger: NcPruneLedger
   readonly pruner: NcDeletedSubjectPruner
   refreshOccupancyWatch(): void
@@ -326,7 +328,8 @@ function dropSwitchedOff(
  * The offline is recognised by the announcement window (`isPlanned`). The
  * return is recognised by the cause the ledger stored on that offline, so a
  * process that restarted in between — and lost the window — still stays quiet.
- * Any other offline still notifies.
+ * The offline arms a return deadline: still offline when it expires is one
+ * notification. Any other offline still notifies.
  */
 function dropPlannedUpdate(
   host: SystemEventsHost,
@@ -336,6 +339,8 @@ function dropPlannedUpdate(
   const nodeId = system.nodeId
   if (nodeId === undefined) return false
   if (system.kind === 'node-offline' && host.plannedUpdates.isPlanned(nodeId, host.now())) {
+    const row = host.liveness.acceptedOf(plannedUpdateNodeSubject(nodeId))
+    host.plannedUpdateReturns.arm(nodeId, row?.updatedAt ?? host.now())
     host.logger.info('node offline not notified — restarting for an update', {
       meta: { nodeId, kind: system.kind },
     })
@@ -346,6 +351,7 @@ function dropPlannedUpdate(
     accepted?.state === 'offline' &&
     accepted.cause === 'update'
   ) {
+    host.plannedUpdateReturns.cancel(nodeId)
     host.logger.info('node online not notified — returning from an update', {
       meta: { nodeId, kind: system.kind },
     })

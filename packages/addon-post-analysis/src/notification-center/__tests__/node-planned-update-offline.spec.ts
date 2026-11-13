@@ -15,6 +15,10 @@ import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helper
 import { NotificationCenter } from '../index.js'
 import { NODE_LIVENESS_HOLDOFF_MS } from '../liveness-holdoff.js'
 import { PLANNED_UPDATE_OFFLINE_GRACE_MS } from '../planned-update-window.js'
+import {
+  PLANNED_UPDATE_RETURN_DEADLINE_MS,
+  PLANNED_UPDATE_UNRETURNED_BODY_KEY,
+} from '../planned-update-return.js'
 import { resolvePruneWindows } from '../prune-windows.js'
 import { makeFakeDeviceSettings } from './fake-device-settings.js'
 
@@ -178,5 +182,54 @@ describe('planned-update offline, wired', () => {
       expect(ncTable(world, 'outbox')?.size).toBe(1)
     })
     expect(frozen(world)[0]?.bodyKey).toBe('system.node-offline.body.agent.shutdown')
+  })
+
+  it('no return within the deadline produces one notification', async () => {
+    const world = await seededCenter()
+    const center = centers[0]
+    center?.onSystemEvent(announceUpdate())
+    center?.onSystemEvent(agent(false, 'shutdown'))
+    await vi.advanceTimersByTimeAsync(PLANNED_UPDATE_RETURN_DEADLINE_MS - 1_000)
+    expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
+    await vi.advanceTimersByTimeAsync(1_000)
+    await vi.waitFor(() => {
+      expect(ncTable(world, 'outbox')?.size).toBe(1)
+    })
+    expect(frozen(world)[0]?.bodyKey).toBe(PLANNED_UPDATE_UNRETURNED_BODY_KEY)
+    await vi.advanceTimersByTimeAsync(PLANNED_UPDATE_RETURN_DEADLINE_MS)
+    expect(ncTable(world, 'outbox')?.size).toBe(1)
+  })
+
+  it('a return before the deadline produces no notification', async () => {
+    const world = await seededCenter()
+    const center = centers[0]
+    center?.onSystemEvent(announceUpdate())
+    center?.onSystemEvent(agent(false, 'shutdown'))
+    await vi.advanceTimersByTimeAsync(PLANNED_UPDATE_RETURN_DEADLINE_MS - 1_000)
+    center?.onSystemEvent(agent(true))
+    await vi.advanceTimersByTimeAsync(PLANNED_UPDATE_RETURN_DEADLINE_MS)
+    expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
+  })
+
+  it('a restart with an already-expired update offline notifies once', async () => {
+    const world = await seededCenter()
+    const first = centers[0]
+    first?.onSystemEvent(announceUpdate())
+    first?.onSystemEvent(agent(false, 'shutdown'))
+    await vi.advanceTimersByTimeAsync(NODE_LIVENESS_HOLDOFF_MS)
+    expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
+    await first?.stop()
+    await vi.advanceTimersByTimeAsync(PLANNED_UPDATE_RETURN_DEADLINE_MS)
+    const second = await startCenter(world, false)
+    await second.whenHydrated()
+    await vi.waitFor(() => {
+      expect(ncTable(world, 'outbox')?.size).toBe(1)
+    })
+    expect(frozen(world)[0]?.bodyKey).toBe(PLANNED_UPDATE_UNRETURNED_BODY_KEY)
+    await second.stop()
+    const third = await startCenter(world, false)
+    await third.whenHydrated()
+    await vi.advanceTimersByTimeAsync(PLANNED_UPDATE_RETURN_DEADLINE_MS)
+    expect(ncTable(world, 'outbox')?.size).toBe(1)
   })
 })

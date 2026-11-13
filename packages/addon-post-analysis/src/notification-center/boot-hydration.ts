@@ -18,6 +18,7 @@ import type { NcBuildEntriesExtras } from './evaluate-and-enqueue.js'
 import type { NcEventOrigin, NcIncomingEvent } from './event-intake.js'
 import { discardedLivenessEvent } from './event-intake.js'
 import { NcLivenessLedger } from './liveness-ledger.js'
+import type { NcPlannedUpdateReturn } from './planned-update-return.js'
 import { OccupancyStore } from './occupancy-store.js'
 import type { NcOutboxEnqueueInput } from './outbox.js'
 import { NcOutbox } from './outbox.js'
@@ -52,6 +53,7 @@ export interface BootHydrationHost {
   readonly evaluationActive: boolean
   kindDeps(): DurableKindDeps
   readonly liveness: NcLivenessLedger
+  readonly plannedUpdateReturns: NcPlannedUpdateReturn
   readonly logger: IScopedLogger
   readonly now: () => number
   readonly occupancyStore: OccupancyStore
@@ -180,6 +182,10 @@ export async function hydrateLiveness(host: BootHydrationHost): Promise<void> {
       ...(forgottenWorkers > 0 ? { forgottenWorkerNodeSubjects: forgottenWorkers } : {}),
     },
   })
+  // After the mirror is loaded. A row still offline from an update past the
+  // deadline notifies once; a younger one waits out the rest. The scan reads
+  // the mirror, not the store (D49).
+  host.plannedUpdateReturns.recover(host.liveness.snapshot())
 }
 /**
  * Say that the ledger refused a liveness event, and why.

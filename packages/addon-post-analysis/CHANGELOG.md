@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grouped device, node and update notifications are titled with the count, not the rule name.
 - Notification copy names the event: a timelapse window, a low consumable, a disarm, a device command and a finished appliance cycle.
 - An update restart and its return send no push, and history keeps the title and body that were sent.
+- A node that does not come back within 10 minutes of an update restart is notified once.
 
 ## [1.2.702] - 2026-11-13
 
