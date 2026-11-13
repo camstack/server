@@ -8,7 +8,7 @@
  * off a `peerBytes` ticket before calling in ({@link assembleEmailMime}).
  */
 import { z } from 'zod'
-import { PeerBytesTicketSchema } from '../interfaces/addon-peer-bytes.js'
+import { PeerBytesTicketSchema, type PeerBytesTicket } from '../interfaces/addon-peer-bytes.js'
 
 /** How many images one email will carry. */
 export const EMAIL_IMAGE_MAX_COUNT: number = 3
@@ -23,7 +23,16 @@ export const EMAIL_IMAGE_MAX_TOTAL_BYTES: number = 5 * 1024 * 1024
 export const EMAIL_IMAGE_SLOT: string = '<!--camstack-images-->'
 
 /** An image a sender still has to read (`peerBytes` ticket, not the bytes). */
-export const EmailImagePartSchema = z.object({
+export interface EmailImagePart {
+  readonly ticket: PeerBytesTicket
+  readonly mime: string
+  readonly name: string
+  readonly contentId: string
+  readonly placement: 'inline' | 'attachment'
+  readonly deviceId?: number
+}
+
+export const EmailImagePartSchema: z.ZodType<EmailImagePart> = z.object({
   ticket: PeerBytesTicketSchema,
   mime: z.string().min(1),
   name: z.string().min(1),
@@ -31,7 +40,6 @@ export const EmailImagePartSchema = z.object({
   placement: z.enum(['inline', 'attachment']),
   deviceId: z.number().int().nonnegative().optional(),
 })
-export type EmailImagePart = z.infer<typeof EmailImagePartSchema>
 
 /** An image whose bytes are already in hand, ready for the MIME body. */
 export interface EmailMimeImage {
