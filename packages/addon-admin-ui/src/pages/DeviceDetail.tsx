@@ -10,6 +10,7 @@ import {
 import {
   BatteryBadge,
   Breadcrumb,
+  DeviceCardFrameProvider,
   Button,
   type ContainerChild,
   DeviceContextProvider,
@@ -909,11 +910,11 @@ export function DeviceDetailPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col h-full">
-        <div className="border-b border-border bg-surface px-6 py-4">
+        <div className="border-b border-border bg-surface px-2 py-4 sm:px-4">
           <div className="h-4 w-48 rounded bg-surface-hover animate-pulse mb-3" />
           <div className="h-8 w-64 rounded bg-surface-hover animate-pulse" />
         </div>
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-2 sm:p-4">
           <div className="h-40 rounded-lg border border-border bg-surface animate-pulse" />
         </div>
       </div>
@@ -975,7 +976,7 @@ export function DeviceDetailPage() {
     // on the page frame), NodeCard and SchemaTabBar.
     <div className="absolute inset-0 flex flex-col overflow-clip">
       {/* ── Header ── */}
-      <div className="border-b border-border bg-surface px-6 py-3 flex-shrink-0">
+      <div className="border-b border-border bg-surface px-2 py-3 sm:px-4 flex-shrink-0">
         {/* Row 1: breadcrumb only — actions live with the device-info
             row below so a long breadcrumb chain can't collide with a
             growing toolbar. */}
@@ -1384,46 +1385,55 @@ export function DeviceDetailPage() {
                       ) : (
                         // A plain wrapper: the hero's `h-full` must not resolve
                         // against the slot, or it claims the widgets' height too.
-                        <div>
-                          <DeviceDetailModule
-                            deviceId={deviceId}
-                            trpcClient={system.trpcClient}
-                            queryClient={queryClient}
-                            theme={resolvedMode}
-                            locale={heroLang(i18n.language)}
-                            canActuate={isAdmin}
-                            defaultHistoryOpen={searchParams.get('tab') === HISTORY_TAB_ID}
-                            onDrawn={setModelDrawn}
-                            onOpenDevice={(id) => navigate(`/devices/${String(id)}`)}
-                            onOpenCamera={(id) => navigate(`/devices/${String(id)}`)}
-                            onNavigate={(path) => navigate(path)}
-                            fallback={
-                              <DeviceHero
-                                deviceId={deviceId}
-                                deviceName={name}
-                                deviceType={deviceTypeStr ?? 'unknown'}
-                                deviceRole={device?.role ?? null}
-                                provider={provider}
-                                isOnline={isOnline}
-                                features={capabilities}
-                              />
-                            }
-                          />
-                          {/* What the dishwasher card does not draw (its options,
+                        // The page header already names the device and its
+                        // integration, so the card drops its own frame (the
+                        // bordered box, the repeated name and the integration
+                        // chip). `bare` is the viewer's sheet too; lists and
+                        // the embed keep the card frame. Gutter is the page's
+                        // `p-2 sm:p-4`, not the card's own padding.
+                        <div data-card-frame="bare" className="p-2 sm:p-4">
+                          <DeviceCardFrameProvider frame="bare">
+                            <DeviceDetailModule
+                              deviceId={deviceId}
+                              trpcClient={system.trpcClient}
+                              queryClient={queryClient}
+                              theme={resolvedMode}
+                              locale={heroLang(i18n.language)}
+                              canActuate={isAdmin}
+                              showName={false}
+                              defaultHistoryOpen={searchParams.get('tab') === HISTORY_TAB_ID}
+                              onDrawn={setModelDrawn}
+                              onOpenDevice={(id) => navigate(`/devices/${String(id)}`)}
+                              onOpenCamera={(id) => navigate(`/devices/${String(id)}`)}
+                              onNavigate={(path) => navigate(path)}
+                              fallback={
+                                <DeviceHero
+                                  deviceId={deviceId}
+                                  deviceName={name}
+                                  deviceType={deviceTypeStr ?? 'unknown'}
+                                  deviceRole={device?.role ?? null}
+                                  provider={provider}
+                                  isOnline={isOnline}
+                                  features={capabilities}
+                                />
+                              }
+                            />
+                            {/* What the dishwasher card does not draw (its options,
                               delayed start, events, care reminders) sits under it.
                               Draws nothing for any other device. */}
-                          <DishwasherOptionsPanel
-                            trpc={system.trpcClient}
-                            deviceId={deviceId}
-                            features={capabilities}
-                            entries={dishwasherBindings.data?.entries}
-                          />
-                          {/* The hero block's own sections (D915): consumables
+                            <DishwasherOptionsPanel
+                              trpc={system.trpcClient}
+                              deviceId={deviceId}
+                              features={capabilities}
+                              entries={dishwasherBindings.data?.entries}
+                            />
+                            {/* The hero block's own sections (D915): consumables
                               sit right under the hero card, in the same slot, so
                               they are in view on every tab. */}
-                          {modelDrawn ? null : (
-                            <DeviceHeroWidgets deviceId={deviceId} widgets={heroSectionWidgets} />
-                          )}
+                            {modelDrawn ? null : (
+                              <DeviceHeroWidgets deviceId={deviceId} widgets={heroSectionWidgets} />
+                            )}
+                          </DeviceCardFrameProvider>
                         </div>
                       )}
                     </div>
@@ -1515,7 +1525,7 @@ export function DeviceDetailPage() {
                     }
                   >
                     {/* Tab bar */}
-                    <div className="flex-shrink-0 border-b border-border bg-surface px-4">
+                    <div className="flex-shrink-0 border-b border-border bg-surface px-2 sm:px-4">
                       <div className="flex flex-nowrap overflow-x-auto md:flex-wrap md:overflow-x-visible items-center gap-0">
                         {tabs.map((tab) => {
                           const isActive = activeTab === tab.id
@@ -1547,8 +1557,8 @@ export function DeviceDetailPage() {
                     <div
                       className={
                         isMobile
-                          ? 'p-3 flex flex-1 flex-col gap-3'
-                          : 'flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3'
+                          ? 'p-2 sm:p-4 flex flex-1 flex-col gap-3'
+                          : 'flex-1 min-h-0 overflow-y-auto p-2 sm:p-4 flex flex-col gap-3'
                       }
                     >
                       {activeTab === 'overview' && hasAnyChildren && (

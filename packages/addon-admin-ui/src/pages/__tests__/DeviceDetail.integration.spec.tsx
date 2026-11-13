@@ -85,7 +85,15 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
-vi.mock('../../modules/device-detail', () => ({ DeviceDetailModule: () => null }))
+const moduleProps = vi.hoisted(() => ({
+  current: null as { readonly showName?: boolean } | null,
+}))
+vi.mock('../../modules/device-detail', () => ({
+  DeviceDetailModule: (props: { readonly showName?: boolean }) => {
+    moduleProps.current = props
+    return <div data-testid="device-module" />
+  },
+}))
 vi.mock('../../hooks/useDevice', () => ({ useDeviceChildren: () => ({ data: [] }) }))
 vi.mock('../../components/device/CameraFunctionSwitches', () => ({
   CameraFunctionSwitches: () => null,
@@ -155,6 +163,28 @@ describe('DeviceDetailPage — integration identity', () => {
     expect(screen.getByText('Loading integration…')).toBeTruthy()
     expect(screen.queryByRole('button', { name: /open integration/i })).toBeNull()
     expect(screen.queryByText('composer')).toBeNull()
+  })
+})
+
+describe('DeviceDetailPage — gutter and card frame', () => {
+  beforeEach(() => {
+    integrationState.answered = true
+    moduleProps.current = null
+    localStorage.clear()
+  })
+
+  it('uses the page gutter and drops the card frame that repeats the name', () => {
+    render(renderPage())
+    const heading = screen.getByRole('heading', { name: 'Porch (composto)' })
+    const header = heading.closest('div.border-b')
+    expect(header?.className).toContain('px-2')
+    expect(header?.className).toContain('sm:px-4')
+    expect(header?.className.includes('px-6')).toBe(false)
+    const hero = screen.getByTestId('device-module').parentElement
+    expect(hero?.getAttribute('data-card-frame')).toBe('bare')
+    expect(hero?.className).toContain('p-2')
+    expect(hero?.className).toContain('sm:p-4')
+    expect(moduleProps.current?.showName).toBe(false)
   })
 })
 
