@@ -1,16 +1,33 @@
 import type { ReactElement } from 'react'
 import { cn } from '../../../lib/cn'
 
+export type LevelTone = 'success' | 'info' | 'warning' | 'danger'
+
+const LEVEL_TONE: Readonly<Record<LevelTone, string>> = {
+  success: 'text-success',
+  info: 'text-info',
+  warning: 'text-warning',
+  danger: 'text-danger',
+}
+
 export interface LevelBarProps {
   /** 0..100. */
   readonly percent: number
   readonly low?: boolean
+  /** The fill's colour; `low` wins (danger). Default success. */
+  readonly tone?: LevelTone
   readonly ariaLabel: string
   readonly className?: string
 }
 
 /** A thin horizontal level (a consumable, a tank, a battery). */
-export function LevelBar({ percent, low, ariaLabel, className }: LevelBarProps): ReactElement {
+export function LevelBar({
+  percent,
+  low,
+  tone = 'success',
+  ariaLabel,
+  className,
+}: LevelBarProps): ReactElement {
   const p = Math.min(100, Math.max(0, Math.round(percent)))
   return (
     <svg
@@ -21,7 +38,7 @@ export function LevelBar({ percent, low, ariaLabel, className }: LevelBarProps):
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={p}
-      className={cn('h-1.5 w-full', low === true ? 'text-danger' : 'text-success', className)}
+      className={cn('h-1.5 w-full', LEVEL_TONE[low === true ? 'danger' : tone], className)}
     >
       <rect width={100} height={6} rx={3} className="fill-surface-hover" />
       <rect width={p} height={6} rx={3} fill="currentColor" />

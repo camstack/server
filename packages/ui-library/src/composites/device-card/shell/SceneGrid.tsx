@@ -8,6 +8,11 @@ export interface SceneZones {
   readonly image: ReactNode
   readonly right?: ReactNode
   readonly bottom?: ReactNode
+  /**
+   * The device is in an alarm state (triggered, jammed, sounding, blocked, a
+   * leak): the scene is washed in the danger colour.
+   */
+  readonly alert?: boolean
 }
 
 export interface SceneGridProps extends SceneZones {
@@ -33,14 +38,17 @@ export function SceneGrid({
   corners,
   bottomCorners,
   activity,
+  alert = false,
 }: SceneGridProps): ReactElement {
   return (
     <div
       data-testid="dc-scene"
       data-act={activity}
       data-bottom={has(bottom)}
+      data-alert={alert}
       className={cn(
-        'dc-scene relative gap-x-2 gap-y-3.5 rounded-2xl border border-border bg-background-elevated px-3 pt-10',
+        'dc-scene relative gap-x-2 gap-y-3.5 rounded-2xl border px-3 pt-10',
+        alert ? 'border-danger/50 bg-danger/10' : 'border-border bg-background-elevated',
         bottomCorners ? 'pb-10' : 'pb-3.5',
       )}
     >

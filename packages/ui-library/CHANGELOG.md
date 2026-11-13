@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A full-height form dialog now has a fixed height on desktop, so only its columns scroll while the title and buttons stay put
 - The device picker panel can fill a dialog column and label an action requirement.
 - The pager under a table names previous and next with a tooltip.
+### Changed
+
+- Device cards for locks, alarm panels, humidifiers, valves, sirens, pet feeders and fountains, and weather stations: two-step unlock and siren, alarm codes typed on a pad and sent only with the command, a lock that refuses to close beside an open door.
 
 ## [1.2.438] - 2026-11-13
 

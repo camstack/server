@@ -18,6 +18,15 @@ import { type ConnectedCardProps, ConnectedPlugCard } from './ConnectedPlugCard'
 import { ConnectedMowerCard, ConnectedVacuumCard } from './ConnectedRobotCard'
 import { ConnectedIrTransmitterCard } from './ConnectedIrTransmitterCard'
 import { ConnectedWaterHeaterCard } from './ConnectedWaterHeaterCard'
+import { type CapCardKind, capCardKindOf } from './cap-card-kinds'
+import { ConnectedAlarmCard } from './ConnectedAlarmCard'
+import { ConnectedHumidifierCard } from './ConnectedHumidifierCard'
+import { ConnectedLockCard } from './ConnectedLockCard'
+import { ConnectedPetFeederCard } from './ConnectedPetFeederCard'
+import { ConnectedPetFountainCard } from './ConnectedPetFountainCard'
+import { ConnectedSirenCard } from './ConnectedSirenCard'
+import { ConnectedValveCard } from './ConnectedValveCard'
+import { ConnectedWeatherCard } from './ConnectedWeatherCard'
 
 /** The scenes a real device can be drawn with today. */
 export type ConnectedCardKind =
@@ -36,6 +45,7 @@ export type ConnectedCardKind =
   | 'energy'
   | 'water-heater'
   | 'ir-transmitter'
+  | CapCardKind
 
 /** `pending` until both the device and its bindings answered; `null` = no card for it. */
 export type ConnectedCardResolution = ConnectedCardKind | 'pending' | null
@@ -51,7 +61,8 @@ const CLIMATE_CAPS: readonly string[] = ['climate-control', 'heating-valve']
  * appliance card (`running-state` or `switch`); a dishwasher that speaks for
  * itself (`dishwasher`), a media player, a vacuum and a mower need their cap;
  * a heat pump needs `heat-pump-status`, an energy system `energy-system`, a
- * water heater `water-heater`.
+ * water heater `water-heater`; the types with one cap of their own (lock,
+ * alarm, valve …) are in `cap-card-kinds`.
  */
 export function connectedCardKindOf(
   deviceType: string | null,
@@ -59,6 +70,8 @@ export function connectedCardKindOf(
   capNames: readonly string[],
 ): ConnectedCardKind | null {
   if (deviceType === null) return null
+  const byCap = capCardKindOf(deviceType, role, capNames)
+  if (byCap !== undefined) return byCap
   if (deviceType === DeviceType.HeatPump)
     return capNames.includes('heat-pump-status') ? 'heat-pump' : null
   if (deviceType === DeviceType.EnergySystem)
@@ -147,5 +160,21 @@ export function ConnectedDeviceCard({
       return <ConnectedWaterHeaterCard {...props} />
     case 'ir-transmitter':
       return <ConnectedIrTransmitterCard {...props} />
+    case 'lock':
+      return <ConnectedLockCard {...props} />
+    case 'alarm':
+      return <ConnectedAlarmCard {...props} />
+    case 'humidifier':
+      return <ConnectedHumidifierCard {...props} />
+    case 'valve':
+      return <ConnectedValveCard {...props} />
+    case 'siren':
+      return <ConnectedSirenCard {...props} />
+    case 'pet-feeder':
+      return <ConnectedPetFeederCard {...props} />
+    case 'pet-fountain':
+      return <ConnectedPetFountainCard {...props} />
+    case 'weather':
+      return <ConnectedWeatherCard {...props} />
   }
 }

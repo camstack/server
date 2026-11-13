@@ -137,5 +137,14 @@ export const DEVICE_CARD_CSS = `
 .dc-remote-dpad>*{min-width:0;padding:0}
 .dc-remote-dpad [data-pos="up"]{grid-area:1/2}.dc-remote-dpad [data-pos="left"]{grid-area:2/1}.dc-remote-dpad [data-pos="ok"]{grid-area:2/2;border-radius:9999px}
 .dc-remote-dpad [data-pos="right"]{grid-area:2/3}.dc-remote-dpad [data-pos="down"]{grid-area:3/2}
+.dc-lock-moving{animation:dc-wobble .7s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes dc-wobble{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+.dc-ring-pulse{animation:dc-ring-pulse 1.6s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes dc-ring-pulse{0%{transform:scale(.85);opacity:.7}100%{transform:scale(1.2);opacity:0}}
+.dc-wave{animation:dc-wave 1s ease-in-out infinite}.dc-wave+.dc-wave{animation-delay:.25s}
+@keyframes dc-wave{50%{opacity:.2}}
+.dc-jet{animation:dc-jet 1.2s ease-in-out infinite;transform-box:fill-box}
+@keyframes dc-jet{50%{transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.dc-lock-moving,.dc-ring-pulse,.dc-wave,.dc-jet{animation:none!important}}
 @media (prefers-reduced-motion:reduce){.dc-fx *,.dc-fx{animation:none!important}.dc-fx-p,.dc-fx-air,.dc-fx-wisps,.dc-fx-draft,.dc-fx-breeze{display:none}.dc-fan *,.dc-fan,.dc-heater *,.dc-appl *,.dc-robot *,.dc-hp *,.dc-tank *,.dc-energy *{animation:none!important}}
 `

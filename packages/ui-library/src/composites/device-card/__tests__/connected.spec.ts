@@ -54,9 +54,10 @@ describe('connectedCardKindOf — a card only for what the device IS (type + rol
     expect(connectedCardKindOf(DeviceType.Cover, null, ['switch'])).toBeNull()
   })
 
-  it('leaves every other type to the hero it already has', () => {
-    expect(connectedCardKindOf(DeviceType.Siren, null, ['switch'])).toBeNull()
+  it('draws a cap-named type only with its own cap, and leaves the rest to the hero', () => {
+    expect(connectedCardKindOf(DeviceType.Siren, null, ['switch'])).toBe('siren')
     expect(connectedCardKindOf(DeviceType.Lock, null, ['switch'])).toBeNull()
+    expect(connectedCardKindOf(DeviceType.Lock, null, ['lock-control'])).toBe('lock')
     expect(connectedCardKindOf(null, null, ['switch', 'climate-control'])).toBeNull()
   })
 })

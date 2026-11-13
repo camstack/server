@@ -928,6 +928,60 @@
       ]
     },
     {
+      "name": "ALARM_DISARMED",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/alarm/AlarmCard.tsx",
+      "summary": "The mode row's id for Disarmed (never a cap arm mode)."
+    },
+    {
+      "name": "alarmArmingPatch",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/alarm-model.ts",
+      "summary": "The optimistic state for an arm command."
+    },
+    {
+      "name": "AlarmCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/alarm/AlarmCard.tsx",
+      "summary": "An alarm panel: the shield says the state, and its only control is the row of the modes it declares (Disarmed first). Disarming always asks to confirm; a panel that wants a code asks for it on the pad, for arming too.…",
+      "props": [
+        {
+          "name": "model",
+          "type": "AlarmCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "AlarmCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "AlarmCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
+    },
+    {
       "name": "AlarmHeroCard",
       "kind": "component",
       "area": "composites",
@@ -935,11 +989,53 @@
       "summary": "AlarmHeroCard — segmented arm/disarm hero for AlarmPanel devices."
     },
     {
+      "name": "AlarmIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/AlarmIllustration.tsx",
+      "summary": "An alarm panel's shield: grey disarmed, green with a check armed, amber with a widening ring while it arms (or counts down), red with \"!\" when it has gone off.",
+      "props": [
+        {
+          "name": "look",
+          "type": "AlarmLook",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "alarmModeLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/alarm/AlarmCard.tsx",
+      "summary": ""
+    },
+    {
       "name": "AlarmPanelInlineControl",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/alarm-hero-card.tsx",
       "summary": "The row/card-sized alarm control — ONE LINE, always."
+    },
+    {
+      "name": "alarmReadingOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/alarm-model.ts",
+      "summary": "The card's activity and armed mode; arming shows the mode it is heading for."
+    },
+    {
+      "name": "alarmStateLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/alarm/AlarmCard.tsx",
+      "summary": ""
     },
     {
       "name": "alignSeries",
@@ -2307,6 +2403,13 @@
       "summary": "Classify ONE node from the registry's answer — the per-node form of `useCapabilityPresence`, for a picker that offers only the nodes running a provider."
     },
     {
+      "name": "capCardKindOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/cap-card-kinds.ts",
+      "summary": "The cap-named card of a device: the kind when it binds the cap, null when it is one of these types but lacks the cap, undefined when the type is not one of these (the caller keeps resolving)."
+    },
+    {
       "name": "Card",
       "kind": "component",
       "area": "primitives",
@@ -2902,6 +3005,39 @@
       ]
     },
     {
+      "name": "CodePad",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/CodePad.tsx",
+      "summary": "The card's code entry: a digit pad for a device that asks for a code before it acts (an alarm panel). The code is shown as dots and leaves the pad only on confirm.",
+      "props": [
+        {
+          "name": "submitLabel",
+          "type": "string",
+          "optional": false,
+          "doc": "What the confirm key says (\"Disarm\", \"Arm away\")."
+        },
+        {
+          "name": "onSubmit",
+          "type": "(code: string) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onCancel",
+          "type": "() => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "CollapsibleCard",
       "kind": "component",
       "area": "primitives",
@@ -3000,6 +3136,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/webrtc-diagnostics/nat-mapping.ts",
       "summary": "The cheap client-side NAT mapping check."
+    },
+    {
+      "name": "compassOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather/model.ts",
+      "summary": "The eight-point compass word for a bearing."
     },
     {
       "name": "computePageButtons",
@@ -3343,6 +3486,13 @@
       "summary": "The ONE modal dialog of the product — confirm, alert and prompt."
     },
     {
+      "name": "ConnectedAlarmCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedAlarmCard.tsx",
+      "summary": "An alarm panel (`alarm-panel`): the declared arm modes and Disarmed in one row; the code, when the panel wants one, goes with the command and nowhere else."
+    },
+    {
       "name": "ConnectedApplianceCard",
       "kind": "component",
       "area": "composites",
@@ -3422,6 +3572,13 @@
       "summary": "A heat pump (`heat-pump-status`): what it reports, and through `heat-pump-control` each circuit's mode / hot-water level and the four system modes — each only when the gateway declares it and the binding implements th…"
     },
     {
+      "name": "ConnectedHumidifierCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedHumidifierCard.tsx",
+      "summary": "A humidifier or dehumidifier (`humidifier`): power, target humidity within the device's range and mode — each only when the binding implements it."
+    },
+    {
       "name": "ConnectedIrTransmitterCard",
       "kind": "component",
       "area": "composites",
@@ -3436,6 +3593,13 @@
       "summary": "The light card of a real device: power through `switch` (D1042), the level through `brightness`, colour and white through `color` — each popover only when the device declares that colour feature."
     },
     {
+      "name": "ConnectedLockCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedLockCard.tsx",
+      "summary": "A lock (`lock-control`): lock, unlock and — when the device declares `lock-open` — release the latch; the door is the contact a Customize link names (D984), read from that sensor, never guessed from the lock."
+    },
+    {
       "name": "ConnectedMediaCard",
       "kind": "component",
       "area": "composites",
@@ -3448,6 +3612,20 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedRobotCard.tsx",
       "summary": "A robot mower (`lawn-mower-control`): mow, pause, dock; its code as the status line."
+    },
+    {
+      "name": "ConnectedPetFeederCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedPetFeederCard.tsx",
+      "summary": "A pet feeder (`pet-feeder`): feed a portion (per hopper on a dual feeder), cancel, call the pet, mark refilled and the four settings — each only when the binding implements it. The desiccant is a consumable (D915), dr…"
+    },
+    {
+      "name": "ConnectedPetFountainCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedPetFountainCard.tsx",
+      "summary": "A drinking fountain (`pet-fountain`): the pump switch and the tank's level."
     },
     {
       "name": "ConnectedPlugCard",
@@ -3489,6 +3667,13 @@
       ]
     },
     {
+      "name": "ConnectedSirenCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedSirenCard.tsx",
+      "summary": "A siren (a `siren` device, or a switch in the siren role): sound and silence through its `switch`. Tone, duration and volume are drawn only when a cap declares them — none does yet."
+    },
+    {
       "name": "ConnectedVacuumCard",
       "kind": "component",
       "area": "composites",
@@ -3496,11 +3681,25 @@
       "summary": "A robot vacuum (`vacuum-control`): clean, pause, stop, dock, locate, suction — each only when its binding implements it."
     },
     {
+      "name": "ConnectedValveCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedValveCard.tsx",
+      "summary": "A valve (`valve`): open, close, stop and — when the binding implements `setPosition` — a position."
+    },
+    {
       "name": "ConnectedWaterHeaterCard",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedWaterHeaterCard.tsx",
       "summary": "A water heater (`water-heater`): target within its range, operation mode, away, and power through the `off` mode (back on in the last mode it ran) — each only when the device declares it and the binding implements the…"
+    },
+    {
+      "name": "ConnectedWeatherCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedWeatherCard.tsx",
+      "summary": "A weather source (`weather`): today's reading. The cap carries no forecast, apparent temperature, rain or UV, so the card draws none of them."
     },
     {
       "name": "CONSUMABLE_LOW_PERCENT",
@@ -6703,6 +6902,33 @@
       "summary": ""
     },
     {
+      "name": "DropIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/DropIllustration.tsx",
+      "summary": "A humidifier: a drop filled to the room's humidity.",
+      "props": [
+        {
+          "name": "fill",
+          "type": "number | null",
+          "optional": false,
+          "doc": "0..1: the room's humidity the drop fills to; null draws it empty."
+        },
+        {
+          "name": "off",
+          "type": "boolean",
+          "optional": false,
+          "doc": "Off: the water is drawn grey."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "DummyHeroCard",
       "kind": "component",
       "area": "composites",
@@ -7856,6 +8082,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "FOUNTAIN_LOW_PERCENT",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/pet/model.ts",
+      "summary": "Under this much water the pump stops: the level is drawn as a warning."
     },
     {
       "name": "frameClass",
@@ -9087,6 +9320,53 @@
       "summary": "`volume_up` → `Volume up`; `custom:hdmi_1` → `hdmi 1`. The fallback of an untranslated role."
     },
     {
+      "name": "humidifierActivityOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/humidifier-model.ts",
+      "summary": "The card's activity: off when it is off, else what its `action` reports."
+    },
+    {
+      "name": "HumidifierCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/humidifier/HumidifierCard.tsx",
+      "summary": "A humidifier or dehumidifier: the target on the left, a drop filled to the room's humidity in the middle, power and mode on the right. Mist rises while it humidifies and drops fall while it dries; off greys the drop a…",
+      "props": [
+        {
+          "name": "model",
+          "type": "HumidifierCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "HumidifierCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "HumidifierCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
+    },
+    {
       "name": "HumidifierHeroCard",
       "kind": "component",
       "area": "composites",
@@ -9101,11 +9381,39 @@
       "summary": "HumidifierInlineControl — compact on/off toggle + current→target readout for a device-list row. Must NOT blow out the row width."
     },
     {
+      "name": "humidifierModeLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/humidifier-model.ts",
+      "summary": ""
+    },
+    {
+      "name": "humidifierModeOptions",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/humidifier-model.ts",
+      "summary": ""
+    },
+    {
+      "name": "humidifierStateLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/humidifier/HumidifierCard.tsx",
+      "summary": ""
+    },
+    {
       "name": "humidifierTint",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/humidifier-control.tsx",
       "summary": "Pure helper — maps the device's on-state + HA `action` to a tint. Exhaustive over the known action strings; an unknown / null action falls back to on/off heuristics."
+    },
+    {
+      "name": "HUMIDITY_STEP",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/humidifier/HumidifierCard.tsx",
+      "summary": "One press of the target moves it by this much."
     },
     {
       "name": "IconAction",
@@ -9434,6 +9742,51 @@
           "type": "boolean",
           "optional": true,
           "doc": "Show agent selector (default: false)"
+        }
+      ]
+    },
+    {
+      "name": "InfoTile",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/InfoTile.tsx",
+      "summary": "A read-only tile in a scene: something the device knows, never a control.",
+      "props": [
+        {
+          "name": "glyph",
+          "type": "CardGlyph",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": true,
+          "doc": "The small word (a door sensor's name, \"Humidity\"); omitted when the value says it all."
+        },
+        {
+          "name": "value",
+          "type": "string | null",
+          "optional": false,
+          "doc": "Null when not reported yet: \"—\"."
+        },
+        {
+          "name": "tone",
+          "type": "InfoTileTone",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "layout",
+          "type": "'stack' | 'side' | 'row'",
+          "optional": true,
+          "doc": "`stack`: glyph over the value, the label under it (a door contact beside a lock). `side`: glyph left, label over the value (a weather readin"
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
         }
       ]
     },
@@ -9937,6 +10290,13 @@
       ]
     },
     {
+      "name": "kmhOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather/model.ts",
+      "summary": "m/s to km/h."
+    },
+    {
       "name": "knownRolesOfGroup",
       "kind": "function",
       "area": "composites",
@@ -10080,6 +10440,12 @@
           "doc": ""
         },
         {
+          "name": "tone",
+          "type": "LevelTone",
+          "optional": true,
+          "doc": "The fill's colour; `low` wins (danger). Default success."
+        },
+        {
           "name": "ariaLabel",
           "type": "string",
           "optional": false,
@@ -10087,6 +10453,39 @@
         },
         {
           "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "LevelRow",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/LevelRow.tsx",
+      "summary": "A scene's level line under the drawing: label, bar, percentage.",
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": "\"Water\", \"Tank\", \"Food\"."
+        },
+        {
+          "name": "percent",
+          "type": "number | null",
+          "optional": false,
+          "doc": "0..100, or null when the device has not reported it: an empty bar and \"—\"."
+        },
+        {
+          "name": "warn",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Warning colour on the bar and the value: the level stops the device."
+        },
+        {
+          "name": "testId",
           "type": "string",
           "optional": true,
           "doc": ""
@@ -10244,11 +10643,79 @@
       "summary": "Register the MF remote (idempotent) and load one of its exposed modules. Returns the resolved `Record<componentKey, Component>` map (the exposed module's `default` export)."
     },
     {
+      "name": "LockCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/lock/LockCard.tsx",
+      "summary": "A lock: the linked door on the left, the padlock in the middle, the one command that changes it on the right. Unlock and Open door are armed (a second press confirms); Lock waits for a closed door. A jammed lock turns…",
+      "props": [
+        {
+          "name": "model",
+          "type": "LockCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "LockCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "LockCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
+    },
+    {
+      "name": "lockDoorOpen",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/lock-model.ts",
+      "summary": "The door is open when the linked contact says so, or the lock does."
+    },
+    {
       "name": "LockHeroCard",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/lock-hero-card.tsx",
       "summary": "LockHeroCard — padlock hero for lock devices."
+    },
+    {
+      "name": "LockIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/LockIllustration.tsx",
+      "summary": "A padlock: green locked, amber unlocked (the shackle lifts), red jammed; it rocks while it moves (still under reduced motion).",
+      "props": [
+        {
+          "name": "look",
+          "type": "LockLook",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "LockInlineControl",
@@ -10262,6 +10729,20 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/lock-panel.tsx",
+      "summary": ""
+    },
+    {
+      "name": "lockReadingOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/lock-model.ts",
+      "summary": "The card's activity from the lock's state; `door-open` is an unlocked lock beside an open door."
+    },
+    {
+      "name": "lockStateLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/lock/LockCard.tsx",
       "summary": ""
     },
     {
@@ -11834,6 +12315,194 @@
       ]
     },
     {
+      "name": "petFaultOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/pet-model.ts",
+      "summary": "The fault a device reports, or null when it is healthy."
+    },
+    {
+      "name": "petFeederActivityOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/pet-model.ts",
+      "summary": ""
+    },
+    {
+      "name": "PetFeederCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/pet/PetFeederCard.tsx",
+      "summary": "A pet feeder: the portion on the left, the hopper emptying over the bowl in the middle, Feed (Cancel while it feeds) and Call pet on the right, the food level under it. A fault turns the scene red and holds Feed.",
+      "props": [
+        {
+          "name": "model",
+          "type": "PetFeederCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "PetFeederCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "PetFeederCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
+    },
+    {
+      "name": "PetFeederIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/PetFeederIllustration.tsx",
+      "summary": "A feeder: the hopper emptying to its food level over a bowl; kibble falls while it feeds.",
+      "props": [
+        {
+          "name": "food",
+          "type": "number | null",
+          "optional": false,
+          "doc": "0..1 food left in the hopper; null when not reported."
+        },
+        {
+          "name": "bowlFull",
+          "type": "boolean",
+          "optional": false,
+          "doc": "Food is in the bowl."
+        },
+        {
+          "name": "low",
+          "type": "boolean",
+          "optional": false,
+          "doc": "Low food: the kibble is drawn in the warning colour."
+        },
+        {
+          "name": "feeding",
+          "type": "boolean",
+          "optional": false,
+          "doc": "Kibble falls while it dispenses."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "petFeederStateLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/pet/PetFeederCard.tsx",
+      "summary": ""
+    },
+    {
+      "name": "petFeedInput",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/pet-model.ts",
+      "summary": ""
+    },
+    {
+      "name": "petFountainActivityOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/pet-model.ts",
+      "summary": ""
+    },
+    {
+      "name": "PetFountainCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/pet/PetFountainCard.tsx",
+      "summary": "A drinking fountain: the basin filled to the tank's level with a jet while the pump runs, the pump switch on the right, the water level under it (a warning under 10%, where the pump stops).",
+      "props": [
+        {
+          "name": "model",
+          "type": "PetFountainCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "PetFountainCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "PetFountainCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
+    },
+    {
+      "name": "PetFountainIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/PetFountainIllustration.tsx",
+      "summary": "A drinking fountain: the basin filled to the tank's level, a jet while the pump runs.",
+      "props": [
+        {
+          "name": "water",
+          "type": "number | null",
+          "optional": false,
+          "doc": "0..1 water in the tank; null when not reported."
+        },
+        {
+          "name": "pumping",
+          "type": "boolean",
+          "optional": false,
+          "doc": "The jet runs while the pump does."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "petFountainStateLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/pet/PetFountainCard.tsx",
+      "summary": ""
+    },
+    {
       "name": "PHASE_CONFIG",
       "kind": "constant",
       "area": "lib",
@@ -12479,6 +13148,13 @@
       "area": "primitives",
       "file": "packages/ui-library/src/primitives/popover.tsx",
       "summary": ""
+    },
+    {
+      "name": "PORTION_STEP",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/pet/PetFeederCard.tsx",
+      "summary": "One press of the portion moves it by this many grams."
     },
     {
       "name": "positionOf",
@@ -14972,6 +15648,60 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/fan/model.ts",
       "summary": "\"+45°\", \"-30°\", \"0°\"."
+    },
+    {
+      "name": "SirenCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/siren/SirenCard.tsx",
+      "summary": "A siren: the horn, waves and a red scene while it sounds. Sounding it is armed (a second press confirms); silencing it is one press.",
+      "props": [
+        {
+          "name": "model",
+          "type": "SirenCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "SirenCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "SirenIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/SirenIllustration.tsx",
+      "summary": "A siren horn; sound waves pulse out of it while it sounds.",
+      "props": [
+        {
+          "name": "sounding",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "Skeleton",
@@ -18092,6 +18822,46 @@
       ]
     },
     {
+      "name": "ValveCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/valve/ValveCard.tsx",
+      "summary": "A water or gas valve: the lever on the pipe says open or closed, the opposite command sits on the right (Stop while it moves), and a valve that takes a position gets the slider on the left.",
+      "props": [
+        {
+          "name": "model",
+          "type": "ValveCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "ValveCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "ValveCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
+    },
+    {
       "name": "ValveHeroCard",
       "kind": "component",
       "area": "composites",
@@ -18099,11 +18869,52 @@
       "summary": "ValveHeroCard — full control surface for the device-detail hero area."
     },
     {
+      "name": "ValveIllustration",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/ValveIllustration.tsx",
+      "summary": "A pipe with a lever valve: the lever lies along the pipe when open and across it when closed (in between for a partial position); water runs while it is open.",
+      "props": [
+        {
+          "name": "openness",
+          "type": "number | null",
+          "optional": false,
+          "doc": "0 closed .. 1 open; null when the position is not known."
+        },
+        {
+          "name": "flowing",
+          "type": "boolean",
+          "optional": false,
+          "doc": "Water runs through the pipe."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "ValveInlineControl",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/valve-control.tsx",
       "summary": "ValveInlineControl — compact, state-aware valve controls for a device-list row. Open ▲ Stop ■ Close ▼ + optional position % badge. Mirrors `CoverInlineControl` exactly. Must NOT blow out the row width."
+    },
+    {
+      "name": "valveOpenness",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/valve/ValveCard.tsx",
+      "summary": "How far open the drawing is: the position when reported, else the state."
+    },
+    {
+      "name": "valveStateLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/valve/ValveCard.tsx",
+      "summary": ""
     },
     {
       "name": "valveStateMeta",
@@ -18378,6 +19189,53 @@
       "summary": ""
     },
     {
+      "name": "WeatherCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather/WeatherCard.tsx",
+      "summary": "A weather source: the temperature large on the left, the sky in the middle, humidity, wind and pressure on the right — each only when the provider reports it (\"—\" while it has not yet). It commands nothing.",
+      "props": [
+        {
+          "name": "model",
+          "type": "WeatherCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "WeatherCardActions",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "WeatherCardHero",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
+      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
+    },
+    {
+      "name": "weatherConditionLabel",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather/WeatherCard.tsx",
+      "summary": ""
+    },
+    {
       "name": "weatherConditionMeta",
       "kind": "function",
       "area": "composites",
@@ -18397,6 +19255,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/weather-control.tsx",
       "summary": "WeatherInlineControl — compact condition icon + temperature readout for a device-list row. Read-only; must NOT blow out the row width."
+    },
+    {
+      "name": "weatherSkyOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather/model.ts",
+      "summary": "The sky drawn for a provider's condition word."
     },
     {
       "name": "weatherTint",

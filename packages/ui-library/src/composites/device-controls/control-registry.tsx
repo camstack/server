@@ -23,14 +23,14 @@ import { SensorHeroCard } from './sensor-hero-card'
 import { UpdateInlineControl, UpdateHeroCard } from './update-control'
 import { VacuumInlineControl } from './vacuum-control'
 import { LawnMowerInlineControl } from './lawn-mower-control'
-import { ValveInlineControl, ValveHeroCard } from './valve-control'
-import { HumidifierInlineControl, HumidifierHeroCard } from './humidifier-control'
+import { ValveInlineControl } from './valve-control'
+import { HumidifierInlineControl } from './humidifier-control'
 import { WaterHeaterInlineControl } from './water-heater-control'
 import { EnergySystemInlineControl } from './energy-system-control'
-import { WeatherInlineControl, WeatherHeroCard } from './weather-control'
+import { WeatherInlineControl } from './weather-control'
 import { ImageInlineControl, ImageHeroCard } from './image-control'
-import { PetFeederInlineControl, PetFeederHeroCard } from './pet-feeder-panel'
-import { PetFountainInlineControl, PetFountainHeroCard } from './pet-fountain-panel'
+import { PetFeederInlineControl } from './pet-feeder-panel'
+import { PetFountainInlineControl } from './pet-fountain-panel'
 import { HeaterInlineControl, HeaterHeroCard } from './heater-control'
 import { DishwasherInlineControl } from './dishwasher-control'
 import { ApplianceInlineControl } from './appliance-control'
@@ -38,7 +38,6 @@ import {
   SwitchInlineControl,
   PlugCardHero,
   LockInlineControl,
-  LockHeroCard,
   LightInlineControl,
   LightHeroCard,
   FanInlineControl,
@@ -54,8 +53,14 @@ import {
   MowerCardHero,
   WaterHeaterCardHero,
   EnergyCardHero,
+  LockCardHero,
+  AlarmCardHero,
+  HumidifierCardHero,
+  ValveCardHero,
+  PetFeederCardHero,
+  PetFountainCardHero,
+  WeatherCardHero,
   AlarmPanelInlineControl,
-  AlarmHeroCard,
   ScriptInlineControl,
   ScriptHeroCard,
   AutomationInlineControl,
@@ -110,7 +115,7 @@ const SWITCH_CONTROL: DeviceTypeControl = {
 
 const LOCK_CONTROL: DeviceTypeControl = {
   InlineControl: LockInlineControl,
-  HeroCard: LockHeroCard,
+  HeroCard: LockCardHero,
 }
 
 const LIGHT_CONTROL: DeviceTypeControl = {
@@ -140,7 +145,7 @@ const MEDIA_PLAYER_CONTROL: DeviceTypeControl = {
 
 const ALARM_PANEL_CONTROL: DeviceTypeControl = {
   InlineControl: AlarmPanelInlineControl,
-  HeroCard: AlarmHeroCard,
+  HeroCard: AlarmCardHero,
 }
 
 const SCRIPT_CONTROL: DeviceTypeControl = {
@@ -170,12 +175,12 @@ const LAWN_MOWER_CONTROL: DeviceTypeControl = {
 
 const VALVE_CONTROL: DeviceTypeControl = {
   InlineControl: ValveInlineControl,
-  HeroCard: ValveHeroCard,
+  HeroCard: ValveCardHero,
 }
 
 const HUMIDIFIER_CONTROL: DeviceTypeControl = {
   InlineControl: HumidifierInlineControl,
-  HeroCard: HumidifierHeroCard,
+  HeroCard: HumidifierCardHero,
 }
 
 const WATER_HEATER_CONTROL: DeviceTypeControl = {
@@ -190,7 +195,7 @@ const ENERGY_SYSTEM_CONTROL: DeviceTypeControl = {
 
 const WEATHER_CONTROL: DeviceTypeControl = {
   InlineControl: WeatherInlineControl,
-  HeroCard: WeatherHeroCard,
+  HeroCard: WeatherCardHero,
 }
 
 const IMAGE_CONTROL: DeviceTypeControl = {
@@ -200,12 +205,12 @@ const IMAGE_CONTROL: DeviceTypeControl = {
 
 const PET_FEEDER_CONTROL: DeviceTypeControl = {
   InlineControl: PetFeederInlineControl,
-  HeroCard: PetFeederHeroCard,
+  HeroCard: PetFeederCardHero,
 }
 
 const PET_FOUNTAIN_CONTROL: DeviceTypeControl = {
   InlineControl: PetFountainInlineControl,
-  HeroCard: PetFountainHeroCard,
+  HeroCard: PetFountainCardHero,
 }
 
 const HEATER_CONTROL: DeviceTypeControl = {

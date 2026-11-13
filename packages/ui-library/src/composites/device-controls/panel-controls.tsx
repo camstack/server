@@ -31,6 +31,7 @@ import { ControlPanel } from './control-panel'
 import type { DeviceControlProps } from './control-registry'
 import { ConnectedClimateCard } from '../device-card/connected/ConnectedClimateCard'
 import { ConnectedPlugCard } from '../device-card/connected/ConnectedPlugCard'
+import { ConnectedSirenCard } from '../device-card/connected/ConnectedSirenCard'
 import {
   ConnectedDeviceCard,
   type ConnectedCardKind,
@@ -284,6 +285,10 @@ export function AcInlineControl({
  * keeps handing a hero per control kind; these two adapt its props.
  */
 export function PlugCardHero({ deviceId, optimistic }: DeviceControlProps): ReactNode {
+  // A siren device or a switch in the siren role is drawn as the siren.
+  const kind = useConnectedCardKind(deviceId)
+  if (kind === 'pending') return null
+  if (kind === 'siren') return <ConnectedSirenCard deviceId={deviceId} optimistic={optimistic} />
   return <ConnectedPlugCard deviceId={deviceId} optimistic={optimistic} />
 }
 
@@ -313,6 +318,13 @@ const VACUUM_KINDS: readonly ConnectedCardKind[] = ['vacuum']
 const MOWER_KINDS: readonly ConnectedCardKind[] = ['mower']
 const WATER_HEATER_KINDS: readonly ConnectedCardKind[] = ['water-heater']
 const ENERGY_KINDS: readonly ConnectedCardKind[] = ['energy']
+const LOCK_KINDS: readonly ConnectedCardKind[] = ['lock']
+const ALARM_KINDS: readonly ConnectedCardKind[] = ['alarm']
+const HUMIDIFIER_KINDS: readonly ConnectedCardKind[] = ['humidifier']
+const VALVE_KINDS: readonly ConnectedCardKind[] = ['valve']
+const PET_FEEDER_KINDS: readonly ConnectedCardKind[] = ['pet-feeder']
+const PET_FOUNTAIN_KINDS: readonly ConnectedCardKind[] = ['pet-fountain']
+const WEATHER_KINDS: readonly ConnectedCardKind[] = ['weather']
 
 export function ApplianceCardHero(props: DeviceControlProps): ReactNode {
   return <ResolvedCardHero {...props} kinds={APPLIANCE_KINDS} />
@@ -340,6 +352,34 @@ export function WaterHeaterCardHero(props: DeviceControlProps): ReactNode {
 
 export function EnergyCardHero(props: DeviceControlProps): ReactNode {
   return <ResolvedCardHero {...props} kinds={ENERGY_KINDS} />
+}
+
+export function LockCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={LOCK_KINDS} />
+}
+
+export function AlarmCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={ALARM_KINDS} />
+}
+
+export function HumidifierCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={HUMIDIFIER_KINDS} />
+}
+
+export function ValveCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={VALVE_KINDS} />
+}
+
+export function PetFeederCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={PET_FEEDER_KINDS} />
+}
+
+export function PetFountainCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={PET_FOUNTAIN_KINDS} />
+}
+
+export function WeatherCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={WEATHER_KINDS} />
 }
 
 // ── MediaPlayer ───────────────────────────────────────────────────────────────
