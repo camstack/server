@@ -120,6 +120,9 @@ const HERO_REGISTRY: Readonly<Partial<Record<DeviceType, HeroComponent>>> = {
   // (ApplianceCardHero: running state, since, the supply switch).
   [DeviceType.Washer]: ControlHero,
   [DeviceType.Dryer]: ControlHero,
+  // Energy system: ControlHero renders the registry-backed EnergyCardHero
+  // (the energy-flow card: solar, storage, grid, house).
+  [DeviceType.EnergySystem]: ControlHero,
 }
 
 /**

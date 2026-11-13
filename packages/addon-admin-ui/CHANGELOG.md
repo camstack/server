@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add target lists every kind with its icon and opens the form on the one you pick; email's Send with offers Create new for a Google account or SMTP relay; the editor sends a test with the unsaved values
 - Notification targets: the test button reads Send test message and says it delivers a real message to the destination typed; each row shows a small badge of the instance it links to (an email target's Google account or SMTP relay), named on hover; a relay a target still names by its old pin counts as in use
 - Labels for the new Energy system device type
+- The Energy system device shows its energy-flow card on the device page
 
 ## [1.2.660] - 2026-11-13
 
