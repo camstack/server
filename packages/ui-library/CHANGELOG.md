@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The device picker shows each device's parent, keeps the filter rail visible on desktop, opens wider, and no longer re-orders or scrolls the list when you select a device
+- A full-height form dialog now has a fixed height on desktop, so only its columns scroll while the title and buttons stay put
 
 ## [1.2.438] - 2026-11-13
 

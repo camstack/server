@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The automation Device command dialog keeps its header and buttons fixed, scrolls each column on its own, and shows the command's parameters below the columns instead of over the device list
+
 ## [1.2.661] - 2026-11-13
 
 ### Added

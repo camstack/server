@@ -3,32 +3,35 @@
  * or the values with a way back. Members add a picked count and Done on the
  * list; Done opens the values step inside the same dialog.
  */
-import { Button } from '@camstack/ui-library'
-import { ChevronLeft } from 'lucide-react'
-import type { ReactNode } from 'react'
-import { phoneColumnVisible, type SourceSelectorStep } from './source-selector-steps'
+import { Button } from "@camstack/ui-library";
+import { ChevronLeft } from "lucide-react";
+import type { ReactNode } from "react";
+import {
+  phoneColumnVisible,
+  type SourceSelectorStep,
+} from "./source-selector-steps";
 
 export interface SourceSelectorBack {
-  readonly label: ReactNode
-  readonly ariaLabel: string
+  readonly label: ReactNode;
+  readonly ariaLabel: string;
 }
 
 export interface SourceSelectorDone {
-  readonly countLabel: string
-  readonly label: string
-  readonly disabled: boolean
+  readonly countLabel: string;
+  readonly label: string;
+  readonly disabled: boolean;
 }
 
 export interface SourceSelectorColumnsProps {
-  readonly step: SourceSelectorStep
-  readonly devices: ReactNode
-  readonly values: ReactNode
-  readonly back: SourceSelectorBack | null
-  readonly onBack: () => void
-  readonly done: SourceSelectorDone | null
-  readonly onDone: () => void
+  readonly step: SourceSelectorStep;
+  readonly devices: ReactNode;
+  readonly values: ReactNode;
+  readonly back: SourceSelectorBack | null;
+  readonly onBack: () => void;
+  readonly done: SourceSelectorDone | null;
+  readonly onDone: () => void;
   /** Fill the height the host gives (a full-height dialog); columns scroll inside it. */
-  readonly fillHeight?: boolean
+  readonly fillHeight?: boolean;
 }
 
 /** `hidden sm:block` — absent from the phone step, present from 640px up. */
@@ -37,9 +40,12 @@ function columnClass(
   column: SourceSelectorStep,
   fillHeight: boolean,
 ): string | undefined {
-  const visible = phoneColumnVisible(step, column)
-  if (fillHeight) return visible ? 'flex min-h-0 flex-col' : 'hidden min-h-0 flex-col sm:flex'
-  return visible ? undefined : 'hidden sm:block'
+  const visible = phoneColumnVisible(step, column);
+  if (fillHeight)
+    return visible
+      ? "flex min-h-0 flex-col"
+      : "hidden min-h-0 flex-col sm:flex";
+  return visible ? undefined : "hidden sm:block";
 }
 
 export function SourceSelectorColumns({
@@ -58,13 +64,13 @@ export function SourceSelectorColumns({
       data-step={step}
       className={
         fillHeight
-          ? 'flex min-h-0 flex-1 flex-col gap-3 sm:grid sm:grid-cols-2 sm:grid-rows-[minmax(0,1fr)] sm:gap-4'
-          : 'flex flex-col gap-3 sm:grid sm:grid-cols-2 sm:gap-4'
+          ? "flex min-h-0 flex-1 flex-col gap-3 sm:grid sm:grid-cols-2 sm:grid-rows-[minmax(0,1fr)] sm:gap-4"
+          : "flex flex-col gap-3 sm:grid sm:grid-cols-2 sm:gap-4"
       }
     >
       <div
         data-testid="source-selector-devices"
-        className={columnClass(step, 'devices', fillHeight)}
+        className={columnClass(step, "devices", fillHeight)}
       >
         {done !== null && (
           <div className="mb-2 flex items-center justify-between gap-2 sm:hidden">
@@ -84,9 +90,18 @@ export function SourceSelectorColumns({
             </Button>
           </div>
         )}
-        {devices}
+        {fillHeight ? (
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+            {devices}
+          </div>
+        ) : (
+          devices
+        )}
       </div>
-      <div data-testid="source-selector-values" className={columnClass(step, 'values', fillHeight)}>
+      <div
+        data-testid="source-selector-values"
+        className={columnClass(step, "values", fillHeight)}
+      >
         {back !== null && (
           <Button
             variant="ghost"
@@ -100,8 +115,12 @@ export function SourceSelectorColumns({
             {back.label}
           </Button>
         )}
-        {fillHeight ? <div className="min-h-0 flex-1 overflow-y-auto">{values}</div> : values}
+        {fillHeight ? (
+          <div className="min-h-0 flex-1 overflow-y-auto">{values}</div>
+        ) : (
+          values
+        )}
       </div>
     </div>
-  )
+  );
 }
