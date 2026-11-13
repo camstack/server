@@ -105,13 +105,13 @@
     "dev:page": "vite -c vite.page.config.ts"
   },
   "dependencies": {
-    "nodehomematic": "^0.6.0"
+    "nodehomematic": "^0.7.0"
   },
   "peerDependencies": {
     "@camstack/types": "*",
-    "zod": "^4.3.6",
     "react": ">=18",
-    "react-dom": ">=18"
+    "react-dom": ">=18",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@camstack/types": "*",
