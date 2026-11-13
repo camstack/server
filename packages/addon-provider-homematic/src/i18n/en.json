@@ -100,7 +100,7 @@
     "buttonChannel": "Channel {{index}}",
     "enableButtonEvents": "Enable button events",
     "disableButtonEvents": "Disable button events",
-    "enableButtonEventsMessage": "Create a central link for {{name}} and, for HomematicIP, a CCU program named \"CamStack: <device> events\" that uses the key (a HomematicIP device sends key presses only for a used key). Direct links stay.",
+    "enableButtonEventsMessage": "Create a central link for {{name}} and, for HomematicIP, a CCU program named \"CamStack: … events\" (named after the device) that uses the key (a HomematicIP device sends key presses only for a used key). Direct links stay.",
     "disableButtonEventsMessage": "Remove the central link for {{name}}. Direct links stay.",
     "directLinks": "Direct links: {{targets}}",
     "directLinksNone": "No direct links",
