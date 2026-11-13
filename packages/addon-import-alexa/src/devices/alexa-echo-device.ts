@@ -333,7 +333,12 @@ export class AlexaEchoDevice extends BaseDevice<typeof alexaEchoDeviceSchema> {
     if (this.volumeSetAt < readStartedAt) return read
     const current = this.runtimeState.getCapState<MediaPlayerStatus>('media-player')
     if (current === undefined) return read
-    return { ...read, volumeLevel: current.volumeLevel, isMuted: current.isMuted }
+    return {
+      ...read,
+      volumeLevel: current.volumeLevel,
+      isMuted: current.isMuted,
+      muteReadback: current.muteReadback === true,
+    }
   }
 
   private async readDoNotDisturb(readStartedAt: number): Promise<void> {

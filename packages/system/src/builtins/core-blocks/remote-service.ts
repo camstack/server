@@ -378,6 +378,8 @@ export class RemoteService implements IRemoteProvider {
       assumedFields: [...input.assumedFields],
       volumeLevel: null,
       isMuted: input.muted,
+      // The remote never reads mute back: a key is momentary even if a value is kept.
+      muteReadback: false,
       source: input.source,
       availableSources: input.sources.map((source) => source.name),
       declaredSources: input.sources.map((source) =>

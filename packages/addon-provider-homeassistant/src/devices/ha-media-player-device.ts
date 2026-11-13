@@ -20,6 +20,7 @@ const COLD_START: MediaPlayerStatus = {
   assumedFields: [],
   volumeLevel: null,
   isMuted: null,
+  muteReadback: false,
   source: '',
   availableSources: [],
   currentMedia: null,
@@ -46,33 +47,14 @@ export class HaMediaPlayerDevice extends HaBaseChildDevice {
   }
 
   protected override handleStatePush(state: HaEntityState): void {
-    if (state.state === 'unavailable' || state.state === 'unknown') return
-    const lastChangedAt = Date.parse(state.last_changed) || Date.now()
-    const attrs = state.attributes
-
-    const playerState = mapHaMediaPlayerState(state.state)
-    const slice: MediaPlayerStatus = {
-      state: playerState ?? 'off',
-      stateSource: 'reported',
-      assumedFields: [],
-      volumeLevel: readVolumeAsPercent(attrs),
-      isMuted: readBooleanAttr(attrs, 'is_volume_muted'),
-      source: readStringAttr(attrs, 'source') ?? '',
-      availableSources: readStringArray(attrs, 'source_list'),
-      currentMedia: buildCurrentMedia(attrs),
-      position: readDurationMs(attrs, 'media_position'),
-      duration: readDurationMs(attrs, 'media_duration'),
-      shuffle: readBooleanAttr(attrs, 'shuffle'),
-      repeat: readRepeat(attrs['repeat']),
-      positionUpdatedAt: null,
-      lastChangedAt,
-    }
-    this.runtimeState.setCapState('media-player', slice)
-    const fetchedAt = Date.now()
+    const now = Date.now()
+    const pushed = mediaPlayerStatusFromHa(state, now)
+    if (pushed === null) return
+    this.runtimeState.setCapState('media-player', pushed.status)
     const previous = this.runtimeState.getCapState<RunningStateStatus>('running-state')
     this.runtimeState.setCapState(
       'running-state',
-      runningFromMediaPlayer(playerState, previous, fetchedAt, lastChangedAt),
+      runningFromMediaPlayer(pushed.playerState, previous, now, pushed.status.lastChangedAt),
     )
   }
 
@@ -158,6 +140,43 @@ export class HaMediaPlayerDevice extends HaBaseChildDevice {
     }
     this.ctx.registerNativeCap(mediaPlayerCapability, provider)
     registerPowerSwitch(this, mediaPlayerCapability, provider)
+  }
+}
+
+export interface HaMediaPlayerPush {
+  readonly status: MediaPlayerStatus
+  readonly playerState: MediaPlayerState | null
+}
+
+/** The media-player slice for one HA entity push. Unavailable and unknown keep the last slice. */
+export function mediaPlayerStatusFromHa(
+  state: HaEntityState,
+  now: number,
+): HaMediaPlayerPush | null {
+  if (state.state === 'unavailable' || state.state === 'unknown') return null
+  const attrs = state.attributes
+  const isMuted = readBooleanAttr(attrs, 'is_volume_muted')
+  const playerState = mapHaMediaPlayerState(state.state)
+  return {
+    playerState,
+    status: {
+      state: playerState ?? 'off',
+      stateSource: 'reported',
+      assumedFields: [],
+      volumeLevel: readVolumeAsPercent(attrs),
+      isMuted,
+      // HA reports mute only when `is_volume_muted` is a boolean. Anything else is no readback.
+      muteReadback: isMuted !== null,
+      source: readStringAttr(attrs, 'source') ?? '',
+      availableSources: readStringArray(attrs, 'source_list'),
+      currentMedia: buildCurrentMedia(attrs),
+      position: readDurationMs(attrs, 'media_position'),
+      duration: readDurationMs(attrs, 'media_duration'),
+      shuffle: readBooleanAttr(attrs, 'shuffle'),
+      repeat: readRepeat(attrs['repeat']),
+      positionUpdatedAt: null,
+      lastChangedAt: Date.parse(state.last_changed) || now,
+    },
   }
 }
 

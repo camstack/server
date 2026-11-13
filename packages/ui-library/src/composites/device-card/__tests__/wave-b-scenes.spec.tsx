@@ -469,6 +469,20 @@ describe('media model', () => {
     expect(mediaPhaseOf({ ...MEDIA_BASE, state: 'buffering' })).toBe('playing')
   })
 
+  it('mute is a readback only when the status says so, even if isMuted is set', () => {
+    const features = [DeviceFeature.MediaPlayerVolume, DeviceFeature.MediaPlayerMute]
+    expect(
+      mediaVolumeOf({ ...MEDIA_BASE, isMuted: true, muteReadback: true }, features),
+    ).toMatchObject({ muteReadback: true, muted: true })
+    expect(mediaVolumeOf({ ...MEDIA_BASE, isMuted: true }, features)).toMatchObject({
+      muteReadback: false,
+      muted: false,
+    })
+    expect(
+      mediaVolumeOf({ ...MEDIA_BASE, isMuted: true, muteReadback: false }, features),
+    ).toMatchObject({ muteReadback: false, muted: false })
+  })
+
   it('volume only when declared; a known level with setVolume uses the declared scale', () => {
     expect(mediaVolumeOf(MEDIA_BASE, [])).toBeNull()
     const reported = mediaVolumeOf(MEDIA_BASE, [DeviceFeature.MediaPlayerVolume])

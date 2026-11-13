@@ -444,7 +444,10 @@ describe('mute on a device that does not report it', () => {
   it('sends the key and keeps no mute state: the key is momentary', async () => {
     const w = world(withMute, { running: true })
     expect(await w.service.sendMediaCommand(press)).toMatchObject({ status: 'sent' })
-    expect(await w.service.assumedStatus(TV)).toMatchObject({ isMuted: null })
+    expect(await w.service.assumedStatus(TV)).toMatchObject({
+      isMuted: null,
+      muteReadback: false,
+    })
     expect(await w.service.getAssumedStatus({ deviceId: TV })).toBeNull()
   })
 

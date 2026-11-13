@@ -87,18 +87,18 @@ describe('media player mute', () => {
     )
 
   it('a provider that reads the mute back offers a toggle that shows its state', () => {
-    const control = muteOf({ ...PLAYING, isMuted: true })
+    const control = muteOf({ ...PLAYING, isMuted: true, muteReadback: true })
     expect(control).toMatchObject({ kind: 'toggle', on: true })
   })
 
-  it('an infrared player (mute only assumed, or unknown) offers a momentary key with no state', () => {
-    const guessed = muteOf({
-      ...PLAYING,
-      isMuted: true,
-      stateSource: 'assumed',
-      assumedFields: ['isMuted'],
+  it('without muteReadback a non-null isMuted is still a momentary key', () => {
+    expect(muteOf({ ...PLAYING, isMuted: true })).toMatchObject({ kind: 'action' })
+    expect(muteOf({ ...PLAYING, isMuted: true, muteReadback: false })).toMatchObject({
+      kind: 'action',
     })
-    expect(guessed).toMatchObject({ kind: 'action' })
-    expect(muteOf({ ...PLAYING, isMuted: null })).toMatchObject({ kind: 'action' })
+    expect(muteOf({ ...PLAYING, isMuted: null, muteReadback: true })).toMatchObject({
+      kind: 'toggle',
+      on: null,
+    })
   })
 })

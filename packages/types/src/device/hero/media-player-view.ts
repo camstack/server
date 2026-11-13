@@ -119,6 +119,7 @@ export interface MediaPlayerView {
   readonly volume: VolumeView
   /** The device reported a level; false draws the slider as unknown. */
   readonly volumeKnown: boolean
+  /** True only when the status sets `muteReadback`. Absent or false is not a reading. */
   readonly muteKnown: boolean
   /** Artwork of what is playing; null when there is none. */
   readonly artworkUrl: string | null
@@ -339,7 +340,7 @@ function deriveFromStatus(
     // a device that declares nothing but reports a mute next to a slider keeps the toggle.
     mute: has(DeviceFeature.MediaPlayerMute) || (volume === 'slider' && status.isMuted !== null),
     volumeKnown: status.volumeLevel !== null,
-    muteKnown: status.isMuted !== null && !isAssumed(status, 'isMuted'),
+    muteKnown: status.muteReadback === true,
     artworkUrl: artworkOf(status),
     source: hasSource
       ? {

@@ -3849,6 +3849,7 @@ Enum: `"reported" \| "assumed"`
 - `assumedFields?`: `MediaPlayerAssumedFieldSchema[] = []`
 - `volumeLevel`: `number \| null`
 - `isMuted`: `boolean \| null`
+- `muteReadback?`: `boolean`
 - `source`: `string`
 - `availableSources`: `string[]`
 - `declaredSources?`: `({ name: string; kind: "digits" \| "sequence" \| "ir"; number?: string })[]`

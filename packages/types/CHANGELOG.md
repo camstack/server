@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A grid frequency and a signal-to-noise or quality ratio are readings of their own, shown in Hz and dB
 - A numeric sensor's hero reading names the unit of its quantity
 - The energy-system storage slice includes battery health.
+- A media player says whether it reads mute back; without that flag mute is a momentary key
 
 ## [1.2.563] - 2026-11-13
 

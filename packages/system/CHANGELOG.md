@@ -107,6 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A light group's source picker and save check now see each member's switch sub-role, so a switch-light relay can join a light group.
 - A stored token grant, internal action or composed device that names the retired thermostat type loads again, read as climate
 - New messages for an email target with no sender, or a sender that no longer exists.
+- A remote reports that it does not read the player's mute back
 
 ### Removed
 

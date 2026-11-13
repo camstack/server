@@ -138,16 +138,27 @@ describe('controls come from what the device exposes', () => {
     ).toBe(true)
   })
 
-  it('an assumed mute is not a readback', () => {
-    const guessed = {
-      ...on,
-      isMuted: true,
-      stateSource: 'assumed' as const,
-      assumedFields: ['isMuted' as const],
-    }
-    expect(deriveMediaPlayerView(guessed, [DeviceFeature.MediaPlayerMute]).muteKnown).toBe(false)
+  it('mute is a toggle only when the provider sets muteReadback', () => {
+    const mute = [DeviceFeature.MediaPlayerMute]
     expect(
-      deriveMediaPlayerView({ ...on, isMuted: true }, [DeviceFeature.MediaPlayerMute]).muteKnown,
+      deriveMediaPlayerView({ ...on, isMuted: true, muteReadback: true }, mute).muteKnown,
+    ).toBe(true)
+    // A non-null isMuted is not a reading: absent and false are both a momentary key.
+    expect(deriveMediaPlayerView({ ...on, isMuted: true }, mute).muteKnown).toBe(false)
+    expect(
+      deriveMediaPlayerView({ ...on, isMuted: true, muteReadback: false }, mute).muteKnown,
+    ).toBe(false)
+    expect(
+      deriveMediaPlayerView(
+        {
+          ...on,
+          isMuted: true,
+          muteReadback: true,
+          stateSource: 'assumed',
+          assumedFields: ['isMuted'],
+        },
+        mute,
+      ).muteKnown,
     ).toBe(true)
   })
 

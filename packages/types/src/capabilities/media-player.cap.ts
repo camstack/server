@@ -86,6 +86,12 @@ export const MediaPlayerStatusSchema = z.object({
   /** Mute toggle distinct from volume=0. Null when no mute surface.
    *  Pair with `DeviceFeature.MediaPlayerMute`. */
   isMuted: z.boolean().nullable(),
+  /**
+   * True only when the provider READS the mute state back from the device.
+   * Absent or false: mute is a momentary key. A non-null `isMuted` is not a
+   * reading on its own — an infrared send can leave a value without this flag.
+   */
+  muteReadback: z.boolean().optional(),
   /** Active source / input. Empty when no source surface. */
   source: z.string(),
   /** Selectable sources. Empty when no source surface.

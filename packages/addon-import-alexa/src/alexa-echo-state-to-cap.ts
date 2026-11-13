@@ -22,6 +22,7 @@ export function emptyEchoStatus(state: MediaPlayerState, now: number): MediaPlay
     assumedFields: [],
     volumeLevel: null,
     isMuted: null,
+    muteReadback: false,
     source: '',
     availableSources: [],
     currentMedia: null,
@@ -114,10 +115,12 @@ export function mapPlayerInfoToStatus(info: PlayerInfo, input: EchoStatusInput):
   if (!input.online) return emptyEchoStatus('off', input.now)
   const length = secondsToMs(info.progress?.mediaLength)
   const position = secondsToMs(info.progress?.mediaProgress)
+  const reportedMute = typeof info.volume?.muted === 'boolean'
   return {
     ...emptyEchoStatus(mapEchoPlaybackState(info.state), input.now),
     volumeLevel: percent(info.volume?.volume),
-    isMuted: typeof info.volume?.muted === 'boolean' ? info.volume.muted : null,
+    isMuted: reportedMute ? info.volume?.muted === true : null,
+    muteReadback: reportedMute,
     source: sourceOf(info),
     currentMedia: currentMediaOf(info),
     position,
@@ -138,9 +141,12 @@ export function withListedVolume(
   listed: DeviceVolume | undefined,
 ): MediaPlayerStatus {
   if (listed === undefined) return status
+  const listedMuted = typeof listed.muted === 'boolean' ? listed.muted : null
+  const filledMute = status.isMuted === null && listedMuted !== null
   return {
     ...status,
     volumeLevel: status.volumeLevel ?? percent(listed.volume),
-    isMuted: status.isMuted ?? listed.muted,
+    isMuted: status.isMuted ?? listedMuted,
+    muteReadback: status.muteReadback === true || filledMute,
   }
 }

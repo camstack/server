@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { mapPlayerInfoToStatus } from '../alexa-echo-state-to-cap.js'
+import { mapPlayerInfoToStatus, withListedVolume } from '../alexa-echo-state-to-cap.js'
 import { PlayerInfoSchema } from '../speak/worker-protocol.js'
 
 const NOW = 1_000
@@ -73,6 +73,21 @@ describe('mapPlayerInfoToStatus', () => {
     expect(status.shuffle).toBeNull()
     expect(status.repeat).toBeNull()
     expect(status.duration).toBeNull()
+  })
+
+  it('muteReadback is true only when Amazon sent a mute boolean', () => {
+    expect(mapPlayerInfoToStatus(playing, { online: true, now: NOW }).muteReadback).toBe(true)
+    expect(mapPlayerInfoToStatus(playing, { online: false, now: NOW }).muteReadback).toBe(false)
+    expect(mapPlayerInfoToStatus({}, { online: true, now: NOW }).muteReadback).toBe(false)
+    expect(
+      mapPlayerInfoToStatus({ volume: { volume: 10 } }, { online: true, now: NOW }).muteReadback,
+    ).toBe(false)
+    const unread = mapPlayerInfoToStatus({}, { online: true, now: NOW })
+    expect(withListedVolume(unread, { volume: null, muted: true }).muteReadback).toBe(true)
+    expect(withListedVolume(unread, { volume: 4, muted: null })).toMatchObject({
+      muteReadback: false,
+      isMuted: null,
+    })
   })
 
   it('a volume of 0 is a reading, a missing volume is not', () => {

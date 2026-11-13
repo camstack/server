@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A Home Assistant media player reports a mute reading only when the entity sends a mute boolean
+
 ## [1.2.685] - 2026-11-13
 
 ### Changed
