@@ -2,6 +2,7 @@ import { customAction, defineCustomActions } from '@camstack/types'
 import { z } from 'zod'
 import {
   AcknowledgeInputSchema,
+  CcuDeviceStateSchema,
   CcuDevicesResultSchema,
   CcuLinksResultSchema,
   CcuListItemSchema,
@@ -29,6 +30,7 @@ import {
   RenameRoomInputSchema,
   RoomChannelsResultSchema,
   SetRoomChannelsInputSchema,
+  SetValueInputSchema,
   SetButtonEventsInputSchema,
   SetChannelConfigInputSchema,
   SetInstallModeInputSchema,
@@ -152,6 +154,14 @@ export const homematicActions = defineCustomActions({
     auth: 'admin',
   }),
   setCcuRoomChannels: customAction(SetRoomChannelsInputSchema, RoomChannelsResultSchema, {
+    kind: 'mutation',
+    auth: 'admin',
+  }),
+  getCcuDeviceState: customAction(DeviceRefSchema, CcuDeviceStateSchema, {
+    kind: 'query',
+    auth: 'admin',
+  }),
+  setCcuValue: customAction(SetValueInputSchema, OkResultSchema, {
     kind: 'mutation',
     auth: 'admin',
   }),

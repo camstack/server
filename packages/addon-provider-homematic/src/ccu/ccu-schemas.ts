@@ -454,3 +454,59 @@ export const RoomChannelsResultSchema = z.object({
   added: z.array(z.string()),
   removed: z.array(z.string()),
 })
+
+// ── Device detail (the device page panel) ─────────────────────────────────
+
+/** One VALUES parameter of a channel: its current value and what a write may send. */
+export const ValueParamSchema = ConfigParamSchema.extend({
+  /** False for a write-only parameter (a key press); its `value` is then meaningless. */
+  readable: z.boolean(),
+})
+export type ValueParam = z.infer<typeof ValueParamSchema>
+
+export const ChannelValuesSchema = z.object({
+  address: z.string(),
+  index: z.number(),
+  type: z.string().nullable(),
+  name: z.string().nullable(),
+  values: z.array(ValueParamSchema),
+})
+export type ChannelValues = z.infer<typeof ChannelValuesSchema>
+
+/** The maintenance readings; `null` = the device has no such reading (never "false"). */
+export const DeviceDiagnosticsSchema = z.object({
+  rssiDevice: z.number().nullable(),
+  rssiPeer: z.number().nullable(),
+  unreach: z.boolean().nullable(),
+  lowBattery: z.boolean().nullable(),
+  /** HmIP reports a flag (duty cycle reached), BidCos a percentage. */
+  dutyCycle: z.union([z.boolean(), z.number()]).nullable(),
+  configPending: z.boolean().nullable(),
+})
+export type DeviceDiagnostics = z.infer<typeof DeviceDiagnosticsSchema>
+
+export const DeviceFirmwareSchema = z.object({
+  installed: z.string().nullable(),
+  available: z.string().nullable(),
+  updatable: z.boolean().nullable(),
+  state: z.string().nullable(),
+})
+
+export const CcuDeviceStateSchema = z.object({
+  address: z.string(),
+  name: z.string().nullable(),
+  type: z.string(),
+  firmware: DeviceFirmwareSchema,
+  diagnostics: DeviceDiagnosticsSchema,
+  channels: z.array(ChannelValuesSchema),
+})
+export type CcuDeviceState = z.infer<typeof CcuDeviceStateSchema>
+
+export const SetValueInputSchema = IntegrationRefSchema.extend({
+  channel: z.string().min(1),
+  parameter: z.string().min(1),
+  value: ConfigValueSchema,
+  /** The CamStack device the write was made from, for the log line's tag. */
+  deviceId: z.number().int().optional(),
+  confirmed: ConfirmedSchema,
+})

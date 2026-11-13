@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CCU page: a Direct links tab lists the CCU's links with their profile, and creates, edits and deletes key → switch actuator links after a confirmation
 - CCU page: rename a device on the CCU (optionally its channels to <name>:<channel>) or a single channel, each after a confirmation
 - The CCU page has a Settings tab with the CCU's rooms: create, rename, delete a room and choose its channels, each after a confirmation
+- A Homematic device's own page (Config tab) shows a panel with its CCU values and diagnostics (reachability, RSSI, battery, duty cycle, pending configuration, firmware update), sends a switch, a value or a key press, and opens the CCU configuration — every write asks first
 
 ## [1.2.194] - 2026-11-13
 

@@ -339,3 +339,16 @@ describe('HmContainerDevice features + online', () => {
     expect(dev.online).toBe(false)
   })
 })
+
+describe('HmContainerDevice device page panel', () => {
+  it('mounts the Homematic device panel widget, addressed to this CCU device', () => {
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
+    const fields = dev.getSettingsUISchema().sections.flatMap((section) => section.fields)
+    const widget = fields.find((field) => field.type === 'widget')
+    expect(widget).toMatchObject({
+      type: 'widget',
+      widgetId: 'provider-homematic/device-panel',
+      widgetConfig: { integrationId: 'hm_001', address: ADDR },
+    })
+  })
+})

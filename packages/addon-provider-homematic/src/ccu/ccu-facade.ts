@@ -39,6 +39,7 @@ export type CcuFacade = Pick<
   | 'deleteRoom'
   | 'addChannelToRoom'
   | 'removeChannelFromRoom'
+  | 'setValue'
 >
 
 /** What every CCU action handler is built from. */

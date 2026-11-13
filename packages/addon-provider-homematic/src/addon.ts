@@ -1,5 +1,6 @@
 import {
   addonPagesSourceCapability,
+  addonWidgetsSourceCapability,
   type AddonInitResult,
   BaseDeviceProvider,
   bestLocationMatch,
@@ -15,6 +16,7 @@ import {
   EventCategory,
   errMsg,
   type IAddonPageProvider,
+  type IAddonWidgetsSourceProvider,
   type IConnectionProbe,
   type IDevice,
   type IDeviceAdoptionProvider,
@@ -37,6 +39,8 @@ import { buildCcuHeatingHandlers } from './ccu/ccu-heating-actions.js'
 import { buildCcuLinkHandlers } from './ccu/ccu-links-actions.js'
 import { buildCcuRenameHandlers } from './ccu/ccu-rename-actions.js'
 import { buildCcuRoomHandlers } from './ccu/ccu-rooms-actions.js'
+import { buildCcuDeviceStateHandlers } from './ccu/ccu-device-state-actions.js'
+import { homematicWidgets } from './widget-catalog.js'
 import { buildCcuPairingHandlers } from './ccu/ccu-pairing-actions.js'
 import { HOMEMATIC_PAGES } from './ccu/ccu-page.js'
 import { buildCcuOverviewHandlers } from './ccu/ccu-overview-actions.js'
@@ -172,6 +176,10 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
           capability: addonPagesSourceCapability,
           provider: this.buildPagesProvider(),
         },
+        {
+          capability: addonWidgetsSourceCapability,
+          provider: this.buildWidgetsProvider(),
+        },
       ],
       customActions: homematicActions,
       actionHandlers: {
@@ -184,6 +192,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
         ...buildCcuLinkHandlers(this.ccuActionDeps()),
         ...buildCcuRenameHandlers(this.ccuActionDeps()),
         ...buildCcuRoomHandlers(this.ccuActionDeps()),
+        ...buildCcuDeviceStateHandlers(this.ccuActionDeps()),
         discoverCcu: async () => {
           const { candidates } = await this.ctx.api.deviceManager.discoverProvider.mutate({
             addonId: this.ctx.id,
@@ -205,6 +214,11 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
   /** The CCU management page, mirroring the manifest `pages[]` entry. */
   private buildPagesProvider(): IAddonPageProvider {
     return { id: this.addonId, listPages: () => HOMEMATIC_PAGES }
+  }
+
+  /** The device page panel widget (`widget-catalog.ts`), mounted by `HmContainerDevice`. */
+  private buildWidgetsProvider(): IAddonWidgetsSourceProvider {
+    return { listWidgets: async () => homematicWidgets }
   }
 
   /** The child a new container stands for, from the live CCU descriptor. */

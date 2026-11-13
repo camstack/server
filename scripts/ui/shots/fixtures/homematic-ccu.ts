@@ -59,7 +59,81 @@ const DEVICES = [
   device('NEQ1234567', 'HM-CC-RT-DN', 'Study radiator', { unreach: true, rssi: null }),
 ]
 
+/** One VALUES parameter of the device panel fixture. */
+function dp(
+  parameter: string,
+  type: string,
+  value: boolean | number | string | null,
+  extra: Readonly<Record<string, unknown>>,
+) {
+  return {
+    parameter,
+    type,
+    min: null,
+    max: null,
+    unit: null,
+    valueList: null,
+    writable: false,
+    readable: true,
+    value,
+    ...extra,
+  }
+}
+
 const ACTIONS: Readonly<Record<string, unknown>> = {
+  getCcuDeviceState: {
+    address: '00315F298E5093',
+    name: 'Bagno',
+    type: 'HmIP-BSM',
+    firmware: {
+      installed: '1.4.8',
+      available: '1.6.2',
+      updatable: true,
+      state: 'READY_FOR_UPDATE',
+    },
+    diagnostics: {
+      rssiDevice: -64,
+      rssiPeer: -71,
+      unreach: false,
+      lowBattery: null,
+      dutyCycle: false,
+      configPending: true,
+    },
+    channels: [
+      {
+        address: '00315F298E5093:1',
+        index: 1,
+        type: 'KEY_TRANSCEIVER',
+        name: 'Bagno sinistra',
+        values: [
+          dp('PRESS_SHORT', 'ACTION', null, { writable: true, readable: false }),
+          dp('PRESS_LONG', 'ACTION', null, { writable: true, readable: false }),
+        ],
+      },
+      {
+        address: '00315F298E5093:4',
+        index: 4,
+        type: 'SWITCH_VIRTUAL_RECEIVER',
+        name: 'Luce bagno',
+        values: [
+          dp('STATE', 'BOOL', true, { writable: true }),
+          dp('ON_TIME', 'FLOAT', null, { writable: true, unit: 's', min: 0, max: 111600 }),
+          dp('PROCESS', 'ENUM', 0, { valueList: ['STABLE', 'NOT_STABLE'] }),
+        ],
+      },
+      {
+        address: '00315F298E5093:0',
+        index: 0,
+        type: 'MAINTENANCE',
+        name: null,
+        values: [
+          dp('RSSI_DEVICE', 'INTEGER', -64, {}),
+          dp('UNREACH', 'BOOL', false, {}),
+          dp('CONFIG_PENDING', 'BOOL', true, {}),
+        ],
+      },
+    ],
+  },
   listCcus: [{ integrationId: 'hm_1', name: 'Casa CCU3', connected: true }],
   ccuOverview: {
     info: {

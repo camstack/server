@@ -5,11 +5,13 @@ import {
   DeviceType,
   errMsg,
   type AccessoryChildSpec,
+  type ConfigUISchemaWithValues,
   type DeviceContext,
 } from '@camstack/types'
 import type { Homematic, HmDevice, ValueChangedEvent } from 'nodehomematic'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import { hmName } from './hm-name.js'
+import { devicePanelSection } from './hm-device-panel-section.js'
 import { mapMaintenanceChannel, readReachability } from '../homematic-diagnostics-mapping.js'
 import { deriveHmEntitySpecs, type HmEntitySpec } from './hm-entity-spec.js'
 import { hmChildFactoryForSpec } from './hm-child-class-factory.js'
@@ -122,6 +124,11 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
       const next = !event.value
       if (this.online !== next) this.markOnline(next)
     })
+  }
+
+  /** The device page's Homematic panel (values, diagnostics, actuation, MASTER configuration). */
+  override getSettingsUISchema(): ConfigUISchemaWithValues {
+    return { sections: [devicePanelSection(this.integrationId, this.address)] }
   }
 
   override async onActivate(): Promise<void> {

@@ -27,5 +27,6 @@
   "device.buttonEvents.keys.label": "Tasti",
   "device.buttonEvents.keys.key": "Tasto",
   "device.buttonEvents.keys.central": "Inviato a CamStack",
-  "device.buttonEvents.keys.links": "Collegamenti diretti"
+  "device.buttonEvents.keys.links": "Collegamenti diretti",
+  "device.panel.title": "Homematic"
 }
