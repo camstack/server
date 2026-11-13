@@ -71,6 +71,15 @@ export interface AutomationEditorProps {
   readonly onSave: (input: CoreBlockInput) => void
   readonly onEject: () => void
   readonly onCancel: () => void
+  /**
+   * Offered when given: keep the recipe as it stands as a new automation template
+   * (#527). The caller stores it and opens the template editor.
+   */
+  readonly onSaveAsTemplate?: (draft: {
+    readonly name: string
+    readonly recipe: AutomationRecipe
+  }) => void
+  readonly savingAsTemplate?: boolean
 }
 
 interface GeneratedSource {
@@ -87,6 +96,8 @@ export function AutomationEditor({
   onSave,
   onEject,
   onCancel,
+  onSaveAsTemplate,
+  savingAsTemplate = false,
 }: AutomationEditorProps) {
   const { t } = useTranslation()
   const [name, setName] = useState(existing?.name ?? '')
@@ -274,6 +285,16 @@ export function AutomationEditor({
               <ScrollText className="h-4 w-4" /> {t('common.logs')}{' '}
               <DisclosureChevron expanded={showLogs} />
             </Button>
+            {onSaveAsTemplate !== undefined && (
+              <Button
+                variant="outline"
+                disabled={saving || savingAsTemplate || blocked}
+                onClick={() => onSaveAsTemplate({ name: name.trim(), recipe })}
+                data-testid="automation-save-as-template"
+              >
+                {t('build.templates.saveAsTemplate', 'Save as template')}
+              </Button>
+            )}
             <Button variant="ghost" onClick={onCancel} disabled={saving}>
               {t('common.close', 'Close')}
             </Button>

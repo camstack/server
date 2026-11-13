@@ -8,7 +8,13 @@
  * An automation IS a core block with an AUTOMATION_RECIPE literal.
  */
 
-import type { CoreBlock, CoreBlockInput } from '@camstack/types'
+import {
+  AUTOMATION_TEMPLATE_VERSION,
+  type AutomationRecipe,
+  type AutomationTemplatePayload,
+  type CoreBlock,
+  type CoreBlockInput,
+} from '@camstack/types'
 import {
   DataTable,
   ErrorBox,
@@ -17,11 +23,13 @@ import {
   useConfirm,
   useItemFormUrl,
   useSystem,
+  useTemplateCreate,
   type DataColumn,
 } from '@camstack/ui-library'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Workflow } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AutomationEditor } from './automation/AutomationEditor'
 import {
   AutomationActions,
@@ -40,6 +48,10 @@ import { EMPTY_RECIPE } from './automation/recipe-parts'
 import { freshest, sortBlocksForDisplay, summariseBlocks } from './core-block-status'
 import { useTranslation } from 'react-i18next'
 import { pushToast } from '../../components/ui/toast-bus'
+import { templateEditPath } from '../../components/remote/EditTemplateButton'
+import { NewAutomationChooser } from './templates/NewAutomationChooser'
+import { TemplateInstancePanel } from './templates/TemplateInstancePanel'
+import { FROM_TEMPLATE_PARAM } from './templates/template-params'
 
 const BLOCKS_KEY = ['coreBlocks', 'list'] as const
 const POLL_MS = 5_000
@@ -73,14 +85,39 @@ export function AutomationsTab({
   } = useItemFormUrl({ editKey: 'block', newKey: 'new' })
   const confirm = useConfirm()
   const [logsFor, setLogsFor] = useState<string | null>(null)
+  const [chooserOpen, setChooserOpen] = useState(false)
+  const [fromTemplate, setFromTemplate] = useState<string | null>(null)
+  const [templateError, setTemplateError] = useState<string | null>(null)
+  const [params, setParams] = useSearchParams()
+  const navigate = useNavigate()
+  const createTemplate = useTemplateCreate()
+  const requestedTemplate = params.get(FROM_TEMPLATE_PARAM)
 
   const editingOpen = formState.mode !== 'closed'
 
   useEffect(() => {
     if (!createRequested) return
-    openNew()
+    setChooserOpen(true)
     onCreateConsumed?.()
-  }, [createRequested, onCreateConsumed, openNew])
+  }, [createRequested, onCreateConsumed])
+
+  useEffect(() => {
+    if (requestedTemplate === null) return
+    setFromTemplate(requestedTemplate)
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete(FROM_TEMPLATE_PARAM)
+        return next
+      },
+      { replace: true },
+    )
+  }, [requestedTemplate, setParams])
+
+  const startBlank = useCallback((): void => {
+    setChooserOpen(false)
+    openNew()
+  }, [openNew])
 
   const blocksQuery = useQuery({
     queryKey: BLOCKS_KEY,
@@ -98,6 +135,7 @@ export function AutomationsTab({
   /** Save closes the editor and says so; a failed save keeps it open (the error is inline). */
   const saved = (block: CoreBlock): void => {
     closeForm()
+    setFromTemplate(null)
     refresh()
     pushToast({
       title: t('build.automationsTab.saved', 'Automation saved'),
@@ -155,6 +193,33 @@ export function AutomationsTab({
     if (editTargetMissing) closeForm()
   }, [editTargetMissing, closeForm])
   const parsed = editing === null ? null : parseRecipeFromCode(editing.code)
+  const instanceLink = parsed !== null && parsed.ok ? parsed.recipe.template : undefined
+
+  /** The recipe as it stands becomes a template with no inputs yet; the template editor opens on it. */
+  const saveAsTemplate = async (draft: {
+    readonly name: string
+    readonly recipe: AutomationRecipe
+  }): Promise<void> => {
+    const { template: _link, ...body } = draft.recipe
+    const payload: AutomationTemplatePayload = {
+      version: AUTOMATION_TEMPLATE_VERSION,
+      body,
+      inputs: [],
+      bindings: [],
+    }
+    setTemplateError(null)
+    try {
+      const result = await createTemplate.mutateAsync({
+        kind: 'automation',
+        name: draft.name,
+        payload,
+      })
+      if (result.status === 'refused') setTemplateError(result.detail)
+      else void navigate(templateEditPath(result.template.id))
+    } catch (error: unknown) {
+      setTemplateError(errorMessage(error))
+    }
+  }
   const saveError =
     create.error !== null
       ? errorMessage(create.error)
@@ -177,6 +242,7 @@ export function AutomationsTab({
               block={block}
               logsOpen={logsFor === block.id}
               unreadable={recipe.ok ? null : recipe.reason}
+              flagged={recipe.ok && recipe.recipe.template?.problems !== undefined}
             />
           )
         },
@@ -246,8 +312,54 @@ export function AutomationsTab({
     [confirm, logsFor, openEdit, remove, setEnabled, t],
   )
 
+  const cancelInstance = (): void => {
+    create.reset()
+    update.reset()
+    setFromTemplate(null)
+    closeForm()
+  }
+
+  if (fromTemplate !== null && !editingOpen) {
+    return (
+      <div className="space-y-3" data-testid="automation-editor-panel">
+        <h3 className="flex items-center gap-2 text-sm font-semibold">
+          <Workflow className="h-4 w-4 text-foreground-muted" />
+          {t('build.automationsTab.newAutomation', 'New automation')}
+        </h3>
+        <TemplateInstancePanel
+          templateId={fromTemplate}
+          existing={null}
+          recipe={null}
+          saving={create.isPending}
+          saveError={saveError}
+          onSave={(input) => create.mutate(input)}
+          onCancel={cancelInstance}
+        />
+      </div>
+    )
+  }
+
   if (editingOpen) {
     if (formState.mode === 'edit' && editing === null) return <Skeleton className="h-24 w-full" />
+    if (editing !== null && instanceLink !== undefined && parsed !== null && parsed.ok) {
+      return (
+        <div className="space-y-3" data-testid="automation-editor-panel">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <Workflow className="h-4 w-4 text-foreground-muted" />
+            {t('build.automationsTab.edit', 'Edit {{name}}', { name: editing.name })}
+          </h3>
+          <TemplateInstancePanel
+            templateId={instanceLink.templateId}
+            existing={editing}
+            recipe={parsed.recipe}
+            saving={update.isPending}
+            saveError={saveError}
+            onSave={(input) => update.mutate({ blockId: editing.id, block: input })}
+            onCancel={cancelInstance}
+          />
+        </div>
+      )
+    }
     return (
       <div className="space-y-3" data-testid="automation-editor-panel">
         <h3 className="flex items-center gap-2 text-sm font-semibold">
@@ -272,6 +384,8 @@ export function AutomationsTab({
           onEject={() => {
             if (editing !== null) eject.mutate(editing)
           }}
+          onSaveAsTemplate={(draft) => void saveAsTemplate(draft)}
+          savingAsTemplate={createTemplate.isPending}
           onCancel={() => {
             create.reset()
             update.reset()
@@ -280,6 +394,7 @@ export function AutomationsTab({
           }}
         />
         {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
+        {templateError !== null && <ErrorBox message={templateError} />}
       </div>
     )
   }
@@ -302,7 +417,7 @@ export function AutomationsTab({
       )}
 
       {knowsThereAreNone ? (
-        <AutomationEmptyState onCreate={openNew} />
+        <AutomationEmptyState onCreate={() => setChooserOpen(true)} />
       ) : (
         <DataTable
           columns={columns}
@@ -321,6 +436,15 @@ export function AutomationsTab({
 
       {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
       {setEnabled.error != null && <ErrorBox message={errorMessage(setEnabled.error)} />}
+      <NewAutomationChooser
+        open={chooserOpen}
+        onBlank={startBlank}
+        onTemplate={(id) => {
+          setChooserOpen(false)
+          setFromTemplate(id)
+        }}
+        onClose={() => setChooserOpen(false)}
+      />
     </div>
   )
 }

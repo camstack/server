@@ -51,6 +51,9 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
         },
       },
     }),
+    // No automation templates: "New automation" goes straight to a blank editor.
+    useTemplateList: () => ({ data: [], status: 'success', refetch: vi.fn() }),
+    useTemplateCreate: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useUiText: () => (key: string, fallback?: string) => fallback ?? key,
   }
 })

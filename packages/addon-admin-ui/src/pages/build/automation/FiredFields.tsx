@@ -24,13 +24,15 @@ import {
 
 export interface FiredFieldsProps {
   readonly leaf: DeviceFiredLeaf
+  /** The device is fixed by the caller (a template input names it): only its events are offered. */
+  readonly hideDevice?: boolean
   readonly onChange: (next: DeviceFiredLeaf) => void
 }
 
 const ANY = ''
 const REQUIRES = { caps: [EVENT_EMITTER_CAP] } as const
 
-export function FiredFields({ leaf, onChange }: FiredFieldsProps) {
+export function FiredFields({ leaf, hideDevice = false, onChange }: FiredFieldsProps) {
   const { t } = useTranslation()
   const hasDevice = leaf.deviceId > 0
   const query = useDeviceStateGetCapSlice(
@@ -52,16 +54,18 @@ export function FiredFields({ leaf, onChange }: FiredFieldsProps) {
 
   return (
     <>
-      <div className="min-w-[13rem] flex-1">
-        <PickerLabel>{t('automation.fired.device', 'Device')}</PickerLabel>
-        <DeviceValuePicker
-          pick="device"
-          requires={REQUIRES}
-          recentKey="automation-device-fired"
-          value={hasDevice ? { deviceId: leaf.deviceId } : null}
-          onChange={(next) => onChange(withFiredDevice(leaf, next?.deviceId ?? 0))}
-        />
-      </div>
+      {!hideDevice && (
+        <div className="min-w-[13rem] flex-1">
+          <PickerLabel>{t('automation.fired.device', 'Device')}</PickerLabel>
+          <DeviceValuePicker
+            pick="device"
+            requires={REQUIRES}
+            recentKey="automation-device-fired"
+            value={hasDevice ? { deviceId: leaf.deviceId } : null}
+            onChange={(next) => onChange(withFiredDevice(leaf, next?.deviceId ?? 0))}
+          />
+        </div>
+      )}
       {hasDevice && state.kind !== 'known' && (
         <p
           className={`min-w-[13rem] flex-1 text-xs ${state.kind === 'unknown' ? 'text-warning' : 'text-foreground-subtle'}`}

@@ -5,7 +5,12 @@
  * so the compiler refuses a kind the page cannot edit. The store itself is
  * generic — only this table is kind-specific on the admin side.
  */
-import { checkTemplatePayload, TEMPLATE_KINDS, type TemplateKind } from '@camstack/types'
+import {
+  AutomationTemplatePayloadSchema,
+  checkTemplatePayload,
+  TEMPLATE_KINDS,
+  type TemplateKind,
+} from '@camstack/types'
 import type { TFunction } from 'i18next'
 import type { ReactNode } from 'react'
 import {
@@ -58,14 +63,35 @@ const VIEWS: Readonly<Record<TemplateKind, TemplateKindView>> = {
         payload: () => copyOfPreset(preset.id),
       })),
   },
+  automation: {
+    label: (t) => t('build.templates.kindAutomation', 'Automation'),
+    emptyPayload: () => ({
+      version: 1,
+      body: { when: { kind: 'any', children: [] }, actions: [] },
+      inputs: [],
+      bindings: [],
+    }),
+    summary: (payload, t) => {
+      const parsed = AutomationTemplatePayloadSchema.safeParse(payload)
+      return parsed.success
+        ? t('build.templates.inputsSummary', { count: parsed.data.inputs.length })
+        : ''
+    },
+    // An automation template is edited inline on Build → Templates, not in the dialog.
+    renderEditor: () => null,
+    isSavable: (payload) => AutomationTemplatePayloadSchema.safeParse(payload).success,
+    presets: () => [],
+  },
 }
 
 export function templateKindView(kind: TemplateKind): TemplateKindView {
   return VIEWS[kind]
 }
 
-/** The kinds the Templates page offers when creating one. */
-export const CREATABLE_TEMPLATE_KINDS: readonly TemplateKind[] = TEMPLATE_KINDS
+/** The kinds the layout dialog creates; an automation template has its own inline editor. */
+export const CREATABLE_TEMPLATE_KINDS: readonly TemplateKind[] = TEMPLATE_KINDS.filter(
+  (kind) => kind !== 'automation',
+)
 
 /** The payload as the store will keep it, or null when the kind's schema refuses it. */
 export function savablePayload(kind: TemplateKind, payload: unknown): unknown {

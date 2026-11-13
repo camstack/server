@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
-import '../../../i18n'
+import '../../../../i18n'
 
 const TEMPLATES = [
   {
@@ -34,12 +34,12 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
-vi.mock('../../../components/remote/TemplateEditorDialog', () => ({
+vi.mock('../../../../components/remote/TemplateEditorDialog', () => ({
   TemplateEditorDialog: ({ draft }: { draft: { id: string | null; name: string } | null }) =>
     draft === null ? null : <div data-testid="editor-open">{draft.name}</div>,
 }))
 
-import { TemplatesPage } from '../Templates'
+import { TemplatesTab } from '../TemplatesTab'
 
 function Where(): React.ReactNode {
   return <span data-testid="search">{useLocation().search}</span>
@@ -50,7 +50,7 @@ function renderAt(url: string): void {
     <MemoryRouter initialEntries={[url]}>
       <QueryClientProvider client={new QueryClient()}>
         <ConfirmDialogProvider>
-          <TemplatesPage />
+          <TemplatesTab />
         </ConfirmDialogProvider>
         <Where />
       </QueryClientProvider>
@@ -60,14 +60,14 @@ function renderAt(url: string): void {
 
 describe('Templates ?edit= deep link', () => {
   it('opens the editor on that template and clears the param', async () => {
-    renderAt('/system/templates?edit=tpl-b')
+    renderAt('/build?tab=templates&edit=tpl-b')
     await waitFor(() => expect(screen.getByTestId('editor-open').textContent).toBe('Bravo'))
-    await waitFor(() => expect(screen.getByTestId('search').textContent).toBe(''))
+    await waitFor(() => expect(screen.getByTestId('search').textContent).toBe('?tab=templates'))
   })
 
   it('opens nothing for an unknown id, and still clears the param', async () => {
-    renderAt('/system/templates?edit=gone')
-    await waitFor(() => expect(screen.getByTestId('search').textContent).toBe(''))
+    renderAt('/build?tab=templates&edit=gone')
+    await waitFor(() => expect(screen.getByTestId('search').textContent).toBe('?tab=templates'))
     expect(screen.queryByTestId('editor-open')).toBeNull()
   })
 })

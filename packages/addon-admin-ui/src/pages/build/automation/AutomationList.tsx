@@ -51,10 +51,17 @@ export interface AutomationSummaryProps {
   /** Set when the block's embedded recipe could not be read — the row is still
    *  shown, because hiding a stored automation is how one goes missing. */
   readonly unreadable: string | null
+  /** Made from a template that has since changed so its values no longer fit (#527). */
+  readonly flagged?: boolean
 }
 
 /** The name cell: name, status, last edit, and the logs panel when open. */
-export function AutomationSummary({ block, logsOpen, unreadable }: AutomationSummaryProps) {
+export function AutomationSummary({
+  block,
+  logsOpen,
+  unreadable,
+  flagged = false,
+}: AutomationSummaryProps) {
   const uiText = useUiText()
   const { t } = useTranslation()
   const status = describeBlockStatus(block)
@@ -65,6 +72,11 @@ export function AutomationSummary({ block, logsOpen, unreadable }: AutomationSum
       <div className="flex flex-wrap items-center gap-2">
         <span className="truncate font-medium">{block.name}</span>
         <Badge variant={badgeVariantForTone(status.tone)}>{status.label}</Badge>
+        {flagged && (
+          <Badge variant="warning" data-testid="automation-flagged-badge">
+            {t('build.templates.flagged', 'Flagged')}
+          </Badge>
+        )}
         {edited !== null && (
           <span className="text-xs text-foreground-subtle">
             {t('common.edited', { when: edited })}

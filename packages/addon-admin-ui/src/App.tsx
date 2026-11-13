@@ -49,6 +49,7 @@ import { ApprovePage } from './pages/Approve'
 import { ChangePasswordPage } from './pages/ChangePassword'
 // Critical first-paint pages — kept eager so they render without a Suspense flash
 import { LoginPage } from './pages/Login'
+import { TemplatesRedirect } from './components/TemplatesRedirect'
 import { trpc } from './trpc'
 import type { ConfigModelSelectorField } from './types/config-ui'
 import { useTranslation } from 'react-i18next'
@@ -165,11 +166,6 @@ const HistoryPage = lazy(() =>
 const CalendarsPage = lazy(() =>
   import('./pages/system/Calendars').then((m) => ({
     default: m.CalendarsPage,
-  })),
-)
-const TemplatesPage = lazy(() =>
-  import('./pages/system/Templates').then((m) => ({
-    default: m.TemplatesPage,
   })),
 )
 
@@ -533,14 +529,7 @@ export function App() {
                                     </ProtectedRoute>
                                   }
                                 />
-                                <Route
-                                  path="/system/templates"
-                                  element={
-                                    <ProtectedRoute requireAdmin>
-                                      <TemplatesPage />
-                                    </ProtectedRoute>
-                                  }
-                                />
+                                <Route path="/system/templates" element={<TemplatesRedirect />} />
                                 {/* Combined pages */}
                                 <Route
                                   path="/system/identity"

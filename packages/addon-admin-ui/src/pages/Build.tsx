@@ -17,8 +17,17 @@ import { AutomationsTab } from './build/AutomationsTab'
 import { SchedulersTab } from './build/schedulers/SchedulersTab'
 import { CustomDeviceTab } from './build/CustomDeviceTab'
 import { ScriptsTab } from './build/ScriptsTab'
+import { FROM_TEMPLATE_PARAM } from './build/templates/template-params'
+import { TemplatesTab } from './build/templates/TemplatesTab'
 
-const TABS = ['automations', 'actions', 'schedulers', 'scripts', 'custom-device'] as const
+const TABS = [
+  'automations',
+  'actions',
+  'schedulers',
+  'scripts',
+  'custom-device',
+  'templates',
+] as const
 type BuildTab = (typeof TABS)[number]
 
 function isTab(value: string | null): value is BuildTab {
@@ -29,7 +38,15 @@ const BLOCKS_KEY = ['coreBlocks', 'list', 'build-counts'] as const
 const SCHEDULERS_COUNT_KEY = ['schedulers', 'list', 'build-counts'] as const
 const ACTIONS_COUNT_KEY = ['actions', 'list', 'build-counts'] as const
 /** `new` is the composition chooser (`useItemFormUrl`). Cleared on leaving a section so it cannot reopen another tab's create dialog. */
-const EDITOR_OWNED = ['block', 'action', 'scheduler', 'create', 'new'] as const
+const EDITOR_OWNED = [
+  'block',
+  'action',
+  'scheduler',
+  'create',
+  'new',
+  'edit',
+  FROM_TEMPLATE_PARAM,
+] as const
 
 function countScripts(blocks: readonly CoreBlock[]): number {
   return blocks.filter((b) => coreBlockSourceKind(b) === 'code').length
@@ -159,7 +176,9 @@ export function BuildPage() {
         ? t('build.newAction', 'New action')
         : tab === 'schedulers'
           ? t('build.newScheduler', 'New scheduler')
-          : t('build.newScript', 'New script')
+          : tab === 'templates'
+            ? t('build.newTemplate', 'New template')
+            : t('build.newScript', 'New script')
 
   const chrome = navChromeForPath('/build', { t, isAdmin: true }) ?? {
     icon: Hammer,
@@ -247,6 +266,17 @@ export function BuildPage() {
           content: (
             <CustomDeviceTab
               createRequested={tab === 'custom-device' && createRequested}
+              onCreateConsumed={clearCreate}
+            />
+          ),
+        },
+        {
+          id: 'templates',
+          label: t('build.tabTemplates', 'Templates'),
+          ownedParams: EDITOR_OWNED,
+          content: (
+            <TemplatesTab
+              createRequested={tab === 'templates' && createRequested}
               onCreateConsumed={clearCreate}
             />
           ),

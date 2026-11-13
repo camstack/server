@@ -50,7 +50,7 @@ describe('targetLabel', () => {
 
 describe('templateEditPath', () => {
   it('is the Templates page with the id to edit', () => {
-    expect(templateEditPath('tpl 1')).toBe('/system/templates?edit=tpl%201')
+    expect(templateEditPath('tpl 1')).toBe('/build?tab=templates&edit=tpl%201')
   })
 })
 
