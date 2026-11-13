@@ -34,6 +34,13 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         args: { on: false },
         effect: { field: 'on', value: false },
       },
+      {
+        id: 'switch.toggle',
+        method: 'toggle',
+        label: { en: 'Toggle', it: 'Commuta' },
+        phrase: { en: 'Toggle {device}', it: 'Commuta {device}' },
+        icon: 'toggle-right',
+      },
     ],
     state: [
       {

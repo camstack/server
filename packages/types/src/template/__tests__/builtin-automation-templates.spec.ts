@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ActionStepSchema,
   AutomationTemplatePayloadSchema,
   BUILTIN_AUTOMATION_TEMPLATES,
   builtinAutomationTemplate,
@@ -46,6 +47,39 @@ describe('built-in automation templates', () => {
       children: [{ id: 'buttons-0' }, { id: 'buttons-1' }],
     })
     expect(out.recipe.actions).toHaveLength(1)
+  })
+
+  it('Buttons → devices expands a switch.toggle command and the step validates', () => {
+    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
+      buttons: [
+        {
+          button: 5656,
+          event: { sourceIds: ['1'], kinds: ['press'] },
+          targets: [5767],
+          action: { actionId: 'switch.toggle' },
+        },
+      ],
+    })
+    expect(out.ok).toBe(true)
+    if (!out.ok) return
+    const choose = out.recipe.actions[0]
+    expect(choose).toMatchObject({
+      kind: 'choose',
+      branches: [
+        {
+          steps: [
+            {
+              kind: 'command',
+              actionId: 'switch.toggle',
+              target: { kind: 'devices', ids: [5767] },
+            },
+          ],
+        },
+      ],
+    })
+    if (choose?.kind !== 'choose') return
+    const step = choose.branches[0]?.steps[0]
+    expect(ActionStepSchema.safeParse(step).success).toBe(true)
   })
 
   it('Buttons → devices refuses a seventh row (one choose branch per row)', () => {

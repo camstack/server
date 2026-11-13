@@ -9,7 +9,9 @@ import { describe, it, expect, vi } from 'vitest'
 import { z } from 'zod'
 import {
   type AddonApi,
+  DeviceRuntimeState,
   method,
+  switchCapability,
   type CapabilityDefinition,
   type IEventBus,
   type IScopedLogger,
@@ -165,5 +167,27 @@ describe('DeviceContext.unregisterNativeCap — the capabilityRegistry branch (D
       expect.stringContaining('not registered by this addon'),
       expect.objectContaining({ tags: expect.objectContaining({ deviceId: CAM_02 }) }),
     )
+  })
+})
+
+describe('registerNativeCap — default switch.toggle', () => {
+  it('flips a provider that only wrote setState, from the switch slice', async () => {
+    const h = hubContexts()
+    const ctx = h.contextFor('addon-a', 5767)
+    const state = DeviceRuntimeState.fromInitial({}, async () => {})
+    state.installCapSchema(switchCapability.name, switchCapability.runtimeState)
+    state.setCapState(switchCapability.name, { on: true, lastChangedAt: 1 })
+    ctx.bindRuntimeState?.(state)
+    const setState = vi.fn(async () => {})
+    ctx.registerNativeCap(switchCapability, {
+      setState,
+      getStatus: async () => ({ on: true, lastChangedAt: 1 }),
+    })
+    const stored = h.reg.getNativeProvider<{
+      toggle?: (input: { deviceId: number }) => Promise<void>
+    }>('switch', 5767)
+    if (stored?.toggle === undefined) throw new Error('toggle was not installed')
+    await stored.toggle({ deviceId: 5767 })
+    expect(setState).toHaveBeenCalledWith({ deviceId: 5767, on: false })
   })
 })

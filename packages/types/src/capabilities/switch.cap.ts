@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import {
+  method,
+  optionalMethod,
+  type CapabilityDefinition,
+  type InferProvider,
+} from './capability-definition.js'
 import { DeviceType, DeviceRole } from '../device/device-type.js'
 import { t } from '../device/cap-vocabulary/l10n.js'
 
@@ -50,6 +55,22 @@ export const switchCapability = {
           icon: 'power-off',
           effect: { field: 'on', value: false },
           args: { on: false },
+        },
+      ],
+    }),
+    // Optional on the provider type: the one default is installed at
+    // native-cap registration (`withDefaultSwitchToggle`) for a driver
+    // that does not write its own. No effect — the outcome is the inverse
+    // of a state this action does not name, so a scheduler cannot hold it.
+    toggle: optionalMethod(z.object({ deviceId: z.number() }), z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'switch.toggle',
+          label: t('Toggle', 'Commuta'),
+          phrase: t('Toggle {device}', 'Commuta {device}'),
+          icon: 'toggle-right',
         },
       ],
     }),

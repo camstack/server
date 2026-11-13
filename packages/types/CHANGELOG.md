@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Device search can require vocabulary actions, so a command picker lists only devices that offer the command.
+- A switch offers Toggle, which flips it from its current on or off state.
 
 ### Changed
 

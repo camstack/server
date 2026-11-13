@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The admin client can run Toggle on a switch.
+
 ### Changed
 
 - The device picker shows each device's parent, keeps the filter rail visible on desktop, opens wider, and no longer re-orders or scrolls the list when you select a device

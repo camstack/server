@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An account can be linked to one instance of an integration: /api/oauth2/authorize takes instance= beside integration=, and the link, its tokens and oauthVerifyAccessToken name the instance
 - Saving an automation template re-expands every automation made from it; an automation that no longer fits is flagged and keeps its last body; a template in use by an automation cannot be deleted
 - Device search filters by vocabulary action, using the same check as the command picker.
+- Toggle on a switch reads its current state and flips it, and refuses when that state is unknown.
 
 ### Changed
 

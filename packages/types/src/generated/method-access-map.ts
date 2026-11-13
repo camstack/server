@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1486 method paths across 206 capabilities.
+ * Coverage: 1487 method paths across 206 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1350,6 +1350,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'streamSignals.listSignals': { capName: "stream-signals", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'switch.getStatus': { capName: "switch", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'switch.setState': { capName: "switch", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'switch.toggle': { capName: "switch", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'system.debugWatch': { capName: "system", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'system.detectSiteLocation': { capName: "system", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'system.featureFlags': { capName: "system", capScope: "system", addonId: null, access: "view", role: "admin" } as const,

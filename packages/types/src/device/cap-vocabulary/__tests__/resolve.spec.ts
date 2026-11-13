@@ -26,6 +26,7 @@ describe('actionsForDevice', () => {
     expect(actions.map((a) => a.id)).toEqual([
       'switch.on',
       'switch.off',
+      'switch.toggle',
       'motionTrigger.on',
       'motionTrigger.off',
     ])
@@ -44,6 +45,11 @@ describe('actionsForDevice', () => {
   it('a plain switch keeps the generic wording; a switch whose ROLE is siren takes the siren wording', () => {
     const plain = actionsForDevice(['switch'], DeviceType.Switch)
     expect(plain[0]?.phrase.en).toBe('Turn on {device}')
+    const toggle = plain.find((a) => a.id === 'switch.toggle')
+    expect(toggle?.label).toEqual({ en: 'Toggle', it: 'Commuta' })
+    expect(toggle?.phrase).toEqual({ en: 'Toggle {device}', it: 'Commuta {device}' })
+    expect(toggle?.icon).toBe('toggle-right')
+    expect(toggle).toMatchObject({ cap: 'switch', method: 'toggle', args: {} })
     const siren = actionsForDevice(['switch'], DeviceType.Switch, DeviceRole.Siren)
     expect(siren[0]?.phrase).toEqual({
       en: 'Sound {device}',

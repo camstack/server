@@ -17,6 +17,15 @@ describe('vocabCall — the one place an action id becomes a cap method', () => 
     })
   })
 
+  it('switch.toggle names the toggle method and bakes no on value', () => {
+    expect(vocabCall('switch.toggle', undefined)).toEqual({
+      cap: 'switch',
+      method: 'toggle',
+      args: {},
+    })
+    expect(findVocabAction('switch.toggle')?.action.effect).toBeUndefined()
+  })
+
   it('treats a step with no args as an empty bag', () => {
     expect(vocabCall('cover.stop', undefined).args).toEqual({})
   })

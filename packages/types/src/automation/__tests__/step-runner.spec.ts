@@ -663,6 +663,18 @@ describe('buildActionSteps — the action id becomes a cap call through the voca
     })
   })
 
+  it('switch.toggle becomes a toggle call with no baked on', async () => {
+    const d = deps()
+    const runnable = buildActionSteps(
+      [{ kind: 'command', target: { kind: 'devices', ids: [5767] }, actionId: 'switch.toggle' }],
+      {},
+      d.deps,
+    )
+    const result = await runSteps(runnable, options())
+    expect(result.failed).toBe(false)
+    expect(d.calls).toEqual([{ deviceId: 5767, cap: 'switch', method: 'toggle', args: {} }])
+  })
+
   it('an open arg travels through unchanged', async () => {
     const d = deps()
     const runnable = buildActionSteps(

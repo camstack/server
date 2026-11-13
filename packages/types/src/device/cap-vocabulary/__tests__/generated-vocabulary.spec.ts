@@ -33,6 +33,7 @@ function asJson(value: unknown): JsonRecord {
 
 /** Actions #524 added after the snapshot, by cap, with the method each calls. */
 const ADDED_ACTIONS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  switch: { 'switch.toggle': 'toggle' },
   ptz: {
     'ptz.savePreset': 'savePreset',
     'ptz.setHomePreset': 'setHomePreset',

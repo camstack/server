@@ -1117,6 +1117,7 @@ export function createDeviceProxy(
 
   const switchInterface = {
     setState: (input?: unknown) => dispatch('switch', 'switch', 'setState', 'mutation', input),
+    toggle: (input?: unknown) => dispatch('switch', 'switch', 'toggle', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('switch', 'switch', 'getStatus', 'query', input),
   }
 

@@ -25,7 +25,14 @@ describe('the effect catalogue', () => {
     ]) {
       expect(ids.has(id), id).toBe(true)
     }
-    for (const id of ['cover.stop', 'button.press', 'valve.stop', 'alarm.trigger', 'lock.open']) {
+    for (const id of [
+      'cover.stop',
+      'button.press',
+      'valve.stop',
+      'alarm.trigger',
+      'lock.open',
+      'switch.toggle',
+    ]) {
       expect(ids.has(id), id).toBe(false)
     }
   })

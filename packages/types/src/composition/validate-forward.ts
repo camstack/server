@@ -81,10 +81,24 @@ export function forwardSourceRefs(composition: Composition): readonly Compositio
   return [...new Map(refs.map((ref) => [compositionSourceKey(ref), ref])).values()]
 }
 
+/**
+ * `switch.toggle` is not a forward. Native-cap registration installs one
+ * default that reads the slice and calls this provider's `setState`, and a
+ * composed switch already forwards `setState`.
+ */
+function servedByRegistrationDefault(def: CapabilityDefinition, method: string): boolean {
+  return def.name === 'switch' && method === 'toggle'
+}
+
 /** The methods a BUILT cap must give a command: served, and not answered by the composer itself. */
 export function commandedMethods(def: CapabilityDefinition): readonly string[] {
   return Object.entries(def.methods)
-    .filter(([name, m]) => m.systemOnly !== true && def.composedMethods?.[name] === undefined)
+    .filter(
+      ([name, m]) =>
+        m.systemOnly !== true &&
+        def.composedMethods?.[name] === undefined &&
+        !servedByRegistrationDefault(def, name),
+    )
     .map(([name]) => name)
 }
 

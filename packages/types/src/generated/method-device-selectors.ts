@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 615 methods carry a device reference, of which
+ * Coverage: 616 methods carry a device reference, of which
  * 195 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -589,6 +589,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'streamParams.setProfile': [{ name: "deviceId", form: "single", optional: false }] as const,
   'switch.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'switch.setState': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'switch.toggle': [{ name: "deviceId", form: "single", optional: false }] as const,
   'system.debugWatch': [{ name: "deviceIds", form: "array", optional: true }] as const,
   'tamper.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'temperatureSensor.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,

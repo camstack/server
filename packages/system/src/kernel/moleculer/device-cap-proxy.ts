@@ -20,6 +20,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { implementedMethodsOf } from '@camstack/types/node'
+import { withDefaultSwitchToggle } from './switch-toggle.js'
 import type {
   AddonApi,
   CapabilityDefinition,
@@ -712,7 +713,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
         // CLAUDE.md follow-up "codegen-driven `getStatus` default"
         // — same effect, implemented at the registration site
         // instead of via codegen output.
-        const finalProvider = ((): InferNativeProvider<TCap> => {
+        const withStatus = ((): InferNativeProvider<TCap> => {
           if (!cap.status || !cap.runtimeState || !runtimeStateRef) return provider
           if (typeof Reflect.get(provider, 'getStatus') === 'function') return provider
           const rsRef = runtimeStateRef
@@ -726,6 +727,14 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
           }
           return { ...provider, getStatus: defaultGetStatus }
         })()
+        // `switch.toggle` for every driver that did not write one. Same
+        // registration site as the default `getStatus`: one body, every
+        // dispatcher then finds the method on the provider.
+        const finalProvider = withDefaultSwitchToggle(cap.name, withStatus, {
+          deviceId: id,
+          readSlice: () => runtimeStateRef?.getCapState('switch'),
+          logger: opts.logger,
+        })
         if (opts.capabilityRegistry) {
           opts.capabilityRegistry.registerNativeProvider(
             cap.name,
