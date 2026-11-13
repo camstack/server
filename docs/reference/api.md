@@ -4783,9 +4783,9 @@
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
-| list | `template.list` | query | protected | `{ kind?: "remote" }` | `TemplateRecordSchema[]` |
+| list | `template.list` | query | protected | `{ kind?: "remote" \| "automation" }` | `TemplateRecordSchema[]` |
 | get | `template.get` | query | protected | `{ id: string }` | `TemplateRecordSchema \| null` |
-| create | `template.create` | mutation | admin | `{ kind: "remote"; name: string; payload: unknown }` | `TemplateWriteResultSchema` |
+| create | `template.create` | mutation | admin | `{ kind: "remote" \| "automation"; name: string; payload: unknown }` | `TemplateWriteResultSchema` |
 | update | `template.update` | mutation | admin | `{ id: string; name?: string; payload?: unknown }` | `TemplateWriteResultSchema` |
 | delete | `template.delete` | mutation | admin | `{ id: string }` | `TemplateDeleteResultSchema` |
 

@@ -26,6 +26,7 @@ import { z } from 'zod'
 import { type QuantityValue } from '../units/quantity-input.js'
 import { findVocabAction } from '../device/cap-vocabulary/action-index.js'
 import { ActionTargetSchema, type ActionTarget } from './action-target.js'
+import { AutomationTemplateLinkSchema } from './template-link.js'
 import { LegacyConditionSchema, LegacyTriggerSchema, convertLegacyWhen } from './legacy-recipe.js'
 import {
   AutomationWhenSchema,
@@ -502,6 +503,12 @@ export const CurrentAutomationRecipeSchema = z.object({
   runMode: AutomationRunModeSchema.optional(),
   /** How many run traces the automation keeps (default {@link DEFAULT_TRACE_KEEP}). */
   keepTraces: z.number().int().min(1).max(MAX_TRACE_KEEP).optional(),
+  /**
+   * Set when the automation was made from a template (#527): the template and
+   * the values filled in. The rest of the recipe is then the expansion, which
+   * the template engine rewrites when the template changes.
+   */
+  template: AutomationTemplateLinkSchema.optional(),
 })
 /**
  * Declared as an interface so it is printed by NAME: a capability that embeds

@@ -1,7 +1,7 @@
 /**
  * Template kinds (D963). A template is a named, reusable piece of operator
- * data that more than one device points at — today the button grid of a
- * remote. The store is generic: it keeps `{ id, kind, name, payload }` and
+ * data that more than one device points at — the button grid of a remote,
+ * and an automation body with declared inputs (#527). The store is generic: it keeps `{ id, kind, name, payload }` and
  * knows nothing of a remote. Only the SYSTEM declares kinds, here: each kind
  * names the schema its payload must satisfy. Adding a kind is adding a member
  * to `TEMPLATE_KINDS` and a payload schema; the compiler refuses one without
@@ -9,13 +9,15 @@
  */
 import { z } from 'zod'
 import { RemoteLayoutPayloadSchema } from '../remote/remote-config.js'
+import { AutomationTemplatePayloadSchema } from './automation-template.js'
 
-export const TEMPLATE_KINDS = ['remote'] as const
+export const TEMPLATE_KINDS = ['remote', 'automation'] as const
 export const TemplateKindSchema = z.enum(TEMPLATE_KINDS)
 export type TemplateKind = z.infer<typeof TemplateKindSchema>
 
 export const TEMPLATE_PAYLOAD_SCHEMAS: Readonly<Record<TemplateKind, z.ZodType>> = {
   remote: RemoteLayoutPayloadSchema,
+  automation: AutomationTemplatePayloadSchema,
 }
 
 export function isTemplateKind(value: string): value is TemplateKind {
