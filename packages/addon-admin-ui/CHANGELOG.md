@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.659] - 2026-11-13
+
 ### Changed
 
 - The unused integration pill-row page base (IntegrationHub / AddonIntegrationBody) is removed; every integration page is the instances table.
