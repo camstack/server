@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-notifiers",
-  "version": "1.2.638",
+  "version": "1.2.639",
   "description": "System notifiers addon for CamStack — a `notification-output` collection provider hosting per-kind notifier adapters (ntfy, pushover, gotify, telegram, discord, webhook, zentik).",
   "keywords": [
     "camstack",
@@ -59,7 +59,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.858"
+      "server": ">=1.2.860"
     }
   },
   "files": [

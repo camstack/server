@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.563] - 2026-11-13
+
 ### Added
 
 - Device search can require vocabulary actions, so a command picker lists only devices that offer the command.
@@ -18,8 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notification templates can count how many devices or nodes went offline and came back in a summary.
 - A disarm notification can name who disarmed the alarm.
 - Notification history can show the title and body that were sent.
-### Changed
-
 - Email images travel as peerBytes tickets on smtp-provider.sendEmail.
 - A cluster update can name a server install that stalled or hit its time limit.
 

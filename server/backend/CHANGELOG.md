@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.860] - 2026-11-13
+
 ### Added
 
 - A switch offers Toggle, which flips it from its current state and refuses when that state is unknown.
+
 ### Fixed
 
 - A cluster update reports a stalled server install, and one that hit its time limit, as their own reasons.

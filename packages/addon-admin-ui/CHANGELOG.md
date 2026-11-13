@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.662] - 2026-11-13
+
 ### Changed
 
 - The device command dialog uses the shared device picker, filtered to devices that offer the command.

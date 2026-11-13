@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.639] - 2026-11-13
+
 ### Added
 
 - Email notifications include up to three images: inline in HTML, attached in text.

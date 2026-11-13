@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.206] - 2026-11-13
+
 ### Changed
 
 - An Alexa account uses the same mark as an Echo target, so a target row does not show that icon twice.
