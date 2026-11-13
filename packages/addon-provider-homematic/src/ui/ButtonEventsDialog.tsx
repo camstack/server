@@ -4,20 +4,8 @@ import { useState } from 'react'
 import { OkResultSchema, type CcuDeviceRow, type KeyChannelLink } from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
+import { centralKey } from './central-key.js'
 import { useCcuWrite } from './use-ccu-write.js'
-
-function centralKey(
-  central: KeyChannelLink['central'],
-):
-  | 'devices.buttonEventsOn'
-  | 'devices.buttonEventsOff'
-  | 'devices.buttonEventsUnsupported'
-  | 'devices.buttonEventsUnknown' {
-  if (central === 'on') return 'devices.buttonEventsOn'
-  if (central === 'off') return 'devices.buttonEventsOff'
-  if (central === 'unsupported') return 'devices.buttonEventsUnsupported'
-  return 'devices.buttonEventsUnknown'
-}
 
 /** Per key channel: whether the CCU sends presses, and the central-link toggle. */
 export function ButtonEventsDialog(props: {

@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Homematic multi-relay children use the CCU channel name, button presses are logged, and adopted key channels can gain a central link from the CCU page.
+- Multi-actuator Homematic children that still use the old “container + channel address” name are renamed to the CCU channel name, or “container chN” when the CCU has no name. Stable IDs stay the same; an operator-chosen name is kept. Anything matched by display name (a HomeKit or Alexa tile name) shows the new name.
+- An adopted container now picks its primary child on activation when it did not already have one.
 
 ## [1.2.192] - 2026-11-12
 

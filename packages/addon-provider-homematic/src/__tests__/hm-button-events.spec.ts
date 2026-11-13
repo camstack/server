@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import type { HmChannel, HmDevice } from 'nodehomematic'
+import type { HmChannel } from 'nodehomematic'
 import { buildCcuDevicesHandlers } from '../ccu/ccu-devices-actions.js'
 import { buildButtonEventHandlers } from '../ccu/ccu-button-events.js'
 import { channelLinkPort, readHmName, type HmChannelLinkPort } from '../ccu/hm-channel-links.js'
 import { fakeDeps } from './ccu-fake.js'
+import { hmDevice } from './hm-test-fixtures.js'
 
 const ADDRESS = '00315F298E5093'
 
-function keyDevice(): HmDevice {
-  const device = {
+function keyDevice() {
+  return hmDevice({
     address: ADDRESS,
     type: 'HmIP-BS2',
     name: 'Pulsante bagno camerette',
@@ -22,9 +23,7 @@ function keyDevice(): HmDevice {
       },
       { address: `${ADDRESS}:4`, index: 4, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
     ],
-  }
-  // `name` on a channel is the 0.6 field. The 0.5.1 channel type omits it.
-  return device as unknown as HmDevice
+  })
 }
 
 function port(central: boolean): HmChannelLinkPort {

@@ -19,6 +19,7 @@ import {
 import type { Homematic, HmCustomEntity, HmDevice } from 'nodehomematic'
 import { HmContainerDevice } from '../devices/hm-container-device.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
+import { hmClimateEntity, hmDataPoint, hmDevice, hmSwitchEntity } from './hm-test-fixtures.js'
 
 // ── Minimal DeviceContext stub (mirrors homematic-device.spec.ts) ──────────
 
@@ -94,30 +95,10 @@ const ADDR = '0001D3C99AB777'
 
 // ── Fixture builders ────────────────────────────────────────────────────────
 
-interface DataPointSeed {
-  parameter: string
-  type?: string
-  value?: boolean | number | string | null
-  unit?: string
-}
-
-function dataPoint(seed: DataPointSeed) {
-  return {
-    id: `dp:${seed.parameter.toLowerCase()}`,
-    parameter: seed.parameter,
-    type: seed.type ?? 'FLOAT',
-    value: seed.value ?? null,
-    unit: seed.unit,
-    readable: true,
-    writable: false,
-    hasEvents: true,
-  }
-}
-
 /** A battery thermostat: HEATING channel + a MAINTENANCE channel with
  *  OPERATING_VOLTAGE + RSSI + UNREACH + firmware descriptor. */
 function makeBatteryThermostat(): HmDevice {
-  return {
+  return hmDevice({
     address: ADDR,
     type: 'HmIP-eTRV-C',
     name: 'Thermostat',
@@ -137,19 +118,19 @@ function makeBatteryThermostat(): HmDevice {
         index: 0,
         type: 'MAINTENANCE',
         dataPoints: [
-          dataPoint({ parameter: 'LOW_BAT', type: 'BOOL', value: false }),
-          dataPoint({ parameter: 'OPERATING_VOLTAGE', value: 2.9, unit: 'V' }),
-          dataPoint({ parameter: 'RSSI_DEVICE', type: 'INTEGER', value: -60, unit: 'dBm' }),
-          dataPoint({ parameter: 'UNREACH', type: 'BOOL', value: false }),
+          hmDataPoint({ parameter: 'LOW_BAT', type: 'BOOL', value: false }),
+          hmDataPoint({ parameter: 'OPERATING_VOLTAGE', value: 2.9, unit: 'V' }),
+          hmDataPoint({ parameter: 'RSSI_DEVICE', type: 'INTEGER', value: -60, unit: 'dBm' }),
+          hmDataPoint({ parameter: 'UNREACH', type: 'BOOL', value: false }),
         ],
       },
     ],
-  } as unknown as HmDevice
+  })
 }
 
 /** A roller-shutter (cover) with one custom entity + an energy meter channel. */
 function makeCover(): HmDevice {
-  return {
+  return hmDevice({
     address: ADDR,
     type: 'HmIP-BROLL',
     name: 'Roller',
@@ -157,13 +138,13 @@ function makeCover(): HmDevice {
       { address: `${ADDR}:4`, index: 4, type: 'SHUTTER_VIRTUAL_RECEIVER', dataPoints: [] },
       { address: `${ADDR}:7`, index: 7, type: 'ENERGIE_METER_TRANSMITTER', dataPoints: [] },
     ],
-  } as unknown as HmDevice
+  })
 }
 
 /** A 2-key wall switch (event-emitter) with no MAINTENANCE channel. */
 function makeWallSwitch(): HmDevice {
-  const dps = [{ parameter: 'PRESS_SHORT' }, { parameter: 'PRESS_LONG' }].map(dataPoint)
-  return {
+  const dps = [{ parameter: 'PRESS_SHORT' }, { parameter: 'PRESS_LONG' }].map(hmDataPoint)
+  return hmDevice({
     address: ADDR,
     type: 'HmIP-WRC2',
     name: 'Wall switch',
@@ -171,7 +152,7 @@ function makeWallSwitch(): HmDevice {
       { address: `${ADDR}:1`, index: 1, type: 'KEY_TRANSCEIVER', dataPoints: dps },
       { address: `${ADDR}:2`, index: 2, type: 'KEY_TRANSCEIVER', dataPoints: dps },
     ],
-  } as unknown as HmDevice
+  })
 }
 
 function coverEntity(): HmCustomEntity {
@@ -199,7 +180,7 @@ describe('HmContainerDevice.getAccessoryChildren', () => {
       'hm_001',
       makeFacade(
         [makeBatteryThermostat()],
-        [{ kind: 'climate', device: ADDR, channel: `${ADDR}:1` } as unknown as HmCustomEntity],
+        [hmClimateEntity({ device: ADDR, channel: `${ADDR}:1` })],
       ),
     )
     const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
@@ -263,7 +244,7 @@ describe('HmContainerDevice.getAccessoryChildren', () => {
   })
 
   it('names each relay from the CCU channel name, else container plus channel index', () => {
-    const relays = {
+    const relays = hmDevice({
       address: ADDR,
       type: 'HmIP-BS2',
       channels: [
@@ -276,14 +257,14 @@ describe('HmContainerDevice.getAccessoryChildren', () => {
         },
         { address: `${ADDR}:8`, index: 8, type: 'SWITCH_VIRTUAL_RECEIVER', dataPoints: [] },
       ],
-    } as unknown as HmDevice
+    })
     homematicFacades.set(
       'hm_001',
       makeFacade(
         [relays],
         [
-          { kind: 'switch', device: ADDR, channel: `${ADDR}:4` } as unknown as HmCustomEntity,
-          { kind: 'switch', device: ADDR, channel: `${ADDR}:8` } as unknown as HmCustomEntity,
+          hmSwitchEntity({ device: ADDR, channel: `${ADDR}:4` }),
+          hmSwitchEntity({ device: ADDR, channel: `${ADDR}:8` }),
         ],
       ),
     )

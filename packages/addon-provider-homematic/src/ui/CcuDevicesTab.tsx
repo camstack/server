@@ -16,6 +16,7 @@ import type { CcuTrpc } from './ccu-client.js'
 import { percentOrDash, textOrDash } from './format.js'
 import { ChannelConfigDialog } from './ChannelConfigDialog.js'
 import { ButtonEventsDialog } from './ButtonEventsDialog.js'
+import { centralKey } from './central-key.js'
 import { DeleteDeviceDialog, type DeleteDraft } from './DeleteDeviceDialog.js'
 import { useCcuData } from './use-ccu-data.js'
 import { useCcuWrite } from './use-ccu-write.js'
@@ -157,14 +158,7 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
               >
                 {t('devices.buttonEventsBadge', {
                   index: channel.index,
-                  state:
-                    channel.central === 'on'
-                      ? t('devices.buttonEventsOn')
-                      : channel.central === 'off'
-                        ? t('devices.buttonEventsOff')
-                        : channel.central === 'unsupported'
-                          ? t('devices.buttonEventsUnsupported')
-                          : t('devices.buttonEventsUnknown'),
+                  state: t(centralKey(channel.central)),
                 })}
               </Badge>
             ))}

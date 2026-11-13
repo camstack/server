@@ -12,6 +12,7 @@ const IT: Record<string, string> = {
   'demo:host.label': 'Server',
   'demo:host.description': 'Nome host o IP',
   'demo:sec.title': 'Connessione',
+  'demo:notice.content': 'Attenzione',
 }
 const lookupIt: CatalogLookup = (ns, key) => IT[`${ns}:${key}`]
 
@@ -59,6 +60,13 @@ describe('localizeConfigTree', () => {
           },
           { key: 'port', label: 'Port', labelKey: 'demo:port.label' },
           { key: 'legacy', label: 'Legacy' },
+          {
+            type: 'info',
+            key: 'notice',
+            label: 'Note',
+            content: 'Heads up',
+            contentKey: 'demo:notice.content',
+          },
         ],
       },
     ],
@@ -68,6 +76,7 @@ describe('localizeConfigTree', () => {
     const out = localizeConfigTree(schema, lookupIt)
     expect(JSON.stringify(out)).toContain('"title":"Connessione"')
     expect(JSON.stringify(out)).toContain('"description":"Nome host o IP"')
+    expect(JSON.stringify(out)).toContain('"content":"Attenzione"')
   })
 
   it('keeps the English text for an unknown key and for a field without keys', () => {

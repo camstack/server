@@ -54,11 +54,13 @@ const KEYED_TEXTS: readonly KeyedText[] = [
   { keyField: 'labelKey', textField: 'label' },
   { keyField: 'descriptionKey', textField: 'description' },
   { keyField: 'titleKey', textField: 'title' },
+  { keyField: 'contentKey', textField: 'content' },
 ]
 
 /**
- * Returns `value` with every `labelKey` / `descriptionKey` / `titleKey` that
- * the catalog can resolve replaced into `label` / `description` / `title`.
+ * Returns `value` with every `labelKey` / `descriptionKey` / `titleKey` /
+ * `contentKey` that the catalog can resolve replaced into `label` /
+ * `description` / `title` / `content`.
  * Pure: the input is never mutated; a subtree with nothing to change is
  * returned as the SAME object. A key the catalog does not hold keeps the
  * English text that sits next to it.

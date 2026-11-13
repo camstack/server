@@ -912,6 +912,8 @@ export interface ConfigInfoField {
   /** `"<namespace>:<key>"` of the translated `label` (D863). */
   labelKey?: string
   content: string
+  /** `"<namespace>:<key>"` of the translated `content` (D863). */
+  contentKey?: string
   variant?: 'info' | 'warning' | 'success' | 'danger'
   /**
    * Rendering mode for `content`. Default `'text'` keeps the legacy

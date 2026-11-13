@@ -100,6 +100,7 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
               label: 'Button events',
               labelKey: 'provider-homematic:device.buttonEvents.hint.label',
               content: BUTTON_EVENTS_HINT,
+              contentKey: 'provider-homematic:device.buttonEvents.hint.content',
               variant: 'warning',
             },
           ],
