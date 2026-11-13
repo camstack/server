@@ -32,6 +32,8 @@ interface Spec {
   readonly slices: Readonly<Record<string, unknown>>
   /** Bound caps when they differ from the slice keys (a cap that has not reported). */
   readonly caps?: readonly string[]
+  /** The device is offline: its last reading is no longer current. */
+  readonly offline?: boolean
 }
 
 const SPECS: Readonly<Record<number, Spec>> = {
@@ -129,6 +131,14 @@ const SPECS: Readonly<Record<number, Spec>> = {
     caps: ['temperature-sensor'],
     slices: {},
   },
+  1514: {
+    name: 'Garage temperature',
+    type: 'sensor',
+    role: 'temperature-sensor',
+    offline: true,
+    // Offline: the last value is stale and must not be drawn as current.
+    slices: { 'temperature-sensor': { temperature: 17.4, lastFetchedAt: NOW - 3 * 60 * MINUTE } },
+  },
 }
 
 const IDS = Object.keys(SPECS).map(Number)
@@ -146,7 +156,7 @@ function deviceOf(id: number, spec: Spec): Record<string, unknown> {
     disabled: false,
     parentDeviceId: spec.parentDeviceId ?? null,
     role: spec.role,
-    online: true,
+    online: spec.offline !== true,
     probed: true,
     features: [],
     isCamera: false,
@@ -167,7 +177,7 @@ function modelOf(id: number, canActuate: boolean): HeroModel | null {
       type: spec.type,
       role: spec.role,
       name: spec.name,
-      online: true,
+      online: spec.offline !== true,
       integration: 'Enpal',
     },
     caps: [...(spec.caps ?? Object.keys(spec.slices)), 'device-status'],

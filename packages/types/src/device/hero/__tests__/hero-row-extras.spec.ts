@@ -128,6 +128,19 @@ describe('row extras', () => {
     expect(ids(projectDeviceRow(media(null, ['media-player'])).extras)).toEqual(['volume.level'])
   })
 
+  it('an automation: Run now is the primary, its enabled switch the extra', () => {
+    const row = projectDeviceRow(
+      build(DeviceType.Automation, ['automation-control'], {
+        enabled: true,
+        isRunning: false,
+        lastTriggeredAt: 0,
+        lastError: null,
+      }),
+    )
+    expect(ids(row.primary === null ? [] : [row.primary])).toEqual(['automation.run'])
+    expect(ids(row.extras)).toEqual(['automation.enabled'])
+  })
+
   it('a gated part yields no control, as primary does', () => {
     const vac = build(DeviceType.Vacuum, ['vacuum-control'], vacuum('cleaning'))
     expect(ids(projectDeviceRow({ ...vac, gated: ['vacuum'] }).extras)).toEqual([])

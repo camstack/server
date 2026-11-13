@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DeviceType } from '../../device-type.js'
 import { buildHeroModel } from '../build-hero-model.js'
+import { emptyMeasurement } from '../hero-measurement.js'
 import { projectDeviceRow } from '../hero-row.js'
 import { build, NOW, rowOf } from './hero-test-kit.js'
 
@@ -78,7 +79,7 @@ describe('a simple sensor is drawn as its ONE measurement', () => {
     expect(t.measurement).toMatchObject({ quantity: 'text', icon: null, value: { en: 'Eco' } })
   })
 
-  it('two measuring caps, an offline sensor or a non-sensor keep the old card', () => {
+  it('two measuring caps or a non-sensor keep the old card', () => {
     const slices = {
       'temperature-sensor': { temperature: 21, lastFetchedAt: NOW },
       'humidity-sensor': { humidity: 40, lastFetchedAt: NOW },
@@ -87,13 +88,24 @@ describe('a simple sensor is drawn as its ONE measurement', () => {
       build(DeviceType.Sensor, ['temperature-sensor', 'humidity-sensor'], slices).measurement,
     ).toBeUndefined()
     expect(
-      build(DeviceType.Sensor, ['temperature-sensor'], slices, [], false).measurement,
-    ).toBeUndefined()
-    expect(
       build(DeviceType.Switch, ['power-meter'], {
         'power-meter': { power: 40, lastFetchedAt: NOW },
       }).measurement,
     ).toBeUndefined()
+  })
+
+  it('an offline sensor keeps its measurement with NO value: the normal card draws "—" and never the stale reading (D393)', () => {
+    const slices = { 'temperature-sensor': { temperature: 17.4, lastFetchedAt: NOW - 3_600_000 } }
+    const offline = build(DeviceType.Sensor, ['temperature-sensor'], slices, [], false)
+    expect(offline.measurement).toEqual(emptyMeasurement('temperature'))
+    expect(offline.measurement?.reading).toBeNull()
+    expect(offline.measurement?.value.en).toBe('—')
+    // The row carries the same empty reading.
+    expect(projectDeviceRow(offline).measurement).toEqual(emptyMeasurement('temperature'))
+    // Online, the same slice is the live reading.
+    expect(build(DeviceType.Sensor, ['temperature-sensor'], slices).measurement?.value.en).toBe(
+      '17.4',
+    )
   })
 
   it('a sensor that has not reported draws its normal card with an empty "—" and its unit (D393)', () => {

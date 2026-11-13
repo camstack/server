@@ -30,7 +30,7 @@ import { HERO_SCENE_ROW_IDS, HERO_SIDE_TILES_MAX } from './hero-model.js'
 import { ROW_READING_FACT_IDS } from './hero-row.js'
 import type { HeroState } from './hero-state.js'
 import { NOT_REPORTED, heroText, type HeroText } from './hero-text.js'
-import { measurementFitsRole, type HeroMeasurement } from './hero-measurement.js'
+import { emptyMeasurement, measurementFitsRole, type HeroMeasurement } from './hero-measurement.js'
 import { resolveOwnPower } from './own-power.js'
 
 export interface HeroModelInput {
@@ -203,17 +203,20 @@ function historyLabelOf(type: string): HeroText {
 
 /**
  * A sensor that measures exactly ONE thing is drawn as that reading. Two measuring
- * caps (a temperature and a humidity on one device) keep today's card, and so does
- * an offline device: its reading is no longer current.
+ * caps (a temperature and a humidity on one device) keep today's card. An offline
+ * device keeps the measurement but with NO value: its last reading is no longer
+ * current, so the card draws its normal self with an empty "—" (D393), never a
+ * stale number and never a 0.
  */
 function measurementOf(
   input: HeroModelInput,
   fragments: readonly HeroFragment[],
 ): HeroMeasurement | undefined {
-  if (input.device.type !== DeviceType.Sensor || !input.device.online) return undefined
+  if (input.device.type !== DeviceType.Sensor) return undefined
   const measured = fragments.flatMap((f) => (f.measurement === undefined ? [] : [f.measurement]))
   const only = measured.length === 1 ? measured[0] : undefined
-  return only !== undefined && measurementFitsRole(only, input.device.role) ? only : undefined
+  if (only === undefined || !measurementFitsRole(only, input.device.role)) return undefined
+  return input.device.online ? only : emptyMeasurement(only.quantity)
 }
 
 function sceneOf(role: string | null, type: string, fragments: readonly HeroFragment[]): HeroScene {

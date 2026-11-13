@@ -23,7 +23,7 @@
  *
  *   - `extras` are the further inline controls of the types that carry more than one
  *     ({@link ROW_EXTRAS_BY_TYPE}): climate setpoint, a robot's return to base,
- *     a player's volume and remote. Each is a control the model already has, named by id,
+ *     a player's volume and remote, an automation's enabled switch. Each is a control the model already has, named by id,
  *     in that order and at most {@link ROW_EXTRAS_MAX}; one the model lacks, or lists in
  *     `gated`, is absent, and the one `primary` already is never repeats. Empty = the
  *     row of an older server: `primary` alone.
@@ -169,6 +169,7 @@ export const ROW_EXTRAS_BY_TYPE: Readonly<Record<string, readonly string[]>> = {
   [DeviceType.Vacuum]: ['vacuum.base'],
   [DeviceType.LawnMower]: ['mower.dock'],
   [DeviceType.MediaPlayer]: ['volume.level', REMOTE_OPEN_ACTION_ID],
+  [DeviceType.Automation]: ['automation.enabled'],
 }
 
 const controlId = (c: HeroControl): string => (c.kind === 'action' ? c.action.id : c.id)
