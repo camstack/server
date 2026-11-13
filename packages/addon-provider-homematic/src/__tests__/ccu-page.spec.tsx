@@ -767,3 +767,79 @@ describe('HomematicCcuPage rename', () => {
     })
   })
 })
+
+describe('HomematicCcuPage settings: rooms', () => {
+  const ch1 = {
+    address: 'BS2:1',
+    name: 'Left key',
+    deviceName: 'Bathroom key',
+    deviceType: 'HmIP-BS2',
+  }
+  const ch4 = {
+    address: 'BS2:4',
+    name: 'Light',
+    deviceName: 'Bathroom key',
+    deviceType: 'HmIP-BS2',
+  }
+  const ROOMS = {
+    rooms: [{ id: '1234', name: 'Bathroom', channels: [ch1] }],
+    channels: [ch1, ch4],
+  }
+
+  function mountRooms(extra: Record<string, Handler>) {
+    window.history.replaceState(null, '', '/?tab=settings')
+    const fake = fakeTrpc({
+      listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
+      listCcuRooms: () => ROOMS,
+      ...extra,
+    })
+    mountPage(fake.trpc)
+    return fake.calls
+  }
+
+  it('lists rooms with their channels', async () => {
+    mountRooms({})
+    expect(await screen.findByText('Bathroom')).toBeTruthy()
+    expect(screen.getByText('Left key')).toBeTruthy()
+  })
+
+  it('creates a room after the name and a confirmation', async () => {
+    const create = vi.fn().mockReturnValue({ id: '9', name: 'Kitchen', channels: [] })
+    mountRooms({ createCcuRoom: create })
+    const button = await screen.findByRole('button', { name: /New room/ })
+    await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false))
+    fireEvent.click(button)
+    const prompt = await screen.findByRole('dialog', { name: /New room/ })
+    fireEvent.change(within(prompt).getByRole('textbox'), { target: { value: 'Kitchen' } })
+    fireEvent.click(within(prompt).getByRole('button', { name: /OK|Confirm/i }))
+    const confirm = await screen.findByRole('dialog', { name: /Create room/ })
+    expect(create).not.toHaveBeenCalled()
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Create room' }))
+    await waitFor(() => expect(create).toHaveBeenCalled())
+    expect(create.mock.calls[0]?.[0]).toEqual({
+      integrationId: 'hm_1',
+      name: 'Kitchen',
+      confirmed: true,
+    })
+  })
+
+  it('sets the picked channels only after confirmation', async () => {
+    const set = vi.fn().mockReturnValue({ added: ['BS2:4'], removed: [] })
+    mountRooms({ setCcuRoomChannels: set })
+    fireEvent.click(await screen.findByRole('button', { name: /More actions/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Choose channels' }))
+    const form = await screen.findByTestId('hm-room-channels-dialog')
+    fireEvent.click(within(form).getByLabelText(/Light/))
+    fireEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    const confirm = await screen.findByRole('dialog', { name: /Change room channels/ })
+    expect(set).not.toHaveBeenCalled()
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Save channels' }))
+    await waitFor(() => expect(set).toHaveBeenCalled())
+    expect(set.mock.calls[0]?.[0]).toEqual({
+      integrationId: 'hm_1',
+      id: '1234',
+      channels: ['BS2:1', 'BS2:4'],
+      confirmed: true,
+    })
+  })
+})

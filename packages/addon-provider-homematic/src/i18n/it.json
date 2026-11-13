@@ -19,7 +19,8 @@
     "tabDevices": "Dispositivi",
     "tabHeating": "Riscaldamento",
     "tabPairing": "Associazione",
-    "tabLinks": "Collegamenti diretti"
+    "tabLinks": "Collegamenti diretti",
+    "tabSettings": "Impostazioni"
   },
   "overview": {
     "loadFailed": "Impossibile leggere la CCU",
@@ -236,5 +237,35 @@
     "channelTitle": "Rinomina canale sulla CCU",
     "channelMessage": "Rinominare il canale {{from}} in {{to}} sulla CCU?",
     "channelConfirm": "Rinomina"
+  },
+  "rooms": {
+    "title": "Stanze",
+    "newRoom": "Nuova stanza",
+    "fieldName": "Nome della stanza",
+    "colRoom": "Stanza",
+    "colChannels": "Canali",
+    "none": "La CCU non ha stanze.",
+    "loadFailed": "Impossibile leggere le stanze",
+    "editChannels": "Scegli i canali",
+    "rename": "Rinomina",
+    "delete": "Elimina stanza",
+    "save": "Salva",
+    "search": "Cerca canali",
+    "selected_one": "{{count}} canale selezionato",
+    "selected_other": "{{count}} canali selezionati",
+    "channelsTitle": "Canali in {{name}}",
+    "createTitle": "Crea stanza",
+    "createMessage": "Creare la stanza {{name}} sulla CCU?",
+    "createConfirm": "Crea stanza",
+    "renameTitle": "Rinomina stanza",
+    "renameMessage": "Rinominare la stanza {{from}} in {{to}} sulla CCU?",
+    "renameConfirm": "Rinomina",
+    "deleteTitle": "Elimina stanza",
+    "deleteMessage": "Eliminare la stanza {{name}} sulla CCU? I canali restano, escono solo dalla stanza.",
+    "deleteConfirm": "Elimina stanza",
+    "membersTitle": "Cambia i canali della stanza",
+    "membersMessage_one": "Impostare la stanza {{name}} con {{count}} canale sulla CCU?",
+    "membersMessage_other": "Impostare la stanza {{name}} con {{count}} canali sulla CCU?",
+    "membersConfirm": "Salva canali"
   }
 }

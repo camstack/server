@@ -20,6 +20,7 @@ import { CcuHeatingTab } from './ui/CcuHeatingTab.js'
 import { CcuLinksTab } from './ui/CcuLinksTab.js'
 import { CcuOverviewTab } from './ui/CcuOverviewTab.js'
 import { CcuPairingTab } from './ui/CcuPairingTab.js'
+import { CcuSettingsTab } from './ui/CcuSettingsTab.js'
 import type { CcuTrpc } from './ui/ccu-client.js'
 import { useCcuData } from './ui/use-ccu-data.js'
 
@@ -112,6 +113,11 @@ export default function HomematicCcuPage(props: AddonPageProps) {
           id: 'pairing',
           label: t('page.tabPairing'),
           content: body(<CcuPairingTab trpc={trpc} integrationId={integrationId} />),
+        },
+        {
+          id: 'settings',
+          label: t('page.tabSettings'),
+          content: body(<CcuSettingsTab trpc={trpc} integrationId={integrationId} />),
         },
       ]}
     />

@@ -36,6 +36,7 @@ import { buildCcuConfigHandlers } from './ccu/ccu-config-actions.js'
 import { buildCcuHeatingHandlers } from './ccu/ccu-heating-actions.js'
 import { buildCcuLinkHandlers } from './ccu/ccu-links-actions.js'
 import { buildCcuRenameHandlers } from './ccu/ccu-rename-actions.js'
+import { buildCcuRoomHandlers } from './ccu/ccu-rooms-actions.js'
 import { buildCcuPairingHandlers } from './ccu/ccu-pairing-actions.js'
 import { HOMEMATIC_PAGES } from './ccu/ccu-page.js'
 import { buildCcuOverviewHandlers } from './ccu/ccu-overview-actions.js'
@@ -182,6 +183,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
         ...buildButtonEventHandlers(this.ccuActionDeps()),
         ...buildCcuLinkHandlers(this.ccuActionDeps()),
         ...buildCcuRenameHandlers(this.ccuActionDeps()),
+        ...buildCcuRoomHandlers(this.ccuActionDeps()),
         discoverCcu: async () => {
           const { candidates } = await this.ctx.api.deviceManager.discoverProvider.mutate({
             addonId: this.ctx.id,

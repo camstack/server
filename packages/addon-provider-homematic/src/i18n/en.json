@@ -19,7 +19,8 @@
     "tabDevices": "Devices",
     "tabHeating": "Heating",
     "tabPairing": "Pairing",
-    "tabLinks": "Direct links"
+    "tabLinks": "Direct links",
+    "tabSettings": "Settings"
   },
   "overview": {
     "loadFailed": "Could not read the CCU",
@@ -236,5 +237,35 @@
     "channelTitle": "Rename channel on the CCU",
     "channelMessage": "Rename the channel {{from}} to {{to}} on the CCU?",
     "channelConfirm": "Rename"
+  },
+  "rooms": {
+    "title": "Rooms",
+    "newRoom": "New room",
+    "fieldName": "Room name",
+    "colRoom": "Room",
+    "colChannels": "Channels",
+    "none": "The CCU has no rooms.",
+    "loadFailed": "Could not read the rooms",
+    "editChannels": "Choose channels",
+    "rename": "Rename",
+    "delete": "Delete room",
+    "save": "Save",
+    "search": "Search channels",
+    "selected_one": "{{count}} channel selected",
+    "selected_other": "{{count}} channels selected",
+    "channelsTitle": "Channels in {{name}}",
+    "createTitle": "Create room",
+    "createMessage": "Create the room {{name}} on the CCU?",
+    "createConfirm": "Create room",
+    "renameTitle": "Rename room",
+    "renameMessage": "Rename the room {{from}} to {{to}} on the CCU?",
+    "renameConfirm": "Rename",
+    "deleteTitle": "Delete room",
+    "deleteMessage": "Delete the room {{name}} on the CCU? Its channels stay, they just leave the room.",
+    "deleteConfirm": "Delete room",
+    "membersTitle": "Change room channels",
+    "membersMessage_one": "Set the room {{name}} to hold {{count}} channel on the CCU?",
+    "membersMessage_other": "Set the room {{name}} to hold {{count}} channels on the CCU?",
+    "membersConfirm": "Save channels"
   }
 }

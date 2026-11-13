@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**249 units · 8646 source files · 242 units claimed by at least one document (8615 files).**
+**249 units · 8649 source files · 242 units claimed by at least one document (8618 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -98,6 +98,7 @@ it never describes how the thing works, and it is never re-verified.
 | `server/backend` | 20 | `api-surface` | `decisions/adr-0693-a-live-database-is-backed-up-by-its-owner-never-copied-as-files.md`, `design/2026-08-13-single-copy-addons-first-boot-install.md`, `architecture/overview.md`, +21 more, 6 ADRs | 2026-10-27 |
 | `packages/addon-cloudflare` | 19 | `remote-access` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md`, `decisions/adr-0234-forked-addons-spawn-after-settings-door.md`, +1 more | — |
 | `packages/addon-post-analysis/src/shared` | 19 | `post-analysis`, `recognition` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0867-the-capture-paths-materialise-no-media-copies-in-the-js-process.md`, `architecture/notifications.md`, +4 more, 1 ADR | 2026-11-12 |
+| `packages/addon-provider-homematic/src/ui` | 19 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-tuya` | 19 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, 1 ADR | 2026-11-08 |
 | `packages/addon-provider-vesync` | 19 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/types/src/generated` | 19 | `capabilities` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0648-a-device-extension-is-a-slot-declared-by-the-cap-that-owns-the-function-and-served-over-its-existing-store.md`, `decisions/adr-0936-a-customize-declaration-is-the-override-contract.md`, +2 more, 2 ADRs | — |
@@ -106,7 +107,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-wyze` | 18 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/system/src/auth` | 18 | `auth` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/authentication.md`, +17 more | 2026-10-21 |
 | `packages/addon-mqtt-broker` | 17 | `ecosystem-exports` | `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0797-no-secret-reaches-a-node-through-its-environment-the-hub-keeps-its-own-in-the-keychain.md` | — |
-| `packages/addon-provider-homematic/src/ui` | 17 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-petkit` | 17 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0959-a-petkit-re-login-is-gated-because-the-account-has-one-session.md`, `decisions/adr-1013-one-instance-model.md`, +1 more, 1 ADR | 2026-11-08 |
 | `packages/addon-provider-rademacher` | 17 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-tailscale` | 17 | `remote-access` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md` | — |
@@ -120,10 +120,10 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-training/src/providers` | 15 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0828-training-provider-entries-are-edited-via-updateentry-not-settings-array.md`, +3 more | 2026-10-14 |
 | `packages/system/src/tls` | 15 | `remote-access` | `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +5 more | — |
 | `packages/addon-provider-gree` | 14 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
+| `packages/addon-provider-homematic/src/ccu` | 14 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/node-root` | 14 | `kernel` | `architecture/update-and-release.md`, `design/2026-09-10-wrapper-identity-and-update.md` _(covers)_, `decisions/adr-0187-an-update-notification-names-one-node-and-both-versions.md`, +9 more, 4 ADRs | 2026-10-27 |
 | `packages/types/src/catalogs` | 14 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, `decisions/adr-0715-a-root-detector-that-declares-a-step-fills-it-and-tier-1-has-one-writer-per-effect.md`, +7 more, 1 ADR | — |
 | `packages/addon-model-studio` | 13 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +2 more | — |
-| `packages/addon-provider-homematic/src/ccu` | 13 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/mcp-develop` | 13 | — | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md` | — |
 | `packages/types` | 13 | `capabilities`, `decode-and-data-planes`, `shared-types`, `transport` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/cloud-training.md`, `decisions/adr-0267-the-token-lifetime-has-one-default-and-is-validated-where-it-is-signed.md`, +2 more, 1 ADR | 2026-10-14 |
 | `packages/types/src/records` | 13 | — | `architecture/records.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0881-records-are-the-third-storage-api-and-a-secret-field-is-a-feature-of-the-kind.md`, +2 more | 2026-10-22 |

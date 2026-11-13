@@ -6,6 +6,10 @@ import {
   CcuLinksResultSchema,
   CcuListItemSchema,
   CcuOverviewSchema,
+  CcuRoomSchema,
+  CcuRoomsResultSchema,
+  CreateRoomInputSchema,
+  DeleteRoomInputSchema,
   CreateGroupInputSchema,
   DeleteCcuDeviceInputSchema,
   DeviceConfigSchema,
@@ -22,6 +26,9 @@ import {
   PairingStatusSchema,
   RenameChannelInputSchema,
   RenameDeviceInputSchema,
+  RenameRoomInputSchema,
+  RoomChannelsResultSchema,
+  SetRoomChannelsInputSchema,
   SetButtonEventsInputSchema,
   SetChannelConfigInputSchema,
   SetInstallModeInputSchema,
@@ -125,6 +132,26 @@ export const homematicActions = defineCustomActions({
     auth: 'admin',
   }),
   renameCcuChannel: customAction(RenameChannelInputSchema, NamedObjectSchema, {
+    kind: 'mutation',
+    auth: 'admin',
+  }),
+  listCcuRooms: customAction(IntegrationRefSchema, CcuRoomsResultSchema, {
+    kind: 'query',
+    auth: 'admin',
+  }),
+  createCcuRoom: customAction(CreateRoomInputSchema, CcuRoomSchema, {
+    kind: 'mutation',
+    auth: 'admin',
+  }),
+  renameCcuRoom: customAction(RenameRoomInputSchema, OkResultSchema, {
+    kind: 'mutation',
+    auth: 'admin',
+  }),
+  deleteCcuRoom: customAction(DeleteRoomInputSchema, OkResultSchema, {
+    kind: 'mutation',
+    auth: 'admin',
+  }),
+  setCcuRoomChannels: customAction(SetRoomChannelsInputSchema, RoomChannelsResultSchema, {
     kind: 'mutation',
     auth: 'admin',
   }),

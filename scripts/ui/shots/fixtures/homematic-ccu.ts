@@ -188,6 +188,43 @@ const ACTIONS: Readonly<Record<string, unknown>> = {
     ],
     failures: [],
   },
+  listCcuRooms: {
+    rooms: [
+      {
+        id: '1234',
+        name: 'Hall',
+        channels: [
+          {
+            address: '0001D3C99C5678:1',
+            name: 'Hall key left',
+            deviceName: 'Hall buttons',
+            deviceType: 'HmIP-BS2',
+          },
+          {
+            address: '0001D3C99C5678:4',
+            name: 'Hall light',
+            deviceName: 'Hall buttons',
+            deviceType: 'HmIP-BS2',
+          },
+        ],
+      },
+      { id: '1240', name: 'Kitchen', channels: [] },
+    ],
+    channels: [
+      {
+        address: '0001D3C99C5678:1',
+        name: 'Hall key left',
+        deviceName: 'Hall buttons',
+        deviceType: 'HmIP-BS2',
+      },
+      {
+        address: '0001D3C99C5678:4',
+        name: 'Hall light',
+        deviceName: 'Hall buttons',
+        deviceType: 'HmIP-BS2',
+      },
+    ],
+  },
   listHeatingGroups: {
     groups: [
       {
@@ -243,7 +280,7 @@ const ACTIONS: Readonly<Record<string, unknown>> = {
 /** The Homematic CCU addon page (`/addon/provider-homematic`): every action answers with invented, deterministic data. */
 export default defineFixtures({
   area: 'homematic-ccu',
-  description: 'Homematic CCU addon page: overview, devices, links, heating, pairing',
+  description: 'Homematic CCU addon page: overview, devices, links, heating, pairing, settings',
   handlers: {
     'mut:addons.custom': (input: unknown) => {
       const action =

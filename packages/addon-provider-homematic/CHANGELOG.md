@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Homematic: a button device's page shows, per key, whether its presses reach CamStack, which channels it switches through direct links, and a confirmed switch to turn the presses on or off; the CCU page's button dialog lists the direct links too
 - CCU page: a Direct links tab lists the CCU's links with their profile, and creates, edits and deletes key → switch actuator links after a confirmation
 - CCU page: rename a device on the CCU (optionally its channels to <name>:<channel>) or a single channel, each after a confirmation
+- The CCU page has a Settings tab with the CCU's rooms: create, rename, delete a room and choose its channels, each after a confirmation
 
 ## [1.2.194] - 2026-11-13
 

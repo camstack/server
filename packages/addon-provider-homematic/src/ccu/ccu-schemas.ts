@@ -409,3 +409,48 @@ export const RenameChannelInputSchema = IntegrationRefSchema.extend({
   name: z.string(),
   confirmed: ConfirmedSchema,
 })
+
+// ── Rooms ──────────────────────────────────────────────────────────────────
+
+export const CcuRoomSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  /** Member channels, named as the CCU names them. */
+  channels: z.array(LinkEndpointSchema),
+})
+export type CcuRoom = z.infer<typeof CcuRoomSchema>
+
+export const CcuRoomsResultSchema = z.object({
+  rooms: z.array(CcuRoomSchema),
+  /** Every channel a room may hold (the maintenance channels excluded). */
+  channels: z.array(LinkEndpointSchema),
+})
+export type CcuRoomsResult = z.infer<typeof CcuRoomsResultSchema>
+
+export const CreateRoomInputSchema = IntegrationRefSchema.extend({
+  name: z.string(),
+  confirmed: ConfirmedSchema,
+})
+
+export const RenameRoomInputSchema = IntegrationRefSchema.extend({
+  id: z.string().min(1),
+  name: z.string(),
+  confirmed: ConfirmedSchema,
+})
+
+export const DeleteRoomInputSchema = IntegrationRefSchema.extend({
+  id: z.string().min(1),
+  confirmed: ConfirmedSchema,
+})
+
+/** The room's whole member list after the edit; the handler adds and removes the difference. */
+export const SetRoomChannelsInputSchema = IntegrationRefSchema.extend({
+  id: z.string().min(1),
+  channels: z.array(z.string().min(1)),
+  confirmed: ConfirmedSchema,
+})
+
+export const RoomChannelsResultSchema = z.object({
+  added: z.array(z.string()),
+  removed: z.array(z.string()),
+})
