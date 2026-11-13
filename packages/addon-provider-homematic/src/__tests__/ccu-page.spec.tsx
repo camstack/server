@@ -1,8 +1,9 @@
 /** @vitest-environment jsdom */
-import { afterEach, describe, expect, it, vi } from 'vitest'
+
+import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { selectOption } from '@camstack/ui-library/testing'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { ConfirmDialogProvider } from '@camstack/ui-library'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import HomematicCcuPage from '../page.js'
 import type { CcuTrpc } from '../ui/ccu-client.js'
 
@@ -964,5 +965,112 @@ describe('HomematicCcuPage settings: rooms', () => {
       channels: ['BS2:1', 'BS2:4'],
       confirmed: true,
     })
+  })
+})
+
+describe('HomematicCcuPage programs', () => {
+  const FIVE_MIN = 5 * 60_000
+  const PROGRAMS = {
+    programs: [
+      {
+        id: '42',
+        name: 'CamStack: Hall buttons events',
+        active: true,
+        internal: false,
+        lastRunMs: Date.now() - FIVE_MIN,
+        createdByCamstack: true,
+        channels: [
+          {
+            address: '0001D3C99C5678:1',
+            channelName: 'Left',
+            deviceName: 'Hall buttons',
+            deviceId: 7,
+          },
+        ],
+      },
+      {
+        id: '7',
+        name: 'Night light',
+        active: false,
+        internal: false,
+        lastRunMs: null,
+        createdByCamstack: false,
+        channels: [],
+      },
+    ],
+    keys: [
+      {
+        address: '0001D3C99C5678:1',
+        name: 'Left',
+        deviceAddress: '0001D3C99C5678',
+        deviceName: 'Hall buttons',
+        deviceType: 'HmIP-BS2',
+      },
+    ],
+  }
+
+  function mountPrograms(extra: Record<string, Handler>) {
+    window.history.replaceState(null, '', '/?tab=programs')
+    const fake = fakeTrpc({
+      listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
+      listCcuPrograms: () => PROGRAMS,
+      ...extra,
+    })
+    mountPage(fake.trpc)
+    return fake
+  }
+
+  it('lists a program with its device, a relative last run, and the CamStack mark', async () => {
+    mountPrograms({})
+    expect(await screen.findByText('CamStack: Hall buttons events')).toBeTruthy()
+    expect(screen.getByText('Hall buttons · Left')).toBeTruthy()
+    expect(screen.getByText('5 min ago')).toBeTruthy()
+    expect(screen.getByText('CamStack', { exact: true })).toBeTruthy()
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0)
+    expect(screen.queryByText('1970')).toBeNull()
+    expectOneTableFrame(screen.getByRole('table'))
+  })
+
+  it('runs a program only after confirmation, then shows saved on the row', async () => {
+    let finish: (value: { ok: true }) => void = () => undefined
+    const run = vi.fn((_input: Record<string, unknown>) => {
+      return new Promise<{ ok: true }>((resolve) => {
+        finish = resolve
+      })
+    })
+    mountPrograms({ runCcuProgram: run })
+    await screen.findByText('CamStack: Hall buttons events')
+    fireEvent.click(screen.getAllByRole('button', { name: /More actions/ })[0] as HTMLElement)
+    fireEvent.click(await screen.findByRole('button', { name: 'Run' }))
+    const confirm = await screen.findByRole('dialog', { name: /Run program/ })
+    expect(run).not.toHaveBeenCalled()
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Run program' }))
+    expect(await screen.findByText('Saving…')).toBeTruthy()
+    finish({ ok: true })
+    expect(await screen.findByText('Saved')).toBeTruthy()
+    await waitFor(() => expect(run).toHaveBeenCalled())
+    expect(run.mock.calls[0]?.[0]).toEqual({
+      integrationId: 'hm_1',
+      programId: '42',
+      confirmed: true,
+    })
+    expect(screen.getByRole('table')).toBeTruthy()
+  })
+
+  it('keeps the error on the row and does not open a second dialog', async () => {
+    mountPrograms({
+      runCcuProgram: () => {
+        throw new Error('ccu refused')
+      },
+    })
+    await screen.findByText('Night light')
+    const menus = screen.getAllByRole('button', { name: /More actions/ })
+    fireEvent.click(menus[1] as HTMLElement)
+    fireEvent.click(await screen.findByRole('button', { name: 'Run' }))
+    const confirm = await screen.findByRole('dialog', { name: /Run program/ })
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Run program' }))
+    expect(await screen.findByText('ccu refused')).toBeTruthy()
+    expect(screen.queryByRole('dialog', { name: /failed/i })).toBeNull()
+    expect(screen.getByRole('table')).toBeTruthy()
   })
 })

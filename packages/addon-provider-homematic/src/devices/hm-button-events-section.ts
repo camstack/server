@@ -13,6 +13,11 @@ export interface HmKeyLinkState {
   /** `null`: the read failed — never shown as "off". */
   readonly central: boolean | null
   readonly links: readonly KeyDirectLink[]
+  /**
+   * Name of the CCU program that makes this key send events, or `null` when
+   * none does (or the program could not be read).
+   */
+  readonly programName: string | null
 }
 
 function keyLabel(key: HmKeyLinkState): string {
@@ -22,6 +27,20 @@ function keyLabel(key: HmKeyLinkState): string {
 function linkText(link: KeyDirectLink): string {
   const target = link.receiverName ?? link.receiverDeviceName
   return target === null ? link.receiver : `${target} (${link.receiver})`
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+}
+
+/** The CCU page, Programs tab, for this integration. */
+export function programsTabHref(integrationId: string): string {
+  const params = new URLSearchParams({ ccu: integrationId, tab: 'programs' })
+  return `/addon/homematic-ccu?${params.toString()}`
 }
 
 function statusOf(central: boolean | null): 'ok' | 'warn' | 'unknown' {
@@ -71,6 +90,22 @@ export function buttonEventsSection(
       variant: 'warning',
     })
   }
+  const programNames = [
+    ...new Set(keys.flatMap((key) => (key.programName === null ? [] : [key.programName]))),
+  ]
+  if (programNames.length > 0) {
+    const href = programsTabHref(integrationId)
+    fields.push({
+      type: 'info',
+      key: 'buttonEventsProgram',
+      label: 'Key event program',
+      labelKey: `${NS}.program.label`,
+      content: programNames
+        .map((name) => `<a href="${escapeHtml(href)}">${escapeHtml(name)}</a>`)
+        .join('<br>'),
+      format: 'html',
+    })
+  }
   fields.push({
     type: 'object-array',
     key: 'buttonEventsKeys',
@@ -79,11 +114,13 @@ export function buttonEventsSection(
     columns: [
       { key: 'key', label: 'Key', labelKey: `${NS}.keys.key` },
       { key: 'central', label: 'Sent to CamStack', labelKey: `${NS}.keys.central`, kind: 'status' },
+      { key: 'program', label: 'Program', labelKey: `${NS}.keys.program` },
       { key: 'links', label: 'Direct links', labelKey: `${NS}.keys.links` },
     ],
     value: keys.map((key) => ({
       key: keyLabel(key),
       central: statusOf(key.central),
+      program: key.programName ?? '—',
       links: key.links.length === 0 ? '—' : key.links.map(linkText).join(', '),
     })),
   })

@@ -165,6 +165,7 @@ function makeFacade(central = true): FacadeHandle {
           ? [{ sender: `${ADDRESS}:1`, receiver: `${ADDRESS}:3`, name: '' }]
           : [],
     }),
+    getKeyEventProgram: async () => null,
   }
   return {
     // Exactly what `HmChildDevice` calls on a `Homematic` facade. Widened at

@@ -22,6 +22,7 @@ export function fakeDeps(
       integrations: () => options.integrations ?? [],
       logger,
       adoptedAddresses: async () => new Map<string, number>(),
+      adoptedNames: async () => new Map<string, string>(),
       ccuChanged: () => undefined,
     },
     logger,

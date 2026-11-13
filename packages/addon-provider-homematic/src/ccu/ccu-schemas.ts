@@ -378,6 +378,66 @@ export const CcuLinksResultSchema = z.object({
 })
 export type CcuLinksResult = z.infer<typeof CcuLinksResultSchema>
 
+// ── Programs ───────────────────────────────────────────────────────────────
+
+/** A channel a program's conditions use, named from CamStack when the device is adopted. */
+export const ProgramChannelSchema = z.object({
+  address: z.string(),
+  channelName: z.string().nullable(),
+  /** CamStack device name when the channel's device is adopted, otherwise the CCU name. */
+  deviceName: z.string().nullable(),
+  deviceId: z.number().int().nullable(),
+})
+export type ProgramChannel = z.infer<typeof ProgramChannelSchema>
+
+export const CcuProgramSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  active: z.boolean(),
+  internal: z.boolean(),
+  /** Epoch milliseconds. `null` when the CCU has no last run, or the run is epoch 0. */
+  lastRunMs: z.number().nullable(),
+  /** The name is the key-event program CamStack creates (`CamStack: … events`). */
+  createdByCamstack: z.boolean(),
+  channels: z.array(ProgramChannelSchema),
+})
+export type CcuProgram = z.infer<typeof CcuProgramSchema>
+
+/** A HmIP key channel a new key-event program may listen to. */
+export const ProgramKeySchema = z.object({
+  address: z.string(),
+  name: z.string().nullable(),
+  deviceAddress: z.string(),
+  deviceName: z.string().nullable(),
+  deviceType: z.string(),
+})
+export type ProgramKey = z.infer<typeof ProgramKeySchema>
+
+export const CcuProgramsResultSchema = z.object({
+  programs: z.array(CcuProgramSchema),
+  keys: z.array(ProgramKeySchema),
+})
+export type CcuProgramsResult = z.infer<typeof CcuProgramsResultSchema>
+
+export const ProgramIdInputSchema = IntegrationRefSchema.extend({
+  programId: z.string().min(1),
+  confirmed: ConfirmedSchema,
+})
+export type ProgramIdInput = z.infer<typeof ProgramIdInputSchema>
+
+export const SetProgramActiveInputSchema = ProgramIdInputSchema.extend({
+  active: z.boolean(),
+})
+export type SetProgramActiveInput = z.infer<typeof SetProgramActiveInputSchema>
+
+/** Create or rewrite the one key-event program of a HmIP button device. */
+export const EnsureKeyEventProgramInputSchema = IntegrationRefSchema.extend({
+  deviceAddress: z.string().min(1),
+  channelAddresses: z.array(z.string().min(1)).min(1),
+  confirmed: ConfirmedSchema,
+})
+export type EnsureKeyEventProgramInput = z.infer<typeof EnsureKeyEventProgramInputSchema>
+
 export const LinkRefInputSchema = IntegrationRefSchema.extend({
   sender: z.string().min(1),
   receiver: z.string().min(1),

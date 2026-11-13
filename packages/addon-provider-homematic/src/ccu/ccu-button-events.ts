@@ -1,6 +1,6 @@
 import type { HmChannel, HmDevice } from 'nodehomematic'
-import { hmKeyChannels } from '../devices/hm-key-vocabulary.js'
 import { channelIndexFromAddress } from '../devices/hm-cold-start.js'
+import { hmKeyChannels } from '../devices/hm-key-vocabulary.js'
 import { hmName } from '../devices/hm-name.js'
 import type { CcuActionDeps, CcuFacade } from './ccu-facade.js'
 import { errorText, requireConfirmed, requireFacade } from './ccu-facade.js'
@@ -30,9 +30,21 @@ export function isHmipDevice(device: Pick<HmDevice, 'type'>): boolean {
   return /^hmip/i.test(device.type)
 }
 
+const KEY_EVENT_PROGRAM_PREFIX = 'CamStack: '
+const KEY_EVENT_PROGRAM_SUFFIX = ' events'
+
 /** The one CCU program that carries a device's key events. It is found by this name; nothing else is stored. */
 export function keyEventProgramName(device: Pick<HmDevice, 'address' | 'name'>): string {
-  return `CamStack: ${hmName(device.name) ?? device.address} events`
+  return `${KEY_EVENT_PROGRAM_PREFIX}${hmName(device.name) ?? device.address}${KEY_EVENT_PROGRAM_SUFFIX}`
+}
+
+/** True when the name is one CamStack assigned to a key-event program. */
+export function isCamStackKeyEventProgramName(name: string): boolean {
+  return (
+    name.startsWith(KEY_EVENT_PROGRAM_PREFIX) &&
+    name.endsWith(KEY_EVENT_PROGRAM_SUFFIX) &&
+    name.length > KEY_EVENT_PROGRAM_PREFIX.length + KEY_EVENT_PROGRAM_SUFFIX.length
+  )
 }
 
 function deviceAddressOf(channelAddress: string): string {

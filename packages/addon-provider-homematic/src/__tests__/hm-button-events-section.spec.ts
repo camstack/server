@@ -6,6 +6,7 @@ const KEY1 = {
   name: null,
   index: '1',
   central: false,
+  programName: null,
   links: [
     {
       receiver: '00315F298E5093:4',
@@ -24,8 +25,8 @@ describe('buttonEventsSection', () => {
     if (section === undefined) throw new Error('no section')
     const table = section.fields.find((field) => field.type === 'object-array')
     expect(table?.type === 'object-array' ? table.value : null).toEqual([
-      { key: 'Key 1', central: 'warn', links: 'Luce bagno (00315F298E5093:4)' },
-      { key: 'Key 2', central: 'ok', links: '—' },
+      { key: 'Key 1', central: 'warn', program: '—', links: 'Luce bagno (00315F298E5093:4)' },
+      { key: 'Key 2', central: 'ok', program: '—', links: '—' },
     ])
     const buttons = section.fields.flatMap((field) =>
       field.type === 'addon-action-button' ? [field] : [],
@@ -43,6 +44,20 @@ describe('buttonEventsSection', () => {
     expect(section?.fields.some((field) => field.type === 'addon-action-button')).toBe(false)
     const table = section?.fields.find((field) => field.type === 'object-array')
     expect(table?.type === 'object-array' ? table.value[0]?.['central'] : null).toBe('unknown')
+  })
+
+  it('names the program that sends the key, and links to the Programs tab', () => {
+    const [section] = buttonEventsSection('hm_1', [
+      { ...KEY1, central: true, programName: 'CamStack: Pulsante bagno events' },
+    ])
+    const table = section?.fields.find((field) => field.type === 'object-array')
+    expect(table?.type === 'object-array' ? table.value[0]?.['program'] : null).toBe(
+      'CamStack: Pulsante bagno events',
+    )
+    const info = section?.fields.find((field) => field.type === 'info' && field.format === 'html')
+    expect(info?.type === 'info' ? info.content : '').toContain('tab=programs')
+    expect(info?.type === 'info' ? info.content : '').toContain('CamStack: Pulsante bagno events')
+    expect(info?.type === 'info' ? info.format : undefined).toBe('html')
   })
 
   it('draws nothing without an integration or keys', () => {

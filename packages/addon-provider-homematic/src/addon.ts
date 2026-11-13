@@ -1,17 +1,20 @@
 import {
+  type AddonInitResult,
   addonPagesSourceCapability,
   addonWidgetsSourceCapability,
-  type AddonInitResult,
   BaseDeviceProvider,
   bestLocationMatch,
   type ConfigUISchema,
   type CreateDeviceSpec,
+  collectOwnerIntegrationIds,
   type DeviceConstructor,
   type DeviceSummary,
   DeviceType,
   type DiscoveryCandidate,
   type DiscoveryHit,
   type DiscoveryMode,
+  defaultIntegrationApiOver,
+  defineAddonMigrations,
   deviceAdoptionCapability,
   EventCategory,
   errMsg,
@@ -20,44 +23,31 @@ import {
   type IConnectionProbe,
   type IDevice,
   type IDeviceAdoptionProvider,
-  type SavedDevice,
-  type SystemEvent,
-  collectOwnerIntegrationIds,
-  defaultIntegrationApiOver,
-  defineAddonMigrations,
   integrationInstancesCapability,
   integrationRowsPortsOverApi,
   type RecordIntegrationInstances,
+  type SavedDevice,
+  type SystemEvent,
 } from '@camstack/types'
 import { z } from 'zod'
-import { HomematicReconciler, type IntegrationLifecycleKind } from './homematic-reconciler.js'
-import type { CcuActionDeps } from './ccu/ccu-facade.js'
 import { buildButtonEventHandlers } from './ccu/ccu-button-events.js'
-import { buildCcuDevicesHandlers } from './ccu/ccu-devices-actions.js'
 import { buildCcuConfigHandlers } from './ccu/ccu-config-actions.js'
+import { buildCcuDeviceStateHandlers } from './ccu/ccu-device-state-actions.js'
+import { buildCcuDevicesHandlers } from './ccu/ccu-devices-actions.js'
+import type { CcuActionDeps } from './ccu/ccu-facade.js'
 import { buildCcuHeatingHandlers } from './ccu/ccu-heating-actions.js'
 import { buildCcuLinkHandlers } from './ccu/ccu-links-actions.js'
+import { buildCcuOverviewHandlers } from './ccu/ccu-overview-actions.js'
+import { HOMEMATIC_PAGES } from './ccu/ccu-page.js'
+import { buildCcuPairingHandlers } from './ccu/ccu-pairing-actions.js'
+import { buildCcuProgramHandlers } from './ccu/ccu-programs-actions.js'
 import { buildCcuRenameHandlers } from './ccu/ccu-rename-actions.js'
 import { buildCcuRoomHandlers } from './ccu/ccu-rooms-actions.js'
-import { buildCcuDeviceStateHandlers } from './ccu/ccu-device-state-actions.js'
-import { homematicWidgets } from './widget-catalog.js'
-import { buildCcuPairingHandlers } from './ccu/ccu-pairing-actions.js'
-import { HOMEMATIC_PAGES } from './ccu/ccu-page.js'
-import { buildCcuOverviewHandlers } from './ccu/ccu-overview-actions.js'
 import { homematicActions } from './custom-actions.js'
-import {
-  buildHomematicInstances,
-  type HomematicConnectionBody,
-  homematicConnectionsEntryKind,
-  homematicRecordKinds,
-  knownCcuHostsOf,
-  readCcuConnection,
-} from './homematic-instances.js'
-import { HOMEMATIC_ROWS_TO_RECORD_MIGRATION } from './migrations/index.js'
+import { hmChildDeviceClass } from './devices/hm-child-class-factory.js'
+import { HmContainerDevice } from './devices/hm-container-device.js'
 import { deriveHmEntitySpecs } from './devices/hm-entity-spec.js'
 import { hmPrimaryChildKeys } from './devices/hm-primary-child.js'
-import { HmContainerDevice } from './devices/hm-container-device.js'
-import { hmChildDeviceClass } from './devices/hm-child-class-factory.js'
 import { isStandaloneEntitySaved } from './devices/hm-standalone-entity.js'
 import { HomematicGatewayDevice } from './devices/homematic-gateway-device.js'
 import { buildHmAdoptionProvider } from './homematic-adoption-provider.js'
@@ -71,8 +61,19 @@ import {
 import { HmClientRegistry } from './homematic-client-registry.js'
 import { buildHomematicConnectionTestProvider } from './homematic-connection-test.js'
 import { homematicFacades } from './homematic-facade-resolver.js'
+import {
+  buildHomematicInstances,
+  type HomematicConnectionBody,
+  homematicConnectionsEntryKind,
+  homematicRecordKinds,
+  knownCcuHostsOf,
+  readCcuConnection,
+} from './homematic-instances.js'
 import { cascadeRemoveDevicesForIntegration } from './homematic-integration-device-cascade.js'
 import { type OfflineTarget, setIntegrationDevicesOnline } from './homematic-integration-offline.js'
+import { HomematicReconciler, type IntegrationLifecycleKind } from './homematic-reconciler.js'
+import { HOMEMATIC_ROWS_TO_RECORD_MIGRATION } from './migrations/index.js'
+import { homematicWidgets } from './widget-catalog.js'
 
 /**
  * Homematic CCU3 / RaspberryMatic: `mode: account`, one integration per CCU.
@@ -190,6 +191,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
         ...buildCcuConfigHandlers(this.ccuActionDeps()),
         ...buildButtonEventHandlers(this.ccuActionDeps()),
         ...buildCcuLinkHandlers(this.ccuActionDeps()),
+        ...buildCcuProgramHandlers(this.ccuActionDeps()),
         ...buildCcuRenameHandlers(this.ccuActionDeps()),
         ...buildCcuRoomHandlers(this.ccuActionDeps()),
         ...buildCcuDeviceStateHandlers(this.ccuActionDeps()),
@@ -241,19 +243,36 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
 
   /** CCU address → CamStack device id for containers adopted from one integration. */
   private async adoptedCcuAddresses(integrationId: string): Promise<ReadonlyMap<string, number>> {
+    const found = await this.adoptedContainers(integrationId)
+    return found.ids
+  }
+
+  /** CCU address → CamStack device name, for the same containers. */
+  private async adoptedCcuNames(integrationId: string): Promise<ReadonlyMap<string, string>> {
+    const found = await this.adoptedContainers(integrationId)
+    return found.names
+  }
+
+  private async adoptedContainers(integrationId: string): Promise<{
+    readonly ids: ReadonlyMap<string, number>
+    readonly names: ReadonlyMap<string, string>
+  }> {
     const reg = this.ctx.kernel.deviceRegistry
     const devices = this.ctx.kernel.devices
-    const byAddress = new Map<string, number>()
-    if (!reg || !devices) return byAddress
+    const ids = new Map<string, number>()
+    const names = new Map<string, string>()
+    if (!reg || !devices) return { ids, names }
     for (const device of reg.getAllForAddon(this.addonId)) {
       if (device.parentDeviceId !== null) continue
       const config = await devices.loadConfig(device.id).catch((): Record<string, unknown> => ({}))
       if (config['integrationId'] !== integrationId) continue
       if (typeof config['hmEntityKey'] === 'string') continue
       const address = config['hmAddress']
-      if (typeof address === 'string' && address.length > 0) byAddress.set(address, device.id)
+      if (typeof address !== 'string' || address.length === 0) continue
+      ids.set(address, device.id)
+      names.set(address, device.name)
     }
-    return byAddress
+    return { ids, names }
   }
 
   /** What the CCU management actions reach: connected sessions only, never a half-started facade. */
@@ -277,6 +296,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
       },
       logger: this.ctx.logger,
       adoptedAddresses: (integrationId) => this.adoptedCcuAddresses(integrationId),
+      adoptedNames: (integrationId) => this.adoptedCcuNames(integrationId),
       ccuChanged: (integrationId) => homematicFacades.emitSnapshot(integrationId),
     }
   }

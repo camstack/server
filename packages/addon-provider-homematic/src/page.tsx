@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import './index.css'
-import { useMemo, type ReactNode } from 'react'
 import {
+  type AddonPageProps,
   EmptyState,
   ErrorBox,
   mountAddonPage,
@@ -9,9 +9,9 @@ import {
   Select,
   Skeleton,
   useUrlQueryParam,
-  type AddonPageProps,
 } from '@camstack/ui-library'
 import { Plug } from 'lucide-react'
+import { type ReactNode, useMemo } from 'react'
 import { z } from 'zod'
 import { CcuListItemSchema } from './ccu/ccu-schemas.js'
 import { useT } from './i18n/index.js'
@@ -20,6 +20,7 @@ import { CcuHeatingTab } from './ui/CcuHeatingTab.js'
 import { CcuLinksTab } from './ui/CcuLinksTab.js'
 import { CcuOverviewTab } from './ui/CcuOverviewTab.js'
 import { CcuPairingTab } from './ui/CcuPairingTab.js'
+import { CcuProgramsTab } from './ui/CcuProgramsTab.js'
 import { CcuSettingsTab } from './ui/CcuSettingsTab.js'
 import type { CcuTrpc } from './ui/ccu-client.js'
 import { useCcuData } from './ui/use-ccu-data.js'
@@ -105,6 +106,11 @@ export default function HomematicCcuPage(props: AddonPageProps) {
           id: 'links',
           label: t('page.tabLinks'),
           content: body(<CcuLinksTab trpc={trpc} integrationId={integrationId} />),
+        },
+        {
+          id: 'programs',
+          label: t('page.tabPrograms'),
+          content: body(<CcuProgramsTab trpc={trpc} integrationId={integrationId} />),
         },
         {
           id: 'heating',

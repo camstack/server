@@ -342,6 +342,66 @@ const ACTIONS: Readonly<Record<string, unknown>> = {
       },
     ],
   },
+  listCcuPrograms: {
+    programs: [
+      {
+        id: '42',
+        name: 'CamStack: Hall buttons events',
+        active: true,
+        internal: false,
+        lastRunMs: TS - 5 * 60_000,
+        createdByCamstack: true,
+        channels: [
+          {
+            address: '0001D3C99C5678:1',
+            channelName: 'Left',
+            deviceName: 'Hall buttons',
+            deviceId: 950,
+          },
+          {
+            address: '0001D3C99C5678:2',
+            channelName: null,
+            deviceName: 'Hall buttons',
+            deviceId: 950,
+          },
+        ],
+      },
+      {
+        id: '7',
+        name: 'Night light',
+        active: false,
+        internal: false,
+        lastRunMs: null,
+        createdByCamstack: false,
+        channels: [],
+      },
+      {
+        id: '3',
+        name: 'Away heating',
+        active: true,
+        internal: true,
+        lastRunMs: TS - 26 * 60 * 60_000,
+        createdByCamstack: false,
+        channels: [],
+      },
+    ],
+    keys: [
+      {
+        address: '0001D3C99C5678:1',
+        name: 'Left',
+        deviceAddress: '0001D3C99C5678',
+        deviceName: 'Hall buttons',
+        deviceType: 'HmIP-BS2',
+      },
+      {
+        address: '0001D3C99C5678:2',
+        name: null,
+        deviceAddress: '0001D3C99C5678',
+        deviceName: 'Hall buttons',
+        deviceType: 'HmIP-BS2',
+      },
+    ],
+  },
   ccuPairingStatus: {
     interfaces: [
       { name: 'BidCos-RF', secondsLeft: 0, supportsSecure: true, error: null },
@@ -354,7 +414,8 @@ const ACTIONS: Readonly<Record<string, unknown>> = {
 /** The Homematic CCU addon page (`/addon/provider-homematic`): every action answers with invented, deterministic data. */
 export default defineFixtures({
   area: 'homematic-ccu',
-  description: 'Homematic CCU addon page: overview, devices, links, heating, pairing, settings',
+  description:
+    'Homematic CCU addon page: overview, devices, links, programs, heating, pairing, settings',
   handlers: {
     'mut:addons.custom': (input: unknown) => {
       const action =

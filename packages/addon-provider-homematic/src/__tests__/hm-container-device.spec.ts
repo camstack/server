@@ -8,15 +8,15 @@
  * spec list.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
-  DeviceType,
-  DeviceRole,
-  DeviceFeature,
   type DeviceContext,
+  DeviceFeature,
+  DeviceRole,
+  DeviceType,
   type IDeviceRuntimeState,
 } from '@camstack/types'
-import type { Homematic, HmCustomEntity, HmDevice } from 'nodehomematic'
+import type { HmCustomEntity, HmDevice, Homematic } from 'nodehomematic'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { HmContainerDevice } from '../devices/hm-container-device.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import { hmClimateEntity, hmDataPoint, hmDevice, hmSwitchEntity } from './hm-test-fixtures.js'
@@ -83,12 +83,17 @@ interface FacadeStub {
     central: boolean
     links: readonly []
   }>
+  getKeyEventProgram?: (name: string) => Promise<{
+    programId: string
+    channelAddresses: string[]
+  } | null>
 }
 
 function makeFacade(
   hmDevices: HmDevice[],
   customEntities: HmCustomEntity[],
   centralByAddress?: Readonly<Record<string, boolean>>,
+  keyEventChannels?: readonly string[],
 ): Homematic {
   const stub: FacadeStub = {
     devices: () => hmDevices,
@@ -100,6 +105,14 @@ function makeFacade(
           getChannelLinkState: async (address: string) => ({
             central: centralByAddress[address] ?? false,
             links: [],
+          }),
+        }),
+    ...(keyEventChannels === undefined
+      ? {}
+      : {
+          getKeyEventProgram: async () => ({
+            programId: '55',
+            channelAddresses: [...keyEventChannels],
           }),
         }),
   }
@@ -379,10 +392,15 @@ describe('HmContainerDevice device page panel', () => {
   it('appends button events with each key central state when the device has key channels', async () => {
     homematicFacades.set(
       'hm_001',
-      makeFacade([makeWallSwitch()], [], {
-        [`${ADDR}:1`]: false,
-        [`${ADDR}:2`]: true,
-      }),
+      makeFacade(
+        [makeWallSwitch()],
+        [],
+        {
+          [`${ADDR}:1`]: false,
+          [`${ADDR}:2`]: true,
+        },
+        [`${ADDR}:1`],
+      ),
     )
     const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
     await vi.waitFor(() => {
@@ -394,8 +412,8 @@ describe('HmContainerDevice device page panel', () => {
     const section = dev.getSettingsUISchema().sections[1]
     const table = section?.fields.find((field) => field.type === 'object-array')
     expect(table?.type === 'object-array' ? table.value : null).toEqual([
-      { key: 'Key 1', central: 'warn', links: '—' },
-      { key: 'Key 2', central: 'ok', links: '—' },
+      { key: 'Key 1', central: 'warn', program: 'CamStack: Wall switch events', links: '—' },
+      { key: 'Key 2', central: 'ok', program: '—', links: '—' },
     ])
     const buttons = section?.fields.flatMap((field) =>
       field.type === 'addon-action-button' ? [field.paramsStatic] : [],

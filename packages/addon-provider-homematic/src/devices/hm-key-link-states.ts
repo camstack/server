@@ -1,6 +1,6 @@
 import type { IScopedLogger } from '@camstack/types'
 import type { HmChannel, HmDevice, Homematic } from 'nodehomematic'
-import { directLinksOfKey } from '../ccu/ccu-button-events.js'
+import { directLinksOfKey, isHmipDevice, keyEventProgramName } from '../ccu/ccu-button-events.js'
 import { channelNameLookup, type HmChannelNames } from '../ccu/hm-channel-names.js'
 import type { HmKeyLinkState } from './hm-button-events-section.js'
 import { channelIndexFromAddress } from './hm-cold-start.js'
@@ -32,7 +32,10 @@ export function clearStoredKeyLinkStates(): void {
   published.clear()
 }
 
-export type KeyLinkFacade = Pick<Homematic, 'getChannelLinkState' | 'devices'>
+export type KeyLinkFacade = Pick<
+  Homematic,
+  'getChannelLinkState' | 'devices' | 'getKeyEventProgram'
+>
 
 export interface KeyLinkRead {
   readonly facade: KeyLinkFacade
@@ -64,10 +67,11 @@ export async function publishKeyLinkStates(
   const keys = hmKeyChannels(read.device)
   if (keys.length === 0) return null
   const names = channelNameLookup(read.facade.devices())
+  const coverage = await keyEventCoverage(read)
   const states: HmKeyLinkState[] = []
   let failed = false
   for (const channel of keys) {
-    const one = await readKey(read, names, channel)
+    const one = await readKey(read, names, channel, coverage.get(channel.address) ?? null)
     if (one.failed) failed = true
     states.push(one.state)
   }
@@ -75,15 +79,37 @@ export async function publishKeyLinkStates(
   return { failed }
 }
 
+/** Channel address → program name, for keys the device's key-event program covers. */
+async function keyEventCoverage(read: KeyLinkRead): Promise<ReadonlyMap<string, string>> {
+  if (!isHmipDevice(read.device)) return new Map()
+  const name = keyEventProgramName(read.device)
+  try {
+    const program = await read.facade.getKeyEventProgram(name)
+    if (program === null) return new Map()
+    return new Map(program.channelAddresses.map((address) => [address, name]))
+  } catch (err: unknown) {
+    read.logger.warn('Homematic key event program could not be read', {
+      tags: { deviceId: read.deviceId },
+      meta: {
+        address: read.deviceAddress,
+        error: err instanceof Error ? err.message : String(err),
+      },
+    })
+    return new Map()
+  }
+}
+
 async function readKey(
   read: KeyLinkRead,
   names: (channelAddress: string) => HmChannelNames,
   channel: HmChannel,
+  programName: string | null,
 ): Promise<OneKeyRead> {
   const base = {
     address: channel.address,
     name: hmName(channel.name),
     index: channelIndexFromAddress(channel.address) ?? String(channel.index),
+    programName,
   }
   try {
     const state = await read.facade.getChannelLinkState(channel.address)

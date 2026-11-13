@@ -30,6 +30,10 @@ export type CcuFacade = Pick<
   | 'ensureKeyEventProgram'
   | 'getKeyEventProgram'
   | 'removeKeyEventProgram'
+  | 'programs'
+  | 'runProgram'
+  | 'setProgramActive'
+  | 'refreshHub'
   | 'addLink'
   | 'removeLink'
   | 'listLinks'
@@ -56,6 +60,8 @@ export interface CcuActionDeps {
    * integration. A missing address is not adopted.
    */
   readonly adoptedAddresses: (integrationId: string) => Promise<ReadonlyMap<string, number>>
+  /** CCU address → CamStack device name, for the same containers as `adoptedAddresses`. */
+  readonly adoptedNames: (integrationId: string) => Promise<ReadonlyMap<string, string>>
   /**
    * A CCU write landed: the adopted devices of this integration re-read what
    * they show (a key's central link, a name).
