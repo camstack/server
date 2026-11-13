@@ -11910,7 +11910,7 @@
   "remote": {
     "templates": {
       "title": "Modelli",
-      "subtitle": "Layout riutilizzabili condivisi da più dispositivi, come la griglia dei tasti di un telecomando.",
+      "subtitle": "Blocchi riutilizzabili: la griglia di pulsanti che un telecomando condivide tra dispositivi, oppure un'automazione che ricrei compilando solo i suoi input.",
       "new": "Nuovo modello",
       "name": "Nome",
       "summary": "Contenuto",

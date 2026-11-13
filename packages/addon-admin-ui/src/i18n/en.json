@@ -11888,7 +11888,7 @@
   "remote": {
     "templates": {
       "title": "Templates",
-      "subtitle": "Reusable layouts that several devices share, such as the button grid of a remote.",
+      "subtitle": "Reusable building blocks: the button grid a remote shares across devices, or an automation you create again by filling in only its inputs.",
       "new": "New template",
       "name": "Name",
       "summary": "Contents",

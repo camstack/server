@@ -29,6 +29,7 @@ import {
   uniqueInputKey,
 } from './mark-as-input'
 import { optionsFromText, optionsToText, patchInput } from './input-edit'
+import { DurationValueInput } from './DurationValueInput'
 
 export interface InputsPanelProps {
   readonly payload: AutomationTemplatePayload
@@ -162,28 +163,58 @@ function InputEditor({ input, deviceInputs, onChange }: InputEditorProps): React
       {(input.kind === 'number' || input.kind === 'duration') && (
         <>
           <FormField label={t('build.templates.min', 'Minimum')}>
-            <Input
-              type="number"
-              value={input.min === undefined ? '' : String(input.min)}
-              onChange={(e) => onChange(patchInput(input, { min: numberOf(e.target.value) }))}
-              data-testid="template-input-min"
-            />
+            {input.kind === 'duration' ? (
+              <span data-testid="template-input-min">
+                <DurationValueInput
+                  value={input.min}
+                  aria-label={t('build.templates.min', 'Minimum')}
+                  onChange={(seconds) => onChange(patchInput(input, { min: seconds }))}
+                />
+              </span>
+            ) : (
+              <Input
+                type="number"
+                value={input.min === undefined ? '' : String(input.min)}
+                onChange={(e) => onChange(patchInput(input, { min: numberOf(e.target.value) }))}
+                data-testid="template-input-min"
+              />
+            )}
           </FormField>
           <FormField label={t('build.templates.max', 'Maximum')}>
-            <Input
-              type="number"
-              value={input.max === undefined ? '' : String(input.max)}
-              onChange={(e) => onChange(patchInput(input, { max: numberOf(e.target.value) }))}
-              data-testid="template-input-max"
-            />
+            {input.kind === 'duration' ? (
+              <span data-testid="template-input-max">
+                <DurationValueInput
+                  value={input.max}
+                  aria-label={t('build.templates.max', 'Maximum')}
+                  onChange={(seconds) => onChange(patchInput(input, { max: seconds }))}
+                />
+              </span>
+            ) : (
+              <Input
+                type="number"
+                value={input.max === undefined ? '' : String(input.max)}
+                onChange={(e) => onChange(patchInput(input, { max: numberOf(e.target.value) }))}
+                data-testid="template-input-max"
+              />
+            )}
           </FormField>
           <FormField label={t('build.templates.default', 'Default')}>
-            <Input
-              type="number"
-              value={input.default === undefined ? '' : String(input.default)}
-              onChange={(e) => onChange(patchInput(input, { default: numberOf(e.target.value) }))}
-              data-testid="template-input-default"
-            />
+            {input.kind === 'duration' ? (
+              <span data-testid="template-input-default">
+                <DurationValueInput
+                  value={input.default}
+                  aria-label={t('build.templates.default', 'Default')}
+                  onChange={(seconds) => onChange(patchInput(input, { default: seconds }))}
+                />
+              </span>
+            ) : (
+              <Input
+                type="number"
+                value={input.default === undefined ? '' : String(input.default)}
+                onChange={(e) => onChange(patchInput(input, { default: numberOf(e.target.value) }))}
+                data-testid="template-input-default"
+              />
+            )}
           </FormField>
         </>
       )}

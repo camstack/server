@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next'
 import { CommandStep } from '../flow/CommandStep'
 import { useAutomationDevices } from '../automation/automation-data'
 import { FiredFields } from '../automation/FiredFields'
+import { DurationValueInput } from './DurationValueInput'
 import {
   groupBounds,
   problemsAt,
@@ -346,8 +347,20 @@ function ScalarControl({
         </div>
       )
     }
-    case 'number':
     case 'duration':
+      return (
+        <span data-testid={`template-input-${address}`}>
+          <DurationValueInput
+            value={typeof value === 'number' ? value : undefined}
+            disabled={disabled}
+            {...(input.min === undefined ? {} : { min: input.min })}
+            {...(input.max === undefined ? {} : { max: input.max })}
+            aria-label={input.label}
+            onChange={onChange}
+          />
+        </span>
+      )
+    case 'number':
       return (
         <Input
           type="number"
