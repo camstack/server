@@ -6,7 +6,11 @@
  */
 import { useQueries } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import type { IntegrationInstance, IntegrationInstanceDescription } from '@camstack/types'
+import {
+  kindServesCap,
+  type IntegrationInstance,
+  type IntegrationInstanceDescription,
+} from '@camstack/types'
 import { useSystem } from '../contexts/system-context'
 import { useAddonsListCapabilityProviders } from '../generated/system-hooks'
 
@@ -48,7 +52,8 @@ export function selectableInstances(
 }
 
 /**
- * The instances of one holder whose kind is configured for `functionCap`, optionally of one kind.
+ * The instances of one holder whose kind serves `functionCap` (configured for it, or declaring it in
+ * `alsoServes`), optionally of one kind.
  * A holder without `kinds` declares none, so it holds none.
  */
 export function instancesOfHolder(
@@ -60,7 +65,7 @@ export function instancesOfHolder(
   const out: LinkableInstance[] = []
   for (const instance of holder.instances) {
     const own = kinds.find((k) => k.id === instance.kind)
-    if (own === undefined || own.functionCap !== functionCap) continue
+    if (own === undefined || !kindServesCap(own, functionCap)) continue
     const kindName = own.brokerKind ?? own.id
     if (kind !== undefined && kindName !== kind) continue
     out.push({

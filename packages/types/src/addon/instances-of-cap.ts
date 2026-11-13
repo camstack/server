@@ -1,8 +1,8 @@
 /**
  * The instances of a function cap across every provider of `integration-instances` (D1013 rule 5).
  *
- * Every holder describes its kinds; the instances of a kind whose `functionCap` is the asked cap are the
- * answer. The hub resolver and an addon reading over `ctx.api` bind the same {@link InstanceSource}, so
+ * Every holder describes its kinds; the instances of a kind that serves the asked cap (its `functionCap`,
+ * or one it declares in `alsoServes`) are the answer. The hub resolver and an addon reading over `ctx.api` bind the same {@link InstanceSource}, so
  * there is ONE rule. A holder that cannot answer is reported in `unreadable`, never skipped silently: an
  * empty list and a failed read are different answers (D315) and a caller that would act on absence
  * (a dispatcher dropping a rule's target) must be able to tell them apart (D49).
@@ -37,6 +37,14 @@ export interface InstancesOfCapResult {
   }[]
 }
 
+/**
+ * The kind's instances answer for `cap`: it is the kind's `functionCap`, or one the kind declares in
+ * `alsoServes`. The one rule a link (a picker, a resolver, a delete guard) matches a target by.
+ */
+export function kindServesCap(kind: IntegrationInstanceKind, cap: string): boolean {
+  return kind.functionCap === cap || (kind.alsoServes ?? []).includes(cap)
+}
+
 export async function instancesOfCap(
   source: InstanceSource,
   cap: string,
@@ -47,7 +55,7 @@ export async function instancesOfCap(
   for (const addonId of await source.holders(cap)) {
     try {
       const description = await source.describe(addonId)
-      const kinds = (description.kinds ?? []).filter((kind) => kind.functionCap === cap)
+      const kinds = (description.kinds ?? []).filter((kind) => kindServesCap(kind, cap))
       if (kinds.length === 0) continue
       for (const instance of await source.listInstances(addonId)) {
         const kind = kinds.find((candidate) => candidate.id === instance.kind)

@@ -63,6 +63,8 @@ export function googleAccountKind(
     id: GOOGLE_BROKER_KIND,
     label: GOOGLE_BROKER_KIND_LABEL,
     functionCap: 'broker',
+    // A Google account also sends mail: an email target links it as its sender.
+    alsoServes: ['smtp-provider'],
     brokerKind: GOOGLE_BROKER_KIND,
     connectPath: deps.connectPath,
     disconnectPath: deps.disconnectPath,

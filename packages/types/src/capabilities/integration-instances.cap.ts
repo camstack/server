@@ -75,6 +75,19 @@ export const IntegrationInstanceKindSchema = z.object({
    * finds the instances whose kind names it; absent takes the kind `id`.
    */
   brokerKind: z.string().min(1).optional(),
+  /**
+   * Other function caps an instance of this kind also serves (a Google account sends mail, so it
+   * serves `smtp-provider` beside being a `broker`). A link to one of these caps lists and accepts
+   * the instance; a page section stays the kinds whose `functionCap` it names. Absent means none.
+   */
+  alsoServes: z.array(z.string().min(1)).optional(),
+  /**
+   * The kind's own icon (a brand mark), hub-relative or a `data:` URI. Absent: the client shows
+   * the provider addon's icon.
+   */
+  iconUrl: z.string().min(1).optional(),
+  /** The media type `iconUrl` serves (`image/svg+xml`, `image/png`); the URL carries no extension. */
+  iconMediaType: z.string().min(1).optional(),
   /** What instances of this kind are for the Integrations page; absent takes the provider's `role`. */
   role: IntegrationInstanceRoleSchema.optional(),
   /** `testInstance` really probes the remote for this kind; absent takes the provider's `canTest`. */

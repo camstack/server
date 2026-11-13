@@ -3,6 +3,7 @@ import {
   buildRawMime,
   createGmailSmtpProvider,
   selectGmailAccount,
+  selectGmailSender,
   type GmailAccountView,
 } from '../google-gmail-smtp.js'
 
@@ -155,5 +156,38 @@ describe('createGmailSmtpProvider', () => {
     expect(getB).toHaveBeenCalled()
     expect(getA).not.toHaveBeenCalled()
     expect(tokens[0]).toContain('tok-b')
+  })
+})
+
+describe('the account a sender link names', () => {
+  const linked = (brokerId: string, connected: boolean): GmailAccountView => ({
+    brokerId,
+    accountEmail: `${brokerId}@example.com`,
+    fromAddress: '',
+    fromName: '',
+    connected,
+    getAccessToken: async () => `tok-${brokerId}`,
+  })
+
+  it('picks the account the instance id names, not the first connected one', () => {
+    const picked = selectGmailSender([linked('google_001', true), linked('google_002', true)], {
+      instanceId: 'google_002',
+    })
+    expect(picked.brokerId).toBe('google_002')
+  })
+
+  it('refuses when the named account is not connected, instead of sending from another', () => {
+    expect(() =>
+      selectGmailSender([linked('google_001', true), linked('google_002', false)], {
+        instanceId: 'google_002',
+      }),
+    ).toThrow(/google_002/)
+  })
+
+  it('without an instance id keeps choosing by From', () => {
+    const picked = selectGmailSender([linked('google_001', true), linked('google_002', true)], {
+      from: 'google_002@example.com',
+    })
+    expect(picked.brokerId).toBe('google_002')
   })
 })

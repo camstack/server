@@ -3018,6 +3018,9 @@ Enum: `"not-electron" \| "no-app-state" \| "app-state-stale" \| "not-downloaded"
 - `label`: `string`
 - `functionCap`: `string`
 - `brokerKind?`: `string`
+- `alsoServes?`: `string[]`
+- `iconUrl?`: `string`
+- `iconMediaType?`: `string`
 - `role?`: `IntegrationInstanceRoleSchema`
 - `canTest?`: `boolean`
 - `signIn?`: `{ basePath: string; methods?: ("device-code" \| "proxy")[] }`

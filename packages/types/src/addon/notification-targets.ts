@@ -408,6 +408,11 @@ export function notificationTargetParts(
       functionCap: NOTIFICATION_OUTPUT_CAP,
       role: 'services',
       canTest,
+      // The brand mark the provider stamped on its descriptor travels with the kind.
+      ...(descriptor.iconUrl !== undefined ? { iconUrl: descriptor.iconUrl } : {}),
+      ...(descriptor.iconMediaType !== undefined
+        ? { iconMediaType: descriptor.iconMediaType }
+        : {}),
     }
     const instances = new RecordIntegrationInstances<InstanceBody>(records, defined, {
       description: {

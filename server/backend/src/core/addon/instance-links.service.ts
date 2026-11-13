@@ -81,7 +81,7 @@ export class InstanceLinksIndex {
 }
 
 /**
- * Refuse while a declared link names instance `id` of `provider`. The target's function cap and
+ * Refuse while a declared link names instance `id` of `provider`. The target's function caps and
  * kind come from its own `describe().kinds`; a provider with no kinds is no link target. A
  * consumer that cannot be read REFUSES: a destructive step never goes ahead on a failed read (D49).
  */
@@ -95,7 +95,11 @@ export async function assertInstanceDeletable(
   const kind = (description.kinds ?? []).find((k) => k.id === instance?.kind)
   if (kind === undefined) return
   const names = kind.brokerKind === undefined ? [kind.id] : [kind.id, kind.brokerKind]
-  await assertInstanceUnused(id, await index.findersFor(kind.functionCap, names))
+  // A link may name the instance through any cap its kind serves (a Google account is a broker and a
+  // mail sender): every one of them is asked.
+  const caps = [kind.functionCap, ...(kind.alsoServes ?? [])]
+  const finders = await Promise.all(caps.map((cap) => index.findersFor(cap, names)))
+  await assertInstanceUnused(id, finders.flat())
 }
 
 /** `provider` with a `deleteInstance` that refuses while a declared link names the instance. */

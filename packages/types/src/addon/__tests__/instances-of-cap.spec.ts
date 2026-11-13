@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 import type {
   IntegrationInstance,
   IntegrationInstanceDescription,
+  IntegrationInstanceKind,
 } from '../../capabilities/integration-instances.cap.js'
-import { type InstanceSource, instancesOfCap } from '../instances-of-cap.js'
+import { type InstanceSource, instancesOfCap, kindServesCap } from '../instances-of-cap.js'
 
 const base = {
   role: 'services',
@@ -81,5 +82,34 @@ describe('instancesOfCap', () => {
       kind: 'homeassistant',
     })
     expect(out.instances.map((i) => i.instance.id)).toEqual(['ha-1'])
+  })
+})
+
+describe('instancesOfCap — a kind that also serves the cap', () => {
+  it('lists an instance whose kind declares the cap in `alsoServes` (a Google account sends mail)', async () => {
+    const account: IntegrationInstanceKind = {
+      id: 'google',
+      label: 'Google account',
+      functionCap: 'broker',
+      alsoServes: ['smtp-provider'],
+    }
+    const google: IntegrationInstanceDescription = { ...base, kinds: [account] }
+    const relays: IntegrationInstanceDescription = {
+      ...base,
+      kinds: [{ id: 'relays', label: 'SMTP relay', functionCap: 'smtp-provider' }],
+    }
+    const src: InstanceSource = {
+      holders: async () => ['google-services', 'smtp-nodemailer'],
+      describe: async (id) => (id === 'google-services' ? google : relays),
+      listInstances: async (id) =>
+        id === 'google-services' ? [inst('acct-1', 'google')] : [inst('relay-1', 'relays')],
+    }
+    const out = await instancesOfCap(src, 'smtp-provider')
+    expect(out.instances.map((i) => [i.addonId, i.instance.id])).toEqual([
+      ['google-services', 'acct-1'],
+      ['smtp-nodemailer', 'relay-1'],
+    ])
+    expect(kindServesCap(account, 'smtp-provider')).toBe(true)
+    expect(kindServesCap(account, 'calendar-source')).toBe(false)
   })
 })

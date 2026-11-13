@@ -68,6 +68,28 @@ describe('instancesOfHolder', () => {
     }
     expect(instancesOfHolder(bare, 'broker')).toEqual([])
   })
+  it('keeps an instance whose kind also serves the cap (a Google account sends mail)', () => {
+    const google: InstanceHolderData = {
+      addonId: 'google-services',
+      description: {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'account',
+        canTest: false,
+        kinds: [
+          {
+            id: 'google',
+            label: 'Google account',
+            functionCap: 'broker',
+            alsoServes: ['smtp-provider'],
+          },
+        ],
+      },
+      instances: [{ id: 'g1', name: 'Me', configured: true, kind: 'google', formValues: {} }],
+    }
+    expect(instancesOfHolder(google, 'smtp-provider').map((i) => i.id)).toEqual(['g1'])
+    expect(instancesOfHolder(google, 'calendar-source')).toEqual([])
+  })
 })
 
 describe('selectableInstances', () => {

@@ -63,6 +63,7 @@ describe('Google accounts as integration instances', () => {
       googleAccountKind({ connectPath: '/c?b={{brokerId}}', disconnectPath: '/d' }),
     ).toMatchObject({
       functionCap: 'broker',
+      alsoServes: ['smtp-provider'],
       brokerKind: 'google',
     })
   })

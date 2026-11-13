@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A Google account can be picked as the sender of an email notification, and mail goes out from exactly that account.
+
 ## [0.2.47] - 2026-11-10
 
 ### Changed

@@ -194,3 +194,35 @@ describe('registeredProviderFor', () => {
     expect(holdersOf(registry).map((h) => h.addonId)).toEqual(['owner'])
   })
 })
+
+describe('instance links guard — a kind that also serves a cap', () => {
+  it('refuses the delete of a Google account an email target sends with (a link to smtp-provider)', async () => {
+    const deleted: string[] = []
+    const google = provider(
+      {
+        kinds: [
+          {
+            id: 'google',
+            label: 'Google account',
+            functionCap: 'broker',
+            alsoServes: ['smtp-provider'],
+          },
+        ],
+      },
+      [row('acct-1', 'google', {})],
+      deleted,
+    )
+    const notifiers = provider(
+      { links: [{ kind: 'email', field: 'sendWith', to: { cap: 'smtp-provider' } }] },
+      [row('t1', 'email', { sendWith: 'acct-1' })],
+    )
+    const holders: readonly InstanceHolder[] = [
+      { addonId: 'google-services', provider: google },
+      { addonId: 'notifiers', provider: notifiers },
+    ]
+    const guarded = guardInstanceDeletes(google, new InstanceLinksIndex(() => holders))
+    const err = await guarded.deleteInstance({ id: 'acct-1' }).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(InstanceInUseError)
+    expect(deleted).toEqual([])
+  })
+})

@@ -9542,7 +9542,7 @@
       "kind": "function",
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-instances-of-cap.ts",
-      "summary": "The instances of one holder whose kind is configured for `functionCap`, optionally of one kind. A holder without `kinds` declares none, so it holds none."
+      "summary": "The instances of one holder whose kind serves `functionCap` (configured for it, or declaring it in `alsoServes`), optionally of one kind. A holder without `kinds` declares none, so it holds none."
     },
     {
       "name": "IR_PROBE_IDLE",

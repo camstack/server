@@ -67,6 +67,39 @@ export function selectGmailAccount(
   return connected[0] ?? null
 }
 
+/** What a send names its account by: the linked instance (a broker id), else the From header. */
+export interface GmailSenderPick {
+  readonly instanceId?: string
+  readonly from?: string
+}
+
+/**
+ * The account a send goes out from. A send that names an instance (an email target's `sendWith`
+ * link) uses exactly that account and is refused when it is not connected — mail never leaves from
+ * another account. A send without one keeps choosing by From, else the first connected account.
+ */
+export function selectGmailSender(
+  accounts: readonly GmailAccountView[],
+  pick: GmailSenderPick,
+): GmailAccountView {
+  if (pick.instanceId !== undefined) {
+    const named = accounts.find((account) => account.brokerId === pick.instanceId)
+    if (named === undefined || !named.connected) {
+      throw new Error(
+        `The Google account ${pick.instanceId} is not connected — sign it in again under Integrations.`,
+      )
+    }
+    return named
+  }
+  const account = selectGmailAccount(accounts, pick.from)
+  if (account === null) {
+    throw new Error(
+      'No Google broker connected — add one under Connectivity → Brokers and Connect.',
+    )
+  }
+  return account
+}
+
 /** Build a minimal multipart/alternative-capable plain (and optional HTML) message. */
 export function buildRawMime(input: {
   readonly from: string
@@ -145,12 +178,10 @@ export function createGmailSmtpProvider(deps: GmailSmtpDeps): ISmtpProvider {
   return {
     getStatus: async () => status(),
     sendEmail: async (input) => {
-      const account = selectGmailAccount(deps.accounts(), input.from)
-      if (account === null) {
-        throw new Error(
-          'No Google broker connected — add one under Connectivity → Brokers and Connect.',
-        )
-      }
+      const account = selectGmailSender(deps.accounts(), {
+        ...(input.instanceId !== undefined ? { instanceId: input.instanceId } : {}),
+        ...(input.from !== undefined ? { from: input.from } : {}),
+      })
       const from = input.from?.trim() || buildFromHeader(account)
       if (!from) {
         throw userError(
