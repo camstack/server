@@ -68,6 +68,8 @@ export interface CardHistory {
 }
 
 export interface CardCommon {
+  /** Set on a live device so the history view can read its actuations. */
+  readonly deviceId?: number
   readonly name: string
   readonly integration: string | null
   /** Null when reachability has not been reported: unknown is neither online nor offline. */

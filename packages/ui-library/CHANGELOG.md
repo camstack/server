@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+### Added
 
-- A media player's device card draws its saved remote layout — shapes, tones and labels — and falls back to a built-in preset instead of raw key codes.
+- A device card's History view lists each actuation — who changed which value, and whether it was confirmed
 
 ## [1.2.436] - 2026-11-13
 

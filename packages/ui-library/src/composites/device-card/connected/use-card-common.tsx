@@ -131,6 +131,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
   const powerOff = usePowerSourcePowerOff()
   const restart = usePowerSourceForceRestart()
   const remotePresence = useCapabilityPresence('remote')
+  const transitionsPresence = useCapabilityPresence('device-transitions')
   const remote = useRemoteListCommands({ deviceId }, { enabled: remotePresence === 'present' })
   const templateId = remote.data?.layoutTemplateId ?? null
   const templates = useTemplateList(
@@ -196,10 +197,11 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
     }))
   }, [consumables, canActuate, t])
 
-  const hasHistory =
+  const seriesReady =
     series.presence === 'present' &&
     series.list.status === 'ok' &&
     (series.list.data?.length ?? 0) > 0
+  const actuationsOffered = transitionsPresence !== 'absent'
   const offlineDuration = sinceText(offlineSince, Date.now(), t)
   const common: CardCommon = {
     name: device.data?.name ?? '',
@@ -232,17 +234,14 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
       remote.data === undefined || remote.data === null || remote.data.commands.length === 0
         ? null
         : remote.data.commands.map((c) => remoteKeyOf(c.role, c.label, t)),
-    remotePanel: remotePanelOf(
-      deviceId,
-      remote.data,
-      templates.data,
-      templates.status,
-      assumed.data,
-    ),
-    remoteLayoutPending: remoteLayoutPending(remote.data, templates.data, templates.status),
-    history: hasHistory
-      ? { charts: <DeviceHistoryView deviceId={deviceId} />, events: null }
-      : null,
+    deviceId,
+    history:
+      seriesReady || actuationsOffered
+        ? {
+            charts: seriesReady ? <DeviceHistoryView deviceId={deviceId} /> : null,
+            events: null,
+          }
+        : null,
   }
 
   const actions: CardCommonActions = {

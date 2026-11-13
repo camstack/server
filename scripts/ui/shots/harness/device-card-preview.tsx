@@ -8,6 +8,10 @@
  */
 import i18n from '@admin/i18n'
 import { bridgeUiText } from '@admin/i18n/ui-text-bridge'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { type ReactElement, type ReactNode, useMemo, useState } from 'react'
+import { fakeClient } from './stubs/transport'
+import { ACTUATION_FIXTURE_DEVICE_ID } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/actuations'
 import {
   ApplianceCard,
   type ApplianceCardActions,
@@ -29,6 +33,7 @@ import {
   type PlugCardActions,
   RobotCard,
   type RobotCardActions,
+  trpc,
   UiTextProvider,
   WaterHeaterCard,
   type WaterHeaterCardActions,
@@ -52,8 +57,38 @@ import { mediaFixtures } from '../../../../packages/ui-library/src/composites/de
 import { plugFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/plug'
 import { robotFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/robot'
 import { waterHeaterFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/water-heater'
-import { irFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/ir'
-import { type ReactElement, type ReactNode, useMemo } from 'react'
+function ValueHistoryMark(): ReactElement {
+  return (
+    <p data-testid="dc-value-history" className="text-xs text-foreground-muted">
+      24 °C · 22 °C
+    </p>
+  )
+}
+
+/** One climate card opened on History, with invented actuations from the fixture transport. */
+function HistoryActuations(): ReactElement {
+  const fixture = CLIMATE_FIXTURES[0]
+  const [client] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+  )
+  if (fixture === undefined) return <p>No climate fixture</p>
+  const common = {
+    ...fixture.model.common,
+    deviceId: ACTUATION_FIXTURE_DEVICE_ID,
+    history: { charts: <ValueHistoryMark />, events: null },
+  }
+  return (
+    <trpc.Provider client={fakeClient()} queryClient={client}>
+      <QueryClientProvider client={client}>
+        <ClimateCard
+          model={{ ...fixture.model, common }}
+          actions={CLIMATE_ACTIONS}
+          initialView="history"
+        />
+      </QueryClientProvider>
+    </trpc.Provider>
+  )
+}
 
 const noop = (): void => undefined
 const PLUG_ACTIONS: PlugCardActions = { onPower: noop, onTimerStart: noop, onTimerStop: noop }
@@ -314,6 +349,8 @@ export function DeviceCardPreview(): ReactElement {
   const params = new URLSearchParams(window.location.search)
   const type = params.get('type') ?? 'plug'
   const remote = params.get('view') === 'remote'
+  const history = params.get('view') === 'history'
+  if (history) document.documentElement.lang = 'it'
   const theme = sessionStorage.getItem('ui-shots:theme') === 'dark' ? 'dark' : 'light'
   const t = useMemo(() => {
     const it = i18n.cloneInstance({ lng: 'it' })
@@ -325,7 +362,9 @@ export function DeviceCardPreview(): ReactElement {
         data-card-type={type}
         className={`${theme} flex min-h-screen flex-wrap content-start items-start gap-4 bg-background p-4 text-foreground`}
       >
-        {WAVE_A_TYPES.has(type) ? (
+        {history ? (
+          <HistoryActuations />
+        ) : WAVE_A_TYPES.has(type) ? (
           <WaveAScene type={type} />
         ) : WAVE_B_TYPES.has(type) ? (
           <WaveBScene type={type} remote={remote} />

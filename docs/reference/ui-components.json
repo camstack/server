@@ -2788,6 +2788,12 @@
           "type": "boolean",
           "optional": true,
           "doc": "Draw the device name (default true); false when the host already names the device."
+        },
+        {
+          "name": "initialView",
+          "type": "DeviceCardView",
+          "optional": true,
+          "doc": "Opens on this view. The shot harness uses `history` so the list is on screen."
         }
       ]
     },
@@ -8721,6 +8727,12 @@
           "type": "() => void",
           "optional": false,
           "doc": ""
+        },
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": true,
+          "doc": "Present on a live device: the actuations section asks for this device."
         }
       ]
     },

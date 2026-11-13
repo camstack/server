@@ -9880,7 +9880,30 @@
       "history": {
         "charts": "Storico",
         "events": "Interazioni",
-        "noEvents": "Ancora nessuna interazione"
+        "noEvents": "Ancora nessuna interazione",
+        "actuations": "Attuazioni",
+        "noActuations": "Nessuna attuazione",
+        "actuationsUnread": "Le attuazioni non si sono potute leggere",
+        "loadMore": "Carica altre",
+        "justNow": "adesso",
+        "minutesAgo": "{{n}} min fa",
+        "hoursAgo": "{{n}} h fa",
+        "daysAgo": "{{n}} g fa",
+        "actorDevice": "Il dispositivo",
+        "actorAutomation": "Automazione",
+        "actorAddon": "Componente",
+        "actorScheduler": "Programma",
+        "actorComposition": "Composizione",
+        "actorNode": "Questo nodo",
+        "on": "Acceso",
+        "off": "Spento",
+        "outcome": {
+          "confirmed": "Confermato",
+          "device": "Dal dispositivo",
+          "already": "Già impostato",
+          "unconfirmed": "Non confermato",
+          "failed": "Non riuscito"
+        }
       },
       "plug": {
         "on": "Accesa",

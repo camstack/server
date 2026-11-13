@@ -10,7 +10,7 @@ import { Dial, type DialTone } from '../../parts/Dial'
 import { MenuButton } from '../../parts/MenuButton'
 import { type DialRange, RangeDial } from '../../parts/RangeDial'
 import { ValueChip } from '../../parts/ValueChip'
-import { DeviceCard } from '../../shell/DeviceCard'
+import { DeviceCard, type DeviceCardView } from '../../shell/DeviceCard'
 import { cardToneClass } from '../../shell/Corner'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import {
@@ -26,6 +26,8 @@ export interface ClimateCardProps {
   readonly orientation?: CardOrientation
   /** Draw the device name (default true); false when the host already names the device. */
   readonly showName?: boolean
+  /** Opens on this view. The shot harness uses `history` so the list is on screen. */
+  readonly initialView?: DeviceCardView
 }
 
 const TONE: Readonly<Record<ClimateActivity, Exclude<CardTone, 'success' | 'danger'>>> = {
@@ -51,6 +53,7 @@ export function ClimateCard({
   actions,
   orientation = 'vertical',
   showName = true,
+  initialView = 'scene',
 }: ClimateCardProps): ReactElement {
   const t = useUiText()
   const [draft, setDraft] = useState<number | null>(null)
@@ -332,6 +335,7 @@ export function ClimateCard({
       actions={actions}
       orientation={orientation}
       showName={showName}
+      initialView={initialView}
       activity={activity}
       state={{ label: words[activity], since: model.since, tone }}
       scene={{

@@ -9858,7 +9858,30 @@
       "history": {
         "charts": "History",
         "events": "Interactions",
-        "noEvents": "No interactions yet"
+        "noEvents": "No interactions yet",
+        "actuations": "Actuations",
+        "noActuations": "No actuations yet",
+        "actuationsUnread": "The actuations could not be read",
+        "loadMore": "Load more",
+        "justNow": "just now",
+        "minutesAgo": "{{n}} min ago",
+        "hoursAgo": "{{n}} h ago",
+        "daysAgo": "{{n}} d ago",
+        "actorDevice": "The device",
+        "actorAutomation": "Automation",
+        "actorAddon": "Add-on",
+        "actorScheduler": "Schedule",
+        "actorComposition": "Composition",
+        "actorNode": "This node",
+        "on": "On",
+        "off": "Off",
+        "outcome": {
+          "confirmed": "Confirmed",
+          "device": "By the device",
+          "already": "Already set",
+          "unconfirmed": "Unconfirmed",
+          "failed": "Failed"
+        }
       },
       "plug": {
         "on": "On",

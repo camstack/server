@@ -4,8 +4,8 @@ import { useUiText } from '../../../contexts/ui-text'
 import { ButtonGroup } from '../parts/ButtonGroup'
 import { CardButton } from '../parts/CardButton'
 import { EventList } from '../parts/EventList'
-import { RemoteGrid, SourceSelectKey } from '../../remote'
-import type { CardHistory, CardRemoteKey, CardRemotePanel, CardState } from './model'
+import { ActuationHistory } from './ActuationHistory'
+import type { CardHistory, CardRemoteKey, CardState } from './model'
 import { cardToneClass } from './Corner'
 import { remoteKeyIconOnly, remotePadRows } from './remote-keys'
 
@@ -35,10 +35,12 @@ export interface HistoryViewProps {
   readonly state: CardState
   readonly history: CardHistory
   readonly onBack: () => void
+  /** Present on a live device: the actuations section asks for this device. */
+  readonly deviceId?: number
 }
 
 /** Replaces the scene: the device's charts and who did what. */
-export function HistoryView({ state, history, onBack }: HistoryViewProps): ReactElement {
+export function HistoryView({ state, history, onBack, deviceId }: HistoryViewProps): ReactElement {
   const t = useUiText()
   const tabs = [
     ...(history.charts === null
@@ -87,6 +89,9 @@ export function HistoryView({ state, history, onBack }: HistoryViewProps): React
           events={history.events}
           emptyLabel={t('uiLibrary.deviceCard.history.noEvents', 'No interactions yet')}
         />
+      ) : null}
+      {deviceId !== undefined && (tab === 'charts' || history.charts === null) ? (
+        <ActuationHistory deviceId={deviceId} />
       ) : null}
     </div>
   )

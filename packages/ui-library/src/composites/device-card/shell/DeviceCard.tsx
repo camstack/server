@@ -133,7 +133,9 @@ export function DeviceCard({
   const gating = useGating(common)
   const [view, setView] = useState<DeviceCardView>(initialView)
   const history = common.history
-  const hasHistory = history !== null && (history.charts !== null || history.events !== null)
+  const hasHistory =
+    history !== null &&
+    (history.charts !== null || history.events !== null || common.deviceId !== undefined)
   const remoteKeys = common.remote ?? []
   const remotePanel = common.remotePanel ?? null
   const remotePending = common.remoteLayoutPending === true
@@ -168,7 +170,12 @@ export function DeviceCard({
           </h3>
         ) : null}
         {view === 'history' && history !== null ? (
-          <HistoryView state={state} history={history} onBack={() => setView('scene')} />
+          <HistoryView
+            state={state}
+            history={history}
+            onBack={() => setView('scene')}
+            {...(common.deviceId === undefined ? {} : { deviceId: common.deviceId })}
+          />
         ) : view === 'remote' && hasRemote ? (
           <RemoteView
             keys={remoteKeys}
