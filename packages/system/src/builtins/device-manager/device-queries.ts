@@ -31,7 +31,7 @@ import {
   InferProvider,
 } from '@camstack/types'
 import {
-  buildSourceInfoFromConfig,
+  projectSourceInfo,
   isCameraDevice,
   persistedFeatures,
   persistedIsCamera,
@@ -341,7 +341,7 @@ export async function listAll(
         // than left to fall out of an empty object: a slim row has no
         // sourceInfo, and dispatch routing must not ask for one.
         if (slim) return {}
-        const si = buildSourceInfoFromConfig(persistedConfig ?? {}, stableId, aid)
+        const si = projectSourceInfo(persistedConfig ?? {}, stableId, aid, metadata)
         return si !== undefined ? { sourceInfo: si } : {}
       })(),
     })
@@ -374,7 +374,7 @@ export async function getDevice(
   // Name now lives exclusively on the meta surface (mutated via
   // `setName` action) — the legacy config.name fallback is gone
   // since drivers no longer carry `name` in their config schema.
-  const sourceInfoGetDevice = buildSourceInfoFromConfig(persistedConfig ?? {}, stableId, aid)
+  const sourceInfoGetDevice = projectSourceInfo(persistedConfig ?? {}, stableId, aid, metadata)
   return {
     id: deviceId,
     stableId,
@@ -498,7 +498,12 @@ function projectChildren(
     // it ever does.
     const persistedConfig = configs.get(m.id) ?? {}
     const metadata = row.metadata
-    const sourceInfoChild = buildSourceInfoFromConfig(persistedConfig, childStableId, ownerAddonId)
+    const sourceInfoChild = projectSourceInfo(
+      persistedConfig,
+      childStableId,
+      ownerAddonId,
+      metadata,
+    )
     results.push({
       id: m.id,
       stableId: childStableId,

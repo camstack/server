@@ -18,6 +18,7 @@ import {
   DeviceFeature,
   DeviceRole,
   DeviceType,
+  extractSourceInfoFromMetadata,
   isKernelDerivedFeature,
 } from '@camstack/types'
 import type { PersistedDeviceMeta } from './device-meta-types.js'
@@ -168,6 +169,31 @@ export function buildSourceInfoFromConfig(
     system: system ?? addonId,
     ...(uniqueId !== undefined ? { uniqueId } : {}),
   }
+}
+
+/**
+ * The `SourceInfo` of a device the hub holds no live instance for: the identity
+ * {@link buildSourceInfoFromConfig} reads from the config, plus the display hints the
+ * provider stored once at adopt under `metadata.sourceInfo` (`quantity`, `dateTimeShape`).
+ * Without them a reading of quantity `device` (CPU load, a frequency) has no unit on the wire.
+ * Identity never comes from the stored blob: the config is the dispatch key.
+ */
+export function projectSourceInfo(
+  persistedConfig: Record<string, unknown>,
+  stableId: string,
+  addonId: string,
+  metadata: Record<string, unknown> | null | undefined,
+): SourceInfo | undefined {
+  const identity = buildSourceInfoFromConfig(persistedConfig, stableId, addonId)
+  const stored = extractSourceInfoFromMetadata(metadata)
+  const hints: Pick<SourceInfo, 'quantity' | 'dateTimeShape'> = {
+    ...(stored?.quantity !== undefined ? { quantity: stored.quantity } : {}),
+    ...(stored?.dateTimeShape !== undefined ? { dateTimeShape: stored.dateTimeShape } : {}),
+  }
+  if (Object.keys(hints).length === 0) return identity
+  return identity === undefined
+    ? { id: stableId, system: addonId, ...hints }
+    : { ...identity, ...hints }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
