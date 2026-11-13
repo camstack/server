@@ -1,6 +1,6 @@
 /**
  * Fixture page for the device card. Not an admin route: `ui:shots` mounts it for
- * the path `/device-card-preview`; `?type=plug|climate|climate-extra|cover|light|fan|heater|washer|dryer|dish|media|vacuum|heatpump|water|energy|ir|lock|alarm|humid|valve|siren|pet|weather|camera|sensor` picks the scene (`climate-extra`: the
+ * the path `/device-card-preview`; `?type=plug|climate|climate-extra|cover|light|fan|heater|washer|dryer|dish|media|vacuum|heatpump|water|energy|ir|lock|alarm|humid|valve|siren|pet|weather|button|update|script|automation|control|event|image|notifier|gateway|misc|camera|sensor` picks the scene (`climate-extra`: the
  * variants real devices have and the mockup does not draw). Every
  * fixture carries the data of one variant of the approved mockup, so
  * `scripts/ui/card-parity.mjs` can shoot the two side by side. Strings are the
@@ -59,6 +59,7 @@ import { robotFixtures } from '../../../../packages/ui-library/src/composites/de
 import { waterHeaterFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/water-heater'
 import { irFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/ir'
 import { WAVE_D_TYPES, WaveDScene } from './device-card-preview-wave-d'
+import { WAVE_E_TYPES, WaveEScene } from './device-card-preview-wave-e'
 
 function ValueHistoryMark(): ReactElement {
   return (
@@ -381,6 +382,8 @@ export function DeviceCardPreview(): ReactElement {
           ))
         ) : WAVE_D_TYPES.has(type) ? (
           <WaveDScene type={type} Cell={Cell} />
+        ) : WAVE_E_TYPES.has(type) ? (
+          <WaveEScene type={type} Cell={Cell} />
         ) : type === 'climate' || type === 'climate-extra' ? (
           (type === 'climate' ? CLIMATE_FIXTURES : CLIMATE_EXTRA_FIXTURES).map((f) => (
             <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>

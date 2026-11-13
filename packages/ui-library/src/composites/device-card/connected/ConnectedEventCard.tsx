@@ -1,0 +1,67 @@
+import type { EventEmitterStatus } from '@camstack/types'
+import type { ReactElement } from 'react'
+import { useTrpcClient } from '../../../contexts/system-context'
+import { type UiTextFn, useUiText } from '../../../contexts/ui-text'
+import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
+import type { EventCardEntry, EventCardModel } from '../scenes/event/EventCard'
+import { EventCard } from '../scenes/event/EventCard'
+import type { ConnectedCardProps } from './ConnectedPlugCard'
+import { sinceText } from './since-text'
+import { useCardCommon } from './use-card-common'
+
+/**
+ * The vocabulary as the card lists it: the labelled vocabulary, or the bare
+ * event types of a status written before it existed.
+ */
+export function eventEntriesOf(status: EventEmitterStatus): readonly EventCardEntry[] {
+  if (status.vocabulary.length > 0)
+    return status.vocabulary.map((entry) => ({ id: entry.id, label: entry.label }))
+  return status.eventTypes.map((id) => ({ id, label: id }))
+}
+
+export function eventLastOf(
+  status: EventEmitterStatus,
+  now: number,
+  t: UiTextFn,
+): EventCardModel['last'] {
+  const fired = status.lastEvent
+  if (fired === null) return null
+  const label = eventEntriesOf(status).find((e) => e.id === fired.eventType)?.label
+  return {
+    id: fired.eventType,
+    label: label ?? fired.eventType,
+    since: sinceText(fired.timestamp, now, t) ?? null,
+  }
+}
+
+/**
+ * An event source (`event-emitter`). The status keeps only the LAST event, so
+ * the card does not claim when the other entries last fired.
+ */
+export function ConnectedEventCard({
+  deviceId,
+  canActuate = true,
+  orientation,
+  showName = true,
+}: ConnectedCardProps): ReactElement | null {
+  const t = useUiText()
+  const client = useTrpcClient()
+  const dev = useDeviceProxy(client, deviceId)
+  const card = useCardCommon({ deviceId, canActuate })
+  const status = useDeviceStateSlice(
+    dev?.eventEmitter === undefined ? undefined : dev.state.eventEmitter,
+  )
+  if (status === undefined) return null
+  return (
+    <EventCard
+      orientation={orientation}
+      showName={showName}
+      actions={card.actions}
+      model={{
+        common: card.common,
+        last: eventLastOf(status, Date.now(), t),
+        entries: eventEntriesOf(status),
+      }}
+    />
+  )
+}

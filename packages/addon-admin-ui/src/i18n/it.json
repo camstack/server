@@ -10414,6 +10414,71 @@
         "unknown": "Nessuna lettura",
         "wind": "Vento",
         "windy": "Ventoso"
+      },
+      "automation": {
+        "disable": "Disattiva",
+        "disabled": "Disattivata",
+        "enable": "Attiva",
+        "enabled": "Attiva",
+        "lastRun": "ultima {{since}} fa",
+        "neverRun": "mai eseguita",
+        "trigger": "Esegui ora"
+      },
+      "button": {
+        "press": "Premi",
+        "ready": "Pronto"
+      },
+      "control": {
+        "change": "Cambia",
+        "datetime": "data e ora",
+        "decrease": "Diminuisci",
+        "increase": "Aumenta",
+        "numeric": "numero",
+        "save": "Salva",
+        "select": "scelta",
+        "text": "testo",
+        "value": "Valore"
+      },
+      "event": {
+        "none": "Ancora nessun evento"
+      },
+      "gateway": {
+        "address": "Indirizzo",
+        "connected": "Connesso",
+        "firmware": "Firmware",
+        "model": "Modello",
+        "reboot": "Riavvia",
+        "unknown": "Stato sconosciuto",
+        "unreachable": "Non raggiungibile"
+      },
+      "image": {
+        "shown": "Immagine",
+        "updated": "aggiornata {{since}} fa"
+      },
+      "notifier": {
+        "failed": "Consegna fallita",
+        "lastSent": "ultimo invio {{since}} fa",
+        "neverSent": "mai inviato",
+        "queued": "In coda",
+        "ready": "Pronto",
+        "test": "Invia prova",
+        "testBody": "Notifica di prova da CamStack."
+      },
+      "script": {
+        "idle": "Pronto",
+        "lastRun": "ultima {{since}} fa",
+        "neverRun": "mai eseguito",
+        "run": "Esegui",
+        "running": "In esecuzione",
+        "stop": "Ferma"
+      },
+      "update": {
+        "available": "Aggiornamento disponibile",
+        "current": "Aggiornato",
+        "install": "Installa",
+        "installed": "Installata",
+        "installing": "Installazione in corso",
+        "latest": "Disponibile"
       }
     },
     "language": "it",

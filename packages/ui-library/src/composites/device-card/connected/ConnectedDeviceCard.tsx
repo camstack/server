@@ -4,29 +4,40 @@ import {
   useDeviceManagerGetBindings,
   useDeviceManagerGetDevice,
 } from '../../../generated/system-hooks'
+import {
+  ConnectedAutomationCard,
+  ConnectedButtonCard,
+  ConnectedScriptCard,
+} from './ConnectedActionCards'
+import { ConnectedAlarmCard } from './ConnectedAlarmCard'
 import { ConnectedApplianceCard } from './ConnectedApplianceCard'
 import { ConnectedClimateCard } from './ConnectedClimateCard'
+import { ConnectedControlCard } from './ConnectedControlCard'
 import { ConnectedCoverCard } from './ConnectedCoverCard'
 import { ConnectedDishwasherCard } from './ConnectedDishwasherCard'
+import { ConnectedEventCard } from './ConnectedEventCard'
 import { ConnectedFanCard } from './ConnectedFanCard'
+import { ConnectedGatewayCard } from './ConnectedGatewayCard'
 import { ConnectedHeaterCard } from './ConnectedHeaterCard'
 import { ConnectedEnergyCard } from './ConnectedEnergyCard'
 import { ConnectedHeatPumpCard } from './ConnectedHeatPumpCard'
-import { ConnectedLightCard } from './ConnectedLightCard'
-import { ConnectedMediaCard } from './ConnectedMediaCard'
-import { type ConnectedCardProps, ConnectedPlugCard } from './ConnectedPlugCard'
-import { ConnectedMowerCard, ConnectedVacuumCard } from './ConnectedRobotCard'
 import { ConnectedIrTransmitterCard } from './ConnectedIrTransmitterCard'
-import { ConnectedWaterHeaterCard } from './ConnectedWaterHeaterCard'
-import { type CapCardKind, capCardKindOf } from './cap-card-kinds'
-import { ConnectedAlarmCard } from './ConnectedAlarmCard'
 import { ConnectedHumidifierCard } from './ConnectedHumidifierCard'
+import { ConnectedImageCard } from './ConnectedImageCard'
+import { ConnectedLightCard } from './ConnectedLightCard'
 import { ConnectedLockCard } from './ConnectedLockCard'
+import { ConnectedMediaCard } from './ConnectedMediaCard'
+import { ConnectedNotifierCard } from './ConnectedNotifierCard'
 import { ConnectedPetFeederCard } from './ConnectedPetFeederCard'
 import { ConnectedPetFountainCard } from './ConnectedPetFountainCard'
+import { type ConnectedCardProps, ConnectedPlugCard } from './ConnectedPlugCard'
+import { ConnectedMowerCard, ConnectedVacuumCard } from './ConnectedRobotCard'
 import { ConnectedSirenCard } from './ConnectedSirenCard'
+import { ConnectedUpdateCard } from './ConnectedUpdateCard'
 import { ConnectedValveCard } from './ConnectedValveCard'
+import { ConnectedWaterHeaterCard } from './ConnectedWaterHeaterCard'
 import { ConnectedWeatherCard } from './ConnectedWeatherCard'
+import { type CapCardKind, capCardKindOf } from './cap-card-kinds'
 
 /** The scenes a real device can be drawn with today. */
 export type ConnectedCardKind =
@@ -176,5 +187,23 @@ export function ConnectedDeviceCard({
       return <ConnectedPetFountainCard {...props} />
     case 'weather':
       return <ConnectedWeatherCard {...props} />
+    case 'button':
+      return <ConnectedButtonCard {...props} />
+    case 'update':
+      return <ConnectedUpdateCard {...props} />
+    case 'script':
+      return <ConnectedScriptCard {...props} />
+    case 'automation':
+      return <ConnectedAutomationCard {...props} />
+    case 'control':
+      return <ConnectedControlCard {...props} />
+    case 'event':
+      return <ConnectedEventCard {...props} />
+    case 'image':
+      return <ConnectedImageCard {...props} />
+    case 'notifier':
+      return <ConnectedNotifierCard {...props} />
+    case 'gateway':
+      return <ConnectedGatewayCard {...props} />
   }
 }

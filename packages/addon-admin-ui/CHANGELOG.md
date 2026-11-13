@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The automation Device command dialog keeps its header and buttons fixed, scrolls each column on its own, and shows the command's parameters below the columns instead of over the device list
 - English and Italian text for the new lock, alarm, humidifier, valve, siren, pet and weather device cards.
+- English and Italian strings for the new device cards (button, update, script, automation, control, event, image, notifier, gateway)
 
 ## [1.2.661] - 2026-11-13
 

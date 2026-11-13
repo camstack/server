@@ -19,31 +19,33 @@
  */
 import type { ReactNode } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { SwitchPanel } from './switch-panel'
-import { LockPanel } from './lock-panel'
-import { BrightnessPanel } from './brightness-panel'
-import { FanPanel } from './fan-panel'
-import { ClimatePanel } from './climate-panel'
-import { HeatingValveReadout } from './heating-valve-readout'
-import { AcPanel } from './ac-panel'
-import { MediaPlayerPanel } from './media-player-panel'
-import { ControlPanel } from './control-panel'
-import type { DeviceControlProps } from './control-registry'
 import { ConnectedClimateCard } from '../device-card/connected/ConnectedClimateCard'
-import { ConnectedPlugCard } from '../device-card/connected/ConnectedPlugCard'
-import { ConnectedSirenCard } from '../device-card/connected/ConnectedSirenCard'
 import {
-  ConnectedDeviceCard,
   type ConnectedCardKind,
+  ConnectedDeviceCard,
   useConnectedCardKind,
 } from '../device-card/connected/ConnectedDeviceCard'
-export { LockHeroCard } from './lock-hero-card'
-export { LightHeroCard } from './light-hero-card'
-export { FanHeroCard } from './fan-hero-card'
+import { ConnectedPlugCard } from '../device-card/connected/ConnectedPlugCard'
+import { ConnectedSirenCard } from '../device-card/connected/ConnectedSirenCard'
+import { AcPanel } from './ac-panel'
+import { BrightnessPanel } from './brightness-panel'
+import { ClimatePanel } from './climate-panel'
+import { ControlPanel } from './control-panel'
+import type { DeviceControlProps } from './control-registry'
+import { DummyHeroCard } from './dummy-hero-card'
+import { FanPanel } from './fan-panel'
+import { HeatingValveReadout } from './heating-valve-readout'
+import { LockPanel } from './lock-panel'
+import { MediaPlayerPanel } from './media-player-panel'
+import { SwitchPanel } from './switch-panel'
+
 // AlarmPanelInlineControl is the row-sized compact strip; AlarmHeroCard the
 // full glyph+label+segments surface. Both live in alarm-hero-card.tsx and
 // subscribe to the cap once (no double useDeviceCapability).
 export { AlarmHeroCard, AlarmInlineControl as AlarmPanelInlineControl } from './alarm-hero-card'
+export { FanHeroCard } from './fan-hero-card'
+export { LightHeroCard } from './light-hero-card'
+export { LockHeroCard } from './lock-hero-card'
 // Script and Automation share one file: same shape (a thing that runs, a last
 // run, an error), differing in one button.
 export {
@@ -380,6 +382,53 @@ export function PetFountainCardHero(props: DeviceControlProps): ReactNode {
 
 export function WeatherCardHero(props: DeviceControlProps): ReactNode {
   return <ResolvedCardHero {...props} kinds={WEATHER_KINDS} />
+}
+
+const BUTTON_KINDS: readonly ConnectedCardKind[] = ['button']
+const UPDATE_KINDS: readonly ConnectedCardKind[] = ['update']
+const SCRIPT_KINDS: readonly ConnectedCardKind[] = ['script']
+const AUTOMATION_KINDS: readonly ConnectedCardKind[] = ['automation']
+const CONTROL_KINDS: readonly ConnectedCardKind[] = ['control']
+const IMAGE_KINDS: readonly ConnectedCardKind[] = ['image']
+/** The `dummy` control kind's types that have a card of their own. */
+const DUMMY_CARD_KINDS: readonly ConnectedCardKind[] = ['event', 'notifier', 'gateway']
+
+export function ButtonCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={BUTTON_KINDS} />
+}
+
+export function UpdateCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={UPDATE_KINDS} />
+}
+
+export function ScriptCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={SCRIPT_KINDS} />
+}
+
+export function AutomationCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={AUTOMATION_KINDS} />
+}
+
+export function ControlCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={CONTROL_KINDS} />
+}
+
+export function ImageCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={IMAGE_KINDS} />
+}
+
+/**
+ * The `dummy` control kind: an event source, a notifier and a gateway draw
+ * their card; every other type keeps the placeholder.
+ */
+export function DummyCardHero(props: DeviceControlProps): ReactNode {
+  const kind = useConnectedCardKind(props.deviceId)
+  if (kind === 'pending') return null
+  if (kind !== null && DUMMY_CARD_KINDS.includes(kind))
+    return (
+      <ConnectedDeviceCard kind={kind} deviceId={props.deviceId} optimistic={props.optimistic} />
+    )
+  return <DummyHeroCard {...props} />
 }
 
 // ── MediaPlayer ───────────────────────────────────────────────────────────────

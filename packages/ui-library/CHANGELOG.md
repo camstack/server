@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Device cards for locks, alarm panels, humidifiers, valves, sirens, pet feeders and fountains, and weather stations: two-step unlock and siren, alarm codes typed on a pad and sent only with the command, a lock that refuses to close beside an open door.
+- Device cards for buttons, updates, scripts, automations, controls (number, choice, text, date), event sources, images, notifiers and gateways, drawn from what each device declares
 
 ## [1.2.438] - 2026-11-13
 

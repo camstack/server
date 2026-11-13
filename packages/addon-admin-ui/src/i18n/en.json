@@ -10392,6 +10392,71 @@
         "unknown": "No reading yet",
         "wind": "Wind",
         "windy": "Windy"
+      },
+      "automation": {
+        "disable": "Disable",
+        "disabled": "Disabled",
+        "enable": "Enable",
+        "enabled": "Enabled",
+        "lastRun": "last ran {{since}} ago",
+        "neverRun": "never ran",
+        "trigger": "Run now"
+      },
+      "button": {
+        "press": "Press",
+        "ready": "Ready"
+      },
+      "control": {
+        "change": "Change",
+        "datetime": "date and time",
+        "decrease": "Decrease",
+        "increase": "Increase",
+        "numeric": "number",
+        "save": "Save",
+        "select": "choice",
+        "text": "text",
+        "value": "Value"
+      },
+      "event": {
+        "none": "No event yet"
+      },
+      "gateway": {
+        "address": "Address",
+        "connected": "Connected",
+        "firmware": "Firmware",
+        "model": "Model",
+        "reboot": "Restart",
+        "unknown": "State unknown",
+        "unreachable": "Unreachable"
+      },
+      "image": {
+        "shown": "Image",
+        "updated": "updated {{since}} ago"
+      },
+      "notifier": {
+        "failed": "Delivery failed",
+        "lastSent": "last sent {{since}} ago",
+        "neverSent": "never sent",
+        "queued": "Queued",
+        "ready": "Ready",
+        "test": "Send test",
+        "testBody": "Test notification from CamStack."
+      },
+      "script": {
+        "idle": "Ready",
+        "lastRun": "last run {{since}} ago",
+        "neverRun": "never run",
+        "run": "Run",
+        "running": "Running",
+        "stop": "Stop"
+      },
+      "update": {
+        "available": "Update available",
+        "current": "Up to date",
+        "install": "Install",
+        "installed": "Installed",
+        "installing": "Installing",
+        "latest": "Available"
       }
     },
     "language": "en",

@@ -9,65 +9,70 @@
  * The mapping is EXHAUSTIVE — `Record<DeviceType, DeviceTypeControl>`
  * means omitting a new enum member fails the build.
  */
-import type { ReactNode } from 'react'
-import { DeviceType, resolveDeviceControlKind, DEVICE_TYPE_CONTROL_KIND } from '@camstack/types'
+
 import type { DeviceControlKind } from '@camstack/types'
+import { DEVICE_TYPE_CONTROL_KIND, DeviceType, resolveDeviceControlKind } from '@camstack/types'
+import type { ReactNode } from 'react'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
-import { FILL, RIGHT, CENTER, FIT, type ControlAlign } from './atoms'
-import { ButtonControl, ButtonHeroCard } from './button-control'
-import { CoverInlineControl } from './cover-inline'
-import { CoverHeroCard } from './cover-hero-card'
-import { DummyInline, DummyHeroCard } from './dummy-hero-card'
-import { SensorInlineControl } from './sensor-inline-control'
-import { SensorHeroCard } from './sensor-hero-card'
-import { UpdateInlineControl, UpdateHeroCard } from './update-control'
-import { VacuumInlineControl } from './vacuum-control'
-import { LawnMowerInlineControl } from './lawn-mower-control'
-import { ValveInlineControl } from './valve-control'
-import { HumidifierInlineControl } from './humidifier-control'
-import { WaterHeaterInlineControl } from './water-heater-control'
 import { EnergySystemInlineControl } from './energy-system-control'
-import { WeatherInlineControl } from './weather-control'
-import { ImageInlineControl, ImageHeroCard } from './image-control'
-import { PetFeederInlineControl } from './pet-feeder-panel'
-import { PetFountainInlineControl } from './pet-fountain-panel'
-import { HeaterInlineControl, HeaterHeroCard } from './heater-control'
-import { DishwasherInlineControl } from './dishwasher-control'
 import { ApplianceInlineControl } from './appliance-control'
+import { CENTER, type ControlAlign, FILL, FIT, RIGHT } from './atoms'
+import { ButtonControl } from './button-control'
+import { CoverHeroCard } from './cover-hero-card'
+import { CoverInlineControl } from './cover-inline'
+import { DishwasherInlineControl } from './dishwasher-control'
+import { DummyInline } from './dummy-hero-card'
+import { HeaterHeroCard, HeaterInlineControl } from './heater-control'
+import { HumidifierInlineControl } from './humidifier-control'
+import { ImageInlineControl } from './image-control'
+import { LawnMowerInlineControl } from './lawn-mower-control'
 import {
-  SwitchInlineControl,
-  PlugCardHero,
-  LockInlineControl,
-  LightInlineControl,
-  LightHeroCard,
-  FanInlineControl,
-  FanHeroCard,
-  ThermostatInlineControl,
   AcInlineControl,
-  ClimateCardHero,
-  MediaPlayerInlineControl,
-  MediaCardHero,
-  ApplianceCardHero,
-  DishwasherCardHero,
-  VacuumCardHero,
-  MowerCardHero,
-  WaterHeaterCardHero,
   EnergyCardHero,
-  LockCardHero,
   AlarmCardHero,
+  AlarmPanelInlineControl,
+  ApplianceCardHero,
+  AutomationCardHero,
+  AutomationInlineControl,
+  ButtonCardHero,
+  ClimateCardHero,
+  ControlCardHero,
+  ControlInlineControl,
+  DishwasherCardHero,
+  DummyCardHero,
+  FanHeroCard,
+  FanInlineControl,
   HumidifierCardHero,
-  ValveCardHero,
+  ImageCardHero,
+  LightHeroCard,
+  LightInlineControl,
+  LockCardHero,
+  LockInlineControl,
+  MediaCardHero,
+  MediaPlayerInlineControl,
+  MowerCardHero,
   PetFeederCardHero,
   PetFountainCardHero,
-  WeatherCardHero,
-  AlarmPanelInlineControl,
+  PlugCardHero,
+  ScriptCardHero,
   ScriptInlineControl,
-  ScriptHeroCard,
-  AutomationInlineControl,
-  AutomationHeroCard,
-  ControlInlineControl,
-  ControlHeroCard,
+  SwitchInlineControl,
+  ThermostatInlineControl,
+  UpdateCardHero,
+  VacuumCardHero,
+  ValveCardHero,
+  WaterHeaterCardHero,
+  WeatherCardHero,
 } from './panel-controls'
+import { PetFeederInlineControl } from './pet-feeder-panel'
+import { PetFountainInlineControl } from './pet-fountain-panel'
+import { SensorHeroCard } from './sensor-hero-card'
+import { SensorInlineControl } from './sensor-inline-control'
+import { UpdateInlineControl } from './update-control'
+import { VacuumInlineControl } from './vacuum-control'
+import { ValveInlineControl } from './valve-control'
+import { WaterHeaterInlineControl } from './water-heater-control'
+import { WeatherInlineControl } from './weather-control'
 
 // Re-export so consumers can import coverHighlight from the registry module
 // rather than from the implementation file directly.
@@ -95,7 +100,7 @@ const COVER_CONTROL: DeviceTypeControl = {
 
 const DUMMY_CONTROL: DeviceTypeControl = {
   InlineControl: DummyInline,
-  HeroCard: DummyHeroCard,
+  HeroCard: DummyCardHero,
 }
 
 const SENSOR_CONTROL: DeviceTypeControl = {
@@ -105,7 +110,7 @@ const SENSOR_CONTROL: DeviceTypeControl = {
 
 const UPDATE_CONTROL: DeviceTypeControl = {
   InlineControl: UpdateInlineControl,
-  HeroCard: UpdateHeroCard,
+  HeroCard: UpdateCardHero,
 }
 
 const SWITCH_CONTROL: DeviceTypeControl = {
@@ -150,17 +155,17 @@ const ALARM_PANEL_CONTROL: DeviceTypeControl = {
 
 const SCRIPT_CONTROL: DeviceTypeControl = {
   InlineControl: ScriptInlineControl,
-  HeroCard: ScriptHeroCard,
+  HeroCard: ScriptCardHero,
 }
 
 const AUTOMATION_CONTROL: DeviceTypeControl = {
   InlineControl: AutomationInlineControl,
-  HeroCard: AutomationHeroCard,
+  HeroCard: AutomationCardHero,
 }
 
 const CONTROL_CONTROL: DeviceTypeControl = {
   InlineControl: ControlInlineControl,
-  HeroCard: ControlHeroCard,
+  HeroCard: ControlCardHero,
 }
 
 const VACUUM_CONTROL: DeviceTypeControl = {
@@ -200,7 +205,7 @@ const WEATHER_CONTROL: DeviceTypeControl = {
 
 const IMAGE_CONTROL: DeviceTypeControl = {
   InlineControl: ImageInlineControl,
-  HeroCard: ImageHeroCard,
+  HeroCard: ImageCardHero,
 }
 
 const PET_FEEDER_CONTROL: DeviceTypeControl = {
@@ -230,7 +235,7 @@ const APPLIANCE_CONTROL: DeviceTypeControl = {
 
 const BUTTON_CONTROL: DeviceTypeControl = {
   InlineControl: ButtonControl,
-  HeroCard: ButtonHeroCard,
+  HeroCard: ButtonCardHero,
 }
 
 /**
