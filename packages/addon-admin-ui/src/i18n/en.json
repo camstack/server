@@ -9354,7 +9354,8 @@
         "petFountain": "Pet fountain",
         "gateway": "Gateway",
         "heater": "Heater",
-        "heatPump": "Heat pump"
+        "heatPump": "Heat pump",
+        "energySystem": "Energy system"
       },
       "role": {
         "siren": "Siren",
@@ -10235,7 +10236,8 @@
         "heatPumpToday": "Heat pump",
         "producing": "Producing",
         "notProducing": "Not producing",
-        "flows": "Energy flows"
+        "flows": "Energy flows",
+        "storage": "Storage"
       },
       "ir": {
         "canLearn": "Can learn",

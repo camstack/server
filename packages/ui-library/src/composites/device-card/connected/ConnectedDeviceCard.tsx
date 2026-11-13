@@ -10,6 +10,7 @@ import { ConnectedCoverCard } from './ConnectedCoverCard'
 import { ConnectedDishwasherCard } from './ConnectedDishwasherCard'
 import { ConnectedFanCard } from './ConnectedFanCard'
 import { ConnectedHeaterCard } from './ConnectedHeaterCard'
+import { ConnectedEnergyCard } from './ConnectedEnergyCard'
 import { ConnectedHeatPumpCard } from './ConnectedHeatPumpCard'
 import { ConnectedLightCard } from './ConnectedLightCard'
 import { ConnectedMediaCard } from './ConnectedMediaCard'
@@ -32,6 +33,7 @@ export type ConnectedCardKind =
   | 'vacuum'
   | 'mower'
   | 'heat-pump'
+  | 'energy'
   | 'water-heater'
   | 'ir-transmitter'
 
@@ -48,7 +50,8 @@ const CLIMATE_CAPS: readonly string[] = ['climate-control', 'heating-valve']
  * `cover`. A washer / dryer / dishwasher known only by its supply is the
  * appliance card (`running-state` or `switch`); a dishwasher that speaks for
  * itself (`dishwasher`), a media player, a vacuum and a mower need their cap;
- * a heat pump needs `heat-pump-status`, a water heater `water-heater`.
+ * a heat pump needs `heat-pump-status`, an energy system `energy-system`, a
+ * water heater `water-heater`.
  */
 export function connectedCardKindOf(
   deviceType: string | null,
@@ -58,6 +61,8 @@ export function connectedCardKindOf(
   if (deviceType === null) return null
   if (deviceType === DeviceType.HeatPump)
     return capNames.includes('heat-pump-status') ? 'heat-pump' : null
+  if (deviceType === DeviceType.EnergySystem)
+    return capNames.includes('energy-system') ? 'energy' : null
   const control = resolveDeviceControlKind(deviceType, role)
   const hasSwitch = capNames.includes('switch')
   if (deviceType === DeviceType.Switch) {
@@ -136,6 +141,8 @@ export function ConnectedDeviceCard({
       return <ConnectedMowerCard {...props} />
     case 'heat-pump':
       return <ConnectedHeatPumpCard {...props} />
+    case 'energy':
+      return <ConnectedEnergyCard {...props} />
     case 'water-heater':
       return <ConnectedWaterHeaterCard {...props} />
     case 'ir-transmitter':

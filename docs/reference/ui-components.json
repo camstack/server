@@ -3394,6 +3394,13 @@
       "summary": "A dishwasher that speaks for itself (the `dishwasher` cap): its programs, the time left, power, start / pause / resume / stop — each drawn only when the binding implements it, the start refused, with the machine's rea…"
     },
     {
+      "name": "ConnectedEnergyCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedEnergyCard.tsx",
+      "summary": "An energy system (`energy-system`): solar, grid, storage, house and heat pump as branches of one bus, with today's totals. Read-only. The storage is a node of the scene fed by the model; the card draws no battery corn…"
+    },
+    {
       "name": "ConnectedFanCard",
       "kind": "component",
       "area": "composites",
@@ -6902,6 +6909,13 @@
       ]
     },
     {
+      "name": "energyFlowsOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
+      "summary": "Node powers signed against the bus (+ into it): the cap's grid is already + import; its storage is + charging, which takes power OUT of the bus, so the scene's battery is its negation. A part the system lacks draws no…"
+    },
+    {
       "name": "energyIsStill",
       "kind": "function",
       "area": "composites",
@@ -6921,6 +6935,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/energy/EnergyCard.tsx",
       "summary": "\"· 4.2 kW\" while producing; otherwise where the house draws from."
+    },
+    {
+      "name": "energyTodayOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
+      "summary": "Today's totals, to a tenth of a kWh; null when the system reports none of them."
     },
     {
       "name": "ensureMfHostInit",

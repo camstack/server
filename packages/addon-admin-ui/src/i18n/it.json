@@ -9376,7 +9376,8 @@
         "petFountain": "Fontana per animali",
         "gateway": "Gateway",
         "heater": "Stufa",
-        "heatPump": "Pompa di calore"
+        "heatPump": "Pompa di calore",
+        "energySystem": "Sistema energetico"
       },
       "role": {
         "siren": "Sirena",
@@ -10257,7 +10258,8 @@
         "heatPumpToday": "Pompa",
         "producing": "Produce",
         "notProducing": "Non produce",
-        "flows": "Flussi di energia"
+        "flows": "Flussi di energia",
+        "storage": "Accumulo"
       },
       "ir": {
         "canLearn": "Può apprendere",

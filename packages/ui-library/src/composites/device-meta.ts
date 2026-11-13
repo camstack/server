@@ -63,6 +63,7 @@ import {
   WashingMachine,
   Waves,
   RadioTower,
+  SolarPanel,
   Wifi,
   Wind,
   Workflow,
@@ -199,6 +200,7 @@ export const FAST_ICON_GLYPHS: Readonly<
   plug: Plug,
   heater: Heater,
   'radio-tower': RadioTower,
+  'solar-panel': SolarPanel,
 }
 
 /** The glyph of a device: its role's icon when the role is known, else its type's (`deviceIconKey`). */
@@ -238,6 +240,10 @@ const DEVICE_TYPE_LABELS: Record<DeviceType, DeviceMetaLabel> = {
   [DeviceType.HeatPump]: {
     labelKey: 'uiLibrary.deviceMeta.type.heatPump',
     labelFallback: 'Heat pump',
+  },
+  [DeviceType.EnergySystem]: {
+    labelKey: 'uiLibrary.deviceMeta.type.energySystem',
+    labelFallback: 'Energy system',
   },
   [DeviceType.Button]: {
     labelKey: 'uiLibrary.deviceMeta.type.button',

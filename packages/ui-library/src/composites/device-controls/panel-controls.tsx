@@ -312,6 +312,7 @@ const MEDIA_KINDS: readonly ConnectedCardKind[] = ['media']
 const VACUUM_KINDS: readonly ConnectedCardKind[] = ['vacuum']
 const MOWER_KINDS: readonly ConnectedCardKind[] = ['mower']
 const WATER_HEATER_KINDS: readonly ConnectedCardKind[] = ['water-heater']
+const ENERGY_KINDS: readonly ConnectedCardKind[] = ['energy']
 
 export function ApplianceCardHero(props: DeviceControlProps): ReactNode {
   return <ResolvedCardHero {...props} kinds={APPLIANCE_KINDS} />
@@ -335,6 +336,10 @@ export function MowerCardHero(props: DeviceControlProps): ReactNode {
 
 export function WaterHeaterCardHero(props: DeviceControlProps): ReactNode {
   return <ResolvedCardHero {...props} kinds={WATER_HEATER_KINDS} />
+}
+
+export function EnergyCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={ENERGY_KINDS} />
 }
 
 // ── MediaPlayer ───────────────────────────────────────────────────────────────

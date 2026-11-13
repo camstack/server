@@ -26,6 +26,7 @@ import { LawnMowerInlineControl } from './lawn-mower-control'
 import { ValveInlineControl, ValveHeroCard } from './valve-control'
 import { HumidifierInlineControl, HumidifierHeroCard } from './humidifier-control'
 import { WaterHeaterInlineControl } from './water-heater-control'
+import { EnergySystemInlineControl } from './energy-system-control'
 import { WeatherInlineControl, WeatherHeroCard } from './weather-control'
 import { ImageInlineControl, ImageHeroCard } from './image-control'
 import { PetFeederInlineControl, PetFeederHeroCard } from './pet-feeder-panel'
@@ -52,6 +53,7 @@ import {
   VacuumCardHero,
   MowerCardHero,
   WaterHeaterCardHero,
+  EnergyCardHero,
   AlarmPanelInlineControl,
   AlarmHeroCard,
   ScriptInlineControl,
@@ -181,6 +183,11 @@ const WATER_HEATER_CONTROL: DeviceTypeControl = {
   HeroCard: WaterHeaterCardHero,
 }
 
+const ENERGY_SYSTEM_CONTROL: DeviceTypeControl = {
+  InlineControl: EnergySystemInlineControl,
+  HeroCard: EnergyCardHero,
+}
+
 const WEATHER_CONTROL: DeviceTypeControl = {
   InlineControl: WeatherInlineControl,
   HeroCard: WeatherHeroCard,
@@ -256,6 +263,7 @@ const CONTROL_KIND_COMPONENTS: Record<DeviceControlKind, DeviceTypeControl> = {
   appliance: APPLIANCE_CONTROL,
   script: SCRIPT_CONTROL,
   automation: AUTOMATION_CONTROL,
+  'energy-system': ENERGY_SYSTEM_CONTROL,
   dummy: DUMMY_CONTROL,
 }
 
@@ -324,6 +332,8 @@ export const CONTROL_FILLS: Record<DeviceType, boolean> = {
   [DeviceType.WaterHeater]: false,
   // Heat pump inline = no inline control yet; the hero carries the modes (D1026).
   [DeviceType.HeatPump]: false,
+  // Energy system inline = solar kW · storage % readout (natural width).
+  [DeviceType.EnergySystem]: false,
   [DeviceType.Sensor]: false,
   [DeviceType.Presence]: false,
   // ── natural width: readout (event stream, no interactive control) ──────
