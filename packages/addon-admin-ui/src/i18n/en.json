@@ -9883,7 +9883,8 @@
       "selectDevice": "Select device…",
       "clear": "Clear",
       "pickAnother": "Pick another",
-      "remove": "Remove"
+      "remove": "Remove",
+      "and": "and"
     },
     "conditionKindPicker": {
       "search": "Search conditions…",

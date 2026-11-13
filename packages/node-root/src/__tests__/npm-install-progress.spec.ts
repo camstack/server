@@ -241,7 +241,7 @@ describe('bounded install progress', () => {
 
   it('does not stall a tree over the walk budget on its own', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-watch-budget-'))
-    fillFiles(dir, 20_001)
+    fillFiles(dir, 51)
     const lines: string[] = []
     let clock = 0
     const spawnProcess: WatchedSpawner = () => deferredChild(7105).child
@@ -249,6 +249,7 @@ describe('bounded install progress', () => {
       command: process.execPath,
       args: ['-e', ''],
       cwd: dir,
+      progressEntryBudget: 50,
       stallMs: 1_000,
       ceilingMs: 1_000,
       pollMs: 1_000,

@@ -180,6 +180,9 @@ function recordingDevice(calls: RecordedCall[]): CapCommandDevice {
       setState: async (input) => {
         calls.push({ method: 'switch.setState', input })
       },
+      toggle: async (input) => {
+        calls.push({ method: 'switch.toggle', input })
+      },
       getStatus: async () => null,
     },
     lockControl: {

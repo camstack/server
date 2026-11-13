@@ -145,6 +145,8 @@ export interface RunWatchedCommandOptions {
   readonly watchProgress?: boolean
   /** Directories outside `cwd` whose growth is also progress (npm cache). */
   readonly progressDirs?: readonly string[]
+  /** Entries one progress walk may read; tests lower it to cross the budget cheaply. */
+  readonly progressEntryBudget?: number
   readonly platform?: NodeJS.Platform
   readonly execPath?: string
   readonly env?: NodeJS.ProcessEnv
@@ -494,6 +496,7 @@ function progressReader(
       env: options.env ?? {},
       previousCheap: previousCheap(),
       aborted,
+      entryBudget: options.progressEntryBudget,
     })
 }
 

@@ -9905,7 +9905,8 @@
       "selectDevice": "Seleziona dispositivo…",
       "clear": "Cancella",
       "pickAnother": "Sceglierne un altro",
-      "remove": "Rimuovi"
+      "remove": "Rimuovi",
+      "and": "e"
     },
     "conditionKindPicker": {
       "search": "Cerca condizioni…",

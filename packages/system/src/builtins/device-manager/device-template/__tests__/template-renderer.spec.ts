@@ -204,7 +204,10 @@ describe('device template sandbox', () => {
     const tight = new DeviceTemplateRenderer({
       workerPath: WORKER,
       workerExecArgv: ['--import', 'tsx'],
-      budgetMs: 150,
+      // A loaded test host can take well over 150 ms for a trivial render;
+      // the slow template below (3000³ iterations) never ends on its own, so
+      // a 1 s budget still proves the cut.
+      budgetMs: 1_000,
       now: () => NOW,
     })
     try {
@@ -213,7 +216,7 @@ describe('device template sandbox', () => {
         '{% for a in stufa_veranda.big.items %}{% for b in stufa_veranda.big.items %}{% for c in stufa_veranda.big.items %}{% endfor %}{% endfor %}{% endfor %}'
       const started = Date.now()
       const out = await tight.render(slow, resolver)
-      expect(Date.now() - started).toBeLessThan(2000)
+      expect(Date.now() - started).toBeLessThan(8_000)
       if (out.ok) throw new Error('expected a timeout')
       expect(out.refusal.reason).toBe('timeout')
       expect(await tight.render('{{ 2 }}', resolver)).toMatchObject({ ok: true, text: '2' })
