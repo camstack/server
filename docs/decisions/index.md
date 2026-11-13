@@ -4,7 +4,7 @@
 
 # Decisions
 
-1015 architecture decision records. One file per decision, never
+1016 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -898,7 +898,7 @@ that rots.
 | D917 | [A keyed array records history per item key, and an orphan series is reported, never purged on that judgement](adr-0917-a-keyed-array-is-history-by-item-key-and-an-orphan-series-is-reported-not-purged.md) | ✅ accepted | 2026-10-23 |
 | D918 | [A camera grant operates its accessories, and the motion-trigger toggle is operate, not configure](adr-0918-a-camera-grant-operates-its-accessories-and-the-motion-trigger-toggle-is-operate.md) | ✅ accepted | 2026-10-23 |
 | D919 | [An accelerator is what the bus shows, re-probed every minute, and a device that left is absent](adr-0919-an-accelerator-is-what-the-bus-shows-re-probed-every-minute-and-a-device-that-left-is-absent.md) | ✅ accepted | 2026-10-23 |
-| D920 | [A device's vocabulary is one cap-keyed map outside the caps](adr-0920-a-devices-vocabulary-is-one-cap-keyed-map-outside-the-caps.md) | ✅ accepted | 2026-10-23 |
+| D920 | [A device's vocabulary is one cap-keyed map outside the caps](adr-0920-a-devices-vocabulary-is-one-cap-keyed-map-outside-the-caps.md) | ↩︎ superseded | 2026-10-23 |
 | D921 | [A person is an admin or a viewer, and a viewer is its devices and its named features](adr-0921-a-person-is-an-admin-or-a-viewer-and-a-viewer-is-its-devices-and-its-features.md) | ✅ accepted | 2026-10-23 |
 | D922 | [A birth suppression names its reason and carries the score the crop really held](adr-0922-a-birth-suppression-names-its-reason-and-carries-the-score-the-crop-really-held.md) | ✅ accepted | 2026-10-23 |
 | D923 | [A camera-recorded clip carries our detections, joined by its provider with the one overlap rule](adr-0923-a-camera-recorded-clip-carries-our-detections-joined-by-its-provider-with-the-one-overlap-rule.md) | ✅ accepted | 2026-10-23 |
@@ -1029,6 +1029,7 @@ that rots.
 | D1047 | [An OAuth link names its instance, and no instance means the default one](adr-1047-an-oauth-link-names-its-instance-and-no-instance-means-the-default-one.md) | ✅ accepted | 2026-11-11 |
 | D1048 | [A battery connection error is a sustained whole-camera outage](adr-1048-a-battery-connection-error-is-a-sustained-whole-camera-outage.md) | ✅ accepted | 2026-11-12 |
 | D1049 | [A device has one exposed name per export instance, and a rename never changes the exported id](adr-1049-a-device-has-one-exposed-name-per-export-instance-and-a-rename-never-changes-the-exported-id.md) | ✅ accepted | 2026-11-12 |
+| D1050 | [A cap's vocabulary is declared on the cap, and the map is generated](adr-1050-a-caps-vocabulary-is-declared-on-the-cap-and-generated.md) | ✅ accepted (supersedes D920) | 2026-11-13 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 
 Conventions, and why the numbering looks the way it does:

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The automation editor offers a heat-pump circuit as a list of the circuits the heat pump reports
+
+## [1.2.658] - 2026-11-13
+
 - The device card History view has Italian and English labels for actuations
 
 ## [1.2.657] - 2026-11-13

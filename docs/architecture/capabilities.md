@@ -130,11 +130,14 @@ inside an admin-only one, fails the build until the classification is updated.
    framework upload is refused: it ships as a published `@camstack/server` closure
    ([update-and-release.md](update-and-release.md)).
 7. **Spec it** in `server/backend/src/__tests__/cap-routers/`.
-8. **Phrase it** in the cap vocabulary (`packages/types/src/device/cap-vocabulary/`,
-   [D920](../decisions/adr-0920-a-devices-vocabulary-is-one-cap-keyed-map-outside-the-caps.md)):
-   a system cap says why it is not a device's vocabulary; a device cap names its
-   actions, state and event triggers in English and Italian, or excuses each
-   operate method and event with a reason. The map's type refuses a missing cap;
+8. **Phrase it** in the cap itself
+   ([D1050](../decisions/adr-1050-a-caps-vocabulary-is-declared-on-the-cap-and-generated.md)):
+   an operate method lists its `actions` (en/it label and phrase, icon, fixed and
+   open args) or says why not with `notOperatorFacing`; an event carries its
+   `trigger` or its reason; the cap's `vocabulary` block holds the noun, picker
+   `order`, state triggers and overrides — for a system cap, only why it is not a
+   device's vocabulary. `npm run codegen` generates the map
+   (`packages/types/src/generated/cap-vocabulary.ts`, never hand-edited);
    `scripts/check-cap-vocabulary.ts` refuses an unphrased operate method or event.
 
 The router builder does **not** re-validate output — it is a structural

@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An IR transmitter remembers its last send and its last learn, including a refusal. A learn the transmitter cannot do is not recorded.
+### Added
+
+- Automations can now save a PTZ preset, set or capture the PTZ home position and its idle return, and change heat-pump circuit and hot-water settings, picking the circuit from the ones the heat pump reports
 
 ## [1.2.560] - 2026-11-13
 

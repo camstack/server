@@ -1,7 +1,8 @@
 ---
 id: D920
 title: A device's vocabulary is one cap-keyed map outside the caps
-status: accepted
+status: superseded
+superseded-by: D1050
 date: 2026-10-23
 supersedes:
 applies-to:
