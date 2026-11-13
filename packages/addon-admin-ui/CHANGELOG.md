@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.664] - 2026-11-13
+
 ### Changed
 
 - A template action that names its devices is one Command field: the dialog picks the command and the devices together.
