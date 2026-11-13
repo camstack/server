@@ -692,6 +692,13 @@
       "summary": "\"NPU\", \"ANE\", \"Coral\", \"CPU\" — chips and tabs."
     },
     {
+      "name": "addButton",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "A new 1×1 button on the first free cell; refused as `outside` when the grid is full."
+    },
+    {
       "name": "AddonScopedSettingsForm",
       "kind": "component",
       "area": "composites",
@@ -1008,6 +1015,42 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-history/use-device-history.ts",
       "summary": "The instant a window ends at, rounded so the query key is stable between renders and the view refreshes at a pace its width justifies."
+    },
+    {
+      "name": "APP_BRANDS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/app-brand-icons.ts",
+      "summary": "The app-brand icon registry of a remote layout button. A button that opens a streaming app wears `icon: \"app:<key>\"`; this is the ONE place that turns the key into something drawable, shared by the editor's picker and…"
+    },
+    {
+      "name": "APP_ICON_PREFIX",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/app-brand-icons.ts",
+      "summary": "The app-brand icon registry of a remote layout button. A button that opens a streaming app wears `icon: \"app:<key>\"`; this is the ONE place that turns the key into something drawable, shared by the editor's picker and…"
+    },
+    {
+      "name": "AppBrandGlyph",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/AppBrandGlyph.tsx",
+      "summary": "Draws one app brand from the registry: the glyph in its brand colour where that reads on both themes (`brandFill`), else in the surrounding text colour; or the lettermark when the glyph set has none.",
+      "props": [
+        {
+          "name": "brand",
+          "type": "AppBrand",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "appIconKey",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/app-brand-icons.ts",
+      "summary": "The app-brand icon registry of a remote layout button. A button that opens a streaming app wears `icon: \"app:<key>\"`; this is the ONE place that turns the key into something drawable, shared by the editor's picker and…"
     },
     {
       "name": "ApplianceCard",
@@ -1812,6 +1855,13 @@
       "summary": "Bounds declared in the stored unit, expressed in the picked unit."
     },
     {
+      "name": "brandFill",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/app-brand-icons.ts",
+      "summary": "The CSS colour to draw a glyph in: its brand colour when that colour keeps at least `MIN_BRAND_CONTRAST` against the dark and the light surface, else null — the caller then uses the surrounding text colour."
+    },
+    {
       "name": "Breadcrumb",
       "kind": "component",
       "area": "composites",
@@ -1894,6 +1944,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/data-records/data-records-model.ts",
       "summary": "Join the declared kinds with the entry catalog. A pending/failed catalog (`undefined`) leaves titles `null`; it never changes which kinds are listed."
+    },
+    {
+      "name": "buildLayout",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "A grid of `columns` × `rows` with `specs` placed on it, each through the same placement check an edit goes through. Meant for code-defined layouts (the built-in presets): a spec that overlaps or leaves the grid is a p…"
     },
     {
       "name": "buildPeerConnectionConfig",
@@ -2557,6 +2614,13 @@
       "props": []
     },
     {
+      "name": "checkedLayout",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The grid as the template store will read it, or null when the schema refuses it."
+    },
+    {
       "name": "childEntityId",
       "kind": "function",
       "area": "composites",
@@ -2644,6 +2708,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/timeline-slider.tsx",
       "summary": "Keep a minute on the day."
+    },
+    {
+      "name": "clampToGrid",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/remote-look.ts",
+      "summary": "A rectangle clipped to the grid, so a footprint that sticks out is still drawn inside it."
     },
     {
       "name": "CLASS_COLORS",
@@ -3690,6 +3761,13 @@
       ]
     },
     {
+      "name": "copyOfPreset",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-presets.ts",
+      "summary": "An independent, editable copy of a preset's layout, or null for an unknown id."
+    },
+    {
       "name": "Corner",
       "kind": "component",
       "area": "composites",
@@ -4274,6 +4352,20 @@
       "summary": "Primary colour when nothing else matches — the first bundled fallback."
     },
     {
+      "name": "DEFAULT_LAYOUT_COLUMNS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
+    },
+    {
+      "name": "DEFAULT_LAYOUT_ROWS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
+    },
+    {
       "name": "DEFAULT_PAGINATION_LABELS",
       "kind": "constant",
       "area": "composites",
@@ -4335,6 +4427,13 @@
       "area": "contexts",
       "file": "packages/ui-library/src/contexts/ui-text.tsx",
       "summary": "English fallback with `{{var}}` interpolation; what renders without a host."
+    },
+    {
+      "name": "deleteGroup",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "Delete a group; its buttons stay as loose keys or go with it."
     },
     {
       "name": "deriveClimateActivity",
@@ -6627,6 +6726,13 @@
       "summary": "The widening warning: on a picker where an empty selection means ALL devices, an empty selection that once held devices must say so."
     },
     {
+      "name": "emptyLayout",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
+    },
+    {
       "name": "emptySessionRun",
       "kind": "function",
       "area": "composites",
@@ -7389,6 +7495,13 @@
       "summary": "One hub session run, as an immutable event log folded into a report."
     },
     {
+      "name": "firstFreeCell",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The first free 1×1 cell outside every group, reading left to right and top to bottom."
+    },
+    {
       "name": "flattenPickerGrouping",
       "kind": "function",
       "area": "composites",
@@ -7712,6 +7825,13 @@
       ]
     },
     {
+      "name": "frameClass",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/remote-look.ts",
+      "summary": "Classes for the box drawn behind a group; `none`, `divider` and unknown frames draw no box."
+    },
+    {
       "name": "freezeVerdict",
       "kind": "function",
       "area": "composites",
@@ -7843,6 +7963,13 @@
       "summary": "Coalesce CONSECUTIVE columns that share an `agentNodeId` into node groups. Order-preserving: the flat column order is untouched, so body cells still map 1:1 to `agents`. A run of length 1 is a plain (ungrouped) node h…"
     },
     {
+      "name": "groupById",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
+    },
+    {
       "name": "groupChildrenByLayout",
       "kind": "function",
       "area": "composites",
@@ -7929,6 +8056,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-picker/device-picker-model.ts",
       "summary": "Group the list by zone, location or nothing."
+    },
+    {
+      "name": "groupsOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
     },
     {
       "name": "hardwareLabel",
@@ -8907,6 +9041,13 @@
       "summary": "`climate-control` → `Climate control`."
     },
     {
+      "name": "humanRole",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "`volume_up` → `Volume up`; `custom:hdmi_1` → `hdmi 1`. The fallback of an untranslated role."
+    },
+    {
       "name": "HumidifierHeroCard",
       "kind": "component",
       "area": "composites",
@@ -9488,6 +9629,13 @@
       "summary": "Whether a cap state field IS a consumable level: an enum whose members are exactly the supply levels (`ok | low | empty`). Derived from the schema, so a new cap that uses the vocabulary is recognised without naming it…"
     },
     {
+      "name": "isCustomRole",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
+    },
+    {
       "name": "isDataTableFilterActive",
       "kind": "function",
       "area": "composites",
@@ -9500,6 +9648,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-name/device-name-nouns.ts",
       "summary": "Short nouns and the stock words they replace."
+    },
+    {
+      "name": "isDividerFrame",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/remote-look.ts",
+      "summary": "Whether the frame is a rule across the grid with a title, not a box."
     },
     {
       "name": "isFieldVisible",
@@ -9563,6 +9718,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/record-entries/record-entry-secrets.ts",
       "summary": "Is this JSON-schema leaf (or path) a credential field?"
+    },
+    {
+      "name": "isSlimDivider",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "How a divider is drawn: a slim rule unless the group asks for a full row."
     },
     {
       "name": "isValueField",
@@ -9736,6 +9898,13 @@
       ]
     },
     {
+      "name": "knownRolesOfGroup",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
+    },
+    {
       "name": "Label",
       "kind": "component",
       "area": "primitives",
@@ -9837,6 +10006,20 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "layoutForRemoteCommands",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/display-layout.ts",
+      "summary": "Which layout a remote is drawn with. A saved template wins. With none, the built-in preset that covers the most of the device's roles — the same starting layouts the layout editor offers — so a key is never a raw id."
+    },
+    {
+      "name": "layoutOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "A payload read from the store, or an empty grid when it is not a remote layout."
     },
     {
       "name": "LevelBar",
@@ -10467,6 +10650,13 @@
       "summary": "The volume block: shown when the player declares a volume level or volume keys."
     },
     {
+      "name": "membersOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The members of a group, in layout order."
+    },
+    {
       "name": "MenuButton",
       "kind": "component",
       "area": "composites",
@@ -10710,6 +10900,20 @@
       "summary": "The path the app is mounted at, with a trailing slash: `/` or `/<prefix>/`. Resolved once — the shell is the only thing that can say where it lives, and it says so before any script runs."
     },
     {
+      "name": "moveButton",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
+    },
+    {
+      "name": "moveGroup",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "Move a group and all its buttons as one."
+    },
+    {
       "name": "moveRangeHandle",
       "kind": "function",
       "area": "composites",
@@ -10778,6 +10982,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "nextButtonId",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
     },
     {
       "name": "nextChoice",
@@ -11988,6 +12199,13 @@
       ]
     },
     {
+      "name": "placementRefusal",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "Why `candidate` cannot sit on `grid` (ignoring the button `ignoreId`), or null when it fits."
+    },
+    {
       "name": "placePopover",
       "kind": "function",
       "area": "primitives",
@@ -12859,6 +13077,13 @@
       "summary": "Install (or replace) one language of one namespace. Subscribers re-render."
     },
     {
+      "name": "REMOTE_LAYOUT_PRESETS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-presets.ts",
+      "summary": "The built-in starting points of the `remote` template kind: layouts that mirror the physical remotes people actually hold. Code-defined and read-only — they are never written to the template store. Choosing one in the…"
+    },
+    {
       "name": "RemoteControl",
       "kind": "constant",
       "area": "icons",
@@ -12871,6 +13096,99 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/Corner.tsx",
       "summary": "Bottom-right: opens the device's remote."
+    },
+    {
+      "name": "RemoteGrid",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/RemoteGrid.tsx",
+      "summary": "The button grid of a remote layout (D964, D973): the editor's canvas and the modal's preview. It draws a `RemoteLayoutPayload` — buttons with their shape and tone, groups with their frame (and, in the editor only, the…",
+      "props": [
+        {
+          "name": "grid",
+          "type": "RemoteLayoutPayload",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": "The accessible name of the grid."
+        },
+        {
+          "name": "selectedId",
+          "type": "string | null",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "onSelect",
+          "type": "(id: string) => void",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "boundRoles",
+          "type": "ReadonlySet<string>",
+          "optional": true,
+          "doc": "Roles that do something: the others are drawn as an outline."
+        },
+        {
+          "name": "showEmptyCells",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Faint cells where nothing sits — the editor shows where a button may go."
+        },
+        {
+          "name": "compact",
+          "type": "boolean",
+          "optional": true,
+          "doc": "A thumbnail: small cells, no words."
+        },
+        {
+          "name": "gridRef",
+          "type": "Ref<HTMLDivElement>",
+          "optional": true,
+          "doc": "The grid element, for the editor's pointer maths."
+        },
+        {
+          "name": "selectedGroupId",
+          "type": "string | null",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "onSelectGroup",
+          "type": "(id: string) => void",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "onItemPointerDown",
+          "type": "(item: RemoteGridDragItem, event: PointerEvent<HTMLElement>) => void",
+          "optional": true,
+          "doc": "Present = the grid is editable: items can be grabbed by pointer and nudged by arrow keys."
+        },
+        {
+          "name": "onItemKeyDown",
+          "type": "(item: RemoteGridDragItem, event: KeyboardEvent<HTMLElement>) => void",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "drag",
+          "type": "GridDrag | null",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "renderWidget",
+          "type": "(button: RemoteLayoutButton, style: RemoteGridPlacement) => ReactNode",
+          "optional": true,
+          "doc": "Where the grid is USED (not edited): draws a widget key (`source_select`). Returning null draws an empty cell; a grid without it draws the w"
+        }
+      ]
     },
     {
       "name": "remoteKeyIconOnly",
@@ -12898,13 +13216,25 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/Overlays.tsx",
-      "summary": "Replaces the scene: the keys the device's remote declares, as a pad when it has one.",
+      "summary": "Replaces the scene: the saved layout, or the keys the device declares.",
       "props": [
         {
           "name": "keys",
           "type": "readonly CardRemoteKey[]",
           "optional": false,
           "doc": ""
+        },
+        {
+          "name": "panel",
+          "type": "CardRemotePanel | null",
+          "optional": true,
+          "doc": "The layout grid. Null: the declared keys, as a pad when they have one."
+        },
+        {
+          "name": "layoutPending",
+          "type": "boolean",
+          "optional": true,
+          "doc": "A saved layout has not arrived yet: draw the frame, never the raw keys."
         },
         {
           "name": "onKey",
@@ -12925,6 +13255,13 @@
           "doc": "Drawn under the keys: what the scene does not (shuffle, repeat)."
         }
       ]
+    },
+    {
+      "name": "removeButton",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
     },
     {
       "name": "renderMarkup",
@@ -12969,11 +13306,32 @@
       "summary": "Reset clears search, Type, Zone and Location — never \"Group by\"."
     },
     {
+      "name": "resizeButton",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
+    },
+    {
+      "name": "resizeGrid",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "New grid size; refused when a button would be left outside it."
+    },
+    {
       "name": "RESOLUTION_BUCKET_MS",
       "kind": "constant",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-history/history-window.ts",
       "summary": "Milliseconds a rollup bucket of a resolution covers (`1d` is nominal across DST)."
+    },
+    {
+      "name": "resolveAppBrand",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/app-brand-icons.ts",
+      "summary": "The brand an `icon` value names, or undefined when it is not an `app:` key of the registry."
     },
     {
       "name": "resolveContainerPrimary",
@@ -13265,6 +13623,13 @@
       "summary": "Keyed by DeviceRole string value. Every entry maps a role to the exact proxy state accessor + rendering instructions. The accessor avoids dynamic string indexing — each one is a concrete property access on the typed `…"
     },
     {
+      "name": "ROLE_GROUP_ORDER",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
+    },
+    {
       "name": "RoleDisplayDefaultsFromServer",
       "kind": "component",
       "area": "composites",
@@ -13299,6 +13664,20 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "roleGroup",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The group a known role is listed under; derived from the vocabulary, never a second list."
+    },
+    {
+      "name": "roleName",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/role-vocabulary.ts",
+      "summary": "The localized name of any role (a custom role is named by its key)."
     },
     {
       "name": "RoleNodePill",
@@ -13429,6 +13808,13 @@
       "area": "lib",
       "file": "packages/ui-library/src/lib/hub-mount.ts",
       "summary": "`<BrowserRouter basename>`: the mount without its trailing slash."
+    },
+    {
+      "name": "rowWeightsOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "Relative row heights (rem, gaps included) for mapping a pointer to a row."
     },
     {
       "name": "RUN_WINDOW_MARGIN_MS",
@@ -14273,6 +14659,34 @@
       "summary": "Stable identity of a series ref (React key, dedup, colour slot)."
     },
     {
+      "name": "setButtonFace",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "Role, icon and label of a button — the parts that never move it."
+    },
+    {
+      "name": "setButtonLook",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "Shape and tone of a button — drawing only, it never moves anything."
+    },
+    {
+      "name": "setGroupTitle",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "A group's frame title; blank clears it."
+    },
+    {
+      "name": "setSeparatorOptions",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "A divider's size and whether its label is drawn; the defaults are stored as absent."
+    },
+    {
       "name": "SETTING_ROW",
       "kind": "constant",
       "area": "lib",
@@ -14360,11 +14774,25 @@
       "summary": "The model a step's settings are read and written for — what a model-bound field (D738) binds to. While the ROOT supplies the step's fine label (D741), that is the root model: the step's threshold then gates the root's…"
     },
     {
+      "name": "shapeClass",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/remote-look.ts",
+      "summary": "Classes for a button's shape; unknown or absent → '' (the button's own rounding)."
+    },
+    {
       "name": "sharedGapSpans",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/charts/chart-data.ts",
       "summary": "The holes every series shares (the intersection), so the chart shades only what NOBODY measured. Series without `gapMs` never contribute a hole and so make the intersection empty: a held value is not unmeasured."
+    },
+    {
+      "name": "shiftButton",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
     },
     {
       "name": "shiftPoints",
@@ -14559,6 +14987,13 @@
       ]
     },
     {
+      "name": "slimRowsOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/layout-model.ts",
+      "summary": "The grid rows that hold nothing but slim dividers; they are drawn as a thin strip instead of a full-height row."
+    },
+    {
       "name": "snapMinute",
       "kind": "function",
       "area": "composites",
@@ -14657,6 +15092,45 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/table-sort.ts",
       "summary": "Return a NEW array of `rows` ordered by `sort`."
+    },
+    {
+      "name": "SourceSelectKey",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/SourceSelectKey.tsx",
+      "summary": "The `source_select` key of a remote layout (planning#460): a widget, not a command. It shows the source the remote assumes is on (else \"Sources\"); a tap opens a picker of the declared sources — Channels (number and na…",
+      "props": [
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "button",
+          "type": "RemoteLayoutButton",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "sources",
+          "type": "readonly RemoteSource[]",
+          "optional": false,
+          "doc": "The declared sources; none = the key is not drawn."
+        },
+        {
+          "name": "current",
+          "type": "string",
+          "optional": false,
+          "doc": "The source the remote assumes is on (`getAssumedStatus.source`), empty when unknown."
+        },
+        {
+          "name": "placement",
+          "type": "RemoteGridPlacement",
+          "optional": false,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "Sparkline",
@@ -16454,6 +16928,13 @@
       "summary": "Tick or untick one filter key."
     },
     {
+      "name": "toneClass",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/remote-look.ts",
+      "summary": "Classes for a button's tone; unknown, absent or `neutral` → '' (the secondary look)."
+    },
+    {
       "name": "Tooltip",
       "kind": "component",
       "area": "primitives",
@@ -17739,6 +18220,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/dishwasher-options.tsx",
       "summary": "Raised events the page may name. Consumable events are dropped."
+    },
+    {
+      "name": "vocabLocale",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/remote/role-vocabulary.ts",
+      "summary": "`it`, `it-IT` → `it`; everything else → `en`."
     },
     {
       "name": "VodPlaybackProvider",
