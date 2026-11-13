@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.171] - 2026-11-13
+
 ### Fixed
 
 - Dahua and Amcrest smart events (person, vehicle, tripwire, intrusion) now start and stop motion recordings the same way ordinary motion does.
