@@ -135,7 +135,7 @@ export const CcuDeviceRowSchema = z.object({
    * Key channels of an ADOPTED device, and whether the CCU sends their presses
    * (a central link). Empty for a device that is not adopted or has no keys.
    */
-  keyChannels: z.array(KeyChannelLinkSchema),
+  keyChannels: z.array(KeyChannelLinkSchema).default([]),
 })
 export type CcuDeviceRow = z.infer<typeof CcuDeviceRowSchema>
 
