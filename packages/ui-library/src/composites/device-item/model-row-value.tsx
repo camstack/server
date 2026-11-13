@@ -29,6 +29,7 @@ import { useTrpcClient } from '../../contexts/system-context'
 import { useUiText } from '../../contexts/ui-text'
 import { useUnitPreferences } from '../../contexts/unit-preferences'
 import { cn } from '../../lib/cn'
+import { formatControlDateTime } from '../../lib/format-control-datetime'
 import { Button } from '../../primitives/button'
 import { Select } from '../../primitives/select'
 import { Switch } from '../../primitives/switch'
@@ -295,6 +296,14 @@ const READOUT_TYPES: ReadonlySet<string> = new Set([
   DeviceType.EventEmitter,
 ])
 
+/** A date / time / datetime control reads out in the viewer's locale, as its row always did. */
+function readoutText(device: RowValueDevice, text: string): string {
+  const shape = device.sourceInfo?.dateTimeShape
+  return device.type === DeviceType.Control && shape !== undefined && text !== ''
+    ? formatControlDateTime(text, shape)
+    : text
+}
+
 export interface ModelRowControlProps {
   readonly device: RowValueDevice
 }
@@ -369,7 +378,7 @@ export function ModelRowControl({ device }: ModelRowControlProps): ReactNode {
         data-testid="row-readout"
         className="min-w-0 truncate text-xs text-foreground-muted"
       >
-        {pickText(head, lang)}
+        {readoutText(device, pickText(head, lang))}
       </span>
     )
   }

@@ -13,6 +13,7 @@ import {
   type DeviceDisplayOverride,
   type SourceInfo,
 } from '@camstack/types'
+import { formatControlDateTime } from '../../../lib/format-control-datetime'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -198,6 +199,16 @@ describe('a Control row edits its primary control', () => {
     render(<ModelRowControl device={device()} />)
     expect(screen.getByTestId('row-readout').textContent).toBe('2026-11-12T10:00:00Z')
     expect(screen.queryByRole('textbox')).toBeNull()
+  })
+
+  it('a date control with a shape is read out in the locale, not as the raw value', () => {
+    answer([controlRow({ kind: 'datetime', value: '2026-11-12' })])
+    render(
+      <ModelRowControl device={device({ sourceInfo: { id: 'd', system: 'ha', dateTimeShape: 'date' } })} />,
+    )
+    const text = screen.getByTestId('row-readout').textContent
+    expect(text).toBe(formatControlDateTime('2026-11-12', 'date'))
+    expect(text).not.toBe('2026-11-12')
   })
 })
 
