@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Homematic: needs nodehomematic 0.6; the button-press (central link) switch now always reads and writes the CCU, and a failed read shows as unknown instead of unavailable
 - Homematic: a button device's page shows, per key, whether its presses reach CamStack, which channels it switches through direct links, and a confirmed switch to turn the presses on or off; the CCU page's button dialog lists the direct links too
+- CCU page: a Direct links tab lists the CCU's links with their profile, and creates, edits and deletes key → switch actuator links after a confirmation
 
 ## [1.2.194] - 2026-11-13
 

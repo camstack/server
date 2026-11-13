@@ -581,3 +581,107 @@ describe('HomematicCcuPage button events', () => {
     })
   })
 })
+
+describe('HomematicCcuPage links', () => {
+  const key1 = {
+    address: 'BS2:1',
+    name: 'Bathroom key left',
+    deviceName: 'Bathroom key',
+    deviceType: 'HmIP-BS2',
+  }
+  const key2 = { address: 'BS2:2', name: null, deviceName: 'Bathroom key', deviceType: 'HmIP-BS2' }
+  const relay = {
+    address: 'BS2:4',
+    name: 'Bathroom light',
+    deviceName: 'Bathroom key',
+    deviceType: 'HmIP-BS2',
+  }
+  const LINKS = {
+    links: [
+      {
+        sender: key1,
+        receiver: relay,
+        name: '',
+        description: '',
+        profile: { kind: 'switch', short: 'toggle', long: 'off' },
+      },
+      { sender: key2, receiver: relay, name: 'x', description: '', profile: { kind: 'custom' } },
+    ],
+    senders: [key1, key2],
+    receivers: [relay],
+    failures: [{ address: 'RCV', deviceName: 'Remote', error: 'getLinks fault' }],
+  }
+
+  function mountLinks(extra: Record<string, Handler>) {
+    window.history.replaceState(null, '', '/?tab=links')
+    const fake = fakeTrpc({
+      listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
+      listCcuLinks: () => LINKS,
+      ...extra,
+    })
+    mountPage(fake.trpc)
+    return fake.calls
+  }
+
+  it('lists links with their profile and names a partial read', async () => {
+    mountLinks({})
+    expect(await screen.findByText('Short: Toggle · Long: Off')).toBeTruthy()
+    expect(screen.getByText('Custom (not editable here)')).toBeTruthy()
+    expect(screen.getByText('Bathroom key:2')).toBeTruthy()
+    expect(screen.getByText(/could not be read/)).toBeTruthy()
+  })
+
+  it('deletes a link only after the operator confirms', async () => {
+    const del = vi.fn().mockReturnValue({ ok: true })
+    mountLinks({ deleteCcuLink: del })
+    await screen.findByText('Short: Toggle · Long: Off')
+    fireEvent.click(screen.getAllByRole('button', { name: /More actions/ })[0] as HTMLElement)
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete link' }))
+    const confirm = await screen.findByRole('dialog', { name: /Delete direct link/ })
+    expect(del).not.toHaveBeenCalled()
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Delete link' }))
+    await waitFor(() => expect(del).toHaveBeenCalled())
+    expect(del.mock.calls[0]?.[0]).toEqual({
+      integrationId: 'hm_1',
+      sender: expect.stringMatching(/^BS2:/),
+      receiver: 'BS2:4',
+      confirmed: true,
+    })
+  })
+
+  it('creates a key → switch link with the picked profile only after confirmation', async () => {
+    const create = vi.fn().mockReturnValue({ ok: true })
+    mountLinks({ createCcuLink: create })
+    const newLink = await screen.findByRole('button', { name: /New link/ })
+    await waitFor(() => expect((newLink as HTMLButtonElement).disabled).toBe(false))
+    fireEvent.click(newLink)
+    const form = await screen.findByTestId('hm-link-dialog')
+    const [sender, receiver, short, long] = within(form).getAllByRole('combobox')
+    selectOption(sender as HTMLElement, 'BS2:2')
+    selectOption(receiver as HTMLElement, 'BS2:4')
+    selectOption(short as HTMLElement, 'on')
+    selectOption(long as HTMLElement, 'none')
+    fireEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    const confirm = await screen.findByRole('dialog', { name: /Create direct link/ })
+    expect(create).not.toHaveBeenCalled()
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Create link' }))
+    await waitFor(() => expect(create).toHaveBeenCalled())
+    expect(create.mock.calls[0]?.[0]).toEqual({
+      integrationId: 'hm_1',
+      sender: 'BS2:2',
+      receiver: 'BS2:4',
+      short: 'on',
+      long: 'none',
+      confirmed: true,
+    })
+  })
+
+  it('offers no profile edit on a custom link', async () => {
+    mountLinks({})
+    await screen.findByText('Custom (not editable here)')
+    const menus = screen.getAllByRole('button', { name: /More actions/ })
+    fireEvent.click(menus[1] as HTMLElement)
+    await screen.findByRole('button', { name: 'Delete link' })
+    expect(screen.queryByRole('button', { name: 'Change profile' })).toBeNull()
+  })
+})

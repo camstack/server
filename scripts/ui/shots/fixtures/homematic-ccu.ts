@@ -110,6 +110,84 @@ const ACTIONS: Readonly<Record<string, unknown>> = {
     error: null,
   },
   listCcuDevices: { devices: DEVICES },
+  listCcuLinks: {
+    links: [
+      {
+        sender: {
+          address: '0001D3C99C5678:1',
+          name: 'Hall key left',
+          deviceName: 'Hall buttons',
+          deviceType: 'HmIP-BS2',
+        },
+        receiver: {
+          address: '0001D3C99C5678:4',
+          name: 'Hall light',
+          deviceName: 'Hall buttons',
+          deviceType: 'HmIP-BS2',
+        },
+        name: '',
+        description: '',
+        profile: { kind: 'switch', short: 'toggle', long: 'off' },
+      },
+      {
+        sender: {
+          address: '0001D3C99C5678:2',
+          name: null,
+          deviceName: 'Hall buttons',
+          deviceType: 'HmIP-BS2',
+        },
+        receiver: {
+          address: '0001D3C99C5678:4',
+          name: 'Hall light',
+          deviceName: 'Hall buttons',
+          deviceType: 'HmIP-BS2',
+        },
+        name: 'Night light',
+        description: '',
+        profile: { kind: 'custom' },
+      },
+      {
+        sender: {
+          address: '000A1D89ABCDEF:1',
+          name: null,
+          deviceName: 'Kitchen window',
+          deviceType: 'HmIP-SWDO',
+        },
+        receiver: {
+          address: '0001D3C99C5678:4',
+          name: 'Hall light',
+          deviceName: 'Hall buttons',
+          deviceType: 'HmIP-BS2',
+        },
+        name: '',
+        description: '',
+        profile: null,
+      },
+    ],
+    senders: [
+      {
+        address: '0001D3C99C5678:1',
+        name: 'Hall key left',
+        deviceName: 'Hall buttons',
+        deviceType: 'HmIP-BS2',
+      },
+      {
+        address: '0001D3C99C5678:2',
+        name: null,
+        deviceName: 'Hall buttons',
+        deviceType: 'HmIP-BS2',
+      },
+    ],
+    receivers: [
+      {
+        address: '0001D3C99C5678:4',
+        name: 'Hall light',
+        deviceName: 'Hall buttons',
+        deviceType: 'HmIP-BS2',
+      },
+    ],
+    failures: [],
+  },
   listHeatingGroups: {
     groups: [
       {
@@ -165,7 +243,7 @@ const ACTIONS: Readonly<Record<string, unknown>> = {
 /** The Homematic CCU addon page (`/addon/provider-homematic`): every action answers with invented, deterministic data. */
 export default defineFixtures({
   area: 'homematic-ccu',
-  description: 'Homematic CCU addon page: overview, devices, heating, pairing',
+  description: 'Homematic CCU addon page: overview, devices, links, heating, pairing',
   handlers: {
     'mut:addons.custom': (input: unknown) => {
       const action =

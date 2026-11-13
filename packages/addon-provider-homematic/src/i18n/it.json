@@ -18,7 +18,8 @@
     "notConnectedHint": "La pagina lavora su una CCU connessa. Controlla la connessione nell'integrazione.",
     "tabDevices": "Dispositivi",
     "tabHeating": "Riscaldamento",
-    "tabPairing": "Associazione"
+    "tabPairing": "Associazione",
+    "tabLinks": "Collegamenti diretti"
   },
   "overview": {
     "loadFailed": "Impossibile leggere la CCU",
@@ -179,5 +180,43 @@
     "confirmTitle": "Scrivi configurazione dispositivo",
     "confirmMessage": "{{count}} parametro/i verranno scritti su {{channel}}: {{names}}. Un valore sbagliato può cambiare il comportamento del dispositivo.",
     "confirmLabel": "Scrivi configurazione"
+  },
+  "links": {
+    "title": "Collegamenti diretti",
+    "hint": "Collegamenti che la CCU mantiene tra un canale mittente e un canale ricevente. Qui si possono creare e modificare i collegamenti tasto → attuatore; gli altri sono mostrati così come sono.",
+    "newLink": "Nuovo collegamento",
+    "editProfile": "Cambia profilo",
+    "delete": "Elimina collegamento",
+    "save": "Salva",
+    "pick": "Scegli un canale",
+    "fieldSender": "Canale tasto (mittente)",
+    "fieldSenderHint": "Solo i canali tasto possono avviare un collegamento creato qui.",
+    "fieldReceiver": "Canale attuatore (ricevente)",
+    "fieldReceiverHint": "Per ora solo canali attuatore di commutazione.",
+    "fieldShort": "Pressione breve",
+    "fieldLong": "Pressione lunga",
+    "action_toggle": "Commuta",
+    "action_on": "Accendi",
+    "action_off": "Spegni",
+    "action_none": "Nulla",
+    "colSender": "Mittente",
+    "colReceiver": "Ricevente",
+    "colName": "Nome",
+    "colProfile": "Profilo",
+    "profileCustom": "Personalizzato (non modificabile qui)",
+    "profileSwitch": "Breve: {{short}} · Lunga: {{long}}",
+    "none": "Nessun collegamento diretto su questa CCU.",
+    "loadFailed": "Impossibile leggere i collegamenti diretti",
+    "partial_one": "Non è stato possibile leggere i collegamenti di {{count}} dispositivo; l'elenco è incompleto",
+    "partial_other": "Non è stato possibile leggere i collegamenti di {{count}} dispositivi; l'elenco è incompleto",
+    "createTitle": "Crea collegamento diretto",
+    "createMessage": "Creare il collegamento {{link}} sulla CCU (pressione breve: {{short}}, lunga: {{long}})? Il tasto comanderà l'attuatore direttamente.",
+    "createConfirm": "Crea collegamento",
+    "profileTitle": "Cambia profilo del collegamento",
+    "profileMessage": "Scrivere pressione breve: {{short}}, lunga: {{long}} sul collegamento {{link}} nella CCU?",
+    "profileConfirm": "Scrivi profilo",
+    "deleteTitle": "Elimina collegamento diretto",
+    "deleteMessage": "Eliminare il collegamento {{link}} sulla CCU? Il tasto non comanderà più direttamente quell'attuatore.",
+    "deleteConfirm": "Elimina collegamento"
   }
 }

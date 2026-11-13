@@ -18,7 +18,8 @@
     "notConnectedHint": "The page works on a connected CCU. Check the connection in the integration.",
     "tabDevices": "Devices",
     "tabHeating": "Heating",
-    "tabPairing": "Pairing"
+    "tabPairing": "Pairing",
+    "tabLinks": "Direct links"
   },
   "overview": {
     "loadFailed": "Could not read the CCU",
@@ -179,5 +180,43 @@
     "confirmTitle": "Write device configuration",
     "confirmMessage": "{{count}} parameter(s) will be written to {{channel}}: {{names}}. A wrong value can change how the device behaves.",
     "confirmLabel": "Write configuration"
+  },
+  "links": {
+    "title": "Direct links",
+    "hint": "Links the CCU keeps between a sender channel and a receiver channel. Key → switch actuator links can be created and edited here; other links are shown as they are.",
+    "newLink": "New link",
+    "editProfile": "Change profile",
+    "delete": "Delete link",
+    "save": "Save",
+    "pick": "Pick a channel",
+    "fieldSender": "Key channel (sender)",
+    "fieldSenderHint": "Only key channels can start a link created here.",
+    "fieldReceiver": "Switch actuator channel (receiver)",
+    "fieldReceiverHint": "Only switch actuator channels for now.",
+    "fieldShort": "Short press",
+    "fieldLong": "Long press",
+    "action_toggle": "Toggle",
+    "action_on": "On",
+    "action_off": "Off",
+    "action_none": "Nothing",
+    "colSender": "Sender",
+    "colReceiver": "Receiver",
+    "colName": "Name",
+    "colProfile": "Profile",
+    "profileCustom": "Custom (not editable here)",
+    "profileSwitch": "Short: {{short}} · Long: {{long}}",
+    "none": "No direct links on this CCU.",
+    "loadFailed": "Could not read the direct links",
+    "partial_one": "The links of {{count}} device could not be read; the list is incomplete",
+    "partial_other": "The links of {{count}} devices could not be read; the list is incomplete",
+    "createTitle": "Create direct link",
+    "createMessage": "Create the link {{link}} on the CCU (short press: {{short}}, long press: {{long}})? The key will switch the actuator directly.",
+    "createConfirm": "Create link",
+    "profileTitle": "Change link profile",
+    "profileMessage": "Write short press: {{short}}, long press: {{long}} to the link {{link}} on the CCU?",
+    "profileConfirm": "Write profile",
+    "deleteTitle": "Delete direct link",
+    "deleteMessage": "Delete the link {{link}} on the CCU? The key will no longer switch that actuator directly.",
+    "deleteConfirm": "Delete link"
   }
 }

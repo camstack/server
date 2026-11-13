@@ -301,3 +301,74 @@ export const SetChannelConfigInputSchema = IntegrationRefSchema.extend({
   values: z.record(z.string(), ConfigValueSchema),
   confirmed: ConfirmedSchema,
 })
+
+// ── Direct links ───────────────────────────────────────────────────────────
+
+/** What one key press does on a key → switch link (`none` ignores the press). */
+export const LINK_PRESS_ACTIONS = ['toggle', 'on', 'off', 'none'] as const
+export const LinkPressActionSchema = z.enum(LINK_PRESS_ACTIONS)
+export type LinkPressAction = z.infer<typeof LinkPressActionSchema>
+
+/**
+ * The resolved profile of a link: `switch` carries the catalogue actions,
+ * `custom` is a key → switch link whose settings match no catalogue entry (it
+ * is shown, never rewritten), `null` is any link no catalogue applies to.
+ */
+export const LinkProfileSchema = z
+  .discriminatedUnion('kind', [
+    z.object({
+      kind: z.literal('switch'),
+      short: LinkPressActionSchema,
+      long: LinkPressActionSchema,
+    }),
+    z.object({ kind: z.literal('custom') }),
+  ])
+  .nullable()
+export type LinkProfile = z.infer<typeof LinkProfileSchema>
+
+/** A channel as the CCU names it; names are `null` when the CCU holds none. */
+export const LinkEndpointSchema = z.object({
+  address: z.string(),
+  name: z.string().nullable(),
+  deviceName: z.string().nullable(),
+  deviceType: z.string().nullable(),
+})
+export type LinkEndpoint = z.infer<typeof LinkEndpointSchema>
+
+export const CcuLinkSchema = z.object({
+  sender: LinkEndpointSchema,
+  receiver: LinkEndpointSchema,
+  name: z.string(),
+  description: z.string(),
+  profile: LinkProfileSchema,
+})
+export type CcuLink = z.infer<typeof CcuLinkSchema>
+
+/** A device whose links could not be read: named, so a partial list never reads as complete. */
+export const LinkReadFailureSchema = z.object({
+  address: z.string(),
+  deviceName: z.string().nullable(),
+  error: z.string(),
+})
+export type LinkReadFailure = z.infer<typeof LinkReadFailureSchema>
+
+export const CcuLinksResultSchema = z.object({
+  links: z.array(CcuLinkSchema),
+  /** Key channels a new link may start from. */
+  senders: z.array(LinkEndpointSchema),
+  /** Switch actuator channels a new link may end at. */
+  receivers: z.array(LinkEndpointSchema),
+  failures: z.array(LinkReadFailureSchema),
+})
+export type CcuLinksResult = z.infer<typeof CcuLinksResultSchema>
+
+export const LinkRefInputSchema = IntegrationRefSchema.extend({
+  sender: z.string().min(1),
+  receiver: z.string().min(1),
+  confirmed: ConfirmedSchema,
+})
+
+export const LinkProfileInputSchema = LinkRefInputSchema.extend({
+  short: LinkPressActionSchema,
+  long: LinkPressActionSchema,
+})

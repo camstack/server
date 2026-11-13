@@ -3,6 +3,7 @@ import { z } from 'zod'
 import {
   AcknowledgeInputSchema,
   CcuDevicesResultSchema,
+  CcuLinksResultSchema,
   CcuListItemSchema,
   CcuOverviewSchema,
   CreateGroupInputSchema,
@@ -13,6 +14,8 @@ import {
   HeatingGroupSchema,
   HeatingOverviewSchema,
   IntegrationRefSchema,
+  LinkProfileInputSchema,
+  LinkRefInputSchema,
   OkResultSchema,
   PairingStatusSchema,
   SetButtonEventsInputSchema,
@@ -94,6 +97,22 @@ export const homematicActions = defineCustomActions({
     auth: 'admin',
   }),
   setButtonEvents: customAction(SetButtonEventsInputSchema, OkResultSchema, {
+    kind: 'mutation',
+    auth: 'admin',
+  }),
+  listCcuLinks: customAction(IntegrationRefSchema, CcuLinksResultSchema, {
+    kind: 'query',
+    auth: 'admin',
+  }),
+  createCcuLink: customAction(LinkProfileInputSchema, OkResultSchema, {
+    kind: 'mutation',
+    auth: 'admin',
+  }),
+  setCcuLinkProfile: customAction(LinkProfileInputSchema, OkResultSchema, {
+    kind: 'mutation',
+    auth: 'admin',
+  }),
+  deleteCcuLink: customAction(LinkRefInputSchema, OkResultSchema, {
     kind: 'mutation',
     auth: 'admin',
   }),
