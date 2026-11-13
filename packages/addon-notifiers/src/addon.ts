@@ -105,6 +105,7 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
                 subject: input.subject,
                 text: input.text,
                 ...(input.html !== undefined ? { html: input.html } : {}),
+                ...(input.images !== undefined ? { images: [...input.images] } : {}),
                 ...(input.from !== undefined ? { from: input.from } : {}),
                 ...(input.addonId !== undefined ? { addonId: input.addonId } : {}),
                 ...(input.instanceId !== undefined ? { instanceId: input.instanceId } : {}),
@@ -127,7 +128,10 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
           }
         : undefined
 
-    const adapters = buildNotifierAdapters(smtpClient)
+    const adapters = buildNotifierAdapters(smtpClient, {
+      logger: this.ctx.logger.child('email'),
+      ...(this.ctx.peerBytes !== undefined ? { peerBytes: this.ctx.peerBytes } : {}),
+    })
     const runtime = createNotificationOutputRuntime({
       store,
       adapters,

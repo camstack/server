@@ -10,6 +10,7 @@ import type { HttpNotifierAdapter, NotifierAdapter } from './adapter.js'
 import { discordAdapter } from './discord.js'
 import type { EmailSmtpClient } from './email.js'
 import { createEmailAdapter } from './email.js'
+import type { EmailAdapterDeps } from './email-images.js'
 import { gotifyAdapter } from './gotify.js'
 import { ntfyAdapter } from './ntfy.js'
 import { pushoverAdapter } from './pushover.js'
@@ -34,7 +35,10 @@ export const HTTP_NOTIFIER_ADAPTERS: readonly HttpNotifierAdapter[] = [
  * Full catalog. When `smtp` is omitted the Email kind is still listed but
  * `sendDirect` fails until the addon wires a client (tests use this).
  */
-export function buildNotifierAdapters(smtp?: EmailSmtpClient): readonly NotifierAdapter[] {
+export function buildNotifierAdapters(
+  smtp?: EmailSmtpClient,
+  email?: EmailAdapterDeps,
+): readonly NotifierAdapter[] {
   const emailSmtp: EmailSmtpClient = smtp ?? {
     async sendEmail() {
       throw new Error(
@@ -42,7 +46,7 @@ export function buildNotifierAdapters(smtp?: EmailSmtpClient): readonly Notifier
       )
     },
   }
-  return [...HTTP_NOTIFIER_ADAPTERS, createEmailAdapter(emailSmtp)]
+  return [...HTTP_NOTIFIER_ADAPTERS, createEmailAdapter(emailSmtp, email)]
 }
 
 /** Default export for specs that only need HTTP kinds + a stub email. */

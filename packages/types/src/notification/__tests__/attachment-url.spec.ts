@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { IScopedLogger, Notification } from '../../index.js'
+import type { IScopedLogger, LogExtras, Notification } from '../../index.js'
 import {
   publicEndpointReaderFrom,
   type PublicEndpointReader,
@@ -14,11 +14,12 @@ const base = (url: string): Notification => ({
   attachments: [{ mediaType: 'image', url }],
 })
 const logger = () => {
-  const log: IScopedLogger & { warn: ReturnType<typeof vi.fn> } = {
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-    error: vi.fn(),
+  const warn = vi.fn<(message: string, extras?: LogExtras) => void>()
+  const log: IScopedLogger & { readonly warn: typeof warn } = {
+    warn,
+    info: () => undefined,
+    debug: () => undefined,
+    error: () => undefined,
     child: () => log,
     withTags: () => log,
   }

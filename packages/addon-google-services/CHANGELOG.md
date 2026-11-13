@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A Google account has its own mark, so an email target badges the account instead of the Google addon's calendar icon.
+- Gmail sends notification images in the same MIME body as SMTP.
 
 ## [0.2.48] - 2026-11-13
 

@@ -280,7 +280,11 @@ export function createNotificationOutputRuntime(
             readPublicEndpoint: deps.readPublicEndpoint,
             ...(logger !== undefined ? { logger } : {}),
           })
-    const prepared = prepareNotification(caps, notification)
+    const preparedBase = prepareNotification(caps, notification)
+    const prepared =
+      notification.deviceId === undefined
+        ? preparedBase
+        : { ...preparedBase, deviceId: notification.deviceId }
 
     let attachments: readonly PreparedAttachment[]
     try {

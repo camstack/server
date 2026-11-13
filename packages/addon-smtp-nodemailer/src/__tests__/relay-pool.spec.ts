@@ -1,3 +1,5 @@
+import { Readable } from 'node:stream'
+import type { PeerBytesOpenResult } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { RelayPool } from '../relay-pool.js'
 import { RELAY_DEFAULT_BODY, type SmtpRelayBody } from '../relay-record-kinds.js'
@@ -14,6 +16,46 @@ const relay = (name: string, host: string, extra: Partial<SmtpRelayBody> = {}): 
 const mail = { to: 'ops@example.com', subject: 's', text: 't' }
 
 describe('RelayPool', () => {
+  it('attaches an image on a text mail with the shared MIME body', async () => {
+    const jpeg = Uint8Array.from([1, 2, 3, 4])
+    const opened: PeerBytesOpenResult = {
+      kind: 'body',
+      body: {
+        status: 200,
+        contentType: 'image/jpeg',
+        declaredBytes: jpeg.byteLength,
+        stream: Readable.from([jpeg]),
+        writeToFile: async () => ({ kind: 'written', bytes: jpeg.byteLength }),
+        cancel: () => undefined,
+      },
+    }
+    const { factory, built } = fakeFactory()
+    const pool = new RelayPool(factory, log, async () => opened)
+    pool.apply('int_0001', relay('a', 'smtp.a.test'))
+    await pool.sendEmail('int_0001', {
+      ...mail,
+      text: 'Hello',
+      images: [
+        {
+          ticket: {
+            url: 'http://127.0.0.1:9/img',
+            hostNodeId: 'hub',
+            expiresAtMs: Date.now() + 30_000,
+            declaredBytes: jpeg.byteLength,
+          },
+          mime: 'image/jpeg',
+          name: 'still.jpg',
+          contentId: 'camstack-image-1',
+          placement: 'attachment',
+        },
+      ],
+    })
+    const raw = String(built[0]?.sent[0]?.raw ?? '')
+    expect(raw).toContain('multipart/mixed')
+    expect(raw).toContain('Content-Disposition: attachment; filename="still.jpg"')
+    expect(raw).not.toContain('multipart/related')
+  })
+
   it('a caller that names a relay reaches that relay and no other', async () => {
     const { factory, built } = fakeFactory()
     const pool = new RelayPool(factory, log)

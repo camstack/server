@@ -64,6 +64,11 @@ export interface PreparedNotification {
   readonly ttl: number | null
   readonly tag: string | null
   /**
+   * The camera this notification is about, when it names one. Copied through so
+   * a sender that drops an image can tag the log with it.
+   */
+  readonly deviceId?: number
+  /**
    * The notifier-declared delivery parameters the rule set for this target
    * (D938), already validated by the dispatcher. An adapter reads the keys it
    * declared; absent when none were set.
@@ -245,6 +250,7 @@ export function prepareNotification(caps: TargetKindCaps, n: Notification): Prep
     sound,
     ttl,
     tag,
+    ...(n.deviceId !== undefined ? { deviceId: n.deviceId } : {}),
     ...(n.delivery !== undefined ? { delivery: n.delivery } : {}),
     bodyParts,
     renderedAs,

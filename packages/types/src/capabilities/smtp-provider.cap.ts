@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
+import { EmailImagePartSchema, EMAIL_IMAGE_MAX_COUNT } from '../notification/email-mime.js'
 
 /**
  * `smtp-provider` — pluggable email delivery surface.
@@ -11,8 +12,8 @@ import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
  * ready provider OR target a specific addonId.
  *
  * The shape stays small on purpose — `sendEmail` is enough for the
- * 90% case. Attachments / HTML templating / multi-part are room for
- * future fields without breaking the existing call sites.
+ * 90% case. An image is not a byte field on this method (D613): `images`
+ * names `peerBytes` tickets the sender opens and folds into one MIME body.
  */
 
 const EmailAddressSchema = z.email()
@@ -44,6 +45,11 @@ const SendEmailInputSchema = z.object({
   text: z.string(),
   /** Optional HTML body. Renders alongside `text` as multi-part. */
   html: z.string().optional(),
+  /**
+   * Images the caller already offered over `peerBytes`. Absent = a mail with
+   * no image. The sender opens each ticket; one it cannot read is left out.
+   */
+  images: z.array(EmailImagePartSchema).max(EMAIL_IMAGE_MAX_COUNT).optional(),
 })
 
 const SendEmailResultSchema = z.object({

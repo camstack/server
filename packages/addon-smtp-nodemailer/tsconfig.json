@@ -1,11 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "./src",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "declaration": false,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@camstack/types": ["../types/src/index.ts"]
+    }
   },
   "include": [
     "src/**/*"

@@ -6619,6 +6619,7 @@ Enum: `"matched" \| "diverged" \| "unknown"`
 - `subject`: `string`
 - `text`: `string`
 - `html?`: `string`
+- `images?`: `({ ticket: { url: string; hostNodeId: string; expiresAtMs: number; declaredBytes: number \| null }; mime: string; name: string; contentId: string; placement: "inline" \| "attachment"; deviceId?: number })[]`
 
 ### `SendEmailResultSchema`
 

@@ -1922,6 +1922,23 @@ export {
   type ResolvedLevel,
 } from './notification/degrade-engine.js'
 export {
+  assembleEmailMime,
+  type EmailImageDropped,
+  type OpenEmailImage,
+  type OutboundEmail,
+  materializeEmailImages,
+} from './notification/email-image-bytes.js'
+export {
+  EMAIL_IMAGE_MAX_COUNT,
+  EMAIL_IMAGE_MAX_TOTAL_BYTES,
+  EMAIL_IMAGE_SLOT,
+  EmailImagePartSchema,
+  type EmailImagePart,
+  type EmailMimeImage,
+  type RawMimeInput,
+  buildRawMime,
+} from './notification/email-mime.js'
+export {
   isRootRelativeUrl,
   type PublicEndpointReader,
   type PublicEndpointReading,

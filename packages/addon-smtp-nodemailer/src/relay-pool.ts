@@ -8,7 +8,14 @@
  */
 import nodemailer from 'nodemailer'
 import type SMTPTransport from 'nodemailer/lib/smtp-transport/index.js'
-import { userError, isInstanceEnabled } from '@camstack/types'
+import {
+  userError,
+  isInstanceEnabled,
+  assembleEmailMime,
+  type EmailImagePart,
+  type PeerBytesOpenResult,
+  type PeerBytesTicket,
+} from '@camstack/types'
 import type { SmtpRelayBody } from './relay-record-kinds.js'
 
 /** The part of a nodemailer transporter the pool uses; tests supply a fake of exactly this. */
@@ -35,7 +42,11 @@ export interface SendEmailRequest {
   readonly subject: string
   readonly text: string
   readonly html?: string | undefined
+  readonly images?: readonly EmailImagePart[] | undefined
 }
+
+/** Opens an image ticket at send time (the addon context exists by then, not at construct). */
+export type OpenEmailTicket = (ticket: PeerBytesTicket) => Promise<PeerBytesOpenResult>
 
 /**
  * `ready` is "the last send worked". A relay that never sent anything is NOT known to be broken:
@@ -111,6 +122,7 @@ export class RelayPool {
   constructor(
     private readonly factory: TransportFactory,
     private readonly log: RelayLog,
+    private readonly openTicket?: OpenEmailTicket,
   ) {}
 
   /** Make `id` serve `body`. An unchanged body keeps its transporter and send state. */
@@ -179,6 +191,33 @@ export class RelayPool {
       : `smtp-nodemailer: unknown relay "${instanceId}"`
   }
 
+  private async mimeOf(from: string, input: SendEmailRequest): Promise<string> {
+    const open = this.openTicket
+    return assembleEmailMime(
+      {
+        from,
+        to: input.to,
+        subject: input.subject,
+        text: input.text,
+        ...(input.cc !== undefined ? { cc: input.cc } : {}),
+        ...(input.bcc !== undefined ? { bcc: input.bcc } : {}),
+        ...(input.replyTo !== undefined ? { replyTo: input.replyTo } : {}),
+        ...(input.html !== undefined ? { html: input.html } : {}),
+        ...(input.images !== undefined ? { images: input.images } : {}),
+      },
+      (ticket) =>
+        open !== undefined
+          ? open(ticket)
+          : Promise.resolve({ kind: 'refused', code: 'unreachable', detail: 'no peerBytes' }),
+      (reason, deviceId) => {
+        this.log.warn(`email image omitted: ${reason}`, {
+          meta: { reason },
+          ...(deviceId !== undefined ? { tags: { deviceId } } : {}),
+        })
+      },
+    )
+  }
+
   async sendEmail(
     instanceId: string | undefined,
     input: SendEmailRequest,
@@ -206,16 +245,17 @@ export class RelayPool {
       )
     }
     // nodemailer's `MailOptions` types require mutable arrays — spread produces a fresh copy.
+    // The body is the shared MIME builder (the same one Gmail uses), sent raw.
+    const raw = await this.mimeOf(from, input)
     const mail: SMTPTransport.MailOptions = {
       from,
       to: typeof input.to === 'string' ? input.to : [...input.to],
       subject: input.subject,
-      text: input.text,
+      raw,
     }
     if (input.cc && input.cc.length > 0) mail.cc = [...input.cc]
     if (input.bcc && input.bcc.length > 0) mail.bcc = [...input.bcc]
     if (input.replyTo) mail.replyTo = input.replyTo
-    if (input.html) mail.html = input.html
     try {
       const info = await relay.transporter.sendMail(mail)
       relay.lastError = undefined

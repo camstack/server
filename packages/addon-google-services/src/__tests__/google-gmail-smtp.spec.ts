@@ -1,3 +1,6 @@
+import { Readable } from 'node:stream'
+import type { PeerBytesOpenResult } from '@camstack/types'
+import { EMAIL_IMAGE_SLOT } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildRawMime,
@@ -156,6 +159,69 @@ describe('createGmailSmtpProvider', () => {
     expect(getB).toHaveBeenCalled()
     expect(getA).not.toHaveBeenCalled()
     expect(tokens[0]).toContain('tok-b')
+  })
+
+  it('inlines an image in the raw MIME the Gmail API receives', async () => {
+    const jpeg = Uint8Array.from([1, 2, 3, 4])
+    let raw = ''
+    const fetchMock: typeof fetch = async (_url, init) => {
+      const parsed: unknown = JSON.parse(String(init?.body))
+      const encoded =
+        typeof parsed === 'object' &&
+        parsed !== null &&
+        'raw' in parsed &&
+        typeof parsed.raw === 'string'
+          ? parsed.raw
+          : ''
+      const b64 = encoded.replace(/-/g, '+').replace(/_/g, '/')
+      const pad = b64.length % 4 === 0 ? '' : '='.repeat(4 - (b64.length % 4))
+      raw = Buffer.from(b64 + pad, 'base64').toString('utf8')
+      return new Response(JSON.stringify({ id: 'msg-img' }), { status: 200 })
+    }
+    const opened: PeerBytesOpenResult = {
+      kind: 'body',
+      body: {
+        status: 200,
+        contentType: 'image/jpeg',
+        declaredBytes: jpeg.byteLength,
+        stream: Readable.from([jpeg]),
+        writeToFile: async () => ({ kind: 'written', bytes: jpeg.byteLength }),
+        cancel: () => undefined,
+      },
+    }
+    const withImage = createGmailSmtpProvider({
+      accounts: () => [accountA],
+      fetch: fetchMock,
+      peerBytes: { open: async () => opened },
+    })
+    await withImage.sendEmail({
+      to: 'you@example.com',
+      subject: 'Hi',
+      text: 'Hello',
+      html: `<h2>T</h2><div>Hello</div>${EMAIL_IMAGE_SLOT}<p><a href="https://click.example/go">go</a></p>`,
+      images: [
+        {
+          ticket: {
+            url: 'http://127.0.0.1:9/img',
+            hostNodeId: 'hub',
+            expiresAtMs: Date.now() + 30_000,
+            declaredBytes: jpeg.byteLength,
+          },
+          mime: 'image/jpeg',
+          name: 'still.jpg',
+          contentId: 'camstack-image-1',
+          placement: 'inline',
+        },
+      ],
+    })
+    expect(raw).toContain('multipart/related')
+    const htmlAt = raw.indexOf('Content-Type: text/html')
+    const html = raw.slice(htmlAt)
+    expect(html.indexOf('src="cid:camstack-image-1"')).toBeGreaterThan(html.indexOf('Hello'))
+    expect(html.indexOf('https://click.example/go')).toBeGreaterThan(
+      html.indexOf('cid:camstack-image-1'),
+    )
+    expect(raw).toContain('Content-ID: <camstack-image-1>')
   })
 })
 

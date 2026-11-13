@@ -101,10 +101,20 @@ export class SmtpNodemailerAddon extends BaseAddon<SmtpAddonConfig> {
     private readonly listeners: ListenerFactory = smtpServerFactory,
   ) {
     super({})
-    this.pool = new RelayPool(factory, {
-      info: (message, context) => this.ctxIfReady?.logger.info(message, context),
-      warn: (message, context) => this.ctxIfReady?.logger.warn(message, context),
-    })
+    this.pool = new RelayPool(
+      factory,
+      {
+        info: (message, context) => this.ctxIfReady?.logger.info(message, context),
+        warn: (message, context) => this.ctxIfReady?.logger.warn(message, context),
+      },
+      (ticket) => {
+        const peer = this.ctxIfReady?.peerBytes
+        if (peer === undefined) {
+          return Promise.resolve({ kind: 'refused', code: 'unreachable', detail: 'no peerBytes' })
+        }
+        return peer.open(ticket)
+      },
+    )
   }
 
   protected async onInitialize(): Promise<ProviderRegistration[]> {

@@ -1,12 +1,22 @@
-import { linkFieldDescriptor, userError } from '@camstack/types'
 /**
  * Email notifier — delivers through a mail sender the target links to (`sendWith`): an instance
  * that serves `smtp-provider`, an SMTP relay or a Google account (whose kind declares it in
  * `alsoServes`). Not HTTP: the provider calls {@link sendDirect}, which resolves the linked
  * instance to the addon that holds it and sends through that addon's `smtp-provider`.
  */
-import type { PreparedNotification, SendResult, TargetKind } from '@camstack/types'
+import {
+  EMAIL_IMAGE_MAX_COUNT,
+  EMAIL_IMAGE_MAX_TOTAL_BYTES,
+  EMAIL_IMAGE_SLOT,
+  linkFieldDescriptor,
+  userError,
+  type EmailImagePart,
+  type PreparedNotification,
+  type SendResult,
+  type TargetKind,
+} from '@camstack/types'
 import type { DirectNotifierAdapter, TargetConfig } from './adapter.js'
+import { type EmailAdapterDeps, emailImagesFor } from './email-images.js'
 
 export const EMAIL_KIND = 'email'
 
@@ -32,6 +42,8 @@ export interface EmailSendInput {
   readonly addonId?: string
   /** The sending instance inside the provider (a relay, a Google account); absent = its default. */
   readonly instanceId?: string
+  /** Images already offered over `peerBytes`. Absent when this mail carries none. */
+  readonly images?: readonly EmailImagePart[]
 }
 
 /** Where a linked sender lives: the provider addon that holds the instance, and the instance. */
@@ -102,7 +114,14 @@ export function buildEmailDescriptor(): TargetKind {
       ],
     },
     caps: {
-      attachments: { mediaTypes: ['image'], mode: 'url', max: 0 },
+      attachments: {
+        mediaTypes: ['image'],
+        // `both`: a url is fetched here, not by the provider. The provider's
+        // `needsFetch` aborts the whole send, and a missing image must not.
+        mode: 'both',
+        max: EMAIL_IMAGE_MAX_COUNT,
+        maxBytes: EMAIL_IMAGE_MAX_TOTAL_BYTES,
+      },
       actions: 0,
       levels: [
         { id: 'normal', label: 'Normal', ordinal: 3 },
@@ -148,7 +167,7 @@ function renderBodies(prepared: PreparedNotification): {
         : ''
     return {
       text,
-      html: `${titleHtml}<div>${body}</div>${clickHtml}`,
+      html: `${titleHtml}<div>${body}</div>${EMAIL_IMAGE_SLOT}${clickHtml}`,
     }
   }
   return { text }
@@ -223,7 +242,10 @@ export function validateEmailConfig(config: TargetConfig): void {
 }
 
 /** Build the email adapter bound to a live smtp-provider client. */
-export function createEmailAdapter(smtp: EmailSmtpClient): DirectNotifierAdapter {
+export function createEmailAdapter(
+  smtp: EmailSmtpClient,
+  deps: EmailAdapterDeps = {},
+): DirectNotifierAdapter {
   return {
     descriptor: buildEmailDescriptor(),
     destinationKeys: ['to', EMAIL_SENDER_KEY],
@@ -231,6 +253,7 @@ export function createEmailAdapter(smtp: EmailSmtpClient): DirectNotifierAdapter
     async sendDirect(config, prepared): Promise<SendResult> {
       try {
         const to = requireTo(config)
+        const images = await emailImagesFor(prepared, deps)
         const bodies = renderBodies(prepared)
         const route = await senderOf(smtp, config)
         const subject =
@@ -243,6 +266,7 @@ export function createEmailAdapter(smtp: EmailSmtpClient): DirectNotifierAdapter
           subject,
           text: bodies.text,
           ...(bodies.html !== undefined ? { html: bodies.html } : {}),
+          ...(images.length > 0 ? { images } : {}),
           addonId: route.addonId,
           ...(route.instanceId !== undefined ? { instanceId: route.instanceId } : {}),
           ...(from !== undefined ? { from } : {}),

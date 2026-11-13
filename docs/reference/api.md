@@ -4482,7 +4482,7 @@
 
 ### `smtp-provider` → `smtpProvider.*`
 
-- **Source:** `packages/types/src/capabilities/smtp-provider.cap.ts:71`
+- **Source:** `packages/types/src/capabilities/smtp-provider.cap.ts:77`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `email`
 - **Archetypes:** internal
 - **Provider interface:** `ISmtpProvider`

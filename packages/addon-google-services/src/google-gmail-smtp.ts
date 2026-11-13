@@ -1,9 +1,20 @@
-import { userError } from '@camstack/types'
 /**
  * Gmail API implementation of `smtp-provider` — send via users.messages.send
  * with a raw RFC 2822 MIME message (base64url). Aggregates N Google brokers.
+ *
+ * The MIME body is {@link assembleEmailMime}, the same function the SMTP relay
+ * uses. Image bytes arrive as `peerBytes` tickets (D613).
  */
-import type { ISmtpProvider } from '@camstack/types'
+import {
+  assembleEmailMime,
+  buildRawMime,
+  userError,
+  type AddonPeerBytes,
+  type IScopedLogger,
+  type ISmtpProvider,
+  type PeerBytesOpenResult,
+  type PeerBytesTicket,
+} from '@camstack/types'
 import { GOOGLE_GMAIL_API } from './google-types.js'
 
 export interface GmailAccountView {
@@ -18,7 +29,12 @@ export interface GmailAccountView {
 export interface GmailSmtpDeps {
   readonly accounts: () => readonly GmailAccountView[]
   readonly fetch?: typeof fetch
+  /** Opens image tickets. Absent: a mail that names an image is sent without it. */
+  readonly peerBytes?: Pick<AddonPeerBytes, 'open'>
+  readonly logger?: Pick<IScopedLogger, 'warn'>
 }
+
+export { buildRawMime }
 
 function encodeBase64Url(bytes: Uint8Array): string {
   const b64 = Buffer.from(bytes).toString('base64')
@@ -28,10 +44,6 @@ function encodeBase64Url(bytes: Uint8Array): string {
 function encodeHeaderWord(value: string): string {
   if (/^[\x20-\x7E]*$/.test(value)) return value
   return `=?UTF-8?B?${Buffer.from(value, 'utf8').toString('base64')}?=`
-}
-
-function formatAddressList(addrs: string | readonly string[]): string {
-  return (Array.isArray(addrs) ? addrs : [addrs]).join(', ')
 }
 
 function buildFromHeader(account: GmailAccountView): string {
@@ -100,52 +112,19 @@ export function selectGmailSender(
   return account
 }
 
-/** Build a minimal multipart/alternative-capable plain (and optional HTML) message. */
-export function buildRawMime(input: {
-  readonly from: string
-  readonly to: string | readonly string[]
-  readonly cc?: readonly string[]
-  readonly bcc?: readonly string[]
-  readonly replyTo?: string
-  readonly subject: string
-  readonly text: string
-  readonly html?: string
-}): string {
-  const lines: string[] = [`From: ${input.from}`, `To: ${formatAddressList(input.to)}`]
-  if (input.cc !== undefined && input.cc.length > 0) {
-    lines.push(`Cc: ${formatAddressList(input.cc)}`)
+function openTicket(deps: GmailSmtpDeps, ticket: PeerBytesTicket): Promise<PeerBytesOpenResult> {
+  const peer = deps.peerBytes
+  if (peer === undefined) {
+    return Promise.resolve({ kind: 'refused', code: 'unreachable', detail: 'no peerBytes' })
   }
-  if (input.bcc !== undefined && input.bcc.length > 0) {
-    lines.push(`Bcc: ${formatAddressList(input.bcc)}`)
-  }
-  if (input.replyTo !== undefined && input.replyTo.length > 0) {
-    lines.push(`Reply-To: ${input.replyTo}`)
-  }
-  lines.push(`Subject: ${encodeHeaderWord(input.subject)}`)
-  lines.push('MIME-Version: 1.0')
+  return peer.open(ticket)
+}
 
-  if (input.html !== undefined && input.html.length > 0) {
-    const boundary = `camstack_${Date.now().toString(36)}`
-    lines.push(`Content-Type: multipart/alternative; boundary="${boundary}"`)
-    lines.push('')
-    lines.push(`--${boundary}`)
-    lines.push('Content-Type: text/plain; charset="UTF-8"')
-    lines.push('Content-Transfer-Encoding: 8bit')
-    lines.push('')
-    lines.push(input.text)
-    lines.push(`--${boundary}`)
-    lines.push('Content-Type: text/html; charset="UTF-8"')
-    lines.push('Content-Transfer-Encoding: 8bit')
-    lines.push('')
-    lines.push(input.html)
-    lines.push(`--${boundary}--`)
-  } else {
-    lines.push('Content-Type: text/plain; charset="UTF-8"')
-    lines.push('Content-Transfer-Encoding: 8bit')
-    lines.push('')
-    lines.push(input.text)
-  }
-  return lines.join('\r\n')
+function dropImage(deps: GmailSmtpDeps, reason: string, deviceId: number | undefined): void {
+  deps.logger?.warn(`email image omitted: ${reason}`, {
+    meta: { reason },
+    ...(deviceId !== undefined ? { tags: { deviceId } } : {}),
+  })
 }
 
 export function createGmailSmtpProvider(deps: GmailSmtpDeps): ISmtpProvider {
@@ -190,16 +169,21 @@ export function createGmailSmtpProvider(deps: GmailSmtpDeps): ISmtpProvider {
           'Set From address on the Google broker (or Connect an account).',
         )
       }
-      const raw = buildRawMime({
-        from,
-        to: input.to,
-        cc: input.cc,
-        bcc: input.bcc,
-        replyTo: input.replyTo,
-        subject: input.subject,
-        text: input.text,
-        html: input.html,
-      })
+      const raw = await assembleEmailMime(
+        {
+          from,
+          to: input.to,
+          subject: input.subject,
+          text: input.text,
+          ...(input.cc !== undefined ? { cc: input.cc } : {}),
+          ...(input.bcc !== undefined ? { bcc: input.bcc } : {}),
+          ...(input.replyTo !== undefined ? { replyTo: input.replyTo } : {}),
+          ...(input.html !== undefined ? { html: input.html } : {}),
+          ...(input.images !== undefined ? { images: input.images } : {}),
+        },
+        (ticket) => openTicket(deps, ticket),
+        (reason, deviceId) => dropImage(deps, reason, deviceId),
+      )
       const token = await account.getAccessToken()
       const res = await http(`${GOOGLE_GMAIL_API}/users/me/messages/send`, {
         method: 'POST',

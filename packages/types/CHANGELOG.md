@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notification templates can count how many devices or nodes went offline and came back in a summary.
 - A disarm notification can name who disarmed the alarm.
 - Notification history can show the title and body that were sent.
+### Changed
+
+- Email images travel as peerBytes tickets on smtp-provider.sendEmail.
 
 ## [1.2.562] - 2026-11-13
 

@@ -1,3 +1,5 @@
+import type { AddonPeerBytes, LogExtras } from '@camstack/types'
+import { EMAIL_IMAGE_SLOT } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildEmailDescriptor,
@@ -7,14 +9,19 @@ import {
   type EmailSmtpClient,
   validateEmailConfig,
 } from '../adapters/email.js'
+import type { EmailAdapterDeps } from '../adapters/email-images.js'
 import { iconUrlFor } from '../icon-routes.js'
 import { createNotificationOutputProvider, createNotificationOutputRuntime } from '../provider.js'
 import { TargetStore } from '../target-store.js'
 import { makeNotifiersRecords } from './fake-records.js'
 
 /** A provider over one email target with `config`, sending through `smtp`. */
-async function emailTargetOver(smtp: EmailSmtpClient, config: Record<string, unknown>) {
-  const adapter = createEmailAdapter(smtp)
+async function emailTargetOver(
+  smtp: EmailSmtpClient,
+  config: Record<string, unknown>,
+  deps?: EmailAdapterDeps,
+) {
+  const adapter = createEmailAdapter(smtp, deps)
   const store = TargetStore.of((await makeNotifiersRecords([adapter.descriptor])).records, [
     adapter.descriptor,
   ])
@@ -241,5 +248,122 @@ describe('the editor test of an email target', () => {
       addonId: 'smtp-nodemailer',
       instanceId: 'relay-2',
     })
+  })
+})
+
+function offerBuffer(): Pick<AddonPeerBytes, 'offerBuffer'> {
+  return {
+    offerBuffer: async (options) => ({
+      kind: 'ticket',
+      ticket: {
+        url: 'http://127.0.0.1:9/email-image',
+        hostNodeId: 'hub',
+        expiresAtMs: Date.now() + 30_000,
+        declaredBytes: options.bytes.byteLength,
+      },
+    }),
+  }
+}
+
+const SENDER: EmailSmtpClient = {
+  sendEmail: async () => ({ messageId: 'm-1' }),
+  resolveSender: async (instanceId) => ({ addonId: 'google-services', instanceId }),
+}
+
+describe('email images', () => {
+  it('puts an HTML image under the body, above the link, and offers the bytes', async () => {
+    const sendEmail = vi.fn(async (_input: EmailSendInput) => ({ messageId: 'm-1' }))
+    const provider = await emailTargetOver(
+      { ...SENDER, sendEmail },
+      { to: 'ops@example.com', sendWith: 'acct-1' },
+      {
+        peerBytes: offerBuffer(),
+        fetchAttachment: async () => ({
+          bytes: Uint8Array.from([1, 2, 3, 4]),
+          mime: 'image/jpeg',
+          name: 'still.jpg',
+        }),
+      },
+    )
+    const result = await provider.testTarget({
+      targetId: 'email-1',
+      sample: {
+        ...SAMPLE,
+        format: 'html',
+        clickUrl: 'https://click.example/go',
+        attachments: [{ mediaType: 'image', url: 'https://cam.example/still.jpg' }],
+      },
+    })
+    expect(result.success).toBe(true)
+    const sent = sendEmail.mock.calls[0]?.[0]
+    expect(sent?.images?.[0]).toMatchObject({
+      placement: 'inline',
+      contentId: 'camstack-image-1',
+      mime: 'image/jpeg',
+      name: 'still.jpg',
+    })
+    const html = sent?.html ?? ''
+    expect(html.indexOf('Hello')).toBeLessThan(html.indexOf(EMAIL_IMAGE_SLOT))
+    expect(html.indexOf(EMAIL_IMAGE_SLOT)).toBeLessThan(html.indexOf('https://click.example/go'))
+  })
+
+  it('attaches the image when the mail is text', async () => {
+    const sendEmail = vi.fn(async (_input: EmailSendInput) => ({ messageId: 'm-1' }))
+    const provider = await emailTargetOver(
+      { ...SENDER, sendEmail },
+      { to: 'ops@example.com', sendWith: 'acct-1' },
+      { peerBytes: offerBuffer() },
+    )
+    const result = await provider.testTarget({
+      targetId: 'email-1',
+      sample: {
+        ...SAMPLE,
+        attachments: [
+          {
+            mediaType: 'image',
+            bytes: Uint8Array.from([9, 8, 7]),
+            mime: 'image/jpeg',
+            name: 'still.jpg',
+          },
+        ],
+      },
+    })
+    expect(result.success).toBe(true)
+    expect(sendEmail.mock.calls[0]?.[0]?.images?.[0]?.placement).toBe('attachment')
+    expect(sendEmail.mock.calls[0]?.[0]?.html).toBeUndefined()
+  })
+
+  it('sends without the image and logs why when the fetch is over the cap', async () => {
+    const lines: { message: string; extras?: LogExtras }[] = []
+    const sendEmail = vi.fn(async (_input: EmailSendInput) => ({ messageId: 'm-1' }))
+    const provider = await emailTargetOver(
+      { ...SENDER, sendEmail },
+      { to: 'ops@example.com', sendWith: 'acct-1' },
+      {
+        peerBytes: offerBuffer(),
+        logger: {
+          warn: (message, extras) => {
+            lines.push({ message, extras })
+          },
+        },
+        fetchAttachment: async () => {
+          throw new Error('attachment exceeds maxBytes (9000000 > 5242880)')
+        },
+      },
+    )
+    const result = await provider.testTarget({
+      targetId: 'email-1',
+      sample: {
+        ...SAMPLE,
+        deviceId: 4,
+        attachments: [{ mediaType: 'image', url: 'https://cam.example/huge.jpg' }],
+      },
+    })
+    expect(result.success).toBe(true)
+    expect(sendEmail).toHaveBeenCalled()
+    expect(sendEmail.mock.calls[0]?.[0]?.images).toBeUndefined()
+    expect(lines[0]?.message).toMatch(/omitted/)
+    expect(lines[0]?.message).toMatch(/maxBytes/)
+    expect(lines[0]?.extras?.tags?.deviceId).toBe(4)
   })
 })

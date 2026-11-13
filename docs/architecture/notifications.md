@@ -2770,6 +2770,14 @@ refused (`notifiers.email-sender-required`), and Gmail sends from exactly the ac
 names, never another signed-in one. Because the link is declared (`describe().links`), the hub
 refuses deleting a relay or an account an email target still sends with.
 
+An email carries up to three images, five megabytes in all. The notifiers addon fetches those
+bytes the same way the other image notifiers do, then offers them to the sending addon over
+`ctx.peerBytes` (D613) — they are not a byte field on `sendEmail`. Gmail and the SMTP relay build
+one MIME body from that offer. An HTML mail shows each image inline under the title and body and
+above the click link (`multipart/related`, `Content-ID`). A text mail attaches the file. A fetch
+that fails or exceeds the cap still sends the mail, and the omission is logged with `deviceId`
+when the notification has one.
+
 Targets written before `sendWith` pinned a provider (`smtpAddonId`) and optionally a relay
 (`smtpInstanceId`). The `email-send-with` migration (`packages/addon-notifiers/src/migrations/`)
 rewrites each such row to a `sendWith` link, keeping its recipients, switch and owner:

@@ -167,6 +167,8 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
             getAccessToken: () => this.ensureAccessToken(entry.id),
           }
         }),
+      ...(this.ctx.peerBytes !== undefined ? { peerBytes: this.ctx.peerBytes } : {}),
+      logger: this.ctx.logger,
     })
 
     const routes: readonly IAddonHttpRoute[] = [
