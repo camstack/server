@@ -2752,23 +2752,44 @@ per listener), which devices mail alarms to ([D999](../decisions/adr-0999-inboun
 It is not part of the outbox: a received mail is a `broker.message` event a consumer turns into its own
 signal (Reolink: a motion event).
 
-### An email target picks a provider and, optionally, one relay ([D996](../decisions/adr-0996-connection-holding-addons-are-integration-instances.md))
+### An email target sends with ONE linked sender ([D1013](../decisions/adr-1013-one-instance-model.md))
 
-The email target's `smtpAddonId` picks the `smtp-provider` (the collection pin). A provider that
-holds several relays (`smtp-nodemailer`: one `relays` record per relay, each an integration
-record) is narrowed by the optional `smtpInstanceId`, the relay's record id (`relay-xxxxxxxx`),
-which the adapter sends as `instanceId` on `sendEmail`. A target with no pin gets the provider's
-first configured relay, so every target written before relays existed keeps working unchanged. An
-unknown relay id is refused by name; it is never answered by another relay. A provider with one
-fixed relay (the Google Gmail API) ignores `instanceId`.
+An email target names the instance that sends its mail in `sendWith`, an `instance-select` link to
+the function cap `smtp-provider`. Two kinds of instance serve it: an SMTP relay of
+`smtp-nodemailer` (a `relays` record, `functionCap: 'smtp-provider'`) and a Google account of
+`google-services`, whose kind declares `alsoServes: ['smtp-provider']` (`kindServesCap`). The
+picker lists both, and a "Create new…" beside it adds a relay or signs in a Google account in
+place. Each option names the sender's status as its provider reports it ("Signed in",
+"Not signed in", a relay's last probe), so a sender that is not ready says so before it is picked.
+The targets table badges each email row with the linked sender's icon, its name on hover.
 
-The relay is a picker, not free text: `smtpInstanceId` is a `select` with
-`discoverOptions: { kind: 'email', dependsOn: ['smtpAddonId'] }`, and the email adapter's
-`discover` answers the relays of the chosen provider from its `integration-instances` records
-(a provider that holds none answers an empty list). `noneLabel` makes the empty value an
-explicit choice ("Default relay") and keeps the control a picker while the list loads or fails;
-`missingLabel` names a stored id the ANSWERED list no longer holds ("missing relay relay-x"),
-so a gone relay never reads as the default. An unanswered list shows the stored id as it is.
+At send time the adapter resolves the link to the addon that holds the instance and calls that
+addon's `smtp-provider.sendEmail` with `instanceId`. There is no fallback: a link to an instance
+that no longer exists is refused by name (`notifiers.email-sender-gone`), a target with no link is
+refused (`notifiers.email-sender-required`), and Gmail sends from exactly the account the link
+names, never another signed-in one. Because the link is declared (`describe().links`), the hub
+refuses deleting a relay or an account an email target still sends with.
+
+Targets written before `sendWith` pinned a provider (`smtpAddonId`) and optionally a relay
+(`smtpInstanceId`). The `email-send-with` migration (`packages/addon-notifiers/src/migrations/`)
+rewrites each such row to a `sendWith` link, keeping its recipients, switch and owner:
+
+- a pinned relay links that relay;
+- a provider pinned alone links the instance the old send path would have used: among the
+  provider's usable instances (enabled and not failing), the one whose address matches the
+  target's `from`, else the first usable one. A signed-out account is never pinned;
+- a provider that is not registered yet (it boots after the notifiers) or whose instances cannot be
+  read FAILS the step, which is retried on the next boot;
+- a provider with no usable sender leaves the row as it is, still sending through its old pin.
+
+Until it is migrated, a legacy row keeps sending through its pin, stays writable (a switch or a
+rename is not refused for a missing `sendWith`), and its `smtpInstanceId` still counts as using
+that relay in the admin UI.
+
+Every target kind can be tested from the editor, before it is saved. A kind with a credential
+probe runs it; any other kind, email included, SENDS the canned test notification to the
+destination typed in the form, which is why the button reads "Send test message" and says it
+delivers a real message.
 
 ## The media policy
 
