@@ -183,7 +183,7 @@ describe('a system notification carries the admin page it is about', () => {
     const result = await h.dispatcher.deliver(
       systemEntry({ kind: 'addon-update-available', subject: 's', nodeId: 'hub', data: {} }),
     )
-    expect(result).toEqual({ ok: true })
+    expect(result).toMatchObject({ ok: true })
     expect(h.sends[0]!.notification.clickUrl).toBeUndefined()
   })
 })

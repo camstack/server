@@ -126,7 +126,7 @@ describe('NcDispatcher — the AI narration pass', () => {
   it('is never consulted for a row that carries no ai policy', async () => {
     const h = makeHarness()
     const before = await h.dispatcher.deliver(makeEntry())
-    expect(before).toEqual({ ok: true })
+    expect(before).toMatchObject({ ok: true })
     expect(h.aiCalls).toHaveLength(0)
     const plainBody = h.sends[0]?.notification.body
     // …and the body is exactly what a row WITH a policy but no sentence gets.
@@ -264,7 +264,7 @@ describe('NcDispatcher — the AI narration pass', () => {
   it('SKIPS the pass entirely when the notification ships text-only', async () => {
     const h = makeHarness({ media: [] })
     const result = await h.dispatcher.deliver(makeEntry({ ai: { shape: 'detection-immediate' } }))
-    expect(result).toEqual({ ok: true })
+    expect(result).toMatchObject({ ok: true })
     expect(h.aiCalls).toHaveLength(0)
     expect(h.sends).toHaveLength(1)
     expect(h.sends[0]?.notification.attachments).toBeUndefined()

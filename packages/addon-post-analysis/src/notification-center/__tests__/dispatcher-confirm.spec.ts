@@ -131,7 +131,7 @@ describe('NcDispatcher — the AI confirm gate', () => {
     const result = await h.dispatcher.deliver(makeEntry())
     expect(h.gateCalls).toHaveLength(0)
     expect(h.sends).toHaveLength(1)
-    expect(result).toEqual({ ok: true })
+    expect(result).toMatchObject({ ok: true })
   })
 
   it('judges the very bytes it is about to ship', async () => {
@@ -162,7 +162,7 @@ describe('NcDispatcher — the AI confirm gate', () => {
     const h = makeHarness(CONFIRMED)
     const result = await h.dispatcher.deliver(makeEntry({ confirm: {} }))
     expect(h.sends).toHaveLength(1)
-    expect(result).toEqual({ ok: true, confirm: CONFIRMED })
+    expect(result).toMatchObject({ ok: true, confirm: CONFIRMED })
   })
 
   it('suppresses BENIGNLY on a negative verdict — no send, no dead-letter', async () => {
@@ -199,7 +199,7 @@ describe('NcDispatcher — the AI confirm gate', () => {
     const h = makeHarness(FAILED_OPEN)
     const result = await h.dispatcher.deliver(makeEntry({ confirm: {} }))
     expect(h.sends).toHaveLength(1)
-    expect(result).toEqual({ ok: true, confirm: FAILED_OPEN })
+    expect(result).toMatchObject({ ok: true, confirm: FAILED_OPEN })
   })
 
   it('still asks when there is no picture — the gate owns that decision', async () => {

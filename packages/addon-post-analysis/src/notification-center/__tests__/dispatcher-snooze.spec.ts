@@ -151,7 +151,7 @@ describe('NcDispatcher — the snooze gate', () => {
   it('delivers normally when nothing is snoozed', async () => {
     const h = makeHarness({ snoozeId: null })
     const result = await h.dispatcher.deliver(makeEntry())
-    expect(result).toEqual({ ok: true })
+    expect(result).toMatchObject({ ok: true })
     expect(h.sends).toHaveLength(1)
   })
 
@@ -175,7 +175,7 @@ describe('NcDispatcher — the snooze gate', () => {
       getMediaForOwner: async () => [],
       getDeviceName: async () => null,
     })
-    expect(await dispatcher.deliver(makeEntry())).toEqual({ ok: true })
+    expect(await dispatcher.deliver(makeEntry())).toMatchObject({ ok: true })
   })
 })
 

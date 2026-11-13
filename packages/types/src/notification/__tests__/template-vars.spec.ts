@@ -334,6 +334,8 @@ describe('the STATE SUMMARY vocabulary (D647)', () => {
     'summaryAddons',
     'summaryAddonUpdates',
     'summaryUpdates',
+    'offlineCount',
+    'onlineCount',
   ]
   const offeredIn = (ctx: Parameters<typeof templateVarsFor>[0]): string[] =>
     templateVarsFor(ctx).map((d) => d.name)

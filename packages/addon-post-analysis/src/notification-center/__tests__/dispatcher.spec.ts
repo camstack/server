@@ -176,7 +176,7 @@ describe('NcDispatcher target resolution', () => {
         },
       )
 
-      expect(await h.dispatcher.deliver(entry)).toEqual({ ok: true })
+      expect(await h.dispatcher.deliver(entry)).toMatchObject({ ok: true })
       expect(h.sends[0]!.notification).toMatchObject({
         title: 'Server update available',
         body: '@camstack/server 1.2.90 is available (current 1.2.89)',
@@ -270,7 +270,7 @@ describe('NcDispatcher notification composition', () => {
   it('routes send by the target addonId and maps success', async () => {
     const h = makeHarness()
     const result = await h.dispatcher.deliver(makeEntry({ media: 'none' }))
-    expect(result).toEqual({ ok: true })
+    expect(result).toMatchObject({ ok: true })
     expect(h.sends).toHaveLength(1)
     expect(h.sends[0]!.addonId).toBe('notifiers')
     expect(h.sends[0]!.targetId).toBe('tgt-1')

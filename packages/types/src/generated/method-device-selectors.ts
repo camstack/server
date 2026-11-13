@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 616 methods carry a device reference, of which
- * 195 are on SYSTEM-scope caps.
+ * Coverage: 617 methods carry a device reference, of which
+ * 196 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -556,6 +556,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'scriptRunner.run': [{ name: "deviceId", form: "single", optional: false }] as const,
   'scriptRunner.stop': [{ name: "deviceId", form: "single", optional: false }] as const,
   'smoke.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'smtpProvider.sendEmail': [{ name: "images", form: "object-array", optional: true, itemField: "deviceId" }] as const,
   'snapshot.applyDeviceSettingsPatch': [{ name: "deviceId", form: "single", optional: false }] as const,
   'snapshot.getDebugState': [{ name: "deviceId", form: "single", optional: false }] as const,
   'snapshot.getDeviceLiveContribution': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -828,6 +829,7 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "remote.sendCommand",
   "remote.sendMediaCommand",
   "remote.setConfig",
+  "smtpProvider.sendEmail",
   "storageAdmin.readRecords",
   "streamBroker.acquireEgressTranscode",
   "streamBroker.applyDeviceSettingsPatch",
